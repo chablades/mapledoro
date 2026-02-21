@@ -182,7 +182,15 @@ export default function MapleDoro() {
         transition: "background 0.35s, border-color 0.35s",
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <div style={{ width: "30px", height: "30px", borderRadius: "8px", background: t.accent, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.9rem" }}>🍁</div>
+          <div style={{ width: "30px", height: "30px", borderRadius: "8px", background: t.accent, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.9rem" }}>
+            <img
+              src="/brand/mapledoro-mark.svg"
+              alt="MapleDoro logo"
+              width={18}
+              height={18}
+              style={{ display: "block" }}
+            />
+          </div>
           <span style={{ fontFamily: "'Fredoka One', cursive", fontSize: "1.2rem", color: t.accent }}>MapleDoro</span>
         </div>
         <div style={{ flex: 1, display: "flex", gap: "1.25rem" }}>
