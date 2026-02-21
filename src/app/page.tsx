@@ -196,7 +196,16 @@ export default function MapleDoro() {
         .panel { transition: background 0.35s ease, border-color 0.35s ease; }
         .panel:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
 
-        .nav-link { color: ${t.muted}; text-decoration: none; font-size: 0.85rem; font-weight: 700; transition: color 0.2s; }
+        .nav-link {
+          color: ${t.muted};
+          text-decoration: none;
+          font-size: 0.85rem;
+          font-weight: 700;
+          transition: color 0.2s;
+          display: inline-flex;
+          align-items: center;
+          min-height: 24px;
+        }
         .nav-link:hover { color: ${t.text}; }
 
         .row-hover:hover { background: ${t.accentSoft} !important; }
@@ -281,8 +290,7 @@ export default function MapleDoro() {
                   link.href === currentPath
                     ? {
                         color: t.accentText,
-                        borderBottom: `2px solid ${t.accent}`,
-                        paddingBottom: "2px",
+                        boxShadow: `inset 0 -2px 0 ${t.accent}`,
                       }
                     : undefined
                 }
