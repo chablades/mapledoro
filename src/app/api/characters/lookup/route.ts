@@ -139,19 +139,32 @@ function jsonLookup(result: LookupResult) {
   });
 }
 
-function getFirstRankRow(payload: unknown): MapleRankRow | null {
+function getExactRankRow(payload: unknown, expectedName: string): MapleRankRow | null {
   if (!payload || typeof payload !== "object") return null;
   const ranks = (payload as { ranks?: unknown }).ranks;
   if (!Array.isArray(ranks) || ranks.length === 0) return null;
-  const first = ranks[0];
-  if (!first || typeof first !== "object") return null;
-  return first as MapleRankRow;
+  const normalizedExpected = normalizeName(expectedName);
+  for (const rank of ranks) {
+    if (!rank || typeof rank !== "object") continue;
+    const row = rank as MapleRankRow;
+    if (normalizeName(String(row.characterName ?? "")) === normalizedExpected) {
+      return row;
+    }
+  }
+  return null;
 }
 
 function getFallbackCacheHit(nameKey: string): CacheEntry | null {
   const entry = fallbackInMemoryCache.get(nameKey);
   if (!entry) return null;
   if (Date.now() >= entry.expiresAt) {
+    fallbackInMemoryCache.delete(nameKey);
+    return null;
+  }
+  if (
+    entry.kind === "found" &&
+    normalizeName(entry.data.characterName) !== normalizeName(nameKey)
+  ) {
     fallbackInMemoryCache.delete(nameKey);
     return null;
   }
@@ -171,6 +184,13 @@ async function getCacheHit(nameKey: string): Promise<{
       if (!raw) return { entry: null, source: null };
       const parsed = JSON.parse(raw) as CacheEntry;
       if (Date.now() >= parsed.expiresAt) {
+        await redis.del(cacheKey(nameKey));
+        return { entry: null, source: null };
+      }
+      if (
+        parsed.kind === "found" &&
+        normalizeName(parsed.data.characterName) !== normalizeName(nameKey)
+      ) {
         await redis.del(cacheKey(nameKey));
         return { entry: null, source: null };
       }
@@ -286,7 +306,7 @@ async function fetchLegion(characterName: string, worldID: number, rebootIndex: 
 
 async function buildLookup(characterName: string, key: string): Promise<LookupResult> {
   const firstQueued = await runQueuedUpstream(() => fetchOverall(characterName));
-  const overallRow = getFirstRankRow(firstQueued.value);
+  const overallRow = getExactRankRow(firstQueued.value, characterName);
 
   if (!overallRow) {
     const expiresAt = getNextUtcMidnightMs(Date.now());
@@ -311,7 +331,7 @@ async function buildLookup(characterName: string, key: string): Promise<LookupRe
     fetchLegion(characterName, overallRow.worldID, 1),
   );
   let legionRaw = secondQueued.value;
-  let legionRow = getFirstRankRow(legionRaw);
+  let legionRow = getExactRankRow(legionRaw, characterName);
   let fallbackLegionQueuedMs = 0;
 
   if (!legionRow) {
@@ -319,7 +339,7 @@ async function buildLookup(characterName: string, key: string): Promise<LookupRe
       fetchLegion(characterName, overallRow.worldID, 0),
     );
     legionRaw = fallbackQueued.value;
-    legionRow = getFirstRankRow(legionRaw);
+    legionRow = getExactRankRow(legionRaw, characterName);
     fallbackLegionQueuedMs = fallbackQueued.queuedMs;
   }
 
