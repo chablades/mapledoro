@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 
 interface Theme {
   name: string;
@@ -128,6 +129,8 @@ const navLinks = [
 
 const MIN_QUERY_LENGTH = 4;
 const COOLDOWN_MS = 5000;
+const LOOKUP_REQUEST_TIMEOUT_MS = 25000;
+const LOOKUP_SLOW_NOTICE_MS = 12000;
 const CHARACTER_CACHE_STORAGE_KEY = "mapledoro_character_cache_v1";
 const MAX_BROWSER_CACHE_ENTRIES = 100;
 const WORLD_NAMES: Record<number, string> = {
@@ -195,7 +198,6 @@ export default function CharacterSearchPage() {
   const [themeKey, setThemeKey] = useState("default");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
   const [now, setNow] = useState(new Date());
   const [query, setQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
@@ -213,10 +215,6 @@ export default function CharacterSearchPage() {
   const cacheRef = useRef<Map<string, CacheEntry>>(new Map());
 
   const t = themes[themeKey];
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 1000);
@@ -277,8 +275,6 @@ export default function CharacterSearchPage() {
       JSON.stringify(asObject),
     );
   };
-
-  if (!mounted) return null;
 
   return (
     <div
@@ -528,7 +524,10 @@ export default function CharacterSearchPage() {
           transition: "background 0.35s, border-color 0.35s",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+        <Link
+          href="/"
+          style={{ display: "flex", alignItems: "center", gap: "8px", textDecoration: "none" }}
+        >
           <div
             style={{
               width: "30px",
@@ -558,7 +557,7 @@ export default function CharacterSearchPage() {
           >
             MapleDoro
           </span>
-        </div>
+        </Link>
 
         <div style={{ flex: 1, display: "flex", gap: "1.25rem" }}>
           <div className="desktop-nav-links" style={{ flex: 1, display: "flex", gap: "1.25rem" }}>
@@ -602,7 +601,7 @@ export default function CharacterSearchPage() {
           aria-label="Open menu"
           onClick={() => setMobileMenuOpen((prev) => !prev)}
           style={{
-            width: "34px",
+            width: "42px",
             height: "34px",
             border: `1px solid ${t.border}`,
             borderRadius: "10px",
@@ -866,12 +865,22 @@ export default function CharacterSearchPage() {
                 setStatusTone("neutral");
                 setStatusMessage("Searching...");
                 lastRequestAtRef.current = Date.now();
+                const controller = new AbortController();
+                const slowTimer = setTimeout(() => {
+                  setStatusTone("neutral");
+                  setStatusMessage("Still searching... high traffic may cause delays.");
+                }, LOOKUP_SLOW_NOTICE_MS);
+                const timeoutTimer = setTimeout(() => {
+                  controller.abort();
+                }, LOOKUP_REQUEST_TIMEOUT_MS);
 
                 try {
                   const response = await fetch(
                     `/api/characters/lookup?character_name=${encodeURIComponent(name)}`,
-                    { cache: "no-store" },
+                    { cache: "no-store", signal: controller.signal },
                   );
+                  clearTimeout(slowTimer);
+                  clearTimeout(timeoutTimer);
                   if (!response.ok) {
                     const errorPayload = (await response.json().catch(() => null)) as
                       | { error?: string }
@@ -909,8 +918,16 @@ export default function CharacterSearchPage() {
                     setStatusMessage(`Character not found.${queueSuffix}`);
                   }
                 } catch (error) {
+                  clearTimeout(slowTimer);
+                  clearTimeout(timeoutTimer);
                   setStatusTone("error");
                   setFoundCharacter(null);
+                  if (error instanceof Error && error.name === "AbortError") {
+                    setStatusMessage(
+                      "Search timed out. Please retry in a few seconds.",
+                    );
+                    return;
+                  }
                   setStatusMessage(
                     error instanceof Error
                       ? error.message

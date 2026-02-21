@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
+import Link from "next/link";
 
 // ── Themes ───────────────────────────────────────────────────────────────────
 const themes: Record<string, Theme> = {
@@ -137,12 +138,10 @@ export default function MapleDoro() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [now, setNow] = useState(new Date());
   const [sunnyEvents, setSunnyEvents] = useState(defaultSunnyEvents);
-  const [mounted, setMounted] = useState(false);
   const leaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const t = themes[themeKey];
 
-  useEffect(() => { setMounted(true); }, []);
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(id);
@@ -153,8 +152,6 @@ export default function MapleDoro() {
     window.addEventListener("resize", close);
     return () => window.removeEventListener("resize", close);
   }, [mobileMenuOpen]);
-
-  if (!mounted) return null;
 
   const daily  = getNextReset(0);
   const weekly = getNextReset(0, 4);
@@ -266,7 +263,10 @@ export default function MapleDoro() {
         position: "fixed", left: 0, right: 0, top: 0, zIndex: 50,
         transition: "background 0.35s, border-color 0.35s",
       }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+        <Link
+          href="/"
+          style={{ display: "flex", alignItems: "center", gap: "8px", textDecoration: "none" }}
+        >
           <div style={{ width: "30px", height: "30px", borderRadius: "8px", background: t.accent, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.9rem" }}>
             <Image
               src="/icons/doro.png"
@@ -277,7 +277,7 @@ export default function MapleDoro() {
             />
           </div>
           <span style={{ fontFamily: "'Fredoka One', cursive", fontSize: "1.2rem", color: t.accent }}>MapleDoro</span>
-        </div>
+        </Link>
         <div style={{ flex: 1, display: "flex", gap: "1.25rem" }}>
           <div className="desktop-nav-links" style={{ flex: 1, display: "flex", gap: "1.25rem" }}>
             {navLinks.map((link) => (
@@ -310,7 +310,7 @@ export default function MapleDoro() {
           aria-label="Open menu"
           onClick={() => setMobileMenuOpen((prev) => !prev)}
           style={{
-            width: "34px",
+            width: "42px",
             height: "34px",
             border: `1px solid ${t.border}`,
             borderRadius: "10px",
