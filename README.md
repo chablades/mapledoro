@@ -1,6 +1,6 @@
 # MapleDoro
 
-Next.js + TypeScript app for the MapleDoro landing/dashboard site.
+Just another MapleStory website for seeing events, sharing characters and more!
 
 ## Local setup
 
@@ -21,11 +21,3 @@ Next.js + TypeScript app for the MapleDoro landing/dashboard site.
 npm run build
 npm run start
 ```
-
-## Deploy to Vercel
-
-1. Push this repo to GitHub.
-2. Import the repo in Vercel.
-3. Framework preset: `Next.js`.
-4. Build command: `npm run build` (default).
-5. Output directory: `.next` (default)
