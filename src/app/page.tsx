@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import Image from "next/image";
 
 // ── Themes ───────────────────────────────────────────────────────────────────
 const themes: Record<string, Theme> = {
@@ -91,6 +92,13 @@ const defaultSunnyEvents = [
   { id: 4, label: "Arcane Catalyst",      done: false },
 ];
 
+const navLinks = [
+  { label: "Dashboard", href: "/" },
+  { label: "Characters", href: "/characters" },
+  { label: "Tools", href: "#" },
+  { label: "Community", href: "#" },
+];
+
 // ── Time helpers ──────────────────────────────────────────────────────────────
 function getNextReset(hour: number, dayOfWeek?: number) {
   const now = new Date();
@@ -122,8 +130,11 @@ function pct(elapsed: number, total: number) {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 export default function MapleDoro() {
+  const currentPath = "/";
+  const topNavOffset = "calc(56px + env(safe-area-inset-top))";
   const [themeKey, setThemeKey] = useState("default");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [now, setNow] = useState(new Date());
   const [sunnyEvents, setSunnyEvents] = useState(defaultSunnyEvents);
   const [mounted, setMounted] = useState(false);
@@ -136,6 +147,12 @@ export default function MapleDoro() {
     const id = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(id);
   }, []);
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    const close = () => setMobileMenuOpen(false);
+    window.addEventListener("resize", close);
+    return () => window.removeEventListener("resize", close);
+  }, [mobileMenuOpen]);
 
   if (!mounted) return null;
 
@@ -167,10 +184,11 @@ export default function MapleDoro() {
   const sunnyDone = sunnyEvents.filter(e => e.done).length;
 
   return (
-    <div style={{ minHeight: "100vh", background: t.bg, color: t.text, fontFamily: "'Nunito', sans-serif", transition: "all 0.35s ease" }}>
+    <div style={{ minHeight: "100dvh", background: t.bg, color: t.text, fontFamily: "'Nunito', sans-serif", transition: "all 0.35s ease", overflowX: "hidden" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&family=Fredoka+One&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body { max-width: 100%; overflow-x: hidden; }
 
         .fade-in { animation: fadeUp 0.5s ease forwards; opacity: 0; }
         @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -188,18 +206,60 @@ export default function MapleDoro() {
         @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
 
         .countdown { font-family: 'Fredoka One', cursive; font-size: 2rem; line-height: 1; letter-spacing: 0.03em; }
+
+        .mobile-menu-btn { display: none; }
+        .mobile-menu-panel { display: none; }
+        .mobile-utc { display: none; }
+        .page-shell {
+          display: flex;
+          min-height: calc(100dvh - (56px + env(safe-area-inset-top)));
+          padding-top: calc(56px + env(safe-area-inset-top));
+          width: 100%;
+          overflow-x: clip;
+        }
+
+        @media (max-width: 860px) {
+          .desktop-nav-links { display: none !important; }
+          .desktop-utc { display: none !important; }
+          .mobile-utc {
+            display: inline-block;
+            font-size: 0.72rem;
+            font-weight: 800;
+            color: ${t.muted};
+            font-family: 'Fredoka One', cursive;
+            letter-spacing: 0.04em;
+            margin-left: auto;
+            margin-right: 0.45rem;
+            white-space: nowrap;
+          }
+          .mobile-menu-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+          }
+          .mobile-menu-panel {
+            display: block;
+            position: fixed !important;
+            top: calc(56px + env(safe-area-inset-top)) !important;
+            left: 0;
+            right: 0;
+          }
+          .theme-sidebar { display: none !important; }
+          .dashboard-main { padding: 1rem !important; }
+          .dashboard-grid { grid-template-columns: 1fr !important; }
+        }
       `}</style>
 
       {/* ── NAV ── */}
-      <nav style={{
-        height: "56px", background: t.panel, borderBottom: `1px solid ${t.border}`,
-        display: "flex", alignItems: "center", padding: "0 1.5rem", gap: "1.5rem",
-        position: "sticky", top: 0, zIndex: 50,
+      <nav className="top-nav" style={{
+        height: topNavOffset, background: t.panel, borderBottom: `1px solid ${t.border}`,
+        display: "flex", alignItems: "center", padding: "env(safe-area-inset-top) 1.5rem 0 1.5rem", gap: "1.5rem",
+        position: "fixed", left: 0, right: 0, top: 0, zIndex: 50,
         transition: "background 0.35s, border-color 0.35s",
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <div style={{ width: "30px", height: "30px", borderRadius: "8px", background: t.accent, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.9rem" }}>
-            <img
+            <Image
               src="/icons/doro.png"
               alt="MapleDoro logo"
               width={18}
@@ -210,24 +270,123 @@ export default function MapleDoro() {
           <span style={{ fontFamily: "'Fredoka One', cursive", fontSize: "1.2rem", color: t.accent }}>MapleDoro</span>
         </div>
         <div style={{ flex: 1, display: "flex", gap: "1.25rem" }}>
-          {["Dashboard", "Characters", "Tools", "Community"].map(l => <a key={l} href="#" className="nav-link">{l}</a>)}
+          <div className="desktop-nav-links" style={{ flex: 1, display: "flex", gap: "1.25rem" }}>
+            {navLinks.map((link) => (
+              <a
+                key={link.label}
+                href={link.href}
+                className="nav-link"
+                aria-current={link.href === currentPath ? "page" : undefined}
+                style={
+                  link.href === currentPath
+                    ? {
+                        color: t.accentText,
+                        borderBottom: `2px solid ${t.accent}`,
+                        paddingBottom: "2px",
+                      }
+                    : undefined
+                }
+              >
+                {link.label}
+              </a>
+            ))}
+          </div>
         </div>
-        <span style={{ fontSize: "0.78rem", fontWeight: 800, color: t.muted, fontFamily: "'Fredoka One', cursive", letterSpacing: "0.05em" }}>
+        <span className="mobile-utc">{now.toUTCString().slice(17, 25)} UTC</span>
+        <span className="desktop-utc" style={{ fontSize: "0.78rem", fontWeight: 800, color: t.muted, fontFamily: "'Fredoka One', cursive", letterSpacing: "0.05em" }}>
           {now.toUTCString().slice(17, 25)} UTC
         </span>
-        <button style={{ background: t.accent, color: "#fff", border: "none", borderRadius: "9px", padding: "7px 16px", fontSize: "0.82rem", fontWeight: 800, cursor: "pointer", fontFamily: "inherit" }}>
-          Sign In
+        <button
+          type="button"
+          className="mobile-menu-btn"
+          aria-label="Open menu"
+          onClick={() => setMobileMenuOpen((prev) => !prev)}
+          style={{
+            width: "34px",
+            height: "34px",
+            border: `1px solid ${t.border}`,
+            borderRadius: "10px",
+            background: t.panel,
+            color: t.text,
+            cursor: "pointer",
+            fontSize: "1rem",
+            fontWeight: 800,
+          }}
+        >
+          ☰
         </button>
       </nav>
+      {mobileMenuOpen && (
+        <div
+          className="mobile-menu-panel"
+          style={{
+            position: "sticky",
+            top: topNavOffset,
+            zIndex: 45,
+            background: t.panel,
+            borderBottom: `1px solid ${t.border}`,
+            padding: "0.75rem 1rem",
+          }}
+        >
+          <div style={{ display: "grid", gap: "0.45rem", marginBottom: "0.75rem" }}>
+            {navLinks.map((link) => (
+              <a
+                key={`m-${link.label}`}
+                href={link.href}
+                className="nav-link"
+                onClick={() => setMobileMenuOpen(false)}
+                style={{
+                  padding: "0.55rem 0.65rem",
+                  borderRadius: "8px",
+                  border: `1px solid ${link.href === currentPath ? t.accent : t.border}`,
+                  background: link.href === currentPath ? t.accentSoft : t.bg,
+                  color: link.href === currentPath ? t.accentText : t.muted,
+                }}
+                aria-current={link.href === currentPath ? "page" : undefined}
+              >
+                {link.label}
+              </a>
+            ))}
+          </div>
+          <div style={{ fontSize: "0.72rem", color: t.muted, fontWeight: 800, marginBottom: "0.45rem" }}>
+            Theme
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "0.45rem" }}>
+            {Object.entries(themes).map(([key, th]) => (
+              <button
+                key={`mobile-theme-${key}`}
+                type="button"
+                onClick={() => {
+                  setThemeKey(key);
+                  setMobileMenuOpen(false);
+                }}
+                style={{
+                  border: `1px solid ${themeKey === key ? t.accent : t.border}`,
+                  borderRadius: "999px",
+                  background: themeKey === key ? t.accentSoft : t.bg,
+                  color: themeKey === key ? t.accentText : t.text,
+                  cursor: "pointer",
+                  fontSize: "0.75rem",
+                  fontWeight: 700,
+                  padding: "0.3rem 0.55rem",
+                }}
+              >
+                {th.emoji} {th.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ── LAYOUT ── */}
-      <div style={{ display: "flex", minHeight: "calc(100vh - 56px)" }}>
+      <div className="page-shell">
 
         {/* ── SIDEBAR (hover) ── */}
         <div
+          className="theme-sidebar"
           onMouseEnter={() => { if (leaveTimer.current) clearTimeout(leaveTimer.current); setSidebarOpen(true); }}
           onMouseLeave={() => { leaveTimer.current = setTimeout(() => setSidebarOpen(false), 250); }}
-          style={{ position: "fixed", left: 0, top: "56px", bottom: 0, zIndex: 40, display: "flex" }}
+          style={{ position: "fixed", left: 0, top: topNavOffset, bottom: 0, zIndex: 40, display: "flex" }}
         >
           {/* Vertical tab */}
           <div style={{
@@ -278,8 +437,8 @@ export default function MapleDoro() {
         </div>
 
         {/* ── MAIN ── */}
-        <div style={{ flex: 1, padding: "1.5rem 1.5rem 2rem 2.75rem" }}>
-          <div style={{ maxWidth: "1100px", margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 330px", gap: "1.25rem", alignItems: "start" }}>
+        <div className="dashboard-main" style={{ flex: 1, width: "100%", padding: "1.5rem 1.5rem 2rem 2.75rem" }}>
+          <div className="dashboard-grid" style={{ maxWidth: "1100px", margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 330px", gap: "1.25rem", alignItems: "start" }}>
 
             {/* ── TIMERS ── */}
             <div className="fade-in panel" style={{
