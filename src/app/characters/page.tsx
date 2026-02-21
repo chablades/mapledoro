@@ -305,6 +305,9 @@ export default function CharacterSearchPage() {
           font-size: 0.85rem;
           font-weight: 700;
           transition: color 0.2s;
+          display: inline-flex;
+          align-items: center;
+          min-height: 24px;
         }
         .nav-link:hover { color: ${t.text}; }
         .theme-btn:hover { background: ${t.accentSoft} !important; }
@@ -569,8 +572,7 @@ export default function CharacterSearchPage() {
                   link.href === currentPath
                     ? {
                         color: t.accentText,
-                        borderBottom: `2px solid ${t.accent}`,
-                        paddingBottom: "2px",
+                        boxShadow: `inset 0 -2px 0 ${t.accent}`,
                       }
                     : undefined
                 }
