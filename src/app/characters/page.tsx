@@ -601,8 +601,8 @@ export default function CharacterSearchPage() {
           aria-label="Open menu"
           onClick={() => setMobileMenuOpen((prev) => !prev)}
           style={{
-            width: "42px",
-            height: "34px",
+            width: "86px",
+            height: "40px",
             border: `1px solid ${t.border}`,
             borderRadius: "10px",
             background: t.panel,
