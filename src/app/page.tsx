@@ -52,6 +52,22 @@ const themes: Record<string, Theme> = {
     sidebar: "#fff8f5", sidebarAccent: "#e05a5a",
     timerBg: "#fff5f2", badge: "#fde8e8", badgeText: "#a03030",
   },
+  yuki: {
+    name: "Yuki", emoji: "🐰",
+    bg: "#faf8f9",
+    panel: "#ffffff",
+    border: "#eedde6",
+    text: "#2a1e24",
+    muted: "#a88898",
+    accent: "#d4607a",
+    accentSoft: "#fceef2",
+    accentText: "#b84060",
+    sidebar: "#fdf5f8",
+    sidebarAccent: "#d4607a",
+    timerBg: "#fdf8fa",
+    badge: "#e8d5e0",
+    badgeText: "#7a4060",
+  },
 };
 
 interface Theme {
@@ -63,9 +79,9 @@ interface Theme {
 
 // ── Data ──────────────────────────────────────────────────────────────────────
 const patchNotes = [
-  { version: "v253", date: "Feb 19", title: "6th Job Skills Rebalance", tags: ["Balance"] },
-  { version: "v252", date: "Feb 5",  title: "Maple World Revamp",       tags: ["Content"] },
-  { version: "v251", date: "Jan 22", title: "Boss Crystal Limit ↑",     tags: ["QoL"] },
+  { version: "v253", date: "Feb 19", title: "6th Job Skills Rebalance", tags: ["Balance"], url: "https://maplestory.nexon.net/news/patch-notes" },
+  { version: "v252", date: "Feb 5",  title: "Maple World Revamp",       tags: ["Content"], url: "https://maplestory.nexon.net/news/patch-notes" },
+  { version: "v251", date: "Jan 22", title: "Boss Crystal Limit ↑",     tags: ["QoL"],     url: "https://maplestory.nexon.net/news/patch-notes" },
 ];
 
 const defaultSunnyEvents = [
@@ -322,20 +338,23 @@ export default function MapleDoro() {
                   <a href="#" style={{ marginLeft: "auto", fontSize: "0.78rem", color: t.accent, textDecoration: "none", fontWeight: 800 }}>All →</a>
                 </div>
                 {patchNotes.map((p, i) => (
-                  <div key={i} className="row-hover" style={{
-                    padding: "0.85rem 1.25rem", cursor: "pointer",
-                    borderBottom: i < patchNotes.length - 1 ? `1px solid ${t.border}` : "none",
-                    transition: "background 0.15s",
-                  }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "5px", marginBottom: "4px" }}>
-                      <span style={{ fontSize: "0.68rem", fontWeight: 800, color: t.accentText, background: t.accentSoft, padding: "2px 7px", borderRadius: "6px" }}>{p.version}</span>
-                      {p.tags.map(tag => (
-                        <span key={tag} style={{ fontSize: "0.65rem", fontWeight: 700, color: t.badgeText, background: t.badge, padding: "2px 7px", borderRadius: "6px" }}>{tag}</span>
-                      ))}
-                      <span style={{ marginLeft: "auto", fontSize: "0.7rem", color: t.muted }}>{p.date}</span>
+                  <a key={i} href={p.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none", display: "block" }}>
+                    <div className="row-hover" style={{
+                      padding: "0.85rem 1.25rem", cursor: "pointer",
+                      borderBottom: i < patchNotes.length - 1 ? `1px solid ${t.border}` : "none",
+                      transition: "background 0.15s",
+                    }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "5px", marginBottom: "4px" }}>
+                        <span style={{ fontSize: "0.68rem", fontWeight: 800, color: t.accentText, background: t.accentSoft, padding: "2px 7px", borderRadius: "6px" }}>{p.version}</span>
+                        {p.tags.map(tag => (
+                          <span key={tag} style={{ fontSize: "0.65rem", fontWeight: 700, color: t.badgeText, background: t.badge, padding: "2px 7px", borderRadius: "6px" }}>{tag}</span>
+                        ))}
+                        <span style={{ marginLeft: "auto", fontSize: "0.7rem", color: t.muted }}>{p.date}</span>
+                        <span style={{ fontSize: "0.75rem", color: t.accent, marginLeft: "4px" }}>↗</span>
+                      </div>
+                      <div style={{ fontSize: "0.875rem", fontWeight: 700, color: t.text }}>{p.title}</div>
                     </div>
-                    <div style={{ fontSize: "0.875rem", fontWeight: 700, color: t.text }}>{p.title}</div>
-                  </div>
+                  </a>
                 ))}
               </div>
 
