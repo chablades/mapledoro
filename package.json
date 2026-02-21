@@ -6,9 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "eslint ."
   },
   "dependencies": {
+    "ioredis": "^5.9.3",
     "next": "^16.1.6",
     "react": "19.0.0",
     "react-dom": "19.0.0"
@@ -17,8 +18,11 @@
     "@types/node": "^22.13.10",
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
-    "eslint": "^9.21.0",
+    "eslint": "^9.39.3",
     "eslint-config-next": "^16.1.6",
     "typescript": "^5.8.2"
+  },
+  "overrides": {
+    "minimatch": "^10.2.2"
   }
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import Image from "next/image";
 
 // ── Themes ───────────────────────────────────────────────────────────────────
 const themes: Record<string, Theme> = {
@@ -131,7 +132,10 @@ export default function MapleDoro() {
 
   const t = themes[themeKey];
 
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setMounted(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(id);
@@ -199,7 +203,7 @@ export default function MapleDoro() {
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <div style={{ width: "30px", height: "30px", borderRadius: "8px", background: t.accent, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.9rem" }}>
-            <img
+            <Image
               src="/icons/doro.png"
               alt="MapleDoro logo"
               width={18}
@@ -210,7 +214,16 @@ export default function MapleDoro() {
           <span style={{ fontFamily: "'Fredoka One', cursive", fontSize: "1.2rem", color: t.accent }}>MapleDoro</span>
         </div>
         <div style={{ flex: 1, display: "flex", gap: "1.25rem" }}>
-          {["Dashboard", "Characters", "Tools", "Community"].map(l => <a key={l} href="#" className="nav-link">{l}</a>)}
+          {[
+            { label: "Dashboard", href: "/" },
+            { label: "Characters", href: "/characters" },
+            { label: "Tools", href: "#" },
+            { label: "Community", href: "#" },
+          ].map((link) => (
+            <a key={link.label} href={link.href} className="nav-link">
+              {link.label}
+            </a>
+          ))}
         </div>
         <span style={{ fontSize: "0.78rem", fontWeight: 800, color: t.muted, fontFamily: "'Fredoka One', cursive", letterSpacing: "0.05em" }}>
           {now.toUTCString().slice(17, 25)} UTC

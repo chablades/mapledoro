@@ -15,6 +15,28 @@ Next.js + TypeScript app for the MapleDoro landing/dashboard site.
    ```
 4. Open `http://localhost:3000`.
 
+## Local Redis cache (character lookup API)
+
+The character lookup route (`/api/characters/lookup`) uses Redis when `REDIS_URL` is set.
+
+1. Start Redis with Docker:
+   ```bash
+   docker run --name mapledoro-redis -p 6379:6379 -d redis:7-alpine
+   ```
+   If the container already exists:
+   ```bash
+   docker start mapledoro-redis
+   ```
+2. Create `.env.local` in the project root:
+   ```env
+   REDIS_URL=redis://127.0.0.1:6379
+   ```
+3. Restart dev server after changing env vars.
+4. Optional: verify cached keys:
+   ```bash
+   docker exec -it mapledoro-redis redis-cli keys "mapledoro:characters:lookup:v1:*"
+   ```
+
 ## Build and run
 
 ```bash
