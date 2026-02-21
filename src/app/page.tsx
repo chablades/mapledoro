@@ -184,11 +184,11 @@ export default function MapleDoro() {
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <div style={{ width: "30px", height: "30px", borderRadius: "8px", background: t.accent, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.9rem" }}>
             <img
-              src="/brand/mapledoro-mark.svg"
+              src="/icons/doro.png"
               alt="MapleDoro logo"
               width={18}
               height={18}
-              style={{ display: "block" }}
+              style={{ display: "block", borderRadius: "4px" }}
             />
           </div>
           <span style={{ fontFamily: "'Fredoka One', cursive", fontSize: "1.2rem", color: t.accent }}>MapleDoro</span>
