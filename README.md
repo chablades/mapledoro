@@ -28,4 +28,4 @@ npm run start
 2. Import the repo in Vercel.
 3. Framework preset: `Next.js`.
 4. Build command: `npm run build` (default).
-5. Output directory: `.next` (default).
+5. Output directory: `.next` (default)
