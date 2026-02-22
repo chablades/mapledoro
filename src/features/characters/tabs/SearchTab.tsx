@@ -108,9 +108,9 @@ export default function SearchTab({ theme }: SearchTabProps) {
           display: flex;
           align-items: center;
           justify-content: center;
-          flex: 1;
+          min-height: 0;
           width: 100%;
-          padding: 2rem 1.5rem;
+          padding: 1rem 1.5rem 2rem 2.75rem;
         }
 
         .characters-search-row {
@@ -123,9 +123,8 @@ export default function SearchTab({ theme }: SearchTabProps) {
           width: 100%;
           max-width: 1100px;
           display: flex;
-          gap: 1.5rem;
-          align-items: center;
-          justify-content: center;
+          gap: 1rem;
+          align-items: start;
         }
 
         .search-pane {
