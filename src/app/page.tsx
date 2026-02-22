@@ -237,11 +237,15 @@ export default function MapleDoro() {
             margin-left: auto;
             margin-right: 0.45rem;
             white-space: nowrap;
+            min-width: 92px;
+            text-align: right;
+            font-variant-numeric: tabular-nums;
           }
           .mobile-menu-btn {
             display: inline-flex;
             align-items: center;
             justify-content: center;
+            margin-right: 0.35rem;
           }
           .mobile-menu-panel {
             display: block;
@@ -259,7 +263,9 @@ export default function MapleDoro() {
       {/* ── NAV ── */}
       <nav className="top-nav" style={{
         height: topNavOffset, background: t.panel, borderBottom: `1px solid ${t.border}`,
-        display: "flex", alignItems: "center", padding: "env(safe-area-inset-top) 1.5rem 0 1.5rem", gap: "1.5rem",
+        display: "flex", alignItems: "center",
+        padding: "env(safe-area-inset-top) calc(1rem + env(safe-area-inset-right)) 0 calc(1rem + env(safe-area-inset-left))",
+        gap: "1.5rem",
         position: "fixed", left: 0, right: 0, top: 0, zIndex: 50,
         transition: "background 0.35s, border-color 0.35s",
       }}>
@@ -310,8 +316,10 @@ export default function MapleDoro() {
           aria-label="Open menu"
           onClick={() => setMobileMenuOpen((prev) => !prev)}
           style={{
-            width: "86px",
+            width: "64px",
+            minWidth: "64px",
             height: "40px",
+            flexShrink: 0,
             border: `1px solid ${t.border}`,
             borderRadius: "10px",
             background: t.panel,
