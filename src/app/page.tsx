@@ -319,8 +319,8 @@ export default function MapleDoro() {
           aria-label="Open menu"
           onClick={() => setMobileMenuOpen((prev) => !prev)}
           style={{
-            width: "54px",
-            minWidth: "54px",
+            width: "45px",
+            minWidth: "45px",
             height: "40px",
             flexShrink: 0,
             border: `1px solid ${t.border}`,
@@ -332,7 +332,6 @@ export default function MapleDoro() {
             lineHeight: 1,
             fontWeight: 700,
             padding: 0,
-            display: "inline-flex",
             alignItems: "center",
             justifyContent: "center",
           }}
