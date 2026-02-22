@@ -12,9 +12,17 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-export function ThemeProvider({ children }: { children: ReactNode }) {
+interface ThemeProviderProps {
+  children: ReactNode;
+  initialThemeKey?: string;
+}
+
+export function ThemeProvider({ children, initialThemeKey = "default" }: ThemeProviderProps) {
+  const validInitialThemeKey = Object.prototype.hasOwnProperty.call(THEMES, initialThemeKey)
+    ? initialThemeKey
+    : "default";
   const { themeKey, setThemeKey } = usePersistedThemeKey({
-    defaultKey: "default",
+    initialKey: validInitialThemeKey,
     validKeys: Object.keys(THEMES),
   });
 

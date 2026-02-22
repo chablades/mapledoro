@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import "./globals.css";
 import { ThemeProvider } from "../components/ThemeContext";
+import { THEMES } from "../components/themes";
 
 export const metadata: Metadata = {
   title: "MapleDoro",
@@ -12,15 +14,22 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const cookieStore = await cookies();
+  const cookieThemeKey = cookieStore.get("mapledoro-theme-key")?.value;
+  const initialThemeKey =
+    cookieThemeKey && Object.prototype.hasOwnProperty.call(THEMES, cookieThemeKey)
+      ? cookieThemeKey
+      : "default";
+
   return (
     <html lang="en">
       <body>
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider initialThemeKey={initialThemeKey}>{children}</ThemeProvider>
       </body>
     </html>
   );
