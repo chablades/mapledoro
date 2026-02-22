@@ -12,6 +12,20 @@ const MAX_ESTIMATED_QUEUE_WAIT_MS = 25000;
 const UPSTREAM_FETCH_TIMEOUT_MS = 8000;
 const LOOKUP_TOTAL_TIMEOUT_MS = 25000;
 const CACHE_KEY_PREFIX = "mapledoro:characters:lookup:v1:";
+const RATE_LIMIT_KEY_PREFIX = "mapledoro:rate:lookup:v1:";
+const CHARACTER_NAME_REGEX = /^[a-zA-ZÀ-ÖØ-öø-ÿ0-9]{4,12}$/;
+
+function parsePositiveIntEnv(name: string, fallback: number) {
+  const raw = process.env[name];
+  if (!raw) return fallback;
+  const parsed = Number.parseInt(raw, 10);
+  if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
+  return parsed;
+}
+
+const IP_REQUESTS_PER_DAY_LIMIT = parsePositiveIntEnv("LOOKUP_IP_DAILY_LIMIT", 59);
+const IP_REQUESTS_PER_MINUTE_LIMIT = parsePositiveIntEnv("LOOKUP_IP_MINUTE_LIMIT", 5);
+const IP_ACTIVE_QUEUE_LIMIT = parsePositiveIntEnv("LOOKUP_IP_ACTIVE_QUEUE_LIMIT", 5);
 const STALE_WHILE_REVALIDATE_SECONDS = Number.parseInt(
   process.env.LOOKUP_CDN_STALE_SECONDS ?? "60",
   10,
@@ -88,11 +102,27 @@ let pendingUpstreamRequests = 0;
 
 const fallbackInMemoryCache = new Map<string, CacheEntry>();
 const inFlightLookup = new Map<string, Promise<LookupResult>>();
+const fallbackMinuteRate = new Map<string, { count: number; expiresAt: number }>();
+const fallbackDailyRate = new Map<string, { count: number; expiresAt: number }>();
+const fallbackActiveQueueByIp = new Map<string, number>();
 const redisUrl = process.env.REDIS_URL?.trim() ?? "";
 const redis = redisUrl ? new Redis(redisUrl, { lazyConnect: true }) : null;
 
+function logRedisError(operation: string, error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+  console.error(`[lookup][redis] ${operation} failed: ${message}`);
+}
+
 function cacheKey(nameKey: string) {
   return `${CACHE_KEY_PREFIX}${nameKey}`;
+}
+
+function rateMinuteKey(ipKey: string) {
+  return `${RATE_LIMIT_KEY_PREFIX}minute:${ipKey}`;
+}
+
+function rateDayKey(ipKey: string) {
+  return `${RATE_LIMIT_KEY_PREFIX}day:${ipKey}`;
 }
 
 function sleep(ms: number) {
@@ -123,6 +153,105 @@ function getNextUtcMidnightMs(fromMs: number) {
   const next = new Date(fromMs);
   next.setUTCHours(24, 0, 0, 0);
   return next.getTime();
+}
+
+function formatUtcResetLabel(fromMs: number) {
+  const nextReset = new Date(getNextUtcMidnightMs(fromMs));
+  return nextReset.toISOString().replace(".000Z", " UTC");
+}
+
+function getClientIp(request: NextRequest) {
+  const xff = request.headers.get("x-forwarded-for");
+  if (xff) {
+    const first = xff.split(",")[0]?.trim();
+    if (first) return first;
+  }
+  const realIp = request.headers.get("x-real-ip")?.trim();
+  if (realIp) return realIp;
+  return "unknown";
+}
+
+function getFallbackRateCount(
+  store: Map<string, { count: number; expiresAt: number }>,
+  key: string,
+  ttlMs: number,
+) {
+  const now = Date.now();
+  const existing = store.get(key);
+  if (!existing || now >= existing.expiresAt) {
+    const fresh = { count: 1, expiresAt: now + ttlMs };
+    store.set(key, fresh);
+    return fresh.count;
+  }
+  existing.count += 1;
+  store.set(key, existing);
+  return existing.count;
+}
+
+async function checkAndTrackIpRate(ipKey: string): Promise<{
+  minuteCount: number;
+  dayCount: number;
+}> {
+  const nowMs = Date.now();
+  const minuteTtlSeconds = 60;
+  const dayTtlSeconds = Math.max(1, Math.floor((getNextUtcMidnightMs(nowMs) - nowMs) / 1000));
+
+  if (redis) {
+    try {
+      if (redis.status === "wait") {
+        await redis.connect();
+      }
+      const [minuteCountRaw, dayCountRaw] = await redis
+        .multi()
+        .incr(rateMinuteKey(ipKey))
+        .expire(rateMinuteKey(ipKey), minuteTtlSeconds)
+        .incr(rateDayKey(ipKey))
+        .expire(rateDayKey(ipKey), dayTtlSeconds)
+        .exec()
+        .then((rows) => {
+          if (!rows) return [1, 1] as const;
+          const minuteRow = rows[0];
+          const dayRow = rows[2];
+          const minuteVal = Number(minuteRow?.[1] ?? 1);
+          const dayVal = Number(dayRow?.[1] ?? 1);
+          return [minuteVal, dayVal] as const;
+        });
+      return { minuteCount: minuteCountRaw, dayCount: dayCountRaw };
+    } catch (error) {
+      logRedisError("checkAndTrackIpRate", error);
+      // Fall through to memory fallback.
+    }
+  }
+
+  const minuteCount = getFallbackRateCount(
+    fallbackMinuteRate,
+    ipKey,
+    minuteTtlSeconds * 1000,
+  );
+  const dayCount = getFallbackRateCount(
+    fallbackDailyRate,
+    ipKey,
+    dayTtlSeconds * 1000,
+  );
+  return { minuteCount, dayCount };
+}
+
+function getActiveQueueCountForIp(ipKey: string) {
+  return fallbackActiveQueueByIp.get(ipKey) ?? 0;
+}
+
+function incrementActiveQueueForIp(ipKey: string) {
+  const next = getActiveQueueCountForIp(ipKey) + 1;
+  fallbackActiveQueueByIp.set(ipKey, next);
+}
+
+function decrementActiveQueueForIp(ipKey: string) {
+  const next = Math.max(0, getActiveQueueCountForIp(ipKey) - 1);
+  if (next === 0) {
+    fallbackActiveQueueByIp.delete(ipKey);
+    return;
+  }
+  fallbackActiveQueueByIp.set(ipKey, next);
 }
 
 function buildLookupCacheHeaders(expiresAt: number) {
@@ -200,7 +329,8 @@ async function getCacheHit(nameKey: string): Promise<{
         return { entry: null, source: null };
       }
       return { entry: parsed, source: "redis_cache" };
-    } catch {
+    } catch (error) {
+      logRedisError("getCacheHit", error);
       const fallback = getFallbackCacheHit(nameKey);
       return { entry: fallback, source: fallback ? "memory_cache" : null };
     }
@@ -218,7 +348,8 @@ async function setCacheHit(nameKey: string, entry: CacheEntry): Promise<void> {
       }
       await redis.set(cacheKey(nameKey), JSON.stringify(entry), "EX", ttlSeconds);
       return;
-    } catch {
+    } catch (error) {
+      logRedisError("setCacheHit", error);
       fallbackInMemoryCache.set(nameKey, entry);
       return;
     }
@@ -396,10 +527,33 @@ export async function GET(request: NextRequest) {
       { status: 400, headers: { "Cache-Control": "no-store" } },
     );
   }
-  if (characterName.length < 4) {
+  if (!CHARACTER_NAME_REGEX.test(characterName)) {
     return NextResponse.json(
-      { error: "character_name must be at least 4 characters" },
+      {
+        error:
+          "Invalid character_name. Use 4-12 characters: letters (A-Z, accented) and numbers only.",
+      },
       { status: 400, headers: { "Cache-Control": "no-store" } },
+    );
+  }
+
+  const ipKey = getClientIp(request);
+  const nowMs = Date.now();
+  const { minuteCount, dayCount } = await checkAndTrackIpRate(ipKey);
+  if (dayCount > IP_REQUESTS_PER_DAY_LIMIT) {
+    return NextResponse.json(
+      {
+        error: `Daily request limit reached for this IP. Try again after UTC reset (${formatUtcResetLabel(nowMs)}).`,
+      },
+      { status: 429, headers: { "Cache-Control": "no-store" } },
+    );
+  }
+  if (minuteCount > IP_REQUESTS_PER_MINUTE_LIMIT) {
+    return NextResponse.json(
+      {
+        error: `Rate limit reached: max ${IP_REQUESTS_PER_MINUTE_LIMIT} requests per minute per IP.`,
+      },
+      { status: 429, headers: { "Cache-Control": "no-store" } },
     );
   }
 
@@ -433,11 +587,19 @@ export async function GET(request: NextRequest) {
     return jsonLookup(shared);
   }
 
+  if (getActiveQueueCountForIp(ipKey) >= IP_ACTIVE_QUEUE_LIMIT) {
+    return NextResponse.json(
+      { error: "Too many concurrent lookups from this IP. Please wait and retry." },
+      { status: 429, headers: { "Cache-Control": "no-store" } },
+    );
+  }
+
   const lookupPromise = withTimeout(
     buildLookup(characterName, key),
     LOOKUP_TOTAL_TIMEOUT_MS,
     "LOOKUP_TIMEOUT",
   );
+  incrementActiveQueueForIp(ipKey);
   inFlightLookup.set(key, lookupPromise);
 
   try {
@@ -474,5 +636,6 @@ export async function GET(request: NextRequest) {
     );
   } finally {
     inFlightLookup.delete(key);
+    decrementActiveQueueForIp(ipKey);
   }
 }
