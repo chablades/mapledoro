@@ -1,5 +1,5 @@
 import type { AppTheme } from "../../../../../../components/themes";
-import type { EquipmentStepDraft } from "../../../../schemas/equipment";
+import type { EquipmentStepDraft } from "../../../schemas/equipment";
 
 export interface EquipmentSubstepProps {
   theme: AppTheme;
