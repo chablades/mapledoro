@@ -192,6 +192,7 @@ export default function SearchTab({ theme }: SearchTabProps) {
             padding: 1rem;
             align-items: center;
             justify-content: center;
+            min-height: 100vh;
           }
 
           .characters-search-row {
