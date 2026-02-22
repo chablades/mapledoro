@@ -1,9 +1,38 @@
+/* Global shared styles/utilities used across all pages. */
+@import url("https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&family=Fredoka+One&display=swap");
+
 html,
 body {
   margin: 0;
   padding: 0;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 * {
   box-sizing: border-box;
 }
+
+.fade-in {
+  animation: fadeUp 0.5s ease forwards;
+  opacity: 0;
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page-shell {
+  display: flex;
+  min-height: calc(100dvh - 56px);
+  padding-top: 56px;
+  width: 100%;
+}
+

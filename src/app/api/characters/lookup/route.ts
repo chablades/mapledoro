@@ -1,9 +1,21 @@
+/*
+  Server lookup API for Maple characters.
+  Purpose: shield Nexon API usage with queueing, timeout guards, and cache layers.
+  Edit this file for lookup logic, cache TTL behavior, and upstream safety limits.
+*/
 import { NextRequest, NextResponse } from "next/server";
 import Redis from "ioredis";
 
 const OVERALL_UPSTREAM_DELAY_MS = 5000;
 const MAX_PENDING_UPSTREAM_REQUESTS = 100;
+const MAX_ESTIMATED_QUEUE_WAIT_MS = 25000;
+const UPSTREAM_FETCH_TIMEOUT_MS = 8000;
+const LOOKUP_TOTAL_TIMEOUT_MS = 25000;
 const CACHE_KEY_PREFIX = "mapledoro:characters:lookup:v1:";
+const STALE_WHILE_REVALIDATE_SECONDS = Number.parseInt(
+  process.env.LOOKUP_CDN_STALE_SECONDS ?? "60",
+  10,
+);
 
 interface MapleRankRow {
   characterID: number;
@@ -87,6 +99,22 @@ function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number, errorCode: string): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(errorCode)), timeoutMs);
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (error) => {
+        clearTimeout(timer);
+        reject(error);
+      },
+    );
+  });
+}
+
 function normalizeName(input: string) {
   return input.trim().toLowerCase();
 }
@@ -97,19 +125,51 @@ function getNextUtcMidnightMs(fromMs: number) {
   return next.getTime();
 }
 
-function getFirstRankRow(payload: unknown): MapleRankRow | null {
+function buildLookupCacheHeaders(expiresAt: number) {
+  const sMaxAge = Math.max(1, Math.floor((expiresAt - Date.now()) / 1000));
+  const swr = Number.isFinite(STALE_WHILE_REVALIDATE_SECONDS)
+    ? Math.max(0, STALE_WHILE_REVALIDATE_SECONDS)
+    : 60;
+  const cacheControlValue = `public, s-maxage=${sMaxAge}, stale-while-revalidate=${swr}`;
+  return {
+    "Cache-Control": cacheControlValue,
+    "CDN-Cache-Control": cacheControlValue,
+    "Vercel-CDN-Cache-Control": cacheControlValue,
+  };
+}
+
+function jsonLookup(result: LookupResult) {
+  return NextResponse.json(result, {
+    headers: buildLookupCacheHeaders(result.expiresAt),
+  });
+}
+
+function getExactRankRow(payload: unknown, expectedName: string): MapleRankRow | null {
   if (!payload || typeof payload !== "object") return null;
   const ranks = (payload as { ranks?: unknown }).ranks;
   if (!Array.isArray(ranks) || ranks.length === 0) return null;
-  const first = ranks[0];
-  if (!first || typeof first !== "object") return null;
-  return first as MapleRankRow;
+  const normalizedExpected = normalizeName(expectedName);
+  for (const rank of ranks) {
+    if (!rank || typeof rank !== "object") continue;
+    const row = rank as MapleRankRow;
+    if (normalizeName(String(row.characterName ?? "")) === normalizedExpected) {
+      return row;
+    }
+  }
+  return null;
 }
 
 function getFallbackCacheHit(nameKey: string): CacheEntry | null {
   const entry = fallbackInMemoryCache.get(nameKey);
   if (!entry) return null;
   if (Date.now() >= entry.expiresAt) {
+    fallbackInMemoryCache.delete(nameKey);
+    return null;
+  }
+  if (
+    entry.kind === "found" &&
+    normalizeName(entry.data.characterName) !== normalizeName(nameKey)
+  ) {
     fallbackInMemoryCache.delete(nameKey);
     return null;
   }
@@ -129,6 +189,13 @@ async function getCacheHit(nameKey: string): Promise<{
       if (!raw) return { entry: null, source: null };
       const parsed = JSON.parse(raw) as CacheEntry;
       if (Date.now() >= parsed.expiresAt) {
+        await redis.del(cacheKey(nameKey));
+        return { entry: null, source: null };
+      }
+      if (
+        parsed.kind === "found" &&
+        normalizeName(parsed.data.characterName) !== normalizeName(nameKey)
+      ) {
         await redis.del(cacheKey(nameKey));
         return { entry: null, source: null };
       }
@@ -163,6 +230,11 @@ async function runQueuedUpstream<T>(fn: () => Promise<T>): Promise<{ value: T; q
   if (pendingUpstreamRequests >= MAX_PENDING_UPSTREAM_REQUESTS) {
     throw new Error("QUEUE_FULL");
   }
+  const queueDelayNow = Math.max(0, nextAllowedAt - Date.now());
+  const estimatedWaitMs = queueDelayNow + pendingUpstreamRequests * OVERALL_UPSTREAM_DELAY_MS;
+  if (estimatedWaitMs > MAX_ESTIMATED_QUEUE_WAIT_MS) {
+    throw new Error("QUEUE_BACKPRESSURE");
+  }
 
   pendingUpstreamRequests += 1;
   const enqueuedAt = Date.now();
@@ -194,14 +266,27 @@ async function runQueuedUpstream<T>(fn: () => Promise<T>): Promise<{ value: T; q
 }
 
 async function fetchJson(url: string) {
-  const response = await fetch(url, {
-    method: "GET",
-    headers: {
-      Accept: "application/json",
-      "User-Agent": "MapleDoro/1.0 (+https://mapledoro.local)",
-    },
-    cache: "no-store",
-  });
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), UPSTREAM_FETCH_TIMEOUT_MS);
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+        "User-Agent": "MapleDoro/1.0 (+https://mapledoro.local)",
+      },
+      cache: "no-store",
+      signal: controller.signal,
+    }).catch((error: unknown) => {
+      if (error instanceof Error && error.name === "AbortError") {
+        throw new Error("UPSTREAM_TIMEOUT");
+      }
+      throw error;
+    });
+  } finally {
+    clearTimeout(timer);
+  }
 
   if (!response.ok) {
     throw new Error(`UPSTREAM_${response.status}`);
@@ -226,7 +311,7 @@ async function fetchLegion(characterName: string, worldID: number, rebootIndex: 
 
 async function buildLookup(characterName: string, key: string): Promise<LookupResult> {
   const firstQueued = await runQueuedUpstream(() => fetchOverall(characterName));
-  const overallRow = getFirstRankRow(firstQueued.value);
+  const overallRow = getExactRankRow(firstQueued.value, characterName);
 
   if (!overallRow) {
     const expiresAt = getNextUtcMidnightMs(Date.now());
@@ -251,7 +336,7 @@ async function buildLookup(characterName: string, key: string): Promise<LookupRe
     fetchLegion(characterName, overallRow.worldID, 1),
   );
   let legionRaw = secondQueued.value;
-  let legionRow = getFirstRankRow(legionRaw);
+  let legionRow = getExactRankRow(legionRaw, characterName);
   let fallbackLegionQueuedMs = 0;
 
   if (!legionRow) {
@@ -259,7 +344,7 @@ async function buildLookup(characterName: string, key: string): Promise<LookupRe
       fetchLegion(characterName, overallRow.worldID, 0),
     );
     legionRaw = fallbackQueued.value;
-    legionRow = getFirstRankRow(legionRaw);
+    legionRow = getExactRankRow(legionRaw, characterName);
     fallbackLegionQueuedMs = fallbackQueued.queuedMs;
   }
 
@@ -306,17 +391,23 @@ async function buildLookup(characterName: string, key: string): Promise<LookupRe
 export async function GET(request: NextRequest) {
   const characterName = request.nextUrl.searchParams.get("character_name")?.trim() ?? "";
   if (!characterName) {
-    return NextResponse.json({ error: "character_name is required" }, { status: 400 });
+    return NextResponse.json(
+      { error: "character_name is required" },
+      { status: 400, headers: { "Cache-Control": "no-store" } },
+    );
   }
   if (characterName.length < 4) {
-    return NextResponse.json({ error: "character_name must be at least 4 characters" }, { status: 400 });
+    return NextResponse.json(
+      { error: "character_name must be at least 4 characters" },
+      { status: 400, headers: { "Cache-Control": "no-store" } },
+    );
   }
 
   const key = normalizeName(characterName);
   const cacheHit = await getCacheHit(key);
   if (cacheHit.entry) {
     if (cacheHit.entry.kind === "not_found") {
-      return NextResponse.json<LookupNotFound>({
+      return jsonLookup({
         found: false,
         characterName: cacheHit.entry.characterName,
         data: null,
@@ -326,7 +417,7 @@ export async function GET(request: NextRequest) {
         source: cacheHit.source ?? "memory_cache",
       });
     }
-    return NextResponse.json<LookupFound>({
+    return jsonLookup({
       found: true,
       data: cacheHit.entry.data,
       expiresAt: cacheHit.entry.expiresAt,
@@ -339,23 +430,48 @@ export async function GET(request: NextRequest) {
   const existing = inFlightLookup.get(key);
   if (existing) {
     const shared = await existing;
-    return NextResponse.json(shared);
+    return jsonLookup(shared);
   }
 
-  const lookupPromise = buildLookup(characterName, key);
+  const lookupPromise = withTimeout(
+    buildLookup(characterName, key),
+    LOOKUP_TOTAL_TIMEOUT_MS,
+    "LOOKUP_TIMEOUT",
+  );
   inFlightLookup.set(key, lookupPromise);
 
   try {
     const result = await lookupPromise;
-    return NextResponse.json(result);
+    return jsonLookup(result);
   } catch (error) {
     if (error instanceof Error && error.message === "QUEUE_FULL") {
       return NextResponse.json(
         { error: "Server lookup queue is full. Please retry shortly." },
-        { status: 429 },
+        { status: 429, headers: { "Cache-Control": "no-store" } },
       );
     }
-    return NextResponse.json({ error: "Lookup failed." }, { status: 502 });
+    if (error instanceof Error && error.message === "QUEUE_BACKPRESSURE") {
+      return NextResponse.json(
+        { error: "Lookup queue is busy right now. Please retry in a few seconds." },
+        { status: 503, headers: { "Cache-Control": "no-store" } },
+      );
+    }
+    if (error instanceof Error && error.message === "UPSTREAM_TIMEOUT") {
+      return NextResponse.json(
+        { error: "Nexon lookup timed out. Please retry shortly." },
+        { status: 504, headers: { "Cache-Control": "no-store" } },
+      );
+    }
+    if (error instanceof Error && error.message === "LOOKUP_TIMEOUT") {
+      return NextResponse.json(
+        { error: "Lookup took too long under current traffic. Please retry." },
+        { status: 504, headers: { "Cache-Control": "no-store" } },
+      );
+    }
+    return NextResponse.json(
+      { error: "Lookup failed." },
+      { status: 502, headers: { "Cache-Control": "no-store" } },
+    );
   } finally {
     inFlightLookup.delete(key);
   }
