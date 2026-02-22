@@ -108,7 +108,7 @@ export default function SearchTab({ theme }: SearchTabProps) {
           display: flex;
           align-items: center;
           justify-content: center;
-          min-height: 0;
+          min-height: 100vh;
           width: 100%;
           padding: 1rem 1.5rem 2rem 2.75rem;
         }
@@ -125,12 +125,15 @@ export default function SearchTab({ theme }: SearchTabProps) {
           display: flex;
           gap: 1rem;
           align-items: start;
+          justify-content: center;
+          margin: 0 auto;
         }
 
         .search-pane {
           flex: 1 1 auto;
           min-width: 0;
           transition: flex-basis 0.35s ease;
+          max-width: 500px;
         }
 
         .search-card {
@@ -156,6 +159,7 @@ export default function SearchTab({ theme }: SearchTabProps) {
 
         .characters-content.has-preview .search-pane {
           flex-basis: calc(100% - 360px);
+          max-width: none;
         }
 
         .characters-content.has-preview .preview-pane {
