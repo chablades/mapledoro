@@ -36,14 +36,3 @@ body {
   width: 100%;
 }
 
-.content-wrapper {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-height: calc(100dvh - 56px);
-  width: 100%;
-}
-
-.main-content {
-  flex: 1;
-}

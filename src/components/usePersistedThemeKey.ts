@@ -3,7 +3,7 @@
 /*
   Shared theme state hook with localStorage persistence.
 */
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 interface UsePersistedThemeKeyOptions {
   defaultKey: string;
@@ -15,16 +15,17 @@ export function usePersistedThemeKey({
   validKeys,
 }: UsePersistedThemeKeyOptions) {
   const [validKeySet] = useState(() => new Set(validKeys));
-  const [themeKey, setThemeKeyState] = useState(defaultKey);
-
-  // Load from localStorage on mount
-  useEffect(() => {
-    const saved = localStorage.getItem("mapledoro-theme-key");
-    if (saved && validKeySet.has(saved)) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setThemeKeyState(saved);
+  const [themeKey, setThemeKeyState] = useState(() => {
+    try {
+      const saved = localStorage.getItem("mapledoro-theme-key");
+      if (saved && validKeySet.has(saved)) {
+        return saved;
+      }
+    } catch {
+      // Ignore storage access issues and keep default theme.
     }
-  }, [validKeySet]);
+    return defaultKey;
+  });
 
   const setThemeKey = (nextKey: string) => {
     const key = validKeySet.has(nextKey) ? nextKey : defaultKey;

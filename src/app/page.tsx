@@ -563,6 +563,7 @@ function DashboardContent({ theme, now }: { theme: AppTheme; now: Date }) {
           </div>
         </div>
       </div>
+
     </>
   );
 }
