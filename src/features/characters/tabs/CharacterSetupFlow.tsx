@@ -1,13 +1,16 @@
 "use client";
 
 /*
-  Search tab for character lookup + preview confirmation.
-  Move lookup UX/UI changes here instead of app/characters/page.tsx.
+  Character setup flow (search + confirmation + onboarding steps).
+  Keeps setup progress recoverable across refreshes with a local draft.
 */
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import type { AppTheme } from "../../../components/themes";
 import type { LookupResponse, NormalizedCharacterData } from "../model/types";
+import StepRenderer from "../setup/StepRenderer";
+import { clampSetupStepIndex, getSetupStepByIndex } from "../setup/steps";
+import type { SetupStepInputById } from "../setup/types";
 
 const MIN_QUERY_LENGTH = 4;
 const MAX_QUERY_LENGTH = 12;
@@ -18,6 +21,8 @@ const COOLDOWN_MS = 5000;
 const LOOKUP_REQUEST_TIMEOUT_MS = 25000;
 const LOOKUP_SLOW_NOTICE_MS = 12000;
 const CHARACTER_CACHE_STORAGE_KEY = `mapledoro_character_cache_${LOOKUP_RESPONSE_SCHEMA_VERSION}`;
+const SETUP_DRAFT_STORAGE_PREFIX = `mapledoro_character_setup_draft_${LOOKUP_RESPONSE_SCHEMA_VERSION}:`;
+const SETUP_DRAFT_LAST_KEY = `mapledoro_character_setup_draft_last_${LOOKUP_RESPONSE_SCHEMA_VERSION}`;
 const MAX_BROWSER_CACHE_ENTRIES = 100;
 const WORLD_NAMES: Record<number, string> = {
   1: "Bera",
@@ -37,11 +42,116 @@ interface CacheEntry {
   data: NormalizedCharacterData | null;
 }
 
-interface SearchTabProps {
+interface SetupDraft {
+  version: 1;
+  characterKey: string;
+  query: string;
+  setupMode: SetupMode;
+  setupFlowStarted: boolean;
+  autoResumeOnLoad: boolean;
+  setupStepIndex: number;
+  setupStepDirection: "forward" | "backward";
+  setupStepTestByStep: SetupStepInputById;
+  confirmedCharacter: NormalizedCharacterData | null;
+  savedAt: number;
+}
+
+interface CharacterSetupFlowProps {
   theme: AppTheme;
 }
 
-export default function SearchTab({ theme }: SearchTabProps) {
+function normalizeCharacterName(value: string) {
+  return value.trim().toLowerCase();
+}
+
+function makeDraftCharacterKey(character: NormalizedCharacterData) {
+  return `${character.worldID}:${normalizeCharacterName(character.characterName)}`;
+}
+
+function parseSetupDraft(raw: string): SetupDraft | null {
+  try {
+    const parsed = JSON.parse(raw) as Partial<SetupDraft>;
+    if (parsed.version !== 1) return null;
+    if (!parsed.confirmedCharacter) return null;
+    if (typeof parsed.query !== "string") return null;
+    if (typeof parsed.characterKey !== "string" || !parsed.characterKey.trim()) return null;
+    return {
+      version: 1,
+      characterKey: parsed.characterKey,
+      query: parsed.query,
+      setupMode: parsed.setupMode === "search" || parsed.setupMode === "import" ? parsed.setupMode : "search",
+      setupFlowStarted: Boolean(parsed.setupFlowStarted),
+      autoResumeOnLoad: parsed.autoResumeOnLoad !== false,
+      setupStepIndex: clampSetupStepIndex(Number(parsed.setupStepIndex ?? 0)),
+      setupStepDirection: parsed.setupStepDirection === "backward" ? "backward" : "forward",
+      setupStepTestByStep:
+        parsed.setupStepTestByStep && typeof parsed.setupStepTestByStep === "object"
+          ? (parsed.setupStepTestByStep as SetupStepInputById)
+          : {},
+      confirmedCharacter: parsed.confirmedCharacter,
+      savedAt: Number(parsed.savedAt ?? Date.now()),
+    };
+  } catch {
+    return null;
+  }
+}
+
+function getSetupDraftStorageKey(characterKey: string) {
+  return `${SETUP_DRAFT_STORAGE_PREFIX}${characterKey}`;
+}
+
+function readSetupDraftByCharacter(character: NormalizedCharacterData): SetupDraft | null {
+  if (typeof window === "undefined") return null;
+  const raw = window.localStorage.getItem(getSetupDraftStorageKey(makeDraftCharacterKey(character)));
+  if (!raw) return null;
+  return parseSetupDraft(raw);
+}
+
+function readLastSetupDraft(): SetupDraft | null {
+  if (typeof window === "undefined") return null;
+  const draftKey = window.localStorage.getItem(SETUP_DRAFT_LAST_KEY);
+  if (!draftKey) return null;
+  const raw = window.localStorage.getItem(getSetupDraftStorageKey(draftKey));
+  if (!raw) return null;
+  return parseSetupDraft(raw);
+}
+
+function writeSetupDraft(draft: SetupDraft) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(getSetupDraftStorageKey(draft.characterKey), JSON.stringify(draft));
+    window.localStorage.setItem(SETUP_DRAFT_LAST_KEY, draft.characterKey);
+  } catch {
+    // Ignore localStorage write failures.
+  }
+}
+
+function setLastSetupDraftAutoResume(value: boolean) {
+  const draft = readLastSetupDraft();
+  if (!draft) return;
+  writeSetupDraft({
+    ...draft,
+    setupFlowStarted: value ? draft.setupFlowStarted : false,
+    autoResumeOnLoad: value,
+    savedAt: Date.now(),
+  });
+}
+
+function removeSetupDraftForCharacter(character: NormalizedCharacterData) {
+  if (typeof window === "undefined") return;
+  try {
+    const characterKey = makeDraftCharacterKey(character);
+    window.localStorage.removeItem(getSetupDraftStorageKey(characterKey));
+    const lastKey = window.localStorage.getItem(SETUP_DRAFT_LAST_KEY);
+    if (lastKey === characterKey) {
+      window.localStorage.removeItem(SETUP_DRAFT_LAST_KEY);
+    }
+  } catch {
+    return null;
+  }
+}
+
+export default function CharacterSetupFlow({ theme }: CharacterSetupFlowProps) {
   const [query, setQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [foundCharacter, setFoundCharacter] = useState<NormalizedCharacterData | null>(
@@ -64,10 +174,17 @@ export default function SearchTab({ theme }: SearchTabProps) {
   const [isSearchFadeIn, setIsSearchFadeIn] = useState(false);
   const [setupFlowStarted, setSetupFlowStarted] = useState(false);
   const [setupPanelVisible, setSetupPanelVisible] = useState(false);
+  const [setupStepIndex, setSetupStepIndex] = useState(0);
+  const [setupStepDirection, setSetupStepDirection] = useState<"forward" | "backward">("forward");
+  const [setupStepTestByStep, setSetupStepTestByStep] = useState<SetupStepInputById>({});
+  const [suppressLayoutTransition, setSuppressLayoutTransition] = useState(false);
+  const [canResumeSetup, setCanResumeSetup] = useState(false);
+  const [isDraftHydrated, setIsDraftHydrated] = useState(false);
   const lastRequestAtRef = useRef(0);
   const cacheRef = useRef<Map<string, CacheEntry>>(new Map());
   const [nowMs, setNowMs] = useState(Date.now());
   const transitionTimersRef = useRef<number[]>([]);
+  const hasHydratedSetupDraftRef = useRef(false);
 
   useEffect(() => {
     const id = setInterval(() => setNowMs(Date.now()), 1000);
@@ -114,6 +231,75 @@ export default function SearchTab({ theme }: SearchTabProps) {
     setConfirmedImageLoaded(false);
   }, [confirmedCharacter]);
 
+  useEffect(() => {
+    const draft = readLastSetupDraft();
+    if (draft) {
+      setCanResumeSetup(true);
+      setQuery(draft.query);
+      if (draft.autoResumeOnLoad) {
+        setSetupMode(draft.setupMode);
+        setConfirmedCharacter(draft.confirmedCharacter);
+        setSuppressLayoutTransition(draft.setupFlowStarted);
+        setSetupFlowStarted(draft.setupFlowStarted);
+        setSetupPanelVisible(false);
+        setSetupStepIndex(draft.setupStepIndex);
+        setSetupStepDirection(draft.setupStepDirection);
+        setSetupStepTestByStep(draft.setupStepTestByStep ?? {});
+        if (draft.setupFlowStarted) {
+          const panelTimer = window.setTimeout(() => {
+            setSetupPanelVisible(true);
+          }, 80);
+          const releaseTimer = window.setTimeout(() => {
+            setSuppressLayoutTransition(false);
+          }, 280);
+          transitionTimersRef.current.push(panelTimer, releaseTimer);
+        }
+      }
+    } else {
+      setCanResumeSetup(false);
+    }
+    hasHydratedSetupDraftRef.current = true;
+    setIsDraftHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!hasHydratedSetupDraftRef.current) return;
+    if (typeof window === "undefined") return;
+    if (!confirmedCharacter) return;
+    if (!setupFlowStarted && setupStepIndex === 0) return;
+
+    const characterKey = makeDraftCharacterKey(confirmedCharacter);
+    const draft: SetupDraft = {
+      version: 1,
+      characterKey,
+      query,
+      setupMode,
+      setupFlowStarted,
+      autoResumeOnLoad: setupFlowStarted,
+      setupStepIndex: clampSetupStepIndex(setupStepIndex),
+      setupStepDirection,
+      setupStepTestByStep,
+      confirmedCharacter,
+      savedAt: Date.now(),
+    };
+
+    writeSetupDraft(draft);
+    setCanResumeSetup(true);
+  }, [
+    query,
+    setupMode,
+    setupFlowStarted,
+    setupStepIndex,
+    setupStepDirection,
+    setupStepTestByStep,
+    confirmedCharacter,
+  ]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }, [setupMode, setupFlowStarted, setupStepIndex]);
+
   const cooldownRemainingMs = Math.max(0, COOLDOWN_MS - (nowMs - lastRequestAtRef.current));
   const trimmedQuery = query.trim();
   const queryInvalid = !CHARACTER_NAME_REGEX.test(trimmedQuery);
@@ -138,11 +324,15 @@ export default function SearchTab({ theme }: SearchTabProps) {
 
   const runBackToSearchTransition = () => {
     setIsBackTransitioning(true);
+    setSuppressLayoutTransition(false);
     setSetupPanelVisible(false);
+    setLastSetupDraftAutoResume(false);
     const backTimer = window.setTimeout(() => {
       setSetupFlowStarted(false);
       setFoundCharacter(null);
       setConfirmedCharacter(null);
+      setSetupStepIndex(0);
+      setSetupStepTestByStep({});
       resetSearchStateMessage();
       setIsBackTransitioning(false);
       setIsSearchFadeIn(true);
@@ -156,12 +346,16 @@ export default function SearchTab({ theme }: SearchTabProps) {
 
   const runBackToIntroTransition = () => {
     setIsModeTransitioning(true);
+    setSuppressLayoutTransition(false);
+    setLastSetupDraftAutoResume(false);
     const backTimer = window.setTimeout(() => {
       setSetupMode("intro");
       setFoundCharacter(null);
       setConfirmedCharacter(null);
       setSetupFlowStarted(false);
       setSetupPanelVisible(false);
+      setSetupStepIndex(0);
+      setSetupStepTestByStep({});
       resetSearchStateMessage();
       setIsModeTransitioning(false);
       setIsSearchFadeIn(true);
@@ -175,12 +369,15 @@ export default function SearchTab({ theme }: SearchTabProps) {
 
   const runTransitionToMode = (nextMode: SetupMode) => {
     setIsModeTransitioning(true);
+    setSuppressLayoutTransition(false);
     const modeTimer = window.setTimeout(() => {
       setSetupMode(nextMode);
       setFoundCharacter(null);
       setConfirmedCharacter(null);
       setSetupFlowStarted(false);
       setSetupPanelVisible(false);
+      setSetupStepIndex(0);
+      setSetupStepTestByStep({});
       if (nextMode === "search") {
         resetSearchStateMessage();
       }
@@ -192,6 +389,109 @@ export default function SearchTab({ theme }: SearchTabProps) {
       transitionTimersRef.current.push(fadeInTimer);
     }, 220);
     transitionTimersRef.current.push(modeTimer);
+  };
+
+  const setSetupStepWithDirection = (nextStep: number) => {
+    const boundedStep = clampSetupStepIndex(nextStep);
+    if (boundedStep === setupStepIndex) return;
+    setSetupStepDirection(boundedStep > setupStepIndex ? "forward" : "backward");
+    setSetupStepIndex(boundedStep);
+  };
+
+  const clearTransitionTimers = () => {
+    for (const timer of transitionTimersRef.current) {
+      window.clearTimeout(timer);
+    }
+    transitionTimersRef.current = [];
+  };
+
+  const beginSetupFlowTransition = (args: {
+    character: NormalizedCharacterData;
+    stepIndex: number;
+    stepDirection: "forward" | "backward";
+    stepData: SetupStepInputById;
+    source?: "confirm" | "resume";
+  }) => {
+    clearTransitionTimers();
+    setIsSearchFadeIn(false);
+    setIsModeTransitioning(false);
+    setIsBackTransitioning(false);
+    setSuppressLayoutTransition(true);
+    setSetupPanelVisible(false);
+    setConfirmedCharacter(args.character);
+    setSetupStepDirection(args.stepDirection);
+    setSetupStepIndex(clampSetupStepIndex(args.stepIndex));
+    setSetupStepTestByStep(args.stepData);
+    setIsConfirmFadeOut(true);
+
+    const fadeTimer = window.setTimeout(() => {
+      setFoundCharacter(null);
+      setSetupFlowStarted(true);
+      setIsConfirmFadeOut(false);
+    }, 240);
+
+    const panelTimer = window.setTimeout(() => {
+      setSetupPanelVisible(true);
+    }, 620);
+
+    const releaseTimer = window.setTimeout(() => {
+      setSuppressLayoutTransition(false);
+    }, 820);
+
+    transitionTimersRef.current.push(fadeTimer, panelTimer, releaseTimer);
+  };
+
+  const clearSetupDraft = () => {
+    if (confirmedCharacter) {
+      removeSetupDraftForCharacter(confirmedCharacter);
+    } else if (typeof window !== "undefined") {
+      const lastKey = window.localStorage.getItem(SETUP_DRAFT_LAST_KEY);
+      if (lastKey) {
+        window.localStorage.removeItem(getSetupDraftStorageKey(lastKey));
+      }
+      window.localStorage.removeItem(SETUP_DRAFT_LAST_KEY);
+    }
+    setCanResumeSetup(false);
+    setSetupStepTestByStep({});
+  };
+
+  const resumeSavedSetup = () => {
+    const draft = readLastSetupDraft();
+    if (!draft) {
+      setCanResumeSetup(false);
+      return;
+    }
+    setCanResumeSetup(true);
+    setQuery(draft.query);
+    setSetupMode("search");
+    if (draft.confirmedCharacter) {
+      beginSetupFlowTransition({
+        character: draft.confirmedCharacter,
+        stepIndex: clampSetupStepIndex(draft.setupStepIndex),
+        stepDirection: draft.setupStepDirection,
+        stepData: draft.setupStepTestByStep ?? {},
+        source: "resume",
+      });
+    }
+    writeSetupDraft({
+      ...draft,
+      setupFlowStarted: true,
+      autoResumeOnLoad: true,
+      savedAt: Date.now(),
+    });
+  };
+
+  const activeSetupStep = getSetupStepByIndex(setupStepIndex);
+  const activeSetupStepValue = activeSetupStep
+    ? setupStepTestByStep[activeSetupStep.id] ?? ""
+    : "";
+
+  const updateActiveStepValue = (value: string) => {
+    if (!activeSetupStep) return;
+    setSetupStepTestByStep((prev) => ({
+      ...prev,
+      [activeSetupStep.id]: value,
+    }));
   };
 
   return (
@@ -220,6 +520,11 @@ export default function SearchTab({ theme }: SearchTabProps) {
           display: flex;
           gap: 1rem;
           align-items: start;
+        }
+
+        .characters-content.suppress-layout .search-pane,
+        .characters-content.suppress-layout .preview-pane {
+          transition: none !important;
         }
 
         .search-pane {
@@ -255,6 +560,16 @@ export default function SearchTab({ theme }: SearchTabProps) {
           position: relative;
           overflow: hidden;
           background: ${theme.border};
+        }
+
+        .confirmed-avatar-wrap {
+          overflow: hidden;
+          flex: 0 0 auto;
+        }
+
+        .confirmed-avatar-wrap {
+          overflow: hidden;
+          flex: 0 0 auto;
         }
 
         .image-skeleton-wrap::after {
@@ -356,6 +671,20 @@ export default function SearchTab({ theme }: SearchTabProps) {
           transform: translateY(8px) !important;
         }
 
+        .setup-step-content {
+          animation-duration: 0.24s;
+          animation-timing-function: ease;
+          animation-fill-mode: both;
+        }
+
+        .setup-step-content.step-forward {
+          animation-name: setupStepSlideForward;
+        }
+
+        .setup-step-content.step-backward {
+          animation-name: setupStepSlideBackward;
+        }
+
         @keyframes previewSwap {
           from { opacity: 0; transform: translateY(8px); }
           to { opacity: 1; transform: translateY(0); }
@@ -370,11 +699,21 @@ export default function SearchTab({ theme }: SearchTabProps) {
           to { opacity: 1; transform: translateY(0); }
         }
 
+        @keyframes setupStepSlideForward {
+          from { opacity: 0; transform: translateX(16px); }
+          to { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes setupStepSlideBackward {
+          from { opacity: 0; transform: translateX(-16px); }
+          to { opacity: 1; transform: translateX(0); }
+        }
+
         @media (max-width: 860px) {
           .characters-main {
             padding: 1rem;
-            align-items: center;
-            justify-content: center;
+            align-items: flex-start;
+            justify-content: flex-start;
           }
 
           .characters-search-row {
@@ -387,6 +726,7 @@ export default function SearchTab({ theme }: SearchTabProps) {
             max-width: 640px;
             margin: 0 auto;
             gap: 0.85rem;
+            align-items: center;
           }
 
           .search-pane,
@@ -400,6 +740,67 @@ export default function SearchTab({ theme }: SearchTabProps) {
           .preview-pane > .character-search-panel {
             width: min(100%, 560px);
             margin: 0 auto;
+          }
+
+          .characters-content.setup-active .search-pane,
+          .characters-content.setup-active .preview-pane {
+            flex: 0 0 auto;
+            max-width: 100%;
+            width: 100%;
+          }
+
+          .characters-content.setup-active .preview-pane {
+            order: 2;
+          }
+
+          .characters-content.setup-active .search-pane {
+            order: 1;
+          }
+
+          .characters-content.setup-active .preview-pane > .character-search-panel {
+            width: min(100%, 640px);
+            margin: 0 auto;
+            padding: 1.15rem !important;
+          }
+
+          .characters-content.setup-active .search-card {
+            width: min(100%, 170px);
+            margin: 0 auto;
+            padding: 0.55rem !important;
+          }
+
+          .confirmed-summary-card {
+            min-height: 0 !important;
+            max-width: 152px !important;
+            gap: 0.1rem !important;
+          }
+
+          .confirmed-summary-card .confirmed-avatar-wrap {
+            width: 64px !important;
+            height: 64px !important;
+            border-radius: 8px !important;
+          }
+
+          .confirmed-summary-card .confirmed-avatar-wrap img {
+            width: 100% !important;
+            height: 100% !important;
+            border-radius: 8px !important;
+            object-fit: cover !important;
+          }
+
+          .confirmed-summary-card button {
+            font-size: 0.74rem !important;
+            padding: 0.32rem 0.52rem !important;
+          }
+
+          .confirmed-summary-card p:first-of-type {
+            font-size: 0.9rem !important;
+          }
+
+          .confirmed-summary-card p:nth-of-type(2),
+          .confirmed-summary-card p:nth-of-type(3) {
+            font-size: 0.72rem !important;
+            line-height: 1.2 !important;
           }
 
           .preview-pane,
@@ -424,6 +825,7 @@ export default function SearchTab({ theme }: SearchTabProps) {
         <div
           className={[
             "characters-content",
+            suppressLayoutTransition ? "suppress-layout" : "",
             foundCharacter && !setupFlowStarted ? "has-preview" : "",
             setupFlowStarted ? "setup-active" : "",
           ]
@@ -432,13 +834,23 @@ export default function SearchTab({ theme }: SearchTabProps) {
         >
           <div className="search-pane">
             <section
-              className={`character-search-panel search-card ${isConfirmFadeOut || isModeTransitioning ? "confirm-fade" : ""} ${isSearchFadeIn ? "search-fade-in" : ""}`}
+              className={[
+                "character-search-panel",
+                "search-card",
+                isConfirmFadeOut || isModeTransitioning ? "confirm-fade" : "",
+                !isConfirmFadeOut && !isModeTransitioning && isSearchFadeIn
+                  ? "search-fade-in"
+                  : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
               style={{
                 background: theme.panel,
                 border: `1px solid ${theme.border}`,
                 borderRadius: "20px",
                 padding: "1.5rem",
                 boxShadow: "0 12px 36px rgba(0,0,0,0.08)",
+                visibility: isDraftHydrated ? "visible" : "hidden",
               }}
             >
               {setupMode === "intro" && (
@@ -466,10 +878,10 @@ export default function SearchTab({ theme }: SearchTabProps) {
                         runTransitionToMode("import");
                       }}
                       style={{
-                        border: `1px solid ${theme.border}`,
+                        border: "none",
                         borderRadius: "12px",
-                        background: theme.bg,
-                        color: theme.text,
+                        background: theme.accent,
+                        color: "#fff",
                         fontFamily: "inherit",
                         fontWeight: 800,
                         fontSize: "0.95rem",
@@ -484,10 +896,10 @@ export default function SearchTab({ theme }: SearchTabProps) {
                       type="button"
                       onClick={() => runTransitionToMode("search")}
                       style={{
-                        border: "none",
+                        border: `1px solid ${theme.border}`,
                         borderRadius: "12px",
-                        background: theme.accent,
-                        color: "#fff",
+                        background: theme.bg,
+                        color: theme.text,
                         fontFamily: "inherit",
                         fontWeight: 800,
                         fontSize: "0.95rem",
@@ -585,6 +997,26 @@ export default function SearchTab({ theme }: SearchTabProps) {
                       <p style={{ color: theme.muted, fontSize: "0.95rem", fontWeight: 600, margin: 0 }}>
                         Type your IGN to setup your profile.
                       </p>
+                      {canResumeSetup && (
+                        <button
+                          type="button"
+                          onClick={resumeSavedSetup}
+                          style={{
+                            marginTop: "0.45rem",
+                            border: `1px solid ${theme.border}`,
+                            borderRadius: "10px",
+                            background: theme.bg,
+                            color: theme.text,
+                            fontFamily: "inherit",
+                            fontWeight: 700,
+                            fontSize: "0.82rem",
+                            padding: "0.4rem 0.65rem",
+                            cursor: "pointer",
+                          }}
+                        >
+                          Resume Setup
+                        </button>
+                      )}
                     </div>
                     <button
                       type="button"
@@ -781,7 +1213,12 @@ export default function SearchTab({ theme }: SearchTabProps) {
               )}
               {setupMode === "search" && setupFlowStarted && confirmedCharacter && (
                 <div
-                  className={isBackTransitioning ? "preview-confirm-fade" : undefined}
+                  className={[
+                    "confirmed-summary-card",
+                    isBackTransitioning ? "preview-confirm-fade" : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
                   style={{
                     minHeight: "320px",
                     maxWidth: "300px",
@@ -816,7 +1253,7 @@ export default function SearchTab({ theme }: SearchTabProps) {
                     Back
                   </button>
                   <div
-                    className={!confirmedImageLoaded ? "image-skeleton-wrap" : undefined}
+                    className={`confirmed-avatar-wrap ${!confirmedImageLoaded ? "image-skeleton-wrap" : ""}`}
                     style={{
                       width: "210px",
                       height: "210px",
@@ -984,17 +1421,18 @@ export default function SearchTab({ theme }: SearchTabProps) {
                       type="button"
                       onClick={() => {
                         if (!foundCharacter) return;
-                        setConfirmedCharacter(foundCharacter);
-                        setIsConfirmFadeOut(true);
-                        const fadeTimer = window.setTimeout(() => {
-                          setFoundCharacter(null);
-                          setSetupFlowStarted(true);
-                          setIsConfirmFadeOut(false);
-                        }, 240);
-                        const panelTimer = window.setTimeout(() => {
-                          setSetupPanelVisible(true);
-                        }, 620);
-                        transitionTimersRef.current.push(fadeTimer, panelTimer);
+                        const existingCharacterDraft = readSetupDraftByCharacter(foundCharacter);
+                        beginSetupFlowTransition({
+                          character: foundCharacter,
+                          stepIndex: existingCharacterDraft
+                            ? clampSetupStepIndex(existingCharacterDraft.setupStepIndex)
+                            : 0,
+                          stepDirection: existingCharacterDraft
+                            ? existingCharacterDraft.setupStepDirection
+                            : "forward",
+                          stepData: existingCharacterDraft?.setupStepTestByStep ?? {},
+                          source: "confirm",
+                        });
                       }}
                       style={{
                         border: "none",
@@ -1019,6 +1457,7 @@ export default function SearchTab({ theme }: SearchTabProps) {
               <aside
                 className={`character-search-panel setup-panel ${setupPanelVisible ? "setup-panel-visible" : ""} ${isBackTransitioning ? "setup-panel-fade" : ""}`}
                 style={{
+                  position: "relative",
                   background: theme.panel,
                   border: `1px solid ${theme.border}`,
                   borderRadius: "20px",
@@ -1026,28 +1465,96 @@ export default function SearchTab({ theme }: SearchTabProps) {
                   boxShadow: "0 12px 36px rgba(0,0,0,0.08)",
                 }}
               >
-                <h2
-                  style={{
-                    margin: 0,
-                    marginBottom: "0.45rem",
-                    fontFamily: "'Fredoka One', cursive",
-                    fontSize: "1.3rem",
-                    lineHeight: 1.2,
-                    color: theme.text,
-                  }}
+                {setupStepIndex > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setSetupStepWithDirection(setupStepIndex + 1)}
+                    style={{
+                      position: "absolute",
+                      top: "0.8rem",
+                      right: "0.8rem",
+                      border: `1px solid ${theme.border}`,
+                      borderRadius: "10px",
+                      background: theme.bg,
+                      color: theme.muted,
+                      fontFamily: "inherit",
+                      fontWeight: 700,
+                      fontSize: "0.8rem",
+                      padding: "0.4rem 0.65rem",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Skip
+                  </button>
+                )}
+                <div
+                  key={`setup-step-${setupStepIndex}`}
+                  className={`setup-step-content ${setupStepDirection === "forward" ? "step-forward" : "step-backward"}`}
                 >
-                  Let&apos;s go through the first setup
-                </h2>
-                <p
-                  style={{
-                    margin: 0,
-                    fontSize: "0.9rem",
-                    color: theme.muted,
-                    fontWeight: 700,
-                  }}
-                >
-                  Next, we&apos;ll walk through your initial profile setup step by step.
-                </p>
+                  {setupStepIndex === 0 ? (
+                    <>
+                      <h2
+                        style={{
+                          margin: 0,
+                          marginBottom: "0.45rem",
+                          fontFamily: "'Fredoka One', cursive",
+                          fontSize: "1.3rem",
+                          lineHeight: 1.2,
+                          color: theme.text,
+                        }}
+                      >
+                        Let&apos;s go through the first setup
+                      </h2>
+                      <p
+                        style={{
+                          margin: 0,
+                          fontSize: "0.9rem",
+                          color: theme.muted,
+                          fontWeight: 700,
+                          marginBottom: "0.9rem",
+                        }}
+                      >
+                        Next, we&apos;ll walk through your initial profile setup step by step.
+                      </p>
+                      <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                        <button
+                          type="button"
+                          onClick={() => setSetupStepWithDirection(1)}
+                          style={{
+                            border: "none",
+                            borderRadius: "10px",
+                            background: theme.accent,
+                            color: "#fff",
+                            fontFamily: "inherit",
+                            fontWeight: 800,
+                            fontSize: "0.88rem",
+                            padding: "0.55rem 0.9rem",
+                            cursor: "pointer",
+                          }}
+                        >
+                          Next Step
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <StepRenderer
+                      theme={theme}
+                      stepIndex={setupStepIndex}
+                      stepValue={activeSetupStepValue}
+                      onStepValueChange={updateActiveStepValue}
+                      onBackStep={() => setSetupStepWithDirection(setupStepIndex - 1)}
+                      onNextStep={() => setSetupStepWithDirection(setupStepIndex + 1)}
+                      onFinish={() => {
+                        clearSetupDraft();
+                        setStatusTone("neutral");
+                        setStatusMessage("Setup progress saved. You can continue editing anytime.");
+                        setSetupFlowStarted(false);
+                        setSetupPanelVisible(false);
+                        setSetupStepIndex(0);
+                      }}
+                    />
+                  )}
+                </div>
               </aside>
             )}
           </div>

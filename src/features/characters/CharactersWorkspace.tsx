@@ -5,7 +5,7 @@
   Owns tab selection and composes each tab content module.
 */
 import type { AppTheme } from "../../components/themes";
-import SearchTab from "./tabs/SearchTab";
+import CharacterSetupFlow from "./tabs/CharacterSetupFlow";
 
 interface CharactersWorkspaceProps {
   theme: AppTheme;
@@ -21,7 +21,7 @@ export default function CharactersWorkspace({ theme }: CharactersWorkspaceProps)
         flexDirection: "column",
       }}
     >
-      <SearchTab theme={theme} />
+      <CharacterSetupFlow theme={theme} />
     </section>
   );
 }
