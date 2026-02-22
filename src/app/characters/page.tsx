@@ -419,6 +419,9 @@ export default function CharacterSearchPage() {
         }
 
         @media (max-width: 860px) {
+          .top-nav {
+            gap: 0.8rem !important;
+          }
           .desktop-nav-links {
             display: none !important;
           }
@@ -519,7 +522,7 @@ export default function CharacterSearchPage() {
           display: "flex",
           alignItems: "center",
           padding:
-            "env(safe-area-inset-top) calc(1rem + env(safe-area-inset-right)) 0 calc(1rem + env(safe-area-inset-left))",
+            "env(safe-area-inset-top) calc(1.5rem + env(safe-area-inset-right)) 0 calc(1.5rem + env(safe-area-inset-left))",
           gap: "1.5rem",
           position: "fixed",
           left: 0,
@@ -606,8 +609,8 @@ export default function CharacterSearchPage() {
           aria-label="Open menu"
           onClick={() => setMobileMenuOpen((prev) => !prev)}
           style={{
-            width: "64px",
-            minWidth: "64px",
+            width: "54px",
+            minWidth: "54px",
             height: "40px",
             flexShrink: 0,
             border: `1px solid ${t.border}`,
@@ -616,10 +619,25 @@ export default function CharacterSearchPage() {
             color: t.text,
             cursor: "pointer",
             fontSize: "1rem",
-            fontWeight: 800,
+            lineHeight: 1,
+            fontWeight: 700,
+            padding: 0,
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
           }}
         >
-          ☰
+          <svg
+            aria-hidden="true"
+            width="36"
+            height="16"
+            viewBox="0 0 36 16"
+            fill="none"
+          >
+            <line x1="2" y1="2" x2="34" y2="2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            <line x1="2" y1="8" x2="34" y2="8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            <line x1="2" y1="14" x2="34" y2="14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          </svg>
         </button>
       </nav>
       {mobileMenuOpen && (
