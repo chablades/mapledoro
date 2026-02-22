@@ -6,6 +6,7 @@ import type { AppTheme } from "../../../components/themes";
 import { SETUP_STEPS } from "./steps";
 import type { SetupStepId } from "./steps";
 import GenericSetupStep from "./components/GenericSetupStep";
+import EquipmentStep from "./components/steps/EquipmentStep";
 
 interface StepRendererProps {
   theme: AppTheme;
@@ -18,7 +19,7 @@ interface StepRendererProps {
 }
 
 const STEP_COMPONENTS: Record<SetupStepId, typeof GenericSetupStep> = {
-  equipment: GenericSetupStep,
+  equipment: EquipmentStep,
   inventory: GenericSetupStep,
   v_matrix: GenericSetupStep,
   hexa_matrix: GenericSetupStep,
