@@ -110,7 +110,7 @@ export default function SearchTab({ theme }: SearchTabProps) {
           justify-content: center;
           min-height: 0;
           width: 100%;
-          padding: 1rem 1.5rem 2rem 2.75rem;
+          padding: 2rem 1.5rem;
         }
 
         .characters-search-row {
@@ -123,14 +123,17 @@ export default function SearchTab({ theme }: SearchTabProps) {
           width: 100%;
           max-width: 1100px;
           display: flex;
-          gap: 1rem;
-          align-items: start;
+          gap: 1.25rem;
+          align-items: center;
+          justify-content: center;
+          margin: 0 auto;
         }
 
         .search-pane {
-          flex: 1 1 auto;
+          flex: 0 1 640px;
+          width: 100%;
           min-width: 0;
-          transition: flex-basis 0.35s ease;
+          transition: all 0.35s ease;
         }
 
         .search-card {
@@ -141,12 +144,8 @@ export default function SearchTab({ theme }: SearchTabProps) {
           flex: 0 0 0;
           max-width: 0;
           overflow: hidden;
-          align-self: stretch;
-          display: flex;
-          align-items: center;
-          justify-content: center;
           opacity: 0;
-          transform: translateY(8px);
+          transform: translateX(20px);
           transition:
             flex-basis 0.35s ease,
             max-width 0.35s ease,
@@ -155,15 +154,15 @@ export default function SearchTab({ theme }: SearchTabProps) {
         }
 
         .characters-content.has-preview .search-pane {
-          flex-basis: calc(100% - 360px);
+          flex-basis: 560px;
         }
 
         .characters-content.has-preview .preview-pane {
-          flex-basis: 360px;
-          max-width: 360px;
+          flex-basis: 380px;
+          max-width: 380px;
           overflow: visible;
           opacity: 1;
-          transform: translateY(0);
+          transform: translateX(0);
         }
 
         .preview-pane > .character-search-panel {
