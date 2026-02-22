@@ -1,3 +1,8 @@
+/*
+  Server lookup API for Maple characters.
+  Purpose: shield Nexon API usage with queueing, timeout guards, and cache layers.
+  Edit this file for lookup logic, cache TTL behavior, and upstream safety limits.
+*/
 import { NextRequest, NextResponse } from "next/server";
 import Redis from "ioredis";
 
