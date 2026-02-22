@@ -12,25 +12,25 @@ import type { AppTheme } from "../components/themes";
 // -- Data ---------------------------------------------------------------------
 const initialPatchNotes = [
   {
-    version: "v253",
-    date: "Feb 19",
-    title: "6th Job Skills Rebalance",
-    tags: ["Balance"],
-    url: "https://maplestory.nexon.net/news/patch-notes",
+    version: "v266",
+    date: "Feb 18",
+    title: "V.266 KNOWN ISSUES",
+    tags: ["MAINTENANCE"],
+    url: "https://www.nexon.com/maplestory/news/maintenance/36146/v-266-known-issues",
   },
   {
-    version: "v252",
-    date: "Feb 5",
-    title: "Maple World Revamp",
-    tags: ["Content"],
-    url: "https://maplestory.nexon.net/news/patch-notes",
+    version: "",
+    date: "Feb 17",
+    title: "[UPDATE FEB 21] CASH SHOP UPDATE FOR FEBRUARY 18",
+    tags: ["SALE"],
+    url: "https://www.nexon.com/maplestory/news/sale/35891/update-feb-21-cash-shop-update-for-february-18",
   },
   {
-    version: "v251",
-    date: "Jan 22",
-    title: "Boss Crystal Limit ↑",
-    tags: ["QoL"],
-    url: "https://maplestory.nexon.net/news/patch-notes",
+    version: "",
+    date: "Feb 17",
+    title: "ETHEREAL ATELIER: KEYS TO LOVE",
+    tags: ["SALE"],
+    url: "https://www.nexon.com/maplestory/news/sale/36387/ethereal-atelier-keys-to-love",
   },
 ];
 
