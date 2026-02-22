@@ -319,8 +319,8 @@ export default function MapleDoro() {
           aria-label="Open menu"
           onClick={() => setMobileMenuOpen((prev) => !prev)}
           style={{
-            width: "45px",
-            minWidth: "45px",
+            width: "40px",
+            minWidth: "40px",
             height: "40px",
             flexShrink: 0,
             border: `1px solid ${t.border}`,
@@ -338,14 +338,14 @@ export default function MapleDoro() {
         >
           <svg
             aria-hidden="true"
-            width="36"
-            height="16"
-            viewBox="0 0 36 16"
+            width="28"
+            height="14"
+            viewBox="0 0 28 14"
             fill="none"
           >
-            <line x1="2" y1="2" x2="34" y2="2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-            <line x1="2" y1="8" x2="34" y2="8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-            <line x1="2" y1="14" x2="34" y2="14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            <line x1="2" y1="2" x2="26" y2="2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            <line x1="2" y1="7" x2="26" y2="7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            <line x1="2" y1="12" x2="26" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
           </svg>
         </button>
       </nav>
