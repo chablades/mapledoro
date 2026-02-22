@@ -31,8 +31,19 @@ body {
 
 .page-shell {
   display: flex;
-  min-height: calc(100dvh - (56px + env(safe-area-inset-top)));
-  padding-top: calc(56px + env(safe-area-inset-top));
+  min-height: calc(100dvh - 56px);
+  padding-top: 56px;
   width: 100%;
-  overflow-x: clip;
+}
+
+.content-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100dvh - 56px);
+  width: 100%;
+}
+
+.main-content {
+  flex: 1;
 }

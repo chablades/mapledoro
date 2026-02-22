@@ -5,12 +5,12 @@
   Edit this file for dashboard-only content/widgets.
   Shared chrome (top nav/sidebar/themes) lives in src/components/AppShell.tsx.
 */
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import AppShell from "../components/AppShell";
 import type { AppTheme } from "../components/themes";
 
 // -- Data ---------------------------------------------------------------------
-const patchNotes = [
+const initialPatchNotes = [
   {
     version: "v253",
     date: "Feb 19",
@@ -71,10 +71,21 @@ function pct(elapsed: number, total: number) {
 
 function DashboardContent({ theme, now }: { theme: AppTheme; now: Date }) {
   const [sunnyEvents, setSunnyEvents] = useState(defaultSunnyEvents);
+  const [patchNotes, setPatchNotes] = useState(initialPatchNotes);
+
+  useEffect(() => {
+    fetch("/api/patch-notes")
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setPatchNotes(data.slice(0, 3));
+        }
+      })
+      .catch((err) => console.error("Failed to fetch patch notes:", err));
+  }, []);
 
   const daily = getNextReset(now, 0);
   const weekly = getNextReset(now, 0, 4);
-  const event = getNextReset(now, 0, 1);
 
   const resets = [
     {
@@ -88,12 +99,6 @@ function DashboardContent({ theme, now }: { theme: AppTheme; now: Date }) {
       color: "#f59e0b",
       countdown: fmt(weekly.getTime() - now.getTime()),
       progress: pct(604800 - (weekly.getTime() - now.getTime()) / 1000, 604800),
-    },
-    {
-      label: "Event Reset",
-      color: "#10b981",
-      countdown: fmt(event.getTime() - now.getTime()),
-      progress: pct(604800 - (event.getTime() - now.getTime()) / 1000, 604800),
     },
   ];
 
@@ -144,6 +149,7 @@ function DashboardContent({ theme, now }: { theme: AppTheme; now: Date }) {
               border: `1px solid ${theme.border}`,
               borderRadius: "18px",
               overflow: "hidden",
+              minHeight: "400px",
             }}
           >
             <div
@@ -155,7 +161,7 @@ function DashboardContent({ theme, now }: { theme: AppTheme; now: Date }) {
                 gap: "8px",
               }}
             >
-              <span style={{ fontSize: "1.1rem" }}>⏱</span>
+              <span style={{ fontSize: "1.1rem" }}>⭐</span>
               <span
                 style={{
                   fontFamily: "'Fredoka One', cursive",
@@ -163,95 +169,21 @@ function DashboardContent({ theme, now }: { theme: AppTheme; now: Date }) {
                   color: theme.text,
                 }}
               >
-                Reset Timers
+                Favorite Characters
               </span>
-              <div
-                style={{
-                  marginLeft: "auto",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "6px",
-                }}
-              >
-                <div className="live-dot" />
-                <span
-                  style={{
-                    fontSize: "0.7rem",
-                    fontWeight: 800,
-                    color: theme.muted,
-                  }}
-                >
-                  LIVE
-                </span>
-              </div>
             </div>
-
-            <div style={{ padding: "0.75rem" }}>
-              {resets.map((r, i) => (
-                <div
-                  key={i}
-                  style={{
-                    background: theme.timerBg,
-                    borderRadius: "14px",
-                    padding: "1rem 1.25rem",
-                    marginBottom: i < 2 ? "0.6rem" : 0,
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "1rem",
-                    border: `1px solid ${theme.border}`,
-                    transition: "background 0.35s, border-color 0.35s",
-                  }}
-                >
-                  <div style={{ flex: 1 }}>
-                    <div
-                      style={{
-                        fontSize: "0.7rem",
-                        fontWeight: 800,
-                        color: theme.muted,
-                        textTransform: "uppercase",
-                        letterSpacing: "0.1em",
-                        marginBottom: "6px",
-                      }}
-                    >
-                      {r.label}
-                    </div>
-                    <div className="countdown" style={{ color: r.color }}>
-                      {r.countdown}
-                    </div>
-                  </div>
-                  <div style={{ width: "90px" }}>
-                    <div
-                      style={{
-                        height: "6px",
-                        background: theme.border,
-                        borderRadius: "3px",
-                        overflow: "hidden",
-                      }}
-                    >
-                      <div
-                        style={{
-                          height: "100%",
-                          background: r.color,
-                          width: r.progress,
-                          borderRadius: "3px",
-                          transition: "width 1s linear",
-                        }}
-                      />
-                    </div>
-                    <div
-                      style={{
-                        fontSize: "0.65rem",
-                        color: theme.muted,
-                        marginTop: "4px",
-                        textAlign: "right",
-                        fontWeight: 700,
-                      }}
-                    >
-                      {r.progress} elapsed
-                    </div>
-                  </div>
-                </div>
-              ))}
+            <div
+              style={{
+                padding: "3rem 2rem",
+                textAlign: "center",
+                color: theme.muted,
+              }}
+            >
+              <div style={{ fontSize: "2rem", marginBottom: "1rem" }}>✨</div>
+              <div style={{ fontWeight: 700, fontSize: "0.9rem" }}>No favorites yet</div>
+              <div style={{ fontSize: "0.8rem", marginTop: "0.5rem", opacity: 0.8 }}>
+                Search for characters to add them here!
+              </div>
             </div>
           </div>
 
@@ -260,6 +192,125 @@ function DashboardContent({ theme, now }: { theme: AppTheme; now: Date }) {
               className="fade-in panel"
               style={{
                 animationDelay: "0.2s",
+                background: theme.panel,
+                border: `1px solid ${theme.border}`,
+                borderRadius: "18px",
+                overflow: "hidden",
+              }}
+            >
+              <div
+                style={{
+                  padding: "1rem 1.25rem 0.8rem",
+                  borderBottom: `1px solid ${theme.border}`,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                }}
+              >
+                <span style={{ fontSize: "1.1rem" }}>⏱</span>
+                <span
+                  style={{
+                    fontFamily: "'Fredoka One', cursive",
+                    fontSize: "1.15rem",
+                    color: theme.text,
+                  }}
+                >
+                  Reset Timers
+                </span>
+                <div
+                  style={{
+                    marginLeft: "auto",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                  }}
+                >
+                  <div className="live-dot" />
+                  <span
+                    style={{
+                      fontSize: "0.7rem",
+                      fontWeight: 800,
+                      color: theme.muted,
+                    }}
+                  >
+                    LIVE
+                  </span>
+                </div>
+              </div>
+
+              <div style={{ padding: "0.75rem" }}>
+                {resets.map((r, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      background: theme.timerBg,
+                      borderRadius: "14px",
+                      padding: "1rem 1.25rem",
+                      marginBottom: i < resets.length - 1 ? "0.6rem" : 0,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "1rem",
+                      border: `1px solid ${theme.border}`,
+                      transition: "background 0.35s, border-color 0.35s",
+                    }}
+                  >
+                    <div style={{ flex: 1 }}>
+                      <div
+                        style={{
+                          fontSize: "0.7rem",
+                          fontWeight: 800,
+                          color: theme.muted,
+                          textTransform: "uppercase",
+                          letterSpacing: "0.1em",
+                          marginBottom: "6px",
+                        }}
+                      >
+                        {r.label}
+                      </div>
+                      <div className="countdown" style={{ color: r.color }}>
+                        {r.countdown}
+                      </div>
+                    </div>
+                    <div style={{ width: "90px" }}>
+                      <div
+                        style={{
+                          height: "6px",
+                          background: theme.border,
+                          borderRadius: "3px",
+                          overflow: "hidden",
+                        }}
+                      >
+                        <div
+                          style={{
+                            height: "100%",
+                            background: r.color,
+                            width: r.progress,
+                            borderRadius: "3px",
+                            transition: "width 1s linear",
+                          }}
+                        />
+                      </div>
+                      <div
+                        style={{
+                          fontSize: "0.65rem",
+                          color: theme.muted,
+                          marginTop: "4px",
+                          textAlign: "right",
+                          fontWeight: 700,
+                        }}
+                      >
+                        {r.progress} elapsed
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div
+              className="fade-in panel"
+              style={{
+                animationDelay: "0.3s",
                 background: theme.panel,
                 border: `1px solid ${theme.border}`,
                 borderRadius: "18px",
@@ -286,7 +337,9 @@ function DashboardContent({ theme, now }: { theme: AppTheme; now: Date }) {
                   Patch Notes
                 </span>
                 <a
-                  href="#"
+                  href="https://maplestory.nexon.net/news/patch-notes"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   style={{
                     marginLeft: "auto",
                     fontSize: "0.78rem",
@@ -375,7 +428,7 @@ function DashboardContent({ theme, now }: { theme: AppTheme; now: Date }) {
             <div
               className="fade-in panel"
               style={{
-                animationDelay: "0.3s",
+                animationDelay: "0.4s",
                 background: theme.panel,
                 border: `1px solid ${theme.border}`,
                 borderRadius: "18px",
