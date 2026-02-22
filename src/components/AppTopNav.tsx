@@ -5,7 +5,7 @@
   Edit here for nav structure/behavior (brand, links, UTC clock, mobile menu).
   Styling lives in AppTopNav.module.css; link list lives in nav-links.ts.
 */
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import styles from "./AppTopNav.module.css";
@@ -32,7 +32,12 @@ export default function AppTopNav<TTheme extends AppTheme>({
   onThemeChange,
 }: AppTopNavProps<TTheme>) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const utcClockText = `${now.toUTCString().slice(17, 25)} UTC`;
+  const clockReady = useSyncExternalStore(
+    () => () => undefined,
+    () => true,
+    () => false,
+  );
+  const utcClockText = clockReady ? `${now.toUTCString().slice(17, 25)} UTC` : "--:--:-- UTC";
 
   useEffect(() => {
     if (!mobileMenuOpen) return;
