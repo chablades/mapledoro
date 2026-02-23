@@ -214,16 +214,16 @@ export default function PreviewSetupPane({
       variant === "main"
         ? {
             flex: "0 0 auto",
-            width: "min(230px, 100%)",
-            minWidth: "180px",
-            maxWidth: "230px",
+            width: "min(190px, 100%)",
+            minWidth: "160px",
+            maxWidth: "190px",
           }
         : variant === "champion"
           ? {
               flex: "0 0 auto",
-              width: "min(205px, 100%)",
-              minWidth: "170px",
-              maxWidth: "205px",
+              width: "min(190px, 100%)",
+              minWidth: "160px",
+              maxWidth: "190px",
             }
           : {
               flex: "0 0 auto",
@@ -232,7 +232,7 @@ export default function PreviewSetupPane({
               maxWidth: "190px",
             };
     return (
-      <div key={key} style={{ ...cardSizeStyle, display: "grid", placeItems: "center" }}>
+      <div key={key} style={{ ...cardSizeStyle, display: "flex", justifyContent: "center", alignItems: "flex-start" }}>
         <button
           type="button"
           disabled={isUiLocked}
@@ -252,9 +252,13 @@ export default function PreviewSetupPane({
           <Image
             src={character.characterImgURL}
             alt={`${character.characterName} avatar`}
-            width={variant === "main" ? 92 : 78}
-            height={variant === "main" ? 92 : 78}
-            style={{ borderRadius: "12px", objectFit: "cover" }}
+            width={78}
+            height={78}
+            style={{
+              borderRadius: "12px",
+              objectFit: "contain",
+              objectPosition: "center bottom",
+            }}
           />
           <span
             style={{
@@ -499,7 +503,7 @@ export default function PreviewSetupPane({
                         Main Character
                       </p>
                       {mainCharacter ? (
-                        <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "flex-start", gap: "0.6rem", width: "100%" }}>
+                        <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "flex-start", alignItems: "flex-start", gap: "0.6rem", width: "100%" }}>
                           {renderCharacterCard(mainCharacter, "main")}
                         </div>
                       ) : (
@@ -530,7 +534,7 @@ export default function PreviewSetupPane({
                             Main is also set as champion.
                           </p>
                         )}
-                        <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "flex-start", gap: "0.6rem", overflow: "hidden", width: "100%", paddingBottom: "0.15rem" }}>
+                        <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "flex-start", alignItems: "flex-start", gap: "0.6rem", overflow: "hidden", width: "100%", paddingBottom: "0.15rem" }}>
                           {championCharactersForDirectory.map((character) =>
                             renderCharacterCard(character, "champion"),
                           )}
@@ -548,7 +552,7 @@ export default function PreviewSetupPane({
                       <p style={{ margin: 0, fontSize: "0.75rem", color: theme.muted, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.03em", marginBottom: "0.5rem" }}>
                         Mules ({otherCharacters.length}/{muleCapacity})
                       </p>
-                      <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "flex-start", gap: "0.6rem", overflow: "hidden", width: "100%", paddingBottom: "0.15rem" }}>
+                      <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "flex-start", alignItems: "flex-start", gap: "0.6rem", overflow: "hidden", width: "100%", paddingBottom: "0.15rem" }}>
                         {otherCharacters.map((character) => renderCharacterCard(character, "mule"))}
                         <button
                           type="button"
