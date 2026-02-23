@@ -432,14 +432,6 @@ async function fetchOverall(characterName: string) {
   return fetchJson(url);
 }
 
-async function fetchLegion(characterName: string, worldID: number, rebootIndex: 0 | 1) {
-  const url =
-    `https://www.nexon.com/api/maplestory/no-auth/ranking/v2/na` +
-    `?type=legion&id=${encodeURIComponent(String(worldID))}` +
-    `&reboot_index=${rebootIndex}&page_index=1&character_name=${encodeURIComponent(characterName)}`;
-  return fetchJson(url);
-}
-
 async function buildLookup(characterName: string, key: string): Promise<LookupResult> {
   const firstQueued = await runQueuedUpstream(() => fetchOverall(characterName));
   const overallRow = getExactRankRow(firstQueued.value, characterName);
@@ -463,22 +455,6 @@ async function buildLookup(characterName: string, key: string): Promise<LookupRe
     return result;
   }
 
-  const secondQueued = await runQueuedUpstream(() =>
-    fetchLegion(characterName, overallRow.worldID, 1),
-  );
-  let legionRaw = secondQueued.value;
-  let legionRow = getExactRankRow(legionRaw, characterName);
-  let fallbackLegionQueuedMs = 0;
-
-  if (!legionRow) {
-    const fallbackQueued = await runQueuedUpstream(() =>
-      fetchLegion(characterName, overallRow.worldID, 0),
-    );
-    legionRaw = fallbackQueued.value;
-    legionRow = getExactRankRow(legionRaw, characterName);
-    fallbackLegionQueuedMs = fallbackQueued.queuedMs;
-  }
-
   const fetchedAt = Date.now();
   const expiresAt = getNextUtcMidnightMs(fetchedAt);
   const merged: NormalizedCharacterData = {
@@ -493,12 +469,12 @@ async function buildLookup(characterName: string, key: string): Promise<LookupRe
     startRank: overallRow.startRank,
     overallRank: overallRow.rank,
     overallGap: overallRow.gap,
-    legionRank: legionRow?.rank ?? 0,
-    legionGap: legionRow?.gap ?? 0,
-    legionLevel: legionRow?.legionLevel ?? overallRow.legionLevel,
-    raidPower: legionRow?.raidPower ?? overallRow.raidPower,
-    tierID: legionRow?.tierID ?? overallRow.tierID,
-    score: legionRow?.score ?? overallRow.score,
+    legionRank: 0,
+    legionGap: 0,
+    legionLevel: 0,
+    raidPower: 0,
+    tierID: overallRow.tierID,
+    score: overallRow.score,
     fetchedAt,
     expiresAt,
   };
@@ -514,7 +490,7 @@ async function buildLookup(characterName: string, key: string): Promise<LookupRe
     data: merged,
     expiresAt,
     fromCache: false,
-    queuedMs: firstQueued.queuedMs + secondQueued.queuedMs + fallbackLegionQueuedMs,
+    queuedMs: firstQueued.queuedMs,
     source: "nexon_upstream",
   };
 }
