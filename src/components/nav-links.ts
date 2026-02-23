@@ -10,6 +10,6 @@ export interface NavLinkItem {
 export const NAV_LINKS: NavLinkItem[] = [
   { label: "Dashboard", href: "/" },
   { label: "Characters", href: "/characters" },
-  { label: "Tools", href: "#" },
+  { label: "Tools", href: "/tools" },
   { label: "Community", href: "#" },
 ];
