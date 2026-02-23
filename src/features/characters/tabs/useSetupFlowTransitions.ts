@@ -1,14 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { NormalizedCharacterData } from "../model/types";
 import type { SetupStepInputById } from "../setup/types";
-import { clampSetupStepIndex } from "../setup/steps";
 import type { SetupMode } from "../model/constants";
+import { getRequiredSetupFlowId, type SetupFlowId } from "../setup/flows";
 
 interface SetupTransitionSetters {
   setSetupMode: (mode: SetupMode) => void;
   setFoundCharacter: (character: NormalizedCharacterData | null) => void;
   setConfirmedCharacter: (character: NormalizedCharacterData | null) => void;
   setSetupFlowStarted: (value: boolean) => void;
+  setActiveFlowId: (flowId: SetupFlowId) => void;
+  setCompletedFlowIds: (flowIds: SetupFlowId[]) => void;
+  setShowFlowOverview: (value: boolean) => void;
+  setShowCharacterDirectory: (value: boolean) => void;
   setSetupStepIndex: (value: number) => void;
   setSetupStepDirection: (value: "forward" | "backward") => void;
   setSetupStepTestByStep: (value: SetupStepInputById) => void;
@@ -20,6 +24,10 @@ interface CommonTransitionCallbacks extends SetupTransitionSetters {
 
 interface SetupFlowTransitionArgs {
   character: NormalizedCharacterData;
+  flowId: SetupFlowId;
+  completedFlowIds: SetupFlowId[];
+  showFlowOverview: boolean;
+  showCharacterDirectory: boolean;
   stepIndex: number;
   stepDirection: "forward" | "backward";
   stepData: SetupStepInputById;
@@ -65,6 +73,10 @@ export function useSetupFlowTransitions() {
       callbacks.setLastSetupDraftAutoResume(false);
       queueTransitionTimer(() => {
         callbacks.setSetupFlowStarted(false);
+        callbacks.setActiveFlowId(getRequiredSetupFlowId());
+        callbacks.setCompletedFlowIds([]);
+        callbacks.setShowFlowOverview(false);
+        callbacks.setShowCharacterDirectory(false);
         callbacks.setFoundCharacter(null);
         callbacks.setConfirmedCharacter(null);
         callbacks.setSetupStepIndex(0);
@@ -94,6 +106,10 @@ export function useSetupFlowTransitions() {
         callbacks.setFoundCharacter(null);
         callbacks.setConfirmedCharacter(null);
         callbacks.setSetupFlowStarted(false);
+        callbacks.setActiveFlowId(getRequiredSetupFlowId());
+        callbacks.setCompletedFlowIds([]);
+        callbacks.setShowFlowOverview(false);
+        callbacks.setShowCharacterDirectory(false);
         setSetupPanelVisible(false);
         callbacks.setSetupStepIndex(0);
         callbacks.setSetupStepTestByStep({});
@@ -117,6 +133,10 @@ export function useSetupFlowTransitions() {
         callbacks.setFoundCharacter(null);
         callbacks.setConfirmedCharacter(null);
         callbacks.setSetupFlowStarted(false);
+        callbacks.setActiveFlowId(getRequiredSetupFlowId());
+        callbacks.setCompletedFlowIds([]);
+        callbacks.setShowFlowOverview(false);
+        callbacks.setShowCharacterDirectory(false);
         setSetupPanelVisible(false);
         callbacks.setSetupStepIndex(0);
         callbacks.setSetupStepTestByStep({});
@@ -142,8 +162,12 @@ export function useSetupFlowTransitions() {
       setSuppressLayoutTransition(true);
       setSetupPanelVisible(false);
       setters.setConfirmedCharacter(args.character);
+      setters.setActiveFlowId(args.flowId);
+      setters.setCompletedFlowIds(args.completedFlowIds);
+      setters.setShowFlowOverview(args.showFlowOverview);
+      setters.setShowCharacterDirectory(args.showCharacterDirectory);
       setters.setSetupStepDirection(args.stepDirection);
-      setters.setSetupStepIndex(clampSetupStepIndex(args.stepIndex));
+      setters.setSetupStepIndex(args.stepIndex);
       setters.setSetupStepTestByStep(args.stepData);
       setIsConfirmFadeOut(true);
 
@@ -164,6 +188,31 @@ export function useSetupFlowTransitions() {
     [clearTransitionTimers, queueTransitionTimer],
   );
 
+  const runBackTransition = useCallback(
+    (
+      onMidTransition: () => void,
+      options?: {
+        enableSearchFadeIn?: boolean;
+      },
+    ) => {
+      const enableSearchFadeIn = options?.enableSearchFadeIn ?? true;
+      setIsBackTransitioning(true);
+      setSuppressLayoutTransition(false);
+      setSetupPanelVisible(false);
+      queueTransitionTimer(() => {
+        onMidTransition();
+        setIsBackTransitioning(false);
+        if (enableSearchFadeIn) {
+          setIsSearchFadeIn(true);
+          queueTransitionTimer(() => {
+            setIsSearchFadeIn(false);
+          }, 260);
+        }
+      }, 220);
+    },
+    [queueTransitionTimer],
+  );
+
   return {
     isConfirmFadeOut,
     isModeTransitioning,
@@ -179,5 +228,6 @@ export function useSetupFlowTransitions() {
     runBackToIntroTransition,
     runTransitionToMode,
     beginSetupFlowTransition,
+    runBackTransition,
   };
 }

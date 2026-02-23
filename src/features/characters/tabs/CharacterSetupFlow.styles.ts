@@ -1,7 +1,11 @@
 import type { AppTheme } from "../../../components/themes";
 
 export function getCharacterSetupFlowStyles(theme: AppTheme) {
-  return `
+      return `
+        :root {
+          scrollbar-gutter: stable;
+        }
+
         .character-search-panel { transition: background 0.35s ease, border-color 0.35s ease; }
 
         .characters-main {
@@ -48,6 +52,32 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
           transform: translateY(8px);
         }
 
+        .search-card.profile-to-directory-fade,
+        .setup-panel.profile-to-directory-fade {
+          animation: profileToDirectoryOut 0.16s ease forwards !important;
+        }
+
+        .profile-actions-card.profile-to-directory-fade {
+          animation: profileToDirectoryOut 0.16s ease forwards !important;
+        }
+
+        .setup-step-content.profile-to-directory-fade,
+        .confirmed-summary-card.profile-to-directory-fade {
+          animation: profileToDirectoryFadeOnly 0.16s ease forwards !important;
+        }
+
+        .profile-actions-card {
+          transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+
+        .profile-actions-card.profile-actions-fade-in {
+          animation: profileActionsFadeIn 0.22s ease both;
+        }
+
+        .profile-actions-card.profile-actions-fade-out {
+          animation: profileActionsFadeOut 0.14s ease both;
+        }
+
         .search-card.search-fade-in {
           animation: searchCardFadeIn 0.26s ease;
         }
@@ -59,6 +89,10 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
         .preview-card.confirm-fade {
           opacity: 0;
           transform: translateY(8px);
+        }
+
+        .preview-card.back-fade {
+          animation: previewBackFade 0.22s ease forwards;
         }
 
         .image-skeleton-wrap {
@@ -137,6 +171,15 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
           transform: translateY(0);
         }
 
+        .characters-content.directory-view .preview-pane {
+          flex: 1 1 auto;
+          max-width: 100%;
+          width: 100%;
+          opacity: 1;
+          transform: translateY(0);
+          transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+
         .preview-pane > .character-search-panel {
           width: 100%;
         }
@@ -151,8 +194,12 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
 
         .preview-confirm-fade {
           opacity: 0 !important;
-          transform: translateY(8px) !important;
-          transition: opacity 0.2s ease, transform 0.2s ease;
+          transform: none !important;
+          transition: opacity 0.2s ease;
+        }
+
+        .preview-content.back-fade-content {
+          animation: previewBackFade 0.22s ease forwards;
         }
 
         .setup-panel {
@@ -171,10 +218,21 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
           transform: translateY(8px) !important;
         }
 
+        .setup-panel.setup-finish-fade {
+          opacity: 0 !important;
+          transform: none !important;
+          transition: opacity 0.2s ease !important;
+        }
+
+        .setup-panel.setup-panel-fade-out {
+          animation: setupPanelFadeOut 0.16s ease both;
+        }
+
         .setup-step-content {
           animation-duration: 0.24s;
           animation-timing-function: ease;
           animation-fill-mode: both;
+          opacity: 0;
         }
 
         .setup-step-content.step-forward {
@@ -185,9 +243,63 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
           animation-name: setupStepSlideBackward;
         }
 
+        .setup-step-content.directory-step-content {
+          animation: none !important;
+          opacity: 1;
+          transform: none;
+        }
+
+        .setup-step-content.step-no-slide {
+          animation: none !important;
+          opacity: 0;
+          transform: none;
+        }
+
+        .setup-panel.step-panel-fade-in {
+          animation: stepPanelFadeIn 0.22s ease both;
+        }
+
+        .setup-step-content.step-flow-fade-in {
+          animation: stepFlowFadeIn 0.22s ease both;
+        }
+
+        .summary-panel-fade-in {
+          animation: summaryFadeIn 0.22s ease both;
+        }
+
+        .desktop-back-label {
+          display: inline;
+        }
+
+        .mobile-back-label {
+          display: none;
+        }
+
+        .profile-role-chip {
+          font-size: 0.76rem !important;
+          padding: 0.22rem 0.68rem !important;
+        }
+
+        .profile-shell-fade-in {
+          animation: profileShellFadeIn 0.22s ease both;
+        }
+
+        .profile-shell-fade-out {
+          animation: profileShellFadeOut 0.16s ease both;
+        }
+
+        .profile-shell-state-fade-in {
+          animation: profileShellStateFadeIn 0.22s ease both;
+        }
+
         @keyframes previewSwap {
           from { opacity: 0; transform: translateY(8px); }
           to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes previewBackFade {
+          from { opacity: 1; transform: translateY(0); }
+          to { opacity: 0; transform: translateY(8px); }
         }
 
         @keyframes imageShimmer {
@@ -209,7 +321,75 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
           to { opacity: 1; transform: translateX(0); }
         }
 
+        @keyframes summaryFadeIn {
+          from { opacity: 0; transform: translateY(8px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes profileActionsFadeIn {
+          from { opacity: 0; transform: translateY(8px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes profileActionsFadeOut {
+          from { opacity: 1; transform: translateY(0); }
+          to { opacity: 0; transform: translateY(8px); }
+        }
+
+        @keyframes profileShellFadeIn {
+          from { opacity: 0; transform: translateY(8px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes profileShellFadeOut {
+          from { opacity: 1; transform: translateY(0); }
+          to { opacity: 0; transform: translateY(8px); }
+        }
+
+        @keyframes profileShellStateFadeIn {
+          from { opacity: 0; transform: translateY(8px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes profileToDirectoryOut {
+          from { opacity: 1; transform: translateY(0); }
+          to { opacity: 0; transform: translateY(8px); }
+        }
+
+        @keyframes profileToDirectoryFadeOnly {
+          from { opacity: 1; transform: none; }
+          to { opacity: 0; transform: none; }
+        }
+
+        @keyframes stepPanelFadeIn {
+          from { opacity: 0; transform: translateY(8px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes stepFlowFadeIn {
+          from { opacity: 0; transform: none; }
+          to { opacity: 1; transform: none; }
+        }
+
+        @keyframes setupPanelFadeOut {
+          from { opacity: 1; transform: translateY(0); }
+          to { opacity: 0; transform: translateY(8px); }
+        }
+
         @media (max-width: 860px) {
+          .desktop-back-label {
+            display: none;
+          }
+
+          .mobile-back-label {
+            display: inline;
+          }
+
+          .profile-role-chip {
+            font-size: 0.62rem !important;
+            padding: 0.1rem 0.42rem !important;
+          }
+
           .characters-main {
             padding: 1rem;
             align-items: flex-start;

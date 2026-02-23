@@ -3,13 +3,14 @@
   Centralizes step-to-component mapping so each step can be specialized later.
 */
 import type { AppTheme } from "../../../components/themes";
-import { SETUP_STEPS } from "./steps";
+import { getFlowStepByIndex, getFlowStepCount, type SetupFlowId } from "./flows";
 import type { SetupStepId } from "./steps";
 import GenericSetupStep from "./components/GenericSetupStep";
-import EquipmentStep from "./components/steps/EquipmentStep";
+import GenderSetupStep from "./components/GenderSetupStep";
 
 interface StepRendererProps {
   theme: AppTheme;
+  flowId: SetupFlowId;
   stepIndex: number;
   stepValue: string;
   onStepValueChange: (value: string) => void;
@@ -19,18 +20,20 @@ interface StepRendererProps {
 }
 
 const STEP_COMPONENTS: Record<SetupStepId, typeof GenericSetupStep> = {
-  equipment: EquipmentStep,
+  gender: GenderSetupStep,
+  stats: GenericSetupStep,
+  equipment_core: GenericSetupStep,
   inventory: GenericSetupStep,
   v_matrix: GenericSetupStep,
   hexa_matrix: GenericSetupStep,
   familiars: GenericSetupStep,
   link_skills: GenericSetupStep,
   legion: GenericSetupStep,
-  stats: GenericSetupStep,
 };
 
 export default function StepRenderer({
   theme,
+  flowId,
   stepIndex,
   stepValue,
   onStepValueChange,
@@ -38,7 +41,7 @@ export default function StepRenderer({
   onNextStep,
   onFinish,
 }: StepRendererProps) {
-  const step = SETUP_STEPS[stepIndex - 1];
+  const step = getFlowStepByIndex(flowId, stepIndex);
   if (!step) return null;
 
   const StepComponent = STEP_COMPONENTS[step.id] ?? GenericSetupStep;
@@ -48,7 +51,7 @@ export default function StepRenderer({
       theme={theme}
       step={step}
       stepNumber={stepIndex}
-      totalSteps={SETUP_STEPS.length}
+      totalSteps={getFlowStepCount(flowId)}
       value={stepValue}
       onChange={onStepValueChange}
       onBack={onBackStep}

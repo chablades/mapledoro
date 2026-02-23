@@ -1,11 +1,7 @@
-/*
-  Generic text-input step used by current scaffolded setup steps.
-  Individual complex steps can replace this component later.
-*/
 import type { AppTheme } from "../../../../components/themes";
 import type { SetupStepDefinition } from "../steps";
 
-interface GenericSetupStepProps {
+interface GenderSetupStepProps {
   theme: AppTheme;
   step: SetupStepDefinition;
   stepNumber: number;
@@ -17,7 +13,25 @@ interface GenericSetupStepProps {
   onFinish: () => void;
 }
 
-export default function GenericSetupStep({
+function genderButtonStyle(
+  theme: AppTheme,
+  active: boolean,
+  accent: string,
+) {
+  return {
+    border: `1px solid ${active ? accent : theme.border}`,
+    borderRadius: "10px",
+    background: active ? `${accent}22` : theme.bg,
+    color: active ? accent : theme.text,
+    fontFamily: "inherit",
+    fontWeight: 800,
+    fontSize: "0.86rem",
+    padding: "0.5rem 0.75rem",
+    cursor: "pointer",
+  } as const;
+}
+
+export default function GenderSetupStep({
   theme,
   step,
   stepNumber,
@@ -27,8 +41,11 @@ export default function GenericSetupStep({
   onBack,
   onNext,
   onFinish,
-}: GenericSetupStepProps) {
+}: GenderSetupStepProps) {
   const isLastStep = stepNumber >= totalSteps;
+  const normalized = value.toLowerCase();
+  const isMale = normalized === "male";
+  const isFemale = normalized === "female";
 
   return (
     <>
@@ -63,41 +80,27 @@ export default function GenericSetupStep({
           fontSize: "0.9rem",
           color: theme.muted,
           fontWeight: 700,
-          marginBottom: "0.6rem",
+          marginBottom: "0.7rem",
         }}
       >
-        Placeholder for {step.label} setup inputs.
+        Optional. You can skip now and set this from the character profile later.
       </p>
-      <label
-        style={{
-          display: "block",
-          fontSize: "0.8rem",
-          color: theme.muted,
-          fontWeight: 800,
-          marginBottom: "0.35rem",
-        }}
-      >
-        Draft Test Input
-      </label>
-      <input
-        type="text"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder="Type anything to test autosave"
-        style={{
-          width: "100%",
-          border: `1px solid ${theme.border}`,
-          borderRadius: "10px",
-          background: theme.bg,
-          color: theme.text,
-          fontFamily: "inherit",
-          fontSize: "0.9rem",
-          fontWeight: 600,
-          padding: "0.55rem 0.7rem",
-          outline: "none",
-          marginBottom: "0.8rem",
-        }}
-      />
+      <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginBottom: "0.8rem" }}>
+        <button
+          type="button"
+          onClick={() => onChange(isMale ? "" : "male")}
+          style={genderButtonStyle(theme, isMale, "#2563eb")}
+        >
+          ♂ Male
+        </button>
+        <button
+          type="button"
+          onClick={() => onChange(isFemale ? "" : "female")}
+          style={genderButtonStyle(theme, isFemale, "#db2777")}
+        >
+          ♀ Female
+        </button>
+      </div>
       <div style={{ display: "flex", gap: "0.6rem", justifyContent: "space-between", alignItems: "center" }}>
         <button
           type="button"
