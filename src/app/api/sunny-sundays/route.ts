@@ -1,11 +1,9 @@
 import { NextResponse } from "next/server";
-import { fetchSunnySunday } from "@/lib/sunnySunday";
-
-export const revalidate = 3600; // Revalidate every hour
+import { getSunnySunday } from "@/lib/sunnySunday";
 
 export async function GET() {
   try {
-    const data = await fetchSunnySunday();
+    const data = await getSunnySunday();
 
     if (!data) {
       return NextResponse.json(
@@ -16,9 +14,9 @@ export async function GET() {
 
     return NextResponse.json(data);
   } catch (error) {
-    console.error("Error fetching Sunny Sunday data:", error);
+    console.error("Error reading Sunny Sunday cache:", error);
     return NextResponse.json(
-      { error: "Failed to fetch Sunny Sunday data" },
+      { error: "Failed to read Sunny Sunday data" },
       { status: 500 },
     );
   }
