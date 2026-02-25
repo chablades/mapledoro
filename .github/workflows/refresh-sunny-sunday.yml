@@ -2,8 +2,8 @@ name: Refresh Sunny Sunday
 
 on:
   schedule:
-    # Runs every hour
-    - cron: "0 * * * *"
+    # Runs once daily at midnight UTC
+    - cron: "0 0 * * *"
   workflow_dispatch: # Allow manual runs from the Actions tab
 
 jobs:
