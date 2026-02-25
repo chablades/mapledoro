@@ -1,0 +1,20 @@
+name: Refresh Sunny Sunday
+
+on:
+  schedule:
+    # Runs daily at 12:00 UTC
+    - cron: "0 12 * * *"
+  workflow_dispatch: # Allow manual runs from the Actions tab
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call refresh endpoint
+        env:
+          SITE_URL: ${{ secrets.SITE_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          curl -sf -X POST "${SITE_URL}/api/sunny-sundays/refresh" \
+            -H "Authorization: Bearer ${CRON_SECRET}" \
+            -H "Content-Type: application/json"

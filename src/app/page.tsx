@@ -7,6 +7,7 @@
 */
 import { useState, useEffect } from "react";
 import AppShell from "../components/AppShell";
+import SunnySundayPanel from "../components/SunnySundayPanel";
 import type { AppTheme } from "../components/themes";
 
 // -- Data ---------------------------------------------------------------------
@@ -34,12 +35,7 @@ const initialPatchNotes = [
   },
 ];
 
-const defaultSunnyEvents = [
-  { id: 1, label: "2× EXP Coupon", done: false },
-  { id: 2, label: "Sunny Sunday Chair", done: false },
-  { id: 3, label: "Gold Maple Leaf Emblem", done: false },
-  { id: 4, label: "Arcane Catalyst", done: false },
-];
+
 
 // -- Time helpers --------------------------------------------------------------
 function getNextReset(base: Date, hour: number, dayOfWeek?: number) {
@@ -70,7 +66,6 @@ function pct(elapsed: number, total: number) {
 }
 
 function DashboardContent({ theme, now }: { theme: AppTheme; now: Date }) {
-  const [sunnyEvents, setSunnyEvents] = useState(defaultSunnyEvents);
   const [patchNotes, setPatchNotes] = useState(initialPatchNotes);
 
   useEffect(() => {
@@ -101,8 +96,6 @@ function DashboardContent({ theme, now }: { theme: AppTheme; now: Date }) {
       progress: pct(604800 - (weekly.getTime() - now.getTime()) / 1000, 604800),
     },
   ];
-
-  const sunnyDone = sunnyEvents.filter((e) => e.done).length;
 
   return (
     <>
@@ -425,141 +418,7 @@ function DashboardContent({ theme, now }: { theme: AppTheme; now: Date }) {
               ))}
             </div>
 
-            <div
-              className="fade-in panel"
-              style={{
-                animationDelay: "0.4s",
-                background: theme.panel,
-                border: `1px solid ${theme.border}`,
-                borderRadius: "18px",
-                overflow: "hidden",
-              }}
-            >
-              <div
-                style={{
-                  padding: "0.9rem 1.25rem",
-                  borderBottom: `1px solid ${theme.border}`,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                }}
-              >
-                <span>☀️</span>
-                <div>
-                  <div
-                    style={{
-                      fontFamily: "'Fredoka One', cursive",
-                      fontSize: "1.1rem",
-                      color: theme.text,
-                      lineHeight: 1,
-                    }}
-                  >
-                    Sunny Sunday
-                  </div>
-                  <div
-                    style={{
-                      fontSize: "0.66rem",
-                      color: theme.muted,
-                      fontWeight: 700,
-                      marginTop: "2px",
-                    }}
-                  >
-                    Event Tracker
-                  </div>
-                </div>
-                <div
-                  style={{
-                    marginLeft: "auto",
-                    fontSize: "0.7rem",
-                    fontWeight: 800,
-                    color: "#92400e",
-                    background: "#fef3c7",
-                    padding: "3px 9px",
-                    borderRadius: "20px",
-                  }}
-                >
-                  {sunnyDone}/{sunnyEvents.length}
-                </div>
-              </div>
-
-              <div style={{ padding: "0.5rem 0.5rem 0" }}>
-                {sunnyEvents.map((ev) => (
-                  <div
-                    key={ev.id}
-                    className="row-hover"
-                    onClick={() =>
-                      setSunnyEvents((prev) =>
-                        prev.map((e) => (e.id === ev.id ? { ...e, done: !e.done } : e)),
-                      )
-                    }
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "10px",
-                      padding: "0.65rem 0.75rem",
-                      cursor: "pointer",
-                      borderRadius: "10px",
-                      transition: "background 0.15s",
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: "20px",
-                        height: "20px",
-                        borderRadius: "6px",
-                        flexShrink: 0,
-                        border: `2px solid ${ev.done ? theme.accent : theme.border}`,
-                        background: ev.done ? theme.accent : "transparent",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        transition: "all 0.2s",
-                      }}
-                    >
-                      {ev.done && <span style={{ color: "#fff", fontSize: "0.65rem", fontWeight: 900 }}>✓</span>}
-                    </div>
-                    <span
-                      style={{
-                        fontSize: "0.875rem",
-                        fontWeight: 600,
-                        color: ev.done ? theme.muted : theme.text,
-                        textDecoration: ev.done ? "line-through" : "none",
-                        transition: "all 0.2s",
-                      }}
-                    >
-                      {ev.label}
-                    </span>
-                  </div>
-                ))}
-              </div>
-
-              <div
-                style={{
-                  padding: "0.75rem 1.25rem",
-                  marginTop: "0.25rem",
-                  borderTop: `1px solid ${theme.border}`,
-                }}
-              >
-                <div
-                  style={{
-                    height: "5px",
-                    background: theme.border,
-                    borderRadius: "3px",
-                    overflow: "hidden",
-                  }}
-                >
-                  <div
-                    style={{
-                      height: "100%",
-                      borderRadius: "3px",
-                      background: `linear-gradient(90deg, ${theme.accent}, #f59e0b)`,
-                      width: `${(sunnyDone / sunnyEvents.length) * 100}%`,
-                      transition: "width 0.35s ease",
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
+            <SunnySundayPanel theme={theme} />
           </div>
         </div>
       </div>
