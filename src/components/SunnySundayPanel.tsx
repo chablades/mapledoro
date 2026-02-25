@@ -30,9 +30,10 @@ export default function SunnySundayPanel({ theme }: SunnySundayPanelProps) {
       .finally(() => setLoading(false));
   }, []);
 
-  // Split weeks into the next upcoming one vs the rest
-  const upcoming = weeks.find((w) => !w.isPast) ?? weeks[weeks.length - 1] ?? null;
-  const otherWeeks = weeks.filter((w) => w !== upcoming);
+  // Show only current/future weeks; the first upcoming one is featured
+  const futureWeeks = weeks.filter((w) => !w.isPast);
+  const upcoming = futureWeeks[0] ?? null;
+  const otherWeeks = futureWeeks.slice(1);
 
   return (
     <div
@@ -111,6 +112,8 @@ export default function SunnySundayPanel({ theme }: SunnySundayPanelProps) {
               <div
                 key={i}
                 style={{
+                  display: "flex",
+                  gap: "0.5rem",
                   padding: "0.5rem 0.65rem",
                   fontSize: "0.85rem",
                   fontWeight: 600,
@@ -119,6 +122,7 @@ export default function SunnySundayPanel({ theme }: SunnySundayPanelProps) {
                   lineHeight: 1.35,
                 }}
               >
+                <span style={{ flexShrink: 0, color: theme.accent }}>•</span>
                 {line}
               </div>
             ))}
@@ -147,7 +151,7 @@ export default function SunnySundayPanel({ theme }: SunnySundayPanelProps) {
                   transition: "all 0.2s",
                 }}
               >
-                <span>Other weeks ({otherWeeks.length})</span>
+                <span>Upcoming weeks ({otherWeeks.length})</span>
                 <span
                   style={{
                     transition: "transform 0.2s",
@@ -174,28 +178,26 @@ export default function SunnySundayPanel({ theme }: SunnySundayPanelProps) {
                           padding: "0.45rem 0.75rem",
                           fontSize: "0.75rem",
                           fontWeight: 700,
-                          color: week.isPast ? theme.muted : theme.text,
+                          color: theme.text,
                           background: theme.bg,
-                          opacity: week.isPast ? 0.6 : 1,
                         }}
                       >
                         {week.date}
-                        {week.isPast && (
-                          <span style={{ marginLeft: "6px", fontSize: "0.65rem", color: theme.muted }}>(past)</span>
-                        )}
                       </div>
                       <div style={{ padding: "0.3rem 0.75rem 0.45rem" }}>
                         {week.details.map((line, li) => (
                           <div
                             key={li}
                             style={{
+                              display: "flex",
+                              gap: "0.5rem",
                               padding: "0.2rem 0",
                               fontSize: "0.78rem",
-                              color: week.isPast ? theme.muted : theme.text,
-                              opacity: week.isPast ? 0.6 : 1,
+                              color: theme.text,
                               lineHeight: 1.35,
                             }}
                           >
+                            <span style={{ flexShrink: 0, color: theme.accent }}>•</span>
                             {line}
                           </div>
                         ))}
