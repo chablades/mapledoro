@@ -4,7 +4,9 @@
 
   Architecture:
   - A cron job calls refreshSunnySunday() daily to check Discord for new data.
-  - The result is persisted to data/sunny-sunday.json (the source of truth).
+  - The result is persisted to a JSON cache file (the source of truth).
+  - On Vercel: /tmp/sunny-sunday.json (writable in serverless).
+  - Locally: data/sunny-sunday.json (for dev convenience).
   - The public GET route reads from the JSON cache — no live Discord calls.
   - The cron skips the Discord call when cached weeks still have upcoming events.
 
@@ -44,7 +46,10 @@ interface CachedData {
 
 // -- Cache file -------------------------------------------------------------
 
-const CACHE_FILE = path.join(process.cwd(), "data", "sunny-sunday.json");
+const CACHE_FILE =
+  process.env.VERCEL === "1"
+    ? "/tmp/sunny-sunday.json"
+    : path.join(process.cwd(), "data", "sunny-sunday.json");
 
 export async function readCachedSchedule(): Promise<CachedData | null> {
   try {

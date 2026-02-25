@@ -2,52 +2,56 @@ import { NextResponse } from "next/server";
 
 export const revalidate = 86400; // Cache for 24 hours
 
+interface NexonNewsItem {
+  id: number;
+  name: string;
+  category: string;
+  liveDate: string;
+}
+
+function formatDate(isoDate: string): string {
+  return new Date(isoDate).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+function buildNewsUrl(item: NexonNewsItem): string {
+  const slug = item.name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+  return `https://www.nexon.com/maplestory/news/${item.category}/${item.id}/${slug}`;
+}
+
 export async function GET() {
   try {
-    const response = await fetch("https://www.nexon.com/maplestory/news/all?page=1");
-    const html = await response.text();
+    // Nexon serves all news as static JSON on their CDN (the website is an SPA).
+    const response = await fetch("https://g.nexonstatic.com/maplestory/cms/v1/news", {
+      headers: { Accept: "application/json" },
+    });
+    if (!response.ok) throw new Error(`CDN returned ${response.status}`);
 
-    // Parse patch notes from HTML
-    // Look for links in the format: [CATEGORY Date TITLE](URL)
-    const linkRegex = /\[([A-Z]+)\s+([A-Za-z]+\s+\d{1,2},?\s*\d{4})\s+([^\]]+)\]\(([^)]+)\)/g;
-    const matches = [];
-    let match;
+    const items = (await response.json()) as NexonNewsItem[];
 
-    while ((match = linkRegex.exec(html)) !== null) {
-      matches.push({
-        category: match[1],
-        date: match[2],
-        title: match[3].trim(),
-        url: match[4],
-      });
-    }
+    // Sort by liveDate descending, take latest 15
+    const sorted = [...items]
+      .sort((a, b) => new Date(b.liveDate).getTime() - new Date(a.liveDate).getTime())
+      .slice(0, 15);
 
-    // Take the first 3 items regardless of category
-    const patchNotes = matches
-      .slice(0, 3)
-      .map((item) => {
-        // Extract version (e.g., v.266 or V.266)
-        const versionMatch = item.title.match(/V\.?(\d+)/i);
-        const version = versionMatch ? `v${versionMatch[1]}` : item.category;
+    const patchNotes = sorted.map((item) => {
+      const versionMatch = item.name.match(/V\.?(\d+)/i);
+      const version = versionMatch ? `v${versionMatch[1]}` : "";
 
-        // Ensure URL is absolute
-        const absoluteUrl = item.url.startsWith("http")
-          ? item.url
-          : `https://www.nexon.com${item.url}`;
-
-        return {
-          version,
-          title: item.title,
-          date: item.date,
-          url: absoluteUrl,
-          tags: [item.category],
-        };
-      });
+      return {
+        version,
+        title: item.name.toUpperCase(),
+        date: formatDate(item.liveDate),
+        url: buildNewsUrl(item),
+        tags: [item.category.toUpperCase()],
+      };
+    });
 
     return NextResponse.json(patchNotes);
   } catch (error) {
     console.error("Error fetching patch notes:", error);
-    // Fallback to latest patch notes
     const defaultPatchNotes = [
       {
         version: "v266",
