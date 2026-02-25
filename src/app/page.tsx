@@ -10,8 +10,29 @@ import AppShell from "../components/AppShell";
 import SunnySundayPanel from "../components/SunnySundayPanel";
 import type { AppTheme } from "../components/themes";
 
+// -- Patch Notes constants ----------------------------------------------------
+const PATCH_CACHE_KEY = "mapledoro_patch_notes_v1";
+const PATCH_CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
+const PATCH_DISPLAY_LIMIT = 3;
+const PATCH_FILTERS = ["All", "MAINTENANCE", "SALE", "UPDATE", "EVENTS", "COMMUNITY"] as const;
+type PatchFilter = (typeof PATCH_FILTERS)[number];
+
+type PatchNote = { version: string; date: string; title: string; tags: string[]; url: string };
+
+function readCachedPatchNotes(): PatchNote[] | null {
+  try {
+    const raw = localStorage.getItem(PATCH_CACHE_KEY);
+    if (!raw) return null;
+    const cached = JSON.parse(raw) as { expiresAt: number; data: PatchNote[] };
+    if (Date.now() < cached.expiresAt && Array.isArray(cached.data) && cached.data.length > 0) {
+      return cached.data;
+    }
+  } catch { /* ignore */ }
+  return null;
+}
+
 // -- Data ---------------------------------------------------------------------
-const initialPatchNotes = [
+const initialPatchNotes: PatchNote[] = [
   {
     version: "v266",
     date: "Feb 18",
@@ -66,14 +87,24 @@ function pct(elapsed: number, total: number) {
 }
 
 function DashboardContent({ theme, now }: { theme: AppTheme; now: Date }) {
-  const [patchNotes, setPatchNotes] = useState(initialPatchNotes);
+  const [patchNotes, setPatchNotes] = useState<PatchNote[]>(() => readCachedPatchNotes() ?? initialPatchNotes);
+  const [patchFilter, setPatchFilter] = useState<PatchFilter>("All");
+  const [patchExpanded, setPatchExpanded] = useState(false);
 
   useEffect(() => {
+    if (readCachedPatchNotes()) return;
+
     fetch("/api/patch-notes")
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data) && data.length > 0) {
-          setPatchNotes(data.slice(0, 3));
+          setPatchNotes(data);
+          try {
+            localStorage.setItem(
+              PATCH_CACHE_KEY,
+              JSON.stringify({ expiresAt: Date.now() + PATCH_CACHE_TTL_MS, data }),
+            );
+          } catch { /* localStorage full or unavailable */ }
         }
       })
       .catch((err) => console.error("Failed to fetch patch notes:", err));
@@ -96,6 +127,15 @@ function DashboardContent({ theme, now }: { theme: AppTheme; now: Date }) {
       progress: pct(604800 - (weekly.getTime() - now.getTime()) / 1000, 604800),
     },
   ];
+
+  const allFilteredPatchNotes =
+    patchFilter === "All"
+      ? patchNotes
+      : patchNotes.filter((p) => p.tags.includes(patchFilter));
+  const filteredPatchNotes = patchExpanded
+    ? allFilteredPatchNotes
+    : allFilteredPatchNotes.slice(0, PATCH_DISPLAY_LIMIT);
+  const hasMoreNotes = allFilteredPatchNotes.length > PATCH_DISPLAY_LIMIT;
 
   return (
     <>
@@ -312,110 +352,170 @@ function DashboardContent({ theme, now }: { theme: AppTheme; now: Date }) {
             >
               <div
                 style={{
-                  padding: "0.9rem 1.25rem",
+                  padding: "0.9rem 1.25rem 0.5rem",
                   borderBottom: `1px solid ${theme.border}`,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
                 }}
               >
-                <span>📋</span>
-                <span
-                  style={{
-                    fontFamily: "'Fredoka One', cursive",
-                    fontSize: "1.1rem",
-                    color: theme.text,
-                  }}
-                >
-                  Patch Notes
-                </span>
-                <a
-                  href="https://maplestory.nexon.net/news/patch-notes"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    marginLeft: "auto",
-                    fontSize: "0.78rem",
-                    color: theme.accent,
-                    textDecoration: "none",
-                    fontWeight: 800,
-                  }}
-                >
-                  All →
-                </a>
-              </div>
-              {patchNotes.map((p, i) => (
-                <a
-                  key={i}
-                  href={p.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{ textDecoration: "none", display: "block" }}
-                >
-                  <div
-                    className="row-hover"
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "0.5rem" }}>
+                  <span>📋</span>
+                  <span
                     style={{
-                      padding: "0.85rem 1.25rem",
-                      cursor: "pointer",
-                      borderBottom:
-                        i < patchNotes.length - 1 ? `1px solid ${theme.border}` : "none",
-                      transition: "background 0.15s",
+                      fontFamily: "'Fredoka One', cursive",
+                      fontSize: "1.1rem",
+                      color: theme.text,
                     }}
                   >
-                    <div
+                    Patch Notes
+                  </span>
+                  <a
+                    href="https://maplestory.nexon.net/news/patch-notes"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      marginLeft: "auto",
+                      fontSize: "0.78rem",
+                      color: theme.accent,
+                      textDecoration: "none",
+                      fontWeight: 800,
+                    }}
+                  >
+                    All →
+                  </a>
+                </div>
+                <div style={{ display: "flex", gap: "4px", flexWrap: "wrap", paddingBottom: "0.4rem" }}>
+                  {PATCH_FILTERS.map((filter) => {
+                    const active = patchFilter === filter;
+                    return (
+                      <button
+                        key={filter}
+                        type="button"
+                        onClick={() => { setPatchFilter(filter); setPatchExpanded(false); }}
+                        style={{
+                          border: "none",
+                          borderRadius: "8px",
+                          padding: "3px 8px",
+                          fontSize: "0.62rem",
+                          fontWeight: 700,
+                          fontFamily: "inherit",
+                          cursor: "pointer",
+                          background: active ? theme.accent : theme.bg,
+                          color: active ? "#fff" : theme.muted,
+                          transition: "all 0.15s",
+                        }}
+                      >
+                        {filter === "All" ? "All" : filter.charAt(0) + filter.slice(1).toLowerCase()}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              {filteredPatchNotes.length === 0 ? (
+                <div style={{ padding: "1.5rem 1.25rem", textAlign: "center", color: theme.muted, fontSize: "0.85rem", fontWeight: 600 }}>
+                  No notes for this filter.
+                </div>
+              ) : (
+                <>
+                  {filteredPatchNotes.map((p, i) => (
+                    <a
+                      key={i}
+                      href={p.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ textDecoration: "none", display: "block" }}
+                    >
+                      <div
+                        className="row-hover"
+                        style={{
+                          padding: "0.85rem 1.25rem",
+                          cursor: "pointer",
+                          borderBottom: `1px solid ${theme.border}`,
+                          transition: "background 0.15s",
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "5px",
+                            marginBottom: "4px",
+                          }}
+                        >
+                          <span
+                            style={{
+                              fontSize: "0.68rem",
+                              fontWeight: 800,
+                              color: theme.accentText,
+                              background: theme.accentSoft,
+                              padding: "2px 7px",
+                              borderRadius: "6px",
+                            }}
+                          >
+                            {p.version}
+                          </span>
+                          {p.tags.map((tag) => (
+                            <span
+                              key={tag}
+                              style={{
+                                fontSize: "0.65rem",
+                                fontWeight: 700,
+                                color: theme.badgeText,
+                                background: theme.badge,
+                                padding: "2px 7px",
+                                borderRadius: "6px",
+                              }}
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                          <span
+                            style={{
+                              marginLeft: "auto",
+                              fontSize: "0.7rem",
+                              color: theme.muted,
+                            }}
+                          >
+                            {p.date}
+                          </span>
+                          <span style={{ fontSize: "0.75rem", color: theme.accent, marginLeft: "4px" }}>
+                            ↗
+                          </span>
+                        </div>
+                        <div style={{ fontSize: "0.875rem", fontWeight: 700, color: theme.text }}>
+                          {p.title}
+                        </div>
+                      </div>
+                    </a>
+                  ))}
+                  {hasMoreNotes && (
+                    <button
+                      type="button"
+                      onClick={() => setPatchExpanded((prev) => !prev)}
                       style={{
                         display: "flex",
                         alignItems: "center",
-                        gap: "5px",
-                        marginBottom: "4px",
+                        justifyContent: "center",
+                        gap: "4px",
+                        width: "100%",
+                        padding: "0.6rem 1.25rem",
+                        border: "none",
+                        background: "transparent",
+                        cursor: "pointer",
+                        fontSize: "0.78rem",
+                        fontWeight: 700,
+                        fontFamily: "inherit",
+                        color: theme.accent,
+                        transition: "background 0.15s",
                       }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = theme.accentSoft; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
                     >
-                      <span
-                        style={{
-                          fontSize: "0.68rem",
-                          fontWeight: 800,
-                          color: theme.accentText,
-                          background: theme.accentSoft,
-                          padding: "2px 7px",
-                          borderRadius: "6px",
-                        }}
-                      >
-                        {p.version}
-                      </span>
-                      {p.tags.map((tag) => (
-                        <span
-                          key={tag}
-                          style={{
-                            fontSize: "0.65rem",
-                            fontWeight: 700,
-                            color: theme.badgeText,
-                            background: theme.badge,
-                            padding: "2px 7px",
-                            borderRadius: "6px",
-                          }}
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                      <span
-                        style={{
-                          marginLeft: "auto",
-                          fontSize: "0.7rem",
-                          color: theme.muted,
-                        }}
-                      >
-                        {p.date}
-                      </span>
-                      <span style={{ fontSize: "0.75rem", color: theme.accent, marginLeft: "4px" }}>
-                        ↗
-                      </span>
-                    </div>
-                    <div style={{ fontSize: "0.875rem", fontWeight: 700, color: theme.text }}>
-                      {p.title}
-                    </div>
-                  </div>
-                </a>
-              ))}
+                      {patchExpanded
+                        ? "Show less ▲"
+                        : `Show ${allFilteredPatchNotes.length - PATCH_DISPLAY_LIMIT} more ▼`}
+                    </button>
+                  )}
+                </>
+              )}
             </div>
 
             <SunnySundayPanel theme={theme} />
