@@ -7,7 +7,9 @@
   - The result is persisted to a JSON cache file (the source of truth).
   - On Vercel: /tmp/sunny-sunday.json (writable in serverless).
   - Locally: data/sunny-sunday.json (for dev convenience).
-  - The public GET route reads from the JSON cache — no live Discord calls.
+  - The public GET route reads from the JSON cache first.
+  - If the cache is empty (e.g. cold start wiped /tmp), it self-heals by
+    fetching from Discord on the spot and repopulating the cache.
   - The cron skips the Discord call when cached weeks still have upcoming events.
 
   Expected Discord message format (one block per week):
@@ -67,9 +69,20 @@ async function writeCachedSchedule(data: CachedData): Promise<void> {
 
 // -- Serving (for GET route) ------------------------------------------------
 
-/** Read from the cache file and recompute isPast relative to now. */
+/**
+ * Read from the cache file and recompute isPast relative to now.
+ * If the cache is empty (e.g. after a Vercel cold start wiped /tmp),
+ * automatically fetch from Discord to repopulate it.
+ */
 export async function getSunnySunday(): Promise<SunnySundayPayload | null> {
-  const cached = await readCachedSchedule();
+  let cached = await readCachedSchedule();
+
+  // Self-heal: if cache is missing, try a live Discord fetch
+  if (!cached || cached.weeks.length === 0) {
+    await refreshSunnySunday().catch(() => {});
+    cached = await readCachedSchedule();
+  }
+
   if (!cached || cached.weeks.length === 0) return null;
 
   const now = new Date();
