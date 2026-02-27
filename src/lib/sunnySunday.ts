@@ -1,16 +1,13 @@
 /*
-  Sunny Sunday data parsing & caching.
+  Sunny Sunday data parsing & fetching.
   Parses multi-week Sunny Sunday event listings from Discord messages.
 
   Architecture:
-  - A cron job calls refreshSunnySunday() daily to check Discord for new data.
-  - The result is persisted to a JSON cache file (the source of truth).
-  - On Vercel: /tmp/sunny-sunday.json (writable in serverless).
-  - Locally: data/sunny-sunday.json (for dev convenience).
-  - The public GET route reads from the JSON cache first.
-  - If the cache is empty (e.g. cold start wiped /tmp), it self-heals by
-    fetching from Discord on the spot and repopulating the cache.
-  - The cron skips the Discord call when cached weeks still have upcoming events.
+  - The public GET route calls fetchSunnySunday() to get data from Discord.
+  - Vercel's CDN caches the response via Cache-Control headers (s-maxage).
+  - No file-system caching — the CDN edge is the cache layer.
+  - First visitor after cache expires triggers a Discord fetch; everyone else
+    gets the cached response instantly.
 
   Expected Discord message format (one block per week):
   ---
@@ -22,8 +19,6 @@
   Treasure Hunter EXP x3
   ---
 */
-import fs from "fs/promises";
-import path from "path";
 import { fetchDiscordMessages } from "./discord";
 
 // -- Types ------------------------------------------------------------------
@@ -40,108 +35,23 @@ export interface SunnySundayPayload {
   fetchedAt: string;
 }
 
-interface CachedData {
-  messageId: string;
-  fetchedAt: string;
-  weeks: SunnySundayWeek[];
-}
-
-// -- Cache file -------------------------------------------------------------
-
-const CACHE_FILE =
-  process.env.VERCEL === "1"
-    ? "/tmp/sunny-sunday.json"
-    : path.join(process.cwd(), "data", "sunny-sunday.json");
-
-export async function readCachedSchedule(): Promise<CachedData | null> {
-  try {
-    const raw = await fs.readFile(CACHE_FILE, "utf-8");
-    return JSON.parse(raw) as CachedData;
-  } catch {
-    return null;
-  }
-}
-
-async function writeCachedSchedule(data: CachedData): Promise<void> {
-  await fs.mkdir(path.dirname(CACHE_FILE), { recursive: true });
-  await fs.writeFile(CACHE_FILE, JSON.stringify(data, null, 2), "utf-8");
-}
-
-// -- Serving (for GET route) ------------------------------------------------
+// -- Fetching ---------------------------------------------------------------
 
 /**
- * Read from the cache file and recompute isPast relative to now.
- * If the cache is empty (e.g. after a Vercel cold start wiped /tmp),
- * automatically fetch from Discord to repopulate it.
+ * Fetch the latest Sunny Sunday schedule directly from Discord,
+ * parse it, and return the payload. Returns null if no data is available.
  */
-export async function getSunnySunday(): Promise<SunnySundayPayload | null> {
-  let cached = await readCachedSchedule();
-
-  // Self-heal: if cache is missing, try a live Discord fetch
-  if (!cached || cached.weeks.length === 0) {
-    await refreshSunnySunday().catch(() => {});
-    cached = await readCachedSchedule();
-  }
-
-  if (!cached || cached.weeks.length === 0) return null;
-
-  const now = new Date();
-  const weeks = cached.weeks.map((w) => ({
-    ...w,
-    isPast: new Date(w.dateISO) < now,
-  }));
-
-  return { weeks, fetchedAt: cached.fetchedAt };
-}
-
-// -- Refresh (for cron route) -----------------------------------------------
-
-/**
- * Returns true when the cache has no data or all listed events are in the past,
- * meaning we should check Discord for a new schedule.
- */
-function shouldRefresh(cached: CachedData | null): boolean {
-  if (!cached || cached.weeks.length === 0) return true;
-
-  const now = new Date();
-  const hasUpcoming = cached.weeks.some((w) => new Date(w.dateISO) > now);
-  return !hasUpcoming;
-}
-
-/**
- * Called by the cron endpoint. Skips the Discord call if the cached schedule
- * still has upcoming events. Returns a status string for logging.
- */
-export async function refreshSunnySunday(): Promise<string> {
-  const cached = await readCachedSchedule();
-
-  if (!shouldRefresh(cached)) {
-    return "skipped — cached schedule still has upcoming events";
-  }
-
+export async function fetchSunnySunday(): Promise<SunnySundayPayload | null> {
   const channelId = process.env.DISCORD_CHANNEL_ID;
-  if (!channelId) return "skipped — DISCORD_CHANNEL_ID not set";
+  if (!channelId) return null;
 
   const messages = await fetchDiscordMessages(channelId, 1);
-  if (messages.length === 0) return "skipped — no messages in channel";
+  if (messages.length === 0) return null;
 
-  const message = messages[0];
+  const weeks = parseSunnySundayMessage(messages[0].content);
+  if (weeks.length === 0) return null;
 
-  // No change since last fetch
-  if (cached && cached.messageId === message.id) {
-    return "skipped — Discord message unchanged";
-  }
-
-  const weeks = parseSunnySundayMessage(message.content);
-  if (weeks.length === 0) return "skipped — could not parse any weeks";
-
-  await writeCachedSchedule({
-    messageId: message.id,
-    fetchedAt: new Date().toISOString(),
-    weeks,
-  });
-
-  return `updated — ${weeks.length} week(s) saved`;
+  return { weeks, fetchedAt: new Date().toISOString() };
 }
 
 // -- Parser -----------------------------------------------------------------
