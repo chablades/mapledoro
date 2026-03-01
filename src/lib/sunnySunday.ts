@@ -64,6 +64,21 @@ const MONTH_MAP: Record<string, number> = {
   july: 6, august: 7, september: 8, october: 9, november: 10, december: 11,
 };
 
+/**
+ * Compute when a Sunny Sunday event actually ends.
+ * Events run from their listed start until the next Monday 00:00 UTC
+ * (i.e. the MapleStory daily reset after Sunday).
+ */
+function getEventEndUTC(startDate: Date): Date {
+  const d = new Date(startDate);
+  const dayOfWeek = d.getUTCDay(); // 0=Sun, 6=Sat
+  // Days until next Monday: Sat(6)->2, Sun(0)->1, Mon(1)->7, etc.
+  const daysUntilMonday = ((8 - dayOfWeek) % 7) || 7;
+  d.setUTCDate(d.getUTCDate() + daysUntilMonday);
+  d.setUTCHours(0, 0, 0, 0);
+  return d;
+}
+
 function parseDateLine(line: string): { label: string; iso: string } | null {
   const m = line.match(DATE_RE);
   if (!m) return null;
@@ -109,7 +124,7 @@ export function parseSunnySundayMessage(content: string): SunnySundayWeek[] {
         date: parsed.label,
         dateISO: parsed.iso,
         details: [],
-        isPast: new Date(parsed.iso) < now,
+        isPast: getEventEndUTC(new Date(parsed.iso)) < now,
       };
       continue;
     }
