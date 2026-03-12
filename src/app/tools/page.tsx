@@ -23,6 +23,13 @@ const TOOLS: ToolCard[] = [
     emoji: "💎",
     href: "/tools/boss-crystals",
   },
+  {
+    title: "Liberation Calculator",
+    description:
+      "Track your Genesis and Destiny liberation progress and estimate completion.",
+    emoji: "🗡️",
+    href: "/tools/liberation",
+  },
 ];
 
 function ToolsContent({ theme }: { theme: AppTheme }) {
