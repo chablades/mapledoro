@@ -87,16 +87,12 @@ function pct(elapsed: number, total: number) {
 }
 
 function DashboardContent({ theme, now }: { theme: AppTheme; now: Date }) {
-  const [patchNotes, setPatchNotes] = useState<PatchNote[]>(initialPatchNotes);
+  const [patchNotes, setPatchNotes] = useState<PatchNote[]>(() => readCachedPatchNotes() ?? initialPatchNotes);
   const [patchFilter, setPatchFilter] = useState<PatchFilter>("All");
   const [patchExpanded, setPatchExpanded] = useState(false);
 
   useEffect(() => {
-    const cached = readCachedPatchNotes();
-    if (cached) {
-      setPatchNotes(cached);
-      return;
-    }
+    if (readCachedPatchNotes()) return;
 
     fetch("/api/patch-notes")
       .then((res) => res.json())
