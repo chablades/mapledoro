@@ -221,7 +221,6 @@ export default function LiberationWorkspace({ theme }: { theme: AppTheme }) {
 
   const { type, questIdx, currentTraces, genesisPass, startDate, selections } = form;
 
-  const setType = useCallback((v: LiberationType) => setForm((f) => ({ ...f, type: v })), []);
   const setQuestIdx = useCallback((v: number) => setForm((f) => ({ ...f, questIdx: v })), []);
   const setCurrentTraces = useCallback((v: number) => setForm((f) => ({ ...f, currentTraces: v })), []);
   const setGenesisPass = useCallback((updater: (prev: boolean) => boolean) => setForm((f) => ({ ...f, genesisPass: updater(f.genesisPass) })), []);

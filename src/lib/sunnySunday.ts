@@ -50,10 +50,7 @@ export async function fetchSunnySunday(): Promise<SunnySundayPayload | null> {
 
 // -- Parser -----------------------------------------------------------------
 
-/** Discord timestamp: <t:1774137600:F> */
-const DISCORD_TS_RE = /<t:(\d+):[A-Za-z]>/;
-
-/** Matches a line that is a date header (with Discord timestamps or markdown heading) */
+/** Matches a line that is a date header with Discord timestamp <t:UNIX:F> */
 const DISCORD_DATE_LINE_RE = /<t:(\d+):F>/;
 
 /** Plain-text date: Saturday, February 28, 2026 4:00 PM */
