@@ -86,6 +86,51 @@ function pct(elapsed: number, total: number) {
   return `${Math.min(100, Math.max(0, (elapsed / total) * 100)).toFixed(1)}%`;
 }
 
+// -- Ursus 2× meso helpers ----------------------------------------------------
+// Two 4-hour windows daily (EST → UTC+0):
+//   9 PM – 1 AM EST  →  02:00 – 06:00 UTC
+//   2 PM – 6 PM EST  →  19:00 – 23:00 UTC
+function getUrsusStatus(now: Date):
+  | { active: true; remaining: number; elapsed: number; total: number }
+  | { active: false; until: number } {
+  const h = now.getUTCHours();
+  const nowMs = now.getTime();
+
+  const inWindow1 = h >= 2 && h < 6;
+  const inWindow2 = h >= 19 && h < 23;
+
+  if (inWindow1 || inWindow2) {
+    const endHour = inWindow1 ? 6 : 23;
+    const end = new Date(now);
+    end.setUTCHours(endHour, 0, 0, 0);
+    const startHour = inWindow1 ? 2 : 19;
+    const start = new Date(now);
+    start.setUTCHours(startHour, 0, 0, 0);
+    return {
+      active: true as const,
+      remaining: end.getTime() - nowMs,
+      elapsed: (nowMs - start.getTime()) / 1000,
+      total: 4 * 3600,
+    };
+  }
+
+  // Next window start
+  let nextStart: Date;
+  if (h < 2) {
+    nextStart = new Date(now);
+    nextStart.setUTCHours(2, 0, 0, 0);
+  } else if (h >= 6 && h < 19) {
+    nextStart = new Date(now);
+    nextStart.setUTCHours(19, 0, 0, 0);
+  } else {
+    // h >= 23
+    nextStart = new Date(now);
+    nextStart.setUTCDate(nextStart.getUTCDate() + 1);
+    nextStart.setUTCHours(2, 0, 0, 0);
+  }
+  return { active: false as const, until: nextStart.getTime() - nowMs };
+}
+
 function DashboardContent({ theme, now }: { theme: AppTheme; now: Date }) {
   const [patchNotes, setPatchNotes] = useState<PatchNote[]>(
     () => readCachedPatchNotes() ?? initialPatchNotes,
@@ -129,6 +174,8 @@ function DashboardContent({ theme, now }: { theme: AppTheme; now: Date }) {
       progress: pct(604800 - (weekly.getTime() - now.getTime()) / 1000, 604800),
     },
   ];
+
+  const ursus = getUrsusStatus(now);
 
   const allFilteredPatchNotes =
     patchFilter === "All"
@@ -339,6 +386,133 @@ function DashboardContent({ theme, now }: { theme: AppTheme; now: Date }) {
                     </div>
                   </div>
                 ))}
+              </div>
+            </div>
+
+            <div
+              className="fade-in panel"
+              style={{
+                animationDelay: "0.25s",
+                background: theme.panel,
+                border: `1px solid ${theme.border}`,
+                borderRadius: "18px",
+                overflow: "hidden",
+              }}
+            >
+              <div
+                style={{
+                  padding: "1rem 1.25rem 0.8rem",
+                  borderBottom: `1px solid ${theme.border}`,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                }}
+              >
+                <span style={{ fontSize: "1.1rem" }}>🐻</span>
+                <span
+                  style={{
+                    fontFamily: "'Fredoka One', cursive",
+                    fontSize: "1.15rem",
+                    color: theme.text,
+                  }}
+                >
+                  Ursus 2× Meso
+                </span>
+                {ursus.active && (
+                  <span
+                    style={{
+                      marginLeft: "auto",
+                      fontSize: "0.65rem",
+                      fontWeight: 800,
+                      color: "#fff",
+                      background: "#10b981",
+                      padding: "2px 8px",
+                      borderRadius: "6px",
+                      letterSpacing: "0.05em",
+                    }}
+                  >
+                    ACTIVE
+                  </span>
+                )}
+              </div>
+              <div style={{ padding: "0.75rem" }}>
+                <div
+                  style={{
+                    background: theme.timerBg,
+                    borderRadius: "14px",
+                    padding: "1rem 1.25rem",
+                    border: `1px solid ${theme.border}`,
+                    transition: "background 0.35s, border-color 0.35s",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "1rem",
+                  }}
+                >
+                  <div style={{ flex: 1 }}>
+                    <div
+                      style={{
+                        fontSize: "0.7rem",
+                        fontWeight: 800,
+                        color: theme.muted,
+                        textTransform: "uppercase",
+                        letterSpacing: "0.1em",
+                        marginBottom: "6px",
+                      }}
+                    >
+                      {ursus.active ? "Ends In" : "Starts In"}
+                    </div>
+                    <div
+                      className="countdown"
+                      style={{ color: theme.accent }}
+                    >
+                      {ursus.active ? fmt(ursus.remaining) : fmt(ursus.until)}
+                    </div>
+                  </div>
+                  {ursus.active && (
+                    <div style={{ width: "90px" }}>
+                      <div
+                        style={{
+                          height: "6px",
+                          background: theme.border,
+                          borderRadius: "3px",
+                          overflow: "hidden",
+                        }}
+                      >
+                        <div
+                          style={{
+                            height: "100%",
+                            background: theme.accent,
+                            width: pct(ursus.elapsed, ursus.total),
+                            borderRadius: "3px",
+                            transition: "width 1s linear",
+                          }}
+                        />
+                      </div>
+                      <div
+                        style={{
+                          fontSize: "0.65rem",
+                          color: theme.muted,
+                          marginTop: "4px",
+                          textAlign: "right",
+                          fontWeight: 700,
+                        }}
+                      >
+                        {pct(ursus.elapsed, ursus.total)} elapsed
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <div
+                  style={{
+                    marginTop: "0.6rem",
+                    fontSize: "0.65rem",
+                    color: theme.muted,
+                    fontWeight: 700,
+                    textAlign: "center",
+                  }}
+                >
+                  7:00 PM – 11:00 PM &amp; 2:00 AM – 6:00 AM UTC
+                </div>
               </div>
             </div>
 
