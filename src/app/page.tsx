@@ -124,7 +124,7 @@ function DashboardContent({ theme, now }: { theme: AppTheme; now: Date }) {
     },
     {
       label: "Weekly Reset",
-      color: "#f59e0b",
+      color: theme.accent,
       countdown: fmt(weekly.getTime() - now.getTime()),
       progress: pct(604800 - (weekly.getTime() - now.getTime()) / 1000, 604800),
     },
