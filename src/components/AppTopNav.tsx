@@ -5,7 +5,7 @@
   Edit here for nav structure/behavior (brand, links, UTC clock, mobile menu).
   Styling lives in AppTopNav.module.css; link list lives in nav-links.ts.
 */
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import styles from "./AppTopNav.module.css";
@@ -32,6 +32,8 @@ export default function AppTopNav<TTheme extends AppTheme>({
   onThemeChange,
 }: AppTopNavProps<TTheme>) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [themeDropdownOpen, setThemeDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const clockReady = useSyncExternalStore(
     () => () => undefined,
     () => true,
@@ -45,6 +47,24 @@ export default function AppTopNav<TTheme extends AppTheme>({
     window.addEventListener("resize", close);
     return () => window.removeEventListener("resize", close);
   }, [mobileMenuOpen]);
+
+  useEffect(() => {
+    if (!themeDropdownOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setThemeDropdownOpen(false);
+      }
+    };
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setThemeDropdownOpen(false);
+    };
+    document.addEventListener("mousedown", handleClick);
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      document.removeEventListener("mousedown", handleClick);
+      document.removeEventListener("keydown", handleKey);
+    };
+  }, [themeDropdownOpen]);
 
   return (
     <>
@@ -113,6 +133,86 @@ export default function AppTopNav<TTheme extends AppTheme>({
               );
             })}
           </div>
+        </div>
+
+        <div className={styles.themeDropdown} ref={dropdownRef}>
+          <span className={styles.themeLabel} style={{ color: theme.muted }}>
+            Theme
+          </span>
+          <button
+            type="button"
+            className={styles.themeDropdownBtn}
+            onClick={() => setThemeDropdownOpen((prev) => !prev)}
+            style={{
+              border: `1px solid ${theme.border}`,
+              background: theme.bg,
+              color: theme.text,
+            }}
+          >
+            <span
+              style={{
+                width: 16,
+                height: 16,
+                borderRadius: 4,
+                background: `linear-gradient(to right, ${theme.bg} 50%, ${theme.accent} 50%)`,
+                border: `1px solid ${theme.border}`,
+                display: "inline-block",
+                flexShrink: 0,
+              }}
+            />
+            <span>{theme.name}</span>
+            <svg width="10" height="6" viewBox="0 0 10 6" fill="none" style={{ marginLeft: "auto", opacity: 0.6 }}>
+              <path
+                d="M1 1L5 5L9 1"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+          {themeDropdownOpen && (
+            <div
+              className={styles.themeDropdownPanel}
+              style={{
+                background: theme.panel,
+                border: `1px solid ${theme.border}`,
+                boxShadow: "0 4px 20px rgba(0,0,0,0.12)",
+              }}
+            >
+              {Object.entries(themes).map(([key, th]) => {
+                const active = themeKey === key;
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    className={styles.themeDropdownItem}
+                    onClick={() => {
+                      onThemeChange(key);
+                      setThemeDropdownOpen(false);
+                    }}
+                    style={{
+                      background: active ? theme.accentSoft : "transparent",
+                      color: active ? theme.accentText : theme.text,
+                    }}
+                  >
+                    <span
+                      style={{
+                        width: 18,
+                        height: 18,
+                        borderRadius: 5,
+                        background: `linear-gradient(to right, ${th.bg} 50%, ${th.accent} 50%)`,
+                        border: `1px solid ${th.border}`,
+                        display: "inline-block",
+                        flexShrink: 0,
+                      }}
+                    />
+                    <span style={{ fontWeight: active ? 800 : 500 }}>{th.name}</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         <span
@@ -253,7 +353,7 @@ export default function AppTopNav<TTheme extends AppTheme>({
                   padding: "0.3rem 0.55rem",
                 }}
               >
-                {th.emoji} {th.name}
+                {th.name}
               </button>
             ))}
           </div>

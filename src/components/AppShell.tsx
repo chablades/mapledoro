@@ -8,7 +8,6 @@ import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import AppTopNav from "./AppTopNav";
 import { NAV_LINKS } from "./nav-links";
-import ThemeSidebar from "./ThemeSidebar";
 import { THEMES, type AppTheme } from "./themes";
 import { useTheme } from "./ThemeContext";
 
@@ -48,12 +47,6 @@ export default function AppShell({ currentPath, children }: AppShellProps) {
       />
 
       <div className="page-shell">
-        <ThemeSidebar
-          theme={theme}
-          themeKey={themeKey}
-          themes={THEMES}
-          onThemeChange={setThemeKey}
-        />
         {children({ theme, now })}
       </div>
 
