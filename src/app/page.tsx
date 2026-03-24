@@ -84,25 +84,19 @@ function fmt(ms: number) {
 
 
 // -- Ursus 2× meso helpers ----------------------------------------------------
-// Two 4-hour windows daily (EST → UTC+0):
-//   9 PM – 1 AM EST  →  02:00 – 06:00 UTC
-//   2 PM – 6 PM EST  →  19:00 – 23:00 UTC
 function getUrsusStatus(now: Date):
   | { active: true; remaining: number }
   | { active: false; until: number } {
   const h = now.getUTCHours();
   const nowMs = now.getTime();
 
-  const inWindow1 = h >= 2 && h < 6;
-  const inWindow2 = h >= 19 && h < 23;
+  const inWindow1 = h >= 1 && h < 5;
+  const inWindow2 = h >= 18 && h < 22;
 
   if (inWindow1 || inWindow2) {
-    const endHour = inWindow1 ? 6 : 23;
+    const endHour = inWindow1 ? 5 : 22;
     const end = new Date(now);
     end.setUTCHours(endHour, 0, 0, 0);
-    const startHour = inWindow1 ? 2 : 19;
-    const start = new Date(now);
-    start.setUTCHours(startHour, 0, 0, 0);
     return {
       active: true as const,
       remaining: end.getTime() - nowMs,
@@ -111,17 +105,17 @@ function getUrsusStatus(now: Date):
 
   // Next window start
   let nextStart: Date;
-  if (h < 2) {
+  if (h < 1) {
     nextStart = new Date(now);
-    nextStart.setUTCHours(2, 0, 0, 0);
-  } else if (h >= 6 && h < 19) {
+    nextStart.setUTCHours(1, 0, 0, 0);
+  } else if (h >= 5 && h < 18) {
     nextStart = new Date(now);
-    nextStart.setUTCHours(19, 0, 0, 0);
+    nextStart.setUTCHours(18, 0, 0, 0);
   } else {
-    // h >= 23
+    // h >= 22
     nextStart = new Date(now);
     nextStart.setUTCDate(nextStart.getUTCDate() + 1);
-    nextStart.setUTCHours(2, 0, 0, 0);
+    nextStart.setUTCHours(1, 0, 0, 0);
   }
   return { active: false as const, until: nextStart.getTime() - nowMs };
 }
@@ -169,6 +163,15 @@ function DashboardContent({ theme, now }: { theme: AppTheme; now: Date }) {
   ];
 
   const ursus = getUrsusStatus(now);
+
+  const fmtLocal = (utcHour: number) => {
+    const d = new Date(now);
+    d.setUTCHours(utcHour, 0, 0, 0);
+    return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  };
+  const tzLabel = new Intl.DateTimeFormat([], { timeZoneName: "short" })
+    .formatToParts(now)
+    .find((p) => p.type === "timeZoneName")?.value ?? "Local";
 
   const allFilteredPatchNotes =
     patchFilter === "All"
@@ -419,7 +422,7 @@ function DashboardContent({ theme, now }: { theme: AppTheme; now: Date }) {
                     textAlign: "center",
                   }}
                 >
-                  7:00 PM – 11:00 PM &amp; 2:00 AM – 6:00 AM UTC
+                  {fmtLocal(1)} – {fmtLocal(5)} &amp; {fmtLocal(18)} – {fmtLocal(22)} {tzLabel}
                 </div>
               </div>
             </div>
