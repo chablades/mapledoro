@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import Link from "next/link";
 import type { AppTheme } from "../../../components/themes";
+import { ToolHeader } from "../../../components/ToolHeader";
 import {
   BOSSES,
   BOSS_GROUPS,
@@ -354,41 +354,11 @@ export default function BossCrystalsWorkspace({ theme }: { theme: AppTheme }) {
         }}
       >
         <div style={{ maxWidth: "1400px", margin: "0 auto" }}>
-          {/* Header */}
-          <div style={{ marginBottom: "1.25rem" }}>
-            <Link
-              href="/tools"
-              style={{
-                fontSize: "0.78rem",
-                fontWeight: 800,
-                color: theme.accent,
-                textDecoration: "none",
-              }}
-            >
-              ← Back to Tools
-            </Link>
-            <div
-              style={{
-                fontFamily: "'Fredoka One', cursive",
-                fontSize: "1.5rem",
-                color: theme.text,
-                marginTop: "0.5rem",
-              }}
-            >
-              Boss Crystal Calculator
-            </div>
-            <div
-              style={{
-                fontSize: "0.8rem",
-                color: theme.muted,
-                fontWeight: 600,
-                marginTop: "0.15rem",
-                lineHeight: 1.5,
-              }}
-            >
-              Select bosses and set party size (1-6). Supports GMS (14 crystals/char).
-            </div>
-          </div>
+          <ToolHeader
+            theme={theme}
+            title="Boss Crystal Calculator"
+            description="Select bosses and set party size (1-6). Supports GMS (14 crystals/char)."
+          />
 
           {/* Controls panel */}
           <div

@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import Link from "next/link";
 import type { AppTheme } from "../../../components/themes";
+import { ToolHeader } from "../../../components/ToolHeader";
 import {
   type LiberationType,
   type LiberationBoss,
@@ -181,6 +181,194 @@ function calculate(
     completionDate,
     breakdown,
   };
+}
+
+// -- Boss Card ----------------------------------------------------------------
+
+function BossCard({
+  boss,
+  sel,
+  isActive,
+  activeDiff,
+  traces,
+  theme,
+  inputStyle,
+  pillBtn,
+  onDifficultyChange,
+  onPartySizeChange,
+  onClearedChange,
+}: {
+  boss: LiberationBoss;
+  sel: BossSelection;
+  isActive: boolean;
+  activeDiff: LiberationBoss["difficulties"][number] | null;
+  traces: number;
+  theme: AppTheme;
+  inputStyle: React.CSSProperties;
+  pillBtn: (active: boolean) => React.CSSProperties;
+  onDifficultyChange: (diffIdx: number | null) => void;
+  onPartySizeChange: (size: number) => void;
+  onClearedChange: (cleared: boolean) => void;
+}) {
+  return (
+    <div
+      style={{
+        background: theme.timerBg,
+        border: `1px solid ${isActive ? theme.accent + "55" : theme.border}`,
+        borderRadius: "14px",
+        padding: "1rem",
+        transition: "border-color 0.15s",
+      }}
+    >
+      {/* Boss header with icon */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "10px",
+          marginBottom: "0.6rem",
+        }}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={boss.icon}
+          alt={boss.name}
+          width={38}
+          height={38}
+          style={{
+            borderRadius: "8px",
+            objectFit: "cover",
+            flexShrink: 0,
+            background: theme.panel,
+            border: `1px solid ${theme.border}`,
+          }}
+        />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div
+            style={{
+              fontFamily: "'Fredoka One', cursive",
+              fontSize: "0.9rem",
+              color: theme.text,
+            }}
+          >
+            {boss.name}
+          </div>
+        </div>
+        {activeDiff && (
+          <div
+            style={{
+              fontSize: "0.72rem",
+              fontWeight: 800,
+              color: theme.accent,
+              padding: "2px 8px",
+              background: theme.accentSoft,
+              borderRadius: "6px",
+              flexShrink: 0,
+              whiteSpace: "nowrap",
+            }}
+          >
+            +{traces} / {boss.reset === "monthly" ? "month" : "week"}
+          </div>
+        )}
+      </div>
+
+      {/* Difficulty pills */}
+      <div
+        style={{
+          display: "flex",
+          gap: "4px",
+          flexWrap: "wrap",
+          marginBottom: "0.6rem",
+        }}
+      >
+        {boss.difficulties.map((diff, di) => (
+          <div
+            key={diff.label}
+            className="lib-diff-btn"
+            onClick={() => onDifficultyChange(sel.difficultyIdx === di ? null : di)}
+            style={pillBtn(sel.difficultyIdx === di)}
+          >
+            {diff.label} ({diff.traces})
+          </div>
+        ))}
+      </div>
+
+      {/* Party size + cleared */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "0.75rem",
+          flexWrap: "wrap",
+          opacity: isActive ? 1 : 0.4,
+          transition: "opacity 0.15s",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "6px",
+          }}
+        >
+          <span
+            style={{
+              fontSize: "0.75rem",
+              fontWeight: 700,
+              color: theme.muted,
+            }}
+          >
+            Party
+          </span>
+          <input
+            type="number"
+            min={1}
+            max={boss.maxParty}
+            value={sel.partySize}
+            disabled={!isActive}
+            onChange={(e) => {
+              let v = parseInt(e.target.value) || 1;
+              if (v < 1) v = 1;
+              if (v > boss.maxParty) v = boss.maxParty;
+              onPartySizeChange(v);
+            }}
+            style={{
+              ...inputStyle,
+              width: "48px",
+              textAlign: "center",
+              padding: "4px 6px",
+              fontSize: "0.78rem",
+              cursor: isActive ? "text" : "not-allowed",
+            }}
+          />
+        </div>
+
+        <div
+          className={isActive ? "lib-btn" : ""}
+          title="Click this if you have already cleared the boss for the week."
+          onClick={() => {
+            if (isActive) onClearedChange(!sel.clearedThisWeek);
+          }}
+          style={{
+            padding: "4px 10px",
+            borderRadius: "8px",
+            fontSize: "0.72rem",
+            fontWeight: 800,
+            cursor: isActive ? "pointer" : "not-allowed",
+            color: sel.clearedThisWeek && isActive
+              ? theme.accentText
+              : theme.muted,
+            background: sel.clearedThisWeek && isActive
+              ? theme.accentSoft
+              : "transparent",
+            border: `1px solid ${sel.clearedThisWeek && isActive ? theme.accent + "44" : theme.border}`,
+          }}
+        >
+          {sel.clearedThisWeek && isActive ? "Cleared" : "Not cleared"}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 // -- Component ----------------------------------------------------------------
@@ -407,41 +595,11 @@ export default function LiberationWorkspace({ theme }: { theme: AppTheme }) {
         }}
       >
         <div style={{ maxWidth: "900px", margin: "0 auto" }}>
-          {/* Header */}
-          <div style={{ marginBottom: "1.25rem" }}>
-            <Link
-              href="/tools"
-              style={{
-                fontSize: "0.78rem",
-                fontWeight: 800,
-                color: theme.accent,
-                textDecoration: "none",
-              }}
-            >
-              ← Back to Tools
-            </Link>
-            <div
-              style={{
-                fontFamily: "'Fredoka One', cursive",
-                fontSize: "1.5rem",
-                color: theme.text,
-                marginTop: "0.5rem",
-              }}
-            >
-              Liberation Calculator
-            </div>
-            <div
-              style={{
-                fontSize: "0.8rem",
-                color: theme.muted,
-                fontWeight: 600,
-                marginTop: "0.15rem",
-                lineHeight: 1.5,
-              }}
-            >
-              Estimate your Genesis or Destiny liberation completion date.
-            </div>
-          </div>
+          <ToolHeader
+            theme={theme}
+            title="Liberation Calculator"
+            description="Estimate your Genesis or Destiny liberation completion date."
+          />
 
           {/* Type toggle */}
           <div className="fade-in" style={sectionPanel}>
@@ -698,164 +856,20 @@ export default function LiberationWorkspace({ theme }: { theme: AppTheme }) {
                   : 0;
 
                 return (
-                  <div
+                  <BossCard
                     key={boss.name}
-                    style={{
-                      background: theme.timerBg,
-                      border: `1px solid ${isActive ? theme.accent + "55" : theme.border}`,
-                      borderRadius: "14px",
-                      padding: "1rem",
-                      transition: "border-color 0.15s",
-                    }}
-                  >
-                    {/* Boss header with icon */}
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "10px",
-                        marginBottom: "0.6rem",
-                      }}
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={boss.icon}
-                        alt={boss.name}
-                        width={38}
-                        height={38}
-                        style={{
-                          borderRadius: "8px",
-                          objectFit: "cover",
-                          flexShrink: 0,
-                          background: theme.panel,
-                          border: `1px solid ${theme.border}`,
-                        }}
-                      />
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div
-                          style={{
-                            fontFamily: "'Fredoka One', cursive",
-                            fontSize: "0.9rem",
-                            color: theme.text,
-                          }}
-                        >
-                          {boss.name}
-                        </div>
-                      </div>
-                      {activeDiff && (
-                        <div
-                          style={{
-                            fontSize: "0.72rem",
-                            fontWeight: 800,
-                            color: theme.accent,
-                            padding: "2px 8px",
-                            background: theme.accentSoft,
-                            borderRadius: "6px",
-                            flexShrink: 0,
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          +{traces} / {boss.reset === "monthly" ? "month" : "week"}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Difficulty pills */}
-                    <div
-                      style={{
-                        display: "flex",
-                        gap: "4px",
-                        flexWrap: "wrap",
-                        marginBottom: "0.6rem",
-                      }}
-                    >
-                      {boss.difficulties.map((diff, di) => (
-                        <div
-                          key={diff.label}
-                          className="lib-diff-btn"
-                          onClick={() => setDifficulty(boss.name, sel.difficultyIdx === di ? null : di)}
-                          style={pillBtn(sel.difficultyIdx === di)}
-                        >
-                          {diff.label} ({diff.traces})
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Party size + cleared (always visible, disabled when no difficulty) */}
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "0.75rem",
-                        flexWrap: "wrap",
-                        opacity: isActive ? 1 : 0.4,
-                        transition: "opacity 0.15s",
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "6px",
-                        }}
-                      >
-                        <span
-                          style={{
-                            fontSize: "0.75rem",
-                            fontWeight: 700,
-                            color: theme.muted,
-                          }}
-                        >
-                          Party
-                        </span>
-                        <input
-                          type="number"
-                          min={1}
-                          max={boss.maxParty}
-                          value={sel.partySize}
-                          disabled={!isActive}
-                          onChange={(e) => {
-                            let v = parseInt(e.target.value) || 1;
-                            if (v < 1) v = 1;
-                            if (v > boss.maxParty) v = boss.maxParty;
-                            setPartySize(boss.name, v);
-                          }}
-                          style={{
-                            ...inputStyle,
-                            width: "48px",
-                            textAlign: "center",
-                            padding: "4px 6px",
-                            fontSize: "0.78rem",
-                            cursor: isActive ? "text" : "not-allowed",
-                          }}
-                        />
-                      </div>
-
-                      <div
-                        className={isActive ? "lib-btn" : ""}
-                        title="Click this if you have already cleared the boss for the week."
-                        onClick={() => {
-                          if (isActive) setCleared(boss.name, !sel.clearedThisWeek);
-                        }}
-                        style={{
-                          padding: "4px 10px",
-                          borderRadius: "8px",
-                          fontSize: "0.72rem",
-                          fontWeight: 800,
-                          cursor: isActive ? "pointer" : "not-allowed",
-                          color: sel.clearedThisWeek && isActive
-                            ? theme.accentText
-                            : theme.muted,
-                          background: sel.clearedThisWeek && isActive
-                            ? theme.accentSoft
-                            : "transparent",
-                          border: `1px solid ${sel.clearedThisWeek && isActive ? theme.accent + "44" : theme.border}`,
-                        }}
-                      >
-                        {sel.clearedThisWeek && isActive ? "Cleared" : "Not cleared"}
-                      </div>
-                    </div>
-                  </div>
+                    boss={boss}
+                    sel={sel}
+                    isActive={isActive}
+                    activeDiff={activeDiff}
+                    traces={traces}
+                    theme={theme}
+                    inputStyle={inputStyle}
+                    pillBtn={pillBtn}
+                    onDifficultyChange={(diffIdx) => setDifficulty(boss.name, diffIdx)}
+                    onPartySizeChange={(size) => setPartySize(boss.name, size)}
+                    onClearedChange={(cleared) => setCleared(boss.name, cleared)}
+                  />
                 );
               })}
             </div>
