@@ -439,7 +439,7 @@ export default function SymbolWorkspace({ theme }: { theme: AppTheme }) {
                 gap: "0.75rem",
               }}
             >
-              {perSymbol.map(({ area, state, remaining, days, levelMax, isMaxed, isTracked, consumed }) => {
+              {perSymbol.map(({ area, state, days, levelMax, isMaxed, isTracked, consumed }) => {
                 const levelPct = isMaxed
                   ? 100
                   : levelMax > 0
