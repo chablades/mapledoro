@@ -121,29 +121,33 @@ function getUrsusStatus(now: Date):
 }
 
 function DashboardContent({ theme, now }: { theme: AppTheme; now: Date }) {
-  const [patchNotes, setPatchNotes] = useState<PatchNote[]>(
-    () => readCachedPatchNotes() ?? initialPatchNotes,
-  );
+  const [patchNotes, setPatchNotes] = useState<PatchNote[]>(initialPatchNotes);
   const [patchFilter, setPatchFilter] = useState<PatchFilter>("All");
   const [patchExpanded, setPatchExpanded] = useState(false);
 
   useEffect(() => {
-    if (readCachedPatchNotes()) return;
+    let cancelled = false;
+    const cached = readCachedPatchNotes();
+    if (cached) {
+      // Defer to avoid synchronous setState inside an effect
+      requestAnimationFrame(() => { if (!cancelled) setPatchNotes(cached); });
+      return () => { cancelled = true; };
+    }
 
     fetch("/api/patch-notes")
       .then((res) => res.json())
       .then((data) => {
-        if (Array.isArray(data) && data.length > 0) {
-          setPatchNotes(data);
-          try {
-            localStorage.setItem(
-              PATCH_CACHE_KEY,
-              JSON.stringify({ expiresAt: Date.now() + PATCH_CACHE_TTL_MS, data }),
-            );
-          } catch { /* localStorage full or unavailable */ }
-        }
+        if (cancelled || !Array.isArray(data) || data.length === 0) return;
+        setPatchNotes(data);
+        try {
+          localStorage.setItem(
+            PATCH_CACHE_KEY,
+            JSON.stringify({ expiresAt: Date.now() + PATCH_CACHE_TTL_MS, data }),
+          );
+        } catch { /* localStorage full or unavailable */ }
       })
       .catch((err) => console.error("Failed to fetch patch notes:", err));
+    return () => { cancelled = true; };
   }, []);
 
   const daily = getNextReset(now, 0);
@@ -324,7 +328,7 @@ function DashboardContent({ theme, now }: { theme: AppTheme; now: Date }) {
                       >
                         {r.label}
                       </div>
-                      <div className="countdown" style={{ color: r.color }}>
+                      <div className="countdown" style={{ color: r.color }} suppressHydrationWarning>
                         {r.countdown}
                       </div>
                     </div>
@@ -402,12 +406,14 @@ function DashboardContent({ theme, now }: { theme: AppTheme; now: Date }) {
                         letterSpacing: "0.1em",
                         marginBottom: "6px",
                       }}
+                      suppressHydrationWarning
                     >
                       {ursus.active ? "Ends In" : "Starts In"}
                     </div>
                     <div
                       className="countdown"
                       style={{ color: theme.accent }}
+                      suppressHydrationWarning
                     >
                       {ursus.active ? fmt(ursus.remaining) : fmt(ursus.until)}
                     </div>
