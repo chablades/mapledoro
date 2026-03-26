@@ -29,8 +29,10 @@ export const CHARACTERS_COPY = {
     confirmButton: "Confirm",
   },
   quickSetupIntro: {
-    title: "Let's go through the first setup",
-    subtitle: "Next, we'll walk through your initial profile setup step by step.",
+    firstTitle: "Let's go through the first setup",
+    firstSubtitle: "Next, we'll walk through your initial profile setup step by step.",
+    additionalTitle: "Let's set up this character",
+    additionalSubtitle: "Next, we'll walk through this character's profile setup step by step.",
     nextStepButton: "Next Step",
   },
   characterProfile: {

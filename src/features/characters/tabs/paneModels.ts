@@ -78,6 +78,7 @@ export interface PreviewPaneModel {
     completedFlowIds: SetupFlowId[];
     showFlowOverview: boolean;
     showCharacterDirectory: boolean;
+    hasCompletedRequiredSetupEver: boolean;
     fastDirectoryRevealOnce: boolean;
     setupStepIndex: number;
     setupStepDirection: "forward" | "backward";

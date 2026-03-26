@@ -10,6 +10,13 @@ interface SetupIntroScreenProps {
 export default function QuickSetupIntroScreen({ model, actions }: SetupIntroScreenProps) {
   const { theme, setup } = model;
   if (setup.showFlowOverview || setup.setupStepIndex !== 0) return null;
+  const isAdditionalCharacterSetup = setup.hasCompletedRequiredSetupEver;
+  const title = isAdditionalCharacterSetup
+    ? CHARACTERS_COPY.quickSetupIntro.additionalTitle
+    : CHARACTERS_COPY.quickSetupIntro.firstTitle;
+  const subtitle = isAdditionalCharacterSetup
+    ? CHARACTERS_COPY.quickSetupIntro.additionalSubtitle
+    : CHARACTERS_COPY.quickSetupIntro.firstSubtitle;
 
   return (
     <>
@@ -23,7 +30,7 @@ export default function QuickSetupIntroScreen({ model, actions }: SetupIntroScre
           color: theme.text,
         }}
       >
-        {CHARACTERS_COPY.quickSetupIntro.title}
+        {title}
       </h2>
       <p
         style={{
@@ -34,7 +41,7 @@ export default function QuickSetupIntroScreen({ model, actions }: SetupIntroScre
           marginBottom: "0.9rem",
         }}
       >
-        {CHARACTERS_COPY.quickSetupIntro.subtitle}
+        {subtitle}
       </p>
       <div style={{ display: "flex", justifyContent: "flex-end" }}>
         <button

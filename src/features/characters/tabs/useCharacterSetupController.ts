@@ -6,9 +6,14 @@ import {
 } from "../model/constants";
 import { findRosterCharacterByName, toCharacterKey } from "../model/characterKeys";
 import {
-  hasAnyCompletedRequiredSetupFlow,
+  createStoredCharacterRecord,
+  hasStoredCompletedRequiredSetup,
+  readCharactersStore,
+  selectCharactersList,
+  writeCharactersStore,
+} from "../model/charactersStore";
+import {
   makeDraftCharacterKey,
-  readMergedCharacterRoster,
   readLastSetupDraft,
   readSetupDraftByCharacter,
   removeSetupDraftForCharacter,
@@ -147,8 +152,9 @@ export function useCharacterSetupController() {
 
   useEffect(() => {
     const draft = readLastSetupDraft();
-    const mergedRoster = readMergedCharacterRoster();
-    const accountHasCompletedRequiredFlow = hasAnyCompletedRequiredSetupFlow();
+    const charactersStore = readCharactersStore();
+    const storedRoster = selectCharactersList(charactersStore).map((entry) => entry.data);
+    const accountHasCompletedRequiredFlow = hasStoredCompletedRequiredSetup(charactersStore);
     const hydrateTimer = window.setTimeout(() => {
       if (draft) {
         const nextCompletedFlowIds = normalizeCompletedFlowIds(draft.completedFlowIds ?? []);
@@ -166,9 +172,9 @@ export function useCharacterSetupController() {
           canResumeFromDraft ? (draft.confirmedCharacter?.characterName ?? draft.query) : null,
         );
         setQuery(draft.query);
-        setCharacterRoster(mergedRoster);
-        setMainCharacterKey(draft.mainCharacterKey ?? null);
-        setChampionCharacterKeys(draft.championCharacterKeys ?? []);
+        setCharacterRoster(storedRoster);
+        setMainCharacterKey(charactersStore.mainCharacterId);
+        setChampionCharacterKeys(charactersStore.championCharacterIds);
 
         if (draft.autoResumeOnLoad && hasActiveFlowInProgress) {
           setCompletedFlowIds(nextCompletedFlowIds);
@@ -228,7 +234,9 @@ export function useCharacterSetupController() {
           setConfirmedCharacter(draft.confirmedCharacter);
         }
       } else if (accountHasCompletedRequiredFlow) {
-        setCharacterRoster(mergedRoster);
+        setCharacterRoster(storedRoster);
+        setMainCharacterKey(charactersStore.mainCharacterId);
+        setChampionCharacterKeys(charactersStore.championCharacterIds);
         setIsAddingCharacter(false);
         setSetupMode("search");
         setSetupFlowStarted(true);
@@ -255,6 +263,63 @@ export function useCharacterSetupController() {
     requiredFlowId,
     setSetupPanelVisible,
     setSuppressLayoutTransition,
+  ]);
+
+  useEffect(() => {
+    if (!hasHydratedSetupDraftRef.current) return;
+    if (typeof window === "undefined") return;
+
+    const existingStore = readCharactersStore();
+    const now = Date.now();
+    const currentCharacterKey = confirmedCharacter ? toCharacterKey(confirmedCharacter) : null;
+    const nextCharactersById = characterRoster.reduce<Record<string, ReturnType<typeof createStoredCharacterRecord>>>(
+      (acc, character) => {
+        const id = toCharacterKey(character);
+        const existingRecord = existingStore.charactersById[id];
+        const isCurrentCharacter = currentCharacterKey === id;
+        const completedFlowIdsForCharacter = isCurrentCharacter
+          ? normalizeCompletedFlowIds(
+              completedFlowIds.length > 0 ? completedFlowIds : existingRecord?.setup.completedFlowIds ?? [],
+            )
+          : existingRecord?.setup.completedFlowIds ?? [requiredFlowId];
+        const activeFlowIdForCharacter = isCurrentCharacter
+          ? activeFlowId
+          : existingRecord?.setup.activeFlowId ?? requiredFlowId;
+
+        acc[id] = createStoredCharacterRecord({
+          character,
+          activeFlowId: activeFlowIdForCharacter,
+          completedFlowIds: completedFlowIdsForCharacter,
+          addedAt: existingRecord?.meta.addedAt ?? now,
+          updatedAt:
+            existingRecord && existingRecord.data.fetchedAt === character.fetchedAt
+              ? existingRecord.meta.updatedAt
+              : now,
+        });
+        return acc;
+      },
+      {},
+    );
+
+    const nextStore = {
+      version: existingStore.version,
+      order: characterRoster.map((character) => toCharacterKey(character)),
+      mainCharacterId:
+        mainCharacterKey && nextCharactersById[mainCharacterKey] ? mainCharacterKey : null,
+      championCharacterIds: championCharacterKeys.filter((id) => Boolean(nextCharactersById[id])),
+      charactersById: nextCharactersById,
+      updatedAt: now,
+    };
+
+    writeCharactersStore(nextStore);
+  }, [
+    activeFlowId,
+    championCharacterKeys,
+    characterRoster,
+    completedFlowIds,
+    confirmedCharacter,
+    mainCharacterKey,
+    requiredFlowId,
   ]);
 
   useEffect(() => {
@@ -659,7 +724,7 @@ export function useCharacterSetupController() {
       setResumeSetupCharacterName(null);
       setIsAddingCharacter(false);
       lookup.resetSearchStateMessage();
-      setHasCompletedRequiredSetupEver(hasAnyCompletedRequiredSetupFlow());
+      setHasCompletedRequiredSetupEver(remainingRoster.length > 0);
       setSetupMode("search");
       setSetupFlowStarted(true);
       setShowFlowOverview(true);

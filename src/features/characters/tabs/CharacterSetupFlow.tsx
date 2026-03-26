@@ -65,14 +65,13 @@ export default function CharacterSetupFlow({ theme }: CharacterSetupFlowProps) {
     statusTone,
     query,
   } = state;
+  const currentCharacterHasCompletedRequiredFlow = completedFlowIds.includes(requiredFlowId);
 
   const layout = deriveCharactersLayout({
     foundCharacter,
     setupFlowStarted,
     showCharacterDirectory,
-    showSetupPane:
-      showCharacterDirectory ||
-      !(completedFlowIds.includes(requiredFlowId) || hasCompletedRequiredSetupEver),
+    showSetupPane: showCharacterDirectory || !currentCharacterHasCompletedRequiredFlow,
     isDirectoryTransitioning: isSwitchingToDirectory,
     suppressLayoutTransition: transitions.suppressLayoutTransition,
   });
@@ -92,8 +91,7 @@ export default function CharacterSetupFlow({ theme }: CharacterSetupFlowProps) {
     search: {
       setupMode,
       setupFlowStarted,
-      hasCompletedRequiredFlow:
-        completedFlowIds.includes(requiredFlowId) || hasCompletedRequiredSetupEver,
+      hasCompletedRequiredFlow: currentCharacterHasCompletedRequiredFlow || hasCompletedRequiredSetupEver,
       canResumeSetup,
       resumeSetupCharacterName,
       query,
@@ -160,6 +158,7 @@ export default function CharacterSetupFlow({ theme }: CharacterSetupFlowProps) {
       completedFlowIds,
       showFlowOverview,
       showCharacterDirectory,
+      hasCompletedRequiredSetupEver,
       fastDirectoryRevealOnce,
       setupStepIndex,
       setupStepDirection,
