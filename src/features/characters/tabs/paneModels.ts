@@ -1,6 +1,6 @@
 import type { AppTheme } from "../../../components/themes";
 import type { NormalizedCharacterData } from "../model/types";
-import type { SetupFlowDefinition, SetupFlowId } from "../setup/flows";
+import type { SetupFlowId } from "../setup/flows";
 import type { SetupMode } from "../model/constants";
 
 export interface SearchPaneModel {
@@ -8,6 +8,7 @@ export interface SearchPaneModel {
   shell: {
     isDraftHydrated: boolean;
     isConfirmFadeOut: boolean;
+    confirmTransitionSource: "found-character" | "resume" | null;
     isModeTransitioning: boolean;
     isSearchFadeIn: boolean;
     isBackTransitioning: boolean;
@@ -30,15 +31,12 @@ export interface SearchPaneModel {
     confirmedCharacter: NormalizedCharacterData | null;
     confirmedImageLoaded: boolean;
     showCharacterDirectory: boolean;
-    showSummaryNavigation: boolean;
-    isSummaryView: boolean;
+    canViewCharacterDirectory: boolean;
     isAddingCharacter: boolean;
     isCurrentMainCharacter: boolean;
     isCurrentChampionCharacter: boolean;
     canSetCurrentChampion: boolean;
     currentCharacterGender: "male" | "female" | null;
-    isStartingOptionalFlow: boolean;
-    isOptionalFlowFadeIn: boolean;
   };
 }
 
@@ -47,7 +45,6 @@ export interface SearchPaneActions {
   runBackToIntroTransition: () => void;
   backFromSetupFlow: () => void;
   backToCharactersDirectory: () => void;
-  returnToSummaryProfile: () => void;
   backFromAddCharacter: () => void;
   resumeSavedSetup: () => void;
   setCurrentAsMain: () => void;
@@ -77,11 +74,8 @@ export interface PreviewPaneModel {
     isSwitchingToDirectory: boolean;
     isSwitchingToProfile: boolean;
     isUiLocked: boolean;
-    isStartingOptionalFlow: boolean;
-    isOptionalFlowFadeIn: boolean;
     activeFlowId: SetupFlowId;
     completedFlowIds: SetupFlowId[];
-    optionalFlows: readonly SetupFlowDefinition[];
     showFlowOverview: boolean;
     showCharacterDirectory: boolean;
     fastDirectoryRevealOnce: boolean;
@@ -104,7 +98,6 @@ export interface PreviewPaneActions {
   setSetupStepWithDirection: (step: number) => void;
   stepValueChange: (value: string) => void;
   finishSetupFlow: () => void;
-  startOptionalFlow: (flowId: SetupFlowId) => void;
   openCharacterSearch: () => void;
   openCharacterProfile: (character: NormalizedCharacterData) => void;
 }

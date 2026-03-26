@@ -4,6 +4,7 @@ interface DeriveCharactersLayoutArgs {
   foundCharacter: NormalizedCharacterData | null;
   setupFlowStarted: boolean;
   showCharacterDirectory: boolean;
+  showSetupPane: boolean;
   isDirectoryTransitioning: boolean;
   suppressLayoutTransition: boolean;
 }
@@ -20,11 +21,12 @@ export function deriveCharactersLayout({
   foundCharacter,
   setupFlowStarted,
   showCharacterDirectory,
+  showSetupPane,
   isDirectoryTransitioning,
   suppressLayoutTransition,
 }: DeriveCharactersLayoutArgs): CharactersLayoutModel {
   const hasPreview = Boolean(foundCharacter) && !setupFlowStarted;
-  const setupActive = setupFlowStarted;
+  const setupActive = setupFlowStarted && showSetupPane;
   const directoryView = showCharacterDirectory && !isDirectoryTransitioning;
   const showSearchPane = !showCharacterDirectory || isDirectoryTransitioning;
 

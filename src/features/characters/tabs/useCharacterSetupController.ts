@@ -32,9 +32,6 @@ import {
 } from "./useSetupFlowTransitions";
 
 const MAX_CHAMPIONS = 4;
-const OPTIONAL_FLOW_FADE_OUT_MS = CHARACTERS_TRANSITION_MS.fast;
-const OPTIONAL_FLOW_TRANSITION_TOTAL_MS = CHARACTERS_TRANSITION_MS.slow;
-
 function normalizeCompletedFlowIds(flowIds: SetupFlowId[]) {
   return Array.from(new Set(flowIds));
 }
@@ -64,8 +61,6 @@ export function useCharacterSetupController() {
   const [showDeleteNotice, setShowDeleteNotice] = useState(false);
   const [isAddingCharacter, setIsAddingCharacter] = useState(false);
   const [fastDirectoryRevealOnce, setFastDirectoryRevealOnce] = useState(false);
-  const [isStartingOptionalFlow, setIsStartingOptionalFlow] = useState(false);
-  const [isOptionalFlowFadeIn, setIsOptionalFlowFadeIn] = useState(false);
   const [characterRoster, setCharacterRoster] = useState<NormalizedCharacterData[]>([]);
   const [mainCharacterKey, setMainCharacterKey] = useState<string | null>(null);
   const [championCharacterKeys, setChampionCharacterKeys] = useState<string[]>([]);
@@ -83,6 +78,11 @@ export function useCharacterSetupController() {
   });
 
   const transitions = useSetupFlowTransitions();
+  const {
+    queueTransitionTimer,
+    setSetupPanelVisible,
+    setSuppressLayoutTransition,
+  } = transitions;
   const requiredFlowId = getRequiredSetupFlowId();
   const isUiLocked =
     transitions.isConfirmFadeOut ||
@@ -178,17 +178,17 @@ export function useCharacterSetupController() {
           setSetupStepTestByStep(draft.setupStepTestByStep ?? {});
           setConfirmedCharacter(draft.confirmedCharacter);
           setSetupMode(draft.setupMode);
-          transitions.setSuppressLayoutTransition(draft.setupFlowStarted);
+          setSuppressLayoutTransition(draft.setupFlowStarted);
           setSetupFlowStarted(draft.setupFlowStarted);
           setShowFlowOverview(Boolean(draft.showFlowOverview));
           setShowCharacterDirectory(Boolean(draft.showCharacterDirectory));
-          transitions.setSetupPanelVisible(false);
+          setSetupPanelVisible(false);
           if (draft.setupFlowStarted) {
-            transitions.queueTransitionTimer(() => {
-              transitions.setSetupPanelVisible(true);
+            queueTransitionTimer(() => {
+              setSetupPanelVisible(true);
             }, CHARACTERS_TRANSITION_MS.setupPanelRevealDelay);
-            transitions.queueTransitionTimer(() => {
-              transitions.setSuppressLayoutTransition(false);
+            queueTransitionTimer(() => {
+              setSuppressLayoutTransition(false);
             }, CHARACTERS_TRANSITION_MS.slow + CHARACTERS_TRANSITION_MS.setupPanelRevealDelay);
           }
         } else if (hasCompletedRequiredFlow || accountHasCompletedRequiredFlow) {
@@ -205,8 +205,8 @@ export function useCharacterSetupController() {
           setSetupFlowStarted(true);
           setShowFlowOverview(true);
           setShowCharacterDirectory(true);
-          transitions.setSetupPanelVisible(true);
-          transitions.setSuppressLayoutTransition(false);
+          setSetupPanelVisible(true);
+          setSuppressLayoutTransition(false);
           setHasCompletedRequiredSetupEver(true);
         } else if (draft.autoResumeOnLoad) {
           setCompletedFlowIds(nextCompletedFlowIds);
@@ -234,8 +234,8 @@ export function useCharacterSetupController() {
         setSetupFlowStarted(true);
         setShowFlowOverview(true);
         setShowCharacterDirectory(true);
-        transitions.setSetupPanelVisible(true);
-        transitions.setSuppressLayoutTransition(false);
+        setSetupPanelVisible(true);
+        setSuppressLayoutTransition(false);
         setCanResumeSetup(false);
         setResumeSetupCharacterName(null);
         setHasCompletedRequiredSetupEver(true);
@@ -249,7 +249,13 @@ export function useCharacterSetupController() {
       setIsDraftHydrated(true);
     }, 0);
     return () => clearTimeout(hydrateTimer);
-  }, [isResumableDraft, requiredFlowId, transitions]);
+  }, [
+    isResumableDraft,
+    queueTransitionTimer,
+    requiredFlowId,
+    setSetupPanelVisible,
+    setSuppressLayoutTransition,
+  ]);
 
   useEffect(() => {
     if (!hasHydratedSetupDraftRef.current) return;
@@ -317,6 +323,7 @@ export function useCharacterSetupController() {
   const beginSetupFlowTransition = useCallback(
     (args: {
       character: NormalizedCharacterData;
+      source: "found-character" | "resume";
       flowId: SetupFlowId;
       completedFlowIds: SetupFlowId[];
       showFlowOverview: boolean;
@@ -444,6 +451,7 @@ export function useCharacterSetupController() {
       immediateUiLockRef.current = true;
       beginSetupFlowTransition({
         character: draft.confirmedCharacter,
+        source: "resume",
         flowId: requiredFlowId,
         completedFlowIds: normalizeCompletedFlowIds(draft.completedFlowIds ?? []),
         showFlowOverview: Boolean(
@@ -483,6 +491,7 @@ export function useCharacterSetupController() {
     immediateUiLockRef.current = true;
     beginSetupFlowTransition({
       character: foundCharacter,
+      source: "found-character",
       flowId: requiredFlowId,
       completedFlowIds: normalizeCompletedFlowIds(
         existingCharacterDraft?.completedFlowIds ?? [],
@@ -525,9 +534,8 @@ export function useCharacterSetupController() {
       setIsAddingCharacter(false);
 
       const updatedCompleted = Array.from(new Set([...completedFlowIds, activeFlowId]));
-      const hasCompletedRequired = updatedCompleted.includes(requiredFlowId);
       setCompletedFlowIds(updatedCompleted);
-      setShowFlowOverview(hasCompletedRequired);
+      setShowFlowOverview(false);
       setShowCharacterDirectory(false);
       setActiveFlowId(requiredFlowId);
       setSetupStepIndex(0);
@@ -551,30 +559,6 @@ export function useCharacterSetupController() {
     upsertRosterCharacter,
   ]);
 
-  const startOptionalFlow = useCallback(
-    (flowId: SetupFlowId) => {
-      if (immediateUiLockRef.current) return;
-      immediateUiLockRef.current = true;
-      setIsStartingOptionalFlow(true);
-      setIsOptionalFlowFadeIn(false);
-      transitions.queueTransitionTimer(() => {
-        setIsAddingCharacter(false);
-        setActiveFlowId(flowId);
-        setShowFlowOverview(false);
-        setShowCharacterDirectory(false);
-        setSetupStepDirection("forward");
-        setSetupStepIndex(1);
-        setIsStartingOptionalFlow(false);
-        setIsOptionalFlowFadeIn(true);
-      }, OPTIONAL_FLOW_FADE_OUT_MS);
-      transitions.queueTransitionTimer(() => {
-        setIsOptionalFlowFadeIn(false);
-        immediateUiLockRef.current = false;
-      }, OPTIONAL_FLOW_TRANSITION_TOTAL_MS);
-    },
-    [transitions],
-  );
-
   const switchToCharacterProfile = useCallback(
     (character: NormalizedCharacterData) => {
       if (immediateUiLockRef.current) return;
@@ -590,11 +574,7 @@ export function useCharacterSetupController() {
         setSetupStepDirection("backward");
         setActiveFlowId(draft?.activeFlowId ?? requiredFlowId);
         setCompletedFlowIds(normalizeCompletedFlowIds(draft?.completedFlowIds ?? []));
-        setShowFlowOverview(
-          Boolean(
-            draft?.completedFlowIds?.includes(requiredFlowId) || draft?.showFlowOverview,
-          ),
-        );
+        setShowFlowOverview(false);
         setSetupStepIndex(
           draft ? clampFlowStepIndex(draft.activeFlowId, draft.setupStepIndex) : 0,
         );
@@ -633,6 +613,7 @@ export function useCharacterSetupController() {
       setIsSwitchingToDirectory(true);
       setSetupStepDirection("forward");
       transitions.queueTransitionTimer(() => {
+        setShowFlowOverview(true);
         setShowCharacterDirectory(true);
       }, CHARACTERS_TRANSITION_MS.fast);
       transitions.queueTransitionTimer(() => {
@@ -644,6 +625,7 @@ export function useCharacterSetupController() {
     setSetupStepDirection("backward");
     setIsSwitchingToDirectory(false);
     setFastDirectoryRevealOnce(false);
+    setShowFlowOverview(false);
     setShowCharacterDirectory(false);
   }, [showCharacterDirectory, transitions]);
 
@@ -799,23 +781,6 @@ export function useCharacterSetupController() {
     transitions,
   ]);
 
-  const returnToSummaryProfile = useCallback(() => {
-    if (immediateUiLockRef.current) return;
-    immediateUiLockRef.current = true;
-    setIsStartingOptionalFlow(true);
-    setIsOptionalFlowFadeIn(false);
-    transitions.queueTransitionTimer(() => {
-      setShowFlowOverview(true);
-      setShowCharacterDirectory(false);
-      setSetupStepDirection("backward");
-      setSetupStepIndex(0);
-      setIsStartingOptionalFlow(false);
-    }, OPTIONAL_FLOW_FADE_OUT_MS);
-    transitions.queueTransitionTimer(() => {
-      immediateUiLockRef.current = false;
-    }, OPTIONAL_FLOW_TRANSITION_TOTAL_MS);
-  }, [transitions]);
-
   const handleQueryInput = useCallback((rawValue: string) => {
     const sanitized = rawValue
       .replace(CHARACTER_NAME_INPUT_FILTER_REGEX, "")
@@ -884,8 +849,6 @@ export function useCharacterSetupController() {
       showDeleteNotice,
       isAddingCharacter,
       fastDirectoryRevealOnce,
-      isStartingOptionalFlow,
-      isOptionalFlowFadeIn,
       characterRoster,
       mainCharacterKey,
       championCharacterKeys,
@@ -926,7 +889,6 @@ export function useCharacterSetupController() {
       resumeSavedSetup,
       confirmFoundCharacter,
       finishSetupFlow,
-      startOptionalFlow,
       setMainCharacter,
       toggleChampionCharacter,
       switchToCharacterProfile,
@@ -934,7 +896,6 @@ export function useCharacterSetupController() {
       removeCurrentCharacter,
       openAddCharacterSearch,
       backFromAddCharacter,
-      returnToSummaryProfile,
       handleQueryInput,
       handleSearchSubmit,
     },

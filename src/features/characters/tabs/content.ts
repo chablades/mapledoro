@@ -3,29 +3,58 @@
   Edit wording here to update all related components.
 */
 export const CHARACTERS_COPY = {
-  titles: {
-    intro: "First-Time Setup",
-    import: "Import Character",
-    search: "Add Your Maple Character",
-    setupIntro: "Let's go through the first setup",
+  firstTimeSetup: {
+    title: "First-Time Setup",
+    subtitle: "Choose how you want to get started.",
+    importButton: "Import Character",
+    searchButton: "Search Character",
+  },
+  importCharacter: {
+    title: "Import Character",
+    subtitle: "Import flow is coming next. You can use search for now.",
+    backButton: "Back",
+    goToSearchButton: "Go To Search",
+  },
+  searchEntry: {
+    title: "Add Your Maple Character",
+    subtitle: "Type your IGN to setup your profile.",
+    resumeSetupButton: "Resume Setup",
+    backButton: "Back",
+    backToCharactersButton: "Back to characters",
+    searchButton: "Search",
+    searchingButton: "Searching...",
+  },
+  searchResultPreview: {
     confirmPrompt: "Is this the character you want to add?",
+    confirmButton: "Confirm",
   },
-  subtitles: {
-    intro: "Choose how you want to get started.",
-    import: "Import flow is coming next. You can use search for now.",
-    search: "Type your IGN to setup your profile.",
-    setupIntro: "Next, we'll walk through your initial profile setup step by step.",
+  quickSetupIntro: {
+    title: "Let's go through the first setup",
+    subtitle: "Next, we'll walk through your initial profile setup step by step.",
+    nextStepButton: "Next Step",
   },
-  buttons: {
-    importCharacter: "Import Character",
-    searchCharacter: "Search Character",
-    goToSearch: "Go To Search",
-    back: "Back",
-    resumeSetup: "Resume Setup",
-    search: "Search",
-    searching: "Searching...",
-    confirm: "Confirm",
-    skip: "Skip",
-    nextStep: "Next Step",
+  characterProfile: {
+    backButton: "Back",
+    viewYourCharactersButton: "View your characters",
+  },
+  characterProfileActions: {
+    setMainButton: "Set main",
+    setChampionButton: "Set champion",
+    removeChampionButton: "Remove champion",
+    removeCharacterButton: "Remove",
+  },
+  characterDirectory: {
+    title: "View Your Characters",
+    sortRowsLabel: "Sort rows",
+    sortAlphabeticalOption: "Alphabetical",
+    sortByLevelOption: "By Level",
+    sortByClassOption: "By Class",
+    mainCharacterLabel: "Main Character",
+    championsLabel: "Champions",
+    mulesLabel: "Mules",
+    addCharacterButton: "Add character",
+    noMainSelectedMessage: "No main selected yet.",
+    noCharactersAddedMessage: "No characters added yet.",
+    mainAlsoChampionMessage: "Main is also set as champion.",
   },
 } as const;

@@ -34,6 +34,7 @@ interface CommonTransitionCallbacks extends SetupTransitionSetters {
 
 interface SetupFlowTransitionArgs {
   character: NormalizedCharacterData;
+  source: "found-character" | "resume";
   flowId: SetupFlowId;
   completedFlowIds: SetupFlowId[];
   showFlowOverview: boolean;
@@ -56,6 +57,9 @@ interface TransitionSequenceOptions {
 
 export function useSetupFlowTransitions() {
   const [isConfirmFadeOut, setIsConfirmFadeOut] = useState(false);
+  const [confirmTransitionSource, setConfirmTransitionSource] = useState<
+    "found-character" | "resume" | null
+  >(null);
   const [isModeTransitioning, setIsModeTransitioning] = useState(false);
   const [isBackTransitioning, setIsBackTransitioning] = useState(false);
   const [isSearchFadeIn, setIsSearchFadeIn] = useState(false);
@@ -95,6 +99,9 @@ export function useSetupFlowTransitions() {
     }: TransitionSequenceOptions) => {
       clearTransitionTimers();
       setIsConfirmFadeOut(type === "confirm");
+      if (type !== "confirm") {
+        setConfirmTransitionSource(null);
+      }
       setIsModeTransitioning(type === "mode");
       setIsBackTransitioning(type === "back");
       setIsSearchFadeIn(false);
@@ -107,6 +114,7 @@ export function useSetupFlowTransitions() {
       queueTransitionTimer(() => {
         onCommit();
         setIsConfirmFadeOut(false);
+        setConfirmTransitionSource(null);
         setIsModeTransitioning(false);
         setIsBackTransitioning(false);
 
@@ -191,6 +199,7 @@ export function useSetupFlowTransitions() {
         suppressLayoutDuring: true,
         restoreLayoutAfterCommit: true,
         beforeCommit: () => {
+          setConfirmTransitionSource(args.source);
           setters.setConfirmedCharacter(args.character);
           setters.setActiveFlowId(args.flowId);
           setters.setCompletedFlowIds(args.completedFlowIds);
@@ -233,6 +242,7 @@ export function useSetupFlowTransitions() {
 
   return {
     isConfirmFadeOut,
+    confirmTransitionSource,
     isModeTransitioning,
     isBackTransitioning,
     isSearchFadeIn,

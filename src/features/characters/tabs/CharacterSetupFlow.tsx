@@ -5,7 +5,6 @@
   Keeps rendering focused while the controller hook owns state and navigation.
 */
 import type { AppTheme } from "../../../components/themes";
-import { getOptionalSetupFlows } from "../setup/flows";
 import { deriveCharactersLayout } from "./charactersLayout";
 import { getCharacterSetupFlowStyles } from "./CharacterSetupFlow.styles";
 import PreviewSetupPane from "./components/PreviewSetupPane";
@@ -44,8 +43,6 @@ export default function CharacterSetupFlow({ theme }: CharacterSetupFlowProps) {
     showDeleteNotice,
     isAddingCharacter,
     fastDirectoryRevealOnce,
-    isStartingOptionalFlow,
-    isOptionalFlowFadeIn,
     characterRoster,
     mainCharacterKey,
     championCharacterKeys,
@@ -73,6 +70,9 @@ export default function CharacterSetupFlow({ theme }: CharacterSetupFlowProps) {
     foundCharacter,
     setupFlowStarted,
     showCharacterDirectory,
+    showSetupPane:
+      showCharacterDirectory ||
+      !(completedFlowIds.includes(requiredFlowId) || hasCompletedRequiredSetupEver),
     isDirectoryTransitioning: isSwitchingToDirectory,
     suppressLayoutTransition: transitions.suppressLayoutTransition,
   });
@@ -82,6 +82,7 @@ export default function CharacterSetupFlow({ theme }: CharacterSetupFlowProps) {
     shell: {
       isDraftHydrated,
       isConfirmFadeOut: transitions.isConfirmFadeOut,
+      confirmTransitionSource: transitions.confirmTransitionSource,
       isModeTransitioning: transitions.isModeTransitioning,
       isSearchFadeIn: transitions.isSearchFadeIn,
       isBackTransitioning: transitions.isBackTransitioning,
@@ -105,16 +106,13 @@ export default function CharacterSetupFlow({ theme }: CharacterSetupFlowProps) {
       confirmedCharacter,
       confirmedImageLoaded,
       showCharacterDirectory,
-      showSummaryNavigation:
+      canViewCharacterDirectory:
         setupFlowStarted && completedFlowIds.includes(requiredFlowId) && !isAddingCharacter,
-      isSummaryView: showFlowOverview,
       isAddingCharacter,
       isCurrentMainCharacter,
       isCurrentChampionCharacter,
       canSetCurrentChampion,
       currentCharacterGender,
-      isStartingOptionalFlow,
-      isOptionalFlowFadeIn,
     },
   };
 
@@ -123,7 +121,6 @@ export default function CharacterSetupFlow({ theme }: CharacterSetupFlowProps) {
     runBackToIntroTransition: actions.runBackToIntroTransition,
     backFromSetupFlow: actions.backFromSetupFlowToAddCharacter,
     backToCharactersDirectory: actions.backToCharactersDirectory,
-    returnToSummaryProfile: actions.returnToSummaryProfile,
     backFromAddCharacter: actions.backFromAddCharacter,
     resumeSavedSetup: actions.resumeSavedSetup,
     setCurrentAsMain: () => {
@@ -159,11 +156,8 @@ export default function CharacterSetupFlow({ theme }: CharacterSetupFlowProps) {
       isSwitchingToDirectory,
       isSwitchingToProfile,
       isUiLocked,
-      isStartingOptionalFlow,
-      isOptionalFlowFadeIn,
       activeFlowId,
       completedFlowIds,
-      optionalFlows: getOptionalSetupFlows(),
       showFlowOverview,
       showCharacterDirectory,
       fastDirectoryRevealOnce,
@@ -186,7 +180,6 @@ export default function CharacterSetupFlow({ theme }: CharacterSetupFlowProps) {
     setSetupStepWithDirection: actions.setSetupStepWithDirection,
     stepValueChange: actions.updateActiveStepValue,
     finishSetupFlow: actions.finishSetupFlow,
-    startOptionalFlow: actions.startOptionalFlow,
     openCharacterSearch: actions.openAddCharacterSearch,
     openCharacterProfile: actions.switchToCharacterProfile,
   };
@@ -196,7 +189,7 @@ export default function CharacterSetupFlow({ theme }: CharacterSetupFlowProps) {
       <style>{getCharacterSetupFlowStyles(theme)}</style>
 
       <main className="characters-main" style={{ flex: 1 }}>
-        <div className={layout.contentClassName}>
+        <div className={`fade-in ${layout.contentClassName}`}>
           {layout.showSearchPane && (
             <div className="search-pane">
               <SearchPaneCard model={searchPaneModel} actions={searchPaneActions} />

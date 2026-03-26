@@ -87,10 +87,6 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
           animation: profileActionsFadeIn var(--characters-standard) ease both;
         }
 
-        .profile-actions-card.profile-actions-fade-out {
-          animation: profileActionsFadeOut var(--characters-fast) ease both;
-        }
-
         .search-card.search-fade-in {
           animation: searchCardFadeIn var(--characters-search-fade) ease;
         }
@@ -150,8 +146,8 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
           overflow: hidden;
           align-self: stretch;
           display: flex;
-          align-items: center;
-          justify-content: center;
+          align-items: flex-start;
+          justify-content: flex-start;
           opacity: 0;
           transform: translateY(8px);
           transition:
@@ -245,10 +241,6 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
           transition: opacity var(--characters-standard) ease !important;
         }
 
-        .setup-panel.setup-panel-fade-out {
-          animation: setupPanelFadeOut var(--characters-fast) ease both;
-        }
-
         .setup-step-content {
           animation-duration: var(--characters-standard);
           animation-timing-function: ease;
@@ -270,24 +262,6 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
           transform: none;
         }
 
-        .setup-step-content.step-no-slide {
-          animation: none !important;
-          opacity: 0;
-          transform: none;
-        }
-
-        .setup-panel.step-panel-fade-in {
-          animation: stepPanelFadeIn var(--characters-standard) ease both;
-        }
-
-        .setup-step-content.step-flow-fade-in {
-          animation: stepFlowFadeIn var(--characters-standard) ease both;
-        }
-
-        .summary-panel-fade-in {
-          animation: summaryFadeIn var(--characters-standard) ease both;
-        }
-
         .desktop-back-label {
           display: inline;
         }
@@ -299,18 +273,6 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
         .profile-role-chip {
           font-size: 0.76rem !important;
           padding: 0.22rem 0.68rem !important;
-        }
-
-        .profile-shell-fade-in {
-          animation: profileShellFadeIn var(--characters-standard) ease both;
-        }
-
-        .profile-shell-fade-out {
-          animation: profileShellFadeOut var(--characters-fast) ease both;
-        }
-
-        .profile-shell-state-fade-in {
-          animation: profileShellStateFadeIn var(--characters-standard) ease both;
         }
 
         @keyframes previewSwap {
@@ -342,32 +304,7 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
           to { opacity: 1; transform: translateX(0); }
         }
 
-        @keyframes summaryFadeIn {
-          from { opacity: 0; transform: translateY(8px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-
         @keyframes profileActionsFadeIn {
-          from { opacity: 0; transform: translateY(8px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes profileActionsFadeOut {
-          from { opacity: 1; transform: translateY(0); }
-          to { opacity: 0; transform: translateY(8px); }
-        }
-
-        @keyframes profileShellFadeIn {
-          from { opacity: 0; transform: translateY(8px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes profileShellFadeOut {
-          from { opacity: 1; transform: translateY(0); }
-          to { opacity: 0; transform: translateY(8px); }
-        }
-
-        @keyframes profileShellStateFadeIn {
           from { opacity: 0; transform: translateY(8px); }
           to { opacity: 1; transform: translateY(0); }
         }
@@ -380,21 +317,6 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
         @keyframes profileToDirectoryFadeOnly {
           from { opacity: 1; transform: none; }
           to { opacity: 0; transform: none; }
-        }
-
-        @keyframes stepPanelFadeIn {
-          from { opacity: 0; transform: translateY(8px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes stepFlowFadeIn {
-          from { opacity: 0; transform: none; }
-          to { opacity: 1; transform: none; }
-        }
-
-        @keyframes setupPanelFadeOut {
-          from { opacity: 1; transform: translateY(0); }
-          to { opacity: 0; transform: translateY(8px); }
         }
 
         @media (max-width: 860px) {
