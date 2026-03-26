@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import type { CSSProperties } from "react";
 import { getDirectoryRevealDelays } from "../charactersDirectory";
 import type { PreviewPaneActions, PreviewPaneModel } from "../paneModels";
 import CharacterDirectoryScreen from "../screens/CharacterDirectoryScreen";
@@ -49,15 +50,17 @@ function getSetupPanelInlineStyle(
   theme: PreviewPaneModel["theme"],
   inCharacterDirectoryView: boolean,
   shouldShowDirectoryPanel: boolean,
-) {
+): CSSProperties {
+  const visibility: CSSProperties["visibility"] =
+    inCharacterDirectoryView && !shouldShowDirectoryPanel ? "hidden" : "visible";
+
   return {
     ...panelCardStyle(theme, "1rem"),
     position: "relative" as const,
     opacity: inCharacterDirectoryView && !shouldShowDirectoryPanel ? 0 : 1,
     transform:
       inCharacterDirectoryView && !shouldShowDirectoryPanel ? "translateY(8px)" : "translateY(0)",
-    visibility:
-      inCharacterDirectoryView && !shouldShowDirectoryPanel ? "hidden" : "visible",
+    visibility,
     transition: "opacity 0.2s ease, transform 0.2s ease",
   };
 }
