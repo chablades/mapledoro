@@ -37,7 +37,7 @@ export const CHARACTERS_COPY = {
   },
   characterProfile: {
     backButton: "Back",
-    viewYourCharactersButton: "View your characters",
+    viewYourCharactersButton: "Characters",
   },
   characterProfileActions: {
     setMainButton: "Set main",

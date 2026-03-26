@@ -166,6 +166,19 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
           max-width: 340px;
         }
 
+        .characters-content.profile-view .search-pane {
+          flex: 0 0 340px;
+          max-width: 340px;
+        }
+
+        .characters-content.profile-view .preview-pane {
+          flex: 0 0 0;
+          max-width: 0;
+          overflow: hidden;
+          opacity: 0;
+          transform: translateY(8px);
+        }
+
         .characters-content.has-preview .preview-pane {
           flex-basis: 360px;
           max-width: 360px;
@@ -275,6 +288,14 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
           padding: 0.22rem 0.68rem !important;
         }
 
+        .profile-actions-wrap {
+          width: 100%;
+        }
+
+        .profile-action-button {
+          flex: 0 0 auto;
+        }
+
         @keyframes previewSwap {
           from { opacity: 0; transform: translateY(8px); }
           to { opacity: 1; transform: translateY(0); }
@@ -333,6 +354,34 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
             padding: 0.1rem 0.42rem !important;
           }
 
+          .profile-actions-wrap {
+            max-width: min(100%, 220px) !important;
+            margin-top: 0.35rem !important;
+          }
+
+          .character-profile-nav-row {
+            justify-content: center !important;
+            margin-bottom: 0.45rem !important;
+          }
+
+          .character-profile-nav-row button {
+            margin-left: 0 !important;
+            align-self: center !important;
+          }
+
+          .profile-actions-card > div {
+            display: grid !important;
+            grid-template-columns: 1fr !important;
+            gap: 0.35rem !important;
+            justify-items: stretch !important;
+            padding: 0.45rem !important;
+          }
+
+          .profile-action-button {
+            width: 100% !important;
+            justify-content: center !important;
+          }
+
           .characters-main {
             padding: 1rem;
             align-items: flex-start;
@@ -356,6 +405,8 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
           .preview-pane {
             width: 100%;
             display: flex;
+            flex-direction: column;
+            align-items: center;
             justify-content: center;
           }
 
@@ -366,7 +417,9 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
           }
 
           .characters-content.setup-active .search-pane,
-          .characters-content.setup-active .preview-pane {
+          .characters-content.setup-active .preview-pane,
+          .characters-content.profile-view .search-pane,
+          .characters-content.profile-view .preview-pane {
             flex: 0 0 auto;
             max-width: 100%;
             width: 100%;
@@ -376,7 +429,8 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
             order: 2;
           }
 
-          .characters-content.setup-active .search-pane {
+          .characters-content.setup-active .search-pane,
+          .characters-content.profile-view .search-pane {
             order: 1;
           }
 

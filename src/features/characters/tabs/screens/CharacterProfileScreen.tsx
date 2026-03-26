@@ -1,8 +1,8 @@
-import Image from "next/image";
 import { WORLD_NAMES } from "../../model/constants";
 import { CHARACTERS_COPY } from "../content";
 import type { SearchPaneActions, SearchPaneModel } from "../paneModels";
 import { secondaryButtonStyle } from "../components/uiStyles";
+import CharacterAvatar from "../components/CharacterAvatar";
 
 function profileRoleBadgeStyle(
   theme: SearchPaneModel["theme"],
@@ -74,16 +74,15 @@ export default function CharacterProfileScreen({
           justifyContent: "flex-start",
           textAlign: "center",
           gap: "0.35rem",
-          paddingTop: "0.15rem",
         }}
       >
         <div
+          className="character-profile-nav-row"
           style={{
             width: "100%",
-            alignSelf: "stretch",
             display: "flex",
-            justifyContent: "flex-end",
-            minHeight: "34px",
+            justifyContent: "flex-start",
+            marginBottom: "0.65rem",
           }}
         >
           <button
@@ -96,10 +95,12 @@ export default function CharacterProfileScreen({
                 : actions.backFromSetupFlow
             }
             style={{
-              ...secondaryButtonStyle(theme, "0.5rem 0.75rem"),
-              fontSize: "0.85rem",
+              ...secondaryButtonStyle(theme, "0.38rem 0.62rem"),
+              fontSize: "0.76rem",
+              fontWeight: 800,
               whiteSpace: "nowrap",
-              marginLeft: "auto",
+              borderRadius: "999px",
+              alignSelf: "flex-start",
             }}
           >
             {profile.canViewCharacterDirectory ? (
@@ -118,14 +119,19 @@ export default function CharacterProfileScreen({
           className={`confirmed-avatar-wrap ${!profile.confirmedImageLoaded ? "image-skeleton-wrap" : ""}`}
           style={{ width: "210px", height: "210px", borderRadius: "22px" }}
         >
-          <Image
+          <CharacterAvatar
             src={profile.confirmedCharacter.characterImgURL}
             alt={`${profile.confirmedCharacter.characterName} avatar`}
             width={210}
             height={210}
-            onLoad={actions.confirmedImageLoaded}
+            onReady={actions.confirmedImageLoaded}
             className={`image-fade-in ${profile.confirmedImageLoaded ? "image-loaded" : ""}`}
-            style={{ borderRadius: "22px", objectFit: "cover", display: "block" }}
+            style={{
+              borderRadius: "22px",
+              objectFit: "contain",
+              objectPosition: "center bottom",
+              display: "block",
+            }}
           />
         </div>
         <div

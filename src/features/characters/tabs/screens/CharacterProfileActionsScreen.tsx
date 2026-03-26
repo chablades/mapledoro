@@ -22,6 +22,7 @@ export default function CharacterProfileActionsScreen({
 
   return (
     <div
+      className="profile-actions-wrap"
       style={{
         marginTop: "0.5rem",
         width: "100%",
@@ -55,6 +56,7 @@ export default function CharacterProfileActionsScreen({
         >
           {!profile.isCurrentMainCharacter && (
             <button
+              className="profile-action-button"
               type="button"
               disabled={shell.isUiLocked}
               onClick={actions.setCurrentAsMain}
@@ -70,6 +72,7 @@ export default function CharacterProfileActionsScreen({
           )}
           {(profile.isCurrentChampionCharacter || profile.canSetCurrentChampion) && (
             <button
+              className="profile-action-button"
               type="button"
               disabled={shell.isUiLocked}
               onClick={actions.toggleCurrentChampion}
@@ -86,6 +89,7 @@ export default function CharacterProfileActionsScreen({
             </button>
           )}
           <button
+            className="profile-action-button profile-action-danger"
             type="button"
             disabled={shell.isUiLocked}
             onClick={onRequestRemove}

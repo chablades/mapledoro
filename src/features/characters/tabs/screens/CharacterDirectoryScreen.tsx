@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { toCharacterKey } from "../../model/characterKeys";
 import type { NormalizedCharacterData } from "../../model/types";
 import {
@@ -8,6 +7,29 @@ import {
 } from "../charactersDirectory";
 import { CHARACTERS_COPY } from "../content";
 import type { PreviewPaneActions, PreviewPaneModel } from "../paneModels";
+import CharacterAvatar from "../components/CharacterAvatar";
+import { useState } from "react";
+
+function DirectoryCharacterAvatar({ character }: { character: NormalizedCharacterData }) {
+  const [imageReady, setImageReady] = useState(false);
+
+  return (
+    <div
+      className={!imageReady ? "image-skeleton-wrap" : undefined}
+      style={{ width: "78px", height: "78px", borderRadius: "12px" }}
+    >
+      <CharacterAvatar
+        src={character.characterImgURL}
+        alt={`${character.characterName} avatar`}
+        width={78}
+        height={78}
+        onReady={() => setImageReady(true)}
+        className={`image-fade-in ${imageReady ? "image-loaded" : ""}`}
+        style={{ borderRadius: "12px", objectFit: "contain", objectPosition: "center bottom" }}
+      />
+    </div>
+  );
+}
 
 interface CharacterDirectoryScreenProps {
   model: PreviewPaneModel;
@@ -79,12 +101,9 @@ export default function CharacterDirectoryScreen({
           fontFamily: "inherit",
         }}
       >
-        <Image
-          src={character.characterImgURL}
-          alt={`${character.characterName} avatar`}
-          width={78}
-          height={78}
-          style={{ borderRadius: "12px", objectFit: "contain", objectPosition: "center bottom" }}
+        <DirectoryCharacterAvatar
+          key={`${character.characterName}:${character.characterImgURL}`}
+          character={character}
         />
         <span style={{ fontSize: "0.78rem", fontWeight: 800, lineHeight: 1.15, color: theme.text, textAlign: "center", maxWidth: "100%", whiteSpace: "nowrap" }}>
           {character.characterName}

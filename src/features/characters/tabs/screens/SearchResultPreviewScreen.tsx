@@ -1,7 +1,7 @@
-import Image from "next/image";
 import { WORLD_NAMES } from "../../model/constants";
 import { CHARACTERS_COPY } from "../content";
 import type { PreviewPaneActions, PreviewPaneModel } from "../paneModels";
+import CharacterAvatar from "../components/CharacterAvatar";
 import { panelCardStyle, primaryButtonStyle } from "../components/uiStyles";
 
 interface SearchResultPreviewScreenProps {
@@ -37,12 +37,12 @@ export default function SearchResultPreviewScreen({
             className={!preview.previewImageLoaded ? "image-skeleton-wrap" : undefined}
             style={{ width: "72px", height: "72px", borderRadius: "12px" }}
           >
-            <Image
+            <CharacterAvatar
               src={preview.foundCharacter.characterImgURL}
               alt={`${preview.foundCharacter.characterName} avatar`}
               width={72}
               height={72}
-              onLoad={() => actions.setPreviewImageLoaded(true)}
+              onReady={() => actions.setPreviewImageLoaded(true)}
               className={`image-fade-in ${preview.previewImageLoaded ? "image-loaded" : ""}`}
               style={{ borderRadius: "12px", display: "block", objectFit: "cover" }}
             />

@@ -72,6 +72,8 @@ export default function CharacterSetupFlow({ theme }: CharacterSetupFlowProps) {
     setupFlowStarted,
     showCharacterDirectory,
     showSetupPane: showCharacterDirectory || !currentCharacterHasCompletedRequiredFlow,
+    showCompletedProfilePane:
+      setupFlowStarted && currentCharacterHasCompletedRequiredFlow && !showCharacterDirectory,
     isDirectoryTransitioning: isSwitchingToDirectory,
     suppressLayoutTransition: transitions.suppressLayoutTransition,
   });
