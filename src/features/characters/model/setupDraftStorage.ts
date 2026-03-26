@@ -4,7 +4,7 @@
 import type { SetupStepInputById } from "../setup/types";
 import { clampFlowStepIndex, getRequiredSetupFlowId, type SetupFlowId } from "../setup/flows";
 import type { NormalizedCharacterData } from "./types";
-import { normalizeCharacterKey, normalizeCharacterName } from "./characterKeys";
+import { normalizeCharacterName } from "./characterKeys";
 import { SETUP_DRAFT_LAST_KEY, SETUP_DRAFT_STORAGE_PREFIX, type SetupMode } from "./constants";
 
 export interface SetupDraft {
@@ -81,7 +81,7 @@ function parseSetupDraft(raw: string): SetupDraft | null {
     const championCharacterKeys = parseDraftChampionCharacterKeys(parsed.championCharacterKeys);
     return {
       version: 1,
-      characterKey: normalizeCharacterKey(parsed.characterKey),
+      characterKey: normalizeCharacterName(parsed.characterKey),
       query: parsed.query,
       setupMode: parsed.setupMode === "search" || parsed.setupMode === "import" ? parsed.setupMode : "search",
       setupFlowStarted: Boolean(parsed.setupFlowStarted),
@@ -157,7 +157,7 @@ export function readLastSetupDraft(): SetupDraft | null {
   if (typeof window === "undefined") return null;
   const draftKey = window.localStorage.getItem(SETUP_DRAFT_LAST_KEY);
   if (draftKey) {
-    const normalizedDraftKey = normalizeCharacterKey(draftKey);
+    const normalizedDraftKey = normalizeCharacterName(draftKey);
     const raw =
       window.localStorage.getItem(getSetupDraftStorageKey(normalizedDraftKey)) ??
       window.localStorage.getItem(getSetupDraftStorageKey(draftKey));
@@ -182,7 +182,7 @@ export function readLastSetupDraft(): SetupDraft | null {
   }
 
   if (newestDraft) {
-    window.localStorage.setItem(SETUP_DRAFT_LAST_KEY, normalizeCharacterKey(newestDraft.characterKey));
+    window.localStorage.setItem(SETUP_DRAFT_LAST_KEY, normalizeCharacterName(newestDraft.characterKey));
   } else {
     window.localStorage.removeItem(SETUP_DRAFT_LAST_KEY);
   }
@@ -212,7 +212,7 @@ export function writeSetupDraft(draft: SetupDraft) {
   if (typeof window === "undefined") return;
   try {
     window.localStorage.setItem(getSetupDraftStorageKey(draft.characterKey), JSON.stringify(draft));
-    window.localStorage.setItem(SETUP_DRAFT_LAST_KEY, normalizeCharacterKey(draft.characterKey));
+    window.localStorage.setItem(SETUP_DRAFT_LAST_KEY, normalizeCharacterName(draft.characterKey));
   } catch {
     // Ignore localStorage write failures.
   }
@@ -251,7 +251,7 @@ export function removeSetupDraftForCharacter(character: NormalizedCharacterData)
       }
 
       if (newestDraft) {
-        window.localStorage.setItem(SETUP_DRAFT_LAST_KEY, normalizeCharacterKey(newestDraft.characterKey));
+        window.localStorage.setItem(SETUP_DRAFT_LAST_KEY, normalizeCharacterName(newestDraft.characterKey));
       } else {
         window.localStorage.removeItem(SETUP_DRAFT_LAST_KEY);
       }

@@ -4,10 +4,6 @@ export function normalizeCharacterName(name: string) {
   return name.trim().toLowerCase();
 }
 
-export function normalizeCharacterKey(key: string) {
-  return normalizeCharacterName(key);
-}
-
 export function toCharacterKey(character: NormalizedCharacterData) {
   return normalizeCharacterName(character.characterName);
 }

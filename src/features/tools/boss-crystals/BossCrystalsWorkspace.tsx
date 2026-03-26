@@ -11,6 +11,7 @@ import {
   formatMeso,
 } from "./bosses";
 import { generateXlsx, downloadBlob, colLetter, type Cell, type FormulaCell } from "./xlsx-export";
+import { loadFromStorage, saveToStorage } from "../storage";
 
 // -- Types --------------------------------------------------------------------
 
@@ -79,20 +80,6 @@ interface SavedState {
   columns: CharacterColumn[];
 }
 
-function loadState(): SavedState | null {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    return JSON.parse(raw);
-  } catch {
-    return null;
-  }
-}
-
-function saveState(server: string, columns: CharacterColumn[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify({ server, columns }));
-}
-
 function restoreColumns(saved: SavedState): CharacterColumn[] {
   return saved.columns.map((col) => ({
     name: col.name,
@@ -114,7 +101,7 @@ export default function BossCrystalsWorkspace({ theme }: { theme: AppTheme }) {
 
   // Load from localStorage on mount
   useEffect(() => {
-    const saved = loadState();
+    const saved = loadFromStorage<SavedState>(STORAGE_KEY);
     if (saved) {
       setServer(saved.server);
       setColumns(restoreColumns(saved));
@@ -124,7 +111,7 @@ export default function BossCrystalsWorkspace({ theme }: { theme: AppTheme }) {
 
   // Persist to localStorage on change
   useEffect(() => {
-    if (loaded) saveState(server, columns);
+    if (loaded) saveToStorage(STORAGE_KEY, { server, columns });
   }, [server, columns, loaded]);
 
   const addColumn = useCallback((preset: string) => {

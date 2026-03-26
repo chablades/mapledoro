@@ -31,6 +31,13 @@ const STALE_WHILE_REVALIDATE_SECONDS = Number.parseInt(
   10,
 );
 
+const LOOKUP_ERROR_RESPONSES: Record<string, { status: number; message: string }> = {
+  QUEUE_FULL: { status: 429, message: "Server lookup queue is full. Please retry shortly." },
+  QUEUE_BACKPRESSURE: { status: 503, message: "Lookup queue is busy right now. Please retry in a few seconds." },
+  UPSTREAM_TIMEOUT: { status: 504, message: "Nexon lookup timed out. Please retry shortly." },
+  LOOKUP_TIMEOUT: { status: 504, message: "Lookup took too long under current traffic. Please retry." },
+};
+
 interface MapleRankRow {
   characterID: number;
   characterName: string;
@@ -107,6 +114,12 @@ const fallbackDailyRate = new Map<string, { count: number; expiresAt: number }>(
 const fallbackActiveQueueByIp = new Map<string, number>();
 const redisUrl = process.env.REDIS_URL?.trim() ?? "";
 const redis = redisUrl ? new Redis(redisUrl, { lazyConnect: true }) : null;
+
+async function ensureRedisConnected() {
+  if (redis && redis.status === "wait") {
+    await redis.connect();
+  }
+}
 
 function logRedisError(operation: string, error: unknown) {
   const message = error instanceof Error ? error.message : String(error);
@@ -198,9 +211,7 @@ async function checkAndTrackIpRate(ipKey: string): Promise<{
 
   if (redis) {
     try {
-      if (redis.status === "wait") {
-        await redis.connect();
-      }
+      await ensureRedisConnected();
       const [minuteCountRaw, dayCountRaw] = await redis
         .multi()
         .incr(rateMinuteKey(ipKey))
@@ -311,9 +322,7 @@ async function getCacheHit(nameKey: string): Promise<{
 }> {
   if (redis) {
     try {
-      if (redis.status === "wait") {
-        await redis.connect();
-      }
+      await ensureRedisConnected();
       const raw = await redis.get(cacheKey(nameKey));
       if (!raw) return { entry: null, source: null };
       const parsed = JSON.parse(raw) as CacheEntry;
@@ -343,9 +352,7 @@ async function setCacheHit(nameKey: string, entry: CacheEntry): Promise<void> {
   const ttlSeconds = Math.max(1, Math.floor((entry.expiresAt - Date.now()) / 1000));
   if (redis) {
     try {
-      if (redis.status === "wait") {
-        await redis.connect();
-      }
+      await ensureRedisConnected();
       await redis.set(cacheKey(nameKey), JSON.stringify(entry), "EX", ttlSeconds);
       return;
     } catch (error) {
@@ -582,33 +589,12 @@ export async function GET(request: NextRequest) {
     const result = await lookupPromise;
     return jsonLookup(result);
   } catch (error) {
-    if (error instanceof Error && error.message === "QUEUE_FULL") {
-      return NextResponse.json(
-        { error: "Server lookup queue is full. Please retry shortly." },
-        { status: 429, headers: { "Cache-Control": "no-store" } },
-      );
-    }
-    if (error instanceof Error && error.message === "QUEUE_BACKPRESSURE") {
-      return NextResponse.json(
-        { error: "Lookup queue is busy right now. Please retry in a few seconds." },
-        { status: 503, headers: { "Cache-Control": "no-store" } },
-      );
-    }
-    if (error instanceof Error && error.message === "UPSTREAM_TIMEOUT") {
-      return NextResponse.json(
-        { error: "Nexon lookup timed out. Please retry shortly." },
-        { status: 504, headers: { "Cache-Control": "no-store" } },
-      );
-    }
-    if (error instanceof Error && error.message === "LOOKUP_TIMEOUT") {
-      return NextResponse.json(
-        { error: "Lookup took too long under current traffic. Please retry." },
-        { status: 504, headers: { "Cache-Control": "no-store" } },
-      );
-    }
+    const knownError =
+      error instanceof Error ? LOOKUP_ERROR_RESPONSES[error.message] : undefined;
+    const { status, message } = knownError ?? { status: 502, message: "Lookup failed." };
     return NextResponse.json(
-      { error: "Lookup failed." },
-      { status: 502, headers: { "Cache-Control": "no-store" } },
+      { error: message },
+      { status, headers: { "Cache-Control": "no-store" } },
     );
   } finally {
     inFlightLookup.delete(key);

@@ -3,6 +3,14 @@
 import { useState, useEffect, useCallback } from "react";
 import type { AppTheme } from "../../../components/themes";
 import { ToolHeader } from "../../../components/ToolHeader";
+import { WikiAttribution } from "../../../components/WikiAttribution";
+import {
+  inputStyle as baseInputStyle,
+  sectionPanel as baseSectionPanel,
+  labelStyle as baseLabelStyle,
+} from "../commonStyles";
+import { todayStr } from "../dateUtils";
+import { loadFromStorage, saveToStorage } from "../storage";
 import {
   type LiberationType,
   type LiberationBoss,
@@ -34,30 +42,10 @@ interface SavedState {
   bosses: Record<string, BossSelection>;
 }
 
-// -- Storage ------------------------------------------------------------------
-
 const STORAGE_KEY = "liberation-v1";
-
-function loadState(): SavedState | null {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    return JSON.parse(raw);
-  } catch {
-    return null;
-  }
-}
-
-function saveState(state: SavedState) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-}
 
 // -- Helpers ------------------------------------------------------------------
 
-function todayStr(): string {
-  const d = new Date();
-  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
-}
 
 function makeBossKey(type: LiberationType, bossName: string): string {
   return `${type}:${bossName}`;
@@ -383,7 +371,7 @@ interface FormState {
 }
 
 function initFormState(): FormState {
-  const saved = loadState();
+  const saved = loadFromStorage<SavedState>(STORAGE_KEY);
   if (saved) {
     return {
       type: saved.type,
@@ -417,7 +405,7 @@ export default function LiberationWorkspace({ theme }: { theme: AppTheme }) {
 
   // Persist
   useEffect(() => {
-    saveState({
+    saveToStorage(STORAGE_KEY, {
       type,
       currentQuestIdx: questIdx,
       currentTraces,
@@ -516,17 +504,7 @@ export default function LiberationWorkspace({ theme }: { theme: AppTheme }) {
   const progressPct = Math.min(100, (tracesCompleted / totalNeeded) * 100);
 
   // Styles
-  const inputStyle: React.CSSProperties = {
-    background: theme.timerBg,
-    border: `1px solid ${theme.border}`,
-    borderRadius: "8px",
-    padding: "6px 10px",
-    color: theme.text,
-    fontFamily: "'Nunito', sans-serif",
-    fontSize: "0.82rem",
-    fontWeight: 700,
-    outline: "none",
-  };
+  const inputStyle = baseInputStyle(theme);
 
   const pillBtn = (
     active: boolean,
@@ -552,22 +530,8 @@ export default function LiberationWorkspace({ theme }: { theme: AppTheme }) {
     border: active ? "none" : `1px solid ${theme.border}`,
   });
 
-  const sectionPanel: React.CSSProperties = {
-    background: theme.panel,
-    border: `1px solid ${theme.border}`,
-    borderRadius: "18px",
-    padding: "1.25rem",
-    marginBottom: "1.25rem",
-  };
-
-  const labelStyle: React.CSSProperties = {
-    fontSize: "0.7rem",
-    fontWeight: 800,
-    color: theme.muted,
-    textTransform: "uppercase",
-    letterSpacing: "0.1em",
-    marginBottom: "8px",
-  };
+  const sectionPanel = baseSectionPanel(theme);
+  const labelStyle = baseLabelStyle(theme);
 
   const traceName = type === "genesis" ? "Traces of Darkness" : "Determination";
   const traceNameShort = type === "genesis" ? "Traces" : "Determination";
@@ -1044,25 +1008,7 @@ export default function LiberationWorkspace({ theme }: { theme: AppTheme }) {
               padding: "0 0.25rem",
             }}
           >
-            Boss images sourced from{" "}
-            <a
-              href="https://maplestorywiki.net"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ color: theme.accent, textDecoration: "none" }}
-            >
-              MapleStory Wiki
-            </a>
-            , licensed under{" "}
-            <a
-              href="https://creativecommons.org/licenses/by-nc-sa/4.0/"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ color: theme.accent, textDecoration: "none" }}
-            >
-              CC BY-NC-SA 4.0
-            </a>
-            .
+            <WikiAttribution theme={theme} subject="Boss images" />
           </div>
         </div>
       </div>

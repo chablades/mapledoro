@@ -143,15 +143,7 @@ export function useCharacterSetupController() {
   }, []);
 
   const applyDraftFlowState = useCallback(
-    (
-      draft: SetupDraft,
-      completedFlowIds: SetupFlowId[],
-      options?: {
-        includeSetupMode?: boolean;
-        includeStartedFlags?: boolean;
-        includeVisibility?: boolean;
-      },
-    ) => {
+    (draft: SetupDraft, completedFlowIds: SetupFlowId[], applyAll?: boolean) => {
       setCompletedFlowIds(completedFlowIds);
       setActiveFlowId(draft.activeFlowId);
       setSetupStepIndex(draft.setupStepIndex);
@@ -159,19 +151,25 @@ export function useCharacterSetupController() {
       setSetupStepTestByStep(draft.setupStepTestByStep ?? {});
       setConfirmedCharacter(draft.confirmedCharacter);
 
-      if (options?.includeSetupMode) {
+      if (applyAll) {
         setSetupMode(draft.setupMode);
-      }
-      if (options?.includeStartedFlags) {
         setSetupFlowStarted(draft.setupFlowStarted);
-      }
-      if (options?.includeVisibility) {
-        setShowFlowOverview(Boolean(draft.showFlowOverview));
-        setShowCharacterDirectory(Boolean(draft.showCharacterDirectory));
+        setShowFlowOverview(draft.showFlowOverview);
+        setShowCharacterDirectory(draft.showCharacterDirectory);
       }
     },
     [],
   );
+
+  const applyCompletedDirectoryView = useCallback(() => {
+    setSetupMode("search");
+    setSetupFlowStarted(true);
+    setShowFlowOverview(true);
+    setShowCharacterDirectory(true);
+    setSetupPanelVisible(true);
+    setSuppressLayoutTransition(false);
+    setHasCompletedRequiredSetupEver(true);
+  }, [setSetupPanelVisible, setSuppressLayoutTransition]);
 
   const showCompletedDirectoryState = useCallback(
     (
@@ -181,15 +179,9 @@ export function useCharacterSetupController() {
       setCharacterRoster(roster);
       setMainCharacterKey(store.mainCharacterId);
       setChampionCharacterKeys(store.championCharacterIds);
-      setSetupMode("search");
-      setSetupFlowStarted(true);
-      setShowFlowOverview(true);
-      setShowCharacterDirectory(true);
-      setSetupPanelVisible(true);
-      setSuppressLayoutTransition(false);
-      setHasCompletedRequiredSetupEver(true);
+      applyCompletedDirectoryView();
     },
-    [setSetupPanelVisible, setSuppressLayoutTransition],
+    [applyCompletedDirectoryView],
   );
 
   const handleDraftHydration = useCallback(
@@ -199,80 +191,73 @@ export function useCharacterSetupController() {
       storedRoster: NormalizedCharacterData[],
       accountHasCompletedRequiredFlow: boolean,
     ) => {
-      if (draft) {
-        const nextCompletedFlowIds = normalizeCompletedFlowIds(draft.completedFlowIds ?? []);
-        const hasCompletedRequiredFlow = nextCompletedFlowIds.includes(requiredFlowId);
-        const hasActiveFlowInProgress =
-          Boolean(draft.setupFlowStarted) && !Boolean(draft.showFlowOverview);
-
-        if (hasCompletedRequiredFlow && draft.confirmedCharacter) {
-          removeSetupDraftForCharacter(draft.confirmedCharacter);
-        }
-
-        setHasCompletedRequiredSetupEver(
-          accountHasCompletedRequiredFlow || hasCompletedRequiredFlow,
-        );
-
-        const canResumeFromDraft = isResumableDraft(draft);
-        setCanResumeSetup(canResumeFromDraft);
-        setResumeSetupCharacterName(
-          canResumeFromDraft ? (draft.confirmedCharacter?.characterName ?? draft.query) : null,
-        );
-        setQuery(draft.query);
-        setCharacterRoster(storedRoster);
-        setMainCharacterKey(store.mainCharacterId);
-        setChampionCharacterKeys(store.championCharacterIds);
-
-        if (draft.autoResumeOnLoad && hasActiveFlowInProgress) {
-          applyDraftFlowState(draft, nextCompletedFlowIds, {
-            includeSetupMode: true,
-            includeStartedFlags: true,
-            includeVisibility: true,
-          });
-          setSuppressLayoutTransition(draft.setupFlowStarted);
-          setSetupPanelVisible(false);
-          if (draft.setupFlowStarted) {
-            queueTransitionTimer(() => {
-              setSetupPanelVisible(true);
-            }, CHARACTERS_TRANSITION_MS.setupPanelRevealDelay);
-            queueTransitionTimer(() => {
-              setSuppressLayoutTransition(false);
-            }, CHARACTERS_TRANSITION_MS.slow + CHARACTERS_TRANSITION_MS.setupPanelRevealDelay);
-          }
-        } else if (hasCompletedRequiredFlow || accountHasCompletedRequiredFlow) {
-          applyDraftFlowState(draft, nextCompletedFlowIds);
-          setSetupMode("search");
-          setSetupFlowStarted(true);
-          setShowFlowOverview(true);
-          setShowCharacterDirectory(true);
-          if (!hasCompletedRequiredFlow) {
-            setActiveFlowId(requiredFlowId);
-            setSetupStepIndex(0);
-            setSetupStepDirection("forward");
-            setSetupStepTestByStep({});
-          }
-          setIsAddingCharacter(false);
-          setSetupPanelVisible(true);
-          setSuppressLayoutTransition(false);
-          setHasCompletedRequiredSetupEver(true);
-        } else if (draft.autoResumeOnLoad) {
-          applyDraftFlowState(draft, nextCompletedFlowIds, {
-            includeSetupMode: true,
-            includeStartedFlags: true,
-            includeVisibility: true,
-          });
+      // No draft — show directory or reset
+      if (!draft) {
+        if (accountHasCompletedRequiredFlow) {
+          showCompletedDirectoryState(store, storedRoster);
         } else {
-          applyDraftFlowState(draft, nextCompletedFlowIds);
+          setCanResumeSetup(false);
+          setResumeSetupCharacterName(null);
+          setHasCompletedRequiredSetupEver(false);
         }
-      } else if (accountHasCompletedRequiredFlow) {
-        showCompletedDirectoryState(store, storedRoster);
-      } else {
-        setCanResumeSetup(false);
-        setResumeSetupCharacterName(null);
-        setHasCompletedRequiredSetupEver(false);
+        return;
       }
+
+      // Draft exists — common setup
+      const nextCompletedFlowIds = normalizeCompletedFlowIds(draft.completedFlowIds ?? []);
+      const hasCompletedRequiredFlow = nextCompletedFlowIds.includes(requiredFlowId);
+
+      if (hasCompletedRequiredFlow && draft.confirmedCharacter) {
+        removeSetupDraftForCharacter(draft.confirmedCharacter);
+      }
+
+      setHasCompletedRequiredSetupEver(
+        accountHasCompletedRequiredFlow || hasCompletedRequiredFlow,
+      );
+
+      const canResumeFromDraft = isResumableDraft(draft);
+      setCanResumeSetup(canResumeFromDraft);
+      setResumeSetupCharacterName(
+        canResumeFromDraft ? (draft.confirmedCharacter?.characterName ?? draft.query) : null,
+      );
+      setQuery(draft.query);
+      setCharacterRoster(storedRoster);
+      setMainCharacterKey(store.mainCharacterId);
+      setChampionCharacterKeys(store.championCharacterIds);
+
+      // Resume an active flow in progress with transition animations
+      if (draft.autoResumeOnLoad && draft.setupFlowStarted && !draft.showFlowOverview) {
+        applyDraftFlowState(draft, nextCompletedFlowIds, true);
+        setSuppressLayoutTransition(true);
+        setSetupPanelVisible(false);
+        queueTransitionTimer(() => {
+          setSetupPanelVisible(true);
+        }, CHARACTERS_TRANSITION_MS.setupPanelRevealDelay);
+        queueTransitionTimer(() => {
+          setSuppressLayoutTransition(false);
+        }, CHARACTERS_TRANSITION_MS.slow + CHARACTERS_TRANSITION_MS.setupPanelRevealDelay);
+        return;
+      }
+
+      // Already completed required flow — show directory
+      if (hasCompletedRequiredFlow || accountHasCompletedRequiredFlow) {
+        applyDraftFlowState(draft, nextCompletedFlowIds);
+        applyCompletedDirectoryView();
+        if (!hasCompletedRequiredFlow) {
+          setActiveFlowId(requiredFlowId);
+          setSetupStepIndex(0);
+          setSetupStepDirection("forward");
+          setSetupStepTestByStep({});
+        }
+        setIsAddingCharacter(false);
+        return;
+      }
+
+      // Apply remaining draft state (with full options if auto-resume requested)
+      applyDraftFlowState(draft, nextCompletedFlowIds, draft.autoResumeOnLoad);
     },
     [
+      applyCompletedDirectoryView,
       applyDraftFlowState,
       isResumableDraft,
       queueTransitionTimer,

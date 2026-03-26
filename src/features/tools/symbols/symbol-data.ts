@@ -7,6 +7,16 @@
 
 export type SymbolType = "arcane" | "sacred";
 
+export interface SymbolState {
+  level: number;
+  current: number;
+  daily: number;
+  /** Arcane only — toggles the flat 120/week from weekly dungeons. */
+  weeklyEnabled: boolean;
+  /** Sacred only — whether this symbol is being tracked. */
+  enabled: boolean;
+}
+
 export interface SymbolArea {
   name: string;
   icon: string;
