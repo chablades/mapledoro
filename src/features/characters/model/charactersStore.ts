@@ -1,0 +1,552 @@
+import { toCharacterKey } from "./characterKeys";
+import { getRequiredSetupFlowId } from "../setup/flows";
+import type { NormalizedCharacterData } from "./types";
+import { readAllSetupDrafts, readLastSetupDraft } from "./setupDraftStorage";
+
+export const CHARACTERS_STORE_VERSION = 1 as const;
+export const CHARACTERS_STORE_STORAGE_KEY = "mapledoro_characters_store_v1";
+
+export interface StoredTripleStatField {
+  base: string;
+  percent: string;
+  percentUnapplied: string;
+}
+
+export interface StoredCooldownReductionField {
+  seconds: string;
+  percent: string;
+}
+
+export interface StoredCharacterStats {
+  hp: StoredTripleStatField;
+  mp: StoredTripleStatField;
+  str: StoredTripleStatField;
+  dex: StoredTripleStatField;
+  int: StoredTripleStatField;
+  luk: StoredTripleStatField;
+  damage: string;
+  bossDamage: string;
+  ignoreDefense: string;
+  attackPower: string;
+  magicAtt: string;
+  criticalRate: string;
+  criticalDamage: string;
+  buffDuration: string;
+  cooldownReduction: StoredCooldownReductionField;
+  cooldownSkip: string;
+  ignoreElementalResistance: string;
+  additionalStatusDamage: string;
+  summonDuration: string;
+  arcanePower: string;
+  sacredPower: string;
+}
+
+export interface StoredEquipmentItem {
+  name: string;
+}
+
+export interface StoredCharacterEquipment {
+  rings: [StoredEquipmentItem | null, StoredEquipmentItem | null, StoredEquipmentItem | null, StoredEquipmentItem | null];
+  pocket: StoredEquipmentItem | null;
+  eye: StoredEquipmentItem | null;
+  face: StoredEquipmentItem | null;
+  pendants: [StoredEquipmentItem | null, StoredEquipmentItem | null];
+  weapon: StoredEquipmentItem | null;
+  secondary: StoredEquipmentItem | null;
+  emblem: StoredEquipmentItem | null;
+  hat: StoredEquipmentItem | null;
+  top: StoredEquipmentItem | null;
+  bottom: StoredEquipmentItem | null;
+  shoulder: StoredEquipmentItem | null;
+  android: StoredEquipmentItem | null;
+  cape: StoredEquipmentItem | null;
+  glove: StoredEquipmentItem | null;
+  shoe: StoredEquipmentItem | null;
+  medal: StoredEquipmentItem | null;
+  heart: StoredEquipmentItem | null;
+  totems: [StoredEquipmentItem | null, StoredEquipmentItem | null, StoredEquipmentItem | null];
+}
+
+export interface StoredCharacterRecord {
+  ign: string;
+  worldId: number;
+  characterID: number;
+  characterName: string;
+  worldID: number;
+  level: number;
+  exp: number;
+  jobName: string;
+  characterImgURL: string;
+  isSearchTarget: boolean;
+  startRank: number;
+  overallRank: number;
+  overallGap: number;
+  legionRank: number;
+  legionGap: number;
+  legionLevel: number;
+  raidPower: number;
+  tierID: number;
+  score: number;
+  fetchedAt: number;
+  expiresAt: number;
+  gender: "male" | "female" | null;
+  stats: StoredCharacterStats;
+  equipment: StoredCharacterEquipment;
+  meta: {
+    addedAt: number;
+    updatedAt: number;
+  };
+}
+
+export interface CharactersStore {
+  version: typeof CHARACTERS_STORE_VERSION;
+  order: string[];
+  mainCharacterId: string | null;
+  championCharacterIds: string[];
+  charactersById: Record<string, StoredCharacterRecord>;
+  updatedAt: number;
+}
+
+export interface CharactersStoreView {
+  version: CharactersStore["version"];
+  all: StoredCharacterRecord[];
+  byId: CharactersStore["charactersById"];
+  main: StoredCharacterRecord | null;
+  champions: StoredCharacterRecord[];
+}
+
+function isObject(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object";
+}
+
+function isNormalizedCharacterData(value: unknown): value is NormalizedCharacterData {
+  return (
+    isObject(value) &&
+    typeof value.characterID === "number" &&
+    typeof value.characterName === "string" &&
+    typeof value.worldID === "number" &&
+    typeof value.level === "number" &&
+    typeof value.exp === "number" &&
+    typeof value.jobName === "string" &&
+    typeof value.characterImgURL === "string" &&
+    typeof value.isSearchTarget === "boolean" &&
+    typeof value.startRank === "number" &&
+    typeof value.overallRank === "number" &&
+    typeof value.overallGap === "number" &&
+    typeof value.legionRank === "number" &&
+    typeof value.legionGap === "number" &&
+    typeof value.legionLevel === "number" &&
+    typeof value.raidPower === "number" &&
+    typeof value.tierID === "number" &&
+    typeof value.score === "number" &&
+    typeof value.fetchedAt === "number" &&
+    typeof value.expiresAt === "number"
+  );
+}
+
+export function createEmptyTripleStatField(): StoredTripleStatField {
+  return {
+    base: "",
+    percent: "",
+    percentUnapplied: "",
+  };
+}
+
+export function createEmptyCharacterStats(): StoredCharacterStats {
+  return {
+    hp: createEmptyTripleStatField(),
+    mp: createEmptyTripleStatField(),
+    str: createEmptyTripleStatField(),
+    dex: createEmptyTripleStatField(),
+    int: createEmptyTripleStatField(),
+    luk: createEmptyTripleStatField(),
+    damage: "",
+    bossDamage: "",
+    ignoreDefense: "",
+    attackPower: "",
+    magicAtt: "",
+    criticalRate: "",
+    criticalDamage: "",
+    buffDuration: "",
+    cooldownReduction: {
+      seconds: "",
+      percent: "",
+    },
+    cooldownSkip: "",
+    ignoreElementalResistance: "",
+    additionalStatusDamage: "",
+    summonDuration: "",
+    arcanePower: "",
+    sacredPower: "",
+  };
+}
+
+export function createEmptyEquipmentItem(): StoredEquipmentItem {
+  return {
+    name: "",
+  };
+}
+
+export function createEmptyCharacterEquipment(): StoredCharacterEquipment {
+  return {
+    rings: [null, null, null, null],
+    pocket: null,
+    eye: null,
+    face: null,
+    pendants: [null, null],
+    weapon: null,
+    secondary: null,
+    emblem: null,
+    hat: null,
+    top: null,
+    bottom: null,
+    shoulder: null,
+    android: null,
+    cape: null,
+    glove: null,
+    shoe: null,
+    medal: null,
+    heart: null,
+    totems: [null, null, null],
+  };
+}
+
+function isStoredTripleStatField(value: unknown): value is StoredTripleStatField {
+  return (
+    isObject(value) &&
+    typeof value.base === "string" &&
+    typeof value.percent === "string" &&
+    typeof value.percentUnapplied === "string"
+  );
+}
+
+function isStoredCooldownReductionField(value: unknown): value is StoredCooldownReductionField {
+  return (
+    isObject(value) &&
+    typeof value.seconds === "string" &&
+    typeof value.percent === "string"
+  );
+}
+
+function isStoredCharacterStats(value: unknown): value is StoredCharacterStats {
+  return (
+    isObject(value) &&
+    isStoredTripleStatField(value.hp) &&
+    isStoredTripleStatField(value.mp) &&
+    isStoredTripleStatField(value.str) &&
+    isStoredTripleStatField(value.dex) &&
+    isStoredTripleStatField(value.int) &&
+    isStoredTripleStatField(value.luk) &&
+    typeof value.damage === "string" &&
+    typeof value.bossDamage === "string" &&
+    typeof value.ignoreDefense === "string" &&
+    typeof value.attackPower === "string" &&
+    typeof value.magicAtt === "string" &&
+    typeof value.criticalRate === "string" &&
+    typeof value.criticalDamage === "string" &&
+    typeof value.buffDuration === "string" &&
+    isStoredCooldownReductionField(value.cooldownReduction) &&
+    typeof value.cooldownSkip === "string" &&
+    typeof value.ignoreElementalResistance === "string" &&
+    typeof value.additionalStatusDamage === "string" &&
+    typeof value.summonDuration === "string" &&
+    typeof value.arcanePower === "string" &&
+    typeof value.sacredPower === "string"
+  );
+}
+
+function isStoredEquipmentItem(value: unknown): value is StoredEquipmentItem {
+  return isObject(value) && typeof value.name === "string";
+}
+
+function isNullableStoredEquipmentItem(value: unknown): value is StoredEquipmentItem | null {
+  return value === null || isStoredEquipmentItem(value);
+}
+
+function isStoredCharacterEquipment(value: unknown): value is StoredCharacterEquipment {
+  return (
+    isObject(value) &&
+    Array.isArray(value.rings) &&
+    value.rings.length === 4 &&
+    value.rings.every(isNullableStoredEquipmentItem) &&
+    isNullableStoredEquipmentItem(value.pocket) &&
+    isNullableStoredEquipmentItem(value.eye) &&
+    isNullableStoredEquipmentItem(value.face) &&
+    Array.isArray(value.pendants) &&
+    value.pendants.length === 2 &&
+    value.pendants.every(isNullableStoredEquipmentItem) &&
+    isNullableStoredEquipmentItem(value.weapon) &&
+    isNullableStoredEquipmentItem(value.secondary) &&
+    isNullableStoredEquipmentItem(value.emblem) &&
+    isNullableStoredEquipmentItem(value.hat) &&
+    isNullableStoredEquipmentItem(value.top) &&
+    isNullableStoredEquipmentItem(value.bottom) &&
+    isNullableStoredEquipmentItem(value.shoulder) &&
+    isNullableStoredEquipmentItem(value.android) &&
+    isNullableStoredEquipmentItem(value.cape) &&
+    isNullableStoredEquipmentItem(value.glove) &&
+    isNullableStoredEquipmentItem(value.shoe) &&
+    isNullableStoredEquipmentItem(value.medal) &&
+    isNullableStoredEquipmentItem(value.heart) &&
+    Array.isArray(value.totems) &&
+    value.totems.length === 3 &&
+    value.totems.every(isNullableStoredEquipmentItem)
+  );
+}
+
+export function createEmptyCharactersStore(): CharactersStore {
+  return {
+    version: CHARACTERS_STORE_VERSION,
+    order: [],
+    mainCharacterId: null,
+    championCharacterIds: [],
+    charactersById: {},
+    updatedAt: 0,
+  };
+}
+
+export function createStoredCharacterRecord(args: {
+  character: NormalizedCharacterData;
+  gender?: "male" | "female" | null;
+  stats?: StoredCharacterStats;
+  equipment?: StoredCharacterEquipment;
+  addedAt?: number;
+  updatedAt?: number;
+}): StoredCharacterRecord {
+  return {
+    ign: args.character.characterName,
+    worldId: args.character.worldID,
+    ...args.character,
+    gender: args.gender ?? null,
+    stats: args.stats ?? createEmptyCharacterStats(),
+    equipment: args.equipment ?? createEmptyCharacterEquipment(),
+    meta: {
+      addedAt: args.addedAt ?? Date.now(),
+      updatedAt: args.updatedAt ?? Date.now(),
+    },
+  };
+}
+
+function parseStoredCharacterRecord(
+  value: unknown,
+  idHint: string | null,
+): StoredCharacterRecord | null {
+  if (!isObject(value)) return null;
+  const ign = typeof value.ign === "string" ? value.ign : null;
+  const worldId = typeof value.worldId === "number" ? value.worldId : null;
+  const normalizedCharacterData = isNormalizedCharacterData(value) ? value : null;
+  const meta = isObject(value.meta) ? value.meta : null;
+  if (!ign || worldId === null || !normalizedCharacterData || !meta) return null;
+  const derivedIgn = ign || idHint || normalizedCharacterData.characterName;
+
+  return {
+    ...normalizedCharacterData,
+    ign: derivedIgn,
+    worldId,
+    gender:
+      value.gender === "male" ? "male" : value.gender === "female" ? "female" : null,
+    stats: isStoredCharacterStats(value.stats) ? value.stats : createEmptyCharacterStats(),
+    equipment: isStoredCharacterEquipment(value.equipment)
+      ? value.equipment
+      : createEmptyCharacterEquipment(),
+    meta: {
+      addedAt: typeof meta.addedAt === "number" ? meta.addedAt : Date.now(),
+      updatedAt: typeof meta.updatedAt === "number" ? meta.updatedAt : Date.now(),
+    },
+  };
+}
+
+function parseCharactersStore(raw: string): CharactersStore | null {
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (!isObject(parsed)) return null;
+    if (parsed.version !== CHARACTERS_STORE_VERSION) return null;
+
+    const charactersByIdInput = isObject(parsed.charactersById) ? parsed.charactersById : {};
+    const charactersById: Record<string, StoredCharacterRecord> = {};
+    for (const [id, entry] of Object.entries(charactersByIdInput)) {
+      const parsedEntry = parseStoredCharacterRecord(entry, id);
+      if (!parsedEntry) continue;
+      charactersById[id] = parsedEntry;
+    }
+
+    const order = Array.isArray(parsed.order)
+      ? parsed.order.filter(
+          (entry): entry is string => typeof entry === "string" && Boolean(charactersById[entry]),
+        )
+      : [];
+
+    for (const id of Object.keys(charactersById)) {
+      if (!order.includes(id)) {
+        order.push(id);
+      }
+    }
+
+    const mainCharacterId =
+      typeof parsed.mainCharacterId === "string" && charactersById[parsed.mainCharacterId]
+        ? parsed.mainCharacterId
+        : null;
+    const championCharacterIds = Array.isArray(parsed.championCharacterIds)
+      ? parsed.championCharacterIds.filter(
+          (entry): entry is string =>
+            typeof entry === "string" && Boolean(charactersById[entry]),
+        )
+      : [];
+
+    return {
+      version: CHARACTERS_STORE_VERSION,
+      order,
+      mainCharacterId,
+      championCharacterIds,
+      charactersById,
+      updatedAt: typeof parsed.updatedAt === "number" ? parsed.updatedAt : Date.now(),
+    };
+  } catch {
+    return null;
+  }
+}
+
+function buildLegacyCharactersStore(): CharactersStore {
+  const requiredFlowId = getRequiredSetupFlowId();
+  const drafts = readAllSetupDrafts()
+    .filter((draft) => draft.confirmedCharacter && draft.completedFlowIds.includes(requiredFlowId))
+    .sort((a, b) => a.savedAt - b.savedAt);
+
+  if (!drafts.length) return createEmptyCharactersStore();
+
+  const charactersById: Record<string, StoredCharacterRecord> = {};
+  const order: string[] = [];
+
+  for (const draft of drafts) {
+    if (!draft.confirmedCharacter) continue;
+    const draftId = toCharacterKey(draft.confirmedCharacter);
+    const existing = charactersById[draftId];
+    charactersById[draftId] = createStoredCharacterRecord({
+      character: draft.confirmedCharacter,
+      gender:
+        draft.setupStepTestByStep.gender?.toLowerCase() === "male"
+          ? "male"
+          : draft.setupStepTestByStep.gender?.toLowerCase() === "female"
+            ? "female"
+            : null,
+      stats: createEmptyCharacterStats(),
+      equipment: createEmptyCharacterEquipment(),
+      addedAt: existing?.meta.addedAt ?? draft.savedAt,
+      updatedAt: draft.savedAt,
+    });
+    if (!order.includes(draftId)) {
+      order.push(draftId);
+    }
+  }
+
+  const lastDraft = readLastSetupDraft();
+  const mainCharacterId =
+    lastDraft?.mainCharacterKey && charactersById[lastDraft.mainCharacterKey]
+      ? lastDraft.mainCharacterKey
+      : order[0] ?? null;
+  const championCharacterIds = (lastDraft?.championCharacterKeys ?? []).filter((id) =>
+    Boolean(charactersById[id]),
+  );
+  const updatedAt = drafts[drafts.length - 1]?.savedAt ?? Date.now();
+
+  return {
+    version: CHARACTERS_STORE_VERSION,
+    order,
+    mainCharacterId,
+    championCharacterIds,
+    charactersById,
+    updatedAt,
+  };
+}
+
+export function writeCharactersStore(store: CharactersStore) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(CHARACTERS_STORE_STORAGE_KEY, JSON.stringify(store));
+  } catch {
+    // Ignore localStorage write failures.
+  }
+}
+
+export function readCharactersStore(): CharactersStore {
+  if (typeof window === "undefined") return createEmptyCharactersStore();
+  const raw = window.localStorage.getItem(CHARACTERS_STORE_STORAGE_KEY);
+  if (raw) {
+    const parsed = parseCharactersStore(raw);
+    if (parsed) return parsed;
+  }
+
+  const migrated = buildLegacyCharactersStore();
+  if (migrated.order.length > 0) {
+    writeCharactersStore(migrated);
+  }
+  return migrated;
+}
+
+export function selectCharactersList(store: CharactersStore): StoredCharacterRecord[] {
+  return store.order
+    .map((id) => store.charactersById[id] ?? null)
+    .filter((entry): entry is StoredCharacterRecord => Boolean(entry));
+}
+
+export function selectCharacterById(store: CharactersStore, id: string) {
+  return store.charactersById[id] ?? null;
+}
+
+export function selectCharacterByIgn(store: CharactersStore, ign: string) {
+  const normalizedIgn = ign.trim().toLowerCase();
+  return (
+    selectCharactersList(store).find((entry) => toCharacterKey(entry) === normalizedIgn) ??
+    null
+  );
+}
+
+export function selectMainCharacter(store: CharactersStore) {
+  if (!store.mainCharacterId) return null;
+  return store.charactersById[store.mainCharacterId] ?? null;
+}
+
+export function selectChampionCharacters(store: CharactersStore) {
+  return store.championCharacterIds
+    .map((id) => store.charactersById[id] ?? null)
+    .filter((entry): entry is StoredCharacterRecord => Boolean(entry));
+}
+
+export function hasStoredCompletedRequiredSetup(store: CharactersStore) {
+  return selectCharactersList(store).length > 0;
+}
+
+export function readCharactersStoreView(): CharactersStoreView {
+  const store = readCharactersStore();
+  return {
+    version: store.version,
+    all: selectCharactersList(store),
+    byId: store.charactersById,
+    main: selectMainCharacter(store),
+    champions: selectChampionCharacters(store),
+  };
+}
+
+export function toNormalizedCharacterData(record: StoredCharacterRecord): NormalizedCharacterData {
+  return {
+    characterID: record.characterID,
+    characterName: record.characterName,
+    worldID: record.worldID,
+    level: record.level,
+    exp: record.exp,
+    jobName: record.jobName,
+    characterImgURL: record.characterImgURL,
+    isSearchTarget: record.isSearchTarget,
+    startRank: record.startRank,
+    overallRank: record.overallRank,
+    overallGap: record.overallGap,
+    legionRank: record.legionRank,
+    legionGap: record.legionGap,
+    legionLevel: record.legionLevel,
+    raidPower: record.raidPower,
+    tierID: record.tierID,
+    score: record.score,
+    fetchedAt: record.fetchedAt,
+    expiresAt: record.expiresAt,
+  };
+}

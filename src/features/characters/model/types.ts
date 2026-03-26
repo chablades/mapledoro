@@ -44,5 +44,3 @@ export interface LookupNotFoundResponse {
 }
 
 export type LookupResponse = LookupFoundResponse | LookupNotFoundResponse;
-
-export type CharactersTabKey = "search" | "inventory" | "character";

@@ -9,9 +9,7 @@ import CharactersWorkspace from "../../features/characters/CharactersWorkspace";
 export default function CharactersPage() {
   return (
     <AppShell currentPath="/characters">
-      {({ theme }) => (
-        <CharactersWorkspace theme={theme} />
-      )}
+      {({ theme }) => <CharactersWorkspace theme={theme} />}
     </AppShell>
   );
 }
