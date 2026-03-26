@@ -10,109 +10,72 @@ import { getCharacterSetupFlowStyles } from "./CharacterSetupFlow.styles";
 import PreviewSetupPane from "./components/PreviewSetupPane";
 import SearchPaneCard from "./components/SearchPaneCard";
 import type { PreviewPaneActions, PreviewPaneModel, SearchPaneActions, SearchPaneModel } from "./paneModels";
-import { useCharacterSetupController } from "./useCharacterSetupController";
+import { useCharacterSetupController, MAX_CHAMPIONS } from "./useCharacterSetupController";
 
 interface CharacterSetupFlowProps {
   theme: AppTheme;
 }
 
 const MAX_ACCOUNT_CHARACTERS = 59;
-const MAX_CHAMPIONS = 4;
 
 export default function CharacterSetupFlow({ theme }: CharacterSetupFlowProps) {
   const controller = useCharacterSetupController();
-
   const { state, transitions, actions } = controller;
-  const {
-    foundCharacter,
-    previewCardReady,
-    previewContentReady,
-    setupMode,
-    confirmedCharacter,
-    previewImageLoaded,
-    confirmedImageLoaded,
-    setupFlowStarted,
-    activeFlowId,
-    completedFlowIds,
-    showFlowOverview,
-    showCharacterDirectory,
-    isSwitchingToDirectory,
-    isSwitchingToProfile,
-    isFinishingSetup,
-    deleteNoticeCharacterName,
-    showDeleteNotice,
-    isAddingCharacter,
-    fastDirectoryRevealOnce,
-    characterRoster,
-    mainCharacterKey,
-    championCharacterKeys,
-    setupStepIndex,
-    setupStepDirection,
-    canResumeSetup,
-    resumeSetupCharacterName,
-    hasCompletedRequiredSetupEver,
-    isDraftHydrated,
-    isUiLocked,
-    activeSetupStepValue,
-    isCurrentMainCharacter,
-    isCurrentChampionCharacter,
-    canSetCurrentChampion,
-    currentCharacterGender,
-    requiredFlowId,
-    queryInvalid,
-    isSearching,
-    statusMessage,
-    statusTone,
-    query,
-  } = state;
-  const currentCharacterHasCompletedRequiredFlow = completedFlowIds.includes(requiredFlowId);
+  const currentCharacterHasCompletedRequiredFlow = state.completedFlowIds.includes(
+    state.requiredFlowId,
+  );
 
   const layout = deriveCharactersLayout({
-    foundCharacter,
-    setupFlowStarted,
-    showCharacterDirectory,
-    showSetupPane: showCharacterDirectory || !currentCharacterHasCompletedRequiredFlow,
+    foundCharacter: state.foundCharacter,
+    setupFlowStarted: state.setupFlowStarted,
+    showCharacterDirectory: state.showCharacterDirectory,
+    showSetupPane: state.showCharacterDirectory || !currentCharacterHasCompletedRequiredFlow,
     showCompletedProfilePane:
-      setupFlowStarted && currentCharacterHasCompletedRequiredFlow && !showCharacterDirectory,
-    isDirectoryTransitioning: isSwitchingToDirectory,
+      state.setupFlowStarted &&
+      currentCharacterHasCompletedRequiredFlow &&
+      !state.showCharacterDirectory,
+    isDirectoryTransitioning: state.isSwitchingToDirectory,
     suppressLayoutTransition: transitions.suppressLayoutTransition,
   });
 
   const searchPaneModel: SearchPaneModel = {
     theme,
     shell: {
-      isDraftHydrated,
+      isDraftHydrated: state.isDraftHydrated,
       isConfirmFadeOut: transitions.isConfirmFadeOut,
       confirmTransitionSource: transitions.confirmTransitionSource,
       isModeTransitioning: transitions.isModeTransitioning,
       isSearchFadeIn: transitions.isSearchFadeIn,
       isBackTransitioning: transitions.isBackTransitioning,
-      isSwitchingToDirectory,
-      isUiLocked,
+      isSwitchingToDirectory: state.isSwitchingToDirectory,
+      isUiLocked: state.isUiLocked,
     },
     search: {
-      setupMode,
-      setupFlowStarted,
-      hasCompletedRequiredFlow: currentCharacterHasCompletedRequiredFlow || hasCompletedRequiredSetupEver,
-      canResumeSetup,
-      resumeSetupCharacterName,
-      query,
-      queryInvalid,
-      isSearching,
-      statusMessage,
-      statusTone,
+      setupMode: state.setupMode,
+      setupFlowStarted: state.setupFlowStarted,
+      hasCompletedRequiredFlow:
+        currentCharacterHasCompletedRequiredFlow || state.hasCompletedRequiredSetupEver,
+      canResumeSetup: state.canResumeSetup,
+      resumeSetupCharacterName: state.resumeSetupCharacterName,
+      query: state.query,
+      queryInvalid: state.queryInvalid,
+      isSearching: state.isSearching,
+      statusMessage: state.statusMessage,
+      statusTone: state.statusTone,
     },
     profile: {
-      confirmedCharacter,
-      confirmedImageLoaded,
-      showCharacterDirectory,
+      confirmedCharacter: state.confirmedCharacter,
+      confirmedImageLoaded: state.confirmedImageLoaded,
+      showCharacterDirectory: state.showCharacterDirectory,
       canViewCharacterDirectory:
-        setupFlowStarted && completedFlowIds.includes(requiredFlowId) && !isAddingCharacter,
-      isAddingCharacter,
-      isCurrentMainCharacter,
-      isCurrentChampionCharacter,
-      canSetCurrentChampion,
-      currentCharacterGender,
+        state.setupFlowStarted &&
+        state.completedFlowIds.includes(state.requiredFlowId) &&
+        !state.isAddingCharacter,
+      isAddingCharacter: state.isAddingCharacter,
+      isCurrentMainCharacter: state.isCurrentMainCharacter,
+      isCurrentChampionCharacter: state.isCurrentChampionCharacter,
+      canSetCurrentChampion: state.canSetCurrentChampion,
+      currentCharacterGender: state.currentCharacterGender,
     },
   };
 
@@ -124,12 +87,12 @@ export default function CharacterSetupFlow({ theme }: CharacterSetupFlowProps) {
     backFromAddCharacter: actions.backFromAddCharacter,
     resumeSavedSetup: actions.resumeSavedSetup,
     setCurrentAsMain: () => {
-      if (!confirmedCharacter) return;
-      actions.setMainCharacter(confirmedCharacter);
+      if (!state.confirmedCharacter) return;
+      actions.setMainCharacter(state.confirmedCharacter);
     },
     toggleCurrentChampion: () => {
-      if (!confirmedCharacter) return;
-      actions.toggleChampionCharacter(confirmedCharacter);
+      if (!state.confirmedCharacter) return;
+      actions.toggleChampionCharacter(state.confirmedCharacter);
     },
     removeCurrentCharacter: actions.removeCurrentCharacter,
     searchSubmit: actions.handleSearchSubmit,
@@ -141,35 +104,35 @@ export default function CharacterSetupFlow({ theme }: CharacterSetupFlowProps) {
   const previewPaneModel: PreviewPaneModel = {
     theme,
     preview: {
-      foundCharacter,
-      previewCardReady,
-      previewContentReady,
-      previewImageLoaded,
+      foundCharacter: state.foundCharacter,
+      previewCardReady: state.previewCardReady,
+      previewContentReady: state.previewContentReady,
+      previewImageLoaded: state.previewImageLoaded,
       isConfirmFadeOut: transitions.isConfirmFadeOut,
       isModeTransitioning: transitions.isModeTransitioning,
     },
     setup: {
-      setupFlowStarted,
+      setupFlowStarted: state.setupFlowStarted,
       setupPanelVisible: transitions.setupPanelVisible,
       isBackTransitioning: transitions.isBackTransitioning,
-      isFinishingSetup,
-      isSwitchingToDirectory,
-      isSwitchingToProfile,
-      isUiLocked,
-      activeFlowId,
-      completedFlowIds,
-      showFlowOverview,
-      showCharacterDirectory,
-      hasCompletedRequiredSetupEver,
-      fastDirectoryRevealOnce,
-      setupStepIndex,
-      setupStepDirection,
-      activeSetupStepValue,
+      isFinishingSetup: state.isFinishingSetup,
+      isSwitchingToDirectory: state.isSwitchingToDirectory,
+      isSwitchingToProfile: state.isSwitchingToProfile,
+      isUiLocked: state.isUiLocked,
+      activeFlowId: state.activeFlowId,
+      completedFlowIds: state.completedFlowIds,
+      showFlowOverview: state.showFlowOverview,
+      showCharacterDirectory: state.showCharacterDirectory,
+      hasCompletedRequiredSetupEver: state.hasCompletedRequiredSetupEver,
+      fastDirectoryRevealOnce: state.fastDirectoryRevealOnce,
+      setupStepIndex: state.setupStepIndex,
+      setupStepDirection: state.setupStepDirection,
+      activeSetupStepValue: state.activeSetupStepValue,
     },
     directory: {
-      allCharacters: characterRoster,
-      mainCharacterKey,
-      championCharacterKeys,
+      allCharacters: state.characterRoster,
+      mainCharacterKey: state.mainCharacterKey,
+      championCharacterKeys: state.championCharacterKeys,
       maxCharacters: MAX_ACCOUNT_CHARACTERS,
       maxChampions: MAX_CHAMPIONS,
     },
@@ -200,14 +163,14 @@ export default function CharacterSetupFlow({ theme }: CharacterSetupFlowProps) {
           <PreviewSetupPane model={previewPaneModel} actions={previewPaneActions} />
         </div>
       </main>
-      {deleteNoticeCharacterName && (
+      {state.deleteNoticeCharacterName && (
         <div
           style={{
             position: "fixed",
             left: "50%",
             top: "50%",
-            transform: `translate(-50%, calc(-50% + ${showDeleteNotice ? "0px" : "8px"}))`,
-            opacity: showDeleteNotice ? 1 : 0,
+            transform: `translate(-50%, calc(-50% + ${state.showDeleteNotice ? "0px" : "8px"}))`,
+            opacity: state.showDeleteNotice ? 1 : 0,
             transition: "opacity 0.22s ease, transform 0.22s ease",
             zIndex: 65,
             pointerEvents: "none",
@@ -226,7 +189,7 @@ export default function CharacterSetupFlow({ theme }: CharacterSetupFlowProps) {
               whiteSpace: "nowrap",
             }}
           >
-            {deleteNoticeCharacterName} was deleted.
+            {state.deleteNoticeCharacterName} was deleted.
           </div>
         </div>
       )}

@@ -16,6 +16,7 @@ import PetsSubstep from "./equipment-substeps/PetsSubstep";
 import DecorationsSubstep from "./equipment-substeps/DecorationsSubstep";
 import DamageSkinSubstep from "./equipment-substeps/DamageSkinSubstep";
 import ReviewSubstep from "./equipment-substeps/ReviewSubstep";
+import SetupStepFrame from "../SetupStepFrame";
 
 interface EquipmentStepProps {
   theme: AppTheme;
@@ -41,7 +42,6 @@ export default function EquipmentStep({
   onFinish,
 }: EquipmentStepProps) {
   const draft = parseEquipmentStepDraft(value);
-  const isLastSetupStep = stepNumber >= totalSteps;
 
   const substepIndex = useMemo(() => {
     const index = EQUIPMENT_SUBSTEPS.findIndex((entry) => entry.id === draft.substep);
@@ -60,62 +60,28 @@ export default function EquipmentStep({
       onBack();
       return;
     }
-    const prevSubstep = EQUIPMENT_SUBSTEPS[substepIndex - 1];
-    patchDraft({ substep: prevSubstep.id });
+    patchDraft({ substep: EQUIPMENT_SUBSTEPS[substepIndex - 1].id });
   };
 
-  const goNext = () => {
+  const handleAdvance = (stepAction: () => void) => {
     if (!isLastSubstep) {
-      const nextSubstep = EQUIPMENT_SUBSTEPS[substepIndex + 1];
-      patchDraft({ substep: nextSubstep.id });
-      return;
+      patchDraft({ substep: EQUIPMENT_SUBSTEPS[substepIndex + 1].id });
+    } else {
+      stepAction();
     }
-    if (isLastSetupStep) {
-      onFinish();
-      return;
-    }
-    onNext();
   };
 
   return (
-    <>
-      <p
-        style={{
-          margin: 0,
-          marginBottom: "0.35rem",
-          fontSize: "0.8rem",
-          color: theme.muted,
-          fontWeight: 800,
-          letterSpacing: "0.03em",
-          textTransform: "uppercase",
-        }}
-      >
-        Step {stepNumber} of {totalSteps}
-      </p>
-      <h2
-        style={{
-          margin: 0,
-          marginBottom: "0.45rem",
-          fontFamily: "'Fredoka One', cursive",
-          fontSize: "1.3rem",
-          lineHeight: 1.2,
-          color: theme.text,
-        }}
-      >
-        {step.label}
-      </h2>
-      <p
-        style={{
-          margin: 0,
-          marginBottom: "0.65rem",
-          fontSize: "0.88rem",
-          color: theme.muted,
-          fontWeight: 700,
-        }}
-      >
-        Section {substepIndex + 1} of {EQUIPMENT_SUBSTEPS.length}: {activeSubstep.label}
-      </p>
-
+    <SetupStepFrame
+      theme={theme}
+      stepLabel={step.label}
+      stepNumber={stepNumber}
+      totalSteps={totalSteps}
+      description={`Section ${substepIndex + 1} of ${EQUIPMENT_SUBSTEPS.length}: ${activeSubstep.label}`}
+      onBack={goPrev}
+      onNext={() => handleAdvance(onNext)}
+      onFinish={() => handleAdvance(onFinish)}
+    >
       <div
         style={{
           border: `1px solid ${theme.border}`,
@@ -141,43 +107,6 @@ export default function EquipmentStep({
           <ReviewSubstep theme={theme} draft={draft} onPatch={patchDraft} />
         )}
       </div>
-
-      <div style={{ display: "flex", gap: "0.6rem", justifyContent: "space-between" }}>
-        <button
-          type="button"
-          onClick={goPrev}
-          style={{
-            border: `1px solid ${theme.border}`,
-            borderRadius: "10px",
-            background: theme.bg,
-            color: theme.text,
-            fontFamily: "inherit",
-            fontWeight: 700,
-            fontSize: "0.86rem",
-            padding: "0.55rem 0.85rem",
-            cursor: "pointer",
-          }}
-        >
-          {substepIndex === 0 ? "Back Step" : "Back Section"}
-        </button>
-        <button
-          type="button"
-          onClick={goNext}
-          style={{
-            border: "none",
-            borderRadius: "10px",
-            background: theme.accent,
-            color: "#fff",
-            fontFamily: "inherit",
-            fontWeight: 800,
-            fontSize: "0.88rem",
-            padding: "0.55rem 0.9rem",
-            cursor: "pointer",
-          }}
-        >
-          {!isLastSubstep ? "Next Section" : isLastSetupStep ? "Finish" : "Next Step"}
-        </button>
-      </div>
-    </>
+    </SetupStepFrame>
   );
 }
