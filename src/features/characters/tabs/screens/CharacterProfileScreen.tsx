@@ -1,4 +1,3 @@
-import { WORLD_NAMES } from "../../model/constants";
 import { CHARACTERS_COPY } from "../content";
 import type { SearchPaneActions, SearchPaneModel } from "../paneModels";
 import { secondaryButtonStyle } from "../components/uiStyles";
