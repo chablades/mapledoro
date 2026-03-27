@@ -21,32 +21,8 @@ export default function SearchEntryScreen({ model, actions }: SearchEntryScreenP
       <div
         style={{
           marginBottom: "0.75rem",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "flex-start",
-          gap: "0.75rem",
         }}
       >
-        <div>
-          <h1 style={titleStyle()}>{CHARACTERS_COPY.searchEntry.title}</h1>
-          <p style={subtitleStyle(theme)}>{CHARACTERS_COPY.searchEntry.subtitle}</p>
-          {search.canResumeSetup && (
-            <button
-              type="button"
-              disabled={shell.isUiLocked}
-              onClick={actions.resumeSavedSetup}
-              style={{
-                ...secondaryButtonStyle(theme, "0.4rem 0.65rem"),
-                marginTop: "0.45rem",
-                fontSize: "0.82rem",
-              }}
-            >
-              {search.resumeSetupCharacterName
-                ? `Resume setup for ${search.resumeSetupCharacterName}`
-                : CHARACTERS_COPY.searchEntry.resumeSetupButton}
-            </button>
-          )}
-        </div>
         <button
           type="button"
           disabled={shell.isUiLocked}
@@ -67,9 +43,11 @@ export default function SearchEntryScreen({ model, actions }: SearchEntryScreenP
             actions.runBackToIntroTransition();
           }}
           style={{
-            ...secondaryButtonStyle(theme, "0.5rem 0.75rem"),
-            fontSize: "0.85rem",
-            whiteSpace: "nowrap",
+            ...secondaryButtonStyle(theme, "0.38rem 0.62rem"),
+            fontSize: "0.76rem",
+            fontWeight: 800,
+            borderRadius: "999px",
+            marginBottom: "0.65rem",
           }}
         >
           {profile.isAddingCharacter && search.hasCompletedRequiredFlow
@@ -78,6 +56,26 @@ export default function SearchEntryScreen({ model, actions }: SearchEntryScreenP
               ? CHARACTERS_COPY.searchEntry.backToCharactersButton
               : CHARACTERS_COPY.searchEntry.backButton}
         </button>
+        <div>
+          <h1 style={titleStyle()}>{CHARACTERS_COPY.searchEntry.title}</h1>
+          <p style={subtitleStyle(theme)}>{CHARACTERS_COPY.searchEntry.subtitle}</p>
+          {search.canResumeSetup && (
+            <button
+              type="button"
+              disabled={shell.isUiLocked}
+              onClick={actions.resumeSavedSetup}
+              style={{
+                ...secondaryButtonStyle(theme, "0.4rem 0.65rem"),
+                marginTop: "0.45rem",
+                fontSize: "0.82rem",
+              }}
+            >
+              {search.resumeSetupCharacterName
+                ? `Resume setup for ${search.resumeSetupCharacterName}`
+                : CHARACTERS_COPY.searchEntry.resumeSetupButton}
+            </button>
+          )}
+        </div>
       </div>
 
       <form onSubmit={actions.searchSubmit} className="characters-search-row">

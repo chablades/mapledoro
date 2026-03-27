@@ -20,7 +20,7 @@ export const CHARACTERS_COPY = {
     subtitle: "Type your IGN to setup your profile.",
     resumeSetupButton: "Resume Setup",
     backButton: "Back",
-    backToCharactersButton: "Back to characters",
+    backToCharactersButton: "← Characters",
     searchButton: "Search",
     searchingButton: "Searching...",
   },
