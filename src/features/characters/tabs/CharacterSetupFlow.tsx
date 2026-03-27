@@ -131,8 +131,9 @@ export default function CharacterSetupFlow({ theme }: CharacterSetupFlowProps) {
     },
     directory: {
       allCharacters: state.characterRoster,
-      mainCharacterKey: state.mainCharacterKey,
-      championCharacterKeys: state.championCharacterKeys,
+      mainCharacterKeyByWorld: state.mainCharacterKeyByWorld,
+      championCharacterKeysByWorld: state.championCharacterKeysByWorld,
+      worldIds: state.worldIds,
       maxCharacters: MAX_ACCOUNT_CHARACTERS,
       maxChampions: MAX_CHAMPIONS,
     },

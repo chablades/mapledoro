@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { toCharacterKey } from "../../model/characterKeys";
+import { WORLD_NAMES } from "../../model/constants";
 import type { NormalizedCharacterData } from "../../model/types";
 import {
   buildDirectoryGroups,
@@ -8,7 +10,6 @@ import {
 import { CHARACTERS_COPY } from "../content";
 import type { PreviewPaneActions, PreviewPaneModel } from "../paneModels";
 import CharacterAvatar from "../components/CharacterAvatar";
-import { useState } from "react";
 
 function DirectoryCharacterAvatar({ character }: { character: NormalizedCharacterData }) {
   const [imageReady, setImageReady] = useState(false);
@@ -47,6 +48,35 @@ export default function CharacterDirectoryScreen({
   directoryRevealPhase,
 }: CharacterDirectoryScreenProps) {
   const { theme, setup, directory } = model;
+
+  // null = all worlds
+  const [selectedWorldId, setSelectedWorldId] = useState<number | null>(
+    directory.worldIds.length === 1 ? directory.worldIds[0] ?? null : null,
+  );
+
+  const inCharacterDirectoryView = setup.showFlowOverview && setup.showCharacterDirectory;
+  if (!inCharacterDirectoryView) return null;
+
+  const shouldShowDirectoryPanel =
+    inCharacterDirectoryView &&
+    !setup.isSwitchingToDirectory &&
+    directoryRevealPhase > 0;
+
+  const hasMultipleWorlds = directory.worldIds.length > 1;
+
+  // Filter characters and resolve world-scoped keys for the selected world
+  const filteredCharacters = selectedWorldId !== null
+    ? directory.allCharacters.filter((c) => c.worldID === selectedWorldId)
+    : directory.allCharacters;
+
+  const activeWorldId = selectedWorldId ?? directory.worldIds[0] ?? null;
+  const activeMainKey = activeWorldId !== null
+    ? (directory.mainCharacterKeyByWorld[String(activeWorldId)] ?? null)
+    : null;
+  const activeChampionKeys = activeWorldId !== null
+    ? (directory.championCharacterKeysByWorld[String(activeWorldId)] ?? [])
+    : [];
+
   const {
     sortedCharacters,
     mainCharacter,
@@ -58,19 +88,25 @@ export default function CharacterDirectoryScreen({
     hasChampionSection,
     isMainAlsoChampion,
   } = buildDirectoryGroups({
-    allCharacters: directory.allCharacters,
+    allCharacters: filteredCharacters,
     sortBy: directorySortBy,
-    mainCharacterKey: directory.mainCharacterKey,
-    championCharacterKeys: directory.championCharacterKeys,
+    mainCharacterKey: selectedWorldId !== null
+      ? activeMainKey
+      : null, // "all worlds" view doesn't use role grouping
+    championCharacterKeys: selectedWorldId !== null ? activeChampionKeys : [],
     maxCharacters: directory.maxCharacters,
   });
 
-  const inCharacterDirectoryView = setup.showFlowOverview && setup.showCharacterDirectory;
-  if (!inCharacterDirectoryView) return null;
-  const shouldShowDirectoryPanel =
-    inCharacterDirectoryView &&
-    !setup.isSwitchingToDirectory &&
-    directoryRevealPhase > 0;
+  const selectStyle = {
+    border: `1px solid ${theme.border}`,
+    borderRadius: "8px",
+    background: theme.panel,
+    color: theme.text,
+    fontFamily: "inherit",
+    fontSize: "0.8rem",
+    fontWeight: 700,
+    padding: "0.25rem 0.4rem",
+  };
 
   const renderCharacterCard = (character: NormalizedCharacterData) => (
     <div
@@ -111,9 +147,35 @@ export default function CharacterDirectoryScreen({
         <span style={{ fontSize: "0.72rem", fontWeight: 700, lineHeight: 1.1, color: theme.muted, textAlign: "center" }}>
           Lv {character.level}
         </span>
+        {/* Show world name on card only in "all worlds" view */}
+        {selectedWorldId === null && hasMultipleWorlds && (
+          <span style={{ fontSize: "0.68rem", fontWeight: 700, lineHeight: 1.1, color: theme.muted, textAlign: "center" }}>
+            {WORLD_NAMES[character.worldID] ?? `World ${character.worldID}`}
+          </span>
+        )}
       </button>
     </div>
   );
+
+  // "All worlds" view: group by world with world headers, no role sections
+  const renderAllWorldsView = () => {
+    return directory.worldIds.map((worldId) => {
+      const worldChars = sortedCharacters.filter((c) => c.worldID === worldId);
+      if (worldChars.length === 0) return null;
+      const worldName = WORLD_NAMES[worldId] ?? `World ${worldId}`;
+      return (
+        <section key={worldId} style={getDirectoryRevealStyle(shouldShowDirectoryPanel && directoryRevealPhase >= 1)}>
+          <div style={{ borderTop: `1px solid ${theme.border}`, marginBottom: "0.7rem" }} />
+          <p className="section-label" style={{ color: theme.muted }}>
+            {worldName}
+          </p>
+          <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "flex-start", alignItems: "flex-start", gap: "0.6rem", width: "100%" }}>
+            {worldChars.map((character) => renderCharacterCard(character))}
+          </div>
+        </section>
+      );
+    });
+  };
 
   return (
     <div>
@@ -133,99 +195,129 @@ export default function CharacterDirectoryScreen({
             borderRadius: "12px",
             background: theme.bg,
             padding: "0.7rem",
+            flexWrap: "wrap",
           }}
         >
           <span style={{ fontSize: "0.78rem", color: theme.muted, fontWeight: 800 }}>
             {CHARACTERS_COPY.characterDirectory.sortRowsLabel}
           </span>
-          <select
-            disabled={setup.isUiLocked}
-            value={directorySortBy}
-            onChange={(event) => onDirectorySortByChange(event.target.value as DirectorySortBy)}
-            style={{ border: `1px solid ${theme.border}`, borderRadius: "8px", background: theme.panel, color: theme.text, fontFamily: "inherit", fontSize: "0.8rem", fontWeight: 700, padding: "0.25rem 0.4rem" }}
-          >
-            <option value="name">{CHARACTERS_COPY.characterDirectory.sortAlphabeticalOption}</option>
-            <option value="level">{CHARACTERS_COPY.characterDirectory.sortByLevelOption}</option>
-            <option value="class">{CHARACTERS_COPY.characterDirectory.sortByClassOption}</option>
-          </select>
+          <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
+            {hasMultipleWorlds && (
+              <select
+                disabled={setup.isUiLocked}
+                value={selectedWorldId ?? "all"}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setSelectedWorldId(val === "all" ? null : Number(val));
+                }}
+                style={selectStyle}
+              >
+                <option value="all">All worlds</option>
+                {directory.worldIds.map((worldId) => (
+                  <option key={worldId} value={worldId}>
+                    {WORLD_NAMES[worldId] ?? `World ${worldId}`}
+                  </option>
+                ))}
+              </select>
+            )}
+            <select
+              disabled={setup.isUiLocked}
+              value={directorySortBy}
+              onChange={(event) => onDirectorySortByChange(event.target.value as DirectorySortBy)}
+              style={selectStyle}
+            >
+              <option value="name">{CHARACTERS_COPY.characterDirectory.sortAlphabeticalOption}</option>
+              <option value="level">{CHARACTERS_COPY.characterDirectory.sortByLevelOption}</option>
+              <option value="class">{CHARACTERS_COPY.characterDirectory.sortByClassOption}</option>
+            </select>
+          </div>
         </div>
 
         <div style={{ borderTop: `1px solid ${theme.border}`, marginTop: "0.15rem" }} />
-        <section style={getDirectoryRevealStyle(shouldShowDirectoryPanel && directoryRevealPhase >= 1)}>
-          <p className="section-label" style={{ color: theme.muted }}>
-            {CHARACTERS_COPY.characterDirectory.mainCharacterLabel}
-          </p>
-          {mainCharacter ? (
-            <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "flex-start", alignItems: "flex-start", gap: "0.6rem", width: "100%" }}>
-              {renderCharacterCard(mainCharacter)}
-            </div>
-          ) : (
-            <p style={{ margin: 0, color: theme.muted, fontWeight: 700 }}>
-              {sortedCharacters.length > 0
-                ? CHARACTERS_COPY.characterDirectory.noMainSelectedMessage
-                : CHARACTERS_COPY.characterDirectory.noCharactersAddedMessage}
-            </p>
-          )}
-        </section>
 
-        {(championCharactersForDirectory.length > 0 || isMainAlsoChampion) && (
-          <section style={getDirectoryRevealStyle(shouldShowDirectoryPanel && directoryRevealPhase >= 2)}>
-            <div style={{ borderTop: `1px solid ${theme.border}`, marginBottom: "0.7rem" }} />
-            <p className="section-label" style={{ color: theme.muted }}>
-              {CHARACTERS_COPY.characterDirectory.championsLabel} ({championCharacters.length}/{directory.maxChampions})
-            </p>
-            {isMainAlsoChampion && (
-              <p style={{ margin: 0, marginBottom: "0.45rem", fontSize: "0.74rem", color: theme.muted, fontWeight: 700 }}>
-                {CHARACTERS_COPY.characterDirectory.mainAlsoChampionMessage}
+        {selectedWorldId === null && hasMultipleWorlds ? (
+          // All worlds: flat list grouped by world, no role sections
+          renderAllWorldsView()
+        ) : (
+          // Single world: role sections (main/champions/mules)
+          <>
+            <section style={getDirectoryRevealStyle(shouldShowDirectoryPanel && directoryRevealPhase >= 1)}>
+              <p className="section-label" style={{ color: theme.muted }}>
+                {CHARACTERS_COPY.characterDirectory.mainCharacterLabel}
               </p>
-            )}
-            <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "flex-start", alignItems: "flex-start", gap: "0.6rem", overflow: "hidden", width: "100%", paddingBottom: "0.15rem" }}>
-              {championCharactersForDirectory.map((character) => renderCharacterCard(character))}
-            </div>
-          </section>
-        )}
+              {mainCharacter ? (
+                <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "flex-start", alignItems: "flex-start", gap: "0.6rem", width: "100%" }}>
+                  {renderCharacterCard(mainCharacter)}
+                </div>
+              ) : (
+                <p style={{ margin: 0, color: theme.muted, fontWeight: 700 }}>
+                  {sortedCharacters.length > 0
+                    ? CHARACTERS_COPY.characterDirectory.noMainSelectedMessage
+                    : CHARACTERS_COPY.characterDirectory.noCharactersAddedMessage}
+                </p>
+              )}
+            </section>
 
-        <section style={getDirectoryRevealStyle(shouldShowDirectoryPanel && directoryRevealPhase >= (hasChampionSection ? 3 : 2))}>
-          <div style={{ borderTop: `1px solid ${theme.border}`, marginBottom: "0.7rem" }} />
-          <p className="section-label" style={{ color: theme.muted }}>
-            {CHARACTERS_COPY.characterDirectory.mulesLabel} ({otherCharacters.length}/{muleCapacity})
-          </p>
-          <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "flex-start", alignItems: "flex-start", gap: "0.6rem", overflow: "hidden", width: "100%", paddingBottom: "0.15rem" }}>
-            {otherCharacters.map((character) => renderCharacterCard(character))}
-            <button
-              type="button"
-              onClick={actions.openCharacterSearch}
-              disabled={!canAddCharacter || setup.isUiLocked}
-              style={{
-                border: `1px solid ${theme.border}`,
-                borderRadius: "12px",
-                background: theme.bg,
-                color: theme.text,
-                fontFamily: "inherit",
-                fontWeight: 900,
-                fontSize: "1.45rem",
-                padding: "0.5rem 0.65rem",
-                flex: "0 0 auto",
-                minWidth: "160px",
-                maxWidth: "190px",
-                width: "min(190px, 100%)",
-                height: "120px",
-                display: "inline-flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "0.3rem",
-                opacity: canAddCharacter ? 1 : 0.55,
-                cursor: canAddCharacter ? "pointer" : "not-allowed",
-              }}
-            >
-              <span>+</span>
-              <span style={{ fontSize: "0.76rem", fontWeight: 800 }}>
-                {CHARACTERS_COPY.characterDirectory.addCharacterButton}
-              </span>
-            </button>
-          </div>
-        </section>
+            {(championCharactersForDirectory.length > 0 || isMainAlsoChampion) && (
+              <section style={getDirectoryRevealStyle(shouldShowDirectoryPanel && directoryRevealPhase >= 2)}>
+                <div style={{ borderTop: `1px solid ${theme.border}`, marginBottom: "0.7rem" }} />
+                <p className="section-label" style={{ color: theme.muted }}>
+                  {CHARACTERS_COPY.characterDirectory.championsLabel} ({championCharacters.length}/{directory.maxChampions})
+                </p>
+                {isMainAlsoChampion && (
+                  <p style={{ margin: 0, marginBottom: "0.45rem", fontSize: "0.74rem", color: theme.muted, fontWeight: 700 }}>
+                    {CHARACTERS_COPY.characterDirectory.mainAlsoChampionMessage}
+                  </p>
+                )}
+                <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "flex-start", alignItems: "flex-start", gap: "0.6rem", overflow: "hidden", width: "100%", paddingBottom: "0.15rem" }}>
+                  {championCharactersForDirectory.map((character) => renderCharacterCard(character))}
+                </div>
+              </section>
+            )}
+
+            <section style={getDirectoryRevealStyle(shouldShowDirectoryPanel && directoryRevealPhase >= (hasChampionSection ? 3 : 2))}>
+              <div style={{ borderTop: `1px solid ${theme.border}`, marginBottom: "0.7rem" }} />
+              <p className="section-label" style={{ color: theme.muted }}>
+                {CHARACTERS_COPY.characterDirectory.mulesLabel} ({otherCharacters.length}/{muleCapacity})
+              </p>
+              <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "flex-start", alignItems: "flex-start", gap: "0.6rem", overflow: "hidden", width: "100%", paddingBottom: "0.15rem" }}>
+                {otherCharacters.map((character) => renderCharacterCard(character))}
+                <button
+                  type="button"
+                  onClick={actions.openCharacterSearch}
+                  disabled={!canAddCharacter || setup.isUiLocked}
+                  style={{
+                    border: `1px solid ${theme.border}`,
+                    borderRadius: "12px",
+                    background: theme.bg,
+                    color: theme.text,
+                    fontFamily: "inherit",
+                    fontWeight: 900,
+                    fontSize: "1.45rem",
+                    padding: "0.5rem 0.65rem",
+                    flex: "0 0 auto",
+                    minWidth: "160px",
+                    maxWidth: "190px",
+                    width: "min(190px, 100%)",
+                    height: "120px",
+                    display: "inline-flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "0.3rem",
+                    opacity: canAddCharacter ? 1 : 0.55,
+                    cursor: canAddCharacter ? "pointer" : "not-allowed",
+                  }}
+                >
+                  <span>+</span>
+                  <span style={{ fontSize: "0.76rem", fontWeight: 800 }}>
+                    {CHARACTERS_COPY.characterDirectory.addCharacterButton}
+                  </span>
+                </button>
+              </div>
+            </section>
+          </>
+        )}
       </div>
     </div>
   );

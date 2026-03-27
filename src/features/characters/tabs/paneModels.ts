@@ -86,8 +86,12 @@ export interface PreviewPaneModel {
   };
   directory: {
     allCharacters: NormalizedCharacterData[];
-    mainCharacterKey: string | null;
-    championCharacterKeys: string[];
+    // Per-world: worldID (as string key) -> character key
+    mainCharacterKeyByWorld: Record<string, string>;
+    // Per-world: worldID (as string key) -> character keys
+    championCharacterKeysByWorld: Record<string, string[]>;
+    // Sorted unique world IDs present in the roster
+    worldIds: number[];
     maxCharacters: number;
     maxChampions: number;
   };

@@ -26,6 +26,7 @@ export function sortCharacters(
 export function buildDirectoryGroups(args: {
   allCharacters: NormalizedCharacterData[];
   sortBy: DirectorySortBy;
+  // Keys for the currently selected world (or filtered set)
   mainCharacterKey: string | null;
   championCharacterKeys: string[];
   maxCharacters: number;
@@ -48,9 +49,7 @@ export function buildDirectoryGroups(args: {
   );
   const otherCharacters = sortedCharacters.filter((character) => {
     const key = toCharacterKey(character);
-    if (mainCharacterCompositeKey && key === mainCharacterCompositeKey) {
-      return false;
-    }
+    if (mainCharacterCompositeKey && key === mainCharacterCompositeKey) return false;
     return !championSet.has(key);
   });
 
@@ -68,8 +67,7 @@ export function buildDirectoryGroups(args: {
     otherCharacters,
     muleCapacity,
     canAddCharacter: sortedCharacters.length < args.maxCharacters,
-    hasChampionSection:
-      championCharactersForDirectory.length > 0 || isMainAlsoChampion,
+    hasChampionSection: championCharactersForDirectory.length > 0 || isMainAlsoChampion,
     isMainAlsoChampion,
   };
 }
