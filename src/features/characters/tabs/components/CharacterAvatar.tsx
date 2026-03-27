@@ -1,17 +1,24 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
-const AVATAR_LOAD_TIMEOUT_MS = 4000;
+const AVATAR_LOAD_TIMEOUT_MS = 8000;
 const AVATAR_MAX_RETRIES = 2;
 const AVATAR_RETRY_DELAY_MS = 350;
-const DEFAULT_FALLBACK_AVATAR_SRC =
+const FALLBACK_SRC =
   "https://maplestory.io/api/character/%7B%22itemId%22%3A2000%2C%22version%22%3A%22265%22%7D%2C%7B%22itemId%22%3A12000%2C%22version%22%3A%22265%22%7D/stand1/0?showears=false&showLefEars=false&showHighLefEars=undefined&resize=1&name=&flipX=false&bgColor=0,0,0,0";
 
-function appendRetryParam(src: string, retryAttempt: number) {
+function appendRetryParam(src: string, attempt: number) {
   const separator = src.includes("?") ? "&" : "?";
-  return `${src}${separator}avatarRetry=${retryAttempt}`;
+  return `${src}${separator}avatarRetry=${attempt}`;
+}
+
+function isCached(src: string) {
+  if (typeof window === "undefined") return false;
+  const img = new window.Image();
+  img.src = src;
+  return img.complete;
 }
 
 interface CharacterAvatarProps {
@@ -35,32 +42,27 @@ export default function CharacterAvatar({
 }: CharacterAvatarProps) {
   const [displaySrc, setDisplaySrc] = useState(src);
   const [retryAttempt, setRetryAttempt] = useState(0);
-  const [settled, setSettled] = useState(false);
-  const readyCalledRef = useRef(false);
-  const fallbackSrc = useMemo(() => DEFAULT_FALLBACK_AVATAR_SRC, []);
+  const [settled, setSettled] = useState(() => isCached(src));
+  const onReadyCalledRef = useRef(false);
+  const settledRef = useRef(settled);
 
-  useEffect(() => {
-    const resetTimer = window.setTimeout(() => {
-      setDisplaySrc(src);
-      setRetryAttempt(0);
-      setSettled(false);
-      readyCalledRef.current = false;
-    }, 0);
-    return () => clearTimeout(resetTimer);
-  }, [src]);
+  // Keep settledRef in sync so retry timeouts can check it without stale closure
+  useEffect(() => { settledRef.current = settled; }, [settled]);
 
+  // Fallback timeout — only runs while not settled
   useEffect(() => {
     if (settled) return;
     const timeout = window.setTimeout(() => {
-      setDisplaySrc(fallbackSrc);
+      setDisplaySrc(FALLBACK_SRC);
       setSettled(true);
     }, AVATAR_LOAD_TIMEOUT_MS);
     return () => clearTimeout(timeout);
-  }, [fallbackSrc, settled, displaySrc]);
+  }, [settled]);
 
+  // Fire onReady once after settled
   useEffect(() => {
-    if (!settled || readyCalledRef.current === true) return;
-    readyCalledRef.current = true;
+    if (!settled || onReadyCalledRef.current) return;
+    onReadyCalledRef.current = true;
     onReady?.();
   }, [onReady, settled]);
 
@@ -70,26 +72,23 @@ export default function CharacterAvatar({
       alt={alt}
       width={width}
       height={height}
-      onLoad={() => {
-        setSettled(true);
-      }}
+      loading="eager"
+      onLoad={() => setSettled(true)}
       onError={() => {
         if (retryAttempt < AVATAR_MAX_RETRIES) {
-          const nextAttempt = retryAttempt + 1;
+          const next = retryAttempt + 1;
           window.setTimeout(() => {
-            setRetryAttempt(nextAttempt);
-            setDisplaySrc(appendRetryParam(src, nextAttempt));
+            if (settledRef.current) return;
+            setRetryAttempt(next);
+            setDisplaySrc(appendRetryParam(src, next));
           }, AVATAR_RETRY_DELAY_MS);
           return;
         }
-        setDisplaySrc(fallbackSrc);
+        setDisplaySrc(FALLBACK_SRC);
         setSettled(true);
       }}
       className={className}
-      style={{
-        color: "transparent",
-        ...style,
-      }}
+      style={{ color: "transparent", ...style }}
       unoptimized={displaySrc.startsWith("data:image/")}
     />
   );

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import type { SearchPaneActions, SearchPaneModel } from "../paneModels";
 import FirstTimeSetupScreen from "../screens/FirstTimeSetupScreen";
 import ImportModeScreen from "../screens/ImportModeScreen";
@@ -37,6 +38,20 @@ export default function SearchPaneCard({ model, actions }: SearchPaneCardProps) 
     element.style.height = "";
     element.style.minHeight = "";
   }, [shell.isSwitchingToDirectory]);
+
+  useEffect(() => {
+    if (showRemoveConfirm) {
+      document.body.style.overflow = "hidden";
+      document.documentElement.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
+    };
+  }, [showRemoveConfirm]);
 
   return (
     <>
@@ -80,7 +95,7 @@ export default function SearchPaneCard({ model, actions }: SearchPaneCardProps) 
         onRequestRemove={() => setShowRemoveConfirm(true)}
       />
 
-      {showRemoveConfirm && profile.confirmedCharacter && (
+      {showRemoveConfirm && profile.confirmedCharacter && createPortal(
         <div
           style={{
             position: "fixed",
@@ -141,7 +156,8 @@ export default function SearchPaneCard({ model, actions }: SearchPaneCardProps) 
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );

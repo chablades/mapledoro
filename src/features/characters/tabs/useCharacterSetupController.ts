@@ -308,13 +308,6 @@ export function useCharacterSetupController() {
   }, [foundCharacter]);
 
   useEffect(() => {
-    const resetTimer = window.setTimeout(() => {
-      setConfirmedImageLoaded(false);
-    }, 0);
-    return () => clearTimeout(resetTimer);
-  }, [confirmedCharacter]);
-
-  useEffect(() => {
     const draft = readLastSetupDraft();
     const store = readCharactersStore();
     const storedRoster = selectCharactersList(store).map(toNormalizedCharacterData);

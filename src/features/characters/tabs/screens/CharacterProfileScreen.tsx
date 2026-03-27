@@ -120,6 +120,7 @@ export default function CharacterProfileScreen({
           style={{ width: "210px", height: "210px", borderRadius: "22px" }}
         >
           <CharacterAvatar
+            key={profile.confirmedCharacter.characterImgURL}
             src={profile.confirmedCharacter.characterImgURL}
             alt={`${profile.confirmedCharacter.characterName} avatar`}
             width={210}
