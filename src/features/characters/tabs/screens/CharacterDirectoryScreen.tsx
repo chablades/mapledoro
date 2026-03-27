@@ -37,6 +37,8 @@ interface CharacterDirectoryScreenProps {
   actions: PreviewPaneActions;
   directorySortBy: DirectorySortBy;
   onDirectorySortByChange: (sortBy: DirectorySortBy) => void;
+  directoryWorldFilter: number | null;
+  onDirectoryWorldFilterChange: (worldId: number | null) => void;
   directoryRevealPhase: number;
 }
 
@@ -45,14 +47,11 @@ export default function CharacterDirectoryScreen({
   actions,
   directorySortBy,
   onDirectorySortByChange,
+  directoryWorldFilter,
+  onDirectoryWorldFilterChange,
   directoryRevealPhase,
 }: CharacterDirectoryScreenProps) {
   const { theme, setup, directory } = model;
-
-  // null = all worlds
-  const [selectedWorldId, setSelectedWorldId] = useState<number | null>(
-    directory.worldIds.length === 1 ? directory.worldIds[0] ?? null : null,
-  );
 
   const inCharacterDirectoryView = setup.showFlowOverview && setup.showCharacterDirectory;
   if (!inCharacterDirectoryView) return null;
@@ -63,8 +62,8 @@ export default function CharacterDirectoryScreen({
     directoryRevealPhase > 0;
 
   const hasMultipleWorlds = directory.worldIds.length > 1;
+  const selectedWorldId = directoryWorldFilter;
 
-  // Filter characters and resolve world-scoped keys for the selected world
   const filteredCharacters = selectedWorldId !== null
     ? directory.allCharacters.filter((c) => c.worldID === selectedWorldId)
     : directory.allCharacters;
@@ -90,9 +89,7 @@ export default function CharacterDirectoryScreen({
   } = buildDirectoryGroups({
     allCharacters: filteredCharacters,
     sortBy: directorySortBy,
-    mainCharacterKey: selectedWorldId !== null
-      ? activeMainKey
-      : null, // "all worlds" view doesn't use role grouping
+    mainCharacterKey: selectedWorldId !== null ? activeMainKey : null,
     championCharacterKeys: selectedWorldId !== null ? activeChampionKeys : [],
     maxCharacters: directory.maxCharacters,
   });
@@ -147,25 +144,21 @@ export default function CharacterDirectoryScreen({
         <span style={{ fontSize: "0.72rem", fontWeight: 700, lineHeight: 1.1, color: theme.muted, textAlign: "center" }}>
           Lv {character.level}
         </span>
-        {/* Show world name on card only in "all worlds" view */}
-        {selectedWorldId === null && hasMultipleWorlds && (
-          <span style={{ fontSize: "0.68rem", fontWeight: 700, lineHeight: 1.1, color: theme.muted, textAlign: "center" }}>
-            {WORLD_NAMES[character.worldID] ?? `World ${character.worldID}`}
-          </span>
-        )}
+        <span style={{ fontSize: "0.72rem", fontWeight: 700, lineHeight: 1.1, color: theme.muted, textAlign: "center" }}>
+          {character.jobName}
+        </span>
       </button>
     </div>
   );
 
-  // "All worlds" view: group by world with world headers, no role sections
   const renderAllWorldsView = () => {
-    return directory.worldIds.map((worldId) => {
+    return directory.worldIds.map((worldId, i) => {
       const worldChars = sortedCharacters.filter((c) => c.worldID === worldId);
       if (worldChars.length === 0) return null;
       const worldName = WORLD_NAMES[worldId] ?? `World ${worldId}`;
       return (
         <section key={worldId} style={getDirectoryRevealStyle(shouldShowDirectoryPanel && directoryRevealPhase >= 1)}>
-          <div style={{ borderTop: `1px solid ${theme.border}`, marginBottom: "0.7rem" }} />
+          {i > 0 && <div style={{ borderTop: `1px solid ${theme.border}`, marginBottom: "0.7rem" }} />}
           <p className="section-label" style={{ color: theme.muted }}>
             {worldName}
           </p>
@@ -176,6 +169,10 @@ export default function CharacterDirectoryScreen({
       );
     });
   };
+
+  const worldLabel = selectedWorldId !== null
+    ? (WORLD_NAMES[selectedWorldId] ?? `World ${selectedWorldId}`)
+    : null;
 
   return (
     <div>
@@ -199,7 +196,9 @@ export default function CharacterDirectoryScreen({
           }}
         >
           <span style={{ fontSize: "0.78rem", color: theme.muted, fontWeight: 800 }}>
-            {CHARACTERS_COPY.characterDirectory.sortRowsLabel}
+            {!hasMultipleWorlds && worldLabel
+              ? worldLabel
+              : CHARACTERS_COPY.characterDirectory.sortRowsLabel}
           </span>
           <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
             {hasMultipleWorlds && (
@@ -208,16 +207,16 @@ export default function CharacterDirectoryScreen({
                 value={selectedWorldId ?? "all"}
                 onChange={(e) => {
                   const val = e.target.value;
-                  setSelectedWorldId(val === "all" ? null : Number(val));
+                  onDirectoryWorldFilterChange(val === "all" ? null : Number(val));
                 }}
                 style={selectStyle}
               >
-                <option value="all">All worlds</option>
                 {directory.worldIds.map((worldId) => (
                   <option key={worldId} value={worldId}>
                     {WORLD_NAMES[worldId] ?? `World ${worldId}`}
                   </option>
                 ))}
+                <option value="all">All worlds</option>
               </select>
             )}
             <select
@@ -233,13 +232,12 @@ export default function CharacterDirectoryScreen({
           </div>
         </div>
 
-        <div style={{ borderTop: `1px solid ${theme.border}`, marginTop: "0.15rem" }} />
+        {/* Single divider — removed the duplicate that was here before */}
+        <div style={{ borderTop: `1px solid ${theme.border}` }} />
 
         {selectedWorldId === null && hasMultipleWorlds ? (
-          // All worlds: flat list grouped by world, no role sections
           renderAllWorldsView()
         ) : (
-          // Single world: role sections (main/champions/mules)
           <>
             <section style={getDirectoryRevealStyle(shouldShowDirectoryPanel && directoryRevealPhase >= 1)}>
               <p className="section-label" style={{ color: theme.muted }}>

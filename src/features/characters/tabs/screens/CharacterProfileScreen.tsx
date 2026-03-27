@@ -169,7 +169,7 @@ export default function CharacterProfileScreen({
             )}
           </p>
           <p style={{ margin: 0, fontSize: "0.95rem", color: theme.muted, fontWeight: 700, lineHeight: 1.3 }}>
-            {WORLD_NAMES[profile.confirmedCharacter.worldID] ?? `ID ${profile.confirmedCharacter.worldID}`}
+            {profile.confirmedCharacter.jobName}
           </p>
           <p style={{ margin: 0, fontSize: "1rem", color: theme.muted, fontWeight: 700, lineHeight: 1.3 }}>
             Level {profile.confirmedCharacter.level}
