@@ -120,15 +120,19 @@ function getUrsusStatus(now: Date):
   return { active: false as const, until: nextStart.getTime() - nowMs };
 }
 
-function DashboardContent({ theme, now }: { theme: AppTheme; now: Date }) {
-  const [patchNotes, setPatchNotes] = useState<PatchNote[]>(
-    () => readCachedPatchNotes() ?? initialPatchNotes,
-  );
+const PLACEHOLDER_COUNTDOWN = "--:--:--";
+
+function DashboardContent({ theme, now }: { theme: AppTheme; now: Date | null }) {
+  const [patchNotes, setPatchNotes] = useState<PatchNote[]>(initialPatchNotes);
   const [patchFilter, setPatchFilter] = useState<PatchFilter>("All");
   const [patchExpanded, setPatchExpanded] = useState(false);
 
   useEffect(() => {
-    if (readCachedPatchNotes()) return;
+    const cached = readCachedPatchNotes();
+    if (cached) {
+      Promise.resolve(cached).then(setPatchNotes);
+      return;
+    }
 
     fetch("/api/patch-notes")
       .then((res) => res.json())
@@ -146,32 +150,36 @@ function DashboardContent({ theme, now }: { theme: AppTheme; now: Date }) {
       .catch((err) => console.error("Failed to fetch patch notes:", err));
   }, []);
 
-  const daily = getNextReset(now, 0);
-  const weekly = getNextReset(now, 0, 4);
+  const resets = now
+    ? [
+        {
+          label: "Daily Reset",
+          color: theme.accent,
+          countdown: fmt(getNextReset(now, 0).getTime() - now.getTime()),
+        },
+        {
+          label: "Weekly Reset",
+          color: theme.accent,
+          countdown: fmt(getNextReset(now, 0, 4).getTime() - now.getTime()),
+        },
+      ]
+    : [
+        { label: "Daily Reset", color: theme.accent, countdown: PLACEHOLDER_COUNTDOWN },
+        { label: "Weekly Reset", color: theme.accent, countdown: PLACEHOLDER_COUNTDOWN },
+      ];
 
-  const resets = [
-    {
-      label: "Daily Reset",
-      color: theme.accent,
-      countdown: fmt(daily.getTime() - now.getTime()),
-    },
-    {
-      label: "Weekly Reset",
-      color: theme.accent,
-      countdown: fmt(weekly.getTime() - now.getTime()),
-    },
-  ];
-
-  const ursus = getUrsusStatus(now);
+  const ursus = now ? getUrsusStatus(now) : null;
 
   const fmtLocal = (utcHour: number) => {
-    const d = new Date(now);
+    const d = new Date(now ?? 0);
     d.setUTCHours(utcHour, 0, 0, 0);
     return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
   };
-  const tzLabel = new Intl.DateTimeFormat([], { timeZoneName: "short" })
-    .formatToParts(now)
-    .find((p) => p.type === "timeZoneName")?.value ?? "Local";
+  const tzLabel = now
+    ? (new Intl.DateTimeFormat([], { timeZoneName: "short" })
+        .formatToParts(now)
+        .find((p) => p.type === "timeZoneName")?.value ?? "Local")
+    : "";
 
   const allFilteredPatchNotes =
     patchFilter === "All"
@@ -295,7 +303,7 @@ function DashboardContent({ theme, now }: { theme: AppTheme; now: Date }) {
                 <span className="panel-header-title" style={{ color: theme.text }}>
                   Ursus 2× Meso
                 </span>
-                {ursus.active && (
+                {ursus?.active && (
                   <span
                     style={{
                       marginLeft: "auto",
@@ -327,13 +335,13 @@ function DashboardContent({ theme, now }: { theme: AppTheme; now: Date }) {
                 >
                   <div style={{ flex: 1 }}>
                     <div className="section-label" style={{ color: theme.muted, marginBottom: "6px" }}>
-                      {ursus.active ? "Ends In" : "Starts In"}
+                      {ursus?.active ? "Ends In" : "Starts In"}
                     </div>
                     <div
                       className="countdown"
                       style={{ color: theme.accent }}
                     >
-                      {ursus.active ? fmt(ursus.remaining) : fmt(ursus.until)}
+                      {ursus ? (ursus.active ? fmt(ursus.remaining) : fmt(ursus.until)) : PLACEHOLDER_COUNTDOWN}
                     </div>
                   </div>
                 </div>
