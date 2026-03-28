@@ -6,8 +6,6 @@ import {
 } from "../model/constants";
 import { findRosterCharacterByName, toCharacterKey } from "../model/characterKeys";
 import {
-  createEmptyCharacterStats,
-  createEmptyCharacterEquipment,
   createStoredCharacterRecord,
   hasStoredCompletedRequiredSetup,
   readCharactersStore,
@@ -25,6 +23,7 @@ import {
   type SetupDraft,
   writeSetupDraft,
 } from "../model/setupDraftStorage";
+import type { StoredCharacterRecord } from "../model/charactersStore";
 import type { NormalizedCharacterData } from "../model/types";
 import {
   clampFlowStepIndex,
@@ -126,7 +125,7 @@ export function useCharacterSetupController() {
   const [showDeleteNotice, setShowDeleteNotice] = useState(false);
   const [isAddingCharacter, setIsAddingCharacter] = useState(false);
   const [fastDirectoryRevealOnce, setFastDirectoryRevealOnce] = useState(false);
-  const [characterRoster, setCharacterRoster] = useState<NormalizedCharacterData[]>([]);
+  const [characterRoster, setCharacterRoster] = useState<StoredCharacterRecord[]>([]);
 
   // World-scoped main and champion keys
   const [mainCharacterKeyByWorld, setMainCharacterKeyByWorld] = useState<Record<string, string>>({});
@@ -177,7 +176,7 @@ export function useCharacterSetupController() {
     [requiredFlowId],
   );
 
-  const upsertRosterCharacter = useCallback((character: NormalizedCharacterData) => {
+  const upsertRosterCharacter = useCallback((character: StoredCharacterRecord) => {
     setCharacterRoster((prev) => {
       const key = toCharacterKey(character);
       const existingIndex = prev.findIndex((entry) => toCharacterKey(entry) === key);
@@ -224,7 +223,7 @@ export function useCharacterSetupController() {
   const showCompletedDirectoryState = useCallback(
     (
       store: ReturnType<typeof readCharactersStore>,
-      roster: NormalizedCharacterData[],
+      roster: StoredCharacterRecord[],
     ) => {
       setCharacterRoster(roster);
       setMainCharacterKeyByWorld(store.mainCharacterIdByWorld);
@@ -286,7 +285,7 @@ export function useCharacterSetupController() {
     (
       draft: SetupDraft,
       store: ReturnType<typeof readCharactersStore>,
-      storedRoster: NormalizedCharacterData[],
+      storedRoster: StoredCharacterRecord[],
       accountHasCompletedRequiredFlow: boolean,
     ) => {
       const nextCompletedFlowIds = normalizeCompletedFlowIds(draft.completedFlowIds ?? []);
@@ -319,7 +318,7 @@ export function useCharacterSetupController() {
     (
       draft: SetupDraft | null,
       store: ReturnType<typeof readCharactersStore>,
-      storedRoster: NormalizedCharacterData[],
+      storedRoster: StoredCharacterRecord[],
       accountHasCompletedRequiredFlow: boolean,
     ) => {
       if (!draft) {
@@ -385,7 +384,7 @@ export function useCharacterSetupController() {
   useEffect(() => {
     const draft = readLastSetupDraft();
     const store = readCharactersStore();
-    const storedRoster = selectCharactersList(store).map(toNormalizedCharacterData);
+    const storedRoster = selectCharactersList(store);
     const accountHasCompletedRequiredFlow = hasStoredCompletedRequiredSetup(store);
 
     const hydrateTimer = window.setTimeout(() => {
@@ -404,28 +403,27 @@ export function useCharacterSetupController() {
     const existingStore = readCharactersStore();
     const now = Date.now();
     const currentCharacterKey = confirmedCharacter ? toCharacterKey(confirmedCharacter) : null;
-    const nextCharactersById = characterRoster.reduce<Record<string, ReturnType<typeof createStoredCharacterRecord>>>(
+    // characterRoster is already StoredCharacterRecord[], just sync gender from setup steps
+    // and update meta.updatedAt if the character data changed since last save.
+    const nextCharactersById = characterRoster.reduce<Record<string, StoredCharacterRecord>>(
       (acc, character) => {
         const id = toCharacterKey(character);
         const existingRecord = existingStore.charactersById[id];
         const isCurrentCharacter = currentCharacterKey === id;
-        const gender = normalizeGenderValue(
-          isCurrentCharacter ? setupStepTestByStep.gender : existingRecord?.gender,
-        );
-        const stats = existingRecord?.stats ?? createEmptyCharacterStats();
-        const equipment = existingRecord?.equipment ?? createEmptyCharacterEquipment();
-
-        acc[id] = createStoredCharacterRecord({
-          character,
+        const gender = isCurrentCharacter
+          ? normalizeGenderValue(setupStepTestByStep.gender)
+          : (character.gender ?? existingRecord?.gender ?? null);
+        acc[id] = {
+          ...character,
           gender,
-          stats,
-          equipment,
-          addedAt: existingRecord?.meta.addedAt ?? now,
-          updatedAt:
-            existingRecord && existingRecord.fetchedAt === character.fetchedAt
-              ? existingRecord.meta.updatedAt
-              : now,
-        });
+          meta: {
+            addedAt: character.meta.addedAt,
+            updatedAt:
+              existingRecord && existingRecord.fetchedAt === character.fetchedAt
+                ? character.meta.updatedAt
+                : now,
+          },
+        };
         return acc;
       },
       {},
@@ -490,7 +488,8 @@ export function useCharacterSetupController() {
       completedFlowIds,
       showFlowOverview,
       showCharacterDirectory,
-      characterRoster,
+      // Draft format uses NormalizedCharacterData — convert from StoredCharacterRecord
+      characterRoster: characterRoster.map(toNormalizedCharacterData),
       mainCharacterKey: getMainKeyForWorld(mainCharacterKeyByWorld, worldId),
       championCharacterKeys: getChampionKeysForWorld(championCharacterKeysByWorld, worldId),
       setupStepIndex: clampFlowStepIndex(activeFlowId, setupStepIndex),
@@ -745,7 +744,12 @@ export function useCharacterSetupController() {
     transitions.queueTransitionTimer(() => {
       const isQuickSetupFlow = activeFlowId === requiredFlowId;
       if (isQuickSetupFlow && confirmedCharacter) {
-        upsertRosterCharacter(confirmedCharacter);
+        // Convert from NormalizedCharacterData (API response) to StoredCharacterRecord before adding to roster
+        const storedRecord = createStoredCharacterRecord({
+          character: confirmedCharacter,
+          gender: normalizeGenderValue(setupStepTestByStep.gender),
+        });
+        upsertRosterCharacter(storedRecord);
         setHasCompletedRequiredSetupEver(true);
         removeSetupDraftForCharacter(confirmedCharacter);
       }
@@ -772,13 +776,14 @@ export function useCharacterSetupController() {
     completedFlowIds,
     confirmedCharacter,
     requiredFlowId,
+    setupStepTestByStep,
     lookup,
     transitions,
     upsertRosterCharacter,
   ]);
 
   const switchToCharacterProfile = useCallback(
-    (character: NormalizedCharacterData) => {
+    (character: StoredCharacterRecord) => {
       if (immediateUiLockRef.current) return;
       immediateUiLockRef.current = true;
       setIsSwitchingToProfile(true);
@@ -810,7 +815,7 @@ export function useCharacterSetupController() {
   );
 
   const setMainCharacter = useCallback(
-    (character: NormalizedCharacterData) => {
+    (character: StoredCharacterRecord) => {
       setMainCharacterKeyByWorld((prev) =>
         setMainKeyForWorld(prev, character.worldID, toCharacterKey(character)),
       );
@@ -819,7 +824,7 @@ export function useCharacterSetupController() {
     [switchToCharacterProfile],
   );
 
-  const toggleChampionCharacter = useCallback((character: NormalizedCharacterData) => {
+  const toggleChampionCharacter = useCallback((character: StoredCharacterRecord) => {
     const key = toCharacterKey(character);
     const worldId = character.worldID;
     setChampionCharacterKeysByWorld((prev) => {

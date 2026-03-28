@@ -1,5 +1,6 @@
 import type { AppTheme } from "../../../components/themes";
 import type { NormalizedCharacterData } from "../model/types";
+import type { StoredCharacterRecord } from "../model/charactersStore";
 import type { SetupFlowId } from "../setup/flows";
 import type { SetupMode } from "../model/constants";
 
@@ -28,7 +29,9 @@ export interface SearchPaneModel {
     statusTone: "neutral" | "error";
   };
   profile: {
-    confirmedCharacter: NormalizedCharacterData | null;
+    // confirmedCharacter is StoredCharacterRecord once the character is in the roster.
+    // It remains NormalizedCharacterData during the initial setup flow before it's saved.
+    confirmedCharacter: StoredCharacterRecord | null;
     confirmedImageLoaded: boolean;
     showCharacterDirectory: boolean;
     canViewCharacterDirectory: boolean;
@@ -59,6 +62,7 @@ export interface SearchPaneActions {
 export interface PreviewPaneModel {
   theme: AppTheme;
   preview: {
+    // foundCharacter is the raw API response before the user confirms/saves it
     foundCharacter: NormalizedCharacterData | null;
     previewCardReady: boolean;
     previewContentReady: boolean;
@@ -85,7 +89,8 @@ export interface PreviewPaneModel {
     activeSetupStepValue: string;
   };
   directory: {
-    allCharacters: NormalizedCharacterData[];
+    // The full roster of saved characters
+    allCharacters: StoredCharacterRecord[];
     // Per-world: worldID (as string key) -> character key
     mainCharacterKeyByWorld: Record<string, string>;
     // Per-world: worldID (as string key) -> character keys
@@ -104,5 +109,5 @@ export interface PreviewPaneActions {
   stepValueChange: (value: string) => void;
   finishSetupFlow: () => void;
   openCharacterSearch: () => void;
-  openCharacterProfile: (character: NormalizedCharacterData) => void;
+  openCharacterProfile: (character: StoredCharacterRecord) => void;
 }

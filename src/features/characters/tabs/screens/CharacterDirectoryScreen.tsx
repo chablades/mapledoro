@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { toCharacterKey } from "../../model/characterKeys";
 import { WORLD_NAMES } from "../../model/constants";
-import type { NormalizedCharacterData } from "../../model/types";
+import type { StoredCharacterRecord } from "../../model/charactersStore";
 import {
   buildDirectoryGroups,
   getDirectoryRevealStyle,
@@ -11,7 +11,7 @@ import { CHARACTERS_COPY } from "../content";
 import type { PreviewPaneActions, PreviewPaneModel } from "../paneModels";
 import CharacterAvatar from "../components/CharacterAvatar";
 
-function DirectoryCharacterAvatar({ character }: { character: NormalizedCharacterData }) {
+function DirectoryCharacterAvatar({ character }: { character: StoredCharacterRecord }) {
   const [imageReady, setImageReady] = useState(false);
 
   return (
@@ -105,7 +105,7 @@ export default function CharacterDirectoryScreen({
     padding: "0.25rem 0.4rem",
   };
 
-  const renderCharacterCard = (character: NormalizedCharacterData) => (
+  const renderCharacterCard = (character: StoredCharacterRecord) => (
     <div
       key={toCharacterKey(character)}
       style={{
@@ -170,9 +170,7 @@ export default function CharacterDirectoryScreen({
     });
   };
 
-  const worldLabel = selectedWorldId !== null
-    ? (WORLD_NAMES[selectedWorldId] ?? `World ${selectedWorldId}`)
-    : null;
+
 
   return (
     <div>
@@ -196,14 +194,12 @@ export default function CharacterDirectoryScreen({
           }}
         >
           <span style={{ fontSize: "0.78rem", color: theme.muted, fontWeight: 800 }}>
-            {!hasMultipleWorlds && worldLabel
-              ? worldLabel
-              : CHARACTERS_COPY.characterDirectory.sortRowsLabel}
+            {CHARACTERS_COPY.characterDirectory.sortRowsLabel}
           </span>
           <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
-            {hasMultipleWorlds && (
+            {directory.worldIds.length > 0 && (
               <select
-                disabled={setup.isUiLocked}
+                disabled={setup.isUiLocked || !hasMultipleWorlds}
                 value={selectedWorldId ?? "all"}
                 onChange={(e) => {
                   const val = e.target.value;
@@ -216,7 +212,7 @@ export default function CharacterDirectoryScreen({
                     {WORLD_NAMES[worldId] ?? `World ${worldId}`}
                   </option>
                 ))}
-                <option value="all">All worlds</option>
+                {hasMultipleWorlds && <option value="all">All worlds</option>}
               </select>
             )}
             <select

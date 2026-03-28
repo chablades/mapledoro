@@ -11,6 +11,8 @@ import PreviewSetupPane from "./components/PreviewSetupPane";
 import SearchPaneCard from "./components/SearchPaneCard";
 import type { PreviewPaneActions, PreviewPaneModel, SearchPaneActions, SearchPaneModel } from "./paneModels";
 import { useCharacterSetupController, MAX_CHAMPIONS } from "./useCharacterSetupController";
+import { toCharacterKey } from "../model/characterKeys";
+import type { StoredCharacterRecord } from "../model/charactersStore";
 
 interface CharacterSetupFlowProps {
   theme: AppTheme;
@@ -21,6 +23,13 @@ const MAX_ACCOUNT_CHARACTERS = 59;
 export default function CharacterSetupFlow({ theme }: CharacterSetupFlowProps) {
   const controller = useCharacterSetupController();
   const { state, transitions, actions } = controller;
+  const confirmedCharacterKey = state.confirmedCharacter
+      ? toCharacterKey(state.confirmedCharacter)
+      : null;
+    const confirmedStoredCharacter = confirmedCharacterKey !== null
+      ? (state.characterRoster.find((r) => toCharacterKey(r) === confirmedCharacterKey) ??
+        (state.confirmedCharacter as unknown as StoredCharacterRecord))
+      : null;
   const currentCharacterHasCompletedRequiredFlow = state.completedFlowIds.includes(
     state.requiredFlowId,
   );
@@ -64,7 +73,7 @@ export default function CharacterSetupFlow({ theme }: CharacterSetupFlowProps) {
       statusTone: state.statusTone,
     },
     profile: {
-      confirmedCharacter: state.confirmedCharacter,
+      confirmedCharacter: confirmedStoredCharacter,
       confirmedImageLoaded: state.confirmedImageLoaded,
       showCharacterDirectory: state.showCharacterDirectory,
       canViewCharacterDirectory:
@@ -87,12 +96,12 @@ export default function CharacterSetupFlow({ theme }: CharacterSetupFlowProps) {
     backFromAddCharacter: actions.backFromAddCharacter,
     resumeSavedSetup: actions.resumeSavedSetup,
     setCurrentAsMain: () => {
-      if (!state.confirmedCharacter) return;
-      actions.setMainCharacter(state.confirmedCharacter);
+      if (!confirmedStoredCharacter) return;
+      actions.setMainCharacter(confirmedStoredCharacter);
     },
     toggleCurrentChampion: () => {
-      if (!state.confirmedCharacter) return;
-      actions.toggleChampionCharacter(state.confirmedCharacter);
+      if (!confirmedStoredCharacter) return;
+      actions.toggleChampionCharacter(confirmedStoredCharacter);
     },
     removeCurrentCharacter: actions.removeCurrentCharacter,
     searchSubmit: actions.handleSearchSubmit,
