@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { SearchPaneActions, SearchPaneModel } from "../paneModels";
-import ConfirmModal from "./ConfirmModal";
+import ConfirmModal from "../../../../components/ConfirmModal";
 import FirstTimeSetupScreen from "../screens/FirstTimeSetupScreen";
 import ImportModeScreen from "../screens/ImportModeScreen";
 import CharacterProfileActionsScreen from "../screens/CharacterProfileActionsScreen";

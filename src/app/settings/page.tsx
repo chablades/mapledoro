@@ -8,7 +8,7 @@
 import { useState } from "react";
 import AppShell from "../../components/AppShell";
 import type { AppTheme } from "../../components/themes";
-import ConfirmModal from "../../features/characters/tabs/components/ConfirmModal";
+import ConfirmModal from "../../components/ConfirmModal";
 
 function hardReset() {
   const keys = Object.keys(localStorage).filter((k) => k.startsWith("mapledoro_"));

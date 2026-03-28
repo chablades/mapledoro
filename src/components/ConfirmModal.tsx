@@ -1,7 +1,7 @@
 "use client";
 
 import { createPortal } from "react-dom";
-import type { AppTheme } from "../../../../components/themes";
+import type { AppTheme } from "./themes";
 
 interface ConfirmModalProps {
   theme: AppTheme;
