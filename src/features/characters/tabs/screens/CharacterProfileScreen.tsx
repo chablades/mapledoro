@@ -204,7 +204,7 @@ export default function CharacterProfileScreen({
                     textTransform: "uppercase",
                   }}
                 >
-                  {role === "main" ? "Main" : role === "champion" ? "Champion" : "Mule"}
+                  {{ main: "Main", champion: "Champion", mule: "Mule" }[role]}
                 </span>
               ))}
             </div>

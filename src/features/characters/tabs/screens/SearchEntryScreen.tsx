@@ -50,11 +50,9 @@ export default function SearchEntryScreen({ model, actions }: SearchEntryScreenP
             marginBottom: "0.65rem",
           }}
         >
-          {profile.isAddingCharacter && search.hasCompletedRequiredFlow
+          {search.hasCompletedRequiredFlow
             ? CHARACTERS_COPY.searchEntry.backToCharactersButton
-            : search.hasCompletedRequiredFlow
-              ? CHARACTERS_COPY.searchEntry.backToCharactersButton
-              : CHARACTERS_COPY.searchEntry.backButton}
+            : CHARACTERS_COPY.searchEntry.backButton}
         </button>
         <div>
           <h1 style={titleStyle()}>{CHARACTERS_COPY.searchEntry.title}</h1>

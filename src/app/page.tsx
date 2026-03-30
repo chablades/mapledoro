@@ -169,6 +169,9 @@ function DashboardContent({ theme, now }: { theme: AppTheme; now: Date | null })
       ];
 
   const ursus = now ? getUrsusStatus(now) : null;
+  let ursusCountdown: string;
+  if (!ursus) ursusCountdown = PLACEHOLDER_COUNTDOWN;
+  else ursusCountdown = fmt(ursus.active ? ursus.remaining : ursus.until);
 
   const fmtLocal = (utcHour: number) => {
     const d = new Date(now ?? 0);
@@ -341,7 +344,7 @@ function DashboardContent({ theme, now }: { theme: AppTheme; now: Date | null })
                       className="countdown"
                       style={{ color: theme.accent }}
                     >
-                      {ursus ? (ursus.active ? fmt(ursus.remaining) : fmt(ursus.until)) : PLACEHOLDER_COUNTDOWN}
+                      {ursusCountdown}
                     </div>
                   </div>
                 </div>

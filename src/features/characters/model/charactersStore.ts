@@ -332,7 +332,7 @@ function parseStoredCharacterRecord(
     ign: derivedIgn,
     worldId,
     gender:
-      value.gender === "male" ? "male" : value.gender === "female" ? "female" : null,
+      value.gender === "male" || value.gender === "female" ? value.gender : null,
     stats: isStoredCharacterStats(value.stats) ? value.stats : createEmptyCharacterStats(),
     equipment: isStoredCharacterEquipment(value.equipment)
       ? value.equipment

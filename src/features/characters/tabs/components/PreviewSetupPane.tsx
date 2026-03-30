@@ -60,9 +60,11 @@ function getActiveScreenClassName(
   activeScreenId: PreviewScreenId,
   setupStepDirection: PreviewPaneModel["setup"]["setupStepDirection"],
 ) {
-  return activeScreenId === "directory" || activeScreenId === "none"
-    ? "setup-step-content directory-step-content"
-    : `setup-step-content ${setupStepDirection === "forward" ? "step-forward" : "step-backward"}`;
+  if (activeScreenId === "directory" || activeScreenId === "none") {
+    return "setup-step-content directory-step-content";
+  }
+  const directionClass = setupStepDirection === "forward" ? "step-forward" : "step-backward";
+  return `setup-step-content ${directionClass}`;
 }
 
 function getSetupPanelClassName(setup: PreviewPaneModel["setup"]) {

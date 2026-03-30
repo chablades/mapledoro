@@ -124,7 +124,13 @@ function parseDateLine(line: string): { label: string; iso: string } | null {
   }
 
   const d = new Date(year, month, day, hours, minutes);
-  const label = line.replace(/\s*\(.*?\)\s*$/, "").trim();
+  const parenIdx = line.lastIndexOf("(");
+  let label: string;
+  if (parenIdx >= 0 && line.trimEnd().endsWith(")")) {
+    label = line.slice(0, parenIdx).trim();
+  } else {
+    label = line.trim();
+  }
 
   return { label, iso: d.toISOString() };
 }
@@ -139,6 +145,34 @@ function cleanDetail(line: string): string {
     .trim();
 }
 
+function processMessageLine(
+  line: string,
+  current: SunnySundayWeek | null,
+  weeks: SunnySundayWeek[],
+  now: Date,
+): SunnySundayWeek | null {
+  if (/^##\s/.test(line) && !DISCORD_DATE_LINE_RE.test(line)) return current;
+
+  const parsed = parseDateLine(line);
+  if (parsed) {
+    if (current) weeks.push(current);
+    return {
+      date: parsed.label,
+      dateISO: parsed.iso,
+      details: [],
+      isPast: getEventEndUTC(new Date(parsed.iso)) < now,
+    };
+  }
+
+  if (!line || /^\(.*\)$/.test(line)) return current;
+
+  if (current) {
+    const cleaned = cleanDetail(line);
+    if (cleaned) current.details.push(cleaned);
+  }
+  return current;
+}
+
 export function parseSunnySundayMessage(content: string): SunnySundayWeek[] {
   const lines = content.split("\n");
   const weeks: SunnySundayWeek[] = [];
@@ -146,30 +180,7 @@ export function parseSunnySundayMessage(content: string): SunnySundayWeek[] {
   const now = new Date();
 
   for (const raw of lines) {
-    const line = raw.trim();
-
-    // Skip the title line (## header with emoji/link)
-    if (/^##\s/.test(line) && !DISCORD_DATE_LINE_RE.test(line)) continue;
-
-    const parsed = parseDateLine(line);
-    if (parsed) {
-      if (current) weeks.push(current);
-      current = {
-        date: parsed.label,
-        dateISO: parsed.iso,
-        details: [],
-        isPast: getEventEndUTC(new Date(parsed.iso)) < now,
-      };
-      continue;
-    }
-
-    if (!line) continue;
-    if (/^\(.*\)$/.test(line)) continue;
-
-    if (current) {
-      const cleaned = cleanDetail(line);
-      if (cleaned) current.details.push(cleaned);
-    }
+    current = processMessageLine(raw.trim(), current, weeks, now);
   }
 
   if (current) weeks.push(current);

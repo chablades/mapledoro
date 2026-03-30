@@ -55,11 +55,10 @@ function getCurrentCharacterGender(
   setupStepTestByStep: SetupStepInputById,
 ): "male" | "female" | null {
   const currentCharacterGenderRaw = (setupStepTestByStep.gender ?? "").toLowerCase();
-  return currentCharacterGenderRaw === "male"
-    ? "male"
-    : currentCharacterGenderRaw === "female"
-      ? "female"
-      : null;
+  if (currentCharacterGenderRaw === "male" || currentCharacterGenderRaw === "female") {
+    return currentCharacterGenderRaw;
+  }
+  return null;
 }
 
 // Helpers for world-scoped main/champion key maps
@@ -727,14 +726,13 @@ export function useCharacterSetupController() {
           existingCharacterDraft?.showFlowOverview,
       ),
       showCharacterDirectory: Boolean(existingCharacterDraft?.showCharacterDirectory),
-      stepIndex: existingCharacterDraft
-        ? clampFlowStepIndex(
-            existingCharacterDraft.activeFlowId,
-            existingCharacterDraft.completedFlowIds?.includes(requiredFlowId)
-              ? 0
-              : existingCharacterDraft.setupStepIndex,
-          )
-        : 0,
+      stepIndex: (() => {
+        if (!existingCharacterDraft) return 0;
+        const draftStepIdx = existingCharacterDraft.completedFlowIds?.includes(requiredFlowId)
+          ? 0
+          : existingCharacterDraft.setupStepIndex;
+        return clampFlowStepIndex(existingCharacterDraft.activeFlowId, draftStepIdx);
+      })(),
       stepDirection: "forward",
       stepData: existingCharacterDraft?.setupStepTestByStep ?? {},
     });

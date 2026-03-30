@@ -111,16 +111,12 @@ interface CalcResult {
   breakdown: { bossName: string; traces: number; reset: string }[];
 }
 
-function calculate(
-  type: LiberationType,
+function accumulateTraces(
   bosses: LiberationBoss[],
-  quests: LiberationQuest[],
   selections: Record<string, BossSelection>,
-  questIdx: number,
-  currentTraces: number,
+  type: LiberationType,
   genesisPass: boolean,
-  startDate: string,
-): CalcResult {
+) {
   let weeklyTraces = 0;
   let monthlyTraces = 0;
   let clearedWeeklyTraces = 0;
@@ -141,33 +137,43 @@ function calculate(
     }
   }
 
-  // Sum remaining from current quest onward
+  return { weeklyTraces, monthlyTraces, clearedWeeklyTraces, breakdown };
+}
+
+function computeWeeksToComplete(
+  totalRemaining: number,
+  effectiveWeekly: number,
+  clearedWeeklyTraces: number,
+): number {
+  if (totalRemaining <= 0) return 0;
+  if (effectiveWeekly <= 0) return Infinity;
+  const firstWeekTraces = effectiveWeekly - clearedWeeklyTraces;
+  const remainingAfterFirstWeek = totalRemaining - firstWeekTraces;
+  if (remainingAfterFirstWeek <= 0) return 1;
+  return 1 + Math.ceil(remainingAfterFirstWeek / effectiveWeekly);
+}
+
+function calculate(
+  type: LiberationType,
+  bosses: LiberationBoss[],
+  quests: LiberationQuest[],
+  selections: Record<string, BossSelection>,
+  questIdx: number,
+  currentTraces: number,
+  genesisPass: boolean,
+  startDate: string,
+): CalcResult {
+  const { weeklyTraces, monthlyTraces, clearedWeeklyTraces, breakdown } =
+    accumulateTraces(bosses, selections, type, genesisPass);
+
   let totalRemaining = 0;
   for (let i = questIdx; i < quests.length; i++) {
     totalRemaining += quests[i].required;
   }
-  totalRemaining -= currentTraces;
-  if (totalRemaining < 0) totalRemaining = 0;
+  totalRemaining = Math.max(0, totalRemaining - currentTraces);
 
-  // Effective weekly (monthly bosses contribute ~1/4.33 per week)
   const effectiveWeekly = weeklyTraces + monthlyTraces / 4.33;
-
-  let weeksToComplete: number;
-  if (totalRemaining <= 0) {
-    weeksToComplete = 0;
-  } else if (effectiveWeekly <= 0) {
-    weeksToComplete = Infinity;
-  } else {
-    // First week: cleared bosses don't contribute (already collected)
-    const firstWeekTraces = effectiveWeekly - clearedWeeklyTraces;
-    const remainingAfterFirstWeek = totalRemaining - firstWeekTraces;
-    if (remainingAfterFirstWeek <= 0) {
-      weeksToComplete = 1;
-    } else {
-      weeksToComplete = 1 + Math.ceil(remainingAfterFirstWeek / effectiveWeekly);
-    }
-  }
-
+  const weeksToComplete = computeWeeksToComplete(totalRemaining, effectiveWeekly, clearedWeeklyTraces);
   const completionDate =
     weeksToComplete === Infinity
       ? "Never"
@@ -529,19 +535,18 @@ export default function LiberationWorkspace({ theme }: { theme: AppTheme }) {
   const pillBtn = (
     active: boolean,
     accent?: boolean,
-  ): React.CSSProperties => ({
-    color: active
-      ? accent
-        ? "#fff"
-        : theme.accentText
-      : theme.muted,
-    background: active
-      ? accent
-        ? theme.accent
-        : theme.accentSoft
-      : "transparent",
-    border: active ? "none" : `1px solid ${theme.border}`,
-  });
+  ): React.CSSProperties => {
+    let color: string;
+    let background: string;
+    if (active) {
+      color = accent ? "#fff" : theme.accentText;
+      background = accent ? theme.accent : theme.accentSoft;
+    } else {
+      color = theme.muted;
+      background = "transparent";
+    }
+    return { color, background, border: active ? "none" : `1px solid ${theme.border}` };
+  };
 
   const sectionPanel: React.CSSProperties = {
     background: theme.panel,

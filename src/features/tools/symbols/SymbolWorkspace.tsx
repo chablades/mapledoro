@@ -257,22 +257,29 @@ function SymbolCardHeader({
         </div>
       )}
 
-      {(!isSacred || isTracked) && (
-        <div
-          style={{
-            fontSize: "0.72rem",
-            fontWeight: 800,
-            padding: "2px 8px",
-            borderRadius: "6px",
-            flexShrink: 0,
-            whiteSpace: "nowrap",
-            color: isMaxed ? "#fff" : days === Infinity ? "#e05a5a" : theme.accent,
-            background: isMaxed ? theme.accent : theme.accentSoft,
-          }}
-        >
-          {isMaxed ? "MAX" : days === Infinity ? "--" : `~${days}d`}
-        </div>
-      )}
+      {(!isSacred || isTracked) && (() => {
+        let badgeColor: string;
+        let badgeLabel: string;
+        if (isMaxed) { badgeColor = "#fff"; badgeLabel = "MAX"; }
+        else if (days === Infinity) { badgeColor = "#e05a5a"; badgeLabel = "--"; }
+        else { badgeColor = theme.accent; badgeLabel = `~${days}d`; }
+        return (
+          <div
+            style={{
+              fontSize: "0.72rem",
+              fontWeight: 800,
+              padding: "2px 8px",
+              borderRadius: "6px",
+              flexShrink: 0,
+              whiteSpace: "nowrap",
+              color: badgeColor,
+              background: isMaxed ? theme.accent : theme.accentSoft,
+            }}
+          >
+            {badgeLabel}
+          </div>
+        );
+      })()}
     </div>
   );
 }
@@ -544,7 +551,10 @@ function SymbolCard({
   theme: AppTheme;
   updateSymbol: (areaName: string, patch: Partial<SymbolState>) => void;
 }) {
-  const levelPct = isMaxed ? 100 : levelMax > 0 ? (state.current / levelMax) * 100 : 0;
+  let levelPct: number;
+  if (isMaxed) levelPct = 100;
+  else if (levelMax > 0) levelPct = (state.current / levelMax) * 100;
+  else levelPct = 0;
   const areaPct = totalForOneArea > 0 ? (consumed / totalForOneArea) * 100 : 0;
   const isSacred = type === "sacred";
   const dailyMax = area.daily + DAILY_EVENT_BONUS;
@@ -718,13 +728,12 @@ function OverallProgressPanel({
         }}
       >
         <span>
-          {noneTracked
-            ? "Select symbols below to start tracking"
-            : allMaxed
-              ? "All symbols maxed!"
-              : anyInfinite
-                ? "Set daily symbols to estimate completion"
-                : `All maxed in ~${maxDaysVal} days (${addDays(maxDaysVal)})`}
+          {(() => {
+            if (noneTracked) return "Select symbols below to start tracking";
+            if (allMaxed) return "All symbols maxed!";
+            if (anyInfinite) return "Set daily symbols to estimate completion";
+            return `All maxed in ~${maxDaysVal} days (${addDays(maxDaysVal)})`;
+          })()}
         </span>
         <span>{noneTracked ? "" : `${overallPct.toFixed(1)}%`}</span>
       </div>
@@ -766,7 +775,7 @@ function CompletionSummaryPanel({
         Completion Summary
       </div>
 
-      {noneTracked ? (
+      {noneTracked && (
         <div
           style={{
             fontSize: "0.82rem",
@@ -781,7 +790,9 @@ function CompletionSummaryPanel({
             ? "Enable symbols above to see completion estimates."
             : "No symbols to track."}
         </div>
-      ) : incomplete.length === 0 ? (
+      )}
+
+      {!noneTracked && incomplete.length === 0 && (
         <div
           style={{
             fontSize: "0.88rem",
@@ -793,10 +804,16 @@ function CompletionSummaryPanel({
         >
           All {type === "arcane" ? "Arcane" : "tracked Sacred"} Symbols are maxed!
         </div>
-      ) : (
+      )}
+
+      {!noneTracked && incomplete.length > 0 && (
         <>
-          {incomplete
-            .sort((a, b) => (b.days === Infinity ? -1 : a.days === Infinity ? 1 : b.days - a.days))
+          {[...incomplete]
+            .sort((a, b) => {
+              if (b.days === Infinity) return -1;
+              if (a.days === Infinity) return 1;
+              return b.days - a.days;
+            })
             .map(({ area, remaining, days }) => (
               <div
                 key={area.name}
@@ -857,11 +874,11 @@ function CompletionSummaryPanel({
                 color: anyInfinite ? "#e05a5a" : theme.accent,
               }}
             >
-              {allMaxed
-                ? "Done!"
-                : anyInfinite
-                  ? "Needs daily income"
-                  : addDays(maxDaysVal)}
+              {(() => {
+                if (allMaxed) return "Done!";
+                if (anyInfinite) return "Needs daily income";
+                return addDays(maxDaysVal);
+              })()}
             </span>
           </div>
         </>

@@ -124,6 +124,21 @@ function isFormula(v: Cell): v is FormulaCell {
   return v !== null && typeof v === "object" && "formula" in v;
 }
 
+function cellToXml(v: Cell, ref: string, strings: Map<string, number>): string {
+  if (v === null || v === undefined) return "";
+  if (isFormula(v)) {
+    if (v.array) {
+      return `<c r="${ref}" s="1"><f t="array" ref="${ref}">${escapeXml(v.formula)}</f></c>`;
+    }
+    return `<c r="${ref}" s="1"><f>${escapeXml(v.formula)}</f></c>`;
+  }
+  if (typeof v === "number") {
+    return `<c r="${ref}" s="1"><v>${v}</v></c>`;
+  }
+  const idx = strings.get(v)!;
+  return `<c r="${ref}" t="s"><v>${idx}</v></c>`;
+}
+
 function buildSheetXml(sheet: Sheet, strings: Map<string, number>): string {
   let xml =
     '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
@@ -143,21 +158,7 @@ function buildSheetXml(sheet: Sheet, strings: Map<string, number>): string {
     const row = sheet.rows[r];
     xml += `<row r="${r + 1}">`;
     for (let c = 0; c < row.length; c++) {
-      const v = row[c];
-      if (v === null || v === undefined) continue;
-      const ref = `${colLetter(c)}${r + 1}`;
-      if (isFormula(v)) {
-        if (v.array) {
-          xml += `<c r="${ref}" s="1"><f t="array" ref="${ref}">${escapeXml(v.formula)}</f></c>`;
-        } else {
-          xml += `<c r="${ref}" s="1"><f>${escapeXml(v.formula)}</f></c>`;
-        }
-      } else if (typeof v === "number") {
-        xml += `<c r="${ref}" s="1"><v>${v}</v></c>`;
-      } else {
-        const idx = strings.get(v)!;
-        xml += `<c r="${ref}" t="s"><v>${idx}</v></c>`;
-      }
+      xml += cellToXml(row[c], `${colLetter(c)}${r + 1}`, strings);
     }
     xml += "</row>";
   }

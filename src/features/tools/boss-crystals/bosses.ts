@@ -71,8 +71,13 @@ export interface BossGroup {
 }
 
 export const BOSS_GROUPS: BossGroup[] = (() => {
-  const strip = (name: string) =>
-    name.replace(/\s*\((?:Easy|Normal|Hard|Chaos|Extreme)\)$/, "");
+  const DIFFICULTY_SUFFIXES = ["(Easy)", "(Normal)", "(Hard)", "(Chaos)", "(Extreme)"];
+  const strip = (name: string) => {
+    for (const suffix of DIFFICULTY_SUFFIXES) {
+      if (name.endsWith(suffix)) return name.slice(0, -suffix.length).trimEnd();
+    }
+    return name;
+  };
   const groups: BossGroup[] = [];
   let current: BossGroup | null = null;
   for (let i = 0; i < BOSSES.length; i++) {
@@ -97,8 +102,6 @@ export const PRESETS = [
 ] as const;
 
 export function formatMeso(n: number): string {
-  return Math.floor(n)
-    .toString()
-    .replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return new Intl.NumberFormat("en-US").format(Math.floor(n));
 }
 
