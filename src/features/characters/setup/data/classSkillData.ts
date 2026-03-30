@@ -3,7 +3,7 @@
   Each entry defines the buff skills a player must activate before screenshotting
   their stats, and which stat fields are relevant for that class.
 
-  Legacy classes (lower job advancements, not accepted by MapleScuter) have empty
+  Legacy classes (lower job advancements, not accepted by MapleScouter) have empty
   buffSkills and requiredStats — the UI will fall back to showing all stat fields.
 
   TODO: Some classes have setup option variants noted inline:
@@ -111,6 +111,46 @@ const OOPARTS_CODE: BuffSkill = {
   skillIconUrl: "https://media.maplestorywiki.net/yetidb/Skill_OOPArts_Code.png",
   skillName: "OOPArts Code",
   jobAdvancement: "4",
+};
+const FLIP_OF_THE_COIN: BuffSkill = {
+  skillIconUrl: "https://media.maplestorywiki.net/yetidb/Skill_Flip_of_the_Coin.png",
+  skillName: "Flip of the Coin",
+  jobAdvancement: "Hyper Skills (140)",
+};
+const RESONANCE_RUSH: BuffSkill = {
+  skillIconUrl: "https://media.maplestorywiki.net/yetidb/Skill_Resonance_Rush.png",
+  skillName: "Resonance Rush",
+  jobAdvancement: "2",
+};
+const SPELL_BULLETS: BuffSkill = {
+  skillIconUrl: "https://media.maplestorywiki.net/yetidb/Skill_Spell_Bullets.png",
+  skillName: "Spell Bullets",
+  jobAdvancement: "1",
+};
+const LUCENT_BRAND: BuffSkill = {
+  skillIconUrl: "https://media.maplestorywiki.net/yetidb/Skill_Lucent_Brand.png",
+  skillName: "Lucent Brand",
+  jobAdvancement: "1",
+};
+const IGNIS_ROAR: BuffSkill = {
+  skillIconUrl: "https://media.maplestorywiki.net/yetidb/Skill_Ignis_Roar.png",
+  skillName: "Ignis Roar",
+  jobAdvancement: "3",
+};
+const HEIR_OF_THE_DIVINE: BuffSkill = {
+  skillIconUrl: "https://media.maplestorywiki.net/yetidb/Skill_Heir_of_the_Divine.png",
+  skillName: "Heir of the Divine",
+  jobAdvancement: "4",
+};
+const MUSCLE_MEMORY: BuffSkill = {
+  skillIconUrl: "https://media.maplestorywiki.net/yetidb/Skill_Muscle_Memory.png",
+  skillName: "Muscle Memory",
+  jobAdvancement: "2",
+};
+const COMBO_TRAINING: BuffSkill = {
+  skillIconUrl: "https://media.maplestorywiki.net/yetidb/Skill_Combo_Training.png",
+  skillName: "Combo Training",
+  jobAdvancement: "3",
 };
 
 // ── Class data ────────────────────────────────────────────────────────────────
@@ -370,14 +410,14 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
   {
     id: "shadower",
     nexonJobName: "Shadower",
-    warnings: [{ message: "Must have 0 stacks for Flip of the Coin (Hyper Skill)" }],
+    warnings: [{ message: "Must have 0 stacks for Flip of the Coin (Hyper Skill)", skill: FLIP_OF_THE_COIN }],
     buffSkills: [DSE, DCO],
     requiredStats: ["luk", "dex", "str", "attackPower"],
   },
   {
     id: "adele",
     nexonJobName: "Adele",
-    warnings: [{ message: "Must have 0 stacks for Resonance Rush (2nd job)" }],
+    warnings: [{ message: "Must have 0 stacks for Resonance Rush (2nd job)", skill: RESONANCE_RUSH }],
     buffSkills: [DSE, DCO],
     requiredStats: ["str", "dex", "attackPower"],
   },
@@ -386,7 +426,7 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
     nexonJobName: "Ark",
     warnings: [
       { message: "Must be in Flora form (not Specter)" },
-      { message: "Must have 0 Spell Bullets (1st job)" },
+      { message: "Must have 0 Spell Bullets (1st job)", skill: SPELL_BULLETS },
       { message: "Do not use Loaded Dice (5th job)", skill: LOADED_DICE },
     ],
     buffSkills: [DSE, DCO],
@@ -395,7 +435,7 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
   {
     id: "illium",
     nexonJobName: "Illium",
-    warnings: [{ message: "Must have 0 stacks (moving, Lucent Brand 1st job)" }],
+    warnings: [{ message: "Must have 0 stacks (moving, Lucent Brand 1st job)", skill: LUCENT_BRAND }],
     buffSkills: [DSE, DCO],
     requiredStats: ["int", "luk", "magicAtt"],
   },
@@ -445,7 +485,7 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
   {
     id: "mercedes",
     nexonJobName: "Mercedes",
-    warnings: [{ message: "Must have 0 stacks (Ignis Roar, 3rd job)" }],
+    warnings: [{ message: "Must have 0 stacks (Ignis Roar, 3rd job)", skill: IGNIS_ROAR }],
     buffSkills: [
       DSE,
       DCO,
@@ -486,7 +526,7 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
     id: "mo_xuan",
     nexonJobName: "Mo Xuan",
     warnings: [
-      { message: "Must have 5 stacks for Heir of the Divine (4th job)" },
+      { message: "Must have 5 stacks for Heir of the Divine (4th job)", skill: HEIR_OF_THE_DIVINE },
       { message: "Do not use Loaded Dice (5th job)", skill: LOADED_DICE },
     ],
     buffSkills: [DSE, DCO],
@@ -506,7 +546,7 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
   {
     id: "cadena",
     nexonJobName: "Cadena",
-    warnings: [{ message: "Must have 0 stacks for Muscle Memory (2nd job)" }],
+    warnings: [{ message: "Must have 0 stacks for Muscle Memory (2nd job)", skill: MUSCLE_MEMORY }],
     buffSkills: [DSE, DCO],
     requiredStats: ["luk", "dex", "str", "attackPower"],
   },
@@ -544,7 +584,7 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
   {
     id: "blaster",
     nexonJobName: "Blaster",
-    warnings: [{ message: "Must have 0 stacks for Combo Training (3rd job)" }],
+    warnings: [{ message: "Must have 0 stacks for Combo Training (3rd job)", skill: COMBO_TRAINING }],
     buffSkills: [DSE, DCO],
     requiredStats: ["str", "dex", "attackPower"],
   },
