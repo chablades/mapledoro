@@ -9,7 +9,7 @@
 // Check https://maplestory.io/api to see available regions and versions.
 export const MAPLESTORY_IO_BASE_URL = "https://maplestory.io";
 export const MAPLESTORY_IO_REGION = "GMS" as const;
-export const MAPLESTORY_IO_VERSION = "TODO" as const;
+export const MAPLESTORY_IO_VERSION = "265" as const;
 
 export function getSkillIconUrl(skillId: number): string {
   return `${MAPLESTORY_IO_BASE_URL}/api/${MAPLESTORY_IO_REGION}/${MAPLESTORY_IO_VERSION}/skill/${skillId}/icon`;
