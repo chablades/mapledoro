@@ -17,7 +17,6 @@ export interface StoredCooldownReductionField {
 
 export interface StoredCharacterStats {
   hp: StoredTripleStatField;
-  mp: StoredTripleStatField;
   str: StoredTripleStatField;
   dex: StoredTripleStatField;
   int: StoredTripleStatField;
@@ -25,8 +24,8 @@ export interface StoredCharacterStats {
   damage: string;
   bossDamage: string;
   ignoreDefense: string;
-  attackPower: string;
-  magicAtt: string;
+  attackPower: StoredTripleStatField;
+  magicAtt: StoredTripleStatField;
   criticalRate: string;
   criticalDamage: string;
   buffDuration: string;
@@ -151,7 +150,6 @@ export function createEmptyTripleStatField(): StoredTripleStatField {
 export function createEmptyCharacterStats(): StoredCharacterStats {
   return {
     hp: createEmptyTripleStatField(),
-    mp: createEmptyTripleStatField(),
     str: createEmptyTripleStatField(),
     dex: createEmptyTripleStatField(),
     int: createEmptyTripleStatField(),
@@ -159,8 +157,8 @@ export function createEmptyCharacterStats(): StoredCharacterStats {
     damage: "",
     bossDamage: "",
     ignoreDefense: "",
-    attackPower: "",
-    magicAtt: "",
+    attackPower: createEmptyTripleStatField(),
+    magicAtt: createEmptyTripleStatField(),
     criticalRate: "",
     criticalDamage: "",
     buffDuration: "",
@@ -223,7 +221,6 @@ function isStoredCharacterStats(value: unknown): value is StoredCharacterStats {
   return (
     isObject(value) &&
     isStoredTripleStatField(value.hp) &&
-    isStoredTripleStatField(value.mp) &&
     isStoredTripleStatField(value.str) &&
     isStoredTripleStatField(value.dex) &&
     isStoredTripleStatField(value.int) &&
@@ -231,8 +228,8 @@ function isStoredCharacterStats(value: unknown): value is StoredCharacterStats {
     typeof value.damage === "string" &&
     typeof value.bossDamage === "string" &&
     typeof value.ignoreDefense === "string" &&
-    typeof value.attackPower === "string" &&
-    typeof value.magicAtt === "string" &&
+    isStoredTripleStatField(value.attackPower) &&
+    isStoredTripleStatField(value.magicAtt) &&
     typeof value.criticalRate === "string" &&
     typeof value.criticalDamage === "string" &&
     typeof value.buffDuration === "string" &&

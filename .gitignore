@@ -10,5 +10,5 @@ coverage/
 .DS_Store
 Thumbs.db
 next-env.d.ts
-data/
+/data/
 .claude/settings.local.json
