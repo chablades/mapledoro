@@ -35,6 +35,12 @@ export default function SunnySundayPanel({ theme }: SunnySundayPanelProps) {
   const upcoming = futureWeeks[0] ?? null;
   const otherWeeks = futureWeeks.slice(1);
 
+  let statusText: string;
+  if (loading) statusText = "Loading...";
+  else if (error) statusText = "Connection error";
+  else if (upcoming) statusText = upcoming.date;
+  else statusText = "No data";
+
   return (
     <div
       className="fade-in panel panel-card"
@@ -59,13 +65,7 @@ export default function SunnySundayPanel({ theme }: SunnySundayPanelProps) {
               marginTop: "2px",
             }}
           >
-            {loading
-              ? "Loading..."
-              : error
-                ? "Connection error"
-                : upcoming
-                  ? upcoming.date
-                  : "No data"}
+            {statusText}
           </div>
         </div>
       </div>

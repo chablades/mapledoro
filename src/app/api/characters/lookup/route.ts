@@ -305,38 +305,39 @@ function getFallbackCacheHit(nameKey: string): CacheEntry | null {
   return entry;
 }
 
+function getMemoryCacheResult(nameKey: string) {
+  const entry = getFallbackCacheHit(nameKey);
+  return { entry, source: entry ? "memory_cache" as const : null };
+}
+
 async function getCacheHit(nameKey: string): Promise<{
   entry: CacheEntry | null;
   source: "redis_cache" | "memory_cache" | null;
 }> {
-  if (redis) {
-    try {
-      if (redis.status === "wait") {
-        await redis.connect();
-      }
-      const raw = await redis.get(cacheKey(nameKey));
-      if (!raw) return { entry: null, source: null };
-      const parsed = JSON.parse(raw) as CacheEntry;
-      if (Date.now() >= parsed.expiresAt) {
-        await redis.del(cacheKey(nameKey));
-        return { entry: null, source: null };
-      }
-      if (
-        parsed.kind === "found" &&
-        normalizeName(parsed.data.characterName) !== normalizeName(nameKey)
-      ) {
-        await redis.del(cacheKey(nameKey));
-        return { entry: null, source: null };
-      }
-      return { entry: parsed, source: "redis_cache" };
-    } catch (error) {
-      logRedisError("getCacheHit", error);
-      const fallback = getFallbackCacheHit(nameKey);
-      return { entry: fallback, source: fallback ? "memory_cache" : null };
+  if (!redis) return getMemoryCacheResult(nameKey);
+  try {
+    if (redis.status === "wait") {
+      await redis.connect();
     }
+    const raw = await redis.get(cacheKey(nameKey));
+    if (!raw) return { entry: null, source: null };
+    const parsed = JSON.parse(raw) as CacheEntry;
+    if (Date.now() >= parsed.expiresAt) {
+      await redis.del(cacheKey(nameKey));
+      return { entry: null, source: null };
+    }
+    if (
+      parsed.kind === "found" &&
+      normalizeName(parsed.data.characterName) !== normalizeName(nameKey)
+    ) {
+      await redis.del(cacheKey(nameKey));
+      return { entry: null, source: null };
+    }
+    return { entry: parsed, source: "redis_cache" };
+  } catch (error) {
+    logRedisError("getCacheHit", error);
+    return getMemoryCacheResult(nameKey);
   }
-  const fallback = getFallbackCacheHit(nameKey);
-  return { entry: fallback, source: fallback ? "memory_cache" : null };
 }
 
 async function setCacheHit(nameKey: string, entry: CacheEntry): Promise<void> {
@@ -495,6 +496,28 @@ async function buildLookup(characterName: string, key: string): Promise<LookupRe
   };
 }
 
+const LOOKUP_ERROR_MAP: Record<string, { message: string; status: number }> = {
+  QUEUE_FULL: { message: "Server lookup queue is full. Please retry shortly.", status: 429 },
+  QUEUE_BACKPRESSURE: { message: "Lookup queue is busy right now. Please retry in a few seconds.", status: 503 },
+  UPSTREAM_TIMEOUT: { message: "Nexon lookup timed out. Please retry shortly.", status: 504 },
+  LOOKUP_TIMEOUT: { message: "Lookup took too long under current traffic. Please retry.", status: 504 },
+};
+
+function lookupErrorResponse(error: unknown): NextResponse {
+  const key = error instanceof Error ? error.message : "";
+  const mapped = LOOKUP_ERROR_MAP[key];
+  if (mapped) {
+    return NextResponse.json(
+      { error: mapped.message },
+      { status: mapped.status, headers: { "Cache-Control": "no-store" } },
+    );
+  }
+  return NextResponse.json(
+    { error: "Lookup failed." },
+    { status: 502, headers: { "Cache-Control": "no-store" } },
+  );
+}
+
 export async function GET(request: NextRequest) {
   const characterName = request.nextUrl.searchParams.get("character_name")?.trim() ?? "";
   if (!characterName) {
@@ -582,34 +605,7 @@ export async function GET(request: NextRequest) {
     const result = await lookupPromise;
     return jsonLookup(result);
   } catch (error) {
-    if (error instanceof Error && error.message === "QUEUE_FULL") {
-      return NextResponse.json(
-        { error: "Server lookup queue is full. Please retry shortly." },
-        { status: 429, headers: { "Cache-Control": "no-store" } },
-      );
-    }
-    if (error instanceof Error && error.message === "QUEUE_BACKPRESSURE") {
-      return NextResponse.json(
-        { error: "Lookup queue is busy right now. Please retry in a few seconds." },
-        { status: 503, headers: { "Cache-Control": "no-store" } },
-      );
-    }
-    if (error instanceof Error && error.message === "UPSTREAM_TIMEOUT") {
-      return NextResponse.json(
-        { error: "Nexon lookup timed out. Please retry shortly." },
-        { status: 504, headers: { "Cache-Control": "no-store" } },
-      );
-    }
-    if (error instanceof Error && error.message === "LOOKUP_TIMEOUT") {
-      return NextResponse.json(
-        { error: "Lookup took too long under current traffic. Please retry." },
-        { status: 504, headers: { "Cache-Control": "no-store" } },
-      );
-    }
-    return NextResponse.json(
-      { error: "Lookup failed." },
-      { status: 502, headers: { "Cache-Control": "no-store" } },
-    );
+    return lookupErrorResponse(error);
   } finally {
     inFlightLookup.delete(key);
     decrementActiveQueueForIp(ipKey);

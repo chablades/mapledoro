@@ -103,6 +103,21 @@ function restoreColumns(saved: SavedState): CharacterColumn[] {
   }));
 }
 
+function updateColumnBoss(
+  columns: CharacterColumn[],
+  colIdx: number,
+  bossIdx: number,
+  updater: (b: BossRow) => BossRow,
+): CharacterColumn[] {
+  return columns.map((col, ci) => {
+    if (ci !== colIdx) return col;
+    return {
+      ...col,
+      bosses: col.bosses.map((b, bi) => (bi === bossIdx ? updater(b) : b)),
+    };
+  });
+}
+
 // -- Component ----------------------------------------------------------------
 
 export default function BossCrystalsWorkspace({ theme }: { theme: AppTheme }) {
@@ -166,28 +181,14 @@ export default function BossCrystalsWorkspace({ theme }: { theme: AppTheme }) {
 
   const toggleBoss = useCallback((colIdx: number, bossIdx: number) => {
     setColumns((prev) =>
-      prev.map((col, ci) => {
-        if (ci !== colIdx) return col;
-        return {
-          ...col,
-          bosses: col.bosses.map((b, bi) =>
-            bi === bossIdx ? { ...b, checked: !b.checked } : b,
-          ),
-        };
-      }),
+      updateColumnBoss(prev, colIdx, bossIdx, (b) => ({ ...b, checked: !b.checked })),
     );
   }, []);
 
   const updatePartySize = useCallback(
     (colIdx: number, bossIdx: number, val: number) => {
       setColumns((prev) =>
-        prev.map((col, ci) => {
-          if (ci !== colIdx) return col;
-          const bosses = col.bosses.map((b, bi) =>
-            bi === bossIdx ? { ...b, partySize: val } : b,
-          );
-          return { ...col, bosses };
-        }),
+        updateColumnBoss(prev, colIdx, bossIdx, (b) => ({ ...b, partySize: val })),
       );
     },
     [],
@@ -297,6 +298,23 @@ export default function BossCrystalsWorkspace({ theme }: { theme: AppTheme }) {
 
   const serverMult = server === "heroic" ? 1 : 5;
 
+  // Precompute per-column disabled sets and per-boss striping
+  const disabledSets = columns.map((col) => getDisabledSet(col.bosses));
+  const bossStriped: boolean[] = [];
+  {
+    let groupIdx = 0;
+    let prevGroup = "";
+    for (let bi = 0; bi < BOSSES.length; bi++) {
+      const group = BOSS_GROUPS.find((g) => g.bossIndices.includes(bi));
+      const groupLabel = group ? group.label : BOSSES[bi].name;
+      if (groupLabel !== prevGroup) {
+        if (prevGroup !== "") groupIdx++;
+        prevGroup = groupLabel;
+      }
+      bossStriped.push(groupIdx % 2 !== 0);
+    }
+  }
+
   const inputStyle: React.CSSProperties = {
     background: theme.timerBg,
     border: `1px solid ${theme.border}`,
@@ -307,24 +325,27 @@ export default function BossCrystalsWorkspace({ theme }: { theme: AppTheme }) {
     textAlign: "center",
   };
 
-  const checkboxStyle = (checked: boolean, disabled: boolean): React.CSSProperties => ({
-    width: "18px",
-    height: "18px",
-    borderRadius: "5px",
-    flexShrink: 0,
-    border: `2px solid ${disabled ? theme.border : checked ? theme.accent : theme.border}`,
-    background: disabled
-      ? theme.timerBg
-      : checked
-        ? theme.accent
-        : "transparent",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    cursor: disabled ? "not-allowed" : "pointer",
-    transition: "all 0.15s",
-    opacity: disabled ? 0.4 : 1,
-  });
+  const checkboxStyle = (checked: boolean, disabled: boolean): React.CSSProperties => {
+    const borderColor = checked && !disabled ? theme.accent : theme.border;
+    let bg: string;
+    if (disabled) bg = theme.timerBg;
+    else if (checked) bg = theme.accent;
+    else bg = "transparent";
+    return {
+      width: "18px",
+      height: "18px",
+      borderRadius: "5px",
+      flexShrink: 0,
+      border: `2px solid ${borderColor}`,
+      background: bg,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      cursor: disabled ? "not-allowed" : "pointer",
+      transition: "all 0.15s",
+      opacity: disabled ? 0.4 : 1,
+    };
+  };
 
   return (
     <>
@@ -686,22 +707,10 @@ export default function BossCrystalsWorkspace({ theme }: { theme: AppTheme }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {(() => {
-                  // Compute per-column disabled sets
-                  const disabledSets = columns.map((col) => getDisabledSet(col.bosses));
-
-                  // Compute per-boss-group striping
-                  let groupIdx = 0;
-                  let prevGroup = "";
-                  return BOSSES.map((boss, bi) => {
-                    const group = BOSS_GROUPS.find((g) => g.bossIndices.includes(bi));
-                    const groupLabel = group ? group.label : boss.name;
-                    if (groupLabel !== prevGroup) {
-                      if (prevGroup !== "") groupIdx++;
-                      prevGroup = groupLabel;
-                    }
-                    const striped = groupIdx % 2 !== 0;
+                  {BOSSES.map((boss, bi) => {
+                    const striped = bossStriped[bi];
                     const rowBg = striped ? theme.timerBg : "transparent";
+                    const maxParty = boss.name === "Lotus (Extreme)" ? 2 : 6;
                     return (
                       <tr key={boss.name}>
                         <td
@@ -778,14 +787,12 @@ export default function BossCrystalsWorkspace({ theme }: { theme: AppTheme }) {
                                 <input
                                   type="number"
                                   min={1}
-                                  max={boss.name === "Lotus (Extreme)" ? 2 : 6}
+                                  max={maxParty}
                                   value={row.partySize}
                                   onChange={(e) => {
-                                    const max =
-                                      boss.name === "Lotus (Extreme)" ? 2 : 6;
                                     let v = parseInt(e.target.value) || 1;
                                     if (v < 1) v = 1;
-                                    if (v > max) v = max;
+                                    if (v > maxParty) v = maxParty;
                                     updatePartySize(ci, bi, v);
                                   }}
                                   className="tool-input"
@@ -797,8 +804,7 @@ export default function BossCrystalsWorkspace({ theme }: { theme: AppTheme }) {
                         })}
                       </tr>
                     );
-                  });
-                })()}
+                  })}
                 </tbody>
               </table>
             </div>
