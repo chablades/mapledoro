@@ -454,11 +454,10 @@ export default function PitchedBossDropsWorkspace({
   const [drops, setDrops] = useState<PitchedBossDrop[]>(() =>
     typeof window === "undefined" ? [] : readStore().drops,
   );
-  const [characters] = useState<StoredCharacterRecord[]>(() =>
-    typeof window === "undefined"
-      ? []
-      : selectCharactersList(readCharactersStore()),
-  );
+  // Read characters fresh each render so newly added characters appear immediately
+  const characters: StoredCharacterRecord[] = mounted
+    ? selectCharactersList(readCharactersStore())
+    : [];
 
   // Form state
   const [selectedCharId, setSelectedCharId] = useState("");
@@ -476,13 +475,13 @@ export default function PitchedBossDropsWorkspace({
   function handleAdd() {
     if (!selectedCharId || !selectedItemId || !channel || !date) return;
     const char = characters.find(
-      (c) => String(c.characterID) === selectedCharId,
+      (c) => c.characterName === selectedCharId,
     );
     if (!char) return;
 
     const newDrop: PitchedBossDrop = {
       id: generateId(),
-      characterId: selectedCharId,
+      characterId: String(char.characterID),
       characterName: char.characterName,
       itemId: selectedItemId,
       channel: parseInt(channel, 10),
@@ -569,7 +568,7 @@ export default function PitchedBossDropsWorkspace({
                 >
                   <option value="">Select character…</option>
                   {characters.map((c) => (
-                    <option key={c.characterID} value={String(c.characterID)}>
+                    <option key={c.characterName} value={c.characterName}>
                       {c.characterName} (Lv.{c.level} {c.jobName})
                     </option>
                   ))}
