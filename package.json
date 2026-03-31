@@ -9,13 +9,15 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "chart.js": "^4.5.1",
     "ioredis": "^5.9.3",
     "next": "^16.2.1",
     "react": "19.2.4",
+    "react-chartjs-2": "^5.3.1",
     "react-dom": "19.2.4"
   },
   "devDependencies": {
-    "@types/node": "^22.13.10",
+    "@types/node": "^22",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "eslint": "^10.1.0",
