@@ -182,14 +182,26 @@ function CharacterCard({
               key={b.boss.name}
               style={{
                 display: "flex",
-                justifyContent: "space-between",
                 alignItems: "center",
+                gap: "6px",
                 fontSize: "0.72rem",
                 color: theme.text,
                 fontWeight: 600,
                 padding: "1.5px 0",
               }}
             >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={b.boss.icon}
+                alt=""
+                width={18}
+                height={18}
+                style={{
+                  borderRadius: "3px",
+                  objectFit: "cover",
+                  flexShrink: 0,
+                }}
+              />
               <span
                 style={{
                   overflow: "hidden",
@@ -530,14 +542,25 @@ function BossSelectionDialog({
         <div
           style={{
             display: "flex",
-            flexWrap: "wrap",
+            alignItems: "center",
             gap: "0.4rem",
+            flexWrap: "wrap",
             marginBottom: "0.75rem",
             paddingBottom: "0.75rem",
             borderBottom: `1px solid ${theme.border}`,
           }}
         >
-          {PRESETS.map((p) => (
+          <span
+            style={{
+              fontSize: "0.72rem",
+              fontWeight: 800,
+              color: theme.muted,
+              marginRight: "0.25rem",
+            }}
+          >
+            Presets
+          </span>
+          {PRESETS.filter((p) => p.key !== "").map((p) => (
             <div
               key={p.key}
               className="bc-btn"
@@ -555,6 +578,22 @@ function BossSelectionDialog({
               {p.label}
             </div>
           ))}
+          <div
+            className="bc-btn"
+            onClick={() => onPreset("")}
+            style={{
+              marginLeft: "auto",
+              padding: "5px 12px",
+              borderRadius: "8px",
+              fontSize: "0.72rem",
+              fontWeight: 800,
+              color: "#e05a5a",
+              background: "transparent",
+              border: "1px solid #e05a5a33",
+            }}
+          >
+            Clear
+          </div>
         </div>
 
         {/* Boss groups */}
@@ -619,6 +658,19 @@ function BossSelectionDialog({
                         </span>
                       )}
                     </div>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={boss.icon}
+                      alt=""
+                      width={22}
+                      height={22}
+                      style={{
+                        borderRadius: "4px",
+                        objectFit: "cover",
+                        flexShrink: 0,
+                        background: theme.panel,
+                      }}
+                    />
                     <span
                       style={{
                         flex: 1,
