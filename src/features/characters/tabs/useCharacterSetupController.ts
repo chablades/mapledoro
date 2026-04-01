@@ -1149,6 +1149,14 @@ export function useCharacterSetupController() {
       backFromAddCharacter,
       handleQueryInput,
       handleSearchSubmit,
+      startOptionalSetupFlow: (flowId: SetupFlowId) => {
+        if (immediateUiLockRef.current) return;
+        setActiveFlowId(flowId);
+        setSetupStepIndex(1);
+        setSetupStepDirection("forward");
+        setShowFlowOverview(false);
+        setShowCharacterDirectory(false);
+      },
     },
   };
 }

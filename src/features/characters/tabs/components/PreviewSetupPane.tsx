@@ -3,6 +3,7 @@ import type { CSSProperties } from "react";
 import { getDirectoryRevealDelays } from "../charactersDirectory";
 import type { PreviewPaneActions, PreviewPaneModel } from "../paneModels";
 import CharacterDirectoryScreen from "../screens/CharacterDirectoryScreen";
+import CharacterProfileOverviewScreen from "../screens/CharacterProfileOverviewScreen";
 import SetupFlowScreen from "../screens/SetupFlowScreen";
 import QuickSetupIntroScreen from "../screens/QuickSetupIntroScreen";
 import SearchResultPreviewScreen from "../screens/SearchResultPreviewScreen";
@@ -45,14 +46,15 @@ interface PreviewSetupPaneProps {
   actions: PreviewPaneActions;
 }
 
-type PreviewScreenId = "directory" | "quick-setup-intro" | "setup-flow" | "none";
+type PreviewScreenId = "directory" | "quick-setup-intro" | "setup-flow" | "profile-overview" | "none";
 
 function getActiveScreenId(setup: PreviewPaneModel["setup"]): PreviewScreenId {
   const inCharacterDirectoryView = setup.showFlowOverview && setup.showCharacterDirectory;
   const hasCompletedRequiredFlow = setup.completedFlowIds.includes("quick_setup");
   if (inCharacterDirectoryView) return "directory";
   if (!hasCompletedRequiredFlow && setup.setupStepIndex === 0) return "quick-setup-intro";
-  if (!hasCompletedRequiredFlow && setup.setupStepIndex > 0) return "setup-flow";
+  if (setup.setupStepIndex > 0) return "setup-flow";
+  if (hasCompletedRequiredFlow && !inCharacterDirectoryView) return "profile-overview";
   return "none";
 }
 
@@ -60,7 +62,7 @@ function getActiveScreenClassName(
   activeScreenId: PreviewScreenId,
   setupStepDirection: PreviewPaneModel["setup"]["setupStepDirection"],
 ) {
-  if (activeScreenId === "directory" || activeScreenId === "none") {
+  if (activeScreenId === "directory" || activeScreenId === "profile-overview" || activeScreenId === "none") {
     return "setup-step-content directory-step-content";
   }
   const directionClass = setupStepDirection === "forward" ? "step-forward" : "step-backward";
@@ -211,6 +213,10 @@ export default function PreviewSetupPane({ model, actions }: PreviewSetupPanePro
             )}
 
             {activeScreenId === "setup-flow" && <SetupFlowScreen model={model} actions={actions} />}
+
+            {activeScreenId === "profile-overview" && (
+              <CharacterProfileOverviewScreen model={model} actions={actions} />
+            )}
           </div>
         </aside>
       )}

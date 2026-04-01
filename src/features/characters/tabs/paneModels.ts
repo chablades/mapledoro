@@ -88,6 +88,9 @@ export interface PreviewPaneModel {
     setupStepDirection: "forward" | "backward";
     activeSetupStepValue: string;
   };
+  profile: {
+    confirmedCharacter: StoredCharacterRecord | null;
+  };
   directory: {
     // The full roster of saved characters
     allCharacters: StoredCharacterRecord[];
@@ -110,4 +113,5 @@ export interface PreviewPaneActions {
   finishSetupFlow: () => void;
   openCharacterSearch: () => void;
   openCharacterProfile: (character: StoredCharacterRecord) => void;
+  startOptionalFlow: (flowId: SetupFlowId) => void;
 }
