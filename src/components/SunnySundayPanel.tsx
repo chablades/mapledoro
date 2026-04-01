@@ -30,15 +30,42 @@ export default function SunnySundayPanel({ theme }: SunnySundayPanelProps) {
       .finally(() => setLoading(false));
   }, []);
 
-  // Show only current/future weeks; the first upcoming one is featured
-  const futureWeeks = weeks.filter((w) => !w.isPast);
+  // Re-check expiration client-side so stale cached responses don't show past events
+  const now = new Date();
+  const getEventEnd = (iso: string) => {
+    const start = new Date(iso);
+    const dayOfWeek = start.getUTCDay();
+    const daysUntilMonday = ((8 - dayOfWeek) % 7) || 7;
+    const end = new Date(start);
+    end.setUTCDate(end.getUTCDate() + daysUntilMonday);
+    end.setUTCHours(0, 0, 0, 0);
+    return end;
+  };
+  const futureWeeks = weeks.filter((w) => getEventEnd(w.dateISO) > now);
   const upcoming = futureWeeks[0] ?? null;
   const otherWeeks = futureWeeks.slice(1);
+
+  // Check if Sunny Sunday is currently active (between event start and next Monday 00:00 UTC)
+  const isActive = upcoming ? new Date(upcoming.dateISO) <= now && getEventEnd(upcoming.dateISO) > now : false;
+
+  // Format the upcoming date in the user's local timezone
+  const formatLocalDate = (iso: string) => {
+    const d = new Date(iso);
+    return d.toLocaleDateString(undefined, {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      timeZoneName: "short",
+    });
+  };
 
   let statusText: string;
   if (loading) statusText = "Loading...";
   else if (error) statusText = "Connection error";
-  else if (upcoming) statusText = upcoming.date;
+  else if (upcoming) statusText = formatLocalDate(upcoming.dateISO);
   else statusText = "No data";
 
   return (
@@ -68,6 +95,22 @@ export default function SunnySundayPanel({ theme }: SunnySundayPanelProps) {
             {statusText}
           </div>
         </div>
+        {isActive && (
+          <span
+            style={{
+              marginLeft: "auto",
+              fontSize: "0.65rem",
+              fontWeight: 800,
+              color: "#fff",
+              background: "#10b981",
+              padding: "2px 8px",
+              borderRadius: "6px",
+              letterSpacing: "0.05em",
+            }}
+          >
+            ACTIVE
+          </span>
+        )}
       </div>
 
       {/* Loading */}
