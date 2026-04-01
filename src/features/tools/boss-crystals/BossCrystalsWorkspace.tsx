@@ -1,121 +1,17 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo, useRef, useSyncExternalStore } from "react";
+import { useSyncExternalStore } from "react";
 import type { AppTheme } from "../../../components/themes";
 import { ToolHeader } from "../../../components/ToolHeader";
 import {
   BOSSES,
   BOSS_GROUPS,
-  SHARED_INDICES,
   PRESETS,
   formatMeso,
 } from "./bosses";
-import { generateXlsx, downloadBlob, colLetter, type Cell, type FormulaCell } from "./xlsx-export";
-import {
-  readCharactersStore,
-  selectCharactersList,
-} from "../../characters/model/charactersStore";
 import type { StoredCharacterRecord } from "../../characters/model/charactersStore";
-
-// -- Types --------------------------------------------------------------------
-
-interface BossRow {
-  checked: boolean;
-  partySize: number;
-}
-
-interface CharacterEntry {
-  name: string;
-  imageURL: string | null;
-  bosses: BossRow[];
-}
-
-type DialogState =
-  | null
-  | { type: "add-name" }
-  | { type: "add-bosses"; name: string; imageURL: string | null }
-  | { type: "edit"; index: number };
-
-// -- Helpers ------------------------------------------------------------------
-
-function createBosses(preset: string): BossRow[] {
-  return BOSSES.map((b) => ({
-    checked: !!(b.preset && b.preset.includes(preset)),
-    partySize: 1,
-  }));
-}
-
-function getDisabledSet(bosses: BossRow[]): Set<number> {
-  const disabled = new Set<number>();
-  for (let i = 0; i < bosses.length; i++) {
-    if (bosses[i].checked) {
-      for (const idx of SHARED_INDICES[i]) disabled.add(idx);
-    }
-  }
-  return disabled;
-}
-
-function calcCharacterIncome(
-  bosses: BossRow[],
-  server: string,
-): { meso: number; crystals: number } {
-  const mult = server === "heroic" ? 1 : 5;
-  const values: number[] = [];
-  for (let i = 0; i < bosses.length; i++) {
-    if (!bosses[i].checked) continue;
-    values.push(BOSSES[i].meso / bosses[i].partySize);
-  }
-  values.sort((a, b) => b - a);
-  const top14 = values.slice(0, 14);
-  let total = 0;
-  for (const v of top14) total += v / mult;
-  return { meso: Math.floor(total), crystals: top14.length };
-}
-
-function checkBg(disabled: boolean, checked: boolean, accent: string, timerBg: string): string {
-  if (disabled) return timerBg;
-  if (checked) return accent;
-  return "transparent";
-}
-
-// -- Storage ------------------------------------------------------------------
-
-const STORAGE_KEY = "boss-crystals-v2";
-
-interface SavedState {
-  server: string;
-  characters?: CharacterEntry[];
-  columns?: { name: string; bosses: BossRow[] }[];
-}
-
-function loadState(): { server: string; characters: CharacterEntry[] } | null {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    const parsed: SavedState = JSON.parse(raw);
-    const chars = parsed.characters ?? parsed.columns;
-    if (!chars) return null;
-    return {
-      server: parsed.server,
-      characters: chars.map((c) => ({
-        name: c.name,
-        imageURL: "imageURL" in c ? (c as CharacterEntry).imageURL : null,
-        bosses: BOSSES.map((_, i) => {
-          const s = c.bosses[i];
-          return s
-            ? { checked: s.checked, partySize: s.partySize }
-            : { checked: false, partySize: 1 };
-        }),
-      })),
-    };
-  } catch {
-    return null;
-  }
-}
-
-function saveState(server: string, characters: CharacterEntry[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify({ server, characters }));
-}
+import { type BossRow, type CharacterEntry, checkBg } from "./boss-crystals-types";
+import { useBossCrystalsState } from "./useBossCrystalsState";
 
 // -- Sub-components -----------------------------------------------------------
 
@@ -864,208 +760,17 @@ export default function BossCrystalsWorkspace({ theme }: { theme: AppTheme }) {
     () => false,
   );
 
-  const [server, setServer] = useState("heroic");
-  const [characters, setCharacters] = useState<CharacterEntry[]>([]);
-  const loadedRef = useRef<true | null>(null);
-
-  // Dialog state
-  const [dialog, setDialog] = useState<DialogState>(null);
-  const [nameMode, setNameMode] = useState<"type" | "select">("type");
-  const [typedName, setTypedName] = useState("");
-  const [selectedStoreChar, setSelectedStoreChar] = useState<StoredCharacterRecord | null>(null);
-  const [dialogBosses, setDialogBosses] = useState<BossRow[]>(() => createBosses(""));
-
-  // Load from localStorage — uses the allowed null-ref-check pattern
-  if (loadedRef.current == null) {
-    if (mounted) {
-      loadedRef.current = true;
-      const saved = loadState();
-      if (saved) {
-        setServer(saved.server);
-        setCharacters(saved.characters);
-      }
-    }
-  }
-
-  // Persist on change (ref access in effects is fine — runs after render)
-  useEffect(() => {
-    if (loadedRef.current != null) saveState(server, characters);
-  }, [server, characters]);
-
-  // -- Calculations --
-  const charIncomes = useMemo(
-    () => characters.map((c) => calcCharacterIncome(c.bosses, server)),
-    [characters, server],
-  );
-  let totalMeso = 0;
-  let totalCrystals = 0;
-  for (const income of charIncomes) {
-    totalMeso += income.meso;
-    totalCrystals += income.crystals;
-  }
-  const serverMult = server === "heroic" ? 1 : 5;
-
-  // Available imported characters (not yet added)
-  const usedNames = useMemo(
-    () => new Set(characters.map((c) => c.name.toLowerCase())),
-    [characters],
-  );
-  const availableStoreChars = useMemo(() => {
-    if (!mounted) return [];
-    const all = selectCharactersList(readCharactersStore());
-    return all.filter((c) => !usedNames.has(c.characterName.toLowerCase()));
-  }, [mounted, usedNames]);
-
-  // Dialog computed
-  const dialogDisabled = useMemo(() => getDisabledSet(dialogBosses), [dialogBosses]);
-  const dialogPreview = useMemo(
-    () => calcCharacterIncome(dialogBosses, server),
-    [dialogBosses, server],
-  );
-  const pendingName =
-    nameMode === "type" ? typedName.trim() : (selectedStoreChar?.characterName ?? "");
-
-  let dialogTitle = "";
-  if (dialog?.type === "add-bosses") dialogTitle = `Select Bosses \u2014 ${dialog.name}`;
-  else if (dialog?.type === "edit") dialogTitle = `Edit Bosses \u2014 ${characters[dialog.index]?.name ?? ""}`;
-
-  const showBossDialog = dialog?.type === "add-bosses" || dialog?.type === "edit";
-
-  // -- Dialog handlers --
-  const openAdd = useCallback(() => {
-    setNameMode("type");
-    setTypedName("");
-    setSelectedStoreChar(null);
-    setDialog({ type: "add-name" });
-  }, []);
-
-  const proceedToBosses = useCallback(() => {
-    if (!pendingName) return;
-    const imageURL =
-      nameMode === "select" ? (selectedStoreChar?.characterImgURL ?? null) : null;
-    setDialogBosses(createBosses(""));
-    setDialog({ type: "add-bosses", name: pendingName, imageURL });
-  }, [pendingName, nameMode, selectedStoreChar]);
-
-  const confirmAdd = useCallback(() => {
-    if (dialog?.type !== "add-bosses") return;
-    setCharacters((prev) => [
-      ...prev,
-      { name: dialog.name, imageURL: dialog.imageURL, bosses: dialogBosses },
-    ]);
-    setDialog(null);
-  }, [dialog, dialogBosses]);
-
-  const openEdit = useCallback(
-    (idx: number) => {
-      setDialogBosses(characters[idx].bosses.map((b) => ({ ...b })));
-      setDialog({ type: "edit", index: idx });
-    },
-    [characters],
-  );
-
-  const confirmEdit = useCallback(() => {
-    if (dialog?.type !== "edit") return;
-    const idx = dialog.index;
-    setCharacters((prev) =>
-      prev.map((c, i) => (i === idx ? { ...c, bosses: dialogBosses } : c)),
-    );
-    setDialog(null);
-  }, [dialog, dialogBosses]);
-
-  const deleteCharacter = useCallback((idx: number) => {
-    setCharacters((prev) => prev.filter((_, i) => i !== idx));
-  }, []);
-
-  const toggleDialogBoss = useCallback((bi: number) => {
-    setDialogBosses((prev) => {
-      const next = prev.map((b) => ({ ...b }));
-      next[bi].checked = !next[bi].checked;
-      return next;
-    });
-  }, []);
-
-  const setDialogParty = useCallback((bi: number, val: number) => {
-    setDialogBosses((prev) => {
-      const next = prev.map((b) => ({ ...b }));
-      next[bi].partySize = val;
-      return next;
-    });
-  }, []);
-
-  const applyPreset = useCallback((key: string) => {
-    setDialogBosses(createBosses(key));
-  }, []);
-
-  const clearData = useCallback(() => {
-    localStorage.removeItem(STORAGE_KEY);
-    setServer("heroic");
-    setCharacters([]);
-  }, []);
-
-  const closeDialog = useCallback(() => setDialog(null), []);
-
-  // -- Export (same spreadsheet format) --
-  const exportXlsx = useCallback(() => {
-    if (characters.length === 0) return;
-    const mult = server === "heroic" ? 1 : 5;
-    const f = (formula: string, array?: boolean): FormulaCell => ({ formula, array });
-    const rows: Cell[][] = [];
-    const firstDataRow = 2;
-    const lastBossRow = firstDataRow + BOSSES.length - 1;
-
-    rows.push(["Boss", "Mesos", ...characters.map((c, i) => c.name || `Character ${i + 1}`)]);
-
-    for (let bi = 0; bi < BOSSES.length; bi++) {
-      const boss = BOSSES[bi];
-      const row: Cell[] = [boss.name, Math.floor(boss.meso / mult)];
-      for (const col of characters) {
-        const br = col.bosses[bi];
-        row.push(br.checked ? br.partySize : null);
-      }
-      rows.push(row);
-    }
-
-    rows.push([]);
-    const charTotalRowIdx = rows.length;
-    {
-      const ks = "{1,2,3,4,5,6,7,8,9,10,11,12,13,14}";
-      const row: Cell[] = ["Character Total", null];
-      for (let ci = 0; ci < characters.length; ci++) {
-        const cc = colLetter(2 + ci);
-        const range = `${cc}${firstDataRow}:${cc}${lastBossRow}`;
-        const mesos = `B${firstDataRow}:B${lastBossRow}`;
-        row.push(f(`SUM(LARGE(IF(${range}<>"",${mesos}/${range},0),${ks}))`, true));
-      }
-      rows.push(row);
-    }
-
-    rows.push([]);
-    rows.push(["Weekly Income Summary", null]);
-    rows.push([]);
-    rows.push(["Bossing", null]);
-
-    for (let ci = 0; ci < characters.length; ci++) {
-      const cc = colLetter(2 + ci);
-      const charName = characters[ci].name || `Character ${ci + 1}`;
-      const income = calcCharacterIncome(characters[ci].bosses, server);
-      rows.push([charName, f(`${cc}${charTotalRowIdx + 1}`), `Crystals: ${income.crystals}`]);
-    }
-
-    rows.push([]);
-    {
-      const charTotalCells = characters
-        .map((_, ci) => `${colLetter(2 + ci)}${charTotalRowIdx + 1}`)
-        .join("+");
-      let tc = 0;
-      for (const col of characters) tc += calcCharacterIncome(col.bosses, server).crystals;
-      rows.push(["Total", f(charTotalCells), `Crystals: ${tc} / 180`]);
-    }
-
-    const colWidths = [34, 22, ...characters.map(() => 22)];
-    const xlsx = generateXlsx([{ name: "Boss Crystals", rows, colWidths }]);
-    downloadBlob(xlsx, "boss-crystals.xlsx");
-  }, [server, characters]);
+  const {
+    server, setServer, characters, charIncomes,
+    totalMeso, totalCrystals, serverMult,
+    dialog, dialogBosses, dialogDisabled, dialogPreview,
+    dialogTitle, showBossDialog, pendingName,
+    nameMode, setNameMode, typedName, setTypedName,
+    selectedStoreChar, setSelectedStoreChar, availableStoreChars,
+    openAdd, proceedToBosses, confirmAdd, openEdit, confirmEdit,
+    deleteCharacter, toggleDialogBoss, setDialogParty, applyPreset,
+    clearData, closeDialog, goBackToAddName, exportXlsx,
+  } = useBossCrystalsState(mounted);
 
   // -- Render -----------------------------------------------------------------
 
@@ -1320,7 +1025,7 @@ export default function BossCrystalsWorkspace({ theme }: { theme: AppTheme }) {
           onToggle={toggleDialogBoss}
           onPartyChange={setDialogParty}
           onPreset={applyPreset}
-          onBack={() => setDialog({ type: "add-name" })}
+          onBack={goBackToAddName}
           onCancel={closeDialog}
           onConfirm={dialog?.type === "add-bosses" ? confirmAdd : confirmEdit}
         />

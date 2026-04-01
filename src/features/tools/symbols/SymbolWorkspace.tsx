@@ -22,6 +22,7 @@ import {
 } from "../../characters/model/charactersStore";
 import { ToolHeader } from "../../../components/ToolHeader";
 import { WikiAttribution } from "../../../components/WikiAttribution";
+import { CharacterSyncPanel } from "../../../components/CharacterSyncPanel";
 import {
   type SymbolType,
   type SymbolArea,
@@ -1186,55 +1187,14 @@ export default function SymbolWorkspace({ theme }: { theme: AppTheme }) {
             description="Track your Arcane and Sacred symbol progress and estimate completion dates."
           />
 
-          {/* Character sync (optional) */}
-          {characters.length > 0 && (
-            <div className="fade-in panel-card" style={sectionPanel}>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "0.75rem",
-                  flexWrap: "wrap",
-                }}
-              >
-                <div
-                  className="section-label"
-                  style={{ color: theme.muted, marginBottom: 0 }}
-                >
-                  Character
-                </div>
-                <select
-                  className="tool-input"
-                  value={selectedCharName ?? ""}
-                  onChange={(e) => handleCharChange(e.target.value || null)}
-                  style={{
-                    ...inputStyle,
-                    flex: 1,
-                    maxWidth: "280px",
-                    cursor: "pointer",
-                  }}
-                >
-                  <option value="">None (global)</option>
-                  {characters.map((c) => (
-                    <option key={c.characterName} value={c.characterName}>
-                      {c.characterName} (Lv.{c.level} {c.jobName})
-                    </option>
-                  ))}
-                </select>
-                {selectedCharName && (
-                  <span
-                    style={{
-                      fontSize: "0.72rem",
-                      fontWeight: 700,
-                      color: theme.accent,
-                    }}
-                  >
-                    Synced to {selectedCharName}
-                  </span>
-                )}
-              </div>
-            </div>
-          )}
+          <CharacterSyncPanel
+            theme={theme}
+            characters={characters}
+            selectedCharName={selectedCharName}
+            onCharChange={handleCharChange}
+            inputStyle={inputStyle}
+            sectionPanel={sectionPanel}
+          />
 
           {/* Type toggle */}
           <div className="fade-in panel-card" style={sectionPanel}>
