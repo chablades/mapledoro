@@ -130,16 +130,12 @@ function DashboardContent({ theme }: { theme: AppTheme }) {
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
   }, []);
-  const [patchNotes, setPatchNotes] = useState<PatchNote[]>(initialPatchNotes);
+  const [patchNotes, setPatchNotes] = useState<PatchNote[]>(() => readCachedPatchNotes() ?? initialPatchNotes);
   const [patchFilter, setPatchFilter] = useState<PatchFilter>("All");
   const [patchExpanded, setPatchExpanded] = useState(false);
 
   useEffect(() => {
-    const cached = readCachedPatchNotes();
-    if (cached) {
-      Promise.resolve(cached).then(setPatchNotes);
-      return;
-    }
+    if (readCachedPatchNotes()) return;
 
     fetch("/api/patch-notes")
       .then((res) => res.json())

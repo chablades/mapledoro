@@ -11,4 +11,5 @@ coverage/
 Thumbs.db
 next-env.d.ts
 data/
+public/cache/
 .claude/settings.local.json
