@@ -170,7 +170,7 @@ export function useCharacterSetupController() {
   const isResumableDraft = useCallback(
     (draft: SetupDraft | null) =>
       Boolean(draft?.confirmedCharacter) &&
-      !Boolean(draft?.completedFlowIds?.includes(requiredFlowId)),
+      !draft?.completedFlowIds?.includes(requiredFlowId),
     [requiredFlowId],
   );
 
@@ -334,7 +334,7 @@ export function useCharacterSetupController() {
         hydrateDraftCommonState(draft, store, storedRoster, accountHasCompletedRequiredFlow);
 
       const hasActiveFlowInProgress =
-        Boolean(draft.setupFlowStarted) && !Boolean(draft.showFlowOverview);
+        draft.setupFlowStarted && !draft.showFlowOverview;
 
       if (draft.autoResumeOnLoad && hasActiveFlowInProgress) {
         resumeActiveFlow(draft, nextCompletedFlowIds);

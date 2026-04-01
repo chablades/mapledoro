@@ -21,13 +21,13 @@ src/
   app/              # Next.js pages & API routes
     api/            # Server routes (characters/lookup, patch-notes, sunny-sundays)
     characters/     # Character management page
-    tools/          # Calculator tools (boss-crystals, liberation, symbols)
+    tools/          # Calculators (boss-crystals, liberation, symbols) & trackers (pitched-boss-drops)
     guides/         # Placeholder
     settings/       # User preferences & hard reset
-  components/       # Reusable UI (AppShell, ThemeContext, themes, nav)
+  components/       # Reusable UI (AppShell, ThemeContext, themes, nav, ToolHeader, WikiAttribution)
   features/         # Self-contained feature modules
     characters/     # Character lookup, directory, setup wizard, profiles
-    tools/          # Boss crystals, liberation, symbols calculators
+    tools/          # Boss crystals, liberation, symbols, pitched-boss-drops
   lib/              # Shared utilities (Discord client, Sunny Sunday parsing)
 ```
 
@@ -39,6 +39,61 @@ Both of the following must pass before any implementation is considered complete
 npm run build
 npm run lint
 ```
+
+### Lint Gotchas
+
+- **`react-hooks/set-state-in-effect`** — No bare `setState()` calls inside `useEffect`. Use lazy `useState` initializers for localStorage reads, `useSyncExternalStore` for external-store patterns, or `useRef` + direct DOM mutation for timers.
+- **`sonarjs/pseudo-random`** — No `Math.random()`. Use `crypto.randomUUID()`.
+- **`@next/next/no-img-element`** — External CDN images use `<img>` with `// eslint-disable-next-line @next/next/no-img-element`.
+
+## Component Patterns
+
+### Route Pages (`src/app/tools/<name>/page.tsx`)
+Thin shells that wrap a workspace in `AppShell`:
+```tsx
+"use client";
+import AppShell from "../../../components/AppShell";
+import FooWorkspace from "../../../features/tools/foo/FooWorkspace";
+export default function FooPage() {
+  return <AppShell currentPath="/tools">{({ theme }) => <FooWorkspace theme={theme} />}</AppShell>;
+}
+```
+
+### Workspace Layout
+All tool workspaces use this centering pattern:
+- Outer: `style={{ flex: 1, width: "100%", padding: "1.5rem 1.5rem 2rem 2.75rem" }}`
+- Inner: `style={{ maxWidth: 900, margin: "0 auto" }}`
+- `<ToolHeader>` first, then content in panel sections
+
+### SSR/Client Gate
+Use `useSyncExternalStore` to safely gate client-only code (localStorage reads):
+```tsx
+const mounted = useSyncExternalStore(() => () => undefined, () => true, () => false);
+```
+
+## Character Store API
+
+Located in `src/features/characters/model/charactersStore.ts`:
+
+- `readCharactersStore()` → `CharactersStore` — reads from localStorage
+- `selectCharactersList(store)` → `StoredCharacterRecord[]` — ordered list
+- Characters are uniquely identified by `characterName` (lowercased as the store key)
+- **`characterID` (number) is NOT unique** — never use as React key or option value
+- Read characters fresh each render (not cached in `useState`) so new additions appear immediately
+
+## localStorage Keys
+
+| Feature | Key | Notes |
+|---------|-----|-------|
+| Characters | `mapledoro_characters_store_v1` | Managed by `charactersStore.ts` |
+| Symbols (global) | `symbols-v2` | Default when no character selected |
+| Symbols (per-char) | `symbols-v2-{characterName}` | When synced to a character |
+| Pitched boss drops | `pitched-boss-drops-v1` | |
+| Theme | Managed by `ThemeContext` | |
+
+## Charts
+
+Pure SVG — no external chart libraries. Existing patterns: horizontal bar charts, line charts with `<polyline>` + `<circle>`.
 
 ## Image Policy
 

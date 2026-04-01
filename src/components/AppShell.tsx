@@ -4,7 +4,6 @@
   Shared application shell for route pages.
   Owns theme + UTC clock state and renders top nav/sidebar consistently.
 */
-import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import AppTopNav from "./AppTopNav";
 import { NAV_LINKS } from "./nav-links";
@@ -13,17 +12,11 @@ import { useTheme } from "./ThemeContext";
 
 interface AppShellProps {
   currentPath: string;
-  children: (args: { theme: AppTheme; now: Date | null }) => ReactNode;
+  children: (args: { theme: AppTheme }) => ReactNode;
 }
 
 export default function AppShell({ currentPath, children }: AppShellProps) {
   const { themeKey, theme, setThemeKey } = useTheme();
-  const [now, setNow] = useState<Date | null>(null);
-
-  useEffect(() => {
-    const id = setInterval(() => setNow(new Date()), 1000);
-    return () => clearInterval(id);
-  }, []);
 
   return (
     <div
@@ -36,7 +29,6 @@ export default function AppShell({ currentPath, children }: AppShellProps) {
       }}
     >
       <AppTopNav
-        now={now ?? new Date(0)}
         currentPath={currentPath}
         themeKey={themeKey}
         theme={theme}
@@ -46,7 +38,7 @@ export default function AppShell({ currentPath, children }: AppShellProps) {
       />
 
       <div className="page-shell">
-        {children({ theme, now })}
+        {children({ theme })}
       </div>
 
       <footer

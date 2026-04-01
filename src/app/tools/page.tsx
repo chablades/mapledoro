@@ -15,7 +15,7 @@ interface ToolCard {
   href: string;
 }
 
-const TOOLS: ToolCard[] = [
+const CALCULATORS: ToolCard[] = [
   {
     title: "Boss Crystal Calculator",
     description:
@@ -39,6 +39,77 @@ const TOOLS: ToolCard[] = [
   },
 ];
 
+const TRACKERS: ToolCard[] = [
+  {
+    title: "Pitched Boss Drop Tracker",
+    description:
+      "Track and analyze your rare pitched boss drops across all characters.",
+    emoji: "🎯",
+    href: "/tools/pitched-boss-drops",
+  },
+];
+
+function ToolGrid({ tools, theme }: { tools: ToolCard[]; theme: AppTheme }) {
+  return (
+    <div
+      className="tools-grid"
+      style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+        gap: "1.25rem",
+      }}
+    >
+      {tools.map((tool) => (
+        <Link
+          key={tool.href}
+          href={tool.href}
+          style={{ textDecoration: "none" }}
+        >
+          <div
+            className="fade-in tool-card panel-card"
+            style={{
+              background: theme.panel,
+              border: `1px solid ${theme.border}`,
+              padding: "1.5rem",
+              cursor: "pointer",
+            }}
+          >
+            <div style={{ fontSize: "2rem", marginBottom: "0.75rem" }}>
+              {tool.emoji}
+            </div>
+            <div
+              className="panel-header-title"
+              style={{ color: theme.text, fontSize: "1.1rem", marginBottom: "0.5rem" }}
+            >
+              {tool.title}
+            </div>
+            <div
+              style={{
+                fontSize: "0.82rem",
+                color: theme.muted,
+                fontWeight: 600,
+                lineHeight: 1.5,
+              }}
+            >
+              {tool.description}
+            </div>
+            <div
+              style={{
+                marginTop: "1rem",
+                fontSize: "0.78rem",
+                fontWeight: 800,
+                color: theme.accent,
+              }}
+            >
+              Open tool →
+            </div>
+          </div>
+        </Link>
+      ))}
+    </div>
+  );
+}
+
 function ToolsContent({ theme }: { theme: AppTheme }) {
   return (
     <>
@@ -56,65 +127,39 @@ function ToolsContent({ theme }: { theme: AppTheme }) {
             Tools
           </div>
           <div className="page-subtitle" style={{ color: theme.muted }}>
-            MapleStory calculators and utilities
+            MapleStory calculators, trackers, and utilities
           </div>
 
           <div
-            className="tools-grid"
             style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-              gap: "1.25rem",
+              fontWeight: 700,
+              fontSize: "0.85rem",
+              color: theme.muted,
+              textTransform: "uppercase",
+              letterSpacing: "0.04em",
+              marginBottom: "0.75rem",
             }}
           >
-            {TOOLS.map((tool) => (
-              <Link
-                key={tool.href}
-                href={tool.href}
-                style={{ textDecoration: "none" }}
-              >
-                <div
-                  className="fade-in tool-card panel-card"
-                  style={{
-                    background: theme.panel,
-                    border: `1px solid ${theme.border}`,
-                    padding: "1.5rem",
-                    cursor: "pointer",
-                  }}
-                >
-                  <div style={{ fontSize: "2rem", marginBottom: "0.75rem" }}>
-                    {tool.emoji}
-                  </div>
-                  <div
-                    className="panel-header-title"
-                    style={{ color: theme.text, fontSize: "1.1rem", marginBottom: "0.5rem" }}
-                  >
-                    {tool.title}
-                  </div>
-                  <div
-                    style={{
-                      fontSize: "0.82rem",
-                      color: theme.muted,
-                      fontWeight: 600,
-                      lineHeight: 1.5,
-                    }}
-                  >
-                    {tool.description}
-                  </div>
-                  <div
-                    style={{
-                      marginTop: "1rem",
-                      fontSize: "0.78rem",
-                      fontWeight: 800,
-                      color: theme.accent,
-                    }}
-                  >
-                    Open tool →
-                  </div>
-                </div>
-              </Link>
-            ))}
+            Calculators
           </div>
+
+          <ToolGrid tools={CALCULATORS} theme={theme} />
+
+          <div
+            style={{
+              fontWeight: 700,
+              fontSize: "0.85rem",
+              color: theme.muted,
+              textTransform: "uppercase",
+              letterSpacing: "0.04em",
+              marginTop: "2rem",
+              marginBottom: "0.75rem",
+            }}
+          >
+            Trackers
+          </div>
+
+          <ToolGrid tools={TRACKERS} theme={theme} />
         </div>
       </div>
     </>

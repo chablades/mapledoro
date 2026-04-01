@@ -5,15 +5,37 @@
   Edit here for nav structure/behavior (brand, links, UTC clock, mobile menu).
   Styling lives in AppTopNav.module.css; link list lives in nav-links.ts.
 */
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import styles from "./AppTopNav.module.css";
 import type { NavLinkItem } from "./nav-links";
 import type { AppTheme } from "./themes";
 
+function UtcClocks({ mobileClassName, desktopClassName, style }: { mobileClassName: string; desktopClassName: string; style: React.CSSProperties }) {
+  const mobileRef = useRef<HTMLSpanElement>(null);
+  const desktopRef = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    const tick = () => {
+      const text = `${new Date().toUTCString().slice(17, 25)} UTC`;
+      if (mobileRef.current) mobileRef.current.textContent = text;
+      if (desktopRef.current) desktopRef.current.textContent = text;
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  return (
+    <>
+      <span ref={mobileRef} className={mobileClassName} style={style}>--:--:-- UTC</span>
+      <span ref={desktopRef} className={desktopClassName} style={style}>--:--:-- UTC</span>
+    </>
+  );
+}
+
 interface AppTopNavProps<TTheme extends AppTheme> {
-  now: Date;
   currentPath: string;
   themeKey: string;
   theme: TTheme;
@@ -23,7 +45,6 @@ interface AppTopNavProps<TTheme extends AppTheme> {
 }
 
 export default function AppTopNav<TTheme extends AppTheme>({
-  now,
   currentPath,
   themeKey,
   theme,
@@ -34,12 +55,6 @@ export default function AppTopNav<TTheme extends AppTheme>({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [themeDropdownOpen, setThemeDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const clockReady = useSyncExternalStore(
-    () => () => undefined,
-    () => true,
-    () => false,
-  );
-  const utcClockText = clockReady ? `${now.toUTCString().slice(17, 25)} UTC` : "--:--:-- UTC";
 
   useEffect(() => {
     if (!mobileMenuOpen) return;
@@ -215,18 +230,7 @@ export default function AppTopNav<TTheme extends AppTheme>({
           )}
         </div>
 
-        <span
-          className={styles.mobileUtc}
-          style={{ color: theme.muted }}
-        >
-          {utcClockText}
-        </span>
-        <span
-          className={styles.desktopUtc}
-          style={{ color: theme.muted }}
-        >
-          {utcClockText}
-        </span>
+        <UtcClocks mobileClassName={styles.mobileUtc} desktopClassName={styles.desktopUtc} style={{ color: theme.muted }} />
         <button
           type="button"
           className={styles.mobileMenuBtn}

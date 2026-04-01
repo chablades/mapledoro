@@ -1,9 +1,29 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useSyncExternalStore } from "react";
+import { Line } from "react-chartjs-2";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Tooltip,
+  Legend,
+  type ChartOptions,
+} from "chart.js";
 import type { AppTheme } from "../../../components/themes";
+
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend);
+import {
+  readCharactersStore,
+  selectCharactersList,
+  type StoredCharacterRecord,
+} from "../../characters/model/charactersStore";
 import { ToolHeader } from "../../../components/ToolHeader";
 import { WikiAttribution } from "../../../components/WikiAttribution";
+import { CharacterSyncPanel } from "../../../components/CharacterSyncPanel";
+import { SegmentedToggle } from "../../../components/SegmentedToggle";
 import {
   type SymbolType,
   type SymbolArea,
@@ -69,9 +89,13 @@ const DAILY_EVENT_BONUS = 6;
 
 const STORAGE_KEY = "symbols-v2";
 
-function loadState(): SavedState | null {
+function storageKeyFor(charName: string | null): string {
+  return charName ? `${STORAGE_KEY}-${charName}` : STORAGE_KEY;
+}
+
+function loadStateFrom(key: string): SavedState | null {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(key);
     if (!raw) return null;
     return JSON.parse(raw);
   } catch {
@@ -79,8 +103,8 @@ function loadState(): SavedState | null {
   }
 }
 
-function saveState(state: SavedState) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+function saveStateTo(key: string, state: SavedState) {
+  localStorage.setItem(key, JSON.stringify(state));
 }
 
 // -- Helpers ------------------------------------------------------------------
@@ -347,7 +371,7 @@ function SymbolLevelControls({
         >
           {Array.from({ length: maxLevel }, (_, i) => i + 1).map((lvl) => (
             <option key={lvl} value={lvl}>
-              {lvl}{lvl === maxLevel ? " (MAX)" : ""}
+              {lvl}
             </option>
           ))}
         </select>
@@ -887,6 +911,136 @@ function CompletionSummaryPanel({
   );
 }
 
+// -- Completion Timeline Chart ------------------------------------------------
+
+const TIMELINE_COLORS = [
+  "#e07840", "#40b040", "#7c6aff", "#e05a5a", "#40b8ff",
+  "#d4a02a", "#d460a0", "#60a060", "#a090dd", "#c08060",
+];
+
+function computeLevelDays(
+  state: SymbolState,
+  growth: number[],
+  maxLevel: number,
+  type: SymbolType,
+): { day: number; level: number }[] {
+  const weekly = effectiveWeekly(type, state.weeklyEnabled);
+  const rate = state.daily + weekly / 7;
+  if (rate <= 0) return [];
+
+  const points: { day: number; level: number }[] = [{ day: 0, level: state.level }];
+  let cumDays = 0;
+  let remaining = symbolsForLevel(growth, state.level) - state.current;
+
+  for (let lvl = state.level; lvl < maxLevel; lvl++) {
+    if (lvl > state.level) remaining = symbolsForLevel(growth, lvl);
+    cumDays += remaining / rate;
+    points.push({ day: Math.ceil(cumDays), level: lvl + 1 });
+  }
+  return points;
+}
+
+function CompletionTimelineChart({
+  theme,
+  sectionPanel,
+  stats,
+  growth,
+  maxLevel,
+  type,
+}: {
+  theme: AppTheme;
+  sectionPanel: React.CSSProperties;
+  stats: SymbolStats;
+  growth: number[];
+  maxLevel: number;
+  type: SymbolType;
+}) {
+  const series = stats.tracked
+    .filter((p) => !p.isMaxed && p.days !== Infinity)
+    .map((p) => ({
+      name: p.area.name,
+      points: computeLevelDays(p.state, growth, maxLevel, type),
+    }))
+    .filter((s) => s.points.length > 1);
+
+  const maxDay = Math.max(...series.flatMap((s) => s.points.map((p) => p.day)), 1);
+
+  const datasets = series.map((s, i) => ({
+    label: s.name,
+    data: s.points.map((p) => ({ x: p.day, y: p.level })),
+    borderColor: TIMELINE_COLORS[i % TIMELINE_COLORS.length],
+    backgroundColor: TIMELINE_COLORS[i % TIMELINE_COLORS.length],
+    tension: 0.2,
+    pointRadius: 3,
+    pointHoverRadius: 5,
+    borderWidth: 2.5,
+  }));
+
+  const chartData = { datasets };
+
+  const options: ChartOptions<"line"> = {
+    responsive: true,
+    maintainAspectRatio: true,
+    plugins: {
+      legend: { position: "bottom" as const, labels: { color: theme.muted, font: { size: 12, weight: 600 as const } } },
+      tooltip: {
+        callbacks: {
+          title: (items) => {
+            const d = (items[0]?.parsed.x as number | null) ?? 0;
+            return d === 0 ? "Today" : addDays(d);
+          },
+          label: (item) =>
+            `${item.dataset.label}: Level ${item.parsed.y}`,
+        },
+      },
+    },
+    scales: {
+      x: {
+        type: "linear" as const,
+        min: 0,
+        max: maxDay,
+        ticks: {
+          color: theme.muted,
+          maxTicksLimit: 6,
+          callback: (value: number | string) => {
+            const d = typeof value === "string" ? parseFloat(value) : value;
+            return d === 0 ? "Today" : addDays(d);
+          },
+        },
+        grid: { color: theme.border },
+        title: { display: true, text: "Date", color: theme.muted, font: { size: 12 } },
+      },
+      y: {
+        min: 1,
+        max: maxLevel,
+        ticks: { color: theme.muted, stepSize: maxLevel <= 12 ? 1 : 2 },
+        grid: { color: theme.border },
+        title: { display: true, text: "Level", color: theme.muted, font: { size: 12 } },
+      },
+    },
+  };
+
+  if (series.length === 0) return null;
+
+  return (
+    <div className="fade-in panel-card" style={{ ...sectionPanel, marginBottom: "1.25rem" }}>
+      <div
+        style={{
+          fontFamily: "var(--font-heading)",
+          fontSize: "1.15rem",
+          color: theme.text,
+          marginBottom: "1rem",
+          paddingBottom: "0.8rem",
+          borderBottom: `1px solid ${theme.border}`,
+        }}
+      >
+        Completion Timeline
+      </div>
+      <Line data={chartData} options={options} />
+    </div>
+  );
+}
+
 // -- Main Component -----------------------------------------------------------
 
 interface FormState {
@@ -895,7 +1049,7 @@ interface FormState {
 }
 
 function initFormState(): FormState {
-  const saved = loadState();
+  const saved = loadStateFrom(STORAGE_KEY);
   if (saved) {
     return { type: saved.type, symbols: saved.symbols };
   }
@@ -903,6 +1057,19 @@ function initFormState(): FormState {
 }
 
 export default function SymbolWorkspace({ theme }: { theme: AppTheme }) {
+  const mounted = useSyncExternalStore(
+    () => () => undefined,
+    () => true,
+    () => false,
+  );
+
+  // Character sync (optional)
+  const characters: StoredCharacterRecord[] = mounted
+    ? selectCharactersList(readCharactersStore())
+    : [];
+  const [selectedCharName, setSelectedCharName] = useState<string | null>(null);
+  const currentStorageKey = storageKeyFor(selectedCharName);
+
   const [form, setForm] = useState<FormState>(initFormState);
   const { type, symbols } = form;
 
@@ -910,10 +1077,39 @@ export default function SymbolWorkspace({ theme }: { theme: AppTheme }) {
   const growth = type === "arcane" ? ARCANE_GROWTH : SACRED_GROWTH;
   const maxLevel = type === "arcane" ? ARCANE_MAX_LEVEL : SACRED_MAX_LEVEL;
 
-  // Persist
+  // Persist to current character's storage key
   useEffect(() => {
-    saveState({ type, symbols });
-  }, [type, symbols]);
+    saveStateTo(currentStorageKey, { type, symbols });
+  }, [currentStorageKey, type, symbols]);
+
+  const handleCharChange = (charName: string | null) => {
+    // Save current state before switching
+    saveStateTo(currentStorageKey, { type, symbols });
+    const newKey = storageKeyFor(charName);
+    const saved = loadStateFrom(newKey);
+
+    if (saved) {
+      setForm({ type: saved.type, symbols: saved.symbols });
+    } else {
+      // Auto-configure based on character level when no saved data exists
+      const char = charName ? characters.find((c) => c.characterName === charName) : null;
+      if (char && char.level >= 260) {
+        // Default to sacred, auto-enable symbols the character can access
+        const sacredSymbols: Record<string, SymbolState> = {};
+        for (const area of SACRED_AREAS) {
+          sacredSymbols[area.name] = {
+            ...defaultSymbolState(area, "sacred"),
+            enabled: char.level >= area.requiredLevel,
+          };
+        }
+        setForm({ type: "sacred", symbols: sacredSymbols });
+      } else {
+        setForm({ type: "arcane", symbols: {} });
+      }
+    }
+
+    setSelectedCharName(charName);
+  };
 
   const switchType = useCallback((t: SymbolType) => {
     setForm((f) => ({ ...f, type: t }));
@@ -992,39 +1188,24 @@ export default function SymbolWorkspace({ theme }: { theme: AppTheme }) {
             description="Track your Arcane and Sacred symbol progress and estimate completion dates."
           />
 
-          {/* Type toggle */}
-          <div className="fade-in panel-card" style={sectionPanel}>
-            <div
-              style={{
-                display: "flex",
-                gap: "4px",
-                background: theme.timerBg,
-                borderRadius: "10px",
-                padding: "3px",
-                border: `1px solid ${theme.border}`,
-              }}
-            >
-              {(["arcane", "sacred"] as const).map((t) => (
-                <div
-                  key={t}
-                  className="sym-btn"
-                  onClick={() => switchType(t)}
-                  style={{
-                    flex: 1,
-                    padding: "9px 18px",
-                    borderRadius: "8px",
-                    fontSize: "0.88rem",
-                    fontWeight: 800,
-                    textAlign: "center",
-                    color: type === t ? theme.accentText : theme.muted,
-                    background: type === t ? theme.accentSoft : "transparent",
-                  }}
-                >
-                  {t === "arcane" ? "Arcane Symbols" : "Sacred Symbols"}
-                </div>
-              ))}
-            </div>
-          </div>
+          <CharacterSyncPanel
+            theme={theme}
+            characters={characters}
+            selectedCharName={selectedCharName}
+            onCharChange={handleCharChange}
+            inputStyle={inputStyle}
+            sectionPanel={sectionPanel}
+          />
+
+          <SegmentedToggle
+            theme={theme}
+            options={["arcane", "sacred"] as const}
+            value={type}
+            labels={{ arcane: "Arcane Symbols", sacred: "Sacred Symbols" }}
+            sectionPanel={sectionPanel}
+            btnClassName="sym-btn"
+            onChange={switchType}
+          />
 
           <OverallProgressPanel theme={theme} sectionPanel={sectionPanel} stats={stats} />
 
@@ -1091,6 +1272,8 @@ export default function SymbolWorkspace({ theme }: { theme: AppTheme }) {
           </div>
 
           <CompletionSummaryPanel theme={theme} sectionPanel={sectionPanel} stats={stats} type={type} />
+
+          <CompletionTimelineChart theme={theme} sectionPanel={sectionPanel} stats={stats} growth={growth} maxLevel={maxLevel} type={type} />
 
           <WikiAttribution theme={theme} subject="Symbol images" />
         </div>
