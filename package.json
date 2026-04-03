@@ -26,8 +26,7 @@
     "typescript": "^5.8.2"
   },
   "overrides": {
-    "brace-expansion": "5.0.5",
     "flatted": "3.4.2",
-    "minimatch": "10.2.4"
+    "minimatch": "10.2.5"
   }
 }
