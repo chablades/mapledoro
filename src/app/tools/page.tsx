@@ -23,23 +23,23 @@ const CALCULATORS: ToolCard[] = [
     emoji: "💎",
     href: "/tools/boss-crystals",
   },
+];
+
+const TRACKERS: ToolCard[] = [
   {
-    title: "Liberation Calculator",
+    title: "Liberation Tracker",
     description:
       "Track your Genesis and Destiny liberation progress and estimate completion.",
     emoji: "🗡️",
     href: "/tools/liberation",
   },
   {
-    title: "Symbol Calculator",
+    title: "Symbol Tracker",
     description:
       "Track your Arcane and Sacred symbol progress and estimate days to max.",
     emoji: "🔮",
     href: "/tools/symbols",
   },
-];
-
-const TRACKERS: ToolCard[] = [
   {
     title: "HEXA Skill Tracker",
     description:

@@ -1184,7 +1184,7 @@ export default function SymbolWorkspace({ theme }: { theme: AppTheme }) {
         <div style={{ maxWidth: "900px", margin: "0 auto" }}>
           <ToolHeader
             theme={theme}
-            title="Symbol Calculator"
+            title="Symbol Tracker"
             description="Track your Arcane and Sacred symbol progress and estimate completion dates."
           />
 

@@ -679,7 +679,7 @@ export default function LiberationWorkspace({ theme }: { theme: AppTheme }) {
         <div style={{ maxWidth: "900px", margin: "0 auto" }}>
           <ToolHeader
             theme={theme}
-            title="Liberation Calculator"
+            title="Liberation Tracker"
             description="Estimate your Genesis or Destiny liberation completion date."
           />
 
