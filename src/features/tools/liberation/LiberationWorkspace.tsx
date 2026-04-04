@@ -1,6 +1,7 @@
 "use client";
 
 import type { AppTheme } from "../../../components/themes";
+import { ProgressBar } from "../../../components/ProgressBar";
 import { ToolHeader } from "../../../components/ToolHeader";
 import { WikiAttribution } from "../../../components/WikiAttribution";
 import { CharacterSyncPanel } from "../../../components/CharacterSyncPanel";
@@ -396,25 +397,7 @@ function LiberationProgressBar({
           {tracesCompleted.toLocaleString()} / {totalNeeded.toLocaleString()} {traceNameShort}
         </div>
       </div>
-      <div
-        style={{
-          height: "12px",
-          borderRadius: "6px",
-          background: theme.timerBg,
-          border: `1px solid ${theme.border}`,
-          overflow: "hidden",
-        }}
-      >
-        <div
-          style={{
-            height: "100%",
-            width: `${progressPct}%`,
-            background: theme.accent,
-            borderRadius: "6px",
-            transition: "width 0.35s ease",
-          }}
-        />
-      </div>
+      <ProgressBar pct={progressPct} theme={theme} />
       <div
         style={{
           display: "flex",
@@ -679,7 +662,7 @@ export default function LiberationWorkspace({ theme }: { theme: AppTheme }) {
         <div style={{ maxWidth: "900px", margin: "0 auto" }}>
           <ToolHeader
             theme={theme}
-            title="Liberation Calculator"
+            title="Liberation Tracker"
             description="Estimate your Genesis or Destiny liberation completion date."
           />
 
