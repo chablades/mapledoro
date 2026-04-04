@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import type { AppTheme } from "../../../components/themes";
+import { ProgressBar } from "../../../components/ProgressBar";
 import { ToolHeader } from "../../../components/ToolHeader";
 import { WikiAttribution } from "../../../components/WikiAttribution";
 import { CharacterSyncPanel } from "../../../components/CharacterSyncPanel";
@@ -177,26 +178,7 @@ function SummaryPanel({
         <SummaryStat label="Sol Erda Fragments" value={grand.fragments} max={maxGrand.fragments} theme={theme} />
       </div>
 
-      {/* Progress Bar */}
-      <div
-        style={{
-          height: "12px",
-          borderRadius: "6px",
-          background: theme.timerBg,
-          border: `1px solid ${theme.border}`,
-          overflow: "hidden",
-        }}
-      >
-        <div
-          style={{
-            height: "100%",
-            width: `${progressPct}%`,
-            background: theme.accent,
-            borderRadius: "6px",
-            transition: "width 0.35s ease",
-          }}
-        />
-      </div>
+      <ProgressBar pct={progressPct} theme={theme} />
       <div
         style={{
           display: "flex",
