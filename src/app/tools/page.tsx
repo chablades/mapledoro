@@ -41,6 +41,13 @@ const CALCULATORS: ToolCard[] = [
 
 const TRACKERS: ToolCard[] = [
   {
+    title: "HEXA Skill Tracker",
+    description:
+      "Track Sol Erda and Fragment costs to max your HEXA skills per character.",
+    emoji: "🔷",
+    href: "/tools/hexa-skills",
+  },
+  {
     title: "Pitched Boss Drop Tracker",
     description:
       "Track and analyze your rare pitched boss drops across all characters.",
