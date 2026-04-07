@@ -11,7 +11,7 @@ import {
   ENHANCEMENT_COSTS,
   MASTERY_COSTS,
   COMMON_COSTS,
-  getCostToMax,
+  getCostRange,
   type LevelCost,
 } from "./hexa-costs";
 import {
@@ -33,6 +33,7 @@ export interface SkillLevels {
 interface SavedState {
   className: string | null;
   levels: SkillLevels;
+  desiredLevels?: SkillLevels;
 }
 
 export interface SkillCostSummary {
@@ -91,8 +92,18 @@ function defaultLevels(): SkillLevels {
   };
 }
 
+function defaultDesiredLevels(): SkillLevels {
+  return {
+    origin: 30,
+    mastery: [30, 30, 30, 30],
+    enhancement: [30, 30, 30, 30],
+    common: COMMON_SKILLS.map(() => 30),
+    ascent: 30,
+  };
+}
+
 function defaultState(): SavedState {
-  return { className: null, levels: defaultLevels() };
+  return { className: null, levels: defaultLevels(), desiredLevels: defaultDesiredLevels() };
 }
 
 function clampLevel(v: number): number {
@@ -100,14 +111,14 @@ function clampLevel(v: number): number {
 }
 
 /** Ensure saved arrays match the expected lengths for the given class. */
-function normalizeLevels(levels: SkillLevels, classDef: HexaClassDef | null): SkillLevels {
+function normalizeLevels(levels: SkillLevels, classDef: HexaClassDef | null, fill = 0): SkillLevels {
   const masteryLen = classDef ? classDef.mastery.length : 4;
   const enhanceLen = classDef ? classDef.enhancement.length : 4;
   const commonLen = COMMON_SKILLS.length;
 
   const padArray = (arr: number[], len: number): number[] => {
     const result = arr.slice(0, len).map(clampLevel);
-    while (result.length < len) result.push(0);
+    while (result.length < len) result.push(fill);
     return result;
   };
 
@@ -122,8 +133,8 @@ function normalizeLevels(levels: SkillLevels, classDef: HexaClassDef | null): Sk
 
 // ── Cost Calculation ─────────────────────────────────────────────────────────
 
-function sectionCost(levels: number[], costTable: readonly LevelCost[]): SectionCost {
-  const perSkill = levels.map((lv) => getCostToMax(costTable, lv));
+function sectionCost(levels: number[], desired: number[], costTable: readonly LevelCost[]): SectionCost {
+  const perSkill = levels.map((lv, i) => getCostRange(costTable, lv, desired[i]));
   const total = perSkill.reduce(
     (acc, c) => ({ solErda: acc.solErda + c.solErda, fragments: acc.fragments + c.fragments }),
     { solErda: 0, fragments: 0 },
@@ -131,18 +142,18 @@ function sectionCost(levels: number[], costTable: readonly LevelCost[]): Section
   return { perSkill, total };
 }
 
-function singleCost(level: number, costTable: readonly LevelCost[]): SectionCost {
-  const cost = getCostToMax(costTable, level);
+function singleCost(level: number, desired: number, costTable: readonly LevelCost[]): SectionCost {
+  const cost = getCostRange(costTable, level, desired);
   return { perSkill: [cost], total: cost };
 }
 
-function calcTotalCosts(levels: SkillLevels, classDef: HexaClassDef | null): TotalCosts {
-  const origin = singleCost(levels.origin, ORIGIN_COSTS);
-  const mastery = sectionCost(levels.mastery, MASTERY_COSTS);
-  const enhancement = sectionCost(levels.enhancement, ENHANCEMENT_COSTS);
-  const common = sectionCost(levels.common, COMMON_COSTS);
+function calcTotalCosts(levels: SkillLevels, desired: SkillLevels, classDef: HexaClassDef | null): TotalCosts {
+  const origin = singleCost(levels.origin, desired.origin, ORIGIN_COSTS);
+  const mastery = sectionCost(levels.mastery, desired.mastery, MASTERY_COSTS);
+  const enhancement = sectionCost(levels.enhancement, desired.enhancement, ENHANCEMENT_COSTS);
+  const common = sectionCost(levels.common, desired.common, COMMON_COSTS);
   const ascent = classDef?.ascent
-    ? singleCost(levels.ascent, ORIGIN_COSTS)
+    ? singleCost(levels.ascent, desired.ascent, ORIGIN_COSTS)
     : { perSkill: [], total: { solErda: 0, fragments: 0 } };
 
   const sections = [origin, mastery, enhancement, common, ascent];
@@ -154,14 +165,14 @@ function calcTotalCosts(levels: SkillLevels, classDef: HexaClassDef | null): Tot
     { solErda: 0, fragments: 0 },
   );
 
-  // Max costs (from baseline: origin starts at 1, all others at 0)
+  // Max costs (from baseline to desired levels)
   const baseLevels = normalizeLevels(defaultLevels(), classDef);
-  const maxOrigin = singleCost(baseLevels.origin, ORIGIN_COSTS);
-  const maxMastery = sectionCost(baseLevels.mastery, MASTERY_COSTS);
-  const maxEnhancement = sectionCost(baseLevels.enhancement, ENHANCEMENT_COSTS);
-  const maxCommon = sectionCost(baseLevels.common, COMMON_COSTS);
+  const maxOrigin = singleCost(baseLevels.origin, desired.origin, ORIGIN_COSTS);
+  const maxMastery = sectionCost(baseLevels.mastery, desired.mastery, MASTERY_COSTS);
+  const maxEnhancement = sectionCost(baseLevels.enhancement, desired.enhancement, ENHANCEMENT_COSTS);
+  const maxCommon = sectionCost(baseLevels.common, desired.common, COMMON_COSTS);
   const maxAscent = classDef?.ascent
-    ? singleCost(baseLevels.ascent, ORIGIN_COSTS)
+    ? singleCost(baseLevels.ascent, desired.ascent, ORIGIN_COSTS)
     : { perSkill: [], total: { solErda: 0, fragments: 0 } };
 
   const maxSections = [maxOrigin, maxMastery, maxEnhancement, maxCommon, maxAscent];
@@ -210,6 +221,7 @@ export function useHexaSkillsState() {
 
   const classDef = state.className ? findClassByName(state.className) : null;
   const levels = normalizeLevels(state.levels, classDef);
+  const desiredLevels = normalizeLevels(state.desiredLevels ?? defaultDesiredLevels(), classDef, 30);
 
   // Persist on change
   useEffect(() => {
@@ -234,7 +246,7 @@ export function useHexaSkillsState() {
         if (char && findClassByName(char.jobName)) {
           autoClass = char.jobName;
         }
-        setState({ className: autoClass, levels: defaultLevels() });
+        setState({ className: autoClass, levels: defaultLevels(), desiredLevels: defaultDesiredLevels() });
       }
 
       setSelectedCharName(charName);
@@ -246,9 +258,15 @@ export function useHexaSkillsState() {
   const setClassName = useCallback((name: string | null) => {
     setState((prev) => {
       const newClassDef = name ? findClassByName(name) : null;
+      const keepLevels = prev.className === name;
       return {
         className: name,
-        levels: normalizeLevels(prev.className === name ? prev.levels : defaultLevels(), newClassDef),
+        levels: normalizeLevels(keepLevels ? prev.levels : defaultLevels(), newClassDef),
+        desiredLevels: normalizeLevels(
+          keepLevels ? (prev.desiredLevels ?? defaultDesiredLevels()) : defaultDesiredLevels(),
+          newClassDef,
+          30,
+        ),
       };
     });
   }, []);
@@ -286,11 +304,53 @@ export function useHexaSkillsState() {
     });
   }, []);
 
+  // Desired level setters
+  const setDesiredOriginLevel = useCallback((v: number) => {
+    setState((prev) => {
+      const dl = prev.desiredLevels ?? defaultDesiredLevels();
+      return { ...prev, desiredLevels: { ...dl, origin: Math.max(1, clampLevel(v)) } };
+    });
+  }, []);
+
+  const setDesiredAscentLevel = useCallback((v: number) => {
+    setState((prev) => {
+      const dl = prev.desiredLevels ?? defaultDesiredLevels();
+      return { ...prev, desiredLevels: { ...dl, ascent: clampLevel(v) } };
+    });
+  }, []);
+
+  const setDesiredMasteryLevel = useCallback((idx: number, v: number) => {
+    setState((prev) => {
+      const dl = prev.desiredLevels ?? defaultDesiredLevels();
+      const mastery = [...dl.mastery];
+      mastery[idx] = clampLevel(v);
+      return { ...prev, desiredLevels: { ...dl, mastery } };
+    });
+  }, []);
+
+  const setDesiredEnhancementLevel = useCallback((idx: number, v: number) => {
+    setState((prev) => {
+      const dl = prev.desiredLevels ?? defaultDesiredLevels();
+      const enhancement = [...dl.enhancement];
+      enhancement[idx] = clampLevel(v);
+      return { ...prev, desiredLevels: { ...dl, enhancement } };
+    });
+  }, []);
+
+  const setDesiredCommonLevel = useCallback((idx: number, v: number) => {
+    setState((prev) => {
+      const dl = prev.desiredLevels ?? defaultDesiredLevels();
+      const common = [...dl.common];
+      common[idx] = clampLevel(v);
+      return { ...prev, desiredLevels: { ...dl, common } };
+    });
+  }, []);
+
   const resetAll = useCallback(() => {
     setState((prev) => ({ ...prev, levels: defaultLevels() }));
   }, []);
 
-  const costs = calcTotalCosts(levels, classDef);
+  const costs = calcTotalCosts(levels, desiredLevels, classDef);
 
   return {
     mounted,
@@ -301,11 +361,17 @@ export function useHexaSkillsState() {
     classDef,
     setClassName,
     levels,
+    desiredLevels,
     setOriginLevel,
     setAscentLevel,
     setMasteryLevel,
     setEnhancementLevel,
     setCommonLevel,
+    setDesiredOriginLevel,
+    setDesiredAscentLevel,
+    setDesiredMasteryLevel,
+    setDesiredEnhancementLevel,
+    setDesiredCommonLevel,
     resetAll,
     costs,
   };
