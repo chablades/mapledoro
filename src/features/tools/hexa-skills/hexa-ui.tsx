@@ -83,19 +83,34 @@ export function CostBadge({ cost, theme, compact }: { cost: SkillCostSummary; th
 
 // ── Level Input ──────────────────────────────────────────────────────────────
 
+function clampInput(raw: string, min: number, max: number): number {
+  let v = parseInt(raw);
+  if (isNaN(v)) v = min;
+  if (v < min) v = min;
+  if (v > max) v = max;
+  return v;
+}
+
 export function LevelInput({
   value,
   min = 0,
+  desiredValue,
+  onDesiredChange,
   onChange,
   theme,
   inputStyle,
 }: {
   value: number;
   min?: number;
+  desiredValue?: number;
+  onDesiredChange?: (v: number) => void;
   onChange: (v: number) => void;
   theme: AppTheme;
   inputStyle: React.CSSProperties;
 }) {
+  const hasDesired = desiredValue !== undefined && onDesiredChange !== undefined;
+  const w = hasDesired ? "44px" : "52px";
+
   return (
     <div style={{ display: "flex", alignItems: "center", gap: "4px", flexShrink: 0 }}>
       <span style={{ fontSize: "0.72rem", fontWeight: 700, color: theme.muted }}>Lv</span>
@@ -104,30 +119,44 @@ export function LevelInput({
         min={min}
         max={30}
         value={value}
-        onChange={(e) => {
-          let v = parseInt(e.target.value);
-          if (isNaN(v)) v = min;
-          if (v < min) v = min;
-          if (v > 30) v = 30;
-          onChange(v);
-        }}
+        onChange={(e) => onChange(clampInput(e.target.value, min, 30))}
         className="tool-input"
         style={{
           ...inputStyle,
-          width: "52px",
+          width: w,
           textAlign: "center",
-          padding: "4px 6px",
+          padding: "4px 4px",
           fontSize: "0.78rem",
         }}
       />
+      {desiredValue !== undefined && onDesiredChange && (
+        <>
+          <span style={{ fontSize: "0.72rem", fontWeight: 700, color: theme.muted }}>/</span>
+          <input
+            type="number"
+            min={min}
+            max={30}
+            value={desiredValue}
+            onChange={(e) => onDesiredChange(clampInput(e.target.value, min, 30))}
+            className="tool-input"
+            style={{
+              ...inputStyle,
+              width: w,
+              textAlign: "center",
+              padding: "4px 4px",
+              fontSize: "0.78rem",
+            }}
+          />
+        </>
+      )}
     </div>
   );
 }
 
 // ── Skill Progress Bar ──────────────────────────────────────────────────────
 
-function SkillProgressBar({ level, theme }: { level: number; theme: AppTheme }) {
-  const pct = (level / 30) * 100;
+function SkillProgressBar({ level, max = 30, theme }: { level: number; max?: number; theme: AppTheme }) {
+  const pct = max > 0 ? Math.min(100, (level / max) * 100) : 100;
   return (
     <div
       style={{
@@ -177,16 +206,20 @@ export function SkillRow({
   skill,
   level,
   min,
+  desiredLevel,
   cost,
   onChange,
+  onDesiredLevelChange,
   theme,
   inputStyle,
 }: {
   skill: HexaSkillDef;
   level: number;
   min?: number;
+  desiredLevel?: number;
   cost: SkillCostSummary;
   onChange: (v: number) => void;
+  onDesiredLevelChange?: (v: number) => void;
   theme: AppTheme;
   inputStyle: React.CSSProperties;
 }) {
@@ -214,9 +247,17 @@ export function SkillRow({
           {skill.name}
         </div>
         <CostBadge cost={cost} theme={theme} compact />
-        <SkillProgressBar level={level} theme={theme} />
+        <SkillProgressBar level={level} max={desiredLevel} theme={theme} />
       </div>
-      <LevelInput value={level} min={min} onChange={onChange} theme={theme} inputStyle={inputStyle} />
+      <LevelInput
+        value={level}
+        min={min}
+        desiredValue={desiredLevel}
+        onDesiredChange={onDesiredLevelChange}
+        onChange={onChange}
+        theme={theme}
+        inputStyle={inputStyle}
+      />
     </div>
   );
 }
@@ -228,8 +269,10 @@ export function SkillSection({
   skills,
   levels,
   minLevel,
+  desiredLevels,
   sectionCost,
   onLevelChange,
+  onDesiredLevelChange,
   theme,
   sectionPanel,
   inputStyle,
@@ -238,8 +281,10 @@ export function SkillSection({
   skills: HexaSkillDef[];
   levels: number[];
   minLevel?: number;
+  desiredLevels?: number[];
   sectionCost: SectionCost;
   onLevelChange: (idx: number, v: number) => void;
+  onDesiredLevelChange?: (idx: number, v: number) => void;
   theme: AppTheme;
   sectionPanel: React.CSSProperties;
   inputStyle: React.CSSProperties;
@@ -259,8 +304,10 @@ export function SkillSection({
           skill={skill}
           level={levels[i]}
           min={minLevel}
+          desiredLevel={desiredLevels?.[i]}
           cost={sectionCost.perSkill[i]}
           onChange={(v) => onLevelChange(i, v)}
+          onDesiredLevelChange={onDesiredLevelChange ? (v) => onDesiredLevelChange(i, v) : undefined}
           theme={theme}
           inputStyle={inputStyle}
         />
@@ -274,16 +321,20 @@ export function SkillSection({
 export function MasterySection({
   classDef,
   levels,
+  desiredLevels,
   sectionCost,
   onLevelChange,
+  onDesiredLevelChange,
   theme,
   sectionPanel,
   inputStyle,
 }: {
   classDef: HexaClassDef;
   levels: number[];
+  desiredLevels?: number[];
   sectionCost: SectionCost;
   onLevelChange: (idx: number, v: number) => void;
+  onDesiredLevelChange?: (idx: number, v: number) => void;
   theme: AppTheme;
   sectionPanel: React.CSSProperties;
   inputStyle: React.CSSProperties;
@@ -316,9 +367,16 @@ export function MasterySection({
               </div>
             ))}
             <CostBadge cost={sectionCost.perSkill[i]} theme={theme} compact />
-            <SkillProgressBar level={levels[i]} theme={theme} />
+            <SkillProgressBar level={levels[i]} max={desiredLevels?.[i]} theme={theme} />
           </div>
-          <LevelInput value={levels[i]} onChange={(v) => onLevelChange(i, v)} theme={theme} inputStyle={inputStyle} />
+          <LevelInput
+            value={levels[i]}
+            desiredValue={desiredLevels?.[i]}
+            onDesiredChange={onDesiredLevelChange ? (v) => onDesiredLevelChange(i, v) : undefined}
+            onChange={(v) => onLevelChange(i, v)}
+            theme={theme}
+            inputStyle={inputStyle}
+          />
         </div>
       ))}
     </div>
