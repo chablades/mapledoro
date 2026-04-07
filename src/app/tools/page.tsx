@@ -23,6 +23,23 @@ const CALCULATORS: ToolCard[] = [
     emoji: "💎",
     href: "/tools/boss-crystals",
   },
+  {
+    title: "Star Force Calculator",
+    description:
+      "Estimate the expected meso cost to star force your equipment.",
+    emoji: "⭐",
+    href: "/tools/star-force",
+  },
+];
+
+const PLANNERS: ToolCard[] = [
+  {
+    title: "Event Planner",
+    description:
+      "Plan your star force spending for the next event. Estimates total meso cost and spare items needed.",
+    emoji: "\uD83D\uDCC5",
+    href: "/tools/event-planner",
+  },
 ];
 
 const TRACKERS: ToolCard[] = [
@@ -151,6 +168,22 @@ function ToolsContent({ theme }: { theme: AppTheme }) {
           </div>
 
           <ToolGrid tools={CALCULATORS} theme={theme} />
+
+          <div
+            style={{
+              fontWeight: 700,
+              fontSize: "0.85rem",
+              color: theme.muted,
+              textTransform: "uppercase",
+              letterSpacing: "0.04em",
+              marginTop: "2rem",
+              marginBottom: "0.75rem",
+            }}
+          >
+            Planners
+          </div>
+
+          <ToolGrid tools={PLANNERS} theme={theme} />
 
           <div
             style={{
