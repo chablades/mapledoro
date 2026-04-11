@@ -476,27 +476,39 @@ function UrsusPanel({ theme, now }: { theme: AppTheme; now: Date | null }) {
 }
 
 function PatchNotesPanel({ theme }: { theme: AppTheme }) {
-  const [patchNotes, setPatchNotes] = useState<PatchNote[]>(() => readCachedPatchNotes() ?? initialPatchNotes);
+  const [patchNotes, setPatchNotes] = useState<PatchNote[]>(initialPatchNotes);
   const [patchFilter, setPatchFilter] = useState<PatchFilter>("All");
   const [patchExpanded, setPatchExpanded] = useState(false);
 
   useEffect(() => {
-    if (readCachedPatchNotes()) return;
+    let cancelled = false;
 
-    fetch("/api/patch-notes")
-      .then((res) => res.json())
-      .then((data) => {
-        if (Array.isArray(data) && data.length > 0) {
-          setPatchNotes(data);
-          try {
-            localStorage.setItem(
-              PATCH_CACHE_KEY,
-              JSON.stringify({ expiresAt: Date.now() + PATCH_CACHE_TTL_MS, data }),
-            );
-          } catch { /* localStorage full or unavailable */ }
+    Promise.resolve()
+      .then(() => {
+        if (cancelled) return;
+        const cached = readCachedPatchNotes();
+        if (cached) {
+          setPatchNotes(cached);
+          return;
         }
+        return fetch("/api/patch-notes")
+          .then((res) => res.json())
+          .then((data) => {
+            if (cancelled) return;
+            if (Array.isArray(data) && data.length > 0) {
+              setPatchNotes(data);
+              try {
+                localStorage.setItem(
+                  PATCH_CACHE_KEY,
+                  JSON.stringify({ expiresAt: Date.now() + PATCH_CACHE_TTL_MS, data }),
+                );
+              } catch { /* localStorage full or unavailable */ }
+            }
+          });
       })
-      .catch((err) => console.error("Failed to fetch patch notes:", err));
+      .catch((err) => console.error("Failed to load patch notes:", err));
+
+    return () => { cancelled = true; };
   }, []);
 
   const allFilteredPatchNotes =
