@@ -14,6 +14,10 @@ const nextConfig = {
         protocol: "https",
         hostname: "g.nexonstatic.com",
       },
+      {
+        protocol: "https",
+        hostname: "maplestory.io",
+      },
     ],
   },
 };
