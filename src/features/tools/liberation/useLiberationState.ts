@@ -61,8 +61,7 @@ function saveStateTo(key: string, state: SavedState) {
 // -- Helpers ------------------------------------------------------------------
 
 function todayStr(): string {
-  const d = new Date();
-  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
+  return formatIsoDate(new Date());
 }
 
 export function makeBossKey(type: LiberationType, bossName: string): string {
@@ -87,9 +86,7 @@ export function getSelection(
   );
 }
 
-function addWeeks(dateStr: string, weeks: number): string {
-  const d = new Date(dateStr + "T00:00:00Z");
-  d.setUTCDate(d.getUTCDate() + weeks * 7);
+function formatIsoDate(d: Date): string {
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
 }
 
@@ -144,17 +141,63 @@ function accumulateTraces(
   return { weeklyTraces, monthlyTraces, clearedWeeklyTraces, breakdown };
 }
 
-function computeWeeksToComplete(
-  totalRemaining: number,
-  effectiveWeekly: number,
+// Weekly boss reset is Thursday 00:00 UTC; the last day of each reset cycle
+// in UTC is Wednesday. Liberation completes on the day the final traces arrive:
+// a Wednesday (weekly clears) or the 1st of a month (Black Mage monthly clear).
+function simulateCompletion(
+  startDate: string,
+  weeklyTraces: number,
+  monthlyTraces: number,
   clearedWeeklyTraces: number,
-): number {
-  if (totalRemaining <= 0) return 0;
-  if (effectiveWeekly <= 0) return Infinity;
-  const firstWeekTraces = effectiveWeekly - clearedWeeklyTraces;
-  const remainingAfterFirstWeek = totalRemaining - firstWeekTraces;
-  if (remainingAfterFirstWeek <= 0) return 1;
-  return 1 + Math.ceil(remainingAfterFirstWeek / effectiveWeekly);
+  totalRemaining: number,
+): { completionDate: string; weeksToComplete: number } {
+  if (totalRemaining <= 0) {
+    return { completionDate: startDate, weeksToComplete: 0 };
+  }
+  if (weeklyTraces <= 0 && monthlyTraces <= 0) {
+    return { completionDate: "Never", weeksToComplete: Infinity };
+  }
+
+  const start = new Date(startDate + "T00:00:00Z");
+
+  const nextWed = new Date(start);
+  const daysToWed = (3 - start.getUTCDay() + 7) % 7;
+  nextWed.setUTCDate(nextWed.getUTCDate() + daysToWed);
+
+  const next1st = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), 1));
+  if (next1st.getTime() < start.getTime()) {
+    next1st.setUTCMonth(next1st.getUTCMonth() + 1);
+  }
+
+  const firstWeekWeekly = Math.max(0, weeklyTraces - clearedWeeklyTraces);
+  const maxDate = new Date(start);
+  maxDate.setUTCFullYear(maxDate.getUTCFullYear() + 10);
+
+  let remaining = totalRemaining;
+  let wedCount = 0;
+  let lastEventDate = new Date(start);
+
+  while (remaining > 0) {
+    const wedFirst = nextWed.getTime() <= next1st.getTime();
+    const eventDate = new Date(wedFirst ? nextWed : next1st);
+    if (eventDate.getTime() > maxDate.getTime()) {
+      return { completionDate: "Never", weeksToComplete: Infinity };
+    }
+    if (wedFirst) {
+      const gained = wedCount === 0 ? firstWeekWeekly : weeklyTraces;
+      remaining -= gained;
+      nextWed.setUTCDate(nextWed.getUTCDate() + 7);
+      wedCount++;
+    } else {
+      remaining -= monthlyTraces;
+      next1st.setUTCMonth(next1st.getUTCMonth() + 1);
+    }
+    lastEventDate = eventDate;
+  }
+
+  const diffDays = Math.round((lastEventDate.getTime() - start.getTime()) / 86400000);
+  const weeksToComplete = Math.max(0, Math.ceil(diffDays / 7));
+  return { completionDate: formatIsoDate(lastEventDate), weeksToComplete };
 }
 
 function calculate(
@@ -177,11 +220,13 @@ function calculate(
   totalRemaining = Math.max(0, totalRemaining - currentTraces);
 
   const effectiveWeekly = weeklyTraces + monthlyTraces / 4.33;
-  const weeksToComplete = computeWeeksToComplete(totalRemaining, effectiveWeekly, clearedWeeklyTraces);
-  const completionDate =
-    weeksToComplete === Infinity
-      ? "Never"
-      : addWeeks(startDate, weeksToComplete);
+  const { completionDate, weeksToComplete } = simulateCompletion(
+    startDate,
+    weeklyTraces,
+    monthlyTraces,
+    clearedWeeklyTraces,
+    totalRemaining,
+  );
 
   return {
     weeklyTraces,

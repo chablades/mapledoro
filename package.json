@@ -11,19 +11,19 @@
   "dependencies": {
     "chart.js": "^4.5.1",
     "ioredis": "^5.9.3",
-    "next": "^16.2.2",
-    "react": "19.2.4",
+    "next": "^16.2.4",
+    "react": "19.2.5",
     "react-chartjs-2": "^5.3.1",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.5"
   },
   "devDependencies": {
     "@types/node": "^22",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "eslint": "^9.39.4",
-    "eslint-config-next": "^16.2.2",
-    "eslint-plugin-sonarjs": "^4.0.2",
-    "typescript": "^5.8.2"
+    "eslint-config-next": "^16.2.4",
+    "eslint-plugin-sonarjs": "^4.0.3",
+    "typescript": "^5.9.3"
   },
   "overrides": {
     "flatted": "3.4.2",
