@@ -12,7 +12,7 @@ Not affiliated with Nexon. All MapleStory IP belongs to Nexon.
 - **Styling:** Inline styles for dynamic theming + global CSS (no Tailwind, no CSS-in-JS library)
 - **State:** React hooks + Context (theme) + localStorage persistence
 - **Server:** Redis (ioredis) for character lookup caching, Nexon CDN for patch notes, Discord for Sunny Sunday events
-- **Linting:** ESLint 10 with eslint-config-next + eslint-plugin-sonarjs
+- **Linting:** ESLint 9 with eslint-config-next + eslint-plugin-sonarjs
 
 ## Directory Structure
 
@@ -25,11 +25,13 @@ src/
     guides/         # Placeholder
     settings/       # User preferences & hard reset
   components/       # Reusable UI (AppShell, ThemeContext, themes, nav, ToolHeader, WikiAttribution)
-  features/         # Self-contained feature modules
+  features/         # Self-contained feature modules (see nested CLAUDE.md files)
     characters/     # Character lookup, directory, setup wizard, profiles
     tools/          # Boss crystals, liberation, symbols, pitched-boss-drops, hexa-skills
   lib/              # Shared utilities (Discord client, Sunny Sunday parsing)
 ```
+
+Feature-specific guidance lives in nested `CLAUDE.md` files (e.g. `src/features/characters/CLAUDE.md`, `src/features/tools/hexa-skills/CLAUDE.md`).
 
 ## Build & Lint
 
@@ -44,7 +46,8 @@ npm run lint
 
 - **`react-hooks/set-state-in-effect`** — No bare `setState()` calls inside `useEffect`. Use lazy `useState` initializers for localStorage reads, `useSyncExternalStore` for external-store patterns, or `useRef` + direct DOM mutation for timers.
 - **`sonarjs/pseudo-random`** — No `Math.random()`. Use `crypto.randomUUID()`.
-- **`@next/next/no-img-element`** — External CDN images use `<img>` with `// eslint-disable-next-line @next/next/no-img-element`.
+- **`sonarjs/cognitive-complexity`** — Function bodies cap at 15 (sonarjs default). Don't chase the score with micro-extractions that just shuffle branches into tiny one-call helpers — extract cohesive sub-steps (a parser, a validator, a renderer) that stand on their own.
+- **`@next/next/no-img-element`** — Disabled project-wide (images come from third-party CDNs — `next/image` optimization isn't worth the config/billing overhead). Use native `<img>` directly.
 
 ## Component Patterns
 
@@ -71,57 +74,30 @@ Use `useSyncExternalStore` to safely gate client-only code (localStorage reads):
 const mounted = useSyncExternalStore(() => () => undefined, () => true, () => false);
 ```
 
-## Character Store API
-
-Located in `src/features/characters/model/charactersStore.ts`:
-
-- `readCharactersStore()` → `CharactersStore` — reads from localStorage
-- `selectCharactersList(store)` → `StoredCharacterRecord[]` — ordered list
-- Characters are uniquely identified by `characterName` (lowercased as the store key)
-- **`characterID` (number) is NOT unique** — never use as React key or option value
-- Read characters fresh each render (not cached in `useState`) so new additions appear immediately
-
 ## localStorage Keys
 
 | Feature | Key | Notes |
 |---------|-----|-------|
-| Characters | `mapledoro_characters_store_v1` | Managed by `charactersStore.ts` |
+| Characters store | `mapledoro_characters_store_v1` | Managed by `charactersStore.ts` |
+| Character lookup cache | `mapledoro_character_cache_v1` | Browser-side lookup result cache |
+| Character setup draft | `mapledoro_character_setup_draft_v1:{characterKey}` | Per-character setup-wizard draft |
+| Directory world filter | `mapledoro_directory_world_filter` | |
+| Patch notes cache | `mapledoro_patch_notes_v1` | Home-page patch notes |
+| Theme | `mapledoro-theme-key` | Managed by `usePersistedThemeKey` |
+| Boss Crystals | `boss-crystals-v2` | Global (single list of characters) |
+| Event Planner | `event-planner-v1` | Global (entries carry `characterName`) |
+| Liberation (global) | `liberation-v1` | Default when no character selected |
+| Liberation (per-char) | `liberation-v1-{characterName}` | When synced to a character |
 | Symbols (global) | `symbols-v2` | Default when no character selected |
 | Symbols (per-char) | `symbols-v2-{characterName}` | When synced to a character |
-| Pitched boss drops | `pitched-boss-drops-v1` | |
 | HEXA Skills (global) | `hexa-skills-v1` | Default when no character selected |
 | HEXA Skills (per-char) | `hexa-skills-v1-{characterName}` | When synced to a character |
-| Theme | Managed by `ThemeContext` | |
+| Pitched boss drops | `pitched-boss-drops-v1` | Event log, not per-character toggle |
 
 ## Charts
 
-Pure SVG — no external chart libraries. Existing patterns: horizontal bar charts, line charts with `<polyline>` + `<circle>`.
+Use `react-chartjs-2` / `chart.js` for line, bar, and other standard chart types (see `features/tools/pitched-boss-drops` and `features/tools/symbols` for setup patterns — register only the scales/elements you use). Hand-rolled SVG (`<polyline>` + `<circle>`, horizontal bar rects) is fine for small one-off visualizations where pulling in chart.js would be overkill.
 
 ## Image Policy
 
-All images used in the project must be sourced from **maplestorywiki.net**. Any page that displays sourced images must include a visible disclaimer/attribution stating:
-
-> Images sourced from [MapleStory Wiki](https://maplestorywiki.net) and are used under the terms of that site's licensing. All MapleStory assets are the property of Nexon.
-
-Use the existing `WikiAttribution` component (`src/components/WikiAttribution.tsx`) where applicable.
-
-## Wiki Data Access
-
-- **CDN images** (`media.maplestorywiki.net/yetidb/Skill_*.png`) — accessible from any client.
-- **Wiki HTML pages** (`maplestorywiki.net/w/*`) — return 403 to programmatic clients. Use `curl` with a browser User-Agent:
-  ```sh
-  curl -s -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36" "URL"
-  ```
-
-## HEXA Skills Tracker
-
-Located in `src/features/tools/hexa-skills/`. Tracks Sol Erda + Fragment costs for all 47 MapleStory classes.
-
-**Key files:**
-- `hexa-classes.ts` — Class/skill definitions. `s(name)` auto-generates icon URL; `si(name, iconName)` overrides icon when wiki name differs.
-- `hexa-costs.ts` — Cost tables (ORIGIN, ENHANCEMENT, MASTERY, COMMON).
-- `useHexaSkillsState.ts` — State hook with localStorage persistence, cost calculation.
-- `hexa-ui.tsx` — Reusable UI primitives (SkillIcon, CostBadge, LevelInput, SkillRow, SkillSection, MasterySection).
-- `HexaSkillsWorkspace.tsx` — Page-level composition (SummaryPanel, ClassSelector, main workspace).
-
-**Icon URL pattern:** `https://media.maplestorywiki.net/yetidb/Skill_{name}.png` — apostrophes → `%27`, colons stripped, spaces → `_`. Bracket skills (`[Tian]`, `[Di]`, `[Shinsoku]`) have no CDN icons; use parenthesized icon overrides via `si()` when available, otherwise fall back to letter initial.
+All images must be sourced from **maplestorywiki.net**. Any page that displays sourced images must include the `WikiAttribution` component (`src/components/WikiAttribution.tsx`).
