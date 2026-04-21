@@ -194,10 +194,10 @@ function ToolsContent({ theme }: { theme: AppTheme }) {
               marginBottom: "0.75rem",
             }}
           >
-            Planners
+            Trackers
           </div>
 
-          <ToolGrid tools={PLANNERS} theme={theme} />
+          <ToolGrid tools={TRACKERS} theme={theme} />
 
           <div
             style={{
@@ -210,10 +210,10 @@ function ToolsContent({ theme }: { theme: AppTheme }) {
               marginBottom: "0.75rem",
             }}
           >
-            Trackers
+            Planners
           </div>
 
-          <ToolGrid tools={TRACKERS} theme={theme} />
+          <ToolGrid tools={PLANNERS} theme={theme} />
         </div>
       </div>
     </>
