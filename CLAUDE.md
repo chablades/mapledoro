@@ -21,14 +21,14 @@ src/
   app/              # Next.js pages & API routes
     api/            # Server routes (characters/lookup, patch-notes, sunny-sundays)
     characters/     # Character management page
-    tools/          # Calculators (boss-crystals, liberation, symbols, hexa-skills) & trackers (pitched-boss-drops)
+    tools/          # Calculators (boss-crystals, liberation, symbols, hexa-skills) & trackers (pitched-boss-drops, dailies)
     guides/         # Placeholder
     settings/       # User preferences & hard reset
-  components/       # Reusable UI (AppShell, ThemeContext, themes, nav, ToolHeader, WikiAttribution)
+  components/       # Reusable UI (AppShell, ThemeContext, themes, nav, ToolHeader, WikiAttribution, RemindersPanel)
   features/         # Self-contained feature modules (see nested CLAUDE.md files)
     characters/     # Character lookup, directory, setup wizard, profiles
-    tools/          # Boss crystals, liberation, symbols, pitched-boss-drops, hexa-skills
-  lib/              # Shared utilities (Discord client, Sunny Sunday parsing)
+    tools/          # Boss crystals, liberation, symbols, pitched-boss-drops, hexa-skills, dailies
+  lib/              # Shared utilities (Discord client, Sunny Sunday parsing, reminders store, Ursus 2× schedule)
 ```
 
 Feature-specific guidance lives in nested `CLAUDE.md` files (e.g. `src/features/characters/CLAUDE.md`, `src/features/tools/hexa-skills/CLAUDE.md`).
@@ -93,6 +93,15 @@ const mounted = useSyncExternalStore(() => () => undefined, () => true, () => fa
 | HEXA Skills (global) | `hexa-skills-v1` | Default when no character selected |
 | HEXA Skills (per-char) | `hexa-skills-v1-{characterName}` | When synced to a character |
 | Pitched boss drops | `pitched-boss-drops-v1` | Event log, not per-character toggle |
+| Daily Tracker | `dailies-v1` | Global; one file keyed by `characterName` (not the per-char `{key}-{charName}` pattern) |
+| Home Reminders | `mapledoro_reminders_v1` | `{ enabled, dismissed }` for Ursus / Auto-Harvest / Sol Erda. Configured on `/tools/dailies`, displayed on home |
+
+## Cross-page shared state
+
+Some state is read on one page and configured on another — the home page reads from stores that other pages write. Today this applies to:
+
+- **Home reminders** (`src/lib/reminders.ts`): hook + `mapledoro_reminders_v1` storage. `RemindersPanel` on the home page is read-only (displays enabled, non-dismissed reminders, plus an "all done" banner). `RemindersConfigBar` on `/tools/dailies` owns enable/disable. Both share the same `useRemindersState` hook; writes propagate on the next mount of the other page.
+- **Home character-row quick jumps** (`src/app/page.tsx`): hover-revealed icon links to `/tools/{dailies,liberation,symbols,hexa-skills}?character=...`. Downstream tools read `?character=` via `useApplyCharacterQueryParam` (`src/features/tools/useApplyCharacterQueryParam.ts`) and preselect the character on first mount.
 
 ## Charts
 

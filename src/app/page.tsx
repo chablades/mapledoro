@@ -9,6 +9,7 @@ import { useState, useEffect, useSyncExternalStore } from "react";
 import Link from "next/link";
 import AppShell from "../components/AppShell";
 import SunnySundayPanel from "../components/SunnySundayPanel";
+import RemindersPanel from "../components/RemindersPanel";
 import type { AppTheme } from "../components/themes";
 import {
   readCharactersStore,
@@ -17,6 +18,7 @@ import {
 import type { StoredCharacterRecord } from "../features/characters/model/charactersStore";
 import { WORLD_NAMES } from "../features/characters/model/constants";
 import CharacterAvatar from "../features/characters/tabs/components/CharacterAvatar";
+import { getUrsusStatus } from "../lib/ursus";
 
 // -- Patch Notes constants ----------------------------------------------------
 const PATCH_CACHE_KEY = "mapledoro_patch_notes_v1";
@@ -90,46 +92,174 @@ function fmt(ms: number) {
 }
 
 
-// -- Ursus 2× meso helpers ----------------------------------------------------
-function getUrsusStatus(now: Date):
-  | { active: true; remaining: number }
-  | { active: false; until: number } {
-  const h = now.getUTCHours();
-  const nowMs = now.getTime();
-
-  const inWindow1 = h >= 1 && h < 5;
-  const inWindow2 = h >= 18 && h < 22;
-
-  if (inWindow1 || inWindow2) {
-    const endHour = inWindow1 ? 5 : 22;
-    const end = new Date(now);
-    end.setUTCHours(endHour, 0, 0, 0);
-    return {
-      active: true as const,
-      remaining: end.getTime() - nowMs,
-    };
-  }
-
-  // Next window start
-  let nextStart: Date;
-  if (h < 1) {
-    nextStart = new Date(now);
-    nextStart.setUTCHours(1, 0, 0, 0);
-  } else if (h >= 5 && h < 18) {
-    nextStart = new Date(now);
-    nextStart.setUTCHours(18, 0, 0, 0);
-  } else {
-    // h >= 22
-    nextStart = new Date(now);
-    nextStart.setUTCDate(nextStart.getUTCDate() + 1);
-    nextStart.setUTCHours(1, 0, 0, 0);
-  }
-  return { active: false as const, until: nextStart.getTime() - nowMs };
-}
-
 const PLACEHOLDER_COUNTDOWN = "--:--:--";
 
 const subscribeFn = () => () => undefined;
+
+// -- Character-row quick-launch tracker icons --------------------------------
+
+interface TrackerLink {
+  emoji: string;
+  label: string;
+  href: (characterName: string) => string;
+}
+
+const TRACKER_LINKS: TrackerLink[] = [
+  {
+    emoji: "📋",
+    label: "Daily Tracker",
+    href: (c) => `/tools/dailies?character=${encodeURIComponent(c)}`,
+  },
+  {
+    emoji: "🗡️",
+    label: "Liberation Tracker",
+    href: (c) => `/tools/liberation?character=${encodeURIComponent(c)}`,
+  },
+  {
+    emoji: "🔮",
+    label: "Symbol Tracker",
+    href: (c) => `/tools/symbols?character=${encodeURIComponent(c)}`,
+  },
+  {
+    emoji: "🔷",
+    label: "HEXA Skills",
+    href: (c) => `/tools/hexa-skills?character=${encodeURIComponent(c)}`,
+  },
+];
+
+function TrackerIcons({ theme, char }: { theme: AppTheme; char: StoredCharacterRecord }) {
+  return (
+    <div
+      className="char-row-icons"
+      style={{
+        display: "flex",
+        gap: 3,
+        flexShrink: 0,
+      }}
+    >
+      {TRACKER_LINKS.map((t) => (
+        <Link
+          key={t.label}
+          href={t.href(char.characterName)}
+          title={t.label}
+          aria-label={`${t.label} for ${char.characterName}`}
+          className="char-row-icon-btn"
+          style={{
+            width: 24,
+            height: 24,
+            borderRadius: 6,
+            background: theme.timerBg,
+            border: `1px solid ${theme.border}`,
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: "0.78rem",
+            textDecoration: "none",
+            lineHeight: 1,
+          }}
+        >
+          {t.emoji}
+        </Link>
+      ))}
+    </div>
+  );
+}
+
+function CharacterRow({
+  theme,
+  char,
+}: {
+  theme: AppTheme;
+  char: StoredCharacterRecord;
+}) {
+  return (
+    <div
+      className="row-hover char-row"
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "0.75rem",
+        padding: "0.6rem 0.75rem",
+        borderRadius: "12px",
+        transition: "background 0.15s",
+      }}
+    >
+      <Link
+        href="/characters"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "0.75rem",
+          flex: 1,
+          minWidth: 0,
+          textDecoration: "none",
+          color: "inherit",
+        }}
+      >
+        <div
+          style={{
+            width: 48,
+            height: 48,
+            borderRadius: "12px",
+            overflow: "hidden",
+            background: theme.timerBg,
+            border: `1px solid ${theme.border}`,
+            flexShrink: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <CharacterAvatar
+            src={char.characterImgURL}
+            alt={char.characterName}
+            width={48}
+            height={48}
+            style={{ objectFit: "contain" }}
+          />
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div
+            style={{
+              fontWeight: 800,
+              fontSize: "0.9rem",
+              color: theme.text,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {char.characterName}
+          </div>
+          <div
+            style={{
+              fontSize: "0.75rem",
+              color: theme.muted,
+              fontWeight: 600,
+              marginTop: "1px",
+            }}
+          >
+            Lv. {char.level} {char.jobName}
+          </div>
+        </div>
+      </Link>
+      <TrackerIcons theme={theme} char={char} />
+      <div
+        style={{
+          fontSize: "0.7rem",
+          fontWeight: 700,
+          color: theme.accentText,
+          background: theme.accentSoft,
+          padding: "2px 8px",
+          borderRadius: "6px",
+          flexShrink: 0,
+        }}
+      >
+        {WORLD_NAMES[char.worldID] ?? `World ${char.worldID}`}
+      </div>
+    </div>
+  );
+}
 
 // -- Panel components ---------------------------------------------------------
 
@@ -205,84 +335,7 @@ function CharactersPanel({ theme, characters }: { theme: AppTheme; characters: S
       ) : (
         <div style={{ padding: "0.5rem" }}>
           {characters.map((char) => (
-            <Link
-              key={char.characterName.toLowerCase()}
-              href="/characters"
-              style={{ textDecoration: "none", display: "block" }}
-            >
-              <div
-                className="row-hover"
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "0.75rem",
-                  padding: "0.6rem 0.75rem",
-                  borderRadius: "12px",
-                  cursor: "pointer",
-                  transition: "background 0.15s",
-                }}
-              >
-                <div
-                  style={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: "12px",
-                    overflow: "hidden",
-                    background: theme.timerBg,
-                    border: `1px solid ${theme.border}`,
-                    flexShrink: 0,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <CharacterAvatar
-                    src={char.characterImgURL}
-                    alt={char.characterName}
-                    width={48}
-                    height={48}
-                    style={{ objectFit: "contain" }}
-                  />
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div
-                    style={{
-                      fontWeight: 800,
-                      fontSize: "0.9rem",
-                      color: theme.text,
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {char.characterName}
-                  </div>
-                  <div
-                    style={{
-                      fontSize: "0.75rem",
-                      color: theme.muted,
-                      fontWeight: 600,
-                      marginTop: "1px",
-                    }}
-                  >
-                    Lv. {char.level} {char.jobName}
-                  </div>
-                </div>
-                <div
-                  style={{
-                    fontSize: "0.7rem",
-                    fontWeight: 700,
-                    color: theme.accentText,
-                    background: theme.accentSoft,
-                    padding: "2px 8px",
-                    borderRadius: "6px",
-                    flexShrink: 0,
-                  }}
-                >
-                  {WORLD_NAMES[char.worldID] ?? `World ${char.worldID}`}
-                </div>
-              </div>
-            </Link>
+            <CharacterRow key={char.characterName.toLowerCase()} theme={theme} char={char} />
           ))}
           <Link
             href="/characters"
@@ -714,30 +767,40 @@ function DashboardContent({ theme }: { theme: AppTheme }) {
 
         .row-hover:hover { background: ${theme.accentSoft} !important; }
 
+        .char-row-icons { opacity: 0; pointer-events: none; transition: opacity 0.15s ease; }
+        .char-row:hover .char-row-icons { opacity: 1; pointer-events: auto; }
+        .char-row-icon-btn { transition: transform 0.1s ease, background 0.15s ease; }
+        .char-row-icon-btn:hover { transform: translateY(-1px); background: ${theme.accentSoft} !important; }
+
         .countdown { font-family: var(--font-heading); font-size: 2rem; line-height: 1; letter-spacing: 0.03em; }
 
         @media (max-width: 860px) {
           .dashboard-grid { grid-template-columns: 1fr !important; }
+          .char-row-icons { opacity: 1 !important; pointer-events: auto !important; }
         }
       `}</style>
 
       <div className="page-content">
-        <div
-          className="page-container dashboard-grid"
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 330px",
-            gap: "1.25rem",
-            alignItems: "start",
-          }}
-        >
-          <CharactersPanel theme={theme} characters={characters} />
+        <div className="page-container">
+          <RemindersPanel theme={theme} now={now} />
 
-          <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
-            <ResetTimersPanel theme={theme} now={now} />
-            <UrsusPanel theme={theme} now={now} />
-            <PatchNotesPanel theme={theme} />
-            <SunnySundayPanel theme={theme} />
+          <div
+            className="dashboard-grid"
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 330px",
+              gap: "1.25rem",
+              alignItems: "start",
+            }}
+          >
+            <CharactersPanel theme={theme} characters={characters} />
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+              <ResetTimersPanel theme={theme} now={now} />
+              <UrsusPanel theme={theme} now={now} />
+              <PatchNotesPanel theme={theme} />
+              <SunnySundayPanel theme={theme} />
+            </div>
           </div>
         </div>
       </div>

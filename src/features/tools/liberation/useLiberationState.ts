@@ -6,6 +6,7 @@ import {
   selectCharactersList,
   type StoredCharacterRecord,
 } from "../../characters/model/charactersStore";
+import { useApplyCharacterQueryParam } from "../useApplyCharacterQueryParam";
 import {
   type LiberationType,
   type LiberationBoss,
@@ -419,13 +420,18 @@ export function useLiberationState() {
     saveStateTo(currentStorageKey, formToSaved(form));
   }, [currentStorageKey, form]);
 
-  const handleCharChange = (charName: string | null) => {
-    saveStateTo(currentStorageKey, formToSaved(form));
-    const newKey = storageKeyFor(charName);
-    const saved = loadStateFrom(newKey);
-    setForm(saved ? savedToForm(saved) : defaultFormState());
-    setSelectedCharName(charName);
-  };
+  const handleCharChange = useCallback(
+    (charName: string | null) => {
+      saveStateTo(currentStorageKey, formToSaved(form));
+      const newKey = storageKeyFor(charName);
+      const saved = loadStateFrom(newKey);
+      setForm(saved ? savedToForm(saved) : defaultFormState());
+      setSelectedCharName(charName);
+    },
+    [currentStorageKey, form],
+  );
+
+  useApplyCharacterQueryParam({ mounted, characters, handleCharChange });
 
   const bosses = type === "genesis" ? GENESIS_BOSSES : DESTINY_BOSSES;
   const quests = type === "genesis" ? GENESIS_QUESTS : DESTINY_QUESTS;

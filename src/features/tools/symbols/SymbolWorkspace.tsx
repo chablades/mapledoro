@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback, useSyncExternalStore } from "react";
+import { useState, useEffect, useCallback, useMemo, useSyncExternalStore } from "react";
+import { useApplyCharacterQueryParam } from "../useApplyCharacterQueryParam";
 import { Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -1063,9 +1064,10 @@ export default function SymbolWorkspace({ theme }: { theme: AppTheme }) {
   );
 
   // Character sync (optional)
-  const characters: StoredCharacterRecord[] = mounted
-    ? selectCharactersList(readCharactersStore())
-    : [];
+  const characters: StoredCharacterRecord[] = useMemo(
+    () => (mounted ? selectCharactersList(readCharactersStore()) : []),
+    [mounted],
+  );
   const [selectedCharName, setSelectedCharName] = useState<string | null>(null);
   const currentStorageKey = storageKeyFor(selectedCharName);
 
@@ -1081,34 +1083,39 @@ export default function SymbolWorkspace({ theme }: { theme: AppTheme }) {
     saveStateTo(currentStorageKey, { type, symbols });
   }, [currentStorageKey, type, symbols]);
 
-  const handleCharChange = (charName: string | null) => {
-    // Save current state before switching
-    saveStateTo(currentStorageKey, { type, symbols });
-    const newKey = storageKeyFor(charName);
-    const saved = loadStateFrom(newKey);
+  const handleCharChange = useCallback(
+    (charName: string | null) => {
+      // Save current state before switching
+      saveStateTo(currentStorageKey, { type, symbols });
+      const newKey = storageKeyFor(charName);
+      const saved = loadStateFrom(newKey);
 
-    if (saved) {
-      setForm({ type: saved.type, symbols: saved.symbols });
-    } else {
-      // Auto-configure based on character level when no saved data exists
-      const char = charName ? characters.find((c) => c.characterName === charName) : null;
-      if (char && char.level >= 260) {
-        // Default to sacred, auto-enable symbols the character can access
-        const sacredSymbols: Record<string, SymbolState> = {};
-        for (const area of SACRED_AREAS) {
-          sacredSymbols[area.name] = {
-            ...defaultSymbolState(area, "sacred"),
-            enabled: char.level >= area.requiredLevel,
-          };
-        }
-        setForm({ type: "sacred", symbols: sacredSymbols });
+      if (saved) {
+        setForm({ type: saved.type, symbols: saved.symbols });
       } else {
-        setForm({ type: "arcane", symbols: {} });
+        // Auto-configure based on character level when no saved data exists
+        const char = charName ? characters.find((c) => c.characterName === charName) : null;
+        if (char && char.level >= 260) {
+          // Default to sacred, auto-enable symbols the character can access
+          const sacredSymbols: Record<string, SymbolState> = {};
+          for (const area of SACRED_AREAS) {
+            sacredSymbols[area.name] = {
+              ...defaultSymbolState(area, "sacred"),
+              enabled: char.level >= area.requiredLevel,
+            };
+          }
+          setForm({ type: "sacred", symbols: sacredSymbols });
+        } else {
+          setForm({ type: "arcane", symbols: {} });
+        }
       }
-    }
 
-    setSelectedCharName(charName);
-  };
+      setSelectedCharName(charName);
+    },
+    [currentStorageKey, type, symbols, characters],
+  );
+
+  useApplyCharacterQueryParam({ mounted, characters, handleCharChange });
 
   const switchType = useCallback((t: SymbolType) => {
     setForm((f) => ({ ...f, type: t }));

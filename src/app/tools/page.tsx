@@ -44,6 +44,13 @@ const PLANNERS: ToolCard[] = [
 
 const TRACKERS: ToolCard[] = [
   {
+    title: "Daily Tracker",
+    description:
+      "Track symbol dailies, daily bosses, and daily content across all your characters.",
+    emoji: "📋",
+    href: "/tools/dailies",
+  },
+  {
     title: "Liberation Tracker",
     description:
       "Track your Genesis and Destiny liberation progress and estimate completion.",
