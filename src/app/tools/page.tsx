@@ -30,6 +30,13 @@ const CALCULATORS: ToolCard[] = [
     emoji: "⭐",
     href: "/tools/star-force",
   },
+  {
+    title: "Cubing Calculator",
+    description:
+      "Calculate the expected cost and number of cubes to achieve your desired potential.",
+    emoji: "🎲",
+    href: "/tools/cubing",
+  },
 ];
 
 const PLANNERS: ToolCard[] = [
