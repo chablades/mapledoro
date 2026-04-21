@@ -898,7 +898,7 @@ export default function BossCrystalsWorkspace({ theme }: { theme: AppTheme }) {
         <div style={{ maxWidth: 1200, margin: "0 auto" }}>
           <ToolHeader
             theme={theme}
-            title="Boss Crystal Calculator"
+            title="Boss Crystal Tracker"
             description="Track weekly boss crystals and meso income across characters."
           />
 

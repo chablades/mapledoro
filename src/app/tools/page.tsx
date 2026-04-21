@@ -17,13 +17,6 @@ interface ToolCard {
 
 const CALCULATORS: ToolCard[] = [
   {
-    title: "Boss Crystal Calculator",
-    description:
-      "Calculate your weekly boss crystal income across all characters.",
-    emoji: "💎",
-    href: "/tools/boss-crystals",
-  },
-  {
     title: "Star Force Calculator",
     description:
       "Estimate the expected meso cost to star force your equipment.",
@@ -50,6 +43,13 @@ const PLANNERS: ToolCard[] = [
 ];
 
 const TRACKERS: ToolCard[] = [
+  {
+    title: "Boss Crystal Tracker",
+    description:
+      "Track your weekly boss crystal income across all characters.",
+    emoji: "💎",
+    href: "/tools/boss-crystals",
+  },
   {
     title: "Daily Tracker",
     description:
