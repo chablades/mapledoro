@@ -6,12 +6,13 @@ import { ToolHeader } from "../../../components/ToolHeader";
 import {
   type CubeKey,
   type ItemCategory,
-  type QuantileResult,
   ITEM_CATEGORIES,
   CUBE_TYPES,
   TIERS,
   STAT_TYPES,
   MAX_CUBE_TIER,
+  TIER_RATES,
+  TIER_RATES_DMT,
   buildStatOptions,
   translateDesiredStat,
   geoDistrQuantile,
@@ -19,6 +20,12 @@ import {
   cubingCost,
 } from "./cubing-types";
 import { getProbability } from "./cubing-engine";
+
+interface TierStep {
+  from: string;
+  to: string;
+  probability: number;
+}
 
 interface CalcResult {
   mesoMean: number;
@@ -32,7 +39,16 @@ interface CalcResult {
   cube85: number;
   cube95: number;
   cubeType: CubeKey;
+  probability: number;
+  tierSteps: TierStep[];
 }
+
+const TIER_PILL: Record<number, { bg: string; text: string }> = {
+  0: { bg: "#4a9eff", text: "#fff" },
+  1: { bg: "#b566ff", text: "#fff" },
+  2: { bg: "#ffb800", text: "#3a2400" },
+  3: { bg: "#22aa44", text: "#fff" },
+};
 
 export default function CubingWorkspace({ theme }: { theme: AppTheme }) {
   const mounted = useSyncExternalStore(() => () => undefined, () => true, () => false);
@@ -47,7 +63,7 @@ export default function CubingWorkspace({ theme }: { theme: AppTheme }) {
   const [dmt, setDmt] = useState(false);
   const [result, setResult] = useState<CalcResult | null>(null);
 
-  const canPickStat = currentTier === desiredTier && MAX_CUBE_TIER[cubeType] >= desiredTier;
+  const canPickStat = currentTier === desiredTier;
   const levelValid = itemLevel > 70;
 
   const statOptions = useMemo(
@@ -57,13 +73,15 @@ export default function CubingWorkspace({ theme }: { theme: AppTheme }) {
 
   const groupedOptions = useMemo(() => {
     const groups: { label: string; options: { value: string; label: string }[] }[] = [];
-    const seen = new Set<string>();
+    const map = new Map<string, { label: string; options: { value: string; label: string }[] }>();
     for (const opt of statOptions) {
-      if (!seen.has(opt.group)) {
-        seen.add(opt.group);
-        groups.push({ label: opt.group, options: [] });
+      let group = map.get(opt.group);
+      if (!group) {
+        group = { label: opt.group, options: [] };
+        map.set(opt.group, group);
+        groups.push(group);
       }
-      groups.find((g) => g.label === opt.group)!.options.push(opt);
+      group.options.push(opt);
     }
     return groups;
   }, [statOptions]);
@@ -72,26 +90,12 @@ export default function CubingWorkspace({ theme }: { theme: AppTheme }) {
     setCurrentTier(val);
     if (desiredTier < val) setDesiredTier(val);
     setDesiredStat("any");
-    autoPickCube(val, Math.max(desiredTier, val));
   }
 
   function handleDesiredTierChange(val: number) {
     setDesiredTier(val);
     if (currentTier > val) setCurrentTier(val);
     setDesiredStat("any");
-    autoPickCube(Math.min(currentTier, val), val);
-  }
-
-  function autoPickCube(cur: number, des: number) {
-    const tieringUp = cur !== des;
-    if (tieringUp) {
-      if (MAX_CUBE_TIER[cubeType] >= des) return;
-      setCubeType(des === 1 ? "master" : "black");
-    } else {
-      if (des === 1) setCubeType("occult");
-      else if (des === 2) setCubeType("master");
-      else if (des === 3) setCubeType("red");
-    }
   }
 
   function handleCalculate() {
@@ -101,12 +105,18 @@ export default function CubingWorkspace({ theme }: { theme: AppTheme }) {
     const p = isAny ? 1 : getProbability(desiredTier, input!, itemType, cubeType, itemLevel);
     const tierUp = getTierUpCosts(currentTier, desiredTier, cubeType, dmt);
 
-    let stats: QuantileResult;
-    if (isAny) {
-      stats = { mean: 0, median: 0, seventy_fifth: 0, eighty_fifth: 0, ninety_fifth: 0 };
-    } else {
-      stats = geoDistrQuantile(p);
+    const rates = dmt ? TIER_RATES_DMT : TIER_RATES;
+    const tierSteps: TierStep[] = [];
+    for (let i = currentTier; i < desiredTier; i++) {
+      const prob = rates[cubeType][i];
+      if (prob != null) {
+        tierSteps.push({ from: TIERS[i].label, to: TIERS[i + 1].label, probability: prob });
+      }
     }
+
+    const stats = isAny
+      ? { mean: 0, median: 0, seventy_fifth: 0, eighty_fifth: 0, ninety_fifth: 0 }
+      : geoDistrQuantile(p);
 
     const mean = Math.round(stats.mean) + tierUp.mean;
     const median = Math.round(stats.median) + tierUp.median;
@@ -126,6 +136,8 @@ export default function CubingWorkspace({ theme }: { theme: AppTheme }) {
       meso85: cubingCost(cubeType, itemLevel, s85),
       meso95: cubingCost(cubeType, itemLevel, s95),
       cubeType,
+      probability: p,
+      tierSteps,
     });
   }
 
@@ -167,7 +179,14 @@ export default function CubingWorkspace({ theme }: { theme: AppTheme }) {
       <style>{`
         @media (max-width: 640px) {
           .cubing-results { grid-template-columns: 1fr !important; }
+          .cubing-tier-pills { gap: 4px !important; }
+          .cubing-tier-pill { padding: 6px 8px !important; font-size: 0.72rem !important; }
         }
+        .cubing-tier-pill:hover {
+          filter: brightness(1.1);
+          transform: translateY(-1px);
+        }
+
       `}</style>
       <div style={{ maxWidth: 900, margin: "0 auto" }}>
         <ToolHeader
@@ -180,7 +199,6 @@ export default function CubingWorkspace({ theme }: { theme: AppTheme }) {
           <div style={{ ...labelStyle, marginBottom: "12px", fontSize: "0.78rem" }}>
             Cubing Information
           </div>
-
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "12px" }}>
             <Field label="Item Category" style={labelStyle}>
               <select
@@ -193,23 +211,20 @@ export default function CubingWorkspace({ theme }: { theme: AppTheme }) {
                 ))}
               </select>
             </Field>
-
             <Field label="Cube Type" style={labelStyle}>
-              <select value={cubeType} onChange={(e) => { setCubeType(e.target.value as CubeKey); setDesiredStat("any"); }} style={selectStyle}>
+              <select value={cubeType} onChange={(e) => {
+                const next = e.target.value as CubeKey;
+                const max = MAX_CUBE_TIER[next];
+                setCubeType(next);
+                if (currentTier > max) setCurrentTier(max);
+                if (desiredTier > max) setDesiredTier(max);
+                setDesiredStat("any");
+              }} style={selectStyle}>
                 {CUBE_TYPES.map((c) => (
                   <option key={c.value} value={c.value}>{c.label}</option>
                 ))}
               </select>
             </Field>
-
-            <Field label="Current Tier" style={labelStyle}>
-              <select value={currentTier} onChange={(e) => handleCurrentTierChange(Number(e.target.value))} style={selectStyle}>
-                {TIERS.map((t) => (
-                  <option key={t.value} value={t.value}>{t.label}</option>
-                ))}
-              </select>
-            </Field>
-
             <Field label="Item Level" style={labelStyle}>
               <input
                 type="number"
@@ -224,26 +239,36 @@ export default function CubingWorkspace({ theme }: { theme: AppTheme }) {
 
         <div className="fade-in" style={panelStyle}>
           <div style={{ ...labelStyle, marginBottom: "12px", fontSize: "0.78rem" }}>
+            Tier Progression
+          </div>
+          <div style={{ marginBottom: "8px" }}>
+            <div style={{ ...labelStyle, marginBottom: "6px" }}>Current Tier</div>
+            <TierPills theme={theme} selected={currentTier} maxTier={MAX_CUBE_TIER[cubeType]} onChange={handleCurrentTierChange} />
+          </div>
+          <TierPathLabel currentTier={currentTier} desiredTier={desiredTier} muted={theme.muted} />
+          <div>
+            <div style={{ ...labelStyle, marginBottom: "6px" }}>Desired Tier</div>
+            <TierPills theme={theme} selected={desiredTier} maxTier={MAX_CUBE_TIER[cubeType]} onChange={handleDesiredTierChange} />
+          </div>
+        </div>
+
+        <div className="fade-in" style={panelStyle}>
+          <div style={{ ...labelStyle, marginBottom: "12px", fontSize: "0.78rem" }}>
             Desired Stats
           </div>
-
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "12px" }}>
-            <Field label="Desired Tier" style={labelStyle}>
-              <select value={desiredTier} onChange={(e) => handleDesiredTierChange(Number(e.target.value))} style={selectStyle}>
-                {TIERS.map((t) => (
-                  <option key={t.value} value={t.value}>{t.label}</option>
-                ))}
-              </select>
-            </Field>
-
             <Field label="Stat Type" style={labelStyle}>
-              <select value={statType} onChange={(e) => { setStatType(e.target.value); setDesiredStat("any"); }} style={selectStyle}>
+              <select
+                value={statType}
+                onChange={(e) => { setStatType(e.target.value); setDesiredStat("any"); }}
+                disabled={!canPickStat}
+                style={{ ...selectStyle, opacity: canPickStat ? 1 : 0.5 }}
+              >
                 {STAT_TYPES.map((s) => (
                   <option key={s.value} value={s.value}>{s.label}</option>
                 ))}
               </select>
             </Field>
-
             <Field label="Desired Stat" style={labelStyle}>
               <DesiredStatSelect
                 levelValid={levelValid}
@@ -255,7 +280,6 @@ export default function CubingWorkspace({ theme }: { theme: AppTheme }) {
               />
             </Field>
           </div>
-
           <div style={{ display: "flex", alignItems: "center", gap: "16px", marginTop: "16px", flexWrap: "wrap" }}>
             <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.82rem", fontWeight: 700, color: theme.text, cursor: "pointer" }}>
               <input
@@ -266,7 +290,6 @@ export default function CubingWorkspace({ theme }: { theme: AppTheme }) {
               />
               Double Miracle Time
             </label>
-
             <button
               onClick={handleCalculate}
               disabled={!levelValid}
@@ -290,27 +313,96 @@ export default function CubingWorkspace({ theme }: { theme: AppTheme }) {
         </div>
 
         {result && (
-          <div className="fade-in cubing-results" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
-            <ResultCard theme={theme} title="Meso Estimate">
-              <ResultRow label="Average cost" value={formatMeso(result.mesoMean)} />
-              <ResultRow label="Median cost" value={formatMeso(result.mesoMedian)} />
-              <ResultDivider theme={theme} />
-              <ResultRow label="75% chance within" value={formatMeso(result.meso75)} />
-              <ResultRow label="85% chance within" value={formatMeso(result.meso85)} />
-              <ResultRow label="95% chance within" value={formatMeso(result.meso95)} />
-            </ResultCard>
-
-            <ResultCard theme={theme} title="Cube Estimate">
-              <ResultRow label="Average cubes" value={`${result.cubeMean.toLocaleString()} ${cubeLabel} cubes`} />
-              <ResultRow label="Median cubes" value={`${result.cubeMedian.toLocaleString()} ${cubeLabel} cubes`} />
-              <ResultDivider theme={theme} />
-              <ResultRow label="75% chance within" value={`${result.cube75.toLocaleString()} ${cubeLabel} cubes`} />
-              <ResultRow label="85% chance within" value={`${result.cube85.toLocaleString()} ${cubeLabel} cubes`} />
-              <ResultRow label="95% chance within" value={`${result.cube95.toLocaleString()} ${cubeLabel} cubes`} />
-            </ResultCard>
+          <div className="fade-in">
+            {result.tierSteps.length > 0 && (
+              <TierUpProbabilities theme={theme} steps={result.tierSteps} />
+            )}
+            {result.probability < 1 && (
+              <ProbabilityBadge theme={theme} probability={result.probability} />
+            )}
+            <div className="cubing-results" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+              <ResultCard
+                theme={theme}
+                title="Meso Cost"
+                heroValue={formatMesoShort(result.mesoMean)}
+                heroLabel="Average cost"
+                rows={[
+                  { label: "Median", value: result.mesoMedian },
+                  { label: "75th percentile", value: result.meso75 },
+                  { label: "85th percentile", value: result.meso85 },
+                  { label: "95th percentile", value: result.meso95 },
+                ]}
+                format={(n: number) => `${n.toLocaleString()} mesos`}
+              />
+              <ResultCard
+                theme={theme}
+                title={`${cubeLabel} Cubes`}
+                heroValue={result.cubeMean.toLocaleString()}
+                heroLabel="Average cubes"
+                rows={[
+                  { label: "Median", value: result.cubeMedian },
+                  { label: "75th percentile", value: result.cube75 },
+                  { label: "85th percentile", value: result.cube85 },
+                  { label: "95th percentile", value: result.cube95 },
+                ]}
+                format={(n: number) => n.toLocaleString()}
+              />
+            </div>
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function TierPills({ theme, selected, maxTier, onChange }: {
+  theme: AppTheme;
+  selected: number;
+  maxTier: number;
+  onChange: (val: number) => void;
+}) {
+  return (
+    <div className="cubing-tier-pills" style={{ display: "flex", gap: "6px" }}>
+      {TIERS.map((t) => {
+        const sel = selected === t.value;
+        const disabled = t.value > maxTier;
+        const tc = TIER_PILL[t.value];
+        return (
+          <button
+            key={t.value}
+            onClick={() => !disabled && onChange(t.value)}
+            className="cubing-tier-pill"
+            style={{
+              flex: 1,
+              padding: "8px 14px",
+              borderRadius: "10px",
+              border: `2px solid ${sel ? tc.bg : theme.border}`,
+              background: sel ? tc.bg : "transparent",
+              color: sel ? tc.text : theme.muted,
+              fontSize: "0.78rem",
+              fontWeight: 800,
+              cursor: disabled ? "not-allowed" : "pointer",
+              opacity: disabled ? 0.35 : 1,
+              transition: "all 0.15s ease",
+            }}
+          >
+            {t.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function TierPathLabel({ currentTier, desiredTier, muted }: { currentTier: number; desiredTier: number; muted: string }) {
+  const steps = desiredTier - currentTier;
+  let text: string;
+  if (steps <= 0) text = `Rerolling at ${TIERS[currentTier].label}`;
+  else if (steps === 1) text = "↓ 1 tier-up step";
+  else text = `↓ ${steps} tier-up steps`;
+  return (
+    <div style={{ textAlign: "center", color: muted, fontSize: "0.75rem", fontWeight: 700, margin: "6px 0" }}>
+      {text}
     </div>
   );
 }
@@ -324,7 +416,84 @@ function Field({ label, style, children }: { label: string; style: React.CSSProp
   );
 }
 
-function ResultCard({ theme, title, children }: { theme: AppTheme; title: string; children: React.ReactNode }) {
+function ProbabilityBadge({ theme, probability }: { theme: AppTheme; probability: number }) {
+  const pct = probability * 100;
+  const display = pct >= 0.01 ? `${pct.toFixed(2)}%` : `${pct.toExponential(2)}%`;
+
+  return (
+    <div style={{
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      marginBottom: "1rem",
+      padding: "14px 20px",
+      borderRadius: "14px",
+      background: theme.panel,
+      border: `1px solid ${theme.border}`,
+    }}>
+      <div style={{ textAlign: "center" }}>
+        <div style={{ fontSize: "0.72rem", fontWeight: 800, color: theme.muted, textTransform: "uppercase", letterSpacing: "0.04em" }}>
+          Probability per cube
+        </div>
+        <div style={{ marginTop: "4px" }}>
+          <span style={{ fontSize: "1.15rem", fontWeight: 800, color: theme.accent }}>
+            {display}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TierUpProbabilities({ theme, steps }: { theme: AppTheme; steps: TierStep[] }) {
+  return (
+    <div style={{
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: "24px",
+      marginBottom: "1rem",
+      padding: "14px 20px",
+      borderRadius: "14px",
+      background: theme.panel,
+      border: `1px solid ${theme.border}`,
+      flexWrap: "wrap",
+    }}>
+      {steps.map((step) => {
+        const pct = step.probability * 100;
+        const display = pct >= 0.01 ? `${pct.toFixed(2)}%` : `${pct.toExponential(2)}%`;
+        return (
+          <div key={`${step.from}-${step.to}`} style={{ textAlign: "center" }}>
+            <div style={{ fontSize: "0.72rem", fontWeight: 800, color: theme.muted, textTransform: "uppercase", letterSpacing: "0.04em" }}>
+              {step.from} → {step.to}
+            </div>
+            <div style={{ marginTop: "4px" }}>
+              <span style={{ fontSize: "1.15rem", fontWeight: 800, color: theme.accent }}>
+                {display}
+              </span>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function ResultCard({
+  theme,
+  title,
+  heroValue,
+  heroLabel,
+  rows,
+  format,
+}: {
+  theme: AppTheme;
+  title: string;
+  heroValue: string;
+  heroLabel: string;
+  rows: { label: string; value: number }[];
+  format: (n: number) => string;
+}) {
   return (
     <div
       className="panel-card"
@@ -335,28 +504,46 @@ function ResultCard({ theme, title, children }: { theme: AppTheme; title: string
         padding: "1.25rem",
       }}
     >
-      <div style={{ fontSize: "0.85rem", fontWeight: 800, color: theme.text, marginBottom: "10px" }}>
+      <div style={{ fontSize: "0.72rem", fontWeight: 800, color: theme.muted, textTransform: "uppercase", letterSpacing: "0.04em" }}>
         {title}
       </div>
-      {children}
+      <div style={{ margin: "8px 0 16px" }}>
+        <div style={{ fontSize: "1.5rem", fontWeight: 800, color: theme.text, lineHeight: 1.1 }}>
+          {heroValue}
+        </div>
+        <div style={{ fontSize: "0.72rem", fontWeight: 700, color: theme.muted, marginTop: "2px" }}>
+          {heroLabel}
+        </div>
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+        {rows.map((row) => (
+          <div key={row.label} style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            fontSize: "0.72rem",
+            fontWeight: 700,
+            color: theme.muted,
+            background: theme.timerBg,
+            borderRadius: "8px",
+            padding: "6px 10px",
+          }}>
+            <span>{row.label}</span>
+            <span style={{ color: theme.accent, fontWeight: 800 }}>{format(row.value)}</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
 
-function ResultDivider({ theme }: { theme: AppTheme }) {
-  return <div style={{ borderTop: `1px solid ${theme.border}`, margin: "8px 0" }} />;
+function trimTrailingZero(v: string): string {
+  return v.endsWith(".0") ? v.slice(0, -2) : v;
 }
 
-function ResultRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div style={{ fontSize: "0.82rem", fontWeight: 600, marginBottom: "4px" }}>
-      <span style={{ opacity: 0.7 }}>{label}: </span>
-      <span style={{ fontWeight: 800 }}>{value}</span>
-    </div>
-  );
-}
-
-function formatMeso(n: number): string {
+function formatMesoShort(n: number): string {
+  if (n >= 1_000_000_000) return `${trimTrailingZero((n / 1_000_000_000).toFixed(1))}B mesos`;
+  if (n >= 1_000_000) return `${trimTrailingZero((n / 1_000_000).toFixed(1))}M mesos`;
   return `${n.toLocaleString()} mesos`;
 }
 
