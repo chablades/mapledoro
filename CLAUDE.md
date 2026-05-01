@@ -21,8 +21,6 @@ MapleDoro — free, open-source MapleStory community web app (character tracking
 
 **Surgical changes.** Touch only what was asked. Don't "improve" adjacent code or formatting. Match existing style. Remove imports/variables YOUR changes made unused; don't remove pre-existing dead code unless asked. Every changed line should trace to the request.
 
-**Use the `code-simplifier` agent** after implementation to review changed code for reuse, quality, and efficiency.
-
 ## Build & Lint
 
 Both must pass before any implementation is considered complete:

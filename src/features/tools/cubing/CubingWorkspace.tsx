@@ -20,6 +20,7 @@ import {
   cubingCost,
 } from "./cubing-types";
 import { getProbability } from "./cubing-engine";
+import { toolStyles } from "../tool-styles";
 
 interface TierStep {
   from: string;
@@ -143,33 +144,20 @@ export default function CubingWorkspace({ theme }: { theme: AppTheme }) {
 
   if (!mounted) return null;
 
+  const styles = toolStyles(theme);
+
   const selectStyle: React.CSSProperties = {
+    ...styles.selectStyle,
     width: "100%",
     padding: "8px 10px",
-    borderRadius: "8px",
-    border: `1px solid ${theme.border}`,
-    background: theme.timerBg,
-    color: theme.text,
-    fontSize: "0.82rem",
-    fontWeight: 700,
     appearance: "auto" as const,
   };
 
-  const labelStyle: React.CSSProperties = {
-    fontSize: "0.72rem",
-    fontWeight: 800,
-    color: theme.muted,
-    textTransform: "uppercase",
-    letterSpacing: "0.04em",
-    marginBottom: "4px",
-  };
+  const labelStyle = styles.labelStyle;
 
   const panelStyle: React.CSSProperties = {
-    background: theme.panel,
-    border: `1px solid ${theme.border}`,
+    ...styles.sectionPanel,
     borderRadius: "18px",
-    padding: "1.25rem",
-    marginBottom: "1.25rem",
   };
 
   const cubeLabel = CUBE_TYPES.find((c) => c.value === result?.cubeType)?.label ?? result?.cubeType;

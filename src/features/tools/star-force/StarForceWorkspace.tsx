@@ -14,7 +14,8 @@ import {
   type StarResult,
   type SimulationResult,
 } from "./star-force-data";
-import { Toggle, PillGroup } from "../shared-ui";
+import { Toggle, PillGroup, MVP_OPTIONS } from "../shared-ui";
+import { toolStyles } from "../tool-styles";
 
 // -- Helpers ------------------------------------------------------------------
 
@@ -241,13 +242,6 @@ function BreakdownTable({ theme, results }: { theme: AppTheme; results: StarResu
 
 // -- Main workspace -----------------------------------------------------------
 
-const MVP_OPTIONS: { value: MvpTier; label: string }[] = [
-  { value: "none", label: "None" },
-  { value: "silver", label: "Silver" },
-  { value: "gold", label: "Gold" },
-  { value: "diamond", label: "Diamond" },
-];
-
 export default function StarForceWorkspace({ theme }: { theme: AppTheme }) {
   const mounted = useSyncExternalStore(
     () => () => undefined,
@@ -300,17 +294,9 @@ export default function StarForceWorkspace({ theme }: { theme: AppTheme }) {
   // Preview rates for the first star
   const previewResult = results.length > 0 ? results[0] : null;
 
-  const inputStyle: React.CSSProperties = {
-    background: theme.timerBg,
-    border: `1px solid ${theme.border}`,
-    color: theme.text,
-    fontSize: "0.82rem",
-    fontWeight: 700,
-    borderRadius: "8px",
-    padding: "7px 10px",
-    width: 110,
-  };
-  const selectStyle: React.CSSProperties = { ...inputStyle, width: 90, cursor: "pointer" };
+  const styles = toolStyles(theme);
+  const inputStyle: React.CSSProperties = { ...styles.inputStyle, width: 110 };
+  const selectStyle: React.CSSProperties = { ...styles.selectStyle, width: 90 };
 
   return (
     <div style={{ flex: 1, width: "100%", padding: "1.5rem 1.5rem 2rem 2.75rem" }}>

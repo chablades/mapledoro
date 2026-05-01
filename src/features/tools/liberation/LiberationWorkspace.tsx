@@ -19,6 +19,7 @@ import {
   getSelection,
   formatDate,
 } from "./useLiberationState";
+import { toolStyles } from "../tool-styles";
 
 // -- Boss Card ----------------------------------------------------------------
 
@@ -655,13 +656,8 @@ export default function LiberationWorkspace({ theme }: { theme: AppTheme }) {
   } = useLiberationState();
 
   // Styles
-  const inputStyle: React.CSSProperties = {
-    background: theme.timerBg,
-    border: `1px solid ${theme.border}`,
-    padding: "6px 10px",
-    color: theme.text,
-    fontSize: "0.82rem",
-  };
+  const styles = toolStyles(theme);
+  const { inputStyle, sectionPanel } = styles;
 
   const pillBtn = (
     active: boolean,
@@ -677,13 +673,6 @@ export default function LiberationWorkspace({ theme }: { theme: AppTheme }) {
       background = "transparent";
     }
     return { color, background, border: active ? "none" : `1px solid ${theme.border}` };
-  };
-
-  const sectionPanel: React.CSSProperties = {
-    background: theme.panel,
-    border: `1px solid ${theme.border}`,
-    padding: "1.25rem",
-    marginBottom: "1.25rem",
   };
 
   const traceName = type === "genesis" ? "Traces of Darkness" : "Determination";
