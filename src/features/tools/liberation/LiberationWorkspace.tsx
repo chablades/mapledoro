@@ -717,7 +717,7 @@ export default function LiberationWorkspace({ theme }: { theme: AppTheme }) {
           <ToolHeader
             theme={theme}
             title="Liberation Tracker"
-            description="Estimate your Genesis or Destiny liberation completion date."
+            description="Choose Genesis or Destiny, set your current quest and traces, then view your estimated completion date."
           />
 
           <CharacterSyncPanel

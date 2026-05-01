@@ -399,7 +399,7 @@ export default function PitchedBossDropsWorkspace({
         <ToolHeader
           theme={theme}
           title="Pitched Boss Drop Tracker"
-          description="Track your rare pitched boss drops across all characters and view analytics."
+          description="Select a character and item, then log each drop as it happens to build your drop history and analytics."
         />
         {/* ── Add drop form ── */}
         <div style={panelStyle(theme)}>

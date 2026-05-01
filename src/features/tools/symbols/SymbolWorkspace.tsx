@@ -1193,7 +1193,7 @@ export default function SymbolWorkspace({ theme }: { theme: AppTheme }) {
           <ToolHeader
             theme={theme}
             title="Symbol Tracker"
-            description="Track your Arcane and Sacred symbol progress and estimate completion dates."
+            description="Switch between Arcane and Sacred, enter each symbol's level and count, and view your estimated days to max."
           />
 
           <CharacterSyncPanel

@@ -290,7 +290,7 @@ export default function HexaSkillsWorkspace({ theme }: { theme: AppTheme }) {
         <ToolHeader
           theme={theme}
           title="HEXA Skill Tracker"
-          description="Track Sol Erda and Sol Erda Fragment costs to max your HEXA skills."
+          description="Select your class, set each skill's current level, and see the total Sol Erda and Fragments needed to max."
         />
 
         <div style={{ display: "flex", gap: "1.25rem", flexWrap: "wrap", marginBottom: "1.25rem" }}>

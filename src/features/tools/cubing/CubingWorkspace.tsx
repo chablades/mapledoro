@@ -192,7 +192,7 @@ export default function CubingWorkspace({ theme }: { theme: AppTheme }) {
         <ToolHeader
           theme={theme}
           title="Cubing Calculator"
-          description="Calculate the expected cost and number of cubes to achieve your desired potential."
+          description="Select your item category, cube type, and item level, then choose your current and desired tier to see expected costs."
         />
 
         <div className="fade-in" style={panelStyle}>

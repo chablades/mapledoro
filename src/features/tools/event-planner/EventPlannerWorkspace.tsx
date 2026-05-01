@@ -560,7 +560,7 @@ export default function EventPlannerWorkspace({ theme }: { theme: AppTheme }) {
         <ToolHeader
           theme={theme}
           title="Event Planner"
-          description="Plan your star force spending for the next event. Estimates total meso cost and spare items needed."
+          description="Toggle your active events and options, then add items with their current and target stars to plan your total spending."
         />
 
         {/* ── Event Settings ────────────────────────────────────────────── */}
