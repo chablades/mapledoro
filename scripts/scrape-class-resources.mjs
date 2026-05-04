@@ -1,0 +1,138 @@
+// One-shot scraper for class community resources (Discord, docs, etc.) from grandislibrary.
+// Run: node scripts/scrape-class-resources.mjs
+// Writes src/app/guides/character-guides/classResources.ts
+
+import fs from "node:fs/promises";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const ROOT = path.resolve(__dirname, "..");
+const OUT_FILE = path.join(ROOT, "src/app/guides/character-guides/classResources.ts");
+const BASE_URL = "https://raw.githubusercontent.com/ikasuu/grandislibrary/master/public/data";
+
+// Map: [our className, grandislibrary group/slug]
+const CLASS_PATHS = [
+  ["Hero",                        "explorers/hero"],
+  ["Paladin",                     "explorers/paladin"],
+  ["Dark Knight",                 "explorers/dark-knight"],
+  ["Arch Mage (Fire/Poison)",     "explorers/arch-mage-fire-poison"],
+  ["Arch Mage (Ice/Lightning)",   "explorers/arch-mage-ice-lightning"],
+  ["Bishop",                      "explorers/bishop"],
+  ["Bow Master",                  "explorers/bowmaster"],
+  ["Marksman",                    "explorers/marksman"],
+  ["Pathfinder",                  "explorers/pathfinder"],
+  ["Night Lord",                  "explorers/night-lord"],
+  ["Shadower",                    "explorers/shadower"],
+  ["Dual Blade",                  "explorers/dual-blade"],
+  ["Corsair",                     "explorers/corsair"],
+  ["Cannoneer",                   "explorers/cannoneer"],
+  ["Buccaneer",                   "explorers/buccaneer"],
+  ["Dawn Warrior",                "cygnus-knights/dawn-warrior"],
+  ["Blaze Wizard",                "cygnus-knights/blaze-wizard"],
+  ["Wind Archer",                 "cygnus-knights/wind-archer"],
+  ["Night Walker",                "cygnus-knights/night-walker"],
+  ["Thunder Breaker",             "cygnus-knights/thunder-breaker"],
+  ["Mihile",                      "cygnus-knights/mihile"],
+  ["Aran",                        "heroes/aran"],
+  ["Evan",                        "heroes/evan"],
+  ["Mercedes",                    "heroes/mercedes"],
+  ["Phantom",                     "heroes/phantom"],
+  ["Luminous",                    "heroes/luminous"],
+  ["Shade",                       "heroes/shade"],
+  ["Battle Mage",                 "resistance/battle-mage"],
+  ["Wild Hunter",                 "resistance/wild-hunter"],
+  ["Mechanic",                    "resistance/mechanic"],
+  ["Blaster",                     "resistance/blaster"],
+  ["Xenon",                       "resistance/xenon"],
+  ["Demon Slayer",                "resistance/demon-slayer"],
+  ["Demon Avenger",               "resistance/demon-avenger"],
+  ["Kaiser",                      "nova/kaiser"],
+  ["Angelic Buster",              "nova/angelic-buster"],
+  ["Cadena",                      "nova/cadena"],
+  ["Kain",                        "nova/kain"],
+  ["Illium",                      "flora/illium"],
+  ["Ark",                         "flora/ark"],
+  ["Adele",                       "flora/adele"],
+  ["Khali",                       "flora/khali"],
+  ["Hoyoung",                     "anima/hoyoung"],
+  ["Lara",                        "anima/lara"],
+  ["Ren",                         "anima/ren"],
+  ["Zero",                        "other/zero"],
+  ["Kinesis",                     "other/kinesis"],
+  ["Hayato",                      "sengoku/hayato"],
+  ["Kanna",                       "sengoku/kanna"],
+  ["Lynn",                        "jianghu/lynn"],
+  ["Mo Xuan",                     "jianghu/mo-xuan"],
+  ["Sia Astelle",                 "shine/sia-astelle"],
+];
+
+function resourceType(title, url) {
+  const t = (title + url).toLowerCase();
+  if (t.includes("discord")) return "discord";
+  if (t.includes("doc") || t.includes("guide") || t.includes("notion")) return "doc";
+  if (t.includes("wiki")) return "wiki";
+  return "other";
+}
+
+async function fetchResources(groupSlug) {
+  const url = `${BASE_URL}/${groupSlug}.json`;
+  const res = await fetch(url);
+  if (!res.ok) {
+    console.warn(`  SKIP ${groupSlug} (${res.status})`);
+    return [];
+  }
+  const data = await res.json();
+  const moreInfo = data?.content?.moreInfo ?? [];
+  return moreInfo
+    .filter((item) => item?.link && item?.title)
+    .map((item) => ({
+      label: item.title,
+      url: item.link,
+      type: resourceType(item.title, item.link),
+    }));
+}
+
+const results = {};
+
+for (const [className, groupSlug] of CLASS_PATHS) {
+  process.stdout.write(`Fetching ${className}…`);
+  const resources = await fetchResources(groupSlug);
+  results[className] = resources;
+  console.log(` ${resources.length} resource(s)`);
+  // Small delay to be polite
+  await new Promise((r) => setTimeout(r, 150));
+}
+
+// Generate TypeScript file
+const lines = [
+  `/*`,
+  `  Community resource links per class (Discord servers, class docs, wikis, etc.).`,
+  `  Auto-generated by scripts/scrape-class-resources.mjs. Do not edit by hand.`,
+  `*/`,
+  ``,
+  `export type ResourceType = "discord" | "doc" | "wiki" | "other";`,
+  ``,
+  `export interface ClassResource {`,
+  `  label: string;`,
+  `  url: string;`,
+  `  type: ResourceType;`,
+  `}`,
+  ``,
+  `export const CLASS_RESOURCES: Record<string, ClassResource[]> = {`,
+];
+
+for (const [className, resources] of Object.entries(results)) {
+  if (resources.length === 0) continue;
+  lines.push(`  ${JSON.stringify(className)}: [`);
+  for (const r of resources) {
+    lines.push(`    { label: ${JSON.stringify(r.label)}, url: ${JSON.stringify(r.url)}, type: ${JSON.stringify(r.type)} },`);
+  }
+  lines.push(`  ],`);
+}
+
+lines.push(`};`);
+lines.push(``);
+
+await fs.writeFile(OUT_FILE, lines.join("\n"), "utf8");
+console.log(`\nWrote ${OUT_FILE}`);

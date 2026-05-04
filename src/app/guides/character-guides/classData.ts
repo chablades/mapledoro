@@ -18,9 +18,59 @@ export interface ClassEntry {
   summary: string;
   difficulty: Difficulty;
   link: string;
+  linkSkillName: string;
+  linkSkillIcon: string;
   legion: string;
   portrait: string;
 }
+
+/* ── Link skill icon URLs (sourced from MapleStory Wiki CDN) ──── */
+
+const CDN = "https://media.maplestorywiki.net/yetidb/";
+
+function ls(skillName: string, iconOverride?: string): { linkSkillName: string; linkSkillIcon: string } {
+  const icon = iconOverride
+    ?? `${CDN}Skill_${skillName.replace(/ /g, "_").replace(/'/g, "%27")}.png`;
+  return { linkSkillName: skillName, linkSkillIcon: icon };
+}
+
+const LINK_SKILLS = {
+  invincibleBelief:        ls("Invincible Belief"),
+  empiricalKnowledge:      ls("Empirical Knowledge"),
+  adventurersCuriosity:    ls("Adventurer's Curiosity"),
+  thiefsCunning:           ls("Thief's Cunning"),
+  pirateBlesssing:         ls("Pirate Blessing"),
+  cygnusBlessing:          ls("Cygnus Blessing"),
+  knightsWatch:            ls("Knight's Watch"),
+  comboKillBlessing:       ls("Combo Kill Blessing"),
+  runePersistence:         ls("Rune Persistence"),
+  elvenBlessing:           ls("Elven Blessing", `${CDN}Skill_Elven_Blessing_%28Linked%29.png`),
+  phantomInstinct:         ls("Phantom Instinct"),
+  lightWash:               ls("Light Wash"),
+  closeCall:               ls("Close Call"),
+  spiritOfFreedom:         ls("Spirit of Freedom"),
+  hybridLogic:             ls("Hybrid Logic"),
+  furyUnleashed:           ls("Fury Unleashed"),
+  wildRage:                ls("Wild Rage"),
+  ironWill:                ls("Iron Will"),
+  termsAndConditions:      ls("Terms and Conditions"),
+  unfairAdvantage:         ls("Unfair Advantage"),
+  timeToComplete:          ls("Time to Prepare"),
+  rhinnesBlessing:         ls("Rhinne's Blessing"),
+  judgment:                ls("Judgment", `${CDN}Skill_Judgment_%28Kinesis%29.png`),
+  nobleFire:               ls("Noble Fire"),
+  tideOfBattle:            ls("Tide of Battle"),
+  innateGift:              ls("Innate Gift"),
+  solus:                   ls("Solus"),
+  naturesFriend:           ls("Nature's Friend"),
+  bravado:                 ls("Bravado"),
+  groundedBody:            ls("Grounded Body"),
+  moonlitBladeLearnings:   ls("Moonlit Blade Learnings"),
+  elementalism:            ls("Elementalism"),
+  focusSpirit:             ls("Focus Spirit", `${CDN}Skill_Spirit_Guide_Blessing.png`),
+  qiCultivation:           ls("Qi Cultivation"),
+  treeOfStars:             ls("Tree of Stars"),
+};
 
 /* ── Shared display utilities ─────────────────────────────────── */
 
@@ -71,7 +121,62 @@ export const CLASS_REGIONS = [
 
 /* ── Class data ───────────────────────────────────────────────── */
 
-const RAW_CLASSES: Omit<ClassEntry, "slug" | "portrait">[] = [
+const LINK_SKILL_MAP: Record<string, { linkSkillName: string; linkSkillIcon: string }> = {
+  "Hero":                       LINK_SKILLS.invincibleBelief,
+  "Paladin":                    LINK_SKILLS.invincibleBelief,
+  "Dark Knight":                LINK_SKILLS.invincibleBelief,
+  "Arch Mage (Fire/Poison)":    LINK_SKILLS.empiricalKnowledge,
+  "Arch Mage (Ice/Lightning)":  LINK_SKILLS.empiricalKnowledge,
+  "Bishop":                     LINK_SKILLS.empiricalKnowledge,
+  "Bow Master":                 LINK_SKILLS.adventurersCuriosity,
+  "Marksman":                   LINK_SKILLS.adventurersCuriosity,
+  "Pathfinder":                 LINK_SKILLS.adventurersCuriosity,
+  "Night Lord":                 LINK_SKILLS.thiefsCunning,
+  "Shadower":                   LINK_SKILLS.thiefsCunning,
+  "Dual Blade":                 LINK_SKILLS.thiefsCunning,
+  "Corsair":                    LINK_SKILLS.pirateBlesssing,
+  "Cannoneer":                  LINK_SKILLS.pirateBlesssing,
+  "Buccaneer":                  LINK_SKILLS.pirateBlesssing,
+  "Dawn Warrior":               LINK_SKILLS.cygnusBlessing,
+  "Blaze Wizard":               LINK_SKILLS.cygnusBlessing,
+  "Wind Archer":                LINK_SKILLS.cygnusBlessing,
+  "Night Walker":               LINK_SKILLS.cygnusBlessing,
+  "Thunder Breaker":            LINK_SKILLS.cygnusBlessing,
+  "Mihile":                     LINK_SKILLS.knightsWatch,
+  "Aran":                       LINK_SKILLS.comboKillBlessing,
+  "Evan":                       LINK_SKILLS.runePersistence,
+  "Mercedes":                   LINK_SKILLS.elvenBlessing,
+  "Phantom":                    LINK_SKILLS.phantomInstinct,
+  "Luminous":                   LINK_SKILLS.lightWash,
+  "Shade":                      LINK_SKILLS.closeCall,
+  "Battle Mage":                LINK_SKILLS.spiritOfFreedom,
+  "Wild Hunter":                LINK_SKILLS.spiritOfFreedom,
+  "Mechanic":                   LINK_SKILLS.spiritOfFreedom,
+  "Blaster":                    LINK_SKILLS.spiritOfFreedom,
+  "Xenon":                      LINK_SKILLS.hybridLogic,
+  "Demon Slayer":               LINK_SKILLS.furyUnleashed,
+  "Demon Avenger":              LINK_SKILLS.wildRage,
+  "Kaiser":                     LINK_SKILLS.ironWill,
+  "Angelic Buster":             LINK_SKILLS.termsAndConditions,
+  "Cadena":                     LINK_SKILLS.unfairAdvantage,
+  "Kain":                       LINK_SKILLS.timeToComplete,
+  "Illium":                     LINK_SKILLS.tideOfBattle,
+  "Ark":                        LINK_SKILLS.solus,
+  "Adele":                      LINK_SKILLS.nobleFire,
+  "Khali":                      LINK_SKILLS.innateGift,
+  "Hoyoung":                    LINK_SKILLS.bravado,
+  "Lara":                       LINK_SKILLS.naturesFriend,
+  "Ren":                        LINK_SKILLS.groundedBody,
+  "Zero":                       LINK_SKILLS.rhinnesBlessing,
+  "Kinesis":                    LINK_SKILLS.judgment,
+  "Hayato":                     LINK_SKILLS.moonlitBladeLearnings,
+  "Kanna":                      LINK_SKILLS.elementalism,
+  "Lynn":                       LINK_SKILLS.focusSpirit,
+  "Mo Xuan":                    LINK_SKILLS.qiCultivation,
+  "Sia Astelle":                LINK_SKILLS.treeOfStars,
+};
+
+const RAW_CLASSES: Omit<ClassEntry, "slug" | "portrait" | "linkSkillName" | "linkSkillIcon">[] = [
   // ── Explorers ──
   { name: "Hero", region: "Explorers", summary: "Warrior who wields greatswords with powerful combo attacks.", difficulty: "Easy", link: "Invincible Belief: Restores Max HP every 1s for 3s. [Lv1: 20% HP, CD 410s | Lv2: 23%, CD 370s | Lv3: 26%, CD 330s | Lv4: 29%, CD 290s | Lv5: 32%, CD 250s | Lv6: 35%, CD 210s | Lv7: 38%, CD 170s | Lv8: 41%, CD 130s | Lv9: 44%, CD 90s]", legion: "STR +10/20/40/80/100" },
   { name: "Paladin", region: "Explorers", summary: "Holy warrior with elemental charges and high survivability.", difficulty: "Easy", link: "Invincible Belief: Restores Max HP every 1s for 3s. [Lv1: 20% HP, CD 410s | Lv2: 23%, CD 370s | Lv3: 26%, CD 330s | Lv4: 29%, CD 290s | Lv5: 32%, CD 250s | Lv6: 35%, CD 210s | Lv7: 38%, CD 170s | Lv8: 41%, CD 130s | Lv9: 44%, CD 90s]", legion: "STR +10/20/40/80/100" },
@@ -142,6 +247,7 @@ export const CLASSES: ClassEntry[] = RAW_CLASSES.map((cls) => ({
   ...cls,
   slug: classSlug(cls.name),
   portrait: classPortraitUrl(cls.name),
+  ...(LINK_SKILL_MAP[cls.name] ?? { linkSkillName: cls.name, linkSkillIcon: "" }),
 }));
 
 export function findClassBySlug(slug: string): ClassEntry | undefined {

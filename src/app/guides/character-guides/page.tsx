@@ -11,6 +11,7 @@ import Link from "next/link";
 import AppShell from "../../../components/AppShell";
 import type { AppTheme } from "../../../components/themes";
 import { CLASSES, CLASS_REGIONS, DIFFICULTY_COLORS, type ClassEntry } from "./classData";
+import { WikiAttribution } from "../../../components/WikiAttribution";
 
 /* ── Class card ───────────────────────────────────────────────── */
 
@@ -258,6 +259,18 @@ function CharacterGuidesContent({ theme }: { theme: AppTheme }) {
                 </div>
               </div>
             ))}
+          </div>
+
+          <div style={{ marginTop: "2rem" }}>
+            <WikiAttribution
+              theme={theme}
+              sources={[
+                {
+                  label: "Nexon",
+                  href: "https://maplestory.nexon.net",
+                },
+              ]}
+            />
           </div>
         </div>
       </div>

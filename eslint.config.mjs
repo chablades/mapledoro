@@ -6,7 +6,7 @@ const config = [
   ...nextVitals,
   ...nextTypescript,
   sonarjs.configs.recommended,
-  { ignores: [".next/**", "out/**", "build/**", "next-env.d.ts"] },
+  { ignores: [".next/**", "out/**", "build/**", "next-env.d.ts", "scripts/**"] },
   {
     rules: {
       "sonarjs/todo-tag": "off",

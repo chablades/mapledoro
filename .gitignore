@@ -12,4 +12,5 @@ Thumbs.db
 next-env.d.ts
 data/
 public/cache/
+.cache/
 .claude/settings.local.json
