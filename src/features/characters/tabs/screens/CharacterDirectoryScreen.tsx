@@ -34,15 +34,27 @@ function DirectoryCharacterAvatar({ character }: { character: StoredCharacterRec
   );
 }
 
+function formatFetchedAt(fetchedAt: number): string {
+  return new Date(fetchedAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+}
+
+function isCharacterStale(expiresAt: number): boolean {
+  return Date.now() > expiresAt;
+}
+
 interface DirectoryCharacterCardProps {
   character: StoredCharacterRecord;
   showWorld: boolean;
   isUiLocked: boolean;
   theme: AppTheme;
+  refreshingKeys: ReadonlySet<string>;
   onOpen: (character: StoredCharacterRecord) => void;
 }
 
-function DirectoryCharacterCard({ character, showWorld, isUiLocked, theme, onOpen }: DirectoryCharacterCardProps) {
+function DirectoryCharacterCard({ character, showWorld, isUiLocked, theme, refreshingKeys, onOpen }: DirectoryCharacterCardProps) {
+  const key = toCharacterKey(character);
+  const isRefreshing = refreshingKeys.has(key);
+  const stale = !isRefreshing && isCharacterStale(character.expiresAt);
   return (
     <div
       style={{
@@ -59,6 +71,7 @@ function DirectoryCharacterCard({ character, showWorld, isUiLocked, theme, onOpe
         type="button"
         disabled={isUiLocked}
         onClick={() => onOpen(character)}
+        title={`Last updated: ${formatFetchedAt(character.fetchedAt)}`}
         style={{
           display: "grid",
           placeItems: "center",
@@ -77,6 +90,8 @@ function DirectoryCharacterCard({ character, showWorld, isUiLocked, theme, onOpe
         />
         <span style={{ fontSize: "0.78rem", fontWeight: 800, lineHeight: 1.15, color: theme.text, textAlign: "center", maxWidth: "100%", whiteSpace: "nowrap" }}>
           {character.characterName}
+          {isRefreshing && <span aria-label="Refreshing" className="char-refresh-spin" style={{ color: theme.muted, marginLeft: "0.2rem" }}>↻</span>}
+          {stale && <span aria-label="Data outdated" style={{ color: "#d97706", marginLeft: "0.2rem" }}>⚠</span>}
         </span>
         <span style={{ fontSize: "0.72rem", fontWeight: 700, lineHeight: 1.1, color: theme.muted, textAlign: "center" }}>
           Lv {character.level}
@@ -188,6 +203,7 @@ interface DirectoryRoleViewProps {
   maxChampions: number;
   onOpen: (character: StoredCharacterRecord) => void;
   onAddCharacter: () => void;
+  refreshingKeys: ReadonlySet<string>;
 }
 
 function DirectoryRoleView({
@@ -195,9 +211,9 @@ function DirectoryRoleView({
   hasChampionSection, isMainAlsoChampion, mainCharacter,
   championCharacters, championCharactersForDirectory, otherCharacters,
   sortedCharacters, muleCapacity, canAddCharacter, maxChampions,
-  onOpen, onAddCharacter,
+  onOpen, onAddCharacter, refreshingKeys,
 }: DirectoryRoleViewProps) {
-  const cardProps = { isUiLocked, theme, showWorld: false, onOpen };
+  const cardProps = { isUiLocked, theme, showWorld: false, onOpen, refreshingKeys };
   const rowStyle = { display: "flex", flexWrap: "wrap" as const, justifyContent: "flex-start", alignItems: "flex-start", gap: "0.6rem", width: "100%" };
 
   return (
@@ -292,10 +308,11 @@ interface DirectoryWorldViewProps {
   sortedCharacters: StoredCharacterRecord[];
   shouldShow: boolean;
   directoryRevealPhase: number;
+  refreshingKeys: ReadonlySet<string>;
   onOpen: (character: StoredCharacterRecord) => void;
 }
 
-function DirectoryWorldView({ theme, isUiLocked, worldIds, sortedCharacters, shouldShow, directoryRevealPhase, onOpen }: DirectoryWorldViewProps) {
+function DirectoryWorldView({ theme, isUiLocked, worldIds, sortedCharacters, shouldShow, directoryRevealPhase, refreshingKeys, onOpen }: DirectoryWorldViewProps) {
   return (
     <>
       {worldIds.map((worldId, i) => {
@@ -309,7 +326,7 @@ function DirectoryWorldView({ theme, isUiLocked, worldIds, sortedCharacters, sho
             </p>
             <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "flex-start", alignItems: "flex-start", gap: "0.6rem", width: "100%" }}>
               {worldChars.map((c) => (
-                <DirectoryCharacterCard key={toCharacterKey(c)} character={c} showWorld={false} isUiLocked={isUiLocked} theme={theme} onOpen={onOpen} />
+                <DirectoryCharacterCard key={toCharacterKey(c)} character={c} showWorld={false} isUiLocked={isUiLocked} theme={theme} refreshingKeys={refreshingKeys} onOpen={onOpen} />
               ))}
             </div>
           </section>
@@ -388,6 +405,7 @@ export default function CharacterDirectoryScreen({
             sortedCharacters={groups.sortedCharacters}
             shouldShow={shouldShowDirectoryPanel}
             directoryRevealPhase={directoryRevealPhase}
+            refreshingKeys={directory.refreshingKeys}
             onOpen={actions.openCharacterProfile}
           />
         ) : (
@@ -406,6 +424,7 @@ export default function CharacterDirectoryScreen({
             muleCapacity={groups.muleCapacity}
             canAddCharacter={groups.canAddCharacter}
             maxChampions={directory.maxChampions}
+            refreshingKeys={directory.refreshingKeys}
             onOpen={actions.openCharacterProfile}
             onAddCharacter={actions.openCharacterSearch}
           />

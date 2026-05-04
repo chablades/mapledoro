@@ -71,6 +71,7 @@ export default function CharacterSetupFlow({ theme }: CharacterSetupFlowProps) {
       isSearching: state.isSearching,
       statusMessage: state.statusMessage,
       statusTone: state.statusTone,
+      degradedCode: state.degradedCode,
     },
     profile: {
       confirmedCharacter: confirmedStoredCharacter,
@@ -85,6 +86,12 @@ export default function CharacterSetupFlow({ theme }: CharacterSetupFlowProps) {
       isCurrentChampionCharacter: state.isCurrentChampionCharacter,
       canSetCurrentChampion: state.canSetCurrentChampion,
       currentCharacterGender: state.currentCharacterGender,
+      isRefreshing: confirmedStoredCharacter
+        ? state.refreshingKeys.has(toCharacterKey(confirmedStoredCharacter))
+        : false,
+      onRefresh: confirmedStoredCharacter
+        ? () => { actions.refreshSingle(confirmedStoredCharacter); }
+        : null,
     },
   };
 
@@ -148,6 +155,7 @@ export default function CharacterSetupFlow({ theme }: CharacterSetupFlowProps) {
       worldIds: state.worldIds,
       maxCharacters: MAX_ACCOUNT_CHARACTERS,
       maxChampions: MAX_CHAMPIONS,
+      refreshingKeys: state.refreshingKeys,
     },
   };
 

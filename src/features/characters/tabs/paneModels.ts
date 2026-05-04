@@ -27,6 +27,7 @@ export interface SearchPaneModel {
     isSearching: boolean;
     statusMessage: string;
     statusTone: "neutral" | "error";
+    degradedCode: string | null;
   };
   profile: {
     // confirmedCharacter is StoredCharacterRecord once the character is in the roster.
@@ -40,6 +41,8 @@ export interface SearchPaneModel {
     isCurrentChampionCharacter: boolean;
     canSetCurrentChampion: boolean;
     currentCharacterGender: "male" | "female" | null;
+    isRefreshing: boolean;
+    onRefresh: (() => void) | null;
   };
 }
 
@@ -102,6 +105,7 @@ export interface PreviewPaneModel {
     worldIds: number[];
     maxCharacters: number;
     maxChampions: number;
+    refreshingKeys: ReadonlySet<string>;
   };
 }
 

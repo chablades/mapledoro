@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useAutoRefresh } from "./useAutoRefresh";
 import {
   CHARACTER_NAME_INPUT_FILTER_REGEX,
   MAX_QUERY_LENGTH,
@@ -124,6 +125,7 @@ export function useCharacterSetupController() {
   const [isAddingCharacter, setIsAddingCharacter] = useState(false);
   const [fastDirectoryRevealOnce, setFastDirectoryRevealOnce] = useState(false);
   const [characterRoster, setCharacterRoster] = useState<StoredCharacterRecord[]>([]);
+  const [autoRefreshQueue, setAutoRefreshQueue] = useState<StoredCharacterRecord[]>([]);
 
   // World-scoped main and champion keys
   const [mainCharacterKeyByWorld, setMainCharacterKeyByWorld] = useState<Record<string, string>>({});
@@ -140,6 +142,30 @@ export function useCharacterSetupController() {
   const lookup = useCharacterLookup({
     query,
     onFoundCharacterChange: setFoundCharacter,
+  });
+
+  const handleRefreshed = useCallback((fresh: NormalizedCharacterData) => {
+    const key = toCharacterKey(fresh);
+    setCharacterRoster((prev) => {
+      const existingIndex = prev.findIndex((c) => toCharacterKey(c) === key);
+      if (existingIndex === -1) return prev;
+      const existing = prev[existingIndex];
+      const updated = createStoredCharacterRecord({
+        character: fresh,
+        gender: existing.gender,
+        stats: existing.stats,
+        equipment: existing.equipment,
+        addedAt: existing.meta.addedAt,
+      });
+      const next = [...prev];
+      next[existingIndex] = updated;
+      return next;
+    });
+  }, []);
+
+  const { refreshingKeys, refreshSingle } = useAutoRefresh({
+    queue: autoRefreshQueue,
+    onRefreshed: handleRefreshed,
   });
 
   const transitions = useSetupFlowTransitions();
@@ -389,6 +415,23 @@ export function useCharacterSetupController() {
       handleDraftHydration(draft, store, storedRoster, accountHasCompletedRequiredFlow);
       hasHydratedSetupDraftRef.current = true;
       setIsDraftHydrated(true);
+
+      // Compute stale main+champions for background auto-refresh
+      const now = Date.now();
+      const seen = new Set<string>();
+      const stale: StoredCharacterRecord[] = [];
+      for (const mainKey of Object.values(store.mainCharacterIdByWorld)) {
+        const char = store.charactersById[mainKey];
+        if (char && now > char.expiresAt) { seen.add(mainKey); stale.push(char); }
+      }
+      for (const champKeys of Object.values(store.championCharacterIdsByWorld)) {
+        for (const key of champKeys) {
+          if (seen.has(key)) continue;
+          const char = store.charactersById[key];
+          if (char && now > char.expiresAt) { seen.add(key); stale.push(char); }
+        }
+      }
+      if (stale.length > 0) setAutoRefreshQueue(stale);
     }, 0);
     return () => clearTimeout(hydrateTimer);
   }, [handleDraftHydration]);
@@ -836,12 +879,10 @@ export function useCharacterSetupController() {
     const key = toCharacterKey(character);
     const worldId = character.worldID;
     setChampionCharacterKeysByWorld((prev) => {
-      const current = getChampionKeysForWorld(prev, worldId);
-      if (current.includes(key)) {
-        return setChampionKeysForWorld(prev, worldId, current.filter((k) => k !== key));
-      }
-      if (current.length >= MAX_CHAMPIONS) return prev;
-      return setChampionKeysForWorld(prev, worldId, [...current, key]);
+      const cur = getChampionKeysForWorld(prev, worldId);
+      if (cur.includes(key)) return setChampionKeysForWorld(prev, worldId, cur.filter((k) => k !== key));
+      if (cur.length >= MAX_CHAMPIONS) return prev;
+      return setChampionKeysForWorld(prev, worldId, [...cur, key]);
     });
   }, []);
 
@@ -1076,6 +1117,7 @@ export function useCharacterSetupController() {
   ).sort((a, b) => a - b);
 
   const state = {
+    refreshingKeys,
     query,
     foundCharacter,
     previewCardReady,
@@ -1117,6 +1159,7 @@ export function useCharacterSetupController() {
     isSearching: lookup.isSearching,
     statusMessage: lookup.statusMessage,
     statusTone: lookup.statusTone,
+    degradedCode: lookup.degradedCode,
   };
 
   return {
@@ -1147,6 +1190,7 @@ export function useCharacterSetupController() {
       removeCurrentCharacter,
       openAddCharacterSearch,
       backFromAddCharacter,
+      refreshSingle,
       handleQueryInput,
       handleSearchSubmit,
       startOptionalSetupFlow: (flowId: SetupFlowId) => {
