@@ -16,6 +16,7 @@ import {
   type SkillCostSummary,
 } from "./useHexaSkillsState";
 import { fmtNum, SkillSection, MasterySection } from "./hexa-ui";
+import { toolStyles } from "../tool-styles";
 
 // ── Class Selector ───────────────────────────────────────────────────────────
 
@@ -261,25 +262,14 @@ export default function HexaSkillsWorkspace({ theme }: { theme: AppTheme }) {
     return { grand, maxGrand, progressPct };
   }, [includeJanus, costs]);
 
-  const sectionPanel: React.CSSProperties = {
-    background: theme.panel,
-    border: `1px solid ${theme.border}`,
-    padding: "1.25rem",
-    marginBottom: "1.25rem",
-  };
+  const styles = toolStyles(theme);
+  const { sectionPanel, inputStyle } = styles;
 
   const halfPanel: React.CSSProperties = {
     ...sectionPanel,
     flex: "1 1 45%",
     minWidth: "280px",
     marginBottom: 0,
-  };
-
-  const inputStyle: React.CSSProperties = {
-    background: theme.timerBg,
-    border: `1px solid ${theme.border}`,
-    color: theme.text,
-    fontSize: "0.82rem",
   };
 
   if (!mounted) return null;
@@ -290,7 +280,7 @@ export default function HexaSkillsWorkspace({ theme }: { theme: AppTheme }) {
         <ToolHeader
           theme={theme}
           title="HEXA Skill Tracker"
-          description="Track Sol Erda and Sol Erda Fragment costs to max your HEXA skills."
+          description="Select your class, set each skill's current level, and see the total Sol Erda and Fragments needed to max."
         />
 
         <div style={{ display: "flex", gap: "1.25rem", flexWrap: "wrap", marginBottom: "1.25rem" }}>

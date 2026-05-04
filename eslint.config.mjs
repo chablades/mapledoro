@@ -10,6 +10,7 @@ const config = [
   {
     rules: {
       "sonarjs/todo-tag": "off",
+      "@next/next/no-img-element": "off",
     },
   },
 ];

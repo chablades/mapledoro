@@ -6,24 +6,16 @@ import {
   useRef,
   useEffect,
   useCallback,
-  useSyncExternalStore,
 } from "react";
 import type { AppTheme } from "../../../components/themes";
 import { ToolHeader } from "../../../components/ToolHeader";
 import { WikiAttribution } from "../../../components/WikiAttribution";
 import {
-  readCharactersStore,
-  selectCharactersList,
-  type StoredCharacterRecord,
-} from "../../characters/model/charactersStore";
-import {
-  computeExpectedCosts,
   formatMeso,
   formatMesoFull,
-  type StarForceOpts,
-  type MvpTier,
 } from "../star-force/star-force-data";
-import { Toggle, PillGroup } from "../shared-ui";
+import { Toggle, PillGroup, MVP_OPTIONS } from "../shared-ui";
+import { toolStyles } from "../tool-styles";
 import {
   EVENT_ITEMS,
   EVENT_ITEMS_BY_ID,
@@ -32,84 +24,7 @@ import {
   categoryLabel,
   type EventItem,
 } from "./event-items";
-
-// ── Types ────────────────────────────────────────────────────────────────────
-
-interface PlannerEntry {
-  id: string;
-  characterName: string;
-  itemId: string;
-  currentStar: number;
-  targetStar: number;
-  replacementCost: number;
-  safeguard: boolean;
-}
-
-interface SavedState {
-  costDiscount: boolean;
-  boomReduction: boolean;
-  starCatch: boolean;
-  mvp: MvpTier;
-  entries: PlannerEntry[];
-}
-
-interface EntryCost {
-  cost: number;
-  booms: number;
-}
-
-// ── Storage ──────────────────────────────────────────────────────────────────
-
-const STORAGE_KEY = "event-planner-v1";
-
-function loadState(): SavedState | null {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    return JSON.parse(raw);
-  } catch {
-    return null;
-  }
-}
-
-function persistState(state: SavedState) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-}
-
-function defaultState(): SavedState {
-  return {
-    costDiscount: false,
-    boomReduction: false,
-    starCatch: true,
-    mvp: "none",
-    entries: [],
-  };
-}
-
-// ── Cost Calculation ─────────────────────────────────────────────────────────
-
-function computeEntryCost(entry: PlannerEntry, settings: SavedState): EntryCost {
-  const item = EVENT_ITEMS_BY_ID.get(entry.itemId);
-  if (!item || entry.currentStar >= entry.targetStar) return { cost: 0, booms: 0 };
-
-  const opts: StarForceOpts = {
-    level: item.level,
-    startStar: entry.currentStar,
-    targetStar: entry.targetStar,
-    replacementCost: entry.replacementCost,
-    costDiscount: settings.costDiscount,
-    boomReduction: settings.boomReduction,
-    starCatch: settings.starCatch,
-    safeguard: entry.safeguard,
-    mvp: settings.mvp,
-  };
-
-  const results = computeExpectedCosts(opts);
-  return {
-    cost: results.reduce((s, r) => s + r.expectedCost, 0),
-    booms: results.reduce((s, r) => s + r.expectedBooms, 0),
-  };
-}
+import { useEventPlannerState, type PlannerEntry, type EntryCost } from "./useEventPlannerState";
 
 // ── Shared sub-components ────────────────────────────────────────────────────
 
@@ -148,7 +63,6 @@ function ItemIcon({
   }
 
   return (
-    // eslint-disable-next-line @next/next/no-img-element
     <img
       src={item.icon}
       alt={item.name}
@@ -210,8 +124,6 @@ function ItemSelector({
 
   const selectedItem = value ? EVENT_ITEMS_BY_ID.get(value) ?? null : null;
 
-  /* Ref select is a hidden native <select> used purely to derive the
-     exact computed height so the custom input matches pixel-for-pixel. */
   const refSelect = useRef<HTMLSelectElement>(null);
   const [selectH, setSelectH] = useState<number | undefined>(undefined);
   useEffect(() => {
@@ -376,106 +288,26 @@ function ItemSelector({
   );
 }
 
-// ── MVP options ──────────────────────────────────────────────────────────────
-
-const MVP_OPTIONS: { value: MvpTier; label: string }[] = [
-  { value: "none", label: "None" },
-  { value: "silver", label: "Silver" },
-  { value: "gold", label: "Gold" },
-  { value: "diamond", label: "Diamond" },
-];
-
 // ── Main workspace ───────────────────────────────────────────────────────────
 
 export default function EventPlannerWorkspace({ theme }: { theme: AppTheme }) {
-  const mounted = useSyncExternalStore(
-    () => () => undefined,
-    () => true,
-    () => false,
-  );
+  const {
+    mounted,
+    characters,
+    state,
+    setCostDiscount,
+    setBoomReduction,
+    setStarCatch,
+    setMvp,
+    addEntry,
+    removeEntry,
+    toggleSafeguard,
+    clearEntries,
+    entryCosts,
+    grandTotal,
+  } = useEventPlannerState();
 
-  const characters: StoredCharacterRecord[] = useMemo(
-    () => (mounted ? selectCharactersList(readCharactersStore()) : []),
-    [mounted],
-  );
-
-  // ── Persisted state ──
-
-  const [state, setState] = useState<SavedState>(() => {
-    if (typeof window === "undefined") return defaultState();
-    return loadState() ?? defaultState();
-  });
-
-  useEffect(() => {
-    persistState(state);
-  }, [state]);
-
-  // ── Settings callbacks ──
-
-  const setCostDiscount = useCallback(
-    (v: boolean) => setState((s) => ({ ...s, costDiscount: v })),
-    [],
-  );
-  const setBoomReduction = useCallback(
-    (v: boolean) => setState((s) => ({ ...s, boomReduction: v })),
-    [],
-  );
-  const setStarCatch = useCallback(
-    (v: boolean) => setState((s) => ({ ...s, starCatch: v })),
-    [],
-  );
-  const setMvp = useCallback(
-    (v: MvpTier) => setState((s) => ({ ...s, mvp: v })),
-    [],
-  );
-
-  // ── Entry management ──
-
-  const addEntry = useCallback(
-    (entry: Omit<PlannerEntry, "id">) => {
-      setState((s) => ({
-        ...s,
-        entries: [...s.entries, { ...entry, id: crypto.randomUUID() }],
-      }));
-    },
-    [],
-  );
-
-  const removeEntry = useCallback((id: string) => {
-    setState((s) => ({
-      ...s,
-      entries: s.entries.filter((e) => e.id !== id),
-    }));
-  }, []);
-
-  const toggleSafeguard = useCallback((id: string) => {
-    setState((s) => ({
-      ...s,
-      entries: s.entries.map((e) =>
-        e.id === id ? { ...e, safeguard: !e.safeguard } : e,
-      ),
-    }));
-  }, []);
-
-  const clearEntries = useCallback(() => {
-    setState((s) => ({ ...s, entries: [] }));
-  }, []);
-
-  // ── Cost computation ──
-
-  const entryCosts = useMemo(
-    () => state.entries.map((e) => computeEntryCost(e, state)),
-    [state],
-  );
-
-  const grandTotal = useMemo(
-    () =>
-      entryCosts.reduce(
-        (acc, c) => ({ cost: acc.cost + c.cost, booms: acc.booms + c.booms }),
-        { cost: 0, booms: 0 },
-      ),
-    [entryCosts],
-  );
+  const styles = toolStyles(theme);
 
   // ── Add-item form state ──
 
@@ -522,26 +354,8 @@ export default function EventPlannerWorkspace({ theme }: { theme: AppTheme }) {
 
   // ── Styles ──
 
-  const inputStyle: React.CSSProperties = {
-    background: theme.timerBg,
-    border: `1px solid ${theme.border}`,
-    color: theme.text,
-    fontSize: "0.82rem",
-    fontWeight: 700,
-    borderRadius: "8px",
-    padding: "7px 10px",
-  };
-
-  const selectStyle: React.CSSProperties = {
-    ...inputStyle,
-    cursor: "pointer",
-  };
-
   const panelStyle: React.CSSProperties = {
-    background: theme.panel,
-    border: `1px solid ${theme.border}`,
-    padding: "1.25rem",
-    marginBottom: "1.25rem",
+    ...styles.sectionPanel,
     borderRadius: "14px",
   };
 
@@ -561,7 +375,7 @@ export default function EventPlannerWorkspace({ theme }: { theme: AppTheme }) {
         <ToolHeader
           theme={theme}
           title="Event Planner"
-          description="Plan your star force spending for the next event. Estimates total meso cost and spare items needed."
+          description="Toggle your active events and options, then add items with their current and target stars to plan your total spending."
         />
 
         {/* ── Event Settings ────────────────────────────────────────────── */}
@@ -676,7 +490,7 @@ export default function EventPlannerWorkspace({ theme }: { theme: AppTheme }) {
                   className="tool-input"
                   value={formChar}
                   onChange={(e) => setFormChar(e.target.value)}
-                  style={{ ...selectStyle, flex: 1 }}
+                  style={{ ...styles.selectStyle, flex: 1 }}
                 >
                   <option value="">Unspecified</option>
                   {characters.map((c) => (
@@ -693,7 +507,7 @@ export default function EventPlannerWorkspace({ theme }: { theme: AppTheme }) {
                     value={formCharCustom}
                     onChange={(e) => setFormCharCustom(e.target.value)}
                     placeholder="Character name"
-                    style={{ ...inputStyle, flex: 1 }}
+                    style={{ ...styles.inputStyle, flex: 1 }}
                   />
                 )}
               </div>
@@ -711,7 +525,7 @@ export default function EventPlannerWorkspace({ theme }: { theme: AppTheme }) {
                 theme={theme}
                 value={formItem}
                 onChange={setFormItem}
-                inputStyle={inputStyle}
+                inputStyle={styles.inputStyle}
               />
             </div>
 
@@ -728,7 +542,7 @@ export default function EventPlannerWorkspace({ theme }: { theme: AppTheme }) {
                   className="tool-input"
                   value={formCurrentStar}
                   onChange={(e) => setFormCurrentStar(Number(e.target.value))}
-                  style={{ ...selectStyle, width: 80 }}
+                  style={{ ...styles.selectStyle, width: 80 }}
                 >
                   {Array.from({ length: itemMaxStar }, (_, i) => i).map((s) => (
                     <option key={s} value={s}>
@@ -743,7 +557,7 @@ export default function EventPlannerWorkspace({ theme }: { theme: AppTheme }) {
                   className="tool-input"
                   value={formTargetStar}
                   onChange={(e) => setFormTargetStar(Number(e.target.value))}
-                  style={{ ...selectStyle, width: 80 }}
+                  style={{ ...styles.selectStyle, width: 80 }}
                 >
                   {Array.from({ length: itemMaxStar }, (_, i) => i + 1).map((s) => (
                     <option key={s} value={s}>
@@ -772,7 +586,7 @@ export default function EventPlannerWorkspace({ theme }: { theme: AppTheme }) {
                     setFormReplaceCost(Math.max(0, Number(e.target.value) || 0))
                   }
                   placeholder="0"
-                  style={{ ...inputStyle, width: 120 }}
+                  style={{ ...styles.inputStyle, width: 120 }}
                 />
                 <Toggle
                   theme={theme}
@@ -1096,7 +910,7 @@ export default function EventPlannerWorkspace({ theme }: { theme: AppTheme }) {
                               flexShrink: 0,
                             }}
                           >
-                            {"\u00d7"}
+                            {"×"}
                           </div>
                         </div>
                       </div>

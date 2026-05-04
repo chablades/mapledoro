@@ -6,6 +6,7 @@ import {
   selectCharactersList,
   type StoredCharacterRecord,
 } from "../../characters/model/charactersStore";
+import { useApplyCharacterQueryParam } from "../useApplyCharacterQueryParam";
 import {
   ORIGIN_COSTS,
   ENHANCEMENT_COSTS,
@@ -253,6 +254,8 @@ export function useHexaSkillsState() {
     },
     [currentStorageKey, state, characters],
   );
+
+  useApplyCharacterQueryParam({ mounted, characters, handleCharChange });
 
   // Class switching
   const setClassName = useCallback((name: string | null) => {

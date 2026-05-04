@@ -6,6 +6,7 @@ import {
   selectCharactersList,
   type StoredCharacterRecord,
 } from "../../characters/model/charactersStore";
+import { useApplyCharacterQueryParam } from "../useApplyCharacterQueryParam";
 import {
   type LiberationType,
   type LiberationBoss,
@@ -96,11 +97,17 @@ export function formatDate(dateStr: string): string {
     year: "numeric",
     month: "long",
     day: "numeric",
-    timeZone: "UTC",
   });
 }
 
 // -- Calculation --------------------------------------------------------------
+
+export interface QuestMilestone {
+  questIdx: number;
+  questLabel: string;
+  completionDate: string;
+  weeksFromStart: number;
+}
 
 export interface CalcResult {
   weeklyTraces: number;
@@ -110,6 +117,7 @@ export interface CalcResult {
   weeksToComplete: number;
   completionDate: string;
   breakdown: { bossName: string; traces: number; reset: string }[];
+  milestones: QuestMilestone[];
 }
 
 function accumulateTraces(
@@ -141,25 +149,45 @@ function accumulateTraces(
   return { weeklyTraces, monthlyTraces, clearedWeeklyTraces, breakdown };
 }
 
-// Weekly boss reset is Thursday 00:00 UTC; the last day of each reset cycle
-// in UTC is Wednesday. Liberation completes on the day the final traces arrive:
-// a Wednesday (weekly clears) or the 1st of a month (Black Mage monthly clear).
-function simulateCompletion(
+// Cumulative traces-from-start needed to finish each remaining quest.
+function buildQuestThresholds(
+  quests: LiberationQuest[],
+  questIdx: number,
+  currentTraces: number,
+): { questIdx: number; questLabel: string; tracesFromStart: number }[] {
+  const thresholds: { questIdx: number; questLabel: string; tracesFromStart: number }[] = [];
+  let acc = 0;
+  for (let i = questIdx; i < quests.length; i++) {
+    const base = quests[i].required;
+    const needed = i === questIdx ? Math.max(0, base - currentTraces) : base;
+    acc += needed;
+    thresholds.push({ questIdx: i, questLabel: quests[i].label, tracesFromStart: acc });
+  }
+  return thresholds;
+}
+
+function weeksFromStart(start: Date, eventDate: Date): number {
+  const diffDays = Math.round((eventDate.getTime() - start.getTime()) / 86400000);
+  return Math.max(0, Math.ceil(diffDays / 7));
+}
+
+interface SimSchedule {
+  start: Date;
+  nextWed: Date;
+  next1st: Date;
+  maxDate: Date;
+  firstWeekWeekly: number;
+  weeklyTraces: number;
+  monthlyTraces: number;
+}
+
+function buildSchedule(
   startDate: string,
   weeklyTraces: number,
   monthlyTraces: number,
   clearedWeeklyTraces: number,
-  totalRemaining: number,
-): { completionDate: string; weeksToComplete: number } {
-  if (totalRemaining <= 0) {
-    return { completionDate: startDate, weeksToComplete: 0 };
-  }
-  if (weeklyTraces <= 0 && monthlyTraces <= 0) {
-    return { completionDate: "Never", weeksToComplete: Infinity };
-  }
-
+): SimSchedule {
   const start = new Date(startDate + "T00:00:00Z");
-
   const nextWed = new Date(start);
   const daysToWed = (3 - start.getUTCDay() + 7) % 7;
   nextWed.setUTCDate(nextWed.getUTCDate() + daysToWed);
@@ -169,35 +197,103 @@ function simulateCompletion(
     next1st.setUTCMonth(next1st.getUTCMonth() + 1);
   }
 
-  const firstWeekWeekly = Math.max(0, weeklyTraces - clearedWeeklyTraces);
   const maxDate = new Date(start);
   maxDate.setUTCFullYear(maxDate.getUTCFullYear() + 10);
 
-  let remaining = totalRemaining;
-  let wedCount = 0;
-  let lastEventDate = new Date(start);
+  return {
+    start,
+    nextWed,
+    next1st,
+    maxDate,
+    firstWeekWeekly: Math.max(0, weeklyTraces - clearedWeeklyTraces),
+    weeklyTraces,
+    monthlyTraces,
+  };
+}
 
-  while (remaining > 0) {
+// Walks the weekly/monthly reset schedule, emitting a milestone each time
+// cumulative gained traces cross a quest threshold.
+function runSimulation(
+  schedule: SimSchedule,
+  thresholds: { questIdx: number; questLabel: string; tracesFromStart: number }[],
+): { milestones: QuestMilestone[]; timedOut: boolean } {
+  const { start, nextWed, next1st, maxDate, firstWeekWeekly, weeklyTraces, monthlyTraces } =
+    schedule;
+  const milestones: QuestMilestone[] = [];
+  let gained = 0;
+  let wedCount = 0;
+  let mIdx = 0;
+
+  while (mIdx < thresholds.length) {
     const wedFirst = nextWed.getTime() <= next1st.getTime();
     const eventDate = new Date(wedFirst ? nextWed : next1st);
     if (eventDate.getTime() > maxDate.getTime()) {
-      return { completionDate: "Never", weeksToComplete: Infinity };
+      return { milestones, timedOut: true };
     }
     if (wedFirst) {
-      const gained = wedCount === 0 ? firstWeekWeekly : weeklyTraces;
-      remaining -= gained;
+      gained += wedCount === 0 ? firstWeekWeekly : weeklyTraces;
       nextWed.setUTCDate(nextWed.getUTCDate() + 7);
       wedCount++;
     } else {
-      remaining -= monthlyTraces;
+      gained += monthlyTraces;
       next1st.setUTCMonth(next1st.getUTCMonth() + 1);
     }
-    lastEventDate = eventDate;
+
+    while (mIdx < thresholds.length && gained >= thresholds[mIdx].tracesFromStart) {
+      milestones.push({
+        questIdx: thresholds[mIdx].questIdx,
+        questLabel: thresholds[mIdx].questLabel,
+        completionDate: formatIsoDate(eventDate),
+        weeksFromStart: weeksFromStart(start, eventDate),
+      });
+      mIdx++;
+    }
   }
 
-  const diffDays = Math.round((lastEventDate.getTime() - start.getTime()) / 86400000);
-  const weeksToComplete = Math.max(0, Math.ceil(diffDays / 7));
-  return { completionDate: formatIsoDate(lastEventDate), weeksToComplete };
+  return { milestones, timedOut: false };
+}
+
+// Weekly boss reset is Thursday 00:00 UTC; the last day of each reset cycle
+// in UTC is Wednesday. Liberation completes on the day the final traces arrive:
+// a Wednesday (weekly clears) or the 1st of a month (Black Mage monthly clear).
+function simulateCompletion(
+  startDate: string,
+  weeklyTraces: number,
+  monthlyTraces: number,
+  clearedWeeklyTraces: number,
+  quests: LiberationQuest[],
+  questIdx: number,
+  currentTraces: number,
+): { completionDate: string; weeksToComplete: number; milestones: QuestMilestone[] } {
+  const thresholds = buildQuestThresholds(quests, questIdx, currentTraces);
+  const totalRemaining = thresholds[thresholds.length - 1]?.tracesFromStart ?? 0;
+
+  if (totalRemaining <= 0) {
+    const milestones = thresholds.map((t) => ({
+      questIdx: t.questIdx,
+      questLabel: t.questLabel,
+      completionDate: startDate,
+      weeksFromStart: 0,
+    }));
+    return { completionDate: startDate, weeksToComplete: 0, milestones };
+  }
+  if (weeklyTraces <= 0 && monthlyTraces <= 0) {
+    return { completionDate: "Never", weeksToComplete: Infinity, milestones: [] };
+  }
+
+  const schedule = buildSchedule(startDate, weeklyTraces, monthlyTraces, clearedWeeklyTraces);
+  const { milestones, timedOut } = runSimulation(schedule, thresholds);
+
+  if (timedOut) {
+    return { completionDate: "Never", weeksToComplete: Infinity, milestones };
+  }
+
+  const final = milestones[milestones.length - 1];
+  return {
+    completionDate: final.completionDate,
+    weeksToComplete: final.weeksFromStart,
+    milestones,
+  };
 }
 
 function calculate(
@@ -220,12 +316,14 @@ function calculate(
   totalRemaining = Math.max(0, totalRemaining - currentTraces);
 
   const effectiveWeekly = weeklyTraces + monthlyTraces / 4.33;
-  const { completionDate, weeksToComplete } = simulateCompletion(
+  const { completionDate, weeksToComplete, milestones } = simulateCompletion(
     startDate,
     weeklyTraces,
     monthlyTraces,
     clearedWeeklyTraces,
-    totalRemaining,
+    quests,
+    questIdx,
+    currentTraces,
   );
 
   return {
@@ -236,6 +334,7 @@ function calculate(
     weeksToComplete,
     completionDate,
     breakdown,
+    milestones,
   };
 }
 
@@ -320,13 +419,18 @@ export function useLiberationState() {
     saveStateTo(currentStorageKey, formToSaved(form));
   }, [currentStorageKey, form]);
 
-  const handleCharChange = (charName: string | null) => {
-    saveStateTo(currentStorageKey, formToSaved(form));
-    const newKey = storageKeyFor(charName);
-    const saved = loadStateFrom(newKey);
-    setForm(saved ? savedToForm(saved) : defaultFormState());
-    setSelectedCharName(charName);
-  };
+  const handleCharChange = useCallback(
+    (charName: string | null) => {
+      saveStateTo(currentStorageKey, formToSaved(form));
+      const newKey = storageKeyFor(charName);
+      const saved = loadStateFrom(newKey);
+      setForm(saved ? savedToForm(saved) : defaultFormState());
+      setSelectedCharName(charName);
+    },
+    [currentStorageKey, form],
+  );
+
+  useApplyCharacterQueryParam({ mounted, characters, handleCharChange });
 
   const bosses = type === "genesis" ? GENESIS_BOSSES : DESTINY_BOSSES;
   const quests = type === "genesis" ? GENESIS_QUESTS : DESTINY_QUESTS;
@@ -415,6 +519,7 @@ export function useLiberationState() {
   const progressPct = Math.min(100, (tracesCompleted / totalNeeded) * 100);
 
   return {
+    mounted,
     characters,
     selectedCharName,
     handleCharChange,

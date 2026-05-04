@@ -125,7 +125,6 @@ function CharacterCard({
         }}
       >
         {char.imageURL ? (
-          // eslint-disable-next-line @next/next/no-img-element
           <img
             src={char.imageURL}
             alt={char.name}
@@ -209,7 +208,6 @@ function CharacterCard({
                 padding: "1.5px 0",
               }}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={b.boss.icon}
                 alt=""
@@ -397,7 +395,6 @@ function AddNameDialog({
                       }}
                     >
                       {c.characterImgURL ? (
-                        // eslint-disable-next-line @next/next/no-img-element
                         <img
                           src={c.characterImgURL}
                           alt={c.characterName}
@@ -677,7 +674,6 @@ function BossSelectionDialog({
                         </span>
                       )}
                     </div>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={boss.icon}
                       alt=""
@@ -874,6 +870,8 @@ export default function BossCrystalsWorkspace({ theme }: { theme: AppTheme }) {
 
   // -- Render -----------------------------------------------------------------
 
+  if (!mounted) return null;
+
   return (
     <>
       <style>{`
@@ -902,8 +900,8 @@ export default function BossCrystalsWorkspace({ theme }: { theme: AppTheme }) {
         <div style={{ maxWidth: 1200, margin: "0 auto" }}>
           <ToolHeader
             theme={theme}
-            title="Boss Crystal Calculator"
-            description="Track weekly boss crystals and meso income across characters."
+            title="Boss Crystal Tracker"
+            description="Select your server type, add characters, and check off the bosses you clear each week to track your meso income."
           />
 
           {/* Controls */}

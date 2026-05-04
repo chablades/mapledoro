@@ -41,7 +41,6 @@ export function SkillIcon({ skill, theme, size = 32 }: { skill: HexaSkillDef; th
   }
 
   return (
-    // eslint-disable-next-line @next/next/no-img-element
     <img
       src={skill.icon}
       alt={skill.name}

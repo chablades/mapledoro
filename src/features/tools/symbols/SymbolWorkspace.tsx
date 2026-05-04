@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect, useCallback, useSyncExternalStore } from "react";
 import { Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -15,117 +14,28 @@ import {
 import type { AppTheme } from "../../../components/themes";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend);
-import {
-  readCharactersStore,
-  selectCharactersList,
-  type StoredCharacterRecord,
-} from "../../characters/model/charactersStore";
 import { ToolHeader } from "../../../components/ToolHeader";
 import { WikiAttribution } from "../../../components/WikiAttribution";
 import { CharacterSyncPanel } from "../../../components/CharacterSyncPanel";
 import { SegmentedToggle } from "../../../components/SegmentedToggle";
+import { toolStyles } from "../tool-styles";
 import {
   type SymbolType,
   type SymbolArea,
-  ARCANE_AREAS,
-  SACRED_AREAS,
-  ARCANE_GROWTH,
-  SACRED_GROWTH,
-  ARCANE_MAX_LEVEL,
-  SACRED_MAX_LEVEL,
-  symbolsRemaining,
-  symbolsConsumed,
-  daysToMax,
   symbolsForLevel,
 } from "./symbol-data";
-
-// -- Types --------------------------------------------------------------------
-
-interface SymbolState {
-  level: number;
-  current: number;
-  daily: number;
-  /** Arcane only — toggles the flat 120/week from weekly dungeons. */
-  weeklyEnabled: boolean;
-  /** Sacred only — whether this symbol is being tracked. */
-  enabled: boolean;
-}
-
-interface SavedState {
-  type: SymbolType;
-  symbols: Record<string, SymbolState>;
-}
-
-interface PerSymbolData {
-  area: SymbolArea;
-  state: SymbolState;
-  remaining: number;
-  days: number;
-  consumed: number;
-  levelMax: number;
-  isMaxed: boolean;
-  isTracked: boolean;
-}
-
-interface SymbolStats {
-  perSymbol: PerSymbolData[];
-  tracked: PerSymbolData[];
-  totalConsumed: number;
-  totalSymbolsNeeded: number;
-  totalForOneArea: number;
-  maxDaysVal: number;
-  overallPct: number;
-  allMaxed: boolean;
-  anyInfinite: boolean;
-  noneTracked: boolean;
-}
+import {
+  useSymbolState,
+  effectiveWeekly,
+  type SymbolState,
+  type SymbolStats,
+} from "./useSymbolState";
 
 // -- Constants ----------------------------------------------------------------
 
-const WEEKLY_SYMBOLS = 120;
 const DAILY_EVENT_BONUS = 6;
 
-// -- Storage ------------------------------------------------------------------
-
-const STORAGE_KEY = "symbols-v2";
-
-function storageKeyFor(charName: string | null): string {
-  return charName ? `${STORAGE_KEY}-${charName}` : STORAGE_KEY;
-}
-
-function loadStateFrom(key: string): SavedState | null {
-  try {
-    const raw = localStorage.getItem(key);
-    if (!raw) return null;
-    return JSON.parse(raw);
-  } catch {
-    return null;
-  }
-}
-
-function saveStateTo(key: string, state: SavedState) {
-  localStorage.setItem(key, JSON.stringify(state));
-}
-
 // -- Helpers ------------------------------------------------------------------
-
-function defaultSymbolState(area: SymbolArea, symbolType: SymbolType): SymbolState {
-  return {
-    level: 1,
-    current: 0,
-    daily: area.daily,
-    weeklyEnabled: symbolType === "arcane",
-    enabled: symbolType === "arcane",
-  };
-}
-
-function getSymbolState(
-  symbols: Record<string, SymbolState>,
-  area: SymbolArea,
-  symbolType: SymbolType,
-): SymbolState {
-  return symbols[area.name] ?? defaultSymbolState(area, symbolType);
-}
 
 function todayStr(): string {
   const d = new Date();
@@ -141,59 +51,6 @@ function addDays(days: number): string {
     day: "numeric",
     timeZone: "UTC",
   });
-}
-
-/** Effective weekly for a symbol based on type and toggle state. */
-function effectiveWeekly(symbolType: SymbolType, weeklyEnabled: boolean): number {
-  return symbolType === "arcane" && weeklyEnabled ? WEEKLY_SYMBOLS : 0;
-}
-
-function computeSymbolStats(
-  areas: SymbolArea[],
-  symbols: Record<string, SymbolState>,
-  growth: number[],
-  type: SymbolType,
-  maxLevel: number,
-): SymbolStats {
-  let totalConsumed = 0;
-  let totalSymbolsNeeded = 0;
-  let maxDaysVal = 0;
-  const totalForOneArea = growth.reduce((a, b) => a + b, 0);
-  const perSymbol: PerSymbolData[] = [];
-
-  for (const area of areas) {
-    const s = getSymbolState(symbols, area, type);
-    const isTracked = type === "arcane" || s.enabled;
-    const weekly = effectiveWeekly(type, s.weeklyEnabled);
-    const remaining = symbolsRemaining(growth, s.level, s.current);
-    const days = daysToMax(remaining, s.daily, weekly);
-    const consumed = symbolsConsumed(growth, s.level, s.current, maxLevel);
-    const isMaxed = s.level >= maxLevel;
-
-    if (isTracked) {
-      totalConsumed += consumed;
-      totalSymbolsNeeded += totalForOneArea;
-      if (days !== Infinity && days > maxDaysVal) maxDaysVal = days;
-    }
-
-    perSymbol.push({
-      area, state: s, remaining, days, consumed,
-      levelMax: symbolsForLevel(growth, s.level),
-      isMaxed, isTracked,
-    });
-  }
-
-  const tracked = perSymbol.filter((p) => p.isTracked);
-  const overallPct = totalSymbolsNeeded > 0
-    ? Math.min(100, (totalConsumed / totalSymbolsNeeded) * 100)
-    : 0;
-
-  return {
-    perSymbol, tracked, totalConsumed, totalSymbolsNeeded, totalForOneArea, maxDaysVal, overallPct,
-    allMaxed: tracked.length > 0 && tracked.every((p) => p.isMaxed),
-    anyInfinite: tracked.some((p) => p.days === Infinity && !p.isMaxed),
-    noneTracked: tracked.length === 0,
-  };
 }
 
 // -- Symbol Card: Header ------------------------------------------------------
@@ -226,7 +83,6 @@ function SymbolCardHeader({
         marginBottom: "0.75rem",
       }}
     >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={area.icon}
         alt={area.name}
@@ -1043,123 +899,24 @@ function CompletionTimelineChart({
 
 // -- Main Component -----------------------------------------------------------
 
-interface FormState {
-  type: SymbolType;
-  symbols: Record<string, SymbolState>;
-}
-
-function initFormState(): FormState {
-  const saved = loadStateFrom(STORAGE_KEY);
-  if (saved) {
-    return { type: saved.type, symbols: saved.symbols };
-  }
-  return { type: "arcane", symbols: {} };
-}
-
 export default function SymbolWorkspace({ theme }: { theme: AppTheme }) {
-  const mounted = useSyncExternalStore(
-    () => () => undefined,
-    () => true,
-    () => false,
-  );
+  const {
+    mounted,
+    characters,
+    selectedCharName,
+    handleCharChange,
+    type,
+    growth,
+    maxLevel,
+    switchType,
+    updateSymbol,
+    resetAll,
+    stats,
+  } = useSymbolState();
 
-  // Character sync (optional)
-  const characters: StoredCharacterRecord[] = mounted
-    ? selectCharactersList(readCharactersStore())
-    : [];
-  const [selectedCharName, setSelectedCharName] = useState<string | null>(null);
-  const currentStorageKey = storageKeyFor(selectedCharName);
+  const styles = toolStyles(theme);
 
-  const [form, setForm] = useState<FormState>(initFormState);
-  const { type, symbols } = form;
-
-  const areas = type === "arcane" ? ARCANE_AREAS : SACRED_AREAS;
-  const growth = type === "arcane" ? ARCANE_GROWTH : SACRED_GROWTH;
-  const maxLevel = type === "arcane" ? ARCANE_MAX_LEVEL : SACRED_MAX_LEVEL;
-
-  // Persist to current character's storage key
-  useEffect(() => {
-    saveStateTo(currentStorageKey, { type, symbols });
-  }, [currentStorageKey, type, symbols]);
-
-  const handleCharChange = (charName: string | null) => {
-    // Save current state before switching
-    saveStateTo(currentStorageKey, { type, symbols });
-    const newKey = storageKeyFor(charName);
-    const saved = loadStateFrom(newKey);
-
-    if (saved) {
-      setForm({ type: saved.type, symbols: saved.symbols });
-    } else {
-      // Auto-configure based on character level when no saved data exists
-      const char = charName ? characters.find((c) => c.characterName === charName) : null;
-      if (char && char.level >= 260) {
-        // Default to sacred, auto-enable symbols the character can access
-        const sacredSymbols: Record<string, SymbolState> = {};
-        for (const area of SACRED_AREAS) {
-          sacredSymbols[area.name] = {
-            ...defaultSymbolState(area, "sacred"),
-            enabled: char.level >= area.requiredLevel,
-          };
-        }
-        setForm({ type: "sacred", symbols: sacredSymbols });
-      } else {
-        setForm({ type: "arcane", symbols: {} });
-      }
-    }
-
-    setSelectedCharName(charName);
-  };
-
-  const switchType = useCallback((t: SymbolType) => {
-    setForm((f) => ({ ...f, type: t }));
-  }, []);
-
-  const updateSymbol = useCallback(
-    (areaName: string, patch: Partial<SymbolState>) => {
-      setForm((f) => {
-        const currentType = f.type;
-        const currentAreas = currentType === "arcane" ? ARCANE_AREAS : SACRED_AREAS;
-        const area = currentAreas.find((a) => a.name === areaName)!;
-        return {
-          ...f,
-          symbols: {
-            ...f.symbols,
-            [areaName]: { ...getSymbolState(f.symbols, area, currentType), ...patch },
-          },
-        };
-      });
-    },
-    [],
-  );
-
-  const resetAll = useCallback(() => {
-    setForm((f) => {
-      const currentAreas = f.type === "arcane" ? ARCANE_AREAS : SACRED_AREAS;
-      const next = { ...f.symbols };
-      for (const area of currentAreas) {
-        next[area.name] = defaultSymbolState(area, f.type);
-      }
-      return { ...f, symbols: next };
-    });
-  }, []);
-
-  const stats = computeSymbolStats(areas, symbols, growth, type, maxLevel);
-
-  const inputStyle: React.CSSProperties = {
-    background: theme.timerBg,
-    border: `1px solid ${theme.border}`,
-    padding: "6px 10px",
-    color: theme.text,
-    fontSize: "0.82rem",
-  };
-
-  const sectionPanel: React.CSSProperties = {
-    background: theme.panel,
-    border: `1px solid ${theme.border}`,
-    padding: "1.25rem",
-    marginBottom: "1.25rem",
-  };
+  if (!mounted) return null;
 
   return (
     <>
@@ -1185,7 +942,7 @@ export default function SymbolWorkspace({ theme }: { theme: AppTheme }) {
           <ToolHeader
             theme={theme}
             title="Symbol Tracker"
-            description="Track your Arcane and Sacred symbol progress and estimate completion dates."
+            description="Switch between Arcane and Sacred, enter each symbol's level and count, and view your estimated days to max."
           />
 
           <CharacterSyncPanel
@@ -1193,8 +950,8 @@ export default function SymbolWorkspace({ theme }: { theme: AppTheme }) {
             characters={characters}
             selectedCharName={selectedCharName}
             onCharChange={handleCharChange}
-            inputStyle={inputStyle}
-            sectionPanel={sectionPanel}
+            inputStyle={styles.inputStyle}
+            sectionPanel={styles.sectionPanel}
           />
 
           <SegmentedToggle
@@ -1202,15 +959,15 @@ export default function SymbolWorkspace({ theme }: { theme: AppTheme }) {
             options={["arcane", "sacred"] as const}
             value={type}
             labels={{ arcane: "Arcane Symbols", sacred: "Sacred Symbols" }}
-            sectionPanel={sectionPanel}
+            sectionPanel={styles.sectionPanel}
             btnClassName="sym-btn"
             onChange={switchType}
           />
 
-          <OverallProgressPanel theme={theme} sectionPanel={sectionPanel} stats={stats} />
+          <OverallProgressPanel theme={theme} sectionPanel={styles.sectionPanel} stats={stats} />
 
           {/* Symbol Cards */}
-          <div className="fade-in panel-card" style={sectionPanel}>
+          <div className="fade-in panel-card" style={styles.sectionPanel}>
             <div
               style={{
                 display: "flex",
@@ -1263,7 +1020,7 @@ export default function SymbolWorkspace({ theme }: { theme: AppTheme }) {
                   type={type}
                   maxLevel={maxLevel}
                   totalForOneArea={stats.totalForOneArea}
-                  inputStyle={inputStyle}
+                  inputStyle={styles.inputStyle}
                   theme={theme}
                   updateSymbol={updateSymbol}
                 />
@@ -1271,9 +1028,9 @@ export default function SymbolWorkspace({ theme }: { theme: AppTheme }) {
             </div>
           </div>
 
-          <CompletionSummaryPanel theme={theme} sectionPanel={sectionPanel} stats={stats} type={type} />
+          <CompletionSummaryPanel theme={theme} sectionPanel={styles.sectionPanel} stats={stats} type={type} />
 
-          <CompletionTimelineChart theme={theme} sectionPanel={sectionPanel} stats={stats} growth={growth} maxLevel={maxLevel} type={type} />
+          <CompletionTimelineChart theme={theme} sectionPanel={styles.sectionPanel} stats={stats} growth={growth} maxLevel={maxLevel} type={type} />
 
           <WikiAttribution theme={theme} subject="Symbol images" />
         </div>

@@ -245,7 +245,6 @@ function ClassRandomizer({ theme }: { theme: AppTheme }) {
               justifyContent: "center",
             }}
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={result.portrait}
               alt={result.name}
@@ -325,7 +324,6 @@ function ClassInfoPanel({ cls, theme }: { cls: MapleClass; theme: AppTheme }) {
           justifyContent: "center",
         }}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={cls.portrait}
           alt={cls.name}
@@ -452,7 +450,6 @@ function ClassDirectory({ theme }: { theme: AppTheme }) {
                         boxShadow: isSelected ? `0 0 0 2px ${theme.accentSoft}` : "none",
                       }}
                     >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={cls.portrait}
                         alt={cls.name}
