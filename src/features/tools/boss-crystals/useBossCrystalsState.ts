@@ -133,6 +133,17 @@ export function useBossCrystalsState(mounted: boolean) {
     setCharacters((prev) => prev.filter((_, i) => i !== idx));
   }, []);
 
+  const reorderCharacters = useCallback((from: number, to: number) => {
+    if (from === to) return;
+    setCharacters((prev) => {
+      if (from < 0 || from >= prev.length || to < 0 || to >= prev.length) return prev;
+      const next = [...prev];
+      const [moved] = next.splice(from, 1);
+      next.splice(to, 0, moved);
+      return next;
+    });
+  }, []);
+
   const toggleDialogBoss = useCallback((bi: number) => {
     setDialogBosses((prev) => {
       const next = prev.map((b) => ({ ...b }));
@@ -194,6 +205,7 @@ export function useBossCrystalsState(mounted: boolean) {
     openEdit,
     confirmEdit,
     deleteCharacter,
+    reorderCharacters,
     toggleDialogBoss,
     setDialogParty,
     applyPreset,

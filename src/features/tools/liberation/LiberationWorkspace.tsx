@@ -1,6 +1,7 @@
 "use client";
 
 import type { AppTheme } from "../../../components/themes";
+import { ProgressBar } from "../../../components/ProgressBar";
 import { ToolHeader } from "../../../components/ToolHeader";
 import { WikiAttribution } from "../../../components/WikiAttribution";
 import { CharacterSyncPanel } from "../../../components/CharacterSyncPanel";
@@ -18,6 +19,7 @@ import {
   getSelection,
   formatDate,
 } from "./useLiberationState";
+import { toolStyles } from "../tool-styles";
 
 // -- Boss Card ----------------------------------------------------------------
 
@@ -65,7 +67,6 @@ function BossCard({
           marginBottom: "0.6rem",
         }}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={boss.icon}
           alt={boss.name}
@@ -396,25 +397,7 @@ function LiberationProgressBar({
           {tracesCompleted.toLocaleString()} / {totalNeeded.toLocaleString()} {traceNameShort}
         </div>
       </div>
-      <div
-        style={{
-          height: "12px",
-          borderRadius: "6px",
-          background: theme.timerBg,
-          border: `1px solid ${theme.border}`,
-          overflow: "hidden",
-        }}
-      >
-        <div
-          style={{
-            height: "100%",
-            width: `${progressPct}%`,
-            background: theme.accent,
-            borderRadius: "6px",
-            transition: "width 0.35s ease",
-          }}
-        />
-      </div>
+      <ProgressBar pct={progressPct} theme={theme} />
       <div
         style={{
           display: "flex",
@@ -525,6 +508,58 @@ function LiberationResultsSection({
         </div>
       </div>
 
+      {/* Quest milestones */}
+      {result.milestones.length > 0 && (
+        <div style={{ marginBottom: "1.25rem" }}>
+          <div className="section-label" style={{ color: theme.muted }}>
+            Milestones
+          </div>
+          {result.milestones.map((m, i) => {
+            const isFinal = i === result.milestones.length - 1;
+            return (
+              <div
+                key={m.questIdx}
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  padding: "5px 0",
+                  borderBottom: `1px solid ${theme.border}`,
+                  fontSize: "0.82rem",
+                  fontWeight: 700,
+                }}
+              >
+                <span style={{ color: theme.text }}>
+                  {m.questLabel}
+                  <span
+                    style={{
+                      fontSize: "0.68rem",
+                      color: theme.muted,
+                      marginLeft: "6px",
+                    }}
+                  >
+                    ({isFinal ? "liberation" : "bar full"})
+                  </span>
+                </span>
+                <span style={{ color: theme.accent, fontWeight: 800 }}>
+                  {formatDate(m.completionDate)}
+                  <span
+                    style={{
+                      color: theme.muted,
+                      fontWeight: 700,
+                      marginLeft: "6px",
+                      fontSize: "0.72rem",
+                    }}
+                  >
+                    ({m.weeksFromStart}w)
+                  </span>
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
       {/* Weekly breakdown */}
       <div className="section-label" style={{ color: theme.muted }}>
         Weekly {traceName} Breakdown
@@ -612,6 +647,7 @@ function LiberationResultsSection({
 
 export default function LiberationWorkspace({ theme }: { theme: AppTheme }) {
   const {
+    mounted,
     characters, selectedCharName, handleCharChange,
     type, questIdx, currentTraces, genesisPass, startDate, selections,
     setQuestIdx, setCurrentTraces, setGenesisPass, setStartDate,
@@ -620,13 +656,8 @@ export default function LiberationWorkspace({ theme }: { theme: AppTheme }) {
   } = useLiberationState();
 
   // Styles
-  const inputStyle: React.CSSProperties = {
-    background: theme.timerBg,
-    border: `1px solid ${theme.border}`,
-    padding: "6px 10px",
-    color: theme.text,
-    fontSize: "0.82rem",
-  };
+  const styles = toolStyles(theme);
+  const { inputStyle, sectionPanel } = styles;
 
   const pillBtn = (
     active: boolean,
@@ -644,15 +675,10 @@ export default function LiberationWorkspace({ theme }: { theme: AppTheme }) {
     return { color, background, border: active ? "none" : `1px solid ${theme.border}` };
   };
 
-  const sectionPanel: React.CSSProperties = {
-    background: theme.panel,
-    border: `1px solid ${theme.border}`,
-    padding: "1.25rem",
-    marginBottom: "1.25rem",
-  };
-
   const traceName = type === "genesis" ? "Traces of Darkness" : "Determination";
   const traceNameShort = type === "genesis" ? "Traces" : "Determination";
+
+  if (!mounted) return null;
 
   return (
     <>
@@ -679,8 +705,8 @@ export default function LiberationWorkspace({ theme }: { theme: AppTheme }) {
         <div style={{ maxWidth: "900px", margin: "0 auto" }}>
           <ToolHeader
             theme={theme}
-            title="Liberation Calculator"
-            description="Estimate your Genesis or Destiny liberation completion date."
+            title="Liberation Tracker"
+            description="Choose Genesis or Destiny, set your current quest and traces, then view your estimated completion date."
           />
 
           <CharacterSyncPanel

@@ -7,44 +7,90 @@
 import Link from "next/link";
 import AppShell from "../../components/AppShell";
 import type { AppTheme } from "../../components/themes";
+import { WikiAttribution } from "../../components/WikiAttribution";
 
 interface ToolCard {
   title: string;
   description: string;
-  emoji: string;
+  icon: string;
+  iconType?: "emoji" | "image";
   href: string;
 }
 
 const CALCULATORS: ToolCard[] = [
   {
-    title: "Boss Crystal Calculator",
+    title: "Star Force Calculator",
     description:
-      "Calculate your weekly boss crystal income across all characters.",
-    emoji: "💎",
-    href: "/tools/boss-crystals",
+      "Estimate the expected meso cost to star force your equipment.",
+    icon: "⭐",
+    href: "/tools/star-force",
   },
   {
-    title: "Liberation Calculator",
+    title: "Cubing Calculator",
     description:
-      "Track your Genesis and Destiny liberation progress and estimate completion.",
-    emoji: "🗡️",
-    href: "/tools/liberation",
+      "Calculate the expected cost and number of cubes to achieve your desired potential.",
+    icon: "https://media.maplestorywiki.net/yetidb/Cash_Glowing_Cube.png",
+    iconType: "image",
+    href: "/tools/cubing",
   },
+];
+
+const PLANNERS: ToolCard[] = [
   {
-    title: "Symbol Calculator",
+    title: "Event Planner",
     description:
-      "Track your Arcane and Sacred symbol progress and estimate days to max.",
-    emoji: "🔮",
-    href: "/tools/symbols",
+      "Plan your star force spending for the next event. Estimates total meso cost and spare items needed.",
+    icon: "📅",
+    href: "/tools/event-planner",
   },
 ];
 
 const TRACKERS: ToolCard[] = [
   {
+    title: "Boss Crystal Tracker",
+    description:
+      "Track your weekly boss crystal income across all characters.",
+    icon: "https://media.maplestorywiki.net/yetidb/Etc_Intense_Power_Crystal_%28Weekly%29_%28Full_Size%29.png",
+    iconType: "image",
+    href: "/tools/boss-crystals",
+  },
+  {
+    title: "Daily Tracker",
+    description:
+      "Track symbol dailies, daily bosses, and daily content across all your characters.",
+    icon: "📋",
+    href: "/tools/dailies",
+  },
+  {
+    title: "Liberation Tracker",
+    description:
+      "Track your Genesis and Destiny liberation progress and estimate completion.",
+    icon: "https://media.maplestorywiki.net/yetidb/Skill_Tanadian_Ruin.png",
+    iconType: "image",
+    href: "/tools/liberation",
+  },
+  {
+    title: "Symbol Tracker",
+    description:
+      "Track your Arcane and Sacred symbol progress and estimate days to max.",
+    icon: "https://media.maplestorywiki.net/yetidb/Eqp_Sacred_Symbol_Cernium.png",
+    iconType: "image",
+    href: "/tools/symbols",
+  },
+  {
+    title: "HEXA Skill Tracker",
+    description:
+      "Track Sol Erda and Fragment costs to max your HEXA skills per character.",
+    icon: "https://media.maplestorywiki.net/yetidb/Etc_Sol_Erda_Fragment_%28Full_Size%29.png",
+    iconType: "image",
+    href: "/tools/hexa-skills",
+  },
+  {
     title: "Pitched Boss Drop Tracker",
     description:
       "Track and analyze your rare pitched boss drops across all characters.",
-    emoji: "🎯",
+    icon: "https://media.maplestorywiki.net/yetidb/Eqp_Genesis_Badge.png",
+    iconType: "image",
     href: "/tools/pitched-boss-drops",
   },
 ];
@@ -74,8 +120,12 @@ function ToolGrid({ tools, theme }: { tools: ToolCard[]; theme: AppTheme }) {
               cursor: "pointer",
             }}
           >
-            <div style={{ fontSize: "2rem", marginBottom: "0.75rem" }}>
-              {tool.emoji}
+            <div style={{ fontSize: "2rem", marginBottom: "0.75rem", height: 36, display: "flex", alignItems: "center" }}>
+              {tool.iconType === "image" ? (
+                <img src={tool.icon} alt="" width={36} height={36} style={{ objectFit: "contain" }} />
+              ) : (
+                tool.icon
+              )}
             </div>
             <div
               className="panel-header-title"
@@ -160,6 +210,26 @@ function ToolsContent({ theme }: { theme: AppTheme }) {
           </div>
 
           <ToolGrid tools={TRACKERS} theme={theme} />
+
+          <div
+            style={{
+              fontWeight: 700,
+              fontSize: "0.85rem",
+              color: theme.muted,
+              textTransform: "uppercase",
+              letterSpacing: "0.04em",
+              marginTop: "2rem",
+              marginBottom: "0.75rem",
+            }}
+          >
+            Planners
+          </div>
+
+          <ToolGrid tools={PLANNERS} theme={theme} />
+
+          <div style={{ marginTop: "2rem" }}>
+            <WikiAttribution theme={theme} subject="Item icons" />
+          </div>
         </div>
       </div>
     </>

@@ -5,10 +5,18 @@
   Owns theme + UTC clock state and renders top nav/sidebar consistently.
 */
 import type { ReactNode } from "react";
+import Link from "next/link";
 import AppTopNav from "./AppTopNav";
 import { NAV_LINKS } from "./nav-links";
 import { THEMES, type AppTheme } from "./themes";
 import { useTheme } from "./ThemeContext";
+
+const FOOTER_LINKS: { label: string; href: string }[] = [
+  { label: "About", href: "/about" },
+  { label: "Terms of Service", href: "/terms" },
+  { label: "Privacy Policy", href: "/privacy" },
+  { label: "Changelog", href: "/changelog" },
+];
 
 interface AppShellProps {
   currentPath: string;
@@ -51,6 +59,31 @@ export default function AppShell({ currentPath, children }: AppShellProps) {
         }}
       >
         <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
+          <nav
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "1.25rem",
+              marginBottom: "1rem",
+              paddingBottom: "1rem",
+              borderBottom: `1px solid ${theme.border}`,
+            }}
+          >
+            {FOOTER_LINKS.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                style={{
+                  fontSize: "0.78rem",
+                  fontWeight: 800,
+                  color: theme.accent,
+                  textDecoration: "none",
+                }}
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
           <div
             style={{
               fontSize: "0.75rem",
