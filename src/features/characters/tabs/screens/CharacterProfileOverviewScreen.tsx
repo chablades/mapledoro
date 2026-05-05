@@ -414,17 +414,17 @@ export default function CharacterProfileOverviewScreen({
   const [activeTab, setActiveTab] = useState<TabId>("overview");
 
   return (
-    <div style={{ position: "relative" }}>
+    <div style={{ display: "flex", alignItems: "flex-start", gap: "1rem" }}>
       {/* Main content */}
-      <div>
+      <div style={{ flex: 1, minWidth: 0 }}>
         {activeTab === "overview" && <OverviewTab model={model} />}
         {activeTab === "stats" && <StatsTab model={model} />}
         {activeTab === "inventory" && <InventoryTab model={model} />}
         {activeTab === "more" && <MoreTab model={model} actions={actions} />}
       </div>
 
-      {/* Binder tabs — escape the panel to the right via absolute + calc */}
-      <div style={{ position: "absolute", top: "0rem", left: "calc(100% + 1rem)", display: "flex", flexDirection: "column", gap: 2 }}>
+      {/* Binder tabs */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 2, flexShrink: 0 }}>
         {TABS.map((tab) => (
           <button
             key={tab.id}
@@ -437,8 +437,7 @@ export default function CharacterProfileOverviewScreen({
               color: activeTab === tab.id ? theme.text : theme.muted,
               background: activeTab === tab.id ? theme.panel : theme.bg,
               border: `1px solid ${theme.border}`,
-              borderLeft: "none",
-              borderRadius: "0 8px 8px 0",
+              borderRadius: 999,
               whiteSpace: "nowrap",
               cursor: "pointer",
               fontFamily: "inherit",
