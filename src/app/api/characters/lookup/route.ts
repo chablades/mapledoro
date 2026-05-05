@@ -14,6 +14,14 @@ const LOOKUP_TOTAL_TIMEOUT_MS = 25000;
 const CACHE_KEY_PREFIX = "mapledoro:characters:lookup:v1:";
 const RATE_LIMIT_KEY_PREFIX = "mapledoro:rate:lookup:v1:";
 const CHARACTER_NAME_REGEX = /^[a-zA-ZÀ-ÖØ-öø-ÿ0-9]{4,12}$/;
+// dont know yet if the 'weekly' for exp is actually weekly or a daily lol
+const NEXON_RANKING_URL = "https://www.nexon.com/api/maplestory/no-auth/ranking/v2/na?type=overall&id=weekly&reboot_index=0&page_index=1";
+// Comma-separated list of proxy base URLs. Each is tried in order before falling back to direct Nexon.
+// Format: NEXON_PROXY_URLS=https://worker1.example.com,https://worker2.example.com
+const NEXON_PROXY_URLS: string[] = (process.env.NEXON_PROXY_URLS ?? "")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
 
 function parsePositiveIntEnv(name: string, fallback: number) {
   const raw = process.env[name];
@@ -106,7 +114,15 @@ const fallbackMinuteRate = new Map<string, { count: number; expiresAt: number }>
 const fallbackDailyRate = new Map<string, { count: number; expiresAt: number }>();
 const fallbackActiveQueueByIp = new Map<string, number>();
 const redisUrl = process.env.REDIS_URL?.trim() ?? "";
-const redis = redisUrl ? new Redis(redisUrl, { lazyConnect: true }) : null;
+const REDIS_CONNECT_TIMEOUT_MS = parsePositiveIntEnv("REDIS_CONNECT_TIMEOUT_MS", 1500);
+const redis = redisUrl ? new Redis(redisUrl, { lazyConnect: true, connectTimeout: REDIS_CONNECT_TIMEOUT_MS, maxRetriesPerRequest: 1 }) : null;
+let hasWarnedRedisFallback = false;
+redis?.on("error", (err: Error) => {
+  if (!hasWarnedRedisFallback) {
+    hasWarnedRedisFallback = true;
+    console.warn(`[lookup][redis] Redis unavailable — falling back to in-memory cache. Rate limits and cache will not persist across restarts. (${err.message})`);
+  }
+});
 
 function logRedisError(operation: string, error: unknown) {
   const message = error instanceof Error ? error.message : String(error);
@@ -268,7 +284,10 @@ function buildLookupCacheHeaders(expiresAt: number) {
 }
 
 function jsonLookup(result: LookupResult) {
-  return NextResponse.json(result, {
+  const payload = hasWarnedRedisFallback
+    ? { ...result, degraded: true, degradedCode: "REDIS_DOWN" }
+    : result;
+  return NextResponse.json(payload, {
     headers: buildLookupCacheHeaders(result.expiresAt),
   });
 }
@@ -333,6 +352,7 @@ async function getCacheHit(nameKey: string): Promise<{
       await redis.del(cacheKey(nameKey));
       return { entry: null, source: null };
     }
+    hasWarnedRedisFallback = false;
     return { entry: parsed, source: "redis_cache" };
   } catch (error) {
     logRedisError("getCacheHit", error);
@@ -348,6 +368,7 @@ async function setCacheHit(nameKey: string, entry: CacheEntry): Promise<void> {
         await redis.connect();
       }
       await redis.set(cacheKey(nameKey), JSON.stringify(entry), "EX", ttlSeconds);
+      hasWarnedRedisFallback = false;
       return;
     } catch (error) {
       logRedisError("setCacheHit", error);
@@ -427,10 +448,15 @@ async function fetchJson(url: string) {
 }
 
 async function fetchOverall(characterName: string) {
-  const url =
-    `https://www.nexon.com/api/maplestory/no-auth/ranking/v2/na` +
-    `?type=overall&id=weekly&reboot_index=0&page_index=1&character_name=${encodeURIComponent(characterName)}`;
-  return fetchJson(url);
+  const nexonUrl = `${NEXON_RANKING_URL}&character_name=${encodeURIComponent(characterName)}`;
+  for (const proxyBase of NEXON_PROXY_URLS) {
+    try {
+      return await fetchJson(`${proxyBase}?url=${encodeURIComponent(nexonUrl)}`);
+    } catch {
+      // try next proxy
+    }
+  }
+  return fetchJson(nexonUrl);
 }
 
 async function buildLookup(characterName: string, key: string): Promise<LookupResult> {
@@ -496,19 +522,24 @@ async function buildLookup(characterName: string, key: string): Promise<LookupRe
   };
 }
 
-const LOOKUP_ERROR_MAP: Record<string, { message: string; status: number }> = {
+const LOOKUP_ERROR_MAP: Record<string, { message: string; status: number; degradedCode?: string }> = {
   QUEUE_FULL: { message: "Server lookup queue is full. Please retry shortly.", status: 429 },
   QUEUE_BACKPRESSURE: { message: "Lookup queue is busy right now. Please retry in a few seconds.", status: 503 },
   UPSTREAM_TIMEOUT: { message: "Nexon lookup timed out. Please retry shortly.", status: 504 },
   LOOKUP_TIMEOUT: { message: "Lookup took too long under current traffic. Please retry.", status: 504 },
+  UPSTREAM_403: { message: "Nexon blocked this request. Please try again later.", status: 502, degradedCode: "NEXON_BLOCKED" },
+  UPSTREAM_429: { message: "Rate limited by Nexon. Please try again later.", status: 502, degradedCode: "NEXON_RATE_LIMITED" },
 };
 
 function lookupErrorResponse(error: unknown): NextResponse {
   const key = error instanceof Error ? error.message : "";
   const mapped = LOOKUP_ERROR_MAP[key];
   if (mapped) {
+    const body = mapped.degradedCode
+      ? { error: mapped.message, degradedCode: mapped.degradedCode }
+      : { error: mapped.message };
     return NextResponse.json(
-      { error: mapped.message },
+      body,
       { status: mapped.status, headers: { "Cache-Control": "no-store" } },
     );
   }
@@ -537,26 +568,8 @@ export async function GET(request: NextRequest) {
   }
 
   const ipKey = getClientIp(request);
-  const nowMs = Date.now();
-  const { minuteCount, dayCount } = await checkAndTrackIpRate(ipKey);
-  if (dayCount > IP_REQUESTS_PER_DAY_LIMIT) {
-    return NextResponse.json(
-      {
-        error: `Daily request limit reached for this IP. Try again after UTC reset (${formatUtcResetLabel(nowMs)}).`,
-      },
-      { status: 429, headers: { "Cache-Control": "no-store" } },
-    );
-  }
-  if (minuteCount > IP_REQUESTS_PER_MINUTE_LIMIT) {
-    return NextResponse.json(
-      {
-        error: `Rate limit reached: max ${IP_REQUESTS_PER_MINUTE_LIMIT} requests per minute per IP.`,
-      },
-      { status: 429, headers: { "Cache-Control": "no-store" } },
-    );
-  }
-
   const key = normalizeName(characterName);
+
   const cacheHit = await getCacheHit(key);
   if (cacheHit.entry) {
     if (cacheHit.entry.kind === "not_found") {
@@ -584,6 +597,26 @@ export async function GET(request: NextRequest) {
   if (existing) {
     const shared = await existing;
     return jsonLookup(shared);
+  }
+
+  // Only count against IP rate limit when actually hitting upstream.
+  const nowMs = Date.now();
+  const { minuteCount, dayCount } = await checkAndTrackIpRate(ipKey);
+  if (dayCount > IP_REQUESTS_PER_DAY_LIMIT) {
+    return NextResponse.json(
+      {
+        error: `Daily request limit reached for this IP. Try again after UTC reset (${formatUtcResetLabel(nowMs)}).`,
+      },
+      { status: 429, headers: { "Cache-Control": "no-store" } },
+    );
+  }
+  if (minuteCount > IP_REQUESTS_PER_MINUTE_LIMIT) {
+    return NextResponse.json(
+      {
+        error: `Rate limit reached: max ${IP_REQUESTS_PER_MINUTE_LIMIT} requests per minute per IP.`,
+      },
+      { status: 429, headers: { "Cache-Control": "no-store" } },
+    );
   }
 
   if (getActiveQueueCountForIp(ipKey) >= IP_ACTIVE_QUEUE_LIMIT) {

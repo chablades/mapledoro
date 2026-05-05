@@ -3,6 +3,14 @@ import type { SearchPaneActions, SearchPaneModel } from "../paneModels";
 import { secondaryButtonStyle } from "../components/uiStyles";
 import CharacterAvatar from "../components/CharacterAvatar";
 
+function isCharacterStale(expiresAt: number): boolean {
+  return Date.now() > expiresAt;
+}
+
+function formatFetchedAt(fetchedAt: number): string {
+  return new Date(fetchedAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+}
+
 function profileRoleBadgeStyle(
   theme: SearchPaneModel["theme"],
   role: "main" | "champion" | "mule",
@@ -53,6 +61,10 @@ export default function CharacterProfileScreen({
     profile.isCurrentMainCharacter,
     profile.isCurrentChampionCharacter,
   );
+  const isStale = isCharacterStale(profile.confirmedCharacter.expiresAt);
+  const formattedDate = formatFetchedAt(profile.confirmedCharacter.fetchedAt);
+  let statusPrefix: string | null = null;
+  if (!profile.isRefreshing && isStale) statusPrefix = "⚠ ";
 
   return (
     <div style={{ display: "grid", justifyItems: "center", gap: "0.5rem" }}>
@@ -208,6 +220,32 @@ export default function CharacterProfileScreen({
                 </span>
               ))}
             </div>
+          )}
+          <p style={{ margin: 0, marginTop: "0.4rem", fontSize: "0.72rem", color: isStale ? "#d97706" : theme.muted, fontWeight: 700, lineHeight: 1.3 }}>
+            {profile.isRefreshing && <span className="char-refresh-spin" style={{ color: theme.muted }}>↻ </span>}
+            {statusPrefix}Updated {formattedDate}
+          </p>
+          {(isStale || profile.isRefreshing) && profile.onRefresh && (
+            <button
+              type="button"
+              disabled={profile.isRefreshing}
+              onClick={profile.onRefresh}
+              style={{
+                marginTop: "0.4rem",
+                background: "transparent",
+                border: `1px solid ${theme.border}`,
+                borderRadius: "999px",
+                color: theme.muted,
+                fontFamily: "inherit",
+                fontSize: "0.72rem",
+                fontWeight: 800,
+                padding: "0.2rem 0.6rem",
+                cursor: profile.isRefreshing ? "not-allowed" : "pointer",
+                opacity: profile.isRefreshing ? 0.5 : 1,
+              }}
+            >
+              {profile.isRefreshing ? "Refreshing…" : "Refresh"}
+            </button>
           )}
         </div>
       </div>

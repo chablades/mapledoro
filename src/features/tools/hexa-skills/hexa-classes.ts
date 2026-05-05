@@ -23,6 +23,14 @@ export interface HexaSkillDef {
   icon: string;
 }
 
+export interface HexaSkillLevels {
+  origin: number;
+  ascent: number;
+  mastery: number[];
+  enhancement: number[];
+  common: number[];
+}
+
 export interface HexaClassDef {
   className: string;
   group: string;
@@ -849,4 +857,65 @@ export function getClassGroups(): string[] {
 /** Get classes in a specific group. */
 export function getClassesInGroup(group: string): HexaClassDef[] {
   return HEXA_CLASSES.filter((c) => c.group === group);
+}
+
+/** Maps classSkillData snake_case IDs to HexaClassDef className for cross-feature lookup. */
+const CLASS_ID_TO_NAME: Record<string, string> = {
+  adele: "Adele",
+  angelic_buster: "Angelic Buster",
+  arch_mage_f_p: "Arch Mage (F/P)",
+  arch_mage_i_l: "Arch Mage (I/L)",
+  aran: "Aran",
+  ark: "Ark",
+  battle_mage: "Battle Mage",
+  bishop: "Bishop",
+  blade_master: "Dual Blade",
+  blaster: "Blaster",
+  blaze_wizard: "Blaze Wizard",
+  bow_master: "Bowmaster",
+  buccaneer: "Buccaneer",
+  cadena: "Cadena",
+  cannoneer: "Cannoneer",
+  corsair: "Corsair",
+  dark_knight: "Dark Knight",
+  dawn_warrior: "Dawn Warrior",
+  demon_avenger: "Demon Avenger",
+  demon_slayer: "Demon Slayer",
+  evan: "Evan",
+  hayato: "Hayato",
+  hero: "Hero",
+  hoyoung: "Hoyoung",
+  illium: "Illium",
+  kain: "Kain",
+  kaiser: "Kaiser",
+  kanna: "Kanna",
+  khali: "Khali",
+  kinesis: "Kinesis",
+  lara: "Lara",
+  luminous: "Luminous",
+  lynn: "Lynn",
+  marksman: "Marksman",
+  mechanic: "Mechanic",
+  mercedes: "Mercedes",
+  mihile: "Mihile",
+  mo_xuan: "Mo Xuan",
+  night_lord: "Night Lord",
+  night_walker: "Night Walker",
+  paladin: "Paladin",
+  pathfinder: "Pathfinder",
+  phantom: "Phantom",
+  ren: "Ren",
+  shade: "Shade",
+  shadower: "Shadower",
+  thunder_breaker: "Thunder Breaker",
+  wild_hunter: "Wild Hunter",
+  wind_archer: "Wind Archer",
+  xenon: "Xenon",
+  zero: "Zero",
+};
+
+/** Lookup a class definition by its classSkillData snake_case id. */
+export function findClassById(id: string): HexaClassDef | null {
+  const className = CLASS_ID_TO_NAME[id];
+  return className !== undefined ? findClassByName(className) : null;
 }
