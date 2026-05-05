@@ -19,17 +19,12 @@ import {
   findClassByName,
   COMMON_SKILLS,
   type HexaClassDef,
+  type HexaSkillLevels,
 } from "./hexa-classes";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
-export interface SkillLevels {
-  origin: number;
-  mastery: number[];
-  enhancement: number[];
-  common: number[];
-  ascent: number;
-}
+export type SkillLevels = HexaSkillLevels;
 
 interface SavedState {
   className: string | null;
