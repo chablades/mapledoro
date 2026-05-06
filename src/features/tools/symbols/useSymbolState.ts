@@ -164,11 +164,7 @@ interface FormState {
   symbols: Record<string, SymbolState>;
 }
 
-function initFormState(): FormState {
-  const saved = loadStateFrom(STORAGE_KEY);
-  if (saved) {
-    return { type: saved.type, symbols: saved.symbols };
-  }
+function defaultFormState(): FormState {
   return { type: "arcane", symbols: {} };
 }
 
@@ -186,7 +182,7 @@ export function useSymbolState() {
   const [selectedCharName, setSelectedCharName] = useState<string | null>(null);
   const currentStorageKey = storageKeyFor(selectedCharName);
 
-  const [form, setForm] = useState<FormState>(initFormState);
+  const [form, setForm] = useState<FormState>(defaultFormState);
   const { type, symbols } = form;
 
   const areas = type === "arcane" ? ARCANE_AREAS : SACRED_AREAS;

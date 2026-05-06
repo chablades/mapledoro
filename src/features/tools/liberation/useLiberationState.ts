@@ -382,12 +382,6 @@ function formToSaved(form: FormState): SavedState {
   };
 }
 
-function initFormState(): FormState {
-  const saved = loadStateFrom(STORAGE_KEY);
-  if (saved) return savedToForm(saved);
-  return defaultFormState();
-}
-
 // -- Hook ---------------------------------------------------------------------
 
 export function useLiberationState() {
@@ -404,7 +398,7 @@ export function useLiberationState() {
   const [selectedCharName, setSelectedCharName] = useState<string | null>(null);
   const currentStorageKey = storageKeyFor(selectedCharName);
 
-  const [form, setForm] = useState<FormState>(initFormState);
+  const [form, setForm] = useState<FormState>(defaultFormState);
 
   const { type, questIdx, currentTraces, genesisPass, startDate, selections } = form;
 

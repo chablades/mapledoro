@@ -210,10 +210,7 @@ export function useHexaSkillsState() {
   const [selectedCharName, setSelectedCharName] = useState<string | null>(null);
   const currentStorageKey = storageKeyFor(selectedCharName);
 
-  const [state, setState] = useState<SavedState>(() => {
-    if (typeof window === "undefined") return defaultState();
-    return loadState(STORAGE_KEY) ?? defaultState();
-  });
+  const [state, setState] = useState<SavedState>(defaultState);
 
   const classDef = state.className ? findClassByName(state.className) : null;
   const levels = normalizeLevels(state.levels, classDef);
