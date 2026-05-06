@@ -9,6 +9,7 @@ import {
   type StarForceOpts,
   type MvpTier,
 } from "../star-force/star-force-data";
+import { readGlobalTool, writeGlobalTool } from "../globalToolsStore";
 import { EVENT_ITEMS_BY_ID } from "./event-items";
 
 // -- Types --------------------------------------------------------------------
@@ -37,22 +38,6 @@ export interface EntryCost {
 }
 
 // -- Storage ------------------------------------------------------------------
-
-const STORAGE_KEY = "event-planner-v1";
-
-function loadState(): SavedState | null {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    return JSON.parse(raw);
-  } catch {
-    return null;
-  }
-}
-
-function persistState(state: SavedState) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-}
 
 function defaultState(): SavedState {
   return {
@@ -105,11 +90,11 @@ export function useEventPlannerState() {
 
   const [state, setState] = useState<SavedState>(() => {
     if (typeof window === "undefined") return defaultState();
-    return loadState() ?? defaultState();
+    return readGlobalTool<SavedState>("eventPlanner") ?? defaultState();
   });
 
   useEffect(() => {
-    persistState(state);
+    writeGlobalTool("eventPlanner", state);
   }, [state]);
 
   // Settings callbacks

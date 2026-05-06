@@ -22,6 +22,7 @@ import {
   selectCharactersList,
   type StoredCharacterRecord,
 } from "../../characters/model/charactersStore";
+import { readGlobalTool, writeGlobalTool } from "../globalToolsStore";
 import { PITCHED_BOSS_ITEMS, PITCHED_ITEMS_BY_ID } from "./pitched-items";
 
 /* ------------------------------------------------------------------ */
@@ -43,34 +44,19 @@ interface PitchedBossDropsStore {
   drops: PitchedBossDrop[];
 }
 
-const STORAGE_KEY = "pitched-boss-drops-v1";
-
 function generateId(): string {
   return crypto.randomUUID();
 }
 
 function readStore(): PitchedBossDropsStore {
   if (typeof window === "undefined") return { version: 1, drops: [] };
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return { version: 1, drops: [] };
-    const parsed = JSON.parse(raw);
-    if (parsed?.version === 1 && Array.isArray(parsed.drops)) {
-      return parsed as PitchedBossDropsStore;
-    }
-  } catch {
-    /* ignore */
-  }
+  const stored = readGlobalTool<PitchedBossDropsStore>("pitchedBossDrops");
+  if (stored?.version === 1 && Array.isArray(stored.drops)) return stored;
   return { version: 1, drops: [] };
 }
 
 function writeStore(store: PitchedBossDropsStore): void {
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
-  } catch {
-    /* ignore */
-  }
+  writeGlobalTool("pitchedBossDrops", store);
 }
 
 function todayStr(): string {

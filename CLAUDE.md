@@ -45,7 +45,7 @@ npm run lint
 
 **SSR/client gate:** `useSyncExternalStore(() => () => undefined, () => true, () => false)` for localStorage reads.
 
-**Per-character storage:** Many tools use `{key}-{characterName}` for per-character data, falling back to `{key}` when no character is selected.
+**Per-character tool storage:** Per-character tool data (symbols, liberation, hexa skills) is stored in each character's `tools` field within the character store (`mapledoro_characters_store_v1`). Read/write via `characterToolStorage.ts` helpers. Global tool data (dailies, event planner, boss crystals, pitched boss drops) lives in a single `mapledoro_tools_v1` key via `globalToolsStore.ts`.
 
 ## Image Policy
 

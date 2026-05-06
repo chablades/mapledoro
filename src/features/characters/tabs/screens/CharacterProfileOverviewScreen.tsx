@@ -3,6 +3,7 @@ import type { SetupFlowId } from "../../setup/flows";
 import type { PreviewPaneActions, PreviewPaneModel } from "../paneModels";
 import { primaryButtonStyle } from "../components/uiStyles";
 import { findClassById, COMMON_SKILLS, type HexaSkillDef, type HexaSkillLevels } from "../../../tools/hexa-skills/hexa-classes";
+import { readCharacterToolData } from "../../../tools/characterToolStorage";
 import { resolveClassId } from "../../setup/data/nexonJobMapping";
 import { CLASS_SKILL_DATA } from "../../setup/data/classSkillData";
 import { WikiAttribution } from "../../../../components/WikiAttribution";
@@ -143,14 +144,8 @@ function resolveMainStatValue(
 
 function readHexaLevels(charName: string | undefined): HexaSkillLevels | null {
   if (!charName) return null;
-  try {
-    const raw = localStorage.getItem(`hexa-skills-v1-${charName}`);
-    if (!raw) return null;
-    const saved = JSON.parse(raw) as { levels?: HexaSkillLevels };
-    return saved.levels ?? null;
-  } catch {
-    return null;
-  }
+  const saved = readCharacterToolData<{ levels?: HexaSkillLevels }>(charName, "hexaSkills");
+  return saved?.levels ?? null;
 }
 
 function OverviewTab({ model }: { model: PreviewPaneModel }) {
