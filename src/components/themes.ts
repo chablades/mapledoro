@@ -1,7 +1,3 @@
-/*
-  Single source of truth for application themes.
-  Edit theme colors/names here to affect all pages using shared components.
-*/
 export interface AppTheme {
   name: string;
   emoji: string;
@@ -20,124 +16,161 @@ export interface AppTheme {
   badgeText: string;
 }
 
-export const THEMES: Record<string, AppTheme> = {
+export type ColorMode = "light" | "dark";
+
+interface ColorModeBase {
+  bg: string;
+  panel: string;
+  border: string;
+  text: string;
+  muted: string;
+  sidebar: string;
+  timerBg: string;
+  badge: string;
+  badgeText: string;
+}
+
+interface AccentTheme {
+  name: string;
+  emoji: string;
+  accent: string;
+  light: { accentSoft: string; accentText: string };
+  dark: { accentSoft: string; accentText: string };
+}
+
+const LIGHT_BASE: ColorModeBase = {
+  bg: "#faf8f5",
+  panel: "#ffffff",
+  border: "#ede8e0",
+  text: "#1c1814",
+  muted: "#8a7f75",
+  sidebar: "#faf8f5",
+  timerBg: "#faf8f5",
+  badge: "#f0e8e0",
+  badgeText: "#7a5a40",
+};
+
+const DARK_BASE: ColorModeBase = {
+  bg: "#101014",
+  panel: "#1a1a22",
+  border: "#2a2a34",
+  text: "#e0ddd8",
+  muted: "#807a85",
+  sidebar: "#131318",
+  timerBg: "#141418",
+  badge: "#242428",
+  badgeText: "#908890",
+};
+
+export const COLOR_MODE_BASES: Record<ColorMode, ColorModeBase> = {
+  light: LIGHT_BASE,
+  dark: DARK_BASE,
+};
+
+export const ACCENT_THEMES: Record<string, AccentTheme> = {
+  aranya: {
+    name: "Aranya",
+    emoji: "🪷",
+    accent: "#882233",
+    light: { accentSoft: "#f6e8ec", accentText: "#6e1828" },
+    dark: { accentSoft: "#200c10", accentText: "#c85060" },
+  },
+  momijigaoka: {
+    name: "Momijigaoka",
+    emoji: "⛩️",
+    accent: "#E95505",
+    light: { accentSoft: "#fdeee6", accentText: "#c04404" },
+    dark: { accentSoft: "#281204", accentText: "#f08040" },
+  },
   default: {
     name: "Default",
     emoji: "🍁",
-    bg: "#faf8f5",
-    panel: "#ffffff",
-    border: "#ede8e0",
-    text: "#1c1814",
-    muted: "#8a7f75",
     accent: "#d4622a",
-    accentSoft: "#fdf0ea",
-    accentText: "#c45520",
-    sidebar: "#fff9f5",
-    sidebarAccent: "#d4622a",
-    timerBg: "#fdf8f4",
-    badge: "#f0e8e0",
-    badgeText: "#7a5a40",
+    light: { accentSoft: "#fdf0ea", accentText: "#c45520" },
+    dark: { accentSoft: "#2a1a0e", accentText: "#e89a50" },
   },
-  henesys: {
-    name: "Henesys",
+  ludibrium: {
+    name: "Ludibrium",
+    emoji: "🧸",
+    accent: "#F6D808",
+    light: { accentSoft: "#fef9e0", accentText: "#b8a006" },
+    dark: { accentSoft: "#282200", accentText: "#f0d830" },
+  },
+  juno: {
+    name: "Juno",
     emoji: "🌿",
-    bg: "#f2faf2",
-    panel: "#ffffff",
-    border: "#cce8cc",
-    text: "#162816",
-    muted: "#507050",
-    accent: "#2d8a2d",
-    accentSoft: "#e8f5e8",
-    accentText: "#1e6e1e",
-    sidebar: "#f0faf0",
-    sidebarAccent: "#2d8a2d",
-    timerBg: "#f0faf0",
-    badge: "#d4edda",
-    badgeText: "#1e5c1e",
-  },
-  kerning: {
-    name: "Kerning City",
-    emoji: "🌆",
-    bg: "#0e0e18",
-    panel: "#16162a",
-    border: "#252540",
-    text: "#e8e6f8",
-    muted: "#7875a0",
-    accent: "#7c6aff",
-    accentSoft: "#1c1a38",
-    accentText: "#a090ff",
-    sidebar: "#121228",
-    sidebarAccent: "#7c6aff",
-    timerBg: "#131328",
-    badge: "#1e1c3a",
-    badgeText: "#9088cc",
+    accent: "#DDEE00",
+    light: { accentSoft: "#fafde0", accentText: "#a0aa00" },
+    dark: { accentSoft: "#222800", accentText: "#e8f030" },
   },
   sleepywood: {
     name: "Sleepywood",
     emoji: "🌑",
-    bg: "#100e0c",
-    panel: "#1a1612",
-    border: "#2a2218",
-    text: "#e8ddd0",
-    muted: "#806a54",
-    accent: "#c47c2a",
-    accentSoft: "#281c0c",
-    accentText: "#e89a40",
-    sidebar: "#161210",
-    sidebarAccent: "#c47c2a",
-    timerBg: "#181410",
-    badge: "#241c10",
-    badgeText: "#a07848",
+    accent: "#157220",
+    light: { accentSoft: "#e6f4e8", accentText: "#0e5a18" },
+    dark: { accentSoft: "#0a200c", accentText: "#3ab848" },
   },
-  ellinia: {
-    name: "Ellinia",
-    emoji: "✨",
-    bg: "#0a1020",
-    panel: "#101828",
-    border: "#182840",
-    text: "#d0e8ff",
-    muted: "#5880aa",
-    accent: "#4ab8ff",
-    accentSoft: "#0c1e38",
-    accentText: "#7accff",
-    sidebar: "#0c1422",
-    sidebarAccent: "#4ab8ff",
-    timerBg: "#0c1830",
-    badge: "#102030",
-    badgeText: "#6aaadd",
+  onyxapple: {
+    name: "Onyx Apple",
+    emoji: "🍎",
+    accent: "#3366FF",
+    light: { accentSoft: "#e8eeff", accentText: "#2850cc" },
+    dark: { accentSoft: "#0c1430", accentText: "#6090ff" },
   },
-  mushroomshrine: {
-    name: "Mushroom Shrine",
-    emoji: "🍄",
-    bg: "#fdf5f0",
-    panel: "#ffffff",
-    border: "#f0ddd0",
-    text: "#2a1810",
-    muted: "#a07060",
-    accent: "#e05a5a",
-    accentSoft: "#fff0f0",
-    accentText: "#c04040",
-    sidebar: "#fff8f5",
-    sidebarAccent: "#e05a5a",
-    timerBg: "#fff5f2",
-    badge: "#fde8e8",
-    badgeText: "#a03030",
+  arcaneriver: {
+    name: "Arcane River",
+    emoji: "🌊",
+    accent: "#2530A0",
+    light: { accentSoft: "#e8e9f4", accentText: "#1c2480" },
+    dark: { accentSoft: "#0a0c28", accentText: "#5860d0" },
+  },
+  cha: {
+    name: "Cha",
+    emoji: "🍵",
+    accent: "#6677bb",
+    light: { accentSoft: "#eef0f8", accentText: "#4c5a9a" },
+    dark: { accentSoft: "#141828", accentText: "#8e9cd8" },
+  },
+  esfera: {
+    name: "Esfera",
+    emoji: "🔮",
+    accent: "#9882C0",
+    light: { accentSoft: "#f2eef8", accentText: "#7a62a8" },
+    dark: { accentSoft: "#1c1628", accentText: "#b8a0e0" },
+  },
+  elluel: {
+    name: "Elluel",
+    emoji: "🌸",
+    accent: "#E9A6BB",
+    light: { accentSoft: "#fdf2f6", accentText: "#c47a98" },
+    dark: { accentSoft: "#2a1420", accentText: "#f0b8d0" },
   },
   yuki: {
     name: "Yuki",
     emoji: "🐰",
-    bg: "#faf8f9",
-    panel: "#ffffff",
-    border: "#eedde6",
-    text: "#2a1e24",
-    muted: "#a88898",
     accent: "#d4607a",
-    accentSoft: "#fceef2",
-    accentText: "#b84060",
-    sidebar: "#fdf5f8",
-    sidebarAccent: "#d4607a",
-    timerBg: "#fdf8fa",
-    badge: "#e8d5e0",
-    badgeText: "#7a4060",
+    light: { accentSoft: "#fceef2", accentText: "#b84060" },
+    dark: { accentSoft: "#301020", accentText: "#f080a0" },
   },
 };
+
+export function composeTheme(accentKey: string, colorMode: ColorMode): AppTheme {
+  const accent = ACCENT_THEMES[accentKey] ?? ACCENT_THEMES["default"];
+  const base = COLOR_MODE_BASES[colorMode];
+  const modeAccent = accent[colorMode];
+
+  return {
+    name: accent.name,
+    emoji: accent.emoji,
+    ...base,
+    accent: accent.accent,
+    accentSoft: modeAccent.accentSoft,
+    accentText: modeAccent.accentText,
+    sidebarAccent: accent.accent,
+  };
+}
+
+// Pre-composed default-light theme for backwards compat / SSR fallback
+export const THEMES: Record<string, AppTheme> = Object.fromEntries(
+  Object.keys(ACCENT_THEMES).map((key) => [key, composeTheme(key, "light")])
+);
