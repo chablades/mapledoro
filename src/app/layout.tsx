@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { ThemeProvider } from "../components/ThemeContext";
 import { ACCENT_THEMES, type ColorMode } from "../components/themes";
@@ -34,9 +35,8 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body>
-        <ThemeProvider initialThemeKey={initialThemeKey} initialColorMode={initialColorMode}>
-          {children}
-        </ThemeProvider>
+        <ThemeProvider initialThemeKey={initialThemeKey}>{children}</ThemeProvider>
+        <Analytics />
       </body>
     </html>
   );
