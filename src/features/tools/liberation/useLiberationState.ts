@@ -7,6 +7,7 @@ import {
   type StoredCharacterRecord,
 } from "../../characters/model/charactersStore";
 import { useApplyCharacterQueryParam } from "../useApplyCharacterQueryParam";
+import { readCharacterToolData, writeCharacterToolData } from "../characterToolStorage";
 import {
   type LiberationType,
   type LiberationBoss,
@@ -35,28 +36,6 @@ interface SavedState {
   genesisPass: boolean;
   startDate: string;
   bosses: Record<string, BossSelection>;
-}
-
-// -- Storage ------------------------------------------------------------------
-
-const STORAGE_KEY = "liberation-v1";
-
-function storageKeyFor(charName: string | null): string {
-  return charName ? `${STORAGE_KEY}-${charName}` : STORAGE_KEY;
-}
-
-function loadStateFrom(key: string): SavedState | null {
-  try {
-    const raw = localStorage.getItem(key);
-    if (!raw) return null;
-    return JSON.parse(raw);
-  } catch {
-    return null;
-  }
-}
-
-function saveStateTo(key: string, state: SavedState) {
-  localStorage.setItem(key, JSON.stringify(state));
 }
 
 // -- Helpers ------------------------------------------------------------------
@@ -382,12 +361,6 @@ function formToSaved(form: FormState): SavedState {
   };
 }
 
-function initFormState(): FormState {
-  const saved = loadStateFrom(STORAGE_KEY);
-  if (saved) return savedToForm(saved);
-  return defaultFormState();
-}
-
 // -- Hook ---------------------------------------------------------------------
 
 export function useLiberationState() {
@@ -402,9 +375,8 @@ export function useLiberationState() {
     ? selectCharactersList(readCharactersStore())
     : [];
   const [selectedCharName, setSelectedCharName] = useState<string | null>(null);
-  const currentStorageKey = storageKeyFor(selectedCharName);
 
-  const [form, setForm] = useState<FormState>(initFormState);
+  const [form, setForm] = useState<FormState>(defaultFormState);
 
   const { type, questIdx, currentTraces, genesisPass, startDate, selections } = form;
 
@@ -414,20 +386,28 @@ export function useLiberationState() {
   const setStartDate = useCallback((v: string) => setForm((f) => ({ ...f, startDate: v })), []);
   const setSelections = useCallback((updater: (prev: Record<string, BossSelection>) => Record<string, BossSelection>) => setForm((f) => ({ ...f, selections: updater(f.selections) })), []);
 
-  // Persist to current character's storage key
   useEffect(() => {
-    saveStateTo(currentStorageKey, formToSaved(form));
-  }, [currentStorageKey, form]);
+    if (selectedCharName) {
+      writeCharacterToolData(selectedCharName, "liberation", formToSaved(form));
+    }
+  }, [selectedCharName, form]);
 
   const handleCharChange = useCallback(
     (charName: string | null) => {
-      saveStateTo(currentStorageKey, formToSaved(form));
-      const newKey = storageKeyFor(charName);
-      const saved = loadStateFrom(newKey);
-      setForm(saved ? savedToForm(saved) : defaultFormState());
+      if (selectedCharName) {
+        writeCharacterToolData(selectedCharName, "liberation", formToSaved(form));
+      }
+
+      if (charName) {
+        const saved = readCharacterToolData<SavedState>(charName, "liberation");
+        setForm(saved ? savedToForm(saved) : defaultFormState());
+      } else {
+        setForm(defaultFormState());
+      }
+
       setSelectedCharName(charName);
     },
-    [currentStorageKey, form],
+    [selectedCharName, form],
   );
 
   useApplyCharacterQueryParam({ mounted, characters, handleCharChange });

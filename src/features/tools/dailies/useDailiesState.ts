@@ -6,6 +6,7 @@ import {
   selectCharactersList,
   type StoredCharacterRecord,
 } from "../../characters/model/charactersStore";
+import { readGlobalTool, writeGlobalTool } from "../globalToolsStore";
 import {
   ARCANE_SYMBOL_QUESTS,
   SACRED_SYMBOL_QUESTS,
@@ -41,8 +42,6 @@ interface SavedState {
 }
 
 // -- Storage ------------------------------------------------------------------
-
-const STORAGE_KEY = "dailies-v1";
 
 export function utcDateStr(d: Date = new Date()): string {
   const y = d.getUTCFullYear();
@@ -116,25 +115,13 @@ function applyDailyReset(state: SavedState): SavedState {
 
 function loadState(): SavedState {
   if (typeof window === "undefined") return { version: 1, characters: {} };
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return { version: 1, characters: {} };
-    const parsed = JSON.parse(raw) as SavedState;
-    if (!parsed || typeof parsed !== "object" || !parsed.characters) {
-      return { version: 1, characters: {} };
-    }
-    return applyDailyReset(parsed);
-  } catch {
-    return { version: 1, characters: {} };
-  }
+  const parsed = readGlobalTool<SavedState>("dailies");
+  if (!parsed || !parsed.characters) return { version: 1, characters: {} };
+  return applyDailyReset(parsed);
 }
 
 function saveState(state: SavedState) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  } catch {
-    /* ignore */
-  }
+  writeGlobalTool("dailies", state);
 }
 
 // -- Progress helpers ---------------------------------------------------------

@@ -89,6 +89,7 @@ export interface StoredCharacterRecord {
   gender: "male" | "female" | null;
   stats: StoredCharacterStats;
   equipment: StoredCharacterEquipment;
+  tools?: Record<string, unknown>;
   meta: {
     addedAt: number;
     updatedAt: number;
@@ -337,6 +338,7 @@ function parseStoredCharacterRecord(
     equipment: isStoredCharacterEquipment(value.equipment)
       ? value.equipment
       : createEmptyCharacterEquipment(),
+    tools: isObject(value.tools) ? (value.tools as Record<string, unknown>) : undefined,
     meta: {
       addedAt: typeof meta.addedAt === "number" ? meta.addedAt : Date.now(),
       updatedAt: typeof meta.updatedAt === "number" ? meta.updatedAt : Date.now(),

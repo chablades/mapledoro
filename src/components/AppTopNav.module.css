@@ -57,79 +57,31 @@
   min-height: 24px;
 }
 
-.themeDropdown {
+/* Sun/Moon color mode toggle */
+.colorModeToggle {
   position: relative;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.themeLabel {
-  font-size: 0.78rem;
-  font-weight: 800;
-  white-space: nowrap;
-}
-
-.themeDropdownBtn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  width: 170px;
-  padding: 0.3rem 0.55rem;
-  border-radius: 8px;
+  width: 48px;
+  height: 26px;
+  border-radius: 13px;
   cursor: pointer;
-  font-size: 0.8rem;
-  font-weight: 700;
-  white-space: nowrap;
-  font-family: inherit;
-  transition: border-color 0.2s;
+  padding: 0;
+  flex-shrink: 0;
+  transition: background 0.3s, border-color 0.3s;
 }
 
-.themeDropdownPanel {
+.colorModeKnob {
   position: absolute;
-  top: calc(100% + 6px);
-  right: 0;
-  border-radius: 10px;
-  padding: 0.35rem;
-  width: 170px;
-  z-index: 60;
-  animation: dropdownFadeIn 0.15s ease;
-}
-
-@keyframes dropdownFadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.themeDropdownItem {
-  position: relative;
+  top: 2px;
+  left: 2px;
+  width: 21px;
+  height: 21px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
-  gap: 8px;
-  width: 100%;
-  padding: 0.4rem 0.55rem;
-  border: none;
-  border-radius: 7px;
-  cursor: pointer;
-  font-size: 0.82rem;
-  font-family: inherit;
-  text-align: left;
-  transition: filter 0.15s;
-}
-
-.themeDropdownItem:hover::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: rgba(128, 128, 128, 0.08);
-  pointer-events: none;
+  justify-content: center;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    background 0.3s,
+    box-shadow 0.3s;
 }
 
 .desktopUtc {
@@ -160,10 +112,6 @@
   }
 
   .desktopNavLinks {
-    display: none !important;
-  }
-
-  .themeDropdown {
     display: none !important;
   }
 

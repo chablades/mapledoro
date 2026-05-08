@@ -7,6 +7,7 @@ import {
   type StoredCharacterRecord,
 } from "../../characters/model/charactersStore";
 import { useApplyCharacterQueryParam } from "../useApplyCharacterQueryParam";
+import { readCharacterToolData, writeCharacterToolData } from "../characterToolStorage";
 import {
   ORIGIN_COSTS,
   ENHANCEMENT_COSTS,
@@ -52,28 +53,6 @@ export interface TotalCosts {
   maxGrand: SkillCostSummary;
   maxCommon: SkillCostSummary;
   progressPct: number;
-}
-
-// ── Storage ──────────────────────────────────────────────────────────────────
-
-const STORAGE_KEY = "hexa-skills-v1";
-
-function storageKeyFor(charName: string | null): string {
-  return charName ? `${STORAGE_KEY}-${charName}` : STORAGE_KEY;
-}
-
-function loadState(key: string): SavedState | null {
-  try {
-    const raw = localStorage.getItem(key);
-    if (!raw) return null;
-    return JSON.parse(raw);
-  } catch {
-    return null;
-  }
-}
-
-function saveState(key: string, state: SavedState) {
-  localStorage.setItem(key, JSON.stringify(state));
 }
 
 // ── Defaults ─────────────────────────────────────────────────────────────────
@@ -208,46 +187,44 @@ export function useHexaSkillsState() {
   );
 
   const [selectedCharName, setSelectedCharName] = useState<string | null>(null);
-  const currentStorageKey = storageKeyFor(selectedCharName);
 
-  const [state, setState] = useState<SavedState>(() => {
-    if (typeof window === "undefined") return defaultState();
-    return loadState(STORAGE_KEY) ?? defaultState();
-  });
+  const [state, setState] = useState<SavedState>(defaultState);
 
   const classDef = state.className ? findClassByName(state.className) : null;
   const levels = normalizeLevels(state.levels, classDef);
   const desiredLevels = normalizeLevels(state.desiredLevels ?? defaultDesiredLevels(), classDef, 30);
 
-  // Persist on change
   useEffect(() => {
-    saveState(currentStorageKey, state);
-  }, [currentStorageKey, state]);
+    if (selectedCharName) {
+      writeCharacterToolData(selectedCharName, "hexaSkills", state);
+    }
+  }, [selectedCharName, state]);
 
-  // Character switching
   const handleCharChange = useCallback(
     (charName: string | null) => {
-      saveState(currentStorageKey, state);
-      const newKey = storageKeyFor(charName);
-      const saved = loadState(newKey);
+      if (selectedCharName) {
+        writeCharacterToolData(selectedCharName, "hexaSkills", state);
+      }
 
-      if (saved) {
-        setState(saved);
-      } else {
-        // Auto-fill class from character
-        const char = charName
-          ? characters.find((c) => c.characterName === charName)
-          : null;
-        let autoClass: string | null = null;
-        if (char && findClassByName(char.jobName)) {
-          autoClass = char.jobName;
+      if (charName) {
+        const saved = readCharacterToolData<SavedState>(charName, "hexaSkills");
+        if (saved) {
+          setState(saved);
+        } else {
+          const char = characters.find((c) => c.characterName === charName);
+          let autoClass: string | null = null;
+          if (char && findClassByName(char.jobName)) {
+            autoClass = char.jobName;
+          }
+          setState({ className: autoClass, levels: defaultLevels(), desiredLevels: defaultDesiredLevels() });
         }
-        setState({ className: autoClass, levels: defaultLevels(), desiredLevels: defaultDesiredLevels() });
+      } else {
+        setState(defaultState());
       }
 
       setSelectedCharName(charName);
     },
-    [currentStorageKey, state, characters],
+    [selectedCharName, state, characters],
   );
 
   useApplyCharacterQueryParam({ mounted, characters, handleCharChange });

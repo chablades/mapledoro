@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { ThemeProvider } from "../components/ThemeContext";
-import { THEMES } from "../components/themes";
+import { ACCENT_THEMES, type ColorMode } from "../components/themes";
 
 export const metadata: Metadata = {
   title: "MapleDoro",
@@ -21,11 +21,16 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const cookieStore = await cookies();
+
   const cookieThemeKey = cookieStore.get("mapledoro-theme-key")?.value;
   const initialThemeKey =
-    cookieThemeKey && Object.prototype.hasOwnProperty.call(THEMES, cookieThemeKey)
+    cookieThemeKey && Object.prototype.hasOwnProperty.call(ACCENT_THEMES, cookieThemeKey)
       ? cookieThemeKey
       : "default";
+
+  const cookieColorMode = cookieStore.get("mapledoro-color-mode")?.value;
+  const initialColorMode: ColorMode =
+    cookieColorMode === "light" || cookieColorMode === "dark" ? cookieColorMode : "light";
 
   return (
     <html lang="en">

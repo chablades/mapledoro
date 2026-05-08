@@ -1,14 +1,10 @@
 "use client";
 
-/*
-  Shared application shell for route pages.
-  Owns theme + UTC clock state and renders top nav/sidebar consistently.
-*/
 import type { ReactNode } from "react";
 import Link from "next/link";
 import AppTopNav from "./AppTopNav";
 import { NAV_LINKS } from "./nav-links";
-import { THEMES, type AppTheme } from "./themes";
+import type { AppTheme } from "./themes";
 import { useTheme } from "./ThemeContext";
 
 const FOOTER_LINKS: { label: string; href: string }[] = [
@@ -24,7 +20,7 @@ interface AppShellProps {
 }
 
 export default function AppShell({ currentPath, children }: AppShellProps) {
-  const { themeKey, theme, setThemeKey } = useTheme();
+  const { theme, colorMode, setColorMode } = useTheme();
 
   return (
     <div
@@ -38,11 +34,10 @@ export default function AppShell({ currentPath, children }: AppShellProps) {
     >
       <AppTopNav
         currentPath={currentPath}
-        themeKey={themeKey}
         theme={theme}
-        themes={THEMES}
         navLinks={NAV_LINKS}
-        onThemeChange={setThemeKey}
+        colorMode={colorMode}
+        onColorModeChange={setColorMode}
       />
 
       <div className="page-shell">

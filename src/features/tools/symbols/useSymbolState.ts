@@ -5,6 +5,7 @@ import {
   selectCharactersList,
   type StoredCharacterRecord,
 } from "../../characters/model/charactersStore";
+import { readCharacterToolData, writeCharacterToolData } from "../characterToolStorage";
 import {
   type SymbolType,
   type SymbolArea,
@@ -62,28 +63,6 @@ export interface SymbolStats {
 // -- Constants ----------------------------------------------------------------
 
 export const WEEKLY_SYMBOLS = 120;
-
-// -- Storage ------------------------------------------------------------------
-
-const STORAGE_KEY = "symbols-v2";
-
-function storageKeyFor(charName: string | null): string {
-  return charName ? `${STORAGE_KEY}-${charName}` : STORAGE_KEY;
-}
-
-function loadStateFrom(key: string): SavedState | null {
-  try {
-    const raw = localStorage.getItem(key);
-    if (!raw) return null;
-    return JSON.parse(raw);
-  } catch {
-    return null;
-  }
-}
-
-function saveStateTo(key: string, state: SavedState) {
-  localStorage.setItem(key, JSON.stringify(state));
-}
 
 // -- Helpers ------------------------------------------------------------------
 
@@ -164,11 +143,7 @@ interface FormState {
   symbols: Record<string, SymbolState>;
 }
 
-function initFormState(): FormState {
-  const saved = loadStateFrom(STORAGE_KEY);
-  if (saved) {
-    return { type: saved.type, symbols: saved.symbols };
-  }
+function defaultFormState(): FormState {
   return { type: "arcane", symbols: {} };
 }
 
@@ -184,9 +159,8 @@ export function useSymbolState() {
     [mounted],
   );
   const [selectedCharName, setSelectedCharName] = useState<string | null>(null);
-  const currentStorageKey = storageKeyFor(selectedCharName);
 
-  const [form, setForm] = useState<FormState>(initFormState);
+  const [form, setForm] = useState<FormState>(defaultFormState);
   const { type, symbols } = form;
 
   const areas = type === "arcane" ? ARCANE_AREAS : SACRED_AREAS;
@@ -194,36 +168,43 @@ export function useSymbolState() {
   const maxLevel = type === "arcane" ? ARCANE_MAX_LEVEL : SACRED_MAX_LEVEL;
 
   useEffect(() => {
-    saveStateTo(currentStorageKey, { type, symbols });
-  }, [currentStorageKey, type, symbols]);
+    if (selectedCharName) {
+      writeCharacterToolData(selectedCharName, "symbols", { type, symbols });
+    }
+  }, [selectedCharName, type, symbols]);
 
   const handleCharChange = useCallback(
     (charName: string | null) => {
-      saveStateTo(currentStorageKey, { type, symbols });
-      const newKey = storageKeyFor(charName);
-      const saved = loadStateFrom(newKey);
+      if (selectedCharName) {
+        writeCharacterToolData(selectedCharName, "symbols", { type, symbols });
+      }
 
-      if (saved) {
-        setForm({ type: saved.type, symbols: saved.symbols });
-      } else {
-        const char = charName ? characters.find((c) => c.characterName === charName) : null;
-        if (char && char.level >= 260) {
-          const sacredSymbols: Record<string, SymbolState> = {};
-          for (const area of SACRED_AREAS) {
-            sacredSymbols[area.name] = {
-              ...defaultSymbolState(area, "sacred"),
-              enabled: char.level >= area.requiredLevel,
-            };
-          }
-          setForm({ type: "sacred", symbols: sacredSymbols });
+      if (charName) {
+        const saved = readCharacterToolData<SavedState>(charName, "symbols");
+        if (saved) {
+          setForm({ type: saved.type, symbols: saved.symbols });
         } else {
-          setForm({ type: "arcane", symbols: {} });
+          const char = characters.find((c) => c.characterName === charName);
+          if (char && char.level >= 260) {
+            const sacredSymbols: Record<string, SymbolState> = {};
+            for (const area of SACRED_AREAS) {
+              sacredSymbols[area.name] = {
+                ...defaultSymbolState(area, "sacred"),
+                enabled: char.level >= area.requiredLevel,
+              };
+            }
+            setForm({ type: "sacred", symbols: sacredSymbols });
+          } else {
+            setForm(defaultFormState);
+          }
         }
+      } else {
+        setForm(defaultFormState);
       }
 
       setSelectedCharName(charName);
     },
-    [currentStorageKey, type, symbols, characters],
+    [selectedCharName, type, symbols, characters],
   );
 
   useApplyCharacterQueryParam({ mounted, characters, handleCharChange });
