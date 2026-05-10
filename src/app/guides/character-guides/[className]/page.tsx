@@ -1,6 +1,7 @@
 "use client";
 
-import React, { use, useState } from "react";
+import React, { type CSSProperties, use, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import AppShell from "../../../../components/AppShell";
 import type { AppTheme } from "../../../../components/themes";
@@ -9,6 +10,109 @@ import { CLASS_RESOURCES } from "../classResources";
 import type { ClassResource } from "../classResources";
 import { WikiAttribution, WIKI_ATTRIBUTION_SOURCE } from "../../../../components/WikiAttribution";
 import { HEXA_IMAGES } from "../hexaData";
+
+/* ── Extracted styles ─────────────────────────────────────── */
+
+function heroPortraitStyle(theme: AppTheme): CSSProperties {
+  return {
+    width: "140px",
+    minWidth: "140px",
+    height: "140px",
+    borderRadius: "14px",
+    border: `1px solid ${theme.border}`,
+    background: theme.panel,
+    overflow: "hidden",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  };
+}
+
+function collapsibleButtonStyle(theme: AppTheme): CSSProperties {
+  return {
+    width: "100%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: "1.25rem",
+    background: "transparent",
+    border: "none",
+    cursor: "pointer",
+    fontFamily: "'Fredoka One', cursive",
+    fontSize: "0.9rem",
+    color: theme.text,
+  };
+}
+
+function wipPlaceholderStyle(theme: AppTheme): CSSProperties {
+  return {
+    width: "100%",
+    minHeight: "200px",
+    borderRadius: "10px",
+    border: `1px dashed ${theme.border}`,
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "0.5rem",
+    color: theme.muted,
+    fontSize: "0.82rem",
+    fontWeight: 600,
+    fontStyle: "italic",
+    textAlign: "center",
+    padding: "1rem",
+  };
+}
+
+const zoomedOverlayStyle: CSSProperties = {
+  position: "fixed",
+  inset: 0,
+  zIndex: 50,
+  background: "rgba(0,0,0,0.85)",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  cursor: "zoom-out",
+  padding: "2rem",
+};
+
+const zoomedImageStyle: CSSProperties = {
+  maxWidth: "95vw",
+  maxHeight: "90vh",
+  objectFit: "contain",
+  borderRadius: "8px",
+};
+
+function serverToggleStyle(theme: AppTheme, active: boolean, withLeftBorder?: boolean): CSSProperties {
+  return {
+    padding: "0.3rem 0.7rem",
+    fontSize: "0.78rem",
+    fontWeight: 700,
+    border: "none",
+    ...(withLeftBorder ? { borderLeft: `1px solid ${theme.border}` } : {}),
+    cursor: "pointer",
+    background: active ? theme.accent : "transparent",
+    color: active ? "#fff" : theme.muted,
+    transition: "background 0.15s, color 0.15s",
+  };
+}
+
+function resourceLinkStyle(color: string): CSSProperties {
+  return {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "0.35rem",
+    padding: "0.3rem 0.75rem",
+    borderRadius: "8px",
+    border: `1.5px solid ${color}`,
+    color,
+    fontSize: "0.78rem",
+    fontWeight: 700,
+    textDecoration: "none",
+    background: "transparent",
+    transition: "background 0.15s",
+  };
+}
 
 function ClassGuideContent({
   theme,
@@ -100,22 +204,10 @@ function ClassGuideContent({
           }}
         >
           <div
-            style={{
-              width: "140px",
-              minWidth: "140px",
-              height: "140px",
-              borderRadius: "14px",
-              border: `1px solid ${theme.border}`,
-              background: theme.panel,
-              overflow: "hidden",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
+            style={heroPortraitStyle(theme)}
           >
             {cls.portrait ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
+              <Image
                 src={cls.portrait}
                 alt={cls.name}
                 width={140}
@@ -206,8 +298,7 @@ function ClassGuideContent({
               </div>
               <div style={{ display: "flex", gap: "0.75rem", alignItems: "flex-start" }}>
                 {cls.linkSkillIcon && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
+                  <Image
                     src={cls.linkSkillIcon}
                     alt={cls.linkSkillName}
                     width={36}
@@ -335,19 +426,7 @@ function InfographicPanel({ className, theme }: { className: string; theme: AppT
     >
       <button
         onClick={() => setOpen((v) => !v)}
-        style={{
-          width: "100%",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "1.25rem",
-          background: "transparent",
-          border: "none",
-          cursor: "pointer",
-          fontFamily: "'Fredoka One', cursive",
-          fontSize: "0.9rem",
-          color: theme.text,
-        }}
+        style={collapsibleButtonStyle(theme)}
       >
         Class Infographic
         <span
@@ -365,44 +444,26 @@ function InfographicPanel({ className, theme }: { className: string; theme: AppT
       {open && (
         <div style={{ padding: "0 1.25rem 1.25rem" }}>
           {hasImage ? (
-            <>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={infographic.url}
-                alt={`${className} infographic`}
-                role="button"
-                tabIndex={0}
-                onClick={() => setZoomed(true)}
-                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setZoomed(true); } }}
-                style={{
-                  width: "100%",
-                  height: "auto",
-                  borderRadius: "10px",
-                  border: `1px solid ${theme.border}`,
-                  cursor: "zoom-in",
-                }}
-              />
-            </>
-          ) : (
-            <div
+            <Image
+              src={infographic.url}
+              alt={`${className} infographic`}
+              role="button"
+              tabIndex={0}
+              onClick={() => setZoomed(true)}
+              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setZoomed(true); } }}
+              width={900}
+              height={1200}
+              sizes="(max-width: 900px) 100vw, 900px"
               style={{
                 width: "100%",
-                minHeight: "200px",
+                height: "auto",
                 borderRadius: "10px",
-                border: `1px dashed ${theme.border}`,
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "0.5rem",
-                color: theme.muted,
-                fontSize: "0.82rem",
-                fontWeight: 600,
-                fontStyle: "italic",
-                textAlign: "center",
-                padding: "1rem",
+                border: `1px solid ${theme.border}`,
+                cursor: "zoom-in",
               }}
-            >
+            />
+          ) : (
+            <div style={wipPlaceholderStyle(theme)}>
               <span>Work in Progress</span>
               <span style={{ fontStyle: "normal", fontSize: "0.78rem" }}>
                 Check the class document or class Discord in Community Resources below for the latest infographics
@@ -417,29 +478,16 @@ function InfographicPanel({ className, theme }: { className: string; theme: AppT
           tabIndex={0}
           onClick={() => setZoomed(false)}
           onKeyDown={(e) => { if (e.key === "Enter" || e.key === " " || e.key === "Escape") { e.preventDefault(); setZoomed(false); } }}
-          style={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 50,
-            background: "rgba(0,0,0,0.85)",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            cursor: "zoom-out",
-            padding: "2rem",
-          }}
+          style={zoomedOverlayStyle}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src={infographic.url}
             alt={`${className} infographic`}
-            style={{
-              maxWidth: "95vw",
-              maxHeight: "90vh",
-              objectFit: "contain",
-              borderRadius: "8px",
-            }}
+            width={1800}
+            height={2400}
+            sizes="95vw"
+            unoptimized
+            style={zoomedImageStyle}
           />
         </div>
       )}
@@ -490,76 +538,39 @@ function HexaGuidePanel({ className, theme }: { className: string; theme: AppThe
         >
           <button
             onClick={() => setServer("heroic")}
-            style={{
-              padding: "0.3rem 0.7rem",
-              fontSize: "0.78rem",
-              fontWeight: 700,
-              border: "none",
-              cursor: "pointer",
-              background: server === "heroic" ? theme.accent : "transparent",
-              color: server === "heroic" ? "#fff" : theme.muted,
-              transition: "background 0.15s, color 0.15s",
-            }}
+            style={serverToggleStyle(theme, server === "heroic")}
           >
             Heroic
           </button>
           <button
             onClick={() => setServer("interactive")}
-            style={{
-              padding: "0.3rem 0.7rem",
-              fontSize: "0.78rem",
-              fontWeight: 700,
-              border: "none",
-              borderLeft: `1px solid ${theme.border}`,
-              cursor: "pointer",
-              background: server === "interactive" ? theme.accent : "transparent",
-              color: server === "interactive" ? "#fff" : theme.muted,
-              transition: "background 0.15s, color 0.15s",
-            }}
+            style={serverToggleStyle(theme, server === "interactive", true)}
           >
             Interactive
           </button>
         </div>
       </div>
       {imageUrl ? (
-        <>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={imageUrl}
-            alt={`${className} HEXA guide (${server})`}
-            role="button"
-            tabIndex={0}
-            onClick={() => setZoomed(true)}
-            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setZoomed(true); } }}
-            style={{
-              width: "100%",
-              height: "auto",
-              borderRadius: "10px",
-              border: `1px solid ${theme.border}`,
-              cursor: "zoom-in",
-            }}
-          />
-        </>
-      ) : (
-        <div
+        <Image
+          src={imageUrl}
+          alt={`${className} HEXA guide (${server})`}
+          role="button"
+          tabIndex={0}
+          onClick={() => setZoomed(true)}
+          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setZoomed(true); } }}
+          width={900}
+          height={1200}
+          sizes="(max-width: 900px) 100vw, 900px"
           style={{
             width: "100%",
-            minHeight: "200px",
+            height: "auto",
             borderRadius: "10px",
-            border: `1px dashed ${theme.border}`,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "0.5rem",
-            color: theme.muted,
-            fontSize: "0.82rem",
-            fontWeight: 600,
-            fontStyle: "italic",
-            textAlign: "center",
-            padding: "1rem",
+            border: `1px solid ${theme.border}`,
+            cursor: "zoom-in",
           }}
-        >
+        />
+      ) : (
+        <div style={wipPlaceholderStyle(theme)}>
           <span>Work in Progress</span>
           <span style={{ fontStyle: "normal", fontSize: "0.78rem" }}>
             Check the class document or class Discord in Community Resources below for the latest HEXA guides
@@ -572,28 +583,16 @@ function HexaGuidePanel({ className, theme }: { className: string; theme: AppThe
           tabIndex={0}
           onClick={() => setZoomed(false)}
           onKeyDown={(e) => { if (e.key === "Enter" || e.key === " " || e.key === "Escape") { e.preventDefault(); setZoomed(false); } }}
-          style={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 50,
-            background: "rgba(0,0,0,0.85)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            cursor: "zoom-out",
-            padding: "2rem",
-          }}
+          style={zoomedOverlayStyle}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src={imageUrl}
             alt={`${className} HEXA guide (${server})`}
-            style={{
-              maxWidth: "95vw",
-              maxHeight: "90vh",
-              objectFit: "contain",
-              borderRadius: "8px",
-            }}
+            width={1800}
+            height={2400}
+            sizes="95vw"
+            unoptimized
+            style={zoomedImageStyle}
           />
         </div>
       )}
@@ -630,20 +629,7 @@ function ResourcesPanel({ className, theme }: { className: string; theme: AppThe
             href={r.url}
             target="_blank"
             rel="noopener noreferrer"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "0.35rem",
-              padding: "0.3rem 0.75rem",
-              borderRadius: "8px",
-              border: `1.5px solid ${RESOURCE_TYPE_COLORS[r.type]}`,
-              color: RESOURCE_TYPE_COLORS[r.type],
-              fontSize: "0.78rem",
-              fontWeight: 700,
-              textDecoration: "none",
-              background: "transparent",
-              transition: "background 0.15s",
-            }}
+            style={resourceLinkStyle(RESOURCE_TYPE_COLORS[r.type])}
           >
             <span
               style={{
@@ -655,7 +641,7 @@ function ResourcesPanel({ className, theme }: { className: string; theme: AppThe
                 flexShrink: 0,
               }}
             />
-            <span style={{ color: theme.muted, fontWeight: 600, fontSize: "0.72rem" }}>
+            <span style={{ color: theme.muted, fontWeight: 600, fontSize: "0.75rem" }}>
               {RESOURCE_TYPE_LABELS[r.type]}
             </span>
             {r.label}

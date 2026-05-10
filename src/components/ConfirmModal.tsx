@@ -1,7 +1,50 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import type { AppTheme } from "./themes";
+
+function modalPanelStyle(theme: AppTheme): CSSProperties {
+  return {
+    width: "min(420px, 100%)",
+    borderRadius: "14px",
+    border: `1px solid ${theme.border}`,
+    background: theme.panel,
+    color: theme.text,
+    padding: "1rem",
+    boxShadow: "0 16px 48px rgba(0,0,0,0.24)",
+    display: "grid",
+    gap: "0.75rem",
+  };
+}
+
+function cancelButtonStyle(theme: AppTheme): CSSProperties {
+  return {
+    border: `1px solid ${theme.border}`,
+    borderRadius: "10px",
+    background: theme.bg,
+    color: theme.text,
+    fontFamily: "inherit",
+    fontWeight: 800,
+    fontSize: "0.86rem",
+    padding: "0.5rem 0.75rem",
+    cursor: "pointer",
+  };
+}
+
+function confirmButtonStyle(theme: AppTheme, danger: boolean): CSSProperties {
+  return {
+    border: danger ? "1px solid #fca5a5" : `1px solid ${theme.accent}`,
+    borderRadius: "10px",
+    background: danger ? "#ef4444" : theme.accent,
+    color: "#fff",
+    fontFamily: "inherit",
+    fontWeight: 800,
+    fontSize: "0.86rem",
+    padding: "0.5rem 0.8rem",
+    cursor: "pointer",
+  };
+}
 
 interface ConfirmModalProps {
   theme: AppTheme;
@@ -34,19 +77,7 @@ export default function ConfirmModal({
         padding: "1rem",
       }}
     >
-      <div
-        style={{
-          width: "min(420px, 100%)",
-          borderRadius: "14px",
-          border: `1px solid ${theme.border}`,
-          background: theme.panel,
-          color: theme.text,
-          padding: "1rem",
-          boxShadow: "0 16px 48px rgba(0,0,0,0.24)",
-          display: "grid",
-          gap: "0.75rem",
-        }}
-      >
+      <div style={modalPanelStyle(theme)}>
         <p style={{ margin: 0, fontSize: "1rem", fontWeight: 800 }}>
           {title}
         </p>
@@ -57,34 +88,14 @@ export default function ConfirmModal({
           <button
             type="button"
             onClick={onCancel}
-            style={{
-              border: `1px solid ${theme.border}`,
-              borderRadius: "10px",
-              background: theme.bg,
-              color: theme.text,
-              fontFamily: "inherit",
-              fontWeight: 800,
-              fontSize: "0.86rem",
-              padding: "0.5rem 0.75rem",
-              cursor: "pointer",
-            }}
+            style={cancelButtonStyle(theme)}
           >
             Cancel
           </button>
           <button
             type="button"
             onClick={onConfirm}
-            style={{
-              border: confirmDanger ? "1px solid #fca5a5" : `1px solid ${theme.accent}`,
-              borderRadius: "10px",
-              background: confirmDanger ? "#ef4444" : theme.accent,
-              color: "#fff",
-              fontFamily: "inherit",
-              fontWeight: 800,
-              fontSize: "0.86rem",
-              padding: "0.5rem 0.8rem",
-              cursor: "pointer",
-            }}
+            style={confirmButtonStyle(theme, confirmDanger)}
           >
             {confirmLabel}
           </button>
