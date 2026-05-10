@@ -66,9 +66,13 @@ export default function GenericSetupStep({
           fontSize: "0.9rem",
           fontWeight: 600,
           padding: "0.55rem 0.7rem",
-          outline: "none",
+          outline: "2px solid transparent",
+          outlineOffset: "2px",
+          transition: "outline-color 0.2s ease",
           marginBottom: "0.8rem",
         }}
+        onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
+        onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
       />
     </SetupStepFrame>
   );

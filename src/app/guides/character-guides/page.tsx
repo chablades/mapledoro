@@ -10,7 +10,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import AppShell from "../../../components/AppShell";
 import type { AppTheme } from "../../../components/themes";
-import { CLASSES, CLASS_REGIONS, DIFFICULTY_COLORS, type ClassEntry } from "./classData";
+import { CLASSES, CLASS_TYPES, type ClassEntry } from "./classData";
 import { WikiAttribution } from "../../../components/WikiAttribution";
 
 /* ── Class card ───────────────────────────────────────────────── */
@@ -77,7 +77,7 @@ function ClassCard({ cls, theme }: { cls: ClassEntry; theme: AppTheme }) {
         <div
           style={{
             fontFamily: "'Fredoka One', cursive",
-            fontSize: "0.72rem",
+            fontSize: "0.78rem",
             color: theme.text,
             textAlign: "center",
             lineHeight: 1.25,
@@ -85,17 +85,6 @@ function ClassCard({ cls, theme }: { cls: ClassEntry; theme: AppTheme }) {
           }}
         >
           {cls.name}
-        </div>
-
-        {/* Difficulty */}
-        <div
-          style={{
-            fontSize: "0.62rem",
-            fontWeight: 700,
-            color: DIFFICULTY_COLORS[cls.difficulty],
-          }}
-        >
-          {cls.difficulty}
         </div>
       </div>
     </Link>
@@ -112,14 +101,16 @@ function CharacterGuidesContent({ theme }: { theme: AppTheme }) {
     ? CLASSES.filter(
         (c) =>
           c.name.toLowerCase().includes(query) ||
+          c.classType.toLowerCase().includes(query) ||
           c.region.toLowerCase().includes(query),
       )
     : CLASSES;
 
-  const grouped = CLASS_REGIONS.map((region) => ({
-    region,
-    classes: filtered.filter((c) => c.region === region),
-  })).filter((g) => g.classes.length > 0);
+  const grouped: { classType: string; classes: typeof filtered }[] = [];
+  for (const classType of CLASS_TYPES) {
+    const classes = filtered.filter((c) => c.classType === classType);
+    if (classes.length > 0) grouped.push({ classType, classes });
+  }
 
   return (
     <>
@@ -174,11 +165,26 @@ function CharacterGuidesContent({ theme }: { theme: AppTheme }) {
               fontSize: "0.85rem",
               color: theme.muted,
               fontWeight: 600,
-              marginBottom: "1.25rem",
+              marginBottom: "0.75rem",
             }}
           >
-            Browse all MapleStory classes — click any class for its dedicated
-            guide
+            Browse all MapleStory classes. Click any class for its community made guide
+          </div>
+          <div
+            style={{
+              fontSize: "0.78rem",
+              color: theme.muted,
+              fontWeight: 600,
+              lineHeight: 1.7,
+              opacity: 0.7,
+              marginBottom: "1.25rem",
+              maxWidth: 700,
+            }}
+          >
+            All guides and infographics are created by the MapleStory community, not
+            MapleDoro. Information shown here may be outdated; always check the
+            original class document or class Discord (linked in Community Resources)
+            for the most up-to-date information.
           </div>
 
           {/* Search bar */}
@@ -198,15 +204,18 @@ function CharacterGuidesContent({ theme }: { theme: AppTheme }) {
                 border: `1px solid ${theme.border}`,
                 background: theme.panel,
                 color: theme.text,
-                outline: "none",
-                transition: "border-color 0.2s ease",
+                outline: "2px solid transparent",
+                outlineOffset: "2px",
+                transition: "border-color 0.2s ease, outline-color 0.2s ease",
               }}
-              onFocus={(e) =>
-                (e.currentTarget.style.borderColor = theme.accent)
-              }
-              onBlur={(e) =>
-                (e.currentTarget.style.borderColor = theme.border)
-              }
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = theme.accent;
+                e.currentTarget.style.outlineColor = theme.accent;
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = theme.border;
+                e.currentTarget.style.outlineColor = "transparent";
+              }}
             />
           </div>
 
@@ -232,8 +241,8 @@ function CharacterGuidesContent({ theme }: { theme: AppTheme }) {
               gap: "2rem",
             }}
           >
-            {grouped.map(({ region, classes }) => (
-              <div key={region}>
+            {grouped.map(({ classType, classes }) => (
+              <div key={classType}>
                 <div
                   style={{
                     fontFamily: "'Fredoka One', cursive",
@@ -242,7 +251,7 @@ function CharacterGuidesContent({ theme }: { theme: AppTheme }) {
                     marginBottom: "0.75rem",
                   }}
                 >
-                  {region}
+                  {classType}
                 </div>
                 <div
                   className="char-guides-grid"

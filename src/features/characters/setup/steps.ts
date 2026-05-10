@@ -2,7 +2,7 @@
   Setup step catalog and helpers.
   Keep this file as the single source of truth for step metadata.
 */
-export const SETUP_STEPS = [
+const SETUP_STEPS = [
   { id: "gender", label: "Gender" },
   { id: "stats", label: "Stats" },
   { id: "equipment_core", label: "Equipment Core" },

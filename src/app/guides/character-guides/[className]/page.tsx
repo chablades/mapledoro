@@ -1,20 +1,14 @@
 "use client";
 
-/*
-  Individual class guide page (placeholder template).
-  Dynamic route: /guides/character-guides/[className]
-*/
-
-import React, { Suspense, use, useMemo, useState } from "react";
+import React, { use, useState } from "react";
 import Link from "next/link";
 import AppShell from "../../../../components/AppShell";
 import type { AppTheme } from "../../../../components/themes";
-import { findClassBySlug, DIFFICULTY_COLORS, highlightNumbers } from "../classData";
-import { loadClassSkills } from "../classSkills/types";
-import ClassSkillsTabs from "../ClassSkillsTabsColumns";
+import { findClassBySlug, highlightNumbers } from "../classData";
 import { CLASS_RESOURCES } from "../classResources";
 import type { ClassResource } from "../classResources";
 import { WikiAttribution, WIKI_ATTRIBUTION_SOURCE } from "../../../../components/WikiAttribution";
+import { HEXA_IMAGES } from "../hexaData";
 
 function ClassGuideContent({
   theme,
@@ -82,7 +76,6 @@ function ClassGuideContent({
       }}
     >
       <div style={{ maxWidth: 900, margin: "0 auto" }}>
-        {/* Back link */}
         <Link
           href="/guides/character-guides"
           style={{
@@ -106,7 +99,6 @@ function ClassGuideContent({
             marginBottom: "2rem",
           }}
         >
-          {/* Portrait */}
           <div
             style={{
               width: "140px",
@@ -143,7 +135,6 @@ function ClassGuideContent({
             )}
           </div>
 
-          {/* Class info */}
           <div style={{ flex: 1 }}>
             <div
               style={{
@@ -171,31 +162,14 @@ function ClassGuideContent({
                 color: theme.muted,
                 fontWeight: 600,
                 lineHeight: 1.6,
-                marginBottom: "0.75rem",
               }}
             >
               {cls.summary}
             </div>
-            <div
-              style={{
-                display: "flex",
-                gap: "1rem",
-                flexWrap: "wrap",
-                fontSize: "0.78rem",
-                fontWeight: 700,
-              }}
-            >
-              <span style={{ color: theme.text }}>
-                Difficulty:{" "}
-                <span style={{ color: DIFFICULTY_COLORS[cls.difficulty] }}>
-                  {cls.difficulty}
-                </span>
-              </span>
-            </div>
           </div>
         </div>
 
-        {/* Info panels */}
+        {/* Content panels */}
         <div
           style={{
             display: "flex",
@@ -203,116 +177,119 @@ function ClassGuideContent({
             gap: "1rem",
           }}
         >
-          <InfographicPanel className={cls.name} theme={theme} />
-
-          {/* Link Skill */}
+          {/* Link Skill + Legion row */}
           <div
             style={{
-              background: theme.panel,
-              border: `1px solid ${theme.border}`,
-              borderRadius: "14px",
-              padding: "1.25rem",
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: "1rem",
             }}
           >
+            {/* Link Skill */}
             <div
               style={{
-                fontFamily: "'Fredoka One', cursive",
-                fontSize: "0.9rem",
-                color: theme.text,
-                marginBottom: "0.75rem",
+                background: theme.panel,
+                border: `1px solid ${theme.border}`,
+                borderRadius: "14px",
+                padding: "1.25rem",
               }}
             >
-              Link Skill
+              <div
+                style={{
+                  fontFamily: "'Fredoka One', cursive",
+                  fontSize: "0.9rem",
+                  color: theme.text,
+                  marginBottom: "0.75rem",
+                }}
+              >
+                Link Skill
+              </div>
+              <div style={{ display: "flex", gap: "0.75rem", alignItems: "flex-start" }}>
+                {cls.linkSkillIcon && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={cls.linkSkillIcon}
+                    alt={cls.linkSkillName}
+                    width={36}
+                    height={36}
+                    style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: "8px",
+                      border: `1px solid ${theme.border}`,
+                      background: theme.bg,
+                      objectFit: "contain",
+                      flexShrink: 0,
+                    }}
+                  />
+                )}
+                <div>
+                  <div
+                    style={{
+                      fontSize: "0.84rem",
+                      fontWeight: 800,
+                      color: theme.text,
+                      marginBottom: "0.25rem",
+                    }}
+                  >
+                    {cls.linkSkillName}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "0.82rem",
+                      color: theme.muted,
+                      fontWeight: 600,
+                      lineHeight: 1.6,
+                    }}
+                  >
+                    {highlightNumbers(cls.link.replace(/^[^:]+:\s*/, ""))}
+                  </div>
+                </div>
+              </div>
             </div>
-            <div style={{ display: "flex", gap: "0.75rem", alignItems: "flex-start" }}>
-              {cls.linkSkillIcon && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={cls.linkSkillIcon}
-                  alt={cls.linkSkillName}
-                  width={36}
-                  height={36}
-                  style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: "8px",
-                    border: `1px solid ${theme.border}`,
-                    background: theme.bg,
-                    objectFit: "contain",
-                    flexShrink: 0,
-                  }}
-                />
-              )}
-              <div>
-                <div
-                  style={{
-                    fontSize: "0.84rem",
-                    fontWeight: 800,
-                    color: theme.text,
-                    marginBottom: "0.25rem",
-                  }}
-                >
-                  {cls.linkSkillName}
-                </div>
-                <div
-                  style={{
-                    fontSize: "0.82rem",
-                    color: theme.muted,
-                    fontWeight: 600,
-                    lineHeight: 1.6,
-                  }}
-                >
-                  {highlightNumbers(cls.link.replace(/^[^:]+:\s*/, ""))}
-                </div>
+
+            {/* Legion Bonus */}
+            <div
+              style={{
+                background: theme.panel,
+                border: `1px solid ${theme.border}`,
+                borderRadius: "14px",
+                padding: "1.25rem",
+              }}
+            >
+              <div
+                style={{
+                  fontFamily: "'Fredoka One', cursive",
+                  fontSize: "0.9rem",
+                  color: theme.text,
+                  marginBottom: "0.75rem",
+                }}
+              >
+                Legion Bonus
+              </div>
+              <div
+                style={{
+                  fontSize: "0.82rem",
+                  color: theme.muted,
+                  fontWeight: 600,
+                  lineHeight: 1.6,
+                }}
+              >
+                {highlightNumbers(cls.legion)}
               </div>
             </div>
           </div>
 
-          {/* Legion */}
-          <div
-            style={{
-              background: theme.panel,
-              border: `1px solid ${theme.border}`,
-              borderRadius: "14px",
-              padding: "1.25rem",
-            }}
-          >
-            <div
-              style={{
-                fontFamily: "'Fredoka One', cursive",
-                fontSize: "0.9rem",
-                color: theme.text,
-                marginBottom: "0.5rem",
-              }}
-            >
-              Legion Bonus
-            </div>
-            <div
-              style={{
-                fontSize: "0.82rem",
-                color: theme.muted,
-                fontWeight: 600,
-                lineHeight: 1.6,
-              }}
-            >
-              {highlightNumbers(cls.legion)}
-            </div>
-          </div>
+          <InfographicPanel className={cls.name} theme={theme} />
+
+          <HexaGuidePanel className={cls.name} theme={theme} />
 
           <ResourcesPanel className={cls.name} theme={theme} />
-
-          <Suspense fallback={<SkillsFallback theme={theme} />}>
-            <AsyncClassSkills className={cls.name} theme={theme} />
-          </Suspense>
 
           <WikiAttribution
             theme={theme}
             sources={[
               WIKI_ATTRIBUTION_SOURCE,
-              {
-                label: "Grandis Library",
-                href: "https://grandislibrary.com",
-              },
               {
                 label: "Nexon",
                 href: "https://maplestory.nexon.net",
@@ -346,7 +323,7 @@ function InfographicPanel({ className, theme }: { className: string; theme: AppT
   const [zoomed, setZoomed] = useState(false);
   const resources = CLASS_RESOURCES[className];
   const infographic = resources?.find((r) => r.type === "infographic");
-  if (!infographic) return null;
+  const hasImage = !!infographic?.url;
   return (
     <div
       style={{
@@ -387,48 +364,63 @@ function InfographicPanel({ className, theme }: { className: string; theme: AppT
       </button>
       {open && (
         <div style={{ padding: "0 1.25rem 1.25rem" }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={infographic.url}
-            alt={`${className} infographic`}
-            onClick={() => setZoomed(true)}
-            style={{
-              width: "100%",
-              height: "auto",
-              borderRadius: "10px",
-              border: `1px solid ${theme.border}`,
-              cursor: "zoom-in",
-            }}
-          />
-          <div
-            style={{
-              fontSize: "0.68rem",
-              color: theme.muted,
-              fontWeight: 600,
-              marginTop: "0.35rem",
-              textAlign: "right",
-              opacity: 0.6,
-            }}
-          >
-            via{" "}
-            <a
-              href="https://www.reddit.com/r/Maplestory/comments/17ocjs4/class_infographics_all_50_new_age/"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ color: theme.muted, textDecoration: "none" }}
+          {hasImage ? (
+            <>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={infographic.url}
+                alt={`${className} infographic`}
+                role="button"
+                tabIndex={0}
+                onClick={() => setZoomed(true)}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setZoomed(true); } }}
+                style={{
+                  width: "100%",
+                  height: "auto",
+                  borderRadius: "10px",
+                  border: `1px solid ${theme.border}`,
+                  cursor: "zoom-in",
+                }}
+              />
+            </>
+          ) : (
+            <div
+              style={{
+                width: "100%",
+                minHeight: "200px",
+                borderRadius: "10px",
+                border: `1px dashed ${theme.border}`,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "0.5rem",
+                color: theme.muted,
+                fontSize: "0.82rem",
+                fontWeight: 600,
+                fontStyle: "italic",
+                textAlign: "center",
+                padding: "1rem",
+              }}
             >
-              u/CovetedEggBar6541
-            </a>
-          </div>
+              <span>Work in Progress</span>
+              <span style={{ fontStyle: "normal", fontSize: "0.78rem" }}>
+                Check the class document or class Discord in Community Resources below for the latest infographics
+              </span>
+            </div>
+          )}
         </div>
       )}
-      {zoomed && (
+      {zoomed && hasImage && (
         <div
+          role="button"
+          tabIndex={0}
           onClick={() => setZoomed(false)}
+          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " " || e.key === "Escape") { e.preventDefault(); setZoomed(false); } }}
           style={{
             position: "fixed",
             inset: 0,
-            zIndex: 9999,
+            zIndex: 50,
             background: "rgba(0,0,0,0.85)",
             display: "flex",
             flexDirection: "column",
@@ -449,20 +441,160 @@ function InfographicPanel({ className, theme }: { className: string; theme: AppT
               borderRadius: "8px",
             }}
           />
-          <a
-            href={infographic.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={(e) => e.stopPropagation()}
+        </div>
+      )}
+    </div>
+  );
+}
+
+type HexaServer = "heroic" | "interactive";
+
+function HexaGuidePanel({ className, theme }: { className: string; theme: AppTheme }) {
+  const [server, setServer] = useState<HexaServer>("heroic");
+  const [zoomed, setZoomed] = useState(false);
+  const hexa = HEXA_IMAGES[className];
+  const imageUrl = server === "heroic" ? hexa?.heroic : hexa?.interactive;
+  return (
+    <div
+      style={{
+        background: theme.panel,
+        border: `1px solid ${theme.border}`,
+        borderRadius: "14px",
+        padding: "1.25rem",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: "0.75rem",
+        }}
+      >
+        <div
+          style={{
+            fontFamily: "'Fredoka One', cursive",
+            fontSize: "0.9rem",
+            color: theme.text,
+          }}
+        >
+          HEXA Guide
+        </div>
+        <div
+          style={{
+            display: "flex",
+            borderRadius: "8px",
+            overflow: "hidden",
+            border: `1px solid ${theme.border}`,
+          }}
+        >
+          <button
+            onClick={() => setServer("heroic")}
             style={{
-              marginTop: "0.75rem",
-              fontSize: "0.7rem",
-              color: "rgba(255,255,255,0.5)",
-              textDecoration: "none",
+              padding: "0.3rem 0.7rem",
+              fontSize: "0.78rem",
+              fontWeight: 700,
+              border: "none",
+              cursor: "pointer",
+              background: server === "heroic" ? theme.accent : "transparent",
+              color: server === "heroic" ? "#fff" : theme.muted,
+              transition: "background 0.15s, color 0.15s",
             }}
           >
-            Open on Imgur ↗
-          </a>
+            Heroic
+          </button>
+          <button
+            onClick={() => setServer("interactive")}
+            style={{
+              padding: "0.3rem 0.7rem",
+              fontSize: "0.78rem",
+              fontWeight: 700,
+              border: "none",
+              borderLeft: `1px solid ${theme.border}`,
+              cursor: "pointer",
+              background: server === "interactive" ? theme.accent : "transparent",
+              color: server === "interactive" ? "#fff" : theme.muted,
+              transition: "background 0.15s, color 0.15s",
+            }}
+          >
+            Interactive
+          </button>
+        </div>
+      </div>
+      {imageUrl ? (
+        <>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={imageUrl}
+            alt={`${className} HEXA guide (${server})`}
+            role="button"
+            tabIndex={0}
+            onClick={() => setZoomed(true)}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setZoomed(true); } }}
+            style={{
+              width: "100%",
+              height: "auto",
+              borderRadius: "10px",
+              border: `1px solid ${theme.border}`,
+              cursor: "zoom-in",
+            }}
+          />
+        </>
+      ) : (
+        <div
+          style={{
+            width: "100%",
+            minHeight: "200px",
+            borderRadius: "10px",
+            border: `1px dashed ${theme.border}`,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "0.5rem",
+            color: theme.muted,
+            fontSize: "0.82rem",
+            fontWeight: 600,
+            fontStyle: "italic",
+            textAlign: "center",
+            padding: "1rem",
+          }}
+        >
+          <span>Work in Progress</span>
+          <span style={{ fontStyle: "normal", fontSize: "0.78rem" }}>
+            Check the class document or class Discord in Community Resources below for the latest HEXA guides
+          </span>
+        </div>
+      )}
+      {zoomed && imageUrl && (
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={() => setZoomed(false)}
+          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " " || e.key === "Escape") { e.preventDefault(); setZoomed(false); } }}
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 50,
+            background: "rgba(0,0,0,0.85)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "zoom-out",
+            padding: "2rem",
+          }}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={imageUrl}
+            alt={`${className} HEXA guide (${server})`}
+            style={{
+              maxWidth: "95vw",
+              maxHeight: "90vh",
+              objectFit: "contain",
+              borderRadius: "8px",
+            }}
+          />
         </div>
       )}
     </div>
@@ -503,7 +635,7 @@ function ResourcesPanel({ className, theme }: { className: string; theme: AppThe
               alignItems: "center",
               gap: "0.35rem",
               padding: "0.3rem 0.75rem",
-              borderRadius: "20px",
+              borderRadius: "8px",
               border: `1.5px solid ${RESOURCE_TYPE_COLORS[r.type]}`,
               color: RESOURCE_TYPE_COLORS[r.type],
               fontSize: "0.78rem",
@@ -530,32 +662,6 @@ function ResourcesPanel({ className, theme }: { className: string; theme: AppThe
           </a>
         ))}
       </div>
-    </div>
-  );
-}
-
-function AsyncClassSkills({ className, theme }: { className: string; theme: AppTheme }) {
-  const skillsPromise = useMemo(() => loadClassSkills(className), [className]);
-  const skillSet = use(skillsPromise);
-  if (!skillSet || skillSet.skills.length === 0) return null;
-  return <ClassSkillsTabs skills={skillSet.skills} theme={theme} />;
-}
-
-function SkillsFallback({ theme }: { theme: AppTheme }) {
-  return (
-    <div
-      style={{
-        background: theme.panel,
-        border: `1px solid ${theme.border}`,
-        borderRadius: "14px",
-        padding: "1.25rem",
-        fontSize: "0.82rem",
-        color: theme.muted,
-        fontWeight: 600,
-        fontStyle: "italic",
-      }}
-    >
-      Loading skills…
     </div>
   );
 }

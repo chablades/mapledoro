@@ -94,8 +94,12 @@ export default function SearchEntryScreen({ model, actions }: SearchEntryScreenP
             fontSize: "0.95rem",
             fontWeight: 600,
             padding: "0.8rem 0.9rem",
-            outline: "none",
+            outline: "2px solid transparent",
+            outlineOffset: "2px",
+            transition: "outline-color 0.2s ease",
           }}
+          onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
+          onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
         />
         <button
           type="submit"

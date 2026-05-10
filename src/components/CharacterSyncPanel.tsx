@@ -57,7 +57,7 @@ export function CharacterSyncPanel({
         {selectedCharName && (
           <span
             style={{
-              fontSize: "0.72rem",
+              fontSize: "0.78rem",
               fontWeight: 700,
               color: theme.accent,
             }}

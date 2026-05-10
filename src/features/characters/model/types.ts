@@ -24,7 +24,7 @@ export interface NormalizedCharacterData {
   expiresAt: number;
 }
 
-export interface LookupFoundResponse {
+interface LookupFoundResponse {
   found: true;
   data: NormalizedCharacterData;
   expiresAt: number;
@@ -35,7 +35,7 @@ export interface LookupFoundResponse {
   degradedCode?: string;
 }
 
-export interface LookupNotFoundResponse {
+interface LookupNotFoundResponse {
   found: false;
   characterName: string;
   data: null;

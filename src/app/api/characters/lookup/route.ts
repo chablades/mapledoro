@@ -20,8 +20,7 @@ const NEXON_RANKING_URL = "https://www.nexon.com/api/maplestory/no-auth/ranking/
 // Format: NEXON_PROXY_URLS=https://worker1.example.com,https://worker2.example.com
 const NEXON_PROXY_URLS: string[] = (process.env.NEXON_PROXY_URLS ?? "")
   .split(",")
-  .map((s) => s.trim())
-  .filter(Boolean);
+  .flatMap((s) => { const t = s.trim(); return t ? [t] : []; });
 
 function parsePositiveIntEnv(name: string, fallback: number) {
   const raw = process.env[name];

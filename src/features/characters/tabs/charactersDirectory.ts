@@ -4,7 +4,7 @@ import { CHARACTERS_TRANSITION_MS } from "./useSetupFlowTransitions";
 
 export type DirectorySortBy = "name" | "level" | "class";
 
-export function sortCharacters(
+function sortCharacters(
   characters: StoredCharacterRecord[],
   sortBy: DirectorySortBy,
 ) {
