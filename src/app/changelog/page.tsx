@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import AppShell from "../../components/AppShell";
 import type { AppTheme } from "../../components/themes";
 
@@ -103,7 +104,26 @@ const TYPE_COLOR: Record<ChangelogEntry["changes"][number]["type"], string> = {
   fixed: "#f59e0b",
 };
 
+const ENTRIES_PER_PAGE = 5;
+
 function ChangelogContent({ theme }: { theme: AppTheme }) {
+  const [page, setPage] = useState(1);
+  const totalPages = Math.ceil(CHANGELOG.length / ENTRIES_PER_PAGE);
+  const firstEntry = (page - 1) * ENTRIES_PER_PAGE;
+  const visibleEntries = CHANGELOG.slice(firstEntry, firstEntry + ENTRIES_PER_PAGE);
+
+  const paginationButtonStyle = {
+    border: `1px solid ${theme.border}`,
+    borderRadius: "999px",
+    background: theme.panel,
+    color: theme.text,
+    padding: "0.45rem 0.8rem",
+    fontSize: "0.8rem",
+    fontWeight: 800,
+    fontFamily: "inherit",
+    cursor: "pointer",
+  } as const;
+
   return (
     <div className="page-content">
       <div className="page-container">
@@ -115,7 +135,7 @@ function ChangelogContent({ theme }: { theme: AppTheme }) {
         </div>
 
         <div style={{ marginTop: "1rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
-          {CHANGELOG.map((entry) => (
+          {visibleEntries.map((entry) => (
             <div
               key={entry.date}
               className="fade-in panel-card"
@@ -177,6 +197,52 @@ function ChangelogContent({ theme }: { theme: AppTheme }) {
             </div>
           ))}
         </div>
+
+        {totalPages > 1 && (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: "0.75rem",
+              marginTop: "1rem",
+              flexWrap: "wrap",
+            }}
+          >
+            <div style={{ color: theme.muted, fontSize: "0.82rem", fontWeight: 700 }}>
+              Showing {firstEntry + 1}-{Math.min(firstEntry + ENTRIES_PER_PAGE, CHANGELOG.length)} of {CHANGELOG.length}
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              <button
+                type="button"
+                onClick={() => setPage((current) => Math.max(1, current - 1))}
+                disabled={page === 1}
+                style={{
+                  ...paginationButtonStyle,
+                  opacity: page === 1 ? 0.45 : 1,
+                  cursor: page === 1 ? "not-allowed" : "pointer",
+                }}
+              >
+                Previous
+              </button>
+              <span style={{ color: theme.muted, fontSize: "0.82rem", fontWeight: 800 }}>
+                {page} / {totalPages}
+              </span>
+              <button
+                type="button"
+                onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+                disabled={page === totalPages}
+                style={{
+                  ...paginationButtonStyle,
+                  opacity: page === totalPages ? 0.45 : 1,
+                  cursor: page === totalPages ? "not-allowed" : "pointer",
+                }}
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
