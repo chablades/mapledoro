@@ -4,14 +4,83 @@ import AppShell from "../../components/AppShell";
 import type { AppTheme } from "../../components/themes";
 
 interface ChangelogEntry {
-  version: string;
   date: string;
   changes: { type: "added" | "changed" | "fixed"; text: string }[];
 }
 
 const CHANGELOG: ChangelogEntry[] = [
   {
-    version: "Unreleased",
+    date: "2026-05-10",
+    changes: [
+      { type: "added", text: "Expanded character guide pages with community resources, skill icons, class infographics, and HEXA guide images where available." },
+      { type: "changed", text: "Replaced placeholder quick-nav icons on homepage with intended icons." },
+      { type: "fixed", text: "Fixed the Liberation Tracker bottom panel losing its styling in some layouts." },
+    ],
+  },
+  {
+    date: "2026-05-08",
+    changes: [
+      { type: "added", text: "Added a global light/dark mode selector and added theme selector under Settings." },
+      { type: "added", text: "Added import and export data under Settings for backing up site data." },
+    ],
+  },
+  {
+    date: "2026-05-05",
+    changes: [
+      { type: "added", text: "Added a character profile overview with stat tabs, WSE equipment slots, and HEXA skill previews." },
+      { type: "added", text: "Added automatic character refresh and stale-data indicators for saved character profiles." },
+      { type: "added", text: "Added Sia Astelle to the HEXA Skill Tracker." },
+      { type: "fixed", text: "Fixed Liberation, Symbol, and HEXA trackers loading wrong job by default." },
+    ],
+  },
+  {
+    date: "2026-05-01",
+    changes: [
+      { type: "added", text: "Added brief instructions to tool pages to make each calculator and tracker easier to start using." },
+    ],
+  },
+  {
+    date: "2026-04-27",
+    changes: [
+      { type: "changed", text: "Improved the Cubing Calculator experience with clearer controls and feedback." },
+      { type: "changed", text: "Refined the Daily Tracker visuals." },
+      { type: "fixed", text: "Fixed Liberation Tracker date calculations." },
+    ],
+  },
+  {
+    date: "2026-04-21",
+    changes: [
+      { type: "added", text: "Added the Daily Tracker for symbol dailies, daily bosses, and daily content across characters." },
+      { type: "added", text: "Added the Cubing Calculator for estimating expected cube cost and cube counts." },
+      { type: "changed", text: "Reorganized the Tools page into calculators, trackers, and planners." },
+      { type: "changed", text: "Moved the Boss Crystal Tracker into the tracker section." },
+    ],
+  },
+  {
+    date: "2026-04-20",
+    changes: [
+      { type: "added", text: "Added milestone tracking to the Liberation calculators." },
+    ],
+  },
+  {
+    date: "2026-04-18",
+    changes: [
+      { type: "fixed", text: "Fixed Liberation Tracker end dates so they line up with MapleStory reset timing." },
+    ],
+  },
+  {
+    date: "2026-04-13",
+    changes: [
+      { type: "added", text: "Added the Character Guides page with searchable MapleStory class cards." },
+    ],
+  },
+  {
+    date: "2026-04-11",
+    changes: [
+      { type: "added", text: "Made character panels draggable in the Boss Crystal Calculator." },
+    ],
+  },
+  {
     date: "2026-04-10",
     changes: [
       { type: "added", text: "About, Terms of Service, Privacy Policy, and Changelog pages linked from the footer." },
@@ -48,7 +117,7 @@ function ChangelogContent({ theme }: { theme: AppTheme }) {
         <div style={{ marginTop: "1rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
           {CHANGELOG.map((entry) => (
             <div
-              key={entry.version + entry.date}
+              key={entry.date}
               className="fade-in panel-card"
               style={{
                 background: theme.panel,
@@ -67,9 +136,6 @@ function ChangelogContent({ theme }: { theme: AppTheme }) {
                 }}
               >
                 <div style={{ fontSize: "1.05rem", fontWeight: 800, color: theme.text }}>
-                  {entry.version}
-                </div>
-                <div style={{ fontSize: "0.78rem", color: theme.muted, fontWeight: 700 }}>
                   {entry.date}
                 </div>
               </div>
