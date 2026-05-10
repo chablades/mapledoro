@@ -31,25 +31,16 @@ export default function SearchPaneCard({ model, actions }: SearchPaneCardProps) 
     if (!element) return;
     if (shell.isSwitchingToDirectory) {
       const height = element.getBoundingClientRect().height;
-      element.style.height = `${height}px`;
-      element.style.minHeight = `${height}px`;
+      Object.assign(element.style, { height: `${height}px`, minHeight: `${height}px` });
       return;
     }
-    element.style.height = "";
-    element.style.minHeight = "";
+    Object.assign(element.style, { height: "", minHeight: "" });
   }, [shell.isSwitchingToDirectory]);
 
   useEffect(() => {
-    if (showRemoveConfirm) {
-      document.body.style.overflow = "hidden";
-      document.documentElement.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-      document.documentElement.style.overflow = "";
-    }
+    document.documentElement.classList.toggle("scroll-locked", showRemoveConfirm);
     return () => {
-      document.body.style.overflow = "";
-      document.documentElement.style.overflow = "";
+      document.documentElement.classList.remove("scroll-locked");
     };
   }, [showRemoveConfirm]);
 

@@ -66,7 +66,6 @@ export default function GenericSetupStep({
           fontSize: "0.9rem",
           fontWeight: 600,
           padding: "0.55rem 0.7rem",
-          outline: "none",
           marginBottom: "0.8rem",
         }}
       />

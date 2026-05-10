@@ -94,7 +94,6 @@ export default function SearchEntryScreen({ model, actions }: SearchEntryScreenP
             fontSize: "0.95rem",
             fontWeight: 600,
             padding: "0.8rem 0.9rem",
-            outline: "none",
           }}
         />
         <button

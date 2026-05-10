@@ -73,5 +73,3 @@ const CLASS_PORTRAITS: Record<string, string> = {
 export function classPortraitUrl(name: string): string {
   return CLASS_PORTRAITS[name] ?? "";
 }
-
-export default CLASS_PORTRAITS;

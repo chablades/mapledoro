@@ -1,7 +1,7 @@
 import { toCharacterKey } from "./characterKeys";
 import type { NormalizedCharacterData } from "./types";
 
-export const CHARACTERS_STORE_VERSION = 1 as const;
+const CHARACTERS_STORE_VERSION = 1 as const;
 export const CHARACTERS_STORE_STORAGE_KEY = "mapledoro_characters_store_v1";
 
 export interface StoredTripleStatField {
@@ -394,8 +394,9 @@ function parseCharactersStore(raw: string): CharactersStore | null {
         )
       : [];
 
+    const orderSet = new Set(order);
     for (const id of Object.keys(charactersById)) {
-      if (!order.includes(id)) order.push(id);
+      if (!orderSet.has(id)) order.push(id);
     }
 
     const { mainCharacterIdByWorld, championCharacterIdsByWorld } =
@@ -434,9 +435,10 @@ export function readCharactersStore(): CharactersStore {
 }
 
 export function selectCharactersList(store: CharactersStore): StoredCharacterRecord[] {
-  return store.order
-    .map((id) => store.charactersById[id] ?? null)
-    .filter((entry): entry is StoredCharacterRecord => Boolean(entry));
+  return store.order.flatMap((id) => {
+    const entry = store.charactersById[id];
+    return entry ? [entry] : [];
+  });
 }
 
 export function selectCharactersListByWorld(
@@ -471,9 +473,10 @@ export function selectChampionCharactersForWorld(
   worldId: number,
 ): StoredCharacterRecord[] {
   const ids = store.championCharacterIdsByWorld[String(worldId)] ?? [];
-  return ids
-    .map((id) => store.charactersById[id] ?? null)
-    .filter((entry): entry is StoredCharacterRecord => Boolean(entry));
+  return ids.flatMap((id) => {
+    const entry = store.charactersById[id];
+    return entry ? [entry] : [];
+  });
 }
 
 export function selectWorldIds(store: CharactersStore): number[] {

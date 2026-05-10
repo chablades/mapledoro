@@ -5,7 +5,7 @@
 import type { SetupStepId } from "./steps";
 import { getSetupStepById, type SetupStepDefinition } from "./steps";
 
-export const SETUP_FLOWS = [
+const SETUP_FLOWS = [
   {
     id: "quick_setup",
     label: "Quick Setup",
@@ -80,7 +80,7 @@ const FLOW_BY_ID = new Map<SetupFlowId, SetupFlowDefinition>(
 
 const QUICK_FLOW_ID: SetupFlowId = "quick_setup";
 
-export function getSetupFlowById(flowId: SetupFlowId) {
+function getSetupFlowById(flowId: SetupFlowId) {
   return FLOW_BY_ID.get(flowId) ?? FLOW_BY_ID.get(QUICK_FLOW_ID)!;
 }
 

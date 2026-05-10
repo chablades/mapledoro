@@ -4,7 +4,7 @@ import { useState, useReducer, useSyncExternalStore } from "react";
 import type { CSSProperties } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import Image from "next/image";
+import { panelStyle, ItemIcon } from "./pitched-boss-ui";
 import type { AppTheme } from "../../../components/themes";
 import { ToolHeader } from "../../../components/ToolHeader";
 import { WikiAttribution } from "../../../components/WikiAttribution";
@@ -107,43 +107,9 @@ const addDropBtnBase: CSSProperties = {
   whiteSpace: "nowrap",
 };
 
-function panelStyle(theme: AppTheme): CSSProperties {
-  return {
-    background: theme.panel,
-    border: `1px solid ${theme.border}`,
-    borderRadius: 12,
-    padding: "1.25rem",
-    marginBottom: "1.5rem",
-  };
-}
-
 /* ------------------------------------------------------------------ */
 /*  Sub-components                                                     */
 /* ------------------------------------------------------------------ */
-
-function ItemIcon({ src }: { src: string }) {
-  return (
-    <span
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        justifyContent: "center",
-        width: 38,
-        height: 38,
-        flexShrink: 0,
-        verticalAlign: "middle",
-      }}
-    >
-      <Image
-        src={src}
-        alt=""
-        width={32}
-        height={32}
-        style={{ imageRendering: "pixelated" }}
-      />
-    </span>
-  );
-}
 
 function DropLogTable({
   theme,

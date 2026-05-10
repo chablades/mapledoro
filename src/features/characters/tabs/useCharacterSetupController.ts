@@ -112,7 +112,7 @@ export function useCharacterSetupController() {
   const [previewImageLoaded, setPreviewImageLoaded] = useState(false);
   const [confirmedImageLoaded, setConfirmedImageLoaded] = useState(false);
   const [setupFlowStarted, setSetupFlowStarted] = useState(false);
-  const [activeFlowId, setActiveFlowId] = useState<SetupFlowId>(getRequiredSetupFlowId());
+  const [activeFlowId, setActiveFlowId] = useState<SetupFlowId>(() => getRequiredSetupFlowId());
   const [completedFlowIds, setCompletedFlowIds] = useState<SetupFlowId[]>([]);
   const [showFlowOverview, setShowFlowOverview] = useState(false);
   const [showCharacterDirectory, setShowCharacterDirectory] = useState(false);
@@ -748,14 +748,12 @@ export function useCharacterSetupController() {
     immediateUiLockRef.current = true;
 
     // In confirmFoundCharacter, right before beginSetupFlowTransition:
-    readAllSetupDrafts()
-      .filter((d) =>
-        d.characterKey !== toCharacterKey(foundCharacter) &&
-        !d.completedFlowIds.includes(requiredFlowId)
-      )
-      .forEach((d) => {
+    const charKey = toCharacterKey(foundCharacter);
+    for (const d of readAllSetupDrafts()) {
+      if (d.characterKey !== charKey && !new Set(d.completedFlowIds).has(requiredFlowId)) {
         if (d.confirmedCharacter) removeSetupDraftForCharacter(d.confirmedCharacter);
-      });
+      }
+    }
 
     beginSetupFlowTransition({
       character: foundCharacter,

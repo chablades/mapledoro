@@ -93,14 +93,14 @@ function DirectoryCharacterCard({ character, showWorld, isUiLocked, theme, refre
           {isRefreshing && <span aria-label="Refreshing" className="char-refresh-spin" style={{ color: theme.muted, marginLeft: "0.2rem" }}>↻</span>}
           {stale && <span aria-label="Data outdated" style={{ color: "#d97706", marginLeft: "0.2rem" }}>⚠</span>}
         </span>
-        <span style={{ fontSize: "0.72rem", fontWeight: 700, lineHeight: 1.1, color: theme.muted, textAlign: "center" }}>
+        <span style={{ fontSize: "0.75rem", fontWeight: 700, lineHeight: 1.1, color: theme.muted, textAlign: "center" }}>
           Lv {character.level}
         </span>
-        <span style={{ fontSize: "0.72rem", fontWeight: 700, lineHeight: 1.1, color: theme.muted, textAlign: "center" }}>
+        <span style={{ fontSize: "0.75rem", fontWeight: 700, lineHeight: 1.1, color: theme.muted, textAlign: "center" }}>
           {character.jobName}
         </span>
         {showWorld && (
-          <span style={{ fontSize: "0.68rem", fontWeight: 700, lineHeight: 1.1, color: theme.muted, textAlign: "center" }}>
+          <span style={{ fontSize: "0.75rem", fontWeight: 700, lineHeight: 1.1, color: theme.muted, textAlign: "center" }}>
             {WORLD_NAMES[character.worldID] ?? `World ${character.worldID}`}
           </span>
         )}
@@ -242,7 +242,7 @@ function DirectoryRoleView({
             {CHARACTERS_COPY.characterDirectory.championsLabel} ({championCharacters.length}/{maxChampions})
           </p>
           {isMainAlsoChampion && (
-            <p style={{ margin: 0, marginBottom: "0.45rem", fontSize: "0.74rem", color: theme.muted, fontWeight: 700 }}>
+            <p style={{ margin: 0, marginBottom: "0.45rem", fontSize: "0.75rem", color: theme.muted, fontWeight: 700 }}>
               {CHARACTERS_COPY.characterDirectory.mainAlsoChampionMessage}
             </p>
           )}

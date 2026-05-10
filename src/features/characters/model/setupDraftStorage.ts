@@ -118,25 +118,6 @@ export function readLastSetupDraft(): SetupDraft | null {
   return newestDraft;
 }
 
-export function hasAnyCompletedRequiredSetupFlow() {
-  if (typeof window === "undefined") return false;
-  try {
-    const requiredFlowId = getRequiredSetupFlowId();
-    for (let i = 0; i < window.localStorage.length; i += 1) {
-      const key = window.localStorage.key(i);
-      if (!key || !key.startsWith(SETUP_DRAFT_STORAGE_PREFIX)) continue;
-      const raw = window.localStorage.getItem(key);
-      if (!raw) continue;
-      const draft = parseSetupDraft(raw);
-      if (!draft) continue;
-      if (draft.completedFlowIds.includes(requiredFlowId)) return true;
-    }
-    return false;
-  } catch {
-    return false;
-  }
-}
-
 export function writeSetupDraft(draft: SetupDraft) {
   if (typeof window === "undefined") return;
   try {
