@@ -66,7 +66,7 @@ const TRACKERS: ToolCard[] = [
     title: "Liberation Tracker",
     description:
       "Track your Genesis and Destiny liberation progress and estimate completion.",
-    icon: "https://media.maplestorywiki.net/yetidb/Skill_Tanadian_Ruin.png",
+    icon: "https://media.maplestorywiki.net/yetidb/Eqp_Genesis_Dagger.png",
     iconType: "image",
     href: "/tools/liberation",
   },
