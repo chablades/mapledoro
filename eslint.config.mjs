@@ -9,8 +9,7 @@ const config = [
   { ignores: [".next/**", "out/**", "build/**", "next-env.d.ts"] },
   {
     rules: {
-      "sonarjs/todo-tag": "off",
-      "@next/next/no-img-element": "off",
+      "sonarjs/todo-tag": "off"
     },
   },
 ];

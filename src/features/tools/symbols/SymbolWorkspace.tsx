@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -83,7 +84,7 @@ function SymbolCardHeader({
         marginBottom: "0.75rem",
       }}
     >
-      <img
+      <Image
         src={area.icon}
         alt={area.name}
         width={38}

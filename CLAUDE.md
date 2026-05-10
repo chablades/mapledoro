@@ -35,7 +35,6 @@ npm run lint
 - **`react-hooks/set-state-in-effect`** — No bare `setState()` in `useEffect`. Use lazy `useState` initializers, `useSyncExternalStore`, or `useRef` + DOM mutation.
 - **`sonarjs/pseudo-random`** — Use `crypto.randomUUID()`, not `Math.random()`.
 - **`sonarjs/cognitive-complexity`** — Cap 15. Extract cohesive sub-steps (parser, validator, renderer) or `eslint-disable` if any split would be artificial. Don't micro-shuffle branches.
-- **`@next/next/no-img-element`** — Disabled. Use native `<img>`.
 
 ## Key Patterns
 
