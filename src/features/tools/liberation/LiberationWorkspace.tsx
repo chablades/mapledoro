@@ -450,7 +450,7 @@ function LiberationResultsSection({
 }) {
   return (
     <div
-      className="fade-in"
+      className="fade-in panel-card"
       style={{
         ...sectionPanel,
         marginBottom: "1.25rem",
