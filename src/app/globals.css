@@ -21,6 +21,11 @@ body {
   box-sizing: border-box;
 }
 
+html.scroll-locked,
+html.scroll-locked body {
+  overflow: hidden;
+}
+
 .fade-in {
   animation: fadeUp 0.5s ease forwards;
   opacity: 0;
@@ -109,7 +114,12 @@ body {
   border-radius: 8px;
   font-family: var(--font-body);
   font-weight: 700;
-  outline: none;
+}
+
+input:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid;
+  outline-offset: 2px;
 }
 
 /* Pill-shaped toggle button */

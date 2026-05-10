@@ -2,11 +2,9 @@
 
 import {
   useState,
-  useReducer,
   useMemo,
   useRef,
   useEffect,
-  useCallback,
 } from "react";
 import Image from "next/image";
 import type { AppTheme } from "../../../components/themes";
@@ -17,16 +15,18 @@ import {
   formatMesoFull,
 } from "../star-force/star-force-data";
 import { Toggle, PillGroup, MVP_OPTIONS } from "../shared-ui";
+import type { MvpTier } from "../star-force/star-force-data";
 import { toolStyles } from "../tool-styles";
 import {
   EVENT_ITEMS,
   EVENT_ITEMS_BY_ID,
   ITEM_CATEGORIES,
-  maxStarForLevel,
   categoryLabel,
   type EventItem,
 } from "./event-items";
 import { useEventPlannerState, type PlannerEntry, type EntryCost } from "./useEventPlannerState";
+import { useEventPlannerForm, type FormState, type FormAction } from "./useEventPlannerForm";
+import type { StoredCharacterRecord } from "../../characters/model/charactersStore";
 
 // ── Shared sub-components ────────────────────────────────────────────────────
 
@@ -649,6 +649,123 @@ function PlanItemsList({
   );
 }
 
+// ── Event settings panel ─────────────────────────────────────────────────────
+
+function EventSettingsPanel({
+  theme, panelStyle, costDiscount, boomReduction, starCatch, mvp,
+  setCostDiscount, setBoomReduction, setStarCatch, setMvp,
+}: {
+  theme: AppTheme;
+  panelStyle: React.CSSProperties;
+  costDiscount: boolean;
+  boomReduction: boolean;
+  starCatch: boolean;
+  mvp: MvpTier;
+  setCostDiscount: (v: boolean) => void;
+  setBoomReduction: (v: boolean) => void;
+  setStarCatch: (v: boolean) => void;
+  setMvp: (v: MvpTier) => void;
+}) {
+  const rowStyle: React.CSSProperties = { display: "flex", flexWrap: "wrap", gap: "0.75rem", alignItems: "center" };
+  return (
+    <div className="fade-in panel-card" style={panelStyle}>
+      <div style={{ ...rowStyle, marginBottom: "0.75rem" }}>
+        <span className="section-label" style={{ color: theme.muted, marginBottom: 0, minWidth: 60 }}>Events</span>
+        <Toggle theme={theme} label="30% Off Cost" checked={costDiscount} onChange={setCostDiscount} />
+        <Toggle theme={theme} label="30% Boom Reduction" checked={boomReduction} onChange={setBoomReduction} />
+      </div>
+      <div style={{ ...rowStyle, marginBottom: "0.75rem" }}>
+        <span className="section-label" style={{ color: theme.muted, marginBottom: 0, minWidth: 60 }}>Options</span>
+        <Toggle theme={theme} label="Star Catching" checked={starCatch} onChange={setStarCatch} />
+      </div>
+      <div style={rowStyle}>
+        <span className="section-label" style={{ color: theme.muted, marginBottom: 0, minWidth: 60 }}>MVP</span>
+        <PillGroup theme={theme} options={MVP_OPTIONS} value={mvp} onChange={setMvp} />
+      </div>
+    </div>
+  );
+}
+
+// ── Add item form ─────────────────────────────────────────────────────────────
+
+function AddItemForm({
+  theme, panelStyle, form, dispatchForm, characters, itemMaxStar, canAdd, handleAdd, styles,
+}: {
+  theme: AppTheme;
+  panelStyle: React.CSSProperties;
+  form: FormState;
+  dispatchForm: React.Dispatch<FormAction>;
+  characters: StoredCharacterRecord[];
+  itemMaxStar: number;
+  canAdd: boolean;
+  handleAdd: () => void;
+  styles: ReturnType<typeof toolStyles>;
+}) {
+  const addButtonStyle: React.CSSProperties = {
+    padding: "7px 20px",
+    borderRadius: "10px",
+    fontSize: "0.82rem",
+    fontWeight: 800,
+    userSelect: "none",
+    whiteSpace: "nowrap",
+    color: canAdd ? theme.accentText : theme.muted,
+    background: canAdd ? theme.accentSoft : theme.timerBg,
+    border: `1px solid ${canAdd ? theme.accent : theme.border}`,
+    opacity: canAdd ? 1 : 0.5,
+    pointerEvents: canAdd ? "auto" : "none",
+  };
+  return (
+    <div className="fade-in panel-card" style={{ ...panelStyle, overflow: "visible", position: "relative", zIndex: 10 }}>
+      <div style={{ fontFamily: "var(--font-heading)", fontSize: "0.95rem", color: theme.text, marginBottom: "1rem" }}>
+        Add Item
+      </div>
+      <div className="ep-form-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem", alignItems: "end" }}>
+        <div>
+          <div className="section-label" style={{ color: theme.muted, marginBottom: 4, fontSize: "0.75rem" }}>Character</div>
+          <div style={{ display: "flex", gap: 6 }}>
+            <select className="tool-input" value={form.char} onChange={(e) => dispatchForm({ type: "setChar", value: e.target.value })} style={{ ...styles.selectStyle, flex: 1 }}>
+              <option value="">Unspecified</option>
+              {characters.map((c) => (
+                <option key={c.characterName} value={c.characterName}>{c.characterName} (Lv.{c.level} {c.jobName})</option>
+              ))}
+              <option value="__custom__">Other (enter name)</option>
+            </select>
+            {form.char === "__custom__" && (
+              <input className="tool-input" type="text" value={form.charCustom} onChange={(e) => dispatchForm({ type: "setCharCustom", value: e.target.value })} placeholder="Character name" style={{ ...styles.inputStyle, flex: 1 }} />
+            )}
+          </div>
+        </div>
+        <div>
+          <div className="section-label" style={{ color: theme.muted, marginBottom: 4, fontSize: "0.75rem" }}>Item</div>
+          <ItemSelector theme={theme} value={form.item} onChange={(v) => dispatchForm({ type: "setItem", value: v })} inputStyle={styles.inputStyle} />
+        </div>
+        <div>
+          <div className="section-label" style={{ color: theme.muted, marginBottom: 4, fontSize: "0.75rem" }}>Stars</div>
+          <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+            <select className="tool-input" value={form.currentStar} onChange={(e) => dispatchForm({ type: "setCurrentStar", value: Number(e.target.value) })} style={{ ...styles.selectStyle, width: 80 }}>
+              {Array.from({ length: itemMaxStar }, (_, i) => i).map((s) => <option key={s} value={s}>{s}★</option>)}
+            </select>
+            <span style={{ color: theme.muted, fontWeight: 700, fontSize: "0.85rem" }}>→</span>
+            <select className="tool-input" value={form.targetStar} onChange={(e) => dispatchForm({ type: "setTargetStar", value: Number(e.target.value) })} style={{ ...styles.selectStyle, width: 80 }}>
+              {Array.from({ length: itemMaxStar }, (_, i) => i + 1).map((s) => <option key={s} value={s}>{s}★</option>)}
+            </select>
+          </div>
+        </div>
+        <div>
+          <div className="section-label" style={{ color: theme.muted, marginBottom: 4, fontSize: "0.75rem" }}>Replace Cost</div>
+          <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+            <input className="tool-input" type="number" min={0} value={form.replaceCost} onChange={(e) => dispatchForm({ type: "setReplaceCost", value: Math.max(0, Number(e.target.value) || 0) })} placeholder="0" style={{ ...styles.inputStyle, width: 120 }} />
+            <Toggle theme={theme} label="Safeguard" checked={form.safeguard} onChange={(v) => dispatchForm({ type: "setSafeguard", value: v })} />
+            <div className="tool-btn" role="button" tabIndex={0} onClick={handleAdd} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleAdd(); } }} style={addButtonStyle}>
+              + Add
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Main workspace ───────────────────────────────────────────────────────────
 
 export default function EventPlannerWorkspace({ theme }: { theme: AppTheme }) {
@@ -672,59 +789,8 @@ export default function EventPlannerWorkspace({ theme }: { theme: AppTheme }) {
 
   // ── Add-item form state ──
 
-  interface FormState {
-    char: string;
-    charCustom: string;
-    item: string | null;
-    currentStar: number;
-    targetStar: number;
-    replaceCost: number;
-    safeguard: boolean;
-  }
-  type FormAction =
-    | { type: "setChar"; value: string }
-    | { type: "setCharCustom"; value: string }
-    | { type: "setItem"; value: string | null }
-    | { type: "setCurrentStar"; value: number }
-    | { type: "setTargetStar"; value: number }
-    | { type: "setReplaceCost"; value: number }
-    | { type: "setSafeguard"; value: boolean }
-    | { type: "clearItem" };
-  const [form, dispatchForm] = useReducer(
-    (state: FormState, action: FormAction): FormState => {
-      switch (action.type) {
-        case "setChar": return { ...state, char: action.value };
-        case "setCharCustom": return { ...state, charCustom: action.value };
-        case "setItem": return { ...state, item: action.value };
-        case "setCurrentStar": return { ...state, currentStar: action.value };
-        case "setTargetStar": return { ...state, targetStar: action.value };
-        case "setReplaceCost": return { ...state, replaceCost: action.value };
-        case "setSafeguard": return { ...state, safeguard: action.value };
-        case "clearItem": return { ...state, item: null };
-      }
-    },
-    { char: "", charCustom: "", item: null, currentStar: 17, targetStar: 22, replaceCost: 0, safeguard: false },
-  );
-
-  const selectedItem = form.item ? EVENT_ITEMS_BY_ID.get(form.item) ?? null : null;
-  const itemMaxStar = selectedItem ? maxStarForLevel(selectedItem.level) : 25;
-
-  const canAdd =
-    selectedItem !== null && form.currentStar < form.targetStar && form.targetStar <= itemMaxStar;
-
-  const handleAdd = useCallback(() => {
-    if (!form.item || !canAdd) return;
-    const charName = form.char === "__custom__" ? form.charCustom.trim() : form.char;
-    addEntry({
-      characterName: charName,
-      itemId: form.item,
-      currentStar: form.currentStar,
-      targetStar: form.targetStar,
-      replacementCost: form.replaceCost,
-      safeguard: form.safeguard,
-    });
-    dispatchForm({ type: "clearItem" });
-  }, [form, canAdd, addEntry]);
+  const { form, dispatchForm, itemMaxStar, canAdd, handleAdd } =
+    useEventPlannerForm(addEntry);
 
   // ── Group entries by character ──
 
@@ -741,56 +807,23 @@ export default function EventPlannerWorkspace({ theme }: { theme: AppTheme }) {
 
   // ── Styles ──
 
-  const panelStyle: React.CSSProperties = {
-    ...styles.sectionPanel,
-    borderRadius: "14px",
-  };
-
-  const addButtonBaseStyle: React.CSSProperties = {
-    padding: "7px 20px",
-    borderRadius: "10px",
-    fontSize: "0.82rem",
-    fontWeight: 800,
-    userSelect: "none",
-    whiteSpace: "nowrap",
-  };
+  const panelStyle: React.CSSProperties = { ...styles.sectionPanel, borderRadius: "14px" };
 
   const clearAllButtonStyle: React.CSSProperties = {
-    padding: "6px 14px",
-    borderRadius: "8px",
-    fontSize: "0.75rem",
-    fontWeight: 700,
-    color: "#e05a5a",
-    background: theme.timerBg,
-    border: `1px solid ${theme.border}`,
-    userSelect: "none",
-    alignSelf: "flex-start",
+    padding: "6px 14px", borderRadius: "8px", fontSize: "0.75rem", fontWeight: 700,
+    color: "#e05a5a", background: theme.timerBg, border: `1px solid ${theme.border}`,
+    userSelect: "none", alignSelf: "flex-start",
   };
 
   const safeguardBaseStyle: React.CSSProperties = {
-    padding: "4px 8px",
-    borderRadius: 6,
-    fontSize: "0.75rem",
-    fontWeight: 700,
-    userSelect: "none",
-    flexShrink: 0,
-    whiteSpace: "nowrap",
+    padding: "4px 8px", borderRadius: 6, fontSize: "0.75rem", fontWeight: 700,
+    userSelect: "none", flexShrink: 0, whiteSpace: "nowrap",
   };
 
   const removeButtonStyle: React.CSSProperties = {
-    width: 24,
-    height: 24,
-    borderRadius: 6,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: "0.85rem",
-    fontWeight: 700,
-    color: theme.muted,
-    background: theme.timerBg,
-    border: `1px solid ${theme.border}`,
-    userSelect: "none",
-    flexShrink: 0,
+    width: 24, height: 24, borderRadius: 6, display: "flex", alignItems: "center",
+    justifyContent: "center", fontSize: "0.85rem", fontWeight: 700, color: theme.muted,
+    background: theme.timerBg, border: `1px solid ${theme.border}`, userSelect: "none", flexShrink: 0,
   };
 
   if (!mounted) return null;
@@ -812,250 +845,31 @@ export default function EventPlannerWorkspace({ theme }: { theme: AppTheme }) {
           description="Toggle your active events and options, then add items with their current and target stars to plan your total spending."
         />
 
-        {/* ── Event Settings ────────────────────────────────────────────── */}
-        <div className="fade-in panel-card" style={panelStyle}>
-          <div
-            style={{
-              display: "flex",
-              flexWrap: "wrap",
-              gap: "0.75rem",
-              alignItems: "center",
-              marginBottom: "0.75rem",
-            }}
-          >
-            <span
-              className="section-label"
-              style={{ color: theme.muted, marginBottom: 0, minWidth: 60 }}
-            >
-              Events
-            </span>
-            <Toggle
-              theme={theme}
-              label="30% Off Cost"
-              checked={state.costDiscount}
-              onChange={setCostDiscount}
-            />
-            <Toggle
-              theme={theme}
-              label="30% Boom Reduction"
-              checked={state.boomReduction}
-              onChange={setBoomReduction}
-            />
-          </div>
+        <EventSettingsPanel
+          theme={theme}
+          panelStyle={panelStyle}
+          costDiscount={state.costDiscount}
+          boomReduction={state.boomReduction}
+          starCatch={state.starCatch}
+          mvp={state.mvp}
+          setCostDiscount={setCostDiscount}
+          setBoomReduction={setBoomReduction}
+          setStarCatch={setStarCatch}
+          setMvp={setMvp}
+        />
 
-          <div
-            style={{
-              display: "flex",
-              flexWrap: "wrap",
-              gap: "0.75rem",
-              alignItems: "center",
-              marginBottom: "0.75rem",
-            }}
-          >
-            <span
-              className="section-label"
-              style={{ color: theme.muted, marginBottom: 0, minWidth: 60 }}
-            >
-              Options
-            </span>
-            <Toggle
-              theme={theme}
-              label="Star Catching"
-              checked={state.starCatch}
-              onChange={setStarCatch}
-            />
-          </div>
+        <AddItemForm
+          theme={theme}
+          panelStyle={panelStyle}
+          form={form}
+          dispatchForm={dispatchForm}
+          characters={characters}
+          itemMaxStar={itemMaxStar}
+          canAdd={canAdd}
+          handleAdd={handleAdd}
+          styles={styles}
+        />
 
-          <div
-            style={{
-              display: "flex",
-              flexWrap: "wrap",
-              gap: "0.75rem",
-              alignItems: "center",
-            }}
-          >
-            <span
-              className="section-label"
-              style={{ color: theme.muted, marginBottom: 0, minWidth: 60 }}
-            >
-              MVP
-            </span>
-            <PillGroup
-              theme={theme}
-              options={MVP_OPTIONS}
-              value={state.mvp}
-              onChange={setMvp}
-            />
-          </div>
-        </div>
-
-        {/* ── Add Item Form ─────────────────────────────────────────────── */}
-        <div className="fade-in panel-card" style={{ ...panelStyle, overflow: "visible", position: "relative", zIndex: 10 }}>
-          <div
-            style={{
-              fontFamily: "var(--font-heading)",
-              fontSize: "0.95rem",
-              color: theme.text,
-              marginBottom: "1rem",
-            }}
-          >
-            Add Item
-          </div>
-
-          <div
-            className="ep-form-grid"
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: "0.75rem",
-              alignItems: "end",
-            }}
-          >
-            {/* Character */}
-            <div>
-              <div
-                className="section-label"
-                style={{ color: theme.muted, marginBottom: 4, fontSize: "0.75rem" }}
-              >
-                Character
-              </div>
-              <div style={{ display: "flex", gap: 6 }}>
-                <select
-                  className="tool-input"
-                  value={form.char}
-                  onChange={(e) => dispatchForm({ type: "setChar", value: e.target.value })}
-                  style={{ ...styles.selectStyle, flex: 1 }}
-                >
-                  <option value="">Unspecified</option>
-                  {characters.map((c) => (
-                    <option key={c.characterName} value={c.characterName}>
-                      {c.characterName} (Lv.{c.level} {c.jobName})
-                    </option>
-                  ))}
-                  <option value="__custom__">Other (enter name)</option>
-                </select>
-                {form.char === "__custom__" && (
-                  <input
-                    className="tool-input"
-                    type="text"
-                    value={form.charCustom}
-                    onChange={(e) => dispatchForm({ type: "setCharCustom", value: e.target.value })}
-                    placeholder="Character name"
-                    style={{ ...styles.inputStyle, flex: 1 }}
-                  />
-                )}
-              </div>
-            </div>
-
-            {/* Item selector */}
-            <div>
-              <div
-                className="section-label"
-                style={{ color: theme.muted, marginBottom: 4, fontSize: "0.75rem" }}
-              >
-                Item
-              </div>
-              <ItemSelector
-                theme={theme}
-                value={form.item}
-                onChange={(v) => dispatchForm({ type: "setItem", value: v })}
-                inputStyle={styles.inputStyle}
-              />
-            </div>
-
-            {/* Stars */}
-            <div>
-              <div
-                className="section-label"
-                style={{ color: theme.muted, marginBottom: 4, fontSize: "0.75rem" }}
-              >
-                Stars
-              </div>
-              <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                <select
-                  className="tool-input"
-                  value={form.currentStar}
-                  onChange={(e) => dispatchForm({ type: "setCurrentStar", value: Number(e.target.value) })}
-                  style={{ ...styles.selectStyle, width: 80 }}
-                >
-                  {Array.from({ length: itemMaxStar }, (_, i) => i).map((s) => (
-                    <option key={s} value={s}>
-                      {s}★
-                    </option>
-                  ))}
-                </select>
-                <span style={{ color: theme.muted, fontWeight: 700, fontSize: "0.85rem" }}>
-                  →
-                </span>
-                <select
-                  className="tool-input"
-                  value={form.targetStar}
-                  onChange={(e) => dispatchForm({ type: "setTargetStar", value: Number(e.target.value) })}
-                  style={{ ...styles.selectStyle, width: 80 }}
-                >
-                  {Array.from({ length: itemMaxStar }, (_, i) => i + 1).map((s) => (
-                    <option key={s} value={s}>
-                      {s}★
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* Replace cost + safeguard + add button */}
-            <div>
-              <div
-                className="section-label"
-                style={{ color: theme.muted, marginBottom: 4, fontSize: "0.75rem" }}
-              >
-                Replace Cost
-              </div>
-              <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                <input
-                  className="tool-input"
-                  type="number"
-                  min={0}
-                  value={form.replaceCost}
-                  onChange={(e) =>
-                    dispatchForm({ type: "setReplaceCost", value: Math.max(0, Number(e.target.value) || 0) })
-                  }
-                  placeholder="0"
-                  style={{ ...styles.inputStyle, width: 120 }}
-                />
-                <Toggle
-                  theme={theme}
-                  label="Safeguard"
-                  checked={form.safeguard}
-                  onChange={(v) => dispatchForm({ type: "setSafeguard", value: v })}
-                />
-                <div
-                  className="tool-btn"
-                  role="button"
-                  tabIndex={0}
-                  onClick={handleAdd}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      handleAdd();
-                    }
-                  }}
-                  style={{
-                    ...addButtonBaseStyle,
-                    color: canAdd ? theme.accentText : theme.muted,
-                    background: canAdd ? theme.accentSoft : theme.timerBg,
-                    border: `1px solid ${canAdd ? theme.accent : theme.border}`,
-                    opacity: canAdd ? 1 : 0.5,
-                    pointerEvents: canAdd ? "auto" : "none",
-                  }}
-                >
-                  + Add
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* ── Summary ───────────────────────────────────────���───────────── */}
         {state.entries.length > 0 && (
           <PlanSummary
             theme={theme}
@@ -1067,7 +881,6 @@ export default function EventPlannerWorkspace({ theme }: { theme: AppTheme }) {
           />
         )}
 
-        {/* ── Plan Items ────────────────────────────────────────────────── */}
         {state.entries.length > 0 && (
           <PlanItemsList
             theme={theme}

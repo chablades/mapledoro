@@ -7,6 +7,7 @@
 */
 import { useState, useEffect, useSyncExternalStore } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import AppShell from "../components/AppShell";
 import SunnySundayPanel from "../components/SunnySundayPanel";
 import RemindersPanel from "../components/RemindersPanel";
@@ -99,25 +100,25 @@ const subscribeFn = () => () => undefined;
 // -- Character-row quick-launch tracker icons --------------------------------
 
 interface TrackerLink {
-  emoji: string;
+  icon: string;
   label: string;
   href: (characterName: string) => string;
 }
 
 const TRACKER_LINKS: TrackerLink[] = [
   {
-    emoji: "🗡️",
     label: "Liberation Tracker",
+    icon: "https://media.maplestorywiki.net/yetidb/Eqp_Genesis_Dagger.png",
     href: (c) => `/tools/liberation?character=${encodeURIComponent(c)}`,
   },
   {
-    emoji: "🔮",
     label: "Symbol Tracker",
+    icon: "https://media.maplestorywiki.net/yetidb/Eqp_Sacred_Symbol_Cernium.png",
     href: (c) => `/tools/symbols?character=${encodeURIComponent(c)}`,
   },
   {
-    emoji: "🔷",
     label: "HEXA Skills",
+    icon: "https://media.maplestorywiki.net/yetidb/Etc_Sol_Erda_Fragment_%28Full_Size%29.png",
     href: (c) => `/tools/hexa-skills?character=${encodeURIComponent(c)}`,
   },
 ];
@@ -128,7 +129,7 @@ function TrackerIcons({ theme, char }: { theme: AppTheme; char: StoredCharacterR
       className="char-row-icons"
       style={{
         display: "flex",
-        gap: 3,
+        gap: 5,
         flexShrink: 0,
       }}
     >
@@ -140,20 +141,19 @@ function TrackerIcons({ theme, char }: { theme: AppTheme; char: StoredCharacterR
           aria-label={`${t.label} for ${char.characterName}`}
           className="char-row-icon-btn"
           style={{
-            width: 24,
-            height: 24,
-            borderRadius: 6,
+            width: 34,
+            height: 34,
+            borderRadius: 8,
             background: theme.timerBg,
             border: `1px solid ${theme.border}`,
             display: "inline-flex",
             alignItems: "center",
             justifyContent: "center",
-            fontSize: "0.78rem",
             textDecoration: "none",
             lineHeight: 1,
           }}
         >
-          {t.emoji}
+          <Image src={t.icon} alt="" width={25} height={25} style={{ objectFit: "contain" }} />
         </Link>
       ))}
     </div>

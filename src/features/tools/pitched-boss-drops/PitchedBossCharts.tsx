@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { panelStyle, ItemIcon } from "./pitched-boss-ui";
 import { useEffect, useState, type ComponentType } from "react";
 import type { AppTheme } from "../../../components/themes";
 import { PITCHED_ITEMS_BY_ID } from "./pitched-items";
@@ -49,40 +49,6 @@ function formatMonth(ym: string): string {
   const [y, m] = ym.split("-");
   const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   return `${MONTH_NAMES[parseInt(m, 10) - 1]} '${y.slice(2)}`;
-}
-
-function panelStyle(theme: AppTheme): React.CSSProperties {
-  return {
-    background: theme.panel,
-    border: `1px solid ${theme.border}`,
-    borderRadius: 12,
-    padding: "1.25rem",
-    marginBottom: "1.5rem",
-  };
-}
-
-function ItemIcon({ src }: { src: string }) {
-  return (
-    <span
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        justifyContent: "center",
-        width: 38,
-        height: 38,
-        flexShrink: 0,
-        verticalAlign: "middle",
-      }}
-    >
-      <Image
-        src={src}
-        alt=""
-        width={32}
-        height={32}
-        className="pixelated-img"
-      />
-    </span>
-  );
 }
 
 function DropCountBarChart({

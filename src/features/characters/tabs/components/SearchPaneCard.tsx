@@ -38,12 +38,9 @@ export default function SearchPaneCard({ model, actions }: SearchPaneCardProps) 
   }, [shell.isSwitchingToDirectory]);
 
   useEffect(() => {
-    const val = showRemoveConfirm ? "hidden" : "";
-    document.body.style.overflow = val;
-    document.documentElement.style.overflow = val;
+    document.documentElement.classList.toggle("scroll-locked", showRemoveConfirm);
     return () => {
-      document.body.style.overflow = "";
-      document.documentElement.style.overflow = "";
+      document.documentElement.classList.remove("scroll-locked");
     };
   }, [showRemoveConfirm]);
 
