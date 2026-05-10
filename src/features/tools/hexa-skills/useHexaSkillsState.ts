@@ -1,11 +1,13 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo, useSyncExternalStore } from "react";
+import { useState, useCallback, useMemo, useSyncExternalStore } from "react";
 import {
   readCharactersStore,
   selectCharactersList,
   type StoredCharacterRecord,
 } from "../../characters/model/charactersStore";
+import { useApplyCharacterQueryParam } from "../useApplyCharacterQueryParam";
+import { readCharacterToolData, writeCharacterToolData } from "../characterToolStorage";
 import {
   ORIGIN_COSTS,
   ENHANCEMENT_COSTS,
@@ -18,17 +20,12 @@ import {
   findClassByName,
   COMMON_SKILLS,
   type HexaClassDef,
+  type HexaSkillLevels,
 } from "./hexa-classes";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
-export interface SkillLevels {
-  origin: number;
-  mastery: number[];
-  enhancement: number[];
-  common: number[];
-  ascent: number;
-}
+export type SkillLevels = HexaSkillLevels;
 
 interface SavedState {
   className: string | null;
@@ -56,28 +53,6 @@ export interface TotalCosts {
   maxGrand: SkillCostSummary;
   maxCommon: SkillCostSummary;
   progressPct: number;
-}
-
-// ── Storage ──────────────────────────────────────────────────────────────────
-
-const STORAGE_KEY = "hexa-skills-v1";
-
-function storageKeyFor(charName: string | null): string {
-  return charName ? `${STORAGE_KEY}-${charName}` : STORAGE_KEY;
-}
-
-function loadState(key: string): SavedState | null {
-  try {
-    const raw = localStorage.getItem(key);
-    if (!raw) return null;
-    return JSON.parse(raw);
-  } catch {
-    return null;
-  }
-}
-
-function saveState(key: string, state: SavedState) {
-  localStorage.setItem(key, JSON.stringify(state));
 }
 
 // ── Defaults ─────────────────────────────────────────────────────────────────
@@ -212,51 +187,58 @@ export function useHexaSkillsState() {
   );
 
   const [selectedCharName, setSelectedCharName] = useState<string | null>(null);
-  const currentStorageKey = storageKeyFor(selectedCharName);
 
-  const [state, setState] = useState<SavedState>(() => {
-    if (typeof window === "undefined") return defaultState();
-    return loadState(STORAGE_KEY) ?? defaultState();
-  });
+  const [state, setState] = useState<SavedState>(defaultState);
 
   const classDef = state.className ? findClassByName(state.className) : null;
   const levels = normalizeLevels(state.levels, classDef);
   const desiredLevels = normalizeLevels(state.desiredLevels ?? defaultDesiredLevels(), classDef, 30);
 
-  // Persist on change
-  useEffect(() => {
-    saveState(currentStorageKey, state);
-  }, [currentStorageKey, state]);
+  const updateState = useCallback(
+    (updater: (prev: SavedState) => SavedState) => {
+      setState((prev) => {
+        const next = updater(prev);
+        if (selectedCharName) {
+          writeCharacterToolData(selectedCharName, "hexaSkills", next);
+        }
+        return next;
+      });
+    },
+    [selectedCharName],
+  );
 
-  // Character switching
   const handleCharChange = useCallback(
     (charName: string | null) => {
-      saveState(currentStorageKey, state);
-      const newKey = storageKeyFor(charName);
-      const saved = loadState(newKey);
+      if (selectedCharName) {
+        writeCharacterToolData(selectedCharName, "hexaSkills", state);
+      }
 
-      if (saved) {
-        setState(saved);
-      } else {
-        // Auto-fill class from character
-        const char = charName
-          ? characters.find((c) => c.characterName === charName)
-          : null;
-        let autoClass: string | null = null;
-        if (char && findClassByName(char.jobName)) {
-          autoClass = char.jobName;
+      if (charName) {
+        const saved = readCharacterToolData<SavedState>(charName, "hexaSkills");
+        if (saved) {
+          setState(saved);
+        } else {
+          const char = characters.find((c) => c.characterName === charName);
+          let autoClass: string | null = null;
+          if (char && findClassByName(char.jobName)) {
+            autoClass = char.jobName;
+          }
+          setState({ className: autoClass, levels: defaultLevels(), desiredLevels: defaultDesiredLevels() });
         }
-        setState({ className: autoClass, levels: defaultLevels(), desiredLevels: defaultDesiredLevels() });
+      } else {
+        setState(defaultState());
       }
 
       setSelectedCharName(charName);
     },
-    [currentStorageKey, state, characters],
+    [selectedCharName, state, characters],
   );
+
+  useApplyCharacterQueryParam({ mounted, characters, handleCharChange });
 
   // Class switching
   const setClassName = useCallback((name: string | null) => {
-    setState((prev) => {
+    updateState((prev) => {
       const newClassDef = name ? findClassByName(name) : null;
       const keepLevels = prev.className === name;
       return {
@@ -269,86 +251,86 @@ export function useHexaSkillsState() {
         ),
       };
     });
-  }, []);
+  }, [updateState]);
 
   // Level setters
   const setOriginLevel = useCallback((v: number) => {
-    setState((prev) => ({ ...prev, levels: { ...prev.levels, origin: Math.max(1, clampLevel(v)) } }));
-  }, []);
+    updateState((prev) => ({ ...prev, levels: { ...prev.levels, origin: Math.max(1, clampLevel(v)) } }));
+  }, [updateState]);
 
   const setAscentLevel = useCallback((v: number) => {
-    setState((prev) => ({ ...prev, levels: { ...prev.levels, ascent: clampLevel(v) } }));
-  }, []);
+    updateState((prev) => ({ ...prev, levels: { ...prev.levels, ascent: clampLevel(v) } }));
+  }, [updateState]);
 
   const setMasteryLevel = useCallback((idx: number, v: number) => {
-    setState((prev) => {
+    updateState((prev) => {
       const mastery = [...prev.levels.mastery];
       mastery[idx] = clampLevel(v);
       return { ...prev, levels: { ...prev.levels, mastery } };
     });
-  }, []);
+  }, [updateState]);
 
   const setEnhancementLevel = useCallback((idx: number, v: number) => {
-    setState((prev) => {
+    updateState((prev) => {
       const enhancement = [...prev.levels.enhancement];
       enhancement[idx] = clampLevel(v);
       return { ...prev, levels: { ...prev.levels, enhancement } };
     });
-  }, []);
+  }, [updateState]);
 
   const setCommonLevel = useCallback((idx: number, v: number) => {
-    setState((prev) => {
+    updateState((prev) => {
       const common = [...prev.levels.common];
       common[idx] = clampLevel(v);
       return { ...prev, levels: { ...prev.levels, common } };
     });
-  }, []);
+  }, [updateState]);
 
   // Desired level setters
   const setDesiredOriginLevel = useCallback((v: number) => {
-    setState((prev) => {
+    updateState((prev) => {
       const dl = prev.desiredLevels ?? defaultDesiredLevels();
       return { ...prev, desiredLevels: { ...dl, origin: Math.max(1, clampLevel(v)) } };
     });
-  }, []);
+  }, [updateState]);
 
   const setDesiredAscentLevel = useCallback((v: number) => {
-    setState((prev) => {
+    updateState((prev) => {
       const dl = prev.desiredLevels ?? defaultDesiredLevels();
       return { ...prev, desiredLevels: { ...dl, ascent: clampLevel(v) } };
     });
-  }, []);
+  }, [updateState]);
 
   const setDesiredMasteryLevel = useCallback((idx: number, v: number) => {
-    setState((prev) => {
+    updateState((prev) => {
       const dl = prev.desiredLevels ?? defaultDesiredLevels();
       const mastery = [...dl.mastery];
       mastery[idx] = clampLevel(v);
       return { ...prev, desiredLevels: { ...dl, mastery } };
     });
-  }, []);
+  }, [updateState]);
 
   const setDesiredEnhancementLevel = useCallback((idx: number, v: number) => {
-    setState((prev) => {
+    updateState((prev) => {
       const dl = prev.desiredLevels ?? defaultDesiredLevels();
       const enhancement = [...dl.enhancement];
       enhancement[idx] = clampLevel(v);
       return { ...prev, desiredLevels: { ...dl, enhancement } };
     });
-  }, []);
+  }, [updateState]);
 
   const setDesiredCommonLevel = useCallback((idx: number, v: number) => {
-    setState((prev) => {
+    updateState((prev) => {
       const dl = prev.desiredLevels ?? defaultDesiredLevels();
       const common = [...dl.common];
       common[idx] = clampLevel(v);
       return { ...prev, desiredLevels: { ...dl, common } };
     });
-  }, []);
+  }, [updateState]);
 
   const resetAll = useCallback(() => {
-    setState((prev) => ({ ...prev, levels: defaultLevels() }));
-  }, []);
+    updateState((prev) => ({ ...prev, levels: defaultLevels() }));
+  }, [updateState]);
 
   const costs = calcTotalCosts(levels, desiredLevels, classDef);
 

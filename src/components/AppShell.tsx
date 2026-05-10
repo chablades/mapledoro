@@ -1,14 +1,10 @@
 "use client";
 
-/*
-  Shared application shell for route pages.
-  Owns theme + UTC clock state and renders top nav/sidebar consistently.
-*/
 import type { ReactNode } from "react";
 import Link from "next/link";
 import AppTopNav from "./AppTopNav";
 import { NAV_LINKS } from "./nav-links";
-import { THEMES, type AppTheme } from "./themes";
+import type { AppTheme } from "./themes";
 import { useTheme } from "./ThemeContext";
 
 const FOOTER_LINKS: { label: string; href: string }[] = [
@@ -24,7 +20,7 @@ interface AppShellProps {
 }
 
 export default function AppShell({ currentPath, children }: AppShellProps) {
-  const { themeKey, theme, setThemeKey } = useTheme();
+  const { theme, colorMode, setColorMode } = useTheme();
 
   return (
     <div
@@ -32,17 +28,16 @@ export default function AppShell({ currentPath, children }: AppShellProps) {
         minHeight: "100dvh",
         background: theme.bg,
         color: theme.text,
-        transition: "all 0.35s ease",
+        transition: "background 0.35s ease, color 0.35s ease",
         overflowX: "hidden",
       }}
     >
       <AppTopNav
         currentPath={currentPath}
-        themeKey={themeKey}
         theme={theme}
-        themes={THEMES}
         navLinks={NAV_LINKS}
-        onThemeChange={setThemeKey}
+        colorMode={colorMode}
+        onColorModeChange={setColorMode}
       />
 
       <div className="page-shell">
@@ -55,7 +50,7 @@ export default function AppShell({ currentPath, children }: AppShellProps) {
           borderTop: `1px solid ${theme.border}`,
           background: theme.panel,
           marginTop: "2rem",
-          transition: "all 0.35s ease",
+          transition: "background 0.35s ease, border-color 0.35s ease",
         }}
       >
         <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
@@ -93,7 +88,7 @@ export default function AppShell({ currentPath, children }: AppShellProps) {
             }}
           >
             <div style={{ marginBottom: "0.5rem", color: theme.text, fontWeight: 800 }}>
-              MapleDoro — A Non-Commercial Fan Project
+              MapleDoro: A Non-Commercial Fan Project
             </div>
             <p style={{ marginBottom: "0.5rem" }}>
               MapleDoro is a free, open-source tool created for the MapleStory

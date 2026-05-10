@@ -1,3 +1,4 @@
+import { readGlobalTool, writeGlobalTool } from "../globalToolsStore";
 import { BOSSES, SHARED_INDICES } from "./bosses";
 
 // -- Types --------------------------------------------------------------------
@@ -19,7 +20,7 @@ export type DialogState =
   | { type: "add-bosses"; name: string; imageURL: string | null }
   | { type: "edit"; index: number };
 
-export interface SavedState {
+interface SavedState {
   server: string;
   characters?: CharacterEntry[];
   columns?: { name: string; bosses: BossRow[] }[];
@@ -69,33 +70,30 @@ export function checkBg(disabled: boolean, checked: boolean, accent: string, tim
 
 // -- Storage ------------------------------------------------------------------
 
-export const STORAGE_KEY = "boss-crystals-v2";
-
 export function loadState(): { server: string; characters: CharacterEntry[] } | null {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    const parsed: SavedState = JSON.parse(raw);
-    const chars = parsed.characters ?? parsed.columns;
-    if (!chars) return null;
-    return {
-      server: parsed.server,
-      characters: chars.map((c) => ({
-        name: c.name,
-        imageURL: "imageURL" in c ? (c as CharacterEntry).imageURL : null,
-        bosses: BOSSES.map((_, i) => {
-          const s = c.bosses[i];
-          return s
-            ? { checked: s.checked, partySize: s.partySize }
-            : { checked: false, partySize: 1 };
-        }),
-      })),
-    };
-  } catch {
-    return null;
-  }
+  const parsed = readGlobalTool<SavedState>("bossCrystals");
+  if (!parsed) return null;
+  const chars = parsed.characters ?? parsed.columns;
+  if (!chars) return null;
+  return {
+    server: parsed.server,
+    characters: chars.map((c) => ({
+      name: c.name,
+      imageURL: "imageURL" in c ? (c as CharacterEntry).imageURL : null,
+      bosses: BOSSES.map((_, i) => {
+        const s = c.bosses[i];
+        return s
+          ? { checked: s.checked, partySize: s.partySize }
+          : { checked: false, partySize: 1 };
+      }),
+    })),
+  };
 }
 
 export function saveState(server: string, characters: CharacterEntry[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify({ server, characters }));
+  writeGlobalTool("bossCrystals", { server, characters });
+}
+
+export function clearState() {
+  writeGlobalTool("bossCrystals", null);
 }

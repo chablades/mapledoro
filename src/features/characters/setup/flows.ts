@@ -11,7 +11,14 @@ export const SETUP_FLOWS = [
     label: "Quick Setup",
     description: "Fast onboarding for one character.",
     required: true,
-    steps: ["gender", "stats"] as const,
+    steps: ["gender"] as const,
+  },
+  {
+    id: "stats_flow",
+    label: "Stats",
+    description: "Set up attack power, defense, and other stat details.",
+    required: false,
+    steps: ["stats"] as const,
   },
   {
     id: "equipment_flow",

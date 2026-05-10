@@ -83,9 +83,9 @@ function ChangelogContent({ theme }: { theme: AppTheme }) {
                   gap: "0.5rem",
                 }}
               >
-                {entry.changes.map((change, i) => (
+                {entry.changes.map((change) => (
                   <li
-                    key={i}
+                    key={change.text}
                     style={{
                       display: "flex",
                       alignItems: "flex-start",
@@ -97,19 +97,9 @@ function ChangelogContent({ theme }: { theme: AppTheme }) {
                     }}
                   >
                     <span
+                      className="changelog-type-pill"
                       style={{
-                        flexShrink: 0,
-                        marginTop: "2px",
-                        fontSize: "0.62rem",
-                        fontWeight: 800,
-                        color: "#fff",
                         background: TYPE_COLOR[change.type],
-                        padding: "2px 8px",
-                        borderRadius: "6px",
-                        letterSpacing: "0.04em",
-                        textTransform: "uppercase",
-                        minWidth: "56px",
-                        textAlign: "center",
                       }}
                     >
                       {TYPE_LABEL[change.type]}

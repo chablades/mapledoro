@@ -9,7 +9,7 @@ const config = [
   { ignores: [".next/**", "out/**", "build/**", "next-env.d.ts", "scripts/**"] },
   {
     rules: {
-      "sonarjs/todo-tag": "off",
+      "sonarjs/todo-tag": "off"
     },
   },
 ];

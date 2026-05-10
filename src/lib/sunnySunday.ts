@@ -173,7 +173,7 @@ function processMessageLine(
   return current;
 }
 
-export function parseSunnySundayMessage(content: string): SunnySundayWeek[] {
+function parseSunnySundayMessage(content: string): SunnySundayWeek[] {
   const lines = content.split("\n");
   const weeks: SunnySundayWeek[] = [];
   let current: SunnySundayWeek | null = null;

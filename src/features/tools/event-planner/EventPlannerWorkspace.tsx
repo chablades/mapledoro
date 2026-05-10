@@ -2,28 +2,22 @@
 
 import {
   useState,
+  useReducer,
   useMemo,
   useRef,
   useEffect,
   useCallback,
-  useSyncExternalStore,
 } from "react";
+import Image from "next/image";
 import type { AppTheme } from "../../../components/themes";
 import { ToolHeader } from "../../../components/ToolHeader";
 import { WikiAttribution } from "../../../components/WikiAttribution";
 import {
-  readCharactersStore,
-  selectCharactersList,
-  type StoredCharacterRecord,
-} from "../../characters/model/charactersStore";
-import {
-  computeExpectedCosts,
   formatMeso,
   formatMesoFull,
-  type StarForceOpts,
-  type MvpTier,
 } from "../star-force/star-force-data";
-import { Toggle, PillGroup } from "../shared-ui";
+import { Toggle, PillGroup, MVP_OPTIONS } from "../shared-ui";
+import { toolStyles } from "../tool-styles";
 import {
   EVENT_ITEMS,
   EVENT_ITEMS_BY_ID,
@@ -32,84 +26,7 @@ import {
   categoryLabel,
   type EventItem,
 } from "./event-items";
-
-// ── Types ────────────────────────────────────────────────────────────────────
-
-interface PlannerEntry {
-  id: string;
-  characterName: string;
-  itemId: string;
-  currentStar: number;
-  targetStar: number;
-  replacementCost: number;
-  safeguard: boolean;
-}
-
-interface SavedState {
-  costDiscount: boolean;
-  boomReduction: boolean;
-  starCatch: boolean;
-  mvp: MvpTier;
-  entries: PlannerEntry[];
-}
-
-interface EntryCost {
-  cost: number;
-  booms: number;
-}
-
-// ── Storage ──────────────────────────────────────────────────────────────────
-
-const STORAGE_KEY = "event-planner-v1";
-
-function loadState(): SavedState | null {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    return JSON.parse(raw);
-  } catch {
-    return null;
-  }
-}
-
-function persistState(state: SavedState) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-}
-
-function defaultState(): SavedState {
-  return {
-    costDiscount: false,
-    boomReduction: false,
-    starCatch: true,
-    mvp: "none",
-    entries: [],
-  };
-}
-
-// ── Cost Calculation ─────────────────────────────────────────────────────────
-
-function computeEntryCost(entry: PlannerEntry, settings: SavedState): EntryCost {
-  const item = EVENT_ITEMS_BY_ID.get(entry.itemId);
-  if (!item || entry.currentStar >= entry.targetStar) return { cost: 0, booms: 0 };
-
-  const opts: StarForceOpts = {
-    level: item.level,
-    startStar: entry.currentStar,
-    targetStar: entry.targetStar,
-    replacementCost: entry.replacementCost,
-    costDiscount: settings.costDiscount,
-    boomReduction: settings.boomReduction,
-    starCatch: settings.starCatch,
-    safeguard: entry.safeguard,
-    mvp: settings.mvp,
-  };
-
-  const results = computeExpectedCosts(opts);
-  return {
-    cost: results.reduce((s, r) => s + r.expectedCost, 0),
-    booms: results.reduce((s, r) => s + r.expectedBooms, 0),
-  };
-}
+import { useEventPlannerState, type PlannerEntry, type EntryCost } from "./useEventPlannerState";
 
 // ── Shared sub-components ────────────────────────────────────────────────────
 
@@ -122,41 +39,38 @@ function ItemIcon({
   size?: number;
   theme: AppTheme;
 }) {
-  const [failed, setFailed] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
+  const fallbackRef = useRef<HTMLDivElement>(null);
 
-  if (failed) {
-    return (
+  return (
+    <>
+      <Image
+        ref={imgRef}
+        src={item.icon}
+        alt={item.name}
+        width={size}
+        height={size}
+        onError={() => {
+          if (imgRef.current) imgRef.current.style.display = "none";
+          if (fallbackRef.current) fallbackRef.current.style.display = "flex";
+        }}
+        className="item-icon-img"
+      />
       <div
+        ref={fallbackRef}
+        className="item-icon-fallback"
         style={{
           width: size,
           height: size,
-          borderRadius: 4,
           background: theme.timerBg,
           border: `1px solid ${theme.border}`,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
           fontSize: size * 0.36,
-          fontWeight: 800,
           color: theme.muted,
-          flexShrink: 0,
         }}
       >
         {item.name[0]}
       </div>
-    );
-  }
-
-  return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src={item.icon}
-      alt={item.name}
-      width={size}
-      height={size}
-      onError={() => setFailed(true)}
-      style={{ objectFit: "contain", flexShrink: 0 }}
-    />
+    </>
   );
 }
 
@@ -210,13 +124,50 @@ function ItemSelector({
 
   const selectedItem = value ? EVENT_ITEMS_BY_ID.get(value) ?? null : null;
 
-  /* Ref select is a hidden native <select> used purely to derive the
-     exact computed height so the custom input matches pixel-for-pixel. */
   const refSelect = useRef<HTMLSelectElement>(null);
   const [selectH, setSelectH] = useState<number | undefined>(undefined);
   useEffect(() => {
     if (refSelect.current) setSelectH(refSelect.current.offsetHeight);
   }, []);
+
+  const searchInputStyle: React.CSSProperties = {
+    border: "none",
+    background: "transparent",
+    color: theme.text,
+    outline: "none",
+    width: "100%",
+    fontFamily: "var(--font-body)",
+    fontSize: "inherit",
+    fontWeight: "inherit",
+    padding: 0,
+    cursor: "inherit",
+  };
+
+  const dropdownMenuStyle: React.CSSProperties = {
+    position: "absolute",
+    top: "100%",
+    left: 0,
+    right: 0,
+    maxHeight: 320,
+    overflowY: "auto",
+    background: theme.panel,
+    border: `1px solid ${theme.border}`,
+    borderRadius: "8px",
+    zIndex: 10,
+    marginTop: 4,
+    boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
+  };
+
+  const dropdownItemStyle: React.CSSProperties = {
+    padding: "7px 12px",
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    cursor: "pointer",
+    fontSize: "0.82rem",
+    fontWeight: 600,
+    color: theme.text,
+  };
 
   return (
     <div ref={ref} style={{ position: "relative", flex: 1, minWidth: 200 }}>
@@ -232,6 +183,10 @@ function ItemSelector({
       </select>
       <div
         className="tool-input"
+        role="combobox"
+        tabIndex={0}
+        aria-expanded={open}
+        aria-controls="event-item-listbox"
         style={{
           ...inputStyle,
           display: "flex",
@@ -244,6 +199,12 @@ function ItemSelector({
         }}
         onClick={() => {
           if (!open) setOpen(true);
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            if (!open) setOpen(true);
+          }
         }}
       >
         {selectedItem && !open && (
@@ -262,23 +223,12 @@ function ItemSelector({
             setOpen(true);
           }}
           placeholder="Search items..."
-          style={{
-            border: "none",
-            background: "transparent",
-            color: theme.text,
-            outline: "none",
-            width: "100%",
-            fontFamily: "var(--font-body)",
-            fontSize: "inherit",
-            fontWeight: "inherit",
-            padding: 0,
-            cursor: "inherit",
-          }}
+          style={searchInputStyle}
         />
         <span
           style={{
             marginLeft: "auto",
-            fontSize: "0.6rem",
+            fontSize: "0.75rem",
             color: theme.muted,
             flexShrink: 0,
             pointerEvents: "none",
@@ -289,20 +239,9 @@ function ItemSelector({
       </div>
       {open && (
         <div
-          style={{
-            position: "absolute",
-            top: "100%",
-            left: 0,
-            right: 0,
-            maxHeight: 320,
-            overflowY: "auto",
-            background: theme.panel,
-            border: `1px solid ${theme.border}`,
-            borderRadius: "8px",
-            zIndex: 100,
-            marginTop: 4,
-            boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
-          }}
+          id="event-item-listbox"
+          role="listbox"
+          style={dropdownMenuStyle}
         >
           {filtered.length === 0 && (
             <div
@@ -324,7 +263,7 @@ function ItemSelector({
                 <div
                   style={{
                     padding: "8px 12px 4px",
-                    fontSize: "0.68rem",
+                    fontSize: "0.75rem",
                     fontWeight: 800,
                     color: theme.muted,
                     textTransform: "uppercase",
@@ -337,28 +276,30 @@ function ItemSelector({
                   <div
                     key={item.id}
                     className="tool-btn tool-dropdown-item"
+                    role="option"
+                    tabIndex={0}
+                    aria-selected={value === item.id}
                     onClick={() => {
                       onChange(item.id);
                       setOpen(false);
                       setSearch("");
                     }}
-                    style={{
-                      padding: "7px 12px",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 8,
-                      cursor: "pointer",
-                      fontSize: "0.82rem",
-                      fontWeight: 600,
-                      color: theme.text,
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        onChange(item.id);
+                        setOpen(false);
+                        setSearch("");
+                      }
                     }}
+                    style={dropdownItemStyle}
                   >
                     <ItemIcon item={item} size={22} theme={theme} />
                     <span>{item.name}</span>
                     <span
                       style={{
                         color: theme.muted,
-                        fontSize: "0.7rem",
+                        fontSize: "0.75rem",
                         marginLeft: "auto",
                         whiteSpace: "nowrap",
                       }}
@@ -376,136 +317,414 @@ function ItemSelector({
   );
 }
 
-// ── MVP options ──────────────────────────────────────────────────────────────
+// ── Summary panel ───────────────────────────────────────────────────────────
 
-const MVP_OPTIONS: { value: MvpTier; label: string }[] = [
-  { value: "none", label: "None" },
-  { value: "silver", label: "Silver" },
-  { value: "gold", label: "Gold" },
-  { value: "diamond", label: "Diamond" },
-];
+function PlanSummary({
+  theme,
+  grandTotal,
+  entryCount,
+  clearEntries,
+  panelStyle,
+  clearAllButtonStyle,
+}: {
+  theme: AppTheme;
+  grandTotal: { cost: number; booms: number };
+  entryCount: number;
+  clearEntries: () => void;
+  panelStyle: React.CSSProperties;
+  clearAllButtonStyle: React.CSSProperties;
+}) {
+  return (
+    <div className="fade-in panel-card" style={panelStyle}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          flexWrap: "wrap",
+          gap: "1rem",
+        }}
+      >
+        <div>
+          <div
+            style={{
+              fontFamily: "var(--font-heading)",
+              fontSize: "0.95rem",
+              color: theme.text,
+              marginBottom: "0.75rem",
+            }}
+          >
+            Summary
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "2rem" }}>
+            <div>
+              <div
+                style={{
+                  fontSize: "0.75rem",
+                  fontWeight: 800,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.04em",
+                  color: theme.muted,
+                  marginBottom: "0.2rem",
+                }}
+              >
+                Total Expected Cost
+              </div>
+              <div
+                style={{
+                  fontFamily: "var(--font-heading)",
+                  fontSize: "1.25rem",
+                  color: theme.accent,
+                }}
+              >
+                {formatMeso(grandTotal.cost)}
+              </div>
+              <div
+                style={{
+                  fontSize: "0.75rem",
+                  color: theme.muted,
+                  fontWeight: 600,
+                }}
+              >
+                {formatMesoFull(grandTotal.cost)} mesos
+              </div>
+            </div>
+            <div>
+              <div
+                style={{
+                  fontSize: "0.75rem",
+                  fontWeight: 800,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.04em",
+                  color: theme.muted,
+                  marginBottom: "0.2rem",
+                }}
+              >
+                Total Expected Spares
+              </div>
+              <div
+                style={{
+                  fontFamily: "var(--font-heading)",
+                  fontSize: "1.25rem",
+                  color: grandTotal.booms > 0 ? "#e05a5a" : theme.text,
+                }}
+              >
+                {grandTotal.booms === 0 ? "0" : grandTotal.booms.toFixed(1)}
+              </div>
+              <div
+                style={{
+                  fontSize: "0.75rem",
+                  color: theme.muted,
+                  fontWeight: 600,
+                }}
+              >
+                replacement items
+              </div>
+            </div>
+            <div>
+              <div
+                style={{
+                  fontSize: "0.75rem",
+                  fontWeight: 800,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.04em",
+                  color: theme.muted,
+                  marginBottom: "0.2rem",
+                }}
+              >
+                Items
+              </div>
+              <div
+                style={{
+                  fontFamily: "var(--font-heading)",
+                  fontSize: "1.25rem",
+                  color: theme.text,
+                }}
+              >
+                {entryCount}
+              </div>
+            </div>
+          </div>
+        </div>
+        <div
+          className="tool-btn"
+          role="button"
+          tabIndex={0}
+          onClick={clearEntries}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              clearEntries();
+            }
+          }}
+          style={clearAllButtonStyle}
+        >
+          Clear All
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Plan items list ─────────────────────────────────────────────────────────
+
+function PlanItemsList({
+  theme,
+  groupedEntries,
+  toggleSafeguard,
+  removeEntry,
+  panelStyle,
+  safeguardBaseStyle,
+  removeButtonStyle,
+}: {
+  theme: AppTheme;
+  groupedEntries: Map<string, { entry: PlannerEntry; cost: EntryCost; idx: number }[]>;
+  toggleSafeguard: (id: string) => void;
+  removeEntry: (id: string) => void;
+  panelStyle: React.CSSProperties;
+  safeguardBaseStyle: React.CSSProperties;
+  removeButtonStyle: React.CSSProperties;
+}) {
+  return (
+    <div className="fade-in panel-card" style={{ ...panelStyle, padding: 0 }}>
+      {Array.from(groupedEntries.entries()).map(
+        ([charName, items], groupIdx) => (
+          <div key={charName}>
+            <div
+              style={{
+                padding: "0.75rem 1.25rem",
+                borderBottom: `1px solid ${theme.border}`,
+                borderTop: groupIdx > 0 ? `1px solid ${theme.border}` : undefined,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <div
+                style={{
+                  fontSize: "0.82rem",
+                  fontWeight: 800,
+                  color: theme.text,
+                }}
+              >
+                {charName}
+              </div>
+              <div
+                style={{
+                  fontSize: "0.75rem",
+                  fontWeight: 700,
+                  color: theme.accent,
+                }}
+              >
+                {formatMesoFull(
+                  items.reduce((s, i) => s + i.cost.cost, 0),
+                )}{" "}mesos
+              </div>
+            </div>
+
+            {items.map(({ entry, cost }) => {
+              const item = EVENT_ITEMS_BY_ID.get(entry.itemId);
+              if (!item) return null;
+              return (
+                <div
+                  key={entry.id}
+                  style={{
+                    padding: "0.6rem 1.25rem",
+                    borderBottom: `1px solid ${theme.border}`,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.75rem",
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <ItemIcon item={item} size={30} theme={theme} />
+                  <div style={{ minWidth: 220 }}>
+                    <div
+                      style={{
+                        fontSize: "0.82rem",
+                        fontWeight: 700,
+                        color: theme.text,
+                      }}
+                    >
+                      {item.name}
+                    </div>
+                    <div
+                      style={{
+                        fontSize: "0.75rem",
+                        fontWeight: 600,
+                        color: theme.muted,
+                      }}
+                    >
+                      Lv.{item.level} {item.slot}
+                    </div>
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "0.78rem",
+                      fontWeight: 700,
+                      color: theme.accent,
+                      whiteSpace: "nowrap",
+                      width: 90,
+                      textAlign: "center",
+                      flexShrink: 0,
+                    }}
+                  >
+                    {entry.currentStar}★ → {entry.targetStar}★
+                  </div>
+                  <div
+                    style={{
+                      marginLeft: "auto",
+                      display: "flex",
+                      gap: "1rem",
+                      alignItems: "center",
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    <div style={{ textAlign: "right" }}>
+                      <div
+                        style={{
+                          fontSize: "0.78rem",
+                          fontWeight: 700,
+                          color: theme.text,
+                        }}
+                      >
+                        {formatMesoFull(cost.cost)} mesos
+                      </div>
+                    </div>
+                    <div style={{ textAlign: "right", minWidth: 90 }}>
+                      <div
+                        style={{
+                          fontSize: "0.78rem",
+                          fontWeight: 700,
+                          color: cost.booms > 0 ? "#e05a5a" : theme.muted,
+                        }}
+                      >
+                        {cost.booms === 0 ? "0" : cost.booms.toFixed(1)} spares
+                      </div>
+                    </div>
+                    <div
+                      className="tool-btn"
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => toggleSafeguard(entry.id)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          toggleSafeguard(entry.id);
+                        }
+                      }}
+                      title={entry.safeguard ? "Safeguard ON (15-17)" : "Safeguard OFF"}
+                      style={{
+                        ...safeguardBaseStyle,
+                        color: entry.safeguard ? theme.accentText : theme.muted,
+                        background: entry.safeguard ? theme.accentSoft : theme.timerBg,
+                        border: `1px solid ${entry.safeguard ? theme.accent : theme.border}`,
+                      }}
+                    >
+                      Safeguard
+                    </div>
+                    <div
+                      className="tool-btn"
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => removeEntry(entry.id)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          removeEntry(entry.id);
+                        }
+                      }}
+                      style={removeButtonStyle}
+                    >
+                      {"×"}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ),
+      )}
+    </div>
+  );
+}
 
 // ── Main workspace ───────────────────────────────────────────────────────────
 
 export default function EventPlannerWorkspace({ theme }: { theme: AppTheme }) {
-  const mounted = useSyncExternalStore(
-    () => () => undefined,
-    () => true,
-    () => false,
-  );
+  const {
+    mounted,
+    characters,
+    state,
+    setCostDiscount,
+    setBoomReduction,
+    setStarCatch,
+    setMvp,
+    addEntry,
+    removeEntry,
+    toggleSafeguard,
+    clearEntries,
+    entryCosts,
+    grandTotal,
+  } = useEventPlannerState();
 
-  const characters: StoredCharacterRecord[] = useMemo(
-    () => (mounted ? selectCharactersList(readCharactersStore()) : []),
-    [mounted],
-  );
-
-  // ── Persisted state ──
-
-  const [state, setState] = useState<SavedState>(() => {
-    if (typeof window === "undefined") return defaultState();
-    return loadState() ?? defaultState();
-  });
-
-  useEffect(() => {
-    persistState(state);
-  }, [state]);
-
-  // ── Settings callbacks ──
-
-  const setCostDiscount = useCallback(
-    (v: boolean) => setState((s) => ({ ...s, costDiscount: v })),
-    [],
-  );
-  const setBoomReduction = useCallback(
-    (v: boolean) => setState((s) => ({ ...s, boomReduction: v })),
-    [],
-  );
-  const setStarCatch = useCallback(
-    (v: boolean) => setState((s) => ({ ...s, starCatch: v })),
-    [],
-  );
-  const setMvp = useCallback(
-    (v: MvpTier) => setState((s) => ({ ...s, mvp: v })),
-    [],
-  );
-
-  // ── Entry management ──
-
-  const addEntry = useCallback(
-    (entry: Omit<PlannerEntry, "id">) => {
-      setState((s) => ({
-        ...s,
-        entries: [...s.entries, { ...entry, id: crypto.randomUUID() }],
-      }));
-    },
-    [],
-  );
-
-  const removeEntry = useCallback((id: string) => {
-    setState((s) => ({
-      ...s,
-      entries: s.entries.filter((e) => e.id !== id),
-    }));
-  }, []);
-
-  const toggleSafeguard = useCallback((id: string) => {
-    setState((s) => ({
-      ...s,
-      entries: s.entries.map((e) =>
-        e.id === id ? { ...e, safeguard: !e.safeguard } : e,
-      ),
-    }));
-  }, []);
-
-  const clearEntries = useCallback(() => {
-    setState((s) => ({ ...s, entries: [] }));
-  }, []);
-
-  // ── Cost computation ──
-
-  const entryCosts = useMemo(
-    () => state.entries.map((e) => computeEntryCost(e, state)),
-    [state],
-  );
-
-  const grandTotal = useMemo(
-    () =>
-      entryCosts.reduce(
-        (acc, c) => ({ cost: acc.cost + c.cost, booms: acc.booms + c.booms }),
-        { cost: 0, booms: 0 },
-      ),
-    [entryCosts],
-  );
+  const styles = toolStyles(theme);
 
   // ── Add-item form state ──
 
-  const [formChar, setFormChar] = useState<string>("");
-  const [formCharCustom, setFormCharCustom] = useState("");
-  const [formItem, setFormItem] = useState<string | null>(null);
-  const [formCurrentStar, setFormCurrentStar] = useState(17);
-  const [formTargetStar, setFormTargetStar] = useState(22);
-  const [formReplaceCost, setFormReplaceCost] = useState(0);
-  const [formSafeguard, setFormSafeguard] = useState(false);
+  interface FormState {
+    char: string;
+    charCustom: string;
+    item: string | null;
+    currentStar: number;
+    targetStar: number;
+    replaceCost: number;
+    safeguard: boolean;
+  }
+  type FormAction =
+    | { type: "setChar"; value: string }
+    | { type: "setCharCustom"; value: string }
+    | { type: "setItem"; value: string | null }
+    | { type: "setCurrentStar"; value: number }
+    | { type: "setTargetStar"; value: number }
+    | { type: "setReplaceCost"; value: number }
+    | { type: "setSafeguard"; value: boolean }
+    | { type: "clearItem" };
+  const [form, dispatchForm] = useReducer(
+    (state: FormState, action: FormAction): FormState => {
+      switch (action.type) {
+        case "setChar": return { ...state, char: action.value };
+        case "setCharCustom": return { ...state, charCustom: action.value };
+        case "setItem": return { ...state, item: action.value };
+        case "setCurrentStar": return { ...state, currentStar: action.value };
+        case "setTargetStar": return { ...state, targetStar: action.value };
+        case "setReplaceCost": return { ...state, replaceCost: action.value };
+        case "setSafeguard": return { ...state, safeguard: action.value };
+        case "clearItem": return { ...state, item: null };
+      }
+    },
+    { char: "", charCustom: "", item: null, currentStar: 17, targetStar: 22, replaceCost: 0, safeguard: false },
+  );
 
-  const selectedItem = formItem ? EVENT_ITEMS_BY_ID.get(formItem) ?? null : null;
+  const selectedItem = form.item ? EVENT_ITEMS_BY_ID.get(form.item) ?? null : null;
   const itemMaxStar = selectedItem ? maxStarForLevel(selectedItem.level) : 25;
 
   const canAdd =
-    selectedItem !== null && formCurrentStar < formTargetStar && formTargetStar <= itemMaxStar;
+    selectedItem !== null && form.currentStar < form.targetStar && form.targetStar <= itemMaxStar;
 
   const handleAdd = useCallback(() => {
-    if (!formItem || !canAdd) return;
-    const charName = formChar === "__custom__" ? formCharCustom.trim() : formChar;
+    if (!form.item || !canAdd) return;
+    const charName = form.char === "__custom__" ? form.charCustom.trim() : form.char;
     addEntry({
       characterName: charName,
-      itemId: formItem,
-      currentStar: formCurrentStar,
-      targetStar: formTargetStar,
-      replacementCost: formReplaceCost,
-      safeguard: formSafeguard,
+      itemId: form.item,
+      currentStar: form.currentStar,
+      targetStar: form.targetStar,
+      replacementCost: form.replaceCost,
+      safeguard: form.safeguard,
     });
-    setFormItem(null);
-  }, [formItem, canAdd, formChar, formCharCustom, formCurrentStar, formTargetStar, formReplaceCost, formSafeguard, addEntry]);
+    dispatchForm({ type: "clearItem" });
+  }, [form, canAdd, addEntry]);
 
   // ── Group entries by character ──
 
@@ -522,27 +741,56 @@ export default function EventPlannerWorkspace({ theme }: { theme: AppTheme }) {
 
   // ── Styles ──
 
-  const inputStyle: React.CSSProperties = {
+  const panelStyle: React.CSSProperties = {
+    ...styles.sectionPanel,
+    borderRadius: "14px",
+  };
+
+  const addButtonBaseStyle: React.CSSProperties = {
+    padding: "7px 20px",
+    borderRadius: "10px",
+    fontSize: "0.82rem",
+    fontWeight: 800,
+    userSelect: "none",
+    whiteSpace: "nowrap",
+  };
+
+  const clearAllButtonStyle: React.CSSProperties = {
+    padding: "6px 14px",
+    borderRadius: "8px",
+    fontSize: "0.75rem",
+    fontWeight: 700,
+    color: "#e05a5a",
     background: theme.timerBg,
     border: `1px solid ${theme.border}`,
-    color: theme.text,
-    fontSize: "0.82rem",
+    userSelect: "none",
+    alignSelf: "flex-start",
+  };
+
+  const safeguardBaseStyle: React.CSSProperties = {
+    padding: "4px 8px",
+    borderRadius: 6,
+    fontSize: "0.75rem",
     fontWeight: 700,
-    borderRadius: "8px",
-    padding: "7px 10px",
+    userSelect: "none",
+    flexShrink: 0,
+    whiteSpace: "nowrap",
   };
 
-  const selectStyle: React.CSSProperties = {
-    ...inputStyle,
-    cursor: "pointer",
-  };
-
-  const panelStyle: React.CSSProperties = {
-    background: theme.panel,
+  const removeButtonStyle: React.CSSProperties = {
+    width: 24,
+    height: 24,
+    borderRadius: 6,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "0.85rem",
+    fontWeight: 700,
+    color: theme.muted,
+    background: theme.timerBg,
     border: `1px solid ${theme.border}`,
-    padding: "1.25rem",
-    marginBottom: "1.25rem",
-    borderRadius: "14px",
+    userSelect: "none",
+    flexShrink: 0,
   };
 
   if (!mounted) return null;
@@ -561,7 +809,7 @@ export default function EventPlannerWorkspace({ theme }: { theme: AppTheme }) {
         <ToolHeader
           theme={theme}
           title="Event Planner"
-          description="Plan your star force spending for the next event. Estimates total meso cost and spare items needed."
+          description="Toggle your active events and options, then add items with their current and target stars to plan your total spending."
         />
 
         {/* ── Event Settings ────────────────────────────────────────────── */}
@@ -667,16 +915,16 @@ export default function EventPlannerWorkspace({ theme }: { theme: AppTheme }) {
             <div>
               <div
                 className="section-label"
-                style={{ color: theme.muted, marginBottom: 4, fontSize: "0.72rem" }}
+                style={{ color: theme.muted, marginBottom: 4, fontSize: "0.75rem" }}
               >
                 Character
               </div>
               <div style={{ display: "flex", gap: 6 }}>
                 <select
                   className="tool-input"
-                  value={formChar}
-                  onChange={(e) => setFormChar(e.target.value)}
-                  style={{ ...selectStyle, flex: 1 }}
+                  value={form.char}
+                  onChange={(e) => dispatchForm({ type: "setChar", value: e.target.value })}
+                  style={{ ...styles.selectStyle, flex: 1 }}
                 >
                   <option value="">Unspecified</option>
                   {characters.map((c) => (
@@ -686,14 +934,14 @@ export default function EventPlannerWorkspace({ theme }: { theme: AppTheme }) {
                   ))}
                   <option value="__custom__">Other (enter name)</option>
                 </select>
-                {formChar === "__custom__" && (
+                {form.char === "__custom__" && (
                   <input
                     className="tool-input"
                     type="text"
-                    value={formCharCustom}
-                    onChange={(e) => setFormCharCustom(e.target.value)}
+                    value={form.charCustom}
+                    onChange={(e) => dispatchForm({ type: "setCharCustom", value: e.target.value })}
                     placeholder="Character name"
-                    style={{ ...inputStyle, flex: 1 }}
+                    style={{ ...styles.inputStyle, flex: 1 }}
                   />
                 )}
               </div>
@@ -703,15 +951,15 @@ export default function EventPlannerWorkspace({ theme }: { theme: AppTheme }) {
             <div>
               <div
                 className="section-label"
-                style={{ color: theme.muted, marginBottom: 4, fontSize: "0.72rem" }}
+                style={{ color: theme.muted, marginBottom: 4, fontSize: "0.75rem" }}
               >
                 Item
               </div>
               <ItemSelector
                 theme={theme}
-                value={formItem}
-                onChange={setFormItem}
-                inputStyle={inputStyle}
+                value={form.item}
+                onChange={(v) => dispatchForm({ type: "setItem", value: v })}
+                inputStyle={styles.inputStyle}
               />
             </div>
 
@@ -719,16 +967,16 @@ export default function EventPlannerWorkspace({ theme }: { theme: AppTheme }) {
             <div>
               <div
                 className="section-label"
-                style={{ color: theme.muted, marginBottom: 4, fontSize: "0.72rem" }}
+                style={{ color: theme.muted, marginBottom: 4, fontSize: "0.75rem" }}
               >
                 Stars
               </div>
               <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
                 <select
                   className="tool-input"
-                  value={formCurrentStar}
-                  onChange={(e) => setFormCurrentStar(Number(e.target.value))}
-                  style={{ ...selectStyle, width: 80 }}
+                  value={form.currentStar}
+                  onChange={(e) => dispatchForm({ type: "setCurrentStar", value: Number(e.target.value) })}
+                  style={{ ...styles.selectStyle, width: 80 }}
                 >
                   {Array.from({ length: itemMaxStar }, (_, i) => i).map((s) => (
                     <option key={s} value={s}>
@@ -741,9 +989,9 @@ export default function EventPlannerWorkspace({ theme }: { theme: AppTheme }) {
                 </span>
                 <select
                   className="tool-input"
-                  value={formTargetStar}
-                  onChange={(e) => setFormTargetStar(Number(e.target.value))}
-                  style={{ ...selectStyle, width: 80 }}
+                  value={form.targetStar}
+                  onChange={(e) => dispatchForm({ type: "setTargetStar", value: Number(e.target.value) })}
+                  style={{ ...styles.selectStyle, width: 80 }}
                 >
                   {Array.from({ length: itemMaxStar }, (_, i) => i + 1).map((s) => (
                     <option key={s} value={s}>
@@ -758,7 +1006,7 @@ export default function EventPlannerWorkspace({ theme }: { theme: AppTheme }) {
             <div>
               <div
                 className="section-label"
-                style={{ color: theme.muted, marginBottom: 4, fontSize: "0.72rem" }}
+                style={{ color: theme.muted, marginBottom: 4, fontSize: "0.75rem" }}
               >
                 Replace Cost
               </div>
@@ -767,34 +1015,37 @@ export default function EventPlannerWorkspace({ theme }: { theme: AppTheme }) {
                   className="tool-input"
                   type="number"
                   min={0}
-                  value={formReplaceCost}
+                  value={form.replaceCost}
                   onChange={(e) =>
-                    setFormReplaceCost(Math.max(0, Number(e.target.value) || 0))
+                    dispatchForm({ type: "setReplaceCost", value: Math.max(0, Number(e.target.value) || 0) })
                   }
                   placeholder="0"
-                  style={{ ...inputStyle, width: 120 }}
+                  style={{ ...styles.inputStyle, width: 120 }}
                 />
                 <Toggle
                   theme={theme}
                   label="Safeguard"
-                  checked={formSafeguard}
-                  onChange={setFormSafeguard}
+                  checked={form.safeguard}
+                  onChange={(v) => dispatchForm({ type: "setSafeguard", value: v })}
                 />
                 <div
                   className="tool-btn"
+                  role="button"
+                  tabIndex={0}
                   onClick={handleAdd}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      handleAdd();
+                    }
+                  }}
                   style={{
-                    padding: "7px 20px",
-                    borderRadius: "10px",
-                    fontSize: "0.82rem",
-                    fontWeight: 800,
+                    ...addButtonBaseStyle,
                     color: canAdd ? theme.accentText : theme.muted,
                     background: canAdd ? theme.accentSoft : theme.timerBg,
                     border: `1px solid ${canAdd ? theme.accent : theme.border}`,
-                    userSelect: "none",
                     opacity: canAdd ? 1 : 0.5,
                     pointerEvents: canAdd ? "auto" : "none",
-                    whiteSpace: "nowrap",
                   }}
                 >
                   + Add
@@ -804,308 +1055,29 @@ export default function EventPlannerWorkspace({ theme }: { theme: AppTheme }) {
           </div>
         </div>
 
-        {/* ── Summary ───────────────────────────────────────────────────── */}
+        {/* ── Summary ───────────────────────────────────────���───────────── */}
         {state.entries.length > 0 && (
-          <div className="fade-in panel-card" style={panelStyle}>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "flex-start",
-                flexWrap: "wrap",
-                gap: "1rem",
-              }}
-            >
-              <div>
-                <div
-                  style={{
-                    fontFamily: "var(--font-heading)",
-                    fontSize: "0.95rem",
-                    color: theme.text,
-                    marginBottom: "0.75rem",
-                  }}
-                >
-                  Summary
-                </div>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: "2rem" }}>
-                  <div>
-                    <div
-                      style={{
-                        fontSize: "0.68rem",
-                        fontWeight: 800,
-                        textTransform: "uppercase",
-                        letterSpacing: "0.04em",
-                        color: theme.muted,
-                        marginBottom: "0.2rem",
-                      }}
-                    >
-                      Total Expected Cost
-                    </div>
-                    <div
-                      style={{
-                        fontFamily: "var(--font-heading)",
-                        fontSize: "1.25rem",
-                        color: theme.accent,
-                      }}
-                    >
-                      {formatMeso(grandTotal.cost)}
-                    </div>
-                    <div
-                      style={{
-                        fontSize: "0.72rem",
-                        color: theme.muted,
-                        fontWeight: 600,
-                      }}
-                    >
-                      {formatMesoFull(grandTotal.cost)} mesos
-                    </div>
-                  </div>
-                  <div>
-                    <div
-                      style={{
-                        fontSize: "0.68rem",
-                        fontWeight: 800,
-                        textTransform: "uppercase",
-                        letterSpacing: "0.04em",
-                        color: theme.muted,
-                        marginBottom: "0.2rem",
-                      }}
-                    >
-                      Total Expected Spares
-                    </div>
-                    <div
-                      style={{
-                        fontFamily: "var(--font-heading)",
-                        fontSize: "1.25rem",
-                        color: grandTotal.booms > 0 ? "#e05a5a" : theme.text,
-                      }}
-                    >
-                      {grandTotal.booms === 0 ? "0" : grandTotal.booms.toFixed(1)}
-                    </div>
-                    <div
-                      style={{
-                        fontSize: "0.72rem",
-                        color: theme.muted,
-                        fontWeight: 600,
-                      }}
-                    >
-                      replacement items
-                    </div>
-                  </div>
-                  <div>
-                    <div
-                      style={{
-                        fontSize: "0.68rem",
-                        fontWeight: 800,
-                        textTransform: "uppercase",
-                        letterSpacing: "0.04em",
-                        color: theme.muted,
-                        marginBottom: "0.2rem",
-                      }}
-                    >
-                      Items
-                    </div>
-                    <div
-                      style={{
-                        fontFamily: "var(--font-heading)",
-                        fontSize: "1.25rem",
-                        color: theme.text,
-                      }}
-                    >
-                      {state.entries.length}
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div
-                className="tool-btn"
-                onClick={clearEntries}
-                style={{
-                  padding: "6px 14px",
-                  borderRadius: "8px",
-                  fontSize: "0.75rem",
-                  fontWeight: 700,
-                  color: "#e05a5a",
-                  background: theme.timerBg,
-                  border: `1px solid ${theme.border}`,
-                  userSelect: "none",
-                  alignSelf: "flex-start",
-                }}
-              >
-                Clear All
-              </div>
-            </div>
-          </div>
+          <PlanSummary
+            theme={theme}
+            grandTotal={grandTotal}
+            entryCount={state.entries.length}
+            clearEntries={clearEntries}
+            panelStyle={panelStyle}
+            clearAllButtonStyle={clearAllButtonStyle}
+          />
         )}
 
         {/* ── Plan Items ────────────────────────────────────────────────── */}
         {state.entries.length > 0 && (
-          <div className="fade-in panel-card" style={{ ...panelStyle, padding: 0 }}>
-            {Array.from(groupedEntries.entries()).map(
-              ([charName, items], groupIdx) => (
-                <div key={charName}>
-                  {/* Character group header */}
-                  <div
-                    style={{
-                      padding: "0.75rem 1.25rem",
-                      borderBottom: `1px solid ${theme.border}`,
-                      borderTop: groupIdx > 0 ? `1px solid ${theme.border}` : undefined,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                    }}
-                  >
-                    <div
-                      style={{
-                        fontSize: "0.82rem",
-                        fontWeight: 800,
-                        color: theme.text,
-                      }}
-                    >
-                      {charName}
-                    </div>
-                    <div
-                      style={{
-                        fontSize: "0.72rem",
-                        fontWeight: 700,
-                        color: theme.accent,
-                      }}
-                    >
-                      {formatMesoFull(
-                        items.reduce((s, i) => s + i.cost.cost, 0),
-                      )}{" "}mesos
-                    </div>
-                  </div>
-
-                  {/* Item rows */}
-                  {items.map(({ entry, cost }) => {
-                    const item = EVENT_ITEMS_BY_ID.get(entry.itemId);
-                    if (!item) return null;
-                    return (
-                      <div
-                        key={entry.id}
-                        style={{
-                          padding: "0.6rem 1.25rem",
-                          borderBottom: `1px solid ${theme.border}`,
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "0.75rem",
-                          flexWrap: "wrap",
-                        }}
-                      >
-                        <ItemIcon item={item} size={30} theme={theme} />
-                        <div style={{ minWidth: 220 }}>
-                          <div
-                            style={{
-                              fontSize: "0.82rem",
-                              fontWeight: 700,
-                              color: theme.text,
-                            }}
-                          >
-                            {item.name}
-                          </div>
-                          <div
-                            style={{
-                              fontSize: "0.7rem",
-                              fontWeight: 600,
-                              color: theme.muted,
-                            }}
-                          >
-                            Lv.{item.level} {item.slot}
-                          </div>
-                        </div>
-                        <div
-                          style={{
-                            fontSize: "0.78rem",
-                            fontWeight: 700,
-                            color: theme.accent,
-                            whiteSpace: "nowrap",
-                            width: 90,
-                            textAlign: "center",
-                            flexShrink: 0,
-                          }}
-                        >
-                          {entry.currentStar}★ → {entry.targetStar}★
-                        </div>
-                        <div
-                          style={{
-                            marginLeft: "auto",
-                            display: "flex",
-                            gap: "1rem",
-                            alignItems: "center",
-                            flexWrap: "wrap",
-                          }}
-                        >
-                          <div style={{ textAlign: "right" }}>
-                            <div
-                              style={{
-                                fontSize: "0.78rem",
-                                fontWeight: 700,
-                                color: theme.text,
-                              }}
-                            >
-                              {formatMesoFull(cost.cost)} mesos
-                            </div>
-                          </div>
-                          <div style={{ textAlign: "right", minWidth: 90 }}>
-                            <div
-                              style={{
-                                fontSize: "0.78rem",
-                                fontWeight: 700,
-                                color: cost.booms > 0 ? "#e05a5a" : theme.muted,
-                              }}
-                            >
-                              {cost.booms === 0 ? "0" : cost.booms.toFixed(1)} spares
-                            </div>
-                          </div>
-                          <div
-                            className="tool-btn"
-                            onClick={() => toggleSafeguard(entry.id)}
-                            title={entry.safeguard ? "Safeguard ON (15-17)" : "Safeguard OFF"}
-                            style={{
-                              padding: "4px 8px",
-                              borderRadius: 6,
-                              fontSize: "0.68rem",
-                              fontWeight: 700,
-                              color: entry.safeguard ? theme.accentText : theme.muted,
-                              background: entry.safeguard ? theme.accentSoft : theme.timerBg,
-                              border: `1px solid ${entry.safeguard ? theme.accent : theme.border}`,
-                              userSelect: "none",
-                              flexShrink: 0,
-                              whiteSpace: "nowrap",
-                            }}
-                          >
-                            Safeguard
-                          </div>
-                          <div
-                            className="tool-btn"
-                            onClick={() => removeEntry(entry.id)}
-                            style={{
-                              width: 24,
-                              height: 24,
-                              borderRadius: 6,
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              fontSize: "0.85rem",
-                              fontWeight: 700,
-                              color: theme.muted,
-                              background: theme.timerBg,
-                              border: `1px solid ${theme.border}`,
-                              userSelect: "none",
-                              flexShrink: 0,
-                            }}
-                          >
-                            {"\u00d7"}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ),
-            )}
-          </div>
+          <PlanItemsList
+            theme={theme}
+            groupedEntries={groupedEntries}
+            toggleSafeguard={toggleSafeguard}
+            removeEntry={removeEntry}
+            panelStyle={panelStyle}
+            safeguardBaseStyle={safeguardBaseStyle}
+            removeButtonStyle={removeButtonStyle}
+          />
         )}
 
         <WikiAttribution theme={theme} subject="Item images" />

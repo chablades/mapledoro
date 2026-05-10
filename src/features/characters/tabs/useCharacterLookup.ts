@@ -34,10 +34,11 @@ export function useCharacterLookup({
   onFoundCharacterChange,
 }: UseCharacterLookupArgs) {
   const [isSearching, setIsSearching] = useState(false);
-  const [statusMessage, setStatusMessage] = useState(getUsageMessage(MIN_QUERY_LENGTH, MAX_QUERY_LENGTH));
+  const [statusMessage, setStatusMessage] = useState(() => getUsageMessage(MIN_QUERY_LENGTH, MAX_QUERY_LENGTH));
   const [statusTone, setStatusTone] = useState<"neutral" | "error">("neutral");
-  const [nowMs, setNowMs] = useState(Date.now());
-  const lastRequestAtRef = useRef(0);
+  const [degradedCode, setDegradedCode] = useState<string | null>(null);
+  const [nowMs, setNowMs] = useState(0);
+  const [lastRequestAtMs, setLastRequestAtMs] = useState(0);
   const cacheRef = useRef<Map<string, CharacterCacheEntry>>(new Map());
 
   useEffect(() => {
@@ -49,7 +50,8 @@ export function useCharacterLookup({
     return () => clearInterval(id);
   }, []);
 
-  const cooldownRemainingMs = Math.max(0, COOLDOWN_MS - (nowMs - lastRequestAtRef.current));
+  const cooldownRemainingMs =
+    lastRequestAtMs === 0 ? 0 : Math.max(0, COOLDOWN_MS - (nowMs - lastRequestAtMs));
   const trimmedQuery = query.trim();
   const queryInvalid = !CHARACTER_NAME_REGEX.test(trimmedQuery);
 
@@ -70,7 +72,7 @@ export function useCharacterLookup({
   const applyCachedLookupResult = (cached: CharacterCacheEntry) => {
     onFoundCharacterChange(cached.found && cached.data ? cached.data : null);
     setStatusTone(cached.found ? "neutral" : "error");
-    setStatusMessage(cached.found ? getFoundMessage(0) : getNotFoundMessage(0));
+    setStatusMessage(cached.found ? getFoundMessage() : getNotFoundMessage());
   };
 
   const applyLookupResult = (name: string, normalized: string, result: LookupResponse) => {
@@ -84,17 +86,19 @@ export function useCharacterLookup({
       data: result.found ? result.data : null,
     });
     persistCache();
+    setDegradedCode(result.degraded ? (result.degradedCode ?? "UNKNOWN") : null);
     if (found) {
       setStatusTone("neutral");
       onFoundCharacterChange(result.data);
-      setStatusMessage(getFoundMessage(result.queuedMs));
+      setStatusMessage(getFoundMessage());
       return;
     }
     setStatusTone("error");
     onFoundCharacterChange(null);
-    setStatusMessage(getNotFoundMessage(result.queuedMs));
+    setStatusMessage(getNotFoundMessage());
   };
 
+  // eslint-disable-next-line sonarjs/cognitive-complexity
   const runLookup = async (name: string) => {
     const normalized = name.toLowerCase();
     if (!CHARACTER_NAME_REGEX.test(name)) {
@@ -123,7 +127,9 @@ export function useCharacterLookup({
     setIsSearching(true);
     setStatusTone("neutral");
     setStatusMessage(LOOKUP_MESSAGES.searching);
-    lastRequestAtRef.current = Date.now();
+    const requestStartedAt = Date.now();
+    setLastRequestAtMs(requestStartedAt);
+    setNowMs(requestStartedAt);
     const controller = new AbortController();
     const slowTimer = setTimeout(() => {
       setStatusTone("neutral");
@@ -139,8 +145,9 @@ export function useCharacterLookup({
       clearLookupTimers(slowTimer, timeoutTimer);
       if (!response.ok) {
         const errorPayload = (await response.json().catch(() => null)) as
-          | { error?: string }
+          | { error?: string; degradedCode?: string }
           | null;
+        if (errorPayload?.degradedCode) setDegradedCode(errorPayload.degradedCode);
         throw new Error(errorPayload?.error ?? `Lookup failed with status ${response.status}`);
       }
       const result = (await response.json()) as LookupResponse;
@@ -163,6 +170,7 @@ export function useCharacterLookup({
     isSearching,
     statusMessage,
     statusTone,
+    degradedCode,
     cooldownRemainingMs,
     trimmedQuery,
     queryInvalid,

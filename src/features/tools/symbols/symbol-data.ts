@@ -36,9 +36,6 @@ export const SACRED_GROWTH: number[] = [
 export const ARCANE_MAX_LEVEL = 20;
 export const SACRED_MAX_LEVEL = 11;
 
-export const ARCANE_TOTAL = ARCANE_GROWTH.reduce((a, b) => a + b, 0); // 2,679
-export const SACRED_TOTAL = SACRED_GROWTH.reduce((a, b) => a + b, 0); // 4,565
-
 // -- Area Definitions ---------------------------------------------------------
 
 export const ARCANE_AREAS: SymbolArea[] = [

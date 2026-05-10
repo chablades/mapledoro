@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useRef } from "react";
+import Image from "next/image";
 import type { AppTheme } from "../../../components/themes";
 import type { HexaSkillDef, HexaClassDef } from "./hexa-classes";
 import type { SkillCostSummary, SectionCost } from "./useHexaSkillsState";
@@ -13,58 +14,81 @@ export function fmtNum(n: number): string {
 
 // ── Skill Icon ───────────────────────────────────────────────────────────────
 
-export function SkillIcon({ skill, theme, size = 32 }: { skill: HexaSkillDef; theme: AppTheme; size?: number }) {
-  const [failedSrc, setFailedSrc] = useState<string | null>(null);
-  const failed = failedSrc === skill.icon;
+const skillIconFallbackBase: React.CSSProperties = {
+  borderRadius: "6px",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  fontWeight: 800,
+  flexShrink: 0,
+};
 
-  if (failed) {
-    return (
-      <div
+const skillIconImgBase: React.CSSProperties = {
+  borderRadius: "6px",
+  objectFit: "cover",
+  flexShrink: 0,
+};
+
+const skillNameOverflow: React.CSSProperties = {
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
+};
+
+const masteryNameStyle: React.CSSProperties = {
+  fontSize: "0.78rem",
+  fontWeight: 600,
+  lineHeight: 1.4,
+  ...skillNameOverflow,
+};
+
+function SkillIcon({ skill, theme, size = 32 }: { skill: HexaSkillDef; theme: AppTheme; size?: number }) {
+  const imgRef = useRef<HTMLImageElement>(null);
+  const fallbackRef = useRef<HTMLDivElement>(null);
+
+  return (
+    <>
+      <Image
+        ref={imgRef}
+        src={skill.icon}
+        alt={skill.name}
+        width={size}
+        height={size}
+        onError={() => {
+          if (imgRef.current) imgRef.current.style.display = "none";
+          if (fallbackRef.current) fallbackRef.current.style.display = "flex";
+        }}
         style={{
+          ...skillIconImgBase,
+          background: theme.panel,
+          border: `1px solid ${theme.border}`,
+        }}
+      />
+      <div
+        ref={fallbackRef}
+        style={{
+          ...skillIconFallbackBase,
+          display: "none",
           width: size,
           height: size,
-          borderRadius: "6px",
           background: theme.accentSoft,
           border: `1px solid ${theme.border}`,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
           fontSize: size * 0.35,
-          fontWeight: 800,
           color: theme.accent,
-          flexShrink: 0,
         }}
       >
         {skill.name.charAt(0)}
       </div>
-    );
-  }
-
-  return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src={skill.icon}
-      alt={skill.name}
-      width={size}
-      height={size}
-      onError={() => setFailedSrc(skill.icon)}
-      style={{
-        borderRadius: "6px",
-        objectFit: "cover",
-        flexShrink: 0,
-        background: theme.panel,
-        border: `1px solid ${theme.border}`,
-      }}
-    />
+    </>
   );
 }
 
 // ── Cost Badge ───────────────────────────────────────────────────────────────
 
-export function CostBadge({ cost, theme, compact }: { cost: SkillCostSummary; theme: AppTheme; compact?: boolean }) {
+function CostBadge({ cost, theme, compact }: { cost: SkillCostSummary; theme: AppTheme; compact?: boolean }) {
   if (cost.solErda === 0 && cost.fragments === 0) {
     return (
-      <span style={{ fontSize: "0.72rem", fontWeight: 800, color: theme.accent }}>
+      <span style={{ fontSize: "0.75rem", fontWeight: 800, color: theme.accent }}>
         MAXED
       </span>
     );
@@ -83,6 +107,12 @@ export function CostBadge({ cost, theme, compact }: { cost: SkillCostSummary; th
 
 // ── Level Input ──────────────────────────────────────────────────────────────
 
+const levelInputOverride: React.CSSProperties = {
+  textAlign: "center",
+  padding: "4px 4px",
+  fontSize: "0.78rem",
+};
+
 function clampInput(raw: string, min: number, max: number): number {
   let v = parseInt(raw);
   if (isNaN(v)) v = min;
@@ -91,7 +121,7 @@ function clampInput(raw: string, min: number, max: number): number {
   return v;
 }
 
-export function LevelInput({
+function LevelInput({
   value,
   min = 0,
   desiredValue,
@@ -113,7 +143,7 @@ export function LevelInput({
 
   return (
     <div style={{ display: "flex", alignItems: "center", gap: "4px", flexShrink: 0 }}>
-      <span style={{ fontSize: "0.72rem", fontWeight: 700, color: theme.muted }}>Lv</span>
+      <span style={{ fontSize: "0.75rem", fontWeight: 700, color: theme.muted }}>Lv</span>
       <input
         type="number"
         min={min}
@@ -121,17 +151,11 @@ export function LevelInput({
         value={value}
         onChange={(e) => onChange(clampInput(e.target.value, min, 30))}
         className="tool-input"
-        style={{
-          ...inputStyle,
-          width: w,
-          textAlign: "center",
-          padding: "4px 4px",
-          fontSize: "0.78rem",
-        }}
+        style={{ ...inputStyle, ...levelInputOverride, width: w }}
       />
       {desiredValue !== undefined && onDesiredChange && (
         <>
-          <span style={{ fontSize: "0.72rem", fontWeight: 700, color: theme.muted }}>/</span>
+          <span style={{ fontSize: "0.75rem", fontWeight: 700, color: theme.muted }}>/</span>
           <input
             type="number"
             min={min}
@@ -139,13 +163,7 @@ export function LevelInput({
             value={desiredValue}
             onChange={(e) => onDesiredChange(clampInput(e.target.value, min, 30))}
             className="tool-input"
-            style={{
-              ...inputStyle,
-              width: w,
-              textAlign: "center",
-              padding: "4px 4px",
-              fontSize: "0.78rem",
-            }}
+            style={{ ...inputStyle, ...levelInputOverride, width: w }}
           />
         </>
       )}
@@ -170,10 +188,12 @@ function SkillProgressBar({ level, max = 30, theme }: { level: number; max?: num
       <div
         style={{
           height: "100%",
-          width: `${pct}%`,
+          width: "100%",
           background: theme.accent,
           borderRadius: "2px",
-          transition: "width 0.25s ease",
+          transform: `scaleX(${pct / 100})`,
+          transformOrigin: "left",
+          transition: "transform 0.25s ease",
         }}
       />
     </div>
@@ -202,7 +222,7 @@ function SectionHeader({ title, cost, theme }: { title: string; cost?: SkillCost
 
 // ── Skill Row ────────────────────────────────────────────────────────────────
 
-export function SkillRow({
+function SkillRow({
   skill,
   level,
   min,
@@ -236,12 +256,10 @@ export function SkillRow({
       <div style={{ flex: 1, minWidth: 0 }}>
         <div
           style={{
+            ...skillNameOverflow,
             fontSize: "0.82rem",
             fontWeight: 700,
             color: theme.text,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
           }}
         >
           {skill.name}
@@ -347,21 +365,13 @@ export function MasterySection({
         theme={theme}
       />
       {classDef.mastery.map((nodeSkills, i) => (
-        <div key={i} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "8px 0" }}>
+        <div key={nodeSkills[0].name} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "8px 0" }}>
           <SkillIcon skill={nodeSkills[0]} theme={theme} />
           <div style={{ flex: 1, minWidth: 0 }}>
             {nodeSkills.map((skill) => (
               <div
                 key={skill.name}
-                style={{
-                  fontSize: "0.78rem",
-                  fontWeight: 600,
-                  color: theme.text,
-                  lineHeight: 1.4,
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                }}
+                style={{ ...masteryNameStyle, color: theme.text }}
               >
                 {skill.name}
               </div>

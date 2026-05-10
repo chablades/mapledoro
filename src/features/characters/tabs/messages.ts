@@ -13,14 +13,12 @@ export function getCooldownMessage(remainingMs: number) {
   return `Please wait ${Math.ceil(remainingMs / 1000)}s before searching again.`;
 }
 
-export function getFoundMessage(queueMs: number) {
-  const queueSuffix = queueMs > 0 ? ` Queue waited ~${Math.ceil(queueMs / 1000)}s.` : "";
-  return `Character found.${queueSuffix}`;
+export function getFoundMessage() {
+  return "Character found.";
 }
 
-export function getNotFoundMessage(queueMs: number) {
-  const queueSuffix = queueMs > 0 ? ` Queue waited ~${Math.ceil(queueMs / 1000)}s.` : "";
-  return `Character not found.${queueSuffix}`;
+export function getNotFoundMessage() {
+  return "Character not found.";
 }
 
 export const LOOKUP_MESSAGES = {

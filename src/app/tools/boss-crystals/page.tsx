@@ -1,7 +1,7 @@
 "use client";
 
 /*
-  Boss Crystal Calculator route shell.
+  Boss Crystal Tracker route shell.
 */
 import AppShell from "../../../components/AppShell";
 import BossCrystalsWorkspace from "../../../features/tools/boss-crystals/BossCrystalsWorkspace";

@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useSyncExternalStore } from "react";
+import Image from "next/image";
+import type { CSSProperties } from "react";
 import type { AppTheme } from "../../../components/themes";
 import { ToolHeader } from "../../../components/ToolHeader";
 import { WikiAttribution } from "../../../components/WikiAttribution";
@@ -13,6 +15,182 @@ import {
 import type { StoredCharacterRecord } from "../../characters/model/charactersStore";
 import { type BossRow, type CharacterEntry, checkBg } from "./boss-crystals-types";
 import { useBossCrystalsState } from "./useBossCrystalsState";
+
+// -- Style helpers ------------------------------------------------------------
+
+function bcIconBtnStyle(theme: AppTheme): CSSProperties {
+  return {
+    padding: "5px 7px",
+    borderRadius: "8px",
+    background: theme.timerBg,
+    border: `1px solid ${theme.border}`,
+    fontSize: "0.75rem",
+    fontWeight: 800,
+    lineHeight: 1,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  };
+}
+
+function bcAvatarFallbackStyle(
+  theme: AppTheme,
+  size: number,
+  radius: string,
+  fontSize: string,
+): CSSProperties {
+  return {
+    width: size,
+    height: size,
+    borderRadius: radius,
+    background: theme.accentSoft,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize,
+    color: theme.accent,
+    fontWeight: 800,
+    flexShrink: 0,
+  };
+}
+
+function bcDialogInputStyle(theme: AppTheme): CSSProperties {
+  return {
+    background: theme.timerBg,
+    border: `1px solid ${theme.border}`,
+    borderRadius: "8px",
+    padding: "8px 12px",
+    color: theme.text,
+    fontSize: "0.85rem",
+  };
+}
+
+function bcDialogBtnStyle(theme: AppTheme): CSSProperties {
+  return {
+    padding: "8px 16px",
+    borderRadius: "10px",
+    fontSize: "0.82rem",
+    fontWeight: 800,
+    color: theme.muted,
+    background: theme.timerBg,
+    border: `1px solid ${theme.border}`,
+  };
+}
+
+function bcDialogPrimaryBtnStyle(theme: AppTheme): CSSProperties {
+  return {
+    padding: "8px 16px",
+    borderRadius: "10px",
+    fontSize: "0.82rem",
+    fontWeight: 800,
+    color: theme.accentText,
+    background: theme.accentSoft,
+    border: `1px solid ${theme.accent}`,
+  };
+}
+
+function bcPresetBtnStyle(theme: AppTheme): CSSProperties {
+  return {
+    padding: "5px 12px",
+    borderRadius: "8px",
+    fontSize: "0.75rem",
+    fontWeight: 800,
+    color: theme.accentText,
+    background: theme.accentSoft,
+    border: `1px solid ${theme.border}`,
+  };
+}
+
+function bcSummaryBarStyle(theme: AppTheme): CSSProperties {
+  return {
+    position: "sticky",
+    top: 0,
+    zIndex: 10,
+    background: theme.panel,
+    border: `1px solid ${theme.border}`,
+    borderRadius: "14px",
+    padding: "1rem 1.5rem",
+    marginBottom: "1.25rem",
+    display: "flex",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: "1rem",
+    boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
+  };
+}
+
+function bcAddCardStyle(theme: AppTheme): CSSProperties {
+  return {
+    background: theme.timerBg,
+    border: `2px dashed ${theme.border}`,
+    borderRadius: "14px",
+    padding: "1.25rem",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: 180,
+  };
+}
+
+function bcControlsPanelStyle(theme: AppTheme): CSSProperties {
+  return {
+    background: theme.panel,
+    border: `1px solid ${theme.border}`,
+    padding: "1.25rem",
+    marginBottom: "1.25rem",
+    display: "flex",
+    flexWrap: "wrap",
+    gap: "0.75rem",
+    alignItems: "center",
+  };
+}
+
+function bcPartySizeSelectStyle(theme: AppTheme): CSSProperties {
+  return {
+    background: theme.timerBg,
+    border: `1px solid ${theme.border}`,
+    borderRadius: "6px",
+    padding: "2px 4px",
+    color: theme.text,
+    fontSize: "0.75rem",
+    width: "44px",
+    cursor: "pointer",
+  };
+}
+
+const bcClearPresetBtnStyle: CSSProperties = {
+  marginLeft: "auto",
+  padding: "5px 12px",
+  borderRadius: "8px",
+  fontSize: "0.75rem",
+  fontWeight: 800,
+  color: "#e05a5a",
+  background: "transparent",
+  border: "1px solid #e05a5a33",
+};
+
+const bcCheckboxBase: CSSProperties = {
+  width: 18,
+  height: 18,
+  borderRadius: 5,
+  flexShrink: 0,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  transition: "background 0.15s, border-color 0.15s",
+};
+
+function bcBossGroupLabelStyle(theme: AppTheme): CSSProperties {
+  return {
+    fontSize: "0.75rem",
+    fontWeight: 800,
+    color: theme.muted,
+    textTransform: "uppercase",
+    letterSpacing: "0.05em",
+    padding: "0.5rem 8px 0.15rem",
+  };
+}
 
 // -- Sub-components -----------------------------------------------------------
 
@@ -43,9 +221,9 @@ function CharacterCard({
   onEdit: () => void;
   onDelete: () => void;
 }) {
-  const selected = char.bosses
-    .map((b, bi) => ({ ...b, boss: BOSSES[bi] }))
-    .filter((b) => b.checked);
+  const selected = char.bosses.flatMap((b, bi) =>
+    b.checked ? [{ ...b, boss: BOSSES[bi] }] : [],
+  );
 
   return (
     <div
@@ -77,27 +255,21 @@ function CharacterCard({
       >
         <div
           className="bc-btn"
+          role="button"
+          tabIndex={0}
           onClick={onDelete}
+          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onDelete(); } }}
           title="Remove character"
-          style={{
-            padding: "5px 7px",
-            borderRadius: "8px",
-            background: theme.timerBg,
-            border: `1px solid ${theme.border}`,
-            fontSize: "0.65rem",
-            fontWeight: 800,
-            color: "#e05a5a",
-            lineHeight: 1,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
+          style={{ ...bcIconBtnStyle(theme), color: "#e05a5a" }}
         >
           ✕
         </div>
         <div
           className="bc-btn"
+          role="button"
+          tabIndex={0}
           onClick={onEdit}
+          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onEdit(); } }}
           title="Edit bosses"
           style={{
             padding: "5px",
@@ -110,7 +282,7 @@ function CharacterCard({
           }}
         >
           <svg viewBox="0 0 24 24" width="14" height="14" fill={theme.muted}>
-            <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
+            <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
           </svg>
         </div>
       </div>
@@ -126,8 +298,7 @@ function CharacterCard({
         }}
       >
         {char.imageURL ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <Image
             src={char.imageURL}
             alt={char.name}
             width={48}
@@ -140,21 +311,7 @@ function CharacterCard({
             }}
           />
         ) : (
-          <div
-            style={{
-              width: 48,
-              height: 48,
-              borderRadius: "10px",
-              background: theme.accentSoft,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: "1.2rem",
-              color: theme.accent,
-              fontWeight: 800,
-              flexShrink: 0,
-            }}
-          >
+          <div style={bcAvatarFallbackStyle(theme, 48, "10px", "1.2rem")}>
             {char.name.charAt(0).toUpperCase()}
           </div>
         )}
@@ -169,7 +326,7 @@ function CharacterCard({
           >
             {char.name}
           </div>
-          <div style={{ fontSize: "0.72rem", color: theme.muted, fontWeight: 700 }}>
+          <div style={{ fontSize: "0.75rem", color: theme.muted, fontWeight: 700 }}>
             {income.crystals}/14 crystals · {formatMeso(income.meso)} mesos
           </div>
         </div>
@@ -204,14 +361,13 @@ function CharacterCard({
                 display: "flex",
                 alignItems: "center",
                 gap: "6px",
-                fontSize: "0.72rem",
+                fontSize: "0.75rem",
                 color: theme.text,
                 fontWeight: 600,
                 padding: "1.5px 0",
               }}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <Image
                 src={b.boss.icon}
                 alt=""
                 width={18}
@@ -234,7 +390,7 @@ function CharacterCard({
               </span>
               <span
                 style={{
-                  fontSize: "0.65rem",
+                  fontSize: "0.75rem",
                   color: theme.muted,
                   marginLeft: "4px",
                   flexShrink: 0,
@@ -279,10 +435,13 @@ function AddNameDialog({
   const hasAvailable = available.length > 0;
 
   return (
-    <div className="bc-overlay" onClick={onClose}>
+    <div className="bc-overlay" role="button" tabIndex={0} onClick={onClose} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClose(); } }}>
       <div
         className="bc-dialog"
+        role="button"
+        tabIndex={0}
         onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") e.stopPropagation(); }}
         style={{ padding: "1.5rem" }}
       >
         <div
@@ -334,18 +493,12 @@ function AddNameDialog({
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && typedName.trim()) onNext();
                 }}
-                autoFocus
+                ref={(el) => el?.focus()}
                 className="tool-input"
                 style={{
-                  background: theme.timerBg,
-                  border: `1px solid ${theme.border}`,
-                  borderRadius: "8px",
-                  padding: "8px 12px",
-                  color: theme.text,
-                  fontSize: "0.85rem",
+                  ...bcDialogInputStyle(theme),
                   width: "calc(100% - 1.5rem)",
                   marginLeft: "1.5rem",
-                  outline: "none",
                 }}
               />
             )}
@@ -386,7 +539,10 @@ function AddNameDialog({
                     <div
                       key={c.characterName}
                       className="bc-char-opt"
+                      role="button"
+                      tabIndex={0}
                       onClick={() => onSelectedChar(c)}
+                      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelectedChar(c); } }}
                       style={{
                         display: "flex",
                         alignItems: "center",
@@ -398,8 +554,7 @@ function AddNameDialog({
                       }}
                     >
                       {c.characterImgURL ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
+                        <Image
                           src={c.characterImgURL}
                           alt={c.characterName}
                           width={32}
@@ -411,21 +566,7 @@ function AddNameDialog({
                           }}
                         />
                       ) : (
-                        <div
-                          style={{
-                            width: 32,
-                            height: 32,
-                            borderRadius: "6px",
-                            background: theme.accentSoft,
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            fontSize: "0.85rem",
-                            fontWeight: 800,
-                            color: theme.accent,
-                            flexShrink: 0,
-                          }}
-                        >
+                        <div style={bcAvatarFallbackStyle(theme, 32, "6px", "0.85rem")}>
                           {c.characterName.charAt(0).toUpperCase()}
                         </div>
                       )}
@@ -433,7 +574,7 @@ function AddNameDialog({
                         <div style={{ fontSize: "0.82rem", fontWeight: 700, color: theme.text }}>
                           {c.characterName}
                         </div>
-                        <div style={{ fontSize: "0.7rem", color: theme.muted }}>
+                        <div style={{ fontSize: "0.75rem", color: theme.muted }}>
                           Lv.{c.level} {c.jobName}
                         </div>
                       </div>
@@ -454,18 +595,9 @@ function AddNameDialog({
               onKeyDown={(e) => {
                 if (e.key === "Enter" && typedName.trim()) onNext();
               }}
-              autoFocus
+              ref={(el) => el?.focus()}
               className="tool-input"
-              style={{
-                background: theme.timerBg,
-                border: `1px solid ${theme.border}`,
-                borderRadius: "8px",
-                padding: "8px 12px",
-                color: theme.text,
-                fontSize: "0.85rem",
-                width: "100%",
-                outline: "none",
-              }}
+              style={{ ...bcDialogInputStyle(theme), width: "100%" }}
             />
           </div>
         )}
@@ -473,30 +605,22 @@ function AddNameDialog({
         <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.5rem" }}>
           <div
             className="bc-btn"
+            role="button"
+            tabIndex={0}
             onClick={onClose}
-            style={{
-              padding: "8px 16px",
-              borderRadius: "10px",
-              fontSize: "0.82rem",
-              fontWeight: 800,
-              color: theme.muted,
-              background: theme.timerBg,
-              border: `1px solid ${theme.border}`,
-            }}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClose(); } }}
+            style={bcDialogBtnStyle(theme)}
           >
             Cancel
           </div>
           <div
             className="bc-btn"
+            role="button"
+            tabIndex={0}
             onClick={pendingName ? onNext : undefined}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); if (pendingName) onNext(); } }}
             style={{
-              padding: "8px 16px",
-              borderRadius: "10px",
-              fontSize: "0.82rem",
-              fontWeight: 800,
-              color: pendingName ? theme.accentText : theme.muted,
-              background: pendingName ? theme.accentSoft : theme.timerBg,
-              border: `1px solid ${pendingName ? theme.accent : theme.border}`,
+              ...(pendingName ? bcDialogPrimaryBtnStyle(theme) : bcDialogBtnStyle(theme)),
               opacity: pendingName ? 1 : 0.5,
               cursor: pendingName ? "pointer" : "not-allowed",
             }}
@@ -541,10 +665,13 @@ function BossSelectionDialog({
   onConfirm: () => void;
 }) {
   return (
-    <div className="bc-overlay" onClick={onCancel}>
+    <div className="bc-overlay" role="button" tabIndex={0} onClick={onCancel} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onCancel(); } }}>
       <div
         className="bc-dialog"
+        role="button"
+        tabIndex={0}
         onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") e.stopPropagation(); }}
         style={{ padding: "1.5rem" }}
       >
         <div
@@ -572,7 +699,7 @@ function BossSelectionDialog({
         >
           <span
             style={{
-              fontSize: "0.72rem",
+              fontSize: "0.75rem",
               fontWeight: 800,
               color: theme.muted,
               marginRight: "0.25rem",
@@ -580,37 +707,26 @@ function BossSelectionDialog({
           >
             Presets
           </span>
-          {PRESETS.filter((p) => p.key !== "").map((p) => (
+          {PRESETS.flatMap((p) => p.key === "" ? [] : [(
             <div
               key={p.key}
               className="bc-btn"
+              role="button"
+              tabIndex={0}
               onClick={() => onPreset(p.key)}
-              style={{
-                padding: "5px 12px",
-                borderRadius: "8px",
-                fontSize: "0.72rem",
-                fontWeight: 800,
-                color: theme.accentText,
-                background: theme.accentSoft,
-                border: `1px solid ${theme.border}`,
-              }}
+              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onPreset(p.key); } }}
+              style={bcPresetBtnStyle(theme)}
             >
               {p.label}
             </div>
-          ))}
+          )])}
           <div
             className="bc-btn"
+            role="button"
+            tabIndex={0}
             onClick={() => onPreset("")}
-            style={{
-              marginLeft: "auto",
-              padding: "5px 12px",
-              borderRadius: "8px",
-              fontSize: "0.72rem",
-              fontWeight: 800,
-              color: "#e05a5a",
-              background: "transparent",
-              border: "1px solid #e05a5a33",
-            }}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onPreset(""); } }}
+            style={bcClearPresetBtnStyle}
           >
             Clear
           </div>
@@ -621,16 +737,7 @@ function BossSelectionDialog({
           {BOSS_GROUPS.map((group) => (
             <div key={group.label}>
               {group.bossIndices.length > 1 && group.label !== "Cygnus" && (
-                <div
-                  style={{
-                    fontSize: "0.68rem",
-                    fontWeight: 800,
-                    color: theme.muted,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.05em",
-                    padding: "0.5rem 8px 0.15rem",
-                  }}
-                >
+                <div style={bcBossGroupLabelStyle(theme)}>
                   {group.label}
                 </div>
               )}
@@ -655,31 +762,26 @@ function BossSelectionDialog({
                     }}
                   >
                     <div
+                      role="button"
+                      tabIndex={0}
                       onClick={() => {
                         if (!isDisabled) onToggle(bi);
                       }}
+                      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); if (!isDisabled) onToggle(bi); } }}
                       style={{
-                        width: 18,
-                        height: 18,
-                        borderRadius: 5,
-                        flexShrink: 0,
+                        ...bcCheckboxBase,
                         border: `2px solid ${checked ? theme.accent : theme.border}`,
                         background: checkBg(isDisabled, row.checked, theme.accent, theme.timerBg),
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
                         cursor: isDisabled ? "not-allowed" : "pointer",
-                        transition: "all 0.15s",
                       }}
                     >
                       {checked && (
-                        <span style={{ color: "#fff", fontSize: "0.6rem", fontWeight: 900 }}>
+                        <span style={{ color: "#fff", fontSize: "0.75rem", fontWeight: 900 }}>
                           ✓
                         </span>
                       )}
                     </div>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
+                    <Image
                       src={boss.icon}
                       alt=""
                       width={22}
@@ -692,6 +794,8 @@ function BossSelectionDialog({
                       }}
                     />
                     <span
+                      role="button"
+                      tabIndex={0}
                       style={{
                         flex: 1,
                         fontSize: "0.78rem",
@@ -702,12 +806,13 @@ function BossSelectionDialog({
                       onClick={() => {
                         if (!isDisabled) onToggle(bi);
                       }}
+                      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); if (!isDisabled) onToggle(bi); } }}
                     >
                       {boss.name}
                     </span>
                     <span
                       style={{
-                        fontSize: "0.68rem",
+                        fontSize: "0.75rem",
                         color: theme.muted,
                         fontWeight: 600,
                         whiteSpace: "nowrap",
@@ -720,16 +825,7 @@ function BossSelectionDialog({
                         value={row.partySize}
                         onChange={(e) => onPartyChange(bi, parseInt(e.target.value))}
                         className="tool-input"
-                        style={{
-                          background: theme.timerBg,
-                          border: `1px solid ${theme.border}`,
-                          borderRadius: "6px",
-                          padding: "2px 4px",
-                          color: theme.text,
-                          fontSize: "0.72rem",
-                          width: "44px",
-                          cursor: "pointer",
-                        }}
+                        style={bcPartySizeSelectStyle(theme)}
                       >
                         {Array.from({ length: maxParty }, (_, i) => i + 1).map((n) => (
                           <option key={n} value={n}>
@@ -773,7 +869,10 @@ function BossSelectionDialog({
           {showBack && (
             <div
               className="bc-btn"
+              role="button"
+              tabIndex={0}
               onClick={onBack}
+              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onBack(); } }}
               style={{
                 padding: "8px 16px",
                 borderRadius: "10px",
@@ -789,7 +888,10 @@ function BossSelectionDialog({
           )}
           <div
             className="bc-btn"
+            role="button"
+            tabIndex={0}
             onClick={onCancel}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onCancel(); } }}
             style={{
               padding: "8px 16px",
               borderRadius: "10px",
@@ -804,7 +906,10 @@ function BossSelectionDialog({
           </div>
           <div
             className="bc-btn"
+            role="button"
+            tabIndex={0}
             onClick={onConfirm}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onConfirm(); } }}
             style={{
               padding: "8px 16px",
               borderRadius: "10px",
@@ -875,6 +980,8 @@ export default function BossCrystalsWorkspace({ theme }: { theme: AppTheme }) {
 
   // -- Render -----------------------------------------------------------------
 
+  if (!mounted) return null;
+
   return (
     <>
       <style>{`
@@ -903,23 +1010,14 @@ export default function BossCrystalsWorkspace({ theme }: { theme: AppTheme }) {
         <div style={{ maxWidth: 1200, margin: "0 auto" }}>
           <ToolHeader
             theme={theme}
-            title="Boss Crystal Calculator"
-            description="Track weekly boss crystals and meso income across characters."
+            title="Boss Crystal Tracker"
+            description="Select your server type, add characters, and check off the bosses you clear each week to track your meso income."
           />
 
           {/* Controls */}
           <div
             className="fade-in panel-card"
-            style={{
-              background: theme.panel,
-              border: `1px solid ${theme.border}`,
-              padding: "1.25rem",
-              marginBottom: "1.25rem",
-              display: "flex",
-              flexWrap: "wrap",
-              gap: "0.75rem",
-              alignItems: "center",
-            }}
+            style={bcControlsPanelStyle(theme)}
           >
             <div
               style={{
@@ -935,7 +1033,10 @@ export default function BossCrystalsWorkspace({ theme }: { theme: AppTheme }) {
                 <div
                   key={s}
                   className="bc-btn"
+                  role="button"
+                  tabIndex={0}
                   onClick={() => setServer(s)}
+                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setServer(s); } }}
                   style={{
                     padding: "6px 14px",
                     borderRadius: "8px",
@@ -952,7 +1053,10 @@ export default function BossCrystalsWorkspace({ theme }: { theme: AppTheme }) {
             <div style={{ marginLeft: "auto", display: "flex", gap: "0.5rem" }}>
               <div
                 className="bc-btn"
+                role="button"
+                tabIndex={0}
                 onClick={clearData}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); clearData(); } }}
                 style={{
                   padding: "6px 14px",
                   borderRadius: "10px",
@@ -967,7 +1071,10 @@ export default function BossCrystalsWorkspace({ theme }: { theme: AppTheme }) {
               </div>
               <div
                 className="bc-btn"
+                role="button"
+                tabIndex={0}
                 onClick={exportXlsx}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); exportXlsx(); } }}
                 style={{
                   padding: "6px 14px",
                   borderRadius: "10px",
@@ -986,21 +1093,7 @@ export default function BossCrystalsWorkspace({ theme }: { theme: AppTheme }) {
           {/* Summary bar */}
           <div
             className="fade-in"
-            style={{
-              position: "sticky",
-              top: 0,
-              zIndex: 10,
-              background: theme.panel,
-              border: `1px solid ${theme.border}`,
-              borderRadius: "14px",
-              padding: "1rem 1.5rem",
-              marginBottom: "1.25rem",
-              display: "flex",
-              flexWrap: "wrap",
-              alignItems: "center",
-              gap: "1rem",
-              boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
-            }}
+            style={bcSummaryBarStyle(theme)}
           >
             <div style={{ display: "flex", alignItems: "baseline", gap: "6px" }}>
               <span
@@ -1067,19 +1160,12 @@ export default function BossCrystalsWorkspace({ theme }: { theme: AppTheme }) {
             {/* Add character card */}
             <div
               className="fade-in bc-add-card panel-card"
+              role="button"
+              tabIndex={0}
               onClick={openAdd}
+              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openAdd(); } }}
               title="Add character"
-              style={{
-                background: theme.timerBg,
-                border: `2px dashed ${theme.border}`,
-                borderRadius: "14px",
-                padding: "1.25rem",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                minHeight: 180,
-              }}
+              style={bcAddCardStyle(theme)}
             >
               <svg viewBox="0 0 24 24" width="36" height="36" fill={theme.muted}>
                 <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />

@@ -2,38 +2,28 @@
 
 ## Project Overview
 
-MapleDoro is a free, open-source web app for the MapleStory community. It provides character tracking, gameplay planning tools and live game event info. All data is persisted client-side in localStorage; server-side caching uses Redis when available.
-
-Not affiliated with Nexon. All MapleStory IP belongs to Nexon.
+MapleDoro — free, open-source MapleStory community web app (character tracking, gameplay tools, live event info). All user data lives in localStorage; server-side caching uses Redis. Not affiliated with Nexon.
 
 ## Tech Stack
 
-- **Next.js 16** (App Router) with **React 19** and **TypeScript** (strict mode)
-- **Styling:** Inline styles for dynamic theming + global CSS (no Tailwind, no CSS-in-JS library)
-- **State:** React hooks + Context (theme) + localStorage persistence
+- **Next.js 16** (App Router), **React 19**, **TypeScript** (strict)
+- **Styling:** Inline styles for dynamic theming + global CSS (no Tailwind, no CSS-in-JS)
+- **State:** React hooks + Context (theme) + localStorage
 - **Server:** Redis (ioredis) for character lookup caching, Nexon CDN for patch notes, Discord for Sunny Sunday events
-- **Linting:** ESLint 10 with eslint-config-next + eslint-plugin-sonarjs
+- **Linting:** ESLint 9 (eslint-config-next + eslint-plugin-sonarjs)
+- **Charts:** `react-chartjs-2` / `chart.js` for standard charts; hand-rolled SVG for small one-offs
 
-## Directory Structure
+## Behavioral Guidelines
 
-```
-src/
-  app/              # Next.js pages & API routes
-    api/            # Server routes (characters/lookup, patch-notes, sunny-sundays)
-    characters/     # Character management page
-    tools/          # Calculators (boss-crystals, liberation, symbols, hexa-skills) & trackers (pitched-boss-drops)
-    guides/         # Placeholder
-    settings/       # User preferences & hard reset
-  components/       # Reusable UI (AppShell, ThemeContext, themes, nav, ToolHeader, WikiAttribution)
-  features/         # Self-contained feature modules
-    characters/     # Character lookup, directory, setup wizard, profiles
-    tools/          # Boss crystals, liberation, symbols, pitched-boss-drops, hexa-skills
-  lib/              # Shared utilities (Discord client, Sunny Sunday parsing)
-```
+**Think before coding.** State assumptions explicitly. If multiple interpretations exist, present them — don't pick silently. If a simpler approach exists, say so. Push back when warranted.
+
+**Simplicity first.** Minimum code that solves the problem. No speculative features, abstractions for single-use code, or error handling for impossible scenarios. If 200 lines could be 50, rewrite it.
+
+**Surgical changes.** Touch only what was asked. Don't "improve" adjacent code or formatting. Match existing style. Remove imports/variables YOUR changes made unused; don't remove pre-existing dead code unless asked. Every changed line should trace to the request.
 
 ## Build & Lint
 
-Both of the following must pass before any implementation is considered complete:
+Both must pass before any implementation is considered complete:
 
 ```sh
 npm run build
@@ -42,86 +32,24 @@ npm run lint
 
 ### Lint Gotchas
 
-- **`react-hooks/set-state-in-effect`** — No bare `setState()` calls inside `useEffect`. Use lazy `useState` initializers for localStorage reads, `useSyncExternalStore` for external-store patterns, or `useRef` + direct DOM mutation for timers.
-- **`sonarjs/pseudo-random`** — No `Math.random()`. Use `crypto.randomUUID()`.
-- **`@next/next/no-img-element`** — External CDN images use `<img>` with `// eslint-disable-next-line @next/next/no-img-element`.
+- **`react-hooks/set-state-in-effect`** — No bare `setState()` in `useEffect`. Use lazy `useState` initializers, `useSyncExternalStore`, or `useRef` + DOM mutation.
+- **`sonarjs/pseudo-random`** — Use `crypto.randomUUID()`, not `Math.random()`.
+- **`sonarjs/cognitive-complexity`** — Cap 15. Extract cohesive sub-steps (parser, validator, renderer) or `eslint-disable` if any split would be artificial. Don't micro-shuffle branches.
 
-## Component Patterns
+## Key Patterns
 
-### Route Pages (`src/app/tools/<name>/page.tsx`)
-Thin shells that wrap a workspace in `AppShell`:
-```tsx
-"use client";
-import AppShell from "../../../components/AppShell";
-import FooWorkspace from "../../../features/tools/foo/FooWorkspace";
-export default function FooPage() {
-  return <AppShell currentPath="/tools">{({ theme }) => <FooWorkspace theme={theme} />}</AppShell>;
-}
-```
+**Route pages** (`src/app/tools/<name>/page.tsx`) are thin `"use client"` shells wrapping a workspace in `AppShell`.
 
-### Workspace Layout
-All tool workspaces use this centering pattern:
-- Outer: `style={{ flex: 1, width: "100%", padding: "1.5rem 1.5rem 2rem 2.75rem" }}`
-- Inner: `style={{ maxWidth: 900, margin: "0 auto" }}`
-- `<ToolHeader>` first, then content in panel sections
+**Workspace layout:** outer padding `1.5rem 1.5rem 2rem 2.75rem`, inner `maxWidth: 900, margin: "0 auto"`. `<ToolHeader>` first, then panel sections.
 
-### SSR/Client Gate
-Use `useSyncExternalStore` to safely gate client-only code (localStorage reads):
-```tsx
-const mounted = useSyncExternalStore(() => () => undefined, () => true, () => false);
-```
+**SSR/client gate:** `useSyncExternalStore(() => () => undefined, () => true, () => false)` for localStorage reads.
 
-## Character Store API
-
-Located in `src/features/characters/model/charactersStore.ts`:
-
-- `readCharactersStore()` → `CharactersStore` — reads from localStorage
-- `selectCharactersList(store)` → `StoredCharacterRecord[]` — ordered list
-- Characters are uniquely identified by `characterName` (lowercased as the store key)
-- **`characterID` (number) is NOT unique** — never use as React key or option value
-- Read characters fresh each render (not cached in `useState`) so new additions appear immediately
-
-## localStorage Keys
-
-| Feature | Key | Notes |
-|---------|-----|-------|
-| Characters | `mapledoro_characters_store_v1` | Managed by `charactersStore.ts` |
-| Symbols (global) | `symbols-v2` | Default when no character selected |
-| Symbols (per-char) | `symbols-v2-{characterName}` | When synced to a character |
-| Pitched boss drops | `pitched-boss-drops-v1` | |
-| HEXA Skills (global) | `hexa-skills-v1` | Default when no character selected |
-| HEXA Skills (per-char) | `hexa-skills-v1-{characterName}` | When synced to a character |
-| Theme | Managed by `ThemeContext` | |
-
-## Charts
-
-Pure SVG — no external chart libraries. Existing patterns: horizontal bar charts, line charts with `<polyline>` + `<circle>`.
+**Per-character tool storage:** Per-character tool data (symbols, liberation, hexa skills) is stored in each character's `tools` field within the character store (`mapledoro_characters_store_v1`). Read/write via `characterToolStorage.ts` helpers. Global tool data (dailies, event planner, boss crystals, pitched boss drops) lives in a single `mapledoro_tools_v1` key via `globalToolsStore.ts`.
 
 ## Image Policy
 
-All images used in the project must be sourced from **maplestorywiki.net**. Any page that displays sourced images must include a visible disclaimer/attribution stating:
+All images sourced from **maplestorywiki.net**. Pages with sourced images must include `WikiAttribution`.
 
-> Images sourced from [MapleStory Wiki](https://maplestorywiki.net) and are used under the terms of that site's licensing. All MapleStory assets are the property of Nexon.
+## Feature Docs
 
-Use the existing `WikiAttribution` component (`src/components/WikiAttribution.tsx`) where applicable.
-
-## Wiki Data Access
-
-- **CDN images** (`media.maplestorywiki.net/yetidb/Skill_*.png`) — accessible from any client.
-- **Wiki HTML pages** (`maplestorywiki.net/w/*`) — return 403 to programmatic clients. Use `curl` with a browser User-Agent:
-  ```sh
-  curl -s -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36" "URL"
-  ```
-
-## HEXA Skills Tracker
-
-Located in `src/features/tools/hexa-skills/`. Tracks Sol Erda + Fragment costs for all 47 MapleStory classes.
-
-**Key files:**
-- `hexa-classes.ts` — Class/skill definitions. `s(name)` auto-generates icon URL; `si(name, iconName)` overrides icon when wiki name differs.
-- `hexa-costs.ts` — Cost tables (ORIGIN, ENHANCEMENT, MASTERY, COMMON).
-- `useHexaSkillsState.ts` — State hook with localStorage persistence, cost calculation.
-- `hexa-ui.tsx` — Reusable UI primitives (SkillIcon, CostBadge, LevelInput, SkillRow, SkillSection, MasterySection).
-- `HexaSkillsWorkspace.tsx` — Page-level composition (SummaryPanel, ClassSelector, main workspace).
-
-**Icon URL pattern:** `https://media.maplestorywiki.net/yetidb/Skill_{name}.png` — apostrophes → `%27`, colons stripped, spaces → `_`. Bracket skills (`[Tian]`, `[Di]`, `[Shinsoku]`) have no CDN icons; use parenthesized icon overrides via `si()` when available, otherwise fall back to letter initial.
+Non-obvious domain rules and invariants live in nested `CLAUDE.md` files under `src/features/`. Consult them when working on a feature.

@@ -135,6 +135,11 @@ export default function SearchEntryScreen({ model, actions }: SearchEntryScreenP
         >
           {search.statusMessage}
         </p>
+        {search.degradedCode && (
+          <p style={{ margin: 0, marginTop: "0.5rem", fontSize: "0.78rem", color: "#d97706", fontWeight: 700 }}>
+            Server issue [{search.degradedCode}]. Please let the developers know.
+          </p>
+        )}
       </div>
     </>
   );

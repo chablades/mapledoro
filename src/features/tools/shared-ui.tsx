@@ -1,4 +1,21 @@
 import type { AppTheme } from "../../components/themes";
+import type { MvpTier } from "./star-force/star-force-data";
+
+export const MVP_OPTIONS: { value: MvpTier; label: string }[] = [
+  { value: "none", label: "None" },
+  { value: "silver", label: "Silver" },
+  { value: "gold", label: "Gold" },
+  { value: "diamond", label: "Diamond" },
+];
+
+const toggleBase: React.CSSProperties = {
+  padding: "8px 16px",
+  borderRadius: "10px",
+  fontSize: "0.8rem",
+  fontWeight: 700,
+  cursor: "pointer",
+  userSelect: "none",
+};
 
 export function Toggle({
   theme,
@@ -14,17 +31,15 @@ export function Toggle({
   return (
     <div
       className="tool-btn"
+      role="button"
+      tabIndex={0}
       onClick={() => onChange(!checked)}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onChange(!checked); } }}
       style={{
-        padding: "8px 16px",
-        borderRadius: "10px",
-        fontSize: "0.8rem",
-        fontWeight: 700,
-        cursor: "pointer",
+        ...toggleBase,
         color: checked ? theme.accentText : theme.muted,
         background: checked ? theme.accentSoft : theme.timerBg,
         border: `1px solid ${checked ? theme.accent : theme.border}`,
-        userSelect: "none",
       }}
     >
       {checked ? "\u2713 " : ""}
@@ -59,7 +74,10 @@ export function PillGroup<T extends string>({
         <div
           key={o.value}
           className="tool-btn"
+          role="button"
+          tabIndex={0}
           onClick={() => onChange(o.value)}
+          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onChange(o.value); } }}
           style={{
             padding: "5px 12px",
             borderRadius: "8px",

@@ -1,16 +1,12 @@
 "use client";
 
-/*
-  Shared top navigation component used by app pages.
-  Edit here for nav structure/behavior (brand, links, UTC clock, mobile menu).
-  Styling lives in AppTopNav.module.css; link list lives in nav-links.ts.
-*/
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import styles from "./AppTopNav.module.css";
 import type { NavLinkItem } from "./nav-links";
 import type { AppTheme } from "./themes";
+import type { ColorMode } from "./themes";
 
 function UtcClocks({ mobileClassName, desktopClassName, style }: { mobileClassName: string; desktopClassName: string; style: React.CSSProperties }) {
   const mobileRef = useRef<HTMLSpanElement>(null);
@@ -35,26 +31,83 @@ function UtcClocks({ mobileClassName, desktopClassName, style }: { mobileClassNa
   );
 }
 
-interface AppTopNavProps<TTheme extends AppTheme> {
-  currentPath: string;
-  themeKey: string;
-  theme: TTheme;
-  themes: Record<string, TTheme>;
-  navLinks: NavLinkItem[];
-  onThemeChange: (key: string) => void;
+function ColorModeToggle({
+  colorMode,
+  onToggle,
+  theme,
+}: {
+  colorMode: ColorMode;
+  onToggle: () => void;
+  theme: AppTheme;
+}) {
+  const isDark = colorMode === "dark";
+
+  return (
+    <button
+      type="button"
+      aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+      onClick={onToggle}
+      className={styles.colorModeToggle}
+      style={{
+        background: isDark ? "#2a2a34" : "#e8e4de",
+        border: `1px solid ${isDark ? "#3a3a48" : "#d8d2c8"}`,
+      }}
+    >
+      <span
+        className={styles.colorModeKnob}
+        style={{
+          transform: isDark ? "translateX(22px)" : "translateX(0)",
+          background: isDark ? "#1a1a22" : "#ffffff",
+          boxShadow: isDark
+            ? "0 1px 3px rgba(0,0,0,0.4)"
+            : "0 1px 3px rgba(0,0,0,0.15)",
+        }}
+      >
+        {isDark ? (
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+            <path
+              d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"
+              fill={theme.accent}
+              stroke={theme.accent}
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        ) : (
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="5" fill={theme.accent} stroke={theme.accent} strokeWidth="2" />
+            <line x1="12" y1="1" x2="12" y2="3" stroke={theme.accent} strokeWidth="2" strokeLinecap="round" />
+            <line x1="12" y1="21" x2="12" y2="23" stroke={theme.accent} strokeWidth="2" strokeLinecap="round" />
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" stroke={theme.accent} strokeWidth="2" strokeLinecap="round" />
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" stroke={theme.accent} strokeWidth="2" strokeLinecap="round" />
+            <line x1="1" y1="12" x2="3" y2="12" stroke={theme.accent} strokeWidth="2" strokeLinecap="round" />
+            <line x1="21" y1="12" x2="23" y2="12" stroke={theme.accent} strokeWidth="2" strokeLinecap="round" />
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" stroke={theme.accent} strokeWidth="2" strokeLinecap="round" />
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" stroke={theme.accent} strokeWidth="2" strokeLinecap="round" />
+          </svg>
+        )}
+      </span>
+    </button>
+  );
 }
 
-export default function AppTopNav<TTheme extends AppTheme>({
+interface AppTopNavProps {
+  currentPath: string;
+  theme: AppTheme;
+  navLinks: NavLinkItem[];
+  colorMode: ColorMode;
+  onColorModeChange: (mode: ColorMode) => void;
+}
+
+export default function AppTopNav({
   currentPath,
-  themeKey,
   theme,
-  themes,
   navLinks,
-  onThemeChange,
-}: AppTopNavProps<TTheme>) {
+  colorMode,
+  onColorModeChange,
+}: AppTopNavProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [themeDropdownOpen, setThemeDropdownOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!mobileMenuOpen) return;
@@ -63,23 +116,8 @@ export default function AppTopNav<TTheme extends AppTheme>({
     return () => window.removeEventListener("resize", close);
   }, [mobileMenuOpen]);
 
-  useEffect(() => {
-    if (!themeDropdownOpen) return;
-    const handleClick = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setThemeDropdownOpen(false);
-      }
-    };
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setThemeDropdownOpen(false);
-    };
-    document.addEventListener("mousedown", handleClick);
-    document.addEventListener("keydown", handleKey);
-    return () => {
-      document.removeEventListener("mousedown", handleClick);
-      document.removeEventListener("keydown", handleKey);
-    };
-  }, [themeDropdownOpen]);
+  const toggleColorMode = () =>
+    onColorModeChange(colorMode === "light" ? "dark" : "light");
 
   return (
     <>
@@ -150,85 +188,7 @@ export default function AppTopNav<TTheme extends AppTheme>({
           </div>
         </div>
 
-        <div className={styles.themeDropdown} ref={dropdownRef}>
-          <span className={styles.themeLabel} style={{ color: theme.muted }}>
-            Theme
-          </span>
-          <button
-            type="button"
-            className={styles.themeDropdownBtn}
-            onClick={() => setThemeDropdownOpen((prev) => !prev)}
-            style={{
-              border: `1px solid ${theme.border}`,
-              background: theme.bg,
-              color: theme.text,
-            }}
-          >
-            <span
-              style={{
-                width: 16,
-                height: 16,
-                borderRadius: 4,
-                background: `linear-gradient(to right, ${theme.bg} 50%, ${theme.accent} 50%)`,
-                border: `1px solid ${theme.border}`,
-                display: "inline-block",
-                flexShrink: 0,
-              }}
-            />
-            <span>{theme.name}</span>
-            <svg width="10" height="6" viewBox="0 0 10 6" fill="none" style={{ marginLeft: "auto", opacity: 0.6 }}>
-              <path
-                d="M1 1L5 5L9 1"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </button>
-          {themeDropdownOpen && (
-            <div
-              className={styles.themeDropdownPanel}
-              style={{
-                background: theme.panel,
-                border: `1px solid ${theme.border}`,
-                boxShadow: "0 4px 20px rgba(0,0,0,0.12)",
-              }}
-            >
-              {Object.entries(themes).map(([key, th]) => {
-                const active = themeKey === key;
-                return (
-                  <button
-                    key={key}
-                    type="button"
-                    className={styles.themeDropdownItem}
-                    onClick={() => {
-                      onThemeChange(key);
-                      setThemeDropdownOpen(false);
-                    }}
-                    style={{
-                      background: active ? theme.accentSoft : "transparent",
-                      color: active ? theme.accentText : theme.text,
-                    }}
-                  >
-                    <span
-                      style={{
-                        width: 18,
-                        height: 18,
-                        borderRadius: 5,
-                        background: `linear-gradient(to right, ${th.bg} 50%, ${th.accent} 50%)`,
-                        border: `1px solid ${th.border}`,
-                        display: "inline-block",
-                        flexShrink: 0,
-                      }}
-                    />
-                    <span style={{ fontWeight: active ? 800 : 500 }}>{th.name}</span>
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </div>
+        <ColorModeToggle colorMode={colorMode} onToggle={toggleColorMode} theme={theme} />
 
         <UtcClocks mobileClassName={styles.mobileUtc} desktopClassName={styles.desktopUtc} style={{ color: theme.muted }} />
         <button
@@ -237,17 +197,9 @@ export default function AppTopNav<TTheme extends AppTheme>({
           aria-label="Open menu"
           onClick={() => setMobileMenuOpen((prev) => !prev)}
           style={{
-            width: "40px",
-            minWidth: "40px",
-            height: "40px",
-            flexShrink: 0,
             border: `1px solid ${theme.border}`,
-            borderRadius: "10px",
             background: theme.panel,
             color: theme.text,
-            cursor: "pointer",
-            padding: 0,
-            lineHeight: 1,
           }}
         >
           <svg aria-hidden="true" width="28" height="14" viewBox="0 0 28 14" fill="none">
@@ -333,33 +285,6 @@ export default function AppTopNav<TTheme extends AppTheme>({
                 </a>
               );
             })}
-          </div>
-          <div style={{ fontSize: "0.72rem", color: theme.muted, fontWeight: 800, marginBottom: "0.45rem" }}>
-            Theme
-          </div>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "0.45rem" }}>
-            {Object.entries(themes).map(([key, th]) => (
-              <button
-                key={`mobile-theme-${key}`}
-                type="button"
-                onClick={() => {
-                  onThemeChange(key);
-                  setMobileMenuOpen(false);
-                }}
-                style={{
-                  border: `1px solid ${themeKey === key ? theme.accent : theme.border}`,
-                  borderRadius: "999px",
-                  background: themeKey === key ? theme.accentSoft : theme.bg,
-                  color: themeKey === key ? theme.accentText : theme.text,
-                  cursor: "pointer",
-                  fontSize: "0.75rem",
-                  fontWeight: 700,
-                  padding: "0.3rem 0.55rem",
-                }}
-              >
-                {th.name}
-              </button>
-            ))}
           </div>
         </div>
       )}

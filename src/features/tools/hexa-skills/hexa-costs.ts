@@ -168,16 +168,3 @@ export function getCostRange(
   }
   return { solErda, fragments };
 }
-
-/** Total cost to max a single skill from a given level. */
-export function getCostToMax(
-  table: readonly LevelCost[],
-  currentLevel: number,
-): LevelCost {
-  return getCostRange(table, currentLevel, 30);
-}
-
-/** Total cost table for a skill type. */
-export function getTotalCost(table: readonly LevelCost[]): LevelCost {
-  return getCostRange(table, 0, 30);
-}

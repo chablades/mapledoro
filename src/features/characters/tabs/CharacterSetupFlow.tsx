@@ -38,7 +38,7 @@ export default function CharacterSetupFlow({ theme }: CharacterSetupFlowProps) {
     foundCharacter: state.foundCharacter,
     setupFlowStarted: state.setupFlowStarted,
     showCharacterDirectory: state.showCharacterDirectory,
-    showSetupPane: state.showCharacterDirectory || !currentCharacterHasCompletedRequiredFlow,
+    showSetupPane: state.setupFlowStarted || state.showCharacterDirectory || !currentCharacterHasCompletedRequiredFlow,
     showCompletedProfilePane:
       state.setupFlowStarted &&
       currentCharacterHasCompletedRequiredFlow &&
@@ -71,6 +71,7 @@ export default function CharacterSetupFlow({ theme }: CharacterSetupFlowProps) {
       isSearching: state.isSearching,
       statusMessage: state.statusMessage,
       statusTone: state.statusTone,
+      degradedCode: state.degradedCode,
     },
     profile: {
       confirmedCharacter: confirmedStoredCharacter,
@@ -85,6 +86,12 @@ export default function CharacterSetupFlow({ theme }: CharacterSetupFlowProps) {
       isCurrentChampionCharacter: state.isCurrentChampionCharacter,
       canSetCurrentChampion: state.canSetCurrentChampion,
       currentCharacterGender: state.currentCharacterGender,
+      isRefreshing: confirmedStoredCharacter
+        ? state.refreshingKeys.has(toCharacterKey(confirmedStoredCharacter))
+        : false,
+      onRefresh: confirmedStoredCharacter
+        ? () => { actions.refreshSingle(confirmedStoredCharacter); }
+        : null,
     },
   };
 
@@ -112,6 +119,9 @@ export default function CharacterSetupFlow({ theme }: CharacterSetupFlowProps) {
 
   const previewPaneModel: PreviewPaneModel = {
     theme,
+    profile: {
+      confirmedCharacter: confirmedStoredCharacter,
+    },
     preview: {
       foundCharacter: state.foundCharacter,
       previewCardReady: state.previewCardReady,
@@ -145,6 +155,7 @@ export default function CharacterSetupFlow({ theme }: CharacterSetupFlowProps) {
       worldIds: state.worldIds,
       maxCharacters: MAX_ACCOUNT_CHARACTERS,
       maxChampions: MAX_CHAMPIONS,
+      refreshingKeys: state.refreshingKeys,
     },
   };
 
@@ -156,6 +167,7 @@ export default function CharacterSetupFlow({ theme }: CharacterSetupFlowProps) {
     finishSetupFlow: actions.finishSetupFlow,
     openCharacterSearch: actions.openAddCharacterSearch,
     openCharacterProfile: actions.switchToCharacterProfile,
+    startOptionalFlow: actions.startOptionalSetupFlow,
   };
 
   return (

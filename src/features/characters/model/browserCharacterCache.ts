@@ -20,7 +20,10 @@ export function loadBrowserCharacterCache(): Map<string, CharacterCacheEntry> {
     const raw = window.localStorage.getItem(CHARACTER_CACHE_STORAGE_KEY);
     if (!raw) return new Map();
     const parsed = JSON.parse(raw) as Record<string, CharacterCacheEntry>;
-    return new Map(Object.entries(parsed));
+    const validEntries = Object.entries(parsed).filter(
+      ([, entry]) => entry && typeof entry === "object" && "data" in entry,
+    );
+    return new Map(validEntries);
   } catch {
     return new Map();
   }

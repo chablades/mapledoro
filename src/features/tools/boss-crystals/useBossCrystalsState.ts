@@ -15,7 +15,7 @@ import {
   calcCharacterIncome,
   loadState,
   saveState,
-  STORAGE_KEY,
+  clearState,
 } from "./boss-crystals-types";
 import { exportBossCrystals } from "./exportBossCrystals";
 
@@ -165,7 +165,7 @@ export function useBossCrystalsState(mounted: boolean) {
   }, []);
 
   const clearData = useCallback(() => {
-    localStorage.removeItem(STORAGE_KEY);
+    clearState();
     setServer("heroic");
     setCharacters([]);
   }, []);

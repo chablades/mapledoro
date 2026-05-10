@@ -31,6 +31,8 @@ export interface LookupFoundResponse {
   fromCache: boolean;
   queuedMs: number;
   source: "redis_cache" | "memory_cache" | "nexon_upstream";
+  degraded?: boolean;
+  degradedCode?: string;
 }
 
 export interface LookupNotFoundResponse {
@@ -41,6 +43,8 @@ export interface LookupNotFoundResponse {
   fromCache: boolean;
   queuedMs: number;
   source: "redis_cache" | "memory_cache" | "nexon_upstream";
+  degraded?: boolean;
+  degradedCode?: string;
 }
 
 export type LookupResponse = LookupFoundResponse | LookupNotFoundResponse;

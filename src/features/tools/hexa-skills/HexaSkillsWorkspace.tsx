@@ -16,6 +16,33 @@ import {
   type SkillCostSummary,
 } from "./useHexaSkillsState";
 import { fmtNum, SkillSection, MasterySection } from "./hexa-ui";
+import { toolStyles } from "../tool-styles";
+
+const checkboxLabelStyle: React.CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: "5px",
+  fontSize: "0.75rem",
+  fontWeight: 700,
+  cursor: "pointer",
+  userSelect: "none",
+};
+
+const resetBtnBase: React.CSSProperties = {
+  padding: "3px 10px",
+  borderRadius: "8px",
+  fontSize: "0.75rem",
+  fontWeight: 800,
+  background: "transparent",
+  cursor: "pointer",
+};
+
+const siaNoticeStyle: React.CSSProperties = {
+  padding: "0.75rem 1rem",
+  fontSize: "0.82rem",
+  fontWeight: 600,
+  lineHeight: 1.5,
+};
 
 // ── Class Selector ───────────────────────────────────────────────────────────
 
@@ -65,7 +92,7 @@ function ClassSelector({
             opacity: disabled ? 0.6 : 1,
           }}
         >
-          <option value="">Select a class...</option>
+          <option value="">Select a class…</option>
           {groups.map((group) => (
             <optgroup key={group} label={group}>
               {getClassesInGroup(group).map((c) => (
@@ -86,7 +113,7 @@ function ClassSelector({
 function SummaryStat({ label, value, max, theme }: { label: string; value: number; max: number; theme: AppTheme }) {
   return (
     <div>
-      <div style={{ fontSize: "0.68rem", fontWeight: 700, color: theme.muted, marginBottom: "2px" }}>
+      <div style={{ fontSize: "0.75rem", fontWeight: 700, color: theme.muted, marginBottom: "2px" }}>
         {label}
       </div>
       <div style={{ fontSize: "1.3rem", fontWeight: 800 }}>
@@ -135,16 +162,7 @@ function SummaryPanel({
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
           <label
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "5px",
-              fontSize: "0.68rem",
-              fontWeight: 700,
-              color: theme.muted,
-              cursor: "pointer",
-              userSelect: "none",
-            }}
+            style={{ ...checkboxLabelStyle, color: theme.muted }}
           >
             <input
               type="checkbox"
@@ -156,16 +174,14 @@ function SummaryPanel({
           </label>
           <div
             className="pill-btn"
+            role="button"
+            tabIndex={0}
             onClick={onReset}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onReset(); } }}
             style={{
-              padding: "3px 10px",
-              borderRadius: "8px",
-              fontSize: "0.68rem",
-              fontWeight: 800,
+              ...resetBtnBase,
               color: theme.muted,
-              background: "transparent",
               border: `1px solid ${theme.border}`,
-              cursor: "pointer",
             }}
           >
             Reset All
@@ -184,7 +200,7 @@ function SummaryPanel({
           display: "flex",
           justifyContent: "flex-end",
           marginTop: "4px",
-          fontSize: "0.72rem",
+          fontSize: "0.75rem",
           fontWeight: 700,
           color: theme.muted,
         }}
@@ -261,25 +277,14 @@ export default function HexaSkillsWorkspace({ theme }: { theme: AppTheme }) {
     return { grand, maxGrand, progressPct };
   }, [includeJanus, costs]);
 
-  const sectionPanel: React.CSSProperties = {
-    background: theme.panel,
-    border: `1px solid ${theme.border}`,
-    padding: "1.25rem",
-    marginBottom: "1.25rem",
-  };
+  const styles = toolStyles(theme);
+  const { sectionPanel, inputStyle } = styles;
 
   const halfPanel: React.CSSProperties = {
     ...sectionPanel,
     flex: "1 1 45%",
     minWidth: "280px",
     marginBottom: 0,
-  };
-
-  const inputStyle: React.CSSProperties = {
-    background: theme.timerBg,
-    border: `1px solid ${theme.border}`,
-    color: theme.text,
-    fontSize: "0.82rem",
   };
 
   if (!mounted) return null;
@@ -290,7 +295,7 @@ export default function HexaSkillsWorkspace({ theme }: { theme: AppTheme }) {
         <ToolHeader
           theme={theme}
           title="HEXA Skill Tracker"
-          description="Track Sol Erda and Sol Erda Fragment costs to max your HEXA skills."
+          description="Select your class, set each skill's current level, and see the total Sol Erda and Fragments needed to max."
         />
 
         <div style={{ display: "flex", gap: "1.25rem", flexWrap: "wrap", marginBottom: "1.25rem" }}>
@@ -314,6 +319,23 @@ export default function HexaSkillsWorkspace({ theme }: { theme: AppTheme }) {
             disabled={selectedCharName != null}
           />
         </div>
+
+        {classDef?.className === "Sia" && (
+          <div
+            className="fade-in panel-card"
+            style={{
+              ...sectionPanel,
+              ...siaNoticeStyle,
+              background: theme.accentSoft,
+              border: `1px solid ${theme.accent}`,
+              color: theme.text,
+            }}
+          >
+            <strong>Note:</strong> Sia uses the Erda Link system instead of the traditional HEXA skill system.
+            The fragment costs shown below are placeholder values based on standard classes.
+            Accurate Erda Link costs will be supported in a future update.
+          </div>
+        )}
 
         {classDef ? (
           <>
