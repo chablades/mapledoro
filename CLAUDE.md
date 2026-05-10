@@ -36,6 +36,15 @@ npm run lint
 - **`sonarjs/pseudo-random`** — Use `crypto.randomUUID()`, not `Math.random()`.
 - **`sonarjs/cognitive-complexity`** — Cap 15. Extract cohesive sub-steps (parser, validator, renderer) or `eslint-disable` if any split would be artificial. Don't micro-shuffle branches.
 
+## React-Doctor Rules
+
+- **Accessibility on clickable non-buttons:** Any `<div>` or `<span>` with `onClick` needs `role="button"`, `tabIndex={0}`, and an `onKeyDown` handler for Enter/Space.
+- **Minimum font size:** 0.75rem (12px). No sub-12px text anywhere.
+- **Progress bar animation:** Use `transform: scaleX()` + `transformOrigin: left`, not `width`, for fill animations (GPU-composited, no layout thrash).
+- **Image error fallbacks:** Use dual-render with refs (`display:none` on fallback, swap via `onError`), not `useState` to toggle. Avoids a re-render on error.
+- **No `autoFocus` attribute.** Use a ref callback with a guard: `ref={(el) => { if (el && document.activeElement !== el) el.focus(); }}`.
+- **localStorage writes:** Write synchronously inside state updaters, not in a `useEffect` watching state. Keeps the write atomic with the state change.
+
 ## Key Patterns
 
 **Route pages** (`src/app/tools/<name>/page.tsx`) are thin `"use client"` shells wrapping a workspace in `AppShell`.
