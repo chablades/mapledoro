@@ -493,7 +493,7 @@ function AddNameDialog({
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && typedName.trim()) onNext();
                 }}
-                ref={(el) => el?.focus()}
+                ref={(el) => { if (el && document.activeElement !== el) el.focus(); }}
                 className="tool-input"
                 style={{
                   ...bcDialogInputStyle(theme),

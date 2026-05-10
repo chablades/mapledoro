@@ -6,7 +6,8 @@
   with a search bar to filter classes.
 */
 
-import React, { useState } from "react";
+import React, { type CSSProperties, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import AppShell from "../../../components/AppShell";
 import type { AppTheme } from "../../../components/themes";
@@ -15,45 +16,64 @@ import { WikiAttribution } from "../../../components/WikiAttribution";
 
 /* ── Class card ───────────────────────────────────────────────── */
 
+function classCardStyle(theme: AppTheme): CSSProperties {
+  return {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: "0.5rem",
+    padding: "0.85rem 0.5rem",
+    background: theme.panel,
+    border: `1px solid ${theme.border}`,
+    borderRadius: "14px",
+    cursor: "pointer",
+    transition:
+      "transform 0.15s ease, box-shadow 0.15s ease, border-color 0.2s ease",
+  };
+}
+
+function searchInputStyle(theme: AppTheme): CSSProperties {
+  return {
+    width: "100%",
+    maxWidth: 400,
+    padding: "0.6rem 1rem",
+    fontSize: "0.85rem",
+    fontWeight: 600,
+    borderRadius: "12px",
+    border: `1px solid ${theme.border}`,
+    background: theme.panel,
+    color: theme.text,
+    outline: "2px solid transparent",
+    outlineOffset: "2px",
+    transition: "border-color 0.2s ease, outline-color 0.2s ease",
+  };
+}
+
+function portraitContainerStyle(theme: AppTheme): CSSProperties {
+  return {
+    width: "72px",
+    height: "72px",
+    borderRadius: "10px",
+    border: `1px solid ${theme.border}`,
+    background: theme.bg,
+    overflow: "hidden",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  };
+}
+
 function ClassCard({ cls, theme }: { cls: ClassEntry; theme: AppTheme }) {
   return (
     <Link
       href={`/guides/character-guides/${cls.slug}`}
       style={{ textDecoration: "none" }}
     >
-      <div
-        className="class-card"
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: "0.5rem",
-          padding: "0.85rem 0.5rem",
-          background: theme.panel,
-          border: `1px solid ${theme.border}`,
-          borderRadius: "14px",
-          cursor: "pointer",
-          transition:
-            "transform 0.15s ease, box-shadow 0.15s ease, border-color 0.2s ease",
-        }}
-      >
+      <div className="class-card" style={classCardStyle(theme)}>
         {/* Portrait */}
-        <div
-          style={{
-            width: "72px",
-            height: "72px",
-            borderRadius: "10px",
-            border: `1px solid ${theme.border}`,
-            background: theme.bg,
-            overflow: "hidden",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
+        <div style={portraitContainerStyle(theme)}>
           {cls.portrait ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <Image
               src={cls.portrait}
               alt={cls.name}
               width={72}
@@ -194,27 +214,12 @@ function CharacterGuidesContent({ theme }: { theme: AppTheme }) {
               placeholder="Search classes..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              style={{
-                width: "100%",
-                maxWidth: 400,
-                padding: "0.6rem 1rem",
-                fontSize: "0.85rem",
-                fontWeight: 600,
-                borderRadius: "12px",
-                border: `1px solid ${theme.border}`,
-                background: theme.panel,
-                color: theme.text,
-                outline: "2px solid transparent",
-                outlineOffset: "2px",
-                transition: "border-color 0.2s ease, outline-color 0.2s ease",
-              }}
+              style={searchInputStyle(theme)}
               onFocus={(e) => {
-                e.currentTarget.style.borderColor = theme.accent;
-                e.currentTarget.style.outlineColor = theme.accent;
+                Object.assign(e.currentTarget.style, { borderColor: theme.accent, outlineColor: theme.accent });
               }}
               onBlur={(e) => {
-                e.currentTarget.style.borderColor = theme.border;
-                e.currentTarget.style.outlineColor = "transparent";
+                Object.assign(e.currentTarget.style, { borderColor: theme.border, outlineColor: "transparent" });
               }}
             />
           </div>
