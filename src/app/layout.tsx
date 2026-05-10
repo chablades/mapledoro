@@ -35,7 +35,9 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body>
-        <ThemeProvider initialThemeKey={initialThemeKey}>{children}</ThemeProvider>
+        <ThemeProvider initialThemeKey={initialThemeKey} initialColorMode={initialColorMode}>
+          {children}
+        </ThemeProvider>
         <Analytics />
       </body>
     </html>

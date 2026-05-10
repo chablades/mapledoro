@@ -14,10 +14,12 @@ export function ProgressBar({ pct, theme }: { pct: number; theme: AppTheme }) {
       <div
         style={{
           height: "100%",
-          width: `${pct}%`,
+          width: "100%",
           background: theme.accent,
           borderRadius: "6px",
-          transition: "width 0.35s ease",
+          transform: `scaleX(${pct / 100})`,
+          transformOrigin: "left",
+          transition: "transform 0.35s ease",
         }}
       />
     </div>

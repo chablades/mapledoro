@@ -78,8 +78,8 @@ interface MapleClass {
   difficulty: Difficulty;
   link: string;
   legion: string;
-  /** portrait URL — official Nexon CDN art */
-  portrait?: string;
+  /** portrait URL from the official Nexon CDN art endpoint. */
+  portrait: string;
 }
 
 import { classPortraitUrl } from "../../../lib/classPortraits";
@@ -171,15 +171,17 @@ const CLASSES: MapleClass[] = [
 const NUM_BLUE = "#4a9eff";
 
 function highlightNumbers(text: string): React.ReactNode[] {
-  // Match "Lv" prefix + numbers with optional: leading +/-, trailing %, s, decimals
   const parts = text.split(/(Lv\d+|\+?\-?\d[\d,.]*%?s?)/g);
-  return parts.map((part, i) =>
-    /\d/.test(part) || /^Lv/.test(part) ? (
-      <span key={i} style={{ color: NUM_BLUE, fontWeight: 700 }}>{part}</span>
+  let offset = 0;
+  return parts.map((part) => {
+    const key = `${offset}`;
+    offset += part.length;
+    return /\d/.test(part) || /^Lv/.test(part) ? (
+      <span key={key} style={{ color: NUM_BLUE, fontWeight: 700 }}>{part}</span>
     ) : (
-      <span key={i}>{part}</span>
-    ),
-  );
+      <span key={key}>{part}</span>
+    );
+  });
 }
 
 const DIFFICULTY_COLORS: Record<Difficulty, string> = {
@@ -196,19 +198,13 @@ function ClassRandomizer({ theme }: { theme: AppTheme }) {
   }
 
   return (
-    <div style={{ marginTop: "1.25rem", display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "0.75rem" }}>
+    <div className="guide-randomizer">
       <button
         onClick={roll}
+        className="guide-primary-btn"
         style={{
-          fontFamily: "'Fredoka One', cursive",
-          fontSize: "0.85rem",
-          padding: "0.6rem 1.25rem",
-          borderRadius: "12px",
-          border: "none",
           background: theme.accent,
           color: "#fff",
-          cursor: "pointer",
-          transition: "opacity 0.2s ease",
         }}
         onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.85")}
         onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
@@ -223,34 +219,22 @@ function ClassRandomizer({ theme }: { theme: AppTheme }) {
             width: "100%",
             background: theme.accentSoft,
             border: `1px solid ${theme.border}`,
-            borderRadius: "14px",
-            padding: "1.25rem",
-            display: "flex",
-            gap: "1.25rem",
-            alignItems: "flex-start",
           }}
         >
           {/* Portrait */}
           <div
+            className="class-portrait-frame class-portrait-lg"
             style={{
-              width: "120px",
-              minWidth: "120px",
-              height: "120px",
-              borderRadius: "12px",
               border: `1px solid ${theme.border}`,
               background: theme.panel,
-              overflow: "hidden",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
             }}
           >
-            <img
+            <Image
               src={result.portrait}
               alt={result.name}
               width={120}
               height={120}
-              style={{ width: "100%", height: "100%", objectFit: "contain" }}
+              className="class-portrait-img"
             />
           </div>
 
@@ -302,34 +286,22 @@ function ClassInfoPanel({ cls, theme }: { cls: MapleClass; theme: AppTheme }) {
         gridColumn: "1 / -1",
         background: theme.accentSoft,
         border: `1px solid ${theme.border}`,
-        borderRadius: "14px",
-        padding: "1.25rem",
-        display: "flex",
-        gap: "1.25rem",
-        alignItems: "flex-start",
       }}
     >
       {/* Portrait */}
       <div
+        className="class-portrait-frame class-portrait-md"
         style={{
-          width: "100px",
-          minWidth: "100px",
-          height: "100px",
-          borderRadius: "12px",
           border: `1px solid ${theme.border}`,
           background: theme.panel,
-          overflow: "hidden",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
         }}
       >
-        <img
+        <Image
           src={cls.portrait}
           alt={cls.name}
           width={100}
           height={100}
-          style={{ width: "100%", height: "100%", objectFit: "contain" }}
+          className="class-portrait-img"
         />
       </div>
 
@@ -372,10 +344,11 @@ function ClassInfoPanel({ cls, theme }: { cls: MapleClass; theme: AppTheme }) {
 function ClassDirectory({ theme }: { theme: AppTheme }) {
   const [selected, setSelected] = useState<string | null>(null);
 
-  const grouped = CLASS_REGIONS.map((region) => ({
-    region,
-    classes: CLASSES.filter((c) => c.region === region),
-  })).filter((g) => g.classes.length > 0);
+  const grouped: { region: string; classes: typeof CLASSES }[] = [];
+  for (const region of CLASS_REGIONS) {
+    const classes = CLASSES.filter((c) => c.region === region);
+    if (classes.length > 0) grouped.push({ region, classes });
+  }
 
   function toggle(name: string) {
     setSelected((prev) => (prev === name ? null : name));
@@ -418,14 +391,12 @@ function ClassDirectory({ theme }: { theme: AppTheme }) {
               return (
                 <React.Fragment key={cls.name}>
                   <div
+                    role="button"
+                    tabIndex={0}
+                    className="class-picker-tile"
                     onClick={() => toggle(cls.name)}
+                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(cls.name); } }}
                     style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      gap: "0.4rem",
-                      cursor: "pointer",
-                      transition: "transform 0.15s ease",
                       transform: isSelected ? "scale(1.05)" : undefined,
                     }}
                     onMouseEnter={(e) => {
@@ -436,31 +407,24 @@ function ClassDirectory({ theme }: { theme: AppTheme }) {
                     }}
                   >
                     <div
+                      className="class-picker-icon"
                       style={{
-                        width: "72px",
-                        height: "72px",
-                        borderRadius: "10px",
                         border: `2px solid ${isSelected ? theme.accent : theme.border}`,
                         background: theme.panel,
-                        overflow: "hidden",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        transition: "border-color 0.2s ease, box-shadow 0.2s ease",
                         boxShadow: isSelected ? `0 0 0 2px ${theme.accentSoft}` : "none",
                       }}
                     >
-                      <img
+                      <Image
                         src={cls.portrait}
                         alt={cls.name}
                         width={72}
                         height={72}
-                        style={{ width: "100%", height: "100%", objectFit: "contain" }}
+                        className="class-portrait-img"
                       />
                     </div>
                     <div
                       style={{
-                        fontSize: "0.68rem",
+                        fontSize: "0.75rem",
                         fontWeight: 700,
                         color: isSelected ? theme.accent : theme.text,
                         textAlign: "center",
@@ -583,15 +547,9 @@ function NewPlayersContent({ theme }: { theme: AppTheme }) {
           {/* Back link */}
           <Link
             href="/guides"
+            className="guide-back-link"
             style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "0.35rem",
-              fontSize: "0.8rem",
-              fontWeight: 700,
               color: theme.accent,
-              textDecoration: "none",
-              marginBottom: "1.25rem",
             }}
           >
             ← Back to Guides

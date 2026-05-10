@@ -102,7 +102,7 @@ export const TIER_RATES_DMT: Record<CubeKey, Record<number, number>> = {
   black: { 0: 0.17 * 2, 1: 0.11 * 2, 2: 0.05 * 2 },
 };
 
-export function getCubeCost(cubeType: CubeKey): number {
+function getCubeCost(cubeType: CubeKey): number {
   switch (cubeType) {
     case "red": return 12_000_000;
     case "black": return 22_000_000;
@@ -111,7 +111,7 @@ export function getCubeCost(cubeType: CubeKey): number {
   }
 }
 
-export function getRevealCostConstant(itemLevel: number): number {
+function getRevealCostConstant(itemLevel: number): number {
   if (itemLevel < 30) return 0;
   if (itemLevel <= 70) return 0.5;
   if (itemLevel <= 120) return 2.5;
@@ -177,7 +177,7 @@ export interface ProbabilityInput {
   lineBossOrIed: number;
 }
 
-export function emptyInput(): ProbabilityInput {
+function emptyInput(): ProbabilityInput {
   return {
     percStat: 0, lineStat: 0, percAllStat: 0, lineAllStat: 0,
     percHp: 0, lineHp: 0, percAtt: 0, lineAtt: 0,

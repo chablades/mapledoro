@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import type { AppTheme } from "../../../components/themes";
 import { ProgressBar } from "../../../components/ProgressBar";
 import { ToolHeader } from "../../../components/ToolHeader";
@@ -20,6 +21,22 @@ import {
   formatDate,
 } from "./useLiberationState";
 import { toolStyles } from "../tool-styles";
+
+const traceBadgeBase: React.CSSProperties = {
+  fontSize: "0.75rem",
+  fontWeight: 800,
+  padding: "2px 8px",
+  borderRadius: "6px",
+  flexShrink: 0,
+  whiteSpace: "nowrap",
+};
+
+const clearedBtnBase: React.CSSProperties = {
+  padding: "4px 10px",
+  borderRadius: "8px",
+  fontSize: "0.75rem",
+  fontWeight: 800,
+};
 
 // -- Boss Card ----------------------------------------------------------------
 
@@ -67,7 +84,7 @@ function BossCard({
           marginBottom: "0.6rem",
         }}
       >
-        <img
+        <Image
           src={boss.icon}
           alt={boss.name}
           width={38}
@@ -94,14 +111,9 @@ function BossCard({
         {activeDiff && (
           <div
             style={{
-              fontSize: "0.72rem",
-              fontWeight: 800,
+              ...traceBadgeBase,
               color: theme.accent,
-              padding: "2px 8px",
               background: theme.accentSoft,
-              borderRadius: "6px",
-              flexShrink: 0,
-              whiteSpace: "nowrap",
             }}
           >
             +{traces} / {boss.reset === "monthly" ? "month" : "week"}
@@ -122,7 +134,10 @@ function BossCard({
           <div
             key={diff.label}
             className="lib-diff-btn pill-btn"
+            role="button"
+            tabIndex={0}
             onClick={() => onDifficultyChange(sel.difficultyIdx === di ? null : di)}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onDifficultyChange(sel.difficultyIdx === di ? null : di); } }}
             style={pillBtn(sel.difficultyIdx === di)}
           >
             {diff.label} ({diff.traces})
@@ -184,14 +199,14 @@ function BossCard({
         <div
           className={isActive ? "lib-btn" : ""}
           title="Click this if you have already cleared the boss for the week."
+          role="button"
+          tabIndex={0}
           onClick={() => {
             if (isActive) onClearedChange(!sel.clearedThisWeek);
           }}
+          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); if (isActive) onClearedChange(!sel.clearedThisWeek); } }}
           style={{
-            padding: "4px 10px",
-            borderRadius: "8px",
-            fontSize: "0.72rem",
-            fontWeight: 800,
+            ...clearedBtnBase,
             cursor: isActive ? "pointer" : "not-allowed",
             color: sel.clearedThisWeek && isActive
               ? theme.accentText
@@ -281,7 +296,7 @@ function LiberationConfigSection({
             }}
           >
             {quests.map((q, i) => (
-              <option key={i} value={i}>
+              <option key={q.label} value={i}>
                 {i + 1}. {q.label} ({q.required.toLocaleString()})
               </option>
             ))}
@@ -343,7 +358,10 @@ function LiberationConfigSection({
           <div style={{ flex: "0 0 auto" }}>
             <div
               className="lib-btn pill-btn"
+              role="button"
+              tabIndex={0}
               onClick={onGenesisPassToggle}
+              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onGenesisPassToggle(); } }}
               style={pillBtn(genesisPass, true)}
             >
               Genesis Pass {genesisPass ? "ON" : "OFF"}
@@ -403,7 +421,7 @@ function LiberationProgressBar({
           display: "flex",
           justifyContent: "space-between",
           marginTop: "6px",
-          fontSize: "0.72rem",
+          fontSize: "0.75rem",
           fontWeight: 700,
           color: theme.muted,
         }}
@@ -533,7 +551,7 @@ function LiberationResultsSection({
                   {m.questLabel}
                   <span
                     style={{
-                      fontSize: "0.68rem",
+                      fontSize: "0.75rem",
                       color: theme.muted,
                       marginLeft: "6px",
                     }}
@@ -548,7 +566,7 @@ function LiberationResultsSection({
                       color: theme.muted,
                       fontWeight: 700,
                       marginLeft: "6px",
-                      fontSize: "0.72rem",
+                      fontSize: "0.75rem",
                     }}
                   >
                     ({m.weeksFromStart}w)
@@ -595,7 +613,7 @@ function LiberationResultsSection({
                 {b.reset === "monthly" && (
                   <span
                     style={{
-                      fontSize: "0.68rem",
+                      fontSize: "0.75rem",
                       color: theme.muted,
                       marginLeft: "6px",
                     }}
@@ -775,11 +793,14 @@ export default function LiberationWorkspace({ theme }: { theme: AppTheme }) {
               <div style={{ marginLeft: "auto" }}>
                 <div
                   className="lib-btn"
+                  role="button"
+                  tabIndex={0}
                   onClick={resetBosses}
+                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); resetBosses(); } }}
                   style={{
                     padding: "4px 10px",
                     borderRadius: "8px",
-                    fontSize: "0.72rem",
+                    fontSize: "0.75rem",
                     fontWeight: 800,
                     color: "#e05a5a",
                     background: "transparent",

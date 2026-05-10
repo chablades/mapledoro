@@ -41,8 +41,8 @@ function TermsContent({ theme }: { theme: AppTheme }) {
       </LegalSection>
 
       <LegalSection theme={theme} title="6. Intellectual Property">
-        MapleStory and all related assets — including but not limited to
-        images, characters, and names — are the intellectual property and
+        MapleStory and all related assets (including but not limited to
+        images, characters, and names) are the intellectual property and
         registered trademarks of Nexon. MapleDoro uses these assets under
         fair use for a non-commercial fan project. All rights remain with
         their respective owners.

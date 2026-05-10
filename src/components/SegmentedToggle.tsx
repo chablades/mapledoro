@@ -22,29 +22,21 @@ export function SegmentedToggle<T extends string>({
   return (
     <div className="fade-in panel-card" style={sectionPanel}>
       <div
+        className="segmented-toggle-track"
         style={{
-          display: "flex",
-          gap: "4px",
           background: theme.timerBg,
-          borderRadius: "10px",
-          padding: "3px",
           border: `1px solid ${theme.border}`,
         }}
       >
         {options.map((t) => (
           <div
             key={t}
-            className={btnClassName}
+            role="button"
+            tabIndex={0}
+            className={["segmented-toggle-option", btnClassName].filter(Boolean).join(" ")}
             onClick={() => onChange(t)}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onChange(t); } }}
             style={{
-              flex: 1,
-              padding: "9px 18px",
-              borderRadius: "8px",
-              fontSize: "0.88rem",
-              fontWeight: 800,
-              textAlign: "center",
-              cursor: "pointer",
-              userSelect: "none",
               color: value === t ? theme.accentText : theme.muted,
               background: value === t ? theme.accentSoft : "transparent",
             }}

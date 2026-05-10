@@ -119,56 +119,34 @@ function SettingsContent({ theme }: { theme: AppTheme }) {
 
         {/* Accent theme selector */}
         <div
-          className="fade-in panel-card"
+          className="fade-in panel-card settings-row-panel settings-theme-panel"
           style={{
             ...panelStyle,
-            overflow: "visible",
-            position: "relative" as const,
-            zIndex: 10,
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            gap: "1rem",
-            flexWrap: "wrap",
           }}
         >
           <div>
             <p style={labelStyle}>Theme</p>
             <p style={descStyle}>Choose the theme used across the site.</p>
           </div>
-          <div ref={dropdownRef} style={{ position: "relative" }}>
+          <div ref={dropdownRef} className="settings-dropdown-root">
             <button
               type="button"
               onClick={() => setAccentDropdownOpen((prev) => !prev)}
+              className="settings-dropdown-trigger"
               style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-                width: 170,
-                padding: "0.3rem 0.55rem",
                 border: `1px solid ${theme.border}`,
-                borderRadius: "8px",
                 background: theme.bg,
                 color: theme.text,
-                cursor: "pointer",
-                fontSize: "0.8rem",
-                fontWeight: 700,
-                fontFamily: "inherit",
-                whiteSpace: "nowrap",
               }}
             >
               <span
+                className="settings-swatch settings-swatch-current"
                 style={{
-                  width: 16,
-                  height: 16,
-                  borderRadius: 4,
                   background: theme.accent,
-                  display: "inline-block",
-                  flexShrink: 0,
                 }}
               />
               <span>{ACCENT_THEMES[themeKey]?.name ?? "Default"}</span>
-              <svg width="10" height="6" viewBox="0 0 10 6" fill="none" style={{ marginLeft: "auto", opacity: 0.6 }}>
+              <svg className="settings-dropdown-icon" width="10" height="6" viewBox="0 0 10 6" fill="none">
                 <path
                   d="M1 1L5 5L9 1"
                   stroke="currentColor"
@@ -180,17 +158,10 @@ function SettingsContent({ theme }: { theme: AppTheme }) {
             </button>
             {accentDropdownOpen && (
               <div
+                className="settings-dropdown-menu"
                 style={{
-                  position: "absolute",
-                  top: "calc(100% + 6px)",
-                  right: 0,
-                  borderRadius: "10px",
-                  padding: "0.35rem",
-                  width: 170,
-                  zIndex: 60,
                   background: theme.panel,
                   border: `1px solid ${theme.border}`,
-                  boxShadow: "0 4px 20px rgba(0,0,0,0.12)",
                 }}
               >
                 {Object.entries(ACCENT_THEMES).map(([key, accent]) => {
@@ -203,30 +174,16 @@ function SettingsContent({ theme }: { theme: AppTheme }) {
                         setThemeKey(key);
                         setAccentDropdownOpen(false);
                       }}
+                      className="settings-dropdown-item"
                       style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "8px",
-                        width: "100%",
-                        padding: "0.4rem 0.55rem",
-                        border: "none",
-                        borderRadius: "7px",
-                        cursor: "pointer",
-                        fontSize: "0.82rem",
-                        fontFamily: "inherit",
-                        textAlign: "left" as const,
                         background: active ? theme.accentSoft : "transparent",
                         color: active ? theme.accentText : theme.text,
                       }}
                     >
                       <span
+                        className="settings-swatch settings-swatch-option"
                         style={{
-                          width: 18,
-                          height: 18,
-                          borderRadius: 5,
                           background: accent.accent,
-                          display: "inline-block",
-                          flexShrink: 0,
                         }}
                       />
                       <span style={{ fontWeight: active ? 800 : 500 }}>{accent.name}</span>
@@ -240,35 +197,24 @@ function SettingsContent({ theme }: { theme: AppTheme }) {
 
         {/* Import / Export */}
         <div
-          className="fade-in panel-card"
+          className="fade-in panel-card settings-row-panel"
           style={{
             ...panelStyle,
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            gap: "1rem",
-            flexWrap: "wrap",
           }}
         >
           <div>
             <p style={labelStyle}>Data management</p>
             <p style={descStyle}>Export your data as a backup, or import a previous backup.</p>
           </div>
-          <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
+          <div className="settings-actions">
             <button
               type="button"
               onClick={exportData}
+              className="settings-pill-btn"
               style={{
                 border: `1px solid ${theme.border}`,
-                borderRadius: "999px",
                 background: theme.accentSoft,
                 color: theme.accentText,
-                fontFamily: "inherit",
-                fontWeight: 800,
-                fontSize: "0.82rem",
-                padding: "0.4rem 0.9rem",
-                cursor: "pointer",
-                whiteSpace: "nowrap",
               }}
             >
               Export data
@@ -276,17 +222,11 @@ function SettingsContent({ theme }: { theme: AppTheme }) {
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
+              className="settings-pill-btn"
               style={{
                 border: `1px solid ${theme.border}`,
-                borderRadius: "999px",
                 background: theme.bg,
                 color: theme.text,
-                fontFamily: "inherit",
-                fontWeight: 800,
-                fontSize: "0.82rem",
-                padding: "0.4rem 0.9rem",
-                cursor: "pointer",
-                whiteSpace: "nowrap",
               }}
             >
               Import data
@@ -308,14 +248,9 @@ function SettingsContent({ theme }: { theme: AppTheme }) {
 
         {/* Reset */}
         <div
-          className="fade-in panel-card"
+          className="fade-in panel-card settings-row-panel"
           style={{
             ...panelStyle,
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            gap: "1rem",
-            flexWrap: "wrap",
           }}
         >
           <div>
@@ -327,17 +262,11 @@ function SettingsContent({ theme }: { theme: AppTheme }) {
           <button
             type="button"
             onClick={() => setShowResetConfirm(true)}
+            className="settings-pill-btn"
             style={{
               border: "1px solid #ef4444",
-              borderRadius: "999px",
               background: "#fef2f2",
               color: "#991b1b",
-              fontFamily: "inherit",
-              fontWeight: 800,
-              fontSize: "0.82rem",
-              padding: "0.4rem 0.9rem",
-              cursor: "pointer",
-              whiteSpace: "nowrap",
             }}
           >
             Reset all data

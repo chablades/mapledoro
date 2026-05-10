@@ -43,7 +43,7 @@ interface SavedState {
 
 // -- Storage ------------------------------------------------------------------
 
-export function utcDateStr(d: Date = new Date()): string {
+function utcDateStr(d: Date = new Date()): string {
   const y = d.getUTCFullYear();
   const m = String(d.getUTCMonth() + 1).padStart(2, "0");
   const day = String(d.getUTCDate()).padStart(2, "0");
@@ -201,8 +201,9 @@ function applyCheckAll(
   saved: Record<string, CharDailyState>,
 ): CharDailyState {
   const counters: Record<string, number> = { ...cs.counters };
+  const selectedContent = new Set(cs.selected.content);
   for (const c of DAILY_CONTENT) {
-    if (!cs.selected.content.includes(c.id)) continue;
+    if (!selectedContent.has(c.id)) continue;
     const othersTotal = char ? sumOthersCounter(c.id, charName, char.worldID, characters, saved) : 0;
     counters[c.id] = Math.max(0, Math.min(c.max, c.max - othersTotal));
   }
@@ -250,15 +251,16 @@ export function useDailiesState() {
   });
 
   useEffect(() => {
+    if (!mounted) return undefined;
     const id = setInterval(() => {
-      setState((prev) => applyDailyReset(prev));
+      setState((prev) => {
+        const next = applyDailyReset(prev);
+        saveState(next);
+        return next;
+      });
     }, 60 * 1000);
     return () => clearInterval(id);
-  }, []);
-
-  useEffect(() => {
-    if (mounted) saveState(state);
-  }, [mounted, state]);
+  }, [mounted]);
 
   const getCharState = useCallback(
     (charName: string): CharDailyState => state.characters[charName] ?? defaultCharState(),
@@ -269,10 +271,12 @@ export function useDailiesState() {
     (charName: string, updater: (cs: CharDailyState) => CharDailyState) => {
       setState((prev) => {
         const cur = prev.characters[charName] ?? defaultCharState();
-        return {
+        const next = {
           ...prev,
           characters: { ...prev.characters, [charName]: updater(cur) },
         };
+        saveState(next);
+        return next;
       });
     },
     [],
@@ -323,13 +327,15 @@ export function useDailiesState() {
           const remaining = Math.max(0, max - othersTotal);
           clamped = Math.min(remaining, clamped);
         }
-        return {
+        const next = {
           ...prev,
           characters: {
             ...prev.characters,
             [charName]: { ...cs, counters: { ...cs.counters, [id]: clamped } },
           },
         };
+        saveState(next);
+        return next;
       });
     },
     [characters],
@@ -361,13 +367,15 @@ export function useDailiesState() {
       const char = characters.find((c) => c.characterName === charName);
       setState((prev) => {
         const cs = prev.characters[charName] ?? defaultCharState();
-        return {
+        const next = {
           ...prev,
           characters: {
             ...prev.characters,
             [charName]: applyCheckAll(cs, char, charName, characters, prev.characters),
           },
         };
+        saveState(next);
+        return next;
       });
     },
     [characters],

@@ -32,8 +32,8 @@ export async function GET() {
     const items = (await response.json()) as NexonNewsItem[];
 
     // Sort by liveDate descending, take latest 15
-    const sorted = [...items]
-      .sort((a, b) => new Date(b.liveDate).getTime() - new Date(a.liveDate).getTime())
+    const sorted = items
+      .toSorted((a, b) => new Date(b.liveDate).getTime() - new Date(a.liveDate).getTime())
       .slice(0, 15);
 
     const patchNotes = sorted.map((item) => {

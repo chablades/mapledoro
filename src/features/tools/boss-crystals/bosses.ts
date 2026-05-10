@@ -105,7 +105,9 @@ export const PRESETS = [
   { key: "ekalos", label: "EKalos" },
 ] as const;
 
+const mesoFormatter = new Intl.NumberFormat("en-US");
+
 export function formatMeso(n: number): string {
-  return new Intl.NumberFormat("en-US").format(Math.floor(n));
+  return mesoFormatter.format(Math.floor(n));
 }
 

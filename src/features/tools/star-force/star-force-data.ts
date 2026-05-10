@@ -28,7 +28,7 @@ export interface StarForceOpts {
 // -- Rates --------------------------------------------------------------------
 
 /** Success rate for enhancing from star S to S+1 (index = current star). */
-export const SUCCESS_RATE: readonly number[] = [
+const SUCCESS_RATE: readonly number[] = [
   0.95, 0.90, 0.85, 0.85, 0.80,  //  0- 4
   0.75, 0.70, 0.65, 0.60, 0.55,  //  5- 9
   0.50, 0.45, 0.40, 0.35, 0.30,  // 10-14
@@ -38,7 +38,7 @@ export const SUCCESS_RATE: readonly number[] = [
 ];
 
 /** Destruction (boom) rate at star S (index = current star). */
-export const DESTROY_RATE: readonly number[] = [
+const DESTROY_RATE: readonly number[] = [
   0,     0,     0,     0,     0,      //  0- 4
   0,     0,     0,     0,     0,      //  5- 9
   0,     0,     0,     0,     0,      // 10-14
@@ -58,7 +58,7 @@ const MAINTAIN_RATE: readonly number[] = [
 ];
 
 /** When destroyed at star S, the trace restores to this star (GMS). */
-export function restorePoint(star: number): number {
+function restorePoint(star: number): number {
   if (star < 20)  return 12;
   if (star === 20) return 15;
   if (star < 23)  return 17;  // 21-22
@@ -121,7 +121,7 @@ const COST_FN: ((L3: number, S1: number) => number)[] = [
 ];
 
 /** Base meso cost for one attempt (before multiplier). */
-export function baseCost(level: number, star: number): number {
+function baseCost(level: number, star: number): number {
   const L = Math.floor(level / 10) * 10;
   const L3 = L * L * L;
   return COST_FN[star](L3, star + 1);
@@ -350,6 +350,8 @@ export function simulate(opts: StarForceOpts, trials: number): SimulationResult 
 
 // -- Formatting ---------------------------------------------------------------
 
+const mesoFormatter = new Intl.NumberFormat("en-US");
+
 export function formatMeso(n: number): string {
   if (n >= 1_000_000_000_000) {
     return (n / 1_000_000_000_000).toFixed(1).replace(/\.0$/, "") + "T";
@@ -360,9 +362,9 @@ export function formatMeso(n: number): string {
   if (n >= 1_000_000) {
     return (n / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M";
   }
-  return new Intl.NumberFormat("en-US").format(Math.floor(n));
+  return mesoFormatter.format(Math.floor(n));
 }
 
 export function formatMesoFull(n: number): string {
-  return new Intl.NumberFormat("en-US").format(Math.floor(n));
+  return mesoFormatter.format(Math.floor(n));
 }

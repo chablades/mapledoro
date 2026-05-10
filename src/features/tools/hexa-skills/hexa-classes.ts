@@ -816,7 +816,7 @@ export const COMMON_SKILLS: HexaSkillDef[] = [
 
 // ── Exported class list ──────────────────────────────────────────────────────
 
-export const HEXA_CLASSES: HexaClassDef[] = [
+const HEXA_CLASSES: HexaClassDef[] = [
   // Explorers
   HERO, PALADIN, DARK_KNIGHT,
   ARCH_MAGE_FP, ARCH_MAGE_IL, BISHOP,
