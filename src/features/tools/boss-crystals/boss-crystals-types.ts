@@ -20,7 +20,7 @@ export type DialogState =
   | { type: "add-bosses"; name: string; imageURL: string | null }
   | { type: "edit"; index: number };
 
-export interface SavedState {
+interface SavedState {
   server: string;
   characters?: CharacterEntry[];
   columns?: { name: string; bosses: BossRow[] }[];

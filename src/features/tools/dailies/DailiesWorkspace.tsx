@@ -26,6 +26,132 @@ import {
 } from "./useDailiesState";
 import RemindersConfigBar from "./RemindersConfigBar";
 
+// -- Style helpers ------------------------------------------------------------
+
+function checkboxItemStyle(
+  theme: AppTheme,
+  checked: boolean,
+): React.CSSProperties {
+  return {
+    display: "flex",
+    alignItems: "center",
+    gap: "0.5rem",
+    padding: "5px 8px",
+    borderRadius: "8px",
+    cursor: "pointer",
+    background: checked ? theme.accentSoft : theme.timerBg,
+    border: `1px solid ${checked ? theme.accent : theme.border}`,
+    fontSize: "0.78rem",
+    fontWeight: 700,
+    color: checked ? theme.accentText : theme.text,
+    userSelect: "none",
+    transition: "background 0.15s, border-color 0.15s",
+  };
+}
+
+function counterBtnStyle(
+  theme: AppTheme,
+  disabled: boolean,
+): React.CSSProperties {
+  return {
+    width: 24,
+    height: 24,
+    borderRadius: 6,
+    border: `1px solid ${theme.border}`,
+    background: theme.panel,
+    color: theme.text,
+    cursor: disabled ? "not-allowed" : "pointer",
+    opacity: disabled ? 0.4 : 1,
+    fontWeight: 800,
+  };
+}
+
+function dialogOverlayStyle(): React.CSSProperties {
+  return {
+    position: "fixed",
+    inset: 0,
+    background: "rgba(0,0,0,0.55)",
+    zIndex: 20,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "1rem",
+  };
+}
+
+function dialogPanelStyle(theme: AppTheme): React.CSSProperties {
+  return {
+    background: theme.panel,
+    border: `1px solid ${theme.border}`,
+    borderRadius: 14,
+    padding: "1.5rem",
+    width: "100%",
+    maxWidth: 560,
+    maxHeight: "90vh",
+    display: "flex",
+    flexDirection: "column",
+  };
+}
+
+function dialogCancelBtnStyle(theme: AppTheme): React.CSSProperties {
+  return {
+    padding: "0.5rem 1rem",
+    borderRadius: 8,
+    border: `1px solid ${theme.border}`,
+    background: theme.timerBg,
+    color: theme.text,
+    fontWeight: 700,
+    fontSize: "0.8rem",
+    cursor: "pointer",
+  };
+}
+
+function accentBtnStyle(
+  theme: AppTheme,
+  padding = "0.5rem 1.25rem",
+): React.CSSProperties {
+  return {
+    padding,
+    borderRadius: 8,
+    background: theme.accent,
+    color: "#fff",
+    border: "none",
+    fontWeight: 800,
+    fontSize: "0.8rem",
+    cursor: "pointer",
+  };
+}
+
+function emptyStateContainerStyle(theme: AppTheme): React.CSSProperties {
+  return {
+    background: theme.panel,
+    border: `1px dashed ${theme.border}`,
+    padding: "3rem 2rem",
+    textAlign: "center",
+    color: theme.muted,
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: "0.75rem",
+  };
+}
+
+function addCharLinkStyle(theme: AppTheme): React.CSSProperties {
+  return {
+    marginTop: "0.5rem",
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 6,
+    padding: "0.55rem 1.25rem",
+    borderRadius: 10,
+    background: theme.accent,
+    color: "#fff",
+    fontWeight: 800,
+    fontSize: "0.85rem",
+    textDecoration: "none",
+  };
+}
+
 // -- Small UI bits ------------------------------------------------------------
 
 function CheckboxItem({
@@ -41,21 +167,7 @@ function CheckboxItem({
 }) {
   return (
     <label
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: "0.5rem",
-        padding: "5px 8px",
-        borderRadius: "8px",
-        cursor: "pointer",
-        background: checked ? theme.accentSoft : theme.timerBg,
-        border: `1px solid ${checked ? theme.accent : theme.border}`,
-        fontSize: "0.78rem",
-        fontWeight: 700,
-        color: checked ? theme.accentText : theme.text,
-        userSelect: "none",
-        transition: "background 0.15s, border-color 0.15s",
-      }}
+      style={checkboxItemStyle(theme, checked)}
     >
       <input
         type="checkbox"
@@ -116,7 +228,7 @@ function CounterRow({
         </div>
         <div
           style={{
-            fontSize: "0.65rem",
+            fontSize: "0.75rem",
             color: worldCapped ? theme.accent : theme.muted,
             fontWeight: 700,
             marginTop: 1,
@@ -130,17 +242,7 @@ function CounterRow({
         type="button"
         onClick={() => onChange(value - 1)}
         disabled={value <= 0}
-        style={{
-          width: 24,
-          height: 24,
-          borderRadius: 6,
-          border: `1px solid ${theme.border}`,
-          background: theme.panel,
-          color: theme.text,
-          cursor: value <= 0 ? "not-allowed" : "pointer",
-          opacity: value <= 0 ? 0.4 : 1,
-          fontWeight: 800,
-        }}
+        style={counterBtnStyle(theme, value <= 0)}
         aria-label={`Decrement ${task.label}`}
       >
         −
@@ -161,17 +263,7 @@ function CounterRow({
         onClick={() => onChange(value + 1)}
         disabled={cannotIncrement}
         title={worldCapped ? "World cap reached" : undefined}
-        style={{
-          width: 24,
-          height: 24,
-          borderRadius: 6,
-          border: `1px solid ${theme.border}`,
-          background: theme.panel,
-          color: theme.text,
-          cursor: cannotIncrement ? "not-allowed" : "pointer",
-          opacity: cannotIncrement ? 0.4 : 1,
-          fontWeight: 800,
-        }}
+        style={counterBtnStyle(theme, cannotIncrement)}
         aria-label={`Increment ${task.label}`}
       >
         +
@@ -184,7 +276,7 @@ function SectionHeader({ theme, label }: { theme: AppTheme; label: string }) {
   return (
     <div
       style={{
-        fontSize: "0.68rem",
+        fontSize: "0.75rem",
         fontWeight: 800,
         textTransform: "uppercase",
         letterSpacing: "0.08em",
@@ -333,16 +425,18 @@ function CardHeader({
         >
           <div
             style={{
-              width: `${pct}%`,
+              width: "100%",
               height: "100%",
               background: complete ? "#10b981" : theme.accent,
-              transition: "width 0.25s",
+              transform: `scaleX(${pct / 100})`,
+              transformOrigin: "left",
+              transition: "transform 0.25s",
             }}
           />
         </div>
         <div
           style={{
-            fontSize: "0.72rem",
+            fontSize: "0.75rem",
             fontWeight: 800,
             color: complete ? "#10b981" : theme.muted,
             flexShrink: 0,
@@ -402,16 +496,7 @@ function CardBody({
         <button
           type="button"
           onClick={onEdit}
-          style={{
-            padding: "0.5rem 1rem",
-            borderRadius: 8,
-            background: theme.accent,
-            color: "#fff",
-            border: "none",
-            fontWeight: 800,
-            fontSize: "0.8rem",
-            cursor: "pointer",
-          }}
+          style={accentBtnStyle(theme, "0.5rem 1rem")}
         >
           + Add tasks
         </button>
@@ -530,7 +615,7 @@ function DialogSection({
       >
         <div
           style={{
-            fontSize: "0.72rem",
+            fontSize: "0.75rem",
             fontWeight: 800,
             color: theme.muted,
             textTransform: "uppercase",
@@ -583,7 +668,7 @@ function dialogPillBtn(theme: AppTheme): React.CSSProperties {
     border: `1px solid ${theme.border}`,
     background: theme.timerBg,
     color: theme.muted,
-    fontSize: "0.68rem",
+    fontSize: "0.75rem",
     fontWeight: 800,
     cursor: "pointer",
   };
@@ -592,18 +677,18 @@ function dialogPillBtn(theme: AppTheme): React.CSSProperties {
 function DailiesSelectionDialog({
   theme,
   charName,
-  initial,
+  draft,
+  setDraft,
   onCancel,
   onConfirm,
 }: {
   theme: AppTheme;
   charName: string;
-  initial: SelectedTasks;
+  draft: SelectedTasks;
+  setDraft: (updater: (prev: SelectedTasks) => SelectedTasks) => void;
   onCancel: () => void;
   onConfirm: (next: SelectedTasks) => void;
 }) {
-  const [draft, setDraft] = useState<SelectedTasks>(initial);
-
   const toggleIn = (key: keyof SelectedTasks, id: string) => {
     setDraft((prev) => {
       const cur = prev[key];
@@ -618,31 +703,18 @@ function DailiesSelectionDialog({
 
   return (
     <div
+      role="button"
+      tabIndex={0}
       onClick={onCancel}
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: "rgba(0,0,0,0.55)",
-        zIndex: 100,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "1rem",
-      }}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onCancel(); } }}
+      style={dialogOverlayStyle()}
     >
       <div
+        role="button"
+        tabIndex={0}
         onClick={(e) => e.stopPropagation()}
-        style={{
-          background: theme.panel,
-          border: `1px solid ${theme.border}`,
-          borderRadius: 14,
-          padding: "1.5rem",
-          width: "100%",
-          maxWidth: 560,
-          maxHeight: "90vh",
-          display: "flex",
-          flexDirection: "column",
-        }}
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); } }}
+        style={dialogPanelStyle(theme)}
       >
         <div
           style={{
@@ -719,32 +791,14 @@ function DailiesSelectionDialog({
           <button
             type="button"
             onClick={onCancel}
-            style={{
-              padding: "0.5rem 1rem",
-              borderRadius: 8,
-              border: `1px solid ${theme.border}`,
-              background: theme.timerBg,
-              color: theme.text,
-              fontWeight: 700,
-              fontSize: "0.8rem",
-              cursor: "pointer",
-            }}
+            style={dialogCancelBtnStyle(theme)}
           >
             Cancel
           </button>
           <button
             type="button"
             onClick={() => onConfirm(draft)}
-            style={{
-              padding: "0.5rem 1.25rem",
-              borderRadius: 8,
-              background: theme.accent,
-              color: "#fff",
-              border: "none",
-              fontWeight: 800,
-              fontSize: "0.8rem",
-              cursor: "pointer",
-            }}
+            style={accentBtnStyle(theme)}
           >
             Save
           </button>
@@ -822,17 +876,7 @@ function EmptyState({ theme }: { theme: AppTheme }) {
   return (
     <div
       className="panel-card"
-      style={{
-        background: theme.panel,
-        border: `1px dashed ${theme.border}`,
-        padding: "3rem 2rem",
-        textAlign: "center",
-        color: theme.muted,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        gap: "0.75rem",
-      }}
+      style={emptyStateContainerStyle(theme)}
     >
       <div style={{ fontSize: "2rem" }}>📋</div>
       <div style={{ fontWeight: 700, fontSize: "0.95rem", color: theme.text }}>
@@ -843,19 +887,7 @@ function EmptyState({ theme }: { theme: AppTheme }) {
       </div>
       <Link
         href="/characters"
-        style={{
-          marginTop: "0.5rem",
-          display: "inline-flex",
-          alignItems: "center",
-          gap: 6,
-          padding: "0.55rem 1.25rem",
-          borderRadius: 10,
-          background: theme.accent,
-          color: "#fff",
-          fontWeight: 800,
-          fontSize: "0.85rem",
-          textDecoration: "none",
-        }}
+        style={addCharLinkStyle(theme)}
       >
         + Add Character
       </Link>
@@ -864,6 +896,16 @@ function EmptyState({ theme }: { theme: AppTheme }) {
 }
 
 // -- Workspace ----------------------------------------------------------------
+
+function cloneSelectedTasks(selected: SelectedTasks): SelectedTasks {
+  return {
+    arcane: [...selected.arcane],
+    sacred: [...selected.sacred],
+    bosses: [...selected.bosses],
+    activities: [...selected.activities],
+    content: [...selected.content],
+  };
+}
 
 export default function DailiesWorkspace({ theme }: { theme: AppTheme }) {
   const {
@@ -880,10 +922,9 @@ export default function DailiesWorkspace({ theme }: { theme: AppTheme }) {
   } = useDailiesState();
 
   const [editingChar, setEditingChar] = useState<string | null>(null);
+  const [editingDraft, setEditingDraft] = useState<SelectedTasks | null>(null);
 
   if (!mounted) return null;
-
-  const editingState = editingChar ? getCharState(editingChar) : null;
 
   return (
     <>
@@ -927,7 +968,10 @@ export default function DailiesWorkspace({ theme }: { theme: AppTheme }) {
                   }
                   onReset={() => resetCharacter(char.characterName)}
                   onCheckAll={() => checkAll(char.characterName)}
-                  onEdit={() => setEditingChar(char.characterName)}
+                  onEdit={() => {
+                    setEditingChar(char.characterName);
+                    setEditingDraft(cloneSelectedTasks(getCharState(char.characterName).selected));
+                  }}
                   onToggleCollapsed={() => toggleCollapsed(char.characterName)}
                 />
               ))}
@@ -936,15 +980,23 @@ export default function DailiesWorkspace({ theme }: { theme: AppTheme }) {
         </div>
       </div>
 
-      {editingChar && editingState && (
+      {editingChar && editingDraft && (
         <DailiesSelectionDialog
+          key={editingChar}
           theme={theme}
           charName={editingChar}
-          initial={editingState.selected}
-          onCancel={() => setEditingChar(null)}
+          draft={editingDraft}
+          setDraft={(updater) => {
+            setEditingDraft((prev) => (prev ? updater(prev) : prev));
+          }}
+          onCancel={() => {
+            setEditingChar(null);
+            setEditingDraft(null);
+          }}
           onConfirm={(next) => {
             setSelected(editingChar, next);
             setEditingChar(null);
+            setEditingDraft(null);
           }}
         />
       )}

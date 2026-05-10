@@ -132,18 +132,18 @@ function getAdjustedRate(current: RateEntry, prev: RateEntry[], pool: RateEntry[
     if (MAX_CATEGORY_COUNT.has(cat)) prevCounts.set(cat, (prevCounts.get(cat) ?? 0) + 1);
   }
 
-  const toRemove: Cat[] = [];
+  const toRemove = new Set<Cat>();
   for (const [spCat, count] of prevCounts) {
     const max = MAX_CATEGORY_COUNT.get(spCat)!;
     if (count > max || (spCat === currentCat && count + 1 > max)) return 0;
-    if (count === max) toRemove.push(spCat);
+    if (count === max) toRemove.add(spCat);
   }
 
-  if (toRemove.length === 0) return currentRate;
+  if (toRemove.size === 0) return currentRate;
 
   let adjustedTotal = 100;
   for (const [cat, , rate] of pool) {
-    if (toRemove.includes(cat)) adjustedTotal -= rate;
+    if (toRemove.has(cat)) adjustedTotal -= rate;
   }
   return (currentRate / adjustedTotal) * 100;
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useSyncExternalStore } from "react";
+import { useState, useCallback, useSyncExternalStore } from "react";
 import {
   readCharactersStore,
   selectCharactersList,
@@ -44,7 +44,7 @@ function todayStr(): string {
   return formatIsoDate(new Date());
 }
 
-export function makeBossKey(type: LiberationType, bossName: string): string {
+function makeBossKey(type: LiberationType, bossName: string): string {
   return `${type}:${bossName}`;
 }
 
@@ -81,7 +81,7 @@ export function formatDate(dateStr: string): string {
 
 // -- Calculation --------------------------------------------------------------
 
-export interface QuestMilestone {
+interface QuestMilestone {
   questIdx: number;
   questLabel: string;
   completionDate: string;
@@ -380,17 +380,24 @@ export function useLiberationState() {
 
   const { type, questIdx, currentTraces, genesisPass, startDate, selections } = form;
 
-  const setQuestIdx = useCallback((v: number) => setForm((f) => ({ ...f, questIdx: v })), []);
-  const setCurrentTraces = useCallback((v: number) => setForm((f) => ({ ...f, currentTraces: v })), []);
-  const setGenesisPass = useCallback((updater: (prev: boolean) => boolean) => setForm((f) => ({ ...f, genesisPass: updater(f.genesisPass) })), []);
-  const setStartDate = useCallback((v: string) => setForm((f) => ({ ...f, startDate: v })), []);
-  const setSelections = useCallback((updater: (prev: Record<string, BossSelection>) => Record<string, BossSelection>) => setForm((f) => ({ ...f, selections: updater(f.selections) })), []);
+  const updateForm = useCallback(
+    (updater: (prev: FormState) => FormState) => {
+      setForm((prev) => {
+        const next = updater(prev);
+        if (selectedCharName) {
+          writeCharacterToolData(selectedCharName, "liberation", formToSaved(next));
+        }
+        return next;
+      });
+    },
+    [selectedCharName],
+  );
 
-  useEffect(() => {
-    if (selectedCharName) {
-      writeCharacterToolData(selectedCharName, "liberation", formToSaved(form));
-    }
-  }, [selectedCharName, form]);
+  const setQuestIdx = useCallback((v: number) => updateForm((f) => ({ ...f, questIdx: v })), [updateForm]);
+  const setCurrentTraces = useCallback((v: number) => updateForm((f) => ({ ...f, currentTraces: v })), [updateForm]);
+  const setGenesisPass = useCallback((updater: (prev: boolean) => boolean) => updateForm((f) => ({ ...f, genesisPass: updater(f.genesisPass) })), [updateForm]);
+  const setStartDate = useCallback((v: string) => updateForm((f) => ({ ...f, startDate: v })), [updateForm]);
+  const setSelections = useCallback((updater: (prev: Record<string, BossSelection>) => Record<string, BossSelection>) => updateForm((f) => ({ ...f, selections: updater(f.selections) })), [updateForm]);
 
   const handleCharChange = useCallback(
     (charName: string | null) => {
@@ -471,14 +478,14 @@ export function useLiberationState() {
 
   const switchType = useCallback(
     (t: LiberationType) => {
-      setForm((f) => ({
+      updateForm((f) => ({
         ...f,
         type: t,
         questIdx: Math.min(f.questIdx, (t === "genesis" ? GENESIS_QUESTS : DESTINY_QUESTS).length - 1),
         currentTraces: 0,
       }));
     },
-    [],
+    [updateForm],
   );
 
   // Calculate

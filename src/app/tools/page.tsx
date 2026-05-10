@@ -5,6 +5,7 @@
   Displays a grid of available tool cards that link to their sub-routes.
 */
 import Link from "next/link";
+import Image from "next/image";
 import AppShell from "../../components/AppShell";
 import type { AppTheme } from "../../components/themes";
 import { WikiAttribution } from "../../components/WikiAttribution";
@@ -122,7 +123,7 @@ function ToolGrid({ tools, theme }: { tools: ToolCard[]; theme: AppTheme }) {
           >
             <div style={{ fontSize: "2rem", marginBottom: "0.75rem", height: 36, display: "flex", alignItems: "center" }}>
               {tool.iconType === "image" ? (
-                <img src={tool.icon} alt="" width={36} height={36} style={{ objectFit: "contain" }} />
+                <Image src={tool.icon} alt="" width={36} height={36} className="item-icon-img" />
               ) : (
                 tool.icon
               )}

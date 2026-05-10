@@ -197,17 +197,9 @@ export default function AppTopNav({
           aria-label="Open menu"
           onClick={() => setMobileMenuOpen((prev) => !prev)}
           style={{
-            width: "40px",
-            minWidth: "40px",
-            height: "40px",
-            flexShrink: 0,
             border: `1px solid ${theme.border}`,
-            borderRadius: "10px",
             background: theme.panel,
             color: theme.text,
-            cursor: "pointer",
-            padding: 0,
-            lineHeight: 1,
           }}
         >
           <svg aria-hidden="true" width="28" height="14" viewBox="0 0 28 14" fill="none">

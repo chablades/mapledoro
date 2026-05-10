@@ -18,6 +18,10 @@ const nextConfig = {
         protocol: "https",
         hostname: "maplestory.io",
       },
+      {
+        protocol: "https",
+        hostname: "media.maplestorywiki.net",
+      },
     ],
   },
 };

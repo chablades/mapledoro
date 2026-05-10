@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -83,7 +84,7 @@ function SymbolCardHeader({
         marginBottom: "0.75rem",
       }}
     >
-      <img
+      <Image
         src={area.icon}
         alt={area.name}
         width={38}
@@ -109,7 +110,7 @@ function SymbolCardHeader({
         </div>
         <div
           style={{
-            fontSize: "0.68rem",
+            fontSize: "0.75rem",
             fontWeight: 700,
             color: theme.muted,
           }}
@@ -121,11 +122,14 @@ function SymbolCardHeader({
       {isSacred && (
         <div
           className="sym-btn"
+          role="button"
+          tabIndex={0}
           onClick={() => updateSymbol(area.name, { enabled: !state.enabled })}
+          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); updateSymbol(area.name, { enabled: !state.enabled }); } }}
           style={{
             padding: "4px 10px",
             borderRadius: "8px",
-            fontSize: "0.72rem",
+            fontSize: "0.75rem",
             fontWeight: 800,
             cursor: "pointer",
             color: isTracked ? theme.accentText : theme.muted,
@@ -146,7 +150,7 @@ function SymbolCardHeader({
         return (
           <div
             style={{
-              fontSize: "0.72rem",
+              fontSize: "0.75rem",
               fontWeight: 800,
               padding: "2px 8px",
               borderRadius: "6px",
@@ -201,7 +205,7 @@ function SymbolLevelControls({
       <div style={{ flex: "0 0 auto" }}>
         <div
           style={{
-            fontSize: "0.68rem",
+            fontSize: "0.75rem",
             fontWeight: 700,
             color: theme.muted,
             marginBottom: "3px",
@@ -237,7 +241,7 @@ function SymbolLevelControls({
         <div style={{ flex: 1 }}>
           <div
             style={{
-              fontSize: "0.68rem",
+              fontSize: "0.75rem",
               fontWeight: 700,
               color: theme.muted,
               marginBottom: "3px",
@@ -380,13 +384,16 @@ function SymbolIncomeControls({
       {!isSacred && (
         <div
           className="sym-btn"
+          role="button"
+          tabIndex={0}
           onClick={() =>
             updateSymbol(area.name, { weeklyEnabled: !state.weeklyEnabled })
           }
+          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); updateSymbol(area.name, { weeklyEnabled: !state.weeklyEnabled }); } }}
           style={{
             padding: "4px 10px",
             borderRadius: "8px",
-            fontSize: "0.72rem",
+            fontSize: "0.75rem",
             fontWeight: 800,
             color: state.weeklyEnabled ? theme.accentText : theme.muted,
             background: state.weeklyEnabled ? theme.accentSoft : "transparent",
@@ -519,7 +526,7 @@ function SymbolCard({
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          fontSize: "0.72rem",
+          fontSize: "0.75rem",
           fontWeight: 700,
           color: theme.muted,
           opacity: disabledSacred ? 0.4 : 1,
@@ -602,7 +609,7 @@ function OverallProgressPanel({
           display: "flex",
           justifyContent: "space-between",
           marginTop: "6px",
-          fontSize: "0.72rem",
+          fontSize: "0.75rem",
           fontWeight: 700,
           color: theme.muted,
         }}
@@ -711,7 +718,7 @@ function CompletionSummaryPanel({
                   {area.name}
                   <span
                     style={{
-                      fontSize: "0.68rem",
+                      fontSize: "0.75rem",
                       color: theme.muted,
                       marginLeft: "6px",
                     }}
@@ -983,11 +990,14 @@ export default function SymbolWorkspace({ theme }: { theme: AppTheme }) {
               <div style={{ marginLeft: "auto" }}>
                 <div
                   className="sym-btn"
+                  role="button"
+                  tabIndex={0}
                   onClick={resetAll}
+                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); resetAll(); } }}
                   style={{
                     padding: "4px 10px",
                     borderRadius: "8px",
-                    fontSize: "0.72rem",
+                    fontSize: "0.75rem",
                     fontWeight: 800,
                     color: "#e05a5a",
                     background: "transparent",

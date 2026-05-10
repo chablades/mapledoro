@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { useState, useMemo, useSyncExternalStore } from "react";
 import type { SetupFlowId } from "../../setup/flows";
 import type { PreviewPaneActions, PreviewPaneModel } from "../paneModels";
@@ -92,9 +93,11 @@ function HexNode({
       content = <span style={{ fontSize: 10, fontWeight: 800, color: lvColor }}>{skill.name.charAt(0)}</span>;
     } else {
       content = (
-        <img
+        <Image
           src={skill.icon}
           alt={skill.name}
+          fill
+          sizes="42px"
           onError={() => setImgError(true)}
           style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain" }}
         />

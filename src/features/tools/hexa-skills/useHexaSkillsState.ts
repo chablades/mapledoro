@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo, useSyncExternalStore } from "react";
+import { useState, useCallback, useMemo, useSyncExternalStore } from "react";
 import {
   readCharactersStore,
   selectCharactersList,
@@ -194,11 +194,18 @@ export function useHexaSkillsState() {
   const levels = normalizeLevels(state.levels, classDef);
   const desiredLevels = normalizeLevels(state.desiredLevels ?? defaultDesiredLevels(), classDef, 30);
 
-  useEffect(() => {
-    if (selectedCharName) {
-      writeCharacterToolData(selectedCharName, "hexaSkills", state);
-    }
-  }, [selectedCharName, state]);
+  const updateState = useCallback(
+    (updater: (prev: SavedState) => SavedState) => {
+      setState((prev) => {
+        const next = updater(prev);
+        if (selectedCharName) {
+          writeCharacterToolData(selectedCharName, "hexaSkills", next);
+        }
+        return next;
+      });
+    },
+    [selectedCharName],
+  );
 
   const handleCharChange = useCallback(
     (charName: string | null) => {
@@ -231,7 +238,7 @@ export function useHexaSkillsState() {
 
   // Class switching
   const setClassName = useCallback((name: string | null) => {
-    setState((prev) => {
+    updateState((prev) => {
       const newClassDef = name ? findClassByName(name) : null;
       const keepLevels = prev.className === name;
       return {
@@ -244,86 +251,86 @@ export function useHexaSkillsState() {
         ),
       };
     });
-  }, []);
+  }, [updateState]);
 
   // Level setters
   const setOriginLevel = useCallback((v: number) => {
-    setState((prev) => ({ ...prev, levels: { ...prev.levels, origin: Math.max(1, clampLevel(v)) } }));
-  }, []);
+    updateState((prev) => ({ ...prev, levels: { ...prev.levels, origin: Math.max(1, clampLevel(v)) } }));
+  }, [updateState]);
 
   const setAscentLevel = useCallback((v: number) => {
-    setState((prev) => ({ ...prev, levels: { ...prev.levels, ascent: clampLevel(v) } }));
-  }, []);
+    updateState((prev) => ({ ...prev, levels: { ...prev.levels, ascent: clampLevel(v) } }));
+  }, [updateState]);
 
   const setMasteryLevel = useCallback((idx: number, v: number) => {
-    setState((prev) => {
+    updateState((prev) => {
       const mastery = [...prev.levels.mastery];
       mastery[idx] = clampLevel(v);
       return { ...prev, levels: { ...prev.levels, mastery } };
     });
-  }, []);
+  }, [updateState]);
 
   const setEnhancementLevel = useCallback((idx: number, v: number) => {
-    setState((prev) => {
+    updateState((prev) => {
       const enhancement = [...prev.levels.enhancement];
       enhancement[idx] = clampLevel(v);
       return { ...prev, levels: { ...prev.levels, enhancement } };
     });
-  }, []);
+  }, [updateState]);
 
   const setCommonLevel = useCallback((idx: number, v: number) => {
-    setState((prev) => {
+    updateState((prev) => {
       const common = [...prev.levels.common];
       common[idx] = clampLevel(v);
       return { ...prev, levels: { ...prev.levels, common } };
     });
-  }, []);
+  }, [updateState]);
 
   // Desired level setters
   const setDesiredOriginLevel = useCallback((v: number) => {
-    setState((prev) => {
+    updateState((prev) => {
       const dl = prev.desiredLevels ?? defaultDesiredLevels();
       return { ...prev, desiredLevels: { ...dl, origin: Math.max(1, clampLevel(v)) } };
     });
-  }, []);
+  }, [updateState]);
 
   const setDesiredAscentLevel = useCallback((v: number) => {
-    setState((prev) => {
+    updateState((prev) => {
       const dl = prev.desiredLevels ?? defaultDesiredLevels();
       return { ...prev, desiredLevels: { ...dl, ascent: clampLevel(v) } };
     });
-  }, []);
+  }, [updateState]);
 
   const setDesiredMasteryLevel = useCallback((idx: number, v: number) => {
-    setState((prev) => {
+    updateState((prev) => {
       const dl = prev.desiredLevels ?? defaultDesiredLevels();
       const mastery = [...dl.mastery];
       mastery[idx] = clampLevel(v);
       return { ...prev, desiredLevels: { ...dl, mastery } };
     });
-  }, []);
+  }, [updateState]);
 
   const setDesiredEnhancementLevel = useCallback((idx: number, v: number) => {
-    setState((prev) => {
+    updateState((prev) => {
       const dl = prev.desiredLevels ?? defaultDesiredLevels();
       const enhancement = [...dl.enhancement];
       enhancement[idx] = clampLevel(v);
       return { ...prev, desiredLevels: { ...dl, enhancement } };
     });
-  }, []);
+  }, [updateState]);
 
   const setDesiredCommonLevel = useCallback((idx: number, v: number) => {
-    setState((prev) => {
+    updateState((prev) => {
       const dl = prev.desiredLevels ?? defaultDesiredLevels();
       const common = [...dl.common];
       common[idx] = clampLevel(v);
       return { ...prev, desiredLevels: { ...dl, common } };
     });
-  }, []);
+  }, [updateState]);
 
   const resetAll = useCallback(() => {
-    setState((prev) => ({ ...prev, levels: defaultLevels() }));
-  }, []);
+    updateState((prev) => ({ ...prev, levels: defaultLevels() }));
+  }, [updateState]);
 
   const costs = calcTotalCosts(levels, desiredLevels, classDef);
 

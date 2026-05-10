@@ -1,19 +1,10 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useState, useReducer, useSyncExternalStore } from "react";
 import type { CSSProperties } from "react";
-import { Line } from "react-chartjs-2";
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Tooltip,
-  Legend,
-} from "chart.js";
-
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend);
+import Link from "next/link";
+import dynamic from "next/dynamic";
+import Image from "next/image";
 import type { AppTheme } from "../../../components/themes";
 import { ToolHeader } from "../../../components/ToolHeader";
 import { WikiAttribution } from "../../../components/WikiAttribution";
@@ -24,6 +15,10 @@ import {
 } from "../../characters/model/charactersStore";
 import { readGlobalTool, writeGlobalTool } from "../globalToolsStore";
 import { PITCHED_BOSS_ITEMS, PITCHED_ITEMS_BY_ID } from "./pitched-items";
+
+const PitchedBossCharts = dynamic(() => import("./PitchedBossCharts"), {
+  ssr: false,
+});
 
 /* ------------------------------------------------------------------ */
 /*  Types & storage                                                    */
@@ -65,41 +60,6 @@ function todayStr(): string {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Chart helpers                                                      */
-/* ------------------------------------------------------------------ */
-
-const CHART_COLORS = [
-  "#e07840",
-  "#40b040",
-  "#7c6aff",
-  "#e05a5a",
-  "#40b8ff",
-  "#d4a02a",
-  "#d460a0",
-  "#60a060",
-  "#a090dd",
-  "#c08060",
-];
-
-function getLastNMonths(n: number): string[] {
-  const months: string[] = [];
-  const now = new Date();
-  for (let i = n - 1; i >= 0; i--) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    months.push(
-      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`,
-    );
-  }
-  return months;
-}
-
-function formatMonth(ym: string): string {
-  const [y, m] = ym.split("-");
-  const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-  return `${MONTH_NAMES[parseInt(m, 10) - 1]} '${y.slice(2)}`;
-}
-
-/* ------------------------------------------------------------------ */
 /*  Inline-style helpers                                               */
 /* ------------------------------------------------------------------ */
 
@@ -123,7 +83,7 @@ function thStyle(theme: AppTheme): CSSProperties {
     padding: "0.5rem 0.75rem",
     color: theme.muted,
     fontWeight: 700,
-    fontSize: "0.72rem",
+    fontSize: "0.75rem",
     textTransform: "uppercase" as const,
     letterSpacing: "0.04em",
   };
@@ -136,6 +96,16 @@ function tdStyle(theme: AppTheme): CSSProperties {
     fontSize: "0.82rem",
   };
 }
+
+const addDropBtnBase: CSSProperties = {
+  padding: "0.5rem 1.25rem",
+  border: "none",
+  borderRadius: 8,
+  fontWeight: 700,
+  fontSize: "0.85rem",
+  height: 38,
+  whiteSpace: "nowrap",
+};
 
 function panelStyle(theme: AppTheme): CSSProperties {
   return {
@@ -164,39 +134,26 @@ function ItemIcon({ src }: { src: string }) {
         verticalAlign: "middle",
       }}
     >
-      <img
+      <Image
         src={src}
         alt=""
+        width={32}
+        height={32}
         style={{ imageRendering: "pixelated" }}
       />
     </span>
   );
 }
 
-function DropCountBarChart({
+function DropLogTable({
   theme,
   drops,
+  onDelete,
 }: {
   theme: AppTheme;
   drops: PitchedBossDrop[];
+  onDelete: (id: string) => void;
 }) {
-  const counts = new Map<string, number>();
-  for (const drop of drops) {
-    counts.set(drop.itemId, (counts.get(drop.itemId) ?? 0) + 1);
-  }
-
-  const entries = Array.from(counts.entries())
-    .map(([itemId, count]) => ({
-      item: PITCHED_ITEMS_BY_ID.get(itemId),
-      count,
-    }))
-    .filter((e): e is { item: NonNullable<typeof e.item>; count: number } =>
-      Boolean(e.item),
-    )
-    .sort((a, b) => b.count - a.count);
-
-  const maxCount = Math.max(...entries.map((e) => e.count), 1);
-
   return (
     <div style={panelStyle(theme)}>
       <div
@@ -204,102 +161,79 @@ function DropCountBarChart({
           fontWeight: 700,
           color: theme.text,
           marginBottom: "1rem",
-          fontSize: "0.95rem",
+          fontSize: "1rem",
         }}
       >
-        Drops by Item
+        Drop Log ({drops.length} total)
       </div>
-      {entries.map(({ item, count }, i) => (
-        <div key={item.id} style={{ marginBottom: "0.6rem" }}>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              fontSize: "0.78rem",
-              marginBottom: 3,
-            }}
-          >
-            <span style={{ display: "flex", alignItems: "center", gap: 5, color: theme.text, fontWeight: 600 }}>
-              <ItemIcon src={item.icon} />
-              {item.name}
-            </span>
-            <span style={{ color: theme.muted, fontWeight: 700 }}>{count}</span>
-          </div>
-          <div
-            style={{
-              width: "100%",
-              height: 18,
-              background: theme.timerBg,
-              borderRadius: 6,
-              overflow: "hidden",
-            }}
-          >
-            <div
+      <div style={{ overflowX: "auto", maxHeight: 400, overflowY: "auto" }}>
+        <table
+          style={{
+            width: "100%",
+            borderCollapse: "collapse",
+            fontSize: "0.82rem",
+          }}
+        >
+          <thead>
+            <tr
               style={{
-                width: `${(count / maxCount) * 100}%`,
-                minWidth: 4,
-                height: "100%",
-                background: CHART_COLORS[i % CHART_COLORS.length],
-                borderRadius: 6,
-                transition: "width 0.3s ease",
+                borderBottom: `2px solid ${theme.border}`,
+                position: "sticky",
+                top: 0,
+                background: theme.panel,
               }}
-            />
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function MonthlyTimeSeriesChart({
-  theme,
-  drops,
-}: {
-  theme: AppTheme;
-  drops: PitchedBossDrop[];
-}) {
-  const months = getLastNMonths(6);
-  const labels = months.map(formatMonth);
-  const charNames = Array.from(new Set(drops.map((d) => d.characterName)));
-
-  const datasets = charNames.map((name, i) => ({
-    label: name,
-    data: months.map(
-      (month) => drops.filter((d) => d.characterName === name && d.date.startsWith(month)).length,
-    ),
-    borderColor: CHART_COLORS[i % CHART_COLORS.length],
-    backgroundColor: CHART_COLORS[i % CHART_COLORS.length],
-    tension: 0.25,
-    pointRadius: 4,
-    pointHoverRadius: 6,
-    borderWidth: 2.5,
-  }));
-
-  const chartData = { labels, datasets };
-
-  const options = {
-    responsive: true,
-    maintainAspectRatio: true,
-    plugins: {
-      legend: { position: "bottom" as const, labels: { color: theme.muted, font: { size: 12, weight: 600 as const } } },
-      tooltip: { mode: "index" as const, intersect: false },
-    },
-    scales: {
-      x: { ticks: { color: theme.muted }, grid: { color: theme.border } },
-      y: {
-        beginAtZero: true,
-        ticks: { color: theme.muted, stepSize: 1 },
-        grid: { color: theme.border },
-      },
-    },
-  };
-
-  return (
-    <div style={panelStyle(theme)}>
-      <div style={{ fontWeight: 700, color: theme.text, marginBottom: "1rem", fontSize: "0.95rem" }}>
-        Monthly Drops by Character
+            >
+              <th style={thStyle(theme)}>Date</th>
+              <th style={thStyle(theme)}>Character</th>
+              <th style={thStyle(theme)}>Item</th>
+              <th style={thStyle(theme)}>Boss</th>
+              <th style={thStyle(theme)}>CH</th>
+              <th style={{ ...thStyle(theme), width: 40 }} />
+            </tr>
+          </thead>
+          <tbody>
+            {drops.map((drop) => {
+              const item = PITCHED_ITEMS_BY_ID.get(drop.itemId);
+              return (
+                <tr
+                  key={drop.id}
+                  style={{ borderBottom: `1px solid ${theme.border}` }}
+                >
+                  <td style={tdStyle(theme)}>{drop.date}</td>
+                  <td style={tdStyle(theme)}>{drop.characterName}</td>
+                  <td style={{ ...tdStyle(theme), fontWeight: 600 }}>
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+                      {item && <ItemIcon src={item.icon} />}
+                      {item?.name ?? drop.itemId}
+                    </span>
+                  </td>
+                  <td style={{ ...tdStyle(theme), color: theme.muted }}>
+                    {item?.boss ?? "—"}
+                  </td>
+                  <td style={tdStyle(theme)}>{drop.channel}</td>
+                  <td style={tdStyle(theme)}>
+                    <button
+                      onClick={() => onDelete(drop.id)}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        color: theme.muted,
+                        cursor: "pointer",
+                        fontSize: "0.8rem",
+                        padding: "2px 6px",
+                        borderRadius: 4,
+                      }}
+                      title="Delete drop"
+                    >
+                      ✕
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
-      <Line data={chartData} options={options} />
     </div>
   );
 }
@@ -315,24 +249,44 @@ export default function PitchedBossDropsWorkspace({
 }: {
   theme: AppTheme;
 }) {
-  // useSyncExternalStore avoids setState-in-effect for the SSR/client gate
   const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
 
-  // Lazy initialization reads localStorage only on the client
   const [drops, setDrops] = useState<PitchedBossDrop[]>(() =>
     typeof window === "undefined" ? [] : readStore().drops,
   );
-  // Read characters fresh each render so newly added characters appear immediately
   const characters: StoredCharacterRecord[] = mounted
     ? selectCharactersList(readCharactersStore())
     : [];
 
-  // Form state
-  const [selectedCharId, setSelectedCharId] = useState("");
-  const [selectedItemId, setSelectedItemId] = useState("");
-  const [channel, setChannel] = useState("");
-  const [date, setDate] = useState(() =>
-    typeof window === "undefined" ? "" : todayStr(),
+  interface FormState {
+    charId: string;
+    itemId: string;
+    channel: string;
+    date: string;
+  }
+  type FormAction =
+    | { type: "setCharId"; value: string }
+    | { type: "setItemId"; value: string }
+    | { type: "setChannel"; value: string }
+    | { type: "setDate"; value: string }
+    | { type: "resetAfterAdd" };
+  const [form, dispatchForm] = useReducer(
+    (state: FormState, action: FormAction): FormState => {
+      switch (action.type) {
+        case "setCharId": return { ...state, charId: action.value };
+        case "setItemId": return { ...state, itemId: action.value };
+        case "setChannel": return { ...state, channel: action.value };
+        case "setDate": return { ...state, date: action.value };
+        case "resetAfterAdd": return { ...state, itemId: "", channel: "" };
+      }
+    },
+    undefined,
+    (): FormState => ({
+      charId: "",
+      itemId: "",
+      channel: "",
+      date: typeof window === "undefined" ? "" : todayStr(),
+    }),
   );
 
   function saveDrops(next: PitchedBossDrop[]) {
@@ -341,9 +295,9 @@ export default function PitchedBossDropsWorkspace({
   }
 
   function handleAdd() {
-    if (!selectedCharId || !selectedItemId || !channel || !date) return;
+    if (!form.charId || !form.itemId || !form.channel || !form.date) return;
     const char = characters.find(
-      (c) => c.characterName === selectedCharId,
+      (c) => c.characterName === form.charId,
     );
     if (!char) return;
 
@@ -351,16 +305,15 @@ export default function PitchedBossDropsWorkspace({
       id: generateId(),
       characterId: String(char.characterID),
       characterName: char.characterName,
-      itemId: selectedItemId,
-      channel: parseInt(channel, 10),
-      date,
-      timestamp: new Date(date).getTime(),
+      itemId: form.itemId,
+      channel: parseInt(form.channel, 10),
+      date: form.date,
+      timestamp: new Date(form.date).getTime(),
     };
 
     const next = [...drops, newDrop].sort((a, b) => b.timestamp - a.timestamp);
     saveDrops(next);
-    setSelectedItemId("");
-    setChannel("");
+    dispatchForm({ type: "resetAfterAdd" });
   }
 
   function handleDelete(id: string) {
@@ -369,12 +322,12 @@ export default function PitchedBossDropsWorkspace({
 
   if (!mounted) return null;
 
-  const sortedDrops = [...drops].sort((a, b) => b.timestamp - a.timestamp);
+  const sortedDrops = drops.toSorted((a, b) => b.timestamp - a.timestamp);
   const formReady =
-    selectedCharId !== "" &&
-    selectedItemId !== "" &&
-    channel !== "" &&
-    date !== "";
+    form.charId !== "" &&
+    form.itemId !== "" &&
+    form.channel !== "" &&
+    form.date !== "";
 
   return (
     <div
@@ -403,9 +356,9 @@ export default function PitchedBossDropsWorkspace({
           {characters.length === 0 ? (
             <div style={{ color: theme.muted, fontSize: "0.85rem" }}>
               No characters added yet.{" "}
-              <a href="/characters" style={{ color: theme.accent }}>
+              <Link href="/characters" style={{ color: theme.accent }}>
                 Add characters
-              </a>{" "}
+              </Link>{" "}
               to start tracking drops.
             </div>
           ) : (
@@ -428,19 +381,19 @@ export default function PitchedBossDropsWorkspace({
                   }}
                 >
                   Character
+                  <select
+                    value={form.charId}
+                    onChange={(e) => dispatchForm({ type: "setCharId", value: e.target.value })}
+                    style={fieldStyle(theme)}
+                  >
+                    <option value="">Select character…</option>
+                    {characters.map((c) => (
+                      <option key={c.characterName} value={c.characterName}>
+                        {c.characterName} (Lv.{c.level} {c.jobName})
+                      </option>
+                    ))}
+                  </select>
                 </label>
-                <select
-                  value={selectedCharId}
-                  onChange={(e) => setSelectedCharId(e.target.value)}
-                  style={fieldStyle(theme)}
-                >
-                  <option value="">Select character…</option>
-                  {characters.map((c) => (
-                    <option key={c.characterName} value={c.characterName}>
-                      {c.characterName} (Lv.{c.level} {c.jobName})
-                    </option>
-                  ))}
-                </select>
               </div>
 
               <div style={{ flex: "1 1 220px" }}>
@@ -454,19 +407,19 @@ export default function PitchedBossDropsWorkspace({
                   }}
                 >
                   Item Dropped
+                  <select
+                    value={form.itemId}
+                    onChange={(e) => dispatchForm({ type: "setItemId", value: e.target.value })}
+                    style={fieldStyle(theme)}
+                  >
+                    <option value="">Select item…</option>
+                    {PITCHED_BOSS_ITEMS.map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {item.name} ({item.boss})
+                      </option>
+                    ))}
+                  </select>
                 </label>
-                <select
-                  value={selectedItemId}
-                  onChange={(e) => setSelectedItemId(e.target.value)}
-                  style={fieldStyle(theme)}
-                >
-                  <option value="">Select item…</option>
-                  {PITCHED_BOSS_ITEMS.map((item) => (
-                    <option key={item.id} value={item.id}>
-                      {item.name} ({item.boss})
-                    </option>
-                  ))}
-                </select>
               </div>
 
               <div style={{ flex: "0 0 90px" }}>
@@ -480,16 +433,16 @@ export default function PitchedBossDropsWorkspace({
                   }}
                 >
                   Channel
+                  <input
+                    type="number"
+                    min={1}
+                    max={30}
+                    value={form.channel}
+                    onChange={(e) => dispatchForm({ type: "setChannel", value: e.target.value })}
+                    placeholder="CH"
+                    style={fieldStyle(theme)}
+                  />
                 </label>
-                <input
-                  type="number"
-                  min={1}
-                  max={30}
-                  value={channel}
-                  onChange={(e) => setChannel(e.target.value)}
-                  placeholder="CH"
-                  style={fieldStyle(theme)}
-                />
               </div>
 
               <div style={{ flex: "0 0 150px" }}>
@@ -503,29 +456,23 @@ export default function PitchedBossDropsWorkspace({
                   }}
                 >
                   Date
+                  <input
+                    type="date"
+                    value={form.date}
+                    onChange={(e) => dispatchForm({ type: "setDate", value: e.target.value })}
+                    style={fieldStyle(theme)}
+                  />
                 </label>
-                <input
-                  type="date"
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  style={fieldStyle(theme)}
-                />
               </div>
 
               <button
                 onClick={handleAdd}
                 disabled={!formReady}
                 style={{
-                  padding: "0.5rem 1.25rem",
+                  ...addDropBtnBase,
                   background: formReady ? theme.accent : theme.border,
                   color: formReady ? "#fff" : theme.muted,
-                  border: "none",
-                  borderRadius: 8,
-                  fontWeight: 700,
-                  fontSize: "0.85rem",
                   cursor: formReady ? "pointer" : "not-allowed",
-                  height: 38,
-                  whiteSpace: "nowrap",
                 }}
               >
                 Add Drop
@@ -536,94 +483,12 @@ export default function PitchedBossDropsWorkspace({
 
         {/* ── Drop log ── */}
         {sortedDrops.length > 0 && (
-          <div style={panelStyle(theme)}>
-            <div
-              style={{
-                fontWeight: 700,
-                color: theme.text,
-                marginBottom: "1rem",
-                fontSize: "1rem",
-              }}
-            >
-              Drop Log ({sortedDrops.length} total)
-            </div>
-            <div style={{ overflowX: "auto", maxHeight: 400, overflowY: "auto" }}>
-              <table
-                style={{
-                  width: "100%",
-                  borderCollapse: "collapse",
-                  fontSize: "0.82rem",
-                }}
-              >
-                <thead>
-                  <tr
-                    style={{
-                      borderBottom: `2px solid ${theme.border}`,
-                      position: "sticky",
-                      top: 0,
-                      background: theme.panel,
-                    }}
-                  >
-                    <th style={thStyle(theme)}>Date</th>
-                    <th style={thStyle(theme)}>Character</th>
-                    <th style={thStyle(theme)}>Item</th>
-                    <th style={thStyle(theme)}>Boss</th>
-                    <th style={thStyle(theme)}>CH</th>
-                    <th style={{ ...thStyle(theme), width: 40 }} />
-                  </tr>
-                </thead>
-                <tbody>
-                  {sortedDrops.map((drop) => {
-                    const item = PITCHED_ITEMS_BY_ID.get(drop.itemId);
-                    return (
-                      <tr
-                        key={drop.id}
-                        style={{ borderBottom: `1px solid ${theme.border}` }}
-                      >
-                        <td style={tdStyle(theme)}>{drop.date}</td>
-                        <td style={tdStyle(theme)}>{drop.characterName}</td>
-                        <td style={{ ...tdStyle(theme), fontWeight: 600 }}>
-                          <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
-                            {item && <ItemIcon src={item.icon} />}
-                            {item?.name ?? drop.itemId}
-                          </span>
-                        </td>
-                        <td style={{ ...tdStyle(theme), color: theme.muted }}>
-                          {item?.boss ?? "\u2014"}
-                        </td>
-                        <td style={tdStyle(theme)}>{drop.channel}</td>
-                        <td style={tdStyle(theme)}>
-                          <button
-                            onClick={() => handleDelete(drop.id)}
-                            style={{
-                              background: "none",
-                              border: "none",
-                              color: theme.muted,
-                              cursor: "pointer",
-                              fontSize: "0.8rem",
-                              padding: "2px 6px",
-                              borderRadius: 4,
-                            }}
-                            title="Delete drop"
-                          >
-                            ✕
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          <DropLogTable theme={theme} drops={sortedDrops} onDelete={handleDelete} />
         )}
 
         {/* ── Analytics ── */}
         {sortedDrops.length > 0 && (
-          <>
-            <DropCountBarChart theme={theme} drops={sortedDrops} />
-            <MonthlyTimeSeriesChart theme={theme} drops={sortedDrops} />
-          </>
+          <PitchedBossCharts theme={theme} drops={sortedDrops} />
         )}
 
         {/* ── Empty state ── */}

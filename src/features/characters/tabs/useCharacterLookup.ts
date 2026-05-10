@@ -34,11 +34,11 @@ export function useCharacterLookup({
   onFoundCharacterChange,
 }: UseCharacterLookupArgs) {
   const [isSearching, setIsSearching] = useState(false);
-  const [statusMessage, setStatusMessage] = useState(getUsageMessage(MIN_QUERY_LENGTH, MAX_QUERY_LENGTH));
+  const [statusMessage, setStatusMessage] = useState(() => getUsageMessage(MIN_QUERY_LENGTH, MAX_QUERY_LENGTH));
   const [statusTone, setStatusTone] = useState<"neutral" | "error">("neutral");
   const [degradedCode, setDegradedCode] = useState<string | null>(null);
-  const [nowMs, setNowMs] = useState(Date.now());
-  const lastRequestAtRef = useRef(0);
+  const [nowMs, setNowMs] = useState(0);
+  const [lastRequestAtMs, setLastRequestAtMs] = useState(0);
   const cacheRef = useRef<Map<string, CharacterCacheEntry>>(new Map());
 
   useEffect(() => {
@@ -50,7 +50,8 @@ export function useCharacterLookup({
     return () => clearInterval(id);
   }, []);
 
-  const cooldownRemainingMs = Math.max(0, COOLDOWN_MS - (nowMs - lastRequestAtRef.current));
+  const cooldownRemainingMs =
+    lastRequestAtMs === 0 ? 0 : Math.max(0, COOLDOWN_MS - (nowMs - lastRequestAtMs));
   const trimmedQuery = query.trim();
   const queryInvalid = !CHARACTER_NAME_REGEX.test(trimmedQuery);
 
@@ -126,7 +127,9 @@ export function useCharacterLookup({
     setIsSearching(true);
     setStatusTone("neutral");
     setStatusMessage(LOOKUP_MESSAGES.searching);
-    lastRequestAtRef.current = Date.now();
+    const requestStartedAt = Date.now();
+    setLastRequestAtMs(requestStartedAt);
+    setNowMs(requestStartedAt);
     const controller = new AbortController();
     const slowTimer = setTimeout(() => {
       setStatusTone("neutral");

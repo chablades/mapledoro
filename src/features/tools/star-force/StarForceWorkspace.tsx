@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useSyncExternalStore } from "react";
+import { useReducer, useMemo, useSyncExternalStore } from "react";
 import type { AppTheme } from "../../../components/themes";
 import { ToolHeader } from "../../../components/ToolHeader";
 import {
@@ -26,6 +26,34 @@ function pct(n: number): string {
   return (n * 100).toFixed(1) + "%";
 }
 
+const rerollBtnStyle: React.CSSProperties = {
+  padding: "7px 16px",
+  borderRadius: "10px",
+  fontSize: "0.8rem",
+  fontWeight: 800,
+  userSelect: "none",
+};
+
+const previewBarBase: React.CSSProperties = {
+  marginTop: "1rem",
+  padding: "10px 14px",
+  borderRadius: "10px",
+  display: "flex",
+  flexWrap: "wrap",
+  gap: "1.25rem",
+  fontSize: "0.78rem",
+  fontWeight: 700,
+};
+
+const optionsPanelBase: React.CSSProperties = {
+  padding: "1.25rem",
+  marginBottom: "1.25rem",
+  borderRadius: "14px",
+  display: "flex",
+  flexDirection: "column",
+  gap: "0.75rem",
+};
+
 // -- Sub-components -----------------------------------------------------------
 
 function InputRow({
@@ -38,15 +66,15 @@ function InputRow({
   children: React.ReactNode;
 }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-      <label
+    <label style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+      <span
         className="section-label"
         style={{ color: theme.muted, minWidth: 130, marginBottom: 0 }}
       >
         {label}
-      </label>
+      </span>
       {children}
-    </div>
+    </label>
   );
 }
 
@@ -107,14 +135,14 @@ function SimulationPanel({
         <div style={statStyle}>
           <div style={labelStyle}>Mean Cost</div>
           <div style={{ ...valueStyle, color: theme.accent }}>{formatMeso(sim.meanCost)}</div>
-          <div style={{ fontSize: "0.72rem", color: theme.muted, fontWeight: 600 }}>
+          <div style={{ fontSize: "0.75rem", color: theme.muted, fontWeight: 600 }}>
             {formatMesoFull(sim.meanCost)} mesos
           </div>
         </div>
         <div style={statStyle}>
           <div style={labelStyle}>Median Cost</div>
           <div style={valueStyle}>{formatMeso(sim.medianCost)}</div>
-          <div style={{ fontSize: "0.72rem", color: theme.muted, fontWeight: 600 }}>
+          <div style={{ fontSize: "0.75rem", color: theme.muted, fontWeight: 600 }}>
             {formatMesoFull(sim.medianCost)} mesos
           </div>
         </div>
@@ -240,6 +268,233 @@ function BreakdownTable({ theme, results }: { theme: AppTheme; results: StarResu
   );
 }
 
+// -- Types --------------------------------------------------------------------
+
+interface CalcState {
+  level: number;
+  startStar: number;
+  targetStar: number;
+  replacementCost: number;
+  costDiscount: boolean;
+  boomReduction: boolean;
+  starCatch: boolean;
+  safeguard: boolean;
+  mvp: MvpTier;
+  trials: number;
+  simGen: number;
+}
+type CalcAction =
+  | { type: "setLevel"; value: number }
+  | { type: "setStartStar"; value: number }
+  | { type: "setTargetStar"; value: number }
+  | { type: "setReplacementCost"; value: number }
+  | { type: "setCostDiscount"; value: boolean }
+  | { type: "setBoomReduction"; value: boolean }
+  | { type: "setStarCatch"; value: boolean }
+  | { type: "setSafeguard"; value: boolean }
+  | { type: "setMvp"; value: MvpTier }
+  | { type: "setTrials"; value: number }
+  | { type: "reroll" };
+
+// -- Inputs panel -------------------------------------------------------------
+
+function StarForceInputs({
+  theme,
+  calc,
+  dispatch,
+  previewCost,
+  previewResult,
+  inputStyle,
+  selectStyle,
+}: {
+  theme: AppTheme;
+  calc: CalcState;
+  dispatch: React.ActionDispatch<[action: CalcAction]>;
+  previewCost: number;
+  previewResult: StarResult | null;
+  inputStyle: React.CSSProperties;
+  selectStyle: React.CSSProperties;
+}) {
+  return (
+    <div
+      className="fade-in panel-card"
+      style={{
+        background: theme.panel,
+        border: `1px solid ${theme.border}`,
+        padding: "1.25rem",
+        marginBottom: "1.25rem",
+        borderRadius: "14px",
+      }}
+    >
+      <div className="sf-inputs-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+        <InputRow label="Item Level" theme={theme}>
+          <input
+            className="tool-input"
+            type="number"
+            min={0}
+            max={300}
+            value={calc.level}
+            onChange={(e) => dispatch({ type: "setLevel", value: Math.max(0, Math.min(300, Number(e.target.value) || 0)) })}
+            style={inputStyle}
+          />
+        </InputRow>
+
+        <InputRow label="Current Star" theme={theme}>
+          <select
+            className="tool-input"
+            value={calc.startStar}
+            onChange={(e) => dispatch({ type: "setStartStar", value: Number(e.target.value) })}
+            style={selectStyle}
+          >
+            {STAR_OPTIONS.slice(0, 30).map((s) => (
+              <option key={s} value={s}>{s}★</option>
+            ))}
+          </select>
+        </InputRow>
+
+        <InputRow label="Target Star" theme={theme}>
+          <select
+            className="tool-input"
+            value={calc.targetStar}
+            onChange={(e) => dispatch({ type: "setTargetStar", value: Number(e.target.value) })}
+            style={selectStyle}
+          >
+            {STAR_OPTIONS.slice(1).map((s) => (
+              <option key={s} value={s}>{s}★</option>
+            ))}
+          </select>
+        </InputRow>
+
+        <InputRow label="Replace Cost" theme={theme}>
+          <input
+            className="tool-input"
+            type="number"
+            min={0}
+            value={calc.replacementCost}
+            onChange={(e) => dispatch({ type: "setReplacementCost", value: Math.max(0, Number(e.target.value) || 0) })}
+            style={inputStyle}
+            placeholder="0"
+          />
+        </InputRow>
+
+        <InputRow label="Trials" theme={theme}>
+          <input
+            className="tool-input"
+            type="number"
+            min={1}
+            max={100000}
+            value={calc.trials}
+            onChange={(e) => dispatch({ type: "setTrials", value: Math.max(1, Math.min(100000, Number(e.target.value) || 1000)) })}
+            style={inputStyle}
+          />
+        </InputRow>
+
+        <div style={{ display: "flex", alignItems: "center" }}>
+          <div
+            className="tool-btn"
+            role="button"
+            tabIndex={0}
+            onClick={() => dispatch({ type: "reroll" })}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); dispatch({ type: "reroll" }); } }}
+            style={{
+              ...rerollBtnStyle,
+              color: theme.accentText,
+              background: theme.accentSoft,
+              border: `1px solid ${theme.accent}`,
+            }}
+          >
+            Re-roll
+          </div>
+        </div>
+      </div>
+
+      <div
+        style={{
+          ...previewBarBase,
+          background: theme.timerBg,
+          color: theme.muted,
+        }}
+      >
+        <span>
+          Next try: <span style={{ color: theme.text }}>{formatMesoFull(previewCost)} mesos</span>
+        </span>
+        {previewResult && (
+          <>
+            <span>
+              Success: <span style={{ color: theme.text }}>{pct(previewResult.success)}</span>
+            </span>
+            {previewResult.destroy > 0 && (
+              <span>
+                Destroy: <span style={{ color: "#e05a5a" }}>{pct(previewResult.destroy)}</span>
+              </span>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// -- Options panel ------------------------------------------------------------
+
+function StarForceOptions({
+  theme,
+  calc,
+  dispatch,
+}: {
+  theme: AppTheme;
+  calc: CalcState;
+  dispatch: React.ActionDispatch<[action: CalcAction]>;
+}) {
+  return (
+    <div
+      className="fade-in panel-card"
+      style={{
+        ...optionsPanelBase,
+        background: theme.panel,
+        border: `1px solid ${theme.border}`,
+      }}
+    >
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem", alignItems: "center" }}>
+        <span
+          className="section-label"
+          style={{ color: theme.muted, marginBottom: 0, minWidth: 60 }}
+        >
+          Events
+        </span>
+        <Toggle theme={theme} label="30% Off Cost" checked={calc.costDiscount} onChange={(v) => dispatch({ type: "setCostDiscount", value: v })} />
+        <Toggle theme={theme} label="30% Boom Reduction" checked={calc.boomReduction} onChange={(v) => dispatch({ type: "setBoomReduction", value: v })} />
+      </div>
+
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem", alignItems: "center" }}>
+        <span
+          className="section-label"
+          style={{ color: theme.muted, marginBottom: 0, minWidth: 60 }}
+        >
+          Options
+        </span>
+        <Toggle theme={theme} label="Star Catching" checked={calc.starCatch} onChange={(v) => dispatch({ type: "setStarCatch", value: v })} />
+        <Toggle
+          theme={theme}
+          label="Safeguard (15-17)"
+          checked={calc.safeguard}
+          onChange={(v) => dispatch({ type: "setSafeguard", value: v })}
+        />
+      </div>
+
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem", alignItems: "center" }}>
+        <span
+          className="section-label"
+          style={{ color: theme.muted, marginBottom: 0, minWidth: 60 }}
+        >
+          MVP
+        </span>
+        <PillGroup theme={theme} options={MVP_OPTIONS} value={calc.mvp} onChange={(v) => dispatch({ type: "setMvp", value: v })} />
+      </div>
+    </div>
+  );
+}
+
 // -- Main workspace -----------------------------------------------------------
 
 export default function StarForceWorkspace({ theme }: { theme: AppTheme }) {
@@ -249,46 +504,65 @@ export default function StarForceWorkspace({ theme }: { theme: AppTheme }) {
     () => false,
   );
 
-  const [level, setLevel] = useState(200);
-  const [startStar, setStartStar] = useState(0);
-  const [targetStar, setTargetStar] = useState(22);
-  const [replacementCost, setReplacementCost] = useState(0);
-  const [costDiscount, setCostDiscount] = useState(false);
-  const [boomReduction, setBoomReduction] = useState(false);
-  const [starCatch, setStarCatch] = useState(true);
-  const [safeguard, setSafeguard] = useState(false);
-  const [mvp, setMvp] = useState<MvpTier>("none");
-  const [trials, setTrials] = useState(1000);
-  const [simGen, setSimGen] = useState(0);
+  const [calc, dispatch] = useReducer(
+    (state: CalcState, action: CalcAction): CalcState => {
+      switch (action.type) {
+        case "setLevel": return { ...state, level: action.value };
+        case "setStartStar": return { ...state, startStar: action.value };
+        case "setTargetStar": return { ...state, targetStar: action.value };
+        case "setReplacementCost": return { ...state, replacementCost: action.value };
+        case "setCostDiscount": return { ...state, costDiscount: action.value };
+        case "setBoomReduction": return { ...state, boomReduction: action.value };
+        case "setStarCatch": return { ...state, starCatch: action.value };
+        case "setSafeguard": return { ...state, safeguard: action.value };
+        case "setMvp": return { ...state, mvp: action.value };
+        case "setTrials": return { ...state, trials: action.value };
+        case "reroll": return { ...state, simGen: state.simGen + 1 };
+      }
+    },
+    {
+      level: 200,
+      startStar: 0,
+      targetStar: 22,
+      replacementCost: 0,
+      costDiscount: false,
+      boomReduction: false,
+      starCatch: true,
+      safeguard: false,
+      mvp: "none" as MvpTier,
+      trials: 1000,
+      simGen: 0,
+    },
+  );
 
-  const effectiveTarget = Math.max(targetStar, startStar + 1);
+  const effectiveTarget = Math.max(calc.targetStar, calc.startStar + 1);
 
   const opts: StarForceOpts = useMemo(
     () => ({
-      level,
-      startStar,
+      level: calc.level,
+      startStar: calc.startStar,
       targetStar: effectiveTarget,
-      replacementCost,
-      costDiscount,
-      boomReduction,
-      starCatch,
-      safeguard,
-      mvp,
+      replacementCost: calc.replacementCost,
+      costDiscount: calc.costDiscount,
+      boomReduction: calc.boomReduction,
+      starCatch: calc.starCatch,
+      safeguard: calc.safeguard,
+      mvp: calc.mvp,
     }),
-    [level, startStar, effectiveTarget, replacementCost, costDiscount, boomReduction, starCatch, safeguard, mvp],
+    [calc.level, calc.startStar, effectiveTarget, calc.replacementCost, calc.costDiscount, calc.boomReduction, calc.starCatch, calc.safeguard, calc.mvp],
   );
 
   const results = useMemo(() => computeExpectedCosts(opts), [opts]);
 
   const sim = useMemo(() => {
-    if (!mounted || startStar >= effectiveTarget || trials <= 0) return null;
-    return simulate(opts, trials);
+    if (!mounted || calc.startStar >= effectiveTarget || calc.trials <= 0) return null;
+    return simulate(opts, calc.trials);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mounted, opts, trials, simGen]);
+  }, [mounted, opts, calc.trials, calc.simGen]);
 
   const previewCost = useMemo(
-    () => attemptCost(level, startStar, opts),
-    [level, startStar, opts],
+    () => attemptCost(calc.level, calc.startStar, opts),
+    [calc.level, calc.startStar, opts],
   );
 
   // Preview rates for the first star
@@ -315,199 +589,31 @@ export default function StarForceWorkspace({ theme }: { theme: AppTheme }) {
         />
 
         {/* -- Inputs -------------------------------------------------------- */}
-        <div
-          className="fade-in panel-card"
-          style={{
-            background: theme.panel,
-            border: `1px solid ${theme.border}`,
-            padding: "1.25rem",
-            marginBottom: "1.25rem",
-            borderRadius: "14px",
-          }}
-        >
-          <div className="sf-inputs-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
-            <InputRow label="Item Level" theme={theme}>
-              <input
-                className="tool-input"
-                type="number"
-                min={0}
-                max={300}
-                value={level}
-                onChange={(e) => setLevel(Math.max(0, Math.min(300, Number(e.target.value) || 0)))}
-                style={inputStyle}
-              />
-            </InputRow>
-
-            <InputRow label="Current Star" theme={theme}>
-              <select
-                className="tool-input"
-                value={startStar}
-                onChange={(e) => setStartStar(Number(e.target.value))}
-                style={selectStyle}
-              >
-                {STAR_OPTIONS.slice(0, 30).map((s) => (
-                  <option key={s} value={s}>{s}★</option>
-                ))}
-              </select>
-            </InputRow>
-
-            <InputRow label="Target Star" theme={theme}>
-              <select
-                className="tool-input"
-                value={targetStar}
-                onChange={(e) => setTargetStar(Number(e.target.value))}
-                style={selectStyle}
-              >
-                {STAR_OPTIONS.slice(1).map((s) => (
-                  <option key={s} value={s}>{s}★</option>
-                ))}
-              </select>
-            </InputRow>
-
-            <InputRow label="Replace Cost" theme={theme}>
-              <input
-                className="tool-input"
-                type="number"
-                min={0}
-                value={replacementCost}
-                onChange={(e) => setReplacementCost(Math.max(0, Number(e.target.value) || 0))}
-                style={inputStyle}
-                placeholder="0"
-              />
-            </InputRow>
-
-            <InputRow label="Trials" theme={theme}>
-              <input
-                className="tool-input"
-                type="number"
-                min={1}
-                max={100000}
-                value={trials}
-                onChange={(e) => setTrials(Math.max(1, Math.min(100000, Number(e.target.value) || 1000)))}
-                style={inputStyle}
-              />
-            </InputRow>
-
-            <div style={{ display: "flex", alignItems: "center" }}>
-              <div
-                className="tool-btn"
-                onClick={() => setSimGen((g) => g + 1)}
-                style={{
-                  padding: "7px 16px",
-                  borderRadius: "10px",
-                  fontSize: "0.8rem",
-                  fontWeight: 800,
-                  color: theme.accentText,
-                  background: theme.accentSoft,
-                  border: `1px solid ${theme.accent}`,
-                  userSelect: "none",
-                }}
-              >
-                Re-roll
-              </div>
-            </div>
-          </div>
-
-          {/* Next attempt preview */}
-          <div
-            style={{
-              marginTop: "1rem",
-              padding: "10px 14px",
-              background: theme.timerBg,
-              borderRadius: "10px",
-              display: "flex",
-              flexWrap: "wrap",
-              gap: "1.25rem",
-              fontSize: "0.78rem",
-              fontWeight: 700,
-              color: theme.muted,
-            }}
-          >
-            <span>
-              Next try: <span style={{ color: theme.text }}>{formatMesoFull(previewCost)} mesos</span>
-            </span>
-            {previewResult && (
-              <>
-                <span>
-                  Success: <span style={{ color: theme.text }}>{pct(previewResult.success)}</span>
-                </span>
-                {previewResult.destroy > 0 && (
-                  <span>
-                    Destroy: <span style={{ color: "#e05a5a" }}>{pct(previewResult.destroy)}</span>
-                  </span>
-                )}
-              </>
-            )}
-          </div>
-        </div>
+        <StarForceInputs
+          theme={theme}
+          calc={calc}
+          dispatch={dispatch}
+          previewCost={previewCost}
+          previewResult={previewResult}
+          inputStyle={inputStyle}
+          selectStyle={selectStyle}
+        />
 
         {/* -- Options ------------------------------------------------------- */}
-        <div
-          className="fade-in panel-card"
-          style={{
-            background: theme.panel,
-            border: `1px solid ${theme.border}`,
-            padding: "1.25rem",
-            marginBottom: "1.25rem",
-            borderRadius: "14px",
-            display: "flex",
-            flexDirection: "column",
-            gap: "0.75rem",
-          }}
-        >
-          {/* Events row */}
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem", alignItems: "center" }}>
-            <span
-              className="section-label"
-              style={{ color: theme.muted, marginBottom: 0, minWidth: 60 }}
-            >
-              Events
-            </span>
-            <Toggle theme={theme} label="30% Off Cost" checked={costDiscount} onChange={setCostDiscount} />
-            <Toggle theme={theme} label="30% Boom Reduction" checked={boomReduction} onChange={setBoomReduction} />
-          </div>
-
-          {/* Enhancements row */}
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem", alignItems: "center" }}>
-            <span
-              className="section-label"
-              style={{ color: theme.muted, marginBottom: 0, minWidth: 60 }}
-            >
-              Options
-            </span>
-            <Toggle theme={theme} label="Star Catching" checked={starCatch} onChange={setStarCatch} />
-            <Toggle
-              theme={theme}
-              label="Safeguard (15-17)"
-              checked={safeguard}
-              onChange={setSafeguard}
-            />
-          </div>
-
-          {/* MVP row */}
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem", alignItems: "center" }}>
-            <span
-              className="section-label"
-              style={{ color: theme.muted, marginBottom: 0, minWidth: 60 }}
-            >
-              MVP
-            </span>
-            <PillGroup theme={theme} options={MVP_OPTIONS} value={mvp} onChange={setMvp} />
-          </div>
-        </div>
+        <StarForceOptions theme={theme} calc={calc} dispatch={dispatch} />
 
         {/* -- Results ------------------------------------------------------- */}
-        {startStar < targetStar && sim && (
+        {calc.startStar < calc.targetStar && sim && (
           <SimulationPanel
             theme={theme}
             sim={sim}
-            startStar={startStar}
+            startStar={calc.startStar}
             targetStar={effectiveTarget}
-            trials={trials}
+            trials={calc.trials}
           />
         )}
 
-        {startStar < targetStar && results.length > 0 && (
+        {calc.startStar < calc.targetStar && results.length > 0 && (
           <BreakdownTable theme={theme} results={results} />
         )}
       </div>

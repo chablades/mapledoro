@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import type { AppTheme } from "./themes";
 import { getUrsusStatus, utcDateStr } from "../lib/ursus";
 import {
@@ -28,21 +29,15 @@ function ReminderCard({
   const bg = highlight ? "rgba(16, 185, 129, 0.12)" : theme.timerBg;
   return (
     <div
+      className="reminder-card"
       style={{
-        display: "flex",
-        alignItems: "center",
-        gap: "0.75rem",
-        padding: "0.75rem 0.9rem",
-        borderRadius: 12,
         background: bg,
         border: `1px solid ${borderColor}`,
-        minWidth: 240,
-        flex: "1 1 240px",
       }}
     >
       <div style={{ fontSize: "1.4rem", flexShrink: 0, width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center" }}>
         {def.icon.startsWith("http") ? (
-          <img src={def.icon} alt="" width={24} height={24} style={{ display: "block" }} />
+          <Image src={def.icon} alt="" width={24} height={24} className="block-img" />
         ) : (
           def.icon
         )}
@@ -62,7 +57,7 @@ function ReminderCard({
           {badge && (
             <span
               style={{
-                fontSize: "0.6rem",
+                fontSize: "0.75rem",
                 fontWeight: 800,
                 color: "#fff",
                 background: "#10b981",
@@ -77,7 +72,7 @@ function ReminderCard({
         </div>
         <div
           style={{
-            fontSize: "0.72rem",
+            fontSize: "0.75rem",
             color: theme.muted,
             fontWeight: 600,
             marginTop: 1,
@@ -96,17 +91,9 @@ function ReminderCard({
         aria-label={`Mark ${def.title} as done for today`}
         className="reminder-done-btn"
         style={{
-          width: 28,
-          height: 28,
-          borderRadius: 8,
           border: `1px solid ${theme.accent}`,
           background: theme.accentSoft,
           color: theme.accent,
-          cursor: "pointer",
-          fontSize: "0.9rem",
-          fontWeight: 900,
-          flexShrink: 0,
-          lineHeight: 1,
         }}
       >
         ✓
@@ -128,7 +115,12 @@ export default function RemindersPanel({
   const ursus = now ? getUrsusStatus(now) : null;
 
   const enabledIds: ReminderId[] = mounted
-    ? REMINDER_DEFS.filter((d) => state.enabled[d.id]).map((d) => d.id)
+    ? REMINDER_DEFS.reduce<ReminderId[]>((acc, d) => {
+        if (state.enabled[d.id]) {
+          acc.push(d.id);
+        }
+        return acc;
+      }, [])
     : [];
   const visibleIds: ReminderId[] = enabledIds.filter(
     (id) => state.dismissed[id] !== today,

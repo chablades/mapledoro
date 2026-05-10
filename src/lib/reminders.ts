@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
+import { useCallback, useState, useSyncExternalStore } from "react";
 
 export type ReminderId = "ursus" | "autoHarvest" | "solErda";
 
@@ -32,21 +32,21 @@ export const REMINDER_DEFS: ReminderDef[] = [
   },
 ];
 
-export interface RemindersState {
+interface RemindersState {
   enabled: Record<ReminderId, boolean>;
   dismissed: Partial<Record<ReminderId, string>>;
 }
 
-export const REMINDERS_STORAGE_KEY = "mapledoro_reminders_v1";
+const REMINDERS_STORAGE_KEY = "mapledoro_reminders_v1";
 
-export function defaultRemindersState(): RemindersState {
+function defaultRemindersState(): RemindersState {
   return {
     enabled: { ursus: false, autoHarvest: false, solErda: false },
     dismissed: {},
   };
 }
 
-export function loadRemindersState(): RemindersState {
+function loadRemindersState(): RemindersState {
   if (typeof window === "undefined") return defaultRemindersState();
   try {
     const raw = localStorage.getItem(REMINDERS_STORAGE_KEY);
@@ -80,33 +80,37 @@ export function useRemindersState() {
     return loadRemindersState();
   });
 
-  useEffect(() => {
-    if (mounted) saveRemindersState(state);
-  }, [mounted, state]);
+  const update = useCallback((updater: (prev: RemindersState) => RemindersState) => {
+    setState((prev) => {
+      const next = updater(prev);
+      saveRemindersState(next);
+      return next;
+    });
+  }, []);
 
   const toggleEnabled = useCallback((id: ReminderId) => {
-    setState((prev) => ({
+    update((prev) => ({
       ...prev,
       enabled: { ...prev.enabled, [id]: !prev.enabled[id] },
     }));
-  }, []);
+  }, [update]);
 
   const markDone = useCallback((id: ReminderId, today: string) => {
-    setState((prev) => ({
+    update((prev) => ({
       ...prev,
       dismissed: { ...prev.dismissed, [id]: today },
     }));
-  }, []);
+  }, [update]);
 
   const clearAll = useCallback((today: string) => {
-    setState((prev) => {
+    update((prev) => {
       const dismissed: Partial<Record<ReminderId, string>> = { ...prev.dismissed };
       for (const def of REMINDER_DEFS) {
         if (prev.enabled[def.id]) dismissed[def.id] = today;
       }
       return { ...prev, dismissed };
     });
-  }, []);
+  }, [update]);
 
   return { mounted, state, toggleEnabled, markDone, clearAll };
 }

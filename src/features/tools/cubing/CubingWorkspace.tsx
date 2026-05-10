@@ -420,7 +420,7 @@ function ProbabilityBadge({ theme, probability }: { theme: AppTheme; probability
       border: `1px solid ${theme.border}`,
     }}>
       <div style={{ textAlign: "center" }}>
-        <div style={{ fontSize: "0.72rem", fontWeight: 800, color: theme.muted, textTransform: "uppercase", letterSpacing: "0.04em" }}>
+        <div style={{ fontSize: "0.75rem", fontWeight: 800, color: theme.muted, textTransform: "uppercase", letterSpacing: "0.04em" }}>
           Probability per cube
         </div>
         <div style={{ marginTop: "4px" }}>
@@ -452,7 +452,7 @@ function TierUpProbabilities({ theme, steps }: { theme: AppTheme; steps: TierSte
         const display = pct >= 0.01 ? `${pct.toFixed(2)}%` : `${pct.toExponential(2)}%`;
         return (
           <div key={`${step.from}-${step.to}`} style={{ textAlign: "center" }}>
-            <div style={{ fontSize: "0.72rem", fontWeight: 800, color: theme.muted, textTransform: "uppercase", letterSpacing: "0.04em" }}>
+            <div style={{ fontSize: "0.75rem", fontWeight: 800, color: theme.muted, textTransform: "uppercase", letterSpacing: "0.04em" }}>
               {step.from} → {step.to}
             </div>
             <div style={{ marginTop: "4px" }}>
@@ -492,14 +492,14 @@ function ResultCard({
         padding: "1.25rem",
       }}
     >
-      <div style={{ fontSize: "0.72rem", fontWeight: 800, color: theme.muted, textTransform: "uppercase", letterSpacing: "0.04em" }}>
+      <div style={{ fontSize: "0.75rem", fontWeight: 800, color: theme.muted, textTransform: "uppercase", letterSpacing: "0.04em" }}>
         {title}
       </div>
       <div style={{ margin: "8px 0 16px" }}>
         <div style={{ fontSize: "1.5rem", fontWeight: 800, color: theme.text, lineHeight: 1.1 }}>
           {heroValue}
         </div>
-        <div style={{ fontSize: "0.72rem", fontWeight: 700, color: theme.muted, marginTop: "2px" }}>
+        <div style={{ fontSize: "0.75rem", fontWeight: 700, color: theme.muted, marginTop: "2px" }}>
           {heroLabel}
         </div>
       </div>
@@ -509,7 +509,7 @@ function ResultCard({
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            fontSize: "0.72rem",
+            fontSize: "0.75rem",
             fontWeight: 700,
             color: theme.muted,
             background: theme.timerBg,

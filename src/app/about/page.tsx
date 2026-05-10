@@ -15,23 +15,17 @@ function AboutContent({ theme }: { theme: AppTheme }) {
         </div>
 
         <div
-          className="fade-in panel-card"
+          className="fade-in panel-card page-prose-panel"
           style={{
             background: theme.panel,
             border: `1px solid ${theme.border}`,
-            borderRadius: "14px",
-            padding: "1.5rem 1.75rem",
-            marginTop: "1rem",
             color: theme.text,
-            fontSize: "0.9rem",
-            lineHeight: 1.7,
-            fontWeight: 500,
           }}
         >
           <p style={{ marginTop: 0 }}>
             MapleDoro started as a side project to help MapleStory players keep
             track of their characters, plan their progression, and stay on top
-            of in-game events — all in one place, without ads, accounts, or
+            of in-game events, all in one place, without ads, accounts, or
             hidden fees.
           </p>
           <p>
@@ -42,7 +36,7 @@ function AboutContent({ theme }: { theme: AppTheme }) {
           </p>
           <p>
             The project is open source and built by volunteers. Feature
-            requests, bug reports, and contributions are welcome — please open
+            requests, bug reports, and contributions are welcome; please open
             an issue or pull request on the GitHub repository.
           </p>
           <p style={{ marginBottom: 0 }}>

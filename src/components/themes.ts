@@ -62,7 +62,7 @@ const DARK_BASE: ColorModeBase = {
   badgeText: "#908890",
 };
 
-export const COLOR_MODE_BASES: Record<ColorMode, ColorModeBase> = {
+const COLOR_MODE_BASES: Record<ColorMode, ColorModeBase> = {
   light: LIGHT_BASE,
   dark: DARK_BASE,
 };
@@ -170,7 +170,3 @@ export function composeTheme(accentKey: string, colorMode: ColorMode): AppTheme 
   };
 }
 
-// Pre-composed default-light theme for backwards compat / SSR fallback
-export const THEMES: Record<string, AppTheme> = Object.fromEntries(
-  Object.keys(ACCENT_THEMES).map((key) => [key, composeTheme(key, "light")])
-);

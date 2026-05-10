@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, useSyncExternalStore } from "react";
+import { useState, useCallback, useMemo, useSyncExternalStore } from "react";
 import { useApplyCharacterQueryParam } from "../useApplyCharacterQueryParam";
 import {
   readCharactersStore,
@@ -36,7 +36,7 @@ interface SavedState {
   symbols: Record<string, SymbolState>;
 }
 
-export interface PerSymbolData {
+interface PerSymbolData {
   area: SymbolArea;
   state: SymbolState;
   remaining: number;
@@ -62,7 +62,7 @@ export interface SymbolStats {
 
 // -- Constants ----------------------------------------------------------------
 
-export const WEEKLY_SYMBOLS = 120;
+const WEEKLY_SYMBOLS = 120;
 
 // -- Helpers ------------------------------------------------------------------
 
@@ -167,11 +167,18 @@ export function useSymbolState() {
   const growth = type === "arcane" ? ARCANE_GROWTH : SACRED_GROWTH;
   const maxLevel = type === "arcane" ? ARCANE_MAX_LEVEL : SACRED_MAX_LEVEL;
 
-  useEffect(() => {
-    if (selectedCharName) {
-      writeCharacterToolData(selectedCharName, "symbols", { type, symbols });
-    }
-  }, [selectedCharName, type, symbols]);
+  const updateForm = useCallback(
+    (updater: (prev: FormState) => FormState) => {
+      setForm((prev) => {
+        const next = updater(prev);
+        if (selectedCharName) {
+          writeCharacterToolData(selectedCharName, "symbols", { type: next.type, symbols: next.symbols });
+        }
+        return next;
+      });
+    },
+    [selectedCharName],
+  );
 
   const handleCharChange = useCallback(
     (charName: string | null) => {
@@ -210,12 +217,12 @@ export function useSymbolState() {
   useApplyCharacterQueryParam({ mounted, characters, handleCharChange });
 
   const switchType = useCallback((t: SymbolType) => {
-    setForm((f) => ({ ...f, type: t }));
-  }, []);
+    updateForm((f) => ({ ...f, type: t }));
+  }, [updateForm]);
 
   const updateSymbol = useCallback(
     (areaName: string, patch: Partial<SymbolState>) => {
-      setForm((f) => {
+      updateForm((f) => {
         const currentType = f.type;
         const currentAreas = currentType === "arcane" ? ARCANE_AREAS : SACRED_AREAS;
         const area = currentAreas.find((a) => a.name === areaName)!;
@@ -228,11 +235,11 @@ export function useSymbolState() {
         };
       });
     },
-    [],
+    [updateForm],
   );
 
   const resetAll = useCallback(() => {
-    setForm((f) => {
+    updateForm((f) => {
       const currentAreas = f.type === "arcane" ? ARCANE_AREAS : SACRED_AREAS;
       const next = { ...f.symbols };
       for (const area of currentAreas) {
@@ -240,7 +247,7 @@ export function useSymbolState() {
       }
       return { ...f, symbols: next };
     });
-  }, []);
+  }, [updateForm]);
 
   const stats = computeSymbolStats(areas, symbols, growth, type, maxLevel);
 

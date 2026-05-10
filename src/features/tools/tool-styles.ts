@@ -32,7 +32,7 @@ export function toolStyles(theme: AppTheme): ToolStyles {
   };
 
   const labelStyle: CSSProperties = {
-    fontSize: "0.72rem",
+    fontSize: "0.75rem",
     fontWeight: 800,
     color: theme.muted,
     textTransform: "uppercase",

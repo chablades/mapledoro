@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, ReactNode } from "react";
+import { createContext, use, ReactNode } from "react";
 import { ACCENT_THEMES, composeTheme, type AppTheme, type ColorMode } from "./themes";
 import { usePersistedThemeKey } from "./usePersistedThemeKey";
 import { usePersistedColorMode } from "./usePersistedColorMode";
@@ -45,7 +45,7 @@ export function ThemeProvider({
 }
 
 export function useTheme() {
-  const context = useContext(ThemeContext);
+  const context = use(ThemeContext);
   if (!context) {
     throw new Error("useTheme must be used within a ThemeProvider");
   }

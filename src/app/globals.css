@@ -147,6 +147,268 @@ body {
   line-height: 1.5;
 }
 
+.item-icon-img {
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.item-icon-fallback {
+  border-radius: 4px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.reminder-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: 12px;
+  min-width: 240px;
+  flex: 1 1 240px;
+}
+
+.reminder-done-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 900;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.segmented-toggle-track {
+  display: flex;
+  gap: 4px;
+  border-radius: 10px;
+  padding: 3px;
+}
+
+.segmented-toggle-option {
+  flex: 1;
+  padding: 9px 18px;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  font-weight: 800;
+  text-align: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.changelog-type-pill {
+  flex-shrink: 0;
+  margin-top: 2px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 6px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  min-width: 56px;
+  text-align: center;
+}
+
+.page-prose-panel {
+  border-radius: 14px;
+  padding: 1.5rem 1.75rem;
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  line-height: 1.7;
+  font-weight: 500;
+}
+
+.guide-randomizer {
+  margin-top: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.guide-primary-btn {
+  font-family: var(--font-heading);
+  font-size: 0.85rem;
+  padding: 0.6rem 1.25rem;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.class-card {
+  border-radius: 14px;
+  padding: 1.25rem;
+  display: flex;
+  gap: 1.25rem;
+  align-items: flex-start;
+}
+
+.class-portrait-frame {
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.class-portrait-lg {
+  width: 120px;
+  min-width: 120px;
+  height: 120px;
+}
+
+.class-portrait-md {
+  width: 100px;
+  min-width: 100px;
+  height: 100px;
+}
+
+.class-portrait-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.class-picker-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.class-picker-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.guide-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-decoration: none;
+  margin-bottom: 1.25rem;
+}
+
+.pixelated-img {
+  image-rendering: pixelated;
+}
+
+.block-img {
+  display: block;
+}
+
+.settings-row-panel {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.settings-theme-panel {
+  overflow: visible;
+  position: relative;
+  z-index: 10;
+}
+
+.settings-dropdown-root {
+  position: relative;
+}
+
+.settings-dropdown-trigger {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 170px;
+  padding: 0.3rem 0.55rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+.settings-swatch {
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.settings-swatch-current {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+}
+
+.settings-swatch-option {
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+}
+
+.settings-dropdown-icon {
+  margin-left: auto;
+  opacity: 0.6;
+}
+
+.settings-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  border-radius: 10px;
+  padding: 0.35rem;
+  width: 170px;
+  z-index: 60;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+}
+
+.settings-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 0.4rem 0.55rem;
+  border: none;
+  border-radius: 7px;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-family: inherit;
+  text-align: left;
+}
+
+.settings-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.settings-pill-btn {
+  border-radius: 999px;
+  font-family: inherit;
+  font-weight: 800;
+  font-size: 0.82rem;
+  padding: 0.4rem 0.9rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
 @media (max-width: 860px) {
   .page-content {
     padding: 1rem;

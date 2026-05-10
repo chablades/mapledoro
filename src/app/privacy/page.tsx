@@ -15,8 +15,8 @@ function PrivacyContent({ theme }: { theme: AppTheme }) {
       </LegalSection>
 
       <LegalSection theme={theme} title="What we store locally">
-        Data you enter — characters, boss crystal progress, symbol
-        tracking, pitched boss drops, theme preference — is saved to your
+        Data you enter (characters, boss crystal progress, symbol
+        tracking, pitched boss drops, theme preference) is saved to your
         browser&apos;s localStorage. This data stays on your device. You
         can wipe it at any time from the Settings page or by clearing your
         browser data.
@@ -42,7 +42,7 @@ function PrivacyContent({ theme }: { theme: AppTheme }) {
       <LegalSection theme={theme} title="No tracking, no advertising">
         MapleDoro does not use Google Analytics, Facebook Pixel, or any
         other tracking or advertising network. We do not sell, rent, or
-        share any data about you — because we don&apos;t collect any.
+        share any data about you, because we don&apos;t collect any.
       </LegalSection>
 
       <LegalSection theme={theme} title="Children">

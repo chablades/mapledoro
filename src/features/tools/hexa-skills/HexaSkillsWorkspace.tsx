@@ -18,6 +18,32 @@ import {
 import { fmtNum, SkillSection, MasterySection } from "./hexa-ui";
 import { toolStyles } from "../tool-styles";
 
+const checkboxLabelStyle: React.CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: "5px",
+  fontSize: "0.75rem",
+  fontWeight: 700,
+  cursor: "pointer",
+  userSelect: "none",
+};
+
+const resetBtnBase: React.CSSProperties = {
+  padding: "3px 10px",
+  borderRadius: "8px",
+  fontSize: "0.75rem",
+  fontWeight: 800,
+  background: "transparent",
+  cursor: "pointer",
+};
+
+const siaNoticeStyle: React.CSSProperties = {
+  padding: "0.75rem 1rem",
+  fontSize: "0.82rem",
+  fontWeight: 600,
+  lineHeight: 1.5,
+};
+
 // ── Class Selector ───────────────────────────────────────────────────────────
 
 function ClassSelector({
@@ -66,7 +92,7 @@ function ClassSelector({
             opacity: disabled ? 0.6 : 1,
           }}
         >
-          <option value="">Select a class...</option>
+          <option value="">Select a class…</option>
           {groups.map((group) => (
             <optgroup key={group} label={group}>
               {getClassesInGroup(group).map((c) => (
@@ -87,7 +113,7 @@ function ClassSelector({
 function SummaryStat({ label, value, max, theme }: { label: string; value: number; max: number; theme: AppTheme }) {
   return (
     <div>
-      <div style={{ fontSize: "0.68rem", fontWeight: 700, color: theme.muted, marginBottom: "2px" }}>
+      <div style={{ fontSize: "0.75rem", fontWeight: 700, color: theme.muted, marginBottom: "2px" }}>
         {label}
       </div>
       <div style={{ fontSize: "1.3rem", fontWeight: 800 }}>
@@ -136,16 +162,7 @@ function SummaryPanel({
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
           <label
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "5px",
-              fontSize: "0.68rem",
-              fontWeight: 700,
-              color: theme.muted,
-              cursor: "pointer",
-              userSelect: "none",
-            }}
+            style={{ ...checkboxLabelStyle, color: theme.muted }}
           >
             <input
               type="checkbox"
@@ -157,16 +174,14 @@ function SummaryPanel({
           </label>
           <div
             className="pill-btn"
+            role="button"
+            tabIndex={0}
             onClick={onReset}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onReset(); } }}
             style={{
-              padding: "3px 10px",
-              borderRadius: "8px",
-              fontSize: "0.68rem",
-              fontWeight: 800,
+              ...resetBtnBase,
               color: theme.muted,
-              background: "transparent",
               border: `1px solid ${theme.border}`,
-              cursor: "pointer",
             }}
           >
             Reset All
@@ -185,7 +200,7 @@ function SummaryPanel({
           display: "flex",
           justifyContent: "flex-end",
           marginTop: "4px",
-          fontSize: "0.72rem",
+          fontSize: "0.75rem",
           fontWeight: 700,
           color: theme.muted,
         }}
@@ -310,13 +325,10 @@ export default function HexaSkillsWorkspace({ theme }: { theme: AppTheme }) {
             className="fade-in panel-card"
             style={{
               ...sectionPanel,
+              ...siaNoticeStyle,
               background: theme.accentSoft,
               border: `1px solid ${theme.accent}`,
-              padding: "0.75rem 1rem",
-              fontSize: "0.82rem",
-              fontWeight: 600,
               color: theme.text,
-              lineHeight: 1.5,
             }}
           >
             <strong>Note:</strong> Sia uses the Erda Link system instead of the traditional HEXA skill system.

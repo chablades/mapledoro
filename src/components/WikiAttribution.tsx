@@ -11,7 +11,7 @@ export function WikiAttribution({ theme, subject }: WikiAttributionProps) {
   return (
     <div
       style={{
-        fontSize: "0.68rem",
+        fontSize: "0.75rem",
         color: theme.muted,
         fontWeight: 600,
         lineHeight: 1.6,
