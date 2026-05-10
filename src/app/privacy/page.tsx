@@ -6,12 +6,39 @@ import type { AppTheme } from "../../components/themes";
 
 function PrivacyContent({ theme }: { theme: AppTheme }) {
   return (
-    <LegalPageLayout theme={theme} title="Privacy Policy" lastUpdated="April 10, 2026">
+    <LegalPageLayout theme={theme} title="Privacy Policy" lastUpdated="May 10, 2026">
       <LegalSection theme={theme} title="Summary">
         MapleDoro does not collect personal information. There are no
-        accounts, no tracking cookies, and no analytics. Everything you
-        enter is stored in your own browser via localStorage and never
-        leaves your device.
+        accounts and no tracking cookies. Everything you enter is stored
+        in your own browser via localStorage and never leaves your device.
+      </LegalSection>
+
+      <LegalSection theme={theme} title="Analytics">
+        MapleDoro uses{" "}
+        <a
+          href="https://vercel.com/docs/analytics"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ color: theme.accent, textDecoration: "none" }}
+        >
+          Vercel Analytics
+        </a>{" "}
+        to collect anonymous, aggregated usage data such as page views,
+        visitor counts, and general geographic region. This data does not
+        include any personally identifiable information, does not use
+        cookies, and cannot be used to identify individual users. It is
+        used solely to understand which features are popular and to
+        improve the site. You can learn more about how Vercel handles
+        this data in their{" "}
+        <a
+          href="https://vercel.com/docs/analytics/privacy-policy"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ color: theme.accent, textDecoration: "none" }}
+        >
+          privacy policy
+        </a>
+        .
       </LegalSection>
 
       <LegalSection theme={theme} title="What we store locally">
@@ -41,8 +68,10 @@ function PrivacyContent({ theme }: { theme: AppTheme }) {
 
       <LegalSection theme={theme} title="No tracking, no advertising">
         MapleDoro does not use Google Analytics, Facebook Pixel, or any
-        other tracking or advertising network. We do not sell, rent, or
-        share any data about you, because we don&apos;t collect any.
+        advertising network. We do not sell, rent, or share any data
+        about you. The only analytics service in use is Vercel Analytics,
+        which collects anonymous, non-identifiable usage metrics as
+        described above.
       </LegalSection>
 
       <LegalSection theme={theme} title="Children">

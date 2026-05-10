@@ -242,7 +242,7 @@ function DirectoryRoleView({
             {CHARACTERS_COPY.characterDirectory.championsLabel} ({championCharacters.length}/{maxChampions})
           </p>
           {isMainAlsoChampion && (
-            <p style={{ margin: 0, marginBottom: "0.45rem", fontSize: "0.75rem", color: theme.muted, fontWeight: 700 }}>
+            <p style={{ margin: 0, marginBottom: "0.45rem", fontSize: "0.78rem", color: theme.muted, fontWeight: 700 }}>
               {CHARACTERS_COPY.characterDirectory.mainAlsoChampionMessage}
             </p>
           )}

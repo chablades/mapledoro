@@ -23,6 +23,13 @@ const GUIDES: GuideCard[] = [
     emoji: "🌱",
     href: "/guides/new-players",
   },
+  {
+    title: "Character Guides",
+    description:
+      "Browse all MapleStory classes with overviews, link skills, and legion bonuses.",
+    emoji: "⚔️",
+    href: "/guides/character-guides",
+  },
 ];
 
 function GuidesContent({ theme }: { theme: AppTheme }) {

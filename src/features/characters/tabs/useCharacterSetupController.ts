@@ -747,11 +747,10 @@ export function useCharacterSetupController() {
     const existingCharacterDraft = readSetupDraftByCharacter(foundCharacter);
     immediateUiLockRef.current = true;
 
-    // In confirmFoundCharacter, right before beginSetupFlowTransition:
     const charKey = toCharacterKey(foundCharacter);
     for (const d of readAllSetupDrafts()) {
-      if (d.characterKey !== charKey && !new Set(d.completedFlowIds).has(requiredFlowId)) {
-        if (d.confirmedCharacter) removeSetupDraftForCharacter(d.confirmedCharacter);
+      if (d.characterKey !== charKey && !d.completedFlowIds.includes(requiredFlowId) && d.confirmedCharacter) {
+        removeSetupDraftForCharacter(d.confirmedCharacter);
       }
     }
 

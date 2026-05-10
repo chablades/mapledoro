@@ -221,7 +221,7 @@ export default function CharacterProfileScreen({
               ))}
             </div>
           )}
-          <p style={{ margin: 0, marginTop: "0.4rem", fontSize: "0.75rem", color: isStale ? "#d97706" : theme.muted, fontWeight: 700, lineHeight: 1.3 }}>
+          <p style={{ margin: 0, marginTop: "0.4rem", fontSize: "0.78rem", color: isStale ? "#d97706" : theme.muted, fontWeight: 700, lineHeight: 1.3 }}>
             {profile.isRefreshing && <span className="char-refresh-spin" style={{ color: theme.muted }}>↻ </span>}
             {statusPrefix}Updated {formattedDate}
           </p>
@@ -237,7 +237,7 @@ export default function CharacterProfileScreen({
                 borderRadius: "999px",
                 color: theme.muted,
                 fontFamily: "inherit",
-                fontSize: "0.75rem",
+                fontSize: "0.78rem",
                 fontWeight: 800,
                 padding: "0.2rem 0.6rem",
                 cursor: profile.isRefreshing ? "not-allowed" : "pointer",

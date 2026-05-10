@@ -71,7 +71,7 @@ const SETUP_FLOWS = [
   },
 ] as const;
 
-export type SetupFlowDefinition = (typeof SETUP_FLOWS)[number];
+type SetupFlowDefinition = (typeof SETUP_FLOWS)[number];
 export type SetupFlowId = SetupFlowDefinition["id"];
 
 const FLOW_BY_ID = new Map<SetupFlowId, SetupFlowDefinition>(
@@ -97,10 +97,6 @@ export function getFlowStepByIndex(flowId: SetupFlowId, stepIndex: number): Setu
   if (stepIndex < 1 || stepIndex > flow.steps.length) return null;
   const stepId = flow.steps[stepIndex - 1] as SetupStepId;
   return getSetupStepById(stepId);
-}
-
-export function getOptionalSetupFlows() {
-  return SETUP_FLOWS.filter((flow) => !flow.required);
 }
 
 export function getRequiredSetupFlowId(): SetupFlowId {

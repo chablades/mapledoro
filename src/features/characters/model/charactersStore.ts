@@ -2,7 +2,7 @@ import { toCharacterKey } from "./characterKeys";
 import type { NormalizedCharacterData } from "./types";
 
 const CHARACTERS_STORE_VERSION = 1 as const;
-export const CHARACTERS_STORE_STORAGE_KEY = "mapledoro_characters_store_v1";
+const CHARACTERS_STORE_STORAGE_KEY = "mapledoro_characters_store_v1";
 
 export interface StoredTripleStatField {
   base: string;
@@ -10,7 +10,7 @@ export interface StoredTripleStatField {
   percentUnapplied: string;
 }
 
-export interface StoredCooldownReductionField {
+interface StoredCooldownReductionField {
   seconds: string;
   percent: string;
 }
@@ -38,7 +38,7 @@ export interface StoredCharacterStats {
   sacredPower: string;
 }
 
-export interface StoredEquipmentItem {
+interface StoredEquipmentItem {
   name: string;
 }
 
@@ -107,14 +107,6 @@ export interface CharactersStore {
   updatedAt: number;
 }
 
-export interface CharactersStoreView {
-  version: CharactersStore["version"];
-  all: StoredCharacterRecord[];
-  byId: CharactersStore["charactersById"];
-  mainByWorld: Record<string, StoredCharacterRecord>;
-  championsByWorld: Record<string, StoredCharacterRecord[]>;
-}
-
 function isObject(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object";
 }
@@ -144,11 +136,11 @@ function isNormalizedCharacterData(value: unknown): value is NormalizedCharacter
   );
 }
 
-export function createEmptyTripleStatField(): StoredTripleStatField {
+function createEmptyTripleStatField(): StoredTripleStatField {
   return { base: "", percent: "", percentUnapplied: "" };
 }
 
-export function createEmptyCharacterStats(): StoredCharacterStats {
+function createEmptyCharacterStats(): StoredCharacterStats {
   return {
     hp: createEmptyTripleStatField(),
     str: createEmptyTripleStatField(),
@@ -173,11 +165,7 @@ export function createEmptyCharacterStats(): StoredCharacterStats {
   };
 }
 
-export function createEmptyEquipmentItem(): StoredEquipmentItem {
-  return { name: "" };
-}
-
-export function createEmptyCharacterEquipment(): StoredCharacterEquipment {
+function createEmptyCharacterEquipment(): StoredCharacterEquipment {
   return {
     rings: [null, null, null, null],
     pocket: null,
@@ -283,7 +271,7 @@ function isStoredCharacterEquipment(value: unknown): value is StoredCharacterEqu
   );
 }
 
-export function createEmptyCharactersStore(): CharactersStore {
+function createEmptyCharactersStore(): CharactersStore {
   return {
     version: CHARACTERS_STORE_VERSION,
     order: [],
@@ -435,17 +423,12 @@ export function readCharactersStore(): CharactersStore {
 }
 
 export function selectCharactersList(store: CharactersStore): StoredCharacterRecord[] {
-  return store.order.flatMap((id) => {
+  const result: StoredCharacterRecord[] = [];
+  for (const id of store.order) {
     const entry = store.charactersById[id];
-    return entry ? [entry] : [];
-  });
-}
-
-export function selectCharactersListByWorld(
-  store: CharactersStore,
-  worldId: number,
-): StoredCharacterRecord[] {
-  return selectCharactersList(store).filter((entry) => entry.worldID === worldId);
+    if (entry) result.push(entry);
+  }
+  return result;
 }
 
 export function selectCharacterById(store: CharactersStore, id: string) {
@@ -459,79 +442,7 @@ export function selectCharacterByIgn(store: CharactersStore, ign: string) {
   );
 }
 
-export function selectMainCharacterForWorld(
-  store: CharactersStore,
-  worldId: number,
-): StoredCharacterRecord | null {
-  const id = store.mainCharacterIdByWorld[String(worldId)];
-  if (!id) return null;
-  return store.charactersById[id] ?? null;
-}
-
-export function selectChampionCharactersForWorld(
-  store: CharactersStore,
-  worldId: number,
-): StoredCharacterRecord[] {
-  const ids = store.championCharacterIdsByWorld[String(worldId)] ?? [];
-  return ids.flatMap((id) => {
-    const entry = store.charactersById[id];
-    return entry ? [entry] : [];
-  });
-}
-
-export function selectWorldIds(store: CharactersStore): number[] {
-  const worlds = new Set<number>();
-  for (const record of selectCharactersList(store)) {
-    worlds.add(record.worldID);
-  }
-  return Array.from(worlds).sort((a, b) => a - b);
-}
-
 export function hasStoredCompletedRequiredSetup(store: CharactersStore) {
   return selectCharactersList(store).length > 0;
 }
 
-export function readCharactersStoreView(): CharactersStoreView {
-  const store = readCharactersStore();
-  const worldIds = selectWorldIds(store);
-
-  const mainByWorld: Record<string, StoredCharacterRecord> = {};
-  const championsByWorld: Record<string, StoredCharacterRecord[]> = {};
-  for (const worldId of worldIds) {
-    const main = selectMainCharacterForWorld(store, worldId);
-    if (main) mainByWorld[String(worldId)] = main;
-    championsByWorld[String(worldId)] = selectChampionCharactersForWorld(store, worldId);
-  }
-
-  return {
-    version: store.version,
-    all: selectCharactersList(store),
-    byId: store.charactersById,
-    mainByWorld,
-    championsByWorld,
-  };
-}
-
-export function toNormalizedCharacterData(record: StoredCharacterRecord): NormalizedCharacterData {
-  return {
-    characterID: record.characterID,
-    characterName: record.characterName,
-    worldID: record.worldID,
-    level: record.level,
-    exp: record.exp,
-    jobName: record.jobName,
-    characterImgURL: record.characterImgURL,
-    isSearchTarget: record.isSearchTarget,
-    startRank: record.startRank,
-    overallRank: record.overallRank,
-    overallGap: record.overallGap,
-    legionRank: record.legionRank,
-    legionGap: record.legionGap,
-    legionLevel: record.legionLevel,
-    raidPower: record.raidPower,
-    tierID: record.tierID,
-    score: record.score,
-    fetchedAt: record.fetchedAt,
-    expiresAt: record.expiresAt,
-  };
-}
