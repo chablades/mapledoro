@@ -152,7 +152,7 @@ function weeksFromStart(start: Date, eventDate: Date): number {
 
 interface SimSchedule {
   start: Date;
-  nextWed: Date;
+  nextThu: Date;
   next1st: Date;
   maxDate: Date;
   firstWeekWeekly: number;
@@ -167,9 +167,9 @@ function buildSchedule(
   clearedWeeklyTraces: number,
 ): SimSchedule {
   const start = new Date(startDate + "T00:00:00Z");
-  const nextWed = new Date(start);
-  const daysToWed = (3 - start.getUTCDay() + 7) % 7;
-  nextWed.setUTCDate(nextWed.getUTCDate() + daysToWed);
+  const nextThu = new Date(start);
+  const daysToThu = (4 - start.getUTCDay() + 7) % 7;
+  nextThu.setUTCDate(nextThu.getUTCDate() + daysToThu);
 
   const next1st = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), 1));
   if (next1st.getTime() < start.getTime()) {
@@ -181,7 +181,7 @@ function buildSchedule(
 
   return {
     start,
-    nextWed,
+    nextThu,
     next1st,
     maxDate,
     firstWeekWeekly: Math.max(0, weeklyTraces - clearedWeeklyTraces),
@@ -196,23 +196,23 @@ function runSimulation(
   schedule: SimSchedule,
   thresholds: { questIdx: number; questLabel: string; tracesFromStart: number }[],
 ): { milestones: QuestMilestone[]; timedOut: boolean } {
-  const { start, nextWed, next1st, maxDate, firstWeekWeekly, weeklyTraces, monthlyTraces } =
+  const { start, nextThu, next1st, maxDate, firstWeekWeekly, weeklyTraces, monthlyTraces } =
     schedule;
   const milestones: QuestMilestone[] = [];
   let gained = 0;
-  let wedCount = 0;
+  let weekCount = 0;
   let mIdx = 0;
 
   while (mIdx < thresholds.length) {
-    const wedFirst = nextWed.getTime() <= next1st.getTime();
-    const eventDate = new Date(wedFirst ? nextWed : next1st);
+    const weeklyFirst = nextThu.getTime() <= next1st.getTime();
+    const eventDate = new Date(weeklyFirst ? nextThu : next1st);
     if (eventDate.getTime() > maxDate.getTime()) {
       return { milestones, timedOut: true };
     }
-    if (wedFirst) {
-      gained += wedCount === 0 ? firstWeekWeekly : weeklyTraces;
-      nextWed.setUTCDate(nextWed.getUTCDate() + 7);
-      wedCount++;
+    if (weeklyFirst) {
+      gained += weekCount === 0 ? firstWeekWeekly : weeklyTraces;
+      nextThu.setUTCDate(nextThu.getUTCDate() + 7);
+      weekCount++;
     } else {
       gained += monthlyTraces;
       next1st.setUTCMonth(next1st.getUTCMonth() + 1);
@@ -232,9 +232,8 @@ function runSimulation(
   return { milestones, timedOut: false };
 }
 
-// Weekly boss reset is Thursday 00:00 UTC; the last day of each reset cycle
-// in UTC is Wednesday. Liberation completes on the day the final traces arrive:
-// a Wednesday (weekly clears) or the 1st of a month (Black Mage monthly clear).
+// Weekly boss reset is Thursday 00:00 UTC. Liberation completes on the reset
+// day the final traces arrive: a Thursday (weekly) or the 1st of a month (monthly).
 function simulateCompletion(
   startDate: string,
   weeklyTraces: number,
