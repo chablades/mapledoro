@@ -16,6 +16,7 @@ const CHANGELOG: ChangelogEntry[] = [
       { type: "added", text: "Expanded character guide pages with community resources, skill icons, class infographics, and HEXA guide images where available." },
       { type: "changed", text: "Replaced placeholder quick-nav icons on homepage with intended icons." },
       { type: "fixed", text: "Fixed the Liberation Tracker bottom panel losing its styling in some layouts." },
+      { type: "fixed", text: "Fixed Liberation Tracker completion dates being off by one day from weekly boss reset." },
     ],
   },
   {
