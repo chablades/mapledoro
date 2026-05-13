@@ -1182,10 +1182,12 @@ export default function BossCrystalsWorkspace({ theme }: { theme: AppTheme }) {
               </span>
             </div>
           </div>
+
+          <div style={{ marginTop: "1.25rem" }}>
+            <WikiAttribution theme={theme} subject="Boss icons" />
+          </div>
         </div>
       </div>
-
-      <WikiAttribution theme={theme} subject="Boss icons" />
 
       {/* Dialogs */}
       {dialog?.type === "add-name" && (

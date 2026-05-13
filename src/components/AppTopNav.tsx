@@ -286,6 +286,12 @@ export default function AppTopNav({
               );
             })}
           </div>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", paddingTop: "0.5rem", borderTop: `1px solid ${theme.border}` }}>
+            <span style={{ fontSize: "0.82rem", fontWeight: 700, color: theme.muted }}>
+              {colorMode === "dark" ? "Dark" : "Light"} mode
+            </span>
+            <ColorModeToggle colorMode={colorMode} onToggle={toggleColorMode} theme={theme} />
+          </div>
         </div>
       )}
     </>

@@ -829,12 +829,13 @@ export default function EventPlannerWorkspace({ theme }: { theme: AppTheme }) {
   if (!mounted) return null;
 
   return (
-    <div style={{ flex: 1, width: "100%", padding: "1.5rem 1.5rem 2rem 2.75rem" }}>
+    <div className="ep-main" style={{ flex: 1, width: "100%", padding: "1.5rem 1.5rem 2rem 2.75rem" }}>
       <style>{`
         .tool-btn { transition: background 0.15s, border-color 0.15s; cursor: pointer; }
         .tool-dropdown-item:hover { background: ${theme.timerBg}; }
         @media (max-width: 860px) {
           .ep-form-grid { grid-template-columns: 1fr !important; }
+          .ep-main { padding: 1rem !important; }
         }
       `}</style>
 

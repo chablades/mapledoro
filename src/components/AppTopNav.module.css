@@ -127,6 +127,14 @@
     display: none !important;
   }
 
+  .colorModeToggle {
+    display: none !important;
+  }
+
+  .mobileMenuPanel .colorModeToggle {
+    display: inline-block !important;
+  }
+
   .mobileUtc {
     display: inline-block;
     font-size: 0.72rem;

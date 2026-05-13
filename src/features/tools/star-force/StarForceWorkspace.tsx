@@ -573,11 +573,12 @@ export default function StarForceWorkspace({ theme }: { theme: AppTheme }) {
   const selectStyle: React.CSSProperties = { ...styles.selectStyle, width: 90 };
 
   return (
-    <div style={{ flex: 1, width: "100%", padding: "1.5rem 1.5rem 2rem 2.75rem" }}>
+    <div className="sf-main" style={{ flex: 1, width: "100%", padding: "1.5rem 1.5rem 2rem 2.75rem" }}>
       <style>{`
         .tool-btn { transition: background 0.15s, border-color 0.15s; cursor: pointer; }
         @media (max-width: 860px) {
           .sf-inputs-grid { grid-template-columns: 1fr !important; }
+          .sf-main { padding: 1rem !important; }
         }
       `}</style>
 

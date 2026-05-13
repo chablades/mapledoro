@@ -843,7 +843,7 @@ function CompletionTimelineChart({
 
   const options: ChartOptions<"line"> = {
     responsive: true,
-    maintainAspectRatio: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: { position: "bottom" as const, labels: { color: theme.muted, font: { size: 12, weight: 600 as const } } },
       tooltip: {
@@ -899,7 +899,9 @@ function CompletionTimelineChart({
       >
         Completion Timeline
       </div>
-      <Line data={chartData} options={options} />
+      <div style={{ position: "relative", height: 300 }}>
+        <Line data={chartData} options={options} />
+      </div>
     </div>
   );
 }
