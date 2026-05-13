@@ -163,12 +163,15 @@ export default function CubingWorkspace({ theme }: { theme: AppTheme }) {
   const cubeLabel = CUBE_TYPES.find((c) => c.value === result?.cubeType)?.label ?? result?.cubeType;
 
   return (
-    <div style={{ flex: 1, width: "100%", padding: "1.5rem 1.5rem 2rem 2.75rem" }}>
+    <div className="cubing-main" style={{ flex: 1, width: "100%", padding: "1.5rem 1.5rem 2rem 2.75rem" }}>
       <style>{`
         @media (max-width: 640px) {
           .cubing-results { grid-template-columns: 1fr !important; }
           .cubing-tier-pills { gap: 4px !important; }
           .cubing-tier-pill { padding: 6px 8px !important; font-size: 0.72rem !important; }
+        }
+        @media (max-width: 860px) {
+          .cubing-main { padding: 1rem !important; }
         }
         .cubing-tier-pill:hover {
           filter: brightness(1.1);

@@ -300,6 +300,11 @@ export default function PitchedBossDropsWorkspace({
       className="pbd-main"
       style={{ flex: 1, width: "100%", padding: "1.5rem 1.5rem 2rem 2.75rem" }}
     >
+      <style>{`
+        @media (max-width: 860px) {
+          .pbd-main { padding: 1rem !important; }
+        }
+      `}</style>
       <div style={{ maxWidth: 900, margin: "0 auto" }}>
         <ToolHeader
           theme={theme}

@@ -934,6 +934,7 @@ export default function DailiesWorkspace({ theme }: { theme: AppTheme }) {
         .dailies-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 1.1rem; }
         @media (max-width: 860px) {
           .dailies-grid { grid-template-columns: 1fr !important; }
+          .dailies-main { padding: 1rem !important; }
         }
         @media (max-width: 435px) {
           .dailies-check-grid { grid-template-columns: 1fr !important; }
@@ -941,6 +942,7 @@ export default function DailiesWorkspace({ theme }: { theme: AppTheme }) {
       `}</style>
 
       <div
+        className="dailies-main"
         style={{
           flex: 1,
           width: "100%",
