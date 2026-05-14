@@ -15,6 +15,7 @@ import {
   useHexaSkillsState,
   type SkillCostSummary,
 } from "./useHexaSkillsState";
+import { COMMON_COSTS, getCostRange } from "./hexa-costs";
 import { fmtNum, SkillSection, MasterySection } from "./hexa-ui";
 import { toolStyles } from "../tool-styles";
 
@@ -264,18 +265,20 @@ export default function HexaSkillsWorkspace({ theme }: { theme: AppTheme }) {
 
   const adjusted = useMemo(() => {
     if (includeJanus) return { grand: costs.grand, maxGrand: costs.maxGrand, progressPct: costs.progressPct };
+    const janusCost = costs.common.perSkill[0] ?? { solErda: 0, fragments: 0 };
+    const janusMaxCost = getCostRange(COMMON_COSTS, 0, desiredLevels.common[0] ?? 30);
     const grand = {
-      solErda: costs.grand.solErda - costs.common.total.solErda,
-      fragments: costs.grand.fragments - costs.common.total.fragments,
+      solErda: costs.grand.solErda - janusCost.solErda,
+      fragments: costs.grand.fragments - janusCost.fragments,
     };
     const maxGrand = {
-      solErda: costs.maxGrand.solErda - costs.maxCommon.solErda,
-      fragments: costs.maxGrand.fragments - costs.maxCommon.fragments,
+      solErda: costs.maxGrand.solErda - janusMaxCost.solErda,
+      fragments: costs.maxGrand.fragments - janusMaxCost.fragments,
     };
     const spent = { solErda: maxGrand.solErda - grand.solErda, fragments: maxGrand.fragments - grand.fragments };
     const progressPct = maxGrand.fragments > 0 ? Math.min(100, (spent.fragments / maxGrand.fragments) * 100) : 0;
     return { grand, maxGrand, progressPct };
-  }, [includeJanus, costs]);
+  }, [includeJanus, costs, desiredLevels.common]);
 
   const styles = toolStyles(theme);
   const { sectionPanel, inputStyle } = styles;

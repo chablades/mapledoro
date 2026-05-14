@@ -4,7 +4,7 @@
 
 // -- Types --------------------------------------------------------------------
 
-export type LiberationType = "genesis" | "destiny";
+export type LiberationType = "genesis" | "destiny" | "destiny2";
 
 export interface LiberationBoss {
   name: string;
@@ -156,6 +156,16 @@ export const DESTINY_BOSSES: LiberationBoss[] = [
     reset: "weekly",
   },
   {
+    name: "Radiant Malefic Star",
+    icon: "https://media.maplestorywiki.net/yetidb/Maple_Guide_-_Malefic_Star.png",
+    difficulties: [
+      { label: "Normal", traces: 20 },
+      { label: "Hard", traces: 380 },
+    ],
+    maxParty: 3,
+    reset: "weekly",
+  },
+  {
     name: "Kaling",
     icon: "https://media.maplestorywiki.net/yetidb/Maple_Guide_-_Kaling.png",
     difficulties: [
@@ -186,6 +196,16 @@ export const DESTINY_BOSSES: LiberationBoss[] = [
     maxParty: 3,
     reset: "weekly",
   },
+  {
+    name: "Jupiter",
+    icon: "https://media.maplestorywiki.net/yetidb/Maple_Guide_-_Jupiter.png",
+    difficulties: [
+      { label: "Normal", traces: 160 },
+      { label: "Hard", traces: 500 },
+    ],
+    maxParty: 3,
+    reset: "weekly",
+  },
 ];
 
 export const DESTINY_QUESTS: LiberationQuest[] = [
@@ -195,6 +215,16 @@ export const DESTINY_QUESTS: LiberationQuest[] = [
 ];
 
 export const DESTINY_TOTAL = 7500;
+
+// -- Destiny Part 2 --------------------------------------------------------------
+
+export const DESTINY2_QUESTS: LiberationQuest[] = [
+  { label: "Decisive Battle, First Adversary", required: 10000 },
+  { label: "Decisive Battle, Limbo", required: 12500 },
+  { label: "Decisive Battle, Baldrix", required: 15000 },
+];
+
+export const DESTINY2_TOTAL = 37500;
 
 // -- Helpers ------------------------------------------------------------------
 

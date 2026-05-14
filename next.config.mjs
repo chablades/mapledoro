@@ -22,6 +22,10 @@ const nextConfig = {
         protocol: "https",
         hostname: "media.maplestorywiki.net",
       },
+      {
+        protocol: "https",
+        hostname: "orangemushroom.net",
+      },
     ],
   },
 };
