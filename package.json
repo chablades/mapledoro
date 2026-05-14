@@ -29,6 +29,6 @@
   "overrides": {
     "flatted": "3.4.2",
     "minimatch": "10.2.5",
-    "postcss": "8.5.13"
+    "postcss": "8.5.14"
   }
 }
