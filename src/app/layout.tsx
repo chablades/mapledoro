@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
-import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { ThemeProvider } from "../components/ThemeContext";
 import { ACCENT_THEMES, type ColorMode } from "../components/themes";
+import CookieConsentBanner from "../components/CookieConsentBanner";
 
 export const metadata: Metadata = {
   title: "MapleDoro",
@@ -37,8 +37,8 @@ export default async function RootLayout({
       <body>
         <ThemeProvider initialThemeKey={initialThemeKey} initialColorMode={initialColorMode}>
           {children}
+          <CookieConsentBanner />
         </ThemeProvider>
-        <Analytics />
       </body>
     </html>
   );
