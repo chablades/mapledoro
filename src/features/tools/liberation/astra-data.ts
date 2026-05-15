@@ -10,7 +10,7 @@ export interface AstraMission {
   fragmentsRequired: number;
 }
 
-export interface AstraDifficulty {
+interface AstraDifficulty {
   label: string;
   traces: number;
   hasVoucher: boolean;
@@ -25,7 +25,7 @@ export interface AstraBoss {
   maxParty: number;
 }
 
-export interface AstraDailyQuest {
+interface AstraDailyQuest {
   id: string;
   label: string;
   fragments: number;

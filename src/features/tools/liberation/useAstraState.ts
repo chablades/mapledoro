@@ -63,13 +63,13 @@ export function getAstraSelection(
 
 // -- Calculation --------------------------------------------------------------
 
-export interface AstraBossBreakdown {
+interface AstraBossBreakdown {
   bossName: string;
   tracesPerWeek: number;
   voucherFragmentsPerWeek: number;
 }
 
-export interface AstraMissionResult {
+interface AstraMissionResult {
   mission: AstraMission;
   completionDate: string;
   weeksFromStart: number;
