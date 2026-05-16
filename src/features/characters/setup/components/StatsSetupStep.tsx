@@ -395,18 +395,19 @@ function SetupOptionsSection({
   const isDA = Boolean(optsDef?.ephinEaSoul);
 
   let soulValue: string | null = null;
-  if (opts.muGongSoul === true) soulValue = "mugong";
-  else if (opts.muGongSoul === false) soulValue = "none";
+  if (opts.soulType === "mugong") soulValue = "mugong";
+  else if (opts.soulType === "none") soulValue = "none";
   if (isDA) {
-    if (opts.ephinEaLevel === 1) soulValue = "ephinea_1";
-    else if (opts.ephinEaLevel === 2) soulValue = "ephinea_2";
+    if (opts.soulType === "ephinea" && opts.ephineaLevel === 1) soulValue = "ephinea_1";
+    else if (opts.soulType === "ephinea" && opts.ephineaLevel === 2) soulValue = "ephinea_2";
   }
 
   function handleSoulToggle(val: string | null) {
-    if (val === null || val === "none") onUpdate({ muGongSoul: val === "none" ? false : undefined, ephinEaLevel: undefined });
-    else if (val === "mugong") onUpdate({ muGongSoul: true, ephinEaLevel: undefined });
-    else if (val === "ephinea_1") onUpdate({ ephinEaLevel: 1, muGongSoul: undefined });
-    else if (val === "ephinea_2") onUpdate({ ephinEaLevel: 2, muGongSoul: undefined });
+    if (val === null) onUpdate({ soulType: undefined, ephineaLevel: undefined });
+    else if (val === "none") onUpdate({ soulType: "none", ephineaLevel: undefined });
+    else if (val === "mugong") onUpdate({ soulType: "mugong", ephineaLevel: undefined });
+    else if (val === "ephinea_1") onUpdate({ soulType: "ephinea", ephineaLevel: 1 });
+    else if (val === "ephinea_2") onUpdate({ soulType: "ephinea", ephineaLevel: 2 });
   }
 
   const soulOptions = isDA
@@ -435,16 +436,16 @@ function SetupOptionsSection({
       <QuestionToggle
         question="Are you Genesis Liberated?"
         options={[{ value: "yes", label: "Yes" }, { value: "no", label: "No" }]}
-        value={boolToYesNo(opts.genesisLiberated ?? undefined)}
-        onToggle={(v) => onUpdate({ genesisLiberated: yesNoToBool(v) })}
+        value={boolToYesNo(opts.isLiberated ?? undefined)}
+        onToggle={(v) => onUpdate({ isLiberated: yesNoToBool(v) })}
         theme={theme}
       />
       {optsDef?.weaponType && (
         <QuestionToggle
           question="What weapon type are you using?"
           options={[{ value: "1h", label: "One-Handed" }, { value: "2h", label: "Two-Handed" }]}
-          value={opts.weaponType ?? null}
-          onToggle={(v) => onUpdate({ weaponType: (v as "1h" | "2h") ?? undefined })}
+          value={opts.weaponHand ?? null}
+          onToggle={(v) => onUpdate({ weaponHand: (v as "1h" | "2h") ?? undefined })}
           theme={theme}
         />
       )}
@@ -459,8 +460,8 @@ function SetupOptionsSection({
         <QuestionToggle
           question="Do you have a Ruin Force Shield equipped?"
           options={[{ value: "yes", label: "Yes" }, { value: "no", label: "No" }]}
-          value={boolToYesNo(opts.ruinForceShield ?? undefined)}
-          onToggle={(v) => onUpdate({ ruinForceShield: yesNoToBool(v) })}
+          value={boolToYesNo(opts.hasRuinForceShield ?? undefined)}
+          onToggle={(v) => onUpdate({ hasRuinForceShield: yesNoToBool(v) })}
           theme={theme}
         />
       )}

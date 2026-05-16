@@ -4,16 +4,14 @@ import type { NormalizedCharacterData } from "./types";
 const CHARACTERS_STORE_VERSION = 1 as const;
 const CHARACTERS_STORE_STORAGE_KEY = "mapledoro_characters_store_v1";
 
-export interface CharacterSetupOptions {
-  genesisLiberated: boolean | null;
-  weaponType: "1h" | "2h" | null;
-  ruinForceShield: boolean | null;
-  muGongSoul: boolean | null;
-  ephinEaLevel: 1 | 2 | null;
+export interface CharacterMarriage {
+  isMarried: boolean | null;
+  partnerName: string | null;
 }
 
-export function createEmptySetupOptions(): CharacterSetupOptions {
-  return { genesisLiberated: null, weaponType: null, ruinForceShield: null, muGongSoul: null, ephinEaLevel: null };
+export interface CharacterSoul {
+  type: "mugong" | "ephinea" | "none" | null;
+  ephineaLevel: 1 | 2 | null;
 }
 
 export interface StoredTripleStatField {
@@ -99,9 +97,11 @@ export interface StoredCharacterRecord {
   fetchedAt: number;
   expiresAt: number;
   gender: "male" | "female" | null;
-  married: boolean | null;
-  partnerName: string | null;
-  setupOptions: CharacterSetupOptions | null;
+  marriage: CharacterMarriage | null;
+  isLiberated: boolean | null;
+  weaponHand: "1h" | "2h" | null;
+  hasRuinForceShield: boolean | null;
+  soul: CharacterSoul | null;
   stats: StoredCharacterStats;
   equipment: StoredCharacterEquipment;
   tools?: Record<string, unknown>;
@@ -221,15 +221,21 @@ function isStoredCooldownReductionField(value: unknown): value is StoredCooldown
   );
 }
 
-function parseSetupOptions(value: unknown): CharacterSetupOptions | null {
+function parseMarriage(value: unknown): CharacterMarriage | null {
   if (!isObject(value)) return null;
-  const ephinRaw = value.ephinEaLevel;
   return {
-    genesisLiberated: typeof value.genesisLiberated === "boolean" ? value.genesisLiberated : null,
-    weaponType: value.weaponType === "1h" || value.weaponType === "2h" ? value.weaponType : null,
-    ruinForceShield: typeof value.ruinForceShield === "boolean" ? value.ruinForceShield : null,
-    muGongSoul: typeof value.muGongSoul === "boolean" ? value.muGongSoul : null,
-    ephinEaLevel: ephinRaw === 1 || ephinRaw === 2 ? ephinRaw : null,
+    isMarried: typeof value.isMarried === "boolean" ? value.isMarried : null,
+    partnerName: typeof value.partnerName === "string" && value.partnerName ? value.partnerName : null,
+  };
+}
+
+function parseSoul(value: unknown): CharacterSoul | null {
+  if (!isObject(value)) return null;
+  const type = value.type;
+  const ephineaRaw = value.ephineaLevel;
+  return {
+    type: type === "mugong" || type === "ephinea" || type === "none" ? type : null,
+    ephineaLevel: ephineaRaw === 1 || ephineaRaw === 2 ? ephineaRaw : null,
   };
 }
 
@@ -312,9 +318,11 @@ function createEmptyCharactersStore(): CharactersStore {
 export function createStoredCharacterRecord(args: {
   character: NormalizedCharacterData;
   gender?: "male" | "female" | null;
-  married?: boolean | null;
-  partnerName?: string | null;
-  setupOptions?: CharacterSetupOptions | null;
+  marriage?: CharacterMarriage | null;
+  isLiberated?: boolean | null;
+  weaponHand?: "1h" | "2h" | null;
+  hasRuinForceShield?: boolean | null;
+  soul?: CharacterSoul | null;
   stats?: StoredCharacterStats;
   equipment?: StoredCharacterEquipment;
   tools?: Record<string, unknown>;
@@ -326,9 +334,11 @@ export function createStoredCharacterRecord(args: {
     worldId: args.character.worldID,
     ...args.character,
     gender: args.gender ?? null,
-    married: args.married ?? null,
-    partnerName: args.partnerName ?? null,
-    setupOptions: args.setupOptions ?? null,
+    marriage: args.marriage ?? null,
+    isLiberated: args.isLiberated ?? null,
+    weaponHand: args.weaponHand ?? null,
+    hasRuinForceShield: args.hasRuinForceShield ?? null,
+    soul: args.soul ?? null,
     stats: args.stats ?? createEmptyCharacterStats(),
     equipment: args.equipment ?? createEmptyCharacterEquipment(),
     tools: args.tools,
@@ -355,11 +365,12 @@ function parseStoredCharacterRecord(
     ...normalizedCharacterData,
     ign: derivedIgn,
     worldId,
-    gender:
-      value.gender === "male" || value.gender === "female" ? value.gender : null,
-    married: typeof value.married === "boolean" ? value.married : null,
-    partnerName: typeof value.partnerName === "string" && value.partnerName ? value.partnerName : null,
-    setupOptions: parseSetupOptions(value.setupOptions),
+    gender: value.gender === "male" || value.gender === "female" ? value.gender : null,
+    marriage: parseMarriage(value.marriage),
+    isLiberated: typeof value.isLiberated === "boolean" ? value.isLiberated : null,
+    weaponHand: value.weaponHand === "1h" || value.weaponHand === "2h" ? value.weaponHand : null,
+    hasRuinForceShield: typeof value.hasRuinForceShield === "boolean" ? value.hasRuinForceShield : null,
+    soul: parseSoul(value.soul),
     stats: isStoredCharacterStats(value.stats) ? value.stats : createEmptyCharacterStats(),
     equipment: isStoredCharacterEquipment(value.equipment)
       ? value.equipment

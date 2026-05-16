@@ -24,7 +24,7 @@ import {
   writeSetupDraft,
 } from "../model/setupDraftStorage";
 import type { StoredCharacterRecord } from "../model/charactersStore";
-import { convertStatsStepDraftToStored, parseStatsStepDraft } from "../setup/data/statsStepDraft";
+import { convertStatsStepDraftToStored, marriageDraftToStored, parseStatsStepDraft } from "../setup/data/statsStepDraft";
 import type { NormalizedCharacterData } from "../model/types";
 import {
   clampFlowStepIndex,
@@ -70,13 +70,8 @@ function getCurrentCharacterGender(
 function getCurrentCharacterMarriage(
   setupStepTestByStep: SetupStepInputById,
 ): { married: boolean | null; partnerName: string | null } {
-  const raw = setupStepTestByStep.marriage ?? "";
-  if (raw === "no") return { married: false, partnerName: null };
-  if (raw.startsWith("yes")) {
-    const pipIdx = raw.indexOf("|");
-    return { married: true, partnerName: pipIdx !== -1 ? raw.slice(pipIdx + 1) || null : null };
-  }
-  return { married: null, partnerName: null };
+  const result = marriageDraftToStored(setupStepTestByStep.marriage ?? "");
+  return { married: result?.isMarried ?? null, partnerName: result?.partnerName ?? null };
 }
 
 // Helpers for world-scoped main/champion key maps
@@ -439,27 +434,14 @@ export function useCharacterSetupController() {
         const gender = isCurrentCharacter
           ? normalizeGenderValue(setupStepTestByStep.gender)
           : (character.gender ?? existingRecord?.gender ?? null);
-        let married = character.married ?? existingRecord?.married ?? null;
-        let partnerName = character.partnerName ?? existingRecord?.partnerName ?? null;
-        if (isCurrentCharacter) {
-          const marriageRaw = setupStepTestByStep.marriage ?? "";
-          if (marriageRaw === "no") {
-            married = false;
-            partnerName = null;
-          } else if (marriageRaw.startsWith("yes")) {
-            married = true;
-            const pipIdx = marriageRaw.indexOf("|");
-            partnerName = pipIdx !== -1 ? marriageRaw.slice(pipIdx + 1) || null : null;
-          } else {
-            married = null;
-            partnerName = null;
-          }
-        }
+        const existingMarriage = character.marriage ?? existingRecord?.marriage ?? null;
+        const marriage = isCurrentCharacter
+          ? marriageDraftToStored(setupStepTestByStep.marriage ?? "")
+          : existingMarriage;
         acc[id] = {
           ...character,
           gender,
-          married,
-          partnerName,
+          marriage,
           meta: {
             addedAt: character.meta.addedAt,
             updatedAt:
@@ -804,8 +786,8 @@ export function useCharacterSetupController() {
     const store = readCharactersStore();
     const existing = selectCharacterById(store, toCharacterKey(character));
     if (!existing) return;
-    const { stats, setupOptions } = convertStatsStepDraftToStored(parseStatsStepDraft(rawDraft));
-    upsertFn({ ...existing, stats: { ...existing.stats, ...stats }, setupOptions });
+    const { stats, isLiberated, weaponHand, hasRuinForceShield, soul } = convertStatsStepDraftToStored(parseStatsStepDraft(rawDraft));
+    upsertFn({ ...existing, stats: { ...existing.stats, ...stats }, isLiberated, weaponHand, hasRuinForceShield, soul });
   }
 
   const finishSetupFlow = useCallback((overrideFlowId?: SetupFlowId) => {
@@ -818,18 +800,10 @@ export function useCharacterSetupController() {
       const isQuickSetupFlow = effectiveFlowId === requiredFlowId;
       const isFullSetupFlow = effectiveFlowId === "full_setup";
       if ((isQuickSetupFlow || isFullSetupFlow) && confirmedCharacter) {
-        const marriageRaw = setupStepTestByStep.marriage ?? "";
-        let married: boolean | null = null;
-        if (marriageRaw.startsWith("yes")) married = true;
-        else if (marriageRaw === "no") married = false;
-        const sep = marriageRaw.indexOf("|");
-        const partnerName = sep >= 0 ? marriageRaw.slice(sep + 1).trim() || null : null;
-        // Convert from NormalizedCharacterData (API response) to StoredCharacterRecord before adding to roster
         const storedRecord = createStoredCharacterRecord({
           character: confirmedCharacter,
           gender: normalizeGenderValue(setupStepTestByStep.gender),
-          married,
-          partnerName,
+          marriage: marriageDraftToStored(setupStepTestByStep.marriage ?? ""),
         });
         upsertRosterCharacter(storedRecord);
         setHasCompletedRequiredSetupEver(true);
@@ -892,11 +866,10 @@ export function useCharacterSetupController() {
         setShowFlowOverview(false);
         setSetupStepIndex(0);
         setSetupStepDirection("forward");
-        const savedMarried = storedCharacter?.married;
-        const savedPartnerName = storedCharacter?.partnerName;
+        const savedMarriage = storedCharacter?.marriage;
         let marriageValue = "";
-        if (savedMarried === true) marriageValue = savedPartnerName ? `yes|${savedPartnerName}` : "yes";
-        else if (savedMarried === false) marriageValue = "no";
+        if (savedMarriage?.isMarried === true) marriageValue = savedMarriage.partnerName ? `yes|${savedMarriage.partnerName}` : "yes";
+        else if (savedMarriage?.isMarried === false) marriageValue = "no";
         setSetupStepTestByStep({
           gender: storedCharacter?.gender ?? "",
           marriage: marriageValue,

@@ -5,7 +5,7 @@
 
 */
 
-import type { CharacterSetupOptions, StoredCharacterStats, StoredTripleStatField } from "../../model/charactersStore";
+import type { CharacterMarriage, CharacterSoul, StoredCharacterStats, StoredTripleStatField } from "../../model/charactersStore";
 
 export interface TripleStatDraft {
   base: string;
@@ -25,7 +25,6 @@ export interface StatsStepDraft {
   int?: TripleStatDraft;
   luk?: TripleStatDraft;
   hp?: TripleStatDraft;
-  // NOTE: store needs to be updated to StoredTripleStatField for these two
   attackPower?: TripleStatDraft;
   magicAtt?: TripleStatDraft;
 
@@ -43,12 +42,14 @@ export interface StatsStepDraft {
   summonDuration?: string;
   arcanePower?: string;
   sacredPower?: string;
+
+  // Character build options
   setupOptions?: {
-    genesisLiberated?: boolean;
-    weaponType?: "1h" | "2h";
-    ruinForceShield?: boolean;
-    muGongSoul?: boolean;
-    ephinEaLevel?: 1 | 2;
+    isLiberated?: boolean;
+    weaponHand?: "1h" | "2h";
+    hasRuinForceShield?: boolean;
+    soulType?: "mugong" | "ephinea" | "none";
+    ephineaLevel?: 1 | 2;
   };
 }
 
@@ -82,23 +83,20 @@ function draftTripleToStored(draft: TripleStatDraft | undefined): StoredTripleSt
   };
 }
 
-/*
-  Converts a filled StatsStepDraft into stored stats + setup options.
-  Missing fields fall back to empty/null values.
-*/
 export function convertStatsStepDraftToStored(
   draft: StatsStepDraft,
-): { stats: Partial<StoredCharacterStats>; setupOptions: CharacterSetupOptions } {
+): { stats: Partial<StoredCharacterStats>; isLiberated: boolean | null; weaponHand: "1h" | "2h" | null; hasRuinForceShield: boolean | null; soul: CharacterSoul | null } {
   const opts = draft.setupOptions ?? {};
-  const ephinRaw = opts.ephinEaLevel;
+  const ephineaRaw = opts.ephineaLevel;
+  const soulType = opts.soulType ?? null;
+  const soul: CharacterSoul | null = soulType !== null
+    ? { type: soulType, ephineaLevel: ephineaRaw === 1 || ephineaRaw === 2 ? ephineaRaw : null }
+    : null;
   return {
-    setupOptions: {
-      genesisLiberated: opts.genesisLiberated ?? null,
-      weaponType: opts.weaponType ?? null,
-      ruinForceShield: opts.ruinForceShield ?? null,
-      muGongSoul: opts.muGongSoul ?? null,
-      ephinEaLevel: ephinRaw === 1 || ephinRaw === 2 ? ephinRaw : null,
-    },
+    isLiberated: opts.isLiberated ?? null,
+    weaponHand: opts.weaponHand ?? null,
+    hasRuinForceShield: opts.hasRuinForceShield ?? null,
+    soul,
     stats: {
       str: draftTripleToStored(draft.str),
       dex: draftTripleToStored(draft.dex),
@@ -125,4 +123,15 @@ export function convertStatsStepDraftToStored(
       sacredPower: draft.sacredPower ?? "",
     },
   };
+}
+
+export function marriageDraftToStored(marriageRaw: string): CharacterMarriage | null {
+  if (!marriageRaw || marriageRaw === "") return null;
+  if (marriageRaw === "no") return { isMarried: false, partnerName: null };
+  if (marriageRaw.startsWith("yes")) {
+    const sep = marriageRaw.indexOf("|");
+    const partnerName = sep >= 0 ? marriageRaw.slice(sep + 1).trim() || null : null;
+    return { isMarried: true, partnerName };
+  }
+  return null;
 }
