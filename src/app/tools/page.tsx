@@ -34,6 +34,14 @@ const CALCULATORS: ToolCard[] = [
     iconType: "image",
     href: "/tools/cubing",
   },
+  {
+    title: "Flaming Calculator",
+    description:
+      "Calculate the expected number of flames to achieve your desired bonus stats.",
+    icon: "https://media.maplestorywiki.net/yetidb/Use_Powerful_Rebirth_Flame.png",
+    iconType: "image",
+    href: "/tools/flaming",
+  },
 ];
 
 const PLANNERS: ToolCard[] = [
