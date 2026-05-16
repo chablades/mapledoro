@@ -30,12 +30,10 @@ interface TierStep {
 
 interface CalcResult {
   mesoMean: number;
-  mesoMedian: number;
   meso75: number;
   meso85: number;
   meso95: number;
   cubeMean: number;
-  cubeMedian: number;
   cube75: number;
   cube85: number;
   cube95: number;
@@ -116,23 +114,20 @@ export default function CubingWorkspace({ theme }: { theme: AppTheme }) {
     }
 
     const stats = isAny
-      ? { mean: 0, median: 0, seventy_fifth: 0, eighty_fifth: 0, ninety_fifth: 0 }
+      ? { mean: 0, seventy_fifth: 0, eighty_fifth: 0, ninety_fifth: 0 }
       : geoDistrQuantile(p);
 
     const mean = Math.round(stats.mean) + tierUp.mean;
-    const median = Math.round(stats.median) + tierUp.median;
     const s75 = Math.round(stats.seventy_fifth) + tierUp.seventy_fifth;
     const s85 = Math.round(stats.eighty_fifth) + tierUp.eighty_fifth;
     const s95 = Math.round(stats.ninety_fifth) + tierUp.ninety_fifth;
 
     setResult({
       cubeMean: mean,
-      cubeMedian: median,
       cube75: s75,
       cube85: s85,
       cube95: s95,
       mesoMean: cubingCost(cubeType, itemLevel, mean),
-      mesoMedian: cubingCost(cubeType, itemLevel, median),
       meso75: cubingCost(cubeType, itemLevel, s75),
       meso85: cubingCost(cubeType, itemLevel, s85),
       meso95: cubingCost(cubeType, itemLevel, s95),
@@ -318,7 +313,6 @@ export default function CubingWorkspace({ theme }: { theme: AppTheme }) {
                 heroValue={formatMesoShort(result.mesoMean)}
                 heroLabel="Average cost"
                 rows={[
-                  { label: "Median", value: result.mesoMedian },
                   { label: "75th percentile", value: result.meso75 },
                   { label: "85th percentile", value: result.meso85 },
                   { label: "95th percentile", value: result.meso95 },
@@ -331,7 +325,6 @@ export default function CubingWorkspace({ theme }: { theme: AppTheme }) {
                 heroValue={result.cubeMean.toLocaleString()}
                 heroLabel="Average cubes"
                 rows={[
-                  { label: "Median", value: result.cubeMedian },
                   { label: "75th percentile", value: result.cube75 },
                   { label: "85th percentile", value: result.cube85 },
                   { label: "95th percentile", value: result.cube95 },
