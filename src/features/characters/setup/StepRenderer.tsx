@@ -7,6 +7,7 @@ import { getFlowStepByIndex, getFlowStepCount, type SetupFlowId } from "./flows"
 import type { SetupStepId } from "./steps";
 import GenericSetupStep from "./components/GenericSetupStep";
 import GenderSetupStep from "./components/GenderSetupStep";
+import MarriageSetupStep from "./components/MarriageSetupStep";
 
 interface StepRendererProps {
   theme: AppTheme;
@@ -21,6 +22,7 @@ interface StepRendererProps {
 
 const STEP_COMPONENTS: Record<SetupStepId, typeof GenericSetupStep> = {
   gender: GenderSetupStep,
+  marriage: MarriageSetupStep,
   stats: GenericSetupStep,
   equipment_core: GenericSetupStep,
   inventory: GenericSetupStep,

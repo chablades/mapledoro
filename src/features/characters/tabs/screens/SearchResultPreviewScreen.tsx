@@ -1,4 +1,5 @@
 import { WORLD_NAMES } from "../../model/constants";
+import { resolveDisplayJobName } from "../../setup/data/nexonJobMapping";
 import { CHARACTERS_COPY } from "../content";
 import type { PreviewPaneActions, PreviewPaneModel } from "../paneModels";
 import CharacterAvatar from "../components/CharacterAvatar";
@@ -55,7 +56,7 @@ export default function SearchResultPreviewScreen({
               {WORLD_NAMES[preview.foundCharacter.worldID] ?? `ID ${preview.foundCharacter.worldID}`}
             </p>
             <p style={{ fontSize: "0.82rem", color: theme.muted, fontWeight: 700, lineHeight: 1.2, margin: 0, marginTop: "0.08rem" }}>
-              Level {preview.foundCharacter.level} · {preview.foundCharacter.jobName}
+              Level {preview.foundCharacter.level} · {resolveDisplayJobName(preview.foundCharacter.jobName)}
             </p>
           </div>
         </div>

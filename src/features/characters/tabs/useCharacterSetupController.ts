@@ -171,7 +171,6 @@ export function useCharacterSetupController() {
 
   const transitions = useSetupFlowTransitions();
   const {
-    queueTransitionTimer,
     setSetupPanelVisible,
     setSuppressLayoutTransition,
   } = transitions;
@@ -264,46 +263,19 @@ export function useCharacterSetupController() {
     [setSetupPanelVisible, setSuppressLayoutTransition],
   );
 
-  const resumeActiveFlow = useCallback(
-    (draft: SetupDraft, nextCompletedFlowIds: SetupFlowId[]) => {
-      applyDraftFlowState(draft, nextCompletedFlowIds, {
-        includeSetupMode: true,
-        includeStartedFlags: true,
-        includeVisibility: true,
-      });
-      setSuppressLayoutTransition(draft.setupFlowStarted);
-      setSetupPanelVisible(false);
-      if (draft.setupFlowStarted) {
-        queueTransitionTimer(() => {
-          setSetupPanelVisible(true);
-        }, CHARACTERS_TRANSITION_MS.setupPanelRevealDelay);
-        queueTransitionTimer(() => {
-          setSuppressLayoutTransition(false);
-        }, CHARACTERS_TRANSITION_MS.slow + CHARACTERS_TRANSITION_MS.setupPanelRevealDelay);
-      }
-    },
-    [applyDraftFlowState, queueTransitionTimer, setSetupPanelVisible, setSuppressLayoutTransition],
-  );
-
   const restoreCompletedFlowState = useCallback(
-    (draft: SetupDraft, nextCompletedFlowIds: SetupFlowId[], hasCompletedRequiredFlow: boolean) => {
+    (draft: SetupDraft, nextCompletedFlowIds: SetupFlowId[]) => {
       applyDraftFlowState(draft, nextCompletedFlowIds);
       setSetupMode("search");
       setSetupFlowStarted(true);
       setShowFlowOverview(true);
       setShowCharacterDirectory(true);
-      if (!hasCompletedRequiredFlow) {
-        setActiveFlowId(requiredFlowId);
-        setSetupStepIndex(0);
-        setSetupStepDirection("forward");
-        setSetupStepTestByStep({});
-      }
       setIsAddingCharacter(false);
       setSetupPanelVisible(true);
       setSuppressLayoutTransition(false);
       setHasCompletedRequiredSetupEver(true);
     },
-    [applyDraftFlowState, requiredFlowId, setSetupPanelVisible, setSuppressLayoutTransition],
+    [applyDraftFlowState, setSetupPanelVisible, setSuppressLayoutTransition],
   );
 
   const hydrateDraftCommonState = useCallback(
@@ -360,23 +332,15 @@ export function useCharacterSetupController() {
       const { nextCompletedFlowIds, hasCompletedRequiredFlow } =
         hydrateDraftCommonState(draft, store, storedRoster, accountHasCompletedRequiredFlow);
 
-      const hasActiveFlowInProgress =
-        draft.setupFlowStarted && !draft.showFlowOverview;
-
-      if (draft.autoResumeOnLoad && hasActiveFlowInProgress) {
-        resumeActiveFlow(draft, nextCompletedFlowIds);
-      } else if (hasCompletedRequiredFlow || accountHasCompletedRequiredFlow) {
-        restoreCompletedFlowState(draft, nextCompletedFlowIds, hasCompletedRequiredFlow);
+      if (hasCompletedRequiredFlow || accountHasCompletedRequiredFlow) {
+        restoreCompletedFlowState(draft, nextCompletedFlowIds);
       } else {
-        applyDraftFlowState(draft, nextCompletedFlowIds, draft.autoResumeOnLoad
-          ? { includeSetupMode: true, includeStartedFlags: true, includeVisibility: true }
-          : undefined);
+        applyDraftFlowState(draft, nextCompletedFlowIds);
       }
     },
     [
       applyDraftFlowState,
       hydrateDraftCommonState,
-      resumeActiveFlow,
       restoreCompletedFlowState,
       showCompletedDirectoryState,
     ],
@@ -710,7 +674,7 @@ export function useCharacterSetupController() {
       beginSetupFlowTransition({
         character: draft.confirmedCharacter,
         source: "resume",
-        flowId: requiredFlowId,
+        flowId: draft.activeFlowId,
         completedFlowIds: normalizeCompletedFlowIds(draft.completedFlowIds ?? []),
         showFlowOverview: Boolean(
           draft.completedFlowIds?.includes(requiredFlowId) || draft.showFlowOverview,
@@ -792,11 +756,20 @@ export function useCharacterSetupController() {
 
     transitions.queueTransitionTimer(() => {
       const isQuickSetupFlow = activeFlowId === requiredFlowId;
-      if (isQuickSetupFlow && confirmedCharacter) {
+      const isFullSetupFlow = activeFlowId === "full_setup";
+      if ((isQuickSetupFlow || isFullSetupFlow) && confirmedCharacter) {
+        const marriageRaw = setupStepTestByStep.marriage ?? "";
+        let married: boolean | null = null;
+        if (marriageRaw.startsWith("yes")) married = true;
+        else if (marriageRaw === "no") married = false;
+        const sep = marriageRaw.indexOf("|");
+        const partnerName = sep >= 0 ? marriageRaw.slice(sep + 1).trim() || null : null;
         // Convert from NormalizedCharacterData (API response) to StoredCharacterRecord before adding to roster
         const storedRecord = createStoredCharacterRecord({
           character: confirmedCharacter,
           gender: normalizeGenderValue(setupStepTestByStep.gender),
+          married,
+          partnerName,
         });
         upsertRosterCharacter(storedRecord);
         setHasCompletedRequiredSetupEver(true);
@@ -804,7 +777,11 @@ export function useCharacterSetupController() {
       }
       setIsAddingCharacter(false);
 
-      const updatedCompleted = Array.from(new Set([...completedFlowIds, activeFlowId]));
+      const updatedCompleted = Array.from(new Set([
+        ...completedFlowIds,
+        activeFlowId,
+        ...(activeFlowId === "full_setup" ? [requiredFlowId] : []),
+      ]));
       setCompletedFlowIds(updatedCompleted);
       setShowFlowOverview(false);
       setShowCharacterDirectory(false);
@@ -812,7 +789,7 @@ export function useCharacterSetupController() {
       setSetupStepIndex(0);
       setSetupStepDirection("forward");
 
-      if (activeFlowId === requiredFlowId) {
+      if (isQuickSetupFlow || isFullSetupFlow) {
         lookup.setStatusTone("neutral");
         lookup.setStatusMessage(LOOKUP_MESSAGES.setupSaved);
       }

@@ -87,6 +87,8 @@ export interface StoredCharacterRecord {
   fetchedAt: number;
   expiresAt: number;
   gender: "male" | "female" | null;
+  married: boolean | null;
+  partnerName: string | null;
   stats: StoredCharacterStats;
   equipment: StoredCharacterEquipment;
   tools?: Record<string, unknown>;
@@ -285,6 +287,8 @@ function createEmptyCharactersStore(): CharactersStore {
 export function createStoredCharacterRecord(args: {
   character: NormalizedCharacterData;
   gender?: "male" | "female" | null;
+  married?: boolean | null;
+  partnerName?: string | null;
   stats?: StoredCharacterStats;
   equipment?: StoredCharacterEquipment;
   tools?: Record<string, unknown>;
@@ -296,6 +300,8 @@ export function createStoredCharacterRecord(args: {
     worldId: args.character.worldID,
     ...args.character,
     gender: args.gender ?? null,
+    married: args.married ?? null,
+    partnerName: args.partnerName ?? null,
     stats: args.stats ?? createEmptyCharacterStats(),
     equipment: args.equipment ?? createEmptyCharacterEquipment(),
     tools: args.tools,
@@ -324,6 +330,8 @@ function parseStoredCharacterRecord(
     worldId,
     gender:
       value.gender === "male" || value.gender === "female" ? value.gender : null,
+    married: typeof value.married === "boolean" ? value.married : null,
+    partnerName: typeof value.partnerName === "string" && value.partnerName ? value.partnerName : null,
     stats: isStoredCharacterStats(value.stats) ? value.stats : createEmptyCharacterStats(),
     equipment: isStoredCharacterEquipment(value.equipment)
       ? value.equipment

@@ -322,7 +322,8 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
   },
   {
     id: "cannoneer",
-    nexonJobName: "Cannoneer",
+    nexonJobName: "Cannon Master",
+    displayName: "Cannoneer",
     warnings: [{ message: "Do not use Loaded Dice (5th job)", skill: LOADED_DICE }],
     buffSkills: [
       DSE,

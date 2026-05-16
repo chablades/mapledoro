@@ -1,6 +1,6 @@
 import { CHARACTERS_COPY } from "../content";
 import type { PreviewPaneActions, PreviewPaneModel } from "../paneModels";
-import { primaryButtonStyle } from "../components/uiStyles";
+import { primaryButtonStyle, secondaryButtonStyle } from "../components/uiStyles";
 
 interface SetupIntroScreenProps {
   model: PreviewPaneModel;
@@ -38,19 +38,45 @@ export default function QuickSetupIntroScreen({ model, actions }: SetupIntroScre
           fontSize: "0.9rem",
           color: theme.muted,
           fontWeight: 700,
-          marginBottom: "0.9rem",
+          marginBottom: "1rem",
         }}
       >
         {subtitle}
       </p>
-      <div style={{ display: "flex", justifyContent: "flex-end" }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>
         <button
           type="button"
           disabled={setup.isUiLocked}
-          onClick={() => actions.setSetupStepWithDirection(1)}
-          style={primaryButtonStyle(theme, "0.55rem 0.9rem")}
+          onClick={() => actions.startOptionalFlow("quick_setup")}
+          style={{
+            ...secondaryButtonStyle(theme, "0.65rem 0.9rem"),
+            textAlign: "left",
+            display: "flex",
+            flexDirection: "column",
+            gap: "0.2rem",
+          }}
         >
-          {CHARACTERS_COPY.quickSetupIntro.nextStepButton}
+          <span style={{ fontWeight: 900, fontSize: "0.9rem" }}>Quick setup</span>
+          <span style={{ fontWeight: 700, fontSize: "0.8rem", color: theme.muted }}>
+            Gender &amp; marriage only
+          </span>
+        </button>
+        <button
+          type="button"
+          disabled={setup.isUiLocked}
+          onClick={() => actions.startOptionalFlow("full_setup")}
+          style={{
+            ...primaryButtonStyle(theme, "0.65rem 0.9rem"),
+            textAlign: "left",
+            display: "flex",
+            flexDirection: "column",
+            gap: "0.2rem",
+          }}
+        >
+          <span style={{ fontWeight: 900, fontSize: "0.9rem" }}>Full setup</span>
+          <span style={{ fontWeight: 700, fontSize: "0.8rem", opacity: 0.8 }}>
+            Stats, equipment, skills, and more
+          </span>
         </button>
       </div>
     </>

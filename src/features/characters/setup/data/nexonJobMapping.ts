@@ -13,8 +13,19 @@ const NEXON_JOB_NAME_TO_CLASS_ID: Record<string, string> = Object.fromEntries(
   CLASS_SKILL_DATA.map((c) => [c.nexonJobName, c.id]),
 );
 
+const NEXON_JOB_NAME_TO_DISPLAY_NAME: Record<string, string> = Object.fromEntries(
+  CLASS_SKILL_DATA
+    .filter((c) => c.displayName !== undefined)
+    .map((c) => [c.nexonJobName, c.displayName as string]),
+);
+
 export function resolveClassId(nexonJobName: string): string | undefined {
   return NEXON_JOB_NAME_TO_CLASS_ID[nexonJobName];
+}
+
+/** Returns the player-facing display name for a class, falling back to Nexon's jobName if no override exists. */
+export function resolveDisplayJobName(nexonJobName: string): string {
+  return NEXON_JOB_NAME_TO_DISPLAY_NAME[nexonJobName] ?? nexonJobName;
 }
 
 export function validateNexonJobMapping(): void {

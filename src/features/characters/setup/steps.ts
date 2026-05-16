@@ -4,6 +4,7 @@
 */
 const SETUP_STEPS = [
   { id: "gender", label: "Gender" },
+  { id: "marriage", label: "Marriage" },
   { id: "stats", label: "Stats" },
   { id: "equipment_core", label: "Equipment Core" },
   { id: "inventory", label: "Inventory" },

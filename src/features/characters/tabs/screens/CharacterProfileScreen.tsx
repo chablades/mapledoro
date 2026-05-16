@@ -1,4 +1,5 @@
 import { CHARACTERS_COPY } from "../content";
+import { resolveDisplayJobName } from "../../setup/data/nexonJobMapping";
 import type { SearchPaneActions, SearchPaneModel } from "../paneModels";
 import { secondaryButtonStyle } from "../components/uiStyles";
 import CharacterAvatar from "../components/CharacterAvatar";
@@ -178,9 +179,18 @@ export default function CharacterProfileScreen({
                 ♀
               </span>
             )}
+            {!profile.isAddingCharacter && profile.confirmedCharacter.married === true && (
+              <span
+                aria-label="Married"
+                title={profile.confirmedCharacter.partnerName ? `Married to ${profile.confirmedCharacter.partnerName}` : "Married"}
+                style={{ color: "#db2777", fontSize: "1.02rem", lineHeight: 1 }}
+              >
+                ♥
+              </span>
+            )}
           </p>
           <p style={{ margin: 0, fontSize: "0.95rem", color: theme.muted, fontWeight: 700, lineHeight: 1.3 }}>
-            {profile.confirmedCharacter.jobName}
+            {resolveDisplayJobName(profile.confirmedCharacter.jobName)}
           </p>
           <p style={{ margin: 0, fontSize: "1rem", color: theme.muted, fontWeight: 700, lineHeight: 1.3 }}>
             Level {profile.confirmedCharacter.level}
@@ -221,10 +231,12 @@ export default function CharacterProfileScreen({
               ))}
             </div>
           )}
-          <p style={{ margin: 0, marginTop: "0.4rem", fontSize: "0.78rem", color: isStale ? "#d97706" : theme.muted, fontWeight: 700, lineHeight: 1.3 }}>
-            {profile.isRefreshing && <span className="char-refresh-spin" style={{ color: theme.muted }}>↻ </span>}
-            {statusPrefix}Updated {formattedDate}
-          </p>
+          {!profile.isAddingCharacter && (
+            <p style={{ margin: 0, marginTop: "0.4rem", fontSize: "0.78rem", color: isStale ? "#d97706" : theme.muted, fontWeight: 700, lineHeight: 1.3 }}>
+              {profile.isRefreshing && <span className="char-refresh-spin" style={{ color: theme.muted }}>↻ </span>}
+              {statusPrefix}Updated {formattedDate}
+            </p>
+          )}
           {(isStale || profile.isRefreshing) && profile.onRefresh && (
             <button
               type="button"

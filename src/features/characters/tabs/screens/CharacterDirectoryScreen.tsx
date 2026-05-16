@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { toCharacterKey } from "../../model/characterKeys";
+import { resolveDisplayJobName } from "../../setup/data/nexonJobMapping";
 import { WORLD_NAMES } from "../../model/constants";
 import type { StoredCharacterRecord } from "../../model/charactersStore";
 import {
@@ -97,7 +98,7 @@ function DirectoryCharacterCard({ character, showWorld, isUiLocked, theme, refre
           Lv {character.level}
         </span>
         <span style={{ fontSize: "0.75rem", fontWeight: 700, lineHeight: 1.1, color: theme.muted, textAlign: "center" }}>
-          {character.jobName}
+          {resolveDisplayJobName(character.jobName)}
         </span>
         {showWorld && (
           <span style={{ fontSize: "0.75rem", fontWeight: 700, lineHeight: 1.1, color: theme.muted, textAlign: "center" }}>

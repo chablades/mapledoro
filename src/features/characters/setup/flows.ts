@@ -11,7 +11,14 @@ const SETUP_FLOWS = [
     label: "Quick Setup",
     description: "Fast onboarding for one character.",
     required: true,
-    steps: ["gender"] as const,
+    steps: ["gender", "marriage"] as const,
+  },
+  {
+    id: "full_setup",
+    label: "Full Setup",
+    description: "Complete profile setup including stats, equipment, and more.",
+    required: false,
+    steps: ["gender", "marriage", "stats", "equipment_core", "v_matrix", "hexa_matrix", "familiars", "link_skills", "inventory"] as const,
   },
   {
     id: "stats_flow",
