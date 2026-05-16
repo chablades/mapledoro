@@ -16,16 +16,35 @@
 import type { StatFieldId } from "./statFields";
 
 export interface BuffSkill {
-  skillIconUrl: string;
+  skillIconUrl?: string;
   skillName: string;
   /** Job advancement label for display in tooltip (e.g. "3", "Hyper Skills (140)", "Beginner", "Transcendent") */
   jobAdvancement: string;
 }
 
+/** Buffs every class must have active, shown before class-specific skills in the buff guide. */
+export const UNIVERSAL_BUFF_SKILLS: BuffSkill[] = [
+  { skillName: "Familiars", jobAdvancement: "Beginner" },
+];
+
+/** Warnings shown for every class on the stats step. */
+export const UNIVERSAL_WARNINGS: ClassWarning[] = [
+  { message: "Soul Gauge must be 0/1000 (a full gauge increases ATT passively)" },
+];
+
 export interface ClassWarning {
   message: string;
   /** If this warning is about a specific skill (e.g. "do not use"), show its icon */
   skill?: BuffSkill;
+}
+
+export interface ClassSetupOptionsDef {
+  /** Hero, Paladin, Dawn Warrior: 1H vs 2H weapon affects attack power */
+  weaponType?: true;
+  /** Demon Slayer, Demon Avenger: optional equipment slot */
+  ruinForceShield?: true;
+  /** Demon Avenger only: replaces universal Mu Gong toggle with Ephinea (Lv 1/2) vs Mu Gong selector */
+  ephinEaSoul?: true;
 }
 
 export interface ClassSkillData {
@@ -41,6 +60,8 @@ export interface ClassSkillData {
   skipMarriage?: true;
   /** Warnings shown before the buff guide. Use skill for "do not use X" entries. */
   warnings?: ClassWarning[];
+  /** Class-specific setup option toggles shown on the stats step. */
+  setupOptionsDef?: ClassSetupOptionsDef;
   buffSkills: BuffSkill[];
   /** Class-specific required stats, ordered by importance (primary first). Universal stats are added automatically. */
   requiredStats: StatFieldId[];
@@ -195,7 +216,7 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
   {
     id: "dawn_warrior",
     nexonJobName: "Dawn Warrior",
-    // TODO: setup option — One-Handed Weapon or Two-Handed Weapon
+    setupOptionsDef: { weaponType: true },
     buffSkills: [
       DSE,
       DCO,
@@ -207,7 +228,7 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
     id: "mihile",
     nexonJobName: "Mihile",
     fixedGender: "male",
-    warnings: [{ message: "Solo party only for Soul Link (3rd job)" }],
+    warnings: [{ message: "Solo party only (for Soul Link)" }],
     buffSkills: [
       DSE,
       DCO,
@@ -225,7 +246,7 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
   {
     id: "thunder_breaker",
     nexonJobName: "Thunder Breaker",
-    warnings: [{ message: "Do not use Loaded Dice (5th job)", skill: LOADED_DICE }],
+    warnings: [{ message: "Do not use", skill: LOADED_DICE }],
     buffSkills: [DSE, DCO],
     requiredStats: ["str", "dex", "attackPower"],
   },
@@ -241,8 +262,8 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
   {
     id: "demon_avenger",
     nexonJobName: "Demon Avenger",
-    warnings: [{ message: "Do not use Overload Release (1st job)", skill: OVERLOAD_RELEASE }],
-    // TODO: setup options — Ephinea Soul (up to Lv. 2) or Mu Gong Soul; optional Ruin Force Shield
+    warnings: [{ message: "Do not use", skill: OVERLOAD_RELEASE }],
+    setupOptionsDef: { ruinForceShield: true, ephinEaSoul: true },
     buffSkills: [
       DSE,
       DCO,
@@ -253,7 +274,7 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
   {
     id: "demon_slayer",
     nexonJobName: "Demon Slayer",
-    // TODO: setup option — optional Ruin Force Shield
+    setupOptionsDef: { ruinForceShield: true },
     buffSkills: [
       DSE,
       DCO,
@@ -298,7 +319,7 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
     id: "blade_master",
     nexonJobName: "Blade Master",
     displayName: "Dual Blade",
-    warnings: [{ message: "Do not use Final Cut (4th job)", skill: FINAL_CUT }],
+    warnings: [{ message: "Do not use", skill: FINAL_CUT }],
     buffSkills: [
       DSE,
       DCO,
@@ -318,7 +339,7 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
   {
     id: "buccaneer",
     nexonJobName: "Buccaneer",
-    warnings: [{ message: "Do not use Loaded Dice (5th job)", skill: LOADED_DICE }],
+    warnings: [{ message: "Do not use", skill: LOADED_DICE }],
     buffSkills: [
       DSE,
       DCO,
@@ -331,7 +352,7 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
     id: "cannoneer",
     nexonJobName: "Cannon Master",
     displayName: "Cannoneer",
-    warnings: [{ message: "Do not use Loaded Dice (5th job)", skill: LOADED_DICE }],
+    warnings: [{ message: "Do not use", skill: LOADED_DICE }],
     buffSkills: [
       DSE,
       DCO,
@@ -342,7 +363,7 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
   {
     id: "corsair",
     nexonJobName: "Corsair",
-    warnings: [{ message: "Do not use Loaded Dice (5th job)", skill: LOADED_DICE }],
+    warnings: [{ message: "Do not use", skill: LOADED_DICE }],
     buffSkills: [
       DSE,
       DCO,
@@ -366,7 +387,7 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
     id: "hero",
     nexonJobName: "Hero",
     warnings: [{ message: "Must have 10 combo orb" }],
-    // TODO: setup option — One-Handed Weapon or Two-Handed Weapon
+    setupOptionsDef: { weaponType: true },
     buffSkills: [
       DSE,
       DCO,
@@ -397,7 +418,7 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
     id: "paladin",
     nexonJobName: "Paladin",
     warnings: [{ message: "Must have 0 charge" }],
-    // TODO: setup option — One-Handed Weapon or Two-Handed Weapon
+    setupOptionsDef: { weaponType: true },
     buffSkills: [
       DSE,
       { skillIconUrl: "https://media.maplestorywiki.net/yetidb/Skill_Combat_Orders.png", skillName: "Combat Orders", jobAdvancement: "3" },
@@ -418,14 +439,14 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
   {
     id: "shadower",
     nexonJobName: "Shadower",
-    warnings: [{ message: "Must have 0 stacks for Flip of the Coin (Hyper Skill)", skill: FLIP_OF_THE_COIN }],
+    warnings: [{ message: "Must have 0 stacks", skill: FLIP_OF_THE_COIN }],
     buffSkills: [DSE, DCO],
     requiredStats: ["luk", "dex", "str", "attackPower"],
   },
   {
     id: "adele",
     nexonJobName: "Adele",
-    warnings: [{ message: "Must have 0 stacks for Resonance Rush (2nd job)", skill: RESONANCE_RUSH }],
+    warnings: [{ message: "Must have 0 stacks", skill: RESONANCE_RUSH }],
     buffSkills: [DSE, DCO],
     requiredStats: ["str", "dex", "attackPower"],
   },
@@ -434,8 +455,8 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
     nexonJobName: "Ark",
     warnings: [
       { message: "Must be in Flora form (not Specter)" },
-      { message: "Must have 0 Spell Bullets (1st job)", skill: SPELL_BULLETS },
-      { message: "Do not use Loaded Dice (5th job)", skill: LOADED_DICE },
+      { message: "Must have 0 stacks", skill: SPELL_BULLETS },
+      { message: "Do not use", skill: LOADED_DICE },
     ],
     buffSkills: [DSE, DCO],
     requiredStats: ["str", "dex", "attackPower"],
@@ -443,7 +464,7 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
   {
     id: "illium",
     nexonJobName: "Illium",
-    warnings: [{ message: "Must have 0 stacks (moving, Lucent Brand 1st job)", skill: LUCENT_BRAND }],
+    warnings: [{ message: "Must have 0 stacks (while moving)", skill: LUCENT_BRAND }],
     buffSkills: [DSE, DCO],
     requiredStats: ["int", "luk", "magicAtt"],
   },
@@ -493,7 +514,7 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
   {
     id: "mercedes",
     nexonJobName: "Mercedes",
-    warnings: [{ message: "Must have 0 stacks (Ignis Roar, 3rd job)", skill: IGNIS_ROAR }],
+    warnings: [{ message: "Must have 0 stacks", skill: IGNIS_ROAR }],
     buffSkills: [
       DSE,
       DCO,
@@ -506,9 +527,9 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
     id: "phantom",
     nexonJobName: "Phantom",
     warnings: [
-      { message: "Do not use Final Cut (4th job)", skill: FINAL_CUT },
-      { message: "Do not use Cross Surge (3rd job)", skill: CROSS_SURGE },
-      { message: "Do not use Spirit Blade (2nd job)", skill: SPIRIT_BLADE },
+      { message: "Do not use", skill: FINAL_CUT },
+      { message: "Do not use", skill: CROSS_SURGE },
+      { message: "Do not use", skill: SPIRIT_BLADE },
     ],
     buffSkills: [DSE, DCO],
     requiredStats: ["luk", "dex", "attackPower"],
@@ -516,7 +537,7 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
   {
     id: "shade",
     nexonJobName: "Shade",
-    warnings: [{ message: "Do not use Loaded Dice (5th job)", skill: LOADED_DICE }],
+    warnings: [{ message: "Do not use", skill: LOADED_DICE }],
     buffSkills: [DSE, DCO],
     requiredStats: ["str", "dex", "attackPower"],
   },
@@ -534,8 +555,8 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
     id: "mo_xuan",
     nexonJobName: "Mo Xuan",
     warnings: [
-      { message: "Must have 5 stacks for Heir of the Divine (4th job)", skill: HEIR_OF_THE_DIVINE },
-      { message: "Do not use Loaded Dice (5th job)", skill: LOADED_DICE },
+      { message: "Must have 5 stacks", skill: HEIR_OF_THE_DIVINE },
+      { message: "Do not use", skill: LOADED_DICE },
     ],
     buffSkills: [DSE, DCO],
     requiredStats: ["dex", "str", "attackPower"],
@@ -544,7 +565,7 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
     id: "angelic_buster",
     nexonJobName: "Angelic Buster",
     fixedGender: "female",
-    warnings: [{ message: "Do not use Loaded Dice (5th job)", skill: LOADED_DICE }],
+    warnings: [{ message: "Do not use", skill: LOADED_DICE }],
     buffSkills: [
       DSE,
       DCO,
@@ -555,7 +576,7 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
   {
     id: "cadena",
     nexonJobName: "Cadena",
-    warnings: [{ message: "Must have 0 stacks for Muscle Memory (2nd job)", skill: MUSCLE_MEMORY }],
+    warnings: [{ message: "Must have 0 stacks", skill: MUSCLE_MEMORY }],
     buffSkills: [DSE, DCO],
     requiredStats: ["luk", "dex", "str", "attackPower"],
   },
@@ -593,14 +614,14 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
   {
     id: "blaster",
     nexonJobName: "Blaster",
-    warnings: [{ message: "Must have 0 stacks for Combo Training (3rd job)", skill: COMBO_TRAINING }],
+    warnings: [{ message: "Must have 0 stacks", skill: COMBO_TRAINING }],
     buffSkills: [DSE, DCO],
     requiredStats: ["str", "dex", "attackPower"],
   },
   {
     id: "mechanic",
     nexonJobName: "Mechanic",
-    warnings: [{ message: "Do not use Loaded Dice (5th job)", skill: LOADED_DICE }],
+    warnings: [{ message: "Do not use", skill: LOADED_DICE }],
     buffSkills: [
       DSE,
       DCO,
@@ -622,8 +643,8 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
     nexonJobName: "Xenon",
     warnings: [
       { message: "Supply Surplus must be 20/20 (Beginner)" },
-      { message: "Do not use Circuit Surge (1st job)", skill: CIRCUIT_SURGE },
-      { message: "Do not use OOPArts Code (4th job)", skill: OOPARTS_CODE },
+      { message: "Do not use", skill: CIRCUIT_SURGE },
+      { message: "Do not use", skill: OOPARTS_CODE },
     ],
     buffSkills: [DSE, DCO],
     requiredStats: ["str", "dex", "luk", "attackPower"],

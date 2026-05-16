@@ -10,6 +10,8 @@ interface SetupStepFrameProps {
   onBack: () => void;
   onNext: () => void;
   onFinish: () => void;
+  /** When provided, always shows this label and always calls onNext (never Finish). */
+  nextLabel?: string;
   children: ReactNode;
 }
 
@@ -22,9 +24,10 @@ export default function SetupStepFrame({
   onBack,
   onNext,
   onFinish,
+  nextLabel,
   children,
 }: SetupStepFrameProps) {
-  const isLastStep = stepNumber >= totalSteps;
+  const isLastStep = !nextLabel && stepNumber >= totalSteps;
 
   return (
     <>
@@ -71,6 +74,7 @@ export default function SetupStepFrame({
           gap: "0.6rem",
           justifyContent: "space-between",
           alignItems: "center",
+          marginTop: "0.9rem",
         }}
       >
         <button
@@ -105,7 +109,7 @@ export default function SetupStepFrame({
             cursor: "pointer",
           }}
         >
-          {isLastStep ? "Finish" : "Next Step"}
+          {nextLabel ?? (isLastStep ? "Finish" : "Next Step")}
         </button>
       </div>
     </>

@@ -24,6 +24,7 @@ import {
   writeSetupDraft,
 } from "../model/setupDraftStorage";
 import type { StoredCharacterRecord } from "../model/charactersStore";
+import { convertStatsStepDraftToStored, parseStatsStepDraft } from "../setup/data/statsStepDraft";
 import type { NormalizedCharacterData } from "../model/types";
 import {
   clampFlowStepIndex,
@@ -423,6 +424,9 @@ export function useCharacterSetupController() {
     if (typeof window === "undefined") return;
 
     const existingStore = readCharactersStore();
+    // Safety guard: never wipe characters that exist in the store but aren't in the
+    // in-memory roster yet (e.g. if this effect fires before hydration sets the roster).
+    if (characterRoster.length === 0 && Object.keys(existingStore.charactersById).length > 0) return;
     const now = Date.now();
     const currentCharacterKey = confirmedCharacter ? toCharacterKey(confirmedCharacter) : null;
     // characterRoster is already StoredCharacterRecord[], just sync gender from setup steps
@@ -791,6 +795,19 @@ export function useCharacterSetupController() {
     lookup,
   ]);
 
+  function applyStatsDraftToRoster(
+    character: NormalizedCharacterData | null,
+    rawDraft: string,
+    upsertFn: (c: StoredCharacterRecord) => void,
+  ) {
+    if (!character) return;
+    const store = readCharactersStore();
+    const existing = selectCharacterById(store, toCharacterKey(character));
+    if (!existing) return;
+    const { stats, setupOptions } = convertStatsStepDraftToStored(parseStatsStepDraft(rawDraft));
+    upsertFn({ ...existing, stats: { ...existing.stats, ...stats }, setupOptions });
+  }
+
   const finishSetupFlow = useCallback((overrideFlowId?: SetupFlowId) => {
     if (immediateUiLockRef.current) return;
     immediateUiLockRef.current = true;
@@ -818,6 +835,11 @@ export function useCharacterSetupController() {
         setHasCompletedRequiredSetupEver(true);
         removeSetupDraftForCharacter(confirmedCharacter);
       }
+
+      if (effectiveFlowId === "stats_flow") {
+        applyStatsDraftToRoster(confirmedCharacter, setupStepTestByStep.stats ?? "", upsertRosterCharacter);
+      }
+
       setIsAddingCharacter(false);
 
       const updatedCompleted = Array.from(new Set([

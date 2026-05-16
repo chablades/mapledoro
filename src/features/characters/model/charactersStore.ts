@@ -4,6 +4,18 @@ import type { NormalizedCharacterData } from "./types";
 const CHARACTERS_STORE_VERSION = 1 as const;
 const CHARACTERS_STORE_STORAGE_KEY = "mapledoro_characters_store_v1";
 
+export interface CharacterSetupOptions {
+  genesisLiberated: boolean | null;
+  weaponType: "1h" | "2h" | null;
+  ruinForceShield: boolean | null;
+  muGongSoul: boolean | null;
+  ephinEaLevel: 1 | 2 | null;
+}
+
+export function createEmptySetupOptions(): CharacterSetupOptions {
+  return { genesisLiberated: null, weaponType: null, ruinForceShield: null, muGongSoul: null, ephinEaLevel: null };
+}
+
 export interface StoredTripleStatField {
   base: string;
   percent: string;
@@ -89,6 +101,7 @@ export interface StoredCharacterRecord {
   gender: "male" | "female" | null;
   married: boolean | null;
   partnerName: string | null;
+  setupOptions: CharacterSetupOptions | null;
   stats: StoredCharacterStats;
   equipment: StoredCharacterEquipment;
   tools?: Record<string, unknown>;
@@ -208,6 +221,18 @@ function isStoredCooldownReductionField(value: unknown): value is StoredCooldown
   );
 }
 
+function parseSetupOptions(value: unknown): CharacterSetupOptions | null {
+  if (!isObject(value)) return null;
+  const ephinRaw = value.ephinEaLevel;
+  return {
+    genesisLiberated: typeof value.genesisLiberated === "boolean" ? value.genesisLiberated : null,
+    weaponType: value.weaponType === "1h" || value.weaponType === "2h" ? value.weaponType : null,
+    ruinForceShield: typeof value.ruinForceShield === "boolean" ? value.ruinForceShield : null,
+    muGongSoul: typeof value.muGongSoul === "boolean" ? value.muGongSoul : null,
+    ephinEaLevel: ephinRaw === 1 || ephinRaw === 2 ? ephinRaw : null,
+  };
+}
+
 function isStoredCharacterStats(value: unknown): value is StoredCharacterStats {
   return (
     isObject(value) &&
@@ -289,6 +314,7 @@ export function createStoredCharacterRecord(args: {
   gender?: "male" | "female" | null;
   married?: boolean | null;
   partnerName?: string | null;
+  setupOptions?: CharacterSetupOptions | null;
   stats?: StoredCharacterStats;
   equipment?: StoredCharacterEquipment;
   tools?: Record<string, unknown>;
@@ -302,6 +328,7 @@ export function createStoredCharacterRecord(args: {
     gender: args.gender ?? null,
     married: args.married ?? null,
     partnerName: args.partnerName ?? null,
+    setupOptions: args.setupOptions ?? null,
     stats: args.stats ?? createEmptyCharacterStats(),
     equipment: args.equipment ?? createEmptyCharacterEquipment(),
     tools: args.tools,
@@ -332,6 +359,7 @@ function parseStoredCharacterRecord(
       value.gender === "male" || value.gender === "female" ? value.gender : null,
     married: typeof value.married === "boolean" ? value.married : null,
     partnerName: typeof value.partnerName === "string" && value.partnerName ? value.partnerName : null,
+    setupOptions: parseSetupOptions(value.setupOptions),
     stats: isStoredCharacterStats(value.stats) ? value.stats : createEmptyCharacterStats(),
     equipment: isStoredCharacterEquipment(value.equipment)
       ? value.equipment

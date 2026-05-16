@@ -37,6 +37,7 @@ export interface SearchPaneModel {
     showCharacterDirectory: boolean;
     canViewCharacterDirectory: boolean;
     isAddingCharacter: boolean;
+    setupStepActive: boolean;
     isCurrentMainCharacter: boolean;
     isCurrentChampionCharacter: boolean;
     canSetCurrentChampion: boolean;

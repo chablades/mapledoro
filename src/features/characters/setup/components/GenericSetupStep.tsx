@@ -11,6 +11,7 @@ interface GenericSetupStepProps {
   step: SetupStepDefinition;
   stepNumber: number;
   totalSteps: number;
+  jobName?: string;
   value: string;
   onChange: (value: string) => void;
   onBack: () => void;

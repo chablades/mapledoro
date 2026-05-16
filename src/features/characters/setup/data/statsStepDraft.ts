@@ -5,7 +5,7 @@
 
 */
 
-import type { StoredCharacterStats, StoredTripleStatField } from "../../model/charactersStore";
+import type { CharacterSetupOptions, StoredCharacterStats, StoredTripleStatField } from "../../model/charactersStore";
 
 export interface TripleStatDraft {
   base: string;
@@ -43,6 +43,13 @@ export interface StatsStepDraft {
   summonDuration?: string;
   arcanePower?: string;
   sacredPower?: string;
+  setupOptions?: {
+    genesisLiberated?: boolean;
+    weaponType?: "1h" | "2h";
+    ruinForceShield?: boolean;
+    muGongSoul?: boolean;
+    ephinEaLevel?: 1 | 2;
+  };
 }
 
 export function serializeStatsStepDraft(draft: StatsStepDraft): string {
@@ -76,36 +83,46 @@ function draftTripleToStored(draft: TripleStatDraft | undefined): StoredTripleSt
 }
 
 /*
-  Converts a filled StatsStepDraft into the shape expected by StoredCharacterStats.
-  Only fields present in the draft are written; missing fields fall back to empty values.
+  Converts a filled StatsStepDraft into stored stats + setup options.
+  Missing fields fall back to empty/null values.
 */
 export function convertStatsStepDraftToStored(
   draft: StatsStepDraft,
-): Partial<StoredCharacterStats> {
+): { stats: Partial<StoredCharacterStats>; setupOptions: CharacterSetupOptions } {
+  const opts = draft.setupOptions ?? {};
+  const ephinRaw = opts.ephinEaLevel;
   return {
-    str: draftTripleToStored(draft.str),
-    dex: draftTripleToStored(draft.dex),
-    int: draftTripleToStored(draft.int),
-    luk: draftTripleToStored(draft.luk),
-    hp: draftTripleToStored(draft.hp),
-    attackPower: draftTripleToStored(draft.attackPower),
-    magicAtt: draftTripleToStored(draft.magicAtt),
-
-    damage: draft.damage ?? "",
-    bossDamage: draft.bossDamage ?? "",
-    ignoreDefense: draft.ignoreDefense ?? "",
-    criticalRate: draft.criticalRate ?? "",
-    criticalDamage: draft.criticalDamage ?? "",
-    buffDuration: draft.buffDuration ?? "",
-    cooldownReduction: {
-      seconds: draft.cooldownReduction?.seconds ?? "",
-      percent: draft.cooldownReduction?.percent ?? "",
+    setupOptions: {
+      genesisLiberated: opts.genesisLiberated ?? null,
+      weaponType: opts.weaponType ?? null,
+      ruinForceShield: opts.ruinForceShield ?? null,
+      muGongSoul: opts.muGongSoul ?? null,
+      ephinEaLevel: ephinRaw === 1 || ephinRaw === 2 ? ephinRaw : null,
     },
-    cooldownSkip: draft.cooldownSkip ?? "",
-    ignoreElementalResistance: draft.ignoreElementalResistance ?? "",
-    additionalStatusDamage: draft.additionalStatusDamage ?? "",
-    summonDuration: draft.summonDuration ?? "",
-    arcanePower: draft.arcanePower ?? "",
-    sacredPower: draft.sacredPower ?? "",
+    stats: {
+      str: draftTripleToStored(draft.str),
+      dex: draftTripleToStored(draft.dex),
+      int: draftTripleToStored(draft.int),
+      luk: draftTripleToStored(draft.luk),
+      hp: draftTripleToStored(draft.hp),
+      attackPower: draftTripleToStored(draft.attackPower),
+      magicAtt: draftTripleToStored(draft.magicAtt),
+      damage: draft.damage ?? "",
+      bossDamage: draft.bossDamage ?? "",
+      ignoreDefense: draft.ignoreDefense ?? "",
+      criticalRate: draft.criticalRate ?? "",
+      criticalDamage: draft.criticalDamage ?? "",
+      buffDuration: draft.buffDuration ?? "",
+      cooldownReduction: {
+        seconds: draft.cooldownReduction?.seconds ?? "",
+        percent: draft.cooldownReduction?.percent ?? "",
+      },
+      cooldownSkip: draft.cooldownSkip ?? "",
+      ignoreElementalResistance: draft.ignoreElementalResistance ?? "",
+      additionalStatusDamage: draft.additionalStatusDamage ?? "",
+      summonDuration: draft.summonDuration ?? "",
+      arcanePower: draft.arcanePower ?? "",
+      sacredPower: draft.sacredPower ?? "",
+    },
   };
 }

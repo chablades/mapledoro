@@ -231,7 +231,7 @@ export default function CharacterProfileScreen({
               ))}
             </div>
           )}
-          {!profile.isAddingCharacter && (
+          {!profile.isAddingCharacter && !profile.setupStepActive && (
             <p style={{ margin: 0, marginTop: "0.4rem", fontSize: "0.78rem", color: isStale ? "#d97706" : theme.muted, fontWeight: 700, lineHeight: 1.3 }}>
               {profile.isRefreshing && <span className="char-refresh-spin" style={{ color: theme.muted }}>↻ </span>}
               {statusPrefix}Updated {formattedDate}

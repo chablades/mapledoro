@@ -9,6 +9,7 @@ import type { SetupStepId } from "./steps";
 import GenericSetupStep from "./components/GenericSetupStep";
 import GenderSetupStep from "./components/GenderSetupStep";
 import MarriageSetupStep from "./components/MarriageSetupStep";
+import StatsSetupStep from "./components/StatsSetupStep";
 
 interface StepRendererProps {
   theme: AppTheme;
@@ -25,7 +26,7 @@ interface StepRendererProps {
 const STEP_COMPONENTS: Record<SetupStepId, typeof GenericSetupStep> = {
   gender: GenderSetupStep,
   marriage: MarriageSetupStep,
-  stats: GenericSetupStep,
+  stats: StatsSetupStep,
   equipment_core: GenericSetupStep,
   inventory: GenericSetupStep,
   v_matrix: GenericSetupStep,
@@ -59,6 +60,7 @@ export default function StepRenderer({
       step={step}
       stepNumber={visibleNumber}
       totalSteps={visibleTotal}
+      jobName={jobName}
       value={stepValue}
       onChange={onStepValueChange}
       onBack={onBackStep}
