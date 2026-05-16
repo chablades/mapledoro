@@ -33,6 +33,12 @@ export interface ClassSkillData {
   nexonJobName: string;
   /** Override display name when Nexon's jobName differs from what players call the class (e.g. "Dual Blade" vs Nexon's "Blade Master") */
   displayName?: string;
+  /** Auto-fill gender and skip the gender setup step (class has a fixed gender) */
+  fixedGender?: "male" | "female";
+  /** Skip the gender setup step with no auto-fill (class has no gender, e.g. Zero) */
+  skipGender?: true;
+  /** Skip the marriage setup step (class cannot participate in marriage, e.g. Zero) */
+  skipMarriage?: true;
   /** Warnings shown before the buff guide. Use skill for "do not use X" entries. */
   warnings?: ClassWarning[];
   buffSkills: BuffSkill[];
@@ -200,6 +206,7 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
   {
     id: "mihile",
     nexonJobName: "Mihile",
+    fixedGender: "male",
     warnings: [{ message: "Solo party only for Soul Link (3rd job)" }],
     buffSkills: [
       DSE,
@@ -536,6 +543,7 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
   {
     id: "angelic_buster",
     nexonJobName: "Angelic Buster",
+    fixedGender: "female",
     warnings: [{ message: "Do not use Loaded Dice (5th job)", skill: LOADED_DICE }],
     buffSkills: [
       DSE,
@@ -635,6 +643,7 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
   {
     id: "sia_astelle",
     nexonJobName: "Sia Astelle",
+    fixedGender: "female",
     buffSkills: [
       DSE,
       DCO,
@@ -645,6 +654,8 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
   {
     id: "zero",
     nexonJobName: "Zero",
+    skipGender: true,
+    skipMarriage: true,
     warnings: [{ message: "Must be in Beta status" }],
     buffSkills: [
       DSE,

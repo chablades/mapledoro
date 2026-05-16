@@ -27,10 +27,14 @@ import type { StoredCharacterRecord } from "../model/charactersStore";
 import type { NormalizedCharacterData } from "../model/types";
 import {
   clampFlowStepIndex,
+  computeEffectiveFlowStart,
   getFlowStepByIndex,
+  getFlowStepCount,
   getRequiredSetupFlowId,
+  isStepSkippedForClass,
   type SetupFlowId,
 } from "../setup/flows";
+import { getClassSetupOverrides } from "../setup/data/nexonJobMapping";
 import type { SetupStepInputById } from "../setup/types";
 import { LOOKUP_MESSAGES } from "./messages";
 import { useCharacterLookup } from "./useCharacterLookup";
@@ -60,6 +64,18 @@ function getCurrentCharacterGender(
     return currentCharacterGenderRaw;
   }
   return null;
+}
+
+function getCurrentCharacterMarriage(
+  setupStepTestByStep: SetupStepInputById,
+): { married: boolean | null; partnerName: string | null } {
+  const raw = setupStepTestByStep.marriage ?? "";
+  if (raw === "no") return { married: false, partnerName: null };
+  if (raw.startsWith("yes")) {
+    const pipIdx = raw.indexOf("|");
+    return { married: true, partnerName: pipIdx !== -1 ? raw.slice(pipIdx + 1) || null : null };
+  }
+  return { married: null, partnerName: null };
 }
 
 // Helpers for world-scoped main/champion key maps
@@ -419,9 +435,27 @@ export function useCharacterSetupController() {
         const gender = isCurrentCharacter
           ? normalizeGenderValue(setupStepTestByStep.gender)
           : (character.gender ?? existingRecord?.gender ?? null);
+        let married = character.married ?? existingRecord?.married ?? null;
+        let partnerName = character.partnerName ?? existingRecord?.partnerName ?? null;
+        if (isCurrentCharacter) {
+          const marriageRaw = setupStepTestByStep.marriage ?? "";
+          if (marriageRaw === "no") {
+            married = false;
+            partnerName = null;
+          } else if (marriageRaw.startsWith("yes")) {
+            married = true;
+            const pipIdx = marriageRaw.indexOf("|");
+            partnerName = pipIdx !== -1 ? marriageRaw.slice(pipIdx + 1) || null : null;
+          } else {
+            married = null;
+            partnerName = null;
+          }
+        }
         acc[id] = {
           ...character,
           gender,
+          married,
+          partnerName,
           meta: {
             addedAt: character.meta.addedAt,
             updatedAt:
@@ -646,12 +680,20 @@ export function useCharacterSetupController() {
 
   const setSetupStepWithDirection = useCallback(
     (nextStep: number) => {
-      const boundedStep = clampFlowStepIndex(activeFlowId, nextStep);
-      if (boundedStep === setupStepIndex) return;
-      setSetupStepDirection(boundedStep > setupStepIndex ? "forward" : "backward");
-      setSetupStepIndex(boundedStep);
+      const direction = nextStep > setupStepIndex ? "forward" : "backward";
+      const jobName = confirmedCharacter?.jobName ?? "";
+      const { gender, skipMarriage } = getClassSetupOverrides(jobName);
+      const stepCount = getFlowStepCount(activeFlowId);
+      let target = Math.max(0, Math.min(stepCount, nextStep));
+      while (target >= 1 && target <= stepCount && isStepSkippedForClass(activeFlowId, target, gender, skipMarriage)) {
+        target += direction === "forward" ? 1 : -1;
+      }
+      target = Math.max(0, Math.min(stepCount, target));
+      if (target === setupStepIndex) return;
+      setSetupStepDirection(direction);
+      setSetupStepIndex(target);
     },
-    [activeFlowId, setupStepIndex],
+    [activeFlowId, confirmedCharacter, setupStepIndex],
   );
 
   const resumeSavedSetup = useCallback(() => {
@@ -749,14 +791,15 @@ export function useCharacterSetupController() {
     lookup,
   ]);
 
-  const finishSetupFlow = useCallback(() => {
+  const finishSetupFlow = useCallback((overrideFlowId?: SetupFlowId) => {
     if (immediateUiLockRef.current) return;
     immediateUiLockRef.current = true;
     setIsFinishingSetup(true);
 
     transitions.queueTransitionTimer(() => {
-      const isQuickSetupFlow = activeFlowId === requiredFlowId;
-      const isFullSetupFlow = activeFlowId === "full_setup";
+      const effectiveFlowId = typeof overrideFlowId === "string" ? overrideFlowId : activeFlowId;
+      const isQuickSetupFlow = effectiveFlowId === requiredFlowId;
+      const isFullSetupFlow = effectiveFlowId === "full_setup";
       if ((isQuickSetupFlow || isFullSetupFlow) && confirmedCharacter) {
         const marriageRaw = setupStepTestByStep.marriage ?? "";
         let married: boolean | null = null;
@@ -779,8 +822,8 @@ export function useCharacterSetupController() {
 
       const updatedCompleted = Array.from(new Set([
         ...completedFlowIds,
-        activeFlowId,
-        ...(activeFlowId === "full_setup" ? [requiredFlowId] : []),
+        effectiveFlowId,
+        ...(effectiveFlowId === "full_setup" ? [requiredFlowId] : []),
       ]));
       setCompletedFlowIds(updatedCompleted);
       setShowFlowOverview(false);
@@ -827,8 +870,14 @@ export function useCharacterSetupController() {
         setShowFlowOverview(false);
         setSetupStepIndex(0);
         setSetupStepDirection("forward");
+        const savedMarried = storedCharacter?.married;
+        const savedPartnerName = storedCharacter?.partnerName;
+        let marriageValue = "";
+        if (savedMarried === true) marriageValue = savedPartnerName ? `yes|${savedPartnerName}` : "yes";
+        else if (savedMarried === false) marriageValue = "no";
         setSetupStepTestByStep({
           gender: storedCharacter?.gender ?? "",
+          marriage: marriageValue,
           stats: "",
           equipment_core: "",
         });
@@ -1085,6 +1134,7 @@ export function useCharacterSetupController() {
   const canSetCurrentChampion =
     isCurrentChampionCharacter || championCharacterKeys.length < MAX_CHAMPIONS;
   const currentCharacterGender = getCurrentCharacterGender(setupStepTestByStep);
+  const currentCharacterMarriage = getCurrentCharacterMarriage(setupStepTestByStep);
 
   // Derive sorted world IDs from roster
   const worldIds = Array.from(
@@ -1129,6 +1179,8 @@ export function useCharacterSetupController() {
     isCurrentChampionCharacter,
     canSetCurrentChampion,
     currentCharacterGender,
+    currentCharacterMarried: currentCharacterMarriage.married,
+    currentCharacterPartnerName: currentCharacterMarriage.partnerName,
     requiredFlowId,
     queryInvalid: lookup.queryInvalid,
     isSearching: lookup.isSearching,
@@ -1170,8 +1222,24 @@ export function useCharacterSetupController() {
       handleSearchSubmit,
       startOptionalSetupFlow: (flowId: SetupFlowId) => {
         if (immediateUiLockRef.current) return;
+        const overrides = confirmedCharacter
+          ? getClassSetupOverrides(confirmedCharacter.jobName)
+          : null;
+        const { startStep, autoFillGender } = overrides
+          ? computeEffectiveFlowStart(flowId, overrides.gender, overrides.skipMarriage)
+          : { startStep: 1, autoFillGender: null };
+        const stepCount = getFlowStepCount(flowId);
+        if (autoFillGender) {
+          setSetupStepTestByStep((prev) => ({ ...prev, gender: autoFillGender }));
+        }
+        if (startStep > stepCount) {
+          // All steps skipped — finish immediately with this flow
+          setActiveFlowId(flowId);
+          finishSetupFlow(flowId);
+          return;
+        }
         setActiveFlowId(flowId);
-        setSetupStepIndex(1);
+        setSetupStepIndex(startStep);
         setSetupStepDirection("forward");
         setShowFlowOverview(false);
         setShowCharacterDirectory(false);

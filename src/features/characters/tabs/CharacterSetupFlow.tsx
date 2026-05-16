@@ -86,6 +86,8 @@ export default function CharacterSetupFlow({ theme }: CharacterSetupFlowProps) {
       isCurrentChampionCharacter: state.isCurrentChampionCharacter,
       canSetCurrentChampion: state.canSetCurrentChampion,
       currentCharacterGender: state.currentCharacterGender,
+      currentCharacterMarried: state.currentCharacterMarried,
+      currentCharacterPartnerName: state.currentCharacterPartnerName,
       isRefreshing: confirmedStoredCharacter
         ? state.refreshingKeys.has(toCharacterKey(confirmedStoredCharacter))
         : false,

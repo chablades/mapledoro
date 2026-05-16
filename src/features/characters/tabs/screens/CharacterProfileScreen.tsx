@@ -179,10 +179,10 @@ export default function CharacterProfileScreen({
                 ♀
               </span>
             )}
-            {!profile.isAddingCharacter && profile.confirmedCharacter.married === true && (
+            {profile.currentCharacterMarried === true && (
               <span
                 aria-label="Married"
-                title={profile.confirmedCharacter.partnerName ? `Married to ${profile.confirmedCharacter.partnerName}` : "Married"}
+                title={profile.currentCharacterPartnerName ? `Married to ${profile.currentCharacterPartnerName}` : "Married"}
                 style={{ color: "#db2777", fontSize: "1.02rem", lineHeight: 1 }}
               >
                 ♥

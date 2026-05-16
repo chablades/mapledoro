@@ -5,6 +5,8 @@
 import type { SetupStepId } from "./steps";
 import { getSetupStepById, type SetupStepDefinition } from "./steps";
 
+type GenderOverride = "male" | "female" | "none" | null;
+
 const SETUP_FLOWS = [
   {
     id: "quick_setup",
@@ -108,4 +110,61 @@ export function getFlowStepByIndex(flowId: SetupFlowId, stepIndex: number): Setu
 
 export function getRequiredSetupFlowId(): SetupFlowId {
   return QUICK_FLOW_ID;
+}
+
+/**
+ * Computes the first non-skipped step index and any gender auto-fill for a class.
+ * Returns startStep > stepCount if all steps are skipped.
+ */
+export function computeEffectiveFlowStart(
+  flowId: SetupFlowId,
+  gender: GenderOverride,
+  skipMarriage: boolean,
+): { startStep: number; autoFillGender: "male" | "female" | null } {
+  const stepCount = getFlowStepCount(flowId);
+  let autoFillGender: "male" | "female" | null = null;
+
+  for (let i = 1; i <= stepCount; i++) {
+    const step = getFlowStepByIndex(flowId, i);
+    if (!step) break;
+    if (step.id === "gender" && gender !== null) {
+      if (gender !== "none") autoFillGender = gender;
+      continue;
+    }
+    if (step.id === "marriage" && skipMarriage) continue;
+    return { startStep: i, autoFillGender };
+  }
+
+  return { startStep: stepCount + 1, autoFillGender };
+}
+
+export function getVisibleStepInfo(
+  flowId: SetupFlowId,
+  stepIndex: number,
+  gender: GenderOverride,
+  skipMarriage: boolean,
+): { visibleNumber: number; visibleTotal: number } {
+  const stepCount = getFlowStepCount(flowId);
+  let visibleTotal = 0;
+  let visibleNumber = 0;
+  for (let i = 1; i <= stepCount; i++) {
+    if (!isStepSkippedForClass(flowId, i, gender, skipMarriage)) {
+      visibleTotal++;
+      if (i <= stepIndex) visibleNumber++;
+    }
+  }
+  return { visibleNumber, visibleTotal };
+}
+
+export function isStepSkippedForClass(
+  flowId: SetupFlowId,
+  stepIndex: number,
+  gender: GenderOverride,
+  skipMarriage: boolean,
+): boolean {
+  const step = getFlowStepByIndex(flowId, stepIndex);
+  if (!step) return false;
+  if (step.id === "gender" && gender !== null) return true;
+  if (step.id === "marriage" && skipMarriage) return true;
+  return false;
 }

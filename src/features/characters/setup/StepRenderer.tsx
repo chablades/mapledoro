@@ -3,7 +3,8 @@
   Centralizes step-to-component mapping so each step can be specialized later.
 */
 import type { AppTheme } from "../../../components/themes";
-import { getFlowStepByIndex, getFlowStepCount, type SetupFlowId } from "./flows";
+import { getFlowStepByIndex, getVisibleStepInfo, type SetupFlowId } from "./flows";
+import { getClassSetupOverrides } from "./data/nexonJobMapping";
 import type { SetupStepId } from "./steps";
 import GenericSetupStep from "./components/GenericSetupStep";
 import GenderSetupStep from "./components/GenderSetupStep";
@@ -13,6 +14,7 @@ interface StepRendererProps {
   theme: AppTheme;
   flowId: SetupFlowId;
   stepIndex: number;
+  jobName?: string;
   stepValue: string;
   onStepValueChange: (value: string) => void;
   onBackStep: () => void;
@@ -37,6 +39,7 @@ export default function StepRenderer({
   theme,
   flowId,
   stepIndex,
+  jobName = "",
   stepValue,
   onStepValueChange,
   onBackStep,
@@ -47,13 +50,15 @@ export default function StepRenderer({
   if (!step) return null;
 
   const StepComponent = STEP_COMPONENTS[step.id] ?? GenericSetupStep;
+  const { gender, skipMarriage } = getClassSetupOverrides(jobName);
+  const { visibleNumber, visibleTotal } = getVisibleStepInfo(flowId, stepIndex, gender, skipMarriage);
 
   return (
     <StepComponent
       theme={theme}
       step={step}
-      stepNumber={stepIndex}
-      totalSteps={getFlowStepCount(flowId)}
+      stepNumber={visibleNumber}
+      totalSteps={visibleTotal}
       value={stepValue}
       onChange={onStepValueChange}
       onBack={onBackStep}

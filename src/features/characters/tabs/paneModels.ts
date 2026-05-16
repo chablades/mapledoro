@@ -41,6 +41,8 @@ export interface SearchPaneModel {
     isCurrentChampionCharacter: boolean;
     canSetCurrentChampion: boolean;
     currentCharacterGender: "male" | "female" | null;
+    currentCharacterMarried: boolean | null;
+    currentCharacterPartnerName: string | null;
     isRefreshing: boolean;
     onRefresh: (() => void) | null;
   };

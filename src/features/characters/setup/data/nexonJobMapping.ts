@@ -7,10 +7,14 @@
   Suggested call site: src/features/characters/tabs/useCharacterSetupController.ts on mount.
 */
 
-import { CLASS_SKILL_DATA } from "./classSkillData";
+import { CLASS_SKILL_DATA, type ClassSkillData } from "./classSkillData";
 
 const NEXON_JOB_NAME_TO_CLASS_ID: Record<string, string> = Object.fromEntries(
   CLASS_SKILL_DATA.map((c) => [c.nexonJobName, c.id]),
+);
+
+const NEXON_JOB_NAME_TO_CLASS_DATA: Record<string, ClassSkillData> = Object.fromEntries(
+  CLASS_SKILL_DATA.map((c) => [c.nexonJobName, c]),
 );
 
 const NEXON_JOB_NAME_TO_DISPLAY_NAME: Record<string, string> = Object.fromEntries(
@@ -26,6 +30,20 @@ export function resolveClassId(nexonJobName: string): string | undefined {
 /** Returns the player-facing display name for a class, falling back to Nexon's jobName if no override exists. */
 export function resolveDisplayJobName(nexonJobName: string): string {
   return NEXON_JOB_NAME_TO_DISPLAY_NAME[nexonJobName] ?? nexonJobName;
+}
+
+export interface ClassSetupOverrides {
+  /** "male"/"female" = skip gender step and auto-fill; "none" = skip with no fill; null = show step normally */
+  gender: "male" | "female" | "none" | null;
+  skipMarriage: boolean;
+}
+
+export function getClassSetupOverrides(nexonJobName: string): ClassSetupOverrides {
+  const data = NEXON_JOB_NAME_TO_CLASS_DATA[nexonJobName];
+  return {
+    gender: data?.skipGender ? "none" : (data?.fixedGender ?? null),
+    skipMarriage: Boolean(data?.skipMarriage),
+  };
 }
 
 export function validateNexonJobMapping(): void {
