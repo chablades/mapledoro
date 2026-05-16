@@ -312,7 +312,7 @@ function geoQuantile(p: number, q: number): number {
   return Math.log(1 - q) / Math.log(1 - p);
 }
 
-export function getFlameTypeText(flameType: FlameType): string {
+function getFlameTypeText(flameType: FlameType): string {
   if (flameType === "drop") return "drops";
   if (flameType === "fusion" || flameType === "masterFusion" || flameType === "meisterFusion") return "fuses";
   if (flameType === "reincarnation") return "abyssal flames";
@@ -458,14 +458,6 @@ export function computeFlameScore(
 // -- Formatting ---------------------------------------------------------------
 
 const mesoFmt = new Intl.NumberFormat("en-US");
-
-export function formatMeso(n: number): string {
-  if (!isFinite(n)) return "N/A";
-  if (n >= 1_000_000_000_000) return (n / 1_000_000_000_000).toFixed(1).replace(/\.0$/, "") + "T";
-  if (n >= 1_000_000_000) return (n / 1_000_000_000).toFixed(1).replace(/\.0$/, "") + "B";
-  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M";
-  return mesoFmt.format(Math.floor(n));
-}
 
 export function formatMesoFull(n: number): string {
   if (!isFinite(n)) return "N/A";

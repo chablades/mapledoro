@@ -164,19 +164,25 @@ function ResultCard({
   heroLabel: string;
   rows: { label: string; value: string }[];
 }) {
+  const cardStyle: CSSProperties = {
+    background: theme.panel,
+    border: `1px solid ${theme.border}`,
+    borderRadius: "18px",
+    padding: "1.25rem",
+  };
+  const titleStyle: CSSProperties = {
+    fontSize: "0.75rem", fontWeight: 800, color: theme.muted,
+    textTransform: "uppercase", letterSpacing: "0.04em",
+  };
+  const rowStyle: CSSProperties = {
+    display: "flex", justifyContent: "space-between", alignItems: "center",
+    fontSize: "0.75rem", fontWeight: 700, color: theme.muted,
+    background: theme.timerBg, borderRadius: "8px", padding: "6px 10px",
+  };
+
   return (
-    <div
-      className="panel-card"
-      style={{
-        background: theme.panel,
-        border: `1px solid ${theme.border}`,
-        borderRadius: "18px",
-        padding: "1.25rem",
-      }}
-    >
-      <div style={{ fontSize: "0.75rem", fontWeight: 800, color: theme.muted, textTransform: "uppercase", letterSpacing: "0.04em" }}>
-        {title}
-      </div>
+    <div className="panel-card" style={cardStyle}>
+      <div style={titleStyle}>{title}</div>
       <div style={{ margin: "8px 0 16px" }}>
         <div style={{ fontSize: "1.5rem", fontWeight: 800, color: theme.text, lineHeight: 1.1 }}>
           {heroValue}
@@ -187,17 +193,7 @@ function ResultCard({
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
         {rows.map((row) => (
-          <div key={row.label} style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            fontSize: "0.75rem",
-            fontWeight: 700,
-            color: theme.muted,
-            background: theme.timerBg,
-            borderRadius: "8px",
-            padding: "6px 10px",
-          }}>
+          <div key={row.label} style={rowStyle}>
             <span>{row.label}</span>
             <span style={{ color: theme.accent, fontWeight: 800 }}>{row.value}</span>
           </div>
@@ -647,6 +643,16 @@ export default function FlamingWorkspace({ theme }: { theme: AppTheme }) {
     ? false
     : state.guildDiscount;
 
+  const probBadgeStyle: CSSProperties = {
+    display: "flex", alignItems: "center", justifyContent: "center",
+    marginBottom: "1rem", padding: "14px 20px", borderRadius: "14px",
+    background: theme.panel, border: `1px solid ${theme.border}`,
+  };
+  const probLabelStyle: CSSProperties = {
+    fontSize: "0.75rem", fontWeight: 800, color: theme.muted,
+    textTransform: "uppercase", letterSpacing: "0.04em",
+  };
+
   return (
     <div className="flame-main" style={{ flex: 1, width: "100%", padding: "1.5rem 1.5rem 2rem 2.75rem" }}>
       <style>{`
@@ -682,21 +688,9 @@ export default function FlamingWorkspace({ theme }: { theme: AppTheme }) {
 
         {results && (
           <>
-            <div
-              className="fade-in"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                marginBottom: "1rem",
-                padding: "14px 20px",
-                borderRadius: "14px",
-                background: theme.panel,
-                border: `1px solid ${theme.border}`,
-              }}
-            >
+            <div className="fade-in" style={probBadgeStyle}>
               <div style={{ textAlign: "center" }}>
-                <div style={{ fontSize: "0.75rem", fontWeight: 800, color: theme.muted, textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                <div style={probLabelStyle}>
                   Probability per flame
                 </div>
                 <div style={{ marginTop: "4px" }}>
