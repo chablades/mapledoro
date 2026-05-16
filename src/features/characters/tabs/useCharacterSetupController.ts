@@ -155,6 +155,7 @@ export function useCharacterSetupController() {
         gender: existing.gender,
         stats: existing.stats,
         equipment: existing.equipment,
+        tools: existing.tools,
         addedAt: existing.meta.addedAt,
       });
       const next = [...prev];

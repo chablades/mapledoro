@@ -287,6 +287,7 @@ export function createStoredCharacterRecord(args: {
   gender?: "male" | "female" | null;
   stats?: StoredCharacterStats;
   equipment?: StoredCharacterEquipment;
+  tools?: Record<string, unknown>;
   addedAt?: number;
   updatedAt?: number;
 }): StoredCharacterRecord {
@@ -297,6 +298,7 @@ export function createStoredCharacterRecord(args: {
     gender: args.gender ?? null,
     stats: args.stats ?? createEmptyCharacterStats(),
     equipment: args.equipment ?? createEmptyCharacterEquipment(),
+    tools: args.tools,
     meta: {
       addedAt: args.addedAt ?? Date.now(),
       updatedAt: args.updatedAt ?? Date.now(),
