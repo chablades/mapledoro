@@ -119,14 +119,16 @@ function HexNode({
   );
 }
 
-function resolveHexaNotice(hasHexa: boolean, isLegacyClass: boolean, classId: string | undefined): string | null {
+function resolveHexaClassDef(classId: string | undefined) {
+  const hexaClassId = classId === "sia_astelle" ? "sia" : classId;
+  return hexaClassId ? findClassById(hexaClassId) : null;
+}
+
+function resolveHexaNotice(hasHexa: boolean, isLegacyClass: boolean): string | null {
   if (!hasHexa) {
     return isLegacyClass
       ? "Hexa skills are not available. This job requires 5th job advancement to access the Hexa Matrix."
       : "Hexa skills unlock at level 260.";
-  }
-  if (classId === "sia_astelle") {
-    return "Sia Astelle uses the Erda Link system instead of the Hexa Matrix. Full support coming soon.";
   }
   return null;
 }
@@ -175,7 +177,7 @@ function OverviewTab({ model }: { model: PreviewPaneModel }) {
   }
 
   const classId = character ? resolveClassId(character.jobName) : undefined;
-  const hexaClassDef = classId ? findClassById(classId) : null;
+  const hexaClassDef = resolveHexaClassDef(classId);
   const classData = classId ? CLASS_SKILL_DATA.find((c) => c.id === classId) : undefined;
   const isLegacyClass = classData !== undefined && classData.buffSkills.length === 0 && classData.requiredStats.length === 0;
   const hasHexa = level >= 260 && !isLegacyClass;
@@ -212,7 +214,7 @@ function OverviewTab({ model }: { model: PreviewPaneModel }) {
   const enhancementSlots: (HexaSkillDef | null)[] = hexaClassDef?.enhancement ?? [null, null, null, null];
   const enhancementLevels = hexaLevels?.enhancement ?? [0, 0, 0, 0];
 
-  const hexaNotice = resolveHexaNotice(hasHexa, isLegacyClass, classId);
+  const hexaNotice = resolveHexaNotice(hasHexa, isLegacyClass);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
@@ -267,7 +269,7 @@ function OverviewTab({ model }: { model: PreviewPaneModel }) {
         </p>
       ) : (
         <div>
-          <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: theme.muted, marginBottom: 10 }}>6th Job · Hexa Skills</div>
+          <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: theme.muted, marginBottom: 10 }}>{classId === "sia_astelle" ? "Erda Link" : "6th Job · Hexa Skills"}</div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1px 1fr", gap: 14, alignItems: "start" }}>
             {/* Left: Skill + Common */}
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
