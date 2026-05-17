@@ -189,6 +189,53 @@ function EstimateResult({
 /*  Star Force Research Tab                                            */
 /* ------------------------------------------------------------------ */
 
+function TrackerProgressBar({
+  theme,
+  current,
+  total,
+  remaining,
+  progress,
+}: {
+  theme: AppTheme;
+  current: string;
+  total: string;
+  remaining: string;
+  progress: number;
+}) {
+  return (
+    <div style={{ marginBottom: "1.25rem" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+        <span style={{ fontSize: "0.75rem", fontWeight: 700, color: theme.muted }}>
+          {current} / {total}
+        </span>
+        <span style={{ fontSize: "0.75rem", fontWeight: 700, color: theme.muted }}>
+          {remaining} remaining
+        </span>
+      </div>
+      <div
+        style={{
+          height: 8,
+          background: theme.timerBg,
+          borderRadius: 4,
+          overflow: "hidden",
+          border: `1px solid ${theme.border}`,
+        }}
+      >
+        <div
+          style={{
+            height: "100%",
+            background: theme.accent,
+            borderRadius: 4,
+            transform: `scaleX(${progress})`,
+            transformOrigin: "left",
+            transition: "transform 0.3s ease",
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+
 function panelStyle(theme: AppTheme): CSSProperties {
   return {
     background: theme.panel,
@@ -319,37 +366,13 @@ function CrystalSection({
         )}
       </div>
 
-      {/* Progress bar */}
-      <div style={{ marginBottom: "1.25rem" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-          <span style={{ fontSize: "0.75rem", fontWeight: 700, color: theme.muted }}>
-            {count} / {targetCost}
-          </span>
-          <span style={{ fontSize: "0.75rem", fontWeight: 700, color: theme.muted }}>
-            {remaining} remaining
-          </span>
-        </div>
-        <div
-          style={{
-            height: 8,
-            background: theme.timerBg,
-            borderRadius: 4,
-            overflow: "hidden",
-            border: `1px solid ${theme.border}`,
-          }}
-        >
-          <div
-            style={{
-              height: "100%",
-              background: theme.accent,
-              borderRadius: 4,
-              transform: `scaleX(${progress})`,
-              transformOrigin: "left",
-              transition: "transform 0.3s ease",
-            }}
-          />
-        </div>
-      </div>
+      <TrackerProgressBar
+        theme={theme}
+        current={String(count)}
+        total={String(targetCost)}
+        remaining={String(remaining)}
+        progress={progress}
+      />
 
       {/* Boss selection */}
       {weeklyBosses.length > 0 && (
@@ -601,37 +624,13 @@ function TraceRestorationTab({ theme }: { theme: AppTheme }) {
           </div>
         </div>
 
-        {/* Progress bar */}
-        <div style={{ marginBottom: "1.25rem" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-            <span style={{ fontSize: "0.75rem", fontWeight: 700, color: theme.muted }}>
-              {state.currentPoints.toLocaleString()} / {targetItem.points.toLocaleString()}
-            </span>
-            <span style={{ fontSize: "0.75rem", fontWeight: 700, color: theme.muted }}>
-              {remaining.toLocaleString()} remaining
-            </span>
-          </div>
-          <div
-            style={{
-              height: 8,
-              background: theme.timerBg,
-              borderRadius: 4,
-              overflow: "hidden",
-              border: `1px solid ${theme.border}`,
-            }}
-          >
-            <div
-              style={{
-                height: "100%",
-                background: theme.accent,
-                borderRadius: 4,
-                transform: `scaleX(${progress})`,
-                transformOrigin: "left",
-                transition: "transform 0.3s ease",
-              }}
-            />
-          </div>
-        </div>
+        <TrackerProgressBar
+          theme={theme}
+          current={state.currentPoints.toLocaleString()}
+          total={targetItem.points.toLocaleString()}
+          remaining={remaining.toLocaleString()}
+          progress={progress}
+        />
 
         {/* Weekly point summary */}
         <div
