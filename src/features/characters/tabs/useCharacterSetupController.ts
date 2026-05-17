@@ -12,6 +12,7 @@ import {
   readCharactersStore,
   selectCharacterById,
   selectCharactersList,
+  writeLinkSkillsForWorld,
   writeCharactersStore,
 } from "../model/charactersStore";
 import {
@@ -472,6 +473,7 @@ export function useCharacterSetupController() {
       mainCharacterIdByWorld: nextMainCharacterIdByWorld,
       championCharacterIdsByWorld: nextChampionCharacterIdsByWorld,
       charactersById: nextCharactersById,
+      linkSkillsByWorld: existingStore.linkSkillsByWorld,
       updatedAt: now,
     };
 
@@ -816,6 +818,11 @@ export function useCharacterSetupController() {
 
       if (effectiveFlowId === "stats_flow") {
         applyStatsDraftToRoster(confirmedCharacter, setupStepTestByStep.stats ?? "", upsertRosterCharacter);
+      }
+
+      const linkSkillsValue = setupStepTestByStep.link_skills;
+      if (linkSkillsValue && confirmedCharacter) {
+        writeLinkSkillsForWorld(confirmedCharacter.worldID, linkSkillsValue);
       }
 
       setIsAddingCharacter(false);

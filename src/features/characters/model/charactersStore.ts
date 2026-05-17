@@ -119,6 +119,8 @@ export interface CharactersStore {
   // Per-world: worldID (as string key) -> character ids
   championCharacterIdsByWorld: Record<string, string[]>;
   charactersById: Record<string, StoredCharacterRecord>;
+  // Per-world: worldID (as string key) -> serialized link skills draft
+  linkSkillsByWorld: Record<string, string>;
   updatedAt: number;
 }
 
@@ -311,6 +313,7 @@ function createEmptyCharactersStore(): CharactersStore {
     mainCharacterIdByWorld: {},
     championCharacterIdsByWorld: {},
     charactersById: {},
+    linkSkillsByWorld: {},
     updatedAt: 0,
   };
 }
@@ -411,6 +414,15 @@ function parseWorldScopedRoles(
   return { mainCharacterIdByWorld, championCharacterIdsByWorld };
 }
 
+function parseLinkSkillsByWorld(raw: unknown): Record<string, string> {
+  if (!isObject(raw)) return {};
+  const result: Record<string, string> = {};
+  for (const [worldId, val] of Object.entries(raw)) {
+    if (typeof val === "string") result[worldId] = val;
+  }
+  return result;
+}
+
 function parseCharactersStore(raw: string): CharactersStore | null {
   try {
     const parsed = JSON.parse(raw) as unknown;
@@ -445,11 +457,17 @@ function parseCharactersStore(raw: string): CharactersStore | null {
       mainCharacterIdByWorld,
       championCharacterIdsByWorld,
       charactersById,
+      linkSkillsByWorld: parseLinkSkillsByWorld(parsed.linkSkillsByWorld),
       updatedAt: typeof parsed.updatedAt === "number" ? parsed.updatedAt : Date.now(),
     };
   } catch {
     return null;
   }
+}
+
+export function writeLinkSkillsForWorld(worldId: number, value: string) {
+  const store = readCharactersStore();
+  writeCharactersStore({ ...store, linkSkillsByWorld: { ...store.linkSkillsByWorld, [String(worldId)]: value } });
 }
 
 export function writeCharactersStore(store: CharactersStore) {

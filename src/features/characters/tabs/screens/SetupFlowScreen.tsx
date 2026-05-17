@@ -1,5 +1,6 @@
 import StepRenderer from "../../setup/StepRenderer";
 import type { PreviewPaneActions, PreviewPaneModel } from "../paneModels";
+import { readCharactersStore } from "../../model/charactersStore";
 
 interface SetupFlowScreenProps {
   model: PreviewPaneModel;
@@ -8,7 +9,19 @@ interface SetupFlowScreenProps {
 
 export default function SetupFlowScreen({ model, actions }: SetupFlowScreenProps) {
   const { theme, setup } = model;
-  const jobName = model.profile.confirmedCharacter?.jobName ?? "";
+  const confirmed = model.profile.confirmedCharacter;
+  const jobName = confirmed?.jobName ?? "";
+
+  const characterRoster = confirmed
+    ? [
+        confirmed,
+        ...model.directory.allCharacters.filter((c) => c.characterName !== confirmed.characterName),
+      ]
+    : model.directory.allCharacters;
+
+  const worldLinkSkills = confirmed?.worldID !== undefined
+    ? (readCharactersStore().linkSkillsByWorld[String(confirmed.worldID)] ?? "")
+    : "";
 
   return (
     <StepRenderer
@@ -17,6 +30,9 @@ export default function SetupFlowScreen({ model, actions }: SetupFlowScreenProps
       stepIndex={setup.setupStepIndex}
       jobName={jobName}
       direction={setup.setupStepDirection}
+      characterRoster={characterRoster}
+      confirmedWorldId={confirmed?.worldID}
+      worldLinkSkills={worldLinkSkills}
       stepValue={setup.activeSetupStepValue}
       onStepValueChange={actions.stepValueChange}
       onBackStep={() => actions.setSetupStepWithDirection(setup.setupStepIndex - 1)}

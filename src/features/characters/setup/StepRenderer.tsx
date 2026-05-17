@@ -10,6 +10,7 @@ import GenericSetupStep from "./components/GenericSetupStep";
 import GenderSetupStep from "./components/GenderSetupStep";
 import MarriageSetupStep from "./components/MarriageSetupStep";
 import StatsSetupStep from "./components/StatsSetupStep";
+import LinkSkillsSetupStep from "./components/LinkSkillsSetupStep";
 
 interface StepRendererProps {
   theme: AppTheme;
@@ -17,6 +18,9 @@ interface StepRendererProps {
   stepIndex: number;
   jobName?: string;
   direction?: "forward" | "backward";
+  characterRoster?: import("../model/charactersStore").StoredCharacterRecord[];
+  confirmedWorldId?: number;
+  worldLinkSkills?: string;
   stepValue: string;
   onStepValueChange: (value: string) => void;
   onBackStep: () => void;
@@ -33,7 +37,7 @@ const STEP_COMPONENTS: Record<SetupStepId, typeof GenericSetupStep> = {
   v_matrix: GenericSetupStep,
   hexa_matrix: GenericSetupStep,
   familiars: GenericSetupStep,
-  link_skills: GenericSetupStep,
+  link_skills: LinkSkillsSetupStep,
   legion: GenericSetupStep,
 };
 
@@ -43,6 +47,9 @@ export default function StepRenderer({
   stepIndex,
   jobName = "",
   direction = "forward",
+  characterRoster,
+  confirmedWorldId,
+  worldLinkSkills,
   stepValue,
   onStepValueChange,
   onBackStep,
@@ -64,6 +71,9 @@ export default function StepRenderer({
       totalSteps={visibleTotal}
       jobName={jobName}
       direction={direction}
+      characterRoster={characterRoster}
+      confirmedWorldId={confirmedWorldId}
+      worldLinkSkills={worldLinkSkills}
       value={stepValue}
       onChange={onStepValueChange}
       onBack={onBackStep}
