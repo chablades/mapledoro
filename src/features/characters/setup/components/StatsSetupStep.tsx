@@ -1,11 +1,12 @@
 "use client";
 
-import { useRef, useState } from "react";
-import type { CSSProperties } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import Image from "next/image";
 import type { AppTheme } from "../../../../components/themes";
 import type { SetupStepDefinition } from "../steps";
 import SetupStepFrame from "./SetupStepFrame";
+import { WikiAttribution } from "../../../../components/WikiAttribution";
 import {
   CLASS_SKILL_DATA,
   UNIVERSAL_BUFF_SKILLS,
@@ -215,8 +216,9 @@ function WarningList({ warnings }: { warnings: ClassWarning[] }) {
 function BuffGuide({ classData, theme }: { classData: ClassSkillData | null; theme: AppTheme }) {
   const allSkills = [...UNIVERSAL_BUFF_SKILLS, ...(classData?.buffSkills ?? [])];
   return (
+    <>
     <div style={{
-      marginBottom: "0.8rem",
+      marginBottom: "0.4rem",
       background: "rgba(22, 163, 74, 0.07)",
       border: "1px solid rgba(22, 163, 74, 0.35)",
       borderRadius: "10px",
@@ -231,6 +233,10 @@ function BuffGuide({ classData, theme }: { classData: ClassSkillData | null; the
         ))}
       </div>
     </div>
+    <div style={{ marginBottom: "0.8rem" }}>
+      <WikiAttribution theme={theme} subject="Skill icons" />
+    </div>
+    </>
   );
 }
 
@@ -339,8 +345,122 @@ function CombatStatCell({
 
 // ── Setup options section ─────────────────────────────────────────────────────
 
+interface TooltipContent {
+  title: string;
+  description: ReactNode;
+  imageUrls?: string[];
+  link?: { href: string; label: string };
+}
+
+function TooltipImage({ src }: { src: string }) {
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const fallbackRef = useRef<HTMLDivElement>(null);
+  return (
+    <>
+      <div ref={wrapperRef}>
+        <Image
+          src={src}
+          alt=""
+          width={28}
+          height={28}
+          unoptimized
+          onError={() => {
+            if (wrapperRef.current) wrapperRef.current.style.display = "none";
+            if (fallbackRef.current) fallbackRef.current.style.display = "block";
+          }}
+          style={{ borderRadius: "5px", display: "block" }}
+        />
+      </div>
+      <div ref={fallbackRef} style={{ display: "none" }} />
+    </>
+  );
+}
+
+function InfoTooltip({ content, theme }: { content: TooltipContent; theme: AppTheme }) {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function handleMouseDown(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleMouseDown);
+    return () => document.removeEventListener("mousedown", handleMouseDown);
+  }, [open]);
+
+  return (
+    <div ref={containerRef} style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-label="More information"
+        style={{
+          width: "1rem",
+          height: "1rem",
+          borderRadius: "50%",
+          border: `1.5px solid ${theme.muted}`,
+          background: open ? `${theme.accent}18` : "transparent",
+          color: open ? theme.accent : theme.muted,
+          fontSize: "0.65rem",
+          fontWeight: 900,
+          fontFamily: "inherit",
+          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: 0,
+          flexShrink: 0,
+          lineHeight: 1,
+          transition: "color 0.1s, background 0.1s",
+        }}
+      >
+        ?
+      </button>
+      {open && (
+        <div style={{
+          position: "absolute",
+          top: "calc(100% + 0.4rem)",
+          left: 0,
+          zIndex: 200,
+          background: theme.bg,
+          border: `1px solid ${theme.border}`,
+          borderRadius: "10px",
+          padding: "0.7rem 0.85rem",
+          width: "240px",
+          boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
+        }}>
+          {content.imageUrls && content.imageUrls.length > 0 && (
+            <div style={{ display: "flex", gap: "0.35rem", marginBottom: "0.4rem" }}>
+              {content.imageUrls.map((src) => <TooltipImage key={src} src={src} />)}
+            </div>
+          )}
+          <p style={{ margin: 0, marginBottom: "0.3rem", fontSize: "0.82rem", fontWeight: 800, color: theme.text }}>
+            {content.title}
+          </p>
+          <p style={{ margin: 0, fontSize: "0.78rem", color: theme.muted, lineHeight: 1.5 }}>
+            {content.description}
+          </p>
+          {content.link && (
+            <a
+              href={content.link.href}
+              target="_blank"
+              rel="noreferrer"
+              style={{ display: "inline-block", marginTop: "0.45rem", fontSize: "0.75rem", color: theme.accent, fontWeight: 700, textDecoration: "none" }}
+            >
+              {content.link.label} →
+            </a>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function QuestionToggle({
-  question, options, value, onToggle, theme,
+  question, options, value, onToggle, theme, tooltip,
 }: {
   question: string;
   options: { value: string; label: string }[];
@@ -348,12 +468,16 @@ function QuestionToggle({
   /** Clicking the active option deselects it (returns null). */
   onToggle: (value: string | null) => void;
   theme: AppTheme;
+  tooltip?: TooltipContent;
 }) {
   return (
     <div style={{ marginBottom: "0.9rem" }}>
-      <p style={{ margin: 0, marginBottom: "0.4rem", fontSize: "0.88rem", fontWeight: 800, color: theme.text }}>
-        {question}
-      </p>
+      <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", marginBottom: "0.4rem" }}>
+        <p style={{ margin: 0, fontSize: "0.88rem", fontWeight: 800, color: theme.text }}>
+          {question}
+        </p>
+        {tooltip && <InfoTooltip content={tooltip} theme={theme} />}
+      </div>
       <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
         {options.map((opt) => {
           const active = value === opt.value;
@@ -434,11 +558,16 @@ function SetupOptionsSection({
   return (
     <div>
       <QuestionToggle
-        question="Are you Genesis Liberated?"
+        question="Are you Liberated?"
         options={[{ value: "yes", label: "Yes" }, { value: "no", label: "No" }]}
         value={boolToYesNo(opts.isLiberated ?? undefined)}
         onToggle={(v) => onUpdate({ isLiberated: yesNoToBool(v) })}
         theme={theme}
+        tooltip={{
+          title: "Genesis Liberation",
+          description: <>Unlocked in Limina (Lv. 255) after defeating the Black Mage in Story Mode at least once. You can start this quest with <a href="https://maplestorywiki.net/w/(Genesis_Weapon)_Trailing_the_Traces_of_the_Black_Mage" target="_blank" rel="noreferrer" style={{ color: theme.accent, fontWeight: 700, textDecoration: "none" }}>[Genesis Weapon] Trailing the Traces of the Black Mage</a>. Completing the full questline is called liberation.</>,
+          link: { href: "https://maplestorywiki.net/w/Genesis_Weapon", label: "See more on the wiki" },
+        }}
       />
       {optsDef?.weaponType && (
         <QuestionToggle
@@ -447,6 +576,10 @@ function SetupOptionsSection({
           value={opts.weaponHand ?? null}
           onToggle={(v) => onUpdate({ weaponHand: (v as "1h" | "2h") ?? undefined })}
           theme={theme}
+          tooltip={{
+            title: "Weapon Type",
+            description: "Hover over your weapon in your equipment inventory and look to the right of the item icon to find your weapon type.",
+          }}
         />
       )}
       <QuestionToggle
@@ -455,6 +588,18 @@ function SetupOptionsSection({
         value={soulValue}
         onToggle={handleSoulToggle}
         theme={theme}
+        tooltip={{
+          title: "Soul Weapons",
+          description: isDA ? (
+            <>A Soul Weapon is a weapon with a boss soul applied to it, providing passive stats based on your soul gauge and a unique skill. Mu Gong comes with <a href="https://maplestorywiki.net/w/Memories" target="_blank" rel="noreferrer" style={{ color: theme.accent, fontWeight: 700, textDecoration: "none" }}>Memories</a>, and Ephenia comes with <a href="https://maplestorywiki.net/w/A_Queenly_Fragrance" target="_blank" rel="noreferrer" style={{ color: theme.accent, fontWeight: 700, textDecoration: "none" }}>A Queenly Fragrance</a>.</>
+          ) : (
+            <>A Soul Weapon is a weapon with a boss soul applied to it, providing passive stats based on your soul gauge and a unique skill. Mu Gong comes with <a href="https://maplestorywiki.net/w/Memories" target="_blank" rel="noreferrer" style={{ color: theme.accent, fontWeight: 700, textDecoration: "none" }}>Memories</a>.</>
+          ),
+          imageUrls: isDA
+            ? ["https://media.maplestorywiki.net/yetidb/Use_Mu_Gong_Soul.png", "https://media.maplestorywiki.net/yetidb/Use_Ephenia_Soul.png"]
+            : ["https://media.maplestorywiki.net/yetidb/Use_Mu_Gong_Soul.png"],
+          link: { href: "https://maplestorywiki.net/w/Soul_Weapon", label: "See more on the wiki" },
+        }}
       />
       {optsDef?.ruinForceShield && (
         <QuestionToggle
@@ -463,6 +608,12 @@ function SetupOptionsSection({
           value={boolToYesNo(opts.hasRuinForceShield ?? undefined)}
           onToggle={(v) => onUpdate({ hasRuinForceShield: yesNoToBool(v) })}
           theme={theme}
+          tooltip={{
+            title: "Ruin Force Shield",
+            description: "A secondary weapon exclusive to Demon Slayer and Demon Avenger, providing Final Damage +10% and Max HP +560 at the cost of increased damage taken.",
+            imageUrls: ["https://media.maplestorywiki.net/yetidb/Eqp_Ruin_Force_Shield.png"],
+            link: { href: "https://maplestorywiki.net/w/Ruin_Force_Shield", label: "See more on the wiki" },
+          }}
         />
       )}
     </div>
@@ -519,6 +670,7 @@ export default function StatsSetupStep({
         nextLabel="Continue"
       >
         <SetupOptionsSection optsDef={classData?.setupOptionsDef} draft={draft} onUpdate={handleSetupOptUpdate} theme={theme} />
+        <WikiAttribution theme={theme} subject="Item & skill icons" />
       </SetupStepFrame>
     );
   }
