@@ -111,6 +111,14 @@ const TRACKERS: ToolCard[] = [
     iconType: "image",
     href: "/tools/pitched-boss-drops",
   },
+  {
+    title: "Trace Restoration Calculator",
+    description:
+      "Track whisper crystal progress and trace restoration missions toward your target items.",
+    icon: "https://media.maplestorywiki.net/yetidb/Etc_Pitched_Whisper_Crystal.png",
+    iconType: "image",
+    href: "/tools/trace-restoration",
+  },
 ];
 
 function ToolCardInner({ tool, theme }: { tool: ToolCard; theme: AppTheme }) {
