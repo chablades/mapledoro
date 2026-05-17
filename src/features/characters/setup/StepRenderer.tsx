@@ -16,6 +16,7 @@ interface StepRendererProps {
   flowId: SetupFlowId;
   stepIndex: number;
   jobName?: string;
+  direction?: "forward" | "backward";
   stepValue: string;
   onStepValueChange: (value: string) => void;
   onBackStep: () => void;
@@ -41,6 +42,7 @@ export default function StepRenderer({
   flowId,
   stepIndex,
   jobName = "",
+  direction = "forward",
   stepValue,
   onStepValueChange,
   onBackStep,
@@ -61,6 +63,7 @@ export default function StepRenderer({
       stepNumber={visibleNumber}
       totalSteps={visibleTotal}
       jobName={jobName}
+      direction={direction}
       value={stepValue}
       onChange={onStepValueChange}
       onBack={onBackStep}

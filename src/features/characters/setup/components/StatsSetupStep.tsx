@@ -31,6 +31,7 @@ interface StatsSetupStepProps {
   stepNumber: number;
   totalSteps: number;
   jobName?: string;
+  direction?: "forward" | "backward";
   value: string;
   onChange: (value: string) => void;
   onBack: () => void;
@@ -623,7 +624,7 @@ function SetupOptionsSection({
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function StatsSetupStep({
-  theme, step, stepNumber, totalSteps, jobName = "", value, onChange, onBack, onNext, onFinish,
+  theme, step, stepNumber, totalSteps, jobName = "", direction = "forward", value, onChange, onBack, onNext, onFinish,
 }: StatsSetupStepProps) {
   const classData = CLASS_SKILL_DATA.find((c) => c.nexonJobName === jobName);
   const draft = parseStatsStepDraft(value);
@@ -650,7 +651,22 @@ export default function StatsSetupStep({
     updateDraft({ setupOptions: { ...(draft.setupOptions ?? {}), ...patch } });
   }
 
-  const [substep, setSubstep] = useState(0);
+  const [substep, setSubstep] = useState(() => direction === "backward" ? 1 : 0);
+  const [substepDirection, setSubstepDirection] = useState<"forward" | "backward">("forward");
+  const [hasSubstepSwitched, setHasSubstepSwitched] = useState(false);
+
+  function goToSubstep(next: number) {
+    setHasSubstepSwitched(true);
+    setSubstepDirection(next > substep ? "forward" : "backward");
+    setSubstep(next);
+  }
+
+  const substepAnimStyle = hasSubstepSwitched ? {
+    animationName: substepDirection === "forward" ? "setupStepSlideForward" : "setupStepSlideBackward",
+    animationDuration: "var(--characters-standard)",
+    animationTimingFunction: "ease",
+    animationFillMode: "both" as const,
+  } : {};
 
   const tripleIds = classData
     ? getRequiredStatsForClass(classData).filter((id): id is TripleStatFieldId => TRIPLE_IDS.has(id))
@@ -658,31 +674,34 @@ export default function StatsSetupStep({
 
   if (substep === 0) {
     return (
-      <SetupStepFrame
-        theme={theme}
-        stepLabel={step.label}
-        stepNumber={stepNumber}
-        totalSteps={totalSteps}
-        description="Configure your character before entering stats."
-        onBack={onBack}
-        onNext={() => setSubstep(1)}
-        onFinish={onFinish}
-        nextLabel="Continue"
-      >
-        <SetupOptionsSection optsDef={classData?.setupOptionsDef} draft={draft} onUpdate={handleSetupOptUpdate} theme={theme} />
-        <WikiAttribution theme={theme} subject="Item & skill icons" />
-      </SetupStepFrame>
+      <div key={0} style={substepAnimStyle}>
+        <SetupStepFrame
+          theme={theme}
+          stepLabel={step.label}
+          stepNumber={stepNumber}
+          totalSteps={totalSteps}
+          description="Configure your character before entering stats."
+          onBack={onBack}
+          onNext={() => goToSubstep(1)}
+          onFinish={onFinish}
+          nextLabel="Continue"
+        >
+          <SetupOptionsSection optsDef={classData?.setupOptionsDef} draft={draft} onUpdate={handleSetupOptUpdate} theme={theme} />
+          <WikiAttribution theme={theme} subject="Item & skill icons" />
+        </SetupStepFrame>
+      </div>
     );
   }
 
   return (
+    <div key={1} style={substepAnimStyle}>
     <SetupStepFrame
       theme={theme}
       stepLabel={step.label}
       stepNumber={stepNumber}
       totalSteps={totalSteps}
       description="All fields are optional. Fill in what you know."
-      onBack={() => setSubstep(0)}
+      onBack={() => goToSubstep(0)}
       onNext={onNext}
       onFinish={onFinish}
     >
@@ -726,5 +745,6 @@ export default function StatsSetupStep({
         </div>
       </div>
     </SetupStepFrame>
+    </div>
   );
 }

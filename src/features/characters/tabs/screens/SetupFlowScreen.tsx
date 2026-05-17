@@ -16,6 +16,7 @@ export default function SetupFlowScreen({ model, actions }: SetupFlowScreenProps
       flowId={setup.activeFlowId}
       stepIndex={setup.setupStepIndex}
       jobName={jobName}
+      direction={setup.setupStepDirection}
       stepValue={setup.activeSetupStepValue}
       onStepValueChange={actions.stepValueChange}
       onBackStep={() => actions.setSetupStepWithDirection(setup.setupStepIndex - 1)}

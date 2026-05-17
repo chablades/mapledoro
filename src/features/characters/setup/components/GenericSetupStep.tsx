@@ -12,6 +12,7 @@ interface GenericSetupStepProps {
   stepNumber: number;
   totalSteps: number;
   jobName?: string;
+  direction?: "forward" | "backward";
   value: string;
   onChange: (value: string) => void;
   onBack: () => void;
