@@ -896,9 +896,10 @@ function DashboardContent({ theme }: { theme: AppTheme }) {
 
         @media (max-width: 1200px) {
           .dashboard-layout { flex-direction: column; }
-          .dashboard-sidebar-left { width: 100%; position: static; }
-          .dashboard-sidebar-right { width: 100%; position: static; order: -1; }
-          .dashboard-main { max-width: none; }
+          .dashboard-sidebar-left { width: 100%; position: static; order: 1; }
+          .dashboard-sidebar-right { width: 100%; position: static; order: 2; }
+          .dashboard-main { max-width: none; order: 0; }
+          .hide-mobile { display: none; }
         }
 
         @media (max-width: 860px) {
@@ -916,7 +917,9 @@ function DashboardContent({ theme }: { theme: AppTheme }) {
       <div className="page-content">
         <div className="dashboard-layout">
           <aside className="dashboard-sidebar-left">
-            <UrsusPanel theme={theme} now={now} />
+            <div className="hide-mobile">
+              <UrsusPanel theme={theme} now={now} />
+            </div>
             <SunnySundayPanel theme={theme} />
           </aside>
           <div className="dashboard-main">
@@ -925,7 +928,9 @@ function DashboardContent({ theme }: { theme: AppTheme }) {
             <CharactersPanel theme={theme} characters={characters} />
           </div>
           <aside className="dashboard-sidebar-right">
-            <ResetTimerPanels theme={theme} now={now} />
+            <div className="hide-mobile">
+              <ResetTimerPanels theme={theme} now={now} />
+            </div>
             <PatchNotesPanel theme={theme} />
           </aside>
         </div>
