@@ -800,11 +800,15 @@ export function useCharacterSetupController() {
       const isQuickSetupFlow = effectiveFlowId === requiredFlowId;
       const isFullSetupFlow = effectiveFlowId === "full_setup";
       if ((isQuickSetupFlow || isFullSetupFlow) && confirmedCharacter) {
-        const storedRecord = createStoredCharacterRecord({
+        let storedRecord = createStoredCharacterRecord({
           character: confirmedCharacter,
           gender: normalizeGenderValue(setupStepTestByStep.gender),
           marriage: marriageDraftToStored(setupStepTestByStep.marriage ?? ""),
         });
+        if (isFullSetupFlow) {
+          const { stats, isLiberated, weaponHand, hasRuinForceShield, soul } = convertStatsStepDraftToStored(parseStatsStepDraft(setupStepTestByStep.stats ?? ""));
+          storedRecord = { ...storedRecord, stats: { ...storedRecord.stats, ...stats }, isLiberated, weaponHand, hasRuinForceShield, soul };
+        }
         upsertRosterCharacter(storedRecord);
         setHasCompletedRequiredSetupEver(true);
         removeSetupDraftForCharacter(confirmedCharacter);
