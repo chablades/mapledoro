@@ -1,12 +1,4 @@
 /* Global shared styles/utilities used across all pages. */
-@import url("https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&family=Fredoka+One&display=swap");
-
-:root {
-  --font-body: "Nunito", ui-rounded, system-ui, -apple-system, "Segoe UI",
-    Roboto, sans-serif;
-  --font-heading: "Fredoka One", ui-rounded, "Trebuchet MS", system-ui,
-    -apple-system, sans-serif;
-}
 
 html,
 body {
