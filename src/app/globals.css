@@ -36,7 +36,7 @@ html.scroll-locked body {
 
 .page-shell {
   display: flex;
-  min-height: calc(100dvh - 56px);
+  flex: 1;
   padding-top: 56px;
   width: 100%;
 }

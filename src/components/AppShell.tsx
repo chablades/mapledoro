@@ -25,6 +25,8 @@ export default function AppShell({ currentPath, children }: AppShellProps) {
   return (
     <div
       style={{
+        display: "flex",
+        flexDirection: "column",
         minHeight: "100dvh",
         background: theme.bg,
         color: theme.text,
@@ -49,7 +51,7 @@ export default function AppShell({ currentPath, children }: AppShellProps) {
           padding: "2rem 1.5rem 3rem 2.75rem",
           borderTop: `1px solid ${theme.border}`,
           background: theme.panel,
-          marginTop: "2rem",
+          marginTop: "auto",
           transition: "background 0.35s ease, border-color 0.35s ease",
         }}
       >
