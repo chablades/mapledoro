@@ -37,22 +37,7 @@ export default function AppShell({ currentPath, children }: AppShellProps) {
       <a
         href="#main-content"
         className="skip-link"
-        style={{
-          position: "absolute",
-          left: "-9999px",
-          top: "auto",
-          width: "1px",
-          height: "1px",
-          overflow: "hidden",
-          zIndex: 9999,
-          padding: "0.75rem 1.5rem",
-          background: theme.accent,
-          color: "#fff",
-          fontWeight: 700,
-          fontSize: "0.875rem",
-          borderRadius: "0 0 8px 0",
-          textDecoration: "none",
-        }}
+        style={{ background: theme.accent }}
       >
         Skip to main content
       </a>
