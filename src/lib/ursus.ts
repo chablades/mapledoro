@@ -33,10 +33,3 @@ export function getUrsusStatus(now: Date): UrsusStatus {
   }
   return { active: false as const, until: nextStart.getTime() - nowMs };
 }
-
-export function utcDateStr(d: Date): string {
-  const y = d.getUTCFullYear();
-  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
-  const day = String(d.getUTCDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
