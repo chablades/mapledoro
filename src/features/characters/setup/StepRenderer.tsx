@@ -12,6 +12,7 @@ import MarriageSetupStep from "./components/MarriageSetupStep";
 import StatsSetupStep from "./components/StatsSetupStep";
 import LinkSkillsSetupStep from "./components/LinkSkillsSetupStep";
 import HexaMatrixSetupStep from "./components/HexaMatrixSetupStep";
+import FamiliarsSetupStep from "./components/FamiliarsSetupStep";
 
 interface StepRendererProps {
   theme: AppTheme;
@@ -39,7 +40,7 @@ const STEP_COMPONENTS: Record<SetupStepId, typeof GenericSetupStep> = {
   inventory: GenericSetupStep,
   v_matrix: GenericSetupStep,
   hexa_matrix: HexaMatrixSetupStep,
-  familiars: GenericSetupStep,
+  familiars: FamiliarsSetupStep,
   link_skills: LinkSkillsSetupStep,
   legion: GenericSetupStep,
 };

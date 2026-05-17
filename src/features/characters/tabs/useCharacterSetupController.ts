@@ -49,6 +49,55 @@ import {
 
 export const MAX_CHAMPIONS = 4;
 
+function tryParseJson(raw: string): unknown {
+  try { return JSON.parse(raw); } catch { return null; }
+}
+
+function buildFullSetupRecord(
+  character: NormalizedCharacterData,
+  stepData: import("../setup/types").SetupStepInputById,
+): StoredCharacterRecord {
+  const base = createStoredCharacterRecord({
+    character,
+    gender: normalizeGenderValue(stepData.gender),
+    marriage: marriageDraftToStored(stepData.marriage ?? ""),
+  });
+  const { stats, isLiberated, weaponHand, hasRuinForceShield, soul } =
+    convertStatsStepDraftToStored(parseStatsStepDraft(stepData.stats ?? ""));
+  const hexaToolData = buildHexaToolDataForRecord(character.jobName, stepData.hexa_matrix ?? "");
+  const familiarsData = stepData.familiars ? tryParseJson(stepData.familiars) : null;
+  const tools = {
+    ...base.tools,
+    ...(hexaToolData ? { hexaSkills: hexaToolData } : null),
+    ...(familiarsData ? { familiars: familiarsData } : null),
+  };
+  return { ...base, stats: { ...base.stats, ...stats }, isLiberated, weaponHand, hasRuinForceShield, soul, tools };
+}
+
+function applyStandaloneToolDrafts(
+  character: NormalizedCharacterData | null,
+  stepData: import("../setup/types").SetupStepInputById,
+  upsertFn: (c: StoredCharacterRecord) => void,
+) {
+  if (!character) return;
+  if (stepData.hexa_matrix) applyHexaDraftToRoster(character, stepData.hexa_matrix, upsertFn);
+  if (stepData.familiars) applyFamiliarsDraftToRoster(character, stepData.familiars, upsertFn);
+}
+
+function applyFamiliarsDraftToRoster(
+  character: NormalizedCharacterData | null,
+  familiarsJson: string,
+  upsertFn: (c: StoredCharacterRecord) => void,
+) {
+  if (!character || !familiarsJson) return;
+  const data = tryParseJson(familiarsJson);
+  if (!data || typeof data !== "object") return;
+  const store = readCharactersStore();
+  const existing = selectCharacterById(store, toCharacterKey(character));
+  if (!existing) return;
+  upsertFn({ ...existing, tools: { ...existing.tools, familiars: data } });
+}
+
 function applyHexaDraftToRoster(
   character: NormalizedCharacterData | null,
   hexaJson: string,
@@ -830,17 +879,13 @@ export function useCharacterSetupController() {
       const isQuickSetupFlow = effectiveFlowId === requiredFlowId;
       const isFullSetupFlow = effectiveFlowId === "full_setup";
       if ((isQuickSetupFlow || isFullSetupFlow) && confirmedCharacter) {
-        let storedRecord = createStoredCharacterRecord({
-          character: confirmedCharacter,
-          gender: normalizeGenderValue(setupStepTestByStep.gender),
-          marriage: marriageDraftToStored(setupStepTestByStep.marriage ?? ""),
-        });
-        if (isFullSetupFlow) {
-          const { stats, isLiberated, weaponHand, hasRuinForceShield, soul } = convertStatsStepDraftToStored(parseStatsStepDraft(setupStepTestByStep.stats ?? ""));
-          const hexaToolData = buildHexaToolDataForRecord(confirmedCharacter.jobName, setupStepTestByStep.hexa_matrix ?? "");
-          const tools = hexaToolData ? { ...storedRecord.tools, hexaSkills: hexaToolData } : storedRecord.tools;
-          storedRecord = { ...storedRecord, stats: { ...storedRecord.stats, ...stats }, isLiberated, weaponHand, hasRuinForceShield, soul, tools };
-        }
+        const storedRecord = isFullSetupFlow
+          ? buildFullSetupRecord(confirmedCharacter, setupStepTestByStep)
+          : createStoredCharacterRecord({
+              character: confirmedCharacter,
+              gender: normalizeGenderValue(setupStepTestByStep.gender),
+              marriage: marriageDraftToStored(setupStepTestByStep.marriage ?? ""),
+            });
         upsertRosterCharacter(storedRecord);
         setHasCompletedRequiredSetupEver(true);
         removeSetupDraftForCharacter(confirmedCharacter);
@@ -855,9 +900,8 @@ export function useCharacterSetupController() {
         writeLinkSkillsForWorld(confirmedCharacter.worldID, linkSkillsValue);
       }
 
-      const hexaValue = setupStepTestByStep.hexa_matrix;
-      if (hexaValue && confirmedCharacter && !isFullSetupFlow) {
-        applyHexaDraftToRoster(confirmedCharacter, hexaValue, upsertRosterCharacter);
+      if (confirmedCharacter && !isFullSetupFlow) {
+        applyStandaloneToolDrafts(confirmedCharacter, setupStepTestByStep, upsertRosterCharacter);
       }
 
       setIsAddingCharacter(false);
