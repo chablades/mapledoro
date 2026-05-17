@@ -122,6 +122,7 @@ export default function AppTopNav({
   return (
     <>
       <nav
+        aria-label="Main navigation"
         className={styles.topNav}
         style={{
           background: theme.panel,
@@ -195,6 +196,7 @@ export default function AppTopNav({
           type="button"
           className={styles.mobileMenuBtn}
           aria-label="Open menu"
+          aria-expanded={mobileMenuOpen}
           onClick={() => setMobileMenuOpen((prev) => !prev)}
           style={{
             border: `1px solid ${theme.border}`,
@@ -235,7 +237,8 @@ export default function AppTopNav({
       </nav>
 
       {mobileMenuOpen && (
-        <div
+        <nav
+          aria-label="Mobile navigation"
           className={styles.mobileMenuPanel}
           style={{
             background: theme.panel,
@@ -292,7 +295,7 @@ export default function AppTopNav({
             </span>
             <ColorModeToggle colorMode={colorMode} onToggle={toggleColorMode} theme={theme} />
           </div>
-        </div>
+        </nav>
       )}
     </>
   );

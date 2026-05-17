@@ -34,6 +34,29 @@ export default function AppShell({ currentPath, children }: AppShellProps) {
         overflowX: "hidden",
       }}
     >
+      <a
+        href="#main-content"
+        className="skip-link"
+        style={{
+          position: "absolute",
+          left: "-9999px",
+          top: "auto",
+          width: "1px",
+          height: "1px",
+          overflow: "hidden",
+          zIndex: 9999,
+          padding: "0.75rem 1.5rem",
+          background: theme.accent,
+          color: "#fff",
+          fontWeight: 700,
+          fontSize: "0.875rem",
+          borderRadius: "0 0 8px 0",
+          textDecoration: "none",
+        }}
+      >
+        Skip to main content
+      </a>
+
       <AppTopNav
         currentPath={currentPath}
         theme={theme}
@@ -42,9 +65,9 @@ export default function AppShell({ currentPath, children }: AppShellProps) {
         onColorModeChange={setColorMode}
       />
 
-      <div className="page-shell">
+      <main id="main-content" className="page-shell">
         {children({ theme })}
-      </div>
+      </main>
 
       <footer
         style={{
@@ -57,6 +80,7 @@ export default function AppShell({ currentPath, children }: AppShellProps) {
       >
         <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
           <nav
+            aria-label="Footer navigation"
             style={{
               display: "flex",
               flexWrap: "wrap",

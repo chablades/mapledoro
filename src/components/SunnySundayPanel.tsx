@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import type { AppTheme } from "./themes";
 import type { SunnySundayWeek, SunnySundayPayload } from "@/lib/sunnySunday";
+import { useClock } from "@/lib/useClock";
 
 interface SunnySundayPanelProps {
   theme: AppTheme;
@@ -31,7 +32,7 @@ export default function SunnySundayPanel({ theme }: SunnySundayPanelProps) {
   }, []);
 
   // Re-check expiration client-side so stale cached responses don't show past events
-  const now = new Date();
+  const now = useClock();
   const getEventEnd = (iso: string) => {
     const start = new Date(iso);
     const dayOfWeek = start.getUTCDay();
@@ -41,12 +42,12 @@ export default function SunnySundayPanel({ theme }: SunnySundayPanelProps) {
     end.setUTCHours(0, 0, 0, 0);
     return end;
   };
-  const futureWeeks = weeks.filter((w) => getEventEnd(w.dateISO) > now);
+  const futureWeeks = now ? weeks.filter((w) => getEventEnd(w.dateISO) > now) : [];
   const upcoming = futureWeeks[0] ?? null;
   const otherWeeks = futureWeeks.slice(1);
 
   // Check if Sunny Sunday is currently active (between event start and next Monday 00:00 UTC)
-  const isActive = upcoming ? new Date(upcoming.dateISO) <= now && getEventEnd(upcoming.dateISO) > now : false;
+  const isActive = upcoming && now ? new Date(upcoming.dateISO) <= now && getEventEnd(upcoming.dateISO) > now : false;
 
   // Format the upcoming date in the user's local timezone
   const formatLocalDate = (iso: string) => {
