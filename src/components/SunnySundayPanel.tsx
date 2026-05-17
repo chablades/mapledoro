@@ -72,7 +72,7 @@ export default function SunnySundayPanel({ theme }: SunnySundayPanelProps) {
     <div
       className="fade-in panel panel-card"
       style={{
-        animationDelay: "0.4s",
+        animationDelay: "0.15s",
         background: theme.panel,
         border: `1px solid ${theme.border}`,
       }}
