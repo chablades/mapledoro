@@ -243,8 +243,8 @@ function HeroBanner({ theme }: { theme: AppTheme }) {
           <Link href="/characters" className="hero-btn-primary" style={primaryBtnStyle}>
             Get Started
           </Link>
-          <Link href="/tools" className="hero-btn-secondary" style={secondaryBtnStyle}>
-            Browse Tools
+          <Link href="/guides" className="hero-btn-secondary" style={secondaryBtnStyle}>
+            Browse Guides
           </Link>
         </div>
       </div>
