@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect, useSyncExternalStore, useRef, type CSSProperties } from "react";
+import { useState, useSyncExternalStore, type CSSProperties } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import AppShell from "../components/AppShell";
 import SunnySundayPanel from "../components/SunnySundayPanel";
 import type { AppTheme } from "../components/themes";
+import { useClock } from "../lib/useClock";
 import {
   readCharactersStore,
   selectCharactersList,
@@ -86,6 +87,7 @@ function fmt(ms: number) {
 
 const PLACEHOLDER_COUNTDOWN = "--:--:--";
 const subscribeFn = () => () => undefined;
+
 
 // -- Quick Tools data ----------------------------------------------------------
 interface QuickTool {
@@ -596,30 +598,21 @@ function CharactersPanel({ theme, characters }: { theme: AppTheme; characters: S
 
 // -- Patch Notes Panel ---------------------------------------------------------
 
-async function fetchPatchNotes(signal: AbortSignal): Promise<PatchNote[] | null> {
-  const res = await fetch("/api/patch-notes", { signal });
-  const data = await res.json();
-  if (Array.isArray(data) && data.length > 0) return data as PatchNote[];
-  return null;
-}
+// Patch notes external store — fetch once, notify subscribers
+let patchNotesData: PatchNote[] = initialPatchNotes;
+const patchListeners = new Set<() => void>();
+let patchFetched = false;
 
-function PatchNotesPanel({ theme }: { theme: AppTheme }) {
-  const [patchNotes, setPatchNotes] = useState<PatchNote[]>(initialPatchNotes);
-  const [patchFilter, setPatchFilter] = useState<PatchFilter>("All");
-  const [patchExpanded, setPatchExpanded] = useState(false);
-  const fetchedRef = useRef(false);
-
-  useEffect(() => {
-    if (fetchedRef.current) return;
-    fetchedRef.current = true;
-
+function subscribePatchNotes(listener: () => void) {
+  patchListeners.add(listener);
+  if (!patchFetched) {
+    patchFetched = true;
     const cached = readCachedPatchNotes();
-
-    const controller = new AbortController();
-    fetchPatchNotes(controller.signal)
+    fetch("/api/patch-notes")
+      .then((res) => res.json())
       .then((data) => {
-        if (data) {
-          setPatchNotes(data);
+        if (Array.isArray(data) && data.length > 0) {
+          patchNotesData = data as PatchNote[];
           try {
             localStorage.setItem(
               PATCH_CACHE_KEY,
@@ -627,18 +620,26 @@ function PatchNotesPanel({ theme }: { theme: AppTheme }) {
             );
           } catch { /* localStorage full or unavailable */ }
         } else if (cached) {
-          setPatchNotes(cached);
+          patchNotesData = cached;
         }
+        patchListeners.forEach((l) => l());
       })
-      .catch((err) => {
-        if (!controller.signal.aborted) {
-          if (cached) setPatchNotes(cached);
-          else console.error("Failed to load patch notes:", err);
+      .catch(() => {
+        if (cached) {
+          patchNotesData = cached;
+          patchListeners.forEach((l) => l());
         }
       });
+  }
+  return () => { patchListeners.delete(listener); };
+}
 
-    return () => { controller.abort(); };
-  }, []);
+function getPatchNotesSnapshot() { return patchNotesData; }
+
+function PatchNotesPanel({ theme }: { theme: AppTheme }) {
+  const patchNotes = useSyncExternalStore(subscribePatchNotes, getPatchNotesSnapshot, () => initialPatchNotes);
+  const [patchFilter, setPatchFilter] = useState<PatchFilter>("All");
+  const [patchExpanded, setPatchExpanded] = useState(false);
 
   const allFilteredPatchNotes =
     patchFilter === "All"
@@ -814,13 +815,7 @@ function DashboardContent({ theme }: { theme: AppTheme }) {
     ? selectCharactersList(readCharactersStore())
     : [];
 
-  const [now, setNow] = useState<Date | null>(null);
-  useEffect(() => {
-    const tick = () => setNow(new Date());
-    tick();
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
-  }, []);
+  const now = useClock();
 
   return (
     <>
