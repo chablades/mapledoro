@@ -10,8 +10,8 @@ export interface CharacterMarriage {
 }
 
 export interface CharacterSoul {
-  type: "mugong" | "ephinea" | "none" | null;
-  ephineaLevel: 1 | 2 | null;
+  type: "mugong" | "ephenia" | "none" | null;
+  epheniaLevel: 1 | 2 | null;
 }
 
 export interface StoredTripleStatField {
@@ -232,10 +232,10 @@ function parseMarriage(value: unknown): CharacterMarriage | null {
 function parseSoul(value: unknown): CharacterSoul | null {
   if (!isObject(value)) return null;
   const type = value.type;
-  const ephineaRaw = value.ephineaLevel;
+  const epheniaRaw = value.epheniaLevel;
   return {
-    type: type === "mugong" || type === "ephinea" || type === "none" ? type : null,
-    ephineaLevel: ephineaRaw === 1 || ephineaRaw === 2 ? ephineaRaw : null,
+    type: type === "mugong" || type === "ephenia" || type === "none" ? type : null,
+    epheniaLevel: epheniaRaw === 1 || epheniaRaw === 2 ? epheniaRaw : null,
   };
 }
 

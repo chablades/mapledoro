@@ -392,29 +392,29 @@ function SetupOptionsSection({
   theme: AppTheme;
 }) {
   const opts = draft.setupOptions ?? {};
-  const isDA = Boolean(optsDef?.ephinEaSoul);
+  const isDA = Boolean(optsDef?.epheniaSoul);
 
   let soulValue: string | null = null;
   if (opts.soulType === "mugong") soulValue = "mugong";
   else if (opts.soulType === "none") soulValue = "none";
   if (isDA) {
-    if (opts.soulType === "ephinea" && opts.ephineaLevel === 1) soulValue = "ephinea_1";
-    else if (opts.soulType === "ephinea" && opts.ephineaLevel === 2) soulValue = "ephinea_2";
+    if (opts.soulType === "ephenia" && opts.epheniaLevel === 1) soulValue = "ephenia_1";
+    else if (opts.soulType === "ephenia" && opts.epheniaLevel === 2) soulValue = "ephenia_2";
   }
 
   function handleSoulToggle(val: string | null) {
-    if (val === null) onUpdate({ soulType: undefined, ephineaLevel: undefined });
-    else if (val === "none") onUpdate({ soulType: "none", ephineaLevel: undefined });
-    else if (val === "mugong") onUpdate({ soulType: "mugong", ephineaLevel: undefined });
-    else if (val === "ephinea_1") onUpdate({ soulType: "ephinea", ephineaLevel: 1 });
-    else if (val === "ephinea_2") onUpdate({ soulType: "ephinea", ephineaLevel: 2 });
+    if (val === null) onUpdate({ soulType: undefined, epheniaLevel: undefined });
+    else if (val === "none") onUpdate({ soulType: "none", epheniaLevel: undefined });
+    else if (val === "mugong") onUpdate({ soulType: "mugong", epheniaLevel: undefined });
+    else if (val === "ephenia_1") onUpdate({ soulType: "ephenia", epheniaLevel: 1 });
+    else if (val === "ephenia_2") onUpdate({ soulType: "ephenia", epheniaLevel: 2 });
   }
 
   const soulOptions = isDA
     ? [
         { value: "none", label: "None" },
-        { value: "ephinea_1", label: "Ephinea Lv 1" },
-        { value: "ephinea_2", label: "Ephinea Lv 2" },
+        { value: "ephenia_1", label: "Ephenia Lv 1" },
+        { value: "ephenia_2", label: "Ephenia Lv 2" },
         { value: "mugong", label: "Mu Gong Soul" },
       ]
     : [{ value: "none", label: "None" }, { value: "mugong", label: "Mu Gong Soul" }];

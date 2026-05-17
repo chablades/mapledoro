@@ -44,7 +44,7 @@ export interface ClassSetupOptionsDef {
   /** Demon Slayer, Demon Avenger: optional equipment slot */
   ruinForceShield?: true;
   /** Demon Avenger only: replaces universal Mu Gong toggle with Ephinea (Lv 1/2) vs Mu Gong selector */
-  ephinEaSoul?: true;
+  epheniaSoul?: true;
 }
 
 export interface ClassSkillData {
@@ -263,7 +263,7 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
     id: "demon_avenger",
     nexonJobName: "Demon Avenger",
     warnings: [{ message: "Do not use", skill: OVERLOAD_RELEASE }],
-    setupOptionsDef: { ruinForceShield: true, ephinEaSoul: true },
+    setupOptionsDef: { ruinForceShield: true, epheniaSoul: true },
     buffSkills: [
       DSE,
       DCO,

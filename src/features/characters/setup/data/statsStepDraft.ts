@@ -48,8 +48,8 @@ export interface StatsStepDraft {
     isLiberated?: boolean;
     weaponHand?: "1h" | "2h";
     hasRuinForceShield?: boolean;
-    soulType?: "mugong" | "ephinea" | "none";
-    ephineaLevel?: 1 | 2;
+    soulType?: "mugong" | "ephenia" | "none";
+    epheniaLevel?: 1 | 2;
   };
 }
 
@@ -87,10 +87,10 @@ export function convertStatsStepDraftToStored(
   draft: StatsStepDraft,
 ): { stats: Partial<StoredCharacterStats>; isLiberated: boolean | null; weaponHand: "1h" | "2h" | null; hasRuinForceShield: boolean | null; soul: CharacterSoul | null } {
   const opts = draft.setupOptions ?? {};
-  const ephineaRaw = opts.ephineaLevel;
+  const epheniaRaw = opts.epheniaLevel;
   const soulType = opts.soulType ?? null;
   const soul: CharacterSoul | null = soulType !== null
-    ? { type: soulType, ephineaLevel: ephineaRaw === 1 || ephineaRaw === 2 ? ephineaRaw : null }
+    ? { type: soulType, epheniaLevel: epheniaRaw === 1 || epheniaRaw === 2 ? epheniaRaw : null }
     : null;
   return {
     isLiberated: opts.isLiberated ?? null,
