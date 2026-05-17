@@ -11,6 +11,7 @@ import GenderSetupStep from "./components/GenderSetupStep";
 import MarriageSetupStep from "./components/MarriageSetupStep";
 import StatsSetupStep from "./components/StatsSetupStep";
 import LinkSkillsSetupStep from "./components/LinkSkillsSetupStep";
+import HexaMatrixSetupStep from "./components/HexaMatrixSetupStep";
 
 interface StepRendererProps {
   theme: AppTheme;
@@ -21,6 +22,8 @@ interface StepRendererProps {
   characterRoster?: import("../model/charactersStore").StoredCharacterRecord[];
   confirmedWorldId?: number;
   worldLinkSkills?: string;
+  characterLevel?: number;
+  confirmedCharacterName?: string;
   stepValue: string;
   onStepValueChange: (value: string) => void;
   onBackStep: () => void;
@@ -35,7 +38,7 @@ const STEP_COMPONENTS: Record<SetupStepId, typeof GenericSetupStep> = {
   equipment_core: GenericSetupStep,
   inventory: GenericSetupStep,
   v_matrix: GenericSetupStep,
-  hexa_matrix: GenericSetupStep,
+  hexa_matrix: HexaMatrixSetupStep,
   familiars: GenericSetupStep,
   link_skills: LinkSkillsSetupStep,
   legion: GenericSetupStep,
@@ -50,6 +53,8 @@ export default function StepRenderer({
   characterRoster,
   confirmedWorldId,
   worldLinkSkills,
+  characterLevel,
+  confirmedCharacterName,
   stepValue,
   onStepValueChange,
   onBackStep,
@@ -61,7 +66,7 @@ export default function StepRenderer({
 
   const StepComponent = STEP_COMPONENTS[step.id] ?? GenericSetupStep;
   const { gender, skipMarriage } = getClassSetupOverrides(jobName);
-  const { visibleNumber, visibleTotal } = getVisibleStepInfo(flowId, stepIndex, gender, skipMarriage);
+  const { visibleNumber, visibleTotal } = getVisibleStepInfo(flowId, stepIndex, gender, skipMarriage, characterLevel, jobName);
 
   return (
     <StepComponent
@@ -74,6 +79,8 @@ export default function StepRenderer({
       characterRoster={characterRoster}
       confirmedWorldId={confirmedWorldId}
       worldLinkSkills={worldLinkSkills}
+      characterLevel={characterLevel}
+      confirmedCharacterName={confirmedCharacterName}
       value={stepValue}
       onChange={onStepValueChange}
       onBack={onBackStep}

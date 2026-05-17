@@ -16,6 +16,8 @@ interface GenericSetupStepProps {
   characterRoster?: import("../../model/charactersStore").StoredCharacterRecord[];
   confirmedWorldId?: number;
   worldLinkSkills?: string;
+  characterLevel?: number;
+  confirmedCharacterName?: string;
   value: string;
   onChange: (value: string) => void;
   onBack: () => void;

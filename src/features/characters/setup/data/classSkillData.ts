@@ -65,6 +65,8 @@ export interface ClassSkillData {
   buffSkills: BuffSkill[];
   /** Class-specific required stats, ordered by importance (primary first). Universal stats are added automatically. */
   requiredStats: StatFieldId[];
+  /** Legacy classes (lower job advancements) — no V Matrix or Hexa Matrix. */
+  isLegacy?: true;
 }
 
 // Stats required for every class regardless of type
@@ -688,49 +690,53 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
 
   // ── Legacy classes (no buff guide, shows all stat fields) ───────────────────
 
-  { id: "ancient_archer", nexonJobName: "Ancient Archer", buffSkills: [], requiredStats: [] },
-  { id: "archer", nexonJobName: "Archer", buffSkills: [], requiredStats: [] },
-  { id: "assassin", nexonJobName: "Assassin", buffSkills: [], requiredStats: [] },
-  { id: "bandit", nexonJobName: "Bandit", buffSkills: [], requiredStats: [] },
-  { id: "beginner", nexonJobName: "Beginner", buffSkills: [], requiredStats: [] },
-  { id: "berserker", nexonJobName: "Berserker", buffSkills: [], requiredStats: [] },
-  { id: "blade_acolyte", nexonJobName: "Blade Acolyte", buffSkills: [], requiredStats: [] },
-  { id: "blade_lord", nexonJobName: "Blade Lord", buffSkills: [], requiredStats: [] },
-  { id: "blade_recruit", nexonJobName: "Blade Recruit", buffSkills: [], requiredStats: [] },
-  { id: "blade_specialist", nexonJobName: "Blade Specialist", buffSkills: [], requiredStats: [] },
-  { id: "brawler", nexonJobName: "Brawler", buffSkills: [], requiredStats: [] },
-  { id: "cannon_master", nexonJobName: "Cannon Master", buffSkills: [], requiredStats: [] },
-  { id: "cannon_trooper", nexonJobName: "Cannon Trooper", buffSkills: [], requiredStats: [] },
-  { id: "chief_bandit", nexonJobName: "Chief Bandit", buffSkills: [], requiredStats: [] },
-  { id: "citizen", nexonJobName: "Citizen", buffSkills: [], requiredStats: [] },
-  { id: "cleric", nexonJobName: "Cleric", buffSkills: [], requiredStats: [] },
-  { id: "crossbowman", nexonJobName: "Crossbowman", buffSkills: [], requiredStats: [] },
-  { id: "crusader", nexonJobName: "Crusader", buffSkills: [], requiredStats: [] },
-  { id: "fighter", nexonJobName: "Fighter", buffSkills: [], requiredStats: [] },
-  { id: "gunslinger", nexonJobName: "Gunslinger", buffSkills: [], requiredStats: [] },
-  { id: "hermit", nexonJobName: "Hermit", buffSkills: [], requiredStats: [] },
-  { id: "hunter", nexonJobName: "Hunter", buffSkills: [], requiredStats: [] },
-  { id: "mage_f_p", nexonJobName: "Mage (F/P)", displayName: "Mage (Fire/Poison)", buffSkills: [], requiredStats: [] },
-  { id: "mage_i_l", nexonJobName: "Mage (I/L)", displayName: "Mage (Ice/Lightning)", buffSkills: [], requiredStats: [] },
-  { id: "magician", nexonJobName: "Magician", buffSkills: [], requiredStats: [] },
-  { id: "marauder", nexonJobName: "Marauder", buffSkills: [], requiredStats: [] },
-  { id: "outlaw", nexonJobName: "Outlaw", buffSkills: [], requiredStats: [] },
-  { id: "page", nexonJobName: "Page", buffSkills: [], requiredStats: [] },
-  { id: "pirate", nexonJobName: "Pirate", buffSkills: [], requiredStats: [] },
-  { id: "priest", nexonJobName: "Priest", buffSkills: [], requiredStats: [] },
-  { id: "ranger", nexonJobName: "Ranger", buffSkills: [], requiredStats: [] },
-  { id: "rogue", nexonJobName: "Rogue", buffSkills: [], requiredStats: [] },
-  { id: "sniper", nexonJobName: "Sniper", buffSkills: [], requiredStats: [] },
-  { id: "soulchaser", nexonJobName: "Soulchaser", buffSkills: [], requiredStats: [] },
-  { id: "spearman", nexonJobName: "Spearman", buffSkills: [], requiredStats: [] },
-  { id: "swordman", nexonJobName: "Swordman", buffSkills: [], requiredStats: [] },
-  { id: "white_knight", nexonJobName: "White Knight", buffSkills: [], requiredStats: [] },
-  { id: "wizard_f_p", nexonJobName: "Wizard (F/P)", displayName: "Wizard (Fire/Poison)", buffSkills: [], requiredStats: [] },
-  { id: "wizard_i_l", nexonJobName: "Wizard (I/L)", displayName: "Wizard (Ice/Lightning)", buffSkills: [], requiredStats: [] },
+  { id: "ancient_archer", nexonJobName: "Ancient Archer", buffSkills: [], requiredStats: [], isLegacy: true },
+  { id: "archer", nexonJobName: "Archer", buffSkills: [], requiredStats: [], isLegacy: true },
+  { id: "assassin", nexonJobName: "Assassin", buffSkills: [], requiredStats: [], isLegacy: true },
+  { id: "bandit", nexonJobName: "Bandit", buffSkills: [], requiredStats: [], isLegacy: true },
+  { id: "beginner", nexonJobName: "Beginner", buffSkills: [], requiredStats: [], isLegacy: true },
+  { id: "berserker", nexonJobName: "Berserker", buffSkills: [], requiredStats: [], isLegacy: true },
+  { id: "blade_acolyte", nexonJobName: "Blade Acolyte", buffSkills: [], requiredStats: [], isLegacy: true },
+  { id: "blade_lord", nexonJobName: "Blade Lord", buffSkills: [], requiredStats: [], isLegacy: true },
+  { id: "blade_recruit", nexonJobName: "Blade Recruit", buffSkills: [], requiredStats: [], isLegacy: true },
+  { id: "blade_specialist", nexonJobName: "Blade Specialist", buffSkills: [], requiredStats: [], isLegacy: true },
+  { id: "brawler", nexonJobName: "Brawler", buffSkills: [], requiredStats: [], isLegacy: true },
+  { id: "cannon_master", nexonJobName: "Cannon Master", buffSkills: [], requiredStats: [], isLegacy: true },
+  { id: "cannon_trooper", nexonJobName: "Cannon Trooper", buffSkills: [], requiredStats: [], isLegacy: true },
+  { id: "chief_bandit", nexonJobName: "Chief Bandit", buffSkills: [], requiredStats: [], isLegacy: true },
+  { id: "citizen", nexonJobName: "Citizen", buffSkills: [], requiredStats: [], isLegacy: true },
+  { id: "cleric", nexonJobName: "Cleric", buffSkills: [], requiredStats: [], isLegacy: true },
+  { id: "crossbowman", nexonJobName: "Crossbowman", buffSkills: [], requiredStats: [], isLegacy: true },
+  { id: "crusader", nexonJobName: "Crusader", buffSkills: [], requiredStats: [], isLegacy: true },
+  { id: "fighter", nexonJobName: "Fighter", buffSkills: [], requiredStats: [], isLegacy: true },
+  { id: "gunslinger", nexonJobName: "Gunslinger", buffSkills: [], requiredStats: [], isLegacy: true },
+  { id: "hermit", nexonJobName: "Hermit", buffSkills: [], requiredStats: [], isLegacy: true },
+  { id: "hunter", nexonJobName: "Hunter", buffSkills: [], requiredStats: [], isLegacy: true },
+  { id: "mage_f_p", nexonJobName: "Mage (F/P)", displayName: "Mage (Fire/Poison)", buffSkills: [], requiredStats: [], isLegacy: true },
+  { id: "mage_i_l", nexonJobName: "Mage (I/L)", displayName: "Mage (Ice/Lightning)", buffSkills: [], requiredStats: [], isLegacy: true },
+  { id: "magician", nexonJobName: "Magician", buffSkills: [], requiredStats: [], isLegacy: true },
+  { id: "marauder", nexonJobName: "Marauder", buffSkills: [], requiredStats: [], isLegacy: true },
+  { id: "outlaw", nexonJobName: "Outlaw", buffSkills: [], requiredStats: [], isLegacy: true },
+  { id: "page", nexonJobName: "Page", buffSkills: [], requiredStats: [], isLegacy: true },
+  { id: "pirate", nexonJobName: "Pirate", buffSkills: [], requiredStats: [], isLegacy: true },
+  { id: "priest", nexonJobName: "Priest", buffSkills: [], requiredStats: [], isLegacy: true },
+  { id: "ranger", nexonJobName: "Ranger", buffSkills: [], requiredStats: [], isLegacy: true },
+  { id: "rogue", nexonJobName: "Rogue", buffSkills: [], requiredStats: [], isLegacy: true },
+  { id: "sniper", nexonJobName: "Sniper", buffSkills: [], requiredStats: [], isLegacy: true },
+  { id: "soulchaser", nexonJobName: "Soulchaser", buffSkills: [], requiredStats: [], isLegacy: true },
+  { id: "spearman", nexonJobName: "Spearman", buffSkills: [], requiredStats: [], isLegacy: true },
+  { id: "swordman", nexonJobName: "Swordman", buffSkills: [], requiredStats: [], isLegacy: true },
+  { id: "white_knight", nexonJobName: "White Knight", buffSkills: [], requiredStats: [], isLegacy: true },
+  { id: "wizard_f_p", nexonJobName: "Wizard (F/P)", displayName: "Wizard (Fire/Poison)", buffSkills: [], requiredStats: [], isLegacy: true },
+  { id: "wizard_i_l", nexonJobName: "Wizard (I/L)", displayName: "Wizard (Ice/Lightning)", buffSkills: [], requiredStats: [], isLegacy: true },
 ];
 
 export function getClassDataByNexonJobName(jobName: string): ClassSkillData | undefined {
   return CLASS_SKILL_DATA.find((c) => c.nexonJobName === jobName);
+}
+
+export function isLegacyClass(jobName: string): boolean {
+  return CLASS_SKILL_DATA.find((c) => c.nexonJobName === jobName)?.isLegacy === true;
 }
 
 export function getClassDataById(id: string): ClassSkillData | undefined {

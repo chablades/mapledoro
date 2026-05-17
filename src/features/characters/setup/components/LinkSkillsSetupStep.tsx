@@ -197,7 +197,12 @@ function LinkSkillRow({
           placeholder="0"
           disabled={locked}
           title={locked ? "Locked because the character you're adding already brings this skill to Master Level 3" : undefined}
-          onChange={(e) => onUpdate(skill.id, e.target.value)}
+          onChange={(e) => {
+            const raw = e.target.value;
+            const n = parseInt(raw, 10);
+            if (!isNaN(n) && n > skill.maxLevel) { onUpdate(skill.id, String(skill.maxLevel)); return; }
+            onUpdate(skill.id, raw);
+          }}
           onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
           onBlur={(e) => {
             e.currentTarget.style.outlineColor = "transparent";

@@ -4,6 +4,7 @@
 */
 import type { SetupStepId } from "./steps";
 import { getSetupStepById, type SetupStepDefinition } from "./steps";
+import { isLegacyClass } from "./data/classSkillData";
 
 type GenderOverride = "male" | "female" | "none" | null;
 
@@ -120,6 +121,8 @@ export function computeEffectiveFlowStart(
   flowId: SetupFlowId,
   gender: GenderOverride,
   skipMarriage: boolean,
+  characterLevel?: number,
+  jobName?: string,
 ): { startStep: number; autoFillGender: "male" | "female" | null } {
   const stepCount = getFlowStepCount(flowId);
   let autoFillGender: "male" | "female" | null = null;
@@ -132,6 +135,7 @@ export function computeEffectiveFlowStart(
       continue;
     }
     if (step.id === "marriage" && skipMarriage) continue;
+    if (isStepSkippedForLevel(step.id, characterLevel, jobName)) continue;
     return { startStep: i, autoFillGender };
   }
 
@@ -143,12 +147,14 @@ export function getVisibleStepInfo(
   stepIndex: number,
   gender: GenderOverride,
   skipMarriage: boolean,
+  characterLevel?: number,
+  jobName?: string,
 ): { visibleNumber: number; visibleTotal: number } {
   const stepCount = getFlowStepCount(flowId);
   let visibleTotal = 0;
   let visibleNumber = 0;
   for (let i = 1; i <= stepCount; i++) {
-    if (!isStepSkippedForClass(flowId, i, gender, skipMarriage)) {
+    if (!isStepSkippedForClass(flowId, i, gender, skipMarriage, characterLevel, jobName)) {
       visibleTotal++;
       if (i <= stepIndex) visibleNumber++;
     }
@@ -156,15 +162,28 @@ export function getVisibleStepInfo(
   return { visibleNumber, visibleTotal };
 }
 
+function isStepSkippedForLevel(stepId: SetupStepId, characterLevel?: number, jobName?: string): boolean {
+  if (jobName && isLegacyClass(jobName)) {
+    if (stepId === "v_matrix" || stepId === "hexa_matrix") return true;
+  }
+  const level = characterLevel ?? 0;
+  if (stepId === "hexa_matrix" && level < 260) return true;
+  if (stepId === "v_matrix" && level < 200) return true;
+  return false;
+}
+
 export function isStepSkippedForClass(
   flowId: SetupFlowId,
   stepIndex: number,
   gender: GenderOverride,
   skipMarriage: boolean,
+  characterLevel?: number,
+  jobName?: string,
 ): boolean {
   const step = getFlowStepByIndex(flowId, stepIndex);
   if (!step) return false;
   if (step.id === "gender" && gender !== null) return true;
   if (step.id === "marriage" && skipMarriage) return true;
+  if (isStepSkippedForLevel(step.id, characterLevel, jobName)) return true;
   return false;
 }

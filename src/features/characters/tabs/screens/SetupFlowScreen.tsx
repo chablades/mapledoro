@@ -33,6 +33,8 @@ export default function SetupFlowScreen({ model, actions }: SetupFlowScreenProps
       characterRoster={characterRoster}
       confirmedWorldId={confirmed?.worldID}
       worldLinkSkills={worldLinkSkills}
+      characterLevel={confirmed?.level}
+      confirmedCharacterName={confirmed?.characterName}
       stepValue={setup.activeSetupStepValue}
       onStepValueChange={actions.stepValueChange}
       onBackStep={() => actions.setSetupStepWithDirection(setup.setupStepIndex - 1)}

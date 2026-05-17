@@ -23,8 +23,9 @@ export default function QuickSetupIntroScreen({ model, actions }: SetupIntroScre
   const jobName = model.profile.confirmedCharacter?.jobName ?? "";
   const overrides = getClassSetupOverrides(jobName);
   const quickStepCount = getFlowStepCount("quick_setup");
+  const characterLevel = model.profile.confirmedCharacter?.level;
   const { startStep: quickStartStep } = computeEffectiveFlowStart(
-    "quick_setup", overrides.gender, overrides.skipMarriage,
+    "quick_setup", overrides.gender, overrides.skipMarriage, characterLevel, jobName,
   );
   const quickSetupAllSkipped = quickStartStep > quickStepCount;
   const genderSkipped = overrides.gender !== null;

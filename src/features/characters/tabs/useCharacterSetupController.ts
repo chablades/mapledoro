@@ -15,6 +15,8 @@ import {
   writeLinkSkillsForWorld,
   writeCharactersStore,
 } from "../model/charactersStore";
+import { findClassById } from "../../tools/hexa-skills/hexa-classes";
+import { getClassDataByNexonJobName } from "../setup/data/classSkillData";
 import {
   readAllSetupDrafts,
   makeDraftCharacterKey,
@@ -46,6 +48,31 @@ import {
 } from "./useSetupFlowTransitions";
 
 export const MAX_CHAMPIONS = 4;
+
+function applyHexaDraftToRoster(
+  character: NormalizedCharacterData | null,
+  hexaJson: string,
+  upsertFn: (c: StoredCharacterRecord) => void,
+) {
+  if (!character) return;
+  const hexaData = buildHexaToolDataForRecord(character.jobName, hexaJson);
+  if (!hexaData) return;
+  const store = readCharactersStore();
+  const existing = selectCharacterById(store, toCharacterKey(character));
+  if (!existing) return;
+  upsertFn({ ...existing, tools: { ...existing.tools, hexaSkills: hexaData } });
+}
+
+function buildHexaToolDataForRecord(jobName: string, hexaJson: string): { className: string; levels: unknown } | null {
+  try {
+    const levels = JSON.parse(hexaJson) as unknown;
+    const classData = getClassDataByNexonJobName(jobName);
+    const hexaClassId = classData?.id === "sia_astelle" ? "sia" : classData?.id;
+    const classDef = hexaClassId ? findClassById(hexaClassId) : null;
+    if (levels && typeof levels === "object" && classDef) return { className: classDef.className, levels };
+  } catch { /* ignore */ }
+  return null;
+}
 
 function normalizeCompletedFlowIds(flowIds: SetupFlowId[]) {
   return Array.from(new Set(flowIds));
@@ -673,7 +700,8 @@ export function useCharacterSetupController() {
       const { gender, skipMarriage } = getClassSetupOverrides(jobName);
       const stepCount = getFlowStepCount(activeFlowId);
       let target = Math.max(0, Math.min(stepCount, nextStep));
-      while (target >= 1 && target <= stepCount && isStepSkippedForClass(activeFlowId, target, gender, skipMarriage)) {
+      const characterLevel = confirmedCharacter?.level;
+      while (target >= 1 && target <= stepCount && isStepSkippedForClass(activeFlowId, target, gender, skipMarriage, characterLevel, jobName)) {
         target += direction === "forward" ? 1 : -1;
       }
       target = Math.max(0, Math.min(stepCount, target));
@@ -809,7 +837,9 @@ export function useCharacterSetupController() {
         });
         if (isFullSetupFlow) {
           const { stats, isLiberated, weaponHand, hasRuinForceShield, soul } = convertStatsStepDraftToStored(parseStatsStepDraft(setupStepTestByStep.stats ?? ""));
-          storedRecord = { ...storedRecord, stats: { ...storedRecord.stats, ...stats }, isLiberated, weaponHand, hasRuinForceShield, soul };
+          const hexaToolData = buildHexaToolDataForRecord(confirmedCharacter.jobName, setupStepTestByStep.hexa_matrix ?? "");
+          const tools = hexaToolData ? { ...storedRecord.tools, hexaSkills: hexaToolData } : storedRecord.tools;
+          storedRecord = { ...storedRecord, stats: { ...storedRecord.stats, ...stats }, isLiberated, weaponHand, hasRuinForceShield, soul, tools };
         }
         upsertRosterCharacter(storedRecord);
         setHasCompletedRequiredSetupEver(true);
@@ -823,6 +853,11 @@ export function useCharacterSetupController() {
       const linkSkillsValue = setupStepTestByStep.link_skills;
       if (linkSkillsValue && confirmedCharacter) {
         writeLinkSkillsForWorld(confirmedCharacter.worldID, linkSkillsValue);
+      }
+
+      const hexaValue = setupStepTestByStep.hexa_matrix;
+      if (hexaValue && confirmedCharacter && !isFullSetupFlow) {
+        applyHexaDraftToRoster(confirmedCharacter, hexaValue, upsertRosterCharacter);
       }
 
       setIsAddingCharacter(false);
@@ -1232,7 +1267,7 @@ export function useCharacterSetupController() {
           ? getClassSetupOverrides(confirmedCharacter.jobName)
           : null;
         const { startStep, autoFillGender } = overrides
-          ? computeEffectiveFlowStart(flowId, overrides.gender, overrides.skipMarriage)
+          ? computeEffectiveFlowStart(flowId, overrides.gender, overrides.skipMarriage, confirmedCharacter?.level, confirmedCharacter?.jobName)
           : { startStep: 1, autoFillGender: null };
         const stepCount = getFlowStepCount(flowId);
         if (autoFillGender) {

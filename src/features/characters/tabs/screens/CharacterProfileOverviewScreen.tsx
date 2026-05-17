@@ -162,10 +162,12 @@ function OverviewTab({ model }: { model: PreviewPaneModel }) {
 
   const mounted = useSyncExternalStore(() => () => undefined, () => true, () => false);
   const charName = character?.characterName;
-  const hexaLevels = useMemo(
-    () => (mounted ? readHexaLevels(charName) : null),
-    [mounted, charName],
-  );
+  const hexaLevels = useMemo(() => {
+    if (!mounted) return null;
+    const fromState = (character?.tools?.hexaSkills as { levels?: HexaSkillLevels } | undefined)?.levels;
+    if (fromState) return fromState;
+    return readHexaLevels(charName);
+  }, [mounted, charName, character?.tools]);
 
   function handleExport() {
     setExportFlash(true);
