@@ -939,10 +939,10 @@ function DashboardContent({ theme }: { theme: AppTheme }) {
         }
 
         @media (max-width: 1200px) {
-          .dashboard-layout { flex-direction: column; }
-          .dashboard-sidebar-left { width: 100%; position: static; order: 1; }
-          .dashboard-sidebar-right { width: 100%; position: static; order: 2; }
-          .dashboard-main { max-width: none; order: 0; }
+          .dashboard-layout { flex-direction: column; align-items: center; gap: 0.35rem; }
+          .dashboard-sidebar-left { width: 100%; max-width: 900px; position: static; order: 1; }
+          .dashboard-sidebar-right { width: 100%; max-width: 900px; position: static; order: 2; }
+          .dashboard-main { width: 100%; max-width: 900px; order: 0; }
           .hide-mobile { display: none; }
         }
 
