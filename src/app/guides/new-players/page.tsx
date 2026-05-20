@@ -126,7 +126,7 @@ function ClassRandomizer({ theme }: { theme: AppTheme }) {
           <div style={{ flex: 1, minWidth: 0 }}>
             <div
               style={{
-                fontFamily: "'Fredoka One', cursive",
+                fontFamily: "var(--font-heading)",
                 fontSize: "1.05rem",
                 color: theme.accent,
                 marginBottom: "0.5rem",
@@ -193,7 +193,7 @@ function ClassInfoPanel({ cls, theme }: { cls: ClassEntry; theme: AppTheme }) {
       <div style={{ flex: 1, minWidth: 0 }}>
         <div
           style={{
-            fontFamily: "'Fredoka One', cursive",
+            fontFamily: "var(--font-heading)",
             fontSize: "0.95rem",
             color: theme.accent,
             marginBottom: "0.4rem",
@@ -242,7 +242,7 @@ function ClassDirectory({ theme }: { theme: AppTheme }) {
     <div style={{ marginTop: "1.75rem", display: "flex", flexDirection: "column", gap: "1.5rem" }}>
       <div
         style={{
-          fontFamily: "'Fredoka One', cursive",
+          fontFamily: "var(--font-heading)",
           fontSize: "1rem",
           color: theme.text,
         }}
@@ -254,7 +254,7 @@ function ClassDirectory({ theme }: { theme: AppTheme }) {
         <div key={region}>
           <div
             style={{
-              fontFamily: "'Fredoka One', cursive",
+              fontFamily: "var(--font-heading)",
               fontSize: "0.85rem",
               color: theme.accent,
               marginBottom: "0.75rem",
@@ -360,7 +360,7 @@ function SectionCard({
       {/* Section heading */}
       <div
         style={{
-          fontFamily: "'Fredoka One', cursive",
+          fontFamily: "var(--font-heading)",
           fontSize: "1.15rem",
           color: theme.text,
           marginBottom: "1rem",
@@ -442,7 +442,7 @@ function NewPlayersContent({ theme }: { theme: AppTheme }) {
           {/* Page title */}
           <div
             style={{
-              fontFamily: "'Fredoka One', cursive",
+              fontFamily: "var(--font-heading)",
               fontSize: "1.5rem",
               color: theme.text,
               marginBottom: "0.25rem",
@@ -474,7 +474,7 @@ function NewPlayersContent({ theme }: { theme: AppTheme }) {
           >
             <div
               style={{
-                fontFamily: "'Fredoka One', cursive",
+                fontFamily: "var(--font-heading)",
                 fontSize: "0.9rem",
                 color: theme.text,
                 marginBottom: "0.75rem",
