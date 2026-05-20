@@ -962,10 +962,12 @@ function DashboardContent({ theme }: { theme: AppTheme }) {
       <div className="page-content">
         <div className="dashboard-layout">
           <aside className="dashboard-sidebar-left">
-            <div className="hide-mobile" style={{ marginBottom: "0.75rem" }}>
+            <div className="hide-mobile">
               <ResetTimerPanels theme={theme} now={now} />
+              <div style={{ marginTop: "0.75rem" }}>
+                <UrsusPanel theme={theme} now={now} />
+              </div>
             </div>
-            <UrsusPanel theme={theme} now={now} />
           </aside>
           <div className="dashboard-main">
             <HeroBanner theme={theme} />
@@ -974,7 +976,7 @@ function DashboardContent({ theme }: { theme: AppTheme }) {
             <CharactersPanel theme={theme} characters={characters} />
           </div>
           <aside className="dashboard-sidebar-right">
-            <div className="hide-mobile" style={{ marginBottom: "0.75rem" }}>
+            <div style={{ marginBottom: "0.75rem" }}>
               <SunnySundayPanel theme={theme} />
             </div>
             <PatchNotesPanel theme={theme} />
