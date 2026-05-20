@@ -83,7 +83,7 @@ function ClassCard({ cls, theme }: { cls: ClassEntry; theme: AppTheme }) {
           ) : (
             <div
               style={{
-                fontFamily: "'Fredoka One', cursive",
+                fontFamily: "var(--font-heading)",
                 fontSize: "1.5rem",
                 color: theme.muted,
               }}
@@ -96,7 +96,7 @@ function ClassCard({ cls, theme }: { cls: ClassEntry; theme: AppTheme }) {
         {/* Name */}
         <div
           style={{
-            fontFamily: "'Fredoka One', cursive",
+            fontFamily: "var(--font-heading)",
             fontSize: "0.78rem",
             color: theme.text,
             textAlign: "center",
@@ -172,7 +172,7 @@ function CharacterGuidesContent({ theme }: { theme: AppTheme }) {
           {/* Title */}
           <div
             style={{
-              fontFamily: "'Fredoka One', cursive",
+              fontFamily: "var(--font-heading)",
               fontSize: "1.5rem",
               color: theme.text,
               marginBottom: "0.25rem",
@@ -250,7 +250,7 @@ function CharacterGuidesContent({ theme }: { theme: AppTheme }) {
               <div key={classType}>
                 <div
                   style={{
-                    fontFamily: "'Fredoka One', cursive",
+                    fontFamily: "var(--font-heading)",
                     fontSize: "1rem",
                     color: theme.accent,
                     marginBottom: "0.75rem",
