@@ -89,6 +89,19 @@ const PLACEHOLDER_COUNTDOWN = "--:--:--";
 const subscribeFn = () => () => undefined;
 
 
+// -- Quick Guides data ---------------------------------------------------------
+interface QuickGuide {
+  title: string;
+  desc: string;
+  emoji: string;
+  href: string;
+}
+
+const QUICK_GUIDES: QuickGuide[] = [
+  { title: "New Players", desc: "Getting started", emoji: "🌱", href: "/guides/new-players" },
+  { title: "Character Guides", desc: "Classes & link skills", emoji: "⚔️", href: "/guides/character-guides" },
+];
+
 // -- Quick Tools data ----------------------------------------------------------
 interface QuickTool {
   title: string;
@@ -129,7 +142,7 @@ const QUICK_TOOLS: QuickTool[] = [
   },
   {
     title: "Liberation",
-    desc: "Genesis, Astra & Destiny",
+    desc: "Liberation planning",
     icon: "https://media.maplestorywiki.net/yetidb/Eqp_Genesis_Dagger.png",
     iconType: "image",
     href: "/tools/liberation",
@@ -167,7 +180,7 @@ function HeroBanner({ theme }: { theme: AppTheme }) {
   const bannerStyle: CSSProperties = {
     position: "relative",
     textAlign: "center",
-    padding: "2.5rem 2rem 2rem",
+    padding: "2rem 2rem 1.5rem",
     borderRadius: 22,
     overflow: "hidden",
     border: `1px solid ${theme.border}`,
@@ -191,33 +204,8 @@ function HeroBanner({ theme }: { theme: AppTheme }) {
     color: theme.muted,
     fontWeight: 600,
     maxWidth: 460,
-    margin: "0 auto 1.25rem",
+    margin: "0 auto 0.5rem",
     lineHeight: 1.5,
-  };
-  const primaryBtnStyle: CSSProperties = {
-    display: "inline-flex",
-    alignItems: "center",
-    padding: "0.55rem 1.25rem",
-    borderRadius: 10,
-    background: theme.accent,
-    color: "#fff",
-    fontWeight: 800,
-    fontSize: "0.82rem",
-    textDecoration: "none",
-    transition: "opacity 0.15s, transform 0.15s",
-  };
-  const secondaryBtnStyle: CSSProperties = {
-    display: "inline-flex",
-    alignItems: "center",
-    padding: "0.55rem 1.25rem",
-    borderRadius: 10,
-    border: `2px solid ${theme.border}`,
-    background: "transparent",
-    color: theme.text,
-    fontWeight: 800,
-    fontSize: "0.82rem",
-    textDecoration: "none",
-    transition: "border-color 0.15s, transform 0.15s",
   };
 
   return (
@@ -239,14 +227,6 @@ function HeroBanner({ theme }: { theme: AppTheme }) {
           Free, open-source tools for tracking characters, planning progression,
           calculating upgrades, and staying on top of game events.
         </p>
-        <div style={{ display: "flex", gap: "0.6rem", justifyContent: "center", flexWrap: "wrap" }}>
-          <Link href="/changelog" className="hero-btn-primary" style={primaryBtnStyle}>
-            What&apos;s New?
-          </Link>
-          <Link href="/guides" className="hero-btn-secondary" style={secondaryBtnStyle}>
-            Browse Guides
-          </Link>
-        </div>
       </div>
     </div>
   );
@@ -359,39 +339,50 @@ function UrsusPanel({ theme, now }: { theme: AppTheme; now: Date | null }) {
     ? (tzFormatter.formatToParts(now).find((p) => p.type === "timeZoneName")?.value ?? "")
     : "";
 
-  const cardStyle: CSSProperties = {
-    background: theme.panel,
-    border: `1px solid ${ursus?.active ? "#10b981" : theme.border}`,
-    borderRadius: 14,
-    padding: "0.85rem 1rem",
-    marginBottom: "0.75rem",
-  };
   const activeBadgeStyle: CSSProperties = {
-    fontSize: "0.75rem",
+    marginLeft: "auto",
+    fontSize: "0.65rem",
     fontWeight: 800,
     color: "#fff",
     background: "#10b981",
-    padding: "1px 6px",
-    borderRadius: 4,
+    padding: "2px 8px",
+    borderRadius: "6px",
     letterSpacing: "0.05em",
   };
 
+  const timerRowStyle: CSSProperties = {
+    background: theme.timerBg,
+    borderRadius: "14px",
+    padding: "1rem 1.25rem",
+    border: `1px solid ${theme.border}`,
+    transition: "background 0.35s, border-color 0.35s",
+  };
+
   return (
-    <div className="fade-in timer-bar-card" style={cardStyle}>
-      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
-        <span className="section-label" style={{ color: theme.muted, marginBottom: 0 }}>
-          {ursus?.active ? "Ursus 2× — Ends In" : "Ursus 2× — Starts In"}
-        </span>
+    <div
+      className="fade-in panel panel-card"
+      style={{ animationDelay: "0.25s", background: theme.panel, border: `1px solid ${theme.border}` }}
+    >
+      <div className="panel-header" style={{ borderBottom: `1px solid ${theme.border}` }}>
+        <span style={{ fontSize: "1.1rem" }}>&#128059;</span>
+        <span className="panel-header-title" style={{ color: theme.text }}>Ursus 2&#215; Meso</span>
         {ursus?.active && <span style={activeBadgeStyle}>ACTIVE</span>}
       </div>
-      <div className="timer-countdown" style={{ color: ursus?.active ? "#10b981" : theme.accent }}>
-        {ursusCountdown}
-      </div>
-      {now && (
-        <div style={{ fontSize: "0.75rem", color: theme.muted, fontWeight: 700, marginTop: 4 }}>
-          {fmtLocal(1)}–{fmtLocal(5)} &amp; {fmtLocal(18)}–{fmtLocal(22)} {tzLabel}
+      <div style={{ padding: "0.75rem" }}>
+        <div style={timerRowStyle}>
+          <div className="section-label" style={{ color: theme.muted, marginBottom: "6px" }}>
+            {ursus?.active ? "Ends In" : "Starts In"}
+          </div>
+          <div className="timer-countdown" style={{ color: theme.accent }}>
+            {ursusCountdown}
+          </div>
         </div>
-      )}
+        {now && (
+          <div style={{ marginTop: "0.6rem", fontSize: "0.75rem", color: theme.muted, fontWeight: 700, textAlign: "center" }}>
+            {fmtLocal(1)} – {fmtLocal(5)} &amp; {fmtLocal(18)} – {fmtLocal(22)} {tzLabel}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -399,37 +390,44 @@ function UrsusPanel({ theme, now }: { theme: AppTheme; now: Date | null }) {
 // -- Reset Timer Panels (right sidebar) ----------------------------------------
 
 function ResetTimerPanels({ theme, now }: { theme: AppTheme; now: Date | null }) {
-  const dailyCountdown = now
-    ? fmt(getNextReset(now, 0).getTime() - now.getTime())
-    : PLACEHOLDER_COUNTDOWN;
-  const weeklyCountdown = now
-    ? fmt(getNextReset(now, 0, 4).getTime() - now.getTime())
-    : PLACEHOLDER_COUNTDOWN;
+  const resets = now
+    ? [
+        { label: "Daily Reset", countdown: fmt(getNextReset(now, 0).getTime() - now.getTime()) },
+        { label: "Weekly Reset", countdown: fmt(getNextReset(now, 0, 4).getTime() - now.getTime()) },
+      ]
+    : [
+        { label: "Daily Reset", countdown: PLACEHOLDER_COUNTDOWN },
+        { label: "Weekly Reset", countdown: PLACEHOLDER_COUNTDOWN },
+      ];
 
-  const cardStyle: CSSProperties = {
-    background: theme.panel,
+  const timerRowStyle: CSSProperties = {
+    background: theme.timerBg,
+    borderRadius: "14px",
+    padding: "1rem 1.25rem",
     border: `1px solid ${theme.border}`,
-    borderRadius: 14,
-    padding: "0.85rem 1rem",
+    transition: "background 0.35s, border-color 0.35s",
   };
 
   return (
-    <div className="fade-in" style={{ display: "flex", flexDirection: "column", gap: "0.5rem", marginBottom: "0.75rem" }}>
-      <div className="timer-bar-card" style={cardStyle}>
-        <div className="section-label" style={{ color: theme.muted, marginBottom: 4 }}>
-          Daily Reset
-        </div>
-        <div className="timer-countdown" style={{ color: theme.accent }}>
-          {dailyCountdown}
-        </div>
+    <div
+      className="fade-in panel panel-card"
+      style={{ animationDelay: "0.2s", background: theme.panel, border: `1px solid ${theme.border}` }}
+    >
+      <div className="panel-header" style={{ borderBottom: `1px solid ${theme.border}` }}>
+        <span style={{ fontSize: "1.1rem" }}>&#9201;</span>
+        <span className="panel-header-title" style={{ color: theme.text }}>Reset Timers</span>
       </div>
-      <div className="timer-bar-card" style={cardStyle}>
-        <div className="section-label" style={{ color: theme.muted, marginBottom: 4 }}>
-          Weekly Reset
-        </div>
-        <div className="timer-countdown" style={{ color: theme.accent }}>
-          {weeklyCountdown}
-        </div>
+      <div style={{ padding: "0.75rem", display: "flex", flexDirection: "column", gap: "0.6rem" }}>
+        {resets.map((r) => (
+          <div key={r.label} style={timerRowStyle}>
+            <div className="section-label" style={{ color: theme.muted, marginBottom: "6px" }}>
+              {r.label}
+            </div>
+            <div className="timer-countdown" style={{ color: theme.accent }}>
+              {r.countdown}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -487,6 +485,55 @@ function QuickToolsGrid({ theme }: { theme: AppTheme }) {
               </div>
               <div style={{ fontSize: "0.75rem", color: theme.muted, fontWeight: 600, lineHeight: 1.3 }}>
                 {tool.desc}
+              </div>
+            </div>
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// -- Quick Guides Grid ---------------------------------------------------------
+
+function QuickGuidesGrid({ theme }: { theme: AppTheme }) {
+  const guideCardStyle: CSSProperties = {
+    background: theme.panel,
+    border: `1px solid ${theme.border}`,
+    borderRadius: 14,
+    padding: "1rem 0.65rem 0.85rem",
+    textAlign: "center",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: "0.3rem",
+  };
+
+  return (
+    <div className="fade-in" style={{ marginBottom: "1.25rem", animationDelay: "0.25s" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.75rem" }}>
+        <span className="panel-header-title" style={{ color: theme.text, fontSize: "1rem" }}>
+          Guides
+        </span>
+        <Link
+          href="/guides"
+          style={{ fontSize: "0.78rem", color: theme.accent, fontWeight: 800, textDecoration: "none" }}
+        >
+          All guides →
+        </Link>
+      </div>
+      <div className="quick-guides-grid" style={{ display: "grid", gridTemplateColumns: `repeat(${QUICK_GUIDES.length}, 1fr)`, gap: "0.75rem" }}>
+        {QUICK_GUIDES.map((guide) => (
+          <Link key={guide.href} href={guide.href} style={{ textDecoration: "none" }}>
+            <div className="quick-tool-card" style={guideCardStyle}>
+              <div style={{ width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 2 }}>
+                <span style={{ fontSize: "1.5rem", lineHeight: 1 }}>{guide.emoji}</span>
+              </div>
+              <div style={{ fontWeight: 700, fontSize: "0.8rem", color: theme.text, lineHeight: 1.2 }}>
+                {guide.title}
+              </div>
+              <div style={{ fontSize: "0.75rem", color: theme.muted, fontWeight: 600, lineHeight: 1.3 }}>
+                {guide.desc}
               </div>
             </div>
           </Link>
@@ -834,9 +881,6 @@ function DashboardContent({ theme }: { theme: AppTheme }) {
           background: ${theme.panel};
           transition: background 0.35s ease, border-color 0.35s ease;
         }
-        .hero-btn-primary:hover { opacity: 0.85; transform: translateY(-1px); }
-        .hero-btn-secondary:hover { border-color: ${theme.accent} !important; transform: translateY(-1px); }
-
         .timer-countdown {
           font-family: var(--font-heading);
           font-size: 2rem;
@@ -910,6 +954,7 @@ function DashboardContent({ theme }: { theme: AppTheme }) {
 
         @media (max-width: 500px) {
           .quick-tools-grid { grid-template-columns: repeat(2, 1fr) !important; }
+          .quick-guides-grid { grid-template-columns: repeat(2, 1fr) !important; }
           .timer-countdown { font-size: 1.5rem !important; }
         }
       `}</style>
@@ -917,19 +962,20 @@ function DashboardContent({ theme }: { theme: AppTheme }) {
       <div className="page-content">
         <div className="dashboard-layout">
           <aside className="dashboard-sidebar-left">
-            <div className="hide-mobile">
-              <UrsusPanel theme={theme} now={now} />
+            <div className="hide-mobile" style={{ marginBottom: "0.75rem" }}>
+              <ResetTimerPanels theme={theme} now={now} />
             </div>
-            <SunnySundayPanel theme={theme} />
+            <UrsusPanel theme={theme} now={now} />
           </aside>
           <div className="dashboard-main">
             <HeroBanner theme={theme} />
             <QuickToolsGrid theme={theme} />
+            <QuickGuidesGrid theme={theme} />
             <CharactersPanel theme={theme} characters={characters} />
           </div>
           <aside className="dashboard-sidebar-right">
-            <div className="hide-mobile">
-              <ResetTimerPanels theme={theme} now={now} />
+            <div className="hide-mobile" style={{ marginBottom: "0.75rem" }}>
+              <SunnySundayPanel theme={theme} />
             </div>
             <PatchNotesPanel theme={theme} />
           </aside>
