@@ -240,8 +240,8 @@ function HeroBanner({ theme }: { theme: AppTheme }) {
           calculating upgrades, and staying on top of game events.
         </p>
         <div style={{ display: "flex", gap: "0.6rem", justifyContent: "center", flexWrap: "wrap" }}>
-          <Link href="/characters" className="hero-btn-primary" style={primaryBtnStyle}>
-            Get Started
+          <Link href="/changelog" className="hero-btn-primary" style={primaryBtnStyle}>
+            What&apos;s New?
           </Link>
           <Link href="/guides" className="hero-btn-secondary" style={secondaryBtnStyle}>
             Browse Guides
