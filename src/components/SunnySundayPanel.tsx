@@ -1,8 +1,29 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useReducer, useRef, useState, type CSSProperties } from "react";
 import type { AppTheme } from "./themes";
 import type { SunnySundayWeek, SunnySundayPayload } from "@/lib/sunnySunday";
+
+type FetchState = { weeks: SunnySundayWeek[]; loading: boolean; error: string | null };
+type FetchAction =
+  | { type: "success"; weeks: SunnySundayWeek[] }
+  | { type: "error"; message: string }
+  | { type: "done" };
+
+function fetchReducer(state: FetchState, action: FetchAction): FetchState {
+  switch (action.type) {
+    case "success": return { weeks: action.weeks, loading: false, error: null };
+    case "error": return { ...state, loading: false, error: action.message };
+    case "done": return { ...state, loading: false };
+  }
+}
+
+async function fetchSunnySundays(signal: AbortSignal): Promise<SunnySundayWeek[]> {
+  const res = await fetch("/api/sunny-sundays", { signal });
+  if (!res.ok) throw new Error("Failed to load");
+  const data = (await res.json()) as SunnySundayPayload;
+  return data.weeks;
+}
 import { useClock } from "@/lib/useClock";
 
 interface SunnySundayPanelProps {
@@ -33,22 +54,21 @@ function formatLocalDate(iso: string) {
 }
 
 function EventDetailsList({ details, theme }: { details: string[]; theme: AppTheme }) {
+  const detailRowStyle: CSSProperties = {
+    display: "flex",
+    gap: "0.5rem",
+    padding: "0.5rem 0.65rem",
+    fontSize: "0.85rem",
+    fontWeight: 600,
+    color: theme.text,
+    borderRadius: "8px",
+    lineHeight: 1.35,
+  };
+
   return (
     <div style={{ padding: "0.5rem 0.75rem 0" }}>
-      {details.map((line, i) => (
-        <div
-          key={i}
-          style={{
-            display: "flex",
-            gap: "0.5rem",
-            padding: "0.5rem 0.65rem",
-            fontSize: "0.85rem",
-            fontWeight: 600,
-            color: theme.text,
-            borderRadius: "8px",
-            lineHeight: 1.35,
-          }}
-        >
+      {details.map((line) => (
+        <div key={line} style={detailRowStyle}>
           <span style={{ flexShrink: 0, color: theme.accent }}>•</span>
           {line}
         </div>
@@ -68,28 +88,30 @@ function OtherWeeksAccordion({
   showOther: boolean;
   onToggle: () => void;
 }) {
+  const toggleBtnStyle: CSSProperties = {
+    width: "100%",
+    padding: "0.5rem 0.75rem",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderRadius: "8px",
+    border: "none",
+    background: theme.accentSoft,
+    fontSize: "0.8rem",
+    fontWeight: 600,
+    fontFamily: "inherit",
+    color: theme.accent,
+    transition: "background 0.2s, color 0.2s",
+  };
+
   if (weeks.length === 0) return null;
   return (
     <div style={{ padding: "0.5rem 0.75rem 0.75rem", borderTop: `1px solid ${theme.border}`, marginTop: "0.4rem" }}>
       <button
         type="button"
         onClick={onToggle}
-        style={{
-          width: "100%",
-          padding: "0.5rem 0.75rem",
-          cursor: "pointer",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          borderRadius: "8px",
-          border: "none",
-          background: theme.accentSoft,
-          fontSize: "0.8rem",
-          fontWeight: 600,
-          fontFamily: "inherit",
-          color: theme.accent,
-          transition: "all 0.2s",
-        }}
+        style={toggleBtnStyle}
       >
         <span>Upcoming weeks ({weeks.length})</span>
         <span
@@ -151,25 +173,24 @@ function OtherWeeksAccordion({
 }
 
 export default function SunnySundayPanel({ theme }: SunnySundayPanelProps) {
-  const [weeks, setWeeks] = useState<SunnySundayWeek[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [{ weeks, loading, error }, dispatch] = useReducer(fetchReducer, { weeks: [], loading: true, error: null });
   const [showOther, setShowOther] = useState(false);
+  const fetchedRef = useRef(false);
 
   useEffect(() => {
-    fetch("/api/sunny-sundays")
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to load");
-        return res.json() as Promise<SunnySundayPayload>;
-      })
-      .then((data) => {
-        setWeeks(data.weeks);
-        setError(null);
-      })
+    if (fetchedRef.current) return;
+    fetchedRef.current = true;
+
+    const controller = new AbortController();
+    fetchSunnySundays(controller.signal)
+      .then((w) => dispatch({ type: "success", weeks: w }))
       .catch((err) => {
-        setError(err instanceof Error ? err.message : "Unknown error");
-      })
-      .finally(() => setLoading(false));
+        if (!controller.signal.aborted) {
+          dispatch({ type: "error", message: err instanceof Error ? err.message : "Unknown error" });
+        }
+      });
+
+    return () => { controller.abort(); };
   }, []);
 
   const now = useClock();
@@ -183,6 +204,17 @@ export default function SunnySundayPanel({ theme }: SunnySundayPanelProps) {
   else if (error) statusText = "Connection error";
   else if (upcoming) statusText = formatLocalDate(upcoming.dateISO);
   else statusText = "No data";
+
+  const activeBadgeStyle: CSSProperties = {
+    marginLeft: "auto",
+    fontSize: "0.75rem",
+    fontWeight: 800,
+    color: "#fff",
+    background: "#10b981",
+    padding: "2px 8px",
+    borderRadius: "6px",
+    letterSpacing: "0.05em",
+  };
 
   return (
     <div
@@ -202,7 +234,7 @@ export default function SunnySundayPanel({ theme }: SunnySundayPanelProps) {
           </div>
           <div
             style={{
-              fontSize: "0.66rem",
+              fontSize: "0.75rem",
               color: theme.muted,
               fontWeight: 700,
               marginTop: "2px",
@@ -212,18 +244,7 @@ export default function SunnySundayPanel({ theme }: SunnySundayPanelProps) {
           </div>
         </div>
         {isActive && (
-          <span
-            style={{
-              marginLeft: "auto",
-              fontSize: "0.65rem",
-              fontWeight: 800,
-              color: "#fff",
-              background: "#10b981",
-              padding: "2px 8px",
-              borderRadius: "6px",
-              letterSpacing: "0.05em",
-            }}
-          >
+          <span style={activeBadgeStyle}>
             ACTIVE
           </span>
         )}
@@ -231,7 +252,7 @@ export default function SunnySundayPanel({ theme }: SunnySundayPanelProps) {
 
       {loading && (
         <div className="empty-state" style={{ color: theme.muted }}>
-          Loading event data...
+          Loading event data&hellip;
         </div>
       )}
 

@@ -1,7 +1,9 @@
 "use client";
 
 import Image from "next/image";
+// react-doctor-disable-next-line react-doctor/prefer-dynamic-import
 import { Line } from "react-chartjs-2";
+// react-doctor-disable-next-line react-doctor/prefer-dynamic-import
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -13,8 +15,6 @@ import {
   type ChartOptions,
 } from "chart.js";
 import type { AppTheme } from "../../../components/themes";
-
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend);
 import { ToolHeader } from "../../../components/ToolHeader";
 import { WikiAttribution } from "../../../components/WikiAttribution";
 import { CharacterSyncPanel } from "../../../components/CharacterSyncPanel";
@@ -31,6 +31,8 @@ import {
   type SymbolState,
   type SymbolStats,
 } from "./useSymbolState";
+
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend);
 
 // -- Constants ----------------------------------------------------------------
 
@@ -75,6 +77,32 @@ function SymbolCardHeader({
   theme: AppTheme;
   updateSymbol: (areaName: string, patch: Partial<SymbolState>) => void;
 }) {
+  const trackBtnStyle: React.CSSProperties = {
+    padding: "4px 10px",
+    borderRadius: "8px",
+    fontSize: "0.75rem",
+    fontWeight: 800,
+    cursor: "pointer",
+    color: isTracked ? theme.accentText : theme.muted,
+    background: isTracked ? theme.accentSoft : "transparent",
+    border: `1px solid ${isTracked ? theme.accent + "44" : theme.border}`,
+  };
+  let badgeColor: string;
+  if (isMaxed) badgeColor = "#fff";
+  else if (days === Infinity) badgeColor = "#e05a5a";
+  else badgeColor = theme.accent;
+
+  const daysBadgeStyle: React.CSSProperties = {
+    fontSize: "0.75rem",
+    fontWeight: 800,
+    padding: "2px 8px",
+    borderRadius: "6px",
+    flexShrink: 0,
+    whiteSpace: "nowrap",
+    color: badgeColor,
+    background: isMaxed ? theme.accent : theme.accentSoft,
+  };
+
   return (
     <div
       style={{
@@ -126,39 +154,20 @@ function SymbolCardHeader({
           tabIndex={0}
           onClick={() => updateSymbol(area.name, { enabled: !state.enabled })}
           onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); updateSymbol(area.name, { enabled: !state.enabled }); } }}
-          style={{
-            padding: "4px 10px",
-            borderRadius: "8px",
-            fontSize: "0.75rem",
-            fontWeight: 800,
-            cursor: "pointer",
-            color: isTracked ? theme.accentText : theme.muted,
-            background: isTracked ? theme.accentSoft : "transparent",
-            border: `1px solid ${isTracked ? theme.accent + "44" : theme.border}`,
-          }}
+          style={trackBtnStyle}
         >
           {isTracked ? "Tracking" : "Not tracking"}
         </div>
       )}
 
       {(!isSacred || isTracked) && (() => {
-        let badgeColor: string;
         let badgeLabel: string;
-        if (isMaxed) { badgeColor = "#fff"; badgeLabel = "MAX"; }
-        else if (days === Infinity) { badgeColor = "#e05a5a"; badgeLabel = "--"; }
-        else { badgeColor = theme.accent; badgeLabel = `~${days}d`; }
+        if (isMaxed) badgeLabel = "MAX";
+        else if (days === Infinity) badgeLabel = "--";
+        else badgeLabel = `~${days}d`;
         return (
           <div
-            style={{
-              fontSize: "0.75rem",
-              fontWeight: 800,
-              padding: "2px 8px",
-              borderRadius: "6px",
-              flexShrink: 0,
-              whiteSpace: "nowrap",
-              color: badgeColor,
-              background: isMaxed ? theme.accent : theme.accentSoft,
-            }}
+            style={daysBadgeStyle}
           >
             {badgeLabel}
           </div>
@@ -350,7 +359,7 @@ function SymbolIncomeControls({
       >
         <span
           style={{
-            fontSize: "0.7rem",
+            fontSize: "0.75rem",
             fontWeight: 700,
             color: theme.muted,
           }}
@@ -447,6 +456,28 @@ function SymbolCard({
   const dailyMax = area.daily + DAILY_EVENT_BONUS;
   const disabledSacred = isSacred && !isTracked;
 
+  const levelBarContainerStyle: React.CSSProperties = {
+    height: "6px",
+    borderRadius: "3px",
+    background: theme.panel,
+    border: `1px solid ${theme.border}`,
+    overflow: "hidden",
+    marginBottom: "0.6rem",
+    opacity: disabledSacred ? 0.4 : 1,
+    transition: "opacity 0.15s",
+  };
+
+  const areaProgressStyle: React.CSSProperties = {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    fontSize: "0.75rem",
+    fontWeight: 700,
+    color: theme.muted,
+    opacity: disabledSacred ? 0.4 : 1,
+    transition: "opacity 0.15s",
+  };
+
   return (
     <div
       style={{
@@ -483,25 +514,16 @@ function SymbolCard({
 
       {/* Level progress bar */}
       {!isMaxed && (
-        <div
-          style={{
-            height: "6px",
-            borderRadius: "3px",
-            background: theme.panel,
-            border: `1px solid ${theme.border}`,
-            overflow: "hidden",
-            marginBottom: "0.6rem",
-            opacity: disabledSacred ? 0.4 : 1,
-            transition: "opacity 0.15s",
-          }}
-        >
+        <div style={levelBarContainerStyle}>
           <div
             style={{
               height: "100%",
-              width: `${levelPct}%`,
+              width: "100%",
               background: theme.accent,
               borderRadius: "3px",
-              transition: "width 0.25s ease",
+              transition: "transform 0.25s ease",
+              transformOrigin: "left",
+              transform: `scaleX(${levelPct / 100})`,
             }}
           />
         </div>
@@ -521,18 +543,7 @@ function SymbolCard({
       )}
 
       {/* Overall area progress + completion */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          fontSize: "0.75rem",
-          fontWeight: 700,
-          color: theme.muted,
-          opacity: disabledSacred ? 0.4 : 1,
-          transition: "opacity 0.15s",
-        }}
-      >
+      <div style={areaProgressStyle}>
         <span>{areaPct.toFixed(1)}% complete</span>
         {!isMaxed && isTracked && days !== Infinity && (
           <span style={{ color: theme.accent, fontWeight: 800 }}>
@@ -597,10 +608,12 @@ function OverallProgressPanel({
         <div
           style={{
             height: "100%",
-            width: `${overallPct}%`,
+            width: "100%",
             background: theme.accent,
             borderRadius: "6px",
-            transition: "width 0.35s ease",
+            transition: "transform 0.35s ease",
+            transformOrigin: "left",
+            transform: `scaleX(${overallPct / 100})`,
           }}
         />
       </div>
@@ -695,8 +708,8 @@ function CompletionSummaryPanel({
 
       {!noneTracked && incomplete.length > 0 && (
         <>
-          {[...incomplete]
-            .sort((a, b) => {
+          {incomplete
+            .toSorted((a, b) => {
               if (b.days === Infinity) return -1;
               if (a.days === Infinity) return 1;
               return b.days - a.days;
@@ -818,13 +831,12 @@ function CompletionTimelineChart({
   maxLevel: number;
   type: SymbolType;
 }) {
-  const series = stats.tracked
-    .filter((p) => !p.isMaxed && p.days !== Infinity)
-    .map((p) => ({
-      name: p.area.name,
-      points: computeLevelDays(p.state, growth, maxLevel, type),
-    }))
-    .filter((s) => s.points.length > 1);
+  const series: { name: string; points: ReturnType<typeof computeLevelDays> }[] = [];
+  for (const p of stats.tracked) {
+    if (p.isMaxed || p.days === Infinity) continue;
+    const points = computeLevelDays(p.state, growth, maxLevel, type);
+    if (points.length > 1) series.push({ name: p.area.name, points });
+  }
 
   const maxDay = Math.max(...series.flatMap((s) => s.points.map((p) => p.day)), 1);
 
