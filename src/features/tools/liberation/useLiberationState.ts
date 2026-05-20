@@ -18,6 +18,8 @@ import {
   DESTINY_BOSSES,
   DESTINY_QUESTS,
   DESTINY_TOTAL,
+  DESTINY2_QUESTS,
+  DESTINY2_TOTAL,
   getTracesPerClear,
 } from "./liberation-data";
 
@@ -419,8 +421,19 @@ export function useLiberationState() {
   useApplyCharacterQueryParam({ mounted, characters, handleCharChange });
 
   const bosses = type === "genesis" ? GENESIS_BOSSES : DESTINY_BOSSES;
-  const quests = type === "genesis" ? GENESIS_QUESTS : DESTINY_QUESTS;
-  const totalNeeded = type === "genesis" ? GENESIS_TOTAL : DESTINY_TOTAL;
+
+  let quests: LiberationQuest[];
+  let totalNeeded: number;
+  if (type === "genesis") {
+    quests = GENESIS_QUESTS;
+    totalNeeded = GENESIS_TOTAL;
+  } else if (type === "destiny2") {
+    quests = DESTINY2_QUESTS;
+    totalNeeded = DESTINY2_TOTAL;
+  } else {
+    quests = DESTINY_QUESTS;
+    totalNeeded = DESTINY_TOTAL;
+  }
 
   const setDifficulty = useCallback(
     (bossName: string, diffIdx: number | null) => {
@@ -464,7 +477,7 @@ export function useLiberationState() {
   const resetBosses = useCallback(() => {
     setSelections((prev) => {
       const next = { ...prev };
-      for (const boss of type === "genesis" ? GENESIS_BOSSES : DESTINY_BOSSES) {
+      for (const boss of bosses) {
         next[makeBossKey(type, boss.name)] = {
           difficultyIdx: null,
           partySize: 1,
@@ -473,16 +486,23 @@ export function useLiberationState() {
       }
       return next;
     });
-  }, [type, setSelections]);
+  }, [type, bosses, setSelections]);
 
   const switchType = useCallback(
     (t: LiberationType) => {
-      updateForm((f) => ({
-        ...f,
-        type: t,
-        questIdx: Math.min(f.questIdx, (t === "genesis" ? GENESIS_QUESTS : DESTINY_QUESTS).length - 1),
-        currentTraces: 0,
-      }));
+      updateForm((f) => {
+        if (f.type === t) return f;
+        let q: LiberationQuest[];
+        if (t === "genesis") q = GENESIS_QUESTS;
+        else if (t === "destiny2") q = DESTINY2_QUESTS;
+        else q = DESTINY_QUESTS;
+        return {
+          ...f,
+          type: t,
+          questIdx: Math.min(f.questIdx, q.length - 1),
+          currentTraces: 0,
+        };
+      });
     },
     [updateForm],
   );

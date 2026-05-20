@@ -44,6 +44,10 @@ npm run lint
 - **Image error fallbacks:** Use dual-render with refs (`display:none` on fallback, swap via `onError`), not `useState` to toggle. Avoids a re-render on error.
 - **No `autoFocus` attribute.** Use a ref callback with a guard: `ref={(el) => { if (el && document.activeElement !== el) el.focus(); }}`.
 - **localStorage writes:** Write synchronously inside state updaters, not in a `useEffect` watching state. Keeps the write atomic with the state change.
+- **Internal links:** Use `next/link` (`<Link>`) instead of `<a>` for internal routes. Enables client-side navigation, prefetching, and scroll preservation.
+- **Images:** Use `next/image` (`<Image>`) instead of `<img>`. Provides automatic optimization, lazy loading, and layout shift prevention.
+- **No unused type exports:** Don't `export` interfaces/types that are only used within the same file. Knip flags these as dead exports.
+- **No exhaustive inline styles:** Extract large `style={{…}}` objects into named `CSSProperties` variables outside JSX. Keeps markup readable and avoids re-creating objects on every render.
 
 ## Key Patterns
 

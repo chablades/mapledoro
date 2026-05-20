@@ -117,7 +117,7 @@ export const MASTERY_COSTS: LevelCost[] = [
   { solErda: 10, fragments: 250 }, // 29→30
 ];
 
-// ── Common (Sol Janus) ───────────────────────────────────────────────────────
+// ── Common (Sol Janus / Sol Hecate) ──────────────────────────────────────────
 
 export const COMMON_COSTS: LevelCost[] = [
   { solErda: 7, fragments: 125 },  // unlock

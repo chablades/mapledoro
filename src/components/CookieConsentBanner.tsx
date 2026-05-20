@@ -2,6 +2,7 @@
 
 import { useSyncExternalStore, useCallback } from "react";
 import type { CSSProperties } from "react";
+import Link from "next/link";
 import { Analytics } from "@vercel/analytics/next";
 import { useTheme } from "./ThemeContext";
 
@@ -85,12 +86,12 @@ function Banner({
     <div style={containerStyle}>
       <p style={{ margin: 0, fontSize: "0.82rem", fontWeight: 600, color: theme.text, maxWidth: 560 }}>
         We use anonymous analytics to understand how the site is used and to improve your experience. No personal data is collected. Learn more in our{" "}
-        <a
+        <Link
           href="/privacy"
           style={{ color: theme.accent, textDecoration: "underline" }}
         >
           Privacy Policy
-        </a>
+        </Link>
         .
       </p>
       <div style={{ display: "flex", gap: "0.5rem", flexShrink: 0 }}>

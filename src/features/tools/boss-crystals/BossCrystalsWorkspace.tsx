@@ -928,6 +928,144 @@ function BossSelectionDialog({
   );
 }
 
+// -- Extracted Sections -------------------------------------------------------
+
+function BossCrystalsControls({
+  theme,
+  server,
+  setServer,
+  clearData,
+  exportXlsx,
+}: {
+  theme: AppTheme;
+  server: string;
+  setServer: (s: string) => void;
+  clearData: () => void;
+  exportXlsx: () => void;
+}) {
+  return (
+    <div className="fade-in panel-card" style={bcControlsPanelStyle(theme)}>
+      <div
+        style={{
+          display: "flex",
+          gap: "4px",
+          background: theme.timerBg,
+          borderRadius: "10px",
+          padding: "3px",
+          border: `1px solid ${theme.border}`,
+        }}
+      >
+        {(["heroic", "interactive"] as const).map((s) => (
+          <div
+            key={s}
+            className="bc-btn"
+            role="button"
+            tabIndex={0}
+            onClick={() => setServer(s)}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setServer(s); } }}
+            style={{
+              padding: "6px 14px",
+              borderRadius: "8px",
+              fontSize: "0.78rem",
+              fontWeight: 800,
+              color: server === s ? theme.accentText : theme.muted,
+              background: server === s ? theme.accentSoft : "transparent",
+            }}
+          >
+            {s === "heroic" ? "Heroic" : "Interactive"}
+          </div>
+        ))}
+      </div>
+      <div style={{ marginLeft: "auto", display: "flex", gap: "0.5rem" }}>
+        <div
+          className="bc-btn"
+          role="button"
+          tabIndex={0}
+          onClick={clearData}
+          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); clearData(); } }}
+          style={{
+            padding: "6px 14px",
+            borderRadius: "10px",
+            fontSize: "0.78rem",
+            fontWeight: 800,
+            color: "#e05a5a",
+            background: "transparent",
+            border: "1px solid #e05a5a33",
+          }}
+        >
+          Clear All
+        </div>
+        <div
+          className="bc-btn"
+          role="button"
+          tabIndex={0}
+          onClick={exportXlsx}
+          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); exportXlsx(); } }}
+          style={{
+            padding: "6px 14px",
+            borderRadius: "10px",
+            fontSize: "0.78rem",
+            fontWeight: 800,
+            color: theme.accentText,
+            background: "transparent",
+            border: `1px solid ${theme.border}`,
+          }}
+        >
+          Export
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function BossCrystalsSummary({
+  theme,
+  totalMeso,
+  totalCrystals,
+}: {
+  theme: AppTheme;
+  totalMeso: number;
+  totalCrystals: number;
+}) {
+  return (
+    <div className="fade-in" style={bcSummaryBarStyle(theme)}>
+      <div style={{ display: "flex", alignItems: "baseline", gap: "6px" }}>
+        <span
+          style={{
+            fontFamily: "var(--font-heading)",
+            fontSize: "0.9rem",
+            color: theme.text,
+          }}
+        >
+          Weekly:
+        </span>
+        <span
+          style={{
+            fontFamily: "var(--font-heading)",
+            fontSize: "1.2rem",
+            color: theme.accent,
+          }}
+        >
+          {formatMeso(totalMeso)} mesos
+        </span>
+      </div>
+      <div style={{ width: "1px", height: "24px", background: theme.border }} />
+      <div
+        style={{
+          padding: "4px 12px",
+          borderRadius: "10px",
+          background: totalCrystals > 180 ? "#e05a5a22" : theme.accentSoft,
+          fontSize: "0.78rem",
+          fontWeight: 800,
+          color: totalCrystals > 180 ? "#e05a5a" : theme.accentText,
+        }}
+      >
+        {totalCrystals} / 180 crystals
+      </div>
+    </div>
+  );
+}
+
 // -- Main Component -----------------------------------------------------------
 
 export default function BossCrystalsWorkspace({ theme }: { theme: AppTheme }) {
@@ -1014,121 +1152,19 @@ export default function BossCrystalsWorkspace({ theme }: { theme: AppTheme }) {
             description="Select your server type, add characters, and check off the bosses you clear each week to track your meso income."
           />
 
-          {/* Controls */}
-          <div
-            className="fade-in panel-card"
-            style={bcControlsPanelStyle(theme)}
-          >
-            <div
-              style={{
-                display: "flex",
-                gap: "4px",
-                background: theme.timerBg,
-                borderRadius: "10px",
-                padding: "3px",
-                border: `1px solid ${theme.border}`,
-              }}
-            >
-              {(["heroic", "interactive"] as const).map((s) => (
-                <div
-                  key={s}
-                  className="bc-btn"
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => setServer(s)}
-                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setServer(s); } }}
-                  style={{
-                    padding: "6px 14px",
-                    borderRadius: "8px",
-                    fontSize: "0.78rem",
-                    fontWeight: 800,
-                    color: server === s ? theme.accentText : theme.muted,
-                    background: server === s ? theme.accentSoft : "transparent",
-                  }}
-                >
-                  {s === "heroic" ? "Heroic" : "Interactive"}
-                </div>
-              ))}
-            </div>
-            <div style={{ marginLeft: "auto", display: "flex", gap: "0.5rem" }}>
-              <div
-                className="bc-btn"
-                role="button"
-                tabIndex={0}
-                onClick={clearData}
-                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); clearData(); } }}
-                style={{
-                  padding: "6px 14px",
-                  borderRadius: "10px",
-                  fontSize: "0.78rem",
-                  fontWeight: 800,
-                  color: "#e05a5a",
-                  background: "transparent",
-                  border: "1px solid #e05a5a33",
-                }}
-              >
-                Clear All
-              </div>
-              <div
-                className="bc-btn"
-                role="button"
-                tabIndex={0}
-                onClick={exportXlsx}
-                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); exportXlsx(); } }}
-                style={{
-                  padding: "6px 14px",
-                  borderRadius: "10px",
-                  fontSize: "0.78rem",
-                  fontWeight: 800,
-                  color: theme.accentText,
-                  background: "transparent",
-                  border: `1px solid ${theme.border}`,
-                }}
-              >
-                Export
-              </div>
-            </div>
-          </div>
+          <BossCrystalsControls
+            theme={theme}
+            server={server}
+            setServer={setServer}
+            clearData={clearData}
+            exportXlsx={exportXlsx}
+          />
 
-          {/* Summary bar */}
-          <div
-            className="fade-in"
-            style={bcSummaryBarStyle(theme)}
-          >
-            <div style={{ display: "flex", alignItems: "baseline", gap: "6px" }}>
-              <span
-                style={{
-                  fontFamily: "var(--font-heading)",
-                  fontSize: "0.9rem",
-                  color: theme.text,
-                }}
-              >
-                Weekly:
-              </span>
-              <span
-                style={{
-                  fontFamily: "var(--font-heading)",
-                  fontSize: "1.2rem",
-                  color: theme.accent,
-                }}
-              >
-                {formatMeso(totalMeso)} mesos
-              </span>
-            </div>
-            <div style={{ width: "1px", height: "24px", background: theme.border }} />
-            <div
-              style={{
-                padding: "4px 12px",
-                borderRadius: "10px",
-                background: totalCrystals > 180 ? "#e05a5a22" : theme.accentSoft,
-                fontSize: "0.78rem",
-                fontWeight: 800,
-                color: totalCrystals > 180 ? "#e05a5a" : theme.accentText,
-              }}
-            >
-              {totalCrystals} / 180 crystals
-            </div>
-          </div>
+          <BossCrystalsSummary
+            theme={theme}
+            totalMeso={totalMeso}
+            totalCrystals={totalCrystals}
+          />
 
           {/* Card grid */}
           <div

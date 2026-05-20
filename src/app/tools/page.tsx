@@ -16,6 +16,7 @@ interface ToolCard {
   icon: string;
   iconType?: "emoji" | "image";
   href: string;
+  comingSoon?: boolean;
 }
 
 const CALCULATORS: ToolCard[] = [
@@ -34,15 +35,31 @@ const CALCULATORS: ToolCard[] = [
     iconType: "image",
     href: "/tools/cubing",
   },
+  {
+    title: "Flaming Calculator",
+    description:
+      "Calculate the expected number of flames to achieve your desired bonus stats.",
+    icon: "https://media.maplestorywiki.net/yetidb/Use_Powerful_Rebirth_Flame.png",
+    iconType: "image",
+    href: "/tools/flaming",
+  },
 ];
 
-const PLANNERS: ToolCard[] = [
+const OTHER_TOOLS: ToolCard[] = [
   {
     title: "Event Planner",
     description:
       "Plan your star force spending for the next event. Estimates total meso cost and spare items needed.",
     icon: "📅",
     href: "/tools/event-planner",
+  },
+  {
+    title: "Mystic Frontier Solver",
+    description:
+      "Import your familiars and dice target to determine whether rerolls are needed.",
+    icon: "🎲",
+    href: "#",
+    comingSoon: true,
   },
 ];
 
@@ -94,7 +111,64 @@ const TRACKERS: ToolCard[] = [
     iconType: "image",
     href: "/tools/pitched-boss-drops",
   },
+  {
+    title: "Trace Restoration Calculator",
+    description:
+      "Track whisper crystal progress and trace restoration missions toward your target items.",
+    icon: "https://media.maplestorywiki.net/yetidb/Etc_Pitched_Whisper_Crystal.png",
+    iconType: "image",
+    href: "/tools/trace-restoration",
+  },
 ];
+
+function ToolCardInner({ tool, theme }: { tool: ToolCard; theme: AppTheme }) {
+  return (
+    <div
+      className={`fade-in tool-card panel-card${tool.comingSoon ? " tool-card-coming-soon" : ""}`}
+      style={{
+        background: tool.comingSoon ? `color-mix(in srgb, ${theme.panel} 50%, transparent)` : theme.panel,
+        border: `1px solid ${theme.border}`,
+        padding: "1.5rem",
+        cursor: tool.comingSoon ? "default" : "pointer",
+        opacity: tool.comingSoon ? 0.7 : 1,
+      }}
+    >
+      <div style={{ fontSize: "2rem", marginBottom: "0.75rem", height: 36, display: "flex", alignItems: "center" }}>
+        {tool.iconType === "image" ? (
+          <Image src={tool.icon} alt="" width={36} height={36} className="item-icon-img" />
+        ) : (
+          tool.icon
+        )}
+      </div>
+      <div
+        className="panel-header-title"
+        style={{ color: theme.text, fontSize: "1.1rem", marginBottom: "0.5rem" }}
+      >
+        {tool.title}
+      </div>
+      <div
+        style={{
+          fontSize: "0.82rem",
+          color: theme.muted,
+          fontWeight: 600,
+          lineHeight: 1.5,
+        }}
+      >
+        {tool.description}
+      </div>
+      <div
+        style={{
+          marginTop: "1rem",
+          fontSize: "0.78rem",
+          fontWeight: 800,
+          color: tool.comingSoon ? theme.muted : theme.accent,
+        }}
+      >
+        {tool.comingSoon ? "Coming soon" : "Open tool →"}
+      </div>
+    </div>
+  );
+}
 
 function ToolGrid({ tools, theme }: { tools: ToolCard[]; theme: AppTheme }) {
   return (
@@ -106,57 +180,17 @@ function ToolGrid({ tools, theme }: { tools: ToolCard[]; theme: AppTheme }) {
         gap: "1.25rem",
       }}
     >
-      {tools.map((tool) => (
-        <Link
-          key={tool.href}
-          href={tool.href}
-          style={{ textDecoration: "none" }}
-        >
-          <div
-            className="fade-in tool-card panel-card"
-            style={{
-              background: theme.panel,
-              border: `1px solid ${theme.border}`,
-              padding: "1.5rem",
-              cursor: "pointer",
-            }}
-          >
-            <div style={{ fontSize: "2rem", marginBottom: "0.75rem", height: 36, display: "flex", alignItems: "center" }}>
-              {tool.iconType === "image" ? (
-                <Image src={tool.icon} alt="" width={36} height={36} className="item-icon-img" />
-              ) : (
-                tool.icon
-              )}
-            </div>
-            <div
-              className="panel-header-title"
-              style={{ color: theme.text, fontSize: "1.1rem", marginBottom: "0.5rem" }}
-            >
-              {tool.title}
-            </div>
-            <div
-              style={{
-                fontSize: "0.82rem",
-                color: theme.muted,
-                fontWeight: 600,
-                lineHeight: 1.5,
-              }}
-            >
-              {tool.description}
-            </div>
-            <div
-              style={{
-                marginTop: "1rem",
-                fontSize: "0.78rem",
-                fontWeight: 800,
-                color: theme.accent,
-              }}
-            >
-              Open tool →
-            </div>
+      {tools.map((tool) =>
+        tool.comingSoon ? (
+          <div key={tool.title}>
+            <ToolCardInner tool={tool} theme={theme} />
           </div>
-        </Link>
-      ))}
+        ) : (
+          <Link key={tool.href} href={tool.href} style={{ textDecoration: "none" }}>
+            <ToolCardInner tool={tool} theme={theme} />
+          </Link>
+        ),
+      )}
     </div>
   );
 }
@@ -223,10 +257,10 @@ function ToolsContent({ theme }: { theme: AppTheme }) {
               marginBottom: "0.75rem",
             }}
           >
-            Planners
+            Other Tools
           </div>
 
-          <ToolGrid tools={PLANNERS} theme={theme} />
+          <ToolGrid tools={OTHER_TOOLS} theme={theme} />
 
           <div style={{ marginTop: "2rem" }}>
             <WikiAttribution theme={theme} subject="Item icons" />

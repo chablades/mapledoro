@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useSyncExternalStore } from "react";
 import Image from "next/image";
 import type { AppTheme } from "../../../components/themes";
 import { ProgressBar } from "../../../components/ProgressBar";
@@ -21,6 +22,9 @@ import {
   formatDate,
 } from "./useLiberationState";
 import { toolStyles } from "../tool-styles";
+import AstraSection from "./AstraSection";
+
+type LiberationTab = LiberationType | "astra";
 
 const traceBadgeBase: React.CSSProperties = {
   fontSize: "0.75rem",
@@ -664,16 +668,31 @@ function LiberationResultsSection({
 // -- Main Component -----------------------------------------------------------
 
 export default function LiberationWorkspace({ theme }: { theme: AppTheme }) {
+  const mounted = useSyncExternalStore(
+    () => () => undefined,
+    () => true,
+    () => false,
+  );
+
+  const [activeTab, setActiveTab] = useState<LiberationTab>("genesis");
+  const showAstra = activeTab === "astra";
+
+  const liberation = useLiberationState();
   const {
-    mounted,
     characters, selectedCharName, handleCharChange,
     type, questIdx, currentTraces, genesisPass, startDate, selections,
     setQuestIdx, setCurrentTraces, setGenesisPass, setStartDate,
     setDifficulty, setPartySize, setCleared, resetBosses, switchType,
     bosses, quests, totalNeeded, result, tracesCompleted, progressPct,
-  } = useLiberationState();
+  } = liberation;
 
-  // Styles
+  const handleTabChange = (tab: LiberationTab) => {
+    setActiveTab(tab);
+    if (tab !== "astra" && type !== tab) {
+      switchType(tab);
+    }
+  };
+
   const styles = toolStyles(theme);
   const { inputStyle, sectionPanel } = styles;
 
@@ -709,6 +728,7 @@ export default function LiberationWorkspace({ theme }: { theme: AppTheme }) {
         @media (max-width: 860px) {
           .lib-main { padding: 1rem !important; }
           .lib-boss-grid { grid-template-columns: 1fr !important; }
+          .segmented-toggle-track { flex-wrap: wrap; }
         }
       `}</style>
 
@@ -724,8 +744,28 @@ export default function LiberationWorkspace({ theme }: { theme: AppTheme }) {
           <ToolHeader
             theme={theme}
             title="Liberation Tracker"
-            description="Choose Genesis or Destiny, set your current quest and traces, then view your estimated completion date."
+            description="Track your Genesis, Destiny, or Astra Secondary progress and view estimated completion dates."
           />
+
+          <SegmentedToggle
+            theme={theme}
+            options={["genesis", "destiny", "destiny2", "astra"] as const}
+            value={activeTab}
+            labels={{
+              genesis: "Genesis",
+              destiny: "Destiny Pt. 1",
+              destiny2: "Destiny Pt. 2",
+              astra: "Astra Secondary",
+            }}
+            sectionPanel={sectionPanel}
+            btnClassName="lib-btn"
+            onChange={handleTabChange}
+          />
+
+          {showAstra ? (
+            <AstraSection theme={theme} />
+          ) : (
+          <>
 
           <CharacterSyncPanel
             theme={theme}
@@ -734,16 +774,6 @@ export default function LiberationWorkspace({ theme }: { theme: AppTheme }) {
             onCharChange={handleCharChange}
             inputStyle={inputStyle}
             sectionPanel={sectionPanel}
-          />
-
-          <SegmentedToggle
-            theme={theme}
-            options={["genesis", "destiny"] as const}
-            value={type}
-            labels={{ genesis: "Genesis Liberation", destiny: "Destiny Liberation" }}
-            sectionPanel={sectionPanel}
-            btnClassName="lib-btn"
-            onChange={switchType}
           />
 
           <LiberationConfigSection
@@ -864,6 +894,9 @@ export default function LiberationWorkspace({ theme }: { theme: AppTheme }) {
           />
 
           <WikiAttribution theme={theme} subject="Boss images" />
+
+          </>
+          )}
         </div>
       </div>
     </>
