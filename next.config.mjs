@@ -23,6 +23,7 @@ const nextConfig = {
     optimizePackageImports: ["chart.js", "react-chartjs-2"],
   },
   images: {
+    minimumCacheTTL: 2678400,
     remotePatterns: [
       {
         protocol: "https",

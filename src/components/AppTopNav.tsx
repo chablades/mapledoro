@@ -142,6 +142,7 @@ export default function AppTopNav({
               alt="MapleDoro logo"
               width={18}
               height={18}
+              unoptimized
               style={{ display: "block", borderRadius: "4px" }}
             />
           </div>

@@ -325,7 +325,7 @@ function CrystalSection({
   return (
     <div style={panelStyle(theme)}>
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: "1rem" }}>
-        <Image src={icon} alt="" width={24} height={24} className="pixelated-img" />
+        <Image src={icon} alt="" width={24} height={24} unoptimized className="pixelated-img" />
         <span style={{ fontWeight: 700, color: theme.text, fontSize: "1rem" }}>{title}</span>
       </div>
 
@@ -521,7 +521,7 @@ function BossMissionCard({
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: "0.75rem" }}>
-        <Image src={boss.icon} alt="" width={32} height={32} className="pixelated-img" />
+        <Image src={boss.icon} alt="" width={32} height={32} unoptimized className="pixelated-img" />
         <div>
           <div style={{ fontWeight: 700, color: theme.text, fontSize: "0.85rem" }}>{boss.name}</div>
           <div style={{ fontSize: "0.75rem", color: theme.muted }}>

@@ -117,6 +117,7 @@ function SymbolCardHeader({
         alt={area.name}
         width={38}
         height={38}
+        unoptimized
         style={{
           borderRadius: "8px",
           objectFit: "contain",

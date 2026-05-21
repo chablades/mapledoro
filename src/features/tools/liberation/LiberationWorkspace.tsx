@@ -93,6 +93,7 @@ function BossCard({
           alt={boss.name}
           width={38}
           height={38}
+          unoptimized
           style={{
             borderRadius: "8px",
             objectFit: "cover",

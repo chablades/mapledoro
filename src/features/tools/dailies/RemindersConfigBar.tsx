@@ -50,7 +50,7 @@ function ReminderCheckItem({
       />
       <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
         {def.icon.startsWith("http") ? (
-          <Image src={def.icon} alt="" width={16} height={16} className="block-img" />
+          <Image src={def.icon} alt="" width={16} height={16} unoptimized className="block-img" />
         ) : (
           <span style={{ fontSize: "0.85rem" }}>{def.icon}</span>
         )}

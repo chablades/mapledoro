@@ -303,6 +303,7 @@ function CharacterCard({
             alt={char.name}
             width={48}
             height={48}
+            unoptimized
             style={{
               borderRadius: "10px",
               background: theme.timerBg,
@@ -372,6 +373,7 @@ function CharacterCard({
                 alt=""
                 width={18}
                 height={18}
+                unoptimized
                 style={{
                   borderRadius: "3px",
                   objectFit: "cover",
@@ -559,6 +561,7 @@ function AddNameDialog({
                           alt={c.characterName}
                           width={32}
                           height={32}
+                          unoptimized
                           style={{
                             borderRadius: "6px",
                             objectFit: "contain",
@@ -786,6 +789,7 @@ function BossSelectionDialog({
                       alt=""
                       width={22}
                       height={22}
+                      unoptimized
                       style={{
                         borderRadius: "4px",
                         objectFit: "cover",

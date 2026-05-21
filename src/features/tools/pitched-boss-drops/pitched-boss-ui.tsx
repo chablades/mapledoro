@@ -24,7 +24,7 @@ export function ItemIcon({ src }: { src: string }) {
         verticalAlign: "middle",
       }}
     >
-      <Image src={src} alt="" width={32} height={32} className="pixelated-img" />
+      <Image src={src} alt="" width={32} height={32} unoptimized className="pixelated-img" />
     </span>
   );
 }
