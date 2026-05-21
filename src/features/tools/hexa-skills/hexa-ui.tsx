@@ -54,6 +54,7 @@ function SkillIcon({ skill, theme, size = 32 }: { skill: HexaSkillDef; theme: Ap
         alt={skill.name}
         width={size}
         height={size}
+        unoptimized
         onError={() => {
           if (imgRef.current) imgRef.current.style.display = "none";
           if (fallbackRef.current) fallbackRef.current.style.display = "flex";

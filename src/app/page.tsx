@@ -217,6 +217,7 @@ function HeroBanner({ theme }: { theme: AppTheme }) {
           alt=""
           width={52}
           height={52}
+          unoptimized
           style={{ marginBottom: "0.5rem" }}
         />
         <h1 style={headingStyle}>MapleDoro</h1>
@@ -257,7 +258,7 @@ function TrackerIcons({ theme, char }: { theme: AppTheme; char: StoredCharacterR
           className="char-row-icon-btn"
           style={iconBtnStyle}
         >
-          <Image src={t.icon} alt="" width={25} height={25} style={{ objectFit: "contain" }} />
+          <Image src={t.icon} alt="" width={25} height={25} unoptimized style={{ objectFit: "contain" }} />
         </Link>
       ))}
     </div>
@@ -475,7 +476,7 @@ function QuickToolsGrid({ theme }: { theme: AppTheme }) {
             <div className="quick-tool-card" style={toolCardStyle}>
               <div style={toolIconWrapStyle}>
                 {tool.iconType === "image" ? (
-                  <Image src={tool.icon} alt="" width={32} height={32} style={{ objectFit: "contain" }} />
+                  <Image src={tool.icon} alt="" width={32} height={32} unoptimized style={{ objectFit: "contain" }} />
                 ) : (
                   <span style={{ fontSize: "1.5rem", lineHeight: 1 }}>{tool.icon}</span>
                 )}

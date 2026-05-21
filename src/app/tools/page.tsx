@@ -135,7 +135,7 @@ function ToolCardInner({ tool, theme }: { tool: ToolCard; theme: AppTheme }) {
     >
       <div style={{ fontSize: "2rem", marginBottom: "0.75rem", height: 36, display: "flex", alignItems: "center" }}>
         {tool.iconType === "image" ? (
-          <Image src={tool.icon} alt="" width={36} height={36} className="item-icon-img" />
+          <Image src={tool.icon} alt="" width={36} height={36} unoptimized className="item-icon-img" />
         ) : (
           tool.icon
         )}
