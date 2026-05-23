@@ -92,16 +92,16 @@ export const ACCENT_THEMES: Record<string, AccentTheme> = {
   ludibrium: {
     name: "Ludibrium",
     emoji: "🧸",
-    accent: "#F6D808",
-    light: { accentSoft: "#fef9e0", accentText: "#b8a006" },
-    dark: { accentSoft: "#282200", accentText: "#f0d830" },
+    accent: "#C4AC06",
+    light: { accentSoft: "#fdf6e0", accentText: "#8a7800" },
+    dark: { accentSoft: "#241e00", accentText: "#f0d830" },
   },
   juno: {
     name: "Juno",
     emoji: "🌿",
-    accent: "#DDEE00",
-    light: { accentSoft: "#fafde0", accentText: "#a0aa00" },
-    dark: { accentSoft: "#222800", accentText: "#e8f030" },
+    accent: "#8FA500",
+    light: { accentSoft: "#f4f7e0", accentText: "#6e7a00" },
+    dark: { accentSoft: "#1c2200", accentText: "#e8f030" },
   },
   sleepywood: {
     name: "Sleepywood",
@@ -122,7 +122,7 @@ export const ACCENT_THEMES: Record<string, AccentTheme> = {
     emoji: "🌊",
     accent: "#2530A0",
     light: { accentSoft: "#e8e9f4", accentText: "#1c2480" },
-    dark: { accentSoft: "#0a0c28", accentText: "#5860d0" },
+    dark: { accentSoft: "#0a0c28", accentText: "#8088e8" },
   },
   cha: {
     name: "Cha",
@@ -141,9 +141,9 @@ export const ACCENT_THEMES: Record<string, AccentTheme> = {
   elluel: {
     name: "Elluel",
     emoji: "🌸",
-    accent: "#E9A6BB",
-    light: { accentSoft: "#fdf2f6", accentText: "#c47a98" },
-    dark: { accentSoft: "#2a1420", accentText: "#f0b8d0" },
+    accent: "#c97090",
+    light: { accentSoft: "#f8ecf0", accentText: "#a85a78" },
+    dark: { accentSoft: "#281020", accentText: "#f0b8d0" },
   },
   yuki: {
     name: "Yuki",

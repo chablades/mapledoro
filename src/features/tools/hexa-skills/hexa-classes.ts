@@ -812,6 +812,8 @@ const SIA: HexaClassDef = {
 
 export const COMMON_SKILLS: HexaSkillDef[] = [
   s("Sol Janus"),
+  // TODO: replace with wiki icon once available
+  { name: "Sol Hecate", icon: "https://orangemushroom.net/wp-content/uploads/2026/01/sol-hecate-1.png" },
 ];
 
 // ── Exported class list ──────────────────────────────────────────────────────

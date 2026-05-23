@@ -8,7 +8,6 @@ export interface ReminderDef {
   id: ReminderId;
   icon: string;
   title: string;
-  description: string;
 }
 
 export const REMINDER_DEFS: ReminderDef[] = [
@@ -16,34 +15,35 @@ export const REMINDER_DEFS: ReminderDef[] = [
     id: "ursus",
     icon: "🐻",
     title: "Ursus",
-    description: "Complete the 3 daily Ursus runs",
   },
   {
     id: "autoHarvest",
     icon: "🌿",
     title: "Auto-Harvest",
-    description: "Claim and start Auto Harvest.",
   },
   {
     id: "solErda",
     icon: "https://media.maplestorywiki.net/yetidb/Etc_Sol_Erda_Fragment_%28Full_Size%29.png",
     title: "Sol Erda Booster",
-    description: "Claim daily Sol Erda Booster rewards.",
   },
 ];
 
 interface RemindersState {
-  enabled: Record<ReminderId, boolean>;
-  dismissed: Partial<Record<ReminderId, string>>;
+  completed: Partial<Record<ReminderId, string>>;
 }
 
 const REMINDERS_STORAGE_KEY = "mapledoro_reminders_v1";
 
+function utcDateStr(): string {
+  const d = new Date();
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(d.getUTCDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
 function defaultRemindersState(): RemindersState {
-  return {
-    enabled: { ursus: false, autoHarvest: false, solErda: false },
-    dismissed: {},
-  };
+  return { completed: {} };
 }
 
 function loadRemindersState(): RemindersState {
@@ -52,10 +52,7 @@ function loadRemindersState(): RemindersState {
     const raw = localStorage.getItem(REMINDERS_STORAGE_KEY);
     if (!raw) return defaultRemindersState();
     const parsed = JSON.parse(raw) as Partial<RemindersState>;
-    return {
-      enabled: { ...defaultRemindersState().enabled, ...parsed.enabled },
-      dismissed: parsed.dismissed ?? {},
-    };
+    return { completed: parsed.completed ?? {} };
   } catch {
     return defaultRemindersState();
   }
@@ -75,42 +72,29 @@ export function useRemindersState() {
     () => true,
     () => false,
   );
-  const [state, setState] = useState<RemindersState>(() => {
-    if (typeof window === "undefined") return defaultRemindersState();
-    return loadRemindersState();
-  });
+  const [state, setState] = useState<RemindersState>(loadRemindersState);
 
-  const update = useCallback((updater: (prev: RemindersState) => RemindersState) => {
+  const today = utcDateStr();
+
+  const isCompleted = useCallback(
+    (id: ReminderId) => state.completed[id] === today,
+    [state.completed, today],
+  );
+
+  const toggleCompleted = useCallback((id: ReminderId) => {
     setState((prev) => {
-      const next = updater(prev);
+      const current = prev.completed[id] === utcDateStr();
+      const completed = { ...prev.completed };
+      if (current) {
+        delete completed[id];
+      } else {
+        completed[id] = utcDateStr();
+      }
+      const next = { ...prev, completed };
       saveRemindersState(next);
       return next;
     });
   }, []);
 
-  const toggleEnabled = useCallback((id: ReminderId) => {
-    update((prev) => ({
-      ...prev,
-      enabled: { ...prev.enabled, [id]: !prev.enabled[id] },
-    }));
-  }, [update]);
-
-  const markDone = useCallback((id: ReminderId, today: string) => {
-    update((prev) => ({
-      ...prev,
-      dismissed: { ...prev.dismissed, [id]: today },
-    }));
-  }, [update]);
-
-  const clearAll = useCallback((today: string) => {
-    update((prev) => {
-      const dismissed: Partial<Record<ReminderId, string>> = { ...prev.dismissed };
-      for (const def of REMINDER_DEFS) {
-        if (prev.enabled[def.id]) dismissed[def.id] = today;
-      }
-      return { ...prev, dismissed };
-    });
-  }, [update]);
-
-  return { mounted, state, toggleEnabled, markDone, clearAll };
+  return { mounted, isCompleted, toggleCompleted };
 }

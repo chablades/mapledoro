@@ -6,148 +6,66 @@ import {
   REMINDER_DEFS,
   useRemindersState,
   type ReminderDef,
-  type ReminderId,
 } from "../../../lib/reminders";
 
-function toggleSwitchStyle(
+function reminderItemStyle(
   theme: AppTheme,
-  on: boolean,
-): React.CSSProperties {
-  return {
-    width: 40,
-    height: 22,
-    borderRadius: 999,
-    border: `1px solid ${on ? theme.accent : theme.border}`,
-    background: on ? theme.accent : theme.timerBg,
-    position: "relative",
-    cursor: "pointer",
-    padding: 0,
-    flexShrink: 0,
-    transition: "background 0.15s, border-color 0.15s",
-  };
-}
-
-function toggleKnobStyle(on: boolean): React.CSSProperties {
-  return {
-    position: "absolute",
-    top: 2,
-    left: on ? 20 : 2,
-    width: 16,
-    height: 16,
-    borderRadius: "50%",
-    background: "#fff",
-    boxShadow: "0 1px 2px rgba(0,0,0,0.2)",
-    transition: "left 0.15s",
-  };
-}
-
-function reminderRowStyle(
-  theme: AppTheme,
-  enabled: boolean,
+  done: boolean,
 ): React.CSSProperties {
   return {
     display: "flex",
     alignItems: "center",
-    gap: "0.75rem",
-    padding: "0.6rem 0.8rem",
-    borderRadius: 10,
-    background: enabled ? theme.accentSoft : theme.timerBg,
-    border: `1px solid ${enabled ? theme.accent : theme.border}`,
-    flex: "1 1 240px",
-    minWidth: 240,
+    gap: "0.5rem",
+    padding: "5px 8px",
+    borderRadius: "8px",
+    cursor: "pointer",
+    background: done ? theme.accentSoft : theme.timerBg,
+    border: `1px solid ${done ? theme.accent : theme.border}`,
+    fontSize: "0.78rem",
+    fontWeight: 700,
+    color: done ? theme.accentText : theme.text,
+    userSelect: "none",
+    transition: "background 0.15s, border-color 0.15s",
   };
 }
 
-const reminderIconStyle: React.CSSProperties = {
-  fontSize: "1.2rem",
-  flexShrink: 0,
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  width: 24,
-  height: 24,
-};
-
-function reminderDescStyle(theme: AppTheme): React.CSSProperties {
-  return {
-    fontSize: "0.7rem",
-    color: theme.muted,
-    fontWeight: 600,
-    marginTop: 1,
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-    whiteSpace: "nowrap",
-  };
-}
-
-function ToggleSwitch({
-  theme,
-  on,
-  onChange,
-  label,
-}: {
-  theme: AppTheme;
-  on: boolean;
-  onChange: () => void;
-  label: string;
-}) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={on}
-      aria-label={label}
-      onClick={onChange}
-      style={toggleSwitchStyle(theme, on)}
-    >
-      <span style={toggleKnobStyle(on)} />
-    </button>
-  );
-}
-
-function ReminderToggleRow({
+function ReminderCheckItem({
   theme,
   def,
-  enabled,
+  done,
   onToggle,
 }: {
   theme: AppTheme;
   def: ReminderDef;
-  enabled: boolean;
+  done: boolean;
   onToggle: () => void;
 }) {
   return (
-    <div style={reminderRowStyle(theme, enabled)}>
-      <span style={reminderIconStyle}>
+    <label style={reminderItemStyle(theme, done)}>
+      <input
+        type="checkbox"
+        checked={done}
+        onChange={onToggle}
+        style={{ accentColor: theme.accent, cursor: "pointer" }}
+      />
+      <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
         {def.icon.startsWith("http") ? (
-          <Image src={def.icon} alt="" width={20} height={20} className="block-img" />
+          <Image src={def.icon} alt="" width={16} height={16} unoptimized className="block-img" />
         ) : (
-          def.icon
+          <span style={{ fontSize: "0.85rem" }}>{def.icon}</span>
         )}
-      </span>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div
-          style={{
-            fontSize: "0.82rem",
-            fontWeight: 800,
-            color: theme.text,
-          }}
-        >
+        <span style={{ textDecoration: done ? "line-through" : "none" }}>
           {def.title}
-        </div>
-        <div style={reminderDescStyle(theme)}>
-          {def.description}
-        </div>
-      </div>
-      <ToggleSwitch theme={theme} on={enabled} onChange={onToggle} label={def.title} />
-    </div>
+        </span>
+      </span>
+    </label>
   );
 }
 
 export default function RemindersConfigBar({ theme }: { theme: AppTheme }) {
-  const { mounted, state, toggleEnabled } = useRemindersState();
+  const { mounted, isCompleted, toggleCompleted } = useRemindersState();
 
-  const enabledFor = (id: ReminderId) => (mounted ? state.enabled[id] : false);
+  if (!mounted) return null;
 
   return (
     <div
@@ -163,45 +81,30 @@ export default function RemindersConfigBar({ theme }: { theme: AppTheme }) {
       <div
         style={{
           display: "flex",
-          alignItems: "center",
+          flexWrap: "wrap",
           gap: "0.5rem",
-          marginBottom: "0.6rem",
+          alignItems: "center",
         }}
       >
-        <span style={{ fontSize: "1rem" }}>🔔</span>
-        <span
-          style={{
-            fontSize: "0.85rem",
-            fontWeight: 800,
-            color: theme.text,
-          }}
-        >
-          Home Reminders
-        </span>
         <span
           style={{
             fontSize: "0.75rem",
+            fontWeight: 800,
+            textTransform: "uppercase",
+            letterSpacing: "0.08em",
             color: theme.muted,
-            fontWeight: 600,
+            marginRight: "0.25rem",
           }}
         >
-          Toggle what appears on the home page each day.
+          Account-wide Dailies
         </span>
-      </div>
-      <div
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: "0.6rem",
-        }}
-      >
         {REMINDER_DEFS.map((def) => (
-          <ReminderToggleRow
+          <ReminderCheckItem
             key={def.id}
             theme={theme}
             def={def}
-            enabled={enabledFor(def.id)}
-            onToggle={() => toggleEnabled(def.id)}
+            done={isCompleted(def.id)}
+            onToggle={() => toggleCompleted(def.id)}
           />
         ))}
       </div>

@@ -55,7 +55,7 @@ function GuidesContent({ theme }: { theme: AppTheme }) {
         <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
           <div
             style={{
-              fontFamily: "'Fredoka One', cursive",
+              fontFamily: "var(--font-heading)",
               fontSize: "1.5rem",
               color: theme.text,
               marginBottom: "0.25rem",
@@ -103,7 +103,7 @@ function GuidesContent({ theme }: { theme: AppTheme }) {
                   </div>
                   <div
                     style={{
-                      fontFamily: "'Fredoka One', cursive",
+                      fontFamily: "var(--font-heading)",
                       fontSize: "1.1rem",
                       color: theme.text,
                       marginBottom: "0.5rem",

@@ -1,12 +1,4 @@
 /* Global shared styles/utilities used across all pages. */
-@import url("https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&family=Fredoka+One&display=swap");
-
-:root {
-  --font-body: "Nunito", ui-rounded, system-ui, -apple-system, "Segoe UI",
-    Roboto, sans-serif;
-  --font-heading: "Fredoka One", ui-rounded, "Trebuchet MS", system-ui,
-    -apple-system, sans-serif;
-}
 
 html,
 body {
@@ -19,6 +11,31 @@ body {
 
 * {
   box-sizing: border-box;
+}
+
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.skip-link:focus {
+  position: fixed !important;
+  left: 0 !important;
+  top: 0 !important;
+  width: auto !important;
+  height: auto !important;
+  overflow: visible !important;
+  z-index: 30;
+  padding: 0.75rem 1.5rem;
+  font-weight: 700;
+  font-size: 0.875rem;
+  border-radius: 0 0 8px;
+  text-decoration: none;
+  color: #fff;
 }
 
 html.scroll-locked,
@@ -44,7 +61,7 @@ html.scroll-locked body {
 
 .page-shell {
   display: flex;
-  min-height: calc(100dvh - 56px);
+  flex: 1;
   padding-top: 56px;
   width: 100%;
 }

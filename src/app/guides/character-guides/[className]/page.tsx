@@ -38,7 +38,7 @@ function collapsibleButtonStyle(theme: AppTheme): CSSProperties {
     background: "transparent",
     border: "none",
     cursor: "pointer",
-    fontFamily: "'Fredoka One', cursive",
+    fontFamily: "var(--font-heading)",
     fontSize: "0.9rem",
     color: theme.text,
   };
@@ -148,7 +148,7 @@ function ClassGuideContent({
           </Link>
           <div
             style={{
-              fontFamily: "'Fredoka One', cursive",
+              fontFamily: "var(--font-heading)",
               fontSize: "1.25rem",
               color: theme.text,
               marginTop: "1rem",
@@ -217,7 +217,7 @@ function ClassGuideContent({
             ) : (
               <div
                 style={{
-                  fontFamily: "'Fredoka One', cursive",
+                  fontFamily: "var(--font-heading)",
                   fontSize: "3rem",
                   color: theme.muted,
                 }}
@@ -230,7 +230,7 @@ function ClassGuideContent({
           <div style={{ flex: 1 }}>
             <div
               style={{
-                fontFamily: "'Fredoka One', cursive",
+                fontFamily: "var(--font-heading)",
                 fontSize: "1.5rem",
                 color: theme.text,
                 marginBottom: "0.25rem",
@@ -288,7 +288,7 @@ function ClassGuideContent({
             >
               <div
                 style={{
-                  fontFamily: "'Fredoka One', cursive",
+                  fontFamily: "var(--font-heading)",
                   fontSize: "0.9rem",
                   color: theme.text,
                   marginBottom: "0.75rem",
@@ -350,7 +350,7 @@ function ClassGuideContent({
             >
               <div
                 style={{
-                  fontFamily: "'Fredoka One', cursive",
+                  fontFamily: "var(--font-heading)",
                   fontSize: "0.9rem",
                   color: theme.text,
                   marginBottom: "0.75rem",
@@ -521,7 +521,7 @@ function HexaGuidePanel({ className, theme }: { className: string; theme: AppThe
       >
         <div
           style={{
-            fontFamily: "'Fredoka One', cursive",
+            fontFamily: "var(--font-heading)",
             fontSize: "0.9rem",
             color: theme.text,
           }}
@@ -614,7 +614,7 @@ function ResourcesPanel({ className, theme }: { className: string; theme: AppThe
     >
       <div
         style={{
-          fontFamily: "'Fredoka One', cursive",
+          fontFamily: "var(--font-heading)",
           fontSize: "0.9rem",
           color: theme.text,
           marginBottom: "0.75rem",

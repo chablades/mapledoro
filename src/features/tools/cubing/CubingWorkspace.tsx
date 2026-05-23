@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useSyncExternalStore } from "react";
+import { useState, useMemo, useReducer, useSyncExternalStore } from "react";
 import type { AppTheme } from "../../../components/themes";
 import { ToolHeader } from "../../../components/ToolHeader";
 import {
@@ -30,12 +30,10 @@ interface TierStep {
 
 interface CalcResult {
   mesoMean: number;
-  mesoMedian: number;
   meso75: number;
   meso85: number;
   meso95: number;
   cubeMean: number;
-  cubeMedian: number;
   cube75: number;
   cube85: number;
   cube95: number;
@@ -51,17 +49,82 @@ const TIER_PILL: Record<number, { bg: string; text: string }> = {
   3: { bg: "#22aa44", text: "#fff" },
 };
 
+interface FormState {
+  itemType: ItemCategory;
+  cubeType: CubeKey;
+  currentTier: number;
+  desiredTier: number;
+  itemLevel: number;
+  statType: string;
+  desiredStat: string;
+  dmt: boolean;
+}
+
+type FormAction =
+  | { type: "setItemType"; value: ItemCategory }
+  | { type: "setCubeType"; value: CubeKey }
+  | { type: "setCurrentTier"; value: number }
+  | { type: "setDesiredTier"; value: number }
+  | { type: "setItemLevel"; value: number }
+  | { type: "setStatType"; value: string }
+  | { type: "setDesiredStat"; value: string }
+  | { type: "setDmt"; value: boolean };
+
+function formReducer(s: FormState, a: FormAction): FormState {
+  switch (a.type) {
+    case "setItemType":
+      return { ...s, itemType: a.value, desiredStat: "any" };
+    case "setCubeType": {
+      const max = MAX_CUBE_TIER[a.value];
+      return {
+        ...s,
+        cubeType: a.value,
+        currentTier: s.currentTier > max ? max : s.currentTier,
+        desiredTier: s.desiredTier > max ? max : s.desiredTier,
+        desiredStat: "any",
+      };
+    }
+    case "setCurrentTier":
+      return {
+        ...s,
+        currentTier: a.value,
+        desiredTier: s.desiredTier < a.value ? a.value : s.desiredTier,
+        desiredStat: "any",
+      };
+    case "setDesiredTier":
+      return {
+        ...s,
+        desiredTier: a.value,
+        currentTier: s.currentTier > a.value ? a.value : s.currentTier,
+        desiredStat: "any",
+      };
+    case "setItemLevel":
+      return { ...s, itemLevel: a.value, desiredStat: "any" };
+    case "setStatType":
+      return { ...s, statType: a.value, desiredStat: "any" };
+    case "setDesiredStat":
+      return { ...s, desiredStat: a.value };
+    case "setDmt":
+      return { ...s, dmt: a.value };
+  }
+}
+
+const FORM_INIT: FormState = {
+  itemType: "shoes",
+  cubeType: "red",
+  currentTier: 3,
+  desiredTier: 3,
+  itemLevel: 150,
+  statType: "normal",
+  desiredStat: "any",
+  dmt: false,
+};
+
 export default function CubingWorkspace({ theme }: { theme: AppTheme }) {
   const mounted = useSyncExternalStore(() => () => undefined, () => true, () => false);
 
-  const [itemType, setItemType] = useState<ItemCategory>("shoes");
-  const [cubeType, setCubeType] = useState<CubeKey>("red");
-  const [currentTier, setCurrentTier] = useState(3);
-  const [desiredTier, setDesiredTier] = useState(3);
-  const [itemLevel, setItemLevel] = useState(150);
-  const [statType, setStatType] = useState("normal");
-  const [desiredStat, setDesiredStat] = useState("any");
-  const [dmt, setDmt] = useState(false);
+  const [form, dispatch] = useReducer(formReducer, FORM_INIT);
+  const { itemType, cubeType, currentTier, desiredTier, itemLevel, statType, desiredStat, dmt } = form;
   const [result, setResult] = useState<CalcResult | null>(null);
 
   const canPickStat = currentTier === desiredTier;
@@ -87,18 +150,6 @@ export default function CubingWorkspace({ theme }: { theme: AppTheme }) {
     return groups;
   }, [statOptions]);
 
-  function handleCurrentTierChange(val: number) {
-    setCurrentTier(val);
-    if (desiredTier < val) setDesiredTier(val);
-    setDesiredStat("any");
-  }
-
-  function handleDesiredTierChange(val: number) {
-    setDesiredTier(val);
-    if (currentTier > val) setCurrentTier(val);
-    setDesiredStat("any");
-  }
-
   function handleCalculate() {
     if (!levelValid) return;
     const isAny = desiredStat === "any";
@@ -116,23 +167,20 @@ export default function CubingWorkspace({ theme }: { theme: AppTheme }) {
     }
 
     const stats = isAny
-      ? { mean: 0, median: 0, seventy_fifth: 0, eighty_fifth: 0, ninety_fifth: 0 }
+      ? { mean: 0, seventy_fifth: 0, eighty_fifth: 0, ninety_fifth: 0 }
       : geoDistrQuantile(p);
 
     const mean = Math.round(stats.mean) + tierUp.mean;
-    const median = Math.round(stats.median) + tierUp.median;
     const s75 = Math.round(stats.seventy_fifth) + tierUp.seventy_fifth;
     const s85 = Math.round(stats.eighty_fifth) + tierUp.eighty_fifth;
     const s95 = Math.round(stats.ninety_fifth) + tierUp.ninety_fifth;
 
     setResult({
       cubeMean: mean,
-      cubeMedian: median,
       cube75: s75,
       cube85: s85,
       cube95: s95,
       mesoMean: cubingCost(cubeType, itemLevel, mean),
-      mesoMedian: cubingCost(cubeType, itemLevel, median),
       meso75: cubingCost(cubeType, itemLevel, s75),
       meso85: cubingCost(cubeType, itemLevel, s85),
       meso95: cubingCost(cubeType, itemLevel, s95),
@@ -145,6 +193,19 @@ export default function CubingWorkspace({ theme }: { theme: AppTheme }) {
   if (!mounted) return null;
 
   const styles = toolStyles(theme);
+
+  const calcBtnStyle: React.CSSProperties = {
+    padding: "10px 28px",
+    borderRadius: "10px",
+    border: `1px solid ${theme.accent}`,
+    background: theme.accent,
+    color: "#fff",
+    fontSize: "0.85rem",
+    fontWeight: 800,
+    cursor: levelValid ? "pointer" : "not-allowed",
+    opacity: levelValid ? 1 : 0.5,
+    marginLeft: "auto",
+  };
 
   const selectStyle: React.CSSProperties = {
     ...styles.selectStyle,
@@ -194,7 +255,7 @@ export default function CubingWorkspace({ theme }: { theme: AppTheme }) {
             <Field label="Item Category" style={labelStyle}>
               <select
                 value={itemType}
-                onChange={(e) => { setItemType(e.target.value as ItemCategory); setDesiredStat("any"); }}
+                onChange={(e) => dispatch({ type: "setItemType", value: e.target.value as ItemCategory })}
                 style={selectStyle}
               >
                 {ITEM_CATEGORIES.map((c) => (
@@ -203,14 +264,7 @@ export default function CubingWorkspace({ theme }: { theme: AppTheme }) {
               </select>
             </Field>
             <Field label="Cube Type" style={labelStyle}>
-              <select value={cubeType} onChange={(e) => {
-                const next = e.target.value as CubeKey;
-                const max = MAX_CUBE_TIER[next];
-                setCubeType(next);
-                if (currentTier > max) setCurrentTier(max);
-                if (desiredTier > max) setDesiredTier(max);
-                setDesiredStat("any");
-              }} style={selectStyle}>
+              <select value={cubeType} onChange={(e) => dispatch({ type: "setCubeType", value: e.target.value as CubeKey })} style={selectStyle}>
                 {CUBE_TYPES.map((c) => (
                   <option key={c.value} value={c.value}>{c.label}</option>
                 ))}
@@ -220,7 +274,7 @@ export default function CubingWorkspace({ theme }: { theme: AppTheme }) {
               <input
                 type="number"
                 value={itemLevel}
-                onChange={(e) => { setItemLevel(Number(e.target.value)); setDesiredStat("any"); }}
+                onChange={(e) => dispatch({ type: "setItemLevel", value: Number(e.target.value) })}
                 min={71}
                 style={{ ...selectStyle, appearance: "auto" as const }}
               />
@@ -234,12 +288,12 @@ export default function CubingWorkspace({ theme }: { theme: AppTheme }) {
           </div>
           <div style={{ marginBottom: "8px" }}>
             <div style={{ ...labelStyle, marginBottom: "6px" }}>Current Tier</div>
-            <TierPills theme={theme} selected={currentTier} maxTier={MAX_CUBE_TIER[cubeType]} onChange={handleCurrentTierChange} />
+            <TierPills theme={theme} selected={currentTier} maxTier={MAX_CUBE_TIER[cubeType]} onChange={(v) => dispatch({ type: "setCurrentTier", value: v })} />
           </div>
           <TierPathLabel currentTier={currentTier} desiredTier={desiredTier} muted={theme.muted} />
           <div>
             <div style={{ ...labelStyle, marginBottom: "6px" }}>Desired Tier</div>
-            <TierPills theme={theme} selected={desiredTier} maxTier={MAX_CUBE_TIER[cubeType]} onChange={handleDesiredTierChange} />
+            <TierPills theme={theme} selected={desiredTier} maxTier={MAX_CUBE_TIER[cubeType]} onChange={(v) => dispatch({ type: "setDesiredTier", value: v })} />
           </div>
         </div>
 
@@ -251,7 +305,7 @@ export default function CubingWorkspace({ theme }: { theme: AppTheme }) {
             <Field label="Stat Type" style={labelStyle}>
               <select
                 value={statType}
-                onChange={(e) => { setStatType(e.target.value); setDesiredStat("any"); }}
+                onChange={(e) => dispatch({ type: "setStatType", value: e.target.value })}
                 disabled={!canPickStat}
                 style={{ ...selectStyle, opacity: canPickStat ? 1 : 0.5 }}
               >
@@ -267,7 +321,7 @@ export default function CubingWorkspace({ theme }: { theme: AppTheme }) {
                 desiredStat={desiredStat}
                 groupedOptions={groupedOptions}
                 selectStyle={selectStyle}
-                onChangeStat={setDesiredStat}
+                onChangeStat={(v) => dispatch({ type: "setDesiredStat", value: v })}
               />
             </Field>
           </div>
@@ -276,7 +330,7 @@ export default function CubingWorkspace({ theme }: { theme: AppTheme }) {
               <input
                 type="checkbox"
                 checked={dmt}
-                onChange={(e) => setDmt(e.target.checked)}
+                onChange={(e) => dispatch({ type: "setDmt", value: e.target.checked })}
                 style={{ accentColor: theme.accent }}
               />
               Double Miracle Time
@@ -285,18 +339,7 @@ export default function CubingWorkspace({ theme }: { theme: AppTheme }) {
               onClick={handleCalculate}
               disabled={!levelValid}
               className="tool-btn"
-              style={{
-                padding: "10px 28px",
-                borderRadius: "10px",
-                border: `1px solid ${theme.accent}`,
-                background: theme.accent,
-                color: "#fff",
-                fontSize: "0.85rem",
-                fontWeight: 800,
-                cursor: levelValid ? "pointer" : "not-allowed",
-                opacity: levelValid ? 1 : 0.5,
-                marginLeft: "auto",
-              }}
+              style={calcBtnStyle}
             >
               Calculate
             </button>
@@ -318,7 +361,6 @@ export default function CubingWorkspace({ theme }: { theme: AppTheme }) {
                 heroValue={formatMesoShort(result.mesoMean)}
                 heroLabel="Average cost"
                 rows={[
-                  { label: "Median", value: result.mesoMedian },
                   { label: "75th percentile", value: result.meso75 },
                   { label: "85th percentile", value: result.meso85 },
                   { label: "95th percentile", value: result.meso95 },
@@ -331,7 +373,6 @@ export default function CubingWorkspace({ theme }: { theme: AppTheme }) {
                 heroValue={result.cubeMean.toLocaleString()}
                 heroLabel="Average cubes"
                 rows={[
-                  { label: "Median", value: result.cubeMedian },
                   { label: "75th percentile", value: result.cube75 },
                   { label: "85th percentile", value: result.cube85 },
                   { label: "95th percentile", value: result.cube95 },
@@ -358,24 +399,25 @@ function TierPills({ theme, selected, maxTier, onChange }: {
         const sel = selected === t.value;
         const disabled = t.value > maxTier;
         const tc = TIER_PILL[t.value];
+        const pillStyle: React.CSSProperties = {
+          flex: 1,
+          padding: "8px 14px",
+          borderRadius: "10px",
+          border: `2px solid ${sel ? tc.bg : theme.border}`,
+          background: sel ? tc.bg : "transparent",
+          color: sel ? tc.text : theme.muted,
+          fontSize: "0.78rem",
+          fontWeight: 800,
+          cursor: disabled ? "not-allowed" : "pointer",
+          opacity: disabled ? 0.35 : 1,
+          transition: "background 0.15s ease, border-color 0.15s ease, color 0.15s ease, opacity 0.15s ease",
+        };
         return (
           <button
             key={t.value}
             onClick={() => !disabled && onChange(t.value)}
             className="cubing-tier-pill"
-            style={{
-              flex: 1,
-              padding: "8px 14px",
-              borderRadius: "10px",
-              border: `2px solid ${sel ? tc.bg : theme.border}`,
-              background: sel ? tc.bg : "transparent",
-              color: sel ? tc.text : theme.muted,
-              fontSize: "0.78rem",
-              fontWeight: 800,
-              cursor: disabled ? "not-allowed" : "pointer",
-              opacity: disabled ? 0.35 : 1,
-              transition: "all 0.15s ease",
-            }}
+            style={pillStyle}
           >
             {t.label}
           </button>
@@ -411,17 +453,19 @@ function ProbabilityBadge({ theme, probability }: { theme: AppTheme; probability
   const pct = probability * 100;
   const display = pct >= 0.01 ? `${pct.toFixed(2)}%` : `${pct.toExponential(2)}%`;
 
+  const containerStyle: React.CSSProperties = {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: "1rem",
+    padding: "14px 20px",
+    borderRadius: "14px",
+    background: theme.panel,
+    border: `1px solid ${theme.border}`,
+  };
+
   return (
-    <div style={{
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      marginBottom: "1rem",
-      padding: "14px 20px",
-      borderRadius: "14px",
-      background: theme.panel,
-      border: `1px solid ${theme.border}`,
-    }}>
+    <div style={containerStyle}>
       <div style={{ textAlign: "center" }}>
         <div style={{ fontSize: "0.75rem", fontWeight: 800, color: theme.muted, textTransform: "uppercase", letterSpacing: "0.04em" }}>
           Probability per cube
@@ -437,19 +481,21 @@ function ProbabilityBadge({ theme, probability }: { theme: AppTheme; probability
 }
 
 function TierUpProbabilities({ theme, steps }: { theme: AppTheme; steps: TierStep[] }) {
+  const containerStyle: React.CSSProperties = {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "24px",
+    marginBottom: "1rem",
+    padding: "14px 20px",
+    borderRadius: "14px",
+    background: theme.panel,
+    border: `1px solid ${theme.border}`,
+    flexWrap: "wrap",
+  };
+
   return (
-    <div style={{
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      gap: "24px",
-      marginBottom: "1rem",
-      padding: "14px 20px",
-      borderRadius: "14px",
-      background: theme.panel,
-      border: `1px solid ${theme.border}`,
-      flexWrap: "wrap",
-    }}>
+    <div style={containerStyle}>
       {steps.map((step) => {
         const pct = step.probability * 100;
         const display = pct >= 0.01 ? `${pct.toFixed(2)}%` : `${pct.toExponential(2)}%`;
@@ -485,6 +531,18 @@ function ResultCard({
   rows: { label: string; value: number }[];
   format: (n: number) => string;
 }) {
+  const rowStyle: React.CSSProperties = {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    fontSize: "0.75rem",
+    fontWeight: 700,
+    color: theme.muted,
+    background: theme.timerBg,
+    borderRadius: "8px",
+    padding: "6px 10px",
+  };
+
   return (
     <div
       className="panel-card"
@@ -508,17 +566,7 @@ function ResultCard({
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
         {rows.map((row) => (
-          <div key={row.label} style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            fontSize: "0.75rem",
-            fontWeight: 700,
-            color: theme.muted,
-            background: theme.timerBg,
-            borderRadius: "8px",
-            padding: "6px 10px",
-          }}>
+          <div key={row.label} style={rowStyle}>
             <span>{row.label}</span>
             <span style={{ color: theme.accent, fontWeight: 800 }}>{format(row.value)}</span>
           </div>

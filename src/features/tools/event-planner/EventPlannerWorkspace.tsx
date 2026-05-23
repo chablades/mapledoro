@@ -50,6 +50,7 @@ function ItemIcon({
         alt={item.name}
         width={size}
         height={size}
+        unoptimized
         onError={() => {
           if (imgRef.current) imgRef.current.style.display = "none";
           if (fallbackRef.current) fallbackRef.current.style.display = "flex";

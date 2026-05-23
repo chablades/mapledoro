@@ -1,9 +1,24 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
+import { Nunito, Fredoka } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "../components/ThemeContext";
 import { ACCENT_THEMES, type ColorMode } from "../components/themes";
 import CookieConsentBanner from "../components/CookieConsentBanner";
+
+const nunito = Nunito({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  variable: "--font-body",
+  display: "swap",
+});
+
+const fredoka = Fredoka({
+  subsets: ["latin"],
+  weight: "700",
+  variable: "--font-heading",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "MapleDoro",
@@ -33,7 +48,7 @@ export default async function RootLayout({
     cookieColorMode === "light" || cookieColorMode === "dark" ? cookieColorMode : "light";
 
   return (
-    <html lang="en">
+    <html lang="en" className={`${nunito.variable} ${fredoka.variable}`}>
       <body>
         <ThemeProvider initialThemeKey={initialThemeKey} initialColorMode={initialColorMode}>
           {children}

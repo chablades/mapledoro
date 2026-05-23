@@ -11,6 +11,31 @@ interface ChangelogEntry {
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    date: "2026-05-17",
+    changes: [
+      { type: "added", text: "Added the Trace Restoration Calculator for estimating trace costs across different success rates." },
+      { type: "added", text: "Added the Flame Calculator for estimating expected flame score outcomes." },
+      { type: "changed", text: "Revamped the homepage layout with a cleaner design." },
+      { type: "changed", text: "Moved account-wide reminders from the homepage into the Daily Tracker." },
+    ],
+  },
+  {
+    date: "2026-05-14",
+    changes: [
+      { type: "added", text: "Added Sol Hecate, Astra Secondary, and Destiny Liberation 2 to the Liberation Tracker." },
+      { type: "changed", text: "Analytics now requires explicit user consent before activating." },
+    ],
+  },
+  {
+    date: "2026-05-13",
+    changes: [
+      { type: "fixed", text: "Fixed Daily Tracker layout on small screens — now displays a single column on mobile." },
+      { type: "fixed", text: "Fixed the light/dark mode toggle overflowing on small screen sizes." },
+      { type: "fixed", text: "Fixed completion timeline collapsing on mobile views." },
+      { type: "fixed", text: "Fixed mobile padding not applying correctly to some tool pages." },
+    ],
+  },
+  {
     date: "2026-05-10",
     changes: [
       { type: "added", text: "Expanded character guide pages with community resources, skill icons, class infographics, and HEXA guide images where available." },
