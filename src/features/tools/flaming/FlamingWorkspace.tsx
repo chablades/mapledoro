@@ -29,6 +29,12 @@ import {
   type FlameResults,
 } from "./flaming-data";
 
+function formatPctFull(pct: number): string {
+  if (pct >= 0.01) return `${pct.toFixed(4)}%`;
+  const s = pct.toPrecision(4);
+  return `${parseFloat(s)}%`;
+}
+
 // -- State --------------------------------------------------------------------
 
 interface CalcState {
@@ -695,7 +701,7 @@ export default function FlamingWorkspace({ theme }: { theme: AppTheme }) {
                 </div>
                 <div style={{ marginTop: "4px" }}>
                   <span style={{ fontSize: "1.15rem", fontWeight: 800, color: theme.accent }}>
-                    {(results.probability * 100).toFixed(4)}%
+                    {formatPctFull(results.probability * 100)}
                   </span>
                 </div>
               </div>
