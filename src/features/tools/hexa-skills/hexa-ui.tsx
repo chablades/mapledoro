@@ -6,12 +6,7 @@ import type { AppTheme } from "../../../components/themes";
 import { replaceZeroOnDigit } from "../numberInputHandlers";
 import type { HexaSkillDef, HexaClassDef } from "./hexa-classes";
 import type { SkillCostSummary, SectionCost } from "./useHexaSkillsState";
-
-// ── Helpers ──────────────────────────────────────────────────────────────────
-
-export function fmtNum(n: number): string {
-  return n.toLocaleString();
-}
+import { fmtNum } from "./hexa-format";
 
 // ── Skill Icon ───────────────────────────────────────────────────────────────
 

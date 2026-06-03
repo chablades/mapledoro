@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, use, ReactNode } from "react";
+import { createContext, use, useMemo, ReactNode } from "react";
 import { ACCENT_THEMES, composeTheme, type AppTheme, type ColorMode } from "./themes";
 import { usePersistedThemeKey } from "./usePersistedThemeKey";
 import { usePersistedColorMode } from "./usePersistedColorMode";
@@ -37,11 +37,12 @@ export function ThemeProvider({
 
   const theme = composeTheme(themeKey, colorMode);
 
-  return (
-    <ThemeContext.Provider value={{ themeKey, theme, setThemeKey, colorMode, setColorMode }}>
-      {children}
-    </ThemeContext.Provider>
+  const value = useMemo(
+    () => ({ themeKey, theme, setThemeKey, colorMode, setColorMode }),
+    [themeKey, theme, setThemeKey, colorMode, setColorMode],
   );
+
+  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
 
 export function useTheme() {

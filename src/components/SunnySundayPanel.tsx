@@ -26,6 +26,17 @@ async function fetchSunnySundays(signal: AbortSignal): Promise<SunnySundayWeek[]
 }
 import { useClock } from "@/lib/useClock";
 
+const activeBadgeStyle: CSSProperties = {
+  marginLeft: "auto",
+  fontSize: "0.75rem",
+  fontWeight: 800,
+  color: "#fff",
+  background: "#10b981",
+  padding: "2px 8px",
+  borderRadius: "6px",
+  letterSpacing: "0.05em",
+};
+
 interface SunnySundayPanelProps {
   theme: AppTheme;
 }
@@ -126,9 +137,9 @@ function OtherWeeksAccordion({
 
       {showOther && (
         <div style={{ marginTop: "0.5rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-          {weeks.map((week, wi) => (
+          {weeks.map((week) => (
             <div
-              key={wi}
+              key={week.date}
               style={{
                 borderRadius: "10px",
                 border: `1px solid ${theme.border}`,
@@ -147,9 +158,9 @@ function OtherWeeksAccordion({
                 {week.date}
               </div>
               <div style={{ padding: "0.3rem 0.75rem 0.45rem" }}>
-                {week.details.map((line, li) => (
+                {week.details.map((line) => (
                   <div
-                    key={li}
+                    key={line}
                     style={{
                       display: "flex",
                       gap: "0.5rem",
@@ -204,17 +215,6 @@ export default function SunnySundayPanel({ theme }: SunnySundayPanelProps) {
   else if (error) statusText = "Connection error";
   else if (upcoming) statusText = formatLocalDate(upcoming.dateISO);
   else statusText = "No data";
-
-  const activeBadgeStyle: CSSProperties = {
-    marginLeft: "auto",
-    fontSize: "0.75rem",
-    fontWeight: 800,
-    color: "#fff",
-    background: "#10b981",
-    padding: "2px 8px",
-    borderRadius: "6px",
-    letterSpacing: "0.05em",
-  };
 
   return (
     <div

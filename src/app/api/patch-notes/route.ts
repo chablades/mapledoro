@@ -2,6 +2,30 @@ import { NextResponse } from "next/server";
 
 export const revalidate = 86400; // Cache for 24 hours
 
+const DEFAULT_PATCH_NOTES = [
+  {
+    version: "v266",
+    date: "Feb 18",
+    title: "V.266 KNOWN ISSUES",
+    tags: ["MAINTENANCE"],
+    url: "https://www.nexon.com/maplestory/news/maintenance/36146/v-266-known-issues",
+  },
+  {
+    version: "",
+    date: "Feb 17",
+    title: "[UPDATE FEB 21] CASH SHOP UPDATE FOR FEBRUARY 18",
+    tags: ["SALE"],
+    url: "https://www.nexon.com/maplestory/news/sale/35891/update-feb-21-cash-shop-update-for-february-18",
+  },
+  {
+    version: "",
+    date: "Feb 17",
+    title: "ETHEREAL ATELIER: KEYS TO LOVE",
+    tags: ["SALE"],
+    url: "https://www.nexon.com/maplestory/news/sale/36387/ethereal-atelier-keys-to-love",
+  },
+];
+
 interface NexonNewsItem {
   id: number;
   name: string;
@@ -26,6 +50,7 @@ export async function GET() {
     // Nexon serves all news as static JSON on their CDN (the website is an SPA).
     const response = await fetch("https://g.nexonstatic.com/maplestory/cms/v1/news", {
       headers: { Accept: "application/json" },
+      next: { revalidate: 86400 },
     });
     if (!response.ok) throw new Error(`CDN returned ${response.status}`);
 
@@ -52,29 +77,6 @@ export async function GET() {
     return NextResponse.json(patchNotes);
   } catch (error) {
     console.error("Error fetching patch notes:", error);
-    const defaultPatchNotes = [
-      {
-        version: "v266",
-        date: "Feb 18",
-        title: "V.266 KNOWN ISSUES",
-        tags: ["MAINTENANCE"],
-        url: "https://www.nexon.com/maplestory/news/maintenance/36146/v-266-known-issues",
-      },
-      {
-        version: "",
-        date: "Feb 17",
-        title: "[UPDATE FEB 21] CASH SHOP UPDATE FOR FEBRUARY 18",
-        tags: ["SALE"],
-        url: "https://www.nexon.com/maplestory/news/sale/35891/update-feb-21-cash-shop-update-for-february-18",
-      },
-      {
-        version: "",
-        date: "Feb 17",
-        title: "ETHEREAL ATELIER: KEYS TO LOVE",
-        tags: ["SALE"],
-        url: "https://www.nexon.com/maplestory/news/sale/36387/ethereal-atelier-keys-to-love",
-      },
-    ];
-    return NextResponse.json(defaultPatchNotes);
+    return NextResponse.json(DEFAULT_PATCH_NOTES);
   }
 }

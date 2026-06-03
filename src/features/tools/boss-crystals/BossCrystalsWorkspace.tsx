@@ -1181,7 +1181,7 @@ export default function BossCrystalsWorkspace({ theme }: { theme: AppTheme }) {
           >
             {characters.map((char, ci) => (
               <CharacterCard
-                key={ci}
+                key={char.name}
                 theme={theme}
                 char={char}
                 income={charIncomes[ci]}

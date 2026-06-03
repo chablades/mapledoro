@@ -84,6 +84,7 @@ function ClassRandomizer({ theme }: { theme: AppTheme }) {
   return (
     <div className="guide-randomizer">
       <button
+        type="button"
         onClick={roll}
         className="guide-primary-btn"
         style={{

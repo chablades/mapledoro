@@ -1,25 +1,11 @@
 import type { AppTheme } from "./themes";
-
-export interface AttributionSource {
-  label: string;
-  href: string;
-  license?: { label: string; href: string };
-}
+import { type AttributionSource, WIKI_ATTRIBUTION_SOURCE } from "./wikiAttribution.data";
 
 interface WikiAttributionProps {
   theme: AppTheme;
   subject?: string;
   sources?: AttributionSource[];
 }
-
-export const WIKI_ATTRIBUTION_SOURCE: AttributionSource = {
-  label: "MapleStory Wiki",
-  href: "https://maplestorywiki.net",
-  license: {
-    label: "CC BY-NC-SA 4.0",
-    href: "https://creativecommons.org/licenses/by-nc-sa/4.0/",
-  },
-};
 
 export function WikiAttribution({ theme, subject, sources }: WikiAttributionProps) {
   const linkStyle = { color: theme.accent, textDecoration: "none" as const };
