@@ -14,7 +14,8 @@ import {
   formatMeso,
   formatMesoFull,
 } from "../star-force/star-force-data";
-import { Toggle, PillGroup, MVP_OPTIONS } from "../shared-ui";
+import { Toggle, PillGroup } from "../shared-ui";
+import { MVP_OPTIONS } from "../shared-data";
 import type { MvpTier } from "../star-force/star-force-data";
 import { toolStyles } from "../tool-styles";
 import {

@@ -16,7 +16,8 @@ import {
   type SkillCostSummary,
 } from "./useHexaSkillsState";
 import { COMMON_COSTS, getCostRange } from "./hexa-costs";
-import { fmtNum, SkillSection, MasterySection } from "./hexa-ui";
+import { SkillSection, MasterySection } from "./hexa-ui";
+import { fmtNum } from "./hexa-format";
 import { toolStyles } from "../tool-styles";
 
 const checkboxLabelStyle: React.CSSProperties = {

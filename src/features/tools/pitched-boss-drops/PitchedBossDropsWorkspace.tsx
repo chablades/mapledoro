@@ -4,7 +4,8 @@ import { useState, useReducer, useSyncExternalStore } from "react";
 import type { CSSProperties } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { panelStyle, ItemIcon } from "./pitched-boss-ui";
+import { ItemIcon } from "./pitched-boss-ui";
+import { panelStyle } from "./pitched-boss-styles";
 import type { AppTheme } from "../../../components/themes";
 import { ToolHeader } from "../../../components/ToolHeader";
 import {

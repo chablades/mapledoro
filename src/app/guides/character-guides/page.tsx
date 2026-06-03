@@ -212,6 +212,7 @@ function CharacterGuidesContent({ theme }: { theme: AppTheme }) {
             <input
               type="text"
               placeholder="Search classes..."
+              aria-label="Search classes"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               style={searchInputStyle(theme)}

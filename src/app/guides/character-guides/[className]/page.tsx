@@ -8,7 +8,8 @@ import type { AppTheme } from "../../../../components/themes";
 import { findClassBySlug, highlightNumbers } from "../classData";
 import { CLASS_RESOURCES } from "../classResources";
 import type { ClassResource } from "../classResources";
-import { WikiAttribution, WIKI_ATTRIBUTION_SOURCE } from "../../../../components/WikiAttribution";
+import { WikiAttribution } from "../../../../components/WikiAttribution";
+import { WIKI_ATTRIBUTION_SOURCE } from "../../../../components/wikiAttribution.data";
 import { HEXA_IMAGES } from "../hexaData";
 
 /* ── Extracted styles ─────────────────────────────────────── */
@@ -425,6 +426,7 @@ function InfographicPanel({ className, theme }: { className: string; theme: AppT
       }}
     >
       <button
+        type="button"
         onClick={() => setOpen((v) => !v)}
         style={collapsibleButtonStyle(theme)}
       >
@@ -537,12 +539,14 @@ function HexaGuidePanel({ className, theme }: { className: string; theme: AppThe
           }}
         >
           <button
+            type="button"
             onClick={() => setServer("heroic")}
             style={serverToggleStyle(theme, server === "heroic")}
           >
             Heroic
           </button>
           <button
+            type="button"
             onClick={() => setServer("interactive")}
             style={serverToggleStyle(theme, server === "interactive", true)}
           >

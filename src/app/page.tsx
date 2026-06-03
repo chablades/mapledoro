@@ -26,6 +26,37 @@ type PatchFilter = (typeof PATCH_FILTERS)[number];
 
 type PatchNote = { version: string; date: string; title: string; tags: string[]; url: string };
 
+const activeBadgeStyle: CSSProperties = {
+  marginLeft: "auto",
+  fontSize: "0.65rem",
+  fontWeight: 800,
+  color: "#fff",
+  background: "#10b981",
+  padding: "2px 8px",
+  borderRadius: "6px",
+  letterSpacing: "0.05em",
+};
+
+const toolIconWrapStyle: CSSProperties = {
+  width: 36,
+  height: 36,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  marginBottom: 2,
+};
+
+const filterBtnBase: CSSProperties = {
+  border: "none",
+  borderRadius: "8px",
+  padding: "3px 8px",
+  fontSize: "0.75rem",
+  fontWeight: 700,
+  fontFamily: "inherit",
+  cursor: "pointer",
+  transition: "background 0.15s, color 0.15s",
+};
+
 function readCachedPatchNotes(): PatchNote[] | null {
   try {
     const raw = localStorage.getItem(PATCH_CACHE_KEY);
@@ -339,17 +370,6 @@ function UrsusPanel({ theme, now }: { theme: AppTheme; now: Date | null }) {
     ? (tzFormatter.formatToParts(now).find((p) => p.type === "timeZoneName")?.value ?? "")
     : "";
 
-  const activeBadgeStyle: CSSProperties = {
-    marginLeft: "auto",
-    fontSize: "0.65rem",
-    fontWeight: 800,
-    color: "#fff",
-    background: "#10b981",
-    padding: "2px 8px",
-    borderRadius: "6px",
-    letterSpacing: "0.05em",
-  };
-
   const timerRowStyle: CSSProperties = {
     background: theme.timerBg,
     borderRadius: "14px",
@@ -447,15 +467,6 @@ function QuickToolsGrid({ theme }: { theme: AppTheme }) {
     alignItems: "center",
     gap: "0.3rem",
   };
-  const toolIconWrapStyle: CSSProperties = {
-    width: 36,
-    height: 36,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 2,
-  };
-
   return (
     <div className="fade-in" style={{ marginBottom: "1.25rem", animationDelay: "0.2s" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.75rem" }}>
@@ -742,17 +753,6 @@ function PatchNotesPanel({ theme }: { theme: AppTheme }) {
     textDecoration: "none",
     fontWeight: 800,
   };
-  const filterBtnBase: CSSProperties = {
-    border: "none",
-    borderRadius: "8px",
-    padding: "3px 8px",
-    fontSize: "0.75rem",
-    fontWeight: 700,
-    fontFamily: "inherit",
-    cursor: "pointer",
-    transition: "background 0.15s, color 0.15s",
-  };
-
   return (
     <div
       className="fade-in panel panel-card"

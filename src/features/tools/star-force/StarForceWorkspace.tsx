@@ -15,7 +15,8 @@ import {
   type StarResult,
   type SimulationResult,
 } from "./star-force-data";
-import { Toggle, PillGroup, MVP_OPTIONS } from "../shared-ui";
+import { Toggle, PillGroup } from "../shared-ui";
+import { MVP_OPTIONS } from "../shared-data";
 import { toolStyles } from "../tool-styles";
 
 // -- Helpers ------------------------------------------------------------------
