@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useReducer, useSyncExternalStore } from "react";
 import type { AppTheme } from "../../../components/themes";
+import { replaceZeroOnDigit } from "../numberInputHandlers";
 import { ToolHeader } from "../../../components/ToolHeader";
 import {
   type CubeKey,
@@ -274,6 +275,8 @@ export default function CubingWorkspace({ theme }: { theme: AppTheme }) {
               <input
                 type="number"
                 value={itemLevel}
+                onFocus={(e) => e.currentTarget.select()}
+                onKeyDown={replaceZeroOnDigit}
                 onChange={(e) => dispatch({ type: "setItemLevel", value: Number(e.target.value) })}
                 min={71}
                 style={{ ...selectStyle, appearance: "auto" as const }}

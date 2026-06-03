@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import Image from "next/image";
 import type { AppTheme } from "../../../components/themes";
+import { replaceZeroOnDigit } from "../numberInputHandlers";
 import type { HexaSkillDef, HexaClassDef } from "./hexa-classes";
 import type { SkillCostSummary, SectionCost } from "./useHexaSkillsState";
 
@@ -150,6 +151,8 @@ function LevelInput({
         min={min}
         max={30}
         value={value}
+        onFocus={(e) => e.currentTarget.select()}
+        onKeyDown={replaceZeroOnDigit}
         onChange={(e) => onChange(clampInput(e.target.value, min, 30))}
         className="tool-input"
         style={{ ...inputStyle, ...levelInputOverride, width: w }}
@@ -162,6 +165,8 @@ function LevelInput({
             min={min}
             max={30}
             value={desiredValue}
+            onFocus={(e) => e.currentTarget.select()}
+            onKeyDown={replaceZeroOnDigit}
             onChange={(e) => onDesiredChange(clampInput(e.target.value, min, 30))}
             className="tool-input"
             style={{ ...inputStyle, ...levelInputOverride, width: w }}

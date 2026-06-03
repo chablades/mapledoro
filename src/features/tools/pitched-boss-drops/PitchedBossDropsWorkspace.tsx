@@ -408,6 +408,7 @@ export default function PitchedBossDropsWorkspace({
                     min={1}
                     max={30}
                     value={form.channel}
+                    onFocus={(e) => e.currentTarget.select()}
                     onChange={(e) => dispatchForm({ type: "setChannel", value: e.target.value })}
                     placeholder="CH"
                     style={fieldStyle(theme)}
