@@ -3,7 +3,7 @@
 import { useRef } from "react";
 import Image from "next/image";
 import type { AppTheme } from "../../../components/themes";
-import { replaceZeroOnDigit } from "../numberInputHandlers";
+import { replaceZeroOnDigit, replaceOneOnDigit } from "../numberInputHandlers";
 import type { HexaSkillDef, HexaClassDef } from "./hexa-classes";
 import type { SkillCostSummary, SectionCost } from "./useHexaSkillsState";
 import { fmtNum } from "./hexa-format";
@@ -137,6 +137,8 @@ function LevelInput({
 }) {
   const hasDesired = desiredValue !== undefined && onDesiredChange !== undefined;
   const w = hasDesired ? "44px" : "52px";
+  // Origin starts at level 1, so its resting value is "1"; everything else rests at "0".
+  const replaceBaseOnDigit = min === 1 ? replaceOneOnDigit : replaceZeroOnDigit;
 
   return (
     <div style={{ display: "flex", alignItems: "center", gap: "4px", flexShrink: 0 }}>
@@ -147,7 +149,7 @@ function LevelInput({
         max={30}
         value={value}
         onFocus={(e) => e.currentTarget.select()}
-        onKeyDown={replaceZeroOnDigit}
+        onKeyDown={replaceBaseOnDigit}
         onChange={(e) => onChange(clampInput(e.target.value, min, 30))}
         className="tool-input"
         style={{ ...inputStyle, ...levelInputOverride, width: w }}
@@ -161,7 +163,7 @@ function LevelInput({
             max={30}
             value={desiredValue}
             onFocus={(e) => e.currentTarget.select()}
-            onKeyDown={replaceZeroOnDigit}
+            onKeyDown={replaceBaseOnDigit}
             onChange={(e) => onDesiredChange(clampInput(e.target.value, min, 30))}
             className="tool-input"
             style={{ ...inputStyle, ...levelInputOverride, width: w }}
