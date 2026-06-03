@@ -174,20 +174,6 @@ textarea:focus-visible {
   line-height: 1.5;
 }
 
-.item-icon-img {
-  object-fit: contain;
-  flex-shrink: 0;
-}
-
-.item-icon-fallback {
-  border-radius: 4px;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  font-weight: 800;
-  flex-shrink: 0;
-}
-
 .reminder-card {
   display: flex;
   align-items: center;
@@ -334,10 +320,6 @@ textarea:focus-visible {
 
 .pixelated-img {
   image-rendering: pixelated;
-}
-
-.block-img {
-  display: block;
 }
 
 .settings-row-panel {

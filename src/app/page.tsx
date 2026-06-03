@@ -4,6 +4,7 @@ import { useState, useSyncExternalStore, type CSSProperties } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import AppShell from "../components/AppShell";
+import { ItemIcon } from "../components/ResourceImage";
 import SunnySundayPanel from "../components/SunnySundayPanel";
 import type { AppTheme } from "../components/themes";
 import { useClock } from "../lib/useClock";
@@ -103,13 +104,11 @@ const QUICK_GUIDES: QuickGuide[] = [
 ];
 
 // -- Quick Tools data ----------------------------------------------------------
-interface QuickTool {
+type QuickTool = {
   title: string;
   desc: string;
-  icon: string;
-  iconType: "emoji" | "image";
   href: string;
-}
+} & ({ iconType: "emoji"; icon: string } | { iconType: "item"; itemId: string });
 
 const QUICK_TOOLS: QuickTool[] = [
   {
@@ -122,36 +121,36 @@ const QUICK_TOOLS: QuickTool[] = [
   {
     title: "Cubing",
     desc: "Potential rolling odds",
-    icon: "https://media.maplestorywiki.net/yetidb/Cash_Glowing_Cube.png",
-    iconType: "image",
+    itemId: "05062028", // Glowing Cube
+    iconType: "item",
     href: "/tools/cubing",
   },
   {
     title: "Flaming",
     desc: "Bonus stat calculator",
-    icon: "https://media.maplestorywiki.net/yetidb/Use_Powerful_Rebirth_Flame.png",
-    iconType: "image",
+    itemId: "02048752", // Powerful Rebirth Flame
+    iconType: "item",
     href: "/tools/flaming",
   },
   {
     title: "HEXA Skills",
     desc: "Sol Erda planning",
-    icon: "https://media.maplestorywiki.net/yetidb/Etc_Sol_Erda_Fragment_%28Full_Size%29.png",
-    iconType: "image",
+    itemId: "04009613", // Sol Erda Fragment
+    iconType: "item",
     href: "/tools/hexa-skills",
   },
   {
     title: "Liberation",
     desc: "Liberation planning",
-    icon: "https://media.maplestorywiki.net/yetidb/Eqp_Genesis_Dagger.png",
-    iconType: "image",
+    itemId: "01332289", // Genesis Dagger
+    iconType: "item",
     href: "/tools/liberation",
   },
 ];
 
 // -- Character tracker quick-launch icons --------------------------------------
 interface TrackerLink {
-  icon: string;
+  itemId: string;
   label: string;
   href: (characterName: string) => string;
 }
@@ -159,17 +158,17 @@ interface TrackerLink {
 const TRACKER_LINKS: TrackerLink[] = [
   {
     label: "Liberation Tracker",
-    icon: "https://media.maplestorywiki.net/yetidb/Eqp_Genesis_Dagger.png",
+    itemId: "01332289", // Genesis Dagger
     href: (c) => `/tools/liberation?character=${encodeURIComponent(c)}`,
   },
   {
     label: "Symbol Tracker",
-    icon: "https://media.maplestorywiki.net/yetidb/Eqp_Sacred_Symbol_Cernium.png",
+    itemId: "01713000", // Sacred Symbol: Cernium
     href: (c) => `/tools/symbols?character=${encodeURIComponent(c)}`,
   },
   {
     label: "HEXA Skills",
-    icon: "https://media.maplestorywiki.net/yetidb/Etc_Sol_Erda_Fragment_%28Full_Size%29.png",
+    itemId: "04009613", // Sol Erda Fragment
     href: (c) => `/tools/hexa-skills?character=${encodeURIComponent(c)}`,
   },
 ];
@@ -258,7 +257,7 @@ function TrackerIcons({ theme, char }: { theme: AppTheme; char: StoredCharacterR
           className="char-row-icon-btn"
           style={iconBtnStyle}
         >
-          <Image src={t.icon} alt="" width={25} height={25} unoptimized style={{ objectFit: "contain" }} />
+          <ItemIcon id={t.itemId} size={25} />
         </Link>
       ))}
     </div>
@@ -475,8 +474,8 @@ function QuickToolsGrid({ theme }: { theme: AppTheme }) {
           <Link key={tool.href} href={tool.href} style={{ textDecoration: "none" }}>
             <div className="quick-tool-card" style={toolCardStyle}>
               <div style={toolIconWrapStyle}>
-                {tool.iconType === "image" ? (
-                  <Image src={tool.icon} alt="" width={32} height={32} unoptimized style={{ objectFit: "contain" }} />
+                {tool.iconType === "item" ? (
+                  <ItemIcon id={tool.itemId} size={32} />
                 ) : (
                   <span style={{ fontSize: "1.5rem", lineHeight: 1 }}>{tool.icon}</span>
                 )}

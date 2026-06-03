@@ -46,8 +46,8 @@ export const DAWN_WHISPER_BOSSES: WhisperBoss[] = [
 
 export const DAWN_TARGET_COST = 65;
 
-export const PITCHED_CRYSTAL_ICON = `${CDN}/Etc_Pitched_Whisper_Crystal.png`;
-export const DAWN_CRYSTAL_ICON = `${CDN}/Etc_Dawn_Whisper_Crystal.png`;
+export const PITCHED_CRYSTAL_ITEM_ID = "04001956"; // Pitched Whisper Crystal
+export const DAWN_CRYSTAL_ITEM_ID = "04001955"; // Dawn Whisper Crystal
 
 /* ------------------------------------------------------------------ */
 /*  Trace Restoration — Missions & Points                             */
@@ -57,26 +57,25 @@ interface TraceItem {
   id: string;
   name: string;
   points: number;
-  icon: string;
 }
 
 export const TRACE_ITEMS: TraceItem[] = [
-  { id: "kannas-treasure", name: "Kanna's Treasure", points: 392, icon: `${CDN}/Eqp_Kanna%27s_Treasure.png` },
-  { id: "black-bean-mark", name: "Black Bean Mark", points: 400, icon: `${CDN}/Eqp_Black_Bean_Mark.png` },
-  { id: "dominator-pendant", name: "Dominator Pendant", points: 431, icon: `${CDN}/Eqp_Dominator_Pendant.png` },
-  { id: "papulatus-mark", name: "Papulatus Mark", points: 462, icon: `${CDN}/Eqp_Papulatus_Mark.png` },
-  { id: "ra-armor", name: "Root Abyss Armor", points: 495, icon: `${CDN}/Eqp_Eagle_Eye_Warrior_Armor.png` },
-  { id: "sweetwater", name: "Sweetwater Equipment", points: 512, icon: `${CDN}/Eqp_Sweetwater_Monocle.png` },
-  { id: "solid-gollux", name: "Solid Gollux Accessories", points: 523, icon: `${CDN}/Eqp_Solid_Engraved_Gollux_Pendant.png` },
-  { id: "absolab", name: "AbsoLab Armor", points: 588, icon: `${CDN}/Use_AbsoLab_Armor_Box.png` },
-  { id: "reinforced-gollux", name: "Reinforced Gollux Accessories", points: 607, icon: `${CDN}/Eqp_Reinforced_Engraved_Gollux_Pendant.png` },
-  { id: "daybreak-pendant", name: "Daybreak Pendant", points: 646, icon: `${CDN}/Eqp_Daybreak_Pendant.png` },
-  { id: "superior-gollux", name: "Superior Gollux Accessories", points: 697, icon: `${CDN}/Eqp_Superior_Engraved_Gollux_Pendant.png` },
-  { id: "guardian-angel-ring", name: "Guardian Angel Ring", points: 844, icon: `${CDN}/Eqp_Guardian_Angel_Ring.png` },
-  { id: "arcane-umbra", name: "Arcane Umbra Armor", points: 960, icon: `${CDN}/Use_Arcane_Umbra_Armor_Box.png` },
-  { id: "pitched-boss", name: "Pitched Boss Items", points: 1680, icon: `${CDN}/Eqp_Genesis_Badge.png` },
-  { id: "eternal", name: "Eternal Armor", points: 2312, icon: `${CDN}/Use_Eternal_Armor_of_Desire_Box.png` },
-  { id: "brilliant-boss", name: "Brilliant Boss Items", points: 2500, icon: `${CDN}/Eqp_Whisper_of_the_Source.png` },
+  { id: "kannas-treasure", name: "Kanna's Treasure", points: 392 },
+  { id: "black-bean-mark", name: "Black Bean Mark", points: 400 },
+  { id: "dominator-pendant", name: "Dominator Pendant", points: 431 },
+  { id: "papulatus-mark", name: "Papulatus Mark", points: 462 },
+  { id: "ra-armor", name: "Root Abyss Armor", points: 495 },
+  { id: "sweetwater", name: "Sweetwater Equipment", points: 512 },
+  { id: "solid-gollux", name: "Solid Gollux Accessories", points: 523 },
+  { id: "absolab", name: "AbsoLab Armor", points: 588 },
+  { id: "reinforced-gollux", name: "Reinforced Gollux Accessories", points: 607 },
+  { id: "daybreak-pendant", name: "Daybreak Pendant", points: 646 },
+  { id: "superior-gollux", name: "Superior Gollux Accessories", points: 697 },
+  { id: "guardian-angel-ring", name: "Guardian Angel Ring", points: 844 },
+  { id: "arcane-umbra", name: "Arcane Umbra Armor", points: 960 },
+  { id: "pitched-boss", name: "Pitched Boss Items", points: 1680 },
+  { id: "eternal", name: "Eternal Armor", points: 2312 },
+  { id: "brilliant-boss", name: "Brilliant Boss Items", points: 2500 },
 ];
 
 interface TraceMission {

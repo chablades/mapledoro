@@ -1,7 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import type { AppTheme } from "../../../components/themes";
+import { ItemIcon } from "../../../components/ResourceImage";
 import {
   REMINDER_DEFS,
   useRemindersState,
@@ -49,8 +49,8 @@ function ReminderCheckItem({
         style={{ accentColor: theme.accent, cursor: "pointer" }}
       />
       <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
-        {def.icon.startsWith("http") ? (
-          <Image src={def.icon} alt="" width={16} height={16} unoptimized className="block-img" />
+        {"itemId" in def ? (
+          <ItemIcon id={def.itemId} size={16} />
         ) : (
           <span style={{ fontSize: "0.85rem" }}>{def.icon}</span>
         )}
