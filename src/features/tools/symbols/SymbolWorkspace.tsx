@@ -14,6 +14,7 @@ import {
   type ChartOptions,
 } from "chart.js";
 import type { AppTheme } from "../../../components/themes";
+import { replaceZeroOnDigit } from "../numberInputHandlers";
 import { ToolHeader } from "../../../components/ToolHeader";
 import { ItemIcon } from "../../../components/ResourceImage";
 import { CharacterSyncPanel } from "../../../components/CharacterSyncPanel";
@@ -269,6 +270,8 @@ function SymbolLevelControls({
               max={levelMax}
               value={state.current}
               disabled={disabled}
+              onFocus={(e) => e.currentTarget.select()}
+              onKeyDown={replaceZeroOnDigit}
               onChange={(e) => {
                 let v = parseInt(e.target.value) || 0;
                 if (v < 0) v = 0;
@@ -370,6 +373,8 @@ function SymbolIncomeControls({
           max={dailyMax}
           value={state.daily}
           disabled={disabled}
+          onFocus={(e) => e.currentTarget.select()}
+          onKeyDown={replaceZeroOnDigit}
           onChange={(e) => {
             let v = parseInt(e.target.value) || 0;
             if (v < 0) v = 0;

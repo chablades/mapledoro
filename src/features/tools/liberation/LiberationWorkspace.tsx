@@ -3,6 +3,7 @@
 import { useState, useSyncExternalStore } from "react";
 import Image from "next/image";
 import type { AppTheme } from "../../../components/themes";
+import { replaceZeroOnDigit } from "../numberInputHandlers";
 import { ProgressBar } from "../../../components/ProgressBar";
 import { ToolHeader } from "../../../components/ToolHeader";
 import { WikiAttribution } from "../../../components/WikiAttribution";
@@ -183,6 +184,7 @@ function BossCard({
             max={boss.maxParty}
             value={sel.partySize}
             disabled={!isActive}
+            onFocus={(e) => e.currentTarget.select()}
             onChange={(e) => {
               let v = parseInt(e.target.value) || 1;
               if (v < 1) v = 1;
@@ -326,6 +328,8 @@ function LiberationConfigSection({
             min={0}
             max={quests[questIdx]?.required ?? 9999}
             value={currentTraces}
+            onFocus={(e) => e.currentTarget.select()}
+            onKeyDown={replaceZeroOnDigit}
             onChange={(e) => {
               let v = parseInt(e.target.value) || 0;
               if (v < 0) v = 0;
@@ -675,9 +679,6 @@ export default function LiberationWorkspace({ theme }: { theme: AppTheme }) {
     () => false,
   );
 
-  const [activeTab, setActiveTab] = useState<LiberationTab>("genesis");
-  const showAstra = activeTab === "astra";
-
   const liberation = useLiberationState();
   const {
     characters, selectedCharName, handleCharChange,
@@ -687,11 +688,19 @@ export default function LiberationWorkspace({ theme }: { theme: AppTheme }) {
     bosses, quests, totalNeeded, result, tracesCompleted, progressPct,
   } = liberation;
 
+  // `type` is the source of truth for the non-Astra tabs and is restored from a
+  // character's saved data on selection; derive activeTab from it so the tab can
+  // never desync from the data. Astra has no `type`, so it gets its own flag.
+  const [showAstra, setShowAstra] = useState(false);
+  const activeTab: LiberationTab = showAstra ? "astra" : type;
+
   const handleTabChange = (tab: LiberationTab) => {
-    setActiveTab(tab);
-    if (tab !== "astra" && type !== tab) {
-      switchType(tab);
+    if (tab === "astra") {
+      setShowAstra(true);
+      return;
     }
+    setShowAstra(false);
+    if (type !== tab) switchType(tab);
   };
 
   const styles = toolStyles(theme);

@@ -4,6 +4,7 @@ import { useState, useSyncExternalStore } from "react";
 import type { CSSProperties } from "react";
 import Image from "next/image";
 import type { AppTheme } from "../../../components/themes";
+import { replaceZeroOnDigit } from "../numberInputHandlers";
 import { ItemIcon } from "../../../components/ResourceImage";
 import { ToolHeader } from "../../../components/ToolHeader";
 import { WikiAttribution } from "../../../components/WikiAttribution";
@@ -337,6 +338,8 @@ function CrystalSection({
             type="number"
             min={0}
             value={count}
+            onFocus={(e) => e.currentTarget.select()}
+            onKeyDown={replaceZeroOnDigit}
             onChange={(e) => onCountChange(Math.max(0, parseInt(e.target.value, 10) || 0))}
             style={{ ...styles.inputStyle, width: 100 }}
           />
@@ -605,6 +608,8 @@ function TraceRestorationTab({ theme }: { theme: AppTheme }) {
               min={0}
               max={MAX_POINTS_CAP}
               value={state.currentPoints}
+              onFocus={(e) => e.currentTarget.select()}
+              onKeyDown={replaceZeroOnDigit}
               onChange={(e) => save({ ...state, currentPoints: Math.min(MAX_POINTS_CAP, Math.max(0, parseInt(e.target.value, 10) || 0)) })}
               style={{ ...styles.inputStyle, width: 110 }}
             />

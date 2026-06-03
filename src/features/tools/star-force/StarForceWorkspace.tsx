@@ -2,6 +2,7 @@
 
 import { useReducer, useMemo, useSyncExternalStore } from "react";
 import type { AppTheme } from "../../../components/themes";
+import { replaceZeroOnDigit } from "../numberInputHandlers";
 import { ToolHeader } from "../../../components/ToolHeader";
 import {
   attemptCost,
@@ -334,6 +335,8 @@ function StarForceInputs({
             min={0}
             max={300}
             value={calc.level}
+            onFocus={(e) => e.currentTarget.select()}
+            onKeyDown={replaceZeroOnDigit}
             onChange={(e) => dispatch({ type: "setLevel", value: Math.max(0, Math.min(300, Number(e.target.value) || 0)) })}
             style={inputStyle}
           />
@@ -371,6 +374,8 @@ function StarForceInputs({
             type="number"
             min={0}
             value={calc.replacementCost}
+            onFocus={(e) => e.currentTarget.select()}
+            onKeyDown={replaceZeroOnDigit}
             onChange={(e) => dispatch({ type: "setReplacementCost", value: Math.max(0, Number(e.target.value) || 0) })}
             style={inputStyle}
             placeholder="0"
@@ -384,6 +389,7 @@ function StarForceInputs({
             min={1}
             max={100000}
             value={calc.trials}
+            onFocus={(e) => e.currentTarget.select()}
             onChange={(e) => dispatch({ type: "setTrials", value: Math.max(1, Math.min(100000, Number(e.target.value) || 1000)) })}
             style={inputStyle}
           />
