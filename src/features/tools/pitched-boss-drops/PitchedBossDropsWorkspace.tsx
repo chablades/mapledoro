@@ -7,7 +7,6 @@ import dynamic from "next/dynamic";
 import { panelStyle, ItemIcon } from "./pitched-boss-ui";
 import type { AppTheme } from "../../../components/themes";
 import { ToolHeader } from "../../../components/ToolHeader";
-import { WikiAttribution } from "../../../components/WikiAttribution";
 import {
   readCharactersStore,
   selectCharactersList,
@@ -169,7 +168,7 @@ function DropLogTable({
                   <td style={tdStyle(theme)}>{drop.characterName}</td>
                   <td style={{ ...tdStyle(theme), fontWeight: 600 }}>
                     <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
-                      {item && <ItemIcon src={item.icon} />}
+                      {item && <ItemIcon id={item.itemId} />}
                       {item?.name ?? drop.itemId}
                     </span>
                   </td>
@@ -476,8 +475,6 @@ export default function PitchedBossDropsWorkspace({
             boss drop!
           </div>
         )}
-
-        <WikiAttribution theme={theme} subject="Item images" />
       </div>
     </div>
   );

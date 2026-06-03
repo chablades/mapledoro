@@ -4,11 +4,10 @@ import { useCallback, useState, useSyncExternalStore } from "react";
 
 export type ReminderId = "ursus" | "autoHarvest" | "solErda";
 
-export interface ReminderDef {
+export type ReminderDef = {
   id: ReminderId;
-  icon: string;
   title: string;
-}
+} & ({ icon: string } | { itemId: string });
 
 export const REMINDER_DEFS: ReminderDef[] = [
   {
@@ -23,7 +22,7 @@ export const REMINDER_DEFS: ReminderDef[] = [
   },
   {
     id: "solErda",
-    icon: "https://media.maplestorywiki.net/yetidb/Etc_Sol_Erda_Fragment_%28Full_Size%29.png",
+    itemId: "04009613", // Sol Erda Fragment
     title: "Sol Erda Booster",
   },
 ];

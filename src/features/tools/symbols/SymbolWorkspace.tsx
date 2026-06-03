@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 // react-doctor-disable-next-line react-doctor/prefer-dynamic-import
 import { Line } from "react-chartjs-2";
 // react-doctor-disable-next-line react-doctor/prefer-dynamic-import
@@ -16,7 +15,7 @@ import {
 } from "chart.js";
 import type { AppTheme } from "../../../components/themes";
 import { ToolHeader } from "../../../components/ToolHeader";
-import { WikiAttribution } from "../../../components/WikiAttribution";
+import { ItemIcon } from "../../../components/ResourceImage";
 import { CharacterSyncPanel } from "../../../components/CharacterSyncPanel";
 import { SegmentedToggle } from "../../../components/SegmentedToggle";
 import { toolStyles } from "../tool-styles";
@@ -112,15 +111,12 @@ function SymbolCardHeader({
         marginBottom: "0.75rem",
       }}
     >
-      <Image
-        src={area.icon}
+      <ItemIcon
+        id={area.itemId}
+        size={38}
         alt={area.name}
-        width={38}
-        height={38}
-        unoptimized
         style={{
           borderRadius: "8px",
-          objectFit: "contain",
           flexShrink: 0,
           background: theme.panel,
           border: `1px solid ${theme.border}`,
@@ -1056,8 +1052,6 @@ export default function SymbolWorkspace({ theme }: { theme: AppTheme }) {
           <CompletionSummaryPanel theme={theme} sectionPanel={styles.sectionPanel} stats={stats} type={type} />
 
           <CompletionTimelineChart theme={theme} sectionPanel={styles.sectionPanel} stats={stats} growth={growth} maxLevel={maxLevel} type={type} />
-
-          <WikiAttribution theme={theme} subject="Symbol images" />
         </div>
       </div>
     </>

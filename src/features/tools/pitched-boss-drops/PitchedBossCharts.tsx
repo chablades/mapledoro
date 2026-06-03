@@ -95,7 +95,7 @@ function DropCountBarChart({
             }}
           >
             <span style={{ display: "flex", alignItems: "center", gap: 5, color: theme.text, fontWeight: 600 }}>
-              <ItemIcon src={item.icon} />
+              <ItemIcon id={item.itemId} />
               {item.name}
             </span>
             <span style={{ color: theme.muted, fontWeight: 700 }}>{count}</span>
