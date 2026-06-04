@@ -4,7 +4,6 @@ import { useState, useMemo } from "react";
 import type { AppTheme } from "../../../components/themes";
 import { ProgressBar } from "../../../components/ProgressBar";
 import { ToolHeader } from "../../../components/ToolHeader";
-import { WikiAttribution } from "../../../components/WikiAttribution";
 import { CharacterSyncPanel } from "../../../components/CharacterSyncPanel";
 import {
   COMMON_SKILLS,
@@ -434,8 +433,6 @@ export default function HexaSkillsWorkspace({ theme }: { theme: AppTheme }) {
         ) : (
           <EmptyState theme={theme} sectionPanel={sectionPanel} />
         )}
-
-        <WikiAttribution theme={theme} subject="Skill icons" />
       </div>
     </div>
   );

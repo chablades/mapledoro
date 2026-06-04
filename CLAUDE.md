@@ -65,6 +65,7 @@ npm run lint
 
 - `<ItemIcon id size shadow? />` · `<MobSprite id size />` · `<SkillIcon id size disabled? />` · `<HexaSkillIcon id size disabled? />` · `<FamiliarSprite id size />`
 - Each is a pure **id → URL** builder (`src/lib/mapleResource.ts`). The host is `NEXT_PUBLIC_RESOURCE_BASE` (default `https://haku.network`); add new hosts to `next.config.mjs` `remotePatterns`.
+- **Boss icons** (Maple Guide) have no component — `bossIconUrl(id)` builds the `ui/boss` URL (ids in `manifests/v<version>/boss.json`), stored as `icon` strings in boss data (`bosses.ts`, `liberation-data.ts`, `astra-data.ts`, `trace-restoration-data.ts`). Radiant Malefic Star and Jupiter aren't on haku yet and stay on `media.maplestorywiki.net`.
 
 **Item icons:** `<ItemIcon>` defaults to the **shadowless** `iconRaw.png`. The framed `icon.png` (drop shadow) is reserved for inventory management — pass `shadow` for it.
 

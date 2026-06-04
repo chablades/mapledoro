@@ -2,6 +2,8 @@
   Astra Secondary mission, boss, and daily-quest data.
 */
 
+import { bossIconUrl } from "../../../lib/mapleResource";
+
 // -- Types --------------------------------------------------------------------
 
 export interface AstraMission {
@@ -47,7 +49,7 @@ export const ASTRA_TOTAL_FRAGMENTS = 10000;
 export const ASTRA_BOSSES: AstraBoss[] = [
   {
     name: "Chosen Seren",
-    icon: "https://media.maplestorywiki.net/yetidb/Maple_Guide_-_Chosen_Seren.png",
+    icon: bossIconUrl("28"),
     difficulties: [
       { label: "Normal", traces: 6, hasVoucher: false },
       { label: "Hard", traces: 15, hasVoucher: false },
@@ -57,7 +59,7 @@ export const ASTRA_BOSSES: AstraBoss[] = [
   },
   {
     name: "Kalos the Guardian",
-    icon: "https://media.maplestorywiki.net/yetidb/Maple_Guide_-_Kalos_the_Guardian.png",
+    icon: bossIconUrl("30"),
     difficulties: [
       { label: "Easy", traces: 6, hasVoucher: false },
       { label: "Normal", traces: 30, hasVoucher: false },
@@ -68,7 +70,7 @@ export const ASTRA_BOSSES: AstraBoss[] = [
   },
   {
     name: "First Adversary",
-    icon: "https://media.maplestorywiki.net/yetidb/Maple_Guide_-_First_Adversary.png",
+    icon: bossIconUrl("35"),
     difficulties: [
       { label: "Easy", traces: 10, hasVoucher: false },
       { label: "Normal", traces: 40, hasVoucher: false },
@@ -88,7 +90,7 @@ export const ASTRA_BOSSES: AstraBoss[] = [
   },
   {
     name: "Kaling",
-    icon: "https://media.maplestorywiki.net/yetidb/Maple_Guide_-_Kaling.png",
+    icon: bossIconUrl("31"),
     difficulties: [
       { label: "Easy", traces: 20, hasVoucher: false },
       { label: "Normal", traces: 80, hasVoucher: false },
@@ -99,7 +101,7 @@ export const ASTRA_BOSSES: AstraBoss[] = [
   },
   {
     name: "Limbo",
-    icon: "https://media.maplestorywiki.net/yetidb/Maple_Guide_-_Limbo.png",
+    icon: bossIconUrl("33"),
     difficulties: [
       { label: "Normal", traces: 80, hasVoucher: false },
       { label: "Hard", traces: 240, hasVoucher: true, voucherCount: 3, voucherValue: 20 },
@@ -108,7 +110,7 @@ export const ASTRA_BOSSES: AstraBoss[] = [
   },
   {
     name: "Baldrix",
-    icon: "https://media.maplestorywiki.net/yetidb/Maple_Guide_-_Baldrix.png",
+    icon: bossIconUrl("34"),
     difficulties: [
       { label: "Normal", traces: 80, hasVoucher: false },
       { label: "Hard", traces: 240, hasVoucher: true, voucherCount: 3, voucherValue: 40 },

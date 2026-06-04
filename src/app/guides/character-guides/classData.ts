@@ -6,6 +6,7 @@
 
 import React from "react";
 import { classPortraitUrl } from "../../../lib/classPortraits";
+import { resourceImageUrl } from "../../../lib/mapleResource";
 
 /* ── Types ────────────────────────────────────────────────────── */
 
@@ -26,52 +27,48 @@ export interface ClassEntry {
   portrait: string;
 }
 
-/* ── Link skill icon URLs (sourced from MapleStory Wiki CDN) ──── */
+/* ── Link skill icons (haku.network `skill` ids from manifests/v268/skill.json) ── */
 
-const CDN = "https://media.maplestorywiki.net/yetidb/";
-
-function ls(skillName: string, iconOverride?: string): { linkSkillName: string; linkSkillIcon: string } {
-  const icon = iconOverride
-    ?? `${CDN}Skill_${skillName.replace(/ /g, "_").replace(/'/g, "%27")}.png`;
-  return { linkSkillName: skillName, linkSkillIcon: icon };
+function ls(skillName: string, skillId: string): { linkSkillName: string; linkSkillIcon: string } {
+  return { linkSkillName: skillName, linkSkillIcon: resourceImageUrl("skill", skillId, "icon.png") };
 }
 
 const LINK_SKILLS = {
-  invincibleBelief:        ls("Invincible Belief"),
-  empiricalKnowledge:      ls("Empirical Knowledge"),
-  adventurersCuriosity:    ls("Adventurer's Curiosity"),
-  thiefsCunning:           ls("Thief's Cunning"),
-  pirateBlesssing:         ls("Pirate Blessing"),
-  cygnusBlessing:          ls("Cygnus Blessing"),
-  knightsWatch:            ls("Knight's Watch"),
-  comboKillBlessing:       ls("Combo Kill Blessing"),
-  runePersistence:         ls("Rune Persistence"),
-  elvenBlessing:           ls("Elven Blessing", `${CDN}Skill_Elven_Blessing_%28Linked%29.png`),
-  phantomInstinct:         ls("Phantom Instinct"),
-  lightWash:               ls("Light Wash"),
-  closeCall:               ls("Close Call"),
-  spiritOfFreedom:         ls("Spirit of Freedom"),
-  hybridLogic:             ls("Hybrid Logic"),
-  furyUnleashed:           ls("Fury Unleashed"),
-  wildRage:                ls("Wild Rage"),
-  ironWill:                ls("Iron Will"),
-  termsAndConditions:      ls("Terms and Conditions"),
-  unfairAdvantage:         ls("Unfair Advantage"),
-  timeToComplete:          ls("Time to Prepare"),
-  rhinnesBlessing:         ls("Rhinne's Blessing"),
-  judgment:                ls("Judgment", `${CDN}Skill_Judgment_%28Kinesis%29.png`),
-  nobleFire:               ls("Noble Fire"),
-  tideOfBattle:            ls("Tide of Battle"),
-  innateGift:              ls("Innate Gift"),
-  solus:                   ls("Solus"),
-  naturesFriend:           ls("Nature's Friend"),
-  bravado:                 ls("Bravado"),
-  groundedBody:            ls("Grounded Body"),
-  moonlitBladeLearnings:   ls("Moonlit Blade Learnings"),
-  elementalism:            ls("Elementalism"),
-  focusSpirit:             ls("Focus Spirit", `${CDN}Skill_Spirit_Guide_Blessing.png`),
-  qiCultivation:           ls("Qi Cultivation"),
-  treeOfStars:             ls("Tree of Stars"),
+  invincibleBelief:        ls("Invincible Belief", "0000252"),
+  empiricalKnowledge:      ls("Empirical Knowledge", "0000255"),
+  adventurersCuriosity:    ls("Adventurer's Curiosity", "0000258"),
+  thiefsCunning:           ls("Thief's Cunning", "0000261"),
+  pirateBlesssing:         ls("Pirate Blessing", "0000264"),
+  cygnusBlessing:          ls("Cygnus Blessing", "10000255"),
+  knightsWatch:            ls("Knight's Watch", "50001214"),
+  comboKillBlessing:       ls("Combo Kill Blessing", "20000297"),
+  runePersistence:         ls("Rune Persistence", "20010294"),
+  elvenBlessing:           ls("Elven Blessing", "20021110"),
+  phantomInstinct:         ls("Phantom Instinct", "20030204"),
+  lightWash:               ls("Light Wash", "20040218"),
+  closeCall:               ls("Close Call", "20050286"),
+  spiritOfFreedom:         ls("Spirit of Freedom", "30000074"),
+  hybridLogic:             ls("Hybrid Logic", "30020233"),
+  furyUnleashed:           ls("Fury Unleashed", "30010112"),
+  wildRage:                ls("Wild Rage", "30010241"),
+  ironWill:                ls("Iron Will", "60000222"),
+  termsAndConditions:      ls("Terms and Conditions", "60011219"),
+  unfairAdvantage:         ls("Unfair Advantage", "60020218"),
+  timeToComplete:          ls("Time to Prepare", "60030241"),
+  rhinnesBlessing:         ls("Rhinne's Blessing", "100000271"),
+  judgment:                ls("Judgment", "140000292"),
+  nobleFire:               ls("Noble Fire", "150020241"),
+  tideOfBattle:            ls("Tide of Battle", "150000017"),
+  innateGift:              ls("Innate Gift", "150030241"),
+  solus:                   ls("Solus", "150010241"),
+  naturesFriend:           ls("Nature's Friend", "160010001"),
+  bravado:                 ls("Bravado", "160000001"),
+  groundedBody:            ls("Grounded Body", "160020001"),
+  moonlitBladeLearnings:   ls("Moonlit Blade Learnings", "40010001"),
+  elementalism:            ls("Elementalism", "40020002"),
+  focusSpirit:             ls("Focus Spirit", "110000800"),
+  qiCultivation:           ls("Qi Cultivation", "170000241"),
+  treeOfStars:             ls("Tree of Stars", "400001100"),
 };
 
 /* ── Shared display utilities ─────────────────────────────────── */

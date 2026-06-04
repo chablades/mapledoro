@@ -14,6 +14,7 @@
 */
 
 import type { StatFieldId } from "./statFields";
+import { resourceImageUrl } from "../../../../lib/mapleResource";
 
 export interface BuffSkill {
   skillIconUrl: string;
@@ -64,13 +65,16 @@ export function getRequiredStatsForClass(classData: ClassSkillData): StatFieldId
 
 // ── Commonly reused buff skills ────────────────────────────────────────────────
 
+// Skill icon by id from the haku.network `skill` resource (ids in manifests/v268/skill.json).
+const sk = (id: string): string => resourceImageUrl("skill", id, "icon.png");
+
 const DSE: BuffSkill = {
-  skillIconUrl: "https://media.maplestorywiki.net/yetidb/Skill_Sharp_Eyes.png",
+  skillIconUrl: sk("0008002"),
   skillName: "Decent Sharp Eyes",
   jobAdvancement: "5",
 };
 const DCO: BuffSkill = {
-  skillIconUrl: "https://media.maplestorywiki.net/yetidb/Skill_Combat_Orders.png",
+  skillIconUrl: sk("0008004"),
   skillName: "Decent Combat Orders",
   jobAdvancement: "5",
 };
@@ -78,77 +82,77 @@ const DCO: BuffSkill = {
 // ── Warning skills (shown with icon in "do not use" warnings) ─────────────────
 
 const LOADED_DICE: BuffSkill = {
-  skillIconUrl: "https://media.maplestorywiki.net/yetidb/Skill_Loaded_Dice.png",
+  skillIconUrl: sk("400051000"),
   skillName: "Loaded Dice",
   jobAdvancement: "5",
 };
 const FINAL_CUT: BuffSkill = {
-  skillIconUrl: "https://media.maplestorywiki.net/yetidb/Skill_Final_Cut.png",
+  skillIconUrl: sk("400004128"),
   skillName: "Final Cut",
   jobAdvancement: "4",
 };
 const CROSS_SURGE: BuffSkill = {
-  skillIconUrl: "https://media.maplestorywiki.net/yetidb/Skill_Cross_Surge.png",
+  skillIconUrl: sk("1311015"),
   skillName: "Cross Surge",
   jobAdvancement: "3",
 };
 const SPIRIT_BLADE: BuffSkill = {
-  skillIconUrl: "https://media.maplestorywiki.net/yetidb/Skill_Spirit_Blade.png",
+  skillIconUrl: sk("1101006"),
   skillName: "Spirit Blade",
   jobAdvancement: "2",
 };
 const OVERLOAD_RELEASE: BuffSkill = {
-  skillIconUrl: "https://media.maplestorywiki.net/yetidb/Skill_Overload_Release.png",
+  skillIconUrl: sk("31011001"),
   skillName: "Overload Release",
   jobAdvancement: "1",
 };
 const CIRCUIT_SURGE: BuffSkill = {
-  skillIconUrl: "https://media.maplestorywiki.net/yetidb/Skill_Circuit_Surge.png",
+  skillIconUrl: sk("36001002"),
   skillName: "Circuit Surge",
   jobAdvancement: "1",
 };
 const OOPARTS_CODE: BuffSkill = {
-  skillIconUrl: "https://media.maplestorywiki.net/yetidb/Skill_OOPArts_Code.png",
+  skillIconUrl: sk("36121003"),
   skillName: "OOPArts Code",
   jobAdvancement: "4",
 };
 const FLIP_OF_THE_COIN: BuffSkill = {
-  skillIconUrl: "https://media.maplestorywiki.net/yetidb/Skill_Flip_of_the_Coin.png",
+  skillIconUrl: sk("4221054"),
   skillName: "Flip of the Coin",
   jobAdvancement: "Hyper Skills (140)",
 };
 const RESONANCE_RUSH: BuffSkill = {
-  skillIconUrl: "https://media.maplestorywiki.net/yetidb/Skill_Resonance_Rush.png",
+  skillIconUrl: sk("151101003"),
   skillName: "Resonance Rush",
   jobAdvancement: "2",
 };
 const SPELL_BULLETS: BuffSkill = {
-  skillIconUrl: "https://media.maplestorywiki.net/yetidb/Skill_Spell_Bullets.png",
+  skillIconUrl: sk("155001103"),
   skillName: "Spell Bullets",
   jobAdvancement: "1",
 };
 const LUCENT_BRAND: BuffSkill = {
-  skillIconUrl: "https://media.maplestorywiki.net/yetidb/Skill_Lucent_Brand.png",
+  skillIconUrl: sk("152000007"),
   skillName: "Lucent Brand",
   jobAdvancement: "1",
 };
 const IGNIS_ROAR: BuffSkill = {
-  skillIconUrl: "https://media.maplestorywiki.net/yetidb/Skill_Ignis_Roar.png",
+  skillIconUrl: sk("23110004"),
   skillName: "Ignis Roar",
   jobAdvancement: "3",
 };
 const HEIR_OF_THE_DIVINE: BuffSkill = {
-  skillIconUrl: "https://media.maplestorywiki.net/yetidb/Skill_Heir_of_the_Divine.png",
+  skillIconUrl: sk("175120016"),
   skillName: "Heir of the Divine",
   jobAdvancement: "4",
 };
 const MUSCLE_MEMORY: BuffSkill = {
-  skillIconUrl: "https://media.maplestorywiki.net/yetidb/Skill_Muscle_Memory.png",
+  skillIconUrl: sk("64100004"),
   skillName: "Muscle Memory",
   jobAdvancement: "2",
 };
 const COMBO_TRAINING: BuffSkill = {
-  skillIconUrl: "https://media.maplestorywiki.net/yetidb/Skill_Combo_Training.png",
+  skillIconUrl: sk("37110009"),
   skillName: "Combo Training",
   jobAdvancement: "3",
 };
@@ -182,7 +186,7 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
     buffSkills: [
       DSE,
       DCO,
-      { skillIconUrl: "https://media.maplestorywiki.net/yetidb/Skill_Fires_of_Creation.png", skillName: "Fires of Creation", jobAdvancement: "4" },
+      { skillIconUrl: sk("12121004"), skillName: "Fires of Creation", jobAdvancement: "4" },
     ],
     requiredStats: ["int", "luk", "magicAtt"],
   },
@@ -193,7 +197,7 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
     buffSkills: [
       DSE,
       DCO,
-      { skillIconUrl: "https://media.maplestorywiki.net/yetidb/Skill_Equinox_Cycle.png", skillName: "Equinox Cycle", jobAdvancement: "2" },
+      { skillIconUrl: sk("11100031"), skillName: "Equinox Cycle", jobAdvancement: "2" },
     ],
     requiredStats: ["str", "dex", "attackPower"],
   },
@@ -204,8 +208,8 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
     buffSkills: [
       DSE,
       DCO,
-      { skillIconUrl: "https://media.maplestorywiki.net/yetidb/Skill_Roiling_Soul.png", skillName: "Roiling Soul", jobAdvancement: "4" },
-      { skillIconUrl: "https://media.maplestorywiki.net/yetidb/Skill_Soul_Link.png", skillName: "Soul Link", jobAdvancement: "3" },
+      { skillIconUrl: sk("51121006"), skillName: "Roiling Soul", jobAdvancement: "4" },
+      { skillIconUrl: sk("51110008"), skillName: "Soul Link", jobAdvancement: "3" },
     ],
     requiredStats: ["str", "dex", "attackPower"],
   },
@@ -226,7 +230,7 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
     id: "wind_archer",
     nexonJobName: "Wind Archer",
     buffSkills: [
-      { skillIconUrl: "https://media.maplestorywiki.net/yetidb/Skill_Sharp_Eyes.png", skillName: "Sharp Eyes", jobAdvancement: "4" },
+      { skillIconUrl: sk("3121002"), skillName: "Sharp Eyes", jobAdvancement: "4" },
       DCO,
     ],
     requiredStats: ["dex", "str", "attackPower"],
@@ -239,7 +243,7 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
     buffSkills: [
       DSE,
       DCO,
-      { skillIconUrl: "https://media.maplestorywiki.net/yetidb/Skill_Diabolic_Recovery.png", skillName: "Diabolic Recovery", jobAdvancement: "3" },
+      { skillIconUrl: sk("31211004"), skillName: "Diabolic Recovery", jobAdvancement: "3" },
     ],
     requiredStats: ["hp", "str", "attackPower"],
   },
@@ -250,7 +254,7 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
     buffSkills: [
       DSE,
       DCO,
-      { skillIconUrl: "https://media.maplestorywiki.net/yetidb/Skill_Dark_Metamorphosis.png", skillName: "Dark Metamorphosis", jobAdvancement: "4" },
+      { skillIconUrl: sk("31121005"), skillName: "Dark Metamorphosis", jobAdvancement: "4" },
     ],
     requiredStats: ["str", "dex", "attackPower"],
   },
@@ -261,7 +265,7 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
     buffSkills: [
       DSE,
       DCO,
-      { skillIconUrl: "https://media.maplestorywiki.net/yetidb/Skill_Meditation.png", skillName: "Meditation", jobAdvancement: "2" },
+      { skillIconUrl: sk("2101001"), skillName: "Meditation", jobAdvancement: "2" },
     ],
     requiredStats: ["int", "luk", "magicAtt"],
   },
@@ -272,7 +276,7 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
     buffSkills: [
       DSE,
       DCO,
-      { skillIconUrl: "https://media.maplestorywiki.net/yetidb/Skill_Meditation.png", skillName: "Meditation", jobAdvancement: "2" },
+      { skillIconUrl: sk("2101001"), skillName: "Meditation", jobAdvancement: "2" },
     ],
     requiredStats: ["int", "luk", "magicAtt"],
   },
@@ -282,8 +286,8 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
     buffSkills: [
       DSE,
       DCO,
-      { skillIconUrl: "https://media.maplestorywiki.net/yetidb/Skill_Advanced_Blessing.png", skillName: "Advanced Blessing", jobAdvancement: "4" },
-      { skillIconUrl: "https://media.maplestorywiki.net/yetidb/Skill_Righteously_Indignant.png", skillName: "Righteously Indignant", jobAdvancement: "Hyper Skills (140)" },
+      { skillIconUrl: sk("2321005"), skillName: "Advanced Blessing", jobAdvancement: "4" },
+      { skillIconUrl: sk("2321054"), skillName: "Righteously Indignant", jobAdvancement: "Hyper Skills (140)" },
     ],
     requiredStats: ["int", "luk", "magicAtt"],
   },
@@ -295,7 +299,7 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
     buffSkills: [
       DSE,
       DCO,
-      { skillIconUrl: "https://media.maplestorywiki.net/yetidb/Skill_Blade_Clone.png", skillName: "Blade Clone", jobAdvancement: "Hyper Skills (140)" },
+      { skillIconUrl: sk("400004133"), skillName: "Blade Clone", jobAdvancement: "Hyper Skills (140)" },
     ],
     requiredStats: ["luk", "dex", "str", "attackPower"],
   },
@@ -303,7 +307,7 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
     id: "bow_master",
     nexonJobName: "Bow Master",
     buffSkills: [
-      { skillIconUrl: "https://media.maplestorywiki.net/yetidb/Skill_Sharp_Eyes.png", skillName: "Sharp Eyes", jobAdvancement: "4" },
+      { skillIconUrl: sk("3121002"), skillName: "Sharp Eyes", jobAdvancement: "4" },
       DCO,
     ],
     requiredStats: ["dex", "str", "attackPower"],
@@ -315,8 +319,8 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
     buffSkills: [
       DSE,
       DCO,
-      { skillIconUrl: "https://media.maplestorywiki.net/yetidb/Skill_Sea_Serpent.png", skillName: "Sea Serpent", jobAdvancement: "2" },
-      { skillIconUrl: "https://media.maplestorywiki.net/yetidb/Skill_Crossbones.png", skillName: "Crossbones", jobAdvancement: "4" },
+      { skillIconUrl: sk("5100017"), skillName: "Sea Serpent", jobAdvancement: "2" },
+      { skillIconUrl: sk("5121015"), skillName: "Crossbones", jobAdvancement: "4" },
     ],
     requiredStats: ["str", "dex", "attackPower"],
   },
@@ -327,7 +331,7 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
     buffSkills: [
       DSE,
       DCO,
-      { skillIconUrl: "https://media.maplestorywiki.net/yetidb/Skill_Monkey_Magic.png", skillName: "Monkey Magic", jobAdvancement: "2" },
+      { skillIconUrl: sk("5301003"), skillName: "Monkey Magic", jobAdvancement: "2" },
     ],
     requiredStats: ["str", "dex", "attackPower"],
   },
@@ -338,7 +342,7 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
     buffSkills: [
       DSE,
       DCO,
-      { skillIconUrl: "https://media.maplestorywiki.net/yetidb/Skill_Jolly_Roger.png", skillName: "Jolly Roger", jobAdvancement: "4" },
+      { skillIconUrl: sk("5221018"), skillName: "Jolly Roger", jobAdvancement: "4" },
     ],
     requiredStats: ["dex", "str", "attackPower"],
   },
@@ -348,9 +352,9 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
     buffSkills: [
       DSE,
       DCO,
-      { skillIconUrl: "https://media.maplestorywiki.net/yetidb/Skill_Evil_Eye.png", skillName: "Evil Eye", jobAdvancement: "2" },
-      { skillIconUrl: "https://media.maplestorywiki.net/yetidb/Skill_Cross_Surge.png", skillName: "Cross Surge", jobAdvancement: "3" },
-      { skillIconUrl: "https://media.maplestorywiki.net/yetidb/Skill_Dark_Resonance.png", skillName: "Dark Resonance", jobAdvancement: "4" },
+      { skillIconUrl: sk("1301013"), skillName: "Evil Eye", jobAdvancement: "2" },
+      { skillIconUrl: sk("1311015"), skillName: "Cross Surge", jobAdvancement: "3" },
+      { skillIconUrl: sk("1321015"), skillName: "Dark Resonance", jobAdvancement: "4" },
     ],
     requiredStats: ["str", "dex", "attackPower"],
   },
@@ -362,7 +366,7 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
     buffSkills: [
       DSE,
       DCO,
-      { skillIconUrl: "https://media.maplestorywiki.net/yetidb/Skill_Spirit_Blade.png", skillName: "Spirit Blade", jobAdvancement: "2" },
+      { skillIconUrl: sk("1101006"), skillName: "Spirit Blade", jobAdvancement: "2" },
     ],
     requiredStats: ["str", "dex", "attackPower"],
   },
@@ -370,7 +374,7 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
     id: "marksman",
     nexonJobName: "Marksman",
     buffSkills: [
-      { skillIconUrl: "https://media.maplestorywiki.net/yetidb/Skill_Sharp_Eyes.png", skillName: "Sharp Eyes", jobAdvancement: "4" },
+      { skillIconUrl: sk("3121002"), skillName: "Sharp Eyes", jobAdvancement: "4" },
       DCO,
     ],
     requiredStats: ["dex", "str", "attackPower"],
@@ -381,7 +385,7 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
     buffSkills: [
       DSE,
       DCO,
-      { skillIconUrl: "https://media.maplestorywiki.net/yetidb/Skill_Bleed_Dart.png", skillName: "Bleed Dart", jobAdvancement: "Hyper Skills (140)" },
+      { skillIconUrl: sk("4121054"), skillName: "Bleed Dart", jobAdvancement: "Hyper Skills (140)" },
     ],
     requiredStats: ["luk", "dex", "attackPower"],
   },
@@ -392,9 +396,9 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
     // TODO: setup option — One-Handed Weapon or Two-Handed Weapon
     buffSkills: [
       DSE,
-      { skillIconUrl: "https://media.maplestorywiki.net/yetidb/Skill_Combat_Orders.png", skillName: "Combat Orders", jobAdvancement: "3" },
-      { skillIconUrl: "https://media.maplestorywiki.net/yetidb/Skill_Parashock_Guard.png", skillName: "Parashock Guard", jobAdvancement: "3" },
-      { skillIconUrl: "https://media.maplestorywiki.net/yetidb/Skill_Divine_Blessing.png", skillName: "Divine Blessing", jobAdvancement: "4" },
+      { skillIconUrl: sk("0008004"), skillName: "Combat Orders", jobAdvancement: "3" },
+      { skillIconUrl: sk("1210014"), skillName: "Parashock Guard", jobAdvancement: "3" },
+      { skillIconUrl: sk("1221015"), skillName: "Divine Blessing", jobAdvancement: "4" },
     ],
     requiredStats: ["str", "dex", "attackPower"],
   },
@@ -402,7 +406,7 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
     id: "pathfinder",
     nexonJobName: "Pathfinder",
     buffSkills: [
-      { skillIconUrl: "https://media.maplestorywiki.net/yetidb/Skill_Sharp_Eyes.png", skillName: "Sharp Eyes", jobAdvancement: "4" },
+      { skillIconUrl: sk("3121002"), skillName: "Sharp Eyes", jobAdvancement: "4" },
       DCO,
     ],
     requiredStats: ["dex", "str", "attackPower"],
@@ -458,7 +462,7 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
     buffSkills: [
       DSE,
       DCO,
-      { skillIconUrl: "https://media.maplestorywiki.net/yetidb/Skill_Maha_Blessing.png", skillName: "Maha Blessing", jobAdvancement: "3" },
+      { skillIconUrl: sk("21111012"), skillName: "Maha Blessing", jobAdvancement: "3" },
     ],
     requiredStats: ["str", "dex", "attackPower"],
   },
@@ -468,7 +472,7 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
     buffSkills: [
       DSE,
       DCO,
-      { skillIconUrl: "https://media.maplestorywiki.net/yetidb/Skill_Blessing_of_the_Onyx.png", skillName: "Blessing of the Onyx", jobAdvancement: "4" },
+      { skillIconUrl: sk("22171073"), skillName: "Blessing of the Onyx", jobAdvancement: "4" },
     ],
     requiredStats: ["int", "luk", "magicAtt"],
   },
@@ -478,7 +482,7 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
     buffSkills: [
       DSE,
       DCO,
-      { skillIconUrl: "https://media.maplestorywiki.net/yetidb/Skill_Photic_Meditation.png", skillName: "Photic Meditation", jobAdvancement: "3" },
+      { skillIconUrl: sk("27111006"), skillName: "Photic Meditation", jobAdvancement: "3" },
     ],
     requiredStats: ["int", "luk", "magicAtt"],
   },
@@ -489,8 +493,8 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
     buffSkills: [
       DSE,
       DCO,
-      { skillIconUrl: "https://media.maplestorywiki.net/yetidb/Skill_Ancient_Warding.png", skillName: "Ancient Warding", jobAdvancement: "4" },
-      { skillIconUrl: "https://media.maplestorywiki.net/yetidb/Skill_Elvish_Blessing.png", skillName: "Elvish Blessing", jobAdvancement: "Hyper Skills (140)" },
+      { skillIconUrl: sk("23121004"), skillName: "Ancient Warding", jobAdvancement: "4" },
+      { skillIconUrl: sk("23121054"), skillName: "Elvish Blessing", jobAdvancement: "Hyper Skills (140)" },
     ],
     requiredStats: ["dex", "str", "attackPower"],
   },
@@ -518,7 +522,7 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
     buffSkills: [
       DSE,
       DCO,
-      { skillIconUrl: "https://media.maplestorywiki.net/yetidb/Skill_Nature%27s_Providence.png", skillName: "Nature's Providence", jobAdvancement: "3" },
+      { skillIconUrl: sk("172111009"), skillName: "Nature's Providence", jobAdvancement: "3" },
     ],
     requiredStats: ["int", "luk", "magicAtt"],
   },
@@ -539,7 +543,7 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
     buffSkills: [
       DSE,
       DCO,
-      { skillIconUrl: "https://media.maplestorywiki.net/yetidb/Skill_Star_Gazer.png", skillName: "Star Gazer", jobAdvancement: "4" },
+      { skillIconUrl: sk("65121004"), skillName: "Star Gazer", jobAdvancement: "4" },
     ],
     requiredStats: ["dex", "str", "attackPower"],
   },
@@ -566,8 +570,8 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
     buffSkills: [
       DSE,
       DCO,
-      { skillIconUrl: "https://media.maplestorywiki.net/yetidb/Skill_Realign_Attacker_Mode.png", skillName: "Realign: Attacker Mode", jobAdvancement: "Beginner" },
-      { skillIconUrl: "https://media.maplestorywiki.net/yetidb/Skill_Blaze_On.png", skillName: "Blaze On", jobAdvancement: "2" },
+      { skillIconUrl: sk("60001217"), skillName: "Realign: Attacker Mode", jobAdvancement: "Beginner" },
+      { skillIconUrl: sk("61101004"), skillName: "Blaze On", jobAdvancement: "2" },
     ],
     requiredStats: ["str", "dex", "attackPower"],
   },
@@ -577,7 +581,7 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
     buffSkills: [
       DSE,
       DCO,
-      { skillIconUrl: "https://media.maplestorywiki.net/yetidb/Skill_Dark_Aura.png", skillName: "Dark Aura", jobAdvancement: "4" },
+      { skillIconUrl: sk("32121017"), skillName: "Dark Aura", jobAdvancement: "4" },
     ],
     requiredStats: ["int", "luk", "magicAtt"],
   },
@@ -595,7 +599,7 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
     buffSkills: [
       DSE,
       DCO,
-      { skillIconUrl: "https://media.maplestorywiki.net/yetidb/Skill_Tank_Mech.png", skillName: "Tank Mech", jobAdvancement: "3" },
+      { skillIconUrl: sk("35111003"), skillName: "Tank Mech", jobAdvancement: "3" },
     ],
     requiredStats: ["dex", "str", "attackPower"],
   },
@@ -603,7 +607,7 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
     id: "wild_hunter",
     nexonJobName: "Wild Hunter",
     buffSkills: [
-      { skillIconUrl: "https://media.maplestorywiki.net/yetidb/Skill_Sharp_Eyes.png", skillName: "Sharp Eyes", jobAdvancement: "4" },
+      { skillIconUrl: sk("3121002"), skillName: "Sharp Eyes", jobAdvancement: "4" },
       DCO,
     ],
     requiredStats: ["dex", "str", "attackPower"],
@@ -637,7 +641,7 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
     buffSkills: [
       DSE,
       DCO,
-      { skillIconUrl: "https://media.maplestorywiki.net/yetidb/Skill_Celestial_Alignment.png", skillName: "Celestial Alignment", jobAdvancement: "2" },
+      { skillIconUrl: sk("182101005"), skillName: "Celestial Alignment", jobAdvancement: "2" },
     ],
     requiredStats: ["int", "luk", "magicAtt"],
   },
@@ -648,7 +652,7 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
     buffSkills: [
       DSE,
       DCO,
-      { skillIconUrl: "https://media.maplestorywiki.net/yetidb/Skill_Divine_Aura.png", skillName: "Divine Aura", jobAdvancement: "Transcendent" },
+      { skillIconUrl: sk("100000263"), skillName: "Divine Aura", jobAdvancement: "Transcendent" },
     ],
     requiredStats: ["str", "dex", "attackPower"],
   },
