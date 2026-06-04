@@ -9,3 +9,9 @@ const RESOURCE_BASE = process.env.NEXT_PUBLIC_RESOURCE_BASE ?? "https://haku.net
 export function resourceImageUrl(type: ResourceType, id: string, asset: string): string {
   return `${RESOURCE_BASE}/api/img/${type}/${id}/${asset}`;
 }
+
+// Boss Maple Guide icon (haku.network `ui/boss` namespace). IDs are looked up by hand
+// from `manifests/v<version>/boss.json` and hardcoded at the call site.
+export function bossIconUrl(id: string): string {
+  return `${RESOURCE_BASE}/api/img/ui/boss/${id}/icon.png`;
+}

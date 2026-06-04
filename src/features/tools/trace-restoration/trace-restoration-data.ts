@@ -1,4 +1,4 @@
-const CDN = "https://media.maplestorywiki.net/yetidb";
+import { bossIconUrl } from "../../../lib/mapleResource";
 
 /* ------------------------------------------------------------------ */
 /*  Star Force Research — Whisper Crystals                             */
@@ -98,7 +98,7 @@ export const TRACE_BOSSES: TraceBoss[] = [
   {
     id: "lotus",
     name: "Lotus",
-    icon: `${CDN}/Maple_Guide_-_Lotus.png`,
+    icon: bossIconUrl("13"),
     frequency: "weekly",
     maxPoints: 14,
     missions: [
@@ -113,7 +113,7 @@ export const TRACE_BOSSES: TraceBoss[] = [
   {
     id: "damien",
     name: "Damien",
-    icon: `${CDN}/Maple_Guide_-_Damien.png`,
+    icon: bossIconUrl("15"),
     frequency: "weekly",
     maxPoints: 7,
     missions: [
@@ -127,7 +127,7 @@ export const TRACE_BOSSES: TraceBoss[] = [
   {
     id: "lucid",
     name: "Lucid",
-    icon: `${CDN}/Maple_Guide_-_Lucid.png`,
+    icon: bossIconUrl("19"),
     frequency: "weekly",
     maxPoints: 12,
     missions: [
@@ -142,7 +142,7 @@ export const TRACE_BOSSES: TraceBoss[] = [
   {
     id: "will",
     name: "Will",
-    icon: `${CDN}/Maple_Guide_-_Will.png`,
+    icon: bossIconUrl("23"),
     frequency: "weekly",
     maxPoints: 13,
     missions: [
@@ -157,7 +157,7 @@ export const TRACE_BOSSES: TraceBoss[] = [
   {
     id: "darknell",
     name: "Darknell",
-    icon: `${CDN}/Maple_Guide_-_Guard_Captain_Darknell.png`,
+    icon: bossIconUrl("27"),
     frequency: "weekly",
     maxPoints: 14,
     missions: [
@@ -172,7 +172,7 @@ export const TRACE_BOSSES: TraceBoss[] = [
   {
     id: "gloom",
     name: "Gloom",
-    icon: `${CDN}/Maple_Guide_-_Giant_Monster_Gloom.png`,
+    icon: bossIconUrl("26"),
     frequency: "weekly",
     maxPoints: 13,
     missions: [
@@ -187,7 +187,7 @@ export const TRACE_BOSSES: TraceBoss[] = [
   {
     id: "vhilla",
     name: "Verus Hilla",
-    icon: `${CDN}/Maple_Guide_-_Verus_Hilla.png`,
+    icon: bossIconUrl("24"),
     frequency: "weekly",
     maxPoints: 19,
     missions: [
@@ -202,7 +202,7 @@ export const TRACE_BOSSES: TraceBoss[] = [
   {
     id: "gas",
     name: "Guardian Angel Slime",
-    icon: `${CDN}/Maple_Guide_-_Guardian_Angel_Slime.png`,
+    icon: bossIconUrl("29"),
     frequency: "weekly",
     maxPoints: 14,
     missions: [
@@ -217,7 +217,7 @@ export const TRACE_BOSSES: TraceBoss[] = [
   {
     id: "blackmage",
     name: "Black Mage",
-    icon: `${CDN}/Maple_Guide_-_Black_Mage.png`,
+    icon: bossIconUrl("25"),
     frequency: "monthly",
     maxPoints: 50,
     missions: [
@@ -231,7 +231,7 @@ export const TRACE_BOSSES: TraceBoss[] = [
   {
     id: "seren",
     name: "Seren",
-    icon: `${CDN}/Maple_Guide_-_Chosen_Seren.png`,
+    icon: bossIconUrl("28"),
     frequency: "weekly",
     maxPoints: 31,
     missions: [
