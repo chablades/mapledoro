@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import Image from "next/image";
 import type { AppTheme } from "../../../components/themes";
+import { resourceImageUrl } from "../../../lib/mapleResource";
 import { replaceZeroOnDigit, replaceOneOnDigit } from "../numberInputHandlers";
 import type { HexaSkillDef, HexaClassDef } from "./hexa-classes";
 import type { SkillCostSummary, SectionCost } from "./useHexaSkillsState";
@@ -38,34 +39,39 @@ const masteryNameStyle: React.CSSProperties = {
   ...skillNameOverflow,
 };
 
-function SkillIcon({ skill, theme, size = 32 }: { skill: HexaSkillDef; theme: AppTheme; size?: number }) {
+// Renders the in-game HEXA Matrix icon (haku.network `hexa-skill` id), or an `iconUrl`
+// override when no id exists yet. A missing icon or load error falls back to the initial.
+function SkillIcon({ iconId, iconUrl, name, theme, size = 32 }: { iconId: string; iconUrl?: string; name: string; theme: AppTheme; size?: number }) {
   const imgRef = useRef<HTMLImageElement>(null);
   const fallbackRef = useRef<HTMLDivElement>(null);
+  const src = iconUrl ?? (iconId !== "" ? resourceImageUrl("hexa-skill", iconId, "icon.png") : null);
 
   return (
     <>
-      <Image
-        ref={imgRef}
-        src={skill.icon}
-        alt={skill.name}
-        width={size}
-        height={size}
-        unoptimized
-        onError={() => {
-          if (imgRef.current) imgRef.current.style.display = "none";
-          if (fallbackRef.current) fallbackRef.current.style.display = "flex";
-        }}
-        style={{
-          ...skillIconImgBase,
-          background: theme.panel,
-          border: `1px solid ${theme.border}`,
-        }}
-      />
+      {src && (
+        <Image
+          ref={imgRef}
+          src={src}
+          alt={name}
+          width={size}
+          height={size}
+          unoptimized
+          onError={() => {
+            if (imgRef.current) imgRef.current.style.display = "none";
+            if (fallbackRef.current) fallbackRef.current.style.display = "flex";
+          }}
+          style={{
+            ...skillIconImgBase,
+            background: theme.panel,
+            border: `1px solid ${theme.border}`,
+          }}
+        />
+      )}
       <div
         ref={fallbackRef}
         style={{
           ...skillIconFallbackBase,
-          display: "none",
+          display: src ? "none" : "flex",
           width: size,
           height: size,
           background: theme.accentSoft,
@@ -74,7 +80,7 @@ function SkillIcon({ skill, theme, size = 32 }: { skill: HexaSkillDef; theme: Ap
           color: theme.accent,
         }}
       >
-        {skill.name.charAt(0)}
+        {name.charAt(0)}
       </div>
     </>
   );
@@ -255,7 +261,7 @@ function SkillRow({
         padding: "8px 0",
       }}
     >
-      <SkillIcon skill={skill} theme={theme} />
+      <SkillIcon iconId={skill.iconId} iconUrl={skill.iconUrl} name={skill.name} theme={theme} />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div
           style={{
@@ -367,16 +373,16 @@ export function MasterySection({
         cost={sectionCost.total}
         theme={theme}
       />
-      {classDef.mastery.map((nodeSkills, i) => (
-        <div key={nodeSkills[0].name} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "8px 0" }}>
-          <SkillIcon skill={nodeSkills[0]} theme={theme} />
+      {classDef.mastery.map((node, i) => (
+        <div key={node.skills[0]} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "8px 0" }}>
+          <SkillIcon iconId={node.iconId} iconUrl={node.iconUrl} name={node.skills[0]} theme={theme} />
           <div style={{ flex: 1, minWidth: 0 }}>
-            {nodeSkills.map((skill) => (
+            {node.skills.map((skillName) => (
               <div
-                key={skill.name}
+                key={skillName}
                 style={{ ...masteryNameStyle, color: theme.text }}
               >
-                {skill.name}
+                {skillName}
               </div>
             ))}
             <CostBadge cost={sectionCost.perSkill[i]} theme={theme} compact />

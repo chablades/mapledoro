@@ -1,0 +1,39 @@
+{
+  "_meta": {
+    "assets": [
+      "icon.png",
+      "iconDisabled.png"
+    ],
+    "urlPattern": "/api/img/erda-skill/{type}/{id}/{asset}"
+  },
+  "entries": {
+    "rush/1": {},
+    "rush/2": {},
+    "rush/6": {},
+    "rush/8": {},
+    "rush/12": {},
+    "rush/13": {},
+    "rush/14": {},
+    "rush/16": {},
+    "rush/23": {},
+    "rush/24": {},
+    "rush/27": {},
+    "rush/32": {},
+    "rush/33": {},
+    "rush/34": {},
+    "rush/39": {},
+    "rush/42": {},
+    "rush/46": {},
+    "skill/100": {},
+    "skill/101": {},
+    "skill/102": {},
+    "skill/104": {},
+    "skill/106": {},
+    "boost/300": {},
+    "boost/303": {},
+    "ultimate/500": {},
+    "ultimate/501": {},
+    "origin/10000": {},
+    "origin/10001": {}
+  }
+}
