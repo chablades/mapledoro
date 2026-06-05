@@ -10,6 +10,7 @@ import {
   simulate,
   formatMeso,
   formatMesoFull,
+  BOOM_TIER_COUNT,
   type StarForceOpts,
   type MvpTier,
   type StarResult,
@@ -22,6 +23,11 @@ import { toolStyles } from "../tool-styles";
 // -- Helpers ------------------------------------------------------------------
 
 const STAR_OPTIONS = Array.from({ length: 31 }, (_, i) => i);
+
+const BOOM_TIER_OPTIONS = Array.from({ length: BOOM_TIER_COUNT }, (_, i) => ({
+  value: String(i + 1),
+  label: `Tier ${i + 1}`,
+}));
 
 function pct(n: number): string {
   if (n === 0) return "—";
@@ -282,6 +288,8 @@ interface CalcState {
   starCatch: boolean;
   safeguard: boolean;
   mvp: MvpTier;
+  experimental: boolean;
+  boomTier: number;
   trials: number;
   simGen: number;
 }
@@ -295,6 +303,8 @@ type CalcAction =
   | { type: "setStarCatch"; value: boolean }
   | { type: "setSafeguard"; value: boolean }
   | { type: "setMvp"; value: MvpTier }
+  | { type: "setExperimental"; value: boolean }
+  | { type: "setBoomTier"; value: number }
   | { type: "setTrials"; value: number }
   | { type: "reroll" };
 
@@ -498,6 +508,34 @@ function StarForceOptions({
         </span>
         <PillGroup theme={theme} options={MVP_OPTIONS} value={calc.mvp} onChange={(v) => dispatch({ type: "setMvp", value: v })} />
       </div>
+
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem", alignItems: "center" }}>
+        <span
+          className="section-label"
+          style={{ color: theme.muted, marginBottom: 0, minWidth: 60 }}
+        >
+          Experimental
+        </span>
+        <Toggle
+          theme={theme}
+          label="Boom Reduction Tier"
+          checked={calc.experimental}
+          onChange={(v) => dispatch({ type: "setExperimental", value: v })}
+        />
+        {calc.experimental && (
+          <>
+            <PillGroup
+              theme={theme}
+              options={BOOM_TIER_OPTIONS}
+              value={String(calc.boomTier)}
+              onChange={(v) => dispatch({ type: "setBoomTier", value: Number(v) })}
+            />
+            <span style={{ fontSize: "0.75rem", fontWeight: 600, color: theme.muted }}>
+              Applies to 15★→22★. Higher tiers cost more for less destruction.
+            </span>
+          </>
+        )}
+      </div>
     </div>
   );
 }
@@ -523,6 +561,8 @@ export default function StarForceWorkspace({ theme }: { theme: AppTheme }) {
         case "setStarCatch": return { ...state, starCatch: action.value };
         case "setSafeguard": return { ...state, safeguard: action.value };
         case "setMvp": return { ...state, mvp: action.value };
+        case "setExperimental": return { ...state, experimental: action.value };
+        case "setBoomTier": return { ...state, boomTier: action.value };
         case "setTrials": return { ...state, trials: action.value };
         case "reroll": return { ...state, simGen: state.simGen + 1 };
       }
@@ -537,6 +577,8 @@ export default function StarForceWorkspace({ theme }: { theme: AppTheme }) {
       starCatch: true,
       safeguard: false,
       mvp: "none" as MvpTier,
+      experimental: false,
+      boomTier: 1,
       trials: 1000,
       simGen: 0,
     },
@@ -555,8 +597,9 @@ export default function StarForceWorkspace({ theme }: { theme: AppTheme }) {
       starCatch: calc.starCatch,
       safeguard: calc.safeguard,
       mvp: calc.mvp,
+      boomTier: calc.experimental ? calc.boomTier : 1,
     }),
-    [calc.level, calc.startStar, effectiveTarget, calc.replacementCost, calc.costDiscount, calc.boomReduction, calc.starCatch, calc.safeguard, calc.mvp],
+    [calc.level, calc.startStar, effectiveTarget, calc.replacementCost, calc.costDiscount, calc.boomReduction, calc.starCatch, calc.safeguard, calc.mvp, calc.experimental, calc.boomTier],
   );
 
   const results = useMemo(() => computeExpectedCosts(opts), [opts]);

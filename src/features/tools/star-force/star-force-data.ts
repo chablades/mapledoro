@@ -23,6 +23,7 @@ export interface StarForceOpts {
   starCatch: boolean;      // +5% multiplicative success
   safeguard: boolean;      // boom protection at stars 15-17 (3x cost)
   mvp: MvpTier;
+  boomTier?: number;       // experimental enhancement mode 1-4 (stars 15-21); 1 = baseline
 }
 
 // -- Rates --------------------------------------------------------------------
@@ -64,6 +65,54 @@ function restorePoint(star: number): number {
   if (star < 23)  return 17;  // 21-22
   if (star < 26)  return 19;  // 23-25
   return 20;                   // 26-29
+}
+
+// -- Boom reduction tier (experimental) ---------------------------------------
+
+/*
+  Experimental "Enhancement Mode" boom-reduction system (Tespia). Eligible at
+  stars 15-21 (i.e. enhancing up to 22★). Tables are indexed [star][tier - 1];
+  tier 1 is the baseline (reproduces the default SUCCESS/DESTROY rates), tiers
+  2-4 trade higher cost for lower destruction. Cost values are additive deltas
+  on top of the base multiplier of 1, matching the safeguard convention.
+*/
+
+const BOOM_TIER_COST_MULT_INCREASE: Record<number, readonly number[]> = {
+  15: [0, 0.5, 1.5, 2],
+  16: [0, 0.5, 1.5, 2],
+  17: [0, 0.5, 1.5, 2],
+  18: [0, 1, 2.5, 5.5],
+  19: [0, 1, 2.5, 5.5],
+  20: [0, 1, 2.5, 5.5],
+  21: [0, 1, 2.5, 5.5],
+};
+
+const BOOM_TIER_DESTROY_RATES: Record<number, readonly number[]> = {
+  15: [0.0210, 0.0140, 0.0070, 0],
+  16: [0.0210, 0.0140, 0.0070, 0],
+  17: [0.0680, 0.0425, 0.0170, 0],
+  18: [0.0680, 0.0440, 0.0180, 0],
+  19: [0.0850, 0.0616, 0.0360, 0],
+  20: [0.1050, 0.0750, 0.0400, 0],
+  21: [0.1275, 0.0880, 0.0450, 0],
+};
+
+const BOOM_TIER_SUCCESS_RATES: Record<number, readonly number[]> = {
+  15: [0.30, 0.30, 0.30, 0.30],
+  16: [0.30, 0.30, 0.30, 0.30],
+  17: [0.15, 0.15, 0.15, 0.15],
+  18: [0.15, 0.12, 0.10, 0.08],
+  19: [0.15, 0.12, 0.10, 0.08],
+  20: [0.30, 0.25, 0.20, 0.15],
+  21: [0.15, 0.12, 0.10, 0.08],
+};
+
+/** Number of selectable enhancement-mode tiers (1-4). */
+export const BOOM_TIER_COUNT = 4;
+
+/** A boom tier override applies only at stars 15-21 with a tier above baseline. */
+function boomTierActive(star: number, boomTier: number | undefined): boolean {
+  return (boomTier ?? 1) > 1 && star >= 15 && star <= 21;
 }
 
 // -- Cost formula -------------------------------------------------------------
@@ -141,6 +190,7 @@ const MVP_DISCOUNT: Record<MvpTier, number> = {
  *  - MVP discount (star ≤ 15): subtract tier %
  *  - 30% off event: subtract 0.30
  *  - Safeguard (stars 15-17): add 2  (triples the cost)
+ *  - Boom tier (stars 15-21): add the tier's cost delta
  */
 export function attemptCost(level: number, star: number, opts: StarForceOpts): number {
   const base = baseCost(level, star);
@@ -148,6 +198,9 @@ export function attemptCost(level: number, star: number, opts: StarForceOpts): n
   if (star <= 15) mult -= MVP_DISCOUNT[opts.mvp];
   if (opts.costDiscount) mult -= 0.3;
   if (opts.safeguard && star >= 15 && star <= 17) mult += 2;
+  if (boomTierActive(star, opts.boomTier)) {
+    mult += BOOM_TIER_COST_MULT_INCREASE[star][opts.boomTier! - 1];
+  }
   return Math.round(base * mult);
 }
 
@@ -163,6 +216,7 @@ interface AdjustedRates {
  * Compute adjusted rates for a star considering all active options.
  *
  * Order of operations (matching reference):
+ *  0. Boom tier (stars 15-21): override base success & boom with the tier's rates
  *  1. Safeguard (stars 15-17): boom → maintain
  *  2. Boom reduction event (stars ≤ 21): boom *= 0.7, excess → maintain
  *  3. Star catching: success *= 1.05, redistribute leftover proportionally
@@ -171,6 +225,14 @@ function adjustedRates(star: number, opts: StarForceOpts): AdjustedRates {
   let success = SUCCESS_RATE[star];
   let maintain = MAINTAIN_RATE[star];
   let boom = DESTROY_RATE[star];
+
+  // Boom tier (experimental): stars 15-21, overrides base success & boom rates
+  if (boomTierActive(star, opts.boomTier)) {
+    const idx = opts.boomTier! - 1;
+    success = BOOM_TIER_SUCCESS_RATES[star][idx];
+    boom = BOOM_TIER_DESTROY_RATES[star][idx];
+    maintain = 1 - success - boom; // no star decrease post-revamp
+  }
 
   // Safeguard: stars 15-17, boom moves to maintain
   if (opts.safeguard && star >= 15 && star <= 17) {
