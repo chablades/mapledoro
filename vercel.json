@@ -1,0 +1,16 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "mapledoro.vercel.app"
+        }
+      ],
+      "destination": "https://mapledoro.com/:path*",
+      "permanent": true
+    }
+  ]
+}
