@@ -85,9 +85,12 @@ export default function MarriageSetupStep({
       {married === true && (
         <input
           type="text"
+          aria-label="Partner's IGN"
           placeholder="Partner's IGN (optional)"
           value={partnerName}
           onChange={(e) => handlePartnerName(e.target.value)}
+          onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
+          onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
           maxLength={12}
           style={{
             width: "100%",
@@ -101,7 +104,7 @@ export default function MarriageSetupStep({
             fontSize: "0.88rem",
             padding: "0.5rem 0.75rem",
             marginBottom: "0.8rem",
-            outline: "none",
+            outlineColor: "transparent",
           }}
         />
       )}

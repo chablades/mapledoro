@@ -108,7 +108,7 @@ function computeAutofill(
       values[skillId as LinkSkillId] = String(best.contribution);
       sources[skillId as LinkSkillId] = `${best.name} (Lv ${best.level})`;
     } else {
-      const sorted = [...entries].sort((a, b) => b.contribution - a.contribution);
+      const sorted = entries.toSorted((a, b) => b.contribution - a.contribution);
       const total = Math.min(sorted.reduce((sum, e) => sum + e.contribution, 0), skill.maxLevel);
       values[skillId as LinkSkillId] = String(total);
       sources[skillId as LinkSkillId] = sorted.map((e) => `${e.name} (Lv ${e.level})`).join(", ");
@@ -179,11 +179,11 @@ function LinkSkillRow({
         <p style={{ margin: 0, fontSize: "0.82rem", fontWeight: 800, color: theme.text, lineHeight: 1.2 }}>
           {skill.name}
         </p>
-        <p style={{ margin: 0, marginTop: "0.1rem", fontSize: "0.72rem", color: theme.muted, fontWeight: 700, lineHeight: 1.2 }}>
+        <p style={{ margin: 0, marginTop: "0.1rem", fontSize: "0.75rem", color: theme.muted, fontWeight: 700, lineHeight: 1.2 }}>
           {skill.classes.join(" · ")}
         </p>
         {source && (
-          <p style={{ margin: 0, marginTop: "0.15rem", fontSize: "0.68rem", color: theme.muted, fontWeight: 600, lineHeight: 1.2, opacity: 0.75 }}>
+          <p style={{ margin: 0, marginTop: "0.15rem", fontSize: "0.75rem", color: theme.muted, fontWeight: 600, lineHeight: 1.2, opacity: 0.75 }}>
             from {source}
           </p>
         )}
@@ -192,6 +192,7 @@ function LinkSkillRow({
         <input
           type="text"
           inputMode="numeric"
+          aria-label={`${skill.name} level`}
           value={value}
           placeholder="0"
           disabled={locked}
@@ -314,7 +315,7 @@ export default function LinkSkillsSetupStep({
                 color: theme.accent,
                 fontFamily: "inherit",
                 fontWeight: 800,
-                fontSize: "0.72rem",
+                fontSize: "0.75rem",
                 padding: "0.2rem 0.55rem",
                 cursor: "pointer",
                 flexShrink: 0,

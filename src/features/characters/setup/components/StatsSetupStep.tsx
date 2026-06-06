@@ -254,7 +254,7 @@ function TripleStatRow({
       </p>
       <div style={{ display: "flex", gap: "0.35rem" }}>
         <div style={{ flex: 2 }}>
-          <input type="text" value={d.base} placeholder="0" style={sub}
+          <input type="text" aria-label={`${TRIPLE_LABELS[id]} base value`} value={d.base} placeholder="0" style={sub}
             onChange={(e) => onUpdate(id, "base", e.target.value)}
             onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
             onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
@@ -263,7 +263,7 @@ function TripleStatRow({
         </div>
         <div style={{ flex: 1.5 }}>
           <div style={{ display: "flex", alignItems: "center", gap: "0.15rem" }}>
-            <input type="text" value={d.percent} placeholder="0" style={sub}
+            <input type="text" aria-label={`${TRIPLE_LABELS[id]} percent value`} value={d.percent} placeholder="0" style={sub}
               onChange={(e) => onUpdate(id, "percent", e.target.value)}
               onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
               onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
@@ -274,7 +274,7 @@ function TripleStatRow({
         </div>
         <div style={{ flex: 1.5 }}>
           <div style={{ display: "flex", alignItems: "center", gap: "0.15rem" }}>
-            <input type="text" value={d.percentUnapplied} placeholder="0" style={sub}
+            <input type="text" aria-label={`${TRIPLE_LABELS[id]} percent not applied`} value={d.percentUnapplied} placeholder="0" style={sub}
               onChange={(e) => onUpdate(id, "percentUnapplied", e.target.value)}
               onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
               onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
@@ -305,13 +305,13 @@ function CombatStatCell({
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.4rem" }}>
         <span style={{ fontSize: "0.78rem", color: theme.muted, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>{label}</span>
         <div style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}>
-          <input type="text" value={cd.seconds} placeholder="0" style={statInputStyle(theme, "2.6rem")}
+          <input type="text" aria-label={`${label} seconds`} value={cd.seconds} placeholder="0" style={statInputStyle(theme, "2.6rem")}
             onChange={(e) => onUpdateCooldown("seconds", e.target.value)}
             onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
             onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
           />
           <span style={{ fontSize: "0.75rem", color: theme.muted, fontWeight: 700 }}>s</span>
-          <input type="text" value={cd.percent} placeholder="0" style={statInputStyle(theme, "2.6rem")}
+          <input type="text" aria-label={`${label} percent`} value={cd.percent} placeholder="0" style={statInputStyle(theme, "2.6rem")}
             onChange={(e) => onUpdateCooldown("percent", e.target.value)}
             onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
             onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
@@ -329,7 +329,7 @@ function CombatStatCell({
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.4rem" }}>
       <span style={{ fontSize: "0.78rem", color: theme.muted, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>{label}</span>
       <div style={{ display: "flex", alignItems: "center", gap: "0.15rem" }}>
-        <input type="text" value={val} placeholder="0" style={statInputStyle(theme, "4rem")}
+        <input type="text" aria-label={label} value={val} placeholder="0" style={statInputStyle(theme, "4rem")}
           onChange={(e) => onUpdate(id, e.target.value)}
           onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
           onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
@@ -401,7 +401,7 @@ function InfoTooltip({ content, theme }: { content: TooltipContent; theme: AppTh
           border: `1.5px solid ${theme.muted}`,
           background: open ? `${theme.accent}18` : "transparent",
           color: open ? theme.accent : theme.muted,
-          fontSize: "0.65rem",
+          fontSize: "0.75rem",
           fontWeight: 900,
           fontFamily: "inherit",
           cursor: "pointer",
@@ -504,6 +504,32 @@ function QuestionToggle({
   );
 }
 
+const BOOL_TOGGLE_OPTIONS = [{ value: "yes", label: "Yes" }, { value: "no", label: "No" }];
+function BoolToggle({ question, value, onToggle, theme, tooltip }: {
+  question: string;
+  value: boolean | undefined;
+  onToggle: (value: boolean | undefined) => void;
+  theme: AppTheme;
+  tooltip?: TooltipContent;
+}) {
+  const strValue = value === true ? "yes" : null;
+  const finalValue = value === false ? "no" : strValue;
+  return (
+    <QuestionToggle
+      question={question}
+      options={BOOL_TOGGLE_OPTIONS}
+      value={finalValue}
+      onToggle={(v) => {
+        if (v === "yes") onToggle(true);
+        else if (v === "no") onToggle(false);
+        else onToggle(undefined);
+      }}
+      theme={theme}
+      tooltip={tooltip}
+    />
+  );
+}
+
 function SetupOptionsSection({
   optsDef, draft, onUpdate, theme,
 }: {
@@ -540,25 +566,12 @@ function SetupOptionsSection({
       ]
     : [{ value: "none", label: "None" }, { value: "mugong", label: "Mu Gong Soul" }];
 
-  function boolToYesNo(val: boolean | undefined): string | null {
-    if (val === true) return "yes";
-    if (val === false) return "no";
-    return null;
-  }
-
-  function yesNoToBool(val: string | null): boolean | undefined {
-    if (val === "yes") return true;
-    if (val === "no") return false;
-    return undefined;
-  }
-
   return (
     <div>
-      <QuestionToggle
+      <BoolToggle
         question="Are you Liberated?"
-        options={[{ value: "yes", label: "Yes" }, { value: "no", label: "No" }]}
-        value={boolToYesNo(opts.isLiberated ?? undefined)}
-        onToggle={(v) => onUpdate({ isLiberated: yesNoToBool(v) })}
+        value={opts.isLiberated}
+        onToggle={(v) => onUpdate({ isLiberated: v })}
         theme={theme}
         tooltip={{
           title: "Genesis Liberation",
@@ -599,11 +612,10 @@ function SetupOptionsSection({
         }}
       />
       {optsDef?.ruinForceShield && (
-        <QuestionToggle
+        <BoolToggle
           question="Do you have a Ruin Force Shield equipped?"
-          options={[{ value: "yes", label: "Yes" }, { value: "no", label: "No" }]}
-          value={boolToYesNo(opts.hasRuinForceShield ?? undefined)}
-          onToggle={(v) => onUpdate({ hasRuinForceShield: yesNoToBool(v) })}
+          value={opts.hasRuinForceShield}
+          onToggle={(v) => onUpdate({ hasRuinForceShield: v })}
           theme={theme}
           tooltip={{
             title: "Ruin Force Shield",

@@ -73,7 +73,7 @@ function normalize(s: string): string {
 
 function matchesQuery(candidate: string, query: string): boolean {
   const norm = normalize(candidate);
-  const tokens = query.trim().split(/\s+/).map(normalize).filter(Boolean);
+  const tokens = query.trim().split(/\s+/).flatMap((t) => { const n = normalize(t); return n ? [n] : []; });
   return tokens.length > 0 && tokens.every((t) => norm.includes(t));
 }
 
@@ -170,7 +170,7 @@ const lineSelectStyle: CSSProperties = {
   boxSizing: "border-box",
   borderRadius: 6,
   fontFamily: "inherit",
-  fontSize: "0.72rem",
+  fontSize: "0.75rem",
   fontWeight: 600,
   padding: "0.25rem 0.4rem",
   border: "1px solid",
@@ -282,6 +282,7 @@ function LinePicker({ value, tier, placeholder, theme, onChange }: {
             <input
               ref={inputRef}
               type="text"
+              aria-label="Search potential lines"
               value={query}
               placeholder="Search…"
               onChange={(e) => setQuery(e.target.value)}
@@ -299,7 +300,7 @@ function LinePicker({ value, tier, placeholder, theme, onChange }: {
                   background: "transparent", border: "none",
                   borderBottom: `1px solid ${theme.border}`,
                   cursor: "pointer", fontFamily: "inherit",
-                  fontSize: "0.72rem", fontWeight: 600, color: theme.muted, textAlign: "left",
+                  fontSize: "0.75rem", fontWeight: 600, color: theme.muted, textAlign: "left",
                 }}
               >
                 — Clear —
@@ -315,7 +316,7 @@ function LinePicker({ value, tier, placeholder, theme, onChange }: {
                   background: line === value ? `${theme.accent}33` : "transparent",
                   border: "none", borderBottom: `1px solid ${theme.border}`,
                   cursor: "pointer", fontFamily: "inherit",
-                  fontSize: "0.72rem", fontWeight: 600, color: theme.text, textAlign: "left",
+                  fontSize: "0.75rem", fontWeight: 600, color: theme.text, textAlign: "left",
                 }}
                 onMouseEnter={(e) => { if (line !== value) e.currentTarget.style.background = `${theme.accent}22`; }}
                 onMouseLeave={(e) => { if (line !== value) e.currentTarget.style.background = "transparent"; }}
@@ -324,7 +325,7 @@ function LinePicker({ value, tier, placeholder, theme, onChange }: {
               </button>
             ))}
             {filtered.length === 0 && (
-              <p style={{ margin: 0, padding: "0.4rem 0.5rem", fontSize: "0.72rem", color: theme.muted, fontWeight: 600 }}>
+              <p style={{ margin: 0, padding: "0.4rem 0.5rem", fontSize: "0.75rem", color: theme.muted, fontWeight: 600 }}>
                 No results
               </p>
             )}
@@ -380,7 +381,7 @@ function TierPickerView({ entry, theme, onBack, onSelect }: {
       >
         ← {getFamiliarDisplayLabel(entry)}
       </button>
-      <p style={{ margin: "0 0 2px", fontSize: "0.72rem", color: theme.muted, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+      <p style={{ margin: "0 0 2px", fontSize: "0.75rem", color: theme.muted, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em" }}>
         Pick rarity
       </p>
       {TIER_ORDER.map((t) => {
@@ -503,6 +504,7 @@ function FamiliarSlotCard({
                 <input
                   ref={inputRef}
                   type="text"
+                  aria-label="Search familiars"
                   value={query}
                   placeholder="Search familiars…"
                   onChange={(e) => onQueryChange(e.target.value)}
@@ -584,13 +586,12 @@ function BadgeSlot({
 
   return (
     <div style={{ position: "relative" }}>
-      <div
-        role="button"
-        tabIndex={0}
+      <button
+        type="button"
         title={badge || "Add badge"}
+        aria-label={badge || "Add badge"}
         onClick={onOpen}
-        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onOpen(); } }}
-        style={{ cursor: "pointer", position: "relative" }}
+        style={{ cursor: "pointer", background: "none", border: "none", padding: 0 }}
       >
         <div style={{ width: outerSize, height: outerSize, clipPath: PENTAGON, background: outerBg, display: "flex", alignItems: "center", justifyContent: "center" }}>
           <div style={{ width: BADGE_SIZE, height: BADGE_SIZE, clipPath: PENTAGON, background: innerBg, display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -603,23 +604,23 @@ function BadgeSlot({
             )}
           </div>
         </div>
-        {badge && (
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); onClear(); }}
-            aria-label="Remove badge"
-            style={{
-              position: "absolute", top: 0, right: 0,
-              width: 14, height: 14, borderRadius: "50%",
-              border: `1px solid ${theme.border}`,
-              background: theme.bg, color: theme.muted,
-              fontSize: "0.75rem", lineHeight: 1,
-              display: "flex", alignItems: "center", justifyContent: "center",
-              cursor: "pointer", padding: 0, fontFamily: "inherit",
-            }}
-          >×</button>
-        )}
-      </div>
+      </button>
+      {badge && (
+        <button
+          type="button"
+          onClick={onClear}
+          aria-label="Remove badge"
+          style={{
+            position: "absolute", top: 0, right: 0,
+            width: 14, height: 14, borderRadius: "50%",
+            border: `1px solid ${theme.border}`,
+            background: theme.bg, color: theme.muted,
+            fontSize: "0.75rem", lineHeight: 1,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            cursor: "pointer", padding: 0, fontFamily: "inherit",
+          }}
+        >×</button>
+      )}
 
       {isOpen && (
         <div style={{ ...popoverContainerStyle, width: 200, background: theme.panel, border: `1px solid ${theme.accent}` }}>
@@ -627,6 +628,7 @@ function BadgeSlot({
             <input
               ref={inputRef}
               type="text"
+              aria-label="Search badges"
               value={query}
               placeholder="Search badges…"
               onChange={(e) => onQueryChange(e.target.value)}

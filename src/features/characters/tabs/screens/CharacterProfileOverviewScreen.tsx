@@ -271,7 +271,7 @@ function OverviewTab({ model }: { model: PreviewPaneModel }) {
         </p>
       ) : (
         <div>
-          <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: theme.muted, marginBottom: 10 }}>{classId === "sia_astelle" ? "Erda Link" : "6th Job · Hexa Skills"}</div>
+          <div style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: theme.muted, marginBottom: 10 }}>{classId === "sia_astelle" ? "Erda Link" : "6th Job · Hexa Skills"}</div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1px 1fr", gap: 14, alignItems: "start" }}>
             {/* Left: Skill + Common */}
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>

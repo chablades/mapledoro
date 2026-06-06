@@ -172,12 +172,13 @@ function SkillIcon({ skill, size = 28 }: { skill: HexaSkillDef; size?: number })
   );
 }
 
-function LevelInput({ value, onChange, theme, min = 0, max = MAX_LEVEL }: { value: number; onChange: (v: number) => void; theme: AppTheme; min?: number; max?: number }) {
+function LevelInput({ value, onChange, theme, min = 0, max = MAX_LEVEL, label }: { value: number; onChange: (v: number) => void; theme: AppTheme; min?: number; max?: number; label?: string }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: "0.3rem", flexShrink: 0 }}>
       <input
         type="text"
         inputMode="numeric"
+        aria-label={label}
         value={value === 0 ? "" : String(value)}
         placeholder={String(min)}
         onChange={(e) => onChange(Number(e.target.value) || 0)}
@@ -242,7 +243,7 @@ function SkillRow({ skill, level, onUpdate, theme, dimmed, min, max }: {
       <p style={{ margin: 0, flex: 1, fontSize: "0.82rem", fontWeight: 700, color: theme.text, minWidth: 0 }}>
         {skill.name}
       </p>
-      <LevelInput value={level} onChange={onUpdate} theme={theme} min={min} max={max} />
+      <LevelInput value={level} onChange={onUpdate} theme={theme} min={min} max={max} label={`${skill.name} level`} />
     </div>
   );
 }
@@ -260,7 +261,7 @@ function MasteryNodeRow({ node, level, onUpdate, theme }: {
       <p style={{ margin: 0, flex: 1, fontSize: "0.78rem", fontWeight: 700, color: theme.text, minWidth: 0, lineHeight: 1.3 }}>
         {node.skills.join(" · ")}
       </p>
-      <LevelInput value={level} onChange={onUpdate} theme={theme} />
+      <LevelInput value={level} onChange={onUpdate} theme={theme} label={`${node.skills[0]} level`} />
     </div>
   );
 }
@@ -333,7 +334,7 @@ function HexaStatRow({ entry, onUpdate, theme, isPrimary, classId, mainStatLabel
             </span>
           )}
         </div>
-        <LevelInput value={entry.level} onChange={(v) => onUpdate({ ...entry, level: v })} theme={theme} max={MAX_STAT_ENTRY_LEVEL} />
+        <LevelInput value={entry.level} onChange={(v) => onUpdate({ ...entry, level: v })} theme={theme} max={MAX_STAT_ENTRY_LEVEL} label="Stat level" />
       </div>
       <StatProgressBar level={entry.level} theme={theme} />
     </div>
@@ -534,7 +535,7 @@ export default function HexaMatrixSetupStep({
                 >
                   <HexaSkillIcon id={def.iconId} size={36} disabled={iconDisabled} />
                   {hint && (
-                    <span style={{ fontSize: "0.62rem", fontWeight: 700, color: theme.muted, lineHeight: 1 }}>
+                    <span style={{ fontSize: "0.75rem", fontWeight: 700, color: theme.muted, lineHeight: 1 }}>
                       {hint}
                     </span>
                   )}
