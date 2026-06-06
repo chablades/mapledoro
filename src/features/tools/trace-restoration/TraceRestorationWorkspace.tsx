@@ -7,7 +7,6 @@ import type { AppTheme } from "../../../components/themes";
 import { replaceZeroOnDigit } from "../numberInputHandlers";
 import { ItemIcon } from "../../../components/ResourceImage";
 import { ToolHeader } from "../../../components/ToolHeader";
-import { WikiAttribution } from "../../../components/WikiAttribution";
 import { SegmentedToggle } from "../../../components/SegmentedToggle";
 import { toolStyles } from "../tool-styles";
 import { readGlobalTool, writeGlobalTool } from "../globalToolsStore";
@@ -768,8 +767,6 @@ export default function TraceRestorationWorkspace({ theme }: { theme: AppTheme }
 
         {tab === "research" && <StarForceResearchTab theme={theme} />}
         {tab === "restoration" && <TraceRestorationTab theme={theme} />}
-
-        <WikiAttribution theme={theme} subject="Boss and item images" />
       </div>
     </div>
   );

@@ -159,7 +159,7 @@ export const DESTINY_BOSSES: LiberationBoss[] = [
   },
   {
     name: "Radiant Malefic Star",
-    icon: "https://media.maplestorywiki.net/yetidb/Maple_Guide_-_Malefic_Star.png",
+    icon: bossIconUrl("37"),
     difficulties: [
       { label: "Normal", traces: 20 },
       { label: "Hard", traces: 380 },
@@ -200,7 +200,7 @@ export const DESTINY_BOSSES: LiberationBoss[] = [
   },
   {
     name: "Jupiter",
-    icon: "https://media.maplestorywiki.net/yetidb/Maple_Guide_-_Jupiter.png",
+    icon: bossIconUrl("38"),
     difficulties: [
       { label: "Normal", traces: 160 },
       { label: "Hard", traces: 500 },

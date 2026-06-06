@@ -12,7 +12,6 @@ import Link from "next/link";
 import AppShell from "../../../components/AppShell";
 import type { AppTheme } from "../../../components/themes";
 import { CLASSES, CLASS_TYPES, type ClassEntry } from "./classData";
-import { WikiAttribution } from "../../../components/WikiAttribution";
 
 /* ── Class card ───────────────────────────────────────────────── */
 
@@ -60,6 +59,16 @@ function portraitContainerStyle(theme: AppTheme): CSSProperties {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
+  };
+}
+
+function attributionStyle(theme: AppTheme): CSSProperties {
+  return {
+    fontSize: "0.75rem",
+    color: theme.muted,
+    fontWeight: 600,
+    lineHeight: 1.6,
+    padding: "0 0.25rem",
   };
 }
 
@@ -277,15 +286,18 @@ function CharacterGuidesContent({ theme }: { theme: AppTheme }) {
           </div>
 
           <div style={{ marginTop: "2rem" }}>
-            <WikiAttribution
-              theme={theme}
-              sources={[
-                {
-                  label: "Nexon",
-                  href: "https://maplestory.nexon.net",
-                },
-              ]}
-            />
+            <div style={attributionStyle(theme)}>
+              Class images and data sourced from{" "}
+              <a
+                href="https://maplestory.nexon.net"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ color: theme.accent, textDecoration: "none" }}
+              >
+                Nexon
+              </a>
+              .
+            </div>
           </div>
         </div>
       </div>

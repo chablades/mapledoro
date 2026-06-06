@@ -6,7 +6,6 @@ import type { AppTheme } from "../../../components/themes";
 import { replaceZeroOnDigit } from "../numberInputHandlers";
 import { ProgressBar } from "../../../components/ProgressBar";
 import { ToolHeader } from "../../../components/ToolHeader";
-import { WikiAttribution } from "../../../components/WikiAttribution";
 import { CharacterSyncPanel } from "../../../components/CharacterSyncPanel";
 import { SegmentedToggle } from "../../../components/SegmentedToggle";
 import {
@@ -902,9 +901,6 @@ export default function LiberationWorkspace({ theme }: { theme: AppTheme }) {
             traceName={traceName}
             traceNameShort={traceNameShort}
           />
-
-          <WikiAttribution theme={theme} subject="Boss images" />
-
           </>
           )}
         </div>
