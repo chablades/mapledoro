@@ -14,28 +14,42 @@ export function Toggle({
   label,
   checked,
   onChange,
+  disabled = false,
+  style,
 }: {
   theme: AppTheme;
   label: string;
   checked: boolean;
   onChange: (v: boolean) => void;
+  disabled?: boolean;
+  style?: React.CSSProperties;
 }) {
+  const mergedStyle: React.CSSProperties = {
+    ...toggleBase,
+    ...style,
+    color: checked ? theme.accentText : theme.muted,
+    background: checked ? theme.accentSoft : theme.timerBg,
+    border: `1px solid ${checked ? theme.accent : theme.border}`,
+    opacity: disabled ? 0.4 : 1,
+    cursor: disabled ? "not-allowed" : "pointer",
+  };
+  const content = `${checked ? "\u2713 " : ""}${label}`;
+
+  if (disabled) {
+    return <div role="button" aria-disabled style={mergedStyle}>{content}</div>;
+  }
+
+  const activate = () => onChange(!checked);
   return (
     <div
       className="tool-btn"
       role="button"
       tabIndex={0}
-      onClick={() => onChange(!checked)}
-      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onChange(!checked); } }}
-      style={{
-        ...toggleBase,
-        color: checked ? theme.accentText : theme.muted,
-        background: checked ? theme.accentSoft : theme.timerBg,
-        border: `1px solid ${checked ? theme.accent : theme.border}`,
-      }}
+      onClick={activate}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); activate(); } }}
+      style={mergedStyle}
     >
-      {checked ? "\u2713 " : ""}
-      {label}
+      {content}
     </div>
   );
 }

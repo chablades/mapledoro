@@ -16,7 +16,7 @@ import {
   type StarResult,
   type SimulationResult,
 } from "./star-force-data";
-import { Toggle, PillGroup } from "../shared-ui";
+import { Toggle } from "../shared-ui";
 import { MVP_OPTIONS } from "../shared-data";
 import { toolStyles } from "../tool-styles";
 
@@ -24,26 +24,47 @@ import { toolStyles } from "../tool-styles";
 
 const STAR_OPTIONS = Array.from({ length: 31 }, (_, i) => i);
 
-const BOOM_TIER_OPTIONS = Array.from({ length: BOOM_TIER_COUNT }, (_, i) => ({
-  value: String(i + 1),
-  label: `Tier ${i + 1}`,
-}));
-
 function pct(n: number): string {
   if (n === 0) return "—";
   return (n * 100).toFixed(1) + "%";
 }
 
-const rerollBtnStyle: React.CSSProperties = {
-  padding: "7px 16px",
+const simulateBtnStyle: React.CSSProperties = {
+  padding: "11px 16px",
   borderRadius: "10px",
-  fontSize: "0.8rem",
+  fontSize: "0.85rem",
   fontWeight: 800,
+  textAlign: "center",
   userSelect: "none",
 };
 
+// Shared height so textboxes, dropdowns, and toggles line up (slider excluded).
+const CONTROL_HEIGHT = 34;
+
+// Common control width per grid column (left: Item Level / Target Star / Trials;
+// right: Current Star / Replace Cost / MVP).
+const LEFT_COL_WIDTH = 110;
+const RIGHT_COL_WIDTH = 130;
+
+const controlSizeStyle: React.CSSProperties = {
+  height: CONTROL_HEIGHT,
+  boxSizing: "border-box",
+};
+
+const toggleControlStyle: React.CSSProperties = {
+  ...controlSizeStyle,
+  display: "flex",
+  alignItems: "center",
+};
+
+const optionRowStyle: React.CSSProperties = {
+  display: "flex",
+  flexWrap: "wrap",
+  gap: "0.75rem",
+  alignItems: "center",
+};
+
 const previewBarBase: React.CSSProperties = {
-  marginTop: "1rem",
   padding: "10px 14px",
   borderRadius: "10px",
   display: "flex",
@@ -59,7 +80,7 @@ const optionsPanelBase: React.CSSProperties = {
   borderRadius: "14px",
   display: "flex",
   flexDirection: "column",
-  gap: "0.75rem",
+  gap: "1rem",
 };
 
 // -- Sub-components -----------------------------------------------------------
@@ -74,10 +95,10 @@ function InputRow({
   children: React.ReactNode;
 }) {
   return (
-    <label style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+    <label style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
       <span
         className="section-label"
-        style={{ color: theme.muted, minWidth: 130, marginBottom: 0 }}
+        style={{ color: theme.muted, minWidth: 110, marginBottom: 0 }}
       >
         {label}
       </span>
@@ -288,7 +309,6 @@ interface CalcState {
   starCatch: boolean;
   safeguard: boolean;
   mvp: MvpTier;
-  experimental: boolean;
   boomTier: number;
   trials: number;
   simGen: number;
@@ -303,14 +323,13 @@ type CalcAction =
   | { type: "setStarCatch"; value: boolean }
   | { type: "setSafeguard"; value: boolean }
   | { type: "setMvp"; value: MvpTier }
-  | { type: "setExperimental"; value: boolean }
   | { type: "setBoomTier"; value: number }
   | { type: "setTrials"; value: number }
   | { type: "reroll" };
 
-// -- Inputs panel -------------------------------------------------------------
+// -- Inputs + options panel ---------------------------------------------------
 
-function StarForceInputs({
+function StarForceForm({
   theme,
   calc,
   dispatch,
@@ -327,15 +346,16 @@ function StarForceInputs({
   inputStyle: React.CSSProperties;
   selectStyle: React.CSSProperties;
 }) {
+  // Boom-reduction tier > 1 overrides events/safeguard, so disable them.
+  const tierActive = calc.boomTier > 1;
+
   return (
     <div
       className="fade-in panel-card"
       style={{
+        ...optionsPanelBase,
         background: theme.panel,
         border: `1px solid ${theme.border}`,
-        padding: "1.25rem",
-        marginBottom: "1.25rem",
-        borderRadius: "14px",
       }}
     >
       <div className="sf-inputs-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
@@ -349,7 +369,7 @@ function StarForceInputs({
             onFocus={(e) => e.currentTarget.select()}
             onKeyDown={replaceZeroOnDigit}
             onChange={(e) => dispatch({ type: "setLevel", value: Math.max(0, Math.min(300, Number(e.target.value) || 0)) })}
-            style={inputStyle}
+            style={{ ...inputStyle, width: LEFT_COL_WIDTH }}
           />
         </InputRow>
 
@@ -358,7 +378,7 @@ function StarForceInputs({
             className="tool-input"
             value={calc.startStar}
             onChange={(e) => dispatch({ type: "setStartStar", value: Number(e.target.value) })}
-            style={selectStyle}
+            style={{ ...selectStyle, width: RIGHT_COL_WIDTH }}
           >
             {STAR_OPTIONS.slice(0, 30).map((s) => (
               <option key={s} value={s}>{s}★</option>
@@ -371,7 +391,7 @@ function StarForceInputs({
             className="tool-input"
             value={calc.targetStar}
             onChange={(e) => dispatch({ type: "setTargetStar", value: Number(e.target.value) })}
-            style={selectStyle}
+            style={{ ...selectStyle, width: LEFT_COL_WIDTH }}
           >
             {STAR_OPTIONS.slice(1).map((s) => (
               <option key={s} value={s}>{s}★</option>
@@ -388,7 +408,7 @@ function StarForceInputs({
             onFocus={(e) => e.currentTarget.select()}
             onKeyDown={replaceZeroOnDigit}
             onChange={(e) => dispatch({ type: "setReplacementCost", value: Math.max(0, Number(e.target.value) || 0) })}
-            style={inputStyle}
+            style={{ ...inputStyle, width: RIGHT_COL_WIDTH }}
             placeholder="0"
           />
         </InputRow>
@@ -402,27 +422,64 @@ function StarForceInputs({
             value={calc.trials}
             onFocus={(e) => e.currentTarget.select()}
             onChange={(e) => dispatch({ type: "setTrials", value: Math.max(1, Math.min(100000, Number(e.target.value) || 1000)) })}
-            style={inputStyle}
+            style={{ ...inputStyle, width: LEFT_COL_WIDTH }}
           />
         </InputRow>
 
-        <div style={{ display: "flex", alignItems: "center" }}>
-          <div
-            className="tool-btn"
-            role="button"
-            tabIndex={0}
-            onClick={() => dispatch({ type: "reroll" })}
-            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); dispatch({ type: "reroll" }); } }}
-            style={{
-              ...rerollBtnStyle,
-              color: theme.accentText,
-              background: theme.accentSoft,
-              border: `1px solid ${theme.accent}`,
-            }}
+        <InputRow label="MVP" theme={theme}>
+          <select
+            className="tool-input"
+            value={calc.mvp}
+            onChange={(e) => dispatch({ type: "setMvp", value: e.target.value as MvpTier })}
+            style={{ ...selectStyle, width: RIGHT_COL_WIDTH }}
           >
-            Re-roll
-          </div>
+            {MVP_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>{o.label}</option>
+            ))}
+          </select>
+        </InputRow>
+      </div>
+
+      {/* Events + Options, aligned with the inputs grid columns */}
+      <div className="sf-inputs-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+        <div style={optionRowStyle}>
+          <span className="section-label" style={{ color: theme.muted, minWidth: 110, marginBottom: 0 }}>
+            Events
+          </span>
+          <Toggle theme={theme} label="30% Off" checked={calc.costDiscount} disabled={tierActive} style={toggleControlStyle} onChange={(v) => dispatch({ type: "setCostDiscount", value: v })} />
+          <Toggle theme={theme} label="30% Boom Reduction" checked={calc.boomReduction} disabled={tierActive} style={toggleControlStyle} onChange={(v) => dispatch({ type: "setBoomReduction", value: v })} />
         </div>
+        <div style={optionRowStyle}>
+          <span className="section-label" style={{ color: theme.muted, minWidth: 110, marginBottom: 0 }}>
+            Options
+          </span>
+          <Toggle theme={theme} label="Star Catching" checked={calc.starCatch} style={toggleControlStyle} onChange={(v) => dispatch({ type: "setStarCatch", value: v })} />
+          <Toggle theme={theme} label="Safeguard (15-17)" checked={calc.safeguard} disabled={tierActive} style={toggleControlStyle} onChange={(v) => dispatch({ type: "setSafeguard", value: v })} />
+        </div>
+      </div>
+
+      <div style={optionRowStyle}>
+        <span className="section-label" style={{ color: theme.muted, minWidth: 110, marginBottom: 0 }}>
+          Boom Reduction
+        </span>
+        <input
+          type="range"
+          min={1}
+          max={BOOM_TIER_COUNT}
+          step={1}
+          value={calc.boomTier}
+          onChange={(e) => dispatch({ type: "setBoomTier", value: Number(e.target.value) })}
+          aria-label="Boom reduction tier"
+          style={{ width: 160, accentColor: theme.accent, cursor: "pointer" }}
+        />
+        <span style={{ fontSize: "0.8rem", fontWeight: 800, color: theme.text, minWidth: 28 }}>
+          {calc.boomTier}×
+        </span>
+        <span style={{ fontSize: "0.75rem", fontWeight: 600, color: theme.muted }}>
+          {tierActive
+            ? "Applies to 15★→22★. Higher tiers cost more for less destruction."
+            : "1× is the normal rate. Drag right to trade higher cost for fewer booms (15★→22★)."}
+        </span>
       </div>
 
       <div
@@ -448,93 +505,21 @@ function StarForceInputs({
           </>
         )}
       </div>
-    </div>
-  );
-}
 
-// -- Options panel ------------------------------------------------------------
-
-function StarForceOptions({
-  theme,
-  calc,
-  dispatch,
-}: {
-  theme: AppTheme;
-  calc: CalcState;
-  dispatch: React.ActionDispatch<[action: CalcAction]>;
-}) {
-  return (
-    <div
-      className="fade-in panel-card"
-      style={{
-        ...optionsPanelBase,
-        background: theme.panel,
-        border: `1px solid ${theme.border}`,
-      }}
-    >
-      <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem", alignItems: "center" }}>
-        <span
-          className="section-label"
-          style={{ color: theme.muted, marginBottom: 0, minWidth: 60 }}
-        >
-          Events
-        </span>
-        <Toggle theme={theme} label="30% Off Cost" checked={calc.costDiscount} onChange={(v) => dispatch({ type: "setCostDiscount", value: v })} />
-        <Toggle theme={theme} label="30% Boom Reduction" checked={calc.boomReduction} onChange={(v) => dispatch({ type: "setBoomReduction", value: v })} />
-      </div>
-
-      <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem", alignItems: "center" }}>
-        <span
-          className="section-label"
-          style={{ color: theme.muted, marginBottom: 0, minWidth: 60 }}
-        >
-          Options
-        </span>
-        <Toggle theme={theme} label="Star Catching" checked={calc.starCatch} onChange={(v) => dispatch({ type: "setStarCatch", value: v })} />
-        <Toggle
-          theme={theme}
-          label="Safeguard (15-17)"
-          checked={calc.safeguard}
-          onChange={(v) => dispatch({ type: "setSafeguard", value: v })}
-        />
-      </div>
-
-      <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem", alignItems: "center" }}>
-        <span
-          className="section-label"
-          style={{ color: theme.muted, marginBottom: 0, minWidth: 60 }}
-        >
-          MVP
-        </span>
-        <PillGroup theme={theme} options={MVP_OPTIONS} value={calc.mvp} onChange={(v) => dispatch({ type: "setMvp", value: v })} />
-      </div>
-
-      <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem", alignItems: "center" }}>
-        <span
-          className="section-label"
-          style={{ color: theme.muted, marginBottom: 0, minWidth: 60 }}
-        >
-          Experimental
-        </span>
-        <Toggle
-          theme={theme}
-          label="Boom Reduction Tier"
-          checked={calc.experimental}
-          onChange={(v) => dispatch({ type: "setExperimental", value: v })}
-        />
-        {calc.experimental && (
-          <>
-            <PillGroup
-              theme={theme}
-              options={BOOM_TIER_OPTIONS}
-              value={String(calc.boomTier)}
-              onChange={(v) => dispatch({ type: "setBoomTier", value: Number(v) })}
-            />
-            <span style={{ fontSize: "0.75rem", fontWeight: 600, color: theme.muted }}>
-              Applies to 15★→22★. Higher tiers cost more for less destruction.
-            </span>
-          </>
-        )}
+      <div
+        className="tool-btn"
+        role="button"
+        tabIndex={0}
+        onClick={() => dispatch({ type: "reroll" })}
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); dispatch({ type: "reroll" }); } }}
+        style={{
+          ...simulateBtnStyle,
+          color: theme.accentText,
+          background: theme.accentSoft,
+          border: `1px solid ${theme.accent}`,
+        }}
+      >
+        Simulate
       </div>
     </div>
   );
@@ -561,7 +546,6 @@ export default function StarForceWorkspace({ theme }: { theme: AppTheme }) {
         case "setStarCatch": return { ...state, starCatch: action.value };
         case "setSafeguard": return { ...state, safeguard: action.value };
         case "setMvp": return { ...state, mvp: action.value };
-        case "setExperimental": return { ...state, experimental: action.value };
         case "setBoomTier": return { ...state, boomTier: action.value };
         case "setTrials": return { ...state, trials: action.value };
         case "reroll": return { ...state, simGen: state.simGen + 1 };
@@ -577,7 +561,6 @@ export default function StarForceWorkspace({ theme }: { theme: AppTheme }) {
       starCatch: true,
       safeguard: false,
       mvp: "none" as MvpTier,
-      experimental: false,
       boomTier: 1,
       trials: 1000,
       simGen: 0,
@@ -586,20 +569,24 @@ export default function StarForceWorkspace({ theme }: { theme: AppTheme }) {
 
   const effectiveTarget = Math.max(calc.targetStar, calc.startStar + 1);
 
+  // A boom-reduction tier above 1 overrides the cost/boom events and safeguard
+  // (we can't assume they stack), so those inputs are ignored when tier > 1.
+  const tierActive = calc.boomTier > 1;
+
   const opts: StarForceOpts = useMemo(
     () => ({
       level: calc.level,
       startStar: calc.startStar,
       targetStar: effectiveTarget,
       replacementCost: calc.replacementCost,
-      costDiscount: calc.costDiscount,
-      boomReduction: calc.boomReduction,
+      costDiscount: tierActive ? false : calc.costDiscount,
+      boomReduction: tierActive ? false : calc.boomReduction,
       starCatch: calc.starCatch,
-      safeguard: calc.safeguard,
+      safeguard: tierActive ? false : calc.safeguard,
       mvp: calc.mvp,
-      boomTier: calc.experimental ? calc.boomTier : 1,
+      boomTier: calc.boomTier,
     }),
-    [calc.level, calc.startStar, effectiveTarget, calc.replacementCost, calc.costDiscount, calc.boomReduction, calc.starCatch, calc.safeguard, calc.mvp, calc.experimental, calc.boomTier],
+    [calc.level, calc.startStar, effectiveTarget, calc.replacementCost, calc.costDiscount, calc.boomReduction, calc.starCatch, calc.safeguard, calc.mvp, calc.boomTier, tierActive],
   );
 
   const results = useMemo(() => computeExpectedCosts(opts), [opts]);
@@ -619,8 +606,8 @@ export default function StarForceWorkspace({ theme }: { theme: AppTheme }) {
   const previewResult = results.length > 0 ? results[0] : null;
 
   const styles = toolStyles(theme);
-  const inputStyle: React.CSSProperties = { ...styles.inputStyle, width: 110 };
-  const selectStyle: React.CSSProperties = { ...styles.selectStyle, width: 90 };
+  const inputStyle: React.CSSProperties = { ...styles.inputStyle, ...controlSizeStyle };
+  const selectStyle: React.CSSProperties = { ...styles.selectStyle, ...controlSizeStyle };
 
   return (
     <div className="sf-main" style={{ flex: 1, width: "100%", padding: "1.5rem 1.5rem 2rem 2.75rem" }}>
@@ -639,8 +626,8 @@ export default function StarForceWorkspace({ theme }: { theme: AppTheme }) {
           description="Enter your item level, current star, and target star, then run the simulation to see expected meso costs."
         />
 
-        {/* -- Inputs -------------------------------------------------------- */}
-        <StarForceInputs
+        {/* -- Inputs + options --------------------------------------------- */}
+        <StarForceForm
           theme={theme}
           calc={calc}
           dispatch={dispatch}
@@ -649,9 +636,6 @@ export default function StarForceWorkspace({ theme }: { theme: AppTheme }) {
           inputStyle={inputStyle}
           selectStyle={selectStyle}
         />
-
-        {/* -- Options ------------------------------------------------------- */}
-        <StarForceOptions theme={theme} calc={calc} dispatch={dispatch} />
 
         {/* -- Results ------------------------------------------------------- */}
         {calc.startStar < calc.targetStar && sim && (
