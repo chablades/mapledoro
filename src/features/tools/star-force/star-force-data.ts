@@ -342,6 +342,9 @@ export interface SimulationResult {
   p95Cost: number;
   minCost: number;
   maxCost: number;
+  /** Per-trial totals, ascending — for distribution/histogram rendering. */
+  costs: number[];
+  booms: number[];
 }
 
 function percentile(sorted: number[], p: number): number {
@@ -407,6 +410,8 @@ export function simulate(opts: StarForceOpts, trials: number): SimulationResult 
     p95Cost: percentile(allCosts, 0.95),
     minCost: allCosts[0],
     maxCost: allCosts[allCosts.length - 1],
+    costs: allCosts,
+    booms: allBooms,
   };
 }
 

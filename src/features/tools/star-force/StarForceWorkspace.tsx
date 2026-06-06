@@ -1,7 +1,8 @@
 "use client";
 
-import { useReducer, useMemo, useSyncExternalStore } from "react";
+import { useReducer, useMemo, useState, useEffect, useSyncExternalStore, type ComponentType } from "react";
 import type { AppTheme } from "../../../components/themes";
+import type { ChartOptions, ChartData, TooltipItem } from "chart.js";
 import { replaceZeroOnDigit } from "../numberInputHandlers";
 import { ToolHeader } from "../../../components/ToolHeader";
 import {
@@ -16,7 +17,7 @@ import {
   type StarResult,
   type SimulationResult,
 } from "./star-force-data";
-import { Toggle } from "../shared-ui";
+import { Toggle, PillGroup } from "../shared-ui";
 import { MVP_OPTIONS } from "../shared-data";
 import { toolStyles } from "../tool-styles";
 
@@ -221,6 +222,174 @@ function SimulationPanel({
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+// -- Histogram panel ----------------------------------------------------------
+
+type HistMetric = "cost" | "booms";
+type BarChartComponent = ComponentType<{ data: unknown; options: unknown }>;
+
+const METRIC_OPTIONS: { value: HistMetric; label: string }[] = [
+  { value: "cost", label: "Meso Cost" },
+  { value: "booms", label: "Booms" },
+];
+
+const COST_BIN_COUNT = 30;
+
+interface Bins {
+  labels: string[];
+  counts: number[];
+  rangeLabels: string[]; // tooltip title per bar
+  cumulative: number[]; // running total up to and including each bin
+}
+
+function withCumulative(counts: number[]): number[] {
+  let run = 0;
+  return counts.map((c) => (run += c));
+}
+
+/** Equal-width bins across the cost range (sorted ascending). */
+function buildCostBins(sorted: number[]): Bins {
+  const min = sorted[0];
+  const max = sorted[sorted.length - 1];
+  if (max <= min) {
+    const one = [sorted.length];
+    return { labels: [formatMeso(min)], counts: one, rangeLabels: [formatMeso(min)], cumulative: one };
+  }
+  const width = (max - min) / COST_BIN_COUNT;
+  const counts = new Array<number>(COST_BIN_COUNT).fill(0);
+  for (const v of sorted) {
+    counts[Math.min(COST_BIN_COUNT - 1, Math.floor((v - min) / width))]++;
+  }
+  const labels: string[] = [];
+  const rangeLabels: string[] = [];
+  for (let i = 0; i < COST_BIN_COUNT; i++) {
+    const lo = min + i * width;
+    labels.push(formatMeso(lo));
+    rangeLabels.push(`${formatMeso(lo)} – ${formatMeso(lo + width)}`);
+  }
+  return { labels, counts, rangeLabels, cumulative: withCumulative(counts) };
+}
+
+/** One bar per integer boom count (sorted ascending). */
+function buildBoomBins(sorted: number[]): Bins {
+  const max = sorted[sorted.length - 1];
+  const counts = new Array<number>(max + 1).fill(0);
+  for (const v of sorted) counts[v]++;
+  const labels = counts.map((_, i) => String(i));
+  return {
+    labels,
+    counts,
+    rangeLabels: labels.map((l) => `${l} boom${l === "1" ? "" : "s"}`),
+    cumulative: withCumulative(counts),
+  };
+}
+
+function HistogramPanel({ theme, sim }: { theme: AppTheme; sim: SimulationResult }) {
+  const [Bar, setBar] = useState<BarChartComponent | null>(null);
+  const [metric, setMetric] = useState<HistMetric>("cost");
+
+  useEffect(() => {
+    let mounted = true;
+    async function loadChart() {
+      const [chartModule, barModule] = await Promise.all([
+        import("chart.js"),
+        import("react-chartjs-2"),
+      ]);
+      chartModule.Chart.register(
+        chartModule.CategoryScale,
+        chartModule.LinearScale,
+        chartModule.BarElement,
+        chartModule.Tooltip,
+      );
+      if (mounted) setBar(() => barModule.Bar as BarChartComponent);
+    }
+    loadChart();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const bins = useMemo(
+    () => (metric === "cost" ? buildCostBins(sim.costs) : buildBoomBins(sim.booms)),
+    [metric, sim],
+  );
+  const total = sim.costs.length;
+
+  const data: ChartData<"bar"> = {
+    labels: bins.labels,
+    datasets: [
+      {
+        label: "Trials",
+        data: bins.counts,
+        backgroundColor: theme.accent,
+        borderRadius: 3,
+        categoryPercentage: 1,
+        barPercentage: metric === "cost" ? 1 : 0.9,
+      },
+    ],
+  };
+
+  const options: ChartOptions<"bar"> = {
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          title: (items: TooltipItem<"bar">[]) => bins.rangeLabels[items[0].dataIndex],
+          label: (item: TooltipItem<"bar">) => {
+            const c = item.parsed.y ?? 0;
+            return `${c.toLocaleString()} trials (${((c / total) * 100).toFixed(1)}%)`;
+          },
+          afterLabel: (item: TooltipItem<"bar">) =>
+            `Cumulative: ${((bins.cumulative[item.dataIndex] / total) * 100).toFixed(1)}%`,
+        },
+      },
+    },
+    scales: {
+      x: {
+        ticks: { color: theme.muted, maxRotation: 0, autoSkip: true, maxTicksLimit: 8 },
+        grid: { display: false },
+      },
+      y: {
+        beginAtZero: true,
+        ticks: { color: theme.muted },
+        grid: { color: theme.border },
+      },
+    },
+  };
+
+  return (
+    <div
+      className="fade-in panel-card"
+      style={{
+        background: theme.panel,
+        border: `1px solid ${theme.border}`,
+        padding: "1.25rem",
+        marginBottom: "1.25rem",
+        borderRadius: "14px",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: "0.75rem",
+          marginBottom: "1rem",
+        }}
+      >
+        <div style={{ fontFamily: "var(--font-heading)", fontSize: "1rem", color: theme.text }}>
+          {metric === "cost" ? "Cost Distribution" : "Boom Distribution"}
+        </div>
+        <PillGroup theme={theme} options={METRIC_OPTIONS} value={metric} onChange={setMetric} />
+      </div>
+      <div style={{ height: 280 }}>{Bar ? <Bar data={data} options={options} /> : null}</div>
     </div>
   );
 }
@@ -646,6 +815,10 @@ export default function StarForceWorkspace({ theme }: { theme: AppTheme }) {
             targetStar={effectiveTarget}
             trials={calc.trials}
           />
+        )}
+
+        {calc.startStar < calc.targetStar && sim && (
+          <HistogramPanel theme={theme} sim={sim} />
         )}
 
         {calc.startStar < calc.targetStar && results.length > 0 && (
