@@ -8,7 +8,7 @@
  * composite icon. IDs were resolved by pixel-matching the v268 asset dump against
  * Grandis Library's labelled class icons; render with <HexaSkillIcon>.
  *
- * Mastery nodes: most classes have 4 nodes (Sia has 2). Each node boosts multiple
+ * Mastery nodes: most classes have 4 nodes (Sia Astelle has 2). Each node boosts multiple
  * skills simultaneously and is leveled as one unit, so it carries one composite icon.
  *
  * Enhancement (V Boost): each class has 4 enhancement skills, each leveled individually.
@@ -802,7 +802,7 @@ const REN: HexaClassDef = {
 // SHINE classes' erda-skill icons live under a per-class `outerId` folder
 // (Sia = 18212, Erel Light = 18112; see manifests/v269/erda-skill.json).
 const SIA: HexaClassDef = {
-  className: "Sia",
+  className: "Sia Astelle",
   group: "SHINE",
   origin: su("Celestial Design", "skill", "182141500"),
   mastery: [
@@ -944,7 +944,7 @@ const CLASS_ID_TO_NAME: Record<string, string> = {
   pathfinder: "Pathfinder",
   phantom: "Phantom",
   ren: "Ren",
-  sia: "Sia",
+  sia_astelle: "Sia Astelle",
   shade: "Shade",
   shadower: "Shadower",
   thunder_breaker: "Thunder Breaker",
