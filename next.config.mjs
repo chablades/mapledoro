@@ -45,6 +45,10 @@ const nextConfig = {
         protocol: "https",
         hostname: "orangemushroom.net",
       },
+      {
+        protocol: "https",
+        hostname: "haku.network",
+      }
     ],
   },
 };

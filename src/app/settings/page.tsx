@@ -235,6 +235,7 @@ function SettingsContent({ theme }: { theme: AppTheme }) {
               ref={fileInputRef}
               type="file"
               accept=".json"
+              aria-label="Import data file"
               onChange={handleImport}
               style={{ display: "none" }}
             />

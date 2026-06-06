@@ -9,7 +9,7 @@ export type SymbolType = "arcane" | "sacred";
 
 export interface SymbolArea {
   name: string;
-  icon: string;
+  itemId: string;
   /** Default daily symbols from quests */
   daily: number;
   /** Default weekly symbols from dungeon content */
@@ -41,7 +41,7 @@ export const SACRED_MAX_LEVEL = 11;
 export const ARCANE_AREAS: SymbolArea[] = [
   {
     name: "Vanishing Journey",
-    icon: "https://media.maplestorywiki.net/yetidb/Eqp_Arcane_Symbol_Vanishing_Journey.png",
+    itemId: "01712001", // Arcane Symbol: Vanishing Journey
     daily: 20,
     weekly: 120,
     weeklyActivity: "Erda Spectrum",
@@ -49,7 +49,7 @@ export const ARCANE_AREAS: SymbolArea[] = [
   },
   {
     name: "Chu Chu Island",
-    icon: "https://media.maplestorywiki.net/yetidb/Eqp_Arcane_Symbol_Chu_Chu_Island.png",
+    itemId: "01712002", // Arcane Symbol: Chu Chu Island
     daily: 20,
     weekly: 120,
     weeklyActivity: "Hungry Muto",
@@ -57,7 +57,7 @@ export const ARCANE_AREAS: SymbolArea[] = [
   },
   {
     name: "Lachelein",
-    icon: "https://media.maplestorywiki.net/yetidb/Eqp_Arcane_Symbol_Lachelein.png",
+    itemId: "01712003", // Arcane Symbol: Lachelein
     daily: 20,
     weekly: 120,
     weeklyActivity: "Midnight Chaser",
@@ -65,7 +65,7 @@ export const ARCANE_AREAS: SymbolArea[] = [
   },
   {
     name: "Arcana",
-    icon: "https://media.maplestorywiki.net/yetidb/Eqp_Arcane_Symbol_Arcana.png",
+    itemId: "01712004", // Arcane Symbol: Arcana
     daily: 20,
     weekly: 120,
     weeklyActivity: "Spirit Savior",
@@ -73,7 +73,7 @@ export const ARCANE_AREAS: SymbolArea[] = [
   },
   {
     name: "Morass",
-    icon: "https://media.maplestorywiki.net/yetidb/Eqp_Arcane_Symbol_Morass.png",
+    itemId: "01712005", // Arcane Symbol: Morass
     daily: 20,
     weekly: 120,
     weeklyActivity: "Ranheim Defense",
@@ -81,7 +81,7 @@ export const ARCANE_AREAS: SymbolArea[] = [
   },
   {
     name: "Esfera",
-    icon: "https://media.maplestorywiki.net/yetidb/Eqp_Arcane_Symbol_Esfera.png",
+    itemId: "01712006", // Arcane Symbol: Esfera
     daily: 20,
     weekly: 120,
     weeklyActivity: "Esfera Guardian",
@@ -92,7 +92,7 @@ export const ARCANE_AREAS: SymbolArea[] = [
 export const SACRED_AREAS: SymbolArea[] = [
   {
     name: "Cernium",
-    icon: "https://media.maplestorywiki.net/yetidb/Eqp_Sacred_Symbol_Cernium.png",
+    itemId: "01713000", // Sacred Symbol: Cernium
     daily: 20,
     weekly: 0,
     weeklyActivity: "",
@@ -100,7 +100,7 @@ export const SACRED_AREAS: SymbolArea[] = [
   },
   {
     name: "Hotel Arcus",
-    icon: "https://media.maplestorywiki.net/yetidb/Eqp_Sacred_Symbol_Arcus.png",
+    itemId: "01713001", // Sacred Symbol: Arcus
     daily: 10,
     weekly: 0,
     weeklyActivity: "",
@@ -108,7 +108,7 @@ export const SACRED_AREAS: SymbolArea[] = [
   },
   {
     name: "Odium",
-    icon: "https://media.maplestorywiki.net/yetidb/Eqp_Sacred_Symbol_Odium.png",
+    itemId: "01713002", // Sacred Symbol: Odium
     daily: 10,
     weekly: 0,
     weeklyActivity: "",
@@ -116,7 +116,7 @@ export const SACRED_AREAS: SymbolArea[] = [
   },
   {
     name: "Shangri-La",
-    icon: "https://media.maplestorywiki.net/yetidb/Eqp_Sacred_Symbol_Shangri-La.png",
+    itemId: "01713003", // Sacred Symbol: Shangri-La
     daily: 10,
     weekly: 0,
     weeklyActivity: "",
@@ -124,7 +124,7 @@ export const SACRED_AREAS: SymbolArea[] = [
   },
   {
     name: "Arteria",
-    icon: "https://media.maplestorywiki.net/yetidb/Eqp_Sacred_Symbol_Arteria.png",
+    itemId: "01713004", // Sacred Symbol: Arteria
     daily: 10,
     weekly: 0,
     weeklyActivity: "",
@@ -132,7 +132,7 @@ export const SACRED_AREAS: SymbolArea[] = [
   },
   {
     name: "Carcion",
-    icon: "https://media.maplestorywiki.net/yetidb/Eqp_Sacred_Symbol_Carcion.png",
+    itemId: "01713005", // Sacred Symbol: Carcion
     daily: 10,
     weekly: 0,
     weeklyActivity: "",
@@ -140,7 +140,7 @@ export const SACRED_AREAS: SymbolArea[] = [
   },
   {
     name: "Tallahart",
-    icon: "https://media.maplestorywiki.net/yetidb/Eqp_Grand_Sacred_Symbol_Tallahart.png",
+    itemId: "01714000", // Grand Sacred Symbol: Tallahart
     daily: 10,
     weekly: 0,
     weeklyActivity: "",

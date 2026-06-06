@@ -8,6 +8,16 @@ import { useTheme } from "./ThemeContext";
 
 const STORAGE_KEY = "mapledoro_analytics_consent";
 
+const buttonBase: CSSProperties = {
+  border: "none",
+  borderRadius: "10px",
+  fontFamily: "inherit",
+  fontWeight: 800,
+  fontSize: "0.82rem",
+  padding: "0.5rem 1rem",
+  cursor: "pointer",
+};
+
 type Consent = "granted" | "denied" | null;
 
 function readConsent(): Consent {
@@ -70,16 +80,6 @@ function Banner({
     justifyContent: "center",
     gap: "1rem",
     flexWrap: "wrap",
-  };
-
-  const buttonBase: CSSProperties = {
-    border: "none",
-    borderRadius: "10px",
-    fontFamily: "inherit",
-    fontWeight: 800,
-    fontSize: "0.82rem",
-    padding: "0.5rem 1rem",
-    cursor: "pointer",
   };
 
   return (

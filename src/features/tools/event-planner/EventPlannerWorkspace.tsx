@@ -6,15 +6,16 @@ import {
   useRef,
   useEffect,
 } from "react";
-import Image from "next/image";
 import type { AppTheme } from "../../../components/themes";
+import { replaceZeroOnDigit } from "../numberInputHandlers";
 import { ToolHeader } from "../../../components/ToolHeader";
-import { WikiAttribution } from "../../../components/WikiAttribution";
+import { ItemIcon as ResourceItemIcon } from "../../../components/ResourceImage";
 import {
   formatMeso,
   formatMesoFull,
 } from "../star-force/star-force-data";
-import { Toggle, PillGroup, MVP_OPTIONS } from "../shared-ui";
+import { Toggle, PillGroup } from "../shared-ui";
+import { MVP_OPTIONS } from "../shared-data";
 import type { MvpTier } from "../star-force/star-force-data";
 import { toolStyles } from "../tool-styles";
 import {
@@ -30,49 +31,8 @@ import type { StoredCharacterRecord } from "../../characters/model/charactersSto
 
 // ── Shared sub-components ────────────────────────────────────────────────────
 
-function ItemIcon({
-  item,
-  size = 28,
-  theme,
-}: {
-  item: EventItem;
-  size?: number;
-  theme: AppTheme;
-}) {
-  const imgRef = useRef<HTMLImageElement>(null);
-  const fallbackRef = useRef<HTMLDivElement>(null);
-
-  return (
-    <>
-      <Image
-        ref={imgRef}
-        src={item.icon}
-        alt={item.name}
-        width={size}
-        height={size}
-        unoptimized
-        onError={() => {
-          if (imgRef.current) imgRef.current.style.display = "none";
-          if (fallbackRef.current) fallbackRef.current.style.display = "flex";
-        }}
-        className="item-icon-img"
-      />
-      <div
-        ref={fallbackRef}
-        className="item-icon-fallback"
-        style={{
-          width: size,
-          height: size,
-          background: theme.timerBg,
-          border: `1px solid ${theme.border}`,
-          fontSize: size * 0.36,
-          color: theme.muted,
-        }}
-      >
-        {item.name[0]}
-      </div>
-    </>
-  );
+function ItemIcon({ item, size = 28 }: { item: EventItem; size?: number }) {
+  return <ResourceItemIcon id={item.itemId} size={size} alt={item.name} />;
 }
 
 // ── Filterable item dropdown ─────────────────────────────────────────────────
@@ -209,7 +169,7 @@ function ItemSelector({
         }}
       >
         {selectedItem && !open && (
-          <ItemIcon item={selectedItem} size={18} theme={theme} />
+          <ItemIcon item={selectedItem} size={18} />
         )}
         <input
           type="text"
@@ -295,7 +255,7 @@ function ItemSelector({
                     }}
                     style={dropdownItemStyle}
                   >
-                    <ItemIcon item={item} size={22} theme={theme} />
+                    <ItemIcon item={item} size={22} />
                     <span>{item.name}</span>
                     <span
                       style={{
@@ -538,7 +498,7 @@ function PlanItemsList({
                     flexWrap: "wrap",
                   }}
                 >
-                  <ItemIcon item={item} size={30} theme={theme} />
+                  <ItemIcon item={item} size={30} />
                   <div style={{ minWidth: 220 }}>
                     <div
                       style={{
@@ -755,7 +715,7 @@ function AddItemForm({
         <div>
           <div className="section-label" style={{ color: theme.muted, marginBottom: 4, fontSize: "0.75rem" }}>Replace Cost</div>
           <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-            <input className="tool-input" type="number" min={0} value={form.replaceCost} onChange={(e) => dispatchForm({ type: "setReplaceCost", value: Math.max(0, Number(e.target.value) || 0) })} placeholder="0" style={{ ...styles.inputStyle, width: 120 }} />
+            <input className="tool-input" type="number" min={0} value={form.replaceCost} onFocus={(e) => e.currentTarget.select()} onKeyDown={replaceZeroOnDigit} onChange={(e) => dispatchForm({ type: "setReplaceCost", value: Math.max(0, Number(e.target.value) || 0) })} placeholder="0" style={{ ...styles.inputStyle, width: 120 }} />
             <Toggle theme={theme} label="Safeguard" checked={form.safeguard} onChange={(v) => dispatchForm({ type: "setSafeguard", value: v })} />
             <div className="tool-btn" role="button" tabIndex={0} onClick={handleAdd} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleAdd(); } }} style={addButtonStyle}>
               + Add
@@ -894,8 +854,6 @@ export default function EventPlannerWorkspace({ theme }: { theme: AppTheme }) {
             removeButtonStyle={removeButtonStyle}
           />
         )}
-
-        <WikiAttribution theme={theme} subject="Item images" />
       </div>
     </div>
   );

@@ -4,7 +4,6 @@ import { useState, useMemo } from "react";
 import type { AppTheme } from "../../../components/themes";
 import { ProgressBar } from "../../../components/ProgressBar";
 import { ToolHeader } from "../../../components/ToolHeader";
-import { WikiAttribution } from "../../../components/WikiAttribution";
 import { CharacterSyncPanel } from "../../../components/CharacterSyncPanel";
 import {
   COMMON_SKILLS,
@@ -16,7 +15,8 @@ import {
   type SkillCostSummary,
 } from "./useHexaSkillsState";
 import { COMMON_COSTS, getCostRange } from "./hexa-costs";
-import { fmtNum, SkillSection, MasterySection } from "./hexa-ui";
+import { SkillSection, MasterySection } from "./hexa-ui";
+import { fmtNum } from "./hexa-format";
 import { toolStyles } from "../tool-styles";
 
 const checkboxLabelStyle: React.CSSProperties = {
@@ -433,8 +433,6 @@ export default function HexaSkillsWorkspace({ theme }: { theme: AppTheme }) {
         ) : (
           <EmptyState theme={theme} sectionPanel={sectionPanel} />
         )}
-
-        <WikiAttribution theme={theme} subject="Skill icons" />
       </div>
     </div>
   );

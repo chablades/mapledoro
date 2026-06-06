@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 // react-doctor-disable-next-line react-doctor/prefer-dynamic-import
 import { Line } from "react-chartjs-2";
 // react-doctor-disable-next-line react-doctor/prefer-dynamic-import
@@ -15,8 +14,9 @@ import {
   type ChartOptions,
 } from "chart.js";
 import type { AppTheme } from "../../../components/themes";
+import { replaceZeroOnDigit } from "../numberInputHandlers";
 import { ToolHeader } from "../../../components/ToolHeader";
-import { WikiAttribution } from "../../../components/WikiAttribution";
+import { ItemIcon } from "../../../components/ResourceImage";
 import { CharacterSyncPanel } from "../../../components/CharacterSyncPanel";
 import { SegmentedToggle } from "../../../components/SegmentedToggle";
 import { toolStyles } from "../tool-styles";
@@ -112,15 +112,12 @@ function SymbolCardHeader({
         marginBottom: "0.75rem",
       }}
     >
-      <Image
-        src={area.icon}
+      <ItemIcon
+        id={area.itemId}
+        size={38}
         alt={area.name}
-        width={38}
-        height={38}
-        unoptimized
         style={{
           borderRadius: "8px",
-          objectFit: "contain",
           flexShrink: 0,
           background: theme.panel,
           border: `1px solid ${theme.border}`,
@@ -273,6 +270,8 @@ function SymbolLevelControls({
               max={levelMax}
               value={state.current}
               disabled={disabled}
+              onFocus={(e) => e.currentTarget.select()}
+              onKeyDown={replaceZeroOnDigit}
               onChange={(e) => {
                 let v = parseInt(e.target.value) || 0;
                 if (v < 0) v = 0;
@@ -374,6 +373,8 @@ function SymbolIncomeControls({
           max={dailyMax}
           value={state.daily}
           disabled={disabled}
+          onFocus={(e) => e.currentTarget.select()}
+          onKeyDown={replaceZeroOnDigit}
           onChange={(e) => {
             let v = parseInt(e.target.value) || 0;
             if (v < 0) v = 0;
@@ -1056,8 +1057,6 @@ export default function SymbolWorkspace({ theme }: { theme: AppTheme }) {
           <CompletionSummaryPanel theme={theme} sectionPanel={styles.sectionPanel} stats={stats} type={type} />
 
           <CompletionTimelineChart theme={theme} sectionPanel={styles.sectionPanel} stats={stats} growth={growth} maxLevel={maxLevel} type={type} />
-
-          <WikiAttribution theme={theme} subject="Symbol images" />
         </div>
       </div>
     </>

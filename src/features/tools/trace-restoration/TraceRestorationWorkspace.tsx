@@ -4,6 +4,8 @@ import { useState, useSyncExternalStore } from "react";
 import type { CSSProperties } from "react";
 import Image from "next/image";
 import type { AppTheme } from "../../../components/themes";
+import { replaceZeroOnDigit } from "../numberInputHandlers";
+import { ItemIcon } from "../../../components/ResourceImage";
 import { ToolHeader } from "../../../components/ToolHeader";
 import { WikiAttribution } from "../../../components/WikiAttribution";
 import { SegmentedToggle } from "../../../components/SegmentedToggle";
@@ -14,8 +16,8 @@ import {
   PITCHED_TARGETS,
   DAWN_WHISPER_BOSSES,
   DAWN_TARGET_COST,
-  PITCHED_CRYSTAL_ICON,
-  DAWN_CRYSTAL_ICON,
+  PITCHED_CRYSTAL_ITEM_ID,
+  DAWN_CRYSTAL_ITEM_ID,
   TRACE_ITEMS,
   TRACE_BOSSES,
   MAX_POINTS_CAP,
@@ -287,7 +289,7 @@ function missionBtnStyle(theme: AppTheme, active: boolean): CSSProperties {
 function CrystalSection({
   theme,
   title,
-  icon,
+  iconId,
   count,
   onCountChange,
   bosses,
@@ -300,7 +302,7 @@ function CrystalSection({
 }: {
   theme: AppTheme;
   title: string;
-  icon: string;
+  iconId: string;
   count: number;
   onCountChange: (n: number) => void;
   bosses: WhisperBoss[];
@@ -325,7 +327,7 @@ function CrystalSection({
   return (
     <div style={panelStyle(theme)}>
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: "1rem" }}>
-        <Image src={icon} alt="" width={24} height={24} unoptimized className="pixelated-img" />
+        <ItemIcon id={iconId} size={24} />
         <span style={{ fontWeight: 700, color: theme.text, fontSize: "1rem" }}>{title}</span>
       </div>
 
@@ -336,6 +338,8 @@ function CrystalSection({
             type="number"
             min={0}
             value={count}
+            onFocus={(e) => e.currentTarget.select()}
+            onKeyDown={replaceZeroOnDigit}
             onChange={(e) => onCountChange(Math.max(0, parseInt(e.target.value, 10) || 0))}
             style={{ ...styles.inputStyle, width: 100 }}
           />
@@ -465,7 +469,7 @@ function StarForceResearchTab({ theme }: { theme: AppTheme }) {
       <CrystalSection
         theme={theme}
         title="Pitched Whisper Crystals"
-        icon={PITCHED_CRYSTAL_ICON}
+        iconId={PITCHED_CRYSTAL_ITEM_ID}
         count={state.pitchedCount}
         onCountChange={(n) => save({ ...state, pitchedCount: n })}
         bosses={PITCHED_WHISPER_BOSSES}
@@ -480,7 +484,7 @@ function StarForceResearchTab({ theme }: { theme: AppTheme }) {
       <CrystalSection
         theme={theme}
         title="Dawn Whisper Crystals"
-        icon={DAWN_CRYSTAL_ICON}
+        iconId={DAWN_CRYSTAL_ITEM_ID}
         count={state.dawnCount}
         onCountChange={(n) => save({ ...state, dawnCount: n })}
         bosses={DAWN_WHISPER_BOSSES}
@@ -604,6 +608,8 @@ function TraceRestorationTab({ theme }: { theme: AppTheme }) {
               min={0}
               max={MAX_POINTS_CAP}
               value={state.currentPoints}
+              onFocus={(e) => e.currentTarget.select()}
+              onKeyDown={replaceZeroOnDigit}
               onChange={(e) => save({ ...state, currentPoints: Math.min(MAX_POINTS_CAP, Math.max(0, parseInt(e.target.value, 10) || 0)) })}
               style={{ ...styles.inputStyle, width: 110 }}
             />

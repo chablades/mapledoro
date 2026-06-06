@@ -2,6 +2,8 @@
   Liberation quest and boss data for Genesis & Destiny liberation calculators.
 */
 
+import { bossIconUrl } from "../../../lib/mapleResource";
+
 // -- Types --------------------------------------------------------------------
 
 export type LiberationType = "genesis" | "destiny" | "destiny2";
@@ -25,7 +27,7 @@ export interface LiberationQuest {
 export const GENESIS_BOSSES: LiberationBoss[] = [
   {
     name: "Lotus",
-    icon: "https://media.maplestorywiki.net/yetidb/Maple_Guide_-_Lotus.png",
+    icon: bossIconUrl("13"),
     difficulties: [
       { label: "Normal", traces: 10 },
       { label: "Hard", traces: 50 },
@@ -35,7 +37,7 @@ export const GENESIS_BOSSES: LiberationBoss[] = [
   },
   {
     name: "Damien",
-    icon: "https://media.maplestorywiki.net/yetidb/Maple_Guide_-_Damien.png",
+    icon: bossIconUrl("15"),
     difficulties: [
       { label: "Normal", traces: 10 },
       { label: "Hard", traces: 50 },
@@ -45,7 +47,7 @@ export const GENESIS_BOSSES: LiberationBoss[] = [
   },
   {
     name: "Lucid",
-    icon: "https://media.maplestorywiki.net/yetidb/Maple_Guide_-_Lucid.png",
+    icon: bossIconUrl("19"),
     difficulties: [
       { label: "Easy", traces: 15 },
       { label: "Normal", traces: 20 },
@@ -56,7 +58,7 @@ export const GENESIS_BOSSES: LiberationBoss[] = [
   },
   {
     name: "Will",
-    icon: "https://media.maplestorywiki.net/yetidb/Maple_Guide_-_Will.png",
+    icon: bossIconUrl("23"),
     difficulties: [
       { label: "Easy", traces: 15 },
       { label: "Normal", traces: 25 },
@@ -67,7 +69,7 @@ export const GENESIS_BOSSES: LiberationBoss[] = [
   },
   {
     name: "Gloom",
-    icon: "https://media.maplestorywiki.net/yetidb/Maple_Guide_-_Giant_Monster_Gloom.png",
+    icon: bossIconUrl("26"),
     difficulties: [
       { label: "Normal", traces: 20 },
       { label: "Chaos", traces: 65 },
@@ -77,7 +79,7 @@ export const GENESIS_BOSSES: LiberationBoss[] = [
   },
   {
     name: "Verus Hilla",
-    icon: "https://media.maplestorywiki.net/yetidb/Maple_Guide_-_Verus_Hilla.png",
+    icon: bossIconUrl("24"),
     difficulties: [
       { label: "Normal", traces: 45 },
       { label: "Hard", traces: 90 },
@@ -87,7 +89,7 @@ export const GENESIS_BOSSES: LiberationBoss[] = [
   },
   {
     name: "Darknell",
-    icon: "https://media.maplestorywiki.net/yetidb/Maple_Guide_-_Guard_Captain_Darknell.png",
+    icon: bossIconUrl("27"),
     difficulties: [
       { label: "Normal", traces: 25 },
       { label: "Hard", traces: 75 },
@@ -97,7 +99,7 @@ export const GENESIS_BOSSES: LiberationBoss[] = [
   },
   {
     name: "Black Mage",
-    icon: "https://media.maplestorywiki.net/yetidb/Maple_Guide_-_Black_Mage.png",
+    icon: bossIconUrl("25"),
     difficulties: [
       { label: "Hard", traces: 600 },
       { label: "Extreme", traces: 600 },
@@ -125,7 +127,7 @@ export const GENESIS_TOTAL = 6500;
 export const DESTINY_BOSSES: LiberationBoss[] = [
   {
     name: "Chosen Seren",
-    icon: "https://media.maplestorywiki.net/yetidb/Maple_Guide_-_Chosen_Seren.png",
+    icon: bossIconUrl("28"),
     difficulties: [
       { label: "Hard", traces: 6 },
       { label: "Extreme", traces: 80 },
@@ -135,7 +137,7 @@ export const DESTINY_BOSSES: LiberationBoss[] = [
   },
   {
     name: "Kalos the Guardian",
-    icon: "https://media.maplestorywiki.net/yetidb/Maple_Guide_-_Kalos_the_Guardian.png",
+    icon: bossIconUrl("30"),
     difficulties: [
       { label: "Normal", traces: 10 },
       { label: "Chaos", traces: 70 },
@@ -146,7 +148,7 @@ export const DESTINY_BOSSES: LiberationBoss[] = [
   },
   {
     name: "First Adversary",
-    icon: "https://media.maplestorywiki.net/yetidb/Maple_Guide_-_First_Adversary.png",
+    icon: bossIconUrl("35"),
     difficulties: [
       { label: "Normal", traces: 15 },
       { label: "Hard", traces: 120 },
@@ -167,7 +169,7 @@ export const DESTINY_BOSSES: LiberationBoss[] = [
   },
   {
     name: "Kaling",
-    icon: "https://media.maplestorywiki.net/yetidb/Maple_Guide_-_Kaling.png",
+    icon: bossIconUrl("31"),
     difficulties: [
       { label: "Normal", traces: 20 },
       { label: "Hard", traces: 160 },
@@ -178,7 +180,7 @@ export const DESTINY_BOSSES: LiberationBoss[] = [
   },
   {
     name: "Limbo",
-    icon: "https://media.maplestorywiki.net/yetidb/Maple_Guide_-_Limbo.png",
+    icon: bossIconUrl("33"),
     difficulties: [
       { label: "Normal", traces: 120 },
       { label: "Hard", traces: 360 },
@@ -188,7 +190,7 @@ export const DESTINY_BOSSES: LiberationBoss[] = [
   },
   {
     name: "Baldrix",
-    icon: "https://media.maplestorywiki.net/yetidb/Maple_Guide_-_Baldrix.png",
+    icon: bossIconUrl("34"),
     difficulties: [
       { label: "Normal", traces: 150 },
       { label: "Hard", traces: 450 },

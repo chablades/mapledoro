@@ -1,0 +1,1559 @@
+{
+  "_meta": {
+    "assets": [
+      "icon.png",
+      "iconDisabled.png"
+    ],
+    "urlPattern": "/api/img/hexa-skill/{id}/{asset}"
+  },
+  "entries": {
+    "10000000": {
+      "section": "hexaSkill"
+    },
+    "10000001": {
+      "section": "hexaSkill"
+    },
+    "10000002": {
+      "section": "hexaSkill"
+    },
+    "10000003": {
+      "section": "hexaSkill"
+    },
+    "10000004": {
+      "section": "hexaSkill"
+    },
+    "10000005": {
+      "section": "hexaSkill"
+    },
+    "10000006": {
+      "section": "hexaSkill"
+    },
+    "10000007": {
+      "section": "hexaSkill"
+    },
+    "10000008": {
+      "section": "hexaSkill"
+    },
+    "10000009": {
+      "section": "hexaSkill"
+    },
+    "10000010": {
+      "section": "hexaSkill"
+    },
+    "10000011": {
+      "section": "hexaSkill"
+    },
+    "10000012": {
+      "section": "hexaSkill"
+    },
+    "10000013": {
+      "section": "hexaSkill"
+    },
+    "10000014": {
+      "section": "hexaSkill"
+    },
+    "10000015": {
+      "section": "hexaSkill"
+    },
+    "10000016": {
+      "section": "hexaSkill"
+    },
+    "10000017": {
+      "section": "hexaSkill"
+    },
+    "10000018": {
+      "section": "hexaSkill"
+    },
+    "10000019": {
+      "section": "hexaSkill"
+    },
+    "10000020": {
+      "section": "hexaSkill"
+    },
+    "10000021": {
+      "section": "hexaSkill"
+    },
+    "10000022": {
+      "section": "hexaSkill"
+    },
+    "10000023": {
+      "section": "hexaSkill"
+    },
+    "10000024": {
+      "section": "hexaSkill"
+    },
+    "10000025": {
+      "section": "hexaSkill"
+    },
+    "10000026": {
+      "section": "hexaSkill"
+    },
+    "10000027": {
+      "section": "hexaSkill"
+    },
+    "10000028": {
+      "section": "hexaSkill"
+    },
+    "10000029": {
+      "section": "hexaSkill"
+    },
+    "10000030": {
+      "section": "hexaSkill"
+    },
+    "10000031": {
+      "section": "hexaSkill"
+    },
+    "10000032": {
+      "section": "hexaSkill"
+    },
+    "10000033": {
+      "section": "hexaSkill"
+    },
+    "10000034": {
+      "section": "hexaSkill"
+    },
+    "10000035": {
+      "section": "hexaSkill"
+    },
+    "10000036": {
+      "section": "hexaSkill"
+    },
+    "10000037": {
+      "section": "hexaSkill"
+    },
+    "10000038": {
+      "section": "hexaSkill"
+    },
+    "10000039": {
+      "section": "hexaSkill"
+    },
+    "10000040": {
+      "section": "hexaSkill"
+    },
+    "10000041": {
+      "section": "hexaSkill"
+    },
+    "10000042": {
+      "section": "hexaSkill"
+    },
+    "10000043": {
+      "section": "hexaSkill"
+    },
+    "10000044": {
+      "section": "hexaSkill"
+    },
+    "10000045": {
+      "section": "hexaSkill"
+    },
+    "20000000": {
+      "section": "hexaSkill"
+    },
+    "20000001": {
+      "section": "hexaSkill"
+    },
+    "20000002": {
+      "section": "hexaSkill"
+    },
+    "20000003": {
+      "section": "hexaSkill"
+    },
+    "20000004": {
+      "section": "hexaSkill"
+    },
+    "20000005": {
+      "section": "hexaSkill"
+    },
+    "20000006": {
+      "section": "hexaSkill"
+    },
+    "20000007": {
+      "section": "hexaSkill"
+    },
+    "20000008": {
+      "section": "hexaSkill"
+    },
+    "20000009": {
+      "section": "hexaSkill"
+    },
+    "20000010": {
+      "section": "hexaSkill"
+    },
+    "20000011": {
+      "section": "hexaSkill"
+    },
+    "20000012": {
+      "section": "hexaSkill"
+    },
+    "20000013": {
+      "section": "hexaSkill"
+    },
+    "20000014": {
+      "section": "hexaSkill"
+    },
+    "20000015": {
+      "section": "hexaSkill"
+    },
+    "20000016": {
+      "section": "hexaSkill"
+    },
+    "20000017": {
+      "section": "hexaSkill"
+    },
+    "20000018": {
+      "section": "hexaSkill"
+    },
+    "20000019": {
+      "section": "hexaSkill"
+    },
+    "20000020": {
+      "section": "hexaSkill"
+    },
+    "20000021": {
+      "section": "hexaSkill"
+    },
+    "20000022": {
+      "section": "hexaSkill"
+    },
+    "20000023": {
+      "section": "hexaSkill"
+    },
+    "20000024": {
+      "section": "hexaSkill"
+    },
+    "20000025": {
+      "section": "hexaSkill"
+    },
+    "20000026": {
+      "section": "hexaSkill"
+    },
+    "20000027": {
+      "section": "hexaSkill"
+    },
+    "20000028": {
+      "section": "hexaSkill"
+    },
+    "20000029": {
+      "section": "hexaSkill"
+    },
+    "20000030": {
+      "section": "hexaSkill"
+    },
+    "20000031": {
+      "section": "hexaSkill"
+    },
+    "20000032": {
+      "section": "hexaSkill"
+    },
+    "20000033": {
+      "section": "hexaSkill"
+    },
+    "20000034": {
+      "section": "hexaSkill"
+    },
+    "20000035": {
+      "section": "hexaSkill"
+    },
+    "20000036": {
+      "section": "hexaSkill"
+    },
+    "20000037": {
+      "section": "hexaSkill"
+    },
+    "20000038": {
+      "section": "hexaSkill"
+    },
+    "20000039": {
+      "section": "hexaSkill"
+    },
+    "20000040": {
+      "section": "hexaSkill"
+    },
+    "20000041": {
+      "section": "hexaSkill"
+    },
+    "20000042": {
+      "section": "hexaSkill"
+    },
+    "20000043": {
+      "section": "hexaSkill"
+    },
+    "20000044": {
+      "section": "hexaSkill"
+    },
+    "20000045": {
+      "section": "hexaSkill"
+    },
+    "20000050": {
+      "section": "hexaSkill"
+    },
+    "20000051": {
+      "section": "hexaSkill"
+    },
+    "20000052": {
+      "section": "hexaSkill"
+    },
+    "20000053": {
+      "section": "hexaSkill"
+    },
+    "20000054": {
+      "section": "hexaSkill"
+    },
+    "20000055": {
+      "section": "hexaSkill"
+    },
+    "20000056": {
+      "section": "hexaSkill"
+    },
+    "20000057": {
+      "section": "hexaSkill"
+    },
+    "20000058": {
+      "section": "hexaSkill"
+    },
+    "20000059": {
+      "section": "hexaSkill"
+    },
+    "20000060": {
+      "section": "hexaSkill"
+    },
+    "20000061": {
+      "section": "hexaSkill"
+    },
+    "20000062": {
+      "section": "hexaSkill"
+    },
+    "20000063": {
+      "section": "hexaSkill"
+    },
+    "20000064": {
+      "section": "hexaSkill"
+    },
+    "20000065": {
+      "section": "hexaSkill"
+    },
+    "20000066": {
+      "section": "hexaSkill"
+    },
+    "20000067": {
+      "section": "hexaSkill"
+    },
+    "20000068": {
+      "section": "hexaSkill"
+    },
+    "20000069": {
+      "section": "hexaSkill"
+    },
+    "20000070": {
+      "section": "hexaSkill"
+    },
+    "20000071": {
+      "section": "hexaSkill"
+    },
+    "20000072": {
+      "section": "hexaSkill"
+    },
+    "20000073": {
+      "section": "hexaSkill"
+    },
+    "20000074": {
+      "section": "hexaSkill"
+    },
+    "20000075": {
+      "section": "hexaSkill"
+    },
+    "20000076": {
+      "section": "hexaSkill"
+    },
+    "20000077": {
+      "section": "hexaSkill"
+    },
+    "20000078": {
+      "section": "hexaSkill"
+    },
+    "20000079": {
+      "section": "hexaSkill"
+    },
+    "20000080": {
+      "section": "hexaSkill"
+    },
+    "20000081": {
+      "section": "hexaSkill"
+    },
+    "20000082": {
+      "section": "hexaSkill"
+    },
+    "20000083": {
+      "section": "hexaSkill"
+    },
+    "20000084": {
+      "section": "hexaSkill"
+    },
+    "20000085": {
+      "section": "hexaSkill"
+    },
+    "20000086": {
+      "section": "hexaSkill"
+    },
+    "20000087": {
+      "section": "hexaSkill"
+    },
+    "20000088": {
+      "section": "hexaSkill"
+    },
+    "20000089": {
+      "section": "hexaSkill"
+    },
+    "20000090": {
+      "section": "hexaSkill"
+    },
+    "20000091": {
+      "section": "hexaSkill"
+    },
+    "20000092": {
+      "section": "hexaSkill"
+    },
+    "20000093": {
+      "section": "hexaSkill"
+    },
+    "20000094": {
+      "section": "hexaSkill"
+    },
+    "20000095": {
+      "section": "hexaSkill"
+    },
+    "20000100": {
+      "section": "hexaSkill"
+    },
+    "20000101": {
+      "section": "hexaSkill"
+    },
+    "20000102": {
+      "section": "hexaSkill"
+    },
+    "20000103": {
+      "section": "hexaSkill"
+    },
+    "20000104": {
+      "section": "hexaSkill"
+    },
+    "20000105": {
+      "section": "hexaSkill"
+    },
+    "20000106": {
+      "section": "hexaSkill"
+    },
+    "20000107": {
+      "section": "hexaSkill"
+    },
+    "20000108": {
+      "section": "hexaSkill"
+    },
+    "20000109": {
+      "section": "hexaSkill"
+    },
+    "20000110": {
+      "section": "hexaSkill"
+    },
+    "20000111": {
+      "section": "hexaSkill"
+    },
+    "20000112": {
+      "section": "hexaSkill"
+    },
+    "20000113": {
+      "section": "hexaSkill"
+    },
+    "20000114": {
+      "section": "hexaSkill"
+    },
+    "20000115": {
+      "section": "hexaSkill"
+    },
+    "20000116": {
+      "section": "hexaSkill"
+    },
+    "20000117": {
+      "section": "hexaSkill"
+    },
+    "20000118": {
+      "section": "hexaSkill"
+    },
+    "20000119": {
+      "section": "hexaSkill"
+    },
+    "20000120": {
+      "section": "hexaSkill"
+    },
+    "20000121": {
+      "section": "hexaSkill"
+    },
+    "20000122": {
+      "section": "hexaSkill"
+    },
+    "20000123": {
+      "section": "hexaSkill"
+    },
+    "20000124": {
+      "section": "hexaSkill"
+    },
+    "20000125": {
+      "section": "hexaSkill"
+    },
+    "20000126": {
+      "section": "hexaSkill"
+    },
+    "20000127": {
+      "section": "hexaSkill"
+    },
+    "20000128": {
+      "section": "hexaSkill"
+    },
+    "20000129": {
+      "section": "hexaSkill"
+    },
+    "20000130": {
+      "section": "hexaSkill"
+    },
+    "20000131": {
+      "section": "hexaSkill"
+    },
+    "20000132": {
+      "section": "hexaSkill"
+    },
+    "20000133": {
+      "section": "hexaSkill"
+    },
+    "20000134": {
+      "section": "hexaSkill"
+    },
+    "20000135": {
+      "section": "hexaSkill"
+    },
+    "20000136": {
+      "section": "hexaSkill"
+    },
+    "20000137": {
+      "section": "hexaSkill"
+    },
+    "20000138": {
+      "section": "hexaSkill"
+    },
+    "20000139": {
+      "section": "hexaSkill"
+    },
+    "20000140": {
+      "section": "hexaSkill"
+    },
+    "20000141": {
+      "section": "hexaSkill"
+    },
+    "20000142": {
+      "section": "hexaSkill"
+    },
+    "20000143": {
+      "section": "hexaSkill"
+    },
+    "20000144": {
+      "section": "hexaSkill"
+    },
+    "20000145": {
+      "section": "hexaSkill"
+    },
+    "20000146": {
+      "section": "hexaSkill"
+    },
+    "20000147": {
+      "section": "hexaSkill"
+    },
+    "20000148": {
+      "section": "hexaSkill"
+    },
+    "20000149": {
+      "section": "hexaSkill"
+    },
+    "20000150": {
+      "section": "hexaSkill"
+    },
+    "20000151": {
+      "section": "hexaSkill"
+    },
+    "20000152": {
+      "section": "hexaSkill"
+    },
+    "20000153": {
+      "section": "hexaSkill"
+    },
+    "20000154": {
+      "section": "hexaSkill"
+    },
+    "20000155": {
+      "section": "hexaSkill"
+    },
+    "20000156": {
+      "section": "hexaSkill"
+    },
+    "20000157": {
+      "section": "hexaSkill"
+    },
+    "20000158": {
+      "section": "hexaSkill"
+    },
+    "20000159": {
+      "section": "hexaSkill"
+    },
+    "20000160": {
+      "section": "hexaSkill"
+    },
+    "20000161": {
+      "section": "hexaSkill"
+    },
+    "20000162": {
+      "section": "hexaSkill"
+    },
+    "20000163": {
+      "section": "hexaSkill"
+    },
+    "20000164": {
+      "section": "hexaSkill"
+    },
+    "20000165": {
+      "section": "hexaSkill"
+    },
+    "20000166": {
+      "section": "hexaSkill"
+    },
+    "20000167": {
+      "section": "hexaSkill"
+    },
+    "20000168": {
+      "section": "hexaSkill"
+    },
+    "20000169": {
+      "section": "hexaSkill"
+    },
+    "20000170": {
+      "section": "hexaSkill"
+    },
+    "20000171": {
+      "section": "hexaSkill"
+    },
+    "20000172": {
+      "section": "hexaSkill"
+    },
+    "20000173": {
+      "section": "hexaSkill"
+    },
+    "20000174": {
+      "section": "hexaSkill"
+    },
+    "20000175": {
+      "section": "hexaSkill"
+    },
+    "20000176": {
+      "section": "hexaSkill"
+    },
+    "20000177": {
+      "section": "hexaSkill"
+    },
+    "20000178": {
+      "section": "hexaSkill"
+    },
+    "20000179": {
+      "section": "hexaSkill"
+    },
+    "20000180": {
+      "section": "hexaSkill"
+    },
+    "20000181": {
+      "section": "hexaSkill"
+    },
+    "20000182": {
+      "section": "hexaSkill"
+    },
+    "20000183": {
+      "section": "hexaSkill"
+    },
+    "20000184": {
+      "section": "hexaSkill"
+    },
+    "20000185": {
+      "section": "hexaSkill"
+    },
+    "20000186": {
+      "section": "hexaSkill"
+    },
+    "20000187": {
+      "section": "hexaSkill"
+    },
+    "20000188": {
+      "section": "hexaSkill"
+    },
+    "20000189": {
+      "section": "hexaSkill"
+    },
+    "20000190": {
+      "section": "hexaSkill"
+    },
+    "20000191": {
+      "section": "hexaSkill"
+    },
+    "30000000": {
+      "section": "hexaSkill"
+    },
+    "30000001": {
+      "section": "hexaSkill"
+    },
+    "30000002": {
+      "section": "hexaSkill"
+    },
+    "30000003": {
+      "section": "hexaSkill"
+    },
+    "30000004": {
+      "section": "hexaSkill"
+    },
+    "30000005": {
+      "section": "hexaSkill"
+    },
+    "30000006": {
+      "section": "hexaSkill"
+    },
+    "30000007": {
+      "section": "hexaSkill"
+    },
+    "30000008": {
+      "section": "hexaSkill"
+    },
+    "30000009": {
+      "section": "hexaSkill"
+    },
+    "30000010": {
+      "section": "hexaSkill"
+    },
+    "30000011": {
+      "section": "hexaSkill"
+    },
+    "30000012": {
+      "section": "hexaSkill"
+    },
+    "30000013": {
+      "section": "hexaSkill"
+    },
+    "30000014": {
+      "section": "hexaSkill"
+    },
+    "30000015": {
+      "section": "hexaSkill"
+    },
+    "30000016": {
+      "section": "hexaSkill"
+    },
+    "30000017": {
+      "section": "hexaSkill"
+    },
+    "30000018": {
+      "section": "hexaSkill"
+    },
+    "30000019": {
+      "section": "hexaSkill"
+    },
+    "30000020": {
+      "section": "hexaSkill"
+    },
+    "30000021": {
+      "section": "hexaSkill"
+    },
+    "30000022": {
+      "section": "hexaSkill"
+    },
+    "30000023": {
+      "section": "hexaSkill"
+    },
+    "30000024": {
+      "section": "hexaSkill"
+    },
+    "30000025": {
+      "section": "hexaSkill"
+    },
+    "30000026": {
+      "section": "hexaSkill"
+    },
+    "30000027": {
+      "section": "hexaSkill"
+    },
+    "30000028": {
+      "section": "hexaSkill"
+    },
+    "30000029": {
+      "section": "hexaSkill"
+    },
+    "30000030": {
+      "section": "hexaSkill"
+    },
+    "30000031": {
+      "section": "hexaSkill"
+    },
+    "30000032": {
+      "section": "hexaSkill"
+    },
+    "30000033": {
+      "section": "hexaSkill"
+    },
+    "30000034": {
+      "section": "hexaSkill"
+    },
+    "30000035": {
+      "section": "hexaSkill"
+    },
+    "30000036": {
+      "section": "hexaSkill"
+    },
+    "30000037": {
+      "section": "hexaSkill"
+    },
+    "30000038": {
+      "section": "hexaSkill"
+    },
+    "30000039": {
+      "section": "hexaSkill"
+    },
+    "30000040": {
+      "section": "hexaSkill"
+    },
+    "30000041": {
+      "section": "hexaSkill"
+    },
+    "30000042": {
+      "section": "hexaSkill"
+    },
+    "30000043": {
+      "section": "hexaSkill"
+    },
+    "30000044": {
+      "section": "hexaSkill"
+    },
+    "30000045": {
+      "section": "hexaSkill"
+    },
+    "30000046": {
+      "section": "hexaSkill"
+    },
+    "30000047": {
+      "section": "hexaSkill"
+    },
+    "30000048": {
+      "section": "hexaSkill"
+    },
+    "30000049": {
+      "section": "hexaSkill"
+    },
+    "30000050": {
+      "section": "hexaSkill"
+    },
+    "30000051": {
+      "section": "hexaSkill"
+    },
+    "30000052": {
+      "section": "hexaSkill"
+    },
+    "30000053": {
+      "section": "hexaSkill"
+    },
+    "30000054": {
+      "section": "hexaSkill"
+    },
+    "30000055": {
+      "section": "hexaSkill"
+    },
+    "30000056": {
+      "section": "hexaSkill"
+    },
+    "30000057": {
+      "section": "hexaSkill"
+    },
+    "30000058": {
+      "section": "hexaSkill"
+    },
+    "30000059": {
+      "section": "hexaSkill"
+    },
+    "30000060": {
+      "section": "hexaSkill"
+    },
+    "30000061": {
+      "section": "hexaSkill"
+    },
+    "30000062": {
+      "section": "hexaSkill"
+    },
+    "30000063": {
+      "section": "hexaSkill"
+    },
+    "30000064": {
+      "section": "hexaSkill"
+    },
+    "30000065": {
+      "section": "hexaSkill"
+    },
+    "30000066": {
+      "section": "hexaSkill"
+    },
+    "30000067": {
+      "section": "hexaSkill"
+    },
+    "30000068": {
+      "section": "hexaSkill"
+    },
+    "30000069": {
+      "section": "hexaSkill"
+    },
+    "30000070": {
+      "section": "hexaSkill"
+    },
+    "30000071": {
+      "section": "hexaSkill"
+    },
+    "30000072": {
+      "section": "hexaSkill"
+    },
+    "30000073": {
+      "section": "hexaSkill"
+    },
+    "30000074": {
+      "section": "hexaSkill"
+    },
+    "30000075": {
+      "section": "hexaSkill"
+    },
+    "30000076": {
+      "section": "hexaSkill"
+    },
+    "30000077": {
+      "section": "hexaSkill"
+    },
+    "30000078": {
+      "section": "hexaSkill"
+    },
+    "30000079": {
+      "section": "hexaSkill"
+    },
+    "30000080": {
+      "section": "hexaSkill"
+    },
+    "30000081": {
+      "section": "hexaSkill"
+    },
+    "30000082": {
+      "section": "hexaSkill"
+    },
+    "30000083": {
+      "section": "hexaSkill"
+    },
+    "30000084": {
+      "section": "hexaSkill"
+    },
+    "30000085": {
+      "section": "hexaSkill"
+    },
+    "30000086": {
+      "section": "hexaSkill"
+    },
+    "30000087": {
+      "section": "hexaSkill"
+    },
+    "30000088": {
+      "section": "hexaSkill"
+    },
+    "30000089": {
+      "section": "hexaSkill"
+    },
+    "30000090": {
+      "section": "hexaSkill"
+    },
+    "30000091": {
+      "section": "hexaSkill"
+    },
+    "30000092": {
+      "section": "hexaSkill"
+    },
+    "30000093": {
+      "section": "hexaSkill"
+    },
+    "30000094": {
+      "section": "hexaSkill"
+    },
+    "30000095": {
+      "section": "hexaSkill"
+    },
+    "30000096": {
+      "section": "hexaSkill"
+    },
+    "30000097": {
+      "section": "hexaSkill"
+    },
+    "30000098": {
+      "section": "hexaSkill"
+    },
+    "30000099": {
+      "section": "hexaSkill"
+    },
+    "30000100": {
+      "section": "hexaSkill"
+    },
+    "30000101": {
+      "section": "hexaSkill"
+    },
+    "30000102": {
+      "section": "hexaSkill"
+    },
+    "30000103": {
+      "section": "hexaSkill"
+    },
+    "30000104": {
+      "section": "hexaSkill"
+    },
+    "30000105": {
+      "section": "hexaSkill"
+    },
+    "30000106": {
+      "section": "hexaSkill"
+    },
+    "30000107": {
+      "section": "hexaSkill"
+    },
+    "30000108": {
+      "section": "hexaSkill"
+    },
+    "30000109": {
+      "section": "hexaSkill"
+    },
+    "30000110": {
+      "section": "hexaSkill"
+    },
+    "30000111": {
+      "section": "hexaSkill"
+    },
+    "30000112": {
+      "section": "hexaSkill"
+    },
+    "30000113": {
+      "section": "hexaSkill"
+    },
+    "30000114": {
+      "section": "hexaSkill"
+    },
+    "30000115": {
+      "section": "hexaSkill"
+    },
+    "30000116": {
+      "section": "hexaSkill"
+    },
+    "30000117": {
+      "section": "hexaSkill"
+    },
+    "30000118": {
+      "section": "hexaSkill"
+    },
+    "30000119": {
+      "section": "hexaSkill"
+    },
+    "30000120": {
+      "section": "hexaSkill"
+    },
+    "30000121": {
+      "section": "hexaSkill"
+    },
+    "30000122": {
+      "section": "hexaSkill"
+    },
+    "30000123": {
+      "section": "hexaSkill"
+    },
+    "30000124": {
+      "section": "hexaSkill"
+    },
+    "30000125": {
+      "section": "hexaSkill"
+    },
+    "30000126": {
+      "section": "hexaSkill"
+    },
+    "30000127": {
+      "section": "hexaSkill"
+    },
+    "30000128": {
+      "section": "hexaSkill"
+    },
+    "30000129": {
+      "section": "hexaSkill"
+    },
+    "30000130": {
+      "section": "hexaSkill"
+    },
+    "30000131": {
+      "section": "hexaSkill"
+    },
+    "30000132": {
+      "section": "hexaSkill"
+    },
+    "30000133": {
+      "section": "hexaSkill"
+    },
+    "30000134": {
+      "section": "hexaSkill"
+    },
+    "30000135": {
+      "section": "hexaSkill"
+    },
+    "30000136": {
+      "section": "hexaSkill"
+    },
+    "30000137": {
+      "section": "hexaSkill"
+    },
+    "30000138": {
+      "section": "hexaSkill"
+    },
+    "30000139": {
+      "section": "hexaSkill"
+    },
+    "30000140": {
+      "section": "hexaSkill"
+    },
+    "30000141": {
+      "section": "hexaSkill"
+    },
+    "30000142": {
+      "section": "hexaSkill"
+    },
+    "30000143": {
+      "section": "hexaSkill"
+    },
+    "30000144": {
+      "section": "hexaSkill"
+    },
+    "30000145": {
+      "section": "hexaSkill"
+    },
+    "30000146": {
+      "section": "hexaSkill"
+    },
+    "30000147": {
+      "section": "hexaSkill"
+    },
+    "30000148": {
+      "section": "hexaSkill"
+    },
+    "30000149": {
+      "section": "hexaSkill"
+    },
+    "30000150": {
+      "section": "hexaSkill"
+    },
+    "30000151": {
+      "section": "hexaSkill"
+    },
+    "30000152": {
+      "section": "hexaSkill"
+    },
+    "30000153": {
+      "section": "hexaSkill"
+    },
+    "30000154": {
+      "section": "hexaSkill"
+    },
+    "30000155": {
+      "section": "hexaSkill"
+    },
+    "30000156": {
+      "section": "hexaSkill"
+    },
+    "30000157": {
+      "section": "hexaSkill"
+    },
+    "30000158": {
+      "section": "hexaSkill"
+    },
+    "30000159": {
+      "section": "hexaSkill"
+    },
+    "30000160": {
+      "section": "hexaSkill"
+    },
+    "30000161": {
+      "section": "hexaSkill"
+    },
+    "30000162": {
+      "section": "hexaSkill"
+    },
+    "30000163": {
+      "section": "hexaSkill"
+    },
+    "30000164": {
+      "section": "hexaSkill"
+    },
+    "30000165": {
+      "section": "hexaSkill"
+    },
+    "30000166": {
+      "section": "hexaSkill"
+    },
+    "30000167": {
+      "section": "hexaSkill"
+    },
+    "30000168": {
+      "section": "hexaSkill"
+    },
+    "30000169": {
+      "section": "hexaSkill"
+    },
+    "30000170": {
+      "section": "hexaSkill"
+    },
+    "30000171": {
+      "section": "hexaSkill"
+    },
+    "30000172": {
+      "section": "hexaSkill"
+    },
+    "30000173": {
+      "section": "hexaSkill"
+    },
+    "30000174": {
+      "section": "hexaSkill"
+    },
+    "30000175": {
+      "section": "hexaSkill"
+    },
+    "30000176": {
+      "section": "hexaSkill"
+    },
+    "30000177": {
+      "section": "hexaSkill"
+    },
+    "30000178": {
+      "section": "hexaSkill"
+    },
+    "30000179": {
+      "section": "hexaSkill"
+    },
+    "30000180": {
+      "section": "hexaSkill"
+    },
+    "30000181": {
+      "section": "hexaSkill"
+    },
+    "30000182": {
+      "section": "hexaSkill"
+    },
+    "30000183": {
+      "section": "hexaSkill"
+    },
+    "10000050": {
+      "section": "hexaSkill"
+    },
+    "20000200": {
+      "section": "hexaSkill"
+    },
+    "20000201": {
+      "section": "hexaSkill"
+    },
+    "20000202": {
+      "section": "hexaSkill"
+    },
+    "20000203": {
+      "section": "hexaSkill"
+    },
+    "30000209": {
+      "section": "hexaSkill"
+    },
+    "30000210": {
+      "section": "hexaSkill"
+    },
+    "30000211": {
+      "section": "hexaSkill"
+    },
+    "30000212": {
+      "section": "hexaSkill"
+    },
+    "10000046": {
+      "section": "hexaSkill"
+    },
+    "10000047": {
+      "section": "hexaSkill"
+    },
+    "20000046": {
+      "section": "hexaSkill"
+    },
+    "20000047": {
+      "section": "hexaSkill"
+    },
+    "30000184": {
+      "section": "hexaSkill"
+    },
+    "30000185": {
+      "section": "hexaSkill"
+    },
+    "30000186": {
+      "section": "hexaSkill"
+    },
+    "30000187": {
+      "section": "hexaSkill"
+    },
+    "30000188": {
+      "section": "hexaSkill"
+    },
+    "30000189": {
+      "section": "hexaSkill"
+    },
+    "30000190": {
+      "section": "hexaSkill"
+    },
+    "30000191": {
+      "section": "hexaSkill"
+    },
+    "10000048": {
+      "section": "hexaSkill"
+    },
+    "20000048": {
+      "section": "hexaSkill"
+    },
+    "30000192": {
+      "section": "hexaSkill"
+    },
+    "30000193": {
+      "section": "hexaSkill"
+    },
+    "30000194": {
+      "section": "hexaSkill"
+    },
+    "30000195": {
+      "section": "hexaSkill"
+    },
+    "20000098": {
+      "section": "hexaSkill"
+    },
+    "20000096": {
+      "section": "hexaSkill"
+    },
+    "20000097": {
+      "section": "hexaSkill"
+    },
+    "20000204": {
+      "section": "hexaSkill"
+    },
+    "30000206": {
+      "section": "hexaSkill"
+    },
+    "10000051": {
+      "section": "hexaSkill"
+    },
+    "10000049": {
+      "section": "hexaSkill"
+    },
+    "20000049": {
+      "section": "hexaSkill"
+    },
+    "30000196": {
+      "section": "hexaSkill"
+    },
+    "30000197": {
+      "section": "hexaSkill"
+    },
+    "30000198": {
+      "section": "hexaSkill"
+    },
+    "30000199": {
+      "section": "hexaSkill"
+    },
+    "20000099": {
+      "section": "hexaSkill"
+    },
+    "20000194": {
+      "section": "hexaSkill"
+    },
+    "20000198": {
+      "section": "hexaSkill"
+    },
+    "20000195": {
+      "section": "hexaSkill"
+    },
+    "20000199": {
+      "section": "hexaSkill"
+    },
+    "20000193": {
+      "section": "hexaSkill"
+    },
+    "20000197": {
+      "section": "hexaSkill"
+    },
+    "20000192": {
+      "section": "hexaSkill"
+    },
+    "20000196": {
+      "section": "hexaSkill"
+    },
+    "10000052": {
+      "section": "hexaSkill"
+    },
+    "10000053": {
+      "section": "hexaSkill"
+    },
+    "10000054": {
+      "section": "hexaSkill"
+    },
+    "10000055": {
+      "section": "hexaSkill"
+    },
+    "10000056": {
+      "section": "hexaSkill"
+    },
+    "10000057": {
+      "section": "hexaSkill"
+    },
+    "10000058": {
+      "section": "hexaSkill"
+    },
+    "10000059": {
+      "section": "hexaSkill"
+    },
+    "10000060": {
+      "section": "hexaSkill"
+    },
+    "10000061": {
+      "section": "hexaSkill"
+    },
+    "10000062": {
+      "section": "hexaSkill"
+    },
+    "10000063": {
+      "section": "hexaSkill"
+    },
+    "10000064": {
+      "section": "hexaSkill"
+    },
+    "10000065": {
+      "section": "hexaSkill"
+    },
+    "10000066": {
+      "section": "hexaSkill"
+    },
+    "10000067": {
+      "section": "hexaSkill"
+    },
+    "10000068": {
+      "section": "hexaSkill"
+    },
+    "10000069": {
+      "section": "hexaSkill"
+    },
+    "10000070": {
+      "section": "hexaSkill"
+    },
+    "10000072": {
+      "section": "hexaSkill"
+    },
+    "10000071": {
+      "section": "hexaSkill"
+    },
+    "10000073": {
+      "section": "hexaSkill"
+    },
+    "10000074": {
+      "section": "hexaSkill"
+    },
+    "10000075": {
+      "section": "hexaSkill"
+    },
+    "10000076": {
+      "section": "hexaSkill"
+    },
+    "10000077": {
+      "section": "hexaSkill"
+    },
+    "10000078": {
+      "section": "hexaSkill"
+    },
+    "10000079": {
+      "section": "hexaSkill"
+    },
+    "10000080": {
+      "section": "hexaSkill"
+    },
+    "10000081": {
+      "section": "hexaSkill"
+    },
+    "10000082": {
+      "section": "hexaSkill"
+    },
+    "10000083": {
+      "section": "hexaSkill"
+    },
+    "10000084": {
+      "section": "hexaSkill"
+    },
+    "10000085": {
+      "section": "hexaSkill"
+    },
+    "10000086": {
+      "section": "hexaSkill"
+    },
+    "10000087": {
+      "section": "hexaSkill"
+    },
+    "10000088": {
+      "section": "hexaSkill"
+    },
+    "10000089": {
+      "section": "hexaSkill"
+    },
+    "10000090": {
+      "section": "hexaSkill"
+    },
+    "10000091": {
+      "section": "hexaSkill"
+    },
+    "10000092": {
+      "section": "hexaSkill"
+    },
+    "10000093": {
+      "section": "hexaSkill"
+    },
+    "10000094": {
+      "section": "hexaSkill"
+    },
+    "10000095": {
+      "section": "hexaSkill"
+    },
+    "10000096": {
+      "section": "hexaSkill"
+    },
+    "10000097": {
+      "section": "hexaSkill"
+    },
+    "10000098": {
+      "section": "hexaSkill"
+    },
+    "10000099": {
+      "section": "hexaSkill"
+    },
+    "10000100": {
+      "section": "hexaSkill"
+    },
+    "10000101": {
+      "section": "hexaSkill"
+    },
+    "10000102": {
+      "section": "hexaSkill"
+    },
+    "50000000": {
+      "section": "hexaStat"
+    },
+    "50000001": {
+      "section": "hexaStat"
+    },
+    "50000002": {
+      "section": "hexaStat"
+    }
+  }
+}

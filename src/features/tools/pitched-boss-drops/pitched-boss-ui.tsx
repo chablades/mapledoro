@@ -1,17 +1,6 @@
-import Image from "next/image";
-import type { AppTheme } from "../../../components/themes";
+import { ItemIcon as ResourceItemIcon } from "../../../components/ResourceImage";
 
-export function panelStyle(theme: AppTheme): React.CSSProperties {
-  return {
-    background: theme.panel,
-    border: `1px solid ${theme.border}`,
-    borderRadius: 12,
-    padding: "1.25rem",
-    marginBottom: "1.5rem",
-  };
-}
-
-export function ItemIcon({ src }: { src: string }) {
+export function ItemIcon({ id }: { id: string }) {
   return (
     <span
       style={{
@@ -24,7 +13,7 @@ export function ItemIcon({ src }: { src: string }) {
         verticalAlign: "middle",
       }}
     >
-      <Image src={src} alt="" width={32} height={32} unoptimized className="pixelated-img" />
+      <ResourceItemIcon id={id} size={32} />
     </span>
   );
 }

@@ -7,7 +7,7 @@ import { findClassById, COMMON_SKILLS, type HexaSkillDef, type HexaSkillLevels }
 import { readCharacterToolData } from "../../../tools/characterToolStorage";
 import { resolveClassId } from "../../setup/data/nexonJobMapping";
 import { CLASS_SKILL_DATA } from "../../setup/data/classSkillData";
-import { WikiAttribution } from "../../../../components/WikiAttribution";
+import { resourceImageUrl } from "../../../../lib/mapleResource";
 
 interface CharacterProfileOverviewScreenProps {
   model: PreviewPaneModel;
@@ -85,16 +85,17 @@ function HexNode({
   const border = { purple: "#7055c8", blue: "#4080c0", pink: "#c055c8", empty: "#c8c0b8" }[variant];
   const lvColor = { purple: "#a090d8", blue: "#6ea8d8", pink: "#d890d8", empty: "#999" }[variant];
 
-  const showImage = !!(skill && !locked && !imgError);
+  const hasIcon = !!skill?.iconId;
+  const showImage = !!(skill && !locked && !imgError && hasIcon);
 
   let content: React.ReactNode;
   if (skill && !locked) {
-    if (imgError) {
+    if (imgError || !skill.iconId) {
       content = <span style={{ fontSize: 10, fontWeight: 800, color: lvColor }}>{skill.name.charAt(0)}</span>;
     } else {
       content = (
         <Image
-          src={skill.icon}
+          src={resourceImageUrl("hexa-skill", skill.iconId, "icon.png")}
           alt={skill.name}
           fill
           sizes="42px"
@@ -209,7 +210,7 @@ function OverviewTab({ model }: { model: PreviewPaneModel }) {
   const commonSlots: (HexaSkillDef | null)[] = [COMMON_SKILLS[0] ?? null, null, null, null];
   const commonLevels = [hexaLevels?.common[0] ?? 0, 0, 0, 0];
   const masterySlots: (HexaSkillDef | null)[] = hexaClassDef
-    ? hexaClassDef.mastery.map((node) => node[0] ?? null)
+    ? hexaClassDef.mastery.map((node) => ({ name: node.skills[0], iconId: node.iconId }))
     : [null, null, null, null];
   const masteryLevels = hexaLevels?.mastery ?? [0, 0, 0, 0];
   const enhancementSlots: (HexaSkillDef | null)[] = hexaClassDef?.enhancement ?? [null, null, null, null];
@@ -328,9 +329,6 @@ function OverviewTab({ model }: { model: PreviewPaneModel }) {
                 </div>
               </div>
             </div>
-          </div>
-          <div style={{ marginTop: 10 }}>
-            <WikiAttribution theme={theme} subject="Skill icons" />
           </div>
         </div>
       )}

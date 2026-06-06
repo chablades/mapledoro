@@ -4,10 +4,10 @@ import { useState, useReducer, useSyncExternalStore } from "react";
 import type { CSSProperties } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { panelStyle, ItemIcon } from "./pitched-boss-ui";
+import { ItemIcon } from "./pitched-boss-ui";
+import { panelStyle } from "./pitched-boss-styles";
 import type { AppTheme } from "../../../components/themes";
 import { ToolHeader } from "../../../components/ToolHeader";
-import { WikiAttribution } from "../../../components/WikiAttribution";
 import {
   readCharactersStore,
   selectCharactersList,
@@ -169,7 +169,7 @@ function DropLogTable({
                   <td style={tdStyle(theme)}>{drop.characterName}</td>
                   <td style={{ ...tdStyle(theme), fontWeight: 600 }}>
                     <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
-                      {item && <ItemIcon src={item.icon} />}
+                      {item && <ItemIcon id={item.itemId} />}
                       {item?.name ?? drop.itemId}
                     </span>
                   </td>
@@ -409,6 +409,7 @@ export default function PitchedBossDropsWorkspace({
                     min={1}
                     max={30}
                     value={form.channel}
+                    onFocus={(e) => e.currentTarget.select()}
                     onChange={(e) => dispatchForm({ type: "setChannel", value: e.target.value })}
                     placeholder="CH"
                     style={fieldStyle(theme)}
@@ -476,8 +477,6 @@ export default function PitchedBossDropsWorkspace({
             boss drop!
           </div>
         )}
-
-        <WikiAttribution theme={theme} subject="Item images" />
       </div>
     </div>
   );

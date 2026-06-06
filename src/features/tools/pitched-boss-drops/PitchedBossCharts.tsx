@@ -1,6 +1,7 @@
 "use client";
 
-import { panelStyle, ItemIcon } from "./pitched-boss-ui";
+import { ItemIcon } from "./pitched-boss-ui";
+import { panelStyle } from "./pitched-boss-styles";
 import { useEffect, useState, type ComponentType } from "react";
 import type { AppTheme } from "../../../components/themes";
 import { PITCHED_ITEMS_BY_ID } from "./pitched-items";
@@ -95,7 +96,7 @@ function DropCountBarChart({
             }}
           >
             <span style={{ display: "flex", alignItems: "center", gap: 5, color: theme.text, fontWeight: 600 }}>
-              <ItemIcon src={item.icon} />
+              <ItemIcon id={item.itemId} />
               {item.name}
             </span>
             <span style={{ color: theme.muted, fontWeight: 700 }}>{count}</span>

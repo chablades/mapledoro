@@ -3,6 +3,7 @@
 import { useReducer, useMemo, useCallback, useSyncExternalStore } from "react";
 import type { CSSProperties } from "react";
 import type { AppTheme } from "../../../components/themes";
+import { replaceZeroOnDigit } from "../numberInputHandlers";
 import { ToolHeader } from "../../../components/ToolHeader";
 import { Toggle } from "../shared-ui";
 import { toolStyles } from "../tool-styles";
@@ -28,6 +29,12 @@ import {
   type FlameScoreInputs,
   type FlameResults,
 } from "./flaming-data";
+
+function formatPctFull(pct: number): string {
+  if (pct >= 0.01) return `${pct.toFixed(4)}%`;
+  const s = pct.toPrecision(4);
+  return `${parseFloat(s)}%`;
+}
 
 // -- State --------------------------------------------------------------------
 
@@ -143,6 +150,8 @@ function EquivRow({
         type="number"
         step={0.01}
         value={value}
+        onFocus={(e) => e.currentTarget.select()}
+        onKeyDown={replaceZeroOnDigit}
         onChange={(e) => onChange(Number(e.target.value) || 0)}
         style={{ ...inputStyle, width: 70, textAlign: "center" }}
       />
@@ -310,6 +319,8 @@ function FlameSettingsPanel({
               type="number"
               min={0}
               value={state.baseAttack}
+              onFocus={(e) => e.currentTarget.select()}
+              onKeyDown={replaceZeroOnDigit}
               onChange={(e) => dispatch({ type: "setBaseAttack", value: Math.max(0, Number(e.target.value) || 0) })}
               style={{ ...inputStyle, width: "100%", padding: "8px 10px" }}
             />
@@ -424,6 +435,8 @@ function TargetPanel({
           type="number"
           min={0}
           value={state.desiredStat}
+          onFocus={(e) => e.currentTarget.select()}
+          onKeyDown={replaceZeroOnDigit}
           onChange={(e) => dispatch({ type: "setDesiredStat", value: Math.max(0, Number(e.target.value) || 0) })}
           style={{ ...inputStyle, width: 110, textAlign: "center" }}
         />
@@ -519,44 +532,44 @@ function FlameScorePanel({
       <div className="flame-score-fields" style={{ display: "flex", gap: "12px", marginBottom: "1rem" }}>
         {cls !== "da" && (
           <Field label="Main Stat" style={labelStyle} containerStyle={flexItem}>
-            <input className="tool-input" type="number" value={state.flameScore.mainStat} onChange={(e) => setField("mainStat", Number(e.target.value) || 0)} style={fieldInputStyle} />
+            <input className="tool-input" type="number" onFocus={(e) => e.currentTarget.select()} onKeyDown={replaceZeroOnDigit} value={state.flameScore.mainStat} onChange={(e) => setField("mainStat", Number(e.target.value) || 0)} style={fieldInputStyle} />
           </Field>
         )}
         {cls === "da" && (
           <Field label="HP" style={labelStyle} containerStyle={flexItem}>
-            <input className="tool-input" type="number" value={state.flameScore.hp} onChange={(e) => setField("hp", Number(e.target.value) || 0)} style={fieldInputStyle} />
+            <input className="tool-input" type="number" onFocus={(e) => e.currentTarget.select()} onKeyDown={replaceZeroOnDigit} value={state.flameScore.hp} onChange={(e) => setField("hp", Number(e.target.value) || 0)} style={fieldInputStyle} />
           </Field>
         )}
         {cls === "other" && (
           <Field label="Secondary Stat" style={labelStyle} containerStyle={flexItem}>
-            <input className="tool-input" type="number" value={state.flameScore.secondaryStat} onChange={(e) => setField("secondaryStat", Number(e.target.value) || 0)} style={fieldInputStyle} />
+            <input className="tool-input" type="number" onFocus={(e) => e.currentTarget.select()} onKeyDown={replaceZeroOnDigit} value={state.flameScore.secondaryStat} onChange={(e) => setField("secondaryStat", Number(e.target.value) || 0)} style={fieldInputStyle} />
           </Field>
         )}
         {(cls === "db" || cls === "shadower" || cls === "cadena") && (
           <>
             <Field label="DEX" style={labelStyle} containerStyle={flexItem}>
-              <input className="tool-input" type="number" value={state.flameScore.dex} onChange={(e) => setField("dex", Number(e.target.value) || 0)} style={fieldInputStyle} />
+              <input className="tool-input" type="number" onFocus={(e) => e.currentTarget.select()} onKeyDown={replaceZeroOnDigit} value={state.flameScore.dex} onChange={(e) => setField("dex", Number(e.target.value) || 0)} style={fieldInputStyle} />
             </Field>
             <Field label="STR" style={labelStyle} containerStyle={flexItem}>
-              <input className="tool-input" type="number" value={state.flameScore.str} onChange={(e) => setField("str", Number(e.target.value) || 0)} style={fieldInputStyle} />
+              <input className="tool-input" type="number" onFocus={(e) => e.currentTarget.select()} onKeyDown={replaceZeroOnDigit} value={state.flameScore.str} onChange={(e) => setField("str", Number(e.target.value) || 0)} style={fieldInputStyle} />
             </Field>
           </>
         )}
         {cls !== "da" && (
           <Field label="All Stat %" style={labelStyle} containerStyle={flexItem}>
-            <input className="tool-input" type="number" value={state.flameScore.allStatPct} onChange={(e) => setField("allStatPct", Number(e.target.value) || 0)} style={fieldInputStyle} />
+            <input className="tool-input" type="number" onFocus={(e) => e.currentTarget.select()} onKeyDown={replaceZeroOnDigit} value={state.flameScore.allStatPct} onChange={(e) => setField("allStatPct", Number(e.target.value) || 0)} style={fieldInputStyle} />
           </Field>
         )}
         <Field label="Attack Power" style={labelStyle} containerStyle={flexItem}>
-          <input className="tool-input" type="number" value={state.flameScore.attack} onChange={(e) => setField("attack", Number(e.target.value) || 0)} style={fieldInputStyle} />
+          <input className="tool-input" type="number" onFocus={(e) => e.currentTarget.select()} onKeyDown={replaceZeroOnDigit} value={state.flameScore.attack} onChange={(e) => setField("attack", Number(e.target.value) || 0)} style={fieldInputStyle} />
         </Field>
         {state.itemType === "weapon" && (
           <>
             <Field label="Boss %" style={labelStyle} containerStyle={flexItem}>
-              <input className="tool-input" type="number" value={state.flameScore.bossPct} onChange={(e) => setField("bossPct", Number(e.target.value) || 0)} style={fieldInputStyle} />
+              <input className="tool-input" type="number" onFocus={(e) => e.currentTarget.select()} onKeyDown={replaceZeroOnDigit} value={state.flameScore.bossPct} onChange={(e) => setField("bossPct", Number(e.target.value) || 0)} style={fieldInputStyle} />
             </Field>
             <Field label="Damage %" style={labelStyle} containerStyle={flexItem}>
-              <input className="tool-input" type="number" value={state.flameScore.dmgPct} onChange={(e) => setField("dmgPct", Number(e.target.value) || 0)} style={fieldInputStyle} />
+              <input className="tool-input" type="number" onFocus={(e) => e.currentTarget.select()} onKeyDown={replaceZeroOnDigit} value={state.flameScore.dmgPct} onChange={(e) => setField("dmgPct", Number(e.target.value) || 0)} style={fieldInputStyle} />
             </Field>
           </>
         )}
@@ -695,7 +708,7 @@ export default function FlamingWorkspace({ theme }: { theme: AppTheme }) {
                 </div>
                 <div style={{ marginTop: "4px" }}>
                   <span style={{ fontSize: "1.15rem", fontWeight: 800, color: theme.accent }}>
-                    {(results.probability * 100).toFixed(4)}%
+                    {formatPctFull(results.probability * 100)}
                   </span>
                 </div>
               </div>

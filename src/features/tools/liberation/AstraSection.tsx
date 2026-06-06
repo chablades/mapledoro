@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import type { AppTheme } from "../../../components/themes";
+import { replaceZeroOnDigit } from "../numberInputHandlers";
 import { ProgressBar } from "../../../components/ProgressBar";
 import { CharacterSyncPanel } from "../../../components/CharacterSyncPanel";
 import { WikiAttribution } from "../../../components/WikiAttribution";
@@ -66,6 +67,8 @@ function VoucherInput({
         max={maxV}
         value={vouchersKept}
         disabled={!isActive}
+        onFocus={(e) => e.currentTarget.select()}
+        onKeyDown={replaceZeroOnDigit}
         onChange={(e) => {
           let v = parseInt(e.target.value) || 0;
           if (v < 0) v = 0;
@@ -182,6 +185,7 @@ function AstraBossCard({
             max={boss.maxParty}
             value={sel.partySize}
             disabled={!isActive}
+            onFocus={(e) => e.currentTarget.select()}
             onChange={(e) => {
               let v = parseInt(e.target.value) || 1;
               if (v < 1) v = 1;
@@ -289,6 +293,8 @@ function AstraConfigSection({
             min={0}
             max={MAX_TRACES_CAPACITY}
             value={currentTraces}
+            onFocus={(e) => e.currentTarget.select()}
+            onKeyDown={replaceZeroOnDigit}
             onChange={(e) => {
               let v = parseInt(e.target.value) || 0;
               if (v < 0) v = 0;
@@ -308,6 +314,8 @@ function AstraConfigSection({
             type="number"
             min={0}
             value={currentFragments}
+            onFocus={(e) => e.currentTarget.select()}
+            onKeyDown={replaceZeroOnDigit}
             onChange={(e) => {
               let v = parseInt(e.target.value) || 0;
               if (v < 0) v = 0;
@@ -393,6 +401,8 @@ function AstraDailyQuestSection({
             min={0}
             max={7}
             value={daysPerWeek}
+            onFocus={(e) => e.currentTarget.select()}
+            onKeyDown={replaceZeroOnDigit}
             onChange={(e) => {
               let v = parseInt(e.target.value) || 0;
               if (v < 0) v = 0;

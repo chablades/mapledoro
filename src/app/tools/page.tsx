@@ -5,19 +5,16 @@
   Displays a grid of available tool cards that link to their sub-routes.
 */
 import Link from "next/link";
-import Image from "next/image";
 import AppShell from "../../components/AppShell";
+import { ItemIcon } from "../../components/ResourceImage";
 import type { AppTheme } from "../../components/themes";
-import { WikiAttribution } from "../../components/WikiAttribution";
 
-interface ToolCard {
+type ToolCard = {
   title: string;
   description: string;
-  icon: string;
-  iconType?: "emoji" | "image";
   href: string;
   comingSoon?: boolean;
-}
+} & ({ iconType?: "emoji"; icon: string } | { iconType: "item"; itemId: string });
 
 const CALCULATORS: ToolCard[] = [
   {
@@ -31,16 +28,16 @@ const CALCULATORS: ToolCard[] = [
     title: "Cubing Calculator",
     description:
       "Calculate the expected cost and number of cubes to achieve your desired potential.",
-    icon: "https://media.maplestorywiki.net/yetidb/Cash_Glowing_Cube.png",
-    iconType: "image",
+    itemId: "05062028", // Glowing Cube
+    iconType: "item",
     href: "/tools/cubing",
   },
   {
     title: "Flaming Calculator",
     description:
       "Calculate the expected number of flames to achieve your desired bonus stats.",
-    icon: "https://media.maplestorywiki.net/yetidb/Use_Powerful_Rebirth_Flame.png",
-    iconType: "image",
+    itemId: "02048752", // Powerful Rebirth Flame
+    iconType: "item",
     href: "/tools/flaming",
   },
 ];
@@ -68,8 +65,8 @@ const TRACKERS: ToolCard[] = [
     title: "Boss Crystal Tracker",
     description:
       "Track your weekly boss crystal income across all characters.",
-    icon: "https://media.maplestorywiki.net/yetidb/Etc_Intense_Power_Crystal_%28Weekly%29_%28Full_Size%29.png",
-    iconType: "image",
+    itemId: "04001928", // Intense Power Crystal (Weekly)
+    iconType: "item",
     href: "/tools/boss-crystals",
   },
   {
@@ -83,40 +80,40 @@ const TRACKERS: ToolCard[] = [
     title: "Liberation Tracker",
     description:
       "Track your Genesis and Destiny liberation progress and estimate completion.",
-    icon: "https://media.maplestorywiki.net/yetidb/Eqp_Genesis_Dagger.png",
-    iconType: "image",
+    itemId: "01332289", // Genesis Dagger
+    iconType: "item",
     href: "/tools/liberation",
   },
   {
     title: "Symbol Tracker",
     description:
       "Track your Arcane and Sacred symbol progress and estimate days to max.",
-    icon: "https://media.maplestorywiki.net/yetidb/Eqp_Sacred_Symbol_Cernium.png",
-    iconType: "image",
+    itemId: "01713000", // Sacred Symbol: Cernium
+    iconType: "item",
     href: "/tools/symbols",
   },
   {
     title: "HEXA Skill Tracker",
     description:
       "Track Sol Erda and Fragment costs to max your HEXA skills per character.",
-    icon: "https://media.maplestorywiki.net/yetidb/Etc_Sol_Erda_Fragment_%28Full_Size%29.png",
-    iconType: "image",
+    itemId: "04009613", // Sol Erda Fragment
+    iconType: "item",
     href: "/tools/hexa-skills",
   },
   {
     title: "Pitched Boss Drop Tracker",
     description:
       "Track and analyze your rare pitched boss drops across all characters.",
-    icon: "https://media.maplestorywiki.net/yetidb/Eqp_Genesis_Badge.png",
-    iconType: "image",
+    itemId: "01182285", // Genesis Badge
+    iconType: "item",
     href: "/tools/pitched-boss-drops",
   },
   {
     title: "Trace Restoration Calculator",
     description:
       "Track whisper crystal progress and trace restoration missions toward your target items.",
-    icon: "https://media.maplestorywiki.net/yetidb/Etc_Pitched_Whisper_Crystal.png",
-    iconType: "image",
+    itemId: "04001956", // Pitched Whisper Crystal
+    iconType: "item",
     href: "/tools/trace-restoration",
   },
 ];
@@ -134,8 +131,8 @@ function ToolCardInner({ tool, theme }: { tool: ToolCard; theme: AppTheme }) {
       }}
     >
       <div style={{ fontSize: "2rem", marginBottom: "0.75rem", height: 36, display: "flex", alignItems: "center" }}>
-        {tool.iconType === "image" ? (
-          <Image src={tool.icon} alt="" width={36} height={36} unoptimized className="item-icon-img" />
+        {tool.iconType === "item" ? (
+          <ItemIcon id={tool.itemId} size={36} />
         ) : (
           tool.icon
         )}
@@ -261,10 +258,6 @@ function ToolsContent({ theme }: { theme: AppTheme }) {
           </div>
 
           <ToolGrid tools={OTHER_TOOLS} theme={theme} />
-
-          <div style={{ marginTop: "2rem" }}>
-            <WikiAttribution theme={theme} subject="Item icons" />
-          </div>
         </div>
       </div>
     </>

@@ -1,4 +1,4 @@
-const CDN = "https://media.maplestorywiki.net/yetidb";
+import { bossIconUrl } from "../../../lib/mapleResource";
 
 /* ------------------------------------------------------------------ */
 /*  Star Force Research — Whisper Crystals                             */
@@ -46,8 +46,8 @@ export const DAWN_WHISPER_BOSSES: WhisperBoss[] = [
 
 export const DAWN_TARGET_COST = 65;
 
-export const PITCHED_CRYSTAL_ICON = `${CDN}/Etc_Pitched_Whisper_Crystal.png`;
-export const DAWN_CRYSTAL_ICON = `${CDN}/Etc_Dawn_Whisper_Crystal.png`;
+export const PITCHED_CRYSTAL_ITEM_ID = "04001956"; // Pitched Whisper Crystal
+export const DAWN_CRYSTAL_ITEM_ID = "04001955"; // Dawn Whisper Crystal
 
 /* ------------------------------------------------------------------ */
 /*  Trace Restoration — Missions & Points                             */
@@ -57,26 +57,25 @@ interface TraceItem {
   id: string;
   name: string;
   points: number;
-  icon: string;
 }
 
 export const TRACE_ITEMS: TraceItem[] = [
-  { id: "kannas-treasure", name: "Kanna's Treasure", points: 392, icon: `${CDN}/Eqp_Kanna%27s_Treasure.png` },
-  { id: "black-bean-mark", name: "Black Bean Mark", points: 400, icon: `${CDN}/Eqp_Black_Bean_Mark.png` },
-  { id: "dominator-pendant", name: "Dominator Pendant", points: 431, icon: `${CDN}/Eqp_Dominator_Pendant.png` },
-  { id: "papulatus-mark", name: "Papulatus Mark", points: 462, icon: `${CDN}/Eqp_Papulatus_Mark.png` },
-  { id: "ra-armor", name: "Root Abyss Armor", points: 495, icon: `${CDN}/Eqp_Eagle_Eye_Warrior_Armor.png` },
-  { id: "sweetwater", name: "Sweetwater Equipment", points: 512, icon: `${CDN}/Eqp_Sweetwater_Monocle.png` },
-  { id: "solid-gollux", name: "Solid Gollux Accessories", points: 523, icon: `${CDN}/Eqp_Solid_Engraved_Gollux_Pendant.png` },
-  { id: "absolab", name: "AbsoLab Armor", points: 588, icon: `${CDN}/Use_AbsoLab_Armor_Box.png` },
-  { id: "reinforced-gollux", name: "Reinforced Gollux Accessories", points: 607, icon: `${CDN}/Eqp_Reinforced_Engraved_Gollux_Pendant.png` },
-  { id: "daybreak-pendant", name: "Daybreak Pendant", points: 646, icon: `${CDN}/Eqp_Daybreak_Pendant.png` },
-  { id: "superior-gollux", name: "Superior Gollux Accessories", points: 697, icon: `${CDN}/Eqp_Superior_Engraved_Gollux_Pendant.png` },
-  { id: "guardian-angel-ring", name: "Guardian Angel Ring", points: 844, icon: `${CDN}/Eqp_Guardian_Angel_Ring.png` },
-  { id: "arcane-umbra", name: "Arcane Umbra Armor", points: 960, icon: `${CDN}/Use_Arcane_Umbra_Armor_Box.png` },
-  { id: "pitched-boss", name: "Pitched Boss Items", points: 1680, icon: `${CDN}/Eqp_Genesis_Badge.png` },
-  { id: "eternal", name: "Eternal Armor", points: 2312, icon: `${CDN}/Use_Eternal_Armor_of_Desire_Box.png` },
-  { id: "brilliant-boss", name: "Brilliant Boss Items", points: 2500, icon: `${CDN}/Eqp_Whisper_of_the_Source.png` },
+  { id: "kannas-treasure", name: "Kanna's Treasure", points: 392 },
+  { id: "black-bean-mark", name: "Black Bean Mark", points: 400 },
+  { id: "dominator-pendant", name: "Dominator Pendant", points: 431 },
+  { id: "papulatus-mark", name: "Papulatus Mark", points: 462 },
+  { id: "ra-armor", name: "Root Abyss Armor", points: 495 },
+  { id: "sweetwater", name: "Sweetwater Equipment", points: 512 },
+  { id: "solid-gollux", name: "Solid Gollux Accessories", points: 523 },
+  { id: "absolab", name: "AbsoLab Armor", points: 588 },
+  { id: "reinforced-gollux", name: "Reinforced Gollux Accessories", points: 607 },
+  { id: "daybreak-pendant", name: "Daybreak Pendant", points: 646 },
+  { id: "superior-gollux", name: "Superior Gollux Accessories", points: 697 },
+  { id: "guardian-angel-ring", name: "Guardian Angel Ring", points: 844 },
+  { id: "arcane-umbra", name: "Arcane Umbra Armor", points: 960 },
+  { id: "pitched-boss", name: "Pitched Boss Items", points: 1680 },
+  { id: "eternal", name: "Eternal Armor", points: 2312 },
+  { id: "brilliant-boss", name: "Brilliant Boss Items", points: 2500 },
 ];
 
 interface TraceMission {
@@ -99,7 +98,7 @@ export const TRACE_BOSSES: TraceBoss[] = [
   {
     id: "lotus",
     name: "Lotus",
-    icon: `${CDN}/Maple_Guide_-_Lotus.png`,
+    icon: bossIconUrl("13"),
     frequency: "weekly",
     maxPoints: 14,
     missions: [
@@ -114,7 +113,7 @@ export const TRACE_BOSSES: TraceBoss[] = [
   {
     id: "damien",
     name: "Damien",
-    icon: `${CDN}/Maple_Guide_-_Damien.png`,
+    icon: bossIconUrl("15"),
     frequency: "weekly",
     maxPoints: 7,
     missions: [
@@ -128,7 +127,7 @@ export const TRACE_BOSSES: TraceBoss[] = [
   {
     id: "lucid",
     name: "Lucid",
-    icon: `${CDN}/Maple_Guide_-_Lucid.png`,
+    icon: bossIconUrl("19"),
     frequency: "weekly",
     maxPoints: 12,
     missions: [
@@ -143,7 +142,7 @@ export const TRACE_BOSSES: TraceBoss[] = [
   {
     id: "will",
     name: "Will",
-    icon: `${CDN}/Maple_Guide_-_Will.png`,
+    icon: bossIconUrl("23"),
     frequency: "weekly",
     maxPoints: 13,
     missions: [
@@ -158,7 +157,7 @@ export const TRACE_BOSSES: TraceBoss[] = [
   {
     id: "darknell",
     name: "Darknell",
-    icon: `${CDN}/Maple_Guide_-_Guard_Captain_Darknell.png`,
+    icon: bossIconUrl("27"),
     frequency: "weekly",
     maxPoints: 14,
     missions: [
@@ -173,7 +172,7 @@ export const TRACE_BOSSES: TraceBoss[] = [
   {
     id: "gloom",
     name: "Gloom",
-    icon: `${CDN}/Maple_Guide_-_Giant_Monster_Gloom.png`,
+    icon: bossIconUrl("26"),
     frequency: "weekly",
     maxPoints: 13,
     missions: [
@@ -188,7 +187,7 @@ export const TRACE_BOSSES: TraceBoss[] = [
   {
     id: "vhilla",
     name: "Verus Hilla",
-    icon: `${CDN}/Maple_Guide_-_Verus_Hilla.png`,
+    icon: bossIconUrl("24"),
     frequency: "weekly",
     maxPoints: 19,
     missions: [
@@ -203,7 +202,7 @@ export const TRACE_BOSSES: TraceBoss[] = [
   {
     id: "gas",
     name: "Guardian Angel Slime",
-    icon: `${CDN}/Maple_Guide_-_Guardian_Angel_Slime.png`,
+    icon: bossIconUrl("29"),
     frequency: "weekly",
     maxPoints: 14,
     missions: [
@@ -218,7 +217,7 @@ export const TRACE_BOSSES: TraceBoss[] = [
   {
     id: "blackmage",
     name: "Black Mage",
-    icon: `${CDN}/Maple_Guide_-_Black_Mage.png`,
+    icon: bossIconUrl("25"),
     frequency: "monthly",
     maxPoints: 50,
     missions: [
@@ -232,7 +231,7 @@ export const TRACE_BOSSES: TraceBoss[] = [
   {
     id: "seren",
     name: "Seren",
-    icon: `${CDN}/Maple_Guide_-_Chosen_Seren.png`,
+    icon: bossIconUrl("28"),
     frequency: "weekly",
     maxPoints: 31,
     missions: [

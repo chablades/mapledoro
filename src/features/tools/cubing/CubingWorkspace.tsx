@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useReducer, useSyncExternalStore } from "react";
 import type { AppTheme } from "../../../components/themes";
+import { replaceZeroOnDigit } from "../numberInputHandlers";
 import { ToolHeader } from "../../../components/ToolHeader";
 import {
   type CubeKey,
@@ -274,6 +275,8 @@ export default function CubingWorkspace({ theme }: { theme: AppTheme }) {
               <input
                 type="number"
                 value={itemLevel}
+                onFocus={(e) => e.currentTarget.select()}
+                onKeyDown={replaceZeroOnDigit}
                 onChange={(e) => dispatch({ type: "setItemLevel", value: Number(e.target.value) })}
                 min={71}
                 style={{ ...selectStyle, appearance: "auto" as const }}
@@ -358,7 +361,7 @@ export default function CubingWorkspace({ theme }: { theme: AppTheme }) {
               <ResultCard
                 theme={theme}
                 title="Meso Cost"
-                heroValue={formatMesoShort(result.mesoMean)}
+                heroValue={`${result.mesoMean.toLocaleString()} mesos`}
                 heroLabel="Average cost"
                 rows={[
                   { label: "75th percentile", value: result.meso75 },
@@ -449,9 +452,15 @@ function Field({ label, style, children }: { label: string; style: React.CSSProp
   );
 }
 
+function formatPctFull(pct: number): string {
+  if (pct >= 0.01) return `${pct.toFixed(4)}%`;
+  const s = pct.toPrecision(4);
+  return `${parseFloat(s)}%`;
+}
+
 function ProbabilityBadge({ theme, probability }: { theme: AppTheme; probability: number }) {
   const pct = probability * 100;
-  const display = pct >= 0.01 ? `${pct.toFixed(2)}%` : `${pct.toExponential(2)}%`;
+  const display = formatPctFull(pct);
 
   const containerStyle: React.CSSProperties = {
     display: "flex",
@@ -498,7 +507,7 @@ function TierUpProbabilities({ theme, steps }: { theme: AppTheme; steps: TierSte
     <div style={containerStyle}>
       {steps.map((step) => {
         const pct = step.probability * 100;
-        const display = pct >= 0.01 ? `${pct.toFixed(2)}%` : `${pct.toExponential(2)}%`;
+        const display = formatPctFull(pct);
         return (
           <div key={`${step.from}-${step.to}`} style={{ textAlign: "center" }}>
             <div style={{ fontSize: "0.75rem", fontWeight: 800, color: theme.muted, textTransform: "uppercase", letterSpacing: "0.04em" }}>
@@ -576,15 +585,6 @@ function ResultCard({
   );
 }
 
-function trimTrailingZero(v: string): string {
-  return v.endsWith(".0") ? v.slice(0, -2) : v;
-}
-
-function formatMesoShort(n: number): string {
-  if (n >= 1_000_000_000) return `${trimTrailingZero((n / 1_000_000_000).toFixed(1))}B mesos`;
-  if (n >= 1_000_000) return `${trimTrailingZero((n / 1_000_000).toFixed(1))}M mesos`;
-  return `${n.toLocaleString()} mesos`;
-}
 
 function DesiredStatSelect({
   levelValid,
