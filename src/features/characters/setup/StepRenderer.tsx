@@ -10,6 +10,7 @@ import GenericSetupStep from "./components/GenericSetupStep";
 import GenderSetupStep from "./components/GenderSetupStep";
 import MarriageSetupStep from "./components/MarriageSetupStep";
 import StatsSetupStep from "./components/StatsSetupStep";
+import EquipmentSetupStep from "./components/EquipmentSetupStep";
 import LinkSkillsSetupStep from "./components/LinkSkillsSetupStep";
 import HexaMatrixSetupStep from "./components/HexaMatrixSetupStep";
 import FamiliarsSetupStep from "./components/FamiliarsSetupStep";
@@ -25,6 +26,7 @@ interface StepRendererProps {
   worldLinkSkills?: string;
   characterLevel?: number;
   confirmedCharacterName?: string;
+  confirmedCharacterImgURL?: string;
   stepValue: string;
   onStepValueChange: (value: string) => void;
   onBackStep: () => void;
@@ -36,7 +38,7 @@ const STEP_COMPONENTS: Record<SetupStepId, typeof GenericSetupStep> = {
   gender: GenderSetupStep,
   marriage: MarriageSetupStep,
   stats: StatsSetupStep,
-  equipment_core: GenericSetupStep,
+  equipment: EquipmentSetupStep,
   inventory: GenericSetupStep,
   v_matrix: GenericSetupStep,
   hexa_matrix: HexaMatrixSetupStep,
@@ -56,6 +58,7 @@ export default function StepRenderer({
   worldLinkSkills,
   characterLevel,
   confirmedCharacterName,
+  confirmedCharacterImgURL,
   stepValue,
   onStepValueChange,
   onBackStep,
@@ -82,6 +85,7 @@ export default function StepRenderer({
       worldLinkSkills={worldLinkSkills}
       characterLevel={characterLevel}
       confirmedCharacterName={confirmedCharacterName}
+      confirmedCharacterImgURL={confirmedCharacterImgURL}
       value={stepValue}
       onChange={onStepValueChange}
       onBack={onBackStep}

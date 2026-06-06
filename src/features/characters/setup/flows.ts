@@ -21,7 +21,7 @@ const SETUP_FLOWS = [
     label: "Full Setup",
     description: "Complete profile setup including stats, equipment, and more.",
     required: false,
-    steps: ["gender", "marriage", "stats", "equipment_core", "v_matrix", "hexa_matrix", "familiars", "link_skills", "inventory"] as const,
+    steps: ["gender", "marriage", "stats", "equipment", "v_matrix", "hexa_matrix", "familiars", "link_skills", "inventory"] as const,
   },
   {
     id: "stats_flow",
@@ -35,7 +35,7 @@ const SETUP_FLOWS = [
     label: "Equipment",
     description: "Add equipped item details for this character.",
     required: false,
-    steps: ["equipment_core"] as const,
+    steps: ["equipment"] as const,
   },
   {
     id: "v_matrix_flow",

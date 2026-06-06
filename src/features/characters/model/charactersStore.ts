@@ -48,29 +48,33 @@ export interface StoredCharacterStats {
   sacredPower: string;
 }
 
-interface StoredEquipmentItem {
+export interface StoredEquipmentItem {
+  id?: number;
   name: string;
 }
 
 export interface StoredCharacterEquipment {
   rings: [StoredEquipmentItem | null, StoredEquipmentItem | null, StoredEquipmentItem | null, StoredEquipmentItem | null];
-  pocket: StoredEquipmentItem | null;
-  eye: StoredEquipmentItem | null;
   face: StoredEquipmentItem | null;
+  eye: StoredEquipmentItem | null;
+  earring: StoredEquipmentItem | null;
   pendants: [StoredEquipmentItem | null, StoredEquipmentItem | null];
+  belt: StoredEquipmentItem | null;
+  pocket: StoredEquipmentItem | null;
+  hat: StoredEquipmentItem | null;
+  cape: StoredEquipmentItem | null;
+  top: StoredEquipmentItem | null;
+  glove: StoredEquipmentItem | null;
+  bottom: StoredEquipmentItem | null;
+  shoe: StoredEquipmentItem | null;
+  shoulder: StoredEquipmentItem | null;
+  medal: StoredEquipmentItem | null;
   weapon: StoredEquipmentItem | null;
   secondary: StoredEquipmentItem | null;
   emblem: StoredEquipmentItem | null;
-  hat: StoredEquipmentItem | null;
-  top: StoredEquipmentItem | null;
-  bottom: StoredEquipmentItem | null;
-  shoulder: StoredEquipmentItem | null;
   android: StoredEquipmentItem | null;
-  cape: StoredEquipmentItem | null;
-  glove: StoredEquipmentItem | null;
-  shoe: StoredEquipmentItem | null;
-  medal: StoredEquipmentItem | null;
   heart: StoredEquipmentItem | null;
+  badge: StoredEquipmentItem | null;
   totems: [StoredEquipmentItem | null, StoredEquipmentItem | null, StoredEquipmentItem | null];
 }
 
@@ -185,23 +189,26 @@ function createEmptyCharacterStats(): StoredCharacterStats {
 function createEmptyCharacterEquipment(): StoredCharacterEquipment {
   return {
     rings: [null, null, null, null],
-    pocket: null,
-    eye: null,
     face: null,
+    eye: null,
+    earring: null,
     pendants: [null, null],
+    belt: null,
+    pocket: null,
+    hat: null,
+    cape: null,
+    top: null,
+    glove: null,
+    bottom: null,
+    shoe: null,
+    shoulder: null,
+    medal: null,
     weapon: null,
     secondary: null,
     emblem: null,
-    hat: null,
-    top: null,
-    bottom: null,
-    shoulder: null,
     android: null,
-    cape: null,
-    glove: null,
-    shoe: null,
-    medal: null,
     heart: null,
+    badge: null,
     totems: [null, null, null],
   };
 }
@@ -268,7 +275,11 @@ function isStoredCharacterStats(value: unknown): value is StoredCharacterStats {
 }
 
 function isStoredEquipmentItem(value: unknown): value is StoredEquipmentItem {
-  return isObject(value) && typeof value.name === "string";
+  return (
+    isObject(value) &&
+    typeof value.name === "string" &&
+    (value.id === undefined || typeof value.id === "number")
+  );
 }
 
 function isNullableStoredEquipmentItem(value: unknown): value is StoredEquipmentItem | null {
@@ -281,9 +292,9 @@ function isStoredCharacterEquipment(value: unknown): value is StoredCharacterEqu
     Array.isArray(value.rings) &&
     value.rings.length === 4 &&
     value.rings.every(isNullableStoredEquipmentItem) &&
-    isNullableStoredEquipmentItem(value.pocket) &&
-    isNullableStoredEquipmentItem(value.eye) &&
     isNullableStoredEquipmentItem(value.face) &&
+    isNullableStoredEquipmentItem(value.eye) &&
+    isNullableStoredEquipmentItem(value.pocket) &&
     Array.isArray(value.pendants) &&
     value.pendants.length === 2 &&
     value.pendants.every(isNullableStoredEquipmentItem) &&

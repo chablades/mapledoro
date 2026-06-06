@@ -11,6 +11,7 @@ import {
   hasStoredCompletedRequiredSetup,
   readCharactersStore,
   selectCharacterById,
+  type StoredCharacterEquipment,
   selectCharactersList,
   writeLinkSkillsForWorld,
   writeCharactersStore,
@@ -53,6 +54,45 @@ function tryParseJson(raw: string): unknown {
   try { return JSON.parse(raw); } catch { return null; }
 }
 
+type EquipmentDraftItem = { id?: number; name: string } | null;
+interface EquipmentDraft {
+  ring1?: EquipmentDraftItem; ring2?: EquipmentDraftItem; ring3?: EquipmentDraftItem; ring4?: EquipmentDraftItem;
+  face?: EquipmentDraftItem; eye?: EquipmentDraftItem; earring?: EquipmentDraftItem;
+  pendant1?: EquipmentDraftItem; pendant2?: EquipmentDraftItem;
+  belt?: EquipmentDraftItem; pocket?: EquipmentDraftItem;
+  hat?: EquipmentDraftItem; cape?: EquipmentDraftItem; top?: EquipmentDraftItem;
+  glove?: EquipmentDraftItem; bottom?: EquipmentDraftItem; shoe?: EquipmentDraftItem;
+  shoulder?: EquipmentDraftItem; medal?: EquipmentDraftItem;
+  weapon?: EquipmentDraftItem; secondary?: EquipmentDraftItem; emblem?: EquipmentDraftItem;
+  android?: EquipmentDraftItem; heart?: EquipmentDraftItem; badge?: EquipmentDraftItem;
+}
+
+function draftItem(v: EquipmentDraftItem) {
+  if (!v?.name) return null;
+  return v.id !== undefined ? { id: v.id, name: v.name } : { name: v.name };
+}
+
+function parseEquipmentDraft(json: string): StoredCharacterEquipment | null {
+  try {
+    const d = tryParseJson(json) as EquipmentDraft | null;
+    if (!d || typeof d !== "object") return null;
+    return {
+      rings: [draftItem(d.ring1 ?? null), draftItem(d.ring2 ?? null), draftItem(d.ring3 ?? null), draftItem(d.ring4 ?? null)],
+      face: draftItem(d.face ?? null), eye: draftItem(d.eye ?? null), earring: draftItem(d.earring ?? null),
+      pendants: [draftItem(d.pendant1 ?? null), draftItem(d.pendant2 ?? null)],
+      belt: draftItem(d.belt ?? null), pocket: draftItem(d.pocket ?? null),
+      hat: draftItem(d.hat ?? null), cape: draftItem(d.cape ?? null), top: draftItem(d.top ?? null),
+      glove: draftItem(d.glove ?? null), bottom: draftItem(d.bottom ?? null), shoe: draftItem(d.shoe ?? null),
+      shoulder: draftItem(d.shoulder ?? null), medal: draftItem(d.medal ?? null),
+      weapon: draftItem(d.weapon ?? null), secondary: draftItem(d.secondary ?? null), emblem: draftItem(d.emblem ?? null),
+      android: draftItem(d.android ?? null), heart: draftItem(d.heart ?? null), badge: draftItem(d.badge ?? null),
+      totems: [null, null, null],
+    };
+  } catch {
+    return null;
+  }
+}
+
 function buildFullSetupRecord(
   character: NormalizedCharacterData,
   stepData: import("../setup/types").SetupStepInputById,
@@ -66,12 +106,32 @@ function buildFullSetupRecord(
     convertStatsStepDraftToStored(parseStatsStepDraft(stepData.stats ?? ""));
   const hexaToolData = buildHexaToolDataForRecord(character.jobName, stepData.hexa_matrix ?? "");
   const familiarsData = stepData.familiars ? tryParseJson(stepData.familiars) : null;
+  const equipmentData = stepData.equipment ? parseEquipmentDraft(stepData.equipment) : null;
   const tools = {
     ...base.tools,
     ...(hexaToolData ? { hexaSkills: hexaToolData } : null),
     ...(familiarsData ? { familiars: familiarsData } : null),
   };
-  return { ...base, stats: { ...base.stats, ...stats }, isLiberated, weaponHand, hasRuinForceShield, soul, tools };
+  return {
+    ...base,
+    stats: { ...base.stats, ...stats },
+    equipment: equipmentData ?? base.equipment,
+    isLiberated, weaponHand, hasRuinForceShield, soul, tools,
+  };
+}
+
+function applyEquipmentDraftToRoster(
+  character: NormalizedCharacterData | null,
+  equipmentJson: string,
+  upsertFn: (c: StoredCharacterRecord) => void,
+) {
+  if (!character || !equipmentJson) return;
+  const equipment = parseEquipmentDraft(equipmentJson);
+  if (!equipment) return;
+  const store = readCharactersStore();
+  const existing = selectCharacterById(store, toCharacterKey(character));
+  if (!existing) return;
+  upsertFn({ ...existing, equipment });
 }
 
 function applyStandaloneToolDrafts(
@@ -80,6 +140,7 @@ function applyStandaloneToolDrafts(
   upsertFn: (c: StoredCharacterRecord) => void,
 ) {
   if (!character) return;
+  if (stepData.equipment) applyEquipmentDraftToRoster(character, stepData.equipment, upsertFn);
   if (stepData.hexa_matrix) applyHexaDraftToRoster(character, stepData.hexa_matrix, upsertFn);
   if (stepData.familiars) applyFamiliarsDraftToRoster(character, stepData.familiars, upsertFn);
 }
@@ -964,7 +1025,7 @@ export function useCharacterSetupController() {
           gender: storedCharacter?.gender ?? "",
           marriage: marriageValue,
           stats: "",
-          equipment_core: "",
+          equipment: "",
         });
         transitions.setSetupPanelVisible(true);
         setIsSwitchingToProfile(false);

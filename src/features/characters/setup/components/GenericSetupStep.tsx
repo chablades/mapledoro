@@ -18,6 +18,7 @@ interface GenericSetupStepProps {
   worldLinkSkills?: string;
   characterLevel?: number;
   confirmedCharacterName?: string;
+  confirmedCharacterImgURL?: string;
   value: string;
   onChange: (value: string) => void;
   onBack: () => void;
