@@ -50,7 +50,6 @@ const SLOT_LABELS: Record<SlotKey, string> = {
   android: "Android", heart: "Heart", badge: "Badge",
 };
 
-// Maps each slot to which public JSON file to fetch for item search.
 const SLOT_DATA_FILE: Record<SlotKey, string> = {
   ring1: "ring", ring2: "ring", ring3: "ring", ring4: "ring",
   face: "face", eye: "eye", earring: "earring",
@@ -63,8 +62,10 @@ const SLOT_DATA_FILE: Record<SlotKey, string> = {
   android: "android", heart: "heart", badge: "badge",
 };
 
-const SLOT_SIZE = 52;
+const SLOT_SIZE = 44;
 const SEARCH_LIMIT = 60;
+// Center block spans weapon + secondary + emblem columns
+const CENTER_WIDTH = 3 * SLOT_SIZE + 2 * 4;
 
 // ── Parse / serialise ──────────────────────────────────────────────────────
 
@@ -80,18 +81,13 @@ function serialiseDraft(draft: EquipmentDraft): string {
 
 function normalize(s: string) { return s.toLowerCase().replace(/[^a-z0-9]/g, ""); }
 
-function matchQuery(name: string, tokens: string[]): boolean {
-  const n = normalize(name);
-  return tokens.length > 0 && tokens.every((t) => n.includes(t));
-}
-
 function filterItems(items: EquipmentItem[], query: string): EquipmentItem[] {
   if (!query.trim()) return items.slice(0, SEARCH_LIMIT);
   const tokens = query.trim().split(/\s+/).flatMap((t) => { const n = normalize(t); return n ? [n] : []; });
   const out: EquipmentItem[] = [];
   for (const item of items) {
     if (out.length >= SEARCH_LIMIT) break;
-    if (matchQuery(item.name, tokens)) out.push(item);
+    if (tokens.every((t) => normalize(item.name).includes(t))) out.push(item);
   }
   return out;
 }
@@ -107,7 +103,6 @@ function ItemPicker({ slot, current, theme, onSelect, onClose }: {
   onSelect: (item: EquipmentItem | null) => void;
   onClose: () => void;
 }) {
-  // loadedItems drives a re-render after async fetch; cache is read directly at render time.
   const [loadedItems, setLoadedItems] = useState<EquipmentItem[] | null>(null);
   const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -130,30 +125,8 @@ function ItemPicker({ slot, current, theme, onSelect, onClose }: {
 
   const filtered = items ? filterItems(items, query) : null;
 
-  const pickerStyle: CSSProperties = {
-    border: `1px solid ${theme.accent}`,
-    borderRadius: 10,
-    background: theme.panel,
-    boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
-    overflow: "hidden",
-  };
-
-  const searchStyle: CSSProperties = {
-    width: "100%",
-    border: "none",
-    borderBottom: `1px solid ${theme.border}`,
-    borderRadius: 0,
-    background: theme.bg,
-    color: theme.text,
-    fontFamily: "inherit",
-    fontSize: "0.85rem",
-    fontWeight: 600,
-    padding: "0.45rem 0.6rem",
-    outline: "none",
-  };
-
   return (
-    <div style={pickerStyle}>
+    <div style={{ border: `1px solid ${theme.accent}`, borderRadius: 10, background: theme.panel, boxShadow: "0 4px 20px rgba(0,0,0,0.3)", overflow: "hidden" }}>
       <div style={{ padding: "0.3rem 0.5rem", borderBottom: `1px solid ${theme.border}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <span style={{ fontSize: "0.8rem", fontWeight: 800, color: theme.muted, textTransform: "uppercase", letterSpacing: "0.03em" }}>
           {SLOT_LABELS[slot]}
@@ -161,8 +134,8 @@ function ItemPicker({ slot, current, theme, onSelect, onClose }: {
         <button
           type="button"
           onClick={onClose}
-          style={{ background: "none", border: "none", cursor: "pointer", color: theme.muted, fontSize: "1rem", lineHeight: 1, padding: "0 0.1rem" }}
           aria-label="Close picker"
+          style={{ background: "none", border: "none", cursor: "pointer", color: theme.muted, fontSize: "1rem", lineHeight: 1, padding: "0 0.1rem" }}
         >
           ✕
         </button>
@@ -174,7 +147,12 @@ function ItemPicker({ slot, current, theme, onSelect, onClose }: {
         value={query}
         placeholder="Search items…"
         onChange={(e) => setQuery(e.target.value)}
-        style={searchStyle}
+        style={{
+          width: "100%", border: "none", borderBottom: `1px solid ${theme.border}`,
+          borderRadius: 0, background: theme.bg, color: theme.text,
+          fontFamily: "inherit", fontSize: "0.85rem", fontWeight: 600,
+          padding: "0.45rem 0.6rem", outline: "none", boxSizing: "border-box",
+        }}
       />
       <div style={{ maxHeight: 220, overflowY: "auto" }}>
         {current && (
@@ -238,45 +216,42 @@ function SlotCell({ slotKey, item, theme, isActive, onClick }: {
   isActive: boolean;
   onClick: () => void;
 }) {
-  const cellStyle: CSSProperties = {
-    width: SLOT_SIZE, height: SLOT_SIZE,
-    border: `1px solid ${isActive ? theme.accent : theme.border}`,
-    borderRadius: 8,
-    background: isActive ? `${theme.accent}15` : theme.bg,
-    display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-    gap: 2, cursor: "pointer", flexShrink: 0,
-    outline: "2px solid transparent", outlineOffset: 2,
-    transition: "border-color 0.15s, background 0.15s",
-    overflow: "hidden", padding: "2px 3px",
-    boxSizing: "border-box",
-  };
-
   return (
     <div
       role="button"
       tabIndex={0}
       aria-label={item ? `${SLOT_LABELS[slotKey]}: ${item.name}` : `Set ${SLOT_LABELS[slotKey]}`}
-      style={cellStyle}
       onClick={onClick}
       onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(); } }}
       onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.borderColor = `${theme.accent}88`; }}
       onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.borderColor = theme.border; }}
       onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
       onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
+      style={{
+        width: SLOT_SIZE, height: SLOT_SIZE, flexShrink: 0,
+        border: `1px solid ${isActive ? theme.accent : theme.border}`,
+        borderRadius: 8,
+        background: isActive ? `${theme.accent}15` : theme.bg,
+        display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+        gap: 2, cursor: "pointer",
+        outline: "2px solid transparent", outlineOffset: 2,
+        transition: "border-color 0.15s, background 0.15s",
+        overflow: "hidden", padding: "2px 3px", boxSizing: "border-box",
+      }}
     >
       {item ? (
         <>
-          <ItemIcon id={String(item.id)} size={28} />
+          <ItemIcon id={String(item.id)} size={26} />
           <span style={{
             fontSize: "0.75rem", color: theme.muted, fontWeight: 700, lineHeight: 1,
             overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-            maxWidth: SLOT_SIZE - 6, display: "block",
+            maxWidth: SLOT_SIZE - 4, display: "block",
           }}>
             {item.name}
           </span>
         </>
       ) : (
-        <span style={{ fontSize: "0.75rem", color: theme.muted, fontWeight: 700, lineHeight: 1.2, textAlign: "center" }}>
+        <span style={{ fontSize: "0.75rem", color: theme.muted, fontWeight: 700, lineHeight: 1.2, textAlign: "center", padding: "0 2px" }}>
           {SLOT_LABELS[slotKey]}
         </span>
       )}
@@ -284,15 +259,32 @@ function SlotCell({ slotKey, item, theme, isActive, onClick }: {
   );
 }
 
+// ── Column helper ──────────────────────────────────────────────────────────
+
+function SlotColumn({ slots, draft, theme, activeSlot, onToggle }: {
+  slots: SlotKey[];
+  draft: EquipmentDraft;
+  theme: AppTheme;
+  activeSlot: SlotKey | null;
+  onToggle: (slot: SlotKey) => void;
+}) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 4, flexShrink: 0 }}>
+      {slots.map((slot) => (
+        <SlotCell
+          key={slot}
+          slotKey={slot}
+          item={draft[slot]}
+          theme={theme}
+          isActive={activeSlot === slot}
+          onClick={() => onToggle(slot)}
+        />
+      ))}
+    </div>
+  );
+}
+
 // ── Main component ─────────────────────────────────────────────────────────
-
-const slotColStyle: CSSProperties = {
-  display: "flex", flexDirection: "column", gap: 4, flexShrink: 0,
-};
-
-const slotRowStyle: CSSProperties = {
-  display: "flex", flexDirection: "row", gap: 4,
-};
 
 export default function EquipmentSetupStep({
   theme,
@@ -319,19 +311,20 @@ export default function EquipmentSetupStep({
     setActiveSlot((prev) => (prev === slot ? null : slot));
   }
 
-  const spriteBoxStyle: CSSProperties = {
-    flex: 1, minWidth: 80,
-    display: "flex", alignItems: "flex-end", justifyContent: "center",
-    border: `1px solid ${theme.border}`,
-    borderRadius: 10, background: theme.bg,
-    overflow: "hidden", alignSelf: "stretch",
-    minHeight: 6 * (SLOT_SIZE + 4) - 4,
-  };
+  // Layout:
+  // Col 1: ring1–4, belt, pocket
+  // Col 2: face, eye, earring, pendant1, pendant2
+  // Center block (3-col wide): sprite above, then weapon / secondary / emblem row
+  // Col 6: hat, top, bottom, shoulder, android
+  // Col 7: cape, glove, shoe, medal, heart, badge
 
-  const weaponBarStyle: CSSProperties = {
-    display: "flex", flexDirection: "row", gap: 4,
-    flexWrap: "wrap", marginTop: 4,
-  };
+  const col1: SlotKey[] = ["ring1", "ring2", "ring3", "ring4", "belt", "pocket"];
+  const col2: SlotKey[] = ["face", "eye", "earring", "pendant1", "pendant2"];
+  const col6: SlotKey[] = ["hat", "top", "bottom", "shoulder", "android"];
+  const col7: SlotKey[] = ["cape", "glove", "shoe", "medal", "heart", "badge"];
+  const centerBottom: SlotKey[] = ["weapon", "secondary", "emblem"];
+
+  const colStyle: CSSProperties = { display: "flex", flexDirection: "column", gap: 4, flexShrink: 0 };
 
   return (
     <SetupStepFrame
@@ -344,80 +337,60 @@ export default function EquipmentSetupStep({
       onNext={onNext}
       onFinish={onFinish}
     >
-      {/* Equipment grid: left accessories | sprite | right armor */}
-      <div style={{ display: "flex", flexDirection: "row", gap: 6, alignItems: "flex-start" }}>
+      {/* Equipment grid */}
+      <div style={{ display: "flex", gap: 4, alignItems: "stretch" }}>
 
-        {/* Left column: rings + accessories */}
-        <div style={slotColStyle}>
-          <div style={slotRowStyle}>
-            <SlotCell slotKey="ring1" item={draft.ring1} theme={theme} isActive={activeSlot === "ring1"} onClick={() => toggleSlot("ring1")} />
-            <SlotCell slotKey="ring2" item={draft.ring2} theme={theme} isActive={activeSlot === "ring2"} onClick={() => toggleSlot("ring2")} />
+        {/* Col 1 */}
+        <SlotColumn slots={col1} draft={draft} theme={theme} activeSlot={activeSlot} onToggle={toggleSlot} />
+
+        {/* Col 2 */}
+        <SlotColumn slots={col2} draft={draft} theme={theme} activeSlot={activeSlot} onToggle={toggleSlot} />
+
+        {/* Center block: sprite + weapon/sub/emblem */}
+        <div style={{ ...colStyle, width: CENTER_WIDTH }}>
+          <div style={{
+            flex: 1,
+            border: `1px solid ${theme.border}`,
+            borderRadius: 8,
+            background: theme.bg,
+            display: "flex", alignItems: "flex-end", justifyContent: "center",
+            overflow: "hidden",
+            minHeight: SLOT_SIZE * 2,
+          }}>
+            {confirmedCharacterImgURL ? (
+              <CharacterAvatar
+                src={confirmedCharacterImgURL}
+                alt="Character preview"
+                width={100}
+                height={200}
+                style={{ objectFit: "contain", width: 100, height: 200 }}
+              />
+            ) : (
+              <span style={{ fontSize: "0.75rem", color: theme.muted, fontWeight: 700, padding: "0.5rem", textAlign: "center" }}>
+                No preview
+              </span>
+            )}
           </div>
-          <div style={slotRowStyle}>
-            <SlotCell slotKey="ring3" item={draft.ring3} theme={theme} isActive={activeSlot === "ring3"} onClick={() => toggleSlot("ring3")} />
-            <SlotCell slotKey="ring4" item={draft.ring4} theme={theme} isActive={activeSlot === "ring4"} onClick={() => toggleSlot("ring4")} />
-          </div>
-          <div style={slotRowStyle}>
-            <SlotCell slotKey="face" item={draft.face} theme={theme} isActive={activeSlot === "face"} onClick={() => toggleSlot("face")} />
-            <SlotCell slotKey="eye" item={draft.eye} theme={theme} isActive={activeSlot === "eye"} onClick={() => toggleSlot("eye")} />
-          </div>
-          <div style={slotRowStyle}>
-            <SlotCell slotKey="earring" item={draft.earring} theme={theme} isActive={activeSlot === "earring"} onClick={() => toggleSlot("earring")} />
-            <SlotCell slotKey="pendant1" item={draft.pendant1} theme={theme} isActive={activeSlot === "pendant1"} onClick={() => toggleSlot("pendant1")} />
-          </div>
-          <div style={slotRowStyle}>
-            <SlotCell slotKey="pendant2" item={draft.pendant2} theme={theme} isActive={activeSlot === "pendant2"} onClick={() => toggleSlot("pendant2")} />
-            <SlotCell slotKey="belt" item={draft.belt} theme={theme} isActive={activeSlot === "belt"} onClick={() => toggleSlot("belt")} />
-          </div>
-          <div style={slotRowStyle}>
-            <SlotCell slotKey="pocket" item={draft.pocket} theme={theme} isActive={activeSlot === "pocket"} onClick={() => toggleSlot("pocket")} />
+          <div style={{ display: "flex", gap: 4 }}>
+            {centerBottom.map((slot) => (
+              <SlotCell
+                key={slot}
+                slotKey={slot}
+                item={draft[slot]}
+                theme={theme}
+                isActive={activeSlot === slot}
+                onClick={() => toggleSlot(slot)}
+              />
+            ))}
           </div>
         </div>
 
-        {/* Center: character sprite */}
-        <div style={spriteBoxStyle}>
-          {confirmedCharacterImgURL ? (
-            <CharacterAvatar
-              src={confirmedCharacterImgURL}
-              alt="Character preview"
-              width={90}
-              height={180}
-              style={{ objectFit: "contain", width: 90, height: 180 }}
-            />
-          ) : (
-            <div style={{ color: theme.muted, fontSize: "0.75rem", fontWeight: 700, padding: "1rem", textAlign: "center" }}>
-              No preview
-            </div>
-          )}
-        </div>
+        {/* Col 6 */}
+        <SlotColumn slots={col6} draft={draft} theme={theme} activeSlot={activeSlot} onToggle={toggleSlot} />
 
-        {/* Right column: armor */}
-        <div style={slotColStyle}>
-          <div style={slotRowStyle}>
-            <SlotCell slotKey="hat" item={draft.hat} theme={theme} isActive={activeSlot === "hat"} onClick={() => toggleSlot("hat")} />
-            <SlotCell slotKey="cape" item={draft.cape} theme={theme} isActive={activeSlot === "cape"} onClick={() => toggleSlot("cape")} />
-          </div>
-          <div style={slotRowStyle}>
-            <SlotCell slotKey="top" item={draft.top} theme={theme} isActive={activeSlot === "top"} onClick={() => toggleSlot("top")} />
-            <SlotCell slotKey="glove" item={draft.glove} theme={theme} isActive={activeSlot === "glove"} onClick={() => toggleSlot("glove")} />
-          </div>
-          <div style={slotRowStyle}>
-            <SlotCell slotKey="bottom" item={draft.bottom} theme={theme} isActive={activeSlot === "bottom"} onClick={() => toggleSlot("bottom")} />
-            <SlotCell slotKey="shoe" item={draft.shoe} theme={theme} isActive={activeSlot === "shoe"} onClick={() => toggleSlot("shoe")} />
-          </div>
-          <div style={slotRowStyle}>
-            <SlotCell slotKey="shoulder" item={draft.shoulder} theme={theme} isActive={activeSlot === "shoulder"} onClick={() => toggleSlot("shoulder")} />
-            <SlotCell slotKey="medal" item={draft.medal} theme={theme} isActive={activeSlot === "medal"} onClick={() => toggleSlot("medal")} />
-          </div>
-        </div>
+        {/* Col 7 */}
+        <SlotColumn slots={col7} draft={draft} theme={theme} activeSlot={activeSlot} onToggle={toggleSlot} />
 
-      </div>
-
-      {/* Weapon / special bar */}
-      <div style={weaponBarStyle}>
-        {(["weapon", "secondary", "emblem", "android", "heart", "badge"] as SlotKey[]).map((slot) => (
-          <SlotCell key={slot} slotKey={slot} item={draft[slot]} theme={theme} isActive={activeSlot === slot} onClick={() => toggleSlot(slot)} />
-        ))}
       </div>
 
       {/* Active slot picker */}
