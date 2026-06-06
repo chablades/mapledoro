@@ -328,7 +328,7 @@ export default function HexaSkillsWorkspace({ theme }: { theme: AppTheme }) {
           />
         </div>
 
-        {classDef?.className === "Sia" && (
+        {classDef?.className === "Sia Astelle" && (
           <div
             className="fade-in panel-card"
             style={{
