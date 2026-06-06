@@ -6,6 +6,7 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import { ItemIcon } from "./pitched-boss-ui";
 import { panelStyle } from "./pitched-boss-styles";
+import { ItemIcon as ResourceItemIcon } from "../../../components/ResourceImage";
 import type { AppTheme } from "../../../components/themes";
 import { ToolHeader } from "../../../components/ToolHeader";
 import {
@@ -204,6 +205,83 @@ function DropLogTable({
   );
 }
 
+function NoCharactersState({ theme }: { theme: AppTheme }) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        textAlign: "center",
+        padding: "2.5rem 1rem 2rem",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          gap: "0.35rem",
+          marginBottom: "1.25rem",
+          opacity: 0.7,
+        }}
+      >
+        {PITCHED_BOSS_ITEMS.slice(0, 6).map((item) => (
+          <span
+            key={item.id}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: 44,
+              height: 44,
+              borderRadius: 10,
+              background: theme.timerBg,
+              border: `1px solid ${theme.border}`,
+            }}
+          >
+            <ResourceItemIcon id={item.itemId} size={30} />
+          </span>
+        ))}
+      </div>
+      <div
+        style={{
+          fontWeight: 700,
+          color: theme.text,
+          fontSize: "1.05rem",
+          marginBottom: "0.4rem",
+        }}
+      >
+        Track your pitched boss drops
+      </div>
+      <div
+        style={{
+          color: theme.muted,
+          fontSize: "0.85rem",
+          maxWidth: 360,
+          lineHeight: 1.5,
+          marginBottom: "1.25rem",
+        }}
+      >
+        Add a character to start logging Berserked, Black Heart, Genesis Badge,
+        and other rare boss drops — then watch your luck stats build up over
+        time.
+      </div>
+      <Link
+        href="/characters"
+        style={{
+          ...addDropBtnBase,
+          display: "inline-flex",
+          alignItems: "center",
+          background: theme.accent,
+          color: "#fff",
+          textDecoration: "none",
+        }}
+      >
+        Add a character
+      </Link>
+    </div>
+  );
+}
+
 /* ------------------------------------------------------------------ */
 /*  Main workspace                                                     */
 /* ------------------------------------------------------------------ */
@@ -313,26 +391,20 @@ export default function PitchedBossDropsWorkspace({
         />
         {/* ── Add drop form ── */}
         <div style={panelStyle(theme)}>
-          <div
-            style={{
-              fontWeight: 700,
-              color: theme.text,
-              marginBottom: "1rem",
-              fontSize: "1rem",
-            }}
-          >
-            Log a Drop
-          </div>
-
           {characters.length === 0 ? (
-            <div style={{ color: theme.muted, fontSize: "0.85rem" }}>
-              No characters added yet.{" "}
-              <Link href="/characters" style={{ color: theme.accent }}>
-                Add characters
-              </Link>{" "}
-              to start tracking drops.
-            </div>
+            <NoCharactersState theme={theme} />
           ) : (
+            <>
+            <div
+              style={{
+                fontWeight: 700,
+                color: theme.text,
+                marginBottom: "1rem",
+                fontSize: "1rem",
+              }}
+            >
+              Log a Drop
+            </div>
             <div
               style={{
                 display: "flex",
@@ -450,6 +522,7 @@ export default function PitchedBossDropsWorkspace({
                 Add Drop
               </button>
             </div>
+            </>
           )}
         </div>
 
