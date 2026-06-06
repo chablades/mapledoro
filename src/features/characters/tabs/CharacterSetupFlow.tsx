@@ -4,6 +4,7 @@
   Character setup flow shell.
   Keeps rendering focused while the controller hook owns state and navigation.
 */
+import { useEffect, useRef } from "react";
 import type { AppTheme } from "../../../components/themes";
 import { deriveCharactersLayout } from "./charactersLayout";
 import { getCharacterSetupFlowStyles } from "./CharacterSetupFlow.styles";
@@ -12,17 +13,34 @@ import SearchPaneCard from "./components/SearchPaneCard";
 import type { PreviewPaneActions, PreviewPaneModel, SearchPaneActions, SearchPaneModel } from "./paneModels";
 import { useCharacterSetupController, MAX_CHAMPIONS } from "./useCharacterSetupController";
 import { toCharacterKey } from "../model/characterKeys";
+import { normalizeCharacterName } from "../model/characterKeys";
 import type { StoredCharacterRecord } from "../model/charactersStore";
 
 interface CharacterSetupFlowProps {
   theme: AppTheme;
+  initialCharacterName?: string;
+  initialAction?: string;
 }
 
 const MAX_ACCOUNT_CHARACTERS = 59;
 
-export default function CharacterSetupFlow({ theme }: CharacterSetupFlowProps) {
+export default function CharacterSetupFlow({ theme, initialCharacterName, initialAction }: CharacterSetupFlowProps) {
   const controller = useCharacterSetupController();
   const { state, transitions, actions } = controller;
+
+  const initialActionAppliedRef = useRef(false);
+  useEffect(() => {
+    if (!state.isDraftHydrated || initialActionAppliedRef.current) return;
+    initialActionAppliedRef.current = true;
+    if (initialCharacterName) {
+      const key = normalizeCharacterName(initialCharacterName);
+      const character = state.characterRoster.find((c) => toCharacterKey(c) === key);
+      if (character) actions.switchToCharacterProfile(character);
+    } else if (initialAction === "add") {
+      actions.openAddCharacterSearch();
+    }
+  }, [state.isDraftHydrated, state.characterRoster, initialCharacterName, initialAction, actions]);
+
   const confirmedCharacterKey = state.confirmedCharacter
       ? toCharacterKey(state.confirmedCharacter)
       : null;

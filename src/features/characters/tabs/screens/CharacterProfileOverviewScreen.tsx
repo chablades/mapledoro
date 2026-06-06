@@ -85,17 +85,17 @@ function HexNode({
   const border = { purple: "#7055c8", blue: "#4080c0", pink: "#c055c8", empty: "#c8c0b8" }[variant];
   const lvColor = { purple: "#a090d8", blue: "#6ea8d8", pink: "#d890d8", empty: "#999" }[variant];
 
-  const hasIcon = !!skill?.iconId;
-  const showImage = !!(skill && !locked && !imgError && hasIcon);
+  const iconSrc = skill?.iconUrl ?? (skill?.iconId ? resourceImageUrl("hexa-skill", skill.iconId, "icon.png") : null);
+  const showImage = !!(skill && !locked && !imgError && iconSrc);
 
   let content: React.ReactNode;
   if (skill && !locked) {
-    if (imgError || !skill.iconId) {
+    if (imgError || !iconSrc) {
       content = <span style={{ fontSize: 10, fontWeight: 800, color: lvColor }}>{skill.name.charAt(0)}</span>;
     } else {
       content = (
         <Image
-          src={resourceImageUrl("hexa-skill", skill.iconId, "icon.png")}
+          src={iconSrc}
           alt={skill.name}
           fill
           sizes="42px"
@@ -210,7 +210,7 @@ function OverviewTab({ model }: { model: PreviewPaneModel }) {
   const commonSlots: (HexaSkillDef | null)[] = [COMMON_SKILLS[0] ?? null, null, null, null];
   const commonLevels = [hexaLevels?.common[0] ?? 0, 0, 0, 0];
   const masterySlots: (HexaSkillDef | null)[] = hexaClassDef
-    ? hexaClassDef.mastery.map((node) => ({ name: node.skills[0], iconId: node.iconId }))
+    ? hexaClassDef.mastery.map((node) => ({ name: node.skills[0], iconId: node.iconId, iconUrl: node.iconUrl }))
     : [null, null, null, null];
   const masteryLevels = hexaLevels?.mastery ?? [0, 0, 0, 0];
   const enhancementSlots: (HexaSkillDef | null)[] = hexaClassDef?.enhancement ?? [null, null, null, null];

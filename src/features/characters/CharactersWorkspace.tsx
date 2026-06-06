@@ -9,9 +9,11 @@ import CharacterSetupFlow from "./tabs/CharacterSetupFlow";
 
 interface CharactersWorkspaceProps {
   theme: AppTheme;
+  initialCharacterName?: string;
+  initialAction?: string;
 }
 
-export default function CharactersWorkspace({ theme }: CharactersWorkspaceProps) {
+export default function CharactersWorkspace({ theme, initialCharacterName, initialAction }: CharactersWorkspaceProps) {
   return (
     <section
       style={{
@@ -21,7 +23,7 @@ export default function CharactersWorkspace({ theme }: CharactersWorkspaceProps)
         flexDirection: "column",
       }}
     >
-      <CharacterSetupFlow theme={theme} />
+      <CharacterSetupFlow theme={theme} initialCharacterName={initialCharacterName} initialAction={initialAction} />
     </section>
   );
 }
