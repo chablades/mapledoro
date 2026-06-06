@@ -338,6 +338,7 @@ export default function EquipmentSetupStep({
       onFinish={onFinish}
     >
       {/* Equipment grid */}
+      <div style={{ display: "flex", justifyContent: "center" }}>
       <div style={{ display: "flex", gap: 4, alignItems: "stretch" }}>
 
         {/* Col 1 */}
@@ -391,6 +392,7 @@ export default function EquipmentSetupStep({
         {/* Col 7 */}
         <SlotColumn slots={col7} draft={draft} theme={theme} activeSlot={activeSlot} onToggle={toggleSlot} />
 
+      </div>
       </div>
 
       {/* Active slot picker */}
