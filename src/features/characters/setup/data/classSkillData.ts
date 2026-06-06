@@ -116,7 +116,7 @@ const LOADED_DICE: BuffSkill = {
   jobAdvancement: "5",
 };
 const FINAL_CUT: BuffSkill = {
-  skillIconUrl: sk("400004128"),
+  skillIconUrl: sk("400004678"), // Final Cut Boost (was 400004128 in v268)
   skillName: "Final Cut",
   jobAdvancement: "4",
 };
@@ -176,7 +176,7 @@ const HEIR_OF_THE_DIVINE: BuffSkill = {
   jobAdvancement: "4",
 };
 const MUSCLE_MEMORY: BuffSkill = {
-  skillIconUrl: sk("64100004"),
+  skillIconUrl: sk("400004732"), // Muscle Memory Boost; base skill 64100004 was removed in v269
   skillName: "Muscle Memory",
   jobAdvancement: "2",
 };
@@ -329,7 +329,7 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
     buffSkills: [
       DSE,
       DCO,
-      { skillIconUrl: sk("400004133"), skillName: "Blade Clone", jobAdvancement: "Hyper Skills (140)" },
+      { skillIconUrl: sk("400004683"), skillName: "Blade Clone", jobAdvancement: "Hyper Skills (140)" }, // Blade Clone Boost (was 400004133 in v268)
     ],
     requiredStats: ["luk", "dex", "str", "attackPower"],
   },

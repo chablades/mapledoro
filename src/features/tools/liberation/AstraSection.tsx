@@ -5,7 +5,6 @@ import type { AppTheme } from "../../../components/themes";
 import { replaceZeroOnDigit } from "../numberInputHandlers";
 import { ProgressBar } from "../../../components/ProgressBar";
 import { CharacterSyncPanel } from "../../../components/CharacterSyncPanel";
-import { WikiAttribution } from "../../../components/WikiAttribution";
 import {
   type AstraBoss,
   ASTRA_BOSSES,
@@ -781,8 +780,6 @@ export default function AstraSection({ theme }: { theme: AppTheme }) {
         sectionPanel={sectionPanel}
         result={state.result}
       />
-
-      <WikiAttribution theme={theme} subject="Boss images" />
     </>
   );
 }

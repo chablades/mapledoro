@@ -81,7 +81,7 @@ export const ASTRA_BOSSES: AstraBoss[] = [
   },
   {
     name: "Radiant Malefic Star",
-    icon: "https://media.maplestorywiki.net/yetidb/Maple_Guide_-_Malefic_Star.png",
+    icon: bossIconUrl("37"),
     difficulties: [
       { label: "Normal", traces: 60, hasVoucher: false },
       { label: "Hard", traces: 240, hasVoucher: true, voucherCount: 3, voucherValue: 30 },
@@ -119,7 +119,7 @@ export const ASTRA_BOSSES: AstraBoss[] = [
   },
   {
     name: "Jupiter",
-    icon: "https://media.maplestorywiki.net/yetidb/Maple_Guide_-_Jupiter.png",
+    icon: bossIconUrl("38"),
     difficulties: [
       { label: "Normal", traces: 210, hasVoucher: true, voucherCount: 3, voucherValue: 15 },
       { label: "Hard", traces: 630, hasVoucher: true, voucherCount: 3, voucherValue: 120 },

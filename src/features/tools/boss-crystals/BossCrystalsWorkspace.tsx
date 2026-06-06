@@ -5,7 +5,6 @@ import Image from "next/image";
 import type { CSSProperties } from "react";
 import type { AppTheme } from "../../../components/themes";
 import { ToolHeader } from "../../../components/ToolHeader";
-import { WikiAttribution } from "../../../components/WikiAttribution";
 import {
   BOSSES,
   BOSS_GROUPS,
@@ -1221,10 +1220,6 @@ export default function BossCrystalsWorkspace({ theme }: { theme: AppTheme }) {
                 Add character
               </span>
             </div>
-          </div>
-
-          <div style={{ marginTop: "1.25rem" }}>
-            <WikiAttribution theme={theme} subject="Boss icons" />
           </div>
         </div>
       </div>

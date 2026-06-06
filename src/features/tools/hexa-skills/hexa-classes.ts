@@ -13,9 +13,10 @@
  *
  * Enhancement (V Boost): each class has 4 enhancement skills, each leveled individually.
  *
- * An empty `iconId` means no haku icon exists yet (e.g. Sol Hecate); <HexaSkillIcon>
- * renders the skill's initial as a fallback. Sia Astelle's nodes/skills and Sol Janus instead
- * carry an `iconUrl` built from the `erda-skill`/`skill` resource types (see `su`/`nodeUrl`).
+ * An empty `iconId` with no `iconUrl` means no haku icon exists yet; <HexaSkillIcon>
+ * renders the skill's initial as a fallback. The SHINE classes (Sia, Erel Light) and the
+ * Sol skills instead carry an `iconUrl` built from the `erda-skill`/`skill` resource types
+ * (see `su`/`nodeUrl`).
  */
 
 import { resourceImageUrl, type ResourceType } from "../../../lib/mapleResource";
@@ -808,30 +809,48 @@ const REN: HexaClassDef = {
 };
 
 // ── SHINE ───────────────────────────
+// SHINE classes' erda-skill icons live under a per-class `outerId` folder
+// (Sia = 18212, Erel Light = 18112; see manifests/v269/erda-skill.json).
 const SIA: HexaClassDef = {
   className: "Sia Astelle",
   group: "SHINE",
   origin: su("Celestial Design", "skill", "182141500"),
   mastery: [
-    nodeUrl("erda-skill", "ultimate/500", "SHINE Ray", "SHINE Stellar I - Antares"),
-    nodeUrl("erda-skill", "ultimate/501", "SHINE Boom", "SHINE Stellar II - Algol", "SHINE Stellar V - Fomalhaut"),
+    nodeUrl("erda-skill", "18212/ultimate/500", "SHINE Ray", "SHINE Stellar I - Antares"),
+    nodeUrl("erda-skill", "18212/ultimate/501", "SHINE Boom", "SHINE Stellar II - Algol", "SHINE Stellar V - Fomalhaut"),
   ],
   enhancement: [
-    su("Shine", "erda-skill", "skill/102"),
-    su("Stellar XI - Sirius", "erda-skill", "skill/101"),
-    su("Stellar XII - Sadalsuud", "erda-skill", "skill/104"),
-    su("Savior's Circle", "erda-skill", "skill/106"),
+    su("Shine", "erda-skill", "18212/skill/102"),
+    su("Stellar XI - Sirius", "erda-skill", "18212/skill/101"),
+    su("Stellar XII - Sadalsuud", "erda-skill", "18212/skill/104"),
+    su("Savior's Circle", "erda-skill", "18212/skill/106"),
   ],
   ascent: su("Starlit Cosmos", "skill", "182141502"),
+};
+
+const EREL_LIGHT: HexaClassDef = {
+  className: "Erel Light",
+  group: "SHINE",
+  origin: su("Fall of Melin", "skill", "181141500"),
+  mastery: [
+    nodeUrl("erda-skill", "18112/ultimate/500", "SHINE Spear of Lugh"),
+    nodeUrl("erda-skill", "18112/ultimate/501", "SHINE Fury of Roan", "SHINE Sting of Roan"),
+  ],
+  enhancement: [
+    su("Eternal Light", "erda-skill", "18112/skill/101"),
+    su("Sentinel Rise", "erda-skill", "18112/skill/102"),
+    su("Eternal Guardian", "erda-skill", "18112/skill/104"),
+    su("Destruction of Roan", "erda-skill", "18112/skill/106"),
+  ],
+  ascent: su("Radiant Spear", "skill", "181141502"),
 };
 
 // ── Common Skills ─────────────────────────────
 
 export const COMMON_SKILLS: HexaSkillDef[] = [
-  su("Sol Janus", "erda-skill", "skill/100"),
-  // Sol Hecate isn't in the v268 dump yet (arriving next version); temporarily served
-  // from orangemushroom.net. Replace iconUrl with its hexa-skill iconId when available.
-  { name: "Sol Hecate", iconId: "", iconUrl: "https://orangemushroom.net/wp-content/uploads/2026/01/sol-hecate-1.png" },
+  // Sol Janus' global icon now lives in the Erel Light erda-skill folder (18112/skill/100).
+  su("Sol Janus", "erda-skill", "18112/skill/100"),
+  su("Sol Hecate", "skill", "500001005"),
 ];
 
 // ── Exported class list ─────────────────────────
@@ -862,7 +881,7 @@ const HEXA_CLASSES: HexaClassDef[] = [
   // Jianghu
   LYNN, MO_XUAN,
   // SHINE
-  SIA,
+  SIA, EREL_LIGHT,
 ];
 
 /** Lookup a class definition by className (case-insensitive). */

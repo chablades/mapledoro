@@ -8,8 +8,6 @@ import type { AppTheme } from "../../../../components/themes";
 import { findClassBySlug, highlightNumbers } from "../classData";
 import { CLASS_RESOURCES } from "../classResources";
 import type { ClassResource } from "../classResources";
-import { WikiAttribution } from "../../../../components/WikiAttribution";
-import { WIKI_ATTRIBUTION_SOURCE } from "../../../../components/wikiAttribution.data";
 import { HEXA_IMAGES } from "../hexaData";
 
 /* ── Extracted styles ─────────────────────────────────────── */
@@ -112,6 +110,16 @@ function resourceLinkStyle(color: string): CSSProperties {
     textDecoration: "none",
     background: "transparent",
     transition: "background 0.15s",
+  };
+}
+
+function attributionStyle(theme: AppTheme): CSSProperties {
+  return {
+    fontSize: "0.75rem",
+    color: theme.muted,
+    fontWeight: 600,
+    lineHeight: 1.6,
+    padding: "0 0.25rem",
   };
 }
 
@@ -378,16 +386,18 @@ function ClassGuideContent({
 
           <ResourcesPanel className={cls.name} theme={theme} />
 
-          <WikiAttribution
-            theme={theme}
-            sources={[
-              WIKI_ATTRIBUTION_SOURCE,
-              {
-                label: "Nexon",
-                href: "https://maplestory.nexon.net",
-              },
-            ]}
-          />
+          <div style={attributionStyle(theme)}>
+            Class images and data sourced from{" "}
+            <a
+              href="https://maplestory.nexon.net"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: theme.accent, textDecoration: "none" }}
+            >
+              Nexon
+            </a>
+            .
+          </div>
         </div>
       </div>
     </div>
