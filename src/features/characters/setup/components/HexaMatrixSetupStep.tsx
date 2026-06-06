@@ -266,6 +266,93 @@ function MasteryNodeRow({ node, level, onUpdate, theme }: {
   );
 }
 
+function StatDropdown({ value, options, onChange, theme, isError, disabledTypes }: {
+  value: string;
+  options: { value: string; label: string }[];
+  onChange: (val: string) => void;
+  theme: AppTheme;
+  isError?: boolean;
+  disabledTypes: Set<string>;
+}) {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function onMouseDown(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", onMouseDown);
+    return () => document.removeEventListener("mousedown", onMouseDown);
+  }, [open]);
+
+  const selected = options.find((o) => o.value === value);
+  const triggerStyle: React.CSSProperties = {
+    display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.4rem",
+    flex: 1, minWidth: 0, width: "100%",
+    border: `1px solid ${isError ? "#ef4444" : theme.border}`,
+    borderRadius: "6px", background: theme.bg,
+    color: selected ? theme.text : theme.muted,
+    fontFamily: "inherit", fontSize: "0.82rem", fontWeight: 700,
+    padding: "0.25rem 0.5rem", cursor: "pointer",
+    outline: "2px solid transparent", outlineOffset: "2px",
+    transition: "outline-color 0.15s ease",
+  };
+
+  return (
+    <div ref={containerRef} style={{ position: "relative", flex: 1, minWidth: 0 }}>
+      <button
+        type="button"
+        onClick={() => setOpen((p) => !p)}
+        onKeyDown={(e) => { if (e.key === "Escape") setOpen(false); }}
+        onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
+        onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
+        style={triggerStyle}
+      >
+        <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          {selected?.label ?? "Select stat…"}
+        </span>
+        <span style={{ fontSize: "0.6rem", flexShrink: 0, opacity: 0.6 }}>▾</span>
+      </button>
+      {open && (
+        <div style={{
+          position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, zIndex: 310,
+          borderRadius: "8px", overflow: "hidden",
+          border: `1px solid ${theme.accent}`, background: theme.panel,
+          boxShadow: "0 4px 16px rgba(0,0,0,0.25)",
+        }}>
+          {options.map((o) => {
+            const isDisabled = disabledTypes.has(o.value);
+            const isSelected = o.value === value;
+            return (
+              <button
+                key={o.value}
+                type="button"
+                disabled={isDisabled}
+                onClick={() => { onChange(o.value); setOpen(false); }}
+                style={{
+                  display: "block", width: "100%", textAlign: "left",
+                  padding: "0.35rem 0.6rem", border: "none",
+                  borderBottom: `1px solid ${theme.border}`,
+                  background: isSelected ? `${theme.accent}33` : "transparent",
+                  color: isDisabled ? theme.muted : theme.text,
+                  fontFamily: "inherit", fontSize: "0.82rem", fontWeight: 700,
+                  cursor: isDisabled ? "default" : "pointer",
+                  opacity: isDisabled ? 0.4 : 1,
+                }}
+                onMouseEnter={(e) => { if (!isDisabled && !isSelected) e.currentTarget.style.background = `${theme.accent}22`; }}
+                onMouseLeave={(e) => { if (!isDisabled && !isSelected) e.currentTarget.style.background = "transparent"; }}
+              >
+                {o.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function StatProgressBar({ level, theme }: { level: number; theme: AppTheme }) {
   return (
     <div style={{ display: "flex", gap: "2px" }}>
@@ -294,40 +381,22 @@ function HexaStatRow({ entry, onUpdate, theme, isPrimary, classId, mainStatLabel
   disabledTypes: Set<string>;
 }) {
   const bonus = getHexaStatBonus(entry.type, entry.level, isPrimary, classId);
-  const selectStyle: React.CSSProperties = {
-    flex: 1,
-    minWidth: 0,
-    border: `1px solid ${isError ? "#ef4444" : theme.border}`,
-    borderRadius: "6px",
-    background: theme.bg,
-    color: entry.type ? theme.text : theme.muted,
-    fontFamily: "inherit",
-    fontSize: "0.82rem",
-    fontWeight: 700,
-    padding: "0.25rem 0.5rem",
-    outline: "2px solid transparent",
-    outlineOffset: "2px",
-    transition: "outline-color 0.15s ease",
-    cursor: "pointer",
-  };
+  const statOptions = HEXA_STAT_OPTIONS.map((o) => {
+    const dynamicLabels: Record<string, string> = { mainStat: mainStatLabel, attackPower: attackLabel };
+    return { value: o.value, label: dynamicLabels[o.value] ?? o.label };
+  });
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "0.3rem" }}>
       <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
         <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: "0.4rem" }}>
-          <select
+          <StatDropdown
             value={entry.type}
-            onChange={(e) => onUpdate({ ...entry, type: e.target.value })}
-            onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
-            onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
-            style={selectStyle}
-          >
-            <option value="">Select stat...</option>
-            {HEXA_STAT_OPTIONS.map((o) => {
-              const dynamicLabels: Record<string, string> = { mainStat: mainStatLabel, attackPower: attackLabel };
-              const label = dynamicLabels[o.value] ?? o.label;
-              return <option key={o.value} value={o.value} disabled={disabledTypes.has(o.value)}>{label}</option>;
-            })}
-          </select>
+            options={statOptions}
+            onChange={(val) => onUpdate({ ...entry, type: val })}
+            theme={theme}
+            isError={isError}
+            disabledTypes={disabledTypes}
+          />
           {bonus && (
             <span style={{ fontSize: "0.8rem", fontWeight: 700, color: theme.accent, flexShrink: 0 }}>
               {bonus}
