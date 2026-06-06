@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { createPortal } from "react-dom";
+import { usePickerCoords } from "../hooks/usePickerCoords";
 import type { AppTheme } from "../../../../components/themes";
 import type { SetupStepDefinition } from "../steps";
 import { ItemIcon } from "../../../../components/ResourceImage";
@@ -10,7 +12,7 @@ import SetupStepFrame from "./SetupStepFrame";
 // ── Types ──────────────────────────────────────────────────────────────────
 
 interface EquipmentItem {
-  id: number;
+  id: string;
   name: string;
 }
 
@@ -46,7 +48,7 @@ const SLOT_LABELS: Record<SlotKey, string> = {
   hat: "Hat", cape: "Cape", top: "Top",
   glove: "Gloves", bottom: "Bottom", shoe: "Shoes",
   shoulder: "Shoulder", medal: "Medal",
-  weapon: "Weapon", secondary: "Sub Wpn", emblem: "Emblem",
+  weapon: "Weapon", secondary: "Secondary", emblem: "Emblem",
   android: "Android", heart: "Heart", badge: "Badge",
 };
 
@@ -62,7 +64,7 @@ const SLOT_DATA_FILE: Record<SlotKey, string> = {
   android: "android", heart: "heart", badge: "badge",
 };
 
-const SLOT_SIZE = 44;
+const SLOT_SIZE = 68;
 const SEARCH_LIMIT = 60;
 // Center block spans weapon + secondary + emblem columns
 const CENTER_WIDTH = 3 * SLOT_SIZE + 2 * 4;
@@ -115,7 +117,7 @@ function ItemPicker({ slot, current, theme, onSelect, onClose }: {
     if (cachedSlotItems[file]) return;
     fetch(`/data/equipment/${file}.json`)
       .then((r) => r.json())
-      .then((raw: [number, string][]) => {
+      .then((raw: [string, string][]) => {
         const parsed = raw.map(([id, name]) => ({ id, name }));
         cachedSlotItems[file] = parsed;
         setLoadedItems(parsed);
@@ -123,137 +125,141 @@ function ItemPicker({ slot, current, theme, onSelect, onClose }: {
       .catch(() => setLoadedItems([]));
   }, [slot, file]);
 
-  const filtered = items ? filterItems(items, query) : null;
+  const filtered = items && query ? filterItems(items, query) : null;
 
   return (
     <div style={{ border: `1px solid ${theme.accent}`, borderRadius: 10, background: theme.panel, boxShadow: "0 4px 20px rgba(0,0,0,0.3)", overflow: "hidden" }}>
-      <div style={{ padding: "0.3rem 0.5rem", borderBottom: `1px solid ${theme.border}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <span style={{ fontSize: "0.8rem", fontWeight: 800, color: theme.muted, textTransform: "uppercase", letterSpacing: "0.03em" }}>
-          {SLOT_LABELS[slot]}
-        </span>
+      {current && (
         <button
           type="button"
-          onClick={onClose}
-          aria-label="Close picker"
-          style={{ background: "none", border: "none", cursor: "pointer", color: theme.muted, fontSize: "1rem", lineHeight: 1, padding: "0 0.1rem" }}
+          onClick={() => { onSelect(null); onClose(); }}
+          style={{
+            display: "block", width: "100%", padding: "0.3rem 0.6rem",
+            background: "transparent", border: "none", borderBottom: `1px solid ${theme.border}`,
+            cursor: "pointer", fontFamily: "inherit",
+            fontSize: "0.75rem", fontWeight: 600, color: theme.muted, textAlign: "left",
+          }}
         >
-          ✕
+          — Clear slot —
         </button>
-      </div>
+      )}
       <input
         ref={inputRef}
         type="text"
         aria-label={`Search ${SLOT_LABELS[slot]} items`}
         value={query}
-        placeholder="Search items…"
+        placeholder={`Search ${SLOT_LABELS[slot]}…`}
         onChange={(e) => setQuery(e.target.value)}
         style={{
-          width: "100%", border: "none", borderBottom: `1px solid ${theme.border}`,
+          width: "100%", border: "none", borderBottom: query ? `1px solid ${theme.border}` : "none",
           borderRadius: 0, background: theme.bg, color: theme.text,
           fontFamily: "inherit", fontSize: "0.85rem", fontWeight: 600,
           padding: "0.45rem 0.6rem", outline: "none", boxSizing: "border-box",
         }}
       />
-      <div style={{ maxHeight: 220, overflowY: "auto" }}>
-        {current && (
-          <button
-            type="button"
-            onClick={() => { onSelect(null); onClose(); }}
-            style={{
-              display: "block", width: "100%", padding: "0.3rem 0.5rem",
-              background: "transparent", border: "none", borderBottom: `1px solid ${theme.border}`,
-              cursor: "pointer", fontFamily: "inherit",
-              fontSize: "0.75rem", fontWeight: 600, color: theme.muted, textAlign: "left",
-            }}
-          >
-            — Clear slot —
-          </button>
-        )}
-        {filtered === null && (
-          <p style={{ margin: 0, padding: "0.5rem 0.6rem", fontSize: "0.8rem", color: theme.muted, fontWeight: 600 }}>
-            Loading…
-          </p>
-        )}
-        {filtered !== null && filtered.length === 0 && (
-          <p style={{ margin: 0, padding: "0.5rem 0.6rem", fontSize: "0.8rem", color: theme.muted, fontWeight: 600 }}>
-            No results
-          </p>
-        )}
-        {filtered?.map((item) => {
-          const isCurrent = item.id === current?.id;
-          return (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => { onSelect(item); onClose(); }}
-              style={{
-                display: "flex", alignItems: "center", gap: "0.45rem",
-                width: "100%", padding: "0.25rem 0.5rem",
-                background: isCurrent ? `${theme.accent}33` : "transparent",
-                border: "none", borderBottom: `1px solid ${theme.border}`,
-                cursor: "pointer", fontFamily: "inherit",
-                fontSize: "0.8rem", fontWeight: 600, color: theme.text, textAlign: "left",
-              }}
-              onMouseEnter={(e) => { if (!isCurrent) e.currentTarget.style.background = `${theme.accent}22`; }}
-              onMouseLeave={(e) => { if (!isCurrent) e.currentTarget.style.background = "transparent"; }}
-            >
-              <ItemIcon id={String(item.id)} size={24} />
-              <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.name}</span>
-            </button>
-          );
-        })}
-      </div>
+      {query && (
+        <div style={{ maxHeight: 220, overflowY: "auto" }}>
+          {items === null && (
+            <p style={{ margin: 0, padding: "0.5rem 0.6rem", fontSize: "0.8rem", color: theme.muted, fontWeight: 600 }}>
+              Loading…
+            </p>
+          )}
+          {filtered !== null && filtered.length === 0 && (
+            <p style={{ margin: 0, padding: "0.5rem 0.6rem", fontSize: "0.8rem", color: theme.muted, fontWeight: 600 }}>
+              No results
+            </p>
+          )}
+          {filtered?.map((item) => {
+            const isCurrent = item.id === current?.id;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => { onSelect(item); onClose(); }}
+                style={{
+                  display: "flex", alignItems: "center", gap: "0.45rem",
+                  width: "100%", padding: "0.3rem 0.6rem",
+                  background: isCurrent ? `${theme.accent}33` : "transparent",
+                  border: "none", borderBottom: `1px solid ${theme.border}`,
+                  cursor: "pointer", fontFamily: "inherit",
+                  fontSize: "0.8rem", fontWeight: 600, color: theme.text, textAlign: "left",
+                }}
+                onMouseEnter={(e) => { if (!isCurrent) e.currentTarget.style.background = `${theme.accent}22`; }}
+                onMouseLeave={(e) => { if (!isCurrent) e.currentTarget.style.background = "transparent"; }}
+              >
+                <ItemIcon id={item.id} size={28} />
+                <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.name}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
 
+const PICKER_WIDTH = 240;
+
 // ── Slot cell ──────────────────────────────────────────────────────────────
 
-function SlotCell({ slotKey, item, theme, isActive, onClick }: {
+function SlotCell({ slotKey, item, theme, isActive, onClick, picker }: {
   slotKey: SlotKey;
   item: EquipmentItem | null | undefined;
   theme: AppTheme;
   isActive: boolean;
   onClick: () => void;
+  picker?: ReactNode;
 }) {
+  const { ref: wrapperRef, coords: pickerCoords, compute } = usePickerCoords(isActive, PICKER_WIDTH);
   return (
-    <div
-      role="button"
-      tabIndex={0}
-      aria-label={item ? `${SLOT_LABELS[slotKey]}: ${item.name}` : `Set ${SLOT_LABELS[slotKey]}`}
-      onClick={onClick}
-      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(); } }}
-      onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.borderColor = `${theme.accent}88`; }}
-      onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.borderColor = theme.border; }}
-      onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
-      onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
-      style={{
-        width: SLOT_SIZE, height: SLOT_SIZE, flexShrink: 0,
-        border: `1px solid ${isActive ? theme.accent : theme.border}`,
-        borderRadius: 8,
-        background: isActive ? `${theme.accent}15` : theme.bg,
-        display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-        gap: 2, cursor: "pointer",
-        outline: "2px solid transparent", outlineOffset: 2,
-        transition: "border-color 0.15s, background 0.15s",
-        overflow: "hidden", padding: "2px 3px", boxSizing: "border-box",
-      }}
-    >
-      {item ? (
-        <>
-          <ItemIcon id={String(item.id)} size={26} />
-          <span style={{
-            fontSize: "0.75rem", color: theme.muted, fontWeight: 700, lineHeight: 1,
-            overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-            maxWidth: SLOT_SIZE - 4, display: "block",
-          }}>
-            {item.name}
+    <div ref={wrapperRef} style={{ position: "relative", width: SLOT_SIZE, flexShrink: 0 }}>
+      <div
+        role="button"
+        tabIndex={0}
+        aria-label={item ? `${SLOT_LABELS[slotKey]}: ${item.name}` : `Set ${SLOT_LABELS[slotKey]}`}
+        onClick={(e) => { e.stopPropagation(); compute(); onClick(); }}
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); compute(); onClick(); } }}
+        onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.borderColor = `${theme.accent}88`; }}
+        onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.borderColor = theme.border; }}
+        onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
+        onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
+        style={{
+          width: SLOT_SIZE, height: SLOT_SIZE,
+          border: `1px solid ${isActive ? theme.accent : theme.border}`,
+          borderRadius: 8,
+          background: isActive ? `${theme.accent}15` : theme.bg,
+          display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+          gap: 2, cursor: "pointer",
+          outline: "2px solid transparent", outlineOffset: 2,
+          transition: "border-color 0.15s, background 0.15s",
+          overflow: "hidden", padding: "2px 3px", boxSizing: "border-box",
+        }}
+      >
+        {item ? (
+          <>
+            <ItemIcon id={item.id} size={30} />
+            <span style={{
+              fontSize: "0.75rem", color: theme.muted, fontWeight: 700, lineHeight: 1,
+              overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+              maxWidth: SLOT_SIZE - 4, display: "block",
+            }}>
+              {item.name}
+            </span>
+          </>
+        ) : (
+          <span style={{ fontSize: "0.75rem", color: theme.muted, fontWeight: 700, lineHeight: 1.2, textAlign: "center", whiteSpace: "nowrap", overflow: "hidden" }}>
+            {SLOT_LABELS[slotKey]}
           </span>
-        </>
-      ) : (
-        <span style={{ fontSize: "0.75rem", color: theme.muted, fontWeight: 700, lineHeight: 1.2, textAlign: "center", padding: "0 2px" }}>
-          {SLOT_LABELS[slotKey]}
-        </span>
+        )}
+      </div>
+      {picker && createPortal(
+        <div
+          onClick={(e) => e.stopPropagation()}
+          style={{ position: "fixed", width: PICKER_WIDTH, zIndex: 300, top: pickerCoords.top, left: pickerCoords.left }}
+        >
+          {picker}
+        </div>,
+        document.body!
       )}
     </div>
   );
@@ -261,12 +267,13 @@ function SlotCell({ slotKey, item, theme, isActive, onClick }: {
 
 // ── Column helper ──────────────────────────────────────────────────────────
 
-function SlotColumn({ slots, draft, theme, activeSlot, onToggle }: {
+function SlotColumn({ slots, draft, theme, activeSlot, onToggle, renderPicker }: {
   slots: SlotKey[];
   draft: EquipmentDraft;
   theme: AppTheme;
   activeSlot: SlotKey | null;
   onToggle: (slot: SlotKey) => void;
+  renderPicker: (slot: SlotKey) => ReactNode;
 }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 4, flexShrink: 0 }}>
@@ -278,6 +285,7 @@ function SlotColumn({ slots, draft, theme, activeSlot, onToggle }: {
           theme={theme}
           isActive={activeSlot === slot}
           onClick={() => onToggle(slot)}
+          picker={renderPicker(slot)}
         />
       ))}
     </div>
@@ -311,6 +319,26 @@ export default function EquipmentSetupStep({
     setActiveSlot((prev) => (prev === slot ? null : slot));
   }
 
+  useEffect(() => {
+    if (!activeSlot) return;
+    const close = () => setActiveSlot(null);
+    document.addEventListener("click", close);
+    return () => document.removeEventListener("click", close);
+  }, [!!activeSlot]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  function renderPicker(slot: SlotKey): ReactNode {
+    if (activeSlot !== slot) return null;
+    return (
+      <ItemPicker
+        slot={slot}
+        current={draft[slot]}
+        theme={theme}
+        onSelect={(item) => updateSlot(slot, item)}
+        onClose={() => setActiveSlot(null)}
+      />
+    );
+  }
+
   // Layout:
   // Col 1: ring1–4, belt, pocket
   // Col 2: face, eye, earring, pendant1, pendant2
@@ -338,14 +366,14 @@ export default function EquipmentSetupStep({
       onFinish={onFinish}
     >
       {/* Equipment grid */}
-      <div style={{ display: "flex", justifyContent: "center" }}>
-      <div style={{ display: "flex", gap: 4, alignItems: "stretch" }}>
+      <div style={{ overflowX: "auto" }}>
+      <div style={{ display: "flex", gap: 4, alignItems: "stretch", width: "fit-content", margin: "0 auto" }}>
 
         {/* Col 1 */}
-        <SlotColumn slots={col1} draft={draft} theme={theme} activeSlot={activeSlot} onToggle={toggleSlot} />
+        <SlotColumn slots={col1} draft={draft} theme={theme} activeSlot={activeSlot} onToggle={toggleSlot} renderPicker={renderPicker} />
 
         {/* Col 2 */}
-        <SlotColumn slots={col2} draft={draft} theme={theme} activeSlot={activeSlot} onToggle={toggleSlot} />
+        <SlotColumn slots={col2} draft={draft} theme={theme} activeSlot={activeSlot} onToggle={toggleSlot} renderPicker={renderPicker} />
 
         {/* Center block: sprite + weapon/sub/emblem */}
         <div style={{ ...colStyle, width: CENTER_WIDTH }}>
@@ -354,7 +382,7 @@ export default function EquipmentSetupStep({
             border: `1px solid ${theme.border}`,
             borderRadius: 8,
             background: theme.bg,
-            display: "flex", alignItems: "flex-end", justifyContent: "center",
+            display: "flex", alignItems: "center", justifyContent: "center",
             overflow: "hidden",
             minHeight: SLOT_SIZE * 2,
           }}>
@@ -381,32 +409,20 @@ export default function EquipmentSetupStep({
                 theme={theme}
                 isActive={activeSlot === slot}
                 onClick={() => toggleSlot(slot)}
+                picker={renderPicker(slot)}
               />
             ))}
           </div>
         </div>
 
         {/* Col 6 */}
-        <SlotColumn slots={col6} draft={draft} theme={theme} activeSlot={activeSlot} onToggle={toggleSlot} />
+        <SlotColumn slots={col6} draft={draft} theme={theme} activeSlot={activeSlot} onToggle={toggleSlot} renderPicker={renderPicker} />
 
         {/* Col 7 */}
-        <SlotColumn slots={col7} draft={draft} theme={theme} activeSlot={activeSlot} onToggle={toggleSlot} />
+        <SlotColumn slots={col7} draft={draft} theme={theme} activeSlot={activeSlot} onToggle={toggleSlot} renderPicker={renderPicker} />
 
       </div>
       </div>
-
-      {/* Active slot picker */}
-      {activeSlot && (
-        <div style={{ marginTop: 8 }}>
-          <ItemPicker
-            slot={activeSlot}
-            current={draft[activeSlot]}
-            theme={theme}
-            onSelect={(item) => updateSlot(activeSlot, item)}
-            onClose={() => setActiveSlot(null)}
-          />
-        </div>
-      )}
     </SetupStepFrame>
   );
 }

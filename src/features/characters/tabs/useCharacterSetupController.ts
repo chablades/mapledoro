@@ -54,7 +54,7 @@ function tryParseJson(raw: string): unknown {
   try { return JSON.parse(raw); } catch { return null; }
 }
 
-type EquipmentDraftItem = { id?: number; name: string } | null;
+type EquipmentDraftItem = { id?: string; name: string } | null;
 interface EquipmentDraft {
   ring1?: EquipmentDraftItem; ring2?: EquipmentDraftItem; ring3?: EquipmentDraftItem; ring4?: EquipmentDraftItem;
   face?: EquipmentDraftItem; eye?: EquipmentDraftItem; earring?: EquipmentDraftItem;

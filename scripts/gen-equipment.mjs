@@ -2,7 +2,7 @@
 /**
  * Generates per-slot equipment item JSON files from the item manifest.
  * Output: public/data/equipment/{slot}.json
- * Each file: Array<[id: number, name: string]> (tuple for compact size)
+ * Each file: Array<[id: string, name: string]> (tuple for compact size; id is 8-digit zero-padded)
  *
  * Usage:
  *   node scripts/gen-equipment.mjs manifests/v268/item.json
@@ -46,14 +46,14 @@ const SLOT_FILTERS = {
 };
 
 for (const [slot, filter] of Object.entries(SLOT_FILTERS)) {
-  /** @type {Array<[number, string]>} */
+  /** @type {Array<[string, string]>} */
   const items = [];
 
   for (const [rawId, entry] of Object.entries(entries)) {
     if (!entry.name) continue;
     if (!filter.cats.includes(entry.category)) continue;
     if (filter.prefixes && !filter.prefixes.some((p) => rawId.startsWith(p))) continue;
-    items.push([Number(rawId), entry.name]);
+    items.push([rawId, entry.name]);
   }
 
   const outputPath = resolve(OUTPUT_DIR, `${slot}.json`);

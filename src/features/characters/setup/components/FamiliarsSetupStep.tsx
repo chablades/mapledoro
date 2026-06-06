@@ -1,6 +1,8 @@
 "use client";
 
 import { useMemo, useRef, useState, useEffect, type CSSProperties } from "react";
+import { createPortal } from "react-dom";
+import { usePickerCoords } from "../hooks/usePickerCoords";
 import type { AppTheme } from "../../../../components/themes";
 import type { SetupStepDefinition } from "../steps";
 import { readCharacterToolData } from "../../../../features/tools/characterToolStorage";
@@ -151,6 +153,9 @@ function patchBadge(value: FamiliarsValue, pi: number, bi: number, val: string):
   };
 }
 
+const FAM_PICKER_WIDTH = 220;
+const BADGE_PICKER_WIDTH = 200;
+
 // ── Shared styles ──────────────────────────────────────────────────────────
 
 const searchInputStyle: CSSProperties = {
@@ -176,13 +181,7 @@ const lineSelectStyle: CSSProperties = {
   border: "1px solid",
 };
 
-const popoverContainerStyle: CSSProperties = {
-  position: "absolute",
-  top: "calc(100% + 4px)",
-  left: "50%",
-  transform: "translateX(-50%)",
-  width: 220,
-  zIndex: 300,
+const popoverVisualStyle: CSSProperties = {
   borderRadius: 10,
   boxShadow: "0 6px 24px rgba(0,0,0,0.28)",
   overflow: "hidden",
@@ -426,6 +425,7 @@ function FamiliarSlotCard({
   const isOpen = openId === slotId;
   const isEmpty = !slot.name;
   const inputRef = useRef<HTMLInputElement>(null);
+  const { ref: wrapperRef, coords: pickerCoords, compute } = usePickerCoords(isOpen, FAM_PICKER_WIDTH);
   const filtered = useMemo(() => isOpen ? filterFamiliars(query) : [], [isOpen, query]);
   useEffect(() => {
     if (isOpen && !pendingEntry) inputRef.current?.focus();
@@ -442,13 +442,24 @@ function FamiliarSlotCard({
   };
 
 
+  const pickerStyle: CSSProperties = {
+    ...popoverVisualStyle,
+    position: "fixed",
+    top: pickerCoords.top,
+    left: pickerCoords.left,
+    width: FAM_PICKER_WIDTH,
+    zIndex: 300,
+    background: theme.panel,
+    border: `1px solid ${theme.accent}`,
+  };
+
   return (
-    <div style={{ flex: 1, position: "relative" }}>
+    <div ref={wrapperRef} style={{ flex: 1, position: "relative" }}>
       <div
         role="button"
         tabIndex={0}
-        onClick={onOpen}
-        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onOpen(); } }}
+        onClick={() => { compute(); onOpen(); }}
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); compute(); onOpen(); } }}
         style={cardStyle}
       >
         {isEmpty ? (
@@ -489,8 +500,12 @@ function FamiliarSlotCard({
         )}
       </div>
 
-      {isOpen && (
-        <div style={{ ...popoverContainerStyle, background: theme.panel, border: `1px solid ${theme.accent}` }}>
+      {isOpen && createPortal(
+        <div
+          onMouseDown={(e) => e.stopPropagation()}
+          onClick={(e) => e.stopPropagation()}
+          style={pickerStyle}
+        >
           {pendingEntry ? (
             <TierPickerView
               entry={pendingEntry}
@@ -543,7 +558,8 @@ function FamiliarSlotCard({
               </div>}
             </>
           )}
-        </div>
+        </div>,
+        document.body!
       )}
     </div>
   );
@@ -573,6 +589,7 @@ function BadgeSlot({
 }) {
   const isOpen = openId === slotId;
   const inputRef = useRef<HTMLInputElement>(null);
+  const { ref: wrapperRef, coords: pickerCoords, compute } = usePickerCoords(isOpen, BADGE_PICKER_WIDTH);
   const filtered = useMemo(() => isOpen ? filterBadges(query) : [], [isOpen, query]);
   const outerSize = BADGE_SIZE + BADGE_BORDER * 2;
 
@@ -583,14 +600,24 @@ function BadgeSlot({
   const filledBg = badge ? `${theme.accent}55` : `${theme.muted}28`;
   const outerBg = isOpen ? theme.accent : filledBg;
   const innerBg = badge ? theme.panel : theme.bg;
+  const badgePickerStyle: CSSProperties = {
+    ...popoverVisualStyle,
+    position: "fixed",
+    top: pickerCoords.top,
+    left: pickerCoords.left,
+    width: BADGE_PICKER_WIDTH,
+    zIndex: 300,
+    background: theme.panel,
+    border: `1px solid ${theme.accent}`,
+  };
 
   return (
-    <div style={{ position: "relative" }}>
+    <div ref={wrapperRef} style={{ position: "relative" }}>
       <button
         type="button"
         title={badge || "Add badge"}
         aria-label={badge || "Add badge"}
-        onClick={onOpen}
+        onClick={() => { compute(); onOpen(); }}
         style={{ cursor: "pointer", background: "none", border: "none", padding: 0 }}
       >
         <div style={{ width: outerSize, height: outerSize, clipPath: PENTAGON, background: outerBg, display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -622,8 +649,12 @@ function BadgeSlot({
         >×</button>
       )}
 
-      {isOpen && (
-        <div style={{ ...popoverContainerStyle, width: 200, background: theme.panel, border: `1px solid ${theme.accent}` }}>
+      {isOpen && createPortal(
+        <div
+          onMouseDown={(e) => e.stopPropagation()}
+          onClick={(e) => e.stopPropagation()}
+          style={badgePickerStyle}
+        >
           <div style={{ padding: "0.4rem 0.5rem", borderBottom: `1px solid ${theme.border}` }}>
             <input
               ref={inputRef}
@@ -632,7 +663,6 @@ function BadgeSlot({
               value={query}
               placeholder="Search badges…"
               onChange={(e) => onQueryChange(e.target.value)}
-              onClick={(e) => e.stopPropagation()}
               style={{ ...searchInputStyle, borderColor: theme.border, background: theme.bg, color: theme.text }}
             />
           </div>
@@ -646,7 +676,7 @@ function BadgeSlot({
               <button
                 key={name}
                 type="button"
-                onClick={(e) => { e.stopPropagation(); onSelect(name); }}
+                onClick={() => onSelect(name)}
                 style={{
                   display: "block",
                   width: "100%", padding: "0.35rem 0.6rem",
@@ -663,7 +693,8 @@ function BadgeSlot({
               </button>
             ))}
           </div>
-        </div>
+        </div>,
+        document.body!
       )}
     </div>
   );

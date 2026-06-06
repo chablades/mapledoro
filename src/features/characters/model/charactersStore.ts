@@ -49,7 +49,7 @@ export interface StoredCharacterStats {
 }
 
 export interface StoredEquipmentItem {
-  id?: number;
+  id?: string;
   name: string;
 }
 
@@ -278,7 +278,7 @@ function isStoredEquipmentItem(value: unknown): value is StoredEquipmentItem {
   return (
     isObject(value) &&
     typeof value.name === "string" &&
-    (value.id === undefined || typeof value.id === "number")
+    (value.id === undefined || typeof value.id === "string")
   );
 }
 

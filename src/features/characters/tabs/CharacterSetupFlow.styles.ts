@@ -200,6 +200,7 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
         .characters-content.setup-active .preview-pane {
           flex: 1 1 auto;
           max-width: calc(100% - 356px);
+          min-width: 520px;
           overflow: visible;
           opacity: 1;
           transform: translateY(0);
@@ -437,6 +438,7 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
 
           .characters-content.setup-active .preview-pane {
             order: 2;
+            min-width: 0;
           }
 
           .characters-content.setup-active .search-pane,
