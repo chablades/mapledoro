@@ -67,9 +67,15 @@ const TIER_COLORS: Record<FamiliarTier, { bg: string; border: string; text: stri
   legendary: { bg: "#001e10", border: "#20a040", text: "#4ade80" },
 };
 
-const TIER_SHORT: Record<FamiliarTier, string> = {
-  common: "C", rare: "R", epic: "E", unique: "U", legendary: "L",
-};
+function normalize(s: string): string {
+  return s.toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+function matchesQuery(candidate: string, query: string): boolean {
+  const norm = normalize(candidate);
+  const tokens = query.trim().split(/\s+/).map(normalize).filter(Boolean);
+  return tokens.length > 0 && tokens.every((t) => norm.includes(t));
+}
 
 // ── Parse / patch helpers ──────────────────────────────────────────────────
 
@@ -159,6 +165,17 @@ const searchInputStyle: CSSProperties = {
   border: "1px solid",
 };
 
+const lineSelectStyle: CSSProperties = {
+  width: "100%",
+  boxSizing: "border-box",
+  borderRadius: 6,
+  fontFamily: "inherit",
+  fontSize: "0.72rem",
+  fontWeight: 600,
+  padding: "0.25rem 0.4rem",
+  border: "1px solid",
+};
+
 const popoverContainerStyle: CSSProperties = {
   position: "absolute",
   top: "calc(100% + 4px)",
@@ -204,15 +221,142 @@ function FamiliarCardSprite({ mobId, size }: { mobId: string; size: number }) {
   );
 }
 
+// ── Line picker ───────────────────────────────────────────────────────────
+
+function LinePicker({ value, tier, placeholder, theme, onChange }: {
+  value: string;
+  tier: FamiliarTier;
+  placeholder: string;
+  theme: AppTheme;
+  onChange: (val: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const lines = getLinesForTier(tier);
+  const filtered = query ? lines.filter((l) => matchesQuery(l, query)) : lines;
+
+  useEffect(() => {
+    if (!open) return;
+    function onMouseDown(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+        setQuery("");
+      }
+    }
+    document.addEventListener("mousedown", onMouseDown);
+    return () => document.removeEventListener("mousedown", onMouseDown);
+  }, [open]);
+
+  useEffect(() => {
+    if (open) inputRef.current?.focus();
+  }, [open]);
+
+  function select(line: string) {
+    onChange(line);
+    setOpen(false);
+    setQuery("");
+  }
+
+  const triggerStyle: CSSProperties = {
+    ...lineSelectStyle,
+    borderColor: theme.border,
+    background: theme.bg,
+    color: value ? theme.text : theme.muted,
+    textAlign: "left",
+    cursor: "pointer",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+    display: "block",
+  };
+
+  return (
+    <div ref={containerRef} style={{ position: "relative", width: "100%" }}>
+      <button
+        type="button"
+        onClick={(e) => { e.stopPropagation(); setOpen((p) => !p); }}
+        style={triggerStyle}
+      >
+        {value || placeholder}
+      </button>
+      {open && (
+        <div
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            position: "absolute", bottom: "calc(100% + 4px)", left: 0, right: 0,
+            zIndex: 310, borderRadius: 8, overflow: "hidden",
+            border: `1px solid ${theme.accent}`,
+            background: theme.panel,
+            boxShadow: "0 4px 16px rgba(0,0,0,0.25)",
+          }}
+        >
+          <div style={{ padding: "0.3rem 0.4rem", borderBottom: `1px solid ${theme.border}` }}>
+            <input
+              ref={inputRef}
+              type="text"
+              value={query}
+              placeholder="Search…"
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={(e) => e.stopPropagation()}
+              style={{ ...searchInputStyle, borderColor: theme.border, background: theme.bg, color: theme.text }}
+            />
+          </div>
+          <div style={{ maxHeight: 160, overflowY: "auto" }}>
+            {value && (
+              <button
+                type="button"
+                onClick={() => select("")}
+                style={{
+                  display: "block", width: "100%", padding: "0.3rem 0.5rem",
+                  background: "transparent", border: "none",
+                  borderBottom: `1px solid ${theme.border}`,
+                  cursor: "pointer", fontFamily: "inherit",
+                  fontSize: "0.72rem", fontWeight: 600, color: theme.muted, textAlign: "left",
+                }}
+              >
+                — Clear —
+              </button>
+            )}
+            {filtered.map((line) => (
+              <button
+                key={line}
+                type="button"
+                onClick={() => select(line)}
+                style={{
+                  display: "block", width: "100%", padding: "0.3rem 0.5rem",
+                  background: line === value ? `${theme.accent}33` : "transparent",
+                  border: "none", borderBottom: `1px solid ${theme.border}`,
+                  cursor: "pointer", fontFamily: "inherit",
+                  fontSize: "0.72rem", fontWeight: 600, color: theme.text, textAlign: "left",
+                }}
+                onMouseEnter={(e) => { if (line !== value) e.currentTarget.style.background = `${theme.accent}22`; }}
+                onMouseLeave={(e) => { if (line !== value) e.currentTarget.style.background = "transparent"; }}
+              >
+                {line}
+              </button>
+            ))}
+            {filtered.length === 0 && (
+              <p style={{ margin: 0, padding: "0.4rem 0.5rem", fontSize: "0.72rem", color: theme.muted, fontWeight: 600 }}>
+                No results
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Familiar slot card ─────────────────────────────────────────────────────
 
 function filterFamiliars(query: string): FamiliarEntry[] {
-  const q = query.trim().toLowerCase();
-  if (!q) return FAMILIARS.slice(0, 50);
+  if (!query.trim()) return FAMILIARS.slice(0, 50);
   const results: FamiliarEntry[] = [];
   for (const f of FAMILIARS) {
     if (results.length >= 50) break;
-    if (getFamiliarDisplayLabel(f).toLowerCase().includes(q)) results.push(f);
+    if (matchesQuery(getFamiliarDisplayLabel(f), query)) results.push(f);
   }
   return results;
 }
@@ -230,47 +374,86 @@ const slotCardBase: CSSProperties = {
   userSelect: "none",
 };
 
+function TierPickerView({ entry, theme, onBack, onSelect }: {
+  entry: FamiliarEntry;
+  theme: AppTheme;
+  onBack: () => void;
+  onSelect: (tier: FamiliarTier) => void;
+}) {
+  return (
+    <div style={{ padding: "0.5rem 0.6rem", display: "flex", flexDirection: "column", gap: 5 }}>
+      <button
+        type="button"
+        onClick={onBack}
+        style={{
+          display: "flex", alignItems: "center", gap: 6,
+          background: "transparent", border: "none", cursor: "pointer",
+          color: theme.muted, fontFamily: "inherit", fontSize: "0.75rem",
+          fontWeight: 700, padding: "0.1rem 0", marginBottom: 2,
+        }}
+      >
+        ← {getFamiliarDisplayLabel(entry)}
+      </button>
+      <p style={{ margin: "0 0 2px", fontSize: "0.72rem", color: theme.muted, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+        Pick rarity
+      </p>
+      {TIER_ORDER.map((t) => {
+        const c = TIER_COLORS[t];
+        return (
+          <button
+            key={t}
+            type="button"
+            onClick={() => onSelect(t)}
+            style={{
+              background: c.bg, border: `1px solid ${c.border}`, color: c.text,
+              borderRadius: 6, padding: "0.3rem 0.6rem",
+              fontWeight: 700, fontSize: "0.8rem", fontFamily: "inherit",
+              cursor: "pointer", textAlign: "left",
+            }}
+          >
+            {TIER_LABELS[t]}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 function FamiliarSlotCard({
-  slot, slotId, openId, query, theme,
-  onOpen, onQueryChange, onSelect, onClear, onTierChange, onLineChange,
+  slot, slotId, openId, query, pendingEntry, theme,
+  onOpen, onQueryChange, onSelect, onClear, onLineChange, onSetPending,
 }: {
   slot: FamiliarSlot;
   slotId: string;
   openId: string | null;
   query: string;
+  pendingEntry: FamiliarEntry | null;
   theme: AppTheme;
   onOpen: () => void;
   onQueryChange: (q: string) => void;
-  onSelect: (entry: FamiliarEntry) => void;
+  onSelect: (entry: FamiliarEntry, tier: FamiliarTier) => void;
   onClear: () => void;
-  onTierChange: (tier: FamiliarTier | "") => void;
   onLineChange: (field: "line1" | "line2", val: string) => void;
+  onSetPending: (entry: FamiliarEntry | null) => void;
 }) {
   const isOpen = openId === slotId;
   const isEmpty = !slot.name;
   const inputRef = useRef<HTMLInputElement>(null);
   const filtered = useMemo(() => isOpen ? filterFamiliars(query) : [], [isOpen, query]);
-  const listId = slot.tier ? `fam-step-lines-${slot.tier}` : undefined;
-
   useEffect(() => {
-    if (isOpen) inputRef.current?.focus();
-  }, [isOpen]);
+    if (isOpen && !pendingEntry) inputRef.current?.focus();
+  }, [isOpen, pendingEntry]);
 
+  const tierBorderColor = slot.tier ? TIER_COLORS[slot.tier].border : null;
   const cardStyle: CSSProperties = {
     ...slotCardBase,
     borderWidth: isOpen ? 2 : 1,
-    borderColor: isOpen ? theme.accent : theme.border,
+    borderColor: isOpen ? theme.accent : (tierBorderColor ?? theme.border),
     borderStyle: isEmpty && !isOpen ? "dashed" : "solid",
     background: isEmpty ? "transparent" : theme.panel,
     justifyContent: isEmpty ? "center" : "flex-start",
   };
 
-  const lineInputStyle: CSSProperties = {
-    ...searchInputStyle,
-    borderColor: theme.border,
-    background: theme.bg,
-    color: theme.text,
-  };
 
   return (
     <div style={{ flex: 1, position: "relative" }}>
@@ -303,56 +486,16 @@ function FamiliarSlotCard({
               >×</button>
             </div>
             <span style={{
-              fontSize: "0.75rem", fontWeight: 700, color: theme.text,
+              fontSize: "0.75rem", fontWeight: 700, color: slot.tier ? TIER_COLORS[slot.tier].text : theme.text,
               textAlign: "center", overflow: "hidden", textOverflow: "ellipsis",
               whiteSpace: "nowrap", maxWidth: "100%", width: "100%",
             }}>
               {slot.name.replace(/ Familiar$/i, "")}
             </span>
-            <div style={{ display: "flex", gap: 3, justifyContent: "center", flexWrap: "wrap" }}>
-              {TIER_ORDER.map((t) => {
-                const c = TIER_COLORS[t];
-                const active = slot.tier === t;
-                return (
-                  <button
-                    key={t}
-                    type="button"
-                    title={TIER_LABELS[t]}
-                    onClick={(e) => { e.stopPropagation(); onTierChange(active ? "" : t); }}
-                    style={{
-                      width: 18, height: 18, borderRadius: 3, padding: 0,
-                      border: `1px solid ${active ? c.border : theme.border}`,
-                      background: active ? c.bg : "transparent",
-                      color: active ? c.text : theme.muted,
-                      fontSize: "0.75rem", fontWeight: 800, fontFamily: "inherit",
-                      cursor: "pointer",
-                    }}
-                  >
-                    {TIER_SHORT[t]}
-                  </button>
-                );
-              })}
-            </div>
             {slot.tier && (
               <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 3, marginTop: 2 }}>
-                <input
-                  type="text"
-                  list={listId}
-                  value={slot.line1}
-                  placeholder="Line 1…"
-                  onClick={(e) => e.stopPropagation()}
-                  onChange={(e) => onLineChange("line1", e.target.value)}
-                  style={lineInputStyle}
-                />
-                <input
-                  type="text"
-                  list={listId}
-                  value={slot.line2}
-                  placeholder="Line 2…"
-                  onClick={(e) => e.stopPropagation()}
-                  onChange={(e) => onLineChange("line2", e.target.value)}
-                  style={lineInputStyle}
-                />
+                <LinePicker value={slot.line1} tier={slot.tier} placeholder="Line 1…" theme={theme} onChange={(v) => onLineChange("line1", v)} />
+                <LinePicker value={slot.line2} tier={slot.tier} placeholder="Line 2…" theme={theme} onChange={(v) => onLineChange("line2", v)} />
               </div>
             )}
           </>
@@ -361,45 +504,57 @@ function FamiliarSlotCard({
 
       {isOpen && (
         <div style={{ ...popoverContainerStyle, background: theme.panel, border: `1px solid ${theme.accent}` }}>
-          <div style={{ padding: "0.4rem 0.5rem", borderBottom: `1px solid ${theme.border}` }}>
-            <input
-              ref={inputRef}
-              type="text"
-              value={query}
-              placeholder="Search familiars…"
-              onChange={(e) => onQueryChange(e.target.value)}
-              onClick={(e) => e.stopPropagation()}
-              style={{ ...searchInputStyle, borderColor: theme.border, background: theme.bg, color: theme.text }}
+          {pendingEntry ? (
+            <TierPickerView
+              entry={pendingEntry}
+              theme={theme}
+              onBack={() => onSetPending(null)}
+              onSelect={(tier) => { onSelect(pendingEntry, tier); }}
             />
-          </div>
-          <div style={{ maxHeight: 200, overflowY: "auto" }}>
-            {filtered.length === 0 && (
-              <p style={{ margin: 0, padding: "0.5rem 0.75rem", fontSize: "0.75rem", color: theme.muted, fontWeight: 600 }}>
-                No results
-              </p>
-            )}
-            {filtered.map((entry) => (
-              <button
-                key={entry.id}
-                type="button"
-                onClick={(e) => { e.stopPropagation(); onSelect(entry); }}
-                style={{
-                  display: "flex", alignItems: "center", gap: 8,
-                  width: "100%", padding: "0.3rem 0.6rem",
-                  background: "transparent", border: "none",
-                  borderBottom: `1px solid ${theme.border}`,
-                  cursor: "pointer", fontFamily: "inherit",
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = `${theme.accent}22`; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
-              >
-                {entry.cardId && <ItemIcon id={entry.cardId} size={FAM_LIST_SIZE} shadow />}
-                <span style={{ fontSize: "0.75rem", fontWeight: 700, color: theme.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {getFamiliarDisplayLabel(entry)}
-                </span>
-              </button>
-            ))}
-          </div>
+          ) : (
+            <>
+              <div style={{ padding: "0.4rem 0.5rem", borderBottom: `1px solid ${theme.border}` }}>
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={query}
+                  placeholder="Search familiars…"
+                  onChange={(e) => onQueryChange(e.target.value)}
+                  onClick={(e) => e.stopPropagation()}
+                  onKeyDown={(e) => e.stopPropagation()}
+                  style={{ ...searchInputStyle, borderColor: theme.border, background: theme.bg, color: theme.text }}
+                />
+              </div>
+              <div style={{ maxHeight: 200, overflowY: "auto" }}>
+                {filtered.length === 0 && (
+                  <p style={{ margin: 0, padding: "0.5rem 0.75rem", fontSize: "0.75rem", color: theme.muted, fontWeight: 600 }}>
+                    No results
+                  </p>
+                )}
+                {filtered.map((entry) => (
+                  <button
+                    key={entry.id}
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); onSetPending(entry); }}
+                    style={{
+                      display: "flex", alignItems: "center", gap: 8,
+                      width: "100%", padding: "0.3rem 0.6rem",
+                      background: "transparent", border: "none",
+                      borderBottom: `1px solid ${theme.border}`,
+                      cursor: "pointer", fontFamily: "inherit",
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = `${theme.accent}22`; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+                  >
+                    {entry.cardId && <ItemIcon id={entry.cardId} size={FAM_LIST_SIZE} shadow />}
+                    <span style={{ fontSize: "0.75rem", fontWeight: 700, color: theme.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {getFamiliarDisplayLabel(entry)}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       )}
     </div>
@@ -534,6 +689,7 @@ export default function FamiliarsSetupStep({
   const [activePreset, setActivePreset] = useState(0);
   const [openId, setOpenId] = useState<string | null>(null);
   const [pickerQuery, setPickerQuery] = useState("");
+  const [pendingFamiliar, setPendingFamiliar] = useState<FamiliarEntry | null>(null);
   const zoneRef = useRef<HTMLDivElement>(null);
   const initialValueRef = useRef(value);
 
@@ -551,6 +707,7 @@ export default function FamiliarsSetupStep({
       if (zoneRef.current && !zoneRef.current.contains(e.target as Node)) {
         setOpenId(null);
         setPickerQuery("");
+        setPendingFamiliar(null);
       }
     }
     document.addEventListener("mousedown", handleMouseDown);
@@ -562,12 +719,14 @@ export default function FamiliarsSetupStep({
 
   function openPicker(id: string) {
     setPickerQuery("");
+    setPendingFamiliar(null);
     setOpenId((prev) => prev === id ? null : id);
   }
 
   function closePicker() {
     setOpenId(null);
     setPickerQuery("");
+    setPendingFamiliar(null);
   }
 
   const badgeRowOffset = (BADGE_SIZE + BADGE_BORDER * 2 + 8) / 2;
@@ -583,12 +742,6 @@ export default function FamiliarsSetupStep({
       onNext={onNext}
       onFinish={onFinish}
     >
-      {TIER_ORDER.map((tier) => (
-        <datalist key={tier} id={`fam-step-lines-${tier}`}>
-          {getLinesForTier(tier).map((line) => <option key={line} value={line} />)}
-        </datalist>
-      ))}
-
       {/* Preset tabs */}
       <div style={{ display: "flex", gap: 6, marginBottom: "0.75rem" }}>
         {Array.from({ length: PRESET_COUNT }, (_, i) => (
@@ -622,15 +775,16 @@ export default function FamiliarsSetupStep({
                 slotId={slotId}
                 openId={openId}
                 query={openId === slotId ? pickerQuery : ""}
+                pendingEntry={openId === slotId ? pendingFamiliar : null}
                 theme={theme}
                 onOpen={() => openPicker(slotId)}
                 onQueryChange={setPickerQuery}
-                onSelect={(entry) => {
-                  onChange(JSON.stringify(patchSlot(parsed, activePreset, i, { familiarId: entry.id, mobId: entry.mobId, name: entry.name })));
+                onSetPending={setPendingFamiliar}
+                onSelect={(entry, tier) => {
+                  onChange(JSON.stringify(patchSlot(parsed, activePreset, i, { familiarId: entry.id, mobId: entry.mobId, name: entry.name, tier, line1: "", line2: "" })));
                   closePicker();
                 }}
                 onClear={() => onChange(JSON.stringify(patchSlot(parsed, activePreset, i, emptySlot())))}
-                onTierChange={(tier) => onChange(JSON.stringify(patchSlot(parsed, activePreset, i, { tier, line1: "", line2: "" })))}
                 onLineChange={(field, val) => onChange(JSON.stringify(patchSlot(parsed, activePreset, i, { [field]: val })))}
               />
             );
