@@ -8,13 +8,13 @@
  * composite icon. IDs were resolved by pixel-matching the v268 asset dump against
  * Grandis Library's labelled class icons; render with <HexaSkillIcon>.
  *
- * Mastery nodes: most classes have 4 nodes (Sia has 2). Each node boosts multiple
+ * Mastery nodes: most classes have 4 nodes (Sia Astelle has 2). Each node boosts multiple
  * skills simultaneously and is leveled as one unit, so it carries one composite icon.
  *
  * Enhancement (V Boost): each class has 4 enhancement skills, each leveled individually.
  *
  * An empty `iconId` means no haku icon exists yet (e.g. Sol Hecate); <HexaSkillIcon>
- * renders the skill's initial as a fallback. Sia's nodes/skills and Sol Janus instead
+ * renders the skill's initial as a fallback. Sia Astelle's nodes/skills and Sol Janus instead
  * carry an `iconUrl` built from the `erda-skill`/`skill` resource types (see `su`/`nodeUrl`).
  */
 
@@ -799,7 +799,7 @@ const REN: HexaClassDef = {
 
 // ── SHINE ───────────────────────────
 const SIA: HexaClassDef = {
-  className: "Sia",
+  className: "Sia Astelle",
   group: "SHINE",
   origin: su("Celestial Design", "skill", "182141500"),
   mastery: [
@@ -925,7 +925,7 @@ const CLASS_ID_TO_NAME: Record<string, string> = {
   pathfinder: "Pathfinder",
   phantom: "Phantom",
   ren: "Ren",
-  sia: "Sia",
+  sia_astelle: "Sia Astelle",
   shade: "Shade",
   shadower: "Shadower",
   thunder_breaker: "Thunder Breaker",
