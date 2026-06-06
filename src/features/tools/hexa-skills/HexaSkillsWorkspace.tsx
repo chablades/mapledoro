@@ -38,7 +38,7 @@ const resetBtnBase: React.CSSProperties = {
   cursor: "pointer",
 };
 
-const siaNoticeStyle: React.CSSProperties = {
+const shineNoticeStyle: React.CSSProperties = {
   padding: "0.75rem 1rem",
   fontSize: "0.82rem",
   fontWeight: 600,
@@ -328,18 +328,18 @@ export default function HexaSkillsWorkspace({ theme }: { theme: AppTheme }) {
           />
         </div>
 
-        {classDef?.className === "Sia" && (
+        {classDef && classDef.group === "SHINE" && (
           <div
             className="fade-in panel-card"
             style={{
               ...sectionPanel,
-              ...siaNoticeStyle,
+              ...shineNoticeStyle,
               background: theme.accentSoft,
               border: `1px solid ${theme.accent}`,
               color: theme.text,
             }}
           >
-            <strong>Note:</strong> Sia uses the Erda Link system instead of the traditional HEXA skill system.
+            <strong>Note:</strong> {classDef.className} uses the Erda Link system instead of the traditional HEXA skill system.
             The fragment costs shown below are placeholder values based on standard classes.
             Accurate Erda Link costs will be supported in a future update.
           </div>

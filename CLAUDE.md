@@ -65,15 +65,13 @@ npm run lint
 
 - `<ItemIcon id size shadow? />` · `<MobSprite id size />` · `<SkillIcon id size disabled? />` · `<HexaSkillIcon id size disabled? />` · `<FamiliarSprite id size />`
 - Each is a pure **id → URL** builder (`src/lib/mapleResource.ts`). The host is `NEXT_PUBLIC_RESOURCE_BASE` (default `https://haku.network`); add new hosts to `next.config.mjs` `remotePatterns`.
-- **Boss icons** (Maple Guide) have no component — `bossIconUrl(id)` builds the `ui/boss` URL (ids in `manifests/v<version>/boss.json`), stored as `icon` strings in boss data (`bosses.ts`, `liberation-data.ts`, `astra-data.ts`, `trace-restoration-data.ts`). Radiant Malefic Star and Jupiter aren't on haku yet and stay on `media.maplestorywiki.net`.
+- **Boss icons** (Maple Guide) have no component — `bossIconUrl(id)` builds the `ui/boss` URL (ids in `manifests/v<version>/boss.json`), stored as `icon` strings in boss data (`bosses.ts`, `liberation-data.ts`, `astra-data.ts`, `trace-restoration-data.ts`).
 
 **Item icons:** `<ItemIcon>` defaults to the **shadowless** `iconRaw.png`. The framed `icon.png` (drop shadow) is reserved for inventory management — pass `shadow` for it.
 
 **Finding IDs:** look them up by hand in the committed manifests `manifests/v<version>/<type>.json` (search by `name`), then hardcode the id at the call site with the name in a comment. There is **no** name→ID resolution map — the manifests are a dev-time reference, never bundled (`item.json` is ~17 MB).
 
 **Familiars:** `<FamiliarSprite>` renders the direct familiar sprite only. For mob- or card-backed familiars (manifest `spriteFrom` = `mob` / `null`), use `<MobSprite id={mobId}>` or `<ItemIcon id={cardId}>` per the manifest entry.
-
-**Migration in progress:** `maplestory.io`, `media.maplestorywiki.net`, and `orangemushroom.net` are being replaced by `haku.network` page-by-page. `WikiAttribution` is required only where wiki imagery genuinely remains.
 
 ## Feature Docs
 
