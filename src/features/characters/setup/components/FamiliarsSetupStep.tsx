@@ -191,33 +191,19 @@ const popoverContainerStyle: CSSProperties = {
 // ── Familiar card sprite: mob primary, familiar fallback ───────────────────
 
 function FamiliarCardSprite({ mobId, size }: { mobId: string; size: number }) {
-  const primaryRef = useRef<HTMLImageElement>(null);
-  const fallbackRef = useRef<HTMLImageElement>(null);
   return (
-    <>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        ref={primaryRef}
-        src={resourceImageUrl("mob", mobId, "sprite.png")}
-        alt=""
-        width={size}
-        height={size}
-        style={{ objectFit: "contain", width: size, height: size, flexShrink: 0 }}
-        onError={() => {
-          if (primaryRef.current) primaryRef.current.style.display = "none";
-          if (fallbackRef.current) fallbackRef.current.style.display = "block";
-        }}
-      />
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        ref={fallbackRef}
-        src={resourceImageUrl("familiar", mobId, "sprite.png")}
-        alt=""
-        width={size}
-        height={size}
-        style={{ display: "none", objectFit: "contain", width: size, height: size, flexShrink: 0 }}
-      />
-    </>
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={resourceImageUrl("mob", mobId, "sprite.png")}
+      alt=""
+      width={size}
+      height={size}
+      style={{ objectFit: "contain", width: size, height: size, flexShrink: 0 }}
+      onError={(e) => {
+        e.currentTarget.onerror = null;
+        e.currentTarget.src = resourceImageUrl("familiar", mobId, "sprite.png");
+      }}
+    />
   );
 }
 
@@ -525,7 +511,7 @@ function FamiliarSlotCard({
                   style={{ ...searchInputStyle, borderColor: theme.border, background: theme.bg, color: theme.text }}
                 />
               </div>
-              <div style={{ maxHeight: 200, overflowY: "auto" }}>
+              {query && <div style={{ maxHeight: 200, overflowY: "auto" }}>
                 {filtered.length === 0 && (
                   <p style={{ margin: 0, padding: "0.5rem 0.75rem", fontSize: "0.75rem", color: theme.muted, fontWeight: 600 }}>
                     No results
@@ -552,7 +538,7 @@ function FamiliarSlotCard({
                     </span>
                   </button>
                 ))}
-              </div>
+              </div>}
             </>
           )}
         </div>
@@ -743,18 +729,19 @@ export default function FamiliarsSetupStep({
       onFinish={onFinish}
     >
       {/* Preset tabs */}
-      <div style={{ display: "flex", gap: 6, marginBottom: "0.75rem" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: "0.75rem" }}>
+        <span style={{ fontSize: "0.8rem", fontWeight: 700, color: theme.muted }}>Preset</span>
         {Array.from({ length: PRESET_COUNT }, (_, i) => (
           <button
             key={i}
             type="button"
             onClick={() => { setActivePreset(i); closePicker(); }}
             style={{
-              width: 32, height: 32, borderRadius: "50%", padding: 0,
+              width: 28, height: 24, borderRadius: 6, padding: 0,
               border: `2px solid ${i === activePreset ? theme.accent : theme.border}`,
               background: i === activePreset ? theme.accent : "transparent",
               color: i === activePreset ? "#fff" : theme.muted,
-              fontFamily: "inherit", fontWeight: 800, fontSize: "0.85rem",
+              fontFamily: "inherit", fontWeight: 800, fontSize: "0.8rem",
               cursor: "pointer",
             }}
           >
@@ -763,9 +750,9 @@ export default function FamiliarsSetupStep({
         ))}
       </div>
 
-      <div ref={zoneRef}>
+      <div>
         {/* 3 familiar cards */}
-        <div style={{ display: "flex", gap: 8, marginBottom: "1rem" }}>
+        <div ref={zoneRef} style={{ display: "flex", gap: 8, marginBottom: "1rem" }}>
           {preset.familiars.map((slot, i) => {
             const slotId = `f${i}`;
             return (
