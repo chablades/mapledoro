@@ -16,6 +16,9 @@
 import type { StatFieldId } from "./statFields";
 import { resourceImageUrl } from "../../../../lib/mapleResource";
 
+// Skill icon by id from the haku.network `skill` resource (ids in manifests/v268/skill.json).
+const sk = (id: string): string => resourceImageUrl("skill", id, "icon.png");
+
 export interface BuffSkill {
   skillIconUrl?: string;
   skillName: string;
@@ -25,7 +28,7 @@ export interface BuffSkill {
 
 /** Buffs every class must have active, shown before class-specific skills in the buff guide. */
 export const UNIVERSAL_BUFF_SKILLS: BuffSkill[] = [
-  { skillName: "Familiars", jobAdvancement: "Beginner" },
+  { skillIconUrl: sk("80011951"), skillName: "Familiars", jobAdvancement: "Beginner" }, // Summon Familiars
 ];
 
 /** Warnings shown for every class on the stats step. */
@@ -93,9 +96,6 @@ export function getRequiredStatsForClass(classData: ClassSkillData): StatFieldId
 }
 
 // ── Commonly reused buff skills ────────────────────────────────────────────────
-
-// Skill icon by id from the haku.network `skill` resource (ids in manifests/v268/skill.json).
-const sk = (id: string): string => resourceImageUrl("skill", id, "icon.png");
 
 const DSE: BuffSkill = {
   skillIconUrl: sk("0008002"),

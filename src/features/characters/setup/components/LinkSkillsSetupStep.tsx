@@ -6,7 +6,6 @@ import type { AppTheme } from "../../../../components/themes";
 import type { SetupStepDefinition } from "../steps";
 import type { StoredCharacterRecord } from "../../model/charactersStore";
 import SetupStepFrame from "./SetupStepFrame";
-import { WikiAttribution } from "../../../../components/WikiAttribution";
 
 interface LinkSkillsSetupStepProps {
   theme: AppTheme;
@@ -363,9 +362,6 @@ export default function LinkSkillsSetupStep({
             min={autofillValues[skill.id] ? Number(autofillValues[skill.id]) : undefined}
           />
         ))}
-      </div>
-      <div style={{ marginTop: "0.5rem" }}>
-        <WikiAttribution theme={theme} subject="Skill icons" />
       </div>
     </SetupStepFrame>
   );

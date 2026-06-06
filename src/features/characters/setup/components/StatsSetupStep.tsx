@@ -6,7 +6,6 @@ import Image from "next/image";
 import type { AppTheme } from "../../../../components/themes";
 import type { SetupStepDefinition } from "../steps";
 import SetupStepFrame from "./SetupStepFrame";
-import { WikiAttribution } from "../../../../components/WikiAttribution";
 import {
   CLASS_SKILL_DATA,
   UNIVERSAL_BUFF_SKILLS,
@@ -234,10 +233,7 @@ function BuffGuide({ classData, theme }: { classData: ClassSkillData | null; the
         ))}
       </div>
     </div>
-    <div style={{ marginBottom: "0.8rem" }}>
-      <WikiAttribution theme={theme} subject="Skill icons" />
-    </div>
-    </>
+</>
   );
 }
 
@@ -687,7 +683,6 @@ export default function StatsSetupStep({
           nextLabel="Continue"
         >
           <SetupOptionsSection optsDef={classData?.setupOptionsDef} draft={draft} onUpdate={handleSetupOptUpdate} theme={theme} />
-          <WikiAttribution theme={theme} subject="Item & skill icons" />
         </SetupStepFrame>
       </div>
     );
