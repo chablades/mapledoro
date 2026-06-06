@@ -101,10 +101,10 @@ const TRACKERS: ToolCard[] = [
     href: "/tools/hexa-skills",
   },
   {
-    title: "Pitched Boss Drop Tracker",
+    title: "Drop Tracker",
     description:
-      "Track and analyze your rare pitched boss drops across all characters.",
-    itemId: "01182285", // Genesis Badge
+      "Track and analyze rare boss drops across all characters.",
+    itemId: "02539004", // Grindstone of Faith
     iconType: "item",
     href: "/tools/pitched-boss-drops",
   },
