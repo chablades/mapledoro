@@ -15,3 +15,9 @@ export function resourceImageUrl(type: ResourceType, id: string, asset: string):
 export function bossIconUrl(id: string): string {
   return `${RESOURCE_BASE}/api/img/ui/boss/${id}/icon.png`;
 }
+
+// Familiar badge icon (haku.network `ui/familiar` namespace). IDs come from
+// `manifests/v<version>/…` ui/familiar extraction; see BADGE_ID_MAP in familiarsData.ts.
+export function familiarBadgeUrl(id: number): string {
+  return `${RESOURCE_BASE}/api/img/ui/familiar/${id}/icon.png`;
+}

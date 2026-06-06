@@ -7,12 +7,12 @@ import type { AppTheme } from "../../../../components/themes";
 import type { SetupStepDefinition } from "../steps";
 import { readCharacterToolData } from "../../../../features/tools/characterToolStorage";
 import {
-  TIER_LABELS, TIER_ORDER, getLinesForTier, BADGE_NAMES,
+  TIER_LABELS, TIER_ORDER, getLinesForTier, BADGE_NAMES, BADGE_ID_MAP,
   FAMILIARS, getFamiliarDisplayLabel,
   type FamiliarTier, type FamiliarEntry,
 } from "../data/familiarsData";
 import { ItemIcon } from "../../../../components/ResourceImage";
-import { resourceImageUrl } from "../../../../lib/mapleResource";
+import { resourceImageUrl, familiarBadgeUrl } from "../../../../lib/mapleResource";
 import SetupStepFrame from "./SetupStepFrame";
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -567,14 +567,15 @@ function FamiliarSlotCard({
 
 // ── Badge slot (pentagon) ──────────────────────────────────────────────────
 
-function filterBadges(query: string): readonly string[] {
+function filterBadges(query: string, excluded: ReadonlySet<string>): readonly string[] {
   const q = query.trim().toLowerCase();
-  if (!q) return BADGE_NAMES;
-  return BADGE_NAMES.filter((n) => n.toLowerCase().includes(q));
+  const available = BADGE_NAMES.filter((n) => !excluded.has(n));
+  if (!q) return available;
+  return available.filter((n) => n.toLowerCase().includes(q));
 }
 
 function BadgeSlot({
-  badge, slotId, openId, query, theme,
+  badge, slotId, openId, query, theme, usedBadges,
   onOpen, onQueryChange, onSelect, onClear,
 }: {
   badge: string;
@@ -582,6 +583,7 @@ function BadgeSlot({
   openId: string | null;
   query: string;
   theme: AppTheme;
+  usedBadges: ReadonlySet<string>;
   onOpen: () => void;
   onQueryChange: (q: string) => void;
   onSelect: (name: string) => void;
@@ -590,16 +592,20 @@ function BadgeSlot({
   const isOpen = openId === slotId;
   const inputRef = useRef<HTMLInputElement>(null);
   const { ref: wrapperRef, coords: pickerCoords, compute } = usePickerCoords(isOpen, BADGE_PICKER_WIDTH);
-  const filtered = useMemo(() => isOpen ? filterBadges(query) : [], [isOpen, query]);
+  // Exclude badges used in other slots; the current slot's own badge stays available for re-selection
+  const excluded = useMemo(() => {
+    const s = new Set(usedBadges);
+    if (badge) s.delete(badge);
+    return s;
+  }, [usedBadges, badge]);
+  const filtered = useMemo(() => isOpen ? filterBadges(query, excluded) : [], [isOpen, query, excluded]);
   const outerSize = BADGE_SIZE + BADGE_BORDER * 2;
 
   useEffect(() => {
     if (isOpen) inputRef.current?.focus();
   }, [isOpen]);
 
-  const filledBg = badge ? `${theme.accent}55` : `${theme.muted}28`;
-  const outerBg = isOpen ? theme.accent : filledBg;
-  const innerBg = badge ? theme.panel : theme.bg;
+  const emptyBg = isOpen ? theme.accent : `${theme.muted}28`;
   const badgePickerStyle: CSSProperties = {
     ...popoverVisualStyle,
     position: "fixed",
@@ -620,16 +626,19 @@ function BadgeSlot({
         onClick={() => { compute(); onOpen(); }}
         style={{ cursor: "pointer", background: "none", border: "none", padding: 0 }}
       >
-        <div style={{ width: outerSize, height: outerSize, clipPath: PENTAGON, background: outerBg, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <div style={{ width: BADGE_SIZE, height: BADGE_SIZE, clipPath: PENTAGON, background: innerBg, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            {badge ? (
-              <span style={{ fontSize: "0.75rem", fontWeight: 800, color: theme.text, textAlign: "center", lineHeight: 1.2, maxWidth: BADGE_SIZE - 8, overflow: "hidden", display: "block" }}>
-                {badge.length > 7 ? badge.slice(0, 7) + "…" : badge}
-              </span>
-            ) : (
-              <span style={{ fontSize: 18, color: theme.muted, lineHeight: 1 }}>+</span>
-            )}
-          </div>
+        <div style={{ width: outerSize, height: outerSize, clipPath: PENTAGON, background: emptyBg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          {badge ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={familiarBadgeUrl(BADGE_ID_MAP[badge])}
+              alt={badge}
+              width={outerSize}
+              height={outerSize}
+              style={{ objectFit: "cover", display: "block" }}
+            />
+          ) : (
+            <span style={{ fontSize: 18, color: theme.muted, lineHeight: 1 }}>+</span>
+          )}
         </div>
       </button>
       {badge && (
@@ -678,8 +687,8 @@ function BadgeSlot({
                 type="button"
                 onClick={() => onSelect(name)}
                 style={{
-                  display: "block",
-                  width: "100%", padding: "0.35rem 0.6rem",
+                  display: "flex", alignItems: "center", gap: 6,
+                  width: "100%", padding: "0.3rem 0.6rem",
                   background: "transparent", border: "none",
                   borderBottom: `1px solid ${theme.border}`,
                   cursor: "pointer", fontFamily: "inherit",
@@ -689,6 +698,8 @@ function BadgeSlot({
                 onMouseEnter={(e) => { e.currentTarget.style.background = `${theme.accent}22`; }}
                 onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
               >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={familiarBadgeUrl(BADGE_ID_MAP[name])} alt="" width={20} height={20} style={{ objectFit: "contain", flexShrink: 0 }} />
                 {name}
               </button>
             ))}
@@ -816,47 +827,54 @@ export default function FamiliarsSetupStep({
           <p style={{ margin: "0 0 0.5rem", fontSize: "0.75rem", fontWeight: 800, color: theme.muted, textTransform: "uppercase", letterSpacing: "0.06em" }}>
             Equipped Badges
           </p>
-          <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-start" }}>
-            <div style={{ display: "flex", gap: 8 }}>
-              {preset.badges.slice(0, 4).map((badge, i) => {
-                const slotId = `b${i}`;
-                return (
-                  <BadgeSlot
-                    key={i}
-                    badge={badge}
-                    slotId={slotId}
-                    openId={openId}
-                    query={openId === slotId ? pickerQuery : ""}
-                    theme={theme}
-                    onOpen={() => openPicker(slotId)}
-                    onQueryChange={setPickerQuery}
-                    onSelect={(name) => { onChange(JSON.stringify(patchBadge(parsed, activePreset, i, name))); closePicker(); }}
-                    onClear={() => onChange(JSON.stringify(patchBadge(parsed, activePreset, i, "")))}
-                  />
-                );
-              })}
-            </div>
-            <div style={{ display: "flex", gap: 8, marginLeft: badgeRowOffset }}>
-              {preset.badges.slice(4).map((badge, i) => {
-                const bi = i + 4;
-                const slotId = `b${bi}`;
-                return (
-                  <BadgeSlot
-                    key={bi}
-                    badge={badge}
-                    slotId={slotId}
-                    openId={openId}
-                    query={openId === slotId ? pickerQuery : ""}
-                    theme={theme}
-                    onOpen={() => openPicker(slotId)}
-                    onQueryChange={setPickerQuery}
-                    onSelect={(name) => { onChange(JSON.stringify(patchBadge(parsed, activePreset, bi, name))); closePicker(); }}
-                    onClear={() => onChange(JSON.stringify(patchBadge(parsed, activePreset, bi, "")))}
-                  />
-                );
-              })}
-            </div>
-          </div>
+          {(() => {
+            const usedBadges = new Set(preset.badges.filter(Boolean));
+            return (
+              <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-start" }}>
+                <div style={{ display: "flex", gap: 8 }}>
+                  {preset.badges.slice(0, 4).map((badge, i) => {
+                    const slotId = `b${i}`;
+                    return (
+                      <BadgeSlot
+                        key={i}
+                        badge={badge}
+                        slotId={slotId}
+                        openId={openId}
+                        query={openId === slotId ? pickerQuery : ""}
+                        theme={theme}
+                        usedBadges={usedBadges}
+                        onOpen={() => openPicker(slotId)}
+                        onQueryChange={setPickerQuery}
+                        onSelect={(name) => { onChange(JSON.stringify(patchBadge(parsed, activePreset, i, name))); closePicker(); }}
+                        onClear={() => onChange(JSON.stringify(patchBadge(parsed, activePreset, i, "")))}
+                      />
+                    );
+                  })}
+                </div>
+                <div style={{ display: "flex", gap: 8, marginLeft: badgeRowOffset }}>
+                  {preset.badges.slice(4).map((badge, i) => {
+                    const bi = i + 4;
+                    const slotId = `b${bi}`;
+                    return (
+                      <BadgeSlot
+                        key={bi}
+                        badge={badge}
+                        slotId={slotId}
+                        openId={openId}
+                        query={openId === slotId ? pickerQuery : ""}
+                        theme={theme}
+                        usedBadges={usedBadges}
+                        onOpen={() => openPicker(slotId)}
+                        onQueryChange={setPickerQuery}
+                        onSelect={(name) => { onChange(JSON.stringify(patchBadge(parsed, activePreset, bi, name))); closePicker(); }}
+                        onClear={() => onChange(JSON.stringify(patchBadge(parsed, activePreset, bi, "")))}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
         </div>
       </div>
 

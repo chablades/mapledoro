@@ -169,6 +169,23 @@ export const BADGE_NAMES: readonly string[] = [
   "Dragon Badge", "Darkness Badge",
 ];
 
+// Maps badge name → ui/familiar icon ID (haku.network /api/img/ui/familiar/{id}/icon.png).
+// IDs determined by pixel-matching local WZ exports against wiki images.
+export const BADGE_ID_MAP: Record<string, number> = {
+  "Starter Badge": 0, "Snowflake Badge": 1, "Oppressor Badge": 2, "Shadow Badge": 3,
+  "Magical Badge": 4, "Secret Badge": 5, "Mesa Badge": 6, "Peaceful Badge": 7,
+  "Beach Badge": 8, "Rebel Badge": 9, "Mineral Badge": 10, "Sandy Badge": 11,
+  "Machine Badge": 12, "Toy Badge": 13, "Clockwork Badge": 14, "Forest Badge": 15,
+  "Wave Badge": 16, "Wings Badge": 17, "Snow Badge": 18, "Depths Badge": 19,
+  "Cloud Badge": 20, "Hatching Badge": 21, "Time Badge": 22, "Shrine Badge": 23,
+  "Shuriken Badge": 24, "Showa Badge": 25, "City Badge": 26, "Mighty Badge": 27,
+  "Exorcism Badge": 28, "Tyrant Badge": 29, "Lion Badge": 30, "Future Badge": 31,
+  "Mariner Badge": 32, "Cursed Badge": 33, "Commerci Badge": 34, "Mushking Badge": 36,
+  "Darkness Badge": 37, "Dragon Badge": 38, "Void Badge": 40, "Labyrinth Badge": 41,
+  "Apocalypse Badge": 42, "Ocean Badge": 43, "Swamp Badge": 44, "Holy Badge": 45,
+  "Wasteland Badge": 46, "Researcher Badge": 47, "Flora Army Badge": 48,
+};
+
 export interface FamiliarEntry {
   id: number;
   name: string;
