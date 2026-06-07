@@ -160,6 +160,7 @@ function OverviewTab({ model }: { model: PreviewPaneModel }) {
   const character = profile.confirmedCharacter;
   const stats = character?.stats;
   const equip = character?.equipment;
+  const equipGrid = equip?.presets?.[equip.activePreset] ?? equip?.presets?.[0];
   const level = character?.level ?? 0;
 
   const [exportFlash, setExportFlash] = useState(false);
@@ -255,9 +256,9 @@ function OverviewTab({ model }: { model: PreviewPaneModel }) {
           </div>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 5, paddingTop: 30 }}>
-          <WseSlot label="Weapon" name={equip?.weapon?.name} theme={theme} />
-          <WseSlot label="Secondary" name={equip?.secondary?.name} theme={theme} />
-          <WseSlot label="Emblem" name={equip?.emblem?.name} theme={theme} />
+          <WseSlot label="Weapon" name={equipGrid?.weapon?.name} theme={theme} />
+          <WseSlot label="Secondary" name={equipGrid?.secondary?.name} theme={theme} />
+          <WseSlot label="Emblem" name={equipGrid?.emblem?.name} theme={theme} />
         </div>
       </div>
 

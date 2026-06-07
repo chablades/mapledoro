@@ -53,7 +53,8 @@ export interface StoredEquipmentItem {
   name: string;
 }
 
-export interface StoredCharacterEquipment {
+/** The per-preset equipment grid — everything that swaps between in-game equip presets. */
+export interface StoredEquipmentPreset {
   rings: [StoredEquipmentItem | null, StoredEquipmentItem | null, StoredEquipmentItem | null, StoredEquipmentItem | null];
   face: StoredEquipmentItem | null;
   eye: StoredEquipmentItem | null;
@@ -75,6 +76,14 @@ export interface StoredCharacterEquipment {
   android: StoredEquipmentItem | null;
   heart: StoredEquipmentItem | null;
   badge: StoredEquipmentItem | null;
+}
+
+export interface StoredCharacterEquipment {
+  /** Three equipment presets (the grid). */
+  presets: [StoredEquipmentPreset, StoredEquipmentPreset, StoredEquipmentPreset];
+  /** Which preset (0-2) is the primary/displayed one. */
+  activePreset: number;
+  // Shared across presets (title, totems, and symbols are separate from the equip preset).
   title: StoredEquipmentItem | null;
   totems: [StoredEquipmentItem | null, StoredEquipmentItem | null, StoredEquipmentItem | null];
 }
@@ -187,7 +196,7 @@ function createEmptyCharacterStats(): StoredCharacterStats {
   };
 }
 
-function createEmptyCharacterEquipment(): StoredCharacterEquipment {
+function createEmptyEquipmentPreset(): StoredEquipmentPreset {
   return {
     rings: [null, null, null, null],
     face: null,
@@ -210,6 +219,13 @@ function createEmptyCharacterEquipment(): StoredCharacterEquipment {
     android: null,
     heart: null,
     badge: null,
+  };
+}
+
+function createEmptyCharacterEquipment(): StoredCharacterEquipment {
+  return {
+    presets: [createEmptyEquipmentPreset(), createEmptyEquipmentPreset(), createEmptyEquipmentPreset()],
+    activePreset: 0,
     title: null,
     totems: [null, null, null],
   };
@@ -288,7 +304,7 @@ function isNullableStoredEquipmentItem(value: unknown): value is StoredEquipment
   return value === null || isStoredEquipmentItem(value);
 }
 
-function isStoredCharacterEquipment(value: unknown): value is StoredCharacterEquipment {
+function isStoredEquipmentPreset(value: unknown): value is StoredEquipmentPreset {
   return (
     isObject(value) &&
     Array.isArray(value.rings) &&
@@ -312,11 +328,49 @@ function isStoredCharacterEquipment(value: unknown): value is StoredCharacterEqu
     isNullableStoredEquipmentItem(value.glove) &&
     isNullableStoredEquipmentItem(value.shoe) &&
     isNullableStoredEquipmentItem(value.medal) &&
-    isNullableStoredEquipmentItem(value.heart) &&
+    isNullableStoredEquipmentItem(value.heart)
+  );
+}
+
+function isStoredCharacterEquipment(value: unknown): value is StoredCharacterEquipment {
+  return (
+    isObject(value) &&
+    Array.isArray(value.presets) &&
+    value.presets.length === 3 &&
+    value.presets.every(isStoredEquipmentPreset) &&
+    typeof value.activePreset === "number" &&
+    isNullableStoredEquipmentItem(value.title) &&
     Array.isArray(value.totems) &&
     value.totems.length === 3 &&
     value.totems.every(isNullableStoredEquipmentItem)
   );
+}
+
+/** Migrate the pre-preset flat equipment shape (grid fields at top level) into preset 1. */
+function migrateFlatEquipment(value: Record<string, unknown>): StoredCharacterEquipment | null {
+  // Capture the shared fields before the grid-shape guard narrows `value`.
+  const title = value.title;
+  const totems = value.totems;
+  if (!isStoredEquipmentPreset(value)) return null;
+  const empty = createEmptyCharacterEquipment();
+  return {
+    presets: [value, empty.presets[1], empty.presets[2]],
+    activePreset: 0,
+    title: isNullableStoredEquipmentItem(title) ? title : null,
+    totems: Array.isArray(totems) && totems.length === 3 && totems.every(isNullableStoredEquipmentItem)
+      ? (totems as StoredCharacterEquipment["totems"])
+      : [null, null, null],
+  };
+}
+
+/** Read equipment from a stored record, migrating older shapes; falls back to empty. */
+function readStoredEquipment(value: unknown): StoredCharacterEquipment {
+  if (isStoredCharacterEquipment(value)) return { ...createEmptyCharacterEquipment(), ...value };
+  if (isObject(value)) {
+    const migrated = migrateFlatEquipment(value);
+    if (migrated) return migrated;
+  }
+  return createEmptyCharacterEquipment();
 }
 
 function createEmptyCharactersStore(): CharactersStore {
@@ -388,9 +442,7 @@ function parseStoredCharacterRecord(
     hasRuinForceShield: typeof value.hasRuinForceShield === "boolean" ? value.hasRuinForceShield : null,
     soul: parseSoul(value.soul),
     stats: isStoredCharacterStats(value.stats) ? value.stats : createEmptyCharacterStats(),
-    equipment: isStoredCharacterEquipment(value.equipment)
-      ? { ...createEmptyCharacterEquipment(), ...value.equipment }
-      : createEmptyCharacterEquipment(),
+    equipment: readStoredEquipment(value.equipment),
     tools: isObject(value.tools) ? (value.tools as Record<string, unknown>) : undefined,
     meta: {
       addedAt: typeof meta.addedAt === "number" ? meta.addedAt : Date.now(),

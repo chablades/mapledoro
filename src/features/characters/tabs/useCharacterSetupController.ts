@@ -12,6 +12,7 @@ import {
   readCharactersStore,
   selectCharacterById,
   type StoredCharacterEquipment,
+  type StoredEquipmentPreset,
   selectCharactersList,
   writeLinkSkillsForWorld,
   writeCharactersStore,
@@ -57,7 +58,8 @@ function tryParseJson(raw: string): unknown {
 }
 
 type EquipmentDraftItem = { id?: string; name: string } | null;
-interface EquipmentDraft {
+/** One preset's grid slots (the part that swaps between equipment presets). */
+interface EquipmentDraftPreset {
   ring1?: EquipmentDraftItem; ring2?: EquipmentDraftItem; ring3?: EquipmentDraftItem; ring4?: EquipmentDraftItem;
   face?: EquipmentDraftItem; eye?: EquipmentDraftItem; earring?: EquipmentDraftItem;
   pendant1?: EquipmentDraftItem; pendant2?: EquipmentDraftItem;
@@ -67,7 +69,15 @@ interface EquipmentDraft {
   shoulder?: EquipmentDraftItem; medal?: EquipmentDraftItem;
   weapon?: EquipmentDraftItem; secondary?: EquipmentDraftItem; emblem?: EquipmentDraftItem;
   android?: EquipmentDraftItem; heart?: EquipmentDraftItem; badge?: EquipmentDraftItem;
+}
+interface EquipmentDraft {
+  presets?: EquipmentDraftPreset[];
+  activePreset?: number;
+  /** Preset indices that were edited; un-diverged presets are saved as copies of preset 1. */
+  diverged?: number[];
+  // Shared across presets:
   title?: EquipmentDraftItem;
+  totem1?: EquipmentDraftItem; totem2?: EquipmentDraftItem; totem3?: EquipmentDraftItem;
   /** Symbol levels keyed by region name; folded into tools.symbols (the calculator store). */
   symbolLevels?: Record<string, number>;
 }
@@ -77,22 +87,33 @@ function draftItem(v: EquipmentDraftItem) {
   return v.id !== undefined ? { id: v.id, name: v.name } : { name: v.name };
 }
 
+function draftPresetToStored(p: EquipmentDraftPreset | undefined): StoredEquipmentPreset {
+  const d = p ?? {};
+  return {
+    rings: [draftItem(d.ring1 ?? null), draftItem(d.ring2 ?? null), draftItem(d.ring3 ?? null), draftItem(d.ring4 ?? null)],
+    face: draftItem(d.face ?? null), eye: draftItem(d.eye ?? null), earring: draftItem(d.earring ?? null),
+    pendants: [draftItem(d.pendant1 ?? null), draftItem(d.pendant2 ?? null)],
+    belt: draftItem(d.belt ?? null), pocket: draftItem(d.pocket ?? null),
+    hat: draftItem(d.hat ?? null), cape: draftItem(d.cape ?? null), top: draftItem(d.top ?? null),
+    glove: draftItem(d.glove ?? null), bottom: draftItem(d.bottom ?? null), shoe: draftItem(d.shoe ?? null),
+    shoulder: draftItem(d.shoulder ?? null), medal: draftItem(d.medal ?? null),
+    weapon: draftItem(d.weapon ?? null), secondary: draftItem(d.secondary ?? null), emblem: draftItem(d.emblem ?? null),
+    android: draftItem(d.android ?? null), heart: draftItem(d.heart ?? null), badge: draftItem(d.badge ?? null),
+  };
+}
+
 function parseEquipmentDraft(json: string): StoredCharacterEquipment | null {
   try {
     const d = tryParseJson(json) as EquipmentDraft | null;
     if (!d || typeof d !== "object") return null;
+    // Un-diverged presets (those mirroring preset 1 in the UI) are saved as copies of preset 1.
+    const diverged = new Set<number>(Array.isArray(d.diverged) ? d.diverged : []);
+    const presetAt = (i: number) => draftPresetToStored(d.presets?.[i === 0 || diverged.has(i) ? i : 0]);
     return {
-      rings: [draftItem(d.ring1 ?? null), draftItem(d.ring2 ?? null), draftItem(d.ring3 ?? null), draftItem(d.ring4 ?? null)],
-      face: draftItem(d.face ?? null), eye: draftItem(d.eye ?? null), earring: draftItem(d.earring ?? null),
-      pendants: [draftItem(d.pendant1 ?? null), draftItem(d.pendant2 ?? null)],
-      belt: draftItem(d.belt ?? null), pocket: draftItem(d.pocket ?? null),
-      hat: draftItem(d.hat ?? null), cape: draftItem(d.cape ?? null), top: draftItem(d.top ?? null),
-      glove: draftItem(d.glove ?? null), bottom: draftItem(d.bottom ?? null), shoe: draftItem(d.shoe ?? null),
-      shoulder: draftItem(d.shoulder ?? null), medal: draftItem(d.medal ?? null),
-      weapon: draftItem(d.weapon ?? null), secondary: draftItem(d.secondary ?? null), emblem: draftItem(d.emblem ?? null),
-      android: draftItem(d.android ?? null), heart: draftItem(d.heart ?? null), badge: draftItem(d.badge ?? null),
+      presets: [presetAt(0), presetAt(1), presetAt(2)],
+      activePreset: typeof d.activePreset === "number" ? d.activePreset : 0,
       title: draftItem(d.title ?? null),
-      totems: [null, null, null],
+      totems: [draftItem(d.totem1 ?? null), draftItem(d.totem2 ?? null), draftItem(d.totem3 ?? null)],
     };
   } catch {
     return null;

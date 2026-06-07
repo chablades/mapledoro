@@ -22,20 +22,38 @@ interface EquipmentItem {
   name: string;
 }
 
-/** Picker-only item; carries reqJob for class-branch filtering (stored items keep only id/name). */
+/** Picker-only item; carries reqJob/reqLevel for filtering (stored items keep only id/name). */
 interface CatalogItem extends EquipmentItem {
   reqJob?: number;
+  reqLevel?: number;
 }
 
 type SlotKey =
   | "ring1" | "ring2" | "ring3" | "ring4"
   | "face" | "eye" | "earring" | "pendant1" | "pendant2" | "belt" | "pocket"
   | "hat" | "cape" | "top" | "glove" | "bottom" | "shoe" | "shoulder" | "medal"
-  | "weapon" | "secondary" | "emblem" | "android" | "heart" | "badge" | "title";
+  | "weapon" | "secondary" | "emblem" | "android" | "heart" | "badge" | "title"
+  | "totem1" | "totem2" | "totem3";
 
 type SymbolTabKey = "arcane" | "sacred";
-// Symbol levels keyed by region name; folded into the calculator's tools.symbols on finish.
-type EquipmentDraft = Partial<Record<SlotKey, EquipmentItem | null>> & { symbolLevels?: Record<string, number> };
+
+// Title, totems, and symbols are shared across presets; the grid slots swap per preset.
+type SharedSlotKey = "title" | "totem1" | "totem2" | "totem3";
+type SlotMap = Partial<Record<SlotKey, EquipmentItem | null>>;
+const PRESET_COUNT = 3;
+const SHARED_SLOTS: ReadonlySet<SlotKey> = new Set<SlotKey>(["title", "totem1", "totem2", "totem3"]);
+const isSharedSlot = (slot: SlotKey): slot is SharedSlotKey => SHARED_SLOTS.has(slot);
+
+interface EquipmentDraft extends Partial<Record<SharedSlotKey, EquipmentItem | null>> {
+  /** Three equipment-grid presets. */
+  presets?: SlotMap[];
+  /** Which preset (0-2) is being edited / is primary. */
+  activePreset?: number;
+  /** Preset indices that have been edited (split off from preset 1). Others mirror preset 1. */
+  diverged?: number[];
+  /** Symbol levels keyed by region name; folded into the calculator's tools.symbols on finish. */
+  symbolLevels?: Record<string, number>;
+}
 
 interface EquipmentSetupStepProps {
   theme: AppTheme;
@@ -44,6 +62,7 @@ interface EquipmentSetupStepProps {
   totalSteps: number;
   direction?: "forward" | "backward";
   jobName?: string;
+  characterLevel?: number;
   confirmedCharacterName?: string;
   confirmedCharacterImgURL?: string;
   value: string;
@@ -65,6 +84,7 @@ const SLOT_LABELS: Record<SlotKey, string> = {
   shoulder: "Shoulder", medal: "Medal",
   weapon: "Weapon", secondary: "Secondary", emblem: "Emblem",
   android: "Android", heart: "Heart", badge: "Badge", title: "Title",
+  totem1: "Totem", totem2: "Totem", totem3: "Totem",
 };
 
 const SLOT_DATA_FILE: Record<SlotKey, string> = {
@@ -77,6 +97,7 @@ const SLOT_DATA_FILE: Record<SlotKey, string> = {
   shoulder: "shoulder", medal: "medal",
   weapon: "weapon", secondary: "secondary", emblem: "emblem",
   android: "android", heart: "heart", badge: "badge", title: "title",
+  totem1: "totem", totem2: "totem", totem3: "totem",
 };
 
 const SYMBOL_TABS: { key: SymbolTabKey; label: string }[] = [
@@ -121,6 +142,11 @@ function branchAllows(item: CatalogItem, branchMask: number): boolean {
 }
 
 const startsWithAny = (id: string, prefixes: string[]) => prefixes.some((p) => id.startsWith(p));
+
+function sameItem(a: EquipmentItem | null | undefined, b: EquipmentItem | null | undefined): boolean {
+  if (!a || !b) return !a && !b;
+  return a.id === b.id && a.name === b.name;
+}
 
 // Astra secondaries (id prefix 0172) come in 3 enhancement stages that all share the same
 // name; the trailing id digit (0/1/2) is the stage. Surface it so the picker doesn't show
@@ -168,14 +194,17 @@ function resolvePickerSource(slot: SlotKey, classId: string | undefined, branchM
 
 const cachedSlotItems: Partial<Record<string, CatalogItem[]>> = {};
 
-type RawCatalogEntry = [string, string] | [string, string, { reqJob?: number }];
+type RawCatalogEntry = [string, string] | [string, string, { reqJob?: number; reqLevel?: number }];
 
-function ItemPicker({ slot, current, theme, files, itemFilter, onSelect, onClose }: {
+function ItemPicker({ slot, current, theme, files, itemFilter, maxLevel, presetBaseItem, onSelect, onClose }: {
   slot: SlotKey;
   current: EquipmentItem | null | undefined;
   theme: AppTheme;
   files: string[];
   itemFilter: (item: CatalogItem) => boolean;
+  maxLevel?: number;
+  /** Preset 1's item for this slot, pinned at the top when editing an overridden preset slot. */
+  presetBaseItem?: EquipmentItem | null;
   onSelect: (item: EquipmentItem | null) => void;
   onClose: () => void;
 }) {
@@ -192,14 +221,16 @@ function ItemPicker({ slot, current, theme, files, itemFilter, onSelect, onClose
     const fileList = cacheKey.split("+");
     Promise.all(fileList.map((f) => fetch(`/data/equipment/${f}.json`).then((r) => r.json() as Promise<RawCatalogEntry[]>)))
       .then((raws) => {
-        const parsed = raws.flat().map(([id, name, stats]) => ({ id, name: withStageLabel(id, name), reqJob: stats?.reqJob }));
+        const parsed = raws.flat().map(([id, name, stats]) => ({ id, name: withStageLabel(id, name), reqJob: stats?.reqJob, reqLevel: stats?.reqLevel }));
         cachedSlotItems[cacheKey] = parsed;
         setLoadedItems(parsed);
       })
       .catch(() => setLoadedItems([]));
   }, [cacheKey]);
 
-  const sourceItems = items ? items.filter(itemFilter) : null;
+  const sourceItems = items
+    ? items.filter((it) => itemFilter(it) && (maxLevel == null || it.reqLevel == null || it.reqLevel <= maxLevel))
+    : null;
   const filtered = sourceItems && query ? filterItems(sourceItems, query) : null;
 
   return (
@@ -216,6 +247,27 @@ function ItemPicker({ slot, current, theme, files, itemFilter, onSelect, onClose
           }}
         >
           — Clear slot —
+        </button>
+      )}
+      {presetBaseItem && (
+        <button
+          type="button"
+          onClick={() => { onSelect({ id: presetBaseItem.id, name: presetBaseItem.name }); onClose(); }}
+          style={{
+            display: "flex", alignItems: "center", gap: 8, width: "100%",
+            padding: "0.4rem 0.6rem", background: `${theme.accent}1a`,
+            border: "none", borderBottom: `1px solid ${theme.border}`,
+            cursor: "pointer", fontFamily: "inherit", textAlign: "left",
+          }}
+        >
+          {presetBaseItem.id && <ItemIcon id={presetBaseItem.id} size={28} />}
+          <span style={{ flex: 1, fontSize: "0.8rem", fontWeight: 700, color: theme.text }}>{presetBaseItem.name}</span>
+          <span style={{
+            fontSize: "0.75rem", fontWeight: 800, color: "#fff", background: theme.accent,
+            padding: "1px 6px", borderRadius: 6, letterSpacing: "0.03em", flexShrink: 0,
+          }}>
+            PRESET 1
+          </span>
         </button>
       )}
       <input
@@ -334,9 +386,9 @@ function SlotCell({ slotKey, item, theme, isActive, onClick, picker }: {
 
 // ── Column helper ──────────────────────────────────────────────────────────
 
-function SlotColumn({ slots, draft, theme, activeSlot, onToggle, renderPicker }: {
+function SlotColumn({ slots, grid, theme, activeSlot, onToggle, renderPicker }: {
   slots: SlotKey[];
-  draft: EquipmentDraft;
+  grid: SlotMap;
   theme: AppTheme;
   activeSlot: SlotKey | null;
   onToggle: (slot: SlotKey) => void;
@@ -348,13 +400,52 @@ function SlotColumn({ slots, draft, theme, activeSlot, onToggle, renderPicker }:
         <SlotCell
           key={slot}
           slotKey={slot}
-          item={draft[slot]}
+          item={grid[slot]}
           theme={theme}
           isActive={activeSlot === slot}
           onClick={() => onToggle(slot)}
           picker={renderPicker(slot)}
         />
       ))}
+    </div>
+  );
+}
+
+// ── Preset bar (3 equipment presets + copy-from) ─────────────────────────────
+
+function PresetBar({ theme, active, onSwitch }: {
+  theme: AppTheme;
+  active: number;
+  onSwitch: (n: number) => void;
+}) {
+  const indices = Array.from({ length: PRESET_COUNT }, (_, i) => i);
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+      <span style={{ fontSize: "0.75rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.05em", color: theme.muted }}>
+        Preset
+      </span>
+      <div style={{ display: "flex", gap: 4 }}>
+        {indices.map((i) => {
+          const on = i === active;
+          return (
+            <button
+              key={i}
+              type="button"
+              onClick={() => onSwitch(i)}
+              style={{
+                border: `1px solid ${on ? theme.accent : theme.border}`,
+                borderRadius: 8,
+                background: on ? theme.accent : theme.bg,
+                color: on ? "#fff" : theme.text,
+                fontFamily: "inherit", fontWeight: 800, fontSize: "0.8rem",
+                width: 34, height: 32, cursor: "pointer",
+              }}
+            >
+              {i + 1}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -497,6 +588,7 @@ export default function EquipmentSetupStep({
   totalSteps,
   direction = "forward",
   jobName = "",
+  characterLevel,
   confirmedCharacterImgURL,
   value,
   onChange,
@@ -508,6 +600,22 @@ export default function EquipmentSetupStep({
   const branchMask = branchMaskForClass(classId);
   const [draft, setDraft] = useState<EquipmentDraft>(() => parseDraft(value));
   const [activeSlot, setActiveSlot] = useState<SlotKey | null>(null);
+  const activePreset = draft.activePreset ?? 0;
+  // Preset 0 is the base; presets 1-2 mirror it until edited (then they're "diverged").
+  const isPresetDiverged = (n: number) => n === 0 || (draft.diverged ?? []).includes(n);
+  const activeGrid: SlotMap = (isPresetDiverged(activePreset) ? draft.presets?.[activePreset] : draft.presets?.[0]) ?? {};
+  const readSlot = (slot: SlotKey) => (isSharedSlot(slot) ? draft[slot] : activeGrid[slot]);
+
+  function commitDraft(next: EquipmentDraft) {
+    setDraft(next);
+    onChange(serialiseDraft(next));
+  }
+
+  /** A fresh length-3 array of preset grids (cloned), so edits don't mutate state. */
+  function clonePresets(): SlotMap[] {
+    const base = draft.presets ?? [];
+    return Array.from({ length: PRESET_COUNT }, (_, i) => ({ ...(base[i] ?? {}) }));
+  }
   const [substep, setSubstep] = useState(() => direction === "backward" ? 1 : 0);
   const [substepDirection, setSubstepDirection] = useState<"forward" | "backward">("forward");
   const [hasSubstepSwitched, setHasSubstepSwitched] = useState(false);
@@ -528,9 +636,25 @@ export default function EquipmentSetupStep({
   } : {};
 
   function updateSlot(slot: SlotKey, item: EquipmentItem | null) {
-    const next = { ...draft, [slot]: item };
-    setDraft(next);
-    onChange(serialiseDraft(next));
+    if (isSharedSlot(slot)) {
+      commitDraft({ ...draft, [slot]: item });
+      return;
+    }
+    const presets = clonePresets();
+    if (isPresetDiverged(activePreset)) {
+      presets[activePreset] = { ...presets[activePreset], [slot]: item };
+      commitDraft({ ...draft, presets });
+    } else {
+      // First edit of a mirrored preset: split it off with a full copy of preset 1 + this change.
+      presets[activePreset] = { ...presets[0], [slot]: item };
+      commitDraft({ ...draft, presets, diverged: [...(draft.diverged ?? []), activePreset] });
+    }
+  }
+
+  function switchPreset(n: number) {
+    setActiveSlot(null);
+    if (n === activePreset) return;
+    commitDraft({ ...draft, activePreset: n });
   }
 
   function toggleSlot(slot: SlotKey) {
@@ -553,16 +677,26 @@ export default function EquipmentSetupStep({
     return () => document.removeEventListener("click", close);
   }, [!!activeSlot]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  /** Preset 1's item for a slot, when editing a different preset where it's been overridden. */
+  function presetBaseItemFor(slot: SlotKey): EquipmentItem | null {
+    if (isSharedSlot(slot) || activePreset === 0) return null;
+    const base = draft.presets?.[0]?.[slot] ?? null;
+    if (!base || sameItem(base, readSlot(slot))) return null;
+    return base;
+  }
+
   function renderPicker(slot: SlotKey): ReactNode {
     if (activeSlot !== slot) return null;
     const source = resolvePickerSource(slot, classId, branchMask);
     return (
       <ItemPicker
         slot={slot}
-        current={draft[slot]}
+        current={readSlot(slot)}
         theme={theme}
+        presetBaseItem={presetBaseItemFor(slot)}
         files={source.files}
         itemFilter={source.filter}
+        maxLevel={characterLevel}
         onSelect={(item) => updateSlot(slot, item)}
         onClose={() => setActiveSlot(null)}
       />
@@ -593,6 +727,22 @@ export default function EquipmentSetupStep({
                 onClick={() => toggleSlot("title")}
                 picker={renderPicker("title")}
               />
+            </div>
+            <div>
+              <SectionHeading label="Totems" theme={theme} />
+              <div style={{ display: "flex", gap: 4 }}>
+                {(["totem1", "totem2", "totem3"] as const).map((slotKey) => (
+                  <SlotCell
+                    key={slotKey}
+                    slotKey={slotKey}
+                    item={draft[slotKey]}
+                    theme={theme}
+                    isActive={activeSlot === slotKey}
+                    onClick={() => toggleSlot(slotKey)}
+                    picker={renderPicker(slotKey)}
+                  />
+                ))}
+              </div>
             </div>
             <div>
               <SectionHeading label="Symbols" theme={theme} />
@@ -638,15 +788,16 @@ export default function EquipmentSetupStep({
       onFinish={onFinish}
       nextLabel="Continue"
     >
+      <PresetBar theme={theme} active={activePreset} onSwitch={switchPreset} />
       {/* Equipment grid */}
       <div style={{ overflowX: "auto" }}>
       <div style={{ display: "flex", gap: 4, alignItems: "stretch", width: "fit-content", margin: "0 auto" }}>
 
         {/* Col 1 */}
-        <SlotColumn slots={col1} draft={draft} theme={theme} activeSlot={activeSlot} onToggle={toggleSlot} renderPicker={renderPicker} />
+        <SlotColumn slots={col1} grid={activeGrid} theme={theme} activeSlot={activeSlot} onToggle={toggleSlot} renderPicker={renderPicker} />
 
         {/* Col 2 */}
-        <SlotColumn slots={col2} draft={draft} theme={theme} activeSlot={activeSlot} onToggle={toggleSlot} renderPicker={renderPicker} />
+        <SlotColumn slots={col2} grid={activeGrid} theme={theme} activeSlot={activeSlot} onToggle={toggleSlot} renderPicker={renderPicker} />
 
         {/* Center block: sprite + weapon/sub/emblem */}
         <div style={{ ...colStyle, width: CENTER_WIDTH }}>
@@ -678,7 +829,7 @@ export default function EquipmentSetupStep({
               <SlotCell
                 key={slot}
                 slotKey={slot}
-                item={draft[slot]}
+                item={activeGrid[slot]}
                 theme={theme}
                 isActive={activeSlot === slot}
                 onClick={() => toggleSlot(slot)}
@@ -689,10 +840,10 @@ export default function EquipmentSetupStep({
         </div>
 
         {/* Col 6 */}
-        <SlotColumn slots={col6} draft={draft} theme={theme} activeSlot={activeSlot} onToggle={toggleSlot} renderPicker={renderPicker} />
+        <SlotColumn slots={col6} grid={activeGrid} theme={theme} activeSlot={activeSlot} onToggle={toggleSlot} renderPicker={renderPicker} />
 
         {/* Col 7 */}
-        <SlotColumn slots={col7} draft={draft} theme={theme} activeSlot={activeSlot} onToggle={toggleSlot} renderPicker={renderPicker} />
+        <SlotColumn slots={col7} grid={activeGrid} theme={theme} activeSlot={activeSlot} onToggle={toggleSlot} renderPicker={renderPicker} />
 
       </div>
       </div>

@@ -77,6 +77,7 @@ const SLOT_FILTERS = {
   android:   { cats: ["Character/Android"], prefixes: ["01662"] },
   heart:     { cats: ["Character/Android"], prefixes: ["01672"] },
   title:     { cats: ["Item/Install"], prefixes: ["03700"] },
+  totem:     { cats: ["Character/Totem"] },
 };
 
 for (const [slot, filter] of Object.entries(SLOT_FILTERS)) {
