@@ -1,6 +1,6 @@
 # Daily Tracker
 
-**Storage:** Stored in the global tools store (`mapledoro_tools_v1`) under the `dailies` key via `globalToolsStore`. One object holds all characters keyed by `characterName`.
+**Storage:** Under the `dailies` key in the global tools store — one object holding all characters keyed by `characterName`.
 
 **Selection model:** Cards start empty — users pick tasks via the edit dialog. Only selected tasks render and count toward progress. Sections with no selections are hidden.
 

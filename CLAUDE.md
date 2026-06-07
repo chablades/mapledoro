@@ -9,17 +9,17 @@ MapleDoro — free, open-source MapleStory community web app (character tracking
 - **Next.js 16** (App Router), **React 19**, **TypeScript** (strict)
 - **Styling:** Inline styles for dynamic theming + global CSS (no Tailwind, no CSS-in-JS)
 - **State:** React hooks + Context (theme) + localStorage
-- **Server:** Redis (ioredis) for character lookup caching, Nexon CDN for patch notes, Discord for Sunny Sunday events
+- **Server:** Redis (ioredis) char-lookup cache, Nexon CDN patch notes, Discord Sunny Sunday events
 - **Linting:** ESLint 9 (eslint-config-next + eslint-plugin-sonarjs)
 - **Charts:** `react-chartjs-2` / `chart.js` for standard charts; hand-rolled SVG for small one-offs
 
 ## Behavioral Guidelines
 
-**Think before coding.** State assumptions explicitly. If multiple interpretations exist, present them — don't pick silently. If a simpler approach exists, say so. Push back when warranted.
+**Think first.** State assumptions. Present multiple interpretations rather than silently picking one; flag simpler approaches and push back when warranted.
 
-**Simplicity first.** Minimum code that solves the problem. No speculative features, abstractions for single-use code, or error handling for impossible scenarios. If 200 lines could be 50, rewrite it.
+**Simplicity first.** Minimum code that solves the problem — no speculative features, single-use abstractions, or handling for impossible cases.
 
-**Surgical changes.** Touch only what was asked. Don't "improve" adjacent code or formatting. Match existing style. Remove imports/variables YOUR changes made unused; don't remove pre-existing dead code unless asked. Every changed line should trace to the request.
+**Surgical changes.** Touch only what was asked; match existing style.
 
 ## Build & Lint
 
@@ -33,21 +33,18 @@ npm run lint
 ### Lint Gotchas
 
 - **`react-hooks/set-state-in-effect`** — No bare `setState()` in `useEffect`. Use lazy `useState` initializers, `useSyncExternalStore`, or `useRef` + DOM mutation.
-- **`sonarjs/pseudo-random`** — Use `crypto.randomUUID()`, not `Math.random()`.
 - **`sonarjs/cognitive-complexity`** — Cap 15. Extract cohesive sub-steps (parser, validator, renderer) or `eslint-disable` if any split would be artificial. Don't micro-shuffle branches.
 
 ## React-Doctor Rules
 
 - **Accessibility on clickable non-buttons:** Any `<div>` or `<span>` with `onClick` needs `role="button"`, `tabIndex={0}`, and an `onKeyDown` handler for Enter/Space.
 - **Minimum font size:** 0.75rem (12px). No sub-12px text anywhere.
-- **Progress bar animation:** Use `transform: scaleX()` + `transformOrigin: left`, not `width`, for fill animations (GPU-composited, no layout thrash).
 - **Image error fallbacks:** Use dual-render with refs (`display:none` on fallback, swap via `onError`), not `useState` to toggle. Avoids a re-render on error.
 - **No `autoFocus` attribute.** Use a ref callback with a guard: `ref={(el) => { if (el && document.activeElement !== el) el.focus(); }}`.
 - **localStorage writes:** Write synchronously inside state updaters, not in a `useEffect` watching state. Keeps the write atomic with the state change.
-- **Internal links:** Use `next/link` (`<Link>`) instead of `<a>` for internal routes. Enables client-side navigation, prefetching, and scroll preservation.
-- **Images:** Use `next/image` (`<Image>`) instead of `<img>`. Provides automatic optimization, lazy loading, and layout shift prevention.
-- **No unused type exports:** Don't `export` interfaces/types that are only used within the same file. Knip flags these as dead exports.
-- **No exhaustive inline styles:** Extract large `style={{…}}` objects into named `CSSProperties` variables outside JSX. Keeps markup readable and avoids re-creating objects on every render.
+- **Internal links → `next/link`; images → `next/image`** (never raw `<a>`/`<img>` for these).
+- **No unused type exports** — don't `export` types used only in the same file (Knip flags them).
+- **Extract large inline `style={{…}}` objects** into named `CSSProperties` vars outside JSX.
 
 ## Key Patterns
 
@@ -57,21 +54,16 @@ npm run lint
 
 **SSR/client gate:** `useSyncExternalStore(() => () => undefined, () => true, () => false)` for localStorage reads.
 
-**Per-character tool storage:** Per-character tool data (symbols, liberation, hexa skills) is stored in each character's `tools` field within the character store (`mapledoro_characters_store_v1`). Read/write via `characterToolStorage.ts` helpers. Global tool data (dailies, event planner, boss crystals, pitched boss drops) lives in a single `mapledoro_tools_v1` key via `globalToolsStore.ts`.
+**Per-character tool storage:** Per-character tool data (symbols, liberation, hexa skills) is stored in each character's `tools` field within the character store (`mapledoro_characters_store_v1`). Read/write via `characterToolStorage.ts` helpers. Global tool data (dailies, event planner, boss crystals, pitched boss drops, trace restoration) lives in a single `mapledoro_tools_v1` key via `globalToolsStore.ts`.
 
 ## Image Policy
 
-**Game art (items, mobs, skills, hexa skills, familiars)** comes from the self-hosted **MapleResource API** at `haku.network`, rendered via the resource components in `src/components/ResourceImage.tsx`:
+Game art comes from the self-hosted **MapleResource API** (`haku.network`), via pure id→URL components in `src/components/ResourceImage.tsx` (`src/lib/mapleResource.ts`): `<ItemIcon>`, `<MobSprite>`, `<SkillIcon>`, `<HexaSkillIcon>`, `<FamiliarSprite>`. Host = `NEXT_PUBLIC_RESOURCE_BASE`; new hosts go in `next.config.mjs` `remotePatterns`.
 
-- `<ItemIcon id size shadow? />` · `<MobSprite id size />` · `<SkillIcon id size disabled? />` · `<HexaSkillIcon id size disabled? />` · `<FamiliarSprite id size />`
-- Each is a pure **id → URL** builder (`src/lib/mapleResource.ts`). The host is `NEXT_PUBLIC_RESOURCE_BASE` (default `https://haku.network`); add new hosts to `next.config.mjs` `remotePatterns`.
-- **Boss icons** (Maple Guide) have no component — `bossIconUrl(id)` builds the `ui/boss` URL (ids in `manifests/v<version>/boss.json`), stored as `icon` strings in boss data (`bosses.ts`, `liberation-data.ts`, `astra-data.ts`, `trace-restoration-data.ts`).
-
-**Item icons:** `<ItemIcon>` defaults to the **shadowless** `iconRaw.png`. The framed `icon.png` (drop shadow) is reserved for inventory management — pass `shadow` for it.
-
-**Finding IDs:** look them up by hand in the committed manifests `manifests/v<version>/<type>.json` (search by `name`), then hardcode the id at the call site with the name in a comment. There is **no** name→ID resolution map — the manifests are a dev-time reference, never bundled (`item.json` is ~17 MB).
-
-**Familiars:** `<FamiliarSprite>` renders the direct familiar sprite only. For mob- or card-backed familiars (manifest `spriteFrom` = `mob` / `null`), use `<MobSprite id={mobId}>` or `<ItemIcon id={cardId}>` per the manifest entry.
+- **Item icons** default to shadowless `iconRaw.png`; pass `shadow` for framed `icon.png` (inventory only).
+- **Boss icons** have no component — use `bossIconUrl(id)` (`ui/boss` URL); stored as `icon` strings in boss data (`bosses.ts`, `liberation-data.ts`, `astra-data.ts`, `trace-restoration-data.ts`).
+- **Familiars:** `<FamiliarSprite>` is direct-sprite only; mob/card-backed ones use `<MobSprite>`/`<ItemIcon>` per manifest `spriteFrom`.
+- **Finding IDs:** search committed `manifests/v<version>/<type>.json` by `name`, hardcode the id with a name comment. No name→ID map; manifests are dev-only, never bundled (`item.json` ~17 MB).
 
 ## Feature Docs
 
