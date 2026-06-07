@@ -265,14 +265,14 @@ function AstraConfigSection({
             Current Mission
           </div>
           <select
-            className="tool-input"
+            className="tool-select"
             value={missionIdx}
             onChange={(e) => {
               onMissionIdxChange(Number(e.target.value));
               onCurrentTracesChange(0);
               onCurrentFragmentsChange(0);
             }}
-            style={{ ...inputStyle, width: "100%", cursor: "pointer" }}
+            style={{ ...inputStyle, width: "100%" }}
           >
             {ASTRA_MISSIONS.map((m, i) => (
               <option key={m.label} value={i}>
@@ -377,10 +377,10 @@ function AstraDailyQuestSection({
             Highest Daily Quest
           </div>
           <select
-            className="tool-input"
+            className="tool-select"
             value={dailyQuestId}
             onChange={(e) => onDailyQuestIdChange(e.target.value)}
-            style={{ ...inputStyle, width: "100%", cursor: "pointer" }}
+            style={{ ...inputStyle, width: "100%" }}
           >
             {ASTRA_DAILY_QUESTS.map((q) => (
               <option key={q.id} value={q.id}>
@@ -435,10 +435,10 @@ function AstraDailyQuestSection({
               New Quest
             </div>
             <select
-              className="tool-input"
+              className="tool-select"
               value={futureQuestId}
               onChange={(e) => onFutureQuestIdChange(e.target.value)}
-              style={{ ...inputStyle, width: "100%", cursor: "pointer" }}
+              style={{ ...inputStyle, width: "100%" }}
             >
               <option value="">(none)</option>
               {ASTRA_DAILY_QUESTS.map((q) => (

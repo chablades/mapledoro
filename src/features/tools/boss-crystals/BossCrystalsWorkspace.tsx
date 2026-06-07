@@ -14,6 +14,7 @@ import {
 import type { StoredCharacterRecord } from "../../characters/model/charactersStore";
 import { type BossRow, type CharacterEntry, checkBg } from "./boss-crystals-types";
 import { useBossCrystalsState } from "./useBossCrystalsState";
+import { toolStyles } from "../tool-styles";
 
 // -- Style helpers ------------------------------------------------------------
 
@@ -53,41 +54,7 @@ function bcAvatarFallbackStyle(
   };
 }
 
-function bcDialogInputStyle(theme: AppTheme): CSSProperties {
-  return {
-    background: theme.timerBg,
-    border: `1px solid ${theme.border}`,
-    borderRadius: "8px",
-    padding: "8px 12px",
-    color: theme.text,
-    fontSize: "0.85rem",
-  };
-}
-
-function bcDialogBtnStyle(theme: AppTheme): CSSProperties {
-  return {
-    padding: "8px 16px",
-    borderRadius: "10px",
-    fontSize: "0.82rem",
-    fontWeight: 800,
-    color: theme.muted,
-    background: theme.timerBg,
-    border: `1px solid ${theme.border}`,
-  };
-}
-
-function bcDialogPrimaryBtnStyle(theme: AppTheme): CSSProperties {
-  return {
-    padding: "8px 16px",
-    borderRadius: "10px",
-    fontSize: "0.82rem",
-    fontWeight: 800,
-    color: theme.accentText,
-    background: theme.accentSoft,
-    border: `1px solid ${theme.accent}`,
-  };
-}
-
+// Colors only; static settings come from the `.tool-input` class.
 function bcPresetBtnStyle(theme: AppTheme): CSSProperties {
   return {
     padding: "5px 12px",
@@ -145,16 +112,16 @@ function bcControlsPanelStyle(theme: AppTheme): CSSProperties {
   };
 }
 
+// Colors from theme; compact sizing is context-specific (kept inline). Border,
+// radius, font-family and cursor come from the `.tool-select` class.
 function bcPartySizeSelectStyle(theme: AppTheme): CSSProperties {
   return {
     background: theme.timerBg,
-    border: `1px solid ${theme.border}`,
-    borderRadius: "6px",
-    padding: "2px 4px",
+    borderColor: theme.border,
     color: theme.text,
+    padding: "2px 4px",
     fontSize: "0.75rem",
     width: "44px",
-    cursor: "pointer",
   };
 }
 
@@ -434,6 +401,7 @@ function AddNameDialog({
   onClose: () => void;
 }) {
   const hasAvailable = available.length > 0;
+  const styles = toolStyles(theme);
 
   return (
     <div className="bc-overlay" role="button" tabIndex={0} onClick={onClose} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClose(); } }}>
@@ -497,7 +465,7 @@ function AddNameDialog({
                 ref={(el) => { if (el && document.activeElement !== el) el.focus(); }}
                 className="tool-input"
                 style={{
-                  ...bcDialogInputStyle(theme),
+                  ...styles.inputStyle,
                   width: "calc(100% - 1.5rem)",
                   marginLeft: "1.5rem",
                 }}
@@ -599,30 +567,30 @@ function AddNameDialog({
               }}
               ref={(el) => el?.focus()}
               className="tool-input"
-              style={{ ...bcDialogInputStyle(theme), width: "100%" }}
+              style={{ ...styles.inputStyle, width: "100%" }}
             />
           </div>
         )}
 
         <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.5rem" }}>
           <div
-            className="bc-btn"
+            className="bc-btn tool-dialog-btn"
             role="button"
             tabIndex={0}
             onClick={onClose}
             onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClose(); } }}
-            style={bcDialogBtnStyle(theme)}
+            style={styles.dialogBtnStyle}
           >
             Cancel
           </div>
           <div
-            className="bc-btn"
+            className="bc-btn tool-dialog-btn"
             role="button"
             tabIndex={0}
             onClick={pendingName ? onNext : undefined}
             onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); if (pendingName) onNext(); } }}
             style={{
-              ...(pendingName ? bcDialogPrimaryBtnStyle(theme) : bcDialogBtnStyle(theme)),
+              ...(pendingName ? styles.dialogPrimaryBtnStyle : styles.dialogBtnStyle),
               opacity: pendingName ? 1 : 0.5,
               cursor: pendingName ? "pointer" : "not-allowed",
             }}
@@ -827,7 +795,7 @@ function BossSelectionDialog({
                       <select
                         value={row.partySize}
                         onChange={(e) => onPartyChange(bi, parseInt(e.target.value))}
-                        className="tool-input"
+                        className="tool-select"
                         style={bcPartySizeSelectStyle(theme)}
                       >
                         {Array.from({ length: maxParty }, (_, i) => i + 1).map((n) => (

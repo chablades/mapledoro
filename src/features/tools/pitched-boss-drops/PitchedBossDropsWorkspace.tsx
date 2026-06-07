@@ -61,14 +61,12 @@ function writeStore(store: PitchedBossDropsStore): void {
 /*  Inline-style helpers                                               */
 /* ------------------------------------------------------------------ */
 
+// Colors + context sizing; static settings come from the `.tool-select` class.
 function filterSelectStyle(theme: AppTheme): CSSProperties {
   return {
-    padding: "0.4rem 0.55rem",
     background: theme.timerBg,
     color: theme.text,
-    border: `1px solid ${theme.border}`,
-    borderRadius: 8,
-    fontSize: "0.8rem",
+    borderColor: theme.border,
     height: 34,
     boxSizing: "border-box",
   };
@@ -266,14 +264,14 @@ function DropLogTable({
                       const v = e.target.value.trim();
                       if (v !== (drop.note ?? "")) onNote(drop.id, v);
                     }}
+                    className="tool-input"
                     style={{
                       width: "100%",
                       minWidth: 120,
                       padding: "3px 6px",
                       background: "transparent",
                       color: theme.text,
-                      border: `1px solid ${theme.border}`,
-                      borderRadius: 6,
+                      borderColor: theme.border,
                       fontSize: "0.8rem",
                     }}
                   />
@@ -332,6 +330,7 @@ function FilterBar({
         Drop Log
       </div>
       <select
+        className="tool-select"
         value={filters.character}
         onChange={(e) => setFilters({ ...filters, character: e.target.value })}
         style={filterSelectStyle(theme)}
@@ -345,6 +344,7 @@ function FilterBar({
         ))}
       </select>
       <select
+        className="tool-select"
         value={filters.category}
         onChange={(e) => setFilters({ ...filters, category: e.target.value })}
         style={filterSelectStyle(theme)}

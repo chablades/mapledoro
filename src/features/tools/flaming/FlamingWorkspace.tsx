@@ -5,7 +5,7 @@ import type { CSSProperties } from "react";
 import type { AppTheme } from "../../../components/themes";
 import { replaceZeroOnDigit } from "../numberInputHandlers";
 import { ToolHeader } from "../../../components/ToolHeader";
-import { Toggle } from "../shared-ui";
+import { Field, Toggle } from "../shared-ui";
 import { toolStyles } from "../tool-styles";
 import {
   FLAME_CLASS_OPTIONS,
@@ -117,15 +117,6 @@ function reducer(state: CalcState, action: CalcAction): CalcState {
 }
 
 // -- Sub-components -----------------------------------------------------------
-
-function Field({ label, style, containerStyle, children }: { label: string; style: CSSProperties; containerStyle?: CSSProperties; children: React.ReactNode }) {
-  return (
-    <div style={containerStyle}>
-      <div style={style}>{label}</div>
-      {children}
-    </div>
-  );
-}
 
 function EquivRow({
   prefix,
@@ -244,13 +235,13 @@ function FlameSettingsPanel({
 
   return (
     <div className="fade-in" style={panelStyle}>
-      <div style={{ ...labelStyle, marginBottom: "12px", fontSize: "0.78rem" }}>
+      <div className="tool-field-label" style={{ ...labelStyle, marginBottom: "12px", fontSize: "0.78rem" }}>
         Flame Settings
       </div>
       <div className="flame-inputs-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "12px" }}>
         <Field label="Class" style={labelStyle}>
           <select
-            className="tool-input"
+            className="tool-select"
             value={state.flameClass}
             onChange={(e) => dispatch({ type: "setClass", value: e.target.value as FlameClass })}
             style={selectStyle}
@@ -263,7 +254,7 @@ function FlameSettingsPanel({
 
         <Field label="Item Type" style={labelStyle}>
           <select
-            className="tool-input"
+            className="tool-select"
             value={state.itemType}
             onChange={(e) => dispatch({ type: "setItemType", value: e.target.value as ItemType })}
             style={selectStyle}
@@ -275,7 +266,7 @@ function FlameSettingsPanel({
 
         <Field label="Flame Type" style={labelStyle}>
           <select
-            className="tool-input"
+            className="tool-select"
             value={state.flameType}
             onChange={(e) => dispatch({ type: "setFlameType", value: e.target.value as FlameType })}
             style={selectStyle}
@@ -289,7 +280,7 @@ function FlameSettingsPanel({
         <Field label="Item Level" style={labelStyle}>
           {showWeaponLevel ? (
             <select
-              className="tool-input"
+              className="tool-select"
               value={state.weaponLevel}
               onChange={(e) => dispatch({ type: "setWeaponLevel", value: e.target.value })}
               style={selectStyle}
@@ -300,7 +291,7 @@ function FlameSettingsPanel({
             </select>
           ) : (
             <select
-              className="tool-input"
+              className="tool-select"
               value={state.itemLevel}
               onChange={(e) => dispatch({ type: "setItemLevel", value: e.target.value })}
               style={selectStyle}
@@ -374,7 +365,7 @@ function EquivalencesPanel({
 
   return (
     <div className="fade-in" style={panelStyle}>
-      <div style={{ ...labelStyle, marginBottom: "12px", fontSize: "0.78rem" }}>
+      <div className="tool-field-label" style={{ ...labelStyle, marginBottom: "12px", fontSize: "0.78rem" }}>
         Stat Equivalences
       </div>
       <div style={{ fontSize: "0.75rem", fontWeight: 600, color: theme.muted, marginBottom: "1rem" }}>
@@ -422,7 +413,7 @@ function TargetPanel({
 
   return (
     <div className="fade-in" style={panelStyle}>
-      <div style={{ ...labelStyle, marginBottom: "12px", fontSize: "0.78rem" }}>
+      <div className="tool-field-label" style={{ ...labelStyle, marginBottom: "12px", fontSize: "0.78rem" }}>
         Desired Stats
       </div>
       <div style={{ fontSize: "0.75rem", fontWeight: 600, color: theme.muted, marginBottom: "1rem" }}>
@@ -522,7 +513,7 @@ function FlameScorePanel({
 
   return (
     <div className="fade-in" style={panelStyle}>
-      <div style={{ ...labelStyle, marginBottom: "12px", fontSize: "0.78rem" }}>
+      <div className="tool-field-label" style={{ ...labelStyle, marginBottom: "12px", fontSize: "0.78rem" }}>
         Flame Score Checker
       </div>
       <div style={{ fontSize: "0.75rem", fontWeight: 600, color: theme.muted, marginBottom: "1rem" }}>

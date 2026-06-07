@@ -3,6 +3,7 @@
 import { useState, useMemo, useReducer, useSyncExternalStore } from "react";
 import type { AppTheme } from "../../../components/themes";
 import { replaceZeroOnDigit } from "../numberInputHandlers";
+import { Field } from "../shared-ui";
 import { ToolHeader } from "../../../components/ToolHeader";
 import {
   type CubeKey,
@@ -249,12 +250,13 @@ export default function CubingWorkspace({ theme }: { theme: AppTheme }) {
         />
 
         <div className="fade-in" style={panelStyle}>
-          <div style={{ ...labelStyle, marginBottom: "12px", fontSize: "0.78rem" }}>
+          <div className="tool-field-label" style={{ ...labelStyle, marginBottom: "12px", fontSize: "0.78rem" }}>
             Cubing Information
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "12px" }}>
             <Field label="Item Category" style={labelStyle}>
               <select
+                className="tool-select"
                 value={itemType}
                 onChange={(e) => dispatch({ type: "setItemType", value: e.target.value as ItemCategory })}
                 style={selectStyle}
@@ -265,7 +267,7 @@ export default function CubingWorkspace({ theme }: { theme: AppTheme }) {
               </select>
             </Field>
             <Field label="Cube Type" style={labelStyle}>
-              <select value={cubeType} onChange={(e) => dispatch({ type: "setCubeType", value: e.target.value as CubeKey })} style={selectStyle}>
+              <select className="tool-select" value={cubeType} onChange={(e) => dispatch({ type: "setCubeType", value: e.target.value as CubeKey })} style={selectStyle}>
                 {CUBE_TYPES.map((c) => (
                   <option key={c.value} value={c.value}>{c.label}</option>
                 ))}
@@ -273,6 +275,7 @@ export default function CubingWorkspace({ theme }: { theme: AppTheme }) {
             </Field>
             <Field label="Item Level" style={labelStyle}>
               <input
+                className="tool-input"
                 type="number"
                 value={itemLevel}
                 onFocus={(e) => e.currentTarget.select()}
@@ -286,27 +289,28 @@ export default function CubingWorkspace({ theme }: { theme: AppTheme }) {
         </div>
 
         <div className="fade-in" style={panelStyle}>
-          <div style={{ ...labelStyle, marginBottom: "12px", fontSize: "0.78rem" }}>
+          <div className="tool-field-label" style={{ ...labelStyle, marginBottom: "12px", fontSize: "0.78rem" }}>
             Tier Progression
           </div>
           <div style={{ marginBottom: "8px" }}>
-            <div style={{ ...labelStyle, marginBottom: "6px" }}>Current Tier</div>
+            <div className="tool-field-label" style={{ ...labelStyle, marginBottom: "6px" }}>Current Tier</div>
             <TierPills theme={theme} selected={currentTier} maxTier={MAX_CUBE_TIER[cubeType]} onChange={(v) => dispatch({ type: "setCurrentTier", value: v })} />
           </div>
           <TierPathLabel currentTier={currentTier} desiredTier={desiredTier} muted={theme.muted} />
           <div>
-            <div style={{ ...labelStyle, marginBottom: "6px" }}>Desired Tier</div>
+            <div className="tool-field-label" style={{ ...labelStyle, marginBottom: "6px" }}>Desired Tier</div>
             <TierPills theme={theme} selected={desiredTier} maxTier={MAX_CUBE_TIER[cubeType]} onChange={(v) => dispatch({ type: "setDesiredTier", value: v })} />
           </div>
         </div>
 
         <div className="fade-in" style={panelStyle}>
-          <div style={{ ...labelStyle, marginBottom: "12px", fontSize: "0.78rem" }}>
+          <div className="tool-field-label" style={{ ...labelStyle, marginBottom: "12px", fontSize: "0.78rem" }}>
             Desired Stats
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "12px" }}>
             <Field label="Stat Type" style={labelStyle}>
               <select
+                className="tool-select"
                 value={statType}
                 onChange={(e) => dispatch({ type: "setStatType", value: e.target.value })}
                 disabled={!canPickStat}
@@ -439,15 +443,6 @@ function TierPathLabel({ currentTier, desiredTier, muted }: { currentTier: numbe
   return (
     <div style={{ textAlign: "center", color: muted, fontSize: "0.75rem", fontWeight: 700, margin: "6px 0" }}>
       {text}
-    </div>
-  );
-}
-
-function Field({ label, style, children }: { label: string; style: React.CSSProperties; children: React.ReactNode }) {
-  return (
-    <div>
-      <div style={style}>{label}</div>
-      {children}
     </div>
   );
 }
@@ -603,20 +598,20 @@ function DesiredStatSelect({
 }) {
   if (!levelValid) {
     return (
-      <select disabled style={{ ...selectStyle, opacity: 0.5 }}>
+      <select className="tool-select" disabled style={{ ...selectStyle, opacity: 0.5 }}>
         <option>Item level must be greater than 71</option>
       </select>
     );
   }
   if (!canPickStat) {
     return (
-      <select disabled style={{ ...selectStyle, opacity: 0.5 }}>
+      <select className="tool-select" disabled style={{ ...selectStyle, opacity: 0.5 }}>
         <option value="any">Any</option>
       </select>
     );
   }
   return (
-    <select value={desiredStat} onChange={(e) => onChangeStat(e.target.value)} style={selectStyle}>
+    <select className="tool-select" value={desiredStat} onChange={(e) => onChangeStat(e.target.value)} style={selectStyle}>
       <option value="any">Any</option>
       {groupedOptions.map((g) => (
         <optgroup key={g.label} label={g.label}>

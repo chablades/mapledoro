@@ -54,6 +54,8 @@ npm run lint
 
 **SSR/client gate:** `useSyncExternalStore(() => () => undefined, () => true, () => false)` for localStorage reads.
 
+**Shared tool controls:** Form controls split static settings (in global CSS) from dynamic theme colors (inline). Use `className="tool-input"` (text/number/date), `"tool-select"` (dropdowns), `"tool-field-label"` (uppercase field labels), and `"tool-dialog-btn"` (modal action buttons) for shape; pair with `toolStyles(theme)` (`tool-styles.ts`) which returns **colors only** (`background`/`borderColor`/`color`). Context sizing (widths, compact paddings) stays inline. `Field` (uppercase label + control) lives in `shared-ui.tsx` alongside `Toggle`/`PillGroup`. Don't re-add radius/padding/font to per-tool style helpers — extend the class instead.
+
 **Per-character tool storage:** Per-character tool data (symbols, liberation, hexa skills) is stored in each character's `tools` field within the character store (`mapledoro_characters_store_v1`). Read/write via `characterToolStorage.ts` helpers. Global tool data (dailies, event planner, boss crystals, pitched boss drops, trace restoration) lives in a single `mapledoro_tools_v1` key via `globalToolsStore.ts`.
 
 ## Image Policy

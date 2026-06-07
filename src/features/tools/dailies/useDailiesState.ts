@@ -7,6 +7,7 @@ import {
   type StoredCharacterRecord,
 } from "../../characters/model/charactersStore";
 import { readGlobalTool, writeGlobalTool } from "../globalToolsStore";
+import { utcDateStr } from "../date";
 import {
   ARCANE_SYMBOL_QUESTS,
   SACRED_SYMBOL_QUESTS,
@@ -42,13 +43,6 @@ interface SavedState {
 }
 
 // -- Storage ------------------------------------------------------------------
-
-function utcDateStr(d: Date = new Date()): string {
-  const y = d.getUTCFullYear();
-  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
-  const day = String(d.getUTCDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
 
 function emptySelected(): SelectedTasks {
   return { arcane: [], sacred: [], bosses: [], activities: [], content: [] };

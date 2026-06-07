@@ -332,8 +332,9 @@ function CrystalSection({
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem", alignItems: "flex-end", marginBottom: "1.25rem" }}>
         <div>
-          <div style={styles.labelStyle}>Current Count</div>
+          <div className="tool-field-label" style={styles.labelStyle}>Current Count</div>
           <input
+            className="tool-input"
             type="number"
             min={0}
             value={count}
@@ -345,8 +346,9 @@ function CrystalSection({
         </div>
         {targetOptions && target !== undefined && onTargetChange && (
           <div style={{ flex: "1 1 200px" }}>
-            <div style={styles.labelStyle}>Target</div>
+            <div className="tool-field-label" style={styles.labelStyle}>Target</div>
             <select
+              className="tool-select"
               value={target}
               onChange={(e) => onTargetChange(e.target.value)}
               style={{ ...styles.selectStyle, width: "100%" }}
@@ -361,8 +363,8 @@ function CrystalSection({
         )}
         {!targetOptions && (
           <div>
-            <div style={styles.labelStyle}>Target</div>
-            <div style={{ ...styles.inputStyle, background: "transparent", border: "none", padding: 0, fontWeight: 700 }}>
+            <div className="tool-field-label" style={styles.labelStyle}>Target</div>
+            <div className="tool-input" style={{ ...styles.inputStyle, background: "transparent", border: "none", padding: 0, fontWeight: 700 }}>
               Dawn Boss Set Equipment (65 crystals)
             </div>
           </div>
@@ -380,7 +382,7 @@ function CrystalSection({
       {/* Boss selection */}
       {weeklyBosses.length > 0 && (
         <div style={{ marginBottom: "1rem" }}>
-          <div style={styles.labelStyle}>Bosses Cleared Weekly</div>
+          <div className="tool-field-label" style={styles.labelStyle}>Bosses Cleared Weekly</div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
             {weeklyBosses.map((boss) => {
               const active = selectedBosses.includes(boss.id);
@@ -403,7 +405,7 @@ function CrystalSection({
       )}
       {monthlyBosses.length > 0 && (
         <div style={{ marginBottom: "1rem" }}>
-          <div style={styles.labelStyle}>Bosses Cleared Monthly</div>
+          <div className="tool-field-label" style={styles.labelStyle}>Bosses Cleared Monthly</div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
             {monthlyBosses.map((boss) => {
               const active = selectedBosses.includes(boss.id);
@@ -601,7 +603,7 @@ function TraceRestorationTab({ theme }: { theme: AppTheme }) {
 
         <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem", alignItems: "flex-end", marginBottom: "1.25rem" }}>
           <div>
-            <div style={styles.labelStyle}>Current Points</div>
+            <div className="tool-field-label" style={styles.labelStyle}>Current Points</div>
             <input
               type="number"
               min={0}
@@ -614,8 +616,9 @@ function TraceRestorationTab({ theme }: { theme: AppTheme }) {
             />
           </div>
           <div style={{ flex: "1 1 250px" }}>
-            <div style={styles.labelStyle}>Target Item</div>
+            <div className="tool-field-label" style={styles.labelStyle}>Target Item</div>
             <select
+              className="tool-select"
               value={state.targetItemId}
               onChange={(e) => save({ ...state, targetItemId: e.target.value })}
               style={{ ...styles.selectStyle, width: "100%" }}

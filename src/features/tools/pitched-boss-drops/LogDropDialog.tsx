@@ -6,6 +6,8 @@ import { createPortal } from "react-dom";
 import Image from "next/image";
 import type { AppTheme } from "../../../components/themes";
 import type { StoredCharacterRecord } from "../../characters/model/charactersStore";
+import { localDateStr } from "../date";
+import { toolStyles } from "../tool-styles";
 import { ItemIcon } from "./pitched-boss-ui";
 import {
   DROP_CATEGORIES,
@@ -27,14 +29,10 @@ export interface LogDropPayload {
 /* ------------------------------------------------------------------ */
 
 function fieldStyle(theme: AppTheme): CSSProperties {
+  // Shared input colors + context sizing; static settings come from `.tool-input`.
   return {
+    ...toolStyles(theme).inputStyle,
     width: "100%",
-    padding: "0.5rem 0.6rem",
-    background: theme.timerBg,
-    color: theme.text,
-    border: `1px solid ${theme.border}`,
-    borderRadius: 8,
-    fontSize: "0.85rem",
     height: 38,
     boxSizing: "border-box",
   };
@@ -63,30 +61,6 @@ function avatarFallbackStyle(theme: AppTheme): CSSProperties {
     color: theme.accent,
     fontWeight: 800,
     flexShrink: 0,
-  };
-}
-
-function dialogBtnStyle(theme: AppTheme): CSSProperties {
-  return {
-    padding: "8px 16px",
-    borderRadius: 10,
-    fontSize: "0.82rem",
-    fontWeight: 800,
-    color: theme.muted,
-    background: theme.timerBg,
-    border: `1px solid ${theme.border}`,
-  };
-}
-
-function dialogPrimaryBtnStyle(theme: AppTheme): CSSProperties {
-  return {
-    padding: "8px 16px",
-    borderRadius: 10,
-    fontSize: "0.82rem",
-    fontWeight: 800,
-    color: theme.accentText,
-    background: theme.accentSoft,
-    border: `1px solid ${theme.accent}`,
   };
 }
 
@@ -233,7 +207,7 @@ function ItemPicker({
   return (
     <div ref={ref} style={{ position: "relative" }}>
       <div
-        className="pbd-combobox"
+        className="pbd-combobox tool-input"
         role="combobox"
         tabIndex={0}
         aria-expanded={open}
@@ -341,11 +315,6 @@ function ItemPicker({
 /*  Dialog                                                             */
 /* ------------------------------------------------------------------ */
 
-function todayStr(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
-
 export default function LogDropDialog({
   theme,
   characters,
@@ -360,8 +329,10 @@ export default function LogDropDialog({
   const [charName, setCharName] = useState("");
   const [itemId, setItemId] = useState("");
   const [channel, setChannel] = useState("");
-  const [date, setDate] = useState(todayStr);
+  const [date, setDate] = useState(localDateStr);
   const [note, setNote] = useState("");
+
+  const styles = toolStyles(theme);
 
   const ready = charName !== "" && itemId !== "" && channel !== "" && date !== "";
 
@@ -442,6 +413,7 @@ export default function LogDropDialog({
                   onFocus={(e) => e.currentTarget.select()}
                   onChange={(e) => setChannel(e.target.value)}
                   placeholder="1"
+                  className="tool-input"
                   style={fieldStyle(theme)}
                 />
               </label>
@@ -451,6 +423,7 @@ export default function LogDropDialog({
                   type="date"
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
+                  className="tool-input"
                   style={fieldStyle(theme)}
                 />
               </label>
@@ -463,6 +436,7 @@ export default function LogDropDialog({
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
                 placeholder="e.g. next in line, sold for…"
+                className="tool-input"
                 style={fieldStyle(theme)}
               />
             </label>
@@ -471,7 +445,7 @@ export default function LogDropDialog({
 
         <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.5rem", marginTop: "1.5rem" }}>
           <div
-            className="pbd-dlg-btn"
+            className="pbd-dlg-btn tool-dialog-btn"
             role="button"
             tabIndex={0}
             onClick={onClose}
@@ -481,12 +455,12 @@ export default function LogDropDialog({
                 onClose();
               }
             }}
-            style={dialogBtnStyle(theme)}
+            style={styles.dialogBtnStyle}
           >
             Cancel
           </div>
           <div
-            className="pbd-dlg-btn"
+            className="pbd-dlg-btn tool-dialog-btn"
             role="button"
             tabIndex={0}
             onClick={ready ? handleSubmit : undefined}
@@ -497,7 +471,7 @@ export default function LogDropDialog({
               }
             }}
             style={{
-              ...dialogPrimaryBtnStyle(theme),
+              ...styles.dialogPrimaryBtnStyle,
               opacity: ready ? 1 : 0.5,
               cursor: ready ? "pointer" : "not-allowed",
             }}
