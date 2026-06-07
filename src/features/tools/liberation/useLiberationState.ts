@@ -8,6 +8,7 @@ import {
 } from "../../characters/model/charactersStore";
 import { useApplyCharacterQueryParam } from "../useApplyCharacterQueryParam";
 import { readCharacterToolData, writeCharacterToolData } from "../characterToolStorage";
+import { utcDateStr } from "../date";
 import {
   type LiberationType,
   type LiberationBoss,
@@ -42,10 +43,6 @@ interface SavedState {
 
 // -- Helpers ------------------------------------------------------------------
 
-function todayStr(): string {
-  return formatIsoDate(new Date());
-}
-
 function makeBossKey(type: LiberationType, bossName: string): string {
   return `${type}:${bossName}`;
 }
@@ -68,9 +65,6 @@ export function getSelection(
   );
 }
 
-function formatIsoDate(d: Date): string {
-  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
-}
 
 export function formatDate(dateStr: string): string {
   const d = new Date(dateStr + "T00:00:00Z");
@@ -224,7 +218,7 @@ function runSimulation(
       milestones.push({
         questIdx: thresholds[mIdx].questIdx,
         questLabel: thresholds[mIdx].questLabel,
-        completionDate: formatIsoDate(eventDate),
+        completionDate: utcDateStr(eventDate),
         weeksFromStart: weeksFromStart(start, eventDate),
       });
       mIdx++;
@@ -335,7 +329,7 @@ function defaultFormState(): FormState {
     questIdx: 0,
     currentTraces: 0,
     genesisPass: false,
-    startDate: todayStr(),
+    startDate: utcDateStr(),
     selections: defaultSelections(),
   };
 }

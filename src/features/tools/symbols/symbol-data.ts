@@ -138,6 +138,14 @@ export const SACRED_AREAS: SymbolArea[] = [
     weeklyActivity: "",
     requiredLevel: 285,
   },
+];
+
+/**
+ * Grand Sacred Symbols. Same growth/max level as regular Sacred Symbols
+ * (`SACRED_GROWTH` / `SACRED_MAX_LEVEL`) — kept in their own array purely to
+ * separate the data and give them distinct styling on the Sacred tab.
+ */
+export const GRAND_SACRED_AREAS: SymbolArea[] = [
   {
     name: "Tallahart",
     itemId: "01714000", // Grand Sacred Symbol: Tallahart
@@ -146,7 +154,25 @@ export const SACRED_AREAS: SymbolArea[] = [
     weeklyActivity: "",
     requiredLevel: 290,
   },
+  {
+    name: "Geardock",
+    itemId: "01714001", // Grand Sacred Symbol: Geardock
+    daily: 10,
+    weekly: 0,
+    weeklyActivity: "",
+    requiredLevel: 295,
+  },
 ];
+
+/** Regular + Grand Sacred Symbols, in display order. */
+export const ALL_SACRED_AREAS: SymbolArea[] = [...SACRED_AREAS, ...GRAND_SACRED_AREAS];
+
+const GRAND_SACRED_NAMES = new Set(GRAND_SACRED_AREAS.map((a) => a.name));
+
+/** True if the area is a Grand Sacred Symbol (drives its distinct card styling). */
+export function isGrandSacredArea(area: SymbolArea): boolean {
+  return GRAND_SACRED_NAMES.has(area.name);
+}
 
 // -- Helpers ------------------------------------------------------------------
 

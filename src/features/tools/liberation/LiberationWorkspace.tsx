@@ -289,7 +289,7 @@ function LiberationConfigSection({
             Current Quest
           </div>
           <select
-            className="tool-input"
+            className="tool-select"
             value={questIdx}
             onChange={(e) => {
               onQuestIdxChange(Number(e.target.value));
@@ -298,7 +298,6 @@ function LiberationConfigSection({
             style={{
               ...inputStyle,
               width: "100%",
-              cursor: "pointer",
             }}
           >
             {quests.map((q, i) => (
