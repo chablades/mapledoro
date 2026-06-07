@@ -93,16 +93,12 @@ function dialogPanelStyle(theme: AppTheme): React.CSSProperties {
   };
 }
 
+// Colors only; shape comes from the `.tool-dialog-btn` class.
 function dialogCancelBtnStyle(theme: AppTheme): React.CSSProperties {
   return {
-    padding: "0.5rem 1rem",
-    borderRadius: 8,
     border: `1px solid ${theme.border}`,
     background: theme.timerBg,
     color: theme.text,
-    fontWeight: 700,
-    fontSize: "0.8rem",
-    cursor: "pointer",
   };
 }
 
@@ -112,13 +108,9 @@ function accentBtnStyle(
 ): React.CSSProperties {
   return {
     padding,
-    borderRadius: 8,
     background: theme.accent,
     color: "#fff",
     border: "none",
-    fontWeight: 800,
-    fontSize: "0.8rem",
-    cursor: "pointer",
   };
 }
 
@@ -497,6 +489,7 @@ function CardBody({
         <button
           type="button"
           onClick={onEdit}
+          className="tool-dialog-btn"
           style={accentBtnStyle(theme, "0.5rem 1rem")}
         >
           + Add tasks
@@ -793,6 +786,7 @@ function DailiesSelectionDialog({
           <button
             type="button"
             onClick={onCancel}
+            className="tool-dialog-btn"
             style={dialogCancelBtnStyle(theme)}
           >
             Cancel
@@ -800,6 +794,7 @@ function DailiesSelectionDialog({
           <button
             type="button"
             onClick={() => onConfirm(draft)}
+            className="tool-dialog-btn"
             style={accentBtnStyle(theme)}
           >
             Save

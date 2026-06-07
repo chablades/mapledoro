@@ -1,5 +1,26 @@
 import type { AppTheme } from "../../components/themes";
 
+/** Label sitting above a control. Typography comes from `.tool-field-label`;
+ *  pass `style` for the dynamic muted color (e.g. `styles.labelStyle`). */
+export function Field({
+  label,
+  style,
+  containerStyle,
+  children,
+}: {
+  label: string;
+  style?: React.CSSProperties;
+  containerStyle?: React.CSSProperties;
+  children: React.ReactNode;
+}) {
+  return (
+    <div style={containerStyle}>
+      <div className="tool-field-label" style={style}>{label}</div>
+      {children}
+    </div>
+  );
+}
+
 const toggleBase: React.CSSProperties = {
   padding: "8px 16px",
   borderRadius: "10px",

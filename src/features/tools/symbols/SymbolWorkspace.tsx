@@ -20,10 +20,12 @@ import { ItemIcon } from "../../../components/ResourceImage";
 import { CharacterSyncPanel } from "../../../components/CharacterSyncPanel";
 import { SegmentedToggle } from "../../../components/SegmentedToggle";
 import { toolStyles } from "../tool-styles";
+import { utcDateStr } from "../date";
 import {
   type SymbolType,
   type SymbolArea,
   symbolsForLevel,
+  isGrandSacredArea,
 } from "./symbol-data";
 import {
   useSymbolState,
@@ -38,15 +40,15 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip,
 
 const DAILY_EVENT_BONUS = 6;
 
+// Grand Sacred Symbols get a violet-tinted card to set them apart from regular
+// Sacred Symbols. Translucent over the panel so it reads on both light and dark.
+const GRAND_CARD_BG = "rgba(139, 92, 246, 0.13)";
+const GRAND_CARD_BORDER = "rgba(139, 92, 246, 0.45)";
+
 // -- Helpers ------------------------------------------------------------------
 
-function todayStr(): string {
-  const d = new Date();
-  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
-}
-
 function addDays(days: number): string {
-  const d = new Date(todayStr() + "T00:00:00Z");
+  const d = new Date(utcDateStr() + "T00:00:00Z");
   d.setUTCDate(d.getUTCDate() + days);
   return d.toLocaleDateString("en-US", {
     year: "numeric",
@@ -455,8 +457,14 @@ function SymbolCard({
   else levelPct = 0;
   const areaPct = totalForOneArea > 0 ? (consumed / totalForOneArea) * 100 : 0;
   const isSacred = type === "sacred";
+  const isGrand = isSacred && isGrandSacredArea(area);
   const dailyMax = area.daily + DAILY_EVENT_BONUS;
   const disabledSacred = isSacred && !isTracked;
+
+  let cardBorderColor: string;
+  if (isMaxed && isTracked) cardBorderColor = theme.accent + "55";
+  else if (isGrand) cardBorderColor = GRAND_CARD_BORDER;
+  else cardBorderColor = theme.border;
 
   const levelBarContainerStyle: React.CSSProperties = {
     height: "6px",
@@ -483,8 +491,8 @@ function SymbolCard({
   return (
     <div
       style={{
-        background: theme.timerBg,
-        border: `1px solid ${isMaxed && isTracked ? theme.accent + "55" : theme.border}`,
+        background: isGrand ? GRAND_CARD_BG : theme.timerBg,
+        border: `1px solid ${cardBorderColor}`,
         borderRadius: "14px",
         padding: "1rem",
         transition: "border-color 0.15s, opacity 0.15s",

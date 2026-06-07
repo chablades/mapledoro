@@ -6,6 +6,8 @@ export interface ToolStyles {
   inputStyle: CSSProperties;
   selectStyle: CSSProperties;
   labelStyle: CSSProperties;
+  dialogBtnStyle: CSSProperties;
+  dialogPrimaryBtnStyle: CSSProperties;
 }
 
 export function toolStyles(theme: AppTheme): ToolStyles {
@@ -16,29 +18,41 @@ export function toolStyles(theme: AppTheme): ToolStyles {
     marginBottom: "1.25rem",
   };
 
+  // Dynamic theme colors only. Static settings (radius, padding, font,
+  // border width) live in the `.tool-input` / `.tool-select` /
+  // `.tool-field-label` global CSS classes; callers pair the className with
+  // these inline color objects.
   const inputStyle: CSSProperties = {
     background: theme.timerBg,
-    border: `1px solid ${theme.border}`,
+    borderColor: theme.border,
     color: theme.text,
-    fontSize: "0.82rem",
-    fontWeight: 700,
-    borderRadius: "8px",
-    padding: "7px 10px",
   };
 
-  const selectStyle: CSSProperties = {
-    ...inputStyle,
-    cursor: "pointer",
-  };
+  const selectStyle: CSSProperties = { ...inputStyle };
 
   const labelStyle: CSSProperties = {
-    fontSize: "0.75rem",
-    fontWeight: 800,
     color: theme.muted,
-    textTransform: "uppercase",
-    letterSpacing: "0.04em",
-    marginBottom: "4px",
   };
 
-  return { sectionPanel, inputStyle, selectStyle, labelStyle };
+  // Dialog action buttons (colors only; shape comes from `.tool-dialog-btn`).
+  const dialogBtnStyle: CSSProperties = {
+    color: theme.muted,
+    background: theme.timerBg,
+    borderColor: theme.border,
+  };
+
+  const dialogPrimaryBtnStyle: CSSProperties = {
+    color: theme.accentText,
+    background: theme.accentSoft,
+    borderColor: theme.accent,
+  };
+
+  return {
+    sectionPanel,
+    inputStyle,
+    selectStyle,
+    labelStyle,
+    dialogBtnStyle,
+    dialogPrimaryBtnStyle,
+  };
 }

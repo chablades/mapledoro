@@ -544,7 +544,7 @@ function StarForceForm({
 
         <InputRow label="Current Star" theme={theme}>
           <select
-            className="tool-input"
+            className="tool-select"
             value={calc.startStar}
             onChange={(e) => dispatch({ type: "setStartStar", value: Number(e.target.value) })}
             style={{ ...selectStyle, width: RIGHT_COL_WIDTH }}
@@ -557,7 +557,7 @@ function StarForceForm({
 
         <InputRow label="Target Star" theme={theme}>
           <select
-            className="tool-input"
+            className="tool-select"
             value={calc.targetStar}
             onChange={(e) => dispatch({ type: "setTargetStar", value: Number(e.target.value) })}
             style={{ ...selectStyle, width: LEFT_COL_WIDTH }}
@@ -597,7 +597,7 @@ function StarForceForm({
 
         <InputRow label="MVP" theme={theme}>
           <select
-            className="tool-input"
+            className="tool-select"
             value={calc.mvp}
             onChange={(e) => dispatch({ type: "setMvp", value: e.target.value as MvpTier })}
             style={{ ...selectStyle, width: RIGHT_COL_WIDTH }}
@@ -781,7 +781,6 @@ export default function StarForceWorkspace({ theme }: { theme: AppTheme }) {
   return (
     <div className="sf-main" style={{ flex: 1, width: "100%", padding: "1.5rem 1.5rem 2rem 2.75rem" }}>
       <style>{`
-        .tool-btn { transition: background 0.15s, border-color 0.15s; cursor: pointer; }
         @media (max-width: 860px) {
           .sf-inputs-grid { grid-template-columns: 1fr !important; }
           .sf-main { padding: 1rem !important; }

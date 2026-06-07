@@ -8,6 +8,7 @@ import {
 } from "../../characters/model/charactersStore";
 import { useApplyCharacterQueryParam } from "../useApplyCharacterQueryParam";
 import { readCharacterToolData, writeCharacterToolData } from "../characterToolStorage";
+import { utcDateStr } from "../date";
 import {
   type AstraBoss,
   type AstraMission,
@@ -40,14 +41,6 @@ interface AstraSavedState {
 
 // -- Helpers ------------------------------------------------------------------
 
-function todayStr(): string {
-  const d = new Date();
-  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
-}
-
-function formatIsoDate(d: Date): string {
-  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
-}
 
 export function formatDate(dateStr: string): string {
   const d = new Date(dateStr + "T00:00:00Z");
@@ -215,7 +208,7 @@ function simulateAstra(p: SimParams): SimResult {
     while (mIdx < remaining.length && traces >= remaining[mIdx].tracesRequired && fragments >= remaining[mIdx].fragmentsRequired) {
       traces -= remaining[mIdx].tracesRequired;
       fragments -= remaining[mIdx].fragmentsRequired;
-      missionResults.push({ mission: remaining[mIdx], completionDate: formatIsoDate(thuDate), weeksFromStart: weekCount });
+      missionResults.push({ mission: remaining[mIdx], completionDate: utcDateStr(thuDate), weeksFromStart: weekCount });
       mIdx++;
     }
 
@@ -291,7 +284,7 @@ function defaultAstraForm(): AstraFormState {
     missionIdx: 0,
     currentTraces: 0,
     currentFragments: 0,
-    startDate: todayStr(),
+    startDate: utcDateStr(),
     dailyQuestId: "tallahart",
     daysPerWeek: 7,
     futureQuestDate: "",

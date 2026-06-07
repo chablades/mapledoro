@@ -10,7 +10,7 @@ import {
   type SymbolType,
   type SymbolArea,
   ARCANE_AREAS,
-  SACRED_AREAS,
+  ALL_SACRED_AREAS,
   ARCANE_GROWTH,
   SACRED_GROWTH,
   ARCANE_MAX_LEVEL,
@@ -163,7 +163,7 @@ export function useSymbolState() {
   const [form, setForm] = useState<FormState>(defaultFormState);
   const { type, symbols } = form;
 
-  const areas = type === "arcane" ? ARCANE_AREAS : SACRED_AREAS;
+  const areas = type === "arcane" ? ARCANE_AREAS : ALL_SACRED_AREAS;
   const growth = type === "arcane" ? ARCANE_GROWTH : SACRED_GROWTH;
   const maxLevel = type === "arcane" ? ARCANE_MAX_LEVEL : SACRED_MAX_LEVEL;
 
@@ -194,7 +194,7 @@ export function useSymbolState() {
           const char = characters.find((c) => c.characterName === charName);
           if (char && char.level >= 260) {
             const sacredSymbols: Record<string, SymbolState> = {};
-            for (const area of SACRED_AREAS) {
+            for (const area of ALL_SACRED_AREAS) {
               sacredSymbols[area.name] = {
                 ...defaultSymbolState(area, "sacred"),
                 enabled: char.level >= area.requiredLevel,
@@ -224,7 +224,7 @@ export function useSymbolState() {
     (areaName: string, patch: Partial<SymbolState>) => {
       updateForm((f) => {
         const currentType = f.type;
-        const currentAreas = currentType === "arcane" ? ARCANE_AREAS : SACRED_AREAS;
+        const currentAreas = currentType === "arcane" ? ARCANE_AREAS : ALL_SACRED_AREAS;
         const area = currentAreas.find((a) => a.name === areaName)!;
         return {
           ...f,
@@ -240,7 +240,7 @@ export function useSymbolState() {
 
   const resetAll = useCallback(() => {
     updateForm((f) => {
-      const currentAreas = f.type === "arcane" ? ARCANE_AREAS : SACRED_AREAS;
+      const currentAreas = f.type === "arcane" ? ARCANE_AREAS : ALL_SACRED_AREAS;
       const next = { ...f.symbols };
       for (const area of currentAreas) {
         next[area.name] = defaultSymbolState(area, f.type);

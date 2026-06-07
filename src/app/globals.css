@@ -126,17 +126,54 @@ html.scroll-locked body {
   font-size: 0.85rem;
 }
 
-/* Form input used across tool workspaces */
-.tool-input {
-  border-radius: 8px;
+/* Shared form controls across tool workspaces.
+   Static settings live here; dynamic theme colors (background, borderColor,
+   color) and context-sensitive sizing (width, etc.) are applied inline. */
+.tool-input,
+.tool-select {
   font-family: var(--font-body);
+  font-size: 0.82rem;
   font-weight: 700;
+  border-radius: 8px;
+  border: 1px solid; /* color supplied inline via borderColor */
+  padding: 7px 10px;
+}
+
+.tool-select {
+  cursor: pointer;
+}
+
+/* Uppercase field label sitting above a control */
+.tool-field-label {
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 4px;
 }
 
 input:focus-visible,
 textarea:focus-visible {
   outline: 2px solid;
   outline-offset: 2px;
+}
+
+/* Interactive control base: pointer + hover transition. Colors stay inline. */
+.tool-btn {
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+/* Dialog / modal action button shape. Colors supplied inline per variant
+   (secondary vs primary); padding may be overridden inline for context. */
+.tool-dialog-btn {
+  padding: 0.5rem 1rem;
+  border-radius: 10px;
+  border: 1px solid;
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
 }
 
 /* Pill-shaped toggle button */

@@ -684,7 +684,7 @@ function AddItemForm({
         <div>
           <div className="section-label" style={{ color: theme.muted, marginBottom: 4, fontSize: "0.75rem" }}>Character</div>
           <div style={{ display: "flex", gap: 6 }}>
-            <select className="tool-input" value={form.char} onChange={(e) => dispatchForm({ type: "setChar", value: e.target.value })} style={{ ...styles.selectStyle, flex: 1 }}>
+            <select className="tool-select" value={form.char} onChange={(e) => dispatchForm({ type: "setChar", value: e.target.value })} style={{ ...styles.selectStyle, flex: 1 }}>
               <option value="">Unspecified</option>
               {characters.map((c) => (
                 <option key={c.characterName} value={c.characterName}>{c.characterName} (Lv.{c.level} {c.jobName})</option>
@@ -703,11 +703,11 @@ function AddItemForm({
         <div>
           <div className="section-label" style={{ color: theme.muted, marginBottom: 4, fontSize: "0.75rem" }}>Stars</div>
           <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-            <select className="tool-input" value={form.currentStar} onChange={(e) => dispatchForm({ type: "setCurrentStar", value: Number(e.target.value) })} style={{ ...styles.selectStyle, width: 80 }}>
+            <select className="tool-select" value={form.currentStar} onChange={(e) => dispatchForm({ type: "setCurrentStar", value: Number(e.target.value) })} style={{ ...styles.selectStyle, width: 80 }}>
               {Array.from({ length: itemMaxStar }, (_, i) => i).map((s) => <option key={s} value={s}>{s}★</option>)}
             </select>
             <span style={{ color: theme.muted, fontWeight: 700, fontSize: "0.85rem" }}>→</span>
-            <select className="tool-input" value={form.targetStar} onChange={(e) => dispatchForm({ type: "setTargetStar", value: Number(e.target.value) })} style={{ ...styles.selectStyle, width: 80 }}>
+            <select className="tool-select" value={form.targetStar} onChange={(e) => dispatchForm({ type: "setTargetStar", value: Number(e.target.value) })} style={{ ...styles.selectStyle, width: 80 }}>
               {Array.from({ length: itemMaxStar }, (_, i) => i + 1).map((s) => <option key={s} value={s}>{s}★</option>)}
             </select>
           </div>
