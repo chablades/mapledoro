@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useReducer, useSyncExternalStore } from "react";
+import { useState, useSyncExternalStore } from "react";
 import type { CSSProperties } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
@@ -15,7 +15,8 @@ import {
   type StoredCharacterRecord,
 } from "../../characters/model/charactersStore";
 import { readGlobalTool, writeGlobalTool } from "../globalToolsStore";
-import { PITCHED_BOSS_ITEMS, PITCHED_ITEMS_BY_ID } from "./pitched-items";
+import { DROP_CATEGORIES, DROP_ITEMS, DROP_ITEMS_BY_ID } from "./pitched-items";
+import LogDropDialog, { type LogDropPayload } from "./LogDropDialog";
 
 const PitchedBossCharts = dynamic(() => import("./PitchedBossCharts"), {
   ssr: false,
@@ -33,6 +34,7 @@ interface PitchedBossDrop {
   channel: number;
   date: string; // YYYY-MM-DD
   timestamp: number;
+  note?: string;
 }
 
 interface PitchedBossDropsStore {
@@ -55,25 +57,19 @@ function writeStore(store: PitchedBossDropsStore): void {
   writeGlobalTool("pitchedBossDrops", store);
 }
 
-function todayStr(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
-
 /* ------------------------------------------------------------------ */
 /*  Inline-style helpers                                               */
 /* ------------------------------------------------------------------ */
 
-function fieldStyle(theme: AppTheme): CSSProperties {
+function filterSelectStyle(theme: AppTheme): CSSProperties {
   return {
-    width: "100%",
-    padding: "0.5rem 0.6rem",
+    padding: "0.4rem 0.55rem",
     background: theme.timerBg,
     color: theme.text,
     border: `1px solid ${theme.border}`,
     borderRadius: 8,
-    fontSize: "0.85rem",
-    height: 38,
+    fontSize: "0.8rem",
+    height: 34,
     boxSizing: "border-box",
   };
 }
@@ -98,110 +94,321 @@ function tdStyle(theme: AppTheme): CSSProperties {
   };
 }
 
-const addDropBtnBase: CSSProperties = {
-  padding: "0.5rem 1.25rem",
-  border: "none",
+const logBtnStyle = (theme: AppTheme): CSSProperties => ({
+  padding: "0.45rem 1rem",
+  border: `1px solid ${theme.accent}`,
+  background: theme.accent,
+  color: "#fff",
   borderRadius: 8,
   fontWeight: 700,
-  fontSize: "0.85rem",
-  height: 38,
+  fontSize: "0.82rem",
+  height: 34,
+  boxSizing: "border-box",
   whiteSpace: "nowrap",
-};
+  cursor: "pointer",
+});
+
+/* ------------------------------------------------------------------ */
+/*  Filters                                                            */
+/* ------------------------------------------------------------------ */
+
+interface Filters {
+  character: string; // "all" | characterName
+  category: string; // "all" | category id
+}
+
+function applyFilters(drops: PitchedBossDrop[], filters: Filters): PitchedBossDrop[] {
+  return drops.filter((d) => {
+    if (filters.character !== "all" && d.characterName !== filters.character) return false;
+    if (filters.category !== "all") {
+      const item = DROP_ITEMS_BY_ID.get(d.itemId);
+      if (item?.category !== filters.category) return false;
+    }
+    return true;
+  });
+}
+
+/* ------------------------------------------------------------------ */
+/*  Sorting                                                            */
+/* ------------------------------------------------------------------ */
+
+type SortKey = "date" | "character" | "item" | "channel";
+interface Sort {
+  key: SortKey;
+  dir: "asc" | "desc";
+}
+
+function itemName(itemId: string): string {
+  return DROP_ITEMS_BY_ID.get(itemId)?.name ?? itemId;
+}
+
+function compareDrops(a: PitchedBossDrop, b: PitchedBossDrop, key: SortKey): number {
+  switch (key) {
+    case "date": return a.timestamp - b.timestamp;
+    case "character": return a.characterName.localeCompare(b.characterName);
+    case "item": return itemName(a.itemId).localeCompare(itemName(b.itemId));
+    case "channel": return a.channel - b.channel;
+  }
+}
+
+function sortDrops(drops: PitchedBossDrop[], sort: Sort): PitchedBossDrop[] {
+  const factor = sort.dir === "asc" ? 1 : -1;
+  return drops.toSorted((a, b) => {
+    const primary = compareDrops(a, b, sort.key) * factor;
+    // Stable tie-break: most recent first.
+    return primary !== 0 ? primary : b.timestamp - a.timestamp;
+  });
+}
 
 /* ------------------------------------------------------------------ */
 /*  Sub-components                                                     */
 /* ------------------------------------------------------------------ */
 
+function SortableTh({
+  theme,
+  label,
+  sortKey,
+  sort,
+  onSort,
+  width,
+}: {
+  theme: AppTheme;
+  label: string;
+  sortKey: SortKey;
+  sort: Sort;
+  onSort: (key: SortKey) => void;
+  width?: number;
+}) {
+  const active = sort.key === sortKey;
+  let arrow = "";
+  if (active) arrow = sort.dir === "asc" ? " ▲" : " ▼";
+  return (
+    <th
+      role="button"
+      tabIndex={0}
+      onClick={() => onSort(sortKey)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onSort(sortKey);
+        }
+      }}
+      style={{
+        ...thStyle(theme),
+        ...(width ? { width } : {}),
+        cursor: "pointer",
+        userSelect: "none",
+        color: active ? theme.text : theme.muted,
+        whiteSpace: "nowrap",
+      }}
+    >
+      {label}
+      {arrow}
+    </th>
+  );
+}
+
 function DropLogTable({
   theme,
   drops,
+  sort,
+  onSort,
+  onNote,
   onDelete,
 }: {
   theme: AppTheme;
   drops: PitchedBossDrop[];
+  sort: Sort;
+  onSort: (key: SortKey) => void;
+  onNote: (id: string, note: string) => void;
   onDelete: (id: string) => void;
 }) {
   return (
-    <div style={panelStyle(theme)}>
-      <div
-        style={{
-          fontWeight: 700,
-          color: theme.text,
-          marginBottom: "1rem",
-          fontSize: "1rem",
-        }}
-      >
-        Drop Log ({drops.length} total)
-      </div>
-      <div style={{ overflowX: "auto", maxHeight: 400, overflowY: "auto" }}>
-        <table
-          style={{
-            width: "100%",
-            borderCollapse: "collapse",
-            fontSize: "0.82rem",
-          }}
-        >
-          <thead>
-            <tr
-              style={{
-                borderBottom: `2px solid ${theme.border}`,
-                position: "sticky",
-                top: 0,
-                background: theme.panel,
-              }}
-            >
-              <th style={thStyle(theme)}>Date</th>
-              <th style={thStyle(theme)}>Character</th>
-              <th style={thStyle(theme)}>Item</th>
-              <th style={thStyle(theme)}>Boss</th>
-              <th style={thStyle(theme)}>CH</th>
-              <th style={{ ...thStyle(theme), width: 40 }} />
-            </tr>
-          </thead>
-          <tbody>
-            {drops.map((drop) => {
-              const item = PITCHED_ITEMS_BY_ID.get(drop.itemId);
-              return (
-                <tr
-                  key={drop.id}
-                  style={{ borderBottom: `1px solid ${theme.border}` }}
-                >
-                  <td style={tdStyle(theme)}>{drop.date}</td>
-                  <td style={tdStyle(theme)}>{drop.characterName}</td>
-                  <td style={{ ...tdStyle(theme), fontWeight: 600 }}>
-                    <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
-                      {item && <ItemIcon id={item.itemId} />}
-                      {item?.name ?? drop.itemId}
-                    </span>
-                  </td>
-                  <td style={{ ...tdStyle(theme), color: theme.muted }}>
-                    {item?.boss ?? "—"}
-                  </td>
-                  <td style={tdStyle(theme)}>{drop.channel}</td>
-                  <td style={tdStyle(theme)}>
-                    <button
-                      onClick={() => onDelete(drop.id)}
-                      style={{
-                        background: "none",
-                        border: "none",
-                        color: theme.muted,
-                        cursor: "pointer",
-                        fontSize: "0.8rem",
-                        padding: "2px 6px",
-                        borderRadius: 4,
-                      }}
-                      title="Delete drop"
-                    >
-                      ✕
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+    <div style={{ overflowX: "auto", maxHeight: 420, overflowY: "auto" }}>
+      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.82rem" }}>
+        <thead>
+          <tr
+            style={{
+              borderBottom: `2px solid ${theme.border}`,
+              position: "sticky",
+              top: 0,
+              background: theme.panel,
+            }}
+          >
+            <SortableTh theme={theme} label="Date" sortKey="date" sort={sort} onSort={onSort} />
+            <SortableTh theme={theme} label="Character" sortKey="character" sort={sort} onSort={onSort} />
+            <SortableTh theme={theme} label="Item" sortKey="item" sort={sort} onSort={onSort} />
+            <SortableTh theme={theme} label="CH" sortKey="channel" sort={sort} onSort={onSort} width={50} />
+            <th style={thStyle(theme)}>Note</th>
+            <th style={{ ...thStyle(theme), width: 40 }} />
+          </tr>
+        </thead>
+        <tbody>
+          {drops.map((drop) => {
+            const item = DROP_ITEMS_BY_ID.get(drop.itemId);
+            return (
+              <tr key={drop.id} style={{ borderBottom: `1px solid ${theme.border}` }}>
+                <td style={tdStyle(theme)}>{drop.date}</td>
+                <td style={tdStyle(theme)}>{drop.characterName}</td>
+                <td style={{ ...tdStyle(theme), fontWeight: 600 }}>
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+                    {item && <ItemIcon id={item.itemId} />}
+                    {item?.name ?? drop.itemId}
+                  </span>
+                </td>
+                <td style={tdStyle(theme)}>{drop.channel}</td>
+                <td style={tdStyle(theme)}>
+                  <input
+                    type="text"
+                    defaultValue={drop.note ?? ""}
+                    placeholder="Add note…"
+                    onBlur={(e) => {
+                      const v = e.target.value.trim();
+                      if (v !== (drop.note ?? "")) onNote(drop.id, v);
+                    }}
+                    style={{
+                      width: "100%",
+                      minWidth: 120,
+                      padding: "3px 6px",
+                      background: "transparent",
+                      color: theme.text,
+                      border: `1px solid ${theme.border}`,
+                      borderRadius: 6,
+                      fontSize: "0.8rem",
+                    }}
+                  />
+                </td>
+                <td style={tdStyle(theme)}>
+                  <button
+                    onClick={() => onDelete(drop.id)}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      color: theme.muted,
+                      cursor: "pointer",
+                      fontSize: "0.8rem",
+                      padding: "2px 6px",
+                      borderRadius: 4,
+                    }}
+                    title="Delete drop"
+                  >
+                    ✕
+                  </button>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
     </div>
+  );
+}
+
+function FilterBar({
+  theme,
+  filters,
+  setFilters,
+  characterNames,
+  onLog,
+}: {
+  theme: AppTheme;
+  filters: Filters;
+  setFilters: (f: Filters) => void;
+  characterNames: string[];
+  onLog: () => void;
+}) {
+  return (
+    <div
+      className="pbd-filter-bar"
+      style={{
+        display: "flex",
+        flexWrap: "wrap",
+        alignItems: "center",
+        gap: "0.5rem",
+        marginBottom: "0.85rem",
+      }}
+    >
+      <div style={{ fontWeight: 700, color: theme.text, fontSize: "1rem", marginRight: "auto" }}>
+        Drop Log
+      </div>
+      <select
+        value={filters.character}
+        onChange={(e) => setFilters({ ...filters, character: e.target.value })}
+        style={filterSelectStyle(theme)}
+        aria-label="Filter by character"
+      >
+        <option value="all">All characters</option>
+        {characterNames.map((name) => (
+          <option key={name} value={name}>
+            {name}
+          </option>
+        ))}
+      </select>
+      <select
+        value={filters.category}
+        onChange={(e) => setFilters({ ...filters, category: e.target.value })}
+        style={filterSelectStyle(theme)}
+        aria-label="Filter by category"
+      >
+        <option value="all">All categories</option>
+        {DROP_CATEGORIES.map((cat) => (
+          <option key={cat.id} value={cat.id}>
+            {cat.label}
+          </option>
+        ))}
+      </select>
+      <button onClick={onLog} style={logBtnStyle(theme)}>
+        + Log a Drop
+      </button>
+    </div>
+  );
+}
+
+function emptyMessageStyle(theme: AppTheme): CSSProperties {
+  return {
+    textAlign: "center",
+    color: theme.muted,
+    fontSize: "0.9rem",
+    padding: "1.5rem 0",
+  };
+}
+
+function LogPanelBody({
+  theme,
+  totalCount,
+  drops,
+  sort,
+  onSort,
+  onNote,
+  onDelete,
+}: {
+  theme: AppTheme;
+  totalCount: number;
+  drops: PitchedBossDrop[];
+  sort: Sort;
+  onSort: (key: SortKey) => void;
+  onNote: (id: string, note: string) => void;
+  onDelete: (id: string) => void;
+}) {
+  if (totalCount === 0) {
+    return (
+      <div style={emptyMessageStyle(theme)}>
+        No drops logged yet. Click “Log a Drop” to record your first one.
+      </div>
+    );
+  }
+  if (drops.length === 0) {
+    return <div style={emptyMessageStyle(theme)}>No drops match the current filters.</div>;
+  }
+  return (
+    <DropLogTable
+      theme={theme}
+      drops={drops}
+      sort={sort}
+      onSort={onSort}
+      onNote={onNote}
+      onDelete={onDelete}
+    />
   );
 }
 
@@ -216,15 +423,8 @@ function NoCharactersState({ theme }: { theme: AppTheme }) {
         padding: "2.5rem 1rem 2rem",
       }}
     >
-      <div
-        style={{
-          display: "flex",
-          gap: "0.35rem",
-          marginBottom: "1.25rem",
-          opacity: 0.7,
-        }}
-      >
-        {PITCHED_BOSS_ITEMS.slice(0, 6).map((item) => (
+      <div style={{ display: "flex", gap: "0.35rem", marginBottom: "1.25rem", opacity: 0.7 }}>
+        {DROP_ITEMS.slice(0, 6).map((item) => (
           <span
             key={item.id}
             style={{
@@ -242,15 +442,8 @@ function NoCharactersState({ theme }: { theme: AppTheme }) {
           </span>
         ))}
       </div>
-      <div
-        style={{
-          fontWeight: 700,
-          color: theme.text,
-          fontSize: "1.05rem",
-          marginBottom: "0.4rem",
-        }}
-      >
-        Track your pitched boss drops
+      <div style={{ fontWeight: 700, color: theme.text, fontSize: "1.05rem", marginBottom: "0.4rem" }}>
+        Track your boss drops
       </div>
       <div
         style={{
@@ -261,16 +454,19 @@ function NoCharactersState({ theme }: { theme: AppTheme }) {
           marginBottom: "1.25rem",
         }}
       >
-        Add a character to start logging Berserked, Black Heart, Genesis Badge,
-        and other rare boss drops — then watch your luck stats build up over
-        time.
+        Add a character to start logging pitched boss items, armor boxes,
+        grindstones, and other rare drops — then watch your luck stats build up
+        over time.
       </div>
       <Link
         href="/characters"
         style={{
-          ...addDropBtnBase,
           display: "inline-flex",
           alignItems: "center",
+          padding: "0.5rem 1.25rem",
+          borderRadius: 8,
+          fontWeight: 700,
+          fontSize: "0.85rem",
           background: theme.accent,
           color: "#fff",
           textDecoration: "none",
@@ -288,90 +484,65 @@ function NoCharactersState({ theme }: { theme: AppTheme }) {
 
 const emptySubscribe = () => () => {};
 
-export default function PitchedBossDropsWorkspace({
-  theme,
-}: {
-  theme: AppTheme;
-}) {
+export default function PitchedBossDropsWorkspace({ theme }: { theme: AppTheme }) {
   const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
 
   const [drops, setDrops] = useState<PitchedBossDrop[]>(() =>
     typeof window === "undefined" ? [] : readStore().drops,
   );
+  const [filters, setFilters] = useState<Filters>({ character: "all", category: "all" });
+  const [sort, setSort] = useState<Sort>({ key: "date", dir: "desc" });
+  const [dialogOpen, setDialogOpen] = useState(false);
+
   const characters: StoredCharacterRecord[] = mounted
     ? selectCharactersList(readCharactersStore())
     : [];
-
-  interface FormState {
-    charId: string;
-    itemId: string;
-    channel: string;
-    date: string;
-  }
-  type FormAction =
-    | { type: "setCharId"; value: string }
-    | { type: "setItemId"; value: string }
-    | { type: "setChannel"; value: string }
-    | { type: "setDate"; value: string }
-    | { type: "resetAfterAdd" };
-  const [form, dispatchForm] = useReducer(
-    (state: FormState, action: FormAction): FormState => {
-      switch (action.type) {
-        case "setCharId": return { ...state, charId: action.value };
-        case "setItemId": return { ...state, itemId: action.value };
-        case "setChannel": return { ...state, channel: action.value };
-        case "setDate": return { ...state, date: action.value };
-        case "resetAfterAdd": return { ...state, itemId: "", channel: "" };
-      }
-    },
-    undefined,
-    (): FormState => ({
-      charId: "",
-      itemId: "",
-      channel: "",
-      date: typeof window === "undefined" ? "" : todayStr(),
-    }),
-  );
 
   function saveDrops(next: PitchedBossDrop[]) {
     setDrops(next);
     writeStore({ version: 1, drops: next });
   }
 
-  function handleAdd() {
-    if (!form.charId || !form.itemId || !form.channel || !form.date) return;
-    const char = characters.find(
-      (c) => c.characterName === form.charId,
-    );
+  function handleAdd(payload: LogDropPayload) {
+    const char = characters.find((c) => c.characterName === payload.characterName);
     if (!char) return;
-
     const newDrop: PitchedBossDrop = {
       id: generateId(),
       characterId: String(char.characterID),
       characterName: char.characterName,
-      itemId: form.itemId,
-      channel: parseInt(form.channel, 10),
-      date: form.date,
-      timestamp: new Date(form.date).getTime(),
+      itemId: payload.itemId,
+      channel: payload.channel,
+      date: payload.date,
+      timestamp: new Date(payload.date).getTime(),
+      note: payload.note || undefined,
     };
+    saveDrops([...drops, newDrop].sort((a, b) => b.timestamp - a.timestamp));
+    setDialogOpen(false);
+  }
 
-    const next = [...drops, newDrop].sort((a, b) => b.timestamp - a.timestamp);
-    saveDrops(next);
-    dispatchForm({ type: "resetAfterAdd" });
+  function handleNote(id: string, note: string) {
+    saveDrops(drops.map((d) => (d.id === id ? { ...d, note: note || undefined } : d)));
   }
 
   function handleDelete(id: string) {
     saveDrops(drops.filter((d) => d.id !== id));
   }
 
+  function handleSort(key: SortKey) {
+    setSort((prev) =>
+      prev.key === key
+        ? { key, dir: prev.dir === "asc" ? "desc" : "asc" }
+        : { key, dir: key === "date" ? "desc" : "asc" },
+    );
+  }
+
   if (!mounted) return null;
 
-  const sortedDrops = drops.toSorted((a, b) => b.timestamp - a.timestamp);
-  const formReady =
-    form.charId !== "" &&
-    form.itemId !== "" &&
-    form.channel !== "" &&
-    form.date !== "";
+  const filteredDrops = sortDrops(applyFilters(drops, filters), sort);
+  const characterNames = Array.from(new Set(drops.map((d) => d.characterName))).sort((a, b) =>
+    a.localeCompare(b),
+  );
+  const hasCharacters = characters.length > 0;
 
   return (
     <div
@@ -381,176 +552,57 @@ export default function PitchedBossDropsWorkspace({
       <style>{`
         @media (max-width: 860px) {
           .pbd-main { padding: 1rem !important; }
+          .pbd-filter-bar { flex-direction: column; align-items: stretch; }
+          .pbd-filter-bar > * { width: 100%; margin-right: 0 !important; }
         }
       `}</style>
       <div style={{ maxWidth: 900, margin: "0 auto" }}>
         <ToolHeader
           theme={theme}
-          title="Pitched Boss Drop Tracker"
-          description="Select a character and item, then log each drop as it happens to build your drop history and analytics."
+          title="Drop Tracker"
+          description="Log rare boss drops as they happen — pitched items, armor boxes, grindstones, and more — to build your drop history and analytics."
         />
-        {/* ── Add drop form ── */}
-        <div style={panelStyle(theme)}>
-          {characters.length === 0 ? (
+
+        {!hasCharacters ? (
+          <div style={panelStyle(theme)}>
             <NoCharactersState theme={theme} />
-          ) : (
-            <>
-            <div
-              style={{
-                fontWeight: 700,
-                color: theme.text,
-                marginBottom: "1rem",
-                fontSize: "1rem",
-              }}
-            >
-              Log a Drop
-            </div>
-            <div
-              style={{
-                display: "flex",
-                flexWrap: "wrap",
-                gap: "0.75rem",
-                alignItems: "flex-end",
-              }}
-            >
-              <div style={{ flex: "1 1 180px" }}>
-                <label
-                  style={{
-                    display: "block",
-                    fontSize: "0.75rem",
-                    fontWeight: 700,
-                    color: theme.muted,
-                    marginBottom: 4,
-                  }}
-                >
-                  Character
-                  <select
-                    value={form.charId}
-                    onChange={(e) => dispatchForm({ type: "setCharId", value: e.target.value })}
-                    style={fieldStyle(theme)}
-                  >
-                    <option value="">Select character…</option>
-                    {characters.map((c) => (
-                      <option key={c.characterName} value={c.characterName}>
-                        {c.characterName} (Lv.{c.level} {c.jobName})
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              </div>
-
-              <div style={{ flex: "1 1 220px" }}>
-                <label
-                  style={{
-                    display: "block",
-                    fontSize: "0.75rem",
-                    fontWeight: 700,
-                    color: theme.muted,
-                    marginBottom: 4,
-                  }}
-                >
-                  Item Dropped
-                  <select
-                    value={form.itemId}
-                    onChange={(e) => dispatchForm({ type: "setItemId", value: e.target.value })}
-                    style={fieldStyle(theme)}
-                  >
-                    <option value="">Select item…</option>
-                    {PITCHED_BOSS_ITEMS.map((item) => (
-                      <option key={item.id} value={item.id}>
-                        {item.name} ({item.boss})
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              </div>
-
-              <div style={{ flex: "0 0 90px" }}>
-                <label
-                  style={{
-                    display: "block",
-                    fontSize: "0.75rem",
-                    fontWeight: 700,
-                    color: theme.muted,
-                    marginBottom: 4,
-                  }}
-                >
-                  Channel
-                  <input
-                    type="number"
-                    min={1}
-                    max={30}
-                    value={form.channel}
-                    onFocus={(e) => e.currentTarget.select()}
-                    onChange={(e) => dispatchForm({ type: "setChannel", value: e.target.value })}
-                    placeholder="CH"
-                    style={fieldStyle(theme)}
-                  />
-                </label>
-              </div>
-
-              <div style={{ flex: "0 0 150px" }}>
-                <label
-                  style={{
-                    display: "block",
-                    fontSize: "0.75rem",
-                    fontWeight: 700,
-                    color: theme.muted,
-                    marginBottom: 4,
-                  }}
-                >
-                  Date
-                  <input
-                    type="date"
-                    value={form.date}
-                    onChange={(e) => dispatchForm({ type: "setDate", value: e.target.value })}
-                    style={fieldStyle(theme)}
-                  />
-                </label>
-              </div>
-
-              <button
-                onClick={handleAdd}
-                disabled={!formReady}
-                style={{
-                  ...addDropBtnBase,
-                  background: formReady ? theme.accent : theme.border,
-                  color: formReady ? "#fff" : theme.muted,
-                  cursor: formReady ? "pointer" : "not-allowed",
-                }}
-              >
-                Add Drop
-              </button>
-            </div>
-            </>
-          )}
-        </div>
-
-        {/* ── Drop log ── */}
-        {sortedDrops.length > 0 && (
-          <DropLogTable theme={theme} drops={sortedDrops} onDelete={handleDelete} />
-        )}
-
-        {/* ── Analytics ── */}
-        {sortedDrops.length > 0 && (
-          <PitchedBossCharts theme={theme} drops={sortedDrops} />
-        )}
-
-        {/* ── Empty state ── */}
-        {sortedDrops.length === 0 && characters.length > 0 && (
-          <div
-            style={{
-              textAlign: "center",
-              color: theme.muted,
-              fontSize: "0.9rem",
-              padding: "2rem 0",
-            }}
-          >
-            No drops logged yet. Use the form above to record your first pitched
-            boss drop!
           </div>
+        ) : (
+          <>
+            <div style={panelStyle(theme)}>
+              <FilterBar
+                theme={theme}
+                filters={filters}
+                setFilters={setFilters}
+                characterNames={characterNames}
+                onLog={() => setDialogOpen(true)}
+              />
+              <LogPanelBody
+                theme={theme}
+                totalCount={drops.length}
+                drops={filteredDrops}
+                sort={sort}
+                onSort={handleSort}
+                onNote={handleNote}
+                onDelete={handleDelete}
+              />
+            </div>
+
+            {filteredDrops.length > 0 && (
+              <PitchedBossCharts theme={theme} drops={filteredDrops} />
+            )}
+          </>
         )}
       </div>
+
+      {dialogOpen && (
+        <LogDropDialog
+          theme={theme}
+          characters={characters}
+          onClose={() => setDialogOpen(false)}
+          onSubmit={handleAdd}
+        />
+      )}
     </div>
   );
 }

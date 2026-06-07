@@ -6,7 +6,7 @@ export function panelStyle(theme: AppTheme): CSSProperties {
     background: theme.panel,
     border: `1px solid ${theme.border}`,
     borderRadius: 12,
-    padding: "1.25rem",
-    marginBottom: "1.5rem",
+    padding: "1rem 1.1rem",
+    marginBottom: "1rem",
   };
 }
