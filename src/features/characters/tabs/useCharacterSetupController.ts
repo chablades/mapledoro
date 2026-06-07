@@ -18,6 +18,8 @@ import {
 } from "../model/charactersStore";
 import { findClassById } from "../../tools/hexa-skills/hexa-classes";
 import { getClassDataByNexonJobName } from "../setup/data/classSkillData";
+import { ARCANE_AREAS, ALL_SACRED_AREAS, type SymbolArea, type SymbolType } from "../../tools/symbols/symbol-data";
+import type { SymbolState } from "../../tools/symbols/useSymbolState";
 import {
   readAllSetupDrafts,
   makeDraftCharacterKey,
@@ -65,6 +67,9 @@ interface EquipmentDraft {
   shoulder?: EquipmentDraftItem; medal?: EquipmentDraftItem;
   weapon?: EquipmentDraftItem; secondary?: EquipmentDraftItem; emblem?: EquipmentDraftItem;
   android?: EquipmentDraftItem; heart?: EquipmentDraftItem; badge?: EquipmentDraftItem;
+  title?: EquipmentDraftItem;
+  /** Symbol levels keyed by region name; folded into tools.symbols (the calculator store). */
+  symbolLevels?: Record<string, number>;
 }
 
 function draftItem(v: EquipmentDraftItem) {
@@ -86,11 +91,57 @@ function parseEquipmentDraft(json: string): StoredCharacterEquipment | null {
       shoulder: draftItem(d.shoulder ?? null), medal: draftItem(d.medal ?? null),
       weapon: draftItem(d.weapon ?? null), secondary: draftItem(d.secondary ?? null), emblem: draftItem(d.emblem ?? null),
       android: draftItem(d.android ?? null), heart: draftItem(d.heart ?? null), badge: draftItem(d.badge ?? null),
+      title: draftItem(d.title ?? null),
       totems: [null, null, null],
     };
   } catch {
     return null;
   }
+}
+
+// ── Symbols: fold equipment-step levels into the calculator's tools.symbols ───
+
+interface SavedSymbols { type: SymbolType; symbols: Record<string, SymbolState> }
+
+function findSymbolArea(name: string): { area: SymbolArea; type: SymbolType } | null {
+  const arcane = ARCANE_AREAS.find((a) => a.name === name);
+  if (arcane) return { area: arcane, type: "arcane" };
+  const sacred = ALL_SACRED_AREAS.find((a) => a.name === name);
+  if (sacred) return { area: sacred, type: "sacred" };
+  return null;
+}
+
+function extractSymbolLevels(json: string): Record<string, number> | null {
+  const d = tryParseJson(json) as EquipmentDraft | null;
+  if (!d || typeof d !== "object" || !d.symbolLevels) return null;
+  return d.symbolLevels;
+}
+
+/** Merge per region: set level + enabled, preserving existing calculator fields. */
+function buildSymbolsToolData(existing: SavedSymbols | null, levels: Record<string, number>): SavedSymbols {
+  const symbols: Record<string, SymbolState> = { ...(existing?.symbols ?? {}) };
+  for (const [name, level] of Object.entries(levels)) {
+    if (!Number.isFinite(level) || level < 1) continue;
+    const found = findSymbolArea(name);
+    if (!found) continue;
+    const prev = symbols[name];
+    symbols[name] = prev
+      ? { ...prev, level, enabled: true }
+      : { level, current: 0, daily: found.area.daily, weeklyEnabled: found.type === "arcane", enabled: true };
+  }
+  return { type: existing?.type ?? "arcane", symbols };
+}
+
+function readExistingSymbols(character: NormalizedCharacterData): SavedSymbols | null {
+  const existing = selectCharacterById(readCharactersStore(), toCharacterKey(character));
+  const saved = existing?.tools?.symbols;
+  return saved && typeof saved === "object" ? (saved as SavedSymbols) : null;
+}
+
+function buildSymbolsToolDataForRecord(character: NormalizedCharacterData, equipmentJson: string): SavedSymbols | null {
+  const levels = extractSymbolLevels(equipmentJson);
+  if (!levels) return null;
+  return buildSymbolsToolData(readExistingSymbols(character), levels);
 }
 
 function buildFullSetupRecord(
@@ -107,10 +158,12 @@ function buildFullSetupRecord(
   const hexaToolData = buildHexaToolDataForRecord(character.jobName, stepData.hexa_matrix ?? "");
   const familiarsData = stepData.familiars ? tryParseJson(stepData.familiars) : null;
   const equipmentData = stepData.equipment ? parseEquipmentDraft(stepData.equipment) : null;
+  const symbolsData = stepData.equipment ? buildSymbolsToolDataForRecord(character, stepData.equipment) : null;
   const tools = {
     ...base.tools,
     ...(hexaToolData ? { hexaSkills: hexaToolData } : null),
     ...(familiarsData ? { familiars: familiarsData } : null),
+    ...(symbolsData ? { symbols: symbolsData } : null),
   };
   return {
     ...base,
@@ -131,7 +184,12 @@ function applyEquipmentDraftToRoster(
   const store = readCharactersStore();
   const existing = selectCharacterById(store, toCharacterKey(character));
   if (!existing) return;
-  upsertFn({ ...existing, equipment });
+  const symbolsData = buildSymbolsToolDataForRecord(character, equipmentJson);
+  upsertFn({
+    ...existing,
+    equipment,
+    tools: symbolsData ? { ...existing.tools, symbols: symbolsData } : existing.tools,
+  });
 }
 
 function applyStandaloneToolDrafts(

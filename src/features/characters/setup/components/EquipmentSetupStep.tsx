@@ -8,6 +8,12 @@ import type { SetupStepDefinition } from "../steps";
 import { ItemIcon } from "../../../../components/ResourceImage";
 import CharacterAvatar from "../../tabs/components/CharacterAvatar";
 import SetupStepFrame from "./SetupStepFrame";
+import {
+  ARCANE_AREAS, SACRED_AREAS, GRAND_SACRED_AREAS,
+  ARCANE_MAX_LEVEL, SACRED_MAX_LEVEL, type SymbolArea,
+} from "../../../tools/symbols/symbol-data";
+import { getClassDataByNexonJobName } from "../data/classSkillData";
+import { branchMaskForClass, weaponPrefixesForClass, secondarySpecForClass, isShieldId } from "../data/classBranch";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -16,19 +22,28 @@ interface EquipmentItem {
   name: string;
 }
 
+/** Picker-only item; carries reqJob for class-branch filtering (stored items keep only id/name). */
+interface CatalogItem extends EquipmentItem {
+  reqJob?: number;
+}
+
 type SlotKey =
   | "ring1" | "ring2" | "ring3" | "ring4"
   | "face" | "eye" | "earring" | "pendant1" | "pendant2" | "belt" | "pocket"
   | "hat" | "cape" | "top" | "glove" | "bottom" | "shoe" | "shoulder" | "medal"
-  | "weapon" | "secondary" | "emblem" | "android" | "heart" | "badge";
+  | "weapon" | "secondary" | "emblem" | "android" | "heart" | "badge" | "title";
 
-type EquipmentDraft = Partial<Record<SlotKey, EquipmentItem | null>>;
+type SymbolTabKey = "arcane" | "sacred";
+// Symbol levels keyed by region name; folded into the calculator's tools.symbols on finish.
+type EquipmentDraft = Partial<Record<SlotKey, EquipmentItem | null>> & { symbolLevels?: Record<string, number> };
 
 interface EquipmentSetupStepProps {
   theme: AppTheme;
   step: SetupStepDefinition;
   stepNumber: number;
   totalSteps: number;
+  direction?: "forward" | "backward";
+  jobName?: string;
   confirmedCharacterName?: string;
   confirmedCharacterImgURL?: string;
   value: string;
@@ -49,7 +64,7 @@ const SLOT_LABELS: Record<SlotKey, string> = {
   glove: "Gloves", bottom: "Bottom", shoe: "Shoes",
   shoulder: "Shoulder", medal: "Medal",
   weapon: "Weapon", secondary: "Secondary", emblem: "Emblem",
-  android: "Android", heart: "Heart", badge: "Badge",
+  android: "Android", heart: "Heart", badge: "Badge", title: "Title",
 };
 
 const SLOT_DATA_FILE: Record<SlotKey, string> = {
@@ -61,8 +76,13 @@ const SLOT_DATA_FILE: Record<SlotKey, string> = {
   glove: "glove", bottom: "bottom", shoe: "shoe",
   shoulder: "shoulder", medal: "medal",
   weapon: "weapon", secondary: "secondary", emblem: "emblem",
-  android: "android", heart: "heart", badge: "badge",
+  android: "android", heart: "heart", badge: "badge", title: "title",
 };
+
+const SYMBOL_TABS: { key: SymbolTabKey; label: string }[] = [
+  { key: "arcane", label: "Arcane" },
+  { key: "sacred", label: "Sacred" },
+];
 
 const SLOT_SIZE = 68;
 const SEARCH_LIMIT = 60;
@@ -83,10 +103,10 @@ function serialiseDraft(draft: EquipmentDraft): string {
 
 function normalize(s: string) { return s.toLowerCase().replace(/[^a-z0-9]/g, ""); }
 
-function filterItems(items: EquipmentItem[], query: string): EquipmentItem[] {
+function filterItems(items: CatalogItem[], query: string): CatalogItem[] {
   if (!query.trim()) return items.slice(0, SEARCH_LIMIT);
   const tokens = query.trim().split(/\s+/).flatMap((t) => { const n = normalize(t); return n ? [n] : []; });
-  const out: EquipmentItem[] = [];
+  const out: CatalogItem[] = [];
   for (const item of items) {
     if (out.length >= SEARCH_LIMIT) break;
     if (tokens.every((t) => normalize(item.name).includes(t))) out.push(item);
@@ -94,38 +114,93 @@ function filterItems(items: EquipmentItem[], query: string): EquipmentItem[] {
   return out;
 }
 
+/** Whether a class can equip an item. mask 0 = no filter; items without reqJob are universal. */
+function branchAllows(item: CatalogItem, branchMask: number): boolean {
+  if (branchMask === 0) return true;
+  return !item.reqJob || (item.reqJob & branchMask) !== 0;
+}
+
+const startsWithAny = (id: string, prefixes: string[]) => prefixes.some((p) => id.startsWith(p));
+
+// Astra secondaries (id prefix 0172) come in 3 enhancement stages that all share the same
+// name; the trailing id digit (0/1/2) is the stage. Surface it so the picker doesn't show
+// three identical rows. Stages correspond to the liberation tool's Astra missions.
+function withStageLabel(id: string, name: string): string {
+  if (!id.startsWith("0172")) return name;
+  const stage = Number(id.slice(-1));
+  return stage >= 0 && stage <= 2 ? `${name} (Stage ${stage + 1})` : name;
+}
+
+interface PickerSource {
+  files: string[];
+  filter: (item: CatalogItem) => boolean;
+}
+
+/** Resolves which data file(s) to load and how to filter them for a given slot + class.
+ *  Weapons/secondaries filter by class-specific id prefixes (precise weapon TYPE);
+ *  classes without a prefix mapping fall back to branch filtering. */
+function resolvePickerSource(slot: SlotKey, classId: string | undefined, branchMask: number): PickerSource {
+  if (slot === "weapon") {
+    const prefixes = weaponPrefixesForClass(classId);
+    if (prefixes) return { files: ["weapon"], filter: (item) => startsWithAny(item.id, prefixes) && branchAllows(item, branchMask) };
+    return { files: ["weapon"], filter: (item) => branchAllows(item, branchMask) };
+  }
+  if (slot === "secondary") {
+    const spec = secondarySpecForClass(classId);
+    if (spec) {
+      return {
+        files: spec.files,
+        filter: (item) => {
+          if (startsWithAny(item.id, spec.prefixes)) return true;
+          if (!isShieldId(item.id)) return false;
+          // Astra shields are class-specific (matched by name); regular shields are branch-pooled.
+          if (item.name.startsWith("Astra ")) return spec.astraShieldNames.includes(item.name);
+          return spec.usesShield && branchAllows(item, branchMask);
+        },
+      };
+    }
+    return { files: [SLOT_DATA_FILE[slot]], filter: (item) => branchAllows(item, branchMask) };
+  }
+  return { files: [SLOT_DATA_FILE[slot]], filter: (item) => branchAllows(item, branchMask) };
+}
+
 // ── Item picker ────────────────────────────────────────────────────────────
 
-const cachedSlotItems: Partial<Record<string, EquipmentItem[]>> = {};
+const cachedSlotItems: Partial<Record<string, CatalogItem[]>> = {};
 
-function ItemPicker({ slot, current, theme, onSelect, onClose }: {
+type RawCatalogEntry = [string, string] | [string, string, { reqJob?: number }];
+
+function ItemPicker({ slot, current, theme, files, itemFilter, onSelect, onClose }: {
   slot: SlotKey;
   current: EquipmentItem | null | undefined;
   theme: AppTheme;
+  files: string[];
+  itemFilter: (item: CatalogItem) => boolean;
   onSelect: (item: EquipmentItem | null) => void;
   onClose: () => void;
 }) {
-  const [loadedItems, setLoadedItems] = useState<EquipmentItem[] | null>(null);
+  const [loadedItems, setLoadedItems] = useState<CatalogItem[] | null>(null);
   const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const file = SLOT_DATA_FILE[slot];
-  const items = cachedSlotItems[file] ?? loadedItems;
+  const cacheKey = files.join("+");
+  const items = cachedSlotItems[cacheKey] ?? loadedItems;
 
   useEffect(() => {
     inputRef.current?.focus();
-    if (cachedSlotItems[file]) return;
-    fetch(`/data/equipment/${file}.json`)
-      .then((r) => r.json())
-      .then((raw: [string, string][]) => {
-        const parsed = raw.map(([id, name]) => ({ id, name }));
-        cachedSlotItems[file] = parsed;
+    if (cachedSlotItems[cacheKey]) return;
+    const fileList = cacheKey.split("+");
+    Promise.all(fileList.map((f) => fetch(`/data/equipment/${f}.json`).then((r) => r.json() as Promise<RawCatalogEntry[]>)))
+      .then((raws) => {
+        const parsed = raws.flat().map(([id, name, stats]) => ({ id, name: withStageLabel(id, name), reqJob: stats?.reqJob }));
+        cachedSlotItems[cacheKey] = parsed;
         setLoadedItems(parsed);
       })
       .catch(() => setLoadedItems([]));
-  }, [slot, file]);
+  }, [cacheKey]);
 
-  const filtered = items && query ? filterItems(items, query) : null;
+  const sourceItems = items ? items.filter(itemFilter) : null;
+  const filtered = sourceItems && query ? filterItems(sourceItems, query) : null;
 
   return (
     <div style={{ border: `1px solid ${theme.accent}`, borderRadius: 10, background: theme.panel, boxShadow: "0 4px 20px rgba(0,0,0,0.3)", overflow: "hidden" }}>
@@ -175,7 +250,7 @@ function ItemPicker({ slot, current, theme, onSelect, onClose }: {
               <button
                 key={item.id}
                 type="button"
-                onClick={() => { onSelect(item); onClose(); }}
+                onClick={() => { onSelect({ id: item.id, name: item.name }); onClose(); }}
                 style={{
                   display: "flex", alignItems: "center", gap: "0.45rem",
                   width: "100%", padding: "0.3rem 0.6rem",
@@ -216,6 +291,7 @@ function SlotCell({ slotKey, item, theme, isActive, onClick, picker }: {
       <div
         role="button"
         tabIndex={0}
+        title={item ? item.name : undefined}
         aria-label={item ? `${SLOT_LABELS[slotKey]}: ${item.name}` : `Set ${SLOT_LABELS[slotKey]}`}
         onClick={(e) => { e.stopPropagation(); compute(); onClick(); }}
         onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); compute(); onClick(); } }}
@@ -236,16 +312,7 @@ function SlotCell({ slotKey, item, theme, isActive, onClick, picker }: {
         }}
       >
         {item ? (
-          <>
-            <ItemIcon id={item.id} size={30} />
-            <span style={{
-              fontSize: "0.75rem", color: theme.muted, fontWeight: 700, lineHeight: 1,
-              overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-              maxWidth: SLOT_SIZE - 4, display: "block",
-            }}>
-              {item.name}
-            </span>
-          </>
+          <ItemIcon id={item.id} size={48} />
         ) : (
           <span style={{ fontSize: "0.75rem", color: theme.muted, fontWeight: 700, lineHeight: 1.2, textAlign: "center", whiteSpace: "nowrap", overflow: "hidden" }}>
             {SLOT_LABELS[slotKey]}
@@ -292,6 +359,135 @@ function SlotColumn({ slots, draft, theme, activeSlot, onToggle, renderPicker }:
   );
 }
 
+// ── Symbol level tile + section ──────────────────────────────────────────────
+
+function SymbolLevelTile({ area, level, maxLevel, theme, onLevel }: {
+  area: SymbolArea;
+  level: number;
+  maxLevel: number;
+  theme: AppTheme;
+  onLevel: (level: number) => void;
+}) {
+  const placed = level >= 1;
+  return (
+    <div style={{
+      width: 84, flexShrink: 0,
+      border: `1px solid ${placed ? theme.accent : theme.border}`,
+      borderRadius: 8,
+      background: placed ? `${theme.accent}15` : theme.bg,
+      display: "flex", flexDirection: "column", alignItems: "center", gap: 3,
+      padding: "6px 4px", boxSizing: "border-box",
+    }}>
+      <div style={{ opacity: placed ? 1 : 0.3, filter: placed ? "none" : "grayscale(1)", lineHeight: 0 }}>
+        <ItemIcon id={area.itemId} size={32} />
+      </div>
+      <span style={{
+        fontSize: "0.75rem", color: placed ? theme.text : theme.muted, fontWeight: 700, lineHeight: 1.1,
+        textAlign: "center", width: "100%", minHeight: "2.2em",
+        display: "flex", alignItems: "center", justifyContent: "center",
+      }}>
+        {area.name}
+      </span>
+      <input
+        type="number"
+        className="no-spinner"
+        min={0}
+        max={maxLevel}
+        aria-label={`${area.name} symbol level`}
+        value={level || ""}
+        placeholder="Lv 0"
+        onChange={(e) => {
+          const raw = Math.floor(Number(e.target.value) || 0);
+          onLevel(Math.max(0, Math.min(maxLevel, raw)));
+        }}
+        style={{
+          width: 56, textAlign: "center",
+          border: `1px solid ${theme.border}`, borderRadius: 6,
+          background: theme.bg, color: theme.text,
+          fontFamily: "inherit", fontWeight: 700, fontSize: "0.8rem",
+          padding: "0.25rem", boxSizing: "border-box",
+        }}
+      />
+    </div>
+  );
+}
+
+function SymbolSection({ symbolLevels, activeTab, theme, onTabChange, onLevel }: {
+  symbolLevels: Record<string, number>;
+  activeTab: SymbolTabKey;
+  theme: AppTheme;
+  onTabChange: (tab: SymbolTabKey) => void;
+  onLevel: (regionName: string, level: number) => void;
+}) {
+  const maxLevel = activeTab === "arcane" ? ARCANE_MAX_LEVEL : SACRED_MAX_LEVEL;
+  const renderTile = (area: SymbolArea) => (
+    <SymbolLevelTile
+      key={area.itemId}
+      area={area}
+      level={symbolLevels[area.name] ?? 0}
+      maxLevel={maxLevel}
+      theme={theme}
+      onLevel={(level) => onLevel(area.name, level)}
+    />
+  );
+  return (
+    <div>
+      <div style={{ display: "flex", gap: 4, marginBottom: "0.6rem" }}>
+        {SYMBOL_TABS.map((tab) => {
+          const isActive = tab.key === activeTab;
+          return (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => onTabChange(tab.key)}
+              style={{
+                border: `1px solid ${isActive ? theme.accent : theme.border}`,
+                borderRadius: 8,
+                background: isActive ? theme.accent : theme.bg,
+                color: isActive ? "#fff" : theme.text,
+                fontFamily: "inherit", fontWeight: 800, fontSize: "0.8rem",
+                padding: "0.4rem 0.8rem", cursor: "pointer",
+              }}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
+      {activeTab === "arcane" ? (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+          {ARCANE_AREAS.map(renderTile)}
+        </div>
+      ) : (
+        <>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+            {SACRED_AREAS.map(renderTile)}
+          </div>
+          <p style={{
+            margin: "0.75rem 0 0.5rem", fontSize: "0.75rem", fontWeight: 700, color: theme.muted,
+          }}>
+            Grand Sacred
+          </p>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+            {GRAND_SACRED_AREAS.map(renderTile)}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function SectionHeading({ label, theme }: { label: string; theme: AppTheme }) {
+  return (
+    <p style={{
+      margin: "0 0 0.5rem", fontSize: "0.8rem", fontWeight: 800,
+      letterSpacing: "0.03em", textTransform: "uppercase", color: theme.muted,
+    }}>
+      {label}
+    </p>
+  );
+}
+
 // ── Main component ─────────────────────────────────────────────────────────
 
 export default function EquipmentSetupStep({
@@ -299,6 +495,8 @@ export default function EquipmentSetupStep({
   step,
   stepNumber,
   totalSteps,
+  direction = "forward",
+  jobName = "",
   confirmedCharacterImgURL,
   value,
   onChange,
@@ -306,8 +504,28 @@ export default function EquipmentSetupStep({
   onNext,
   onFinish,
 }: EquipmentSetupStepProps) {
+  const classId = getClassDataByNexonJobName(jobName)?.id;
+  const branchMask = branchMaskForClass(classId);
   const [draft, setDraft] = useState<EquipmentDraft>(() => parseDraft(value));
   const [activeSlot, setActiveSlot] = useState<SlotKey | null>(null);
+  const [substep, setSubstep] = useState(() => direction === "backward" ? 1 : 0);
+  const [substepDirection, setSubstepDirection] = useState<"forward" | "backward">("forward");
+  const [hasSubstepSwitched, setHasSubstepSwitched] = useState(false);
+  const [symbolTab, setSymbolTab] = useState<SymbolTabKey>("arcane");
+
+  function goToSubstep(next: number) {
+    setHasSubstepSwitched(true);
+    setSubstepDirection(next > substep ? "forward" : "backward");
+    setActiveSlot(null);
+    setSubstep(next);
+  }
+
+  const substepAnimStyle: CSSProperties = hasSubstepSwitched ? {
+    animationName: substepDirection === "forward" ? "setupStepSlideForward" : "setupStepSlideBackward",
+    animationDuration: "var(--characters-standard)",
+    animationTimingFunction: "ease",
+    animationFillMode: "both",
+  } : {};
 
   function updateSlot(slot: SlotKey, item: EquipmentItem | null) {
     const next = { ...draft, [slot]: item };
@@ -319,6 +537,15 @@ export default function EquipmentSetupStep({
     setActiveSlot((prev) => (prev === slot ? null : slot));
   }
 
+  function setSymbolLevel(regionName: string, level: number) {
+    const levels = { ...(draft.symbolLevels ?? {}) };
+    if (level >= 1) levels[regionName] = level;
+    else delete levels[regionName];
+    const next = { ...draft, symbolLevels: levels };
+    setDraft(next);
+    onChange(serialiseDraft(next));
+  }
+
   useEffect(() => {
     if (!activeSlot) return;
     const close = () => setActiveSlot(null);
@@ -328,14 +555,58 @@ export default function EquipmentSetupStep({
 
   function renderPicker(slot: SlotKey): ReactNode {
     if (activeSlot !== slot) return null;
+    const source = resolvePickerSource(slot, classId, branchMask);
     return (
       <ItemPicker
         slot={slot}
         current={draft[slot]}
         theme={theme}
+        files={source.files}
+        itemFilter={source.filter}
         onSelect={(item) => updateSlot(slot, item)}
         onClose={() => setActiveSlot(null)}
       />
+    );
+  }
+
+  if (substep === 1) {
+    return (
+      <div key={1} style={substepAnimStyle}>
+        <SetupStepFrame
+          theme={theme}
+          stepLabel="Title & Symbols"
+          stepNumber={stepNumber}
+          totalSteps={totalSteps}
+          description="Add your title and enter your symbol levels."
+          onBack={() => goToSubstep(0)}
+          onNext={onNext}
+          onFinish={onFinish}
+        >
+          <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+            <div>
+              <SectionHeading label="Title" theme={theme} />
+              <SlotCell
+                slotKey="title"
+                item={draft.title}
+                theme={theme}
+                isActive={activeSlot === "title"}
+                onClick={() => toggleSlot("title")}
+                picker={renderPicker("title")}
+              />
+            </div>
+            <div>
+              <SectionHeading label="Symbols" theme={theme} />
+              <SymbolSection
+                symbolLevels={draft.symbolLevels ?? {}}
+                activeTab={symbolTab}
+                theme={theme}
+                onTabChange={setSymbolTab}
+                onLevel={setSymbolLevel}
+              />
+            </div>
+          </div>
+        </SetupStepFrame>
+      </div>
     );
   }
 
@@ -355,6 +626,7 @@ export default function EquipmentSetupStep({
   const colStyle: CSSProperties = { display: "flex", flexDirection: "column", gap: 4, flexShrink: 0 };
 
   return (
+    <div key={0} style={substepAnimStyle}>
     <SetupStepFrame
       theme={theme}
       stepLabel={step.label}
@@ -362,8 +634,9 @@ export default function EquipmentSetupStep({
       totalSteps={totalSteps}
       description="Record the items you have equipped."
       onBack={onBack}
-      onNext={onNext}
+      onNext={() => goToSubstep(1)}
       onFinish={onFinish}
+      nextLabel="Continue"
     >
       {/* Equipment grid */}
       <div style={{ overflowX: "auto" }}>
@@ -424,5 +697,6 @@ export default function EquipmentSetupStep({
       </div>
       </div>
     </SetupStepFrame>
+    </div>
   );
 }

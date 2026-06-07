@@ -75,6 +75,7 @@ export interface StoredCharacterEquipment {
   android: StoredEquipmentItem | null;
   heart: StoredEquipmentItem | null;
   badge: StoredEquipmentItem | null;
+  title: StoredEquipmentItem | null;
   totems: [StoredEquipmentItem | null, StoredEquipmentItem | null, StoredEquipmentItem | null];
 }
 
@@ -209,6 +210,7 @@ function createEmptyCharacterEquipment(): StoredCharacterEquipment {
     android: null,
     heart: null,
     badge: null,
+    title: null,
     totems: [null, null, null],
   };
 }
@@ -387,7 +389,7 @@ function parseStoredCharacterRecord(
     soul: parseSoul(value.soul),
     stats: isStoredCharacterStats(value.stats) ? value.stats : createEmptyCharacterStats(),
     equipment: isStoredCharacterEquipment(value.equipment)
-      ? value.equipment
+      ? { ...createEmptyCharacterEquipment(), ...value.equipment }
       : createEmptyCharacterEquipment(),
     tools: isObject(value.tools) ? (value.tools as Record<string, unknown>) : undefined,
     meta: {

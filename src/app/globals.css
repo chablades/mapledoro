@@ -143,6 +143,17 @@ html.scroll-locked body {
   cursor: pointer;
 }
 
+/* Hide native number-input spinner arrows */
+.no-spinner {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+.no-spinner::-webkit-outer-spin-button,
+.no-spinner::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
 /* Uppercase field label sitting above a control */
 .tool-field-label {
   font-size: 0.75rem;

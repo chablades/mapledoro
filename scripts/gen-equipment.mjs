@@ -40,8 +40,17 @@ function servedStats(rawId) {
 
 mkdirSync(OUTPUT_DIR, { recursive: true });
 
+// In the item data, a stat-bearing item's `islot` is the slot/type code it occupies:
+// "Wp"/"WpSi" = a primary weapon (WpSi = two-handed, also blocks the secondary slot),
+// "Si" = a pure secondary (katara, Magic Arrows, Soul Ring, shields, …). The game files
+// lump both primary weapons and secondaries under the Character/Weapon category, so the
+// weapon and secondary picker files are split apart here by `islot`.
+const isSecondaryIslot = (stats) => stats?.islot === "Si";
+
 // Maps each slot name to which item categories and optional ID prefixes match it.
 // prefixes: 5-character string prefixes of the raw item ID (zero-padded).
+// where(rawId, entry, stats): optional override predicate; when present, cats/prefixes
+//   are ignored and the item is included iff where() returns true.
 const SLOT_FILTERS = {
   ring:      { cats: ["Character/Ring"] },
   face:      { cats: ["Character/Accessory"], prefixes: ["01010", "01012"] },
@@ -60,10 +69,14 @@ const SLOT_FILTERS = {
   bottom:    { cats: ["Character/Pants", "Character/Longcoat"] },
   glove:     { cats: ["Character/Glove"] },
   shoe:      { cats: ["Character/Shoes"] },
-  weapon:    { cats: ["Character/Weapon"] },
-  secondary: { cats: ["Character/Shield"] },
+  // Primary weapons: Character/Weapon minus the Si secondaries (cosmetics have no stats
+  // and stay here — they're weapons).
+  weapon:    { where: (_id, entry, stats) => entry.category === "Character/Weapon" && !isSecondaryIslot(stats) },
+  // Secondaries: shields plus the Si-coded items mislabeled as Character/Weapon.
+  secondary: { where: (_id, entry, stats) => entry.category === "Character/Shield" || (entry.category === "Character/Weapon" && isSecondaryIslot(stats)) },
   android:   { cats: ["Character/Android"], prefixes: ["01662"] },
   heart:     { cats: ["Character/Android"], prefixes: ["01672"] },
+  title:     { cats: ["Item/Install"], prefixes: ["03700"] },
 };
 
 for (const [slot, filter] of Object.entries(SLOT_FILTERS)) {
@@ -72,9 +85,13 @@ for (const [slot, filter] of Object.entries(SLOT_FILTERS)) {
 
   for (const [rawId, entry] of Object.entries(entries)) {
     if (!entry.name) continue;
-    if (!filter.cats.includes(entry.category)) continue;
-    if (filter.prefixes && !filter.prefixes.some((p) => rawId.startsWith(p))) continue;
     const stats = servedStats(rawId);
+    if (filter.where) {
+      if (!filter.where(rawId, entry, stats)) continue;
+    } else {
+      if (!filter.cats.includes(entry.category)) continue;
+      if (filter.prefixes && !filter.prefixes.some((p) => rawId.startsWith(p))) continue;
+    }
     items.push(stats ? [rawId, entry.name, stats] : [rawId, entry.name]);
   }
 
