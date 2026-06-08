@@ -286,7 +286,7 @@ export function CharacterSyncPanel({
           <span
             style={{
               color: theme.muted,
-              fontSize: "0.7rem",
+              fontSize: "0.75rem",
               flexShrink: 0,
               transform: open ? "rotate(180deg)" : "none",
               transition: "transform 0.15s",

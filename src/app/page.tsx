@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore, type CSSProperties } from "react";
-import { createPortal } from "react-dom";
+import { useEffect, useRef, useState, useSyncExternalStore, type CSSProperties } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import AppShell from "../components/AppShell";
@@ -603,12 +602,13 @@ function CustomizeToolsDialog({
   onSave: (hrefs: string[]) => void;
 }) {
   const [draft, setDraft] = useState<string[]>(current);
+  const dialogRef = useRef<HTMLDialogElement>(null);
 
+  // Open as a true modal: native <dialog> handles focus trapping, Escape, and
+  // the backdrop for free (mounted only while editing, so open once on mount).
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [onClose]);
+    dialogRef.current?.showModal();
+  }, []);
 
   const draftSet = new Set(draft);
   const atMax = draft.length >= HOME_TOOLS_COUNT;
@@ -624,20 +624,12 @@ function CustomizeToolsDialog({
 
   const save = () => onSave(ALL_QUICK_TOOLS.filter((t) => draftSet.has(t.href)).map((t) => t.href));
 
-  const overlayStyle: CSSProperties = {
-    position: "fixed",
-    inset: 0,
-    background: "rgba(15, 23, 42, 0.42)",
-    display: "grid",
-    placeItems: "center",
-    zIndex: 60,
-    padding: "1rem",
-  };
-  const panelStyle: CSSProperties = {
+  // display/flex live in the <style> block (scoped to [open]) so the dialog stays
+  // hidden until showModal() runs, avoiding a one-frame in-flow flash on mount.
+  const dialogStyle: CSSProperties = {
     width: "min(560px, 100%)",
     maxHeight: "85vh",
-    display: "flex",
-    flexDirection: "column",
+    padding: 0,
     background: theme.panel,
     color: theme.text,
     border: `1px solid ${theme.border}`,
@@ -680,16 +672,18 @@ function CustomizeToolsDialog({
     opacity: canSave ? 1 : 0.5,
   };
 
-  return createPortal(
-    <div onClick={onClose} style={overlayStyle}>
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label="Customize dashboard tools"
-        onClick={(e) => e.stopPropagation()}
-        style={panelStyle}
-      >
+  return (
+    <dialog
+      ref={dialogRef}
+      className="customize-tools-dialog"
+      aria-label="Customize dashboard tools"
+      onCancel={onClose}
+      onClick={(e) => { if (e.target === dialogRef.current) onClose(); }}
+      style={dialogStyle}
+    >
         <style>{`
+          dialog.customize-tools-dialog[open] { display: flex; flex-direction: column; }
+          dialog.customize-tools-dialog::backdrop { background: rgba(15, 23, 42, 0.42); }
           @media (min-width: 540px) {
             .customize-tools-grid { grid-template-columns: 1fr 1fr !important; }
           }
@@ -732,9 +726,7 @@ function CustomizeToolsDialog({
             Save
           </button>
         </div>
-      </div>
-    </div>,
-    document.body,
+    </dialog>
   );
 }
 
