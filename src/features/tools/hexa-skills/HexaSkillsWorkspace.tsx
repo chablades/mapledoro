@@ -65,7 +65,10 @@ function ClassSelector({
   const groups = getClassGroups();
 
   return (
-    <div className="fade-in panel-card" style={sectionPanel}>
+    <div
+      className="fade-in panel-card"
+      style={{ ...sectionPanel, display: "flex", flexDirection: "column", justifyContent: "center" }}
+    >
       <div
         style={{
           display: "flex",
