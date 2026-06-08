@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useSyncExternalStore, type CSSProperties } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore, type CSSProperties } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import AppShell from "../components/AppShell";
@@ -8,6 +8,7 @@ import { ItemIcon } from "../components/ResourceImage";
 import SunnySundayPanel from "../components/SunnySundayPanel";
 import type { AppTheme } from "../components/themes";
 import { useClock } from "../lib/useClock";
+import { readGlobalTool, writeGlobalTool } from "../features/tools/globalToolsStore";
 import {
   readCharactersStore,
   selectCharactersList,
@@ -141,7 +142,9 @@ type QuickTool = {
   href: string;
 } & ({ iconType: "emoji"; icon: string } | { iconType: "item"; itemId: string });
 
-const QUICK_TOOLS: QuickTool[] = [
+// Full catalog of dashboard-launchable tools. `href` doubles as the stable id
+// used to persist the user's chosen subset.
+const ALL_QUICK_TOOLS: QuickTool[] = [
   {
     title: "Star Force",
     desc: "Cost calculator",
@@ -177,7 +180,64 @@ const QUICK_TOOLS: QuickTool[] = [
     iconType: "item",
     href: "/tools/liberation",
   },
+  {
+    title: "Symbol Tracker",
+    desc: "Arcane & Sacred progress",
+    itemId: "01713000", // Sacred Symbol: Cernium
+    iconType: "item",
+    href: "/tools/symbols",
+  },
+  {
+    title: "Boss Crystals",
+    desc: "Weekly crystal income",
+    itemId: "04001928", // Intense Power Crystal
+    iconType: "item",
+    href: "/tools/boss-crystals",
+  },
+  {
+    title: "Daily Tracker",
+    desc: "Daily content tracker",
+    icon: "📋",
+    iconType: "emoji",
+    href: "/tools/dailies",
+  },
+  {
+    title: "Drop Tracker",
+    desc: "Rare boss drops",
+    itemId: "02539004", // Grindstone of Faith
+    iconType: "item",
+    href: "/tools/pitched-boss-drops",
+  },
+  {
+    title: "Trace Restoration",
+    desc: "Whisper crystal progress",
+    itemId: "04001956", // Pitched Whisper Crystal
+    iconType: "item",
+    href: "/tools/trace-restoration",
+  },
+  {
+    title: "Event Planner",
+    desc: "Event spending planner",
+    icon: "📅",
+    iconType: "emoji",
+    href: "/tools/event-planner",
+  },
 ];
+
+const HOME_TOOLS_KEY = "homeToolSelection";
+const HOME_TOOLS_COUNT = 5;
+const DEFAULT_TOOL_HREFS = ALL_QUICK_TOOLS.slice(0, HOME_TOOLS_COUNT).map((t) => t.href);
+
+// Read the saved selection, falling back to the default when missing or invalid
+// (e.g. a stored tool was renamed/removed, or the count drifted).
+function readHomeToolSelection(): string[] {
+  const stored = readGlobalTool<string[]>(HOME_TOOLS_KEY);
+  if (Array.isArray(stored)) {
+    const valid = stored.filter((href) => ALL_QUICK_TOOLS.some((t) => t.href === href));
+    if (valid.length === HOME_TOOLS_COUNT) return valid;
+  }
+  return DEFAULT_TOOL_HREFS;
+}
 
 // -- Character tracker quick-launch icons --------------------------------------
 interface TrackerLink {
@@ -455,7 +515,237 @@ function ResetTimerPanels({ theme, now }: { theme: AppTheme; now: Date | null })
 
 // -- Quick Tools Grid ----------------------------------------------------------
 
+function ToolIcon({ tool, size }: { tool: QuickTool; size: number }) {
+  return tool.iconType === "item" ? (
+    <ItemIcon id={tool.itemId} size={size} />
+  ) : (
+    <span style={{ fontSize: size * 0.78, lineHeight: 1 }}>{tool.icon}</span>
+  );
+}
+
+// Single selectable row in the customize dialog.
+function ToolOption({
+  theme,
+  tool,
+  selected,
+  disabled,
+  onToggle,
+}: {
+  theme: AppTheme;
+  tool: QuickTool;
+  selected: boolean;
+  disabled: boolean;
+  onToggle: () => void;
+}) {
+  const optionStyle: CSSProperties = {
+    display: "flex",
+    alignItems: "center",
+    gap: "0.6rem",
+    padding: "0.55rem 0.65rem",
+    borderRadius: 12,
+    border: `1px solid ${selected ? theme.accent : theme.border}`,
+    background: selected ? theme.accentSoft : theme.bg,
+    cursor: disabled ? "not-allowed" : "pointer",
+    opacity: disabled ? 0.45 : 1,
+    textAlign: "left",
+    fontFamily: "inherit",
+    width: "100%",
+    transition: "border-color 0.15s, background 0.15s",
+  };
+  const checkStyle: CSSProperties = {
+    width: 20,
+    height: 20,
+    borderRadius: 6,
+    flexShrink: 0,
+    border: `1px solid ${selected ? theme.accent : theme.border}`,
+    background: selected ? theme.accent : "transparent",
+    color: "#fff",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "0.78rem",
+    fontWeight: 900,
+  };
+  return (
+    <button
+      type="button"
+      aria-pressed={selected}
+      disabled={disabled}
+      onClick={onToggle}
+      style={optionStyle}
+    >
+      <div style={{ width: 30, height: 30, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+        <ToolIcon tool={tool} size={26} />
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontWeight: 700, fontSize: "0.82rem", color: theme.text, lineHeight: 1.2 }}>
+          {tool.title}
+        </div>
+        <div style={{ fontSize: "0.75rem", color: theme.muted, fontWeight: 600, lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          {tool.desc}
+        </div>
+      </div>
+      <span style={checkStyle}>{selected ? "✓" : ""}</span>
+    </button>
+  );
+}
+
+function CustomizeToolsDialog({
+  theme,
+  current,
+  onClose,
+  onSave,
+}: {
+  theme: AppTheme;
+  current: string[];
+  onClose: () => void;
+  onSave: (hrefs: string[]) => void;
+}) {
+  const [draft, setDraft] = useState<string[]>(current);
+  const dialogRef = useRef<HTMLDialogElement>(null);
+
+  // Open as a true modal: native <dialog> handles focus trapping, Escape, and
+  // the backdrop for free (mounted only while editing, so open once on mount).
+  useEffect(() => {
+    dialogRef.current?.showModal();
+  }, []);
+
+  const draftSet = new Set(draft);
+  const atMax = draft.length >= HOME_TOOLS_COUNT;
+  const canSave = draft.length === HOME_TOOLS_COUNT;
+
+  const toggle = (href: string) => {
+    setDraft((prev) => {
+      if (prev.includes(href)) return prev.filter((h) => h !== href);
+      if (prev.length >= HOME_TOOLS_COUNT) return prev;
+      return [...prev, href];
+    });
+  };
+
+  const save = () => onSave(ALL_QUICK_TOOLS.filter((t) => draftSet.has(t.href)).map((t) => t.href));
+
+  // display/flex live in the <style> block (scoped to [open]) so the dialog stays
+  // hidden until showModal() runs, avoiding a one-frame in-flow flash on mount.
+  const dialogStyle: CSSProperties = {
+    width: "min(560px, 100%)",
+    maxHeight: "85vh",
+    padding: 0,
+    background: theme.panel,
+    color: theme.text,
+    border: `1px solid ${theme.border}`,
+    borderRadius: 16,
+    boxShadow: "0 16px 48px rgba(0,0,0,0.24)",
+    overflow: "hidden",
+  };
+  const countBadgeStyle: CSSProperties = {
+    marginLeft: "auto",
+    fontSize: "0.78rem",
+    fontWeight: 800,
+    color: canSave ? theme.accentText : theme.muted,
+    background: canSave ? theme.accentSoft : theme.timerBg,
+    border: `1px solid ${canSave ? theme.accent + "55" : theme.border}`,
+    padding: "2px 9px",
+    borderRadius: 999,
+    flexShrink: 0,
+  };
+  const cancelBtnStyle: CSSProperties = {
+    border: `1px solid ${theme.border}`,
+    borderRadius: 10,
+    background: theme.bg,
+    color: theme.text,
+    fontFamily: "inherit",
+    fontWeight: 800,
+    fontSize: "0.84rem",
+    padding: "0.5rem 0.9rem",
+    cursor: "pointer",
+  };
+  const saveBtnStyle: CSSProperties = {
+    border: `1px solid ${theme.accent}`,
+    borderRadius: 10,
+    background: theme.accent,
+    color: "#fff",
+    fontFamily: "inherit",
+    fontWeight: 800,
+    fontSize: "0.84rem",
+    padding: "0.5rem 1.1rem",
+    cursor: canSave ? "pointer" : "not-allowed",
+    opacity: canSave ? 1 : 0.5,
+  };
+
+  return (
+    <dialog
+      ref={dialogRef}
+      className="customize-tools-dialog"
+      aria-label="Customize dashboard tools"
+      onCancel={onClose}
+      onClick={(e) => { if (e.target === dialogRef.current) onClose(); }}
+      style={dialogStyle}
+    >
+        <style>{`
+          dialog.customize-tools-dialog[open] { display: flex; flex-direction: column; }
+          dialog.customize-tools-dialog::backdrop { background: rgba(15, 23, 42, 0.42); }
+          @media (min-width: 540px) {
+            .customize-tools-grid { grid-template-columns: 1fr 1fr !important; }
+          }
+        `}</style>
+        <div style={{ padding: "1rem 1.1rem 0.75rem", borderBottom: `1px solid ${theme.border}` }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <span className="panel-header-title" style={{ color: theme.text, fontSize: "1.05rem" }}>
+              Customize Tools
+            </span>
+            <span style={countBadgeStyle}>{draft.length} / {HOME_TOOLS_COUNT}</span>
+          </div>
+          <div style={{ fontSize: "0.78rem", color: theme.muted, fontWeight: 600, marginTop: 4 }}>
+            Pick exactly {HOME_TOOLS_COUNT} tools to show on your dashboard.
+          </div>
+        </div>
+
+        <div style={{ padding: "0.85rem 1.1rem", overflowY: "auto", flex: 1, minHeight: 0 }}>
+          <div className="customize-tools-grid" style={{ display: "grid", gridTemplateColumns: "1fr", gap: "0.5rem" }}>
+            {ALL_QUICK_TOOLS.map((tool) => {
+              const selected = draftSet.has(tool.href);
+              return (
+                <ToolOption
+                  key={tool.href}
+                  theme={theme}
+                  tool={tool}
+                  selected={selected}
+                  disabled={!selected && atMax}
+                  onToggle={() => toggle(tool.href)}
+                />
+              );
+            })}
+          </div>
+        </div>
+
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.55rem", padding: "0.8rem 1.1rem", borderTop: `1px solid ${theme.border}` }}>
+          <button type="button" onClick={onClose} style={cancelBtnStyle}>
+            Cancel
+          </button>
+          <button type="button" onClick={save} disabled={!canSave} style={saveBtnStyle}>
+            Save
+          </button>
+        </div>
+    </dialog>
+  );
+}
+
 function QuickToolsGrid({ theme }: { theme: AppTheme }) {
+  const mounted = useSyncExternalStore(subscribeFn, () => true, () => false);
+  const [override, setOverride] = useState<string[] | null>(null);
+  const [editing, setEditing] = useState(false);
+
+  const selectedHrefs = override ?? (mounted ? readHomeToolSelection() : DEFAULT_TOOL_HREFS);
+  const selectedTools = selectedHrefs
+    .map((href) => ALL_QUICK_TOOLS.find((t) => t.href === href))
+    .filter((t): t is QuickTool => Boolean(t));
+
+  const handleSave = (hrefs: string[]) => {
+    setOverride(hrefs);
+    writeGlobalTool(HOME_TOOLS_KEY, hrefs);
+    setEditing(false);
+  };
+
   const toolCardStyle: CSSProperties = {
     background: theme.panel,
     border: `1px solid ${theme.border}`,
@@ -467,12 +757,40 @@ function QuickToolsGrid({ theme }: { theme: AppTheme }) {
     alignItems: "center",
     gap: "0.3rem",
   };
+  const customizeBtnStyle: CSSProperties = {
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: 26,
+    height: 26,
+    borderRadius: 8,
+    border: `1px solid ${theme.border}`,
+    background: theme.timerBg,
+    color: theme.muted,
+    cursor: "pointer",
+    fontSize: "0.9rem",
+    lineHeight: 1,
+    padding: 0,
+  };
+
   return (
     <div className="fade-in" style={{ marginBottom: "1.25rem", animationDelay: "0.2s" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.75rem" }}>
-        <span className="panel-header-title" style={{ color: theme.text, fontSize: "1rem" }}>
-          Tools
-        </span>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+          <span className="panel-header-title" style={{ color: theme.text, fontSize: "1rem" }}>
+            Tools
+          </span>
+          <button
+            type="button"
+            className="customize-btn"
+            onClick={() => setEditing(true)}
+            aria-label="Customize tools"
+            title="Customize tools"
+            style={customizeBtnStyle}
+          >
+            ⚙
+          </button>
+        </div>
         <Link
           href="/tools"
           style={{ fontSize: "0.78rem", color: theme.accent, fontWeight: 800, textDecoration: "none" }}
@@ -481,15 +799,11 @@ function QuickToolsGrid({ theme }: { theme: AppTheme }) {
         </Link>
       </div>
       <div className="quick-tools-grid" style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "0.75rem" }}>
-        {QUICK_TOOLS.map((tool) => (
+        {selectedTools.map((tool) => (
           <Link key={tool.href} href={tool.href} style={{ textDecoration: "none" }}>
             <div className="quick-tool-card" style={toolCardStyle}>
               <div style={toolIconWrapStyle}>
-                {tool.iconType === "item" ? (
-                  <ItemIcon id={tool.itemId} size={32} />
-                ) : (
-                  <span style={{ fontSize: "1.5rem", lineHeight: 1 }}>{tool.icon}</span>
-                )}
+                <ToolIcon tool={tool} size={32} />
               </div>
               <div style={{ fontWeight: 700, fontSize: "0.8rem", color: theme.text, lineHeight: 1.2 }}>
                 {tool.title}
@@ -501,6 +815,14 @@ function QuickToolsGrid({ theme }: { theme: AppTheme }) {
           </Link>
         ))}
       </div>
+      {editing && (
+        <CustomizeToolsDialog
+          theme={theme}
+          current={selectedHrefs}
+          onClose={() => setEditing(false)}
+          onSave={handleSave}
+        />
+      )}
     </div>
   );
 }
@@ -915,6 +1237,9 @@ function DashboardContent({ theme }: { theme: AppTheme }) {
           position: sticky;
           top: 72px;
         }
+
+        .customize-btn { transition: border-color 0.15s ease, color 0.15s ease; }
+        .customize-btn:hover { border-color: ${theme.accent} !important; color: ${theme.accent} !important; }
 
         .quick-tool-card {
           transition: transform 0.15s ease, background 0.35s ease, border-color 0.35s ease, box-shadow 0.15s ease;
