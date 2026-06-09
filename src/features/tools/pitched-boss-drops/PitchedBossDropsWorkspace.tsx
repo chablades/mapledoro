@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useState } from "react";
+import { useMounted } from "../../../lib/useMounted";
 import type { CSSProperties } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
@@ -472,10 +473,8 @@ function NoCharactersState({ theme }: { theme: AppTheme }) {
 /*  Main workspace                                                     */
 /* ------------------------------------------------------------------ */
 
-const emptySubscribe = () => () => {};
-
 export default function PitchedBossDropsWorkspace({ theme }: { theme: AppTheme }) {
-  const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
+  const mounted = useMounted();
 
   const [drops, setDrops] = useState<PitchedBossDrop[]>(() =>
     typeof window === "undefined" ? [] : readStore().drops,
@@ -535,18 +534,14 @@ export default function PitchedBossDropsWorkspace({ theme }: { theme: AppTheme }
   const hasCharacters = characters.length > 0;
 
   return (
-    <div
-      className="pbd-main"
-      style={{ flex: 1, width: "100%", padding: "1.5rem 1.5rem 2rem 2.75rem" }}
-    >
+    <div className="page-content">
       <style>{`
         @media (max-width: 860px) {
-          .pbd-main { padding: 1rem !important; }
           .pbd-filter-bar { flex-direction: column; align-items: stretch; }
           .pbd-filter-bar > * { width: 100%; margin-right: 0 !important; }
         }
       `}</style>
-      <div style={{ maxWidth: 900, margin: "0 auto" }}>
+      <div className="tool-container">
         <ToolHeader
           theme={theme}
           title="Drop Tracker"

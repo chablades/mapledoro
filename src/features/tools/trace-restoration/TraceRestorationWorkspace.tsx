@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useState } from "react";
+import { useMounted } from "../../../lib/useMounted";
 import type { CSSProperties } from "react";
 import Image from "next/image";
 import type { AppTheme } from "../../../components/themes";
@@ -734,26 +735,16 @@ const TAB_LABELS: Record<Tab, string> = {
   restoration: "Trace Restoration",
 };
 
-const emptySubscribe = () => () => {};
-
 export default function TraceRestorationWorkspace({ theme }: { theme: AppTheme }) {
-  const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
+  const mounted = useMounted();
   const [tab, setTab] = useState<Tab>("research");
   const styles = toolStyles(theme);
 
   if (!mounted) return null;
 
   return (
-    <div
-      className="tr-main"
-      style={{ flex: 1, width: "100%", padding: "1.5rem 1.5rem 2rem 2.75rem" }}
-    >
-      <style>{`
-        @media (max-width: 860px) {
-          .tr-main { padding: 1rem !important; }
-        }
-      `}</style>
-      <div style={{ maxWidth: 900, margin: "0 auto" }}>
+    <div className="page-content">
+      <div className="tool-container">
         <ToolHeader
           theme={theme}
           title="Trace Restoration Calculator"

@@ -4,10 +4,20 @@
   Tools landing page.
   Displays a grid of available tool cards that link to their sub-routes.
 */
+import type { CSSProperties } from "react";
 import Link from "next/link";
 import AppShell from "../../components/AppShell";
 import { ItemIcon } from "../../components/ResourceImage";
 import type { AppTheme } from "../../components/themes";
+
+// Uppercase section heading above each tool group; color (theme.muted) inline.
+const sectionLabelBase: CSSProperties = {
+  fontWeight: 700,
+  fontSize: "0.85rem",
+  textTransform: "uppercase",
+  letterSpacing: "0.04em",
+  marginBottom: "0.75rem",
+};
 
 type ToolCard = {
   title: string;
@@ -121,7 +131,7 @@ const TRACKERS: ToolCard[] = [
 function ToolCardInner({ tool, theme }: { tool: ToolCard; theme: AppTheme }) {
   return (
     <div
-      className={`tool-card panel-card${tool.comingSoon ? " tool-card-coming-soon" : ""}`}
+      className={`panel-card${tool.comingSoon ? "" : " hover-lift-card"}`}
       style={{
         background: tool.comingSoon ? `color-mix(in srgb, ${theme.panel} 50%, transparent)` : theme.panel,
         border: `1px solid ${theme.border}`,
@@ -196,12 +206,7 @@ function ToolsContent({ theme }: { theme: AppTheme }) {
   return (
     <>
       <style>{`
-        .tool-card { transition: transform 0.15s ease, background 0.35s ease, border-color 0.35s ease, box-shadow 0.15s ease; }
-        .tool-card:not(.tool-card-coming-soon):hover {
-          transform: translateY(-3px);
-          box-shadow: 0 6px 20px rgba(0,0,0,0.06);
-          border-color: ${theme.accent} !important;
-        }
+        .hover-lift-card:hover { border-color: ${theme.accent} !important; }
         @media (max-width: 860px) {
           .tools-grid { grid-template-columns: 1fr !important; }
         }
@@ -216,48 +221,19 @@ function ToolsContent({ theme }: { theme: AppTheme }) {
             MapleStory calculators, trackers, and utilities
           </div>
 
-          <div
-            style={{
-              fontWeight: 700,
-              fontSize: "0.85rem",
-              color: theme.muted,
-              textTransform: "uppercase",
-              letterSpacing: "0.04em",
-              marginBottom: "0.75rem",
-            }}
-          >
+          <div style={{ ...sectionLabelBase, color: theme.muted }}>
             Calculators
           </div>
 
           <ToolGrid tools={CALCULATORS} theme={theme} />
 
-          <div
-            style={{
-              fontWeight: 700,
-              fontSize: "0.85rem",
-              color: theme.muted,
-              textTransform: "uppercase",
-              letterSpacing: "0.04em",
-              marginTop: "2rem",
-              marginBottom: "0.75rem",
-            }}
-          >
+          <div style={{ ...sectionLabelBase, color: theme.muted, marginTop: "2rem" }}>
             Trackers
           </div>
 
           <ToolGrid tools={TRACKERS} theme={theme} />
 
-          <div
-            style={{
-              fontWeight: 700,
-              fontSize: "0.85rem",
-              color: theme.muted,
-              textTransform: "uppercase",
-              letterSpacing: "0.04em",
-              marginTop: "2rem",
-              marginBottom: "0.75rem",
-            }}
-          >
+          <div style={{ ...sectionLabelBase, color: theme.muted, marginTop: "2rem" }}>
             Other Tools
           </div>
 

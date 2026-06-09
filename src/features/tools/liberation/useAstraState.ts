@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useCallback, useSyncExternalStore } from "react";
+import { useState, useCallback } from "react";
+import { useMounted } from "../../../lib/useMounted";
 import {
   readCharactersStore,
   selectCharactersList,
@@ -324,11 +325,7 @@ function formToSaved(form: AstraFormState): AstraSavedState {
 // -- Hook ---------------------------------------------------------------------
 
 export function useAstraState() {
-  const mounted = useSyncExternalStore(
-    () => () => undefined,
-    () => true,
-    () => false,
-  );
+  const mounted = useMounted();
 
   const characters: StoredCharacterRecord[] = mounted
     ? selectCharactersList(readCharactersStore())

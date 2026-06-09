@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useReducer, useRef, useState, type CSSProperties } from "react";
+import Panel from "./Panel";
 import type { AppTheme } from "./themes";
 import type { SunnySundayWeek, SunnySundayPayload } from "@/lib/sunnySunday";
 
@@ -217,14 +218,7 @@ export default function SunnySundayPanel({ theme }: SunnySundayPanelProps) {
   else statusText = "No data";
 
   return (
-    <div
-      className="fade-in panel panel-card"
-      style={{
-        animationDelay: "0.15s",
-        background: theme.panel,
-        border: `1px solid ${theme.border}`,
-      }}
-    >
+    <Panel theme={theme} delay="0.15s">
       {/* Header */}
       <div className="panel-header" style={{ borderBottom: `1px solid ${theme.border}` }}>
         <span>☀️</span>
@@ -282,6 +276,6 @@ export default function SunnySundayPanel({ theme }: SunnySundayPanelProps) {
           No Sunny Sunday data available.
         </div>
       )}
-    </div>
+    </Panel>
   );
 }

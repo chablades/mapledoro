@@ -1,6 +1,5 @@
 import type { CSSProperties } from "react";
-import { dialogBtnColors, dialogPrimaryBtnColors } from "../../components/ConfirmDialog";
-import type { AppTheme } from "../../components/themes";
+import { dialogBtnColors, dialogPrimaryBtnColors, type AppTheme } from "../../components/themes";
 
 export interface ToolStyles {
   sectionPanel: CSSProperties;

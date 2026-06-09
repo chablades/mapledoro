@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useMemo, useReducer, useSyncExternalStore } from "react";
+import { useState, useMemo, useReducer } from "react";
+import { useMounted } from "../../../lib/useMounted";
 import type { AppTheme } from "../../../components/themes";
 import { replaceZeroOnDigit } from "../numberInputHandlers";
-import { Field, ActionButton } from "../shared-ui";
+import { Field, Toggle, ActionButton } from "../shared-ui";
 import { ToolHeader } from "../../../components/ToolHeader";
 import {
   type CubeKey,
@@ -43,13 +44,6 @@ interface CalcResult {
   probability: number;
   tierSteps: TierStep[];
 }
-
-const TIER_PILL: Record<number, { bg: string; text: string }> = {
-  0: { bg: "#4a9eff", text: "#fff" },
-  1: { bg: "#b566ff", text: "#fff" },
-  2: { bg: "#ffb800", text: "#3a2400" },
-  3: { bg: "#22aa44", text: "#fff" },
-};
 
 interface FormState {
   itemType: ItemCategory;
@@ -123,7 +117,7 @@ const FORM_INIT: FormState = {
 };
 
 export default function CubingWorkspace({ theme }: { theme: AppTheme }) {
-  const mounted = useSyncExternalStore(() => () => undefined, () => true, () => false);
+  const mounted = useMounted();
 
   const [form, dispatch] = useReducer(formReducer, FORM_INIT);
   const { itemType, cubeType, currentTier, desiredTier, itemLevel, statType, desiredStat, dmt } = form;
@@ -199,6 +193,7 @@ export default function CubingWorkspace({ theme }: { theme: AppTheme }) {
   const selectStyle: React.CSSProperties = {
     ...styles.selectStyle,
     width: "100%",
+    height: "35px", // pin: Chrome gives <select> a taller intrinsic line box than <input>
     padding: "8px 10px",
     appearance: "auto" as const,
   };
@@ -210,26 +205,25 @@ export default function CubingWorkspace({ theme }: { theme: AppTheme }) {
     borderRadius: "18px",
   };
 
+  const fieldRowStyle: React.CSSProperties = {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+    gap: "12px",
+    marginBottom: "12px",
+  };
+
   const cubeLabel = CUBE_TYPES.find((c) => c.value === result?.cubeType)?.label ?? result?.cubeType;
 
   return (
-    <div className="cubing-main" style={{ flex: 1, width: "100%", padding: "1.5rem 1.5rem 2rem 2.75rem" }}>
+    <div className="page-content">
       <style>{`
         @media (max-width: 640px) {
           .cubing-results { grid-template-columns: 1fr !important; }
-          .cubing-tier-pills { gap: 4px !important; }
-          .cubing-tier-pill { padding: 6px 8px !important; font-size: 0.72rem !important; }
+          .cubing-actions { flex-direction: column; }
+          .cubing-actions .tool-btn { width: 100%; height: 40px; margin-left: 0 !important; }
         }
-        @media (max-width: 860px) {
-          .cubing-main { padding: 1rem !important; }
-        }
-        .cubing-tier-pill:hover {
-          filter: brightness(1.1);
-          transform: translateY(-1px);
-        }
-
       `}</style>
-      <div style={{ maxWidth: 900, margin: "0 auto" }}>
+      <div className="tool-container">
         <ToolHeader
           theme={theme}
           title="Cubing Calculator"
@@ -240,7 +234,7 @@ export default function CubingWorkspace({ theme }: { theme: AppTheme }) {
           <div className="tool-field-label" style={{ ...labelStyle, marginBottom: "12px", fontSize: "0.78rem" }}>
             Cubing Information
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "12px" }}>
+          <div style={fieldRowStyle}>
             <Field label="Item Category" style={labelStyle}>
               <select
                 className="tool-select"
@@ -273,28 +267,33 @@ export default function CubingWorkspace({ theme }: { theme: AppTheme }) {
               />
             </Field>
           </div>
-        </div>
-
-        <div className="fade-in" style={panelStyle}>
-          <div className="tool-field-label" style={{ ...labelStyle, marginBottom: "12px", fontSize: "0.78rem" }}>
-            Tier Progression
+          <div style={fieldRowStyle}>
+            <Field label="Current Tier" style={labelStyle}>
+              <select
+                className="tool-select"
+                value={currentTier}
+                onChange={(e) => dispatch({ type: "setCurrentTier", value: Number(e.target.value) })}
+                style={selectStyle}
+              >
+                {TIERS.filter((t) => t.value <= MAX_CUBE_TIER[cubeType]).map((t) => (
+                  <option key={t.value} value={t.value}>{t.label}</option>
+                ))}
+              </select>
+            </Field>
+            <Field label="Desired Tier" style={labelStyle}>
+              <select
+                className="tool-select"
+                value={desiredTier}
+                onChange={(e) => dispatch({ type: "setDesiredTier", value: Number(e.target.value) })}
+                style={selectStyle}
+              >
+                {TIERS.filter((t) => t.value <= MAX_CUBE_TIER[cubeType]).map((t) => (
+                  <option key={t.value} value={t.value}>{t.label}</option>
+                ))}
+              </select>
+            </Field>
           </div>
-          <div style={{ marginBottom: "8px" }}>
-            <div className="tool-field-label" style={{ ...labelStyle, marginBottom: "6px" }}>Current Tier</div>
-            <TierPills theme={theme} selected={currentTier} maxTier={MAX_CUBE_TIER[cubeType]} onChange={(v) => dispatch({ type: "setCurrentTier", value: v })} />
-          </div>
-          <TierPathLabel currentTier={currentTier} desiredTier={desiredTier} muted={theme.muted} />
-          <div>
-            <div className="tool-field-label" style={{ ...labelStyle, marginBottom: "6px" }}>Desired Tier</div>
-            <TierPills theme={theme} selected={desiredTier} maxTier={MAX_CUBE_TIER[cubeType]} onChange={(v) => dispatch({ type: "setDesiredTier", value: v })} />
-          </div>
-        </div>
-
-        <div className="fade-in" style={panelStyle}>
-          <div className="tool-field-label" style={{ ...labelStyle, marginBottom: "12px", fontSize: "0.78rem" }}>
-            Desired Stats
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "12px" }}>
+          <div style={fieldRowStyle}>
             <Field label="Stat Type" style={labelStyle}>
               <select
                 className="tool-select"
@@ -319,16 +318,15 @@ export default function CubingWorkspace({ theme }: { theme: AppTheme }) {
               />
             </Field>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "16px", marginTop: "16px", flexWrap: "wrap" }}>
-            <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.82rem", fontWeight: 700, color: theme.text, cursor: "pointer" }}>
-              <input
-                type="checkbox"
-                checked={dmt}
-                onChange={(e) => dispatch({ type: "setDmt", value: e.target.checked })}
-                style={{ accentColor: theme.accent }}
-              />
-              Double Miracle Time
-            </label>
+          <div className="cubing-actions" style={{ display: "flex", alignItems: "center", gap: "16px", marginTop: "4px", flexWrap: "wrap" }}>
+            <Toggle
+              theme={theme}
+              label="Double Miracle Time"
+              checked={dmt}
+              disabled={currentTier === desiredTier}
+              onChange={(v) => dispatch({ type: "setDmt", value: v })}
+              style={{ alignSelf: "stretch", minWidth: "190px" }}
+            />
             <ActionButton
               theme={theme}
               label="Calculate"
@@ -380,59 +378,6 @@ export default function CubingWorkspace({ theme }: { theme: AppTheme }) {
   );
 }
 
-function TierPills({ theme, selected, maxTier, onChange }: {
-  theme: AppTheme;
-  selected: number;
-  maxTier: number;
-  onChange: (val: number) => void;
-}) {
-  return (
-    <div className="cubing-tier-pills" style={{ display: "flex", gap: "6px" }}>
-      {TIERS.map((t) => {
-        const sel = selected === t.value;
-        const disabled = t.value > maxTier;
-        const tc = TIER_PILL[t.value];
-        const pillStyle: React.CSSProperties = {
-          flex: 1,
-          padding: "8px 14px",
-          borderRadius: "10px",
-          border: `2px solid ${sel ? tc.bg : theme.border}`,
-          background: sel ? tc.bg : "transparent",
-          color: sel ? tc.text : theme.muted,
-          fontSize: "0.78rem",
-          fontWeight: 800,
-          cursor: disabled ? "not-allowed" : "pointer",
-          opacity: disabled ? 0.35 : 1,
-          transition: "background 0.15s ease, border-color 0.15s ease, color 0.15s ease, opacity 0.15s ease",
-        };
-        return (
-          <button
-            key={t.value}
-            onClick={() => !disabled && onChange(t.value)}
-            className="cubing-tier-pill"
-            style={pillStyle}
-          >
-            {t.label}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
-function TierPathLabel({ currentTier, desiredTier, muted }: { currentTier: number; desiredTier: number; muted: string }) {
-  const steps = desiredTier - currentTier;
-  let text: string;
-  if (steps <= 0) text = `Rerolling at ${TIERS[currentTier].label}`;
-  else if (steps === 1) text = "↓ 1 tier-up step";
-  else text = `↓ ${steps} tier-up steps`;
-  return (
-    <div style={{ textAlign: "center", color: muted, fontSize: "0.75rem", fontWeight: 700, margin: "6px 0" }}>
-      {text}
-    </div>
-  );
-}
-
 function formatPctFull(pct: number): string {
   if (pct >= 0.01) return `${pct.toFixed(4)}%`;
   const s = pct.toPrecision(4);
@@ -444,20 +389,15 @@ function ProbabilityBadge({ theme, probability }: { theme: AppTheme; probability
   const display = formatPctFull(pct);
 
   const containerStyle: React.CSSProperties = {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
     marginBottom: "1rem",
-    padding: "14px 20px",
-    borderRadius: "14px",
     background: theme.panel,
     border: `1px solid ${theme.border}`,
   };
 
   return (
-    <div style={containerStyle}>
+    <div className="result-banner" style={containerStyle}>
       <div style={{ textAlign: "center" }}>
-        <div style={{ fontSize: "0.75rem", fontWeight: 800, color: theme.muted, textTransform: "uppercase", letterSpacing: "0.04em" }}>
+        <div className="tool-field-label" style={{ color: theme.muted, marginBottom: 0 }}>
           Probability per cube
         </div>
         <div style={{ marginTop: "4px" }}>
@@ -472,26 +412,21 @@ function ProbabilityBadge({ theme, probability }: { theme: AppTheme; probability
 
 function TierUpProbabilities({ theme, steps }: { theme: AppTheme; steps: TierStep[] }) {
   const containerStyle: React.CSSProperties = {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
     gap: "24px",
     marginBottom: "1rem",
-    padding: "14px 20px",
-    borderRadius: "14px",
     background: theme.panel,
     border: `1px solid ${theme.border}`,
     flexWrap: "wrap",
   };
 
   return (
-    <div style={containerStyle}>
+    <div className="result-banner" style={containerStyle}>
       {steps.map((step) => {
         const pct = step.probability * 100;
         const display = formatPctFull(pct);
         return (
           <div key={`${step.from}-${step.to}`} style={{ textAlign: "center" }}>
-            <div style={{ fontSize: "0.75rem", fontWeight: 800, color: theme.muted, textTransform: "uppercase", letterSpacing: "0.04em" }}>
+            <div className="tool-field-label" style={{ color: theme.muted, marginBottom: 0 }}>
               {step.from} → {step.to}
             </div>
             <div style={{ marginTop: "4px" }}>
@@ -539,11 +474,10 @@ function ResultCard({
       style={{
         background: theme.panel,
         border: `1px solid ${theme.border}`,
-        borderRadius: "18px",
         padding: "1.25rem",
       }}
     >
-      <div style={{ fontSize: "0.75rem", fontWeight: 800, color: theme.muted, textTransform: "uppercase", letterSpacing: "0.04em" }}>
+      <div className="tool-field-label" style={{ color: theme.muted, marginBottom: 0 }}>
         {title}
       </div>
       <div style={{ margin: "8px 0 16px" }}>

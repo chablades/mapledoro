@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useState } from "react";
+import { useMounted } from "../../../lib/useMounted";
 import Image from "next/image";
 import type { CSSProperties } from "react";
 import type { AppTheme } from "../../../components/themes";
@@ -9,8 +10,8 @@ import {
   BOSSES,
   BOSS_GROUPS,
   PRESETS,
-  formatMeso,
 } from "./bosses";
+import { formatMesoFull } from "../format";
 import type { StoredCharacterRecord } from "../../characters/model/charactersStore";
 import {
   type BossRow,
@@ -19,8 +20,9 @@ import {
   checkBg,
 } from "./boss-crystals-types";
 import { useBossCrystalsState } from "./useBossCrystalsState";
+import { CharacterPickerRow } from "../CharacterPickerRow";
 import { toolStyles } from "../tool-styles";
-import { ConfirmButton } from "../../../components/ConfirmDialog";
+import { ConfirmButton } from "../../../components/ConfirmButton";
 
 // -- Style helpers ------------------------------------------------------------
 
@@ -39,21 +41,17 @@ function bcIconBtnStyle(theme: AppTheme): CSSProperties {
   };
 }
 
-function bcAvatarFallbackStyle(
-  theme: AppTheme,
-  size: number,
-  radius: string,
-  fontSize: string,
-): CSSProperties {
+// 48px card-header avatar fallback (picker rows use CharacterPickerRow).
+function bcAvatarFallbackStyle(theme: AppTheme): CSSProperties {
   return {
-    width: size,
-    height: size,
-    borderRadius: radius,
+    width: 48,
+    height: 48,
+    borderRadius: "10px",
     background: theme.accentSoft,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontSize,
+    fontSize: "1.2rem",
     color: theme.accent,
     fontWeight: 800,
     flexShrink: 0,
@@ -312,7 +310,7 @@ function CharacterCard({
             }}
           />
         ) : (
-          <div style={bcAvatarFallbackStyle(theme, 48, "10px", "1.2rem")}>
+          <div style={bcAvatarFallbackStyle(theme)}>
             {char.name.charAt(0).toUpperCase()}
           </div>
         )}
@@ -328,7 +326,7 @@ function CharacterCard({
             {char.name}
           </div>
           <div style={{ fontSize: "0.75rem", color: theme.muted, fontWeight: 700 }}>
-            {income.crystals}/14 crystals · {formatMeso(income.meso)} mesos
+            {income.crystals}/14 crystals · {formatMesoFull(income.meso)} mesos
           </div>
         </div>
       </div>
@@ -422,7 +420,7 @@ function CharacterCard({
                 }}
               >
                 {b.partySize > 1 ? `${b.partySize}p · ` : ""}
-                {formatMeso(b.boss.meso / b.partySize / serverMult)}
+                {formatMesoFull(b.boss.meso / b.partySize / serverMult)}
               </span>
             </div>
           ))
@@ -559,55 +557,15 @@ function AddNameDialog({
                   overflowY: "auto",
                 }}
               >
-                {available.map((c) => {
-                  const isSelected = selectedChar?.characterName === c.characterName;
-                  return (
-                    <div
-                      key={c.characterName}
-                      className="bc-char-opt"
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => onSelectedChar(c)}
-                      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelectedChar(c); } }}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "0.75rem",
-                        padding: "8px 12px",
-                        borderRadius: "10px",
-                        background: isSelected ? theme.accentSoft : theme.timerBg,
-                        border: `1px solid ${isSelected ? theme.accent : theme.border}`,
-                      }}
-                    >
-                      {c.characterImgURL ? (
-                        <Image
-                          src={c.characterImgURL}
-                          alt={c.characterName}
-                          width={32}
-                          height={32}
-                          unoptimized
-                          style={{
-                            borderRadius: "6px",
-                            objectFit: "contain",
-                            flexShrink: 0,
-                          }}
-                        />
-                      ) : (
-                        <div style={bcAvatarFallbackStyle(theme, 32, "6px", "0.85rem")}>
-                          {c.characterName.charAt(0).toUpperCase()}
-                        </div>
-                      )}
-                      <div>
-                        <div style={{ fontSize: "0.82rem", fontWeight: 700, color: theme.text }}>
-                          {c.characterName}
-                        </div>
-                        <div style={{ fontSize: "0.75rem", color: theme.muted }}>
-                          Lv.{c.level} {c.jobName}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
+                {available.map((c) => (
+                  <CharacterPickerRow
+                    key={c.characterName}
+                    theme={theme}
+                    character={c}
+                    selected={selectedChar?.characterName === c.characterName}
+                    onSelect={() => onSelectedChar(c)}
+                  />
+                ))}
               </div>
             )}
           </div>
@@ -848,7 +806,7 @@ function BossSelectionDialog({
                         whiteSpace: "nowrap",
                       }}
                     >
-                      {formatMeso(boss.meso / serverMult)}
+                      {formatMesoFull(boss.meso / serverMult)}
                     </span>
                     {checked && (
                       <select
@@ -890,7 +848,7 @@ function BossSelectionDialog({
             {preview.crystals}/14
           </span>
           {" crystals · "}
-          <span style={{ color: theme.accent }}>{formatMeso(preview.meso)}</span>
+          <span style={{ color: theme.accent }}>{formatMesoFull(preview.meso)}</span>
           {" mesos"}
         </div>
 
@@ -1062,7 +1020,7 @@ function BossCrystalsSummary({
       <div className="bc-weekly" style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
         <div className="bc-summary-headline" style={{ display: "flex", alignItems: "baseline", gap: "6px", flexWrap: "wrap" }}>
           <span style={bcSummaryLabelStyle(theme)}>Weekly:</span>
-          <span className="bc-summary-value" style={bcSummaryValueStyle(theme)}>{formatMeso(totalMeso)} mesos</span>
+          <span className="bc-summary-value" style={bcSummaryValueStyle(theme)}>{formatMesoFull(totalMeso)} mesos</span>
         </div>
         <div
           className="bc-pill"
@@ -1083,7 +1041,7 @@ function BossCrystalsSummary({
         <div className="bc-progress" style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "0.75rem" }}>
           <div className="bc-summary-headline" style={{ display: "flex", alignItems: "baseline", gap: "6px", flexWrap: "wrap" }}>
             <span style={bcSummaryLabelStyle(theme)}>Weekly Progress:</span>
-            <span className="bc-summary-value" style={bcSummaryValueStyle(theme)}>{formatMeso(clearedMeso)} mesos</span>
+            <span className="bc-summary-value" style={bcSummaryValueStyle(theme)}>{formatMesoFull(clearedMeso)} mesos</span>
           </div>
           <div
             className="bc-pill"
@@ -1108,11 +1066,7 @@ function BossCrystalsSummary({
 // -- Main Component -----------------------------------------------------------
 
 export default function BossCrystalsWorkspace({ theme }: { theme: AppTheme }) {
-  const mounted = useSyncExternalStore(
-    () => () => undefined,
-    () => true,
-    () => false,
-  );
+  const mounted = useMounted();
 
   const {
     server, setServer, characters, charIncomes,
@@ -1174,10 +1128,8 @@ export default function BossCrystalsWorkspace({ theme }: { theme: AppTheme }) {
         .bc-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 1rem; }
         .bc-dialog { background: ${theme.panel}; border: 1px solid ${theme.border}; border-radius: 16px; max-width: 600px; width: 100%; max-height: 80vh; overflow-y: auto; box-shadow: 0 8px 32px rgba(0,0,0,0.15); }
         .bc-boss-row:hover { background: ${theme.accentSoft} !important; }
-        .bc-char-opt { transition: border-color 0.15s, background 0.15s; cursor: pointer; }
-        .bc-char-opt:hover { border-color: ${theme.accent} !important; }
+        .char-pick-row:hover { border-color: ${theme.accent} !important; }
         @media (max-width: 860px) {
-          .bc-main { padding: 1rem !important; }
           .bc-server-group { width: 100%; }
           .bc-server-opt { flex: 1; }
           .bc-actions { margin-left: 0 !important; width: 100%; }
@@ -1204,10 +1156,7 @@ export default function BossCrystalsWorkspace({ theme }: { theme: AppTheme }) {
         }
       `}</style>
 
-      <div
-        className="bc-main"
-        style={{ flex: 1, width: "100%", padding: "1.5rem 1.5rem 2rem 2.75rem" }}
-      >
+      <div className="page-content">
         <div style={{ maxWidth: 1200, margin: "0 auto" }}>
           <ToolHeader
             theme={theme}

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useCallback, useMemo, useSyncExternalStore } from "react";
+import { useState, useCallback, useMemo } from "react";
+import { useMounted } from "../../../lib/useMounted";
 import {
   readCharactersStore,
   selectCharactersList,
@@ -175,11 +176,7 @@ function calcTotalCosts(levels: SkillLevels, desired: SkillLevels, classDef: Hex
 // ── Hook ─────────────────────────────────────────────────────────────────────
 
 export function useHexaSkillsState() {
-  const mounted = useSyncExternalStore(
-    () => () => undefined,
-    () => true,
-    () => false,
-  );
+  const mounted = useMounted();
 
   const characters: StoredCharacterRecord[] = useMemo(
     () => (mounted ? selectCharactersList(readCharactersStore()) : []),

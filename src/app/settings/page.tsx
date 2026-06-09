@@ -3,13 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import AppShell from "../../components/AppShell";
 import type { AppTheme } from "../../components/themes";
-import { ACCENT_THEMES } from "../../components/themes";
+import { ACCENT_THEMES, dialogBtnColors, dialogPrimaryBtnColors } from "../../components/themes";
 import { useTheme } from "../../components/ThemeContext";
-import {
-  ConfirmButton,
-  dialogBtnColors,
-  dialogPrimaryBtnColors,
-} from "../../components/ConfirmDialog";
+import { ConfirmButton } from "../../components/ConfirmButton";
 
 function hardReset() {
   const keys = Object.keys(localStorage).filter((k) => k.startsWith("mapledoro"));
@@ -123,9 +119,7 @@ function SettingsContent({ theme }: { theme: AppTheme }) {
         {/* Accent theme selector */}
         <div
           className="fade-in panel-card settings-row-panel settings-theme-panel"
-          style={{
-            ...panelStyle,
-          }}
+          style={panelStyle}
         >
           <div>
             <p style={labelStyle}>Theme</p>
@@ -201,9 +195,7 @@ function SettingsContent({ theme }: { theme: AppTheme }) {
         {/* Import / Export */}
         <div
           className="fade-in panel-card settings-row-panel"
-          style={{
-            ...panelStyle,
-          }}
+          style={panelStyle}
         >
           <div>
             <p style={labelStyle}>Data management</p>
@@ -245,9 +237,7 @@ function SettingsContent({ theme }: { theme: AppTheme }) {
         {/* Reset */}
         <div
           className="fade-in panel-card settings-row-panel"
-          style={{
-            ...panelStyle,
-          }}
+          style={panelStyle}
         >
           <div>
             <p style={labelStyle}>Reset all data</p>

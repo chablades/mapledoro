@@ -1,4 +1,5 @@
-import { useState, useMemo, useEffect, useCallback, useSyncExternalStore } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
+import { useMounted } from "../../../lib/useMounted";
 import {
   readCharactersStore,
   selectCharactersList,
@@ -77,11 +78,7 @@ function computeEntryCost(entry: PlannerEntry, settings: SavedState): EntryCost 
 // -- Hook ---------------------------------------------------------------------
 
 export function useEventPlannerState() {
-  const mounted = useSyncExternalStore(
-    () => () => undefined,
-    () => true,
-    () => false,
-  );
+  const mounted = useMounted();
 
   const characters: StoredCharacterRecord[] = useMemo(
     () => (mounted ? selectCharactersList(readCharactersStore()) : []),

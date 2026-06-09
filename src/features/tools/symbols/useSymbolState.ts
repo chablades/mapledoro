@@ -1,4 +1,5 @@
-import { useState, useCallback, useMemo, useSyncExternalStore } from "react";
+import { useState, useCallback, useMemo } from "react";
+import { useMounted } from "../../../lib/useMounted";
 import { useApplyCharacterQueryParam } from "../useApplyCharacterQueryParam";
 import {
   readCharactersStore,
@@ -148,11 +149,7 @@ function defaultFormState(): FormState {
 }
 
 export function useSymbolState() {
-  const mounted = useSyncExternalStore(
-    () => () => undefined,
-    () => true,
-    () => false,
-  );
+  const mounted = useMounted();
 
   const characters: StoredCharacterRecord[] = useMemo(
     () => (mounted ? selectCharactersList(readCharactersStore()) : []),

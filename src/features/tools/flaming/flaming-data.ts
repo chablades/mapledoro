@@ -459,11 +459,6 @@ export function computeFlameScore(
 
 const mesoFmt = new Intl.NumberFormat("en-US");
 
-export function formatMesoFull(n: number): string {
-  if (!isFinite(n)) return "N/A";
-  return mesoFmt.format(Math.floor(n));
-}
-
 export function formatFlames(n: number): string {
   if (!isFinite(n)) return "∞";
   return mesoFmt.format(Math.round(n));

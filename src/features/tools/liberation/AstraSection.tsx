@@ -22,23 +22,7 @@ import {
   formatDate,
 } from "./useAstraState";
 import { toolStyles } from "../tool-styles";
-import { ConfirmButton } from "../../../components/ConfirmDialog";
-
-const traceBadgeBase: React.CSSProperties = {
-  fontSize: "0.75rem",
-  fontWeight: 800,
-  padding: "2px 8px",
-  borderRadius: "6px",
-  flexShrink: 0,
-  whiteSpace: "nowrap",
-};
-
-const clearedBtnBase: React.CSSProperties = {
-  padding: "4px 10px",
-  borderRadius: "8px",
-  fontSize: "0.75rem",
-  fontWeight: 800,
-};
+import { ConfirmButton } from "../../../components/ConfirmButton";
 
 // -- Voucher Input ------------------------------------------------------------
 
@@ -144,7 +128,7 @@ function AstraBossCard({
           </div>
         </div>
         {activeDiff && (
-          <div style={{ ...traceBadgeBase, color: theme.accent, background: theme.accentSoft }}>
+          <div className="tool-badge" style={{ color: theme.accent, background: theme.accentSoft }}>
             +{traces} / week
           </div>
         )}
@@ -198,14 +182,13 @@ function AstraBossCard({
         </div>
 
         <div
-          className={isActive ? "lib-btn" : ""}
+          className={isActive ? "tool-chip-btn lib-btn" : "tool-chip-btn"}
           title="Click this if you have already cleared the boss for the week."
           role="button"
           tabIndex={0}
           onClick={() => { if (isActive) onClearedChange(!sel.clearedThisWeek); }}
           onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); if (isActive) onClearedChange(!sel.clearedThisWeek); } }}
           style={{
-            ...clearedBtnBase,
             cursor: isActive ? "pointer" : "not-allowed",
             color: cleared ? theme.accentText : theme.muted,
             background: cleared ? theme.accentSoft : "transparent",

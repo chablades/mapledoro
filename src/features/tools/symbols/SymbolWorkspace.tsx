@@ -20,7 +20,7 @@ import { ItemIcon } from "../../../components/ResourceImage";
 import { CharacterSyncPanel } from "../../../components/CharacterSyncPanel";
 import { SegmentedToggle } from "../../../components/SegmentedToggle";
 import { toolStyles } from "../tool-styles";
-import { ConfirmButton } from "../../../components/ConfirmDialog";
+import { ConfirmButton } from "../../../components/ConfirmButton";
 import { utcDateStr } from "../date";
 import {
   type SymbolType,
@@ -81,10 +81,6 @@ function SymbolCardHeader({
   updateSymbol: (areaName: string, patch: Partial<SymbolState>) => void;
 }) {
   const trackBtnStyle: React.CSSProperties = {
-    padding: "4px 10px",
-    borderRadius: "8px",
-    fontSize: "0.75rem",
-    fontWeight: 800,
     cursor: "pointer",
     color: isTracked ? theme.accentText : theme.muted,
     background: isTracked ? theme.accentSoft : "transparent",
@@ -96,12 +92,6 @@ function SymbolCardHeader({
   else badgeColor = theme.accent;
 
   const daysBadgeStyle: React.CSSProperties = {
-    fontSize: "0.75rem",
-    fontWeight: 800,
-    padding: "2px 8px",
-    borderRadius: "6px",
-    flexShrink: 0,
-    whiteSpace: "nowrap",
     color: badgeColor,
     background: isMaxed ? theme.accent : theme.accentSoft,
   };
@@ -150,7 +140,7 @@ function SymbolCardHeader({
 
       {isSacred && (
         <div
-          className="sym-btn"
+          className="sym-btn tool-chip-btn"
           role="button"
           tabIndex={0}
           onClick={() => updateSymbol(area.name, { enabled: !state.enabled })}
@@ -167,9 +157,7 @@ function SymbolCardHeader({
         else if (days === Infinity) badgeLabel = "--";
         else badgeLabel = `~${days}d`;
         return (
-          <div
-            style={daysBadgeStyle}
-          >
+          <div className="tool-badge" style={daysBadgeStyle}>
             {badgeLabel}
           </div>
         );
@@ -957,20 +945,12 @@ export default function SymbolWorkspace({ theme }: { theme: AppTheme }) {
         .sym-btn:hover { transform: translateY(-1px); }
         .sym-btn:active { transform: translateY(0); }
         @media (max-width: 860px) {
-          .sym-main { padding: 1rem !important; }
           .sym-grid { grid-template-columns: 1fr !important; }
         }
       `}</style>
 
-      <div
-        className="sym-main"
-        style={{
-          flex: 1,
-          width: "100%",
-          padding: "1.5rem 1.5rem 2rem 2.75rem",
-        }}
-      >
-        <div style={{ maxWidth: "900px", margin: "0 auto" }}>
+      <div className="page-content">
+        <div className="tool-container">
           <ToolHeader
             theme={theme}
             title="Symbol Tracker"

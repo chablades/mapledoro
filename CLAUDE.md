@@ -52,7 +52,7 @@ npm run lint
 
 **Workspace layout:** outer padding `1.5rem 1.5rem 2rem 2.75rem`, inner `maxWidth: 900, margin: "0 auto"`. `<ToolHeader>` first, then panel sections.
 
-**SSR/client gate:** `useSyncExternalStore(() => () => undefined, () => true, () => false)` for localStorage reads.
+**SSR/client gate:** `useMounted()` (`src/lib/useMounted.ts`) for localStorage reads — false during SSR/hydration, true after mount.
 
 **Shared tool controls:** Form controls split static settings (in global CSS) from dynamic theme colors (inline). Use `className="tool-input"` (text/number/date), `"tool-select"` (dropdowns), `"tool-field-label"` (uppercase field labels), and `"tool-dialog-btn"` (modal action buttons) for shape; pair with `toolStyles(theme)` (`tool-styles.ts`) which returns **colors only** (`background`/`borderColor`/`color`). Context sizing (widths, compact paddings) stays inline. `Field` (uppercase label + control) lives in `shared-ui.tsx` alongside `Toggle`/`PillGroup`. Don't re-add radius/padding/font to per-tool style helpers — extend the class instead.
 
