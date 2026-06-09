@@ -138,7 +138,7 @@ function EquivRow({
       <input
         className="tool-input"
         type="number"
-        step={0.01}
+        step={0.1}
         value={value}
         onFocus={(e) => e.currentTarget.select()}
         onKeyDown={replaceZeroOnDigit}
