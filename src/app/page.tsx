@@ -601,14 +601,26 @@ function CustomizeToolsDialog({
   onClose: () => void;
   onSave: (hrefs: string[]) => void;
 }) {
-  const [draft, setDraft] = useState<string[]>(current);
+  // Captured once on purpose: the dialog is mounted fresh per edit session
+  // (`{editing && ...}`), so `current` can't change while it's open.
+  const [draft, setDraft] = useState<string[]>(() => current);
   const dialogRef = useRef<HTMLDialogElement>(null);
 
   // Open as a true modal: native <dialog> handles focus trapping, Escape, and
   // the backdrop for free (mounted only while editing, so open once on mount).
+  // Backdrop click-to-close is a pointer-only convenience (keyboard users
+  // dismiss via Escape/cancel), so it lives here as a native listener rather
+  // than an interactive handler on the non-interactive <dialog> element.
   useEffect(() => {
-    dialogRef.current?.showModal();
-  }, []);
+    const dlg = dialogRef.current;
+    if (!dlg) return;
+    if (!dlg.open) dlg.showModal();
+    const onBackdropClick = (e: MouseEvent) => {
+      if (e.target === dlg) onClose();
+    };
+    dlg.addEventListener("click", onBackdropClick);
+    return () => dlg.removeEventListener("click", onBackdropClick);
+  }, [onClose]);
 
   const draftSet = new Set(draft);
   const atMax = draft.length >= HOME_TOOLS_COUNT;
@@ -622,7 +634,7 @@ function CustomizeToolsDialog({
     });
   };
 
-  const save = () => onSave(ALL_QUICK_TOOLS.filter((t) => draftSet.has(t.href)).map((t) => t.href));
+  const save = () => onSave(ALL_QUICK_TOOLS.flatMap((t) => (draftSet.has(t.href) ? [t.href] : [])));
 
   // display/flex live in the <style> block (scoped to [open]) so the dialog stays
   // hidden until showModal() runs, avoiding a one-frame in-flow flash on mount.
@@ -678,7 +690,6 @@ function CustomizeToolsDialog({
       className="customize-tools-dialog"
       aria-label="Customize dashboard tools"
       onCancel={onClose}
-      onClick={(e) => { if (e.target === dialogRef.current) onClose(); }}
       style={dialogStyle}
     >
         <style>{`

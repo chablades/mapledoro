@@ -37,7 +37,7 @@ npm run lint
 
 ## React-Doctor Rules
 
-- **Accessibility on clickable non-buttons:** Any `<div>` or `<span>` with `onClick` needs `role="button"`, `tabIndex={0}`, and an `onKeyDown` handler for Enter/Space.
+- **Clickable elements:** Prefer a real `<button>` (reset appearance via CSS: `background: none; border: none; padding: 0; font: inherit; text-align: inherit`) — native semantics, focus, and keyboard handling for free. Only fall back to `<div>`/`<span>` with `role="button"`, `tabIndex={0}`, and an `onKeyDown` Enter/Space handler when `<button>` can't work (e.g. nested interactive content).
 - **Minimum font size:** 0.75rem (12px). No sub-12px text anywhere.
 - **Image error fallbacks:** Use dual-render with refs (`display:none` on fallback, swap via `onError`), not `useState` to toggle. Avoids a re-render on error.
 - **No `autoFocus` attribute.** Use a ref callback with a guard: `ref={(el) => { if (el && document.activeElement !== el) el.focus(); }}`.

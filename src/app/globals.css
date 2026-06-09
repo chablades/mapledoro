@@ -163,6 +163,7 @@ textarea:focus-visible {
   cursor: pointer;
   user-select: none;
   transition: background 0.15s, border-color 0.15s;
+  font-family: var(--font-body); /* native <button> doesn't inherit it */
 }
 
 /* Dialog / modal action button shape. Colors supplied inline per variant
@@ -242,7 +243,9 @@ textarea:focus-visible {
 .segmented-toggle-option {
   flex: 1;
   padding: 9px 18px;
+  border: none;
   border-radius: 8px;
+  font-family: var(--font-body);
   font-size: 0.88rem;
   font-weight: 800;
   text-align: center;

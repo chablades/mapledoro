@@ -62,22 +62,16 @@ export function Toggle({
   };
   const content = `${checked ? "\u2713 " : ""}${label}`;
 
-  if (disabled) {
-    return <div role="button" aria-disabled style={mergedStyle}>{content}</div>;
-  }
-
-  const activate = () => onChange(!checked);
   return (
-    <div
+    <button
+      type="button"
       className="tool-btn"
-      role="button"
-      tabIndex={0}
-      onClick={activate}
-      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); activate(); } }}
+      disabled={disabled}
+      onClick={() => onChange(!checked)}
       style={mergedStyle}
     >
       {content}
-    </div>
+    </button>
   );
 }
 
@@ -104,15 +98,14 @@ export function PillGroup<T extends string>({
       }}
     >
       {options.map((o) => (
-        <div
+        <button
           key={o.value}
+          type="button"
           className="tool-btn"
-          role="button"
-          tabIndex={0}
           onClick={() => onChange(o.value)}
-          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onChange(o.value); } }}
           style={{
             padding: "5px 12px",
+            border: "none",
             borderRadius: "8px",
             fontSize: "0.75rem",
             fontWeight: 700,
@@ -122,7 +115,7 @@ export function PillGroup<T extends string>({
           }}
         >
           {o.label}
-        </div>
+        </button>
       ))}
     </div>
   );
@@ -238,26 +231,22 @@ export function ConfirmDialog({
           {message}
         </div>
         <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.5rem" }}>
-          <div
+          <button
+            type="button"
             className="tool-btn tool-dialog-btn"
-            role="button"
-            tabIndex={0}
             onClick={onCancel}
-            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onCancel(); } }}
             style={styles.dialogBtnStyle}
           >
             Cancel
-          </div>
-          <div
+          </button>
+          <button
+            type="button"
             className="tool-btn tool-dialog-btn"
-            role="button"
-            tabIndex={0}
             onClick={onConfirm}
-            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onConfirm(); } }}
             style={{ ...styles.dialogBtnStyle, color: "#fff", background: "#e05a5a", borderColor: "#e05a5a" }}
           >
             {confirmLabel}
-          </div>
+          </button>
         </div>
       </div>
     </div>,
@@ -301,16 +290,14 @@ export function ConfirmButton({
   const triggerClass = className ? `tool-btn ${className}` : "tool-btn";
   return (
     <>
-      <div
+      <button
+        type="button"
         className={triggerClass}
-        role="button"
-        tabIndex={0}
         onClick={() => setConfirming(true)}
-        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setConfirming(true); } }}
         style={{ ...dangerBtnStyle, ...style }}
       >
         {label}
-      </div>
+      </button>
       {confirming && (
         <ConfirmDialog
           theme={theme}
