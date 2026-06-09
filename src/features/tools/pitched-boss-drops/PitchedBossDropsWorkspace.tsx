@@ -17,6 +17,7 @@ import {
 import { readGlobalTool, writeGlobalTool } from "../globalToolsStore";
 import { DROP_CATEGORIES, DROP_ITEMS, DROP_ITEMS_BY_ID } from "./pitched-items";
 import LogDropDialog, { type LogDropPayload } from "./LogDropDialog";
+import { ActionButton } from "../shared-ui";
 
 const PitchedBossCharts = dynamic(() => import("./PitchedBossCharts"), {
   ssr: false,
@@ -91,20 +92,6 @@ function tdStyle(theme: AppTheme): CSSProperties {
     fontSize: "0.82rem",
   };
 }
-
-const logBtnStyle = (theme: AppTheme): CSSProperties => ({
-  padding: "0.45rem 1rem",
-  border: `1px solid ${theme.accent}`,
-  background: theme.accent,
-  color: "#fff",
-  borderRadius: 8,
-  fontWeight: 700,
-  fontSize: "0.82rem",
-  height: 34,
-  boxSizing: "border-box",
-  whiteSpace: "nowrap",
-  cursor: "pointer",
-});
 
 /* ------------------------------------------------------------------ */
 /*  Filters                                                            */
@@ -357,9 +344,12 @@ function FilterBar({
           </option>
         ))}
       </select>
-      <button onClick={onLog} style={logBtnStyle(theme)}>
-        + Log a Drop
-      </button>
+      <ActionButton
+        theme={theme}
+        label="+ Log a Drop"
+        onClick={onLog}
+        style={{ height: 34, padding: "0 1rem", whiteSpace: "nowrap" }}
+      />
     </div>
   );
 }

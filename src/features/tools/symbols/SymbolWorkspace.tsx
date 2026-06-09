@@ -20,6 +20,7 @@ import { ItemIcon } from "../../../components/ResourceImage";
 import { CharacterSyncPanel } from "../../../components/CharacterSyncPanel";
 import { SegmentedToggle } from "../../../components/SegmentedToggle";
 import { toolStyles } from "../tool-styles";
+import { ConfirmButton } from "../shared-ui";
 import { utcDateStr } from "../date";
 import {
   type SymbolType,
@@ -1012,24 +1013,13 @@ export default function SymbolWorkspace({ theme }: { theme: AppTheme }) {
                 {type === "arcane" ? "Arcane River" : "Grandis"} Symbols
               </div>
               <div style={{ marginLeft: "auto" }}>
-                <div
-                  className="sym-btn"
-                  role="button"
-                  tabIndex={0}
-                  onClick={resetAll}
-                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); resetAll(); } }}
-                  style={{
-                    padding: "4px 10px",
-                    borderRadius: "8px",
-                    fontSize: "0.75rem",
-                    fontWeight: 800,
-                    color: "#e05a5a",
-                    background: "transparent",
-                    border: "1px solid #e05a5a33",
-                  }}
-                >
-                  Reset
-                </div>
+                <ConfirmButton
+                  theme={theme}
+                  label="Reset"
+                  title="Reset symbols?"
+                  message={`This resets every ${type === "arcane" ? "Arcane" : "Sacred"} Symbol's level and count back to defaults.`}
+                  onConfirm={resetAll}
+                />
               </div>
             </div>
 

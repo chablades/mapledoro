@@ -22,6 +22,7 @@ import {
   formatDate,
 } from "./useLiberationState";
 import { toolStyles } from "../tool-styles";
+import { ConfirmButton, Toggle } from "../shared-ui";
 import AstraSection from "./AstraSection";
 
 type LiberationTab = LiberationType | "astra";
@@ -236,7 +237,6 @@ function LiberationConfigSection({
   theme,
   sectionPanel,
   inputStyle,
-  pillBtn,
   type,
   quests,
   questIdx,
@@ -252,7 +252,6 @@ function LiberationConfigSection({
   theme: AppTheme;
   sectionPanel: React.CSSProperties;
   inputStyle: React.CSSProperties;
-  pillBtn: (active: boolean, accent?: boolean) => React.CSSProperties;
   type: LiberationType;
   quests: LiberationQuest[];
   questIdx: number;
@@ -363,16 +362,13 @@ function LiberationConfigSection({
         {/* Genesis Pass */}
         {type === "genesis" && (
           <div style={{ flex: "0 0 auto" }}>
-            <div
-              className="lib-btn pill-btn"
-              role="button"
-              tabIndex={0}
-              onClick={onGenesisPassToggle}
-              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onGenesisPassToggle(); } }}
-              style={pillBtn(genesisPass, true)}
-            >
-              Genesis Pass {genesisPass ? "ON" : "OFF"}
-            </div>
+            <Toggle
+              theme={theme}
+              label="Genesis Pass"
+              checked={genesisPass}
+              onChange={onGenesisPassToggle}
+              style={{ width: 150, display: "flex", alignItems: "center", justifyContent: "center", whiteSpace: "nowrap" }}
+            />
           </div>
         )}
       </div>
@@ -788,7 +784,6 @@ export default function LiberationWorkspace({ theme }: { theme: AppTheme }) {
             theme={theme}
             sectionPanel={sectionPanel}
             inputStyle={inputStyle}
-            pillBtn={pillBtn}
             type={type}
             quests={quests}
             questIdx={questIdx}
@@ -829,24 +824,13 @@ export default function LiberationWorkspace({ theme }: { theme: AppTheme }) {
               </div>
 
               <div style={{ marginLeft: "auto" }}>
-                <div
-                  className="lib-btn"
-                  role="button"
-                  tabIndex={0}
-                  onClick={resetBosses}
-                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); resetBosses(); } }}
-                  style={{
-                    padding: "4px 10px",
-                    borderRadius: "8px",
-                    fontSize: "0.75rem",
-                    fontWeight: 800,
-                    color: "#e05a5a",
-                    background: "transparent",
-                    border: "1px solid #e05a5a33",
-                  }}
-                >
-                  Reset
-                </div>
+                <ConfirmButton
+                  theme={theme}
+                  label="Reset"
+                  title="Reset boss selection?"
+                  message="This clears the bosses and difficulties you've selected for this tab. Your quest progress and current traces stay."
+                  onConfirm={resetBosses}
+                />
               </div>
             </div>
 

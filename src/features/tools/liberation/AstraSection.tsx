@@ -22,6 +22,7 @@ import {
   formatDate,
 } from "./useAstraState";
 import { toolStyles } from "../tool-styles";
+import { ConfirmButton } from "../shared-ui";
 
 const traceBadgeBase: React.CSSProperties = {
   fontSize: "0.75rem",
@@ -730,24 +731,13 @@ export default function AstraSection({ theme }: { theme: AppTheme }) {
             Boss Selection
           </div>
           <div style={{ marginLeft: "auto" }}>
-            <div
-              className="lib-btn"
-              role="button"
-              tabIndex={0}
-              onClick={state.resetBosses}
-              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); state.resetBosses(); } }}
-              style={{
-                padding: "4px 10px",
-                borderRadius: "8px",
-                fontSize: "0.75rem",
-                fontWeight: 800,
-                color: "#e05a5a",
-                background: "transparent",
-                border: "1px solid #e05a5a33",
-              }}
-            >
-              Reset
-            </div>
+            <ConfirmButton
+              theme={theme}
+              label="Reset"
+              title="Reset boss selection?"
+              message="This clears the Astra bosses and difficulties you've selected. Your mission progress and current totals stay."
+              onConfirm={state.resetBosses}
+            />
           </div>
         </div>
 

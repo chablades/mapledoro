@@ -3,7 +3,7 @@
 import { useState, useMemo, useReducer, useSyncExternalStore } from "react";
 import type { AppTheme } from "../../../components/themes";
 import { replaceZeroOnDigit } from "../numberInputHandlers";
-import { Field } from "../shared-ui";
+import { Field, ActionButton } from "../shared-ui";
 import { ToolHeader } from "../../../components/ToolHeader";
 import {
   type CubeKey,
@@ -196,19 +196,6 @@ export default function CubingWorkspace({ theme }: { theme: AppTheme }) {
 
   const styles = toolStyles(theme);
 
-  const calcBtnStyle: React.CSSProperties = {
-    padding: "10px 28px",
-    borderRadius: "10px",
-    border: `1px solid ${theme.accent}`,
-    background: theme.accent,
-    color: "#fff",
-    fontSize: "0.85rem",
-    fontWeight: 800,
-    cursor: levelValid ? "pointer" : "not-allowed",
-    opacity: levelValid ? 1 : 0.5,
-    marginLeft: "auto",
-  };
-
   const selectStyle: React.CSSProperties = {
     ...styles.selectStyle,
     width: "100%",
@@ -342,14 +329,13 @@ export default function CubingWorkspace({ theme }: { theme: AppTheme }) {
               />
               Double Miracle Time
             </label>
-            <button
-              onClick={handleCalculate}
+            <ActionButton
+              theme={theme}
+              label="Calculate"
               disabled={!levelValid}
-              className="tool-btn"
-              style={calcBtnStyle}
-            >
-              Calculate
-            </button>
+              onClick={handleCalculate}
+              style={{ marginLeft: "auto" }}
+            />
           </div>
         </div>
 

@@ -20,6 +20,7 @@ import {
 } from "./boss-crystals-types";
 import { useBossCrystalsState } from "./useBossCrystalsState";
 import { toolStyles } from "../tool-styles";
+import { ConfirmButton } from "../shared-ui";
 
 // -- Style helpers ------------------------------------------------------------
 
@@ -1008,25 +1009,16 @@ function BossCrystalsControls({
         ))}
       </div>
       <div className="bc-actions" style={{ marginLeft: "auto", display: "flex", gap: "0.5rem" }}>
-        <div
+        <ConfirmButton
+          theme={theme}
+          label="Clear"
+          title="Wipe all bosses?"
+          message="This removes every character and their tracked bosses. This can't be undone."
+          confirmLabel="Wipe all"
+          onConfirm={onClear}
           className="bc-btn bc-action-btn"
-          role="button"
-          tabIndex={0}
-          onClick={onClear}
-          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClear(); } }}
-          style={{
-            padding: "6px 14px",
-            borderRadius: "10px",
-            fontSize: "0.78rem",
-            fontWeight: 800,
-            textAlign: "center",
-            color: "#e05a5a",
-            background: "transparent",
-            border: "1px solid #e05a5a33",
-          }}
-        >
-          Clear
-        </div>
+          style={{ padding: "6px 14px", borderRadius: "10px", fontSize: "0.78rem", textAlign: "center" }}
+        />
         <div
           className="bc-btn bc-action-btn"
           role="button"
@@ -1113,71 +1105,6 @@ function BossCrystalsSummary({
   );
 }
 
-function ConfirmClearDialog({
-  theme,
-  onCancel,
-  onConfirm,
-}: {
-  theme: AppTheme;
-  onCancel: () => void;
-  onConfirm: () => void;
-}) {
-  const styles = toolStyles(theme);
-  return (
-    <div className="bc-overlay" role="button" tabIndex={0} onClick={onCancel} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onCancel(); } }}>
-      <div
-        className="bc-dialog"
-        role="button"
-        tabIndex={0}
-        onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") e.stopPropagation(); }}
-        style={{ padding: "1.5rem", maxWidth: 420 }}
-      >
-        <div
-          style={{
-            fontFamily: "var(--font-heading)",
-            fontSize: "1.1rem",
-            color: theme.text,
-            marginBottom: "0.75rem",
-          }}
-        >
-          Wipe all bosses?
-        </div>
-        <div style={{ fontSize: "0.85rem", color: theme.muted, fontWeight: 600, marginBottom: "1.25rem", lineHeight: 1.5 }}>
-          This removes every character and their tracked bosses. This can&apos;t be undone.
-        </div>
-        <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.5rem" }}>
-          <div
-            className="bc-btn tool-dialog-btn"
-            role="button"
-            tabIndex={0}
-            onClick={onCancel}
-            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onCancel(); } }}
-            style={styles.dialogBtnStyle}
-          >
-            Cancel
-          </div>
-          <div
-            className="bc-btn tool-dialog-btn"
-            role="button"
-            tabIndex={0}
-            onClick={onConfirm}
-            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onConfirm(); } }}
-            style={{
-              ...styles.dialogBtnStyle,
-              color: "#fff",
-              background: "#e05a5a",
-              borderColor: "#e05a5a",
-            }}
-          >
-            Wipe all
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // -- Main Component -----------------------------------------------------------
 
 export default function BossCrystalsWorkspace({ theme }: { theme: AppTheme }) {
@@ -1201,7 +1128,6 @@ export default function BossCrystalsWorkspace({ theme }: { theme: AppTheme }) {
 
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
-  const [confirmingClear, setConfirmingClear] = useState(false);
 
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, idx: number) => {
     e.dataTransfer.effectAllowed = "move";
@@ -1242,6 +1168,7 @@ export default function BossCrystalsWorkspace({ theme }: { theme: AppTheme }) {
         .bc-btn { transition: background 0.15s, transform 0.1s; cursor: pointer; user-select: none; }
         .bc-btn:hover { transform: translateY(-1px); }
         .bc-btn:active { transform: translateY(0); }
+        .bc-action-btn:hover, .bc-action-btn:active { transform: none; }
         .bc-add-card { transition: border-color 0.15s, background 0.15s; cursor: pointer; }
         .bc-add-card:hover { border-color: ${theme.accent} !important; background: ${theme.accentSoft} !important; }
         .bc-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 1rem; }
@@ -1292,7 +1219,7 @@ export default function BossCrystalsWorkspace({ theme }: { theme: AppTheme }) {
             theme={theme}
             server={server}
             setServer={setServer}
-            onClear={() => setConfirmingClear(true)}
+            onClear={clearData}
             exportXlsx={exportXlsx}
           />
 
@@ -1397,17 +1324,6 @@ export default function BossCrystalsWorkspace({ theme }: { theme: AppTheme }) {
           onBack={goBackToAddName}
           onCancel={closeDialog}
           onConfirm={dialog?.type === "add-bosses" ? confirmAdd : confirmEdit}
-        />
-      )}
-
-      {confirmingClear && (
-        <ConfirmClearDialog
-          theme={theme}
-          onCancel={() => setConfirmingClear(false)}
-          onConfirm={() => {
-            clearData();
-            setConfirmingClear(false);
-          }}
         />
       )}
     </>

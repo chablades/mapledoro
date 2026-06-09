@@ -25,6 +25,7 @@ import {
   type TaskSection,
 } from "./useDailiesState";
 import RemindersConfigBar from "./RemindersConfigBar";
+import { ActionButton } from "../shared-ui";
 
 // -- Style helpers ------------------------------------------------------------
 
@@ -486,14 +487,12 @@ function CardBody({
         }}
       >
         <div style={{ marginBottom: "0.75rem" }}>No tasks tracked yet.</div>
-        <button
-          type="button"
+        <ActionButton
+          theme={theme}
+          label="+ Add tasks"
           onClick={onEdit}
-          className="tool-dialog-btn"
-          style={accentBtnStyle(theme, "0.5rem 1rem")}
-        >
-          + Add tasks
-        </button>
+          style={{ padding: "0.5rem 1rem" }}
+        />
       </div>
     );
   }
