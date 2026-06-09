@@ -663,8 +663,6 @@ function CompletionSummaryPanel({
           fontSize: "1.15rem",
           color: theme.text,
           marginBottom: "1rem",
-          paddingBottom: "0.8rem",
-          borderBottom: `1px solid ${theme.border}`,
         }}
       >
         Completion Summary
