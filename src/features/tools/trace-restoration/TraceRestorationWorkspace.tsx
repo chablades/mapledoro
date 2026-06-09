@@ -271,6 +271,7 @@ const missionBtnBase: CSSProperties = {
   justifyContent: "space-between",
   alignItems: "center",
   padding: "5px 8px",
+  border: "none",
   borderRadius: 6,
   fontSize: "0.75rem",
   cursor: "pointer",
@@ -388,17 +389,15 @@ function CrystalSection({
             {weeklyBosses.map((boss) => {
               const active = selectedBosses.includes(boss.id);
               return (
-                <div
+                <button
                   key={boss.id}
-                  role="button"
-                  tabIndex={0}
+                  type="button"
                   className="tool-btn"
                   onClick={() => onBossToggle(boss.id)}
-                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onBossToggle(boss.id); } }}
                   style={bossChipStyle(theme, active)}
                 >
                   {active ? "✓ " : ""}{boss.name}
-                </div>
+                </button>
               );
             })}
           </div>
@@ -411,17 +410,15 @@ function CrystalSection({
             {monthlyBosses.map((boss) => {
               const active = selectedBosses.includes(boss.id);
               return (
-                <div
+                <button
                   key={boss.id}
-                  role="button"
-                  tabIndex={0}
+                  type="button"
                   className="tool-btn"
                   onClick={() => onBossToggle(boss.id)}
-                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onBossToggle(boss.id); } }}
                   style={bossChipStyle(theme, active)}
                 >
                   {active ? "✓ " : ""}{boss.name}
-                </div>
+                </button>
               );
             })}
           </div>
@@ -539,20 +536,18 @@ function BossMissionCard({
         {boss.missions.map((mission) => {
           const active = selectedMissions.includes(mission.id);
           return (
-            <div
+            <button
               key={mission.id}
-              role="button"
-              tabIndex={0}
+              type="button"
               className="tool-btn"
               onClick={() => onToggleMission(mission.id)}
-              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onToggleMission(mission.id); } }}
               style={missionBtnStyle(theme, active)}
             >
               <span>{active ? "✓ " : ""}{mission.description}</span>
               <span style={{ fontWeight: 800, fontSize: "0.75rem", color: active ? theme.accent : theme.muted }}>
                 +{mission.points}
               </span>
-            </div>
+            </button>
           );
         })}
       </div>

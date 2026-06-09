@@ -136,18 +136,16 @@ function AstraBossCard({
 
       <div style={{ display: "flex", gap: "4px", flexWrap: "wrap", marginBottom: "0.6rem" }}>
         {boss.difficulties.map((diff, di) => (
-          <div
+          <button
             key={diff.label}
-            className="lib-diff-btn pill-btn"
-            role="button"
-            tabIndex={0}
+            type="button"
+            className="btn-reset lib-diff-btn pill-btn"
             onClick={() => onDifficultyChange(sel.difficultyIdx === di ? null : di)}
-            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onDifficultyChange(sel.difficultyIdx === di ? null : di); } }}
             style={pillBtn(sel.difficultyIdx === di)}
           >
             {diff.label} ({diff.traces})
             {diff.hasVoucher && " ★"}
-          </div>
+          </button>
         ))}
       </div>
 
@@ -181,13 +179,12 @@ function AstraBossCard({
           />
         </div>
 
-        <div
-          className={isActive ? "tool-chip-btn lib-btn" : "tool-chip-btn"}
+        <button
+          type="button"
+          className={isActive ? "btn-reset tool-chip-btn lib-btn" : "btn-reset tool-chip-btn"}
           title="Click this if you have already cleared the boss for the week."
-          role="button"
-          tabIndex={0}
-          onClick={() => { if (isActive) onClearedChange(!sel.clearedThisWeek); }}
-          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); if (isActive) onClearedChange(!sel.clearedThisWeek); } }}
+          disabled={!isActive}
+          onClick={() => onClearedChange(!sel.clearedThisWeek)}
           style={{
             cursor: isActive ? "pointer" : "not-allowed",
             color: cleared ? theme.accentText : theme.muted,
@@ -196,7 +193,7 @@ function AstraBossCard({
           }}
         >
           {cleared ? "Cleared" : "Not cleared"}
-        </div>
+        </button>
 
         {activeDiff?.hasVoucher && (
           <VoucherInput

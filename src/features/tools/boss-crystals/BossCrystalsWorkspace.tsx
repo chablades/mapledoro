@@ -251,23 +251,19 @@ function CharacterCard({
           gap: "4px",
         }}
       >
-        <div
-          className="bc-btn"
-          role="button"
-          tabIndex={0}
+        <button
+          type="button"
+          className="btn-reset bc-btn"
           onClick={onDelete}
-          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onDelete(); } }}
           title="Remove character"
           style={{ ...bcIconBtnStyle(theme), color: "#e05a5a" }}
         >
           ✕
-        </div>
-        <div
-          className="bc-btn"
-          role="button"
-          tabIndex={0}
+        </button>
+        <button
+          type="button"
+          className="btn-reset bc-btn"
           onClick={onEdit}
-          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onEdit(); } }}
           title="Edit bosses"
           style={{
             padding: "5px",
@@ -282,7 +278,7 @@ function CharacterCard({
           <svg viewBox="0 0 24 24" width="14" height="14" fill={theme.muted}>
             <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
           </svg>
-        </div>
+        </button>
       </div>
 
       {/* Character header */}
@@ -366,13 +362,11 @@ function CharacterCard({
                 padding: "1.5px 0",
               }}
             >
-              <div
-                className="bc-btn"
-                role="button"
-                tabIndex={0}
+              <button
+                type="button"
+                className="btn-reset bc-btn"
                 aria-pressed={!!b.cleared}
                 onClick={() => onToggleCleared(b.index)}
-                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onToggleCleared(b.index); } }}
                 title={b.cleared ? "Mark as not cleared" : "Mark as cleared this week"}
                 style={{
                   ...bcCardCheckboxBase,
@@ -385,7 +379,7 @@ function CharacterCard({
                     ✓
                   </span>
                 )}
-              </div>
+              </button>
               <Image
                 src={b.boss.icon}
                 alt=""
@@ -588,22 +582,19 @@ function AddNameDialog({
         )}
 
         <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.5rem" }}>
-          <div
-            className="bc-btn tool-dialog-btn"
-            role="button"
-            tabIndex={0}
+          <button
+            type="button"
+            className="btn-reset bc-btn tool-dialog-btn"
             onClick={onClose}
-            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClose(); } }}
             style={styles.dialogBtnStyle}
           >
             Cancel
-          </div>
-          <div
-            className="bc-btn tool-dialog-btn"
-            role="button"
-            tabIndex={0}
-            onClick={pendingName ? onNext : undefined}
-            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); if (pendingName) onNext(); } }}
+          </button>
+          <button
+            type="button"
+            className="btn-reset bc-btn tool-dialog-btn"
+            disabled={!pendingName}
+            onClick={onNext}
             style={{
               ...(pendingName ? styles.dialogPrimaryBtnStyle : styles.dialogBtnStyle),
               opacity: pendingName ? 1 : 0.5,
@@ -611,7 +602,7 @@ function AddNameDialog({
             }}
           >
             Next
-          </div>
+          </button>
         </div>
       </div>
     </div>
@@ -695,28 +686,24 @@ function BossSelectionDialog({
             Presets
           </span>
           {PRESETS.flatMap((p) => p.key === "" ? [] : [(
-            <div
+            <button
               key={p.key}
-              className="bc-btn bc-preset-btn"
-              role="button"
-              tabIndex={0}
+              type="button"
+              className="btn-reset bc-btn bc-preset-btn"
               onClick={() => onPreset(p.key)}
-              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onPreset(p.key); } }}
               style={bcPresetBtnStyle(theme)}
             >
               {p.label}
-            </div>
+            </button>
           )])}
-          <div
-            className="bc-btn bc-preset-btn bc-preset-clear"
-            role="button"
-            tabIndex={0}
+          <button
+            type="button"
+            className="btn-reset bc-btn bc-preset-btn bc-preset-clear"
             onClick={() => onPreset("")}
-            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onPreset(""); } }}
             style={bcClearPresetBtnStyle}
           >
             Clear
-          </div>
+          </button>
         </div>
 
         {/* Boss groups */}
@@ -748,13 +735,12 @@ function BossSelectionDialog({
                       opacity: isDisabled ? 0.4 : 1,
                     }}
                   >
-                    <div
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => {
-                        if (!isDisabled) onToggle(bi);
-                      }}
-                      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); if (!isDisabled) onToggle(bi); } }}
+                    <button
+                      type="button"
+                      className="btn-reset"
+                      aria-pressed={checked}
+                      disabled={isDisabled}
+                      onClick={() => onToggle(bi)}
                       style={{
                         ...bcCheckboxBase,
                         border: `2px solid ${checked ? theme.accent : theme.border}`,
@@ -767,7 +753,7 @@ function BossSelectionDialog({
                           ✓
                         </span>
                       )}
-                    </div>
+                    </button>
                     <Image
                       src={boss.icon}
                       alt=""
@@ -781,23 +767,22 @@ function BossSelectionDialog({
                         background: theme.panel,
                       }}
                     />
-                    <span
-                      role="button"
-                      tabIndex={0}
+                    <button
+                      type="button"
+                      className="btn-reset"
+                      disabled={isDisabled}
                       style={{
                         flex: 1,
+                        textAlign: "left",
                         fontSize: "0.78rem",
                         fontWeight: 700,
                         color: theme.text,
                         cursor: isDisabled ? "not-allowed" : "pointer",
                       }}
-                      onClick={() => {
-                        if (!isDisabled) onToggle(bi);
-                      }}
-                      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); if (!isDisabled) onToggle(bi); } }}
+                      onClick={() => onToggle(bi)}
                     >
                       {boss.name}
-                    </span>
+                    </button>
                     <span
                       style={{
                         fontSize: "0.75rem",
@@ -855,12 +840,10 @@ function BossSelectionDialog({
         {/* Actions */}
         <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.5rem" }}>
           {showBack && (
-            <div
-              className="bc-btn"
-              role="button"
-              tabIndex={0}
+            <button
+              type="button"
+              className="btn-reset bc-btn"
               onClick={onBack}
-              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onBack(); } }}
               style={{
                 padding: "8px 16px",
                 borderRadius: "10px",
@@ -872,14 +855,12 @@ function BossSelectionDialog({
               }}
             >
               Back
-            </div>
+            </button>
           )}
-          <div
-            className="bc-btn"
-            role="button"
-            tabIndex={0}
+          <button
+            type="button"
+            className="btn-reset bc-btn"
             onClick={onCancel}
-            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onCancel(); } }}
             style={{
               padding: "8px 16px",
               borderRadius: "10px",
@@ -891,13 +872,11 @@ function BossSelectionDialog({
             }}
           >
             Cancel
-          </div>
-          <div
-            className="bc-btn"
-            role="button"
-            tabIndex={0}
+          </button>
+          <button
+            type="button"
+            className="btn-reset bc-btn"
             onClick={onConfirm}
-            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onConfirm(); } }}
             style={{
               padding: "8px 16px",
               borderRadius: "10px",
@@ -909,7 +888,7 @@ function BossSelectionDialog({
             }}
           >
             {confirmLabel}
-          </div>
+          </button>
         </div>
       </div>
     </div>
@@ -945,13 +924,11 @@ function BossCrystalsControls({
         }}
       >
         {(["heroic", "interactive"] as const).map((s) => (
-          <div
+          <button
             key={s}
-            className="bc-btn bc-server-opt"
-            role="button"
-            tabIndex={0}
+            type="button"
+            className="btn-reset bc-btn bc-server-opt"
             onClick={() => setServer(s)}
-            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setServer(s); } }}
             style={{
               padding: "6px 14px",
               borderRadius: "8px",
@@ -963,7 +940,7 @@ function BossCrystalsControls({
             }}
           >
             {s === "heroic" ? "Heroic" : "Interactive"}
-          </div>
+          </button>
         ))}
       </div>
       <div className="bc-actions" style={{ marginLeft: "auto", display: "flex", gap: "0.5rem" }}>
@@ -977,12 +954,10 @@ function BossCrystalsControls({
           className="bc-btn bc-action-btn"
           style={{ padding: "6px 14px", borderRadius: "10px", fontSize: "0.78rem", textAlign: "center" }}
         />
-        <div
-          className="bc-btn bc-action-btn"
-          role="button"
-          tabIndex={0}
+        <button
+          type="button"
+          className="btn-reset bc-btn bc-action-btn"
           onClick={exportXlsx}
-          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); exportXlsx(); } }}
           style={{
             padding: "6px 14px",
             borderRadius: "10px",
@@ -995,7 +970,7 @@ function BossCrystalsControls({
           }}
         >
           Export
-        </div>
+        </button>
       </div>
     </div>
   );
@@ -1117,11 +1092,9 @@ export default function BossCrystalsWorkspace({ theme }: { theme: AppTheme }) {
     <>
       <style>{`
         .bc-card { transition: box-shadow 0.15s, transform 0.15s, opacity 0.15s, border-color 0.15s; }
-        .bc-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); transform: translateY(-1px); }
+        .bc-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
         .bc-card:active { cursor: grabbing; }
         .bc-btn { transition: background 0.15s, transform 0.1s; cursor: pointer; user-select: none; }
-        .bc-btn:hover { transform: translateY(-1px); }
-        .bc-btn:active { transform: translateY(0); }
         .bc-action-btn:hover, .bc-action-btn:active { transform: none; }
         .bc-add-card { transition: border-color 0.15s, background 0.15s; cursor: pointer; }
         .bc-add-card:hover { border-color: ${theme.accent} !important; background: ${theme.accentSoft} !important; }
@@ -1209,12 +1182,10 @@ export default function BossCrystalsWorkspace({ theme }: { theme: AppTheme }) {
             ))}
 
             {/* Add character card */}
-            <div
-              className="fade-in bc-add-card panel-card"
-              role="button"
-              tabIndex={0}
+            <button
+              type="button"
+              className="btn-reset fade-in bc-add-card panel-card"
               onClick={openAdd}
-              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openAdd(); } }}
               title="Add character"
               style={bcAddCardStyle(theme)}
             >
@@ -1231,7 +1202,7 @@ export default function BossCrystalsWorkspace({ theme }: { theme: AppTheme }) {
               >
                 Add character
               </span>
-            </div>
+            </button>
           </div>
         </div>
       </div>

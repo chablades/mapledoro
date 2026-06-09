@@ -473,11 +473,11 @@ function InfographicPanel({ className, theme }: { className: string; theme: AppT
         </div>
       )}
       {zoomed && hasImage && (
-        <div
-          role="button"
-          tabIndex={0}
+        <button
+          type="button"
+          className="btn-reset"
           onClick={() => setZoomed(false)}
-          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " " || e.key === "Escape") { e.preventDefault(); setZoomed(false); } }}
+          onKeyDown={(e) => { if (e.key === "Escape") { e.preventDefault(); setZoomed(false); } }}
           style={zoomedOverlayStyle}
         >
           <Image
@@ -489,7 +489,7 @@ function InfographicPanel({ className, theme }: { className: string; theme: AppT
             unoptimized
             style={zoomedImageStyle}
           />
-        </div>
+        </button>
       )}
     </div>
   );
@@ -580,11 +580,11 @@ function HexaGuidePanel({ className, theme }: { className: string; theme: AppThe
         </div>
       )}
       {zoomed && imageUrl && (
-        <div
-          role="button"
-          tabIndex={0}
+        <button
+          type="button"
+          className="btn-reset"
           onClick={() => setZoomed(false)}
-          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " " || e.key === "Escape") { e.preventDefault(); setZoomed(false); } }}
+          onKeyDown={(e) => { if (e.key === "Escape") { e.preventDefault(); setZoomed(false); } }}
           style={zoomedOverlayStyle}
         >
           <Image
@@ -596,7 +596,7 @@ function HexaGuidePanel({ className, theme }: { className: string; theme: AppThe
             unoptimized
             style={zoomedImageStyle}
           />
-        </div>
+        </button>
       )}
     </div>
   );

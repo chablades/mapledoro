@@ -275,12 +275,10 @@ function ClassDirectory({ theme }: { theme: AppTheme }) {
               const isSelected = selected === cls.name;
               return (
                 <React.Fragment key={cls.name}>
-                  <div
-                    role="button"
-                    tabIndex={0}
-                    className="class-picker-tile"
+                  <button
+                    type="button"
+                    className="btn-reset class-picker-tile"
                     onClick={() => toggle(cls.name)}
-                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(cls.name); } }}
                     style={{
                       transform: isSelected ? "scale(1.05)" : undefined,
                     }}
@@ -319,7 +317,7 @@ function ClassDirectory({ theme }: { theme: AppTheme }) {
                     >
                       {cls.name}
                     </div>
-                  </div>
+                  </button>
 
                   {/* Expanded info panel — spans full grid width */}
                   {isSelected && <ClassInfoPanel cls={cls} theme={theme} />}

@@ -120,17 +120,15 @@ function BossCard({
         }}
       >
         {boss.difficulties.map((diff, di) => (
-          <div
+          <button
             key={diff.label}
-            className="lib-diff-btn pill-btn"
-            role="button"
-            tabIndex={0}
+            type="button"
+            className="btn-reset lib-diff-btn pill-btn"
             onClick={() => onDifficultyChange(sel.difficultyIdx === di ? null : di)}
-            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onDifficultyChange(sel.difficultyIdx === di ? null : di); } }}
             style={pillBtn(sel.difficultyIdx === di)}
           >
             {diff.label} ({diff.traces})
-          </div>
+          </button>
         ))}
       </div>
 
@@ -186,15 +184,12 @@ function BossCard({
           />
         </div>
 
-        <div
-          className={isActive ? "tool-chip-btn lib-btn" : "tool-chip-btn"}
+        <button
+          type="button"
+          className={isActive ? "btn-reset tool-chip-btn lib-btn" : "btn-reset tool-chip-btn"}
           title="Click this if you have already cleared the boss for the week."
-          role="button"
-          tabIndex={0}
-          onClick={() => {
-            if (isActive) onClearedChange(!sel.clearedThisWeek);
-          }}
-          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); if (isActive) onClearedChange(!sel.clearedThisWeek); } }}
+          disabled={!isActive}
+          onClick={() => onClearedChange(!sel.clearedThisWeek)}
           style={{
             cursor: isActive ? "pointer" : "not-allowed",
             color: sel.clearedThisWeek && isActive
@@ -207,7 +202,7 @@ function BossCard({
           }}
         >
           {sel.clearedThisWeek && isActive ? "Cleared" : "Not cleared"}
-        </div>
+        </button>
       </div>
     </div>
   );
@@ -708,10 +703,7 @@ export default function LiberationWorkspace({ theme }: { theme: AppTheme }) {
     <>
       <style>{`
         .lib-btn { transition: background 0.15s, transform 0.1s; cursor: pointer; user-select: none; }
-        .lib-btn:hover { transform: translateY(-1px); }
-        .lib-btn:active { transform: translateY(0); }
         .lib-diff-btn { transition: all 0.15s; cursor: pointer; user-select: none; }
-        .lib-diff-btn:hover { transform: translateY(-1px); }
         @media (max-width: 860px) {
           .lib-boss-grid { grid-template-columns: 1fr !important; }
           .segmented-toggle-track { flex-wrap: wrap; }

@@ -139,16 +139,14 @@ function SymbolCardHeader({
       </div>
 
       {isSacred && (
-        <div
-          className="sym-btn tool-chip-btn"
-          role="button"
-          tabIndex={0}
+        <button
+          type="button"
+          className="btn-reset sym-btn tool-chip-btn"
           onClick={() => updateSymbol(area.name, { enabled: !state.enabled })}
-          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); updateSymbol(area.name, { enabled: !state.enabled }); } }}
           style={trackBtnStyle}
         >
           {isTracked ? "Tracking" : "Not tracking"}
-        </div>
+        </button>
       )}
 
       {(!isSacred || isTracked) && (() => {
@@ -384,14 +382,12 @@ function SymbolIncomeControls({
       </div>
 
       {!isSacred && (
-        <div
-          className="sym-btn"
-          role="button"
-          tabIndex={0}
+        <button
+          type="button"
+          className="btn-reset sym-btn"
           onClick={() =>
             updateSymbol(area.name, { weeklyEnabled: !state.weeklyEnabled })
           }
-          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); updateSymbol(area.name, { weeklyEnabled: !state.weeklyEnabled }); } }}
           style={{
             padding: "4px 10px",
             borderRadius: "8px",
@@ -403,7 +399,7 @@ function SymbolIncomeControls({
           }}
         >
           Weekly {state.weeklyEnabled ? "120" : "OFF"}
-        </div>
+        </button>
       )}
     </div>
   );
@@ -942,8 +938,6 @@ export default function SymbolWorkspace({ theme }: { theme: AppTheme }) {
     <>
       <style>{`
         .sym-btn { transition: background 0.15s, transform 0.1s; cursor: pointer; user-select: none; }
-        .sym-btn:hover { transform: translateY(-1px); }
-        .sym-btn:active { transform: translateY(0); }
         @media (max-width: 860px) {
           .sym-grid { grid-template-columns: 1fr !important; }
         }

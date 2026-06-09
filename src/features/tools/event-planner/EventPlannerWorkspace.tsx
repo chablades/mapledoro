@@ -404,21 +404,14 @@ function PlanSummary({
             </div>
           </div>
         </div>
-        <div
+        <button
+          type="button"
           className="tool-btn"
-          role="button"
-          tabIndex={0}
           onClick={clearEntries}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              clearEntries();
-            }
-          }}
           style={clearAllButtonStyle}
         >
           Clear All
-        </div>
+        </button>
       </div>
     </div>
   );
@@ -560,17 +553,10 @@ function PlanItemsList({
                         {cost.booms === 0 ? "0" : cost.booms.toFixed(1)} spares
                       </div>
                     </div>
-                    <div
+                    <button
+                      type="button"
                       className="tool-btn"
-                      role="button"
-                      tabIndex={0}
                       onClick={() => toggleSafeguard(entry.id)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          e.preventDefault();
-                          toggleSafeguard(entry.id);
-                        }
-                      }}
                       title={entry.safeguard ? "Safeguard ON (15-17)" : "Safeguard OFF"}
                       style={{
                         ...safeguardBaseStyle,
@@ -580,22 +566,15 @@ function PlanItemsList({
                       }}
                     >
                       Safeguard
-                    </div>
-                    <div
+                    </button>
+                    <button
+                      type="button"
                       className="tool-btn"
-                      role="button"
-                      tabIndex={0}
                       onClick={() => removeEntry(entry.id)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          e.preventDefault();
-                          removeEntry(entry.id);
-                        }
-                      }}
                       style={removeButtonStyle}
                     >
                       {"×"}
-                    </div>
+                    </button>
                   </div>
                 </div>
               );
@@ -714,9 +693,9 @@ function AddItemForm({
           <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
             <input className="tool-input" type="number" min={0} value={form.replaceCost} onFocus={(e) => e.currentTarget.select()} onKeyDown={replaceZeroOnDigit} onChange={(e) => dispatchForm({ type: "setReplaceCost", value: Math.max(0, Number(e.target.value) || 0) })} placeholder="0" style={{ ...styles.inputStyle, width: 120 }} />
             <Toggle theme={theme} label="Safeguard" checked={form.safeguard} onChange={(v) => dispatchForm({ type: "setSafeguard", value: v })} style={{ width: 120, alignSelf: "stretch", display: "flex", alignItems: "center", justifyContent: "center", whiteSpace: "nowrap" }} />
-            <div className="tool-btn" role="button" tabIndex={0} onClick={handleAdd} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleAdd(); } }} style={addButtonStyle}>
+            <button type="button" className="tool-btn" onClick={handleAdd} style={addButtonStyle}>
               + Add
-            </div>
+            </button>
           </div>
         </div>
       </div>

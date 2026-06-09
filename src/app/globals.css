@@ -9,9 +9,10 @@ body {
   font-family: var(--font-body);
 }
 
-/* Reserve scrollbar space so centered content doesn't shift between short and tall pages */
+/* Keep the root scrollport width consistent between short and tall pages. */
 html {
-  scrollbar-gutter: stable;
+  overflow-y: scroll;
+  -webkit-overflow-scrolling: touch;
 }
 
 * {
@@ -181,6 +182,17 @@ input:focus-visible,
 textarea:focus-visible {
   outline: 2px solid;
   outline-offset: 2px;
+}
+
+/* Appearance reset for <button> elements styled as custom clickables.
+   Declared before the shape classes below so they win the cascade. */
+.btn-reset {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
 }
 
 /* Interactive control base: pointer + hover transition. Colors stay inline. */
