@@ -121,7 +121,7 @@ const TRACKERS: ToolCard[] = [
 function ToolCardInner({ tool, theme }: { tool: ToolCard; theme: AppTheme }) {
   return (
     <div
-      className={`fade-in tool-card panel-card${tool.comingSoon ? " tool-card-coming-soon" : ""}`}
+      className={`tool-card panel-card${tool.comingSoon ? " tool-card-coming-soon" : ""}`}
       style={{
         background: tool.comingSoon ? `color-mix(in srgb, ${theme.panel} 50%, transparent)` : theme.panel,
         border: `1px solid ${theme.border}`,
@@ -170,7 +170,7 @@ function ToolCardInner({ tool, theme }: { tool: ToolCard; theme: AppTheme }) {
 function ToolGrid({ tools, theme }: { tools: ToolCard[]; theme: AppTheme }) {
   return (
     <div
-      className="tools-grid"
+      className="fade-in tools-grid"
       style={{
         display: "grid",
         gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
@@ -196,8 +196,12 @@ function ToolsContent({ theme }: { theme: AppTheme }) {
   return (
     <>
       <style>{`
-        .tool-card { transition: background 0.35s ease, border-color 0.35s ease, transform 0.15s ease; }
-        .tool-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
+        .tool-card { transition: transform 0.15s ease, background 0.35s ease, border-color 0.35s ease, box-shadow 0.15s ease; }
+        .tool-card:not(.tool-card-coming-soon):hover {
+          transform: translateY(-3px);
+          box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+          border-color: ${theme.accent} !important;
+        }
         @media (max-width: 860px) {
           .tools-grid { grid-template-columns: 1fr !important; }
         }
