@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react";
+import { dialogBtnColors, dialogPrimaryBtnColors } from "../../components/ConfirmDialog";
 import type { AppTheme } from "../../components/themes";
 
 export interface ToolStyles {
@@ -35,17 +36,9 @@ export function toolStyles(theme: AppTheme): ToolStyles {
   };
 
   // Dialog action buttons (colors only; shape comes from `.tool-dialog-btn`).
-  const dialogBtnStyle: CSSProperties = {
-    color: theme.muted,
-    background: theme.timerBg,
-    borderColor: theme.border,
-  };
+  const dialogBtnStyle: CSSProperties = dialogBtnColors(theme);
 
-  const dialogPrimaryBtnStyle: CSSProperties = {
-    color: theme.accentText,
-    background: theme.accentSoft,
-    borderColor: theme.accent,
-  };
+  const dialogPrimaryBtnStyle: CSSProperties = dialogPrimaryBtnColors(theme);
 
   return {
     sectionPanel,

@@ -22,7 +22,8 @@ import {
   formatDate,
 } from "./useLiberationState";
 import { toolStyles } from "../tool-styles";
-import { ConfirmButton, Toggle } from "../shared-ui";
+import { Toggle } from "../shared-ui";
+import { ConfirmButton } from "../../../components/ConfirmDialog";
 import AstraSection from "./AstraSection";
 
 type LiberationTab = LiberationType | "astra";

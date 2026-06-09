@@ -9,6 +9,11 @@ body {
   font-family: var(--font-body);
 }
 
+/* Reserve scrollbar space so centered content doesn't shift between short and tall pages */
+html {
+  scrollbar-gutter: stable;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -446,16 +451,6 @@ textarea:focus-visible {
   gap: 0.5rem;
   align-items: center;
   flex-wrap: wrap;
-}
-
-.settings-pill-btn {
-  border-radius: 999px;
-  font-family: inherit;
-  font-weight: 800;
-  font-size: 0.82rem;
-  padding: 0.4rem 0.9rem;
-  cursor: pointer;
-  white-space: nowrap;
 }
 
 @media (max-width: 860px) {

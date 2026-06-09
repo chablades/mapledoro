@@ -18,7 +18,7 @@ import { COMMON_COSTS, getCostRange } from "./hexa-costs";
 import { SkillSection, MasterySection } from "./hexa-ui";
 import { fmtNum } from "./hexa-format";
 import { toolStyles } from "../tool-styles";
-import { ConfirmButton } from "../shared-ui";
+import { ConfirmButton } from "../../../components/ConfirmDialog";
 
 const checkboxLabelStyle: React.CSSProperties = {
   display: "flex",

@@ -20,7 +20,7 @@ import {
 } from "./boss-crystals-types";
 import { useBossCrystalsState } from "./useBossCrystalsState";
 import { toolStyles } from "../tool-styles";
-import { ConfirmButton } from "../shared-ui";
+import { ConfirmButton } from "../../../components/ConfirmDialog";
 
 // -- Style helpers ------------------------------------------------------------
 

@@ -22,7 +22,7 @@ import {
   formatDate,
 } from "./useAstraState";
 import { toolStyles } from "../tool-styles";
-import { ConfirmButton } from "../shared-ui";
+import { ConfirmButton } from "../../../components/ConfirmDialog";
 
 const traceBadgeBase: React.CSSProperties = {
   fontSize: "0.75rem",

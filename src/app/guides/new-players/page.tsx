@@ -412,23 +412,13 @@ function NewPlayersContent({ theme }: { theme: AppTheme }) {
   return (
     <>
       <style>{`
-        @media (max-width: 860px) {
-          .guide-main { padding: 1rem !important; }
-        }
         @media (max-width: 500px) {
           .class-card { flex-direction: column !important; align-items: center !important; text-align: center !important; }
         }
       `}</style>
 
-      <div
-        className="guide-main"
-        style={{
-          flex: 1,
-          width: "100%",
-          padding: "1.5rem 1.5rem 2rem 2.75rem",
-        }}
-      >
-        <div style={{ maxWidth: "860px", margin: "0 auto" }}>
+      <div className="page-content">
+        <div className="page-container">
           {/* Back link */}
           <Link
             href="/guides"

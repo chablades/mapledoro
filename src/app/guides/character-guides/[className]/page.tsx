@@ -134,14 +134,8 @@ function ClassGuideContent({
 
   if (!cls) {
     return (
-      <div
-        style={{
-          flex: 1,
-          width: "100%",
-          padding: "1.5rem 1.5rem 2rem 2.75rem",
-        }}
-      >
-        <div style={{ maxWidth: 900, margin: "0 auto" }}>
+      <div className="page-content">
+        <div className="page-container">
           <Link
             href="/guides/character-guides"
             style={{
@@ -181,14 +175,8 @@ function ClassGuideContent({
   }
 
   return (
-    <div
-      style={{
-        flex: 1,
-        width: "100%",
-        padding: "1.5rem 1.5rem 2rem 2.75rem",
-      }}
-    >
-      <div style={{ maxWidth: 900, margin: "0 auto" }}>
+    <div className="page-content">
+      <div className="page-container">
         <Link
           href="/guides/character-guides"
           style={{

@@ -20,7 +20,7 @@ import { ItemIcon } from "../../../components/ResourceImage";
 import { CharacterSyncPanel } from "../../../components/CharacterSyncPanel";
 import { SegmentedToggle } from "../../../components/SegmentedToggle";
 import { toolStyles } from "../tool-styles";
-import { ConfirmButton } from "../shared-ui";
+import { ConfirmButton } from "../../../components/ConfirmDialog";
 import { utcDateStr } from "../date";
 import {
   type SymbolType,

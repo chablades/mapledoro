@@ -5,7 +5,11 @@ import AppShell from "../../components/AppShell";
 import type { AppTheme } from "../../components/themes";
 import { ACCENT_THEMES } from "../../components/themes";
 import { useTheme } from "../../components/ThemeContext";
-import ConfirmModal from "../../components/ConfirmModal";
+import {
+  ConfirmButton,
+  dialogBtnColors,
+  dialogPrimaryBtnColors,
+} from "../../components/ConfirmDialog";
 
 function hardReset() {
   const keys = Object.keys(localStorage).filter((k) => k.startsWith("mapledoro"));
@@ -32,7 +36,6 @@ function exportData() {
 
 function SettingsContent({ theme }: { theme: AppTheme }) {
   const { themeKey, setThemeKey } = useTheme();
-  const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [importStatus, setImportStatus] = useState<string | null>(null);
   const [accentDropdownOpen, setAccentDropdownOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -210,24 +213,16 @@ function SettingsContent({ theme }: { theme: AppTheme }) {
             <button
               type="button"
               onClick={exportData}
-              className="settings-pill-btn"
-              style={{
-                border: `1px solid ${theme.border}`,
-                background: theme.accentSoft,
-                color: theme.accentText,
-              }}
+              className="tool-btn tool-dialog-btn"
+              style={dialogPrimaryBtnColors(theme)}
             >
               Export data
             </button>
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="settings-pill-btn"
-              style={{
-                border: `1px solid ${theme.border}`,
-                background: theme.bg,
-                color: theme.text,
-              }}
+              className="tool-btn tool-dialog-btn"
+              style={dialogBtnColors(theme)}
             >
               Import data
             </button>
@@ -260,31 +255,16 @@ function SettingsContent({ theme }: { theme: AppTheme }) {
               Clears all characters, settings, and saved state from this browser.
             </p>
           </div>
-          <button
-            type="button"
-            onClick={() => setShowResetConfirm(true)}
-            className="settings-pill-btn"
-            style={{
-              border: "1px solid #ef4444",
-              background: "#fef2f2",
-              color: "#991b1b",
-            }}
-          >
-            Reset all data
-          </button>
-        </div>
-
-        {showResetConfirm && (
-          <ConfirmModal
+          <ConfirmButton
             theme={theme}
+            label="Reset all data"
+            style={{ padding: "0.5rem 1rem", fontSize: "0.82rem", borderRadius: "10px" }}
             title="Reset all data?"
-            description="This will delete all your characters, world settings, and saved state from this browser. There is no undo."
+            message="This will delete all your characters, world settings, and saved state from this browser. There is no undo."
             confirmLabel="Reset everything"
-            confirmDanger
             onConfirm={hardReset}
-            onCancel={() => setShowResetConfirm(false)}
           />
-        )}
+        </div>
       </div>
     </div>
   );
