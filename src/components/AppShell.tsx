@@ -56,7 +56,7 @@ export default function AppShell({ currentPath, children }: AppShellProps) {
 
       <footer
         style={{
-          padding: "2rem 1.5rem 3rem 2.75rem",
+          padding: "1.5rem 1.5rem 1.5rem 2.75rem",
           borderTop: `1px solid ${theme.border}`,
           background: theme.panel,
           marginTop: "auto",
@@ -106,7 +106,7 @@ export default function AppShell({ currentPath, children }: AppShellProps) {
               community. This project is not affiliated with, endorsed, or
               supported by Nexon, Wizet, or any of their partners.
             </p>
-            <p>
+            <p style={{ margin: 0 }}>
               MapleStory and all related assets, including but not limited to
               images, characters, and names, are the intellectual property and
               registered trademarks of Nexon. All rights reserved to their
