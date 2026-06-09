@@ -29,20 +29,18 @@ export function SegmentedToggle<T extends string>({
         }}
       >
         {options.map((t) => (
-          <div
+          <button
             key={t}
-            role="button"
-            tabIndex={0}
+            type="button"
             className={["segmented-toggle-option", btnClassName].filter(Boolean).join(" ")}
             onClick={() => onChange(t)}
-            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onChange(t); } }}
             style={{
               color: value === t ? theme.accentText : theme.muted,
               background: value === t ? theme.accentSoft : "transparent",
             }}
           >
             {labels[t]}
-          </div>
+          </button>
         ))}
       </div>
     </div>

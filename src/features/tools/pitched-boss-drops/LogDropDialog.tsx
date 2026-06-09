@@ -2,10 +2,10 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties } from "react";
-import { createPortal } from "react-dom";
-import Image from "next/image";
+import ModalShell from "../../../components/ModalShell";
 import type { AppTheme } from "../../../components/themes";
 import type { StoredCharacterRecord } from "../../characters/model/charactersStore";
+import { CharacterPickerRow } from "../CharacterPickerRow";
 import { localDateStr } from "../date";
 import { toolStyles } from "../tool-styles";
 import { ItemIcon } from "./pitched-boss-ui";
@@ -48,24 +48,8 @@ function labelStyle(theme: AppTheme): CSSProperties {
   };
 }
 
-function avatarFallbackStyle(theme: AppTheme): CSSProperties {
-  return {
-    width: 32,
-    height: 32,
-    borderRadius: 6,
-    background: theme.accentSoft,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: "0.85rem",
-    color: theme.accent,
-    fontWeight: 800,
-    flexShrink: 0,
-  };
-}
-
 /* ------------------------------------------------------------------ */
-/*  Character picker (card list, mirrors Boss Crystals dialog)         */
+/*  Character picker (card list, shared with Boss Crystals dialog)     */
 /* ------------------------------------------------------------------ */
 
 function CharacterPicker({
@@ -90,58 +74,15 @@ function CharacterPicker({
         overflowY: "auto",
       }}
     >
-      {characters.map((c) => {
-        const selected = value === c.characterName;
-        return (
-          <div
-            key={c.characterName}
-            className="pbd-char-opt"
-            role="button"
-            tabIndex={0}
-            aria-pressed={selected}
-            onClick={() => onChange(c.characterName)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                onChange(c.characterName);
-              }
-            }}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "0.6rem",
-              padding: "6px 10px",
-              borderRadius: 10,
-              background: selected ? theme.accentSoft : theme.timerBg,
-              border: `1px solid ${selected ? theme.accent : theme.border}`,
-              cursor: "pointer",
-            }}
-          >
-            {c.characterImgURL ? (
-              <Image
-                src={c.characterImgURL}
-                alt={c.characterName}
-                width={32}
-                height={32}
-                unoptimized
-                style={{ borderRadius: 6, objectFit: "contain", flexShrink: 0 }}
-              />
-            ) : (
-              <div style={avatarFallbackStyle(theme)}>
-                {c.characterName.charAt(0).toUpperCase()}
-              </div>
-            )}
-            <div>
-              <div style={{ fontSize: "0.82rem", fontWeight: 700, color: theme.text }}>
-                {c.characterName}
-              </div>
-              <div style={{ fontSize: "0.75rem", color: theme.muted }}>
-                Lv.{c.level} {c.jobName}
-              </div>
-            </div>
-          </div>
-        );
-      })}
+      {characters.map((c) => (
+        <CharacterPickerRow
+          key={c.characterName}
+          theme={theme}
+          character={c}
+          selected={value === c.characterName}
+          onSelect={() => onChange(c.characterName)}
+        />
+      ))}
     </div>
   );
 }
@@ -341,19 +282,19 @@ export default function LogDropDialog({
     onSubmit({ characterName: charName, itemId, channel: parseInt(channel, 10), date, note: note.trim() });
   }
 
-  return createPortal(
-    <div
-      className="pbd-overlay"
-      role="button"
-      tabIndex={0}
-      onClick={onClose}
-      onKeyDown={(e) => {
-        if (e.key === "Escape") onClose();
+  return (
+    <ModalShell
+      theme={theme}
+      ariaLabel="Log a drop"
+      onClose={onClose}
+      style={{
+        width: "min(640px, 100%)",
+        maxHeight: "92vh",
+        overflowY: "auto",
+        padding: "1.5rem 1.5rem 1.75rem",
       }}
     >
       <style>{`
-        .pbd-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 1rem; }
-        .pbd-dialog { background: ${theme.panel}; border: 1px solid ${theme.border}; border-radius: 16px; max-width: 640px; width: 100%; max-height: 92vh; overflow-y: auto; box-shadow: 0 8px 32px rgba(0,0,0,0.15); padding: 1.5rem 1.5rem 1.75rem; }
         .pbd-char-list { scrollbar-width: none; -ms-overflow-style: none; }
         .pbd-char-list::-webkit-scrollbar { width: 0; height: 0; background: transparent; }
         .pbd-char-list::-webkit-scrollbar-thumb { background: transparent; }
@@ -361,17 +302,8 @@ export default function LogDropDialog({
           .pbd-char-list { max-height: 176px !important; }
         }
         .pbd-option:hover { background: ${theme.accentSoft}; }
-        .pbd-char-opt:hover { border-color: ${theme.accent} !important; }
-        .pbd-dlg-btn { transition: background 0.15s, transform 0.1s; cursor: pointer; user-select: none; }
-        .pbd-dlg-btn:active { transform: scale(0.97); }
+        .char-pick-row:hover { border-color: ${theme.accent} !important; }
       `}</style>
-      <div
-        className="pbd-dialog"
-        role="button"
-        tabIndex={0}
-        onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => e.stopPropagation()}
-      >
         <div
           style={{
             fontFamily: "var(--font-heading)",
@@ -444,32 +376,19 @@ export default function LogDropDialog({
         </div>
 
         <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.5rem", marginTop: "1.5rem" }}>
-          <div
-            className="pbd-dlg-btn tool-dialog-btn"
-            role="button"
-            tabIndex={0}
+          <button
+            type="button"
+            className="tool-btn tool-dialog-btn"
             onClick={onClose}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                onClose();
-              }
-            }}
             style={styles.dialogBtnStyle}
           >
             Cancel
-          </div>
-          <div
-            className="pbd-dlg-btn tool-dialog-btn"
-            role="button"
-            tabIndex={0}
-            onClick={ready ? handleSubmit : undefined}
-            onKeyDown={(e) => {
-              if ((e.key === "Enter" || e.key === " ") && ready) {
-                e.preventDefault();
-                handleSubmit();
-              }
-            }}
+          </button>
+          <button
+            type="button"
+            className="tool-btn tool-dialog-btn"
+            onClick={handleSubmit}
+            disabled={!ready}
             style={{
               ...styles.dialogPrimaryBtnStyle,
               opacity: ready ? 1 : 0.5,
@@ -477,10 +396,8 @@ export default function LogDropDialog({
             }}
           >
             Add Drop
-          </div>
+          </button>
         </div>
-      </div>
-    </div>,
-    document.body,
+    </ModalShell>
   );
 }

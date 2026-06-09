@@ -18,6 +18,7 @@ import { COMMON_COSTS, getCostRange } from "./hexa-costs";
 import { SkillSection, MasterySection } from "./hexa-ui";
 import { fmtNum } from "./hexa-format";
 import { toolStyles } from "../tool-styles";
+import { ConfirmButton } from "../../../components/ConfirmButton";
 
 const checkboxLabelStyle: React.CSSProperties = {
   display: "flex",
@@ -27,15 +28,6 @@ const checkboxLabelStyle: React.CSSProperties = {
   fontWeight: 700,
   cursor: "pointer",
   userSelect: "none",
-};
-
-const resetBtnBase: React.CSSProperties = {
-  padding: "3px 10px",
-  borderRadius: "8px",
-  fontSize: "0.75rem",
-  fontWeight: 800,
-  background: "transparent",
-  cursor: "pointer",
 };
 
 const shineNoticeStyle: React.CSSProperties = {
@@ -176,20 +168,13 @@ function SummaryPanel({
             />
             Include Janus in Total?
           </label>
-          <div
-            className="pill-btn"
-            role="button"
-            tabIndex={0}
-            onClick={onReset}
-            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onReset(); } }}
-            style={{
-              ...resetBtnBase,
-              color: theme.muted,
-              border: `1px solid ${theme.border}`,
-            }}
-          >
-            Reset All
-          </div>
+          <ConfirmButton
+            theme={theme}
+            label="Reset"
+            title="Reset skill levels?"
+            message="This sets every HEXA skill's current level back to its minimum. Your selected class and desired levels stay."
+            onConfirm={onReset}
+          />
         </div>
       </div>
 
@@ -296,13 +281,8 @@ export default function HexaSkillsWorkspace({ theme }: { theme: AppTheme }) {
   if (!mounted) return null;
 
   return (
-    <div className="hexa-main" style={{ flex: 1, width: "100%", padding: "1.5rem 1.5rem 2rem 2.75rem" }}>
-      <style>{`
-        @media (max-width: 860px) {
-          .hexa-main { padding: 1rem !important; }
-        }
-      `}</style>
-      <div style={{ maxWidth: 900, margin: "0 auto" }}>
+    <div className="page-content">
+      <div className="tool-container">
         <ToolHeader
           theme={theme}
           title="HEXA Skill Tracker"

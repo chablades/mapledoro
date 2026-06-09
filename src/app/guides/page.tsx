@@ -36,41 +36,18 @@ function GuidesContent({ theme }: { theme: AppTheme }) {
   return (
     <>
       <style>{`
-        .guide-card { transition: background 0.35s ease, border-color 0.35s ease, transform 0.15s ease; }
-        .guide-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
+        .hover-lift-card:hover { border-color: ${theme.accent} !important; }
         @media (max-width: 860px) {
-          .guides-main { padding: 1rem !important; }
           .guides-grid { grid-template-columns: 1fr !important; }
         }
       `}</style>
 
-      <div
-        className="guides-main"
-        style={{
-          flex: 1,
-          width: "100%",
-          padding: "1.5rem 1.5rem 2rem 2.75rem",
-        }}
-      >
-        <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
-          <div
-            style={{
-              fontFamily: "var(--font-heading)",
-              fontSize: "1.5rem",
-              color: theme.text,
-              marginBottom: "0.25rem",
-            }}
-          >
+      <div className="page-content">
+        <div className="page-container">
+          <div className="page-title" style={{ color: theme.text }}>
             Guides
           </div>
-          <div
-            style={{
-              fontSize: "0.85rem",
-              color: theme.muted,
-              fontWeight: 600,
-              marginBottom: "1.5rem",
-            }}
-          >
+          <div className="page-subtitle" style={{ color: theme.muted }}>
             MapleStory guides and resources
           </div>
 
@@ -89,11 +66,10 @@ function GuidesContent({ theme }: { theme: AppTheme }) {
                 style={{ textDecoration: "none" }}
               >
                 <div
-                  className="fade-in guide-card"
+                  className="fade-in panel-card hover-lift-card"
                   style={{
                     background: theme.panel,
                     border: `1px solid ${theme.border}`,
-                    borderRadius: "18px",
                     padding: "1.5rem",
                     cursor: "pointer",
                   }}
@@ -102,12 +78,8 @@ function GuidesContent({ theme }: { theme: AppTheme }) {
                     {guide.emoji}
                   </div>
                   <div
-                    style={{
-                      fontFamily: "var(--font-heading)",
-                      fontSize: "1.1rem",
-                      color: theme.text,
-                      marginBottom: "0.5rem",
-                    }}
+                    className="panel-header-title"
+                    style={{ color: theme.text, fontSize: "1.1rem", marginBottom: "0.5rem" }}
                   >
                     {guide.title}
                   </div>

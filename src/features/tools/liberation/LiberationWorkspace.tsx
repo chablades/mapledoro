@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useState } from "react";
+import { useMounted } from "../../../lib/useMounted";
 import Image from "next/image";
 import type { AppTheme } from "../../../components/themes";
 import { replaceZeroOnDigit } from "../numberInputHandlers";
@@ -22,25 +23,11 @@ import {
   formatDate,
 } from "./useLiberationState";
 import { toolStyles } from "../tool-styles";
+import { Toggle } from "../shared-ui";
+import { ConfirmButton } from "../../../components/ConfirmButton";
 import AstraSection from "./AstraSection";
 
 type LiberationTab = LiberationType | "astra";
-
-const traceBadgeBase: React.CSSProperties = {
-  fontSize: "0.75rem",
-  fontWeight: 800,
-  padding: "2px 8px",
-  borderRadius: "6px",
-  flexShrink: 0,
-  whiteSpace: "nowrap",
-};
-
-const clearedBtnBase: React.CSSProperties = {
-  padding: "4px 10px",
-  borderRadius: "8px",
-  fontSize: "0.75rem",
-  fontWeight: 800,
-};
 
 // -- Boss Card ----------------------------------------------------------------
 
@@ -115,11 +102,8 @@ function BossCard({
         </div>
         {activeDiff && (
           <div
-            style={{
-              ...traceBadgeBase,
-              color: theme.accent,
-              background: theme.accentSoft,
-            }}
+            className="tool-badge"
+            style={{ color: theme.accent, background: theme.accentSoft }}
           >
             +{traces} / {boss.reset === "monthly" ? "month" : "week"}
           </div>
@@ -136,17 +120,15 @@ function BossCard({
         }}
       >
         {boss.difficulties.map((diff, di) => (
-          <div
+          <button
             key={diff.label}
-            className="lib-diff-btn pill-btn"
-            role="button"
-            tabIndex={0}
+            type="button"
+            className="btn-reset lib-diff-btn pill-btn"
             onClick={() => onDifficultyChange(sel.difficultyIdx === di ? null : di)}
-            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onDifficultyChange(sel.difficultyIdx === di ? null : di); } }}
             style={pillBtn(sel.difficultyIdx === di)}
           >
             {diff.label} ({diff.traces})
-          </div>
+          </button>
         ))}
       </div>
 
@@ -202,17 +184,13 @@ function BossCard({
           />
         </div>
 
-        <div
-          className={isActive ? "lib-btn" : ""}
+        <button
+          type="button"
+          className={isActive ? "btn-reset tool-chip-btn lib-btn" : "btn-reset tool-chip-btn"}
           title="Click this if you have already cleared the boss for the week."
-          role="button"
-          tabIndex={0}
-          onClick={() => {
-            if (isActive) onClearedChange(!sel.clearedThisWeek);
-          }}
-          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); if (isActive) onClearedChange(!sel.clearedThisWeek); } }}
+          disabled={!isActive}
+          onClick={() => onClearedChange(!sel.clearedThisWeek)}
           style={{
-            ...clearedBtnBase,
             cursor: isActive ? "pointer" : "not-allowed",
             color: sel.clearedThisWeek && isActive
               ? theme.accentText
@@ -224,7 +202,7 @@ function BossCard({
           }}
         >
           {sel.clearedThisWeek && isActive ? "Cleared" : "Not cleared"}
-        </div>
+        </button>
       </div>
     </div>
   );
@@ -236,7 +214,6 @@ function LiberationConfigSection({
   theme,
   sectionPanel,
   inputStyle,
-  pillBtn,
   type,
   quests,
   questIdx,
@@ -252,7 +229,6 @@ function LiberationConfigSection({
   theme: AppTheme;
   sectionPanel: React.CSSProperties;
   inputStyle: React.CSSProperties;
-  pillBtn: (active: boolean, accent?: boolean) => React.CSSProperties;
   type: LiberationType;
   quests: LiberationQuest[];
   questIdx: number;
@@ -362,17 +338,19 @@ function LiberationConfigSection({
 
         {/* Genesis Pass */}
         {type === "genesis" && (
-          <div style={{ flex: "0 0 auto" }}>
-            <div
-              className="lib-btn pill-btn"
-              role="button"
-              tabIndex={0}
-              onClick={onGenesisPassToggle}
-              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onGenesisPassToggle(); } }}
-              style={pillBtn(genesisPass, true)}
-            >
-              Genesis Pass {genesisPass ? "ON" : "OFF"}
+          <div style={{ flex: "0 0 auto", alignSelf: "stretch", display: "flex", flexDirection: "column" }}>
+            {/* Phantom label matching the other columns so the toggle below
+                stretches to exactly the input height */}
+            <div aria-hidden style={{ fontSize: "0.78rem", fontWeight: 700, marginBottom: "4px" }}>
+              {"\u00A0"}
             </div>
+            <Toggle
+              theme={theme}
+              label="Genesis Pass"
+              checked={genesisPass}
+              onChange={onGenesisPassToggle}
+              style={{ width: 150, flex: 1, display: "flex", alignItems: "center", justifyContent: "center", whiteSpace: "nowrap" }}
+            />
           </div>
         )}
       </div>
@@ -671,11 +649,7 @@ function LiberationResultsSection({
 // -- Main Component -----------------------------------------------------------
 
 export default function LiberationWorkspace({ theme }: { theme: AppTheme }) {
-  const mounted = useSyncExternalStore(
-    () => () => undefined,
-    () => true,
-    () => false,
-  );
+  const mounted = useMounted();
 
   const liberation = useLiberationState();
   const {
@@ -729,26 +703,15 @@ export default function LiberationWorkspace({ theme }: { theme: AppTheme }) {
     <>
       <style>{`
         .lib-btn { transition: background 0.15s, transform 0.1s; cursor: pointer; user-select: none; }
-        .lib-btn:hover { transform: translateY(-1px); }
-        .lib-btn:active { transform: translateY(0); }
         .lib-diff-btn { transition: all 0.15s; cursor: pointer; user-select: none; }
-        .lib-diff-btn:hover { transform: translateY(-1px); }
         @media (max-width: 860px) {
-          .lib-main { padding: 1rem !important; }
           .lib-boss-grid { grid-template-columns: 1fr !important; }
           .segmented-toggle-track { flex-wrap: wrap; }
         }
       `}</style>
 
-      <div
-        className="lib-main"
-        style={{
-          flex: 1,
-          width: "100%",
-          padding: "1.5rem 1.5rem 2rem 2.75rem",
-        }}
-      >
-        <div style={{ maxWidth: "900px", margin: "0 auto" }}>
+      <div className="page-content">
+        <div className="tool-container">
           <ToolHeader
             theme={theme}
             title="Liberation Tracker"
@@ -788,7 +751,6 @@ export default function LiberationWorkspace({ theme }: { theme: AppTheme }) {
             theme={theme}
             sectionPanel={sectionPanel}
             inputStyle={inputStyle}
-            pillBtn={pillBtn}
             type={type}
             quests={quests}
             questIdx={questIdx}
@@ -829,24 +791,13 @@ export default function LiberationWorkspace({ theme }: { theme: AppTheme }) {
               </div>
 
               <div style={{ marginLeft: "auto" }}>
-                <div
-                  className="lib-btn"
-                  role="button"
-                  tabIndex={0}
-                  onClick={resetBosses}
-                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); resetBosses(); } }}
-                  style={{
-                    padding: "4px 10px",
-                    borderRadius: "8px",
-                    fontSize: "0.75rem",
-                    fontWeight: 800,
-                    color: "#e05a5a",
-                    background: "transparent",
-                    border: "1px solid #e05a5a33",
-                  }}
-                >
-                  Reset
-                </div>
+                <ConfirmButton
+                  theme={theme}
+                  label="Reset"
+                  title="Reset boss selection?"
+                  message="This clears the bosses and difficulties you've selected for this tab. Your quest progress and current traces stay."
+                  onConfirm={resetBosses}
+                />
               </div>
             </div>
 

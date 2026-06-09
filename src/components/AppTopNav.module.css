@@ -84,13 +84,14 @@
     box-shadow 0.3s;
 }
 
-.desktopUtc {
-  font-size: 0.78rem;
+.desktopUtc,
+.mobileUtc {
+  font-size: 0.85rem;
   font-weight: 800;
   font-family: var(--font-heading);
   letter-spacing: 0.05em;
   font-variant-numeric: tabular-nums;
-  min-width: 105px;
+  min-width: 115px;
   text-align: right;
 }
 
@@ -137,16 +138,9 @@
 
   .mobileUtc {
     display: inline-block;
-    font-size: 0.72rem;
-    font-weight: 800;
-    font-family: var(--font-heading);
-    letter-spacing: 0.04em;
     margin-left: auto;
     margin-right: 0.45rem;
     white-space: nowrap;
-    min-width: 92px;
-    text-align: right;
-    font-variant-numeric: tabular-nums;
   }
 
   .mobileMenuBtn {

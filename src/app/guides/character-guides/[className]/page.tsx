@@ -134,14 +134,8 @@ function ClassGuideContent({
 
   if (!cls) {
     return (
-      <div
-        style={{
-          flex: 1,
-          width: "100%",
-          padding: "1.5rem 1.5rem 2rem 2.75rem",
-        }}
-      >
-        <div style={{ maxWidth: 900, margin: "0 auto" }}>
+      <div className="page-content">
+        <div className="page-container">
           <Link
             href="/guides/character-guides"
             style={{
@@ -181,14 +175,8 @@ function ClassGuideContent({
   }
 
   return (
-    <div
-      style={{
-        flex: 1,
-        width: "100%",
-        padding: "1.5rem 1.5rem 2rem 2.75rem",
-      }}
-    >
-      <div style={{ maxWidth: 900, margin: "0 auto" }}>
+    <div className="page-content">
+      <div className="page-container">
         <Link
           href="/guides/character-guides"
           style={{
@@ -485,11 +473,11 @@ function InfographicPanel({ className, theme }: { className: string; theme: AppT
         </div>
       )}
       {zoomed && hasImage && (
-        <div
-          role="button"
-          tabIndex={0}
+        <button
+          type="button"
+          className="btn-reset"
           onClick={() => setZoomed(false)}
-          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " " || e.key === "Escape") { e.preventDefault(); setZoomed(false); } }}
+          onKeyDown={(e) => { if (e.key === "Escape") { e.preventDefault(); setZoomed(false); } }}
           style={zoomedOverlayStyle}
         >
           <Image
@@ -501,7 +489,7 @@ function InfographicPanel({ className, theme }: { className: string; theme: AppT
             unoptimized
             style={zoomedImageStyle}
           />
-        </div>
+        </button>
       )}
     </div>
   );
@@ -592,11 +580,11 @@ function HexaGuidePanel({ className, theme }: { className: string; theme: AppThe
         </div>
       )}
       {zoomed && imageUrl && (
-        <div
-          role="button"
-          tabIndex={0}
+        <button
+          type="button"
+          className="btn-reset"
           onClick={() => setZoomed(false)}
-          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " " || e.key === "Escape") { e.preventDefault(); setZoomed(false); } }}
+          onKeyDown={(e) => { if (e.key === "Escape") { e.preventDefault(); setZoomed(false); } }}
           style={zoomedOverlayStyle}
         >
           <Image
@@ -608,7 +596,7 @@ function HexaGuidePanel({ className, theme }: { className: string; theme: AppThe
             unoptimized
             style={zoomedImageStyle}
           />
-        </div>
+        </button>
       )}
     </div>
   );

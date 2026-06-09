@@ -25,6 +25,7 @@ import {
   type TaskSection,
 } from "./useDailiesState";
 import RemindersConfigBar from "./RemindersConfigBar";
+import { ActionButton } from "../shared-ui";
 
 // -- Style helpers ------------------------------------------------------------
 
@@ -486,14 +487,12 @@ function CardBody({
         }}
       >
         <div style={{ marginBottom: "0.75rem" }}>No tasks tracked yet.</div>
-        <button
-          type="button"
+        <ActionButton
+          theme={theme}
+          label="+ Add tasks"
           onClick={onEdit}
-          className="tool-dialog-btn"
-          style={accentBtnStyle(theme, "0.5rem 1rem")}
-        >
-          + Add tasks
-        </button>
+          style={{ padding: "0.5rem 1rem" }}
+        />
       </div>
     );
   }
@@ -929,21 +928,13 @@ export default function DailiesWorkspace({ theme }: { theme: AppTheme }) {
         .dailies-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 1.1rem; }
         @media (max-width: 860px) {
           .dailies-grid { grid-template-columns: 1fr !important; }
-          .dailies-main { padding: 1rem !important; }
         }
         @media (max-width: 435px) {
           .dailies-check-grid { grid-template-columns: 1fr !important; }
         }
       `}</style>
 
-      <div
-        className="dailies-main"
-        style={{
-          flex: 1,
-          width: "100%",
-          padding: "1.5rem 1.5rem 2rem 2.75rem",
-        }}
-      >
+      <div className="page-content">
         <div style={{ maxWidth: 1200, margin: "0 auto" }}>
           <ToolHeader
             theme={theme}

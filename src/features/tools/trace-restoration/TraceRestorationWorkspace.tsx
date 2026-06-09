@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useState } from "react";
+import { useMounted } from "../../../lib/useMounted";
 import type { CSSProperties } from "react";
 import Image from "next/image";
 import type { AppTheme } from "../../../components/themes";
@@ -270,6 +271,7 @@ const missionBtnBase: CSSProperties = {
   justifyContent: "space-between",
   alignItems: "center",
   padding: "5px 8px",
+  border: "none",
   borderRadius: 6,
   fontSize: "0.75rem",
   cursor: "pointer",
@@ -387,17 +389,15 @@ function CrystalSection({
             {weeklyBosses.map((boss) => {
               const active = selectedBosses.includes(boss.id);
               return (
-                <div
+                <button
                   key={boss.id}
-                  role="button"
-                  tabIndex={0}
+                  type="button"
                   className="tool-btn"
                   onClick={() => onBossToggle(boss.id)}
-                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onBossToggle(boss.id); } }}
                   style={bossChipStyle(theme, active)}
                 >
                   {active ? "✓ " : ""}{boss.name}
-                </div>
+                </button>
               );
             })}
           </div>
@@ -410,17 +410,15 @@ function CrystalSection({
             {monthlyBosses.map((boss) => {
               const active = selectedBosses.includes(boss.id);
               return (
-                <div
+                <button
                   key={boss.id}
-                  role="button"
-                  tabIndex={0}
+                  type="button"
                   className="tool-btn"
                   onClick={() => onBossToggle(boss.id)}
-                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onBossToggle(boss.id); } }}
                   style={bossChipStyle(theme, active)}
                 >
                   {active ? "✓ " : ""}{boss.name}
-                </div>
+                </button>
               );
             })}
           </div>
@@ -538,20 +536,18 @@ function BossMissionCard({
         {boss.missions.map((mission) => {
           const active = selectedMissions.includes(mission.id);
           return (
-            <div
+            <button
               key={mission.id}
-              role="button"
-              tabIndex={0}
+              type="button"
               className="tool-btn"
               onClick={() => onToggleMission(mission.id)}
-              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onToggleMission(mission.id); } }}
               style={missionBtnStyle(theme, active)}
             >
               <span>{active ? "✓ " : ""}{mission.description}</span>
               <span style={{ fontWeight: 800, fontSize: "0.75rem", color: active ? theme.accent : theme.muted }}>
                 +{mission.points}
               </span>
-            </div>
+            </button>
           );
         })}
       </div>
@@ -605,6 +601,7 @@ function TraceRestorationTab({ theme }: { theme: AppTheme }) {
           <div>
             <div className="tool-field-label" style={styles.labelStyle}>Current Points</div>
             <input
+              className="tool-input"
               type="number"
               min={0}
               max={MAX_POINTS_CAP}
@@ -733,26 +730,16 @@ const TAB_LABELS: Record<Tab, string> = {
   restoration: "Trace Restoration",
 };
 
-const emptySubscribe = () => () => {};
-
 export default function TraceRestorationWorkspace({ theme }: { theme: AppTheme }) {
-  const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
+  const mounted = useMounted();
   const [tab, setTab] = useState<Tab>("research");
   const styles = toolStyles(theme);
 
   if (!mounted) return null;
 
   return (
-    <div
-      className="tr-main"
-      style={{ flex: 1, width: "100%", padding: "1.5rem 1.5rem 2rem 2.75rem" }}
-    >
-      <style>{`
-        @media (max-width: 860px) {
-          .tr-main { padding: 1rem !important; }
-        }
-      `}</style>
-      <div style={{ maxWidth: 900, margin: "0 auto" }}>
+    <div className="page-content">
+      <div className="tool-container">
         <ToolHeader
           theme={theme}
           title="Trace Restoration Calculator"

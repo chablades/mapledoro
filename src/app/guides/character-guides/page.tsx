@@ -149,20 +149,12 @@ function CharacterGuidesContent({ theme }: { theme: AppTheme }) {
           box-shadow: 0 6px 20px rgba(0,0,0,0.08);
         }
         @media (max-width: 860px) {
-          .char-guides-main { padding: 1rem !important; }
           .char-guides-grid { grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)) !important; }
         }
       `}</style>
 
-      <div
-        className="char-guides-main"
-        style={{
-          flex: 1,
-          width: "100%",
-          padding: "1.5rem 1.5rem 2rem 2.75rem",
-        }}
-      >
-        <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+      <div className="page-content">
+        <div className="page-container">
           {/* Back link */}
           <Link
             href="/guides"

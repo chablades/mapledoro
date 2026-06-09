@@ -20,6 +20,7 @@ import { ItemIcon } from "../../../components/ResourceImage";
 import { CharacterSyncPanel } from "../../../components/CharacterSyncPanel";
 import { SegmentedToggle } from "../../../components/SegmentedToggle";
 import { toolStyles } from "../tool-styles";
+import { ConfirmButton } from "../../../components/ConfirmButton";
 import { utcDateStr } from "../date";
 import {
   type SymbolType,
@@ -80,10 +81,6 @@ function SymbolCardHeader({
   updateSymbol: (areaName: string, patch: Partial<SymbolState>) => void;
 }) {
   const trackBtnStyle: React.CSSProperties = {
-    padding: "4px 10px",
-    borderRadius: "8px",
-    fontSize: "0.75rem",
-    fontWeight: 800,
     cursor: "pointer",
     color: isTracked ? theme.accentText : theme.muted,
     background: isTracked ? theme.accentSoft : "transparent",
@@ -95,12 +92,6 @@ function SymbolCardHeader({
   else badgeColor = theme.accent;
 
   const daysBadgeStyle: React.CSSProperties = {
-    fontSize: "0.75rem",
-    fontWeight: 800,
-    padding: "2px 8px",
-    borderRadius: "6px",
-    flexShrink: 0,
-    whiteSpace: "nowrap",
     color: badgeColor,
     background: isMaxed ? theme.accent : theme.accentSoft,
   };
@@ -148,16 +139,14 @@ function SymbolCardHeader({
       </div>
 
       {isSacred && (
-        <div
-          className="sym-btn"
-          role="button"
-          tabIndex={0}
+        <button
+          type="button"
+          className="btn-reset sym-btn tool-chip-btn"
           onClick={() => updateSymbol(area.name, { enabled: !state.enabled })}
-          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); updateSymbol(area.name, { enabled: !state.enabled }); } }}
           style={trackBtnStyle}
         >
           {isTracked ? "Tracking" : "Not tracking"}
-        </div>
+        </button>
       )}
 
       {(!isSacred || isTracked) && (() => {
@@ -166,9 +155,7 @@ function SymbolCardHeader({
         else if (days === Infinity) badgeLabel = "--";
         else badgeLabel = `~${days}d`;
         return (
-          <div
-            style={daysBadgeStyle}
-          >
+          <div className="tool-badge" style={daysBadgeStyle}>
             {badgeLabel}
           </div>
         );
@@ -395,14 +382,12 @@ function SymbolIncomeControls({
       </div>
 
       {!isSacred && (
-        <div
-          className="sym-btn"
-          role="button"
-          tabIndex={0}
+        <button
+          type="button"
+          className="btn-reset sym-btn"
           onClick={() =>
             updateSymbol(area.name, { weeklyEnabled: !state.weeklyEnabled })
           }
-          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); updateSymbol(area.name, { weeklyEnabled: !state.weeklyEnabled }); } }}
           style={{
             padding: "4px 10px",
             borderRadius: "8px",
@@ -414,7 +399,7 @@ function SymbolIncomeControls({
           }}
         >
           Weekly {state.weeklyEnabled ? "120" : "OFF"}
-        </div>
+        </button>
       )}
     </div>
   );
@@ -678,8 +663,6 @@ function CompletionSummaryPanel({
           fontSize: "1.15rem",
           color: theme.text,
           marginBottom: "1rem",
-          paddingBottom: "0.8rem",
-          borderBottom: `1px solid ${theme.border}`,
         }}
       >
         Completion Summary
@@ -953,23 +936,13 @@ export default function SymbolWorkspace({ theme }: { theme: AppTheme }) {
     <>
       <style>{`
         .sym-btn { transition: background 0.15s, transform 0.1s; cursor: pointer; user-select: none; }
-        .sym-btn:hover { transform: translateY(-1px); }
-        .sym-btn:active { transform: translateY(0); }
         @media (max-width: 860px) {
-          .sym-main { padding: 1rem !important; }
           .sym-grid { grid-template-columns: 1fr !important; }
         }
       `}</style>
 
-      <div
-        className="sym-main"
-        style={{
-          flex: 1,
-          width: "100%",
-          padding: "1.5rem 1.5rem 2rem 2.75rem",
-        }}
-      >
-        <div style={{ maxWidth: "900px", margin: "0 auto" }}>
+      <div className="page-content">
+        <div className="tool-container">
           <ToolHeader
             theme={theme}
             title="Symbol Tracker"
@@ -1012,24 +985,13 @@ export default function SymbolWorkspace({ theme }: { theme: AppTheme }) {
                 {type === "arcane" ? "Arcane River" : "Grandis"} Symbols
               </div>
               <div style={{ marginLeft: "auto" }}>
-                <div
-                  className="sym-btn"
-                  role="button"
-                  tabIndex={0}
-                  onClick={resetAll}
-                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); resetAll(); } }}
-                  style={{
-                    padding: "4px 10px",
-                    borderRadius: "8px",
-                    fontSize: "0.75rem",
-                    fontWeight: 800,
-                    color: "#e05a5a",
-                    background: "transparent",
-                    border: "1px solid #e05a5a33",
-                  }}
-                >
-                  Reset
-                </div>
+                <ConfirmButton
+                  theme={theme}
+                  label="Reset"
+                  title="Reset symbols?"
+                  message={`This resets every ${type === "arcane" ? "Arcane" : "Sacred"} Symbol's level and count back to defaults.`}
+                  onConfirm={resetAll}
+                />
               </div>
             </div>
 

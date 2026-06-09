@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useState } from "react";
+import { useMounted } from "../../../lib/useMounted";
 import type { CSSProperties } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
@@ -17,6 +18,7 @@ import {
 import { readGlobalTool, writeGlobalTool } from "../globalToolsStore";
 import { DROP_CATEGORIES, DROP_ITEMS, DROP_ITEMS_BY_ID } from "./pitched-items";
 import LogDropDialog, { type LogDropPayload } from "./LogDropDialog";
+import { ActionButton } from "../shared-ui";
 
 const PitchedBossCharts = dynamic(() => import("./PitchedBossCharts"), {
   ssr: false,
@@ -91,20 +93,6 @@ function tdStyle(theme: AppTheme): CSSProperties {
     fontSize: "0.82rem",
   };
 }
-
-const logBtnStyle = (theme: AppTheme): CSSProperties => ({
-  padding: "0.45rem 1rem",
-  border: `1px solid ${theme.accent}`,
-  background: theme.accent,
-  color: "#fff",
-  borderRadius: 8,
-  fontWeight: 700,
-  fontSize: "0.82rem",
-  height: 34,
-  boxSizing: "border-box",
-  whiteSpace: "nowrap",
-  cursor: "pointer",
-});
 
 /* ------------------------------------------------------------------ */
 /*  Filters                                                            */
@@ -357,9 +345,12 @@ function FilterBar({
           </option>
         ))}
       </select>
-      <button onClick={onLog} style={logBtnStyle(theme)}>
-        + Log a Drop
-      </button>
+      <ActionButton
+        theme={theme}
+        label="+ Log a Drop"
+        onClick={onLog}
+        style={{ height: 34, padding: "0 1rem", whiteSpace: "nowrap" }}
+      />
     </div>
   );
 }
@@ -482,10 +473,8 @@ function NoCharactersState({ theme }: { theme: AppTheme }) {
 /*  Main workspace                                                     */
 /* ------------------------------------------------------------------ */
 
-const emptySubscribe = () => () => {};
-
 export default function PitchedBossDropsWorkspace({ theme }: { theme: AppTheme }) {
-  const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
+  const mounted = useMounted();
 
   const [drops, setDrops] = useState<PitchedBossDrop[]>(() =>
     typeof window === "undefined" ? [] : readStore().drops,
@@ -545,18 +534,14 @@ export default function PitchedBossDropsWorkspace({ theme }: { theme: AppTheme }
   const hasCharacters = characters.length > 0;
 
   return (
-    <div
-      className="pbd-main"
-      style={{ flex: 1, width: "100%", padding: "1.5rem 1.5rem 2rem 2.75rem" }}
-    >
+    <div className="page-content">
       <style>{`
         @media (max-width: 860px) {
-          .pbd-main { padding: 1rem !important; }
           .pbd-filter-bar { flex-direction: column; align-items: stretch; }
           .pbd-filter-bar > * { width: 100%; margin-right: 0 !important; }
         }
       `}</style>
-      <div style={{ maxWidth: 900, margin: "0 auto" }}>
+      <div className="tool-container">
         <ToolHeader
           theme={theme}
           title="Drop Tracker"

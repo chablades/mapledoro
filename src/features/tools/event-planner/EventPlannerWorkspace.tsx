@@ -10,10 +10,7 @@ import type { AppTheme } from "../../../components/themes";
 import { replaceZeroOnDigit } from "../numberInputHandlers";
 import { ToolHeader } from "../../../components/ToolHeader";
 import { ItemIcon as ResourceItemIcon } from "../../../components/ResourceImage";
-import {
-  formatMeso,
-  formatMesoFull,
-} from "../star-force/star-force-data";
+import { formatMeso, formatMesoFull } from "../format";
 import { Toggle, PillGroup } from "../shared-ui";
 import { MVP_OPTIONS } from "../shared-data";
 import type { MvpTier } from "../star-force/star-force-data";
@@ -407,21 +404,14 @@ function PlanSummary({
             </div>
           </div>
         </div>
-        <div
+        <button
+          type="button"
           className="tool-btn"
-          role="button"
-          tabIndex={0}
           onClick={clearEntries}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              clearEntries();
-            }
-          }}
           style={clearAllButtonStyle}
         >
           Clear All
-        </div>
+        </button>
       </div>
     </div>
   );
@@ -563,17 +553,10 @@ function PlanItemsList({
                         {cost.booms === 0 ? "0" : cost.booms.toFixed(1)} spares
                       </div>
                     </div>
-                    <div
+                    <button
+                      type="button"
                       className="tool-btn"
-                      role="button"
-                      tabIndex={0}
                       onClick={() => toggleSafeguard(entry.id)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          e.preventDefault();
-                          toggleSafeguard(entry.id);
-                        }
-                      }}
                       title={entry.safeguard ? "Safeguard ON (15-17)" : "Safeguard OFF"}
                       style={{
                         ...safeguardBaseStyle,
@@ -583,22 +566,15 @@ function PlanItemsList({
                       }}
                     >
                       Safeguard
-                    </div>
-                    <div
+                    </button>
+                    <button
+                      type="button"
                       className="tool-btn"
-                      role="button"
-                      tabIndex={0}
                       onClick={() => removeEntry(entry.id)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          e.preventDefault();
-                          removeEntry(entry.id);
-                        }
-                      }}
                       style={removeButtonStyle}
                     >
                       {"×"}
-                    </div>
+                    </button>
                   </div>
                 </div>
               );
@@ -716,10 +692,10 @@ function AddItemForm({
           <div className="section-label" style={{ color: theme.muted, marginBottom: 4, fontSize: "0.75rem" }}>Replace Cost</div>
           <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
             <input className="tool-input" type="number" min={0} value={form.replaceCost} onFocus={(e) => e.currentTarget.select()} onKeyDown={replaceZeroOnDigit} onChange={(e) => dispatchForm({ type: "setReplaceCost", value: Math.max(0, Number(e.target.value) || 0) })} placeholder="0" style={{ ...styles.inputStyle, width: 120 }} />
-            <Toggle theme={theme} label="Safeguard" checked={form.safeguard} onChange={(v) => dispatchForm({ type: "setSafeguard", value: v })} />
-            <div className="tool-btn" role="button" tabIndex={0} onClick={handleAdd} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleAdd(); } }} style={addButtonStyle}>
+            <Toggle theme={theme} label="Safeguard" checked={form.safeguard} onChange={(v) => dispatchForm({ type: "setSafeguard", value: v })} style={{ width: 120, alignSelf: "stretch", display: "flex", alignItems: "center", justifyContent: "center", whiteSpace: "nowrap" }} />
+            <button type="button" className="tool-btn" onClick={handleAdd} style={addButtonStyle}>
               + Add
-            </div>
+            </button>
           </div>
         </div>
       </div>
@@ -790,17 +766,15 @@ export default function EventPlannerWorkspace({ theme }: { theme: AppTheme }) {
   if (!mounted) return null;
 
   return (
-    <div className="ep-main" style={{ flex: 1, width: "100%", padding: "1.5rem 1.5rem 2rem 2.75rem" }}>
+    <div className="page-content">
       <style>{`
-        .tool-btn { transition: background 0.15s, border-color 0.15s; cursor: pointer; }
         .tool-dropdown-item:hover { background: ${theme.timerBg}; }
         @media (max-width: 860px) {
           .ep-form-grid { grid-template-columns: 1fr !important; }
-          .ep-main { padding: 1rem !important; }
         }
       `}</style>
 
-      <div style={{ maxWidth: 900, margin: "0 auto" }}>
+      <div className="tool-container">
         <ToolHeader
           theme={theme}
           title="Event Planner"

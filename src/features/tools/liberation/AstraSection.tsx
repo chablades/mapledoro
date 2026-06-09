@@ -22,22 +22,7 @@ import {
   formatDate,
 } from "./useAstraState";
 import { toolStyles } from "../tool-styles";
-
-const traceBadgeBase: React.CSSProperties = {
-  fontSize: "0.75rem",
-  fontWeight: 800,
-  padding: "2px 8px",
-  borderRadius: "6px",
-  flexShrink: 0,
-  whiteSpace: "nowrap",
-};
-
-const clearedBtnBase: React.CSSProperties = {
-  padding: "4px 10px",
-  borderRadius: "8px",
-  fontSize: "0.75rem",
-  fontWeight: 800,
-};
+import { ConfirmButton } from "../../../components/ConfirmButton";
 
 // -- Voucher Input ------------------------------------------------------------
 
@@ -143,7 +128,7 @@ function AstraBossCard({
           </div>
         </div>
         {activeDiff && (
-          <div style={{ ...traceBadgeBase, color: theme.accent, background: theme.accentSoft }}>
+          <div className="tool-badge" style={{ color: theme.accent, background: theme.accentSoft }}>
             +{traces} / week
           </div>
         )}
@@ -151,18 +136,16 @@ function AstraBossCard({
 
       <div style={{ display: "flex", gap: "4px", flexWrap: "wrap", marginBottom: "0.6rem" }}>
         {boss.difficulties.map((diff, di) => (
-          <div
+          <button
             key={diff.label}
-            className="lib-diff-btn pill-btn"
-            role="button"
-            tabIndex={0}
+            type="button"
+            className="btn-reset lib-diff-btn pill-btn"
             onClick={() => onDifficultyChange(sel.difficultyIdx === di ? null : di)}
-            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onDifficultyChange(sel.difficultyIdx === di ? null : di); } }}
             style={pillBtn(sel.difficultyIdx === di)}
           >
             {diff.label} ({diff.traces})
             {diff.hasVoucher && " ★"}
-          </div>
+          </button>
         ))}
       </div>
 
@@ -196,15 +179,13 @@ function AstraBossCard({
           />
         </div>
 
-        <div
-          className={isActive ? "lib-btn" : ""}
+        <button
+          type="button"
+          className={isActive ? "btn-reset tool-chip-btn lib-btn" : "btn-reset tool-chip-btn"}
           title="Click this if you have already cleared the boss for the week."
-          role="button"
-          tabIndex={0}
-          onClick={() => { if (isActive) onClearedChange(!sel.clearedThisWeek); }}
-          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); if (isActive) onClearedChange(!sel.clearedThisWeek); } }}
+          disabled={!isActive}
+          onClick={() => onClearedChange(!sel.clearedThisWeek)}
           style={{
-            ...clearedBtnBase,
             cursor: isActive ? "pointer" : "not-allowed",
             color: cleared ? theme.accentText : theme.muted,
             background: cleared ? theme.accentSoft : "transparent",
@@ -212,7 +193,7 @@ function AstraBossCard({
           }}
         >
           {cleared ? "Cleared" : "Not cleared"}
-        </div>
+        </button>
 
         {activeDiff?.hasVoucher && (
           <VoucherInput
@@ -730,24 +711,13 @@ export default function AstraSection({ theme }: { theme: AppTheme }) {
             Boss Selection
           </div>
           <div style={{ marginLeft: "auto" }}>
-            <div
-              className="lib-btn"
-              role="button"
-              tabIndex={0}
-              onClick={state.resetBosses}
-              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); state.resetBosses(); } }}
-              style={{
-                padding: "4px 10px",
-                borderRadius: "8px",
-                fontSize: "0.75rem",
-                fontWeight: 800,
-                color: "#e05a5a",
-                background: "transparent",
-                border: "1px solid #e05a5a33",
-              }}
-            >
-              Reset
-            </div>
+            <ConfirmButton
+              theme={theme}
+              label="Reset"
+              title="Reset boss selection?"
+              message="This clears the Astra bosses and difficulties you've selected. Your mission progress and current totals stay."
+              onConfirm={state.resetBosses}
+            />
           </div>
         </div>
 

@@ -1,6 +1,7 @@
 "use client";
 
-import { useReducer, useMemo, useState, useEffect, useSyncExternalStore, type ComponentType } from "react";
+import { useReducer, useMemo, useState, useEffect, type ComponentType } from "react";
+import { useMounted } from "../../../lib/useMounted";
 import type { AppTheme } from "../../../components/themes";
 import type { ChartOptions, ChartData, TooltipItem } from "chart.js";
 import { replaceZeroOnDigit } from "../numberInputHandlers";
@@ -9,15 +10,14 @@ import {
   attemptCost,
   computeExpectedCosts,
   simulate,
-  formatMeso,
-  formatMesoFull,
   BOOM_TIER_COUNT,
   type StarForceOpts,
   type MvpTier,
   type StarResult,
   type SimulationResult,
 } from "./star-force-data";
-import { Toggle, PillGroup } from "../shared-ui";
+import { formatMeso, formatMesoFull } from "../format";
+import { Toggle, PillGroup, ActionButton } from "../shared-ui";
 import { MVP_OPTIONS } from "../shared-data";
 import { toolStyles } from "../tool-styles";
 
@@ -29,15 +29,6 @@ function pct(n: number): string {
   if (n === 0) return "—";
   return (n * 100).toFixed(1) + "%";
 }
-
-const simulateBtnStyle: React.CSSProperties = {
-  padding: "11px 16px",
-  borderRadius: "10px",
-  fontSize: "0.85rem",
-  fontWeight: 800,
-  textAlign: "center",
-  userSelect: "none",
-};
 
 // Shared height so textboxes, dropdowns, and toggles line up (slider excluded).
 const CONTROL_HEIGHT = 34;
@@ -675,21 +666,12 @@ function StarForceForm({
         )}
       </div>
 
-      <div
-        className="tool-btn"
-        role="button"
-        tabIndex={0}
+      <ActionButton
+        theme={theme}
+        label="Simulate"
+        fullWidth
         onClick={() => dispatch({ type: "reroll" })}
-        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); dispatch({ type: "reroll" }); } }}
-        style={{
-          ...simulateBtnStyle,
-          color: theme.accentText,
-          background: theme.accentSoft,
-          border: `1px solid ${theme.accent}`,
-        }}
-      >
-        Simulate
-      </div>
+      />
     </div>
   );
 }
@@ -697,11 +679,7 @@ function StarForceForm({
 // -- Main workspace -----------------------------------------------------------
 
 export default function StarForceWorkspace({ theme }: { theme: AppTheme }) {
-  const mounted = useSyncExternalStore(
-    () => () => undefined,
-    () => true,
-    () => false,
-  );
+  const mounted = useMounted();
 
   const [calc, dispatch] = useReducer(
     (state: CalcState, action: CalcAction): CalcState => {
@@ -779,15 +757,14 @@ export default function StarForceWorkspace({ theme }: { theme: AppTheme }) {
   const selectStyle: React.CSSProperties = { ...styles.selectStyle, ...controlSizeStyle };
 
   return (
-    <div className="sf-main" style={{ flex: 1, width: "100%", padding: "1.5rem 1.5rem 2rem 2.75rem" }}>
+    <div className="page-content">
       <style>{`
         @media (max-width: 860px) {
           .sf-inputs-grid { grid-template-columns: 1fr !important; }
-          .sf-main { padding: 1rem !important; }
         }
       `}</style>
 
-      <div style={{ maxWidth: 900, margin: "0 auto" }}>
+      <div className="tool-container">
         <ToolHeader
           theme={theme}
           title="Star Force Calculator"

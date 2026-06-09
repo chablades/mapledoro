@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useCallback, useSyncExternalStore } from "react";
+import { useState, useCallback } from "react";
+import { useMounted } from "../../../lib/useMounted";
 import {
   readCharactersStore,
   selectCharactersList,
@@ -359,11 +360,7 @@ function formToSaved(form: FormState): SavedState {
 // -- Hook ---------------------------------------------------------------------
 
 export function useLiberationState() {
-  const mounted = useSyncExternalStore(
-    () => () => undefined,
-    () => true,
-    () => false,
-  );
+  const mounted = useMounted();
 
   // Character sync
   const characters: StoredCharacterRecord[] = mounted

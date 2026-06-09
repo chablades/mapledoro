@@ -414,24 +414,3 @@ export function simulate(opts: StarForceOpts, trials: number): SimulationResult 
     booms: allBooms,
   };
 }
-
-// -- Formatting ---------------------------------------------------------------
-
-const mesoFormatter = new Intl.NumberFormat("en-US");
-
-export function formatMeso(n: number): string {
-  if (n >= 1_000_000_000_000) {
-    return (n / 1_000_000_000_000).toFixed(1).replace(/\.0$/, "") + "T";
-  }
-  if (n >= 1_000_000_000) {
-    return (n / 1_000_000_000).toFixed(1).replace(/\.0$/, "") + "B";
-  }
-  if (n >= 1_000_000) {
-    return (n / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M";
-  }
-  return mesoFormatter.format(Math.floor(n));
-}
-
-export function formatMesoFull(n: number): string {
-  return mesoFormatter.format(Math.floor(n));
-}

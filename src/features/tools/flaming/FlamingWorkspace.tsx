@@ -1,11 +1,13 @@
 "use client";
 
-import { useReducer, useMemo, useCallback, useSyncExternalStore } from "react";
+import { useReducer, useMemo, useCallback } from "react";
+import { useMounted } from "../../../lib/useMounted";
 import type { CSSProperties } from "react";
 import type { AppTheme } from "../../../components/themes";
 import { replaceZeroOnDigit } from "../numberInputHandlers";
 import { ToolHeader } from "../../../components/ToolHeader";
 import { Field, Toggle } from "../shared-ui";
+import { formatMesoFull } from "../format";
 import { toolStyles } from "../tool-styles";
 import {
   FLAME_CLASS_OPTIONS,
@@ -18,10 +20,7 @@ import {
   defaultEquivalences,
   defaultDesiredStat,
   flameMesoCost,
-  formatMesoFull,
   formatFlames,
-  getLowerTierLimit,
-  getUpperTierLimit,
   type FlameClass,
   type FlameType,
   type ItemType,
@@ -134,12 +133,12 @@ function EquivRow({
   inputStyle: CSSProperties;
 }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
-      <span style={{ fontSize: "0.82rem", fontWeight: 700, color: theme.muted, whiteSpace: "nowrap" }}>{prefix}</span>
+    <>
+      <span style={{ fontSize: "0.82rem", fontWeight: 700, color: theme.muted, whiteSpace: "nowrap", justifySelf: "end" }}>{prefix}</span>
       <input
         className="tool-input"
         type="number"
-        step={0.01}
+        step={0.1}
         value={value}
         onFocus={(e) => e.currentTarget.select()}
         onKeyDown={replaceZeroOnDigit}
@@ -147,7 +146,7 @@ function EquivRow({
         style={{ ...inputStyle, width: 70, textAlign: "center" }}
       />
       <span style={{ fontSize: "0.82rem", fontWeight: 700, color: theme.muted, whiteSpace: "nowrap" }}>{suffix}</span>
-    </div>
+    </>
   );
 }
 
@@ -167,12 +166,7 @@ function ResultCard({
   const cardStyle: CSSProperties = {
     background: theme.panel,
     border: `1px solid ${theme.border}`,
-    borderRadius: "18px",
     padding: "1.25rem",
-  };
-  const titleStyle: CSSProperties = {
-    fontSize: "0.75rem", fontWeight: 800, color: theme.muted,
-    textTransform: "uppercase", letterSpacing: "0.04em",
   };
   const rowStyle: CSSProperties = {
     display: "flex", justifyContent: "space-between", alignItems: "center",
@@ -182,7 +176,7 @@ function ResultCard({
 
   return (
     <div className="panel-card" style={cardStyle}>
-      <div style={titleStyle}>{title}</div>
+      <div className="tool-field-label" style={{ color: theme.muted, marginBottom: 0 }}>{title}</div>
       <div style={{ margin: "8px 0 16px" }}>
         <div style={{ fontSize: "1.5rem", fontWeight: 800, color: theme.text, lineHeight: 1.1 }}>
           {heroValue}
@@ -223,13 +217,6 @@ function FlameSettingsPanel({
   const needsGranular = state.flameClass === "da";
   const levelOptions = needsGranular ? GRANULAR_LEVELS : ARMOR_LEVELS;
   const showWeaponLevel = state.itemType === "weapon" && state.flameClass !== "da";
-
-  const nonAdv = !state.flameAdvantaged;
-  const lo = getLowerTierLimit(state.flameType, nonAdv);
-  const hi = getUpperTierLimit(state.flameType, nonAdv) - 1;
-  const advLabel = state.flameAdvantaged
-    ? `Flame-Advantaged Item (Tiers ${lo}–${hi})`
-    : `Non-Advantaged Item (Tiers ${lo}–${hi})`;
 
   const guildDisabled = state.flameType === "eternal" || state.flameType === "reincarnation";
 
@@ -319,10 +306,10 @@ function FlameSettingsPanel({
         )}
       </div>
 
-      <div style={{ marginTop: "16px", display: "flex", flexWrap: "wrap", gap: "0.75rem", alignItems: "center" }}>
+      <div className="flame-toggles" style={{ marginTop: "16px", display: "flex", flexWrap: "wrap", gap: "0.75rem", alignItems: "center" }}>
         <Toggle
           theme={theme}
-          label={advLabel}
+          label="Flame-Advantaged Item (Tiers 3–6)"
           checked={state.flameAdvantaged}
           onChange={(v) => dispatch({ type: "setFlameAdvantaged", value: v })}
         />
@@ -372,7 +359,7 @@ function EquivalencesPanel({
         Adjust these to match your character. Leave defaults if unsure.
       </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "max-content max-content max-content", alignItems: "center", gap: "0.5rem", justifyContent: "start" }}>
         <EquivRow prefix="1 All Stat % =" suffix="Main Stat" value={state.equivalences.allStat} onChange={(v) => setEquiv("allStat", v)} theme={theme} inputStyle={inputStyle} />
         <EquivRow prefix="1 Attack =" suffix="Main Stat" value={state.equivalences.attack} onChange={(v) => setEquiv("attack", v)} theme={theme} inputStyle={inputStyle} />
 
@@ -566,17 +553,9 @@ function FlameScorePanel({
         )}
       </div>
 
-      <div style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "14px 20px",
-        borderRadius: "14px",
-        background: theme.timerBg,
-        border: `1px solid ${theme.border}`,
-      }}>
+      <div className="result-banner" style={{ background: theme.timerBg, border: `1px solid ${theme.border}` }}>
         <div style={{ textAlign: "center" }}>
-          <div style={{ fontSize: "0.75rem", fontWeight: 800, color: theme.muted, textTransform: "uppercase", letterSpacing: "0.04em" }}>
+          <div className="tool-field-label" style={{ color: theme.muted, marginBottom: 0 }}>
             Flame Score
           </div>
           <div style={{ marginTop: "4px" }}>
@@ -593,11 +572,7 @@ function FlameScorePanel({
 // -- Main workspace -----------------------------------------------------------
 
 export default function FlamingWorkspace({ theme }: { theme: AppTheme }) {
-  const mounted = useSyncExternalStore(
-    () => () => undefined,
-    () => true,
-    () => false,
-  );
+  const mounted = useMounted();
 
   const [state, dispatch] = useReducer(reducer, undefined, initState);
 
@@ -648,32 +623,28 @@ export default function FlamingWorkspace({ theme }: { theme: AppTheme }) {
     : state.guildDiscount;
 
   const probBadgeStyle: CSSProperties = {
-    display: "flex", alignItems: "center", justifyContent: "center",
-    marginBottom: "1rem", padding: "14px 20px", borderRadius: "14px",
-    background: theme.panel, border: `1px solid ${theme.border}`,
-  };
-  const probLabelStyle: CSSProperties = {
-    fontSize: "0.75rem", fontWeight: 800, color: theme.muted,
-    textTransform: "uppercase", letterSpacing: "0.04em",
+    marginBottom: "1rem",
+    background: theme.panel,
+    border: `1px solid ${theme.border}`,
   };
 
   return (
-    <div className="flame-main" style={{ flex: 1, width: "100%", padding: "1.5rem 1.5rem 2rem 2.75rem" }}>
+    <div className="page-content">
       <style>{`
-        .tool-btn { transition: background 0.15s, border-color 0.15s; cursor: pointer; }
         @media (max-width: 640px) {
           .flame-results { grid-template-columns: 1fr !important; }
           .flame-score-fields { flex-wrap: wrap; }
           .flame-eq-target-row { grid-template-columns: 1fr !important; }
+          .flame-toggles { flex-direction: column; align-items: stretch !important; }
+          .flame-toggles .tool-btn { width: 100%; }
         }
         @media (max-width: 860px) {
           .flame-inputs-grid { grid-template-columns: 1fr !important; }
-          .flame-main { padding: 1rem !important; }
           .flame-eq-target-row { grid-template-columns: 1fr !important; }
         }
       `}</style>
 
-      <div style={{ maxWidth: 900, margin: "0 auto" }}>
+      <div className="tool-container">
         <ToolHeader
           theme={theme}
           title="Flaming Calculator"
@@ -692,9 +663,9 @@ export default function FlamingWorkspace({ theme }: { theme: AppTheme }) {
 
         {results && (
           <>
-            <div className="fade-in" style={probBadgeStyle}>
+            <div className="fade-in result-banner" style={probBadgeStyle}>
               <div style={{ textAlign: "center" }}>
-                <div style={probLabelStyle}>
+                <div className="tool-field-label" style={{ color: theme.muted, marginBottom: 0 }}>
                   Probability per flame
                 </div>
                 <div style={{ marginTop: "4px" }}>

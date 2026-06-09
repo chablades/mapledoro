@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import CharacterAvatar from "../features/characters/tabs/components/CharacterAvatar";
 import type { AppTheme } from "./themes";
@@ -143,17 +143,21 @@ export function CharacterSyncPanel({
   const triggerRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  const positionMenu = useCallback(() => {
+  const positionMenu = () => {
     const el = triggerRef.current;
     if (!el) return;
     const r = el.getBoundingClientRect();
     setMenuPos({ top: r.bottom + 4, left: r.left, width: r.width });
-  }, []);
+  };
+
+  // Effect Event so the open-menu effect can call the latest positionMenu
+  // from its listeners without re-subscribing them on every render.
+  const repositionMenu = useEffectEvent(positionMenu);
 
   // While open: reposition on scroll/resize, close on outside click or Escape.
   useEffect(() => {
     if (!open) return;
-    const reposition = () => positionMenu();
+    const reposition = () => repositionMenu();
     const handlePointer = (e: MouseEvent) => {
       const t = e.target as Node;
       if (triggerRef.current?.contains(t) || menuRef.current?.contains(t)) return;
@@ -172,7 +176,7 @@ export function CharacterSyncPanel({
       document.removeEventListener("mousedown", handlePointer);
       document.removeEventListener("keydown", handleKey);
     };
-  }, [open, positionMenu]);
+  }, [open]);
 
   if (characters.length === 0) return null;
 
@@ -188,6 +192,33 @@ export function CharacterSyncPanel({
     setOpen(false);
   };
 
+  const triggerStyle: React.CSSProperties = {
+    ...inputStyle,
+    flex: 1,
+    minWidth: 220,
+    maxWidth: 320,
+    display: "flex",
+    alignItems: "center",
+    gap: "0.6rem",
+    padding: "5px 10px",
+    cursor: "pointer",
+  };
+
+  const menuStyle: React.CSSProperties = {
+    position: "fixed",
+    top: menuPos?.top,
+    left: menuPos?.left,
+    width: menuPos?.width,
+    zIndex: 90,
+    background: theme.panel,
+    border: `1px solid ${theme.border}`,
+    borderRadius: "10px",
+    boxShadow: "0 8px 24px rgba(0,0,0,0.25)",
+    maxHeight: "320px",
+    overflowY: "auto",
+    padding: "4px",
+  };
+
   // Portaled to <body> with fixed positioning so it escapes any clipping or
   // stacking context from the nested panel/flex layout it lives in.
   const menu =
@@ -199,20 +230,7 @@ export function CharacterSyncPanel({
         ref={menuRef}
         role="listbox"
         className="csp-dropdown"
-        style={{
-          position: "fixed",
-          top: menuPos.top,
-          left: menuPos.left,
-          width: menuPos.width,
-          zIndex: 90,
-          background: theme.panel,
-          border: `1px solid ${theme.border}`,
-          borderRadius: "10px",
-          boxShadow: "0 8px 24px rgba(0,0,0,0.25)",
-          maxHeight: "320px",
-          overflowY: "auto",
-          padding: "4px",
-        }}
+        style={menuStyle}
       >
         <CharacterOption
           theme={theme}
@@ -270,17 +288,7 @@ export function CharacterSyncPanel({
               toggleOpen();
             }
           }}
-          style={{
-            ...inputStyle,
-            flex: 1,
-            minWidth: 220,
-            maxWidth: 320,
-            display: "flex",
-            alignItems: "center",
-            gap: "0.6rem",
-            padding: "5px 10px",
-            cursor: "pointer",
-          }}
+          style={triggerStyle}
         >
           <CharacterLabel theme={theme} record={selected} />
           <span
