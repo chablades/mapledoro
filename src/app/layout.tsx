@@ -54,7 +54,8 @@ const DATA_MIGRATION_SCRIPT = `(function () {
       if (amp !== -1) encoded = encoded.slice(0, amp);
       var incoming = JSON.parse(decodeURIComponent(encoded));
       Object.keys(incoming).forEach(function (k) {
-        if (localStorage.getItem(k) === null) localStorage.setItem(k, incoming[k]);
+        if (k.indexOf(PREFIX) === 0 && typeof incoming[k] === "string" && localStorage.getItem(k) === null)
+          localStorage.setItem(k, incoming[k]);
       });
       history.replaceState(null, "", location.pathname + location.search);
     }
@@ -91,6 +92,7 @@ export default async function RootLayout({
   return (
     <html lang="en" className={`${nunito.variable} ${fredoka.variable}`}>
       <body>
+        {/* react-doctor-disable-next-line react-doctor/no-danger, react-doctor/nextjs-no-native-script -- static build-time string, intentionally render-blocking: must redirect before paint on the old origin and import keys before any component reads localStorage */}
         <script dangerouslySetInnerHTML={{ __html: DATA_MIGRATION_SCRIPT }} />
         <ThemeProvider initialThemeKey={initialThemeKey} initialColorMode={initialColorMode}>
           {children}
