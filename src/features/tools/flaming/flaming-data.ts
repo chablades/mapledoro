@@ -98,7 +98,7 @@ function getTierProbabilities(flameType: FlameType, nonAdvantaged: boolean): Rec
   return nonAdvantaged ? makeNonAdvantaged(base) : base;
 }
 
-export function getLowerTierLimit(flameType: FlameType, nonAdvantaged: boolean): number {
+function getLowerTierLimit(flameType: FlameType, nonAdvantaged: boolean): number {
   const adj = nonAdvantaged ? 2 : 0;
   for (let i = 3; i <= 7; i++) {
     if (TIER_PROBABILITIES[flameType][i] > 0) return i - adj;
@@ -106,7 +106,7 @@ export function getLowerTierLimit(flameType: FlameType, nonAdvantaged: boolean):
   return 3;
 }
 
-export function getUpperTierLimit(flameType: FlameType, nonAdvantaged: boolean): number {
+function getUpperTierLimit(flameType: FlameType, nonAdvantaged: boolean): number {
   const adj = nonAdvantaged ? 2 : 0;
   for (let i = 7; i >= 3; i--) {
     if (TIER_PROBABILITIES[flameType][i] > 0) return i - adj + 1;

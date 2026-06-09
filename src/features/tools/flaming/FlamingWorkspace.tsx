@@ -21,8 +21,6 @@ import {
   defaultDesiredStat,
   flameMesoCost,
   formatFlames,
-  getLowerTierLimit,
-  getUpperTierLimit,
   type FlameClass,
   type FlameType,
   type ItemType,
@@ -135,8 +133,8 @@ function EquivRow({
   inputStyle: CSSProperties;
 }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
-      <span style={{ fontSize: "0.82rem", fontWeight: 700, color: theme.muted, whiteSpace: "nowrap" }}>{prefix}</span>
+    <>
+      <span style={{ fontSize: "0.82rem", fontWeight: 700, color: theme.muted, whiteSpace: "nowrap", justifySelf: "end" }}>{prefix}</span>
       <input
         className="tool-input"
         type="number"
@@ -148,7 +146,7 @@ function EquivRow({
         style={{ ...inputStyle, width: 70, textAlign: "center" }}
       />
       <span style={{ fontSize: "0.82rem", fontWeight: 700, color: theme.muted, whiteSpace: "nowrap" }}>{suffix}</span>
-    </div>
+    </>
   );
 }
 
@@ -219,13 +217,6 @@ function FlameSettingsPanel({
   const needsGranular = state.flameClass === "da";
   const levelOptions = needsGranular ? GRANULAR_LEVELS : ARMOR_LEVELS;
   const showWeaponLevel = state.itemType === "weapon" && state.flameClass !== "da";
-
-  const nonAdv = !state.flameAdvantaged;
-  const lo = getLowerTierLimit(state.flameType, nonAdv);
-  const hi = getUpperTierLimit(state.flameType, nonAdv) - 1;
-  const advLabel = state.flameAdvantaged
-    ? `Flame-Advantaged Item (Tiers ${lo}–${hi})`
-    : `Non-Advantaged Item (Tiers ${lo}–${hi})`;
 
   const guildDisabled = state.flameType === "eternal" || state.flameType === "reincarnation";
 
@@ -315,10 +306,10 @@ function FlameSettingsPanel({
         )}
       </div>
 
-      <div style={{ marginTop: "16px", display: "flex", flexWrap: "wrap", gap: "0.75rem", alignItems: "center" }}>
+      <div className="flame-toggles" style={{ marginTop: "16px", display: "flex", flexWrap: "wrap", gap: "0.75rem", alignItems: "center" }}>
         <Toggle
           theme={theme}
-          label={advLabel}
+          label="Flame-Advantaged Item (Tiers 3–6)"
           checked={state.flameAdvantaged}
           onChange={(v) => dispatch({ type: "setFlameAdvantaged", value: v })}
         />
@@ -368,7 +359,7 @@ function EquivalencesPanel({
         Adjust these to match your character. Leave defaults if unsure.
       </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "max-content max-content max-content", alignItems: "center", gap: "0.5rem", justifyContent: "start" }}>
         <EquivRow prefix="1 All Stat % =" suffix="Main Stat" value={state.equivalences.allStat} onChange={(v) => setEquiv("allStat", v)} theme={theme} inputStyle={inputStyle} />
         <EquivRow prefix="1 Attack =" suffix="Main Stat" value={state.equivalences.attack} onChange={(v) => setEquiv("attack", v)} theme={theme} inputStyle={inputStyle} />
 
@@ -644,6 +635,8 @@ export default function FlamingWorkspace({ theme }: { theme: AppTheme }) {
           .flame-results { grid-template-columns: 1fr !important; }
           .flame-score-fields { flex-wrap: wrap; }
           .flame-eq-target-row { grid-template-columns: 1fr !important; }
+          .flame-toggles { flex-direction: column; align-items: stretch !important; }
+          .flame-toggles .tool-btn { width: 100%; }
         }
         @media (max-width: 860px) {
           .flame-inputs-grid { grid-template-columns: 1fr !important; }
