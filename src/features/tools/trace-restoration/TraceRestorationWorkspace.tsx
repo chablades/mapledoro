@@ -605,6 +605,7 @@ function TraceRestorationTab({ theme }: { theme: AppTheme }) {
           <div>
             <div className="tool-field-label" style={styles.labelStyle}>Current Points</div>
             <input
+              className="tool-input"
               type="number"
               min={0}
               max={MAX_POINTS_CAP}
