@@ -361,13 +361,18 @@ function LiberationConfigSection({
 
         {/* Genesis Pass */}
         {type === "genesis" && (
-          <div style={{ flex: "0 0 auto" }}>
+          <div style={{ flex: "0 0 auto", alignSelf: "stretch", display: "flex", flexDirection: "column" }}>
+            {/* Phantom label matching the other columns so the toggle below
+                stretches to exactly the input height */}
+            <div aria-hidden style={{ fontSize: "0.78rem", fontWeight: 700, marginBottom: "4px" }}>
+              {"\u00A0"}
+            </div>
             <Toggle
               theme={theme}
               label="Genesis Pass"
               checked={genesisPass}
               onChange={onGenesisPassToggle}
-              style={{ width: 150, display: "flex", alignItems: "center", justifyContent: "center", whiteSpace: "nowrap" }}
+              style={{ width: 150, flex: 1, display: "flex", alignItems: "center", justifyContent: "center", whiteSpace: "nowrap" }}
             />
           </div>
         )}
