@@ -19,18 +19,31 @@ interface CharacterSyncPanelProps {
 
 const AVATAR_SIZE = 34;
 
-// Bordered avatar box. `record` null renders the "global" placeholder; a record
+/** Display labels for a non-character row (the null option or an extra option). */
+interface OptionLabels {
+  label: string;
+  subtitle: string;
+}
+
+const NULL_OPTION_DEFAULT: OptionLabels = {
+  label: "None (global)",
+  subtitle: "Shared across characters",
+};
+
+// Bordered avatar box. `record` null renders the placeholder; a record
 // without an image falls back to its first initial.
-function CharacterAvatarBox({
+export function CharacterAvatarBox({
   theme,
   record,
+  size = AVATAR_SIZE,
 }: {
   theme: AppTheme;
   record: StoredCharacterRecord | null;
+  size?: number;
 }) {
   const boxStyle: React.CSSProperties = {
-    width: AVATAR_SIZE,
-    height: AVATAR_SIZE,
+    width: size,
+    height: size,
     borderRadius: "8px",
     overflow: "hidden",
     flexShrink: 0,
@@ -53,8 +66,8 @@ function CharacterAvatarBox({
       <CharacterAvatar
         src={record.characterImgURL}
         alt={record.characterName}
-        width={AVATAR_SIZE}
-        height={AVATAR_SIZE}
+        width={size}
+        height={size}
         style={{ objectFit: "contain" }}
       />
     </div>
@@ -62,12 +75,15 @@ function CharacterAvatarBox({
 }
 
 // Avatar + name + subtitle, shared by the trigger and the dropdown options.
+// `fallback` supplies the text when there is no character record.
 function CharacterLabel({
   theme,
   record,
+  fallback = NULL_OPTION_DEFAULT,
 }: {
   theme: AppTheme;
   record: StoredCharacterRecord | null;
+  fallback?: OptionLabels;
 }) {
   return (
     <>
@@ -83,10 +99,10 @@ function CharacterLabel({
             whiteSpace: "nowrap",
           }}
         >
-          {record ? record.characterName : "None (global)"}
+          {record ? record.characterName : fallback.label}
         </div>
         <div style={{ fontSize: "0.75rem", color: theme.muted, fontWeight: 600 }}>
-          {record ? `Lv.${record.level} ${record.jobName}` : "Shared across characters"}
+          {record ? `Lv.${record.level} ${record.jobName}` : fallback.subtitle}
         </div>
       </div>
     </>
@@ -96,11 +112,13 @@ function CharacterLabel({
 function CharacterOption({
   theme,
   record,
+  fallback,
   selected,
   onSelect,
 }: {
   theme: AppTheme;
   record: StoredCharacterRecord | null;
+  fallback?: OptionLabels;
   selected: boolean;
   onSelect: () => void;
 }) {
@@ -126,19 +144,38 @@ function CharacterOption({
         background: selected ? theme.accentSoft : "transparent",
       }}
     >
-      <CharacterLabel theme={theme} record={record} />
+      <CharacterLabel theme={theme} record={record} fallback={fallback} />
     </div>
   );
 }
 
-export function CharacterSyncPanel({
+interface CharacterDropdownProps {
+  theme: AppTheme;
+  characters: StoredCharacterRecord[];
+  selectedCharName: string | null;
+  onCharChange: (name: string | null) => void;
+  inputStyle: React.CSSProperties;
+  /** Labels for the no-character row (defaults to the sync-panel wording). */
+  nullOption?: OptionLabels;
+  /** Extra row appended after the characters; selecting it reports its `value`. */
+  extraOption?: OptionLabels & { value: string };
+  /** Size/layout overrides for the trigger. */
+  triggerStyle?: React.CSSProperties;
+}
+
+/** Avatar + name dropdown for picking a stored character. The menu is portaled
+ *  to <body> with fixed positioning so it escapes any clipping or stacking
+ *  context from the nested panel/flex layout it lives in. */
+export function CharacterDropdown({
   theme,
   characters,
   selectedCharName,
   onCharChange,
   inputStyle,
-  sectionPanel,
-}: CharacterSyncPanelProps) {
+  nullOption = NULL_OPTION_DEFAULT,
+  extraOption,
+  triggerStyle,
+}: CharacterDropdownProps) {
   const [open, setOpen] = useState(false);
   // Fixed-position coords for the portaled menu, measured from the trigger.
   const [menuPos, setMenuPos] = useState<{ top: number; left: number; width: number } | null>(null);
@@ -180,9 +217,8 @@ export function CharacterSyncPanel({
     };
   }, [open]);
 
-  if (characters.length === 0) return null;
-
   const selected = characters.find((c) => c.characterName === selectedCharName) ?? null;
+  const extraSelected = extraOption !== undefined && selectedCharName === extraOption.value;
 
   const toggleOpen = () => {
     if (!open) positionMenu();
@@ -194,7 +230,7 @@ export function CharacterSyncPanel({
     setOpen(false);
   };
 
-  const triggerStyle: React.CSSProperties = {
+  const mergedTriggerStyle: React.CSSProperties = {
     ...inputStyle,
     flex: 1,
     minWidth: 220,
@@ -204,6 +240,7 @@ export function CharacterSyncPanel({
     gap: "0.6rem",
     padding: "5px 10px",
     cursor: "pointer",
+    ...triggerStyle,
   };
 
   const menuStyle: React.CSSProperties = {
@@ -221,8 +258,6 @@ export function CharacterSyncPanel({
     padding: "4px",
   };
 
-  // Portaled to <body> with fixed positioning so it escapes any clipping or
-  // stacking context from the nested panel/flex layout it lives in.
   const menu =
     open &&
     menuPos &&
@@ -237,7 +272,8 @@ export function CharacterSyncPanel({
         <CharacterOption
           theme={theme}
           record={null}
-          selected={selected === null}
+          fallback={nullOption}
+          selected={selectedCharName === null}
           onSelect={() => choose(null)}
         />
         {characters.map((c) => (
@@ -249,11 +285,20 @@ export function CharacterSyncPanel({
             onSelect={() => choose(c.characterName)}
           />
         ))}
+        {extraOption && (
+          <CharacterOption
+            theme={theme}
+            record={null}
+            fallback={extraOption}
+            selected={extraSelected}
+            onSelect={() => choose(extraOption.value)}
+          />
+        )}
       </div>,
       document.body,
     );
 
-  const row = (
+  return (
     <>
       <style>{`
         .csp-option { transition: background 0.15s; border-radius: 8px; }
@@ -266,53 +311,78 @@ export function CharacterSyncPanel({
         .csp-dropdown::-webkit-scrollbar-thumb { background: rgba(127,127,127,0.45); border-radius: 4px; }
       `}</style>
       <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "0.75rem",
-          flexWrap: "wrap",
+        ref={triggerRef}
+        className="tool-input csp-trigger"
+        role="button"
+        tabIndex={0}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        onClick={toggleOpen}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            toggleOpen();
+          }
         }}
+        style={mergedTriggerStyle}
       >
-        <div className="section-label" style={{ color: theme.muted, marginBottom: 0 }}>
-          Character
-        </div>
-        <div
-          ref={triggerRef}
-          className="tool-input csp-trigger"
-          role="button"
-          tabIndex={0}
-          aria-haspopup="listbox"
-          aria-expanded={open}
-          onClick={toggleOpen}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              toggleOpen();
-            }
+        <CharacterLabel
+          theme={theme}
+          record={selected}
+          fallback={extraSelected ? extraOption : nullOption}
+        />
+        <span
+          style={{
+            color: theme.muted,
+            fontSize: "0.75rem",
+            flexShrink: 0,
+            transform: open ? "rotate(180deg)" : "none",
+            transition: "transform 0.15s",
           }}
-          style={triggerStyle}
         >
-          <CharacterLabel theme={theme} record={selected} />
-          <span
-            style={{
-              color: theme.muted,
-              fontSize: "0.75rem",
-              flexShrink: 0,
-              transform: open ? "rotate(180deg)" : "none",
-              transition: "transform 0.15s",
-            }}
-          >
-            ▼
-          </span>
-        </div>
-        {menu}
-        {selectedCharName && (
-          <span style={{ fontSize: "0.78rem", fontWeight: 700, color: theme.accent }}>
-            Synced
-          </span>
-        )}
+          ▼
+        </span>
       </div>
+      {menu}
     </>
+  );
+}
+
+export function CharacterSyncPanel({
+  theme,
+  characters,
+  selectedCharName,
+  onCharChange,
+  inputStyle,
+  sectionPanel,
+}: CharacterSyncPanelProps) {
+  if (characters.length === 0) return null;
+
+  const row = (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "0.75rem",
+        flexWrap: "wrap",
+      }}
+    >
+      <div className="section-label" style={{ color: theme.muted, marginBottom: 0 }}>
+        Character
+      </div>
+      <CharacterDropdown
+        theme={theme}
+        characters={characters}
+        selectedCharName={selectedCharName}
+        onCharChange={onCharChange}
+        inputStyle={inputStyle}
+      />
+      {selectedCharName && (
+        <span style={{ fontSize: "0.78rem", fontWeight: 700, color: theme.accent }}>
+          Synced
+        </span>
+      )}
+    </div>
   );
 
   if (!sectionPanel) return row;
