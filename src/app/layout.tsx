@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { Nunito, Fredoka } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "../components/ThemeContext";
-import { ACCENT_THEMES, type ColorMode } from "../components/themes";
+import { ACCENT_THEMES, composeTheme, type ColorMode } from "../components/themes";
 import CookieConsentBanner from "../components/CookieConsentBanner";
 
 const nunito = Nunito({
@@ -89,8 +89,17 @@ export default async function RootLayout({
   const initialColorMode: ColorMode =
     cookieColorMode === "light" || cookieColorMode === "dark" ? cookieColorMode : "light";
 
+  // Theme background on <html> so iOS Safari's toolbar tint and overscroll
+  // rubber-band reveal the theme color, not default white. Kept in sync after
+  // theme changes by ThemeProvider.
+  const initialBg = composeTheme(initialThemeKey, initialColorMode).bg;
+
   return (
-    <html lang="en" className={`${nunito.variable} ${fredoka.variable}`}>
+    <html
+      lang="en"
+      className={`${nunito.variable} ${fredoka.variable}`}
+      style={{ background: initialBg }}
+    >
       <body>
         {/* react-doctor-disable-next-line react-doctor/no-danger, react-doctor/nextjs-no-native-script -- static build-time string, intentionally render-blocking: must redirect before paint on the old origin and import keys before any component reads localStorage */}
         <script dangerouslySetInnerHTML={{ __html: DATA_MIGRATION_SCRIPT }} />

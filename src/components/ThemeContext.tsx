@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, use, useMemo, ReactNode } from "react";
+import { createContext, use, useEffect, useMemo, ReactNode } from "react";
 import { ACCENT_THEMES, composeTheme, type AppTheme, type ColorMode } from "./themes";
 import { usePersistedThemeKey } from "./usePersistedThemeKey";
 import { usePersistedColorMode } from "./usePersistedColorMode";
@@ -36,6 +36,12 @@ export function ThemeProvider({
   const { colorMode, setColorMode } = usePersistedColorMode(initialColorMode);
 
   const theme = composeTheme(themeKey, colorMode);
+
+  // Keep the <html> background (set server-side in layout.tsx for iOS Safari
+  // toolbar tint / overscroll) in sync with theme changes.
+  useEffect(() => {
+    document.documentElement.style.background = theme.bg;
+  }, [theme.bg]);
 
   const value = useMemo(
     () => ({ themeKey, theme, setThemeKey, colorMode, setColorMode }),
