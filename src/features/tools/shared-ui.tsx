@@ -23,11 +23,16 @@ export function Field({
   );
 }
 
+/** Hairline between stacked blocks that share one panel. */
+export function PanelDivider({ theme }: { theme: AppTheme }) {
+  return <div style={{ borderTop: `1px solid ${theme.border}`, margin: "1rem 0" }} />;
+}
+
 const toggleBase: React.CSSProperties = {
   padding: "8px 16px",
   borderRadius: "10px",
   fontSize: "0.8rem",
-  lineHeight: 1, // pin the line box so the checkmark glyph can't change height on toggle
+  lineHeight: 1,
   fontWeight: 700,
   cursor: "pointer",
   userSelect: "none",
@@ -57,8 +62,6 @@ export function Toggle({
     opacity: disabled ? 0.4 : 1,
     cursor: disabled ? "not-allowed" : "pointer",
   };
-  const content = `${checked ? "\u2713 " : ""}${label}`;
-
   return (
     <button
       type="button"
@@ -67,7 +70,11 @@ export function Toggle({
       onClick={() => onChange(!checked)}
       style={mergedStyle}
     >
-      {content}
+      {/* The check slot always occupies space so toggling doesn't change the width. */}
+      <span style={{ visibility: checked ? "visible" : "hidden", marginRight: "0.35em" }}>
+        {"\u2713"}
+      </span>
+      {label}
     </button>
   );
 }

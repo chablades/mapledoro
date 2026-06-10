@@ -18,6 +18,7 @@ import { COMMON_COSTS, getCostRange } from "./hexa-costs";
 import { SkillSection, MasterySection } from "./hexa-ui";
 import { fmtNum } from "./hexa-format";
 import { toolStyles } from "../tool-styles";
+import { PanelDivider } from "../shared-ui";
 import { ConfirmButton } from "../../../components/ConfirmButton";
 
 const checkboxLabelStyle: React.CSSProperties = {
@@ -42,14 +43,12 @@ const shineNoticeStyle: React.CSSProperties = {
 function ClassSelector({
   theme,
   inputStyle,
-  sectionPanel,
   selectedClassName,
   onClassChange,
   disabled,
 }: {
   theme: AppTheme;
   inputStyle: React.CSSProperties;
-  sectionPanel: React.CSSProperties;
   selectedClassName: string | null;
   onClassChange: (name: string | null) => void;
   disabled?: boolean;
@@ -58,48 +57,43 @@ function ClassSelector({
 
   return (
     <div
-      className="fade-in panel-card"
-      style={{ ...sectionPanel, display: "flex", flexDirection: "column", justifyContent: "center" }}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "0.75rem",
+        flexWrap: "wrap",
+      }}
     >
       <div
+        className="section-label"
+        style={{ color: theme.muted, marginBottom: 0 }}
+      >
+        Class
+      </div>
+      <select
+        className="tool-input"
+        value={selectedClassName ?? ""}
+        onChange={(e) => onClassChange(e.target.value || null)}
+        disabled={disabled}
         style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "0.75rem",
-          flexWrap: "wrap",
+          ...inputStyle,
+          flex: 1,
+          maxWidth: "280px",
+          cursor: disabled ? "not-allowed" : "pointer",
+          opacity: disabled ? 0.6 : 1,
         }}
       >
-        <div
-          className="section-label"
-          style={{ color: theme.muted, marginBottom: 0 }}
-        >
-          Class
-        </div>
-        <select
-          className="tool-input"
-          value={selectedClassName ?? ""}
-          onChange={(e) => onClassChange(e.target.value || null)}
-          disabled={disabled}
-          style={{
-            ...inputStyle,
-            flex: 1,
-            maxWidth: "280px",
-            cursor: disabled ? "not-allowed" : "pointer",
-            opacity: disabled ? 0.6 : 1,
-          }}
-        >
-          <option value="">Select a class…</option>
-          {groups.map((group) => (
-            <optgroup key={group} label={group}>
-              {getClassesInGroup(group).map((c) => (
-                <option key={c.className} value={c.className}>
-                  {c.className}
-                </option>
-              ))}
-            </optgroup>
-          ))}
-        </select>
-      </div>
+        <option value="">Select a class…</option>
+        {groups.map((group) => (
+          <optgroup key={group} label={group}>
+            {getClassesInGroup(group).map((c) => (
+              <option key={c.className} value={c.className}>
+                {c.className}
+              </option>
+            ))}
+          </optgroup>
+        ))}
+      </select>
     </div>
   );
 }
@@ -124,7 +118,6 @@ function SummaryStat({ label, value, max, theme }: { label: string; value: numbe
 
 function SummaryPanel({
   theme,
-  sectionPanel,
   grand,
   maxGrand,
   progressPct,
@@ -133,7 +126,6 @@ function SummaryPanel({
   onReset,
 }: {
   theme: AppTheme;
-  sectionPanel: React.CSSProperties;
   grand: SkillCostSummary;
   maxGrand: SkillCostSummary;
   progressPct: number;
@@ -142,7 +134,7 @@ function SummaryPanel({
   onReset: () => void;
 }) {
   return (
-    <div className="fade-in panel-card" style={sectionPanel}>
+    <>
       <div
         style={{
           display: "flex",
@@ -196,7 +188,7 @@ function SummaryPanel({
       >
         {progressPct.toFixed(1)}% Complete
       </div>
-    </div>
+    </>
   );
 }
 
@@ -289,26 +281,47 @@ export default function HexaSkillsWorkspace({ theme }: { theme: AppTheme }) {
           description="Select your class, set each skill's current level, and see the total Sol Erda and Fragments needed to max."
         />
 
-        <div style={{ display: "flex", gap: "1.25rem", flexWrap: "wrap", marginBottom: "1.25rem" }}>
-          {characters.length > 0 && (
-            <CharacterSyncPanel
-              theme={theme}
-              characters={characters}
-              selectedCharName={selectedCharName}
-              onCharChange={handleCharChange}
-              inputStyle={inputStyle}
-              sectionPanel={halfPanel}
-            />
-          )}
+        {/* Character + class + cost summary share one panel to keep the page
+            header area short. */}
+        <div className="fade-in panel-card" style={sectionPanel}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem 2rem", flexWrap: "wrap" }}>
+            {characters.length > 0 && (
+              <div style={{ flex: "1 1 320px" }}>
+                <CharacterSyncPanel
+                  theme={theme}
+                  characters={characters}
+                  selectedCharName={selectedCharName}
+                  onCharChange={handleCharChange}
+                  inputStyle={inputStyle}
+                />
+              </div>
+            )}
 
-          <ClassSelector
-            theme={theme}
-            inputStyle={inputStyle}
-            sectionPanel={halfPanel}
-            selectedClassName={className}
-            onClassChange={setClassName}
-            disabled={selectedCharName != null}
-          />
+            <div style={{ flex: "1 1 280px" }}>
+              <ClassSelector
+                theme={theme}
+                inputStyle={inputStyle}
+                selectedClassName={className}
+                onClassChange={setClassName}
+                disabled={selectedCharName != null}
+              />
+            </div>
+          </div>
+
+          {classDef && (
+            <>
+              <PanelDivider theme={theme} />
+              <SummaryPanel
+                theme={theme}
+                grand={adjusted.grand}
+                maxGrand={adjusted.maxGrand}
+                progressPct={adjusted.progressPct}
+                includeJanus={includeJanus}
+                onIncludeJanusChange={setIncludeJanus}
+                onReset={resetAll}
+              />
+            </>
+          )}
         </div>
 
         {classDef && classDef.group === "SHINE" && (
@@ -330,17 +343,6 @@ export default function HexaSkillsWorkspace({ theme }: { theme: AppTheme }) {
 
         {classDef ? (
           <>
-            <SummaryPanel
-              theme={theme}
-              sectionPanel={sectionPanel}
-              grand={adjusted.grand}
-              maxGrand={adjusted.maxGrand}
-              progressPct={adjusted.progressPct}
-              includeJanus={includeJanus}
-              onIncludeJanusChange={setIncludeJanus}
-              onReset={resetAll}
-            />
-
             {/* Origin + Ascent */}
             <div style={{ display: "flex", gap: "1.25rem", flexWrap: "wrap", marginBottom: "1.25rem" }}>
               <SkillSection

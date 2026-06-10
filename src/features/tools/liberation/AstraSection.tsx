@@ -22,6 +22,7 @@ import {
   formatDate,
 } from "./useAstraState";
 import { toolStyles } from "../tool-styles";
+import { PanelDivider } from "../shared-ui";
 import { ConfirmButton } from "../../../components/ConfirmButton";
 
 // -- Voucher Input ------------------------------------------------------------
@@ -439,13 +440,11 @@ function AstraDailyQuestSection({
 
 function AstraProgressSection({
   theme,
-  sectionPanel,
   tracesCompleted,
   fragmentsCompleted,
   missionIdx,
 }: {
   theme: AppTheme;
-  sectionPanel: React.CSSProperties;
   tracesCompleted: number;
   fragmentsCompleted: number;
   missionIdx: number;
@@ -454,7 +453,7 @@ function AstraProgressSection({
   const fragsPct = Math.min(100, (fragmentsCompleted / ASTRA_TOTAL_FRAGMENTS) * 100);
 
   return (
-    <div className="fade-in panel-card" style={sectionPanel}>
+    <>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "8px" }}>
         <div className="section-label" style={{ color: theme.muted }}>Traces Progress</div>
         <div style={{ fontSize: "0.78rem", fontWeight: 800, color: theme.accent }}>
@@ -479,7 +478,7 @@ function AstraProgressSection({
           <span>{fragsPct.toFixed(1)}%</span>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 
@@ -660,14 +659,28 @@ export default function AstraSection({ theme }: { theme: AppTheme }) {
 
   return (
     <>
-      <CharacterSyncPanel
-        theme={theme}
-        characters={state.characters}
-        selectedCharName={state.selectedCharName}
-        onCharChange={state.handleCharChange}
-        inputStyle={inputStyle}
-        sectionPanel={sectionPanel}
-      />
+      {/* Character + mission progress share one panel to keep the page header
+          area short. */}
+      <div className="fade-in panel-card" style={sectionPanel}>
+        {state.characters.length > 0 && (
+          <>
+            <CharacterSyncPanel
+              theme={theme}
+              characters={state.characters}
+              selectedCharName={state.selectedCharName}
+              onCharChange={state.handleCharChange}
+              inputStyle={inputStyle}
+            />
+            <PanelDivider theme={theme} />
+          </>
+        )}
+        <AstraProgressSection
+          theme={theme}
+          tracesCompleted={state.tracesCompleted}
+          fragmentsCompleted={state.fragmentsCompleted}
+          missionIdx={state.missionIdx}
+        />
+      </div>
 
       <AstraConfigSection
         theme={theme}
@@ -681,14 +694,6 @@ export default function AstraSection({ theme }: { theme: AppTheme }) {
         onCurrentTracesChange={state.setCurrentTraces}
         onCurrentFragmentsChange={state.setCurrentFragments}
         onStartDateChange={state.setStartDate}
-      />
-
-      <AstraProgressSection
-        theme={theme}
-        sectionPanel={sectionPanel}
-        tracesCompleted={state.tracesCompleted}
-        fragmentsCompleted={state.fragmentsCompleted}
-        missionIdx={state.missionIdx}
       />
 
       <AstraDailyQuestSection

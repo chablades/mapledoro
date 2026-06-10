@@ -20,6 +20,7 @@ import { ItemIcon } from "../../../components/ResourceImage";
 import { CharacterSyncPanel } from "../../../components/CharacterSyncPanel";
 import { SegmentedToggle } from "../../../components/SegmentedToggle";
 import { toolStyles } from "../tool-styles";
+import { PanelDivider } from "../shared-ui";
 import { ConfirmButton } from "../../../components/ConfirmButton";
 import { utcDateStr } from "../date";
 import {
@@ -559,17 +560,15 @@ function SymbolCard({
 
 function OverallProgressPanel({
   theme,
-  sectionPanel,
   stats,
 }: {
   theme: AppTheme;
-  sectionPanel: React.CSSProperties;
   stats: SymbolStats;
 }) {
   const { noneTracked, totalConsumed, totalSymbolsNeeded, overallPct, allMaxed, anyInfinite, maxDaysVal } = stats;
 
   return (
-    <div className="fade-in panel-card" style={sectionPanel}>
+    <>
       <div
         style={{
           display: "flex",
@@ -632,7 +631,7 @@ function OverallProgressPanel({
         </span>
         <span>{noneTracked ? "" : `${overallPct.toFixed(1)}%`}</span>
       </div>
-    </div>
+    </>
   );
 }
 
@@ -938,6 +937,7 @@ export default function SymbolWorkspace({ theme }: { theme: AppTheme }) {
         .sym-btn { transition: background 0.15s, transform 0.1s; cursor: pointer; user-select: none; }
         @media (max-width: 860px) {
           .sym-grid { grid-template-columns: 1fr !important; }
+          .sym-controls .segmented-toggle-track { margin-left: 0 !important; flex: 1 1 100%; }
         }
       `}</style>
 
@@ -949,26 +949,38 @@ export default function SymbolWorkspace({ theme }: { theme: AppTheme }) {
             description="Switch between Arcane and Sacred, enter each symbol's level and count, and view your estimated days to max."
           />
 
-          <CharacterSyncPanel
-            theme={theme}
-            characters={characters}
-            selectedCharName={selectedCharName}
-            onCharChange={handleCharChange}
-            inputStyle={styles.inputStyle}
-            sectionPanel={styles.sectionPanel}
-          />
-
-          <SegmentedToggle
-            theme={theme}
-            options={["arcane", "sacred"] as const}
-            value={type}
-            labels={{ arcane: "Arcane Symbols", sacred: "Sacred Symbols" }}
-            sectionPanel={styles.sectionPanel}
-            btnClassName="sym-btn"
-            onChange={switchType}
-          />
-
-          <OverallProgressPanel theme={theme} sectionPanel={styles.sectionPanel} stats={stats} />
+          {/* Character + type toggle + overall progress share one panel to keep
+              the page header area short. */}
+          <div className="fade-in panel-card" style={styles.sectionPanel}>
+            <div
+              className="sym-controls"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "0.75rem",
+                flexWrap: "wrap",
+              }}
+            >
+              <CharacterSyncPanel
+                theme={theme}
+                characters={characters}
+                selectedCharName={selectedCharName}
+                onCharChange={handleCharChange}
+                inputStyle={styles.inputStyle}
+              />
+              <SegmentedToggle
+                theme={theme}
+                options={["arcane", "sacred"] as const}
+                value={type}
+                labels={{ arcane: "Arcane Symbols", sacred: "Sacred Symbols" }}
+                trackStyle={{ flexShrink: 0, marginLeft: characters.length > 0 ? "auto" : undefined }}
+                btnClassName="sym-btn"
+                onChange={switchType}
+              />
+            </div>
+            <PanelDivider theme={theme} />
+            <OverallProgressPanel theme={theme} stats={stats} />
+          </div>
 
           {/* Symbol Cards */}
           <div className="fade-in panel-card" style={styles.sectionPanel}>
