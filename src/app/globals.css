@@ -9,10 +9,12 @@ body {
   font-family: var(--font-body);
 }
 
-/* Keep the root scrollport width consistent between short and tall pages. */
+/* Keep the root scrollport width consistent between short and tall pages.
+   overscroll-behavior-y stops iOS rubber-banding, which flashed white past the
+   document edges and let content slide over the fixed header. */
 html {
   overflow-y: scroll;
-  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: none;
 }
 
 * {
