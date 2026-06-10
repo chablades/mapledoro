@@ -298,6 +298,7 @@ textarea:focus-visible {
   font-size: 0.88rem;
   font-weight: 800;
   text-align: center;
+  white-space: nowrap;
   cursor: pointer;
   user-select: none;
 }

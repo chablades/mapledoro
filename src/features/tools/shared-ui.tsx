@@ -23,6 +23,11 @@ export function Field({
   );
 }
 
+/** Hairline between stacked blocks that share one panel. */
+export function PanelDivider({ theme }: { theme: AppTheme }) {
+  return <div style={{ borderTop: `1px solid ${theme.border}`, margin: "1rem 0" }} />;
+}
+
 const toggleBase: React.CSSProperties = {
   padding: "8px 16px",
   borderRadius: "10px",

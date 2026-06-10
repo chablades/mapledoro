@@ -12,7 +12,9 @@ interface CharacterSyncPanelProps {
   selectedCharName: string | null;
   onCharChange: (name: string | null) => void;
   inputStyle: React.CSSProperties;
-  sectionPanel: React.CSSProperties;
+  /** Panel chrome around the picker row. Omit to render the bare row for
+   *  embedding in an existing panel. */
+  sectionPanel?: React.CSSProperties;
 }
 
 const AVATAR_SIZE = 34;
@@ -251,8 +253,8 @@ export function CharacterSyncPanel({
       document.body,
     );
 
-  return (
-    <div className="fade-in panel-card" style={sectionPanel}>
+  const row = (
+    <>
       <style>{`
         .csp-option { transition: background 0.15s; border-radius: 8px; }
         .csp-option:not(.csp-option-selected):hover { background: rgba(127,127,127,0.14); }
@@ -310,6 +312,14 @@ export function CharacterSyncPanel({
           </span>
         )}
       </div>
+    </>
+  );
+
+  if (!sectionPanel) return row;
+
+  return (
+    <div className="fade-in panel-card" style={sectionPanel}>
+      {row}
     </div>
   );
 }

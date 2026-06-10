@@ -23,7 +23,7 @@ import {
   formatDate,
 } from "./useLiberationState";
 import { toolStyles } from "../tool-styles";
-import { Toggle } from "../shared-ui";
+import { PanelDivider, Toggle } from "../shared-ui";
 import { ConfirmButton } from "../../../components/ConfirmButton";
 import AstraSection from "./AstraSection";
 
@@ -362,7 +362,6 @@ function LiberationConfigSection({
 
 function LiberationProgressBar({
   theme,
-  sectionPanel,
   tracesCompleted,
   totalNeeded,
   traceNameShort,
@@ -371,7 +370,6 @@ function LiberationProgressBar({
   progressPct,
 }: {
   theme: AppTheme;
-  sectionPanel: React.CSSProperties;
   tracesCompleted: number;
   totalNeeded: number;
   traceNameShort: string;
@@ -380,7 +378,7 @@ function LiberationProgressBar({
   progressPct: number;
 }) {
   return (
-    <div className="fade-in panel-card" style={sectionPanel}>
+    <>
       <div
         style={{
           display: "flex",
@@ -414,7 +412,7 @@ function LiberationProgressBar({
         <span>Quest {questIdx + 1} of {totalQuests}</span>
         <span>{progressPct.toFixed(1)}%</span>
       </div>
-    </div>
+    </>
   );
 }
 
@@ -718,34 +716,52 @@ export default function LiberationWorkspace({ theme }: { theme: AppTheme }) {
             description="Track your Genesis, Destiny, or Astra Secondary progress and view estimated completion dates."
           />
 
-          <SegmentedToggle
-            theme={theme}
-            options={["genesis", "destiny", "destiny2", "astra"] as const}
-            value={activeTab}
-            labels={{
-              genesis: "Genesis",
-              destiny: "Destiny Pt. 1",
-              destiny2: "Destiny Pt. 2",
-              astra: "Astra Secondary",
-            }}
-            sectionPanel={sectionPanel}
-            btnClassName="lib-btn"
-            onChange={handleTabChange}
-          />
+          <div className="fade-in" style={{ marginBottom: "1.25rem" }}>
+            <SegmentedToggle
+              theme={theme}
+              options={["genesis", "destiny", "destiny2", "astra"] as const}
+              value={activeTab}
+              labels={{
+                genesis: "Genesis",
+                destiny: "Destiny Pt. 1",
+                destiny2: "Destiny Pt. 2",
+                astra: "Astra Secondary",
+              }}
+              btnClassName="lib-btn"
+              onChange={handleTabChange}
+            />
+          </div>
 
           {showAstra ? (
             <AstraSection theme={theme} />
           ) : (
           <>
 
-          <CharacterSyncPanel
-            theme={theme}
-            characters={characters}
-            selectedCharName={selectedCharName}
-            onCharChange={handleCharChange}
-            inputStyle={inputStyle}
-            sectionPanel={sectionPanel}
-          />
+          {/* Character + liberation progress share one panel to keep the page
+              header area short. */}
+          <div className="fade-in panel-card" style={sectionPanel}>
+            {characters.length > 0 && (
+              <>
+                <CharacterSyncPanel
+                  theme={theme}
+                  characters={characters}
+                  selectedCharName={selectedCharName}
+                  onCharChange={handleCharChange}
+                  inputStyle={inputStyle}
+                />
+                <PanelDivider theme={theme} />
+              </>
+            )}
+            <LiberationProgressBar
+              theme={theme}
+              tracesCompleted={tracesCompleted}
+              totalNeeded={totalNeeded}
+              traceNameShort={traceNameShort}
+              questIdx={questIdx}
+              totalQuests={quests.length}
+              progressPct={progressPct}
+            />
+          </div>
 
           <LiberationConfigSection
             theme={theme}
@@ -762,17 +778,6 @@ export default function LiberationWorkspace({ theme }: { theme: AppTheme }) {
             onCurrentTracesChange={setCurrentTraces}
             onStartDateChange={setStartDate}
             onGenesisPassToggle={() => setGenesisPass((p) => !p)}
-          />
-
-          <LiberationProgressBar
-            theme={theme}
-            sectionPanel={sectionPanel}
-            tracesCompleted={tracesCompleted}
-            totalNeeded={totalNeeded}
-            traceNameShort={traceNameShort}
-            questIdx={questIdx}
-            totalQuests={quests.length}
-            progressPct={progressPct}
           />
 
           {/* Boss Selection */}
