@@ -75,7 +75,7 @@ function initState(): CalcState {
     baseAttack: 149,
     flameAdvantaged: true,
     desiredStat: 100,
-    guildDiscount: false,
+    guildDiscount: true,
     equivalences: eq,
     flameScore: { mainStat: 0, secondaryStat: 0, allStatPct: 0, attack: 0, bossPct: 0, dmgPct: 0, hp: 0, dex: 0, str: 0, luk: 0 },
   };

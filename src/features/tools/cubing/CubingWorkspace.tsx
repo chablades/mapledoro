@@ -66,38 +66,47 @@ type FormAction =
   | { type: "setDesiredStat"; value: string }
   | { type: "setDmt"; value: boolean };
 
+/** Keep the chosen desired stat across form changes; reset to "any" only when
+ *  it's no longer a valid option (e.g. armor ↔ WSE swaps, tier mismatch). */
+function withValidDesiredStat(s: FormState): FormState {
+  if (s.desiredStat === "any") return s;
+  const stillValid =
+    s.currentTier === s.desiredTier &&
+    s.itemLevel > 70 &&
+    buildStatOptions(s.itemType, s.cubeType, s.desiredTier, s.itemLevel, s.statType)
+      .some((o) => o.value === s.desiredStat);
+  return stillValid ? s : { ...s, desiredStat: "any" };
+}
+
 function formReducer(s: FormState, a: FormAction): FormState {
   switch (a.type) {
     case "setItemType":
-      return { ...s, itemType: a.value, desiredStat: "any" };
+      return withValidDesiredStat({ ...s, itemType: a.value });
     case "setCubeType": {
       const max = MAX_CUBE_TIER[a.value];
-      return {
+      return withValidDesiredStat({
         ...s,
         cubeType: a.value,
         currentTier: s.currentTier > max ? max : s.currentTier,
         desiredTier: s.desiredTier > max ? max : s.desiredTier,
-        desiredStat: "any",
-      };
+      });
     }
     case "setCurrentTier":
-      return {
+      return withValidDesiredStat({
         ...s,
         currentTier: a.value,
         desiredTier: s.desiredTier < a.value ? a.value : s.desiredTier,
-        desiredStat: "any",
-      };
+      });
     case "setDesiredTier":
-      return {
+      return withValidDesiredStat({
         ...s,
         desiredTier: a.value,
         currentTier: s.currentTier > a.value ? a.value : s.currentTier,
-        desiredStat: "any",
-      };
+      });
     case "setItemLevel":
-      return { ...s, itemLevel: a.value, desiredStat: "any" };
+      return withValidDesiredStat({ ...s, itemLevel: a.value });
     case "setStatType":
-      return { ...s, statType: a.value, desiredStat: "any" };
+      return withValidDesiredStat({ ...s, statType: a.value });
     case "setDesiredStat":
       return { ...s, desiredStat: a.value };
     case "setDmt":
