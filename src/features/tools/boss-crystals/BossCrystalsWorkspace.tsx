@@ -204,6 +204,7 @@ function CharacterCard({
   onEdit,
   onDelete,
   onToggleCleared,
+  onSetAllCleared,
 }: {
   theme: AppTheme;
   char: CharacterEntry;
@@ -218,10 +219,12 @@ function CharacterCard({
   onEdit: () => void;
   onDelete: () => void;
   onToggleCleared: (bossIndex: number) => void;
+  onSetAllCleared: (cleared: boolean) => void;
 }) {
   const selected = char.bosses.flatMap((b, bi) =>
     b.checked ? [{ ...b, boss: BOSSES[bi], index: bi }] : [],
   );
+  const allCleared = selected.length > 0 && selected.every((b) => b.cleared);
 
   return (
     <div
@@ -279,6 +282,26 @@ function CharacterCard({
             <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
           </svg>
         </button>
+        <button
+          type="button"
+          className="btn-reset bc-btn"
+          aria-pressed={allCleared}
+          onClick={() => onSetAllCleared(!allCleared)}
+          title={allCleared ? "Unmark all bosses" : "Mark all bosses cleared"}
+          style={{
+            padding: "5px",
+            borderRadius: "8px",
+            background: allCleared ? theme.accentSoft : theme.timerBg,
+            border: `1px solid ${allCleared ? theme.accent : theme.border}`,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <svg viewBox="0 0 24 24" width="14" height="14" fill={allCleared ? theme.accent : theme.muted}>
+            <path d="M18 7l-1.41-1.41-6.34 6.34 1.41 1.41L18 7zm4.24-1.41L11.66 16.17 7.48 12l-1.41 1.41L11.66 19l12-12-1.42-1.41zM.41 13.41L6 19l1.41-1.41L1.83 12 .41 13.41z" />
+          </svg>
+        </button>
       </div>
 
       {/* Character header */}
@@ -288,7 +311,7 @@ function CharacterCard({
           alignItems: "center",
           gap: "0.75rem",
           marginBottom: "0.75rem",
-          paddingRight: "4rem",
+          paddingRight: "5.5rem",
         }}
       >
         {char.imageURL ? (
@@ -1051,7 +1074,7 @@ export default function BossCrystalsWorkspace({ theme }: { theme: AppTheme }) {
     nameMode, setNameMode, typedName, setTypedName,
     selectedStoreChar, setSelectedStoreChar, availableStoreChars,
     openAdd, proceedToBosses, confirmAdd, openEdit, confirmEdit,
-    deleteCharacter, toggleBossCleared, reorderCharacters, toggleDialogBoss, setDialogParty, applyPreset,
+    deleteCharacter, toggleBossCleared, setAllBossesCleared, reorderCharacters, toggleDialogBoss, setDialogParty, applyPreset,
     clearData, closeDialog, goBackToAddName, exportXlsx,
   } = useBossCrystalsState(mounted);
 
@@ -1178,6 +1201,7 @@ export default function BossCrystalsWorkspace({ theme }: { theme: AppTheme }) {
                 onEdit={() => openEdit(ci)}
                 onDelete={() => deleteCharacter(ci)}
                 onToggleCleared={(bi) => toggleBossCleared(ci, bi)}
+                onSetAllCleared={(cleared) => setAllBossesCleared(ci, cleared)}
               />
             ))}
 

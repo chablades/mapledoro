@@ -28,6 +28,18 @@ function resetClearedFlags(chars: CharacterEntry[]): CharacterEntry[] {
   }));
 }
 
+function setClearedForChar(
+  chars: CharacterEntry[],
+  charIdx: number,
+  cleared: boolean,
+): CharacterEntry[] {
+  return chars.map((c, i) =>
+    i === charIdx
+      ? { ...c, bosses: c.bosses.map((b) => (b.checked ? { ...b, cleared } : b)) }
+      : c,
+  );
+}
+
 function toggleClearedAt(
   chars: CharacterEntry[],
   charIdx: number,
@@ -181,6 +193,10 @@ export function useBossCrystalsState(mounted: boolean) {
     setCharacters((prev) => toggleClearedAt(prev, charIdx, bossIdx));
   }, []);
 
+  const setAllBossesCleared = useCallback((charIdx: number, cleared: boolean) => {
+    setCharacters((prev) => setClearedForChar(prev, charIdx, cleared));
+  }, []);
+
   const reorderCharacters = useCallback((from: number, to: number) => {
     if (from === to) return;
     setCharacters((prev) => {
@@ -256,6 +272,7 @@ export function useBossCrystalsState(mounted: boolean) {
     confirmEdit,
     deleteCharacter,
     toggleBossCleared,
+    setAllBossesCleared,
     reorderCharacters,
     toggleDialogBoss,
     setDialogParty,

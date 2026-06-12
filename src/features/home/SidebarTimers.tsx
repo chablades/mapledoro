@@ -3,7 +3,7 @@
 import type { CSSProperties } from "react";
 import Panel from "../../components/Panel";
 import type { AppTheme } from "../../components/themes";
-import { formatCountdown, getNextReset } from "../../lib/time";
+import { formatCountdown, formatCountdownDays, getNextReset } from "../../lib/time";
 import { getUrsusStatus } from "../../lib/ursus";
 
 const PLACEHOLDER_COUNTDOWN = "--:--:--";
@@ -77,7 +77,7 @@ export function ResetTimerPanels({ theme, now }: { theme: AppTheme; now: Date | 
   const resets = now
     ? [
         { label: "Daily Reset", countdown: formatCountdown(getNextReset(now, 0).getTime() - now.getTime()) },
-        { label: "Weekly Reset", countdown: formatCountdown(getNextReset(now, 0, 4).getTime() - now.getTime()) },
+        { label: "Weekly Reset", countdown: formatCountdownDays(getNextReset(now, 0, 4).getTime() - now.getTime()) },
       ]
     : [
         { label: "Daily Reset", countdown: PLACEHOLDER_COUNTDOWN },
