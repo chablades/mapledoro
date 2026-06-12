@@ -18,7 +18,7 @@ interface GameCard {
 
 const GAMES: GameCard[] = [
   {
-    title: "Skill Guesser",
+    title: "Mapledle",
     description:
       "Guess which class learns the daily skill icon in 5 tries. A new puzzle arrives every day at 00:00 UTC.",
     icon: "🎯",

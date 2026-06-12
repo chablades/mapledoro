@@ -1,6 +1,6 @@
 /*
-  localStorage store for game results. Games live in their own
-  `mapledoro_games_v1` key (mirrors globalToolsStore's shape/versioning).
+  localStorage store for game results + game preferences. Games live in their
+  own `mapledoro_games_v1` key (mirrors globalToolsStore's shape/versioning).
 */
 
 const STORAGE_KEY = "mapledoro_games_v1";
@@ -13,7 +13,7 @@ export interface SkillGuesserResult {
 
 interface GamesStore {
   version: 1;
-  skillGuesser: { results: Record<string, SkillGuesserResult> };
+  skillGuesser: { results: Record<string, SkillGuesserResult>; hardMode?: boolean };
 }
 
 function emptyStore(): GamesStore {
@@ -40,6 +40,19 @@ export function writeSkillGuesserResult(puzzleNumber: number, result: SkillGuess
   if (typeof window === "undefined") return;
   const store = readStore();
   store.skillGuesser.results[String(puzzleNumber)] = result;
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+  } catch { /* ignore */ }
+}
+
+export function readSkillGuesserHardMode(): boolean {
+  return readStore().skillGuesser.hardMode === true;
+}
+
+export function writeSkillGuesserHardMode(on: boolean): void {
+  if (typeof window === "undefined") return;
+  const store = readStore();
+  store.skillGuesser.hardMode = on;
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
   } catch { /* ignore */ }

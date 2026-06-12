@@ -19,7 +19,7 @@ function buildShareText(
   const squares = result.guesses
     .map((g) => (g === puzzle.className ? "\u{1F7E9}" : "\u{1F7E5}"))
     .join("");
-  return `MapleDoro Skill Guesser #${puzzleNumber} ${score}\n${squares}\n${SHARE_URL}`;
+  return `Mapledle #${puzzleNumber} ${score}\n${squares}\n${SHARE_URL}`;
 }
 
 function formatCountdown(ms: number): string {
@@ -93,7 +93,7 @@ export default function ResultsDialog({
   return (
     <ModalShell
       theme={theme}
-      ariaLabel="Skill Guesser results"
+      ariaLabel="Mapledle results"
       onClose={onClose}
       style={{ width: "min(420px, calc(100% - 2rem))", padding: "1.5rem" }}
     >
@@ -102,7 +102,7 @@ export default function ResultsDialog({
           {result.won ? "You got it!" : "Out of guesses!"}
         </div>
         <div style={{ fontSize: "0.8rem", fontWeight: 700, color: theme.muted, marginTop: "0.2rem" }}>
-          Skill Guesser #{puzzleNumber} — {score}
+          Mapledle #{puzzleNumber} — {score}
         </div>
 
         <div

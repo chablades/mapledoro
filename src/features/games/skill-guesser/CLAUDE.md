@@ -1,4 +1,8 @@
-# Skill Guesser
+# Mapledle (Skill Guesser)
+
+User-facing name is **Mapledle** (matching the Discord Activity port); internal
+identifiers and the `/games/skill-guesser` route intentionally keep the old
+`skill-guesser` name for now.
 
 Daily game: guess which class learns the shown skill icon in 5 tries. The puzzle
 advances at **00:00:00 UTC**; puzzle #1 = the `EPOCH_UTC_MS` day in `puzzles.ts`
@@ -33,4 +37,6 @@ regenerating the payload (the generator validates names against this file).
 
 **Results** live in `mapledoro_games_v1` (own key, NOT `mapledoro_tools_v1`),
 keyed by puzzle number; in-progress guesses are persisted too (`done: false`)
-and excluded from stats.
+and excluded from stats. The **hard mode** preference (progressive icon blur:
+7px before the first guess, linearly sharp by the last; blur math must match
+the Discord Activity) lives in the same store under `skillGuesser.hardMode`.

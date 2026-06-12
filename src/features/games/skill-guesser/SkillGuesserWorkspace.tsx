@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react"
 import Link from "next/link";
 import type { AppTheme } from "../../../components/themes";
 import { useMounted } from "../../../lib/useMounted";
-import { ActionButton } from "../../tools/shared-ui";
+import { ActionButton, Toggle } from "../../tools/shared-ui";
 import { toolStyles } from "../../tools/tool-styles";
 import { SKILL_GUESSER_CLASSES, findSkillGuesserClass } from "./classes";
 import {
@@ -18,13 +18,18 @@ import PuzzleSkillIcon from "./PuzzleSkillIcon";
 import ResultsDialog from "./ResultsDialog";
 import {
   computeSkillGuesserStats,
+  readSkillGuesserHardMode,
   readSkillGuesserResult,
+  writeSkillGuesserHardMode,
   writeSkillGuesserResult,
   type SkillGuesserResult,
 } from "./storage";
 
 const HIT_GREEN = "#2d8a2d";
 const MISS_RED = "#c44040";
+
+/* Hard mode: blur in px before any guess; reaches 0 on the final guess. */
+const HARD_MODE_MAX_BLUR = 7;
 
 /* ------------------------------------------------------------------ */
 /*  Class picker (searchable combobox over the answer pool)            */
@@ -329,7 +334,17 @@ function StatsPanel({ theme, sectionPanel }: { theme: AppTheme; sectionPanel: CS
 /*  Game board                                                         */
 /* ------------------------------------------------------------------ */
 
-function GameBoard({ theme, puzzleNumber }: { theme: AppTheme; puzzleNumber: number }) {
+function GameBoard({
+  theme,
+  puzzleNumber,
+  hardMode,
+  onHardModeChange,
+}: {
+  theme: AppTheme;
+  puzzleNumber: number;
+  hardMode: boolean;
+  onHardModeChange: (on: boolean) => void;
+}) {
   const puzzle = useMemo(() => getPuzzle(puzzleNumber), [puzzleNumber]);
   const styles = toolStyles(theme);
   const [result, setResult] = useState<SkillGuesserResult>(
@@ -341,6 +356,13 @@ function GameBoard({ theme, puzzleNumber }: { theme: AppTheme; puzzleNumber: num
 
   const guessed = useMemo(() => new Set(result.guesses), [result.guesses]);
   const failedCount = result.guesses.filter((g) => g !== puzzle.className).length;
+
+  // Hard mode: fully blurred before the first guess, sharpening linearly so
+  // the icon is only fully clear on the last guess (or once the game ends).
+  const blurPx =
+    hardMode && !result.done
+      ? (HARD_MODE_MAX_BLUR * (MAX_GUESSES - 1 - result.guesses.length)) / (MAX_GUESSES - 1)
+      : 0;
 
   function handleSubmit(name?: string) {
     const guess = name ?? staged;
@@ -379,7 +401,11 @@ function GameBoard({ theme, puzzleNumber }: { theme: AppTheme; puzzleNumber: num
               puzzle={puzzle}
               size={64}
               alt="Mystery skill icon"
-              style={{ imageRendering: "pixelated" }}
+              style={{
+                imageRendering: "pixelated",
+                filter: blurPx > 0 ? `blur(${blurPx}px)` : undefined,
+                transition: "filter 0.45s ease",
+              }}
             />
           </div>
           <div style={{ fontSize: "0.85rem", fontWeight: 700, color: theme.text }}>
@@ -390,6 +416,13 @@ function GameBoard({ theme, puzzleNumber }: { theme: AppTheme; puzzleNumber: num
               ? `The answer was ${puzzle.className} — ${puzzle.skillName}`
               : `${MAX_GUESSES - result.guesses.length} of ${MAX_GUESSES} guesses remaining`}
           </div>
+          <Toggle
+            theme={theme}
+            label="Hard Mode"
+            checked={hardMode}
+            onChange={onHardModeChange}
+            style={{ marginTop: "0.2rem" }}
+          />
         </div>
 
         {result.done ? (
@@ -450,12 +483,20 @@ function GameBoard({ theme, puzzleNumber }: { theme: AppTheme; puzzleNumber: num
 export default function SkillGuesserWorkspace({ theme }: { theme: AppTheme }) {
   const mounted = useMounted();
   const [puzzleNumber, setPuzzleNumber] = useState(() => currentPuzzleNumber());
+  const [hardMode, setHardMode] = useState(() => readSkillGuesserHardMode());
 
   // Move to the next puzzle when the UTC day rolls over while the page is open.
   useEffect(() => {
     const t = setTimeout(() => setPuzzleNumber(currentPuzzleNumber()), msUntilNextPuzzle() + 250);
     return () => clearTimeout(t);
   }, [puzzleNumber]);
+
+  function handleHardModeChange(on: boolean) {
+    setHardMode(() => {
+      writeSkillGuesserHardMode(on);
+      return on;
+    });
+  }
 
   if (!mounted) return null;
 
@@ -469,7 +510,7 @@ export default function SkillGuesserWorkspace({ theme }: { theme: AppTheme }) {
             ← Back to Games
           </Link>
           <div className="tool-header-title" style={{ color: theme.text }}>
-            Skill Guesser #{puzzleNumber}
+            Mapledle #{puzzleNumber}
           </div>
           <div className="tool-header-desc" style={{ color: theme.muted }}>
             Guess which class learns the daily skill in {MAX_GUESSES} tries. A new puzzle arrives
@@ -477,7 +518,13 @@ export default function SkillGuesserWorkspace({ theme }: { theme: AppTheme }) {
           </div>
         </div>
 
-        <GameBoard key={puzzleNumber} theme={theme} puzzleNumber={puzzleNumber} />
+        <GameBoard
+          key={puzzleNumber}
+          theme={theme}
+          puzzleNumber={puzzleNumber}
+          hardMode={hardMode}
+          onHardModeChange={handleHardModeChange}
+        />
       </div>
     </div>
   );
