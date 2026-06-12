@@ -11,6 +11,7 @@ export const NAV_LINKS: NavLinkItem[] = [
   { label: "Dashboard", href: "/" },
   { label: "Characters", href: "/characters" },
   { label: "Tools", href: "/tools" },
+  { label: "Games", href: "/games" },
   { label: "Guides", href: "/guides" },
   { label: "Settings", href: "/settings" },
 ];
