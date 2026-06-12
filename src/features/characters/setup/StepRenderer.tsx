@@ -13,6 +13,7 @@ import StatsSetupStep from "./components/StatsSetupStep";
 import EquipmentSetupStep from "./components/EquipmentSetupStep";
 import LinkSkillsSetupStep from "./components/LinkSkillsSetupStep";
 import HexaMatrixSetupStep from "./components/HexaMatrixSetupStep";
+import VMatrixSetupStep from "./components/VMatrixSetupStep";
 import FamiliarsSetupStep from "./components/FamiliarsSetupStep";
 
 interface StepRendererProps {
@@ -40,7 +41,7 @@ const STEP_COMPONENTS: Record<SetupStepId, typeof GenericSetupStep> = {
   stats: StatsSetupStep,
   equipment: EquipmentSetupStep,
   inventory: GenericSetupStep,
-  v_matrix: GenericSetupStep,
+  v_matrix: VMatrixSetupStep,
   hexa_matrix: HexaMatrixSetupStep,
   familiars: FamiliarsSetupStep,
   link_skills: LinkSkillsSetupStep,

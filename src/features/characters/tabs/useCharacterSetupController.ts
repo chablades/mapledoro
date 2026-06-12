@@ -177,12 +177,14 @@ function buildFullSetupRecord(
   const { stats, isLiberated, weaponHand, hasRuinForceShield, soul } =
     convertStatsStepDraftToStored(parseStatsStepDraft(stepData.stats ?? ""));
   const hexaToolData = buildHexaToolDataForRecord(character.jobName, stepData.hexa_matrix ?? "");
+  const vMatrixToolData = buildVMatrixToolDataForRecord(stepData.v_matrix ?? "");
   const familiarsData = stepData.familiars ? tryParseJson(stepData.familiars) : null;
   const equipmentData = stepData.equipment ? parseEquipmentDraft(stepData.equipment) : null;
   const symbolsData = stepData.equipment ? buildSymbolsToolDataForRecord(character, stepData.equipment) : null;
   const tools = {
     ...base.tools,
     ...(hexaToolData ? { hexaSkills: hexaToolData } : null),
+    ...(vMatrixToolData ? { vMatrix: vMatrixToolData } : null),
     ...(familiarsData ? { familiars: familiarsData } : null),
     ...(symbolsData ? { symbols: symbolsData } : null),
   };
@@ -221,6 +223,7 @@ function applyStandaloneToolDrafts(
   if (!character) return;
   if (stepData.equipment) applyEquipmentDraftToRoster(character, stepData.equipment, upsertFn);
   if (stepData.hexa_matrix) applyHexaDraftToRoster(character, stepData.hexa_matrix, upsertFn);
+  if (stepData.v_matrix) applyVMatrixDraftToRoster(character, stepData.v_matrix, upsertFn);
   if (stepData.familiars) applyFamiliarsDraftToRoster(character, stepData.familiars, upsertFn);
 }
 
@@ -250,6 +253,30 @@ function applyHexaDraftToRoster(
   const existing = selectCharacterById(store, toCharacterKey(character));
   if (!existing) return;
   upsertFn({ ...existing, tools: { ...existing.tools, hexaSkills: hexaData } });
+}
+
+function buildVMatrixToolDataForRecord(vMatrixJson: string): { levels: Record<string, number> } | null {
+  const parsed = tryParseJson(vMatrixJson);
+  if (!parsed || typeof parsed !== "object") return null;
+  const levels: Record<string, number> = {};
+  for (const [name, level] of Object.entries(parsed as Record<string, unknown>)) {
+    const n = Math.round(Number(level));
+    if (Number.isFinite(n) && n > 0) levels[name] = n;
+  }
+  return Object.keys(levels).length > 0 ? { levels } : null;
+}
+
+function applyVMatrixDraftToRoster(
+  character: NormalizedCharacterData | null,
+  vMatrixJson: string,
+  upsertFn: (c: StoredCharacterRecord) => void,
+) {
+  if (!character) return;
+  const vMatrixData = buildVMatrixToolDataForRecord(vMatrixJson);
+  if (!vMatrixData) return;
+  const existing = selectCharacterById(readCharactersStore(), toCharacterKey(character));
+  if (!existing) return;
+  upsertFn({ ...existing, tools: { ...existing.tools, vMatrix: vMatrixData } });
 }
 
 function buildHexaToolDataForRecord(jobName: string, hexaJson: string): { className: string; levels: unknown } | null {
