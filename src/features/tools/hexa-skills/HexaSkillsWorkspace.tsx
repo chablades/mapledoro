@@ -18,6 +18,8 @@ import { COMMON_COSTS, getCostRange } from "./hexa-costs";
 import { SkillSection, MasterySection } from "./hexa-ui";
 import { fmtNum } from "./hexa-format";
 import { toolStyles } from "../tool-styles";
+import { PanelDivider } from "../shared-ui";
+import { ConfirmButton } from "../../../components/ConfirmButton";
 
 const checkboxLabelStyle: React.CSSProperties = {
   display: "flex",
@@ -27,15 +29,6 @@ const checkboxLabelStyle: React.CSSProperties = {
   fontWeight: 700,
   cursor: "pointer",
   userSelect: "none",
-};
-
-const resetBtnBase: React.CSSProperties = {
-  padding: "3px 10px",
-  borderRadius: "8px",
-  fontSize: "0.75rem",
-  fontWeight: 800,
-  background: "transparent",
-  cursor: "pointer",
 };
 
 const shineNoticeStyle: React.CSSProperties = {
@@ -50,14 +43,12 @@ const shineNoticeStyle: React.CSSProperties = {
 function ClassSelector({
   theme,
   inputStyle,
-  sectionPanel,
   selectedClassName,
   onClassChange,
   disabled,
 }: {
   theme: AppTheme;
   inputStyle: React.CSSProperties;
-  sectionPanel: React.CSSProperties;
   selectedClassName: string | null;
   onClassChange: (name: string | null) => void;
   disabled?: boolean;
@@ -65,46 +56,44 @@ function ClassSelector({
   const groups = getClassGroups();
 
   return (
-    <div className="fade-in panel-card" style={sectionPanel}>
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "0.75rem",
+        flexWrap: "wrap",
+      }}
+    >
       <div
+        className="section-label"
+        style={{ color: theme.muted, marginBottom: 0 }}
+      >
+        Class
+      </div>
+      <select
+        className="tool-input"
+        value={selectedClassName ?? ""}
+        onChange={(e) => onClassChange(e.target.value || null)}
+        disabled={disabled}
         style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "0.75rem",
-          flexWrap: "wrap",
+          ...inputStyle,
+          flex: 1,
+          maxWidth: "280px",
+          cursor: disabled ? "not-allowed" : "pointer",
+          opacity: disabled ? 0.6 : 1,
         }}
       >
-        <div
-          className="section-label"
-          style={{ color: theme.muted, marginBottom: 0 }}
-        >
-          Class
-        </div>
-        <select
-          className="tool-input"
-          value={selectedClassName ?? ""}
-          onChange={(e) => onClassChange(e.target.value || null)}
-          disabled={disabled}
-          style={{
-            ...inputStyle,
-            flex: 1,
-            maxWidth: "280px",
-            cursor: disabled ? "not-allowed" : "pointer",
-            opacity: disabled ? 0.6 : 1,
-          }}
-        >
-          <option value="">Select a class…</option>
-          {groups.map((group) => (
-            <optgroup key={group} label={group}>
-              {getClassesInGroup(group).map((c) => (
-                <option key={c.className} value={c.className}>
-                  {c.className}
-                </option>
-              ))}
-            </optgroup>
-          ))}
-        </select>
-      </div>
+        <option value="">Select a class…</option>
+        {groups.map((group) => (
+          <optgroup key={group} label={group}>
+            {getClassesInGroup(group).map((c) => (
+              <option key={c.className} value={c.className}>
+                {c.className}
+              </option>
+            ))}
+          </optgroup>
+        ))}
+      </select>
     </div>
   );
 }
@@ -129,7 +118,6 @@ function SummaryStat({ label, value, max, theme }: { label: string; value: numbe
 
 function SummaryPanel({
   theme,
-  sectionPanel,
   grand,
   maxGrand,
   progressPct,
@@ -138,7 +126,6 @@ function SummaryPanel({
   onReset,
 }: {
   theme: AppTheme;
-  sectionPanel: React.CSSProperties;
   grand: SkillCostSummary;
   maxGrand: SkillCostSummary;
   progressPct: number;
@@ -147,7 +134,7 @@ function SummaryPanel({
   onReset: () => void;
 }) {
   return (
-    <div className="fade-in panel-card" style={sectionPanel}>
+    <>
       <div
         style={{
           display: "flex",
@@ -173,20 +160,13 @@ function SummaryPanel({
             />
             Include Janus in Total?
           </label>
-          <div
-            className="pill-btn"
-            role="button"
-            tabIndex={0}
-            onClick={onReset}
-            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onReset(); } }}
-            style={{
-              ...resetBtnBase,
-              color: theme.muted,
-              border: `1px solid ${theme.border}`,
-            }}
-          >
-            Reset All
-          </div>
+          <ConfirmButton
+            theme={theme}
+            label="Reset"
+            title="Reset skill levels?"
+            message="This sets every HEXA skill's current level back to its minimum. Your selected class and desired levels stay."
+            onConfirm={onReset}
+          />
         </div>
       </div>
 
@@ -208,7 +188,7 @@ function SummaryPanel({
       >
         {progressPct.toFixed(1)}% Complete
       </div>
-    </div>
+    </>
   );
 }
 
@@ -293,39 +273,55 @@ export default function HexaSkillsWorkspace({ theme }: { theme: AppTheme }) {
   if (!mounted) return null;
 
   return (
-    <div className="hexa-main" style={{ flex: 1, width: "100%", padding: "1.5rem 1.5rem 2rem 2.75rem" }}>
-      <style>{`
-        @media (max-width: 860px) {
-          .hexa-main { padding: 1rem !important; }
-        }
-      `}</style>
-      <div style={{ maxWidth: 900, margin: "0 auto" }}>
+    <div className="page-content">
+      <div className="tool-container">
         <ToolHeader
           theme={theme}
           title="HEXA Skill Tracker"
           description="Select your class, set each skill's current level, and see the total Sol Erda and Fragments needed to max."
         />
 
-        <div style={{ display: "flex", gap: "1.25rem", flexWrap: "wrap", marginBottom: "1.25rem" }}>
-          {characters.length > 0 && (
-            <CharacterSyncPanel
-              theme={theme}
-              characters={characters}
-              selectedCharName={selectedCharName}
-              onCharChange={handleCharChange}
-              inputStyle={inputStyle}
-              sectionPanel={halfPanel}
-            />
-          )}
+        {/* Character + class + cost summary share one panel to keep the page
+            header area short. */}
+        <div className="fade-in panel-card" style={sectionPanel}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem 2rem", flexWrap: "wrap" }}>
+            {characters.length > 0 && (
+              <div style={{ flex: "1 1 320px" }}>
+                <CharacterSyncPanel
+                  theme={theme}
+                  characters={characters}
+                  selectedCharName={selectedCharName}
+                  onCharChange={handleCharChange}
+                  inputStyle={inputStyle}
+                />
+              </div>
+            )}
 
-          <ClassSelector
-            theme={theme}
-            inputStyle={inputStyle}
-            sectionPanel={halfPanel}
-            selectedClassName={className}
-            onClassChange={setClassName}
-            disabled={selectedCharName != null}
-          />
+            <div style={{ flex: "1 1 280px" }}>
+              <ClassSelector
+                theme={theme}
+                inputStyle={inputStyle}
+                selectedClassName={className}
+                onClassChange={setClassName}
+                disabled={selectedCharName != null}
+              />
+            </div>
+          </div>
+
+          {classDef && (
+            <>
+              <PanelDivider theme={theme} />
+              <SummaryPanel
+                theme={theme}
+                grand={adjusted.grand}
+                maxGrand={adjusted.maxGrand}
+                progressPct={adjusted.progressPct}
+                includeJanus={includeJanus}
+                onIncludeJanusChange={setIncludeJanus}
+                onReset={resetAll}
+              />
+            </>
+          )}
         </div>
 
         {classDef && classDef.group === "SHINE" && (
@@ -347,17 +343,6 @@ export default function HexaSkillsWorkspace({ theme }: { theme: AppTheme }) {
 
         {classDef ? (
           <>
-            <SummaryPanel
-              theme={theme}
-              sectionPanel={sectionPanel}
-              grand={adjusted.grand}
-              maxGrand={adjusted.maxGrand}
-              progressPct={adjusted.progressPct}
-              includeJanus={includeJanus}
-              onIncludeJanusChange={setIncludeJanus}
-              onReset={resetAll}
-            />
-
             {/* Origin + Ascent */}
             <div style={{ display: "flex", gap: "1.25rem", flexWrap: "wrap", marginBottom: "1.25rem" }}>
               <SkillSection

@@ -52,6 +52,12 @@ export function HexaSkillIcon({ id, disabled = false, ...rest }: ResourceIconPro
   return <ResourceImage src={resourceImageUrl("hexa-skill", id, disabled ? "iconDisabled.png" : "icon.png")} {...rest} />;
 }
 
+// Erda Link skill icon (SHINE classes). `id` is the manifest's multi-segment
+// "{outerId}/{type}/{id}" path (e.g. "18212/skill/102").
+export function ErdaSkillIcon({ id, ...rest }: ResourceIconProps) {
+  return <ResourceImage src={resourceImageUrl("erda-skill", id, "icon.png")} {...rest} />;
+}
+
 // Direct familiar sprite only. For mob- or card-backed familiars (manifest
 // `spriteFrom` = "mob" / null), use <MobSprite id={mobId}> or <ItemIcon id={cardId}>.
 export function FamiliarSprite({ id, ...rest }: ResourceIconProps) {

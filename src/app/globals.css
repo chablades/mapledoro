@@ -9,6 +9,14 @@ body {
   font-family: var(--font-body);
 }
 
+/* Keep the root scrollport width consistent between short and tall pages.
+   overscroll-behavior-y stops iOS rubber-banding, which flashed white past the
+   document edges and let content slide over the fixed header. */
+html {
+  overflow-y: scroll;
+  overscroll-behavior-y: none;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -109,6 +117,26 @@ html.scroll-locked body {
   font-size: 1.15rem;
 }
 
+/* Link card that lifts on hover. The accent hover border color is injected by
+   the page's themed <style> block:
+   .hover-lift-card:hover { border-color: <accent> !important; } */
+.hover-lift-card {
+  transition: transform 0.15s ease, background 0.35s ease, border-color 0.35s ease, box-shadow 0.15s ease;
+}
+
+.hover-lift-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+}
+
+/* Accent "All → / Manage →" link in a panel or section header; color inline. */
+.accent-link {
+  margin-left: auto;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
 /* Uppercase label for sections or field groups */
 .section-label {
   margin: 0;
@@ -169,11 +197,23 @@ textarea:focus-visible {
   outline-offset: 2px;
 }
 
+/* Appearance reset for <button> elements styled as custom clickables.
+   Declared before the shape classes below so they win the cascade. */
+.btn-reset {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
+}
+
 /* Interactive control base: pointer + hover transition. Colors stay inline. */
 .tool-btn {
   cursor: pointer;
   user-select: none;
   transition: background 0.15s, border-color 0.15s;
+  font-family: var(--font-body); /* native <button> doesn't inherit it */
 }
 
 /* Dialog / modal action button shape. Colors supplied inline per variant
@@ -196,6 +236,39 @@ textarea:focus-visible {
   cursor: pointer;
   user-select: none;
   transition: all 0.15s;
+}
+
+/* Inner content container of a tool workspace (sits inside `.page-content`) */
+.tool-container {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* Small status badge (trace gain, days-to-max, …); colors inline */
+.tool-badge {
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 6px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* Small toggle chip (Cleared / Track, …); colors and cursor inline */
+.tool-chip-btn {
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+/* Centered hero-number banner in calculator results; colors inline */
+.result-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 20px;
+  border-radius: 14px;
 }
 
 /* Tool page header block (back link + title + description) */
@@ -222,27 +295,6 @@ textarea:focus-visible {
   line-height: 1.5;
 }
 
-.reminder-card {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem 0.9rem;
-  border-radius: 12px;
-  min-width: 240px;
-  flex: 1 1 240px;
-}
-
-.reminder-done-btn {
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  font-weight: 900;
-  flex-shrink: 0;
-  line-height: 1;
-}
-
 .segmented-toggle-track {
   display: flex;
   gap: 4px;
@@ -253,10 +305,13 @@ textarea:focus-visible {
 .segmented-toggle-option {
   flex: 1;
   padding: 9px 18px;
+  border: none;
   border-radius: 8px;
+  font-family: var(--font-body);
   font-size: 0.88rem;
   font-weight: 800;
   text-align: center;
+  white-space: nowrap;
   cursor: pointer;
   user-select: none;
 }
@@ -454,16 +509,6 @@ textarea:focus-visible {
   gap: 0.5rem;
   align-items: center;
   flex-wrap: wrap;
-}
-
-.settings-pill-btn {
-  border-radius: 999px;
-  font-family: inherit;
-  font-weight: 800;
-  font-size: 0.82rem;
-  padding: 0.4rem 0.9rem;
-  cursor: pointer;
-  white-space: nowrap;
 }
 
 @media (max-width: 860px) {

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo, useSyncExternalStore } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { useMounted } from "../../../lib/useMounted";
 import {
   readCharactersStore,
   selectCharactersList,
@@ -228,11 +229,7 @@ export function hasAnySelected(cs: CharDailyState): boolean {
 export type TaskSection = "arcane" | "sacred" | "bosses" | "activities";
 
 export function useDailiesState() {
-  const mounted = useSyncExternalStore(
-    () => () => undefined,
-    () => true,
-    () => false,
-  );
+  const mounted = useMounted();
 
   const characters: StoredCharacterRecord[] = useMemo(
     () => (mounted ? selectCharactersList(readCharactersStore()) : []),

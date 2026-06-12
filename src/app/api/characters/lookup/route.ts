@@ -548,6 +548,7 @@ function lookupErrorResponse(error: unknown): NextResponse {
   );
 }
 
+// react-doctor-disable-next-line react-doctor/nextjs-no-side-effect-in-get-handler -- inFlightLookup is in-memory request coalescing for a public read endpoint (deleted in finally); no credentialed state change, so CSRF does not apply
 export async function GET(request: NextRequest) {
   const characterName = request.nextUrl.searchParams.get("character_name")?.trim() ?? "";
   if (!characterName) {

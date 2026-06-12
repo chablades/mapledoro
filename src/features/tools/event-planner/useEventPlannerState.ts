@@ -1,4 +1,5 @@
-import { useState, useMemo, useEffect, useCallback, useSyncExternalStore } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
+import { useMounted } from "../../../lib/useMounted";
 import {
   readCharactersStore,
   selectCharactersList,
@@ -21,16 +22,29 @@ export interface PlannerEntry {
   currentStar: number;
   targetStar: number;
   replacementCost: number;
+  starCatch: boolean;
   safeguard: boolean;
+  boomTier: number; // experimental enhancement mode (1 = baseline)
 }
 
+// Events and MVP are global (they apply to every entry); star catch, safeguard,
+// and boom tier are per-entry, captured from the add form.
 interface SavedState {
   costDiscount: boolean;
   boomReduction: boolean;
-  starCatch: boolean;
   mvp: MvpTier;
   entries: PlannerEntry[];
 }
+
+// Saves predating per-entry options stored star catch / boom tier globally and
+// their entries lack those fields.
+type LegacyEntry = Omit<PlannerEntry, "starCatch" | "boomTier"> &
+  Partial<Pick<PlannerEntry, "starCatch" | "boomTier">>;
+type LegacySavedState = Partial<Omit<SavedState, "entries">> & {
+  starCatch?: boolean;
+  boomTier?: number;
+  entries?: LegacyEntry[];
+};
 
 export interface EntryCost {
   cost: number;
@@ -43,7 +57,6 @@ function defaultState(): SavedState {
   return {
     costDiscount: false,
     boomReduction: false,
-    starCatch: true,
     mvp: "none",
     entries: [],
   };
@@ -55,16 +68,21 @@ function computeEntryCost(entry: PlannerEntry, settings: SavedState): EntryCost 
   const item = EVENT_ITEMS_BY_ID.get(entry.itemId);
   if (!item || entry.currentStar >= entry.targetStar) return { cost: 0, booms: 0 };
 
+  // An entry's boom-reduction tier above 1 overrides the cost/boom events and
+  // its safeguard (we can't assume they stack), matching the star force workspace.
+  const tierActive = entry.boomTier > 1;
+
   const opts: StarForceOpts = {
     level: item.level,
     startStar: entry.currentStar,
     targetStar: entry.targetStar,
     replacementCost: entry.replacementCost,
-    costDiscount: settings.costDiscount,
-    boomReduction: settings.boomReduction,
-    starCatch: settings.starCatch,
-    safeguard: entry.safeguard,
+    costDiscount: !tierActive && settings.costDiscount,
+    boomReduction: !tierActive && settings.boomReduction,
+    starCatch: entry.starCatch,
+    safeguard: !tierActive && entry.safeguard,
     mvp: settings.mvp,
+    boomTier: entry.boomTier,
   };
 
   const results = computeExpectedCosts(opts);
@@ -77,11 +95,7 @@ function computeEntryCost(entry: PlannerEntry, settings: SavedState): EntryCost 
 // -- Hook ---------------------------------------------------------------------
 
 export function useEventPlannerState() {
-  const mounted = useSyncExternalStore(
-    () => () => undefined,
-    () => true,
-    () => false,
-  );
+  const mounted = useMounted();
 
   const characters: StoredCharacterRecord[] = useMemo(
     () => (mounted ? selectCharactersList(readCharactersStore()) : []),
@@ -90,7 +104,20 @@ export function useEventPlannerState() {
 
   const [state, setState] = useState<SavedState>(() => {
     if (typeof window === "undefined") return defaultState();
-    return readGlobalTool<SavedState>("eventPlanner") ?? defaultState();
+    const saved = readGlobalTool<LegacySavedState>("eventPlanner");
+    const defaults = defaultState();
+    return {
+      costDiscount: saved?.costDiscount ?? defaults.costDiscount,
+      boomReduction: saved?.boomReduction ?? defaults.boomReduction,
+      mvp: saved?.mvp ?? defaults.mvp,
+      // Older saves stored star catch / boom tier globally — fold them into
+      // each entry; entries that already carry their own values win.
+      entries: (saved?.entries ?? []).map((e) => ({
+        starCatch: saved?.starCatch ?? true,
+        boomTier: saved?.boomTier ?? 1,
+        ...e,
+      })),
+    };
   });
 
   useEffect(() => {
@@ -104,10 +131,6 @@ export function useEventPlannerState() {
   );
   const setBoomReduction = useCallback(
     (v: boolean) => setState((s) => ({ ...s, boomReduction: v })),
-    [],
-  );
-  const setStarCatch = useCallback(
-    (v: boolean) => setState((s) => ({ ...s, starCatch: v })),
     [],
   );
   const setMvp = useCallback(
@@ -130,15 +153,6 @@ export function useEventPlannerState() {
     setState((s) => ({
       ...s,
       entries: s.entries.filter((e) => e.id !== id),
-    }));
-  }, []);
-
-  const toggleSafeguard = useCallback((id: string) => {
-    setState((s) => ({
-      ...s,
-      entries: s.entries.map((e) =>
-        e.id === id ? { ...e, safeguard: !e.safeguard } : e,
-      ),
     }));
   }, []);
 
@@ -167,11 +181,9 @@ export function useEventPlannerState() {
     state,
     setCostDiscount,
     setBoomReduction,
-    setStarCatch,
     setMvp,
     addEntry,
     removeEntry,
-    toggleSafeguard,
     clearEntries,
     entryCosts,
     grandTotal,

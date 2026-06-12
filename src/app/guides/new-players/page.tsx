@@ -275,12 +275,10 @@ function ClassDirectory({ theme }: { theme: AppTheme }) {
               const isSelected = selected === cls.name;
               return (
                 <React.Fragment key={cls.name}>
-                  <div
-                    role="button"
-                    tabIndex={0}
-                    className="class-picker-tile"
+                  <button
+                    type="button"
+                    className="btn-reset class-picker-tile"
                     onClick={() => toggle(cls.name)}
-                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(cls.name); } }}
                     style={{
                       transform: isSelected ? "scale(1.05)" : undefined,
                     }}
@@ -319,7 +317,7 @@ function ClassDirectory({ theme }: { theme: AppTheme }) {
                     >
                       {cls.name}
                     </div>
-                  </div>
+                  </button>
 
                   {/* Expanded info panel — spans full grid width */}
                   {isSelected && <ClassInfoPanel cls={cls} theme={theme} />}
@@ -412,23 +410,13 @@ function NewPlayersContent({ theme }: { theme: AppTheme }) {
   return (
     <>
       <style>{`
-        @media (max-width: 860px) {
-          .guide-main { padding: 1rem !important; }
-        }
         @media (max-width: 500px) {
           .class-card { flex-direction: column !important; align-items: center !important; text-align: center !important; }
         }
       `}</style>
 
-      <div
-        className="guide-main"
-        style={{
-          flex: 1,
-          width: "100%",
-          padding: "1.5rem 1.5rem 2rem 2.75rem",
-        }}
-      >
-        <div style={{ maxWidth: "860px", margin: "0 auto" }}>
+      <div className="page-content">
+        <div className="page-container">
           {/* Back link */}
           <Link
             href="/guides"

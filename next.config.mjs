@@ -35,10 +35,6 @@ const nextConfig = {
       },
       {
         protocol: "https",
-        hostname: "maplestory.io",
-      },
-      {
-        protocol: "https",
         hostname: "haku.network",
       }
     ],

@@ -1,3 +1,5 @@
+"use client";
+
 import type { AppTheme } from "../../components/themes";
 
 /** Label sitting above a control. Typography comes from `.tool-field-label`;
@@ -21,10 +23,16 @@ export function Field({
   );
 }
 
+/** Hairline between stacked blocks that share one panel. */
+export function PanelDivider({ theme }: { theme: AppTheme }) {
+  return <div style={{ borderTop: `1px solid ${theme.border}`, margin: "1rem 0" }} />;
+}
+
 const toggleBase: React.CSSProperties = {
   padding: "8px 16px",
   borderRadius: "10px",
   fontSize: "0.8rem",
+  lineHeight: 1,
   fontWeight: 700,
   cursor: "pointer",
   userSelect: "none",
@@ -54,24 +62,20 @@ export function Toggle({
     opacity: disabled ? 0.4 : 1,
     cursor: disabled ? "not-allowed" : "pointer",
   };
-  const content = `${checked ? "\u2713 " : ""}${label}`;
-
-  if (disabled) {
-    return <div role="button" aria-disabled style={mergedStyle}>{content}</div>;
-  }
-
-  const activate = () => onChange(!checked);
   return (
-    <div
+    <button
+      type="button"
       className="tool-btn"
-      role="button"
-      tabIndex={0}
-      onClick={activate}
-      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); activate(); } }}
+      disabled={disabled}
+      onClick={() => onChange(!checked)}
       style={mergedStyle}
     >
-      {content}
-    </div>
+      {/* The check slot always occupies space so toggling doesn't change the width. */}
+      <span style={{ visibility: checked ? "visible" : "hidden", marginRight: "0.35em" }}>
+        {"\u2713"}
+      </span>
+      {label}
+    </button>
   );
 }
 
@@ -98,15 +102,14 @@ export function PillGroup<T extends string>({
       }}
     >
       {options.map((o) => (
-        <div
+        <button
           key={o.value}
+          type="button"
           className="tool-btn"
-          role="button"
-          tabIndex={0}
           onClick={() => onChange(o.value)}
-          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onChange(o.value); } }}
           style={{
             padding: "5px 12px",
+            border: "none",
             borderRadius: "8px",
             fontSize: "0.75rem",
             fontWeight: 700,
@@ -116,8 +119,58 @@ export function PillGroup<T extends string>({
           }}
         >
           {o.label}
-        </div>
+        </button>
       ))}
     </div>
+  );
+}
+
+// Primary call-to-action button: solid accent fill, used for the main action of
+// a tool (Simulate, Calculate, Log a Drop, …). Colors come from the theme; shape
+// is fixed here so every tool's CTA matches.
+const actionBtnBase: React.CSSProperties = {
+  padding: "10px 22px",
+  borderRadius: "10px",
+  border: "1px solid",
+  fontFamily: "var(--font-body)",
+  fontSize: "0.85rem",
+  fontWeight: 800,
+  textAlign: "center",
+};
+
+export function ActionButton({
+  theme,
+  label,
+  onClick,
+  disabled = false,
+  fullWidth = false,
+  style,
+}: {
+  theme: AppTheme;
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+  fullWidth?: boolean;
+  style?: React.CSSProperties;
+}) {
+  return (
+    <button
+      type="button"
+      className="tool-btn"
+      onClick={disabled ? undefined : onClick}
+      disabled={disabled}
+      style={{
+        ...actionBtnBase,
+        background: theme.accent,
+        borderColor: theme.accent,
+        color: "#fff",
+        width: fullWidth ? "100%" : undefined,
+        opacity: disabled ? 0.5 : 1,
+        cursor: disabled ? "not-allowed" : "pointer",
+        ...style,
+      }}
+    >
+      {label}
+    </button>
   );
 }

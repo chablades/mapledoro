@@ -574,6 +574,15 @@ export function selectCharacterByIgn(store: CharactersStore, ign: string) {
   );
 }
 
+/** First character in roster order that is a world main, or null. */
+export function selectMainCharacter(store: CharactersStore) {
+  const mainIds = new Set(Object.values(store.mainCharacterIdByWorld));
+  for (const id of store.order) {
+    if (mainIds.has(id)) return store.charactersById[id] ?? null;
+  }
+  return null;
+}
+
 export function hasStoredCompletedRequiredSetup(store: CharactersStore) {
   return selectCharactersList(store).length > 0;
 }

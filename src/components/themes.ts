@@ -1,3 +1,5 @@
+import type { CSSProperties } from "react";
+
 export interface AppTheme {
   name: string;
   emoji: string;
@@ -167,6 +169,24 @@ export function composeTheme(accentKey: string, colorMode: ColorMode): AppTheme 
     accentSoft: modeAccent.accentSoft,
     accentText: modeAccent.accentText,
     sidebarAccent: accent.accent,
+  };
+}
+
+// Dialog action button colors (shape comes from the global `.tool-dialog-btn`
+// class). Secondary = muted neutral; primary = soft accent fill.
+export function dialogBtnColors(theme: AppTheme): CSSProperties {
+  return {
+    color: theme.muted,
+    background: theme.timerBg,
+    borderColor: theme.border,
+  };
+}
+
+export function dialogPrimaryBtnColors(theme: AppTheme): CSSProperties {
+  return {
+    color: theme.accentText,
+    background: theme.accentSoft,
+    borderColor: theme.accent,
   };
 }
 

@@ -12,17 +12,56 @@ import {
   type DialogState,
   createBosses,
   getDisabledSet,
-  calcCharacterIncome,
+  calcCharacterProgress,
+  currentWeekId,
   loadState,
   saveState,
   clearState,
 } from "./boss-crystals-types";
 import { exportBossCrystals } from "./exportBossCrystals";
 
+// Module-level so the per-boss `.map` callbacks don't deepen hook nesting.
+function resetClearedFlags(chars: CharacterEntry[]): CharacterEntry[] {
+  return chars.map((c) => ({
+    ...c,
+    bosses: c.bosses.map((b) => (b.cleared ? { ...b, cleared: false } : b)),
+  }));
+}
+
+function setClearedForChar(
+  chars: CharacterEntry[],
+  charIdx: number,
+  cleared: boolean,
+): CharacterEntry[] {
+  return chars.map((c, i) =>
+    i === charIdx
+      ? { ...c, bosses: c.bosses.map((b) => (b.checked ? { ...b, cleared } : b)) }
+      : c,
+  );
+}
+
+function toggleClearedAt(
+  chars: CharacterEntry[],
+  charIdx: number,
+  bossIdx: number,
+): CharacterEntry[] {
+  return chars.map((c, i) =>
+    i === charIdx
+      ? {
+          ...c,
+          bosses: c.bosses.map((b, bi) =>
+            bi === bossIdx ? { ...b, cleared: !b.cleared } : b,
+          ),
+        }
+      : c,
+  );
+}
+
 export function useBossCrystalsState(mounted: boolean) {
   const [server, setServer] = useState("heroic");
   const [characters, setCharacters] = useState<CharacterEntry[]>([]);
   const loadedRef = useRef<true | null>(null);
+  const weekRef = useRef<string | null>(null);
 
   // Dialog state
   const [dialog, setDialog] = useState<DialogState>(null);
@@ -48,16 +87,33 @@ export function useBossCrystalsState(mounted: boolean) {
     if (loadedRef.current != null) saveState(server, characters);
   }, [server, characters]);
 
+  // Weekly reset (Thursday 00:00 UTC) while the page stays open.
+  useEffect(() => {
+    if (!mounted) return undefined;
+    if (weekRef.current === null) weekRef.current = currentWeekId();
+    const id = setInterval(() => {
+      const wk = currentWeekId();
+      if (wk === weekRef.current) return;
+      weekRef.current = wk;
+      setCharacters(resetClearedFlags);
+    }, 60 * 1000);
+    return () => clearInterval(id);
+  }, [mounted]);
+
   // -- Calculations --
   const charIncomes = useMemo(
-    () => characters.map((c) => calcCharacterIncome(c.bosses, server)),
+    () => characters.map((c) => calcCharacterProgress(c.bosses, server)),
     [characters, server],
   );
   let totalMeso = 0;
   let totalCrystals = 0;
+  let clearedMeso = 0;
+  let clearedCrystals = 0;
   for (const income of charIncomes) {
     totalMeso += income.meso;
     totalCrystals += income.crystals;
+    clearedMeso += income.clearedMeso;
+    clearedCrystals += income.clearedCrystals;
   }
   const serverMult = server === "heroic" ? 1 : 5;
 
@@ -75,7 +131,7 @@ export function useBossCrystalsState(mounted: boolean) {
   // Dialog computed
   const dialogDisabled = useMemo(() => getDisabledSet(dialogBosses), [dialogBosses]);
   const dialogPreview = useMemo(
-    () => calcCharacterIncome(dialogBosses, server),
+    () => calcCharacterProgress(dialogBosses, server),
     [dialogBosses, server],
   );
   const pendingName =
@@ -133,6 +189,14 @@ export function useBossCrystalsState(mounted: boolean) {
     setCharacters((prev) => prev.filter((_, i) => i !== idx));
   }, []);
 
+  const toggleBossCleared = useCallback((charIdx: number, bossIdx: number) => {
+    setCharacters((prev) => toggleClearedAt(prev, charIdx, bossIdx));
+  }, []);
+
+  const setAllBossesCleared = useCallback((charIdx: number, cleared: boolean) => {
+    setCharacters((prev) => setClearedForChar(prev, charIdx, cleared));
+  }, []);
+
   const reorderCharacters = useCallback((from: number, to: number) => {
     if (from === to) return;
     setCharacters((prev) => {
@@ -184,6 +248,8 @@ export function useBossCrystalsState(mounted: boolean) {
     charIncomes,
     totalMeso,
     totalCrystals,
+    clearedMeso,
+    clearedCrystals,
     serverMult,
     dialog,
     dialogBosses,
@@ -205,6 +271,8 @@ export function useBossCrystalsState(mounted: boolean) {
     openEdit,
     confirmEdit,
     deleteCharacter,
+    toggleBossCleared,
+    setAllBossesCleared,
     reorderCharacters,
     toggleDialogBoss,
     setDialogParty,

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useState } from "react";
+import { useMounted } from "../../../lib/useMounted";
 import Image from "next/image";
 import type { CSSProperties } from "react";
 import type { AppTheme } from "../../../components/themes";
@@ -9,12 +10,19 @@ import {
   BOSSES,
   BOSS_GROUPS,
   PRESETS,
-  formatMeso,
 } from "./bosses";
+import { formatMesoFull } from "../format";
 import type { StoredCharacterRecord } from "../../characters/model/charactersStore";
-import { type BossRow, type CharacterEntry, checkBg } from "./boss-crystals-types";
+import {
+  type BossRow,
+  type CharacterEntry,
+  type CharacterProgress,
+  checkBg,
+} from "./boss-crystals-types";
 import { useBossCrystalsState } from "./useBossCrystalsState";
+import { CharacterPickerRow } from "../CharacterPickerRow";
 import { toolStyles } from "../tool-styles";
+import { ConfirmButton } from "../../../components/ConfirmButton";
 
 // -- Style helpers ------------------------------------------------------------
 
@@ -33,21 +41,17 @@ function bcIconBtnStyle(theme: AppTheme): CSSProperties {
   };
 }
 
-function bcAvatarFallbackStyle(
-  theme: AppTheme,
-  size: number,
-  radius: string,
-  fontSize: string,
-): CSSProperties {
+// 48px card-header avatar fallback (picker rows use CharacterPickerRow).
+function bcAvatarFallbackStyle(theme: AppTheme): CSSProperties {
   return {
-    width: size,
-    height: size,
-    borderRadius: radius,
+    width: 48,
+    height: 48,
+    borderRadius: "10px",
     background: theme.accentSoft,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontSize,
+    fontSize: "1.2rem",
     color: theme.accent,
     fontWeight: 800,
     flexShrink: 0,
@@ -119,9 +123,8 @@ function bcPartySizeSelectStyle(theme: AppTheme): CSSProperties {
     background: theme.timerBg,
     borderColor: theme.border,
     color: theme.text,
-    padding: "2px 4px",
+    padding: "2px 6px",
     fontSize: "0.75rem",
-    width: "44px",
   };
 }
 
@@ -146,6 +149,33 @@ const bcCheckboxBase: CSSProperties = {
   justifyContent: "center",
   transition: "background 0.15s, border-color 0.15s",
 };
+
+const bcCardCheckboxBase: CSSProperties = {
+  width: 16,
+  height: 16,
+  borderRadius: 4,
+  flexShrink: 0,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  transition: "background 0.15s, border-color 0.15s",
+};
+
+function bcSummaryLabelStyle(theme: AppTheme): CSSProperties {
+  return {
+    fontFamily: "var(--font-heading)",
+    fontSize: "0.9rem",
+    color: theme.text,
+  };
+}
+
+function bcSummaryValueStyle(theme: AppTheme): CSSProperties {
+  return {
+    fontFamily: "var(--font-heading)",
+    fontSize: "1.2rem",
+    color: theme.accent,
+  };
+}
 
 function bcBossGroupLabelStyle(theme: AppTheme): CSSProperties {
   return {
@@ -173,10 +203,12 @@ function CharacterCard({
   onDragEnd,
   onEdit,
   onDelete,
+  onToggleCleared,
+  onSetAllCleared,
 }: {
   theme: AppTheme;
   char: CharacterEntry;
-  income: { meso: number; crystals: number };
+  income: CharacterProgress;
   serverMult: number;
   isDragging: boolean;
   isDropTarget: boolean;
@@ -186,10 +218,13 @@ function CharacterCard({
   onDragEnd: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  onToggleCleared: (bossIndex: number) => void;
+  onSetAllCleared: (cleared: boolean) => void;
 }) {
   const selected = char.bosses.flatMap((b, bi) =>
-    b.checked ? [{ ...b, boss: BOSSES[bi] }] : [],
+    b.checked ? [{ ...b, boss: BOSSES[bi], index: bi }] : [],
   );
+  const allCleared = selected.length > 0 && selected.every((b) => b.cleared);
 
   return (
     <div
@@ -219,23 +254,19 @@ function CharacterCard({
           gap: "4px",
         }}
       >
-        <div
-          className="bc-btn"
-          role="button"
-          tabIndex={0}
+        <button
+          type="button"
+          className="btn-reset bc-btn"
           onClick={onDelete}
-          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onDelete(); } }}
           title="Remove character"
           style={{ ...bcIconBtnStyle(theme), color: "#e05a5a" }}
         >
           ✕
-        </div>
-        <div
-          className="bc-btn"
-          role="button"
-          tabIndex={0}
+        </button>
+        <button
+          type="button"
+          className="btn-reset bc-btn"
           onClick={onEdit}
-          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onEdit(); } }}
           title="Edit bosses"
           style={{
             padding: "5px",
@@ -250,7 +281,27 @@ function CharacterCard({
           <svg viewBox="0 0 24 24" width="14" height="14" fill={theme.muted}>
             <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
           </svg>
-        </div>
+        </button>
+        <button
+          type="button"
+          className="btn-reset bc-btn"
+          aria-pressed={allCleared}
+          onClick={() => onSetAllCleared(!allCleared)}
+          title={allCleared ? "Unmark all bosses" : "Mark all bosses cleared"}
+          style={{
+            padding: "5px",
+            borderRadius: "8px",
+            background: allCleared ? theme.accentSoft : theme.timerBg,
+            border: `1px solid ${allCleared ? theme.accent : theme.border}`,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <svg viewBox="0 0 24 24" width="14" height="14" fill={allCleared ? theme.accent : theme.muted}>
+            <path d="M18 7l-1.41-1.41-6.34 6.34 1.41 1.41L18 7zm4.24-1.41L11.66 16.17 7.48 12l-1.41 1.41L11.66 19l12-12-1.42-1.41zM.41 13.41L6 19l1.41-1.41L1.83 12 .41 13.41z" />
+          </svg>
+        </button>
       </div>
 
       {/* Character header */}
@@ -260,7 +311,7 @@ function CharacterCard({
           alignItems: "center",
           gap: "0.75rem",
           marginBottom: "0.75rem",
-          paddingRight: "4rem",
+          paddingRight: "5.5rem",
         }}
       >
         {char.imageURL ? (
@@ -278,7 +329,7 @@ function CharacterCard({
             }}
           />
         ) : (
-          <div style={bcAvatarFallbackStyle(theme, 48, "10px", "1.2rem")}>
+          <div style={bcAvatarFallbackStyle(theme)}>
             {char.name.charAt(0).toUpperCase()}
           </div>
         )}
@@ -294,7 +345,7 @@ function CharacterCard({
             {char.name}
           </div>
           <div style={{ fontSize: "0.75rem", color: theme.muted, fontWeight: 700 }}>
-            {income.crystals}/14 crystals · {formatMeso(income.meso)} mesos
+            {income.crystals}/14 crystals · {formatMesoFull(income.meso)} mesos
           </div>
         </div>
       </div>
@@ -334,6 +385,24 @@ function CharacterCard({
                 padding: "1.5px 0",
               }}
             >
+              <button
+                type="button"
+                className="btn-reset bc-btn"
+                aria-pressed={!!b.cleared}
+                onClick={() => onToggleCleared(b.index)}
+                title={b.cleared ? "Mark as not cleared" : "Mark as cleared this week"}
+                style={{
+                  ...bcCardCheckboxBase,
+                  border: `2px solid ${b.cleared ? theme.accent : theme.border}`,
+                  background: b.cleared ? theme.accent : "transparent",
+                }}
+              >
+                {b.cleared && (
+                  <span style={{ color: "#fff", fontSize: "0.6rem", fontWeight: 900, lineHeight: 1 }}>
+                    ✓
+                  </span>
+                )}
+              </button>
               <Image
                 src={b.boss.icon}
                 alt=""
@@ -344,6 +413,7 @@ function CharacterCard({
                   borderRadius: "3px",
                   objectFit: "cover",
                   flexShrink: 0,
+                  opacity: b.cleared ? 0.55 : 1,
                 }}
               />
               <span
@@ -352,6 +422,8 @@ function CharacterCard({
                   textOverflow: "ellipsis",
                   whiteSpace: "nowrap",
                   flex: 1,
+                  textDecoration: b.cleared ? "line-through" : "none",
+                  color: b.cleared ? theme.muted : theme.text,
                 }}
               >
                 {b.boss.name}
@@ -365,7 +437,7 @@ function CharacterCard({
                 }}
               >
                 {b.partySize > 1 ? `${b.partySize}p · ` : ""}
-                {formatMeso(b.boss.meso / b.partySize / serverMult)}
+                {formatMesoFull(b.boss.meso / b.partySize / serverMult)}
               </span>
             </div>
           ))
@@ -502,55 +574,15 @@ function AddNameDialog({
                   overflowY: "auto",
                 }}
               >
-                {available.map((c) => {
-                  const isSelected = selectedChar?.characterName === c.characterName;
-                  return (
-                    <div
-                      key={c.characterName}
-                      className="bc-char-opt"
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => onSelectedChar(c)}
-                      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelectedChar(c); } }}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "0.75rem",
-                        padding: "8px 12px",
-                        borderRadius: "10px",
-                        background: isSelected ? theme.accentSoft : theme.timerBg,
-                        border: `1px solid ${isSelected ? theme.accent : theme.border}`,
-                      }}
-                    >
-                      {c.characterImgURL ? (
-                        <Image
-                          src={c.characterImgURL}
-                          alt={c.characterName}
-                          width={32}
-                          height={32}
-                          unoptimized
-                          style={{
-                            borderRadius: "6px",
-                            objectFit: "contain",
-                            flexShrink: 0,
-                          }}
-                        />
-                      ) : (
-                        <div style={bcAvatarFallbackStyle(theme, 32, "6px", "0.85rem")}>
-                          {c.characterName.charAt(0).toUpperCase()}
-                        </div>
-                      )}
-                      <div>
-                        <div style={{ fontSize: "0.82rem", fontWeight: 700, color: theme.text }}>
-                          {c.characterName}
-                        </div>
-                        <div style={{ fontSize: "0.75rem", color: theme.muted }}>
-                          Lv.{c.level} {c.jobName}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
+                {available.map((c) => (
+                  <CharacterPickerRow
+                    key={c.characterName}
+                    theme={theme}
+                    character={c}
+                    selected={selectedChar?.characterName === c.characterName}
+                    onSelect={() => onSelectedChar(c)}
+                  />
+                ))}
               </div>
             )}
           </div>
@@ -573,22 +605,19 @@ function AddNameDialog({
         )}
 
         <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.5rem" }}>
-          <div
-            className="bc-btn tool-dialog-btn"
-            role="button"
-            tabIndex={0}
+          <button
+            type="button"
+            className="btn-reset bc-btn tool-dialog-btn"
             onClick={onClose}
-            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClose(); } }}
             style={styles.dialogBtnStyle}
           >
             Cancel
-          </div>
-          <div
-            className="bc-btn tool-dialog-btn"
-            role="button"
-            tabIndex={0}
-            onClick={pendingName ? onNext : undefined}
-            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); if (pendingName) onNext(); } }}
+          </button>
+          <button
+            type="button"
+            className="btn-reset bc-btn tool-dialog-btn"
+            disabled={!pendingName}
+            onClick={onNext}
             style={{
               ...(pendingName ? styles.dialogPrimaryBtnStyle : styles.dialogBtnStyle),
               opacity: pendingName ? 1 : 0.5,
@@ -596,7 +625,7 @@ function AddNameDialog({
             }}
           >
             Next
-          </div>
+          </button>
         </div>
       </div>
     </div>
@@ -657,6 +686,7 @@ function BossSelectionDialog({
 
         {/* Presets */}
         <div
+          className="bc-presets"
           style={{
             display: "flex",
             alignItems: "center",
@@ -668,6 +698,7 @@ function BossSelectionDialog({
           }}
         >
           <span
+            className="bc-presets-label"
             style={{
               fontSize: "0.75rem",
               fontWeight: 800,
@@ -678,28 +709,24 @@ function BossSelectionDialog({
             Presets
           </span>
           {PRESETS.flatMap((p) => p.key === "" ? [] : [(
-            <div
+            <button
               key={p.key}
-              className="bc-btn"
-              role="button"
-              tabIndex={0}
+              type="button"
+              className="btn-reset bc-btn bc-preset-btn"
               onClick={() => onPreset(p.key)}
-              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onPreset(p.key); } }}
               style={bcPresetBtnStyle(theme)}
             >
               {p.label}
-            </div>
+            </button>
           )])}
-          <div
-            className="bc-btn"
-            role="button"
-            tabIndex={0}
+          <button
+            type="button"
+            className="btn-reset bc-btn bc-preset-btn bc-preset-clear"
             onClick={() => onPreset("")}
-            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onPreset(""); } }}
             style={bcClearPresetBtnStyle}
           >
             Clear
-          </div>
+          </button>
         </div>
 
         {/* Boss groups */}
@@ -731,13 +758,12 @@ function BossSelectionDialog({
                       opacity: isDisabled ? 0.4 : 1,
                     }}
                   >
-                    <div
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => {
-                        if (!isDisabled) onToggle(bi);
-                      }}
-                      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); if (!isDisabled) onToggle(bi); } }}
+                    <button
+                      type="button"
+                      className="btn-reset"
+                      aria-pressed={checked}
+                      disabled={isDisabled}
+                      onClick={() => onToggle(bi)}
                       style={{
                         ...bcCheckboxBase,
                         border: `2px solid ${checked ? theme.accent : theme.border}`,
@@ -750,7 +776,7 @@ function BossSelectionDialog({
                           ✓
                         </span>
                       )}
-                    </div>
+                    </button>
                     <Image
                       src={boss.icon}
                       alt=""
@@ -764,23 +790,22 @@ function BossSelectionDialog({
                         background: theme.panel,
                       }}
                     />
-                    <span
-                      role="button"
-                      tabIndex={0}
+                    <button
+                      type="button"
+                      className="btn-reset"
+                      disabled={isDisabled}
                       style={{
                         flex: 1,
+                        textAlign: "left",
                         fontSize: "0.78rem",
                         fontWeight: 700,
                         color: theme.text,
                         cursor: isDisabled ? "not-allowed" : "pointer",
                       }}
-                      onClick={() => {
-                        if (!isDisabled) onToggle(bi);
-                      }}
-                      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); if (!isDisabled) onToggle(bi); } }}
+                      onClick={() => onToggle(bi)}
                     >
                       {boss.name}
-                    </span>
+                    </button>
                     <span
                       style={{
                         fontSize: "0.75rem",
@@ -789,7 +814,7 @@ function BossSelectionDialog({
                         whiteSpace: "nowrap",
                       }}
                     >
-                      {formatMeso(boss.meso / serverMult)}
+                      {formatMesoFull(boss.meso / serverMult)}
                     </span>
                     {checked && (
                       <select
@@ -800,7 +825,7 @@ function BossSelectionDialog({
                       >
                         {Array.from({ length: maxParty }, (_, i) => i + 1).map((n) => (
                           <option key={n} value={n}>
-                            {n}p
+                            {n === 1 ? "1 person" : `${n} people`}
                           </option>
                         ))}
                       </select>
@@ -831,19 +856,17 @@ function BossSelectionDialog({
             {preview.crystals}/14
           </span>
           {" crystals · "}
-          <span style={{ color: theme.accent }}>{formatMeso(preview.meso)}</span>
+          <span style={{ color: theme.accent }}>{formatMesoFull(preview.meso)}</span>
           {" mesos"}
         </div>
 
         {/* Actions */}
         <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.5rem" }}>
           {showBack && (
-            <div
-              className="bc-btn"
-              role="button"
-              tabIndex={0}
+            <button
+              type="button"
+              className="btn-reset bc-btn"
               onClick={onBack}
-              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onBack(); } }}
               style={{
                 padding: "8px 16px",
                 borderRadius: "10px",
@@ -855,14 +878,12 @@ function BossSelectionDialog({
               }}
             >
               Back
-            </div>
+            </button>
           )}
-          <div
-            className="bc-btn"
-            role="button"
-            tabIndex={0}
+          <button
+            type="button"
+            className="btn-reset bc-btn"
             onClick={onCancel}
-            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onCancel(); } }}
             style={{
               padding: "8px 16px",
               borderRadius: "10px",
@@ -874,13 +895,11 @@ function BossSelectionDialog({
             }}
           >
             Cancel
-          </div>
-          <div
-            className="bc-btn"
-            role="button"
-            tabIndex={0}
+          </button>
+          <button
+            type="button"
+            className="btn-reset bc-btn"
             onClick={onConfirm}
-            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onConfirm(); } }}
             style={{
               padding: "8px 16px",
               borderRadius: "10px",
@@ -892,7 +911,7 @@ function BossSelectionDialog({
             }}
           >
             {confirmLabel}
-          </div>
+          </button>
         </div>
       </div>
     </div>
@@ -905,18 +924,19 @@ function BossCrystalsControls({
   theme,
   server,
   setServer,
-  clearData,
+  onClear,
   exportXlsx,
 }: {
   theme: AppTheme;
   server: string;
   setServer: (s: string) => void;
-  clearData: () => void;
+  onClear: () => void;
   exportXlsx: () => void;
 }) {
   return (
-    <div className="fade-in panel-card" style={bcControlsPanelStyle(theme)}>
+    <div className="fade-in panel-card bc-controls" style={bcControlsPanelStyle(theme)}>
       <div
+        className="bc-server-group"
         style={{
           display: "flex",
           gap: "4px",
@@ -927,63 +947,53 @@ function BossCrystalsControls({
         }}
       >
         {(["heroic", "interactive"] as const).map((s) => (
-          <div
+          <button
             key={s}
-            className="bc-btn"
-            role="button"
-            tabIndex={0}
+            type="button"
+            className="btn-reset bc-btn bc-server-opt"
             onClick={() => setServer(s)}
-            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setServer(s); } }}
             style={{
               padding: "6px 14px",
               borderRadius: "8px",
-              fontSize: "0.78rem",
+              fontSize: "0.85rem",
               fontWeight: 800,
+              textAlign: "center",
               color: server === s ? theme.accentText : theme.muted,
               background: server === s ? theme.accentSoft : "transparent",
             }}
           >
             {s === "heroic" ? "Heroic" : "Interactive"}
-          </div>
+          </button>
         ))}
       </div>
-      <div style={{ marginLeft: "auto", display: "flex", gap: "0.5rem" }}>
-        <div
-          className="bc-btn"
-          role="button"
-          tabIndex={0}
-          onClick={clearData}
-          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); clearData(); } }}
-          style={{
-            padding: "6px 14px",
-            borderRadius: "10px",
-            fontSize: "0.78rem",
-            fontWeight: 800,
-            color: "#e05a5a",
-            background: "transparent",
-            border: "1px solid #e05a5a33",
-          }}
-        >
-          Clear All
-        </div>
-        <div
-          className="bc-btn"
-          role="button"
-          tabIndex={0}
+      <div className="bc-actions" style={{ marginLeft: "auto", display: "flex", gap: "0.5rem" }}>
+        <ConfirmButton
+          theme={theme}
+          label="Clear"
+          title="Wipe all bosses?"
+          message="This removes every character and their tracked bosses. This can't be undone."
+          confirmLabel="Wipe all"
+          onConfirm={onClear}
+          className="bc-btn bc-action-btn"
+          style={{ padding: "6px 14px", borderRadius: "10px", fontSize: "0.78rem", textAlign: "center" }}
+        />
+        <button
+          type="button"
+          className="btn-reset bc-btn bc-action-btn"
           onClick={exportXlsx}
-          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); exportXlsx(); } }}
           style={{
             padding: "6px 14px",
             borderRadius: "10px",
             fontSize: "0.78rem",
             fontWeight: 800,
+            textAlign: "center",
             color: theme.accentText,
             background: "transparent",
             border: `1px solid ${theme.border}`,
           }}
         >
           Export
-        </div>
+        </button>
       </div>
     </div>
   );
@@ -993,46 +1003,60 @@ function BossCrystalsSummary({
   theme,
   totalMeso,
   totalCrystals,
+  clearedMeso,
+  clearedCrystals,
 }: {
   theme: AppTheme;
   totalMeso: number;
   totalCrystals: number;
+  clearedMeso: number;
+  clearedCrystals: number;
 }) {
+  const allCleared = totalCrystals > 0 && clearedCrystals >= totalCrystals;
   return (
-    <div className="fade-in" style={bcSummaryBarStyle(theme)}>
-      <div style={{ display: "flex", alignItems: "baseline", gap: "6px" }}>
-        <span
+    <div className="fade-in bc-summary" style={bcSummaryBarStyle(theme)}>
+      <div className="bc-weekly" style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+        <div className="bc-summary-headline" style={{ display: "flex", alignItems: "baseline", gap: "6px", flexWrap: "wrap" }}>
+          <span style={bcSummaryLabelStyle(theme)}>Weekly:</span>
+          <span className="bc-summary-value" style={bcSummaryValueStyle(theme)}>{formatMesoFull(totalMeso)} mesos</span>
+        </div>
+        <div
+          className="bc-pill"
           style={{
-            fontFamily: "var(--font-heading)",
-            fontSize: "0.9rem",
-            color: theme.text,
+            padding: "4px 12px",
+            borderRadius: "10px",
+            background: totalCrystals > 180 ? "#e05a5a22" : theme.accentSoft,
+            fontSize: "0.78rem",
+            fontWeight: 800,
+            whiteSpace: "nowrap",
+            color: totalCrystals > 180 ? "#e05a5a" : theme.accentText,
           }}
         >
-          Weekly:
-        </span>
-        <span
-          style={{
-            fontFamily: "var(--font-heading)",
-            fontSize: "1.2rem",
-            color: theme.accent,
-          }}
-        >
-          {formatMeso(totalMeso)} mesos
-        </span>
+          {totalCrystals} / 180 crystals
+        </div>
       </div>
-      <div style={{ width: "1px", height: "24px", background: theme.border }} />
-      <div
-        style={{
-          padding: "4px 12px",
-          borderRadius: "10px",
-          background: totalCrystals > 180 ? "#e05a5a22" : theme.accentSoft,
-          fontSize: "0.78rem",
-          fontWeight: 800,
-          color: totalCrystals > 180 ? "#e05a5a" : theme.accentText,
-        }}
-      >
-        {totalCrystals} / 180 crystals
-      </div>
+      {clearedCrystals > 0 && (
+        <div className="bc-progress" style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "0.75rem" }}>
+          <div className="bc-summary-headline" style={{ display: "flex", alignItems: "baseline", gap: "6px", flexWrap: "wrap" }}>
+            <span style={bcSummaryLabelStyle(theme)}>Weekly Progress:</span>
+            <span className="bc-summary-value" style={bcSummaryValueStyle(theme)}>{formatMesoFull(clearedMeso)} mesos</span>
+          </div>
+          <div
+            className="bc-pill"
+            style={{
+              padding: "4px 12px",
+              borderRadius: "10px",
+              background: allCleared ? theme.accent : theme.accentSoft,
+              fontSize: "0.78rem",
+              fontWeight: 800,
+              whiteSpace: "nowrap",
+              color: allCleared ? "#fff" : theme.accentText,
+            }}
+          >
+            {clearedCrystals} / {totalCrystals} crystals
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -1040,21 +1064,17 @@ function BossCrystalsSummary({
 // -- Main Component -----------------------------------------------------------
 
 export default function BossCrystalsWorkspace({ theme }: { theme: AppTheme }) {
-  const mounted = useSyncExternalStore(
-    () => () => undefined,
-    () => true,
-    () => false,
-  );
+  const mounted = useMounted();
 
   const {
     server, setServer, characters, charIncomes,
-    totalMeso, totalCrystals, serverMult,
+    totalMeso, totalCrystals, clearedMeso, clearedCrystals, serverMult,
     dialog, dialogBosses, dialogDisabled, dialogPreview,
     dialogTitle, showBossDialog, pendingName,
     nameMode, setNameMode, typedName, setTypedName,
     selectedStoreChar, setSelectedStoreChar, availableStoreChars,
     openAdd, proceedToBosses, confirmAdd, openEdit, confirmEdit,
-    deleteCharacter, reorderCharacters, toggleDialogBoss, setDialogParty, applyPreset,
+    deleteCharacter, toggleBossCleared, setAllBossesCleared, reorderCharacters, toggleDialogBoss, setDialogParty, applyPreset,
     clearData, closeDialog, goBackToAddName, exportXlsx,
   } = useBossCrystalsState(mounted);
 
@@ -1095,27 +1115,44 @@ export default function BossCrystalsWorkspace({ theme }: { theme: AppTheme }) {
     <>
       <style>{`
         .bc-card { transition: box-shadow 0.15s, transform 0.15s, opacity 0.15s, border-color 0.15s; }
-        .bc-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); transform: translateY(-1px); }
+        .bc-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
         .bc-card:active { cursor: grabbing; }
         .bc-btn { transition: background 0.15s, transform 0.1s; cursor: pointer; user-select: none; }
-        .bc-btn:hover { transform: translateY(-1px); }
-        .bc-btn:active { transform: translateY(0); }
+        .bc-action-btn:hover, .bc-action-btn:active { transform: none; }
         .bc-add-card { transition: border-color 0.15s, background 0.15s; cursor: pointer; }
         .bc-add-card:hover { border-color: ${theme.accent} !important; background: ${theme.accentSoft} !important; }
         .bc-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 1rem; }
         .bc-dialog { background: ${theme.panel}; border: 1px solid ${theme.border}; border-radius: 16px; max-width: 600px; width: 100%; max-height: 80vh; overflow-y: auto; box-shadow: 0 8px 32px rgba(0,0,0,0.15); }
         .bc-boss-row:hover { background: ${theme.accentSoft} !important; }
-        .bc-char-opt { transition: border-color 0.15s, background 0.15s; cursor: pointer; }
-        .bc-char-opt:hover { border-color: ${theme.accent} !important; }
+        .char-pick-row:hover { border-color: ${theme.accent} !important; }
         @media (max-width: 860px) {
-          .bc-main { padding: 1rem !important; }
+          .bc-server-group { width: 100%; }
+          .bc-server-opt { flex: 1; }
+          .bc-actions { margin-left: 0 !important; width: 100%; }
+          .bc-action-btn { flex: 1; }
+          .bc-summary { padding: 0.85rem 1rem !important; gap: 0.85rem !important; }
+          .bc-weekly, .bc-progress {
+            width: 100%;
+            margin-left: 0 !important;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.1rem;
+          }
+          .bc-summary-value { font-size: 1.15rem !important; }
+          .bc-pill {
+            padding: 0 !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+            font-size: 0.8rem !important;
+            font-weight: 700 !important;
+            color: ${theme.muted} !important;
+          }
+          .bc-presets-label { width: 100%; margin-right: 0 !important; margin-bottom: 0.1rem; }
+          .bc-preset-btn { flex: 1 1 28%; margin-left: 0 !important; text-align: center; }
         }
       `}</style>
 
-      <div
-        className="bc-main"
-        style={{ flex: 1, width: "100%", padding: "1.5rem 1.5rem 2rem 2.75rem" }}
-      >
+      <div className="page-content">
         <div style={{ maxWidth: 1200, margin: "0 auto" }}>
           <ToolHeader
             theme={theme}
@@ -1127,7 +1164,7 @@ export default function BossCrystalsWorkspace({ theme }: { theme: AppTheme }) {
             theme={theme}
             server={server}
             setServer={setServer}
-            clearData={clearData}
+            onClear={clearData}
             exportXlsx={exportXlsx}
           />
 
@@ -1135,6 +1172,8 @@ export default function BossCrystalsWorkspace({ theme }: { theme: AppTheme }) {
             theme={theme}
             totalMeso={totalMeso}
             totalCrystals={totalCrystals}
+            clearedMeso={clearedMeso}
+            clearedCrystals={clearedCrystals}
           />
 
           {/* Card grid */}
@@ -1161,16 +1200,16 @@ export default function BossCrystalsWorkspace({ theme }: { theme: AppTheme }) {
                 onDragEnd={handleDragEnd}
                 onEdit={() => openEdit(ci)}
                 onDelete={() => deleteCharacter(ci)}
+                onToggleCleared={(bi) => toggleBossCleared(ci, bi)}
+                onSetAllCleared={(cleared) => setAllBossesCleared(ci, cleared)}
               />
             ))}
 
             {/* Add character card */}
-            <div
-              className="fade-in bc-add-card panel-card"
-              role="button"
-              tabIndex={0}
+            <button
+              type="button"
+              className="btn-reset fade-in bc-add-card panel-card"
               onClick={openAdd}
-              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openAdd(); } }}
               title="Add character"
               style={bcAddCardStyle(theme)}
             >
@@ -1187,7 +1226,7 @@ export default function BossCrystalsWorkspace({ theme }: { theme: AppTheme }) {
               >
                 Add character
               </span>
-            </div>
+            </button>
           </div>
         </div>
       </div>
