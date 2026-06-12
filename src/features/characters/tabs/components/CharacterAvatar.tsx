@@ -7,7 +7,7 @@ const AVATAR_LOAD_TIMEOUT_MS = 8000;
 const AVATAR_MAX_RETRIES = 2;
 const AVATAR_RETRY_DELAY_MS = 350;
 const FALLBACK_SRC =
-  "https://maplestory.io/api/character/%7B%22itemId%22%3A2000%2C%22version%22%3A%22265%22%7D%2C%7B%22itemId%22%3A12000%2C%22version%22%3A%22265%22%7D/stand1/0?showears=false&showLefEars=false&showHighLefEars=undefined&resize=1&name=&flipX=false&bgColor=0,0,0,0";
+  "https://haku.network/api/img/avatar/2000/stand1.png";
 
 function appendRetryParam(src: string, attempt: number) {
   const separator = src.includes("?") ? "&" : "?";

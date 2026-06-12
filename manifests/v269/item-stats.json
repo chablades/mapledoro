@@ -14197,7 +14197,8 @@
       "incSTR": 8,
       "incDEX": 8,
       "incINT": 8,
-      "incLUK": 8
+      "incLUK": 8,
+      "onlyEquip": true
     },
     "01012196": {
       "islot": "Af",
@@ -19823,7 +19824,8 @@
     },
     "01032269": {
       "islot": "Ae",
-      "reqLevel": 10
+      "reqLevel": 10,
+      "onlyEquip": true
     },
     "01032270": {
       "islot": "Ae",
@@ -19831,7 +19833,8 @@
       "incSTR": 1,
       "incDEX": 1,
       "incINT": 1,
-      "incLUK": 1
+      "incLUK": 1,
+      "onlyEquip": true
     },
     "01032271": {
       "islot": "Ae",
@@ -19839,7 +19842,8 @@
       "incSTR": 1,
       "incDEX": 1,
       "incINT": 1,
-      "incLUK": 1
+      "incLUK": 1,
+      "onlyEquip": true
     },
     "01032272": {
       "islot": "Ae",
@@ -19847,7 +19851,8 @@
       "incSTR": 1,
       "incDEX": 1,
       "incINT": 1,
-      "incLUK": 1
+      "incLUK": 1,
+      "onlyEquip": true
     },
     "01032273": {
       "islot": "Ae",
@@ -19855,7 +19860,8 @@
       "incSTR": 1,
       "incDEX": 1,
       "incINT": 1,
-      "incLUK": 1
+      "incLUK": 1,
+      "onlyEquip": true
     },
     "01032274": {
       "islot": "Ae",
@@ -19864,7 +19870,8 @@
       "incDEX": 1,
       "incINT": 1,
       "incLUK": 1,
-      "setItemID": 652
+      "setItemID": 652,
+      "onlyEquip": true
     },
     "01032275": {
       "islot": "Ae",
@@ -19872,7 +19879,8 @@
       "incSTR": 1,
       "incDEX": 1,
       "incINT": 1,
-      "incLUK": 1
+      "incLUK": 1,
+      "onlyEquip": true
     },
     "01032276": {
       "islot": "Ae",
@@ -19880,7 +19888,8 @@
       "incSTR": 1,
       "incDEX": 1,
       "incINT": 1,
-      "incLUK": 1
+      "incLUK": 1,
+      "onlyEquip": true
     },
     "01032277": {
       "islot": "Ae",
@@ -19888,7 +19897,8 @@
       "incSTR": 1,
       "incDEX": 1,
       "incINT": 1,
-      "incLUK": 1
+      "incLUK": 1,
+      "onlyEquip": true
     },
     "01032278": {
       "islot": "Ae",
@@ -19896,7 +19906,8 @@
       "incSTR": 1,
       "incDEX": 1,
       "incINT": 1,
-      "incLUK": 1
+      "incLUK": 1,
+      "onlyEquip": true
     },
     "01032279": {
       "islot": "Ae",
@@ -19905,7 +19916,8 @@
       "incDEX": 1,
       "incINT": 1,
       "incLUK": 1,
-      "setItemID": 652
+      "setItemID": 652,
+      "onlyEquip": true
     },
     "01032280": {
       "islot": "Ae",
@@ -19913,7 +19925,8 @@
       "incSTR": 1,
       "incDEX": 1,
       "incINT": 1,
-      "incLUK": 1
+      "incLUK": 1,
+      "onlyEquip": true
     },
     "01032281": {
       "islot": "Ae",
@@ -19921,7 +19934,8 @@
       "incSTR": 1,
       "incDEX": 1,
       "incINT": 1,
-      "incLUK": 1
+      "incLUK": 1,
+      "onlyEquip": true
     },
     "01032282": {
       "islot": "Ae",
@@ -19929,7 +19943,8 @@
       "incSTR": 1,
       "incDEX": 1,
       "incINT": 1,
-      "incLUK": 1
+      "incLUK": 1,
+      "onlyEquip": true
     },
     "01032283": {
       "islot": "Ae",
@@ -19937,7 +19952,8 @@
       "incSTR": 1,
       "incDEX": 1,
       "incINT": 1,
-      "incLUK": 1
+      "incLUK": 1,
+      "onlyEquip": true
     },
     "01032284": {
       "islot": "Ae",
@@ -19946,7 +19962,8 @@
       "incDEX": 1,
       "incINT": 1,
       "incLUK": 1,
-      "setItemID": 652
+      "setItemID": 652,
+      "onlyEquip": true
     },
     "01032285": {
       "islot": "Ae",
@@ -19954,7 +19971,8 @@
       "incSTR": 1,
       "incDEX": 1,
       "incINT": 1,
-      "incLUK": 1
+      "incLUK": 1,
+      "onlyEquip": true
     },
     "01032286": {
       "islot": "Ae",
@@ -19962,7 +19980,8 @@
       "incSTR": 1,
       "incDEX": 1,
       "incINT": 1,
-      "incLUK": 1
+      "incLUK": 1,
+      "onlyEquip": true
     },
     "01032287": {
       "islot": "Ae",
@@ -19970,7 +19989,8 @@
       "incSTR": 1,
       "incDEX": 1,
       "incINT": 1,
-      "incLUK": 1
+      "incLUK": 1,
+      "onlyEquip": true
     },
     "01032288": {
       "islot": "Ae",
@@ -19978,7 +19998,8 @@
       "incSTR": 1,
       "incDEX": 1,
       "incINT": 1,
-      "incLUK": 1
+      "incLUK": 1,
+      "onlyEquip": true
     },
     "01032289": {
       "islot": "Ae",
@@ -19987,7 +20008,8 @@
       "incDEX": 1,
       "incINT": 1,
       "incLUK": 1,
-      "setItemID": 652
+      "setItemID": 652,
+      "onlyEquip": true
     },
     "01032290": {
       "islot": "Ae",
@@ -19995,7 +20017,8 @@
       "incSTR": 1,
       "incDEX": 1,
       "incINT": 1,
-      "incLUK": 1
+      "incLUK": 1,
+      "onlyEquip": true
     },
     "01032291": {
       "islot": "Ae",
@@ -20003,7 +20026,8 @@
       "incSTR": 1,
       "incDEX": 1,
       "incINT": 1,
-      "incLUK": 1
+      "incLUK": 1,
+      "onlyEquip": true
     },
     "01032292": {
       "islot": "Ae",
@@ -20011,7 +20035,8 @@
       "incSTR": 1,
       "incDEX": 1,
       "incINT": 1,
-      "incLUK": 1
+      "incLUK": 1,
+      "onlyEquip": true
     },
     "01032293": {
       "islot": "Ae",
@@ -20019,7 +20044,8 @@
       "incSTR": 1,
       "incDEX": 1,
       "incINT": 1,
-      "incLUK": 1
+      "incLUK": 1,
+      "onlyEquip": true
     },
     "01032294": {
       "islot": "Ae",
@@ -20028,7 +20054,8 @@
       "incDEX": 1,
       "incINT": 1,
       "incLUK": 1,
-      "setItemID": 652
+      "setItemID": 652,
+      "onlyEquip": true
     },
     "01032295": {
       "islot": "Ae",
@@ -20036,7 +20063,8 @@
       "incSTR": 1,
       "incDEX": 1,
       "incINT": 1,
-      "incLUK": 1
+      "incLUK": 1,
+      "onlyEquip": true
     },
     "01032296": {
       "islot": "Ae",
@@ -20044,7 +20072,8 @@
       "incSTR": 1,
       "incDEX": 1,
       "incINT": 1,
-      "incLUK": 1
+      "incLUK": 1,
+      "onlyEquip": true
     },
     "01032297": {
       "islot": "Ae",
@@ -20052,7 +20081,8 @@
       "incSTR": 1,
       "incDEX": 1,
       "incINT": 1,
-      "incLUK": 1
+      "incLUK": 1,
+      "onlyEquip": true
     },
     "01032298": {
       "islot": "Ae",
@@ -20060,7 +20090,8 @@
       "incSTR": 1,
       "incDEX": 1,
       "incINT": 1,
-      "incLUK": 1
+      "incLUK": 1,
+      "onlyEquip": true
     },
     "01032299": {
       "islot": "Ae",
@@ -20069,7 +20100,8 @@
       "incDEX": 1,
       "incINT": 1,
       "incLUK": 1,
-      "setItemID": 652
+      "setItemID": 652,
+      "onlyEquip": true
     },
     "01032300": {
       "islot": "Ae",
@@ -20077,7 +20109,8 @@
       "incSTR": 1,
       "incDEX": 1,
       "incINT": 1,
-      "incLUK": 1
+      "incLUK": 1,
+      "onlyEquip": true
     },
     "01032301": {
       "islot": "Ae",
@@ -20085,7 +20118,8 @@
       "incSTR": 1,
       "incDEX": 1,
       "incINT": 1,
-      "incLUK": 1
+      "incLUK": 1,
+      "onlyEquip": true
     },
     "01032302": {
       "islot": "Ae",
@@ -20093,7 +20127,8 @@
       "incSTR": 1,
       "incDEX": 1,
       "incINT": 1,
-      "incLUK": 1
+      "incLUK": 1,
+      "onlyEquip": true
     },
     "01032303": {
       "islot": "Ae",
@@ -20101,7 +20136,8 @@
       "incSTR": 1,
       "incDEX": 1,
       "incINT": 1,
-      "incLUK": 1
+      "incLUK": 1,
+      "onlyEquip": true
     },
     "01032304": {
       "islot": "Ae",
@@ -20110,7 +20146,8 @@
       "incDEX": 1,
       "incINT": 1,
       "incLUK": 1,
-      "setItemID": 652
+      "setItemID": 652,
+      "onlyEquip": true
     },
     "01032305": {
       "islot": "Ae",
@@ -20118,7 +20155,8 @@
       "incSTR": 1,
       "incDEX": 1,
       "incINT": 1,
-      "incLUK": 1
+      "incLUK": 1,
+      "onlyEquip": true
     },
     "01032306": {
       "islot": "Ae",
@@ -20126,7 +20164,8 @@
       "incSTR": 1,
       "incDEX": 1,
       "incINT": 1,
-      "incLUK": 1
+      "incLUK": 1,
+      "onlyEquip": true
     },
     "01032307": {
       "islot": "Ae",
@@ -20134,7 +20173,8 @@
       "incSTR": 1,
       "incDEX": 1,
       "incINT": 1,
-      "incLUK": 1
+      "incLUK": 1,
+      "onlyEquip": true
     },
     "01032308": {
       "islot": "Ae",
@@ -20142,7 +20182,8 @@
       "incSTR": 1,
       "incDEX": 1,
       "incINT": 1,
-      "incLUK": 1
+      "incLUK": 1,
+      "onlyEquip": true
     },
     "01032309": {
       "islot": "Ae",
@@ -20151,7 +20192,8 @@
       "incDEX": 1,
       "incINT": 1,
       "incLUK": 1,
-      "setItemID": 652
+      "setItemID": 652,
+      "onlyEquip": true
     },
     "01032313": {
       "islot": "Ae",
@@ -20279,7 +20321,8 @@
       "incEVA": 24,
       "tuc": 3,
       "charmEXP": 60,
-      "setItemID": 462
+      "setItemID": 462,
+      "onlyEquip": true
     },
     "01122001": {
       "islot": "Pe",
@@ -20675,7 +20718,8 @@
       "incEVA": 32,
       "tuc": 3,
       "charmEXP": 80,
-      "setItemID": 462
+      "setItemID": 462,
+      "onlyEquip": true
     },
     "01122077": {
       "islot": "Pe",
@@ -20696,7 +20740,8 @@
       "incMMP": 100,
       "incPAD": 5,
       "incMAD": 10,
-      "tuc": 4
+      "tuc": 4,
+      "onlyEquip": true
     },
     "01122079": {
       "islot": "Pe",
@@ -20705,7 +20750,8 @@
       "incMMP": 80,
       "incPAD": 3,
       "incMAD": 7,
-      "tuc": 4
+      "tuc": 4,
+      "onlyEquip": true
     },
     "01122080": {
       "islot": "Pe",
@@ -20786,7 +20832,8 @@
       "incMDD": 65,
       "incACC": 8,
       "incEVA": 8,
-      "tuc": 4
+      "tuc": 4,
+      "onlyEquip": true
     },
     "01122089": {
       "islot": "Pe",
@@ -20798,7 +20845,8 @@
       "incMDD": 105,
       "incACC": 16,
       "incEVA": 16,
-      "tuc": 4
+      "tuc": 4,
+      "onlyEquip": true
     },
     "01122090": {
       "islot": "Pe",
@@ -20810,7 +20858,8 @@
       "incMDD": 145,
       "incACC": 24,
       "incEVA": 24,
-      "tuc": 4
+      "tuc": 4,
+      "onlyEquip": true
     },
     "01122091": {
       "islot": "Pe",
@@ -20822,7 +20871,8 @@
       "incMDD": 185,
       "incACC": 32,
       "incEVA": 32,
-      "tuc": 4
+      "tuc": 4,
+      "onlyEquip": true
     },
     "01122092": {
       "islot": "Pe",
@@ -20834,7 +20884,8 @@
       "incMDD": 65,
       "incACC": 8,
       "incEVA": 8,
-      "tuc": 4
+      "tuc": 4,
+      "onlyEquip": true
     },
     "01122093": {
       "islot": "Pe",
@@ -20846,7 +20897,8 @@
       "incMDD": 105,
       "incACC": 16,
       "incEVA": 16,
-      "tuc": 4
+      "tuc": 4,
+      "onlyEquip": true
     },
     "01122094": {
       "islot": "Pe",
@@ -20858,7 +20910,8 @@
       "incMDD": 145,
       "incACC": 24,
       "incEVA": 24,
-      "tuc": 4
+      "tuc": 4,
+      "onlyEquip": true
     },
     "01122095": {
       "islot": "Pe",
@@ -20870,7 +20923,8 @@
       "incMDD": 185,
       "incACC": 32,
       "incEVA": 32,
-      "tuc": 4
+      "tuc": 4,
+      "onlyEquip": true
     },
     "01122096": {
       "islot": "Pe",
@@ -20882,7 +20936,8 @@
       "incMDD": 65,
       "incACC": 8,
       "incEVA": 8,
-      "tuc": 4
+      "tuc": 4,
+      "onlyEquip": true
     },
     "01122097": {
       "islot": "Pe",
@@ -20894,7 +20949,8 @@
       "incMDD": 105,
       "incACC": 16,
       "incEVA": 16,
-      "tuc": 4
+      "tuc": 4,
+      "onlyEquip": true
     },
     "01122098": {
       "islot": "Pe",
@@ -20906,7 +20962,8 @@
       "incMDD": 145,
       "incACC": 24,
       "incEVA": 24,
-      "tuc": 4
+      "tuc": 4,
+      "onlyEquip": true
     },
     "01122099": {
       "islot": "Pe",
@@ -20918,7 +20975,8 @@
       "incMDD": 185,
       "incACC": 32,
       "incEVA": 32,
-      "tuc": 4
+      "tuc": 4,
+      "onlyEquip": true
     },
     "01122100": {
       "islot": "Pe",
@@ -20930,7 +20988,8 @@
       "incMDD": 65,
       "incACC": 8,
       "incEVA": 8,
-      "tuc": 4
+      "tuc": 4,
+      "onlyEquip": true
     },
     "01122101": {
       "islot": "Pe",
@@ -20942,7 +21001,8 @@
       "incMDD": 105,
       "incACC": 16,
       "incEVA": 16,
-      "tuc": 4
+      "tuc": 4,
+      "onlyEquip": true
     },
     "01122102": {
       "islot": "Pe",
@@ -20954,7 +21014,8 @@
       "incMDD": 145,
       "incACC": 24,
       "incEVA": 24,
-      "tuc": 4
+      "tuc": 4,
+      "onlyEquip": true
     },
     "01122103": {
       "islot": "Pe",
@@ -20966,7 +21027,8 @@
       "incMDD": 185,
       "incACC": 32,
       "incEVA": 32,
-      "tuc": 4
+      "tuc": 4,
+      "onlyEquip": true
     },
     "01122104": {
       "islot": "Pe",
@@ -20985,7 +21047,8 @@
       "incEVA": 32,
       "tuc": 5,
       "charmEXP": 90,
-      "setItemID": 24
+      "setItemID": 24,
+      "onlyEquip": true
     },
     "01122105": {
       "islot": "Pe",
@@ -21003,7 +21066,8 @@
       "incSpeed": 15,
       "incJump": 15,
       "tuc": 3,
-      "setItemID": 30
+      "setItemID": 30,
+      "onlyEquip": true
     },
     "01122107": {
       "islot": "Pe",
@@ -21020,7 +21084,8 @@
       "incEVA": 50,
       "incSpeed": 15,
       "incJump": 15,
-      "tuc": 3
+      "tuc": 3,
+      "onlyEquip": true
     },
     "01122109": {
       "islot": "Pe",
@@ -21082,7 +21147,8 @@
       "incEVA": 30,
       "tuc": 4,
       "charmEXP": 60,
-      "setItemID": 163
+      "setItemID": 163,
+      "onlyEquip": true
     },
     "01122117": {
       "islot": "Pe",
@@ -21097,7 +21163,8 @@
       "incEVA": 30,
       "tuc": 4,
       "charmEXP": 60,
-      "setItemID": 163
+      "setItemID": 163,
+      "onlyEquip": true
     },
     "01122118": {
       "islot": "Pe",
@@ -21116,7 +21183,8 @@
       "incJump": 5,
       "tuc": 4,
       "charmEXP": 80,
-      "setItemID": 163
+      "setItemID": 163,
+      "onlyEquip": true
     },
     "01122119": {
       "islot": "Pe",
@@ -21184,7 +21252,8 @@
       "incEVA": 50,
       "tuc": 5,
       "charmEXP": 90,
-      "setItemID": 51
+      "setItemID": 51,
+      "onlyEquip": true
     },
     "01122150": {
       "islot": "Pe",
@@ -21201,7 +21270,8 @@
       "incMDD": 100,
       "tuc": 6,
       "charmEXP": 120,
-      "setItemID": 462
+      "setItemID": 462,
+      "onlyEquip": true
     },
     "01122151": {
       "islot": "Pe",
@@ -21269,7 +21339,8 @@
       "incSTR": 2,
       "incDEX": 2,
       "incINT": 2,
-      "incLUK": 2
+      "incLUK": 2,
+      "onlyEquip": true
     },
     "01122157": {
       "islot": "Pe",
@@ -21293,7 +21364,8 @@
       "incMMP": 80,
       "incPAD": 3,
       "incMAD": 7,
-      "tuc": 4
+      "tuc": 4,
+      "onlyEquip": true
     },
     "01122160": {
       "islot": "Pe",
@@ -21302,7 +21374,8 @@
       "incMMP": 100,
       "incPAD": 5,
       "incMAD": 10,
-      "tuc": 4
+      "tuc": 4,
+      "onlyEquip": true
     },
     "01122161": {
       "islot": "Pe",
@@ -21591,7 +21664,8 @@
       "incLUK": 2,
       "incPDD": 50,
       "incMDD": 50,
-      "tuc": 6
+      "tuc": 6,
+      "onlyEquip": true
     },
     "01122194": {
       "islot": "Pe",
@@ -21734,7 +21808,8 @@
       "incMAD": 1,
       "incPDD": 50,
       "incMDD": 50,
-      "tuc": 8
+      "tuc": 8,
+      "onlyEquip": true
     },
     "01122205": {
       "islot": "Pe",
@@ -21767,7 +21842,8 @@
       "incSTR": 2,
       "incDEX": 2,
       "incINT": 2,
-      "incLUK": 2
+      "incLUK": 2,
+      "onlyEquip": true
     },
     "01122208": {
       "islot": "Pe",
@@ -21887,7 +21963,8 @@
       "incLUK": 3,
       "incPDD": 100,
       "incMDD": 100,
-      "tuc": 7
+      "tuc": 7,
+      "onlyEquip": true
     },
     "01122220": {
       "islot": "Pe",
@@ -21900,7 +21977,8 @@
       "incMAD": 1,
       "incPDD": 50,
       "incMDD": 50,
-      "tuc": 5
+      "tuc": 5,
+      "onlyEquip": true
     },
     "01122221": {
       "islot": "Pe",
@@ -21951,7 +22029,8 @@
       "incPAD": 10,
       "incPDD": 20,
       "incMDD": 20,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01122227": {
       "islot": "Pe",
@@ -21960,7 +22039,8 @@
       "incMAD": 10,
       "incPDD": 20,
       "incMDD": 20,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01122228": {
       "islot": "Pe",
@@ -21969,7 +22049,8 @@
       "incPAD": 10,
       "incPDD": 20,
       "incMDD": 20,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01122229": {
       "islot": "Pe",
@@ -21978,7 +22059,8 @@
       "incPAD": 10,
       "incPDD": 20,
       "incMDD": 20,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01122230": {
       "islot": "Pe",
@@ -21987,7 +22069,8 @@
       "incPAD": 10,
       "incPDD": 20,
       "incMDD": 20,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01122231": {
       "islot": "Pe",
@@ -21996,7 +22079,8 @@
       "incPAD": 15,
       "incPDD": 30,
       "incMDD": 30,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01122232": {
       "islot": "Pe",
@@ -22005,7 +22089,8 @@
       "incMAD": 15,
       "incPDD": 30,
       "incMDD": 30,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01122233": {
       "islot": "Pe",
@@ -22014,7 +22099,8 @@
       "incPAD": 15,
       "incPDD": 30,
       "incMDD": 30,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01122234": {
       "islot": "Pe",
@@ -22023,7 +22109,8 @@
       "incPAD": 15,
       "incPDD": 30,
       "incMDD": 30,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01122235": {
       "islot": "Pe",
@@ -22032,7 +22119,8 @@
       "incPAD": 15,
       "incPDD": 30,
       "incMDD": 30,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01122236": {
       "islot": "Pe",
@@ -22041,7 +22129,8 @@
       "incPAD": 25,
       "incPDD": 40,
       "incMDD": 40,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01122237": {
       "islot": "Pe",
@@ -22050,7 +22139,8 @@
       "incMAD": 25,
       "incPDD": 40,
       "incMDD": 40,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01122238": {
       "islot": "Pe",
@@ -22059,7 +22149,8 @@
       "incPAD": 25,
       "incPDD": 40,
       "incMDD": 40,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01122239": {
       "islot": "Pe",
@@ -22068,7 +22159,8 @@
       "incPAD": 25,
       "incPDD": 40,
       "incMDD": 40,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01122240": {
       "islot": "Pe",
@@ -22077,7 +22169,8 @@
       "incPAD": 25,
       "incPDD": 40,
       "incMDD": 40,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01122241": {
       "islot": "Pe",
@@ -22086,7 +22179,8 @@
       "incPAD": 30,
       "incPDD": 50,
       "incMDD": 50,
-      "tuc": 4
+      "tuc": 4,
+      "onlyEquip": true
     },
     "01122242": {
       "islot": "Pe",
@@ -22095,7 +22189,8 @@
       "incMAD": 30,
       "incPDD": 50,
       "incMDD": 50,
-      "tuc": 4
+      "tuc": 4,
+      "onlyEquip": true
     },
     "01122243": {
       "islot": "Pe",
@@ -22104,7 +22199,8 @@
       "incPAD": 30,
       "incPDD": 50,
       "incMDD": 50,
-      "tuc": 4
+      "tuc": 4,
+      "onlyEquip": true
     },
     "01122244": {
       "islot": "Pe",
@@ -22113,7 +22209,8 @@
       "incPAD": 30,
       "incPDD": 50,
       "incMDD": 50,
-      "tuc": 4
+      "tuc": 4,
+      "onlyEquip": true
     },
     "01122245": {
       "islot": "Pe",
@@ -22122,7 +22219,8 @@
       "incPAD": 30,
       "incPDD": 50,
       "incMDD": 50,
-      "tuc": 4
+      "tuc": 4,
+      "onlyEquip": true
     },
     "01122246": {
       "islot": "Pe",
@@ -22191,7 +22289,8 @@
       "incPDD": 100,
       "incMDD": 100,
       "tuc": 3,
-      "setItemID": 462
+      "setItemID": 462,
+      "onlyEquip": true
     },
     "01122256": {
       "islot": "Pe",
@@ -22240,7 +22339,8 @@
       "incMDD": 65,
       "incACC": 8,
       "incEVA": 8,
-      "tuc": 4
+      "tuc": 4,
+      "onlyEquip": true
     },
     "01122261": {
       "islot": "Pe",
@@ -22430,7 +22530,8 @@
       "incMDD": 108,
       "tuc": 4,
       "charmEXP": 60,
-      "setItemID": 329
+      "setItemID": 329,
+      "onlyEquip": true
     },
     "01122275": {
       "islot": "Pe",
@@ -22477,7 +22578,8 @@
       "incMDD": 115,
       "incEVA": 28,
       "tuc": 3,
-      "charmEXP": 70
+      "charmEXP": 70,
+      "onlyEquip": true
     },
     "01122280": {
       "islot": "Pe",
@@ -22562,7 +22664,8 @@
       "incLUK": 4,
       "incPAD": 4,
       "incMAD": 4,
-      "tuc": 12
+      "tuc": 12,
+      "onlyEquip": true
     },
     "01122300": {
       "islot": "Pe",
@@ -22623,7 +22726,8 @@
       "incPAD": 1,
       "incMAD": 1,
       "incPDD": 100,
-      "incMDD": 100
+      "incMDD": 100,
+      "onlyEquip": true
     },
     "01122309": {
       "islot": "Pe",
@@ -22637,7 +22741,8 @@
       "incPAD": 3,
       "incMAD": 3,
       "incPDD": 150,
-      "incMDD": 150
+      "incMDD": 150,
+      "onlyEquip": true
     },
     "01122310": {
       "islot": "Pe",
@@ -22651,7 +22756,8 @@
       "incPAD": 5,
       "incMAD": 5,
       "incPDD": 200,
-      "incMDD": 200
+      "incMDD": 200,
+      "onlyEquip": true
     },
     "01122311": {
       "islot": "Pe",
@@ -22665,7 +22771,8 @@
       "incPAD": 10,
       "incMAD": 10,
       "incPDD": 300,
-      "incMDD": 300
+      "incMDD": 300,
+      "onlyEquip": true
     },
     "01122312": {
       "islot": "Pe",
@@ -22712,7 +22819,8 @@
       "incPDD": 100,
       "incMDD": 100,
       "tuc": 4,
-      "setItemID": 568
+      "setItemID": 568,
+      "onlyEquip": true
     },
     "01122329": {
       "islot": "Pe",
@@ -22897,7 +23005,8 @@
       "incLUK": 10,
       "incPAD": 3,
       "incMAD": 3,
-      "setItemID": 615
+      "setItemID": 615,
+      "onlyEquip": true
     },
     "01122364": {
       "islot": "Pe",
@@ -22929,27 +23038,32 @@
     "01122366": {
       "islot": "Pe",
       "reqLevel": 30,
-      "setItemID": 626
+      "setItemID": 626,
+      "onlyEquip": true
     },
     "01122367": {
       "islot": "Pe",
       "reqLevel": 30,
-      "setItemID": 626
+      "setItemID": 626,
+      "onlyEquip": true
     },
     "01122368": {
       "islot": "Pe",
       "reqLevel": 30,
-      "setItemID": 626
+      "setItemID": 626,
+      "onlyEquip": true
     },
     "01122369": {
       "islot": "Pe",
       "reqLevel": 30,
-      "setItemID": 626
+      "setItemID": 626,
+      "onlyEquip": true
     },
     "01122370": {
       "islot": "Pe",
       "reqLevel": 30,
-      "setItemID": 626
+      "setItemID": 626,
+      "onlyEquip": true
     },
     "01122371": {
       "islot": "Pe",
@@ -22960,7 +23074,8 @@
       "incLUK": 10,
       "incPAD": 3,
       "incMAD": 3,
-      "setItemID": 626
+      "setItemID": 626,
+      "onlyEquip": true
     },
     "01122372": {
       "islot": "Pe",
@@ -22977,7 +23092,8 @@
       "incMDD": 100,
       "tuc": 5,
       "charmEXP": 120,
-      "setItemID": 462
+      "setItemID": 462,
+      "onlyEquip": true
     },
     "01122373": {
       "islot": "Pe",
@@ -22994,7 +23110,8 @@
       "incMDD": 100,
       "tuc": 5,
       "charmEXP": 120,
-      "setItemID": 462
+      "setItemID": 462,
+      "onlyEquip": true
     },
     "01122374": {
       "islot": "Pe",
@@ -23011,7 +23128,8 @@
       "incMDD": 100,
       "tuc": 5,
       "charmEXP": 120,
-      "setItemID": 462
+      "setItemID": 462,
+      "onlyEquip": true
     },
     "01122375": {
       "islot": "Pe",
@@ -23028,7 +23146,8 @@
       "incMDD": 100,
       "tuc": 5,
       "charmEXP": 120,
-      "setItemID": 462
+      "setItemID": 462,
+      "onlyEquip": true
     },
     "01122376": {
       "islot": "Pe",
@@ -23045,7 +23164,8 @@
       "incMDD": 100,
       "tuc": 5,
       "charmEXP": 120,
-      "setItemID": 462
+      "setItemID": 462,
+      "onlyEquip": true
     },
     "01122377": {
       "islot": "Pe",
@@ -23062,7 +23182,8 @@
       "incMDD": 100,
       "tuc": 5,
       "charmEXP": 120,
-      "setItemID": 462
+      "setItemID": 462,
+      "onlyEquip": true
     },
     "01122379": {
       "islot": "Pe",
@@ -23084,7 +23205,8 @@
       "incSTR": 1,
       "incDEX": 1,
       "incINT": 1,
-      "incLUK": 1
+      "incLUK": 1,
+      "onlyEquip": true
     },
     "01122381": {
       "islot": "Pe",
@@ -23092,7 +23214,8 @@
       "incSTR": 1,
       "incDEX": 1,
       "incINT": 1,
-      "incLUK": 1
+      "incLUK": 1,
+      "onlyEquip": true
     },
     "01122382": {
       "islot": "Pe",
@@ -23100,7 +23223,8 @@
       "incSTR": 1,
       "incDEX": 1,
       "incINT": 1,
-      "incLUK": 1
+      "incLUK": 1,
+      "onlyEquip": true
     },
     "01122383": {
       "islot": "Pe",
@@ -23108,7 +23232,8 @@
       "incSTR": 1,
       "incDEX": 1,
       "incINT": 1,
-      "incLUK": 1
+      "incLUK": 1,
+      "onlyEquip": true
     },
     "01122384": {
       "islot": "Pe",
@@ -23117,7 +23242,8 @@
       "incDEX": 1,
       "incINT": 1,
       "incLUK": 1,
-      "setItemID": 652
+      "setItemID": 652,
+      "onlyEquip": true
     },
     "01122385": {
       "islot": "Pe",
@@ -23125,7 +23251,8 @@
       "incSTR": 1,
       "incDEX": 1,
       "incINT": 1,
-      "incLUK": 1
+      "incLUK": 1,
+      "onlyEquip": true
     },
     "01122386": {
       "islot": "Pe",
@@ -23133,7 +23260,8 @@
       "incSTR": 1,
       "incDEX": 1,
       "incINT": 1,
-      "incLUK": 1
+      "incLUK": 1,
+      "onlyEquip": true
     },
     "01122387": {
       "islot": "Pe",
@@ -23141,7 +23269,8 @@
       "incSTR": 1,
       "incDEX": 1,
       "incINT": 1,
-      "incLUK": 1
+      "incLUK": 1,
+      "onlyEquip": true
     },
     "01122388": {
       "islot": "Pe",
@@ -23149,7 +23278,8 @@
       "incSTR": 1,
       "incDEX": 1,
       "incINT": 1,
-      "incLUK": 1
+      "incLUK": 1,
+      "onlyEquip": true
     },
     "01122389": {
       "islot": "Pe",
@@ -23158,7 +23288,8 @@
       "incDEX": 1,
       "incINT": 1,
       "incLUK": 1,
-      "setItemID": 652
+      "setItemID": 652,
+      "onlyEquip": true
     },
     "01122390": {
       "islot": "Pe",
@@ -23166,7 +23297,8 @@
       "incSTR": 1,
       "incDEX": 1,
       "incINT": 1,
-      "incLUK": 1
+      "incLUK": 1,
+      "onlyEquip": true
     },
     "01122391": {
       "islot": "Pe",
@@ -23174,7 +23306,8 @@
       "incSTR": 1,
       "incDEX": 1,
       "incINT": 1,
-      "incLUK": 1
+      "incLUK": 1,
+      "onlyEquip": true
     },
     "01122392": {
       "islot": "Pe",
@@ -23182,7 +23315,8 @@
       "incSTR": 1,
       "incDEX": 1,
       "incINT": 1,
-      "incLUK": 1
+      "incLUK": 1,
+      "onlyEquip": true
     },
     "01122393": {
       "islot": "Pe",
@@ -23190,7 +23324,8 @@
       "incSTR": 1,
       "incDEX": 1,
       "incINT": 1,
-      "incLUK": 1
+      "incLUK": 1,
+      "onlyEquip": true
     },
     "01122394": {
       "islot": "Pe",
@@ -23199,7 +23334,8 @@
       "incDEX": 1,
       "incINT": 1,
       "incLUK": 1,
-      "setItemID": 652
+      "setItemID": 652,
+      "onlyEquip": true
     },
     "01122395": {
       "islot": "Pe",
@@ -23207,7 +23343,8 @@
       "incSTR": 1,
       "incDEX": 1,
       "incINT": 1,
-      "incLUK": 1
+      "incLUK": 1,
+      "onlyEquip": true
     },
     "01122396": {
       "islot": "Pe",
@@ -23215,7 +23352,8 @@
       "incSTR": 1,
       "incDEX": 1,
       "incINT": 1,
-      "incLUK": 1
+      "incLUK": 1,
+      "onlyEquip": true
     },
     "01122397": {
       "islot": "Pe",
@@ -23223,7 +23361,8 @@
       "incSTR": 1,
       "incDEX": 1,
       "incINT": 1,
-      "incLUK": 1
+      "incLUK": 1,
+      "onlyEquip": true
     },
     "01122398": {
       "islot": "Pe",
@@ -23231,7 +23370,8 @@
       "incSTR": 1,
       "incDEX": 1,
       "incINT": 1,
-      "incLUK": 1
+      "incLUK": 1,
+      "onlyEquip": true
     },
     "01122399": {
       "islot": "Pe",
@@ -23240,7 +23380,8 @@
       "incDEX": 1,
       "incINT": 1,
       "incLUK": 1,
-      "setItemID": 652
+      "setItemID": 652,
+      "onlyEquip": true
     },
     "01122400": {
       "islot": "Pe",
@@ -23248,7 +23389,8 @@
       "incSTR": 1,
       "incDEX": 1,
       "incINT": 1,
-      "incLUK": 1
+      "incLUK": 1,
+      "onlyEquip": true
     },
     "01122401": {
       "islot": "Pe",
@@ -23256,7 +23398,8 @@
       "incSTR": 1,
       "incDEX": 1,
       "incINT": 1,
-      "incLUK": 1
+      "incLUK": 1,
+      "onlyEquip": true
     },
     "01122402": {
       "islot": "Pe",
@@ -23264,7 +23407,8 @@
       "incSTR": 1,
       "incDEX": 1,
       "incINT": 1,
-      "incLUK": 1
+      "incLUK": 1,
+      "onlyEquip": true
     },
     "01122403": {
       "islot": "Pe",
@@ -23272,7 +23416,8 @@
       "incSTR": 1,
       "incDEX": 1,
       "incINT": 1,
-      "incLUK": 1
+      "incLUK": 1,
+      "onlyEquip": true
     },
     "01122404": {
       "islot": "Pe",
@@ -23281,7 +23426,8 @@
       "incDEX": 1,
       "incINT": 1,
       "incLUK": 1,
-      "setItemID": 652
+      "setItemID": 652,
+      "onlyEquip": true
     },
     "01122405": {
       "islot": "Pe",
@@ -23289,7 +23435,8 @@
       "incSTR": 1,
       "incDEX": 1,
       "incINT": 1,
-      "incLUK": 1
+      "incLUK": 1,
+      "onlyEquip": true
     },
     "01122406": {
       "islot": "Pe",
@@ -23297,7 +23444,8 @@
       "incSTR": 1,
       "incDEX": 1,
       "incINT": 1,
-      "incLUK": 1
+      "incLUK": 1,
+      "onlyEquip": true
     },
     "01122407": {
       "islot": "Pe",
@@ -23305,7 +23453,8 @@
       "incSTR": 1,
       "incDEX": 1,
       "incINT": 1,
-      "incLUK": 1
+      "incLUK": 1,
+      "onlyEquip": true
     },
     "01122408": {
       "islot": "Pe",
@@ -23313,7 +23462,8 @@
       "incSTR": 1,
       "incDEX": 1,
       "incINT": 1,
-      "incLUK": 1
+      "incLUK": 1,
+      "onlyEquip": true
     },
     "01122409": {
       "islot": "Pe",
@@ -23322,7 +23472,8 @@
       "incDEX": 1,
       "incINT": 1,
       "incLUK": 1,
-      "setItemID": 652
+      "setItemID": 652,
+      "onlyEquip": true
     },
     "01122410": {
       "islot": "Pe",
@@ -23330,7 +23481,8 @@
       "incSTR": 1,
       "incDEX": 1,
       "incINT": 1,
-      "incLUK": 1
+      "incLUK": 1,
+      "onlyEquip": true
     },
     "01122411": {
       "islot": "Pe",
@@ -23338,7 +23490,8 @@
       "incSTR": 1,
       "incDEX": 1,
       "incINT": 1,
-      "incLUK": 1
+      "incLUK": 1,
+      "onlyEquip": true
     },
     "01122412": {
       "islot": "Pe",
@@ -23346,7 +23499,8 @@
       "incSTR": 1,
       "incDEX": 1,
       "incINT": 1,
-      "incLUK": 1
+      "incLUK": 1,
+      "onlyEquip": true
     },
     "01122413": {
       "islot": "Pe",
@@ -23354,7 +23508,8 @@
       "incSTR": 1,
       "incDEX": 1,
       "incINT": 1,
-      "incLUK": 1
+      "incLUK": 1,
+      "onlyEquip": true
     },
     "01122414": {
       "islot": "Pe",
@@ -23363,7 +23518,8 @@
       "incDEX": 1,
       "incINT": 1,
       "incLUK": 1,
-      "setItemID": 652
+      "setItemID": 652,
+      "onlyEquip": true
     },
     "01122415": {
       "islot": "Pe",
@@ -23371,7 +23527,8 @@
       "incSTR": 1,
       "incDEX": 1,
       "incINT": 1,
-      "incLUK": 1
+      "incLUK": 1,
+      "onlyEquip": true
     },
     "01122416": {
       "islot": "Pe",
@@ -23379,7 +23536,8 @@
       "incSTR": 1,
       "incDEX": 1,
       "incINT": 1,
-      "incLUK": 1
+      "incLUK": 1,
+      "onlyEquip": true
     },
     "01122417": {
       "islot": "Pe",
@@ -23387,7 +23545,8 @@
       "incSTR": 1,
       "incDEX": 1,
       "incINT": 1,
-      "incLUK": 1
+      "incLUK": 1,
+      "onlyEquip": true
     },
     "01122418": {
       "islot": "Pe",
@@ -23395,7 +23554,8 @@
       "incSTR": 1,
       "incDEX": 1,
       "incINT": 1,
-      "incLUK": 1
+      "incLUK": 1,
+      "onlyEquip": true
     },
     "01122419": {
       "islot": "Pe",
@@ -23404,11 +23564,13 @@
       "incDEX": 1,
       "incINT": 1,
       "incLUK": 1,
-      "setItemID": 652
+      "setItemID": 652,
+      "onlyEquip": true
     },
     "01122420": {
       "islot": "Pe",
-      "reqLevel": 10
+      "reqLevel": 10,
+      "onlyEquip": true
     },
     "01122421": {
       "islot": "Pe",
@@ -23453,7 +23615,8 @@
       "incMDD": 100,
       "tuc": 5,
       "charmEXP": 120,
-      "setItemID": 462
+      "setItemID": 462,
+      "onlyEquip": true
     },
     "01122424": {
       "islot": "Pe",
@@ -23470,7 +23633,8 @@
       "incMDD": 100,
       "tuc": 5,
       "charmEXP": 120,
-      "setItemID": 462
+      "setItemID": 462,
+      "onlyEquip": true
     },
     "01122425": {
       "islot": "Pe",
@@ -23487,7 +23651,8 @@
       "incMDD": 100,
       "tuc": 5,
       "charmEXP": 120,
-      "setItemID": 462
+      "setItemID": 462,
+      "onlyEquip": true
     },
     "01122426": {
       "islot": "Pe",
@@ -23504,7 +23669,8 @@
       "incMDD": 100,
       "tuc": 5,
       "charmEXP": 120,
-      "setItemID": 462
+      "setItemID": 462,
+      "onlyEquip": true
     },
     "01122427": {
       "islot": "Pe",
@@ -23521,7 +23687,8 @@
       "incMDD": 100,
       "tuc": 5,
       "charmEXP": 120,
-      "setItemID": 462
+      "setItemID": 462,
+      "onlyEquip": true
     },
     "01122428": {
       "islot": "Pe",
@@ -23538,7 +23705,8 @@
       "incMDD": 100,
       "tuc": 5,
       "charmEXP": 120,
-      "setItemID": 462
+      "setItemID": 462,
+      "onlyEquip": true
     },
     "01122430": {
       "islot": "Pe",
@@ -23554,7 +23722,8 @@
       "incMDD": 200,
       "tuc": 6,
       "charmEXP": 150,
-      "setItemID": 677
+      "setItemID": 677,
+      "onlyEquip": true
     },
     "01122437": {
       "islot": "Pe",
@@ -23581,7 +23750,8 @@
       "incPDD": 100,
       "incMDD": 100,
       "tuc": 5,
-      "setItemID": 782
+      "setItemID": 782,
+      "onlyEquip": true
     },
     "01122439": {
       "islot": "Pe",
@@ -23595,7 +23765,8 @@
       "incPDD": 100,
       "incMDD": 100,
       "tuc": 5,
-      "setItemID": 782
+      "setItemID": 782,
+      "onlyEquip": true
     },
     "01122443": {
       "islot": "Pe",
@@ -23611,7 +23782,8 @@
       "incMDD": 100,
       "tuc": 6,
       "charmEXP": 150,
-      "setItemID": 869
+      "setItemID": 869,
+      "onlyEquip": true
     },
     "01122444": {
       "islot": "Pe",
@@ -23626,7 +23798,8 @@
       "incMAD": 1,
       "incPDD": 30,
       "incMDD": 30,
-      "tuc": 3
+      "tuc": 3,
+      "onlyEquip": true
     },
     "01122445": {
       "islot": "Pe",
@@ -23641,7 +23814,8 @@
       "incMAD": 2,
       "incPDD": 50,
       "incMDD": 50,
-      "tuc": 3
+      "tuc": 3,
+      "onlyEquip": true
     },
     "01122447": {
       "islot": "Pe",
@@ -23656,7 +23830,8 @@
       "incPDD": 300,
       "incMDD": 300,
       "tuc": 7,
-      "setItemID": 1055
+      "setItemID": 1055,
+      "onlyEquip": true
     },
     "01122453": {
       "islot": "Pe",
@@ -25765,7 +25940,8 @@
     "01132191": {
       "islot": "Be",
       "reqLevel": 10,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01132192": {
       "islot": "Be",
@@ -25773,7 +25949,8 @@
       "incSTR": 9,
       "incPAD": 3,
       "incMAD": 3,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01132193": {
       "islot": "Be",
@@ -25781,19 +25958,22 @@
       "incSTR": 7,
       "incPAD": 1,
       "incMAD": 1,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01132194": {
       "islot": "Be",
       "reqLevel": 10,
       "incSTR": 5,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01132195": {
       "islot": "Be",
       "reqLevel": 10,
       "incSTR": 3,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01132196": {
       "islot": "Be",
@@ -25801,7 +25981,8 @@
       "incLUK": 9,
       "incPAD": 3,
       "incMAD": 3,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01132197": {
       "islot": "Be",
@@ -25809,19 +25990,22 @@
       "incLUK": 7,
       "incPAD": 1,
       "incMAD": 1,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01132198": {
       "islot": "Be",
       "reqLevel": 10,
       "incLUK": 5,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01132199": {
       "islot": "Be",
       "reqLevel": 10,
       "incLUK": 3,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01132200": {
       "islot": "Be",
@@ -25829,7 +26013,8 @@
       "incINT": 9,
       "incPAD": 3,
       "incMAD": 3,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01132201": {
       "islot": "Be",
@@ -25837,19 +26022,22 @@
       "incINT": 7,
       "incPAD": 1,
       "incMAD": 1,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01132202": {
       "islot": "Be",
       "reqLevel": 10,
       "incINT": 5,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01132203": {
       "islot": "Be",
       "reqLevel": 10,
       "incINT": 3,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01132204": {
       "islot": "Be",
@@ -25857,7 +26045,8 @@
       "incDEX": 9,
       "incPAD": 3,
       "incMAD": 3,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01132205": {
       "islot": "Be",
@@ -25865,19 +26054,22 @@
       "incDEX": 7,
       "incPAD": 1,
       "incMAD": 1,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01132206": {
       "islot": "Be",
       "reqLevel": 10,
       "incDEX": 5,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01132207": {
       "islot": "Be",
       "reqLevel": 10,
       "incDEX": 3,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01132208": {
       "islot": "Be",
@@ -26551,7 +26743,8 @@
       "incPDD": 100,
       "incMDD": 100,
       "tuc": 4,
-      "setItemID": 473
+      "setItemID": 473,
+      "onlyEquip": true
     },
     "01132278": {
       "islot": "Be",
@@ -27950,14 +28143,16 @@
       "incSTR": 3,
       "incDEX": 3,
       "incINT": 3,
-      "incLUK": 3
+      "incLUK": 3,
+      "onlyEquip": true
     },
     "01142148": {
       "islot": "Me",
       "incSTR": 7,
       "incDEX": 7,
       "incINT": 7,
-      "incLUK": 7
+      "incLUK": 7,
+      "onlyEquip": true
     },
     "01142149": {
       "islot": "Me",
@@ -38222,7 +38417,8 @@
       "incPDD": 100,
       "incMDD": 100,
       "tuc": 2,
-      "setItemID": 473
+      "setItemID": 473,
+      "onlyEquip": true
     },
     "01152172": {
       "islot": "Sh",
@@ -39847,7 +40043,8 @@
       "incINT": 22,
       "incLUK": 22,
       "incPAD": 7,
-      "incMAD": 7
+      "incMAD": 7,
+      "onlyEquip": true
     },
     "01182089": {
       "islot": "Ba",
@@ -39857,7 +40054,8 @@
       "incINT": 16,
       "incLUK": 16,
       "incPAD": 5,
-      "incMAD": 5
+      "incMAD": 5,
+      "onlyEquip": true
     },
     "01182090": {
       "islot": "Ba",
@@ -39867,7 +40065,8 @@
       "incINT": 12,
       "incLUK": 12,
       "incPAD": 4,
-      "incMAD": 4
+      "incMAD": 4,
+      "onlyEquip": true
     },
     "01182091": {
       "islot": "Ba",
@@ -39876,7 +40075,8 @@
       "incINT": 6,
       "incLUK": 6,
       "incPAD": 1,
-      "incMAD": 1
+      "incMAD": 1,
+      "onlyEquip": true
     },
     "01182092": {
       "islot": "Ba",
@@ -39946,7 +40146,8 @@
       "incSTR": 1,
       "incDEX": 1,
       "incINT": 1,
-      "incLUK": 1
+      "incLUK": 1,
+      "onlyEquip": true
     },
     "01182103": {
       "islot": "Ba",
@@ -39955,7 +40156,8 @@
       "incINT": 1,
       "incLUK": 1,
       "incPAD": 1,
-      "incMAD": 1
+      "incMAD": 1,
+      "onlyEquip": true
     },
     "01182104": {
       "islot": "Ba",
@@ -39964,7 +40166,8 @@
       "incINT": 2,
       "incLUK": 2,
       "incPAD": 1,
-      "incMAD": 1
+      "incMAD": 1,
+      "onlyEquip": true
     },
     "01182105": {
       "islot": "Ba",
@@ -39973,7 +40176,8 @@
       "incINT": 2,
       "incLUK": 2,
       "incPAD": 2,
-      "incMAD": 2
+      "incMAD": 2,
+      "onlyEquip": true
     },
     "01182106": {
       "islot": "Ba",
@@ -39982,7 +40186,8 @@
       "incINT": 3,
       "incLUK": 3,
       "incPAD": 2,
-      "incMAD": 2
+      "incMAD": 2,
+      "onlyEquip": true
     },
     "01182107": {
       "islot": "Ba",
@@ -39991,7 +40196,8 @@
       "incINT": 3,
       "incLUK": 3,
       "incPAD": 3,
-      "incMAD": 3
+      "incMAD": 3,
+      "onlyEquip": true
     },
     "01182108": {
       "incSTR": 4,
@@ -39999,7 +40205,8 @@
       "incINT": 4,
       "incLUK": 4,
       "incPAD": 3,
-      "incMAD": 3
+      "incMAD": 3,
+      "onlyEquip": true
     },
     "01182109": {
       "islot": "Ba",
@@ -40008,7 +40215,8 @@
       "incINT": 4,
       "incLUK": 4,
       "incPAD": 4,
-      "incMAD": 4
+      "incMAD": 4,
+      "onlyEquip": true
     },
     "01182110": {
       "islot": "Ba",
@@ -40017,14 +40225,16 @@
       "incINT": 5,
       "incLUK": 5,
       "incPAD": 4,
-      "incMAD": 4
+      "incMAD": 4,
+      "onlyEquip": true
     },
     "01182111": {
       "islot": "Ba",
       "incSTR": 3,
       "incDEX": 3,
       "incINT": 3,
-      "incLUK": 3
+      "incLUK": 3,
+      "onlyEquip": true
     },
     "01182112": {
       "islot": "Ba",
@@ -40033,7 +40243,8 @@
       "incINT": 5,
       "incLUK": 5,
       "incPAD": 1,
-      "incMAD": 1
+      "incMAD": 1,
+      "onlyEquip": true
     },
     "01182113": {
       "islot": "Ba",
@@ -40042,7 +40253,8 @@
       "incINT": 7,
       "incLUK": 7,
       "incPAD": 2,
-      "incMAD": 2
+      "incMAD": 2,
+      "onlyEquip": true
     },
     "01182114": {
       "islot": "Ba",
@@ -40051,7 +40263,8 @@
       "incINT": 10,
       "incLUK": 10,
       "incPAD": 3,
-      "incMAD": 3
+      "incMAD": 3,
+      "onlyEquip": true
     },
     "01182115": {
       "islot": "Ba",
@@ -40060,7 +40273,8 @@
       "incINT": 13,
       "incLUK": 13,
       "incPAD": 4,
-      "incMAD": 4
+      "incMAD": 4,
+      "onlyEquip": true
     },
     "01182116": {
       "islot": "Ba",
@@ -40069,7 +40283,8 @@
       "incINT": 16,
       "incLUK": 16,
       "incPAD": 6,
-      "incMAD": 6
+      "incMAD": 6,
+      "onlyEquip": true
     },
     "01182117": {
       "islot": "Ba",
@@ -40078,7 +40293,8 @@
       "incINT": 20,
       "incLUK": 20,
       "incPAD": 8,
-      "incMAD": 8
+      "incMAD": 8,
+      "onlyEquip": true
     },
     "01182118": {
       "islot": "Ba",
@@ -40087,7 +40303,8 @@
       "incINT": 24,
       "incLUK": 24,
       "incPAD": 10,
-      "incMAD": 10
+      "incMAD": 10,
+      "onlyEquip": true
     },
     "01182119": {
       "islot": "Ba",
@@ -40096,7 +40313,8 @@
       "incINT": 28,
       "incLUK": 28,
       "incPAD": 13,
-      "incMAD": 13
+      "incMAD": 13,
+      "onlyEquip": true
     },
     "01182120": {
       "islot": "Ba",
@@ -40393,7 +40611,8 @@
       "incINT": 24,
       "incLUK": 24,
       "incPAD": 8,
-      "incMAD": 8
+      "incMAD": 8,
+      "onlyEquip": true
     },
     "01182162": {
       "islot": "Ba",
@@ -40402,7 +40621,8 @@
       "incINT": 24,
       "incLUK": 24,
       "incPAD": 8,
-      "incMAD": 8
+      "incMAD": 8,
+      "onlyEquip": true
     },
     "01182163": {
       "islot": "Ba",
@@ -40411,7 +40631,8 @@
       "incINT": 24,
       "incLUK": 24,
       "incPAD": 8,
-      "incMAD": 8
+      "incMAD": 8,
+      "onlyEquip": true
     },
     "01182165": {
       "islot": "Ba",
@@ -40441,7 +40662,8 @@
       "incINT": 32,
       "incLUK": 32,
       "incPAD": 16,
-      "incMAD": 16
+      "incMAD": 16,
+      "onlyEquip": true
     },
     "01182168": {
       "islot": "Ba",
@@ -40451,7 +40673,8 @@
       "incINT": 12,
       "incLUK": 12,
       "incPAD": 6,
-      "incMAD": 6
+      "incMAD": 6,
+      "onlyEquip": true
     },
     "01182169": {
       "islot": "Ba",
@@ -40461,7 +40684,8 @@
       "incINT": 16,
       "incLUK": 16,
       "incPAD": 8,
-      "incMAD": 8
+      "incMAD": 8,
+      "onlyEquip": true
     },
     "01182170": {
       "islot": "Ba",
@@ -40471,7 +40695,8 @@
       "incINT": 20,
       "incLUK": 20,
       "incPAD": 10,
-      "incMAD": 10
+      "incMAD": 10,
+      "onlyEquip": true
     },
     "01182171": {
       "islot": "Ba",
@@ -40481,7 +40706,8 @@
       "incINT": 24,
       "incLUK": 24,
       "incPAD": 12,
-      "incMAD": 12
+      "incMAD": 12,
+      "onlyEquip": true
     },
     "01182172": {
       "islot": "Ba",
@@ -40491,7 +40717,8 @@
       "incINT": 28,
       "incLUK": 28,
       "incPAD": 14,
-      "incMAD": 14
+      "incMAD": 14,
+      "onlyEquip": true
     },
     "01182174": {
       "islot": "Ba",
@@ -40545,7 +40772,8 @@
       "incMHP": 300,
       "incMMP": 300,
       "incPAD": 10,
-      "incMAD": 10
+      "incMAD": 10,
+      "onlyEquip": true
     },
     "01182181": {
       "islot": "Ba",
@@ -41850,7 +42078,8 @@
       "incINT": 10,
       "incLUK": 10,
       "incPAD": 7,
-      "incMAD": 7
+      "incMAD": 7,
+      "onlyEquip": true
     },
     "01190546": {
       "islot": "Si",
@@ -80715,7 +80944,8 @@
       "incDEX": 2,
       "incINT": 2,
       "incLUK": 2,
-      "tuc": 6
+      "tuc": 6,
+      "onlyEquip": true
     },
     "01112445": {
       "islot": "Ri",
@@ -81173,41 +81403,47 @@
       "islot": "Ri",
       "reqLevel": 40,
       "incPDD": 80,
-      "incMDD": 80
+      "incMDD": 80,
+      "onlyEquip": true
     },
     "01112535": {
       "islot": "Ri",
       "reqLevel": 40,
       "incPDD": 10,
       "incMDD": 10,
-      "incACC": 10
+      "incACC": 10,
+      "onlyEquip": true
     },
     "01112536": {
       "islot": "Ri",
       "reqLevel": 40,
       "incPDD": 10,
       "incMDD": 10,
-      "incEVA": 10
+      "incEVA": 10,
+      "onlyEquip": true
     },
     "01112537": {
       "islot": "Ri",
       "reqLevel": 50,
       "incPDD": 160,
-      "incMDD": 160
+      "incMDD": 160,
+      "onlyEquip": true
     },
     "01112538": {
       "islot": "Ri",
       "reqLevel": 50,
       "incPDD": 12,
       "incMDD": 12,
-      "incACC": 30
+      "incACC": 30,
+      "onlyEquip": true
     },
     "01112539": {
       "islot": "Ri",
       "reqLevel": 50,
       "incPDD": 12,
       "incMDD": 12,
-      "incEVA": 30
+      "incEVA": 30,
+      "onlyEquip": true
     },
     "01112540": {
       "islot": "Ri",
@@ -81215,35 +81451,40 @@
       "incPDD": 14,
       "incMDD": 14,
       "incSpeed": 5,
-      "incJump": 3
+      "incJump": 3,
+      "onlyEquip": true
     },
     "01112541": {
       "islot": "Ri",
       "reqLevel": 60,
       "incMHP": 100,
       "incPDD": 14,
-      "incMDD": 14
+      "incMDD": 14,
+      "onlyEquip": true
     },
     "01112542": {
       "islot": "Ri",
       "reqLevel": 60,
       "incMMP": 100,
       "incPDD": 14,
-      "incMDD": 14
+      "incMDD": 14,
+      "onlyEquip": true
     },
     "01112543": {
       "islot": "Ri",
       "reqLevel": 60,
       "incPDD": 14,
       "incMDD": 14,
-      "incACC": 60
+      "incACC": 60,
+      "onlyEquip": true
     },
     "01112544": {
       "islot": "Ri",
       "reqLevel": 60,
       "incPDD": 14,
       "incMDD": 14,
-      "incEVA": 60
+      "incEVA": 60,
+      "onlyEquip": true
     },
     "01112545": {
       "islot": "Ri",
@@ -81251,77 +81492,88 @@
       "incPDD": 16,
       "incMDD": 16,
       "incSpeed": 10,
-      "incJump": 6
+      "incJump": 6,
+      "onlyEquip": true
     },
     "01112546": {
       "islot": "Ri",
       "reqLevel": 70,
       "incSTR": 1,
       "incPDD": 16,
-      "incMDD": 16
+      "incMDD": 16,
+      "onlyEquip": true
     },
     "01112547": {
       "islot": "Ri",
       "reqLevel": 70,
       "incINT": 1,
       "incPDD": 16,
-      "incMDD": 16
+      "incMDD": 16,
+      "onlyEquip": true
     },
     "01112548": {
       "islot": "Ri",
       "reqLevel": 70,
       "incDEX": 1,
       "incPDD": 16,
-      "incMDD": 16
+      "incMDD": 16,
+      "onlyEquip": true
     },
     "01112549": {
       "islot": "Ri",
       "reqLevel": 70,
       "incLUK": 1,
       "incPDD": 16,
-      "incMDD": 16
+      "incMDD": 16,
+      "onlyEquip": true
     },
     "01112550": {
       "islot": "Ri",
       "reqLevel": 80,
       "incMHP": 200,
       "incPDD": 18,
-      "incMDD": 18
+      "incMDD": 18,
+      "onlyEquip": true
     },
     "01112551": {
       "islot": "Ri",
       "reqLevel": 80,
       "incMMP": 200,
       "incPDD": 18,
-      "incMDD": 18
+      "incMDD": 18,
+      "onlyEquip": true
     },
     "01112552": {
       "islot": "Ri",
       "reqLevel": 80,
       "incSTR": 2,
       "incPDD": 18,
-      "incMDD": 18
+      "incMDD": 18,
+      "onlyEquip": true
     },
     "01112553": {
       "islot": "Ri",
       "reqLevel": 80,
       "incINT": 2,
       "incPDD": 18,
-      "incMDD": 18
+      "incMDD": 18,
+      "onlyEquip": true
     },
     "01112554": {
       "islot": "Ri",
       "reqLevel": 80,
       "incDEX": 2,
       "incPDD": 18,
-      "incMDD": 18
+      "incMDD": 18,
+      "onlyEquip": true
     },
     "01112555": {
       "islot": "Ri",
       "reqLevel": 80,
       "incLUK": 2,
       "incPDD": 18,
-      "incMDD": 18
+      "incMDD": 18,
+      "onlyEquip": true
     },
     "01112556": {
       "islot": "Ri",
@@ -81329,49 +81581,56 @@
       "incPDD": 20,
       "incMDD": 20,
       "incSpeed": 15,
-      "incJump": 9
+      "incJump": 9,
+      "onlyEquip": true
     },
     "01112557": {
       "islot": "Ri",
       "reqLevel": 90,
       "incPDD": 20,
       "incMDD": 20,
-      "incACC": 100
+      "incACC": 100,
+      "onlyEquip": true
     },
     "01112558": {
       "islot": "Ri",
       "reqLevel": 90,
       "incPDD": 20,
       "incMDD": 20,
-      "incEVA": 100
+      "incEVA": 100,
+      "onlyEquip": true
     },
     "01112559": {
       "islot": "Ri",
       "reqLevel": 90,
       "incSTR": 3,
       "incPDD": 20,
-      "incMDD": 20
+      "incMDD": 20,
+      "onlyEquip": true
     },
     "01112560": {
       "islot": "Ri",
       "reqLevel": 90,
       "incINT": 3,
       "incPDD": 20,
-      "incMDD": 20
+      "incMDD": 20,
+      "onlyEquip": true
     },
     "01112561": {
       "islot": "Ri",
       "reqLevel": 90,
       "incDEX": 3,
       "incPDD": 20,
-      "incMDD": 20
+      "incMDD": 20,
+      "onlyEquip": true
     },
     "01112562": {
       "islot": "Ri",
       "reqLevel": 90,
       "incLUK": 3,
       "incPDD": 20,
-      "incMDD": 20
+      "incMDD": 20,
+      "onlyEquip": true
     },
     "01112563": {
       "islot": "Ri",
@@ -81379,35 +81638,40 @@
       "incPDD": 22,
       "incMDD": 22,
       "incACC": 150,
-      "incEVA": 150
+      "incEVA": 150,
+      "onlyEquip": true
     },
     "01112564": {
       "islot": "Ri",
       "reqLevel": 100,
       "incSTR": 4,
       "incPDD": 22,
-      "incMDD": 22
+      "incMDD": 22,
+      "onlyEquip": true
     },
     "01112565": {
       "islot": "Ri",
       "reqLevel": 100,
       "incINT": 4,
       "incPDD": 22,
-      "incMDD": 22
+      "incMDD": 22,
+      "onlyEquip": true
     },
     "01112566": {
       "islot": "Ri",
       "reqLevel": 100,
       "incDEX": 4,
       "incPDD": 22,
-      "incMDD": 22
+      "incMDD": 22,
+      "onlyEquip": true
     },
     "01112567": {
       "islot": "Ri",
       "reqLevel": 100,
       "incLUK": 4,
       "incPDD": 22,
-      "incMDD": 22
+      "incMDD": 22,
+      "onlyEquip": true
     },
     "01112568": {
       "islot": "Ri",
@@ -81415,7 +81679,8 @@
       "incPDD": 24,
       "incMDD": 24,
       "incSpeed": 20,
-      "incJump": 12
+      "incJump": 12,
+      "onlyEquip": true
     },
     "01112569": {
       "islot": "Ri",
@@ -81423,35 +81688,40 @@
       "incMHP": 200,
       "incMMP": 200,
       "incPDD": 24,
-      "incMDD": 24
+      "incMDD": 24,
+      "onlyEquip": true
     },
     "01112570": {
       "islot": "Ri",
       "reqLevel": 110,
       "incSTR": 5,
       "incPDD": 24,
-      "incMDD": 24
+      "incMDD": 24,
+      "onlyEquip": true
     },
     "01112571": {
       "islot": "Ri",
       "reqLevel": 110,
       "incINT": 5,
       "incPDD": 24,
-      "incMDD": 24
+      "incMDD": 24,
+      "onlyEquip": true
     },
     "01112572": {
       "islot": "Ri",
       "reqLevel": 110,
       "incDEX": 5,
       "incPDD": 24,
-      "incMDD": 24
+      "incMDD": 24,
+      "onlyEquip": true
     },
     "01112573": {
       "islot": "Ri",
       "reqLevel": 110,
       "incLUK": 5,
       "incPDD": 24,
-      "incMDD": 24
+      "incMDD": 24,
+      "onlyEquip": true
     },
     "01112574": {
       "islot": "Ri",
@@ -81459,63 +81729,72 @@
       "incPDD": 26,
       "incMDD": 26,
       "incACC": 200,
-      "incEVA": 200
+      "incEVA": 200,
+      "onlyEquip": true
     },
     "01112575": {
       "islot": "Ri",
       "reqLevel": 120,
       "incSTR": 7,
       "incPDD": 26,
-      "incMDD": 26
+      "incMDD": 26,
+      "onlyEquip": true
     },
     "01112576": {
       "islot": "Ri",
       "reqLevel": 120,
       "incINT": 7,
       "incPDD": 26,
-      "incMDD": 26
+      "incMDD": 26,
+      "onlyEquip": true
     },
     "01112577": {
       "islot": "Ri",
       "reqLevel": 120,
       "incDEX": 7,
       "incPDD": 26,
-      "incMDD": 26
+      "incMDD": 26,
+      "onlyEquip": true
     },
     "01112578": {
       "islot": "Ri",
       "reqLevel": 120,
       "incLUK": 7,
       "incPDD": 26,
-      "incMDD": 26
+      "incMDD": 26,
+      "onlyEquip": true
     },
     "01112579": {
       "islot": "Ri",
       "reqLevel": 130,
       "incSTR": 8,
       "incPDD": 28,
-      "incMDD": 28
+      "incMDD": 28,
+      "onlyEquip": true
     },
     "01112580": {
       "islot": "Ri",
       "reqLevel": 130,
       "incINT": 8,
       "incPDD": 28,
-      "incMDD": 28
+      "incMDD": 28,
+      "onlyEquip": true
     },
     "01112581": {
       "islot": "Ri",
       "reqLevel": 130,
       "incDEX": 8,
       "incPDD": 28,
-      "incMDD": 28
+      "incMDD": 28,
+      "onlyEquip": true
     },
     "01112582": {
       "islot": "Ri",
       "reqLevel": 130,
       "incLUK": 8,
       "incPDD": 28,
-      "incMDD": 28
+      "incMDD": 28,
+      "onlyEquip": true
     },
     "01112583": {
       "islot": "Ri",
@@ -81528,7 +81807,8 @@
       "incMAD": 1,
       "incACC": 30,
       "incEVA": 30,
-      "setItemID": 23
+      "setItemID": 23,
+      "onlyEquip": true
     },
     "01112584": {
       "islot": "Ri",
@@ -81542,7 +81822,8 @@
       "incPAD": 4,
       "incMAD": 4,
       "charmEXP": 90,
-      "setItemID": 24
+      "setItemID": 24,
+      "onlyEquip": true
     },
     "01112585": {
       "islot": "Ri",
@@ -81553,7 +81834,8 @@
       "incLUK": 1,
       "incACC": 30,
       "incEVA": 30,
-      "charmEXP": 30
+      "charmEXP": 30,
+      "onlyEquip": true
     },
     "01112586": {
       "islot": "Ri",
@@ -81564,7 +81846,8 @@
       "incLUK": 6,
       "incMHP": 100,
       "incMMP": 100,
-      "charmEXP": 80
+      "charmEXP": 80,
+      "onlyEquip": true
     },
     "01112587": {
       "islot": "Ri",
@@ -81572,7 +81855,8 @@
       "incPAD": 1,
       "incMAD": 1,
       "incPDD": 22,
-      "incMDD": 22
+      "incMDD": 22,
+      "onlyEquip": true
     },
     "01112588": {
       "islot": "Ri",
@@ -81580,7 +81864,8 @@
       "incPAD": 2,
       "incMAD": 2,
       "incPDD": 24,
-      "incMDD": 24
+      "incMDD": 24,
+      "onlyEquip": true
     },
     "01112589": {
       "islot": "Ri",
@@ -81588,7 +81873,8 @@
       "incPAD": 3,
       "incMAD": 3,
       "incPDD": 26,
-      "incMDD": 26
+      "incMDD": 26,
+      "onlyEquip": true
     },
     "01112590": {
       "islot": "Ri",
@@ -81596,7 +81882,8 @@
       "incPAD": 4,
       "incMAD": 4,
       "incPDD": 28,
-      "incMDD": 28
+      "incMDD": 28,
+      "onlyEquip": true
     },
     "01112591": {
       "islot": "Ri",
@@ -81627,11 +81914,13 @@
       "incLUK": 2,
       "incPDD": 28,
       "incMDD": 28,
-      "tuc": 3
+      "tuc": 3,
+      "onlyEquip": true
     },
     "01112594": {
       "islot": "Ri",
-      "reqLevel": 13
+      "reqLevel": 13,
+      "onlyEquip": true
     },
     "01112595": {
       "islot": "Ri",
@@ -81643,7 +81932,8 @@
       "incPAD": 1,
       "incMAD": 1,
       "incACC": 30,
-      "incEVA": 30
+      "incEVA": 30,
+      "onlyEquip": true
     },
     "01112596": {
       "islot": "Ri",
@@ -81658,7 +81948,8 @@
       "incMAD": 1,
       "incPDD": 10,
       "incMDD": 10,
-      "setItemID": 30
+      "setItemID": 30,
+      "onlyEquip": true
     },
     "01112597": {
       "islot": "Ri",
@@ -81676,7 +81967,8 @@
       "incACC": 100,
       "incEVA": 100,
       "incSpeed": 10,
-      "incJump": 10
+      "incJump": 10,
+      "onlyEquip": true
     },
     "01112598": {
       "islot": "Ri",
@@ -81690,7 +81982,8 @@
       "incPAD": 1,
       "incMAD": 1,
       "incPDD": 10,
-      "incMDD": 10
+      "incMDD": 10,
+      "onlyEquip": true
     },
     "01112599": {
       "islot": "Ri",
@@ -82313,7 +82606,8 @@
       "incACC": 50,
       "incEVA": 50,
       "charmEXP": 60,
-      "setItemID": 50
+      "setItemID": 50,
+      "onlyEquip": true
     },
     "01112662": {
       "islot": "Ri",
@@ -82327,7 +82621,8 @@
       "incPAD": 4,
       "incMAD": 4,
       "charmEXP": 90,
-      "setItemID": 51
+      "setItemID": 51,
+      "onlyEquip": true
     },
     "01112663": {
       "islot": "Ri",
@@ -82338,7 +82633,8 @@
       "incLUK": 10,
       "incMHP": 150,
       "incMMP": 150,
-      "charmEXP": 80
+      "charmEXP": 80,
+      "onlyEquip": true
     },
     "01112664": {
       "islot": "Ri",
@@ -82352,7 +82648,8 @@
       "incEVA": 75,
       "tuc": 2,
       "charmEXP": 80,
-      "setItemID": 52
+      "setItemID": 52,
+      "onlyEquip": true
     },
     "01112665": {
       "islot": "Ri",
@@ -82367,7 +82664,8 @@
       "incACC": 75,
       "tuc": 2,
       "charmEXP": 80,
-      "setItemID": 52
+      "setItemID": 52,
+      "onlyEquip": true
     },
     "01112666": {
       "islot": "Ri",
@@ -82382,7 +82680,8 @@
       "incACC": 75,
       "tuc": 2,
       "charmEXP": 80,
-      "setItemID": 53
+      "setItemID": 53,
+      "onlyEquip": true
     },
     "01112667": {
       "islot": "Ri",
@@ -82396,7 +82695,8 @@
       "incEVA": 75,
       "tuc": 2,
       "charmEXP": 80,
-      "setItemID": 53
+      "setItemID": 53,
+      "onlyEquip": true
     },
     "01112668": {
       "islot": "Ri",
@@ -82410,7 +82710,8 @@
       "incPAD": 1,
       "incMAD": 1,
       "incPDD": 10,
-      "incMDD": 10
+      "incMDD": 10,
+      "onlyEquip": true
     },
     "01112670": {
       "islot": "Ri",
@@ -82421,7 +82722,8 @@
       "incLUK": 1,
       "incPDD": 10,
       "incMDD": 10,
-      "incACC": 5
+      "incACC": 5,
+      "onlyEquip": true
     },
     "01112671": {
       "islot": "Ri",
@@ -82433,7 +82735,8 @@
       "incPDD": 15,
       "incMDD": 15,
       "incACC": 10,
-      "incSpeed": 5
+      "incSpeed": 5,
+      "onlyEquip": true
     },
     "01112672": {
       "islot": "Ri",
@@ -82447,7 +82750,8 @@
       "incPDD": 20,
       "incMDD": 20,
       "incACC": 15,
-      "incSpeed": 5
+      "incSpeed": 5,
+      "onlyEquip": true
     },
     "01112673": {
       "islot": "Ri",
@@ -82464,7 +82768,8 @@
       "incMDD": 40,
       "incACC": 25,
       "incEVA": 15,
-      "incSpeed": 5
+      "incSpeed": 5,
+      "onlyEquip": true
     },
     "01112675": {
       "islot": "Ri",
@@ -82549,7 +82854,8 @@
       "incPDD": 30,
       "incMDD": 30,
       "incSpeed": 5,
-      "setItemID": 58
+      "setItemID": 58,
+      "onlyEquip": true
     },
     "01112682": {
       "islot": "Ri",
@@ -82560,7 +82866,8 @@
       "incLUK": 2,
       "incMHP": 100,
       "incMMP": 100,
-      "setItemID": 57
+      "setItemID": 57,
+      "onlyEquip": true
     },
     "01112683": {
       "islot": "Ri",
@@ -82576,7 +82883,8 @@
       "incPDD": 45,
       "incMDD": 45,
       "incACC": 15,
-      "incEVA": 15
+      "incEVA": 15,
+      "onlyEquip": true
     },
     "01112684": {
       "islot": "Ri",
@@ -82610,7 +82918,8 @@
       "incMMP": 150,
       "incPAD": 1,
       "incMAD": 1,
-      "setItemID": 57
+      "setItemID": 57,
+      "onlyEquip": true
     },
     "01112690": {
       "islot": "Ri",
@@ -82626,7 +82935,8 @@
       "incMAD": 1,
       "incPDD": 10,
       "incMDD": 10,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01112692": {
       "islot": "Ri",
@@ -82822,7 +83132,8 @@
       "incACC": 150,
       "incEVA": 150,
       "charmEXP": 90,
-      "setItemID": 74
+      "setItemID": 74,
+      "onlyEquip": true
     },
     "01112713": {
       "islot": "Ri",
@@ -82838,7 +83149,8 @@
       "incACC": 100,
       "incEVA": 100,
       "charmEXP": 90,
-      "setItemID": 75
+      "setItemID": 75,
+      "onlyEquip": true
     },
     "01112714": {
       "islot": "Ri",
@@ -82854,7 +83166,8 @@
       "incACC": 50,
       "incEVA": 50,
       "charmEXP": 90,
-      "setItemID": 76
+      "setItemID": 76,
+      "onlyEquip": true
     },
     "01112715": {
       "islot": "Ri",
@@ -82870,7 +83183,8 @@
       "incACC": 50,
       "incEVA": 50,
       "charmEXP": 90,
-      "setItemID": 79
+      "setItemID": 79,
+      "onlyEquip": true
     },
     "01112721": {
       "islot": "Ri",
@@ -82884,7 +83198,8 @@
       "incPAD": 3,
       "incMAD": 3,
       "incPDD": 10,
-      "incMDD": 10
+      "incMDD": 10,
+      "onlyEquip": true
     },
     "01112723": {
       "islot": "Ri",
@@ -82897,7 +83212,8 @@
       "incMAD": 2,
       "incPDD": 10,
       "incMDD": 10,
-      "incACC": 10
+      "incACC": 10,
+      "onlyEquip": true
     },
     "01112726": {
       "islot": "Ri",
@@ -82909,7 +83225,8 @@
       "incPAD": 2,
       "incPDD": 10,
       "incMDD": 10,
-      "incACC": 10
+      "incACC": 10,
+      "onlyEquip": true
     },
     "01112727": {
       "islot": "Ri",
@@ -82923,7 +83240,8 @@
       "incPAD": 1,
       "incMAD": 1,
       "incPDD": 10,
-      "incMDD": 10
+      "incMDD": 10,
+      "onlyEquip": true
     },
     "01112735": {
       "islot": "Ri",
@@ -82934,7 +83252,8 @@
       "incLUK": 10,
       "incMHP": 150,
       "incMMP": 150,
-      "charmEXP": 80
+      "charmEXP": 80,
+      "onlyEquip": true
     },
     "01112736": {
       "islot": "Ri",
@@ -82947,7 +83266,8 @@
       "incMAD": 2,
       "incPDD": 10,
       "incMDD": 10,
-      "incACC": 10
+      "incACC": 10,
+      "onlyEquip": true
     },
     "01112737": {
       "islot": "Ri",
@@ -82959,7 +83279,8 @@
       "incPAD": 7,
       "incPDD": 30,
       "incMDD": 30,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01112739": {
       "islot": "Ri",
@@ -82971,7 +83292,8 @@
       "incMAD": 2,
       "incPDD": 10,
       "incMDD": 10,
-      "incACC": 10
+      "incACC": 10,
+      "onlyEquip": true
     },
     "01112740": {
       "islot": "Ri",
@@ -82983,7 +83305,8 @@
       "incPAD": 2,
       "incPDD": 10,
       "incMDD": 10,
-      "incACC": 10
+      "incACC": 10,
+      "onlyEquip": true
     },
     "01112742": {
       "islot": "Ri",
@@ -82992,7 +83315,8 @@
       "incDEX": 3,
       "incINT": 3,
       "incLUK": 3,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01112743": {
       "islot": "Ri",
@@ -83003,7 +83327,8 @@
       "incLUK": 5,
       "incPAD": 1,
       "incMAD": 1,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01112744": {
       "islot": "Ri",
@@ -83012,7 +83337,8 @@
       "incDEX": 5,
       "incINT": 5,
       "incLUK": 5,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01112746": {
       "islot": "Ri",
@@ -83024,7 +83350,8 @@
       "incMHP": 50,
       "incMMP": 50,
       "incPAD": 3,
-      "incMAD": 3
+      "incMAD": 3,
+      "onlyEquip": true
     },
     "01112747": {
       "islot": "Ri",
@@ -83037,7 +83364,8 @@
       "incMAD": 2,
       "incPDD": 10,
       "incMDD": 10,
-      "incACC": 10
+      "incACC": 10,
+      "onlyEquip": true
     },
     "01112748": {
       "islot": "Ri",
@@ -83048,7 +83376,8 @@
       "incLUK": 6,
       "incPAD": 2,
       "incMAD": 2,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01112750": {
       "islot": "Ri",
@@ -83062,7 +83391,8 @@
       "incPDD": 70,
       "incMDD": 70,
       "tuc": 2,
-      "charmEXP": 90
+      "charmEXP": 90,
+      "onlyEquip": true
     },
     "01112751": {
       "islot": "Ri",
@@ -83075,7 +83405,8 @@
       "incMAD": 2,
       "incPDD": 10,
       "incMDD": 10,
-      "incACC": 10
+      "incACC": 10,
+      "onlyEquip": true
     },
     "01112752": {
       "islot": "Ri",
@@ -83088,7 +83419,8 @@
       "incMAD": 2,
       "incPDD": 10,
       "incMDD": 10,
-      "incACC": 10
+      "incACC": 10,
+      "onlyEquip": true
     },
     "01112757": {
       "islot": "Ri",
@@ -83113,7 +83445,8 @@
       "incPDD": 10,
       "incMDD": 10,
       "tuc": 2,
-      "setItemID": 150
+      "setItemID": 150,
+      "onlyEquip": true
     },
     "01112759": {
       "islot": "Ri",
@@ -83124,7 +83457,8 @@
       "incLUK": 2,
       "incPDD": 24,
       "incMDD": 24,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01112760": {
       "islot": "Ri",
@@ -83134,7 +83468,8 @@
       "incINT": 5,
       "incLUK": 5,
       "tuc": 2,
-      "setItemID": 155
+      "setItemID": 155,
+      "onlyEquip": true
     },
     "01112761": {
       "islot": "Ri",
@@ -83148,12 +83483,14 @@
       "incPDD": 30,
       "incMDD": 30,
       "incSpeed": 5,
-      "setItemID": 157
+      "setItemID": 157,
+      "onlyEquip": true
     },
     "01112762": {
       "islot": "Ri",
       "reqLevel": 10,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01112763": {
       "islot": "Ri",
@@ -83161,7 +83498,8 @@
       "incSTR": 10,
       "incPAD": 10,
       "incMAD": 10,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01112764": {
       "islot": "Ri",
@@ -83169,19 +83507,22 @@
       "incSTR": 7,
       "incPAD": 7,
       "incMAD": 7,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01112765": {
       "islot": "Ri",
       "reqLevel": 10,
       "incSTR": 5,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01112766": {
       "islot": "Ri",
       "reqLevel": 10,
       "incSTR": 3,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01112767": {
       "islot": "Ri",
@@ -83189,7 +83530,8 @@
       "incLUK": 10,
       "incPAD": 10,
       "incMAD": 10,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01112768": {
       "islot": "Ri",
@@ -83197,19 +83539,22 @@
       "incLUK": 7,
       "incPAD": 7,
       "incMAD": 7,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01112769": {
       "islot": "Ri",
       "reqLevel": 10,
       "incLUK": 5,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01112770": {
       "islot": "Ri",
       "reqLevel": 10,
       "incLUK": 3,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01112771": {
       "islot": "Ri",
@@ -83217,7 +83562,8 @@
       "incINT": 10,
       "incPAD": 10,
       "incMAD": 10,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01112772": {
       "islot": "Ri",
@@ -83225,19 +83571,22 @@
       "incINT": 7,
       "incPAD": 7,
       "incMAD": 7,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01112773": {
       "islot": "Ri",
       "reqLevel": 10,
       "incINT": 5,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01112774": {
       "islot": "Ri",
       "reqLevel": 10,
       "incINT": 3,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01112775": {
       "islot": "Ri",
@@ -83245,7 +83594,8 @@
       "incDEX": 10,
       "incPAD": 10,
       "incMAD": 10,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01112776": {
       "islot": "Ri",
@@ -83253,19 +83603,22 @@
       "incDEX": 7,
       "incPAD": 7,
       "incMAD": 7,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01112777": {
       "islot": "Ri",
       "reqLevel": 10,
       "incDEX": 5,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01112778": {
       "islot": "Ri",
       "reqLevel": 10,
       "incDEX": 3,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01112779": {
       "islot": "Ri",
@@ -83288,7 +83641,8 @@
       "incPAD": 2,
       "incPDD": 10,
       "incMDD": 10,
-      "incEVA": 10
+      "incEVA": 10,
+      "onlyEquip": true
     },
     "01112781": {
       "islot": "Ri",
@@ -83300,7 +83654,8 @@
       "incPAD": 2,
       "incPDD": 10,
       "incMDD": 10,
-      "incACC": 10
+      "incACC": 10,
+      "onlyEquip": true
     },
     "01112782": {
       "islot": "Ri",
@@ -83317,7 +83672,8 @@
       "incACC": 150,
       "incEVA": 150,
       "tuc": 2,
-      "setItemID": 159
+      "setItemID": 159,
+      "onlyEquip": true
     },
     "01112783": {
       "islot": "Ri",
@@ -83334,7 +83690,8 @@
       "incACC": 150,
       "incEVA": 150,
       "tuc": 2,
-      "setItemID": 160
+      "setItemID": 160,
+      "onlyEquip": true
     },
     "01112784": {
       "islot": "Ri",
@@ -83351,7 +83708,8 @@
       "incACC": 150,
       "incEVA": 150,
       "tuc": 2,
-      "setItemID": 161
+      "setItemID": 161,
+      "onlyEquip": true
     },
     "01112789": {
       "islot": "Ri",
@@ -83364,7 +83722,8 @@
       "incMAD": 2,
       "incPDD": 10,
       "incMDD": 10,
-      "incACC": 10
+      "incACC": 10,
+      "onlyEquip": true
     },
     "01112790": {
       "islot": "Ri",
@@ -83373,7 +83732,8 @@
       "incDEX": 4,
       "incINT": 4,
       "incLUK": 4,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01112791": {
       "islot": "Ri",
@@ -83384,14 +83744,16 @@
       "incLUK": 5,
       "incPAD": 1,
       "incMAD": 1,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01112792": {
       "islot": "Ri",
       "reqLevel": 120,
       "incPAD": 5,
       "incMAD": 5,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01112794": {
       "islot": "Ri",
@@ -83402,7 +83764,8 @@
       "incLUK": 6,
       "incPAD": 2,
       "incMAD": 2,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01112795": {
       "islot": "Ri",
@@ -83413,7 +83776,8 @@
       "incLUK": 7,
       "incPAD": 3,
       "incMAD": 3,
-      "tuc": 4
+      "tuc": 4,
+      "onlyEquip": true
     },
     "01112796": {
       "islot": "Ri",
@@ -83422,7 +83786,8 @@
       "incDEX": 3,
       "incINT": 3,
       "incLUK": 3,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01112803": {
       "islot": "Ri",
@@ -83476,7 +83841,8 @@
       "incINT": 1,
       "incLUK": 1,
       "incMHP": 100,
-      "incMMP": 100
+      "incMMP": 100,
+      "onlyEquip": true
     },
     "01112927": {
       "islot": "Ri",
@@ -83492,7 +83858,8 @@
       "incLUK": 5,
       "incACC": 30,
       "incEVA": 30,
-      "charmEXP": 30
+      "charmEXP": 30,
+      "onlyEquip": true
     },
     "01112951": {
       "islot": "Ri",
@@ -83508,7 +83875,8 @@
       "incEVA": 150,
       "incSpeed": 18,
       "incJump": 10,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01112952": {
       "islot": "Ri",
@@ -83524,7 +83892,8 @@
       "incEVA": 150,
       "incSpeed": 18,
       "incJump": 10,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01112965": {
       "islot": "Ri",
@@ -83548,7 +83917,8 @@
       "incPAD": 3,
       "incMAD": 3,
       "tuc": 2,
-      "setItemID": 174
+      "setItemID": 174,
+      "onlyEquip": true
     },
     "01113006": {
       "islot": "Ri",
@@ -83556,7 +83926,8 @@
       "incPAD": 1,
       "incMAD": 1,
       "tuc": 2,
-      "setItemID": 175
+      "setItemID": 175,
+      "onlyEquip": true
     },
     "01113011": {
       "islot": "Ri",
@@ -83568,7 +83939,8 @@
       "incPAD": 2,
       "incMAD": 2,
       "incPDD": 10,
-      "incMDD": 10
+      "incMDD": 10,
+      "onlyEquip": true
     },
     "01113012": {
       "islot": "Ri",
@@ -83581,7 +83953,8 @@
       "incPAD": 2,
       "incMAD": 2,
       "incPDD": 10,
-      "incMDD": 10
+      "incMDD": 10,
+      "onlyEquip": true
     },
     "01113013": {
       "islot": "Ri",
@@ -83594,7 +83967,8 @@
       "incMAD": 2,
       "incPDD": 10,
       "incMDD": 10,
-      "incACC": 50
+      "incACC": 50,
+      "onlyEquip": true
     },
     "01113014": {
       "islot": "Ri",
@@ -83605,7 +83979,8 @@
       "incLUK": 5,
       "incPAD": 2,
       "incMAD": 2,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01113015": {
       "islot": "Ri",
@@ -83614,7 +83989,8 @@
       "incDEX": 1,
       "incINT": 1,
       "incLUK": 1,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01113016": {
       "islot": "Ri",
@@ -83630,7 +84006,8 @@
       "incACC": 150,
       "incEVA": 150,
       "charmEXP": 90,
-      "setItemID": 219
+      "setItemID": 219,
+      "onlyEquip": true
     },
     "01113017": {
       "islot": "Ri",
@@ -83641,7 +84018,8 @@
       "incLUK": 5,
       "incPAD": 2,
       "incMAD": 2,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01113018": {
       "islot": "Ri",
@@ -83669,7 +84047,8 @@
       "incSpeed": 18,
       "incJump": 10,
       "tuc": 2,
-      "charmEXP": 80
+      "charmEXP": 80,
+      "onlyEquip": true
     },
     "01113022": {
       "islot": "Ri",
@@ -83678,7 +84057,8 @@
       "incDEX": 3,
       "incINT": 3,
       "incLUK": 3,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01113023": {
       "islot": "Ri",
@@ -83689,7 +84069,8 @@
       "incLUK": 3,
       "incPAD": 1,
       "incMAD": 1,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01113024": {
       "islot": "Ri",
@@ -83700,7 +84081,8 @@
       "incLUK": 3,
       "incPAD": 2,
       "incMAD": 2,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01113025": {
       "islot": "Ri",
@@ -83711,7 +84093,8 @@
       "incLUK": 5,
       "incPAD": 2,
       "incMAD": 2,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01113026": {
       "islot": "Ri",
@@ -83722,7 +84105,8 @@
       "incLUK": 6,
       "incPAD": 3,
       "incMAD": 3,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01113027": {
       "islot": "Ri",
@@ -83731,7 +84115,8 @@
       "incDEX": 1,
       "incINT": 1,
       "incLUK": 1,
-      "tuc": 4
+      "tuc": 4,
+      "onlyEquip": true
     },
     "01113034": {
       "islot": "Ri",
@@ -83743,7 +84128,8 @@
       "incPAD": 3,
       "incMAD": 3,
       "tuc": 2,
-      "setItemID": 275
+      "setItemID": 275,
+      "onlyEquip": true
     },
     "01113035": {
       "islot": "Ri",
@@ -83752,7 +84138,8 @@
       "incDEX": 3,
       "incINT": 3,
       "incLUK": 3,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01113036": {
       "islot": "Ri",
@@ -83763,7 +84150,8 @@
       "incLUK": 5,
       "incPAD": 1,
       "incMAD": 1,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01113037": {
       "islot": "Ri",
@@ -83777,7 +84165,8 @@
       "incPAD": 1,
       "incMAD": 1,
       "incPDD": 10,
-      "incMDD": 10
+      "incMDD": 10,
+      "onlyEquip": true
     },
     "01113038": {
       "islot": "Ri",
@@ -83790,7 +84179,8 @@
       "incMMP": 60,
       "incPDD": 200,
       "incMDD": 200,
-      "setItemID": 276
+      "setItemID": 276,
+      "onlyEquip": true
     },
     "01113039": {
       "islot": "Ri",
@@ -83807,7 +84197,8 @@
       "incMDD": 50,
       "incACC": 15,
       "incEVA": 15,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01113040": {
       "islot": "Ri",
@@ -83818,7 +84209,8 @@
       "incLUK": 7,
       "incPAD": 3,
       "incMAD": 3,
-      "tuc": 4
+      "tuc": 4,
+      "onlyEquip": true
     },
     "01113041": {
       "islot": "Ri",
@@ -83827,7 +84219,8 @@
       "incDEX": 3,
       "incINT": 3,
       "incLUK": 3,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01113045": {
       "islot": "Ri",
@@ -83851,7 +84244,8 @@
       "incPAD": 1,
       "incMAD": 1,
       "incPDD": 20,
-      "incMDD": 20
+      "incMDD": 20,
+      "onlyEquip": true
     },
     "01113049": {
       "islot": "Ri",
@@ -83877,7 +84271,8 @@
       "incPDD": 17,
       "incMDD": 17,
       "tuc": 3,
-      "setItemID": 297
+      "setItemID": 297,
+      "onlyEquip": true
     },
     "01113054": {
       "islot": "Ri",
@@ -83891,7 +84286,8 @@
       "incPDD": 25,
       "incMDD": 25,
       "tuc": 3,
-      "setItemID": 298
+      "setItemID": 298,
+      "onlyEquip": true
     },
     "01113055": {
       "islot": "Ri",
@@ -83907,7 +84303,8 @@
       "incPDD": 150,
       "incMDD": 150,
       "tuc": 2,
-      "setItemID": 287
+      "setItemID": 287,
+      "onlyEquip": true
     },
     "01113057": {
       "islot": "Ri",
@@ -83941,7 +84338,8 @@
       "reqLevel": 100,
       "incSTR": 4,
       "incPDD": 22,
-      "incMDD": 22
+      "incMDD": 22,
+      "onlyEquip": true
     },
     "01113060": {
       "islot": "Ri",
@@ -83951,7 +84349,8 @@
       "incINT": 2,
       "incLUK": 2,
       "incMHP": 150,
-      "incMMP": 150
+      "incMMP": 150,
+      "onlyEquip": true
     },
     "01113061": {
       "islot": "Ri",
@@ -83962,7 +84361,8 @@
       "incLUK": 2,
       "incPAD": 1,
       "incACC": 15,
-      "incEVA": 15
+      "incEVA": 15,
+      "onlyEquip": true
     },
     "01113062": {
       "islot": "Ri",
@@ -83971,7 +84371,8 @@
       "incMMP": 50,
       "incPAD": 1,
       "incPDD": 50,
-      "incMDD": 50
+      "incMDD": 50,
+      "onlyEquip": true
     },
     "01113063": {
       "islot": "Ri",
@@ -83985,7 +84386,8 @@
       "incEVA": 75,
       "tuc": 2,
       "charmEXP": 80,
-      "setItemID": 305
+      "setItemID": 305,
+      "onlyEquip": true
     },
     "01113064": {
       "islot": "Ri",
@@ -84000,7 +84402,8 @@
       "incACC": 75,
       "tuc": 2,
       "charmEXP": 80,
-      "setItemID": 305
+      "setItemID": 305,
+      "onlyEquip": true
     },
     "01113065": {
       "islot": "Ri",
@@ -84015,7 +84418,8 @@
       "incACC": 75,
       "tuc": 2,
       "charmEXP": 80,
-      "setItemID": 306
+      "setItemID": 306,
+      "onlyEquip": true
     },
     "01113066": {
       "islot": "Ri",
@@ -84029,7 +84433,8 @@
       "incEVA": 75,
       "tuc": 2,
       "charmEXP": 80,
-      "setItemID": 306
+      "setItemID": 306,
+      "onlyEquip": true
     },
     "01113067": {
       "islot": "Ri",
@@ -84040,7 +84445,8 @@
       "incLUK": 6,
       "incPDD": 28,
       "incMDD": 28,
-      "tuc": 3
+      "tuc": 3,
+      "onlyEquip": true
     },
     "01113068": {
       "islot": "Ri",
@@ -84075,7 +84481,8 @@
       "incMAD": 1,
       "incPDD": 100,
       "incMDD": 100,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01113071": {
       "islot": "Ri",
@@ -84106,7 +84513,8 @@
       "incEVA": 25,
       "incSpeed": 5,
       "tuc": 2,
-      "setItemID": 315
+      "setItemID": 315,
+      "onlyEquip": true
     },
     "01113073": {
       "islot": "Ri",
@@ -84124,7 +84532,8 @@
       "incACC": 50,
       "incEVA": 50,
       "tuc": 3,
-      "setItemID": 316
+      "setItemID": 316,
+      "onlyEquip": true
     },
     "01113074": {
       "islot": "Ri",
@@ -84143,7 +84552,8 @@
       "incEVA": 100,
       "incSpeed": 10,
       "tuc": 5,
-      "setItemID": 317
+      "setItemID": 317,
+      "onlyEquip": true
     },
     "01113075": {
       "islot": "Ri",
@@ -84162,7 +84572,8 @@
       "incEVA": 100,
       "incSpeed": 10,
       "tuc": 7,
-      "setItemID": 318
+      "setItemID": 318,
+      "onlyEquip": true
     },
     "01113076": {
       "islot": "Ri",
@@ -84176,7 +84587,8 @@
       "incPAD": 1,
       "incMAD": 1,
       "incPDD": 50,
-      "incMDD": 50
+      "incMDD": 50,
+      "onlyEquip": true
     },
     "01113077": {
       "islot": "Ri",
@@ -84190,7 +84602,8 @@
       "incPAD": 10,
       "incMAD": 10,
       "incPDD": 600,
-      "incMDD": 600
+      "incMDD": 600,
+      "onlyEquip": true
     },
     "01113078": {
       "islot": "Ri",
@@ -84209,7 +84622,8 @@
       "incEVA": 100,
       "incSpeed": 10,
       "tuc": 7,
-      "setItemID": 318
+      "setItemID": 318,
+      "onlyEquip": true
     },
     "01113079": {
       "islot": "Ri",
@@ -84222,7 +84636,8 @@
       "incPAD": 1,
       "incPDD": 100,
       "tuc": 2,
-      "setItemID": 323
+      "setItemID": 323,
+      "onlyEquip": true
     },
     "01113080": {
       "islot": "Ri",
@@ -84235,7 +84650,8 @@
       "incMAD": 1,
       "incMDD": 100,
       "tuc": 2,
-      "setItemID": 323
+      "setItemID": 323,
+      "onlyEquip": true
     },
     "01113081": {
       "islot": "Ri",
@@ -84248,7 +84664,8 @@
       "incPAD": 1,
       "incPDD": 100,
       "tuc": 2,
-      "setItemID": 324
+      "setItemID": 324,
+      "onlyEquip": true
     },
     "01113082": {
       "islot": "Ri",
@@ -84261,7 +84678,8 @@
       "incMAD": 1,
       "incMDD": 100,
       "tuc": 2,
-      "setItemID": 324
+      "setItemID": 324,
+      "onlyEquip": true
     },
     "01113085": {
       "islot": "Ri",
@@ -84274,7 +84692,8 @@
       "incPAD": 2,
       "incPDD": 150,
       "tuc": 2,
-      "setItemID": 331
+      "setItemID": 331,
+      "onlyEquip": true
     },
     "01113086": {
       "islot": "Ri",
@@ -84287,7 +84706,8 @@
       "incMAD": 2,
       "incMDD": 150,
       "tuc": 2,
-      "setItemID": 331
+      "setItemID": 331,
+      "onlyEquip": true
     },
     "01113087": {
       "islot": "Ri",
@@ -84300,7 +84720,8 @@
       "incPAD": 2,
       "incPDD": 150,
       "tuc": 2,
-      "setItemID": 332
+      "setItemID": 332,
+      "onlyEquip": true
     },
     "01113088": {
       "islot": "Ri",
@@ -84313,7 +84734,8 @@
       "incMAD": 2,
       "incMDD": 150,
       "tuc": 2,
-      "setItemID": 332
+      "setItemID": 332,
+      "onlyEquip": true
     },
     "01113089": {
       "islot": "Ri",
@@ -84330,7 +84752,8 @@
       "incMDD": 140,
       "tuc": 2,
       "charmEXP": 60,
-      "setItemID": 329
+      "setItemID": 329,
+      "onlyEquip": true
     },
     "01113091": {
       "islot": "Ri",
@@ -84344,7 +84767,8 @@
       "incPDD": 25,
       "incMDD": 25,
       "incSpeed": 5,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01113093": {
       "islot": "Ri",
@@ -84370,7 +84794,8 @@
       "incPAD": 7,
       "incMAD": 7,
       "incPDD": 300,
-      "incMDD": 300
+      "incMDD": 300,
+      "onlyEquip": true
     },
     "01113096": {
       "islot": "Ri",
@@ -84385,7 +84810,8 @@
       "incMAD": 4,
       "incPDD": 100,
       "incMDD": 100,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01113098": {
       "islot": "Ri",
@@ -84713,7 +85139,8 @@
       "incSpeed": 18,
       "incJump": 10,
       "tuc": 2,
-      "charmEXP": 80
+      "charmEXP": 80,
+      "onlyEquip": true
     },
     "01113133": {
       "islot": "Ri",
@@ -84777,7 +85204,8 @@
       "incPAD": 2,
       "incMAD": 2,
       "tuc": 3,
-      "setItemID": 462
+      "setItemID": 462,
+      "onlyEquip": true
     },
     "01113155": {
       "islot": "Ri",
@@ -84793,7 +85221,8 @@
       "incPDD": 150,
       "incMDD": 150,
       "tuc": 2,
-      "setItemID": 473
+      "setItemID": 473,
+      "onlyEquip": true
     },
     "01113162": {
       "islot": "Ri",
@@ -84864,7 +85293,8 @@
       "incSpeed": 18,
       "incJump": 10,
       "tuc": 2,
-      "charmEXP": 80
+      "charmEXP": 80,
+      "onlyEquip": true
     },
     "01113176": {
       "islot": "Ri",
@@ -84875,7 +85305,8 @@
       "incLUK": 5,
       "incPAD": 1,
       "incMAD": 1,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01113180": {
       "islot": "Ri",
@@ -84886,7 +85317,8 @@
       "incINT": 5,
       "incLUK": 5,
       "incPAD": 5,
-      "incMAD": 5
+      "incMAD": 5,
+      "onlyEquip": true
     },
     "01113181": {
       "islot": "Ri",
@@ -84897,7 +85329,8 @@
       "incINT": 5,
       "incLUK": 5,
       "incPAD": 5,
-      "incMAD": 5
+      "incMAD": 5,
+      "onlyEquip": true
     },
     "01113185": {
       "islot": "Ri",
@@ -84926,7 +85359,8 @@
       "incLUK": 7,
       "incPAD": 3,
       "incMAD": 3,
-      "tuc": 4
+      "tuc": 4,
+      "onlyEquip": true
     },
     "01113188": {
       "islot": "Ri",
@@ -84935,7 +85369,8 @@
       "incDEX": 3,
       "incINT": 3,
       "incLUK": 3,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01113210": {
       "islot": "Ri",
@@ -84951,7 +85386,8 @@
       "incPDD": 50,
       "incMDD": 50,
       "tuc": 3,
-      "setItemID": 568
+      "setItemID": 568,
+      "onlyEquip": true
     },
     "01113218": {
       "islot": "Ri",
@@ -84964,7 +85400,8 @@
       "incMAD": 2,
       "incPDD": 30,
       "incMDD": 30,
-      "setItemID": 578
+      "setItemID": 578,
+      "onlyEquip": true
     },
     "01113219": {
       "islot": "Ri",
@@ -84995,7 +85432,8 @@
       "incPAD": 1,
       "incMAD": 1,
       "incPDD": 10,
-      "incMDD": 10
+      "incMDD": 10,
+      "onlyEquip": true
     },
     "01113222": {
       "islot": "Ri",
@@ -85065,7 +85503,8 @@
       "incPAD": 2,
       "incMAD": 2,
       "incPDD": 10,
-      "incMDD": 10
+      "incMDD": 10,
+      "onlyEquip": true
     },
     "01113229": {
       "islot": "Ri",
@@ -85097,7 +85536,8 @@
       "incMHP": 3000,
       "incMMP": 3000,
       "incPAD": 20,
-      "incMAD": 20
+      "incMAD": 20,
+      "onlyEquip": true
     },
     "01113235": {
       "islot": "Ri",
@@ -85135,7 +85575,8 @@
       "incMAD": 6,
       "incPDD": 550,
       "incMDD": 550,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01113238": {
       "islot": "Ri",
@@ -85151,7 +85592,8 @@
       "incMAD": 6,
       "incPDD": 550,
       "incMDD": 550,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01113239": {
       "islot": "Ri",
@@ -85167,7 +85609,8 @@
       "incMAD": 6,
       "incPDD": 550,
       "incMDD": 550,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01113240": {
       "islot": "Ri",
@@ -85183,7 +85626,8 @@
       "incMAD": 6,
       "incPDD": 550,
       "incMDD": 550,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01113241": {
       "islot": "Ri",
@@ -85199,7 +85643,8 @@
       "incMAD": 6,
       "incPDD": 550,
       "incMDD": 550,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01113242": {
       "islot": "Ri",
@@ -85371,7 +85816,8 @@
       "incSTR": 1,
       "incPDD": 10,
       "incMDD": 10,
-      "tuc": 4
+      "tuc": 4,
+      "onlyEquip": true
     },
     "01113259": {
       "islot": "Ri",
@@ -85379,7 +85825,8 @@
       "incDEX": 1,
       "incPDD": 10,
       "incMDD": 10,
-      "tuc": 4
+      "tuc": 4,
+      "onlyEquip": true
     },
     "01113260": {
       "islot": "Ri",
@@ -85387,7 +85834,8 @@
       "incINT": 1,
       "incPDD": 10,
       "incMDD": 10,
-      "tuc": 4
+      "tuc": 4,
+      "onlyEquip": true
     },
     "01113261": {
       "islot": "Ri",
@@ -85395,7 +85843,8 @@
       "incLUK": 1,
       "incPDD": 10,
       "incMDD": 10,
-      "tuc": 4
+      "tuc": 4,
+      "onlyEquip": true
     },
     "01113262": {
       "islot": "Ri",
@@ -85403,7 +85852,8 @@
       "incMHP": 50,
       "incPDD": 20,
       "incMDD": 20,
-      "tuc": 4
+      "tuc": 4,
+      "onlyEquip": true
     },
     "01113263": {
       "islot": "Ri",
@@ -85411,7 +85861,8 @@
       "incMMP": 50,
       "incPDD": 20,
       "incMDD": 20,
-      "tuc": 4
+      "tuc": 4,
+      "onlyEquip": true
     },
     "01113264": {
       "islot": "Ri",
@@ -85422,7 +85873,8 @@
       "incLUK": 3,
       "incPDD": 25,
       "incMDD": 25,
-      "tuc": 4
+      "tuc": 4,
+      "onlyEquip": true
     },
     "01113265": {
       "islot": "Ri",
@@ -85433,7 +85885,8 @@
       "incLUK": 5,
       "incPDD": 30,
       "incMDD": 30,
-      "tuc": 4
+      "tuc": 4,
+      "onlyEquip": true
     },
     "01113266": {
       "islot": "Ri",
@@ -85446,7 +85899,8 @@
       "incMAD": 3,
       "incPDD": 35,
       "incMDD": 35,
-      "tuc": 4
+      "tuc": 4,
+      "onlyEquip": true
     },
     "01113267": {
       "islot": "Ri",
@@ -85459,7 +85913,8 @@
       "incMAD": 5,
       "incPDD": 35,
       "incMDD": 35,
-      "tuc": 4
+      "tuc": 4,
+      "onlyEquip": true
     },
     "01113268": {
       "islot": "Ri",
@@ -85471,7 +85926,8 @@
       "incMHP": 10,
       "incMMP": 10,
       "charmEXP": 100,
-      "setItemID": 615
+      "setItemID": 615,
+      "onlyEquip": true
     },
     "01113269": {
       "islot": "Ri",
@@ -85488,7 +85944,8 @@
       "incEVA": 150,
       "incSpeed": 18,
       "incJump": 10,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01113273": {
       "islot": "Ri",
@@ -85539,7 +85996,8 @@
       "incDEX": 7,
       "incINT": 7,
       "incLUK": 7,
-      "tuc": 2
+      "tuc": 2,
+      "onlyEquip": true
     },
     "01113280": {
       "islot": "Ri",
@@ -85553,7 +86011,8 @@
       "incPAD": 3,
       "incMAD": 3,
       "incSpeed": 5,
-      "incJump": 5
+      "incJump": 5,
+      "onlyEquip": true
     },
     "01113281": {
       "islot": "Ri",
@@ -85567,7 +86026,8 @@
       "incPAD": 3,
       "incMAD": 3,
       "incSpeed": 5,
-      "incJump": 5
+      "incJump": 5,
+      "onlyEquip": true
     },
     "01113282": {
       "islot": "Ri",
@@ -85581,7 +86041,8 @@
       "incPAD": 2,
       "incMAD": 2,
       "tuc": 3,
-      "setItemID": 462
+      "setItemID": 462,
+      "onlyEquip": true
     },
     "01113283": {
       "islot": "Ri",
@@ -85593,7 +86054,8 @@
       "incPAD": 10,
       "incMAD": 10,
       "incPDD": 20,
-      "incMDD": 20
+      "incMDD": 20,
+      "onlyEquip": true
     },
     "01113286": {
       "islot": "Ri",
@@ -85622,7 +86084,8 @@
       "incLUK": 2,
       "incPAD": 2,
       "incMAD": 2,
-      "tuc": 13
+      "tuc": 13,
+      "onlyEquip": true
     },
     "01113292": {
       "islot": "Ri",
@@ -85667,7 +86130,8 @@
       "incLUK": 6,
       "incPAD": 6,
       "incMAD": 6,
-      "tuc": 14
+      "tuc": 14,
+      "onlyEquip": true
     },
     "01113301": {
       "islot": "Ri",
@@ -85677,7 +86141,8 @@
       "incINT": 20,
       "incLUK": 20,
       "incPAD": 20,
-      "incMAD": 20
+      "incMAD": 20,
+      "onlyEquip": true
     },
     "01113304": {
       "islot": "Ri",
@@ -85703,7 +86168,8 @@
       "incPDD": 100,
       "incMDD": 100,
       "tuc": 1,
-      "setItemID": 782
+      "setItemID": 782,
+      "onlyEquip": true
     },
     "01113306": {
       "islot": "Ri",
@@ -85717,7 +86183,8 @@
       "incPAD": 4,
       "incMAD": 4,
       "tuc": 3,
-      "setItemID": 677
+      "setItemID": 677,
+      "onlyEquip": true
     },
     "01113313": {
       "islot": "Ri",
@@ -85731,7 +86198,8 @@
       "incPAD": 2,
       "incMAD": 2,
       "tuc": 3,
-      "setItemID": 462
+      "setItemID": 462,
+      "onlyEquip": true
     },
     "01113316": {
       "islot": "Ri",
@@ -85745,7 +86213,8 @@
       "incPAD": 2,
       "incMAD": 2,
       "tuc": 3,
-      "setItemID": 869
+      "setItemID": 869,
+      "onlyEquip": true
     },
     "01113329": {
       "islot": "Ri",
@@ -85769,7 +86238,8 @@
       "incPAD": 10,
       "incMAD": 10,
       "incPDD": 10,
-      "incMDD": 10
+      "incMDD": 10,
+      "onlyEquip": true
     },
     "01113339": {
       "islot": "Ri",
@@ -85781,7 +86251,8 @@
       "incPAD": 2,
       "incMAD": 2,
       "tuc": 2,
-      "setItemID": 462
+      "setItemID": 462,
+      "onlyEquip": true
     },
     "01113341": {
       "islot": "Ri",
@@ -85795,7 +86266,8 @@
       "incPAD": 5,
       "incMAD": 5,
       "tuc": 4,
-      "setItemID": 1055
+      "setItemID": 1055,
+      "onlyEquip": true
     },
     "01113342": {
       "islot": "Ri",
@@ -85807,7 +86279,8 @@
       "incPAD": 2,
       "incMAD": 2,
       "tuc": 3,
-      "setItemID": 462
+      "setItemID": 462,
+      "onlyEquip": true
     },
     "01113344": {
       "islot": "Ri",
@@ -85931,7 +86404,8 @@
       "incPAD": 5,
       "incMAD": 5,
       "tuc": 4,
-      "setItemID": 1055
+      "setItemID": 1055,
+      "onlyEquip": true
     },
     "01113361": {
       "islot": "Ri",
@@ -86506,7 +86980,8 @@
     "01114300": {
       "islot": "Ri",
       "reqLevel": 120,
-      "tuc": 20
+      "tuc": 20,
+      "onlyEquip": true
     },
     "01114301": {
       "islot": "Ri",
@@ -86518,7 +86993,8 @@
       "incMHP": 2000,
       "incMMP": 2000,
       "incPAD": 20,
-      "incMAD": 20
+      "incMAD": 20,
+      "onlyEquip": true
     },
     "01114302": {
       "islot": "Ri",
@@ -86531,12 +87007,14 @@
       "incMMP": 500,
       "incPAD": 10,
       "incMAD": 10,
-      "setItemID": -1
+      "setItemID": -1,
+      "onlyEquip": true
     },
     "01114303": {
       "islot": "Ri",
       "reqLevel": 120,
-      "tuc": 20
+      "tuc": 20,
+      "onlyEquip": true
     },
     "01114304": {
       "islot": "Ri",
@@ -86548,7 +87026,8 @@
       "incMHP": 2000,
       "incMMP": 2000,
       "incPAD": 20,
-      "incMAD": 20
+      "incMAD": 20,
+      "onlyEquip": true
     },
     "01114305": {
       "islot": "Ri",
@@ -86560,7 +87039,8 @@
       "incMHP": 3000,
       "incMMP": 3000,
       "incPAD": 20,
-      "incMAD": 20
+      "incMAD": 20,
+      "onlyEquip": true
     },
     "01114306": {
       "islot": "Ri",
@@ -86572,7 +87052,8 @@
       "incMHP": 3000,
       "incMMP": 3000,
       "incPAD": 20,
-      "incMAD": 20
+      "incMAD": 20,
+      "onlyEquip": true
     },
     "01114307": {
       "islot": "Ri",
@@ -86585,7 +87066,8 @@
       "incMMP": 1000,
       "incPAD": 10,
       "incMAD": 10,
-      "tuc": 3
+      "tuc": 3,
+      "onlyEquip": true
     },
     "01114308": {
       "islot": "Ri",
@@ -86597,7 +87079,8 @@
       "incMHP": 1000,
       "incMMP": 1000,
       "incPAD": 10,
-      "incMAD": 10
+      "incMAD": 10,
+      "onlyEquip": true
     },
     "01114309": {
       "islot": "Ri",
@@ -86609,7 +87092,8 @@
       "incMHP": 2000,
       "incMMP": 2000,
       "incPAD": 15,
-      "incMAD": 15
+      "incMAD": 15,
+      "onlyEquip": true
     },
     "01114310": {
       "islot": "Ri",
@@ -86621,7 +87105,8 @@
       "incMHP": 3000,
       "incMMP": 3000,
       "incPAD": 20,
-      "incMAD": 20
+      "incMAD": 20,
+      "onlyEquip": true
     },
     "01114311": {
       "islot": "Ri",
@@ -86633,7 +87118,8 @@
       "incMHP": 4000,
       "incMMP": 4000,
       "incPAD": 25,
-      "incMAD": 25
+      "incMAD": 25,
+      "onlyEquip": true
     },
     "01114312": {
       "islot": "Ri",
@@ -86657,7 +87143,8 @@
       "incMHP": 2000,
       "incMMP": 2000,
       "incPAD": 20,
-      "incMAD": 20
+      "incMAD": 20,
+      "onlyEquip": true
     },
     "01114314": {
       "islot": "Ri",
@@ -86669,7 +87156,8 @@
       "incMHP": 2000,
       "incMMP": 2000,
       "incPAD": 20,
-      "incMAD": 20
+      "incMAD": 20,
+      "onlyEquip": true
     },
     "01114315": {
       "islot": "Ri",
@@ -86681,7 +87169,8 @@
       "incMHP": 2000,
       "incMMP": 2000,
       "incPAD": 20,
-      "incMAD": 20
+      "incMAD": 20,
+      "onlyEquip": true
     },
     "01114316": {
       "islot": "Ri",
@@ -86693,7 +87182,8 @@
       "incMHP": 4000,
       "incMMP": 4000,
       "incPAD": 25,
-      "incMAD": 25
+      "incMAD": 25,
+      "onlyEquip": true
     },
     "01114318": {
       "islot": "Ri",
@@ -86706,7 +87196,8 @@
       "incMMP": 1000,
       "incPAD": 10,
       "incMAD": 10,
-      "tuc": 3
+      "tuc": 3,
+      "onlyEquip": true
     },
     "01114319": {
       "islot": "Ri",
@@ -86718,7 +87209,8 @@
       "incMHP": 1000,
       "incMMP": 1000,
       "incPAD": 10,
-      "incMAD": 10
+      "incMAD": 10,
+      "onlyEquip": true
     },
     "01114320": {
       "islot": "Ri",
@@ -86730,7 +87222,8 @@
       "incMHP": 2000,
       "incMMP": 2000,
       "incPAD": 15,
-      "incMAD": 15
+      "incMAD": 15,
+      "onlyEquip": true
     },
     "01114321": {
       "islot": "Ri",
@@ -86742,7 +87235,8 @@
       "incMHP": 3000,
       "incMMP": 3000,
       "incPAD": 20,
-      "incMAD": 20
+      "incMAD": 20,
+      "onlyEquip": true
     },
     "01114322": {
       "islot": "Ri",
@@ -86754,7 +87248,8 @@
       "incMHP": 4000,
       "incMMP": 4000,
       "incPAD": 25,
-      "incMAD": 25
+      "incMAD": 25,
+      "onlyEquip": true
     },
     "01114323": {
       "islot": "Ri",
@@ -86766,7 +87261,8 @@
       "incMHP": 2000,
       "incMMP": 2000,
       "incPAD": 20,
-      "incMAD": 20
+      "incMAD": 20,
+      "onlyEquip": true
     },
     "01114324": {
       "islot": "Ri",
@@ -86778,7 +87274,8 @@
       "incMHP": 4000,
       "incMMP": 4000,
       "incPAD": 25,
-      "incMAD": 25
+      "incMAD": 25,
+      "onlyEquip": true
     },
     "01114327": {
       "islot": "Ri",
@@ -87583,7 +88080,8 @@
       "charmEXP": 200,
       "reqSpecJobs": [
         1
-      ]
+      ],
+      "onlyEquip": true
     },
     "01092124": {
       "islot": "Si",
@@ -87596,7 +88094,8 @@
       "charmEXP": 200,
       "reqSpecJobs": [
         1
-      ]
+      ],
+      "onlyEquip": true
     },
     "01092125": {
       "islot": "Si",
@@ -87609,7 +88108,8 @@
       "charmEXP": 200,
       "reqSpecJobs": [
         1
-      ]
+      ],
+      "onlyEquip": true
     },
     "01092126": {
       "islot": "Si",
@@ -87622,7 +88122,8 @@
       "charmEXP": 200,
       "reqSpecJobs": [
         2
-      ]
+      ],
+      "onlyEquip": true
     },
     "01092127": {
       "islot": "Si",
@@ -87635,7 +88136,8 @@
       "charmEXP": 200,
       "reqSpecJobs": [
         2
-      ]
+      ],
+      "onlyEquip": true
     },
     "01092128": {
       "islot": "Si",
@@ -87648,7 +88150,8 @@
       "charmEXP": 200,
       "reqSpecJobs": [
         2
-      ]
+      ],
+      "onlyEquip": true
     },
     "01092129": {
       "islot": "Si",
@@ -87661,7 +88164,8 @@
       "charmEXP": 200,
       "reqSpecJobs": [
         4
-      ]
+      ],
+      "onlyEquip": true
     },
     "01092130": {
       "islot": "Si",
@@ -87674,7 +88178,8 @@
       "charmEXP": 200,
       "reqSpecJobs": [
         4
-      ]
+      ],
+      "onlyEquip": true
     },
     "01092131": {
       "islot": "Si",
@@ -87687,7 +88192,8 @@
       "charmEXP": 200,
       "reqSpecJobs": [
         4
-      ]
+      ],
+      "onlyEquip": true
     },
     "01092132": {
       "islot": "Si",
@@ -87697,7 +88203,8 @@
       "incDEX": 10,
       "incPAD": 7,
       "tuc": 5,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01092133": {
       "islot": "Si",
@@ -87707,7 +88214,8 @@
       "incDEX": 15,
       "incPAD": 7,
       "tuc": 5,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01092134": {
       "islot": "Si",
@@ -87717,7 +88225,8 @@
       "incDEX": 20,
       "incPAD": 7,
       "tuc": 5,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01092135": {
       "islot": "Si",
@@ -87730,7 +88239,8 @@
       "charmEXP": 200,
       "reqSpecJobs": [
         12
-      ]
+      ],
+      "onlyEquip": true
     },
     "01092136": {
       "islot": "Si",
@@ -87743,7 +88253,8 @@
       "charmEXP": 200,
       "reqSpecJobs": [
         12
-      ]
+      ],
+      "onlyEquip": true
     },
     "01092137": {
       "islot": "Si",
@@ -87756,7 +88267,8 @@
       "charmEXP": 200,
       "reqSpecJobs": [
         12
-      ]
+      ],
+      "onlyEquip": true
     },
     "01092138": {
       "islot": "Si",
@@ -87769,7 +88281,8 @@
       "charmEXP": 200,
       "reqSpecJobs": [
         22
-      ]
+      ],
+      "onlyEquip": true
     },
     "01092139": {
       "islot": "Si",
@@ -87782,7 +88295,8 @@
       "charmEXP": 200,
       "reqSpecJobs": [
         22
-      ]
+      ],
+      "onlyEquip": true
     },
     "01092140": {
       "islot": "Si",
@@ -87795,7 +88309,8 @@
       "charmEXP": 200,
       "reqSpecJobs": [
         22
-      ]
+      ],
+      "onlyEquip": true
     },
     "01092141": {
       "islot": "Si",
@@ -87808,7 +88323,8 @@
       "charmEXP": 200,
       "reqSpecJobs": [
         32
-      ]
+      ],
+      "onlyEquip": true
     },
     "01092142": {
       "islot": "Si",
@@ -87821,7 +88337,8 @@
       "charmEXP": 200,
       "reqSpecJobs": [
         32
-      ]
+      ],
+      "onlyEquip": true
     },
     "01092143": {
       "islot": "Si",
@@ -87834,7 +88351,8 @@
       "charmEXP": 200,
       "reqSpecJobs": [
         32
-      ]
+      ],
+      "onlyEquip": true
     },
     "01098000": {
       "islot": "Si",
@@ -87960,7 +88478,8 @@
       "incSTR": 10,
       "incDEX": 10,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01098013": {
       "islot": "Si",
@@ -87969,7 +88488,8 @@
       "incSTR": 15,
       "incDEX": 15,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01098014": {
       "islot": "Si",
@@ -87978,7 +88498,8 @@
       "incSTR": 20,
       "incDEX": 20,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01099000": {
       "islot": "Si",
@@ -88203,7 +88724,8 @@
       "incMHP": 1000,
       "incMMP": 110,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01099024": {
       "islot": "Si",
@@ -88214,7 +88736,8 @@
       "incMHP": 1000,
       "incMMP": 110,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01099025": {
       "islot": "Si",
@@ -88225,7 +88748,8 @@
       "incMHP": 1000,
       "incMMP": 110,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01099026": {
       "islot": "Si",
@@ -88236,7 +88760,8 @@
       "incMHP": 1000,
       "incMMP": 110,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01099027": {
       "islot": "Si",
@@ -88247,7 +88772,8 @@
       "incMHP": 1000,
       "incMMP": 110,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01099028": {
       "islot": "Si",
@@ -88258,7 +88784,8 @@
       "incMHP": 1000,
       "incMMP": 110,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01099029": {
       "islot": "Si",
@@ -88269,7 +88796,8 @@
       "incMHP": 1000,
       "incMMP": 110,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01099030": {
       "islot": "Si",
@@ -88280,7 +88808,8 @@
       "incMHP": 1000,
       "incMMP": 110,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01099031": {
       "islot": "Si",
@@ -88291,7 +88820,8 @@
       "incMHP": 1000,
       "incMMP": 110,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01099032": {
       "islot": "Si",
@@ -88302,7 +88832,8 @@
       "incMHP": 1000,
       "incMMP": 110,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01099033": {
       "islot": "Si",
@@ -88313,7 +88844,8 @@
       "incMHP": 1000,
       "incMMP": 110,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01099034": {
       "islot": "Si",
@@ -88324,7 +88856,8 @@
       "incMHP": 1000,
       "incMMP": 110,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01070023": {
       "islot": "So",
@@ -95159,142 +95692,166 @@
       "reqLevel": 120,
       "incDEX": 20,
       "incPAD": 6,
-      "incMAD": 6
+      "incMAD": 6,
+      "onlyEquip": true
     },
     "01202024": {
       "islot": "Po",
       "reqLevel": 70,
       "incDEX": 12,
       "incPAD": 3,
-      "incMAD": 3
+      "incMAD": 3,
+      "onlyEquip": true
     },
     "01202025": {
       "islot": "Po",
       "reqLevel": 30,
       "incDEX": 8,
       "incPAD": 1,
-      "incMAD": 1
+      "incMAD": 1,
+      "onlyEquip": true
     },
     "01202026": {
       "islot": "Po",
-      "incDEX": 4
+      "incDEX": 4,
+      "onlyEquip": true
     },
     "01202027": {
       "islot": "Po",
       "reqLevel": 120,
       "incINT": 20,
       "incPAD": 6,
-      "incMAD": 6
+      "incMAD": 6,
+      "onlyEquip": true
     },
     "01202028": {
       "islot": "Po",
       "reqLevel": 70,
       "incINT": 12,
       "incPAD": 3,
-      "incMAD": 3
+      "incMAD": 3,
+      "onlyEquip": true
     },
     "01202029": {
       "islot": "Po",
       "reqLevel": 30,
       "incINT": 8,
       "incPAD": 1,
-      "incMAD": 1
+      "incMAD": 1,
+      "onlyEquip": true
     },
     "01202030": {
       "islot": "Po",
-      "incINT": 4
+      "incINT": 4,
+      "onlyEquip": true
     },
     "01202031": {
       "islot": "Po",
       "reqLevel": 120,
       "incSTR": 20,
       "incPAD": 6,
-      "incMAD": 6
+      "incMAD": 6,
+      "onlyEquip": true
     },
     "01202032": {
       "islot": "Po",
       "reqLevel": 70,
       "incSTR": 12,
       "incPAD": 3,
-      "incMAD": 3
+      "incMAD": 3,
+      "onlyEquip": true
     },
     "01202033": {
       "islot": "Po",
       "reqLevel": 30,
       "incSTR": 8,
       "incPAD": 1,
-      "incMAD": 1
+      "incMAD": 1,
+      "onlyEquip": true
     },
     "01202034": {
       "islot": "Po",
-      "incSTR": 4
+      "incSTR": 4,
+      "onlyEquip": true
     },
     "01202035": {
       "islot": "Po",
       "reqLevel": 120,
       "incLUK": 20,
       "incPAD": 6,
-      "incMAD": 6
+      "incMAD": 6,
+      "onlyEquip": true
     },
     "01202036": {
       "islot": "Po",
       "reqLevel": 70,
       "incLUK": 12,
       "incPAD": 3,
-      "incMAD": 3
+      "incMAD": 3,
+      "onlyEquip": true
     },
     "01202037": {
       "islot": "Po",
       "reqLevel": 30,
       "incLUK": 8,
       "incPAD": 1,
-      "incMAD": 1
+      "incMAD": 1,
+      "onlyEquip": true
     },
     "01202038": {
       "islot": "Po",
-      "incLUK": 4
+      "incLUK": 4,
+      "onlyEquip": true
     },
     "01202039": {
       "islot": "Po",
       "incDEX": 14,
       "incPAD": 4,
-      "incMAD": 4
+      "incMAD": 4,
+      "onlyEquip": true
     },
     "01202040": {
       "islot": "Po",
       "incINT": 14,
       "incPAD": 4,
-      "incMAD": 4
+      "incMAD": 4,
+      "onlyEquip": true
     },
     "01202041": {
       "islot": "Po",
       "incSTR": 14,
       "incPAD": 4,
-      "incMAD": 4
+      "incMAD": 4,
+      "onlyEquip": true
     },
     "01202042": {
       "islot": "Po",
       "incLUK": 14,
       "incPAD": 4,
-      "incMAD": 4
+      "incMAD": 4,
+      "onlyEquip": true
     },
     "01202043": {
       "islot": "Po",
       "incSTR": 2,
-      "incDEX": 1
+      "incDEX": 1,
+      "onlyEquip": true
     },
     "01202044": {
       "islot": "Po",
-      "incINT": 1
+      "incINT": 1,
+      "onlyEquip": true
     },
     "01202045": {
       "islot": "Po",
       "incINT": 2,
-      "incLUK": 1
+      "incLUK": 1,
+      "onlyEquip": true
     },
     "01202046": {
       "islot": "Po",
-      "incSTR": 1
+      "incSTR": 1,
+      "onlyEquip": true
     },
     "01202047": {
       "islot": "Po",
@@ -95389,124 +95946,144 @@
       "reqLevel": 120,
       "incDEX": 20,
       "incPAD": 6,
-      "incMAD": 6
+      "incMAD": 6,
+      "onlyEquip": true
     },
     "01202064": {
       "islot": "Po",
       "reqLevel": 70,
       "incDEX": 12,
       "incPAD": 3,
-      "incMAD": 3
+      "incMAD": 3,
+      "onlyEquip": true
     },
     "01202065": {
       "islot": "Po",
       "reqLevel": 30,
       "incDEX": 8,
       "incPAD": 1,
-      "incMAD": 1
+      "incMAD": 1,
+      "onlyEquip": true
     },
     "01202066": {
       "islot": "Po",
-      "incDEX": 4
+      "incDEX": 4,
+      "onlyEquip": true
     },
     "01202067": {
       "islot": "Po",
       "reqLevel": 120,
       "incINT": 20,
       "incPAD": 6,
-      "incMAD": 6
+      "incMAD": 6,
+      "onlyEquip": true
     },
     "01202068": {
       "islot": "Po",
       "reqLevel": 70,
       "incINT": 12,
       "incPAD": 3,
-      "incMAD": 3
+      "incMAD": 3,
+      "onlyEquip": true
     },
     "01202069": {
       "islot": "Po",
       "reqLevel": 30,
       "incINT": 8,
       "incPAD": 1,
-      "incMAD": 1
+      "incMAD": 1,
+      "onlyEquip": true
     },
     "01202070": {
       "islot": "Po",
-      "incINT": 4
+      "incINT": 4,
+      "onlyEquip": true
     },
     "01202071": {
       "islot": "Po",
       "reqLevel": 120,
       "incSTR": 20,
       "incPAD": 6,
-      "incMAD": 6
+      "incMAD": 6,
+      "onlyEquip": true
     },
     "01202072": {
       "islot": "Po",
       "reqLevel": 70,
       "incSTR": 12,
       "incPAD": 3,
-      "incMAD": 3
+      "incMAD": 3,
+      "onlyEquip": true
     },
     "01202073": {
       "islot": "Po",
       "reqLevel": 30,
       "incSTR": 8,
       "incPAD": 1,
-      "incMAD": 1
+      "incMAD": 1,
+      "onlyEquip": true
     },
     "01202074": {
       "islot": "Po",
-      "incSTR": 4
+      "incSTR": 4,
+      "onlyEquip": true
     },
     "01202075": {
       "islot": "Po",
       "reqLevel": 120,
       "incLUK": 20,
       "incPAD": 6,
-      "incMAD": 6
+      "incMAD": 6,
+      "onlyEquip": true
     },
     "01202076": {
       "islot": "Po",
       "reqLevel": 70,
       "incLUK": 12,
       "incPAD": 3,
-      "incMAD": 3
+      "incMAD": 3,
+      "onlyEquip": true
     },
     "01202077": {
       "islot": "Po",
       "reqLevel": 30,
       "incLUK": 8,
       "incPAD": 1,
-      "incMAD": 1
+      "incMAD": 1,
+      "onlyEquip": true
     },
     "01202078": {
       "islot": "Po",
-      "incLUK": 4
+      "incLUK": 4,
+      "onlyEquip": true
     },
     "01202079": {
       "islot": "Po",
       "incDEX": 14,
       "incPAD": 4,
-      "incMAD": 4
+      "incMAD": 4,
+      "onlyEquip": true
     },
     "01202080": {
       "islot": "Po",
       "incINT": 14,
       "incPAD": 4,
-      "incMAD": 4
+      "incMAD": 4,
+      "onlyEquip": true
     },
     "01202081": {
       "islot": "Po",
       "incSTR": 14,
       "incPAD": 4,
-      "incMAD": 4
+      "incMAD": 4,
+      "onlyEquip": true
     },
     "01202082": {
       "islot": "Po",
       "incLUK": 14,
       "incPAD": 4,
-      "incMAD": 4
+      "incMAD": 4,
+      "onlyEquip": true
     },
     "01202083": {
       "islot": "Po",
@@ -95516,7 +96093,8 @@
       "incINT": 22,
       "incLUK": 22,
       "incPAD": 7,
-      "incMAD": 7
+      "incMAD": 7,
+      "onlyEquip": true
     },
     "01202084": {
       "islot": "Po",
@@ -95526,7 +96104,8 @@
       "incINT": 16,
       "incLUK": 16,
       "incPAD": 5,
-      "incMAD": 5
+      "incMAD": 5,
+      "onlyEquip": true
     },
     "01202085": {
       "islot": "Po",
@@ -95536,7 +96115,8 @@
       "incINT": 12,
       "incLUK": 12,
       "incPAD": 4,
-      "incMAD": 4
+      "incMAD": 4,
+      "onlyEquip": true
     },
     "01202086": {
       "islot": "Po",
@@ -95545,21 +96125,24 @@
       "incINT": 6,
       "incLUK": 6,
       "incPAD": 1,
-      "incMAD": 1
+      "incMAD": 1,
+      "onlyEquip": true
     },
     "01202087": {
       "islot": "Po",
       "reqLevel": 30,
       "incPAD": 3,
       "incMAD": 3,
-      "setItemID": 174
+      "setItemID": 174,
+      "onlyEquip": true
     },
     "01202088": {
       "islot": "Po",
       "reqLevel": 30,
       "incPAD": 1,
       "incMAD": 1,
-      "setItemID": 175
+      "setItemID": 175,
+      "onlyEquip": true
     },
     "01202089": {
       "islot": "Po",
@@ -95568,7 +96151,8 @@
       "incINT": 24,
       "incLUK": 24,
       "incPAD": 8,
-      "incMAD": 8
+      "incMAD": 8,
+      "onlyEquip": true
     },
     "01202090": {
       "islot": "Po",
@@ -95577,7 +96161,8 @@
       "incINT": 24,
       "incLUK": 24,
       "incPAD": 8,
-      "incMAD": 8
+      "incMAD": 8,
+      "onlyEquip": true
     },
     "01202091": {
       "islot": "Po",
@@ -95586,31 +96171,36 @@
       "incINT": 24,
       "incLUK": 24,
       "incPAD": 8,
-      "incMAD": 8
+      "incMAD": 8,
+      "onlyEquip": true
     },
     "01202094": {
       "islot": "Po",
       "incSTR": 28,
       "incPAD": 12,
-      "incMAD": 12
+      "incMAD": 12,
+      "onlyEquip": true
     },
     "01202095": {
       "islot": "Po",
       "incDEX": 28,
       "incPAD": 12,
-      "incMAD": 12
+      "incMAD": 12,
+      "onlyEquip": true
     },
     "01202096": {
       "islot": "Po",
       "incINT": 28,
       "incPAD": 12,
-      "incMAD": 12
+      "incMAD": 12,
+      "onlyEquip": true
     },
     "01202097": {
       "islot": "Po",
       "incLUK": 28,
       "incPAD": 12,
-      "incMAD": 12
+      "incMAD": 12,
+      "onlyEquip": true
     },
     "01202118": {
       "islot": "Po",
@@ -95619,7 +96209,8 @@
       "incINT": 20,
       "incLUK": 20,
       "incPAD": 8,
-      "incMAD": 8
+      "incMAD": 8,
+      "onlyEquip": true
     },
     "01202119": {
       "islot": "Po",
@@ -95628,7 +96219,8 @@
       "incINT": 28,
       "incLUK": 28,
       "incPAD": 13,
-      "incMAD": 13
+      "incMAD": 13,
+      "onlyEquip": true
     },
     "01202122": {
       "islot": "Po",
@@ -95637,7 +96229,8 @@
       "incINT": 10,
       "incLUK": 10,
       "incPAD": 4,
-      "incMAD": 4
+      "incMAD": 4,
+      "onlyEquip": true
     },
     "01202123": {
       "islot": "Po",
@@ -95646,7 +96239,8 @@
       "incINT": 15,
       "incLUK": 15,
       "incPAD": 5,
-      "incMAD": 5
+      "incMAD": 5,
+      "onlyEquip": true
     },
     "01202124": {
       "islot": "Po",
@@ -95655,7 +96249,8 @@
       "incINT": 30,
       "incLUK": 30,
       "incPAD": 7,
-      "incMAD": 7
+      "incMAD": 7,
+      "onlyEquip": true
     },
     "01202133": {
       "islot": "Po",
@@ -95665,7 +96260,8 @@
       "incINT": 12,
       "incLUK": 12,
       "incPAD": 6,
-      "incMAD": 6
+      "incMAD": 6,
+      "onlyEquip": true
     },
     "01202134": {
       "islot": "Po",
@@ -95675,7 +96271,8 @@
       "incINT": 16,
       "incLUK": 16,
       "incPAD": 8,
-      "incMAD": 8
+      "incMAD": 8,
+      "onlyEquip": true
     },
     "01202135": {
       "islot": "Po",
@@ -95685,7 +96282,8 @@
       "incINT": 20,
       "incLUK": 20,
       "incPAD": 10,
-      "incMAD": 10
+      "incMAD": 10,
+      "onlyEquip": true
     },
     "01202136": {
       "islot": "Po",
@@ -95695,7 +96293,8 @@
       "incINT": 24,
       "incLUK": 24,
       "incPAD": 12,
-      "incMAD": 12
+      "incMAD": 12,
+      "onlyEquip": true
     },
     "01202137": {
       "islot": "Po",
@@ -95705,7 +96304,8 @@
       "incINT": 28,
       "incLUK": 28,
       "incPAD": 14,
-      "incMAD": 14
+      "incMAD": 14,
+      "onlyEquip": true
     },
     "01202138": {
       "islot": "Po",
@@ -95715,7 +96315,8 @@
       "incINT": 32,
       "incLUK": 32,
       "incPAD": 16,
-      "incMAD": 16
+      "incMAD": 16,
+      "onlyEquip": true
     },
     "01202139": {
       "islot": "Po",
@@ -95725,7 +96326,8 @@
       "incINT": 18,
       "incLUK": 18,
       "incPAD": 1,
-      "incMAD": 1
+      "incMAD": 1,
+      "onlyEquip": true
     },
     "01202160": {
       "islot": "Po",
@@ -95739,22 +96341,26 @@
     "01202161": {
       "islot": "Po",
       "incSTR": 15,
-      "incPAD": 4
+      "incPAD": 4,
+      "onlyEquip": true
     },
     "01202162": {
       "islot": "Po",
       "incINT": 15,
-      "incMAD": 4
+      "incMAD": 4,
+      "onlyEquip": true
     },
     "01202163": {
       "islot": "Po",
       "incLUK": 15,
-      "incPAD": 4
+      "incPAD": 4,
+      "onlyEquip": true
     },
     "01202164": {
       "islot": "Po",
       "incDEX": 15,
-      "incPAD": 4
+      "incPAD": 4,
+      "onlyEquip": true
     },
     "01202173": {
       "islot": "Po",
@@ -95765,7 +96371,8 @@
       "incLUK": 20,
       "incPAD": 10,
       "incMAD": 10,
-      "setItemID": 569
+      "setItemID": 569,
+      "onlyEquip": true
     },
     "01202174": {
       "islot": "Po",
@@ -95776,7 +96383,8 @@
       "incLUK": 20,
       "incPAD": 10,
       "incMAD": 10,
-      "setItemID": 569
+      "setItemID": 569,
+      "onlyEquip": true
     },
     "01202175": {
       "islot": "Po",
@@ -95787,7 +96395,8 @@
       "incLUK": 22,
       "incPAD": 12,
       "incMAD": 12,
-      "setItemID": 569
+      "setItemID": 569,
+      "onlyEquip": true
     },
     "01202181": {
       "islot": "Po",
@@ -95797,7 +96406,8 @@
       "incINT": 12,
       "incLUK": 12,
       "incPAD": 6,
-      "incMAD": 6
+      "incMAD": 6,
+      "onlyEquip": true
     },
     "01202182": {
       "islot": "Po",
@@ -95807,7 +96417,8 @@
       "incINT": 16,
       "incLUK": 16,
       "incPAD": 8,
-      "incMAD": 8
+      "incMAD": 8,
+      "onlyEquip": true
     },
     "01202183": {
       "islot": "Po",
@@ -95817,7 +96428,8 @@
       "incINT": 20,
       "incLUK": 20,
       "incPAD": 10,
-      "incMAD": 10
+      "incMAD": 10,
+      "onlyEquip": true
     },
     "01202184": {
       "islot": "Po",
@@ -95827,7 +96439,8 @@
       "incINT": 24,
       "incLUK": 24,
       "incPAD": 12,
-      "incMAD": 12
+      "incMAD": 12,
+      "onlyEquip": true
     },
     "01202185": {
       "islot": "Po",
@@ -95837,7 +96450,8 @@
       "incINT": 28,
       "incLUK": 28,
       "incPAD": 14,
-      "incMAD": 14
+      "incMAD": 14,
+      "onlyEquip": true
     },
     "01202186": {
       "islot": "Po",
@@ -95847,7 +96461,8 @@
       "incINT": 32,
       "incLUK": 32,
       "incPAD": 16,
-      "incMAD": 16
+      "incMAD": 16,
+      "onlyEquip": true
     },
     "01202187": {
       "islot": "Po",
@@ -95856,7 +96471,8 @@
       "incINT": 28,
       "incLUK": 28,
       "incPAD": 8,
-      "incMAD": 8
+      "incMAD": 8,
+      "onlyEquip": true
     },
     "01202188": {
       "islot": "Po",
@@ -95865,7 +96481,8 @@
       "incINT": 24,
       "incLUK": 24,
       "incPAD": 6,
-      "incMAD": 6
+      "incMAD": 6,
+      "onlyEquip": true
     },
     "01202189": {
       "islot": "Po",
@@ -95874,14 +96491,16 @@
       "incINT": 20,
       "incLUK": 20,
       "incPAD": 4,
-      "incMAD": 4
+      "incMAD": 4,
+      "onlyEquip": true
     },
     "01202193": {
       "islot": "Po",
       "incSTR": 20,
       "incDEX": 20,
       "incINT": 20,
-      "incLUK": 20
+      "incLUK": 20,
+      "onlyEquip": true
     },
     "01202200": {
       "islot": "Po",
@@ -95891,7 +96510,8 @@
       "incINT": 14,
       "incLUK": 14,
       "incPAD": 2,
-      "incMAD": 2
+      "incMAD": 2,
+      "onlyEquip": true
     },
     "01202215": {
       "islot": "Po",
@@ -95902,7 +96522,8 @@
       "incLUK": 20,
       "incPAD": 1,
       "incMAD": 1,
-      "setItemID": 594
+      "setItemID": 594,
+      "onlyEquip": true
     },
     "01202216": {
       "islot": "Po",
@@ -95913,7 +96534,8 @@
       "incLUK": 20,
       "incPAD": 1,
       "incMAD": 1,
-      "setItemID": 594
+      "setItemID": 594,
+      "onlyEquip": true
     },
     "01202217": {
       "islot": "Po",
@@ -95924,55 +96546,64 @@
       "incLUK": 20,
       "incPAD": 1,
       "incMAD": 1,
-      "setItemID": 594
+      "setItemID": 594,
+      "onlyEquip": true
     },
     "01202221": {
       "islot": "Po",
       "reqLevel": 35,
-      "incSTR": 4
+      "incSTR": 4,
+      "onlyEquip": true
     },
     "01202222": {
       "islot": "Po",
       "reqLevel": 35,
-      "incDEX": 4
+      "incDEX": 4,
+      "onlyEquip": true
     },
     "01202223": {
       "islot": "Po",
       "reqLevel": 35,
-      "incINT": 4
+      "incINT": 4,
+      "onlyEquip": true
     },
     "01202224": {
       "islot": "Po",
       "reqLevel": 35,
-      "incLUK": 4
+      "incLUK": 4,
+      "onlyEquip": true
     },
     "01202225": {
       "islot": "Po",
       "reqLevel": 40,
       "incSTR": 8,
       "incPAD": 5,
-      "incMAD": 5
+      "incMAD": 5,
+      "onlyEquip": true
     },
     "01202226": {
       "islot": "Po",
       "reqLevel": 40,
       "incDEX": 8,
       "incPAD": 5,
-      "incMAD": 5
+      "incMAD": 5,
+      "onlyEquip": true
     },
     "01202227": {
       "islot": "Po",
       "reqLevel": 40,
       "incINT": 8,
       "incPAD": 5,
-      "incMAD": 5
+      "incMAD": 5,
+      "onlyEquip": true
     },
     "01202228": {
       "islot": "Po",
       "reqLevel": 40,
       "incLUK": 8,
       "incPAD": 5,
-      "incMAD": 5
+      "incMAD": 5,
+      "onlyEquip": true
     },
     "01202229": {
       "islot": "Po",
@@ -95982,7 +96613,8 @@
       "incINT": 12,
       "incLUK": 12,
       "incPAD": 7,
-      "incMAD": 7
+      "incMAD": 7,
+      "onlyEquip": true
     },
     "01202230": {
       "islot": "Po",
@@ -95992,7 +96624,8 @@
       "incINT": 16,
       "incLUK": 16,
       "incPAD": 10,
-      "incMAD": 10
+      "incMAD": 10,
+      "onlyEquip": true
     },
     "01202231": {
       "islot": "Po",
@@ -96001,7 +96634,8 @@
       "incINT": 28,
       "incLUK": 28,
       "incPAD": 15,
-      "incMAD": 15
+      "incMAD": 15,
+      "onlyEquip": true
     },
     "01202232": {
       "islot": "Po",
@@ -96010,7 +96644,8 @@
       "incINT": 28,
       "incLUK": 28,
       "incPAD": 13,
-      "incMAD": 13
+      "incMAD": 13,
+      "onlyEquip": true
     },
     "01202233": {
       "islot": "Po",
@@ -96019,7 +96654,8 @@
       "incINT": 28,
       "incLUK": 28,
       "incPAD": 8,
-      "incMAD": 8
+      "incMAD": 8,
+      "onlyEquip": true
     },
     "01202234": {
       "islot": "Po",
@@ -96028,7 +96664,8 @@
       "incINT": 24,
       "incLUK": 24,
       "incPAD": 6,
-      "incMAD": 6
+      "incMAD": 6,
+      "onlyEquip": true
     },
     "01202235": {
       "islot": "Po",
@@ -96037,7 +96674,8 @@
       "incINT": 20,
       "incLUK": 20,
       "incPAD": 4,
-      "incMAD": 4
+      "incMAD": 4,
+      "onlyEquip": true
     },
     "01202236": {
       "islot": "Po",
@@ -96046,7 +96684,8 @@
       "incINT": 30,
       "incLUK": 30,
       "incPAD": 10,
-      "incMAD": 10
+      "incMAD": 10,
+      "onlyEquip": true
     },
     "01202237": {
       "islot": "Po",
@@ -96054,7 +96693,8 @@
       "incSTR": 20,
       "incPAD": 7,
       "incMAD": 7,
-      "setItemID": 630
+      "setItemID": 630,
+      "onlyEquip": true
     },
     "01202238": {
       "islot": "Po",
@@ -96062,7 +96702,8 @@
       "incLUK": 20,
       "incPAD": 7,
       "incMAD": 7,
-      "setItemID": 630
+      "setItemID": 630,
+      "onlyEquip": true
     },
     "01202239": {
       "islot": "Po",
@@ -96070,7 +96711,8 @@
       "incINT": 20,
       "incPAD": 7,
       "incMAD": 7,
-      "setItemID": 630
+      "setItemID": 630,
+      "onlyEquip": true
     },
     "01202240": {
       "islot": "Po",
@@ -96078,7 +96720,8 @@
       "incDEX": 20,
       "incPAD": 7,
       "incMAD": 7,
-      "setItemID": 630
+      "setItemID": 630,
+      "onlyEquip": true
     },
     "01202247": {
       "islot": "Po",
@@ -96087,7 +96730,8 @@
       "incINT": 30,
       "incLUK": 30,
       "incPAD": 10,
-      "incMAD": 10
+      "incMAD": 10,
+      "onlyEquip": true
     },
     "01202248": {
       "islot": "Po",
@@ -96118,7 +96762,8 @@
       "reqLevel": 30,
       "incPAD": 3,
       "incMAD": 3,
-      "setItemID": 174
+      "setItemID": 174,
+      "onlyEquip": true
     },
     "01202268": {
       "islot": "Po",
@@ -96128,7 +96773,8 @@
       "incINT": 20,
       "incLUK": 20,
       "incPAD": 7,
-      "incMAD": 7
+      "incMAD": 7,
+      "onlyEquip": true
     },
     "01202269": {
       "islot": "Po",
@@ -96138,7 +96784,8 @@
       "incINT": 20,
       "incLUK": 20,
       "incPAD": 7,
-      "incMAD": 7
+      "incMAD": 7,
+      "onlyEquip": true
     },
     "01202270": {
       "islot": "Po",
@@ -96148,7 +96795,8 @@
       "incINT": 20,
       "incLUK": 20,
       "incPAD": 7,
-      "incMAD": 7
+      "incMAD": 7,
+      "onlyEquip": true
     },
     "01202271": {
       "islot": "Po",
@@ -96158,7 +96806,8 @@
       "incINT": 20,
       "incLUK": 20,
       "incPAD": 7,
-      "incMAD": 7
+      "incMAD": 7,
+      "onlyEquip": true
     },
     "01202272": {
       "islot": "Po",
@@ -96168,7 +96817,8 @@
       "incINT": 20,
       "incLUK": 20,
       "incPAD": 7,
-      "incMAD": 7
+      "incMAD": 7,
+      "onlyEquip": true
     },
     "01202273": {
       "islot": "Po",
@@ -96178,7 +96828,8 @@
       "incINT": 20,
       "incLUK": 20,
       "incPAD": 7,
-      "incMAD": 7
+      "incMAD": 7,
+      "onlyEquip": true
     },
     "01202274": {
       "islot": "Po",
@@ -96188,7 +96839,8 @@
       "incINT": 20,
       "incLUK": 20,
       "incPAD": 7,
-      "incMAD": 7
+      "incMAD": 7,
+      "onlyEquip": true
     },
     "01202275": {
       "islot": "Po",
@@ -96198,7 +96850,8 @@
       "incINT": 20,
       "incLUK": 20,
       "incPAD": 7,
-      "incMAD": 7
+      "incMAD": 7,
+      "onlyEquip": true
     },
     "01202281": {
       "islot": "Po",
@@ -96208,7 +96861,8 @@
       "incINT": 7,
       "incLUK": 7,
       "incPAD": 7,
-      "incMAD": 7
+      "incMAD": 7,
+      "onlyEquip": true
     },
     "01202287": {
       "islot": "Po",
@@ -96218,7 +96872,8 @@
       "incINT": 20,
       "incLUK": 20,
       "incPAD": 5,
-      "incMAD": 5
+      "incMAD": 5,
+      "onlyEquip": true
     },
     "01202288": {
       "islot": "Po",
@@ -96228,7 +96883,8 @@
       "incINT": 20,
       "incLUK": 20,
       "incPAD": 10,
-      "incMAD": 10
+      "incMAD": 10,
+      "onlyEquip": true
     },
     "01202289": {
       "islot": "Po",
@@ -96238,7 +96894,8 @@
       "incINT": 20,
       "incLUK": 20,
       "incPAD": 10,
-      "incMAD": 10
+      "incMAD": 10,
+      "onlyEquip": true
     },
     "01202292": {
       "islot": "Po",
@@ -96248,7 +96905,8 @@
       "incINT": 15,
       "incLUK": 15,
       "incPAD": 5,
-      "incMAD": 5
+      "incMAD": 5,
+      "onlyEquip": true
     },
     "01202293": {
       "islot": "Po",
@@ -96258,7 +96916,8 @@
       "incINT": 15,
       "incLUK": 15,
       "incPAD": 5,
-      "incMAD": 5
+      "incMAD": 5,
+      "onlyEquip": true
     },
     "01202294": {
       "islot": "Po",
@@ -96268,7 +96927,8 @@
       "incINT": 15,
       "incLUK": 15,
       "incPAD": 5,
-      "incMAD": 5
+      "incMAD": 5,
+      "onlyEquip": true
     },
     "01202305": {
       "islot": "Po",
@@ -96279,7 +96939,8 @@
       "incLUK": 7,
       "incPAD": 7,
       "incMAD": 7,
-      "setItemID": 934
+      "setItemID": 934,
+      "onlyEquip": true
     },
     "01202306": {
       "islot": "Po",
@@ -96290,7 +96951,8 @@
       "incLUK": 7,
       "incPAD": 7,
       "incMAD": 7,
-      "setItemID": 934
+      "setItemID": 934,
+      "onlyEquip": true
     },
     "01202307": {
       "islot": "Po",
@@ -96301,7 +96963,8 @@
       "incLUK": 7,
       "incPAD": 7,
       "incMAD": 7,
-      "setItemID": 934
+      "setItemID": 934,
+      "onlyEquip": true
     },
     "01202308": {
       "islot": "Po",
@@ -96311,7 +96974,8 @@
       "incINT": 20,
       "incLUK": 20,
       "incPAD": 7,
-      "incMAD": 7
+      "incMAD": 7,
+      "onlyEquip": true
     },
     "01202309": {
       "islot": "Po",
@@ -96321,7 +96985,8 @@
       "incINT": 20,
       "incLUK": 20,
       "incPAD": 7,
-      "incMAD": 7
+      "incMAD": 7,
+      "onlyEquip": true
     },
     "01202310": {
       "islot": "Po",
@@ -96331,7 +96996,8 @@
       "incINT": 20,
       "incLUK": 20,
       "incPAD": 7,
-      "incMAD": 7
+      "incMAD": 7,
+      "onlyEquip": true
     },
     "01202311": {
       "islot": "Po",
@@ -96341,7 +97007,8 @@
       "incINT": 20,
       "incLUK": 20,
       "incPAD": 7,
-      "incMAD": 7
+      "incMAD": 7,
+      "onlyEquip": true
     },
     "01202312": {
       "islot": "Po",
@@ -96351,7 +97018,8 @@
       "incINT": 20,
       "incLUK": 20,
       "incPAD": 7,
-      "incMAD": 7
+      "incMAD": 7,
+      "onlyEquip": true
     },
     "01202313": {
       "islot": "Po",
@@ -96361,7 +97029,8 @@
       "incINT": 20,
       "incLUK": 20,
       "incPAD": 7,
-      "incMAD": 7
+      "incMAD": 7,
+      "onlyEquip": true
     },
     "01202314": {
       "islot": "Po",
@@ -96371,7 +97040,8 @@
       "incINT": 20,
       "incLUK": 20,
       "incPAD": 7,
-      "incMAD": 7
+      "incMAD": 7,
+      "onlyEquip": true
     },
     "01202315": {
       "islot": "Po",
@@ -96381,14 +97051,16 @@
       "incINT": 20,
       "incLUK": 20,
       "incPAD": 7,
-      "incMAD": 7
+      "incMAD": 7,
+      "onlyEquip": true
     },
     "01202316": {
       "islot": "Po",
       "incSTR": 20,
       "incDEX": 20,
       "incINT": 20,
-      "incLUK": 20
+      "incLUK": 20,
+      "onlyEquip": true
     },
     "01202317": {
       "islot": "Po",
@@ -96399,7 +97071,8 @@
       "incLUK": 25,
       "incPAD": 12,
       "incMAD": 12,
-      "setItemID": 1056
+      "setItemID": 1056,
+      "onlyEquip": true
     },
     "01202318": {
       "islot": "Po",
@@ -96410,7 +97083,8 @@
       "incLUK": 25,
       "incPAD": 12,
       "incMAD": 12,
-      "setItemID": 1056
+      "setItemID": 1056,
+      "onlyEquip": true
     },
     "01202319": {
       "islot": "Po",
@@ -96421,7 +97095,8 @@
       "incLUK": 25,
       "incPAD": 12,
       "incMAD": 12,
-      "setItemID": 1056
+      "setItemID": 1056,
+      "onlyEquip": true
     },
     "01202326": {
       "islot": "Po",
@@ -96432,7 +97107,8 @@
       "incLUK": 30,
       "incPAD": 15,
       "incMAD": 15,
-      "setItemID": 1116
+      "setItemID": 1116,
+      "onlyEquip": true
     },
     "01202327": {
       "islot": "Po",
@@ -96443,7 +97119,8 @@
       "incLUK": 30,
       "incPAD": 15,
       "incMAD": 15,
-      "setItemID": 1116
+      "setItemID": 1116,
+      "onlyEquip": true
     },
     "01202328": {
       "islot": "Po",
@@ -96454,7 +97131,8 @@
       "incLUK": 30,
       "incPAD": 15,
       "incMAD": 15,
-      "setItemID": 1116
+      "setItemID": 1116,
+      "onlyEquip": true
     },
     "01202335": {
       "islot": "Po",
@@ -96465,7 +97143,8 @@
       "incLUK": 25,
       "incPAD": 12,
       "incMAD": 12,
-      "setItemID": 1155
+      "setItemID": 1155,
+      "onlyEquip": true
     },
     "01202336": {
       "islot": "Po",
@@ -96476,7 +97155,8 @@
       "incLUK": 25,
       "incPAD": 12,
       "incMAD": 12,
-      "setItemID": 1155
+      "setItemID": 1155,
+      "onlyEquip": true
     },
     "01202337": {
       "islot": "Po",
@@ -96487,7 +97167,8 @@
       "incLUK": 25,
       "incPAD": 12,
       "incMAD": 12,
-      "setItemID": 1155
+      "setItemID": 1155,
+      "onlyEquip": true
     },
     "01202338": {
       "islot": "Po",
@@ -96495,7 +97176,8 @@
       "incLUK": 20,
       "incPAD": 7,
       "incMAD": 7,
-      "setItemID": 630
+      "setItemID": 630,
+      "onlyEquip": true
     },
     "01202339": {
       "islot": "Po",
@@ -96503,7 +97185,8 @@
       "incLUK": 20,
       "incPAD": 7,
       "incMAD": 7,
-      "setItemID": 630
+      "setItemID": 630,
+      "onlyEquip": true
     },
     "01202340": {
       "islot": "Po",
@@ -96511,7 +97194,8 @@
       "incLUK": 20,
       "incPAD": 7,
       "incMAD": 7,
-      "setItemID": 630
+      "setItemID": 630,
+      "onlyEquip": true
     },
     "01212000": {
       "islot": "Wp",
@@ -97626,7 +98310,8 @@
       "incPAD": 237,
       "incMAD": 400,
       "bdR": 30,
-      "imdR": 20
+      "imdR": 20,
+      "onlyEquip": true
     },
     "01212129": {
       "islot": "Wp",
@@ -97640,7 +98325,8 @@
       "imdR": 20,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 887
+      "setItemID": 887,
+      "onlyEquip": true
     },
     "01212130": {
       "islot": "Wp",
@@ -97805,7 +98491,8 @@
       "imdR": 20,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 887
+      "setItemID": 887,
+      "onlyEquip": true
     },
     "01212143": {
       "islot": "Wp",
@@ -97828,7 +98515,8 @@
       "imdR": 20,
       "tuc": 9,
       "charmEXP": 200,
-      "setItemID": 887
+      "setItemID": 887,
+      "onlyEquip": true
     },
     "01212146": {
       "islot": "Wp",
@@ -98058,7 +98746,8 @@
       "incPAD": 340,
       "bdR": 30,
       "imdR": 20,
-      "attackSpeed": 4
+      "attackSpeed": 4,
+      "onlyEquip": true
     },
     "01213022": {
       "islot": "Wp",
@@ -98072,7 +98761,8 @@
       "attackSpeed": 4,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 886
+      "setItemID": 886,
+      "onlyEquip": true
     },
     "01213023": {
       "islot": "Wp",
@@ -98350,7 +99040,8 @@
       "attackSpeed": 4,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 886
+      "setItemID": 886,
+      "onlyEquip": true
     },
     "01213054": {
       "islot": "Wp",
@@ -98364,7 +99055,8 @@
       "attackSpeed": 4,
       "tuc": 9,
       "charmEXP": 200,
-      "setItemID": 886
+      "setItemID": 886,
+      "onlyEquip": true
     },
     "01213055": {
       "islot": "Wp",
@@ -98602,7 +99294,8 @@
       "incSpeed": 19,
       "bdR": 30,
       "imdR": 20,
-      "attackSpeed": 4
+      "attackSpeed": 4,
+      "onlyEquip": true
     },
     "01214022": {
       "islot": "WpSi",
@@ -98617,7 +99310,8 @@
       "attackSpeed": 4,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 888
+      "setItemID": 888,
+      "onlyEquip": true
     },
     "01214023": {
       "islot": "WpSi",
@@ -98899,7 +99593,8 @@
       "attackSpeed": 4,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 888
+      "setItemID": 888,
+      "onlyEquip": true
     },
     "01214050": {
       "islot": "WpSi",
@@ -98914,7 +99609,8 @@
       "attackSpeed": 4,
       "tuc": 9,
       "charmEXP": 200,
-      "setItemID": 888
+      "setItemID": 888,
+      "onlyEquip": true
     },
     "01214051": {
       "islot": "WpSi",
@@ -99166,7 +99862,8 @@
       "incPAD": 340,
       "bdR": 30,
       "imdR": 20,
-      "attackSpeed": 4
+      "attackSpeed": 4,
+      "onlyEquip": true
     },
     "01215024": {
       "islot": "Wp",
@@ -99180,7 +99877,8 @@
       "attackSpeed": 4,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 886
+      "setItemID": 886,
+      "onlyEquip": true
     },
     "01215025": {
       "islot": "Wp",
@@ -99194,7 +99892,8 @@
       "attackSpeed": 4,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 886
+      "setItemID": 886,
+      "onlyEquip": true
     },
     "01215026": {
       "islot": "Wp",
@@ -99399,7 +100098,8 @@
       "attackSpeed": 4,
       "tuc": 9,
       "charmEXP": 200,
-      "setItemID": 886
+      "setItemID": 886,
+      "onlyEquip": true
     },
     "01215047": {
       "islot": "Wp",
@@ -100376,7 +101076,8 @@
       "incPAD": 255,
       "bdR": 30,
       "imdR": 20,
-      "attackSpeed": 5
+      "attackSpeed": 5,
+      "onlyEquip": true
     },
     "01222122": {
       "islot": "Wp",
@@ -100390,7 +101091,8 @@
       "attackSpeed": 5,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 890
+      "setItemID": 890,
+      "onlyEquip": true
     },
     "01222123": {
       "islot": "Wp",
@@ -100548,7 +101250,8 @@
       "attackSpeed": 5,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 890
+      "setItemID": 890,
+      "onlyEquip": true
     },
     "01222136": {
       "islot": "Wp",
@@ -100562,7 +101265,8 @@
       "attackSpeed": 5,
       "tuc": 9,
       "charmEXP": 200,
-      "setItemID": 890
+      "setItemID": 890,
+      "onlyEquip": true
     },
     "01222137": {
       "islot": "Wp",
@@ -101511,7 +102215,8 @@
       "incPAD": 340,
       "bdR": 30,
       "imdR": 20,
-      "attackSpeed": 6
+      "attackSpeed": 6,
+      "onlyEquip": true
     },
     "01232122": {
       "islot": "Wp",
@@ -101525,7 +102230,8 @@
       "attackSpeed": 6,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 886
+      "setItemID": 886,
+      "onlyEquip": true
     },
     "01232123": {
       "islot": "Wp",
@@ -101683,7 +102389,8 @@
       "attackSpeed": 6,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 886
+      "setItemID": 886,
+      "onlyEquip": true
     },
     "01232136": {
       "islot": "Wp",
@@ -101697,7 +102404,8 @@
       "attackSpeed": 6,
       "tuc": 9,
       "charmEXP": 200,
-      "setItemID": 886
+      "setItemID": 886,
+      "onlyEquip": true
     },
     "01232137": {
       "islot": "Wp",
@@ -102810,7 +103518,8 @@
       "incPAD": 255,
       "bdR": 30,
       "imdR": 20,
-      "attackSpeed": 5
+      "attackSpeed": 5,
+      "onlyEquip": true
     },
     "01242139": {
       "islot": "Wp",
@@ -102824,7 +103533,8 @@
       "attackSpeed": 5,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 890
+      "setItemID": 890,
+      "onlyEquip": true
     },
     "01242140": {
       "islot": "Wp",
@@ -102835,7 +103545,8 @@
       "incPAD": 255,
       "bdR": 30,
       "imdR": 20,
-      "attackSpeed": 5
+      "attackSpeed": 5,
+      "onlyEquip": true
     },
     "01242141": {
       "islot": "Wp",
@@ -102849,7 +103560,8 @@
       "attackSpeed": 5,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 889
+      "setItemID": 889,
+      "onlyEquip": true
     },
     "01242142": {
       "islot": "Wp",
@@ -103092,7 +103804,8 @@
       "attackSpeed": 5,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 890
+      "setItemID": 890,
+      "onlyEquip": true
     },
     "01242161": {
       "islot": "Wp",
@@ -103106,7 +103819,8 @@
       "attackSpeed": 5,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 889
+      "setItemID": 889,
+      "onlyEquip": true
     },
     "01242162": {
       "islot": "Wp",
@@ -103120,7 +103834,8 @@
       "attackSpeed": 5,
       "tuc": 9,
       "charmEXP": 200,
-      "setItemID": 890
+      "setItemID": 890,
+      "onlyEquip": true
     },
     "01242163": {
       "islot": "Wp",
@@ -103134,7 +103849,8 @@
       "attackSpeed": 5,
       "tuc": 9,
       "charmEXP": 200,
-      "setItemID": 889
+      "setItemID": 889,
+      "onlyEquip": true
     },
     "01242164": {
       "islot": "Wp",
@@ -104065,7 +104781,8 @@
       "incMAD": 400,
       "bdR": 30,
       "imdR": 20,
-      "attackSpeed": 6
+      "attackSpeed": 6,
+      "onlyEquip": true
     },
     "01252106": {
       "islot": "Wp",
@@ -104081,7 +104798,8 @@
       "attackSpeed": 6,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 887
+      "setItemID": 887,
+      "onlyEquip": true
     },
     "01252108": {
       "islot": "Wp",
@@ -104220,7 +104938,8 @@
       "attackSpeed": 6,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 887
+      "setItemID": 887,
+      "onlyEquip": true
     },
     "01252130": {
       "islot": "Wp",
@@ -104498,7 +105217,8 @@
       "attackSpeed": 6,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 887
+      "setItemID": 887,
+      "onlyEquip": true
     },
     "01253022": {
       "islot": "Wp",
@@ -104511,7 +105231,8 @@
       "incMAD": 400,
       "bdR": 30,
       "imdR": 20,
-      "attackSpeed": 6
+      "attackSpeed": 6,
+      "onlyEquip": true
     },
     "01253023": {
       "islot": "Wp",
@@ -104615,7 +105336,8 @@
       "attackSpeed": 6,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 887
+      "setItemID": 887,
+      "onlyEquip": true
     },
     "01253030": {
       "islot": "Wp",
@@ -104782,7 +105504,8 @@
       "attackSpeed": 6,
       "tuc": 9,
       "charmEXP": 200,
-      "setItemID": 887
+      "setItemID": 887,
+      "onlyEquip": true
     },
     "01254000": {
       "islot": "Wp",
@@ -105078,7 +105801,8 @@
       "incPAD": 237,
       "incMAD": 400,
       "bdR": 30,
-      "imdR": 20
+      "imdR": 20,
+      "onlyEquip": true
     },
     "01254028": {
       "islot": "Wp",
@@ -105092,7 +105816,8 @@
       "imdR": 20,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 887
+      "setItemID": 887,
+      "onlyEquip": true
     },
     "01254029": {
       "islot": "Wp",
@@ -105106,7 +105831,8 @@
       "imdR": 20,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 887
+      "setItemID": 887,
+      "onlyEquip": true
     },
     "01254030": {
       "islot": "Wp",
@@ -106182,7 +106908,8 @@
       "incMAD": 400,
       "bdR": 30,
       "imdR": 20,
-      "attackSpeed": 6
+      "attackSpeed": 6,
+      "onlyEquip": true
     },
     "01262051": {
       "islot": "Wp",
@@ -106197,7 +106924,8 @@
       "attackSpeed": 6,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 887
+      "setItemID": 887,
+      "onlyEquip": true
     },
     "01262052": {
       "islot": "Wp",
@@ -106358,7 +107086,8 @@
       "attackSpeed": 6,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 887
+      "setItemID": 887,
+      "onlyEquip": true
     },
     "01262066": {
       "islot": "Wp",
@@ -106373,7 +107102,8 @@
       "attackSpeed": 6,
       "tuc": 9,
       "charmEXP": 200,
-      "setItemID": 887
+      "setItemID": 887,
+      "onlyEquip": true
     },
     "01262067": {
       "islot": "Wp",
@@ -106777,7 +107507,8 @@
       "incPAD": 318,
       "bdR": 30,
       "imdR": 20,
-      "attackSpeed": 4
+      "attackSpeed": 4,
+      "onlyEquip": true
     },
     "01272040": {
       "islot": "Wp",
@@ -106791,7 +107522,8 @@
       "attackSpeed": 4,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 889
+      "setItemID": 889,
+      "onlyEquip": true
     },
     "01272041": {
       "islot": "Wp",
@@ -106942,7 +107674,8 @@
       "attackSpeed": 4,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 889
+      "setItemID": 889,
+      "onlyEquip": true
     },
     "01272055": {
       "islot": "Wp",
@@ -106956,7 +107689,8 @@
       "attackSpeed": 4,
       "tuc": 9,
       "charmEXP": 200,
-      "setItemID": 889
+      "setItemID": 889,
+      "onlyEquip": true
     },
     "01272056": {
       "islot": "Wp",
@@ -107397,7 +108131,8 @@
       "incMAD": 400,
       "bdR": 30,
       "imdR": 20,
-      "attackSpeed": 6
+      "attackSpeed": 6,
+      "onlyEquip": true
     },
     "01282040": {
       "islot": "Wp",
@@ -107412,7 +108147,8 @@
       "attackSpeed": 6,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 887
+      "setItemID": 887,
+      "onlyEquip": true
     },
     "01282041": {
       "islot": "Wp",
@@ -107573,7 +108309,8 @@
       "attackSpeed": 6,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 887
+      "setItemID": 887,
+      "onlyEquip": true
     },
     "01282055": {
       "islot": "Wp",
@@ -107597,7 +108334,8 @@
       "attackSpeed": 6,
       "tuc": 9,
       "charmEXP": 200,
-      "setItemID": 887
+      "setItemID": 887,
+      "onlyEquip": true
     },
     "01282057": {
       "islot": "Wp",
@@ -107828,7 +108566,8 @@
       "incPAD": 318,
       "bdR": 30,
       "imdR": 20,
-      "attackSpeed": 4
+      "attackSpeed": 4,
+      "onlyEquip": true
     },
     "01292022": {
       "islot": "Wp",
@@ -107842,7 +108581,8 @@
       "attackSpeed": 4,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 889
+      "setItemID": 889,
+      "onlyEquip": true
     },
     "01292023": {
       "islot": "Wp",
@@ -108120,7 +108860,8 @@
       "attackSpeed": 4,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 889
+      "setItemID": 889,
+      "onlyEquip": true
     },
     "01292051": {
       "islot": "Wp",
@@ -108134,7 +108875,8 @@
       "attackSpeed": 4,
       "tuc": 9,
       "charmEXP": 200,
-      "setItemID": 889
+      "setItemID": 889,
+      "onlyEquip": true
     },
     "01292052": {
       "islot": "Wp",
@@ -110633,7 +111375,8 @@
       "incPAD": 326,
       "bdR": 30,
       "imdR": 20,
-      "attackSpeed": 5
+      "attackSpeed": 5,
+      "onlyEquip": true
     },
     "01302355": {
       "islot": "Wp",
@@ -110647,7 +111390,8 @@
       "attackSpeed": 5,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 886
+      "setItemID": 886,
+      "onlyEquip": true
     },
     "01302356": {
       "islot": "Wp",
@@ -110804,7 +111548,8 @@
       "attackSpeed": 5,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 886
+      "setItemID": 886,
+      "onlyEquip": true
     },
     "01302376": {
       "islot": "Wp",
@@ -110818,7 +111563,8 @@
       "attackSpeed": 5,
       "tuc": 9,
       "charmEXP": 200,
-      "setItemID": 886
+      "setItemID": 886,
+      "onlyEquip": true
     },
     "01302377": {
       "islot": "Wp",
@@ -112601,7 +113347,8 @@
       "incPAD": 326,
       "bdR": 30,
       "imdR": 20,
-      "attackSpeed": 5
+      "attackSpeed": 5,
+      "onlyEquip": true
     },
     "01312213": {
       "islot": "Wp",
@@ -112615,7 +113362,8 @@
       "attackSpeed": 5,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 886
+      "setItemID": 886,
+      "onlyEquip": true
     },
     "01312214": {
       "islot": "Wp",
@@ -112770,7 +113518,8 @@
       "attackSpeed": 5,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 886
+      "setItemID": 886,
+      "onlyEquip": true
     },
     "01312227": {
       "islot": "Wp",
@@ -112784,7 +113533,8 @@
       "attackSpeed": 5,
       "tuc": 9,
       "charmEXP": 200,
-      "setItemID": 886
+      "setItemID": 886,
+      "onlyEquip": true
     },
     "01312228": {
       "islot": "Wp",
@@ -114788,7 +115538,8 @@
       "incPAD": 326,
       "bdR": 30,
       "imdR": 20,
-      "attackSpeed": 5
+      "attackSpeed": 5,
+      "onlyEquip": true
     },
     "01322264": {
       "islot": "Wp",
@@ -114802,7 +115553,8 @@
       "attackSpeed": 5,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 886
+      "setItemID": 886,
+      "onlyEquip": true
     },
     "01322265": {
       "islot": "Wp",
@@ -114956,7 +115708,8 @@
       "attackSpeed": 5,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 886
+      "setItemID": 886,
+      "onlyEquip": true
     },
     "01322282": {
       "islot": "Wp",
@@ -114976,7 +115729,8 @@
       "attackSpeed": 5,
       "tuc": 9,
       "charmEXP": 200,
-      "setItemID": 886
+      "setItemID": 886,
+      "onlyEquip": true
     },
     "01332000": {
       "islot": "Wp",
@@ -117272,7 +118026,8 @@
       "incPAD": 318,
       "bdR": 30,
       "imdR": 20,
-      "attackSpeed": 4
+      "attackSpeed": 4,
+      "onlyEquip": true
     },
     "01332289": {
       "islot": "Wp",
@@ -117286,7 +118041,8 @@
       "attackSpeed": 4,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 889
+      "setItemID": 889,
+      "onlyEquip": true
     },
     "01332290": {
       "islot": "Wp",
@@ -117443,7 +118199,8 @@
       "attackSpeed": 4,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 889
+      "setItemID": 889,
+      "onlyEquip": true
     },
     "01332304": {
       "islot": "Wp",
@@ -117465,7 +118222,8 @@
       "attackSpeed": 4,
       "tuc": 9,
       "charmEXP": 200,
-      "setItemID": 889
+      "setItemID": 889,
+      "onlyEquip": true
     },
     "01332306": {
       "islot": "Wp",
@@ -118452,7 +119210,8 @@
       "incPAD": 225,
       "attackSpeed": 3,
       "tuc": 3,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01342122": {
       "islot": "Si",
@@ -118464,7 +119223,8 @@
       "incPAD": 225,
       "attackSpeed": 3,
       "tuc": 6,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01342123": {
       "islot": "Si",
@@ -118476,7 +119236,8 @@
       "incPAD": 225,
       "attackSpeed": 3,
       "tuc": 10,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01352000": {
       "islot": "Si",
@@ -123259,7 +124020,8 @@
       "incPAD": 326,
       "bdR": 30,
       "imdR": 20,
-      "attackSpeed": 5
+      "attackSpeed": 5,
+      "onlyEquip": true
     },
     "01362149": {
       "islot": "Wp",
@@ -123273,7 +124035,8 @@
       "attackSpeed": 5,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 889
+      "setItemID": 889,
+      "onlyEquip": true
     },
     "01362150": {
       "islot": "Wp",
@@ -123423,7 +124186,8 @@
       "attackSpeed": 5,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 889
+      "setItemID": 889,
+      "onlyEquip": true
     },
     "01362163": {
       "islot": "Wp",
@@ -123445,7 +124209,8 @@
       "attackSpeed": 5,
       "tuc": 9,
       "charmEXP": 200,
-      "setItemID": 889
+      "setItemID": 889,
+      "onlyEquip": true
     },
     "01362166": {
       "islot": "Wp",
@@ -125489,7 +126254,8 @@
       "incMAD": 400,
       "bdR": 30,
       "imdR": 20,
-      "attackSpeed": 6
+      "attackSpeed": 6,
+      "onlyEquip": true
     },
     "01372237": {
       "islot": "Wp",
@@ -125504,7 +126270,8 @@
       "attackSpeed": 6,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 887
+      "setItemID": 887,
+      "onlyEquip": true
     },
     "01372238": {
       "islot": "Wp",
@@ -125672,7 +126439,8 @@
       "attackSpeed": 6,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 887
+      "setItemID": 887,
+      "onlyEquip": true
     },
     "01372252": {
       "islot": "Wp",
@@ -125687,7 +126455,8 @@
       "attackSpeed": 6,
       "tuc": 9,
       "charmEXP": 200,
-      "setItemID": 887
+      "setItemID": 887,
+      "onlyEquip": true
     },
     "01372253": {
       "islot": "Wp",
@@ -128085,7 +128854,8 @@
       "incMAD": 406,
       "bdR": 30,
       "imdR": 20,
-      "attackSpeed": 8
+      "attackSpeed": 8,
+      "onlyEquip": true
     },
     "01382274": {
       "islot": "Wp",
@@ -128100,7 +128870,8 @@
       "attackSpeed": 8,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 887
+      "setItemID": 887,
+      "onlyEquip": true
     },
     "01382275": {
       "islot": "Wp",
@@ -128261,7 +129032,8 @@
       "attackSpeed": 8,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 887
+      "setItemID": 887,
+      "onlyEquip": true
     },
     "01382288": {
       "islot": "Wp",
@@ -128285,7 +129057,8 @@
       "attackSpeed": 8,
       "tuc": 9,
       "charmEXP": 200,
-      "setItemID": 887
+      "setItemID": 887,
+      "onlyEquip": true
     },
     "01382290": {
       "islot": "Wp",
@@ -130384,7 +131157,8 @@
       "incPAD": 340,
       "bdR": 30,
       "imdR": 20,
-      "attackSpeed": 6
+      "attackSpeed": 6,
+      "onlyEquip": true
     },
     "01402268": {
       "islot": "WpSi",
@@ -130398,7 +131172,8 @@
       "attackSpeed": 6,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 886
+      "setItemID": 886,
+      "onlyEquip": true
     },
     "01402269": {
       "islot": "WpSi",
@@ -130613,7 +131388,8 @@
       "attackSpeed": 6,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 886
+      "setItemID": 886,
+      "onlyEquip": true
     },
     "01402294": {
       "islot": "WpSi",
@@ -130635,7 +131411,8 @@
       "attackSpeed": 6,
       "tuc": 9,
       "charmEXP": 200,
-      "setItemID": 886
+      "setItemID": 886,
+      "onlyEquip": true
     },
     "01402296": {
       "islot": "WpSi",
@@ -130872,7 +131649,8 @@
       "incPAD": 255,
       "bdR": 30,
       "imdR": 20,
-      "attackSpeed": 4
+      "attackSpeed": 4,
+      "onlyEquip": true
     },
     "01403022": {
       "islot": "Wp",
@@ -130887,7 +131665,8 @@
       "attackSpeed": 4,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 890
+      "setItemID": 890,
+      "onlyEquip": true
     },
     "01403023": {
       "islot": "Wp",
@@ -131155,7 +131934,8 @@
       "attackSpeed": 4,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 890
+      "setItemID": 890,
+      "onlyEquip": true
     },
     "01403053": {
       "islot": "Wp",
@@ -131386,7 +132166,8 @@
       "incPAD": 318,
       "bdR": 30,
       "imdR": 20,
-      "attackSpeed": 4
+      "attackSpeed": 4,
+      "onlyEquip": true
     },
     "01404022": {
       "islot": "Wp",
@@ -131400,7 +132181,8 @@
       "attackSpeed": 4,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 889
+      "setItemID": 889,
+      "onlyEquip": true
     },
     "01404023": {
       "islot": "Wp",
@@ -131641,7 +132423,8 @@
       "attackSpeed": 4,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 889
+      "setItemID": 889,
+      "onlyEquip": true
     },
     "01404047": {
       "islot": "Wp",
@@ -131655,7 +132438,8 @@
       "attackSpeed": 4,
       "tuc": 9,
       "charmEXP": 200,
-      "setItemID": 889
+      "setItemID": 889,
+      "onlyEquip": true
     },
     "01404048": {
       "islot": "Wp",
@@ -133137,7 +133921,8 @@
       "incPAD": 340,
       "bdR": 30,
       "imdR": 20,
-      "attackSpeed": 6
+      "attackSpeed": 6,
+      "onlyEquip": true
     },
     "01412189": {
       "islot": "WpSi",
@@ -133151,7 +133936,8 @@
       "attackSpeed": 6,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 886
+      "setItemID": 886,
+      "onlyEquip": true
     },
     "01412190": {
       "islot": "WpSi",
@@ -133254,7 +134040,8 @@
       "attackSpeed": 6,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 886
+      "setItemID": 886,
+      "onlyEquip": true
     },
     "01412198": {
       "islot": "WpSi",
@@ -133268,7 +134055,8 @@
       "attackSpeed": 6,
       "tuc": 9,
       "charmEXP": 200,
-      "setItemID": 886
+      "setItemID": 886,
+      "onlyEquip": true
     },
     "01412199": {
       "islot": "WpSi",
@@ -134793,7 +135581,8 @@
       "incPAD": 340,
       "bdR": 30,
       "imdR": 20,
-      "attackSpeed": 6
+      "attackSpeed": 6,
+      "onlyEquip": true
     },
     "01422197": {
       "islot": "WpSi",
@@ -134807,7 +135596,8 @@
       "attackSpeed": 6,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 886
+      "setItemID": 886,
+      "onlyEquip": true
     },
     "01422198": {
       "islot": "WpSi",
@@ -134922,7 +135712,8 @@
       "attackSpeed": 6,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 886
+      "setItemID": 886,
+      "onlyEquip": true
     },
     "01422209": {
       "islot": "WpSi",
@@ -134944,7 +135735,8 @@
       "attackSpeed": 6,
       "tuc": 9,
       "charmEXP": 200,
-      "setItemID": 886
+      "setItemID": 886,
+      "onlyEquip": true
     },
     "01422211": {
       "islot": "WpSi",
@@ -136715,7 +137507,8 @@
       "incPAD": 340,
       "bdR": 30,
       "imdR": 20,
-      "attackSpeed": 6
+      "attackSpeed": 6,
+      "onlyEquip": true
     },
     "01432227": {
       "islot": "Wp",
@@ -136729,7 +137522,8 @@
       "attackSpeed": 6,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 886
+      "setItemID": 886,
+      "onlyEquip": true
     },
     "01432228": {
       "islot": "Wp",
@@ -136879,7 +137673,8 @@
       "attackSpeed": 6,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 886
+      "setItemID": 886,
+      "onlyEquip": true
     },
     "01432241": {
       "islot": "Wp",
@@ -136901,7 +137696,8 @@
       "attackSpeed": 6,
       "tuc": 9,
       "charmEXP": 200,
-      "setItemID": 886
+      "setItemID": 886,
+      "onlyEquip": true
     },
     "01432243": {
       "islot": "Wp",
@@ -137166,7 +137962,8 @@
       "incPAD": 340,
       "bdR": 30,
       "imdR": 20,
-      "attackSpeed": 6
+      "attackSpeed": 6,
+      "onlyEquip": true
     },
     "01433024": {
       "islot": "Wp",
@@ -137180,7 +137977,8 @@
       "attackSpeed": 6,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 886
+      "setItemID": 886,
+      "onlyEquip": true
     },
     "01433025": {
       "islot": "Wp",
@@ -137194,7 +137992,8 @@
       "attackSpeed": 6,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 886
+      "setItemID": 886,
+      "onlyEquip": true
     },
     "01433026": {
       "islot": "Wp",
@@ -137208,7 +138007,8 @@
       "attackSpeed": 6,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 886
+      "setItemID": 886,
+      "onlyEquip": true
     },
     "01433027": {
       "islot": "Wp",
@@ -139543,7 +140343,8 @@
       "incPAD": 304,
       "bdR": 30,
       "imdR": 20,
-      "attackSpeed": 5
+      "attackSpeed": 5,
+      "onlyEquip": true
     },
     "01442285": {
       "islot": "Wp",
@@ -139557,7 +140358,8 @@
       "attackSpeed": 5,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 886
+      "setItemID": 886,
+      "onlyEquip": true
     },
     "01442286": {
       "islot": "Wp",
@@ -139711,7 +140513,8 @@
       "attackSpeed": 5,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 886
+      "setItemID": 886,
+      "onlyEquip": true
     },
     "01442301": {
       "islot": "Wp",
@@ -139725,7 +140528,8 @@
       "attackSpeed": 5,
       "tuc": 9,
       "charmEXP": 200,
-      "setItemID": 886
+      "setItemID": 886,
+      "onlyEquip": true
     },
     "01452000": {
       "islot": "WpSi",
@@ -141885,7 +142689,8 @@
       "incSpeed": 19,
       "bdR": 30,
       "imdR": 20,
-      "attackSpeed": 6
+      "attackSpeed": 6,
+      "onlyEquip": true
     },
     "01452266": {
       "islot": "WpSi",
@@ -141900,7 +142705,8 @@
       "attackSpeed": 6,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 888
+      "setItemID": 888,
+      "onlyEquip": true
     },
     "01452267": {
       "islot": "WpSi",
@@ -142066,7 +142872,8 @@
       "attackSpeed": 6,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 888
+      "setItemID": 888,
+      "onlyEquip": true
     },
     "01452286": {
       "islot": "WpSi",
@@ -142090,7 +142897,8 @@
       "attackSpeed": 6,
       "tuc": 9,
       "charmEXP": 200,
-      "setItemID": 888
+      "setItemID": 888,
+      "onlyEquip": true
     },
     "01452288": {
       "islot": "WpSi",
@@ -144140,7 +144948,8 @@
       "incSpeed": 19,
       "bdR": 30,
       "imdR": 20,
-      "attackSpeed": 6
+      "attackSpeed": 6,
+      "onlyEquip": true
     },
     "01462252": {
       "islot": "WpSi",
@@ -144155,7 +144964,8 @@
       "attackSpeed": 6,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 888
+      "setItemID": 888,
+      "onlyEquip": true
     },
     "01462253": {
       "islot": "WpSi",
@@ -144332,7 +145142,8 @@
       "attackSpeed": 6,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 888
+      "setItemID": 888,
+      "onlyEquip": true
     },
     "01462269": {
       "islot": "WpSi",
@@ -144355,7 +145166,8 @@
       "attackSpeed": 6,
       "tuc": 9,
       "charmEXP": 200,
-      "setItemID": 888
+      "setItemID": 888,
+      "onlyEquip": true
     },
     "01462271": {
       "islot": "WpSi",
@@ -146704,7 +147516,8 @@
       "incPAD": 172,
       "bdR": 30,
       "imdR": 20,
-      "attackSpeed": 4
+      "attackSpeed": 4,
+      "onlyEquip": true
     },
     "01472275": {
       "islot": "Wp",
@@ -146718,7 +147531,8 @@
       "attackSpeed": 4,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 889
+      "setItemID": 889,
+      "onlyEquip": true
     },
     "01472276": {
       "islot": "Wp",
@@ -146868,7 +147682,8 @@
       "attackSpeed": 4,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 889
+      "setItemID": 889,
+      "onlyEquip": true
     },
     "01472289": {
       "islot": "Wp",
@@ -146892,7 +147707,8 @@
       "attackSpeed": 4,
       "tuc": 9,
       "charmEXP": 200,
-      "setItemID": 889
+      "setItemID": 889,
+      "onlyEquip": true
     },
     "01472291": {
       "islot": "Wp",
@@ -148663,7 +149479,8 @@
       "incPAD": 255,
       "bdR": 30,
       "imdR": 20,
-      "attackSpeed": 5
+      "attackSpeed": 5,
+      "onlyEquip": true
     },
     "01482232": {
       "islot": "Wp",
@@ -148677,7 +149494,8 @@
       "attackSpeed": 5,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 890
+      "setItemID": 890,
+      "onlyEquip": true
     },
     "01482233": {
       "islot": "Wp",
@@ -148827,7 +149645,8 @@
       "attackSpeed": 5,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 890
+      "setItemID": 890,
+      "onlyEquip": true
     },
     "01482246": {
       "islot": "Wp",
@@ -148849,7 +149668,8 @@
       "attackSpeed": 5,
       "tuc": 9,
       "charmEXP": 200,
-      "setItemID": 890
+      "setItemID": 890,
+      "onlyEquip": true
     },
     "01482248": {
       "islot": "Wp",
@@ -150614,7 +151434,8 @@
       "incPAD": 249,
       "bdR": 30,
       "imdR": 20,
-      "attackSpeed": 5
+      "attackSpeed": 5,
+      "onlyEquip": true
     },
     "01492245": {
       "islot": "Wp",
@@ -150628,7 +151449,8 @@
       "attackSpeed": 5,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 890
+      "setItemID": 890,
+      "onlyEquip": true
     },
     "01492246": {
       "islot": "Wp",
@@ -150783,7 +151605,8 @@
       "attackSpeed": 5,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 890
+      "setItemID": 890,
+      "onlyEquip": true
     },
     "01492260": {
       "islot": "Wp",
@@ -150805,7 +151628,8 @@
       "attackSpeed": 5,
       "tuc": 9,
       "charmEXP": 200,
-      "setItemID": 890
+      "setItemID": 890,
+      "onlyEquip": true
     },
     "01492262": {
       "islot": "Wp",
@@ -152018,7 +152842,8 @@
       "incSpeed": 19,
       "bdR": 30,
       "imdR": 20,
-      "attackSpeed": 6
+      "attackSpeed": 6,
+      "onlyEquip": true
     },
     "01522152": {
       "islot": "Wp",
@@ -152033,7 +152858,8 @@
       "attackSpeed": 6,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 888
+      "setItemID": 888,
+      "onlyEquip": true
     },
     "01522153": {
       "islot": "Wp",
@@ -152188,7 +153014,8 @@
       "attackSpeed": 6,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 888
+      "setItemID": 888,
+      "onlyEquip": true
     },
     "01522165": {
       "islot": "Wp",
@@ -152211,7 +153038,8 @@
       "attackSpeed": 6,
       "tuc": 9,
       "charmEXP": 200,
-      "setItemID": 888
+      "setItemID": 888,
+      "onlyEquip": true
     },
     "01522168": {
       "islot": "Wp",
@@ -153540,7 +154368,8 @@
       "incPDD": 250,
       "bdR": 30,
       "imdR": 20,
-      "attackSpeed": 8
+      "attackSpeed": 8,
+      "onlyEquip": true
     },
     "01532157": {
       "islot": "Wp",
@@ -153555,7 +154384,8 @@
       "attackSpeed": 8,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 890
+      "setItemID": 890,
+      "onlyEquip": true
     },
     "01532158": {
       "islot": "Wp",
@@ -153718,7 +154548,8 @@
       "attackSpeed": 8,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 890
+      "setItemID": 890,
+      "onlyEquip": true
     },
     "01532171": {
       "islot": "Wp",
@@ -153742,7 +154573,8 @@
       "attackSpeed": 8,
       "tuc": 9,
       "charmEXP": 200,
-      "setItemID": 890
+      "setItemID": 890,
+      "onlyEquip": true
     },
     "01532173": {
       "islot": "Wp",
@@ -154725,7 +155557,8 @@
       "incPAD": 326,
       "bdR": 30,
       "imdR": 20,
-      "attackSpeed": 5
+      "attackSpeed": 5,
+      "onlyEquip": true
     },
     "01542128": {
       "islot": "WpSi",
@@ -154740,7 +155573,8 @@
       "attackSpeed": 5,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 886
+      "setItemID": 886,
+      "onlyEquip": true
     },
     "01542130": {
       "islot": "WpSi",
@@ -154853,7 +155687,8 @@
       "attackSpeed": 5,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 886
+      "setItemID": 886,
+      "onlyEquip": true
     },
     "01542150": {
       "islot": "Wp",
@@ -155942,7 +156777,8 @@
       "incPAD": 237,
       "incMAD": 400,
       "bdR": 30,
-      "imdR": 20
+      "imdR": 20,
+      "onlyEquip": true
     },
     "01552130": {
       "islot": "Wp",
@@ -155957,7 +156793,8 @@
       "imdR": 20,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 887
+      "setItemID": 887,
+      "onlyEquip": true
     },
     "01552132": {
       "islot": "Wp",
@@ -156076,7 +156913,8 @@
       "imdR": 20,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 887
+      "setItemID": 887,
+      "onlyEquip": true
     },
     "01552153": {
       "islot": "Wp",
@@ -156220,7 +157058,8 @@
       "imdR": 20,
       "attackSpeed": 8,
       "tuc": 8,
-      "setItemID": 886
+      "setItemID": 886,
+      "onlyEquip": true
     },
     "01562011": {
       "islot": "WpSi",
@@ -156234,7 +157073,8 @@
       "imdR": 20,
       "attackSpeed": 8,
       "tuc": 8,
-      "setItemID": 886
+      "setItemID": 886,
+      "onlyEquip": true
     },
     "01562012": {
       "islot": "WpSi",
@@ -156248,7 +157088,8 @@
       "imdR": 20,
       "attackSpeed": 8,
       "tuc": 9,
-      "setItemID": 886
+      "setItemID": 886,
+      "onlyEquip": true
     },
     "01572000": {
       "islot": "WpSi",
@@ -156359,7 +157200,8 @@
       "imdR": 20,
       "attackSpeed": 6,
       "tuc": 8,
-      "setItemID": 886
+      "setItemID": 886,
+      "onlyEquip": true
     },
     "01572011": {
       "islot": "WpSi",
@@ -156372,7 +157214,8 @@
       "imdR": 20,
       "attackSpeed": 6,
       "tuc": 8,
-      "setItemID": 886
+      "setItemID": 886,
+      "onlyEquip": true
     },
     "01572012": {
       "islot": "WpSi",
@@ -156385,7 +157228,8 @@
       "imdR": 20,
       "attackSpeed": 6,
       "tuc": 9,
-      "setItemID": 886
+      "setItemID": 886,
+      "onlyEquip": true
     },
     "01582000": {
       "islot": "Wp",
@@ -156800,7 +157644,8 @@
       "incPAD": 255,
       "bdR": 30,
       "imdR": 20,
-      "attackSpeed": 5
+      "attackSpeed": 5,
+      "onlyEquip": true
     },
     "01582044": {
       "islot": "Wp",
@@ -156814,7 +157659,8 @@
       "attackSpeed": 5,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 886
+      "setItemID": 886,
+      "onlyEquip": true
     },
     "01582045": {
       "islot": "Wp",
@@ -156964,7 +157810,8 @@
       "attackSpeed": 5,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 886
+      "setItemID": 886,
+      "onlyEquip": true
     },
     "01582059": {
       "islot": "Wp",
@@ -156986,7 +157833,8 @@
       "attackSpeed": 5,
       "tuc": 9,
       "charmEXP": 200,
-      "setItemID": 886
+      "setItemID": 886,
+      "onlyEquip": true
     },
     "01582061": {
       "islot": "Wp",
@@ -157224,7 +158072,8 @@
       "incSpeed": 19,
       "bdR": 30,
       "imdR": 20,
-      "attackSpeed": 6
+      "attackSpeed": 6,
+      "onlyEquip": true
     },
     "01592022": {
       "islot": "WpSi",
@@ -157239,7 +158088,8 @@
       "attackSpeed": 6,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 888
+      "setItemID": 888,
+      "onlyEquip": true
     },
     "01592023": {
       "islot": "WpSi",
@@ -157553,7 +158403,8 @@
       "attackSpeed": 6,
       "tuc": 8,
       "charmEXP": 200,
-      "setItemID": 888
+      "setItemID": 888,
+      "onlyEquip": true
     },
     "01592050": {
       "islot": "WpSi",
@@ -157576,7 +158427,8 @@
       "attackSpeed": 6,
       "tuc": 9,
       "charmEXP": 200,
-      "setItemID": 888
+      "setItemID": 888,
+      "onlyEquip": true
     },
     "01592052": {
       "islot": "WpSi",
@@ -157883,7 +158735,8 @@
       "incSTR": 10,
       "incDEX": 10,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01720001": {
       "islot": "Si",
@@ -157892,7 +158745,8 @@
       "incSTR": 15,
       "incDEX": 15,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01720002": {
       "islot": "Si",
@@ -157901,7 +158755,8 @@
       "incSTR": 20,
       "incDEX": 20,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01720100": {
       "islot": "Si",
@@ -157910,7 +158765,8 @@
       "incSTR": 10,
       "incDEX": 10,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01720101": {
       "islot": "Si",
@@ -157919,7 +158775,8 @@
       "incSTR": 15,
       "incDEX": 15,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01720102": {
       "islot": "Si",
@@ -157928,7 +158785,8 @@
       "incSTR": 20,
       "incDEX": 20,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01720200": {
       "islot": "Si",
@@ -157937,7 +158795,8 @@
       "incSTR": 10,
       "incDEX": 10,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01720201": {
       "islot": "Si",
@@ -157946,7 +158805,8 @@
       "incSTR": 15,
       "incDEX": 15,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01720202": {
       "islot": "Si",
@@ -157955,7 +158815,8 @@
       "incSTR": 20,
       "incDEX": 20,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01720600": {
       "islot": "Si",
@@ -157964,7 +158825,8 @@
       "incSTR": 10,
       "incDEX": 10,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01720601": {
       "islot": "Si",
@@ -157973,7 +158835,8 @@
       "incSTR": 15,
       "incDEX": 15,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01720602": {
       "islot": "Si",
@@ -157982,7 +158845,8 @@
       "incSTR": 20,
       "incDEX": 20,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01720700": {
       "islot": "Si",
@@ -157991,7 +158855,8 @@
       "incSTR": 10,
       "incDEX": 10,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01720701": {
       "islot": "Si",
@@ -158000,7 +158865,8 @@
       "incSTR": 15,
       "incDEX": 15,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01720702": {
       "islot": "Si",
@@ -158009,7 +158875,8 @@
       "incSTR": 20,
       "incDEX": 20,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01720800": {
       "islot": "Si",
@@ -158018,7 +158885,8 @@
       "incSTR": 10,
       "incDEX": 10,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01720801": {
       "islot": "Si",
@@ -158027,7 +158895,8 @@
       "incSTR": 15,
       "incDEX": 15,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01720802": {
       "islot": "Si",
@@ -158036,7 +158905,8 @@
       "incSTR": 20,
       "incDEX": 20,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01720900": {
       "islot": "Si",
@@ -158045,7 +158915,8 @@
       "incDEX": 10,
       "incLUK": 10,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01720901": {
       "islot": "Si",
@@ -158054,7 +158925,8 @@
       "incDEX": 15,
       "incLUK": 15,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01720902": {
       "islot": "Si",
@@ -158063,7 +158935,8 @@
       "incDEX": 20,
       "incLUK": 20,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01721100": {
       "islot": "Si",
@@ -158072,7 +158945,8 @@
       "incSTR": 10,
       "incDEX": 10,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01721101": {
       "islot": "Si",
@@ -158081,7 +158955,8 @@
       "incSTR": 15,
       "incDEX": 15,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01721102": {
       "islot": "Si",
@@ -158090,7 +158965,8 @@
       "incSTR": 20,
       "incDEX": 20,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01721200": {
       "islot": "Si",
@@ -158099,7 +158975,8 @@
       "incSTR": 10,
       "incDEX": 10,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01721201": {
       "islot": "Si",
@@ -158108,7 +158985,8 @@
       "incSTR": 15,
       "incDEX": 15,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01721202": {
       "islot": "Si",
@@ -158117,7 +158995,8 @@
       "incSTR": 20,
       "incDEX": 20,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01721300": {
       "islot": "Si",
@@ -158126,7 +159005,8 @@
       "incSTR": 10,
       "incDEX": 10,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01721301": {
       "islot": "Si",
@@ -158135,7 +159015,8 @@
       "incSTR": 15,
       "incDEX": 15,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01721302": {
       "islot": "Si",
@@ -158144,7 +159025,8 @@
       "incSTR": 20,
       "incDEX": 20,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01721400": {
       "islot": "Si",
@@ -158153,7 +159035,8 @@
       "incSTR": 10,
       "incDEX": 10,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01721401": {
       "islot": "Si",
@@ -158162,7 +159045,8 @@
       "incSTR": 15,
       "incDEX": 15,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01721402": {
       "islot": "Si",
@@ -158171,7 +159055,8 @@
       "incSTR": 20,
       "incDEX": 20,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01721600": {
       "islot": "Si",
@@ -158180,7 +159065,8 @@
       "incSTR": 10,
       "incDEX": 10,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01721601": {
       "islot": "Si",
@@ -158189,7 +159075,8 @@
       "incSTR": 15,
       "incDEX": 15,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01721602": {
       "islot": "Si",
@@ -158198,7 +159085,8 @@
       "incSTR": 20,
       "incDEX": 20,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01721700": {
       "islot": "Si",
@@ -158207,7 +159095,8 @@
       "incDEX": 10,
       "incLUK": 10,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01721701": {
       "islot": "Si",
@@ -158216,7 +159105,8 @@
       "incDEX": 15,
       "incLUK": 15,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01721702": {
       "islot": "Si",
@@ -158225,7 +159115,8 @@
       "incDEX": 20,
       "incLUK": 20,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01721800": {
       "islot": "Si",
@@ -158234,7 +159125,8 @@
       "incSTR": 10,
       "incDEX": 10,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01721801": {
       "islot": "Si",
@@ -158243,7 +159135,8 @@
       "incSTR": 15,
       "incDEX": 15,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01721802": {
       "islot": "Si",
@@ -158252,7 +159145,8 @@
       "incSTR": 20,
       "incDEX": 20,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01721900": {
       "islot": "Si",
@@ -158261,7 +159155,8 @@
       "incSTR": 10,
       "incDEX": 10,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01721901": {
       "islot": "Si",
@@ -158270,7 +159165,8 @@
       "incSTR": 15,
       "incDEX": 15,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01721902": {
       "islot": "Si",
@@ -158279,7 +159175,8 @@
       "incSTR": 20,
       "incDEX": 20,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01722100": {
       "islot": "Si",
@@ -158288,7 +159185,8 @@
       "incSTR": 10,
       "incDEX": 10,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01722101": {
       "islot": "Si",
@@ -158297,7 +159195,8 @@
       "incSTR": 15,
       "incDEX": 15,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01722102": {
       "islot": "Si",
@@ -158306,7 +159205,8 @@
       "incSTR": 20,
       "incDEX": 20,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01722200": {
       "islot": "Si",
@@ -158315,7 +159215,8 @@
       "incDEX": 10,
       "incLUK": 10,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01722201": {
       "islot": "Si",
@@ -158324,7 +159225,8 @@
       "incDEX": 15,
       "incLUK": 15,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01722202": {
       "islot": "Si",
@@ -158333,7 +159235,8 @@
       "incDEX": 20,
       "incLUK": 20,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01722300": {
       "islot": "Si",
@@ -158342,7 +159245,8 @@
       "incINT": 10,
       "incLUK": 10,
       "incMAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01722301": {
       "islot": "Si",
@@ -158351,7 +159255,8 @@
       "incINT": 15,
       "incLUK": 15,
       "incMAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01722302": {
       "islot": "Si",
@@ -158360,7 +159265,8 @@
       "incINT": 20,
       "incLUK": 20,
       "incMAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01722400": {
       "islot": "Si",
@@ -158369,7 +159275,8 @@
       "incSTR": 10,
       "incDEX": 10,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01722401": {
       "islot": "Si",
@@ -158378,7 +159285,8 @@
       "incSTR": 15,
       "incDEX": 15,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01722402": {
       "islot": "Si",
@@ -158387,7 +159295,8 @@
       "incSTR": 20,
       "incDEX": 20,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01722800": {
       "islot": "Si",
@@ -158396,7 +159305,8 @@
       "incSTR": 10,
       "incDEX": 10,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01722801": {
       "islot": "Si",
@@ -158405,7 +159315,8 @@
       "incSTR": 15,
       "incDEX": 15,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01722802": {
       "islot": "Si",
@@ -158414,7 +159325,8 @@
       "incSTR": 20,
       "incDEX": 20,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01722900": {
       "islot": "Si",
@@ -158423,7 +159335,8 @@
       "incSTR": 10,
       "incDEX": 10,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01722901": {
       "islot": "Si",
@@ -158432,7 +159345,8 @@
       "incSTR": 15,
       "incDEX": 15,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01722902": {
       "islot": "Si",
@@ -158441,7 +159355,8 @@
       "incSTR": 20,
       "incDEX": 20,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01723000": {
       "islot": "Si",
@@ -158453,7 +159368,8 @@
       "incMHP": 1000,
       "incMMP": 1000,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01723001": {
       "islot": "Si",
@@ -158465,7 +159381,8 @@
       "incMHP": 1000,
       "incMMP": 1000,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01723002": {
       "islot": "Si",
@@ -158480,7 +159397,8 @@
       "charmEXP": 200,
       "reqSpecJobs": [
         36
-      ]
+      ],
+      "onlyEquip": true
     },
     "01723100": {
       "islot": "Si",
@@ -158489,7 +159407,8 @@
       "incSTR": 10,
       "incDEX": 10,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01723101": {
       "islot": "Si",
@@ -158498,7 +159417,8 @@
       "incSTR": 15,
       "incDEX": 15,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01723102": {
       "islot": "Si",
@@ -158507,7 +159427,8 @@
       "incSTR": 20,
       "incDEX": 20,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01723300": {
       "islot": "Si",
@@ -158516,7 +159437,8 @@
       "incSTR": 10,
       "incDEX": 10,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01723301": {
       "islot": "Si",
@@ -158525,7 +159447,8 @@
       "incSTR": 15,
       "incDEX": 15,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01723302": {
       "islot": "Si",
@@ -158534,7 +159457,8 @@
       "incSTR": 20,
       "incDEX": 20,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01723400": {
       "islot": "Si",
@@ -158543,7 +159467,8 @@
       "incSTR": 10,
       "incDEX": 10,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01723401": {
       "islot": "Si",
@@ -158552,7 +159477,8 @@
       "incSTR": 15,
       "incDEX": 15,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01723402": {
       "islot": "Si",
@@ -158561,7 +159487,8 @@
       "incSTR": 20,
       "incDEX": 20,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01723500": {
       "islot": "Si",
@@ -158570,7 +159497,8 @@
       "incDEX": 10,
       "incLUK": 10,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01723501": {
       "islot": "Si",
@@ -158579,7 +159507,8 @@
       "incDEX": 15,
       "incLUK": 15,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01723502": {
       "islot": "Si",
@@ -158588,7 +159517,8 @@
       "incDEX": 20,
       "incLUK": 20,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01723600": {
       "islot": "Si",
@@ -158597,7 +159527,8 @@
       "incSTR": 10,
       "incDEX": 10,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01723601": {
       "islot": "Si",
@@ -158606,7 +159537,8 @@
       "incSTR": 15,
       "incDEX": 15,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01723602": {
       "islot": "Si",
@@ -158615,7 +159547,8 @@
       "incSTR": 20,
       "incDEX": 20,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01723700": {
       "islot": "Si",
@@ -158626,7 +159559,8 @@
       "incPAD": 7,
       "bdR": 45,
       "imdR": 20,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01723701": {
       "islot": "Si",
@@ -158637,7 +159571,8 @@
       "incPAD": 7,
       "bdR": 45,
       "imdR": 20,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01723702": {
       "islot": "Si",
@@ -158648,7 +159583,8 @@
       "incPAD": 7,
       "bdR": 45,
       "imdR": 20,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01723800": {
       "islot": "Si",
@@ -158657,7 +159593,8 @@
       "incINT": 10,
       "incLUK": 10,
       "incMAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01723801": {
       "islot": "Si",
@@ -158666,7 +159603,8 @@
       "incINT": 15,
       "incLUK": 15,
       "incMAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01723802": {
       "islot": "Si",
@@ -158675,7 +159613,8 @@
       "incINT": 20,
       "incLUK": 20,
       "incMAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01723900": {
       "islot": "Si",
@@ -158684,7 +159623,8 @@
       "incSTR": 10,
       "incDEX": 10,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01723901": {
       "islot": "Si",
@@ -158693,7 +159633,8 @@
       "incSTR": 15,
       "incDEX": 15,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01723902": {
       "islot": "Si",
@@ -158702,7 +159643,8 @@
       "incSTR": 20,
       "incDEX": 20,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01724000": {
       "islot": "Si",
@@ -158711,7 +159653,8 @@
       "incINT": 10,
       "incLUK": 10,
       "incMAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01724001": {
       "islot": "Si",
@@ -158720,7 +159663,8 @@
       "incINT": 15,
       "incLUK": 15,
       "incMAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01724002": {
       "islot": "Si",
@@ -158729,7 +159673,8 @@
       "incINT": 20,
       "incLUK": 20,
       "incMAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01724100": {
       "islot": "Si",
@@ -158738,7 +159683,8 @@
       "incDEX": 10,
       "incLUK": 10,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01724101": {
       "islot": "Si",
@@ -158747,7 +159693,8 @@
       "incDEX": 15,
       "incLUK": 15,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01724102": {
       "islot": "Si",
@@ -158756,7 +159703,8 @@
       "incDEX": 20,
       "incLUK": 20,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01724200": {
       "islot": "Si",
@@ -158765,7 +159713,8 @@
       "incSTR": 10,
       "incDEX": 10,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01724201": {
       "islot": "Si",
@@ -158774,7 +159723,8 @@
       "incSTR": 15,
       "incDEX": 15,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01724202": {
       "islot": "Si",
@@ -158783,7 +159733,8 @@
       "incSTR": 20,
       "incDEX": 20,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01724300": {
       "islot": "Si",
@@ -158792,7 +159743,8 @@
       "incSTR": 10,
       "incDEX": 10,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01724301": {
       "islot": "Si",
@@ -158801,7 +159753,8 @@
       "incSTR": 15,
       "incDEX": 15,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01724302": {
       "islot": "Si",
@@ -158810,7 +159763,8 @@
       "incSTR": 20,
       "incDEX": 20,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01724400": {
       "islot": "Si",
@@ -158819,7 +159773,8 @@
       "incINT": 10,
       "incLUK": 10,
       "incMAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01724401": {
       "islot": "Si",
@@ -158828,7 +159783,8 @@
       "incINT": 15,
       "incLUK": 15,
       "incMAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01724402": {
       "islot": "Si",
@@ -158837,7 +159793,8 @@
       "incINT": 20,
       "incLUK": 20,
       "incMAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01724500": {
       "islot": "Si",
@@ -158846,7 +159803,8 @@
       "incDEX": 10,
       "incLUK": 10,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01724501": {
       "islot": "Si",
@@ -158855,7 +159813,8 @@
       "incDEX": 15,
       "incLUK": 15,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01724502": {
       "islot": "Si",
@@ -158864,7 +159823,8 @@
       "incDEX": 20,
       "incLUK": 20,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01725300": {
       "islot": "Si",
@@ -158873,7 +159833,8 @@
       "incINT": 10,
       "incLUK": 10,
       "incMAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01725301": {
       "islot": "Si",
@@ -158882,7 +159843,8 @@
       "incINT": 15,
       "incLUK": 15,
       "incMAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01725302": {
       "islot": "Si",
@@ -158891,7 +159853,8 @@
       "incINT": 20,
       "incLUK": 20,
       "incMAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01725400": {
       "islot": "Si",
@@ -158900,7 +159863,8 @@
       "incSTR": 10,
       "incDEX": 10,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01725401": {
       "islot": "Si",
@@ -158909,7 +159873,8 @@
       "incSTR": 15,
       "incDEX": 15,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01725402": {
       "islot": "Si",
@@ -158918,7 +159883,8 @@
       "incSTR": 20,
       "incDEX": 20,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01726000": {
       "islot": "Si",
@@ -158927,7 +159893,8 @@
       "incSTR": 10,
       "incDEX": 10,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01726001": {
       "islot": "Si",
@@ -158936,7 +159903,8 @@
       "incSTR": 15,
       "incDEX": 15,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     },
     "01726002": {
       "islot": "Si",
@@ -158945,7 +159913,8 @@
       "incSTR": 20,
       "incDEX": 20,
       "incPAD": 7,
-      "charmEXP": 200
+      "charmEXP": 200,
+      "onlyEquip": true
     }
   }
 }
