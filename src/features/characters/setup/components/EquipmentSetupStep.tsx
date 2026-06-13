@@ -22,10 +22,12 @@ interface EquipmentItem {
   name: string;
 }
 
-/** Picker-only item; carries reqJob/reqLevel for filtering (stored items keep only id/name). */
+/** Picker-only item; carries reqJob/reqLevel/onlyEquip for filtering (stored items keep only id/name). */
 interface CatalogItem extends EquipmentItem {
   reqJob?: number;
   reqLevel?: number;
+  /** Unique-equip: can't be selected in more than one slot of the same group (rings, pendants, totems). */
+  onlyEquip?: boolean;
 }
 
 type SlotKey =
@@ -194,15 +196,23 @@ function resolvePickerSource(slot: SlotKey, classId: string | undefined, branchM
 
 const cachedSlotItems: Partial<Record<string, CatalogItem[]>> = {};
 
-type RawCatalogEntry = [string, string] | [string, string, { reqJob?: number; reqLevel?: number }];
+type RawCatalogEntry = [string, string] | [string, string, { reqJob?: number; reqLevel?: number; onlyEquip?: boolean }];
 
-function ItemPicker({ slot, current, theme, files, itemFilter, maxLevel, presetBaseItem, onSelect, onClose }: {
+/** Slot groups where the same `onlyEquip` item can't occupy more than one slot at once. */
+const RING_SLOTS: readonly SlotKey[] = ["ring1", "ring2", "ring3", "ring4"];
+const PENDANT_SLOTS: readonly SlotKey[] = ["pendant1", "pendant2"];
+const TOTEM_SLOTS: readonly SlotKey[] = ["totem1", "totem2", "totem3"];
+const UNIQUE_SLOT_GROUPS: readonly (readonly SlotKey[])[] = [RING_SLOTS, PENDANT_SLOTS, TOTEM_SLOTS];
+
+function ItemPicker({ slot, current, theme, files, itemFilter, maxLevel, excludeIds, presetBaseItem, onSelect, onClose }: {
   slot: SlotKey;
   current: EquipmentItem | null | undefined;
   theme: AppTheme;
   files: string[];
   itemFilter: (item: CatalogItem) => boolean;
   maxLevel?: number;
+  /** Item ids already placed in sibling slots (e.g. other rings); onlyEquip items among them are hidden. */
+  excludeIds?: ReadonlySet<string>;
   /** Preset 1's item for this slot, pinned at the top when editing an overridden preset slot. */
   presetBaseItem?: EquipmentItem | null;
   onSelect: (item: EquipmentItem | null) => void;
@@ -221,7 +231,7 @@ function ItemPicker({ slot, current, theme, files, itemFilter, maxLevel, presetB
     const fileList = cacheKey.split("+");
     Promise.all(fileList.map((f) => fetch(`/data/equipment/${f}.json`).then((r) => r.json() as Promise<RawCatalogEntry[]>)))
       .then((raws) => {
-        const parsed = raws.flat().map(([id, name, stats]) => ({ id, name: withStageLabel(id, name), reqJob: stats?.reqJob, reqLevel: stats?.reqLevel }));
+        const parsed = raws.flat().map(([id, name, stats]) => ({ id, name: withStageLabel(id, name), reqJob: stats?.reqJob, reqLevel: stats?.reqLevel, onlyEquip: stats?.onlyEquip }));
         cachedSlotItems[cacheKey] = parsed;
         setLoadedItems(parsed);
       })
@@ -229,9 +239,18 @@ function ItemPicker({ slot, current, theme, files, itemFilter, maxLevel, presetB
   }, [cacheKey]);
 
   const sourceItems = items
-    ? items.filter((it) => itemFilter(it) && (maxLevel == null || it.reqLevel == null || it.reqLevel <= maxLevel))
+    ? items.filter((it) =>
+        itemFilter(it) &&
+        (maxLevel == null || it.reqLevel == null || it.reqLevel <= maxLevel) &&
+        !(it.onlyEquip && excludeIds?.has(it.id)))
     : null;
   const filtered = sourceItems && query ? filterItems(sourceItems, query) : null;
+  // Suppress the "revert to preset 1" shortcut if that item is onlyEquip and already placed in a sibling slot.
+  const presetBaseConflicts = !!(
+    presetBaseItem &&
+    excludeIds?.has(presetBaseItem.id) &&
+    items?.some((it) => it.id === presetBaseItem.id && it.onlyEquip)
+  );
 
   return (
     <div style={{ border: `1px solid ${theme.accent}`, borderRadius: 10, background: theme.panel, boxShadow: "0 4px 20px rgba(0,0,0,0.3)", overflow: "hidden" }}>
@@ -249,7 +268,7 @@ function ItemPicker({ slot, current, theme, files, itemFilter, maxLevel, presetB
           — Clear slot —
         </button>
       )}
-      {presetBaseItem && (
+      {presetBaseItem && !presetBaseConflicts && (
         <button
           type="button"
           onClick={() => { onSelect({ id: presetBaseItem.id, name: presetBaseItem.name }); onClose(); }}
@@ -677,6 +696,19 @@ export default function EquipmentSetupStep({
     return () => document.removeEventListener("click", close);
   }, [!!activeSlot]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  /** Item ids placed in sibling slots of the same unique-equip group (other rings/pendants/totems). */
+  function siblingItemIds(slot: SlotKey): ReadonlySet<string> | undefined {
+    const group = UNIQUE_SLOT_GROUPS.find((g) => g.includes(slot));
+    if (!group) return undefined;
+    const ids = new Set<string>();
+    for (const sibling of group) {
+      if (sibling === slot) continue;
+      const item = readSlot(sibling);
+      if (item) ids.add(item.id);
+    }
+    return ids;
+  }
+
   /** Preset 1's item for a slot, when editing a different preset where it's been overridden. */
   function presetBaseItemFor(slot: SlotKey): EquipmentItem | null {
     if (isSharedSlot(slot) || activePreset === 0) return null;
@@ -694,6 +726,7 @@ export default function EquipmentSetupStep({
         current={readSlot(slot)}
         theme={theme}
         presetBaseItem={presetBaseItemFor(slot)}
+        excludeIds={siblingItemIds(slot)}
         files={source.files}
         itemFilter={source.filter}
         maxLevel={characterLevel}
