@@ -283,7 +283,7 @@ function ChangelogContent({ theme }: { theme: AppTheme }) {
                     key={change.text}
                     style={{
                       display: "flex",
-                      alignItems: "flex-start",
+                      alignItems: "center",
                       gap: "0.6rem",
                       fontSize: "0.88rem",
                       color: theme.text,
