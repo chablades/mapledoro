@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import type { AppTheme } from "../../../../components/themes";
 import type { SetupStepDefinition } from "../steps";
-import type { HexaClassDef, HexaMasteryNode, HexaSkillDef, HexaSkillLevels, HexaStatEntry, HexaStatSlot } from "../../../../features/tools/hexa-skills/hexa-classes";
+import type { HexaClassDef, HexaSkillDef, HexaSkillLevels, HexaStatEntry, HexaStatSlot } from "../../../../features/tools/hexa-skills/hexa-classes";
 import { findClassById, COMMON_SKILLS } from "../../../../features/tools/hexa-skills/hexa-classes";
 import { resourceImageUrl } from "../../../../lib/mapleResource";
 import { getClassDataByNexonJobName } from "../data/classSkillData";
@@ -228,40 +228,51 @@ function SectionLabel({ label, theme }: { label: string; theme: AppTheme }) {
   );
 }
 
-function SkillRow({ skill, level, onUpdate, theme, dimmed, min, max }: {
+/** Condensed icon tile: icon + level input, full skill name(s) shown via tooltip on hover. */
+function HexaTile({ skill, level, onUpdate, theme, min = 0, max = MAX_LEVEL }: {
   skill: HexaSkillDef;
   level: number;
   onUpdate: (v: number) => void;
   theme: AppTheme;
-  dimmed?: boolean;
   min?: number;
   max?: number;
 }) {
+  const filled = level > 0;
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", opacity: dimmed ? 0.5 : 1 }}>
-      <SkillIcon skill={skill} />
-      <p style={{ margin: 0, flex: 1, fontSize: "0.82rem", fontWeight: 700, color: theme.text, minWidth: 0 }}>
-        {skill.name}
-      </p>
-      <LevelInput value={level} onChange={onUpdate} theme={theme} min={min} max={max} label={`${skill.name} level`} />
-    </div>
-  );
-}
-
-function MasteryNodeRow({ node, level, onUpdate, theme }: {
-  node: HexaMasteryNode;
-  level: number;
-  onUpdate: (v: number) => void;
-  theme: AppTheme;
-}) {
-  const nodeAsSkill: HexaSkillDef = { iconId: node.iconId, iconUrl: node.iconUrl, name: node.skills[0] };
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
-      <SkillIcon skill={nodeAsSkill} size={28} />
-      <p style={{ margin: 0, flex: 1, fontSize: "0.78rem", fontWeight: 700, color: theme.text, minWidth: 0, lineHeight: 1.3 }}>
-        {node.skills.join(" · ")}
-      </p>
-      <LevelInput value={level} onChange={onUpdate} theme={theme} label={`${node.skills[0]} level`} />
+    <div title={skill.name} style={{
+      width: 60, flexShrink: 0,
+      border: `1px solid ${filled ? theme.accent : theme.border}`,
+      borderRadius: 8,
+      background: filled ? `${theme.accent}15` : theme.bg,
+      display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
+      padding: "6px 4px", boxSizing: "border-box",
+    }}>
+      <div style={{ opacity: filled ? 1 : 0.5, filter: filled ? "none" : "grayscale(1)", lineHeight: 0 }}>
+        <SkillIcon skill={skill} size={28} />
+      </div>
+      <input
+        type="text"
+        inputMode="numeric"
+        aria-label={`${skill.name} level`}
+        value={level === 0 ? "" : String(level)}
+        placeholder={String(min)}
+        onChange={(e) => onUpdate(Number(e.target.value) || 0)}
+        onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
+        onBlur={(e) => {
+          e.currentTarget.style.outlineColor = "transparent";
+          const v = parseInt(e.currentTarget.value, 10);
+          onUpdate(isNaN(v) ? min : Math.max(min, clamp(v, max)));
+        }}
+        style={{
+          width: 44, textAlign: "center",
+          border: `1px solid ${theme.border}`, borderRadius: 6,
+          background: theme.bg, color: theme.text,
+          fontFamily: "inherit", fontWeight: 700, fontSize: "0.78rem",
+          padding: "0.2rem", boxSizing: "border-box",
+          outline: "2px solid transparent", outlineOffset: "2px",
+          transition: "outline-color 0.15s ease",
+        }}
+      />
     </div>
   );
 }
@@ -478,16 +489,23 @@ export default function HexaMatrixSetupStep({
           <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
 
             <div>
-              <SectionLabel label="Origin" theme={theme} />
-              <SkillRow skill={classDef.origin} level={levels.origin}
-                onUpdate={(v) => update({ origin: v })} theme={theme} min={1} />
+              <SectionLabel label="Origin & Ascent" theme={theme} />
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
+                <HexaTile skill={classDef.origin} level={levels.origin}
+                  onUpdate={(v) => update({ origin: v })} theme={theme} min={1} />
+                {classDef.ascent && (
+                  <HexaTile skill={classDef.ascent} level={levels.ascent}
+                    onUpdate={(v) => update({ ascent: v })} theme={theme} />
+                )}
+              </div>
             </div>
 
             <div>
               <SectionLabel label="Mastery" theme={theme} />
-              <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
                 {classDef.mastery.map((node, i) => (
-                  <MasteryNodeRow key={i} node={node} level={levels.mastery[i] ?? 0}
+                  <HexaTile key={`mastery-${i}`} skill={{ iconId: node.iconId, iconUrl: node.iconUrl, name: node.skills.join(" · ") }}
+                    level={levels.mastery[i] ?? 0}
                     onUpdate={(v) => {
                       const next = [...levels.mastery];
                       next[i] = v;
@@ -501,9 +519,9 @@ export default function HexaMatrixSetupStep({
 
             <div>
               <SectionLabel label="Enhancement" theme={theme} />
-              <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
                 {classDef.enhancement.map((skill, i) => (
-                  <SkillRow key={skill.name} skill={skill} level={levels.enhancement[i] ?? 0}
+                  <HexaTile key={`enhancement-${skill.name}`} skill={skill} level={levels.enhancement[i] ?? 0}
                     onUpdate={(v) => {
                       const next = [...levels.enhancement];
                       next[i] = v;
@@ -515,19 +533,11 @@ export default function HexaMatrixSetupStep({
               </div>
             </div>
 
-            {classDef.ascent && (
-              <div>
-                <SectionLabel label="Ascent" theme={theme} />
-                <SkillRow skill={classDef.ascent} level={levels.ascent}
-                  onUpdate={(v) => update({ ascent: v })} theme={theme} />
-              </div>
-            )}
-
             <div>
               <SectionLabel label="Common" theme={theme} />
-              <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
                 {COMMON_SKILLS.map((skill, i) => (
-                  <SkillRow key={skill.name} skill={skill} level={levels.common[i] ?? 0}
+                  <HexaTile key={skill.name} skill={skill} level={levels.common[i] ?? 0}
                     onUpdate={(v) => {
                       const next = [...levels.common];
                       next[i] = v;
