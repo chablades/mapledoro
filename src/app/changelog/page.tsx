@@ -11,12 +11,95 @@ interface ChangelogEntry {
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    date: "2026-06-12",
+    changes: [
+      { type: "added", text: "Added Mapledle, a daily skill guessing game, under the new Games section." },
+      { type: "added", text: "Added a check all button to the Boss Crystal Calculator to check or uncheck every boss at once." },
+      { type: "changed", text: "Tools with a character selector now default to your Main character." },
+      { type: "changed", text: "The weekly reset countdown now shows days, hours, and minutes." },
+      { type: "changed", text: "The Flame Calculator now starts with the guild discount enabled." },
+      { type: "changed", text: "The Cubing Calculator now keeps your desired stat selection unless the item type requires a different set of stats (such as WSE)." },
+    ],
+  },
+  {
+    date: "2026-06-10",
+    changes: [
+      { type: "changed", text: "Revamped the Event Planner with a cleaner layout and improved character syncing." },
+      { type: "changed", text: "Improved use of vertical space in the HEXA Skill, Liberation, and Symbol trackers." },
+      { type: "fixed", text: "Fixed several behavior issues on iOS." },
+    ],
+  },
+  {
+    date: "2026-06-09",
+    changes: [
+      { type: "changed", text: "Unified button styling across tools for a more consistent look." },
+      { type: "fixed", text: "Fixed the current points input losing its styling in the Trace Restoration Calculator." },
+      { type: "fixed", text: "Fixed uneven panel heights in the Liberation Tracker." },
+    ],
+  },
+  {
+    date: "2026-06-08",
+    changes: [
+      { type: "added", text: "The Boss Crystal Tracker now also tracks weekly clear status." },
+    ],
+  },
+  {
+    date: "2026-06-07",
+    changes: [
+      { type: "added", text: "Added the Geardock symbol to the Symbol Tracker." },
+      { type: "added", text: "Added the ability to customize which tools appear on the homepage." },
+      { type: "changed", text: "Tool pages now show your character's image in the character selector." },
+    ],
+  },
+  {
+    date: "2026-06-06",
+    changes: [
+      { type: "added", text: "Added Erel Light to the HEXA Skill Tracker." },
+      { type: "added", text: "Added an outcome histogram to the Star Force Calculator." },
+      { type: "changed", text: "Revamped the Pitched Boss Drop Tracker with a new drop logging dialog and improved charts." },
+      { type: "changed", text: "Improved controls and feedback in the Star Force Calculator." },
+      { type: "fixed", text: "Fixed newly added Sia Astelle characters not being identified correctly in the HEXA Skill Tracker." },
+    ],
+  },
+  {
+    date: "2026-06-05",
+    changes: [
+      { type: "added", text: "Added experimental boom reduction tiers to the Star Force Calculator." },
+    ],
+  },
+  {
+    date: "2026-06-03",
+    changes: [
+      { type: "changed", text: "Improved number input controls across trackers." },
+      { type: "fixed", text: "Fixed the Liberation Tracker wiping saved progress in some cases." },
+    ],
+  },
+  {
+    date: "2026-05-28",
+    changes: [
+      { type: "fixed", text: "Fixed the Cubing and Flame calculators truncating entered values." },
+    ],
+  },
+  {
+    date: "2026-05-20",
+    changes: [
+      { type: "fixed", text: "Fixed the font not rendering correctly on the Guides page." },
+    ],
+  },
+  {
+    date: "2026-05-19",
+    changes: [
+      { type: "fixed", text: "Fixed various mobile layout issues across the site." },
+    ],
+  },
+  {
     date: "2026-05-17",
     changes: [
       { type: "added", text: "Added the Trace Restoration Calculator for estimating trace costs across different success rates." },
       { type: "added", text: "Added the Flame Calculator for estimating expected flame score outcomes." },
       { type: "changed", text: "Revamped the homepage layout with a cleaner design." },
       { type: "changed", text: "Moved account-wide reminders from the homepage into the Daily Tracker." },
+      { type: "changed", text: "Tweaked several themes for better contrast." },
     ],
   },
   {
@@ -29,7 +112,7 @@ const CHANGELOG: ChangelogEntry[] = [
   {
     date: "2026-05-13",
     changes: [
-      { type: "fixed", text: "Fixed Daily Tracker layout on small screens — now displays a single column on mobile." },
+      { type: "fixed", text: "Fixed Daily Tracker layout on small screens, which now displays a single column on mobile." },
       { type: "fixed", text: "Fixed the light/dark mode toggle overflowing on small screen sizes." },
       { type: "fixed", text: "Fixed completion timeline collapsing on mobile views." },
       { type: "fixed", text: "Fixed mobile padding not applying correctly to some tool pages." },
@@ -200,7 +283,7 @@ function ChangelogContent({ theme }: { theme: AppTheme }) {
                     key={change.text}
                     style={{
                       display: "flex",
-                      alignItems: "flex-start",
+                      alignItems: "center",
                       gap: "0.6rem",
                       fontSize: "0.88rem",
                       color: theme.text,
