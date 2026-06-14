@@ -1,0 +1,118 @@
+{
+  "_meta": {
+    "assets": [
+      "icon.png"
+    ],
+    "urlPattern": "/api/img/ui/boss/{id}/icon.png"
+  },
+  "entries": {
+    "1": {
+      "name": "Zakum"
+    },
+    "2": {
+      "name": "Horntail"
+    },
+    "3": {
+      "name": "Hilla"
+    },
+    "4": {
+      "name": "Pierre"
+    },
+    "5": {
+      "name": "Von Bon"
+    },
+    "6": {
+      "name": "Crimson Queen"
+    },
+    "7": {
+      "name": "Vellum"
+    },
+    "8": {
+      "name": "Von Leon"
+    },
+    "9": {
+      "name": "Arkarium"
+    },
+    "10": {
+      "name": "Magnus"
+    },
+    "11": {
+      "name": "Pink Bean"
+    },
+    "12": {
+      "name": "Cygnus"
+    },
+    "13": {
+      "name": "Lotus"
+    },
+    "15": {
+      "name": "Damien"
+    },
+    "16": {
+      "name": "Gollux"
+    },
+    "17": {
+      "name": "Ranmaru"
+    },
+    "18": {
+      "name": "Princess No"
+    },
+    "19": {
+      "name": "Lucid"
+    },
+    "21": {
+      "name": "OMNI-CLN"
+    },
+    "22": {
+      "name": "Papulatus"
+    },
+    "23": {
+      "name": "Will"
+    },
+    "24": {
+      "name": "Verus Hilla"
+    },
+    "25": {
+      "name": "Black Mage"
+    },
+    "26": {
+      "name": "Gloom"
+    },
+    "27": {
+      "name": "Darknell"
+    },
+    "28": {
+      "name": "Chosen Seren"
+    },
+    "29": {
+      "name": "Guardian Angel Slime"
+    },
+    "30": {
+      "name": "Kalos the Guardian"
+    },
+    "31": {
+      "name": "Kaling"
+    },
+    "33": {
+      "name": "Limbo"
+    },
+    "107": {
+      "name": "Akechi Mitsuhide"
+    },
+    "34": {
+      "name": "Baldrix"
+    },
+    "36": {
+      "name": "Kai"
+    },
+    "37": {
+      "name": "Malefic Star"
+    },
+    "38": {
+      "name": "Jupiter"
+    },
+    "35": {
+      "name": "First Adversary"
+    }
+  }
+}
