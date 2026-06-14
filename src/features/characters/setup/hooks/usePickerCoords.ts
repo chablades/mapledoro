@@ -15,9 +15,13 @@ export function usePickerCoords(isOpen: boolean, width: number) {
 
   useEffect(() => {
     if (!isOpen) return;
-    const onResize = () => setCoords(calcPickerCoords(ref.current, width));
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
+    const recompute = () => setCoords(calcPickerCoords(ref.current, width));
+    window.addEventListener("resize", recompute);
+    window.addEventListener("scroll", recompute, { capture: true, passive: true });
+    return () => {
+      window.removeEventListener("resize", recompute);
+      window.removeEventListener("scroll", recompute, true);
+    };
   }, [isOpen, width]);
 
   return {

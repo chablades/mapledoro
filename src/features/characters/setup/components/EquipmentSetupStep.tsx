@@ -496,23 +496,18 @@ function SymbolLevelTile({ area, level, maxLevel, theme, onLevel }: {
   const placed = level >= 1;
   return (
     <div style={{
-      width: 84, flexShrink: 0,
+      width: 64, flexShrink: 0,
       border: `1px solid ${placed ? theme.accent : theme.border}`,
       borderRadius: 8,
       background: placed ? `${theme.accent}15` : theme.bg,
       display: "flex", flexDirection: "column", alignItems: "center", gap: 3,
       padding: "6px 4px", boxSizing: "border-box",
     }}>
-      <div style={{ opacity: placed ? 1 : 0.3, filter: placed ? "none" : "grayscale(1)", lineHeight: 0 }}>
-        <ItemIcon id={area.itemId} size={32} />
-      </div>
-      <span style={{
-        fontSize: "0.75rem", color: placed ? theme.text : theme.muted, fontWeight: 700, lineHeight: 1.1,
-        textAlign: "center", width: "100%", minHeight: "2.2em",
-        display: "flex", alignItems: "center", justifyContent: "center",
-      }}>
-        {area.name}
-      </span>
+      <HoverTooltip label={area.name} theme={theme}>
+        <div style={{ opacity: placed ? 1 : 0.3, filter: placed ? "none" : "grayscale(1)", lineHeight: 0, cursor: "pointer" }}>
+          <ItemIcon id={area.itemId} size={32} />
+        </div>
+      </HoverTooltip>
       <input
         type="number"
         className="no-spinner"
@@ -580,12 +575,12 @@ function SymbolSection({ symbolLevels, activeTab, theme, onTabChange, onLevel }:
         })}
       </div>
       {activeTab === "arcane" ? (
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 64px)", gap: 4 }}>
           {ARCANE_AREAS.map(renderTile)}
         </div>
       ) : (
         <>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 64px)", gap: 4 }}>
             {SACRED_AREAS.map(renderTile)}
           </div>
           <p style={{
@@ -593,7 +588,7 @@ function SymbolSection({ symbolLevels, activeTab, theme, onTabChange, onLevel }:
           }}>
             Grand Sacred
           </p>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 64px)", gap: 4 }}>
             {GRAND_SACRED_AREAS.map(renderTile)}
           </div>
         </>
@@ -832,14 +827,18 @@ export default function EquipmentSetupStep({
   };
 
   return (
-    <div key={0} style={substepAnimStyle}>
+    <div key={0} className="eq-substep-root" style={substepAnimStyle}>
     <style>{`
-      @media (max-width: 480px) {
-        .eq-section { display: none; }
-        .eq-page-0 .eq-section-0,
-        .eq-page-1 .eq-section-1,
-        .eq-page-2 .eq-section-2 { display: flex; }
-        .eq-page-nav { display: flex; }
+      .eq-substep-root {
+        container-type: inline-size;
+      }
+      /* Carousel kicks in once the available width can't fit the full grid (~500px),
+         regardless of which page-layout breakpoint produced that width. */
+      @container (max-width: 520px) {
+        .eq-page-0 .eq-section-1, .eq-page-0 .eq-section-2,
+        .eq-page-1 .eq-section-0, .eq-page-1 .eq-section-2,
+        .eq-page-2 .eq-section-0, .eq-page-2 .eq-section-1 { display: none; }
+        .eq-page-nav.eq-page-nav { display: flex; }
       }
     `}</style>
     <SetupStepFrame
@@ -862,7 +861,7 @@ export default function EquipmentSetupStep({
         <button type="button" aria-label="Next section" onClick={() => setMobileGridPage((p) => (p + 1) % 3)} style={navBtnStyle}>›</button>
       </div>
       {/* Equipment grid */}
-      <div className={`eq-page-${mobileGridPage}`} style={{ overflowX: "auto" }}>
+      <div className={`eq-page-${mobileGridPage}`}>
       <div style={{ display: "flex", gap: 4, alignItems: "stretch", width: "fit-content", margin: "0 auto" }}>
 
         <div className="eq-section eq-section-0" style={{ gap: 4, flexShrink: 0 }}>

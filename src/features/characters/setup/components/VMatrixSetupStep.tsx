@@ -161,7 +161,7 @@ function NodeSection({ label, nodes, levels, theme, onSet, onSetMany }: {
       <SectionLabel label={label} theme={theme}
         onMaxAll={() => onSetMany(Object.fromEntries(nodes.map(([, name, max]) => [name, max])))}
         onClear={() => onSetMany(Object.fromEntries(nodes.map(([, name]) => [name, 0])))} />
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 60px)", gap: "0.4rem" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, 60px)", gap: "0.4rem" }}>
         {nodes.map(([id, name, max]) => (
           <VMatrixTile key={name} id={id} name={name} level={levels[name] ?? 0} max={max} theme={theme}
             onUpdate={(v) => onSet(name, v)} />

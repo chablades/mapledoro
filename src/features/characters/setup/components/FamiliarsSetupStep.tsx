@@ -3,6 +3,7 @@
 import { useMemo, useRef, useState, useEffect, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import { usePickerCoords } from "../hooks/usePickerCoords";
+import HoverTooltip from "../../../../components/HoverTooltip";
 import type { AppTheme } from "../../../../components/themes";
 import type { SetupStepDefinition } from "../steps";
 import { readCharacterToolData } from "../../../../features/tools/characterToolStorage";
@@ -337,10 +338,11 @@ function LinePicker({ value, tier, placeholder, theme, onChange }: {
 
 // ── Familiar slot card ─────────────────────────────────────────────────────
 
-function filterFamiliars(query: string): FamiliarEntry[] {
-  if (!query.trim()) return FAMILIARS.slice(0, 50);
+function filterFamiliars(query: string, excludeId: number | null): FamiliarEntry[] {
+  const pool = excludeId == null ? FAMILIARS : FAMILIARS.filter((f) => f.id !== excludeId);
+  if (!query.trim()) return pool.slice(0, 50);
   const results: FamiliarEntry[] = [];
-  for (const f of FAMILIARS) {
+  for (const f of pool) {
     if (results.length >= 50) break;
     if (matchesQuery(getFamiliarDisplayLabel(f), query)) results.push(f);
   }
@@ -424,9 +426,10 @@ function FamiliarSlotCard({
 }) {
   const isOpen = openId === slotId;
   const isEmpty = !slot.name;
+  const displayName = slot.name.replace(/ Familiar$/i, "");
   const inputRef = useRef<HTMLInputElement>(null);
   const { ref: wrapperRef, coords: pickerCoords, compute } = usePickerCoords(isOpen, FAM_PICKER_WIDTH);
-  const filtered = useMemo(() => isOpen ? filterFamiliars(query) : [], [isOpen, query]);
+  const filtered = useMemo(() => isOpen ? filterFamiliars(query, slot.familiarId) : [], [isOpen, query, slot.familiarId]);
   useEffect(() => {
     if (isOpen && !pendingEntry) inputRef.current?.focus();
   }, [isOpen, pendingEntry]);
@@ -466,7 +469,7 @@ function FamiliarSlotCard({
           <span style={{ fontSize: 24, color: theme.muted, lineHeight: 1, fontWeight: 300 }}>+</span>
         ) : (
           <>
-            <div style={{ position: "relative" }}>
+            <HoverTooltip label={displayName} theme={theme}>
               <FamiliarCardSprite mobId={slot.mobId} size={FAM_CARD_SIZE} />
               <button
                 type="button"
@@ -482,14 +485,7 @@ function FamiliarSlotCard({
                   cursor: "pointer", padding: 0, fontFamily: "inherit",
                 }}
               >×</button>
-            </div>
-            <span style={{
-              fontSize: "0.75rem", fontWeight: 700, color: slot.tier ? TIER_COLORS[slot.tier].text : theme.text,
-              textAlign: "center", overflow: "hidden", textOverflow: "ellipsis",
-              whiteSpace: "nowrap", maxWidth: "100%", width: "100%",
-            }}>
-              {slot.name.replace(/ Familiar$/i, "")}
-            </span>
+            </HoverTooltip>
             {slot.tier && (
               <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 3, marginTop: 2 }}>
                 <LinePicker value={slot.line1} tier={slot.tier} placeholder="Line 1…" theme={theme} onChange={(v) => onLineChange("line1", v)} />
@@ -506,6 +502,38 @@ function FamiliarSlotCard({
           onClick={(e) => e.stopPropagation()}
           style={pickerStyle}
         >
+          {!isEmpty && !pendingEntry && (
+            <button
+              type="button"
+              onClick={() => {
+                const entry = FAMILIARS.find((f) => f.id === slot.familiarId);
+                if (entry) onSetPending(entry);
+              }}
+              style={{
+                display: "flex", alignItems: "center", gap: 8, width: "100%",
+                padding: "0.4rem 0.6rem", border: "none", borderBottom: `1px solid ${theme.border}`,
+                background: "transparent", cursor: "pointer", fontFamily: "inherit", textAlign: "left",
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = `${theme.accent}22`; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+            >
+              <FamiliarCardSprite mobId={slot.mobId} size={28} />
+              <div style={{ overflow: "hidden", flex: 1 }}>
+                <p style={{ margin: 0, fontSize: "0.75rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.04em", color: theme.muted }}>Currently Selected</p>
+                <p style={{ margin: 0, fontSize: "0.8rem", fontWeight: 700, color: theme.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{displayName}</p>
+              </div>
+              {slot.tier && (
+                <span style={{
+                  flexShrink: 0, padding: "0.1rem 0.4rem", borderRadius: 4,
+                  fontSize: "0.75rem", fontWeight: 800,
+                  background: TIER_COLORS[slot.tier].bg, border: `1px solid ${TIER_COLORS[slot.tier].border}`, color: TIER_COLORS[slot.tier].text,
+                }}>
+                  {TIER_LABELS[slot.tier]}
+                </span>
+              )}
+              <span style={{ flexShrink: 0, color: theme.muted, fontSize: "0.85rem" }}>›</span>
+            </button>
+          )}
           {pendingEntry ? (
             <TierPickerView
               entry={pendingEntry}

@@ -6,6 +6,7 @@ import type { AppTheme } from "../../../../components/themes";
 import type { SetupStepDefinition } from "../steps";
 import type { StoredCharacterRecord } from "../../model/charactersStore";
 import SetupStepFrame from "./SetupStepFrame";
+import InfoTooltip, { type TooltipContent } from "./InfoTooltip";
 
 interface LinkSkillsSetupStepProps {
   theme: AppTheme;
@@ -116,6 +117,38 @@ function computeAutofill(
   }
 
   return { values, sources };
+}
+
+const WHERE_TOOLTIP: TooltipContent = {
+  title: "Link Manager",
+  description: "Found in the Beginner tab of your Skill window under Link Manager.",
+};
+
+const MASTER_LEVEL_ROWS: { label: string; note: string }[] = [
+  { label: "Master Lv. 1", note: "Character Lv. 70" },
+  { label: "Master Lv. 2", note: "Character Lv. 120" },
+  { label: "Master Lv. 3", note: "Character Lv. 210" },
+];
+
+function masterLevelTooltip(theme: AppTheme): TooltipContent {
+  return {
+    title: "Master Levels",
+    description: (
+      <>
+        <div style={{ display: "flex", flexDirection: "column", gap: "0.2rem", marginBottom: "0.5rem" }}>
+          {MASTER_LEVEL_ROWS.map(({ label, note }) => (
+            <div key={label} style={{ display: "flex", justifyContent: "space-between", gap: "0.5rem" }}>
+              <span style={{ fontWeight: 800, color: theme.text }}>{label}</span>
+              <span>{note}</span>
+            </div>
+          ))}
+        </div>
+        <div>
+          <strong style={{ color: theme.text }}>Master Lv. 4-9</strong> (Empirical Knowledge &amp; Thief&apos;s Cunning only): each Explorer Magician or Thief character contributes their own master level (1-3), for a total of up to 9.
+        </div>
+      </>
+    ),
+  };
 }
 
 function parseDraft(raw: string): LinkSkillsDraft {
@@ -283,28 +316,33 @@ export default function LinkSkillsSetupStep({
       stepLabel={step.label}
       stepNumber={stepNumber}
       totalSteps={totalSteps}
-      description={<>All fields are optional. Fill in what you can.<br />Shared across all characters on your world, inherited automatically by new characters.</>}
+      description="All fields are optional. Fill in what you can."
       onBack={onBack}
       onNext={onNext}
       onFinish={onFinish}
     >
-      <div style={{
-        marginBottom: "0.8rem",
-        background: `${theme.accent}0f`,
-        border: `1px solid ${theme.accent}40`,
-        borderRadius: "10px",
-        padding: "0.6rem 0.85rem",
-        display: "flex",
-        flexDirection: "column",
-        gap: "0.25rem",
-      }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.15rem" }}>
-          <div>
-            <p style={{ margin: 0, fontSize: "0.82rem", fontWeight: 800, color: theme.accent }}>
-              Found in the Beginner tab of your Skill window under Link Manager.
-            </p>
-          </div>
-          {hasRosterData && (
+      <div className="link-skills-root">
+      <style>{`
+        .link-skills-root { container-type: inline-size; }
+        .link-skills-grid { grid-template-columns: 1fr 1fr; }
+        @container (max-width: 480px) {
+          .link-skills-grid { grid-template-columns: 1fr; }
+        }
+      `}</style>
+      <div style={{ marginBottom: "0.8rem" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", marginBottom: "0.35rem" }}>
+          <p style={{ margin: 0, fontSize: "0.82rem", fontWeight: 800, color: theme.text }}>Where can I find this?</p>
+          <InfoTooltip content={WHERE_TOOLTIP} theme={theme} />
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", marginBottom: "0.5rem" }}>
+          <p style={{ margin: 0, fontSize: "0.82rem", fontWeight: 800, color: theme.text }}>What do the levels mean?</p>
+          <InfoTooltip content={masterLevelTooltip(theme)} theme={theme} />
+        </div>
+        <p style={{ margin: 0, fontSize: "0.75rem", color: theme.muted, fontWeight: 700 }}>
+          These levels are shared across all characters on your world, and inherited automatically by new characters.
+        </p>
+        {hasRosterData && (
+          <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "0.5rem" }}>
             <button
               type="button"
               onClick={handleAutofill}
@@ -319,26 +357,14 @@ export default function LinkSkillsSetupStep({
                 padding: "0.2rem 0.55rem",
                 cursor: "pointer",
                 flexShrink: 0,
-                marginLeft: "0.5rem",
               }}
             >
               Autofill from roster
             </button>
-          )}
-        </div>
-        {[
-          { label: "Master Lv. 1", note: "Level 70" },
-          { label: "Master Lv. 2", note: "Level 120" },
-          { label: "Master Lv. 3", note: "Level 210" },
-          { label: "Master Lv. 4-9", note: "Empirical Knowledge & Thief's Cunning only - each Explorer Magician or Thief character you have contributes their own master level (1-3) to the total" },
-        ].map(({ label, note }) => (
-          <div key={label} style={{ display: "flex", alignItems: "baseline", gap: "0.5rem" }}>
-            <span style={{ fontSize: "0.78rem", fontWeight: 900, color: theme.accent, minWidth: "5rem" }}>{label}</span>
-            <span style={{ fontSize: "0.78rem", color: theme.muted, fontWeight: 700 }}>{note}</span>
           </div>
-        ))}
+        )}
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem" }}>
+      <div className="link-skills-grid" style={{ display: "grid", gap: "0.5rem" }}>
         {singleSkills.map((skill) => (
           <LinkSkillRow
             key={skill.id}
@@ -363,6 +389,7 @@ export default function LinkSkillsSetupStep({
             min={autofillValues[skill.id] ? Number(autofillValues[skill.id]) : undefined}
           />
         ))}
+      </div>
       </div>
     </SetupStepFrame>
   );
