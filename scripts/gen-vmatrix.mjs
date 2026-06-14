@@ -1,219 +1,92 @@
 #!/usr/bin/env node
 /**
- * Generates per-class V Matrix node catalogs by scraping grandislibrary.com.
+ * Generates per-class V Matrix node catalogs from the WZ-dumped manifest.
  * Output: public/data/vmatrix/<classId>.json
- *   { job: Node[], boost: Node[], common: Node[] }  where Node = [skillId|null, displayName].
- *   skillId is a manifests/v269/skill.json id used for the haku.network skill icon (null only
- *   when unresolved — the UI shows a placeholder tile; names always render).
+ *   { job: Node[], boost: Node[], common: Node[] }  where Node = [id, displayName, maxLevel].
+ *   id is the manifests/v269/v-matrix.json entry id, used directly for the
+ *   haku.network v-matrix icon (resourceImageUrl("v-matrix", id, "icon.png")).
+ *   maxLevel is per-entry (job=30, boost=60, common=30 except two Kanna branch
+ *   nodes which cap at 50) — always read from the manifest, never assumed.
  *
- * Data source: each class page embeds a Next.js __NEXT_DATA__ blob with post.skill.fifth:
- *   - fifthMain  → Job Nodes   (the class's 5th-job V skills; max level 30)
- *   - fifthBoost → Boost Nodes (boostable sub-5th-job skills; max level 60). v269 fuses some
- *       into shared tiles in-game; rendered flat here (pairing is client/WZ-only).
- *   - fifthCommon → branch/faction common V skills (string keys, resolved via COMMON_KEYS).
- * Universal common nodes (Erda Nova, Decents, …) are the same for every class and appended
- * from UNIVERSAL_COMMON.
+ * Source: manifests/v269/v-matrix.json `entries`, each keyed by id:
+ *   - type 0 with `className` set: job nodes (jobs === [class's own job code])
+ *   - type 1 with `className` set: boost nodes (already fused per matrix slot)
+ *   - type 0 without `className`: common nodes — universal (jobs === ["all"])
+ *     or branch/faction-shared (jobs includes a class's own job code)
+ *   - type 2/3: special/event/unused — skipped entirely
  *
- * Icon resolution (per the image policy, art comes from haku.network by skill id):
- *   1. PIXEL MATCH (primary, for job + boost) — grandislibrary serves the same WZ icon art as
- *      the local skill dump, so each node's gl icon is downloaded and hash-matched against the
- *      dump's per-id icon.png. This is name-agnostic, so it fixes both unmatched boost names
- *      and wrong-stage matches (e.g. "Essence Sprinkle Boost" → 162121021, not the base id).
- *   2. NAME MATCH (fallback, and primary for common nodes which are key-based with no gl icon)
- *      — resolves the display name against skill.json, via NAME_OVERRIDES then normalized name.
- *   Pixel matching needs the skill dump (default E:/mapledoro-image/output/skill); without it,
- *   the script falls back to name matching only.
+ * Common node order: branch/faction-shared nodes (ascending id) first, then the 15 universal
+ * nodes in UNIVERSAL_ORDER — the in-game "Common" tab's fixed display order, which isn't
+ * derivable from any manifest field and was confirmed against 3 classes' screenshots.
  *
- * Usage:  node scripts/gen-vmatrix.mjs [skill.json] [dumpSkillDir]
- *   (network: fetches 53 class pages + each job/boost icon from grandislibrary.com, cached)
+ * Usage: node scripts/gen-vmatrix.mjs [v-matrix.json]
  */
 
-import { readFileSync, writeFileSync, mkdirSync, readdirSync, existsSync } from "fs";
-import { resolve, join } from "path";
-import { tmpdir } from "os";
-import { createHash } from "crypto";
-import sharp from "sharp";
+import { readFileSync, writeFileSync, mkdirSync } from "fs";
+import { resolve } from "path";
 
-const skillManifestPath = process.argv[2] ?? "manifests/v269/skill.json";
-const DUMP_SKILL_DIR = process.argv[3] ?? "E:/mapledoro-image/output/skill";
+const manifestPath = process.argv[2] ?? "manifests/v269/v-matrix.json";
 const OUTPUT_DIR = resolve("public/data/vmatrix");
-const GL = "https://grandislibrary.com";
-const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 
-// ── Name → id resolver (skill.json) ──────────────────────────────────────────
-const skillEntries = JSON.parse(readFileSync(resolve(skillManifestPath), "utf8")).entries;
-const idByNormName = new Map();
-const norm = (s) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
-for (const [id, e] of Object.entries(skillEntries)) {
-  if (e.name) { const k = norm(e.name); if (!idByNormName.has(k)) idByNormName.set(k, id); }
-}
+const SLUG_OVERRIDES = { Bowmaster: "bow_master", "Dual Blade": "blade_master" };
+const slugify = (name) => name.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+const classIdFor = (className) => SLUG_OVERRIDES[className] ?? slugify(className);
 
-// Manual name overrides for skills that don't match skill.json (decents reuse a base icon,
-// grandislibrary abbreviations, or true manifest gaps pinned from the .wz). gl name → skill id.
-const NAME_OVERRIDES = {
-  "Decent Holy Fountain": "2311011", // no own entry; decents reuse the base skill icon (Holy Fountain)
-};
+// Removed classes still present in the manifest — Jett and old Beast Tamer ("11212").
+const EXCLUDED_CLASSES = new Set(["Jett's Return", "11212"]);
 
-const nameId = (name) => NAME_OVERRIDES[name] ?? idByNormName.get(norm(name)) ?? null;
+const entries = JSON.parse(readFileSync(resolve(manifestPath), "utf8")).entries;
 
-// Boost skills appear in skill.json under the full "X Boost" name; fall back through the base
-// skill and compound-name forms for boosts that have no single combined entry.
-function boostNameId(boostName) {
-  const base = boostName.replace(/\s*Boost$/i, "").trim();
-  const variants = [
-    boostName, base,
-    boostName.replace(/^\[[^\]]+\]\s*/, ""), base.replace(/^\[[^\]]+\]\s*/, ""),
-    base.split(/\s*\/\s*|\s+and\s+|\s*&\s*|,\s*/i)[0] + " Boost",
-    base.split(/\s*\/\s*|\s+and\s+|\s*&\s*|,\s*/i)[0],
-  ];
-  for (const v of variants) { const id = nameId(v); if (id) return id; }
-  return null;
-}
-
-// ── Pixel matcher (primary) ──────────────────────────────────────────────────
-async function hashImg(input) {
-  const buf = await sharp(input).resize(32, 32, { fit: "fill" }).ensureAlpha().raw().toBuffer();
-  return createHash("md5").update(buf).digest("hex");
-}
-
-async function buildPixelIndex(dir) {
-  if (!existsSync(dir)) {
-    console.warn(`! skill dump not found at ${dir} — falling back to name matching only`);
-    return null;
+// Per-class job + boost nodes, and each class's own job code, from className-tagged entries.
+const classes = new Map(); // classId -> { className, ownCode, job: Node[], boost: Node[] }
+for (const [id, e] of Object.entries(entries)) {
+  if (!e.className || EXCLUDED_CLASSES.has(e.className)) continue;
+  let cls = classes.get(classIdFor(e.className));
+  if (!cls) {
+    cls = { className: e.className, ownCode: null, job: [], boost: [] };
+    classes.set(classIdFor(e.className), cls);
   }
-  const index = new Map(); // pixel hash → skill id (first id wins; identical art renders the same)
-  for (const id of readdirSync(dir)) {
-    try { const h = await hashImg(`${dir}/${id}/icon.png`); if (!index.has(h)) index.set(h, id); }
-    catch { /* no icon.png */ }
+  if (e.type === 0) {
+    cls.ownCode ??= e.jobs[0];
+    cls.job.push([id, e.name, e.maxLevel]);
+  } else if (e.type === 1) {
+    cls.boost.push([id, e.name, e.maxLevel]);
   }
-  console.log(`pixel index: ${index.size} icons from ${dir}`);
-  return index;
 }
 
-const ICON_CACHE = join(tmpdir(), "mapledoro-vmatrix-icons");
-mkdirSync(ICON_CACHE, { recursive: true });
+// Common candidates: type-0 entries with no className (universal + branch/faction-shared).
+const commonCandidates = Object.entries(entries).filter(([, e]) => e.type === 0 && !e.className);
+const branchCommon = commonCandidates.filter(([, e]) => !e.jobs.includes("all"));
 
-async function fetchIcon(iconPath) {
-  const cacheFile = join(ICON_CACHE, iconPath.replace(/[^a-z0-9]/gi, "_"));
-  if (existsSync(cacheFile)) return readFileSync(cacheFile);
-  const res = await fetch(GL + iconPath, { headers: { "User-Agent": UA } });
-  if (!res.ok) return null;
-  const buf = Buffer.from(await res.arrayBuffer());
-  if (buf[0] !== 0x89) return null; // not a PNG (e.g. 404 HTML)
-  writeFileSync(cacheFile, buf);
-  return buf;
-}
-
-const pixelIndex = await buildPixelIndex(DUMP_SKILL_DIR);
-
-async function pixelId(iconPath) {
-  if (!pixelIndex || !iconPath) return null;
-  try {
-    const buf = await fetchIcon(iconPath);
-    if (!buf) return null;
-    return pixelIndex.get(await hashImg(buf)) ?? null;
-  } catch { return null; }
-}
-
-// ── Class list + slug→id (irregular cases only) ──────────────────────────────
-const SLUG_TO_ID = {
-  bowmaster: "bow_master",
-  "dual-blade": "blade_master",
-  "arch-mage-fire-poison": "arch_mage_f_p",
-  "arch-mage-ice-lightning": "arch_mage_i_l",
-};
-const slugToId = (slug) => SLUG_TO_ID[slug] ?? slug.replace(/-/g, "_");
-
-const CLASS_PAGES = `anima/hoyoung anima/lara anima/ren cygnus-knights/blaze-wizard cygnus-knights/dawn-warrior
-cygnus-knights/mihile cygnus-knights/night-walker cygnus-knights/thunder-breaker cygnus-knights/wind-archer
-explorers/arch-mage-fire-poison explorers/arch-mage-ice-lightning explorers/bishop explorers/bowmaster
-explorers/buccaneer explorers/cannoneer explorers/corsair explorers/dark-knight explorers/dual-blade
-explorers/hero explorers/marksman explorers/night-lord explorers/paladin explorers/pathfinder explorers/shadower
-flora/adele flora/ark flora/illium flora/khali heroes/aran heroes/evan heroes/luminous heroes/mercedes
-heroes/phantom heroes/shade jianghu/lynn jianghu/mo-xuan nova/angelic-buster nova/cadena nova/kain nova/kaiser
-other/kinesis other/zero resistance/battle-mage resistance/blaster resistance/demon-avenger resistance/demon-slayer
-resistance/mechanic resistance/wild-hunter resistance/xenon sengoku/hayato sengoku/kanna shine/erel-light
-shine/sia-astelle`.split(/\s+/).filter(Boolean);
-
-// fifthCommon key → skill name (resolved against the 400001xxx common-V block). expWarrior/etc
-// is an Explorer-only, branch-keyed node indistinguishable from goddessBlessing here; skipped.
-const COMMON_KEYS = {
-  afterimageOfTheOtherworld: "Afterimage of the Otherworld", conversionOverdrive: "Conversion Overdrive",
-  cygnusBlessing: "Empress Cygnus's Blessing", defenderOfTheDemon: "Defender of the Demon",
-  etherealForm: "Ethereal Form", freudsWisdom: "Freud's Wisdom", goddessBlessing: "Maple World Goddess's Blessing",
-  guidedArrow: "Guided Arrow", impenetrableSkin: "Impenetrable Skin", lastResort: "Last Resort",
-  loadedDice: "Loaded Dice", lotusFlower: "Lotus Flower", manaOverload: "Mana Overload",
-  mightOfTheNova: "Might of the Nova", otherworldGoddessBlessing: "Otherworld Goddess's Blessing",
-  overdrive: "Overdrive", phalanxCharge: "Phalanx Charge", powerOfDestiny: "Power of Destiny",
-  princessSakunoBlessing: "Princess Sakuno's Blessing", resistanceInfantry: "Resistance Infantry",
-  ringOfSamsara: "Ring of Samsara", transcendent: "Transcendent",
-  transcendentRhinnePrayer: "Transcendent Rhinne's Prayer", treeOfStars: "Tree of Stars",
-  twilightBloom: "Twilight Bloom", venomBurst: "Venom Burst", viciousShot: "Vicious Shot",
-  weaponAura: "Weapon Aura",
-  grandisGoddessBlessingFL: "Grandis Goddess's Blessing", grandisGoddessBlessingHY: "Grandis Goddess's Blessing",
-  grandisGoddessBlessingKAI: "Grandis Goddess's Blessing", grandisGoddessBlessingLARA: "Grandis Goddess's Blessing",
-  grandisGoddessBlessingLEN: "Grandis Goddess's Blessing", grandisGoddessBlessingNV: "Grandis Goddess's Blessing",
-};
-
-const UNIVERSAL_COMMON = [
-  "Erda Nova", "Will of Erda", "Erda Shower", "Rope Lift", "Blink",
-  "Decent Holy Symbol", "Decent Holy Fountain", "Decent Speed Infusion",
-  "Decent Advanced Blessing", "Decent Combat Orders", "Decent Hyper Body",
-  "Decent Sharp Eyes", "Decent Mystic Door", "True Arachnid Reflection", "Solar Crest",
+const UNIVERSAL_ORDER = [
+  "10000008", // Erda Nova
+  "10000009", // Will of Erda
+  "10000007", // Blink
+  "10000022", // Erda Shower
+  "10000000", // Rope Lift
+  "10000010", // Decent Holy Symbol
+  "10000036", // Decent Holy Fountain
+  "10000006", // Decent Speed Infusion
+  "10000005", // Decent Advanced Blessing
+  "10000004", // Decent Combat Orders
+  "10000003", // Decent Hyper Body
+  "10000002", // Decent Sharp Eyes
+  "10000001", // Decent Mystic Door
+  "10000024", // True Arachnid Reflection
+  "10000031", // Solar Crest
 ];
-
-function extractPost(html) {
-  const m = html.match(/<script id="__NEXT_DATA__" type="application\/json">([\s\S]*?)<\/script>/);
-  if (!m) throw new Error("no __NEXT_DATA__");
-  return JSON.parse(m[1]).props.pageProps.post;
-}
-
-const unresolved = new Set();
-// Common nodes are key/name-based (no gl icon to pixel-match).
-const universalNodes = UNIVERSAL_COMMON.map((name) => {
-  const id = nameId(name); if (!id) unresolved.add(name); return [id, name];
-});
+const universalCommon = UNIVERSAL_ORDER.map((id) => [id, entries[id].name, entries[id].maxLevel]);
 
 mkdirSync(OUTPUT_DIR, { recursive: true });
 
-let ok = 0;
-const failures = [];
+for (const [classId, cls] of classes) {
+  const common = [
+    ...branchCommon.filter(([, e]) => e.jobs.includes(cls.ownCode)).map(([id, e]) => [id, e.name, e.maxLevel]),
+    ...universalCommon,
+  ];
 
-for (const page of CLASS_PAGES) {
-  const slug = page.split("/")[1];
-  const classId = slugToId(slug);
-  try {
-    const res = await fetch(GL + "/" + page, { headers: { "User-Agent": UA } });
-    if (!res.ok) throw new Error("HTTP " + res.status);
-    const fifth = extractPost(await res.text()).skill?.fifth;
-    if (!fifth) throw new Error("no skill.fifth");
-
-    // job + boost: pixel-match by gl icon first, then name.
-    const job = [];
-    for (const s of (fifth.fifthMain || []).filter((x) => x?.name)) {
-      const id = (await pixelId(s.icons?.[0])) ?? nameId(s.name);
-      if (!id) unresolved.add(s.name);
-      job.push([id, s.name]);
-    }
-    const boost = [];
-    for (const s of (fifth.fifthBoost || []).filter((x) => x?.name)) {
-      const id = (await pixelId(s.icons?.[0])) ?? boostNameId(s.name);
-      if (!id) unresolved.add(s.name);
-      boost.push([id, s.name]);
-    }
-    // common: branch (keys) + universal, name-resolved.
-    const branchCommon = (fifth.fifthCommon || []).map((k) => COMMON_KEYS[k]).filter(Boolean)
-      .map((name) => { const id = nameId(name); if (!id) unresolved.add(name); return [id, name]; });
-    const common = [...branchCommon, ...universalNodes];
-
-    writeFileSync(resolve(OUTPUT_DIR, `${classId}.json`), JSON.stringify({ job, boost, common }));
-    console.log(`${classId.padEnd(18)} job=${job.length} boost=${boost.length} common=${common.length}`);
-    ok++;
-  } catch (e) {
-    failures.push(`${classId} (${page}): ${e.message}`);
-  }
+  writeFileSync(resolve(OUTPUT_DIR, `${classId}.json`), JSON.stringify({ job: cls.job, boost: cls.boost, common }));
+  console.log(`${classId.padEnd(18)} job=${cls.job.length} boost=${cls.boost.length} common=${common.length}`);
 }
 
-console.log(`\n${ok}/${CLASS_PAGES.length} classes written → ${OUTPUT_DIR}`);
-if (failures.length) console.log("FAILURES:\n  " + failures.join("\n  "));
-if (unresolved.size) console.log(`UNRESOLVED icons (${unresolved.size}):\n  ` + [...unresolved].sort().join("\n  "));
+console.log(`\n${classes.size} classes written -> ${OUTPUT_DIR}`);

@@ -40,7 +40,6 @@ const STEP_COMPONENTS: Record<SetupStepId, typeof GenericSetupStep> = {
   marriage: MarriageSetupStep,
   stats: StatsSetupStep,
   equipment: EquipmentSetupStep,
-  inventory: GenericSetupStep,
   v_matrix: VMatrixSetupStep,
   hexa_matrix: HexaMatrixSetupStep,
   familiars: FamiliarsSetupStep,

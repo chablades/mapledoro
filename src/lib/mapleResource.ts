@@ -2,7 +2,7 @@
 // IDs are looked up by hand from the committed manifests in `manifests/v<version>/`;
 // see CLAUDE.md "Image Policy". Override the host with NEXT_PUBLIC_RESOURCE_BASE.
 
-export type ResourceType = "erda-skill" | "familiar" | "hexa-skill" | "item" | "mob" | "skill";
+export type ResourceType = "erda-skill" | "familiar" | "hexa-skill" | "item" | "mob" | "skill" | "v-matrix";
 
 const RESOURCE_BASE = process.env.NEXT_PUBLIC_RESOURCE_BASE ?? "https://haku.network";
 

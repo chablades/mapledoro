@@ -7,7 +7,6 @@ const SETUP_STEPS = [
   { id: "marriage", label: "Marriage" },
   { id: "stats", label: "Stats" },
   { id: "equipment", label: "Equipment" },
-  { id: "inventory", label: "Inventory" },
   { id: "v_matrix", label: "V Matrix" },
   { id: "hexa_matrix", label: "Hexa Matrix" },
   { id: "familiars", label: "Familiars" },

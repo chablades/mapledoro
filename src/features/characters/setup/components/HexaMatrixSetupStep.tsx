@@ -210,21 +210,42 @@ function LevelInput({ value, onChange, theme, min = 0, max = MAX_LEVEL, label }:
   );
 }
 
-function SectionLabel({ label, theme }: { label: string; theme: AppTheme }) {
+function SectionLabel({ label, theme, onMaxAll, onClear }: { label: string; theme: AppTheme; onMaxAll?: () => void; onClear?: () => void }) {
+  const btnStyle: React.CSSProperties = {
+    background: "none", border: "none", padding: 0, font: "inherit",
+    fontSize: "0.75rem", fontWeight: 800, letterSpacing: "0.05em", textTransform: "uppercase",
+    cursor: "pointer",
+  };
   return (
-    <p style={{
-      margin: 0,
-      marginBottom: "0.45rem",
-      fontSize: "0.75rem",
-      fontWeight: 800,
-      color: theme.muted,
-      letterSpacing: "0.05em",
-      textTransform: "uppercase" as const,
-      paddingBottom: "0.25rem",
-      borderBottom: `1px solid ${theme.border}`,
+    <div style={{
+      display: "flex", justifyContent: "space-between", alignItems: "baseline",
+      marginBottom: "0.45rem", paddingBottom: "0.25rem", borderBottom: `1px solid ${theme.border}`,
     }}>
-      {label}
-    </p>
+      <p style={{
+        margin: 0,
+        fontSize: "0.75rem",
+        fontWeight: 800,
+        color: theme.muted,
+        letterSpacing: "0.05em",
+        textTransform: "uppercase" as const,
+      }}>
+        {label}
+      </p>
+      {(onMaxAll || onClear) && (
+        <div style={{ display: "flex", gap: "1rem" }}>
+          {onClear && (
+            <button type="button" onClick={onClear} style={{ ...btnStyle, color: theme.muted }}>
+              Clear
+            </button>
+          )}
+          {onMaxAll && (
+            <button type="button" onClick={onMaxAll} style={{ ...btnStyle, color: theme.accent }}>
+              Max All
+            </button>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -489,7 +510,9 @@ export default function HexaMatrixSetupStep({
           <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
 
             <div>
-              <SectionLabel label="Origin & Ascent" theme={theme} />
+              <SectionLabel label="Origin & Ascent" theme={theme}
+                onMaxAll={() => update({ origin: MAX_LEVEL, ...(classDef.ascent ? { ascent: MAX_LEVEL } : {}) })}
+                onClear={() => update({ origin: 0, ...(classDef.ascent ? { ascent: 0 } : {}) })} />
               <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
                 <HexaTile skill={classDef.origin} level={levels.origin}
                   onUpdate={(v) => update({ origin: v })} theme={theme} min={1} />
@@ -501,7 +524,9 @@ export default function HexaMatrixSetupStep({
             </div>
 
             <div>
-              <SectionLabel label="Mastery" theme={theme} />
+              <SectionLabel label="Mastery" theme={theme}
+                onMaxAll={() => update({ mastery: classDef.mastery.map(() => MAX_LEVEL) })}
+                onClear={() => update({ mastery: classDef.mastery.map(() => 0) })} />
               <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
                 {classDef.mastery.map((node, i) => (
                   <HexaTile key={`mastery-${i}`} skill={{ iconId: node.iconId, iconUrl: node.iconUrl, name: node.skills.join(" · ") }}
@@ -518,7 +543,9 @@ export default function HexaMatrixSetupStep({
             </div>
 
             <div>
-              <SectionLabel label="Enhancement" theme={theme} />
+              <SectionLabel label="Enhancement" theme={theme}
+                onMaxAll={() => update({ enhancement: classDef.enhancement.map(() => MAX_LEVEL) })}
+                onClear={() => update({ enhancement: classDef.enhancement.map(() => 0) })} />
               <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
                 {classDef.enhancement.map((skill, i) => (
                   <HexaTile key={`enhancement-${skill.name}`} skill={skill} level={levels.enhancement[i] ?? 0}
@@ -534,7 +561,9 @@ export default function HexaMatrixSetupStep({
             </div>
 
             <div>
-              <SectionLabel label="Common" theme={theme} />
+              <SectionLabel label="Common" theme={theme}
+                onMaxAll={() => update({ common: COMMON_SKILLS.map(() => MAX_LEVEL) })}
+                onClear={() => update({ common: COMMON_SKILLS.map(() => 0) })} />
               <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
                 {COMMON_SKILLS.map((skill, i) => (
                   <HexaTile key={skill.name} skill={skill} level={levels.common[i] ?? 0}

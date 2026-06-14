@@ -21,7 +21,7 @@ const SETUP_FLOWS = [
     label: "Full Setup",
     description: "Complete profile setup including stats, equipment, and more.",
     required: false,
-    steps: ["gender", "marriage", "stats", "equipment", "v_matrix", "hexa_matrix", "familiars", "link_skills", "inventory"] as const,
+    steps: ["gender", "marriage", "stats", "equipment", "v_matrix", "hexa_matrix", "familiars", "link_skills"] as const,
   },
   {
     id: "stats_flow",
@@ -64,13 +64,6 @@ const SETUP_FLOWS = [
     description: "Add active link preset details.",
     required: false,
     steps: ["link_skills"] as const,
-  },
-  {
-    id: "inventory_flow",
-    label: "Inventory",
-    description: "Add inventory tab captures.",
-    required: false,
-    steps: ["inventory"] as const,
   },
   {
     id: "legion_account_flow",
