@@ -2493,12 +2493,12 @@
       "type": 0,
       "maxLevel": 30,
       "jobs": [
-        "14212"
+        "1412"
       ],
       "connectSkills": [
         "400041008"
       ],
-      "className": "Kinesis",
+      "className": "Night Walker",
       "hasIcon": true
     },
     "10040006": {
@@ -2563,13 +2563,13 @@
       "type": 0,
       "maxLevel": 30,
       "jobs": [
-        "14212"
+        "1412"
       ],
       "connectSkills": [
         "400041028",
         "400041095"
       ],
-      "className": "Kinesis",
+      "className": "Night Walker",
       "hasIcon": true
     },
     "10040011": {
@@ -2676,12 +2676,12 @@
       "type": 0,
       "maxLevel": 30,
       "jobs": [
-        "14212"
+        "1412"
       ],
       "connectSkills": [
         "400041037"
       ],
-      "className": "Kinesis",
+      "className": "Night Walker",
       "hasIcon": true
     },
     "10040020": {
@@ -2816,12 +2816,12 @@
       "type": 0,
       "maxLevel": 30,
       "jobs": [
-        "14212"
+        "1412"
       ],
       "connectSkills": [
         "400041059"
       ],
-      "className": "Kinesis",
+      "className": "Night Walker",
       "hasIcon": true
     },
     "10040030": {
