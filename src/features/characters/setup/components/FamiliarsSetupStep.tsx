@@ -767,7 +767,7 @@ export default function FamiliarsSetupStep({
       stepLabel={step.label}
       stepNumber={stepNumber}
       totalSteps={totalSteps}
-      description="All fields are optional. Fill in what you know."
+      description="All fields are optional. Fill in what you can."
       onBack={onBack}
       onNext={onNext}
       onFinish={onFinish}

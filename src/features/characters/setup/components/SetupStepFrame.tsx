@@ -12,6 +12,8 @@ interface SetupStepFrameProps {
   onFinish: () => void;
   /** When provided, always shows this label and always calls onNext (never Finish). */
   nextLabel?: string;
+  /** Disables the Next/Finish button, e.g. while required questions are unanswered. */
+  nextDisabled?: boolean;
   children: ReactNode;
 }
 
@@ -25,6 +27,7 @@ export default function SetupStepFrame({
   onNext,
   onFinish,
   nextLabel,
+  nextDisabled,
   children,
 }: SetupStepFrameProps) {
   const isLastStep = !nextLabel && stepNumber >= totalSteps;
@@ -96,17 +99,18 @@ export default function SetupStepFrame({
         </button>
         <button
           type="button"
+          disabled={nextDisabled}
           onClick={isLastStep ? onFinish : onNext}
           style={{
             border: "none",
             borderRadius: "10px",
-            background: theme.accent,
-            color: "#fff",
+            background: nextDisabled ? theme.border : theme.accent,
+            color: nextDisabled ? theme.muted : "#fff",
             fontFamily: "inherit",
             fontWeight: 800,
             fontSize: "0.88rem",
             padding: "0.55rem 0.9rem",
-            cursor: "pointer",
+            cursor: nextDisabled ? "not-allowed" : "pointer",
           }}
         >
           {nextLabel ?? (isLastStep ? "Finish" : "Next Step")}

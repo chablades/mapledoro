@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 
 import { createPortal } from "react-dom";
 import { usePickerCoords } from "../hooks/usePickerCoords";
 import type { AppTheme } from "../../../../components/themes";
+import HoverTooltip from "../../../../components/HoverTooltip";
 import type { SetupStepDefinition } from "../steps";
 import { ItemIcon } from "../../../../components/ResourceImage";
 import CharacterAvatar from "../../tabs/components/CharacterAvatar";
@@ -111,6 +112,8 @@ const SLOT_SIZE = 68;
 const SEARCH_LIMIT = 60;
 // Center block spans weapon + secondary + emblem columns
 const CENTER_WIDTH = 3 * SLOT_SIZE + 2 * 4;
+// Labels for the mobile equipment-grid carousel (one section visible at a time)
+const EQUIPMENT_PAGE_LABELS = ["Accessories", "Weapon", "Armor"];
 
 // ── Parse / serialise ──────────────────────────────────────────────────────
 
@@ -241,6 +244,7 @@ function ItemPicker({ slot, current, theme, files, itemFilter, maxLevel, exclude
   const sourceItems = items
     ? items.filter((it) =>
         itemFilter(it) &&
+        it.id !== current?.id &&
         (maxLevel == null || it.reqLevel == null || it.reqLevel <= maxLevel) &&
         !(it.onlyEquip && excludeIds?.has(it.id)))
     : null;
@@ -254,6 +258,15 @@ function ItemPicker({ slot, current, theme, files, itemFilter, maxLevel, exclude
 
   return (
     <div style={{ border: `1px solid ${theme.accent}`, borderRadius: 10, background: theme.panel, boxShadow: "0 4px 20px rgba(0,0,0,0.3)", overflow: "hidden" }}>
+      {current && (
+        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "0.4rem 0.6rem", borderBottom: `1px solid ${theme.border}` }}>
+          {current.id && <ItemIcon id={current.id} size={28} />}
+          <div style={{ overflow: "hidden" }}>
+            <p style={{ margin: 0, fontSize: "0.75rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.04em", color: theme.muted }}>Currently Equipped</p>
+            <p style={{ margin: 0, fontSize: "0.8rem", fontWeight: 700, color: theme.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{current.name}</p>
+          </div>
+        </div>
+      )}
       {current && (
         <button
           type="button"
@@ -357,39 +370,41 @@ function SlotCell({ slotKey, item, theme, isActive, onClick, picker }: {
   picker?: ReactNode;
 }) {
   const { ref: wrapperRef, coords: pickerCoords, compute } = usePickerCoords(isActive, PICKER_WIDTH);
+  const button = (
+    <div
+      role="button"
+      tabIndex={0}
+      aria-label={item ? `${SLOT_LABELS[slotKey]}: ${item.name}` : `Set ${SLOT_LABELS[slotKey]}`}
+      onClick={(e) => { e.stopPropagation(); compute(); onClick(); }}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); compute(); onClick(); } }}
+      onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.borderColor = `${theme.accent}88`; }}
+      onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.borderColor = theme.border; }}
+      onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
+      onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
+      style={{
+        width: SLOT_SIZE, height: SLOT_SIZE,
+        border: `1px solid ${isActive ? theme.accent : theme.border}`,
+        borderRadius: 8,
+        background: isActive ? `${theme.accent}15` : theme.bg,
+        display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+        gap: 2, cursor: "pointer",
+        outline: "2px solid transparent", outlineOffset: 2,
+        transition: "border-color 0.15s, background 0.15s",
+        overflow: "hidden", padding: "2px 3px", boxSizing: "border-box",
+      }}
+    >
+      {item ? (
+        <ItemIcon id={item.id} size={48} />
+      ) : (
+        <span style={{ fontSize: "0.75rem", color: theme.muted, fontWeight: 700, lineHeight: 1.2, textAlign: "center", whiteSpace: "nowrap", overflow: "hidden" }}>
+          {SLOT_LABELS[slotKey]}
+        </span>
+      )}
+    </div>
+  );
   return (
     <div ref={wrapperRef} style={{ position: "relative", width: SLOT_SIZE, flexShrink: 0 }}>
-      <div
-        role="button"
-        tabIndex={0}
-        title={item ? item.name : undefined}
-        aria-label={item ? `${SLOT_LABELS[slotKey]}: ${item.name}` : `Set ${SLOT_LABELS[slotKey]}`}
-        onClick={(e) => { e.stopPropagation(); compute(); onClick(); }}
-        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); compute(); onClick(); } }}
-        onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.borderColor = `${theme.accent}88`; }}
-        onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.borderColor = theme.border; }}
-        onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
-        onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
-        style={{
-          width: SLOT_SIZE, height: SLOT_SIZE,
-          border: `1px solid ${isActive ? theme.accent : theme.border}`,
-          borderRadius: 8,
-          background: isActive ? `${theme.accent}15` : theme.bg,
-          display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-          gap: 2, cursor: "pointer",
-          outline: "2px solid transparent", outlineOffset: 2,
-          transition: "border-color 0.15s, background 0.15s",
-          overflow: "hidden", padding: "2px 3px", boxSizing: "border-box",
-        }}
-      >
-        {item ? (
-          <ItemIcon id={item.id} size={48} />
-        ) : (
-          <span style={{ fontSize: "0.75rem", color: theme.muted, fontWeight: 700, lineHeight: 1.2, textAlign: "center", whiteSpace: "nowrap", overflow: "hidden" }}>
-            {SLOT_LABELS[slotKey]}
-          </span>
-        )}
-      </div>
+      {item ? <HoverTooltip label={item.name} theme={theme}>{button}</HoverTooltip> : button}
       {picker && createPortal(
         <div
           onClick={(e) => e.stopPropagation()}
@@ -639,6 +654,7 @@ export default function EquipmentSetupStep({
   const [substepDirection, setSubstepDirection] = useState<"forward" | "backward">("forward");
   const [hasSubstepSwitched, setHasSubstepSwitched] = useState(false);
   const [symbolTab, setSymbolTab] = useState<SymbolTabKey>("arcane");
+  const [mobileGridPage, setMobileGridPage] = useState(0);
 
   function goToSubstep(next: number) {
     setHasSubstepSwitched(true);
@@ -741,10 +757,10 @@ export default function EquipmentSetupStep({
       <div key={1} style={substepAnimStyle}>
         <SetupStepFrame
           theme={theme}
-          stepLabel="Title & Symbols"
+          stepLabel="Additional Equipment"
           stepNumber={stepNumber}
           totalSteps={totalSteps}
-          description="Add your title and enter your symbol levels."
+          description="All slots and fields are optional. Fill in what you can."
           onBack={() => goToSubstep(0)}
           onNext={onNext}
           onFinish={onFinish}
@@ -806,34 +822,59 @@ export default function EquipmentSetupStep({
   const col7: SlotKey[] = ["cape", "glove", "shoe", "medal", "heart", "badge"];
   const centerBottom: SlotKey[] = ["weapon", "secondary", "emblem"];
 
-  const colStyle: CSSProperties = { display: "flex", flexDirection: "column", gap: 4, flexShrink: 0 };
+  const navBtnStyle: CSSProperties = {
+    border: `1px solid ${theme.border}`,
+    borderRadius: 8,
+    background: theme.bg,
+    color: theme.text,
+    fontFamily: "inherit", fontWeight: 800, fontSize: "1rem",
+    width: 36, height: 32, cursor: "pointer",
+  };
 
   return (
     <div key={0} style={substepAnimStyle}>
+    <style>{`
+      @media (max-width: 480px) {
+        .eq-section { display: none; }
+        .eq-page-0 .eq-section-0,
+        .eq-page-1 .eq-section-1,
+        .eq-page-2 .eq-section-2 { display: flex; }
+        .eq-page-nav { display: flex; }
+      }
+    `}</style>
     <SetupStepFrame
       theme={theme}
       stepLabel={step.label}
       stepNumber={stepNumber}
       totalSteps={totalSteps}
-      description="Record the items you have equipped."
+      description="All slots are optional. Fill in what you can."
       onBack={onBack}
       onNext={() => goToSubstep(1)}
       onFinish={onFinish}
       nextLabel="Continue"
     >
       <PresetBar theme={theme} active={activePreset} onSwitch={switchPreset} />
+      <div className="eq-page-nav" style={{ alignItems: "center", justifyContent: "center", gap: 12, marginBottom: 8 }}>
+        <button type="button" aria-label="Previous section" onClick={() => setMobileGridPage((p) => (p + 2) % 3)} style={navBtnStyle}>‹</button>
+        <span style={{ fontSize: "0.75rem", fontWeight: 800, color: theme.muted, textTransform: "uppercase", letterSpacing: "0.05em", minWidth: 90, textAlign: "center" }}>
+          {EQUIPMENT_PAGE_LABELS[mobileGridPage]}
+        </span>
+        <button type="button" aria-label="Next section" onClick={() => setMobileGridPage((p) => (p + 1) % 3)} style={navBtnStyle}>›</button>
+      </div>
       {/* Equipment grid */}
-      <div style={{ overflowX: "auto" }}>
+      <div className={`eq-page-${mobileGridPage}`} style={{ overflowX: "auto" }}>
       <div style={{ display: "flex", gap: 4, alignItems: "stretch", width: "fit-content", margin: "0 auto" }}>
 
-        {/* Col 1 */}
-        <SlotColumn slots={col1} grid={activeGrid} theme={theme} activeSlot={activeSlot} onToggle={toggleSlot} renderPicker={renderPicker} />
+        <div className="eq-section eq-section-0" style={{ gap: 4, flexShrink: 0 }}>
+          {/* Col 1 */}
+          <SlotColumn slots={col1} grid={activeGrid} theme={theme} activeSlot={activeSlot} onToggle={toggleSlot} renderPicker={renderPicker} />
 
-        {/* Col 2 */}
-        <SlotColumn slots={col2} grid={activeGrid} theme={theme} activeSlot={activeSlot} onToggle={toggleSlot} renderPicker={renderPicker} />
+          {/* Col 2 */}
+          <SlotColumn slots={col2} grid={activeGrid} theme={theme} activeSlot={activeSlot} onToggle={toggleSlot} renderPicker={renderPicker} />
+        </div>
 
         {/* Center block: sprite + weapon/sub/emblem */}
-        <div style={{ ...colStyle, width: CENTER_WIDTH }}>
+        <div className="eq-section eq-section-1" style={{ flexDirection: "column", gap: 4, flexShrink: 0, width: CENTER_WIDTH }}>
           <div style={{
             flex: 1,
             border: `1px solid ${theme.border}`,
@@ -872,11 +913,13 @@ export default function EquipmentSetupStep({
           </div>
         </div>
 
-        {/* Col 6 */}
-        <SlotColumn slots={col6} grid={activeGrid} theme={theme} activeSlot={activeSlot} onToggle={toggleSlot} renderPicker={renderPicker} />
+        <div className="eq-section eq-section-2" style={{ gap: 4, flexShrink: 0 }}>
+          {/* Col 6 */}
+          <SlotColumn slots={col6} grid={activeGrid} theme={theme} activeSlot={activeSlot} onToggle={toggleSlot} renderPicker={renderPicker} />
 
-        {/* Col 7 */}
-        <SlotColumn slots={col7} grid={activeGrid} theme={theme} activeSlot={activeSlot} onToggle={toggleSlot} renderPicker={renderPicker} />
+          {/* Col 7 */}
+          <SlotColumn slots={col7} grid={activeGrid} theme={theme} activeSlot={activeSlot} onToggle={toggleSlot} renderPicker={renderPicker} />
+        </div>
 
       </div>
       </div>

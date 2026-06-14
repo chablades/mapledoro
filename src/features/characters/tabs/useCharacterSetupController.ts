@@ -175,7 +175,7 @@ function buildFullSetupRecord(
     marriage: marriageDraftToStored(stepData.marriage ?? ""),
   });
   const { stats, isLiberated, weaponHand, hasRuinForceShield, soul } =
-    convertStatsStepDraftToStored(parseStatsStepDraft(stepData.stats ?? ""));
+    convertStatsStepDraftToStored(parseStatsStepDraft(stepData.stats ?? ""), character.level);
   const hexaToolData = buildHexaToolDataForRecord(character.jobName, stepData.hexa_matrix ?? "");
   const vMatrixToolData = buildVMatrixToolDataForRecord(stepData.v_matrix ?? "");
   const familiarsData = stepData.familiars ? tryParseJson(stepData.familiars) : null;
@@ -1032,7 +1032,7 @@ export function useCharacterSetupController() {
     const store = readCharactersStore();
     const existing = selectCharacterById(store, toCharacterKey(character));
     if (!existing) return;
-    const { stats, isLiberated, weaponHand, hasRuinForceShield, soul } = convertStatsStepDraftToStored(parseStatsStepDraft(rawDraft));
+    const { stats, isLiberated, weaponHand, hasRuinForceShield, soul } = convertStatsStepDraftToStored(parseStatsStepDraft(rawDraft), character.level);
     upsertFn({ ...existing, stats: { ...existing.stats, ...stats }, isLiberated, weaponHand, hasRuinForceShield, soul });
   }
 

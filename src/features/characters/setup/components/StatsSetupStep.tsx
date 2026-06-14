@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import Image from "next/image";
 import type { AppTheme } from "../../../../components/themes";
+import HoverTooltip from "../../../../components/HoverTooltip";
 import type { SetupStepDefinition } from "../steps";
 import SetupStepFrame from "./SetupStepFrame";
 import {
@@ -18,6 +19,7 @@ import {
 } from "../data/classSkillData";
 import { TRIPLE_STAT_FIELDS, type StatFieldId, type TripleStatFieldId } from "../data/statFields";
 import {
+  GENESIS_LIBERATION_LEVEL,
   parseStatsStepDraft,
   serializeStatsStepDraft,
   type StatsStepDraft,
@@ -31,6 +33,7 @@ interface StatsSetupStepProps {
   totalSteps: number;
   jobName?: string;
   direction?: "forward" | "backward";
+  characterLevel?: number;
   value: string;
   onChange: (value: string) => void;
   onBack: () => void;
@@ -89,6 +92,7 @@ function statInputStyle(theme: AppTheme, width?: string): CSSProperties {
     outlineOffset: "2px",
     transition: "outline-color 0.15s ease",
     width: width ?? "100%",
+    minWidth: 0,
     boxSizing: "border-box" as const,
   };
 }
@@ -117,6 +121,28 @@ function formatJobAdvancement(raw: string): string {
   return JOB_ORDINALS[raw] ?? raw;
 }
 
+function countSetupOptionsQuestions(optsDef: ClassSetupOptionsDef | undefined, characterLevel: number | undefined): number {
+  const isLiberationEligible = characterLevel === undefined || characterLevel >= GENESIS_LIBERATION_LEVEL;
+  let count = 1; // "Do you use any of these souls?" is always shown
+  if (isLiberationEligible) count += 1;
+  if (optsDef?.weaponType) count += 1;
+  if (optsDef?.ruinForceShield) count += 1;
+  return count;
+}
+
+function isSetupOptionsComplete(
+  optsDef: ClassSetupOptionsDef | undefined,
+  opts: NonNullable<StatsStepDraft["setupOptions"]>,
+  characterLevel: number | undefined,
+): boolean {
+  const isLiberationEligible = characterLevel === undefined || characterLevel >= GENESIS_LIBERATION_LEVEL;
+  if (isLiberationEligible && opts.isLiberated === undefined) return false;
+  if (opts.soulType === undefined) return false;
+  if (optsDef?.weaponType && opts.weaponHand === undefined) return false;
+  if (optsDef?.ruinForceShield && opts.hasRuinForceShield === undefined) return false;
+  return true;
+}
+
 // ── Sub-components ────────────────────────────────────────────────────────────
 
 function SkillIconBadge({ skill, theme }: { skill: BuffSkill; theme: AppTheme }) {
@@ -127,9 +153,13 @@ function SkillIconBadge({ skill, theme }: { skill: BuffSkill; theme: AppTheme })
     <div style={{ width: 32, height: 32, borderRadius: "4px", background: theme.border }} />
   );
   return (
-    <div
-      title={`${skill.skillName} — ${formatJobAdvancement(skill.jobAdvancement)}`}
-      style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.15rem" }}
+    <HoverTooltip
+      label={<>
+        <div>{skill.skillName}</div>
+        <div style={{ color: theme.muted, fontWeight: 600, fontStyle: "italic" }}>{formatJobAdvancement(skill.jobAdvancement)}</div>
+      </>}
+      theme={theme}
+      style={{ display: "flex", flexDirection: "column", alignItems: "center" }}
     >
       {iconUrl ? (
         <>
@@ -150,10 +180,7 @@ function SkillIconBadge({ skill, theme }: { skill: BuffSkill; theme: AppTheme })
           <div ref={fallbackRef} style={{ display: "none", width: 32, height: 32, borderRadius: "4px", background: theme.border }} />
         </>
       ) : placeholder}
-      <span style={{ fontSize: "0.75rem", color: theme.muted, fontWeight: 700, textAlign: "center", lineHeight: 1.2 }}>
-        {skill.skillName}
-      </span>
-    </div>
+    </HoverTooltip>
   );
 }
 
@@ -302,9 +329,9 @@ function CombatStatCell({
   if (id === "cooldownReduction") {
     const cd = draft.cooldownReduction ?? { seconds: "", percent: "" };
     return (
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.4rem" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.4rem", minWidth: 0 }}>
         <span style={{ fontSize: "0.78rem", color: theme.muted, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>{label}</span>
-        <div style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.25rem", flexShrink: 0 }}>
           <input type="text" aria-label={`${label} seconds`} value={cd.seconds} placeholder="0" style={statInputStyle(theme, "2.6rem")}
             onChange={(e) => onUpdateCooldown("seconds", e.target.value)}
             onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
@@ -326,9 +353,9 @@ function CombatStatCell({
   const val = typeof raw === "string" ? raw : "";
   const isRaw = RAW_VALUE_STAT_IDS.has(id);
   return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.4rem" }}>
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.4rem", minWidth: 0 }}>
       <span style={{ fontSize: "0.78rem", color: theme.muted, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>{label}</span>
-      <div style={{ display: "flex", alignItems: "center", gap: "0.15rem" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "0.15rem", flexShrink: 0 }}>
         <input type="text" aria-label={label} value={val} placeholder="0" style={statInputStyle(theme, "4rem")}
           onChange={(e) => onUpdate(id, e.target.value)}
           onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
@@ -375,10 +402,20 @@ function TooltipImage({ src }: { src: string }) {
 
 function InfoTooltip({ content, theme }: { content: TooltipContent; theme: AppTheme }) {
   const [open, setOpen] = useState(false);
+  const [shiftX, setShiftX] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
+  const popupRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open) return;
+    const container = containerRef.current;
+    const popup = popupRef.current;
+    if (container && popup) {
+      const margin = 8;
+      const naturalLeft = container.getBoundingClientRect().left;
+      const naturalRight = naturalLeft + popup.offsetWidth;
+      setShiftX(naturalRight > window.innerWidth - margin ? window.innerWidth - margin - naturalRight : 0);
+    }
     function handleMouseDown(e: MouseEvent) {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setOpen(false);
@@ -417,16 +454,17 @@ function InfoTooltip({ content, theme }: { content: TooltipContent; theme: AppTh
         ?
       </button>
       {open && (
-        <div style={{
+        <div ref={popupRef} style={{
           position: "absolute",
           top: "calc(100% + 0.4rem)",
           left: 0,
+          transform: shiftX ? `translateX(${shiftX}px)` : undefined,
           zIndex: 200,
           background: theme.bg,
           border: `1px solid ${theme.border}`,
           borderRadius: "10px",
           padding: "0.7rem 0.85rem",
-          width: "240px",
+          width: "min(240px, calc(100vw - 24px))",
           boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
         }}>
           {content.imageUrls && content.imageUrls.length > 0 && (
@@ -531,15 +569,17 @@ function BoolToggle({ question, value, onToggle, theme, tooltip }: {
 }
 
 function SetupOptionsSection({
-  optsDef, draft, onUpdate, theme,
+  optsDef, draft, onUpdate, theme, characterLevel,
 }: {
   optsDef: ClassSetupOptionsDef | undefined;
   draft: StatsStepDraft;
   onUpdate: (patch: Partial<NonNullable<StatsStepDraft["setupOptions"]>>) => void;
   theme: AppTheme;
+  characterLevel?: number;
 }) {
   const opts = draft.setupOptions ?? {};
   const isDA = Boolean(optsDef?.epheniaSoul);
+  const isLiberationEligible = characterLevel === undefined || characterLevel >= GENESIS_LIBERATION_LEVEL;
 
   let soulValue: string | null = null;
   if (opts.soulType === "mugong") soulValue = "mugong";
@@ -568,17 +608,19 @@ function SetupOptionsSection({
 
   return (
     <div>
-      <BoolToggle
-        question="Are you Liberated?"
-        value={opts.isLiberated}
-        onToggle={(v) => onUpdate({ isLiberated: v })}
-        theme={theme}
-        tooltip={{
-          title: "Genesis Liberation",
-          description: <>Unlocked in Limina (Lv. 255) after defeating the Black Mage in Story Mode at least once. You can start this quest with <a href="https://maplestorywiki.net/w/(Genesis_Weapon)_Trailing_the_Traces_of_the_Black_Mage" target="_blank" rel="noreferrer" style={{ color: theme.accent, fontWeight: 700, textDecoration: "none" }}>[Genesis Weapon] Trailing the Traces of the Black Mage</a>. Completing the full questline is called liberation.</>,
-          link: { href: "https://maplestorywiki.net/w/Genesis_Weapon", label: "See more on the wiki" },
-        }}
-      />
+      {isLiberationEligible && (
+        <BoolToggle
+          question="Are you Liberated?"
+          value={opts.isLiberated}
+          onToggle={(v) => onUpdate({ isLiberated: v })}
+          theme={theme}
+          tooltip={{
+            title: "Genesis Liberation",
+            description: <>Unlocked in Limina (Lv. 255) after defeating the Black Mage in Story Mode at least once. You can start this quest with <a href="https://maplestorywiki.net/w/(Genesis_Weapon)_Trailing_the_Traces_of_the_Black_Mage" target="_blank" rel="noreferrer" style={{ color: theme.accent, fontWeight: 700, textDecoration: "none" }}>[Genesis Weapon] Trailing the Traces of the Black Mage</a>. Completing the full questline is called liberation.</>,
+            link: { href: "https://maplestorywiki.net/w/Genesis_Weapon", label: "See more on the wiki" },
+          }}
+        />
+      )}
       {optsDef?.weaponType && (
         <QuestionToggle
           question="What weapon type are you using?"
@@ -632,7 +674,7 @@ function SetupOptionsSection({
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function StatsSetupStep({
-  theme, step, stepNumber, totalSteps, jobName = "", direction = "forward", value, onChange, onBack, onNext, onFinish,
+  theme, step, stepNumber, totalSteps, jobName = "", direction = "forward", characterLevel, value, onChange, onBack, onNext, onFinish,
 }: StatsSetupStepProps) {
   const classData = CLASS_SKILL_DATA.find((c) => c.nexonJobName === jobName);
   const draft = parseStatsStepDraft(value);
@@ -688,13 +730,18 @@ export default function StatsSetupStep({
           stepLabel={step.label}
           stepNumber={stepNumber}
           totalSteps={totalSteps}
-          description="Configure your character before entering stats."
+          description={
+            countSetupOptionsQuestions(classData?.setupOptionsDef, characterLevel) === 1
+              ? "One quick question about your character first:"
+              : "A few quick questions about your character first:"
+          }
           onBack={onBack}
           onNext={() => goToSubstep(1)}
           onFinish={onFinish}
           nextLabel="Continue"
+          nextDisabled={!isSetupOptionsComplete(classData?.setupOptionsDef, draft.setupOptions ?? {}, characterLevel)}
         >
-          <SetupOptionsSection optsDef={classData?.setupOptionsDef} draft={draft} onUpdate={handleSetupOptUpdate} theme={theme} />
+          <SetupOptionsSection optsDef={classData?.setupOptionsDef} draft={draft} onUpdate={handleSetupOptUpdate} theme={theme} characterLevel={characterLevel} />
         </SetupStepFrame>
       </div>
     );
@@ -702,12 +749,17 @@ export default function StatsSetupStep({
 
   return (
     <div key={1} style={substepAnimStyle}>
+    <style>{`
+      @media (max-width: 480px) {
+        .stats-combat-grid, .stats-symbols-grid { flex-direction: column; }
+      }
+    `}</style>
     <SetupStepFrame
       theme={theme}
       stepLabel={step.label}
       stepNumber={stepNumber}
       totalSteps={totalSteps}
-      description="All fields are optional. Fill in what you know."
+      description="All fields are optional. Fill in what you can."
       onBack={() => goToSubstep(0)}
       onNext={onNext}
       onFinish={onFinish}
@@ -727,13 +779,13 @@ export default function StatsSetupStep({
 
       <div style={{ marginBottom: "0.75rem" }}>
         <p style={sectionLabelStyle(theme)}>Combat Stats</p>
-        <div style={{ display: "flex", gap: "0.75rem" }}>
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+        <div className="stats-combat-grid" style={{ display: "flex", gap: "0.75rem", minWidth: 0 }}>
+          <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: "0.4rem" }}>
             {COMBAT_LEFT.map((id) => (
               <CombatStatCell key={id} id={id} draft={draft} onUpdate={handleSingleUpdate} onUpdateCooldown={handleCooldownUpdate} theme={theme} />
             ))}
           </div>
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+          <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: "0.4rem" }}>
             {COMBAT_RIGHT.map((id) => (
               <CombatStatCell key={id} id={id} draft={draft} onUpdate={handleSingleUpdate} onUpdateCooldown={handleCooldownUpdate} theme={theme} />
             ))}
@@ -743,9 +795,9 @@ export default function StatsSetupStep({
 
       <div>
         <p style={sectionLabelStyle(theme)}>Symbols</p>
-        <div style={{ display: "flex", gap: "0.75rem" }}>
+        <div className="stats-symbols-grid" style={{ display: "flex", gap: "0.75rem", minWidth: 0 }}>
           {(["arcanePower", "sacredPower"] as StatFieldId[]).map((id) => (
-            <div key={id} style={{ flex: 1 }}>
+            <div key={id} style={{ flex: 1, minWidth: 0 }}>
               <CombatStatCell id={id} draft={draft} onUpdate={handleSingleUpdate} onUpdateCooldown={handleCooldownUpdate} theme={theme} />
             </div>
           ))}

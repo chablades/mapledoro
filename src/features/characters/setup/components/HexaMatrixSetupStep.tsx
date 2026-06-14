@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import type { AppTheme } from "../../../../components/themes";
+import HoverTooltip from "../../../../components/HoverTooltip";
 import type { SetupStepDefinition } from "../steps";
 import type { HexaClassDef, HexaSkillDef, HexaSkillLevels, HexaStatEntry, HexaStatSlot } from "../../../../features/tools/hexa-skills/hexa-classes";
 import { findClassById, COMMON_SKILLS } from "../../../../features/tools/hexa-skills/hexa-classes";
@@ -249,7 +250,7 @@ function SectionLabel({ label, theme, onMaxAll, onClear }: { label: string; them
   );
 }
 
-/** Condensed icon tile: icon + level input, full skill name(s) shown via tooltip on hover. */
+/** Condensed icon tile: icon + level input, full skill name(s) shown via tooltip on hover/tap. */
 function HexaTile({ skill, level, onUpdate, theme, min = 0, max = MAX_LEVEL }: {
   skill: HexaSkillDef;
   level: number;
@@ -260,7 +261,7 @@ function HexaTile({ skill, level, onUpdate, theme, min = 0, max = MAX_LEVEL }: {
 }) {
   const filled = level > 0;
   return (
-    <div title={skill.name} style={{
+    <HoverTooltip label={skill.name} theme={theme} style={{
       width: 60, flexShrink: 0,
       border: `1px solid ${filled ? theme.accent : theme.border}`,
       borderRadius: 8,
@@ -294,7 +295,7 @@ function HexaTile({ skill, level, onUpdate, theme, min = 0, max = MAX_LEVEL }: {
           transition: "outline-color 0.15s ease",
         }}
       />
-    </div>
+    </HoverTooltip>
   );
 }
 
@@ -503,7 +504,7 @@ export default function HexaMatrixSetupStep({
     return (
       <div key={0} style={substepAnimStyle}>
         <SetupStepFrame theme={theme} stepLabel={classDef.className === "Sia" ? "Erda Link" : step.label} stepNumber={stepNumber} totalSteps={totalSteps}
-          description="All fields are optional. Fill in what you know."
+          description="All fields are optional. Fill in what you can."
           onBack={onBack} onNext={() => goToSubstep(1)} onFinish={onFinish}
           nextLabel="Continue"
         >
@@ -529,7 +530,7 @@ export default function HexaMatrixSetupStep({
                 onClear={() => update({ mastery: classDef.mastery.map(() => 0) })} />
               <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
                 {classDef.mastery.map((node, i) => (
-                  <HexaTile key={`mastery-${i}`} skill={{ iconId: node.iconId, iconUrl: node.iconUrl, name: node.skills.join(" · ") }}
+                  <HexaTile key={`mastery-${i}`} skill={{ iconId: node.iconId, iconUrl: node.iconUrl, name: node.skills.join("\n") }}
                     level={levels.mastery[i] ?? 0}
                     onUpdate={(v) => {
                       const next = [...levels.mastery];
@@ -609,7 +610,7 @@ export default function HexaMatrixSetupStep({
   return (
     <div key={1} style={substepAnimStyle}>
       <SetupStepFrame theme={theme} stepLabel="HEXA Stat" stepNumber={stepNumber} totalSteps={totalSteps}
-        description="All fields are optional. Fill in what you know."
+        description="All fields are optional. Fill in what you can."
         onBack={() => goToSubstep(0)} onNext={onNext} onFinish={onFinish}
       >
         <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>

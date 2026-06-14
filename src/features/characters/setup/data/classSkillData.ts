@@ -28,7 +28,7 @@ export interface BuffSkill {
 
 /** Buffs every class must have active, shown before class-specific skills in the buff guide. */
 export const UNIVERSAL_BUFF_SKILLS: BuffSkill[] = [
-  { skillIconUrl: sk("80011951"), skillName: "Familiars", jobAdvancement: "Beginner" }, // Summon Familiars
+  { skillIconUrl: sk("80011951"), skillName: "Summon Familiars", jobAdvancement: "Beginner" },
 ];
 
 /** Warnings shown for every class on the stats step. */

@@ -283,7 +283,7 @@ export default function LinkSkillsSetupStep({
       stepLabel={step.label}
       stepNumber={stepNumber}
       totalSteps={totalSteps}
-      description={<>All fields are optional. Fill in what you know.<br />Shared across all characters on your world, inherited automatically by new characters.</>}
+      description={<>All fields are optional. Fill in what you can.<br />Shared across all characters on your world, inherited automatically by new characters.</>}
       onBack={onBack}
       onNext={onNext}
       onFinish={onFinish}

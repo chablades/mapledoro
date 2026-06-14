@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import type { AppTheme } from "../../../../components/themes";
+import HoverTooltip from "../../../../components/HoverTooltip";
 import type { SetupStepDefinition } from "../steps";
 import { getClassDataByNexonJobName } from "../data/classSkillData";
 import { readCharacterToolData } from "../../../../features/tools/characterToolStorage";
@@ -69,7 +70,7 @@ function SkillIcon({ id, name, size = 28 }: { id: string; name: string; size?: n
   );
 }
 
-/** Condensed icon tile: icon + level input, full node name shown via tooltip on hover. */
+/** Condensed icon tile: icon + level input, full node name shown via tooltip on hover/tap. */
 function VMatrixTile({ id, name, level, max, onUpdate, theme }: {
   id: string;
   name: string;
@@ -80,7 +81,7 @@ function VMatrixTile({ id, name, level, max, onUpdate, theme }: {
 }) {
   const filled = level > 0;
   return (
-    <div title={name} style={{
+    <HoverTooltip label={name} theme={theme} style={{
       width: 60, flexShrink: 0,
       border: `1px solid ${filled ? theme.accent : theme.border}`,
       borderRadius: 8,
@@ -113,7 +114,7 @@ function VMatrixTile({ id, name, level, max, onUpdate, theme }: {
           transition: "outline-color 0.15s ease",
         }}
       />
-    </div>
+    </HoverTooltip>
   );
 }
 
@@ -220,7 +221,7 @@ export default function VMatrixSetupStep({
 
   return (
     <SetupStepFrame theme={theme} stepLabel={step.label} stepNumber={stepNumber} totalSteps={totalSteps}
-      description="All fields are optional. Fill in what you know."
+      description="All fields are optional. Fill in what you can."
       onBack={onBack} onNext={onNext} onFinish={onFinish}
     >
       {catalog ? (

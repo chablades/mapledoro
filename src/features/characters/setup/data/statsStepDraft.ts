@@ -53,6 +53,9 @@ export interface StatsStepDraft {
   };
 }
 
+/** Minimum character level to unlock Genesis Liberation. */
+export const GENESIS_LIBERATION_LEVEL = 255;
+
 export function serializeStatsStepDraft(draft: StatsStepDraft): string {
   return JSON.stringify(draft);
 }
@@ -85,6 +88,7 @@ function draftTripleToStored(draft: TripleStatDraft | undefined): StoredTripleSt
 
 export function convertStatsStepDraftToStored(
   draft: StatsStepDraft,
+  characterLevel?: number,
 ): { stats: Partial<StoredCharacterStats>; isLiberated: boolean | null; weaponHand: "1h" | "2h" | null; hasRuinForceShield: boolean | null; soul: CharacterSoul | null } {
   const opts = draft.setupOptions ?? {};
   const epheniaRaw = opts.epheniaLevel;
@@ -92,8 +96,9 @@ export function convertStatsStepDraftToStored(
   const soul: CharacterSoul | null = soulType !== null
     ? { type: soulType, epheniaLevel: epheniaRaw === 1 || epheniaRaw === 2 ? epheniaRaw : null }
     : null;
+  const isBelowLiberationLevel = characterLevel !== undefined && characterLevel < GENESIS_LIBERATION_LEVEL;
   return {
-    isLiberated: opts.isLiberated ?? null,
+    isLiberated: opts.isLiberated ?? (isBelowLiberationLevel ? false : null),
     weaponHand: opts.weaponHand ?? null,
     hasRuinForceShield: opts.hasRuinForceShield ?? null,
     soul,
