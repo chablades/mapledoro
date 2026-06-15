@@ -1,0 +1,115 @@
+// ── Inner Ability ────────────────────────────────────────────────────────
+// Each of a preset's 3 lines has its own independent rank (a Legendary-grade
+// preset can still roll Rare/Epic/Unique individual lines). Line value pools
+// per rank sourced from https://maplestorywiki.net/w/Inner_Ability.
+
+export type IATier = "rare" | "epic" | "unique" | "legendary";
+
+export const IA_TIER_LABELS: Record<IATier, string> = {
+  rare: "Rare",
+  epic: "Epic",
+  unique: "Unique",
+  legendary: "Legendary",
+};
+
+export const IA_TIER_ORDER: IATier[] = ["rare", "epic", "unique", "legendary"];
+
+const IA_LINES: Record<IATier, string[]> = {
+  rare: [
+    "STR: +5", "STR: +6", "STR: +7", "STR: +8", "STR: +9", "STR: +10",
+    "DEX: +5", "DEX: +6", "DEX: +7", "DEX: +8", "DEX: +9", "DEX: +10",
+    "INT: +5", "INT: +6", "INT: +7", "INT: +8", "INT: +9", "INT: +10",
+    "LUK: +5", "LUK: +6", "LUK: +7", "LUK: +8", "LUK: +9", "LUK: +10",
+    "All Stats: +5", "All Stats: +6", "All Stats: +7", "All Stats: +8", "All Stats: +9", "All Stats: +10",
+    "Max HP: +75", "Max HP: +90", "Max HP: +105", "Max HP: +120", "Max HP: +135", "Max HP: +150",
+    "Max MP: +75", "Max MP: +90", "Max MP: +105", "Max MP: +120", "Max MP: +135", "Max MP: +150",
+    "Item Drop Rate: +3%", "Item Drop Rate: +4%", "Item Drop Rate: +5%",
+    "Mesos Obtained: +3%", "Mesos Obtained: +4%", "Mesos Obtained: +5%",
+    "Damage to Normal Monsters: +2%", "Damage to Normal Monsters: +3%",
+    "Damage to Monsters w/ Abnormal Status: +2%", "Damage to Monsters w/ Abnormal Status: +3%",
+    "Buff Duration: +7%", "Buff Duration: +8%", "Buff Duration: +9%", "Buff Duration: +10%", "Buff Duration: +12%", "Buff Duration: +13%",
+    "Jump: +4", "Jump: +6", "Jump: +8",
+    "Speed: +4", "Speed: +6", "Speed: +8",
+    "DEF: +50", "DEF: +60", "DEF: +70", "DEF: +80", "DEF: +90", "DEF: +100",
+  ],
+  epic: [
+    "STR: +15", "STR: +16", "STR: +17", "STR: +18", "STR: +19", "STR: +20",
+    "DEX: +15", "DEX: +16", "DEX: +17", "DEX: +18", "DEX: +19", "DEX: +20",
+    "INT: +15", "INT: +16", "INT: +17", "INT: +18", "INT: +19", "INT: +20",
+    "LUK: +15", "LUK: +16", "LUK: +17", "LUK: +18", "LUK: +19", "LUK: +20",
+    "All Stats: +15", "All Stats: +16", "All Stats: +17", "All Stats: +18", "All Stats: +19", "All Stats: +20",
+    "Max HP: +225", "Max HP: +240", "Max HP: +255", "Max HP: +270", "Max HP: +285", "Max HP: +300",
+    "Max MP: +225", "Max MP: +240", "Max MP: +255", "Max MP: +270", "Max MP: +285", "Max MP: +300",
+    "Critical Rate: +5%", "Critical Rate: +6%", "Critical Rate: +7%", "Critical Rate: +8%", "Critical Rate: +9%", "Critical Rate: +10%",
+    "Attack: +6", "Attack: +9", "Attack: +12",
+    "Magic ATT: +6", "Magic ATT: +9", "Magic ATT: +12",
+    "Damage: +6%", "Damage: +9%", "Damage: +12%",
+    "Item Drop Rate: +8%", "Item Drop Rate: +9%", "Item Drop Rate: +10%",
+    "Mesos Obtained: +8%", "Mesos Obtained: +9%", "Mesos Obtained: +10%",
+    "Damage to Normal Monsters: +4%", "Damage to Normal Monsters: +5%",
+    "Damage to Monsters w/ Abnormal Status: +4%", "Damage to Monsters w/ Abnormal Status: +5%",
+    "Buff Duration: +19%", "Buff Duration: +20%", "Buff Duration: +22%", "Buff Duration: +23%", "Buff Duration: +24%", "Buff Duration: +25%",
+    "Jump: +10", "Jump: +12", "Jump: +14",
+    "Speed: +10", "Speed: +12", "Speed: +14",
+    "DEF: +150", "DEF: +160", "DEF: +170", "DEF: +180", "DEF: +190", "DEF: +200",
+  ],
+  unique: [
+    "STR: +25", "STR: +26", "STR: +27", "STR: +28", "STR: +29", "STR: +30",
+    "DEX: +25", "DEX: +26", "DEX: +27", "DEX: +28", "DEX: +29", "DEX: +30",
+    "INT: +25", "INT: +26", "INT: +27", "INT: +28", "INT: +29", "INT: +30",
+    "LUK: +25", "LUK: +26", "LUK: +27", "LUK: +28", "LUK: +29", "LUK: +30",
+    "All Stats: +25", "All Stats: +26", "All Stats: +27", "All Stats: +28", "All Stats: +29", "All Stats: +30",
+    "Max HP: +375", "Max HP: +390", "Max HP: +405", "Max HP: +420", "Max HP: +435", "Max HP: +450",
+    "Max MP: +375", "Max MP: +390", "Max MP: +405", "Max MP: +420", "Max MP: +435", "Max MP: +450",
+    "Max HP: +5%", "Max HP: +6%", "Max HP: +7%", "Max HP: +8%", "Max HP: +9%", "Max HP: +10%",
+    "Max MP: +5%", "Max MP: +6%", "Max MP: +7%", "Max MP: +8%", "Max MP: +9%", "Max MP: +10%",
+    "Boss Damage: +5%", "Boss Damage: +6%", "Boss Damage: +7%", "Boss Damage: +8%", "Boss Damage: +9%", "Boss Damage: +10%",
+    "Critical Rate: +15%", "Critical Rate: +16%", "Critical Rate: +17%", "Critical Rate: +18%", "Critical Rate: +19%", "Critical Rate: +20%",
+    "Attack: +15", "Attack: +18", "Attack: +21",
+    "Magic ATT: +15", "Magic ATT: +18", "Magic ATT: +21",
+    "Damage: +15%", "Damage: +18%", "Damage: +21%",
+    "Item Drop Rate: +13%", "Item Drop Rate: +14%", "Item Drop Rate: +15%",
+    "Mesos Obtained: +13%", "Mesos Obtained: +14%", "Mesos Obtained: +15%",
+    "Damage to Normal Monsters: +7%", "Damage to Normal Monsters: +8%",
+    "Damage to Monsters w/ Abnormal Status: +7%", "Damage to Monsters w/ Abnormal Status: +8%",
+    "Buff Duration: +32%", "Buff Duration: +33%", "Buff Duration: +34%", "Buff Duration: +35%", "Buff Duration: +37%", "Buff Duration: +38%",
+    "Cooldown Skip Chance: +5%", "Cooldown Skip Chance: +6%", "Cooldown Skip Chance: +7%", "Cooldown Skip Chance: +8%", "Cooldown Skip Chance: +9%", "Cooldown Skip Chance: +10%",
+    "Jump: +18", "Jump: +20",
+    "Speed: +18", "Speed: +20",
+    "DEF: +250", "DEF: +260", "DEF: +270", "DEF: +280", "DEF: +290", "DEF: +300",
+    "Final Damage: +13% of DEF", "Final Damage: +15% of DEF", "Final Damage: +18% of DEF", "Final Damage: +20% of DEF", "Final Damage: +23% of DEF", "Final Damage: +25% of DEF",
+  ],
+  legendary: [
+    "STR: +35", "STR: +36", "STR: +37", "STR: +38", "STR: +39", "STR: +40",
+    "DEX: +35", "DEX: +36", "DEX: +37", "DEX: +38", "DEX: +39", "DEX: +40",
+    "INT: +35", "INT: +36", "INT: +37", "INT: +38", "INT: +39", "INT: +40",
+    "LUK: +35", "LUK: +36", "LUK: +37", "LUK: +38", "LUK: +39", "LUK: +40",
+    "All Stats: +35", "All Stats: +36", "All Stats: +37", "All Stats: +38", "All Stats: +39", "All Stats: +40",
+    "Max HP: +525", "Max HP: +540", "Max HP: +555", "Max HP: +570", "Max HP: +585", "Max HP: +600",
+    "Max MP: +525", "Max MP: +540", "Max MP: +555", "Max MP: +570", "Max MP: +585", "Max MP: +600",
+    "Max HP: +15%", "Max HP: +16%", "Max HP: +17%", "Max HP: +18%", "Max HP: +19%", "Max HP: +20%",
+    "Max MP: +15%", "Max MP: +16%", "Max MP: +17%", "Max MP: +18%", "Max MP: +19%", "Max MP: +20%",
+    "Boss Damage: +15%", "Boss Damage: +16%", "Boss Damage: +17%", "Boss Damage: +18%", "Boss Damage: +19%", "Boss Damage: +20%",
+    "Critical Rate: +25%", "Critical Rate: +26%", "Critical Rate: +27%", "Critical Rate: +28%", "Critical Rate: +29%", "Critical Rate: +30%",
+    "Attack: +27", "Attack: +30",
+    "Magic ATT: +27", "Magic ATT: +30",
+    "Damage: +27%", "Damage: +30%",
+    "Item Drop Rate: +18%", "Item Drop Rate: +19%", "Item Drop Rate: +20%",
+    "Mesos Obtained: +18%", "Mesos Obtained: +19%", "Mesos Obtained: +20%",
+    "Damage to Normal Monsters: +9%", "Damage to Normal Monsters: +10%",
+    "Damage to Monsters w/ Abnormal Status: +9%", "Damage to Monsters w/ Abnormal Status: +10%",
+    "Buff Duration: +44%", "Buff Duration: +45%", "Buff Duration: +47%", "Buff Duration: +48%", "Buff Duration: +49%", "Buff Duration: +50%",
+    "Cooldown Skip Chance: +15%", "Cooldown Skip Chance: +16%", "Cooldown Skip Chance: +17%", "Cooldown Skip Chance: +18%", "Cooldown Skip Chance: +19%", "Cooldown Skip Chance: +20%",
+    "Attack: +1 per 10 Lv", "Attack: +1 per 12 Lv", "Attack: +1 per 14 Lv", "Attack: +1 per 16 Lv",
+    "Magic ATT: +1 per 10 Lv", "Magic ATT: +1 per 12 Lv", "Magic ATT: +1 per 14 Lv", "Magic ATT: +1 per 16 Lv",
+    "Attack Speed: +1",
+    "Passive Skill Level: +1",
+    "Enemies Hit by Multi-target Skills: +1",
+    "DEF: +350", "DEF: +360", "DEF: +370", "DEF: +380", "DEF: +390", "DEF: +400",
+    "Final Damage: +38% of DEF", "Final Damage: +40% of DEF", "Final Damage: +43% of DEF", "Final Damage: +45% of DEF", "Final Damage: +48% of DEF", "Final Damage: +50% of DEF",
+  ],
+};
+
+export function getLinesForIATier(tier: IATier): string[] {
+  return IA_LINES[tier];
+}
