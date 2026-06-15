@@ -38,6 +38,19 @@ function servedStats(rawId) {
   return rest;
 }
 
+/**
+ * Pet/pet-equip compatibility: pets list which pet-equip ids they can wear (`wearableEquips`),
+ * and pet-equips list which pet ids can wear them (`wearablePets`). Carried through as extra
+ * fields on the served item alongside (or in place of) stats.
+ * @param {string} slot
+ * @param {Record<string, unknown>} entry
+ */
+function wearableLinks(slot, entry) {
+  if (slot === "pet" && Array.isArray(entry.wearableEquips)) return { wearableEquips: entry.wearableEquips };
+  if (slot === "petequip" && Array.isArray(entry.wearablePets)) return { wearablePets: entry.wearablePets };
+  return undefined;
+}
+
 mkdirSync(OUTPUT_DIR, { recursive: true });
 
 // In the item data, a stat-bearing item's `islot` is the slot/type code it occupies:
@@ -78,6 +91,8 @@ const SLOT_FILTERS = {
   heart:     { cats: ["Character/Android"], prefixes: ["01672"] },
   title:     { cats: ["Item/Install"], prefixes: ["03700"] },
   totem:     { cats: ["Character/Totem"] },
+  pet:       { cats: ["Item/Pet"] },
+  petequip:  { cats: ["Character/PetEquip"] },
 };
 
 for (const [slot, filter] of Object.entries(SLOT_FILTERS)) {
@@ -93,7 +108,8 @@ for (const [slot, filter] of Object.entries(SLOT_FILTERS)) {
       if (!filter.cats.includes(entry.category)) continue;
       if (filter.prefixes && !filter.prefixes.some((p) => rawId.startsWith(p))) continue;
     }
-    items.push(stats ? [rawId, entry.name, stats] : [rawId, entry.name]);
+    const combined = stats || wearableLinks(slot, entry) ? { ...stats, ...wearableLinks(slot, entry) } : undefined;
+    items.push(combined ? [rawId, entry.name, combined] : [rawId, entry.name]);
   }
 
   const outputPath = resolve(OUTPUT_DIR, `${slot}.json`);

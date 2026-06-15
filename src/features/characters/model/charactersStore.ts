@@ -78,6 +78,24 @@ export interface StoredEquipmentPreset {
   badge: StoredEquipmentItem | null;
 }
 
+/** Inner Ability tier; "" means the line's rank hasn't been set yet. */
+export type StoredIATier = "" | "rare" | "epic" | "unique" | "legendary";
+
+export interface StoredInnerAbilityLine {
+  tier: StoredIATier;
+  value: string;
+}
+
+export interface StoredInnerAbilityPreset {
+  lines: [StoredInnerAbilityLine, StoredInnerAbilityLine, StoredInnerAbilityLine];
+}
+
+export interface StoredInnerAbility {
+  /** Which preset (0-2) is the primary/displayed one. */
+  activePreset: number;
+  presets: [StoredInnerAbilityPreset, StoredInnerAbilityPreset, StoredInnerAbilityPreset];
+}
+
 export interface StoredCharacterEquipment {
   /** Three equipment presets (the grid). */
   presets: [StoredEquipmentPreset, StoredEquipmentPreset, StoredEquipmentPreset];
@@ -86,6 +104,9 @@ export interface StoredCharacterEquipment {
   // Shared across presets (title, totems, and symbols are separate from the equip preset).
   title: StoredEquipmentItem | null;
   totems: [StoredEquipmentItem | null, StoredEquipmentItem | null, StoredEquipmentItem | null];
+  pets: [StoredEquipmentItem | null, StoredEquipmentItem | null, StoredEquipmentItem | null];
+  petEquips: [StoredEquipmentItem | null, StoredEquipmentItem | null, StoredEquipmentItem | null];
+  innerAbility: StoredInnerAbility;
 }
 
 export interface StoredCharacterRecord {
@@ -222,12 +243,26 @@ function createEmptyEquipmentPreset(): StoredEquipmentPreset {
   };
 }
 
+function createEmptyInnerAbilityPreset(): StoredInnerAbilityPreset {
+  return { lines: [{ tier: "", value: "" }, { tier: "", value: "" }, { tier: "", value: "" }] };
+}
+
+function createEmptyInnerAbility(): StoredInnerAbility {
+  return {
+    activePreset: 0,
+    presets: [createEmptyInnerAbilityPreset(), createEmptyInnerAbilityPreset(), createEmptyInnerAbilityPreset()],
+  };
+}
+
 function createEmptyCharacterEquipment(): StoredCharacterEquipment {
   return {
     presets: [createEmptyEquipmentPreset(), createEmptyEquipmentPreset(), createEmptyEquipmentPreset()],
     activePreset: 0,
     title: null,
     totems: [null, null, null],
+    pets: [null, null, null],
+    petEquips: [null, null, null],
+    innerAbility: createEmptyInnerAbility(),
   };
 }
 
@@ -360,6 +395,9 @@ function migrateFlatEquipment(value: Record<string, unknown>): StoredCharacterEq
     totems: Array.isArray(totems) && totems.length === 3 && totems.every(isNullableStoredEquipmentItem)
       ? (totems as StoredCharacterEquipment["totems"])
       : [null, null, null],
+    pets: empty.pets,
+    petEquips: empty.petEquips,
+    innerAbility: empty.innerAbility,
   };
 }
 

@@ -13,6 +13,10 @@ import {
   selectCharacterById,
   type StoredCharacterEquipment,
   type StoredEquipmentPreset,
+  type StoredIATier,
+  type StoredInnerAbility,
+  type StoredInnerAbilityPreset,
+  type StoredInnerAbilityLine,
   selectCharactersList,
   writeLinkSkillsForWorld,
   writeCharactersStore,
@@ -70,6 +74,17 @@ interface EquipmentDraftPreset {
   weapon?: EquipmentDraftItem; secondary?: EquipmentDraftItem; emblem?: EquipmentDraftItem;
   android?: EquipmentDraftItem; heart?: EquipmentDraftItem; badge?: EquipmentDraftItem;
 }
+interface EquipmentDraftIALine {
+  tier?: StoredIATier;
+  value?: string;
+}
+interface EquipmentDraftIAPreset {
+  lines?: EquipmentDraftIALine[];
+}
+interface EquipmentDraftIA {
+  activePreset?: number;
+  presets?: EquipmentDraftIAPreset[];
+}
 interface EquipmentDraft {
   presets?: EquipmentDraftPreset[];
   activePreset?: number;
@@ -78,8 +93,34 @@ interface EquipmentDraft {
   // Shared across presets:
   title?: EquipmentDraftItem;
   totem1?: EquipmentDraftItem; totem2?: EquipmentDraftItem; totem3?: EquipmentDraftItem;
+  pet1?: EquipmentDraftItem; pet2?: EquipmentDraftItem; pet3?: EquipmentDraftItem;
+  petEquip1?: EquipmentDraftItem; petEquip2?: EquipmentDraftItem; petEquip3?: EquipmentDraftItem;
+  innerAbility?: EquipmentDraftIA;
   /** Symbol levels keyed by region name; folded into tools.symbols (the calculator store). */
   symbolLevels?: Record<string, number>;
+}
+
+const IA_TIERS = new Set<string>(["rare", "epic", "unique", "legendary"]);
+
+function draftIATier(v: unknown): StoredIATier {
+  return typeof v === "string" && IA_TIERS.has(v) ? (v as StoredIATier) : "";
+}
+
+function draftIALine(l: EquipmentDraftIALine | undefined): StoredInnerAbilityLine {
+  return { tier: draftIATier(l?.tier), value: typeof l?.value === "string" ? l.value : "" };
+}
+
+function draftIAPreset(p: EquipmentDraftIAPreset | undefined): StoredInnerAbilityPreset {
+  const lines = p?.lines ?? [];
+  return { lines: [draftIALine(lines[0]), draftIALine(lines[1]), draftIALine(lines[2])] };
+}
+
+function draftInnerAbility(ia: EquipmentDraftIA | undefined): StoredInnerAbility {
+  const presets = ia?.presets ?? [];
+  return {
+    activePreset: typeof ia?.activePreset === "number" ? ia.activePreset : 0,
+    presets: [draftIAPreset(presets[0]), draftIAPreset(presets[1]), draftIAPreset(presets[2])],
+  };
 }
 
 function draftItem(v: EquipmentDraftItem) {
@@ -114,6 +155,9 @@ function parseEquipmentDraft(json: string): StoredCharacterEquipment | null {
       activePreset: typeof d.activePreset === "number" ? d.activePreset : 0,
       title: draftItem(d.title ?? null),
       totems: [draftItem(d.totem1 ?? null), draftItem(d.totem2 ?? null), draftItem(d.totem3 ?? null)],
+      pets: [draftItem(d.pet1 ?? null), draftItem(d.pet2 ?? null), draftItem(d.pet3 ?? null)],
+      petEquips: [draftItem(d.petEquip1 ?? null), draftItem(d.petEquip2 ?? null), draftItem(d.petEquip3 ?? null)],
+      innerAbility: draftInnerAbility(d.innerAbility),
     };
   } catch {
     return null;

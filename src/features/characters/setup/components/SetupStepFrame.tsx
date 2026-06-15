@@ -14,6 +14,10 @@ interface SetupStepFrameProps {
   nextLabel?: string;
   /** Disables the Next/Finish button, e.g. while required questions are unanswered. */
   nextDisabled?: boolean;
+  /** Zero-based index of the active substep within this step (for the substep pip row). */
+  substepIndex?: number;
+  /** Total substeps in this step; the pip row only renders when this is > 1. */
+  substepCount?: number;
   children: ReactNode;
 }
 
@@ -28,6 +32,8 @@ export default function SetupStepFrame({
   onFinish,
   nextLabel,
   nextDisabled,
+  substepIndex = 0,
+  substepCount = 0,
   children,
 }: SetupStepFrameProps) {
   const isLastStep = !nextLabel && stepNumber >= totalSteps;
@@ -47,6 +53,25 @@ export default function SetupStepFrame({
       >
         Step {stepNumber} of {totalSteps}
       </p>
+      {substepCount > 1 && (
+        <div
+          aria-label={`Part ${substepIndex + 1} of ${substepCount}`}
+          style={{ display: "flex", gap: "0.3rem", alignItems: "center", marginBottom: "0.5rem" }}
+        >
+          {Array.from({ length: substepCount }, (_, i) => (
+            <span
+              key={i}
+              style={{
+                height: 6,
+                width: i === substepIndex ? 18 : 6,
+                borderRadius: 3,
+                background: i <= substepIndex ? theme.accent : theme.border,
+                transition: "width 0.2s ease, background 0.2s ease",
+              }}
+            />
+          ))}
+        </div>
+      )}
       <h2
         style={{
           margin: 0,
