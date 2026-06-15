@@ -838,7 +838,8 @@ export default function EquipmentSetupStep({
         .eq-page-0 .eq-section-1, .eq-page-0 .eq-section-2,
         .eq-page-1 .eq-section-0, .eq-page-1 .eq-section-2,
         .eq-page-2 .eq-section-0, .eq-page-2 .eq-section-1 { display: none; }
-        .eq-page-nav.eq-page-nav { display: flex; }
+        .eq-page-label.eq-page-label { display: block; }
+        .eq-page-nav-btn.eq-page-nav-btn { display: flex; align-items: center; justify-content: center; }
       }
     `}</style>
     <SetupStepFrame
@@ -853,72 +854,76 @@ export default function EquipmentSetupStep({
       nextLabel="Continue"
     >
       <PresetBar theme={theme} active={activePreset} onSwitch={switchPreset} />
-      <div className="eq-page-nav" style={{ alignItems: "center", justifyContent: "center", gap: 12, marginBottom: 8 }}>
-        <button type="button" aria-label="Previous section" onClick={() => setMobileGridPage((p) => (p + 2) % 3)} style={navBtnStyle}>‹</button>
-        <span style={{ fontSize: "0.75rem", fontWeight: 800, color: theme.muted, textTransform: "uppercase", letterSpacing: "0.05em", minWidth: 90, textAlign: "center" }}>
-          {EQUIPMENT_PAGE_LABELS[mobileGridPage]}
-        </span>
-        <button type="button" aria-label="Next section" onClick={() => setMobileGridPage((p) => (p + 1) % 3)} style={navBtnStyle}>›</button>
-      </div>
+      <p className="eq-page-label" style={{ margin: "0 0 8px", fontSize: "0.75rem", fontWeight: 800, color: theme.muted, textTransform: "uppercase", letterSpacing: "0.05em", textAlign: "center" }}>
+        {EQUIPMENT_PAGE_LABELS[mobileGridPage]}
+      </p>
       {/* Equipment grid */}
       <div className={`eq-page-${mobileGridPage}`}>
-      <div style={{ display: "flex", gap: 4, alignItems: "stretch", width: "fit-content", margin: "0 auto" }}>
+      <div style={{ display: "flex", gap: 8, alignItems: "center", justifyContent: "center" }}>
 
-        <div className="eq-section eq-section-0" style={{ gap: 4, flexShrink: 0 }}>
-          {/* Col 1 */}
-          <SlotColumn slots={col1} grid={activeGrid} theme={theme} activeSlot={activeSlot} onToggle={toggleSlot} renderPicker={renderPicker} />
+        <button type="button" className="eq-page-nav-btn" aria-label="Previous section" onClick={() => setMobileGridPage((p) => (p + 2) % 3)} style={navBtnStyle}>‹</button>
 
-          {/* Col 2 */}
-          <SlotColumn slots={col2} grid={activeGrid} theme={theme} activeSlot={activeSlot} onToggle={toggleSlot} renderPicker={renderPicker} />
-        </div>
+        <div style={{ display: "flex", gap: 4, alignItems: "stretch" }}>
 
-        {/* Center block: sprite + weapon/sub/emblem */}
-        <div className="eq-section eq-section-1" style={{ flexDirection: "column", gap: 4, flexShrink: 0, width: CENTER_WIDTH }}>
-          <div style={{
-            flex: 1,
-            border: `1px solid ${theme.border}`,
-            borderRadius: 8,
-            background: theme.bg,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            overflow: "hidden",
-            minHeight: SLOT_SIZE * 2,
-          }}>
-            {confirmedCharacterImgURL ? (
-              <CharacterAvatar
-                src={confirmedCharacterImgURL}
-                alt="Character preview"
-                width={100}
-                height={200}
-                style={{ objectFit: "contain", width: 100, height: 200 }}
-              />
-            ) : (
-              <span style={{ fontSize: "0.75rem", color: theme.muted, fontWeight: 700, padding: "0.5rem", textAlign: "center" }}>
-                No preview
-              </span>
-            )}
+          <div className="eq-section eq-section-0" style={{ gap: 4, flexShrink: 0 }}>
+            {/* Col 1 */}
+            <SlotColumn slots={col1} grid={activeGrid} theme={theme} activeSlot={activeSlot} onToggle={toggleSlot} renderPicker={renderPicker} />
+
+            {/* Col 2 */}
+            <SlotColumn slots={col2} grid={activeGrid} theme={theme} activeSlot={activeSlot} onToggle={toggleSlot} renderPicker={renderPicker} />
           </div>
-          <div style={{ display: "flex", gap: 4 }}>
-            {centerBottom.map((slot) => (
-              <SlotCell
-                key={slot}
-                slotKey={slot}
-                item={activeGrid[slot]}
-                theme={theme}
-                isActive={activeSlot === slot}
-                onClick={() => toggleSlot(slot)}
-                picker={renderPicker(slot)}
-              />
-            ))}
+
+          {/* Center block: sprite + weapon/sub/emblem */}
+          <div className="eq-section eq-section-1" style={{ flexDirection: "column", gap: 4, flexShrink: 0, width: CENTER_WIDTH }}>
+            <div style={{
+              flex: 1,
+              border: `1px solid ${theme.border}`,
+              borderRadius: 8,
+              background: theme.bg,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              overflow: "hidden",
+              minHeight: SLOT_SIZE * 2,
+            }}>
+              {confirmedCharacterImgURL ? (
+                <CharacterAvatar
+                  src={confirmedCharacterImgURL}
+                  alt="Character preview"
+                  width={100}
+                  height={200}
+                  style={{ objectFit: "contain", width: 100, height: 200 }}
+                />
+              ) : (
+                <span style={{ fontSize: "0.75rem", color: theme.muted, fontWeight: 700, padding: "0.5rem", textAlign: "center" }}>
+                  No preview
+                </span>
+              )}
+            </div>
+            <div style={{ display: "flex", gap: 4 }}>
+              {centerBottom.map((slot) => (
+                <SlotCell
+                  key={slot}
+                  slotKey={slot}
+                  item={activeGrid[slot]}
+                  theme={theme}
+                  isActive={activeSlot === slot}
+                  onClick={() => toggleSlot(slot)}
+                  picker={renderPicker(slot)}
+                />
+              ))}
+            </div>
           </div>
+
+          <div className="eq-section eq-section-2" style={{ gap: 4, flexShrink: 0 }}>
+            {/* Col 6 */}
+            <SlotColumn slots={col6} grid={activeGrid} theme={theme} activeSlot={activeSlot} onToggle={toggleSlot} renderPicker={renderPicker} />
+
+            {/* Col 7 */}
+            <SlotColumn slots={col7} grid={activeGrid} theme={theme} activeSlot={activeSlot} onToggle={toggleSlot} renderPicker={renderPicker} />
+          </div>
+
         </div>
 
-        <div className="eq-section eq-section-2" style={{ gap: 4, flexShrink: 0 }}>
-          {/* Col 6 */}
-          <SlotColumn slots={col6} grid={activeGrid} theme={theme} activeSlot={activeSlot} onToggle={toggleSlot} renderPicker={renderPicker} />
-
-          {/* Col 7 */}
-          <SlotColumn slots={col7} grid={activeGrid} theme={theme} activeSlot={activeSlot} onToggle={toggleSlot} renderPicker={renderPicker} />
-        </div>
+        <button type="button" className="eq-page-nav-btn" aria-label="Next section" onClick={() => setMobileGridPage((p) => (p + 1) % 3)} style={navBtnStyle}>›</button>
 
       </div>
       </div>

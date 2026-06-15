@@ -22,7 +22,7 @@ const sk = (id: string): string => resourceImageUrl("skill", id, "icon.png");
 export interface BuffSkill {
   skillIconUrl?: string;
   skillName: string;
-  /** Job advancement label for display in tooltip (e.g. "3", "Hyper Skills (140)", "Beginner", "Transcendent") */
+  /** Job advancement label for display in tooltip (e.g. "3", "Hyper Skills (140)", "Beginner") */
   jobAdvancement: string;
 }
 
@@ -33,13 +33,15 @@ export const UNIVERSAL_BUFF_SKILLS: BuffSkill[] = [
 
 /** Warnings shown for every class on the stats step. */
 export const UNIVERSAL_WARNINGS: ClassWarning[] = [
-  { message: "Soul Gauge must be 0/1000 (a full gauge increases ATT passively)" },
+  { message: "Soul Gauge must be 0/1000", tooltip: { title: "Soul Gauge", description: "A full gauge increases ATT passively." } },
 ];
 
 export interface ClassWarning {
   message: string;
   /** If this warning is about a specific skill (e.g. "do not use"), show its icon */
   skill?: BuffSkill;
+  /** Optional explanation shown via a "?" tooltip next to the warning. */
+  tooltip?: { title: string; description: string };
 }
 
 export interface ClassSetupOptionsDef {
@@ -165,6 +167,11 @@ const LUCENT_BRAND: BuffSkill = {
   skillName: "Lucent Brand",
   jobAdvancement: "1",
 };
+const TIDE_OF_BATTLE: BuffSkill = {
+  skillIconUrl: sk("150000017"),
+  skillName: "Tide of Battle",
+  jobAdvancement: "1",
+};
 const IGNIS_ROAR: BuffSkill = {
   skillIconUrl: sk("23110004"),
   skillName: "Ignis Roar",
@@ -185,6 +192,26 @@ const COMBO_TRAINING: BuffSkill = {
   skillName: "Combo Training",
   jobAdvancement: "3",
 };
+const ADVANCED_COMBO: BuffSkill = {
+  skillIconUrl: sk("1120003"),
+  skillName: "Advanced Combo",
+  jobAdvancement: "4",
+};
+const GREATER_VESSEL_OF_LIGHT: BuffSkill = {
+  skillIconUrl: sk("1220010"),
+  skillName: "Greater Vessel of Light",
+  jobAdvancement: "4",
+};
+const MANIFESTATION_WIND_SWING: BuffSkill = {
+  skillIconUrl: sk("162111000"),
+  skillName: "Manifestation: Wind Swing",
+  jobAdvancement: "3",
+};
+const MANIFESTATION_SUNLIGHT_FILLED_GROUND: BuffSkill = {
+  skillIconUrl: sk("162111003"),
+  skillName: "Manifestation: Sunlight-Filled Ground",
+  jobAdvancement: "3",
+};
 
 // ── Class data ────────────────────────────────────────────────────────────────
 
@@ -200,6 +227,10 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
   {
     id: "lara",
     nexonJobName: "Lara",
+    warnings: [
+      { message: "Do not use", skill: MANIFESTATION_WIND_SWING },
+      { message: "Do not use", skill: MANIFESTATION_SUNLIGHT_FILLED_GROUND },
+    ],
     buffSkills: [DSE, DCO],
     requiredStats: ["int", "luk", "magicAtt"],
   },
@@ -223,11 +254,7 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
     id: "dawn_warrior",
     nexonJobName: "Dawn Warrior",
     setupOptionsDef: { weaponType: true },
-    buffSkills: [
-      DSE,
-      DCO,
-      { skillIconUrl: sk("11100031"), skillName: "Equinox Cycle", jobAdvancement: "2" },
-    ],
+    buffSkills: [DSE, DCO],
     requiredStats: ["str", "dex", "attackPower"],
   },
   {
@@ -392,7 +419,7 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
   {
     id: "hero",
     nexonJobName: "Hero",
-    warnings: [{ message: "Must have 10 combo orb" }],
+    warnings: [{ message: "Must have 10 combo orb", skill: ADVANCED_COMBO }],
     setupOptionsDef: { weaponType: true },
     buffSkills: [
       DSE,
@@ -423,7 +450,7 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
   {
     id: "paladin",
     nexonJobName: "Paladin",
-    warnings: [{ message: "Must have 0 charge" }],
+    warnings: [{ message: "Must have 0 charge", skill: GREATER_VESSEL_OF_LIGHT }],
     setupOptionsDef: { weaponType: true },
     buffSkills: [
       DSE,
@@ -470,7 +497,10 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
   {
     id: "illium",
     nexonJobName: "Illium",
-    warnings: [{ message: "Must have 0 stacks (while moving)", skill: LUCENT_BRAND }],
+    warnings: [
+      { message: "Must have 0 stacks", skill: LUCENT_BRAND },
+      { message: "Must have 0 stacks (do not move)", skill: TIDE_OF_BATTLE },
+    ],
     buffSkills: [DSE, DCO],
     requiredStats: ["int", "luk", "magicAtt"],
   },
@@ -639,6 +669,7 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
     id: "wild_hunter",
     nexonJobName: "Wild Hunter",
     buffSkills: [
+      { skillIconUrl: sk("33101004"), skillName: "Call of the Wild", jobAdvancement: "2" },
       { skillIconUrl: sk("3121002"), skillName: "Sharp Eyes", jobAdvancement: "4" },
       DCO,
     ],
@@ -684,11 +715,7 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
     skipGender: true,
     skipMarriage: true,
     warnings: [{ message: "Must be in Beta status" }],
-    buffSkills: [
-      DSE,
-      DCO,
-      { skillIconUrl: sk("100000263"), skillName: "Divine Aura", jobAdvancement: "Transcendent" },
-    ],
+    buffSkills: [DSE, DCO],
     requiredStats: ["str", "dex", "attackPower"],
   },
 

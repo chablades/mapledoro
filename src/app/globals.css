@@ -463,8 +463,12 @@ textarea:focus-visible {
   display: flex;
 }
 
-/* Prev/next controls for the mobile equipment-grid carousel; hidden on desktop. */
-.eq-page-nav {
+/* Prev/next controls and page label for the mobile equipment-grid carousel; hidden on desktop. */
+.eq-page-nav-btn {
+  display: none;
+}
+
+.eq-page-label {
   display: none;
 }
 

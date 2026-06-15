@@ -161,7 +161,7 @@ function NodeSection({ label, nodes, levels, theme, onSet, onSetMany }: {
       <SectionLabel label={label} theme={theme}
         onMaxAll={() => onSetMany(Object.fromEntries(nodes.map(([, name, max]) => [name, max])))}
         onClear={() => onSetMany(Object.fromEntries(nodes.map(([, name]) => [name, 0])))} />
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, 60px)", gap: "0.4rem" }}>
+      <div className="vmatrix-grid" style={{ display: "grid", gap: "0.4rem" }}>
         {nodes.map(([id, name, max]) => (
           <VMatrixTile key={name} id={id} name={name} level={levels[name] ?? 0} max={max} theme={theme}
             onUpdate={(v) => onSet(name, v)} />
@@ -225,7 +225,14 @@ export default function VMatrixSetupStep({
       onBack={onBack} onNext={onNext} onFinish={onFinish}
     >
       {catalog ? (
-        <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+        <div className="vmatrix-root" style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+          <style>{`
+            .vmatrix-root { container-type: inline-size; }
+            .vmatrix-grid { grid-template-columns: repeat(6, 60px); }
+            @container (max-width: 410px) {
+              .vmatrix-grid { grid-template-columns: repeat(auto-fill, 60px); }
+            }
+          `}</style>
           <NodeSection label="Job Nodes" nodes={catalog.job} levels={levels} theme={theme} onSet={setLevel} onSetMany={setLevels} />
           <NodeSection label="Boost Nodes" nodes={catalog.boost} levels={levels} theme={theme} onSet={setLevel} onSetMany={setLevels} />
           <NodeSection label="Common Nodes" nodes={catalog.common} levels={levels} theme={theme} onSet={setLevel} onSetMany={setLevels} />

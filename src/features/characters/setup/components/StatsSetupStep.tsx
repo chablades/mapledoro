@@ -122,6 +122,23 @@ function formatJobAdvancement(raw: string): string {
   return JOB_ORDINALS[raw] ?? raw;
 }
 
+// Minimum character level for each jobAdvancement label, used to hide buffs/warnings
+// for skills the character hasn't unlocked yet.
+const JOB_ADVANCEMENT_MIN_LEVEL: Record<string, number> = {
+  "Beginner": 1,
+  "1": 10,
+  "2": 30,
+  "3": 60,
+  "4": 100,
+  "5": 200,
+  "Hyper Skills (140)": 140,
+};
+
+function isSkillUnlocked(skill: BuffSkill, characterLevel: number | undefined): boolean {
+  if (characterLevel === undefined) return true;
+  return characterLevel >= (JOB_ADVANCEMENT_MIN_LEVEL[skill.jobAdvancement] ?? 0);
+}
+
 function countSetupOptionsQuestions(optsDef: ClassSetupOptionsDef | undefined, characterLevel: number | undefined): number {
   const isLiberationEligible = characterLevel === undefined || characterLevel >= GENESIS_LIBERATION_LEVEL;
   let count = 1; // "Do you use any of these souls?" is always shown
@@ -146,12 +163,12 @@ function isSetupOptionsComplete(
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
-function SkillIconBadge({ skill, theme }: { skill: BuffSkill; theme: AppTheme }) {
+function SkillIconBadge({ skill, theme, size = 32, style }: { skill: BuffSkill; theme: AppTheme; size?: number; style?: CSSProperties }) {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const fallbackRef = useRef<HTMLDivElement>(null);
   const iconUrl = skill.skillIconUrl;
   const placeholder = (
-    <div style={{ width: 32, height: 32, borderRadius: "4px", background: theme.border }} />
+    <div style={{ width: size, height: size, borderRadius: "4px", background: theme.border }} />
   );
   return (
     <HoverTooltip
@@ -160,16 +177,16 @@ function SkillIconBadge({ skill, theme }: { skill: BuffSkill; theme: AppTheme })
         <div style={{ color: theme.muted, fontWeight: 600, fontStyle: "italic" }}>{formatJobAdvancement(skill.jobAdvancement)}</div>
       </>}
       theme={theme}
-      style={{ display: "flex", flexDirection: "column", alignItems: "center" }}
+      style={{ display: "flex", flexDirection: "column", alignItems: "center", ...style }}
     >
       {iconUrl ? (
         <>
-          <div ref={wrapperRef} style={{ width: 32, height: 32, borderRadius: "4px", overflow: "hidden" }}>
+          <div ref={wrapperRef} style={{ width: size, height: size, borderRadius: "4px", overflow: "hidden" }}>
             <Image
               src={iconUrl!}
               alt={skill.skillName}
-              width={32}
-              height={32}
+              width={size}
+              height={size}
               onError={() => {
                 if (wrapperRef.current) wrapperRef.current.style.display = "none";
                 if (fallbackRef.current) fallbackRef.current.style.display = "block";
@@ -178,18 +195,19 @@ function SkillIconBadge({ skill, theme }: { skill: BuffSkill; theme: AppTheme })
               unoptimized
             />
           </div>
-          <div ref={fallbackRef} style={{ display: "none", width: 32, height: 32, borderRadius: "4px", background: theme.border }} />
+          <div ref={fallbackRef} style={{ display: "none", width: size, height: size, borderRadius: "4px", background: theme.border }} />
         </>
       ) : placeholder}
     </HoverTooltip>
   );
 }
 
-function WarningList({ warnings }: { warnings: ClassWarning[] }) {
-  if (!warnings.length) return null;
+function WarningList({ warnings, theme, characterLevel }: { warnings: ClassWarning[]; theme: AppTheme; characterLevel?: number }) {
+  const unlocked = warnings.filter((w) => !w.skill || isSkillUnlocked(w.skill, characterLevel));
+  if (!unlocked.length) return null;
 
-  const doNotUse = warnings.filter((w) => w.skill && w.message === "Do not use");
-  const others = warnings.filter((w) => !(w.skill && w.message === "Do not use"));
+  const doNotUse = unlocked.filter((w) => w.skill && w.message === "Do not use");
+  const others = unlocked.filter((w) => !(w.skill && w.message === "Do not use"));
 
   return (
     <div style={{
@@ -203,12 +221,15 @@ function WarningList({ warnings }: { warnings: ClassWarning[] }) {
       gap: "0.4rem",
     }}>
       {others.map((w, i) => (
-        <div key={i} style={{ display: "flex", alignItems: "center", gap: "0.45rem" }}>
-          <span style={{ fontSize: "0.75rem", color: "#d97706", flexShrink: 0 }}>⚠</span>
-          <span style={{ fontSize: "0.82rem", color: "#d97706", fontWeight: 700, flex: 1 }}>{w.message}</span>
-          {w.skill?.skillIconUrl && (
-            <div title={`${w.skill.skillName} — ${formatJobAdvancement(w.skill.jobAdvancement)}`} style={{ flexShrink: 0 }}>
-              <Image src={w.skill.skillIconUrl} alt={w.skill.skillName} width={28} height={28} style={{ borderRadius: "5px", display: "block" }} unoptimized />
+        <div key={i}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.45rem" }}>
+            <span style={{ fontSize: "0.75rem", color: "#d97706", flexShrink: 0, lineHeight: 1 }}>⚠</span>
+            <span style={{ fontSize: "0.82rem", color: "#d97706", fontWeight: 700 }}>{w.message}{w.skill ? ":" : ""}</span>
+            {w.tooltip && <InfoTooltip content={w.tooltip} theme={theme} />}
+          </div>
+          {w.skill && (
+            <div style={{ marginTop: "0.35rem", marginLeft: "1.2rem" }}>
+              <SkillIconBadge skill={w.skill} theme={theme} size={32} style={{ display: "inline-flex" }} />
             </div>
           )}
         </div>
@@ -216,23 +237,12 @@ function WarningList({ warnings }: { warnings: ClassWarning[] }) {
       {doNotUse.length > 0 && (
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: "0.45rem", marginBottom: "0.45rem" }}>
-            <span style={{ fontSize: "0.75rem", color: "#d97706", flexShrink: 0 }}>⚠</span>
+            <span style={{ fontSize: "0.75rem", color: "#d97706", flexShrink: 0, lineHeight: 1 }}>⚠</span>
             <span style={{ fontSize: "0.82rem", color: "#d97706", fontWeight: 700 }}>Do not use the following skills:</span>
           </div>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "0.65rem" }}>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "0.65rem", marginLeft: "1.2rem" }}>
             {doNotUse.map((w, i) => w.skill && (
-              <div
-                key={i}
-                title={`${w.skill.skillName} — ${formatJobAdvancement(w.skill.jobAdvancement)}`}
-                style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.2rem" }}
-              >
-                {w.skill.skillIconUrl && (
-                  <Image src={w.skill.skillIconUrl} alt={w.skill.skillName} width={36} height={36} style={{ borderRadius: "6px", display: "block" }} unoptimized />
-                )}
-                <span style={{ fontSize: "0.75rem", color: "#d97706", fontWeight: 700, textAlign: "center", lineHeight: 1.2, maxWidth: "4.5rem" }}>
-                  {w.skill.skillName}
-                </span>
-              </div>
+              <SkillIconBadge key={i} skill={w.skill} theme={theme} size={32} style={{ display: "inline-flex" }} />
             ))}
           </div>
         </div>
@@ -241,8 +251,9 @@ function WarningList({ warnings }: { warnings: ClassWarning[] }) {
   );
 }
 
-function BuffGuide({ classData, theme }: { classData: ClassSkillData | null; theme: AppTheme }) {
-  const allSkills = [...UNIVERSAL_BUFF_SKILLS, ...(classData?.buffSkills ?? [])];
+function BuffGuide({ classData, theme, characterLevel }: { classData: ClassSkillData | null; theme: AppTheme; characterLevel?: number }) {
+  const allSkills = [...UNIVERSAL_BUFF_SKILLS, ...(classData?.buffSkills ?? [])]
+    .filter((skill) => isSkillUnlocked(skill, characterLevel));
   return (
     <>
     <div style={{
@@ -252,10 +263,13 @@ function BuffGuide({ classData, theme }: { classData: ClassSkillData | null; the
       borderRadius: "10px",
       padding: "0.65rem 0.85rem",
     }}>
-      <p style={{ margin: 0, marginBottom: "0.5rem", fontSize: "0.82rem", color: "#16a34a", fontWeight: 700 }}>
-        Activate these buffs before entering stats:
-      </p>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: "0.65rem" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "0.45rem", marginBottom: "0.5rem" }}>
+        <span style={{ fontSize: "0.75rem", color: "#16a34a", flexShrink: 0, lineHeight: 1 }}>★</span>
+        <p style={{ margin: 0, fontSize: "0.82rem", color: "#16a34a", fontWeight: 700 }}>
+          Activate these buffs before entering stats:
+        </p>
+      </div>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "0.65rem", marginLeft: "1.2rem" }}>
         {allSkills.map((skill, i) => (
           <SkillIconBadge key={i} skill={skill} theme={theme} />
         ))}
@@ -640,8 +654,8 @@ export default function StatsSetupStep({
       onNext={onNext}
       onFinish={onFinish}
     >
-      <WarningList warnings={[...UNIVERSAL_WARNINGS, ...(classData?.warnings ?? [])]} />
-      <BuffGuide classData={classData ?? null} theme={theme} />
+      <WarningList warnings={[...UNIVERSAL_WARNINGS, ...(classData?.warnings ?? [])]} theme={theme} characterLevel={characterLevel} />
+      <BuffGuide classData={classData ?? null} theme={theme} characterLevel={characterLevel} />
       {tripleIds.length > 0 && (
         <div style={{ marginBottom: "0.75rem" }}>
           <p style={sectionLabelStyle(theme)}>Basic Stats</p>
