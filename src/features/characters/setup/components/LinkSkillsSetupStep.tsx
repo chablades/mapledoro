@@ -144,7 +144,10 @@ function masterLevelTooltip(theme: AppTheme): TooltipContent {
           ))}
         </div>
         <div>
-          <strong style={{ color: theme.text }}>Master Lv. 4-9</strong> (Empirical Knowledge &amp; Thief&apos;s Cunning only): each Explorer Magician or Thief character contributes their own master level (1-3), for a total of up to 9.
+          <div style={{ fontWeight: 800, color: theme.text, marginBottom: "0.2rem" }}>Master Lv. 4-9</div>
+          <div>
+            <strong>Empirical Knowledge &amp; Thief&apos;s Cunning only</strong>: each Explorer Magician or Thief character contributes their own master level (1-3), for a total of up to 9.
+          </div>
         </div>
       </>
     ),

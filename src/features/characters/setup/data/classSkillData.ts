@@ -33,7 +33,7 @@ export const UNIVERSAL_BUFF_SKILLS: BuffSkill[] = [
 
 /** Warnings shown for every class on the stats step. */
 export const UNIVERSAL_WARNINGS: ClassWarning[] = [
-  { message: "Soul Gauge must be 0/1000", tooltip: { title: "Soul Gauge", description: "A full gauge increases ATT passively." } },
+  { message: "Soul Gauge must be 0/1000", tooltip: { title: "Soul Gauge", description: "A full gauge increases ATT/MATT passively." } },
 ];
 
 export interface ClassWarning {

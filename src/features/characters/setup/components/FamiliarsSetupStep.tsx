@@ -534,6 +534,20 @@ function FamiliarSlotCard({
               <span style={{ flexShrink: 0, color: theme.muted, fontSize: "0.85rem" }}>›</span>
             </button>
           )}
+          {!isEmpty && !pendingEntry && (
+            <button
+              type="button"
+              onClick={onClear}
+              style={{
+                display: "block", width: "100%", padding: "0.3rem 0.6rem",
+                background: "transparent", border: "none", borderBottom: `1px solid ${theme.border}`,
+                cursor: "pointer", fontFamily: "inherit",
+                fontSize: "0.75rem", fontWeight: 600, color: theme.muted, textAlign: "left",
+              }}
+            >
+              — Clear slot —
+            </button>
+          )}
           {pendingEntry ? (
             <TierPickerView
               entry={pendingEntry}
@@ -620,13 +634,7 @@ function BadgeSlot({
   const isOpen = openId === slotId;
   const inputRef = useRef<HTMLInputElement>(null);
   const { ref: wrapperRef, coords: pickerCoords, compute } = usePickerCoords(isOpen, BADGE_PICKER_WIDTH);
-  // Exclude badges used in other slots; the current slot's own badge stays available for re-selection
-  const excluded = useMemo(() => {
-    const s = new Set(usedBadges);
-    if (badge) s.delete(badge);
-    return s;
-  }, [usedBadges, badge]);
-  const filtered = useMemo(() => isOpen ? filterBadges(query, excluded) : [], [isOpen, query, excluded]);
+  const filtered = useMemo(() => isOpen ? filterBadges(query, usedBadges) : [], [isOpen, query, usedBadges]);
   const outerSize = BADGE_SIZE + BADGE_BORDER * 2;
 
   useEffect(() => {
@@ -692,6 +700,30 @@ function BadgeSlot({
           onClick={(e) => e.stopPropagation()}
           style={badgePickerStyle}
         >
+          {badge && (
+            <div style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "0.4rem 0.6rem", borderBottom: `1px solid ${theme.border}` }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={familiarBadgeUrl(BADGE_ID_MAP[badge])} alt="" width={28} height={28} style={{ objectFit: "contain", flexShrink: 0 }} />
+              <div style={{ overflow: "hidden", flex: 1 }}>
+                <p style={{ margin: 0, fontSize: "0.75rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.04em", color: theme.muted }}>Currently Selected</p>
+                <p style={{ margin: 0, fontSize: "0.8rem", fontWeight: 700, color: theme.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{badge}</p>
+              </div>
+            </div>
+          )}
+          {badge && (
+            <button
+              type="button"
+              onClick={onClear}
+              style={{
+                display: "block", width: "100%", padding: "0.3rem 0.6rem",
+                background: "transparent", border: "none", borderBottom: `1px solid ${theme.border}`,
+                cursor: "pointer", fontFamily: "inherit",
+                fontSize: "0.75rem", fontWeight: 600, color: theme.muted, textAlign: "left",
+              }}
+            >
+              — Clear slot —
+            </button>
+          )}
           <div style={{ padding: "0.4rem 0.5rem", borderBottom: `1px solid ${theme.border}` }}>
             <input
               ref={inputRef}
@@ -843,7 +875,7 @@ export default function FamiliarsSetupStep({
                   onChange(JSON.stringify(patchSlot(parsed, activePreset, i, { familiarId: entry.id, mobId: entry.mobId, name: entry.name, tier, line1: "", line2: "" })));
                   closePicker();
                 }}
-                onClear={() => onChange(JSON.stringify(patchSlot(parsed, activePreset, i, emptySlot())))}
+                onClear={() => { onChange(JSON.stringify(patchSlot(parsed, activePreset, i, emptySlot()))); closePicker(); }}
                 onLineChange={(field, val) => onChange(JSON.stringify(patchSlot(parsed, activePreset, i, { [field]: val })))}
               />
             );
@@ -874,7 +906,7 @@ export default function FamiliarsSetupStep({
                         onOpen={() => openPicker(slotId)}
                         onQueryChange={setPickerQuery}
                         onSelect={(name) => { onChange(JSON.stringify(patchBadge(parsed, activePreset, i, name))); closePicker(); }}
-                        onClear={() => onChange(JSON.stringify(patchBadge(parsed, activePreset, i, "")))}
+                        onClear={() => { onChange(JSON.stringify(patchBadge(parsed, activePreset, i, ""))); closePicker(); }}
                       />
                     );
                   })}
@@ -895,7 +927,7 @@ export default function FamiliarsSetupStep({
                         onOpen={() => openPicker(slotId)}
                         onQueryChange={setPickerQuery}
                         onSelect={(name) => { onChange(JSON.stringify(patchBadge(parsed, activePreset, bi, name))); closePicker(); }}
-                        onClear={() => onChange(JSON.stringify(patchBadge(parsed, activePreset, bi, "")))}
+                        onClear={() => { onChange(JSON.stringify(patchBadge(parsed, activePreset, bi, ""))); closePicker(); }}
                       />
                     );
                   })}
