@@ -156,6 +156,7 @@ function patchBadge(value: FamiliarsValue, pi: number, bi: number, val: string):
 
 const FAM_PICKER_WIDTH = 220;
 const BADGE_PICKER_WIDTH = 200;
+const LINE_PICKER_WIDTH = 240;
 
 // ── Shared styles ──────────────────────────────────────────────────────────
 
@@ -209,40 +210,32 @@ function FamiliarCardSprite({ mobId, size }: { mobId: string; size: number }) {
 
 // ── Line picker ───────────────────────────────────────────────────────────
 
-function LinePicker({ value, tier, placeholder, theme, onChange }: {
+function LinePicker({ id, openId, onToggle, onClose, value, tier, placeholder, theme, onChange }: {
+  id: string;
+  openId: string | null;
+  onToggle: () => void;
+  onClose: () => void;
   value: string;
   tier: FamiliarTier;
   placeholder: string;
   theme: AppTheme;
   onChange: (val: string) => void;
 }) {
-  const [open, setOpen] = useState(false);
+  const isOpen = openId === id;
   const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const { ref: wrapperRef, portalRef } = usePickerCoords(isOpen, LINE_PICKER_WIDTH);
   const lines = getLinesForTier(tier);
-  const filtered = query ? lines.filter((l) => matchesQuery(l, query)) : lines;
+  const options = lines.filter((l) => l !== value);
+  const filtered = query ? options.filter((l) => matchesQuery(l, query)) : options;
 
   useEffect(() => {
-    if (!open) return;
-    function onMouseDown(e: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false);
-        setQuery("");
-      }
-    }
-    document.addEventListener("mousedown", onMouseDown);
-    return () => document.removeEventListener("mousedown", onMouseDown);
-  }, [open]);
-
-  useEffect(() => {
-    if (open) inputRef.current?.focus();
-  }, [open]);
+    if (isOpen) inputRef.current?.focus();
+  }, [isOpen]);
 
   function select(line: string) {
     onChange(line);
-    setOpen(false);
-    setQuery("");
+    onClose();
   }
 
   const triggerStyle: CSSProperties = {
@@ -258,26 +251,57 @@ function LinePicker({ value, tier, placeholder, theme, onChange }: {
     display: "block",
   };
 
+  const pickerStyle: CSSProperties = {
+    ...popoverVisualStyle,
+    position: "absolute",
+    top: 0,
+    left: 0,
+    width: LINE_PICKER_WIDTH,
+    zIndex: 310,
+    background: theme.panel,
+    border: `1px solid ${theme.accent}`,
+  };
+
   return (
-    <div ref={containerRef} style={{ position: "relative", width: "100%" }}>
+    <div ref={wrapperRef} style={{ position: "relative", width: "100%" }}>
       <button
         type="button"
-        onClick={(e) => { e.stopPropagation(); setOpen((p) => !p); }}
+        onClick={(e) => {
+          e.stopPropagation();
+          if (!isOpen) setQuery("");
+          onToggle();
+        }}
         style={triggerStyle}
       >
         {value || placeholder}
       </button>
-      {open && (
+      {isOpen && createPortal(
         <div
+          ref={portalRef}
+          onMouseDown={(e) => e.stopPropagation()}
           onClick={(e) => e.stopPropagation()}
-          style={{
-            position: "absolute", bottom: "calc(100% + 4px)", left: 0, right: 0,
-            zIndex: 310, borderRadius: 8, overflow: "hidden",
-            border: `1px solid ${theme.accent}`,
-            background: theme.panel,
-            boxShadow: "0 4px 16px rgba(0,0,0,0.25)",
-          }}
+          style={pickerStyle}
         >
+          {value && (
+            <div style={{ padding: "0.4rem 0.6rem", borderBottom: `1px solid ${theme.border}` }}>
+              <p style={{ margin: 0, fontSize: "0.75rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.04em", color: theme.muted }}>Currently Selected</p>
+              <p style={{ margin: 0, fontSize: "0.8rem", fontWeight: 700, color: theme.text }}>{value}</p>
+            </div>
+          )}
+          {value && (
+            <button
+              type="button"
+              onClick={() => select("")}
+              style={{
+                display: "block", width: "100%", padding: "0.3rem 0.6rem",
+                background: "transparent", border: "none", borderBottom: `1px solid ${theme.border}`,
+                cursor: "pointer", fontFamily: "inherit",
+                fontSize: "0.75rem", fontWeight: 600, color: theme.muted, textAlign: "left",
+              }}
+            >
+              — Clear —
+            </button>
+          )}
           <div style={{ padding: "0.3rem 0.4rem", borderBottom: `1px solid ${theme.border}` }}>
             <input
               ref={inputRef}
@@ -290,22 +314,7 @@ function LinePicker({ value, tier, placeholder, theme, onChange }: {
               style={{ ...searchInputStyle, borderColor: theme.border, background: theme.bg, color: theme.text }}
             />
           </div>
-          <div style={{ maxHeight: 160, overflowY: "auto" }}>
-            {value && (
-              <button
-                type="button"
-                onClick={() => select("")}
-                style={{
-                  display: "block", width: "100%", padding: "0.3rem 0.5rem",
-                  background: "transparent", border: "none",
-                  borderBottom: `1px solid ${theme.border}`,
-                  cursor: "pointer", fontFamily: "inherit",
-                  fontSize: "0.75rem", fontWeight: 600, color: theme.muted, textAlign: "left",
-                }}
-              >
-                — Clear —
-              </button>
-            )}
+          <div style={{ maxHeight: 200, overflowY: "auto" }}>
             {filtered.map((line) => (
               <button
                 key={line}
@@ -313,13 +322,13 @@ function LinePicker({ value, tier, placeholder, theme, onChange }: {
                 onClick={() => select(line)}
                 style={{
                   display: "block", width: "100%", padding: "0.3rem 0.5rem",
-                  background: line === value ? `${theme.accent}33` : "transparent",
+                  background: "transparent",
                   border: "none", borderBottom: `1px solid ${theme.border}`,
                   cursor: "pointer", fontFamily: "inherit",
                   fontSize: "0.75rem", fontWeight: 600, color: theme.text, textAlign: "left",
                 }}
-                onMouseEnter={(e) => { if (line !== value) e.currentTarget.style.background = `${theme.accent}22`; }}
-                onMouseLeave={(e) => { if (line !== value) e.currentTarget.style.background = "transparent"; }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = `${theme.accent}22`; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
               >
                 {line}
               </button>
@@ -330,7 +339,8 @@ function LinePicker({ value, tier, placeholder, theme, onChange }: {
               </p>
             )}
           </div>
-        </div>
+        </div>,
+        document.body!
       )}
     </div>
   );
@@ -410,6 +420,7 @@ function TierPickerView({ entry, theme, onBack, onSelect }: {
 function FamiliarSlotCard({
   slot, slotId, openId, query, pendingEntry, theme,
   onOpen, onQueryChange, onSelect, onClear, onLineChange, onSetPending,
+  onTogglePicker, onClosePicker,
 }: {
   slot: FamiliarSlot;
   slotId: string;
@@ -423,6 +434,8 @@ function FamiliarSlotCard({
   onClear: () => void;
   onLineChange: (field: "line1" | "line2", val: string) => void;
   onSetPending: (entry: FamiliarEntry | null) => void;
+  onTogglePicker: (id: string) => void;
+  onClosePicker: () => void;
 }) {
   const isOpen = openId === slotId;
   const isEmpty = !slot.name;
@@ -457,7 +470,7 @@ function FamiliarSlotCard({
   };
 
   return (
-    <div ref={wrapperRef} style={{ flex: 1, position: "relative" }}>
+    <div ref={wrapperRef} style={{ flex: 1, minWidth: 0, position: "relative" }}>
       <div
         role="button"
         tabIndex={0}
@@ -488,8 +501,28 @@ function FamiliarSlotCard({
             </HoverTooltip>
             {slot.tier && (
               <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 3, marginTop: 2 }}>
-                <LinePicker value={slot.line1} tier={slot.tier} placeholder="Line 1…" theme={theme} onChange={(v) => onLineChange("line1", v)} />
-                <LinePicker value={slot.line2} tier={slot.tier} placeholder="Line 2…" theme={theme} onChange={(v) => onLineChange("line2", v)} />
+                <LinePicker
+                  id={`${slotId}-line1`}
+                  openId={openId}
+                  onToggle={() => onTogglePicker(`${slotId}-line1`)}
+                  onClose={onClosePicker}
+                  value={slot.line1}
+                  tier={slot.tier}
+                  placeholder="Line 1…"
+                  theme={theme}
+                  onChange={(v) => onLineChange("line1", v)}
+                />
+                <LinePicker
+                  id={`${slotId}-line2`}
+                  openId={openId}
+                  onToggle={() => onTogglePicker(`${slotId}-line2`)}
+                  onClose={onClosePicker}
+                  value={slot.line2}
+                  tier={slot.tier}
+                  placeholder="Line 2…"
+                  theme={theme}
+                  onChange={(v) => onLineChange("line2", v)}
+                />
               </div>
             )}
           </>
@@ -879,6 +912,8 @@ export default function FamiliarsSetupStep({
                 }}
                 onClear={() => { onChange(JSON.stringify(patchSlot(parsed, activePreset, i, emptySlot()))); closePicker(); }}
                 onLineChange={(field, val) => onChange(JSON.stringify(patchSlot(parsed, activePreset, i, { [field]: val })))}
+                onTogglePicker={openPicker}
+                onClosePicker={closePicker}
               />
             );
           })}
