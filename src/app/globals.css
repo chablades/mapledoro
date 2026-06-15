@@ -298,7 +298,15 @@ textarea:focus-visible {
   z-index: 30;
 }
 
-.hover-tip:hover .hover-tip-bubble,
+/* :hover triggers via mouse only — touch devices "sticky hover" on tap, which fought
+   with tap handlers that open something else (e.g. an item picker) on the same element. */
+@media (hover: hover) and (pointer: fine) {
+  .hover-tip:hover .hover-tip-bubble {
+    opacity: 1;
+    visibility: visible;
+  }
+}
+
 .hover-tip-bubble.is-open {
   opacity: 1;
   visibility: visible;

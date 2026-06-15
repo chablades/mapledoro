@@ -428,7 +428,7 @@ function FamiliarSlotCard({
   const isEmpty = !slot.name;
   const displayName = slot.name.replace(/ Familiar$/i, "");
   const inputRef = useRef<HTMLInputElement>(null);
-  const { ref: wrapperRef, coords: pickerCoords, compute } = usePickerCoords(isOpen, FAM_PICKER_WIDTH);
+  const { ref: wrapperRef, portalRef } = usePickerCoords(isOpen, FAM_PICKER_WIDTH);
   const filtered = useMemo(() => isOpen ? filterFamiliars(query, slot.familiarId) : [], [isOpen, query, slot.familiarId]);
   useEffect(() => {
     if (isOpen && !pendingEntry) inputRef.current?.focus();
@@ -447,9 +447,9 @@ function FamiliarSlotCard({
 
   const pickerStyle: CSSProperties = {
     ...popoverVisualStyle,
-    position: "fixed",
-    top: pickerCoords.top,
-    left: pickerCoords.left,
+    position: "absolute",
+    top: 0,
+    left: 0,
     width: FAM_PICKER_WIDTH,
     zIndex: 300,
     background: theme.panel,
@@ -461,8 +461,8 @@ function FamiliarSlotCard({
       <div
         role="button"
         tabIndex={0}
-        onClick={() => { compute(); onOpen(); }}
-        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); compute(); onOpen(); } }}
+        onClick={() => { onOpen(); }}
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onOpen(); } }}
         style={cardStyle}
       >
         {isEmpty ? (
@@ -498,6 +498,7 @@ function FamiliarSlotCard({
 
       {isOpen && createPortal(
         <div
+          ref={portalRef}
           onMouseDown={(e) => e.stopPropagation()}
           onClick={(e) => e.stopPropagation()}
           style={pickerStyle}
@@ -633,7 +634,7 @@ function BadgeSlot({
 }) {
   const isOpen = openId === slotId;
   const inputRef = useRef<HTMLInputElement>(null);
-  const { ref: wrapperRef, coords: pickerCoords, compute } = usePickerCoords(isOpen, BADGE_PICKER_WIDTH);
+  const { ref: wrapperRef, portalRef } = usePickerCoords(isOpen, BADGE_PICKER_WIDTH);
   const filtered = useMemo(() => isOpen ? filterBadges(query, usedBadges) : [], [isOpen, query, usedBadges]);
   const outerSize = BADGE_SIZE + BADGE_BORDER * 2;
 
@@ -644,9 +645,9 @@ function BadgeSlot({
   const emptyBg = isOpen ? theme.accent : `${theme.muted}28`;
   const badgePickerStyle: CSSProperties = {
     ...popoverVisualStyle,
-    position: "fixed",
-    top: pickerCoords.top,
-    left: pickerCoords.left,
+    position: "absolute",
+    top: 0,
+    left: 0,
     width: BADGE_PICKER_WIDTH,
     zIndex: 300,
     background: theme.panel,
@@ -659,7 +660,7 @@ function BadgeSlot({
         type="button"
         title={badge || "Add badge"}
         aria-label={badge || "Add badge"}
-        onClick={() => { compute(); onOpen(); }}
+        onClick={() => { onOpen(); }}
         style={{ cursor: "pointer", background: "none", border: "none", padding: 0 }}
       >
         <div style={{ width: outerSize, height: outerSize, clipPath: PENTAGON, background: emptyBg, display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -696,6 +697,7 @@ function BadgeSlot({
 
       {isOpen && createPortal(
         <div
+          ref={portalRef}
           onMouseDown={(e) => e.stopPropagation()}
           onClick={(e) => e.stopPropagation()}
           style={badgePickerStyle}

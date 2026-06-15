@@ -369,14 +369,15 @@ function SlotCell({ slotKey, item, theme, isActive, onClick, picker }: {
   onClick: () => void;
   picker?: ReactNode;
 }) {
-  const { ref: wrapperRef, coords: pickerCoords, compute } = usePickerCoords(isActive, PICKER_WIDTH);
+  const { ref: wrapperRef, portalRef } = usePickerCoords(isActive, PICKER_WIDTH);
   const button = (
     <div
       role="button"
       tabIndex={0}
+      data-slot={slotKey}
       aria-label={item ? `${SLOT_LABELS[slotKey]}: ${item.name}` : `Set ${SLOT_LABELS[slotKey]}`}
-      onClick={(e) => { e.stopPropagation(); compute(); onClick(); }}
-      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); compute(); onClick(); } }}
+      onClick={(e) => { e.stopPropagation(); onClick(); }}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(); } }}
       onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.borderColor = `${theme.accent}88`; }}
       onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.borderColor = theme.border; }}
       onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
@@ -407,8 +408,10 @@ function SlotCell({ slotKey, item, theme, isActive, onClick, picker }: {
       {item ? <HoverTooltip label={item.name} theme={theme}>{button}</HoverTooltip> : button}
       {picker && createPortal(
         <div
+          ref={portalRef}
+          data-equipment-picker
           onClick={(e) => e.stopPropagation()}
-          style={{ position: "fixed", width: PICKER_WIDTH, zIndex: 300, top: pickerCoords.top, left: pickerCoords.left }}
+          style={{ position: "absolute", width: PICKER_WIDTH, zIndex: 300, top: 0, left: 0 }}
         >
           {picker}
         </div>,
@@ -700,12 +703,32 @@ export default function EquipmentSetupStep({
     onChange(serialiseDraft(next));
   }
 
+  // Capture phase so a tap on another slot can swap the picker directly, even when the open
+  // picker's portal (absolutely positioned, high z-index) visually overlaps that slot — checking
+  // elementsFromPoint sees through the portal to the slot cell underneath. Walk top-to-bottom so
+  // a click that actually lands on the picker (e.g. its search box or "Clear slot" button) is
+  // left alone even if some other slot cell happens to sit underneath it at that point.
   useEffect(() => {
     if (!activeSlot) return;
-    const close = () => setActiveSlot(null);
-    document.addEventListener("click", close);
-    return () => document.removeEventListener("click", close);
-  }, [!!activeSlot]); // eslint-disable-line react-hooks/exhaustive-deps
+    const handleClick = (e: MouseEvent) => {
+      const path = document.elementsFromPoint(e.clientX, e.clientY);
+      for (const el of path) {
+        if (!(el instanceof HTMLElement)) continue;
+        if (el.hasAttribute("data-equipment-picker")) return;
+        if (el.dataset.slot) {
+          const slot = el.dataset.slot as SlotKey;
+          if (slot !== activeSlot) {
+            e.stopPropagation();
+            setActiveSlot(slot);
+          }
+          return;
+        }
+      }
+      setActiveSlot(null);
+    };
+    document.addEventListener("click", handleClick, true);
+    return () => document.removeEventListener("click", handleClick, true);
+  }, [activeSlot]);
 
   /** Item ids placed in sibling slots of the same unique-equip group (other rings/pendants/totems). */
   function siblingItemIds(slot: SlotKey): ReadonlySet<string> | undefined {
@@ -822,8 +845,8 @@ export default function EquipmentSetupStep({
     borderRadius: 8,
     background: theme.bg,
     color: theme.text,
-    fontFamily: "inherit", fontWeight: 800, fontSize: "1rem",
-    width: 36, height: 32, cursor: "pointer",
+    fontFamily: "inherit", fontWeight: 800, fontSize: "1.5rem",
+    width: 44, height: 48, cursor: "pointer",
   };
 
   return (

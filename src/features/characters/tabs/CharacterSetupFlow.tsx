@@ -100,7 +100,7 @@ export default function CharacterSetupFlow({ theme, initialCharacterName, initia
         state.completedFlowIds.includes(state.requiredFlowId) &&
         !state.isAddingCharacter,
       isAddingCharacter: state.isAddingCharacter,
-      setupStepActive: state.setupStepIndex > 0,
+      setupStepActive: !state.showFlowOverview,
       isCurrentMainCharacter: state.isCurrentMainCharacter,
       isCurrentChampionCharacter: state.isCurrentChampionCharacter,
       canSetCurrentChampion: state.canSetCurrentChampion,
