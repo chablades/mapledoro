@@ -62,11 +62,11 @@ export default function SetupStepFrame({
             <span
               key={i}
               style={{
-                height: 6,
-                width: i === substepIndex ? 18 : 6,
-                borderRadius: 3,
+                height: 7,
+                width: 28,
+                borderRadius: 4,
                 background: i <= substepIndex ? theme.accent : theme.border,
-                transition: "width 0.2s ease, background 0.2s ease",
+                transition: "background 0.2s ease",
               }}
             />
           ))}
