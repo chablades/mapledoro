@@ -71,7 +71,7 @@
 
 .colorModeKnob {
   position: absolute;
-  top: 2px;
+  top: 50%;
   left: 2px;
   width: 21px;
   height: 21px;
