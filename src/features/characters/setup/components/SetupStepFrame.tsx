@@ -109,18 +109,19 @@ export default function SetupStepFrame({
           type="button"
           onClick={onBack}
           style={{
-            border: `1px solid ${theme.border}`,
-            borderRadius: "10px",
-            background: theme.bg,
-            color: theme.text,
+            border: "none",
+            background: "none",
+            color: theme.muted,
             fontFamily: "inherit",
-            fontWeight: 800,
-            fontSize: "0.88rem",
-            padding: "0.55rem 0.9rem",
+            fontWeight: 700,
+            fontSize: "0.85rem",
+            padding: "0.55rem 0.4rem",
             cursor: "pointer",
           }}
+          onMouseEnter={(e) => { e.currentTarget.style.color = theme.text; }}
+          onMouseLeave={(e) => { e.currentTarget.style.color = theme.muted; }}
         >
-          Prev Step
+          ← Prev Step
         </button>
         <button
           type="button"

@@ -304,13 +304,17 @@ function TripleStatRow({
 }) {
   const d: TripleStatDraft = draft[id] ?? { base: "", percent: "", percentUnapplied: "" };
   const sub = statInputStyle(theme);
+  // "% Not Applied" is meaningless for ATT (it only ever existed as a legacy
+  // scouter workaround for pre-remaster Kanna's HP→MATT conversion, and a stray
+  // value here produces an invalid range). Only show it for the stat fields.
+  const isAttack = id === "attackPower" || id === "magicAtt";
   return (
     <div>
       <p style={{ margin: 0, marginBottom: "0.25rem", fontSize: "0.82rem", fontWeight: 800, color: theme.text }}>
         {TRIPLE_LABELS[id]}
       </p>
       <div style={{ display: "flex", gap: "0.35rem" }}>
-        <div style={{ flex: 2 }}>
+        <div style={{ flex: 1 }}>
           <input type="text" aria-label={`${TRIPLE_LABELS[id]} base value`} value={d.base} placeholder="0" style={sub}
             onChange={(e) => onUpdate(id, "base", e.target.value)}
             onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
@@ -318,7 +322,7 @@ function TripleStatRow({
           />
           <p style={{ margin: 0, marginTop: "0.15rem", fontSize: "0.75rem", color: theme.muted, fontWeight: 700, textAlign: "center" }}>Base Value</p>
         </div>
-        <div style={{ flex: 1.5 }}>
+        <div style={{ flex: 1 }}>
           <div style={{ position: "relative" }}>
             <input type="text" aria-label={`${TRIPLE_LABELS[id]} percent value`} value={d.percent} placeholder="0" style={{ ...sub, paddingRight: "1.15rem" }}
               onChange={(e) => onUpdate(id, "percent", e.target.value)}
@@ -329,17 +333,19 @@ function TripleStatRow({
           </div>
           <p style={{ margin: 0, marginTop: "0.15rem", fontSize: "0.75rem", color: theme.muted, fontWeight: 700, textAlign: "center" }}>% Value</p>
         </div>
-        <div style={{ flex: 1.5 }}>
-          <div style={{ position: "relative" }}>
-            <input type="text" aria-label={`${TRIPLE_LABELS[id]} percent not applied`} value={d.percentUnapplied} placeholder="0" style={{ ...sub, paddingRight: "1.15rem" }}
-              onChange={(e) => onUpdate(id, "percentUnapplied", e.target.value)}
-              onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
-              onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
-            />
-            <span style={inputSuffixStyle(theme)}>%</span>
+        {!isAttack && (
+          <div style={{ flex: 1 }}>
+            <div style={{ position: "relative" }}>
+              <input type="text" aria-label={`${TRIPLE_LABELS[id]} percent not applied`} value={d.percentUnapplied} placeholder="0" style={{ ...sub, paddingRight: "1.15rem" }}
+                onChange={(e) => onUpdate(id, "percentUnapplied", e.target.value)}
+                onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
+                onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
+              />
+              <span style={inputSuffixStyle(theme)}>%</span>
+            </div>
+            <p style={{ margin: 0, marginTop: "0.15rem", fontSize: "0.75rem", color: theme.muted, fontWeight: 700, textAlign: "center" }}>% Not Applied</p>
           </div>
-          <p style={{ margin: 0, marginTop: "0.15rem", fontSize: "0.75rem", color: theme.muted, fontWeight: 700, textAlign: "center" }}>% Not Applied</p>
-        </div>
+        )}
       </div>
     </div>
   );

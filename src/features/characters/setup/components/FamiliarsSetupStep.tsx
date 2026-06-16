@@ -484,20 +484,6 @@ function FamiliarSlotCard({
           <>
             <HoverTooltip label={displayName} theme={theme}>
               <FamiliarCardSprite mobId={slot.mobId} size={FAM_CARD_SIZE} />
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); onClear(); }}
-                aria-label="Remove familiar"
-                style={{
-                  position: "absolute", top: -5, right: -5,
-                  width: 16, height: 16, borderRadius: "50%",
-                  border: `1px solid ${theme.border}`,
-                  background: theme.bg, color: theme.muted,
-                  fontSize: "0.75rem", lineHeight: 1,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  cursor: "pointer", padding: 0, fontFamily: "inherit",
-                }}
-              >×</button>
             </HoverTooltip>
             {slot.tier && (
               <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 3, marginTop: 2 }}>
@@ -711,23 +697,6 @@ function BadgeSlot({
           )}
         </div>
       </button>
-      {badge && (
-        <button
-          type="button"
-          onClick={onClear}
-          aria-label="Remove badge"
-          style={{
-            position: "absolute", top: 0, right: 0,
-            width: 14, height: 14, borderRadius: "50%",
-            border: `1px solid ${theme.border}`,
-            background: theme.bg, color: theme.muted,
-            fontSize: "0.75rem", lineHeight: 1,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            cursor: "pointer", padding: 0, fontFamily: "inherit",
-          }}
-        >×</button>
-      )}
-
       {isOpen && createPortal(
         <div
           ref={portalRef}

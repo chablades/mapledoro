@@ -542,12 +542,12 @@ function SymbolLevelTile({ area, level, maxLevel, theme, onLevel }: {
   const placed = level >= 1;
   return (
     <div style={{
-      width: 64, flexShrink: 0,
+      width: 74, flexShrink: 0,
       border: `1px solid ${placed ? theme.accent : theme.border}`,
       borderRadius: 8,
       background: placed ? `${theme.accent}15` : theme.bg,
-      display: "flex", flexDirection: "column", alignItems: "center", gap: 3,
-      padding: "6px 4px", boxSizing: "border-box",
+      display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
+      padding: "8px 9px", boxSizing: "border-box",
     }}>
       <HoverTooltip label={area.name} theme={theme}>
         <div style={{ opacity: placed ? 1 : 0.3, filter: placed ? "none" : "grayscale(1)", lineHeight: 0, cursor: "pointer" }}>
@@ -561,7 +561,7 @@ function SymbolLevelTile({ area, level, maxLevel, theme, onLevel }: {
         max={maxLevel}
         aria-label={`${area.name} symbol level`}
         value={level || ""}
-        placeholder="Lv 0"
+        placeholder="0"
         onChange={(e) => {
           const raw = Math.floor(Number(e.target.value) || 0);
           onLevel(Math.max(0, Math.min(maxLevel, raw)));
@@ -621,12 +621,12 @@ function SymbolSection({ symbolLevels, activeTab, theme, onTabChange, onLevel }:
         })}
       </div>
       {activeTab === "arcane" ? (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 64px)", gap: 4 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 74px)", gap: 4 }}>
           {ARCANE_AREAS.map(renderTile)}
         </div>
       ) : (
         <>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 64px)", gap: 4 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 74px)", gap: 4 }}>
             {SACRED_AREAS.map(renderTile)}
           </div>
           <p style={{
@@ -634,7 +634,7 @@ function SymbolSection({ symbolLevels, activeTab, theme, onTabChange, onLevel }:
           }}>
             Grand Sacred
           </p>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 64px)", gap: 4 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 74px)", gap: 4 }}>
             {GRAND_SACRED_AREAS.map(renderTile)}
           </div>
         </>
@@ -722,6 +722,8 @@ function IAGradeHeader({ grade, openId, theme, onToggle, onClose, onSelect }: {
       <button
         type="button"
         onClick={(e) => { e.stopPropagation(); onToggle(); }}
+        onMouseEnter={(e) => { e.currentTarget.style.borderColor = theme.accent; if (!c) e.currentTarget.style.background = theme.panel; }}
+        onMouseLeave={(e) => { e.currentTarget.style.borderColor = c ? c.border : theme.border; if (!c) e.currentTarget.style.background = theme.bg; }}
         style={{
           display: "flex", alignItems: "center", gap: 8, width: "100%",
           padding: "0.5rem 0.7rem", borderRadius: 8,
@@ -729,12 +731,17 @@ function IAGradeHeader({ grade, openId, theme, onToggle, onClose, onSelect }: {
           background: c ? c.border : theme.bg,
           color: c ? "#fff" : theme.muted,
           fontFamily: "inherit", fontWeight: 800, fontSize: "0.9rem", cursor: "pointer", textAlign: "left",
+          transition: "border-color 0.15s ease, background 0.15s ease",
         }}
       >
         <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="currentColor" style={{ flexShrink: 0 }}>
           <path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z" />
         </svg>
         {grade ? `${IA_TIER_LABELS[grade]} Ability` : "Set Ability Grade"}
+        <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
+          style={{ marginLeft: "auto", flexShrink: 0, transform: isOpen ? "rotate(180deg)" : "none", transition: "transform 0.15s ease" }}>
+          <path d="M6 9l6 6 6-6" />
+        </svg>
       </button>
       {isOpen && createPortal(
         <div ref={portalRef} onMouseDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()}
@@ -750,8 +757,8 @@ function IAGradeHeader({ grade, openId, theme, onToggle, onClose, onSelect }: {
                   border: "none", borderBottom: `1px solid ${theme.border}`, cursor: "pointer",
                   fontFamily: "inherit", fontWeight: 800, fontSize: "0.8rem", textAlign: "left",
                 }}
-                onMouseEnter={(e) => { if (!active) e.currentTarget.style.background = tc.bg; }}
-                onMouseLeave={(e) => { if (!active) e.currentTarget.style.background = "transparent"; }}>
+                onMouseEnter={(e) => { if (!active) { e.currentTarget.style.background = tc.border; e.currentTarget.style.color = "#fff"; } }}
+                onMouseLeave={(e) => { if (!active) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = theme.text; } }}>
                 <span style={{ width: 10, height: 10, borderRadius: 3, background: tc.border, flexShrink: 0 }} />
                 {IA_TIER_LABELS[t]} Ability
               </button>
