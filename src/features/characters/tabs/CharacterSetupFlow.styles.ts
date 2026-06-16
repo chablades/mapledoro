@@ -453,9 +453,9 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
           }
 
           .characters-content.setup-active .search-card {
-            width: min(100%, 170px);
+            width: min(100%, 440px);
             margin: 0 auto;
-            padding: 0.55rem !important;
+            padding: 0.65rem 0.75rem !important;
           }
 
           .confirmed-summary-card {
@@ -490,6 +490,60 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
           .confirmed-summary-card p:nth-of-type(3) {
             font-size: 0.72rem !important;
             line-height: 1.2 !important;
+          }
+
+          /* Setup card: horizontal layout — round back icon | bigger avatar | info.
+             Scoped to setup-active so the profile-view card is untouched. To switch
+             to the "stacked, big centered avatar" variant later, drop the row override
+             on .confirmed-summary-card and bump the avatar size. */
+          .characters-content.setup-active .confirmed-summary-card {
+            flex-direction: row !important;
+            align-items: center !important;
+            justify-content: center !important;
+            max-width: 100% !important;
+            gap: 0.7rem !important;
+            text-align: left !important;
+          }
+
+          .characters-content.setup-active .confirmed-summary-card .character-profile-nav-row {
+            width: auto !important;
+            margin: 0 !important;
+            flex: 0 0 auto !important;
+          }
+
+          .characters-content.setup-active .confirmed-summary-card .character-profile-nav-row button {
+            width: auto !important;
+            height: auto !important;
+            padding: 0.4rem 0.72rem !important;
+            font-size: 0.8rem !important;
+            font-weight: 800 !important;
+            border-radius: 9px !important;
+            white-space: nowrap !important;
+          }
+
+          .characters-content.setup-active .confirmed-summary-card .confirmed-avatar-wrap {
+            width: 84px !important;
+            height: 84px !important;
+            border-radius: 12px !important;
+            flex: 0 0 auto !important;
+          }
+
+          .characters-content.setup-active .confirmed-summary-card .confirmed-avatar-wrap img {
+            object-fit: cover !important;
+            object-position: center top !important;
+            border-radius: 12px !important;
+          }
+
+          .characters-content.setup-active .confirmed-summary-card > div:last-child {
+            width: auto !important;
+            flex: 0 1 auto !important;
+            min-width: 0 !important;
+            align-items: flex-start !important;
+            text-align: left !important;
+          }
+
+          .characters-content.setup-active .confirmed-summary-card > div:last-child > div {
+            justify-content: flex-start !important;
           }
 
           .preview-pane,

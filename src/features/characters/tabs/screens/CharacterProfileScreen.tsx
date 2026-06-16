@@ -120,7 +120,7 @@ export default function CharacterProfileScreen({
                 <span className="desktop-back-label">
                   {`← ${CHARACTERS_COPY.characterProfile.viewYourCharactersButton}`}
                 </span>
-                <span className="mobile-back-label">←</span>
+                <span className="mobile-back-label">← Back</span>
               </>
             ) : (
               CHARACTERS_COPY.characterProfile.backButton

@@ -23,6 +23,7 @@ import {
 } from "../model/charactersStore";
 import { findClassById } from "../../tools/hexa-skills/hexa-classes";
 import { getClassDataByNexonJobName } from "../setup/data/classSkillData";
+import { hexaStatHasData, type HexaStatNode } from "../setup/data/hexaStatData";
 import { ARCANE_AREAS, ALL_SACRED_AREAS, type SymbolArea, type SymbolType } from "../../tools/symbols/symbol-data";
 import type { SymbolState } from "../../tools/symbols/useSymbolState";
 import {
@@ -220,14 +221,16 @@ function buildFullSetupRecord(
   });
   const { stats, isLiberated, weaponHand, hasRuinForceShield, soul } =
     convertStatsStepDraftToStored(parseStatsStepDraft(stepData.stats ?? ""), character.level);
-  const hexaToolData = buildHexaToolDataForRecord(character.jobName, stepData.hexa_matrix ?? "");
+  const hexaSkillsToolData = buildHexaSkillsToolData(character.jobName, stepData.hexa_matrix ?? "");
+  const hexaStatToolData = buildHexaStatToolData(stepData.hexa_matrix ?? "");
   const vMatrixToolData = buildVMatrixToolDataForRecord(stepData.v_matrix ?? "");
   const familiarsData = stepData.familiars ? tryParseJson(stepData.familiars) : null;
   const equipmentData = stepData.equipment ? parseEquipmentDraft(stepData.equipment) : null;
   const symbolsData = stepData.equipment ? buildSymbolsToolDataForRecord(character, stepData.equipment) : null;
   const tools = {
     ...base.tools,
-    ...(hexaToolData ? { hexaSkills: hexaToolData } : null),
+    ...(hexaSkillsToolData ? { hexaSkills: hexaSkillsToolData } : null),
+    ...(hexaStatToolData ? { hexaStat: hexaStatToolData } : null),
     ...(vMatrixToolData ? { vMatrix: vMatrixToolData } : null),
     ...(familiarsData ? { familiars: familiarsData } : null),
     ...(symbolsData ? { symbols: symbolsData } : null),
@@ -291,12 +294,22 @@ function applyHexaDraftToRoster(
   upsertFn: (c: StoredCharacterRecord) => void,
 ) {
   if (!character) return;
-  const hexaData = buildHexaToolDataForRecord(character.jobName, hexaJson);
-  if (!hexaData) return;
+  const hexaSkillsData = buildHexaSkillsToolData(character.jobName, hexaJson);
+  const hexaStatData = buildHexaStatToolData(hexaJson);
+  if (!hexaSkillsData && !hexaStatData) return;
   const store = readCharactersStore();
   const existing = selectCharacterById(store, toCharacterKey(character));
   if (!existing) return;
-  upsertFn({ ...existing, tools: { ...existing.tools, hexaSkills: hexaData } });
+  // Preserve any calculator-only fields (e.g. desiredLevels) already in tools.hexaSkills.
+  const existingHexaSkills = existing.tools?.hexaSkills as Record<string, unknown> | undefined;
+  upsertFn({
+    ...existing,
+    tools: {
+      ...existing.tools,
+      ...(hexaSkillsData ? { hexaSkills: { ...existingHexaSkills, ...hexaSkillsData } } : null),
+      ...(hexaStatData ? { hexaStat: hexaStatData } : null),
+    },
+  });
 }
 
 function buildVMatrixToolDataForRecord(vMatrixJson: string): { levels: Record<string, number> } | null {
@@ -323,13 +336,32 @@ function applyVMatrixDraftToRoster(
   upsertFn({ ...existing, tools: { ...existing.tools, vMatrix: vMatrixData } });
 }
 
-function buildHexaToolDataForRecord(jobName: string, hexaJson: string): { className: string; levels: unknown } | null {
+// 6th-job HEXA Skills data (origin/mastery/enhancement/common/ascent), persisted to
+// tools.hexaSkills. HEXA Stat is stripped out — it lives in its own key (see below).
+function buildHexaSkillsToolData(jobName: string, hexaJson: string): { className: string; levels: unknown } | null {
   try {
-    const levels = JSON.parse(hexaJson) as unknown;
+    const parsed = JSON.parse(hexaJson) as Record<string, unknown>;
     const classData = getClassDataByNexonJobName(jobName);
     const hexaClassId = classData?.id === "sia_astelle" ? "sia" : classData?.id;
     const classDef = hexaClassId ? findClassById(hexaClassId) : null;
-    if (levels && typeof levels === "object" && classDef) return { className: classDef.className, levels };
+    if (parsed && typeof parsed === "object" && classDef) {
+      const levels = { ...parsed };
+      delete levels.hexaStat;
+      return { className: classDef.className, levels };
+    }
+  } catch { /* ignore */ }
+  return null;
+}
+
+// HEXA Stat is its own progression system — stored separately from the HEXA Skills
+// calculator under tools.hexaStat. Only persisted when at least one node has data.
+function buildHexaStatToolData(hexaJson: string): { nodes: HexaStatNode[] } | null {
+  try {
+    const parsed = JSON.parse(hexaJson) as { hexaStat?: unknown };
+    const nodes = parsed?.hexaStat;
+    if (Array.isArray(nodes) && hexaStatHasData(nodes as HexaStatNode[])) {
+      return { nodes: nodes as HexaStatNode[] };
+    }
   } catch { /* ignore */ }
   return null;
 }

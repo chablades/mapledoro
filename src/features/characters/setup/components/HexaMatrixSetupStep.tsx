@@ -5,10 +5,11 @@ import Image from "next/image";
 import type { AppTheme } from "../../../../components/themes";
 import HoverTooltip from "../../../../components/HoverTooltip";
 import type { SetupStepDefinition } from "../steps";
-import type { HexaClassDef, HexaSkillDef, HexaSkillLevels, HexaStatEntry, HexaStatSlot } from "../../../../features/tools/hexa-skills/hexa-classes";
+import type { HexaClassDef, HexaSkillDef, HexaSkillLevels } from "../../../../features/tools/hexa-skills/hexa-classes";
 import { findClassById, COMMON_SKILLS } from "../../../../features/tools/hexa-skills/hexa-classes";
 import { resourceImageUrl } from "../../../../lib/mapleResource";
 import { getClassDataByNexonJobName } from "../data/classSkillData";
+import type { HexaStatEntry, HexaStatSlot, HexaStatNode } from "../data/hexaStatData";
 import { HEXA_STAT_OPTIONS, getHexaStatBonus, getMainStatLabel, getAttackLabel } from "../data/hexaStatData";
 import { readCharacterToolData } from "../../../../features/tools/characterToolStorage";
 import SetupStepFrame from "./SetupStepFrame";
@@ -37,6 +38,12 @@ const MAX_LEVEL = 30;
 // TODO: update with actual Hexa Stat entry max level once confirmed
 const MAX_STAT_ENTRY_LEVEL = 10;
 
+// Each HEXA Stat node holds two presets in-game: an active and a stored "saved" config.
+const PRESET_LABELS = ["Active", "Stored"] as const;
+
+// Two substeps: skill levels, then HEXA Stat.
+const SUBSTEP_COUNT = 2;
+
 // hexa-skill ids from manifests/v268/hexa-skill.json (section: "hexaStat")
 const HEXA_STAT_DEFS: HexaSkillDef[] = [
   { iconId: "50000000", name: "Hexa Stat I" },
@@ -50,10 +57,15 @@ function clamp(v: number, max = MAX_LEVEL): number {
 
 function emptyEntry(): HexaStatEntry { return { type: "", level: 0 }; }
 function emptySlot(): HexaStatSlot { return { main: emptyEntry(), alt: [emptyEntry(), emptyEntry()] }; }
+function emptyNode(): HexaStatNode { return { presets: [emptySlot(), emptySlot()], activePreset: 0 }; }
 
 function isSlotEmpty(slot: HexaStatSlot): boolean {
   return !slot.main.type && !slot.alt[0].type && !slot.alt[1].type &&
     slot.main.level === 0 && slot.alt[0].level === 0 && slot.alt[1].level === 0;
+}
+
+function isNodeEmpty(node: HexaStatNode): boolean {
+  return isSlotEmpty(node.presets[0]) && isSlotEmpty(node.presets[1]);
 }
 
 // Node 0 is always accessible (HEXA Matrix implies 6th job). Nodes 1 and 2 have character level gates.
@@ -118,22 +130,41 @@ function parseSlot(raw: unknown): HexaStatSlot {
   return { main: parseEntry(r.main), alt: [parseEntry(altRaw[0]), parseEntry(altRaw[1])] };
 }
 
-function emptyLevels(classDef: HexaClassDef): HexaSkillLevels {
+function parseNode(raw: unknown): HexaStatNode {
+  if (!raw || typeof raw !== "object") return emptyNode();
+  const r = raw as Partial<HexaStatNode> & Partial<HexaStatSlot>;
+  // New shape: { presets, activePreset }
+  if (Array.isArray(r.presets)) {
+    return {
+      presets: [parseSlot(r.presets[0]), parseSlot(r.presets[1])],
+      activePreset: r.activePreset === 1 ? 1 : 0,
+    };
+  }
+  // Legacy shape: a bare HexaStatSlot ({ main, alt }) → migrate into the active preset.
+  return { presets: [parseSlot(raw), emptySlot()], activePreset: 0 };
+}
+
+// The step's working draft carries both systems in one JSON value: the 6th-job
+// skill levels (persisted to tools.hexaSkills) plus the HEXA Stat nodes (persisted
+// separately to tools.hexaStat). The controller splits them on save.
+type HexaDraft = HexaSkillLevels & { hexaStat: [HexaStatNode, HexaStatNode, HexaStatNode] };
+
+function emptyLevels(classDef: HexaClassDef): HexaDraft {
   return {
     origin: 1,
     mastery: classDef.mastery.map(() => 0),
     enhancement: classDef.enhancement.map(() => 0),
     common: COMMON_SKILLS.map(() => 0),
     ascent: 0,
-    hexaStat: [emptySlot(), emptySlot(), emptySlot()],
+    hexaStat: [emptyNode(), emptyNode(), emptyNode()],
   };
 }
 
-function parseDraft(raw: string, classDef: HexaClassDef): HexaSkillLevels {
+function parseDraft(raw: string, classDef: HexaClassDef): HexaDraft {
   const empty = emptyLevels(classDef);
   if (!raw) return empty;
   try {
-    const parsed = JSON.parse(raw) as Partial<HexaSkillLevels>;
+    const parsed = JSON.parse(raw) as Partial<HexaDraft>;
     if (!parsed || typeof parsed !== "object") return empty;
     const pad = (arr: unknown, len: number): number[] => {
       const a = Array.isArray(arr) ? arr : [];
@@ -148,7 +179,7 @@ function parseDraft(raw: string, classDef: HexaClassDef): HexaSkillLevels {
       enhancement: pad(parsed.enhancement, classDef.enhancement.length),
       common: pad(parsed.common, COMMON_SKILLS.length),
       ascent: clamp(Number(parsed.ascent) || 0),
-      hexaStat: [parseSlot(rawSlots[0]), parseSlot(rawSlots[1]), parseSlot(rawSlots[2])],
+      hexaStat: [parseNode(rawSlots[0]), parseNode(rawSlots[1]), parseNode(rawSlots[2])],
     };
   } catch { return empty; }
 }
@@ -460,9 +491,10 @@ export default function HexaMatrixSetupStep({
   useEffect(() => {
     if (initialValueRef.current) return;
     if (!classDef || !confirmedCharacterName) return;
-    const saved = readCharacterToolData<{ levels?: HexaSkillLevels }>(confirmedCharacterName, "hexaSkills");
-    if (saved?.levels) {
-      onChange(JSON.stringify(saved.levels));
+    const savedSkills = readCharacterToolData<{ levels?: HexaSkillLevels }>(confirmedCharacterName, "hexaSkills");
+    const savedStat = readCharacterToolData<{ nodes?: HexaStatNode[] }>(confirmedCharacterName, "hexaStat");
+    if (savedSkills?.levels || savedStat?.nodes) {
+      onChange(JSON.stringify({ ...(savedSkills?.levels ?? {}), hexaStat: savedStat?.nodes }));
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -494,9 +526,9 @@ export default function HexaMatrixSetupStep({
   } : {};
 
   const levels = parseDraft(value, classDef);
-  const hexaStat = levels.hexaStat ?? [emptySlot(), emptySlot(), emptySlot()];
+  const hexaStat = levels.hexaStat;
 
-  function update(patch: Partial<HexaSkillLevels>) {
+  function update(patch: Partial<HexaDraft>) {
     onChange(JSON.stringify({ ...levels, ...patch }));
   }
 
@@ -504,6 +536,7 @@ export default function HexaMatrixSetupStep({
     return (
       <div key={0} style={substepAnimStyle}>
         <SetupStepFrame theme={theme} stepLabel={classDef.className === "Sia" ? "Erda Link" : step.label} stepNumber={stepNumber} totalSteps={totalSteps}
+          substepIndex={substep} substepCount={SUBSTEP_COUNT}
           description="All fields are optional. Fill in what you can."
           onBack={onBack} onNext={() => goToSubstep(1)} onFinish={onFinish}
           nextLabel="Continue"
@@ -586,11 +619,19 @@ export default function HexaMatrixSetupStep({
   }
 
   const charLevel = characterLevel ?? Infinity;
-  const slot = hexaStat[activeSlot];
-  const mainDisabled = getMainDisabledTypes(hexaStat, activeSlot);
+  const activeNode = hexaStat[activeSlot];
+  const activePreset = activeNode.activePreset;
+  const slot = activeNode.presets[activePreset];
+  // Cross-node uniqueness compares against each node's currently-active preset.
+  const activeSlots: [HexaStatSlot, HexaStatSlot, HexaStatSlot] = [
+    hexaStat[0].presets[hexaStat[0].activePreset],
+    hexaStat[1].presets[hexaStat[1].activePreset],
+    hexaStat[2].presets[hexaStat[2].activePreset],
+  ];
+  const mainDisabled = getMainDisabledTypes(activeSlots, activeSlot);
   const altDisabled: [Set<string>, Set<string>] = [
-    getAltDisabledTypes(hexaStat, activeSlot, 0),
-    getAltDisabledTypes(hexaStat, activeSlot, 1),
+    getAltDisabledTypes(activeSlots, activeSlot, 0),
+    getAltDisabledTypes(activeSlots, activeSlot, 1),
   ];
   const mainError = !!slot.main.type && mainDisabled.has(slot.main.type);
   const altErrors: [boolean, boolean] = [
@@ -602,14 +643,23 @@ export default function HexaMatrixSetupStep({
   const attackLabel = getAttackLabel(primaryStat);
 
   function setSlot(s: HexaStatSlot) {
-    const next: [HexaStatSlot, HexaStatSlot, HexaStatSlot] = [hexaStat[0], hexaStat[1], hexaStat[2]];
-    next[activeSlot] = s;
+    const next: [HexaStatNode, HexaStatNode, HexaStatNode] = [hexaStat[0], hexaStat[1], hexaStat[2]];
+    const presets: [HexaStatSlot, HexaStatSlot] = [...next[activeSlot].presets];
+    presets[activePreset] = s;
+    next[activeSlot] = { ...next[activeSlot], presets };
+    update({ hexaStat: next });
+  }
+
+  function setActivePreset(p: number) {
+    const next: [HexaStatNode, HexaStatNode, HexaStatNode] = [hexaStat[0], hexaStat[1], hexaStat[2]];
+    next[activeSlot] = { ...next[activeSlot], activePreset: p };
     update({ hexaStat: next });
   }
 
   return (
     <div key={1} style={substepAnimStyle}>
       <SetupStepFrame theme={theme} stepLabel="HEXA Stat" stepNumber={stepNumber} totalSteps={totalSteps}
+        substepIndex={substep} substepCount={SUBSTEP_COUNT}
         description="All fields are optional. Fill in what you can."
         onBack={() => goToSubstep(0)} onNext={onNext} onFinish={onFinish}
       >
@@ -620,7 +670,7 @@ export default function HexaMatrixSetupStep({
               const locked = !isNodeUnlocked(i, charLevel);
               const hint = locked ? lockHint(i) : null;
               const isActive = activeSlot === i && !locked;
-              const iconDisabled = locked || isSlotEmpty(hexaStat[i]);
+              const iconDisabled = locked || isNodeEmpty(hexaStat[i]);
               const tabStyle: React.CSSProperties = {
                 display: "flex",
                 flexDirection: "column",
@@ -651,6 +701,34 @@ export default function HexaMatrixSetupStep({
                 </div>
               );
             })}
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+            <span style={{
+              fontSize: "0.75rem", fontWeight: 800, color: theme.muted,
+              letterSpacing: "0.05em", textTransform: "uppercase",
+            }}>
+              Preset
+            </span>
+            <div style={{
+              display: "flex", gap: "3px", padding: "3px",
+              border: `1px solid ${theme.border}`, borderRadius: "9px",
+            }}>
+              {PRESET_LABELS.map((label, p) => {
+                const isActive = activePreset === p;
+                return (
+                  <button key={label} type="button" onClick={() => setActivePreset(p)} style={{
+                    border: "none", borderRadius: "6px", cursor: "pointer",
+                    padding: "0.25rem 0.7rem", fontFamily: "inherit",
+                    fontSize: "0.78rem", fontWeight: 700,
+                    color: isActive ? "#fff" : theme.muted,
+                    background: isActive ? theme.accent : "transparent",
+                  }}>
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           <div>

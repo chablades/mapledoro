@@ -11,6 +11,35 @@ export type HexaStatType =
   | "ignoreDefense"
   | "criticalDamage";
 
+// ── HEXA Stat node model ──────────────────────────────────────────────────────
+// HEXA Stat is its own progression system, stored separately from the 6th-job
+// HEXA Skills calculator data (per-character tool key "hexaStat", not "hexaSkills").
+
+export interface HexaStatEntry {
+  type: string;
+  level: number;
+}
+export interface HexaStatSlot {
+  main: HexaStatEntry;
+  alt: [HexaStatEntry, HexaStatEntry];
+}
+/**
+ * A single HEXA Stat node (Hexa Stat I/II/III). In-game each node holds two
+ * independent presets — Active and Stored — with its own active selection.
+ * {@link activePreset} is 0 (Active) or 1 (Stored).
+ */
+export interface HexaStatNode {
+  presets: [HexaStatSlot, HexaStatSlot];
+  activePreset: number;
+}
+
+/** True if any preset of any node has a chosen stat type or a non-zero level. */
+export function hexaStatHasData(nodes: HexaStatNode[]): boolean {
+  const slotHasData = (s: HexaStatSlot): boolean =>
+    !!s.main.type || s.main.level > 0 || s.alt.some((a) => !!a.type || a.level > 0);
+  return nodes.some((n) => n.presets.some(slotHasData));
+}
+
 /** Labels for the two dynamic options — pass the result of getMainStatLabel / getAttackLabel. */
 export const HEXA_STAT_OPTIONS: { value: HexaStatType; label: string }[] = [
   { value: "mainStat",       label: "Main Stat" },   // replaced at render time

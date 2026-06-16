@@ -612,11 +612,16 @@ export default function StatsSetupStep({
     ? getRequiredStatsForClass(classData).filter((id): id is TripleStatFieldId => TRIPLE_IDS.has(id))
     : [];
 
+  // Two substeps: setup questions, then the stat fields.
+  const SUBSTEP_COUNT = 2;
+
   if (substep === 0) {
     return (
       <div key={0} style={substepAnimStyle}>
         <SetupStepFrame
           theme={theme}
+          substepIndex={substep}
+          substepCount={SUBSTEP_COUNT}
           stepLabel={step.label}
           stepNumber={stepNumber}
           totalSteps={totalSteps}
@@ -646,6 +651,8 @@ export default function StatsSetupStep({
     `}</style>
     <SetupStepFrame
       theme={theme}
+      substepIndex={substep}
+      substepCount={SUBSTEP_COUNT}
       stepLabel={step.label}
       stepNumber={stepNumber}
       totalSteps={totalSteps}

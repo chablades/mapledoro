@@ -36,22 +36,12 @@ export interface HexaMasteryNode {
   skills: string[];
 }
 
-export interface HexaStatEntry {
-  type: string;
-  level: number;
-}
-export interface HexaStatSlot {
-  main: HexaStatEntry;
-  alt: [HexaStatEntry, HexaStatEntry];
-}
-
 export interface HexaSkillLevels {
   origin: number;
   ascent: number;
   mastery: number[];
   enhancement: number[];
   common: number[];
-  hexaStat?: [HexaStatSlot, HexaStatSlot, HexaStatSlot];
 }
 
 export interface HexaClassDef {
