@@ -197,7 +197,7 @@ export default function CharacterSetupFlow({ theme, initialCharacterName, initia
     <>
       <style>{getCharacterSetupFlowStyles(theme)}</style>
 
-      <main className="characters-main" style={{ flex: 1 }}>
+      <main className="characters-main" style={{ flex: 1, position: "relative" }}>
         <div className={`fade-in ${layout.contentClassName}`}>
           {layout.showSearchPane && (
             <div className="search-pane">
@@ -207,37 +207,39 @@ export default function CharacterSetupFlow({ theme, initialCharacterName, initia
 
           <PreviewSetupPane model={previewPaneModel} actions={previewPaneActions} />
         </div>
-      </main>
-      {state.deleteNoticeCharacterName && (
-        <div
-          style={{
-            position: "fixed",
-            left: "50%",
-            top: "50%",
-            transform: `translate(-50%, calc(-50% + ${state.showDeleteNotice ? "0px" : "8px"}))`,
-            opacity: state.showDeleteNotice ? 1 : 0,
-            transition: "opacity 0.22s ease, transform 0.22s ease",
-            zIndex: 65,
-            pointerEvents: "none",
-          }}
-        >
+
+        {state.deleteNoticeCharacterName && (
           <div
             style={{
-              border: `1px solid ${theme.border}`,
-              borderRadius: "12px",
-              background: theme.panel,
-              color: theme.text,
-              padding: "0.65rem 0.9rem",
-              boxShadow: "0 10px 28px rgba(0,0,0,0.18)",
-              fontSize: "0.86rem",
-              fontWeight: 800,
-              whiteSpace: "nowrap",
+              position: "absolute",
+              inset: 0,
+              display: "grid",
+              placeItems: "center",
+              zIndex: 65,
+              pointerEvents: "none",
             }}
           >
-            {state.deleteNoticeCharacterName} was deleted.
+            <div
+              style={{
+                border: `1px solid ${theme.border}`,
+                borderRadius: "12px",
+                background: theme.panel,
+                color: theme.text,
+                padding: "0.65rem 0.9rem",
+                boxShadow: "0 10px 28px rgba(0,0,0,0.18)",
+                fontSize: "0.86rem",
+                fontWeight: 800,
+                whiteSpace: "nowrap",
+                opacity: state.showDeleteNotice ? 1 : 0,
+                transform: `translateY(${state.showDeleteNotice ? "0px" : "8px"})`,
+                transition: "opacity 0.22s ease, transform 0.22s ease",
+              }}
+            >
+              {state.deleteNoticeCharacterName} was deleted.
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </main>
     </>
   );
 }

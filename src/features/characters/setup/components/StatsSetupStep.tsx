@@ -98,6 +98,21 @@ function statInputStyle(theme: AppTheme, width?: string): CSSProperties {
   };
 }
 
+// Unit suffix ("%", "s", …) rendered inside a stat input box, anchored to its right
+// edge. Keeps the input as the full visual box; pointer-events off so clicks reach it.
+function inputSuffixStyle(theme: AppTheme): CSSProperties {
+  return {
+    position: "absolute",
+    right: "0.45rem",
+    top: "50%",
+    transform: "translateY(-50%)",
+    fontSize: "0.75rem",
+    color: theme.muted,
+    fontWeight: 700,
+    pointerEvents: "none",
+  };
+}
+
 function sectionLabelStyle(theme: AppTheme): CSSProperties {
   return {
     margin: 0,
@@ -304,24 +319,24 @@ function TripleStatRow({
           <p style={{ margin: 0, marginTop: "0.15rem", fontSize: "0.75rem", color: theme.muted, fontWeight: 700, textAlign: "center" }}>Base Value</p>
         </div>
         <div style={{ flex: 1.5 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.15rem" }}>
-            <input type="text" aria-label={`${TRIPLE_LABELS[id]} percent value`} value={d.percent} placeholder="0" style={sub}
+          <div style={{ position: "relative" }}>
+            <input type="text" aria-label={`${TRIPLE_LABELS[id]} percent value`} value={d.percent} placeholder="0" style={{ ...sub, paddingRight: "1.15rem" }}
               onChange={(e) => onUpdate(id, "percent", e.target.value)}
               onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
               onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
             />
-            <span style={{ fontSize: "0.75rem", color: theme.muted, fontWeight: 700, flexShrink: 0 }}>%</span>
+            <span style={inputSuffixStyle(theme)}>%</span>
           </div>
           <p style={{ margin: 0, marginTop: "0.15rem", fontSize: "0.75rem", color: theme.muted, fontWeight: 700, textAlign: "center" }}>% Value</p>
         </div>
         <div style={{ flex: 1.5 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.15rem" }}>
-            <input type="text" aria-label={`${TRIPLE_LABELS[id]} percent not applied`} value={d.percentUnapplied} placeholder="0" style={sub}
+          <div style={{ position: "relative" }}>
+            <input type="text" aria-label={`${TRIPLE_LABELS[id]} percent not applied`} value={d.percentUnapplied} placeholder="0" style={{ ...sub, paddingRight: "1.15rem" }}
               onChange={(e) => onUpdate(id, "percentUnapplied", e.target.value)}
               onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
               onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
             />
-            <span style={{ fontSize: "0.75rem", color: theme.muted, fontWeight: 700, flexShrink: 0 }}>%</span>
+            <span style={inputSuffixStyle(theme)}>%</span>
           </div>
           <p style={{ margin: 0, marginTop: "0.15rem", fontSize: "0.75rem", color: theme.muted, fontWeight: 700, textAlign: "center" }}>% Not Applied</p>
         </div>
@@ -346,19 +361,23 @@ function CombatStatCell({
     return (
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.4rem", minWidth: 0 }}>
         <span style={{ fontSize: "0.78rem", color: theme.muted, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>{label}</span>
-        <div style={{ display: "flex", alignItems: "center", gap: "0.25rem", flexShrink: 0 }}>
-          <input type="text" aria-label={`${label} seconds`} value={cd.seconds} placeholder="0" style={statInputStyle(theme, "2.6rem")}
-            onChange={(e) => onUpdateCooldown("seconds", e.target.value)}
-            onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
-            onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
-          />
-          <span style={{ fontSize: "0.75rem", color: theme.muted, fontWeight: 700 }}>s</span>
-          <input type="text" aria-label={`${label} percent`} value={cd.percent} placeholder="0" style={statInputStyle(theme, "2.6rem")}
-            onChange={(e) => onUpdateCooldown("percent", e.target.value)}
-            onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
-            onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
-          />
-          <span style={{ fontSize: "0.75rem", color: theme.muted, fontWeight: 700 }}>%</span>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.3rem", flexShrink: 0 }}>
+          <div style={{ position: "relative" }}>
+            <input type="text" aria-label={`${label} seconds`} value={cd.seconds} placeholder="0" style={{ ...statInputStyle(theme, "2.9rem"), paddingRight: "1.05rem" }}
+              onChange={(e) => onUpdateCooldown("seconds", e.target.value)}
+              onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
+              onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
+            />
+            <span style={inputSuffixStyle(theme)}>s</span>
+          </div>
+          <div style={{ position: "relative" }}>
+            <input type="text" aria-label={`${label} percent`} value={cd.percent} placeholder="0" style={{ ...statInputStyle(theme, "2.9rem"), paddingRight: "1.05rem" }}
+              onChange={(e) => onUpdateCooldown("percent", e.target.value)}
+              onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
+              onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
+            />
+            <span style={inputSuffixStyle(theme)}>%</span>
+          </div>
         </div>
       </div>
     );
@@ -370,13 +389,14 @@ function CombatStatCell({
   return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.4rem", minWidth: 0 }}>
       <span style={{ fontSize: "0.78rem", color: theme.muted, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>{label}</span>
-      <div style={{ display: "flex", alignItems: "center", gap: "0.15rem", flexShrink: 0 }}>
-        <input type="text" aria-label={label} value={val} placeholder="0" style={statInputStyle(theme, "4rem")}
+      <div style={{ position: "relative", flexShrink: 0 }}>
+        <input type="text" aria-label={label} value={val} placeholder="0"
+          style={isRaw ? statInputStyle(theme, "4rem") : { ...statInputStyle(theme, "4rem"), paddingRight: "1.15rem" }}
           onChange={(e) => onUpdate(id, e.target.value)}
           onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
           onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
         />
-        {!isRaw && <span style={{ fontSize: "0.75rem", color: theme.muted, fontWeight: 700, flexShrink: 0 }}>%</span>}
+        {!isRaw && <span style={inputSuffixStyle(theme)}>%</span>}
       </div>
     </div>
   );
@@ -643,9 +663,13 @@ export default function StatsSetupStep({
   }
 
   return (
-    <div key={1} style={substepAnimStyle}>
+    <div key={1} className="stats-substep-root" style={substepAnimStyle}>
     <style>{`
-      @media (max-width: 480px) {
+      .stats-substep-root { container-type: inline-size; }
+      /* Collapse to one column on the panel's actual width, not the viewport — the
+         setup panel is much narrower than the window, so a viewport query collapsed
+         far too late. */
+      @container (max-width: 520px) {
         .stats-combat-grid, .stats-symbols-grid { flex-direction: column; }
       }
     `}</style>

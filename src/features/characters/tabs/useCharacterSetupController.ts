@@ -739,9 +739,10 @@ export function useCharacterSetupController() {
     if (typeof window === "undefined") return;
 
     const existingStore = readCharactersStore();
-    // Safety guard: never wipe characters that exist in the store but aren't in the
-    // in-memory roster yet (e.g. if this effect fires before hydration sets the roster).
-    if (characterRoster.length === 0 && Object.keys(existingStore.charactersById).length > 0) return;
+    // The pre-hydration race (roster momentarily empty before load) is already handled by
+    // the hasHydratedSetupDraftRef guard above. By this point hydration has run, so an empty
+    // roster is intentional — e.g. the user removed their last character — and must be
+    // persisted; otherwise that final character would survive in storage and reappear.
     const now = Date.now();
     const currentCharacterKey = confirmedCharacter ? toCharacterKey(confirmedCharacter) : null;
     // characterRoster is already StoredCharacterRecord[], just sync gender from setup steps
@@ -1076,18 +1077,14 @@ export function useCharacterSetupController() {
       completedFlowIds: normalizeCompletedFlowIds(
         existingCharacterDraft?.completedFlowIds ?? [],
       ),
-      showFlowOverview: Boolean(
-        existingCharacterDraft?.completedFlowIds?.includes(requiredFlowId) ||
-          existingCharacterDraft?.showFlowOverview,
-      ),
-      showCharacterDirectory: Boolean(existingCharacterDraft?.showCharacterDirectory),
-      stepIndex: (() => {
-        if (!existingCharacterDraft) return 0;
-        const draftStepIdx = existingCharacterDraft.completedFlowIds?.includes(requiredFlowId)
-          ? 0
-          : existingCharacterDraft.setupStepIndex;
-        return clampFlowStepIndex(existingCharacterDraft.activeFlowId, draftStepIdx);
-      })(),
+      // A fresh confirm from search always lands on the intro (first step), never
+      // mid-flow — resuming is the job of the explicit Resume button. Previously this
+      // restored the draft's step index, so re-confirming a character whose draft had
+      // advanced would skip the intro entirely. Entered stepData is still preserved
+      // (passed below) so nothing the user typed is lost.
+      showFlowOverview: false,
+      showCharacterDirectory: false,
+      stepIndex: 0,
       stepDirection: "forward",
       stepData: existingCharacterDraft?.setupStepTestByStep ?? {},
     });
@@ -1273,6 +1270,7 @@ export function useCharacterSetupController() {
     const remainingRoster = characterRoster.filter(
       (entry) => toCharacterKey(entry) !== removedKey,
     );
+    const isLastCharacter = remainingRoster.length === 0;
 
     // Clean up world-scoped champion keys
     const nextChampionKeysByWorld = { ...championCharacterKeysByWorld };
@@ -1292,6 +1290,8 @@ export function useCharacterSetupController() {
 
     removeSetupDraftForCharacter(removedCharacter);
     setIsDeleteTransitioning(true);
+    // Fade the current view out first (the brief empty beat) for both cases — multi-char
+    // then reveals the directory; last-char cross-fades into the first-time setup screen.
     setIsSwitchingToDirectory(true);
     setSetupStepDirection("forward");
 
@@ -1306,12 +1306,27 @@ export function useCharacterSetupController() {
       setResumeSetupCharacterName(null);
       setIsAddingCharacter(false);
       lookup.resetSearchStateMessage();
-      setHasCompletedRequiredSetupEver(remainingRoster.length > 0);
-      setSetupMode("search");
-      setSetupFlowStarted(true);
-      setShowFlowOverview(true);
-      setShowCharacterDirectory(true);
-      transitions.setSetupPanelVisible(true);
+      setHasCompletedRequiredSetupEver(!isLastCharacter);
+      if (isLastCharacter) {
+        // Removed the final character — return to the first-time "add a character" state
+        // instead of an empty directory view (which has nothing to show and bounces the
+        // user back and forth with a dangling "back to directory" affordance).
+        setSetupMode("intro");
+        setSetupFlowStarted(false);
+        setShowFlowOverview(false);
+        setShowCharacterDirectory(false);
+        transitions.setSetupPanelVisible(false);
+        // Keep isSwitchingToDirectory true here so the first-time card stays
+        // blanked (faded out) under the delete notice — same "blank for a beat"
+        // window the multi-char delete shows before its directory reveals. The
+        // final cleanup timer clears it and fades the first-time screen in.
+      } else {
+        setSetupMode("search");
+        setSetupFlowStarted(true);
+        setShowFlowOverview(true);
+        setShowCharacterDirectory(true);
+        transitions.setSetupPanelVisible(true);
+      }
       setSetupStepIndex(0);
       setSetupStepDirection("forward");
       setDeleteNoticeCharacterName(removedCharacter.characterName);
@@ -1329,6 +1344,11 @@ export function useCharacterSetupController() {
       setDeleteNoticeCharacterName(null);
       setIsDeleteTransitioning(false);
       setIsSwitchingToDirectory(false);
+      if (isLastCharacter) {
+        // Now that the blank beat has elapsed, ease the first-time setup screen
+        // in instead of snapping it on.
+        transitions.playSearchFadeIn();
+      }
       immediateUiLockRef.current = false;
     }, CHARACTERS_TRANSITION_MS.standard + CHARACTERS_TRANSITION_MS.deleteNoticeTotal);
   }, [

@@ -237,6 +237,16 @@ export function useSetupFlowTransitions() {
     [runTransitionSequence],
   );
 
+  // Play the search-card entrance fade on its own, for flows that commit state
+  // outside runTransitionSequence (e.g. removing the last character lands on the
+  // first-time setup screen and should ease in, not snap).
+  const playSearchFadeIn = useCallback(() => {
+    setIsSearchFadeIn(true);
+    queueTransitionTimer(() => {
+      setIsSearchFadeIn(false);
+    }, CHARACTERS_TRANSITION_MS.searchFadeIn);
+  }, [queueTransitionTimer]);
+
   return {
     isConfirmFadeOut,
     confirmTransitionSource,
@@ -253,5 +263,6 @@ export function useSetupFlowTransitions() {
     runTransitionToMode,
     beginSetupFlowTransition,
     runBackTransition,
+    playSearchFadeIn,
   };
 }
