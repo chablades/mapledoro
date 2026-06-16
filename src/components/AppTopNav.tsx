@@ -56,7 +56,7 @@ function ColorModeToggle({
       <span
         className={styles.colorModeKnob}
         style={{
-          transform: isDark ? "translateX(22px)" : "translateX(0)",
+          transform: isDark ? "translate(22px, -50%)" : "translate(0, -50%)",
           background: isDark ? "#1a1a22" : "#ffffff",
           boxShadow: isDark
             ? "0 1px 3px rgba(0,0,0,0.4)"
