@@ -645,9 +645,9 @@ function EventSettingsSection({
   setBoomTier: (v: number) => void;
   selectStyle: React.CSSProperties;
 }) {
-  // The next item's boom-reduction tier > 1 overrides its safeguard, so disable
-  // that toggle. Events stay enabled — they're global and still apply to
-  // entries whose own tier is 1.
+  // The next item's Enhancement Mode tier > 1 overrides its safeguard, so disable
+  // that toggle. The events stay enabled — they stack with Enhancement Mode and
+  // apply to every entry.
   const tierActive = boomTier > 1;
   const rowStyle: React.CSSProperties = { display: "flex", flexWrap: "wrap", gap: "0.75rem", alignItems: "center" };
   const labelStyle: React.CSSProperties = { color: theme.muted, marginBottom: 0, minWidth: 110 };
@@ -679,7 +679,7 @@ function EventSettingsSection({
         </select>
       </div>
       <div className="ep-setting-row" style={rowStyle}>
-        <span className="section-label" style={labelStyle}>Boom Reduction</span>
+        <span className="section-label" style={labelStyle}>Enhancement Mode</span>
         <input
           type="range"
           min={1}
@@ -687,7 +687,7 @@ function EventSettingsSection({
           step={1}
           value={boomTier}
           onChange={(e) => setBoomTier(Number(e.target.value))}
-          aria-label="Boom reduction tier"
+          aria-label="Enhancement Mode tier"
           style={{ flex: 1, minWidth: 140, accentColor: theme.accent, cursor: "pointer" }}
         />
         <span style={{ fontSize: "0.8rem", fontWeight: 800, color: theme.text, minWidth: 24 }}>
