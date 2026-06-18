@@ -36846,6 +36846,10 @@
       "incACC": 40,
       "incEVA": 40
     },
+    "01143592": {
+      "islot": "Me",
+      "reqLevel": 250
+    },
     "01152000": {
       "islot": "Sh",
       "reqLevel": 20,
