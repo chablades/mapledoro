@@ -61,20 +61,16 @@
       "desc": "Increases Buff Duration by 2%."
     },
     "18112/rush/34": {
-      "name": "Skill Cooldown",
-      "desc": "Decreases skill cooldown by 1%."
+      "name": "Critical Rate",
+      "desc": "Increases Critical Rate by 1%."
+    },
+    "18112/rush/37": {
+      "name": "Abnormal Status Damage Boost",
+      "desc": "Increases damage to targets with an Abnormal Status by 1%."
     },
     "18112/rush/46": {
       "name": "Attack Power",
       "desc": "Increases Attack Power by 8."
-    },
-    "18112/rush/50": {
-      "name": "Summon Duration",
-      "desc": "Increases Summon Duration by 7%."
-    },
-    "18112/rush/51": {
-      "name": "Abnormal Status Damage Boost",
-      "desc": "Increases damage to targets with an Abnormal Status by 4%."
     },
     "18112/skill/100": {
       "name": "Sol Janus",
@@ -131,6 +127,10 @@
     "18212/rush/13": {
       "name": "INT",
       "desc": "Increases INT by 150."
+    },
+    "18212/rush/34": {
+      "name": "Summon Duration",
+      "desc": "Increases Summon Duration by 2%."
     },
     "18212/rush/35": {
       "name": "Buff Duration",

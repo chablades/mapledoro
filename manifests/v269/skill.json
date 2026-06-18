@@ -13686,15 +13686,9 @@
     "80000921": {
       "name": "WINTER MELODY"
     },
-    "80000922": {
-      "name": "\uC058\uB760 \uC7A5\uC1A1\uC758 \uD504\uB9AC\uB80C Lv.1"
-    },
-    "80000923": {
-      "name": "\uC058\uB760 \uC7A5\uC1A1\uC758 \uD504\uB9AC\uB80C Lv.2"
-    },
-    "80000924": {
-      "name": "\uC058\uB760 \uC7A5\uC1A1\uC758 \uD504\uB9AC\uB80C Lv.3"
-    },
+    "80000922": {},
+    "80000923": {},
+    "80000924": {},
     "80000938": {
       "name": "\uC740\uBE5B \uC218\uD638\uC758 \uB0A0\uAC1C"
     },
@@ -19280,7 +19274,7 @@
       "name": "Leap"
     },
     "80012875": {
-      "name": "Flurry"
+      "name": "Multistrike"
     },
     "9001003": {
       "name": "Admin\u0027s Blessing"
