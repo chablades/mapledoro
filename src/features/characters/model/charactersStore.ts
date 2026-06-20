@@ -25,6 +25,24 @@ interface StoredCooldownReductionField {
   percent: string;
 }
 
+export interface StoredHyperStat {
+  /** One allocation map (HyperStatCategoryId → level 1–15) per preset. */
+  presets: Record<string, number>[];
+  activePreset: number;
+}
+
+/** Oz ring levels (OzRingId → 1–6) + the Totalling Ring's off-stat values. */
+export interface StoredOzRings {
+  usesContinuous: boolean;
+  levels: Record<string, number>;
+  totallingStats: Record<string, number>;
+}
+
+/** MapleScouter-flow inputs — character data fed to the ranking, NOT a tool. */
+export interface StoredScouterData {
+  ozRings?: StoredOzRings;
+}
+
 export interface StoredCharacterStats {
   hp: StoredTripleStatField;
   str: StoredTripleStatField;
@@ -46,6 +64,9 @@ export interface StoredCharacterStats {
   summonDuration: string;
   arcanePower: string;
   sacredPower: string;
+  /** Hyper Stat allocation (3 swappable presets). Optional for back-compat with
+   *  records saved before hyper stat was collected. */
+  hyperStat?: StoredHyperStat;
 }
 
 export interface StoredEquipmentItem {
@@ -140,6 +161,7 @@ export interface StoredCharacterRecord {
   stats: StoredCharacterStats;
   equipment: StoredCharacterEquipment;
   tools?: Record<string, unknown>;
+  scouter?: StoredScouterData;
   meta: {
     addedAt: number;
     updatedAt: number;
@@ -214,6 +236,7 @@ function createEmptyCharacterStats(): StoredCharacterStats {
     summonDuration: "",
     arcanePower: "",
     sacredPower: "",
+    hyperStat: { presets: [{}, {}, {}], activePreset: 0 },
   };
 }
 
@@ -482,6 +505,7 @@ function parseStoredCharacterRecord(
     stats: isStoredCharacterStats(value.stats) ? value.stats : createEmptyCharacterStats(),
     equipment: readStoredEquipment(value.equipment),
     tools: isObject(value.tools) ? (value.tools as Record<string, unknown>) : undefined,
+    scouter: isObject(value.scouter) ? (value.scouter as StoredScouterData) : undefined,
     meta: {
       addedAt: typeof meta.addedAt === "number" ? meta.addedAt : Date.now(),
       updatedAt: typeof meta.updatedAt === "number" ? meta.updatedAt : Date.now(),

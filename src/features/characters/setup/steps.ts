@@ -12,6 +12,7 @@ const SETUP_STEPS = [
   { id: "familiars", label: "Familiars" },
   { id: "link_skills", label: "Link Skills" },
   { id: "legion", label: "Legion" },
+  { id: "oz_rings", label: "Oz Rings" },
 ] as const;
 
 export type SetupStepDefinition = (typeof SETUP_STEPS)[number];

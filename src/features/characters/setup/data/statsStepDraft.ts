@@ -5,7 +5,8 @@
 
 */
 
-import type { CharacterMarriage, CharacterSoul, StoredCharacterStats, StoredTripleStatField } from "../../model/charactersStore";
+import type { CharacterMarriage, CharacterSoul, StoredCharacterStats, StoredHyperStat, StoredTripleStatField } from "../../model/charactersStore";
+import { HYPER_STAT_CATEGORIES, HYPER_STAT_PRESET_COUNT, parseStoredHyperStatLevel } from "./hyperStatData";
 
 export interface TripleStatDraft {
   base: string;
@@ -16,6 +17,33 @@ export interface TripleStatDraft {
 export interface CooldownReductionDraft {
   seconds: string;
   percent: string;
+}
+
+export interface HyperStatDraft {
+  /** One raw-level map per preset (length HYPER_STAT_PRESET_COUNT). */
+  presets: Record<string, string>[];
+  activePreset: number;
+}
+
+/** Coerces any stored/legacy value into a well-formed HyperStatDraft. */
+export function normalizeHyperStatDraft(raw: unknown): HyperStatDraft {
+  const presets: Record<string, string>[] = Array.from({ length: HYPER_STAT_PRESET_COUNT }, () => ({}));
+  let activePreset = 0;
+  if (raw && typeof raw === "object") {
+    const obj = raw as Record<string, unknown>;
+    if (Array.isArray(obj.presets)) {
+      obj.presets.forEach((p, i) => {
+        if (i < presets.length && p && typeof p === "object") presets[i] = { ...(p as Record<string, string>) };
+      });
+      if (typeof obj.activePreset === "number" && obj.activePreset >= 0 && obj.activePreset < presets.length) {
+        activePreset = obj.activePreset;
+      }
+    } else {
+      // Legacy single-allocation shape (flat category→level map) → preset 1.
+      presets[0] = { ...(obj as Record<string, string>) };
+    }
+  }
+  return { presets, activePreset };
 }
 
 export interface StatsStepDraft {
@@ -42,6 +70,10 @@ export interface StatsStepDraft {
   summonDuration?: string;
   arcanePower?: string;
   sacredPower?: string;
+
+  // Hyper Stat allocation (Full setup only): 3 swappable presets, each a map of
+  // HyperStatCategoryId → raw level string as typed in the substep.
+  hyperStat?: HyperStatDraft;
 
   // Character build options
   setupOptions?: {
@@ -86,6 +118,20 @@ function draftTripleToStored(draft: TripleStatDraft | undefined): StoredTripleSt
   };
 }
 
+/** Converts each preset to stored levels, keeping only valid 1–15 entries. */
+function draftHyperStatToStored(draft: HyperStatDraft | undefined): StoredHyperStat {
+  const hyper = normalizeHyperStatDraft(draft);
+  const presets = hyper.presets.map((p) => {
+    const out: Record<string, number> = {};
+    for (const { id } of HYPER_STAT_CATEGORIES) {
+      const level = parseStoredHyperStatLevel(p[id]);
+      if (level !== null) out[id] = level;
+    }
+    return out;
+  });
+  return { presets, activePreset: hyper.activePreset };
+}
+
 export function convertStatsStepDraftToStored(
   draft: StatsStepDraft,
   characterLevel?: number,
@@ -126,6 +172,7 @@ export function convertStatsStepDraftToStored(
       summonDuration: draft.summonDuration ?? "",
       arcanePower: draft.arcanePower ?? "",
       sacredPower: draft.sacredPower ?? "",
+      hyperStat: draftHyperStatToStored(draft.hyperStat),
     },
   };
 }

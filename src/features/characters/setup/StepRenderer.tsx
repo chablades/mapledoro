@@ -15,6 +15,7 @@ import LinkSkillsSetupStep from "./components/LinkSkillsSetupStep";
 import HexaMatrixSetupStep from "./components/HexaMatrixSetupStep";
 import VMatrixSetupStep from "./components/VMatrixSetupStep";
 import FamiliarsSetupStep from "./components/FamiliarsSetupStep";
+import OzRingsSetupStep from "./components/OzRingsSetupStep";
 
 interface StepRendererProps {
   theme: AppTheme;
@@ -45,6 +46,7 @@ const STEP_COMPONENTS: Record<SetupStepId, typeof GenericSetupStep> = {
   familiars: FamiliarsSetupStep,
   link_skills: LinkSkillsSetupStep,
   legion: GenericSetupStep,
+  oz_rings: OzRingsSetupStep,
 };
 
 export default function StepRenderer({
@@ -76,6 +78,7 @@ export default function StepRenderer({
     <StepComponent
       theme={theme}
       step={step}
+      flowId={flowId}
       stepNumber={visibleNumber}
       totalSteps={visibleTotal}
       jobName={jobName}

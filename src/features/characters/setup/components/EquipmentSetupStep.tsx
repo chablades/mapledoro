@@ -1171,7 +1171,7 @@ export default function EquipmentSetupStep({
           <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
             <div>
               <SectionHeading label="Pets" theme={theme} />
-              <div style={{ display: "flex", gap: 16 }}>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
                 {([["pet1", "petEquip1"], ["pet2", "petEquip2"], ["pet3", "petEquip3"]] as const).map(([petKey, equipKey]) => (
                   <div key={petKey} style={{ display: "flex", gap: 4 }}>
                     <SlotCell

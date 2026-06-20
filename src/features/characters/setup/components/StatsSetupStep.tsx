@@ -6,6 +6,7 @@ import Image from "next/image";
 import type { AppTheme } from "../../../../components/themes";
 import HoverTooltip from "../../../../components/HoverTooltip";
 import type { SetupStepDefinition } from "../steps";
+import type { SetupFlowId } from "../flows";
 import SetupStepFrame from "./SetupStepFrame";
 import InfoTooltip, { type TooltipContent } from "./InfoTooltip";
 import {
@@ -21,15 +22,18 @@ import {
 import { TRIPLE_STAT_FIELDS, type StatFieldId, type TripleStatFieldId } from "../data/statFields";
 import {
   GENESIS_LIBERATION_LEVEL,
+  normalizeHyperStatDraft,
   parseStatsStepDraft,
   serializeStatsStepDraft,
   type StatsStepDraft,
   type TripleStatDraft,
 } from "../data/statsStepDraft";
+import { HYPER_STAT_CATEGORIES, HYPER_STAT_PRESET_COUNT, sanitizeHyperStatInput, type HyperStatCategoryDef } from "../data/hyperStatData";
 
 interface StatsSetupStepProps {
   theme: AppTheme;
   step: SetupStepDefinition;
+  flowId?: SetupFlowId;
   stepNumber: number;
   totalSteps: number;
   jobName?: string;
@@ -304,9 +308,10 @@ function TripleStatRow({
 }) {
   const d: TripleStatDraft = draft[id] ?? { base: "", percent: "", percentUnapplied: "" };
   const sub = statInputStyle(theme);
-  // "% Not Applied" is meaningless for ATT (it only ever existed as a legacy
-  // scouter workaround for pre-remaster Kanna's HP→MATT conversion, and a stray
-  // value here produces an invalid range). Only show it for the stat fields.
+  // "% Not Applied" is shown for every stat EXCEPT ATT, in all flows. For ATT it's
+  // meaningless — it only ever existed as a legacy scouter workaround for
+  // pre-remaster Kanna's HP→MATT conversion, and a stray value produces an invalid
+  // range; MapleScouter always sends ATT % not applied as 0.
   const isAttack = id === "attackPower" || id === "magicAtt";
   return (
     <div>
@@ -347,6 +352,69 @@ function TripleStatRow({
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function HyperPresetBar({ theme, active, onSwitch }: {
+  theme: AppTheme;
+  active: number;
+  onSwitch: (n: number) => void;
+}) {
+  const indices = Array.from({ length: HYPER_STAT_PRESET_COUNT }, (_, i) => i);
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+      <span style={{ fontSize: "0.75rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.05em", color: theme.muted }}>
+        Preset
+      </span>
+      <div style={{ display: "flex", gap: 4 }}>
+        {indices.map((i) => {
+          const on = i === active;
+          return (
+            <button
+              key={i}
+              type="button"
+              onClick={() => onSwitch(i)}
+              style={{
+                border: `1px solid ${on ? theme.accent : theme.border}`,
+                borderRadius: 8,
+                background: on ? theme.accent : theme.bg,
+                color: on ? "#fff" : theme.text,
+                fontFamily: "inherit", fontWeight: 800, fontSize: "0.8rem",
+                width: 34, height: 32, cursor: "pointer",
+              }}
+            >
+              {i + 1}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function HyperStatCell({
+  cat, value, onUpdate, theme,
+}: {
+  cat: HyperStatCategoryDef;
+  value: string;
+  onUpdate: (id: string, val: string) => void;
+  theme: AppTheme;
+}) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.5rem" }}>
+      <span style={{ fontSize: "0.82rem", fontWeight: 700, color: theme.text, minWidth: 0 }}>{cat.label}</span>
+      <input
+        type="text"
+        inputMode="numeric"
+        aria-label={`${cat.label} hyper stat level`}
+        value={value}
+        placeholder="0"
+        style={{ ...statInputStyle(theme, "3.4rem"), textAlign: "center", flexShrink: 0 }}
+        onChange={(e) => onUpdate(cat.id, e.target.value)}
+        onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
+        onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
+      />
     </div>
   );
 }
@@ -590,10 +658,14 @@ function SetupOptionsSection({
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function StatsSetupStep({
-  theme, step, stepNumber, totalSteps, jobName = "", direction = "forward", characterLevel, value, onChange, onBack, onNext, onFinish,
+  theme, step, flowId, stepNumber, totalSteps, jobName = "", direction = "forward", characterLevel, value, onChange, onBack, onNext, onFinish,
 }: StatsSetupStepProps) {
   const classData = CLASS_SKILL_DATA.find((c) => c.nexonJobName === jobName);
   const draft = parseStatsStepDraft(value);
+  // Hyper Stat is a Full-setup detail that MapleScouter never uses, so it gets its
+  // own substep everywhere EXCEPT the scouter flow. ("% Not Applied" is NOT flow-
+  // specific — it shows for every non-ATT stat in all flows; see TripleStatRow.)
+  const showHyperStat = flowId !== "maplescouter_setup";
 
   function updateDraft(patch: Partial<StatsStepDraft>) {
     onChange(serializeStatsStepDraft({ ...draft, ...patch }));
@@ -617,7 +689,24 @@ export default function StatsSetupStep({
     updateDraft({ setupOptions: { ...(draft.setupOptions ?? {}), ...patch } });
   }
 
-  const [substep, setSubstep] = useState(() => direction === "backward" ? 1 : 0);
+  const hyper = normalizeHyperStatDraft(draft.hyperStat);
+
+  function handleHyperStatUpdate(id: string, val: string) {
+    const presets = hyper.presets.map((p, i) =>
+      i === hyper.activePreset ? { ...p, [id]: sanitizeHyperStatInput(val) } : p,
+    );
+    updateDraft({ hyperStat: { presets, activePreset: hyper.activePreset } });
+  }
+
+  function switchHyperPreset(n: number) {
+    updateDraft({ hyperStat: { presets: hyper.presets, activePreset: n } });
+  }
+
+  // Substeps: questions → stat fields → hyper stat (Full setup only).
+  const lastSubstep = showHyperStat ? 2 : 1;
+  const SUBSTEP_COUNT = showHyperStat ? 3 : 2;
+
+  const [substep, setSubstep] = useState(() => direction === "backward" ? lastSubstep : 0);
   const [substepDirection, setSubstepDirection] = useState<"forward" | "backward">("forward");
   const [hasSubstepSwitched, setHasSubstepSwitched] = useState(false);
 
@@ -637,9 +726,6 @@ export default function StatsSetupStep({
   const tripleIds = classData
     ? getRequiredStatsForClass(classData).filter((id): id is TripleStatFieldId => TRIPLE_IDS.has(id))
     : [];
-
-  // Two substeps: setup questions, then the stat fields.
-  const SUBSTEP_COUNT = 2;
 
   if (substep === 0) {
     return (
@@ -668,15 +754,17 @@ export default function StatsSetupStep({
     );
   }
 
-  return (
+  if (substep === 1) return (
     <div key={1} className="stats-substep-root" style={substepAnimStyle}>
     <style>{`
       .stats-substep-root { container-type: inline-size; }
       /* Collapse to one column on the panel's actual width, not the viewport — the
          setup panel is much narrower than the window, so a viewport query collapsed
-         far too late. */
+         far too late. Gap lives in CSS (not inline) so the query can tighten the
+         column seam to match the row gap when the two columns stack. */
+      .stats-combat-grid, .stats-symbols-grid { gap: 0.75rem; }
       @container (max-width: 520px) {
-        .stats-combat-grid, .stats-symbols-grid { flex-direction: column; }
+        .stats-combat-grid, .stats-symbols-grid { flex-direction: column; gap: 0.4rem; }
       }
     `}</style>
     <SetupStepFrame
@@ -688,8 +776,9 @@ export default function StatsSetupStep({
       totalSteps={totalSteps}
       description="All fields are optional. Fill in what you can."
       onBack={() => goToSubstep(0)}
-      onNext={onNext}
+      onNext={showHyperStat ? () => goToSubstep(2) : onNext}
       onFinish={onFinish}
+      nextLabel={showHyperStat ? "Continue" : undefined}
     >
       <WarningList warnings={[...UNIVERSAL_WARNINGS, ...(classData?.warnings ?? [])]} theme={theme} characterLevel={characterLevel} />
       <BuffGuide classData={classData ?? null} theme={theme} characterLevel={characterLevel} />
@@ -706,7 +795,7 @@ export default function StatsSetupStep({
 
       <div style={{ marginBottom: "0.75rem" }}>
         <p style={sectionLabelStyle(theme)}>Combat Stats</p>
-        <div className="stats-combat-grid" style={{ display: "flex", gap: "0.75rem", minWidth: 0 }}>
+        <div className="stats-combat-grid" style={{ display: "flex", minWidth: 0 }}>
           <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: "0.4rem" }}>
             {COMBAT_LEFT.map((id) => (
               <CombatStatCell key={id} id={id} draft={draft} onUpdate={handleSingleUpdate} onUpdateCooldown={handleCooldownUpdate} theme={theme} />
@@ -722,13 +811,54 @@ export default function StatsSetupStep({
 
       <div>
         <p style={sectionLabelStyle(theme)}>Symbols</p>
-        <div className="stats-symbols-grid" style={{ display: "flex", gap: "0.75rem", minWidth: 0 }}>
+        <div className="stats-symbols-grid" style={{ display: "flex", minWidth: 0 }}>
           {(["arcanePower", "sacredPower"] as StatFieldId[]).map((id) => (
             <div key={id} style={{ flex: 1, minWidth: 0 }}>
               <CombatStatCell id={id} draft={draft} onUpdate={handleSingleUpdate} onUpdateCooldown={handleCooldownUpdate} theme={theme} />
             </div>
           ))}
         </div>
+      </div>
+    </SetupStepFrame>
+    </div>
+  );
+
+  // Substep 2 — Hyper Stat (Full setup only). Mirrors the in-game Hyper Stats
+  // window: every category, level 0–15, entered directly into a two-column list.
+  const hyperHalf = Math.ceil(HYPER_STAT_CATEGORIES.length / 2);
+  const hyperCols = [HYPER_STAT_CATEGORIES.slice(0, hyperHalf), HYPER_STAT_CATEGORIES.slice(hyperHalf)];
+  return (
+    <div key={2} className="stats-hyper-root" style={substepAnimStyle}>
+    <style>{`
+      .stats-hyper-root { container-type: inline-size; }
+      /* Gap lives in CSS (not inline) so the container query can override it —
+         when the two columns stack, match the inter-column gap to the row gap so
+         the seam between the columns isn't wider than the rest of the list. */
+      .stats-hyper-grid { gap: 0.75rem; }
+      @container (max-width: 520px) { .stats-hyper-grid { flex-direction: column; gap: 0.4rem; } }
+    `}</style>
+    <SetupStepFrame
+      theme={theme}
+      substepIndex={substep}
+      substepCount={SUBSTEP_COUNT}
+      stepLabel={step.label}
+      stepNumber={stepNumber}
+      totalSteps={totalSteps}
+      description="Enter your Hyper Stat levels (0–15 each) to match your in-game window."
+      onBack={() => goToSubstep(1)}
+      onNext={onNext}
+      onFinish={onFinish}
+    >
+      <p style={sectionLabelStyle(theme)}>Hyper Stats</p>
+      <HyperPresetBar theme={theme} active={hyper.activePreset} onSwitch={switchHyperPreset} />
+      <div className="stats-hyper-grid" style={{ display: "flex", minWidth: 0 }}>
+        {hyperCols.map((col, i) => (
+          <div key={i} style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+            {col.map((cat) => (
+              <HyperStatCell key={cat.id} cat={cat} value={hyper.presets[hyper.activePreset]?.[cat.id] ?? ""} onUpdate={handleHyperStatUpdate} theme={theme} />
+            ))}
+          </div>
+        ))}
       </div>
     </SetupStepFrame>
     </div>

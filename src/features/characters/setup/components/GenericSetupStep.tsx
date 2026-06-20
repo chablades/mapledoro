@@ -4,11 +4,13 @@
 */
 import type { AppTheme } from "../../../../components/themes";
 import type { SetupStepDefinition } from "../steps";
+import type { SetupFlowId } from "../flows";
 import SetupStepFrame from "./SetupStepFrame";
 
 interface GenericSetupStepProps {
   theme: AppTheme;
   step: SetupStepDefinition;
+  flowId?: SetupFlowId;
   stepNumber: number;
   totalSteps: number;
   jobName?: string;

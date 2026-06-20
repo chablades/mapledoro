@@ -24,6 +24,16 @@ const SETUP_FLOWS = [
     steps: ["gender", "marriage", "stats", "equipment", "v_matrix", "hexa_matrix", "familiars", "link_skills"] as const,
   },
   {
+    id: "maplescouter_setup",
+    label: "MapleScouter Setup",
+    description: "Collect the inputs MapleScouter needs to rank this character.",
+    required: false,
+    // Still to add in later phases — buffs (+ Champion Renown), legion artifacts,
+    // and a hexa-skills-only variant of the hexa step. The `stats` step is
+    // flow-aware: it shows "% Not Applied" only in this flow (see StatsSetupStep).
+    steps: ["stats", "oz_rings", "link_skills"] as const,
+  },
+  {
     id: "stats_flow",
     label: "Stats",
     description: "Set up attack power, defense, and other stat details.",

@@ -37,6 +37,7 @@ import {
 } from "../model/setupDraftStorage";
 import type { StoredCharacterRecord } from "../model/charactersStore";
 import { convertStatsStepDraftToStored, marriageDraftToStored, parseStatsStepDraft } from "../setup/data/statsStepDraft";
+import { convertOzRingsDraftToStored, parseOzRingsDraft } from "../setup/data/ozRingData";
 import type { NormalizedCharacterData } from "../model/types";
 import {
   clampFlowStepIndex,
@@ -208,6 +209,52 @@ function buildSymbolsToolDataForRecord(character: NormalizedCharacterData, equip
   const levels = extractSymbolLevels(equipmentJson);
   if (!levels) return null;
   return buildSymbolsToolData(readExistingSymbols(character), levels);
+}
+
+function applyStatsDraftToRoster(
+  character: NormalizedCharacterData | null,
+  rawDraft: string,
+  upsertFn: (c: StoredCharacterRecord) => void,
+) {
+  if (!character) return;
+  const store = readCharactersStore();
+  const existing = selectCharacterById(store, toCharacterKey(character));
+  if (!existing) return;
+  const { stats, isLiberated, weaponHand, hasRuinForceShield, soul } = convertStatsStepDraftToStored(parseStatsStepDraft(rawDraft), character.level);
+  upsertFn({ ...existing, stats: { ...existing.stats, ...stats }, isLiberated, weaponHand, hasRuinForceShield, soul });
+}
+
+/**
+ * Builds/merges the MapleScouter flow's data into the roster in ONE upsert;
+ * returns true if it created a new record. `upsertFn` writes via React state, so
+ * we can't create-then-read within a tick — start from the existing record if
+ * present, otherwise a fresh base (MapleScouter is a first-time entry mode and
+ * collects no gender/marriage), and apply stats + oz rings before the single write.
+ */
+function applyMapleScouterFlow(
+  character: NormalizedCharacterData | null,
+  stepData: import("../setup/types").SetupStepInputById,
+  upsertFn: (c: StoredCharacterRecord) => void,
+): boolean {
+  if (!character) return false;
+  const existing = selectCharacterById(readCharactersStore(), toCharacterKey(character));
+  const created = !existing;
+  const base = existing ?? createStoredCharacterRecord({
+    character,
+    gender: normalizeGenderValue(stepData.gender),
+    marriage: marriageDraftToStored(stepData.marriage ?? ""),
+  });
+  const { stats, isLiberated, weaponHand, hasRuinForceShield, soul } =
+    convertStatsStepDraftToStored(parseStatsStepDraft(stepData.stats ?? ""), character.level);
+  const ozRings = convertOzRingsDraftToStored(parseOzRingsDraft(stepData.oz_rings ?? ""));
+  upsertFn({
+    ...base,
+    stats: { ...base.stats, ...stats },
+    isLiberated, weaponHand, hasRuinForceShield, soul,
+    scouter: ozRings ? { ...base.scouter, ozRings } : base.scouter,
+  });
+  if (created) removeSetupDraftForCharacter(character);
+  return created;
 }
 
 function buildFullSetupRecord(
@@ -1096,19 +1143,6 @@ export function useCharacterSetupController() {
     lookup,
   ]);
 
-  function applyStatsDraftToRoster(
-    character: NormalizedCharacterData | null,
-    rawDraft: string,
-    upsertFn: (c: StoredCharacterRecord) => void,
-  ) {
-    if (!character) return;
-    const store = readCharactersStore();
-    const existing = selectCharacterById(store, toCharacterKey(character));
-    if (!existing) return;
-    const { stats, isLiberated, weaponHand, hasRuinForceShield, soul } = convertStatsStepDraftToStored(parseStatsStepDraft(rawDraft), character.level);
-    upsertFn({ ...existing, stats: { ...existing.stats, ...stats }, isLiberated, weaponHand, hasRuinForceShield, soul });
-  }
-
   const finishSetupFlow = useCallback((overrideFlowId?: SetupFlowId) => {
     if (immediateUiLockRef.current) return;
     immediateUiLockRef.current = true;
@@ -1135,6 +1169,11 @@ export function useCharacterSetupController() {
         applyStatsDraftToRoster(confirmedCharacter, setupStepTestByStep.stats ?? "", upsertRosterCharacter);
       }
 
+      if (effectiveFlowId === "maplescouter_setup"
+        && applyMapleScouterFlow(confirmedCharacter, setupStepTestByStep, upsertRosterCharacter)) {
+        setHasCompletedRequiredSetupEver(true);
+      }
+
       const linkSkillsValue = setupStepTestByStep.link_skills;
       if (linkSkillsValue && confirmedCharacter) {
         writeLinkSkillsForWorld(confirmedCharacter.worldID, linkSkillsValue);
@@ -1149,7 +1188,10 @@ export function useCharacterSetupController() {
       const updatedCompleted = Array.from(new Set([
         ...completedFlowIds,
         effectiveFlowId,
-        ...(effectiveFlowId === "full_setup" ? [requiredFlowId] : []),
+        // Full and MapleScouter are entry modes — finishing either also satisfies
+        // the required (quick) flow, so the completed profile pane shows instead of
+        // looping back to the setup intro.
+        ...(effectiveFlowId === "full_setup" || effectiveFlowId === "maplescouter_setup" ? [requiredFlowId] : []),
       ]));
       setCompletedFlowIds(updatedCompleted);
       setShowFlowOverview(false);

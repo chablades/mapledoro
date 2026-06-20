@@ -104,6 +104,23 @@ export default function QuickSetupIntroScreen({ model, actions }: SetupIntroScre
         <button
           type="button"
           disabled={setup.isUiLocked}
+          onClick={() => actions.startOptionalFlow("maplescouter_setup")}
+          style={{
+            ...secondaryButtonStyle(theme, "0.65rem 0.9rem"),
+            textAlign: "left",
+            display: "flex",
+            flexDirection: "column",
+            gap: "0.2rem",
+          }}
+        >
+          <span style={{ fontWeight: 900, fontSize: "0.9rem" }}>MapleScouter setup</span>
+          <span style={{ fontWeight: 700, fontSize: "0.8rem", color: theme.muted }}>
+            Inputs for a MapleScouter ranking
+          </span>
+        </button>
+        <button
+          type="button"
+          disabled={setup.isUiLocked}
           onClick={() => actions.startOptionalFlow("full_setup")}
           style={{
             ...primaryButtonStyle(theme, "0.65rem 0.9rem"),
