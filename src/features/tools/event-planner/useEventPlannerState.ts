@@ -68,8 +68,9 @@ function computeEntryCost(entry: PlannerEntry, settings: SavedState): EntryCost 
   const item = EVENT_ITEMS_BY_ID.get(entry.itemId);
   if (!item || entry.currentStar >= entry.targetStar) return { cost: 0, booms: 0 };
 
-  // An entry's boom-reduction tier above 1 overrides the cost/boom events and
-  // its safeguard (we can't assume they stack), matching the star force workspace.
+  // The 30% events stack with Enhancement Mode, but an entry's safeguard is
+  // ignored when its tier is above baseline (we can't assume that one stacks),
+  // matching the star force workspace.
   const tierActive = entry.boomTier > 1;
 
   const opts: StarForceOpts = {
@@ -77,8 +78,8 @@ function computeEntryCost(entry: PlannerEntry, settings: SavedState): EntryCost 
     startStar: entry.currentStar,
     targetStar: entry.targetStar,
     replacementCost: entry.replacementCost,
-    costDiscount: !tierActive && settings.costDiscount,
-    boomReduction: !tierActive && settings.boomReduction,
+    costDiscount: settings.costDiscount,
+    boomReduction: settings.boomReduction,
     starCatch: entry.starCatch,
     safeguard: !tierActive && entry.safeguard,
     mvp: settings.mvp,

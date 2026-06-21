@@ -87,10 +87,10 @@ function InputRow({
   children: React.ReactNode;
 }) {
   return (
-    <label style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+    <label className="sf-input-row" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
       <span
         className="section-label"
-        style={{ color: theme.muted, minWidth: 110, marginBottom: 0 }}
+        style={{ color: theme.muted, minWidth: 96, marginBottom: 0 }}
       >
         {label}
       </span>
@@ -506,7 +506,8 @@ function StarForceForm({
   inputStyle: React.CSSProperties;
   selectStyle: React.CSSProperties;
 }) {
-  // Boom-reduction tier > 1 overrides events/safeguard, so disable them.
+  // The 30% events stack with Enhancement Mode, but we don't assume safeguard
+  // does — so only safeguard is disabled when a tier above baseline is active.
   const tierActive = calc.boomTier > 1;
 
   return (
@@ -602,15 +603,15 @@ function StarForceForm({
 
       {/* Events + Options, aligned with the inputs grid columns */}
       <div className="sf-inputs-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
-        <div style={optionRowStyle}>
-          <span className="section-label" style={{ color: theme.muted, minWidth: 110, marginBottom: 0 }}>
+        <div className="sf-option-row" style={optionRowStyle}>
+          <span className="section-label" style={{ color: theme.muted, minWidth: 96, marginBottom: 0 }}>
             Events
           </span>
-          <Toggle theme={theme} label="30% Off" checked={calc.costDiscount} disabled={tierActive} style={toggleControlStyle} onChange={(v) => dispatch({ type: "setCostDiscount", value: v })} />
-          <Toggle theme={theme} label="30% Boom Reduction" checked={calc.boomReduction} disabled={tierActive} style={toggleControlStyle} onChange={(v) => dispatch({ type: "setBoomReduction", value: v })} />
+          <Toggle theme={theme} label="30% Off" checked={calc.costDiscount} style={toggleControlStyle} onChange={(v) => dispatch({ type: "setCostDiscount", value: v })} />
+          <Toggle theme={theme} label="30% Boom Reduction" checked={calc.boomReduction} style={toggleControlStyle} onChange={(v) => dispatch({ type: "setBoomReduction", value: v })} />
         </div>
-        <div style={optionRowStyle}>
-          <span className="section-label" style={{ color: theme.muted, minWidth: 110, marginBottom: 0 }}>
+        <div className="sf-option-row" style={optionRowStyle}>
+          <span className="section-label" style={{ color: theme.muted, minWidth: 96, marginBottom: 0 }}>
             Options
           </span>
           <Toggle theme={theme} label="Star Catching" checked={calc.starCatch} style={toggleControlStyle} onChange={(v) => dispatch({ type: "setStarCatch", value: v })} />
@@ -618,23 +619,25 @@ function StarForceForm({
         </div>
       </div>
 
-      <div style={optionRowStyle}>
-        <span className="section-label" style={{ color: theme.muted, minWidth: 110, marginBottom: 0 }}>
-          Boom Reduction
+      <div className="sf-slider-row" style={optionRowStyle}>
+        <span className="section-label" style={{ color: theme.muted, minWidth: 96, marginBottom: 0 }}>
+          Enhancement Mode
         </span>
-        <input
-          type="range"
-          min={1}
-          max={BOOM_TIER_COUNT}
-          step={1}
-          value={calc.boomTier}
-          onChange={(e) => dispatch({ type: "setBoomTier", value: Number(e.target.value) })}
-          aria-label="Boom reduction tier"
-          style={{ width: 160, accentColor: theme.accent, cursor: "pointer" }}
-        />
-        <span style={{ fontSize: "0.8rem", fontWeight: 800, color: theme.text, minWidth: 28 }}>
-          {calc.boomTier}×
-        </span>
+        <div className="sf-slider-controls" style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+          <input
+            type="range"
+            min={1}
+            max={BOOM_TIER_COUNT}
+            step={1}
+            value={calc.boomTier}
+            onChange={(e) => dispatch({ type: "setBoomTier", value: Number(e.target.value) })}
+            aria-label="Enhancement Mode tier"
+            style={{ width: 160, accentColor: theme.accent, cursor: "pointer" }}
+          />
+          <span style={{ fontSize: "0.8rem", fontWeight: 800, color: theme.text, minWidth: 28 }}>
+            {calc.boomTier}×
+          </span>
+        </div>
         <span style={{ fontSize: "0.75rem", fontWeight: 600, color: theme.muted }}>
           {tierActive
             ? "Applies to 15★→22★. Higher tiers cost more for less destruction."
@@ -716,8 +719,8 @@ export default function StarForceWorkspace({ theme }: { theme: AppTheme }) {
 
   const effectiveTarget = Math.max(calc.targetStar, calc.startStar + 1);
 
-  // A boom-reduction tier above 1 overrides the cost/boom events and safeguard
-  // (we can't assume they stack), so those inputs are ignored when tier > 1.
+  // The 30% events stack with Enhancement Mode, but safeguard is ignored when a
+  // tier above baseline is active (we can't assume that one stacks).
   const tierActive = calc.boomTier > 1;
 
   const opts: StarForceOpts = useMemo(
@@ -726,8 +729,8 @@ export default function StarForceWorkspace({ theme }: { theme: AppTheme }) {
       startStar: calc.startStar,
       targetStar: effectiveTarget,
       replacementCost: calc.replacementCost,
-      costDiscount: tierActive ? false : calc.costDiscount,
-      boomReduction: tierActive ? false : calc.boomReduction,
+      costDiscount: calc.costDiscount,
+      boomReduction: calc.boomReduction,
       starCatch: calc.starCatch,
       safeguard: tierActive ? false : calc.safeguard,
       mvp: calc.mvp,
@@ -761,6 +764,10 @@ export default function StarForceWorkspace({ theme }: { theme: AppTheme }) {
       <style>{`
         @media (max-width: 860px) {
           .sf-inputs-grid { grid-template-columns: 1fr !important; }
+          .sf-input-row .tool-input, .sf-input-row .tool-select { flex: 1; min-width: 0; }
+          .sf-option-row, .sf-slider-row { flex-direction: column; align-items: stretch !important; gap: 0.5rem; }
+          .sf-option-row .tool-btn { width: 100%; }
+          .sf-slider-row input[type="range"] { flex: 1; min-width: 0; }
         }
       `}</style>
 

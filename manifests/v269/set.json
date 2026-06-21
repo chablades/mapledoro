@@ -41812,11 +41812,6 @@
         },
         {
           "itemIds": [
-            "01552153"
-          ]
-        },
-        {
-          "itemIds": [
             "01253039"
           ]
         },
@@ -42784,32 +42779,6 @@
         }
       }
     },
-    "1127": {
-      "name": "\uC058\uB760 \uC7A5\uC1A1\uC758 \uD504\uB9AC\uB80C \uC138\uD2B8",
-      "completeCount": 3,
-      "members": [
-        {
-          "itemIds": [
-            "05002828"
-          ]
-        },
-        {
-          "itemIds": [
-            "05002829"
-          ]
-        },
-        {
-          "itemIds": [
-            "05002830"
-          ]
-        },
-        {
-          "itemIds": [
-            "05002831"
-          ]
-        }
-      ]
-    },
     "1133": {
       "name": "Squeaky Musicians",
       "completeCount": 5,
@@ -42920,7 +42889,7 @@
       }
     },
     "1149": {
-      "name": "\uBC18\uC9DD \uB0D0\uB0D0 \uD3AB \uC138\uD2B8",
+      "name": "Sparkle-Nya Pet Set",
       "completeCount": 3,
       "members": [
         {
@@ -42941,7 +42910,7 @@
       ]
     },
     "1150": {
-      "name": "\uBE5B\uB098\uB294 \uB2C8\uB2C8\uC5D8 \uD3AB \uC138\uD2B8",
+      "name": "Radiant Niniel Pet Set",
       "completeCount": 3,
       "members": [
         {

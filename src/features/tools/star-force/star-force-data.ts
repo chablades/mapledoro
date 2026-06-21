@@ -186,11 +186,13 @@ const MVP_DISCOUNT: Record<MvpTier, number> = {
 /**
  * Final meso cost for one attempt at star S, including all multipliers.
  *
- * Multiplier starts at 1, then:
+ * The events (MVP / 30% off) and safeguard adjust the base cost first; the
+ * Enhancement Mode surcharge then multiplies that event-adjusted cost (so the
+ * 30% off discounts the surcharge too). Multiplier starts at 1, then:
  *  - MVP discount (star ≤ 15): subtract tier %
  *  - 30% off event: subtract 0.30
  *  - Safeguard (stars 15-17): add 2  (triples the cost)
- *  - Boom tier (stars 15-21): add the tier's cost delta
+ *  - Enhancement Mode (stars 15-21): multiply by (1 + the tier's cost delta)
  */
 export function attemptCost(level: number, star: number, opts: StarForceOpts): number {
   const base = baseCost(level, star);
@@ -199,7 +201,7 @@ export function attemptCost(level: number, star: number, opts: StarForceOpts): n
   if (opts.costDiscount) mult -= 0.3;
   if (opts.safeguard && star >= 15 && star <= 17) mult += 2;
   if (boomTierActive(star, opts.boomTier)) {
-    mult += BOOM_TIER_COST_MULT_INCREASE[star][opts.boomTier! - 1];
+    mult *= 1 + BOOM_TIER_COST_MULT_INCREASE[star][opts.boomTier! - 1];
   }
   return Math.round(base * mult);
 }
@@ -216,9 +218,10 @@ interface AdjustedRates {
  * Compute adjusted rates for a star considering all active options.
  *
  * Order of operations (matching reference):
- *  0. Boom tier (stars 15-21): override base success & boom with the tier's rates
+ *  0. Enhancement Mode (stars 15-21): override base success & boom with the tier's rates
  *  1. Safeguard (stars 15-17): boom → maintain
  *  2. Boom reduction event (stars ≤ 21): boom *= 0.7, excess → maintain
+ *     (stacks on top of the Enhancement Mode rate — base × 0.7 × tier factor)
  *  3. Star catching: success *= 1.05, redistribute leftover proportionally
  */
 function adjustedRates(star: number, opts: StarForceOpts): AdjustedRates {

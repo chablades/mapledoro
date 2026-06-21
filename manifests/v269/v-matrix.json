@@ -9752,7 +9752,7 @@
       "name": "Twilight Bloom",
       "desc": "Greatly boosts the blessing of the Five Planets when it erupts in full bloom and greatly increases your stats temporarily.",
       "type": 0,
-      "maxLevel": 50,
+      "maxLevel": 30,
       "jobs": [
         "4112",
         "4212"
@@ -9878,7 +9878,7 @@
       "name": "Princess Sakuno\u0027s Blessing",
       "desc": "The blessing of Princess Sakuno briefly unlocks your maximum potential.",
       "type": 0,
-      "maxLevel": 50,
+      "maxLevel": 30,
       "jobs": [
         "4112",
         "4212"

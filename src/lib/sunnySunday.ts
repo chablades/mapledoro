@@ -35,15 +35,32 @@ export interface SunnySundayPayload {
  * Fetch the latest Sunny Sunday schedule directly from Discord,
  * parse it, and return the payload. Returns null if no data is available.
  */
+// Nexon sometimes splits the upcoming schedule across several consecutive
+// posts, so scan a handful of recent messages rather than just the newest.
+const MESSAGES_TO_SCAN = 5;
+
 export async function fetchSunnySunday(): Promise<SunnySundayPayload | null> {
   const channelId = process.env.DISCORD_CHANNEL_ID;
   if (!channelId) return null;
 
-  const messages = await fetchDiscordMessages(channelId, 1);
+  const messages = await fetchDiscordMessages(channelId, MESSAGES_TO_SCAN);
   if (messages.length === 0) return null;
 
-  const weeks = parseSunnySundayMessage(messages[0].content);
-  if (weeks.length === 0) return null;
+  // Merge weeks from every recent message, de-duping by start instant so a
+  // schedule spanning multiple posts shows as one continuous list.
+  const byISO = new Map<string, SunnySundayWeek>();
+  for (const msg of messages) {
+    for (const week of parseSunnySundayMessage(msg.content)) {
+      if (!byISO.has(week.dateISO)) byISO.set(week.dateISO, week);
+    }
+  }
+  if (byISO.size === 0) return null;
+
+  // Past weeks are never displayed; drop them so the cached payload only
+  // carries the upcoming schedule (empty off-season → panel shows "No data").
+  const weeks = [...byISO.values()]
+    .filter((w) => !w.isPast)
+    .sort((a, b) => new Date(a.dateISO).getTime() - new Date(b.dateISO).getTime());
 
   return { weeks, fetchedAt: new Date().toISOString() };
 }
@@ -77,19 +94,27 @@ function getEventEndUTC(startDate: Date): Date {
   return d;
 }
 
-/** Format a Date as a readable label like "Saturday, March 19, 2026 4:00 PM" */
+// Sunny Sunday times are posted as Discord timestamps at 00:00 UTC — the GMS
+// server reset, which is 5:00 PM Pacific the prior day. Format in Pacific (GMS
+// server time) so the label names the actual event day, e.g.
+// "Sunday, June 21, 2026 5:00 PM", not the UTC rollover into Monday midnight.
+const PACIFIC_LABEL_FMT = new Intl.DateTimeFormat("en-US", {
+  timeZone: "America/Los_Angeles",
+  weekday: "long",
+  month: "long",
+  day: "numeric",
+  year: "numeric",
+  hour: "numeric",
+  minute: "2-digit",
+  hour12: true,
+});
+
+/** Format a Date as a readable label like "Sunday, June 21, 2026 5:00 PM" */
 function formatDateLabel(d: Date): string {
-  const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-  const months = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December",
-  ];
-  const h = d.getUTCHours();
-  const m = d.getUTCMinutes();
-  const hour12 = h % 12 || 12;
-  const ampm = h < 12 ? "AM" : "PM";
-  const minStr = String(m).padStart(2, "0");
-  return `${days[d.getUTCDay()]}, ${months[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()} ${hour12}:${minStr} ${ampm}`;
+  const parts = PACIFIC_LABEL_FMT.formatToParts(d);
+  const get = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((p) => p.type === type)?.value ?? "";
+  return `${get("weekday")}, ${get("month")} ${get("day")}, ${get("year")} ${get("hour")}:${get("minute")} ${get("dayPeriod")}`;
 }
 
 function parseDateLine(line: string): { label: string; iso: string } | null {
@@ -139,9 +164,9 @@ function parseDateLine(line: string): { label: string; iso: string } | null {
 function cleanDetail(line: string): string {
   return line
     .replace(/<t:\d+:[A-Za-z]>/g, "")  // remove Discord timestamps
-    .replace(/\*\*/g, "")               // remove bold **
     .replace(/^-\s*/, "")               // remove leading "- "
     .replace(/^\*\s*/, "  • ")          // convert "* " sub-items to indented bullet
+    .replace(/\*/g, "")                 // remove remaining bold/italic markers
     .trim();
 }
 
