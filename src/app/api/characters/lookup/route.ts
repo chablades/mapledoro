@@ -112,6 +112,31 @@ const inFlightLookup = new Map<string, Promise<LookupResult>>();
 const fallbackMinuteRate = new Map<string, { count: number; expiresAt: number }>();
 const fallbackDailyRate = new Map<string, { count: number; expiresAt: number }>();
 const fallbackActiveQueueByIp = new Map<string, number>();
+
+// Cap on the in-memory fallback maps (used only when Redis is down). Without it, a
+// flood of unique names/IPs grows them unbounded, since entries are otherwise pruned
+// only lazily on re-access. When at capacity we drop expired entries first, then evict
+// oldest-inserted entries (Map preserves insertion order) until back under the cap.
+const MAX_FALLBACK_ENTRIES = 10000;
+
+function pruneFallbackMap<V extends { expiresAt: number }>(store: Map<string, V>) {
+  if (store.size < MAX_FALLBACK_ENTRIES) return;
+  const now = Date.now();
+  for (const [key, value] of store) {
+    if (now >= value.expiresAt) store.delete(key);
+  }
+  while (store.size >= MAX_FALLBACK_ENTRIES) {
+    const oldest = store.keys().next().value;
+    if (oldest === undefined) break;
+    store.delete(oldest);
+  }
+}
+
+function setFallbackCache(nameKey: string, entry: CacheEntry) {
+  pruneFallbackMap(fallbackInMemoryCache);
+  fallbackInMemoryCache.set(nameKey, entry);
+}
+
 const redisUrl = process.env.REDIS_URL?.trim() ?? "";
 const REDIS_CONNECT_TIMEOUT_MS = parsePositiveIntEnv("REDIS_CONNECT_TIMEOUT_MS", 1500);
 const redis = redisUrl ? new Redis(redisUrl, { lazyConnect: true, connectTimeout: REDIS_CONNECT_TIMEOUT_MS, maxRetriesPerRequest: 1 }) : null;
@@ -175,14 +200,18 @@ function formatUtcResetLabel(fromMs: number) {
   return nextReset.toISOString().replace(".000Z", " UTC");
 }
 
+// Client IP for rate limiting: must be a trusted value, or an attacker rotates it
+// to dodge the caps. Vercel overwrites these at the edge, so prefer x-real-ip, then
+// the rightmost (proxy-appended) x-forwarded-for hop (never the spoofable leftmost).
 function getClientIp(request: NextRequest) {
-  const xff = request.headers.get("x-forwarded-for");
-  if (xff) {
-    const first = xff.split(",")[0]?.trim();
-    if (first) return first;
-  }
   const realIp = request.headers.get("x-real-ip")?.trim();
   if (realIp) return realIp;
+  const xff = request.headers.get("x-forwarded-for");
+  if (xff) {
+    const parts = xff.split(",");
+    const last = parts[parts.length - 1]?.trim();
+    if (last) return last;
+  }
   return "unknown";
 }
 
@@ -194,6 +223,7 @@ function getFallbackRateCount(
   const now = Date.now();
   const existing = store.get(key);
   if (!existing || now >= existing.expiresAt) {
+    pruneFallbackMap(store);
     const fresh = { count: 1, expiresAt: now + ttlMs };
     store.set(key, fresh);
     return fresh.count;
@@ -371,11 +401,11 @@ async function setCacheHit(nameKey: string, entry: CacheEntry): Promise<void> {
       return;
     } catch (error) {
       logRedisError("setCacheHit", error);
-      fallbackInMemoryCache.set(nameKey, entry);
+      setFallbackCache(nameKey, entry);
       return;
     }
   }
-  fallbackInMemoryCache.set(nameKey, entry);
+  setFallbackCache(nameKey, entry);
 }
 
 async function runQueuedUpstream<T>(fn: () => Promise<T>): Promise<{ value: T; queuedMs: number }> {
