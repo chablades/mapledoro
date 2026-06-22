@@ -15,6 +15,7 @@ import type { AppTheme } from "../../../components/themes";
 import { resourceImageUrl } from "../../../lib/mapleResource";
 import type {
   ClassConfig,
+  InnerLine,
   NodeType,
   Skill,
   StatPart,
@@ -232,18 +233,6 @@ function SectionNav() {
 
 /* ── Header + quick facts ───────────────────────────────── */
 
-function Stars({ n }: { n: number }) {
-  return (
-    <>
-      <span className={styles.stars} aria-hidden>
-        {"★".repeat(n)}
-        <span className={styles.off}>{"★".repeat(5 - n)}</span>
-      </span>
-      <span className={styles.srOnly}>{n} of 5</span>
-    </>
-  );
-}
-
 function ClassHeader({ config }: { config: ClassConfig }) {
   return (
     <header className={styles.hero} id="overview">
@@ -265,14 +254,6 @@ function ClassHeader({ config }: { config: ClassConfig }) {
             </span>
           </div>
           <p className={styles.hDesc}>{config.description}</p>
-        </div>
-        <div className={styles.diff}>
-          <span className={styles.diffRow}>
-            Bossing <Stars n={config.difficulty.bossing} />
-          </span>
-          <span className={styles.diffRow}>
-            Mobbing <Stars n={config.difficulty.mobbing} />
-          </span>
         </div>
       </div>
     </header>
@@ -338,33 +319,27 @@ function LegionCard({ config }: { config: ClassConfig }) {
   );
 }
 
-function InnerAbilityCard({ config }: { config: ClassConfig }) {
+function InnerAbilityColumn({ label, lines }: { label: string; lines: InnerLine[] }) {
   return (
-    <section className={styles.card}>
-      <h2 className={styles.secT}>Inner ability</h2>
-      {config.innerAbility.map((line) => (
+    <div>
+      <div className={styles.iaH}>{label}</div>
+      {lines.map((line) => (
         <div key={line.tier} className={styles.iaRow}>
           <span className={cx(styles.tier, TIER_CLASS[line.tier])}>{line.tag}</span>
           {line.text}
         </div>
       ))}
-    </section>
+    </div>
   );
 }
 
-function HyperStats({ config }: { config: ClassConfig }) {
+function InnerAbilityCard({ config }: { config: ClassConfig }) {
   return (
     <section className={styles.card}>
-      <div className={styles.hyper}>
-        <h2 className={styles.secT} style={{ margin: 0 }}>
-          Hyper stats
-        </h2>
-        {config.hyperStats.map((stat, i) => (
-          <Fragment key={stat}>
-            {i > 0 && <span className={styles.gt} aria-hidden>›</span>}
-            <span className={styles.pill}>{stat}</span>
-          </Fragment>
-        ))}
+      <h2 className={styles.secT}>Inner ability</h2>
+      <div className={styles.iaSplit}>
+        <InnerAbilityColumn label="Bossing" lines={config.innerAbility.bossing} />
+        <InnerAbilityColumn label="Mobbing" lines={config.innerAbility.mobbing} />
       </div>
     </section>
   );
@@ -375,7 +350,7 @@ function HyperStats({ config }: { config: ClassConfig }) {
 function Sequence({ config }: { config: ClassConfig }) {
   return (
     <section className={styles.card} id="sequence">
-      <h2 className={styles.secT}>Sequence</h2>
+      <h2 className={styles.secT}>Buff sequence</h2>
       <div className={styles.rail}>
         {config.sequence.map((step, i) => {
           const skill = config.skills[step.skill];

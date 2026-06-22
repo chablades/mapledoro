@@ -44,10 +44,16 @@ interface LinkSkill {
   note?: string;
 }
 
-interface InnerLine {
+export interface InnerLine {
   tier: Tier;
   tag: string;
   text: string;
+}
+
+// Rendered as two labeled columns (Bossing | Mobbing) in one card.
+interface InnerAbility {
+  bossing: InnerLine[];
+  mobbing: InnerLine[];
 }
 
 interface SeqStep {
@@ -87,8 +93,9 @@ interface Resource {
   kind: "wiki" | "disc" | "doc";
 }
 
-// [class name, effect] recommended-link row.
-type RecLink = [name: string, effect: string];
+// [class name, effect, optional skill iconId] recommended-link row. The icon is
+// a leading chip; rows render a letter fallback (first char of name) until set.
+type RecLink = [name: string, effect: string, iconId?: string];
 
 export interface ClassConfig {
   name: string;
@@ -97,13 +104,11 @@ export interface ClassConfig {
   description: string;
   portraitUrl?: string;
   accentColor: string;
-  difficulty: { bossing: number; mobbing: number };
   facts: Fact[];
   linkSkill: LinkSkill;
   legion: string;
   weaponNote?: string;
-  innerAbility: InnerLine[];
-  hyperStats: string[];
+  innerAbility: InnerAbility;
   skills: Record<string, Skill>;
   sequence: SeqStep[];
   seqNote?: string;
