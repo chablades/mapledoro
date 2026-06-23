@@ -18,7 +18,6 @@ export const hero: ClassConfig = {
     "A combo-orb warrior built around big two-handed swings and one of the cleanest burst sequences in the game.",
   portraitUrl: classPortraitUrl("Hero"),
   accentColor: "#e5484d",
-  difficulty: { bossing: 4, mobbing: 3 },
   facts: [
     { label: "Primary weapon", value: "2H Axe / Sword", itemIds: ["1412065", "1402002"] },
     { label: "Secondary", value: "Medallion · Shield", itemIds: ["1092060"] },
@@ -38,12 +37,18 @@ export const hero: ClassConfig = {
   legion: "STR +10 / 20 / 40 / 80 / 100",
   weaponNote:
     "2H = 1.44× multiplier (AS 7) vs 1H 1.34× (AS 8). Axe adds +5% damage from Weapon Mastery — take the axe.",
-  innerAbility: [
-    { tier: "leg", tag: "Legendary", text: "Attack Speed +1" },
-    { tier: "unq", tag: "Unique", text: "+20% Boss Damage or +30 ATT" },
-    { tier: "epc", tag: "Epic", text: "+12 All Stats" },
-  ],
-  hyperStats: ["Crit Damage", "Damage", "Boss Damage", "IED", "STR"],
+  innerAbility: {
+    bossing: [
+      { tier: "leg", tag: "Legendary", text: "Attack Speed +1" },
+      { tier: "unq", tag: "Unique", text: "+20% Boss Damage or +30 ATT" },
+      { tier: "epc", tag: "Epic", text: "+12 All Stats" },
+    ],
+    mobbing: [
+      { tier: "leg", tag: "Legendary", text: "Attack Speed +1" },
+      { tier: "unq", tag: "Unique", text: "+20% Boss Damage or +30 ATT" },
+      { tier: "epc", tag: "Epic", text: "+12 All Stats" },
+    ],
+  },
   skills: {
     spiritCalibur: {
       name: "Spirit Calibur",

@@ -26,7 +26,6 @@ export const paladin: ClassConfig = {
     "A holy knight built around elemental charges and Vessel of Light stacks — heavy on survivability, with stacked binds and a 30-second invincibility to walk through one-shot mechanics.",
   portraitUrl: classPortraitUrl("Paladin"),
   accentColor: "#4a7fe0",
-  difficulty: { bossing: 2, mobbing: 3 },
   facts: [
     { label: "Primary weapon", value: "1H / 2H Sword · Blunt" },
     { label: "Secondary", value: "Rosary · Shield" },
@@ -46,12 +45,18 @@ export const paladin: ClassConfig = {
   legion: "STR +10 / 20 / 40 / 80 / 100",
   weaponNote:
     "1H sword + shield = 1.24× multiplier (AS 8); 2H = 1.34× (AS 7). High Paladin gives a 1H sword a little extra mastery and crit damage.",
-  innerAbility: [
-    { tier: "leg", tag: "Legendary", text: "Attack Speed +1" },
-    { tier: "unq", tag: "Unique", text: "Boss Damage +10%" },
-    { tier: "epc", tag: "Epic", text: "Damage to enemies w/ Abnormal Status +8%" },
-  ],
-  hyperStats: ["Crit Damage", "Damage", "Boss Damage", "IED", "ATT", "STR", "Crit Rate"],
+  innerAbility: {
+    bossing: [
+      { tier: "leg", tag: "Legendary", text: "Attack Speed +1" },
+      { tier: "unq", tag: "Unique", text: "Boss Damage +10%" },
+      { tier: "epc", tag: "Epic", text: "Damage to enemies w/ Abnormal Status +8%" },
+    ],
+    mobbing: [
+      { tier: "leg", tag: "Legendary", text: "Attack Speed +1" },
+      { tier: "unq", tag: "Unique", text: "Boss Damage +10%" },
+      { tier: "epc", tag: "Epic", text: "Damage to enemies w/ Abnormal Status +8%" },
+    ],
+  },
   skills: {
     // ── Burst / actives ──
     goddessBlessing: {

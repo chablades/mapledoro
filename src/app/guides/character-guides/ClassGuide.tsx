@@ -670,7 +670,6 @@ export function ClassGuide({ config, theme }: { config: ClassConfig; theme: AppT
             <InnerAbilityCard config={config} />
           </div>
 
-          <HyperStats config={config} />
           <Sequence config={config} />
           <LevelingOrder config={config} />
           <Utility config={config} />

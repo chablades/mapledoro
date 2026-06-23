@@ -324,6 +324,27 @@
   margin-top: 0.4375rem;
 }
 
+.iaSplit {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+
+@media (max-width: 560px) {
+  .iaSplit {
+    grid-template-columns: 1fr;
+  }
+}
+
+.iaH {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--cg-dim);
+  margin-bottom: 0.25rem;
+}
+
 /* hyper stats */
 .hyper {
   display: flex;
