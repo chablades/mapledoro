@@ -88,7 +88,12 @@ export default function CharacterAvatar({
         setSettled(true);
       }}
       className={className}
-      style={{ color: "transparent", ...style }}
+      // Pin the rendered CSS size to the width/height props on BOTH axes. The fallback
+      // avatar has a different natural aspect ratio than real avatars, so without an
+      // explicit size next/image can lay it out with one axis derived from the ratio and
+      // the other pinned to the attribute — which trips its "width or height modified, but
+      // not the other" dev warning. Consumers can still override via `style`.
+      style={{ color: "transparent", width, height, ...style }}
       unoptimized={displaySrc.startsWith("data:image/")}
     />
   );
