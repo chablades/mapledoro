@@ -14,7 +14,7 @@ import {
   parseBuffsDraft, serializeBuffsDraft,
   sanitizeGuildLevel, sanitizeRenownLevel, toggleBoolBuff,
   primaryStatForClass, mainStatsForClass, getStatPotionTiers, statAbbrev,
-  extremePotionIconId, extremePotionLabel,
+  extremePotionIconId, extremePotionLabel, heroEchoSkillId, heroEchoName,
   type GuildBuffId, type BoolBuffId, type RenownStatId, type BoolBuffEntry,
 } from "../data/buffsData";
 import SetupStepFrame from "./SetupStepFrame";
@@ -109,19 +109,21 @@ function renderIcon(icon: BoolBuffEntry["icon"], size: number, active: boolean) 
   );
 }
 
-function BoolBuffTile({ entry, active, onToggle, theme, iconOverride, label }: {
+function BoolBuffTile({ entry, active, onToggle, theme, iconOverride, label, ariaLabel }: {
   entry: BoolBuffEntry;
   active: boolean;
   onToggle: () => void;
   theme: AppTheme;
   iconOverride?: { id: string; kind: "item"; shadow?: boolean } | { id: string; kind: "skill" };
   label?: ReactNode;
+  ariaLabel?: string;
 }) {
   const icon = iconOverride ?? entry.icon;
   const { secondIcon } = entry;
+  const resolvedAriaLabel = ariaLabel ?? entry.name;
   return (
     <HoverTooltip label={label ?? entry.name} theme={theme}>
-      <button type="button" onClick={onToggle} aria-label={entry.name} aria-pressed={active} style={boolTileStyle(active, theme)}>
+      <button type="button" onClick={onToggle} aria-label={resolvedAriaLabel} aria-pressed={active} style={boolTileStyle(active, theme)}>
         {secondIcon ? (
           <div style={{ position: "relative", width: 42, height: 40, flexShrink: 0, filter: active ? "none" : "grayscale(1)" }}>
             <div style={{ position: "absolute", top: 0, left: 10, lineHeight: 0, opacity: active ? 0.5 : 0.16 }}>
@@ -188,7 +190,8 @@ function sparklingRedStarTooltip(theme: AppTheme): ReactNode {
   );
 }
 
-function boolBuffLabel(id: BoolBuffEntry["id"], primaryStat: ReturnType<typeof primaryStatForClass>, theme: AppTheme): ReactNode | undefined {
+function boolBuffLabel(id: BoolBuffEntry["id"], primaryStat: ReturnType<typeof primaryStatForClass>, theme: AppTheme, jobName: string): ReactNode | undefined {
+  if (id === "heroEcho") return heroEchoName(jobName);
   if (id === "extremePotion") return extremePotionLabel(primaryStat);
   if (id === "sparklingRedStar") return sparklingRedStarTooltip(theme);
   if (id === "maxedSacredSymbol") return (
@@ -233,6 +236,9 @@ export default function BuffsSetupStep({
   const statPotionActive = statPotionTier > 0;
   const statPotionTier10 = statTiers[9];
 
+  const ungroupedBools = BOOL_BUFFS.filter((b) => !b.group);
+  const statPotionInsertIdx = ungroupedBools.findIndex((b) => b.id === "sparklingRedStar") + 1;
+
   function toggleStatPotion() {
     update({ statPotionTier: statPotionActive ? "0" : "10" });
   }
@@ -272,6 +278,22 @@ export default function BuffsSetupStep({
         <div>
           <p style={sectionLabel(theme)}>Buffs</p>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {ungroupedBools.slice(0, statPotionInsertIdx).map((b) => (
+              <BoolBuffTile
+                key={b.id}
+                entry={b}
+                active={draft.bools[b.id] ?? false}
+                onToggle={() => toggleBool(b.id)}
+                iconOverride={
+                  b.id === "extremePotion" ? { kind: "item", id: extremePotionIconId(primaryStat) }
+                  : b.id === "heroEcho" ? { kind: "skill", id: heroEchoSkillId(jobName) }
+                  : undefined
+                }
+                label={boolBuffLabel(b.id, primaryStat, theme, jobName)}
+                ariaLabel={b.id === "heroEcho" ? heroEchoName(jobName) : undefined}
+                theme={theme}
+              />
+            ))}
             {/* Advanced Stat Potion — always tier X (+30), tooltip lists all class stats */}
             <HoverTooltip
               label={(() => {
@@ -305,14 +327,19 @@ export default function BuffsSetupStep({
                 </div>
               </button>
             </HoverTooltip>
-            {BOOL_BUFFS.filter((b) => !b.group).map((b) => (
+            {ungroupedBools.slice(statPotionInsertIdx).map((b) => (
               <BoolBuffTile
                 key={b.id}
                 entry={b}
                 active={draft.bools[b.id] ?? false}
                 onToggle={() => toggleBool(b.id)}
-                iconOverride={b.id === "extremePotion" ? { kind: "item", id: extremePotionIconId(primaryStat) } : undefined}
-                label={boolBuffLabel(b.id, primaryStat, theme)}
+                iconOverride={
+                  b.id === "extremePotion" ? { kind: "item", id: extremePotionIconId(primaryStat) }
+                  : b.id === "heroEcho" ? { kind: "skill", id: heroEchoSkillId(jobName) }
+                  : undefined
+                }
+                label={boolBuffLabel(b.id, primaryStat, theme, jobName)}
+                ariaLabel={b.id === "heroEcho" ? heroEchoName(jobName) : undefined}
                 theme={theme}
               />
             ))}

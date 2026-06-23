@@ -117,26 +117,31 @@ export interface BoolBuffEntry {
   group?: "A" | "B";
 }
 
+// Ungrouped order: roughly obtainability — NPC shop (candied apple) → quest shop elixirs →
+// free daily (extreme) → profession-gated (red star/advanced stat) → boss drop (bright moonlight) →
+// guild/legion/paid buffs → equipment (sacred symbols).
+// Group A/B: potions first (left-to-right matches in-game), visually distinct skill buff last.
 export const BOOL_BUFFS: readonly BoolBuffEntry[] = [
+  { id: "candiedApple",      name: "Candied Apple",                  icon: { kind: "item",  id: "02023908" } },
   { id: "sayramElixir",      name: "Sayram's Elixir",                icon: { kind: "item",  id: "02024234" } },
   { id: "collectorElixir",   name: "Collector's Elixir",             icon: { kind: "item",  id: "02024290" } },
   { id: "honorableElixir",   name: "Honorable Elixir",               icon: { kind: "item",  id: "02024304" } },
+  { id: "extremePotion",     name: "Extreme Potion",                 icon: { kind: "item",  id: "02023125" } }, // icon resolved at render time
+  { id: "sparklingRedStar",  name: "Sparkling Red Star Potion",      icon: { kind: "item",  id: "02024174" }, secondIcon: { kind: "item", id: "02024175" } },
+  // Advanced Stat Potion tile is inserted here at render time
+  { id: "brightMoonlight",   name: "Bright Moonlight Potion",        icon: { kind: "item",  id: "02023136" } },
   { id: "heroEcho",          name: "Hero's Echo",                    icon: { kind: "skill", id: "0001005"  } },
   { id: "legionMight",       name: "Legion's Might",                 icon: { kind: "item",  id: "02024188" } },
   { id: "masarayuGift",      name: "Masarayu's Gift Atmospheric Effect", icon: { kind: "item", id: "02024193", shadow: true } },
-  { id: "extremePotion",     name: "Extreme Potion",                 icon: { kind: "item",  id: "02023125" } }, // icon resolved at render time
-  { id: "mvpSuperpower",     name: "MVP Superpower Buff",            icon: { kind: "item",  id: "02023544" } },
-  { id: "vipBuff",           name: "VIP Buff (Stats)",               icon: { kind: "item",  id: "02024163", shadow: true } },
-  { id: "brightMoonlight",   name: "Bright Moonlight Potion",        icon: { kind: "item",  id: "02023136" } },
-  { id: "candiedApple",      name: "Candied Apple",                  icon: { kind: "item",  id: "02023908" } },
   { id: "caretakerSupport",  name: "Caretaker's Support",            icon: { kind: "skill", id: "80011827" } },
-  { id: "sparklingRedStar",  name: "Sparkling Red Star Potion",      icon: { kind: "item",  id: "02024174" }, secondIcon: { kind: "item", id: "02024175" } },
-  { id: "maxedSacredSymbol", name: "Lv. 11 Sacred Symbols",           icon: { kind: "item",  id: "02638024" } },
+  { id: "vipBuff",           name: "VIP Buff (Stats)",               icon: { kind: "item",  id: "02024163", shadow: true } },
+  { id: "mvpSuperpower",     name: "MVP Superpower Buff",            icon: { kind: "item",  id: "02023544" } },
+  { id: "maxedSacredSymbol", name: "Lv. 11 Sacred Symbols",          icon: { kind: "item",  id: "02638024" } },
   // Group A
+  { id: "sparklingBlueStar",   name: "Sparkling Blue Star Potion",       icon: { kind: "item",  id: "02024173" }, group: "A" },
   { id: "greatHeroBoost",      name: "Advanced Great Hero Boost Potion", icon: { kind: "item",  id: "02024176" }, group: "A" },
   { id: "legendaryHero",       name: "Legendary Hero Potion",            icon: { kind: "item",  id: "02024179" }, group: "A" },
   { id: "advWeaponTempering",  name: "Advanced Weapon Tempering",        icon: { kind: "skill", id: "80002363" }, group: "A" },
-  { id: "sparklingBlueStar",   name: "Sparkling Blue Star Potion",       icon: { kind: "item",  id: "02024173" }, group: "A" },
   // Group B
   { id: "onyxApple",       name: "Onyx Apple",         icon: { kind: "item", id: "02024278" }, group: "B" },
   { id: "tengusJudgement", name: "Tengu's Judgement",  icon: { kind: "item", id: "02023626" }, group: "B" },
@@ -144,6 +149,33 @@ export const BOOL_BUFFS: readonly BoolBuffEntry[] = [
 
 export const BUFF_GROUP_A = new Set<BoolBuffId>(["greatHeroBoost","legendaryHero","advWeaponTempering","sparklingBlueStar"]);
 export const BUFF_GROUP_B = new Set<BoolBuffId>(["onyxApple","tengusJudgement"]);
+
+// Classes whose Echo of Hero equivalent has a unique in-game icon.
+// All others use the generic 0001005. Confirmed via grandislibrary pixel-match against WZ exports.
+const HERO_ECHO_SKILL_MAP: Partial<Record<string, string>> = {
+  // Nova — Exclusive Spell
+  "Kaiser": "60001005", "Angelic Buster": "60001005", "Cadena": "60001005", "Kain": "60001005",
+  // Flora — Exclusive Spell (each class has a distinct icon)
+  "Illium": "150001005", "Ark": "150011005", "Adele": "150021005", "Khali": "150031005",
+  // Anima — Exclusive Spell (shared icon across branch)
+  "Hoyoung": "160001005", "Lara": "160001005", "Ren": "160001005",
+  // Jianghu
+  "Mo Xuan": "170001005",
+  // Shine
+  "Sia Astelle": "180001005",
+};
+
+/** Echo of Hero skill ID for a given Nexon job name. Falls back to the generic beginner skill. */
+export function heroEchoSkillId(nexonJobName: string): string {
+  return HERO_ECHO_SKILL_MAP[nexonJobName] ?? "0001005";
+}
+
+/** Display name for a class's Echo of Hero equivalent. */
+export function heroEchoName(nexonJobName: string): string {
+  if (nexonJobName === "Sia Astelle") return "Stellar Equalize";
+  if (HERO_ECHO_SKILL_MAP[nexonJobName] && nexonJobName !== "Mo Xuan") return "Exclusive Spell";
+  return "Hero's Echo";
+}
 
 /** Extreme Potion item ID resolved by class primary stat. */
 export function extremePotionIconId(stat: StatId): string {
