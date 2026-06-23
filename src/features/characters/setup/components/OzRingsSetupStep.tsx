@@ -1,6 +1,7 @@
 "use client";
 
 import type { CSSProperties } from "react";
+import { numericKeyDown } from "../../../../lib/inputUtils";
 import type { AppTheme } from "../../../../components/themes";
 import { ItemIcon } from "../../../../components/ResourceImage";
 import HoverTooltip from "../../../../components/HoverTooltip";
@@ -69,6 +70,7 @@ function RingTile({ iconId, name, level, onLevel, theme }: {
         value={level}
         placeholder="0"
         onChange={(e) => onLevel(e.target.value)}
+        onKeyDown={numericKeyDown}
         style={{
           width: 56, textAlign: "center",
           border: `1px solid ${theme.border}`, borderRadius: 6,
@@ -133,6 +135,7 @@ function StatRow({ label, value, onChange, theme }: {
         value={value}
         placeholder="0"
         onChange={(e) => onChange(e.target.value.replace(/\D/g, ""))}
+        onKeyDown={numericKeyDown}
         style={{
           width: "5rem", textAlign: "center",
           border: `1px solid ${theme.border}`, borderRadius: 7,

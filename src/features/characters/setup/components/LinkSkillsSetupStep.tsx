@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { numericKeyDown } from "../../../../lib/inputUtils";
 import Image from "next/image";
 import type { AppTheme } from "../../../../components/themes";
 import type { SetupStepDefinition } from "../steps";
@@ -249,6 +250,7 @@ function LinkSkillRow({
             if (isNaN(parsed) || parsed < floor) { onUpdate(skill.id, String(floor)); return; }
             if (parsed > skill.maxLevel) onUpdate(skill.id, String(skill.maxLevel));
           }}
+          onKeyDown={numericKeyDown}
           style={{
             width: "2.2rem",
             border: `1px solid ${locked ? theme.accent : theme.border}`,

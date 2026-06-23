@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { numericKeyDown } from "../../../../lib/inputUtils";
 import type { CSSProperties } from "react";
 import Image from "next/image";
 import type { AppTheme } from "../../../../components/themes";
@@ -324,6 +325,7 @@ function TripleStatRow({
             onChange={(e) => onUpdate(id, "base", e.target.value)}
             onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
             onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
+            onKeyDown={numericKeyDown}
           />
           <p style={{ margin: 0, marginTop: "0.15rem", fontSize: "0.75rem", color: theme.muted, fontWeight: 700, textAlign: "center" }}>Base Value</p>
         </div>
@@ -333,6 +335,7 @@ function TripleStatRow({
               onChange={(e) => onUpdate(id, "percent", e.target.value)}
               onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
               onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
+              onKeyDown={numericKeyDown}
             />
             <span style={inputSuffixStyle(theme)}>%</span>
           </div>
@@ -345,6 +348,7 @@ function TripleStatRow({
                 onChange={(e) => onUpdate(id, "percentUnapplied", e.target.value)}
                 onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
                 onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
+                onKeyDown={numericKeyDown}
               />
               <span style={inputSuffixStyle(theme)}>%</span>
             </div>
@@ -414,6 +418,7 @@ function HyperStatCell({
         onChange={(e) => onUpdate(cat.id, e.target.value)}
         onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
         onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
+        onKeyDown={numericKeyDown}
       />
     </div>
   );
@@ -441,6 +446,7 @@ function CombatStatCell({
               onChange={(e) => onUpdateCooldown("seconds", e.target.value)}
               onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
               onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
+              onKeyDown={numericKeyDown}
             />
             <span style={inputSuffixStyle(theme)}>s</span>
           </div>
@@ -469,6 +475,7 @@ function CombatStatCell({
           onChange={(e) => onUpdate(id, e.target.value)}
           onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
           onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
+          onKeyDown={numericKeyDown}
         />
         {!isRaw && <span style={inputSuffixStyle(theme)}>%</span>}
       </div>

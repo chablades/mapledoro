@@ -38,9 +38,40 @@ export interface StoredOzRings {
   totallingStats: Record<string, number>;
 }
 
+/** Buffs entered in the MapleScouter buffs step. */
+export interface StoredScouterBuffs {
+  bossSlayers?: number;
+  undeterred?: number;
+  forTheGuild?: number;
+  hardHitter?: number;
+  statPotionValue?: number;
+  sayramElixir?: true;
+  collectorElixir?: true;
+  honorableElixir?: true;
+  heroEcho?: true;
+  legionMight?: true;
+  masarayuGift?: true;
+  extremePotion?: true;
+  mvpSuperpower?: true;
+  vipBuff?: true;
+  brightMoonlight?: true;
+  candiedApple?: true;
+  caretakerSupport?: true;
+  sparklingRedStar?: true;
+  maxedSacredSymbol?: true;
+  greatHeroBoost?: true;
+  legendaryHero?: true;
+  advWeaponTempering?: true;
+  sparklingBlueStar?: true;
+  onyxApple?: true;
+  tengusJudgement?: true;
+  renown?: Partial<Record<"allStats" | "atkMagAtk" | "bossDmg" | "ignoreDef" | "critDmg", number>>;
+}
+
 /** MapleScouter-flow inputs — character data fed to the ranking, NOT a tool. */
 export interface StoredScouterData {
   ozRings?: StoredOzRings;
+  buffs?: StoredScouterBuffs;
 }
 
 export interface StoredCharacterStats {

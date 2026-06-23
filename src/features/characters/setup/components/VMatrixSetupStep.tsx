@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { numericKeyDown } from "../../../../lib/inputUtils";
 import Image from "next/image";
 import type { AppTheme } from "../../../../components/themes";
 import HoverTooltip from "../../../../components/HoverTooltip";
@@ -104,6 +105,7 @@ function VMatrixTile({ id, name, level, max, onUpdate, theme }: {
           e.currentTarget.style.outlineColor = "transparent";
           onUpdate(clamp(parseInt(e.currentTarget.value, 10) || 0, max));
         }}
+        onKeyDown={numericKeyDown}
         style={{
           width: 44, textAlign: "center",
           border: `1px solid ${theme.border}`, borderRadius: 6,

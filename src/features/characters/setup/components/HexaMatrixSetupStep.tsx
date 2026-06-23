@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { numericKeyDown } from "../../../../lib/inputUtils";
 import Image from "next/image";
 import type { AppTheme } from "../../../../components/themes";
 import HoverTooltip from "../../../../components/HoverTooltip";
@@ -221,6 +222,7 @@ function LevelInput({ value, onChange, theme, min = 0, max = MAX_LEVEL, label }:
           const clamped = isNaN(v) ? min : Math.max(min, clamp(v, max));
           onChange(clamped);
         }}
+        onKeyDown={numericKeyDown}
         style={{
           width: "2.2rem",
           border: `1px solid ${theme.border}`,
@@ -316,6 +318,7 @@ function HexaTile({ skill, level, onUpdate, theme, min = 0, max = MAX_LEVEL }: {
           const v = parseInt(e.currentTarget.value, 10);
           onUpdate(isNaN(v) ? min : Math.max(min, clamp(v, max)));
         }}
+        onKeyDown={numericKeyDown}
         style={{
           width: 44, textAlign: "center",
           border: `1px solid ${theme.border}`, borderRadius: 6,

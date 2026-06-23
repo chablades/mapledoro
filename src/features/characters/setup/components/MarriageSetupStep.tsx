@@ -1,4 +1,5 @@
 import type { AppTheme } from "../../../../components/themes";
+import { CHARACTER_NAME_INPUT_FILTER_REGEX } from "../../model/constants";
 import type { SetupStepDefinition } from "../steps";
 import SetupStepFrame from "./SetupStepFrame";
 
@@ -52,7 +53,8 @@ export default function MarriageSetupStep({
   };
 
   const handlePartnerName = (name: string) => {
-    onChange(name ? `yes|${name}` : "yes");
+    const sanitized = name.replace(CHARACTER_NAME_INPUT_FILTER_REGEX, "").slice(0, 12);
+    onChange(sanitized ? `yes|${sanitized}` : "yes");
   };
 
   return (

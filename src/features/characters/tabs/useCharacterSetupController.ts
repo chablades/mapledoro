@@ -38,6 +38,7 @@ import {
 import type { StoredCharacterRecord } from "../model/charactersStore";
 import { convertStatsStepDraftToStored, marriageDraftToStored, parseStatsStepDraft } from "../setup/data/statsStepDraft";
 import { convertOzRingsDraftToStored, parseOzRingsDraft } from "../setup/data/ozRingData";
+import { convertBuffsDraftToStored, parseBuffsDraft } from "../setup/data/buffsData";
 import type { NormalizedCharacterData } from "../model/types";
 import {
   clampFlowStepIndex,
@@ -247,11 +248,15 @@ function applyMapleScouterFlow(
   const { stats, isLiberated, weaponHand, hasRuinForceShield, soul } =
     convertStatsStepDraftToStored(parseStatsStepDraft(stepData.stats ?? ""), character.level);
   const ozRings = convertOzRingsDraftToStored(parseOzRingsDraft(stepData.oz_rings ?? ""));
+  const buffs = convertBuffsDraftToStored(parseBuffsDraft(stepData.buffs ?? ""));
+  const scouterPatch = ozRings || buffs
+    ? { ...base.scouter, ...(ozRings ? { ozRings } : {}), ...(buffs ? { buffs } : {}) }
+    : base.scouter;
   upsertFn({
     ...base,
     stats: { ...base.stats, ...stats },
     isLiberated, weaponHand, hasRuinForceShield, soul,
-    scouter: ozRings ? { ...base.scouter, ozRings } : base.scouter,
+    scouter: scouterPatch,
   });
   if (created) removeSetupDraftForCharacter(character);
   return created;

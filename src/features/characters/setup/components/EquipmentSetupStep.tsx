@@ -566,6 +566,7 @@ function SymbolLevelTile({ area, level, maxLevel, theme, onLevel }: {
           const raw = Math.floor(Number(e.target.value) || 0);
           onLevel(Math.max(0, Math.min(maxLevel, raw)));
         }}
+        onKeyDown={(e) => { if (!/^\d$/.test(e.key) && !["Backspace","Delete","ArrowLeft","ArrowRight","Tab","Home","End"].includes(e.key)) e.preventDefault(); }}
         style={{
           width: 56, textAlign: "center",
           border: `1px solid ${theme.border}`, borderRadius: 6,
