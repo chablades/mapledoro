@@ -710,6 +710,18 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
     requiredStats: ["int", "luk", "magicAtt"],
   },
   {
+    id: "erel_light",
+    nexonJobName: "Erel Light",
+    // STR warrior (Shine). Gram weapon / Keir secondary — see classBranch.ts.
+    // No fixed gender. buffSkills are the universal decent skills only for now:
+    // Erel is too new for MapleScouter to list its buffs yet, so we can't confirm
+    // which always-on skills raise stat-window values. TODO: revisit once MapleScouter
+    // adds Erel Light and add the class-specific buff(s) (candidates: Light Enchant,
+    // Helian Blessing, and the other no-cooldown actives — see new-class-checklist memory).
+    buffSkills: [DSE, DCO],
+    requiredStats: ["str", "dex", "attackPower"],
+  },
+  {
     id: "zero",
     nexonJobName: "Zero",
     skipGender: true,

@@ -161,8 +161,8 @@ const HERO_ECHO_SKILL_MAP: Partial<Record<string, string>> = {
   "Hoyoung": "160001005", "Lara": "160001005", "Ren": "160001005",
   // Jianghu
   "Mo Xuan": "170001005",
-  // Shine
-  "Sia Astelle": "180001005",
+  // Shine (shared "Stellar Equalize" icon)
+  "Sia Astelle": "180001005", "Erel Light": "180001005",
 };
 
 /** Echo of Hero skill ID for a given Nexon job name. Falls back to the generic beginner skill. */
@@ -172,7 +172,7 @@ export function heroEchoSkillId(nexonJobName: string): string {
 
 /** Display name for a class's Echo of Hero equivalent. */
 export function heroEchoName(nexonJobName: string): string {
-  if (nexonJobName === "Sia Astelle") return "Stellar Equalize";
+  if (nexonJobName === "Sia Astelle" || nexonJobName === "Erel Light") return "Stellar Equalize";
   if (HERO_ECHO_SKILL_MAP[nexonJobName] && nexonJobName !== "Mo Xuan") return "Exclusive Spell";
   return "Hero's Echo";
 }
