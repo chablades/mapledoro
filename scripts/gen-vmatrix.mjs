@@ -5,8 +5,7 @@
  *   { job: Node[], boost: Node[], common: Node[] }  where Node = [id, displayName, maxLevel].
  *   id is the manifests/v269/v-matrix.json entry id, used directly for the
  *   haku.network v-matrix icon (resourceImageUrl("v-matrix", id, "icon.png")).
- *   maxLevel is per-entry, read from the manifest (job=30, boost=60, common=30),
- *   except MAX_LEVEL_OVERRIDES below for entries where the manifest is wrong.
+ *   maxLevel is per-entry, read from the manifest (job=30, boost=60, common=30).
  *
  * Source: manifests/v269/v-matrix.json `entries`, each keyed by id:
  *   - type 0 with `className` set: job nodes (jobs === [class's own job code])
@@ -35,10 +34,7 @@ const classIdFor = (className) => SLUG_OVERRIDES[className] ?? slugify(className
 // Removed classes still present in the manifest — Jett and old Beast Tamer ("11212").
 const EXCLUDED_CLASSES = new Set(["Jett's Return", "11212"]);
 
-// Manifest reports maxLevel 50 for these two Hayato/Kanna shared common nodes, but the
-// in-game skill tooltip shows max level 30 — manifest data bug, override until corrected.
-const MAX_LEVEL_OVERRIDES = { "10000021": 30, "10000030": 30 };
-const maxLevelFor = (id, e) => MAX_LEVEL_OVERRIDES[id] ?? e.maxLevel;
+const maxLevelFor = (id, e) => e.maxLevel;
 
 const entries = JSON.parse(readFileSync(resolve(manifestPath), "utf8")).entries;
 

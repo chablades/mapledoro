@@ -16,6 +16,7 @@ import {
   primaryStatForClass, mainStatsForClass, getStatPotionTiers, statAbbrev,
   extremePotionIconId, extremePotionLabel, heroEchoSkillId, heroEchoName,
   type GuildBuffId, type BoolBuffId, type RenownStatId, type BoolBuffEntry,
+  type StatId, type BoolBuffIconType,
 } from "../data/buffsData";
 import SetupStepFrame from "./SetupStepFrame";
 
@@ -55,6 +56,13 @@ const boolTileStyle = (active: boolean, theme: AppTheme): CSSProperties => ({
   cursor: "pointer", padding: 0, lineHeight: 0,
   display: "flex", alignItems: "center", justifyContent: "center",
 });
+
+// A couple of bool buffs swap their catalog icon for a class/stat-specific one.
+function buffIconOverride(id: BoolBuffId, primaryStat: StatId, jobName: string): BoolBuffIconType | undefined {
+  if (id === "extremePotion") return { kind: "item", id: extremePotionIconId(primaryStat) };
+  if (id === "heroEcho") return { kind: "skill", id: heroEchoSkillId(jobName) };
+  return undefined;
+}
 
 // ── LeveledBuffTile ──────────────────────────────────────────────────────────
 
@@ -284,11 +292,7 @@ export default function BuffsSetupStep({
                 entry={b}
                 active={draft.bools[b.id] ?? false}
                 onToggle={() => toggleBool(b.id)}
-                iconOverride={
-                  b.id === "extremePotion" ? { kind: "item", id: extremePotionIconId(primaryStat) }
-                  : b.id === "heroEcho" ? { kind: "skill", id: heroEchoSkillId(jobName) }
-                  : undefined
-                }
+                iconOverride={buffIconOverride(b.id, primaryStat, jobName)}
                 label={boolBuffLabel(b.id, primaryStat, theme, jobName)}
                 ariaLabel={b.id === "heroEcho" ? heroEchoName(jobName) : undefined}
                 theme={theme}
@@ -333,11 +337,7 @@ export default function BuffsSetupStep({
                 entry={b}
                 active={draft.bools[b.id] ?? false}
                 onToggle={() => toggleBool(b.id)}
-                iconOverride={
-                  b.id === "extremePotion" ? { kind: "item", id: extremePotionIconId(primaryStat) }
-                  : b.id === "heroEcho" ? { kind: "skill", id: heroEchoSkillId(jobName) }
-                  : undefined
-                }
+                iconOverride={buffIconOverride(b.id, primaryStat, jobName)}
                 label={boolBuffLabel(b.id, primaryStat, theme, jobName)}
                 ariaLabel={b.id === "heroEcho" ? heroEchoName(jobName) : undefined}
                 theme={theme}
