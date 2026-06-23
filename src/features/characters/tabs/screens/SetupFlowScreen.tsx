@@ -23,6 +23,10 @@ export default function SetupFlowScreen({ model, actions }: SetupFlowScreenProps
     ? (readCharactersStore().linkSkillsByWorld[String(confirmed.worldID)] ?? "")
     : "";
 
+  const worldScouterWhRank = confirmed?.worldID !== undefined
+    ? readCharactersStore().scouterLegionByWorld[String(confirmed.worldID)]?.wildHunterRank
+    : undefined;
+
   return (
     <StepRenderer
       theme={theme}
@@ -33,6 +37,7 @@ export default function SetupFlowScreen({ model, actions }: SetupFlowScreenProps
       characterRoster={characterRoster}
       confirmedWorldId={confirmed?.worldID}
       worldLinkSkills={worldLinkSkills}
+      worldScouterWhRank={worldScouterWhRank}
       characterLevel={confirmed?.level}
       confirmedCharacterName={confirmed?.characterName}
       confirmedCharacterImgURL={confirmed?.characterImgURL}

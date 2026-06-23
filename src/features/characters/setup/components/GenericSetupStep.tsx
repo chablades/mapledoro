@@ -18,6 +18,7 @@ interface GenericSetupStepProps {
   characterRoster?: import("../../model/charactersStore").StoredCharacterRecord[];
   confirmedWorldId?: number;
   worldLinkSkills?: string;
+  worldScouterWhRank?: import("../../model/charactersStore").WhLegionRank;
   characterLevel?: number;
   confirmedCharacterName?: string;
   confirmedCharacterImgURL?: string;

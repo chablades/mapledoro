@@ -17,8 +17,10 @@ import {
   type StoredInnerAbility,
   type StoredInnerAbilityPreset,
   type StoredInnerAbilityLine,
+  type WhLegionRank,
   selectCharactersList,
   writeLinkSkillsForWorld,
+  writeScouterLegionForWorld,
   writeCharactersStore,
 } from "../model/charactersStore";
 import { findClassById } from "../../tools/hexa-skills/hexa-classes";
@@ -39,6 +41,7 @@ import type { StoredCharacterRecord } from "../model/charactersStore";
 import { convertStatsStepDraftToStored, marriageDraftToStored, parseStatsStepDraft } from "../setup/data/statsStepDraft";
 import { convertOzRingsDraftToStored, parseOzRingsDraft } from "../setup/data/ozRingData";
 import { convertBuffsDraftToStored, parseBuffsDraft } from "../setup/data/buffsData";
+import { convertScouterQuestionsDraftToStored, whRankFromRoster } from "../setup/data/scouterQuestionsData";
 import type { NormalizedCharacterData } from "../model/types";
 import {
   clampFlowStepIndex,
@@ -225,6 +228,20 @@ function applyStatsDraftToRoster(
   upsertFn({ ...existing, stats: { ...existing.stats, ...stats }, isLiberated, weaponHand, hasRuinForceShield, soul });
 }
 
+const WH_LEGION_RANK_SET = new Set<string>(["B", "A", "S", "SS", "SSS"]);
+
+/** Resolves the world's WH Legion rank: roster-derived wins, then manual pick, then stored. */
+function resolveWhLegionRank(
+  derived: WhLegionRank | null,
+  manual: string | undefined,
+  existing: WhLegionRank | undefined,
+): WhLegionRank | undefined {
+  if (derived) return derived;
+  if (manual === "none") return undefined;
+  if (manual && WH_LEGION_RANK_SET.has(manual)) return manual as WhLegionRank;
+  return existing;
+}
+
 /**
  * Builds/merges the MapleScouter flow's data into the roster in ONE upsert;
  * returns true if it created a new record. `upsertFn` writes via React state, so
@@ -238,19 +255,39 @@ function applyMapleScouterFlow(
   upsertFn: (c: StoredCharacterRecord) => void,
 ): boolean {
   if (!character) return false;
-  const existing = selectCharacterById(readCharactersStore(), toCharacterKey(character));
+  const store = readCharactersStore();
+  const existing = selectCharacterById(store, toCharacterKey(character));
   const created = !existing;
   const base = existing ?? createStoredCharacterRecord({
     character,
     gender: normalizeGenderValue(stepData.gender),
     marriage: marriageDraftToStored(stepData.marriage ?? ""),
   });
+
+  const statsDraft = parseStatsStepDraft(stepData.stats ?? "");
+
+  // Wild Hunter Legion rank is account-level (per-world): derive it from the highest
+  // Wild Hunter in this world's roster (incl. the character being set up, in case it
+  // IS the WH) when present; otherwise the user's manual pick, then the existing
+  // stored value. Persisted world-scoped, not per-character.
+  const worldRoster = selectCharactersList(store).filter((c) => c.worldID === character.worldID);
+  const legionRoster = worldRoster.some((c) => toCharacterKey(c) === toCharacterKey(base))
+    ? worldRoster
+    : [...worldRoster, base];
+  const wildHunterRank = resolveWhLegionRank(
+    whRankFromRoster(legionRoster),
+    statsDraft.scouterQuestions?.whLegion,
+    store.scouterLegionByWorld[String(character.worldID)]?.wildHunterRank,
+  );
+  writeScouterLegionForWorld(character.worldID, wildHunterRank ? { wildHunterRank } : {});
+
   const { stats, isLiberated, weaponHand, hasRuinForceShield, soul } =
-    convertStatsStepDraftToStored(parseStatsStepDraft(stepData.stats ?? ""), character.level);
+    convertStatsStepDraftToStored(statsDraft, character.level);
   const ozRings = convertOzRingsDraftToStored(parseOzRingsDraft(stepData.oz_rings ?? ""));
   const buffs = convertBuffsDraftToStored(parseBuffsDraft(stepData.buffs ?? ""));
-  const scouterPatch = ozRings || buffs
-    ? { ...base.scouter, ...(ozRings ? { ozRings } : {}), ...(buffs ? { buffs } : {}) }
+  const scouterQ = convertScouterQuestionsDraftToStored(statsDraft);
+  const scouterPatch = ozRings || buffs || scouterQ
+    ? { ...base.scouter, ...(ozRings ? { ozRings } : {}), ...(buffs ? { buffs } : {}), ...(scouterQ ?? {}) }
     : base.scouter;
   upsertFn({
     ...base,
@@ -846,6 +883,7 @@ export function useCharacterSetupController() {
       championCharacterIdsByWorld: nextChampionCharacterIdsByWorld,
       charactersById: nextCharactersById,
       linkSkillsByWorld: existingStore.linkSkillsByWorld,
+      scouterLegionByWorld: existingStore.scouterLegionByWorld,
       updatedAt: now,
     };
 

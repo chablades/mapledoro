@@ -72,6 +72,20 @@ export interface StoredScouterBuffs {
 export interface StoredScouterData {
   ozRings?: StoredOzRings;
   buffs?: StoredScouterBuffs;
+  /** Scouter-relevant legendary Inner Ability line, if any. */
+  innerAbilityLine?: "passive" | "multiTarget";
+}
+
+/** Wild Hunter legion-attacker grade (derived from the WH's level). */
+export type WhLegionRank = "B" | "A" | "S" | "SS" | "SSS";
+
+/**
+ * Per-world account-level scouter inputs (Legion is per-world). The WH rank is
+ * derived from the highest Wild Hunter in that world's roster; legion artifacts
+ * (user input, not derivable) will live here too.
+ */
+export interface StoredScouterLegion {
+  wildHunterRank?: WhLegionRank;
 }
 
 export interface StoredCharacterStats {
@@ -209,6 +223,8 @@ export interface CharactersStore {
   charactersById: Record<string, StoredCharacterRecord>;
   // Per-world: worldID (as string key) -> serialized link skills draft
   linkSkillsByWorld: Record<string, string>;
+  // Per-world: worldID (as string key) -> account-level scouter inputs (WH legion, …)
+  scouterLegionByWorld: Record<string, StoredScouterLegion>;
   updatedAt: number;
 }
 
@@ -473,6 +489,7 @@ function createEmptyCharactersStore(): CharactersStore {
     championCharacterIdsByWorld: {},
     charactersById: {},
     linkSkillsByWorld: {},
+    scouterLegionByWorld: {},
     updatedAt: 0,
   };
 }
@@ -581,6 +598,19 @@ function parseLinkSkillsByWorld(raw: unknown): Record<string, string> {
   return result;
 }
 
+const WH_LEGION_RANKS = new Set<string>(["B", "A", "S", "SS", "SSS"]);
+
+function parseScouterLegionByWorld(raw: unknown): Record<string, StoredScouterLegion> {
+  if (!isObject(raw)) return {};
+  const result: Record<string, StoredScouterLegion> = {};
+  for (const [worldId, val] of Object.entries(raw)) {
+    if (isObject(val) && typeof val.wildHunterRank === "string" && WH_LEGION_RANKS.has(val.wildHunterRank)) {
+      result[worldId] = { wildHunterRank: val.wildHunterRank as WhLegionRank };
+    }
+  }
+  return result;
+}
+
 function parseCharactersStore(raw: string): CharactersStore | null {
   try {
     const parsed = JSON.parse(raw) as unknown;
@@ -616,6 +646,7 @@ function parseCharactersStore(raw: string): CharactersStore | null {
       championCharacterIdsByWorld,
       charactersById,
       linkSkillsByWorld: parseLinkSkillsByWorld(parsed.linkSkillsByWorld),
+      scouterLegionByWorld: parseScouterLegionByWorld(parsed.scouterLegionByWorld),
       updatedAt: typeof parsed.updatedAt === "number" ? parsed.updatedAt : Date.now(),
     };
   } catch {
@@ -626,6 +657,11 @@ function parseCharactersStore(raw: string): CharactersStore | null {
 export function writeLinkSkillsForWorld(worldId: number, value: string) {
   const store = readCharactersStore();
   writeCharactersStore({ ...store, linkSkillsByWorld: { ...store.linkSkillsByWorld, [String(worldId)]: value } });
+}
+
+export function writeScouterLegionForWorld(worldId: number, value: StoredScouterLegion) {
+  const store = readCharactersStore();
+  writeCharactersStore({ ...store, scouterLegionByWorld: { ...store.scouterLegionByWorld, [String(worldId)]: value } });
 }
 
 export function writeCharactersStore(store: CharactersStore) {

@@ -83,6 +83,17 @@ export interface StatsStepDraft {
     soulType?: "mugong" | "ephenia" | "none";
     epheniaLevel?: 1 | 2;
   };
+
+  // MapleScouter-only answers (render only in the scouter flow).
+  // - innerAbilityLine ("passive" | "multiTarget" | "neither"): per-character, stored
+  //   in the `scouter` blob.
+  // - whLegion ("none" | WhLegionRank): the MANUAL Wild Hunter Legion rank, used only
+  //   when no WH is in the world's roster (otherwise it's derived & locked). Committed
+  //   per-world to scouterLegionByWorld on finish, not to the character record.
+  scouterQuestions?: {
+    innerAbilityLine?: string;
+    whLegion?: string;
+  };
 }
 
 /** Minimum character level to unlock Genesis Liberation. */

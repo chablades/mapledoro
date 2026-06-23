@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { Fragment, useRef, useState } from "react";
 import { numericKeyDown } from "../../../../lib/inputUtils";
 import type { CSSProperties } from "react";
 import Image from "next/image";
@@ -30,6 +30,8 @@ import {
   type TripleStatDraft,
 } from "../data/statsStepDraft";
 import { HYPER_STAT_CATEGORIES, HYPER_STAT_PRESET_COUNT, sanitizeHyperStatInput, type HyperStatCategoryDef } from "../data/hyperStatData";
+import { IA_LINE_OPTIONS, WH_RANK_OPTIONS, whAutofillSourceFromRoster, type WhAutofillSource } from "../data/scouterQuestionsData";
+import type { StoredCharacterRecord, WhLegionRank } from "../../model/charactersStore";
 
 interface StatsSetupStepProps {
   theme: AppTheme;
@@ -40,6 +42,9 @@ interface StatsSetupStepProps {
   jobName?: string;
   direction?: "forward" | "backward";
   characterLevel?: number;
+  characterRoster?: StoredCharacterRecord[];
+  confirmedWorldId?: number;
+  worldScouterWhRank?: WhLegionRank;
   value: string;
   onChange: (value: string) => void;
   onBack: () => void;
@@ -166,19 +171,6 @@ function countSetupOptionsQuestions(optsDef: ClassSetupOptionsDef | undefined, c
   if (optsDef?.weaponType) count += 1;
   if (optsDef?.ruinForceShield) count += 1;
   return count;
-}
-
-function isSetupOptionsComplete(
-  optsDef: ClassSetupOptionsDef | undefined,
-  opts: NonNullable<StatsStepDraft["setupOptions"]>,
-  characterLevel: number | undefined,
-): boolean {
-  const isLiberationEligible = characterLevel === undefined || characterLevel >= GENESIS_LIBERATION_LEVEL;
-  if (isLiberationEligible && opts.isLiberated === undefined) return false;
-  if (opts.soulType === undefined) return false;
-  if (optsDef?.weaponType && opts.weaponHand === undefined) return false;
-  if (optsDef?.ruinForceShield && opts.hasRuinForceShield === undefined) return false;
-  return true;
 }
 
 // ── Sub-components ────────────────────────────────────────────────────────────
@@ -489,7 +481,7 @@ function QuestionToggle({
   question, options, value, onToggle, theme, tooltip,
 }: {
   question: string;
-  options: { value: string; label: string }[];
+  options: { value: string; label: string; sublabel?: string; optOut?: boolean }[];
   value: string | null;
   /** Clicking the active option deselects it (returns null). */
   onToggle: (value: string | null) => void;
@@ -507,25 +499,39 @@ function QuestionToggle({
       <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
         {options.map((opt) => {
           const active = value === opt.value;
+          // The opt-out reads as a distinct choice through its descriptive wording
+          // ("No soul weapon", etc.) and its own row, not special chrome.
+          const bgColor = active ? `${theme.accent}22` : theme.bg;
           return (
-            <button
-              key={opt.value}
-              type="button"
-              onClick={() => onToggle(active ? null : opt.value)}
-              style={{
-                border: `1px solid ${active ? theme.accent : theme.border}`,
-                borderRadius: "9px",
-                background: active ? `${theme.accent}22` : theme.bg,
-                color: active ? theme.accent : theme.text,
-                fontFamily: "inherit",
-                fontWeight: 800,
-                fontSize: "0.85rem",
-                padding: "0.4rem 0.85rem",
-                cursor: "pointer",
-              }}
-            >
-              {opt.label}
-            </button>
+            <Fragment key={opt.value}>
+              {opt.optOut && <div aria-hidden style={{ flexBasis: "100%", height: 0 }} />}
+              <button
+                type="button"
+                onClick={() => onToggle(active ? null : opt.value)}
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: opt.sublabel ? "0.1rem" : 0,
+                  border: `1px solid ${active ? theme.accent : theme.border}`,
+                  borderRadius: "9px",
+                  background: bgColor,
+                  color: active ? theme.accent : theme.text,
+                  fontFamily: "inherit",
+                  fontWeight: 800,
+                  fontSize: "0.85rem",
+                  lineHeight: 1.15,
+                  padding: "0.4rem 0.85rem",
+                  cursor: "pointer",
+                }}
+              >
+                <span>{opt.label}</span>
+                {opt.sublabel && (
+                  <span style={{ fontSize: "0.75rem", fontWeight: 700, opacity: 0.7 }}>{opt.sublabel}</span>
+                )}
+              </button>
+            </Fragment>
           );
         })}
       </div>
@@ -590,12 +596,12 @@ function SetupOptionsSection({
 
   const soulOptions = isDA
     ? [
-        { value: "none", label: "None" },
         { value: "ephenia_1", label: "Ephenia Lv 1" },
         { value: "ephenia_2", label: "Ephenia Lv 2" },
         { value: "mugong", label: "Mu Gong Soul" },
+        { value: "none", label: "No soul weapon", optOut: true },
       ]
-    : [{ value: "none", label: "None" }, { value: "mugong", label: "Mu Gong Soul" }];
+    : [{ value: "mugong", label: "Mu Gong Soul" }, { value: "none", label: "No soul weapon", optOut: true }];
 
   return (
     <div>
@@ -662,10 +668,80 @@ function SetupOptionsSection({
   );
 }
 
+// MapleScouter-only questionnaire. The Wild Hunter Legion rank is account-level and
+// hard-locked, so it's shown read-only (derived per-world from the roster); the Inner
+// Ability line is a per-character pick. Renders only in the scouter flow.
+function ScouterQuestionsSection({ sq, whSource, whWorldRank, onUpdate, theme }: {
+  sq: NonNullable<StatsStepDraft["scouterQuestions"]>;
+  whSource: WhAutofillSource | null;
+  whWorldRank: WhLegionRank | undefined;
+  onUpdate: (patch: Partial<NonNullable<StatsStepDraft["scouterQuestions"]>>) => void;
+  theme: AppTheme;
+}) {
+  return (
+    <>
+      {whSource ? (
+        // A Wild Hunter is in this world's roster — the rank is authoritative, so it's
+        // derived and locked (it auto-updates as that character levels). Same question
+        // as the manual case, showing only the matching bracket as a locked button.
+        <div style={{ marginBottom: "0.9rem" }}>
+          <p style={{ margin: "0 0 0.4rem", fontSize: "0.88rem", fontWeight: 800, color: theme.text }}>
+            What&apos;s your Wild Hunter&apos;s level?
+          </p>
+          <div style={{
+            display: "inline-flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "0.1rem",
+            border: `1px solid ${theme.accent}`, borderRadius: "9px", background: `${theme.accent}22`, color: theme.accent,
+            fontWeight: 800, fontSize: "0.85rem", lineHeight: 1.15, padding: "0.4rem 0.85rem",
+          }}>
+            <span>{WH_RANK_OPTIONS.find((o) => o.value === whSource.rank)?.label ?? `Rank ${whSource.rank}`}</span>
+            <span style={{ fontSize: "0.75rem", fontWeight: 700, opacity: 0.7 }}>{whSource.rank}</span>
+          </div>
+          <p style={{ margin: "0.4rem 0 0", fontSize: "0.75rem", fontWeight: 700, color: theme.muted }}>
+            Auto-filled from <span style={{ color: theme.accent }}>{whSource.name}</span> (Lv {whSource.level}).
+          </p>
+        </div>
+      ) : (
+        // No Wild Hunter in the roster — let the user set the world's rank manually.
+        <QuestionToggle
+          question="What's your Wild Hunter's level?"
+          options={WH_RANK_OPTIONS}
+          value={sq.whLegion ?? whWorldRank ?? null}
+          // Deselect-to-clear: clicking the active button (incl. No Wild Hunter) clears it.
+          onToggle={(v) => onUpdate({ whLegion: v ?? undefined })}
+          theme={theme}
+        />
+      )}
+      <QuestionToggle
+        question="Which Inner Ability line do you use for bossing?"
+        options={IA_LINE_OPTIONS}
+        value={sq.innerAbilityLine ?? null}
+        onToggle={(v) => onUpdate({ innerAbilityLine: v ?? undefined })}
+        theme={theme}
+        tooltip={{
+          title: "Inner Ability",
+          description: "Found in your Stats window: click \"Detail\", then the \"Ability\" button at the bottom right. Only a Legendary-rank Inner Ability can roll these lines.",
+        }}
+      />
+    </>
+  );
+}
+
+// Derives the read-only WH Legion source for the scouter flow, scoped to the
+// character's world (Legion is per-world). Null outside the scouter flow.
+function deriveScouterWhSource(
+  isScouter: boolean,
+  roster: StoredCharacterRecord[] | undefined,
+  worldId: number | undefined,
+): WhAutofillSource | null {
+  if (!isScouter) return null;
+  const worldRoster = (roster ?? []).filter((c) => worldId == null || c.worldID === worldId);
+  return whAutofillSourceFromRoster(worldRoster);
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function StatsSetupStep({
-  theme, step, flowId, stepNumber, totalSteps, jobName = "", direction = "forward", characterLevel, value, onChange, onBack, onNext, onFinish,
+  theme, step, flowId, stepNumber, totalSteps, jobName = "", direction = "forward", characterLevel, characterRoster, confirmedWorldId, worldScouterWhRank, value, onChange, onBack, onNext, onFinish,
 }: StatsSetupStepProps) {
   const classData = CLASS_SKILL_DATA.find((c) => c.nexonJobName === jobName);
   const draft = parseStatsStepDraft(value);
@@ -673,6 +749,10 @@ export default function StatsSetupStep({
   // own substep everywhere EXCEPT the scouter flow. ("% Not Applied" is NOT flow-
   // specific — it shows for every non-ATT stat in all flows; see TripleStatRow.)
   const showHyperStat = flowId !== "maplescouter_setup";
+  const isScouter = flowId === "maplescouter_setup";
+
+  // WH Legion rank is read-only/derived, scoped to this character's world.
+  const whSource = deriveScouterWhSource(isScouter, characterRoster, confirmedWorldId);
 
   function updateDraft(patch: Partial<StatsStepDraft>) {
     onChange(serializeStatsStepDraft({ ...draft, ...patch }));
@@ -694,6 +774,10 @@ export default function StatsSetupStep({
 
   function handleSetupOptUpdate(patch: Partial<NonNullable<StatsStepDraft["setupOptions"]>>) {
     updateDraft({ setupOptions: { ...(draft.setupOptions ?? {}), ...patch } });
+  }
+
+  function handleScouterQUpdate(patch: Partial<NonNullable<StatsStepDraft["scouterQuestions"]>>) {
+    updateDraft({ scouterQuestions: { ...(draft.scouterQuestions ?? {}), ...patch } });
   }
 
   const hyper = normalizeHyperStatDraft(draft.hyperStat);
@@ -734,6 +818,11 @@ export default function StatsSetupStep({
     ? getRequiredStatsForClass(classData).filter((id): id is TripleStatFieldId => TRIPLE_IDS.has(id))
     : [];
 
+  const questionCount = countSetupOptionsQuestions(classData?.setupOptionsDef, characterLevel) + (isScouter ? 2 : 0);
+  const questionsDescription = questionCount === 1
+    ? "One quick question about your character first:"
+    : "A few quick questions about your character first:";
+
   if (substep === 0) {
     return (
       <div key={0} style={substepAnimStyle}>
@@ -744,18 +833,22 @@ export default function StatsSetupStep({
           stepLabel={step.label}
           stepNumber={stepNumber}
           totalSteps={totalSteps}
-          description={
-            countSetupOptionsQuestions(classData?.setupOptionsDef, characterLevel) === 1
-              ? "One quick question about your character first:"
-              : "A few quick questions about your character first:"
-          }
+          description={questionsDescription}
           onBack={onBack}
           onNext={() => goToSubstep(1)}
           onFinish={onFinish}
           nextLabel="Continue"
-          nextDisabled={!isSetupOptionsComplete(classData?.setupOptionsDef, draft.setupOptions ?? {}, characterLevel)}
         >
           <SetupOptionsSection optsDef={classData?.setupOptionsDef} draft={draft} onUpdate={handleSetupOptUpdate} theme={theme} characterLevel={characterLevel} />
+          {isScouter && (
+            <ScouterQuestionsSection
+              sq={draft.scouterQuestions ?? {}}
+              whSource={whSource}
+              whWorldRank={worldScouterWhRank}
+              onUpdate={handleScouterQUpdate}
+              theme={theme}
+            />
+          )}
         </SetupStepFrame>
       </div>
     );
