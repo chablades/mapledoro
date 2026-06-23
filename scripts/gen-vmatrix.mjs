@@ -55,9 +55,21 @@ for (const [id, e] of Object.entries(entries)) {
   }
 }
 
+// In-game order of the branch/faction-shared common nodes is NOT the manifest id order.
+// Ids listed here sort to the front in this order; everything else falls back to ascending id.
+const BRANCH_COMMON_ORDER = [
+  "10000025", // Maple World Goddess's Blessing — precedes the faction node (e.g. Resistance Infantry) in-game
+];
+const branchRank = (id) => {
+  const i = BRANCH_COMMON_ORDER.indexOf(id);
+  return i === -1 ? BRANCH_COMMON_ORDER.length : i;
+};
+
 // Common candidates: type-0 entries with no className (universal + branch/faction-shared).
 const commonCandidates = Object.entries(entries).filter(([, e]) => e.type === 0 && !e.className);
-const branchCommon = commonCandidates.filter(([, e]) => !e.jobs.includes("all"));
+const branchCommon = commonCandidates
+  .filter(([, e]) => !e.jobs.includes("all"))
+  .sort(([a], [b]) => branchRank(a) - branchRank(b) || a.localeCompare(b));
 
 const UNIVERSAL_ORDER = [
   "10000008", // Erda Nova
