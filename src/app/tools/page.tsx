@@ -62,10 +62,9 @@ const OTHER_TOOLS: ToolCard[] = [
   {
     title: "Mystic Frontier Solver",
     description:
-      "Import your familiars and dice target to determine whether rerolls are needed.",
+      "Set your familiars, dice, and target score to see if your roll passes and which rerolls would get you there.",
     icon: "🎲",
-    href: "#",
-    comingSoon: true,
+    href: "/tools/mystic-frontier",
   },
 ];
 
