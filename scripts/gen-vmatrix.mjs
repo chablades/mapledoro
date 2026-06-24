@@ -8,10 +8,13 @@
  *   maxLevel is per-entry, read from the manifest (job=30, boost=60, common=30).
  *
  * Source: manifests/v269/v-matrix.json `entries`, each keyed by id:
- *   - type 0 with `className` set: job nodes (jobs === [class's own job code])
+ *   - type 0 with `className`, id >= 10010000: job nodes (jobs === [class's own job code])
  *   - type 1 with `className` set: boost nodes (already fused per matrix slot)
  *   - type 0 without `className`: common nodes — universal (jobs === ["all"])
  *     or branch/faction-shared (jobs includes a class's own job code)
+ *   - type 0 with `className`, id < 10010000: class-EXCLUSIVE common nodes (e.g. Zero's
+ *     "Transcendent", Kinesis's "Afterimage of the Otherworld") — they carry a className
+ *     like job nodes but live in the shared common id space, so they belong in common, not job
  *   - type 2/3: special/event/unused — skipped entirely
  *
  * Common node order: branch/faction-shared nodes (ascending id) first, then the 15 universal
@@ -34,14 +37,27 @@ const classIdFor = (className) => SLUG_OVERRIDES[className] ?? slugify(className
 // Removed classes still present in the manifest — Jett and old Beast Tamer ("11212").
 const EXCLUDED_CLASSES = new Set(["Jett's Return", "11212"]);
 
+// Job entries the manifest over-includes. These Kinesis ids (Psychic Shockwave, Psychic
+// Nova, Ultimate: Checkmate, Psychic Castle) are newer/HEXA-era skills, NOT real V matrix
+// job nodes — Kinesis has 4 job nodes in-game (confirmed by Yuki), but the manifest lists 8
+// with no field to tell them apart, so they're excluded by id. The job-count guard below
+// will surface any future class that drifts from the 4-job / 6-boost shape.
+const EXCLUDED_NODE_IDS = new Set(["10020058", "10020059", "10020060", "10020061"]);
+
 const maxLevelFor = (id, e) => e.maxLevel;
+
+// Job nodes are id >= 10010000; the 10000xxx space is shared common nodes. A few
+// className-tagged entries (Zero's Transcendent pair, Kinesis's Afterimage) live in
+// that common space and are class-exclusive COMMON nodes, not job nodes.
+const COMMON_ID_MAX = 10010000;
+const isCommonRangeId = (id) => Number(id) < COMMON_ID_MAX;
 
 const entries = JSON.parse(readFileSync(resolve(manifestPath), "utf8")).entries;
 
 // Per-class job + boost nodes, and each class's own job code, from className-tagged entries.
 const classes = new Map(); // classId -> { className, ownCode, job: Node[], boost: Node[] }
 for (const [id, e] of Object.entries(entries)) {
-  if (!e.className || EXCLUDED_CLASSES.has(e.className)) continue;
+  if (!e.className || EXCLUDED_CLASSES.has(e.className) || EXCLUDED_NODE_IDS.has(id)) continue;
   let cls = classes.get(classIdFor(e.className));
   if (!cls) {
     cls = { className: e.className, ownCode: null, job: [], boost: [] };
@@ -49,7 +65,8 @@ for (const [id, e] of Object.entries(entries)) {
   }
   if (e.type === 0) {
     cls.ownCode ??= e.jobs[0];
-    cls.job.push([id, e.name, maxLevelFor(id, e)]);
+    // Class-exclusive common nodes (common id space) are picked up by commonCandidates below.
+    if (!isCommonRangeId(id)) cls.job.push([id, e.name, maxLevelFor(id, e)]);
   } else if (e.type === 1) {
     cls.boost.push([id, e.name, maxLevelFor(id, e)]);
   }
@@ -65,8 +82,9 @@ const branchRank = (id) => {
   return i === -1 ? BRANCH_COMMON_ORDER.length : i;
 };
 
-// Common candidates: type-0 entries with no className (universal + branch/faction-shared).
-const commonCandidates = Object.entries(entries).filter(([, e]) => e.type === 0 && !e.className);
+// Common candidates: type-0 entries that are either unowned (universal + branch/faction-shared)
+// or class-exclusive common nodes living in the common id space (Zero/Kinesis specials).
+const commonCandidates = Object.entries(entries).filter(([id, e]) => e.type === 0 && (!e.className || isCommonRangeId(id)));
 const branchCommon = commonCandidates
   .filter(([, e]) => !e.jobs.includes("all"))
   .sort(([a], [b]) => branchRank(a) - branchRank(b) || a.localeCompare(b));
@@ -103,3 +121,13 @@ for (const [classId, cls] of classes) {
 }
 
 console.log(`\n${classes.size} classes written -> ${OUTPUT_DIR}`);
+
+// Every class should have exactly 4 job nodes and 6 boost nodes. Anything else signals a
+// manifest anomaly (over/under-included nodes) that needs a human look — flag it loudly.
+const offShape = [...classes].filter(([, c]) => c.job.length !== 4 || c.boost.length !== 6);
+if (offShape.length > 0) {
+  console.warn(`\n⚠ ${offShape.length} class(es) not 4-job / 6-boost — verify against in-game:`);
+  for (const [classId, c] of offShape) console.warn(`   ${classId.padEnd(18)} job=${c.job.length} boost=${c.boost.length}`);
+} else {
+  console.log("\nAll classes are 4-job / 6-boost ✓");
+}
