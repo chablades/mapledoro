@@ -83,11 +83,22 @@ export const IA_LINE_OPTIONS: { value: string; label: string; optOut?: boolean }
 
 // ── Conversion ─────────────────────────────────────────────────────────────────
 
-/** Pulls the per-character scouter answers (Inner Ability line) out of the stats draft. */
+/** Parses the weapon ATT/MATT field into a positive integer, or undefined if blank/invalid. */
+function parseWeaponAtt(raw: string | undefined): number | undefined {
+  const n = Number(raw?.trim());
+  return Number.isFinite(n) && n > 0 ? Math.floor(n) : undefined;
+}
+
+/** Pulls the per-character scouter inputs (Inner Ability line + weapon ATT) out of the stats draft. */
 export function convertScouterQuestionsDraftToStored(
   draft: StatsStepDraft,
-): Pick<StoredScouterData, "innerAbilityLine"> | null {
+): Pick<StoredScouterData, "innerAbilityLine" | "weaponAtt"> | null {
   const line = draft.scouterQuestions?.innerAbilityLine;
-  if (line === "passive" || line === "multiTarget") return { innerAbilityLine: line };
-  return null;
+  const innerAbilityLine = line === "passive" || line === "multiTarget" ? line : undefined;
+  const weaponAtt = parseWeaponAtt(draft.weaponAtt);
+  if (innerAbilityLine === undefined && weaponAtt === undefined) return null;
+  return {
+    ...(innerAbilityLine !== undefined ? { innerAbilityLine } : {}),
+    ...(weaponAtt !== undefined ? { weaponAtt } : {}),
+  };
 }

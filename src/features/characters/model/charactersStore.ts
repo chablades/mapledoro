@@ -74,6 +74,8 @@ export interface StoredScouterData {
   buffs?: StoredScouterBuffs;
   /** Scouter-relevant legendary Inner Ability line, if any. */
   innerAbilityLine?: "passive" | "multiTarget";
+  /** Weapon's attack value — the "+X" Attack Power / Magic ATT shown on the weapon tooltip. */
+  weaponAtt?: number;
 }
 
 /** Wild Hunter legion-attacker grade (derived from the WH's level). */

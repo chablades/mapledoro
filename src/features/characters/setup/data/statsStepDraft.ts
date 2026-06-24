@@ -84,6 +84,11 @@ export interface StatsStepDraft {
     epheniaLevel?: 1 | 2;
   };
 
+  // MapleScouter-only: the weapon's ATT/MATT value (the "+X" shown when hovering the
+  // weapon in the equipment window). Scouter needs the raw number; not captured by Full
+  // setup. Committed to the `scouter` blob (StoredScouterData.weaponAtt).
+  weaponAtt?: string;
+
   // MapleScouter-only answers (render only in the scouter flow).
   // - innerAbilityLine ("passive" | "multiTarget" | "neither"): per-character, stored
   //   in the `scouter` blob.

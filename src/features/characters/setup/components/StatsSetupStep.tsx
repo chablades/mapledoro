@@ -159,6 +159,12 @@ const JOB_ADVANCEMENT_MIN_LEVEL: Record<string, number> = {
   "Hyper Skills (140)": 140,
 };
 
+// Scouter weapon-ATT field: magic classes enter Magic ATT, everyone else Attack Power.
+function deriveWeaponAtt(tripleIds: TripleStatFieldId[]): { usesMagicWeapon: boolean; label: string } {
+  const usesMagicWeapon = tripleIds.includes("magicAtt") && !tripleIds.includes("attackPower");
+  return { usesMagicWeapon, label: usesMagicWeapon ? "Weapon Magic ATT" : "Weapon ATT" };
+}
+
 function isSkillUnlocked(skill: BuffSkill, characterLevel: number | undefined): boolean {
   if (characterLevel === undefined) return true;
   return characterLevel >= (JOB_ADVANCEMENT_MIN_LEVEL[skill.jobAdvancement] ?? 0);
@@ -470,6 +476,46 @@ function CombatStatCell({
           onKeyDown={numericKeyDown}
         />
         {!isRaw && <span style={inputSuffixStyle(theme)}>%</span>}
+      </div>
+    </div>
+  );
+}
+
+// Scouter-only weapon ATT/MATT field — the "+X" attack value shown on the weapon hover.
+function WeaponAttField({ label, usesMagicWeapon, value, onUpdate, theme }: {
+  label: string;
+  usesMagicWeapon: boolean;
+  value: string;
+  onUpdate: (val: string) => void;
+  theme: AppTheme;
+}) {
+  const statName = usesMagicWeapon ? "Magic ATT" : "Attack Power";
+  return (
+    <div style={{ marginTop: "0.75rem" }}>
+      <p style={sectionLabelStyle(theme)}>Weapon</p>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.5rem" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", minWidth: 0 }}>
+          <span style={{ fontSize: "0.82rem", fontWeight: 700, color: theme.text }}>{label}</span>
+          <InfoTooltip
+            content={{
+              title: label,
+              description: `Hover over your weapon in the equipment window and enter the total ${statName} shown (the white number with a +).`,
+            }}
+            theme={theme}
+          />
+        </div>
+        <input
+          type="text"
+          inputMode="numeric"
+          aria-label={label}
+          value={value}
+          placeholder="0"
+          style={{ ...statInputStyle(theme, "4rem"), flexShrink: 0 }}
+          onChange={(e) => onUpdate(e.target.value)}
+          onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
+          onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
+          onKeyDown={numericKeyDown}
+        />
       </div>
     </div>
   );
@@ -818,6 +864,8 @@ export default function StatsSetupStep({
     ? getRequiredStatsForClass(classData).filter((id): id is TripleStatFieldId => TRIPLE_IDS.has(id))
     : [];
 
+  const { usesMagicWeapon, label: weaponAttLabel } = deriveWeaponAtt(tripleIds);
+
   const questionCount = countSetupOptionsQuestions(classData?.setupOptionsDef, characterLevel) + (isScouter ? 2 : 0);
   const questionsDescription = questionCount === 1
     ? "One quick question about your character first:"
@@ -919,6 +967,16 @@ export default function StatsSetupStep({
           ))}
         </div>
       </div>
+
+      {isScouter && (
+        <WeaponAttField
+          label={weaponAttLabel}
+          usesMagicWeapon={usesMagicWeapon}
+          value={draft.weaponAtt ?? ""}
+          onUpdate={(v) => handleSingleUpdate("weaponAtt", v)}
+          theme={theme}
+        />
+      )}
     </SetupStepFrame>
     </div>
   );
