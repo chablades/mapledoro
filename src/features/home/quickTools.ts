@@ -94,6 +94,13 @@ export const ALL_QUICK_TOOLS: QuickLink[] = [
     iconType: "emoji",
     href: "/tools/event-planner",
   },
+  {
+    title: "Mystic Frontier",
+    desc: "Dice roll solver",
+    itemId: "03802172", // Blessed Orange Dice
+    iconType: "item",
+    href: "/tools/mystic-frontier",
+  },
 ];
 
 export const QUICK_GUIDES: QuickLink[] = [
