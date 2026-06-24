@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 
 const AVATAR_LOAD_TIMEOUT_MS = 8000;
@@ -33,6 +32,13 @@ interface CharacterAvatarProps {
 
 export default function CharacterAvatar({
   src,
+  ...props
+}: CharacterAvatarProps) {
+  return <CharacterAvatarImage key={src} src={src} {...props} />;
+}
+
+function CharacterAvatarImage({
+  src,
   alt,
   width,
   height,
@@ -43,13 +49,9 @@ export default function CharacterAvatar({
   const [displaySrc, setDisplaySrc] = useState(src);
   const [retryAttempt, setRetryAttempt] = useState(0);
   const [settled, setSettled] = useState(() => isCached(src));
-  const onReadyCalledRef = useRef(false);
-  const settledRef = useRef(settled);
+  const readySrcRef = useRef<string | null>(null);
+  const retryTimeoutRef = useRef<number | null>(null);
 
-  // Keep settledRef in sync so retry timeouts can check it without stale closure
-  useEffect(() => { settledRef.current = settled; }, [settled]);
-
-  // Fallback timeout — only runs while not settled
   useEffect(() => {
     if (settled) return;
     const timeout = window.setTimeout(() => {
@@ -59,26 +61,35 @@ export default function CharacterAvatar({
     return () => clearTimeout(timeout);
   }, [settled]);
 
-  // Fire onReady once after settled
   useEffect(() => {
-    if (!settled || onReadyCalledRef.current) return;
-    onReadyCalledRef.current = true;
+    return () => {
+      if (retryTimeoutRef.current !== null) {
+        window.clearTimeout(retryTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!settled) return;
+    if (readySrcRef.current === src) return;
+    readySrcRef.current = src;
     onReady?.();
-  }, [onReady, settled]);
+  }, [onReady, settled, src]);
 
   return (
-    <Image
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
       src={displaySrc}
       alt={alt}
       width={width}
       height={height}
       loading="eager"
+      decoding="async"
       onLoad={() => setSettled(true)}
       onError={() => {
         if (retryAttempt < AVATAR_MAX_RETRIES) {
           const next = retryAttempt + 1;
-          window.setTimeout(() => {
-            if (settledRef.current) return;
+          retryTimeoutRef.current = window.setTimeout(() => {
             setRetryAttempt(next);
             setDisplaySrc(appendRetryParam(src, next));
           }, AVATAR_RETRY_DELAY_MS);
@@ -88,13 +99,7 @@ export default function CharacterAvatar({
         setSettled(true);
       }}
       className={className}
-      // Pin the rendered CSS size to the width/height props on BOTH axes. The fallback
-      // avatar has a different natural aspect ratio than real avatars, so without an
-      // explicit size next/image can lay it out with one axis derived from the ratio and
-      // the other pinned to the attribute — which trips its "width or height modified, but
-      // not the other" dev warning. Consumers can still override via `style`.
       style={{ color: "transparent", width, height, ...style }}
-      unoptimized={displaySrc.startsWith("data:image/")}
     />
   );
 }
