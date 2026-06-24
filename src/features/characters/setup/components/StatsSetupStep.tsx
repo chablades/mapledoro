@@ -30,8 +30,8 @@ import {
   type TripleStatDraft,
 } from "../data/statsStepDraft";
 import { HYPER_STAT_CATEGORIES, HYPER_STAT_PRESET_COUNT, sanitizeHyperStatInput, type HyperStatCategoryDef } from "../data/hyperStatData";
-import { IA_LINE_OPTIONS, WH_RANK_OPTIONS, whAutofillSourceFromRoster, type WhAutofillSource } from "../data/scouterQuestionsData";
-import type { StoredCharacterRecord, WhLegionRank } from "../../model/charactersStore";
+import { IA_LINE_OPTIONS, LEGION_ARTIFACT_FINAL_ATK_LIMIT, WH_RANK_OPTIONS, whAutofillSourceFromRoster, type WhAutofillSource } from "../data/scouterQuestionsData";
+import type { StoredCharacterRecord, StoredScouterLegion } from "../../model/charactersStore";
 
 interface StatsSetupStepProps {
   theme: AppTheme;
@@ -44,7 +44,7 @@ interface StatsSetupStepProps {
   characterLevel?: number;
   characterRoster?: StoredCharacterRecord[];
   confirmedWorldId?: number;
-  worldScouterWhRank?: WhLegionRank;
+  worldScouterLegion?: StoredScouterLegion;
   value: string;
   onChange: (value: string) => void;
   onBack: () => void;
@@ -714,16 +714,66 @@ function SetupOptionsSection({
   );
 }
 
+// Keeps the Final Attack Skill % field digits-only and hard-capped at the artifact max,
+// so a user can never see an out-of-range value stick.
+function clampFinalAttackInput(raw: string): string {
+  const digits = raw.replace(/\D/g, "");
+  if (digits === "") return "";
+  return String(Math.min(Number(digits), LEGION_ARTIFACT_FINAL_ATK_LIMIT));
+}
+
+// A labeled numeric row (mirrors WeaponAttField) for the Final Attack Skill artifact.
+function LegionFinalAttackField({ value, onUpdate, theme }: {
+  value: string;
+  onUpdate: (val: string) => void;
+  theme: AppTheme;
+}) {
+  const label = "Final Attack Skill Damage";
+  return (
+    <div style={{ marginBottom: "0.9rem" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", marginBottom: "0.4rem" }}>
+        <span style={{ fontSize: "0.88rem", fontWeight: 800, color: theme.text }}>{label}</span>
+        <InfoTooltip
+          content={{
+            title: label,
+            description: `Found in your Legion window, in the Artifacts tab. Enter the total for the stat "Damage of Final Attack Skills" (up to ${LEGION_ARTIFACT_FINAL_ATK_LIMIT}%).`,
+          }}
+          theme={theme}
+        />
+      </div>
+      <div style={{ position: "relative", width: "5rem" }}>
+        <input
+          type="text"
+          inputMode="numeric"
+          aria-label={label}
+          value={value}
+          placeholder="0"
+          style={{ ...statInputStyle(theme, "100%"), paddingRight: "1.15rem" }}
+          onChange={(e) => onUpdate(clampFinalAttackInput(e.target.value))}
+          onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
+          onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
+          onKeyDown={numericKeyDown}
+        />
+        <span style={inputSuffixStyle(theme)}>%</span>
+      </div>
+    </div>
+  );
+}
+
 // MapleScouter-only questionnaire. The Wild Hunter Legion rank is account-level and
-// hard-locked, so it's shown read-only (derived per-world from the roster); the Inner
-// Ability line is a per-character pick. Renders only in the scouter flow.
-function ScouterQuestionsSection({ sq, whSource, whWorldRank, onUpdate, theme }: {
+// hard-locked, so it's shown read-only (derived per-world from the roster); the two
+// Maple Union artifacts are account-level manual inputs (prefilled from the world's
+// stored values); the Inner Ability line is a per-character pick. Scouter flow only.
+function ScouterQuestionsSection({ sq, whSource, worldLegion, onUpdate, theme }: {
   sq: NonNullable<StatsStepDraft["scouterQuestions"]>;
   whSource: WhAutofillSource | null;
-  whWorldRank: WhLegionRank | undefined;
+  worldLegion: StoredScouterLegion | undefined;
   onUpdate: (patch: Partial<NonNullable<StatsStepDraft["scouterQuestions"]>>) => void;
   theme: AppTheme;
 }) {
+  const whWorldRank = worldLegion?.wildHunterRank;
+  const finalAtkValue = sq.artifactFinalAttackDmg
+    ?? (worldLegion?.artifactFinalAttackDmg != null ? String(worldLegion.artifactFinalAttackDmg) : "");
   return (
     <>
       {whSource ? (
@@ -757,6 +807,21 @@ function ScouterQuestionsSection({ sq, whSource, whWorldRank, onUpdate, theme }:
           theme={theme}
         />
       )}
+      <BoolToggle
+        question="Do you have the +1 attack target Legion artifact?"
+        value={sq.artifactExtraTarget ?? worldLegion?.artifactExtraTarget}
+        onToggle={(v) => onUpdate({ artifactExtraTarget: v })}
+        theme={theme}
+        tooltip={{
+          title: "Legion Artifact",
+          description: 'Found in your Legion window, in the Artifacts tab. The stat is called: "+1 targets hit when using multi-target skills and EXP acquired."',
+        }}
+      />
+      <LegionFinalAttackField
+        value={finalAtkValue}
+        onUpdate={(v) => onUpdate({ artifactFinalAttackDmg: v })}
+        theme={theme}
+      />
       <QuestionToggle
         question="Which Inner Ability line do you use for bossing?"
         options={IA_LINE_OPTIONS}
@@ -787,7 +852,7 @@ function deriveScouterWhSource(
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function StatsSetupStep({
-  theme, step, flowId, stepNumber, totalSteps, jobName = "", direction = "forward", characterLevel, characterRoster, confirmedWorldId, worldScouterWhRank, value, onChange, onBack, onNext, onFinish,
+  theme, step, flowId, stepNumber, totalSteps, jobName = "", direction = "forward", characterLevel, characterRoster, confirmedWorldId, worldScouterLegion, value, onChange, onBack, onNext, onFinish,
 }: StatsSetupStepProps) {
   const classData = CLASS_SKILL_DATA.find((c) => c.nexonJobName === jobName);
   const draft = parseStatsStepDraft(value);
@@ -892,7 +957,7 @@ export default function StatsSetupStep({
             <ScouterQuestionsSection
               sq={draft.scouterQuestions ?? {}}
               whSource={whSource}
-              whWorldRank={worldScouterWhRank}
+              worldLegion={worldScouterLegion}
               onUpdate={handleScouterQUpdate}
               theme={theme}
             />

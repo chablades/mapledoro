@@ -9,7 +9,7 @@
     blob (StoredScouterData), NOT in StoredCharacterStats.
 */
 
-import type { StoredCharacterRecord, StoredScouterData, WhLegionRank } from "../../model/charactersStore";
+import { LEGION_ARTIFACT_FINAL_ATK_MAX, type StoredCharacterRecord, type StoredScouterData, type StoredScouterLegion, type WhLegionRank } from "../../model/charactersStore";
 import type { StatsStepDraft } from "./statsStepDraft";
 
 // ── Wild Hunter legion rank ───────────────────────────────────────────────────
@@ -80,6 +80,42 @@ export const IA_LINE_OPTIONS: { value: string; label: string; optOut?: boolean }
   { value: "multiTarget", label: "Multi-target +1 enemy" },
   { value: "neither", label: "Neither", optOut: true },
 ];
+
+// ── Legion artifacts (Maple Union) ───────────────────────────────────────────────
+// Two account-level (per-world) artifact effects MapleScouter wants, neither derivable:
+//  - "+1 targets hit on multi-target skills & EXP acquired" — a yes/no effect.
+//  - "Damage of Final Attack Skills" — a percent (caps at LEGION_ARTIFACT_FINAL_ATK_MAX).
+// Both persist per-world on StoredScouterLegion alongside the WH rank.
+
+export const LEGION_ARTIFACT_FINAL_ATK_LIMIT = LEGION_ARTIFACT_FINAL_ATK_MAX;
+
+/** Parses the final-attack-damage percent (1–LIMIT), or undefined if blank/invalid. */
+function parseFinalAttackDmg(raw: string | undefined): number | undefined {
+  const n = Number(raw?.trim());
+  if (!Number.isFinite(n) || n <= 0) return undefined;
+  return Math.min(Math.floor(n), LEGION_ARTIFACT_FINAL_ATK_LIMIT);
+}
+
+type LegionArtifactFields = Pick<StoredScouterLegion, "artifactExtraTarget" | "artifactFinalAttackDmg">;
+
+/**
+ * Resolves the per-world legion artifact fields for a finish: the draft entry wins
+ * (including clearing — an empty numeric field or "No" toggle removes the value),
+ * otherwise the existing stored value is preserved. Returns only set fields.
+ */
+export function resolveLegionArtifacts(
+  sq: StatsStepDraft["scouterQuestions"],
+  existing: LegionArtifactFields | undefined,
+): LegionArtifactFields {
+  const extraTarget = sq?.artifactExtraTarget ?? existing?.artifactExtraTarget;
+  const finalAtk = sq?.artifactFinalAttackDmg !== undefined
+    ? parseFinalAttackDmg(sq.artifactFinalAttackDmg)
+    : existing?.artifactFinalAttackDmg;
+  return {
+    ...(extraTarget ? { artifactExtraTarget: true } : {}),
+    ...(finalAtk !== undefined ? { artifactFinalAttackDmg: finalAtk } : {}),
+  };
+}
 
 // ── Conversion ─────────────────────────────────────────────────────────────────
 

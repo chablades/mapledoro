@@ -41,7 +41,7 @@ import type { StoredCharacterRecord } from "../model/charactersStore";
 import { convertStatsStepDraftToStored, marriageDraftToStored, parseStatsStepDraft } from "../setup/data/statsStepDraft";
 import { convertOzRingsDraftToStored, parseOzRingsDraft } from "../setup/data/ozRingData";
 import { convertBuffsDraftToStored, parseBuffsDraft } from "../setup/data/buffsData";
-import { convertScouterQuestionsDraftToStored, whRankFromRoster } from "../setup/data/scouterQuestionsData";
+import { convertScouterQuestionsDraftToStored, resolveLegionArtifacts, whRankFromRoster } from "../setup/data/scouterQuestionsData";
 import type { NormalizedCharacterData } from "../model/types";
 import {
   clampFlowStepIndex,
@@ -274,12 +274,19 @@ function applyMapleScouterFlow(
   const legionRoster = worldRoster.some((c) => toCharacterKey(c) === toCharacterKey(base))
     ? worldRoster
     : [...worldRoster, base];
+  const existingLegion = store.scouterLegionByWorld[String(character.worldID)];
   const wildHunterRank = resolveWhLegionRank(
     whRankFromRoster(legionRoster),
     statsDraft.scouterQuestions?.whLegion,
-    store.scouterLegionByWorld[String(character.worldID)]?.wildHunterRank,
+    existingLegion?.wildHunterRank,
   );
-  writeScouterLegionForWorld(character.worldID, wildHunterRank ? { wildHunterRank } : {});
+  // Maple Union artifacts are also account-level (per-world), not derivable — keep them
+  // on the same per-world blob next to the WH rank.
+  const artifacts = resolveLegionArtifacts(statsDraft.scouterQuestions, existingLegion);
+  writeScouterLegionForWorld(character.worldID, {
+    ...(wildHunterRank ? { wildHunterRank } : {}),
+    ...artifacts,
+  });
 
   const { stats, isLiberated, weaponHand, hasRuinForceShield, soul } =
     convertStatsStepDraftToStored(statsDraft, character.level);

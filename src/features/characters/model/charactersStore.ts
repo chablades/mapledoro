@@ -81,13 +81,20 @@ export interface StoredScouterData {
 /** Wild Hunter legion-attacker grade (derived from the WH's level). */
 export type WhLegionRank = "B" | "A" | "S" | "SS" | "SSS";
 
+/** Max percent for the "Damage of Final Attack Skills" Maple Union artifact. */
+export const LEGION_ARTIFACT_FINAL_ATK_MAX = 30;
+
 /**
  * Per-world account-level scouter inputs (Legion is per-world). The WH rank is
- * derived from the highest Wild Hunter in that world's roster; legion artifacts
- * (user input, not derivable) will live here too.
+ * derived from the highest Wild Hunter in that world's roster; the Maple Union
+ * artifacts are user input (not derivable).
  */
 export interface StoredScouterLegion {
   wildHunterRank?: WhLegionRank;
+  /** "+1 targets hit on multi-target skills & EXP acquired" artifact is active. */
+  artifactExtraTarget?: boolean;
+  /** "Damage of Final Attack Skills" artifact bonus, as a percent (1–30). */
+  artifactFinalAttackDmg?: number;
 }
 
 export interface StoredCharacterStats {
@@ -606,8 +613,17 @@ function parseScouterLegionByWorld(raw: unknown): Record<string, StoredScouterLe
   if (!isObject(raw)) return {};
   const result: Record<string, StoredScouterLegion> = {};
   for (const [worldId, val] of Object.entries(raw)) {
-    if (isObject(val) && typeof val.wildHunterRank === "string" && WH_LEGION_RANKS.has(val.wildHunterRank)) {
-      result[worldId] = { wildHunterRank: val.wildHunterRank as WhLegionRank };
+    if (!isObject(val)) continue;
+    const entry: StoredScouterLegion = {};
+    if (typeof val.wildHunterRank === "string" && WH_LEGION_RANKS.has(val.wildHunterRank)) {
+      entry.wildHunterRank = val.wildHunterRank as WhLegionRank;
+    }
+    if (val.artifactExtraTarget === true) entry.artifactExtraTarget = true;
+    if (typeof val.artifactFinalAttackDmg === "number" && val.artifactFinalAttackDmg > 0) {
+      entry.artifactFinalAttackDmg = Math.min(Math.floor(val.artifactFinalAttackDmg), LEGION_ARTIFACT_FINAL_ATK_MAX);
+    }
+    if (entry.wildHunterRank !== undefined || entry.artifactExtraTarget || entry.artifactFinalAttackDmg !== undefined) {
+      result[worldId] = entry;
     }
   }
   return result;

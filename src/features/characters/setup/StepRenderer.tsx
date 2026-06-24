@@ -27,7 +27,7 @@ interface StepRendererProps {
   characterRoster?: import("../model/charactersStore").StoredCharacterRecord[];
   confirmedWorldId?: number;
   worldLinkSkills?: string;
-  worldScouterWhRank?: import("../model/charactersStore").WhLegionRank;
+  worldScouterLegion?: import("../model/charactersStore").StoredScouterLegion;
   characterLevel?: number;
   confirmedCharacterName?: string;
   confirmedCharacterImgURL?: string;
@@ -61,7 +61,7 @@ export default function StepRenderer({
   characterRoster,
   confirmedWorldId,
   worldLinkSkills,
-  worldScouterWhRank,
+  worldScouterLegion,
   characterLevel,
   confirmedCharacterName,
   confirmedCharacterImgURL,
@@ -90,7 +90,7 @@ export default function StepRenderer({
       characterRoster={characterRoster}
       confirmedWorldId={confirmedWorldId}
       worldLinkSkills={worldLinkSkills}
-      worldScouterWhRank={worldScouterWhRank}
+      worldScouterLegion={worldScouterLegion}
       characterLevel={characterLevel}
       confirmedCharacterName={confirmedCharacterName}
       confirmedCharacterImgURL={confirmedCharacterImgURL}
