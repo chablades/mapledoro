@@ -6,6 +6,7 @@ import Image from "next/image";
 import type { AppTheme } from "../../../../components/themes";
 import HoverTooltip from "../../../../components/HoverTooltip";
 import type { SetupStepDefinition } from "../steps";
+import type { SetupFlowId } from "../flows";
 import type { HexaClassDef, HexaSkillDef, HexaSkillLevels } from "../../../../features/tools/hexa-skills/hexa-classes";
 import { findClassById, COMMON_SKILLS } from "../../../../features/tools/hexa-skills/hexa-classes";
 import { resourceImageUrl } from "../../../../lib/mapleResource";
@@ -19,6 +20,7 @@ import { HexaSkillIcon } from "../../../../components/ResourceImage";
 interface HexaMatrixSetupStepProps {
   theme: AppTheme;
   step: SetupStepDefinition;
+  flowId?: SetupFlowId;
   stepNumber: number;
   totalSteps: number;
   jobName?: string;
@@ -41,9 +43,6 @@ const MAX_STAT_ENTRY_LEVEL = 10;
 
 // Each HEXA Stat node holds two presets in-game: an active and a stored "saved" config.
 const PRESET_LABELS = ["Active", "Stored"] as const;
-
-// Two substeps: skill levels, then HEXA Stat.
-const SUBSTEP_COUNT = 2;
 
 // hexa-skill ids from manifests/v268/hexa-skill.json (section: "hexaStat")
 const HEXA_STAT_DEFS: HexaSkillDef[] = [
@@ -477,28 +476,151 @@ function HexaStatRow({ entry, onUpdate, theme, isPrimary, classId, mainStatLabel
   );
 }
 
+// Loads any previously-saved hexa data for this character into the step's draft value,
+// or null when there's nothing to prefill. Kept out of the component to hold its
+// cognitive complexity down.
+function readSavedHexaValue(classDef: HexaClassDef | null, characterName: string | undefined): string | null {
+  if (!classDef || !characterName) return null;
+  const savedSkills = readCharacterToolData<{ levels?: HexaSkillLevels }>(characterName, "hexaSkills");
+  const savedStat = readCharacterToolData<{ nodes?: HexaStatNode[] }>(characterName, "hexaStat");
+  if (!savedSkills?.levels && !savedStat?.nodes) return null;
+  return JSON.stringify({ ...(savedSkills?.levels ?? {}), hexaStat: savedStat?.nodes });
+}
+
+// Substep 0: the hexa skill-level grid (origin/ascent, mastery, enhancement, common).
+// Extracted so the main step component stays under the cognitive-complexity cap; it's
+// also the only substep the MapleScouter flow renders (skill levels, no HEXA Stat).
+function HexaSkillLevelsSubstep({
+  theme, classDef, step, levels, update, stepNumber, totalSteps,
+  substepIndex, substepCount, animStyle, showHexaStat, onBack, onContinue, onNext, onFinish,
+}: {
+  theme: AppTheme;
+  classDef: HexaClassDef;
+  step: SetupStepDefinition;
+  levels: HexaDraft;
+  update: (patch: Partial<HexaDraft>) => void;
+  stepNumber: number;
+  totalSteps: number;
+  substepIndex: number;
+  substepCount: number;
+  animStyle: React.CSSProperties;
+  showHexaStat: boolean;
+  onBack: () => void;
+  onContinue: () => void;
+  onNext: () => void;
+  onFinish: () => void;
+}) {
+  const stepLabel = classDef.className === "Sia" ? "Erda Link" : step.label;
+  return (
+    <div key={0} style={animStyle}>
+      <SetupStepFrame theme={theme} stepLabel={stepLabel} stepNumber={stepNumber} totalSteps={totalSteps}
+        substepIndex={substepIndex} substepCount={substepCount}
+        description="All fields are optional. Fill in what you can."
+        onBack={onBack}
+        onNext={showHexaStat ? onContinue : onNext}
+        onFinish={onFinish}
+        nextLabel={showHexaStat ? "Continue" : undefined}
+      >
+        <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+
+          <div>
+            <SectionLabel label="Origin & Ascent" theme={theme}
+              onMaxAll={() => update({ origin: MAX_LEVEL, ...(classDef.ascent ? { ascent: MAX_LEVEL } : {}) })}
+              onClear={() => update({ origin: 0, ...(classDef.ascent ? { ascent: 0 } : {}) })} />
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
+              <HexaTile skill={classDef.origin} level={levels.origin}
+                onUpdate={(v) => update({ origin: v })} theme={theme} min={1} />
+              {classDef.ascent && (
+                <HexaTile skill={classDef.ascent} level={levels.ascent}
+                  onUpdate={(v) => update({ ascent: v })} theme={theme} />
+              )}
+            </div>
+          </div>
+
+          <div>
+            <SectionLabel label="Mastery" theme={theme}
+              onMaxAll={() => update({ mastery: classDef.mastery.map(() => MAX_LEVEL) })}
+              onClear={() => update({ mastery: classDef.mastery.map(() => 0) })} />
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
+              {classDef.mastery.map((node, i) => (
+                <HexaTile key={`mastery-${i}`} skill={{ iconId: node.iconId, iconUrl: node.iconUrl, name: node.skills.join("\n") }}
+                  level={levels.mastery[i] ?? 0}
+                  onUpdate={(v) => {
+                    const next = [...levels.mastery];
+                    next[i] = v;
+                    update({ mastery: next });
+                  }}
+                  theme={theme}
+                />
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <SectionLabel label="Enhancement" theme={theme}
+              onMaxAll={() => update({ enhancement: classDef.enhancement.map(() => MAX_LEVEL) })}
+              onClear={() => update({ enhancement: classDef.enhancement.map(() => 0) })} />
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
+              {classDef.enhancement.map((skill, i) => (
+                <HexaTile key={`enhancement-${skill.name}`} skill={skill} level={levels.enhancement[i] ?? 0}
+                  onUpdate={(v) => {
+                    const next = [...levels.enhancement];
+                    next[i] = v;
+                    update({ enhancement: next });
+                  }}
+                  theme={theme}
+                />
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <SectionLabel label="Common" theme={theme}
+              onMaxAll={() => update({ common: COMMON_SKILLS.map(() => MAX_LEVEL) })}
+              onClear={() => update({ common: COMMON_SKILLS.map(() => 0) })} />
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
+              {COMMON_SKILLS.map((skill, i) => (
+                <HexaTile key={skill.name} skill={skill} level={levels.common[i] ?? 0}
+                  onUpdate={(v) => {
+                    const next = [...levels.common];
+                    next[i] = v;
+                    update({ common: next });
+                  }}
+                  theme={theme}
+                />
+              ))}
+            </div>
+          </div>
+
+        </div>
+      </SetupStepFrame>
+    </div>
+  );
+}
+
 export default function HexaMatrixSetupStep({
-  theme, step, stepNumber, totalSteps, jobName = "", direction = "forward",
+  theme, step, flowId, stepNumber, totalSteps, jobName = "", direction = "forward",
   confirmedCharacterName, characterLevel, value, onChange, onBack, onNext, onFinish,
 }: HexaMatrixSetupStepProps) {
+  // MapleScouter only needs hexa skill levels, so the HEXA Stat substep is gated out
+  // of that flow (mirrors how Stats gates its hyper-stat substep). Two substeps
+  // everywhere else: skill levels, then HEXA Stat.
+  const showHexaStat = flowId !== "maplescouter_setup";
+  const substepCount = showHexaStat ? 2 : 1;
   const classData = getClassDataByNexonJobName(jobName);
   const hexaClassId = classData?.id === "sia_astelle" ? "sia" : classData?.id;
   const classDef = hexaClassId ? findClassById(hexaClassId) : null;
   const initialValueRef = useRef(value);
 
-  const [substep, setSubstep] = useState(() => direction === "backward" ? 1 : 0);
+  const [substep, setSubstep] = useState(() => direction === "backward" && showHexaStat ? 1 : 0);
   const [substepDirection, setSubstepDirection] = useState<"forward" | "backward">("forward");
   const [hasSubstepSwitched, setHasSubstepSwitched] = useState(false);
   const [activeSlot, setActiveSlot] = useState(0);
 
   useEffect(() => {
     if (initialValueRef.current) return;
-    if (!classDef || !confirmedCharacterName) return;
-    const savedSkills = readCharacterToolData<{ levels?: HexaSkillLevels }>(confirmedCharacterName, "hexaSkills");
-    const savedStat = readCharacterToolData<{ nodes?: HexaStatNode[] }>(confirmedCharacterName, "hexaStat");
-    if (savedSkills?.levels || savedStat?.nodes) {
-      onChange(JSON.stringify({ ...(savedSkills?.levels ?? {}), hexaStat: savedStat?.nodes }));
-    }
+    const saved = readSavedHexaValue(classDef, confirmedCharacterName);
+    if (saved) onChange(saved);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -537,87 +659,13 @@ export default function HexaMatrixSetupStep({
 
   if (substep === 0) {
     return (
-      <div key={0} style={substepAnimStyle}>
-        <SetupStepFrame theme={theme} stepLabel={classDef.className === "Sia" ? "Erda Link" : step.label} stepNumber={stepNumber} totalSteps={totalSteps}
-          substepIndex={substep} substepCount={SUBSTEP_COUNT}
-          description="All fields are optional. Fill in what you can."
-          onBack={onBack} onNext={() => goToSubstep(1)} onFinish={onFinish}
-          nextLabel="Continue"
-        >
-          <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-
-            <div>
-              <SectionLabel label="Origin & Ascent" theme={theme}
-                onMaxAll={() => update({ origin: MAX_LEVEL, ...(classDef.ascent ? { ascent: MAX_LEVEL } : {}) })}
-                onClear={() => update({ origin: 0, ...(classDef.ascent ? { ascent: 0 } : {}) })} />
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
-                <HexaTile skill={classDef.origin} level={levels.origin}
-                  onUpdate={(v) => update({ origin: v })} theme={theme} min={1} />
-                {classDef.ascent && (
-                  <HexaTile skill={classDef.ascent} level={levels.ascent}
-                    onUpdate={(v) => update({ ascent: v })} theme={theme} />
-                )}
-              </div>
-            </div>
-
-            <div>
-              <SectionLabel label="Mastery" theme={theme}
-                onMaxAll={() => update({ mastery: classDef.mastery.map(() => MAX_LEVEL) })}
-                onClear={() => update({ mastery: classDef.mastery.map(() => 0) })} />
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
-                {classDef.mastery.map((node, i) => (
-                  <HexaTile key={`mastery-${i}`} skill={{ iconId: node.iconId, iconUrl: node.iconUrl, name: node.skills.join("\n") }}
-                    level={levels.mastery[i] ?? 0}
-                    onUpdate={(v) => {
-                      const next = [...levels.mastery];
-                      next[i] = v;
-                      update({ mastery: next });
-                    }}
-                    theme={theme}
-                  />
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <SectionLabel label="Enhancement" theme={theme}
-                onMaxAll={() => update({ enhancement: classDef.enhancement.map(() => MAX_LEVEL) })}
-                onClear={() => update({ enhancement: classDef.enhancement.map(() => 0) })} />
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
-                {classDef.enhancement.map((skill, i) => (
-                  <HexaTile key={`enhancement-${skill.name}`} skill={skill} level={levels.enhancement[i] ?? 0}
-                    onUpdate={(v) => {
-                      const next = [...levels.enhancement];
-                      next[i] = v;
-                      update({ enhancement: next });
-                    }}
-                    theme={theme}
-                  />
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <SectionLabel label="Common" theme={theme}
-                onMaxAll={() => update({ common: COMMON_SKILLS.map(() => MAX_LEVEL) })}
-                onClear={() => update({ common: COMMON_SKILLS.map(() => 0) })} />
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
-                {COMMON_SKILLS.map((skill, i) => (
-                  <HexaTile key={skill.name} skill={skill} level={levels.common[i] ?? 0}
-                    onUpdate={(v) => {
-                      const next = [...levels.common];
-                      next[i] = v;
-                      update({ common: next });
-                    }}
-                    theme={theme}
-                  />
-                ))}
-              </div>
-            </div>
-
-          </div>
-        </SetupStepFrame>
-      </div>
+      <HexaSkillLevelsSubstep
+        theme={theme} classDef={classDef} step={step} levels={levels} update={update}
+        stepNumber={stepNumber} totalSteps={totalSteps}
+        substepIndex={substep} substepCount={substepCount} animStyle={substepAnimStyle}
+        showHexaStat={showHexaStat}
+        onBack={onBack} onContinue={() => goToSubstep(1)} onNext={onNext} onFinish={onFinish}
+      />
     );
   }
 
@@ -662,7 +710,7 @@ export default function HexaMatrixSetupStep({
   return (
     <div key={1} style={substepAnimStyle}>
       <SetupStepFrame theme={theme} stepLabel="HEXA Stat" stepNumber={stepNumber} totalSteps={totalSteps}
-        substepIndex={substep} substepCount={SUBSTEP_COUNT}
+        substepIndex={substep} substepCount={substepCount}
         description="All fields are optional. Fill in what you can."
         onBack={() => goToSubstep(0)} onNext={onNext} onFinish={onFinish}
       >
