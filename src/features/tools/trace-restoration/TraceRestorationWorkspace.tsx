@@ -742,7 +742,7 @@ export default function TraceRestorationWorkspace({ theme }: { theme: AppTheme }
       <div className="tool-container">
         <ToolHeader
           theme={theme}
-          title="Trace Restoration Calculator"
+          title="Trace Restoration Tracker"
           description="Track your Star Force Research whisper crystals and Trace Restoration mission progress."
         />
 
