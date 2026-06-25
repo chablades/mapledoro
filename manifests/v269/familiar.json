@@ -3,7 +3,7 @@
     "assets": [
       "sprite.png"
     ],
-    "urlPattern": "spriteFrom=mob -\u003E /api/img/mob/{mobId}/sprite.png ; spriteFrom=familiar -\u003E /api/img/familiar/{id}/sprite.png ; spriteFrom=null -\u003E fall back to card /api/img/item/{cardId}/icon.png"
+    "urlPattern": "spriteFrom=mob -\u003E /api/img/mob/{spriteMobId ?? mobId}/sprite.png ; spriteFrom=familiar -\u003E /api/img/familiar/{id}/sprite.png ; spriteFrom=null -\u003E fall back to card /api/img/item/{cardId}/icon.png"
   },
   "entries": {
     "9960000": {
@@ -1053,11 +1053,12 @@
     "9960089": {
       "name": "Lupin",
       "mobId": "3210800",
+      "spriteMobId": "2700311",
       "cardIds": [
         "02870089",
         "02880089"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Beast",
       "element": "None"
     },
@@ -1374,6 +1375,7 @@
         "02870117"
       ],
       "spriteFrom": "familiar",
+      "spriteFrame": "mob|9010042|stand.0",
       "familiarType": "Nymph",
       "element": "Fire"
     },
@@ -1561,6 +1563,7 @@
         "02880118"
       ],
       "spriteFrom": "familiar",
+      "spriteFrame": "mob|4090000|move.1",
       "familiarType": "Beast",
       "element": "None"
     },
@@ -2241,11 +2244,12 @@
     "9960195": {
       "name": "MT-09",
       "mobId": "5120100",
+      "spriteMobId": "4230134",
       "cardIds": [
         "02870195",
         "02880756"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Machine",
       "element": "Lightning"
     },
@@ -2270,6 +2274,7 @@
         "02880917"
       ],
       "spriteFrom": "familiar",
+      "spriteFrame": "mob|3645310|stand.0",
       "familiarType": "Plant",
       "element": "Holy"
     },
@@ -2317,6 +2322,7 @@
         "02880920"
       ],
       "spriteFrom": "familiar",
+      "spriteFrame": "mob|3645309|stand.0",
       "familiarType": "Beast",
       "element": "Holy"
     },
@@ -2334,12 +2340,13 @@
     "9960203": {
       "name": "Drake",
       "mobId": "5130100",
+      "spriteMobId": "3645307",
       "cardIds": [
         "02870203",
         "02880165",
         "02880921"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Reptile",
       "element": "None"
     },
@@ -2533,6 +2540,13 @@
     "9960220": {
       "name": "Orange Mushroom",
       "mobId": "1210102",
+      "cardIds": [
+        "02870021",
+        "02870220",
+        "02880021",
+        "02880783"
+      ],
+      "cardIdsFrom": "9960021",
       "spriteFrom": "mob",
       "familiarType": "Plant",
       "element": "None"
@@ -2598,11 +2612,12 @@
     "9960226": {
       "name": "Malady",
       "mobId": "5300100",
+      "spriteMobId": "2700312",
       "cardIds": [
         "02870226",
         "02880185"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "Dark"
     },
@@ -2764,6 +2779,7 @@
         "02880938"
       ],
       "spriteFrom": "familiar",
+      "spriteFrame": "mob|5100109|stand.0",
       "familiarType": "Devil",
       "element": "Lightning"
     },
@@ -2871,6 +2887,7 @@
         "02880944"
       ],
       "spriteFrom": "familiar",
+      "spriteFrame": "fam|stand.0",
       "familiarType": "Reptile",
       "element": "Dark"
     },
@@ -3213,6 +3230,7 @@
         "02880960"
       ],
       "spriteFrom": "familiar",
+      "spriteFrame": "mob|3645314|stand.0",
       "familiarType": "Devil",
       "element": "Lightning"
     },
@@ -3225,6 +3243,7 @@
         "02880961"
       ],
       "spriteFrom": "familiar",
+      "spriteFrame": "mob|3645313|stand.0",
       "familiarType": "Devil",
       "element": "Poison"
     },
@@ -3288,35 +3307,38 @@
     "9960286": {
       "name": "Yellow King Goblin",
       "mobId": "7130400",
+      "spriteMobId": "5100108",
       "cardIds": [
         "02870286",
         "02880238"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Devil",
       "element": "Fire"
     },
     "9960287": {
       "name": "Blue King Goblin",
       "mobId": "7130401",
+      "spriteMobId": "5100106",
       "cardIds": [
         "02870287",
         "02880239",
         "02880965"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Devil",
       "element": "Ice"
     },
     "9960288": {
       "name": "Green King Goblin",
       "mobId": "7130402",
+      "spriteMobId": "5100107",
       "cardIds": [
         "02870288",
         "02880240",
         "02880966"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Devil",
       "element": "Poison"
     },
@@ -4335,18 +4357,20 @@
         "02870376"
       ],
       "spriteFrom": "familiar",
+      "spriteFrame": "mob|8500001|attack1.0",
       "familiarType": "Devil",
       "element": "Dark"
     },
     "9960377": {
       "name": "Papulatus",
       "mobId": "8500002",
+      "spriteMobId": "2600632",
       "cardIds": [
         "02870377",
         "02870518",
         "02880323"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Devil",
       "element": "Dark"
     },
@@ -4363,11 +4387,12 @@
     "9960379": {
       "name": "Pink Bean",
       "mobId": "8820001",
+      "spriteMobId": "8820000",
       "cardIds": [
         "02870379",
         "02870522"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Devil",
       "element": "Dark"
     },
@@ -4440,17 +4465,19 @@
         "02880703"
       ],
       "spriteFrom": "familiar",
+      "spriteFrame": "mob|8240039|stand.0",
       "familiarType": "Human",
       "element": "Dark"
     },
     "9960387": {
       "name": "Black Witch",
       "mobId": "9001010",
+      "spriteMobId": "8230045",
       "cardIds": [
         "02870387",
         "02880705"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "Dark"
     },
@@ -4484,6 +4511,7 @@
         "02870390"
       ],
       "spriteFrom": "familiar",
+      "spriteFrame": "mob|5250002|stand.0",
       "familiarType": "Beast",
       "element": "None"
     },
@@ -4815,11 +4843,13 @@
     "9960421": {
       "name": "Cynical Orange Mushroom",
       "mobId": "9300274",
+      "spriteMobId": "2300102",
       "cardIds": [
         "02870421",
         "02880344",
         "02881065"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Plant",
       "element": "None"
     },
@@ -4916,6 +4946,7 @@
         "02870430"
       ],
       "spriteFrom": "familiar",
+      "spriteFrame": "mob|9010187|stand.0",
       "familiarType": "Beast",
       "element": "None"
     },
@@ -4982,10 +5013,11 @@
     "9960437": {
       "name": "Gentleman",
       "mobId": "9300393",
+      "spriteMobId": "8645452",
       "cardIds": [
         "02870437"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "Dark"
     },
@@ -5016,6 +5048,7 @@
         "02870440"
       ],
       "spriteFrom": "familiar",
+      "spriteFrame": "mob|8240029|stand.0",
       "familiarType": "Plant",
       "element": "None"
     },
@@ -5036,6 +5069,7 @@
         "02870442"
       ],
       "spriteFrom": "familiar",
+      "spriteFrame": "mob|5100002|stand.0",
       "familiarType": "Devil",
       "element": "Fire"
     },
@@ -5392,6 +5426,7 @@
         "02880378"
       ],
       "spriteFrom": "familiar",
+      "spriteFrame": "mob|3645308|stand.0",
       "familiarType": "Human",
       "element": "Holy"
     },
@@ -5418,20 +5453,22 @@
     "9960476": {
       "name": "Prison Guard Boar",
       "mobId": "8840003",
+      "spriteMobId": "8210006",
       "cardIds": [
         "02870476"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Beast",
       "element": "Fire"
     },
     "9960477": {
       "name": "Prison Guard Rhino",
       "mobId": "8840004",
+      "spriteMobId": "8210007",
       "cardIds": [
         "02870477"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Beast",
       "element": "Fire"
     },
@@ -5448,55 +5485,60 @@
     "9960479": {
       "name": "Mihile",
       "mobId": "8850005",
+      "spriteMobId": "8850000",
       "cardIds": [
         "02870479",
         "02880379"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "Holy"
     },
     "9960480": {
       "name": "Oz",
       "mobId": "8850006",
+      "spriteMobId": "8850001",
       "cardIds": [
         "02870480",
         "02880380"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "Fire"
     },
     "9960481": {
       "name": "Irena",
       "mobId": "8850007",
+      "spriteMobId": "8850002",
       "cardIds": [
         "02870481",
         "02880381"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "Ice"
     },
     "9960482": {
       "name": "Eckhart",
       "mobId": "8850008",
+      "spriteMobId": "8850003",
       "cardIds": [
         "02870482",
         "02880382"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "Dark"
     },
     "9960483": {
       "name": "Hawkeye",
       "mobId": "8850009",
+      "spriteMobId": "8850004",
       "cardIds": [
         "02870483",
         "02880383"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "Lightning"
     },
@@ -5524,6 +5566,7 @@
     "9960526": {
       "name": "Mori Ranmaru",
       "mobId": "9421581",
+      "spriteMobId": "9400937",
       "cardIds": [
         "02870526",
         "02870528",
@@ -5531,7 +5574,7 @@
         "02871458",
         "02880384"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "Dark"
     },
@@ -5543,21 +5586,38 @@
         "02870529",
         "02870582"
       ],
-      "spriteFrom": "mob",
+      "spriteFrom": "familiar",
+      "spriteFrame": "mob|9421562|attack1.0",
       "familiarType": "Human",
       "element": "Dark"
     },
     "9960528": {
       "name": "Mori Ranmaru",
       "mobId": "9421581",
-      "spriteFrom": "familiar",
+      "spriteMobId": "9400937",
+      "cardIds": [
+        "02870526",
+        "02870528",
+        "02871387",
+        "02871458",
+        "02880384"
+      ],
+      "cardIdsFrom": "9960526",
+      "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "Dark"
     },
     "9960529": {
       "name": "Takigawa Kazumasu",
       "mobId": "9421562",
-      "spriteFrom": "mob",
+      "cardIds": [
+        "02870527",
+        "02870529",
+        "02870582"
+      ],
+      "cardIdsFrom": "9960527",
+      "spriteFrom": "familiar",
+      "spriteFrame": "mob|9421562|attack1.0",
       "familiarType": "Human",
       "element": "Dark"
     },
@@ -5663,6 +5723,7 @@
         "02881085"
       ],
       "spriteFrom": "familiar",
+      "spriteFrame": "mob|9421504|stand.0",
       "familiarType": "Human",
       "element": "None"
     },
@@ -5907,6 +5968,7 @@
         "02880817"
       ],
       "spriteFrom": "familiar",
+      "spriteFrame": "mob|2400015|stand.0",
       "familiarType": "Devil",
       "element": "None"
     },
@@ -5943,6 +6005,7 @@
         "02880820"
       ],
       "spriteFrom": "familiar",
+      "spriteFrame": "mob|2400016|stand.0",
       "familiarType": "Devil",
       "element": "None"
     },
@@ -5955,6 +6018,7 @@
         "02880821"
       ],
       "spriteFrom": "familiar",
+      "spriteFrame": "mob|2400017|stand.0",
       "familiarType": "Devil",
       "element": "None"
     },
@@ -6133,7 +6197,14 @@
     "9960582": {
       "name": "Takigawa Kazumasu",
       "mobId": "9421562",
-      "spriteFrom": "mob",
+      "cardIds": [
+        "02870527",
+        "02870529",
+        "02870582"
+      ],
+      "cardIdsFrom": "9960527",
+      "spriteFrom": "familiar",
+      "spriteFrame": "mob|9421562|attack1.0",
       "familiarType": "Devil",
       "element": "Dark"
     },
@@ -6173,6 +6244,13 @@
     "9960586": {
       "name": "Calico Timcat",
       "mobId": "9390806",
+      "cardIds": [
+        "02870586",
+        "02870706",
+        "02880468",
+        "02881066"
+      ],
+      "cardIdsFrom": "9960706",
       "spriteFrom": "mob",
       "familiarType": "Beast",
       "element": "None"
@@ -6180,6 +6258,12 @@
     "9960587": {
       "name": "Gray Tomcat",
       "mobId": "9390807",
+      "cardIds": [
+        "02870587",
+        "02870707",
+        "02880469"
+      ],
+      "cardIdsFrom": "9960707",
       "spriteFrom": "mob",
       "familiarType": "Beast",
       "element": "None"
@@ -6187,6 +6271,12 @@
     "9960588": {
       "name": "Cutthroat Delfino",
       "mobId": "9390808",
+      "cardIds": [
+        "02870588",
+        "02870708",
+        "02880470"
+      ],
+      "cardIdsFrom": "9960708",
       "spriteFrom": "mob",
       "familiarType": "Fish",
       "element": "Fire"
@@ -6194,6 +6284,12 @@
     "9960589": {
       "name": "Sureshot Delfino",
       "mobId": "9390809",
+      "cardIds": [
+        "02870589",
+        "02870709",
+        "02880471"
+      ],
+      "cardIdsFrom": "9960709",
       "spriteFrom": "mob",
       "familiarType": "Fish",
       "element": "Poison"
@@ -6201,6 +6297,12 @@
     "9960590": {
       "name": "Voodoo Delfino",
       "mobId": "9390810",
+      "cardIds": [
+        "02870590",
+        "02870710",
+        "02880472"
+      ],
+      "cardIdsFrom": "9960710",
       "spriteFrom": "mob",
       "familiarType": "Fish",
       "element": "Lightning"
@@ -6208,6 +6310,12 @@
     "9960591": {
       "name": "Ripclaw Delfino",
       "mobId": "9390811",
+      "cardIds": [
+        "02870591",
+        "02870711",
+        "02880473"
+      ],
+      "cardIdsFrom": "9960711",
       "spriteFrom": "mob",
       "familiarType": "Fish",
       "element": "Ice"
@@ -6215,13 +6323,26 @@
     "9960592": {
       "name": "Blood Pirate Swabby",
       "mobId": "9390815",
+      "cardIds": [
+        "02870592",
+        "02870712",
+        "02880474"
+      ],
+      "cardIdsFrom": "9960712",
       "spriteFrom": "familiar",
+      "spriteFrame": "mob|9390800|stand.0",
       "familiarType": "Beast",
       "element": "None"
     },
     "9960594": {
       "name": "Dirty Lupo",
       "mobId": "9390813",
+      "cardIds": [
+        "02870594",
+        "02870715",
+        "02880477"
+      ],
+      "cardIdsFrom": "9960715",
       "spriteFrom": "mob",
       "familiarType": "Beast",
       "element": "Fire"
@@ -6229,6 +6350,13 @@
     "9960595": {
       "name": "Blood Pirate Lookout",
       "mobId": "9390816",
+      "cardIds": [
+        "02870595",
+        "02870713",
+        "02880475",
+        "02881067"
+      ],
+      "cardIdsFrom": "9960713",
       "spriteFrom": "mob",
       "familiarType": "Beast",
       "element": "None"
@@ -6236,6 +6364,12 @@
     "9960596": {
       "name": "Nightcutter Assassin",
       "mobId": "9390818",
+      "cardIds": [
+        "02870596",
+        "02870716",
+        "02880478"
+      ],
+      "cardIdsFrom": "9960716",
       "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "Poison"
@@ -6243,6 +6377,12 @@
     "9960597": {
       "name": "Nightwhip Assassin",
       "mobId": "9390819",
+      "cardIds": [
+        "02870597",
+        "02870717",
+        "02880479"
+      ],
+      "cardIdsFrom": "9960717",
       "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "Fire"
@@ -6250,6 +6390,12 @@
     "9960598": {
       "name": "Nightpriest Assassin",
       "mobId": "9390820",
+      "cardIds": [
+        "02870598",
+        "02870718",
+        "02880480"
+      ],
+      "cardIdsFrom": "9960718",
       "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "Lightning"
@@ -6321,6 +6467,7 @@
         "02870605"
       ],
       "spriteFrom": "familiar",
+      "spriteFrame": "mob|8230070|stand.0",
       "familiarType": "Human",
       "element": "None"
     },
@@ -6341,6 +6488,7 @@
         "02870607"
       ],
       "spriteFrom": "familiar",
+      "spriteFrame": "mob|8230069|stand.0",
       "familiarType": "Human",
       "element": "None"
     },
@@ -6484,33 +6632,36 @@
     "9960620": {
       "name": "Corrupted Veilstone Beta",
       "mobId": "9390621",
+      "spriteMobId": "9390620",
       "cardIds": [
         "02870620",
         "02880425"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Nymph",
       "element": "Dark"
     },
     "9960621": {
       "name": "Corrupted Veilstone Gamma",
       "mobId": "9390622",
+      "spriteMobId": "9390620",
       "cardIds": [
         "02870621",
         "02880426"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Nymph",
       "element": "Dark"
     },
     "9960622": {
       "name": "Corrupted Veilstone Delta",
       "mobId": "9390623",
+      "spriteMobId": "9390620",
       "cardIds": [
         "02870622",
         "02880427"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Nymph",
       "element": "Dark"
     },
@@ -6528,11 +6679,12 @@
     "9960624": {
       "name": "Conjured Veilprey",
       "mobId": "9390625",
+      "spriteMobId": "9390624",
       "cardIds": [
         "02870624",
         "02880429"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Plant",
       "element": "Dark"
     },
@@ -6550,22 +6702,24 @@
     "9960626": {
       "name": "Mutated Wardlock",
       "mobId": "9390634",
+      "spriteMobId": "9390633",
       "cardIds": [
         "02870626",
         "02880431"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Beast",
       "element": "Poison"
     },
     "9960627": {
       "name": "Wardlock",
       "mobId": "9390635",
+      "spriteMobId": "9390633",
       "cardIds": [
         "02870627",
         "02880432"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Beast",
       "element": "Poison"
     },
@@ -7146,6 +7300,7 @@
         "02880729"
       ],
       "spriteFrom": "familiar",
+      "spriteFrame": "mob|3503002|stand.0",
       "familiarType": "Devil",
       "element": "None"
     },
@@ -7235,6 +7390,7 @@
         "02880737"
       ],
       "spriteFrom": "familiar",
+      "spriteFrame": "mob|8240132|stand.0",
       "familiarType": "Beast",
       "element": "None"
     },
@@ -7296,11 +7452,12 @@
     "9960693": {
       "name": "Patriarch Birdshark",
       "mobId": "8642022",
+      "spriteMobId": "8642015",
       "cardIds": [
         "02870693",
         "02880746"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Beast",
       "element": "None"
     },
@@ -7362,10 +7519,11 @@
     "9960699": {
       "name": "Combat Mushroom",
       "mobId": "9402225",
+      "spriteMobId": "9402052",
       "cardIds": [
         "02870702"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Devil",
       "element": "Dark"
     },
@@ -7514,6 +7672,7 @@
         "02880474"
       ],
       "spriteFrom": "familiar",
+      "spriteFrame": "mob|9390800|stand.0",
       "familiarType": "Beast",
       "element": "None"
     },
@@ -7685,6 +7844,13 @@
     "9960739": {
       "name": "Tic (Easy)",
       "mobId": "9400310",
+      "cardIds": [
+        "02870728",
+        "02870739",
+        "02880484",
+        "02881074"
+      ],
+      "cardIdsFrom": "9960728",
       "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "Ice"
@@ -7692,6 +7858,13 @@
     "9960740": {
       "name": "Tac (Easy)",
       "mobId": "9400311",
+      "cardIds": [
+        "02870729",
+        "02870740",
+        "02880485",
+        "02881075"
+      ],
+      "cardIdsFrom": "9960729",
       "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "Ice"
@@ -7699,6 +7872,13 @@
     "9960741": {
       "name": "Toe (Easy)",
       "mobId": "9400312",
+      "cardIds": [
+        "02870730",
+        "02870741",
+        "02880486",
+        "02881076"
+      ],
+      "cardIdsFrom": "9960730",
       "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "Lightning"
@@ -7706,6 +7886,13 @@
     "9960742": {
       "name": "Tic (Medium)",
       "mobId": "9400313",
+      "cardIds": [
+        "02870731",
+        "02870742",
+        "02880487",
+        "02881077"
+      ],
+      "cardIdsFrom": "9960731",
       "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "Lightning"
@@ -7713,6 +7900,13 @@
     "9960743": {
       "name": "Tac (Medium)",
       "mobId": "9400314",
+      "cardIds": [
+        "02870732",
+        "02870743",
+        "02880488",
+        "02881078"
+      ],
+      "cardIdsFrom": "9960732",
       "spriteFrom": "mob",
       "familiarType": "Nymph",
       "element": "Holy"
@@ -7720,6 +7914,13 @@
     "9960744": {
       "name": "Toe (Medium)",
       "mobId": "9400315",
+      "cardIds": [
+        "02870733",
+        "02870744",
+        "02880489",
+        "02881079"
+      ],
+      "cardIdsFrom": "9960733",
       "spriteFrom": "mob",
       "familiarType": "Devil",
       "element": "Dark"
@@ -7727,6 +7928,13 @@
     "9960745": {
       "name": "Tic (Hard)",
       "mobId": "9400316",
+      "cardIds": [
+        "02870734",
+        "02870745",
+        "02880490",
+        "02881080"
+      ],
+      "cardIdsFrom": "9960734",
       "spriteFrom": "mob",
       "familiarType": "Beast",
       "element": "Poison"
@@ -7734,6 +7942,13 @@
     "9960746": {
       "name": "Tac (Hard)",
       "mobId": "9400317",
+      "cardIds": [
+        "02870735",
+        "02870746",
+        "02880491",
+        "02881081"
+      ],
+      "cardIdsFrom": "9960735",
       "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "Lightning"
@@ -7764,6 +7979,13 @@
     "9960752": {
       "name": "Cross (Easy)",
       "mobId": "9400319",
+      "cardIds": [
+        "02870751",
+        "02870752",
+        "02870756",
+        "02870760"
+      ],
+      "cardIdsFrom": "9960751",
       "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "None"
@@ -7781,6 +8003,13 @@
     "9960760": {
       "name": "Cross (Easy)",
       "mobId": "9400319",
+      "cardIds": [
+        "02870751",
+        "02870752",
+        "02870756",
+        "02870760"
+      ],
+      "cardIdsFrom": "9960751",
       "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "None"
@@ -7921,11 +8150,12 @@
     "9960773": {
       "name": "Oda Spirit Walker",
       "mobId": "9450048",
+      "spriteMobId": "9450030",
       "cardIds": [
         "02870773",
         "02870788"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "Ice"
     },
@@ -8074,10 +8304,11 @@
     "9960788": {
       "name": "Oda Spirit Walker",
       "mobId": "9450048",
+      "spriteMobId": "9450030",
       "cardIds": [
         "02880508"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "Ice"
     },
@@ -8152,12 +8383,13 @@
     "9960795": {
       "name": "Frozen Vanity",
       "mobId": "8630004",
+      "spriteMobId": "2600903",
       "cardIds": [
         "02870795",
         "02880515",
         "02881053"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Devil",
       "element": "Ice"
     },
@@ -8365,50 +8597,55 @@
     "9960814": {
       "name": "Burning Solitude",
       "mobId": "9461066",
+      "spriteMobId": "8630005",
       "cardIds": [
         "02870814"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Devil",
       "element": "Fire"
     },
     "9960815": {
       "name": "Burning Terror",
       "mobId": "9461067",
+      "spriteMobId": "8630006",
       "cardIds": [
         "02870815"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Devil",
       "element": "Fire"
     },
     "9960816": {
       "name": "Burning Rage",
       "mobId": "9461068",
+      "spriteMobId": "8630007",
       "cardIds": [
         "02870816"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Devil",
       "element": "Fire"
     },
     "9960817": {
       "name": "Burning Anxiety",
       "mobId": "9461069",
+      "spriteMobId": "8630008",
       "cardIds": [
         "02870817"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Devil",
       "element": "Fire"
     },
     "9960818": {
       "name": "Burning Vanity",
       "mobId": "9461070",
+      "spriteMobId": "8630009",
       "cardIds": [
         "02870818"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Devil",
       "element": "Fire"
     },
@@ -8475,20 +8712,22 @@
     "9960825": {
       "name": "Corrupted Intermediate Magician",
       "mobId": "9461077",
+      "spriteMobId": "8630016",
       "cardIds": [
         "02870825"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "Dark"
     },
     "9960826": {
       "name": "Corrupted Advanced Magician",
       "mobId": "9461078",
+      "spriteMobId": "8630017",
       "cardIds": [
         "02870826"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "Dark"
     },
@@ -8572,11 +8811,13 @@
     "9960834": {
       "name": "Flying Master of Disguise",
       "mobId": "8240018",
+      "spriteMobId": "8240017",
       "cardIds": [
         "02880649",
         "02880702",
         "02880711"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Machine",
       "element": "Fire"
     },
@@ -8623,11 +8864,12 @@
     "9960839": {
       "name": "Dargoth",
       "mobId": "9300432",
+      "spriteMobId": "8240048",
       "cardIds": [
         "02880654",
         "02880704"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Machine",
       "element": "None"
     },
@@ -8644,10 +8886,11 @@
     "9960841": {
       "name": "Black Wing Henchman",
       "mobId": "9300429",
+      "spriteMobId": "8230043",
       "cardIds": [
         "02880656"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Beast",
       "element": "None"
     },
@@ -8884,18 +9127,22 @@
     "9960865": {
       "name": "Repairoid",
       "mobId": "8250013",
+      "spriteMobId": "8240084",
       "cardIds": [
         "02880680"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Machine",
       "element": "Lightning"
     },
     "9960866": {
       "name": "Alloy Xenoroid DX",
       "mobId": "8250015",
+      "spriteMobId": "8240092",
       "cardIds": [
         "02880681"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Machine",
       "element": "Lightning"
     },
@@ -8922,9 +9169,11 @@
     "9960869": {
       "name": "Alloy Xenoroid EX",
       "mobId": "8250021",
+      "spriteMobId": "8240094",
       "cardIds": [
         "02880684"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Machine",
       "element": "Lightning"
     },
@@ -9091,12 +9340,27 @@
     "9960887": {
       "name": "Flying Master of Disguise",
       "mobId": "8240018",
+      "spriteMobId": "8240017",
+      "cardIds": [
+        "02880649",
+        "02880702",
+        "02880711"
+      ],
+      "cardIdsFrom": "9960834",
+      "spriteFrom": "mob",
       "familiarType": "Machine",
       "element": "None"
     },
     "9960889": {
       "name": "Lotus",
       "mobId": "8240098",
+      "cardIds": [
+        "02880665",
+        "02880707",
+        "02880713",
+        "02881141"
+      ],
+      "cardIdsFrom": "9960850",
       "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "Dark"
@@ -9104,6 +9368,14 @@
     "9960890": {
       "name": "Lotus",
       "mobId": "8240099",
+      "cardIds": [
+        "02880666",
+        "02880708",
+        "02880714",
+        "02880716",
+        "02881142"
+      ],
+      "cardIdsFrom": "9960851",
       "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "Dark"
@@ -9111,6 +9383,12 @@
     "9960891": {
       "name": "Demolishizer",
       "mobId": "8250012",
+      "cardIds": [
+        "02880679",
+        "02880710",
+        "02880715"
+      ],
+      "cardIdsFrom": "9960864",
       "spriteFrom": "mob",
       "familiarType": "Machine",
       "element": "None"
@@ -9148,9 +9426,11 @@
     "9960896": {
       "name": "Sondal",
       "mobId": "9601008",
+      "spriteMobId": "9305675",
       "cardIds": [
         "02880721"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Beast",
       "element": "Dark"
     },
@@ -9297,11 +9577,12 @@
     "9960912": {
       "name": "Lil Arkarium",
       "mobId": "9400489",
+      "spriteMobId": "9300686",
       "cardIds": [
         "02870846",
         "02871471"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "Dark"
     },
@@ -9319,17 +9600,24 @@
     "9960914": {
       "name": "Lil Von Leon",
       "mobId": "9400488",
+      "spriteMobId": "9300685",
       "cardIds": [
         "02870848",
         "02871473"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Beast",
       "element": "Dark"
     },
     "9960915": {
       "name": "Ergoth",
       "mobId": "9300028",
+      "cardIds": [
+        "02870404",
+        "02870854",
+        "02880336"
+      ],
+      "cardIdsFrom": "9960404",
       "spriteFrom": "mob",
       "familiarType": "Beast",
       "element": "None"
@@ -9337,54 +9625,66 @@
     "9960916": {
       "name": "Magnificent Murgoth",
       "mobId": "9303103",
+      "spriteMobId": "9303102",
       "cardIds": [
         "02870855"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Undead",
       "element": "Dark"
     },
     "9960917": {
       "name": "Warrior Lil Murgoth",
       "mobId": "9303104",
+      "spriteMobId": "9303070",
       "cardIds": [
         "02870856"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Undead",
       "element": "Poison"
     },
     "9960918": {
       "name": "Mage Lil Murgoth",
       "mobId": "9303105",
+      "spriteMobId": "9303071",
       "cardIds": [
         "02870857"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Undead",
       "element": "Ice"
     },
     "9960919": {
       "name": "Bowman Lil Murgoth",
       "mobId": "9303106",
+      "spriteMobId": "9303072",
       "cardIds": [
         "02870858"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Undead",
       "element": "Dark"
     },
     "9960920": {
       "name": "Thief Lil Murgoth",
       "mobId": "9303107",
+      "spriteMobId": "9303073",
       "cardIds": [
         "02870859"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Undead",
       "element": "Lightning"
     },
     "9960921": {
       "name": "Pirate Lil Murgoth",
       "mobId": "9303108",
+      "spriteMobId": "9303074",
       "cardIds": [
         "02870860"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Undead",
       "element": "Fire"
     },
@@ -9468,21 +9768,23 @@
     "9960929": {
       "name": "Hazard\u0027s Rotten Crony",
       "mobId": "2400318",
+      "spriteMobId": "2400311",
       "cardIds": [
         "02870873"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Nymph",
       "element": "Dark"
     },
     "9960930": {
       "name": "Lil Cygnus",
       "mobId": "9400487",
+      "spriteMobId": "9300687",
       "cardIds": [
         "02870874",
         "02871477"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "Holy"
     },
@@ -9511,6 +9813,12 @@
     "9960933": {
       "name": "Orchid",
       "mobId": "9300435",
+      "cardIds": [
+        "02870853",
+        "02870877",
+        "02871414"
+      ],
+      "cardIdsFrom": "9960705",
       "spriteFrom": "mob",
       "familiarType": "Beast",
       "element": "None"
@@ -9540,10 +9848,11 @@
     "9960936": {
       "name": "Uncontrollable Maha",
       "mobId": "9001014",
+      "spriteMobId": "8645453",
       "cardIds": [
         "02870880"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Nymph",
       "element": "Fire"
     },
@@ -9758,279 +10067,337 @@
     "9960955": {
       "name": "Shrelephant",
       "mobId": "9402356",
+      "spriteMobId": "9402237",
       "cardIds": [
         "02870899"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Beast",
       "element": "Ice"
     },
     "9960956": {
       "name": "Eyeful",
       "mobId": "9402357",
+      "spriteMobId": "9402238",
       "cardIds": [
         "02871483"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Devil",
       "element": "Ice"
     },
     "9960957": {
       "name": "Petreefied Eyeful",
       "mobId": "9402358",
+      "spriteMobId": "9402240",
       "cardIds": [
         "02871484"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Devil",
       "element": "Ice"
     },
     "9960958": {
       "name": "Raging Shrelephant",
       "mobId": "9402359",
+      "spriteMobId": "9402241",
       "cardIds": [
         "02871485"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Beast",
       "element": "Ice"
     },
     "9960959": {
       "name": "Raging Werebeast",
       "mobId": "9402360",
+      "spriteMobId": "9402242",
       "cardIds": [
         "02871486"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Beast",
       "element": "Ice"
     },
     "9960960": {
       "name": "Frostfang Werebeast",
       "mobId": "9402361",
+      "spriteMobId": "9402243",
       "cardIds": [
         "02871487"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Beast",
       "element": "Ice"
     },
     "9960961": {
       "name": "Grimgaze Werebeast",
       "mobId": "9402362",
+      "spriteMobId": "9402244",
       "cardIds": [
         "02870905"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Beast",
       "element": "Ice"
     },
     "9960962": {
       "name": "Raging Hellfang",
       "mobId": "9402363",
+      "spriteMobId": "9402245",
       "cardIds": [
         "02871488"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Beast",
       "element": "Ice"
     },
     "9960963": {
       "name": "Frost Hellfang",
       "mobId": "9402364",
+      "spriteMobId": "9402246",
       "cardIds": [
         "02871489"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Beast",
       "element": "Ice"
     },
     "9960964": {
       "name": "Raging Leatty",
       "mobId": "9402365",
+      "spriteMobId": "9402248",
       "cardIds": [
         "02870908"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Beast",
       "element": "Ice"
     },
     "9960965": {
       "name": "Fembris",
       "mobId": "9402366",
+      "spriteMobId": "9402249",
       "cardIds": [
         "02870909"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Beast",
       "element": "Fire"
     },
     "9960966": {
       "name": "Frostflail Yeti",
       "mobId": "9402367",
+      "spriteMobId": "9402250",
       "cardIds": [
         "02870910"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Beast",
       "element": "Ice"
     },
     "9960967": {
       "name": "Actinops",
       "mobId": "9402368",
+      "spriteMobId": "9402251",
       "cardIds": [
         "02870911"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Reptile",
       "element": "Poison"
     },
     "9960968": {
       "name": "Kaptafel Snowfield Archer",
       "mobId": "9402369",
+      "spriteMobId": "9402313",
       "cardIds": [
         "02871490"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "Ice"
     },
     "9960969": {
       "name": "Svarti Harpooner",
       "mobId": "9402382",
+      "spriteMobId": "9402315",
       "cardIds": [
         "02871491"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "Ice"
     },
     "9960970": {
       "name": "Skuas Guard",
       "mobId": "9402383",
+      "spriteMobId": "9402316",
       "cardIds": [
         "02871492"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "Ice"
     },
     "9960971": {
       "name": "Skuas Miner",
       "mobId": "9402384",
+      "spriteMobId": "9402317",
       "cardIds": [
         "02871493"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "Ice"
     },
     "9960972": {
       "name": "Kan",
       "mobId": "9402385",
+      "spriteMobId": "9402311",
       "cardIds": [
         "02870916"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "Ice"
     },
     "9960973": {
       "name": "Peytour",
       "mobId": "9402386",
+      "spriteMobId": "9402306",
       "cardIds": [
         "02870917"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "Ice"
     },
     "9960974": {
       "name": "Slaka",
       "mobId": "9402387",
+      "spriteMobId": "9402308",
       "cardIds": [
         "02871494"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "Ice"
     },
     "9960975": {
       "name": "Gurnardson",
       "mobId": "9402388",
+      "spriteMobId": "9402305",
       "cardIds": [
         "02871495"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "Ice"
     },
     "9960976": {
       "name": "Einar",
       "mobId": "9402389",
+      "spriteMobId": "9402310",
       "cardIds": [
         "02871496"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "Ice"
     },
     "9960977": {
       "name": "Aruhi",
       "mobId": "9402390",
+      "spriteMobId": "9402309",
       "cardIds": [
         "02871497"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "Ice"
     },
     "9960978": {
       "name": "Ullan",
       "mobId": "9402391",
+      "spriteMobId": "9402312",
       "cardIds": [
         "02871498"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "Ice"
     },
     "9960979": {
       "name": "Black Knight",
       "mobId": "9303135",
+      "spriteMobId": "8220022",
       "cardIds": [
         "02870923",
         "02871499"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Undead",
       "element": "Lightning"
     },
     "9960980": {
       "name": "Mad Mage",
       "mobId": "9303136",
+      "spriteMobId": "8220023",
       "cardIds": [
         "02870924",
         "02871500"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Undead",
       "element": "Ice"
     },
     "9960981": {
       "name": "Rampant Cyborg",
       "mobId": "9303137",
+      "spriteMobId": "8220024",
       "cardIds": [
         "02870925",
         "02871501"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Undead",
       "element": "Dark"
     },
     "9960982": {
       "name": "Vicious Hunter",
       "mobId": "9303138",
+      "spriteMobId": "8220025",
       "cardIds": [
         "02870926",
         "02871502"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Undead",
       "element": "Poison"
     },
     "9960983": {
       "name": "Bad Brawler",
       "mobId": "9303139",
+      "spriteMobId": "8220026",
       "cardIds": [
         "02870927",
         "02871503"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Undead",
       "element": "Fire"
     },
     "9960984": {
       "name": "Giant Blackheart",
       "mobId": "2600910",
+      "cardIds": [
+        "02870678",
+        "02870928",
+        "02871539",
+        "02880467"
+      ],
+      "cardIdsFrom": "9960678",
       "spriteFrom": "mob",
       "familiarType": "Devil",
       "element": "Dark"
@@ -10082,65 +10449,70 @@
     "9960989": {
       "name": "Silent Knight",
       "mobId": "8644724",
+      "spriteMobId": "8644706",
       "cardIds": [
         "02870936",
         "02871508",
         "02881104",
         "02881128"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Undead",
       "element": "Dark"
     },
     "9960990": {
       "name": "Silent Scout",
       "mobId": "8644725",
+      "spriteMobId": "8644707",
       "cardIds": [
         "02870937",
         "02871509",
         "02881105",
         "02881129"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Undead",
       "element": "Dark"
     },
     "9960991": {
       "name": "Silent Rogue",
       "mobId": "8644726",
+      "spriteMobId": "8644708",
       "cardIds": [
         "02870938",
         "02871510",
         "02881106",
         "02881130"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Undead",
       "element": "Dark"
     },
     "9960992": {
       "name": "Despairing Wing",
       "mobId": "8644727",
+      "spriteMobId": "8644704",
       "cardIds": [
         "02870939",
         "02871511",
         "02881102",
         "02881126"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Undead",
       "element": "Dark"
     },
     "9960993": {
       "name": "Despairing Blade",
       "mobId": "8644728",
+      "spriteMobId": "8644705",
       "cardIds": [
         "02870940",
         "02871512",
         "02881103",
         "02881127"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Undead",
       "element": "Dark"
     },
@@ -10256,11 +10628,12 @@
     "9961003": {
       "name": "Nightghost",
       "mobId": "9400003",
+      "spriteMobId": "9300698",
       "cardIds": [
         "02871003",
         "02880532"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Undead",
       "element": "Dark"
     },
@@ -10333,11 +10706,12 @@
     "9961010": {
       "name": "Water Goblin",
       "mobId": "9400012",
+      "spriteMobId": "6500001",
       "cardIds": [
         "02871010",
         "02880539"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Nymph",
       "element": "Poison"
     },
@@ -10366,12 +10740,13 @@
     "9961013": {
       "name": "Yakuza Soldier",
       "mobId": "9400100",
+      "spriteMobId": "9400041",
       "cardIds": [
         "02871013",
         "02880542",
         "02881068"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "None"
     },
@@ -10384,6 +10759,7 @@
         "02881069"
       ],
       "spriteFrom": "familiar",
+      "spriteFrame": "mob|9400042|stand.0",
       "familiarType": "Human",
       "element": "None"
     },
@@ -10479,30 +10855,33 @@
     "9961023": {
       "name": "Golden Slime",
       "mobId": "9400202",
+      "spriteMobId": "7120105",
       "cardIds": [
         "02871023"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Nymph",
       "element": "Poison"
     },
     "9961024": {
       "name": "Silver Slime",
       "mobId": "9400203",
+      "spriteMobId": "7120104",
       "cardIds": [
         "02871024"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Nymph",
       "element": "Poison"
     },
     "9961025": {
       "name": "Silver Slime",
       "mobId": "9400204",
+      "spriteMobId": "7120104",
       "cardIds": [
         "02871025"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Nymph",
       "element": "Poison"
     },
@@ -10542,44 +10921,48 @@
     "9961044": {
       "name": "Sakura Genin",
       "mobId": "9400400",
+      "spriteMobId": "6500002",
       "cardIds": [
         "02871044",
         "02880566"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "None"
     },
     "9961045": {
       "name": "Sakura Chunin",
       "mobId": "9400401",
+      "spriteMobId": "6500003",
       "cardIds": [
         "02871045",
         "02880567"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "Poison"
     },
     "9961046": {
       "name": "Sakura Jonin",
       "mobId": "9400402",
+      "spriteMobId": "6500004",
       "cardIds": [
         "02871046",
         "02880568"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "Ice"
     },
     "9961047": {
       "name": "Sakura Ninto",
       "mobId": "9400403",
+      "spriteMobId": "6500005",
       "cardIds": [
         "02871047",
         "02880569"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Undead",
       "element": "Dark"
     },
@@ -10597,11 +10980,12 @@
     "9961049": {
       "name": "Sakura Musha",
       "mobId": "9400405",
+      "spriteMobId": "6500006",
       "cardIds": [
         "02871049",
         "02881254"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Undead",
       "element": "Fire"
     },
@@ -10619,10 +11003,11 @@
     "9961051": {
       "name": "Sakura Toad",
       "mobId": "9400407",
+      "spriteMobId": "6500010",
       "cardIds": [
         "02871051"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Reptile",
       "element": "Poison"
     },
@@ -10635,6 +11020,7 @@
         "02880572"
       ],
       "spriteFrom": "familiar",
+      "spriteFrame": "mob|6500011|stand.0",
       "familiarType": "Human",
       "element": "Dark"
     },
@@ -10681,11 +11067,12 @@
     "9961064": {
       "name": "Typhon",
       "mobId": "9400574",
+      "spriteMobId": "8148000",
       "cardIds": [
         "02871064",
         "02880573"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Beast",
       "element": "Dark"
     },
@@ -10746,11 +11133,12 @@
     "9961070": {
       "name": "Elderwraith",
       "mobId": "9400580",
+      "spriteMobId": "8148006",
       "cardIds": [
         "02871070",
         "02880578"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Devil",
       "element": "Dark"
     },
@@ -10762,6 +11150,7 @@
         "02880579"
       ],
       "spriteFrom": "familiar",
+      "spriteFrame": "mob|8148001|stand.0",
       "familiarType": "Devil",
       "element": "Lightning"
     },
@@ -10779,22 +11168,24 @@
     "9961073": {
       "name": "Leprechaun",
       "mobId": "9400583",
+      "spriteMobId": "8148003",
       "cardIds": [
         "02871073",
         "02880581"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Devil",
       "element": "Poison"
     },
     "9961074": {
       "name": "Nagrom",
       "mobId": "9400589",
+      "spriteMobId": "9300776",
       "cardIds": [
         "02871074",
         "02880582"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Devil",
       "element": "Lightning"
     },
@@ -10806,6 +11197,7 @@
         "02880583"
       ],
       "spriteFrom": "familiar",
+      "spriteFrame": "fam|jump.0",
       "familiarType": "Devil",
       "element": "Poison"
     },
@@ -10828,16 +11220,19 @@
         "02880585"
       ],
       "spriteFrom": "familiar",
+      "spriteFrame": "mob|9300774|stand.0",
       "familiarType": "Devil",
       "element": "Lightning"
     },
     "9961078": {
       "name": "Hsalf",
       "mobId": "9400593",
+      "spriteMobId": "9300775",
       "cardIds": [
         "02871078",
         "02880586"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Devil",
       "element": "Poison"
     },
@@ -10849,6 +11244,7 @@
         "02880587"
       ],
       "spriteFrom": "familiar",
+      "spriteFrame": "mob|9300783|stand.0",
       "familiarType": "Devil",
       "element": "Fire"
     },
@@ -10860,6 +11256,7 @@
         "02880588"
       ],
       "spriteFrom": "familiar",
+      "spriteFrame": "mob|8148008|fly.0",
       "familiarType": "Beast",
       "element": "None"
     },
@@ -10871,6 +11268,7 @@
         "02880589"
       ],
       "spriteFrom": "familiar",
+      "spriteFrame": "mob|8148010|stand.0",
       "familiarType": "Human",
       "element": "Fire"
     },
@@ -10881,6 +11279,7 @@
         "02871082"
       ],
       "spriteFrom": "familiar",
+      "spriteFrame": "mob|8148011|stand.0",
       "familiarType": "Human",
       "element": "Ice"
     },
@@ -10897,48 +11296,52 @@
     "9961084": {
       "name": "Lord Skeleton",
       "mobId": "9400725",
+      "spriteMobId": "8645251",
       "cardIds": [
         "02870490",
         "02871084",
         "02880590"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Undead",
       "element": "Dark"
     },
     "9961085": {
       "name": "Pixiemom",
       "mobId": "9400726",
+      "spriteMobId": "9300472",
       "cardIds": [
         "02870493",
         "02871085",
         "02880591"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Nymph",
       "element": "Holy"
     },
     "9961086": {
       "name": "Queen Pepe",
       "mobId": "9400727",
+      "spriteMobId": "9300483",
       "cardIds": [
         "02870494",
         "02871086",
         "02880592"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Beast",
       "element": "Ice"
     },
     "9961087": {
       "name": "Toy Black Knight",
       "mobId": "9400728",
+      "spriteMobId": "9300473",
       "cardIds": [
         "02870497",
         "02871087",
         "02880593"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Machine",
       "element": "Dark"
     },
@@ -10951,66 +11354,72 @@
         "02880594"
       ],
       "spriteFrom": "familiar",
+      "spriteFrame": "mob|3645324|stand.0",
       "familiarType": "Beast",
       "element": "Poison"
     },
     "9961089": {
       "name": "Master Hoblin",
       "mobId": "9400730",
+      "spriteMobId": "8645252",
       "cardIds": [
         "02870507",
         "02871089",
         "02880595"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Devil",
       "element": "Dark"
     },
     "9961090": {
       "name": "Master Harp",
       "mobId": "9400731",
+      "spriteMobId": "9300480",
       "cardIds": [
         "02870508",
         "02871090",
         "02880596"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Beast",
       "element": "Lightning"
     },
     "9961091": {
       "name": "Master Birk",
       "mobId": "9400732",
+      "spriteMobId": "9300481",
       "cardIds": [
         "02870509",
         "02871091",
         "02880597"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Beast",
       "element": "Dark"
     },
     "9961092": {
       "name": "Kentaurus King",
       "mobId": "9400733",
+      "spriteMobId": "9300482",
       "cardIds": [
         "02870510",
         "02871092",
         "02880598"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Beast",
       "element": "Dark"
     },
     "9961093": {
       "name": "Coco",
       "mobId": "9400734",
+      "spriteMobId": "9300474",
       "cardIds": [
         "02871093",
         "02880599",
         "02881091"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Devil",
       "element": "Dark"
     },
@@ -11027,21 +11436,23 @@
     "9961095": {
       "name": "Crow",
       "mobId": "9400738",
+      "spriteMobId": "9300486",
       "cardIds": [
         "02871095"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "None"
     },
     "9961096": {
       "name": "Corrupted Bastille",
       "mobId": "9400741",
+      "spriteMobId": "9300487",
       "cardIds": [
         "02870511",
         "02871096"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Devil",
       "element": "Dark"
     },
@@ -11070,11 +11481,12 @@
     "9961099": {
       "name": "Angry Stray Dog",
       "mobId": "9410002",
+      "spriteMobId": "3645304",
       "cardIds": [
         "02871099",
         "02880602"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Beast",
       "element": "None"
     },
@@ -11179,10 +11591,11 @@
     "9961109": {
       "name": "Axe Visitor",
       "mobId": "9420030",
+      "spriteMobId": "9390100",
       "cardIds": [
         "02871109"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Machine",
       "element": "Lightning"
     },
@@ -11193,6 +11606,7 @@
         "02871110"
       ],
       "spriteFrom": "familiar",
+      "spriteFrame": "mob|9390101|fly.0",
       "familiarType": "Machine",
       "element": "Lightning"
     },
@@ -11203,6 +11617,7 @@
         "02871111"
       ],
       "spriteFrom": "familiar",
+      "spriteFrame": "mob|9390102|fly.0",
       "familiarType": "Machine",
       "element": "Lightning"
     },
@@ -11213,6 +11628,7 @@
         "02871112"
       ],
       "spriteFrom": "familiar",
+      "spriteFrame": "mob|9420021|stand.0",
       "familiarType": "Machine",
       "element": "Lightning"
     },
@@ -11229,50 +11645,55 @@
     "9961114": {
       "name": "Spirit Visitor",
       "mobId": "9420035",
+      "spriteMobId": "9390103",
       "cardIds": [
         "02871114"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Machine",
       "element": "Lightning"
     },
     "9961115": {
       "name": "Bully Visitor",
       "mobId": "9420043",
+      "spriteMobId": "9420042",
       "cardIds": [
         "02871115"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Machine",
       "element": "Lightning"
     },
     "9961116": {
       "name": "Unjust Visitor",
       "mobId": "9420052",
+      "spriteMobId": "9420051",
       "cardIds": [
         "02871116"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Machine",
       "element": "Lightning"
     },
     "9961117": {
       "name": "Speedy Visitor",
       "mobId": "9420055",
+      "spriteMobId": "9390104",
       "cardIds": [
         "02871117"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Machine",
       "element": "Lightning"
     },
     "9961118": {
       "name": "Destroyer",
       "mobId": "9420059",
+      "spriteMobId": "9420057",
       "cardIds": [
         "02871118"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Machine",
       "element": "Lightning"
     },
@@ -11283,6 +11704,7 @@
         "02871119"
       ],
       "spriteFrom": "familiar",
+      "spriteFrame": "mob|9390110|fly.0",
       "familiarType": "Machine",
       "element": "Lightning"
     },
@@ -11293,6 +11715,7 @@
         "02871120"
       ],
       "spriteFrom": "familiar",
+      "spriteFrame": "mob|9390113|stand.0",
       "familiarType": "Machine",
       "element": "Lightning"
     },
@@ -11457,44 +11880,48 @@
     "9961136": {
       "name": "Giant Centipede",
       "mobId": "9600009",
+      "spriteMobId": "5220004",
       "cardIds": [
         "02871136",
         "02880619"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Beast",
       "element": "Poison"
     },
     "9961137": {
       "name": "Black Bear Swordsman",
       "mobId": "9600012",
+      "spriteMobId": "9430044",
       "cardIds": [
         "02871137",
         "02880620"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Beast",
       "element": "None"
     },
     "9961138": {
       "name": "White Tiger Swordsman",
       "mobId": "9600013",
+      "spriteMobId": "9430045",
       "cardIds": [
         "02871138",
         "02880621"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Beast",
       "element": "None"
     },
     "9961139": {
       "name": "Eagle Swordsman",
       "mobId": "9600014",
+      "spriteMobId": "9430032",
       "cardIds": [
         "02871139",
         "02880622"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Beast",
       "element": "None"
     },
@@ -11506,6 +11933,7 @@
         "02880623"
       ],
       "spriteFrom": "familiar",
+      "spriteFrame": "mob|9430046|stand.0",
       "familiarType": "Human",
       "element": "None"
     },
@@ -11517,6 +11945,7 @@
         "02880624"
       ],
       "spriteFrom": "familiar",
+      "spriteFrame": "mob|9430059|stand.0",
       "familiarType": "Human",
       "element": "Poison"
     },
@@ -11539,6 +11968,7 @@
         "02880626"
       ],
       "spriteFrom": "familiar",
+      "spriteFrame": "mob|9430051|attack1.0",
       "familiarType": "Human",
       "element": "Holy"
     },
@@ -11550,6 +11980,7 @@
         "02880627"
       ],
       "spriteFrom": "familiar",
+      "spriteFrame": "mob|9430058|attack1.0",
       "familiarType": "Human",
       "element": "Holy"
     },
@@ -11561,6 +11992,7 @@
         "02880628"
       ],
       "spriteFrom": "familiar",
+      "spriteFrame": "mob|9430052|stand.0",
       "familiarType": "Human",
       "element": "Holy"
     },
@@ -11572,6 +12004,7 @@
         "02880629"
       ],
       "spriteFrom": "familiar",
+      "spriteFrame": "mob|9430053|stand.0",
       "familiarType": "Human",
       "element": "Holy"
     },
@@ -11583,6 +12016,7 @@
         "02880630"
       ],
       "spriteFrom": "familiar",
+      "spriteFrame": "mob|9430057|stand.0",
       "familiarType": "Human",
       "element": "Holy"
     },
@@ -11594,6 +12028,7 @@
         "02880631"
       ],
       "spriteFrom": "familiar",
+      "spriteFrame": "mob|9430054|stand.0",
       "familiarType": "Human",
       "element": "Holy"
     },
@@ -11606,6 +12041,7 @@
         "02880632"
       ],
       "spriteFrom": "familiar",
+      "spriteFrame": "mob|9430050|stand.0",
       "familiarType": "Human",
       "element": "Holy"
     },
@@ -11677,77 +12113,84 @@
     "9961182": {
       "name": "Lil Luminous (Light)",
       "mobId": "9601159",
+      "spriteMobId": "9300752",
       "cardIds": [
         "02870955",
         "02871524"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "Holy"
     },
     "9961183": {
       "name": "Lil Luminous (Dark)",
       "mobId": "9601160",
+      "spriteMobId": "9300753",
       "cardIds": [
         "02870956",
         "02871525"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "Dark"
     },
     "9961184": {
       "name": "Lil Luminous (Equilibrium)",
       "mobId": "9601161",
+      "spriteMobId": "9300754",
       "cardIds": [
         "02870957",
         "02871526"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "Holy"
     },
     "9961185": {
       "name": "Lil Mercedes",
       "mobId": "9601162",
+      "spriteMobId": "9300756",
       "cardIds": [
         "02870958",
         "02871527"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "Holy"
     },
     "9961186": {
       "name": "Lil Phantom",
       "mobId": "9601163",
+      "spriteMobId": "9300757",
       "cardIds": [
         "02870959",
         "02871528"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "Lightning"
     },
     "9961187": {
       "name": "Lil Shade",
       "mobId": "9601164",
+      "spriteMobId": "9300881",
       "cardIds": [
         "02870960",
         "02871529"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "Dark"
     },
     "9961188": {
       "name": "Lil Moonbeam",
       "mobId": "9601165",
+      "spriteMobId": "9300882",
       "cardIds": [
         "02870961",
         "02871530"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "None"
     },
@@ -11759,6 +12202,7 @@
         "02871531"
       ],
       "spriteFrom": "familiar",
+      "spriteFrame": "mob|9300883|move.0",
       "familiarType": "Human",
       "element": "None"
     },
@@ -11798,31 +12242,34 @@
     "9961193": {
       "name": "Ephenia",
       "mobId": "9300711",
+      "spriteMobId": "5250007",
       "cardIds": [
         "02870968",
         "02871537"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Nymph",
       "element": "None"
     },
     "9961194": {
       "name": "Demon King",
       "mobId": "9402401",
+      "spriteMobId": "9402397",
       "cardIds": [
         "02870933"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Devil",
       "element": "Dark"
     },
     "9961195": {
       "name": "Golem",
       "mobId": "9402402",
+      "spriteMobId": "9402395",
       "cardIds": [
         "02870934"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Machine",
       "element": "None"
     },
@@ -11839,6 +12286,11 @@
     "9961197": {
       "name": "Lyra",
       "mobId": "9300764",
+      "cardIds": [
+        "02870608",
+        "02870969"
+      ],
+      "cardIdsFrom": "9960608",
       "spriteFrom": "mob",
       "familiarType": "Beast",
       "element": "None"
@@ -11846,16 +12298,22 @@
     "9961198": {
       "name": "Shadow Knight",
       "mobId": "9300765",
+      "spriteMobId": "9300745",
       "cardIds": [
         "02870970"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "None"
     },
     "9961199": {
       "name": "Milo",
       "mobId": "9300768",
+      "cardIds": [
+        "02870609",
+        "02870971"
+      ],
+      "cardIdsFrom": "9960609",
       "spriteFrom": "mob",
       "familiarType": "Beast",
       "element": "None"
@@ -11913,6 +12371,13 @@
     "9961205": {
       "name": "Lotus",
       "mobId": "8240098",
+      "cardIds": [
+        "02880665",
+        "02880707",
+        "02880713",
+        "02881141"
+      ],
+      "cardIdsFrom": "9960850",
       "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "Dark"
@@ -11920,6 +12385,14 @@
     "9961206": {
       "name": "Lotus",
       "mobId": "8240099",
+      "cardIds": [
+        "02880666",
+        "02880708",
+        "02880714",
+        "02880716",
+        "02881142"
+      ],
+      "cardIdsFrom": "9960851",
       "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "Dark"
@@ -11973,11 +12446,13 @@
     "9961211": {
       "name": "Crushing Glare",
       "mobId": "8644644",
+      "spriteMobId": "8644618",
       "cardIds": [
         "02870981",
         "02881115",
         "02881139"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Beast",
       "element": "None"
     },
@@ -12046,9 +12521,11 @@
     "9961218": {
       "name": "Flared Hoppin\u0027 Sprout",
       "mobId": "2300271",
+      "spriteMobId": "2300260",
       "cardIds": [
         "02870988"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Beast",
       "element": "Holy"
     },
@@ -12125,27 +12602,33 @@
     "9961226": {
       "name": "Fistfight Troublemaker",
       "mobId": "2700306",
+      "spriteMobId": "2700110",
       "cardIds": [
         "02871177"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Devil",
       "element": "Ice"
     },
     "9961227": {
       "name": "Forever Alone Troublemaker",
       "mobId": "2700307",
+      "spriteMobId": "2700112",
       "cardIds": [
         "02871178"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Devil",
       "element": "Holy"
     },
     "9961228": {
       "name": "Two-faced Troublemaker",
       "mobId": "2700308",
+      "spriteMobId": "2700114",
       "cardIds": [
         "02871179"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Devil",
       "element": "Dark"
     },
@@ -12396,22 +12879,26 @@
     "9961259": {
       "name": "Ebonstar Foot Soldier",
       "mobId": "8645123",
+      "spriteMobId": "8645111",
       "cardIds": [
         "02871206",
         "02881255",
         "02881267"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "None"
     },
     "9961260": {
       "name": "Ebonstar Archer",
       "mobId": "8645124",
+      "spriteMobId": "8645112",
       "cardIds": [
         "02871207",
         "02881256",
         "02881268"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "Fire"
     },
@@ -12442,44 +12929,52 @@
     "9961263": {
       "name": "Monster Gull",
       "mobId": "8645125",
+      "spriteMobId": "8645113",
       "cardIds": [
         "02871210",
         "02881259",
         "02881271"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Beast",
       "element": "None"
     },
     "9961264": {
       "name": "Fire Spirit",
       "mobId": "8645126",
+      "spriteMobId": "8645114",
       "cardIds": [
         "02871211",
         "02881260",
         "02881272"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Nymph",
       "element": "Fire"
     },
     "9961265": {
       "name": "Wandering Scholar Ghost",
       "mobId": "8645127",
+      "spriteMobId": "8645115",
       "cardIds": [
         "02871212",
         "02881261",
         "02881273"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Nymph",
       "element": "Dark"
     },
     "9961266": {
       "name": "Flora Foot Soldier",
       "mobId": "8645131",
+      "spriteMobId": "8645116",
       "cardIds": [
         "02871213",
         "02881262",
         "02881274"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "None"
     },
@@ -12608,45 +13103,55 @@
     "9961279": {
       "name": "Corrupted Master",
       "mobId": "9601267",
+      "spriteMobId": "9601266",
       "cardIds": [
         "02871226"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Beast",
       "element": "Dark"
     },
     "9961280": {
       "name": "Corrupted Windreaver",
       "mobId": "9601268",
+      "spriteMobId": "9480327",
       "cardIds": [
         "02871227"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Beast",
       "element": "Dark"
     },
     "9961281": {
       "name": "Corrupted Flamekeeper",
       "mobId": "9601269",
+      "spriteMobId": "9480328",
       "cardIds": [
         "02871228"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Beast",
       "element": "Fire"
     },
     "9961282": {
       "name": "Corrupted Shadowknight",
       "mobId": "9601270",
+      "spriteMobId": "9480330",
       "cardIds": [
         "02871229"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Beast",
       "element": "Dark"
     },
     "9961283": {
       "name": "Corrupted Stormcaster",
       "mobId": "9601271",
+      "spriteMobId": "9480331",
       "cardIds": [
         "02871230"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Beast",
       "element": "Lightning"
     },
@@ -12828,11 +13333,12 @@
     "9961328": {
       "name": "Dark Construct",
       "mobId": "8644831",
+      "spriteMobId": "8644703",
       "cardIds": [
         "02881101",
         "02881125"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Beast",
       "element": "Dark"
     },
@@ -13113,10 +13619,12 @@
     "9961403": {
       "name": "Chosen Seren",
       "mobId": "8880600",
+      "spriteMobId": "8880615",
       "cardIds": [
         "02871358",
         "02881215"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "Holy"
     },
@@ -13134,10 +13642,12 @@
     "9961423": {
       "name": "Explosive Slime",
       "mobId": "9410796",
+      "spriteMobId": "8880705",
       "cardIds": [
         "02871402",
         "02871403"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Nymph",
       "element": "Dark"
     },
@@ -13166,30 +13676,36 @@
     "9961431": {
       "name": "Dunas Unit",
       "mobId": "9601837",
+      "spriteMobId": "9400659",
       "cardIds": [
         "02881236",
         "02881249"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Machine",
       "element": "Lightning"
     },
     "9961432": {
       "name": "Afterlord",
       "mobId": "9601810",
+      "spriteMobId": "8120102",
       "cardIds": [
         "02881235",
         "02881248"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Machine",
       "element": "Fire"
     },
     "9961433": {
       "name": "Prototype Lord",
       "mobId": "9601811",
+      "spriteMobId": "8120103",
       "cardIds": [
         "02881234",
         "02881247"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Machine",
       "element": "Fire"
     },
@@ -13201,46 +13717,55 @@
         "02881246"
       ],
       "spriteFrom": "familiar",
+      "spriteFrame": "mob|7120106|stand.0",
       "familiarType": "Machine",
       "element": "Fire"
     },
     "9961435": {
       "name": "Maverick Alpha",
       "mobId": "9601816",
+      "spriteMobId": "8120104",
       "cardIds": [
         "02881232",
         "02881245"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Machine",
       "element": "Fire"
     },
     "9961436": {
       "name": "Enhanced Maverick Beta",
       "mobId": "9601818",
+      "spriteMobId": "8120105",
       "cardIds": [
         "02881231",
         "02881244"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Machine",
       "element": "Fire"
     },
     "9961437": {
       "name": "Imperial Guard",
       "mobId": "9601822",
+      "spriteMobId": "8140511",
       "cardIds": [
         "02881230",
         "02881243"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Machine",
       "element": "Fire"
     },
     "9961438": {
       "name": "Royal Guard",
       "mobId": "9601825",
+      "spriteMobId": "8140512",
       "cardIds": [
         "02881229",
         "02881242"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Machine",
       "element": "Fire"
     },
@@ -13251,16 +13776,20 @@
         "02881228",
         "02881241"
       ],
+      "spriteFrom": "familiar",
+      "spriteFrame": "mob|7120100|stand.0",
       "familiarType": "Beast",
       "element": "Dark"
     },
     "9961440": {
       "name": "Mystery Man",
       "mobId": "9601835",
+      "spriteMobId": "8220010",
       "cardIds": [
         "02881227",
         "02881240"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "Holy"
     },
@@ -13289,46 +13818,56 @@
     "9961443": {
       "name": "Iruvata",
       "mobId": "9601828",
+      "spriteMobId": "7120109",
       "cardIds": [
         "02881237",
         "02881250"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "None"
     },
     "9961444": {
       "name": "Avarice",
       "mobId": "9601947",
+      "spriteMobId": "9601941",
       "cardIds": [
         "02871444"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Reptile",
       "element": "Dark"
     },
     "9961445": {
       "name": "Anuth",
       "mobId": "9601949",
+      "spriteMobId": "9601943",
       "cardIds": [
         "02871445"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Reptile",
       "element": "Dark"
     },
     "9961446": {
       "name": "Avareza",
       "mobId": "9601950",
+      "spriteMobId": "9601944",
       "cardIds": [
         "02871446"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Reptile",
       "element": "Dark"
     },
     "9961447": {
       "name": "Avaritia",
       "mobId": "9601948",
+      "spriteMobId": "9601942",
       "cardIds": [
         "02871447"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Reptile",
       "element": "Dark"
     },
@@ -13948,6 +14487,7 @@
         "02872002"
       ],
       "spriteFrom": "familiar",
+      "spriteFrame": "mob|9100008|move.0",
       "familiarType": "Beast",
       "element": "None"
     },
@@ -14070,30 +14610,33 @@
     "9962014": {
       "name": "Rideword P",
       "mobId": "9500184",
+      "spriteMobId": "9400553",
       "cardIds": [
         "02872014"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Nymph",
       "element": "Poison"
     },
     "9962015": {
       "name": "Rideword Y",
       "mobId": "9500185",
+      "spriteMobId": "9400554",
       "cardIds": [
         "02872015"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Nymph",
       "element": "Lightning"
     },
     "9962016": {
       "name": "Rideword B",
       "mobId": "9500186",
+      "spriteMobId": "9400555",
       "cardIds": [
         "02872016"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Machine",
       "element": "Ice"
     },
@@ -14104,6 +14647,7 @@
         "02872017"
       ],
       "spriteFrom": "familiar",
+      "spriteFrame": "mob|9400558|stand.0",
       "familiarType": "Machine",
       "element": "None"
     },
@@ -14140,10 +14684,11 @@
     "9962021": {
       "name": "Ghost",
       "mobId": "9500196",
+      "spriteMobId": "9100027",
       "cardIds": [
         "02872021"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Undead",
       "element": "Dark"
     },
@@ -14154,6 +14699,7 @@
         "02872022"
       ],
       "spriteFrom": "familiar",
+      "spriteFrame": "mob|9400561|stand.0",
       "familiarType": "Devil",
       "element": "Poison"
     },
@@ -14164,6 +14710,7 @@
         "02872023"
       ],
       "spriteFrom": "familiar",
+      "spriteFrame": "mob|9400562|stand.0",
       "familiarType": "Devil",
       "element": "Poison"
     },
@@ -14174,6 +14721,7 @@
         "02872024"
       ],
       "spriteFrom": "familiar",
+      "spriteFrame": "mob|9400322|stand.0",
       "familiarType": "Nymph",
       "element": "Ice"
     },
@@ -14184,6 +14732,7 @@
         "02872025"
       ],
       "spriteFrom": "familiar",
+      "spriteFrame": "mob|9300677|stand.0",
       "familiarType": "Nymph",
       "element": "Ice"
     },
@@ -14214,6 +14763,7 @@
         "02872028"
       ],
       "spriteFrom": "familiar",
+      "spriteFrame": "mob|9100030|stand.1",
       "familiarType": "Beast",
       "element": "None"
     },
@@ -14297,17 +14847,25 @@
     "9962036": {
       "name": "Ravana",
       "mobId": "9500390",
+      "spriteMobId": "9480108",
       "cardIds": [
         "02872036",
         "02880641"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Nymph",
       "element": "Lightning"
     },
     "9962037": {
       "name": "Red Snail",
       "mobId": "0130101",
+      "cardIds": [
+        "02870004",
+        "02872037",
+        "02880004",
+        "02880772"
+      ],
+      "cardIdsFrom": "9960004",
       "spriteFrom": "mob",
       "familiarType": "Beast",
       "element": "Fire"
@@ -14315,6 +14873,13 @@
     "9962038": {
       "name": "Slime",
       "mobId": "0210100",
+      "cardIds": [
+        "02870008",
+        "02872038",
+        "02880008",
+        "02880774"
+      ],
+      "cardIdsFrom": "9960008",
       "spriteFrom": "mob",
       "familiarType": "Nymph",
       "element": "Poison"
@@ -14322,6 +14887,13 @@
     "9962039": {
       "name": "Ribbon Pig",
       "mobId": "1210101",
+      "cardIds": [
+        "02870020",
+        "02872039",
+        "02880020",
+        "02880782"
+      ],
+      "cardIdsFrom": "9960020",
       "spriteFrom": "mob",
       "familiarType": "Beast",
       "element": "Fire"
@@ -14329,6 +14901,12 @@
     "9962040": {
       "name": "Zombie Mushroom",
       "mobId": "2230101",
+      "cardIds": [
+        "02870046",
+        "02872040",
+        "02880046"
+      ],
+      "cardIdsFrom": "9960046",
       "spriteFrom": "mob",
       "familiarType": "Undead",
       "element": "Dark"
@@ -14336,6 +14914,13 @@
     "9962041": {
       "name": "Star Pixie",
       "mobId": "3230200",
+      "cardIds": [
+        "02870097",
+        "02872041",
+        "02880097",
+        "02880848"
+      ],
+      "cardIdsFrom": "9960097",
       "spriteFrom": "mob",
       "familiarType": "Nymph",
       "element": "None"
@@ -14343,6 +14928,16 @@
     "9962042": {
       "name": "Golden Pig",
       "mobId": "9500167",
+      "cardIds": [
+        "02872013",
+        "02872042",
+        "02872043",
+        "02872044",
+        "02872045",
+        "02872046",
+        "02872047"
+      ],
+      "cardIdsFrom": "9962013",
       "spriteFrom": "mob",
       "familiarType": "Machine",
       "element": "Holy"
@@ -14350,6 +14945,16 @@
     "9962043": {
       "name": "Golden Pig",
       "mobId": "9500167",
+      "cardIds": [
+        "02872013",
+        "02872042",
+        "02872043",
+        "02872044",
+        "02872045",
+        "02872046",
+        "02872047"
+      ],
+      "cardIdsFrom": "9962013",
       "spriteFrom": "mob",
       "familiarType": "Machine",
       "element": "Holy"
@@ -14357,6 +14962,16 @@
     "9962044": {
       "name": "Golden Pig",
       "mobId": "9500167",
+      "cardIds": [
+        "02872013",
+        "02872042",
+        "02872043",
+        "02872044",
+        "02872045",
+        "02872046",
+        "02872047"
+      ],
+      "cardIdsFrom": "9962013",
       "spriteFrom": "mob",
       "familiarType": "Machine",
       "element": "Holy"
@@ -14364,6 +14979,16 @@
     "9962045": {
       "name": "Golden Pig",
       "mobId": "9500167",
+      "cardIds": [
+        "02872013",
+        "02872042",
+        "02872043",
+        "02872044",
+        "02872045",
+        "02872046",
+        "02872047"
+      ],
+      "cardIdsFrom": "9962013",
       "spriteFrom": "mob",
       "familiarType": "Machine",
       "element": "Holy"
@@ -14371,6 +14996,16 @@
     "9962046": {
       "name": "Golden Pig",
       "mobId": "9500167",
+      "cardIds": [
+        "02872013",
+        "02872042",
+        "02872043",
+        "02872044",
+        "02872045",
+        "02872046",
+        "02872047"
+      ],
+      "cardIdsFrom": "9962013",
       "spriteFrom": "mob",
       "familiarType": "Machine",
       "element": "Holy"
@@ -14378,6 +15013,16 @@
     "9962047": {
       "name": "Golden Pig",
       "mobId": "9500167",
+      "cardIds": [
+        "02872013",
+        "02872042",
+        "02872043",
+        "02872044",
+        "02872045",
+        "02872046",
+        "02872047"
+      ],
+      "cardIdsFrom": "9962013",
       "spriteFrom": "mob",
       "familiarType": "Machine",
       "element": "Holy"
@@ -14385,13 +15030,24 @@
     "9962048": {
       "name": "Demon Soldier",
       "mobId": "8240164",
-      "spriteFrom": "familiar",
+      "spriteMobId": "3503002",
+      "cardIds": [
+        "02870679",
+        "02880729"
+      ],
+      "cardIdsFrom": "9960679",
+      "spriteFrom": "mob",
       "familiarType": "Devil",
       "element": "None"
     },
     "9962049": {
       "name": "Dark Demon Axeman",
       "mobId": "3503004",
+      "cardIds": [
+        "02870680",
+        "02880730"
+      ],
+      "cardIdsFrom": "9960680",
       "spriteFrom": "mob",
       "familiarType": "Devil",
       "element": "None"
@@ -14399,6 +15055,11 @@
     "9962050": {
       "name": "Dark Demon Shieldbearer",
       "mobId": "3503006",
+      "cardIds": [
+        "02870681",
+        "02880731"
+      ],
+      "cardIdsFrom": "9960681",
       "spriteFrom": "mob",
       "familiarType": "Devil",
       "element": "None"
@@ -14406,6 +15067,11 @@
     "9962051": {
       "name": "Dark Demon Swordmaster",
       "mobId": "3503003",
+      "cardIds": [
+        "02870682",
+        "02880732"
+      ],
+      "cardIdsFrom": "9960682",
       "spriteFrom": "mob",
       "familiarType": "Devil",
       "element": "Dark"
@@ -14413,6 +15079,11 @@
     "9962052": {
       "name": "Dark Demon Shieldmaster",
       "mobId": "3503007",
+      "cardIds": [
+        "02870683",
+        "02880733"
+      ],
+      "cardIdsFrom": "9960683",
       "spriteFrom": "mob",
       "familiarType": "Devil",
       "element": "Dark"
@@ -14420,6 +15091,12 @@
     "9962053": {
       "name": "Dark Demon Wolfmaster",
       "mobId": "3503009",
+      "cardIds": [
+        "02870684",
+        "02871412",
+        "02880734"
+      ],
+      "cardIdsFrom": "9960684",
       "spriteFrom": "mob",
       "familiarType": "Devil",
       "element": "Dark"
@@ -14427,6 +15104,11 @@
     "9962054": {
       "name": "Ruins Scorpion",
       "mobId": "8240162",
+      "cardIds": [
+        "02870685",
+        "02880735"
+      ],
+      "cardIdsFrom": "9960685",
       "spriteFrom": "mob",
       "familiarType": "Beast",
       "element": "Poison"
@@ -14434,6 +15116,11 @@
     "9962055": {
       "name": "Devil Murukun",
       "mobId": "8240133",
+      "cardIds": [
+        "02870686",
+        "02880736"
+      ],
+      "cardIdsFrom": "9960686",
       "spriteFrom": "mob",
       "familiarType": "Nymph",
       "element": "Ice"
@@ -14441,13 +15128,24 @@
     "9962056": {
       "name": "Devil Mukuru",
       "mobId": "9833008",
-      "spriteFrom": "familiar",
+      "spriteMobId": "8240132",
+      "cardIds": [
+        "02870687",
+        "02880737"
+      ],
+      "cardIdsFrom": "9960687",
+      "spriteFrom": "mob",
       "familiarType": "Nymph",
       "element": "Ice"
     },
     "9962057": {
       "name": "Damien",
       "mobId": "8880101",
+      "cardIds": [
+        "02870688",
+        "02880738"
+      ],
+      "cardIdsFrom": "9960688",
       "spriteFrom": "mob",
       "familiarType": "Devil",
       "element": "Dark"
@@ -14475,239 +15173,368 @@
     "9970264": {
       "name": "Shrelephant",
       "mobId": "9402356",
-      "spriteFrom": "familiar",
+      "spriteMobId": "9402237",
+      "cardIds": [
+        "02870899"
+      ],
+      "cardIdsFrom": "9960955",
+      "spriteFrom": "mob",
       "familiarType": "Beast",
       "element": "Ice"
     },
     "9970265": {
       "name": "Eyeful",
       "mobId": "9402357",
+      "spriteMobId": "9402238",
       "cardIds": [
         "02870900"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Devil",
       "element": "Ice"
     },
     "9970266": {
       "name": "Petreefied Eyeful",
       "mobId": "9402358",
+      "spriteMobId": "9402240",
       "cardIds": [
         "02870901"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Devil",
       "element": "Ice"
     },
     "9970267": {
       "name": "Raging Shrelephant",
       "mobId": "9402359",
+      "spriteMobId": "9402241",
       "cardIds": [
         "02870902"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Beast",
       "element": "Ice"
     },
     "9970268": {
       "name": "Raging Werebeast",
       "mobId": "9402360",
+      "spriteMobId": "9402242",
       "cardIds": [
         "02870903"
       ],
-      "spriteFrom": "familiar",
+      "spriteFrom": "mob",
       "familiarType": "Beast",
       "element": "Ice"
     },
     "9970269": {
       "name": "Frostfang Werebeast",
       "mobId": "9402361",
+      "spriteMobId": "9402243",
       "cardIds": [
         "02870904"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Beast",
       "element": "Ice"
     },
     "9970270": {
       "name": "Grimgaze Werebeast",
       "mobId": "9402362",
+      "spriteMobId": "9402244",
+      "cardIds": [
+        "02870905"
+      ],
+      "cardIdsFrom": "9960961",
+      "spriteFrom": "mob",
       "familiarType": "Beast",
       "element": "Ice"
     },
     "9970271": {
       "name": "Raging Hellfang",
       "mobId": "9402363",
+      "spriteMobId": "9402245",
       "cardIds": [
         "02870906"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Beast",
       "element": "Ice"
     },
     "9970272": {
       "name": "Frost Hellfang",
       "mobId": "9402364",
+      "spriteMobId": "9402246",
       "cardIds": [
         "02870907"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Beast",
       "element": "Ice"
     },
     "9970273": {
       "name": "Raging Leatty",
       "mobId": "9402365",
+      "spriteMobId": "9402248",
+      "cardIds": [
+        "02870908"
+      ],
+      "cardIdsFrom": "9960964",
+      "spriteFrom": "mob",
       "familiarType": "Beast",
       "element": "Ice"
     },
     "9970274": {
       "name": "Fembris",
       "mobId": "9402366",
+      "spriteMobId": "9402249",
+      "cardIds": [
+        "02870909"
+      ],
+      "cardIdsFrom": "9960965",
+      "spriteFrom": "mob",
       "familiarType": "Beast",
       "element": "Fire"
     },
     "9970275": {
       "name": "Frostflail Yeti",
       "mobId": "9402367",
+      "spriteMobId": "9402250",
+      "cardIds": [
+        "02870910"
+      ],
+      "cardIdsFrom": "9960966",
+      "spriteFrom": "mob",
       "familiarType": "Beast",
       "element": "Ice"
     },
     "9970276": {
       "name": "Actinops",
       "mobId": "9402368",
+      "spriteMobId": "9402251",
+      "cardIds": [
+        "02870911"
+      ],
+      "cardIdsFrom": "9960967",
+      "spriteFrom": "mob",
       "familiarType": "Reptile",
       "element": "Poison"
     },
     "9970277": {
       "name": "Kaptafel Snowfield Archer",
       "mobId": "9402369",
+      "spriteMobId": "9402313",
       "cardIds": [
         "02870912"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "Ice"
     },
     "9970278": {
       "name": "Svarti Harpooner",
       "mobId": "9402382",
+      "spriteMobId": "9402315",
       "cardIds": [
         "02870913"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "Ice"
     },
     "9970279": {
       "name": "Skuas Guard",
       "mobId": "9402383",
+      "spriteMobId": "9402316",
       "cardIds": [
         "02870914"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "Ice"
     },
     "9970280": {
       "name": "Skuas Miner",
       "mobId": "9402384",
+      "spriteMobId": "9402317",
       "cardIds": [
         "02870915"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "Ice"
     },
     "9970281": {
       "name": "Kan",
       "mobId": "9402385",
+      "spriteMobId": "9402311",
+      "cardIds": [
+        "02870916"
+      ],
+      "cardIdsFrom": "9960972",
+      "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "Ice"
     },
     "9970282": {
       "name": "Peytour",
       "mobId": "9402386",
+      "spriteMobId": "9402306",
+      "cardIds": [
+        "02870917"
+      ],
+      "cardIdsFrom": "9960973",
+      "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "Ice"
     },
     "9970283": {
       "name": "Slaka",
       "mobId": "9402387",
+      "spriteMobId": "9402308",
       "cardIds": [
         "02870918"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "Ice"
     },
     "9970284": {
       "name": "Gurnardson",
       "mobId": "9402388",
+      "spriteMobId": "9402305",
       "cardIds": [
         "02870919"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "Ice"
     },
     "9970285": {
       "name": "Einar",
       "mobId": "9402389",
+      "spriteMobId": "9402310",
       "cardIds": [
         "02870920"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "Ice"
     },
     "9970286": {
       "name": "Aruhi",
       "mobId": "9402390",
+      "spriteMobId": "9402309",
       "cardIds": [
         "02870921"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "Ice"
     },
     "9970287": {
       "name": "Ullan",
       "mobId": "9402391",
+      "spriteMobId": "9402312",
       "cardIds": [
         "02870922"
       ],
+      "spriteFrom": "mob",
       "familiarType": "Human",
       "element": "Ice"
     },
     "9970298": {
       "name": "Demon King",
       "mobId": "9402401",
-      "spriteFrom": "familiar",
+      "spriteMobId": "9402397",
+      "cardIds": [
+        "02870933"
+      ],
+      "cardIdsFrom": "9961194",
+      "spriteFrom": "mob",
       "familiarType": "Devil",
       "element": "Dark"
     },
     "9970299": {
       "name": "Golem",
       "mobId": "9402402",
-      "spriteFrom": "familiar",
+      "spriteMobId": "9402395",
+      "cardIds": [
+        "02870934"
+      ],
+      "cardIdsFrom": "9961195",
+      "spriteFrom": "mob",
       "familiarType": "Machine",
       "element": "None"
     },
     "9970300": {
       "name": "Goblin Archer",
       "mobId": "9402403",
+      "cardIds": [
+        "02870935"
+      ],
+      "cardIdsFrom": "9961196",
       "spriteFrom": "familiar",
+      "spriteFrame": "mob|9402396|stand.0",
       "familiarType": "Devil",
       "element": "Poison"
     },
     "9970301": {
       "name": "Silent Knight",
       "mobId": "8644724",
+      "spriteMobId": "8644706",
+      "cardIds": [
+        "02870936",
+        "02871508",
+        "02881104",
+        "02881128"
+      ],
+      "cardIdsFrom": "9960989",
+      "spriteFrom": "mob",
       "familiarType": "Undead",
       "element": "Dark"
     },
     "9970302": {
       "name": "Silent Scout",
       "mobId": "8644725",
+      "spriteMobId": "8644707",
+      "cardIds": [
+        "02870937",
+        "02871509",
+        "02881105",
+        "02881129"
+      ],
+      "cardIdsFrom": "9960990",
+      "spriteFrom": "mob",
       "familiarType": "Undead",
       "element": "Dark"
     },
     "9970303": {
       "name": "Silent Rogue",
       "mobId": "8644726",
+      "spriteMobId": "8644708",
+      "cardIds": [
+        "02870938",
+        "02871510",
+        "02881106",
+        "02881130"
+      ],
+      "cardIdsFrom": "9960991",
+      "spriteFrom": "mob",
       "familiarType": "Undead",
       "element": "Dark"
     },
     "9970304": {
       "name": "Despairing Wing",
       "mobId": "8644727",
+      "spriteMobId": "8644704",
+      "cardIds": [
+        "02870939",
+        "02871511",
+        "02881102",
+        "02881126"
+      ],
+      "cardIdsFrom": "9960992",
+      "spriteFrom": "mob",
       "familiarType": "Undead",
       "element": "Dark"
     },
