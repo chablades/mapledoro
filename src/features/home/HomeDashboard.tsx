@@ -1,5 +1,6 @@
 "use client";
 
+import MiracleTimePanel from "../../components/MiracleTimePanel";
 import SunnySundayPanel from "../../components/SunnySundayPanel";
 import type { AppTheme } from "../../components/themes";
 import { useClock } from "../../lib/useClock";
@@ -126,6 +127,9 @@ export default function HomeDashboard({ theme }: { theme: AppTheme }) {
               <div style={{ marginTop: "0.75rem" }}>
                 <UrsusPanel theme={theme} now={now} />
               </div>
+            </div>
+            <div style={{ marginTop: "0.75rem" }}>
+              <MiracleTimePanel theme={theme} />
             </div>
           </aside>
           <div className="dashboard-main">
