@@ -6,20 +6,22 @@ import type { AppTheme } from "../../../components/themes";
 import { toolStyles } from "../../tools/tool-styles";
 import PuzzleSkillIcon from "./PuzzleSkillIcon";
 import { MAX_GUESSES, msUntilNextPuzzle, type SkillGuesserPuzzle } from "./puzzles";
-import type { SkillGuesserResult } from "./storage";
+import type { GameMode, SkillGuesserResult } from "./storage";
 
 const SHARE_URL = "https://www.mapledoro.com/games/skill-guesser";
 
 function buildShareText(
   puzzleNumber: number,
-  puzzle: SkillGuesserPuzzle,
+  mode: GameMode,
+  answer: string,
   result: SkillGuesserResult,
 ): string {
   const score = result.won ? `${result.guesses.length}/${MAX_GUESSES}` : `X/${MAX_GUESSES}`;
+  const tag = mode === "hard" ? " (Hard)" : "";
   const squares = result.guesses
-    .map((g) => (g === puzzle.className ? "\u{1F7E9}" : "\u{1F7E5}"))
+    .map((g) => (g === answer ? "\u{1F7E9}" : "\u{1F7E5}"))
     .join("");
-  return `Mapledle #${puzzleNumber} ${score}\n${squares}\n${SHARE_URL}`;
+  return `Mapledle #${puzzleNumber}${tag} ${score}\n${squares}\n${SHARE_URL}`;
 }
 
 function formatCountdown(ms: number): string {
@@ -63,13 +65,20 @@ export default function ResultsDialog({
   theme,
   puzzleNumber,
   puzzle,
+  mode,
   result,
+  answer,
+  skillNameRevealed,
   onClose,
 }: {
   theme: AppTheme;
   puzzleNumber: number;
   puzzle: SkillGuesserPuzzle;
+  mode: GameMode;
   result: SkillGuesserResult;
+  /** The value guesses are scored against (skill name in hard mode, else class). */
+  answer: string;
+  skillNameRevealed: boolean;
   onClose: () => void;
 }) {
   const styles = toolStyles(theme);
@@ -83,7 +92,7 @@ export default function ResultsDialog({
 
   async function handleShare() {
     try {
-      await navigator.clipboard.writeText(buildShareText(puzzleNumber, puzzle, result));
+      await navigator.clipboard.writeText(buildShareText(puzzleNumber, mode, answer, result));
       setCopied(true);
     } catch { /* clipboard unavailable */ }
   }
@@ -102,7 +111,7 @@ export default function ResultsDialog({
           {result.won ? "You got it!" : "Out of guesses!"}
         </div>
         <div style={{ fontSize: "0.8rem", fontWeight: 700, color: theme.muted, marginTop: "0.2rem" }}>
-          Mapledle #{puzzleNumber} — {score}
+          Mapledle #{puzzleNumber}{mode === "hard" ? " (Hard)" : ""} — {score}
         </div>
 
         <div
@@ -131,14 +140,14 @@ export default function ResultsDialog({
               {puzzle.className}
             </div>
             <div style={{ fontSize: "0.78rem", fontWeight: 600, color: theme.muted }}>
-              {puzzle.skillName}
+              {skillNameRevealed ? puzzle.skillName : "Clear Hard Mode to reveal the skill name"}
             </div>
           </div>
         </div>
 
         <div style={{ fontSize: "1.3rem", letterSpacing: "0.15em", marginBottom: "1.1rem" }} aria-hidden="true">
           {result.guesses.map((g, i) => (
-            <span key={i}>{g === puzzle.className ? "\u{1F7E9}" : "\u{1F7E5}"}</span>
+            <span key={i}>{g === answer ? "\u{1F7E9}" : "\u{1F7E5}"}</span>
           ))}
         </div>
 
