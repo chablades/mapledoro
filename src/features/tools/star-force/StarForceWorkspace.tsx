@@ -114,7 +114,7 @@ function SimulationPanel({
 }) {
   const statStyle: React.CSSProperties = { flex: "1 1 140px" };
   const labelStyle: React.CSSProperties = {
-    fontSize: "0.7rem",
+    fontSize: "0.75rem",
     fontWeight: 800,
     textTransform: "uppercase" as const,
     letterSpacing: "0.04em",
@@ -388,7 +388,7 @@ function HistogramPanel({ theme, sim }: { theme: AppTheme; sim: SimulationResult
 function BreakdownTable({ theme, results }: { theme: AppTheme; results: StarResult[] }) {
   const thStyle: React.CSSProperties = {
     padding: "8px 10px",
-    fontSize: "0.7rem",
+    fontSize: "0.75rem",
     fontWeight: 800,
     textTransform: "uppercase",
     letterSpacing: "0.04em",
