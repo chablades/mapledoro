@@ -11,6 +11,33 @@ interface ChangelogEntry {
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    date: "2026-06-27",
+    changes: [
+      { type: "added", text: "Added a Hard Mode to Mapledle that challenges you to name the exact skill, unlocked after you finish the day's class puzzle." },
+      { type: "added", text: "You can now replay previous Mapledle puzzles using the arrows on the puzzle header." },
+    ],
+  },
+  {
+    date: "2026-06-25",
+    changes: [
+      { type: "added", text: "Added a Miracle Time schedule panel to the homepage, showing upcoming windows in your local time with an active indicator." },
+    ],
+  },
+  {
+    date: "2026-06-17",
+    changes: [
+      { type: "changed", text: "Renamed the Star Force Calculator's boom reduction tiers to Enhancement Mode, and the cost and boom reduction events now stack with it in both the calculator and Event Planner." },
+      { type: "fixed", text: "Improved the layout of the Star Force Calculator's events and Enhancement Mode controls." },
+    ],
+  },
+  {
+    date: "2026-06-16",
+    changes: [
+      { type: "fixed", text: "Fixed Sunny Sunday events not appearing when the schedule was split across multiple Discord posts." },
+      { type: "fixed", text: "Fixed the light/dark mode toggle knob not being vertically centered." },
+    ],
+  },
+  {
     date: "2026-06-12",
     changes: [
       { type: "added", text: "Added Mapledle, a daily skill guessing game, under the new Games section." },
