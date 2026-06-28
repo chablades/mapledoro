@@ -21,6 +21,15 @@ MapleDoro — free, open-source MapleStory community web app (character tracking
 
 **Surgical changes.** Touch only what was asked; match existing style.
 
+## Changelog
+
+Whenever a change makes a user-facing difference (bug fix, new feature, or behavior change), add a matching entry to the `CHANGELOG` array in `src/app/changelog/page.tsx` as part of the same work. Skip purely internal changes (refactors, tests, tooling, docs) that users would never notice.
+
+- Add changes to the entry for today's date, creating a new entry at the top of the array if one does not exist (newest first).
+- Pick the right `type`: `added` for new tools or capabilities, `changed` for tweaks to existing behavior, `fixed` for bug fixes.
+- Match the tone and structure of existing entries: one short, plain sentence per change, written for players, naming the tool affected (for example "Fixed the Liberation Tracker wiping saved progress in some cases.").
+- Do not use em dashes in entry text.
+
 ## Build & Lint
 
 Both must pass before any implementation is considered complete:
