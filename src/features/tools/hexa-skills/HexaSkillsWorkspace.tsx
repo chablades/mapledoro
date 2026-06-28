@@ -20,6 +20,11 @@ import { fmtNum } from "./hexa-format";
 import { toolStyles } from "../tool-styles";
 import { PanelDivider } from "../shared-ui";
 import { ConfirmButton } from "../../../components/ConfirmButton";
+import { ItemIcon } from "../../../components/ResourceImage";
+
+// Item ids (manifests/v269/item.json): Sol Erda, Sol Erda Fragment
+const SOL_ERDA_ITEM_ID = "05066300";
+const SOL_ERDA_FRAGMENT_ITEM_ID = "04009613";
 
 const checkboxLabelStyle: React.CSSProperties = {
   display: "flex",
@@ -100,15 +105,34 @@ function ClassSelector({
 
 // ── Summary Stat ────────────────────────────────────────────────────────────
 
-function SummaryStat({ label, value, max, theme }: { label: string; value: number; max: number; theme: AppTheme }) {
+function SummaryStat({
+  label,
+  iconId,
+  value,
+  max,
+  theme,
+}: {
+  label: string;
+  iconId: string;
+  value: number;
+  max: number;
+  theme: AppTheme;
+}) {
+  const accumulated = max - value;
   return (
-    <div>
-      <div style={{ fontSize: "0.75rem", fontWeight: 700, color: theme.muted, marginBottom: "2px" }}>
-        {label}
-      </div>
-      <div style={{ fontSize: "1.3rem", fontWeight: 800 }}>
-        <span style={{ color: theme.accent }}>{fmtNum(value)}</span>
-        <span style={{ fontSize: "0.75rem", fontWeight: 600, color: theme.muted }}> / {fmtNum(max)}</span>
+    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+      <ItemIcon id={iconId} size={36} alt={label} />
+      <div>
+        <div style={{ fontSize: "0.75rem", fontWeight: 700, color: theme.muted, marginBottom: "3px" }}>
+          {label}
+        </div>
+        <div style={{ fontSize: "1.3rem", fontWeight: 800, lineHeight: 1.1 }}>
+          <span style={{ color: theme.accent }}>{fmtNum(value)}</span>
+          <span style={{ fontSize: "0.9rem", fontWeight: 600, color: theme.muted }}> remaining</span>
+        </div>
+        <div style={{ fontSize: "0.75rem", fontWeight: 600, color: theme.muted, marginTop: "3px" }}>
+          {fmtNum(accumulated)} / {fmtNum(max)} accumulated
+        </div>
       </div>
     </div>
   );
@@ -146,7 +170,7 @@ function SummaryPanel({
         }}
       >
         <div className="section-label" style={{ color: theme.muted, marginBottom: 0 }}>
-          Total Remaining
+          Overall Progress
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
           <label
@@ -171,8 +195,20 @@ function SummaryPanel({
       </div>
 
       <div style={{ display: "flex", gap: "2rem", marginBottom: "12px", flexWrap: "wrap" }}>
-        <SummaryStat label="Sol Erda" value={grand.solErda} max={maxGrand.solErda} theme={theme} />
-        <SummaryStat label="Sol Erda Fragments" value={grand.fragments} max={maxGrand.fragments} theme={theme} />
+        <SummaryStat
+          label="Sol Erda"
+          iconId={SOL_ERDA_ITEM_ID}
+          value={grand.solErda}
+          max={maxGrand.solErda}
+          theme={theme}
+        />
+        <SummaryStat
+          label="Sol Erda Fragments"
+          iconId={SOL_ERDA_FRAGMENT_ITEM_ID}
+          value={grand.fragments}
+          max={maxGrand.fragments}
+          theme={theme}
+        />
       </div>
 
       <ProgressBar pct={progressPct} theme={theme} />
