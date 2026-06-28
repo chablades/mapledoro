@@ -104,7 +104,10 @@ function accumulateTraces(
 ) {
   let weeklyTraces = 0;
   let monthlyTraces = 0;
-  let clearedWeeklyTraces = 0;
+  // Income from bosses not yet cleared this week/month — still earnable right
+  // now, before the next reset.
+  let immediateWeekly = 0;
+  let immediateMonthly = 0;
   const breakdown: CalcResult["breakdown"] = [];
 
   for (const boss of bosses) {
@@ -116,13 +119,14 @@ function accumulateTraces(
     breakdown.push({ bossName: boss.name, traces, reset: boss.reset });
     if (boss.reset === "monthly") {
       monthlyTraces += traces;
+      if (!sel.clearedThisWeek) immediateMonthly += traces;
     } else {
       weeklyTraces += traces;
-      if (sel.clearedThisWeek) clearedWeeklyTraces += traces;
+      if (!sel.clearedThisWeek) immediateWeekly += traces;
     }
   }
 
-  return { weeklyTraces, monthlyTraces, clearedWeeklyTraces, breakdown };
+  return { weeklyTraces, monthlyTraces, immediateWeekly, immediateMonthly, breakdown };
 }
 
 // Cumulative traces-from-start needed to finish each remaining quest.
@@ -152,7 +156,7 @@ interface SimSchedule {
   nextThu: Date;
   next1st: Date;
   maxDate: Date;
-  firstWeekWeekly: number;
+  immediateTraces: number;
   weeklyTraces: number;
   monthlyTraces: number;
 }
@@ -161,17 +165,20 @@ function buildSchedule(
   startDate: string,
   weeklyTraces: number,
   monthlyTraces: number,
-  clearedWeeklyTraces: number,
+  immediateTraces: number,
 ): SimSchedule {
   const start = new Date(startDate + "T00:00:00Z");
+
+  // Next weekly reset (Thursday 00:00 UTC) strictly after start. On a Thursday
+  // the reset has already passed, so the next one is a full week out — the
+  // current week's earnings count as immediate income instead.
   const nextThu = new Date(start);
   const daysToThu = (4 - start.getUTCDay() + 7) % 7;
-  nextThu.setUTCDate(nextThu.getUTCDate() + daysToThu);
+  nextThu.setUTCDate(nextThu.getUTCDate() + (daysToThu || 7));
 
-  const next1st = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), 1));
-  if (next1st.getTime() < start.getTime()) {
-    next1st.setUTCMonth(next1st.getUTCMonth() + 1);
-  }
+  // Next monthly reset is the 1st of next month; the current month's earnings
+  // count as immediate income.
+  const next1st = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth() + 1, 1));
 
   const maxDate = new Date(start);
   maxDate.setUTCFullYear(maxDate.getUTCFullYear() + 10);
@@ -181,40 +188,27 @@ function buildSchedule(
     nextThu,
     next1st,
     maxDate,
-    firstWeekWeekly: Math.max(0, weeklyTraces - clearedWeeklyTraces),
+    immediateTraces,
     weeklyTraces,
     monthlyTraces,
   };
 }
 
 // Walks the weekly/monthly reset schedule, emitting a milestone each time
-// cumulative gained traces cross a quest threshold.
+// cumulative gained traces cross a quest threshold. Income still earnable in the
+// current week/month is credited up front, so completion can land on the start
+// date itself.
 function runSimulation(
   schedule: SimSchedule,
   thresholds: { questIdx: number; questLabel: string; tracesFromStart: number }[],
 ): { milestones: QuestMilestone[]; timedOut: boolean } {
-  const { start, nextThu, next1st, maxDate, firstWeekWeekly, weeklyTraces, monthlyTraces } =
+  const { start, nextThu, next1st, maxDate, immediateTraces, weeklyTraces, monthlyTraces } =
     schedule;
   const milestones: QuestMilestone[] = [];
   let gained = 0;
-  let weekCount = 0;
   let mIdx = 0;
 
-  while (mIdx < thresholds.length) {
-    const weeklyFirst = nextThu.getTime() <= next1st.getTime();
-    const eventDate = new Date(weeklyFirst ? nextThu : next1st);
-    if (eventDate.getTime() > maxDate.getTime()) {
-      return { milestones, timedOut: true };
-    }
-    if (weeklyFirst) {
-      gained += weekCount === 0 ? firstWeekWeekly : weeklyTraces;
-      nextThu.setUTCDate(nextThu.getUTCDate() + 7);
-      weekCount++;
-    } else {
-      gained += monthlyTraces;
-      next1st.setUTCMonth(next1st.getUTCMonth() + 1);
-    }
-
+  const recordCrossed = (eventDate: Date) => {
     while (mIdx < thresholds.length && gained >= thresholds[mIdx].tracesFromStart) {
       milestones.push({
         questIdx: thresholds[mIdx].questIdx,
@@ -224,18 +218,38 @@ function runSimulation(
       });
       mIdx++;
     }
+  };
+
+  gained += immediateTraces;
+  recordCrossed(start);
+
+  while (mIdx < thresholds.length) {
+    const weeklyFirst = nextThu.getTime() <= next1st.getTime();
+    const eventDate = new Date(weeklyFirst ? nextThu : next1st);
+    if (eventDate.getTime() > maxDate.getTime()) {
+      return { milestones, timedOut: true };
+    }
+    if (weeklyFirst) {
+      gained += weeklyTraces;
+      nextThu.setUTCDate(nextThu.getUTCDate() + 7);
+    } else {
+      gained += monthlyTraces;
+      next1st.setUTCMonth(next1st.getUTCMonth() + 1);
+    }
+    recordCrossed(eventDate);
   }
 
   return { milestones, timedOut: false };
 }
 
-// Weekly boss reset is Thursday 00:00 UTC. Liberation completes on the reset
-// day the final traces arrive: a Thursday (weekly) or the 1st of a month (monthly).
+// Weekly boss reset is Thursday 00:00 UTC. Liberation completes when the final
+// traces arrive: immediately (current-week income), on a Thursday (weekly), or
+// on the 1st of a month (monthly).
 function simulateCompletion(
   startDate: string,
   weeklyTraces: number,
   monthlyTraces: number,
-  clearedWeeklyTraces: number,
+  immediateTraces: number,
   quests: LiberationQuest[],
   questIdx: number,
   currentTraces: number,
@@ -256,7 +270,7 @@ function simulateCompletion(
     return { completionDate: "Never", weeksToComplete: Infinity, milestones: [] };
   }
 
-  const schedule = buildSchedule(startDate, weeklyTraces, monthlyTraces, clearedWeeklyTraces);
+  const schedule = buildSchedule(startDate, weeklyTraces, monthlyTraces, immediateTraces);
   const { milestones, timedOut } = runSimulation(schedule, thresholds);
 
   if (timedOut) {
@@ -281,7 +295,7 @@ function calculate(
   genesisPass: boolean,
   startDate: string,
 ): CalcResult {
-  const { weeklyTraces, monthlyTraces, clearedWeeklyTraces, breakdown } =
+  const { weeklyTraces, monthlyTraces, immediateWeekly, immediateMonthly, breakdown } =
     accumulateTraces(bosses, selections, type, genesisPass);
 
   let totalRemaining = 0;
@@ -295,7 +309,7 @@ function calculate(
     startDate,
     weeklyTraces,
     monthlyTraces,
-    clearedWeeklyTraces,
+    immediateWeekly + immediateMonthly,
     quests,
     questIdx,
     currentTraces,

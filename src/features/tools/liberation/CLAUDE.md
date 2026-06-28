@@ -3,9 +3,9 @@
 **Four tabs:** Genesis, Destiny Part 1, Destiny Part 2, Astra Secondary.
 
 **Reset cadence (simulator correctness):**
-- **Weekly bosses** reset **Thursday 00:00 UTC**. The simulator iterates Thursdays as the reset day.
-- **Monthly bosses** (Black Mage) land on the **1st of each month UTC**.
-- `clearedThisWeek` deducts traces from the *first* week only.
+- **Weekly bosses** reset **Thursday 00:00 UTC**. The simulator iterates Thursdays as the reset day. The first iterated Thursday is *strictly after* the start date (a start that lands on a Thursday counts that week's income as immediate, not as a reset event), and every reset — including the first — pays the **full** weekly income.
+- **Monthly bosses** (Black Mage) land on the **1st of each month UTC**; the next monthly reset is always the 1st of the *following* month.
+- `clearedThisWeek` does **not** reduce any reset payout. It only controls whether a boss's income is counted as **immediate** (earnable now, before the next reset) — an uncleared boss can push completion onto the start date itself; a cleared boss's next income arrives at the next reset. This matches masonym.dev's Destiny/Genesis model.
 
 **Genesis Pass:** flat +10% trace multiplier on Genesis bosses. No effect on Destiny.
 
