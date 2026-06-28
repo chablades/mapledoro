@@ -11,6 +11,39 @@ interface ChangelogEntry {
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    date: "2026-06-28",
+    changes: [
+      { type: "added", text: "The HEXA Skill Tracker summary now shows Sol Erda and Sol Erda Fragment icons alongside how much you have accumulated toward the total." },
+      { type: "fixed", text: "Fixed the Liberation Tracker adding an extra week to the completion estimate in some scenarios." },
+    ],
+  },
+  {
+    date: "2026-06-27",
+    changes: [
+      { type: "added", text: "Added a Hard mode to Mapledle where you guess the exact skill instead of just the class, matching the Discord version." },
+      { type: "added", text: "You can now replay previous days in Mapledle using the arrows next to the puzzle." },
+    ],
+  },
+  {
+    date: "2026-06-25",
+    changes: [
+      { type: "added", text: "Added a Miracle Time panel to the homepage showing which equipment categories are featured each day." },
+    ],
+  },
+  {
+    date: "2026-06-17",
+    changes: [
+      { type: "changed", text: "Renamed Boom Reduction to Enhancement Mode in the Star Force Calculator, and the 30% events now stack with it." },
+    ],
+  },
+  {
+    date: "2026-06-16",
+    changes: [
+      { type: "fixed", text: "Fixed Sunny Sunday events not showing when they were split across multiple Discord posts." },
+      { type: "fixed", text: "Fixed the light/dark mode toggle knob not sitting centered." },
+    ],
+  },
+  {
     date: "2026-06-12",
     changes: [
       { type: "added", text: "Added Mapledle, a daily skill guessing game, under the new Games section." },
@@ -213,7 +246,7 @@ const TYPE_COLOR: Record<ChangelogEntry["changes"][number]["type"], string> = {
   fixed: "#f59e0b",
 };
 
-const ENTRIES_PER_PAGE = 5;
+const ENTRIES_PER_PAGE = 7;
 
 function ChangelogContent({ theme }: { theme: AppTheme }) {
   const [page, setPage] = useState(1);
