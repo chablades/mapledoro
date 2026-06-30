@@ -89,7 +89,10 @@ function accumulateBossIncome(
 ) {
   let weeklyTraces = 0;
   let weeklyVoucherFragments = 0;
-  let clearedWeeklyTraces = 0;
+  // Income from bosses not yet cleared this week — still earnable right now,
+  // before the next reset.
+  let immediateTraces = 0;
+  let immediateVoucherFragments = 0;
   const breakdown: AstraBossBreakdown[] = [];
 
   for (const boss of bosses) {
@@ -105,14 +108,18 @@ function accumulateBossIncome(
     }
     const tracesPerClear = Math.floor(diff.traces / sel.partySize);
     weeklyTraces += tracesPerClear;
-    if (sel.clearedThisWeek) clearedWeeklyTraces += tracesPerClear;
 
     const voucherFrags = diff.hasVoucher ? sel.vouchersKept * (diff.voucherValue ?? 0) : 0;
     weeklyVoucherFragments += voucherFrags;
+
+    if (!sel.clearedThisWeek) {
+      immediateTraces += tracesPerClear;
+      immediateVoucherFragments += voucherFrags;
+    }
     breakdown.push({ bossName: boss.name, tracesPerWeek: tracesPerClear, voucherFragmentsPerWeek: voucherFrags });
   }
 
-  return { weeklyTraces, weeklyVoucherFragments, clearedWeeklyTraces, breakdown };
+  return { weeklyTraces, weeklyVoucherFragments, immediateTraces, immediateVoucherFragments, breakdown };
 }
 
 function resolveDailyFragRate(
@@ -132,7 +139,8 @@ interface SimParams {
   missionIdx: number;
   weeklyTraces: number;
   weeklyVoucherFragments: number;
-  clearedWeeklyTraces: number;
+  immediateTraces: number;
+  immediateVoucherFragments: number;
   dailyQuestId: string;
   daysPerWeek: number;
   futureQuestDate: string;
@@ -172,7 +180,13 @@ function checkEarlyCompletion(
 
 function simulateAstra(p: SimParams): SimResult {
   const remaining = ASTRA_MISSIONS.slice(p.missionIdx);
-  const earlyResult = checkEarlyCompletion(remaining, p.startTraces, p.startFragments, p.startDate, p.weeklyTraces);
+
+  // Boss income from bosses not yet cleared this week is earnable immediately,
+  // so fold it into the starting balances before any reset.
+  const startTraces = Math.min(p.startTraces + p.immediateTraces, MAX_TRACES_CAPACITY);
+  const startFragments = p.startFragments + p.immediateVoucherFragments;
+
+  const earlyResult = checkEarlyCompletion(remaining, startTraces, startFragments, p.startDate, p.weeklyTraces);
   if (earlyResult) return earlyResult;
 
   const { baseDailyFrags, futureDailyFrags } = resolveDailyFragRate(p.dailyQuestId, p.futureQuestId);
@@ -186,8 +200,8 @@ function simulateAstra(p: SimParams): SimResult {
   const maxDate = new Date(start);
   maxDate.setUTCFullYear(maxDate.getUTCFullYear() + 10);
 
-  let traces = Math.min(p.startTraces, MAX_TRACES_CAPACITY);
-  let fragments = p.startFragments;
+  let traces = startTraces;
+  let fragments = startFragments;
   let mIdx = 0;
   let weekCount = 0;
   let prevDate = new Date(start);
@@ -196,8 +210,7 @@ function simulateAstra(p: SimParams): SimResult {
   while (mIdx < remaining.length) {
     if (thuDate.getTime() > maxDate.getTime()) return { ...NEVER, missionResults };
 
-    const tracesToAdd = weekCount === 0 ? Math.max(0, p.weeklyTraces - p.clearedWeeklyTraces) : p.weeklyTraces;
-    traces = Math.min(traces + tracesToAdd, MAX_TRACES_CAPACITY);
+    traces = Math.min(traces + p.weeklyTraces, MAX_TRACES_CAPACITY);
 
     const daysSince = Math.round((thuDate.getTime() - prevDate.getTime()) / 86400000);
     const dailyRate = (upgradeDate && thuDate >= upgradeDate) ? futureDailyFrags : baseDailyFrags;
@@ -235,7 +248,7 @@ function calculateAstra(
   futureQuestDate: string,
   futureQuestId: string,
 ): AstraCalcResult {
-  const { weeklyTraces, weeklyVoucherFragments, clearedWeeklyTraces, breakdown } =
+  const { weeklyTraces, weeklyVoucherFragments, immediateTraces, immediateVoucherFragments, breakdown } =
     accumulateBossIncome(ASTRA_BOSSES, selections);
 
   const dailyQuest = ASTRA_DAILY_QUESTS.find((q) => q.id === dailyQuestId);
@@ -255,7 +268,7 @@ function calculateAstra(
 
   const { completionDate, weeksToComplete, missionResults } = simulateAstra({
     startDate, startTraces: currentTraces, startFragments: currentFragments, missionIdx,
-    weeklyTraces, weeklyVoucherFragments, clearedWeeklyTraces,
+    weeklyTraces, weeklyVoucherFragments, immediateTraces, immediateVoucherFragments,
     dailyQuestId, daysPerWeek, futureQuestDate, futureQuestId,
   });
 

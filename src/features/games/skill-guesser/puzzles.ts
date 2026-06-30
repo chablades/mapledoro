@@ -48,9 +48,29 @@ export function currentPuzzleNumber(nowMs = Date.now()): number {
   return Math.max(1, Math.floor((nowMs - EPOCH_UTC_MS) / DAY_MS) + 1);
 }
 
+/** UTC midnight (epoch ms) a given puzzle number went live. */
+export function puzzleDateMs(puzzleNumber: number): number {
+  return EPOCH_UTC_MS + (puzzleNumber - 1) * DAY_MS;
+}
+
 export function getPuzzle(puzzleNumber: number): SkillGuesserPuzzle {
   const puzzles = decodePuzzles();
   return puzzles[(puzzleNumber - 1) % puzzles.length];
+}
+
+/**
+ * Sorted, de-duplicated skill names across the whole puzzle pool. This is the
+ * only list of skill names in the client, so hard mode's skill picker draws
+ * from it (mirroring how the class picker draws from SKILL_GUESSER_CLASSES).
+ */
+let skillNameCache: string[] | null = null;
+export function allSkillNames(): string[] {
+  if (!skillNameCache) {
+    skillNameCache = [...new Set(decodePuzzles().map((p) => p.skillName))].sort((a, b) =>
+      a.localeCompare(b),
+    );
+  }
+  return skillNameCache;
 }
 
 /** Milliseconds until the next 00:00:00 UTC rollover. */

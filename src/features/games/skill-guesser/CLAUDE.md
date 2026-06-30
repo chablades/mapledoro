@@ -7,6 +7,21 @@ identifiers and the `/games/skill-guesser` route intentionally keep the old
 Daily game: guess which class learns the shown skill icon in 5 tries. The puzzle
 advances at **00:00:00 UTC**; puzzle #1 = the `EPOCH_UTC_MS` day in `puzzles.ts`
 (2026-06-11). Day N maps to payload index `(N-1) % length` (wraps after a year).
+Players can replay earlier days via prev/next arrows on the header (clamped
+between #1 and today); the workspace keys `PuzzleView` by puzzle number so each
+day re-reads its own results.
+
+**Two modes per puzzle.** Each day has a `normal` and a `hard` game with
+independent guesses/results. In normal mode you name the **class**
+(`answer = puzzle.className`, picker from `SKILL_GUESSER_CLASSES`); in hard mode
+you name the **skill itself** (`answer = puzzle.skillName`, picker from
+`allSkillNames()`). The whole board — guess slots, squares, share text, win
+check — keys off that one `answer`. Hard mode is locked until the normal game is
+**finished** (won OR all 5 guesses used). The **skill name** stays hidden
+everywhere until the player **wins (clears) hard mode** (`results.hard.won`) —
+i.e. until they actually name it — so a normal finish reveals only the class.
+Stats are tracked **separately per mode** (`computeSkillGuesserStats(mode)`).
+Mirror behavior changes with the Discord Activity port.
 
 **Puzzle payload** (`puzzle-data.generated.ts`) is AUTO-GENERATED — never edit by
 hand. Regenerate with `node scripts/generate-skill-guesser-data.mjs` (needs the
@@ -36,7 +51,7 @@ against GMS sources (Grandis Library / wiki). Renaming a class requires
 regenerating the payload (the generator validates names against this file).
 
 **Results** live in `mapledoro_games_v1` (own key, NOT `mapledoro_tools_v1`),
-keyed by puzzle number; in-progress guesses are persisted too (`done: false`)
-and excluded from stats. The **hard mode** preference (progressive icon blur:
-7px before the first guess, linearly sharp by the last; blur math must match
-the Discord Activity) lives in the same store under `skillGuesser.hardMode`.
+keyed by puzzle number → `{ normal?, hard? }`; in-progress guesses are persisted
+too (`done: false`) and excluded from stats. Store schema is **version 2**;
+v1 (single result per puzzle + a global `hardMode` toggle) is migrated on read,
+folding each old result into the `normal` slot.

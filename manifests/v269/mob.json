@@ -163,7 +163,8 @@
       "name": "Dark Axe Stump"
     },
     "2130103": {
-      "name": "Jr. Necki"
+      "name": "Jr. Necki",
+      "spriteFrame": "move.0"
     },
     "2150000": {
       "name": "Water Thief Monster"
@@ -1129,7 +1130,8 @@
       "name": "Jr. Seal"
     },
     "3300000": {
-      "name": "Renegade Spores"
+      "name": "Renegade Spores",
+      "spriteFrame": "move.0"
     },
     "3300001": {
       "name": "Poison Mushroom"
@@ -1435,7 +1437,8 @@
       "name": "Mutant Desert Rabbit"
     },
     "4090000": {
-      "name": "Iron Hog"
+      "name": "Iron Hog",
+      "spriteFrame": "move.1"
     },
     "4110300": {
       "name": "Iron Mutae"
@@ -1612,7 +1615,8 @@
       "name": "Yellow Perfume"
     },
     "4300003": {
-      "name": "Yellow Perfume"
+      "name": "Yellow Perfume",
+      "spriteFrame": "attack2.7"
     },
     "4300004": {
       "name": "Pink Perfume"
@@ -4179,6 +4183,9 @@
     "8645436": {
       "name": "Limbo"
     },
+    "8645437": {
+      "name": "Malefic Spirit"
+    },
     "8645438": {
       "name": "Strike Securitron"
     },
@@ -4250,6 +4257,9 @@
     },
     "8645487": {
       "name": "Surveillance Robot"
+    },
+    "8645489": {
+      "name": "Giant Combatron"
     },
     "8800000": {
       "name": "Zakum"
@@ -4841,6 +4851,57 @@
     },
     "8881624": {
       "name": "Concentrated Magical Essence"
+    },
+    "8881700": {
+      "name": "Adversary\u0027s Valor"
+    },
+    "8881705": {
+      "name": "Adversary\u0027s Conviction"
+    },
+    "8881710": {
+      "name": "First Adversary"
+    },
+    "8881715": {
+      "name": "World Heart"
+    },
+    "8881860": {
+      "name": "Kai"
+    },
+    "8881864": {
+      "name": "Transcended Kai"
+    },
+    "8881868": {
+      "name": "Chrono Module Type-F"
+    },
+    "8881900": {
+      "name": "Malefic Star"
+    },
+    "8881904": {
+      "name": "Crooked Scale"
+    },
+    "8882001": {
+      "name": "Jupiter"
+    },
+    "8882004": {
+      "name": "Alchemical Entity"
+    },
+    "8882006": {
+      "name": "Auspicious Jupiter"
+    },
+    "8882009": {
+      "name": "Balanced Jupiter"
+    },
+    "8882011": {
+      "name": "Ruinous Jupiter"
+    },
+    "8882013": {
+      "name": "Alchemical Remnant"
+    },
+    "8882015": {
+      "name": "Jupiter"
+    },
+    "8882016": {
+      "name": "Jupiter"
     },
     "8890000": {
       "name": "Black Mage\u0027s Henchman"
@@ -8674,7 +8735,8 @@
       "name": "M Artist\r\n"
     },
     "9430051": {
-      "name": "G Martial\r\n"
+      "name": "G Martial\r\n",
+      "spriteFrame": "attack1.0"
     },
     "9430052": {
       "name": "G Giant\r\n\r\n"
@@ -8689,7 +8751,8 @@
       "name": "B Staffman"
     },
     "9430058": {
-      "name": "B Martial"
+      "name": "B Martial",
+      "spriteFrame": "attack1.0"
     },
     "9430059": {
       "name": "Tr MA five"
@@ -10077,6 +10140,24 @@
     "9602622": {
       "name": "Terrible Tornado"
     },
+    "9602627": {
+      "name": "Model Freshman Rock Spirit"
+    },
+    "9602628": {
+      "name": "Eager Freshman Rock Spirit"
+    },
+    "9602629": {
+      "name": "Problem Freshman Rock Spirit"
+    },
+    "9602630": {
+      "name": "Model Graduate Rock Spirit Familiar"
+    },
+    "9602631": {
+      "name": "Eager Graduate Rock Spirit Familiar"
+    },
+    "9602632": {
+      "name": "Problem Graduate Rock Spirit Familiar"
+    },
     "9602633": {
       "name": "Rock Spirit Stan Gull"
     },
@@ -10277,6 +10358,30 @@
     },
     "9810401": {
       "name": "Thick Branch"
+    },
+    "9820005": {
+      "name": "Gold Treasure Box (Rare)"
+    },
+    "9820006": {
+      "name": "Gold Treasure Box (Epic)"
+    },
+    "9820007": {
+      "name": "Gold Treasure Box (Unique)"
+    },
+    "9820008": {
+      "name": "Gold Treasure Box (Legendary)"
+    },
+    "9820009": {
+      "name": "Diamond Treasure Box (Rare)"
+    },
+    "9820010": {
+      "name": "Diamond Treasure Box (Epic)"
+    },
+    "9820011": {
+      "name": "Diamond Treasure Box (Unique)"
+    },
+    "9820012": {
+      "name": "Diamond Treasure Box (Legendary)"
     },
     "9832001": {
       "name": "Stormwing"
@@ -11465,6 +11570,249 @@
     },
     "9834488": {
       "name": "Angler Duke"
+    },
+    "9834490": {
+      "name": "Angler Commander"
+    },
+    "9834492": {
+      "name": "Flying Cone"
+    },
+    "9834494": {
+      "name": "Practice Book"
+    },
+    "9834495": {
+      "name": "Secret Book 1"
+    },
+    "9834496": {
+      "name": "Secret Book 2"
+    },
+    "9834497": {
+      "name": "Secret Book 3"
+    },
+    "9834498": {
+      "name": "Secret Book 4"
+    },
+    "9834500": {
+      "name": "Secret Book 6"
+    },
+    "9834501": {
+      "name": "Secret Book 7"
+    },
+    "9834511": {
+      "name": "Triton"
+    },
+    "9834530": {
+      "name": "Practice Dimensional Gate"
+    },
+    "9834531": {
+      "name": "Dimensional Gate 1"
+    },
+    "9834532": {
+      "name": "Dimensional Gate 2"
+    },
+    "9834534": {
+      "name": "Dimensional Gate 4"
+    },
+    "9834535": {
+      "name": "Dimensional Gate 5"
+    },
+    "9834536": {
+      "name": "Dimensional Gate 6"
+    },
+    "9834538": {
+      "name": "Jade Scout"
+    },
+    "9834539": {
+      "name": "Jade Brute"
+    },
+    "9834540": {
+      "name": "Jade War Master"
+    },
+    "9834541": {
+      "name": "Azure Scout"
+    },
+    "9834542": {
+      "name": "Azure Brute"
+    },
+    "9834543": {
+      "name": "Azure War Master"
+    },
+    "9834544": {
+      "name": "Scarlet Scout"
+    },
+    "9834545": {
+      "name": "Scarlet Brute"
+    },
+    "9834546": {
+      "name": "Scarlet War Master"
+    },
+    "9834547": {
+      "name": "Jade Viper"
+    },
+    "9834548": {
+      "name": "Jade Elite"
+    },
+    "9834549": {
+      "name": "Jade Draco Lord"
+    },
+    "9834550": {
+      "name": "Azure Viper"
+    },
+    "9834551": {
+      "name": "Azure Elite"
+    },
+    "9834552": {
+      "name": "Azure Draco Lord"
+    },
+    "9834553": {
+      "name": "Scarlet Viper"
+    },
+    "9834554": {
+      "name": "Scarlet Elite"
+    },
+    "9834555": {
+      "name": "Scarlet Draco Lord"
+    },
+    "9834610": {
+      "name": "Scarecrow Waiting Map"
+    },
+    "9834611": {
+      "name": "Twisted Eye of Time"
+    },
+    "9834612": {
+      "name": "Twisted Chronos"
+    },
+    "9834620": {
+      "name": "Contaminated Tree Toad"
+    },
+    "9834621": {
+      "name": "Contaminated Snake"
+    },
+    "9834622": {
+      "name": "Contaminated Bear"
+    },
+    "9834623": {
+      "name": "Contaminated Shensung"
+    },
+    "9834625": {
+      "name": "Contaminated Shensung"
+    },
+    "9834626": {
+      "name": "Contaminated Wolf"
+    },
+    "9834627": {
+      "name": "Contaminated Owl"
+    },
+    "9834630": {
+      "name": "Contaminated Ara"
+    },
+    "9834635": {
+      "name": "Contaminated Zigang"
+    },
+    "9834636": {
+      "name": "Giant Rat"
+    },
+    "9834637": {
+      "name": "Contaminated Lantern"
+    },
+    "9834640": {
+      "name": "Contaminated Bat"
+    },
+    "9834642": {
+      "name": "Contaminated Rock"
+    },
+    "9834643": {
+      "name": "Contaminated Rock"
+    },
+    "9834644": {
+      "name": "Contaminated Rock"
+    },
+    "9834645": {
+      "name": "Contaminated Rock"
+    },
+    "9834664": {
+      "name": "Deep Sea King"
+    },
+    "9834665": {
+      "name": "Deep Sea King"
+    },
+    "9834683": {
+      "name": "Beach Gold Hog"
+    },
+    "9834697": {
+      "name": "Mechaberry"
+    },
+    "9834698": {
+      "name": "Mechaberry Zeta"
+    },
+    "9834699": {
+      "name": "Mechaberry Psi"
+    },
+    "9834700": {
+      "name": "Intensifying Flame"
+    },
+    "9834720": {
+      "name": "Haste Inferno A"
+    },
+    "9834721": {
+      "name": "Haste Inferno B"
+    },
+    "9834722": {
+      "name": "Haste Treasure Box (Rare)"
+    },
+    "9834723": {
+      "name": "Haste Treasure Box (Epic)"
+    },
+    "9834724": {
+      "name": "Haste Treasure Box (Unique)"
+    },
+    "9834725": {
+      "name": "Haste Treasure Box (Legendary)"
+    },
+    "9990002": {
+      "name": "Plant"
+    },
+    "9990003": {
+      "name": "Fish"
+    },
+    "9990004": {
+      "name": "Reptile"
+    },
+    "9990005": {
+      "name": "Spirit"
+    },
+    "9990006": {
+      "name": "Devil"
+    },
+    "9990007": {
+      "name": "Immortal"
+    },
+    "9990008": {
+      "name": "Enchanted"
+    },
+    "9990009": {
+      "name": "Boss"
+    },
+    "9990010": {
+      "name": "Fireball"
+    },
+    "9990011": {
+      "name": "Blizzard"
+    },
+    "9990012": {
+      "name": "Lightning"
+    },
+    "9990013": {
+      "name": "Poison"
+    },
+    "9990014": {
+      "name": "Holy"
+    },
+    "9990015": {
+      "name": "Darkness"
+    },
+    "9990025": {
+      "name": "Lucid Type"
     }
   }
 }
