@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "doctor": "npx --yes react-doctor@latest . --verbose --scope changed"
   },
   "dependencies": {
     "@vercel/analytics": "^2.0.1",
