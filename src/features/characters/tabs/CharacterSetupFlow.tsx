@@ -82,8 +82,7 @@ export default function CharacterSetupFlow({ theme, initialCharacterName, initia
       setupFlowStarted: state.setupFlowStarted,
       hasCompletedRequiredFlow:
         currentCharacterHasCompletedRequiredFlow || state.hasCompletedRequiredSetupEver,
-      canResumeSetup: state.canResumeSetup,
-      resumeSetupCharacterName: state.resumeSetupCharacterName,
+      drafts: state.draftSummaries,
       query: state.query,
       queryInvalid: state.queryInvalid,
       isSearching: state.isSearching,
@@ -124,7 +123,8 @@ export default function CharacterSetupFlow({ theme, initialCharacterName, initia
     backFromSetupFlow: actions.backFromSetupFlowToAddCharacter,
     backToCharactersDirectory: actions.backToCharactersDirectory,
     backFromAddCharacter: actions.backFromAddCharacter,
-    resumeSavedSetup: actions.resumeSavedSetup,
+    resumeDraft: actions.resumeDraft,
+    clearDraft: actions.clearDraft,
     setCurrentAsMain: () => {
       if (!confirmedStoredCharacter) return;
       actions.setMainCharacter(confirmedStoredCharacter);
@@ -152,6 +152,7 @@ export default function CharacterSetupFlow({ theme, initialCharacterName, initia
       previewImageLoaded: state.previewImageLoaded,
       isConfirmFadeOut: transitions.isConfirmFadeOut,
       isModeTransitioning: transitions.isModeTransitioning,
+      foundCharacterHasResumableDraft: state.foundCharacterHasResumableDraft,
     },
     setup: {
       setupFlowStarted: state.setupFlowStarted,
@@ -185,6 +186,8 @@ export default function CharacterSetupFlow({ theme, initialCharacterName, initia
   const previewPaneActions: PreviewPaneActions = {
     setPreviewImageLoaded: actions.setPreviewImageLoaded,
     confirmFoundCharacter: actions.confirmFoundCharacter,
+    resumeFoundCharacterDraft: actions.resumeFoundCharacterDraft,
+    startFreshSetup: actions.startFreshSetup,
     setSetupStepWithDirection: actions.setSetupStepWithDirection,
     stepValueChange: actions.updateActiveStepValue,
     finishSetupFlow: actions.finishSetupFlow,

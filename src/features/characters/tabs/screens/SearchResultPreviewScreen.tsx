@@ -3,7 +3,7 @@ import { resolveDisplayJobName } from "../../setup/data/nexonJobMapping";
 import { CHARACTERS_COPY } from "../content";
 import type { PreviewPaneActions, PreviewPaneModel } from "../paneModels";
 import CharacterAvatar from "../components/CharacterAvatar";
-import { panelCardStyle, primaryButtonStyle } from "../components/uiStyles";
+import { panelCardStyle, primaryButtonStyle, secondaryButtonStyle } from "../components/uiStyles";
 
 interface SearchResultPreviewScreenProps {
   model: PreviewPaneModel;
@@ -61,17 +61,43 @@ export default function SearchResultPreviewScreen({
           </div>
         </div>
         <div style={{ borderTop: `1px solid ${theme.border}`, paddingTop: "0.65rem" }}>
-          <p style={{ fontSize: "0.86rem", color: theme.text, fontWeight: 700, margin: 0, marginBottom: "0.72rem" }}>
-            {CHARACTERS_COPY.searchResultPreview.confirmPrompt}
-          </p>
-          <button
-            type="button"
-            disabled={setup.isUiLocked}
-            onClick={actions.confirmFoundCharacter}
-            style={{ ...primaryButtonStyle(theme, "0.7rem 0.9rem"), width: "100%" }}
-          >
-            {CHARACTERS_COPY.searchResultPreview.confirmButton}
-          </button>
+          {preview.foundCharacterHasResumableDraft ? (
+            <>
+              <p style={{ fontSize: "0.86rem", color: theme.text, fontWeight: 700, margin: 0, marginBottom: "0.72rem" }}>
+                {preview.foundCharacter.characterName} has a saved setup in progress.
+              </p>
+              <button
+                type="button"
+                disabled={setup.isUiLocked}
+                onClick={actions.resumeFoundCharacterDraft}
+                style={{ ...primaryButtonStyle(theme, "0.7rem 0.9rem"), width: "100%" }}
+              >
+                Resume setup
+              </button>
+              <button
+                type="button"
+                disabled={setup.isUiLocked}
+                onClick={actions.startFreshSetup}
+                style={{ ...secondaryButtonStyle(theme, "0.7rem 0.9rem"), width: "100%", marginTop: "0.5rem" }}
+              >
+                Start fresh
+              </button>
+            </>
+          ) : (
+            <>
+              <p style={{ fontSize: "0.86rem", color: theme.text, fontWeight: 700, margin: 0, marginBottom: "0.72rem" }}>
+                {CHARACTERS_COPY.searchResultPreview.confirmPrompt}
+              </p>
+              <button
+                type="button"
+                disabled={setup.isUiLocked}
+                onClick={actions.confirmFoundCharacter}
+                style={{ ...primaryButtonStyle(theme, "0.7rem 0.9rem"), width: "100%" }}
+              >
+                {CHARACTERS_COPY.searchResultPreview.confirmButton}
+              </button>
+            </>
+          )}
         </div>
       </div>
     </aside>

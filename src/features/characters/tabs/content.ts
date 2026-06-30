@@ -18,7 +18,6 @@ export const CHARACTERS_COPY = {
   searchEntry: {
     title: "Add Your Maple Character",
     subtitle: "Type your IGN to setup your profile.",
-    resumeSetupButton: "Resume Setup",
     backButton: "Back",
     backToCharactersButton: "← Characters",
     searchButton: "Search",

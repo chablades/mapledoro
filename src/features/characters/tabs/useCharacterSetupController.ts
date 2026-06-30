@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAutoRefresh } from "./useAutoRefresh";
 import {
   CHARACTER_NAME_INPUT_FILTER_REGEX,
@@ -29,10 +29,11 @@ import { hexaStatHasData, type HexaStatNode } from "../setup/data/hexaStatData";
 import { ARCANE_AREAS, ALL_SACRED_AREAS, type SymbolArea, type SymbolType } from "../../tools/symbols/symbol-data";
 import type { SymbolState } from "../../tools/symbols/useSymbolState";
 import {
-  readAllSetupDrafts,
+  pruneAndReadSetupDrafts,
   makeDraftCharacterKey,
   readLastSetupDraft,
   readSetupDraftByCharacter,
+  readSetupDraftByKey,
   removeSetupDraftForCharacter,
   type SetupDraft,
   writeSetupDraft,
@@ -49,9 +50,11 @@ import {
   getFlowStepByIndex,
   getFlowStepCount,
   getRequiredSetupFlowId,
+  getSetupFlowLabel,
   isStepSkippedForClass,
   type SetupFlowId,
 } from "../setup/flows";
+import type { SetupDraftSummary } from "./paneModels";
 import { getClassSetupOverrides } from "../setup/data/nexonJobMapping";
 import type { SetupStepInputById } from "../setup/types";
 import { LOOKUP_MESSAGES } from "./messages";
@@ -573,8 +576,7 @@ export function useCharacterSetupController() {
   const [setupStepIndex, setSetupStepIndex] = useState(0);
   const [setupStepDirection, setSetupStepDirection] = useState<"forward" | "backward">("forward");
   const [setupStepTestByStep, setSetupStepTestByStep] = useState<SetupStepInputById>({});
-  const [canResumeSetup, setCanResumeSetup] = useState(false);
-  const [resumeSetupCharacterName, setResumeSetupCharacterName] = useState<string | null>(null);
+  const [draftSummaries, setDraftSummaries] = useState<SetupDraftSummary[]>([]);
   const [hasCompletedRequiredSetupEver, setHasCompletedRequiredSetupEver] = useState(false);
   const [isDraftHydrated, setIsDraftHydrated] = useState(false);
   const hasHydratedSetupDraftRef = useRef(false);
@@ -638,6 +640,27 @@ export function useCharacterSetupController() {
       !draft?.completedFlowIds?.includes(requiredFlowId),
     [requiredFlowId],
   );
+
+  const refreshDraftSummaries = useCallback(() => {
+    const now = Date.now();
+    setDraftSummaries(
+      pruneAndReadSetupDrafts()
+        .filter((draft) => isResumableDraft(draft))
+        .map((draft) => ({
+          characterKey: draft.characterKey,
+          characterName: draft.confirmedCharacter?.characterName ?? draft.query,
+          jobName: draft.confirmedCharacter?.jobName ?? "",
+          imgUrl: draft.confirmedCharacter?.characterImgURL ?? "",
+          flowId: draft.activeFlowId,
+          flowLabel: getSetupFlowLabel(draft.activeFlowId),
+          started: draft.setupStepIndex >= 1,
+          stepIndex: draft.setupStepIndex,
+          stepCount: getFlowStepCount(draft.activeFlowId),
+          savedAt: draft.savedAt,
+          expired: draft.confirmedCharacter ? now > draft.confirmedCharacter.expiresAt : false,
+        })),
+    );
+  }, [isResumableDraft]);
 
   const upsertRosterCharacter = useCallback((character: StoredCharacterRecord) => {
     setCharacterRoster((prev) => {
@@ -735,11 +758,6 @@ export function useCharacterSetupController() {
         accountHasCompletedRequiredFlow || hasCompletedRequiredFlow,
       );
 
-      const canResumeFromDraft = isResumableDraft(draft);
-      setCanResumeSetup(canResumeFromDraft);
-      setResumeSetupCharacterName(
-        canResumeFromDraft ? (draft.confirmedCharacter?.characterName ?? draft.query) : null,
-      );
       setQuery(draft.query);
       setCharacterRoster(storedRoster);
       setMainCharacterKeyByWorld(store.mainCharacterIdByWorld);
@@ -747,7 +765,7 @@ export function useCharacterSetupController() {
 
       return { nextCompletedFlowIds, hasCompletedRequiredFlow };
     },
-    [isResumableDraft, requiredFlowId],
+    [requiredFlowId],
   );
 
   const handleDraftHydration = useCallback(
@@ -761,8 +779,6 @@ export function useCharacterSetupController() {
         if (accountHasCompletedRequiredFlow) {
           showCompletedDirectoryState(store, storedRoster);
         } else {
-          setCanResumeSetup(false);
-          setResumeSetupCharacterName(null);
           setHasCompletedRequiredSetupEver(false);
         }
         return;
@@ -819,6 +835,7 @@ export function useCharacterSetupController() {
       handleDraftHydration(draft, store, storedRoster, accountHasCompletedRequiredFlow);
       hasHydratedSetupDraftRef.current = true;
       setIsDraftHydrated(true);
+      refreshDraftSummaries();
 
       // Compute stale main+champions for background auto-refresh
       const now = Date.now();
@@ -838,7 +855,18 @@ export function useCharacterSetupController() {
       if (stale.length > 0) setAutoRefreshQueue(stale);
     }, 0);
     return () => clearTimeout(hydrateTimer);
-  }, [handleDraftHydration]);
+  }, [handleDraftHydration, refreshDraftSummaries]);
+
+  // Keep the resumable-draft list fresh each time the search-entry screen is shown
+  // (covers add-character, back navigation, and post-finish returns). The setState
+  // runs inside a timer to stay clear of the no-set-state-in-effect rule, mirroring
+  // the hydrate effect above.
+  useEffect(() => {
+    if (!hasHydratedSetupDraftRef.current) return;
+    if (setupMode !== "search" || setupFlowStarted) return;
+    const id = window.setTimeout(() => refreshDraftSummaries(), 0);
+    return () => clearTimeout(id);
+  }, [setupMode, setupFlowStarted, refreshDraftSummaries]);
 
   // Persist store whenever roster or world-scoped keys change
   useEffect(() => {
@@ -923,11 +951,7 @@ export function useCharacterSetupController() {
     const hasCompletedRequiredFlow = completedFlowIds.includes(requiredFlowId);
     if (hasCompletedRequiredFlow) {
       removeSetupDraftForCharacter(confirmedCharacter);
-      const clearResumeStateTimer = window.setTimeout(() => {
-        setCanResumeSetup(false);
-        setResumeSetupCharacterName(null);
-      }, 0);
-      return () => clearTimeout(clearResumeStateTimer);
+      return;
     }
 
     const characterKey = makeDraftCharacterKey(confirmedCharacter);
@@ -950,21 +974,12 @@ export function useCharacterSetupController() {
     };
 
     writeSetupDraft(draft);
-    const resumeStateTimer = window.setTimeout(() => {
-      const canResumeFromDraft = isResumableDraft(draft);
-      setCanResumeSetup(canResumeFromDraft);
-      setResumeSetupCharacterName(
-        canResumeFromDraft ? confirmedCharacter.characterName : null,
-      );
-    }, 0);
-    return () => clearTimeout(resumeStateTimer);
   }, [
     activeFlowId,
     championCharacterKeysByWorld,
     characterRoster,
     completedFlowIds,
     confirmedCharacter,
-    isResumableDraft,
     mainCharacterKeyByWorld,
     query,
     requiredFlowId,
@@ -1113,40 +1128,45 @@ export function useCharacterSetupController() {
     [activeFlowId, confirmedCharacter, setupStepIndex],
   );
 
-  const resumeSavedSetup = useCallback(() => {
+  const resumeDraft = useCallback(async (characterKey: string) => {
     if (immediateUiLockRef.current) return;
-    const draft = readLastSetupDraft();
-    if (!draft || !isResumableDraft(draft)) {
-      setCanResumeSetup(false);
-      setResumeSetupCharacterName(null);
+    const draft = readSetupDraftByKey(characterKey);
+    if (!draft || !isResumableDraft(draft) || !draft.confirmedCharacter) return;
+    const snapshot = draft.confirmedCharacter;
+
+    setIsAddingCharacter(false);
+    setSetupMode("search");
+
+    // The snapshot's base data is past its reset window — re-fetch live via the normal
+    // search→preview path instead of resuming on stale stats. Confirming the refreshed
+    // result preserves the draft's entered step data (see confirmFoundCharacter).
+    if (Date.now() > snapshot.expiresAt) {
+      setSetupFlowStarted(false);
+      setConfirmedCharacter(null);
+      transitions.setSetupPanelVisible(false);
+      setQuery(snapshot.characterName);
+      await lookup.runLookup(snapshot.characterName);
       return;
     }
 
-    setCanResumeSetup(true);
-    setResumeSetupCharacterName(draft.confirmedCharacter?.characterName ?? draft.query);
-    setIsAddingCharacter(false);
     setQuery("");
-    setSetupMode("search");
-
-    if (draft.confirmedCharacter) {
-      immediateUiLockRef.current = true;
-      beginSetupFlowTransition({
-        character: draft.confirmedCharacter,
-        source: "resume",
-        flowId: draft.activeFlowId,
-        completedFlowIds: normalizeCompletedFlowIds(draft.completedFlowIds ?? []),
-        showFlowOverview: Boolean(
-          draft.completedFlowIds?.includes(requiredFlowId) || draft.showFlowOverview,
-        ),
-        showCharacterDirectory: Boolean(draft.showCharacterDirectory),
-        stepIndex: clampFlowStepIndex(
-          draft.activeFlowId,
-          draft.completedFlowIds?.includes(requiredFlowId) ? 0 : draft.setupStepIndex,
-        ),
-        stepDirection: draft.setupStepDirection,
-        stepData: draft.setupStepTestByStep ?? {},
-      });
-    }
+    immediateUiLockRef.current = true;
+    beginSetupFlowTransition({
+      character: snapshot,
+      source: "resume",
+      flowId: draft.activeFlowId,
+      completedFlowIds: normalizeCompletedFlowIds(draft.completedFlowIds ?? []),
+      showFlowOverview: Boolean(
+        draft.completedFlowIds?.includes(requiredFlowId) || draft.showFlowOverview,
+      ),
+      showCharacterDirectory: Boolean(draft.showCharacterDirectory),
+      stepIndex: clampFlowStepIndex(
+        draft.activeFlowId,
+        draft.completedFlowIds?.includes(requiredFlowId) ? 0 : draft.setupStepIndex,
+      ),
+      stepDirection: draft.setupStepDirection,
+      stepData: draft.setupStepTestByStep ?? {},
+    });
 
     writeSetupDraft({
       ...draft,
@@ -1154,7 +1174,50 @@ export function useCharacterSetupController() {
       autoResumeOnLoad: true,
       savedAt: draft.savedAt,
     });
-  }, [beginSetupFlowTransition, isResumableDraft, requiredFlowId]);
+  }, [beginSetupFlowTransition, isResumableDraft, lookup, requiredFlowId, transitions]);
+
+  const clearDraft = useCallback((characterKey: string) => {
+    const draft = readSetupDraftByKey(characterKey);
+    if (draft?.confirmedCharacter) removeSetupDraftForCharacter(draft.confirmedCharacter);
+    refreshDraftSummaries();
+  }, [refreshDraftSummaries]);
+
+  // The searched character has a started, resumable draft — the preview offers
+  // Resume / Start fresh. A stepIndex-0 draft (flow not yet chosen) has no real
+  // progress, so it confirms normally instead of prompting. Derived from
+  // draftSummaries (not a fresh localStorage read) so clearing the draft from the
+  // dropdown immediately flips this off and the preview drops back to confirm.
+  const foundCharacterHasResumableDraft = useMemo(() => {
+    if (!foundCharacter) return false;
+    const key = toCharacterKey(foundCharacter);
+    return draftSummaries.some((summary) => summary.characterKey === key && summary.started);
+  }, [foundCharacter, draftSummaries]);
+
+  const resumeFoundCharacterDraft = useCallback(() => {
+    if (immediateUiLockRef.current) return;
+    if (!foundCharacter) return;
+    const draft = readSetupDraftByCharacter(foundCharacter);
+    if (!draft || !isResumableDraft(draft)) return;
+    immediateUiLockRef.current = true;
+    // Resume on the freshly-searched character (live base data), restoring the
+    // draft's flow, position, and entered step data.
+    beginSetupFlowTransition({
+      character: foundCharacter,
+      source: "resume",
+      flowId: draft.activeFlowId,
+      completedFlowIds: normalizeCompletedFlowIds(draft.completedFlowIds ?? []),
+      showFlowOverview: Boolean(
+        draft.completedFlowIds?.includes(requiredFlowId) || draft.showFlowOverview,
+      ),
+      showCharacterDirectory: Boolean(draft.showCharacterDirectory),
+      stepIndex: clampFlowStepIndex(
+        draft.activeFlowId,
+        draft.completedFlowIds?.includes(requiredFlowId) ? 0 : draft.setupStepIndex,
+      ),
+      stepDirection: draft.setupStepDirection,
+      stepData: draft.setupStepTestByStep ?? {},
+    });
+  }, [beginSetupFlowTransition, foundCharacter, isResumableDraft, requiredFlowId]);
 
   const confirmFoundCharacter = useCallback(() => {
     if (immediateUiLockRef.current) return;
@@ -1170,13 +1233,6 @@ export function useCharacterSetupController() {
 
     const existingCharacterDraft = readSetupDraftByCharacter(foundCharacter);
     immediateUiLockRef.current = true;
-
-    const charKey = toCharacterKey(foundCharacter);
-    for (const d of readAllSetupDrafts()) {
-      if (d.characterKey !== charKey && !d.completedFlowIds.includes(requiredFlowId) && d.confirmedCharacter) {
-        removeSetupDraftForCharacter(d.confirmedCharacter);
-      }
-    }
 
     beginSetupFlowTransition({
       character: foundCharacter,
@@ -1203,6 +1259,15 @@ export function useCharacterSetupController() {
     requiredFlowId,
     lookup,
   ]);
+
+  const startFreshSetup = useCallback(() => {
+    if (immediateUiLockRef.current) return;
+    if (!foundCharacter) return;
+    // Discard the saved draft so the confirm below starts from a clean slate
+    // (confirmFoundCharacter reads the existing draft to seed step data).
+    removeSetupDraftForCharacter(foundCharacter);
+    confirmFoundCharacter();
+  }, [confirmFoundCharacter, foundCharacter]);
 
   const finishSetupFlow = useCallback((overrideFlowId?: SetupFlowId) => {
     if (immediateUiLockRef.current) return;
@@ -1405,8 +1470,6 @@ export function useCharacterSetupController() {
       setConfirmedCharacter(null);
       setFoundCharacter(null);
       setQuery("");
-      setCanResumeSetup(false);
-      setResumeSetupCharacterName(null);
       setIsAddingCharacter(false);
       lookup.resetSearchStateMessage();
       setHasCompletedRequiredSetupEver(!isLastCharacter);
@@ -1466,8 +1529,6 @@ export function useCharacterSetupController() {
   const openAddCharacterSearch = useCallback(() => {
     if (immediateUiLockRef.current) return;
     immediateUiLockRef.current = true;
-    const draft = readLastSetupDraft();
-    const canResumeFromDraft = isResumableDraft(draft);
     transitions.runBackTransition(() => {
       setIsAddingCharacter(true);
       setShowCharacterDirectory(false);
@@ -1477,15 +1538,9 @@ export function useCharacterSetupController() {
       setFoundCharacter(null);
       setConfirmedCharacter(null);
       setQuery("");
-      setCanResumeSetup(canResumeFromDraft);
-      setResumeSetupCharacterName(
-        canResumeFromDraft
-          ? (draft?.confirmedCharacter?.characterName ?? draft?.query ?? null)
-          : null,
-      );
       lookup.resetSearchStateMessage();
     });
-  }, [isResumableDraft, lookup, transitions]);
+  }, [lookup, transitions]);
 
   const backFromAddCharacter = useCallback(() => {
     if (immediateUiLockRef.current) return;
@@ -1620,8 +1675,8 @@ export function useCharacterSetupController() {
     worldIds,
     setupStepIndex,
     setupStepDirection,
-    canResumeSetup,
-    resumeSetupCharacterName,
+    draftSummaries,
+    foundCharacterHasResumableDraft,
     hasCompletedRequiredSetupEver,
     isDraftHydrated,
     isUiLocked,
@@ -1658,8 +1713,11 @@ export function useCharacterSetupController() {
       runTransitionToMode,
       backFromSetupFlowToAddCharacter,
       backToCharactersDirectory,
-      resumeSavedSetup,
+      resumeDraft,
+      clearDraft,
       confirmFoundCharacter,
+      resumeFoundCharacterDraft,
+      startFreshSetup,
       finishSetupFlow,
       setMainCharacter,
       toggleChampionCharacter,

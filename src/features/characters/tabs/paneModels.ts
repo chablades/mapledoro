@@ -4,6 +4,23 @@ import type { StoredCharacterRecord } from "../model/charactersStore";
 import type { SetupFlowId } from "../setup/flows";
 import type { SetupMode } from "../model/constants";
 
+// Lightweight, render-ready view of a resumable setup draft for the search-entry list.
+export interface SetupDraftSummary {
+  characterKey: string;
+  characterName: string;
+  jobName: string;
+  imgUrl: string;
+  flowId: SetupFlowId;
+  flowLabel: string;
+  // stepIndex 0 means the user is still on the flow picker and has not chosen a
+  // setup yet, so flowLabel should not be shown as a definitive choice.
+  started: boolean;
+  stepIndex: number;
+  stepCount: number;
+  savedAt: number;
+  expired: boolean;
+}
+
 export interface SearchPaneModel {
   theme: AppTheme;
   shell: {
@@ -20,8 +37,7 @@ export interface SearchPaneModel {
     setupMode: SetupMode;
     setupFlowStarted: boolean;
     hasCompletedRequiredFlow: boolean;
-    canResumeSetup: boolean;
-    resumeSetupCharacterName: string | null;
+    drafts: SetupDraftSummary[];
     query: string;
     queryInvalid: boolean;
     isSearching: boolean;
@@ -55,7 +71,8 @@ export interface SearchPaneActions {
   backFromSetupFlow: () => void;
   backToCharactersDirectory: () => void;
   backFromAddCharacter: () => void;
-  resumeSavedSetup: () => void;
+  resumeDraft: (characterKey: string) => void;
+  clearDraft: (characterKey: string) => void;
   setCurrentAsMain: () => void;
   toggleCurrentChampion: () => void;
   removeCurrentCharacter: () => void;
@@ -75,6 +92,9 @@ export interface PreviewPaneModel {
     previewImageLoaded: boolean;
     isConfirmFadeOut: boolean;
     isModeTransitioning: boolean;
+    // True when the searched character already has a started, resumable draft —
+    // the preview then offers Resume / Start fresh instead of a plain confirm.
+    foundCharacterHasResumableDraft: boolean;
   };
   setup: {
     setupFlowStarted: boolean;
@@ -115,6 +135,8 @@ export interface PreviewPaneModel {
 export interface PreviewPaneActions {
   setPreviewImageLoaded: (loaded: boolean) => void;
   confirmFoundCharacter: () => void;
+  resumeFoundCharacterDraft: () => void;
+  startFreshSetup: () => void;
   setSetupStepWithDirection: (step: number) => void;
   stepValueChange: (value: string) => void;
   finishSetupFlow: () => void;

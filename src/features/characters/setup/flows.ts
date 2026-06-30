@@ -100,6 +100,10 @@ export function getFlowStepCount(flowId: SetupFlowId) {
   return getSetupFlowById(flowId).steps.length;
 }
 
+export function getSetupFlowLabel(flowId: SetupFlowId) {
+  return getSetupFlowById(flowId).label;
+}
+
 export function clampFlowStepIndex(flowId: SetupFlowId, stepIndex: number) {
   return Math.max(0, Math.min(getFlowStepCount(flowId), stepIndex));
 }
