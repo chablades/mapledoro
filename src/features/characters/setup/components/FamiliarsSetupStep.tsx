@@ -188,6 +188,76 @@ const popoverVisualStyle: CSSProperties = {
   overflow: "hidden",
 };
 
+type TierColor = { bg: string; border: string; text: string };
+
+const clearRowStyle = (theme: AppTheme): CSSProperties => ({
+  display: "block", width: "100%", padding: "0.3rem 0.6rem",
+  background: "transparent", border: "none", borderBottom: `1px solid ${theme.border}`,
+  cursor: "pointer", fontFamily: "inherit",
+  fontSize: "0.75rem", fontWeight: 600, color: theme.muted, textAlign: "left",
+});
+
+const lineOptionStyle = (theme: AppTheme): CSSProperties => ({
+  display: "block", width: "100%", padding: "0.3rem 0.5rem",
+  background: "transparent",
+  border: "none", borderBottom: `1px solid ${theme.border}`,
+  cursor: "pointer", fontFamily: "inherit",
+  fontSize: "0.75rem", fontWeight: 600, color: theme.text, textAlign: "left",
+});
+
+const tierBackButtonStyle = (theme: AppTheme): CSSProperties => ({
+  display: "flex", alignItems: "center", gap: 6,
+  background: "transparent", border: "none", cursor: "pointer",
+  color: theme.muted, fontFamily: "inherit", fontSize: "0.75rem",
+  fontWeight: 700, padding: "0.1rem 0", marginBottom: 2,
+});
+
+const tierOptionStyle = (c: TierColor): CSSProperties => ({
+  background: c.bg, border: `1px solid ${c.border}`, color: c.text,
+  borderRadius: 6, padding: "0.3rem 0.6rem",
+  fontWeight: 700, fontSize: "0.8rem", fontFamily: "inherit",
+  cursor: "pointer", textAlign: "left",
+});
+
+const selectedFamiliarRowStyle = (theme: AppTheme): CSSProperties => ({
+  display: "flex", alignItems: "center", gap: 8, width: "100%",
+  padding: "0.4rem 0.6rem", border: "none", borderBottom: `1px solid ${theme.border}`,
+  background: "transparent", cursor: "pointer", fontFamily: "inherit", textAlign: "left",
+});
+
+const tierBadgeStyle = (c: TierColor): CSSProperties => ({
+  flexShrink: 0, padding: "0.1rem 0.4rem", borderRadius: 4,
+  fontSize: "0.75rem", fontWeight: 800,
+  background: c.bg, border: `1px solid ${c.border}`, color: c.text,
+});
+
+const familiarOptionStyle = (theme: AppTheme): CSSProperties => ({
+  display: "flex", alignItems: "center", gap: 8,
+  width: "100%", padding: "0.3rem 0.6rem",
+  background: "transparent", border: "none",
+  borderBottom: `1px solid ${theme.border}`,
+  cursor: "pointer", fontFamily: "inherit",
+});
+
+const badgeOptionStyle = (theme: AppTheme): CSSProperties => ({
+  display: "flex", alignItems: "center", gap: 6,
+  width: "100%", padding: "0.3rem 0.6rem",
+  background: "transparent", border: "none",
+  borderBottom: `1px solid ${theme.border}`,
+  cursor: "pointer", fontFamily: "inherit",
+  textAlign: "left",
+  fontSize: "0.75rem", fontWeight: 600, color: theme.text,
+});
+
+const presetSquareStyle = (theme: AppTheme, active: boolean): CSSProperties => ({
+  width: 28, height: 24, borderRadius: 6, padding: 0,
+  border: `2px solid ${active ? theme.accent : theme.border}`,
+  background: active ? theme.accent : "transparent",
+  color: active ? "#fff" : theme.muted,
+  fontFamily: "inherit", fontWeight: 800, fontSize: "0.8rem",
+  cursor: "pointer",
+});
+
 // ── Familiar card sprite: mob → familiar → card icon → "?" placeholder ─────
 // Sequential fallback chain (per CLAUDE.md image policy: swap via onError, no
 // re-render). A single <img> walks the candidate list one request at a time —
@@ -343,12 +413,7 @@ function LinePicker({ id, openId, onToggle, onClose, value, tier, placeholder, t
             <button
               type="button"
               onClick={() => select("")}
-              style={{
-                display: "block", width: "100%", padding: "0.3rem 0.6rem",
-                background: "transparent", border: "none", borderBottom: `1px solid ${theme.border}`,
-                cursor: "pointer", fontFamily: "inherit",
-                fontSize: "0.75rem", fontWeight: 600, color: theme.muted, textAlign: "left",
-              }}
+              style={clearRowStyle(theme)}
             >
               — Clear —
             </button>
@@ -371,13 +436,7 @@ function LinePicker({ id, openId, onToggle, onClose, value, tier, placeholder, t
                 key={line}
                 type="button"
                 onClick={() => select(line)}
-                style={{
-                  display: "block", width: "100%", padding: "0.3rem 0.5rem",
-                  background: "transparent",
-                  border: "none", borderBottom: `1px solid ${theme.border}`,
-                  cursor: "pointer", fontFamily: "inherit",
-                  fontSize: "0.75rem", fontWeight: 600, color: theme.text, textAlign: "left",
-                }}
+                style={lineOptionStyle(theme)}
                 onMouseEnter={(e) => { e.currentTarget.style.background = `${theme.accent}22`; }}
                 onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
               >
@@ -434,12 +493,7 @@ function TierPickerView({ entry, theme, onBack, onSelect }: {
       <button
         type="button"
         onClick={onBack}
-        style={{
-          display: "flex", alignItems: "center", gap: 6,
-          background: "transparent", border: "none", cursor: "pointer",
-          color: theme.muted, fontFamily: "inherit", fontSize: "0.75rem",
-          fontWeight: 700, padding: "0.1rem 0", marginBottom: 2,
-        }}
+        style={tierBackButtonStyle(theme)}
       >
         ← {getFamiliarDisplayLabel(entry)}
       </button>
@@ -453,12 +507,7 @@ function TierPickerView({ entry, theme, onBack, onSelect }: {
             key={t}
             type="button"
             onClick={() => onSelect(t)}
-            style={{
-              background: c.bg, border: `1px solid ${c.border}`, color: c.text,
-              borderRadius: 6, padding: "0.3rem 0.6rem",
-              fontWeight: 700, fontSize: "0.8rem", fontFamily: "inherit",
-              cursor: "pointer", textAlign: "left",
-            }}
+            style={tierOptionStyle(c)}
           >
             {TIER_LABELS[t]}
           </button>
@@ -581,11 +630,7 @@ function FamiliarSlotCard({
                 const entry = FAMILIARS.find((f) => f.id === slot.familiarId);
                 if (entry) onSetPending(entry);
               }}
-              style={{
-                display: "flex", alignItems: "center", gap: 8, width: "100%",
-                padding: "0.4rem 0.6rem", border: "none", borderBottom: `1px solid ${theme.border}`,
-                background: "transparent", cursor: "pointer", fontFamily: "inherit", textAlign: "left",
-              }}
+              style={selectedFamiliarRowStyle(theme)}
               onMouseEnter={(e) => { e.currentTarget.style.background = `${theme.accent}22`; }}
               onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
             >
@@ -595,11 +640,7 @@ function FamiliarSlotCard({
                 <p style={{ margin: 0, fontSize: "0.8rem", fontWeight: 700, color: theme.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{displayName}</p>
               </div>
               {slot.tier && (
-                <span style={{
-                  flexShrink: 0, padding: "0.1rem 0.4rem", borderRadius: 4,
-                  fontSize: "0.75rem", fontWeight: 800,
-                  background: TIER_COLORS[slot.tier].bg, border: `1px solid ${TIER_COLORS[slot.tier].border}`, color: TIER_COLORS[slot.tier].text,
-                }}>
+                <span style={tierBadgeStyle(TIER_COLORS[slot.tier])}>
                   {TIER_LABELS[slot.tier]}
                 </span>
               )}
@@ -610,12 +651,7 @@ function FamiliarSlotCard({
             <button
               type="button"
               onClick={onClear}
-              style={{
-                display: "block", width: "100%", padding: "0.3rem 0.6rem",
-                background: "transparent", border: "none", borderBottom: `1px solid ${theme.border}`,
-                cursor: "pointer", fontFamily: "inherit",
-                fontSize: "0.75rem", fontWeight: 600, color: theme.muted, textAlign: "left",
-              }}
+              style={clearRowStyle(theme)}
             >
               — Clear slot —
             </button>
@@ -653,13 +689,7 @@ function FamiliarSlotCard({
                     key={entry.id}
                     type="button"
                     onClick={(e) => { e.stopPropagation(); onSetPending(entry); }}
-                    style={{
-                      display: "flex", alignItems: "center", gap: 8,
-                      width: "100%", padding: "0.3rem 0.6rem",
-                      background: "transparent", border: "none",
-                      borderBottom: `1px solid ${theme.border}`,
-                      cursor: "pointer", fontFamily: "inherit",
-                    }}
+                    style={familiarOptionStyle(theme)}
                     onMouseEnter={(e) => { e.currentTarget.style.background = `${theme.accent}22`; }}
                     onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
                   >
@@ -770,12 +800,7 @@ function BadgeSlot({
             <button
               type="button"
               onClick={onClear}
-              style={{
-                display: "block", width: "100%", padding: "0.3rem 0.6rem",
-                background: "transparent", border: "none", borderBottom: `1px solid ${theme.border}`,
-                cursor: "pointer", fontFamily: "inherit",
-                fontSize: "0.75rem", fontWeight: 600, color: theme.muted, textAlign: "left",
-              }}
+              style={clearRowStyle(theme)}
             >
               — Clear slot —
             </button>
@@ -802,15 +827,7 @@ function BadgeSlot({
                 key={name}
                 type="button"
                 onClick={() => onSelect(name)}
-                style={{
-                  display: "flex", alignItems: "center", gap: 6,
-                  width: "100%", padding: "0.3rem 0.6rem",
-                  background: "transparent", border: "none",
-                  borderBottom: `1px solid ${theme.border}`,
-                  cursor: "pointer", fontFamily: "inherit",
-                  textAlign: "left",
-                  fontSize: "0.75rem", fontWeight: 600, color: theme.text,
-                }}
+                style={badgeOptionStyle(theme)}
                 onMouseEnter={(e) => { e.currentTarget.style.background = `${theme.accent}22`; }}
                 onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
               >
@@ -896,14 +913,7 @@ export default function FamiliarsSetupStep({
             key={i}
             type="button"
             onClick={() => { setActivePreset(i); closePicker(); }}
-            style={{
-              width: 28, height: 24, borderRadius: 6, padding: 0,
-              border: `2px solid ${i === activePreset ? theme.accent : theme.border}`,
-              background: i === activePreset ? theme.accent : "transparent",
-              color: i === activePreset ? "#fff" : theme.muted,
-              fontFamily: "inherit", fontWeight: 800, fontSize: "0.8rem",
-              cursor: "pointer",
-            }}
+            style={presetSquareStyle(theme, i === activePreset)}
           >
             {i + 1}
           </button>

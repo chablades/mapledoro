@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import Image from "next/image";
 import type { AppTheme } from "../../../../components/themes";
 
@@ -11,6 +11,40 @@ export interface TooltipContent {
   imageUrls?: string[];
   link?: { href: string; label: string };
 }
+
+const infoButtonStyle = (theme: AppTheme, open: boolean): CSSProperties => ({
+  width: "1rem",
+  height: "1rem",
+  borderRadius: "50%",
+  border: `1.5px solid ${theme.muted}`,
+  background: open ? `${theme.accent}18` : "transparent",
+  color: open ? theme.accent : theme.muted,
+  fontSize: "0.75rem",
+  fontWeight: 900,
+  fontFamily: "inherit",
+  cursor: "pointer",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  padding: 0,
+  flexShrink: 0,
+  lineHeight: 1,
+  transition: "color 0.1s, background 0.1s",
+});
+
+const infoPopupStyle = (theme: AppTheme, shiftX: number): CSSProperties => ({
+  position: "absolute",
+  top: "calc(100% + 0.4rem)",
+  left: 0,
+  transform: shiftX ? `translateX(${shiftX}px)` : undefined,
+  zIndex: 200,
+  background: theme.bg,
+  border: `1px solid ${theme.border}`,
+  borderRadius: "10px",
+  padding: "0.7rem 0.85rem",
+  width: "min(240px, calc(100vw - 24px))",
+  boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
+});
 
 function TooltipImage({ src }: { src: string }) {
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -67,42 +101,12 @@ export default function InfoTooltip({ content, theme }: { content: TooltipConten
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-label="More information"
-        style={{
-          width: "1rem",
-          height: "1rem",
-          borderRadius: "50%",
-          border: `1.5px solid ${theme.muted}`,
-          background: open ? `${theme.accent}18` : "transparent",
-          color: open ? theme.accent : theme.muted,
-          fontSize: "0.75rem",
-          fontWeight: 900,
-          fontFamily: "inherit",
-          cursor: "pointer",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: 0,
-          flexShrink: 0,
-          lineHeight: 1,
-          transition: "color 0.1s, background 0.1s",
-        }}
+        style={infoButtonStyle(theme, open)}
       >
         ?
       </button>
       {open && (
-        <div ref={popupRef} style={{
-          position: "absolute",
-          top: "calc(100% + 0.4rem)",
-          left: 0,
-          transform: shiftX ? `translateX(${shiftX}px)` : undefined,
-          zIndex: 200,
-          background: theme.bg,
-          border: `1px solid ${theme.border}`,
-          borderRadius: "10px",
-          padding: "0.7rem 0.85rem",
-          width: "min(240px, calc(100vw - 24px))",
-          boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
-        }}>
+        <div ref={popupRef} style={infoPopupStyle(theme, shiftX)}>
           {content.imageUrls && content.imageUrls.length > 0 && (
             <div style={{ display: "flex", gap: "0.35rem", marginBottom: "0.4rem" }}>
               {content.imageUrls.map((src) => <TooltipImage key={src} src={src} />)}

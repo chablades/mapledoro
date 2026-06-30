@@ -141,6 +141,107 @@ const CENTER_WIDTH = 3 * SLOT_SIZE + 2 * 4;
 // Labels for the mobile equipment-grid carousel (one section visible at a time)
 const EQUIPMENT_PAGE_LABELS = ["Accessories", "Weapon", "Armor"];
 
+type SwatchColor = { bg: string; border: string; text: string };
+
+// Equipment grid column layouts (static slot key lists).
+const COL1_SLOTS: SlotKey[] = ["ring1", "ring2", "ring3", "ring4", "belt", "pocket"];
+const COL2_SLOTS: SlotKey[] = ["face", "eye", "earring", "pendant1", "pendant2"];
+const COL6_SLOTS: SlotKey[] = ["hat", "top", "bottom", "shoulder", "android"];
+const COL7_SLOTS: SlotKey[] = ["cape", "glove", "shoe", "medal", "heart", "badge"];
+const CENTER_BOTTOM_SLOTS: SlotKey[] = ["weapon", "secondary", "emblem"];
+
+const pickerClearRowStyle = (theme: AppTheme): CSSProperties => ({
+  display: "block", width: "100%", padding: "0.3rem 0.6rem",
+  background: "transparent", border: "none", borderBottom: `1px solid ${theme.border}`,
+  cursor: "pointer", fontFamily: "inherit",
+  fontSize: "0.75rem", fontWeight: 600, color: theme.muted, textAlign: "left",
+});
+
+const presetBaseItemStyle = (theme: AppTheme): CSSProperties => ({
+  display: "flex", alignItems: "center", gap: 8, width: "100%",
+  padding: "0.4rem 0.6rem", background: `${theme.accent}1a`,
+  border: "none", borderBottom: `1px solid ${theme.border}`,
+  cursor: "pointer", fontFamily: "inherit", textAlign: "left",
+});
+
+const presetBadgeStyle = (theme: AppTheme): CSSProperties => ({
+  fontSize: "0.75rem", fontWeight: 800, color: "#fff", background: theme.accent,
+  padding: "1px 6px", borderRadius: 6, letterSpacing: "0.03em", flexShrink: 0,
+});
+
+const pickerSearchInputStyle = (theme: AppTheme, hasQuery: boolean): CSSProperties => ({
+  width: "100%", border: "none", borderBottom: hasQuery ? `1px solid ${theme.border}` : "none",
+  borderRadius: 0, background: theme.bg, color: theme.text,
+  fontFamily: "inherit", fontSize: "0.85rem", fontWeight: 600,
+  padding: "0.45rem 0.6rem", outline: "none", boxSizing: "border-box",
+});
+
+const pickerItemStyle = (theme: AppTheme, isCurrent: boolean): CSSProperties => ({
+  display: "flex", alignItems: "center", gap: "0.45rem",
+  width: "100%", padding: "0.3rem 0.6rem",
+  background: isCurrent ? `${theme.accent}33` : "transparent",
+  border: "none", borderBottom: `1px solid ${theme.border}`,
+  cursor: "pointer", fontFamily: "inherit",
+  fontSize: "0.8rem", fontWeight: 600, color: theme.text, textAlign: "left",
+});
+
+const slotCellStyle = (theme: AppTheme, isActive: boolean): CSSProperties => ({
+  width: SLOT_SIZE, height: SLOT_SIZE,
+  border: `1px solid ${isActive ? theme.accent : theme.border}`,
+  borderRadius: 8,
+  background: isActive ? `${theme.accent}15` : theme.bg,
+  display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+  gap: 2, cursor: "pointer",
+  outline: "2px solid transparent", outlineOffset: 2,
+  transition: "border-color 0.15s, background 0.15s",
+  overflow: "hidden", padding: "2px 3px", boxSizing: "border-box",
+});
+
+const presetButtonStyle = (theme: AppTheme, on: boolean): CSSProperties => ({
+  border: `1px solid ${on ? theme.accent : theme.border}`,
+  borderRadius: 8,
+  background: on ? theme.accent : theme.bg,
+  color: on ? "#fff" : theme.text,
+  fontFamily: "inherit", fontWeight: 800, fontSize: "0.8rem",
+  width: 34, height: 32, cursor: "pointer",
+});
+
+const symbolTileStyle = (theme: AppTheme, placed: boolean): CSSProperties => ({
+  width: 74, flexShrink: 0,
+  border: `1px solid ${placed ? theme.accent : theme.border}`,
+  borderRadius: 8,
+  background: placed ? `${theme.accent}15` : theme.bg,
+  display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
+  padding: "8px 9px", boxSizing: "border-box",
+});
+
+const symbolTileInputStyle = (theme: AppTheme): CSSProperties => ({
+  width: 56, textAlign: "center",
+  border: `1px solid ${theme.border}`, borderRadius: 6,
+  background: theme.bg, color: theme.text,
+  fontFamily: "inherit", fontWeight: 700, fontSize: "0.8rem",
+  padding: "0.25rem", boxSizing: "border-box",
+});
+
+const symbolTabStyle = (theme: AppTheme, isActive: boolean): CSSProperties => ({
+  border: `1px solid ${isActive ? theme.accent : theme.border}`,
+  borderRadius: 8,
+  background: isActive ? theme.accent : theme.bg,
+  color: isActive ? "#fff" : theme.text,
+  fontFamily: "inherit", fontWeight: 800, fontSize: "0.8rem",
+  padding: "0.4rem 0.8rem", cursor: "pointer",
+});
+
+const spritePreviewStyle = (theme: AppTheme): CSSProperties => ({
+  flex: 1,
+  border: `1px solid ${theme.border}`,
+  borderRadius: 8,
+  background: theme.bg,
+  display: "flex", alignItems: "center", justifyContent: "center",
+  overflow: "hidden",
+  minHeight: SLOT_SIZE * 2,
+});
+
 // ── Parse / serialise ──────────────────────────────────────────────────────
 
 function parseDraft(raw: string): EquipmentDraft {
@@ -314,12 +415,7 @@ function ItemPicker({ slot, current, theme, files, itemFilter, maxLevel, exclude
         <button
           type="button"
           onClick={() => { onSelect(null); onClose(); }}
-          style={{
-            display: "block", width: "100%", padding: "0.3rem 0.6rem",
-            background: "transparent", border: "none", borderBottom: `1px solid ${theme.border}`,
-            cursor: "pointer", fontFamily: "inherit",
-            fontSize: "0.75rem", fontWeight: 600, color: theme.muted, textAlign: "left",
-          }}
+          style={pickerClearRowStyle(theme)}
         >
           — Clear slot —
         </button>
@@ -328,19 +424,11 @@ function ItemPicker({ slot, current, theme, files, itemFilter, maxLevel, exclude
         <button
           type="button"
           onClick={() => { onSelect({ id: presetBaseItem.id, name: presetBaseItem.name }); onClose(); }}
-          style={{
-            display: "flex", alignItems: "center", gap: 8, width: "100%",
-            padding: "0.4rem 0.6rem", background: `${theme.accent}1a`,
-            border: "none", borderBottom: `1px solid ${theme.border}`,
-            cursor: "pointer", fontFamily: "inherit", textAlign: "left",
-          }}
+          style={presetBaseItemStyle(theme)}
         >
           {presetBaseItem.id && <ItemIcon id={presetBaseItem.id} size={28} />}
           <span style={{ flex: 1, fontSize: "0.8rem", fontWeight: 700, color: theme.text }}>{presetBaseItem.name}</span>
-          <span style={{
-            fontSize: "0.75rem", fontWeight: 800, color: "#fff", background: theme.accent,
-            padding: "1px 6px", borderRadius: 6, letterSpacing: "0.03em", flexShrink: 0,
-          }}>
+          <span style={presetBadgeStyle(theme)}>
             PRESET 1
           </span>
         </button>
@@ -352,12 +440,7 @@ function ItemPicker({ slot, current, theme, files, itemFilter, maxLevel, exclude
         value={query}
         placeholder={`Search ${SLOT_LABELS[slot]}…`}
         onChange={(e) => setQuery(e.target.value)}
-        style={{
-          width: "100%", border: "none", borderBottom: query ? `1px solid ${theme.border}` : "none",
-          borderRadius: 0, background: theme.bg, color: theme.text,
-          fontFamily: "inherit", fontSize: "0.85rem", fontWeight: 600,
-          padding: "0.45rem 0.6rem", outline: "none", boxSizing: "border-box",
-        }}
+        style={pickerSearchInputStyle(theme, Boolean(query))}
       />
       {(query || showAllWhenEmpty) && (
         <div style={{ maxHeight: 220, overflowY: "auto" }}>
@@ -378,14 +461,7 @@ function ItemPicker({ slot, current, theme, files, itemFilter, maxLevel, exclude
                 key={item.id}
                 type="button"
                 onClick={() => { onSelect({ id: item.id, name: item.name }); onClose(); }}
-                style={{
-                  display: "flex", alignItems: "center", gap: "0.45rem",
-                  width: "100%", padding: "0.3rem 0.6rem",
-                  background: isCurrent ? `${theme.accent}33` : "transparent",
-                  border: "none", borderBottom: `1px solid ${theme.border}`,
-                  cursor: "pointer", fontFamily: "inherit",
-                  fontSize: "0.8rem", fontWeight: 600, color: theme.text, textAlign: "left",
-                }}
+                style={pickerItemStyle(theme, isCurrent)}
                 onMouseEnter={(e) => { if (!isCurrent) e.currentTarget.style.background = `${theme.accent}22`; }}
                 onMouseLeave={(e) => { if (!isCurrent) e.currentTarget.style.background = "transparent"; }}
               >
@@ -425,17 +501,7 @@ function SlotCell({ slotKey, item, theme, isActive, onClick, picker }: {
       onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.borderColor = theme.border; }}
       onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
       onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
-      style={{
-        width: SLOT_SIZE, height: SLOT_SIZE,
-        border: `1px solid ${isActive ? theme.accent : theme.border}`,
-        borderRadius: 8,
-        background: isActive ? `${theme.accent}15` : theme.bg,
-        display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-        gap: 2, cursor: "pointer",
-        outline: "2px solid transparent", outlineOffset: 2,
-        transition: "border-color 0.15s, background 0.15s",
-        overflow: "hidden", padding: "2px 3px", boxSizing: "border-box",
-      }}
+      style={slotCellStyle(theme, isActive)}
     >
       {item ? (
         <ItemIcon id={item.id} size={48} />
@@ -512,14 +578,7 @@ function PresetBar({ theme, active, onSwitch }: {
               key={i}
               type="button"
               onClick={() => onSwitch(i)}
-              style={{
-                border: `1px solid ${on ? theme.accent : theme.border}`,
-                borderRadius: 8,
-                background: on ? theme.accent : theme.bg,
-                color: on ? "#fff" : theme.text,
-                fontFamily: "inherit", fontWeight: 800, fontSize: "0.8rem",
-                width: 34, height: 32, cursor: "pointer",
-              }}
+              style={presetButtonStyle(theme, on)}
             >
               {i + 1}
             </button>
@@ -541,14 +600,7 @@ function SymbolLevelTile({ area, level, maxLevel, theme, onLevel }: {
 }) {
   const placed = level >= 1;
   return (
-    <div style={{
-      width: 74, flexShrink: 0,
-      border: `1px solid ${placed ? theme.accent : theme.border}`,
-      borderRadius: 8,
-      background: placed ? `${theme.accent}15` : theme.bg,
-      display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
-      padding: "8px 9px", boxSizing: "border-box",
-    }}>
+    <div style={symbolTileStyle(theme, placed)}>
       <HoverTooltip label={area.name} theme={theme}>
         <div style={{ opacity: placed ? 1 : 0.3, filter: placed ? "none" : "grayscale(1)", lineHeight: 0, cursor: "pointer" }}>
           <ItemIcon id={area.itemId} size={32} />
@@ -567,13 +619,7 @@ function SymbolLevelTile({ area, level, maxLevel, theme, onLevel }: {
           onLevel(Math.max(0, Math.min(maxLevel, raw)));
         }}
         onKeyDown={(e) => { if (!/^\d$/.test(e.key) && !["Backspace","Delete","ArrowLeft","ArrowRight","Tab","Home","End"].includes(e.key)) e.preventDefault(); }}
-        style={{
-          width: 56, textAlign: "center",
-          border: `1px solid ${theme.border}`, borderRadius: 6,
-          background: theme.bg, color: theme.text,
-          fontFamily: "inherit", fontWeight: 700, fontSize: "0.8rem",
-          padding: "0.25rem", boxSizing: "border-box",
-        }}
+        style={symbolTileInputStyle(theme)}
       />
     </div>
   );
@@ -607,14 +653,7 @@ function SymbolSection({ symbolLevels, activeTab, theme, onTabChange, onLevel }:
               key={tab.key}
               type="button"
               onClick={() => onTabChange(tab.key)}
-              style={{
-                border: `1px solid ${isActive ? theme.accent : theme.border}`,
-                borderRadius: 8,
-                background: isActive ? theme.accent : theme.bg,
-                color: isActive ? "#fff" : theme.text,
-                fontFamily: "inherit", fontWeight: 800, fontSize: "0.8rem",
-                padding: "0.4rem 0.8rem", cursor: "pointer",
-              }}
+              style={symbolTabStyle(theme, isActive)}
             >
               {tab.label}
             </button>
@@ -706,6 +745,46 @@ const IA_POPOVER_SHELL: CSSProperties = {
   ...iaPopoverVisualStyle, position: "absolute", top: 0, left: 0, width: IA_PICKER_WIDTH, zIndex: 310,
 };
 
+const iaGradeButtonStyle = (theme: AppTheme, c: SwatchColor | null): CSSProperties => ({
+  display: "flex", alignItems: "center", gap: 8, width: "100%",
+  padding: "0.5rem 0.7rem", borderRadius: 8,
+  border: `1px solid ${c ? c.border : theme.border}`,
+  background: c ? c.border : theme.bg,
+  color: c ? "#fff" : theme.muted,
+  fontFamily: "inherit", fontWeight: 800, fontSize: "0.9rem", cursor: "pointer", textAlign: "left",
+  transition: "border-color 0.15s ease, background 0.15s ease",
+});
+
+const iaGradeOptionStyle = (theme: AppTheme, tc: SwatchColor, active: boolean): CSSProperties => ({
+  display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "0.45rem 0.6rem",
+  background: active ? tc.border : "transparent", color: active ? "#fff" : theme.text,
+  border: "none", borderBottom: `1px solid ${theme.border}`, cursor: "pointer",
+  fontFamily: "inherit", fontWeight: 800, fontSize: "0.8rem", textAlign: "left",
+});
+
+const iaLineOptionStyle = (theme: AppTheme): CSSProperties => ({
+  display: "block", width: "100%", padding: "0.3rem 0.5rem", background: "transparent",
+  border: "none", borderBottom: `1px solid ${theme.border}`, cursor: "pointer",
+  fontFamily: "inherit", fontSize: "0.75rem", fontWeight: 600, color: theme.text, textAlign: "left",
+});
+
+const iaLineBarStyle = (theme: AppTheme, c: SwatchColor | null, grade: IATier | ""): CSSProperties => ({
+  display: "block", width: "100%", padding: "0.5rem 0.7rem", borderRadius: 8,
+  border: c ? `1px solid ${c.border}` : `1px dashed ${theme.border}`,
+  background: c ? c.border : theme.bg,
+  color: c ? "#fff" : theme.muted,
+  fontFamily: "inherit", fontWeight: 700, fontSize: "0.82rem", textAlign: "left",
+  cursor: grade ? "pointer" : "not-allowed", opacity: grade ? 1 : 0.55,
+  overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+});
+
+const iaTierToggleStyle = (theme: AppTheme, tc: SwatchColor, active: boolean): CSSProperties => ({
+  flex: 1, padding: "0.3rem", borderRadius: 6,
+  border: `1px solid ${active ? tc.border : theme.border}`,
+  background: active ? tc.border : theme.bg, color: active ? "#fff" : theme.muted,
+  fontFamily: "inherit", fontWeight: 800, fontSize: "0.72rem", cursor: "pointer",
+});
+
 /** Colored grade banner ("Legendary Ability") that opens a 4-tier grade selector. */
 function IAGradeHeader({ grade, openId, theme, onToggle, onClose, onSelect }: {
   grade: IATier | "";
@@ -725,15 +804,7 @@ function IAGradeHeader({ grade, openId, theme, onToggle, onClose, onSelect }: {
         onClick={(e) => { e.stopPropagation(); onToggle(); }}
         onMouseEnter={(e) => { e.currentTarget.style.borderColor = theme.accent; if (!c) e.currentTarget.style.background = theme.panel; }}
         onMouseLeave={(e) => { e.currentTarget.style.borderColor = c ? c.border : theme.border; if (!c) e.currentTarget.style.background = theme.bg; }}
-        style={{
-          display: "flex", alignItems: "center", gap: 8, width: "100%",
-          padding: "0.5rem 0.7rem", borderRadius: 8,
-          border: `1px solid ${c ? c.border : theme.border}`,
-          background: c ? c.border : theme.bg,
-          color: c ? "#fff" : theme.muted,
-          fontFamily: "inherit", fontWeight: 800, fontSize: "0.9rem", cursor: "pointer", textAlign: "left",
-          transition: "border-color 0.15s ease, background 0.15s ease",
-        }}
+        style={iaGradeButtonStyle(theme, c)}
       >
         <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="currentColor" style={{ flexShrink: 0 }}>
           <path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z" />
@@ -752,12 +823,7 @@ function IAGradeHeader({ grade, openId, theme, onToggle, onClose, onSelect }: {
             const active = grade === t;
             return (
               <button key={t} type="button" onClick={() => { onSelect(t); onClose(); }}
-                style={{
-                  display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "0.45rem 0.6rem",
-                  background: active ? tc.border : "transparent", color: active ? "#fff" : theme.text,
-                  border: "none", borderBottom: `1px solid ${theme.border}`, cursor: "pointer",
-                  fontFamily: "inherit", fontWeight: 800, fontSize: "0.8rem", textAlign: "left",
-                }}
+                style={iaGradeOptionStyle(theme, tc, active)}
                 onMouseEnter={(e) => { if (!active) { e.currentTarget.style.background = tc.border; e.currentTarget.style.color = "#fff"; } }}
                 onMouseLeave={(e) => { if (!active) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = theme.text; } }}>
                 <span style={{ width: 10, height: 10, borderRadius: 3, background: tc.border, flexShrink: 0 }} />
@@ -788,11 +854,7 @@ function IALineOptions({ tier, currentValue, theme, onPick }: {
     <>
       {currentValue && (
         <button type="button" onClick={() => onPick("")}
-          style={{
-            display: "block", width: "100%", padding: "0.3rem 0.6rem", background: "transparent",
-            border: "none", borderBottom: `1px solid ${theme.border}`, cursor: "pointer",
-            fontFamily: "inherit", fontSize: "0.75rem", fontWeight: 600, color: theme.muted, textAlign: "left",
-          }}>
+          style={pickerClearRowStyle(theme)}>
           — Clear —
         </button>
       )}
@@ -804,11 +866,7 @@ function IALineOptions({ tier, currentValue, theme, onPick }: {
       <div style={{ maxHeight: 200, overflowY: "auto" }}>
         {filtered.map((line) => (
           <button key={line} type="button" onClick={() => onPick(line)}
-            style={{
-              display: "block", width: "100%", padding: "0.3rem 0.5rem", background: "transparent",
-              border: "none", borderBottom: `1px solid ${theme.border}`, cursor: "pointer",
-              fontFamily: "inherit", fontSize: "0.75rem", fontWeight: 600, color: theme.text, textAlign: "left",
-            }}
+            style={iaLineOptionStyle(theme)}
             onMouseEnter={(e) => { e.currentTarget.style.background = `${theme.accent}22`; }}
             onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}>
             {line}
@@ -849,15 +907,7 @@ function IALineBar({ lineIdx, line, grade, openId, theme, onToggle, onClose, onS
   return (
     <div ref={wrapperRef} style={{ position: "relative" }}>
       <button type="button" disabled={!grade} onClick={(e) => { e.stopPropagation(); onToggle(); }}
-        style={{
-          display: "block", width: "100%", padding: "0.5rem 0.7rem", borderRadius: 8,
-          border: c ? `1px solid ${c.border}` : `1px dashed ${theme.border}`,
-          background: c ? c.border : theme.bg,
-          color: c ? "#fff" : theme.muted,
-          fontFamily: "inherit", fontWeight: 700, fontSize: "0.82rem", textAlign: "left",
-          cursor: grade ? "pointer" : "not-allowed", opacity: grade ? 1 : 0.55,
-          overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-        }}>
+        style={iaLineBarStyle(theme, c, grade)}>
         {label}
       </button>
       {isOpen && grade && createPortal(
@@ -870,12 +920,7 @@ function IALineBar({ lineIdx, line, grade, openId, theme, onToggle, onClose, onS
                 const active = line.tier === t;
                 return (
                   <button key={t} type="button" onClick={() => onSetTier(t)}
-                    style={{
-                      flex: 1, padding: "0.3rem", borderRadius: 6,
-                      border: `1px solid ${active ? tc.border : theme.border}`,
-                      background: active ? tc.border : theme.bg, color: active ? "#fff" : theme.muted,
-                      fontFamily: "inherit", fontWeight: 800, fontSize: "0.72rem", cursor: "pointer",
-                    }}>
+                    style={iaTierToggleStyle(theme, tc, active)}>
                     {IA_TIER_LABELS[t]}
                   </button>
                 );
@@ -1295,12 +1340,6 @@ export default function EquipmentSetupStep({
   // Col 6: hat, top, bottom, shoulder, android
   // Col 7: cape, glove, shoe, medal, heart, badge
 
-  const col1: SlotKey[] = ["ring1", "ring2", "ring3", "ring4", "belt", "pocket"];
-  const col2: SlotKey[] = ["face", "eye", "earring", "pendant1", "pendant2"];
-  const col6: SlotKey[] = ["hat", "top", "bottom", "shoulder", "android"];
-  const col7: SlotKey[] = ["cape", "glove", "shoe", "medal", "heart", "badge"];
-  const centerBottom: SlotKey[] = ["weapon", "secondary", "emblem"];
-
   const navBtnStyle: CSSProperties = {
     border: `1px solid ${theme.border}`,
     borderRadius: 8,
@@ -1353,23 +1392,15 @@ export default function EquipmentSetupStep({
 
           <div className="eq-section eq-section-0" style={{ gap: 4, flexShrink: 0 }}>
             {/* Col 1 */}
-            <SlotColumn slots={col1} grid={activeGrid} theme={theme} activeSlot={activeSlot} onToggle={toggleSlot} renderPicker={renderPicker} />
+            <SlotColumn slots={COL1_SLOTS} grid={activeGrid} theme={theme} activeSlot={activeSlot} onToggle={toggleSlot} renderPicker={renderPicker} />
 
             {/* Col 2 */}
-            <SlotColumn slots={col2} grid={activeGrid} theme={theme} activeSlot={activeSlot} onToggle={toggleSlot} renderPicker={renderPicker} />
+            <SlotColumn slots={COL2_SLOTS} grid={activeGrid} theme={theme} activeSlot={activeSlot} onToggle={toggleSlot} renderPicker={renderPicker} />
           </div>
 
           {/* Center block: sprite + weapon/sub/emblem */}
           <div className="eq-section eq-section-1" style={{ flexDirection: "column", gap: 4, flexShrink: 0, width: CENTER_WIDTH }}>
-            <div style={{
-              flex: 1,
-              border: `1px solid ${theme.border}`,
-              borderRadius: 8,
-              background: theme.bg,
-              display: "flex", alignItems: "center", justifyContent: "center",
-              overflow: "hidden",
-              minHeight: SLOT_SIZE * 2,
-            }}>
+            <div style={spritePreviewStyle(theme)}>
               {confirmedCharacterImgURL ? (
                 <CharacterAvatar
                   src={confirmedCharacterImgURL}
@@ -1385,7 +1416,7 @@ export default function EquipmentSetupStep({
               )}
             </div>
             <div style={{ display: "flex", gap: 4 }}>
-              {centerBottom.map((slot) => (
+              {CENTER_BOTTOM_SLOTS.map((slot) => (
                 <SlotCell
                   key={slot}
                   slotKey={slot}
@@ -1401,10 +1432,10 @@ export default function EquipmentSetupStep({
 
           <div className="eq-section eq-section-2" style={{ gap: 4, flexShrink: 0 }}>
             {/* Col 6 */}
-            <SlotColumn slots={col6} grid={activeGrid} theme={theme} activeSlot={activeSlot} onToggle={toggleSlot} renderPicker={renderPicker} />
+            <SlotColumn slots={COL6_SLOTS} grid={activeGrid} theme={theme} activeSlot={activeSlot} onToggle={toggleSlot} renderPicker={renderPicker} />
 
             {/* Col 7 */}
-            <SlotColumn slots={col7} grid={activeGrid} theme={theme} activeSlot={activeSlot} onToggle={toggleSlot} renderPicker={renderPicker} />
+            <SlotColumn slots={COL7_SLOTS} grid={activeGrid} theme={theme} activeSlot={activeSlot} onToggle={toggleSlot} renderPicker={renderPicker} />
           </div>
 
         </div>

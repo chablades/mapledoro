@@ -39,6 +39,42 @@ const sectionLabelStyle = (theme: AppTheme): CSSProperties => ({
   textTransform: "uppercase", letterSpacing: "0.05em", color: theme.muted,
 });
 
+const ringTileStyle = (theme: AppTheme, placed: boolean): CSSProperties => ({
+  width: 74, flexShrink: 0,
+  border: `1px solid ${placed ? theme.accent : theme.border}`,
+  borderRadius: 8,
+  background: placed ? `${theme.accent}15` : theme.bg,
+  display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
+  padding: "8px 9px", boxSizing: "border-box",
+});
+
+const ringInputStyle = (theme: AppTheme): CSSProperties => ({
+  width: 56, textAlign: "center",
+  border: `1px solid ${theme.border}`, borderRadius: 6,
+  background: theme.bg, color: theme.text,
+  fontFamily: "inherit", fontWeight: 700, fontSize: "0.8rem",
+  padding: "0.25rem", boxSizing: "border-box",
+});
+
+const yesNoOptionStyle = (theme: AppTheme, active: boolean): CSSProperties => ({
+  border: `1px solid ${active ? theme.accent : theme.border}`,
+  borderRadius: 9,
+  background: active ? `${theme.accent}22` : theme.bg,
+  color: active ? theme.accent : theme.text,
+  fontFamily: "inherit", fontWeight: 800, fontSize: "0.85rem",
+  padding: "0.4rem 0.85rem", cursor: "pointer",
+});
+
+const statRowInputStyle = (theme: AppTheme): CSSProperties => ({
+  width: "5rem", textAlign: "center",
+  border: `1px solid ${theme.border}`, borderRadius: 7,
+  background: theme.bg, color: theme.text,
+  fontFamily: "inherit", fontWeight: 600, fontSize: "0.82rem",
+  padding: "0.3rem 0.4rem", boxSizing: "border-box",
+});
+
+const YES_NO_OPTIONS = [{ v: true, label: "Yes" }, { v: false, label: "No" }];
+
 function RingTile({ iconId, name, level, onLevel, theme }: {
   iconId: string;
   name: string;
@@ -48,14 +84,7 @@ function RingTile({ iconId, name, level, onLevel, theme }: {
 }) {
   const placed = (Number.parseInt(level || "0", 10) || 0) >= 1;
   return (
-    <div style={{
-      width: 74, flexShrink: 0,
-      border: `1px solid ${placed ? theme.accent : theme.border}`,
-      borderRadius: 8,
-      background: placed ? `${theme.accent}15` : theme.bg,
-      display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
-      padding: "8px 9px", boxSizing: "border-box",
-    }}>
+    <div style={ringTileStyle(theme, placed)}>
       <HoverTooltip label={name} theme={theme}>
         <div style={{ opacity: placed ? 1 : 0.3, filter: placed ? "none" : "grayscale(1)", lineHeight: 0 }}>
           <ItemIcon id={iconId} size={32} />
@@ -71,13 +100,7 @@ function RingTile({ iconId, name, level, onLevel, theme }: {
         placeholder="0"
         onChange={(e) => onLevel(e.target.value)}
         onKeyDown={numericKeyDown}
-        style={{
-          width: 56, textAlign: "center",
-          border: `1px solid ${theme.border}`, borderRadius: 6,
-          background: theme.bg, color: theme.text,
-          fontFamily: "inherit", fontWeight: 700, fontSize: "0.8rem",
-          padding: "0.25rem", boxSizing: "border-box",
-        }}
+        style={ringInputStyle(theme)}
       />
     </div>
   );
@@ -89,26 +112,18 @@ function YesNoQuestion({ question, value, onChange, theme }: {
   onChange: (next: boolean) => void;
   theme: AppTheme;
 }) {
-  const options = [{ v: true, label: "Yes" }, { v: false, label: "No" }];
   return (
     <div>
       <p style={{ margin: "0 0 0.4rem", fontSize: "0.88rem", fontWeight: 800, color: theme.text }}>{question}</p>
       <div style={{ display: "flex", gap: "0.4rem" }}>
-        {options.map((opt) => {
+        {YES_NO_OPTIONS.map((opt) => {
           const active = opt.v === value;
           return (
             <button
               key={opt.label}
               type="button"
               onClick={() => onChange(opt.v)}
-              style={{
-                border: `1px solid ${active ? theme.accent : theme.border}`,
-                borderRadius: 9,
-                background: active ? `${theme.accent}22` : theme.bg,
-                color: active ? theme.accent : theme.text,
-                fontFamily: "inherit", fontWeight: 800, fontSize: "0.85rem",
-                padding: "0.4rem 0.85rem", cursor: "pointer",
-              }}
+              style={yesNoOptionStyle(theme, active)}
             >
               {opt.label}
             </button>
@@ -136,13 +151,7 @@ function StatRow({ label, value, onChange, theme }: {
         placeholder="0"
         onChange={(e) => onChange(e.target.value.replace(/\D/g, ""))}
         onKeyDown={numericKeyDown}
-        style={{
-          width: "5rem", textAlign: "center",
-          border: `1px solid ${theme.border}`, borderRadius: 7,
-          background: theme.bg, color: theme.text,
-          fontFamily: "inherit", fontWeight: 600, fontSize: "0.82rem",
-          padding: "0.3rem 0.4rem", boxSizing: "border-box",
-        }}
+        style={statRowInputStyle(theme)}
       />
     </div>
   );

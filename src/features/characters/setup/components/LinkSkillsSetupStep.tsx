@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import type { CSSProperties } from "react";
 import { numericKeyDown } from "../../../../lib/inputUtils";
 import Image from "next/image";
 import type { AppTheme } from "../../../../components/themes";
@@ -188,6 +189,36 @@ function LinkSkillIcon({ iconUrl, name }: { iconUrl: string; name: string }) {
   );
 }
 
+const linkLevelInputStyle = (theme: AppTheme, locked: boolean | undefined): CSSProperties => ({
+  width: "2.2rem",
+  border: `1px solid ${locked ? theme.accent : theme.border}`,
+  borderRadius: "6px",
+  background: locked ? `${theme.accent}18` : theme.bg,
+  color: locked ? theme.accent : theme.text,
+  fontFamily: "inherit",
+  fontSize: "0.82rem",
+  fontWeight: 700,
+  padding: "0.25rem 0.35rem",
+  textAlign: "center",
+  outline: "2px solid transparent",
+  outlineOffset: "2px",
+  transition: "outline-color 0.15s ease",
+  cursor: locked ? "default" : undefined,
+});
+
+const autofillButtonStyle = (theme: AppTheme): CSSProperties => ({
+  border: `1px solid ${theme.accent}`,
+  borderRadius: "7px",
+  background: "transparent",
+  color: theme.accent,
+  fontFamily: "inherit",
+  fontWeight: 800,
+  fontSize: "0.75rem",
+  padding: "0.2rem 0.55rem",
+  cursor: "pointer",
+  flexShrink: 0,
+});
+
 function LinkSkillRow({
   skill, value, source, onUpdate, theme, fullWidth, locked, min,
 }: {
@@ -251,22 +282,7 @@ function LinkSkillRow({
             if (parsed > skill.maxLevel) onUpdate(skill.id, String(skill.maxLevel));
           }}
           onKeyDown={numericKeyDown}
-          style={{
-            width: "2.2rem",
-            border: `1px solid ${locked ? theme.accent : theme.border}`,
-            borderRadius: "6px",
-            background: locked ? `${theme.accent}18` : theme.bg,
-            color: locked ? theme.accent : theme.text,
-            fontFamily: "inherit",
-            fontSize: "0.82rem",
-            fontWeight: 700,
-            padding: "0.25rem 0.35rem",
-            textAlign: "center",
-            outline: "2px solid transparent",
-            outlineOffset: "2px",
-            transition: "outline-color 0.15s ease",
-            cursor: locked ? "default" : undefined,
-          }}
+          style={linkLevelInputStyle(theme, locked)}
         />
         <span style={{ fontSize: "0.75rem", color: theme.muted, fontWeight: 700 }}>/ {skill.maxLevel}</span>
       </div>
@@ -351,18 +367,7 @@ export default function LinkSkillsSetupStep({
             <button
               type="button"
               onClick={handleAutofill}
-              style={{
-                border: `1px solid ${theme.accent}`,
-                borderRadius: "7px",
-                background: "transparent",
-                color: theme.accent,
-                fontFamily: "inherit",
-                fontWeight: 800,
-                fontSize: "0.75rem",
-                padding: "0.2rem 0.55rem",
-                cursor: "pointer",
-                flexShrink: 0,
-              }}
+              style={autofillButtonStyle(theme)}
             >
               Autofill from roster
             </button>

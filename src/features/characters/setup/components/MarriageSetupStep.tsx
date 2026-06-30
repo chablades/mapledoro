@@ -38,6 +38,23 @@ function toggleButtonStyle(theme: AppTheme, active: boolean, accent: string) {
   } as const;
 }
 
+function partnerInputStyle(theme: AppTheme) {
+  return {
+    width: "100%",
+    boxSizing: "border-box",
+    border: `1px solid ${theme.border}`,
+    borderRadius: "10px",
+    background: theme.bg,
+    color: theme.text,
+    fontFamily: "inherit",
+    fontWeight: 700,
+    fontSize: "0.88rem",
+    padding: "0.5rem 0.75rem",
+    marginBottom: "0.8rem",
+    outlineColor: "transparent",
+  } as const;
+}
+
 export default function MarriageSetupStep({
   theme, step, stepNumber, totalSteps, value, onChange, onBack, onNext, onFinish,
 }: MarriageSetupStepProps) {
@@ -94,20 +111,7 @@ export default function MarriageSetupStep({
           onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
           onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
           maxLength={12}
-          style={{
-            width: "100%",
-            boxSizing: "border-box",
-            border: `1px solid ${theme.border}`,
-            borderRadius: "10px",
-            background: theme.bg,
-            color: theme.text,
-            fontFamily: "inherit",
-            fontWeight: 700,
-            fontSize: "0.88rem",
-            padding: "0.5rem 0.75rem",
-            marginBottom: "0.8rem",
-            outlineColor: "transparent",
-          }}
+          style={partnerInputStyle(theme)}
         />
       )}
     </SetupStepFrame>

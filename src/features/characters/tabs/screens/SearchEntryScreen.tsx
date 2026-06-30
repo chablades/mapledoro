@@ -18,6 +18,52 @@ interface SearchEntryScreenProps {
   actions: SearchPaneActions;
 }
 
+const clearDraftButtonStyle = (theme: Theme, disabled: boolean): CSSProperties => ({
+  flexShrink: 0,
+  background: "none",
+  border: "none",
+  borderRadius: "8px",
+  padding: "0 0.55rem",
+  font: "inherit",
+  fontSize: "0.82rem",
+  fontWeight: 800,
+  color: theme.muted,
+  cursor: disabled ? "not-allowed" : "pointer",
+});
+
+const draftListboxStyle = (theme: Theme): CSSProperties => ({
+  position: "absolute",
+  top: "calc(100% + 0.35rem)",
+  left: 0,
+  right: 0,
+  zIndex: 30,
+  background: theme.panel,
+  border: `1px solid ${theme.border}`,
+  borderRadius: "12px",
+  boxShadow: "0 8px 24px rgba(0,0,0,0.25)",
+  padding: "0.3rem",
+  maxHeight: "300px",
+  overflowY: "auto",
+  display: "flex",
+  flexDirection: "column",
+  gap: "0.1rem",
+});
+
+const searchInputStyle = (theme: Theme): CSSProperties => ({
+  width: "100%",
+  border: `1px solid ${theme.border}`,
+  borderRadius: "12px",
+  background: theme.bg,
+  color: theme.text,
+  fontFamily: "inherit",
+  fontSize: "0.95rem",
+  fontWeight: 600,
+  padding: "0.8rem 0.9rem",
+  outline: "2px solid transparent",
+  outlineOffset: "2px",
+  transition: "outline-color 0.2s ease",
+});
+
 function draftStatusLine(draft: SetupDraftSummary): string {
   if (!draft.started) return "Not started";
   const step = Math.min(Math.max(draft.stepIndex, 1), draft.stepCount);
@@ -88,18 +134,7 @@ function DraftOption({
         onClick={onClear}
         title="Clear draft"
         aria-label={`Clear setup draft for ${draft.characterName}`}
-        style={{
-          flexShrink: 0,
-          background: "none",
-          border: "none",
-          borderRadius: "8px",
-          padding: "0 0.55rem",
-          font: "inherit",
-          fontSize: "0.82rem",
-          fontWeight: 800,
-          color: theme.muted,
-          cursor: disabled ? "not-allowed" : "pointer",
-        }}
+        style={clearDraftButtonStyle(theme, disabled)}
       >
         ✕
       </button>
@@ -156,23 +191,7 @@ function DraftPicker({
       {open && (
         <div
           role="listbox"
-          style={{
-            position: "absolute",
-            top: "calc(100% + 0.35rem)",
-            left: 0,
-            right: 0,
-            zIndex: 30,
-            background: theme.panel,
-            border: `1px solid ${theme.border}`,
-            borderRadius: "12px",
-            boxShadow: "0 8px 24px rgba(0,0,0,0.25)",
-            padding: "0.3rem",
-            maxHeight: "300px",
-            overflowY: "auto",
-            display: "flex",
-            flexDirection: "column",
-            gap: "0.1rem",
-          }}
+          style={draftListboxStyle(theme)}
         >
           {drafts.map((draft) => (
             <DraftOption
@@ -255,20 +274,7 @@ export default function SearchEntryScreen({ model, actions }: SearchEntryScreenP
           onChange={(event) => actions.queryChange(event.target.value)}
           placeholder="In-Game Name"
           maxLength={MAX_QUERY_LENGTH}
-          style={{
-            width: "100%",
-            border: `1px solid ${theme.border}`,
-            borderRadius: "12px",
-            background: theme.bg,
-            color: theme.text,
-            fontFamily: "inherit",
-            fontSize: "0.95rem",
-            fontWeight: 600,
-            padding: "0.8rem 0.9rem",
-            outline: "2px solid transparent",
-            outlineOffset: "2px",
-            transition: "outline-color 0.2s ease",
-          }}
+          style={searchInputStyle(theme)}
           onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
           onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
         />

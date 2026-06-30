@@ -137,6 +137,56 @@ function sectionLabelStyle(theme: AppTheme): CSSProperties {
   };
 }
 
+const warningBoxStyle: CSSProperties = {
+  marginBottom: "0.8rem",
+  background: "rgba(217, 119, 6, 0.08)",
+  border: "1px solid rgba(217, 119, 6, 0.35)",
+  borderRadius: "10px",
+  padding: "0.65rem 0.85rem",
+  display: "flex",
+  flexDirection: "column",
+  gap: "0.4rem",
+};
+
+function presetButtonStyle(theme: AppTheme, on: boolean): CSSProperties {
+  return {
+    border: `1px solid ${on ? theme.accent : theme.border}`,
+    borderRadius: 8,
+    background: on ? theme.accent : theme.bg,
+    color: on ? "#fff" : theme.text,
+    fontFamily: "inherit", fontWeight: 800, fontSize: "0.8rem",
+    width: 34, height: 32, cursor: "pointer",
+  };
+}
+
+function questionOptionButtonStyle(theme: AppTheme, active: boolean, hasSublabel: boolean): CSSProperties {
+  return {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: hasSublabel ? "0.1rem" : 0,
+    border: `1px solid ${active ? theme.accent : theme.border}`,
+    borderRadius: "9px",
+    background: active ? `${theme.accent}22` : theme.bg,
+    color: active ? theme.accent : theme.text,
+    fontFamily: "inherit",
+    fontWeight: 800,
+    fontSize: "0.85rem",
+    lineHeight: 1.15,
+    padding: "0.4rem 0.85rem",
+    cursor: "pointer",
+  };
+}
+
+function lockedRankBadgeStyle(theme: AppTheme): CSSProperties {
+  return {
+    display: "inline-flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "0.1rem",
+    border: `1px solid ${theme.accent}`, borderRadius: "9px", background: `${theme.accent}22`, color: theme.accent,
+    fontWeight: 800, fontSize: "0.85rem", lineHeight: 1.15, padding: "0.4rem 0.85rem",
+  };
+}
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 const JOB_ORDINALS: Record<string, string> = {
@@ -228,18 +278,9 @@ function WarningList({ warnings, theme, characterLevel }: { warnings: ClassWarni
   const others = unlocked.filter((w) => !(w.skill && w.message === "Do not use"));
 
   return (
-    <div style={{
-      marginBottom: "0.8rem",
-      background: "rgba(217, 119, 6, 0.08)",
-      border: "1px solid rgba(217, 119, 6, 0.35)",
-      borderRadius: "10px",
-      padding: "0.65rem 0.85rem",
-      display: "flex",
-      flexDirection: "column",
-      gap: "0.4rem",
-    }}>
-      {others.map((w, i) => (
-        <div key={i}>
+    <div style={warningBoxStyle}>
+      {others.map((w) => (
+        <div key={w.skill?.skillName ?? w.message}>
           <div style={{ display: "flex", alignItems: "center", gap: "0.45rem" }}>
             <span style={{ fontSize: "0.75rem", color: "#d97706", flexShrink: 0, lineHeight: 1 }}>⚠</span>
             <span style={{ fontSize: "0.82rem", color: "#d97706", fontWeight: 700 }}>{w.message}{w.skill ? ":" : ""}</span>
@@ -259,8 +300,8 @@ function WarningList({ warnings, theme, characterLevel }: { warnings: ClassWarni
             <span style={{ fontSize: "0.82rem", color: "#d97706", fontWeight: 700 }}>Do not use the following skills:</span>
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: "0.65rem", marginLeft: "1.2rem" }}>
-            {doNotUse.map((w, i) => w.skill && (
-              <SkillIconBadge key={i} skill={w.skill} theme={theme} size={32} style={{ display: "inline-flex" }} />
+            {doNotUse.map((w) => w.skill && (
+              <SkillIconBadge key={w.skill.skillName} skill={w.skill} theme={theme} size={32} style={{ display: "inline-flex" }} />
             ))}
           </div>
         </div>
@@ -288,8 +329,8 @@ function BuffGuide({ classData, theme, characterLevel }: { classData: ClassSkill
         </p>
       </div>
       <div style={{ display: "flex", flexWrap: "wrap", gap: "0.65rem", marginLeft: "1.2rem" }}>
-        {allSkills.map((skill, i) => (
-          <SkillIconBadge key={i} skill={skill} theme={theme} />
+        {allSkills.map((skill) => (
+          <SkillIconBadge key={skill.skillName} skill={skill} theme={theme} />
         ))}
       </div>
     </div>
@@ -377,14 +418,7 @@ function HyperPresetBar({ theme, active, onSwitch }: {
               key={i}
               type="button"
               onClick={() => onSwitch(i)}
-              style={{
-                border: `1px solid ${on ? theme.accent : theme.border}`,
-                borderRadius: 8,
-                background: on ? theme.accent : theme.bg,
-                color: on ? "#fff" : theme.text,
-                fontFamily: "inherit", fontWeight: 800, fontSize: "0.8rem",
-                width: 34, height: 32, cursor: "pointer",
-              }}
+              style={presetButtonStyle(theme, on)}
             >
               {i + 1}
             </button>
@@ -547,30 +581,13 @@ function QuestionToggle({
           const active = value === opt.value;
           // The opt-out reads as a distinct choice through its descriptive wording
           // ("No soul weapon", etc.) and its own row, not special chrome.
-          const bgColor = active ? `${theme.accent}22` : theme.bg;
           return (
             <Fragment key={opt.value}>
               {opt.optOut && <div aria-hidden style={{ flexBasis: "100%", height: 0 }} />}
               <button
                 type="button"
                 onClick={() => onToggle(active ? null : opt.value)}
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: opt.sublabel ? "0.1rem" : 0,
-                  border: `1px solid ${active ? theme.accent : theme.border}`,
-                  borderRadius: "9px",
-                  background: bgColor,
-                  color: active ? theme.accent : theme.text,
-                  fontFamily: "inherit",
-                  fontWeight: 800,
-                  fontSize: "0.85rem",
-                  lineHeight: 1.15,
-                  padding: "0.4rem 0.85rem",
-                  cursor: "pointer",
-                }}
+                style={questionOptionButtonStyle(theme, active, Boolean(opt.sublabel))}
               >
                 <span>{opt.label}</span>
                 {opt.sublabel && (
@@ -784,11 +801,7 @@ function ScouterQuestionsSection({ sq, whSource, worldLegion, onUpdate, theme }:
           <p style={{ margin: "0 0 0.4rem", fontSize: "0.88rem", fontWeight: 800, color: theme.text }}>
             What&apos;s your Wild Hunter&apos;s level?
           </p>
-          <div style={{
-            display: "inline-flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "0.1rem",
-            border: `1px solid ${theme.accent}`, borderRadius: "9px", background: `${theme.accent}22`, color: theme.accent,
-            fontWeight: 800, fontSize: "0.85rem", lineHeight: 1.15, padding: "0.4rem 0.85rem",
-          }}>
+          <div style={lockedRankBadgeStyle(theme)}>
             <span>{WH_RANK_OPTIONS.find((o) => o.value === whSource.rank)?.label ?? `Rank ${whSource.rank}`}</span>
             <span style={{ fontSize: "0.75rem", fontWeight: 700, opacity: 0.7 }}>{whSource.rank}</span>
           </div>

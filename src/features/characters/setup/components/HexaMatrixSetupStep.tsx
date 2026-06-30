@@ -55,6 +55,73 @@ function clamp(v: number, max = MAX_LEVEL): number {
   return Math.max(0, Math.min(max, Math.round(v) || 0));
 }
 
+const sectionBtnStyle: React.CSSProperties = {
+  background: "none", border: "none", padding: 0, font: "inherit",
+  fontSize: "0.75rem", fontWeight: 800, letterSpacing: "0.05em", textTransform: "uppercase",
+  cursor: "pointer",
+};
+
+const levelRowInputStyle = (theme: AppTheme): React.CSSProperties => ({
+  width: "2.2rem",
+  border: `1px solid ${theme.border}`,
+  borderRadius: "6px",
+  background: theme.bg,
+  color: theme.text,
+  fontFamily: "inherit",
+  fontSize: "0.82rem",
+  fontWeight: 700,
+  padding: "0.25rem 0.35rem",
+  textAlign: "center",
+  outline: "2px solid transparent",
+  outlineOffset: "2px",
+  transition: "outline-color 0.15s ease",
+});
+
+const hexaTileStyle = (theme: AppTheme, filled: boolean): React.CSSProperties => ({
+  width: 60, flexShrink: 0,
+  border: `1px solid ${filled ? theme.accent : theme.border}`,
+  borderRadius: 8,
+  background: filled ? `${theme.accent}15` : theme.bg,
+  display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
+  padding: "6px 4px", boxSizing: "border-box",
+});
+
+const hexaTileInputStyle = (theme: AppTheme): React.CSSProperties => ({
+  width: 44, textAlign: "center",
+  border: `1px solid ${theme.border}`, borderRadius: 6,
+  background: theme.bg, color: theme.text,
+  fontFamily: "inherit", fontWeight: 700, fontSize: "0.78rem",
+  padding: "0.2rem", boxSizing: "border-box",
+  outline: "2px solid transparent", outlineOffset: "2px",
+  transition: "outline-color 0.15s ease",
+});
+
+const statDropdownMenuStyle = (theme: AppTheme): React.CSSProperties => ({
+  position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, zIndex: 310,
+  borderRadius: "8px", overflow: "hidden",
+  border: `1px solid ${theme.accent}`, background: theme.panel,
+  boxShadow: "0 4px 16px rgba(0,0,0,0.25)",
+});
+
+const statDropdownOptionStyle = (theme: AppTheme, isSelected: boolean, isDisabled: boolean): React.CSSProperties => ({
+  display: "block", width: "100%", textAlign: "left",
+  padding: "0.35rem 0.6rem", border: "none",
+  borderBottom: `1px solid ${theme.border}`,
+  background: isSelected ? `${theme.accent}33` : "transparent",
+  color: isDisabled ? theme.muted : theme.text,
+  fontFamily: "inherit", fontSize: "0.82rem", fontWeight: 700,
+  cursor: isDisabled ? "default" : "pointer",
+  opacity: isDisabled ? 0.4 : 1,
+});
+
+const presetToggleButtonStyle = (theme: AppTheme, isActive: boolean): React.CSSProperties => ({
+  border: "none", borderRadius: "6px", cursor: "pointer",
+  padding: "0.25rem 0.7rem", fontFamily: "inherit",
+  fontSize: "0.78rem", fontWeight: 700,
+  color: isActive ? "#fff" : theme.muted,
+  background: isActive ? theme.accent : "transparent",
+});
+
 function emptyEntry(): HexaStatEntry { return { type: "", level: 0 }; }
 function emptySlot(): HexaStatSlot { return { main: emptyEntry(), alt: [emptyEntry(), emptyEntry()] }; }
 function emptyNode(): HexaStatNode { return { presets: [emptySlot(), emptySlot()], activePreset: 0 }; }
@@ -222,21 +289,7 @@ function LevelInput({ value, onChange, theme, min = 0, max = MAX_LEVEL, label }:
           onChange(clamped);
         }}
         onKeyDown={numericKeyDown}
-        style={{
-          width: "2.2rem",
-          border: `1px solid ${theme.border}`,
-          borderRadius: "6px",
-          background: theme.bg,
-          color: theme.text,
-          fontFamily: "inherit",
-          fontSize: "0.82rem",
-          fontWeight: 700,
-          padding: "0.25rem 0.35rem",
-          textAlign: "center",
-          outline: "2px solid transparent",
-          outlineOffset: "2px",
-          transition: "outline-color 0.15s ease",
-        }}
+        style={levelRowInputStyle(theme)}
       />
       <span style={{ fontSize: "0.75rem", color: theme.muted, fontWeight: 700 }}>/ {max}</span>
     </div>
@@ -244,11 +297,6 @@ function LevelInput({ value, onChange, theme, min = 0, max = MAX_LEVEL, label }:
 }
 
 function SectionLabel({ label, theme, onMaxAll, onClear }: { label: string; theme: AppTheme; onMaxAll?: () => void; onClear?: () => void }) {
-  const btnStyle: React.CSSProperties = {
-    background: "none", border: "none", padding: 0, font: "inherit",
-    fontSize: "0.75rem", fontWeight: 800, letterSpacing: "0.05em", textTransform: "uppercase",
-    cursor: "pointer",
-  };
   return (
     <div style={{
       display: "flex", justifyContent: "space-between", alignItems: "baseline",
@@ -267,12 +315,12 @@ function SectionLabel({ label, theme, onMaxAll, onClear }: { label: string; them
       {(onMaxAll || onClear) && (
         <div style={{ display: "flex", gap: "1rem" }}>
           {onClear && (
-            <button type="button" onClick={onClear} style={{ ...btnStyle, color: theme.muted }}>
+            <button type="button" onClick={onClear} style={{ ...sectionBtnStyle, color: theme.muted }}>
               Clear
             </button>
           )}
           {onMaxAll && (
-            <button type="button" onClick={onMaxAll} style={{ ...btnStyle, color: theme.accent }}>
+            <button type="button" onClick={onMaxAll} style={{ ...sectionBtnStyle, color: theme.accent }}>
               Max All
             </button>
           )}
@@ -293,14 +341,7 @@ function HexaTile({ skill, level, onUpdate, theme, min = 0, max = MAX_LEVEL }: {
 }) {
   const filled = level > 0;
   return (
-    <HoverTooltip label={skill.name} theme={theme} style={{
-      width: 60, flexShrink: 0,
-      border: `1px solid ${filled ? theme.accent : theme.border}`,
-      borderRadius: 8,
-      background: filled ? `${theme.accent}15` : theme.bg,
-      display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
-      padding: "6px 4px", boxSizing: "border-box",
-    }}>
+    <HoverTooltip label={skill.name} theme={theme} style={hexaTileStyle(theme, filled)}>
       <div style={{ opacity: filled ? 1 : 0.5, filter: filled ? "none" : "grayscale(1)", lineHeight: 0 }}>
         <SkillIcon skill={skill} size={28} />
       </div>
@@ -318,15 +359,7 @@ function HexaTile({ skill, level, onUpdate, theme, min = 0, max = MAX_LEVEL }: {
           onUpdate(isNaN(v) ? min : Math.max(min, clamp(v, max)));
         }}
         onKeyDown={numericKeyDown}
-        style={{
-          width: 44, textAlign: "center",
-          border: `1px solid ${theme.border}`, borderRadius: 6,
-          background: theme.bg, color: theme.text,
-          fontFamily: "inherit", fontWeight: 700, fontSize: "0.78rem",
-          padding: "0.2rem", boxSizing: "border-box",
-          outline: "2px solid transparent", outlineOffset: "2px",
-          transition: "outline-color 0.15s ease",
-        }}
+        style={hexaTileInputStyle(theme)}
       />
     </HoverTooltip>
   );
@@ -378,15 +411,10 @@ function StatDropdown({ value, options, onChange, theme, isError, disabledTypes 
         <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
           {selected?.label ?? "Select stat…"}
         </span>
-        <span style={{ fontSize: "0.6rem", flexShrink: 0, opacity: 0.6 }}>▾</span>
+        <span style={{ fontSize: "0.75rem", flexShrink: 0, opacity: 0.6 }}>▾</span>
       </button>
       {open && (
-        <div style={{
-          position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, zIndex: 310,
-          borderRadius: "8px", overflow: "hidden",
-          border: `1px solid ${theme.accent}`, background: theme.panel,
-          boxShadow: "0 4px 16px rgba(0,0,0,0.25)",
-        }}>
+        <div style={statDropdownMenuStyle(theme)}>
           {options.map((o) => {
             const isDisabled = disabledTypes.has(o.value);
             const isSelected = o.value === value;
@@ -396,16 +424,7 @@ function StatDropdown({ value, options, onChange, theme, isError, disabledTypes 
                 type="button"
                 disabled={isDisabled}
                 onClick={() => { onChange(o.value); setOpen(false); }}
-                style={{
-                  display: "block", width: "100%", textAlign: "left",
-                  padding: "0.35rem 0.6rem", border: "none",
-                  borderBottom: `1px solid ${theme.border}`,
-                  background: isSelected ? `${theme.accent}33` : "transparent",
-                  color: isDisabled ? theme.muted : theme.text,
-                  fontFamily: "inherit", fontSize: "0.82rem", fontWeight: 700,
-                  cursor: isDisabled ? "default" : "pointer",
-                  opacity: isDisabled ? 0.4 : 1,
-                }}
+                style={statDropdownOptionStyle(theme, isSelected, isDisabled)}
                 onMouseEnter={(e) => { if (!isDisabled && !isSelected) e.currentTarget.style.background = `${theme.accent}22`; }}
                 onMouseLeave={(e) => { if (!isDisabled && !isSelected) e.currentTarget.style.background = "transparent"; }}
               >
@@ -768,13 +787,7 @@ export default function HexaMatrixSetupStep({
               {PRESET_LABELS.map((label, p) => {
                 const isActive = activePreset === p;
                 return (
-                  <button key={label} type="button" onClick={() => setActivePreset(p)} style={{
-                    border: "none", borderRadius: "6px", cursor: "pointer",
-                    padding: "0.25rem 0.7rem", fontFamily: "inherit",
-                    fontSize: "0.78rem", fontWeight: 700,
-                    color: isActive ? "#fff" : theme.muted,
-                    background: isActive ? theme.accent : "transparent",
-                  }}>
+                  <button key={label} type="button" onClick={() => setActivePreset(p)} style={presetToggleButtonStyle(theme, isActive)}>
                     {label}
                   </button>
                 );

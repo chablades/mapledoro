@@ -57,6 +57,40 @@ const boolTileStyle = (active: boolean, theme: AppTheme): CSSProperties => ({
   display: "flex", alignItems: "center", justifyContent: "center",
 });
 
+const leveledBuffTileStyle = (theme: AppTheme, active: boolean): CSSProperties => ({
+  width: 68, flexShrink: 0,
+  border: `1px solid ${active ? theme.accent : theme.border}`,
+  borderRadius: 8,
+  background: active ? `${theme.accent}15` : theme.bg,
+  display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
+  padding: "7px 6px", boxSizing: "border-box",
+});
+
+const renownInputStyle = (theme: AppTheme, active: boolean): CSSProperties => ({
+  width: 40, textAlign: "center",
+  border: `1px solid ${active ? theme.accent : theme.border}`,
+  borderRadius: 6,
+  background: active ? `${theme.accent}10` : theme.bg,
+  color: theme.text,
+  fontFamily: "inherit", fontWeight: 700, fontSize: "0.8rem",
+  padding: "0.2rem", boxSizing: "border-box",
+});
+
+const pickOneGroupStyle = (theme: AppTheme): CSSProperties => ({
+  position: "relative",
+  display: "flex", gap: 8, flexWrap: "wrap",
+  border: `1px dashed ${theme.border}`,
+  borderRadius: 8, padding: "6px 6px 4px",
+  marginTop: 6,
+});
+
+const pickOneLabelStyle = (theme: AppTheme): CSSProperties => ({
+  position: "absolute", top: -9, left: 8,
+  fontSize: "0.65rem", fontWeight: 700, textTransform: "uppercase",
+  letterSpacing: "0.04em", color: theme.muted,
+  background: theme.bg, padding: "0 4px",
+});
+
 // A couple of bool buffs swap their catalog icon for a class/stat-specific one.
 function buffIconOverride(id: BoolBuffId, primaryStat: StatId, jobName: string): BoolBuffIconType | undefined {
   if (id === "extremePotion") return { kind: "item", id: extremePotionIconId(primaryStat) };
@@ -76,14 +110,7 @@ function LeveledBuffTile({ skillId, name, level, max, onLevel, theme }: {
 }) {
   const active = (Number.parseInt(level || "0", 10) || 0) > 0;
   return (
-    <div style={{
-      width: 68, flexShrink: 0,
-      border: `1px solid ${active ? theme.accent : theme.border}`,
-      borderRadius: 8,
-      background: active ? `${theme.accent}15` : theme.bg,
-      display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
-      padding: "7px 6px", boxSizing: "border-box",
-    }}>
+    <div style={leveledBuffTileStyle(theme, active)}>
       <HoverTooltip label={name} theme={theme}>
         <div style={{ opacity: active ? 1 : 0.35, filter: active ? "none" : "grayscale(1)", lineHeight: 0 }}>
           <SkillIcon id={skillId} size={32} />
@@ -159,7 +186,7 @@ function RenownCol({ shortLabel, fullLabel, value, onChange, theme }: {
   const active = (Number.parseInt(value || "0", 10) || 0) > 0;
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-      <span style={{ fontSize: "0.7rem", fontWeight: 700, color: theme.muted, textAlign: "center", whiteSpace: "nowrap" }}>
+      <span style={{ fontSize: "0.75rem", fontWeight: 700, color: theme.muted, textAlign: "center", whiteSpace: "nowrap" }}>
         {shortLabel}
       </span>
       <input
@@ -172,15 +199,7 @@ function RenownCol({ shortLabel, fullLabel, value, onChange, theme }: {
         placeholder="0"
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={numericKeyDown}
-        style={{
-          width: 40, textAlign: "center",
-          border: `1px solid ${active ? theme.accent : theme.border}`,
-          borderRadius: 6,
-          background: active ? `${theme.accent}10` : theme.bg,
-          color: theme.text,
-          fontFamily: "inherit", fontWeight: 700, fontSize: "0.8rem",
-          padding: "0.2rem", boxSizing: "border-box",
-        }}
+        style={renownInputStyle(theme, active)}
       />
     </div>
   );
@@ -347,20 +366,9 @@ export default function BuffsSetupStep({
               <div key={`${groupId}-break`} style={{ flexBasis: "100%", height: 0 }} />,
               <div
                 key={groupId}
-                style={{
-                  position: "relative",
-                  display: "flex", gap: 8, flexWrap: "wrap",
-                  border: `1px dashed ${theme.border}`,
-                  borderRadius: 8, padding: "6px 6px 4px",
-                  marginTop: 6,
-                }}
+                style={pickOneGroupStyle(theme)}
               >
-                <span style={{
-                  position: "absolute", top: -9, left: 8,
-                  fontSize: "0.65rem", fontWeight: 700, textTransform: "uppercase",
-                  letterSpacing: "0.04em", color: theme.muted,
-                  background: theme.bg, padding: "0 4px",
-                }}>
+                <span style={pickOneLabelStyle(theme)}>
                   pick one
                 </span>
                 {BOOL_BUFFS.filter((b) => groupSet.has(b.id)).map((b) => (

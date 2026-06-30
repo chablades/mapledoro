@@ -42,6 +42,31 @@ function clamp(v: number, max: number): number {
   return Math.max(0, Math.min(max, Math.round(v) || 0));
 }
 
+const sectionBtnStyle: React.CSSProperties = {
+  background: "none", border: "none", padding: 0, font: "inherit",
+  fontSize: "0.75rem", fontWeight: 800, letterSpacing: "0.05em", textTransform: "uppercase",
+  cursor: "pointer",
+};
+
+const vMatrixTileStyle = (theme: AppTheme, filled: boolean): React.CSSProperties => ({
+  width: 60, flexShrink: 0,
+  border: `1px solid ${filled ? theme.accent : theme.border}`,
+  borderRadius: 8,
+  background: filled ? `${theme.accent}15` : theme.bg,
+  display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
+  padding: "6px 4px", boxSizing: "border-box",
+});
+
+const vMatrixInputStyle = (theme: AppTheme): React.CSSProperties => ({
+  width: 44, textAlign: "center",
+  border: `1px solid ${theme.border}`, borderRadius: 6,
+  background: theme.bg, color: theme.text,
+  fontFamily: "inherit", fontWeight: 700, fontSize: "0.78rem",
+  padding: "0.2rem", boxSizing: "border-box",
+  outline: "2px solid transparent", outlineOffset: "2px",
+  transition: "outline-color 0.15s ease",
+});
+
 function parseLevels(raw: string): Record<string, number> {
   if (!raw) return {};
   try {
@@ -82,14 +107,7 @@ function VMatrixTile({ id, name, level, max, onUpdate, theme }: {
 }) {
   const filled = level > 0;
   return (
-    <HoverTooltip label={name} theme={theme} style={{
-      width: 60, flexShrink: 0,
-      border: `1px solid ${filled ? theme.accent : theme.border}`,
-      borderRadius: 8,
-      background: filled ? `${theme.accent}15` : theme.bg,
-      display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
-      padding: "6px 4px", boxSizing: "border-box",
-    }}>
+    <HoverTooltip label={name} theme={theme} style={vMatrixTileStyle(theme, filled)}>
       <div style={{ opacity: filled ? 1 : 0.5, filter: filled ? "none" : "grayscale(1)", lineHeight: 0 }}>
         <SkillIcon id={id} name={name} size={28} />
       </div>
@@ -106,26 +124,13 @@ function VMatrixTile({ id, name, level, max, onUpdate, theme }: {
           onUpdate(clamp(parseInt(e.currentTarget.value, 10) || 0, max));
         }}
         onKeyDown={numericKeyDown}
-        style={{
-          width: 44, textAlign: "center",
-          border: `1px solid ${theme.border}`, borderRadius: 6,
-          background: theme.bg, color: theme.text,
-          fontFamily: "inherit", fontWeight: 700, fontSize: "0.78rem",
-          padding: "0.2rem", boxSizing: "border-box",
-          outline: "2px solid transparent", outlineOffset: "2px",
-          transition: "outline-color 0.15s ease",
-        }}
+        style={vMatrixInputStyle(theme)}
       />
     </HoverTooltip>
   );
 }
 
 function SectionLabel({ label, theme, onMaxAll, onClear }: { label: string; theme: AppTheme; onMaxAll: () => void; onClear: () => void }) {
-  const btnStyle: React.CSSProperties = {
-    background: "none", border: "none", padding: 0, font: "inherit",
-    fontSize: "0.75rem", fontWeight: 800, letterSpacing: "0.05em", textTransform: "uppercase",
-    cursor: "pointer",
-  };
   return (
     <div style={{
       display: "flex", justifyContent: "space-between", alignItems: "baseline",
@@ -138,10 +143,10 @@ function SectionLabel({ label, theme, onMaxAll, onClear }: { label: string; them
         {label}
       </p>
       <div style={{ display: "flex", gap: "1rem" }}>
-        <button type="button" onClick={onClear} style={{ ...btnStyle, color: theme.muted }}>
+        <button type="button" onClick={onClear} style={{ ...sectionBtnStyle, color: theme.muted }}>
           Clear
         </button>
-        <button type="button" onClick={onMaxAll} style={{ ...btnStyle, color: theme.accent }}>
+        <button type="button" onClick={onMaxAll} style={{ ...sectionBtnStyle, color: theme.accent }}>
           Max All
         </button>
       </div>
