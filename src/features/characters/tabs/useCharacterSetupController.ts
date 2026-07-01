@@ -14,6 +14,7 @@ import {
   type CharactersStore,
   type StoredCharacterEquipment,
   type StoredEquipmentPreset,
+  type StoredLegionCrystal,
   type StoredIATier,
   type StoredInnerAbility,
   type StoredInnerAbilityPreset,
@@ -46,11 +47,20 @@ import { convertOzRingsDraftToStored, parseOzRingsDraft } from "../setup/data/oz
 import { convertBuffsDraftToStored, parseBuffsDraft } from "../setup/data/buffsData";
 import {
   convertScouterQuestionsDraftToStored,
-  parseLegionArtifactsDraft,
   resolveLegionArtifacts,
   whRankFromRoster,
   type LegionArtifactsDraft,
 } from "../setup/data/scouterQuestionsData";
+import {
+  computeRawStatLevels,
+  effectiveStatLevel,
+  hasAnyCrystalProgress,
+  parseLegionArtifactBoardDraft,
+  sanitizeCrystalLevel,
+  statBonusValue,
+  type LegionArtifactBoardDraft,
+  type LegionCrystalDraft,
+} from "../setup/data/legionArtifactData";
 import type { NormalizedCharacterData } from "../model/types";
 import {
   clampFlowStepIndex,
@@ -253,6 +263,16 @@ function resolveWhLegionRank(
   return existing;
 }
 
+// The draft shape allows optional/sparse fields (mid-edit); storage wants every crystal
+// fully filled in (level defaults to 0, stats padded to 3 slots).
+function toStoredLegionCrystals(crystals: LegionCrystalDraft[] | undefined): StoredLegionCrystal[] | undefined {
+  if (!crystals) return undefined;
+  return crystals.map((c) => ({
+    level: sanitizeCrystalLevel(c?.level),
+    stats: [c?.stats?.[0] ?? null, c?.stats?.[1] ?? null, c?.stats?.[2] ?? null],
+  }));
+}
+
 /**
  * Resolves + persists this world's Legion data (WH rank, Maple Union artifacts) from a
  * Stats-draft WH-rank pick and an (optional) Legion Artifacts draft. Shared between
@@ -266,6 +286,7 @@ function applyScouterLegionForWorld(
   base: StoredCharacterRecord,
   whLegionDraft: string | undefined,
   legionArtifactsDraft: LegionArtifactsDraft | undefined,
+  board?: LegionArtifactBoardDraft,
 ): void {
   // Wild Hunter Legion rank is account-level (per-world): derive it from the highest
   // Wild Hunter in this world's roster (incl. the character being set up, in case it
@@ -282,11 +303,19 @@ function applyScouterLegionForWorld(
     existingLegion?.wildHunterRank,
   );
   // Maple Union artifacts are also account-level (per-world), not derivable — keep them
-  // on the same per-world blob next to the WH rank.
+  // on the same per-world blob next to the WH rank. (For full_setup these are already
+  // derived from `board` by the caller before this function runs.)
   const artifacts = resolveLegionArtifacts(legionArtifactsDraft, existingLegion);
+  // The full 9-crystal board (full_setup only) is also per-world; preserve whatever's
+  // already stored when this session didn't touch it (e.g. a second character on the
+  // same world finishing full_setup without revisiting Legion Artifacts).
+  const artifactLevel = board?.artifactLevel ?? existingLegion?.artifactLevel;
+  const crystals = toStoredLegionCrystals(board?.crystals) ?? existingLegion?.crystals;
   writeScouterLegionForWorld(character.worldID, {
     ...(wildHunterRank ? { wildHunterRank } : {}),
     ...artifacts,
+    ...(artifactLevel !== undefined ? { artifactLevel } : {}),
+    ...(crystals ? { crystals } : {}),
   });
 }
 
@@ -367,6 +396,20 @@ function deriveMaxedSacredSymbol(symbolsData: SavedSymbols | null): boolean {
   return SACRED_AREAS.every((a) => (symbolsData.symbols[a.name]?.level ?? 0) >= SACRED_MAX_LEVEL);
 }
 
+// The scouter API only needs 2 of the 16 Legion Artifact stats — derive them from the
+// full board full_setup collects instead of storing a separately-entered value. Only
+// derives (and thus only overrides whatever's already stored for this world) when this
+// session's board actually has crystal progress — an empty/untouched board must NOT
+// wipe a value a different character already set here via maplescouter_setup.
+function deriveLegionArtifactFields(board: LegionArtifactBoardDraft): LegionArtifactsDraft | undefined {
+  if (!hasAnyCrystalProgress(board.crystals)) return undefined;
+  const rawLevels = computeRawStatLevels(board.crystals);
+  return {
+    artifactExtraTarget: effectiveStatLevel(rawLevels.multiTargetExp) >= 1,
+    artifactFinalAttackDmg: String(statBonusValue("finalAttackDamage", effectiveStatLevel(rawLevels.finalAttackDamage))),
+  };
+}
+
 function buildFullSetupRecord(
   character: NormalizedCharacterData,
   stepData: import("../setup/types").SetupStepInputById,
@@ -377,13 +420,15 @@ function buildFullSetupRecord(
     marriage: marriageDraftToStored(stepData.marriage ?? ""),
   });
   const statsDraft = parseStatsStepDraft(stepData.stats ?? "");
+  const legionBoard = parseLegionArtifactBoardDraft(stepData.legion_artifacts ?? "");
   const store = readCharactersStore();
   applyScouterLegionForWorld(
     store,
     character,
     base,
     statsDraft.scouterQuestions?.whLegion,
-    parseLegionArtifactsDraft(stepData.legion_artifacts ?? ""),
+    deriveLegionArtifactFields(legionBoard),
+    legionBoard,
   );
 
   const { stats, isLiberated, weaponHand, hasRuinForceShield, soul } =

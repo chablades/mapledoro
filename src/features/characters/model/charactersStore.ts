@@ -84,10 +84,21 @@ export type WhLegionRank = "B" | "A" | "S" | "SS" | "SSS";
 /** Max percent for the "Damage of Final Attack Skills" Maple Union artifact. */
 export const LEGION_ARTIFACT_FINAL_ATK_MAX = 30;
 
+/** One Legion Artifact Crystal: a level (0-5) and up to 3 assigned stat lines (by id,
+ *  see LegionArtifactStatId in setup/data/legionArtifactData.ts — kept as a loose string
+ *  here to avoid the model layer depending on setup/data). */
+export interface StoredLegionCrystal {
+  level: number;
+  stats: (string | null)[];
+}
+
 /**
  * Per-world account-level scouter inputs (Legion is per-world). The WH rank is
  * derived from the highest Wild Hunter in that world's roster; the Maple Union
  * artifacts are user input (not derivable).
+ * asks for them directly, full_setup derives them from `artifactLevel`/`crystals` (the
+ * full 9-crystal board) instead — see legionArtifactData.ts and
+ * useCharacterSetupController.ts's applyScouterLegionForWorld.
  */
 export interface StoredScouterLegion {
   wildHunterRank?: WhLegionRank;
@@ -95,6 +106,10 @@ export interface StoredScouterLegion {
   artifactExtraTarget?: boolean;
   /** "Damage of Final Attack Skills" artifact bonus, as a percent (1–30). */
   artifactFinalAttackDmg?: number;
+  /** Legion Artifact level (0-60); gates which of the 9 crystals are unlocked. */
+  artifactLevel?: number;
+  /** The 9 crystals, indexed to match LEGION_CRYSTALS order. */
+  crystals?: StoredLegionCrystal[];
 }
 
 export interface StoredCharacterStats {
@@ -608,23 +623,48 @@ function parseLinkSkillsByWorld(raw: unknown): Record<string, string> {
 }
 
 const WH_LEGION_RANKS = new Set<string>(["B", "A", "S", "SS", "SSS"]);
+const MAX_LEGION_ARTIFACT_LEVEL = 60;
+
+function parseStoredLegionCrystal(val: unknown): StoredLegionCrystal | null {
+  if (!isObject(val)) return null;
+  const level = typeof val.level === "number" ? Math.max(0, Math.min(5, Math.floor(val.level))) : 0;
+  const stats = Array.isArray(val.stats)
+    ? val.stats.map((s) => (typeof s === "string" ? s : null))
+    : [];
+  return { level, stats };
+}
+
+function parseScouterLegionEntry(val: Record<string, unknown>): StoredScouterLegion {
+  const entry: StoredScouterLegion = {};
+  if (typeof val.wildHunterRank === "string" && WH_LEGION_RANKS.has(val.wildHunterRank)) {
+    entry.wildHunterRank = val.wildHunterRank as WhLegionRank;
+  }
+  if (val.artifactExtraTarget === true) entry.artifactExtraTarget = true;
+  if (typeof val.artifactFinalAttackDmg === "number" && val.artifactFinalAttackDmg > 0) {
+    entry.artifactFinalAttackDmg = Math.min(Math.floor(val.artifactFinalAttackDmg), LEGION_ARTIFACT_FINAL_ATK_MAX);
+  }
+  if (typeof val.artifactLevel === "number") {
+    entry.artifactLevel = Math.max(0, Math.min(MAX_LEGION_ARTIFACT_LEVEL, Math.floor(val.artifactLevel)));
+  }
+  if (Array.isArray(val.crystals)) {
+    const crystals = val.crystals.map(parseStoredLegionCrystal).filter((c): c is StoredLegionCrystal => c !== null);
+    if (crystals.length > 0) entry.crystals = crystals;
+  }
+  return entry;
+}
+
+function isEmptyScouterLegionEntry(entry: StoredScouterLegion): boolean {
+  return entry.wildHunterRank === undefined && !entry.artifactExtraTarget && entry.artifactFinalAttackDmg === undefined
+    && entry.artifactLevel === undefined && entry.crystals === undefined;
+}
 
 function parseScouterLegionByWorld(raw: unknown): Record<string, StoredScouterLegion> {
   if (!isObject(raw)) return {};
   const result: Record<string, StoredScouterLegion> = {};
   for (const [worldId, val] of Object.entries(raw)) {
     if (!isObject(val)) continue;
-    const entry: StoredScouterLegion = {};
-    if (typeof val.wildHunterRank === "string" && WH_LEGION_RANKS.has(val.wildHunterRank)) {
-      entry.wildHunterRank = val.wildHunterRank as WhLegionRank;
-    }
-    if (val.artifactExtraTarget === true) entry.artifactExtraTarget = true;
-    if (typeof val.artifactFinalAttackDmg === "number" && val.artifactFinalAttackDmg > 0) {
-      entry.artifactFinalAttackDmg = Math.min(Math.floor(val.artifactFinalAttackDmg), LEGION_ARTIFACT_FINAL_ATK_MAX);
-    }
-    if (entry.wildHunterRank !== undefined || entry.artifactExtraTarget || entry.artifactFinalAttackDmg !== undefined) {
-      result[worldId] = entry;
-    }
+    const entry = parseScouterLegionEntry(val);
+    if (!isEmptyScouterLegionEntry(entry)) result[worldId] = entry;
   }
   return result;
 }
