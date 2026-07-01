@@ -21,7 +21,10 @@ const SETUP_FLOWS = [
     label: "Full Setup",
     description: "Complete profile setup including stats, equipment, and more.",
     required: false,
-    steps: ["gender", "marriage", "stats", "equipment", "v_matrix", "hexa_matrix", "familiars", "link_skills"] as const,
+    // Superset of maplescouter_setup: `stats` is flow-aware (shows the WH Legion rank
+    // question + Weapon ATT field here too); `buffs`/`oz_rings`/`legion_artifacts` are
+    // the scouter-only data full_setup didn't used to collect.
+    steps: ["gender", "marriage", "stats", "buffs", "equipment", "oz_rings", "legion_artifacts", "v_matrix", "hexa_matrix", "familiars", "link_skills"] as const,
   },
   {
     id: "maplescouter_setup",
@@ -73,13 +76,6 @@ const SETUP_FLOWS = [
     description: "Add active link preset details.",
     required: false,
     steps: ["link_skills"] as const,
-  },
-  {
-    id: "legion_account_flow",
-    label: "Legion",
-    description: "Account-level legion and roster details.",
-    required: false,
-    steps: ["legion"] as const,
   },
 ] as const;
 

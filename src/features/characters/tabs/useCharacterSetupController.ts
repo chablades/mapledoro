@@ -11,6 +11,7 @@ import {
   hasStoredCompletedRequiredSetup,
   readCharactersStore,
   selectCharacterById,
+  type CharactersStore,
   type StoredCharacterEquipment,
   type StoredEquipmentPreset,
   type StoredIATier,
@@ -26,7 +27,8 @@ import {
 import { findClassById } from "../../tools/hexa-skills/hexa-classes";
 import { getClassDataByNexonJobName } from "../setup/data/classSkillData";
 import { hexaStatHasData, type HexaStatNode } from "../setup/data/hexaStatData";
-import { ARCANE_AREAS, ALL_SACRED_AREAS, type SymbolArea, type SymbolType } from "../../tools/symbols/symbol-data";
+import { IA_PASSIVE_PLUS_ONE_LINE, IA_MULTI_TARGET_PLUS_ONE_LINE } from "../setup/data/innerAbilityData";
+import { ARCANE_AREAS, ALL_SACRED_AREAS, SACRED_AREAS, SACRED_MAX_LEVEL, type SymbolArea, type SymbolType } from "../../tools/symbols/symbol-data";
 import type { SymbolState } from "../../tools/symbols/useSymbolState";
 import {
   pruneAndReadSetupDrafts,
@@ -42,7 +44,13 @@ import type { StoredCharacterRecord } from "../model/charactersStore";
 import { convertStatsStepDraftToStored, marriageDraftToStored, parseStatsStepDraft } from "../setup/data/statsStepDraft";
 import { convertOzRingsDraftToStored, parseOzRingsDraft } from "../setup/data/ozRingData";
 import { convertBuffsDraftToStored, parseBuffsDraft } from "../setup/data/buffsData";
-import { convertScouterQuestionsDraftToStored, resolveLegionArtifacts, whRankFromRoster } from "../setup/data/scouterQuestionsData";
+import {
+  convertScouterQuestionsDraftToStored,
+  parseLegionArtifactsDraft,
+  resolveLegionArtifacts,
+  whRankFromRoster,
+  type LegionArtifactsDraft,
+} from "../setup/data/scouterQuestionsData";
 import type { NormalizedCharacterData } from "../model/types";
 import {
   clampFlowStepIndex,
@@ -246,6 +254,43 @@ function resolveWhLegionRank(
 }
 
 /**
+ * Resolves + persists this world's Legion data (WH rank, Maple Union artifacts) from a
+ * Stats-draft WH-rank pick and an (optional) Legion Artifacts draft. Shared between
+ * maplescouter_setup (artifacts collected inline in the Stats questionnaire) and
+ * full_setup (artifacts collected on their own dedicated step) — both now show the WH
+ * Legion rank question in Stats, so this write can't live in just one flow anymore.
+ */
+function applyScouterLegionForWorld(
+  store: CharactersStore,
+  character: NormalizedCharacterData,
+  base: StoredCharacterRecord,
+  whLegionDraft: string | undefined,
+  legionArtifactsDraft: LegionArtifactsDraft | undefined,
+): void {
+  // Wild Hunter Legion rank is account-level (per-world): derive it from the highest
+  // Wild Hunter in this world's roster (incl. the character being set up, in case it
+  // IS the WH) when present; otherwise the user's manual pick, then the existing
+  // stored value. Persisted world-scoped, not per-character.
+  const worldRoster = selectCharactersList(store).filter((c) => c.worldID === character.worldID);
+  const legionRoster = worldRoster.some((c) => toCharacterKey(c) === toCharacterKey(base))
+    ? worldRoster
+    : [...worldRoster, base];
+  const existingLegion = store.scouterLegionByWorld[String(character.worldID)];
+  const wildHunterRank = resolveWhLegionRank(
+    whRankFromRoster(legionRoster),
+    whLegionDraft,
+    existingLegion?.wildHunterRank,
+  );
+  // Maple Union artifacts are also account-level (per-world), not derivable — keep them
+  // on the same per-world blob next to the WH rank.
+  const artifacts = resolveLegionArtifacts(legionArtifactsDraft, existingLegion);
+  writeScouterLegionForWorld(character.worldID, {
+    ...(wildHunterRank ? { wildHunterRank } : {}),
+    ...artifacts,
+  });
+}
+
+/**
  * Builds/merges the MapleScouter flow's data into the roster in ONE upsert;
  * returns true if it created a new record. `upsertFn` writes via React state, so
  * we can't create-then-read within a tick — start from the existing record if
@@ -268,28 +313,7 @@ function applyMapleScouterFlow(
   });
 
   const statsDraft = parseStatsStepDraft(stepData.stats ?? "");
-
-  // Wild Hunter Legion rank is account-level (per-world): derive it from the highest
-  // Wild Hunter in this world's roster (incl. the character being set up, in case it
-  // IS the WH) when present; otherwise the user's manual pick, then the existing
-  // stored value. Persisted world-scoped, not per-character.
-  const worldRoster = selectCharactersList(store).filter((c) => c.worldID === character.worldID);
-  const legionRoster = worldRoster.some((c) => toCharacterKey(c) === toCharacterKey(base))
-    ? worldRoster
-    : [...worldRoster, base];
-  const existingLegion = store.scouterLegionByWorld[String(character.worldID)];
-  const wildHunterRank = resolveWhLegionRank(
-    whRankFromRoster(legionRoster),
-    statsDraft.scouterQuestions?.whLegion,
-    existingLegion?.wildHunterRank,
-  );
-  // Maple Union artifacts are also account-level (per-world), not derivable — keep them
-  // on the same per-world blob next to the WH rank.
-  const artifacts = resolveLegionArtifacts(statsDraft.scouterQuestions, existingLegion);
-  writeScouterLegionForWorld(character.worldID, {
-    ...(wildHunterRank ? { wildHunterRank } : {}),
-    ...artifacts,
-  });
+  applyScouterLegionForWorld(store, character, base, statsDraft.scouterQuestions?.whLegion, statsDraft.scouterQuestions);
 
   const { stats, isLiberated, weaponHand, hasRuinForceShield, soul } =
     convertStatsStepDraftToStored(statsDraft, character.level);
@@ -320,6 +344,29 @@ function applyMapleScouterFlow(
   return created;
 }
 
+// The only two legendary Inner Ability lines MapleScouter cares about — full_setup
+// derives its scouter-facing answer from the Equipment IA card's active preset instead
+// of asking the question again (maplescouter_setup, which has no Equipment step, still
+// asks directly; see ScouterQuestionsSection's showArtifactsAndIA in StatsSetupStep).
+function deriveInnerAbilityLineFromEquipment(
+  equipment: StoredCharacterEquipment | null,
+): "passive" | "multiTarget" | undefined {
+  const preset = equipment?.innerAbility.presets[equipment.innerAbility.activePreset];
+  const values = preset?.lines.map((l) => l.value) ?? [];
+  if (values.includes(IA_PASSIVE_PLUS_ONE_LINE)) return "passive";
+  if (values.includes(IA_MULTI_TARGET_PLUS_ONE_LINE)) return "multiTarget";
+  return undefined;
+}
+
+// "Lv. 11 Sacred Symbols" (the Buffs step's maxedSacredSymbol tile) is about the 6 boss
+// regions' Sacred Symbols specifically (Grand Sacred grants EXP/meso/drop, not a boss
+// bonus, so it's excluded) — full_setup already has this data from the Equipment step's
+// Symbols substep, so it's derived here rather than trusting a separate manual toggle.
+function deriveMaxedSacredSymbol(symbolsData: SavedSymbols | null): boolean {
+  if (!symbolsData) return false;
+  return SACRED_AREAS.every((a) => (symbolsData.symbols[a.name]?.level ?? 0) >= SACRED_MAX_LEVEL);
+}
+
 function buildFullSetupRecord(
   character: NormalizedCharacterData,
   stepData: import("../setup/types").SetupStepInputById,
@@ -329,8 +376,18 @@ function buildFullSetupRecord(
     gender: normalizeGenderValue(stepData.gender),
     marriage: marriageDraftToStored(stepData.marriage ?? ""),
   });
+  const statsDraft = parseStatsStepDraft(stepData.stats ?? "");
+  const store = readCharactersStore();
+  applyScouterLegionForWorld(
+    store,
+    character,
+    base,
+    statsDraft.scouterQuestions?.whLegion,
+    parseLegionArtifactsDraft(stepData.legion_artifacts ?? ""),
+  );
+
   const { stats, isLiberated, weaponHand, hasRuinForceShield, soul } =
-    convertStatsStepDraftToStored(parseStatsStepDraft(stepData.stats ?? ""), character.level);
+    convertStatsStepDraftToStored(statsDraft, character.level);
   const hexaSkillsToolData = buildHexaSkillsToolData(character.jobName, stepData.hexa_matrix ?? "");
   const hexaStatToolData = buildHexaStatToolData(stepData.hexa_matrix ?? "");
   const vMatrixToolData = buildVMatrixToolDataForRecord(stepData.v_matrix ?? "");
@@ -345,11 +402,27 @@ function buildFullSetupRecord(
     ...(familiarsData ? { familiars: familiarsData } : null),
     ...(symbolsData ? { symbols: symbolsData } : null),
   };
+
+  const ozRings = convertOzRingsDraftToStored(parseOzRingsDraft(stepData.oz_rings ?? ""));
+  const buffsConverted = convertBuffsDraftToStored(parseBuffsDraft(stepData.buffs ?? ""));
+  const buffs = deriveMaxedSacredSymbol(symbolsData)
+    ? { ...(buffsConverted ?? {}), maxedSacredSymbol: true as const }
+    : buffsConverted;
+  const scouterQ = convertScouterQuestionsDraftToStored(statsDraft);
+  const innerAbilityLine = deriveInnerAbilityLineFromEquipment(equipmentData);
+  const scouterPatch = {
+    ...(ozRings ? { ozRings } : {}),
+    ...(buffs ? { buffs } : {}),
+    ...(scouterQ ?? {}),
+    ...(innerAbilityLine ? { innerAbilityLine } : {}),
+  };
+
   return {
     ...base,
     stats: { ...base.stats, ...stats },
     equipment: equipmentData ?? base.equipment,
     isLiberated, weaponHand, hasRuinForceShield, soul, tools,
+    ...(Object.keys(scouterPatch).length > 0 ? { scouter: scouterPatch } : {}),
   };
 }
 

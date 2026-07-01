@@ -17,6 +17,7 @@ import VMatrixSetupStep from "./components/VMatrixSetupStep";
 import FamiliarsSetupStep from "./components/FamiliarsSetupStep";
 import OzRingsSetupStep from "./components/OzRingsSetupStep";
 import BuffsSetupStep from "./components/BuffsSetupStep";
+import LegionArtifactsSetupStep from "./components/LegionArtifactsSetupStep";
 
 interface StepRendererProps {
   theme: AppTheme;
@@ -47,9 +48,9 @@ const STEP_COMPONENTS: Record<SetupStepId, typeof GenericSetupStep> = {
   hexa_matrix: HexaMatrixSetupStep,
   familiars: FamiliarsSetupStep,
   link_skills: LinkSkillsSetupStep,
-  legion: GenericSetupStep,
   oz_rings: OzRingsSetupStep,
   buffs: BuffsSetupStep,
+  legion_artifacts: LegionArtifactsSetupStep,
 };
 
 export default function StepRenderer({

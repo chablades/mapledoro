@@ -98,13 +98,35 @@ function parseFinalAttackDmg(raw: string | undefined): number | undefined {
 
 type LegionArtifactFields = Pick<StoredScouterLegion, "artifactExtraTarget" | "artifactFinalAttackDmg">;
 
+/** Draft shape for full_setup's standalone Legion Artifacts step — same field names as
+ *  the scouter questionnaire's artifact fields, so `resolveLegionArtifacts` (below)
+ *  works unchanged for either caller. */
+export interface LegionArtifactsDraft {
+  artifactExtraTarget?: boolean;
+  artifactFinalAttackDmg?: string;
+}
+
+export function parseLegionArtifactsDraft(raw: string): LegionArtifactsDraft {
+  if (!raw) return {};
+  try {
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" ? parsed as LegionArtifactsDraft : {};
+  } catch {
+    return {};
+  }
+}
+
+export function serializeLegionArtifactsDraft(draft: LegionArtifactsDraft): string {
+  return JSON.stringify(draft);
+}
+
 /**
  * Resolves the per-world legion artifact fields for a finish: the draft entry wins
  * (including clearing — an empty numeric field or "No" toggle removes the value),
  * otherwise the existing stored value is preserved. Returns only set fields.
  */
 export function resolveLegionArtifacts(
-  sq: StatsStepDraft["scouterQuestions"],
+  sq: LegionArtifactsDraft | undefined,
   existing: LegionArtifactFields | undefined,
 ): LegionArtifactFields {
   const extraTarget = sq?.artifactExtraTarget ?? existing?.artifactExtraTarget;

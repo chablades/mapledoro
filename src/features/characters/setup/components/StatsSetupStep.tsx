@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { numericKeyDown } from "../../../../lib/inputUtils";
 import type { CSSProperties } from "react";
 import Image from "next/image";
@@ -9,7 +9,8 @@ import HoverTooltip from "../../../../components/HoverTooltip";
 import type { SetupStepDefinition } from "../steps";
 import type { SetupFlowId } from "../flows";
 import SetupStepFrame from "./SetupStepFrame";
-import InfoTooltip, { type TooltipContent } from "./InfoTooltip";
+import InfoTooltip from "./InfoTooltip";
+import { statInputStyle, inputSuffixStyle, QuestionToggle, BoolToggle, LegionFinalAttackField } from "./QuestionControls";
 import {
   CLASS_SKILL_DATA,
   UNIVERSAL_BUFF_SKILLS,
@@ -30,7 +31,7 @@ import {
   type TripleStatDraft,
 } from "../data/statsStepDraft";
 import { HYPER_STAT_CATEGORIES, HYPER_STAT_PRESET_COUNT, sanitizeHyperStatInput, type HyperStatCategoryDef } from "../data/hyperStatData";
-import { IA_LINE_OPTIONS, LEGION_ARTIFACT_FINAL_ATK_LIMIT, WH_RANK_OPTIONS, whAutofillSourceFromRoster, type WhAutofillSource } from "../data/scouterQuestionsData";
+import { IA_LINE_OPTIONS, WH_RANK_OPTIONS, whAutofillSourceFromRoster, type WhAutofillSource } from "../data/scouterQuestionsData";
 import type { StoredCharacterRecord, StoredScouterLegion } from "../../model/charactersStore";
 
 interface StatsSetupStepProps {
@@ -89,40 +90,6 @@ const STAT_LABELS: Partial<Record<StatFieldId, string>> = {
 
 // ── Styles ────────────────────────────────────────────────────────────────────
 
-function statInputStyle(theme: AppTheme, width?: string): CSSProperties {
-  return {
-    border: `1px solid ${theme.border}`,
-    borderRadius: "7px",
-    background: theme.bg,
-    color: theme.text,
-    fontFamily: "inherit",
-    fontSize: "0.82rem",
-    fontWeight: 600,
-    padding: "0.3rem 0.4rem",
-    outline: "2px solid transparent",
-    outlineOffset: "2px",
-    transition: "outline-color 0.15s ease",
-    width: width ?? "100%",
-    minWidth: 0,
-    boxSizing: "border-box" as const,
-  };
-}
-
-// Unit suffix ("%", "s", …) rendered inside a stat input box, anchored to its right
-// edge. Keeps the input as the full visual box; pointer-events off so clicks reach it.
-function inputSuffixStyle(theme: AppTheme): CSSProperties {
-  return {
-    position: "absolute",
-    right: "0.45rem",
-    top: "50%",
-    transform: "translateY(-50%)",
-    fontSize: "0.75rem",
-    color: theme.muted,
-    fontWeight: 700,
-    pointerEvents: "none",
-  };
-}
-
 function sectionLabelStyle(theme: AppTheme): CSSProperties {
   return {
     margin: 0,
@@ -156,26 +123,6 @@ function presetButtonStyle(theme: AppTheme, on: boolean): CSSProperties {
     color: on ? "#fff" : theme.text,
     fontFamily: "inherit", fontWeight: 800, fontSize: "0.8rem",
     width: 34, height: 32, cursor: "pointer",
-  };
-}
-
-function questionOptionButtonStyle(theme: AppTheme, active: boolean, hasSublabel: boolean): CSSProperties {
-  return {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: hasSublabel ? "0.1rem" : 0,
-    border: `1px solid ${active ? theme.accent : theme.border}`,
-    borderRadius: "9px",
-    background: active ? `${theme.accent}22` : theme.bg,
-    color: active ? theme.accent : theme.text,
-    fontFamily: "inherit",
-    fontWeight: 800,
-    fontSize: "0.85rem",
-    lineHeight: 1.15,
-    padding: "0.4rem 0.85rem",
-    cursor: "pointer",
   };
 }
 
@@ -557,77 +504,6 @@ function WeaponAttField({ label, usesMagicWeapon, value, onUpdate, theme }: {
 
 // ── Setup options section ─────────────────────────────────────────────────────
 
-function QuestionToggle({
-  question, options, value, onToggle, theme, tooltip,
-}: {
-  question: string;
-  options: { value: string; label: string; sublabel?: string; optOut?: boolean }[];
-  value: string | null;
-  /** Clicking the active option deselects it (returns null). */
-  onToggle: (value: string | null) => void;
-  theme: AppTheme;
-  tooltip?: TooltipContent;
-}) {
-  return (
-    <div style={{ marginBottom: "0.9rem" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", marginBottom: "0.4rem" }}>
-        <p style={{ margin: 0, fontSize: "0.88rem", fontWeight: 800, color: theme.text }}>
-          {question}
-        </p>
-        {tooltip && <InfoTooltip content={tooltip} theme={theme} />}
-      </div>
-      <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
-        {options.map((opt) => {
-          const active = value === opt.value;
-          // The opt-out reads as a distinct choice through its descriptive wording
-          // ("No soul weapon", etc.) and its own row, not special chrome.
-          return (
-            <Fragment key={opt.value}>
-              {opt.optOut && <div aria-hidden style={{ flexBasis: "100%", height: 0 }} />}
-              <button
-                type="button"
-                onClick={() => onToggle(active ? null : opt.value)}
-                style={questionOptionButtonStyle(theme, active, Boolean(opt.sublabel))}
-              >
-                <span>{opt.label}</span>
-                {opt.sublabel && (
-                  <span style={{ fontSize: "0.75rem", fontWeight: 700, opacity: 0.7 }}>{opt.sublabel}</span>
-                )}
-              </button>
-            </Fragment>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-const BOOL_TOGGLE_OPTIONS = [{ value: "yes", label: "Yes" }, { value: "no", label: "No" }];
-function BoolToggle({ question, value, onToggle, theme, tooltip }: {
-  question: string;
-  value: boolean | undefined;
-  onToggle: (value: boolean | undefined) => void;
-  theme: AppTheme;
-  tooltip?: TooltipContent;
-}) {
-  const strValue = value === true ? "yes" : null;
-  const finalValue = value === false ? "no" : strValue;
-  return (
-    <QuestionToggle
-      question={question}
-      options={BOOL_TOGGLE_OPTIONS}
-      value={finalValue}
-      onToggle={(v) => {
-        if (v === "yes") onToggle(true);
-        else if (v === "no") onToggle(false);
-        else onToggle(undefined);
-      }}
-      theme={theme}
-      tooltip={tooltip}
-    />
-  );
-}
-
 function SetupOptionsSection({
   optsDef, draft, onUpdate, theme, characterLevel,
 }: {
@@ -731,62 +607,20 @@ function SetupOptionsSection({
   );
 }
 
-// Keeps the Final Attack Skill % field digits-only and hard-capped at the artifact max,
-// so a user can never see an out-of-range value stick.
-function clampFinalAttackInput(raw: string): string {
-  const digits = raw.replace(/\D/g, "");
-  if (digits === "") return "";
-  return String(Math.min(Number(digits), LEGION_ARTIFACT_FINAL_ATK_LIMIT));
-}
 
-// A labeled numeric row (mirrors WeaponAttField) for the Final Attack Skill artifact.
-function LegionFinalAttackField({ value, onUpdate, theme }: {
-  value: string;
-  onUpdate: (val: string) => void;
-  theme: AppTheme;
-}) {
-  const label = "Final Attack Skill Damage";
-  return (
-    <div style={{ marginBottom: "0.9rem" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", marginBottom: "0.4rem" }}>
-        <span style={{ fontSize: "0.88rem", fontWeight: 800, color: theme.text }}>{label}</span>
-        <InfoTooltip
-          content={{
-            title: label,
-            description: `Found in your Legion window, in the Artifacts tab. Enter the total for the stat "Damage of Final Attack Skills" (up to ${LEGION_ARTIFACT_FINAL_ATK_LIMIT}%).`,
-          }}
-          theme={theme}
-        />
-      </div>
-      <div style={{ position: "relative", width: "5rem" }}>
-        <input
-          type="text"
-          inputMode="numeric"
-          aria-label={label}
-          value={value}
-          placeholder="0"
-          style={{ ...statInputStyle(theme, "100%"), paddingRight: "1.15rem" }}
-          onChange={(e) => onUpdate(clampFinalAttackInput(e.target.value))}
-          onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
-          onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
-          onKeyDown={numericKeyDown}
-        />
-        <span style={inputSuffixStyle(theme)}>%</span>
-      </div>
-    </div>
-  );
-}
-
-// MapleScouter-only questionnaire. The Wild Hunter Legion rank is account-level and
-// hard-locked, so it's shown read-only (derived per-world from the roster); the two
-// Maple Union artifacts are account-level manual inputs (prefilled from the world's
-// stored values); the Inner Ability line is a per-character pick. Scouter flow only.
-function ScouterQuestionsSection({ sq, whSource, worldLegion, onUpdate, theme }: {
+// Wild Hunter Legion rank is account-level and hard-locked, so it's shown read-only
+// (derived per-world from the roster) — shown in BOTH full_setup and maplescouter_setup.
+// The two Maple Union artifacts and the Inner Ability line stay scouter-only: full_setup
+// collects the artifacts on their own dedicated Legion Artifacts step (richer, not just
+// the two scouter-relevant fields) and derives Inner Ability line from the Equipment IA
+// card instead of asking again — see showArtifactsAndIA.
+function ScouterQuestionsSection({ sq, whSource, worldLegion, onUpdate, theme, showArtifactsAndIA }: {
   sq: NonNullable<StatsStepDraft["scouterQuestions"]>;
   whSource: WhAutofillSource | null;
   worldLegion: StoredScouterLegion | undefined;
   onUpdate: (patch: Partial<NonNullable<StatsStepDraft["scouterQuestions"]>>) => void;
   theme: AppTheme;
+  showArtifactsAndIA: boolean;
 }) {
   const whWorldRank = worldLegion?.wildHunterRank;
   const finalAtkValue = sq.artifactFinalAttackDmg
@@ -820,46 +654,65 @@ function ScouterQuestionsSection({ sq, whSource, worldLegion, onUpdate, theme }:
           theme={theme}
         />
       )}
-      <BoolToggle
-        question="Do you have the +1 attack target Legion artifact?"
-        value={sq.artifactExtraTarget ?? worldLegion?.artifactExtraTarget}
-        onToggle={(v) => onUpdate({ artifactExtraTarget: v })}
-        theme={theme}
-        tooltip={{
-          title: "Legion Artifact",
-          description: 'Found in your Legion window, in the Artifacts tab. The stat is called: "+1 targets hit when using multi-target skills and EXP acquired."',
-        }}
-      />
-      <LegionFinalAttackField
-        value={finalAtkValue}
-        onUpdate={(v) => onUpdate({ artifactFinalAttackDmg: v })}
-        theme={theme}
-      />
-      <QuestionToggle
-        question="Which Inner Ability line do you use for bossing?"
-        options={IA_LINE_OPTIONS}
-        value={sq.innerAbilityLine ?? null}
-        onToggle={(v) => onUpdate({ innerAbilityLine: v ?? undefined })}
-        theme={theme}
-        tooltip={{
-          title: "Inner Ability",
-          description: "Found in your Stats window: click \"Detail\", then the \"Ability\" button at the bottom right. Only a Legendary-rank Inner Ability can roll these lines.",
-        }}
-      />
+      {showArtifactsAndIA && (
+        <>
+          <BoolToggle
+            question="Do you have the +1 attack target Legion artifact?"
+            value={sq.artifactExtraTarget ?? worldLegion?.artifactExtraTarget}
+            onToggle={(v) => onUpdate({ artifactExtraTarget: v })}
+            theme={theme}
+            tooltip={{
+              title: "Legion Artifact",
+              description: 'Found in your Legion window, in the Artifacts tab. The stat is called: "+1 targets hit when using multi-target skills and EXP acquired."',
+            }}
+          />
+          <LegionFinalAttackField
+            value={finalAtkValue}
+            onUpdate={(v) => onUpdate({ artifactFinalAttackDmg: v })}
+            theme={theme}
+          />
+          <QuestionToggle
+            question="Which Inner Ability line do you use for bossing?"
+            options={IA_LINE_OPTIONS}
+            value={sq.innerAbilityLine ?? null}
+            onToggle={(v) => onUpdate({ innerAbilityLine: v ?? undefined })}
+            theme={theme}
+            tooltip={{
+              title: "Inner Ability",
+              description: "Found in your Stats window: click \"Detail\", then the \"Ability\" button at the bottom right. Only a Legendary-rank Inner Ability can roll these lines.",
+            }}
+          />
+        </>
+      )}
     </>
   );
 }
 
-// Derives the read-only WH Legion source for the scouter flow, scoped to the
-// character's world (Legion is per-world). Null outside the scouter flow.
+// Derives the read-only WH Legion source, scoped to the character's world. Null
+// unless WH Legion rank is shown (maplescouter_setup and full_setup).
 function deriveScouterWhSource(
-  isScouter: boolean,
+  showWhLegion: boolean,
   roster: StoredCharacterRecord[] | undefined,
   worldId: number | undefined,
 ): WhAutofillSource | null {
-  if (!isScouter) return null;
+  if (!showWhLegion) return null;
   const worldRoster = (roster ?? []).filter((c) => worldId == null || c.worldID === worldId);
   return whAutofillSourceFromRoster(worldRoster);
+}
+
+// WH Legion rank + Weapon ATT are shared between full_setup and maplescouter_setup
+// (full_setup is a superset); Legion artifacts + Inner Ability line stay scouter-only
+// (see ScouterQuestionsSection's showArtifactsAndIA).
+function deriveScouterVisibility(flowId: SetupFlowId | undefined): { isScouter: boolean; showWhLegionAndWeaponAtt: boolean } {
+  const isScouter = flowId === "maplescouter_setup";
+  return { isScouter, showWhLegionAndWeaponAtt: isScouter || flowId === "full_setup" };
+}
+
+// Extra questionnaire items beyond SetupOptionsSection's own count: the WH Legion rank
+// question (full_setup + maplescouter_setup) plus, scouter-only, the combined Legion
+// artifacts + Inner Ability block.
+function scouterQuestionCountDelta(showWhLegionAndWeaponAtt: boolean, isScouter: boolean): number {
+  return (showWhLegionAndWeaponAtt ? 1 : 0) + (isScouter ? 1 : 0);
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
@@ -873,10 +726,10 @@ export default function StatsSetupStep({
   // own substep everywhere EXCEPT the scouter flow. ("% Not Applied" is NOT flow-
   // specific — it shows for every non-ATT stat in all flows; see TripleStatRow.)
   const showHyperStat = flowId !== "maplescouter_setup";
-  const isScouter = flowId === "maplescouter_setup";
+  const { isScouter, showWhLegionAndWeaponAtt } = deriveScouterVisibility(flowId);
 
   // WH Legion rank is read-only/derived, scoped to this character's world.
-  const whSource = deriveScouterWhSource(isScouter, characterRoster, confirmedWorldId);
+  const whSource = deriveScouterWhSource(showWhLegionAndWeaponAtt, characterRoster, confirmedWorldId);
 
   function updateDraft(patch: Partial<StatsStepDraft>) {
     onChange(serializeStatsStepDraft({ ...draft, ...patch }));
@@ -944,7 +797,8 @@ export default function StatsSetupStep({
 
   const { usesMagicWeapon, label: weaponAttLabel } = deriveWeaponAtt(tripleIds);
 
-  const questionCount = countSetupOptionsQuestions(classData?.setupOptionsDef, characterLevel) + (isScouter ? 2 : 0);
+  const questionCount = countSetupOptionsQuestions(classData?.setupOptionsDef, characterLevel)
+    + scouterQuestionCountDelta(showWhLegionAndWeaponAtt, isScouter);
   const questionsDescription = questionCount === 1
     ? "One quick question about your character first:"
     : "A few quick questions about your character first:";
@@ -966,13 +820,14 @@ export default function StatsSetupStep({
           nextLabel="Continue"
         >
           <SetupOptionsSection optsDef={classData?.setupOptionsDef} draft={draft} onUpdate={handleSetupOptUpdate} theme={theme} characterLevel={characterLevel} />
-          {isScouter && (
+          {showWhLegionAndWeaponAtt && (
             <ScouterQuestionsSection
               sq={draft.scouterQuestions ?? {}}
               whSource={whSource}
               worldLegion={worldScouterLegion}
               onUpdate={handleScouterQUpdate}
               theme={theme}
+              showArtifactsAndIA={isScouter}
             />
           )}
         </SetupStepFrame>
@@ -1055,7 +910,7 @@ export default function StatsSetupStep({
         </div>
       </div>
 
-      {isScouter && (
+      {showWhLegionAndWeaponAtt && (
         <WeaponAttField
           label={weaponAttLabel}
           usesMagicWeapon={usesMagicWeapon}

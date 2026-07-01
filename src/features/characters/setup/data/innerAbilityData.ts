@@ -160,3 +160,9 @@ for (const tier of IA_TIER_ORDER) IA_LINES[tier].push(...dualStatLines(tier));
 export function getLinesForIATier(tier: IATier): string[] {
   return IA_LINES[tier];
 }
+
+// The only two legendary lines MapleScouter cares about (see scouterQuestionsData.ts's
+// IA_LINE_OPTIONS) — full_setup derives its scouter-facing Inner Ability line answer by
+// checking for these exact strings in the Equipment IA card instead of asking again.
+export const IA_PASSIVE_PLUS_ONE_LINE = "Passive Skills: +1 Level";
+export const IA_MULTI_TARGET_PLUS_ONE_LINE = "Number of enemies hit by multi-target skill +1";

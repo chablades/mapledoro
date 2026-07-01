@@ -11,9 +11,9 @@ const SETUP_STEPS = [
   { id: "hexa_matrix", label: "Hexa Matrix" },
   { id: "familiars", label: "Familiars" },
   { id: "link_skills", label: "Link Skills" },
-  { id: "legion", label: "Legion" },
   { id: "oz_rings", label: "Oz Rings" },
   { id: "buffs", label: "Buffs" },
+  { id: "legion_artifacts", label: "Legion Artifacts" },
 ] as const;
 
 export type SetupStepDefinition = (typeof SETUP_STEPS)[number];

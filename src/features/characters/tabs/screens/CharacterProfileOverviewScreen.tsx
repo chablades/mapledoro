@@ -383,7 +383,6 @@ function MoreTab({ model, actions }: { model: PreviewPaneModel; actions: Preview
     { id: "v_matrix_flow", label: "V Matrix", desc: "Node slots and matrix details" },
     { id: "familiars_flow", label: "Familiars", desc: "Familiar presets and badge effects" },
     { id: "link_skills_flow", label: "Link Skills", desc: "Active link preset details" },
-    { id: "legion_account_flow", label: "Legion", desc: "Account-level legion and roster" },
     { id: "hexa_matrix_flow", label: "Hexa Matrix", desc: "Hexa skills and hexa stat details" },
   ];
   return (
