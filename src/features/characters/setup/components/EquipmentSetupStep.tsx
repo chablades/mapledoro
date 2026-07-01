@@ -280,15 +280,6 @@ function sameItem(a: EquipmentItem | null | undefined, b: EquipmentItem | null |
   return a.id === b.id && a.name === b.name;
 }
 
-// Astra secondaries (id prefix 0172) come in 3 enhancement stages that all share the same
-// name; the trailing id digit (0/1/2) is the stage. Surface it so the picker doesn't show
-// three identical rows. Stages correspond to the liberation tool's Astra missions.
-function withStageLabel(id: string, name: string): string {
-  if (!id.startsWith("0172")) return name;
-  const stage = Number(id.slice(-1));
-  return stage >= 0 && stage <= 2 ? `${name} (Stage ${stage + 1})` : name;
-}
-
 interface PickerSource {
   files: string[];
   filter: (item: CatalogItem) => boolean;
@@ -312,7 +303,10 @@ function resolvePickerSource(slot: SlotKey, classId: string | undefined, branchM
           if (startsWithAny(item.id, spec.prefixes)) return true;
           if (!isShieldId(item.id)) return false;
           // Astra shields are class-specific (matched by name); regular shields are branch-pooled.
-          if (item.name.startsWith("Astra ")) return spec.astraShieldNames.includes(item.name);
+          // startsWith, not exact equality: served names carry a disambiguating "(...)" suffix
+          // (gen-equipment.mjs bakes in a stage/stat label since all 3 enhancement tiers share
+          // one base name) that astraShieldNames' base names don't include.
+          if (item.name.startsWith("Astra ")) return spec.astraShieldNames.some((n) => item.name.startsWith(n));
           return spec.usesShield && branchAllows(item, branchMask);
         },
       };
@@ -376,7 +370,7 @@ function ItemPicker({ slot, current, theme, files, itemFilter, maxLevel, exclude
     const fileList = cacheKey.split("+");
     Promise.all(fileList.map((f) => fetch(`/data/equipment/${f}.json`).then((r) => r.json() as Promise<RawCatalogEntry[]>)))
       .then((raws) => {
-        const parsed = raws.flat().map(([id, name, stats]) => ({ id, name: withStageLabel(id, name), reqJob: stats?.reqJob, reqLevel: stats?.reqLevel, onlyEquip: stats?.onlyEquip, wearablePets: stats?.wearablePets, wearableEquips: stats?.wearableEquips }));
+        const parsed = raws.flat().map(([id, name, stats]) => ({ id, name, reqJob: stats?.reqJob, reqLevel: stats?.reqLevel, onlyEquip: stats?.onlyEquip, wearablePets: stats?.wearablePets, wearableEquips: stats?.wearableEquips }));
         cachedSlotItems[cacheKey] = parsed;
         setLoadedItems(parsed);
       })

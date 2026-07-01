@@ -1000,7 +1000,7 @@ export default function StatsSetupStep({
       stepLabel={step.label}
       stepNumber={stepNumber}
       totalSteps={totalSteps}
-      description="All fields are optional. Fill in what you can."
+      description="Enter your stats exactly as shown in your in-game Stat window. All fields are optional."
       onBack={() => goToSubstep(0)}
       onNext={showHyperStat ? () => goToSubstep(2) : onNext}
       onFinish={onFinish}
@@ -1010,7 +1010,16 @@ export default function StatsSetupStep({
       <BuffGuide classData={classData ?? null} theme={theme} characterLevel={characterLevel} />
       {tripleIds.length > 0 && (
         <div style={{ marginBottom: "0.75rem" }}>
-          <p style={sectionLabelStyle(theme)}>Basic Stats</p>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", marginBottom: "0.45rem", paddingBottom: "0.25rem", borderBottom: `1px solid ${theme.border}` }}>
+            <span style={{ fontSize: "0.75rem", fontWeight: 800, color: theme.muted, letterSpacing: "0.05em", textTransform: "uppercase" as const }}>Basic Stats</span>
+            <InfoTooltip
+              content={{
+                title: "Basic Stats",
+                description: "Hover over each stat in your in-game Stat window and look under [Applied Value]. Enter Base Value, % Value, and % Value Not Applied exactly as shown there.",
+              }}
+              theme={theme}
+            />
+          </div>
           <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
             {tripleIds.map((id) => (
               <TripleStatRow key={id} id={id} draft={draft} onUpdate={handleTripleUpdate} theme={theme} />

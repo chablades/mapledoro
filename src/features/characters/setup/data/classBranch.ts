@@ -167,7 +167,7 @@ const SECONDARY_TYPE_PREFIXES: Record<string, string[]> = {
   arrowFletching: ["0135226"], bowThimble: ["0135227"], scabbard: ["0135228"],
   charm: ["0135229"], orb: ["0135240", "0135241"], dragonEssence: ["0135250"],
   soulRing: ["0135260"], magnum: ["0135270", "0135271"], leaf: ["0135281", "0135284"],
-  kodachi: ["0135283"], braceBand: ["0135286"], compass: ["0135287"],
+  kodachi: ["0135280", "0135283"], braceBand: ["0135286"], compass: ["0135287"],
   keir: ["0135288"], wristband: ["0135290"], farsight: ["0135291"],
   powderKeg: ["0135292"], mass: ["0135293"], document: ["0135294"],
   magicMarble: ["0135295"], arrowhead: ["0135296"], jewel: ["0135297"],

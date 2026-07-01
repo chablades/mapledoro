@@ -266,17 +266,20 @@ const presetSquareStyle = (theme: AppTheme, active: boolean): CSSProperties => (
 // familiar (e.g. False Daimyo) settles on its card icon or the "?" instead of
 // re-fetching a broken URL forever. `key` remounts a fresh chain per slot.
 
-function FamiliarCardSprite({ mobId, cardId, size, theme }: { mobId: string; cardId: string; size: number; theme: AppTheme }) {
+function FamiliarCardSprite({ mobId, familiarId, cardId, size, theme }: { mobId: string; familiarId: number | null; cardId: string; size: number; theme: AppTheme }) {
   const sources = [
     resourceImageUrl("mob", mobId, "sprite.png"),
-    resourceImageUrl("familiar", mobId, "sprite.png"),
+    // "familiar" sprites are keyed by the familiar's OWN id, not mobId — these are
+    // "direct sprite" familiars (spriteFrom: "familiar") with no real monster to
+    // borrow a mob sprite from.
+    ...(familiarId !== null ? [resourceImageUrl("familiar", String(familiarId), "sprite.png")] : []),
     ...(cardId ? [resourceImageUrl("item", cardId, "icon.png")] : []),
   ];
   return (
     <span style={{ width: size, height: size, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        key={`${mobId}/${cardId}`}
+        key={`${mobId}/${familiarId}/${cardId}`}
         src={sources[0]}
         alt=""
         width={size}
@@ -296,35 +299,6 @@ function FamiliarCardSprite({ mobId, cardId, size, theme }: { mobId: string; car
         }}
       />
       <span aria-hidden style={{ display: "none", fontSize: size * 0.5, fontWeight: 300, lineHeight: 1, color: theme.muted }}>?</span>
-    </span>
-  );
-}
-
-// ── Picker-list thumbnail: card icon → "?" placeholder ─────────────────────
-// Card-only (no mob/familiar sprite attempts) so opening the picker doesn't fire
-// extra 404s for every result row. Falls back to "?" when the card is absent or
-// 404s, and always reserves the slot so the row label stays aligned.
-
-function FamiliarCardIcon({ cardId, size, theme }: { cardId: string; size: number; theme: AppTheme }) {
-  return (
-    <span style={{ width: size, height: size, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-      {cardId && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          key={cardId}
-          src={resourceImageUrl("item", cardId, "icon.png")}
-          alt=""
-          width={size}
-          height={size}
-          style={{ objectFit: "contain", width: size, height: size, display: "block" }}
-          onError={(e) => {
-            e.currentTarget.style.display = "none";
-            const ph = e.currentTarget.nextElementSibling as HTMLElement | null;
-            if (ph) ph.style.display = "block";
-          }}
-        />
-      )}
-      <span aria-hidden style={{ display: cardId ? "none" : "block", fontSize: size * 0.5, fontWeight: 300, lineHeight: 1, color: theme.muted }}>?</span>
     </span>
   );
 }
@@ -458,8 +432,14 @@ function LinePicker({ id, openId, onToggle, onClose, value, tier, placeholder, t
 
 // ── Familiar slot card ─────────────────────────────────────────────────────
 
+// Same-name entries that render a pixel-identical sprite (e.g. periodic card
+// reissues) are excluded from search — they'd otherwise show as two indistinguishable
+// results. The "duplicate" entry stays in FAMILIARS itself so an already-saved
+// character that picked one still resolves correctly via FAMILIARS.find().
+const SELECTABLE_FAMILIARS = FAMILIARS.filter((f) => f.duplicateOf === undefined);
+
 function filterFamiliars(query: string, excludeId: number | null): FamiliarEntry[] {
-  const pool = excludeId == null ? FAMILIARS : FAMILIARS.filter((f) => f.id !== excludeId);
+  const pool = excludeId == null ? SELECTABLE_FAMILIARS : SELECTABLE_FAMILIARS.filter((f) => f.id !== excludeId);
   if (!query.trim()) return pool.slice(0, 50);
   const results: FamiliarEntry[] = [];
   for (const f of pool) {
@@ -540,7 +520,9 @@ function FamiliarSlotCard({
   const isOpen = openId === slotId;
   const isEmpty = !slot.name;
   const displayName = slot.name.replace(/ Familiar$/i, "");
-  const cardId = FAMILIARS.find((f) => f.id === slot.familiarId)?.cardId ?? "";
+  const matchedEntry = FAMILIARS.find((f) => f.id === slot.familiarId);
+  const cardId = matchedEntry?.cardId ?? "";
+  const spriteMobId = matchedEntry?.spriteMobId ?? slot.mobId;
   const inputRef = useRef<HTMLInputElement>(null);
   const { ref: wrapperRef, portalRef } = usePickerCoords(isOpen, FAM_PICKER_WIDTH);
   const filtered = useMemo(() => isOpen ? filterFamiliars(query, slot.familiarId) : [], [isOpen, query, slot.familiarId]);
@@ -584,7 +566,7 @@ function FamiliarSlotCard({
         ) : (
           <>
             <HoverTooltip label={displayName} theme={theme}>
-              <FamiliarCardSprite mobId={slot.mobId} cardId={cardId} size={FAM_CARD_SIZE} theme={theme} />
+              <FamiliarCardSprite mobId={spriteMobId} familiarId={slot.familiarId} cardId={cardId} size={FAM_CARD_SIZE} theme={theme} />
             </HoverTooltip>
             {slot.tier && (
               <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 3, marginTop: 2 }}>
@@ -634,7 +616,7 @@ function FamiliarSlotCard({
               onMouseEnter={(e) => { e.currentTarget.style.background = `${theme.accent}22`; }}
               onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
             >
-              <FamiliarCardSprite mobId={slot.mobId} cardId={cardId} size={28} theme={theme} />
+              <FamiliarCardSprite mobId={spriteMobId} familiarId={slot.familiarId} cardId={cardId} size={28} theme={theme} />
               <div style={{ overflow: "hidden", flex: 1 }}>
                 <p style={{ margin: 0, fontSize: "0.75rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.04em", color: theme.muted }}>Currently Selected</p>
                 <p style={{ margin: 0, fontSize: "0.8rem", fontWeight: 700, color: theme.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{displayName}</p>
@@ -693,7 +675,7 @@ function FamiliarSlotCard({
                     onMouseEnter={(e) => { e.currentTarget.style.background = `${theme.accent}22`; }}
                     onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
                   >
-                    <FamiliarCardIcon cardId={entry.cardId} size={FAM_LIST_SIZE} theme={theme} />
+                    <FamiliarCardSprite mobId={entry.spriteMobId ?? entry.mobId} familiarId={entry.id} cardId={entry.cardId} size={FAM_LIST_SIZE} theme={theme} />
                     <span style={{ fontSize: "0.75rem", fontWeight: 700, color: theme.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {getFamiliarDisplayLabel(entry)}
                     </span>
