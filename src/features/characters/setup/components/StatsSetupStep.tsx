@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { numericKeyDown } from "../../../../lib/inputUtils";
 import type { CSSProperties } from "react";
 import Image from "next/image";
+import { resourceImageUrl } from "../../../../lib/mapleResource";
 import type { AppTheme } from "../../../../components/themes";
 import HoverTooltip from "../../../../components/HoverTooltip";
 import type { SetupStepDefinition } from "../steps";
@@ -33,6 +34,13 @@ import {
 import { HYPER_STAT_CATEGORIES, HYPER_STAT_PRESET_COUNT, sanitizeHyperStatInput, type HyperStatCategoryDef } from "../data/hyperStatData";
 import { IA_LINE_OPTIONS, WH_RANK_OPTIONS, whAutofillSourceFromRoster, type WhAutofillSource } from "../data/scouterQuestionsData";
 import type { StoredCharacterRecord, StoredScouterLegion } from "../../model/charactersStore";
+
+// Soul Weapon tooltip illustrations. Every stat-variant "Soul" item (Beefy/Swift/Clever/
+// etc.) shares the identical icon, pixel-verified 2026-07-01 — these are just one
+// representative id from each family.
+const MU_GONG_SOUL_ITEM_ID = "02591038"; // "Beefy Mu Gong Soul"
+const EPHENIA_SOUL_ITEM_ID = "02591187"; // "Beefy Ephenia Soul"
+const RUIN_FORCE_SHIELD_ITEM_ID = "01099015"; // "Ruin Force Shield"
 
 interface StatsSetupStepProps {
   theme: AppTheme;
@@ -584,8 +592,8 @@ function SetupOptionsSection({
             <>A Soul Weapon is a weapon with a boss soul applied to it, providing passive stats based on your soul gauge and a unique skill. Mu Gong comes with <a href="https://maplestorywiki.net/w/Memories" target="_blank" rel="noreferrer" style={{ color: theme.accent, fontWeight: 700, textDecoration: "none" }}>Memories</a>.</>
           ),
           imageUrls: isDA
-            ? ["https://media.maplestorywiki.net/yetidb/Use_Mu_Gong_Soul.png", "https://media.maplestorywiki.net/yetidb/Use_Ephenia_Soul.png"]
-            : ["https://media.maplestorywiki.net/yetidb/Use_Mu_Gong_Soul.png"],
+            ? [resourceImageUrl("item", MU_GONG_SOUL_ITEM_ID, "iconRaw.png"), resourceImageUrl("item", EPHENIA_SOUL_ITEM_ID, "iconRaw.png")]
+            : [resourceImageUrl("item", MU_GONG_SOUL_ITEM_ID, "iconRaw.png")],
           link: { href: "https://maplestorywiki.net/w/Soul_Weapon", label: "See more on the wiki" },
         }}
       />
@@ -598,7 +606,7 @@ function SetupOptionsSection({
           tooltip={{
             title: "Ruin Force Shield",
             description: "A secondary weapon exclusive to Demon Slayer and Demon Avenger, providing Final Damage +10% and Max HP +560 at the cost of increased damage taken.",
-            imageUrls: ["https://media.maplestorywiki.net/yetidb/Eqp_Ruin_Force_Shield.png"],
+            imageUrls: [resourceImageUrl("item", RUIN_FORCE_SHIELD_ITEM_ID, "iconRaw.png")],
             link: { href: "https://maplestorywiki.net/w/Ruin_Force_Shield", label: "See more on the wiki" },
           }}
         />

@@ -94,8 +94,8 @@ export interface StoredLegionCrystal {
 
 /**
  * Per-world account-level scouter inputs (Legion is per-world). The WH rank is
- * derived from the highest Wild Hunter in that world's roster; the Maple Union
- * artifacts are user input (not derivable).
+ * derived from the highest Wild Hunter in that world's roster. `artifactExtraTarget`/
+ * `artifactFinalAttackDmg` are the 2 fields MapleScouter's API needs; MapleScouter setup
  * asks for them directly, full_setup derives them from `artifactLevel`/`crystals` (the
  * full 9-crystal board) instead — see legionArtifactData.ts and
  * useCharacterSetupController.ts's applyScouterLegionForWorld.

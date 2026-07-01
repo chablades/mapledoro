@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import type { CSSProperties } from "react";
 import { numericKeyDown } from "../../../../lib/inputUtils";
 import Image from "next/image";
+import { resourceImageUrl } from "../../../../lib/mapleResource";
 import type { AppTheme } from "../../../../components/themes";
 import type { SetupStepDefinition } from "../steps";
 import type { StoredCharacterRecord } from "../../model/charactersStore";
@@ -37,22 +38,21 @@ interface LinkSkillDef {
   name: string;
   classes: string[];
   maxLevel: number;
-  iconUrl: string;
+  /** manifests/v269/skill.json id — pixel-verified 2026-07-01 against maplestorywiki. */
+  iconId: string;
 }
 
-const BASE = "https://media.maplestorywiki.net/yetidb/";
-
 const LINK_SKILLS: LinkSkillDef[] = [
-  { id: "unfairAdvantage",    name: "Unfair Advantage",    classes: ["Cadena"],                                    maxLevel: 3, iconUrl: `${BASE}Skill_Unfair_Advantage.png` },
-  { id: "tideOfBattle",       name: "Tide of Battle",      classes: ["Illium"],                                    maxLevel: 3, iconUrl: `${BASE}Skill_Tide_of_Battle.png` },
-  { id: "solus",              name: "Solus",               classes: ["Ark"],                                       maxLevel: 3, iconUrl: `${BASE}Skill_Solus.png` },
-  { id: "timeToPrepare",      name: "Time to Prepare",     classes: ["Kain"],                                      maxLevel: 3, iconUrl: `${BASE}Skill_Time_to_Prepare.png` },
-  { id: "termsAndConditions", name: "Terms and Conditions",classes: ["Angelic Buster"],                            maxLevel: 3, iconUrl: `${BASE}Skill_Terms_and_Conditions.png` },
-  { id: "elementalism",       name: "Elementalism",        classes: ["Kanna"],                                     maxLevel: 3, iconUrl: `${BASE}Skill_Elementalism.png` },
-  { id: "qiCultivation",      name: "Qi Cultivation",      classes: ["Mo Xuan"],                                   maxLevel: 3, iconUrl: `${BASE}Skill_Qi_Cultivation.png` },
-  { id: "bravado",            name: "Bravado",             classes: ["Hoyoung"],                                   maxLevel: 3, iconUrl: `${BASE}Skill_Bravado.png` },
-  { id: "empiricalKnowledge", name: "Empirical Knowledge", classes: ["Arch Mage (F/P)", "Arch Mage (I/L)", "Bishop"], maxLevel: 9, iconUrl: `${BASE}Skill_Empirical_Knowledge.png` },
-  { id: "thiefsСunning",      name: "Thief's Cunning",     classes: ["Night Lord", "Shadower", "Dual Blade"],      maxLevel: 9, iconUrl: `${BASE}Skill_Thief%27s_Cunning.png` },
+  { id: "unfairAdvantage",    name: "Unfair Advantage",    classes: ["Cadena"],                                    maxLevel: 3, iconId: "60020218" },
+  { id: "tideOfBattle",       name: "Tide of Battle",      classes: ["Illium"],                                    maxLevel: 3, iconId: "150000017" },
+  { id: "solus",              name: "Solus",               classes: ["Ark"],                                       maxLevel: 3, iconId: "150010241" },
+  { id: "timeToPrepare",      name: "Time to Prepare",     classes: ["Kain"],                                      maxLevel: 3, iconId: "60030241" },
+  { id: "termsAndConditions", name: "Terms and Conditions",classes: ["Angelic Buster"],                            maxLevel: 3, iconId: "60011219" },
+  { id: "elementalism",       name: "Elementalism",        classes: ["Kanna"],                                     maxLevel: 3, iconId: "40020002" },
+  { id: "qiCultivation",      name: "Qi Cultivation",      classes: ["Mo Xuan"],                                   maxLevel: 3, iconId: "170000241" },
+  { id: "bravado",            name: "Bravado",             classes: ["Hoyoung"],                                   maxLevel: 3, iconId: "160000001" },
+  { id: "empiricalKnowledge", name: "Empirical Knowledge", classes: ["Arch Mage (F/P)", "Arch Mage (I/L)", "Bishop"], maxLevel: 9, iconId: "0000255" },
+  { id: "thiefsСunning",      name: "Thief's Cunning",     classes: ["Night Lord", "Shadower", "Dual Blade"],      maxLevel: 9, iconId: "0000261" },
 ];
 
 // nexonJobName → which skill it contributes to
@@ -165,14 +165,14 @@ function parseDraft(raw: string): LinkSkillsDraft {
   return {};
 }
 
-function LinkSkillIcon({ iconUrl, name }: { iconUrl: string; name: string }) {
+function LinkSkillIcon({ iconId, name }: { iconId: string; name: string }) {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const fallbackRef = useRef<HTMLDivElement>(null);
   return (
     <>
       <div ref={wrapperRef} style={{ flexShrink: 0 }}>
         <Image
-          src={iconUrl}
+          src={resourceImageUrl("skill", iconId, "icon.png")}
           alt={name}
           width={32}
           height={32}
@@ -242,7 +242,7 @@ function LinkSkillRow({
       background: theme.bg,
       ...(fullWidth ? { gridColumn: "1 / -1" } : {}),
     }}>
-      <LinkSkillIcon iconUrl={skill.iconUrl} name={skill.name} />
+      <LinkSkillIcon iconId={skill.iconId} name={skill.name} />
       <div style={{ flex: 1, minWidth: 0 }}>
         <p style={{ margin: 0, fontSize: "0.82rem", fontWeight: 800, color: theme.text, lineHeight: 1.2 }}>
           {skill.name}
