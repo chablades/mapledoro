@@ -545,6 +545,9 @@ export function useCharacterSetupController() {
   const immediateUiLockRef = useRef(false);
   const [query, setQuery] = useState("");
   const [foundCharacter, setFoundCharacter] = useState<NormalizedCharacterData | null>(null);
+  // True when foundCharacter is a stale draft snapshot shown because a resume's
+  // refresh attempt failed (character not found / lookup error), not a live result.
+  const [isStaleFallbackPreview, setIsStaleFallbackPreview] = useState(false);
   const [previewCardReady, setPreviewCardReady] = useState(false);
   const [previewContentReady, setPreviewContentReady] = useState(false);
   const [setupMode, setSetupMode] = useState<SetupMode>("intro");
@@ -1136,16 +1139,22 @@ export function useCharacterSetupController() {
 
     setIsAddingCharacter(false);
     setSetupMode("search");
+    setIsStaleFallbackPreview(false);
 
     // The snapshot's base data is past its reset window — re-fetch live via the normal
     // search→preview path instead of resuming on stale stats. Confirming the refreshed
-    // result preserves the draft's entered step data (see confirmFoundCharacter).
+    // result preserves the draft's entered step data (see confirmFoundCharacter). If the
+    // refresh fails, fall back to the stale snapshot so the draft isn't a dead end.
     if (Date.now() > snapshot.expiresAt) {
       setSetupFlowStarted(false);
       setConfirmedCharacter(null);
       transitions.setSetupPanelVisible(false);
       setQuery(snapshot.characterName);
-      await lookup.runLookup(snapshot.characterName);
+      const found = await lookup.runLookup(snapshot.characterName);
+      if (!found) {
+        setIsStaleFallbackPreview(true);
+        setFoundCharacter(snapshot);
+      }
       return;
     }
 
@@ -1621,9 +1630,18 @@ export function useCharacterSetupController() {
       setSetupFlowStarted(false);
       transitions.setSetupPanelVisible(false);
       setConfirmedCharacter(null);
-      await lookup.runLookup(lookup.trimmedQuery);
+      setIsStaleFallbackPreview(false);
+
+      const found = await lookup.runLookup(lookup.trimmedQuery);
+      if (!found) {
+        const draft = readSetupDraftByKey(lookup.trimmedQuery);
+        if (draft && isResumableDraft(draft) && draft.confirmedCharacter) {
+          setIsStaleFallbackPreview(true);
+          setFoundCharacter(draft.confirmedCharacter);
+        }
+      }
     },
-    [characterRoster, lookup, transitions],
+    [characterRoster, isResumableDraft, lookup, transitions],
   );
 
   const activeSetupStep = getFlowStepByIndex(activeFlowId, setupStepIndex);
@@ -1651,6 +1669,7 @@ export function useCharacterSetupController() {
     refreshingKeys,
     query,
     foundCharacter,
+    isStaleFallbackPreview,
     previewCardReady,
     previewContentReady,
     setupMode,

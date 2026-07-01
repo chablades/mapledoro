@@ -153,6 +153,7 @@ export default function CharacterSetupFlow({ theme, initialCharacterName, initia
       isConfirmFadeOut: transitions.isConfirmFadeOut,
       isModeTransitioning: transitions.isModeTransitioning,
       foundCharacterHasResumableDraft: state.foundCharacterHasResumableDraft,
+      isStaleFallbackPreview: state.isStaleFallbackPreview,
     },
     setup: {
       setupFlowStarted: state.setupFlowStarted,

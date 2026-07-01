@@ -63,9 +63,20 @@ export default function SearchResultPreviewScreen({
         <div style={{ borderTop: `1px solid ${theme.border}`, paddingTop: "0.65rem" }}>
           {preview.foundCharacterHasResumableDraft ? (
             <>
-              <p style={{ fontSize: "0.86rem", color: theme.text, fontWeight: 700, margin: 0, marginBottom: "0.72rem" }}>
-                {preview.foundCharacter.characterName} has a saved setup in progress.
-              </p>
+              {preview.isStaleFallbackPreview ? (
+                <>
+                  <p style={{ fontSize: "0.86rem", color: "#dc2626", fontWeight: 700, margin: 0 }}>
+                    {`Couldn't refresh ${preview.foundCharacter.characterName}'s data right now.`}
+                  </p>
+                  <p style={{ fontSize: "0.86rem", color: theme.text, fontWeight: 700, margin: 0, marginTop: "0.3rem", marginBottom: "0.72rem" }}>
+                    You can still resume using your last saved data below.
+                  </p>
+                </>
+              ) : (
+                <p style={{ fontSize: "0.86rem", color: theme.text, fontWeight: 700, margin: 0, marginBottom: "0.72rem" }}>
+                  {`${preview.foundCharacter.characterName} has a saved setup in progress.`}
+                </p>
+              )}
               <button
                 type="button"
                 disabled={setup.isUiLocked}

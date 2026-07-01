@@ -95,6 +95,9 @@ export interface PreviewPaneModel {
     // True when the searched character already has a started, resumable draft —
     // the preview then offers Resume / Start fresh instead of a plain confirm.
     foundCharacterHasResumableDraft: boolean;
+    // True when foundCharacter is a stale draft snapshot shown because a resume's
+    // refresh attempt failed, not a live lookup result.
+    isStaleFallbackPreview: boolean;
   };
   setup: {
     setupFlowStarted: boolean;
