@@ -11,6 +11,12 @@ interface ChangelogEntry {
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    date: "2026-07-03",
+    changes: [
+      { type: "fixed", text: "Fixed the Liberation Tracker sharing one current quest and trace count across the Genesis, Destiny Part 1, and Destiny Part 2 tabs, so each tab now keeps its own progress." },
+    ],
+  },
+  {
     date: "2026-06-28",
     changes: [
       { type: "added", text: "The HEXA Skill Tracker summary now shows Sol Erda and Sol Erda Fragment icons alongside how much you have accumulated toward the total." },
