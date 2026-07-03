@@ -33,10 +33,18 @@ export interface BossSelection {
   clearedThisWeek: boolean;
 }
 
+interface QuestProgress {
+  questIdx: number;
+  currentTraces: number;
+}
+
 interface SavedState {
   type: LiberationType;
-  currentQuestIdx: number;
-  currentTraces: number;
+  // Per-type quest progress. Older saves stored a single shared
+  // `currentQuestIdx`/`currentTraces` pair; those are migrated on read.
+  progress?: Record<LiberationType, QuestProgress>;
+  currentQuestIdx?: number;
+  currentTraces?: number;
   genesisPass: boolean;
   startDate: string;
   bosses: Record<string, BossSelection>;
@@ -50,6 +58,14 @@ function makeBossKey(type: LiberationType, bossName: string): string {
 
 function defaultSelections(): Record<string, BossSelection> {
   return {};
+}
+
+function emptyProgress(): Record<LiberationType, QuestProgress> {
+  return {
+    genesis: { questIdx: 0, currentTraces: 0 },
+    destiny: { questIdx: 0, currentTraces: 0 },
+    destiny2: { questIdx: 0, currentTraces: 0 },
+  };
 }
 
 export function getSelection(
@@ -331,8 +347,7 @@ function calculate(
 
 interface FormState {
   type: LiberationType;
-  questIdx: number;
-  currentTraces: number;
+  progress: Record<LiberationType, QuestProgress>;
   genesisPass: boolean;
   startDate: string;
   selections: Record<string, BossSelection>;
@@ -341,8 +356,7 @@ interface FormState {
 function defaultFormState(): FormState {
   return {
     type: "genesis",
-    questIdx: 0,
-    currentTraces: 0,
+    progress: emptyProgress(),
     genesisPass: false,
     startDate: utcDateStr(),
     selections: defaultSelections(),
@@ -350,10 +364,21 @@ function defaultFormState(): FormState {
 }
 
 function savedToForm(saved: SavedState): FormState {
+  let progress: Record<LiberationType, QuestProgress>;
+  if (saved.progress) {
+    progress = { ...emptyProgress(), ...saved.progress };
+  } else {
+    // Legacy save: a single shared quest/trace pair. Attribute it to the tab
+    // that was active when it was saved so that tab keeps its progress.
+    progress = emptyProgress();
+    progress[saved.type] = {
+      questIdx: saved.currentQuestIdx ?? 0,
+      currentTraces: saved.currentTraces ?? 0,
+    };
+  }
   return {
     type: saved.type,
-    questIdx: saved.currentQuestIdx,
-    currentTraces: saved.currentTraces,
+    progress,
     genesisPass: saved.genesisPass,
     startDate: saved.startDate,
     selections: saved.bosses,
@@ -363,8 +388,7 @@ function savedToForm(saved: SavedState): FormState {
 function formToSaved(form: FormState): SavedState {
   return {
     type: form.type,
-    currentQuestIdx: form.questIdx,
-    currentTraces: form.currentTraces,
+    progress: form.progress,
     genesisPass: form.genesisPass,
     startDate: form.startDate,
     bosses: form.selections,
@@ -384,7 +408,8 @@ export function useLiberationState() {
 
   const [form, setForm] = useState<FormState>(defaultFormState);
 
-  const { type, questIdx, currentTraces, genesisPass, startDate, selections } = form;
+  const { type, progress, genesisPass, startDate, selections } = form;
+  const { questIdx, currentTraces } = progress[type];
 
   const updateForm = useCallback(
     (updater: (prev: FormState) => FormState) => {
@@ -399,8 +424,14 @@ export function useLiberationState() {
     [selectedCharName],
   );
 
-  const setQuestIdx = useCallback((v: number) => updateForm((f) => ({ ...f, questIdx: v })), [updateForm]);
-  const setCurrentTraces = useCallback((v: number) => updateForm((f) => ({ ...f, currentTraces: v })), [updateForm]);
+  const setQuestIdx = useCallback((v: number) => updateForm((f) => ({
+    ...f,
+    progress: { ...f.progress, [f.type]: { ...f.progress[f.type], questIdx: v } },
+  })), [updateForm]);
+  const setCurrentTraces = useCallback((v: number) => updateForm((f) => ({
+    ...f,
+    progress: { ...f.progress, [f.type]: { ...f.progress[f.type], currentTraces: v } },
+  })), [updateForm]);
   const setGenesisPass = useCallback((updater: (prev: boolean) => boolean) => updateForm((f) => ({ ...f, genesisPass: updater(f.genesisPass) })), [updateForm]);
   const setStartDate = useCallback((v: string) => updateForm((f) => ({ ...f, startDate: v })), [updateForm]);
   const setSelections = useCallback((updater: (prev: Record<string, BossSelection>) => Record<string, BossSelection>) => updateForm((f) => ({ ...f, selections: updater(f.selections) })), [updateForm]);
@@ -495,19 +526,9 @@ export function useLiberationState() {
 
   const switchType = useCallback(
     (t: LiberationType) => {
-      updateForm((f) => {
-        if (f.type === t) return f;
-        let q: LiberationQuest[];
-        if (t === "genesis") q = GENESIS_QUESTS;
-        else if (t === "destiny2") q = DESTINY2_QUESTS;
-        else q = DESTINY_QUESTS;
-        return {
-          ...f,
-          type: t,
-          questIdx: Math.min(f.questIdx, q.length - 1),
-          currentTraces: 0,
-        };
-      });
+      // Each tab keeps its own quest progress, so switching just changes which
+      // slot is active. A misclick on the tabs no longer wipes anything.
+      updateForm((f) => (f.type === t ? f : { ...f, type: t }));
     },
     [updateForm],
   );
