@@ -28,7 +28,8 @@
       "name": "Tienk"
     },
     "0002007": {
-      "name": "Maple Administrator"
+      "name": "Maple Administrator",
+      "spriteFrame": "info.default"
     },
     "0002008": {
       "name": "Sugar"
@@ -190,7 +191,8 @@
       "name": "Tru"
     },
     "1002105": {
-      "name": "Interdimensional Portal"
+      "name": "Interdimensional Portal",
+      "spriteFrame": "info.default"
     },
     "1010100": {
       "name": "Rina"
@@ -283,10 +285,8 @@
       "name": "Growlie"
     },
     "1012115": {
-      "name": "Henesys Forest"
-    },
-    "1012116": {
-      "name": "Henesys Forest"
+      "name": "Henesys Forest",
+      "spriteFrame": "blackShadow.1"
     },
     "1012117": {
       "name": "Big Headward"
@@ -334,7 +334,8 @@
       "name": "Wanted: Zombie Mushmom"
     },
     "1012133": {
-      "name": "Mailbox"
+      "name": "Mailbox",
+      "spriteFrame": "info.default"
     },
     "1012134": {
       "name": "Athena Pierce"
@@ -344,9 +345,6 @@
     },
     "1013001": {
       "name": "Dragon"
-    },
-    "1013002": {
-      "name": "Dragon Nest"
     },
     "1013100": {
       "name": "Anna"
@@ -361,7 +359,8 @@
       "name": "Gustav"
     },
     "1013104": {
-      "name": "Hen"
+      "name": "Hen",
+      "spriteFrame": "info.default"
     },
     "1013105": {
       "name": "Dairy Cow"
@@ -385,7 +384,8 @@
       "name": "Hiver"
     },
     "1013205": {
-      "name": "Afrien"
+      "name": "Afrien",
+      "spriteFrame": "info.default"
     },
     "1013206": {
       "name": "Hiver"
@@ -500,12 +500,6 @@
     },
     "1013357": {
       "name": "Karuppa Town Resident"
-    },
-    "1013358": {
-      "name": "Pathfinder"
-    },
-    "1013359": {
-      "name": "Pathfinder"
     },
     "1013360": {
       "name": "Soul"
@@ -934,10 +928,8 @@
       "name": "Reef"
     },
     "1032109": {
-      "name": "Corner of the Magic Library"
-    },
-    "1032110": {
-      "name": "Corner of the Magic Library"
+      "name": "Corner of the Magic Library",
+      "spriteFrame": "blackShadow.1"
     },
     "1032111": {
       "name": "Small Tree Stump"
@@ -950,9 +942,6 @@
     },
     "1032114": {
       "name": "Power B. Fore"
-    },
-    "1032116": {
-      "name": "Magical Potion Guide"
     },
     "1032200": {
       "name": "Lania"
@@ -1008,15 +997,6 @@
     "1032217": {
       "name": "Lania"
     },
-    "1032218": {
-      "name": "Magic Library Checker"
-    },
-    "1032219": {
-      "name": "Magic Library Checker"
-    },
-    "1032220": {
-      "name": "Magic Library Checker"
-    },
     "1033000": {
       "name": "Hermes"
     },
@@ -1060,7 +1040,8 @@
       "name": "Music Box"
     },
     "1033111": {
-      "name": "Corridor of Knowledge"
+      "name": "Corridor of Knowledge",
+      "spriteFrame": "info.default"
     },
     "1033112": {
       "name": "Mysterious Portal"
@@ -1078,10 +1059,12 @@
       "name": "Vel"
     },
     "1033200": {
-      "name": "Freud"
+      "name": "Freud",
+      "spriteFrame": "info.default"
     },
     "1033201": {
-      "name": "Afrien"
+      "name": "Afrien",
+      "spriteFrame": "info.default"
     },
     "1033202": {
       "name": "Philius"
@@ -1093,7 +1076,8 @@
       "name": "Astilda"
     },
     "1033205": {
-      "name": "Entrance to Elluel"
+      "name": "Entrance to Elluel",
+      "spriteFrame": "info.default"
     },
     "1033206": {
       "name": "Music Box"
@@ -1102,10 +1086,12 @@
       "name": "Great Spirit"
     },
     "1033211": {
-      "name": "Elf\u0027s Harp"
+      "name": "Elf\u0027s Harp",
+      "spriteFrame": "info.default"
     },
     "1033220": {
-      "name": "Fountainhead Pillar"
+      "name": "Fountainhead Pillar",
+      "spriteFrame": "info.default"
     },
     "1033221": {
       "name": "Athena Pierce"
@@ -1140,9 +1126,6 @@
     "1033231": {
       "name": "Moonie"
     },
-    "1033232": {
-      "name": "Athena Pierce"
-    },
     "1033233": {
       "name": "Cutie"
     },
@@ -1171,10 +1154,8 @@
       "name": "a pile of herbs"
     },
     "1043002": {
-      "name": "Empty Wall"
-    },
-    "1043003": {
-      "name": "Blue Bottle"
+      "name": "Empty Wall",
+      "spriteFrame": "q2358.0"
     },
     "1043004": {
       "name": "Talking Tree"
@@ -1273,16 +1254,20 @@
       "name": "Knocked Trash Can"
     },
     "1052109": {
-      "name": "Subway Trash Can"
+      "name": "Subway Trash Can",
+      "spriteFrame": "info.default"
     },
     "1052110": {
-      "name": "Subway Trash Can"
+      "name": "Subway Trash Can",
+      "spriteFrame": "info.default"
     },
     "1052111": {
-      "name": "Subway Trash Can"
+      "name": "Subway Trash Can",
+      "spriteFrame": "info.default"
     },
     "1052112": {
-      "name": "Subway Trash Can"
+      "name": "Subway Trash Can",
+      "spriteFrame": "info.default"
     },
     "1052113": {
       "name": "Power B. Fore"
@@ -1323,9 +1308,6 @@
     "1052125": {
       "name": "June"
     },
-    "1052126": {
-      "name": "Former Dark Lord\u0027s Diary"
-    },
     "1052127": {
       "name": "Dark Lord"
     },
@@ -1333,16 +1315,20 @@
       "name": "Someone\u0027s Hat"
     },
     "1052129": {
-      "name": "Pharmacy Drawer 1"
+      "name": "Pharmacy Drawer 1",
+      "spriteFrame": "info.default"
     },
     "1052130": {
-      "name": "Pharmacy Drawer 2"
+      "name": "Pharmacy Drawer 2",
+      "spriteFrame": "info.default"
     },
     "1052131": {
-      "name": "Pharmacy Drawer 3"
+      "name": "Pharmacy Drawer 3",
+      "spriteFrame": "info.default"
     },
     "1052132": {
-      "name": "Pharmacy Drawer 4"
+      "name": "Pharmacy Drawer 4",
+      "spriteFrame": "info.default"
     },
     "1052133": {
       "name": "Jane Doe"
@@ -1354,7 +1340,8 @@
       "name": "Blake"
     },
     "1052136": {
-      "name": "Elevator"
+      "name": "Elevator",
+      "spriteFrame": "info.default"
     },
     "1052137": {
       "name": "Blake\u0027s Guitar"
@@ -1363,7 +1350,8 @@
       "name": "Jake\u0027s Invitation"
     },
     "1052201": {
-      "name": "Office TV"
+      "name": "Office TV",
+      "spriteFrame": "info.default"
     },
     "1052202": {
       "name": "Office TV"
@@ -1561,10 +1549,12 @@
       "name": "Huey"
     },
     "1058002": {
-      "name": "The Dark Lord\u0027s Diary"
+      "name": "The Dark Lord\u0027s Diary",
+      "spriteFrame": "info.default"
     },
     "1058003": {
-      "name": "Mu Young\u0027s Storage"
+      "name": "Mu Young\u0027s Storage",
+      "spriteFrame": "info.default"
     },
     "1061000": {
       "name": "Chrishrama"
@@ -1668,9 +1658,6 @@
     "1063010": {
       "name": "Wanted : Drake"
     },
-    "1063011": {
-      "name": "Cave Wall of Evil Eye"
-    },
     "1063012": {
       "name": "Shaman Rock"
     },
@@ -1679,9 +1666,6 @@
     },
     "1063014": {
       "name": "Mysterious Piece of Paper"
-    },
-    "1063015": {
-      "name": "Underground Temple Entrance"
     },
     "1063016": {
       "name": "Strange Looking Statue "
@@ -1708,7 +1692,8 @@
       "name": "Havis"
     },
     "1064005": {
-      "name": "Pooki"
+      "name": "Pooki",
+      "spriteFrame": "info.default"
     },
     "1064006": {
       "name": "Tricky"
@@ -1717,7 +1702,8 @@
       "name": "Countess Porkina"
     },
     "1064008": {
-      "name": "Laviola"
+      "name": "Laviola",
+      "spriteFrame": "info.default"
     },
     "1064009": {
       "name": "Disenchanted Pig"
@@ -1729,19 +1715,24 @@
       "name": "Fedric de Blanc"
     },
     "1064012": {
-      "name": "First Seal Door"
+      "name": "First Seal Door",
+      "spriteFrame": "info.default"
     },
     "1064013": {
-      "name": "Second Seal Door"
+      "name": "Second Seal Door",
+      "spriteFrame": "info.default"
     },
     "1064014": {
-      "name": "Third Seal Door"
+      "name": "Third Seal Door",
+      "spriteFrame": "info.default"
     },
     "1064015": {
-      "name": "Fourth Seal Door"
+      "name": "Fourth Seal Door",
+      "spriteFrame": "info.default"
     },
     "1064016": {
-      "name": "Secluded Door"
+      "name": "Secluded Door",
+      "spriteFrame": "info.default"
     },
     "1064017": {
       "name": "Vellum"
@@ -1759,7 +1750,8 @@
       "name": "Kidan"
     },
     "1064022": {
-      "name": "Shinsoo"
+      "name": "Shinsoo",
+      "spriteFrame": "info.default"
     },
     "1064023": {
       "name": "Cygnus"
@@ -1780,7 +1772,8 @@
       "name": "Vellum"
     },
     "1064029": {
-      "name": "Quest Map Exit"
+      "name": "Quest Map Exit",
+      "spriteFrame": "info.default"
     },
     "1064030": {
       "name": "Crimson Queen"
@@ -1789,7 +1782,8 @@
       "name": "Havis"
     },
     "1064032": {
-      "name": "Neglected Garden Entrance"
+      "name": "Neglected Garden Entrance",
+      "spriteFrame": "info.default"
     },
     "1072000": {
       "name": "Stands With Bulls"
@@ -1861,7 +1855,8 @@
       "name": "Irvin"
     },
     "1082102": {
-      "name": "Shady Beach Entrance"
+      "name": "Shady Beach Entrance",
+      "spriteFrame": "info.default"
     },
     "1082200": {
       "name": "Irvin"
@@ -1960,13 +1955,11 @@
       "name": "Water Filter"
     },
     "1092016": {
-      "name": "Shiny Stone"
+      "name": "Shiny Stone",
+      "spriteFrame": "info.default"
     },
     "1092017": {
       "name": "Anonymous Merchant"
-    },
-    "1092018": {
-      "name": "Trash Can"
     },
     "1092019": {
       "name": "Lord Jonathan"
@@ -2000,21 +1993,6 @@
     },
     "1094001": {
       "name": "Abel"
-    },
-    "1094002": {
-      "name": "Bush"
-    },
-    "1094003": {
-      "name": "Bush"
-    },
-    "1094004": {
-      "name": "Bush"
-    },
-    "1094005": {
-      "name": "Bush"
-    },
-    "1094006": {
-      "name": "Bush"
     },
     "1095000": {
       "name": "Shulynch"
@@ -2055,14 +2033,8 @@
     "1096008": {
       "name": "Jr. Balrog"
     },
-    "1096009": {
-      "name": "Cannon Remnants"
-    },
     "1096010": {
       "name": "Ignition Device"
-    },
-    "1096011": {
-      "name": "Balrog Summon Effect"
     },
     "1096012": {
       "name": "After the Cannon Ball Fires"
@@ -2107,7 +2079,8 @@
       "name": "Cygnus"
     },
     "1101001": {
-      "name": "Shinsoo"
+      "name": "Shinsoo",
+      "spriteFrame": "info.default"
     },
     "1101002": {
       "name": "Neinheart"
@@ -2158,7 +2131,8 @@
       "name": "Kisha"
     },
     "1102009": {
-      "name": "Neinheart"
+      "name": "Neinheart",
+      "spriteFrame": "info.default"
     },
     "1102100": {
       "name": "Kiku"
@@ -2299,10 +2273,12 @@
       "name": "Hawkeye"
     },
     "1104208": {
-      "name": "Shinsoo"
+      "name": "Shinsoo",
+      "spriteFrame": "info.default"
     },
     "1104209": {
-      "name": "Altar of Darkness Statue"
+      "name": "Altar of Darkness Statue",
+      "spriteFrame": "info.default"
     },
     "1104300": {
       "name": "Wightmare"
@@ -2311,7 +2287,8 @@
       "name": "Wightmare"
     },
     "1104302": {
-      "name": "Old Book"
+      "name": "Old Book",
+      "spriteFrame": "info.default"
     },
     "1104303": {
       "name": "Cygnus Chief Knight"
@@ -2344,7 +2321,8 @@
       "name": "Neinheart"
     },
     "1104313": {
-      "name": "Shinsoo"
+      "name": "Shinsoo",
+      "spriteFrame": "info.default"
     },
     "1104314": {
       "name": "Francis"
@@ -2413,19 +2391,11 @@
       "name": "Neinheart"
     },
     "1106004": {
-      "name": "Attic Potion Box"
-    },
-    "1106005": {
-      "name": "Jaah"
-    },
-    "1106006": {
-      "name": "Jaah"
+      "name": "Attic Potion Box",
+      "spriteFrame": "info.default"
     },
     "1106007": {
       "name": "Unidentified Assailant"
-    },
-    "1106008": {
-      "name": "Worn Tent"
     },
     "1106009": {
       "name": "Irena"
@@ -2455,7 +2425,8 @@
       "name": "Lilin"
     },
     "1201001": {
-      "name": "Giant Polearm"
+      "name": "Giant Polearm",
+      "spriteFrame": "info.default"
     },
     "1201002": {
       "name": "Maha"
@@ -2529,9 +2500,6 @@
     "1204020": {
       "name": "Nameless"
     },
-    "1204030": {
-      "name": "Storage Bookshelf"
-    },
     "1204031": {
       "name": "???"
     },
@@ -2542,7 +2510,8 @@
       "name": "John\u0027s Box"
     },
     "1205000": {
-      "name": "Afrien"
+      "name": "Afrien",
+      "spriteFrame": "info.default"
     },
     "1209000": {
       "name": "Athena Pierce"
@@ -2562,11 +2531,9 @@
     "1209005": {
       "name": "Refugee"
     },
-    "1209006": {
-      "name": "Lost Kid"
-    },
     "1209007": {
-      "name": "Athena Pierce"
+      "name": "Athena Pierce",
+      "spriteFrame": "info.default"
     },
     "1300000": {
       "name": "Mushking"
@@ -2593,7 +2560,8 @@
       "name": "Scarrs"
     },
     "1300008": {
-      "name": "James"
+      "name": "James",
+      "spriteFrame": "info.default"
     },
     "1300009": {
       "name": "Mushroom Soldier"
@@ -2605,13 +2573,12 @@
       "name": "Thorn Remover"
     },
     "1300012": {
-      "name": "Door to East Castle Tower"
+      "name": "Door to East Castle Tower",
+      "spriteFrame": "info.default"
     },
     "1300013": {
-      "name": "Blocked Entrance"
-    },
-    "1300014": {
-      "name": "SELF"
+      "name": "Blocked Entrance",
+      "spriteFrame": "info.default"
     },
     "1301000": {
       "name": "Thorr"
@@ -2623,7 +2590,8 @@
       "name": "Violetta"
     },
     "1302002": {
-      "name": "Violetta"
+      "name": "Violetta",
+      "spriteFrame": "info.default"
     },
     "1302003": {
       "name": "Violetta"
@@ -2636,12 +2604,6 @@
     },
     "1302007": {
       "name": "Head Security Officer"
-    },
-    "1302008": {
-      "name": "Cannon"
-    },
-    "1302009": {
-      "name": "Cannon"
     },
     "1302010": {
       "name": "Gamma and Omega"
@@ -2682,20 +2644,15 @@
     "1302022": {
       "name": "Thorr"
     },
-    "1302023": {
-      "name": "Jump Pad"
-    },
     "1302024": {
       "name": "Seagull Master"
     },
     "1302025": {
       "name": "Galley"
     },
-    "1302026": {
-      "name": "Wanted"
-    },
     "1302027": {
-      "name": "Gorgeous Rose"
+      "name": "Gorgeous Rose",
+      "spriteFrame": "condition2.stand.0"
     },
     "1302100": {
       "name": "Mushking"
@@ -2749,7 +2706,8 @@
       "name": "Ghostie"
     },
     "1302117": {
-      "name": "Croopa (a fake name)"
+      "name": "Croopa (a fake name)",
+      "spriteFrame": "action.0"
     },
     "1302118": {
       "name": "Spirit Viking"
@@ -2815,16 +2773,20 @@
       "name": "Hawkeye"
     },
     "1402200": {
-      "name": "Kiriga"
+      "name": "Kiriga",
+      "spriteFrame": "info.default"
     },
     "1402201": {
-      "name": "Kidis"
+      "name": "Kidis",
+      "spriteFrame": "info.default"
     },
     "1402202": {
-      "name": "Kiman"
+      "name": "Kiman",
+      "spriteFrame": "info.default"
     },
     "1402203": {
-      "name": "Kibelu"
+      "name": "Kibelu",
+      "spriteFrame": "info.default"
     },
     "1402300": {
       "name": "Mercedes"
@@ -2839,16 +2801,19 @@
       "name": "Hilla\u0027s Guard"
     },
     "1403000": {
-      "name": "Small Cabinet"
+      "name": "Small Cabinet",
+      "spriteFrame": "info.default"
     },
     "1403001": {
-      "name": "Treasure Chest"
+      "name": "Treasure Chest",
+      "spriteFrame": "info.default"
     },
     "1403002": {
       "name": "Guardioso"
     },
     "1403003": {
-      "name": "Portrait"
+      "name": "Portrait",
+      "spriteFrame": "info.default"
     },
     "1403004": {
       "name": "Dust Dwarf"
@@ -2866,7 +2831,8 @@
       "name": "Black Wing Henchman"
     },
     "1404004": {
-      "name": "Pile of Worn Books"
+      "name": "Pile of Worn Books",
+      "spriteFrame": "info.default"
     },
     "1404005": {
       "name": "Lotus"
@@ -2965,13 +2931,16 @@
       "name": "Phiny the Fairy"
     },
     "1500021": {
-      "name": "Hidey Hole"
+      "name": "Hidey Hole",
+      "spriteFrame": "info.default"
     },
     "1500022": {
-      "name": "Fairy Stageplay"
+      "name": "Fairy Stageplay",
+      "spriteFrame": "info.default"
     },
     "1500023": {
-      "name": "Hidey Hole"
+      "name": "Hidey Hole",
+      "spriteFrame": "info.default"
     },
     "1500024": {
       "name": "Noisy Spot"
@@ -2979,17 +2948,24 @@
     "1500025": {
       "name": "Noisy Spot"
     },
+    "1500026": {
+      "name": "???",
+      "spriteFrame": "info.default"
+    },
     "1500027": {
-      "name": "Mole King\u0027s Lair"
+      "name": "Mole King\u0027s Lair",
+      "spriteFrame": "info.default"
     },
     "1500028": {
       "name": "Lyn the Fairy"
     },
     "1500029": {
-      "name": "Schoolboys\u0027 Note"
+      "name": "Schoolboys\u0027 Note",
+      "spriteFrame": "info.default"
     },
     "1500030": {
-      "name": "Schoolgirls\u0027 Note"
+      "name": "Schoolgirls\u0027 Note",
+      "spriteFrame": "info.default"
     },
     "1500031": {
       "name": "Woonie the Fairy"
@@ -3010,7 +2986,8 @@
       "name": "Baby Bird"
     },
     "1501004": {
-      "name": "Shimmer Songbird"
+      "name": "Shimmer Songbird",
+      "spriteFrame": "info.default"
     },
     "1501005": {
       "name": "Renard"
@@ -3103,13 +3080,16 @@
       "name": "Baby Seal"
     },
     "1513000": {
-      "name": "Ship Wreckage 1"
+      "name": "Ship Wreckage 1",
+      "spriteFrame": "info.default"
     },
     "1513001": {
-      "name": "Ship Wreckage 2"
+      "name": "Ship Wreckage 2",
+      "spriteFrame": "info.default"
     },
     "1513002": {
-      "name": "Ship Wreckage 3"
+      "name": "Ship Wreckage 3",
+      "spriteFrame": "info.default"
     },
     "1513003": {
       "name": "School of Fish"
@@ -3181,7 +3161,8 @@
       "name": "Rondo"
     },
     "1520011": {
-      "name": "Interdimensional Portal"
+      "name": "Interdimensional Portal",
+      "spriteFrame": "info.default"
     },
     "1520012": {
       "name": "Tess"
@@ -3260,9 +3241,6 @@
     },
     "1520037": {
       "name": "Rondo"
-    },
-    "1520038": {
-      "name": "Water"
     },
     "1520039": {
       "name": "Lilin"
@@ -3958,13 +3936,16 @@
       "name": "Dust Zone"
     },
     "1530500": {
-      "name": "Photographic Evidence"
+      "name": "Photographic Evidence",
+      "spriteFrame": "info.default"
     },
     "1530501": {
-      "name": "Photographic Evidence"
+      "name": "Photographic Evidence",
+      "spriteFrame": "info.default"
     },
     "1530502": {
-      "name": "Photographic Evidence"
+      "name": "Photographic Evidence",
+      "spriteFrame": "info.default"
     },
     "1530503": {
       "name": "Mug"
@@ -3973,16 +3954,20 @@
       "name": "Water Bottle"
     },
     "1530505": {
-      "name": "Classroom Chalkboard"
+      "name": "Classroom Chalkboard",
+      "spriteFrame": "info.default"
     },
     "1530506": {
-      "name": "Classroom Chalkboard"
+      "name": "Classroom Chalkboard",
+      "spriteFrame": "info.default"
     },
     "1530507": {
-      "name": "Classroom Chalkboard"
+      "name": "Classroom Chalkboard",
+      "spriteFrame": "info.default"
     },
     "1530508": {
-      "name": "Experiment Tool"
+      "name": "Experiment Tool",
+      "spriteFrame": "info.default"
     },
     "1530509": {
       "name": "Lock"
@@ -4097,9 +4082,6 @@
     },
     "1530564": {
       "name": "Elwin"
-    },
-    "1530570": {
-      "name": "Orchid"
     },
     "1530571": {
       "name": "Secret Couple"
@@ -4422,9 +4404,6 @@
     "1530733": {
       "name": "Mihile"
     },
-    "1531000": {
-      "name": "Kinesis"
-    },
     "1531001": {
       "name": "Jay"
     },
@@ -4543,10 +4522,12 @@
       "name": "Dressy Lady"
     },
     "1531040": {
-      "name": "King Omen"
+      "name": "King Omen",
+      "spriteFrame": "wait.0"
     },
     "1531041": {
-      "name": "Vending Machine"
+      "name": "Vending Machine",
+      "spriteFrame": "shop.0"
     },
     "1531042": {
       "name": "Min"
@@ -4611,9 +4592,6 @@
     "1531062": {
       "name": "Grendel the Really Old"
     },
-    "1531063": {
-      "name": "Kinesis"
-    },
     "1531064": {
       "name": "Blue Shirt Guy"
     },
@@ -4632,12 +4610,6 @@
     "1531069": {
       "name": "Yuna"
     },
-    "1531070": {
-      "name": "Jay\u0027s Computer"
-    },
-    "1540000": {
-      "name": "Electronic Display"
-    },
     "1540005": {
       "name": "Popularity Ranking Board"
     },
@@ -4655,9 +4627,6 @@
     },
     "1540011": {
       "name": "Sierra Grace"
-    },
-    "1540012": {
-      "name": "Star Planet Limousine"
     },
     "1540013": {
       "name": "Star Planet Limousine"
@@ -5125,7 +5094,8 @@
       "name": "10 Boogies"
     },
     "1540486": {
-      "name": "Pulverizer"
+      "name": "Pulverizer",
+      "spriteFrame": "stay.0"
     },
     "1540487": {
       "name": "Dropship"
@@ -5158,7 +5128,8 @@
       "name": "Lotus Hologram"
     },
     "1540497": {
-      "name": "Gelimer"
+      "name": "Gelimer",
+      "spriteFrame": "standreal.0"
     },
     "1540498": {
       "name": "Athena Pierce"
@@ -5224,10 +5195,12 @@
       "name": "Bunny Doll x100 Box"
     },
     "1540519": {
-      "name": "Curious Spirit"
+      "name": "Curious Spirit",
+      "spriteFrame": "info.default"
     },
     "1540520": {
-      "name": "Gruff Spirit"
+      "name": "Gruff Spirit",
+      "spriteFrame": "info.default"
     },
     "1540521": {
       "name": "White Mage"
@@ -5297,9 +5270,6 @@
     },
     "1540543": {
       "name": "Wendelline"
-    },
-    "1540544": {
-      "name": "Transparent"
     },
     "1540545": {
       "name": "Alpha"
@@ -5512,7 +5482,8 @@
       "name": "Lotus"
     },
     "1540662": {
-      "name": "Tent"
+      "name": "Tent",
+      "spriteFrame": "info.default"
     },
     "1540663": {
       "name": "One-Eye"
@@ -5542,7 +5513,8 @@
       "name": "Demolishizer Body"
     },
     "1540672": {
-      "name": "Flare"
+      "name": "Flare",
+      "spriteFrame": "appear.2"
     },
     "1540673": {
       "name": "Flare"
@@ -5623,7 +5595,8 @@
       "name": "Guwaru"
     },
     "1540708": {
-      "name": "Puzzle Directions"
+      "name": "Puzzle Directions",
+      "spriteFrame": "info.default"
     },
     "1540709": {
       "name": "Orchid"
@@ -5653,7 +5626,8 @@
       "name": "Lever"
     },
     "1540718": {
-      "name": "Hidden Entrance"
+      "name": "Hidden Entrance",
+      "spriteFrame": "open.0"
     },
     "1540719": {
       "name": "Elevator Entrance"
@@ -5674,16 +5648,20 @@
       "name": "Admiral Martini"
     },
     "1540725": {
-      "name": "Gelimer\u0027s Documents 1"
+      "name": "Gelimer\u0027s Documents 1",
+      "spriteFrame": "info.default"
     },
     "1540726": {
-      "name": "Gelimer\u0027s Documents 2"
+      "name": "Gelimer\u0027s Documents 2",
+      "spriteFrame": "info.default"
     },
     "1540727": {
-      "name": "Gelimer\u0027s Documents 3"
+      "name": "Gelimer\u0027s Documents 3",
+      "spriteFrame": "info.default"
     },
     "1540728": {
-      "name": "Lab Light Switch"
+      "name": "Lab Light Switch",
+      "spriteFrame": "info.default"
     },
     "1540729": {
       "name": "Cygnus"
@@ -5695,33 +5673,6 @@
       "name": "Triple Lock Door"
     },
     "1540732": {
-      "name": "Neinheart"
-    },
-    "1540733": {
-      "name": "Gupi"
-    },
-    "1540734": {
-      "name": "Dolpi"
-    },
-    "1540735": {
-      "name": "Lepi"
-    },
-    "1540736": {
-      "name": "Athena Pierce"
-    },
-    "1540737": {
-      "name": "Claudine"
-    },
-    "1540738": {
-      "name": "Belle"
-    },
-    "1540739": {
-      "name": "Brighton"
-    },
-    "1540740": {
-      "name": "Orchid"
-    },
-    "1540741": {
       "name": "Neinheart"
     },
     "1540742": {
@@ -5746,7 +5697,8 @@
       "name": "Fallen Platform"
     },
     "1540749": {
-      "name": "Falling Pulverizer"
+      "name": "Falling Pulverizer",
+      "spriteFrame": "drop.15"
     },
     "1540751": {
       "name": "Android"
@@ -5763,20 +5715,8 @@
     "1540755": {
       "name": "Xenoroid B"
     },
-    "1540756": {
-      "name": "Target Board"
-    },
     "1540757": {
       "name": "Container"
-    },
-    "1540758": {
-      "name": "Young Irvin"
-    },
-    "1540759": {
-      "name": "Young Martini"
-    },
-    "1540760": {
-      "name": "Young Geilmer"
     },
     "1540761": {
       "name": "Bomb"
@@ -5789,15 +5729,6 @@
     },
     "1540764": {
       "name": "Athena Pierce"
-    },
-    "1540765": {
-      "name": "Gupi"
-    },
-    "1540766": {
-      "name": "Dolpi"
-    },
-    "1540767": {
-      "name": "Lepi"
     },
     "1540768": {
       "name": "Gupi"
@@ -5819,9 +5750,6 @@
     },
     "1540784": {
       "name": "Evan"
-    },
-    "1540786": {
-      "name": "Mir"
     },
     "1540788": {
       "name": "Display cloud"
@@ -5910,9 +5838,6 @@
     "1540819": {
       "name": "Alicia"
     },
-    "1540820": {
-      "name": "Afrien"
-    },
     "1540821": {
       "name": "Afrien\u0027s Eye"
     },
@@ -5976,17 +5901,11 @@
     "1540841": {
       "name": "Demon Officer"
     },
-    "1540842": {
-      "name": "???"
-    },
     "1540843": {
       "name": "???"
     },
     "1540845": {
       "name": "Arkarium"
-    },
-    "1540846": {
-      "name": "???"
     },
     "1540847": {
       "name": "Wolf Dog"
@@ -5998,7 +5917,8 @@
       "name": "Ruins Scorpion"
     },
     "1540850": {
-      "name": "Damien\u0027s Mother"
+      "name": "Damien\u0027s Mother",
+      "spriteFrame": "loop.0"
     },
     "1540851": {
       "name": "Kapus"
@@ -6219,29 +6139,8 @@
     "1540925": {
       "name": "Dark Demon Wolfmaster"
     },
-    "1540926": {
-      "name": "Damien"
-    },
-    "1540927": {
-      "name": "The Demon"
-    },
-    "1540928": {
-      "name": "Arkarium"
-    },
-    "1540929": {
-      "name": "Hilla"
-    },
-    "1540930": {
-      "name": "Spirit of Vengeance"
-    },
     "1540931": {
       "name": "Alicia"
-    },
-    "1540933": {
-      "name": "Arkarium"
-    },
-    "1540934": {
-      "name": "Damien"
     },
     "1540935": {
       "name": "Alicia"
@@ -6352,7 +6251,8 @@
       "name": "Athena Pierce"
     },
     "1541028": {
-      "name": "Forest"
+      "name": "Forest",
+      "spriteFrame": "info.illustration2.face.0"
     },
     "1541029": {
       "name": "Destonen"
@@ -6366,96 +6266,6 @@
     "1541032": {
       "name": "Kyrin"
     },
-    "1541033": {
-      "name": "Beginner"
-    },
-    "1541034": {
-      "name": "Beginner"
-    },
-    "1541035": {
-      "name": "Hero"
-    },
-    "1541036": {
-      "name": "Hero"
-    },
-    "1541037": {
-      "name": "Paladin"
-    },
-    "1541038": {
-      "name": "Paladin"
-    },
-    "1541039": {
-      "name": "Dark Knight"
-    },
-    "1541040": {
-      "name": "Dark Knight"
-    },
-    "1541041": {
-      "name": "Arch Mage"
-    },
-    "1541042": {
-      "name": "Arch Mage"
-    },
-    "1541043": {
-      "name": "Arch Mage"
-    },
-    "1541044": {
-      "name": "Arch Mage"
-    },
-    "1541045": {
-      "name": "Bishop"
-    },
-    "1541046": {
-      "name": "Bishop"
-    },
-    "1541047": {
-      "name": "Marksman"
-    },
-    "1541048": {
-      "name": "Marksman"
-    },
-    "1541049": {
-      "name": "Bow Master"
-    },
-    "1541050": {
-      "name": "Bow Master"
-    },
-    "1541051": {
-      "name": "Shadower"
-    },
-    "1541052": {
-      "name": "Shadower"
-    },
-    "1541053": {
-      "name": "Night Lord"
-    },
-    "1541054": {
-      "name": "Night Lord"
-    },
-    "1541055": {
-      "name": "Dual Blade"
-    },
-    "1541056": {
-      "name": "Dual Blade"
-    },
-    "1541057": {
-      "name": "Buccaneer"
-    },
-    "1541058": {
-      "name": "Buccaneer"
-    },
-    "1541059": {
-      "name": "Corsair"
-    },
-    "1541060": {
-      "name": "Corsair"
-    },
-    "1541061": {
-      "name": "Cannoneer"
-    },
-    "1541062": {
-      "name": "Cannoneer"
-    },
     "1541063": {
       "name": "Mysterious Voice"
     },
@@ -6467,12 +6277,6 @@
     },
     "1541066": {
       "name": "Messages"
-    },
-    "1541067": {
-      "name": "Forest"
-    },
-    "1541068": {
-      "name": "Maple Tree"
     },
     "1541069": {
       "name": "Goddess of Maple World"
@@ -6595,16 +6399,14 @@
       "name": "Kinu"
     },
     "1541127": {
-      "name": "Shinsoo"
+      "name": "Shinsoo",
+      "spriteFrame": "info.default"
     },
     "1541130": {
       "name": "Cygnus"
     },
     "1541131": {
       "name": "Cygnus"
-    },
-    "1541132": {
-      "name": "Shinsoo"
     },
     "1541133": {
       "name": "Neinheart"
@@ -6702,9 +6504,6 @@
     "1541165": {
       "name": "Black Wing Henchman"
     },
-    "1541166": {
-      "name": "???"
-    },
     "1541167": {
       "name": "Black Wing Henchman"
     },
@@ -6734,12 +6533,6 @@
     },
     "1541176": {
       "name": "Weirdo Horny Mushroom"
-    },
-    "1541177": {
-      "name": "Noblesse"
-    },
-    "1541178": {
-      "name": "Noblesse"
     },
     "1541179": {
       "name": "Dark Cygnus"
@@ -6812,9 +6605,6 @@
     },
     "1541217": {
       "name": "Ereve Elder"
-    },
-    "1541218": {
-      "name": "Shinsoo"
     },
     "1541219": {
       "name": "10 Boogies"
@@ -6932,9 +6722,6 @@
     },
     "1541257": {
       "name": "Photo"
-    },
-    "1541258": {
-      "name": "Mihile"
     },
     "1541259": {
       "name": "Mihile"
@@ -7083,23 +6870,11 @@
     "1541319": {
       "name": "Orchid"
     },
-    "1541321": {
-      "name": "Sleepywood Ruin"
-    },
-    "1541322": {
-      "name": "Sleepywood Ruin"
-    },
-    "1541323": {
-      "name": "Sleepywood Ruin"
-    },
     "1541324": {
       "name": "Grendel the Really Old"
     },
     "1541325": {
       "name": "Shade"
-    },
-    "1541326": {
-      "name": "Suspicious Ice Chunk"
     },
     "1541330": {
       "name": "Freud"
@@ -7155,12 +6930,6 @@
     "1541349": {
       "name": "Flower"
     },
-    "1541400": {
-      "name": "Aran"
-    },
-    "1541401": {
-      "name": "Aran"
-    },
     "1541402": {
       "name": "Maha"
     },
@@ -7209,20 +6978,8 @@
     "1541417": {
       "name": "Werewolf"
     },
-    "1541418": {
-      "name": "Shade"
-    },
-    "1541419": {
-      "name": "Luminous"
-    },
-    "1541420": {
-      "name": "Phantom"
-    },
     "1541421": {
       "name": "Seal Stone"
-    },
-    "1541422": {
-      "name": "???"
     },
     "1541423": {
       "name": "Black Wing Henchman"
@@ -7273,7 +7030,8 @@
       "name": "Christmas Tree"
     },
     "2001008": {
-      "name": "Christmas Tree"
+      "name": "Christmas Tree",
+      "spriteFrame": "info.default"
     },
     "2002000": {
       "name": "Rupi"
@@ -7390,7 +7148,8 @@
       "name": "Pelace"
     },
     "2012023": {
-      "name": "Maple Leaf Marble"
+      "name": "Maple Leaf Marble",
+      "spriteFrame": "info.default"
     },
     "2012024": {
       "name": "Egnet"
@@ -7400,27 +7159,6 @@
     },
     "2012026": {
       "name": "Elliza"
-    },
-    "2012027": {
-      "name": "Harp String \u003CC\u003E"
-    },
-    "2012028": {
-      "name": "Harp String \u003CD\u003E"
-    },
-    "2012029": {
-      "name": "Harp String \u003CE\u003E"
-    },
-    "2012030": {
-      "name": "Harp String \u003CF\u003E"
-    },
-    "2012031": {
-      "name": "Harp String \u003CG\u003E"
-    },
-    "2012032": {
-      "name": "Harp String \u003CA\u003E"
-    },
-    "2012033": {
-      "name": "Harp String \u003CB\u003E"
     },
     "2012034": {
       "name": "Hidden Brick"
@@ -7433,9 +7171,6 @@
     },
     "2012038": {
       "name": "Daedal"
-    },
-    "2012039": {
-      "name": "Old Altar"
     },
     "2012040": {
       "name": "Daedal"
@@ -7519,19 +7254,23 @@
       "name": "Tylus"
     },
     "2022005": {
-      "name": "Shammos"
+      "name": "Shammos",
+      "spriteFrame": "info.default"
     },
     "2022006": {
-      "name": "Message from Shammos"
+      "name": "Message from Shammos",
+      "spriteFrame": "info.default"
     },
     "2022007": {
-      "name": "Glacial Water"
+      "name": "Glacial Water",
+      "spriteFrame": "info.default"
     },
     "2022008": {
       "name": "Rex"
     },
     "2022009": {
-      "name": "Shammos"
+      "name": "Shammos",
+      "spriteFrame": "info.default"
     },
     "2023000": {
       "name": "Danger Zone Taxi"
@@ -8034,9 +7773,6 @@
     "2052027": {
       "name": "Jenny"
     },
-    "2052028": {
-      "name": "Luggage"
-    },
     "2052029": {
       "name": "Barnard Gray"
     },
@@ -8053,10 +7789,12 @@
       "name": "Nolyfe"
     },
     "2052034": {
-      "name": "Ventilation Ducts"
+      "name": "Ventilation Ducts",
+      "spriteFrame": "info.default"
     },
     "2052035": {
-      "name": "Ventilation Ducts"
+      "name": "Ventilation Ducts",
+      "spriteFrame": "info.default"
     },
     "2052036": {
       "name": "Jenny"
@@ -8065,7 +7803,8 @@
       "name": "Jenny"
     },
     "2052038": {
-      "name": "Parachute"
+      "name": "Parachute",
+      "spriteFrame": "special.15"
     },
     "2052039": {
       "name": "Parachute"
@@ -8284,7 +8023,8 @@
       "name": "Moni"
     },
     "2074020": {
-      "name": "Nolbu\u0027s House"
+      "name": "Nolbu\u0027s House",
+      "spriteFrame": "info.default"
     },
     "2074021": {
       "name": "Qing Merchant"
@@ -8320,7 +8060,8 @@
       "name": "Kong Ji"
     },
     "2074032": {
-      "name": "Kong Ji\u0027s House"
+      "name": "Kong Ji\u0027s House",
+      "spriteFrame": "info.default"
     },
     "2074033": {
       "name": "Cave Entrance"
@@ -8419,7 +8160,8 @@
       "name": "Seolie"
     },
     "2074117": {
-      "name": "Pear"
+      "name": "Pear",
+      "spriteFrame": "info.default"
     },
     "2074118": {
       "name": "Shim Chung"
@@ -8444,9 +8186,6 @@
     },
     "2074125": {
       "name": "Seolie"
-    },
-    "2074126": {
-      "name": "Tree"
     },
     "2074127": {
       "name": "God of Mountains"
@@ -8577,7 +8316,6 @@
     "2079003": {
       "name": "Job Ranking List"
     },
-    "2079100": {},
     "2080000": {
       "name": "Mos"
     },
@@ -8648,7 +8386,8 @@
       "name": "Nix"
     },
     "2081013": {
-      "name": "Frightening Marble"
+      "name": "Frightening Marble",
+      "spriteFrame": "info.default"
     },
     "2081014": {
       "name": "Dunamis"
@@ -8741,10 +8480,12 @@
       "name": "Fountain of Life"
     },
     "2083006": {
-      "name": "Time Gate"
+      "name": "Time Gate",
+      "spriteFrame": "info.default"
     },
     "2083007": {
-      "name": "Time Gate"
+      "name": "Time Gate",
+      "spriteFrame": "info.default"
     },
     "2084000": {
       "name": "Gold Compass"
@@ -8777,7 +8518,8 @@
       "name": "Crimson Sky Doorway"
     },
     "2085002": {
-      "name": "Crimson Sky Doorway"
+      "name": "Crimson Sky Doorway",
+      "spriteFrame": "info.default"
     },
     "2085003": {
       "name": "Dragon Rider"
@@ -8840,10 +8582,12 @@
       "name": "Mu Lung Dojo Bulletin Board"
     },
     "2091007": {
-      "name": "Mu Gong"
+      "name": "Mu Gong",
+      "spriteFrame": "info.default"
     },
     "2091008": {
-      "name": "Jin Jin"
+      "name": "Jin Jin",
+      "spriteFrame": "info.default"
     },
     "2091009": {
       "name": "Entrance of Sealed Shrine"
@@ -8942,10 +8686,12 @@
       "name": "Calm Grizzly"
     },
     "2091127": {
-      "name": "Gold Dragon Dojo"
+      "name": "Gold Dragon Dojo",
+      "spriteFrame": "info.default"
     },
     "2091128": {
-      "name": "Red Tiger Dojo"
+      "name": "Red Tiger Dojo",
+      "spriteFrame": "info.default"
     },
     "2091129": {
       "name": "Red Tiger Gate"
@@ -8984,10 +8730,12 @@
       "name": "Timmy"
     },
     "2091141": {
-      "name": "Gold Dragon Dojo"
+      "name": "Gold Dragon Dojo",
+      "spriteFrame": "info.default"
     },
     "2091142": {
-      "name": "Red Tiger Dojo"
+      "name": "Red Tiger Dojo",
+      "spriteFrame": "info.default"
     },
     "2091143": {
       "name": "La Me"
@@ -9027,15 +8775,6 @@
     },
     "2094002": {
       "name": "Guon"
-    },
-    "2094003": {
-      "name": "For Checking"
-    },
-    "2094004": {
-      "name": "For Checking"
-    },
-    "2094005": {
-      "name": "For Checking"
     },
     "2095000": {
       "name": "Delli"
@@ -9146,43 +8885,19 @@
       "name": "Syras"
     },
     "2103000": {
-      "name": "Palace Oasis"
+      "name": "Palace Oasis",
+      "spriteFrame": "info.default"
     },
     "2103001": {
-      "name": "Secret Wall"
+      "name": "Secret Wall",
+      "spriteFrame": "info.default"
     },
     "2103002": {
-      "name": "Queen\u0027s Cabinet"
-    },
-    "2103003": {
-      "name": "Ariant Private House1"
-    },
-    "2103004": {
-      "name": "Ariant Private House2"
-    },
-    "2103005": {
-      "name": "Ariant Private House4"
-    },
-    "2103006": {
-      "name": "Ariant Private House6"
+      "name": "Queen\u0027s Cabinet",
+      "spriteFrame": "info.default"
     },
     "2103007": {
       "name": "Treasure Box"
-    },
-    "2103008": {
-      "name": "Mysterious Voice"
-    },
-    "2103009": {
-      "name": "Ariant Private House1 Cupboard"
-    },
-    "2103010": {
-      "name": "Ariant Private House2 Cupboard"
-    },
-    "2103011": {
-      "name": "Ariant Private House4 Cupboard"
-    },
-    "2103012": {
-      "name": "Ariant Private House6 Cupboard"
     },
     "2103013": {
       "name": "Duarte"
@@ -9286,50 +9001,32 @@
     "2111009": {
       "name": "Russellon"
     },
-    "2111010": {
-      "name": "Alcadno\u0027s Cabinet"
-    },
-    "2111011": {
-      "name": "Wall"
-    },
-    "2111012": {
-      "name": "Cabinet"
-    },
-    "2111013": {
-      "name": "Picture Frame"
-    },
     "2111014": {
-      "name": "Desk"
+      "name": "Desk",
+      "spriteFrame": "info.0"
     },
     "2111015": {
-      "name": "Russellon\u0027s Desk"
+      "name": "Russellon\u0027s Desk",
+      "spriteFrame": "info.default"
     },
     "2111016": {
       "name": "Dr. De Lang\u0027s Secret Book"
     },
-    "2111017": {
-      "name": "1st Pipe Handle"
-    },
-    "2111018": {
-      "name": "2nd Pipe Handle"
-    },
-    "2111019": {
-      "name": "3rd Pipe Handle"
-    },
     "2111020": {
-      "name": "1st Magic Pentagram"
+      "name": "1st Magic Pentagram",
+      "spriteFrame": "act33451.0"
     },
     "2111021": {
-      "name": "2nd Magic Pentagram"
+      "name": "2nd Magic Pentagram",
+      "spriteFrame": "act33452.0"
     },
     "2111022": {
-      "name": "3rd Magic Pentagram"
+      "name": "3rd Magic Pentagram",
+      "spriteFrame": "act33453.0"
     },
     "2111023": {
-      "name": "Center of the Magic Pentagram"
-    },
-    "2111024": {
-      "name": "Secret Passage"
+      "name": "Center of the Magic Pentagram",
+      "spriteFrame": "act33454.0"
     },
     "2111025": {
       "name": "Control Device"
@@ -9361,9 +9058,6 @@
     "2112006": {
       "name": "Romeo"
     },
-    "2112007": {
-      "name": "Investigation Result"
-    },
     "2112008": {
       "name": "Juliet"
     },
@@ -9379,20 +9073,11 @@
     "2112012": {
       "name": "Yulete"
     },
-    "2112013": {
-      "name": "Investigation Result"
-    },
     "2112014": {
       "name": "Yulete"
     },
     "2112015": {
       "name": "Yulete"
-    },
-    "2112016": {
-      "name": "Hidden Documents"
-    },
-    "2112017": {
-      "name": "Dropped Piece of Paper"
     },
     "2112018": {
       "name": "Romeo \u0026 Juliet"
@@ -9443,34 +9128,42 @@
       "name": "Joey"
     },
     "2120015": {
-      "name": "Haunted Mansion Center Mirror"
+      "name": "Haunted Mansion Center Mirror",
+      "spriteFrame": "info.default"
     },
     "2120016": {
-      "name": "Guest Room Exit"
+      "name": "Guest Room Exit",
+      "spriteFrame": "info.default"
     },
     "2120017": {
       "name": "Masked Gentleman"
     },
     "2120018": {
-      "name": "Empty Cabinet"
+      "name": "Empty Cabinet",
+      "spriteFrame": "info.default"
     },
     "2120019": {
-      "name": "Empty Cabinet"
+      "name": "Empty Cabinet",
+      "spriteFrame": "info.default"
     },
     "2120020": {
       "name": "Empty Cabinet"
     },
     "2120021": {
-      "name": "Empty Cabinet"
+      "name": "Empty Cabinet",
+      "spriteFrame": "info.default"
     },
     "2120022": {
-      "name": "Empty Cabinet"
+      "name": "Empty Cabinet",
+      "spriteFrame": "info.default"
     },
     "2120023": {
-      "name": "Empty Cabinet"
+      "name": "Empty Cabinet",
+      "spriteFrame": "info.default"
     },
     "2120024": {
-      "name": "Empty Cabinet"
+      "name": "Empty Cabinet",
+      "spriteFrame": "info.default"
     },
     "2120025": {
       "name": "Spin Man"
@@ -9506,76 +9199,93 @@
       "name": "Nameless Cat"
     },
     "2121001": {
-      "name": "A Grave with a Collapsed Gravestone"
+      "name": "A Grave with a Collapsed Gravestone",
+      "spriteFrame": "info.default"
     },
     "2121002": {
-      "name": "Nameless Grave"
+      "name": "Nameless Grave",
+      "spriteFrame": "info.default"
     },
     "2121003": {
-      "name": "Unvisited Grave"
+      "name": "Unvisited Grave",
+      "spriteFrame": "info.default"
     },
     "2121004": {
-      "name": "Somebody\u0027s Grave"
+      "name": "Somebody\u0027s Grave",
+      "spriteFrame": "info.default"
     },
     "2121005": {
       "name": "Piano"
     },
     "2121006": {
-      "name": "Someone\u0027s Picture Frame 1"
+      "name": "Someone\u0027s Picture Frame 1",
+      "spriteFrame": "info.default"
     },
     "2121007": {
-      "name": "Someone\u0027s Picture Frame 2"
+      "name": "Someone\u0027s Picture Frame 2",
+      "spriteFrame": "info.default"
     },
     "2121008": {
-      "name": "Someone\u0027s Picture Frame 3"
+      "name": "Someone\u0027s Picture Frame 3",
+      "spriteFrame": "info.default"
     },
     "2121009": {
-      "name": "Someone\u0027s Picture Frame 4"
+      "name": "Someone\u0027s Picture Frame 4",
+      "spriteFrame": "info.default"
     },
     "2121010": {
-      "name": "Someone\u0027s Picture Frame 5"
+      "name": "Someone\u0027s Picture Frame 5",
+      "spriteFrame": "info.default"
     },
     "2121011": {
-      "name": "Sophelia\u0027s Picture Frame"
+      "name": "Sophelia\u0027s Picture Frame",
+      "spriteFrame": "info.default"
     },
     "2121012": {
       "name": "A Girl Dressed In Her Halloween Outfit"
     },
     "2121013": {
-      "name": "Old Newspaper"
+      "name": "Old Newspaper",
+      "spriteFrame": "info.default"
     },
     "2121014": {
-      "name": "Mysterious Graffiti"
+      "name": "Mysterious Graffiti",
+      "spriteFrame": "info.default"
     },
     "2121015": {
-      "name": "Old Brooch"
+      "name": "Old Brooch",
+      "spriteFrame": "info.default"
     },
     "2121016": {
-      "name": "Faceless Portrait"
+      "name": "Faceless Portrait",
+      "spriteFrame": "info.default"
     },
     "2121017": {
-      "name": "Broken Carriage"
+      "name": "Broken Carriage",
+      "spriteFrame": "info.default"
     },
     "2121018": {
-      "name": "Trashed Hair"
+      "name": "Trashed Hair",
+      "spriteFrame": "info.default"
     },
     "2121019": {
-      "name": "Piled Documents"
+      "name": "Piled Documents",
+      "spriteFrame": "info.default"
     },
     "2121020": {
       "name": "Masked Gentleman"
     },
-    "2121021": {
-      "name": "Strange Attraction"
-    },
     "2121022": {
-      "name": "Dress Chest"
+      "name": "Dress Chest",
+      "spriteFrame": "info.default"
     },
     "2121023": {
-      "name": "Missing Portrait"
+      "name": "Missing Portrait",
+      "spriteFrame": "info.default"
     },
     "2121024": {
-      "name": "Gloomy Mask"
+      "name": "Gloomy Mask",
+      "spriteFrame": "info.default"
     },
     "2121025": {
       "name": "Haunted Mansion Invitation"
@@ -9616,20 +9326,8 @@
     "2131010": {
       "name": "Destonen"
     },
-    "2131011": {
-      "name": "Floating Rock Fragment"
-    },
-    "2131012": {
-      "name": "Big Mushroom"
-    },
-    "2131013": {
-      "name": "Flower Bloomed in Mushroom Hill"
-    },
     "2131014": {
       "name": "Sion"
-    },
-    "2131015": {
-      "name": "Flower Bloomed in Mushroom Hill"
     },
     "2131016": {
       "name": "Baby Kyrin"
@@ -9656,16 +9354,19 @@
       "name": "Ellin Forest Sign"
     },
     "2133003": {
-      "name": "Wooden Desk"
+      "name": "Wooden Desk",
+      "spriteFrame": "info.default"
     },
     "2133004": {
       "name": "Spright"
     },
     "2133005": {
-      "name": "Cave Entrance"
+      "name": "Cave Entrance",
+      "spriteFrame": "info.default"
     },
     "2133006": {
-      "name": "Ephenia\u0027s Hiding Place"
+      "name": "Ephenia\u0027s Hiding Place",
+      "spriteFrame": "info.default"
     },
     "2133007": {
       "name": "Ephenia"
@@ -9733,21 +9434,6 @@
     "2135006": {
       "name": "Master Pirate"
     },
-    "2135007": {
-      "name": "Red Nirg\u0027s Rune"
-    },
-    "2135008": {
-      "name": "Margana\u0027s Rune"
-    },
-    "2135009": {
-      "name": "Rellik\u0027s Rune"
-    },
-    "2135010": {
-      "name": "Hsalf\u0027s Rune"
-    },
-    "2135011": {
-      "name": "Gawyllacs\u0027s Rune"
-    },
     "2135012": {
       "name": "Warrior Weapon Dummy"
     },
@@ -9791,7 +9477,8 @@
       "name": "Amnesiac Temple Keeper"
     },
     "2140008": {
-      "name": "Johanna"
+      "name": "Johanna",
+      "spriteFrame": "info.default"
     },
     "2140009": {
       "name": "Strange Ornate Chest"
@@ -9977,13 +9664,16 @@
       "name": "Neinheart"
     },
     "2143002": {
-      "name": "Shinsoo"
+      "name": "Shinsoo",
+      "spriteFrame": "info.default"
     },
     "2143003": {
-      "name": "Informant"
+      "name": "Informant",
+      "spriteFrame": "info.default"
     },
     "2143004": {
-      "name": "Another Informant"
+      "name": "Another Informant",
+      "spriteFrame": "info.default"
     },
     "2143100": {
       "name": "Cygnus"
@@ -10031,7 +9721,8 @@
       "name": "Maha"
     },
     "2144006": {
-      "name": "Afrien"
+      "name": "Afrien",
+      "spriteFrame": "info.default"
     },
     "2144007": {
       "name": "Onyx Dragon Egg"
@@ -10064,10 +9755,12 @@
       "name": "Rhinne"
     },
     "2144017": {
-      "name": "Netherworld Altar Statue"
+      "name": "Netherworld Altar Statue",
+      "spriteFrame": "info.default"
     },
     "2144018": {
-      "name": "Netherworld Altar Statue"
+      "name": "Netherworld Altar Statue",
+      "spriteFrame": "info.default"
     },
     "2144019": {
       "name": "Arkarium"
@@ -10133,7 +9826,8 @@
       "name": "Wendelline"
     },
     "2151007": {
-      "name": "Elevator Control"
+      "name": "Elevator Control",
+      "spriteFrame": "info.default"
     },
     "2151008": {
       "name": "Black Jack"
@@ -10220,7 +9914,8 @@
       "name": "Von"
     },
     "2153004": {
-      "name": "Black Portal"
+      "name": "Black Portal",
+      "spriteFrame": "info.default"
     },
     "2153005": {
       "name": "Vita"
@@ -10277,7 +9972,8 @@
       "name": "Unnamed Skeleton"
     },
     "2154015": {
-      "name": "Elevator Control"
+      "name": "Elevator Control",
+      "spriteFrame": "info.default"
     },
     "2154016": {
       "name": "Von"
@@ -10337,13 +10033,15 @@
       "name": "One-Eye\u0027s Letter"
     },
     "2155103": {
-      "name": "Deep Ground"
+      "name": "Deep Ground",
+      "spriteFrame": "info.default"
     },
     "2155104": {
       "name": "Dummie"
     },
     "2155105": {
-      "name": "Hidden Door"
+      "name": "Hidden Door",
+      "spriteFrame": "open.0"
     },
     "2155106": {
       "name": "Patrolbot"
@@ -10438,12 +10136,6 @@
     "2159005": {
       "name": "Von"
     },
-    "2159006": {
-      "name": "Vita"
-    },
-    "2159007": {
-      "name": "Vita"
-    },
     "2159008": {
       "name": "Schiller"
     },
@@ -10454,7 +10146,8 @@
       "name": "J"
     },
     "2159011": {
-      "name": "Suspicious Hollow"
+      "name": "Suspicious Hollow",
+      "spriteFrame": "info.default"
     },
     "2159012": {
       "name": "Gelimer"
@@ -10520,7 +10213,8 @@
       "name": "Buck Teeth"
     },
     "2159304": {
-      "name": "Suspicious Entrance"
+      "name": "Suspicious Entrance",
+      "spriteFrame": "info.default"
     },
     "2159305": {
       "name": "Wonny"
@@ -10591,12 +10285,6 @@
     "2159327": {
       "name": "Francis\u0027s Diary"
     },
-    "2159328": {
-      "name": "Burnt Remains 1"
-    },
-    "2159329": {
-      "name": "Burnt Remains 2"
-    },
     "2159330": {
       "name": "Shiny Pendant"
     },
@@ -10620,9 +10308,6 @@
     },
     "2159337": {
       "name": "Dodo"
-    },
-    "2159338": {
-      "name": "Quest Check NPC"
     },
     "2159339": {
       "name": "Orchid"
@@ -10802,10 +10487,12 @@
       "name": "Black Wings Lackey"
     },
     "2159398": {
-      "name": "Desk"
+      "name": "Desk",
+      "spriteFrame": "info.default"
     },
     "2159399": {
-      "name": "Roo-D"
+      "name": "Roo-D",
+      "spriteFrame": "info.default"
     },
     "2159400": {
       "name": "Roo-D"
@@ -10847,7 +10534,8 @@
       "name": "???"
     },
     "2159413": {
-      "name": ""
+      "name": "",
+      "spriteFrame": "teleportation.5"
     },
     "2159414": {
       "name": "???"
@@ -10910,7 +10598,8 @@
       "name": "Fattie"
     },
     "2159434": {
-      "name": "Shabby Payphone"
+      "name": "Shabby Payphone",
+      "spriteFrame": "info.default"
     },
     "2159435": {
       "name": "Puppeteer"
@@ -10963,9 +10652,6 @@
     "2159451": {
       "name": "Evan"
     },
-    "2159452": {
-      "name": "Shady Beach"
-    },
     "2159453": {
       "name": "Lilin"
     },
@@ -10981,17 +10667,9 @@
     "2159457": {
       "name": "Aran"
     },
-    "2159458": {
-      "name": "Igloo"
-    },
-    "2159459": {
-      "name": "Igloo"
-    },
-    "2159460": {
-      "name": "Igloo"
-    },
     "2159461": {
-      "name": "Treasure Chest"
+      "name": "Treasure Chest",
+      "spriteFrame": "info.default"
     },
     "2159462": {
       "name": "Guardioso"
@@ -11237,7 +10915,8 @@
       "name": "???"
     },
     "2159597": {
-      "name": "???"
+      "name": "???",
+      "spriteFrame": "mon1.0"
     },
     "2159598": {
       "name": "Lora"
@@ -11306,7 +10985,8 @@
       "name": "Murt"
     },
     "2161005": {
-      "name": "Lion King Guardian Statue"
+      "name": "Lion King Guardian Statue",
+      "spriteFrame": "info.default"
     },
     "2161006": {
       "name": "Luden"
@@ -11321,7 +11001,8 @@
       "name": "Ifia"
     },
     "2161010": {
-      "name": "Luden"
+      "name": "Luden",
+      "spriteFrame": "info.default"
     },
     "2161011": {
       "name": "Von Leon"
@@ -11396,10 +11077,12 @@
       "name": "Michael"
     },
     "2170006": {
-      "name": "Coliseum"
+      "name": "Coliseum",
+      "spriteFrame": "info.default"
     },
     "2170007": {
-      "name": "Coliseum"
+      "name": "Coliseum",
+      "spriteFrame": "info.default"
     },
     "2170016": {
       "name": "Michaela"
@@ -11441,7 +11124,8 @@
       "name": "Longorias"
     },
     "2183003": {
-      "name": "Medina"
+      "name": "Medina",
+      "spriteFrame": "info.default"
     },
     "2183004": {
       "name": "Longorias"
@@ -11450,7 +11134,8 @@
       "name": "Longorias"
     },
     "2183006": {
-      "name": "Medina"
+      "name": "Medina",
+      "spriteFrame": "info.default"
     },
     "2184000": {
       "name": "Medina"
@@ -11470,9 +11155,9 @@
     "2184006": {
       "name": "Desert Soldier 3"
     },
-    "2184007": {},
     "2184008": {
-      "name": "Mystery Potion"
+      "name": "Mystery Potion",
+      "spriteFrame": "condition2.stand.0"
     },
     "2184009": {
       "name": "Hilla"
@@ -11484,7 +11169,8 @@
       "name": "Wandering Mystic"
     },
     "2184012": {
-      "name": "Hidden Door"
+      "name": "Hidden Door",
+      "spriteFrame": "info.default"
     },
     "2184013": {
       "name": "Medina"
@@ -11595,10 +11281,8 @@
       "name": "Oliver"
     },
     "2191018": {
-      "name": "Fantastic Viking"
-    },
-    "2191019": {
-      "name": "Gyro Drop"
+      "name": "Fantastic Viking",
+      "spriteFrame": "info.default"
     },
     "2191020": {
       "name": "Al Scapone"
@@ -11610,7 +11294,8 @@
       "name": "Spiegelmann"
     },
     "2192001": {
-      "name": "Fantastic Animal Show"
+      "name": "Fantastic Animal Show",
+      "spriteFrame": "info.default"
     },
     "2192002": {
       "name": "Fantastic Cable Car"
@@ -11775,10 +11460,12 @@
       "name": "Chino"
     },
     "2210007": {
-      "name": "Stone Colossus"
+      "name": "Stone Colossus",
+      "spriteFrame": "info.default"
     },
     "2210008": {
-      "name": "Stone Colossus"
+      "name": "Stone Colossus",
+      "spriteFrame": "info.default"
     },
     "2210009": {
       "name": "???"
@@ -11913,7 +11600,8 @@
       "name": "Keilbarren"
     },
     "2230212": {
-      "name": "Kerkaporta"
+      "name": "Kerkaporta",
+      "spriteFrame": "info.default"
     },
     "2231000": {
       "name": "Isaac"
@@ -12084,16 +11772,20 @@
       "name": "Nathania"
     },
     "2300005": {
-      "name": "Promessa"
+      "name": "Promessa",
+      "spriteFrame": "info.default"
     },
     "2300006": {
-      "name": "Veritas"
+      "name": "Veritas",
+      "spriteFrame": "info.default"
     },
     "2300007": {
-      "name": "Nathania"
+      "name": "Nathania",
+      "spriteFrame": "info.default"
     },
     "2300008": {
-      "name": "Edwin"
+      "name": "Edwin",
+      "spriteFrame": "info.default"
     },
     "2301000": {
       "name": "Edwin"
@@ -12171,16 +11863,15 @@
       "name": "Oko"
     },
     "2400023": {
-      "name": "Dungeon Entrance"
+      "name": "Dungeon Entrance",
+      "spriteFrame": "info.default"
     },
     "2400024": {
       "name": "Benedict"
     },
     "2400025": {
-      "name": "Maple World Portal"
-    },
-    "2400026": {
-      "name": "Temporal Gate Entrance"
+      "name": "Maple World Portal",
+      "spriteFrame": "info.default"
     },
     "2400027": {
       "name": "Worena"
@@ -12270,7 +11961,8 @@
       "name": "Horntail"
     },
     "2411012": {
-      "name": "Mue and Tommie"
+      "name": "Mue and Tommie",
+      "spriteFrame": "info.default"
     },
     "2411013": {
       "name": "Shammos"
@@ -12389,17 +12081,12 @@
     "2420022": {
       "name": "Tigun\u0027s Treasure Box"
     },
-    "2420023": {
-      "name": "Pot"
-    },
     "2420024": {
       "name": "Phantom\u0027s Letter"
     },
-    "2420025": {
-      "name": "Castle Script Portal"
-    },
     "2420026": {
-      "name": "Adequate Wall"
+      "name": "Adequate Wall",
+      "spriteFrame": "info.default"
     },
     "2420027": {
       "name": "Ardin"
@@ -12442,9 +12129,6 @@
     },
     "2420040": {
       "name": "Shah Mar"
-    },
-    "2420041": {
-      "name": "Secret Gate"
     },
     "2430000": {
       "name": "Larelle"
@@ -12498,13 +12182,15 @@
       "name": "Dairy Cow"
     },
     "2430017": {
-      "name": "Haystack"
+      "name": "Haystack",
+      "spriteFrame": "info.default"
     },
     "2430018": {
       "name": "Natalie"
     },
     "2430019": {
-      "name": "Larelle\u0027s Journal"
+      "name": "Larelle\u0027s Journal",
+      "spriteFrame": "info.default"
     },
     "2430020": {
       "name": "Evan"
@@ -13275,7 +12961,8 @@
       "name": "Ereve Elder"
     },
     "2520013": {
-      "name": "Shinsoo"
+      "name": "Shinsoo",
+      "spriteFrame": "info.default"
     },
     "2520014": {
       "name": "Matthias"
@@ -13293,7 +12980,8 @@
       "name": "Giant Dargoth"
     },
     "2520019": {
-      "name": "Black Wing Henchman"
+      "name": "Black Wing Henchman",
+      "spriteFrame": "stand.1"
     },
     "2520020": {
       "name": "Black Wing Henchman"
@@ -13370,9 +13058,6 @@
     "2530016": {
       "name": "Elex"
     },
-    "2531000": {
-      "name": "Dunamis"
-    },
     "2531001": {
       "name": "Dunamis"
     },
@@ -13398,7 +13083,8 @@
       "name": "Ripley"
     },
     "2540002": {
-      "name": "Dorothy"
+      "name": "Dorothy",
+      "spriteFrame": "info.default"
     },
     "2540003": {
       "name": "Secreta"
@@ -13413,7 +13099,8 @@
       "name": "One Who Fights the Darkness"
     },
     "2540007": {
-      "name": "Fear Amplifier"
+      "name": "Fear Amplifier",
+      "spriteFrame": "info.default"
     },
     "2540008": {
       "name": "One Who Loves Quizzes"
@@ -13441,9 +13128,6 @@
     },
     "2540019": {
       "name": "Tower of Oz Weekly Rankings"
-    },
-    "2540020": {
-      "name": "Burning Altar"
     },
     "2550000": {
       "name": "Ryude"
@@ -13611,15 +13295,13 @@
       "name": "Backpack"
     },
     "2560106": {
-      "name": "The Mysterious Girl"
+      "name": "The Mysterious Girl",
+      "spriteFrame": "info.default"
     },
     "2560107": {
       "name": "Seamus"
     },
     "2560108": {
-      "name": "Alchemy Encyclopedia"
-    },
-    "2560109": {
       "name": "Alchemy Encyclopedia"
     },
     "2560110": {
@@ -13641,7 +13323,8 @@
       "name": "Will"
     },
     "2560116": {
-      "name": "An Evening Primrose on the Desk"
+      "name": "An Evening Primrose on the Desk",
+      "spriteFrame": "info.default"
     },
     "2560117": {
       "name": "Kyson"
@@ -13979,12 +13662,6 @@
     "2580070": {
       "name": "Gob"
     },
-    "2580071": {
-      "name": "???"
-    },
-    "2580072": {
-      "name": "???"
-    },
     "2580073": {
       "name": "Combatron"
     },
@@ -14063,12 +13740,6 @@
     "3000007": {
       "name": "Velderoth"
     },
-    "3000008": {
-      "name": "Harpoon"
-    },
-    "3000009": {
-      "name": "Maroon"
-    },
     "3000010": {
       "name": "Ancient Nova Storage"
     },
@@ -14076,7 +13747,8 @@
       "name": "Former Kaiser"
     },
     "3000012": {
-      "name": "Interdimensional Portal"
+      "name": "Interdimensional Portal",
+      "spriteFrame": "info.default"
     },
     "3000013": {
       "name": "Tear"
@@ -14106,7 +13778,8 @@
       "name": "Maroon"
     },
     "3000022": {
-      "name": "Jewel"
+      "name": "Jewel",
+      "spriteFrame": "info.default"
     },
     "3000023": {
       "name": "Karin"
@@ -14400,31 +14073,40 @@
       "name": "Karin"
     },
     "3001020": {
-      "name": "Tyrant\u0027s Throne Entrance"
+      "name": "Tyrant\u0027s Throne Entrance",
+      "spriteFrame": "info.default"
     },
     "3001021": {
-      "name": "Tyrant\u0027s Throne Exit"
+      "name": "Tyrant\u0027s Throne Exit",
+      "spriteFrame": "info.default"
     },
     "3001022": {
-      "name": "Tyrant\u0027s Throne Exit"
+      "name": "Tyrant\u0027s Throne Exit",
+      "spriteFrame": "info.default"
     },
     "3001023": {
-      "name": "Velderoth\u0027s Sitting Room Entrance"
+      "name": "Velderoth\u0027s Sitting Room Entrance",
+      "spriteFrame": "info.default"
     },
     "3001024": {
-      "name": "Velderoth\u0027s Sitting Room Exit"
+      "name": "Velderoth\u0027s Sitting Room Exit",
+      "spriteFrame": "info.default"
     },
     "3001025": {
-      "name": "Victor\u0027s Workshop Entrance"
+      "name": "Victor\u0027s Workshop Entrance",
+      "spriteFrame": "info.default"
     },
     "3001026": {
-      "name": "Victor\u0027s Workshop Exit"
+      "name": "Victor\u0027s Workshop Exit",
+      "spriteFrame": "info.default"
     },
     "3001027": {
-      "name": "Treglow\u0027s Laboratory Entrance"
+      "name": "Treglow\u0027s Laboratory Entrance",
+      "spriteFrame": "info.default"
     },
     "3001028": {
-      "name": "Treglow\u0027s Laboratory Exit"
+      "name": "Treglow\u0027s Laboratory Exit",
+      "spriteFrame": "info.default"
     },
     "3001029": {
       "name": "Morrow Tree"
@@ -14436,7 +14118,8 @@
       "name": "Romero"
     },
     "3001032": {
-      "name": "Tyrant\u0027s Throne Entrance"
+      "name": "Tyrant\u0027s Throne Entrance",
+      "spriteFrame": "info.default"
     },
     "3001033": {
       "name": "Tonero"
@@ -14445,16 +14128,20 @@
       "name": "Romero"
     },
     "3001035": {
-      "name": "Royal Family Secret Passage"
+      "name": "Royal Family Secret Passage",
+      "spriteFrame": "info.default"
     },
     "3001036": {
-      "name": "Specter Flare"
+      "name": "Specter Flare",
+      "spriteFrame": "info.default"
     },
     "3001037": {
-      "name": "Specter Flare"
+      "name": "Specter Flare",
+      "spriteFrame": "info.default"
     },
     "3001038": {
-      "name": "Specter Flare"
+      "name": "Specter Flare",
+      "spriteFrame": "info.default"
     },
     "3001100": {
       "name": "Edea"
@@ -14490,13 +14177,16 @@
       "name": "Tiron"
     },
     "3001112": {
-      "name": "Old Doodles"
+      "name": "Old Doodles",
+      "spriteFrame": "info.default"
     },
     "3001113": {
-      "name": "Old Doodles"
+      "name": "Old Doodles",
+      "spriteFrame": "info.default"
     },
     "3001114": {
-      "name": "Old Doodles"
+      "name": "Old Doodles",
+      "spriteFrame": "info.default"
     },
     "3001115": {
       "name": "Old Box"
@@ -14697,10 +14387,12 @@
       "name": "Lab Tech"
     },
     "3001226": {
-      "name": "Gen\u0027s Ledger"
+      "name": "Gen\u0027s Ledger",
+      "spriteFrame": "info.default"
     },
     "3001227": {
-      "name": "Pawn Shop Surroundings"
+      "name": "Pawn Shop Surroundings",
+      "spriteFrame": "info.default"
     },
     "3001228": {
       "name": "Old Safe"
@@ -14712,13 +14404,16 @@
       "name": "Popoh"
     },
     "3001231": {
-      "name": "Cracked Floor"
+      "name": "Cracked Floor",
+      "spriteFrame": "info.default"
     },
     "3001232": {
-      "name": "Scrapyard Weapon Part"
+      "name": "Scrapyard Weapon Part",
+      "spriteFrame": "info.default"
     },
     "3001233": {
-      "name": "Fighting Grounds Weapon Part"
+      "name": "Fighting Grounds Weapon Part",
+      "spriteFrame": "info.default"
     },
     "3001234": {
       "name": "Exchange Pouch"
@@ -14812,12 +14507,6 @@
     },
     "3001269": {
       "name": "Hazard\u0027s Mean Crony"
-    },
-    "3001270": {
-      "name": "Cadena"
-    },
-    "3001271": {
-      "name": "Cadena"
     },
     "3001272": {
       "name": "Old Safe"
@@ -15153,7 +14842,8 @@
       "name": "Ferret"
     },
     "3001403": {
-      "name": "Storage"
+      "name": "Storage",
+      "spriteFrame": "info.default"
     },
     "3001404": {
       "name": "Mar"
@@ -15165,7 +14855,8 @@
       "name": "Zippy"
     },
     "3001407": {
-      "name": "Crystal Energy Shard"
+      "name": "Crystal Energy Shard",
+      "spriteFrame": "info.default"
     },
     "3001408": {
       "name": "Zippy"
@@ -15326,29 +15017,8 @@
     "3001465": {
       "name": "Wee"
     },
-    "3001500": {
-      "name": "Ark"
-    },
-    "3001501": {
-      "name": "Ark"
-    },
-    "3001502": {
-      "name": "Ark"
-    },
-    "3001503": {
-      "name": "Ark"
-    },
     "3001504": {
       "name": "Albaire"
-    },
-    "3001505": {
-      "name": "Albaire"
-    },
-    "3001506": {
-      "name": "Limbo"
-    },
-    "3001507": {
-      "name": "???"
     },
     "3001508": {
       "name": "Zippy"
@@ -15395,9 +15065,6 @@
     "3001522": {
       "name": "Ton"
     },
-    "3001523": {
-      "name": "Crystal Energy Shard"
-    },
     "3001524": {
       "name": "Gale Fox"
     },
@@ -15421,18 +15088,6 @@
     },
     "3001531": {
       "name": "Illusion Soldier B"
-    },
-    "3001532": {
-      "name": "Zippy"
-    },
-    "3001533": {
-      "name": "Ferret"
-    },
-    "3001534": {
-      "name": "Salvo"
-    },
-    "3001535": {
-      "name": "Mar"
     },
     "3001536": {
       "name": "Francis"
@@ -15483,10 +15138,12 @@
       "name": "Market Hoodlum"
     },
     "3001600": {
-      "name": "Stone of Sealing"
+      "name": "Stone of Sealing",
+      "spriteFrame": "info.default"
     },
     "3001601": {
-      "name": "Master\u0027s Drawer"
+      "name": "Master\u0027s Drawer",
+      "spriteFrame": "info.default"
     },
     "3001602": {
       "name": "Ironhide"
@@ -15573,13 +15230,16 @@
       "name": "Handsome Monk"
     },
     "3001630": {
-      "name": "Wood Pile"
+      "name": "Wood Pile",
+      "spriteFrame": "info.default"
     },
     "3001631": {
-      "name": "Locked Door"
+      "name": "Locked Door",
+      "spriteFrame": "info.default"
     },
     "3001632": {
-      "name": "Locked Door"
+      "name": "Locked Door",
+      "spriteFrame": "info.default"
     },
     "3001633": {
       "name": "Taotie"
@@ -15700,15 +15360,6 @@
     },
     "3001673": {
       "name": "Private Investigator"
-    },
-    "3001674": {
-      "name": "Hoyoung"
-    },
-    "3001675": {
-      "name": "Hoyoung"
-    },
-    "3001676": {
-      "name": "???"
     },
     "3001677": {
       "name": "Trainee"
@@ -15921,7 +15572,8 @@
       "name": "Knight\u0027s Token"
     },
     "3001918": {
-      "name": "Knight Statue"
+      "name": "Knight Statue",
+      "spriteFrame": "info.default"
     },
     "3001919": {
       "name": "Jerome"
@@ -16172,14 +15824,8 @@
     "3002012": {
       "name": "Wooden Crate"
     },
-    "3002013": {
-      "name": "Fox\u0027s Gift"
-    },
     "3002014": {
       "name": "Souffle"
-    },
-    "3002015": {
-      "name": "Fox God"
     },
     "3002016": {
       "name": "Brook"
@@ -16319,12 +15965,6 @@
     "3002129": {
       "name": "Lumps"
     },
-    "3002130": {
-      "name": "Shade"
-    },
-    "3002131": {
-      "name": "Shade"
-    },
     "3002132": {
       "name": "Moonbeam"
     },
@@ -16422,7 +16062,8 @@
       "name": "Jenna"
     },
     "3003110": {
-      "name": "Kima"
+      "name": "Kima",
+      "spriteFrame": "info.default"
     },
     "3003111": {
       "name": "Legato"
@@ -16461,7 +16102,8 @@
       "name": "Tree of Memory"
     },
     "3003123": {
-      "name": "Kima"
+      "name": "Kima",
+      "spriteFrame": "info.default"
     },
     "3003124": {
       "name": "Flame Bird"
@@ -16565,9 +16207,6 @@
     "3003158": {
       "name": "Madam Popo"
     },
-    "3003159": {
-      "name": "Lyon"
-    },
     "3003160": {
       "name": "Simia"
     },
@@ -16586,9 +16225,6 @@
     "3003165": {
       "name": "Muto"
     },
-    "3003166": {
-      "name": "Simia"
-    },
     "3003167": {
       "name": "Lyon"
     },
@@ -16602,7 +16238,8 @@
       "name": "Madam Popo"
     },
     "3003171": {
-      "name": "Muto"
+      "name": "Muto",
+      "spriteFrame": "info.default"
     },
     "3003200": {
       "name": "Lucid"
@@ -16934,18 +16571,6 @@
     "3003315": {
       "name": "Rock Spirits"
     },
-    "3003316": {
-      "name": "Rock Spirit"
-    },
-    "3003317": {
-      "name": "Rock Spirit"
-    },
-    "3003318": {
-      "name": "Rock Spirit"
-    },
-    "3003319": {
-      "name": "Rock Spirit"
-    },
     "3003320": {
       "name": "Small Spirit"
     },
@@ -16984,15 +16609,6 @@
     },
     "3003332": {
       "name": "Tidy Spirit"
-    },
-    "3003333": {
-      "name": "Rock Spirit"
-    },
-    "3003334": {
-      "name": "Rock Spirit"
-    },
-    "3003335": {
-      "name": "Rock Spirit"
     },
     "3003336": {
       "name": "Small Spirit"
@@ -17074,9 +16690,6 @@
     },
     "3003373": {
       "name": "???"
-    },
-    "3003381": {
-      "name": "Escaped Rock Spirit"
     },
     "3003400": {
       "name": "Tana"
@@ -17163,7 +16776,8 @@
       "name": "Woman"
     },
     "3003428": {
-      "name": "Tana"
+      "name": "Tana",
+      "spriteFrame": "info.default"
     },
     "3003429": {
       "name": "Researcher"
@@ -17244,10 +16858,12 @@
       "name": "Researcher"
     },
     "3003475": {
-      "name": "Sealed Door"
+      "name": "Sealed Door",
+      "spriteFrame": "info.default"
     },
     "3003476": {
-      "name": "Sealed Door"
+      "name": "Sealed Door",
+      "spriteFrame": "info.default"
     },
     "3003480": {
       "name": "Jean"
@@ -17334,7 +16950,8 @@
       "name": "Tana"
     },
     "3003518": {
-      "name": "Dimensional Gate"
+      "name": "Dimensional Gate",
+      "spriteFrame": "special.0"
     },
     "3003519": {
       "name": "Will"
@@ -17459,12 +17076,6 @@
     "3003560": {
       "name": "Gate"
     },
-    "3003561": {
-      "name": "Gate"
-    },
-    "3003562": {
-      "name": "Gate"
-    },
     "3003563": {
       "name": "Mirror World Nodestone"
     },
@@ -17501,12 +17112,6 @@
     "3003574": {
       "name": "Guardian of Time"
     },
-    "3003575": {
-      "name": "Cygnus Soldier"
-    },
-    "3003576": {
-      "name": "Resistance Soldier"
-    },
     "3003577": {
       "name": "Melange"
     },
@@ -17520,10 +17125,12 @@
       "name": "Distorted Erda"
     },
     "3003581": {
-      "name": "Sunlight Statue"
+      "name": "Sunlight Statue",
+      "spriteFrame": "info.default"
     },
     "3003582": {
-      "name": "Wind Statue"
+      "name": "Wind Statue",
+      "spriteFrame": "info.default"
     },
     "3003583": {
       "name": "Baz"
@@ -17571,10 +17178,12 @@
       "name": "Nora"
     },
     "3003598": {
-      "name": "Identisk Statue"
+      "name": "Identisk Statue",
+      "spriteFrame": "info.default"
     },
     "3003599": {
-      "name": "Identisk Statue"
+      "name": "Identisk Statue",
+      "spriteFrame": "info.default"
     },
     "3003600": {
       "name": "Ollie"
@@ -17738,9 +17347,6 @@
     "3003656": {
       "name": "Cygnus"
     },
-    "3003657": {
-      "name": "Shinsoo"
-    },
     "3003658": {
       "name": "Athena Pierce"
     },
@@ -17898,10 +17504,12 @@
       "name": "Traces of Alliance Members"
     },
     "3003710": {
-      "name": "Shimmering Wall"
+      "name": "Shimmering Wall",
+      "spriteFrame": "info.default"
     },
     "3003711": {
-      "name": "Gate"
+      "name": "Gate",
+      "spriteFrame": "info.default"
     },
     "3003713": {
       "name": "Azalin"
@@ -17913,7 +17521,8 @@
       "name": "Wooden Post"
     },
     "3003716": {
-      "name": "Source of Suffering"
+      "name": "Source of Suffering",
+      "spriteFrame": "info.default"
     },
     "3003717": {
       "name": "???"
@@ -18051,10 +17660,12 @@
       "name": "Wounded Soldier"
     },
     "3003767": {
-      "name": "Mystery Voice"
+      "name": "Mystery Voice",
+      "spriteFrame": "standG.0"
     },
     "3003768": {
-      "name": "Mystery Voice"
+      "name": "Mystery Voice",
+      "spriteFrame": "standW.0"
     },
     "3003769": {
       "name": "???"
@@ -18155,12 +17766,6 @@
     "3003801": {
       "name": "Injured Alliance Member"
     },
-    "3003802": {
-      "name": "Spirit Stone Altar"
-    },
-    "3003803": {
-      "name": "Unmarked Grave"
-    },
     "3003804": {
       "name": "Alliance in the Labyrinth"
     },
@@ -18255,7 +17860,8 @@
       "name": "Cygnus"
     },
     "3003917": {
-      "name": "White Mage"
+      "name": "White Mage",
+      "spriteFrame": "special.0"
     },
     "3003918": {
       "name": "Tana"
@@ -18339,7 +17945,8 @@
       "name": "Khali"
     },
     "3003945": {
-      "name": "Warrior"
+      "name": "Warrior",
+      "spriteFrame": "special1_0.0"
     },
     "3003950": {
       "name": "Moco"
@@ -18582,7 +18189,8 @@
       "name": "Luxury Tour Agent"
     },
     "3004034": {
-      "name": "Fallen Airship"
+      "name": "Fallen Airship",
+      "spriteFrame": "info.default"
     },
     "3004035": {
       "name": "Rave"
@@ -18758,9 +18366,6 @@
     "3004101": {
       "name": "Bitterbot"
     },
-    "3004102": {
-      "name": "Cadena"
-    },
     "3004103": {
       "name": "Mastema"
     },
@@ -18803,9 +18408,6 @@
     "3004116": {
       "name": "Lady Syl"
     },
-    "3004117": {
-      "name": "Pathfinder"
-    },
     "3004118": {
       "name": "Brie"
     },
@@ -18832,9 +18434,6 @@
     },
     "3004126": {
       "name": "Former Kaiser"
-    },
-    "3004127": {
-      "name": "Albaire"
     },
     "3004128": {
       "name": "Ark"
@@ -18890,14 +18489,8 @@
     "3004145": {
       "name": "Illium"
     },
-    "3004146": {
-      "name": "Ark"
-    },
     "3004147": {
       "name": "Kinesis"
-    },
-    "3004149": {
-      "name": "Pathfinder"
     },
     "3004150": {
       "name": "Moco"
@@ -18991,7 +18584,8 @@
     },
     "3004208": {},
     "3004210": {
-      "name": "Claudine"
+      "name": "Claudine",
+      "spriteFrame": "info.default"
     },
     "3004211": {
       "name": "Belle"
@@ -19500,9 +19094,6 @@
     "3004541": {
       "name": "Holy Sword Azor"
     },
-    "3004542": {
-      "name": "Gate"
-    },
     "3004543": {
       "name": "Ebonstar Magician"
     },
@@ -19759,7 +19350,8 @@
       "name": "Monkeyrog"
     },
     "3004702": {
-      "name": "Small Flower"
+      "name": "Small Flower",
+      "spriteFrame": "info.default"
     },
     "3004703": {
       "name": "Caster"
@@ -19804,7 +19396,8 @@
       "name": "Puptail"
     },
     "3004717": {
-      "name": "Giant Flower"
+      "name": "Giant Flower",
+      "spriteFrame": "info.default"
     },
     "3004718": {
       "name": "???"
@@ -19816,7 +19409,8 @@
       "name": "Caster"
     },
     "3004721": {
-      "name": "Giant Flower"
+      "name": "Giant Flower",
+      "spriteFrame": "info.default"
     },
     "3004722": {
       "name": "Caster"
@@ -19861,10 +19455,12 @@
       "name": "Fallen Bunshroom"
     },
     "3004738": {
-      "name": "Small Flower"
+      "name": "Small Flower",
+      "spriteFrame": "info.default"
     },
     "3004739": {
-      "name": "Small Flower"
+      "name": "Small Flower",
+      "spriteFrame": "info.default"
     },
     "3004740": {
       "name": "Neinheart"
@@ -19876,7 +19472,8 @@
       "name": "Ollie"
     },
     "3004743": {
-      "name": "Kaling"
+      "name": "Kaling",
+      "spriteFrame": "stand1.0"
     },
     "3004744": {
       "name": "Bappy"
@@ -20055,9 +19652,6 @@
     "3004860": {
       "name": "Hyades"
     },
-    "3004861": {
-      "name": "Comm System"
-    },
     "3004862": {
       "name": "Necklace"
     },
@@ -20069,12 +19663,6 @@
     },
     "3004865": {
       "name": "Submarine"
-    },
-    "3004901": {
-      "name": "Kain"
-    },
-    "3004902": {
-      "name": "Kain"
     },
     "3004903": {
       "name": "Boss"
@@ -20371,7 +19959,8 @@
       "name": "Gracho"
     },
     "3005033": {
-      "name": "Kelly\u0027s Letter"
+      "name": "Kelly\u0027s Letter",
+      "spriteFrame": "info.default"
     },
     "3005050": {
       "name": "Rusty"
@@ -20430,15 +20019,6 @@
     "3005069": {
       "name": "Sandblade Overlord"
     },
-    "3005070": {
-      "name": "???"
-    },
-    "3005072": {
-      "name": "Seeker 1"
-    },
-    "3005073": {
-      "name": "Seeker 2"
-    },
     "3005074": {
       "name": "Conductorbot"
     },
@@ -20451,12 +20031,6 @@
     "3005077": {
       "name": "Archelon"
     },
-    "3005100": {
-      "name": "Lara"
-    },
-    "3005101": {
-      "name": "Lara"
-    },
     "3005102": {
       "name": "Gri"
     },
@@ -20466,20 +20040,11 @@
     "3005104": {
       "name": "Mountain Kid"
     },
-    "3005105": {
-      "name": "Little Gri"
-    },
-    "3005106": {
-      "name": "Gru"
-    },
     "3005107": {
       "name": "Sketchy Merchant"
     },
     "3005108": {
       "name": "Magistrate"
-    },
-    "3005109": {
-      "name": "Sodam"
     },
     "3005110": {
       "name": "Tough-looking Hyuk"
@@ -20492,9 +20057,6 @@
     },
     "3005113": {
       "name": "Granny Dume"
-    },
-    "3005114": {
-      "name": "Naru"
     },
     "3005115": {
       "name": "Rami"
@@ -20538,26 +20100,11 @@
     "3005128": {
       "name": "Arisol"
     },
-    "3005129": {
-      "name": "Dorry"
-    },
-    "3005130": {
-      "name": "Salom"
-    },
     "3005131": {
       "name": "Kaling"
     },
-    "3005132": {
-      "name": "Tormented Shade"
-    },
-    "3005133": {
-      "name": "Consoling Shade"
-    },
     "3005134": {
       "name": "Master Tai Yu"
-    },
-    "3005135": {
-      "name": "???"
     },
     "3005150": {
       "name": "Gri"
@@ -20865,9 +20412,6 @@
     "3005265": {
       "name": "Kalos"
     },
-    "3005266": {
-      "name": "Gate"
-    },
     "3005267": {
       "name": "Kalos\u0027s Residual Determination"
     },
@@ -21007,7 +20551,8 @@
       "name": "Tana"
     },
     "3005374": {
-      "name": "Attack"
+      "name": "Attack",
+      "spriteFrame": "special.0"
     },
     "3005375": {
       "name": "Will 2"
@@ -21109,7 +20654,8 @@
       "name": "Tana (Ritual)"
     },
     "3005408": {
-      "name": "Dimensional Gate"
+      "name": "Dimensional Gate",
+      "spriteFrame": "special.0"
     },
     "3005409": {
       "name": "Light Executor"
@@ -21118,7 +20664,8 @@
       "name": "Mirror Gate"
     },
     "3005411": {
-      "name": "Black Mage"
+      "name": "Black Mage",
+      "spriteFrame": "special.0"
     },
     "3005412": {
       "name": "White Mage"
@@ -21289,13 +20836,12 @@
       "name": "Kaling"
     },
     "3005543": {
-      "name": "Stairway Up"
+      "name": "Stairway Up",
+      "spriteFrame": "info.default"
     },
     "3005544": {
-      "name": "Stairway Down"
-    },
-    "3005545": {
-      "name": "Where Will Slumbers"
+      "name": "Stairway Down",
+      "spriteFrame": "info.default"
     },
     "3005546": {
       "name": "Echo of Ancient Resolve"
@@ -21332,9 +20878,6 @@
     },
     "3005560": {
       "name": "Kaling"
-    },
-    "3005561": {
-      "name": "???"
     },
     "3005562": {
       "name": "Taotie"
@@ -21386,9 +20929,6 @@
     },
     "3005578": {
       "name": "Angler Robot Type B"
-    },
-    "3005579": {
-      "name": "Abandoned Worktable"
     },
     "3005580": {
       "name": "Seri"
@@ -21982,19 +21522,24 @@
       "name": "Evil Hand"
     },
     "3005830": {
-      "name": "Red Thread"
+      "name": "Red Thread",
+      "spriteFrame": "end.0"
     },
     "3005831": {
-      "name": "Red Thread"
+      "name": "Red Thread",
+      "spriteFrame": "end.0"
     },
     "3005832": {
-      "name": "Red Thread"
+      "name": "Red Thread",
+      "spriteFrame": "end.0"
     },
     "3005833": {
-      "name": "Red Thread"
+      "name": "Red Thread",
+      "spriteFrame": "shoot.1"
     },
     "3005834": {
-      "name": "Red Thread"
+      "name": "Red Thread",
+      "spriteFrame": "shoot.1"
     },
     "3005835": {
       "name": "Red Thread"
@@ -22374,9 +21919,6 @@
     "3006117": {
       "name": "Godsphere"
     },
-    "3006118": {
-      "name": "Gerand Darmoor"
-    },
     "3006119": {
       "name": "???"
     },
@@ -22504,16 +22046,20 @@
       "name": "Shensung"
     },
     "3006182": {
-      "name": "Spring Scroll"
+      "name": "Spring Scroll",
+      "spriteFrame": "info.default"
     },
     "3006183": {
-      "name": "Summer Scroll"
+      "name": "Summer Scroll",
+      "spriteFrame": "info.default"
     },
     "3006184": {
-      "name": "Autumn Scroll"
+      "name": "Autumn Scroll",
+      "spriteFrame": "info.default"
     },
     "3006185": {
-      "name": "Winter Scroll"
+      "name": "Winter Scroll",
+      "spriteFrame": "info.default"
     },
     "3006186": {
       "name": "Haia"
@@ -22536,14 +22082,13 @@
     "3006192": {
       "name": "Somiya"
     },
-    "3006193": {
-      "name": "Gate to the Lost Light of Four Seasons"
-    },
     "3006194": {
-      "name": "Spring Light"
+      "name": "Spring Light",
+      "spriteFrame": "info.default"
     },
     "3006195": {
-      "name": "Autumn Glow"
+      "name": "Autumn Glow",
+      "spriteFrame": "info.default"
     },
     "3006199": {
       "name": "Ferocious Beast Entanglement Ring"
@@ -22571,9 +22116,6 @@
     },
     "3006217": {
       "name": "Ypsilon"
-    },
-    "3006218": {
-      "name": "Letter"
     },
     "3006219": {
       "name": "Nile"
@@ -22617,14 +22159,9 @@
     "3006232": {
       "name": "Nile"
     },
-    "3006233": {
-      "name": "Tree"
-    },
-    "3006234": {
-      "name": "Tree"
-    },
     "3006235": {
-      "name": "Anan\u0027s Document Pile"
+      "name": "Anan\u0027s Document Pile",
+      "spriteFrame": "info.default"
     },
     "3006250": {
       "name": "Tasha"
@@ -22680,12 +22217,6 @@
     "3006267": {
       "name": "Kain"
     },
-    "3006268": {
-      "name": "Khali"
-    },
-    "3006269": {
-      "name": "Khali"
-    },
     "3006270": {
       "name": "Sloppy Marauder"
     },
@@ -22740,9 +22271,6 @@
     "3006289": {
       "name": "Kaling"
     },
-    "3006290": {
-      "name": "Private Investigator"
-    },
     "3006291": {
       "name": "Hanasol"
     },
@@ -22775,9 +22303,6 @@
     },
     "3006301": {
       "name": "Ink-Shaded Butterfly"
-    },
-    "3006302": {
-      "name": "???"
     },
     "3006303": {
       "name": "Lantern"
@@ -22887,15 +22412,6 @@
     "3006356": {
       "name": "Goddess of Tynerum"
     },
-    "3006357": {
-      "name": "Sol Erda\u0027s Will"
-    },
-    "3006358": {
-      "name": "Faint Voice"
-    },
-    "3006359": {
-      "name": "Clear Voice"
-    },
     "3006360": {
       "name": "Goddess of Grandis"
     },
@@ -22952,21 +22468,6 @@
     },
     "3006378": {
       "name": "Goddess of Tynerum"
-    },
-    "3006379": {
-      "name": "Broken Fragment"
-    },
-    "3006380": {
-      "name": "Broken Fragment"
-    },
-    "3006381": {
-      "name": "Broken Fragment"
-    },
-    "3006382": {
-      "name": "Broken Fragment"
-    },
-    "3006383": {
-      "name": "Broken Fragment"
     },
     "3006384": {
       "name": "Goddess of Maple World"
@@ -23133,15 +22634,6 @@
     "3006443": {
       "name": "Mihile"
     },
-    "3006444": {
-      "name": "Suspicious Place"
-    },
-    "3006445": {
-      "name": "Suspicious Place"
-    },
-    "3006446": {
-      "name": "Suspicious Place"
-    },
     "3006450": {
       "name": "Gaon"
     },
@@ -23211,12 +22703,6 @@
     "3006472": {
       "name": "Kidan"
     },
-    "3006473": {
-      "name": "Shinsoo"
-    },
-    "3006474": {
-      "name": "???"
-    },
     "3006475": {
       "name": "Mihile"
     },
@@ -23233,19 +22719,24 @@
       "name": "Marona"
     },
     "3006480": {
-      "name": "Laboratory System"
+      "name": "Laboratory System",
+      "spriteFrame": "info.default"
     },
     "3006481": {
-      "name": "First Barrier Stone"
+      "name": "First Barrier Stone",
+      "spriteFrame": "info.default"
     },
     "3006482": {
-      "name": "Second Barrier Stone"
+      "name": "Second Barrier Stone",
+      "spriteFrame": "info.default"
     },
     "3006483": {
-      "name": "Third Barrier Stone"
+      "name": "Third Barrier Stone",
+      "spriteFrame": "info.default"
     },
     "3006484": {
-      "name": "Fourth Barrier Stone"
+      "name": "Fourth Barrier Stone",
+      "spriteFrame": "info.default"
     },
     "3006485": {
       "name": "Gino"
@@ -23460,9 +22951,6 @@
     "3006555": {
       "name": "Lupamo"
     },
-    "3006558": {
-      "name": "Gateway to Replicated Space"
-    },
     "3006559": {
       "name": "Distorted Ambition"
     },
@@ -23641,7 +23129,8 @@
       "name": "Edvar"
     },
     "3006618": {
-      "name": "???"
+      "name": "???",
+      "spriteFrame": "blue.0"
     },
     "3006619": {
       "name": "Asha"
@@ -23785,13 +23274,12 @@
       "name": "Farol"
     },
     "3006667": {
-      "name": "Sword Manual"
-    },
-    "3006668": {
-      "name": "Journal"
+      "name": "Sword Manual",
+      "spriteFrame": "info.default"
     },
     "3006669": {
-      "name": "Interdimensional Portal"
+      "name": "Interdimensional Portal",
+      "spriteFrame": "info.default"
     },
     "3006670": {
       "name": "Ren"
@@ -24240,12 +23728,6 @@
     "3006869": {
       "name": "Judge of Storms"
     },
-    "3006870": {
-      "name": "???"
-    },
-    "3006871": {
-      "name": "???"
-    },
     "3006872": {
       "name": "Court Knight"
     },
@@ -24270,9 +23752,6 @@
     "3006879": {
       "name": "???"
     },
-    "3006880": {
-      "name": "Path to Baldrix"
-    },
     "3006881": {
       "name": "Trace of Eternal Loyalty"
     },
@@ -24288,9 +23767,6 @@
     "3006885": {
       "name": "Tirnog"
     },
-    "3006886": {
-      "name": "Phantom Seal"
-    },
     "3006887": {
       "name": "???"
     },
@@ -24303,29 +23779,21 @@
     "3006890": {
       "name": "???"
     },
-    "3006891": {
-      "name": "Altar of Providence"
-    },
-    "3006892": {
-      "name": "Altar of Judgment"
-    },
-    "3006893": {
-      "name": "Altar of Eternity"
-    },
-    "3006894": {
-      "name": "Phantom Crystal Ball"
-    },
     "3006900": {
-      "name": "Calm Water"
+      "name": "Calm Water",
+      "spriteFrame": "info.default"
     },
     "3006901": {
-      "name": "Calm Water"
+      "name": "Calm Water",
+      "spriteFrame": "info.default"
     },
     "3006902": {
-      "name": "Calm Water"
+      "name": "Calm Water",
+      "spriteFrame": "info.default"
     },
     "3006903": {
-      "name": "Calm Water"
+      "name": "Calm Water",
+      "spriteFrame": "info.default"
     },
     "3006910": {
       "name": "Starling"
@@ -24371,9 +23839,6 @@
     },
     "3006924": {
       "name": "Red Flower Mask"
-    },
-    "3006925": {
-      "name": "Lamp"
     },
     "3006926": {
       "name": "Gere"
@@ -24594,9 +24059,6 @@
     "3007025": {
       "name": "Elvis"
     },
-    "3007026": {
-      "name": "Hourglass of Time"
-    },
     "3007030": {
       "name": "Johanna"
     },
@@ -24651,9 +24113,6 @@
     "3007047": {
       "name": "Zigang"
     },
-    "3007048": {
-      "name": "???"
-    },
     "3007049": {
       "name": "Key of Purification"
     },
@@ -24681,12 +24140,6 @@
     "3007057": {
       "name": "Nona"
     },
-    "3007058": {
-      "name": "Phantom Crystal Ball"
-    },
-    "3007059": {
-      "name": "Divine Brazier"
-    },
     "3007060": {
       "name": "Baz"
     },
@@ -24698,12 +24151,6 @@
     },
     "3007063": {
       "name": "Cygnus Soldier"
-    },
-    "3007064": {
-      "name": "Melian"
-    },
-    "3007065": {
-      "name": "Garuda"
     },
     "3007066": {
       "name": "Phantom Crystal Ball"
@@ -24783,9 +24230,6 @@
     "3007104": {
       "name": "Alchemitron"
     },
-    "3007105": {
-      "name": "Jupiter Entrance Gate"
-    },
     "3007106": {
       "name": "Gate"
     },
@@ -24797,9 +24241,6 @@
     },
     "3007109": {
       "name": "Scrapped Robot"
-    },
-    "3007150": {
-      "name": "Malefic Star Entrance Gate"
     },
     "3007151": {
       "name": "Gate"
@@ -25156,10 +24597,12 @@
       "name": "Buhbear"
     },
     "9000093": {
-      "name": "Headmaster Ferdi"
+      "name": "Headmaster Ferdi",
+      "spriteFrame": "info.default"
     },
     "9000094": {
-      "name": "Headmaster Ferdi"
+      "name": "Headmaster Ferdi",
+      "spriteFrame": "info.default"
     },
     "9000095": {
       "name": "Witchy Woman"
@@ -25171,7 +24614,8 @@
       "name": "Blackbull"
     },
     "9000098": {
-      "name": "Gate of Trials"
+      "name": "Gate of Trials",
+      "spriteFrame": "info.default"
     },
     "9000099": {
       "name": "Toniza"
@@ -25255,19 +24699,22 @@
       "name": "School Bus"
     },
     "9000126": {
-      "name": "Easel"
+      "name": "Easel",
+      "spriteFrame": "info.default"
     },
     "9000127": {
       "name": "Coma"
     },
     "9000128": {
-      "name": "So Ha"
+      "name": "So Ha",
+      "spriteFrame": "info.default"
     },
     "9000129": {
       "name": "Cassandra"
     },
     "9000130": {
-      "name": "Classroom Door"
+      "name": "Classroom Door",
+      "spriteFrame": "info.default"
     },
     "9000131": {
       "name": "Magical Mortar Bunny"
@@ -25575,18 +25022,6 @@
     "9000234": {
       "name": "Mover"
     },
-    "9000235": {},
-    "9000236": {},
-    "9000237": {},
-    "9000238": {},
-    "9000239": {},
-    "9000240": {},
-    "9000241": {},
-    "9000242": {},
-    "9000243": {},
-    "9000244": {},
-    "9000245": {},
-    "9000246": {},
     "9000247": {
       "name": "Lil Zakum"
     },
@@ -25653,7 +25088,6 @@
     "9000271": {
       "name": "Dr. Kim"
     },
-    "9000272": {},
     "9000273": {
       "name": "Blue Pony"
     },
@@ -25724,7 +25158,8 @@
       "name": "Grinder Spirit Bunny"
     },
     "9000296": {
-      "name": "Rice Cake Master Moon Bunny"
+      "name": "Rice Cake Master Moon Bunny",
+      "spriteFrame": "info.default"
     },
     "9000297": {
       "name": "Ancient Master Baker Bunny"
@@ -25858,12 +25293,6 @@
     "9000343": {
       "name": "Maple Claws"
     },
-    "9000344": {
-      "name": "Agent Chillson"
-    },
-    "9000345": {
-      "name": "Agent Burns"
-    },
     "9000346": {
       "name": "Rupi"
     },
@@ -25881,12 +25310,6 @@
     },
     "9000353": {
       "name": "Rudi"
-    },
-    "9000354": {
-      "name": "Agent Chillson"
-    },
-    "9000355": {
-      "name": "Agent Burns"
     },
     "9000356": {
       "name": "Mr. Noh"
@@ -26069,7 +25492,8 @@
       "name": "Trap 2"
     },
     "9000419": {
-      "name": "Icicle"
+      "name": "Icicle",
+      "spriteFrame": "fall.0"
     },
     "9000420": {
       "name": "Ice Cube"
@@ -26131,9 +25555,6 @@
     "9000440": {
       "name": "Ayame"
     },
-    "9000441": {
-      "name": "Ominous Voice"
-    },
     "9000442": {
       "name": "Princess Sakuno"
     },
@@ -26173,50 +25594,11 @@
     "9000454": {
       "name": "Winter Deer"
     },
-    "9001000": {
-      "name": "Cokebear Operator"
-    },
-    "9001001": {
-      "name": "Lolo"
-    },
-    "9001002": {
-      "name": "Polar Bear Poch"
-    },
-    "9001003": {
-      "name": "Polar Bear Nell"
-    },
-    "9001004": {
-      "name": "Polar Bear Hoop"
-    },
     "9001005": {
       "name": "Polar Bear Poch"
     },
     "9001006": {
       "name": "Polar Bear Poch"
-    },
-    "9001008": {
-      "name": "Bohun"
-    },
-    "9001009": {
-      "name": "Shimmy"
-    },
-    "9001010": {
-      "name": "Agent Chillson"
-    },
-    "9001011": {
-      "name": "Agent Burns"
-    },
-    "9001012": {
-      "name": "\uC720\uC810\uC7A5"
-    },
-    "9001013": {
-      "name": "\uB124\uB124\uCE58\uD0A8"
-    },
-    "9001014": {
-      "name": "Agent Chillson"
-    },
-    "9001015": {
-      "name": "Agent Burns"
     },
     "9001016": {
       "name": "Tangyoon"
@@ -26289,24 +25671,6 @@
     },
     "9001039": {
       "name": "Super Lich"
-    },
-    "9001040": {
-      "name": "Manager Mush"
-    },
-    "9001041": {
-      "name": "Festival Ice Cream Coordinator"
-    },
-    "9001042": {
-      "name": "Manager Mush"
-    },
-    "9001043": {
-      "name": "Manager Mush"
-    },
-    "9001044": {
-      "name": "Manager Mush"
-    },
-    "9001045": {
-      "name": "Manager Mush"
     },
     "9001046": {
       "name": "Lady Blair (?)"
@@ -26486,7 +25850,8 @@
       "name": "The Lost Grey"
     },
     "9001107": {
-      "name": "Guide Moon Bunny"
+      "name": "Guide Moon Bunny",
+      "spriteFrame": "info.default"
     },
     "9001108": {
       "name": "Gatekeeper Moon Bunny"
@@ -26552,7 +25917,8 @@
       "name": "Spiegelmann"
     },
     "9001130": {
-      "name": "[[2016 KMS NY Event]]Pink Mong"
+      "name": "[[2016 KMS NY Event]]Pink Mong",
+      "spriteFrame": "eye.0"
     },
     "9001131": {
       "name": "Pink Bean Santa"
@@ -26603,7 +25969,8 @@
       "name": "Metal Bucket Snowman"
     },
     "9001148": {
-      "name": "Christmas Tree"
+      "name": "Christmas Tree",
+      "spriteFrame": "info.default"
     },
     "9001149": {
       "name": "Metal Bucket Snowman"
@@ -26713,9 +26080,6 @@
     "9001190": {
       "name": "Ocean"
     },
-    "9001191": {
-      "name": "???"
-    },
     "9001192": {
       "name": "Kemdi"
     },
@@ -26758,9 +26122,6 @@
     "9001217": {
       "name": "Ring Master Orchid"
     },
-    "9001218": {
-      "name": "MFF Marquee"
-    },
     "9001219": {
       "name": "Kemdi"
     },
@@ -26769,9 +26130,6 @@
     },
     "9001221": {
       "name": "Pink Bean"
-    },
-    "9001222": {
-      "name": "MFF Marquee"
     },
     "9001223": {
       "name": "Grim Orange Mushroom"
@@ -26972,7 +26330,8 @@
       "name": "Fireworks"
     },
     "9010056": {
-      "name": "Fireworks"
+      "name": "Fireworks",
+      "spriteFrame": "stand.1"
     },
     "9010057": {
       "name": "Dami"
@@ -27103,11 +26462,6 @@
     "9010100": {
       "name": "Mr. Flopsy the Dreamweaver"
     },
-    "9010101": {},
-    "9010102": {},
-    "9010103": {},
-    "9010104": {},
-    "9010105": {},
     "9010106": {
       "name": "Dame Appropriation"
     },
@@ -27166,16 +26520,19 @@
       "name": "Captured Explorer"
     },
     "9020007": {
-      "name": "Kenta"
+      "name": "Kenta",
+      "spriteFrame": "info.default"
     },
     "9020008": {
-      "name": "Captured Explorer"
+      "name": "Captured Explorer",
+      "spriteFrame": "info.default"
     },
     "9020009": {
       "name": "Piston"
     },
     "9020010": {
-      "name": "Interdimensional Portal"
+      "name": "Interdimensional Portal",
+      "spriteFrame": "info.default"
     },
     "9020011": {
       "name": "Hilla"
@@ -27232,25 +26589,11 @@
       "name": "Nack"
     },
     "9031008": {
-      "name": "Grant"
+      "name": "Grant",
+      "spriteFrame": "info.default"
     },
     "9031009": {
       "name": "Tespia Helper"
-    },
-    "9031010": {
-      "name": "Herb Collection"
-    },
-    "9031011": {
-      "name": "Mining Machine"
-    },
-    "9031012": {
-      "name": "Smithing Anvil"
-    },
-    "9031013": {
-      "name": "Jewelry Machine"
-    },
-    "9031014": {
-      "name": "Alchemy Tome"
     },
     "9031015": {
       "name": "Angelica"
@@ -27535,7 +26878,8 @@
       "name": "Toben Hair Hero"
     },
     "9062065": {
-      "name": "Hashtag Phone"
+      "name": "Hashtag Phone",
+      "spriteFrame": "info.default"
     },
     "9062066": {
       "name": "Cassandra"
@@ -27549,9 +26893,6 @@
     "9062069": {
       "name": "Pink Bean"
     },
-    "9062070": {
-      "name": "Legendary Maple Tree"
-    },
     "9062071": {
       "name": "Grizzle"
     },
@@ -27560,18 +26901,6 @@
     },
     "9062073": {
       "name": "Kemdi"
-    },
-    "9062074": {
-      "name": "The Legends Return!"
-    },
-    "9062075": {
-      "name": "Reverse Battle"
-    },
-    "9062076": {
-      "name": "Monsteropoly"
-    },
-    "9062077": {
-      "name": "One Card"
     },
     "9062078": {
       "name": "Tangyoon"
@@ -27598,22 +26927,28 @@
       "name": "Fritto"
     },
     "9062087": {
-      "name": "Mannequin"
+      "name": "Mannequin",
+      "spriteFrame": "info.default"
     },
     "9062088": {
-      "name": "Mannequin"
+      "name": "Mannequin",
+      "spriteFrame": "info.default"
     },
     "9062089": {
-      "name": "Mannequin"
+      "name": "Mannequin",
+      "spriteFrame": "info.default"
     },
     "9062090": {
-      "name": "Mannequin"
+      "name": "Mannequin",
+      "spriteFrame": "info.default"
     },
     "9062091": {
-      "name": "Mannequin"
+      "name": "Mannequin",
+      "spriteFrame": "info.default"
     },
     "9062092": {
-      "name": "Mannequin"
+      "name": "Mannequin",
+      "spriteFrame": "info.default"
     },
     "9062093": {
       "name": "Agent M"
@@ -27688,7 +27023,8 @@
       "name": "Dark Ravine"
     },
     "9062117": {
-      "name": "Peaceful Maple Tree"
+      "name": "Peaceful Maple Tree",
+      "spriteFrame": "info.default"
     },
     "9062118": {
       "name": "Utah"
@@ -27704,9 +27040,6 @@
     },
     "9062122": {
       "name": "Auntie Anna"
-    },
-    "9062123": {
-      "name": "Comborghini"
     },
     "9062124": {
       "name": "Garden Variety Bean"
@@ -27816,17 +27149,11 @@
     "9062160": {
       "name": "Kemdi"
     },
-    "9062161": {
-      "name": "Giant Wisp"
-    },
     "9062162": {
       "name": "Fidan"
     },
     "9062163": {
       "name": "Fidan"
-    },
-    "9062164": {
-      "name": "Toben Hair Hero"
     },
     "9062165": {
       "name": "Pink Bean Statue"
@@ -27888,9 +27215,6 @@
     "9062184": {
       "name": "Knight Kemdi"
     },
-    "9062185": {
-      "name": "Hero Bazzi"
-    },
     "9062186": {
       "name": "Knight Kemdi"
     },
@@ -27902,9 +27226,6 @@
     },
     "9062189": {
       "name": "Silverbristle"
-    },
-    "9062190": {
-      "name": "Hero Dao"
     },
     "9062191": {
       "name": "Lord Pixrog"
@@ -28039,10 +27360,12 @@
       "name": "Sweepy"
     },
     "9062235": {
-      "name": "One-Eyed Goblin"
+      "name": "One-Eyed Goblin",
+      "spriteFrame": "info.default"
     },
     "9062236": {
-      "name": "Two-Eyed Goblin"
+      "name": "Two-Eyed Goblin",
+      "spriteFrame": "info.default"
     },
     "9062237": {
       "name": "One-Eyed Goblin"
@@ -28144,16 +27467,20 @@
       "name": "Android"
     },
     "9062271": {
-      "name": "Human"
+      "name": "Human",
+      "spriteFrame": "info.default"
     },
     "9062272": {
-      "name": "Human"
+      "name": "Human",
+      "spriteFrame": "info.default"
     },
     "9062273": {
-      "name": "Human"
+      "name": "Human",
+      "spriteFrame": "info.default"
     },
     "9062274": {
-      "name": "Human"
+      "name": "Human",
+      "spriteFrame": "info.default"
     },
     "9062275": {
       "name": "Sophelia"
@@ -28200,9 +27527,6 @@
     "9062289": {
       "name": "Lady Moon Bunny"
     },
-    "9062290": {
-      "name": "Toben Hair Hero"
-    },
     "9062291": {
       "name": "Ralphio"
     },
@@ -28225,7 +27549,8 @@
       "name": "Swanson"
     },
     "9062298": {
-      "name": "VIP Coupon Book"
+      "name": "VIP Coupon Book",
+      "spriteFrame": "info.default"
     },
     "9062299": {
       "name": "Nicole"
@@ -28264,7 +27589,8 @@
       "name": "Swanson"
     },
     "9062311": {
-      "name": "VIP Coupon Book"
+      "name": "VIP Coupon Book",
+      "spriteFrame": "info.default"
     },
     "9062312": {
       "name": "Ralphio"
@@ -28407,260 +27733,15 @@
     "9062359": {
       "name": "Phiny the Fairy"
     },
-    "9062360": {
-      "name": "Old Music Sheet"
-    },
-    "9062361": {
-      "name": "Baby Food Recipe"
-    },
-    "9062362": {
-      "name": "Odd Animal Encyclopedia #1"
-    },
-    "9062363": {
-      "name": "Desk Drawer"
-    },
-    "9062364": {
-      "name": "Safe"
-    },
-    "9062365": {
-      "name": "Picture Frame"
-    },
-    "9062366": {
-      "name": "Red Book"
-    },
-    "9062367": {
-      "name": "Red Book"
-    },
-    "9062368": {
-      "name": "Red Book"
-    },
-    "9062369": {
-      "name": "Harp \u003CDo\u003E"
-    },
-    "9062370": {
-      "name": "Harp \u003CRe\u003E"
-    },
-    "9062371": {
-      "name": "Harp \u003CMi\u003E"
-    },
-    "9062372": {
-      "name": "Harp \u003CFa\u003E"
-    },
-    "9062373": {
-      "name": "Harp \u003CSo\u003E"
-    },
-    "9062374": {
-      "name": "Harp \u003CLa\u003E"
-    },
-    "9062375": {
-      "name": "Harp \u003CTi\u003E"
-    },
     "9062376": {
       "name": "Ghost Baby"
-    },
-    "9062377": {
-      "name": "Letter"
-    },
-    "9062378": {
-      "name": "Storage Room Picture Frame"
-    },
-    "9062379": {
-      "name": "Fireplace"
-    },
-    "9062380": {
-      "name": "Deer Trophy"
-    },
-    "9062381": {
-      "name": "Hog Trophy"
-    },
-    "9062382": {
-      "name": "Eagle Trophy"
-    },
-    "9062383": {
-      "name": "Nursery Lock"
-    },
-    "9062384": {
-      "name": "???"
-    },
-    "9062385": {
-      "name": "Piano Lock"
-    },
-    "9062386": {
-      "name": "Old Book"
     },
     "9062387": {
       "name": "Unsigned Letter"
     },
-    "9062388": {
-      "name": "Lock"
-    },
-    "9062389": {
-      "name": "Cooking Utensils"
-    },
-    "9062390": {
-      "name": "First Spot"
-    },
-    "9062391": {
-      "name": "Second Spot"
-    },
-    "9062392": {
-      "name": "Third Spot"
-    },
-    "9062393": {
-      "name": "Fourth Spot"
-    },
-    "9062394": {
-      "name": "Fifth Spot"
-    },
-    "9062395": {
-      "name": "Blue Book"
-    },
-    "9062396": {
-      "name": "Blue Book"
-    },
-    "9062397": {
-      "name": "Old Book"
-    },
-    "9062398": {
-      "name": "Old Book"
-    },
-    "9062399": {
-      "name": "Old Book"
-    },
-    "9062400": {
-      "name": "Note on the Table"
-    },
-    "9062401": {
-      "name": "Purple Book"
-    },
-    "9062402": {
-      "name": "Purple Book"
-    },
-    "9062403": {
-      "name": "Purple Book"
-    },
-    "9062404": {
-      "name": "Purple Book"
-    },
-    "9062405": {
-      "name": "Chipped Plate"
-    },
-    "9062406": {
-      "name": "Custodian\u0027s Bag"
-    },
-    "9062407": {
-      "name": "Custodian\u0027s Journal"
-    },
-    "9062408": {
-      "name": "Coat Racks"
-    },
-    "9062409": {
-      "name": "Serving Plate Cover"
-    },
-    "9062410": {
-      "name": "Mouse Hole"
-    },
-    "9062411": {
-      "name": "Old Teacup Set"
-    },
-    "9062412": {
-      "name": "Freezer"
-    },
-    "9062413": {
-      "name": "Gas Stove"
-    },
-    "9062414": {
-      "name": "Gas Pipes"
-    },
-    "9062415": {
-      "name": "Water"
-    },
-    "9062416": {
-      "name": "Load"
-    },
-    "9062417": {
-      "name": "Clock"
-    },
-    "9062418": {
-      "name": "Pipe"
-    },
-    "9062419": {
-      "name": "Gas Meter"
-    },
-    "9062420": {
-      "name": "Cake"
-    },
-    "9062421": {
-      "name": "Empty Bucket"
-    },
-    "9062422": {
-      "name": "Canopy"
-    },
-    "9062423": {
-      "name": "White Dresser"
-    },
-    "9062424": {
-      "name": "Wood Dresser"
-    },
-    "9062425": {
-      "name": "Small Object"
-    },
-    "9062426": {
-      "name": "Large Object"
-    },
-    "9062427": {
-      "name": "Decoration"
-    },
-    "9062428": {
-      "name": "Cupboard"
-    },
-    "9062429": {
-      "name": "Odd Animal Encyclopedia #2"
-    },
-    "9062430": {
-      "name": "Odd Animal Encyclopedia #3"
-    },
-    "9062431": {
-      "name": "Small Object 2"
-    },
-    "9062432": {
-      "name": "Mirror"
-    },
-    "9062433": {
-      "name": "Haunted Harp"
-    },
-    "9062434": {
-      "name": "Haunted Object 1"
-    },
-    "9062435": {
-      "name": "Haunted Object 2"
-    },
-    "9062436": {
-      "name": "Picture Frame 1"
-    },
-    "9062437": {
-      "name": "Small Object 3"
-    },
-    "9062438": {
-      "name": "Tea Table"
-    },
-    "9062439": {
-      "name": "Phone"
-    },
-    "9062440": {
-      "name": "Photo"
-    },
-    "9062441": {
-      "name": "Paper"
-    },
-    "9062442": {
-      "name": "Drawer"
-    },
-    "9062443": {
-      "name": "Flower"
-    },
     "9062444": {
-      "name": "Ghost Baby"
+      "name": "Ghost Baby",
+      "spriteFrame": "bye.0"
     },
     "9062445": {
       "name": "Yeti"
@@ -28806,12 +27887,6 @@
     "9062492": {
       "name": "Assistant Robo"
     },
-    "9062493": {
-      "name": "\uC228\uACA8\uC9C4 \uC720\uC801\uC758 \uBCF4\uBB3C \uC0C1\uC790"
-    },
-    "9062494": {
-      "name": "\uC228\uACA8\uC9C4 \uC720\uC801\uC758 \uBCF4\uBB3C \uC0C1\uC790"
-    },
     "9062495": {
       "name": "White Baby Monkey"
     },
@@ -28855,13 +27930,16 @@
       "name": "Small Spirit"
     },
     "9062510": {
-      "name": "Red Bud"
+      "name": "Red Bud",
+      "spriteFrame": "info.default"
     },
     "9062511": {
-      "name": "Blue Bud"
+      "name": "Blue Bud",
+      "spriteFrame": "info.default"
     },
     "9062512": {
-      "name": "Yellow Bud"
+      "name": "Yellow Bud",
+      "spriteFrame": "info.default"
     },
     "9062513": {
       "name": "Tree Spirit"
@@ -29018,9 +28096,6 @@
     },
     "9062564": {
       "name": "Orange Mushroom Tent"
-    },
-    "9062565": {
-      "name": "Flag Race Flag"
     },
     "9062566": {
       "name": "Yeti"
@@ -29211,26 +28286,14 @@
     "9062633": {
       "name": "Slime"
     },
-    "9062634": {
-      "name": "Clothes Store"
-    },
     "9062635": {
       "name": "Clothes Store"
-    },
-    "9062636": {
-      "name": "Props Store"
     },
     "9062637": {
       "name": "Props Store"
     },
-    "9062638": {
-      "name": "Mount Store"
-    },
     "9062639": {
       "name": "Mount Store"
-    },
-    "9062640": {
-      "name": "Jisoo"
     },
     "9062641": {
       "name": "Cassandra"
@@ -29242,27 +28305,6 @@
       "name": "Ellie"
     },
     "9062644": {
-      "name": "Rith"
-    },
-    "9062645": {
-      "name": "Ellie"
-    },
-    "9062646": {
-      "name": "Ellie"
-    },
-    "9062647": {
-      "name": "Ellie"
-    },
-    "9062648": {
-      "name": "Ellie"
-    },
-    "9062649": {
-      "name": "Rith"
-    },
-    "9062650": {
-      "name": "Rith"
-    },
-    "9062651": {
       "name": "Rith"
     },
     "9062652": {
@@ -29312,12 +28354,6 @@
     },
     "9062667": {
       "name": "Magic Wardrobe"
-    },
-    "9062668": {
-      "name": "Willy"
-    },
-    "9062669": {
-      "name": "Willy"
     },
     "9062670": {
       "name": "Lucky"
@@ -29383,19 +28419,8 @@
       "name": "Herman"
     },
     "9062691": {
-      "name": "Cake"
-    },
-    "9062692": {
-      "name": "Scribbles"
-    },
-    "9062693": {
-      "name": "Map"
-    },
-    "9062694": {
-      "name": "Robot"
-    },
-    "9062695": {
-      "name": "Photo"
+      "name": "Cake",
+      "spriteFrame": "info.default"
     },
     "9062696": {
       "name": "Flaming Mike"
@@ -29601,50 +28626,24 @@
     "9062766": {
       "name": "Champion Toben Hair"
     },
-    "9062768": {
-      "name": "Clothes Store"
-    },
     "9062769": {
       "name": "Clothes Store"
-    },
-    "9062770": {
-      "name": "Accessory Store"
     },
     "9062771": {
       "name": "Accessory Store"
     },
-    "9062772": {
-      "name": "Mount Store"
-    },
     "9062773": {
       "name": "Mount Store"
     },
-    "9062774": {
-      "name": "Gold Richie"
-    },
     "9062775": {
-      "name": "Safe"
+      "name": "Safe",
+      "spriteFrame": "info.cover"
     },
     "9062776": {
       "name": "Ant"
     },
     "9062777": {
       "name": "Grasshopper"
-    },
-    "9062778": {
-      "name": "Star Candy"
-    },
-    "9062779": {
-      "name": "Star Candy"
-    },
-    "9062780": {
-      "name": "Star Candy"
-    },
-    "9062781": {
-      "name": "Star Candy"
-    },
-    "9062782": {
-      "name": "Star Candy"
     },
     "9062783": {
       "name": "Slime"
@@ -29710,27 +28709,6 @@
       "name": "Slime"
     },
     "9062805": {
-      "name": "Wave"
-    },
-    "9062806": {
-      "name": "Spiegelmann"
-    },
-    "9062807": {
-      "name": "Kemdi"
-    },
-    "9062808": {
-      "name": "Pink Bean"
-    },
-    "9062809": {
-      "name": "Yeti"
-    },
-    "9062810": {
-      "name": "Orange Mushroom"
-    },
-    "9062811": {
-      "name": "Slime"
-    },
-    "9062812": {
       "name": "Wave"
     },
     "9062813": {
@@ -29850,29 +28828,19 @@
     "9062851": {
       "name": "Green Mushroom"
     },
-    "9062852": {
-      "name": "Green Mushroom"
-    },
     "9062853": {
-      "name": "Orange Mushroom Safe"
+      "name": "Orange Mushroom Safe",
+      "spriteFrame": "condition1.stand.0"
     },
     "9062854": {
-      "name": "Green Mushroom Safe"
+      "name": "Green Mushroom Safe",
+      "spriteFrame": "condition1.stand.0"
     },
     "9062855": {
       "name": "Orange Mushroom"
     },
-    "9062856": {
-      "name": "Neon Spiegelmann"
-    },
-    "9062857": {
-      "name": "Neon Kiosk"
-    },
     "9062858": {
       "name": "Neon Kiosk"
-    },
-    "9062859": {
-      "name": "Ring Kiosk"
     },
     "9062860": {
       "name": "Ring Kiosk"
@@ -30069,9 +29037,6 @@
     "9062924": {
       "name": "Lippe"
     },
-    "9062925": {
-      "name": "Little Prince"
-    },
     "9062926": {
       "name": "Tirith"
     },
@@ -30144,18 +29109,6 @@
     "9062949": {
       "name": "Cake"
     },
-    "9062950": {
-      "name": "Scribbles"
-    },
-    "9062951": {
-      "name": "Map"
-    },
-    "9062952": {
-      "name": "Robot"
-    },
-    "9062953": {
-      "name": "Photo"
-    },
     "9062954": {
       "name": "Toben Hair Hero"
     },
@@ -30164,9 +29117,6 @@
     },
     "9062956": {
       "name": "Cassandra"
-    },
-    "9062957": {
-      "name": "Ameryl Pots"
     },
     "9062958": {
       "name": "Snowy Healing Altar"
@@ -30232,13 +29182,16 @@
       "name": "Orin"
     },
     "9062979": {
-      "name": "Identisk Statue"
+      "name": "Identisk Statue",
+      "spriteFrame": "info.default"
     },
     "9062980": {
-      "name": "Sunlight Statue"
+      "name": "Sunlight Statue",
+      "spriteFrame": "info.default"
     },
     "9062981": {
-      "name": "Wind Statue"
+      "name": "Wind Statue",
+      "spriteFrame": "info.default"
     },
     "9062982": {
       "name": "Baz"
@@ -30289,13 +29242,15 @@
       "name": "Nell"
     },
     "9062998": {
-      "name": "Sunlight Statue"
+      "name": "Sunlight Statue",
+      "spriteFrame": "info.default"
     },
     "9062999": {
       "name": "Enki"
     },
     "9063000": {
-      "name": "Spark of Determination"
+      "name": "Spark of Determination",
+      "spriteFrame": "info.default"
     },
     "9063001": {
       "name": "Neinheart"
@@ -30308,6 +29263,10 @@
     },
     "9063004": {
       "name": "Neinheart"
+    },
+    "9063005": {
+      "name": "Identisk Statue",
+      "spriteFrame": "info.default"
     },
     "9063006": {
       "name": "Step Up Helper"
@@ -30350,9 +29309,6 @@
     },
     "9063019": {
       "name": "Spiegelmann"
-    },
-    "9063020": {
-      "name": "Okya"
     },
     "9063021": {
       "name": "Oshik"
@@ -30528,21 +29484,6 @@
     "9063078": {
       "name": "Sunset Kiosk"
     },
-    "9063079": {
-      "name": "Star Candy"
-    },
-    "9063080": {
-      "name": "Star Candy"
-    },
-    "9063081": {
-      "name": "Star Candy"
-    },
-    "9063082": {
-      "name": "Star Candy"
-    },
-    "9063083": {
-      "name": "Star Candy"
-    },
     "9063084": {
       "name": "Champion Toben Hair"
     },
@@ -30551,9 +29492,6 @@
     },
     "9063133": {
       "name": "Angelic Buster"
-    },
-    "9063134": {
-      "name": "Mr. Flopsy the Dreamweaver"
     },
     "9063135": {
       "name": "Dreaming Lucid"
@@ -30621,18 +29559,6 @@
     "9063157": {
       "name": "Hilla"
     },
-    "9063158": {
-      "name": "Will"
-    },
-    "9063159": {
-      "name": "Lucid"
-    },
-    "9063160": {
-      "name": "Damien"
-    },
-    "9063161": {
-      "name": "Von Leon"
-    },
     "9063162": {
       "name": "Jolly Gray Mask"
     },
@@ -30673,7 +29599,8 @@
       "name": "Spiegelmann"
     },
     "9063175": {
-      "name": "Spiegelmann"
+      "name": "Spiegelmann",
+      "spriteFrame": "condition1.default"
     },
     "9063176": {
       "name": "Gold Richie"
@@ -30692,18 +29619,6 @@
     },
     "9063181": {
       "name": "Snow Duck"
-    },
-    "9063182": {
-      "name": "Bounty Hunter\u0027s Portal"
-    },
-    "9063183": {
-      "name": "Bounty Hunter\u0027s Portal"
-    },
-    "9063184": {
-      "name": "Inferno Wolf\u0027s Den"
-    },
-    "9063185": {
-      "name": "Mystical Hunter\u0027s Portal"
     },
     "9063186": {
       "name": "Cutesy Plate"
@@ -31182,18 +30097,6 @@
     "9063348": {
       "name": "Mirror"
     },
-    "9063349": {
-      "name": "Cobra"
-    },
-    "9063350": {
-      "name": "Dave"
-    },
-    "9063351": {
-      "name": "Diver Box"
-    },
-    "9063352": {
-      "name": "Mirror"
-    },
     "9063353": {
       "name": "That feels nice and cool!"
     },
@@ -31374,9 +30277,6 @@
     "9063412": {
       "name": "Lycanthrope"
     },
-    "9063413": {
-      "name": "Suspicious Space"
-    },
     "9063414": {
       "name": "Reserved Local"
     },
@@ -31394,9 +30294,6 @@
     },
     "9063419": {
       "name": "Illie"
-    },
-    "9063420": {
-      "name": "Suspicious Space"
     },
     "9063421": {
       "name": "Hilla"
@@ -31418,9 +30315,6 @@
     },
     "9063427": {
       "name": "Wise Shamaness"
-    },
-    "9063428": {
-      "name": "Suspicious Space"
     },
     "9063429": {
       "name": "Gruff Spirit"
@@ -31457,9 +30351,6 @@
     },
     "9063440": {
       "name": "Kindhearted Local"
-    },
-    "9063441": {
-      "name": "Suspicious Space"
     },
     "9063442": {
       "name": "Arkarium"
@@ -31623,9 +30514,6 @@
     "9063495": {
       "name": "Kibbles"
     },
-    "9063496": {
-      "name": "A Faint Glimmer"
-    },
     "9063497": {
       "name": "Storage"
     },
@@ -31740,15 +30628,9 @@
     "9063617": {
       "name": "Tia"
     },
-    "9063618": {
-      "name": "Angelo"
-    },
     "9063620": {
       "name": "Kelly"
     },
-    "9063621": {},
-    "9063622": {},
-    "9063623": {},
     "9063624": {
       "name": "Ms. Appropriation"
     },
@@ -31825,7 +30707,8 @@
       "name": "Cutter"
     },
     "9063649": {
-      "name": "Young Anima"
+      "name": "Young Anima",
+      "spriteFrame": "info.default"
     },
     "9063650": {
       "name": "Kyrin"
@@ -31931,9 +30814,6 @@
     },
     "9063684": {
       "name": "Calico"
-    },
-    "9063685": {
-      "name": "???"
     },
     "9063686": {
       "name": "Octo-Me"
@@ -32085,15 +30965,11 @@
     "9063735": {
       "name": "Status Board"
     },
-    "9063736": {},
     "9063737": {
       "name": "Champion Toben Hair"
     },
     "9063738": {
       "name": "Elwin"
-    },
-    "9063739": {
-      "name": "Cassandra"
     },
     "9063740": {
       "name": "Hilla"
@@ -32132,7 +31008,8 @@
       "name": "Seya"
     },
     "9063752": {
-      "name": "Lepa"
+      "name": "Lepa",
+      "spriteFrame": "info.default"
     },
     "9063753": {
       "name": "Lepa"
@@ -32161,9 +31038,6 @@
     "9063761": {
       "name": "Kibbles"
     },
-    "9063762": {
-      "name": "Tera Blink Help"
-    },
     "9063763": {
       "name": "Mover"
     },
@@ -32182,9 +31056,6 @@
     "9063768": {
       "name": "Spiegelmann"
     },
-    "9063769": {},
-    "9063770": {},
-    "9063771": {},
     "9063772": {
       "name": "Kibbles"
     },
@@ -32295,9 +31166,6 @@
     },
     "9063808": {
       "name": "NLM Token Vending Machine"
-    },
-    "9063809": {
-      "name": "Break Time"
     },
     "9063810": {
       "name": "Gunny"
@@ -32578,9 +31446,6 @@
     "9063903": {
       "name": "Ellanos"
     },
-    "9063904": {
-      "name": "First Clear Ranking"
-    },
     "9063905": {
       "name": "Ailene"
     },
@@ -32599,9 +31464,6 @@
     "9063918": {
       "name": "Gen"
     },
-    "9063919": {},
-    "9063920": {},
-    "9063921": {},
     "9063922": {
       "name": "Gob"
     },
@@ -32702,7 +31564,8 @@
       "name": "Monster Park Shuttle"
     },
     "9071004": {
-      "name": "Gate"
+      "name": "Gate",
+      "spriteFrame": "info.default"
     },
     "9071005": {
       "name": "Spiegelmann"
@@ -32712,9 +31575,6 @@
     },
     "9071007": {
       "name": "Spiegelette"
-    },
-    "9071009": {
-      "name": "Monster Park Electronic Display"
     },
     "9072000": {
       "name": "Instructor Irvin"
@@ -32791,9 +31651,6 @@
     "9073008": {
       "name": "Mystic Gate"
     },
-    "9073009": {
-      "name": "Supply Box"
-    },
     "9073010": {
       "name": "Crow"
     },
@@ -32804,7 +31661,8 @@
       "name": "Starling"
     },
     "9073013": {
-      "name": "Mystic Gate"
+      "name": "Mystic Gate",
+      "spriteFrame": "info.default"
     },
     "9073014": {
       "name": "Crow"
@@ -32855,16 +31713,20 @@
       "name": "Spiegelmann"
     },
     "9074001": {
-      "name": "Seasonal Series: Spring"
+      "name": "Seasonal Series: Spring",
+      "spriteFrame": "info.default"
     },
     "9074002": {
-      "name": "Seasonal Series: Summer"
+      "name": "Seasonal Series: Summer",
+      "spriteFrame": "info.default"
     },
     "9074003": {
-      "name": "Seasonal Series: Fall"
+      "name": "Seasonal Series: Fall",
+      "spriteFrame": "info.default"
     },
     "9074004": {
-      "name": "Seasonal Series: Winter"
+      "name": "Seasonal Series: Winter",
+      "spriteFrame": "info.default"
     },
     "9074005": {
       "name": "Unpublished Work"
@@ -32912,7 +31774,8 @@
       "name": "Camp Fire"
     },
     "9074402": {
-      "name": "Tree Branch"
+      "name": "Tree Branch",
+      "spriteFrame": "info.default"
     },
     "9075000": {
       "name": "Lotus"
@@ -32954,10 +31817,12 @@
       "name": "Gatekeeper"
     },
     "9075104": {
-      "name": "Link 2 Control Device"
+      "name": "Link 2 Control Device",
+      "spriteFrame": "info.default"
     },
     "9075105": {
-      "name": "Power Control Device"
+      "name": "Power Control Device",
+      "spriteFrame": "info.default"
     },
     "9075106": {
       "name": "Link 6 Control Device"
@@ -33061,9 +31926,6 @@
     "9076000": {
       "name": "Spiegelette"
     },
-    "9076001": {
-      "name": "Cross World Party Quest"
-    },
     "9076002": {
       "name": "Pub"
     },
@@ -33131,10 +31993,8 @@
       "name": "Stormclaw"
     },
     "9076140": {
-      "name": "Junk"
-    },
-    "9076141": {
-      "name": "Sayram"
+      "name": "Junk",
+      "spriteFrame": "info.default"
     },
     "9076142": {
       "name": "Stormclaw"
@@ -33191,7 +32051,8 @@
       "name": "Storage Room 3"
     },
     "9076167": {
-      "name": "Enhancement Altar"
+      "name": "Enhancement Altar",
+      "spriteFrame": "info.default"
     },
     "9076168": {
       "name": "Game Master Pierre"
@@ -33207,9 +32068,6 @@
     },
     "9090003": {
       "name": "Bjorn"
-    },
-    "9090004": {
-      "name": "TV Display"
     },
     "9090005": {
       "name": "Pegasus"
@@ -33455,7 +32313,8 @@
       "name": "Ram"
     },
     "9100031": {
-      "name": "Trolley Driver"
+      "name": "Trolley Driver",
+      "spriteFrame": "info.default"
     },
     "9100032": {
       "name": "Showa Resident 1"
@@ -33470,7 +32329,8 @@
       "name": "Showa Resident 4"
     },
     "9100036": {
-      "name": "Mailbox"
+      "name": "Mailbox",
+      "spriteFrame": "info.default"
     },
     "9100037": {
       "name": "Baetan"
@@ -33525,12 +32385,6 @@
     },
     "9102002": {
       "name": "Oster"
-    },
-    "9102100": {
-      "name": "?"
-    },
-    "9102101": {
-      "name": "?"
     },
     "9103000": {
       "name": "Pietri"
@@ -33880,9 +32734,6 @@
     "9112004": {
       "name": "Kamaitachi"
     },
-    "9112005": {
-      "name": "Raccoon Hill Situation"
-    },
     "9112006": {
       "name": "Kind-Looking Specter"
     },
@@ -34177,11 +33028,9 @@
     "9120216": {
       "name": "Wence"
     },
-    "9120217": {
-      "name": "Crow"
-    },
     "9120218": {
-      "name": "Starling"
+      "name": "Starling",
+      "spriteFrame": "info.default"
     },
     "9120219": {
       "name": "Bastille"
@@ -34555,9 +33404,6 @@
     "9130120": {
       "name": "Oura Shogun"
     },
-    "9130122": {
-      "name": "Ominous Voice"
-    },
     "9130124": {
       "name": "Princess Sakuno"
     },
@@ -34660,14 +33506,8 @@
     "9131008": {
       "name": "Takeda Cavalry"
     },
-    "9131009": {
-      "name": "Honnou-ji Eastern Gate"
-    },
     "9131010": {
       "name": "Tsuchimikado Haruaki"
-    },
-    "9131011": {
-      "name": "Altar"
     },
     "9131012": {
       "name": "Athena Pierce"
@@ -34676,10 +33516,12 @@
       "name": "Hayato"
     },
     "9131014": {
-      "name": "Hayato"
+      "name": "Hayato",
+      "spriteFrame": "bm0.0"
     },
     "9131015": {
-      "name": "Kanna"
+      "name": "Kanna",
+      "spriteFrame": "bm0.0"
     },
     "9131016": {
       "name": "Kanna"
@@ -34735,21 +33577,6 @@
     "9135027": {
       "name": "Lucia"
     },
-    "9136005": {
-      "name": "PLAYER SLOT 1"
-    },
-    "9136006": {
-      "name": "PLAYER SLOT 2"
-    },
-    "9136007": {
-      "name": "PLAYER SLOT 3"
-    },
-    "9136008": {
-      "name": "PLAYER SLOT 4"
-    },
-    "9136009": {
-      "name": "PLAYER SLOT 5"
-    },
     "9137002": {
       "name": "C"
     },
@@ -34779,51 +33606,6 @@
     },
     "9137014": {
       "name": "Armin Arlelt"
-    },
-    "9137200": {
-      "name": "Instructor Keith Shadis"
-    },
-    "9137201": {
-      "name": "Annie Leonhart"
-    },
-    "9137202": {
-      "name": "Christa Lenz"
-    },
-    "9137203": {
-      "name": "Mikasa Ackermann"
-    },
-    "9137204": {
-      "name": "Mikasa Ackermann"
-    },
-    "9137205": {
-      "name": "Eren Jaeger"
-    },
-    "9137206": {
-      "name": "Armin Arlelt"
-    },
-    "9137207": {
-      "name": "Sasha Braus"
-    },
-    "9137208": {
-      "name": "Wall Rose"
-    },
-    "9137209": {
-      "name": "Levi"
-    },
-    "9137210": {
-      "name": "Christa Lenz"
-    },
-    "9137211": {
-      "name": "Eren Jaeger"
-    },
-    "9137212": {
-      "name": "Annie Leonhart"
-    },
-    "9137213": {
-      "name": "Annie Leonhart"
-    },
-    "9137214": {
-      "name": "Annie Leonhart"
     },
     "9200000": {
       "name": "Cody"
@@ -35176,9 +33958,6 @@
     "9201113": {
       "name": "Jack Barricade"
     },
-    "9201114": {
-      "name": "Gate"
-    },
     "9201115": {
       "name": "Battle Statue"
     },
@@ -35232,15 +34011,6 @@
     },
     "9201138": {
       "name": "Jonas"
-    },
-    "9201139": {
-      "name": "Olivia\u0027s Mirror1"
-    },
-    "9201140": {
-      "name": "Olivia\u0027s Mirror2"
-    },
-    "9201141": {
-      "name": "Olivia\u0027s Mirror3"
     },
     "9201142": {
       "name": "Witch Malady"
@@ -35365,27 +34135,6 @@
     "9201214": {
       "name": "Heena"
     },
-    "9201215": {
-      "name": "script"
-    },
-    "9201216": {
-      "name": "Portal"
-    },
-    "9201217": {
-      "name": "Portal"
-    },
-    "9201218": {
-      "name": "Portal"
-    },
-    "9201219": {
-      "name": "Portal"
-    },
-    "9201220": {
-      "name": "Portal"
-    },
-    "9201221": {
-      "name": "Portal"
-    },
     "9201222": {
       "name": "Exit"
     },
@@ -35458,23 +34207,8 @@
     "9201245": {
       "name": "The Decapatruck"
     },
-    "9201246": {
-      "name": "Hidden Spot Cole"
-    },
-    "9201247": {
-      "name": "Cole"
-    },
-    "9201248": {
-      "name": "Stew"
-    },
-    "9201249": {
-      "name": "Hidden Spot Stew"
-    },
     "9201250": {
       "name": "George Washington"
-    },
-    "9201251": {
-      "name": "Enter Lobby"
     },
     "9201252": {
       "name": "Nurse Pretty"
@@ -35643,9 +34377,6 @@
     },
     "9201309": {
       "name": "Feline Pirate Ship"
-    },
-    "9201310": {
-      "name": "Olivia\u0027s Mirror4 (Chaos)"
     },
     "9201311": {
       "name": "Regular Cab in Victoria"
@@ -35965,14 +34696,12 @@
     "9201418": {
       "name": "Kayla the Fairy"
     },
-    "9201419": {
-      "name": "Voice"
-    },
     "9201420": {
       "name": "Strawberry Cream Cake"
     },
     "9201421": {
-      "name": "Honey Apple Pie"
+      "name": "Honey Apple Pie",
+      "spriteFrame": "stand.1"
     },
     "9201422": {
       "name": "Karula"
@@ -36391,9 +35120,6 @@
     "9201590": {
       "name": "Xiao"
     },
-    "9201592": {
-      "name": "dummy"
-    },
     "9201593": {
       "name": "Vivian"
     },
@@ -36477,18 +35203,6 @@
     },
     "9201621": {
       "name": "Miracle Time"
-    },
-    "9201622": {
-      "name": "Jett"
-    },
-    "9201623": {
-      "name": "Jett"
-    },
-    "9201624": {
-      "name": "Beast Tamer"
-    },
-    "9201625": {
-      "name": "Beast Tamer"
     },
     "9201626": {
       "name": "Maple Administrator"
@@ -36708,12 +35422,6 @@
     },
     "9201710": {
       "name": "Yeti"
-    },
-    "9201711": {
-      "name": "Erel Light"
-    },
-    "9201712": {
-      "name": "Erel Light"
     },
     "9201713": {
       "name": "Archon"
@@ -36943,9 +35651,6 @@
     "9201788": {
       "name": "Inspector"
     },
-    "9201789": {
-      "name": "Lead Inspector"
-    },
     "9201790": {
       "name": "Humanoid A"
     },
@@ -37069,9 +35774,6 @@
     "9201842": {
       "name": "Era"
     },
-    "9201843": {
-      "name": "???"
-    },
     "9201844": {
       "name": "Unstable Rumo"
     },
@@ -37127,7 +35829,8 @@
       "name": "Lazy Daisy"
     },
     "9209100": {
-      "name": "Santa"
+      "name": "Santa",
+      "spriteFrame": "info.default"
     },
     "9209101": {
       "name": "Santa"
@@ -37328,7 +36031,8 @@
       "name": "Doctor Bing at the Scene"
     },
     "9250144": {
-      "name": "Time Machine"
+      "name": "Time Machine",
+      "spriteFrame": "info.default"
     },
     "9250145": {
       "name": "Worm Hole to the Present"
@@ -37561,23 +36265,14 @@
     "9270076": {
       "name": "Fur White"
     },
-    "9270082": {
-      "name": "Broken Wooden Box"
-    },
     "9270083": {
       "name": "Burke"
     },
     "9270084": {
       "name": "Burke"
     },
-    "9270085": {
-      "name": "Master Key Container"
-    },
     "9270086": {
       "name": "Black Bark"
-    },
-    "9270087": {
-      "name": "Burnt Remains"
     },
     "9270088": {
       "name": "Black Bark"
@@ -37714,9 +36409,6 @@
     "9270239": {
       "name": "Blake"
     },
-    "9270240": {
-      "name": "Blake"
-    },
     "9270248": {
       "name": "Dragon Expert"
     },
@@ -37749,9 +36441,6 @@
     },
     "9270284": {
       "name": "Snake Expert"
-    },
-    "9270285": {
-      "name": "\uCE74\uC6B4\uD2B8\uB2E4\uC6B4 \uC81C\uB2E8"
     },
     "9270307": {
       "name": "\uB9C8\uC655 \uBC1C\uB85D"
@@ -37987,9 +36676,6 @@
     "9310060": {
       "name": "Cassandra"
     },
-    "9310082": {
-      "name": "Mount Song Maple TV"
-    },
     "9310083": {
       "name": "Talking Snow Man"
     },
@@ -38012,7 +36698,8 @@
       "name": "Chao"
     },
     "9310395": {
-      "name": "Boxing Machine"
+      "name": "Boxing Machine",
+      "spriteFrame": "info.default"
     },
     "9310411": {
       "name": "Gold Dragon Gate"
@@ -38102,10 +36789,12 @@
       "name": "Calm Grizzly"
     },
     "9310449": {
-      "name": "Gold Dragon Dojo"
+      "name": "Gold Dragon Dojo",
+      "spriteFrame": "info.default"
     },
     "9310450": {
-      "name": "Red Tiger Dojo"
+      "name": "Red Tiger Dojo",
+      "spriteFrame": "info.default"
     },
     "9310451": {
       "name": "Red Tiger Gate"
@@ -38113,11 +36802,6 @@
     "9310452": {
       "name": "Gold Dragon Gate"
     },
-    "9310453": {},
-    "9310454": {},
-    "9310455": {},
-    "9310456": {},
-    "9310457": {},
     "9310458": {
       "name": "Moonlight Posie"
     },
@@ -38149,10 +36833,12 @@
       "name": "Yohu"
     },
     "9310468": {
-      "name": "Gold Dragon Dojo"
+      "name": "Gold Dragon Dojo",
+      "spriteFrame": "info.default"
     },
     "9310469": {
-      "name": "Red Tiger Dojo"
+      "name": "Red Tiger Dojo",
+      "spriteFrame": "info.default"
     },
     "9310480": {
       "name": "Fireworks Merchant"
@@ -38206,46 +36892,59 @@
       "name": "Mu Gong"
     },
     "9310500": {
-      "name": "Wu Tien Mountain Portal"
+      "name": "Wu Tien Mountain Portal",
+      "spriteFrame": "info.default"
     },
     "9310501": {
-      "name": "Wu Tien Mountain Portal"
+      "name": "Wu Tien Mountain Portal",
+      "spriteFrame": "info.default"
     },
     "9310502": {
-      "name": "Wu Tien Mountain Portal"
+      "name": "Wu Tien Mountain Portal",
+      "spriteFrame": "info.default"
     },
     "9310503": {
-      "name": "Wu Tien Mountain Portal"
+      "name": "Wu Tien Mountain Portal",
+      "spriteFrame": "info.default"
     },
     "9310504": {
-      "name": "Wu Tien Mountain Portal"
+      "name": "Wu Tien Mountain Portal",
+      "spriteFrame": "info.default"
     },
     "9310505": {
-      "name": "Wu Tien Mountain Portal"
+      "name": "Wu Tien Mountain Portal",
+      "spriteFrame": "info.default"
     },
     "9310506": {
-      "name": "Wu Tien Mountain Portal"
+      "name": "Wu Tien Mountain Portal",
+      "spriteFrame": "info.default"
     },
     "9310507": {
-      "name": "Wu Tien Mountain Portal"
+      "name": "Wu Tien Mountain Portal",
+      "spriteFrame": "info.default"
     },
     "9310508": {
-      "name": "Wu Tien Mountain Portal"
+      "name": "Wu Tien Mountain Portal",
+      "spriteFrame": "info.default"
     },
     "9310509": {
-      "name": "Wu Tien Mountain Portal"
+      "name": "Wu Tien Mountain Portal",
+      "spriteFrame": "info.default"
     },
     "9310510": {
-      "name": "Mu Gong"
+      "name": "Mu Gong",
+      "spriteFrame": "info.default"
     },
     "9310512": {
-      "name": "Lost in Thought"
+      "name": "Lost in Thought",
+      "spriteFrame": "stand.2"
     },
     "9310514": {
       "name": "Mu Gong"
     },
     "9310515": {
-      "name": "Wu Tien Mountain Portal"
+      "name": "Wu Tien Mountain Portal",
+      "spriteFrame": "info.default"
     },
     "9310516": {
       "name": "Wukong"
@@ -38353,10 +37052,12 @@
       "name": "Trapped Man"
     },
     "9310565": {
-      "name": "Shanghai Interdimensional Portal"
+      "name": "Shanghai Interdimensional Portal",
+      "spriteFrame": "info.default"
     },
     "9310566": {
-      "name": "Shanghai Interdimensional Portal"
+      "name": "Shanghai Interdimensional Portal",
+      "spriteFrame": "info.default"
     },
     "9310567": {
       "name": "Shopper Jiangshi"
@@ -38388,15 +37089,6 @@
     "9310584": {
       "name": "Kindly Woodcutter"
     },
-    "9310585": {
-      "name": "shaolincheck1"
-    },
-    "9310586": {
-      "name": "shaolincheck2"
-    },
-    "9310587": {
-      "name": "shaolincheck3"
-    },
     "9310588": {
       "name": "Haunted Stone"
     },
@@ -38418,23 +37110,23 @@
     "9310594": {
       "name": "\u65D7\u6746"
     },
-    "9310595": {
-      "name": "Kid Shoes"
-    },
     "9310596": {
       "name": "Wise Chief Priest"
     },
     "9310597": {
-      "name": "Zarak"
+      "name": "Zarak",
+      "spriteFrame": "condition1.stand.0"
     },
     "9310598": {
-      "name": "Elder Jung"
+      "name": "Elder Jung",
+      "spriteFrame": "condition1.stand.0"
     },
     "9310599": {
       "name": "Xuzhu"
     },
     "9310600": {
-      "name": "check"
+      "name": "check",
+      "spriteFrame": "condition.stand.0"
     },
     "9310601": {
       "name": "Fortune Teller of Henesys"
@@ -38776,10 +37468,12 @@
       "name": "Lab Server Von Leon"
     },
     "9330617": {
-      "name": "Lab Server Lion King Statue"
+      "name": "Lab Server Lion King Statue",
+      "spriteFrame": "info.default"
     },
     "9330618": {
-      "name": "Lab Server Lion King Statue"
+      "name": "Lab Server Lion King Statue",
+      "spriteFrame": "info.default"
     },
     "9330619": {
       "name": "Job Instructor Dr. Bebe"
@@ -38792,9 +37486,6 @@
     },
     "9390010": {
       "name": "Researcher Zet"
-    },
-    "9390011": {
-      "name": ""
     },
     "9390012": {
       "name": "Gastro"
@@ -39085,7 +37776,8 @@
       "name": "Mama Tom"
     },
     "9390316": {
-      "name": "Mama Tom"
+      "name": "Mama Tom",
+      "spriteFrame": "info.default"
     },
     "9390317": {
       "name": "Bernie"
@@ -39505,7 +38197,8 @@
       "name": "Kyrin"
     },
     "9390467": {
-      "name": "Arby"
+      "name": "Arby",
+      "spriteFrame": "info.default"
     },
     "9390468": {
       "name": "Pia"
@@ -39547,13 +38240,8 @@
       "name": "Aria"
     },
     "9400007": {
-      "name": "Fountain of Life"
-    },
-    "9400008": {
-      "name": "Fountain of Life"
-    },
-    "9400009": {
-      "name": "Fountain of Life"
+      "name": "Fountain of Life",
+      "spriteFrame": "info.default"
     },
     "9400010": {
       "name": "Hidden Stone"
@@ -39610,7 +38298,8 @@
       "name": "Neinheart"
     },
     "9400029": {
-      "name": "Shinsoo"
+      "name": "Shinsoo",
+      "spriteFrame": "info.default"
     },
     "9400030": {
       "name": "Claudine"
@@ -39772,10 +38461,8 @@
       "name": "Neinheart"
     },
     "9400084": {
-      "name": "Demon Soldier"
-    },
-    "9400085": {
-      "name": "? ? ?"
+      "name": "Demon Soldier",
+      "spriteFrame": "skill.0"
     },
     "9400086": {
       "name": "Mihile"
@@ -39874,10 +38561,12 @@
       "name": "Brawns"
     },
     "9400135": {
-      "name": "Beefy"
+      "name": "Beefy",
+      "spriteFrame": "shop.0"
     },
     "9400136": {
-      "name": "Huang Zhen"
+      "name": "Huang Zhen",
+      "spriteFrame": "shop.0"
     },
     "9400137": {
       "name": "DJ JM"
@@ -40200,42 +38889,6 @@
     "9400253": {
       "name": "Balrog"
     },
-    "9400256": {
-      "name": "key01"
-    },
-    "9400257": {
-      "name": "key02"
-    },
-    "9400258": {
-      "name": "key03"
-    },
-    "9400259": {
-      "name": "key04"
-    },
-    "9400260": {
-      "name": "key05"
-    },
-    "9400261": {
-      "name": "key06"
-    },
-    "9400262": {
-      "name": "key07"
-    },
-    "9400263": {
-      "name": "key08"
-    },
-    "9400264": {
-      "name": "key09"
-    },
-    "9400265": {
-      "name": "key10"
-    },
-    "9400266": {
-      "name": "key11"
-    },
-    "9400267": {
-      "name": "key12"
-    },
     "9400268": {
       "name": "Beodog"
     },
@@ -40268,9 +38921,6 @@
     },
     "9400311": {
       "name": "Yellow Mage"
-    },
-    "9400312": {
-      "name": "Treasure Sack"
     },
     "9400313": {
       "name": "Horemheb"
@@ -40338,9 +38988,6 @@
     "9400335": {
       "name": "Chair"
     },
-    "9400336": {
-      "name": "Ravaged Sack"
-    },
     "9400340": {
       "name": "Sylvia"
     },
@@ -40370,9 +39017,6 @@
     },
     "9400350": {
       "name": "Neinheart"
-    },
-    "9400351": {
-      "name": "Cygnus"
     },
     "9400352": {
       "name": "Claudine"
@@ -40407,9 +39051,6 @@
     "9400362": {
       "name": "White Dragon"
     },
-    "9400363": {
-      "name": "Kidan"
-    },
     "9400364": {
       "name": "Chief Tatamo"
     },
@@ -40419,8 +39060,13 @@
     "9400366": {
       "name": "Mama Ice Pepe"
     },
+    "9400367": {
+      "name": "Betty",
+      "spriteFrame": "info.default"
+    },
     "9400368": {
-      "name": "Ice Nependeath"
+      "name": "Ice Nependeath",
+      "spriteFrame": "icestand1.0"
     },
     "9400369": {
       "name": "Byron"
@@ -40623,23 +39269,11 @@
     "9400467": {
       "name": "Passing Resistance Member"
     },
-    "9400468": {
-      "name": "Rune-Engraved Elunite Crystal"
-    },
     "9400469": {
       "name": "Fenton"
     },
     "9400470": {
       "name": "Maynard"
-    },
-    "9400471": {
-      "name": "Evidence of Spaceflight Research"
-    },
-    "9400472": {
-      "name": "Water Filtration Facility Ruins"
-    },
-    "9400473": {
-      "name": "Stellar Observatory Ruins"
     },
     "9400474": {
       "name": "Maynard"
@@ -40657,7 +39291,8 @@
       "name": "Surana"
     },
     "9400483": {
-      "name": "Matter Transducer"
+      "name": "Matter Transducer",
+      "spriteFrame": "info.default"
     },
     "9400484": {
       "name": "Ryuul Data Collector"
@@ -40812,12 +39447,6 @@
     "9400550": {
       "name": "Dr. Kim"
     },
-    "9400551": {
-      "name": "Shinji"
-    },
-    "9400552": {
-      "name": "Rei"
-    },
     "9400553": {
       "name": "Asuka"
     },
@@ -40828,40 +39457,52 @@
       "name": "Dr. Kim"
     },
     "9400556": {
-      "name": "Captive Balloon Rat"
+      "name": "Captive Balloon Rat",
+      "spriteFrame": "info.default"
     },
     "9400557": {
-      "name": "Captive Blue Flower Cow"
+      "name": "Captive Blue Flower Cow",
+      "spriteFrame": "info.default"
     },
     "9400558": {
-      "name": "Captive Hogul"
+      "name": "Captive Hogul",
+      "spriteFrame": "info.default"
     },
     "9400559": {
-      "name": "Captive White Hare"
+      "name": "Captive White Hare",
+      "spriteFrame": "info.default"
     },
     "9400560": {
-      "name": "Captive Drake"
+      "name": "Captive Drake",
+      "spriteFrame": "info.default"
     },
     "9400561": {
-      "name": "Captive White Bellamoa"
+      "name": "Captive White Bellamoa",
+      "spriteFrame": "info.default"
     },
     "9400562": {
-      "name": "Captive Toy Trojan"
+      "name": "Captive Toy Trojan",
+      "spriteFrame": "info.default"
     },
     "9400563": {
-      "name": "Captive Tragos"
+      "name": "Captive Tragos",
+      "spriteFrame": "info.default"
     },
     "9400564": {
-      "name": "Captive Wild Monkey"
+      "name": "Captive Wild Monkey",
+      "spriteFrame": "info.default"
     },
     "9400565": {
-      "name": "Captive Punk Chick"
+      "name": "Captive Punk Chick",
+      "spriteFrame": "info.default"
     },
     "9400566": {
-      "name": "Captive Jr. Cerebes"
+      "name": "Captive Jr. Cerebes",
+      "spriteFrame": "info.default"
     },
     "9400567": {
-      "name": "Captive Iron Hog"
+      "name": "Captive Iron Hog",
+      "spriteFrame": "info.default"
     },
     "9400568": {
       "name": "Spiegelmann"
@@ -41134,13 +39775,16 @@
       "name": "Eyeful"
     },
     "9400686": {
-      "name": "Raging Werebeast"
+      "name": "Raging Werebeast",
+      "spriteFrame": "regen.7"
     },
     "9400687": {
-      "name": "Frostfang Werebeast"
+      "name": "Frostfang Werebeast",
+      "spriteFrame": "regen.7"
     },
     "9400688": {
-      "name": "Grimgaze Werebeast"
+      "name": "Grimgaze Werebeast",
+      "spriteFrame": "regen.7"
     },
     "9400689": {
       "name": "Jellyrash"
@@ -41249,36 +39893,6 @@
     },
     "9400731": {
       "name": "Sakura Kinomoto"
-    },
-    "9400732": {
-      "name": "film1"
-    },
-    "9400733": {
-      "name": "film2"
-    },
-    "9400734": {
-      "name": "film3"
-    },
-    "9400735": {
-      "name": "film4"
-    },
-    "9400736": {
-      "name": "film5"
-    },
-    "9400737": {
-      "name": "film6"
-    },
-    "9400738": {
-      "name": "film7"
-    },
-    "9400739": {
-      "name": "film8"
-    },
-    "9400740": {
-      "name": "film9"
-    },
-    "9400741": {
-      "name": "film10"
     },
     "9400742": {
       "name": "Soldier"
@@ -41550,21 +40164,6 @@
     "9400845": {
       "name": "Abbes"
     },
-    "9400846": {
-      "name": "01"
-    },
-    "9400847": {
-      "name": "02"
-    },
-    "9400848": {
-      "name": "03"
-    },
-    "9400849": {
-      "name": "04"
-    },
-    "9400850": {
-      "name": "05"
-    },
     "9400851": {
       "name": "Nova Soldier"
     },
@@ -41607,9 +40206,6 @@
     "9400864": {
       "name": "Grandpa Boulder"
     },
-    "9400865": {
-      "name": "dummy"
-    },
     "9400870": {
       "name": "Grandpa Boulder"
     },
@@ -41639,102 +40235,6 @@
     },
     "9400879": {
       "name": "Petal Flurry"
-    },
-    "9400880": {
-      "name": "Henesys Market Entrance Sign"
-    },
-    "9400881": {
-      "name": "Small Tree Stump at the Chimney Tree Top in Ellinia"
-    },
-    "9400882": {
-      "name": "Ellinel Fairy Academy Entrance"
-    },
-    "9400883": {
-      "name": "Highest Place in Perion"
-    },
-    "9400884": {
-      "name": "Kerning City Subway Platform Entrance"
-    },
-    "9400885": {
-      "name": "Wide-Mouth Shark in Lith Harbor"
-    },
-    "9400886": {
-      "name": "Flower Tree in the Sleepywood Silent Swamp"
-    },
-    "9400887": {
-      "name": "Strategy Room in the Dark World Tree Deserted Camp"
-    },
-    "9400888": {
-      "name": "Wanted Sign at the Mushroom Castle Entrance"
-    },
-    "9400889": {
-      "name": "Giant Artillery for the Nautilus"
-    },
-    "9400890": {
-      "name": "Drink Stand at Gold Beach Resort"
-    },
-    "9400891": {
-      "name": "Ereve\u0027s Shinsoo"
-    },
-    "9400892": {
-      "name": "Maha the Spirit in the Giant Polearm in Rien"
-    },
-    "9400893": {
-      "name": "Giant Goddess Statue at the Orbis Entrance"
-    },
-    "9400894": {
-      "name": "Chief\u0027s Residence Entrance in El Nath"
-    },
-    "9400895": {
-      "name": "Door to Zakum Entrance in Dead Mine"
-    },
-    "9400896": {
-      "name": "Eos Tower Entrance"
-    },
-    "9400897": {
-      "name": "Helios Tower Entrance"
-    },
-    "9400898": {
-      "name": "Crystal Ball in Aqua Road\u0027s Center Street"
-    },
-    "9400899": {
-      "name": "Biggest Egg in Leafre"
-    },
-    "9400900": {
-      "name": "Giant Medicinal Kettle Next to Mu Lung General Store"
-    },
-    "9400901": {
-      "name": "Ariant Castle Entrance"
-    },
-    "9400902": {
-      "name": "Alcadno Society Entrance in Magatia"
-    },
-    "9400903": {
-      "name": "Goddess Rhinne\u0027s Statue at Three Doors in the Temple of Time"
-    },
-    "9400904": {
-      "name": "Giant Storybook in Grand Athenaeum"
-    },
-    "9400905": {
-      "name": "Giant Wall Clock in Edelstein City Hall"
-    },
-    "9400906": {
-      "name": "Cable Car to the Scrapyard in Edelstein Strolling Path"
-    },
-    "9400907": {
-      "name": "Granny\u0027s Spicy Roll Stand in front of the Shiny Club Uniform Shop"
-    },
-    "9400908": {
-      "name": "Dragon Statue in Pantheon\u0027s Great Temple"
-    },
-    "9400909": {
-      "name": "Tree of Memory in Nameless Town"
-    },
-    "9400910": {
-      "name": "Giant Muto in Chu Chu Island"
-    },
-    "9400911": {
-      "name": "Grendel the Really Old"
     },
     "9400917": {
       "name": "Haku"
@@ -41852,9 +40352,6 @@
     },
     "9400957": {
       "name": "Hallowkitty"
-    },
-    "9400958": {
-      "name": "Hidden Door"
     },
     "9400960": {
       "name": "Dark Prince"
@@ -42492,7 +40989,6 @@
     "9401273": {
       "name": "Dona"
     },
-    "9401274": {},
     "9401275": {
       "name": "Mo Xuan"
     },
@@ -42661,9 +41157,6 @@
     "9401330": {
       "name": "Maplemas Donation Kettle"
     },
-    "9401331": {
-      "name": "Maple Globe Statue Base"
-    },
     "9401332": {
       "name": "Yun Jing"
     },
@@ -42808,9 +41301,6 @@
     "9401381": {
       "name": "Xiao Xiao"
     },
-    "9401383": {
-      "name": "blankDummy"
-    },
     "9401384": {
       "name": "CAPOO"
     },
@@ -42915,9 +41405,6 @@
     },
     "9401420": {
       "name": "Goo Gachapon"
-    },
-    "9401421": {
-      "name": "Messy Goo"
     },
     "9401422": {
       "name": "Messy Goo"
@@ -43053,9 +41540,6 @@
     },
     "9401500": {
       "name": "Pharaoh"
-    },
-    "9401501": {
-      "name": "Massive Statue"
     },
     "9401502": {
       "name": "Pollion"
@@ -43298,7 +41782,8 @@
       "name": "Nameless Monkey"
     },
     "9401589": {
-      "name": "Orchid"
+      "name": "Orchid",
+      "spriteFrame": "info.default"
     },
     "9401590": {
       "name": "Small Dock Storage Room"
@@ -43309,14 +41794,12 @@
     "9401592": {
       "name": "Benedict"
     },
-    "9401593": {
-      "name": "Faint Voice"
-    },
     "9401594": {
       "name": "Jack"
     },
     "9401595": {
-      "name": "Energy Stone"
+      "name": "Energy Stone",
+      "spriteFrame": "info.default"
     },
     "9401596": {
       "name": "Grader"
@@ -43369,12 +41852,6 @@
     "9401612": {
       "name": "Jack"
     },
-    "9401613": {
-      "name": "Plant"
-    },
-    "9401614": {
-      "name": "Plant"
-    },
     "9401616": {
       "name": "Nautilus_NPC1"
     },
@@ -43405,65 +41882,16 @@
     "9401625": {
       "name": "Pit-a-Pat Gift Box"
     },
-    "9401626": {
-      "name": "Safe No. 1"
-    },
-    "9401627": {
-      "name": "Safe No. 2"
-    },
-    "9401628": {
-      "name": "Safe No. 3"
-    },
-    "9401629": {
-      "name": "Safe No. 4"
-    },
-    "9401630": {
-      "name": "GC_Showcase_1_dummy"
-    },
-    "9401631": {
-      "name": "GC_Showcase_2_dummy"
-    },
-    "9401632": {
-      "name": "GC_Showcase_3_dummy"
-    },
-    "9401633": {
-      "name": "GC_Showcase_4_dummy"
-    },
-    "9401634": {
-      "name": "GC_Showcase_5_dummy"
-    },
-    "9401635": {
-      "name": "GC_Showcase_6_dummy"
-    },
-    "9401636": {
-      "name": "GC_Showcase_7_dummy"
-    },
-    "9401637": {
-      "name": "GC_Showcase_8_dummy"
-    },
-    "9401638": {
-      "name": "GC_Showcase_9_dummy"
-    },
-    "9401639": {
-      "name": "GC_Showcase_10_dummy"
-    },
-    "9401640": {
-      "name": "Divine Anvil"
-    },
-    "9401641": {
-      "name": "Gavel"
-    },
     "9401642": {
       "name": "Regeneration Energy"
     },
     "9401643": {
-      "name": "Energy Stone"
-    },
-    "9401645": {
-      "name": "Craftsman Statue"
+      "name": "Energy Stone",
+      "spriteFrame": "info.default"
     },
     "9401646": {
-      "name": "Torn Journal"
+      "name": "Torn Journal",
+      "spriteFrame": "info.default"
     },
     "9401647": {
       "name": "Personal Safe"
@@ -43490,7 +41918,8 @@
       "name": "Vanessa"
     },
     "9401655": {
-      "name": "Bulletin Board"
+      "name": "Bulletin Board",
+      "spriteFrame": "info.default"
     },
     "9401656": {
       "name": "Joss"
@@ -43609,9 +42038,6 @@
     "9401708": {
       "name": "Starlight Concentrator"
     },
-    "9401709": {
-      "name": "Pascal"
-    },
     "9401710": {
       "name": "Dolly"
     },
@@ -43623,9 +42049,6 @@
     },
     "9401713": {
       "name": "Vanessa"
-    },
-    "9401714": {
-      "name": "DOGDOG"
     },
     "9401715": {
       "name": "Spiegelmann"
@@ -43756,18 +42179,6 @@
     "9401757": {
       "name": "Spiegelette"
     },
-    "9401768": {
-      "name": "Kazuma"
-    },
-    "9401769": {
-      "name": "Aqua"
-    },
-    "9401770": {
-      "name": "Megumin"
-    },
-    "9401771": {
-      "name": "Darkness"
-    },
     "9401772": {
       "name": "Red Fox Neruru"
     },
@@ -43790,7 +42201,8 @@
       "name": "Stump Spirit"
     },
     "9401779": {
-      "name": "Stump Spirit"
+      "name": "Stump Spirit",
+      "spriteFrame": "info.default"
     },
     "9401780": {
       "name": "Lynn"
@@ -43800,21 +42212,6 @@
     },
     "9401782": {
       "name": "Lynn"
-    },
-    "9401783": {
-      "name": "Lynn"
-    },
-    "9401784": {
-      "name": "Lynn"
-    },
-    "9401785": {
-      "name": "Lynn\u0027s Past Life"
-    },
-    "9401786": {
-      "name": "Lynn\u0027s Past Life"
-    },
-    "9401787": {
-      "name": "Lynn\u0027s Past Life"
     },
     "9401788": {
       "name": "Lynn\u0027s Past Life"
@@ -43876,12 +42273,6 @@
     "9401807": {
       "name": "Hypnos"
     },
-    "9401808": {
-      "name": "Passerby"
-    },
-    "9401809": {
-      "name": "Passerby"
-    },
     "9401810": {
       "name": "Wooden Box"
     },
@@ -43890,9 +42281,6 @@
     },
     "9401812": {
       "name": "Small Stump"
-    },
-    "9401813": {
-      "name": "Move to Maple World"
     },
     "9401816": {
       "name": "Forest Master"
@@ -43949,7 +42337,8 @@
       "name": "Earth Guardian"
     },
     "9401834": {
-      "name": "Earth Guardian"
+      "name": "Earth Guardian",
+      "spriteFrame": "hide2.0"
     },
     "9401835": {
       "name": "???"
@@ -44038,9 +42427,6 @@
     "9401863": {
       "name": "Pan"
     },
-    "9401864": {
-      "name": "Scribbles on the Hut"
-    },
     "9401865": {
       "name": "Cygnus"
     },
@@ -44086,12 +42472,6 @@
     "9401918": {
       "name": "Illusionary Hedgehog"
     },
-    "9401919": {
-      "name": "Celebratory Electronic Display"
-    },
-    "9401920": {
-      "name": "Glowing Electronic Display"
-    },
     "9401959": {
       "name": "Tanjiro Kamado"
     },
@@ -44124,9 +42504,6 @@
     },
     "9401969": {
       "name": "Kanao Tsuyuri"
-    },
-    "9401970": {
-      "name": "Explorer"
     },
     "9401971": {
       "name": "Beginner Adventurer"
@@ -44246,7 +42623,8 @@
       "name": "Maple Administrator"
     },
     "9402025": {
-      "name": "Parchment"
+      "name": "Parchment",
+      "spriteFrame": "info.default"
     },
     "9402027": {
       "name": "Dancing So Gong Doll"
@@ -44468,7 +42846,8 @@
       "name": "Francis"
     },
     "9402398": {
-      "name": "Cutscene"
+      "name": "Cutscene",
+      "spriteFrame": "pre.0"
     },
     "9402399": {
       "name": "Oda Spirit Walker"
@@ -44533,277 +42912,6 @@
     "9900011": {
       "name": "Maple Administrator"
     },
-    "9901000": {
-      "name": "FangBlade"
-    },
-    "9901001": {},
-    "9901002": {},
-    "9901003": {},
-    "9901004": {},
-    "9901005": {},
-    "9901006": {},
-    "9901007": {},
-    "9901008": {},
-    "9901009": {},
-    "9901010": {},
-    "9901011": {},
-    "9901012": {},
-    "9901013": {},
-    "9901014": {},
-    "9901015": {},
-    "9901016": {},
-    "9901017": {},
-    "9901018": {},
-    "9901019": {},
-    "9901100": {},
-    "9901101": {},
-    "9901102": {},
-    "9901103": {},
-    "9901104": {},
-    "9901105": {},
-    "9901106": {},
-    "9901107": {},
-    "9901108": {},
-    "9901109": {},
-    "9901110": {},
-    "9901111": {},
-    "9901112": {},
-    "9901113": {},
-    "9901114": {},
-    "9901115": {},
-    "9901116": {},
-    "9901117": {},
-    "9901118": {},
-    "9901119": {},
-    "9901200": {},
-    "9901201": {},
-    "9901202": {},
-    "9901203": {},
-    "9901204": {},
-    "9901205": {},
-    "9901206": {},
-    "9901207": {},
-    "9901208": {},
-    "9901209": {},
-    "9901210": {},
-    "9901211": {},
-    "9901212": {},
-    "9901213": {},
-    "9901214": {},
-    "9901215": {},
-    "9901216": {},
-    "9901217": {},
-    "9901218": {},
-    "9901219": {},
-    "9901300": {},
-    "9901301": {},
-    "9901302": {},
-    "9901303": {},
-    "9901304": {},
-    "9901305": {},
-    "9901306": {},
-    "9901307": {},
-    "9901308": {},
-    "9901309": {},
-    "9901310": {},
-    "9901311": {},
-    "9901312": {},
-    "9901313": {},
-    "9901314": {},
-    "9901315": {},
-    "9901316": {},
-    "9901317": {},
-    "9901318": {},
-    "9901319": {},
-    "9901500": {},
-    "9901501": {},
-    "9901502": {},
-    "9901503": {},
-    "9901504": {},
-    "9901505": {},
-    "9901506": {},
-    "9901507": {},
-    "9901508": {},
-    "9901509": {},
-    "9901510": {},
-    "9901511": {},
-    "9901512": {},
-    "9901513": {},
-    "9901514": {},
-    "9901515": {},
-    "9901516": {},
-    "9901517": {},
-    "9901518": {},
-    "9901519": {},
-    "9901520": {},
-    "9901521": {},
-    "9901522": {},
-    "9901523": {},
-    "9901524": {},
-    "9901525": {},
-    "9901526": {},
-    "9901527": {},
-    "9901528": {},
-    "9901529": {},
-    "9901530": {},
-    "9901531": {},
-    "9901532": {},
-    "9901533": {},
-    "9901534": {},
-    "9901535": {},
-    "9901536": {},
-    "9901537": {},
-    "9901538": {},
-    "9901539": {},
-    "9901540": {},
-    "9901541": {},
-    "9901542": {},
-    "9901543": {},
-    "9901544": {},
-    "9901545": {},
-    "9901546": {},
-    "9901547": {},
-    "9901548": {},
-    "9901549": {},
-    "9901550": {},
-    "9901551": {},
-    "9901600": {},
-    "9901601": {},
-    "9901602": {},
-    "9901603": {},
-    "9901604": {},
-    "9901605": {},
-    "9901606": {},
-    "9901607": {},
-    "9901608": {},
-    "9901609": {},
-    "9901610": {},
-    "9901611": {},
-    "9901612": {},
-    "9901613": {},
-    "9901614": {},
-    "9901615": {},
-    "9901616": {},
-    "9901700": {},
-    "9901701": {},
-    "9901702": {},
-    "9901703": {},
-    "9901704": {},
-    "9901705": {},
-    "9901706": {},
-    "9901707": {},
-    "9901708": {},
-    "9901709": {},
-    "9901710": {},
-    "9901711": {},
-    "9901712": {},
-    "9901713": {},
-    "9901714": {},
-    "9901715": {},
-    "9901716": {},
-    "9901717": {},
-    "9901718": {},
-    "9901719": {},
-    "9901720": {},
-    "9901721": {},
-    "9901722": {},
-    "9901723": {},
-    "9901724": {},
-    "9901725": {},
-    "9901726": {},
-    "9901727": {},
-    "9901728": {},
-    "9901729": {},
-    "9901730": {},
-    "9901731": {},
-    "9901732": {},
-    "9901733": {},
-    "9901734": {},
-    "9901735": {},
-    "9901736": {},
-    "9901737": {},
-    "9901738": {},
-    "9901739": {},
-    "9901740": {},
-    "9901741": {},
-    "9901742": {},
-    "9901743": {},
-    "9901744": {},
-    "9901745": {},
-    "9901746": {},
-    "9901747": {},
-    "9901748": {},
-    "9901749": {},
-    "9901800": {},
-    "9901801": {},
-    "9901802": {},
-    "9901803": {},
-    "9901804": {},
-    "9901805": {},
-    "9901806": {},
-    "9901807": {},
-    "9901808": {},
-    "9901809": {},
-    "9901810": {},
-    "9901811": {},
-    "9901812": {},
-    "9901813": {},
-    "9901814": {},
-    "9901815": {},
-    "9901816": {},
-    "9901817": {},
-    "9901818": {},
-    "9901819": {},
-    "9901820": {},
-    "9901821": {},
-    "9901822": {},
-    "9901823": {},
-    "9901824": {},
-    "9901825": {},
-    "9901826": {},
-    "9901827": {},
-    "9901828": {},
-    "9901829": {},
-    "9901830": {},
-    "9901831": {},
-    "9901832": {},
-    "9901833": {},
-    "9901834": {},
-    "9901835": {},
-    "9901836": {},
-    "9901837": {},
-    "9901838": {},
-    "9901839": {},
-    "9901840": {},
-    "9901841": {},
-    "9901842": {},
-    "9901843": {},
-    "9901844": {},
-    "9901845": {},
-    "9901846": {},
-    "9901847": {},
-    "9901848": {},
-    "9901849": {},
-    "9901900": {},
-    "9901901": {},
-    "9901902": {},
-    "9901903": {},
-    "9901904": {},
-    "9901905": {},
-    "9901906": {},
-    "9901907": {},
-    "9901908": {},
-    "9901909": {},
-    "9901910": {},
-    "9901911": {},
-    "9901912": {},
-    "9901913": {},
-    "9901914": {},
-    "9901915": {},
-    "9901916": {},
-    "9901917": {},
-    "9901918": {},
-    "9901919": {},
     "9901920": {
       "name": "Spiegelmann"
     }
