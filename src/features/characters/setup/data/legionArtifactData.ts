@@ -8,6 +8,8 @@
   (max value / 10 per level) for every stat shown at Lv 10.
 */
 
+// A crystal can't be "unleveled": once unlocked it's always at least level 1 in-game.
+export const MIN_CRYSTAL_LEVEL = 1;
 export const MAX_CRYSTAL_LEVEL = 5;
 export const MAX_ARTIFACT_LEVEL = 60;
 export const MAX_STAT_TOTAL_LEVEL = 10;
@@ -55,22 +57,27 @@ export interface LegionArtifactStatDef {
 // 0.75%/level matched the screenshot's "+7.50%" exactly).
 export const LEGION_ARTIFACT_STATS: LegionArtifactStatDef[] = [
   { id: "allStats", label: "All Stats", perLevel: 15, unit: "flat" },
-  { id: "hpMp", label: "Max HP and MP", perLevel: 750, unit: "flat" },
-  { id: "attMatt", label: "Attack Power and Magic ATT", perLevel: 3, unit: "flat" },
+  { id: "hpMp", label: "Max HP/MP", perLevel: 750, unit: "flat" },
+  { id: "attMatt", label: "Attack Power/Magic ATT", perLevel: 3, unit: "flat" },
   { id: "damage", label: "Damage", perLevel: 1.5, unit: "percent" },
   { id: "bossDamage", label: "Boss Damage", perLevel: 1.5, unit: "percent" },
   { id: "ignoreDefense", label: "Ignore Defense", perLevel: 2, unit: "percent" },
   { id: "buffDuration", label: "Buff Duration", perLevel: 2, unit: "percent" },
   { id: "skipCooldown", label: "Skill Cooldown Bypass Chance", perLevel: 0.75, unit: "percent" },
-  { id: "mesos", label: "Mesos Obtained", perLevel: 1.2, unit: "percent" },
+  { id: "mesos", label: "Meso Drop", perLevel: 1.2, unit: "percent" },
   { id: "itemDrop", label: "Item Drop Rate", perLevel: 1.2, unit: "percent" },
   { id: "criticalRate", label: "Critical Rate", perLevel: 2, unit: "percent" },
   { id: "criticalDamage", label: "Critical Damage", perLevel: 0.4, unit: "percent" },
-  { id: "multiTargetExp", label: "EXP Obtained", perLevel: 1.2, unit: "percent", flagAtLevelOne: "Max AoE Skill Targets +1" },
+  { id: "multiTargetExp", label: "Bonus EXP", perLevel: 1.2, unit: "percent", flagAtLevelOne: "Max AoE Skill Targets +1" },
   { id: "statusResistance", label: "Status Resistance", perLevel: 1.2, unit: "flat" },
-  { id: "summonDuration", label: "Summoned Minion Duration", perLevel: 2, unit: "percent" },
-  { id: "finalAttackDamage", label: "Damage of Final Attack Skills", perLevel: 3, unit: "percent" },
+  { id: "summonDuration", label: "Summon Duration", perLevel: 2, unit: "percent" },
+  { id: "finalAttackDamage", label: "Damage of Final Attack Skill", perLevel: 3, unit: "percent" },
 ];
+
+// Every crystal starts with these exact 3 lines (in this order) before the player spends
+// a reset stone to reroll them — confirmed against Yuki's in-game board, where untouched
+// crystals all share this same default set.
+export const DEFAULT_CRYSTAL_STATS: LegionArtifactStatId[] = ["allStats", "hpMp", "attMatt"];
 
 const STAT_BY_ID = new Map(LEGION_ARTIFACT_STATS.map((s) => [s.id, s]));
 
@@ -111,23 +118,29 @@ export function serializeLegionArtifactBoardDraft(draft: LegionArtifactBoardDraf
 }
 
 export function sanitizeCrystalLevel(level: number | undefined): number {
-  return Math.max(0, Math.min(MAX_CRYSTAL_LEVEL, Math.floor(level ?? 0)));
+  return Math.max(MIN_CRYSTAL_LEVEL, Math.min(MAX_CRYSTAL_LEVEL, Math.floor(level ?? MIN_CRYSTAL_LEVEL)));
 }
 
-/** Raw (uncapped) summed level per stat across every crystal it's assigned to. */
+/**
+ * Raw (uncapped) summed level per stat across every UNLOCKED crystal it's assigned to.
+ * `artifactLevel` is required: the setup step densely fills all 9 array slots (including
+ * still-locked ones) with the level-1 default the moment any single crystal is edited (see
+ * `updateCrystal`'s comment), so a locked crystal's placeholder entry must be excluded here
+ * or it'd silently count toward the totals before the player has even unlocked it.
+ */
 export function computeRawStatLevels(
   crystals: LegionCrystalDraft[] | undefined,
+  artifactLevel: number,
 ): Partial<Record<LegionArtifactStatId, number>> {
   const totals: Partial<Record<LegionArtifactStatId, number>> = {};
-  for (const crystal of crystals ?? []) {
-    if (!crystal) continue;
+  (crystals ?? []).forEach((crystal, index) => {
+    if (!crystal || !isCrystalUnlocked(index, artifactLevel)) return;
     const level = sanitizeCrystalLevel(crystal.level);
-    if (level <= 0) continue;
     for (const statId of crystal.stats ?? []) {
       if (!statId) continue;
       totals[statId] = (totals[statId] ?? 0) + level;
     }
-  }
+  });
   return totals;
 }
 

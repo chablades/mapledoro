@@ -403,7 +403,7 @@ function deriveMaxedSacredSymbol(symbolsData: SavedSymbols | null): boolean {
 // wipe a value a different character already set here via maplescouter_setup.
 function deriveLegionArtifactFields(board: LegionArtifactBoardDraft): LegionArtifactsDraft | undefined {
   if (!hasAnyCrystalProgress(board.crystals)) return undefined;
-  const rawLevels = computeRawStatLevels(board.crystals);
+  const rawLevels = computeRawStatLevels(board.crystals, board.artifactLevel ?? 0);
   return {
     artifactExtraTarget: effectiveStatLevel(rawLevels.multiTargetExp) >= 1,
     artifactFinalAttackDmg: String(statBonusValue("finalAttackDamage", effectiveStatLevel(rawLevels.finalAttackDamage))),
