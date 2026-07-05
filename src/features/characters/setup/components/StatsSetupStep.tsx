@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { numericKeyDown, sanitizeDigitsInput } from "../../../../lib/inputUtils";
+import { numericKeyDown, sanitizeDigitsInput, decimalKeyDown, sanitizeDecimalInput } from "../../../../lib/inputUtils";
 import type { CSSProperties } from "react";
 import Image from "next/image";
 import { resourceImageUrl } from "../../../../lib/mapleResource";
@@ -89,6 +89,9 @@ const COMBAT_RIGHT: StatFieldId[] = [
 // Stats where the value is a raw number, not a percentage
 const RAW_VALUE_STAT_IDS = new Set<StatFieldId>(["arcanePower", "sacredPower"]);
 
+// Combat stats that are always whole numbers in-game (unlike Boss Damage, Crit Damage, etc.)
+const NO_DECIMAL_STAT_IDS = new Set<StatFieldId>(["summonDuration", "buffDuration", "criticalRate"]);
+
 // Sanity thresholds mirroring MapleScouter's own input validation — catches the most
 // common mix-ups (Total vs. Base, character Magic ATT vs. weapon Magic ATT) before the
 // user ever hits MapleScouter's own (Korean-only) error popups. These are MapleScouter's
@@ -102,9 +105,9 @@ const WEAPON_ATT_WARN_AT = 1150;
 const IGNORE_ELEMENTAL_RESIST_MAX = 15;
 
 function clampIgnoreElementalResist(raw: string): string {
-  const digits = raw.replace(/\D/g, "");
-  if (digits === "") return "";
-  return String(Math.min(Number(digits), IGNORE_ELEMENTAL_RESIST_MAX));
+  const sanitized = sanitizeDecimalInput(raw);
+  if (sanitized === "" || sanitized.endsWith(".")) return sanitized;
+  return String(Math.min(Number(sanitized), IGNORE_ELEMENTAL_RESIST_MAX));
 }
 
 const MAIN_STAT_IDS = new Set<string>(["str", "dex", "int", "luk"]);
@@ -462,6 +465,7 @@ function CombatStatCell({
               onChange={(e) => onUpdateCooldown("percent", sanitizeDigitsInput(e.target.value))}
               onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
               onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
+              onKeyDown={numericKeyDown}
             />
             <span style={inputSuffixStyle(theme)}>%</span>
           </div>
@@ -473,16 +477,21 @@ function CombatStatCell({
   const raw = (draft as Record<string, unknown>)[id];
   const val = typeof raw === "string" ? raw : "";
   const isRaw = RAW_VALUE_STAT_IDS.has(id);
+  const allowsDecimal = !isRaw && !NO_DECIMAL_STAT_IDS.has(id);
   return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.4rem", minWidth: 0 }}>
       <span style={{ fontSize: "0.78rem", color: theme.muted, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>{label}</span>
       <div style={{ position: "relative", flexShrink: 0 }}>
         <input type="text" aria-label={label} value={val} placeholder="0"
           style={isRaw ? statInputStyle(theme, "4rem") : { ...statInputStyle(theme, "4rem"), paddingRight: "1.15rem" }}
-          onChange={(e) => onUpdate(id, id === "ignoreElementalResistance" ? clampIgnoreElementalResist(e.target.value) : sanitizeDigitsInput(e.target.value))}
+          onChange={(e) => {
+            if (id === "ignoreElementalResistance") onUpdate(id, clampIgnoreElementalResist(e.target.value));
+            else if (allowsDecimal) onUpdate(id, sanitizeDecimalInput(e.target.value));
+            else onUpdate(id, sanitizeDigitsInput(e.target.value));
+          }}
           onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
           onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
-          onKeyDown={numericKeyDown}
+          onKeyDown={allowsDecimal ? decimalKeyDown : numericKeyDown}
         />
         {!isRaw && <span style={inputSuffixStyle(theme)}>%</span>}
       </div>
