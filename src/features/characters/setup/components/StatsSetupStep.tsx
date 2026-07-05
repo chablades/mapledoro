@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { numericKeyDown } from "../../../../lib/inputUtils";
+import { numericKeyDown, sanitizeDigitsInput } from "../../../../lib/inputUtils";
 import type { CSSProperties } from "react";
 import Image from "next/image";
 import { resourceImageUrl } from "../../../../lib/mapleResource";
@@ -11,7 +11,7 @@ import type { SetupStepDefinition } from "../steps";
 import type { SetupFlowId } from "../flows";
 import SetupStepFrame from "./SetupStepFrame";
 import InfoTooltip from "./InfoTooltip";
-import { statInputStyle, inputSuffixStyle, QuestionToggle, BoolToggle, LegionFinalAttackField } from "./QuestionControls";
+import { statInputStyle, inputSuffixStyle, ChecklistCheckbox, ChecklistGroup, LegionFinalAttackField, InputWarningBubble } from "./QuestionControls";
 import {
   CLASS_SKILL_DATA,
   UNIVERSAL_BUFF_SKILLS,
@@ -25,6 +25,8 @@ import {
 import { TRIPLE_STAT_FIELDS, type StatFieldId, type TripleStatFieldId } from "../data/statFields";
 import {
   GENESIS_LIBERATION_LEVEL,
+  isArcaneEligible,
+  isSacredEligible,
   normalizeHyperStatDraft,
   parseStatsStepDraft,
   serializeStatsStepDraft,
@@ -80,6 +82,26 @@ const COMBAT_RIGHT: StatFieldId[] = [
 // Stats where the value is a raw number, not a percentage
 const RAW_VALUE_STAT_IDS = new Set<StatFieldId>(["arcanePower", "sacredPower"]);
 
+// Sanity thresholds mirroring MapleScouter's own input validation — catches the most
+// common mix-ups (Total vs. Base, character Magic ATT vs. weapon Magic ATT) before the
+// user ever hits MapleScouter's own (Korean-only) error popups. These are MapleScouter's
+// sanity bounds, not real game caps, so they warn instead of hard-blocking input.
+const MAIN_STAT_BASE_VALUE_WARN_AT = 10000;
+const MAIN_STAT_PERCENT_UNAPPLIED_WARN_AT = 40000;
+const WEAPON_ATT_WARN_AT = 1150;
+
+// Ignore Elemental Resistance actually caps at 15% in-game, so this one's a real,
+// stable limit worth hard-clamping (unlike the sanity thresholds above).
+const IGNORE_ELEMENTAL_RESIST_MAX = 15;
+
+function clampIgnoreElementalResist(raw: string): string {
+  const digits = raw.replace(/\D/g, "");
+  if (digits === "") return "";
+  return String(Math.min(Number(digits), IGNORE_ELEMENTAL_RESIST_MAX));
+}
+
+const MAIN_STAT_IDS = new Set<string>(["str", "dex", "int", "luk"]);
+
 const STAT_LABELS: Partial<Record<StatFieldId, string>> = {
   damage: "Damage",
   bossDamage: "Boss Damage",
@@ -134,14 +156,6 @@ function presetButtonStyle(theme: AppTheme, on: boolean): CSSProperties {
   };
 }
 
-function lockedRankBadgeStyle(theme: AppTheme): CSSProperties {
-  return {
-    display: "inline-flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "0.1rem",
-    border: `1px solid ${theme.accent}`, borderRadius: "9px", background: `${theme.accent}22`, color: theme.accent,
-    fontWeight: 800, fontSize: "0.85rem", lineHeight: 1.15, padding: "0.4rem 0.85rem",
-  };
-}
-
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 const JOB_ORDINALS: Record<string, string> = {
@@ -173,15 +187,6 @@ function deriveWeaponAtt(tripleIds: TripleStatFieldId[]): { usesMagicWeapon: boo
 function isSkillUnlocked(skill: BuffSkill, characterLevel: number | undefined): boolean {
   if (characterLevel === undefined) return true;
   return characterLevel >= (JOB_ADVANCEMENT_MIN_LEVEL[skill.jobAdvancement] ?? 0);
-}
-
-function countSetupOptionsQuestions(optsDef: ClassSetupOptionsDef | undefined, characterLevel: number | undefined): number {
-  const isLiberationEligible = characterLevel === undefined || characterLevel >= GENESIS_LIBERATION_LEVEL;
-  let count = 1; // "Do you use any of these souls?" is always shown
-  if (isLiberationEligible) count += 1;
-  if (optsDef?.weaponType) count += 1;
-  if (optsDef?.ruinForceShield) count += 1;
-  return count;
 }
 
 // ── Sub-components ────────────────────────────────────────────────────────────
@@ -294,29 +299,36 @@ function BuffGuide({ classData, theme, characterLevel }: { classData: ClassSkill
 }
 
 function TripleStatRow({
-  id, draft, onUpdate, theme,
+  id, draft, onUpdate, theme, isMainStat,
 }: {
   id: TripleStatFieldId;
   draft: StatsStepDraft;
   onUpdate: (id: TripleStatFieldId, field: keyof TripleStatDraft, val: string) => void;
   theme: AppTheme;
+  isMainStat: boolean;
 }) {
   const d: TripleStatDraft = draft[id] ?? { base: "", percent: "", percentUnapplied: "" };
   const sub = statInputStyle(theme);
+  const label = TRIPLE_LABELS[id];
   // "% Not Applied" is shown for every stat EXCEPT ATT, in all flows. For ATT it's
   // meaningless — it only ever existed as a legacy scouter workaround for
   // pre-remaster Kanna's HP→MATT conversion, and a stray value produces an invalid
   // range; MapleScouter always sends ATT % not applied as 0.
   const isAttack = id === "attackPower" || id === "magicAtt";
+  // Only the class's main stat (STR/DEX/INT/LUK) is at risk of the Total-vs-Base
+  // mix-up MapleScouter itself warns about — HP/ATT/MATT don't have that ambiguity.
+  const showBaseWarning = isMainStat && Number(d.base) >= MAIN_STAT_BASE_VALUE_WARN_AT;
+  const showPercentUnappliedWarning = isMainStat && Number(d.percentUnapplied) >= MAIN_STAT_PERCENT_UNAPPLIED_WARN_AT;
   return (
     <div>
       <p style={{ margin: 0, marginBottom: "0.25rem", fontSize: "0.82rem", fontWeight: 800, color: theme.text }}>
-        {TRIPLE_LABELS[id]}
+        {label}
       </p>
       <div style={{ display: "flex", gap: "0.35rem" }}>
-        <div style={{ flex: 1 }}>
-          <input type="text" aria-label={`${TRIPLE_LABELS[id]} base value`} value={d.base} placeholder="0" style={sub}
-            onChange={(e) => onUpdate(id, "base", e.target.value)}
+        <div style={{ flex: 1, position: "relative" }}>
+          {showBaseWarning && <InputWarningBubble message={`That looks like your total ${label}, enter your Base Value for ${label}.`} theme={theme} />}
+          <input type="text" aria-label={`${label} base value`} value={d.base} placeholder="0" style={sub}
+            onChange={(e) => onUpdate(id, "base", sanitizeDigitsInput(e.target.value))}
             onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
             onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
             onKeyDown={numericKeyDown}
@@ -325,8 +337,8 @@ function TripleStatRow({
         </div>
         <div style={{ flex: 1 }}>
           <div style={{ position: "relative" }}>
-            <input type="text" aria-label={`${TRIPLE_LABELS[id]} percent value`} value={d.percent} placeholder="0" style={{ ...sub, paddingRight: "1.15rem" }}
-              onChange={(e) => onUpdate(id, "percent", e.target.value)}
+            <input type="text" aria-label={`${label} percent value`} value={d.percent} placeholder="0" style={{ ...sub, paddingRight: "1.15rem" }}
+              onChange={(e) => onUpdate(id, "percent", sanitizeDigitsInput(e.target.value))}
               onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
               onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
               onKeyDown={numericKeyDown}
@@ -338,8 +350,9 @@ function TripleStatRow({
         {!isAttack && (
           <div style={{ flex: 1 }}>
             <div style={{ position: "relative" }}>
-              <input type="text" aria-label={`${TRIPLE_LABELS[id]} percent not applied`} value={d.percentUnapplied} placeholder="0" style={{ ...sub, paddingRight: "1.15rem" }}
-                onChange={(e) => onUpdate(id, "percentUnapplied", e.target.value)}
+              {showPercentUnappliedWarning && <InputWarningBubble message={`That % looks too large, enter your % Value Not Applied for ${label}.`} theme={theme} />}
+              <input type="text" aria-label={`${label} percent not applied`} value={d.percentUnapplied} placeholder="0" style={{ ...sub, paddingRight: "1.15rem" }}
+                onChange={(e) => onUpdate(id, "percentUnapplied", sanitizeDigitsInput(e.target.value))}
                 onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
                 onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
                 onKeyDown={numericKeyDown}
@@ -430,7 +443,7 @@ function CombatStatCell({
         <div style={{ display: "flex", alignItems: "center", gap: "0.3rem", flexShrink: 0 }}>
           <div style={{ position: "relative" }}>
             <input type="text" aria-label={`${label} seconds`} value={cd.seconds} placeholder="0" style={{ ...statInputStyle(theme, "2.9rem"), paddingRight: "1.05rem" }}
-              onChange={(e) => onUpdateCooldown("seconds", e.target.value)}
+              onChange={(e) => onUpdateCooldown("seconds", sanitizeDigitsInput(e.target.value))}
               onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
               onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
               onKeyDown={numericKeyDown}
@@ -439,7 +452,7 @@ function CombatStatCell({
           </div>
           <div style={{ position: "relative" }}>
             <input type="text" aria-label={`${label} percent`} value={cd.percent} placeholder="0" style={{ ...statInputStyle(theme, "2.9rem"), paddingRight: "1.05rem" }}
-              onChange={(e) => onUpdateCooldown("percent", e.target.value)}
+              onChange={(e) => onUpdateCooldown("percent", sanitizeDigitsInput(e.target.value))}
               onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
               onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
             />
@@ -459,7 +472,7 @@ function CombatStatCell({
       <div style={{ position: "relative", flexShrink: 0 }}>
         <input type="text" aria-label={label} value={val} placeholder="0"
           style={isRaw ? statInputStyle(theme, "4rem") : { ...statInputStyle(theme, "4rem"), paddingRight: "1.15rem" }}
-          onChange={(e) => onUpdate(id, e.target.value)}
+          onChange={(e) => onUpdate(id, id === "ignoreElementalResistance" ? clampIgnoreElementalResist(e.target.value) : sanitizeDigitsInput(e.target.value))}
           onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
           onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
           onKeyDown={numericKeyDown}
@@ -479,32 +492,41 @@ function WeaponAttField({ label, usesMagicWeapon, value, onUpdate, theme }: {
   theme: AppTheme;
 }) {
   const statName = usesMagicWeapon ? "Magic ATT" : "Attack Power";
+  const statShortName = usesMagicWeapon ? "Magic ATT" : "ATT";
+  // MapleScouter flags this Total-vs-Weapon-only mix-up for every class, not just
+  // magic ones — same threshold either way.
+  const showWeaponAttWarning = Number(value) > WEAPON_ATT_WARN_AT;
   return (
     <div style={{ marginTop: "0.75rem" }}>
       <p style={sectionLabelStyle(theme)}>Weapon</p>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.5rem" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", minWidth: 0 }}>
-          <span style={{ fontSize: "0.82rem", fontWeight: 700, color: theme.text }}>{label}</span>
-          <InfoTooltip
-            content={{
-              title: label,
-              description: `Hover over your weapon in the equipment window and enter the total ${statName} shown (the white number with a +).`,
-            }}
-            theme={theme}
-          />
+      <div className="stats-weapon-grid" style={{ minWidth: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.5rem", minWidth: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", minWidth: 0 }}>
+            <span style={{ fontSize: "0.82rem", fontWeight: 700, color: theme.text }}>{label}</span>
+            <InfoTooltip
+              content={{
+                title: label,
+                description: `Hover over your weapon in the equipment window and enter the total ${statName} shown (the white number with a +).`,
+              }}
+              theme={theme}
+            />
+          </div>
+          <div style={{ position: "relative", flexShrink: 0 }}>
+            {showWeaponAttWarning && <InputWarningBubble message={`That looks like your total ${statShortName}, enter your weapon's ${statShortName}.`} theme={theme} />}
+            <input
+              type="text"
+              inputMode="numeric"
+              aria-label={label}
+              value={value}
+              placeholder="0"
+              style={statInputStyle(theme, "4rem")}
+              onChange={(e) => onUpdate(sanitizeDigitsInput(e.target.value))}
+              onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
+              onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
+              onKeyDown={numericKeyDown}
+            />
+          </div>
         </div>
-        <input
-          type="text"
-          inputMode="numeric"
-          aria-label={label}
-          value={value}
-          placeholder="0"
-          style={{ ...statInputStyle(theme, "4rem"), flexShrink: 0 }}
-          onChange={(e) => onUpdate(e.target.value)}
-          onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
-          onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
-          onKeyDown={numericKeyDown}
-        />
       </div>
     </div>
   );
@@ -513,13 +535,14 @@ function WeaponAttField({ label, usesMagicWeapon, value, onUpdate, theme }: {
 // ── Setup options section ─────────────────────────────────────────────────────
 
 function SetupOptionsSection({
-  optsDef, draft, onUpdate, theme, characterLevel,
+  optsDef, draft, onUpdate, theme, characterLevel, required,
 }: {
   optsDef: ClassSetupOptionsDef | undefined;
   draft: StatsStepDraft;
   onUpdate: (patch: Partial<NonNullable<StatsStepDraft["setupOptions"]>>) => void;
   theme: AppTheme;
   characterLevel?: number;
+  required?: boolean;
 }) {
   const opts = draft.setupOptions ?? {};
   const isDA = Boolean(optsDef?.epheniaSoul);
@@ -541,21 +564,23 @@ function SetupOptionsSection({
     else if (val === "ephenia_2") onUpdate({ soulType: "ephenia", epheniaLevel: 2 });
   }
 
+  // "No soul weapon" is a real radio option here too, same reasoning as WH rank/IA
+  // line — it's the discoverable way to say "none", not a special opt-out.
   const soulOptions = isDA
     ? [
         { value: "ephenia_1", label: "Ephenia Lv 1" },
         { value: "ephenia_2", label: "Ephenia Lv 2" },
         { value: "mugong", label: "Mu Gong Soul" },
-        { value: "none", label: "No soul weapon", optOut: true },
+        { value: "none", label: "No soul weapon", standalone: true },
       ]
-    : [{ value: "mugong", label: "Mu Gong Soul" }, { value: "none", label: "No soul weapon", optOut: true }];
+    : [{ value: "mugong", label: "Mu Gong Soul" }];
 
   return (
     <div>
       {isLiberationEligible && (
-        <BoolToggle
-          question="Are you Liberated?"
-          value={opts.isLiberated}
+        <ChecklistCheckbox
+          label="Genesis Liberation complete?"
+          checked={opts.isLiberated}
           onToggle={(v) => onUpdate({ isLiberated: v })}
           theme={theme}
           tooltip={{
@@ -565,42 +590,10 @@ function SetupOptionsSection({
           }}
         />
       )}
-      {optsDef?.weaponType && (
-        <QuestionToggle
-          question="What weapon type are you using?"
-          options={[{ value: "1h", label: "One-Handed" }, { value: "2h", label: "Two-Handed" }]}
-          value={opts.weaponHand ?? null}
-          onToggle={(v) => onUpdate({ weaponHand: (v as "1h" | "2h") ?? undefined })}
-          theme={theme}
-          tooltip={{
-            title: "Weapon Type",
-            description: "Hover over your weapon in your equipment inventory and look to the right of the item icon to find your weapon type.",
-          }}
-        />
-      )}
-      <QuestionToggle
-        question="Do you use any of these souls?"
-        options={soulOptions}
-        value={soulValue}
-        onToggle={handleSoulToggle}
-        theme={theme}
-        tooltip={{
-          title: "Soul Weapons",
-          description: isDA ? (
-            <>A Soul Weapon is a weapon with a boss soul applied to it, providing passive stats based on your soul gauge and a unique skill. Mu Gong comes with <a href="https://maplestorywiki.net/w/Memories" target="_blank" rel="noreferrer" style={{ color: theme.accent, fontWeight: 700, textDecoration: "none" }}>Memories</a>, and Ephenia comes with <a href="https://maplestorywiki.net/w/A_Queenly_Fragrance" target="_blank" rel="noreferrer" style={{ color: theme.accent, fontWeight: 700, textDecoration: "none" }}>A Queenly Fragrance</a>.</>
-          ) : (
-            <>A Soul Weapon is a weapon with a boss soul applied to it, providing passive stats based on your soul gauge and a unique skill. Mu Gong comes with <a href="https://maplestorywiki.net/w/Memories" target="_blank" rel="noreferrer" style={{ color: theme.accent, fontWeight: 700, textDecoration: "none" }}>Memories</a>.</>
-          ),
-          imageUrls: isDA
-            ? [resourceImageUrl("item", MU_GONG_SOUL_ITEM_ID, "iconRaw.png"), resourceImageUrl("item", EPHENIA_SOUL_ITEM_ID, "iconRaw.png")]
-            : [resourceImageUrl("item", MU_GONG_SOUL_ITEM_ID, "iconRaw.png")],
-          link: { href: "https://maplestorywiki.net/w/Soul_Weapon", label: "See more on the wiki" },
-        }}
-      />
       {optsDef?.ruinForceShield && (
-        <BoolToggle
-          question="Do you have a Ruin Force Shield equipped?"
-          value={opts.hasRuinForceShield}
+        <ChecklistCheckbox
+          label="Ruin Force Shield equipped?"
+          checked={opts.hasRuinForceShield}
           onToggle={(v) => onUpdate({ hasRuinForceShield: v })}
           theme={theme}
           tooltip={{
@@ -611,6 +604,53 @@ function SetupOptionsSection({
           }}
         />
       )}
+      {soulOptions.length === 1 && (
+        // Only one real soul option for this class — a radio-style group of one
+        // reads oddly, so this is a plain checkbox instead, grouped with the other
+        // checkboxes above the radio-style questions below.
+        <ChecklistCheckbox
+          label="Mu Gong Soul applied to your weapon?"
+          checked={soulValue === "mugong"}
+          onToggle={(v) => handleSoulToggle(v ? "mugong" : null)}
+          theme={theme}
+          tooltip={{
+            title: "Soul Weapons",
+            description: <>A Soul Weapon is a weapon with a boss soul applied to it, providing passive stats based on your soul gauge and a unique skill. Mu Gong comes with <a href="https://maplestorywiki.net/w/Memories" target="_blank" rel="noreferrer" style={{ color: theme.accent, fontWeight: 700, textDecoration: "none" }}>Memories</a>.</>,
+            imageUrls: [resourceImageUrl("item", MU_GONG_SOUL_ITEM_ID, "iconRaw.png")],
+            link: { href: "https://maplestorywiki.net/w/Soul_Weapon", label: "See more on the wiki" },
+          }}
+        />
+      )}
+      {optsDef?.weaponType && (
+        <ChecklistGroup
+          question="What weapon type are you using?"
+          options={[{ value: "1h", label: "One-Handed" }, { value: "2h", label: "Two-Handed" }]}
+          value={opts.weaponHand ?? null}
+          onToggle={(v) => onUpdate({ weaponHand: (v as "1h" | "2h") ?? undefined })}
+          theme={theme}
+          required={required}
+          tooltip={{
+            title: "Weapon Type",
+            description: "Hover over your weapon in your equipment inventory and look to the right of the item icon to find your weapon type.",
+          }}
+        />
+      )}
+      {soulOptions.length > 1 && (
+        <ChecklistGroup
+          question="Which soul have you applied to your weapon?"
+          options={soulOptions}
+          value={soulValue}
+          onToggle={handleSoulToggle}
+          theme={theme}
+          required={required}
+          tooltip={{
+            title: "Soul Weapons",
+            description: <>A Soul Weapon is a weapon with a boss soul applied to it, providing passive stats based on your soul gauge and a unique skill. Mu Gong comes with <a href="https://maplestorywiki.net/w/Memories" target="_blank" rel="noreferrer" style={{ color: theme.accent, fontWeight: 700, textDecoration: "none" }}>Memories</a>, and Ephenia comes with <a href="https://maplestorywiki.net/w/A_Queenly_Fragrance" target="_blank" rel="noreferrer" style={{ color: theme.accent, fontWeight: 700, textDecoration: "none" }}>A Queenly Fragrance</a>.</>,
+            imageUrls: [resourceImageUrl("item", MU_GONG_SOUL_ITEM_ID, "iconRaw.png"), resourceImageUrl("item", EPHENIA_SOUL_ITEM_ID, "iconRaw.png")],
+            link: { href: "https://maplestorywiki.net/w/Soul_Weapon", label: "See more on the wiki" },
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -618,81 +658,109 @@ function SetupOptionsSection({
 
 // Wild Hunter Legion rank is account-level and hard-locked, so it's shown read-only
 // (derived per-world from the roster) — shown in BOTH full_setup and maplescouter_setup.
-// The two Maple Union artifacts and the Inner Ability line stay scouter-only: full_setup
-// collects the artifacts on their own dedicated Legion Artifacts step (richer, not just
-// the two scouter-relevant fields) and derives Inner Ability line from the Equipment IA
-// card instead of asking again — see showArtifactsAndIA.
-function ScouterQuestionsSection({ sq, whSource, worldLegion, onUpdate, theme, showArtifactsAndIA }: {
+// Lives under its own "Legion" section since it isn't sourced from any specific
+// in-game screen, unlike the Artifacts questions below.
+function WildHunterRankQuestion({ sq, whSource, worldLegion, onUpdate, theme, required }: {
   sq: NonNullable<StatsStepDraft["scouterQuestions"]>;
   whSource: WhAutofillSource | null;
   worldLegion: StoredScouterLegion | undefined;
   onUpdate: (patch: Partial<NonNullable<StatsStepDraft["scouterQuestions"]>>) => void;
   theme: AppTheme;
-  showArtifactsAndIA: boolean;
+  required?: boolean;
 }) {
   const whWorldRank = worldLegion?.wildHunterRank;
+  if (whSource) {
+    // A Wild Hunter is in this world's roster — the rank is authoritative, so it's
+    // derived and locked (it auto-updates as that character levels). Renders the same
+    // ChecklistGroup component as the manual case (for visual consistency), but with
+    // only the matching bracket in the option list — the other 5 can never apply here,
+    // so showing them would just be dead, unclickable clutter.
+    const matchedOption = WH_RANK_OPTIONS.find((o) => o.value === whSource.rank);
+    return (
+      <div>
+        <ChecklistGroup
+          question="What's your Wild Hunter's level?"
+          options={matchedOption ? [matchedOption] : []}
+          value={whSource.rank}
+          onToggle={() => {}}
+          theme={theme}
+          disabled
+        />
+        <p style={{ margin: "-0.5rem 0 0.9rem", fontSize: "0.75rem", fontWeight: 700, color: theme.muted }}>
+          Auto-filled from <span style={{ color: theme.accent }}>{whSource.name}</span> (Lv {whSource.level}).
+        </p>
+      </div>
+    );
+  }
+  // No Wild Hunter in the roster — let the user set the world's rank manually.
+  // Deselect-to-clear: clicking the active bracket clears it. Leaving every bracket
+  // unchecked already means "no Wild Hunter" (see resolveWhLegionRank).
+  return (
+    <ChecklistGroup
+      question="What's your Wild Hunter's level?"
+      options={WH_RANK_OPTIONS}
+      value={sq.whLegion ?? whWorldRank ?? null}
+      onToggle={(v) => onUpdate({ whLegion: v ?? undefined })}
+      theme={theme}
+      required={required}
+    />
+  );
+}
+
+// The two Maple Union artifacts, both sourced from the Legion window's Artifacts tab.
+// Scouter-only: full_setup collects the whole 9-crystal board on its own dedicated
+// Legion Artifacts step instead of asking these two flattened fields again.
+function LegionArtifactQuestions({ sq, worldLegion, onUpdate, theme }: {
+  sq: NonNullable<StatsStepDraft["scouterQuestions"]>;
+  worldLegion: StoredScouterLegion | undefined;
+  onUpdate: (patch: Partial<NonNullable<StatsStepDraft["scouterQuestions"]>>) => void;
+  theme: AppTheme;
+}) {
   const finalAtkValue = sq.artifactFinalAttackDmg
     ?? (worldLegion?.artifactFinalAttackDmg != null ? String(worldLegion.artifactFinalAttackDmg) : "");
   return (
     <>
-      {whSource ? (
-        // A Wild Hunter is in this world's roster — the rank is authoritative, so it's
-        // derived and locked (it auto-updates as that character levels). Same question
-        // as the manual case, showing only the matching bracket as a locked button.
-        <div style={{ marginBottom: "0.9rem" }}>
-          <p style={{ margin: "0 0 0.4rem", fontSize: "0.88rem", fontWeight: 800, color: theme.text }}>
-            What&apos;s your Wild Hunter&apos;s level?
-          </p>
-          <div style={lockedRankBadgeStyle(theme)}>
-            <span>{WH_RANK_OPTIONS.find((o) => o.value === whSource.rank)?.label ?? `Rank ${whSource.rank}`}</span>
-            <span style={{ fontSize: "0.75rem", fontWeight: 700, opacity: 0.7 }}>{whSource.rank}</span>
-          </div>
-          <p style={{ margin: "0.4rem 0 0", fontSize: "0.75rem", fontWeight: 700, color: theme.muted }}>
-            Auto-filled from <span style={{ color: theme.accent }}>{whSource.name}</span> (Lv {whSource.level}).
-          </p>
-        </div>
-      ) : (
-        // No Wild Hunter in the roster — let the user set the world's rank manually.
-        <QuestionToggle
-          question="What's your Wild Hunter's level?"
-          options={WH_RANK_OPTIONS}
-          value={sq.whLegion ?? whWorldRank ?? null}
-          // Deselect-to-clear: clicking the active button (incl. No Wild Hunter) clears it.
-          onToggle={(v) => onUpdate({ whLegion: v ?? undefined })}
-          theme={theme}
-        />
-      )}
-      {showArtifactsAndIA && (
-        <>
-          <BoolToggle
-            question="Do you have the +1 attack target Legion artifact?"
-            value={sq.artifactExtraTarget ?? worldLegion?.artifactExtraTarget}
-            onToggle={(v) => onUpdate({ artifactExtraTarget: v })}
-            theme={theme}
-            tooltip={{
-              title: "Legion Artifact",
-              description: 'Found in your Legion window, in the Artifacts tab. The stat is called: "+1 targets hit when using multi-target skills and EXP acquired."',
-            }}
-          />
-          <LegionFinalAttackField
-            value={finalAtkValue}
-            onUpdate={(v) => onUpdate({ artifactFinalAttackDmg: v })}
-            theme={theme}
-          />
-          <QuestionToggle
-            question="Which Inner Ability line do you use for bossing?"
-            options={IA_LINE_OPTIONS}
-            value={sq.innerAbilityLine ?? null}
-            onToggle={(v) => onUpdate({ innerAbilityLine: v ?? undefined })}
-            theme={theme}
-            tooltip={{
-              title: "Inner Ability",
-              description: "Found in your Stats window: click \"Detail\", then the \"Ability\" button at the bottom right. Only a Legendary-rank Inner Ability can roll these lines.",
-            }}
-          />
-        </>
-      )}
+      <ChecklistCheckbox
+        label="Increases Bonus EXP stat?"
+        checked={sq.artifactExtraTarget ?? worldLegion?.artifactExtraTarget}
+        onToggle={(v) => onUpdate({ artifactExtraTarget: v })}
+        theme={theme}
+        tooltip={{
+          title: "Increases Bonus EXP",
+          description: <>Found in your Legion window, in the Artifacts tab. Assigning the <strong>Increases Bonus EXP</strong> stat to a crystal also grants <strong>Max AoE Skill Targets: +1</strong>, listed under Artifact Bonuses.</>,
+        }}
+      />
+      <LegionFinalAttackField
+        value={finalAtkValue}
+        onUpdate={(v) => onUpdate({ artifactFinalAttackDmg: v })}
+        theme={theme}
+      />
     </>
+  );
+}
+
+// Inner Ability line is scouter-only (full_setup derives it from the Equipment IA
+// card instead) but is a per-character fact like Liberated/Soul/weapon type, so it
+// groups with Character Info rather than Artifacts or Legion.
+function InnerAbilityLineQuestion({ sq, onUpdate, theme, required }: {
+  sq: NonNullable<StatsStepDraft["scouterQuestions"]>;
+  onUpdate: (patch: Partial<NonNullable<StatsStepDraft["scouterQuestions"]>>) => void;
+  theme: AppTheme;
+  required?: boolean;
+}) {
+  return (
+    <ChecklistGroup
+      question="Which Inner Ability line do you use for bossing?"
+      options={IA_LINE_OPTIONS}
+      value={sq.innerAbilityLine ?? null}
+      onToggle={(v) => onUpdate({ innerAbilityLine: v ?? undefined })}
+      theme={theme}
+      required={required}
+      tooltip={{
+        title: "Inner Ability",
+        description: <>Found in your Stats window: click <strong>Detail</strong>, then the <strong>Ability</strong> button at the bottom right. Only a Legendary-rank Inner Ability can roll these lines.</>,
+      }}
+    />
   );
 }
 
@@ -709,18 +777,247 @@ function deriveScouterWhSource(
 }
 
 // WH Legion rank + Weapon ATT are shared between full_setup and maplescouter_setup
-// (full_setup is a superset); Legion artifacts + Inner Ability line stay scouter-only
-// (see ScouterQuestionsSection's showArtifactsAndIA).
+// (full_setup is a superset); Legion artifacts + Inner Ability line stay scouter-only.
 function deriveScouterVisibility(flowId: SetupFlowId | undefined): { isScouter: boolean; showWhLegionAndWeaponAtt: boolean } {
   const isScouter = flowId === "maplescouter_setup";
   return { isScouter, showWhLegionAndWeaponAtt: isScouter || flowId === "full_setup" };
 }
 
-// Extra questionnaire items beyond SetupOptionsSection's own count: the WH Legion rank
-// question (full_setup + maplescouter_setup) plus, scouter-only, the combined Legion
-// artifacts + Inner Ability block.
-function scouterQuestionCountDelta(showWhLegionAndWeaponAtt: boolean, isScouter: boolean): number {
-  return (showWhLegionAndWeaponAtt ? 1 : 0) + (isScouter ? 1 : 0);
+// MapleScouter needs real data to calculate correctly, but only the radio-style pick-
+// one groups actually need forcing: a checkbox left unchecked already unambiguously
+// reads as "no" (there's no distinct "unanswered" state to worry about), and Final
+// Attack Skill Damage already defaults to 0 when blank. A radio group is different —
+// each option (including "None"/"Neither") is a distinct, deliberate click, so leaving
+// the whole group untouched is genuinely ambiguous and worth blocking on.
+// full_setup never calls this — its questionnaire stays optional ("fill in what you know").
+function isScouterQuestionnaireComplete(
+  optsDef: ClassSetupOptionsDef | undefined,
+  opts: NonNullable<StatsStepDraft["setupOptions"]> | undefined,
+  sq: NonNullable<StatsStepDraft["scouterQuestions"]> | undefined,
+  whSource: WhAutofillSource | null,
+): boolean {
+  const o = opts ?? {};
+  const s = sq ?? {};
+  const isDA = Boolean(optsDef?.epheniaSoul);
+  if (optsDef?.weaponType && o.weaponHand === undefined) return false;
+  if (isDA && o.soulType === undefined) return false;
+  if (!whSource && s.whLegion === undefined) return false;
+  if (s.innerAbilityLine === undefined) return false;
+  return true;
+}
+
+function isTripleStatFilled(t: TripleStatDraft | undefined, id: TripleStatFieldId): boolean {
+  if (!t?.base?.trim() || !t?.percent?.trim()) return false;
+  const isAttack = id === "attackPower" || id === "magicAtt";
+  return isAttack || Boolean(t.percentUnapplied?.trim());
+}
+
+// Same thresholds as the warning bubbles — a value that's clearly the wrong kind of
+// number (Total instead of Base, etc.) shouldn't be submittable, not just flagged.
+// A blank/untouched field is always sane (Number("") is 0, not a violation) — this
+// only rejects a value that's actually been typed in and is clearly wrong.
+function isTripleStatSane(t: TripleStatDraft | undefined, isMainStat: boolean): boolean {
+  if (!isMainStat || !t) return true;
+  if (Number(t.base) >= MAIN_STAT_BASE_VALUE_WARN_AT) return false;
+  return Number(t.percentUnapplied) < MAIN_STAT_PERCENT_UNAPPLIED_WARN_AT;
+}
+
+function isWeaponAttSane(weaponAtt: string | undefined): boolean {
+  const trimmed = weaponAtt?.trim();
+  if (!trimmed) return true;
+  return Number(trimmed) <= WEAPON_ATT_WARN_AT;
+}
+
+function isCombatFieldFilled(draft: StatsStepDraft, id: StatFieldId): boolean {
+  if (id === "cooldownReduction") {
+    const cd = draft.cooldownReduction;
+    return Boolean(cd?.seconds?.trim() && cd?.percent?.trim());
+  }
+  const raw = (draft as Record<string, unknown>)[id];
+  return typeof raw === "string" && raw.trim().length > 0;
+}
+
+// Applies in EVERY flow, including full_setup: a blank/incomplete field is always
+// fine (full_setup stays otherwise optional), but a value that's clearly the wrong
+// kind of number (Total instead of Base, etc.) should never be saved, in any flow.
+function isStatsSubstepSane(
+  draft: StatsStepDraft,
+  tripleIds: TripleStatFieldId[],
+  primaryStat: TripleStatFieldId | undefined,
+  showWeaponAtt: boolean,
+): boolean {
+  const triplesSane = tripleIds.every((id) => isTripleStatSane(draft[id], id === primaryStat));
+  const weaponAttSane = !showWeaponAtt || isWeaponAttSane(draft.weaponAtt);
+  return triplesSane && weaponAttSane;
+}
+
+// MapleScouter's calculation needs a real number for every stat, including 0 — a blank
+// field is ambiguous (never entered vs. genuinely 0), so every stat shown must be
+// explicitly typed in. Scouter-only; full_setup relies on isStatsSubstepSane alone.
+function isStatsSubstepComplete(
+  draft: StatsStepDraft,
+  tripleIds: TripleStatFieldId[],
+  requireWeaponAtt: boolean,
+  primaryStat: TripleStatFieldId | undefined,
+  showArcanePower: boolean,
+  showSacredPower: boolean,
+): boolean {
+  const tripleFilled = tripleIds.every((id) => isTripleStatFilled(draft[id], id));
+  const combatFilled = [...COMBAT_LEFT, ...COMBAT_RIGHT].every((id) => isCombatFieldFilled(draft, id));
+  const symbolsFilled = (!showArcanePower || Boolean(draft.arcanePower?.trim())) && (!showSacredPower || Boolean(draft.sacredPower?.trim()));
+  const weaponAttFilled = !requireWeaponAtt || Boolean(draft.weaponAtt?.trim());
+  return tripleFilled && combatFilled && symbolsFilled && weaponAttFilled
+    && isStatsSubstepSane(draft, tripleIds, primaryStat, requireWeaponAtt);
+}
+
+function statsSubstepDescription(isScouter: boolean): string {
+  if (isScouter) {
+    return "Follow the requirements below, then enter every stat exactly as shown in your Character Info window. Don't leave any blank, even if the value is 0.";
+  }
+  return "Follow the requirements below, then enter your stats exactly as shown in your Character Info window. All fields are optional.";
+}
+
+// Substep 1 — the stat window fields (Basic/Combat/Symbols/Weapon ATT). Pulled into
+// its own component (rather than inline like substeps 0/2) purely to keep the main
+// component's cognitive complexity under the sonarjs cap — MapleScouter's completion
+// gating added enough branches here to push it over.
+function StatsWindowSubstep({
+  theme, step, stepNumber, totalSteps, substep, substepCount, substepAnimStyle,
+  goToSubstep, showHyperStat, onNext, onFinish,
+  classData, characterLevel, tripleIds, draft,
+  handleTripleUpdate, handleSingleUpdate, handleCooldownUpdate,
+  showWhLegionAndWeaponAtt, weaponAttLabel, usesMagicWeapon, isScouter,
+}: {
+  theme: AppTheme;
+  step: SetupStepDefinition;
+  stepNumber: number;
+  totalSteps: number;
+  substep: number;
+  substepCount: number;
+  substepAnimStyle: CSSProperties;
+  goToSubstep: (n: number) => void;
+  showHyperStat: boolean;
+  onNext: () => void;
+  onFinish: () => void;
+  classData: ClassSkillData | undefined;
+  characterLevel?: number;
+  tripleIds: TripleStatFieldId[];
+  draft: StatsStepDraft;
+  handleTripleUpdate: (id: TripleStatFieldId, field: keyof TripleStatDraft, val: string) => void;
+  handleSingleUpdate: (id: string, val: string) => void;
+  handleCooldownUpdate: (field: "seconds" | "percent", val: string) => void;
+  showWhLegionAndWeaponAtt: boolean;
+  weaponAttLabel: string;
+  usesMagicWeapon: boolean;
+  isScouter: boolean;
+}) {
+  const primaryStat = classData?.requiredStats.find((s): s is TripleStatFieldId => MAIN_STAT_IDS.has(s));
+  const showArcanePower = isArcaneEligible(characterLevel, classData?.isLegacy);
+  const showSacredPower = isSacredEligible(characterLevel, classData?.isLegacy);
+  const symbolIds = ([showArcanePower && "arcanePower", showSacredPower && "sacredPower"] as const).filter(Boolean) as StatFieldId[];
+  const statsComplete = isScouter
+    ? isStatsSubstepComplete(draft, tripleIds, showWhLegionAndWeaponAtt, primaryStat, showArcanePower, showSacredPower)
+    : isStatsSubstepSane(draft, tripleIds, primaryStat, showWhLegionAndWeaponAtt);
+  return (
+    <div key={1} className="stats-substep-root" style={substepAnimStyle}>
+    <style>{`
+      .stats-substep-root { container-type: inline-size; }
+      /* Collapse to one column on the panel's actual width, not the viewport — the
+         setup panel is much narrower than the window, so a viewport query collapsed
+         far too late. Gap lives in CSS (not inline) so the query can tighten the
+         column seam to match the row gap when the two columns stack. */
+      .stats-combat-grid { gap: 0.75rem; }
+      /* Grid (not flex) so a single visible symbol — Arcane alone, Lv 200-259 — stays
+         pinned to the left column's width instead of a lone flex:1 item stretching to
+         fill the whole row and dragging its input far to the right. */
+      .stats-symbols-grid, .stats-weapon-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+      @container (max-width: 520px) {
+        .stats-combat-grid { flex-direction: column; gap: 0.4rem; }
+        .stats-symbols-grid, .stats-weapon-grid { grid-template-columns: 1fr; gap: 0.4rem; }
+      }
+    `}</style>
+    <SetupStepFrame
+      theme={theme}
+      substepIndex={substep}
+      substepCount={substepCount}
+      stepLabel={step.label}
+      stepNumber={stepNumber}
+      totalSteps={totalSteps}
+      description={statsSubstepDescription(isScouter)}
+      onBack={() => goToSubstep(0)}
+      onNext={showHyperStat ? () => goToSubstep(2) : onNext}
+      onFinish={onFinish}
+      nextLabel={showHyperStat ? "Continue" : undefined}
+      nextDisabled={!statsComplete}
+    >
+      <WarningList warnings={[...UNIVERSAL_WARNINGS, ...(classData?.warnings ?? [])]} theme={theme} characterLevel={characterLevel} />
+      <BuffGuide classData={classData ?? null} theme={theme} characterLevel={characterLevel} />
+      {tripleIds.length > 0 && (
+        <div style={{ marginBottom: "0.75rem" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", marginBottom: "0.45rem", paddingBottom: "0.25rem", borderBottom: `1px solid ${theme.border}` }}>
+            <span style={{ fontSize: "0.75rem", fontWeight: 800, color: theme.muted, letterSpacing: "0.05em", textTransform: "uppercase" as const }}>Basic Stats</span>
+            <InfoTooltip
+              content={{
+                title: "Basic Stats",
+                description: "Hover over each stat in your Character Info window and look under [Applied Value]. Enter Base Value, % Value, and % Value Not Applied exactly as shown there.",
+              }}
+              theme={theme}
+            />
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+            {tripleIds.map((id) => (
+              <TripleStatRow key={id} id={id} draft={draft} onUpdate={handleTripleUpdate} theme={theme} isMainStat={id === primaryStat} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div style={{ marginBottom: "0.75rem" }}>
+        <p style={sectionLabelStyle(theme)}>Combat Stats</p>
+        <div className="stats-combat-grid" style={{ display: "flex", minWidth: 0 }}>
+          <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+            {COMBAT_LEFT.map((id) => (
+              <CombatStatCell key={id} id={id} draft={draft} onUpdate={handleSingleUpdate} onUpdateCooldown={handleCooldownUpdate} theme={theme} />
+            ))}
+          </div>
+          <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+            {COMBAT_RIGHT.map((id) => (
+              <CombatStatCell key={id} id={id} draft={draft} onUpdate={handleSingleUpdate} onUpdateCooldown={handleCooldownUpdate} theme={theme} />
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {symbolIds.length > 0 && (
+        <div>
+          <p style={sectionLabelStyle(theme)}>Symbols</p>
+          <div className="stats-symbols-grid" style={{ minWidth: 0 }}>
+            {symbolIds.map((id) => (
+              <div key={id} style={{ minWidth: 0 }}>
+                <CombatStatCell id={id} draft={draft} onUpdate={handleSingleUpdate} onUpdateCooldown={handleCooldownUpdate} theme={theme} />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {showWhLegionAndWeaponAtt && (
+        <WeaponAttField
+          label={weaponAttLabel}
+          usesMagicWeapon={usesMagicWeapon}
+          value={draft.weaponAtt ?? ""}
+          onUpdate={(v) => handleSingleUpdate("weaponAtt", v)}
+          theme={theme}
+        />
+      )}
+      {!statsComplete && (
+        <p style={{ margin: "0.75rem 0 0", fontSize: "0.78rem", fontWeight: 700, color: theme.muted }}>
+          {isScouter ? "Fill in every stat above, and fix any flagged values, to continue." : "Fix the flagged value above to continue."}
+        </p>
+      )}
+    </SetupStepFrame>
+    </div>
+  );
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
@@ -805,13 +1102,10 @@ export default function StatsSetupStep({
 
   const { usesMagicWeapon, label: weaponAttLabel } = deriveWeaponAtt(tripleIds);
 
-  const questionCount = countSetupOptionsQuestions(classData?.setupOptionsDef, characterLevel)
-    + scouterQuestionCountDelta(showWhLegionAndWeaponAtt, isScouter);
-  const questionsDescription = questionCount === 1
-    ? "One quick question about your character first:"
-    : "A few quick questions about your character first:";
-
   if (substep === 0) {
+    const questionnaireComplete = !isScouter || isScouterQuestionnaireComplete(
+      classData?.setupOptionsDef, draft.setupOptions, draft.scouterQuestions, whSource,
+    );
     return (
       <div key={0} style={substepAnimStyle}>
         <SetupStepFrame
@@ -821,22 +1115,58 @@ export default function StatsSetupStep({
           stepLabel={step.label}
           stepNumber={stepNumber}
           totalSteps={totalSteps}
-          description={questionsDescription}
+          description="Select what applies to your character below."
           onBack={onBack}
           onNext={() => goToSubstep(1)}
           onFinish={onFinish}
           nextLabel="Continue"
+          nextDisabled={isScouter && !questionnaireComplete}
         >
-          <SetupOptionsSection optsDef={classData?.setupOptionsDef} draft={draft} onUpdate={handleSetupOptUpdate} theme={theme} characterLevel={characterLevel} />
-          {showWhLegionAndWeaponAtt && (
-            <ScouterQuestionsSection
-              sq={draft.scouterQuestions ?? {}}
-              whSource={whSource}
-              worldLegion={worldScouterLegion}
-              onUpdate={handleScouterQUpdate}
+          <p style={sectionLabelStyle(theme)}>Character Info</p>
+          <div style={{ marginBottom: "0.75rem" }}>
+            <SetupOptionsSection
+              optsDef={classData?.setupOptionsDef}
+              draft={draft}
+              onUpdate={handleSetupOptUpdate}
               theme={theme}
-              showArtifactsAndIA={isScouter}
+              characterLevel={characterLevel}
+              required={isScouter}
             />
+            {isScouter && (
+              <InnerAbilityLineQuestion sq={draft.scouterQuestions ?? {}} onUpdate={handleScouterQUpdate} theme={theme} required={isScouter} />
+            )}
+          </div>
+
+          {isScouter && (
+            <div style={{ marginBottom: "0.75rem" }}>
+              <p style={sectionLabelStyle(theme)}>Legion Artifact</p>
+              <LegionArtifactQuestions
+                sq={draft.scouterQuestions ?? {}}
+                worldLegion={worldScouterLegion}
+                onUpdate={handleScouterQUpdate}
+                theme={theme}
+              />
+            </div>
+          )}
+
+          {showWhLegionAndWeaponAtt && (
+            <div>
+              <p style={sectionLabelStyle(theme)}>Mules</p>
+              <WildHunterRankQuestion
+                sq={draft.scouterQuestions ?? {}}
+                whSource={whSource}
+                worldLegion={worldScouterLegion}
+                onUpdate={handleScouterQUpdate}
+                theme={theme}
+                required={isScouter}
+              />
+            </div>
+          )}
+
+          {isScouter && !questionnaireComplete && (
+            <p style={{ margin: "0.4rem 0 0", fontSize: "0.78rem", fontWeight: 700, color: theme.muted }}>
+              Answer every starred question above to continue.
+            </p>
           )}
         </SetupStepFrame>
       </div>
@@ -844,97 +1174,25 @@ export default function StatsSetupStep({
   }
 
   if (substep === 1) return (
-    <div key={1} className="stats-substep-root" style={substepAnimStyle}>
-    <style>{`
-      .stats-substep-root { container-type: inline-size; }
-      /* Collapse to one column on the panel's actual width, not the viewport — the
-         setup panel is much narrower than the window, so a viewport query collapsed
-         far too late. Gap lives in CSS (not inline) so the query can tighten the
-         column seam to match the row gap when the two columns stack. */
-      .stats-combat-grid, .stats-symbols-grid { gap: 0.75rem; }
-      @container (max-width: 520px) {
-        .stats-combat-grid, .stats-symbols-grid { flex-direction: column; gap: 0.4rem; }
-      }
-    `}</style>
-    <SetupStepFrame
-      theme={theme}
-      substepIndex={substep}
-      substepCount={SUBSTEP_COUNT}
-      stepLabel={step.label}
-      stepNumber={stepNumber}
-      totalSteps={totalSteps}
-      description="Enter your stats exactly as shown in your in-game Stat window. All fields are optional."
-      onBack={() => goToSubstep(0)}
-      onNext={showHyperStat ? () => goToSubstep(2) : onNext}
-      onFinish={onFinish}
-      nextLabel={showHyperStat ? "Continue" : undefined}
-    >
-      <WarningList warnings={[...UNIVERSAL_WARNINGS, ...(classData?.warnings ?? [])]} theme={theme} characterLevel={characterLevel} />
-      <BuffGuide classData={classData ?? null} theme={theme} characterLevel={characterLevel} />
-      {tripleIds.length > 0 && (
-        <div style={{ marginBottom: "0.75rem" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", marginBottom: "0.45rem", paddingBottom: "0.25rem", borderBottom: `1px solid ${theme.border}` }}>
-            <span style={{ fontSize: "0.75rem", fontWeight: 800, color: theme.muted, letterSpacing: "0.05em", textTransform: "uppercase" as const }}>Basic Stats</span>
-            <InfoTooltip
-              content={{
-                title: "Basic Stats",
-                description: "Hover over each stat in your in-game Stat window and look under [Applied Value]. Enter Base Value, % Value, and % Value Not Applied exactly as shown there.",
-              }}
-              theme={theme}
-            />
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-            {tripleIds.map((id) => (
-              <TripleStatRow key={id} id={id} draft={draft} onUpdate={handleTripleUpdate} theme={theme} />
-            ))}
-          </div>
-        </div>
-      )}
-
-      <div style={{ marginBottom: "0.75rem" }}>
-        <p style={sectionLabelStyle(theme)}>Combat Stats</p>
-        <div className="stats-combat-grid" style={{ display: "flex", minWidth: 0 }}>
-          <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: "0.4rem" }}>
-            {COMBAT_LEFT.map((id) => (
-              <CombatStatCell key={id} id={id} draft={draft} onUpdate={handleSingleUpdate} onUpdateCooldown={handleCooldownUpdate} theme={theme} />
-            ))}
-          </div>
-          <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: "0.4rem" }}>
-            {COMBAT_RIGHT.map((id) => (
-              <CombatStatCell key={id} id={id} draft={draft} onUpdate={handleSingleUpdate} onUpdateCooldown={handleCooldownUpdate} theme={theme} />
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div>
-        <p style={sectionLabelStyle(theme)}>Symbols</p>
-        <div className="stats-symbols-grid" style={{ display: "flex", minWidth: 0 }}>
-          {(["arcanePower", "sacredPower"] as StatFieldId[]).map((id) => (
-            <div key={id} style={{ flex: 1, minWidth: 0 }}>
-              <CombatStatCell id={id} draft={draft} onUpdate={handleSingleUpdate} onUpdateCooldown={handleCooldownUpdate} theme={theme} />
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {showWhLegionAndWeaponAtt && (
-        <WeaponAttField
-          label={weaponAttLabel}
-          usesMagicWeapon={usesMagicWeapon}
-          value={draft.weaponAtt ?? ""}
-          onUpdate={(v) => handleSingleUpdate("weaponAtt", v)}
-          theme={theme}
-        />
-      )}
-    </SetupStepFrame>
-    </div>
+    <StatsWindowSubstep
+      theme={theme} step={step} stepNumber={stepNumber} totalSteps={totalSteps}
+      substep={substep} substepCount={SUBSTEP_COUNT} substepAnimStyle={substepAnimStyle}
+      goToSubstep={goToSubstep} showHyperStat={showHyperStat} onNext={onNext} onFinish={onFinish}
+      classData={classData} characterLevel={characterLevel} tripleIds={tripleIds} draft={draft}
+      handleTripleUpdate={handleTripleUpdate} handleSingleUpdate={handleSingleUpdate} handleCooldownUpdate={handleCooldownUpdate}
+      showWhLegionAndWeaponAtt={showWhLegionAndWeaponAtt} weaponAttLabel={weaponAttLabel} usesMagicWeapon={usesMagicWeapon} isScouter={isScouter}
+    />
   );
 
   // Substep 2 — Hyper Stat (Full setup only). Mirrors the in-game Hyper Stats
   // window: every category, level 0–15, entered directly into a two-column list.
-  const hyperHalf = Math.ceil(HYPER_STAT_CATEGORIES.length / 2);
-  const hyperCols = [HYPER_STAT_CATEGORIES.slice(0, hyperHalf), HYPER_STAT_CATEGORIES.slice(hyperHalf)];
+  // Arcane Power only appears in that window once the character can actually have
+  // Arcane Force — same eligibility as the Symbols section in substep 1.
+  const hyperCategories = HYPER_STAT_CATEGORIES.filter(
+    (cat) => cat.id !== "arcanePower" || isArcaneEligible(characterLevel, classData?.isLegacy),
+  );
+  const hyperHalf = Math.ceil(hyperCategories.length / 2);
+  const hyperCols = [hyperCategories.slice(0, hyperHalf), hyperCategories.slice(hyperHalf)];
   return (
     <div key={2} className="stats-hyper-root" style={substepAnimStyle}>
     <style>{`

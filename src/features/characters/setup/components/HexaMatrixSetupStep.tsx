@@ -534,7 +534,7 @@ function HexaSkillLevelsSubstep({
     <div key={0} style={animStyle}>
       <SetupStepFrame theme={theme} stepLabel={stepLabel} stepNumber={stepNumber} totalSteps={totalSteps}
         substepIndex={substepIndex} substepCount={substepCount}
-        description="All fields are optional. Fill in what you can."
+        description="Enter your HEXA skill levels."
         onBack={onBack}
         onNext={showHexaStat ? onContinue : onNext}
         onFinish={onFinish}

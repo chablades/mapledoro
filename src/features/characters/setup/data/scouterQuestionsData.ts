@@ -10,6 +10,7 @@
 */
 
 import { LEGION_ARTIFACT_FINAL_ATK_MAX, type StoredCharacterRecord, type StoredScouterData, type StoredScouterLegion, type WhLegionRank } from "../../model/charactersStore";
+import { IA_MULTI_TARGET_PLUS_ONE_LINE, IA_PASSIVE_PLUS_ONE_LINE } from "./innerAbilityData";
 import type { StatsStepDraft } from "./statsStepDraft";
 
 // ── Wild Hunter legion rank ───────────────────────────────────────────────────
@@ -61,24 +62,32 @@ export function whRankFromRoster(roster: readonly StoredCharacterRecord[]): WhLe
 
 // Manual-entry buttons, shown ONLY when no Wild Hunter is in the world's roster. The
 // question asks for the WH's level (what people know); each bracket maps to a grade
-// (lv200 = lv201 = SS), so the buttons are the brackets. Stored value = grade.
-export const WH_RANK_OPTIONS: { value: string; label: string; sublabel?: string; optOut?: boolean }[] = [
+// (lv200 = lv201 = SS), so the buttons are the brackets. Stored value = grade. "No
+// Wild Hunter" is a real radio option (not a special opt-out) — with these rendered
+// as radio dots, an explicit "none" is the standard, discoverable way to say so,
+// rather than relying on knowing you can click the active bracket again to clear it.
+// It's functionally identical to leaving every bracket unchecked either way, since
+// resolveWhLegionRank treats any value outside the real bracket set as "no Wild Hunter".
+export const WH_RANK_OPTIONS: { value: string; label: string; sublabel?: string; standalone?: boolean }[] = [
   { value: "B", label: "Lv 60–99", sublabel: "B" },
   { value: "A", label: "Lv 100–139", sublabel: "A" },
   { value: "S", label: "Lv 140–199", sublabel: "S" },
   { value: "SS", label: "Lv 200–249", sublabel: "SS" },
   { value: "SSS", label: "Lv 250+", sublabel: "SSS" },
-  { value: "none", label: "No Wild Hunter", optOut: true },
+  { value: "none", label: "No Wild Hunter", standalone: true },
 ];
 
 // ── Inner Ability line ─────────────────────────────────────────────────────────
 // The only Inner Ability lines MapleScouter cares about are the two legendary
-// utility lines; everything else is captured by the stat window. Three-way pick.
+// utility lines; everything else is captured by the stat window. "Neither" is a real
+// radio option for the same reason as WH rank's "none" above — convertScouterQuestionsDraftToStored
+// already only recognizes "passive"/"multiTarget", so "neither" resolves to the same
+// "no line" outcome as leaving both unchecked.
 
-export const IA_LINE_OPTIONS: { value: string; label: string; optOut?: boolean }[] = [
-  { value: "passive", label: "Passive Skills +1" },
-  { value: "multiTarget", label: "Multi-target +1 enemy" },
-  { value: "neither", label: "Neither", optOut: true },
+export const IA_LINE_OPTIONS: { value: string; label: string; standalone?: boolean }[] = [
+  { value: "passive", label: IA_PASSIVE_PLUS_ONE_LINE },
+  { value: "multiTarget", label: IA_MULTI_TARGET_PLUS_ONE_LINE },
+  { value: "neither", label: "Neither", standalone: true },
 ];
 
 // ── Legion artifacts (Maple Union) ───────────────────────────────────────────────

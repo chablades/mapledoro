@@ -1,7 +1,8 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import { numericKeyDown } from "../../../../lib/inputUtils";
+import { numericKeyDown, sanitizeDigitsInput } from "../../../../lib/inputUtils";
+import { resourceImageUrl } from "../../../../lib/mapleResource";
 import type { AppTheme } from "../../../../components/themes";
 import { ItemIcon } from "../../../../components/ResourceImage";
 import HoverTooltip from "../../../../components/HoverTooltip";
@@ -17,9 +18,42 @@ import {
   serializeOzRingsDraft,
   type MainStatId,
   type OzRingId,
+  type OzRingMode,
   type OzRingsDraft,
 } from "../data/ozRingData";
 import SetupStepFrame from "./SetupStepFrame";
+import InfoTooltip from "./InfoTooltip";
+import { InputWarningBubble } from "./QuestionControls";
+
+// MapleScouter's own sanity bound for the Totalling Ring off-stat fields (a 7-digit
+// entry gets rejected) — not a real game cap, so this warns instead of hard-blocking.
+const TOTALLING_STAT_WARN_AT = 1000000;
+
+// manifests/v269/item.json, Item/Consume. Green/Red Jade's raw art fills its canvas
+// edge-to-edge (31x26, no padding) while Black/White Jade/Life have a visible margin
+// baked in (~36x36 canvas, content ~85-92% of it) — shrunk + nudged down here to
+// visually match, offsets measured directly off a 4x-zoom screenshot comparing each
+// icon's bottom edge against Black Jade's (the only one with zero baked-in padding
+// asymmetry, so treated as the reference).
+const BOSS_RING_BOX_ITEM_IDS: { id: string; scale?: number; offsetY?: number }[] = [
+  { id: "02028407", scale: 0.89, offsetY: 1.25 }, // Green Jade Boss Ring Box
+  { id: "02028408", scale: 0.89, offsetY: 1.25 }, // Red Jade Boss Ring Box
+  { id: "02028409" }, // Black Jade Boss Ring Box (reference)
+  { id: "02028410", offsetY: 0.5 }, // White Jade Boss Ring Box
+  { id: "02028430", offsetY: 0.5 }, // Life Boss Ring Box
+];
+
+const OZ_RING_TOOLTIP = {
+  title: "Oz Rings",
+  description: "Special Skill Rings, better known as Oz Rings, drop from Boss Ring Boxes. Most players either swap between a Ring of Restraint and a Weapon Jump ring mid-fight, or run a single Continuous Ring instead.",
+  imageUrls: BOSS_RING_BOX_ITEM_IDS.map(({ id, scale, offsetY }) => ({ src: resourceImageUrl("item", id, "iconRaw.png"), scale, offsetY })),
+  link: { href: "https://maplestorywiki.net/w/Skill_Rings", label: "MapleStory Wiki: Skill Rings" },
+};
+
+const RING_MODE_OPTIONS: { mode: OzRingMode; label: string }[] = [
+  { mode: "standard", label: "Standard" },
+  { mode: "continuous", label: "Continuous" },
+];
 
 interface OzRingsSetupStepProps {
   theme: AppTheme;
@@ -39,6 +73,15 @@ const sectionLabelStyle = (theme: AppTheme): CSSProperties => ({
   textTransform: "uppercase", letterSpacing: "0.05em", color: theme.muted,
 });
 
+const ringModeTabStyle = (theme: AppTheme, isActive: boolean): CSSProperties => ({
+  border: `1px solid ${isActive ? theme.accent : theme.border}`,
+  borderRadius: 8,
+  background: isActive ? theme.accent : theme.bg,
+  color: isActive ? "#fff" : theme.text,
+  fontFamily: "inherit", fontWeight: 800, fontSize: "0.8rem",
+  padding: "0.4rem 0.8rem", cursor: "pointer",
+});
+
 const ringTileStyle = (theme: AppTheme, placed: boolean): CSSProperties => ({
   width: 74, flexShrink: 0,
   border: `1px solid ${placed ? theme.accent : theme.border}`,
@@ -56,15 +99,6 @@ const ringInputStyle = (theme: AppTheme): CSSProperties => ({
   padding: "0.25rem", boxSizing: "border-box",
 });
 
-const yesNoOptionStyle = (theme: AppTheme, active: boolean): CSSProperties => ({
-  border: `1px solid ${active ? theme.accent : theme.border}`,
-  borderRadius: 9,
-  background: active ? `${theme.accent}22` : theme.bg,
-  color: active ? theme.accent : theme.text,
-  fontFamily: "inherit", fontWeight: 800, fontSize: "0.85rem",
-  padding: "0.4rem 0.85rem", cursor: "pointer",
-});
-
 const statRowInputStyle = (theme: AppTheme): CSSProperties => ({
   width: "5rem", textAlign: "center",
   border: `1px solid ${theme.border}`, borderRadius: 7,
@@ -72,8 +106,6 @@ const statRowInputStyle = (theme: AppTheme): CSSProperties => ({
   fontFamily: "inherit", fontWeight: 600, fontSize: "0.82rem",
   padding: "0.3rem 0.4rem", boxSizing: "border-box",
 });
-
-const YES_NO_OPTIONS = [{ v: true, label: "Yes" }, { v: false, label: "No" }];
 
 function RingTile({ iconId, name, level, onLevel, theme }: {
   iconId: string;
@@ -106,30 +138,23 @@ function RingTile({ iconId, name, level, onLevel, theme }: {
   );
 }
 
-function YesNoQuestion({ question, value, onChange, theme }: {
-  question: string;
-  value: boolean;
-  onChange: (next: boolean) => void;
+function RingModeTabs({ mode, onChange, theme }: {
+  mode: OzRingMode;
+  onChange: (next: OzRingMode) => void;
   theme: AppTheme;
 }) {
   return (
-    <div>
-      <p style={{ margin: "0 0 0.4rem", fontSize: "0.88rem", fontWeight: 800, color: theme.text }}>{question}</p>
-      <div style={{ display: "flex", gap: "0.4rem" }}>
-        {YES_NO_OPTIONS.map((opt) => {
-          const active = opt.v === value;
-          return (
-            <button
-              key={opt.label}
-              type="button"
-              onClick={() => onChange(opt.v)}
-              style={yesNoOptionStyle(theme, active)}
-            >
-              {opt.label}
-            </button>
-          );
-        })}
-      </div>
+    <div style={{ display: "flex", gap: 4 }}>
+      {RING_MODE_OPTIONS.map((opt) => (
+        <button
+          key={opt.mode}
+          type="button"
+          onClick={() => onChange(opt.mode)}
+          style={ringModeTabStyle(theme, opt.mode === mode)}
+        >
+          {opt.label}
+        </button>
+      ))}
     </div>
   );
 }
@@ -140,19 +165,23 @@ function StatRow({ label, value, onChange, theme }: {
   onChange: (val: string) => void;
   theme: AppTheme;
 }) {
+  const showWarning = Number(value) >= TOTALLING_STAT_WARN_AT;
   return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.5rem" }}>
       <span style={{ fontSize: "0.85rem", fontWeight: 700, color: theme.text }}>{label}</span>
-      <input
-        type="text"
-        inputMode="numeric"
-        aria-label={`Totalling Ring ${label}`}
-        value={value}
-        placeholder="0"
-        onChange={(e) => onChange(e.target.value.replace(/\D/g, ""))}
-        onKeyDown={numericKeyDown}
-        style={statRowInputStyle(theme)}
-      />
+      <div style={{ position: "relative" }}>
+        {showWarning && <InputWarningBubble message={`That ${label} value looks too large. Double check.`} theme={theme} />}
+        <input
+          type="text"
+          inputMode="numeric"
+          aria-label={`Totalling Ring ${label}`}
+          value={value}
+          placeholder="0"
+          onChange={(e) => onChange(sanitizeDigitsInput(e.target.value))}
+          onKeyDown={numericKeyDown}
+          style={statRowInputStyle(theme)}
+        />
+      </div>
     </div>
   );
 }
@@ -168,6 +197,14 @@ export default function OzRingsSetupStep({
     onChange(serializeOzRingsDraft({ ...draft, ...patch }));
   }
 
+  // Standard and Continuous are alternate builds, never both at once — clearing the
+  // other side's levels on switch means whatever's visible is exactly what gets saved,
+  // instead of stale numbers lingering out of view under the tab you're not on.
+  function setRingMode(mode: OzRingMode) {
+    if (mode === draft.ringMode) return;
+    onChange(serializeOzRingsDraft({ ringMode: mode, levels: {}, totallingStatValues: {} }));
+  }
+
   function setLevel(ring: OzRingId, val: string) {
     update({ levels: { ...draft.levels, [ring]: sanitizeOzRingLevel(val) } });
   }
@@ -177,7 +214,15 @@ export default function OzRingsSetupStep({
   }
 
   const totallingLevel = Number.parseInt(draft.levels.totalling ?? "", 10);
-  const showTotallingStats = Number.isFinite(totallingLevel) && totallingLevel > 0 && ozInfo.totallingStats.length > 0;
+  const showTotallingStats = draft.ringMode === "standard"
+    && Number.isFinite(totallingLevel) && totallingLevel > 0 && ozInfo.totallingStats.length > 0;
+  // A value that's clearly wrong (same threshold as the warning bubble) shouldn't be
+  // submittable, in any flow — this is the only gate on this step; blank stats stay
+  // fine everywhere.
+  const hasInsaneTotallingStat = showTotallingStats && ozInfo.totallingStats.some((stat) => {
+    const raw = draft.totallingStatValues[stat]?.trim();
+    return Boolean(raw) && Number(raw) >= TOTALLING_STAT_WARN_AT;
+  });
 
   return (
     <SetupStepFrame
@@ -185,25 +230,32 @@ export default function OzRingsSetupStep({
       stepLabel={step.label}
       stepNumber={stepNumber}
       totalSteps={totalSteps}
-      description="Enter your Oz ring levels (0–6) as shown in-game."
+      description="Enter your Oz ring info if you use them when bossing. Pick whichever setup you actually run, never both."
       onBack={onBack}
       onNext={onNext}
       onFinish={onFinish}
+      nextDisabled={hasInsaneTotallingStat}
     >
       <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem", maxWidth: 360 }}>
-        <YesNoQuestion
-          question="Do you use a Continuous Ring?"
-          value={draft.usesContinuous}
-          onChange={(v) => update({ usesContinuous: v })}
-          theme={theme}
-        />
+        <div>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", marginBottom: "0.4rem" }}>
+            <span style={{ ...sectionLabelStyle(theme), margin: 0 }}>Ring Setup</span>
+            <InfoTooltip content={OZ_RING_TOOLTIP} theme={theme} />
+          </div>
+          <RingModeTabs mode={draft.ringMode} onChange={setRingMode} theme={theme} />
+          <p style={{ margin: "0.4rem 0 0", fontSize: "0.75rem", color: theme.muted }}>
+            Levels range from 0 to 6, leave at 0 if unused.
+          </p>
+        </div>
 
-        {draft.usesContinuous ? (
+        {draft.ringMode === "continuous" && (
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
             <RingTile iconId={OZ_RING_ICON_IDS.continuous} name="Continuous Ring"
               level={draft.levels.continuous ?? ""} onLevel={(v) => setLevel("continuous", v)} theme={theme} />
           </div>
-        ) : (
+        )}
+
+        {draft.ringMode === "standard" && (
           <>
             <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
               <RingTile iconId={OZ_RING_ICON_IDS.restraint} name="Ring of Restraint"
@@ -231,6 +283,12 @@ export default function OzRingsSetupStep({
               </div>
             )}
           </>
+        )}
+
+        {hasInsaneTotallingStat && (
+          <p style={{ margin: 0, fontSize: "0.78rem", fontWeight: 700, color: theme.muted }}>
+            Fix the flagged value above to continue.
+          </p>
         )}
       </div>
     </SetupStepFrame>

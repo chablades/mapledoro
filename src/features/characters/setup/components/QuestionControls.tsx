@@ -45,61 +45,181 @@ export function inputSuffixStyle(theme: AppTheme): CSSProperties {
   };
 }
 
-export function questionOptionButtonStyle(theme: AppTheme, active: boolean, hasSublabel: boolean): CSSProperties {
+// A floating callout anchored above a stat input, warning that a typed value looks
+// like the wrong kind of number for this field (e.g. a Total stat instead of Base).
+// The input's wrapper needs `position: relative` for this to anchor correctly.
+function inputWarningBubbleStyle(theme: AppTheme): CSSProperties {
   return {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: hasSublabel ? "0.1rem" : 0,
-    border: `1px solid ${active ? theme.accent : theme.border}`,
-    borderRadius: "9px",
-    background: active ? `${theme.accent}22` : theme.bg,
-    color: active ? theme.accent : theme.text,
-    fontFamily: "inherit",
-    fontWeight: 800,
-    fontSize: "0.85rem",
-    lineHeight: 1.15,
-    padding: "0.4rem 0.85rem",
-    cursor: "pointer",
+    position: "absolute",
+    bottom: "calc(100% + 0.4rem)",
+    left: "50%",
+    transform: "translateX(-50%)",
+    zIndex: 20,
+    background: theme.bg,
+    border: "1px solid rgba(217, 119, 6, 0.6)",
+    color: "#d97706",
+    fontSize: "0.7rem",
+    fontWeight: 700,
+    padding: "0.35rem 0.55rem",
+    borderRadius: "7px",
+    width: "max-content",
+    maxWidth: "170px",
+    textAlign: "center",
+    lineHeight: 1.3,
+    boxShadow: "0 4px 14px rgba(0,0,0,0.25)",
+    pointerEvents: "none",
   };
 }
 
-export function QuestionToggle({
-  question, options, value, onToggle, theme, tooltip,
-}: {
+export function InputWarningBubble({ message, theme }: { message: string; theme: AppTheme }) {
+  return (
+    <div role="alert" style={inputWarningBubbleStyle(theme)}>
+      {message}
+    </div>
+  );
+}
+
+// ── Checklist-style question controls ──────────────────────────────────────────
+// Traits render as checkbox rows in a flat list rather than competing pill buttons,
+// so a "none of these" answer reads as one more line item, not a peer choice.
+
+// `trailingPadding` spaces a row out from whatever follows it inline. ChecklistGroup's
+// option buttons need it (so wrapped options don't crowd each other); ChecklistCheckbox
+// doesn't, since its tooltip sits right after with its own gap — keeping both would
+// double up and push the tooltip noticeably further from the label than on a
+// ChecklistGroup question.
+function checklistRowStyle(theme: AppTheme, trailingPadding = "0.6rem"): CSSProperties {
+  return {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "0.45rem",
+    border: "none",
+    background: "none",
+    padding: `0.3rem ${trailingPadding} 0.3rem 0`,
+    font: "inherit",
+    cursor: "pointer",
+    color: theme.text,
+  };
+}
+
+// Square box for a true multi-select trait (ChecklistItem) — any number of these can
+// be checked at once.
+function checklistBoxStyle(theme: AppTheme, checked: boolean): CSSProperties {
+  return {
+    flexShrink: 0,
+    width: "1.05rem",
+    height: "1.05rem",
+    borderRadius: "4px",
+    border: `1.5px solid ${checked ? theme.accent : theme.border}`,
+    background: checked ? `${theme.accent}22` : theme.bg,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  };
+}
+
+// Round radio dot for a pick-one group (ChecklistGroup) — picking one option in the
+// group clears any other, so it reads as a radio rather than a checkbox at a glance.
+function checklistRadioStyle(theme: AppTheme, active: boolean): CSSProperties {
+  return {
+    flexShrink: 0,
+    width: "1.05rem",
+    height: "1.05rem",
+    borderRadius: "50%",
+    border: `1.5px solid ${active ? theme.accent : theme.border}`,
+    background: theme.bg,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  };
+}
+
+function checklistMarkStyle(color: string): CSSProperties {
+  return { fontSize: "0.72rem", fontWeight: 900, lineHeight: 1, color };
+}
+
+function checklistRadioDotStyle(theme: AppTheme): CSSProperties {
+  return { width: "0.5rem", height: "0.5rem", borderRadius: "50%", background: theme.accent };
+}
+
+function RequiredMark({ theme }: { theme: AppTheme }) {
+  return <span style={{ color: theme.accent, fontWeight: 900, marginLeft: "0.15rem" }}>*</span>;
+}
+
+// A plain yes/no checkbox — click just toggles checked/unchecked, like any normal
+// checkbox. Before the first click `checked` is undefined (never answered), which
+// renders identically to unchecked but is preserved as a distinct "unknown" value in
+// storage if the question is never touched (e.g. full_setup, which stays optional).
+// Once clicked, it only ever alternates true/false — there's no way back to
+// "unanswered" from the UI, since nothing downstream needs to re-create that state.
+export function ChecklistCheckbox({ label, checked, onToggle, theme, tooltip, required }: {
+  label: string;
+  checked: boolean | undefined;
+  onToggle: (checked: boolean) => void;
+  theme: AppTheme;
+  tooltip?: TooltipContent;
+  required?: boolean;
+}) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", marginBottom: "0.15rem" }}>
+      <button type="button" onClick={() => onToggle(!checked)} style={checklistRowStyle(theme, "0")}>
+        <span style={checklistBoxStyle(theme, checked === true)}>
+          {checked === true && <span style={checklistMarkStyle(theme.accent)}>✓</span>}
+        </span>
+        <span style={{ fontSize: "0.88rem", fontWeight: 800 }}>
+          {label}
+          {required && <RequiredMark theme={theme} />}
+        </span>
+      </button>
+      {tooltip && <InfoTooltip content={tooltip} theme={theme} />}
+    </div>
+  );
+}
+
+// A mutually-exclusive pick list (soul type, Wild Hunter rank bracket, Inner Ability
+// line, weapon hand, ...). "None"/"Neither" is a real option here (not a specially
+// chromed opt-out), just flagged `standalone` to break onto its own line so it reads
+// as "none of the above" rather than blending into the real choices.
+export function ChecklistGroup({ question, options, value, onToggle, theme, tooltip, required, disabled }: {
   question: string;
-  options: { value: string; label: string; sublabel?: string; optOut?: boolean }[];
+  options: { value: string; label: string; sublabel?: string; standalone?: boolean }[];
   value: string | null;
   /** Clicking the active option deselects it (returns null). */
   onToggle: (value: string | null) => void;
   theme: AppTheme;
   tooltip?: TooltipContent;
+  required?: boolean;
+  /** Locks the group to its current value (e.g. a derived Wild Hunter rank) — options
+   *  still render for context, but none of them are clickable. */
+  disabled?: boolean;
 }) {
   return (
-    <div style={{ marginBottom: "0.9rem" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", marginBottom: "0.4rem" }}>
-        <p style={{ margin: 0, fontSize: "0.88rem", fontWeight: 800, color: theme.text }}>
+    <div style={{ marginTop: "0.6rem", marginBottom: "0.9rem" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", marginBottom: "0.3rem" }}>
+        <p style={{ margin: 0, fontSize: "0.88rem", fontWeight: 800, color: theme.muted }}>
           {question}
+          {required && <RequiredMark theme={theme} />}
         </p>
         {tooltip && <InfoTooltip content={tooltip} theme={theme} />}
       </div>
-      <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
+      <div style={{ display: "flex", flexWrap: "wrap" }}>
         {options.map((opt) => {
           const active = value === opt.value;
-          // The opt-out reads as a distinct choice through its descriptive wording
-          // ("No soul weapon", etc.) and its own row, not special chrome.
           return (
             <Fragment key={opt.value}>
-              {opt.optOut && <div aria-hidden style={{ flexBasis: "100%", height: 0 }} />}
+              {opt.standalone && <div aria-hidden style={{ flexBasis: "100%", height: 0 }} />}
               <button
                 type="button"
+                disabled={disabled}
                 onClick={() => onToggle(active ? null : opt.value)}
-                style={questionOptionButtonStyle(theme, active, Boolean(opt.sublabel))}
+                style={{ ...checklistRowStyle(theme), ...(disabled ? { cursor: "default" } : {}) }}
               >
-                <span>{opt.label}</span>
+                <span style={checklistRadioStyle(theme, active)}>
+                  {active && <span style={checklistRadioDotStyle(theme)} />}
+                </span>
+                <span style={{ fontSize: "0.85rem", fontWeight: 800, color: theme.text }}>{opt.label}</span>
                 {opt.sublabel && (
-                  <span style={{ fontSize: "0.75rem", fontWeight: 700, opacity: 0.7 }}>{opt.sublabel}</span>
+                  <span style={{ fontSize: "0.75rem", fontWeight: 700, color: theme.muted }}>({opt.sublabel})</span>
                 )}
               </button>
             </Fragment>
@@ -107,32 +227,6 @@ export function QuestionToggle({
         })}
       </div>
     </div>
-  );
-}
-
-const BOOL_TOGGLE_OPTIONS = [{ value: "yes", label: "Yes" }, { value: "no", label: "No" }];
-export function BoolToggle({ question, value, onToggle, theme, tooltip }: {
-  question: string;
-  value: boolean | undefined;
-  onToggle: (value: boolean | undefined) => void;
-  theme: AppTheme;
-  tooltip?: TooltipContent;
-}) {
-  const strValue = value === true ? "yes" : null;
-  const finalValue = value === false ? "no" : strValue;
-  return (
-    <QuestionToggle
-      question={question}
-      options={BOOL_TOGGLE_OPTIONS}
-      value={finalValue}
-      onToggle={(v) => {
-        if (v === "yes") onToggle(true);
-        else if (v === "no") onToggle(false);
-        else onToggle(undefined);
-      }}
-      theme={theme}
-      tooltip={tooltip}
-    />
   );
 }
 
@@ -145,20 +239,24 @@ function clampFinalAttackInput(raw: string): string {
 }
 
 // A labeled numeric row (mirrors WeaponAttField) for the Final Attack Skill artifact.
-export function LegionFinalAttackField({ value, onUpdate, theme }: {
+export function LegionFinalAttackField({ value, onUpdate, theme, required }: {
   value: string;
   onUpdate: (val: string) => void;
   theme: AppTheme;
+  required?: boolean;
 }) {
   const label = "Final Attack Skill Damage";
   return (
-    <div style={{ marginBottom: "0.9rem" }}>
+    <div style={{ marginTop: "0.6rem", marginBottom: "0.9rem" }}>
       <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", marginBottom: "0.4rem" }}>
-        <span style={{ fontSize: "0.88rem", fontWeight: 800, color: theme.text }}>{label}</span>
+        <span style={{ fontSize: "0.88rem", fontWeight: 800, color: theme.muted }}>
+          {label}
+          {required && <RequiredMark theme={theme} />}
+        </span>
         <InfoTooltip
           content={{
             title: label,
-            description: `Found in your Legion window, in the Artifacts tab. Enter the total for the stat "Damage of Final Attack Skills" (up to ${LEGION_ARTIFACT_FINAL_ATK_LIMIT}%).`,
+            description: <>Found in your Legion window, in the Artifacts tab. Assigning the <strong>Increases Damage of Final Attack Skill</strong> stat to a crystal grants <strong>Final Attack Skill Damage</strong>, listed under Artifact Bonuses. Enter the total for this stat (up to {LEGION_ARTIFACT_FINAL_ATK_LIMIT}%).</>,
           }}
           theme={theme}
         />

@@ -33,7 +33,7 @@ export interface StoredHyperStat {
 
 /** Oz ring levels (OzRingId → 1–6) + the Totalling Ring's off-stat values. */
 export interface StoredOzRings {
-  usesContinuous: boolean;
+  ringMode: "standard" | "continuous";
   levels: Record<string, number>;
   totallingStats: Record<string, number>;
 }

@@ -1,5 +1,5 @@
 import type { AppTheme } from "../../../../components/themes";
-import { CHARACTER_NAME_INPUT_FILTER_REGEX } from "../../model/constants";
+import { CHARACTER_NAME_INPUT_FILTER_REGEX, MIN_QUERY_LENGTH } from "../../model/constants";
 import type { SetupStepDefinition } from "../steps";
 import SetupStepFrame from "./SetupStepFrame";
 
@@ -59,6 +59,7 @@ export default function MarriageSetupStep({
   theme, step, stepNumber, totalSteps, value, onChange, onBack, onNext, onFinish,
 }: MarriageSetupStepProps) {
   const { married, partnerName } = parseMarriageValue(value);
+  const partnerNameTooShort = married === true && partnerName.length > 0 && partnerName.length < MIN_QUERY_LENGTH;
 
   const handleMarriedToggle = (choice: boolean) => {
     if (married === choice) {
@@ -84,6 +85,7 @@ export default function MarriageSetupStep({
       onBack={onBack}
       onNext={onNext}
       onFinish={onFinish}
+      nextDisabled={partnerNameTooShort}
     >
       <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginBottom: "0.8rem" }}>
         <button
@@ -102,17 +104,25 @@ export default function MarriageSetupStep({
         </button>
       </div>
       {married === true && (
-        <input
-          type="text"
-          aria-label="Partner's IGN"
-          placeholder="Partner's IGN (optional)"
-          value={partnerName}
-          onChange={(e) => handlePartnerName(e.target.value)}
-          onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
-          onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
-          maxLength={12}
-          style={partnerInputStyle(theme)}
-        />
+        <>
+          <input
+            type="text"
+            aria-label="Partner's IGN"
+            placeholder="Partner's IGN (optional)"
+            value={partnerName}
+            onChange={(e) => handlePartnerName(e.target.value)}
+            onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
+            onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
+            minLength={MIN_QUERY_LENGTH}
+            maxLength={12}
+            style={partnerInputStyle(theme)}
+          />
+          {partnerNameTooShort && (
+            <p style={{ margin: "-0.55rem 0 0.8rem", fontSize: "0.78rem", fontWeight: 700, color: "#dc2626" }}>
+              IGNs are at least {MIN_QUERY_LENGTH} characters.
+            </p>
+          )}
+        </>
       )}
     </SetupStepFrame>
   );

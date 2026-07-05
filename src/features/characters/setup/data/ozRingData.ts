@@ -67,9 +67,11 @@ export function getOzClassStatInfo(requiredStats: readonly string[]): OzClassSta
   return { primaryStat, weaponJumpLabel, weaponJumpIconId, totallingStats };
 }
 
+/** Which ring path the user runs: the 3 standard rings, or the merged Continuous Ring. */
+export type OzRingMode = "standard" | "continuous";
+
 export interface OzRingsDraft {
-  /** The swap: true ⇒ the user runs a Continuous Ring (and only that input shows). */
-  usesContinuous: boolean;
+  ringMode: OzRingMode;
   /** Raw level strings (0–6) keyed by ring id. */
   levels: Partial<Record<OzRingId, string>>;
   /** Raw Totalling Ring stat values keyed by main stat id (only the off-stats). */
@@ -77,16 +79,19 @@ export interface OzRingsDraft {
 }
 
 export function emptyOzRingsDraft(): OzRingsDraft {
-  return { usesContinuous: false, levels: {}, totallingStatValues: {} };
+  return { ringMode: "standard", levels: {}, totallingStatValues: {} };
 }
 
 export function parseOzRingsDraft(value: string): OzRingsDraft {
   if (!value) return emptyOzRingsDraft();
   try {
-    const parsed = JSON.parse(value) as Partial<OzRingsDraft>;
+    // `usesContinuous` is the pre-rename shape (same 2 modes, just a bool instead of a
+    // union) — map it forward losslessly.
+    const parsed = JSON.parse(value) as Partial<OzRingsDraft> & { usesContinuous?: boolean };
     if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+      const ringMode: OzRingMode = parsed.ringMode ?? (parsed.usesContinuous ? "continuous" : "standard");
       return {
-        usesContinuous: parsed.usesContinuous === true,
+        ringMode,
         levels: parsed.levels ?? {},
         totallingStatValues: parsed.totallingStatValues ?? {},
       };
@@ -116,11 +121,15 @@ export function parseOzRingLevel(raw: string | undefined): number | null {
   return Math.min(n, OZ_RING_MAX_LEVEL);
 }
 
-/** Stored ring levels for the rings relevant to the chosen swap. */
+const RINGS_BY_MODE: Record<OzRingMode, OzRingId[]> = {
+  standard: ["restraint", "weaponJump", "totalling"],
+  continuous: ["continuous"],
+};
+
+/** Stored ring levels for the rings relevant to the chosen mode. */
 function collectStoredRingLevels(draft: OzRingsDraft): Record<string, number> {
   const out: Record<string, number> = {};
-  const rings: OzRingId[] = draft.usesContinuous ? ["continuous"] : ["restraint", "weaponJump", "totalling"];
-  for (const ring of rings) {
+  for (const ring of RINGS_BY_MODE[draft.ringMode]) {
     const lvl = parseOzRingLevel(draft.levels[ring]);
     if (lvl !== null) out[ring] = lvl;
   }
@@ -140,12 +149,12 @@ function collectStoredTotallingStats(draft: OzRingsDraft): Record<string, number
 
 /**
  * Converts a draft to its stored shape, keeping ONLY the rings relevant to the
- * chosen swap (continuous ⇒ just the continuous level; otherwise the 3 rings +
+ * chosen mode (continuous ⇒ just the continuous level; standard ⇒ the 3 rings +
  * Totalling stats when its level > 0). Returns null when nothing was entered.
  */
 export function convertOzRingsDraftToStored(draft: OzRingsDraft): StoredOzRings | null {
   const levels = collectStoredRingLevels(draft);
-  const totallingStats = !draft.usesContinuous && levels.totalling ? collectStoredTotallingStats(draft) : {};
+  const totallingStats = draft.ringMode === "standard" && levels.totalling ? collectStoredTotallingStats(draft) : {};
   if (Object.keys(levels).length === 0 && Object.keys(totallingStats).length === 0) return null;
-  return { usesContinuous: draft.usesContinuous, levels, totallingStats };
+  return { ringMode: draft.ringMode, levels, totallingStats };
 }

@@ -6,6 +6,7 @@ import type { AppTheme } from "../../../../components/themes";
 import { ItemIcon, SkillIcon } from "../../../../components/ResourceImage";
 import HoverTooltip from "../../../../components/HoverTooltip";
 import type { SetupStepDefinition } from "../steps";
+import type { SetupFlowId } from "../flows";
 import { CLASS_SKILL_DATA } from "../data/classSkillData";
 import {
   GUILD_BUFFS, GUILD_BUFF_MAX,
@@ -23,6 +24,7 @@ import SetupStepFrame from "./SetupStepFrame";
 interface BuffsSetupStepProps {
   theme: AppTheme;
   step: SetupStepDefinition;
+  flowId?: SetupFlowId;
   stepNumber: number;
   totalSteps: number;
   jobName?: string;
@@ -233,13 +235,18 @@ function boolBuffLabel(id: BoolBuffEntry["id"], primaryStat: ReturnType<typeof p
 // ── Main component ───────────────────────────────────────────────────────────
 
 export default function BuffsSetupStep({
-  theme, step, stepNumber, totalSteps, jobName = "", value, onChange, onBack, onNext, onFinish,
+  theme, step, flowId, stepNumber, totalSteps, jobName = "", value, onChange, onBack, onNext, onFinish,
 }: BuffsSetupStepProps) {
   const classData = CLASS_SKILL_DATA.find((c) => c.nexonJobName === jobName);
   const requiredStats = classData?.requiredStats ?? [];
   const primaryStat = primaryStatForClass(requiredStats);
   const classMainStats = mainStatsForClass(requiredStats);
   const statTiers = getStatPotionTiers(primaryStat);
+
+  // full_setup derives this from the Equipment Symbols substep instead (see
+  // deriveMaxedSacredSymbol in useCharacterSetupController.ts) — asking it here too
+  // would be a duplicate, out-of-order entry point for the same fact.
+  const showMaxedSacredSymbol = flowId === "maplescouter_setup";
 
   const draft = parseBuffsDraft(value);
 
@@ -263,7 +270,7 @@ export default function BuffsSetupStep({
   const statPotionActive = statPotionTier > 0;
   const statPotionTier10 = statTiers[9];
 
-  const ungroupedBools = BOOL_BUFFS.filter((b) => !b.group);
+  const ungroupedBools = BOOL_BUFFS.filter((b) => !b.group && (showMaxedSacredSymbol || b.id !== "maxedSacredSymbol"));
   const statPotionInsertIdx = ungroupedBools.findIndex((b) => b.id === "sparklingRedStar") + 1;
 
   function toggleStatPotion() {
@@ -276,7 +283,7 @@ export default function BuffsSetupStep({
       stepLabel={step.label}
       stepNumber={stepNumber}
       totalSteps={totalSteps}
-      description="Select all buffs you use when bossing."
+      description="Select all the buffs you use when bossing."
       onBack={onBack}
       onNext={onNext}
       onFinish={onFinish}

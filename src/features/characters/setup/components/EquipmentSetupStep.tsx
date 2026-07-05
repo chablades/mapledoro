@@ -14,6 +14,7 @@ import {
   ARCANE_MAX_LEVEL, SACRED_MAX_LEVEL, type SymbolArea,
 } from "../../../tools/symbols/symbol-data";
 import { getClassDataByNexonJobName } from "../data/classSkillData";
+import { isArcaneEligible, isSacredEligible } from "../data/statsStepDraft";
 import { branchMaskForClass, weaponPrefixesForClass, secondarySpecForClass, isShieldId } from "../data/classBranch";
 import { IA_TIER_LABELS, IA_TIER_ORDER, getLinesForIATier, type IATier } from "../data/innerAbilityData";
 
@@ -619,9 +620,10 @@ function SymbolLevelTile({ area, level, maxLevel, theme, onLevel }: {
   );
 }
 
-function SymbolSection({ symbolLevels, activeTab, theme, onTabChange, onLevel }: {
+function SymbolSection({ symbolLevels, activeTab, availableTabs, theme, onTabChange, onLevel }: {
   symbolLevels: Record<string, number>;
   activeTab: SymbolTabKey;
+  availableTabs: { key: SymbolTabKey; label: string }[];
   theme: AppTheme;
   onTabChange: (tab: SymbolTabKey) => void;
   onLevel: (regionName: string, level: number) => void;
@@ -639,8 +641,9 @@ function SymbolSection({ symbolLevels, activeTab, theme, onTabChange, onLevel }:
   );
   return (
     <div>
+      {availableTabs.length > 1 && (
       <div style={{ display: "flex", gap: 4, marginBottom: "0.6rem" }}>
-        {SYMBOL_TABS.map((tab) => {
+        {availableTabs.map((tab) => {
           const isActive = tab.key === activeTab;
           return (
             <button
@@ -654,6 +657,7 @@ function SymbolSection({ symbolLevels, activeTab, theme, onTabChange, onLevel }:
           );
         })}
       </div>
+      )}
       {activeTab === "arcane" ? (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 74px)", gap: 4 }}>
           {ARCANE_AREAS.map(renderTile)}
@@ -970,8 +974,14 @@ export default function EquipmentSetupStep({
   onNext,
   onFinish,
 }: EquipmentSetupStepProps) {
-  const classId = getClassDataByNexonJobName(jobName)?.id;
+  const classData = getClassDataByNexonJobName(jobName);
+  const classId = classData?.id;
   const branchMask = branchMaskForClass(classId);
+  const showArcaneSymbols = isArcaneEligible(characterLevel, classData?.isLegacy);
+  const showSacredSymbols = isSacredEligible(characterLevel, classData?.isLegacy);
+  const availableSymbolTabs = SYMBOL_TABS.filter(
+    (tab) => (tab.key === "arcane" ? showArcaneSymbols : showSacredSymbols),
+  );
   const [draft, setDraft] = useState<EquipmentDraft>(() => parseDraft(value));
   const [activeSlot, setActiveSlot] = useState<SlotKey | null>(null);
   const activePreset = draft.activePreset ?? 0;
@@ -993,7 +1003,7 @@ export default function EquipmentSetupStep({
   const [substep, setSubstep] = useState(() => direction === "backward" ? 2 : 0);
   const [substepDirection, setSubstepDirection] = useState<"forward" | "backward">("forward");
   const [hasSubstepSwitched, setHasSubstepSwitched] = useState(false);
-  const [symbolTab, setSymbolTab] = useState<SymbolTabKey>("arcane");
+  const [symbolTab, setSymbolTab] = useState<SymbolTabKey>(() => (showArcaneSymbols ? "arcane" : "sacred"));
   const [mobileGridPage, setMobileGridPage] = useState(0);
   const [iaOpenId, setIaOpenId] = useState<string | null>(null);
   const iaZoneRef = useRef<HTMLDivElement>(null);
@@ -1311,16 +1321,19 @@ export default function EquipmentSetupStep({
                 ))}
               </div>
             </div>
-            <div>
-              <SectionHeading label="Symbols" theme={theme} />
-              <SymbolSection
-                symbolLevels={draft.symbolLevels ?? {}}
-                activeTab={symbolTab}
-                theme={theme}
-                onTabChange={setSymbolTab}
-                onLevel={setSymbolLevel}
-              />
-            </div>
+            {availableSymbolTabs.length > 0 && (
+              <div>
+                <SectionHeading label="Symbols" theme={theme} />
+                <SymbolSection
+                  symbolLevels={draft.symbolLevels ?? {}}
+                  activeTab={symbolTab}
+                  availableTabs={availableSymbolTabs}
+                  theme={theme}
+                  onTabChange={setSymbolTab}
+                  onLevel={setSymbolLevel}
+                />
+              </div>
+            )}
           </div>
         </SetupStepFrame>
       </div>

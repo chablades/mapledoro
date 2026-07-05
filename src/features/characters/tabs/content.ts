@@ -29,9 +29,9 @@ export const CHARACTERS_COPY = {
   },
   quickSetupIntro: {
     firstTitle: "Let's go through the first setup",
-    firstSubtitle: "Next, we'll walk through your initial profile setup step by step.",
+    firstSubtitle: "This is your first character, we'll go through it one step at a time.",
     additionalTitle: "Let's set up this character",
-    additionalSubtitle: "Next, we'll walk through this character's profile setup step by step.",
+    additionalSubtitle: "We'll go through it one step at a time.",
     nextStepButton: "Next Step",
   },
   characterProfile: {

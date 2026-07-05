@@ -1,6 +1,7 @@
 import { CHARACTERS_COPY } from "../content";
 import type { PreviewPaneActions, PreviewPaneModel } from "../paneModels";
 import { primaryButtonStyle, secondaryButtonStyle } from "../components/uiStyles";
+import { dialogPrimaryBtnColors } from "../../../../components/themes";
 import { getClassSetupOverrides } from "../../setup/data/nexonJobMapping";
 import { computeEffectiveFlowStart, getFlowStepCount } from "../../setup/flows";
 
@@ -107,6 +108,9 @@ export default function QuickSetupIntroScreen({ model, actions }: SetupIntroScre
           onClick={() => actions.startOptionalFlow("maplescouter_setup")}
           style={{
             ...secondaryButtonStyle(theme, "0.65rem 0.9rem"),
+            ...dialogPrimaryBtnColors(theme),
+            color: theme.text,
+            borderColor: theme.border,
             textAlign: "left",
             display: "flex",
             flexDirection: "column",
@@ -115,7 +119,7 @@ export default function QuickSetupIntroScreen({ model, actions }: SetupIntroScre
         >
           <span style={{ fontWeight: 900, fontSize: "0.9rem" }}>MapleScouter setup</span>
           <span style={{ fontWeight: 700, fontSize: "0.8rem", color: theme.muted }}>
-            Inputs for a MapleScouter ranking
+            Stats, buffs, and skill levels, for MapleScouter calculations
           </span>
         </button>
         <button

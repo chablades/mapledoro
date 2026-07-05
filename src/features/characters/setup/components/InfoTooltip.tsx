@@ -8,7 +8,13 @@ import type { AppTheme } from "../../../../components/themes";
 export interface TooltipContent {
   title: string;
   description: ReactNode;
-  imageUrls?: string[];
+  /** Plain URLs render at full size, no offset; pass `{ src, scale, offsetY }` for an icon
+   *  whose raw art isn't cropped consistently with its neighbors (a real MapleStory asset
+   *  inconsistency, not something CSS alone can fix — see the Oz Ring Boss Ring Box icons).
+   *  `scale` (0-1) shrinks it, `offsetY` (px, +down) nudges vertical position. Both apply
+   *  via `transform` rather than width/height/margin, so every icon's box stays the same
+   *  size and position in the row — no separate re-centering to get slightly wrong. */
+  imageUrls?: (string | { src: string; scale?: number; offsetY?: number })[];
   link?: { href: string; label: string };
 }
 
@@ -46,9 +52,13 @@ const infoPopupStyle = (theme: AppTheme, shiftX: number): CSSProperties => ({
   boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
 });
 
-function TooltipImage({ src }: { src: string }) {
+function TooltipImage({ src, scale = 1, offsetY = 0 }: { src: string; scale?: number; offsetY?: number }) {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const fallbackRef = useRef<HTMLDivElement>(null);
+  const transforms = [
+    offsetY !== 0 ? `translateY(${offsetY}px)` : "",
+    scale !== 1 ? `scale(${scale})` : "",
+  ].filter(Boolean).join(" ");
   return (
     <>
       <div ref={wrapperRef}>
@@ -62,7 +72,10 @@ function TooltipImage({ src }: { src: string }) {
             if (wrapperRef.current) wrapperRef.current.style.display = "none";
             if (fallbackRef.current) fallbackRef.current.style.display = "block";
           }}
-          style={{ borderRadius: "5px", display: "block" }}
+          style={{
+            borderRadius: "5px", display: "block", objectFit: "contain",
+            transform: transforms || undefined,
+          }}
         />
       </div>
       <div ref={fallbackRef} style={{ display: "none" }} />
@@ -109,7 +122,10 @@ export default function InfoTooltip({ content, theme }: { content: TooltipConten
         <div ref={popupRef} style={infoPopupStyle(theme, shiftX)}>
           {content.imageUrls && content.imageUrls.length > 0 && (
             <div style={{ display: "flex", gap: "0.35rem", marginBottom: "0.4rem" }}>
-              {content.imageUrls.map((src) => <TooltipImage key={src} src={src} />)}
+              {content.imageUrls.map((entry) => {
+                const { src, scale, offsetY } = typeof entry === "string" ? { src: entry, scale: undefined, offsetY: undefined } : entry;
+                return <TooltipImage key={src} src={src} scale={scale} offsetY={offsetY} />;
+              })}
             </div>
           )}
           <p style={{ margin: 0, marginBottom: "0.3rem", fontSize: "0.82rem", fontWeight: 800, color: theme.text }}>

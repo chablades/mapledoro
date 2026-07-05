@@ -111,19 +111,23 @@ function computeAutofill(
       values[skillId as LinkSkillId] = String(best.contribution);
       sources[skillId as LinkSkillId] = `${best.name} (Lv ${best.level})`;
     } else {
-      const sorted = entries.toSorted((a, b) => b.contribution - a.contribution);
-      const total = Math.min(sorted.reduce((sum, e) => sum + e.contribution, 0), skill.maxLevel);
+      const total = Math.min(entries.reduce((sum, e) => sum + e.contribution, 0), skill.maxLevel);
+      const alphabetical = entries.toSorted((a, b) => a.name.localeCompare(b.name));
       values[skillId as LinkSkillId] = String(total);
-      sources[skillId as LinkSkillId] = sorted.map((e) => `${e.name} (Lv ${e.level})`).join(", ");
+      sources[skillId as LinkSkillId] = alphabetical.map((e) => `${e.name} (Lv ${e.level})`).join(", ");
     }
   }
 
   return { values, sources };
 }
 
+// manifests/v269/skill.json
+const LINK_MANAGER_SKILL_ID = "0001251"; // "Link Manager"
+
 const WHERE_TOOLTIP: TooltipContent = {
   title: "Link Manager",
   description: "Found in the Beginner tab of your Skill window under Link Manager.",
+  imageUrls: [resourceImageUrl("skill", LINK_MANAGER_SKILL_ID, "icon.png")],
 };
 
 const MASTER_LEVEL_ROWS: { label: string; note: string }[] = [
@@ -337,7 +341,7 @@ export default function LinkSkillsSetupStep({
       stepLabel={step.label}
       stepNumber={stepNumber}
       totalSteps={totalSteps}
-      description="All fields are optional. Fill in what you can."
+      description="Enter your link skill levels."
       onBack={onBack}
       onNext={onNext}
       onFinish={onFinish}

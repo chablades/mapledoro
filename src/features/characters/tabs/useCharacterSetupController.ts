@@ -251,16 +251,17 @@ function applyStatsDraftToRoster(
 
 const WH_LEGION_RANK_SET = new Set<string>(["B", "A", "S", "SS", "SSS"]);
 
-/** Resolves the world's WH Legion rank: roster-derived wins, then manual pick, then stored. */
+// Resolves the world's WH Legion rank: roster-derived wins, else the manual pick.
+// A blank manual pick just means "no Wild Hunter" and replaces whatever was stored
+// before — there's no separate "clear" affordance, since a blank answer already IS
+// the "none" answer (same reasoning as the soul/Inner-Ability-line questions).
 function resolveWhLegionRank(
   derived: WhLegionRank | null,
   manual: string | undefined,
-  existing: WhLegionRank | undefined,
 ): WhLegionRank | undefined {
   if (derived) return derived;
-  if (manual === "none") return undefined;
   if (manual && WH_LEGION_RANK_SET.has(manual)) return manual as WhLegionRank;
-  return existing;
+  return undefined;
 }
 
 // The draft shape allows optional/sparse fields (mid-edit); storage wants every crystal
@@ -297,11 +298,7 @@ function applyScouterLegionForWorld(
     ? worldRoster
     : [...worldRoster, base];
   const existingLegion = store.scouterLegionByWorld[String(character.worldID)];
-  const wildHunterRank = resolveWhLegionRank(
-    whRankFromRoster(legionRoster),
-    whLegionDraft,
-    existingLegion?.wildHunterRank,
-  );
+  const wildHunterRank = resolveWhLegionRank(whRankFromRoster(legionRoster), whLegionDraft);
   // Maple Union artifacts are also account-level (per-world), not derivable — keep them
   // on the same per-world blob next to the WH rank. (For full_setup these are already
   // derived from `board` by the caller before this function runs.)
@@ -774,7 +771,7 @@ export function useCharacterSetupController() {
           imgUrl: draft.confirmedCharacter?.characterImgURL ?? "",
           flowId: draft.activeFlowId,
           flowLabel: getSetupFlowLabel(draft.activeFlowId),
-          started: draft.setupStepIndex >= 1,
+          started: draft.setupStepIndex >= 1 || Object.keys(draft.setupStepTestByStep).length > 0,
           stepIndex: draft.setupStepIndex,
           stepCount: getFlowStepCount(draft.activeFlowId),
           savedAt: draft.savedAt,

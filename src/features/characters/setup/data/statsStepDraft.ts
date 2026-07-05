@@ -108,6 +108,25 @@ export interface StatsStepDraft {
 /** Minimum character level to unlock Genesis Liberation. */
 export const GENESIS_LIBERATION_LEVEL = 255;
 
+/** Minimum character level to unlock Arcane Symbols / Arcane Force. */
+export const ARCANE_POWER_LEVEL = 200;
+
+/** Minimum character level to unlock Sacred Symbols / Sacred Power. */
+export const SACRED_POWER_LEVEL = 260;
+
+// A character below the unlock level (or still on a pre-advancement legacy job) can
+// never have this symbol type at all — "undefined level = assume eligible" so an
+// unknown level (e.g. a lookup that hasn't resolved yet) doesn't wrongly hide the field.
+export function isArcaneEligible(characterLevel: number | undefined, isLegacy: boolean | undefined): boolean {
+  if (isLegacy) return false;
+  return characterLevel === undefined || characterLevel >= ARCANE_POWER_LEVEL;
+}
+
+export function isSacredEligible(characterLevel: number | undefined, isLegacy: boolean | undefined): boolean {
+  if (isLegacy) return false;
+  return characterLevel === undefined || characterLevel >= SACRED_POWER_LEVEL;
+}
+
 export function serializeStatsStepDraft(draft: StatsStepDraft): string {
   return JSON.stringify(draft);
 }
