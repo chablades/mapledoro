@@ -119,7 +119,7 @@ const TRACKERS: ToolCard[] = [
     href: "/tools/pitched-boss-drops",
   },
   {
-    title: "Trace Restoration Calculator",
+    title: "Trace Restoration Tracker",
     description:
       "Track whisper crystal progress and trace restoration missions toward your target items.",
     itemId: "04001956", // Pitched Whisper Crystal
