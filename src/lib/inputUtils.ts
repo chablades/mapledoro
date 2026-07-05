@@ -2,8 +2,9 @@ import type { KeyboardEvent } from "react";
 
 const EDIT_KEYS = ["Backspace","Delete","ArrowLeft","ArrowRight","Tab","Home","End"];
 
-/** Blocks non-digit keys on numeric-only inputs, allowing editing/navigation keys. */
+/** Blocks non-digit keys on numeric-only inputs, allowing editing/navigation keys and Ctrl/Cmd shortcuts. */
 export function numericKeyDown(e: KeyboardEvent<HTMLInputElement>) {
+  if (e.ctrlKey || e.metaKey) return;
   if (!/^\d$/.test(e.key) && !EDIT_KEYS.includes(e.key)) e.preventDefault();
 }
 
