@@ -42,7 +42,7 @@ import {
 import { IA_LINE_OPTIONS, WH_RANK_OPTIONS, whAutofillSourceFromRoster, type WhAutofillSource } from "../data/scouterQuestionsData";
 import type { IADraft } from "../data/innerAbilityData";
 import InnerAbilitySetupStep from "./InnerAbilitySetupStep";
-import type { StoredCharacterRecord, StoredScouterLegion } from "../../model/charactersStore";
+import type { StoredCharacterRecord, StoredScouterLegion, WhLegionRank } from "../../model/charactersStore";
 
 // Soul Weapon tooltip illustrations. Every stat-variant "Soul" item (Beefy/Swift/Clever/
 // etc.) shares the identical icon, pixel-verified 2026-07-01 — these are just one
@@ -709,14 +709,17 @@ function WildHunterRankQuestion({ sq, whSource, worldLegion, onUpdate, theme, re
     );
   }
   // No Wild Hunter in the roster — let the user set the world's rank manually.
-  // Deselect-to-clear: clicking the active bracket clears it. Leaving every bracket
-  // unchecked already means "no Wild Hunter" (see resolveWhLegionRank).
+  // Deselect-to-clear: clicking the active bracket clears it, same as picking "No
+  // Wild Hunter" explicitly. Both map to the "none" sentinel, NOT undefined — undefined
+  // means "untouched this session, inherit the world's stored value" (see
+  // resolveWhLegionRank), so writing it here would just make the click look like it
+  // did nothing (the displayed value falls right back to whWorldRank below).
   return (
     <ChecklistGroup
       question="What's your Wild Hunter's level?"
       options={WH_RANK_OPTIONS}
       value={sq.whLegion ?? whWorldRank ?? null}
-      onToggle={(v) => onUpdate({ whLegion: v ?? undefined })}
+      onToggle={(v) => onUpdate({ whLegion: v ?? "none" })}
       theme={theme}
       required={required}
     />
@@ -811,13 +814,16 @@ function isScouterQuestionnaireComplete(
   opts: NonNullable<StatsStepDraft["setupOptions"]> | undefined,
   sq: NonNullable<StatsStepDraft["scouterQuestions"]> | undefined,
   whSource: WhAutofillSource | null,
+  whWorldRank: WhLegionRank | undefined,
 ): boolean {
   const o = opts ?? {};
   const s = sq ?? {};
   const isDA = Boolean(optsDef?.epheniaSoul);
   if (optsDef?.weaponType && o.weaponHand === undefined) return false;
   if (isDA && o.soulType === undefined) return false;
-  if (!whSource && s.whLegion === undefined) return false;
+  // A rank already showing on screen via the world fallback (see WildHunterRankQuestion)
+  // counts as answered — s.whLegion alone doesn't know about that fallback.
+  if (!whSource && s.whLegion === undefined && whWorldRank === undefined) return false;
   if (s.innerAbilityLine === undefined) return false;
   return true;
 }
@@ -1134,7 +1140,7 @@ export default function StatsSetupStep({
 
   if (substep === 0) {
     const questionnaireComplete = !isScouter || isScouterQuestionnaireComplete(
-      classData?.setupOptionsDef, draft.setupOptions, draft.scouterQuestions, whSource,
+      classData?.setupOptionsDef, draft.setupOptions, draft.scouterQuestions, whSource, worldScouterLegion?.wildHunterRank,
     );
     return (
       <div key={0} style={substepAnimStyle}>

@@ -213,17 +213,20 @@ function applyStatsDraftToRoster(
 
 const WH_LEGION_RANK_SET = new Set<string>(["B", "A", "S", "SS", "SSS"]);
 
-// Resolves the world's WH Legion rank: roster-derived wins, else the manual pick.
-// A blank manual pick just means "no Wild Hunter" and replaces whatever was stored
-// before — there's no separate "clear" affordance, since a blank answer already IS
-// the "none" answer (same reasoning as the soul/Inner-Ability-line questions).
+// Resolves the world's WH Legion rank: roster-derived wins, else the manual pick,
+// else whatever was already stored. `manual` is undefined when this session never
+// touched the question (preserve the existing value — writeScouterLegionForWorld
+// replaces the whole per-world blob, so dropping this would silently erase it on
+// every unrelated finish) vs. "none" when the user explicitly picked "No Wild
+// Hunter" or cleared their previous bracket pick (an explicit, deliberate clear).
 function resolveWhLegionRank(
   derived: WhLegionRank | null,
   manual: string | undefined,
+  existing: WhLegionRank | undefined,
 ): WhLegionRank | undefined {
   if (derived) return derived;
-  if (manual && WH_LEGION_RANK_SET.has(manual)) return manual as WhLegionRank;
-  return undefined;
+  if (manual === undefined) return existing;
+  return WH_LEGION_RANK_SET.has(manual) ? (manual as WhLegionRank) : undefined;
 }
 
 // The draft shape allows optional/sparse fields (mid-edit); storage wants every crystal
@@ -260,7 +263,7 @@ function applyScouterLegionForWorld(
     ? worldRoster
     : [...worldRoster, base];
   const existingLegion = store.scouterLegionByWorld[String(character.worldID)];
-  const wildHunterRank = resolveWhLegionRank(whRankFromRoster(legionRoster), whLegionDraft);
+  const wildHunterRank = resolveWhLegionRank(whRankFromRoster(legionRoster), whLegionDraft, existingLegion?.wildHunterRank);
   // Maple Union artifacts are also account-level (per-world), not derivable — keep them
   // on the same per-world blob next to the WH rank. (For full_setup these are already
   // derived from `board` by the caller before this function runs.)
