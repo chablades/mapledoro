@@ -229,6 +229,56 @@ function resolveWhLegionRank(
   return WH_LEGION_RANK_SET.has(manual) ? (manual as WhLegionRank) : undefined;
 }
 
+/**
+ * Re-derives the world's WH Legion rank from its current roster and persists it if
+ * it changed. `applyScouterLegionForWorld` only runs when a Full/MapleScouter setup
+ * finishes, so it misses two roster changes that should also keep this in sync: a
+ * new character added via quick setup (no Stats questionnaire at all), and an
+ * existing Wild Hunter leveling into a new bracket via auto-refresh. A no-WH-in-
+ * roster result never touches storage — that would erase a legitimate manual pick
+ * for a Wild Hunter who just isn't in this local roster.
+ */
+function syncWhLegionRankForWorld(worldId: number, base?: StoredCharacterRecord): void {
+  const store = readCharactersStore();
+  const worldRoster = selectCharactersList(store).filter((c) => c.worldID === worldId);
+  const legionRoster = base && !worldRoster.some((c) => toCharacterKey(c) === toCharacterKey(base))
+    ? [...worldRoster, base]
+    : worldRoster;
+  const derived = whRankFromRoster(legionRoster);
+  if (!derived) return;
+  const existingLegion = store.scouterLegionByWorld[String(worldId)];
+  if (existingLegion?.wildHunterRank === derived) return;
+  writeScouterLegionForWorld(worldId, { ...existingLegion, wildHunterRank: derived });
+}
+
+/** Guard wrapper for the auto-refresh callsite — kept separate so the null-check
+ *  narrows normally (the record is only ever assigned from inside a setState
+ *  closure at the callsite, which defeats TS's control-flow narrowing there). */
+function syncWhLegionRankAfterRefresh(record: StoredCharacterRecord | null): void {
+  if (record) syncWhLegionRankForWorld(record.worldID, record);
+}
+
+/** Builds the finished quick/full setup record and upserts it, resyncing the world's
+ *  WH Legion rank for quick setup (full setup already does this internally via
+ *  buildFullSetupRecord → applyScouterLegionForWorld). Split out of finishSetupFlow
+ *  purely to stay under the cognitive-complexity cap. */
+function finalizeQuickOrFullSetupRecord(
+  isFullSetupFlow: boolean,
+  confirmedCharacter: NormalizedCharacterData,
+  setupStepTestByStep: SetupStepInputById,
+  upsertRosterCharacter: (c: StoredCharacterRecord) => void,
+): void {
+  const storedRecord = isFullSetupFlow
+    ? buildFullSetupRecord(confirmedCharacter, setupStepTestByStep)
+    : createStoredCharacterRecord({
+        character: confirmedCharacter,
+        gender: normalizeGenderValue(setupStepTestByStep.gender),
+        marriage: marriageDraftToStored(setupStepTestByStep.marriage ?? ""),
+      });
+  upsertRosterCharacter(storedRecord);
+  if (!isFullSetupFlow) syncWhLegionRankForWorld(confirmedCharacter.worldID, storedRecord);
+}
+
 // The draft shape allows optional/sparse fields (mid-edit); storage wants every crystal
 // fully filled in (level defaults to 0, stats padded to 3 slots).
 function toStoredLegionCrystals(crystals: LegionCrystalDraft[] | undefined): StoredLegionCrystal[] | undefined {
@@ -669,6 +719,7 @@ export function useCharacterSetupController() {
 
   const handleRefreshed = useCallback((fresh: NormalizedCharacterData) => {
     const key = toCharacterKey(fresh);
+    let refreshedRecord: StoredCharacterRecord | null = null;
     setCharacterRoster((prev) => {
       const existingIndex = prev.findIndex((c) => toCharacterKey(c) === key);
       if (existingIndex === -1) return prev;
@@ -681,10 +732,17 @@ export function useCharacterSetupController() {
         tools: existing.tools,
         addedAt: existing.meta.addedAt,
       });
+      refreshedRecord = updated;
       const next = [...prev];
       next[existingIndex] = updated;
       return next;
     });
+    // A Wild Hunter leveling into a new legion bracket over time should update the
+    // world's derived rank the same way finishing a setup for it would. Pass the
+    // refreshed record explicitly as `base` — the roster in localStorage still has
+    // this character's PRE-refresh level at this point, since the persistence effect
+    // for `characterRoster` hasn't run yet.
+    syncWhLegionRankAfterRefresh(refreshedRecord);
   }, []);
 
   const { refreshingKeys, refreshSingle } = useAutoRefresh({
@@ -1367,14 +1425,7 @@ export function useCharacterSetupController() {
       const isQuickSetupFlow = effectiveFlowId === requiredFlowId;
       const isFullSetupFlow = effectiveFlowId === "full_setup";
       if ((isQuickSetupFlow || isFullSetupFlow) && confirmedCharacter) {
-        const storedRecord = isFullSetupFlow
-          ? buildFullSetupRecord(confirmedCharacter, setupStepTestByStep)
-          : createStoredCharacterRecord({
-              character: confirmedCharacter,
-              gender: normalizeGenderValue(setupStepTestByStep.gender),
-              marriage: marriageDraftToStored(setupStepTestByStep.marriage ?? ""),
-            });
-        upsertRosterCharacter(storedRecord);
+        finalizeQuickOrFullSetupRecord(isFullSetupFlow, confirmedCharacter, setupStepTestByStep, upsertRosterCharacter);
         setHasCompletedRequiredSetupEver(true);
         removeSetupDraftForCharacter(confirmedCharacter);
       }
