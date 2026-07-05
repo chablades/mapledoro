@@ -81,7 +81,7 @@ export default function MarriageSetupStep({
       stepLabel={step.label}
       stepNumber={stepNumber}
       totalSteps={totalSteps}
-      description="Optional. You can skip now and set this from the character profile later."
+      description="Enter your marriage status and partner's IGN. You can set this later from the character profile."
       onBack={onBack}
       onNext={onNext}
       onFinish={onFinish}

@@ -136,6 +136,9 @@ export interface StoredCharacterStats {
   /** Hyper Stat allocation (3 swappable presets). Optional for back-compat with
    *  records saved before hyper stat was collected. */
   hyperStat?: StoredHyperStat;
+  /** Inner Ability (3 swappable presets, each with 3 tiered lines) — a Character Info
+   *  fact (found in the in-game Stats window), collected on the Stats setup step. */
+  innerAbility?: StoredInnerAbility;
 }
 
 export interface StoredEquipmentItem {
@@ -196,7 +199,6 @@ export interface StoredCharacterEquipment {
   totems: [StoredEquipmentItem | null, StoredEquipmentItem | null, StoredEquipmentItem | null];
   pets: [StoredEquipmentItem | null, StoredEquipmentItem | null, StoredEquipmentItem | null];
   petEquips: [StoredEquipmentItem | null, StoredEquipmentItem | null, StoredEquipmentItem | null];
-  innerAbility: StoredInnerAbility;
 }
 
 export interface StoredCharacterRecord {
@@ -308,6 +310,7 @@ function createEmptyCharacterStats(): StoredCharacterStats {
     arcanePower: "",
     sacredPower: "",
     hyperStat: { presets: [{}, {}, {}], activePreset: 0 },
+    innerAbility: createEmptyInnerAbility(),
   };
 }
 
@@ -356,7 +359,6 @@ function createEmptyCharacterEquipment(): StoredCharacterEquipment {
     totems: [null, null, null],
     pets: [null, null, null],
     petEquips: [null, null, null],
-    innerAbility: createEmptyInnerAbility(),
   };
 }
 
@@ -491,7 +493,6 @@ function migrateFlatEquipment(value: Record<string, unknown>): StoredCharacterEq
       : [null, null, null],
     pets: empty.pets,
     petEquips: empty.petEquips,
-    innerAbility: empty.innerAbility,
   };
 }
 

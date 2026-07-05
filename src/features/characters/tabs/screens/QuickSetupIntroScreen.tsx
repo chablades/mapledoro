@@ -136,7 +136,7 @@ export default function QuickSetupIntroScreen({ model, actions }: SetupIntroScre
         >
           <span style={{ fontWeight: 900, fontSize: "0.9rem" }}>Full setup</span>
           <span style={{ fontWeight: 700, fontSize: "0.8rem", opacity: 0.8 }}>
-            Stats, equipment, skills, and more
+            Stats, equipment, skills, and more. All steps are optional.
           </span>
         </button>
       </div>

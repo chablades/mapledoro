@@ -730,7 +730,7 @@ export default function HexaMatrixSetupStep({
     <div key={1} style={substepAnimStyle}>
       <SetupStepFrame theme={theme} stepLabel="HEXA Stat" stepNumber={stepNumber} totalSteps={totalSteps}
         substepIndex={substep} substepCount={substepCount}
-        description="All fields are optional. Fill in what you can."
+        description="Enter your HEXA Stat nodes."
         onBack={() => goToSubstep(0)} onNext={onNext} onFinish={onFinish}
       >
         <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>

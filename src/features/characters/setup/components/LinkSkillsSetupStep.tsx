@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { Fragment, useEffect, useRef } from "react";
 import type { CSSProperties } from "react";
 import { numericKeyDown } from "../../../../lib/inputUtils";
 import Image from "next/image";
@@ -74,7 +74,7 @@ const CLASS_TO_SKILL: Record<string, LinkSkillId> = {
 };
 
 type LinkSkillsDraft = Partial<Record<LinkSkillId, string>>;
-type AutofillSources = Partial<Record<LinkSkillId, string>>;
+type AutofillSources = Partial<Record<LinkSkillId, string[]>>;
 
 function inferLinkLevel(level: number): number {
   if (level >= 210) return 3;
@@ -109,12 +109,12 @@ function computeAutofill(
     if (skill.maxLevel === 3) {
       const best = entries.reduce((a, b) => a.contribution > b.contribution ? a : b);
       values[skillId as LinkSkillId] = String(best.contribution);
-      sources[skillId as LinkSkillId] = `${best.name} (Lv ${best.level})`;
+      sources[skillId as LinkSkillId] = [`${best.name} (Lv ${best.level})`];
     } else {
       const total = Math.min(entries.reduce((sum, e) => sum + e.contribution, 0), skill.maxLevel);
       const alphabetical = entries.toSorted((a, b) => a.name.localeCompare(b.name));
       values[skillId as LinkSkillId] = String(total);
-      sources[skillId as LinkSkillId] = alphabetical.map((e) => `${e.name} (Lv ${e.level})`).join(", ");
+      sources[skillId as LinkSkillId] = alphabetical.map((e) => `${e.name} (Lv ${e.level})`);
     }
   }
 
@@ -223,12 +223,28 @@ const autofillButtonStyle = (theme: AppTheme): CSSProperties => ({
   flexShrink: 0,
 });
 
+// Renders a token list (class names, "name (Lv N)" entries) so long lines wrap
+// between tokens rather than inside one — a plain joined string lets the browser
+// break at any space, including ones inside a token like "Arch Mage (I/L)".
+function NowrapTokens({ tokens, separator }: { tokens: string[]; separator: string }) {
+  return (
+    <>
+      {tokens.map((token, i) => (
+        <Fragment key={token}>
+          {i > 0 && separator}
+          <span style={{ whiteSpace: "nowrap" }}>{token}</span>
+        </Fragment>
+      ))}
+    </>
+  );
+}
+
 function LinkSkillRow({
   skill, value, source, onUpdate, theme, fullWidth, locked, min,
 }: {
   skill: LinkSkillDef;
   value: string;
-  source?: string;
+  source?: string[];
   onUpdate: (id: LinkSkillId, val: string) => void;
   theme: AppTheme;
   fullWidth?: boolean;
@@ -252,11 +268,11 @@ function LinkSkillRow({
           {skill.name}
         </p>
         <p style={{ margin: 0, marginTop: "0.1rem", fontSize: "0.75rem", color: theme.muted, fontWeight: 700, lineHeight: 1.2 }}>
-          {skill.classes.join(" · ")}
+          <NowrapTokens tokens={skill.classes} separator=" · " />
         </p>
-        {source && (
+        {source && source.length > 0 && (
           <p style={{ margin: 0, marginTop: "0.15rem", fontSize: "0.75rem", color: theme.muted, fontWeight: 600, lineHeight: 1.2, opacity: 0.75 }}>
-            from {source}
+            from <NowrapTokens tokens={source} separator=", " />
           </p>
         )}
       </div>

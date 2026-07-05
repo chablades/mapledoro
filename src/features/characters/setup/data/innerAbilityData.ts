@@ -5,6 +5,10 @@
 // (https://maplestory.nexon.com/Guide/OtherProbability/ability/reputevalue),
 // cross-referenced with https://maplestorywiki.net/w/Inner_Ability.
 
+import type {
+  StoredIATier, StoredInnerAbility, StoredInnerAbilityLine, StoredInnerAbilityPreset,
+} from "../../model/charactersStore";
+
 export type IATier = "rare" | "epic" | "unique" | "legendary";
 
 export const IA_TIER_LABELS: Record<IATier, string> = {
@@ -163,6 +167,74 @@ export function getLinesForIATier(tier: IATier): string[] {
 
 // The only two legendary lines MapleScouter cares about (see scouterQuestionsData.ts's
 // IA_LINE_OPTIONS) — full_setup derives its scouter-facing Inner Ability line answer by
-// checking for these exact strings in the Equipment IA card instead of asking again.
+// checking for these exact strings in the Stats step's Inner Ability card instead of
+// asking again.
 export const IA_PASSIVE_PLUS_ONE_LINE = "Passive Skills: +1 Level";
 export const IA_MULTI_TARGET_PLUS_ONE_LINE = "Number of enemies hit by multi-target skill +1";
+
+// ── Draft shape (setup UI) ───────────────────────────────────────────────────
+// Inner Ability presets (3 lines each, each with an independent tier). Lives on the
+// Stats step's draft (StatsStepDraft.innerAbility) — it's a Character Info fact
+// (found in the in-game Stats window), not an Equipment one.
+
+export interface IALineDraft {
+  tier?: IATier | "";
+  value?: string;
+}
+export interface IAPresetDraft {
+  lines?: IALineDraft[];
+}
+export interface IADraft {
+  activePreset?: number;
+  presets?: IAPresetDraft[];
+}
+
+export interface IALineFull { tier: IATier | ""; value: string }
+export interface IAPresetFull { lines: [IALineFull, IALineFull, IALineFull] }
+export interface IAFull { activePreset: number; presets: [IAPresetFull, IAPresetFull, IAPresetFull] }
+
+/** Fills in defaults for the partial Inner Ability draft so the UI can index it safely. */
+export function normalizeIA(ia: IADraft | undefined): IAFull {
+  const presets = ia?.presets ?? [];
+  const preset = (i: number): IAPresetFull => {
+    const lines = presets[i]?.lines ?? [];
+    const line = (j: number): IALineFull => ({ tier: lines[j]?.tier ?? "", value: lines[j]?.value ?? "" });
+    return { lines: [line(0), line(1), line(2)] };
+  };
+  const activePreset = ia?.activePreset;
+  return {
+    activePreset: activePreset === 1 || activePreset === 2 ? activePreset : 0,
+    presets: [preset(0), preset(1), preset(2)],
+  };
+}
+
+const IA_TIER_INDEX: Record<IATier, number> = { rare: 0, epic: 1, unique: 2, legendary: 3 };
+
+/** Tiers a line may take given the ability grade. Line 1 is always the grade; lines 2-3 floor at
+ *  two tiers below (clamped to Rare). Line 2 may reach the grade itself — covering legacy GMS /
+ *  TMS Hyper-circulator Legendary 2nd lines — while line 3 caps one tier below the grade. */
+export function allowedLineTiers(grade: IATier, lineIdx: number): IATier[] {
+  if (lineIdx === 0) return [grade];
+  const g = IA_TIER_INDEX[grade];
+  const hi = lineIdx === 1 ? g : Math.max(0, g - 1);
+  return IA_TIER_ORDER.slice(Math.max(0, g - 2), hi + 1);
+}
+
+// ── Storage conversion ───────────────────────────────────────────────────────
+
+function draftIALineToStored(l: IALineDraft | undefined): StoredInnerAbilityLine {
+  return { tier: (l?.tier ?? "") as StoredIATier, value: l?.value ?? "" };
+}
+
+function draftIAPresetToStored(p: IAPresetDraft | undefined): StoredInnerAbilityPreset {
+  const lines = p?.lines ?? [];
+  return { lines: [draftIALineToStored(lines[0]), draftIALineToStored(lines[1]), draftIALineToStored(lines[2])] };
+}
+
+export function convertInnerAbilityDraftToStored(draft: IADraft | undefined): StoredInnerAbility {
+  const presets = draft?.presets ?? [];
+  return {
+    activePreset: typeof draft?.activePreset === "number" ? draft.activePreset : 0,
+    presets: [draftIAPresetToStored(presets[0]), draftIAPresetToStored(presets[1]), draftIAPresetToStored(presets[2])],
+  };
+}

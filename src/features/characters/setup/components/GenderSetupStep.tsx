@@ -53,7 +53,7 @@ export default function GenderSetupStep({
       stepLabel={step.label}
       stepNumber={stepNumber}
       totalSteps={totalSteps}
-      description="Optional. You can skip now and set this from the character profile later."
+      description="Select your character's gender. You can set this later from the character profile."
       onBack={onBack}
       onNext={onNext}
       onFinish={onFinish}

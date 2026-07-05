@@ -228,7 +228,7 @@ export default function VMatrixSetupStep({
 
   return (
     <SetupStepFrame theme={theme} stepLabel={step.label} stepNumber={stepNumber} totalSteps={totalSteps}
-      description="All fields are optional. Fill in what you can."
+      description="Enter your V Matrix node levels."
       onBack={onBack} onNext={onNext} onFinish={onFinish}
     >
       {catalog ? (

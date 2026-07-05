@@ -404,7 +404,7 @@ export default function BuffsSetupStep({
                 </div>
               );
             })()}
-            <div style={{ display: "flex", gap: 10 }}>
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
               {RENOWN_STATS.map((r) => {
                 const atkLabel = primaryStat === "int" ? "MATT" : "ATT";
                 const shortLabel = r.id === "atkMagAtk" ? atkLabel : r.shortLabel;

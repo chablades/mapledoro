@@ -15,10 +15,7 @@ import {
   type StoredCharacterEquipment,
   type StoredEquipmentPreset,
   type StoredLegionCrystal,
-  type StoredIATier,
   type StoredInnerAbility,
-  type StoredInnerAbilityPreset,
-  type StoredInnerAbilityLine,
   type WhLegionRank,
   selectCharactersList,
   writeLinkSkillsForWorld,
@@ -101,17 +98,6 @@ interface EquipmentDraftPreset {
   weapon?: EquipmentDraftItem; secondary?: EquipmentDraftItem; emblem?: EquipmentDraftItem;
   android?: EquipmentDraftItem; heart?: EquipmentDraftItem; badge?: EquipmentDraftItem;
 }
-interface EquipmentDraftIALine {
-  tier?: StoredIATier;
-  value?: string;
-}
-interface EquipmentDraftIAPreset {
-  lines?: EquipmentDraftIALine[];
-}
-interface EquipmentDraftIA {
-  activePreset?: number;
-  presets?: EquipmentDraftIAPreset[];
-}
 interface EquipmentDraft {
   presets?: EquipmentDraftPreset[];
   activePreset?: number;
@@ -122,32 +108,8 @@ interface EquipmentDraft {
   totem1?: EquipmentDraftItem; totem2?: EquipmentDraftItem; totem3?: EquipmentDraftItem;
   pet1?: EquipmentDraftItem; pet2?: EquipmentDraftItem; pet3?: EquipmentDraftItem;
   petEquip1?: EquipmentDraftItem; petEquip2?: EquipmentDraftItem; petEquip3?: EquipmentDraftItem;
-  innerAbility?: EquipmentDraftIA;
   /** Symbol levels keyed by region name; folded into tools.symbols (the calculator store). */
   symbolLevels?: Record<string, number>;
-}
-
-const IA_TIERS = new Set<string>(["rare", "epic", "unique", "legendary"]);
-
-function draftIATier(v: unknown): StoredIATier {
-  return typeof v === "string" && IA_TIERS.has(v) ? (v as StoredIATier) : "";
-}
-
-function draftIALine(l: EquipmentDraftIALine | undefined): StoredInnerAbilityLine {
-  return { tier: draftIATier(l?.tier), value: typeof l?.value === "string" ? l.value : "" };
-}
-
-function draftIAPreset(p: EquipmentDraftIAPreset | undefined): StoredInnerAbilityPreset {
-  const lines = p?.lines ?? [];
-  return { lines: [draftIALine(lines[0]), draftIALine(lines[1]), draftIALine(lines[2])] };
-}
-
-function draftInnerAbility(ia: EquipmentDraftIA | undefined): StoredInnerAbility {
-  const presets = ia?.presets ?? [];
-  return {
-    activePreset: typeof ia?.activePreset === "number" ? ia.activePreset : 0,
-    presets: [draftIAPreset(presets[0]), draftIAPreset(presets[1]), draftIAPreset(presets[2])],
-  };
 }
 
 function draftItem(v: EquipmentDraftItem) {
@@ -184,7 +146,6 @@ function parseEquipmentDraft(json: string): StoredCharacterEquipment | null {
       totems: [draftItem(d.totem1 ?? null), draftItem(d.totem2 ?? null), draftItem(d.totem3 ?? null)],
       pets: [draftItem(d.pet1 ?? null), draftItem(d.pet2 ?? null), draftItem(d.pet3 ?? null)],
       petEquips: [draftItem(d.petEquip1 ?? null), draftItem(d.petEquip2 ?? null), draftItem(d.petEquip3 ?? null)],
-      innerAbility: draftInnerAbility(d.innerAbility),
     };
   } catch {
     return null;
@@ -245,7 +206,8 @@ function applyStatsDraftToRoster(
   const store = readCharactersStore();
   const existing = selectCharacterById(store, toCharacterKey(character));
   if (!existing) return;
-  const { stats, isLiberated, weaponHand, hasRuinForceShield, soul } = convertStatsStepDraftToStored(parseStatsStepDraft(rawDraft), character.level);
+  const { stats, isLiberated, weaponHand, hasRuinForceShield, soul } =
+    convertStatsStepDraftToStored(parseStatsStepDraft(rawDraft), character.level);
   upsertFn({ ...existing, stats: { ...existing.stats, ...stats }, isLiberated, weaponHand, hasRuinForceShield, soul });
 }
 
@@ -371,13 +333,12 @@ function applyMapleScouterFlow(
 }
 
 // The only two legendary Inner Ability lines MapleScouter cares about — full_setup
-// derives its scouter-facing answer from the Equipment IA card's active preset instead
-// of asking the question again (maplescouter_setup, which has no Equipment step, still
-// asks directly; see ScouterQuestionsSection's showArtifactsAndIA in StatsSetupStep).
-function deriveInnerAbilityLineFromEquipment(
-  equipment: StoredCharacterEquipment | null,
-): "passive" | "multiTarget" | undefined {
-  const preset = equipment?.innerAbility.presets[equipment.innerAbility.activePreset];
+// derives its scouter-facing answer from the Stats step's Inner Ability card's active
+// preset instead of asking the question again (maplescouter_setup, which has no Inner
+// Ability substep, still asks directly; see ScouterQuestionsSection's showArtifactsAndIA
+// in StatsSetupStep).
+function deriveInnerAbilityLine(innerAbility: StoredInnerAbility | undefined): "passive" | "multiTarget" | undefined {
+  const preset = innerAbility?.presets[innerAbility.activePreset];
   const values = preset?.lines.map((l) => l.value) ?? [];
   if (values.includes(IA_PASSIVE_PLUS_ONE_LINE)) return "passive";
   if (values.includes(IA_MULTI_TARGET_PLUS_ONE_LINE)) return "multiTarget";
@@ -451,7 +412,7 @@ function buildFullSetupRecord(
     ? { ...(buffsConverted ?? {}), maxedSacredSymbol: true as const }
     : buffsConverted;
   const scouterQ = convertScouterQuestionsDraftToStored(statsDraft);
-  const innerAbilityLine = deriveInnerAbilityLineFromEquipment(equipmentData);
+  const innerAbilityLine = deriveInnerAbilityLine(stats.innerAbility);
   const scouterPatch = {
     ...(ozRings ? { ozRings } : {}),
     ...(buffs ? { buffs } : {}),

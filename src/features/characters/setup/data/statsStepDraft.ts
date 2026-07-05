@@ -7,6 +7,7 @@
 
 import type { CharacterMarriage, CharacterSoul, StoredCharacterStats, StoredHyperStat, StoredTripleStatField } from "../../model/charactersStore";
 import { HYPER_STAT_CATEGORIES, HYPER_STAT_PRESET_COUNT, parseStoredHyperStatLevel } from "./hyperStatData";
+import { convertInnerAbilityDraftToStored, type IADraft } from "./innerAbilityData";
 
 export interface TripleStatDraft {
   base: string;
@@ -75,6 +76,12 @@ export interface StatsStepDraft {
   // HyperStatCategoryId → raw level string as typed in the substep.
   hyperStat?: HyperStatDraft;
 
+  // Inner Ability (Full setup only): 3 swappable presets, each with 3 independently-
+  // tiered lines. A Character Info fact (found in the in-game Stats window), so it
+  // lives here rather than on the Equipment step. Committed to
+  // StoredCharacterEquipment.innerAbility on finish (see useCharacterSetupController).
+  innerAbility?: IADraft;
+
   // Character build options
   setupOptions?: {
     isLiberated?: boolean;
@@ -127,6 +134,13 @@ export function isSacredEligible(characterLevel: number | undefined, isLegacy: b
   return characterLevel === undefined || characterLevel >= SACRED_POWER_LEVEL;
 }
 
+/** Minimum character level to unlock Hyper Stats. */
+export const HYPER_STAT_LEVEL = 140;
+
+export function isHyperStatEligible(characterLevel: number | undefined): boolean {
+  return characterLevel === undefined || characterLevel >= HYPER_STAT_LEVEL;
+}
+
 export function serializeStatsStepDraft(draft: StatsStepDraft): string {
   return JSON.stringify(draft);
 }
@@ -174,7 +188,13 @@ function draftHyperStatToStored(draft: HyperStatDraft | undefined): StoredHyperS
 export function convertStatsStepDraftToStored(
   draft: StatsStepDraft,
   characterLevel?: number,
-): { stats: Partial<StoredCharacterStats>; isLiberated: boolean | null; weaponHand: "1h" | "2h" | null; hasRuinForceShield: boolean | null; soul: CharacterSoul | null } {
+): {
+  stats: Partial<StoredCharacterStats>;
+  isLiberated: boolean | null;
+  weaponHand: "1h" | "2h" | null;
+  hasRuinForceShield: boolean | null;
+  soul: CharacterSoul | null;
+} {
   const opts = draft.setupOptions ?? {};
   const epheniaRaw = opts.epheniaLevel;
   const soulType = opts.soulType ?? null;
@@ -212,6 +232,7 @@ export function convertStatsStepDraftToStored(
       arcanePower: draft.arcanePower ?? "",
       sacredPower: draft.sacredPower ?? "",
       hyperStat: draftHyperStatToStored(draft.hyperStat),
+      innerAbility: convertInnerAbilityDraftToStored(draft.innerAbility),
     },
   };
 }

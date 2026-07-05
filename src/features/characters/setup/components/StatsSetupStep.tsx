@@ -26,6 +26,7 @@ import { TRIPLE_STAT_FIELDS, type StatFieldId, type TripleStatFieldId } from "..
 import {
   GENESIS_LIBERATION_LEVEL,
   isArcaneEligible,
+  isHyperStatEligible,
   isSacredEligible,
   normalizeHyperStatDraft,
   parseStatsStepDraft,
@@ -33,8 +34,14 @@ import {
   type StatsStepDraft,
   type TripleStatDraft,
 } from "../data/statsStepDraft";
-import { HYPER_STAT_CATEGORIES, HYPER_STAT_PRESET_COUNT, sanitizeHyperStatInput, type HyperStatCategoryDef } from "../data/hyperStatData";
+import {
+  HYPER_STAT_CATEGORIES, HYPER_STAT_PRESET_COUNT,
+  hyperStatBudget, hyperStatPresetSpent, sanitizeHyperStatInput,
+  type HyperStatCategoryDef,
+} from "../data/hyperStatData";
 import { IA_LINE_OPTIONS, WH_RANK_OPTIONS, whAutofillSourceFromRoster, type WhAutofillSource } from "../data/scouterQuestionsData";
+import type { IADraft } from "../data/innerAbilityData";
+import InnerAbilitySetupStep from "./InnerAbilitySetupStep";
 import type { StoredCharacterRecord, StoredScouterLegion } from "../../model/charactersStore";
 
 // Soul Weapon tooltip illustrations. Every stat-variant "Soul" item (Beefy/Swift/Clever/
@@ -874,7 +881,7 @@ function statsSubstepDescription(isScouter: boolean): string {
   if (isScouter) {
     return "Follow the requirements below, then enter every stat exactly as shown in your Character Info window. Don't leave any blank, even if the value is 0.";
   }
-  return "Follow the requirements below, then enter your stats exactly as shown in your Character Info window. All fields are optional.";
+  return "Follow the requirements below, then enter your stats exactly as shown in your Character Info window.";
 }
 
 // Substep 1 — the stat window fields (Basic/Combat/Symbols/Weapon ATT). Pulled into
@@ -883,7 +890,7 @@ function statsSubstepDescription(isScouter: boolean): string {
 // gating added enough branches here to push it over.
 function StatsWindowSubstep({
   theme, step, stepNumber, totalSteps, substep, substepCount, substepAnimStyle,
-  goToSubstep, showHyperStat, onNext, onFinish,
+  goToSubstep, hasMoreSubsteps, onNext, onFinish,
   classData, characterLevel, tripleIds, draft,
   handleTripleUpdate, handleSingleUpdate, handleCooldownUpdate,
   showWhLegionAndWeaponAtt, weaponAttLabel, usesMagicWeapon, isScouter,
@@ -896,7 +903,7 @@ function StatsWindowSubstep({
   substepCount: number;
   substepAnimStyle: CSSProperties;
   goToSubstep: (n: number) => void;
-  showHyperStat: boolean;
+  hasMoreSubsteps: boolean;
   onNext: () => void;
   onFinish: () => void;
   classData: ClassSkillData | undefined;
@@ -945,9 +952,9 @@ function StatsWindowSubstep({
       totalSteps={totalSteps}
       description={statsSubstepDescription(isScouter)}
       onBack={() => goToSubstep(0)}
-      onNext={showHyperStat ? () => goToSubstep(2) : onNext}
+      onNext={hasMoreSubsteps ? () => goToSubstep(2) : onNext}
       onFinish={onFinish}
-      nextLabel={showHyperStat ? "Continue" : undefined}
+      nextLabel={hasMoreSubsteps ? "Continue" : undefined}
       nextDisabled={!statsComplete}
     >
       <WarningList warnings={[...UNIVERSAL_WARNINGS, ...(classData?.warnings ?? [])]} theme={theme} characterLevel={characterLevel} />
@@ -1030,7 +1037,9 @@ export default function StatsSetupStep({
   // Hyper Stat is a Full-setup detail that MapleScouter never uses, so it gets its
   // own substep everywhere EXCEPT the scouter flow. ("% Not Applied" is NOT flow-
   // specific — it shows for every non-ATT stat in all flows; see TripleStatRow.)
-  const showHyperStat = flowId !== "maplescouter_setup";
+  // Also hidden below Lv 140, same as Genesis Liberation/Arcane/Sacred — a character
+  // that can't have Hyper Stats yet shouldn't be asked to fill them in.
+  const showHyperStat = flowId !== "maplescouter_setup" && isHyperStatEligible(characterLevel);
   const { isScouter, showWhLegionAndWeaponAtt } = deriveScouterVisibility(flowId);
 
   // WH Legion rank is read-only/derived, scoped to this character's world.
@@ -1065,8 +1074,9 @@ export default function StatsSetupStep({
   const hyper = normalizeHyperStatDraft(draft.hyperStat);
 
   function handleHyperStatUpdate(id: string, val: string) {
+    const maxLevel = HYPER_STAT_CATEGORIES.find((cat) => cat.id === id)?.maxLevel;
     const presets = hyper.presets.map((p, i) =>
-      i === hyper.activePreset ? { ...p, [id]: sanitizeHyperStatInput(val) } : p,
+      i === hyper.activePreset ? { ...p, [id]: sanitizeHyperStatInput(val, maxLevel) } : p,
     );
     updateDraft({ hyperStat: { presets, activePreset: hyper.activePreset } });
   }
@@ -1075,9 +1085,20 @@ export default function StatsSetupStep({
     updateDraft({ hyperStat: { presets: hyper.presets, activePreset: n } });
   }
 
-  // Substeps: questions → stat fields → hyper stat (Full setup only).
-  const lastSubstep = showHyperStat ? 2 : 1;
-  const SUBSTEP_COUNT = showHyperStat ? 3 : 2;
+  // Inner Ability is a Character Info fact (found in the in-game Stats window) that
+  // Full setup collects in its own detailed substep; MapleScouter asks a simpler
+  // version of the same question inline in substep 0 instead (no level gate — Inner
+  // Ability itself isn't level-locked, unlike Hyper Stat).
+  const showInnerAbility = flowId !== "maplescouter_setup";
+
+  // Substeps: questions → stat fields → hyper stat (Lv 140+, full setup only) →
+  // inner ability (full setup only). Hyper Stat and Inner Ability each occupy the
+  // next free slot in that order, so either can be absent without leaving a gap.
+  const hyperStatSubstep = showHyperStat ? 2 : -1;
+  let innerAbilitySubstep = -1;
+  if (showInnerAbility) innerAbilitySubstep = showHyperStat ? 3 : 2;
+  const lastSubstep = Math.max(1, hyperStatSubstep, innerAbilitySubstep);
+  const SUBSTEP_COUNT = lastSubstep + 1;
 
   const [substep, setSubstep] = useState(() => direction === "backward" ? lastSubstep : 0);
   const [substepDirection, setSubstepDirection] = useState<"forward" | "backward">("forward");
@@ -1115,7 +1136,7 @@ export default function StatsSetupStep({
           stepLabel={step.label}
           stepNumber={stepNumber}
           totalSteps={totalSteps}
-          description="Select what applies to your character below."
+          description="Answer what applies to your character below."
           onBack={onBack}
           onNext={() => goToSubstep(1)}
           onFinish={onFinish}
@@ -1177,56 +1198,102 @@ export default function StatsSetupStep({
     <StatsWindowSubstep
       theme={theme} step={step} stepNumber={stepNumber} totalSteps={totalSteps}
       substep={substep} substepCount={SUBSTEP_COUNT} substepAnimStyle={substepAnimStyle}
-      goToSubstep={goToSubstep} showHyperStat={showHyperStat} onNext={onNext} onFinish={onFinish}
+      goToSubstep={goToSubstep} hasMoreSubsteps={SUBSTEP_COUNT > 2} onNext={onNext} onFinish={onFinish}
       classData={classData} characterLevel={characterLevel} tripleIds={tripleIds} draft={draft}
       handleTripleUpdate={handleTripleUpdate} handleSingleUpdate={handleSingleUpdate} handleCooldownUpdate={handleCooldownUpdate}
       showWhLegionAndWeaponAtt={showWhLegionAndWeaponAtt} weaponAttLabel={weaponAttLabel} usesMagicWeapon={usesMagicWeapon} isScouter={isScouter}
     />
   );
 
-  // Substep 2 — Hyper Stat (Full setup only). Mirrors the in-game Hyper Stats
+  // Substep — Hyper Stat (Full setup, Lv 140+ only). Mirrors the in-game Hyper Stats
   // window: every category, level 0–15, entered directly into a two-column list.
   // Arcane Power only appears in that window once the character can actually have
   // Arcane Force — same eligibility as the Symbols section in substep 1.
-  const hyperCategories = HYPER_STAT_CATEGORIES.filter(
-    (cat) => cat.id !== "arcanePower" || isArcaneEligible(characterLevel, classData?.isLegacy),
-  );
-  const hyperHalf = Math.ceil(hyperCategories.length / 2);
-  const hyperCols = [hyperCategories.slice(0, hyperHalf), hyperCategories.slice(hyperHalf)];
-  return (
-    <div key={2} className="stats-hyper-root" style={substepAnimStyle}>
-    <style>{`
-      .stats-hyper-root { container-type: inline-size; }
-      /* Gap lives in CSS (not inline) so the container query can override it —
-         when the two columns stack, match the inter-column gap to the row gap so
-         the seam between the columns isn't wider than the rest of the list. */
-      .stats-hyper-grid { gap: 0.75rem; }
-      @container (max-width: 520px) { .stats-hyper-grid { flex-direction: column; gap: 0.4rem; } }
-    `}</style>
-    <SetupStepFrame
-      theme={theme}
-      substepIndex={substep}
-      substepCount={SUBSTEP_COUNT}
-      stepLabel={step.label}
-      stepNumber={stepNumber}
-      totalSteps={totalSteps}
-      description="Enter your Hyper Stat levels (0–15 each) to match your in-game window."
-      onBack={() => goToSubstep(1)}
-      onNext={onNext}
-      onFinish={onFinish}
-    >
-      <p style={sectionLabelStyle(theme)}>Hyper Stats</p>
-      <HyperPresetBar theme={theme} active={hyper.activePreset} onSwitch={switchHyperPreset} />
-      <div className="stats-hyper-grid" style={{ display: "flex", minWidth: 0 }}>
-        {hyperCols.map((col, i) => (
-          <div key={i} style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: "0.4rem" }}>
-            {col.map((cat) => (
-              <HyperStatCell key={cat.id} cat={cat} value={hyper.presets[hyper.activePreset]?.[cat.id] ?? ""} onUpdate={handleHyperStatUpdate} theme={theme} />
-            ))}
-          </div>
-        ))}
+  if (substep === hyperStatSubstep) {
+    const hyperCategories = HYPER_STAT_CATEGORIES.filter(
+      (cat) => cat.id !== "arcanePower" || isArcaneEligible(characterLevel, classData?.isLegacy),
+    );
+    const hyperHalf = Math.ceil(hyperCategories.length / 2);
+    const hyperCols = [hyperCategories.slice(0, hyperHalf), hyperCategories.slice(hyperHalf)];
+    const activeHyperPreset = hyper.presets[hyper.activePreset] ?? {};
+    const hyperSpent = hyperStatPresetSpent(activeHyperPreset, hyperCategories.map((cat) => cat.id));
+    const hyperBudget = hyperStatBudget(characterLevel);
+    const hyperOverspent = hyperSpent > hyperBudget;
+    return (
+      <div key={2} className="stats-hyper-root" style={substepAnimStyle}>
+      <style>{`
+        .stats-hyper-root { container-type: inline-size; }
+        /* Gap lives in CSS (not inline) so the container query can override it —
+           when the two columns stack, match the inter-column gap to the row gap so
+           the seam between the columns isn't wider than the rest of the list. */
+        .stats-hyper-grid { gap: 0.75rem; }
+        @container (max-width: 520px) { .stats-hyper-grid { flex-direction: column; gap: 0.4rem; } }
+      `}</style>
+      <SetupStepFrame
+        theme={theme}
+        substepIndex={substep}
+        substepCount={SUBSTEP_COUNT}
+        stepLabel={step.label}
+        stepNumber={stepNumber}
+        totalSteps={totalSteps}
+        description="Enter your Hyper Stat levels."
+        onBack={() => goToSubstep(1)}
+        onNext={() => goToSubstep(innerAbilitySubstep)}
+        onFinish={onFinish}
+        nextLabel="Continue"
+        nextDisabled={hyperOverspent}
+      >
+        <p style={sectionLabelStyle(theme)}>Hyper Stats</p>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.5rem" }}>
+          <HyperPresetBar theme={theme} active={hyper.activePreset} onSwitch={switchHyperPreset} />
+          {Number.isFinite(hyperBudget) && (
+            <span style={{ fontSize: "0.78rem", fontWeight: 800, color: hyperOverspent ? "#dc2626" : theme.muted, marginBottom: 12 }}>
+              {hyperSpent.toLocaleString()} / {hyperBudget.toLocaleString()} points used
+            </span>
+          )}
+        </div>
+        <div className="stats-hyper-grid" style={{ display: "flex", minWidth: 0 }}>
+          {hyperCols.map((col, i) => (
+            <div key={i} style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+              {col.map((cat) => (
+                <HyperStatCell key={cat.id} cat={cat} value={hyper.presets[hyper.activePreset]?.[cat.id] ?? ""} onUpdate={handleHyperStatUpdate} theme={theme} />
+              ))}
+            </div>
+          ))}
+        </div>
+        {hyperOverspent && (
+          <p style={{ margin: "0.5rem 0 0", fontSize: "0.78rem", fontWeight: 700, color: theme.muted }}>
+            You&apos;ve used more points than you have at this level. Double-check your allocations above to continue.
+          </p>
+        )}
+      </SetupStepFrame>
       </div>
-    </SetupStepFrame>
+    );
+  }
+
+  // Substep — Inner Ability (Full setup only). A Character Info fact, but detailed
+  // enough (grade + 3 tiered lines) to warrant its own substep rather than folding
+  // into substep 0's questionnaire.
+  function handleInnerAbilityUpdate(next: IADraft) {
+    updateDraft({ innerAbility: next });
+  }
+  return (
+    <div key={3} style={substepAnimStyle}>
+      <SetupStepFrame
+        theme={theme}
+        substepIndex={substep}
+        substepCount={SUBSTEP_COUNT}
+        stepLabel={step.label}
+        stepNumber={stepNumber}
+        totalSteps={totalSteps}
+        description="Enter your Inner Ability."
+        onBack={() => goToSubstep(hyperStatSubstep >= 0 ? hyperStatSubstep : 1)}
+        onNext={onNext}
+        onFinish={onFinish}
+      >
+        <p style={sectionLabelStyle(theme)}>Inner Ability</p>
+        <InnerAbilitySetupStep draft={draft.innerAbility} onUpdate={handleInnerAbilityUpdate} theme={theme} />
+      </SetupStepFrame>
     </div>
   );
 }

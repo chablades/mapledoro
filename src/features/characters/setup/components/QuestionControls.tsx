@@ -90,8 +90,11 @@ export function InputWarningBubble({ message, theme }: { message: string; theme:
 // ChecklistGroup question.
 function checklistRowStyle(theme: AppTheme, trailingPadding = "0.6rem"): CSSProperties {
   return {
-    display: "inline-flex",
-    alignItems: "center",
+    display: "inline-grid",
+    gridTemplateColumns: "auto minmax(0, 1fr)",
+    alignItems: "start",
+    textAlign: "left",
+    minWidth: 0,
     gap: "0.45rem",
     border: "none",
     background: "none",
@@ -161,17 +164,37 @@ export function ChecklistCheckbox({ label, checked, onToggle, theme, tooltip, re
   required?: boolean;
 }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", marginBottom: "0.15rem" }}>
-      <button type="button" onClick={() => onToggle(!checked)} style={checklistRowStyle(theme, "0")}>
-        <span style={checklistBoxStyle(theme, checked === true)}>
-          {checked === true && <span style={checklistMarkStyle(theme.accent)}>✓</span>}
-        </span>
-        <span style={{ fontSize: "0.88rem", fontWeight: 800 }}>
-          {label}
-          {required && <RequiredMark theme={theme} />}
-        </span>
-      </button>
-      {tooltip && <InfoTooltip content={tooltip} theme={theme} />}
+    <div
+      role="checkbox"
+      aria-checked={checked === true}
+      tabIndex={0}
+      onClick={() => onToggle(!checked)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onToggle(!checked);
+        }
+      }}
+      style={{ ...checklistRowStyle(theme, "0"), display: "grid", marginBottom: "0.15rem" }}
+    >
+      <span style={checklistBoxStyle(theme, checked === true)}>
+        {checked === true && <span style={checklistMarkStyle(theme.accent)}>✓</span>}
+      </span>
+      <span style={{ fontSize: "0.88rem", fontWeight: 800 }}>
+        {label}
+        {required && <RequiredMark theme={theme} />}
+        {tooltip && (
+          <>
+            {" "}
+            <span
+              style={{ display: "inline-flex", verticalAlign: "middle" }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <InfoTooltip content={tooltip} theme={theme} />
+            </span>
+          </>
+        )}
+      </span>
     </div>
   );
 }
@@ -217,10 +240,12 @@ export function ChecklistGroup({ question, options, value, onToggle, theme, tool
                 <span style={checklistRadioStyle(theme, active)}>
                   {active && <span style={checklistRadioDotStyle(theme)} />}
                 </span>
-                <span style={{ fontSize: "0.85rem", fontWeight: 800, color: theme.text }}>{opt.label}</span>
-                {opt.sublabel && (
-                  <span style={{ fontSize: "0.75rem", fontWeight: 700, color: theme.muted }}>({opt.sublabel})</span>
-                )}
+                <span style={{ fontSize: "0.85rem", fontWeight: 800, color: theme.text }}>
+                  {opt.label}
+                  {opt.sublabel && (
+                    <span style={{ fontSize: "0.75rem", fontWeight: 700, color: theme.muted }}> ({opt.sublabel})</span>
+                  )}
+                </span>
               </button>
             </Fragment>
           );
