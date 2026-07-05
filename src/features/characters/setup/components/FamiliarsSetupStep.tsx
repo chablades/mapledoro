@@ -882,7 +882,7 @@ export default function FamiliarsSetupStep({
       stepLabel={step.label}
       stepNumber={stepNumber}
       totalSteps={totalSteps}
-      description="Enter your familiars."
+      description="Choose your familiars and badges."
       onBack={onBack}
       onNext={onNext}
       onFinish={onFinish}

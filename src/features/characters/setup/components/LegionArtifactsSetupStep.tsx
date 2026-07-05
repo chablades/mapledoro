@@ -43,6 +43,7 @@ interface LegionArtifactsSetupStepProps {
 const PICKER_WIDTH = 230;
 const CARD_POPOVER_WIDTH = 240;
 const CRYSTAL_TILE_SIZE = 116;
+const CRYSTAL_TILE_SIZE_MOBILE = 100;
 const CRYSTAL_ICON_SIZE = 80;
 const EMPTY_CRYSTAL: LegionCrystalDraft = { level: MIN_CRYSTAL_LEVEL, stats: [...DEFAULT_CRYSTAL_STATS] };
 
@@ -66,14 +67,14 @@ function levelInputStyle(theme: AppTheme, width: number): CSSProperties {
 }
 
 const crystalGridStyle: CSSProperties = {
-  display: "grid", gridTemplateColumns: `repeat(3, ${CRYSTAL_TILE_SIZE}px)`, gap: "0.6rem",
+  display: "grid", gap: "0.6rem",
 };
 
-const crystalIconImgStyle: CSSProperties = { borderRadius: 8, objectFit: "contain" };
+const crystalIconImgStyle: CSSProperties = { width: "68%", height: "68%", borderRadius: 8, objectFit: "contain" };
 
 function crystalTileStyle(theme: AppTheme, unlocked: boolean, isOpen: boolean): CSSProperties {
   return {
-    position: "relative", width: CRYSTAL_TILE_SIZE, height: CRYSTAL_TILE_SIZE,
+    position: "relative",
     display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 6,
     borderRadius: 12, border: `2px solid ${isOpen ? theme.accent : theme.border}`,
     background: unlocked ? theme.bg : `${theme.muted}0d`,
@@ -312,7 +313,7 @@ function CrystalTile({
 
   if (!unlocked) {
     return (
-      <div style={crystalTileStyle(theme, false, false)} title={`${def.name} — Lv ${def.requiredArtifactLevel}+ required`}>
+      <div className="legion-crystal-tile" style={crystalTileStyle(theme, false, false)} title={`${def.name} — Lv ${def.requiredArtifactLevel}+ required`}>
         <Image src={iconSrc} alt="" width={CRYSTAL_ICON_SIZE} height={CRYSTAL_ICON_SIZE} unoptimized style={crystalIconImgStyle} />
         <span style={crystalLockedBadgeStyle(theme)}>Lv {def.requiredArtifactLevel}+</span>
       </div>
@@ -323,6 +324,7 @@ function CrystalTile({
     <div ref={ref} style={{ position: "relative" }}>
       <button
         type="button"
+        className="legion-crystal-tile"
         title={def.name}
         aria-label={`${def.name}, level ${level}`}
         onClick={(e) => { e.stopPropagation(); onToggleCard(); }}
@@ -432,12 +434,24 @@ export default function LegionArtifactsSetupStep({
       stepLabel={step.label}
       stepNumber={stepNumber}
       totalSteps={totalSteps}
-      description="Enter your Legion Artifact crystals, found in the Legion window's Artifacts tab. This is account-wide for your world."
+      description="Set your Legion Artifact level and crystals."
       onBack={onBack}
       onNext={onNext}
       onFinish={onFinish}
     >
-      <div ref={zoneRef} style={{ display: "flex", flexDirection: "column", gap: "1rem", maxWidth: 460 }}>
+      <p style={{ margin: "0 0 1rem", fontSize: "0.75rem", color: theme.muted, fontWeight: 700 }}>
+        These are shared across all characters on your world, and inherited automatically by new characters.
+      </p>
+      <div ref={zoneRef} className="legion-artifacts-root" style={{ display: "flex", flexDirection: "column", gap: "1rem", maxWidth: 460 }}>
+        <style>{`
+          .legion-artifacts-root { container-type: inline-size; }
+          .legion-crystal-grid { grid-template-columns: repeat(3, ${CRYSTAL_TILE_SIZE}px); }
+          .legion-crystal-tile { width: ${CRYSTAL_TILE_SIZE}px; height: ${CRYSTAL_TILE_SIZE}px; }
+          @container (max-width: 400px) {
+            .legion-crystal-grid { grid-template-columns: repeat(3, ${CRYSTAL_TILE_SIZE_MOBILE}px); }
+            .legion-crystal-tile { width: ${CRYSTAL_TILE_SIZE_MOBILE}px; height: ${CRYSTAL_TILE_SIZE_MOBILE}px; }
+          }
+        `}</style>
         <div>
           <p style={sectionLabelStyle(theme)}>Artifact Level</p>
           <input
@@ -454,7 +468,7 @@ export default function LegionArtifactsSetupStep({
           />
         </div>
 
-        <div style={crystalGridStyle}>
+        <div className="legion-crystal-grid" style={crystalGridStyle}>
           {LEGION_CRYSTALS.map((def, index) => (
             <CrystalTile
               key={def.id}

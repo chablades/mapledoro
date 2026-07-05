@@ -529,12 +529,13 @@ function HexaSkillLevelsSubstep({
   onNext: () => void;
   onFinish: () => void;
 }) {
-  const stepLabel = classDef.className === "Sia" ? "Erda Link" : step.label;
+  const isShine = classDef.group === "SHINE";
+  const stepLabel = isShine ? "Erda Link" : step.label;
   return (
     <div key={0} style={animStyle}>
       <SetupStepFrame theme={theme} stepLabel={stepLabel} stepNumber={stepNumber} totalSteps={totalSteps}
         substepIndex={substepIndex} substepCount={substepCount}
-        description="Enter your HEXA skill levels."
+        description={isShine ? "Enter your Erda Link skill levels." : "Enter your HEXA skill levels."}
         onBack={onBack}
         onNext={showHexaStat ? onContinue : onNext}
         onFinish={onFinish}
@@ -627,8 +628,7 @@ export default function HexaMatrixSetupStep({
   const showHexaStat = flowId !== "maplescouter_setup";
   const substepCount = showHexaStat ? 2 : 1;
   const classData = getClassDataByNexonJobName(jobName);
-  const hexaClassId = classData?.id === "sia_astelle" ? "sia" : classData?.id;
-  const classDef = hexaClassId ? findClassById(hexaClassId) : null;
+  const classDef = classData?.id ? findClassById(classData.id) : null;
   const initialValueRef = useRef(value);
 
   const [substep, setSubstep] = useState(() => direction === "backward" && showHexaStat ? 1 : 0);
@@ -730,7 +730,7 @@ export default function HexaMatrixSetupStep({
     <div key={1} style={substepAnimStyle}>
       <SetupStepFrame theme={theme} stepLabel="HEXA Stat" stepNumber={stepNumber} totalSteps={totalSteps}
         substepIndex={substep} substepCount={substepCount}
-        description="Enter your HEXA Stat nodes."
+        description="Set your HEXA Stat nodes."
         onBack={() => goToSubstep(0)} onNext={onNext} onFinish={onFinish}
       >
         <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>

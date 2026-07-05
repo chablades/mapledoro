@@ -122,8 +122,7 @@ function HexNode({
 }
 
 function resolveHexaClassDef(classId: string | undefined) {
-  const hexaClassId = classId === "sia_astelle" ? "sia" : classId;
-  return hexaClassId ? findClassById(hexaClassId) : null;
+  return classId ? findClassById(classId) : null;
 }
 
 function resolveHexaNotice(hasHexa: boolean, isLegacyClass: boolean): string | null {
@@ -208,8 +207,8 @@ function OverviewTab({ model }: { model: PreviewPaneModel }) {
     hexaLevels?.ascent ?? 0,
     0, 0, 0, 0,
   ];
-  const commonSlots: (HexaSkillDef | null)[] = [COMMON_SKILLS[0] ?? null, null, null, null];
-  const commonLevels = [hexaLevels?.common[0] ?? 0, 0, 0, 0];
+  const commonSlots: (HexaSkillDef | null)[] = [COMMON_SKILLS[0] ?? null, COMMON_SKILLS[1] ?? null, null, null];
+  const commonLevels = [hexaLevels?.common[0] ?? 0, hexaLevels?.common[1] ?? 0, 0, 0];
   const masterySlots: (HexaSkillDef | null)[] = hexaClassDef
     ? hexaClassDef.mastery.map((node) => ({ name: node.skills[0], iconId: node.iconId, iconUrl: node.iconUrl }))
     : [null, null, null, null];
@@ -272,7 +271,7 @@ function OverviewTab({ model }: { model: PreviewPaneModel }) {
         </p>
       ) : (
         <div>
-          <div style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: theme.muted, marginBottom: 10 }}>{classId === "sia_astelle" ? "Erda Link" : "6th Job · Hexa Skills"}</div>
+          <div style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: theme.muted, marginBottom: 10 }}>{hexaClassDef?.group === "SHINE" ? "Erda Link" : "6th Job · Hexa Skills"}</div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1px 1fr", gap: 14, alignItems: "start" }}>
             {/* Left: Skill + Common */}
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>

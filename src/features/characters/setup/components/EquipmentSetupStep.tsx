@@ -882,7 +882,7 @@ export default function EquipmentSetupStep({
           totalSteps={totalSteps}
           substepIndex={substep}
           substepCount={SUBSTEP_COUNT}
-          description="Enter your title, totems, and symbols."
+          description="Set your title, totems, and symbol levels."
           onBack={() => goToSubstep(0)}
           onNext={() => goToSubstep(2)}
           onFinish={onFinish}
@@ -945,30 +945,33 @@ export default function EquipmentSetupStep({
           totalSteps={totalSteps}
           substepIndex={substep}
           substepCount={SUBSTEP_COUNT}
-          description="Enter your pets."
+          description="Choose your pets."
           onBack={() => goToSubstep(1)}
           onNext={onNext}
           onFinish={onFinish}
         >
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
-            {([["pet1", "petEquip1"], ["pet2", "petEquip2"], ["pet3", "petEquip3"]] as const).map(([petKey, equipKey]) => (
-              <div key={petKey} style={{ display: "flex", gap: 4 }}>
-                <SlotCell
-                  slotKey={petKey}
-                  item={draft[petKey]}
-                  theme={theme}
-                  isActive={activeSlot === petKey}
-                  onClick={() => toggleSlot(petKey)}
-                  picker={renderPicker(petKey)}
-                />
-                <SlotCell
-                  slotKey={equipKey}
-                  item={draft[equipKey]}
-                  theme={theme}
-                  isActive={activeSlot === equipKey}
-                  onClick={() => toggleSlot(equipKey)}
-                  picker={renderPicker(equipKey)}
-                />
+          <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+            {([["pet1", "petEquip1", "Pet 1"], ["pet2", "petEquip2", "Pet 2"], ["pet3", "petEquip3", "Pet 3"]] as const).map(([petKey, equipKey, label]) => (
+              <div key={petKey}>
+                <SectionHeading label={label} theme={theme} />
+                <div style={{ display: "flex", gap: 4 }}>
+                  <SlotCell
+                    slotKey={petKey}
+                    item={draft[petKey]}
+                    theme={theme}
+                    isActive={activeSlot === petKey}
+                    onClick={() => toggleSlot(petKey)}
+                    picker={renderPicker(petKey)}
+                  />
+                  <SlotCell
+                    slotKey={equipKey}
+                    item={draft[equipKey]}
+                    theme={theme}
+                    isActive={activeSlot === equipKey}
+                    onClick={() => toggleSlot(equipKey)}
+                    picker={renderPicker(equipKey)}
+                  />
+                </div>
               </div>
             ))}
           </div>
@@ -1016,7 +1019,7 @@ export default function EquipmentSetupStep({
       totalSteps={totalSteps}
       substepIndex={substep}
       substepCount={SUBSTEP_COUNT}
-      description="Enter your equipped gear."
+      description="Choose your equipped gear."
       onBack={onBack}
       onNext={() => goToSubstep(1)}
       onFinish={onFinish}

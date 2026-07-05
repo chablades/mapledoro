@@ -138,13 +138,14 @@ function IAPresetBar({ theme, active, onSwitch }: {
 }
 
 /** Colored grade banner ("Legendary Ability") that opens a 4-tier grade selector. */
-function IAGradeHeader({ grade, openId, theme, onToggle, onClose, onSelect }: {
+function IAGradeHeader({ grade, openId, theme, onToggle, onClose, onSelect, onClear }: {
   grade: IATier | "";
   openId: string | null;
   theme: AppTheme;
   onToggle: () => void;
   onClose: () => void;
   onSelect: (tier: IATier) => void;
+  onClear: () => void;
 }) {
   const isOpen = openId === "ia-grade";
   const { ref: wrapperRef, portalRef } = usePickerCoords(isOpen, IA_PICKER_WIDTH);
@@ -170,6 +171,11 @@ function IAGradeHeader({ grade, openId, theme, onToggle, onClose, onSelect }: {
       {isOpen && createPortal(
         <div ref={portalRef} onMouseDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()}
           style={{ ...IA_POPOVER_SHELL, background: theme.panel, border: `1px solid ${theme.accent}` }}>
+          {grade && (
+            <button type="button" onClick={() => { onClear(); onClose(); }} style={pickerClearRowStyle(theme)}>
+              — Clear —
+            </button>
+          )}
           {IA_TIER_ORDER.map((t) => {
             const tc = IA_TIER_COLORS[t];
             const active = grade === t;
@@ -338,6 +344,16 @@ export default function InnerAbilitySetupStep({ draft, onUpdate, theme }: {
     onUpdate({ ...ia, presets });
   }
 
+  // Clears the grade back to unset, wiping all 3 lines with it (their allowed
+  // tiers/values are only meaningful relative to a chosen grade).
+  function clearGrade() {
+    const active = ia.presets[ia.activePreset];
+    if (!active.lines[0].tier) return;
+    const lines = active.lines.map(() => ({ tier: "" as IATier | "", value: "" })) as IAPresetFull["lines"];
+    const presets = ia.presets.map((p, i) => (i === ia.activePreset ? { lines } : p)) as IAFull["presets"];
+    onUpdate({ ...ia, presets });
+  }
+
   // Closes the line/grade picker on outside clicks, scoped to this section's zone
   // (its portal popovers stop propagation, so they don't trigger this themselves).
   useEffect(() => {
@@ -359,6 +375,7 @@ export default function InnerAbilitySetupStep({ draft, onUpdate, theme }: {
         onToggle={() => toggle("ia-grade")}
         onClose={() => setOpenId(null)}
         onSelect={setGrade}
+        onClear={clearGrade}
       />
       {ia.presets[ia.activePreset].lines.map((line, i) => (
         <IALineBar

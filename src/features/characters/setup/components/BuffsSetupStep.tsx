@@ -283,7 +283,7 @@ export default function BuffsSetupStep({
       stepLabel={step.label}
       stepNumber={stepNumber}
       totalSteps={totalSteps}
-      description="Select all the buffs you use when bossing."
+      description="Set your buffs and their levels for bossing."
       onBack={onBack}
       onNext={onNext}
       onFinish={onFinish}

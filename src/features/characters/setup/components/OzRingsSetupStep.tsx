@@ -230,7 +230,7 @@ export default function OzRingsSetupStep({
       stepLabel={step.label}
       stepNumber={stepNumber}
       totalSteps={totalSteps}
-      description="Enter your Oz ring info if you use them when bossing. Pick whichever setup you actually run, never both."
+      description="Enter your Oz ring info if you use them when bossing."
       onBack={onBack}
       onNext={onNext}
       onFinish={onFinish}
@@ -241,6 +241,9 @@ export default function OzRingsSetupStep({
           <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", marginBottom: "0.4rem" }}>
             <span style={{ ...sectionLabelStyle(theme), margin: 0 }}>Ring Setup</span>
             <InfoTooltip content={OZ_RING_TOOLTIP} theme={theme} />
+            <span style={{ fontSize: "0.72rem", fontWeight: 600, color: theme.muted, textTransform: "none", letterSpacing: "normal" }}>
+              · choose one
+            </span>
           </div>
           <RingModeTabs mode={draft.ringMode} onChange={setRingMode} theme={theme} />
           <p style={{ margin: "0.4rem 0 0", fontSize: "0.75rem", color: theme.muted }}>

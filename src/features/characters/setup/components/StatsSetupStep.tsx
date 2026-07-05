@@ -1243,7 +1243,6 @@ export default function StatsSetupStep({
         nextLabel="Continue"
         nextDisabled={hyperOverspent}
       >
-        <p style={sectionLabelStyle(theme)}>Hyper Stats</p>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.5rem" }}>
           <HyperPresetBar theme={theme} active={hyper.activePreset} onSwitch={switchHyperPreset} />
           {Number.isFinite(hyperBudget) && (
@@ -1286,12 +1285,11 @@ export default function StatsSetupStep({
         stepLabel={step.label}
         stepNumber={stepNumber}
         totalSteps={totalSteps}
-        description="Enter your Inner Ability."
+        description="Set your Inner Ability."
         onBack={() => goToSubstep(hyperStatSubstep >= 0 ? hyperStatSubstep : 1)}
         onNext={onNext}
         onFinish={onFinish}
       >
-        <p style={sectionLabelStyle(theme)}>Inner Ability</p>
         <InnerAbilitySetupStep draft={draft.innerAbility} onUpdate={handleInnerAbilityUpdate} theme={theme} />
       </SetupStepFrame>
     </div>

@@ -920,6 +920,7 @@ const CLASS_ID_TO_NAME: Record<string, string> = {
   dawn_warrior: "Dawn Warrior",
   demon_avenger: "Demon Avenger",
   demon_slayer: "Demon Slayer",
+  erel_light: "Erel Light",
   evan: "Evan",
   hayato: "Hayato",
   hero: "Hero",
