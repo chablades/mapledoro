@@ -39,6 +39,57 @@ const PUZZLE_DATE_FMT = new Intl.DateTimeFormat(undefined, {
 
 const EMPTY_RESULT: SkillGuesserResult = { guesses: [], won: false, done: false };
 
+const optionBtn: CSSProperties = {
+  display: "block",
+  width: "100%",
+  background: "none",
+  border: "none",
+  padding: "7px 12px",
+  font: "inherit",
+  textAlign: "left",
+  fontSize: "0.82rem",
+  fontWeight: 600,
+};
+
+const modeTabBtn: CSSProperties = {
+  padding: "5px 14px",
+  border: "none",
+  borderRadius: 8,
+  fontSize: "0.75rem",
+  fontWeight: 700,
+  userSelect: "none",
+};
+
+const guessSlot: CSSProperties = {
+  borderRadius: 10,
+  padding: "0.5rem 0.85rem",
+  display: "flex",
+  alignItems: "center",
+  gap: "0.6rem",
+  fontSize: "0.85rem",
+  fontWeight: 700,
+  minHeight: 24,
+};
+
+const distBar: CSSProperties = {
+  borderRadius: 4,
+  color: "#fff",
+  fontSize: "0.75rem",
+  fontWeight: 800,
+  padding: "1px 6px",
+  textAlign: "right",
+  boxSizing: "border-box",
+};
+
+const iconFrame: CSSProperties = {
+  width: 96,
+  height: 96,
+  borderRadius: 14,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+};
+
 /* ------------------------------------------------------------------ */
 /*  Guess picker (searchable combobox over the active answer pool)     */
 /*  Normal mode picks a class; hard mode picks the skill name.         */
@@ -157,15 +208,7 @@ function GuessPicker({
                 disabled={used}
                 onClick={() => pick(name)}
                 style={{
-                  display: "block",
-                  width: "100%",
-                  background: "none",
-                  border: "none",
-                  padding: "7px 12px",
-                  font: "inherit",
-                  textAlign: "left",
-                  fontSize: "0.82rem",
-                  fontWeight: 600,
+                  ...optionBtn,
                   color: used ? theme.muted : theme.text,
                   textDecoration: used ? "line-through" : "none",
                   cursor: used ? "not-allowed" : "pointer",
@@ -226,16 +269,11 @@ function ModeTabs({
             onClick={() => onChange(t.value)}
             title={t.disabled ? "Finish Normal Mode to unlock" : undefined}
             style={{
-              padding: "5px 14px",
-              border: "none",
-              borderRadius: 8,
-              fontSize: "0.75rem",
-              fontWeight: 700,
+              ...modeTabBtn,
               color: active ? "#fff" : theme.muted,
               background: active ? theme.accent : "transparent",
               opacity: t.disabled ? 0.5 : 1,
               cursor: t.disabled ? "not-allowed" : "pointer",
-              userSelect: "none",
             }}
           >
             {t.label}
@@ -278,17 +316,7 @@ function GuessSlots({
         return (
           <div
             key={i}
-            style={{
-              ...filled,
-              borderRadius: 10,
-              padding: "0.5rem 0.85rem",
-              display: "flex",
-              alignItems: "center",
-              gap: "0.6rem",
-              fontSize: "0.85rem",
-              fontWeight: 700,
-              minHeight: 24,
-            }}
+            style={{ ...filled, ...guessSlot }}
           >
             {guess ? (
               <>
@@ -394,17 +422,11 @@ function StatsPanel({
                 <span style={{ width: 14, fontSize: "0.75rem", fontWeight: 800, color: theme.muted }}>{label}</span>
                 <div
                   style={{
+                    ...distBar,
                     width: `${(count / maxCount) * 100}%`,
                     minWidth: count > 0 ? 26 : 8,
                     background: i < MAX_GUESSES ? theme.accent : MISS_RED,
                     opacity: count > 0 ? 1 : 0.25,
-                    borderRadius: 4,
-                    color: "#fff",
-                    fontSize: "0.75rem",
-                    fontWeight: 800,
-                    padding: "1px 6px",
-                    textAlign: "right",
-                    boxSizing: "border-box",
                   }}
                 >
                   {count}
@@ -482,16 +504,7 @@ function PuzzleView({ theme, puzzleNumber }: { theme: AppTheme; puzzleNumber: nu
       <div className="fade-in panel-card" style={styles.sectionPanel}>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.4rem", marginBottom: "1.1rem" }}>
           <div
-            style={{
-              width: 96,
-              height: 96,
-              borderRadius: 14,
-              border: `1px solid ${theme.border}`,
-              background: theme.timerBg,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
+            style={{ ...iconFrame, border: `1px solid ${theme.border}`, background: theme.timerBg }}
           >
             <PuzzleSkillIcon
               puzzle={puzzle}
