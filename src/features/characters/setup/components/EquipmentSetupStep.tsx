@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { usePickerCoords } from "../hooks/usePickerCoords";
+import { numericKeyDown } from "../../../../lib/inputUtils";
 import type { AppTheme } from "../../../../components/themes";
 import HoverTooltip from "../../../../components/HoverTooltip";
 import type { SetupStepDefinition } from "../steps";
@@ -596,7 +597,7 @@ function SymbolLevelTile({ area, level, maxLevel, theme, onLevel }: {
           const raw = Math.floor(Number(e.target.value) || 0);
           onLevel(Math.max(0, Math.min(maxLevel, raw)));
         }}
-        onKeyDown={(e) => { if (!/^\d$/.test(e.key) && !["Backspace","Delete","ArrowLeft","ArrowRight","Tab","Home","End"].includes(e.key)) e.preventDefault(); }}
+        onKeyDown={numericKeyDown}
         style={symbolTileInputStyle(theme)}
       />
     </div>
