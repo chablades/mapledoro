@@ -4,7 +4,10 @@
  * Output: public/data/equipment/{slot}.json
  * Each file: Array<[id, name] | [id, name, stats]> — id is 8-digit zero-padded; the
  *   stats object is appended only for items that have base stats (cosmetics omit it).
- *   Base stats come from item-stats.json (sibling of item.json), joined by id.
+ *   Base stats come from item-stats.json (sibling of item.json), joined by id. Items
+ *   flagged `cash` there (pure cash-shop cosmetic overlays, e.g. Illusion Ring) are
+ *   dropped entirely -- they never occupy their slot in-game, unlike cash-shop-SOLD
+ *   but stat-bearing gear like the Eternal Wedding Ring, which doesn't carry this flag.
  *   `tuc` (raw 0-indexed WZ upgrade count) is normalized here to `upgradeSlots` (tuc + 1,
  *   the in-game slot count); all other stat keys are passed through verbatim. Genesis/
  *   Destiny-tier weapons (islot "Wp"/"WpSi" + onlyEquip, name-prefixed "Genesis "/
@@ -20,9 +23,8 @@
  *   node scripts/gen-equipment.mjs manifests/v269/item.json
  *
  * Set EQUIP_ICON_DIR to the local WZ image dump's `item/` dir to enable icon-based
- * dedup of pet/pet-equip/title/totem/weapon/hat/ring/secondary (collapses look-alike
- * name reissues; keeps distinct same-name entries that just happen to share a display
- * name and/or icon):
+ * dedup, applied to every slot (collapses look-alike name reissues; keeps distinct
+ * same-name entries that just happen to share a display name and/or icon):
  *   EQUIP_ICON_DIR=/path/to/dump/item node scripts/gen-equipment.mjs manifests/v269/item.json
  *
  * Set EQUIP_DEDUP_VERDICTS to the manual dedup audit's verdicts file (see
@@ -100,11 +102,23 @@ const statEntries = JSON.parse(readFileSync(statsPath, "utf8")).entries;
 function servedStats(rawId, name) {
   const stats = statEntries[rawId];
   if (!stats) return undefined;
-  const { tuc, ...rest } = stats;
+  const { tuc, cash, ...rest } = stats;
   const isGenesisDestinyWeapon = /^(Genesis|Destiny) /.test(name) && stats.islot?.startsWith("Wp") && stats.onlyEquip;
   if (tuc !== undefined) rest.upgradeSlots = isGenesisDestinyWeapon ? tuc : tuc + 1;
   return rest;
 }
+
+// item-stats.json's `cash` flag marks pure cash-shop cosmetic overlays (e.g. Illusion
+// Ring) that never actually occupy their slot in-game -- confirmed against the raw .wz
+// dump to exclude real cash-shop-SOLD but stat-bearing gear like the Eternal Wedding
+// Ring, which does not carry this flag. Checked empty across all 50k+ flagged entries:
+// none carry any combat stat, so it's a safe drop for slots with a non-cash source to
+// fall back to. Pet/pet-equip are the one exception: every real, wearable item there is
+// cash-shop-sourced (there's no "real gear" alternative like Eternal Wedding Ring to
+// preserve), so the flag there means "cash-shop sourced" rather than "overlay junk" --
+// applying it would empty both pickers entirely, so those two slots are exempt.
+const CASH_FILTER_EXEMPT_SLOTS = new Set(["pet", "petequip"]);
+const isCashCosmetic = (rawId) => statEntries[rawId]?.cash === true;
 
 /**
  * Pet/pet-equip compatibility: pets list which pet-equip ids they can wear (`wearableEquips`),
@@ -120,10 +134,10 @@ function wearableLinks(slot, entry) {
 }
 
 /**
- * Pets, pet-equips, titles, totems, weapons, hats, rings, and secondaries all ship
- * cash-shop/event reissues that share a display name and icon but differ by id — these
- * surfaced as duplicate rows in the setup picker (e.g. "Dusk" three times, "MVP Bronze"
- * twice). But name+icon alone isn't proof of a true duplicate: MapleStory also reuses a
+ * Nearly every equipment slot ships cash-shop/event reissues that share a display name
+ * and icon but differ by id — these surfaced as duplicate rows in the setup picker (e.g.
+ * "Dusk" three times, "MVP Bronze" twice, "Crystal Ventus Badge" twice). But name+icon
+ * alone isn't proof of a true duplicate: MapleStory also reuses a
  * name+icon across genuinely different items — e.g. two "Eternal Wedding Ring" ids grant
  * +5 vs +7 all stats, and growth-series weapons repeat a name+icon at each level
  * breakpoint with different stats. So this also requires the full stat block to match
@@ -238,6 +252,7 @@ for (const [slot, filter] of Object.entries(SLOT_FILTERS)) {
 
   for (const [rawId, entry] of Object.entries(entries)) {
     if (!entry.name) continue;
+    if (!CASH_FILTER_EXEMPT_SLOTS.has(slot) && isCashCosmetic(rawId)) continue;
     const stats = servedStats(rawId, entry.name);
     if (filter.where) {
       if (!filter.where(rawId, entry, stats)) continue;
@@ -252,12 +267,13 @@ for (const [slot, filter] of Object.entries(SLOT_FILTERS)) {
   outputs[slot] = items;
 }
 
-// Collapse duplicate-named pets / pet-equips / titles / totems / weapons / hats / rings /
-// secondaries. Pet and pet-equip are a cross-referenced pair, so their compatibility ids
-// get remapped to the survivor's canonical id afterward; the rest have no such
-// cross-references.
+// Collapse duplicate-named items across every slot. Pet and pet-equip are a
+// cross-referenced pair, so their compatibility ids get remapped to the survivor's
+// canonical id afterward; weapon/secondary need the extra type-prefix guard
+// (requireSamePrefix, see dedupeByName's doc comment); every other slot has no such
+// cross-slot concern and uses the plain name+icon+stats match.
 if (!ICON_DIR || !existsSync(ICON_DIR)) {
-  console.warn(`⚠ EQUIP_ICON_DIR ${ICON_DIR ? `(${ICON_DIR}) not found` : "unset"} — skipping pet/pet-equip/title/totem/weapon/hat/ring/secondary dedup. Picker may show duplicate names.`);
+  console.warn(`⚠ EQUIP_ICON_DIR ${ICON_DIR ? `(${ICON_DIR}) not found` : "unset"} — skipping all slot dedup. Picker may show duplicate names.`);
 } else {
   if (outputs.pet && outputs.petequip) {
     const pet = dedupeByName(outputs.pet, "wearableEquips");
@@ -267,11 +283,12 @@ if (!ICON_DIR || !existsSync(ICON_DIR)) {
     outputs.pet = pet.deduped;
     outputs.petequip = petequip.deduped;
   }
-  for (const slot of ["title", "totem", "hat", "ring"]) {
-    if (outputs[slot]) outputs[slot] = dedupeByName(outputs[slot]).deduped;
-  }
   for (const slot of ["weapon", "secondary"]) {
     if (outputs[slot]) outputs[slot] = dedupeByName(outputs[slot], undefined, true).deduped;
+  }
+  for (const slot of Object.keys(SLOT_FILTERS)) {
+    if (slot === "pet" || slot === "petequip" || slot === "weapon" || slot === "secondary") continue;
+    if (outputs[slot]) outputs[slot] = dedupeByName(outputs[slot]).deduped;
   }
 }
 
