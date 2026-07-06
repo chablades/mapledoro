@@ -1,0 +1,76 @@
+{
+  "_meta": {
+    "assets": [
+      "icon.png"
+    ],
+    "urlPattern": "/api/img/ui/cash-badge/{type}/{id}/icon.png"
+  },
+  "entries": {
+    "cash/0": {
+      "type": "cash"
+    },
+    "cash/1": {
+      "type": "cash"
+    },
+    "cash/2": {
+      "type": "cash"
+    },
+    "cash/3": {
+      "type": "cash"
+    },
+    "label/16": {
+      "type": "label"
+    },
+    "label/100": {
+      "type": "label"
+    },
+    "label/0": {
+      "type": "label"
+    },
+    "label/1": {
+      "type": "label"
+    },
+    "label/2": {
+      "type": "label"
+    },
+    "label/3": {
+      "type": "label"
+    },
+    "label/4": {
+      "type": "label"
+    },
+    "label/5": {
+      "type": "label"
+    },
+    "label/6": {
+      "type": "label"
+    },
+    "label/7": {
+      "type": "label"
+    },
+    "label/8": {
+      "type": "label"
+    },
+    "label/9": {
+      "type": "label"
+    },
+    "label/10": {
+      "type": "label"
+    },
+    "label/11": {
+      "type": "label"
+    },
+    "label/12": {
+      "type": "label"
+    },
+    "label/13": {
+      "type": "label"
+    },
+    "label/14": {
+      "type": "label"
+    },
+    "label/15": {
+      "type": "label"
+    }
+  }
+}
