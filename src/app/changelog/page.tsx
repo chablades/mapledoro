@@ -11,6 +11,12 @@ interface ChangelogEntry {
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    date: "2026-07-06",
+    changes: [
+      { type: "changed", text: "The Miracle Time panel on the homepage now hides itself when there is no upcoming schedule instead of showing an empty box." },
+    ],
+  },
+  {
     date: "2026-07-03",
     changes: [
       { type: "fixed", text: "Fixed the Liberation Tracker sharing one current quest and trace count across the Genesis, Destiny Part 1, and Destiny Part 2 tabs, so each tab now keeps its own progress." },
