@@ -1,22 +1,10 @@
 "use client";
 
-import { useEffect, useReducer, useRef, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import Panel from "./Panel";
 import type { AppTheme } from "./themes";
 import { useClock } from "@/lib/useClock";
 import type { MiracleTimeSlot, MiracleTimePayload } from "@/lib/miracleTime";
-
-type FetchState = { slots: MiracleTimeSlot[]; loading: boolean; error: string | null };
-type FetchAction =
-  | { type: "success"; slots: MiracleTimeSlot[] }
-  | { type: "error"; message: string };
-
-function fetchReducer(state: FetchState, action: FetchAction): FetchState {
-  switch (action.type) {
-    case "success": return { slots: action.slots, loading: false, error: null };
-    case "error": return { ...state, loading: false, error: action.message };
-  }
-}
 
 async function fetchMiracleTime(signal: AbortSignal): Promise<MiracleTimeSlot[]> {
   const res = await fetch("/api/miracle-time", { signal });
@@ -81,12 +69,9 @@ function SlotRow({
   );
 }
 
+/** Renders nothing until upcoming slots are available — no data, no box. */
 export default function MiracleTimePanel({ theme }: { theme: AppTheme }) {
-  const [{ slots, loading, error }, dispatch] = useReducer(fetchReducer, {
-    slots: [],
-    loading: true,
-    error: null,
-  });
+  const [slots, setSlots] = useState<MiracleTimeSlot[]>([]);
   const fetchedRef = useRef(false);
 
   useEffect(() => {
@@ -95,11 +80,9 @@ export default function MiracleTimePanel({ theme }: { theme: AppTheme }) {
 
     const controller = new AbortController();
     fetchMiracleTime(controller.signal)
-      .then((s) => dispatch({ type: "success", slots: s }))
-      .catch((err) => {
-        if (!controller.signal.aborted) {
-          dispatch({ type: "error", message: err instanceof Error ? err.message : "Unknown error" });
-        }
+      .then(setSlots)
+      .catch(() => {
+        // No data or fetch failure — the panel simply stays hidden.
       });
 
     return () => { controller.abort(); };
@@ -114,44 +97,26 @@ export default function MiracleTimePanel({ theme }: { theme: AppTheme }) {
     ? upcoming.find((s) => Date.parse(s.startISO) <= nowMs && nowMs <= Date.parse(s.endISO))?.startISO
     : undefined;
 
-  let statusText: string;
-  if (loading) statusText = "Loading...";
-  else if (error) statusText = "Connection error";
-  else if (activeISO) statusText = "Active now";
-  else if (upcoming.length > 0) statusText = `Next: ${formatLocal(upcoming[0].startISO)}`;
-  else statusText = "No data";
+  if (upcoming.length === 0) return null;
+
+  const statusText = activeISO ? "Active now" : `Next: ${formatLocal(upcoming[0].startISO)}`;
 
   return (
-    <Panel theme={theme} delay="0.2s">
-      <div className="panel-header" style={{ borderBottom: `1px solid ${theme.border}` }}>
-        <span>🎲</span>
-        <div style={{ flex: 1 }}>
-          <div className="panel-header-title" style={{ color: theme.text, lineHeight: 1 }}>
-            Miracle Time
+    <div style={{ marginTop: "0.75rem" }}>
+      <Panel theme={theme} delay="0.2s">
+        <div className="panel-header" style={{ borderBottom: `1px solid ${theme.border}` }}>
+          <span>🎲</span>
+          <div style={{ flex: 1 }}>
+            <div className="panel-header-title" style={{ color: theme.text, lineHeight: 1 }}>
+              Miracle Time
+            </div>
+            <div style={{ fontSize: "0.75rem", color: theme.muted, fontWeight: 700, marginTop: "2px" }}>
+              {statusText}
+            </div>
           </div>
-          <div style={{ fontSize: "0.75rem", color: theme.muted, fontWeight: 700, marginTop: "2px" }}>
-            {statusText}
-          </div>
+          {activeISO && <span style={activeBadgeStyle}>ACTIVE</span>}
         </div>
-        {activeISO && <span style={activeBadgeStyle}>ACTIVE</span>}
-      </div>
 
-      {loading && (
-        <div className="empty-state" style={{ color: theme.muted }}>
-          Loading event data&hellip;
-        </div>
-      )}
-
-      {error && (
-        <div className="empty-state" style={{ color: theme.muted }}>
-          <div style={{ marginBottom: "0.5rem" }}>Could not load Miracle Time data.</div>
-          <div style={{ fontSize: "0.75rem", opacity: 0.7 }}>
-            Check that your Discord bot is configured.
-          </div>
-        </div>
-      )}
-
-      {!loading && !error && upcoming.length > 0 && (
         <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", padding: "0.75rem" }}>
           {upcoming.map((slot) => (
             <SlotRow
@@ -162,13 +127,7 @@ export default function MiracleTimePanel({ theme }: { theme: AppTheme }) {
             />
           ))}
         </div>
-      )}
-
-      {!loading && !error && upcoming.length === 0 && (
-        <div className="empty-state" style={{ color: theme.muted }}>
-          No Miracle Time data available.
-        </div>
-      )}
-    </Panel>
+      </Panel>
+    </div>
   );
 }

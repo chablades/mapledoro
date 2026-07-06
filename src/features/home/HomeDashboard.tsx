@@ -128,9 +128,7 @@ export default function HomeDashboard({ theme }: { theme: AppTheme }) {
                 <UrsusPanel theme={theme} now={now} />
               </div>
             </div>
-            <div style={{ marginTop: "0.75rem" }}>
-              <MiracleTimePanel theme={theme} />
-            </div>
+            <MiracleTimePanel theme={theme} />
           </aside>
           <div className="dashboard-main">
             <HeroBanner theme={theme} />
