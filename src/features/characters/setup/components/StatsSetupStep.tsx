@@ -1148,7 +1148,7 @@ export default function StatsSetupStep({
           theme={theme}
           substepIndex={substep}
           substepCount={SUBSTEP_COUNT}
-          stepLabel={step.label}
+          stepLabel="Quick Questions"
           stepNumber={stepNumber}
           totalSteps={totalSteps}
           description="Answer what applies to your character below."
@@ -1248,7 +1248,7 @@ export default function StatsSetupStep({
         theme={theme}
         substepIndex={substep}
         substepCount={SUBSTEP_COUNT}
-        stepLabel={step.label}
+        stepLabel="Hyper Stats"
         stepNumber={stepNumber}
         totalSteps={totalSteps}
         description="Enter your Hyper Stat levels."
@@ -1297,7 +1297,7 @@ export default function StatsSetupStep({
         theme={theme}
         substepIndex={substep}
         substepCount={SUBSTEP_COUNT}
-        stepLabel={step.label}
+        stepLabel="Inner Ability"
         stepNumber={stepNumber}
         totalSteps={totalSteps}
         description="Set your Inner Ability."

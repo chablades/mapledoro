@@ -364,7 +364,7 @@ function applyMapleScouterFlow(
   const scouterPatch = ozRings || buffs || scouterQ
     ? { ...base.scouter, ...(ozRings ? { ozRings } : {}), ...(buffs ? { buffs } : {}), ...(scouterQ ?? {}) }
     : base.scouter;
-  // The scouter flow reuses the full-setup Hexa Matrix step (skill-levels substep only),
+  // The scouter flow reuses the full-setup HEXA Matrix step (skill-levels substep only),
   // persisting to the same tool homes as full setup. HEXA Stat isn't collected here, but
   // we still build it so any value the step autofilled from existing data is preserved.
   const hexaSkillsToolData = buildHexaSkillsToolData(character.jobName, stepData.hexa_matrix ?? "");

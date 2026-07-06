@@ -104,5 +104,5 @@ export function getHexaStatBonus(type: string, level: number, isPrimary: boolean
     if (classId === "demon_avenger") return `+${value * 21} Max HP`;
   }
 
-  return IS_PERCENT.has(type as HexaStatType) ? `+${value}%` : `+${value}`;
+  return IS_PERCENT.has(type as HexaStatType) ? `+${value.toFixed(2)}%` : `+${value}`;
 }

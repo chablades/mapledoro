@@ -8,7 +8,7 @@ const SETUP_STEPS = [
   { id: "stats", label: "Stats" },
   { id: "equipment", label: "Equipment" },
   { id: "v_matrix", label: "V Matrix" },
-  { id: "hexa_matrix", label: "Hexa Matrix" },
+  { id: "hexa_matrix", label: "HEXA Matrix" },
   { id: "familiars", label: "Familiars" },
   { id: "link_skills", label: "Link Skills" },
   { id: "oz_rings", label: "Oz Rings" },

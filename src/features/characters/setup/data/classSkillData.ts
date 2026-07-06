@@ -71,7 +71,7 @@ export interface ClassSkillData {
   buffSkills: BuffSkill[];
   /** Class-specific required stats, ordered by importance (primary first). Universal stats are added automatically. */
   requiredStats: StatFieldId[];
-  /** Legacy classes (lower job advancements) — no V Matrix or Hexa Matrix. */
+  /** Legacy classes (lower job advancements) — no V Matrix or HEXA Matrix. */
   isLegacy?: true;
 }
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { numericKeyDown } from "../../../../lib/inputUtils";
+import { numericKeyDown, clampNumber } from "../../../../lib/inputUtils";
 import Image from "next/image";
 import type { AppTheme } from "../../../../components/themes";
 import HoverTooltip from "../../../../components/HoverTooltip";
@@ -37,10 +37,6 @@ interface VMatrixSetupStepProps {
 
 // Per-session cache of fetched class catalogs, keyed by classId.
 const catalogCache: Record<string, VMatrixData> = {};
-
-function clamp(v: number, max: number): number {
-  return Math.max(0, Math.min(max, Math.round(v) || 0));
-}
 
 const sectionBtnStyle: React.CSSProperties = {
   background: "none", border: "none", padding: 0, font: "inherit",
@@ -117,12 +113,9 @@ function VMatrixTile({ id, name, level, max, onUpdate, theme }: {
         aria-label={`${name} level`}
         value={level === 0 ? "" : String(level)}
         placeholder="0"
-        onChange={(e) => onUpdate(Number(e.target.value) || 0)}
+        onChange={(e) => onUpdate(clampNumber(Number(e.target.value) || 0, max))}
         onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
-        onBlur={(e) => {
-          e.currentTarget.style.outlineColor = "transparent";
-          onUpdate(clamp(parseInt(e.currentTarget.value, 10) || 0, max));
-        }}
+        onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
         onKeyDown={numericKeyDown}
         style={vMatrixInputStyle(theme)}
       />

@@ -27,8 +27,19 @@ export function decimalKeyDown(e: KeyboardEvent<HTMLInputElement>) {
 }
 
 /**
- * Digits + at most one decimal point, with leading zeros in the integer part stripped.
- * Keeps a trailing "." intact (e.g. "43.") so the user can keep typing decimal digits.
+ * Clamps a numeric level to [min, max], falling back to min when NaN. Shared by every
+ * "level" style input across the app (V/Hexa Matrix nodes, equipment symbols, legion
+ * artifacts, the standalone hexa-skills tool) so they all clamp on every keystroke the
+ * same way instead of diverging per component.
+ */
+export function clampNumber(v: number, max: number, min = 0): number {
+  return Number.isNaN(v) ? min : Math.max(min, Math.min(max, v));
+}
+
+/**
+ * Digits + at most one decimal point, capped at 2 decimal places, with leading
+ * zeros in the integer part stripped. Keeps a trailing "." intact (e.g. "43.") so
+ * the user can keep typing decimal digits.
  */
 export function sanitizeDecimalInput(raw: string): string {
   const firstDot = raw.indexOf(".");
@@ -38,5 +49,5 @@ export function sanitizeDecimalInput(raw: string): string {
   if (cleaned === "" || cleaned === ".") return cleaned === "." ? "0." : "";
   const [intPart, decPart] = cleaned.split(".");
   const normalizedInt = intPart === "" ? "0" : String(Number.parseInt(intPart, 10));
-  return decPart === undefined ? normalizedInt : `${normalizedInt}.${decPart}`;
+  return decPart === undefined ? normalizedInt : `${normalizedInt}.${decPart.slice(0, 2)}`;
 }

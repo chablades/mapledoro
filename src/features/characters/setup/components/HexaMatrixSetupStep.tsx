@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { numericKeyDown } from "../../../../lib/inputUtils";
+import { numericKeyDown, clampNumber } from "../../../../lib/inputUtils";
 import Image from "next/image";
 import type { AppTheme } from "../../../../components/themes";
 import HoverTooltip from "../../../../components/HoverTooltip";
@@ -50,10 +50,6 @@ const HEXA_STAT_DEFS: HexaSkillDef[] = [
   { iconId: "50000001", name: "Hexa Stat II" },
   { iconId: "50000002", name: "Hexa Stat III" },
 ];
-
-function clamp(v: number, max = MAX_LEVEL): number {
-  return Math.max(0, Math.min(max, Math.round(v) || 0));
-}
 
 const sectionBtnStyle: React.CSSProperties = {
   background: "none", border: "none", padding: 0, font: "inherit",
@@ -235,17 +231,17 @@ function parseDraft(raw: string, classDef: HexaClassDef): HexaDraft {
     if (!parsed || typeof parsed !== "object") return empty;
     const pad = (arr: unknown, len: number): number[] => {
       const a = Array.isArray(arr) ? arr : [];
-      const result = a.slice(0, len).map((v) => clamp(Number(v)));
+      const result = a.slice(0, len).map((v) => clampNumber(Number(v), MAX_LEVEL));
       while (result.length < len) result.push(0);
       return result;
     };
     const rawSlots = Array.isArray(parsed.hexaStat) ? parsed.hexaStat : [];
     return {
-      origin: Math.max(1, clamp(Number(parsed.origin) || 1)),
+      origin: Math.max(1, clampNumber(Number(parsed.origin) || 1, MAX_LEVEL)),
       mastery: pad(parsed.mastery, classDef.mastery.length),
       enhancement: pad(parsed.enhancement, classDef.enhancement.length),
       common: pad(parsed.common, COMMON_SKILLS.length),
-      ascent: clamp(Number(parsed.ascent) || 0),
+      ascent: clampNumber(Number(parsed.ascent) || 0, MAX_LEVEL),
       hexaStat: [parseNode(rawSlots[0]), parseNode(rawSlots[1]), parseNode(rawSlots[2])],
     };
   } catch { return empty; }
@@ -280,14 +276,9 @@ function LevelInput({ value, onChange, theme, min = 0, max = MAX_LEVEL, label }:
         aria-label={label}
         value={value === 0 ? "" : String(value)}
         placeholder={String(min)}
-        onChange={(e) => onChange(Number(e.target.value) || 0)}
+        onChange={(e) => onChange(clampNumber(Number(e.target.value) || 0, max, min))}
         onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
-        onBlur={(e) => {
-          e.currentTarget.style.outlineColor = "transparent";
-          const v = parseInt(e.currentTarget.value, 10);
-          const clamped = isNaN(v) ? min : Math.max(min, clamp(v, max));
-          onChange(clamped);
-        }}
+        onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
         onKeyDown={numericKeyDown}
         style={levelRowInputStyle(theme)}
       />
@@ -351,13 +342,9 @@ function HexaTile({ skill, level, onUpdate, theme, min = 0, max = MAX_LEVEL }: {
         aria-label={`${skill.name} level`}
         value={level === 0 ? "" : String(level)}
         placeholder={String(min)}
-        onChange={(e) => onUpdate(Number(e.target.value) || 0)}
+        onChange={(e) => onUpdate(clampNumber(Number(e.target.value) || 0, max, min))}
         onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
-        onBlur={(e) => {
-          e.currentTarget.style.outlineColor = "transparent";
-          const v = parseInt(e.currentTarget.value, 10);
-          onUpdate(isNaN(v) ? min : Math.max(min, clamp(v, max)));
-        }}
+        onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
         onKeyDown={numericKeyDown}
         style={hexaTileInputStyle(theme)}
       />
@@ -646,7 +633,7 @@ export default function HexaMatrixSetupStep({
   if (!classDef) {
     return (
       <SetupStepFrame theme={theme} stepLabel={step.label} stepNumber={stepNumber} totalSteps={totalSteps}
-        description="Hexa Matrix data is not available for this class yet."
+        description="HEXA Matrix data is not available for this class yet."
         onBack={onBack} onNext={onNext} onFinish={onFinish}
       >
         <p style={{ margin: 0, fontSize: "0.85rem", color: theme.muted, fontWeight: 700 }}>

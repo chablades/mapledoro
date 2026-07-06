@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
-import { numericKeyDown } from "../../../../lib/inputUtils";
+import { numericKeyDown, clampNumber } from "../../../../lib/inputUtils";
 import { legionCrystalIconUrl } from "../../../../lib/mapleResource";
 import type { AppTheme } from "../../../../components/themes";
 import type { SetupStepDefinition } from "../steps";
@@ -455,14 +455,12 @@ export default function LegionArtifactsSetupStep({
         <div>
           <p style={sectionLabelStyle(theme)}>Artifact Level</p>
           <input
-            type="number"
-            className="no-spinner"
-            min={0}
-            max={MAX_ARTIFACT_LEVEL}
+            type="text"
+            inputMode="numeric"
             aria-label="Legion Artifact level"
             value={artifactLevel || ""}
             placeholder="0"
-            onChange={(e) => updateArtifactLevel(Math.max(0, Math.min(MAX_ARTIFACT_LEVEL, Math.floor(Number(e.target.value) || 0))))}
+            onChange={(e) => updateArtifactLevel(clampNumber(Math.floor(Number(e.target.value) || 0), MAX_ARTIFACT_LEVEL))}
             onKeyDown={numericKeyDown}
             style={levelInputStyle(theme, 56)}
           />

@@ -197,12 +197,13 @@ export default function OzRingsSetupStep({
     onChange(serializeOzRingsDraft({ ...draft, ...patch }));
   }
 
-  // Standard and Continuous are alternate builds, never both at once — clearing the
-  // other side's levels on switch means whatever's visible is exactly what gets saved,
-  // instead of stale numbers lingering out of view under the tab you're not on.
+  // Standard and Continuous are alternate builds — only the active one gets converted
+  // to stored/scouter data (see convertOzRingsDraftToStored), so switching tabs doesn't
+  // need to wipe the other side's levels. Keeping both lets you flip back and forth
+  // without re-entering numbers you already typed.
   function setRingMode(mode: OzRingMode) {
     if (mode === draft.ringMode) return;
-    onChange(serializeOzRingsDraft({ ringMode: mode, levels: {}, totallingStatValues: {} }));
+    update({ ringMode: mode });
   }
 
   function setLevel(ring: OzRingId, val: string) {

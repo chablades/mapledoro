@@ -128,7 +128,7 @@ function resolveHexaClassDef(classId: string | undefined) {
 function resolveHexaNotice(hasHexa: boolean, isLegacyClass: boolean): string | null {
   if (!hasHexa) {
     return isLegacyClass
-      ? "Hexa skills are not available. This job requires 5th job advancement to access the Hexa Matrix."
+      ? "Hexa skills are not available. This job requires 5th job advancement to access the HEXA Matrix."
       : "Hexa skills unlock at level 260.";
   }
   return null;
@@ -382,7 +382,7 @@ function MoreTab({ model, actions }: { model: PreviewPaneModel; actions: Preview
     { id: "v_matrix_flow", label: "V Matrix", desc: "Node slots and matrix details" },
     { id: "familiars_flow", label: "Familiars", desc: "Familiar presets and badge effects" },
     { id: "link_skills_flow", label: "Link Skills", desc: "Active link preset details" },
-    { id: "hexa_matrix_flow", label: "Hexa Matrix", desc: "Hexa skills and hexa stat details" },
+    { id: "hexa_matrix_flow", label: "HEXA Matrix", desc: "Hexa skills and hexa stat details" },
   ];
   return (
     <div style={{ display: "grid", gap: "0.55rem" }}>

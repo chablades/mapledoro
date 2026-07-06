@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { usePickerCoords } from "../hooks/usePickerCoords";
-import { numericKeyDown } from "../../../../lib/inputUtils";
+import { numericKeyDown, clampNumber } from "../../../../lib/inputUtils";
 import type { AppTheme } from "../../../../components/themes";
 import HoverTooltip from "../../../../components/HoverTooltip";
 import type { SetupStepDefinition } from "../steps";
@@ -586,17 +586,12 @@ function SymbolLevelTile({ area, level, maxLevel, theme, onLevel }: {
         </div>
       </HoverTooltip>
       <input
-        type="number"
-        className="no-spinner"
-        min={0}
-        max={maxLevel}
+        type="text"
+        inputMode="numeric"
         aria-label={`${area.name} symbol level`}
         value={level || ""}
         placeholder="0"
-        onChange={(e) => {
-          const raw = Math.floor(Number(e.target.value) || 0);
-          onLevel(Math.max(0, Math.min(maxLevel, raw)));
-        }}
+        onChange={(e) => onLevel(clampNumber(Math.floor(Number(e.target.value) || 0), maxLevel))}
         onKeyDown={numericKeyDown}
         style={symbolTileInputStyle(theme)}
       />

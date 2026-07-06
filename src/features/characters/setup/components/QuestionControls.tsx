@@ -6,7 +6,7 @@
 "use client";
 
 import { Fragment, type CSSProperties } from "react";
-import { numericKeyDown } from "../../../../lib/inputUtils";
+import { numericKeyDown, sanitizeDigitsInput, clampNumber } from "../../../../lib/inputUtils";
 import type { AppTheme } from "../../../../components/themes";
 import InfoTooltip, { type TooltipContent } from "./InfoTooltip";
 import { LEGION_ARTIFACT_FINAL_ATK_LIMIT } from "../data/scouterQuestionsData";
@@ -256,11 +256,12 @@ export function ChecklistGroup({ question, options, value, onToggle, theme, tool
 }
 
 // Keeps the Final Attack Skill % field digits-only and hard-capped at the artifact max,
-// so a user can never see an out-of-range value stick.
+// so a user can never see an out-of-range value stick. Empty stays empty rather than
+// snapping to "0" so an unanswered field still reads that way.
 function clampFinalAttackInput(raw: string): string {
-  const digits = raw.replace(/\D/g, "");
+  const digits = sanitizeDigitsInput(raw);
   if (digits === "") return "";
-  return String(Math.min(Number(digits), LEGION_ARTIFACT_FINAL_ATK_LIMIT));
+  return String(clampNumber(Number(digits), LEGION_ARTIFACT_FINAL_ATK_LIMIT));
 }
 
 // A labeled numeric row (mirrors WeaponAttField) for the Final Attack Skill artifact.
