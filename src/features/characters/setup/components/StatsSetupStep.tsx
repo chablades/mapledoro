@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { numericKeyDown, sanitizeDigitsInput, decimalKeyDown, sanitizeDecimalInput } from "../../../../lib/inputUtils";
+import { joinWithAnd } from "../../../../lib/textUtils";
 import type { CSSProperties } from "react";
 import Image from "next/image";
 import { resourceImageUrl } from "../../../../lib/mapleResource";
@@ -892,6 +893,26 @@ function isStatsSubstepComplete(
     && isStatsSubstepSane(draft, tripleIds, primaryStat, requireWeaponAtt);
 }
 
+// "X left" / "X over" — pulled out of the main component (rather than an inline
+// ternary) purely to keep its cognitive complexity under the sonarjs cap.
+function hyperStatBudgetSuffix(budget: number, spent: number): string {
+  const remaining = budget - spent;
+  return remaining < 0 ? `${Math.abs(remaining).toLocaleString()} over` : `${remaining.toLocaleString()} left`;
+}
+
+// Names EVERY over-budget preset, not just whichever isn't on screen right now — all
+// 3 presets persist to storage regardless of which is active, so all 3 must
+// independently stay within budget, and the message should say so even when the
+// currently-displayed preset is one of the offenders (mirrors HEXA Stat's node
+// message, which lists every offending node the same way).
+function hyperOverBudgetMessage(overBudgetPresetIndices: number[]): string {
+  if (overBudgetPresetIndices.length === 0) return "";
+  const labels = overBudgetPresetIndices.map((i) => `Preset ${i + 1}`);
+  const verb = labels.length > 1 ? "have" : "has";
+  const pronoun = labels.length > 1 ? "them" : "it";
+  return `${joinWithAnd(labels)} ${verb} used more points than you have at this level. Fix ${pronoun} to continue.`;
+}
+
 function statsSubstepDescription(isScouter: boolean): string {
   if (isScouter) {
     return "Follow the requirements below, then enter every stat exactly as shown in your Character Info window. Don't leave any blank, even if the value is 0.";
@@ -1230,10 +1251,19 @@ export default function StatsSetupStep({
     );
     const hyperHalf = Math.ceil(hyperCategories.length / 2);
     const hyperCols = [hyperCategories.slice(0, hyperHalf), hyperCategories.slice(hyperHalf)];
+    const hyperCategoryIds = hyperCategories.map((cat) => cat.id);
     const activeHyperPreset = hyper.presets[hyper.activePreset] ?? {};
-    const hyperSpent = hyperStatPresetSpent(activeHyperPreset, hyperCategories.map((cat) => cat.id));
+    const hyperSpent = hyperStatPresetSpent(activeHyperPreset, hyperCategoryIds);
     const hyperBudget = hyperStatBudget(characterLevel);
     const hyperOverspent = hyperSpent > hyperBudget;
+    // All 3 presets persist to storage regardless of which is active, so Continue must
+    // stay blocked if ANY preset is over budget — otherwise switching to a valid preset
+    // silently bypasses the check while an overspent one is still saved (same class of
+    // bug as HEXA Stat's node/preset check).
+    const overBudgetPresetIndices = hyper.presets.reduce<number[]>((acc, p, i) => (
+      hyperStatPresetSpent(p, hyperCategoryIds) > hyperBudget ? [...acc, i] : acc
+    ), []);
+    const anyPresetOverBudget = overBudgetPresetIndices.length > 0;
     return (
       <div key={2} className="stats-hyper-root" style={substepAnimStyle}>
       <style>{`
@@ -1256,13 +1286,13 @@ export default function StatsSetupStep({
         onNext={() => goToSubstep(innerAbilitySubstep)}
         onFinish={onFinish}
         nextLabel="Continue"
-        nextDisabled={hyperOverspent}
+        nextDisabled={anyPresetOverBudget}
       >
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.5rem" }}>
           <HyperPresetBar theme={theme} active={hyper.activePreset} onSwitch={switchHyperPreset} />
           {Number.isFinite(hyperBudget) && (
             <span style={{ fontSize: "0.78rem", fontWeight: 800, color: hyperOverspent ? "#dc2626" : theme.muted, marginBottom: 12 }}>
-              {hyperSpent.toLocaleString()} / {hyperBudget.toLocaleString()} points used
+              {hyperSpent.toLocaleString()} / {hyperBudget.toLocaleString()} points used ({hyperStatBudgetSuffix(hyperBudget, hyperSpent)})
             </span>
           )}
         </div>
@@ -1275,9 +1305,9 @@ export default function StatsSetupStep({
             </div>
           ))}
         </div>
-        {hyperOverspent && (
+        {anyPresetOverBudget && (
           <p style={{ margin: "0.5rem 0 0", fontSize: "0.78rem", fontWeight: 700, color: theme.muted }}>
-            You&apos;ve used more points than you have at this level. Double-check your allocations above to continue.
+            {hyperOverBudgetMessage(overBudgetPresetIndices)}
           </p>
         )}
       </SetupStepFrame>

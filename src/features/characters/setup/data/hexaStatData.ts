@@ -40,6 +40,16 @@ export function hexaStatHasData(nodes: HexaStatNode[]): boolean {
   return nodes.some((n) => n.presets.some(slotHasData));
 }
 
+// A node levels up 20 times total (each level-up adds +1 to one of its 3 stat lines),
+// so the 3 lines' levels can never sum past 20 even though each line individually caps
+// at 10 (e.g. 10/10/0 is the in-game max for two lines, 10/10/10 is impossible).
+export const HEXA_STAT_NODE_MAX_LEVEL = 20;
+
+/** Sum of a node preset's 3 stat-line levels (main + both alt), for the 20-level node cap. */
+export function hexaStatSlotLevelSum(slot: HexaStatSlot): number {
+  return slot.main.level + slot.alt[0].level + slot.alt[1].level;
+}
+
 /** Labels for the two dynamic options — pass the result of getMainStatLabel / getAttackLabel. */
 export const HEXA_STAT_OPTIONS: { value: HexaStatType; label: string }[] = [
   { value: "mainStat",       label: "Main Stat" },   // replaced at render time

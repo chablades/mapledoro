@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { numericKeyDown, clampNumber } from "../../../../lib/inputUtils";
+import { joinWithAnd } from "../../../../lib/textUtils";
 import { useKeyboardListNav } from "../../../../lib/useKeyboardListNav";
 import Image from "next/image";
 import type { AppTheme } from "../../../../components/themes";
@@ -13,7 +14,7 @@ import { findClassById, COMMON_SKILLS } from "../../../../features/tools/hexa-sk
 import { resourceImageUrl } from "../../../../lib/mapleResource";
 import { getClassDataByNexonJobName } from "../data/classSkillData";
 import type { HexaStatEntry, HexaStatSlot, HexaStatNode } from "../data/hexaStatData";
-import { HEXA_STAT_OPTIONS, getHexaStatBonus, getMainStatLabel, getAttackLabel } from "../data/hexaStatData";
+import { HEXA_STAT_OPTIONS, HEXA_STAT_NODE_MAX_LEVEL, getHexaStatBonus, getMainStatLabel, getAttackLabel, hexaStatSlotLevelSum } from "../data/hexaStatData";
 import { readCharacterToolData } from "../../../../features/tools/characterToolStorage";
 import SetupStepFrame from "./SetupStepFrame";
 import { HexaSkillIcon } from "../../../../components/ResourceImage";
@@ -39,11 +40,11 @@ interface HexaMatrixSetupStepProps {
 }
 
 const MAX_LEVEL = 30;
-// TODO: update with actual Hexa Stat entry max level once confirmed
 const MAX_STAT_ENTRY_LEVEL = 10;
 
 // Each HEXA Stat node holds two presets in-game: an active and a stored "saved" config.
 const PRESET_LABELS = ["Active", "Stored"] as const;
+const NODE_LABELS = ["I", "II", "III"] as const;
 
 // hexa-skill ids from manifests/v268/hexa-skill.json (section: "hexaStat")
 const HEXA_STAT_DEFS: HexaSkillDef[] = [
@@ -143,6 +144,32 @@ function isSlotEmpty(slot: HexaStatSlot): boolean {
 
 function isNodeEmpty(node: HexaStatNode): boolean {
   return isSlotEmpty(node.presets[0]) && isSlotEmpty(node.presets[1]);
+}
+
+// Builds one condensed sentence naming every node with an over-limit preset, instead
+// of enumerating each (node, preset) pair individually (gets unreadable fast once more
+// than one node is affected). Groups by node — "both presets" when both are over,
+// otherwise names the one that is — and collapses to a single line if every node is
+// affected on both presets (worst case: nothing left to name, so just say "every node").
+function buildOverLimitMessage(hexaStat: [HexaStatNode, HexaStatNode, HexaStatNode]): string {
+  const perNode = hexaStat.map((node) => node.presets.map((p) => hexaStatSlotLevelSum(p) > HEXA_STAT_NODE_MAX_LEVEL));
+  const affectedIndices = perNode.reduce<number[]>((acc, presets, i) => (presets.some(Boolean) ? [...acc, i] : acc), []);
+  if (affectedIndices.length === 0) return "";
+
+  if (affectedIndices.length === 3 && affectedIndices.every((i) => perNode[i].every(Boolean))) {
+    return "Every HEXA Stat node has more than 20 total levels assigned across both presets. Fix them to continue.";
+  }
+
+  const labels = affectedIndices.map((i) => {
+    const [activeOver, storedOver] = perNode[i];
+    let suffix = `${PRESET_LABELS[0]} preset`;
+    if (activeOver && storedOver) suffix = "both presets";
+    else if (storedOver) suffix = `${PRESET_LABELS[1]} preset`;
+    return `HEXA Stat ${NODE_LABELS[i]} (${suffix})`;
+  });
+  const verb = labels.length > 1 ? "have" : "has";
+  const pronoun = labels.length > 1 ? "them" : "it";
+  return `${joinWithAnd(labels)} ${verb} more than 20 total levels assigned. Fix ${pronoun} to continue.`;
 }
 
 // Node 0 is always accessible (HEXA Matrix implies 6th job). Nodes 1 and 2 have character level gates.
@@ -753,6 +780,10 @@ export default function HexaMatrixSetupStep({
   const primaryStat = classData?.requiredStats[0] ?? "";
   const mainStatLabel = getMainStatLabel(classData?.id ?? "", primaryStat);
   const attackLabel = getAttackLabel(primaryStat);
+  const slotLevelSum = hexaStatSlotLevelSum(slot);
+  const slotOverLimit = slotLevelSum > HEXA_STAT_NODE_MAX_LEVEL;
+  const overLimitMessage = buildOverLimitMessage(hexaStat);
+  const anyNodeOverLimit = overLimitMessage !== "";
 
   function setSlot(s: HexaStatSlot) {
     const next: [HexaStatNode, HexaStatNode, HexaStatNode] = [hexaStat[0], hexaStat[1], hexaStat[2]];
@@ -774,6 +805,7 @@ export default function HexaMatrixSetupStep({
         substepIndex={substep} substepCount={substepCount}
         description="Set your HEXA Stat nodes."
         onBack={() => goToSubstep(0)} onNext={onNext} onFinish={onFinish}
+        nextDisabled={anyNodeOverLimit}
       >
         <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
 
@@ -815,26 +847,31 @@ export default function HexaMatrixSetupStep({
             })}
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
-            <span style={{
-              fontSize: "0.75rem", fontWeight: 800, color: theme.muted,
-              letterSpacing: "0.05em", textTransform: "uppercase",
-            }}>
-              Preset
-            </span>
-            <div style={{
-              display: "flex", gap: "3px", padding: "3px",
-              border: `1px solid ${theme.border}`, borderRadius: "9px",
-            }}>
-              {PRESET_LABELS.map((label, p) => {
-                const isActive = activePreset === p;
-                return (
-                  <button key={label} type="button" onClick={() => setActivePreset(p)} style={presetToggleButtonStyle(theme, isActive)}>
-                    {label}
-                  </button>
-                );
-              })}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.6rem" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+              <span style={{
+                fontSize: "0.75rem", fontWeight: 800, color: theme.muted,
+                letterSpacing: "0.05em", textTransform: "uppercase",
+              }}>
+                Preset
+              </span>
+              <div style={{
+                display: "flex", gap: "3px", padding: "3px",
+                border: `1px solid ${theme.border}`, borderRadius: "9px",
+              }}>
+                {PRESET_LABELS.map((label, p) => {
+                  const isActive = activePreset === p;
+                  return (
+                    <button key={label} type="button" onClick={() => setActivePreset(p)} style={presetToggleButtonStyle(theme, isActive)}>
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
+            <span style={{ fontSize: "0.78rem", fontWeight: 800, color: slotOverLimit ? "#dc2626" : theme.muted }}>
+              {slotLevelSum} / {HEXA_STAT_NODE_MAX_LEVEL} levels used
+            </span>
           </div>
 
           <div>
@@ -861,6 +898,12 @@ export default function HexaMatrixSetupStep({
               ))}
             </div>
           </div>
+
+          {anyNodeOverLimit && (
+            <p style={{ margin: 0, fontSize: "0.78rem", fontWeight: 700, color: theme.muted }}>
+              {overLimitMessage}
+            </p>
+          )}
 
         </div>
       </SetupStepFrame>
