@@ -215,15 +215,20 @@ export default function OzRingsSetupStep({
   }
 
   const totallingLevel = Number.parseInt(draft.levels.totalling ?? "", 10);
-  const showTotallingStats = draft.ringMode === "standard"
-    && Number.isFinite(totallingLevel) && totallingLevel > 0 && ozInfo.totallingStats.length > 0;
+  const totallingStatsEntered = Number.isFinite(totallingLevel) && totallingLevel > 0 && ozInfo.totallingStats.length > 0;
+  const showTotallingStats = draft.ringMode === "standard" && totallingStatsEntered;
   // A value that's clearly wrong (same threshold as the warning bubble) shouldn't be
-  // submittable, in any flow — this is the only gate on this step; blank stats stay
-  // fine everywhere.
-  const hasInsaneTotallingStat = showTotallingStats && ozInfo.totallingStats.some((stat) => {
-    const raw = draft.totallingStatValues[stat]?.trim();
-    return Boolean(raw) && Number(raw) >= TOTALLING_STAT_WARN_AT;
-  });
+  // submittable, in any flow — checked off the draft data itself (not `showTotallingStats`)
+  // so switching to the Continuous tab can't hide a bad Standard-side value past this gate;
+  // this is the only gate on this step, blank stats stay fine everywhere.
+  const insaneTotallingStatCount = totallingStatsEntered
+    ? ozInfo.totallingStats.filter((stat) => {
+        const raw = draft.totallingStatValues[stat]?.trim();
+        return Boolean(raw) && Number(raw) >= TOTALLING_STAT_WARN_AT;
+      }).length
+    : 0;
+  const hasInsaneTotallingStat = insaneTotallingStatCount > 0;
+  const flaggedValueWord = insaneTotallingStatCount > 1 ? "values" : "value";
 
   return (
     <SetupStepFrame
@@ -288,13 +293,15 @@ export default function OzRingsSetupStep({
             )}
           </>
         )}
-
-        {hasInsaneTotallingStat && (
-          <p style={{ margin: 0, fontSize: "0.78rem", fontWeight: 700, color: theme.muted }}>
-            Fix the flagged value above to continue.
-          </p>
-        )}
       </div>
+
+      {hasInsaneTotallingStat && (
+        <p style={{ margin: "0.75rem 0 0", fontSize: "0.78rem", fontWeight: 700, color: theme.muted }}>
+          {showTotallingStats
+            ? `Fix the flagged ${flaggedValueWord} above to continue.`
+            : `Switch to Standard ring setup and fix the flagged Totalling Ring ${flaggedValueWord} to continue.`}
+        </p>
+      )}
     </SetupStepFrame>
   );
 }

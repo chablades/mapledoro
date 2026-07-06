@@ -85,13 +85,10 @@ export function emptyOzRingsDraft(): OzRingsDraft {
 export function parseOzRingsDraft(value: string): OzRingsDraft {
   if (!value) return emptyOzRingsDraft();
   try {
-    // `usesContinuous` is the pre-rename shape (same 2 modes, just a bool instead of a
-    // union) — map it forward losslessly.
-    const parsed = JSON.parse(value) as Partial<OzRingsDraft> & { usesContinuous?: boolean };
+    const parsed = JSON.parse(value) as Partial<OzRingsDraft>;
     if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-      const ringMode: OzRingMode = parsed.ringMode ?? (parsed.usesContinuous ? "continuous" : "standard");
       return {
-        ringMode,
+        ringMode: parsed.ringMode ?? "standard",
         levels: parsed.levels ?? {},
         totallingStatValues: parsed.totallingStatValues ?? {},
       };
@@ -121,15 +118,12 @@ export function parseOzRingLevel(raw: string | undefined): number | null {
   return Math.min(n, OZ_RING_MAX_LEVEL);
 }
 
-const RINGS_BY_MODE: Record<OzRingMode, OzRingId[]> = {
-  standard: ["restraint", "weaponJump", "totalling"],
-  continuous: ["continuous"],
-};
+const ALL_RING_IDS: OzRingId[] = ["restraint", "weaponJump", "totalling", "continuous"];
 
-/** Stored ring levels for the rings relevant to the chosen mode. */
+/** Stored ring levels for every ring the user entered, regardless of active mode. */
 function collectStoredRingLevels(draft: OzRingsDraft): Record<string, number> {
   const out: Record<string, number> = {};
-  for (const ring of RINGS_BY_MODE[draft.ringMode]) {
+  for (const ring of ALL_RING_IDS) {
     const lvl = parseOzRingLevel(draft.levels[ring]);
     if (lvl !== null) out[ring] = lvl;
   }
@@ -148,13 +142,14 @@ function collectStoredTotallingStats(draft: OzRingsDraft): Record<string, number
 }
 
 /**
- * Converts a draft to its stored shape, keeping ONLY the rings relevant to the
- * chosen mode (continuous ⇒ just the continuous level; standard ⇒ the 3 rings +
- * Totalling stats when its level > 0). Returns null when nothing was entered.
+ * Converts a draft to its stored shape, keeping every ring level the user entered
+ * across both modes (not just the currently active one) plus Totalling stats when
+ * its level > 0. `ringMode` is stored only as a flag for which build is active.
+ * Returns null when nothing was entered.
  */
 export function convertOzRingsDraftToStored(draft: OzRingsDraft): StoredOzRings | null {
   const levels = collectStoredRingLevels(draft);
-  const totallingStats = draft.ringMode === "standard" && levels.totalling ? collectStoredTotallingStats(draft) : {};
+  const totallingStats = levels.totalling ? collectStoredTotallingStats(draft) : {};
   if (Object.keys(levels).length === 0 && Object.keys(totallingStats).length === 0) return null;
   return { ringMode: draft.ringMode, levels, totallingStats };
 }
