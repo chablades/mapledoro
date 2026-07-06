@@ -99,7 +99,7 @@ export function mainStatsForClass(requiredStats: readonly string[]): StatId[] {
 
 export type BoolBuffId =
   | "sayramElixir" | "collectorElixir" | "honorableElixir"
-  | "heroEcho" | "legionMight" | "masarayuGift" | "extremePotion"
+  | "heroEcho" | "legionMight" | "masarayuGift" | "extremePotion" | "extremeGreenPotion"
   | "mvpSuperpower" | "vipBuff" | "brightMoonlight" | "candiedApple"
   | "caretakerSupport" | "sparklingRedStar" | "maxedSacredSymbol"
   // Group A — pick one
@@ -108,6 +108,8 @@ export type BoolBuffId =
   | "onyxApple" | "tengusJudgement";
 
 export type BoolBuffIconType = { kind: "item"; id: string; shadow?: boolean } | { kind: "skill"; id: string };
+
+export const EXTREME_GREEN_POTION_ITEM_ID = "02023126";
 
 export interface BoolBuffEntry {
   id: BoolBuffId;
@@ -127,6 +129,9 @@ export const BOOL_BUFFS: readonly BoolBuffEntry[] = [
   { id: "collectorElixir",   name: "Collector's Elixir",             icon: { kind: "item",  id: "02024290" } },
   { id: "honorableElixir",   name: "Honorable Elixir",               icon: { kind: "item",  id: "02024304" } },
   { id: "extremePotion",     name: "Extreme Potion",                 icon: { kind: "item",  id: "02023125" } }, // icon resolved at render time
+  // Only rendered as its own tile for Hurricane classes (see isHurricaneClass); everyone else gets it
+  // layered onto the Extreme Potion tile instead (see buffSecondIconOverride in BuffsSetupStep.tsx).
+  { id: "extremeGreenPotion", name: "Extreme Green Potion",          icon: { kind: "item",  id: EXTREME_GREEN_POTION_ITEM_ID } },
   { id: "sparklingRedStar",  name: "Sparkling Red Star Potion",      icon: { kind: "item",  id: "02024174" }, secondIcon: { kind: "item", id: "02024175" } },
   // Advanced Stat Potion tile is inserted here at render time
   { id: "brightMoonlight",   name: "Bright Moonlight Potion",        icon: { kind: "item",  id: "02023136" } },
@@ -185,6 +190,19 @@ export function extremePotionIconId(stat: StatId): string {
 /** Extreme Potion label suffix resolved by class primary stat. */
 export function extremePotionLabel(stat: StatId): string {
   return stat === "int" ? "Extreme Blue Potion" : "Extreme Red Potion";
+}
+
+// Classes that don't run a fixed attack-speed stage the same way everyone else does, so they get
+// Extreme Green Potion as its own separate buff tile instead of it being folded into Extreme Potion.
+// Ren is deliberately excluded: some of her attacks are affected by Green Potion the normal way, so
+// she doesn't need the special-case split (Yuki, 2026-07-06) — revisit if Nexon changes this.
+const HURRICANE_JOB_NAMES = new Set<string>([
+  "Wild Hunter", "Bow Master", "Phantom", "Wind Archer", "Blaze Wizard", "Corsair",
+]);
+
+/** Whether a class gets a separate Extreme Green Potion tile instead of a merged one. */
+export function isHurricaneClass(nexonJobName: string): boolean {
+  return HURRICANE_JOB_NAMES.has(nexonJobName);
 }
 
 // ── Champion's Renown ────────────────────────────────────────────────────────

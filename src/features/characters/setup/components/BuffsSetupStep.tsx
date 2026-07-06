@@ -16,6 +16,7 @@ import {
   sanitizeGuildLevel, sanitizeRenownLevel, toggleBoolBuff,
   primaryStatForClass, mainStatsForClass, getStatPotionTiers, statAbbrev,
   extremePotionIconId, extremePotionLabel, heroEchoSkillId, heroEchoName,
+  isHurricaneClass, EXTREME_GREEN_POTION_ITEM_ID,
   type GuildBuffId, type BoolBuffId, type RenownStatId, type BoolBuffEntry,
   type StatId, type BoolBuffIconType,
 } from "../data/buffsData";
@@ -100,6 +101,13 @@ function buffIconOverride(id: BoolBuffId, primaryStat: StatId, jobName: string):
   return undefined;
 }
 
+// Non-Hurricane classes get Extreme Green Potion layered onto the Extreme Potion tile instead of
+// their own separate tile — see isHurricaneClass.
+function buffSecondIconOverride(id: BoolBuffId, jobName: string): BoolBuffIconType | undefined {
+  if (id === "extremePotion" && !isHurricaneClass(jobName)) return { kind: "item", id: EXTREME_GREEN_POTION_ITEM_ID };
+  return undefined;
+}
+
 // ── LeveledBuffTile ──────────────────────────────────────────────────────────
 
 function LeveledBuffTile({ skillId, name, level, max, onLevel, theme }: {
@@ -146,17 +154,18 @@ function renderIcon(icon: BoolBuffEntry["icon"], size: number, active: boolean) 
   );
 }
 
-function BoolBuffTile({ entry, active, onToggle, theme, iconOverride, label, ariaLabel }: {
+function BoolBuffTile({ entry, active, onToggle, theme, iconOverride, secondIconOverride, label, ariaLabel }: {
   entry: BoolBuffEntry;
   active: boolean;
   onToggle: () => void;
   theme: AppTheme;
   iconOverride?: { id: string; kind: "item"; shadow?: boolean } | { id: string; kind: "skill" };
+  secondIconOverride?: BoolBuffIconType;
   label?: ReactNode;
   ariaLabel?: string;
 }) {
   const icon = iconOverride ?? entry.icon;
-  const { secondIcon } = entry;
+  const secondIcon = secondIconOverride ?? entry.secondIcon;
   const resolvedAriaLabel = ariaLabel ?? entry.name;
   return (
     <HoverTooltip label={label ?? entry.name} theme={theme}>
@@ -219,9 +228,19 @@ function sparklingRedStarTooltip(theme: AppTheme): ReactNode {
   );
 }
 
+function extremePotionMergedTooltip(theme: AppTheme, primaryStat: StatId): ReactNode {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+      <span>{extremePotionLabel(primaryStat)}</span>
+      <span style={{ opacity: 0.6, fontSize: "0.8em", color: theme.muted }}>and</span>
+      <span>Extreme Green Potion</span>
+    </div>
+  );
+}
+
 function boolBuffLabel(id: BoolBuffEntry["id"], primaryStat: ReturnType<typeof primaryStatForClass>, theme: AppTheme, jobName: string): ReactNode | undefined {
   if (id === "heroEcho") return heroEchoName(jobName);
-  if (id === "extremePotion") return extremePotionLabel(primaryStat);
+  if (id === "extremePotion") return isHurricaneClass(jobName) ? extremePotionLabel(primaryStat) : extremePotionMergedTooltip(theme, primaryStat);
   if (id === "sparklingRedStar") return sparklingRedStarTooltip(theme);
   if (id === "maxedSacredSymbol") return (
     <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
@@ -270,7 +289,13 @@ export default function BuffsSetupStep({
   const statPotionActive = statPotionTier > 0;
   const statPotionTier10 = statTiers[9];
 
-  const ungroupedBools = BOOL_BUFFS.filter((b) => !b.group && (showMaxedSacredSymbol || b.id !== "maxedSacredSymbol"));
+  const isHurricane = isHurricaneClass(jobName);
+  const ungroupedBools = BOOL_BUFFS.filter((b) => {
+    if (b.group) return false;
+    if (b.id === "maxedSacredSymbol") return showMaxedSacredSymbol;
+    if (b.id === "extremeGreenPotion") return isHurricane;
+    return true;
+  });
   const statPotionInsertIdx = ungroupedBools.findIndex((b) => b.id === "sparklingRedStar") + 1;
 
   function toggleStatPotion() {
@@ -319,6 +344,7 @@ export default function BuffsSetupStep({
                 active={draft.bools[b.id] ?? false}
                 onToggle={() => toggleBool(b.id)}
                 iconOverride={buffIconOverride(b.id, primaryStat, jobName)}
+                secondIconOverride={buffSecondIconOverride(b.id, jobName)}
                 label={boolBuffLabel(b.id, primaryStat, theme, jobName)}
                 ariaLabel={b.id === "heroEcho" ? heroEchoName(jobName) : undefined}
                 theme={theme}
@@ -364,6 +390,7 @@ export default function BuffsSetupStep({
                 active={draft.bools[b.id] ?? false}
                 onToggle={() => toggleBool(b.id)}
                 iconOverride={buffIconOverride(b.id, primaryStat, jobName)}
+                secondIconOverride={buffSecondIconOverride(b.id, jobName)}
                 label={boolBuffLabel(b.id, primaryStat, theme, jobName)}
                 ariaLabel={b.id === "heroEcho" ? heroEchoName(jobName) : undefined}
                 theme={theme}
