@@ -4,6 +4,8 @@ import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 
 import { createPortal } from "react-dom";
 import { usePickerCoords } from "../hooks/usePickerCoords";
 import { numericKeyDown, clampNumber } from "../../../../lib/inputUtils";
+import { useKeyboardListNav } from "../../../../lib/useKeyboardListNav";
+import { searchAndRank } from "../../../../lib/searchMatch";
 import type { AppTheme } from "../../../../components/themes";
 import HoverTooltip from "../../../../components/HoverTooltip";
 import type { SetupStepDefinition } from "../steps";
@@ -161,10 +163,16 @@ const pickerSearchInputStyle = (theme: AppTheme, hasQuery: boolean): CSSProperti
   padding: "0.45rem 0.6rem", outline: "none", boxSizing: "border-box",
 });
 
-const pickerItemStyle = (theme: AppTheme, isCurrent: boolean): CSSProperties => ({
+function pickerItemBackground(theme: AppTheme, isCurrent: boolean, isHighlighted: boolean): string {
+  if (isCurrent) return `${theme.accent}33`;
+  if (isHighlighted) return `${theme.accent}22`;
+  return "transparent";
+}
+
+const pickerItemStyle = (theme: AppTheme, isCurrent: boolean, isHighlighted: boolean): CSSProperties => ({
   display: "flex", alignItems: "center", gap: "0.45rem",
   width: "100%", padding: "0.3rem 0.6rem",
-  background: isCurrent ? `${theme.accent}33` : "transparent",
+  background: pickerItemBackground(theme, isCurrent, isHighlighted),
   border: "none", borderBottom: `1px solid ${theme.border}`,
   cursor: "pointer", fontFamily: "inherit",
   fontSize: "0.8rem", fontWeight: 600, color: theme.text, textAlign: "left",
@@ -239,17 +247,9 @@ function serialiseDraft(draft: EquipmentDraft): string {
 
 // ── Item search ─────────────────────────────────────────────────────────────
 
-function normalize(s: string) { return s.toLowerCase().replace(/[^a-z0-9]/g, ""); }
-
 function filterItems(items: CatalogItem[], query: string): CatalogItem[] {
   if (!query.trim()) return items.slice(0, SEARCH_LIMIT);
-  const tokens = query.trim().split(/\s+/).flatMap((t) => { const n = normalize(t); return n ? [n] : []; });
-  const out: CatalogItem[] = [];
-  for (const item of items) {
-    if (out.length >= SEARCH_LIMIT) break;
-    if (tokens.every((t) => normalize(item.name).includes(t))) out.push(item);
-  }
-  return out;
+  return searchAndRank(items, query, (item) => item.name).slice(0, SEARCH_LIMIT);
 }
 
 /** Whether a class can equip an item. mask 0 = no filter; items without reqJob are universal. */
@@ -379,6 +379,22 @@ function ItemPicker({ slot, current, theme, files, itemFilter, maxLevel, exclude
     items?.some((it) => it.id === presetBaseItem.id && it.onlyEquip)
   );
 
+  const { highlightedIndex, onKeyDown: navKeyDown, itemRef } = useKeyboardListNav({
+    items: displayed ?? [],
+    resetKey: query,
+    onSelect: (item) => { onSelect({ id: item.id, name: item.name }); onClose(); },
+  });
+
+  function handleSearchKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === "Backspace" && query === "" && current) {
+      e.preventDefault();
+      onSelect(null);
+      onClose();
+      return;
+    }
+    navKeyDown(e);
+  }
+
   return (
     <div style={{ border: `1px solid ${theme.accent}`, borderRadius: 10, background: theme.panel, boxShadow: "0 4px 20px rgba(0,0,0,0.3)", overflow: "hidden" }}>
       {current && (
@@ -419,6 +435,7 @@ function ItemPicker({ slot, current, theme, files, itemFilter, maxLevel, exclude
         value={query}
         placeholder={`Search ${SLOT_LABELS[slot]}…`}
         onChange={(e) => setQuery(e.target.value)}
+        onKeyDown={handleSearchKeyDown}
         style={pickerSearchInputStyle(theme, Boolean(query))}
       />
       {(query || showAllWhenEmpty) && (
@@ -433,14 +450,16 @@ function ItemPicker({ slot, current, theme, files, itemFilter, maxLevel, exclude
               No results
             </p>
           )}
-          {displayed?.map((item) => {
+          {displayed?.map((item, i) => {
             const isCurrent = item.id === current?.id;
+            const isHighlighted = i === highlightedIndex;
             return (
               <button
                 key={item.id}
+                ref={itemRef(i)}
                 type="button"
                 onClick={() => { onSelect({ id: item.id, name: item.name }); onClose(); }}
-                style={pickerItemStyle(theme, isCurrent)}
+                style={pickerItemStyle(theme, isCurrent, isHighlighted)}
                 onMouseEnter={(e) => { if (!isCurrent) e.currentTarget.style.background = `${theme.accent}22`; }}
                 onMouseLeave={(e) => { if (!isCurrent) e.currentTarget.style.background = "transparent"; }}
               >

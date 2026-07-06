@@ -3,6 +3,8 @@
 import { createPortal } from "react-dom";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { usePickerCoords } from "../hooks/usePickerCoords";
+import { useKeyboardListNav } from "../../../../lib/useKeyboardListNav";
+import { searchAndRank } from "../../../../lib/searchMatch";
 import type { AppTheme } from "../../../../components/themes";
 import {
   IA_TIER_LABELS, IA_TIER_ORDER, allowedLineTiers, getLinesForIATier, normalizeIA,
@@ -21,14 +23,6 @@ const IA_TIER_COLORS: Record<IATier, SwatchColor> = {
 };
 
 const IA_PICKER_WIDTH = 240;
-
-function normalize(s: string) { return s.toLowerCase().replace(/[^a-z0-9]/g, ""); }
-
-function matchesIAQuery(candidate: string, query: string): boolean {
-  const norm = normalize(candidate);
-  const tokens = query.trim().split(/\s+/).flatMap((t) => { const n = normalize(t); return n ? [n] : []; });
-  return tokens.length > 0 && tokens.every((t) => norm.includes(t));
-}
 
 const iaSearchInputStyle: CSSProperties = {
   width: "100%",
@@ -68,15 +62,21 @@ const iaGradeButtonStyle = (theme: AppTheme, c: SwatchColor | null): CSSProperti
   transition: "border-color 0.15s ease, background 0.15s ease",
 });
 
-const iaGradeOptionStyle = (theme: AppTheme, tc: SwatchColor, active: boolean): CSSProperties => ({
+function iaGradeOptionBackground(tc: SwatchColor, active: boolean, isHighlighted: boolean): string {
+  if (active) return tc.border;
+  if (isHighlighted) return `${tc.border}33`;
+  return "transparent";
+}
+
+const iaGradeOptionStyle = (theme: AppTheme, tc: SwatchColor, active: boolean, isHighlighted: boolean): CSSProperties => ({
   display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "0.45rem 0.6rem",
-  background: active ? tc.border : "transparent", color: active ? "#fff" : theme.text,
+  background: iaGradeOptionBackground(tc, active, isHighlighted), color: active ? "#fff" : theme.text,
   border: "none", borderBottom: `1px solid ${theme.border}`, cursor: "pointer",
   fontFamily: "inherit", fontWeight: 800, fontSize: "0.8rem", textAlign: "left",
 });
 
-const iaLineOptionStyle = (theme: AppTheme): CSSProperties => ({
-  display: "block", width: "100%", padding: "0.3rem 0.5rem", background: "transparent",
+const iaLineOptionStyle = (theme: AppTheme, isHighlighted: boolean): CSSProperties => ({
+  display: "block", width: "100%", padding: "0.3rem 0.5rem", background: isHighlighted ? `${theme.accent}22` : "transparent",
   border: "none", borderBottom: `1px solid ${theme.border}`, cursor: "pointer",
   fontFamily: "inherit", fontSize: "0.75rem", fontWeight: 600, color: theme.text, textAlign: "left",
 });
@@ -150,11 +150,34 @@ function IAGradeHeader({ grade, openId, theme, onToggle, onClose, onSelect, onCl
   const isOpen = openId === "ia-grade";
   const { ref: wrapperRef, portalRef } = usePickerCoords(isOpen, IA_PICKER_WIDTH);
   const c = grade ? IA_TIER_COLORS[grade] : null;
+
+  const { highlightedIndex, onKeyDown: navKeyDown, itemRef } = useKeyboardListNav({
+    items: IA_TIER_ORDER,
+    resetKey: isOpen,
+    onSelect: (t) => { onSelect(t); onClose(); },
+  });
+
+  function handleTriggerKeyDown(e: React.KeyboardEvent) {
+    if (e.key === "Escape") { onClose(); return; }
+    if ((e.key === "Backspace" || e.key === "Delete") && grade) {
+      e.preventDefault();
+      onClear();
+      onClose();
+      return;
+    }
+    if (!isOpen) {
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); onToggle(); }
+      return;
+    }
+    navKeyDown(e);
+  }
+
   return (
     <div ref={wrapperRef} style={{ position: "relative" }}>
       <button
         type="button"
         onClick={(e) => { e.stopPropagation(); onToggle(); }}
+        onKeyDown={handleTriggerKeyDown}
         onMouseEnter={(e) => { e.currentTarget.style.borderColor = theme.accent; if (!c) e.currentTarget.style.background = theme.panel; }}
         onMouseLeave={(e) => { e.currentTarget.style.borderColor = c ? c.border : theme.border; if (!c) e.currentTarget.style.background = theme.bg; }}
         style={iaGradeButtonStyle(theme, c)}
@@ -176,12 +199,12 @@ function IAGradeHeader({ grade, openId, theme, onToggle, onClose, onSelect, onCl
               — Clear —
             </button>
           )}
-          {IA_TIER_ORDER.map((t) => {
+          {IA_TIER_ORDER.map((t, i) => {
             const tc = IA_TIER_COLORS[t];
             const active = grade === t;
             return (
-              <button key={t} type="button" onClick={() => { onSelect(t); onClose(); }}
-                style={iaGradeOptionStyle(theme, tc, active)}
+              <button key={t} ref={itemRef(i)} type="button" onClick={() => { onSelect(t); onClose(); }}
+                style={iaGradeOptionStyle(theme, tc, active, i === highlightedIndex)}
                 onMouseEnter={(e) => { if (!active) { e.currentTarget.style.background = tc.border; e.currentTarget.style.color = "#fff"; } }}
                 onMouseLeave={(e) => { if (!active) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = theme.text; } }}>
                 <span style={{ width: 10, height: 10, borderRadius: 3, background: tc.border, flexShrink: 0 }} />
@@ -207,7 +230,24 @@ function IALineOptions({ tier, currentValue, theme, onPick }: {
   const inputRef = useRef<HTMLInputElement>(null);
   useEffect(() => { inputRef.current?.focus(); }, []);
   const options = getLinesForIATier(tier).filter((l) => l !== currentValue);
-  const filtered = query ? options.filter((l) => matchesIAQuery(l, query)) : options;
+  const filtered = query ? searchAndRank(options, query, (l) => l) : options;
+
+  const { highlightedIndex, onKeyDown: navKeyDown, itemRef } = useKeyboardListNav({
+    items: filtered,
+    resetKey: query,
+    onSelect: (line) => onPick(line),
+  });
+
+  function handleSearchKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    e.stopPropagation();
+    if (e.key === "Backspace" && query === "" && currentValue) {
+      e.preventDefault();
+      onPick("");
+      return;
+    }
+    navKeyDown(e);
+  }
+
   return (
     <>
       {currentValue && (
@@ -218,13 +258,13 @@ function IALineOptions({ tier, currentValue, theme, onPick }: {
       )}
       <div style={{ padding: "0.3rem 0.4rem", borderBottom: `1px solid ${theme.border}` }}>
         <input ref={inputRef} type="text" aria-label="Search Inner Ability lines" value={query} placeholder="Search…"
-          onChange={(e) => setQuery(e.target.value)} onKeyDown={(e) => e.stopPropagation()}
+          onChange={(e) => setQuery(e.target.value)} onKeyDown={handleSearchKeyDown}
           style={{ ...iaSearchInputStyle, borderColor: theme.border, background: theme.bg, color: theme.text }} />
       </div>
       <div style={{ maxHeight: 200, overflowY: "auto" }}>
-        {filtered.map((line) => (
-          <button key={line} type="button" onClick={() => onPick(line)}
-            style={iaLineOptionStyle(theme)}
+        {filtered.map((line, i) => (
+          <button key={line} ref={itemRef(i)} type="button" onClick={() => onPick(line)}
+            style={iaLineOptionStyle(theme, i === highlightedIndex)}
             onMouseEnter={(e) => { e.currentTarget.style.background = `${theme.accent}22`; }}
             onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}>
             {line}

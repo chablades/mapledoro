@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { numericKeyDown, clampNumber } from "../../../../lib/inputUtils";
+import { useKeyboardListNav } from "../../../../lib/useKeyboardListNav";
 import Image from "next/image";
 import type { AppTheme } from "../../../../components/themes";
 import HoverTooltip from "../../../../components/HoverTooltip";
@@ -99,11 +100,24 @@ const statDropdownMenuStyle = (theme: AppTheme): React.CSSProperties => ({
   boxShadow: "0 4px 16px rgba(0,0,0,0.25)",
 });
 
-const statDropdownOptionStyle = (theme: AppTheme, isSelected: boolean, isDisabled: boolean): React.CSSProperties => ({
+const statDropdownClearRowStyle = (theme: AppTheme): React.CSSProperties => ({
+  display: "block", width: "100%", padding: "0.3rem 0.6rem",
+  background: "transparent", border: "none", borderBottom: `1px solid ${theme.border}`,
+  cursor: "pointer", fontFamily: "inherit",
+  fontSize: "0.75rem", fontWeight: 600, color: theme.muted, textAlign: "left",
+});
+
+function statDropdownOptionBackground(theme: AppTheme, isSelected: boolean, isHighlighted: boolean): string {
+  if (isSelected) return `${theme.accent}33`;
+  if (isHighlighted) return `${theme.accent}22`;
+  return "transparent";
+}
+
+const statDropdownOptionStyle = (theme: AppTheme, isSelected: boolean, isDisabled: boolean, isHighlighted: boolean): React.CSSProperties => ({
   display: "block", width: "100%", textAlign: "left",
   padding: "0.35rem 0.6rem", border: "none",
   borderBottom: `1px solid ${theme.border}`,
-  background: isSelected ? `${theme.accent}33` : "transparent",
+  background: statDropdownOptionBackground(theme, isSelected, isHighlighted),
   color: isDisabled ? theme.muted : theme.text,
   fontFamily: "inherit", fontSize: "0.82rem", fontWeight: 700,
   cursor: isDisabled ? "default" : "pointer",
@@ -372,7 +386,29 @@ function StatDropdown({ value, options, onChange, theme, isError, disabledTypes 
     return () => document.removeEventListener("mousedown", onMouseDown);
   }, [open]);
 
+  const { highlightedIndex, onKeyDown: navKeyDown, itemRef } = useKeyboardListNav({
+    items: options,
+    resetKey: open,
+    isDisabled: (o) => disabledTypes.has(o.value),
+    onSelect: (o) => { onChange(o.value); setOpen(false); },
+  });
+
   const selected = options.find((o) => o.value === value);
+
+  function handleTriggerKeyDown(e: React.KeyboardEvent) {
+    if (e.key === "Escape") { setOpen(false); return; }
+    if ((e.key === "Backspace" || e.key === "Delete") && selected) {
+      e.preventDefault();
+      onChange("");
+      setOpen(false);
+      return;
+    }
+    if (!open) {
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); setOpen(true); }
+      return;
+    }
+    navKeyDown(e);
+  }
   const triggerStyle: React.CSSProperties = {
     display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.4rem",
     flex: 1, minWidth: 0, width: "100%",
@@ -390,7 +426,7 @@ function StatDropdown({ value, options, onChange, theme, isError, disabledTypes 
       <button
         type="button"
         onClick={() => setOpen((p) => !p)}
-        onKeyDown={(e) => { if (e.key === "Escape") setOpen(false); }}
+        onKeyDown={handleTriggerKeyDown}
         onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
         onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
         style={triggerStyle}
@@ -402,16 +438,27 @@ function StatDropdown({ value, options, onChange, theme, isError, disabledTypes 
       </button>
       {open && (
         <div style={statDropdownMenuStyle(theme)}>
-          {options.map((o) => {
+          {selected && (
+            <button
+              type="button"
+              onClick={() => { onChange(""); setOpen(false); }}
+              style={statDropdownClearRowStyle(theme)}
+            >
+              — Clear —
+            </button>
+          )}
+          {options.map((o, i) => {
             const isDisabled = disabledTypes.has(o.value);
             const isSelected = o.value === value;
+            const isHighlighted = i === highlightedIndex;
             return (
               <button
                 key={o.value}
+                ref={itemRef(i)}
                 type="button"
                 disabled={isDisabled}
                 onClick={() => { onChange(o.value); setOpen(false); }}
-                style={statDropdownOptionStyle(theme, isSelected, isDisabled)}
+                style={statDropdownOptionStyle(theme, isSelected, isDisabled, isHighlighted)}
                 onMouseEnter={(e) => { if (!isDisabled && !isSelected) e.currentTarget.style.background = `${theme.accent}22`; }}
                 onMouseLeave={(e) => { if (!isDisabled && !isSelected) e.currentTarget.style.background = "transparent"; }}
               >
@@ -453,6 +500,13 @@ function HexaStatRow({ entry, onUpdate, theme, isPrimary, classId, mainStatLabel
   disabledTypes: Set<string>;
 }) {
   const bonus = getHexaStatBonus(entry.type, entry.level, isPrimary, classId);
+  // Reserve the bonus column's width to the widest value any stat type could show at
+  // MAX_STAT_ENTRY_LEVEL, unconditionally, so neither picking a stat nor typing a level
+  // ever grows the text and shrinks the dropdown beside it.
+  const maxBonusWidth = HEXA_STAT_OPTIONS.reduce((max, o) => {
+    const b = getHexaStatBonus(o.value, MAX_STAT_ENTRY_LEVEL, isPrimary, classId);
+    return Math.max(max, b.length);
+  }, 0);
   const statOptions = HEXA_STAT_OPTIONS.map((o) => {
     const dynamicLabels: Record<string, string> = { mainStat: mainStatLabel, attackPower: attackLabel };
     return { value: o.value, label: dynamicLabels[o.value] ?? o.label };
@@ -469,11 +523,12 @@ function HexaStatRow({ entry, onUpdate, theme, isPrimary, classId, mainStatLabel
             isError={isError}
             disabledTypes={disabledTypes}
           />
-          {bonus && (
-            <span style={{ fontSize: "0.8rem", fontWeight: 700, color: theme.accent, flexShrink: 0 }}>
-              {bonus}
-            </span>
-          )}
+          <span style={{
+            fontSize: "0.8rem", fontWeight: 700, color: theme.accent, flexShrink: 0,
+            width: `${maxBonusWidth}ch`, textAlign: "right", fontVariantNumeric: "tabular-nums",
+          }}>
+            {bonus}
+          </span>
         </div>
         <LevelInput value={entry.level} onChange={(v) => onUpdate({ ...entry, level: v })} theme={theme} max={MAX_STAT_ENTRY_LEVEL} label="Stat level" />
       </div>

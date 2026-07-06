@@ -3,6 +3,8 @@
 import { useMemo, useRef, useState, useEffect, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import { usePickerCoords } from "../hooks/usePickerCoords";
+import { useKeyboardListNav } from "../../../../lib/useKeyboardListNav";
+import { searchAndRank } from "../../../../lib/searchMatch";
 import HoverTooltip from "../../../../components/HoverTooltip";
 import type { AppTheme } from "../../../../components/themes";
 import type { SetupStepDefinition } from "../steps";
@@ -69,15 +71,6 @@ const TIER_COLORS: Record<FamiliarTier, { bg: string; border: string; text: stri
   legendary: { bg: "#001e10", border: "#20a040", text: "#4ade80" },
 };
 
-function normalize(s: string): string {
-  return s.toLowerCase().replace(/[^a-z0-9]/g, "");
-}
-
-function matchesQuery(candidate: string, query: string): boolean {
-  const norm = normalize(candidate);
-  const tokens = query.trim().split(/\s+/).flatMap((t) => { const n = normalize(t); return n ? [n] : []; });
-  return tokens.length > 0 && tokens.every((t) => norm.includes(t));
-}
 
 // ── Parse / patch helpers ──────────────────────────────────────────────────
 
@@ -197,9 +190,9 @@ const clearRowStyle = (theme: AppTheme): CSSProperties => ({
   fontSize: "0.75rem", fontWeight: 600, color: theme.muted, textAlign: "left",
 });
 
-const lineOptionStyle = (theme: AppTheme): CSSProperties => ({
+const lineOptionStyle = (theme: AppTheme, isHighlighted: boolean): CSSProperties => ({
   display: "block", width: "100%", padding: "0.3rem 0.5rem",
-  background: "transparent",
+  background: isHighlighted ? `${theme.accent}22` : "transparent",
   border: "none", borderBottom: `1px solid ${theme.border}`,
   cursor: "pointer", fontFamily: "inherit",
   fontSize: "0.75rem", fontWeight: 600, color: theme.text, textAlign: "left",
@@ -212,11 +205,12 @@ const tierBackButtonStyle = (theme: AppTheme): CSSProperties => ({
   fontWeight: 700, padding: "0.1rem 0", marginBottom: 2,
 });
 
-const tierOptionStyle = (c: TierColor): CSSProperties => ({
+const tierOptionStyle = (theme: AppTheme, c: TierColor, isHighlighted: boolean): CSSProperties => ({
   background: c.bg, border: `1px solid ${c.border}`, color: c.text,
   borderRadius: 6, padding: "0.3rem 0.6rem",
   fontWeight: 700, fontSize: "0.8rem", fontFamily: "inherit",
   cursor: "pointer", textAlign: "left",
+  boxShadow: isHighlighted ? `0 0 0 2px ${theme.accent}` : "none",
 });
 
 const selectedFamiliarRowStyle = (theme: AppTheme): CSSProperties => ({
@@ -231,18 +225,18 @@ const tierBadgeStyle = (c: TierColor): CSSProperties => ({
   background: c.bg, border: `1px solid ${c.border}`, color: c.text,
 });
 
-const familiarOptionStyle = (theme: AppTheme): CSSProperties => ({
+const familiarOptionStyle = (theme: AppTheme, isHighlighted: boolean): CSSProperties => ({
   display: "flex", alignItems: "center", gap: 8,
   width: "100%", padding: "0.3rem 0.6rem",
-  background: "transparent", border: "none",
+  background: isHighlighted ? `${theme.accent}22` : "transparent", border: "none",
   borderBottom: `1px solid ${theme.border}`,
   cursor: "pointer", fontFamily: "inherit",
 });
 
-const badgeOptionStyle = (theme: AppTheme): CSSProperties => ({
+const badgeOptionStyle = (theme: AppTheme, isHighlighted: boolean): CSSProperties => ({
   display: "flex", alignItems: "center", gap: 6,
   width: "100%", padding: "0.3rem 0.6rem",
-  background: "transparent", border: "none",
+  background: isHighlighted ? `${theme.accent}22` : "transparent", border: "none",
   borderBottom: `1px solid ${theme.border}`,
   cursor: "pointer", fontFamily: "inherit",
   textAlign: "left",
@@ -322,7 +316,7 @@ function LinePicker({ id, openId, onToggle, onClose, value, tier, placeholder, t
   const { ref: wrapperRef, portalRef } = usePickerCoords(isOpen, LINE_PICKER_WIDTH);
   const lines = getLinesForTier(tier);
   const options = lines.filter((l) => l !== value);
-  const filtered = query ? options.filter((l) => matchesQuery(l, query)) : options;
+  const filtered = query ? searchAndRank(options, query, (l) => l) : options;
 
   useEffect(() => {
     if (isOpen) inputRef.current?.focus();
@@ -331,6 +325,22 @@ function LinePicker({ id, openId, onToggle, onClose, value, tier, placeholder, t
   function select(line: string) {
     onChange(line);
     onClose();
+  }
+
+  const { highlightedIndex, onKeyDown: navKeyDown, itemRef } = useKeyboardListNav({
+    items: filtered,
+    resetKey: query,
+    onSelect: (line) => select(line),
+  });
+
+  function handleSearchKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    e.stopPropagation();
+    if (e.key === "Backspace" && query === "" && value) {
+      e.preventDefault();
+      select("");
+      return;
+    }
+    navKeyDown(e);
   }
 
   const triggerStyle: CSSProperties = {
@@ -400,17 +410,18 @@ function LinePicker({ id, openId, onToggle, onClose, value, tier, placeholder, t
               value={query}
               placeholder="Search…"
               onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(e) => e.stopPropagation()}
+              onKeyDown={handleSearchKeyDown}
               style={{ ...searchInputStyle, borderColor: theme.border, background: theme.bg, color: theme.text }}
             />
           </div>
           <div style={{ maxHeight: 200, overflowY: "auto" }}>
-            {filtered.map((line) => (
+            {filtered.map((line, i) => (
               <button
                 key={line}
+                ref={itemRef(i)}
                 type="button"
                 onClick={() => select(line)}
-                style={lineOptionStyle(theme)}
+                style={lineOptionStyle(theme, i === highlightedIndex)}
                 onMouseEnter={(e) => { e.currentTarget.style.background = `${theme.accent}22`; }}
                 onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
               >
@@ -441,12 +452,7 @@ const SELECTABLE_FAMILIARS = FAMILIARS.filter((f) => f.duplicateOf === undefined
 function filterFamiliars(query: string, excludeId: number | null): FamiliarEntry[] {
   const pool = excludeId == null ? SELECTABLE_FAMILIARS : SELECTABLE_FAMILIARS.filter((f) => f.id !== excludeId);
   if (!query.trim()) return pool.slice(0, 50);
-  const results: FamiliarEntry[] = [];
-  for (const f of pool) {
-    if (results.length >= 50) break;
-    if (matchesQuery(getFamiliarDisplayLabel(f), query)) results.push(f);
-  }
-  return results;
+  return searchAndRank(pool, query, getFamiliarDisplayLabel).slice(0, 50);
 }
 
 const slotCardBase: CSSProperties = {
@@ -468,8 +474,23 @@ function TierPickerView({ entry, theme, onBack, onSelect }: {
   onBack: () => void;
   onSelect: (tier: FamiliarTier) => void;
 }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  useEffect(() => { containerRef.current?.focus(); }, []);
+
+  const { highlightedIndex, onKeyDown: navKeyDown, itemRef } = useKeyboardListNav({
+    items: TIER_ORDER,
+    resetKey: entry.id,
+    onSelect: (t) => onSelect(t),
+  });
+
+  function handleContainerKeyDown(e: React.KeyboardEvent) {
+    if (e.key === "Escape") { onBack(); return; }
+    navKeyDown(e);
+  }
+
   return (
-    <div style={{ padding: "0.5rem 0.6rem", display: "flex", flexDirection: "column", gap: 5 }}>
+    <div ref={containerRef} tabIndex={-1} onKeyDown={handleContainerKeyDown}
+      style={{ padding: "0.5rem 0.6rem", display: "flex", flexDirection: "column", gap: 5, outline: "none" }}>
       <button
         type="button"
         onClick={onBack}
@@ -480,14 +501,15 @@ function TierPickerView({ entry, theme, onBack, onSelect }: {
       <p style={{ margin: "0 0 2px", fontSize: "0.75rem", color: theme.muted, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em" }}>
         Pick rarity
       </p>
-      {TIER_ORDER.map((t) => {
+      {TIER_ORDER.map((t, i) => {
         const c = TIER_COLORS[t];
         return (
           <button
             key={t}
+            ref={itemRef(i)}
             type="button"
             onClick={() => onSelect(t)}
-            style={tierOptionStyle(c)}
+            style={tierOptionStyle(theme, c, i === highlightedIndex)}
           >
             {TIER_LABELS[t]}
           </button>
@@ -529,6 +551,22 @@ function FamiliarSlotCard({
   useEffect(() => {
     if (isOpen && !pendingEntry) inputRef.current?.focus();
   }, [isOpen, pendingEntry]);
+
+  const { highlightedIndex, onKeyDown: navKeyDown, itemRef } = useKeyboardListNav({
+    items: filtered,
+    resetKey: query,
+    onSelect: (entry) => onSetPending(entry),
+  });
+
+  function handleSearchKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    e.stopPropagation();
+    if (e.key === "Backspace" && query === "" && !isEmpty) {
+      e.preventDefault();
+      onClear();
+      return;
+    }
+    navKeyDown(e);
+  }
 
   const tierBorderColor = slot.tier ? TIER_COLORS[slot.tier].border : null;
   const cardStyle: CSSProperties = {
@@ -656,7 +694,7 @@ function FamiliarSlotCard({
                   placeholder="Search familiars…"
                   onChange={(e) => onQueryChange(e.target.value)}
                   onClick={(e) => e.stopPropagation()}
-                  onKeyDown={(e) => e.stopPropagation()}
+                  onKeyDown={handleSearchKeyDown}
                   style={{ ...searchInputStyle, borderColor: theme.border, background: theme.bg, color: theme.text }}
                 />
               </div>
@@ -666,12 +704,13 @@ function FamiliarSlotCard({
                     No results
                   </p>
                 )}
-                {filtered.map((entry) => (
+                {filtered.map((entry, i) => (
                   <button
                     key={entry.id}
+                    ref={itemRef(i)}
                     type="button"
                     onClick={(e) => { e.stopPropagation(); onSetPending(entry); }}
-                    style={familiarOptionStyle(theme)}
+                    style={familiarOptionStyle(theme, i === highlightedIndex)}
                     onMouseEnter={(e) => { e.currentTarget.style.background = `${theme.accent}22`; }}
                     onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
                   >
@@ -694,10 +733,9 @@ function FamiliarSlotCard({
 // ── Badge slot (pentagon) ──────────────────────────────────────────────────
 
 function filterBadges(query: string, excluded: ReadonlySet<string>): readonly string[] {
-  const q = query.trim().toLowerCase();
   const available = BADGE_NAMES.filter((n) => !excluded.has(n));
-  if (!q) return available;
-  return available.filter((n) => n.toLowerCase().includes(q));
+  if (!query.trim()) return available;
+  return searchAndRank(available, query, (n) => n);
 }
 
 function BadgeSlot({
@@ -724,6 +762,21 @@ function BadgeSlot({
   useEffect(() => {
     if (isOpen) inputRef.current?.focus();
   }, [isOpen]);
+
+  const { highlightedIndex, onKeyDown: navKeyDown, itemRef } = useKeyboardListNav({
+    items: filtered,
+    resetKey: query,
+    onSelect: (name) => onSelect(name),
+  });
+
+  function handleSearchKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === "Backspace" && query === "" && badge) {
+      e.preventDefault();
+      onClear();
+      return;
+    }
+    navKeyDown(e);
+  }
 
   const emptyBg = isOpen ? theme.accent : `${theme.muted}28`;
   const badgePickerStyle: CSSProperties = {
@@ -795,6 +848,7 @@ function BadgeSlot({
               value={query}
               placeholder="Search badges…"
               onChange={(e) => onQueryChange(e.target.value)}
+              onKeyDown={handleSearchKeyDown}
               style={{ ...searchInputStyle, borderColor: theme.border, background: theme.bg, color: theme.text }}
             />
           </div>
@@ -804,12 +858,13 @@ function BadgeSlot({
                 No results
               </p>
             )}
-            {filtered.map((name) => (
+            {filtered.map((name, i) => (
               <button
                 key={name}
+                ref={itemRef(i)}
                 type="button"
                 onClick={() => onSelect(name)}
-                style={badgeOptionStyle(theme)}
+                style={badgeOptionStyle(theme, i === highlightedIndex)}
                 onMouseEnter={(e) => { e.currentTarget.style.background = `${theme.accent}22`; }}
                 onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
               >

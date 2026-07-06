@@ -4,6 +4,8 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react"
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import { numericKeyDown, clampNumber } from "../../../../lib/inputUtils";
+import { useKeyboardListNav } from "../../../../lib/useKeyboardListNav";
+import { searchAndRank } from "../../../../lib/searchMatch";
 import { legionCrystalIconUrl } from "../../../../lib/mapleResource";
 import type { AppTheme } from "../../../../components/themes";
 import type { SetupStepDefinition } from "../steps";
@@ -144,10 +146,16 @@ function levelRowLabelStyle(theme: AppTheme): CSSProperties {
   return { fontSize: "0.75rem", fontWeight: 800, color: theme.muted, textTransform: "uppercase", letterSpacing: "0.04em" };
 }
 
-function popoverOptionStyle(theme: AppTheme, active: boolean): CSSProperties {
+function popoverOptionBackground(theme: AppTheme, active: boolean, isHighlighted: boolean): string {
+  if (active) return `${theme.accent}33`;
+  if (isHighlighted) return `${theme.accent}22`;
+  return "transparent";
+}
+
+function popoverOptionStyle(theme: AppTheme, active: boolean, isHighlighted: boolean): CSSProperties {
   return {
     display: "block", width: "100%", textAlign: "left",
-    background: active ? `${theme.accent}22` : "transparent", border: "none",
+    background: popoverOptionBackground(theme, active, isHighlighted), border: "none",
     color: theme.text, fontFamily: "inherit", fontWeight: 600, fontSize: "0.78rem",
     padding: "0.4rem 0.6rem", cursor: "pointer",
   };
@@ -220,13 +228,30 @@ function StatSlotChip({
   const inputRef = useRef<HTMLInputElement>(null);
   const options = LEGION_ARTIFACT_STATS.filter((s) => !excludeIds.has(s.id) || s.id === statId);
   const filtered = useMemo(
-    () => query.trim() ? options.filter((o) => o.label.toLowerCase().includes(query.trim().toLowerCase())) : options,
+    () => query.trim() ? searchAndRank(options, query, (o) => o.label) : options,
     [options, query],
   );
 
   useEffect(() => {
     if (isOpen) inputRef.current?.focus();
   }, [isOpen]);
+
+  const { highlightedIndex, onKeyDown: navKeyDown, itemRef } = useKeyboardListNav({
+    items: filtered,
+    resetKey: query,
+    onSelect: (opt) => { onPick(opt.id); onClose(); },
+  });
+
+  function handleSearchKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    e.stopPropagation();
+    if (e.key === "Backspace" && query === "" && def) {
+      e.preventDefault();
+      onPick(null);
+      onClose();
+      return;
+    }
+    navKeyDown(e);
+  }
 
   return (
     <div ref={ref} style={{ position: "relative" }}>
@@ -258,17 +283,18 @@ function StatSlotChip({
               value={query}
               placeholder="Search…"
               onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(e) => e.stopPropagation()}
+              onKeyDown={handleSearchKeyDown}
               style={{ ...statSearchInputStyle, borderColor: theme.border, background: theme.bg, color: theme.text }}
             />
           </div>
           <div style={{ maxHeight: 240, overflowY: "auto" }}>
-            {filtered.map((opt) => (
+            {filtered.map((opt, i) => (
               <button
                 key={opt.id}
+                ref={itemRef(i)}
                 type="button"
                 onClick={() => { onPick(opt.id); onClose(); }}
-                style={popoverOptionStyle(theme, opt.id === statId)}
+                style={popoverOptionStyle(theme, opt.id === statId, i === highlightedIndex)}
               >
                 {opt.label}
               </button>
