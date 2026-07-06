@@ -38,9 +38,9 @@ const infoButtonStyle = (theme: AppTheme, open: boolean): CSSProperties => ({
   transition: "color 0.1s, background 0.1s",
 });
 
-const infoPopupStyle = (theme: AppTheme, shiftX: number): CSSProperties => ({
+const infoPopupStyle = (theme: AppTheme, shiftX: number, openAbove: boolean): CSSProperties => ({
   position: "absolute",
-  top: "calc(100% + 0.4rem)",
+  ...(openAbove ? { bottom: "calc(100% + 0.4rem)" } : { top: "calc(100% + 0.4rem)" }),
   left: 0,
   transform: shiftX ? `translateX(${shiftX}px)` : undefined,
   zIndex: 200,
@@ -86,6 +86,7 @@ function TooltipImage({ src, scale = 1, offsetY = 0 }: { src: string; scale?: nu
 export default function InfoTooltip({ content, theme }: { content: TooltipContent; theme: AppTheme }) {
   const [open, setOpen] = useState(false);
   const [shiftX, setShiftX] = useState(0);
+  const [openAbove, setOpenAbove] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const popupRef = useRef<HTMLDivElement>(null);
 
@@ -95,9 +96,14 @@ export default function InfoTooltip({ content, theme }: { content: TooltipConten
     const popup = popupRef.current;
     if (container && popup) {
       const margin = 8;
-      const naturalLeft = container.getBoundingClientRect().left;
-      const naturalRight = naturalLeft + popup.offsetWidth;
+      const rect = container.getBoundingClientRect();
+      const naturalRight = rect.left + popup.offsetWidth;
       setShiftX(naturalRight > window.innerWidth - margin ? window.innerWidth - margin - naturalRight : 0);
+      // Flip above the trigger when there isn't enough room below in the viewport —
+      // otherwise a tooltip opened near the bottom of a step forces the page to grow
+      // to fit it, visibly pushing content past the footer.
+      const spaceBelow = window.innerHeight - rect.bottom;
+      setOpenAbove(spaceBelow < popup.offsetHeight + margin && rect.top > spaceBelow);
     }
     function handleMouseDown(e: MouseEvent) {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
@@ -119,7 +125,7 @@ export default function InfoTooltip({ content, theme }: { content: TooltipConten
         ?
       </button>
       {open && (
-        <div ref={popupRef} style={infoPopupStyle(theme, shiftX)}>
+        <div ref={popupRef} style={infoPopupStyle(theme, shiftX, openAbove)}>
           {content.imageUrls && content.imageUrls.length > 0 && (
             <div style={{ display: "flex", gap: "0.35rem", marginBottom: "0.4rem" }}>
               {content.imageUrls.map((entry) => {

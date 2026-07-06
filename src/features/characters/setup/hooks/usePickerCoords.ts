@@ -13,16 +13,25 @@ type PickerCoords = { top: number; left: number };
 // instead of the viewport when <html> has a non-visible `overflow` (set globally for
 // rubber-band scrolling), which made viewport-relative `fixed` popovers jump to the wrong
 // spot once the page was scrolled.
-function calcPickerCoords(el: HTMLElement | null, width: number): PickerCoords {
+function calcPickerCoords(el: HTMLElement | null, portalHeight: number, width: number): PickerCoords {
   if (!el) return { top: 0, left: 0 };
   const rect = el.getBoundingClientRect();
   const left = Math.max(8, Math.min(rect.left + rect.width / 2 - width / 2, window.innerWidth - width - 8));
-  return { top: rect.bottom + window.scrollY + 4, left: left + window.scrollX };
+  // Prefer opening below the anchor; flip above it when there isn't enough room left in
+  // the viewport and opening above would actually fit better. Without this, a popover
+  // anchored near the bottom of the page (e.g. the last row of a grid) forces the
+  // document to grow to fit it, visibly pushing content past the footer.
+  const spaceBelow = window.innerHeight - rect.bottom;
+  const openAbove = portalHeight > 0 && spaceBelow < portalHeight + 4 && rect.top > spaceBelow;
+  const top = openAbove
+    ? rect.top + window.scrollY - portalHeight - 4
+    : rect.bottom + window.scrollY + 4;
+  return { top, left: left + window.scrollX };
 }
 
 function applyPickerCoords(anchor: HTMLElement | null, portal: HTMLElement | null, width: number) {
   if (!portal) return;
-  const { top, left } = calcPickerCoords(anchor, width);
+  const { top, left } = calcPickerCoords(anchor, portal.offsetHeight, width);
   portal.style.top = `${top}px`;
   portal.style.left = `${left}px`;
 }

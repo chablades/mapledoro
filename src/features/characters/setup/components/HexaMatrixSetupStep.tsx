@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { numericKeyDown, clampNumber } from "../../../../lib/inputUtils";
 import { joinWithAnd } from "../../../../lib/textUtils";
 import { useKeyboardListNav } from "../../../../lib/useKeyboardListNav";
@@ -94,8 +94,9 @@ const hexaTileInputStyle = (theme: AppTheme): React.CSSProperties => ({
   transition: "outline-color 0.15s ease",
 });
 
-const statDropdownMenuStyle = (theme: AppTheme): React.CSSProperties => ({
-  position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, zIndex: 310,
+const statDropdownMenuStyle = (theme: AppTheme, openUpward: boolean): React.CSSProperties => ({
+  position: "absolute", left: 0, right: 0, zIndex: 310,
+  ...(openUpward ? { bottom: "calc(100% + 4px)" } : { top: "calc(100% + 4px)" }),
   borderRadius: "8px", overflow: "hidden",
   border: `1px solid ${theme.accent}`, background: theme.panel,
   boxShadow: "0 4px 16px rgba(0,0,0,0.25)",
@@ -402,7 +403,9 @@ function StatDropdown({ value, options, onChange, theme, isError, disabledTypes 
   disabledTypes: Set<string>;
 }) {
   const [open, setOpen] = useState(false);
+  const [openUpward, setOpenUpward] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -411,6 +414,19 @@ function StatDropdown({ value, options, onChange, theme, isError, disabledTypes 
     }
     document.addEventListener("mousedown", onMouseDown);
     return () => document.removeEventListener("mousedown", onMouseDown);
+  }, [open]);
+
+  // Flip the menu above the trigger when there isn't enough room below in the viewport —
+  // otherwise a dropdown opened near the bottom of the HEXA node grid forces the page to
+  // grow to fit it, visibly pushing content past the footer.
+  useLayoutEffect(() => {
+    if (!open) return;
+    const container = containerRef.current;
+    const menu = menuRef.current;
+    if (!container || !menu) return;
+    const rect = container.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - rect.bottom;
+    setOpenUpward(spaceBelow < menu.offsetHeight + 4 && rect.top > spaceBelow);
   }, [open]);
 
   const { highlightedIndex, onKeyDown: navKeyDown, itemRef } = useKeyboardListNav({
@@ -464,7 +480,7 @@ function StatDropdown({ value, options, onChange, theme, isError, disabledTypes 
         <span style={{ fontSize: "0.75rem", flexShrink: 0, opacity: 0.6 }}>▾</span>
       </button>
       {open && (
-        <div style={statDropdownMenuStyle(theme)}>
+        <div ref={menuRef} style={statDropdownMenuStyle(theme, openUpward)}>
           {selected && (
             <button
               type="button"
