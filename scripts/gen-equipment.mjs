@@ -163,6 +163,13 @@ function wearableLinks(slot, entry) {
  * Ring/hat/title/totem/pet have no such per-type prefix filtering, so a stats match is
  * sufficient proof there regardless of prefix (e.g. ring reissues that only changed
  * flavor text land at a new prefix but keep identical stats).
+ *
+ * `upgradeSlots` is also excluded from the stats-match comparison (same treatment as
+ * `linkKey`): the same weapon/ring/hat is routinely reissued at a different starting
+ * slot count (e.g. two "Arcane Umbra Spirit Walker Fan" ids, byte-identical otherwise,
+ * at 10 vs. 9 slots) — this isn't a different item the way an Eternal Wedding Ring's
+ * +5-vs-+7 stat difference is, it's incidental drop variance the picker has no use for
+ * (found affecting 67 of 75 duplicate-name weapon groups alone).
  * @param {Array<[string,string]|[string,string,object]>} items
  * @param {"wearableEquips"|"wearablePets"} [linkKey] omitted for slots with no cross-slot links
  * @param {boolean} [requireSamePrefix]
@@ -171,7 +178,7 @@ function dedupeByName(items, linkKey, requireSamePrefix) {
   const byKey = new Map();
   const canonicalById = new Map();
   for (const [id, name, stats] of items) {
-    const compareStats = stats && linkKey ? { ...stats, [linkKey]: undefined } : stats;
+    const compareStats = stats ? { ...stats, upgradeSlots: undefined, ...(linkKey ? { [linkKey]: undefined } : null) } : stats;
     const typePrefix = id.slice(0, 5);
     const statsKey = compareStats ? JSON.stringify(compareStats) : `noStats:${typePrefix}`;
     const key = requireSamePrefix ? `${name} ${iconHash(id)} ${typePrefix} ${statsKey}` : `${name} ${iconHash(id)} ${statsKey}`;

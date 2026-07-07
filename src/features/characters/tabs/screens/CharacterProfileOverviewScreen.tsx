@@ -128,8 +128,8 @@ function resolveHexaClassDef(classId: string | undefined) {
 function resolveHexaNotice(hasHexa: boolean, isLegacyClass: boolean): string | null {
   if (!hasHexa) {
     return isLegacyClass
-      ? "Hexa skills are not available. This job requires 5th job advancement to access the HEXA Matrix."
-      : "Hexa skills unlock at level 260.";
+      ? "HEXA skills are not available. This job requires 5th job advancement to access the HEXA Matrix."
+      : "HEXA skills unlock at level 260.";
   }
   return null;
 }
@@ -240,7 +240,7 @@ function OverviewTab({ model }: { model: PreviewPaneModel }) {
       <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 16, marginBottom: 14, alignItems: "start" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
           <div style={{ marginBottom: 8 }}>
-            <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: theme.muted, marginBottom: 2 }}>Hexa Stat</div>
+            <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: theme.muted, marginBottom: 2 }}>HEXA Stat</div>
             <div style={{ fontSize: 20, fontWeight: 800, color: theme.muted, lineHeight: 1, fontFamily: "var(--font-heading)" }}>—</div>
           </div>
           <div>
@@ -271,7 +271,7 @@ function OverviewTab({ model }: { model: PreviewPaneModel }) {
         </p>
       ) : (
         <div>
-          <div style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: theme.muted, marginBottom: 10 }}>{hexaClassDef?.group === "SHINE" ? "Erda Link" : "6th Job · Hexa Skills"}</div>
+          <div style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: theme.muted, marginBottom: 10 }}>{hexaClassDef?.group === "SHINE" ? "Erda Link" : "6th Job · HEXA Skills"}</div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1px 1fr", gap: 14, alignItems: "start" }}>
             {/* Left: Skill + Common */}
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -351,7 +351,7 @@ function StatsTab({ model }: { model: PreviewPaneModel }) {
     { label: "Cooldown Skip", value: s?.cooldownSkip },
     { label: "Arcane Force", value: s?.arcanePower },
     { label: "Sacred Power", value: s?.sacredPower },
-    { label: "Hexa Stat", value: undefined },
+    { label: "HEXA Stat", value: undefined },
   ];
   return (
     <div>
@@ -382,7 +382,7 @@ function MoreTab({ model, actions }: { model: PreviewPaneModel; actions: Preview
     { id: "v_matrix_flow", label: "V Matrix", desc: "Node slots and matrix details" },
     { id: "familiars_flow", label: "Familiars", desc: "Familiar presets and badge effects" },
     { id: "link_skills_flow", label: "Link Skills", desc: "Active link preset details" },
-    { id: "hexa_matrix_flow", label: "HEXA Matrix", desc: "Hexa skills and hexa stat details" },
+    { id: "hexa_matrix_flow", label: "HEXA Matrix", desc: "HEXA skills and HEXA stat details" },
   ];
   return (
     <div style={{ display: "grid", gap: "0.55rem" }}>

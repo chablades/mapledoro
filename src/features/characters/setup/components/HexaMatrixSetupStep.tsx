@@ -46,11 +46,11 @@ const MAX_STAT_ENTRY_LEVEL = 10;
 const PRESET_LABELS = ["Active", "Stored"] as const;
 const NODE_LABELS = ["I", "II", "III"] as const;
 
-// hexa-skill ids from manifests/v268/hexa-skill.json (section: "hexaStat")
+// hexa-skill ids from the "hexaStat" section of the hexa-skill manifest
 const HEXA_STAT_DEFS: HexaSkillDef[] = [
-  { iconId: "50000000", name: "Hexa Stat I" },
-  { iconId: "50000001", name: "Hexa Stat II" },
-  { iconId: "50000002", name: "Hexa Stat III" },
+  { iconId: "50000000", name: "HEXA Stat I" },
+  { iconId: "50000001", name: "HEXA Stat II" },
+  { iconId: "50000002", name: "HEXA Stat III" },
 ];
 
 const sectionBtnStyle: React.CSSProperties = {

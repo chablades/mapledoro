@@ -35,9 +35,12 @@ function ResourceImage({
 }
 
 // Defaults to the shadowless `iconRaw.png`. Pass `shadow` for the framed `icon.png`
-// (reserved for inventory management).
-export function ItemIcon({ id, shadow = false, ...rest }: ResourceIconProps & { shadow?: boolean }) {
-  return <ResourceImage src={resourceImageUrl("item", id, shadow ? "icon.png" : "iconRaw.png")} {...rest} />;
+// (reserved for inventory management). Pass `revealed` for the `iconD`/`iconRawD`
+// variant some items have (e.g. androids: the egg-form default vs. the actual sprite
+// shown once equipped) — orthogonal to `shadow`, so both can combine.
+export function ItemIcon({ id, shadow = false, revealed = false, ...rest }: ResourceIconProps & { shadow?: boolean; revealed?: boolean }) {
+  const base = shadow ? "icon" : "iconRaw";
+  return <ResourceImage src={resourceImageUrl("item", id, `${base}${revealed ? "D" : ""}.png`)} {...rest} />;
 }
 
 export function MobSprite({ id, ...rest }: ResourceIconProps) {

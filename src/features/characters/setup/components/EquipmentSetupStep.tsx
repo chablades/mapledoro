@@ -345,6 +345,7 @@ function ItemPicker({ slot, current, theme, files, itemFilter, maxLevel, exclude
   const [loadedItems, setLoadedItems] = useState<CatalogItem[] | null>(null);
   const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
+  const isAndroid = slot === "android";
 
   const cacheKey = files.join("+");
   const items = cachedSlotItems[cacheKey] ?? loadedItems;
@@ -399,7 +400,7 @@ function ItemPicker({ slot, current, theme, files, itemFilter, maxLevel, exclude
     <div style={{ border: `1px solid ${theme.accent}`, borderRadius: 10, background: theme.panel, boxShadow: "0 4px 20px rgba(0,0,0,0.3)", overflow: "hidden" }}>
       {current && (
         <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "0.4rem 0.6rem", borderBottom: `1px solid ${theme.border}` }}>
-          {current.id && <ItemIcon id={current.id} size={28} />}
+          {current.id && <ItemIcon id={current.id} size={28} revealed={isAndroid} />}
           <div style={{ overflow: "hidden" }}>
             <p style={{ margin: 0, fontSize: "0.75rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.04em", color: theme.muted }}>Currently Equipped</p>
             <p style={{ margin: 0, fontSize: "0.8rem", fontWeight: 700, color: theme.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{current.name}</p>
@@ -421,7 +422,7 @@ function ItemPicker({ slot, current, theme, files, itemFilter, maxLevel, exclude
           onClick={() => { onSelect({ id: presetBaseItem.id, name: presetBaseItem.name }); onClose(); }}
           style={presetBaseItemStyle(theme)}
         >
-          {presetBaseItem.id && <ItemIcon id={presetBaseItem.id} size={28} />}
+          {presetBaseItem.id && <ItemIcon id={presetBaseItem.id} size={28} revealed={isAndroid} />}
           <span style={{ flex: 1, fontSize: "0.8rem", fontWeight: 700, color: theme.text }}>{presetBaseItem.name}</span>
           <span style={presetBadgeStyle(theme)}>
             PRESET 1
@@ -463,7 +464,7 @@ function ItemPicker({ slot, current, theme, files, itemFilter, maxLevel, exclude
                 onMouseEnter={(e) => { if (!isCurrent) e.currentTarget.style.background = `${theme.accent}22`; }}
                 onMouseLeave={(e) => { if (!isCurrent) e.currentTarget.style.background = "transparent"; }}
               >
-                <ItemIcon id={item.id} size={28} />
+                <ItemIcon id={item.id} size={28} revealed={isAndroid} />
                 <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.name}</span>
               </button>
             );
@@ -502,7 +503,7 @@ function SlotCell({ slotKey, item, theme, isActive, onClick, picker }: {
       style={slotCellStyle(theme, isActive)}
     >
       {item ? (
-        <ItemIcon id={item.id} size={48} />
+        <ItemIcon id={item.id} size={48} revealed={slotKey === "android"} />
       ) : (
         <span style={{ fontSize: "0.75rem", color: theme.muted, fontWeight: 700, lineHeight: 1.2, textAlign: "center", whiteSpace: "nowrap", overflow: "hidden" }}>
           {SLOT_LABELS[slotKey]}

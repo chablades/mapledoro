@@ -59,7 +59,7 @@ const SETUP_FLOWS = [
   {
     id: "hexa_matrix_flow",
     label: "HEXA Matrix",
-    description: "Add hexa skills and hexa stat details.",
+    description: "Add HEXA skills and HEXA stat details.",
     required: false,
     steps: ["hexa_matrix"] as const,
   },
