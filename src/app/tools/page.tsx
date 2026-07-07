@@ -50,6 +50,14 @@ const CALCULATORS: ToolCard[] = [
     iconType: "item",
     href: "/tools/flaming",
   },
+  {
+    title: "EXP Calculator",
+    description:
+      "Calculate EXP buffs, monster EXP, event resources, and level progress from 200 to 300.",
+    itemId: "02637353", // EXP Voucher
+    iconType: "item",
+    href: "/tools/exp-calculator",
+  },
 ];
 
 const OTHER_TOOLS: ToolCard[] = [

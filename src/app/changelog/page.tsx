@@ -11,6 +11,12 @@ interface ChangelogEntry {
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    date: "2026-07-07",
+    changes: [
+      { type: "added", text: "Added the EXP Calculator with GMS EXP Buffs + Monster EXP, All-in-One, and resource table tabs." },
+    ],
+  },
+  {
     date: "2026-07-06",
     changes: [
       { type: "changed", text: "The Miracle Time panel on the homepage now hides itself when there is no upcoming schedule instead of showing an empty box." },
