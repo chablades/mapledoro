@@ -351,7 +351,7 @@ function BuffsTab({ theme }: { theme: AppTheme }) {
                   value={buffs.inputs[buff.id] ?? 0}
                   onFocus={(e) => e.currentTarget.select()}
                   onKeyDown={replaceZeroOnDigit}
-                  onChange={(e) => setBuffs((state) => ({ ...state, inputs: { ...state.inputs, [buff.id]: Number(e.target.value) || 0 } }))}
+                  onChange={(e) => setBuffs((state) => ({ ...state, inputs: { ...state.inputs, [buff.id]: Math.min(buff.max, Math.max(0, Number(e.target.value) || 0)) } }))}
                   style={inputStyle}
                 />
               </div>

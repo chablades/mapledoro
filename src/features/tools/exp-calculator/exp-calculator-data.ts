@@ -240,7 +240,7 @@ export const LEVEL_INPUT_BUFFS: InputBuff[] = [
 
 export const INPUT_BUFFS: InputBuff[] = [
   { id: "legion-board", label: "Legion Board EXP Obtained", max: 10, step: 0.25 },
-  { id: "event-title", label: "Events / Event Titles", max: 100 },
+  { id: "event-title", label: "Events / Event Titles", max: 100, step: 0.5 },
 ];
 
 const EXP_TICKET_CROWN = [
