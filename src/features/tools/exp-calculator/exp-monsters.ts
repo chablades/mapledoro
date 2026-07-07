@@ -4,7 +4,36 @@
   name: string;
   level: number;
   exp: number;
-  mapId: string;
+  area: string;
+  search: string;
+}
+
+// Area display names the title-cased mapId slug fallback can't derive.
+const AREA_LABEL_OVERRIDES: Record<string, string> = {
+  "map-cernium-2": "Burning Cernium",
+  "map-chew-chew": "Chu Chu Island",
+  "map-fwt": "Dark World Tree",
+  "map-geardrak": "Geardock",
+  "map-haven": "Scrapyard",
+  "map-hotel-arcs": "Hotel Arcus",
+  "map-labyrinth": "Labyrinth of Suffering",
+  "map-lacheln": "Lachelein",
+  "map-limen": "Limina",
+  "map-moras": "Morass",
+  "map-rte": "Vanishing Journey",
+  "map-shangri-la": "Shangri-La",
+  "map-yum-yum": "Yum Yum Island",
+};
+
+function areaLabel(mapId: string): string {
+  return (
+    AREA_LABEL_OVERRIDES[mapId] ??
+    mapId
+      .replace(/^map-/, "")
+      .split("-")
+      .map((word) => (word.length > 0 ? `${word.charAt(0).toUpperCase()}${word.slice(1)}` : word))
+      .join(" ")
+  );
 }
 
 const MONSTER_ROWS = [
@@ -246,13 +275,17 @@ const MONSTER_ROWS = [
   ["8645486", "Kronos's Retribution", 299, 5912186, "map-geardrak"],
 ] as const;
 
-export const EXP_MONSTERS: ExpMonster[] = MONSTER_ROWS.map(([id, name, level, exp, mapId], index) => ({
-  key: [id, level, exp, mapId, index].join("-"),
-  id,
-  name,
-  level,
-  exp,
-  mapId,
-}));
+export const EXP_MONSTERS: ExpMonster[] = MONSTER_ROWS.map(([id, name, level, exp, mapId], index) => {
+  const area = areaLabel(mapId);
+  return {
+    key: [id, level, exp, mapId, index].join("-"),
+    id,
+    name,
+    level,
+    exp,
+    area,
+    search: `${name}|${area}|${mapId}`.toLowerCase(),
+  };
+});
 
 

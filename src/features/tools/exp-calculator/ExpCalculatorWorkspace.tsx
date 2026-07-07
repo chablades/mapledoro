@@ -8,6 +8,7 @@ import { SegmentedToggle } from "../../../components/SegmentedToggle";
 import type { AppTheme } from "../../../components/themes";
 import { ToolHeader } from "../../../components/ToolHeader";
 import { useMounted } from "../../../lib/useMounted";
+import { formatExpCompact, formatMesoFull } from "../format";
 import { replaceZeroOnDigit } from "../numberInputHandlers";
 import { Field } from "../shared-ui";
 import { toolStyles } from "../tool-styles";
@@ -26,10 +27,13 @@ import {
   percentOfLevel,
   type AllInOneInput,
   type BuffState,
+  type CheckBuff,
   type EpicDungeonRow,
   type IconRef,
+  type InputBuff,
   type LevelResourceRow,
   type MonsterExpInput,
+  type MonsterExpResult,
   type ResourceTable,
 } from "./exp-calculator-data";
 import { EXP_MONSTERS, type ExpMonster } from "./exp-monsters";
@@ -39,9 +43,7 @@ import {
 } from "../../characters/model/charactersStore";
 
 type ExpTab = "buffs" | "all-in-one" | "resources";
-type ExclusiveGroupId = "cash" | "use" | "ring";
 
-const PUNCH_KING_MAX_POINTS = 1150;
 const TAB_OPTIONS: ExpTab[] = ["buffs", "all-in-one", "resources"];
 const TAB_LABELS: Record<ExpTab, string> = {
   buffs: "Farming Calculator",
@@ -57,51 +59,49 @@ const DEFAULT_MONSTER: MonsterExpInput = {
   hourlyKillCount: 18000,
 };
 
+const ALL_IN_ONE_RESOURCES = RESOURCE_TABLES.flatMap((table) =>
+  table.allInOne ? [{ id: table.id, ...table.allInOne }] : [],
+);
+
 const DEFAULT_ALL_IN_ONE: AllInOneInput = {
   startLevel: 260,
   startPercent: 0,
   targetLevel: 270,
-  expTickets: 0,
-  advancedExpTickets: 0,
-  punchKingPoints: 0,
-  strawberryMonsters: 0,
-  mechaberryRuns: 0,
+  resources: Object.fromEntries(ALL_IN_ONE_RESOURCES.map((resource) => [resource.id, 0])),
   customExp: 0,
 };
 
-const MONSTER_AREA_LABELS: Record<string, string> = {
-  "map-arcana": "Arcana",
-  "map-arteria": "Arteria",
-  "map-carcion": "Carcion",
-  "map-cernium": "Cernium",
-  "map-cernium-2": "Burning Cernium",
-  "map-chew-chew": "Chu Chu Island",
-  "map-esfera": "Esfera",
-  "map-fox-valley": "Fox Valley",
-  "map-fwt": "Dark World Tree",
-  "map-geardrak": "Geardock",
-  "map-haven": "Scrapyard",
-  "map-hotel-arcs": "Hotel Arcus",
-  "map-labyrinth": "Labyrinth of Suffering",
-  "map-lacheln": "Lachelein",
-  "map-limen": "Limina",
-  "map-moonbridge": "Moonbridge",
-  "map-moras": "Morass",
-  "map-odium": "Odium",
-  "map-reverse-city": "Reverse City",
-  "map-rte": "Vanishing Journey",
-  "map-sellas": "Sellas",
-  "map-shangri-la": "Shangri-La",
-  "map-tallahart": "Tallahart",
-  "map-twilight-perion": "Twilight Perion",
-  "map-yum-yum": "Yum Yum Island",
-};
+const EXCLUSIVE_BUFF_SECTIONS = CHECK_BUFF_GROUPS.filter((group) => group.mode === "exclusive").reduce<
+  { title: string; buffs: { groupId: string; buff: CheckBuff }[] }[]
+>((sections, group) => {
+  const entries = group.buffs.map((buff) => ({ groupId: group.id, buff }));
+  const existing = sections.find((section) => section.title === group.section);
+  if (existing) existing.buffs.push(...entries);
+  else sections.push({ title: group.section, buffs: entries });
+  return sections;
+}, []);
+
+const ADDITIVE_GROUP = CHECK_BUFF_GROUPS.find((group) => group.mode === "multi");
+
+const INPUT_BUFF_PANELS = [
+  { title: "Skill Levels", buffs: LEVEL_INPUT_BUFFS },
+  { title: "Custom Additive Inputs", buffs: INPUT_BUFFS },
+];
+
+const iconRowStyle: React.CSSProperties = { display: "flex", alignItems: "center", gap: 8 };
+
+function expPanelStyle(styles: ReturnType<typeof toolStyles>): React.CSSProperties {
+  return { ...styles.sectionPanel, borderRadius: "14px" };
+}
+
+function fullWidthControl(base: React.CSSProperties): React.CSSProperties {
+  return { ...base, width: "100%", height: 35 };
+}
 
 export default function ExpCalculatorWorkspace({ theme }: { theme: AppTheme }) {
   const mounted = useMounted();
-  const styles = toolStyles(theme);
   const [tab, setTab] = useState<ExpTab>("buffs");
-  const panelStyle: React.CSSProperties = { ...styles.sectionPanel, borderRadius: "14px" };
+  const panelStyle = expPanelStyle(toolStyles(theme));
 
   if (!mounted) return null;
 
@@ -151,19 +151,23 @@ export default function ExpCalculatorWorkspace({ theme }: { theme: AppTheme }) {
 
 function BuffsTab({ theme }: { theme: AppTheme }) {
   const styles = toolStyles(theme);
-  const inputStyle: React.CSSProperties = { ...styles.inputStyle, width: "100%", height: 35 };
+  const inputStyle = fullWidthControl(styles.inputStyle);
   const characterDropdownInputStyle: React.CSSProperties = { ...styles.inputStyle, width: "100%" };
-  const selectStyle: React.CSSProperties = { ...styles.selectStyle, width: "100%", height: 35 };
+  const selectStyle = fullWidthControl(styles.selectStyle);
   const labelStyle = styles.labelStyle;
-  const panelStyle: React.CSSProperties = { ...styles.sectionPanel, borderRadius: "14px" };
+  const panelStyle = expPanelStyle(styles);
   const [monster, setMonster] = useState<MonsterExpInput>(DEFAULT_MONSTER);
   const [selectedCharName, setSelectedCharName] = useState<string | null>(null);
   const [selectedMonster, setSelectedMonster] = useState<ExpMonster | null>(null);
-  const [buffs, setBuffs] = useState<BuffState>(() => cloneBuffState(DEFAULT_BUFF_STATE));
+  const [buffs, setBuffs] = useState<BuffState>(DEFAULT_BUFF_STATE);
   const result = useMemo(() => calculateMonsterExp(monster, buffs), [monster, buffs]);
-  const characters = selectCharactersList(readCharactersStore());
-  const updateExclusiveBuff = (groupId: ExclusiveGroupId, buffId: string) => {
-    setBuffs((state) => applyExclusiveBuff(state, groupId, buffId));
+  const characters = useMemo(() => selectCharactersList(readCharactersStore()), []);
+  const updateExclusiveBuff = (groupId: string, buffId: string) => {
+    setBuffs((state) => ({ ...state, exclusive: { ...state.exclusive, [groupId]: buffId } }));
+  };
+  const updateInputBuff = (buff: InputBuff, raw: number) => {
+    const value = Math.min(buff.max, Math.max(0, raw));
+    setBuffs((state) => ({ ...state, inputs: { ...state.inputs, [buff.id]: value } }));
   };
   const updateCharacter = (name: string | null) => {
     setSelectedCharName(name);
@@ -172,9 +176,7 @@ function BuffsTab({ theme }: { theme: AppTheme }) {
     setMonster((state) => ({
       ...state,
       playerLevel: selected.level,
-      currentPercent: expForLevel(selected.level) > 0
-        ? roundToThree(Math.min(99.999, Math.max(0, (selected.exp / expForLevel(selected.level)) * 100)))
-        : 0,
+      currentPercent: roundToThree(Math.min(99.999, Math.max(0, percentOfLevel(selected.level, selected.exp)))),
     }));
   };
   const updateSelectedMonster = (option: ExpMonster) => {
@@ -212,7 +214,6 @@ function BuffsTab({ theme }: { theme: AppTheme }) {
         <SectionTitle theme={theme} label="Monster" />
         <MonsterSelector
           theme={theme}
-          playerLevel={monster.playerLevel}
           selected={selectedMonster}
           inputStyle={inputStyle}
           onSelect={updateSelectedMonster}
@@ -223,13 +224,12 @@ function BuffsTab({ theme }: { theme: AppTheme }) {
         </div>
       </div>
 
-      <div className="fade-in" style={panelStyle}>
-        <SectionTitle theme={theme} label="Reg Server Modifiers" />
-        <div className="exp-grid">
-          {CHECK_BUFF_GROUPS.filter((group) => group.id === "cash" || group.id === "ring").flatMap((group) =>
-            group.buffs.filter((buff) => buff.id !== "none").map((buff) => {
-              const groupId = group.id as ExclusiveGroupId;
-              const selected = buffs[groupId] === buff.id;
+      {EXCLUSIVE_BUFF_SECTIONS.map((section) => (
+        <div key={section.title} className="fade-in" style={panelStyle}>
+          <SectionTitle theme={theme} label={section.title} />
+          <div className="exp-grid">
+            {section.buffs.map(({ groupId, buff }) => {
+              const selected = buffs.exclusive[groupId] === buff.id;
               return (
                 <button
                   type="button"
@@ -242,55 +242,36 @@ function BuffsTab({ theme }: { theme: AppTheme }) {
                   <span>{buff.label}</span>
                 </button>
               );
-            }),
-          )}
+            })}
+          </div>
         </div>
-      </div>
+      ))}
 
-      <div className="fade-in" style={panelStyle}>
-        <SectionTitle theme={theme} label="Use Coupon" />
-        <div className="exp-grid">
-          {CHECK_BUFF_GROUPS.find((group) => group.id === "use")?.buffs.filter((buff) => buff.id !== "none").map((buff) => {
-            const selected = buffs.use === buff.id;
-            return (
-              <button
-                type="button"
-                key={buff.id}
-                className="exp-buff-card panel-card"
-                onClick={() => updateExclusiveBuff("use", selected ? "none" : buff.id)}
-                style={buffButtonStyle(theme, selected)}
-              >
+      {ADDITIVE_GROUP && (
+        <div className="fade-in" style={panelStyle}>
+          <SectionTitle theme={theme} label={ADDITIVE_GROUP.section} />
+          <div className="exp-grid">
+            {ADDITIVE_GROUP.buffs.map((buff) => (
+              <label key={buff.id} className="exp-buff-card panel-card" style={buffButtonStyle(theme, Boolean(buffs.additive[buff.id]))}>
+                <input
+                  type="checkbox"
+                  checked={Boolean(buffs.additive[buff.id])}
+                  onChange={(e) => setBuffs((state) => toggleAdditiveBuff(state, buff, e.target.checked))}
+                />
                 <BuffIcon icon={buff.icon} label={buff.label} />
                 <span>{buff.label}</span>
-              </button>
-            );
-          })}
+              </label>
+            ))}
+          </div>
         </div>
-      </div>
-
-      <div className="fade-in" style={panelStyle}>
-        <SectionTitle theme={theme} label="Additive Buffs" />
-        <div className="exp-grid">
-          {CHECK_BUFF_GROUPS.find((group) => group.id === "additive")?.buffs.map((buff) => (
-            <label key={buff.id} className="exp-buff-card panel-card" style={buffButtonStyle(theme, Boolean(buffs.additive[buff.id]))}>
-              <input
-                type="checkbox"
-                checked={Boolean(buffs.additive[buff.id])}
-                onChange={(e) => setBuffs((state) => toggleAdditiveBuff(state, buff.id, e.target.checked))}
-              />
-              <BuffIcon icon={buff.icon} label={buff.label} />
-              <span>{buff.label}</span>
-            </label>
-          ))}
-        </div>
-      </div>
+      )}
 
       <div className="fade-in" style={panelStyle}>
         <SectionTitle theme={theme} label="Selectable Buffs" />
         <div className="exp-select-grid">
           {SELECT_BUFFS.map((buff) => (
             <Field key={buff.id} label={buff.label} style={labelStyle}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <div style={iconRowStyle}>
                 <BuffIcon icon={buff.icon} label={buff.label} />
                 <select
                   className="tool-select"
@@ -310,55 +291,32 @@ function BuffsTab({ theme }: { theme: AppTheme }) {
         </div>
       </div>
 
-      <div className="fade-in" style={panelStyle}>
-        <SectionTitle theme={theme} label="Skill Levels" />
-        <div className="exp-grid">
-          {LEVEL_INPUT_BUFFS.map((buff) => (
-            <Field key={buff.id} label={buff.label} style={labelStyle}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <BuffIcon icon={buff.icon} label={buff.label} />
-                <input
-                  className="tool-input"
-                  type="number"
-                  min={0}
-                  max={buff.max}
-                  step={1}
-                  value={buffs.inputs[buff.id] ?? 0}
-                  onFocus={(e) => e.currentTarget.select()}
-                  onKeyDown={replaceZeroOnDigit}
-                  onChange={(e) => setBuffs((state) => ({ ...state, inputs: { ...state.inputs, [buff.id]: Number(e.target.value) || 0 } }))}
-                  style={inputStyle}
-                />
-              </div>
-            </Field>
-          ))}
+      {INPUT_BUFF_PANELS.map((panel) => (
+        <div key={panel.title} className="fade-in" style={panelStyle}>
+          <SectionTitle theme={theme} label={panel.title} />
+          <div className="exp-grid">
+            {panel.buffs.map((buff) => (
+              <Field key={buff.id} label={buff.label} style={labelStyle}>
+                <div style={iconRowStyle}>
+                  <BuffIcon icon={buff.icon} label={buff.label} />
+                  <input
+                    className="tool-input"
+                    type="number"
+                    min={0}
+                    max={buff.max}
+                    step={buff.step ?? 1}
+                    value={buffs.inputs[buff.id] ?? 0}
+                    onFocus={(e) => e.currentTarget.select()}
+                    onKeyDown={replaceZeroOnDigit}
+                    onChange={(e) => updateInputBuff(buff, Number(e.target.value) || 0)}
+                    style={inputStyle}
+                  />
+                </div>
+              </Field>
+            ))}
+          </div>
         </div>
-      </div>
-
-      <div className="fade-in" style={panelStyle}>
-        <SectionTitle theme={theme} label="Custom Additive Inputs" />
-        <div className="exp-grid">
-          {INPUT_BUFFS.map((buff) => (
-            <Field key={buff.id} label={buff.label} style={labelStyle}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <BuffIcon icon={buff.icon} label={buff.label} />
-                <input
-                  className="tool-input"
-                  type="number"
-                  min={0}
-                  max={buff.max}
-                  step={buff.step ?? 1}
-                  value={buffs.inputs[buff.id] ?? 0}
-                  onFocus={(e) => e.currentTarget.select()}
-                  onKeyDown={replaceZeroOnDigit}
-                  onChange={(e) => setBuffs((state) => ({ ...state, inputs: { ...state.inputs, [buff.id]: Math.min(buff.max, Math.max(0, Number(e.target.value) || 0)) } }))}
-                  style={inputStyle}
-                />
-              </div>
-            </Field>
-          ))}
-        </div>
-      </div>
+      ))}
 
       <ExpOverviewPanel theme={theme} monster={monster} selectedMonster={selectedMonster} result={result} />
     </>
@@ -372,7 +330,6 @@ function MonsterSelector({
   onSelect,
 }: {
   theme: AppTheme;
-  playerLevel: number;
   selected: ExpMonster | null;
   inputStyle: React.CSSProperties;
   onSelect: (monster: ExpMonster) => void;
@@ -416,12 +373,7 @@ function MonsterSelector({
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return EXP_MONSTERS.slice(0, 60);
-    return EXP_MONSTERS
-      .filter((monster) => {
-        const area = monsterAreaLabel(monster.mapId).toLowerCase();
-        return monster.name.toLowerCase().includes(q) || area.includes(q) || monster.mapId.toLowerCase().includes(q);
-      })
-      .slice(0, 80);
+    return EXP_MONSTERS.filter((monster) => monster.search.includes(q)).slice(0, 80);
   }, [search]);
 
   const choose = (monster: ExpMonster) => {
@@ -479,7 +431,7 @@ function MonsterSelector({
           <span style={{ flex: 1, minWidth: 0 }}>
             <span style={{ display: "block", fontSize: "0.82rem", fontWeight: 800 }}>{monster.name}</span>
             <span style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: theme.muted }}>
-              Lv. {monster.level} | {monsterAreaLabel(monster.mapId)}
+              Lv. {monster.level} | {monster.area}
             </span>
           </span>
         </button>
@@ -540,10 +492,9 @@ function ExpOverviewPanel({
   theme: AppTheme;
   monster: MonsterExpInput;
   selectedMonster: ExpMonster | null;
-  result: ReturnType<typeof calculateMonsterExp>;
+  result: MonsterExpResult;
 }) {
-  const styles = toolStyles(theme);
-  const panelStyle: React.CSSProperties = { ...styles.sectionPanel, borderRadius: "14px" };
+  const panelStyle = expPanelStyle(toolStyles(theme));
   const visualCardStyle: React.CSSProperties = {
     background: theme.timerBg,
     border: `1px solid ${theme.border}`,
@@ -568,10 +519,10 @@ function ExpOverviewPanel({
               {selectedMonster?.name ?? "Select a monster"}
             </div>
             <div style={{ color: theme.muted, fontSize: "0.76rem", fontWeight: 800, marginTop: 3 }}>
-              Lv. {monster.monsterLevel} | Base {formatNumber(monster.monsterBaseExp)} EXP
+              Lv. {monster.monsterLevel} | Base {formatMesoFull(monster.monsterBaseExp)} EXP
             </div>
             <div style={{ color: theme.text, fontSize: "1.1rem", fontWeight: 900, marginTop: 8 }}>
-              {formatCompact(result.normalExp)}
+              {formatExpCompact(result.normalExp)}
             </div>
             <div className="tool-field-label" style={{ color: theme.muted, marginTop: 2 }}>
               Final kill EXP
@@ -580,7 +531,7 @@ function ExpOverviewPanel({
         </div>
         <div className="exp-results">
           <MiniMetric theme={theme} label="Hours to Next Level" value={formatHours(result.hoursToNextLevel)} />
-          <MiniMetric theme={theme} label="Hourly EXP" value={formatCompact(result.hourlyExp)} />
+          <MiniMetric theme={theme} label="Hourly EXP" value={formatExpCompact(result.hourlyExp)} />
           <MiniMetric theme={theme} label="Total Multiplier" value={`${result.buffMultiplier.toFixed(3)}x`} />
           <MiniMetric theme={theme} label="Level Bonus" value={`${result.monsterLevelBonus.toFixed(2)}x`} />
         </div>
@@ -591,14 +542,14 @@ function ExpOverviewPanel({
           theme={theme}
           icon={<MobSprite id="9834331" size={38} alt="Booster Flame" />}
           label="VIP / HEXA Booster"
-          value={formatCompact(result.vipBoosterExp)}
+          value={formatExpCompact(result.vipBoosterExp)}
           detail={`${formatPercent(percentOfLevel(monster.playerLevel, result.vipBoosterExp))}% EXP gained per proc`}
         />
         <VisualMetric
           theme={theme}
           icon={<ItemIcon id="02639929" size={34} alt="Gilded Clockwork" />}
           label="Gilded Clockwork"
-          value={formatCompact(result.goldClockworkExp)}
+          value={formatExpCompact(result.goldClockworkExp)}
           detail={`${formatPercent(percentOfLevel(monster.playerLevel, result.goldClockworkExp))}% EXP gained per proc`}
         />
       </div>
@@ -618,9 +569,9 @@ function MiniMetric({ theme, label, value }: { theme: AppTheme; label: string; v
 
 function AllInOneTab({ theme }: { theme: AppTheme }) {
   const styles = toolStyles(theme);
-  const inputStyle: React.CSSProperties = { ...styles.inputStyle, width: "100%", height: 35 };
+  const inputStyle = fullWidthControl(styles.inputStyle);
   const labelStyle = styles.labelStyle;
-  const panelStyle: React.CSSProperties = { ...styles.sectionPanel, borderRadius: "14px" };
+  const panelStyle = expPanelStyle(styles);
   const [input, setInput] = useState<AllInOneInput>(DEFAULT_ALL_IN_ONE);
   const result = useMemo(() => calculateAllInOne(input), [input]);
 
@@ -639,18 +590,16 @@ function AllInOneTab({ theme }: { theme: AppTheme }) {
       <div className="fade-in" style={panelStyle}>
         <SectionTitle theme={theme} label="Resource Quantities" />
         <div className="exp-grid">
-          <NumberField label="EXP Tickets" min={0} value={input.expTickets} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => setInput((state) => ({ ...state, expTickets: value }))} />
-          <NumberField label="Advanced EXP Tickets" min={0} value={input.advancedExpTickets} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => setInput((state) => ({ ...state, advancedExpTickets: value }))} />
-          <NumberField label="Punch King Points" min={0} max={1150} value={input.punchKingPoints} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => setInput((state) => ({ ...state, punchKingPoints: value }))} />
-          <NumberField label="Berry Farm Monsters" min={0} value={input.strawberryMonsters} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => setInput((state) => ({ ...state, strawberryMonsters: value }))} />
-          <NumberField label="Mechaberry Runs" min={0} value={input.mechaberryRuns} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => setInput((state) => ({ ...state, mechaberryRuns: value }))} />
+          {ALL_IN_ONE_RESOURCES.map((resource) => (
+            <NumberField key={resource.id} label={resource.label} min={0} max={resource.max} value={input.resources[resource.id] ?? 0} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => setInput((state) => ({ ...state, resources: { ...state.resources, [resource.id]: value } }))} />
+          ))}
         </div>
       </div>
 
       <div className="exp-results fade-in">
-        <MetricCard theme={theme} label="Resource EXP" value={formatCompact(result.totalExp)} detail={formatNumber(result.totalExp)} />
+        <MetricCard theme={theme} label="Resource EXP" value={formatExpCompact(result.totalExp)} detail={formatMesoFull(result.totalExp)} />
         <MetricCard theme={theme} label="After Resources" value={`Lv. ${result.level}`} detail={`${result.percent.toFixed(4)}%`} />
-        <MetricCard theme={theme} label="Target Remaining" value={formatCompact(result.remainingToTarget)} detail={`To Lv. ${input.targetLevel}`} />
+        <MetricCard theme={theme} label="Target Remaining" value={formatExpCompact(result.remainingToTarget)} detail={`To Lv. ${input.targetLevel}`} />
       </div>
     </>
   );
@@ -658,8 +607,8 @@ function AllInOneTab({ theme }: { theme: AppTheme }) {
 
 function ResourcesTab({ theme }: { theme: AppTheme }) {
   const styles = toolStyles(theme);
-  const selectStyle: React.CSSProperties = { ...styles.selectStyle, width: "100%", height: 35 };
-  const panelStyle: React.CSSProperties = { ...styles.sectionPanel, borderRadius: "14px" };
+  const selectStyle = fullWidthControl(styles.selectStyle);
+  const panelStyle = expPanelStyle(styles);
   const [tableId, setTableId] = useState(RESOURCE_TABLES[0]?.id ?? "");
   const selected = RESOURCE_TABLES.find((table) => table.id === tableId) ?? RESOURCE_TABLES[0];
 
@@ -696,7 +645,7 @@ function ResourcesTab({ theme }: { theme: AppTheme }) {
 function ResourceTableView({ theme, table }: { theme: AppTheme; table: ResourceTable }) {
   const thStyle: React.CSSProperties = { padding: "8px 10px", borderBottom: `2px solid ${theme.border}`, color: theme.muted, fontSize: "0.75rem", fontWeight: 800, textAlign: "right", textTransform: "uppercase" };
   const tdStyle: React.CSSProperties = { padding: "8px 10px", borderBottom: `1px solid ${theme.border}`, color: theme.text, fontSize: "0.8rem", fontWeight: 700, textAlign: "right" };
-  const showPunchKingMax = table.id === "punch-king";
+  const maxUnits = table.allInOne?.max;
 
   return (
     <div className="panel-card" style={{ marginTop: "1rem", background: theme.panel, border: `1px solid ${theme.border}`, borderRadius: 8, overflowX: "auto" }}>
@@ -713,7 +662,7 @@ function ResourceTableView({ theme, table }: { theme: AppTheme; table: ResourceT
             ) : (
               <>
                 <th style={thStyle}>EXP</th>
-                {showPunchKingMax && <th style={thStyle}>{PUNCH_KING_MAX_POINTS} Points</th>}
+                {maxUnits !== undefined && <th style={thStyle}>{maxUnits} Points</th>}
                 <th style={thStyle}>% TNL</th>
                 <th style={thStyle}>To Level</th>
               </>
@@ -725,16 +674,16 @@ function ResourceTableView({ theme, table }: { theme: AppTheme; table: ResourceT
             ? (table.rows as EpicDungeonRow[]).map((row) => (
                 <tr key={row.level}>
                   <td style={{ ...tdStyle, textAlign: "left", color: theme.accent }}>Lv. {row.level}</td>
-                  <td style={tdStyle}>{formatNumber(row.baseExp)}</td>
-                  <td style={tdStyle}>{formatNumber(row.fiveXExp)}</td>
-                  <td style={tdStyle}>{formatNumber(row.nineXExp)}</td>
+                  <td style={tdStyle}>{formatMesoFull(row.baseExp)}</td>
+                  <td style={tdStyle}>{formatMesoFull(row.fiveXExp)}</td>
+                  <td style={tdStyle}>{formatMesoFull(row.nineXExp)}</td>
                 </tr>
               ))
             : (table.rows as LevelResourceRow[]).map((row) => (
                 <tr key={row.level}>
                   <td style={{ ...tdStyle, textAlign: "left", color: theme.accent }}>Lv. {row.level}</td>
-                  <td style={tdStyle}>{formatNumber(row.exp)}</td>
-                  {showPunchKingMax && <td style={tdStyle}>{formatNumber(row.exp * PUNCH_KING_MAX_POINTS)}</td>}
+                  <td style={tdStyle}>{formatMesoFull(row.exp)}</td>
+                  {maxUnits !== undefined && <td style={tdStyle}>{formatMesoFull(row.exp * maxUnits)}</td>}
                   <td style={tdStyle}>{percentOfLevel(row.level, row.exp).toFixed(6)}%</td>
                   <td style={tdStyle}>{Math.ceil(expForLevel(row.level) / Math.max(1, row.exp)).toLocaleString()}</td>
                 </tr>
@@ -793,7 +742,7 @@ function NumberField({
         }}
         style={{
           ...inputStyle,
-          background: disabled ? themeAwareDisabledBackground(inputStyle.background) : inputStyle.background,
+          background: disabled ? inputStyle.background ?? "rgba(120, 120, 120, 0.12)" : inputStyle.background,
           opacity: disabled ? 0.65 : inputStyle.opacity,
           cursor: disabled ? "not-allowed" : inputStyle.cursor,
         }}
@@ -839,52 +788,10 @@ function buffButtonStyle(theme: AppTheme, selected: boolean): React.CSSPropertie
   };
 }
 
-function themeAwareDisabledBackground(background: React.CSSProperties["background"]): React.CSSProperties["background"] {
-  return background ?? "rgba(120, 120, 120, 0.12)";
-}
-
-function cloneBuffState(state: BuffState): BuffState {
-  return {
-    cash: state.cash,
-    use: state.use,
-    ring: state.ring,
-    additive: { ...state.additive },
-    selects: { ...state.selects },
-    inputs: { ...state.inputs },
-  };
-}
-
-function applyExclusiveBuff(state: BuffState, groupId: ExclusiveGroupId, buffId: string): BuffState {
-  return { ...state, [groupId]: buffId };
-}
-
-function toggleAdditiveBuff(state: BuffState, buffId: string, checked: boolean): BuffState {
-  const additive = { ...state.additive, [buffId]: checked };
-  if (checked && buffId === "eap") additive["small-eap"] = false;
-  if (checked && buffId === "small-eap") additive.eap = false;
-  if (checked && buffId === "mvp-50") additive["mvp-70"] = false;
-  if (checked && buffId === "mvp-70") additive["mvp-50"] = false;
+function toggleAdditiveBuff(state: BuffState, buff: CheckBuff, checked: boolean): BuffState {
+  const additive = { ...state.additive, [buff.id]: checked };
+  if (checked) for (const excluded of buff.excludes ?? []) additive[excluded] = false;
   return { ...state, additive };
-}
-
-function monsterAreaLabel(mapId: string): string {
-  return MONSTER_AREA_LABELS[mapId] ?? mapId.replace(/^map-/, "").split("-").map(capitalizeWord).join(" ");
-}
-
-function capitalizeWord(word: string): string {
-  return word.length > 0 ? `${word.charAt(0).toUpperCase()}${word.slice(1)}` : word;
-}
-
-function formatNumber(n: number): string {
-  return Math.round(n).toLocaleString();
-}
-
-function formatCompact(n: number): string {
-  if (n >= 1_000_000_000_000_000) return `${(n / 1_000_000_000_000_000).toFixed(2)}q`;
-  if (n >= 1_000_000_000_000) return `${(n / 1_000_000_000_000).toFixed(2)}t`;
-  if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(2)}b`;
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}m`;
-  return formatNumber(n);
 }
 
 function formatHours(hours: number): string {

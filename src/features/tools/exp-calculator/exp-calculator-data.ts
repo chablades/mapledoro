@@ -11,20 +11,22 @@ export interface CheckBuff {
   value: number;
   icon?: IconRef;
   maxLevel?: number;
+  excludes?: string[];
 }
 
-export interface CheckBuffGroup {
+interface CheckBuffGroup {
   id: string;
-  label: string;
+  section: string;
   mode: "exclusive" | "multi";
   buffs: CheckBuff[];
 }
 
-export interface SelectBuff {
+interface SelectBuff {
   id: string;
   label: string;
   icon?: IconRef;
   options: { label: string; value: number }[];
+  additive?: boolean;
 }
 
 export interface InputBuff {
@@ -33,12 +35,11 @@ export interface InputBuff {
   max: number;
   step?: number;
   icon?: IconRef;
+  bonusByLevel?: number[];
 }
 
 export interface BuffState {
-  cash: string;
-  use: string;
-  ring: string;
+  exclusive: Record<string, string>;
   additive: Record<string, boolean>;
   selects: Record<string, number>;
   inputs: Record<string, number>;
@@ -60,7 +61,6 @@ export interface MonsterExpResult {
   goldClockworkExp: number;
   hourlyExp: number;
   hoursToNextLevel: number;
-  tnlPercent: number;
 }
 
 export interface LevelResourceRow {
@@ -81,21 +81,18 @@ export interface ResourceTable {
   description: string;
   kind: "single-exp" | "epic";
   rows: LevelResourceRow[] | EpicDungeonRow[];
+  allInOne?: { label: string; max?: number };
 }
 
 export interface AllInOneInput {
   startLevel: number;
   startPercent: number;
   targetLevel: number;
-  expTickets: number;
-  advancedExpTickets: number;
-  punchKingPoints: number;
-  strawberryMonsters: number;
-  mechaberryRuns: number;
+  resources: Record<string, number>;
   customExp: number;
 }
 
-export interface AllInOneResult {
+interface AllInOneResult {
   level: number;
   percent: number;
   totalExp: number;
@@ -118,51 +115,44 @@ const EXP_TO_NEXT_LEVEL_VALUES = [
   1053187790325841, 1158506569358425, 1737759854037637,
 ];
 
-export const EXP_TO_NEXT_LEVEL = Object.fromEntries(
-  EXP_TO_NEXT_LEVEL_VALUES.map((exp, index) => [MIN_EXP_LEVEL + index, exp]),
-) as Record<number, number>;
-
 export const CHECK_BUFF_GROUPS: CheckBuffGroup[] = [
   {
     id: "cash",
-    label: "Cash Shop Coupon",
+    section: "Reg Server Modifiers",
     mode: "exclusive",
     buffs: [
-      { id: "none", label: "None", value: 1 },
       { id: "cash-2x", label: "2x Cash Shop Coupon (Lv. 250 or below)", value: 2, maxLevel: 250, icon: { type: "item", id: "05211046" } },
     ],
   },
   {
-    id: "use",
-    label: "Use Coupon",
+    id: "ring",
+    section: "Reg Server Modifiers",
     mode: "exclusive",
     buffs: [
-      { id: "none", label: "None", value: 1 },
+      { id: "torment", label: "Ring of Torment (x1.15 EXP)", value: 1.15, icon: { type: "item", id: "01114401" } },
+    ],
+  },
+  {
+    id: "use",
+    section: "Use Coupon",
+    mode: "exclusive",
+    buffs: [
       { id: "use-2x", label: "2x EXP Coupon / Legion EXP", value: 2, icon: { type: "item", id: "02450064" } },
       { id: "use-3x", label: "3x EXP Coupon", value: 3, icon: { type: "item", id: "02450163" } },
       { id: "use-4x", label: "4x EXP Coupon", value: 4, icon: { type: "item", id: "02450187" } },
     ],
   },
   {
-    id: "ring",
-    label: "Ring of Torment",
-    mode: "exclusive",
-    buffs: [
-      { id: "none", label: "None", value: 1 },
-      { id: "torment", label: "Ring of Torment (x1.15 EXP)", value: 1.15, icon: { type: "item", id: "01114401" } },
-    ],
-  },
-  {
     id: "additive",
-    label: "Additive Buffs",
+    section: "Additive Buffs",
     mode: "multi",
     buffs: [
-      { id: "eap", label: "EXP Accumulation Potion (+10%)", value: 10, icon: { type: "item", id: "02003550" } },
-      { id: "small-eap", label: "Small Concentrated EXP Accumulation Potion (+20%)", value: 20, icon: { type: "item", id: "02003612" } },
+      { id: "eap", label: "EXP Accumulation Potion (+10%)", value: 10, icon: { type: "item", id: "02003550" }, excludes: ["small-eap"] },
+      { id: "small-eap", label: "Small Concentrated EXP Accumulation Potion (+20%)", value: 20, icon: { type: "item", id: "02003612" }, excludes: ["eap"] },
       { id: "extreme-gold", label: "Extreme Gold Potion (+10%)", value: 10, icon: { type: "item", id: "02023128" } },
       { id: "vip-exp", label: "VIP Buff (EXP) (+15%)", value: 15, icon: { type: "item", id: "02024164", shadow: true } },
-      { id: "mvp-50", label: "MVP 50% Bonus EXP (+50%)", value: 50, icon: { type: "item", id: "02023926" } },
-      { id: "mvp-70", label: "MVP 70% Bonus EXP (+70%)", value: 70, icon: { type: "item", id: "02024275" } },
+      { id: "mvp-50", label: "MVP 50% Bonus EXP (+50%)", value: 50, icon: { type: "item", id: "02023926" }, excludes: ["mvp-70"] },
+      { id: "mvp-70", label: "MVP 70% Bonus EXP (+70%)", value: 70, icon: { type: "item", id: "02024275" }, excludes: ["mvp-50"] },
       { id: "exp-boost-ring-15", label: "EXP Boost Ring (+15%)", value: 15, icon: { type: "item", id: "01114326" } },
       { id: "aut-cernium", label: "Sacred Symbol: Cernium MAX (+10%)", value: 10, icon: { type: "item", id: "01713000" } },
       { id: "aut-arcs", label: "Sacred Symbol: Arcus MAX (+10%)", value: 10, icon: { type: "item", id: "01713001" } },
@@ -181,13 +171,13 @@ export const SELECT_BUFFS: SelectBuff[] = [
     { label: "Level 2 (+15% EXP)", value: 15 },
     { label: "Level 3 (+20% EXP)", value: 20 },
   ] },
-  { id: "evan-link", label: "Rune Persistence (Evan Link Skill)", icon: { type: "skill", id: "20010294" }, options: [
+  { id: "evan-link", label: "Rune Persistence (Evan Link Skill)", icon: { type: "skill", id: "20010294" }, additive: false, options: [
     { label: "N/A", value: 0 },
     { label: "Level 1 (Rune Duration +30%)", value: 1 },
     { label: "Level 2 (Rune Duration +50%)", value: 2 },
     { label: "Level 3 (Rune Duration +70%)", value: 3 },
   ] },
-  { id: "rune-day", label: "Rune Day", icon: { type: "skill", id: "80003910" }, options: [
+  { id: "rune-day", label: "Rune Day", icon: { type: "skill", id: "80003910" }, additive: false, options: [
     { label: "No event", value: 0 },
     { label: "+100% Rune EXP", value: 1 },
     { label: "+100% Rune EXP + 10 min cooldown", value: 2 },
@@ -208,6 +198,11 @@ export const SELECT_BUFFS: SelectBuff[] = [
     { label: "Level 2 (+50% EXP averaged)", value: 50 },
     { label: "Level 3 (+112.5% EXP averaged)", value: 112.5 },
     { label: "Level 4 (+200% EXP)", value: 200 },
+  ] },
+  { id: "exp-node", label: "EXP Node (Averaged)", icon: { type: "item", id: "02831071" }, options: [
+    { label: "N/A", value: 0 },
+    { label: "+10% EXP (Roro Power III)", value: 10 },
+    { label: "+33% EXP (Mapae - EXP Power)", value: 33 },
   ] },
   { id: "holy-symbol", label: "Holy Symbol", icon: { type: "skill", id: "400001020" }, options: [
     { label: "N/A", value: 0 },
@@ -233,9 +228,12 @@ export const SELECT_BUFFS: SelectBuff[] = [
   { id: "roll-of-the-dice", label: "Roll of the Dice", icon: { type: "skill", id: "35111013" }, options: percentOptions([0, 30, 40, 50]) },
 ];
 
+const HYPER_STAT_EXP_BONUS = [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 6, 7, 8, 9, 10];
+const SOL_JANUS_EXP_BONUS = [0, 10, 12, 14, 16, 18, 20, 22, 24, 26, 37, 39, 41, 43, 45, 47, 49, 51, 53, 55, 67, 69, 71, 73, 75, 77, 79, 81, 83, 85, 100];
+
 export const LEVEL_INPUT_BUFFS: InputBuff[] = [
-  { id: "hyper-stats", label: "Hyper Stats (EXP Obtained) Level (1-15)", max: 15, icon: { type: "erda-skill", id: "18112/rush/2" } },
-  { id: "sol-janus", label: "Sol Janus Level (1-30)", max: 30, icon: { type: "skill", id: "500001000" } },
+  { id: "hyper-stats", label: "Hyper Stats (EXP Obtained) Level (1-15)", max: 15, icon: { type: "erda-skill", id: "18112/rush/2" }, bonusByLevel: HYPER_STAT_EXP_BONUS },
+  { id: "sol-janus", label: "Sol Janus Level (1-30)", max: 30, icon: { type: "skill", id: "500001000" }, bonusByLevel: SOL_JANUS_EXP_BONUS },
 ];
 
 export const INPUT_BUFFS: InputBuff[] = [
@@ -317,6 +315,7 @@ export const RESOURCE_TABLES: ResourceTable[] = [
     description: "CROWN+ EXP ticket values per ticket from the local EXP Ticket workbook.",
     kind: "single-exp",
     rows: makeLevelRows(200, EXP_TICKET_CROWN),
+    allInOne: { label: "EXP Tickets" },
   },
   {
     id: "advanced-exp-ticket",
@@ -324,6 +323,7 @@ export const RESOURCE_TABLES: ResourceTable[] = [
     description: "Advanced EXP ticket values per ticket from the local EXP Ticket workbook.",
     kind: "single-exp",
     rows: makeLevelRows(260, ADV_EXP_TICKET),
+    allInOne: { label: "Advanced EXP Tickets" },
   },
   {
     id: "punch-king",
@@ -331,6 +331,7 @@ export const RESOURCE_TABLES: ResourceTable[] = [
     description: "Spiegella's Golden Carriage Tomato Punch King EXP per point, max 1150 points per run.",
     kind: "single-exp",
     rows: makeLevelRows(200, PUNCH_KING),
+    allInOne: { label: "Punch King Points", max: 1150 },
   },
   {
     id: "strawberry-farm",
@@ -338,6 +339,7 @@ export const RESOURCE_TABLES: ResourceTable[] = [
     description: "Spiegella's Golden Strawberry Farm / Midnight Dream Catcher EXP per monster.",
     kind: "single-exp",
     rows: makeLevelRows(200, STRAWBERRY_FARM),
+    allInOne: { label: "Berry Farm Monsters" },
   },
   {
     id: "mechaberry-farm",
@@ -345,6 +347,7 @@ export const RESOURCE_TABLES: ResourceTable[] = [
     description: "Mechaberry Farm EXP per run. The workbook notes these values are not affected by EXP multipliers.",
     kind: "single-exp",
     rows: makeLevelRows(280, MECHABERRY_FARM),
+    allInOne: { label: "Mechaberry Runs" },
   },
   {
     id: "high-mountain",
@@ -370,23 +373,21 @@ export const RESOURCE_TABLES: ResourceTable[] = [
 ];
 
 export const DEFAULT_BUFF_STATE: BuffState = {
-  cash: "none",
-  use: "none",
-  ring: "none",
+  exclusive: {},
   additive: {},
   selects: Object.fromEntries(SELECT_BUFFS.map((buff) => [buff.id, 0])),
   inputs: Object.fromEntries([...INPUT_BUFFS, ...LEVEL_INPUT_BUFFS].map((buff) => [buff.id, 0])),
 };
 
 export function expForLevel(level: number): number {
-  return EXP_TO_NEXT_LEVEL[level] ?? 0;
+  return EXP_TO_NEXT_LEVEL_VALUES[level - MIN_EXP_LEVEL] ?? 0;
 }
 
-export function levelExpRemaining(level: number, percent: number): number {
+function levelExpRemaining(level: number, percent: number): number {
   return Math.ceil(expForLevel(level) * (1 - clamp(percent, 0, 99.999) / 100));
 }
 
-export function monsterLevelBonus(playerLevel: number, monsterLevel: number): number {
+function monsterLevelBonus(playerLevel: number, monsterLevel: number): number {
   const diff = Math.abs(monsterLevel - playerLevel);
   if (diff <= 1) return 1.2;
   if (diff <= 4) return 1.1;
@@ -394,27 +395,28 @@ export function monsterLevelBonus(playerLevel: number, monsterLevel: number): nu
   return 1;
 }
 
-export function calculateBuffMultiplier(state: BuffState, playerLevel: number): number {
-  const cash = selectedCheckBuff("cash", state.cash);
-  const use = selectedCheckBuff("use", state.use);
-  const ring = selectedCheckBuff("ring", state.ring);
-  const multiplicative = checkApplies(cash, playerLevel) * checkApplies(use, playerLevel) * checkApplies(ring, playerLevel);
-  const additive = CHECK_BUFF_GROUPS.find((group) => group.id === "additive")?.buffs.reduce((sum, buff) => {
-    return sum + (state.additive[buff.id] ? buff.value / 100 : 0);
-  }, 0) ?? 0;
+function calculateBuffMultiplier(state: BuffState, playerLevel: number): number {
+  let multiplicative = 1;
+  let additive = 0;
+  for (const group of CHECK_BUFF_GROUPS) {
+    if (group.mode === "exclusive") {
+      const selected = group.buffs.find((buff) => buff.id === state.exclusive[group.id]);
+      multiplicative *= checkApplies(selected, playerLevel);
+    } else {
+      additive += group.buffs.reduce((sum, buff) => sum + (state.additive[buff.id] ? buff.value / 100 : 0), 0);
+    }
+  }
   const selectAdditive = SELECT_BUFFS.reduce((sum, buff) => {
-    if (buff.id === "evan-link" || buff.id === "rune-day") return sum;
+    if (buff.additive === false) return sum;
     return sum + (state.selects[buff.id] ?? 0) / 100;
   }, 0);
-  const inputAdditive = INPUT_BUFFS.reduce((sum, buff) => sum + clamp(state.inputs[buff.id] ?? 0, 0, buff.max) / 100, 0);
-  const levelInputAdditive = LEVEL_INPUT_BUFFS.reduce((sum, buff) => {
-    const level = Math.floor(clamp(state.inputs[buff.id] ?? 0, 0, buff.max));
-    if (buff.id === "hyper-stats") return sum + hyperStatExpBonus(level) / 100;
-    if (buff.id === "sol-janus") return sum + solJanusExpBonus(level) / 100;
-    return sum;
+  const inputAdditive = [...INPUT_BUFFS, ...LEVEL_INPUT_BUFFS].reduce((sum, buff) => {
+    const value = clamp(state.inputs[buff.id] ?? 0, 0, buff.max);
+    const percent = buff.bonusByLevel ? buff.bonusByLevel[Math.floor(value)] ?? 0 : value;
+    return sum + percent / 100;
   }, 0);
   const runeAdditive = runeExpBonus(state.selects["evan-link"] ?? 0, state.selects["rune-day"] ?? 0) / 100;
-  return multiplicative + additive + selectAdditive + inputAdditive + levelInputAdditive + runeAdditive;
+  return multiplicative + additive + selectAdditive + inputAdditive + runeAdditive;
 }
 
 export function calculateMonsterExp(input: MonsterExpInput, buffs: BuffState): MonsterExpResult {
@@ -432,7 +434,6 @@ export function calculateMonsterExp(input: MonsterExpInput, buffs: BuffState): M
     goldClockworkExp: normalExp * 200,
     hourlyExp,
     hoursToNextLevel: hourlyExp > 0 ? remainingExp / hourlyExp : 0,
-    tnlPercent: percentOfLevel(input.playerLevel, normalExp),
   };
 }
 
@@ -452,7 +453,7 @@ export function calculateAllInOne(input: AllInOneInput): AllInOneResult {
   };
 }
 
-export function resourceExpAtLevel(tableId: string, level: number): number {
+function resourceExpAtLevel(tableId: string, level: number): number {
   const table = RESOURCE_TABLES.find((resource) => resource.id === tableId);
   if (!table || table.kind !== "single-exp") return 0;
   const rows = table.rows as LevelResourceRow[];
@@ -465,13 +466,9 @@ export function percentOfLevel(level: number, exp: number): number {
 }
 
 function allInOneExpAtLevel(level: number, input: AllInOneInput): number {
-  return (
-    resourceExpAtLevel("exp-ticket", level) * Math.max(0, input.expTickets) +
-    resourceExpAtLevel("advanced-exp-ticket", level) * Math.max(0, input.advancedExpTickets) +
-    resourceExpAtLevel("punch-king", level) * Math.max(0, input.punchKingPoints) +
-    resourceExpAtLevel("strawberry-farm", level) * Math.max(0, input.strawberryMonsters) +
-    resourceExpAtLevel("mechaberry-farm", level) * Math.max(0, input.mechaberryRuns) +
-    Math.max(0, input.customExp)
+  return RESOURCE_TABLES.reduce(
+    (sum, table) => (table.allInOne ? sum + resourceExpAtLevel(table.id, level) * Math.max(0, input.resources[table.id] ?? 0) : sum),
+    Math.max(0, input.customExp),
   );
 }
 
@@ -491,11 +488,6 @@ function expNeededBetween(level: number, currentExp: number, targetLevel: number
     required += expForLevel(nextLevel);
   }
   return required;
-}
-
-function selectedCheckBuff(groupId: string, selectedId: string): CheckBuff | undefined {
-  const group = CHECK_BUFF_GROUPS.find((entry) => entry.id === groupId);
-  return group?.buffs.find((buff) => buff.id === selectedId);
 }
 
 function checkApplies(buff: CheckBuff | undefined, playerLevel: number): number {
@@ -527,25 +519,8 @@ function grandSymbolOptions(): { label: string; value: number }[] {
 
 function runeExpBonus(evanLinkLevel: number, runeDay: number): number {
   const evanMultiplier = [1, 1.3, 1.5, 1.7][Math.floor(clamp(evanLinkLevel, 0, 3))] ?? 1;
-  let regularBase = 20;
-  let blessingBase = 40;
-  if (runeDay === 1) {
-    regularBase = 40;
-    blessingBase = 60;
-  }
-  if (runeDay === 2) {
-    regularBase = 60;
-    blessingBase = 90;
-  }
-  return regularBase * evanMultiplier + blessingBase * evanMultiplier;
-}
-
-function hyperStatExpBonus(level: number): number {
-  return [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 6, 7, 8, 9, 10][level] ?? 0;
-}
-
-function solJanusExpBonus(level: number): number {
-  return [0, 10, 12, 14, 16, 18, 20, 22, 24, 26, 37, 39, 41, 43, 45, 47, 49, 51, 53, 55, 67, 69, 71, 73, 75, 77, 79, 81, 83, 85, 100][level] ?? 0;
+  const [regularBase, blessingBase] = [[20, 40], [40, 60], [60, 90]][runeDay] ?? [20, 40];
+  return (regularBase + blessingBase) * evanMultiplier;
 }
 
 function makeLevelRows(startLevel: number, values: number[]): LevelResourceRow[] {
