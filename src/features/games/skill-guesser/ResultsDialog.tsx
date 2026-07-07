@@ -61,6 +61,16 @@ const revealIconFrame: CSSProperties = {
   flexShrink: 0,
 };
 
+const revealCard: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: "0.85rem",
+  margin: "1.1rem 0",
+  padding: "0.85rem 1rem",
+  borderRadius: 12,
+  textAlign: "left",
+};
+
 export default function ResultsDialog({
   theme,
   puzzleNumber,
@@ -115,17 +125,7 @@ export default function ResultsDialog({
         </div>
 
         <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "0.85rem",
-            margin: "1.1rem 0",
-            padding: "0.85rem 1rem",
-            borderRadius: 12,
-            border: `1px solid ${theme.border}`,
-            background: theme.timerBg,
-            textAlign: "left",
-          }}
+          style={{ ...revealCard, border: `1px solid ${theme.border}`, background: theme.timerBg }}
         >
           <div style={{ ...revealIconFrame, background: theme.panel, border: `1px solid ${theme.border}` }}>
             <PuzzleSkillIcon
