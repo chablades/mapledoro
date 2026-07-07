@@ -105,6 +105,13 @@ export function getFlowStepCount(flowId: SetupFlowId) {
   return getSetupFlowById(flowId).steps.length;
 }
 
+/** Whether finishing this flow is supposed to touch the given step's data at all —
+ *  used to stop leftover draft values from an abandoned different flow (e.g. Full
+ *  Setup steps typed in before backing out to Quick Setup) from leaking into storage. */
+export function flowIncludesStep(flowId: SetupFlowId, stepId: SetupStepId): boolean {
+  return (getSetupFlowById(flowId).steps as readonly string[]).includes(stepId);
+}
+
 export function getSetupFlowLabel(flowId: SetupFlowId) {
   return getSetupFlowById(flowId).label;
 }

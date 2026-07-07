@@ -67,6 +67,7 @@ import type { NormalizedCharacterData } from "../model/types";
 import {
   clampFlowStepIndex,
   computeEffectiveFlowStart,
+  flowIncludesStep,
   getFlowStepByIndex,
   getFlowStepCount,
   getRequiredSetupFlowId,
@@ -279,13 +280,21 @@ function finalizeQuickOrFullSetupRecord(
   setupStepTestByStep: SetupStepInputById,
   upsertRosterCharacter: (c: StoredCharacterRecord) => void,
 ): void {
-  const storedRecord = isFullSetupFlow
-    ? buildFullSetupRecord(confirmedCharacter, setupStepTestByStep)
-    : createStoredCharacterRecord({
-        character: confirmedCharacter,
-        gender: normalizeGenderValue(setupStepTestByStep.gender),
-        marriage: marriageDraftToStored(setupStepTestByStep.marriage ?? ""),
-      });
+  let storedRecord: StoredCharacterRecord;
+  if (isFullSetupFlow) {
+    storedRecord = buildFullSetupRecord(confirmedCharacter, setupStepTestByStep);
+  } else {
+    const gender = normalizeGenderValue(setupStepTestByStep.gender);
+    const marriage = marriageDraftToStored(setupStepTestByStep.marriage ?? "");
+    // Quick Setup only ever collects gender + marriage — merge those two fields onto
+    // whatever's already on record for this character instead of building a bare record
+    // and replacing it wholesale, which would silently wipe stats/equipment/hexa/v-matrix/
+    // familiars/tools that a prior Full Setup (or standalone tool flow) already saved.
+    const existing = selectCharacterById(readCharactersStore(), toCharacterKey(confirmedCharacter));
+    storedRecord = existing
+      ? { ...existing, gender, marriage }
+      : createStoredCharacterRecord({ character: confirmedCharacter, gender, marriage });
+  }
   upsertRosterCharacter(storedRecord);
   if (!isFullSetupFlow) syncWhLegionRankForWorld(confirmedCharacter.worldID, storedRecord);
 }
@@ -365,11 +374,10 @@ function applyMapleScouterFlow(
   const store = readCharactersStore();
   const existing = selectCharacterById(store, toCharacterKey(character));
   const created = !existing;
-  const base = existing ?? createStoredCharacterRecord({
-    character,
-    gender: normalizeGenderValue(stepData.gender),
-    marriage: marriageDraftToStored(stepData.marriage ?? ""),
-  });
+  // MapleScouter setup has no gender/marriage step (see doc comment above) — don't read
+  // stepData.gender/marriage here, since that field is shared draft state that can still be
+  // holding a value left over from an abandoned Quick/Full Setup attempt on this character.
+  const base = existing ?? createStoredCharacterRecord({ character });
 
   const statsDraft = parseStatsStepDraft(stepData.stats ?? "");
   applyScouterLegionForWorld(store, character, base, statsDraft.scouterQuestions?.whLegion, statsDraft.scouterQuestions);
@@ -535,12 +543,24 @@ function applyStandaloneToolDrafts(
   character: NormalizedCharacterData | null,
   stepData: import("../setup/types").SetupStepInputById,
   upsertFn: (c: StoredCharacterRecord) => void,
+  flowId: SetupFlowId,
 ) {
   if (!character) return;
-  if (stepData.equipment) applyEquipmentDraftToRoster(character, stepData.equipment, upsertFn);
-  if (stepData.hexa_matrix) applyHexaDraftToRoster(character, stepData.hexa_matrix, upsertFn);
-  if (stepData.v_matrix) applyVMatrixDraftToRoster(character, stepData.v_matrix, upsertFn);
-  if (stepData.familiars) applyFamiliarsDraftToRoster(character, stepData.familiars, upsertFn);
+  // Gate each field by whether the flow actually being finished includes that step —
+  // otherwise leftover draft data from a different, abandoned flow (e.g. Equipment typed
+  // in during Full Setup, then backing out to finish Quick Setup) silently leaks in.
+  if (stepData.equipment && flowIncludesStep(flowId, "equipment")) {
+    applyEquipmentDraftToRoster(character, stepData.equipment, upsertFn);
+  }
+  if (stepData.hexa_matrix && flowIncludesStep(flowId, "hexa_matrix")) {
+    applyHexaDraftToRoster(character, stepData.hexa_matrix, upsertFn);
+  }
+  if (stepData.v_matrix && flowIncludesStep(flowId, "v_matrix")) {
+    applyVMatrixDraftToRoster(character, stepData.v_matrix, upsertFn);
+  }
+  if (stepData.familiars && flowIncludesStep(flowId, "familiars")) {
+    applyFamiliarsDraftToRoster(character, stepData.familiars, upsertFn);
+  }
 }
 
 // The setup step's own draft never carries an activePreset at all (its preset tab is
@@ -670,22 +690,6 @@ function normalizeGenderValue(value: string | undefined | null): "male" | "femal
   return null;
 }
 
-function getCurrentCharacterGender(
-  setupStepTestByStep: SetupStepInputById,
-): "male" | "female" | null {
-  const currentCharacterGenderRaw = (setupStepTestByStep.gender ?? "").toLowerCase();
-  if (currentCharacterGenderRaw === "male" || currentCharacterGenderRaw === "female") {
-    return currentCharacterGenderRaw;
-  }
-  return null;
-}
-
-function getCurrentCharacterMarriage(
-  setupStepTestByStep: SetupStepInputById,
-): { married: boolean | null; partnerName: string | null } {
-  const result = marriageDraftToStored(setupStepTestByStep.marriage ?? "");
-  return { married: result?.isMarried ?? null, partnerName: result?.partnerName ?? null };
-}
 
 // Helpers for world-scoped main/champion key maps
 function getMainKeyForWorld(
@@ -1073,25 +1077,20 @@ export function useCharacterSetupController() {
     // roster is intentional — e.g. the user removed their last character — and must be
     // persisted; otherwise that final character would survive in storage and reappear.
     const now = Date.now();
-    const currentCharacterKey = confirmedCharacter ? toCharacterKey(confirmedCharacter) : null;
-    // characterRoster is already StoredCharacterRecord[], just sync gender from setup steps
-    // and update meta.updatedAt if the character data changed since last save.
+    // characterRoster is already StoredCharacterRecord[]. Gender/marriage only change when
+    // the roster itself changes (a setup flow's Finish calling upsertRosterCharacter), not
+    // live as the draft is typed — now that there are multiple setup flows, a value typed
+    // into one flow shouldn't count until that flow's own Finish actually commits it (see
+    // finalizeQuickOrFullSetupRecord / applyMapleScouterFlow). Also update meta.updatedAt if
+    // the character data changed since last save.
     const nextCharactersById = characterRoster.reduce<Record<string, StoredCharacterRecord>>(
       (acc, character) => {
         const id = toCharacterKey(character);
         const existingRecord = existingStore.charactersById[id];
-        const isCurrentCharacter = currentCharacterKey === id;
-        const gender = isCurrentCharacter
-          ? normalizeGenderValue(setupStepTestByStep.gender)
-          : (character.gender ?? existingRecord?.gender ?? null);
-        const existingMarriage = character.marriage ?? existingRecord?.marriage ?? null;
-        const marriage = isCurrentCharacter
-          ? marriageDraftToStored(setupStepTestByStep.marriage ?? "")
-          : existingMarriage;
         acc[id] = {
           ...character,
-          gender,
-          marriage,
+          gender: character.gender ?? existingRecord?.gender ?? null,
+          marriage: character.marriage ?? existingRecord?.marriage ?? null,
           meta: {
             addedAt: character.meta.addedAt,
             updatedAt:
@@ -1116,15 +1115,21 @@ export function useCharacterSetupController() {
       if (validKeys.length > 0) nextChampionCharacterIdsByWorld[worldId] = validKeys;
     }
 
+    // Re-read the world-scoped fields immediately before writing rather than reusing the
+    // earlier existingStore read: this effect fires on every setup-flow keystroke (any step,
+    // any open tab), and the roster rebuild above takes real time, leaving a window where a
+    // concurrent writeLinkSkillsForWorld/writeLegionArtifactForWorld call (e.g. from another
+    // tab) could land in between and get silently clobbered by this pass-through write.
+    const freshWorldFields = readCharactersStore();
     const nextStore = {
       version: existingStore.version,
       order: characterRoster.map((character) => toCharacterKey(character)),
       mainCharacterIdByWorld: nextMainCharacterIdByWorld,
       championCharacterIdsByWorld: nextChampionCharacterIdsByWorld,
       charactersById: nextCharactersById,
-      linkSkillsByWorld: existingStore.linkSkillsByWorld,
-      scouterLegionByWorld: existingStore.scouterLegionByWorld,
-      legionArtifactByWorld: existingStore.legionArtifactByWorld,
+      linkSkillsByWorld: freshWorldFields.linkSkillsByWorld,
+      scouterLegionByWorld: freshWorldFields.scouterLegionByWorld,
+      legionArtifactByWorld: freshWorldFields.legionArtifactByWorld,
       updatedAt: now,
     };
 
@@ -1132,9 +1137,7 @@ export function useCharacterSetupController() {
   }, [
     championCharacterKeysByWorld,
     characterRoster,
-    confirmedCharacter,
     mainCharacterKeyByWorld,
-    setupStepTestByStep,
   ]);
 
   // Persist draft
@@ -1494,13 +1497,16 @@ export function useCharacterSetupController() {
         setHasCompletedRequiredSetupEver(true);
       }
 
+      // Gated by the flow actually being finished, not just "is this draft field non-empty" —
+      // otherwise leftover data from a different, abandoned flow (e.g. Link Skills filled in
+      // during Full Setup, then backing out to finish Quick Setup) silently leaks into storage.
       const linkSkillsValue = setupStepTestByStep.link_skills;
-      if (linkSkillsValue && confirmedCharacter) {
+      if (linkSkillsValue && confirmedCharacter && flowIncludesStep(effectiveFlowId, "link_skills")) {
         writeLinkSkillsForWorld(confirmedCharacter.worldID, linkSkillsDraftToStored(linkSkillsValue));
       }
 
       if (confirmedCharacter && !isFullSetupFlow) {
-        applyStandaloneToolDrafts(confirmedCharacter, setupStepTestByStep, upsertRosterCharacter);
+        applyStandaloneToolDrafts(confirmedCharacter, setupStepTestByStep, upsertRosterCharacter, effectiveFlowId);
       }
 
       setIsAddingCharacter(false);
@@ -1842,8 +1848,16 @@ export function useCharacterSetupController() {
   );
   const canSetCurrentChampion =
     isCurrentChampionCharacter || championCharacterKeys.length < MAX_CHAMPIONS;
-  const currentCharacterGender = getCurrentCharacterGender(setupStepTestByStep);
-  const currentCharacterMarriage = getCurrentCharacterMarriage(setupStepTestByStep);
+  // Sourced from the roster (what's actually saved), not the live draft — a value typed
+  // into an in-progress step shouldn't show here until its flow's Finish actually commits it.
+  const currentRosterCharacter = currentCharacterKey
+    ? characterRoster.find((c) => toCharacterKey(c) === currentCharacterKey) ?? null
+    : null;
+  const currentCharacterGender = currentRosterCharacter?.gender ?? null;
+  const currentCharacterMarriage = {
+    married: currentRosterCharacter?.marriage?.isMarried ?? null,
+    partnerName: currentRosterCharacter?.marriage?.partnerName ?? null,
+  };
 
   // Derive sorted world IDs from roster
   const worldIds = Array.from(
