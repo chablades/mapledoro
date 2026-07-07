@@ -151,7 +151,7 @@ export function resolveLegionArtifacts(
 // ── Conversion ─────────────────────────────────────────────────────────────────
 
 /** Parses the weapon ATT/MATT field into a positive integer, or undefined if blank/invalid. */
-function parseWeaponAtt(raw: string | undefined): number | undefined {
+export function parseWeaponAtt(raw: string | undefined): number | undefined {
   const n = Number(raw?.trim());
   return Number.isFinite(n) && n > 0 ? Math.floor(n) : undefined;
 }

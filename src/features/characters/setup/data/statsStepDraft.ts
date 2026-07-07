@@ -8,6 +8,7 @@
 import type { CharacterMarriage, CharacterSoul, StoredCharacterStats, StoredHyperStat, StoredTripleStatField } from "../../model/charactersStore";
 import { HYPER_STAT_CATEGORIES, HYPER_STAT_PRESET_COUNT, parseStoredHyperStatLevel } from "./hyperStatData";
 import { convertInnerAbilityDraftToStored, type IADraft } from "./innerAbilityData";
+import type { ClassSkillData } from "./classSkillData";
 
 export interface TripleStatDraft {
   base: string;
@@ -182,7 +183,10 @@ function draftHyperStatToStored(draft: HyperStatDraft | undefined): StoredHyperS
     }
     return out;
   });
-  return { presets, activePreset: hyper.activePreset };
+  // Always saved as preset 1 — the tab switcher used to view/edit each preset isn't an
+  // explicit "this is my active loadout" choice, so trusting it would silently save
+  // whatever preset was last open while editing.
+  return { presets, activePreset: 0 };
 }
 
 export function convertStatsStepDraftToStored(
@@ -235,6 +239,28 @@ export function convertStatsStepDraftToStored(
       innerAbility: convertInnerAbilityDraftToStored(draft.innerAbility),
     },
   };
+}
+
+// ── Weapon ATT/MATT ──────────────────────────────────────────────────────────
+// Shared between StatsSetupStep (maplescouter_setup, which has no Equipment step to
+// ask this in) and EquipmentSetupStep (full_setup, asked inline in the weapon picker).
+
+/** Value above which a Weapon ATT/MATT entry is almost certainly the Total stat, not
+ *  the weapon's own +X — MapleScouter itself flags this same mix-up. */
+export const WEAPON_ATT_WARN_AT = 1150;
+
+export function isWeaponAttSane(weaponAtt: string | undefined): boolean {
+  const trimmed = weaponAtt?.trim();
+  if (!trimmed) return true;
+  return Number(trimmed) <= WEAPON_ATT_WARN_AT;
+}
+
+/** "Weapon ATT" vs "Weapon Magic ATT", based on whether the class's required stats
+ *  include Magic ATT but not Attack Power. */
+export function deriveWeaponAttLabel(classData: ClassSkillData | undefined): { usesMagicWeapon: boolean; label: string } {
+  const required = classData?.requiredStats ?? [];
+  const usesMagicWeapon = required.includes("magicAtt") && !required.includes("attackPower");
+  return { usesMagicWeapon, label: usesMagicWeapon ? "Weapon Magic ATT" : "Weapon ATT" };
 }
 
 export function marriageDraftToStored(marriageRaw: string): CharacterMarriage | null {

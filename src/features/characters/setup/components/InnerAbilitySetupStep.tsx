@@ -220,11 +220,12 @@ function IAGradeHeader({ grade, openId, theme, onToggle, onClose, onSelect, onCl
 }
 
 /** Search + value list for a line's chosen tier. Mounts when the line popover opens. */
-function IALineOptions({ tier, currentValue, theme, onPick }: {
+function IALineOptions({ tier, currentValue, theme, onPick, onClose }: {
   tier: IATier;
   currentValue: string;
   theme: AppTheme;
   onPick: (value: string) => void;
+  onClose: () => void;
 }) {
   const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -236,6 +237,7 @@ function IALineOptions({ tier, currentValue, theme, onPick }: {
     items: filtered,
     resetKey: query,
     onSelect: (line) => onPick(line),
+    onClose,
   });
 
   function handleSearchKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
@@ -327,7 +329,7 @@ function IALineBar({ lineIdx, line, grade, openId, theme, onToggle, onClose, onS
           )}
           {tier ? (
             <IALineOptions tier={tier} currentValue={line.value} theme={theme}
-              onPick={(v) => { onSetValue(tier, v); onClose(); }} />
+              onPick={(v) => { onSetValue(tier, v); onClose(); }} onClose={onClose} />
           ) : (
             <p style={{ margin: 0, padding: "0.5rem 0.6rem", fontSize: "0.78rem", color: theme.muted, fontWeight: 600 }}>Pick a tier first</p>
           )}

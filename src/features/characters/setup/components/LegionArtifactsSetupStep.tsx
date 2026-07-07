@@ -9,7 +9,7 @@ import { searchAndRank } from "../../../../lib/searchMatch";
 import { legionCrystalIconUrl } from "../../../../lib/mapleResource";
 import type { AppTheme } from "../../../../components/themes";
 import type { SetupStepDefinition } from "../steps";
-import type { StoredScouterLegion } from "../../model/charactersStore";
+import type { StoredLegionArtifact } from "../../model/charactersStore";
 import { usePickerCoords } from "../hooks/usePickerCoords";
 import {
   CRYSTAL_STAT_SLOTS,
@@ -34,7 +34,7 @@ interface LegionArtifactsSetupStepProps {
   step: SetupStepDefinition;
   stepNumber: number;
   totalSteps: number;
-  worldScouterLegion?: StoredScouterLegion;
+  worldLegionArtifact?: StoredLegionArtifact;
   value: string;
   onChange: (value: string) => void;
   onBack: () => void;
@@ -240,6 +240,7 @@ function StatSlotChip({
     items: filtered,
     resetKey: query,
     onSelect: (opt) => { onPick(opt.id); onClose(); },
+    onClose,
   });
 
   function handleSearchKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
@@ -397,12 +398,12 @@ function CrystalTile({
 // ── Main component ───────────────────────────────────────────────────────────
 
 export default function LegionArtifactsSetupStep({
-  theme, step, stepNumber, totalSteps, worldScouterLegion, value, onChange, onBack, onNext, onFinish,
+  theme, step, stepNumber, totalSteps, worldLegionArtifact, value, onChange, onBack, onNext, onFinish,
 }: LegionArtifactsSetupStepProps) {
   const draft = parseLegionArtifactBoardDraft(value);
-  const artifactLevel = draft.artifactLevel ?? worldScouterLegion?.artifactLevel ?? 0;
+  const artifactLevel = draft.artifactLevel ?? worldLegionArtifact?.artifactLevel ?? 0;
   const crystals: LegionCrystalDraft[] = draft.crystals
-    ?? (worldScouterLegion?.crystals as LegionCrystalDraft[] | undefined)
+    ?? (worldLegionArtifact?.crystals as LegionCrystalDraft[] | undefined)
     ?? [];
 
   const [openCardIndex, setOpenCardIndex] = useState<number | null>(null);

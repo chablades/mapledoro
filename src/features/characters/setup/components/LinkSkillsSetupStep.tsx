@@ -7,7 +7,7 @@ import Image from "next/image";
 import { resourceImageUrl } from "../../../../lib/mapleResource";
 import type { AppTheme } from "../../../../components/themes";
 import type { SetupStepDefinition } from "../steps";
-import type { StoredCharacterRecord } from "../../model/charactersStore";
+import type { StoredCharacterRecord, LinkSkillId } from "../../model/charactersStore";
 import SetupStepFrame from "./SetupStepFrame";
 import InfoTooltip, { type TooltipContent } from "./InfoTooltip";
 
@@ -27,11 +27,6 @@ interface LinkSkillsSetupStepProps {
   onNext: () => void;
   onFinish: () => void;
 }
-
-type LinkSkillId =
-  | "unfairAdvantage" | "tideOfBattle" | "solus" | "timeToPrepare"
-  | "termsAndConditions" | "elementalism" | "qiCultivation" | "bravado"
-  | "empiricalKnowledge" | "thiefsСunning";
 
 interface LinkSkillDef {
   id: LinkSkillId;

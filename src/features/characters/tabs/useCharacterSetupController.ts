@@ -16,10 +16,14 @@ import {
   type StoredEquipmentPreset,
   type StoredLegionCrystal,
   type StoredInnerAbility,
+  type StoredFamiliarsData,
+  type StoredVMatrixData,
   type WhLegionRank,
   selectCharactersList,
+  linkSkillsDraftToStored,
   writeLinkSkillsForWorld,
   writeScouterLegionForWorld,
+  writeLegionArtifactForWorld,
   writeCharactersStore,
 } from "../model/charactersStore";
 import { findClassById } from "../../tools/hexa-skills/hexa-classes";
@@ -46,6 +50,7 @@ import {
   convertScouterQuestionsDraftToStored,
   resolveLegionArtifacts,
   whRankFromRoster,
+  parseWeaponAtt,
   type LegionArtifactsDraft,
 } from "../setup/data/scouterQuestionsData";
 import {
@@ -141,7 +146,10 @@ function parseEquipmentDraft(json: string): StoredCharacterEquipment | null {
     const presetAt = (i: number) => draftPresetToStored(d.presets?.[i === 0 || diverged.has(i) ? i : 0]);
     return {
       presets: [presetAt(0), presetAt(1), presetAt(2)],
-      activePreset: typeof d.activePreset === "number" ? d.activePreset : 0,
+      // Always saved as preset 1, regardless of which tab was last open while editing —
+      // the tab switcher isn't an explicit "this is my active loadout" choice, so trusting
+      // it would silently save whatever preset the user happened to edit last.
+      activePreset: 0,
       title: draftItem(d.title ?? null),
       totems: [draftItem(d.totem1 ?? null), draftItem(d.totem2 ?? null), draftItem(d.totem3 ?? null)],
       pets: [draftItem(d.pet1 ?? null), draftItem(d.pet2 ?? null), draftItem(d.pet3 ?? null)],
@@ -318,17 +326,24 @@ function applyScouterLegionForWorld(
   // on the same per-world blob next to the WH rank. (For full_setup these are already
   // derived from `board` by the caller before this function runs.)
   const artifacts = resolveLegionArtifacts(legionArtifactsDraft, existingLegion);
-  // The full 9-crystal board (full_setup only) is also per-world; preserve whatever's
-  // already stored when this session didn't touch it (e.g. a second character on the
-  // same world finishing full_setup without revisiting Legion Artifacts).
-  const artifactLevel = board?.artifactLevel ?? existingLegion?.artifactLevel;
-  const crystals = toStoredLegionCrystals(board?.crystals) ?? existingLegion?.crystals;
   writeScouterLegionForWorld(character.worldID, {
     ...(wildHunterRank ? { wildHunterRank } : {}),
     ...artifacts,
-    ...(artifactLevel !== undefined ? { artifactLevel } : {}),
-    ...(crystals ? { crystals } : {}),
   });
+
+  // The full 9-crystal board (full_setup only) is real Legion Artifact data, not a
+  // scouter input — lives on its own per-world store. Preserve whatever's already
+  // stored when this session didn't touch it (e.g. a second character on the same
+  // world finishing full_setup without revisiting Legion Artifacts).
+  if (board) {
+    const existingArtifact = store.legionArtifactByWorld[String(character.worldID)];
+    const artifactLevel = board.artifactLevel ?? existingArtifact?.artifactLevel;
+    const crystals = toStoredLegionCrystals(board.crystals) ?? existingArtifact?.crystals;
+    writeLegionArtifactForWorld(character.worldID, {
+      ...(artifactLevel !== undefined ? { artifactLevel } : {}),
+      ...(crystals ? { crystals } : {}),
+    });
+  }
 }
 
 /**
@@ -446,16 +461,14 @@ function buildFullSetupRecord(
     convertStatsStepDraftToStored(statsDraft, character.level);
   const hexaSkillsToolData = buildHexaSkillsToolData(character.jobName, stepData.hexa_matrix ?? "");
   const hexaStatToolData = buildHexaStatToolData(stepData.hexa_matrix ?? "");
-  const vMatrixToolData = buildVMatrixToolDataForRecord(stepData.v_matrix ?? "");
-  const familiarsData = stepData.familiars ? tryParseJson(stepData.familiars) : null;
+  const vMatrixData = buildVMatrixDataForRecord(stepData.v_matrix ?? "");
+  const familiarsData = buildFamiliarsDataForRecord(stepData.familiars ?? "");
   const equipmentData = stepData.equipment ? parseEquipmentDraft(stepData.equipment) : null;
   const symbolsData = stepData.equipment ? buildSymbolsToolDataForRecord(character, stepData.equipment) : null;
   const tools = {
     ...base.tools,
     ...(hexaSkillsToolData ? { hexaSkills: hexaSkillsToolData } : null),
     ...(hexaStatToolData ? { hexaStat: hexaStatToolData } : null),
-    ...(vMatrixToolData ? { vMatrix: vMatrixToolData } : null),
-    ...(familiarsData ? { familiars: familiarsData } : null),
     ...(symbolsData ? { symbols: symbolsData } : null),
   };
 
@@ -464,12 +477,14 @@ function buildFullSetupRecord(
   const buffs = deriveMaxedSacredSymbol(symbolsData)
     ? { ...(buffsConverted ?? {}), maxedSacredSymbol: true as const }
     : buffsConverted;
-  const scouterQ = convertScouterQuestionsDraftToStored(statsDraft);
   const innerAbilityLine = deriveInnerAbilityLine(stats.innerAbility);
+  // full_setup asks Weapon ATT inline in the Equipment step's weapon picker, not Stats
+  // (maplescouter_setup has no Equipment step, so it's the only flow still asking in Stats).
+  const weaponAtt = stepData.equipment ? extractWeaponAttFromEquipmentDraft(stepData.equipment) : undefined;
   const scouterPatch = {
     ...(ozRings ? { ozRings } : {}),
     ...(buffs ? { buffs } : {}),
-    ...(scouterQ ?? {}),
+    ...(weaponAtt !== undefined ? { weaponAtt } : {}),
     ...(innerAbilityLine ? { innerAbilityLine } : {}),
   };
 
@@ -478,8 +493,18 @@ function buildFullSetupRecord(
     stats: { ...base.stats, ...stats },
     equipment: equipmentData ?? base.equipment,
     isLiberated, weaponHand, hasRuinForceShield, soul, tools,
+    familiars: familiarsData ?? base.familiars,
+    vMatrix: vMatrixData ?? base.vMatrix,
     ...(Object.keys(scouterPatch).length > 0 ? { scouter: scouterPatch } : {}),
   };
+}
+
+// Weapon ATT/MATT is asked inline in the weapon slot's picker (full_setup only), not
+// stored as equipment data — pulled out of the same draft and merged into scouter.
+function extractWeaponAttFromEquipmentDraft(equipmentJson: string): number | undefined {
+  const parsed = tryParseJson(equipmentJson);
+  if (!parsed || typeof parsed !== "object") return undefined;
+  return parseWeaponAtt((parsed as { weaponAtt?: string }).weaponAtt);
 }
 
 function applyEquipmentDraftToRoster(
@@ -494,10 +519,12 @@ function applyEquipmentDraftToRoster(
   const existing = selectCharacterById(store, toCharacterKey(character));
   if (!existing) return;
   const symbolsData = buildSymbolsToolDataForRecord(character, equipmentJson);
+  const weaponAtt = extractWeaponAttFromEquipmentDraft(equipmentJson);
   upsertFn({
     ...existing,
     equipment,
     tools: symbolsData ? { ...existing.tools, symbols: symbolsData } : existing.tools,
+    scouter: weaponAtt !== undefined ? { ...existing.scouter, weaponAtt } : existing.scouter,
   });
 }
 
@@ -513,18 +540,27 @@ function applyStandaloneToolDrafts(
   if (stepData.familiars) applyFamiliarsDraftToRoster(character, stepData.familiars, upsertFn);
 }
 
+// The setup step's own draft never carries an activePreset at all (its preset tab is
+// local React state, not serialized) — always save preset 1, same policy as the other
+// three preset-based systems, rather than trusting whichever tab was last open.
+function buildFamiliarsDataForRecord(familiarsJson: string): StoredFamiliarsData | null {
+  const parsed = tryParseJson(familiarsJson);
+  if (!parsed || typeof parsed !== "object") return null;
+  return { ...(parsed as Omit<StoredFamiliarsData, "activePreset">), activePreset: 0 };
+}
+
 function applyFamiliarsDraftToRoster(
   character: NormalizedCharacterData | null,
   familiarsJson: string,
   upsertFn: (c: StoredCharacterRecord) => void,
 ) {
-  if (!character || !familiarsJson) return;
-  const data = tryParseJson(familiarsJson);
-  if (!data || typeof data !== "object") return;
+  if (!character) return;
+  const data = buildFamiliarsDataForRecord(familiarsJson);
+  if (!data) return;
   const store = readCharactersStore();
   const existing = selectCharacterById(store, toCharacterKey(character));
   if (!existing) return;
-  upsertFn({ ...existing, tools: { ...existing.tools, familiars: data } });
+  upsertFn({ ...existing, familiars: data });
 }
 
 function applyHexaDraftToRoster(
@@ -551,7 +587,7 @@ function applyHexaDraftToRoster(
   });
 }
 
-function buildVMatrixToolDataForRecord(vMatrixJson: string): { levels: Record<string, number> } | null {
+function buildVMatrixDataForRecord(vMatrixJson: string): StoredVMatrixData | null {
   const parsed = tryParseJson(vMatrixJson);
   if (!parsed || typeof parsed !== "object") return null;
   const levels: Record<string, number> = {};
@@ -568,11 +604,11 @@ function applyVMatrixDraftToRoster(
   upsertFn: (c: StoredCharacterRecord) => void,
 ) {
   if (!character) return;
-  const vMatrixData = buildVMatrixToolDataForRecord(vMatrixJson);
+  const vMatrixData = buildVMatrixDataForRecord(vMatrixJson);
   if (!vMatrixData) return;
   const existing = selectCharacterById(readCharactersStore(), toCharacterKey(character));
   if (!existing) return;
-  upsertFn({ ...existing, tools: { ...existing.tools, vMatrix: vMatrixData } });
+  upsertFn({ ...existing, vMatrix: vMatrixData });
 }
 
 // 6th-job HEXA Skills data (origin/mastery/enhancement/common/ascent), persisted to
@@ -599,7 +635,10 @@ function buildHexaStatToolData(hexaJson: string): { nodes: HexaStatNode[] } | nu
     const parsed = JSON.parse(hexaJson) as { hexaStat?: unknown };
     const nodes = parsed?.hexaStat;
     if (Array.isArray(nodes) && hexaStatHasData(nodes as HexaStatNode[])) {
-      return { nodes: nodes as HexaStatNode[] };
+      // Always saved as Active (preset 0) per node — the Active/Stored toggle used while
+      // editing isn't an explicit "this is what's live in-game" choice, so trusting it
+      // would silently save whichever one was last open while editing.
+      return { nodes: (nodes as HexaStatNode[]).map((n) => ({ ...n, activePreset: 0 })) };
     }
   } catch { /* ignore */ }
   return null;
@@ -1070,6 +1109,7 @@ export function useCharacterSetupController() {
       charactersById: nextCharactersById,
       linkSkillsByWorld: existingStore.linkSkillsByWorld,
       scouterLegionByWorld: existingStore.scouterLegionByWorld,
+      legionArtifactByWorld: existingStore.legionArtifactByWorld,
       updatedAt: now,
     };
 
@@ -1441,7 +1481,7 @@ export function useCharacterSetupController() {
 
       const linkSkillsValue = setupStepTestByStep.link_skills;
       if (linkSkillsValue && confirmedCharacter) {
-        writeLinkSkillsForWorld(confirmedCharacter.worldID, linkSkillsValue);
+        writeLinkSkillsForWorld(confirmedCharacter.worldID, linkSkillsDraftToStored(linkSkillsValue));
       }
 
       if (confirmedCharacter && !isFullSetupFlow) {

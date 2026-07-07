@@ -24,7 +24,12 @@ const SETUP_FLOWS = [
     // Superset of maplescouter_setup: `stats` is flow-aware (shows the WH Legion rank
     // question + Weapon ATT field here too); `buffs`/`oz_rings`/`legion_artifacts` are
     // the scouter-only data full_setup didn't used to collect.
-    steps: ["gender", "marriage", "stats", "buffs", "equipment", "oz_rings", "legion_artifacts", "v_matrix", "hexa_matrix", "familiars", "link_skills"] as const,
+    // Ordered to minimize in-game window switching (2026-07-07): stats' Character-Info
+    // fields first, then the equipment cluster (equipment/oz_rings/familiars), then an
+    // uninterrupted Skill-window run (link_skills before v_matrix before hexa_matrix,
+    // matching the Beginner→V→VI tab order so you never jump backward a tab), then
+    // legion_artifacts + buffs last (weakest/most flexible window affinity).
+    steps: ["gender", "marriage", "stats", "equipment", "oz_rings", "familiars", "link_skills", "v_matrix", "hexa_matrix", "legion_artifacts", "buffs"] as const,
   },
   {
     id: "maplescouter_setup",

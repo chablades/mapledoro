@@ -234,7 +234,10 @@ function draftIAPresetToStored(p: IAPresetDraft | undefined): StoredInnerAbility
 export function convertInnerAbilityDraftToStored(draft: IADraft | undefined): StoredInnerAbility {
   const presets = draft?.presets ?? [];
   return {
-    activePreset: typeof draft?.activePreset === "number" ? draft.activePreset : 0,
+    // Always saved as preset 1 — the tab switcher used to view/edit each preset isn't an
+    // explicit "this is my active loadout" choice, so trusting it would silently save
+    // whatever preset was last open while editing.
+    activePreset: 0,
     presets: [draftIAPresetToStored(presets[0]), draftIAPresetToStored(presets[1]), draftIAPresetToStored(presets[2])],
   };
 }

@@ -29,6 +29,9 @@ import {
   isArcaneEligible,
   isHyperStatEligible,
   isSacredEligible,
+  isWeaponAttSane,
+  deriveWeaponAttLabel,
+  WEAPON_ATT_WARN_AT,
   normalizeHyperStatDraft,
   parseStatsStepDraft,
   serializeStatsStepDraft,
@@ -99,7 +102,6 @@ const NO_DECIMAL_STAT_IDS = new Set<StatFieldId>(["summonDuration", "buffDuratio
 // sanity bounds, not real game caps, so they warn instead of hard-blocking input.
 const MAIN_STAT_BASE_VALUE_WARN_AT = 10000;
 const MAIN_STAT_PERCENT_UNAPPLIED_WARN_AT = 40000;
-const WEAPON_ATT_WARN_AT = 1150;
 
 // Ignore Elemental Resistance actually caps at 15% in-game, so this one's a real,
 // stable limit worth hard-clamping (unlike the sanity thresholds above).
@@ -188,12 +190,6 @@ const JOB_ADVANCEMENT_MIN_LEVEL: Record<string, number> = {
   "5": 200,
   "Hyper Skills (140)": 140,
 };
-
-// Scouter weapon-ATT field: magic classes enter Magic ATT, everyone else Attack Power.
-function deriveWeaponAtt(tripleIds: TripleStatFieldId[]): { usesMagicWeapon: boolean; label: string } {
-  const usesMagicWeapon = tripleIds.includes("magicAtt") && !tripleIds.includes("attackPower");
-  return { usesMagicWeapon, label: usesMagicWeapon ? "Weapon Magic ATT" : "Weapon ATT" };
-}
 
 function isSkillUnlocked(skill: BuffSkill, characterLevel: number | undefined): boolean {
   if (characterLevel === undefined) return true;
@@ -796,11 +792,13 @@ function deriveScouterWhSource(
   return whAutofillSourceFromRoster(worldRoster);
 }
 
-// WH Legion rank + Weapon ATT are shared between full_setup and maplescouter_setup
-// (full_setup is a superset); Legion artifacts + Inner Ability line stay scouter-only.
-function deriveScouterVisibility(flowId: SetupFlowId | undefined): { isScouter: boolean; showWhLegionAndWeaponAtt: boolean } {
+// WH Legion rank is shared between full_setup and maplescouter_setup (full_setup is a
+// superset); Legion artifacts + Inner Ability line stay scouter-only. Weapon ATT is
+// scouter-ONLY here — full_setup asks it in the Equipment step's weapon picker instead,
+// since maplescouter_setup has no Equipment step to move it into.
+function deriveScouterVisibility(flowId: SetupFlowId | undefined): { isScouter: boolean; showWhLegion: boolean; showWeaponAtt: boolean } {
   const isScouter = flowId === "maplescouter_setup";
-  return { isScouter, showWhLegionAndWeaponAtt: isScouter || flowId === "full_setup" };
+  return { isScouter, showWhLegion: isScouter || flowId === "full_setup", showWeaponAtt: isScouter };
 }
 
 // MapleScouter needs real data to calculate correctly, but only the radio-style pick-
@@ -843,12 +841,6 @@ function isTripleStatSane(t: TripleStatDraft | undefined, isMainStat: boolean): 
   if (!isMainStat || !t) return true;
   if (Number(t.base) >= MAIN_STAT_BASE_VALUE_WARN_AT) return false;
   return Number(t.percentUnapplied) < MAIN_STAT_PERCENT_UNAPPLIED_WARN_AT;
-}
-
-function isWeaponAttSane(weaponAtt: string | undefined): boolean {
-  const trimmed = weaponAtt?.trim();
-  if (!trimmed) return true;
-  return Number(trimmed) <= WEAPON_ATT_WARN_AT;
 }
 
 function isCombatFieldFilled(draft: StatsStepDraft, id: StatFieldId): boolean {
@@ -929,7 +921,7 @@ function StatsWindowSubstep({
   goToSubstep, hasMoreSubsteps, onNext, onFinish,
   classData, characterLevel, tripleIds, draft,
   handleTripleUpdate, handleSingleUpdate, handleCooldownUpdate,
-  showWhLegionAndWeaponAtt, weaponAttLabel, usesMagicWeapon, isScouter,
+  showWeaponAtt, weaponAttLabel, usesMagicWeapon, isScouter,
 }: {
   theme: AppTheme;
   step: SetupStepDefinition;
@@ -949,7 +941,7 @@ function StatsWindowSubstep({
   handleTripleUpdate: (id: TripleStatFieldId, field: keyof TripleStatDraft, val: string) => void;
   handleSingleUpdate: (id: string, val: string) => void;
   handleCooldownUpdate: (field: "seconds" | "percent", val: string) => void;
-  showWhLegionAndWeaponAtt: boolean;
+  showWeaponAtt: boolean;
   weaponAttLabel: string;
   usesMagicWeapon: boolean;
   isScouter: boolean;
@@ -959,8 +951,8 @@ function StatsWindowSubstep({
   const showSacredPower = isSacredEligible(characterLevel, classData?.isLegacy);
   const symbolIds = ([showArcanePower && "arcanePower", showSacredPower && "sacredPower"] as const).filter(Boolean) as StatFieldId[];
   const statsComplete = isScouter
-    ? isStatsSubstepComplete(draft, tripleIds, showWhLegionAndWeaponAtt, primaryStat, showArcanePower, showSacredPower)
-    : isStatsSubstepSane(draft, tripleIds, primaryStat, showWhLegionAndWeaponAtt);
+    ? isStatsSubstepComplete(draft, tripleIds, showWeaponAtt, primaryStat, showArcanePower, showSacredPower)
+    : isStatsSubstepSane(draft, tripleIds, primaryStat, showWeaponAtt);
   return (
     <div key={1} className="stats-substep-root" style={substepAnimStyle}>
     <style>{`
@@ -1044,7 +1036,7 @@ function StatsWindowSubstep({
         </div>
       )}
 
-      {showWhLegionAndWeaponAtt && (
+      {showWeaponAtt && (
         <WeaponAttField
           label={weaponAttLabel}
           usesMagicWeapon={usesMagicWeapon}
@@ -1076,10 +1068,10 @@ export default function StatsSetupStep({
   // Also hidden below Lv 140, same as Genesis Liberation/Arcane/Sacred — a character
   // that can't have Hyper Stats yet shouldn't be asked to fill them in.
   const showHyperStat = flowId !== "maplescouter_setup" && isHyperStatEligible(characterLevel);
-  const { isScouter, showWhLegionAndWeaponAtt } = deriveScouterVisibility(flowId);
+  const { isScouter, showWhLegion, showWeaponAtt } = deriveScouterVisibility(flowId);
 
   // WH Legion rank is read-only/derived, scoped to this character's world.
-  const whSource = deriveScouterWhSource(showWhLegionAndWeaponAtt, characterRoster, confirmedWorldId);
+  const whSource = deriveScouterWhSource(showWhLegion, characterRoster, confirmedWorldId);
 
   function updateDraft(patch: Partial<StatsStepDraft>) {
     onChange(serializeStatsStepDraft({ ...draft, ...patch }));
@@ -1157,7 +1149,7 @@ export default function StatsSetupStep({
     ? getRequiredStatsForClass(classData).filter((id): id is TripleStatFieldId => TRIPLE_IDS.has(id))
     : [];
 
-  const { usesMagicWeapon, label: weaponAttLabel } = deriveWeaponAtt(tripleIds);
+  const { usesMagicWeapon, label: weaponAttLabel } = deriveWeaponAttLabel(classData);
 
   if (substep === 0) {
     const questionnaireComplete = !isScouter || isScouterQuestionnaireComplete(
@@ -1206,7 +1198,7 @@ export default function StatsSetupStep({
             </div>
           )}
 
-          {showWhLegionAndWeaponAtt && (
+          {showWhLegion && (
             <div>
               <p style={sectionLabelStyle(theme)}>Mules</p>
               <WildHunterRankQuestion
@@ -1237,7 +1229,7 @@ export default function StatsSetupStep({
       goToSubstep={goToSubstep} hasMoreSubsteps={SUBSTEP_COUNT > 2} onNext={onNext} onFinish={onFinish}
       classData={classData} characterLevel={characterLevel} tripleIds={tripleIds} draft={draft}
       handleTripleUpdate={handleTripleUpdate} handleSingleUpdate={handleSingleUpdate} handleCooldownUpdate={handleCooldownUpdate}
-      showWhLegionAndWeaponAtt={showWhLegionAndWeaponAtt} weaponAttLabel={weaponAttLabel} usesMagicWeapon={usesMagicWeapon} isScouter={isScouter}
+      showWeaponAtt={showWeaponAtt} weaponAttLabel={weaponAttLabel} usesMagicWeapon={usesMagicWeapon} isScouter={isScouter}
     />
   );
 

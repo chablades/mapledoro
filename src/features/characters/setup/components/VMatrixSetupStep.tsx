@@ -7,7 +7,7 @@ import type { AppTheme } from "../../../../components/themes";
 import HoverTooltip from "../../../../components/HoverTooltip";
 import type { SetupStepDefinition } from "../steps";
 import { getClassDataByNexonJobName } from "../data/classSkillData";
-import { readCharacterToolData } from "../../../../features/tools/characterToolStorage";
+import { readCharactersStore, selectCharacterByIgn } from "../../model/charactersStore";
 import { resourceImageUrl } from "../../../../lib/mapleResource";
 import SetupStepFrame from "./SetupStepFrame";
 
@@ -191,7 +191,7 @@ export default function VMatrixSetupStep({
   // Prefill from saved tool data on first land (only when the step has no draft yet).
   useEffect(() => {
     if (initialValueRef.current || !confirmedCharacterName) return;
-    const saved = readCharacterToolData<{ levels?: Record<string, number> }>(confirmedCharacterName, "vMatrix");
+    const saved = selectCharacterByIgn(readCharactersStore(), confirmedCharacterName)?.vMatrix;
     if (saved?.levels && Object.keys(saved.levels).length > 0) onChange(JSON.stringify(saved.levels));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { usePickerCoords } from "../hooks/usePickerCoords";
-import { numericKeyDown, clampNumber } from "../../../../lib/inputUtils";
+import { numericKeyDown, clampNumber, sanitizeDigitsInput } from "../../../../lib/inputUtils";
 import { useKeyboardListNav } from "../../../../lib/useKeyboardListNav";
 import { searchAndRank } from "../../../../lib/searchMatch";
 import type { AppTheme } from "../../../../components/themes";
@@ -17,8 +17,9 @@ import {
   ARCANE_MAX_LEVEL, SACRED_MAX_LEVEL, type SymbolArea,
 } from "../../../tools/symbols/symbol-data";
 import { getClassDataByNexonJobName } from "../data/classSkillData";
-import { isArcaneEligible, isSacredEligible } from "../data/statsStepDraft";
+import { isArcaneEligible, isSacredEligible, isWeaponAttSane, deriveWeaponAttLabel, WEAPON_ATT_WARN_AT } from "../data/statsStepDraft";
 import { branchMaskForClass, weaponPrefixesForClass, secondarySpecForClass, isShieldId } from "../data/classBranch";
+import { InputWarningBubble } from "./QuestionControls";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -67,6 +68,9 @@ interface EquipmentDraft extends Partial<Record<SharedSlotKey, EquipmentItem | n
   diverged?: number[];
   /** Symbol levels keyed by region name; folded into the calculator's tools.symbols on finish. */
   symbolLevels?: Record<string, number>;
+  /** Scouter-only weapon ATT/MATT, asked inline when picking a weapon in preset 1 (see
+   *  WeaponAttStepView) — not equipment data, folded into `scouter.weaponAtt` on finish. */
+  weaponAtt?: string;
 }
 
 interface EquipmentSetupStepProps {
@@ -136,6 +140,26 @@ const COL2_SLOTS: SlotKey[] = ["face", "eye", "earring", "pendant1", "pendant2"]
 const COL6_SLOTS: SlotKey[] = ["hat", "top", "bottom", "shoulder", "android"];
 const COL7_SLOTS: SlotKey[] = ["cape", "glove", "shoe", "medal", "heart", "badge"];
 const CENTER_BOTTOM_SLOTS: SlotKey[] = ["weapon", "secondary", "emblem"];
+
+const equippedHeaderStyle = (theme: AppTheme, interactive: boolean): CSSProperties => ({
+  display: "flex", alignItems: "center", gap: 8, width: "100%",
+  padding: "0.4rem 0.6rem",
+  // `border: "none"` (to reset the button's default border) would also wipe out a
+  // borderBottom set before it, since the shorthand resets all sides — so borderBottom
+  // is applied last, unconditionally, guaranteeing it always wins.
+  ...(interactive
+    ? { background: "none", border: "none", font: "inherit", textAlign: "left" as const, cursor: "pointer" }
+    : {}),
+  borderBottom: `1px solid ${theme.border}`,
+});
+
+const equippedHeaderLabelStyle = (theme: AppTheme): CSSProperties => ({
+  margin: 0, fontSize: "0.75rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.04em", color: theme.muted,
+});
+
+const equippedHeaderNameStyle = (theme: AppTheme): CSSProperties => ({
+  margin: 0, fontSize: "0.8rem", fontWeight: 700, color: theme.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+});
 
 const pickerClearRowStyle = (theme: AppTheme): CSSProperties => ({
   display: "block", width: "100%", padding: "0.3rem 0.6rem",
@@ -326,7 +350,10 @@ function petEquipCompatible(petId: string, equipId: string): boolean {
   return equip?.wearablePets?.includes(petId) ?? false;
 }
 
-function ItemPicker({ slot, current, theme, files, itemFilter, maxLevel, excludeIds, presetBaseItem, showAllWhenEmpty, onSelect, onClose }: {
+function ItemPicker({
+  slot, current, theme, files, itemFilter, maxLevel, excludeIds, presetBaseItem, showAllWhenEmpty,
+  onSelect, onClose, weaponAttStep,
+}: {
   slot: SlotKey;
   current: EquipmentItem | null | undefined;
   theme: AppTheme;
@@ -341,17 +368,36 @@ function ItemPicker({ slot, current, theme, files, itemFilter, maxLevel, exclude
   showAllWhenEmpty?: boolean;
   onSelect: (item: EquipmentItem | null) => void;
   onClose: () => void;
+  /** Weapon slot, preset 1 only: picking (or reviewing) an item shows a Weapon ATT/MATT
+   *  ask in this same popover before committing, mirroring the Familiars tier-pick flow. */
+  weaponAttStep?: {
+    label: string;
+    value: string;
+    onChange: (v: string) => void;
+  };
 }) {
   const [loadedItems, setLoadedItems] = useState<CatalogItem[] | null>(null);
   const [query, setQuery] = useState("");
+  const [pendingItem, setPendingItem] = useState<EquipmentItem | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const isAndroid = slot === "android";
+
+  function selectItem(item: EquipmentItem) {
+    if (weaponAttStep) { setPendingItem(item); return; }
+    onSelect(item);
+    onClose();
+  }
 
   const cacheKey = files.join("+");
   const items = cachedSlotItems[cacheKey] ?? loadedItems;
 
+  // Refocus the search box whenever we're not showing the weapon-ATT follow-up screen —
+  // including when "Back" returns from it, so typing can resume without an extra click.
   useEffect(() => {
-    inputRef.current?.focus();
+    if (!pendingItem) inputRef.current?.focus();
+  }, [pendingItem]);
+
+  useEffect(() => {
     if (cachedSlotItems[cacheKey]) return;
     const fileList = cacheKey.split("+");
     Promise.all(fileList.map((f) => fetch(`/data/equipment/${f}.json`).then((r) => r.json() as Promise<RawCatalogEntry[]>)))
@@ -383,7 +429,8 @@ function ItemPicker({ slot, current, theme, files, itemFilter, maxLevel, exclude
   const { highlightedIndex, onKeyDown: navKeyDown, itemRef } = useKeyboardListNav({
     items: displayed ?? [],
     resetKey: query,
-    onSelect: (item) => { onSelect({ id: item.id, name: item.name }); onClose(); },
+    onSelect: (item) => selectItem({ id: item.id, name: item.name }),
+    onClose,
   });
 
   function handleSearchKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
@@ -396,14 +443,42 @@ function ItemPicker({ slot, current, theme, files, itemFilter, maxLevel, exclude
     navKeyDown(e);
   }
 
+  if (pendingItem && weaponAttStep) {
+    return (
+      <WeaponAttStepView
+        item={pendingItem}
+        theme={theme}
+        isAndroid={isAndroid}
+        label={weaponAttStep.label}
+        value={weaponAttStep.value}
+        onChange={weaponAttStep.onChange}
+        onBack={() => setPendingItem(null)}
+        onConfirm={() => { onSelect(pendingItem); onClose(); }}
+      />
+    );
+  }
+
   return (
     <div style={{ border: `1px solid ${theme.accent}`, borderRadius: 10, background: theme.panel, boxShadow: "0 4px 20px rgba(0,0,0,0.3)", overflow: "hidden" }}>
-      {current && (
-        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "0.4rem 0.6rem", borderBottom: `1px solid ${theme.border}` }}>
+      {current && weaponAttStep ? (
+        <button
+          type="button"
+          onClick={() => setPendingItem(current)}
+          style={equippedHeaderStyle(theme, true)}
+        >
+          {current.id && <ItemIcon id={current.id} size={28} revealed={isAndroid} />}
+          <div style={{ overflow: "hidden", flex: 1 }}>
+            <p style={equippedHeaderLabelStyle(theme)}>Currently Equipped</p>
+            <p style={equippedHeaderNameStyle(theme)}>{current.name}</p>
+          </div>
+          <span style={{ flexShrink: 0, color: theme.muted, fontSize: "0.85rem" }}>›</span>
+        </button>
+      ) : current && (
+        <div style={equippedHeaderStyle(theme, false)}>
           {current.id && <ItemIcon id={current.id} size={28} revealed={isAndroid} />}
           <div style={{ overflow: "hidden" }}>
-            <p style={{ margin: 0, fontSize: "0.75rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.04em", color: theme.muted }}>Currently Equipped</p>
-            <p style={{ margin: 0, fontSize: "0.8rem", fontWeight: 700, color: theme.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{current.name}</p>
+            <p style={equippedHeaderLabelStyle(theme)}>Currently Equipped</p>
+            <p style={equippedHeaderNameStyle(theme)}>{current.name}</p>
           </div>
         </div>
       )}
@@ -419,7 +494,7 @@ function ItemPicker({ slot, current, theme, files, itemFilter, maxLevel, exclude
       {presetBaseItem && !presetBaseConflicts && (
         <button
           type="button"
-          onClick={() => { onSelect({ id: presetBaseItem.id, name: presetBaseItem.name }); onClose(); }}
+          onClick={() => selectItem({ id: presetBaseItem.id, name: presetBaseItem.name })}
           style={presetBaseItemStyle(theme)}
         >
           {presetBaseItem.id && <ItemIcon id={presetBaseItem.id} size={28} revealed={isAndroid} />}
@@ -459,7 +534,7 @@ function ItemPicker({ slot, current, theme, files, itemFilter, maxLevel, exclude
                 key={item.id}
                 ref={itemRef(i)}
                 type="button"
-                onClick={() => { onSelect({ id: item.id, name: item.name }); onClose(); }}
+                onClick={() => selectItem({ id: item.id, name: item.name })}
                 style={pickerItemStyle(theme, isCurrent, isHighlighted)}
                 onMouseEnter={(e) => { if (!isCurrent) e.currentTarget.style.background = `${theme.accent}22`; }}
                 onMouseLeave={(e) => { if (!isCurrent) e.currentTarget.style.background = "transparent"; }}
@@ -471,6 +546,101 @@ function ItemPicker({ slot, current, theme, files, itemFilter, maxLevel, exclude
           })}
         </div>
       )}
+    </div>
+  );
+}
+
+const weaponAttBackButtonStyle = (theme: AppTheme): CSSProperties => ({
+  display: "flex", alignItems: "center", gap: 8, width: "100%",
+  background: "transparent", border: "none", borderBottom: `1px solid ${theme.border}`,
+  cursor: "pointer", fontFamily: "inherit", textAlign: "left",
+  padding: "0.4rem 0.6rem",
+});
+
+const weaponAttConfirmButtonStyle = (theme: AppTheme, disabled: boolean): CSSProperties => ({
+  border: "none", borderRadius: 8, padding: "0.4rem 0.9rem",
+  fontFamily: "inherit", fontWeight: 800, fontSize: "0.8rem",
+  cursor: disabled ? "default" : "pointer",
+  background: disabled ? theme.border : theme.accent,
+  color: disabled ? theme.muted : "#fff",
+  opacity: disabled ? 0.6 : 1,
+});
+
+const weaponAttInputStyle = (theme: AppTheme): CSSProperties => ({
+  width: "100%", boxSizing: "border-box", border: `1px solid ${theme.border}`, borderRadius: 8,
+  background: theme.bg, color: theme.text, fontFamily: "inherit", fontSize: "0.85rem", fontWeight: 700,
+  padding: "0.4rem 0.6rem", outline: "2px solid transparent",
+});
+
+// Follow-up screen shown inside the weapon slot's picker after selecting an item (preset
+// 1 only) — mirrors FamiliarsSetupStep's tier-pick flow, so the ATT ask is tied to the
+// moment of picking the weapon instead of a separate field elsewhere on the page.
+function WeaponAttStepView({ item, theme, isAndroid, label, value, onChange, onBack, onConfirm }: {
+  item: EquipmentItem;
+  theme: AppTheme;
+  isAndroid: boolean;
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  onBack: () => void;
+  onConfirm: () => void;
+}) {
+  const sane = isWeaponAttSane(value);
+  const showWarning = Number(value) > WEAPON_ATT_WARN_AT;
+  const statShortName = label.endsWith("Magic ATT") ? "Magic ATT" : "ATT";
+  // Focus once on mount only — re-running this on every render (the usual guarded-ref
+  // autofocus pattern) would fight the user for focus if anything elsewhere causes a
+  // harmless re-render while they're mid-selection, silently clearing their selection.
+  const hasAutoFocusedRef = useRef(false);
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === "Escape") { onBack(); return; }
+    if (e.key === "Enter") {
+      if (sane) onConfirm();
+      return;
+    }
+    numericKeyDown(e);
+  }
+
+  return (
+    <div style={{ border: `1px solid ${theme.accent}`, borderRadius: 10, background: theme.panel, boxShadow: "0 4px 20px rgba(0,0,0,0.3)", overflow: "hidden" }}>
+      <button type="button" onClick={onBack} style={weaponAttBackButtonStyle(theme)}>
+        {item.id && <ItemIcon id={item.id} size={28} revealed={isAndroid} />}
+        <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontSize: "0.8rem", fontWeight: 700, color: theme.text }}>
+          ← {item.name}
+        </span>
+      </button>
+      <div style={{ padding: "0.6rem" }}>
+        <p style={{ margin: "0 0 0.4rem", fontSize: "0.75rem", color: theme.muted, fontWeight: 700 }}>
+          {`Enter the total ${label} shown on this weapon's tooltip (the white number with a +).`}
+        </p>
+        <div style={{ position: "relative" }}>
+          {showWarning && (
+            <InputWarningBubble message={`That looks like your total ${statShortName}, enter your weapon's ${statShortName}.`} theme={theme} />
+          )}
+          <input
+            ref={(el) => {
+              if (el && !hasAutoFocusedRef.current) {
+                hasAutoFocusedRef.current = true;
+                el.focus();
+              }
+            }}
+            type="text"
+            inputMode="numeric"
+            aria-label={label}
+            value={value}
+            placeholder="0"
+            onChange={(e) => onChange(sanitizeDigitsInput(e.target.value))}
+            onKeyDown={handleKeyDown}
+            style={weaponAttInputStyle(theme)}
+          />
+        </div>
+        <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "0.6rem" }}>
+          <button type="button" disabled={!sane} onClick={onConfirm} style={weaponAttConfirmButtonStyle(theme, !sane)}>
+            Done
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -711,6 +881,7 @@ export default function EquipmentSetupStep({
   const classData = getClassDataByNexonJobName(jobName);
   const classId = classData?.id;
   const branchMask = branchMaskForClass(classId);
+  const { label: weaponAttLabel } = deriveWeaponAttLabel(classData);
   const showArcaneSymbols = isArcaneEligible(characterLevel, classData?.isLegacy);
   const showSacredSymbols = isSacredEligible(characterLevel, classData?.isLegacy);
   const availableSymbolTabs = SYMBOL_TABS.filter(
@@ -798,6 +969,10 @@ export default function EquipmentSetupStep({
     onChange(serialiseDraft(next));
   }
 
+  function setWeaponAtt(v: string) {
+    commitDraft({ ...draft, weaponAtt: v });
+  }
+
   // Capture phase so a tap on another slot can swap the picker directly, even when the open
   // picker's portal (absolutely positioned, high z-index) visually overlaps that slot — checking
   // elementsFromPoint sees through the portal to the slot cell underneath. Walk top-to-bottom so
@@ -805,6 +980,15 @@ export default function EquipmentSetupStep({
   // left alone even if some other slot cell happens to sit underneath it at that point.
   useEffect(() => {
     if (!activeSlot) return;
+    // Tracks whether the mousedown that started this interaction was inside the picker,
+    // so a drag that ends outside it (e.g. selecting the weapon-ATT description text and
+    // releasing past the window edge) isn't mistaken for an outside click — only the
+    // click's landing point was checked before, not where the gesture began.
+    let mouseDownInsidePicker = false;
+    const handleMouseDown = (e: MouseEvent) => {
+      mouseDownInsidePicker = document.elementsFromPoint(e.clientX, e.clientY)
+        .some((el) => el instanceof HTMLElement && el.hasAttribute("data-equipment-picker"));
+    };
     const handleClick = (e: MouseEvent) => {
       const path = document.elementsFromPoint(e.clientX, e.clientY);
       for (const el of path) {
@@ -819,10 +1003,15 @@ export default function EquipmentSetupStep({
           return;
         }
       }
+      if (mouseDownInsidePicker) return;
       setActiveSlot(null);
     };
+    document.addEventListener("mousedown", handleMouseDown, true);
     document.addEventListener("click", handleClick, true);
-    return () => document.removeEventListener("click", handleClick, true);
+    return () => {
+      document.removeEventListener("mousedown", handleMouseDown, true);
+      document.removeEventListener("click", handleClick, true);
+    };
   }, [activeSlot]);
 
   /** Item ids placed in sibling slots of the same unique-equip group (other rings/pendants/totems). */
@@ -871,6 +1060,14 @@ export default function EquipmentSetupStep({
       }
     }
 
+    // Weapon ATT/MATT is scouter-only data, asked inline right after picking a weapon —
+    // but only for preset 1 (the one assumed to be the character's actual active
+    // loadout; see the activePreset fix elsewhere in this step), so filling in
+    // presets 2/3 doesn't ask the same question again for a build that isn't "active."
+    const weaponAttStep = slot === "weapon" && activePreset === 0
+      ? { label: weaponAttLabel, value: draft.weaponAtt ?? "", onChange: setWeaponAtt }
+      : undefined;
+
     return (
       <ItemPicker
         slot={slot}
@@ -884,6 +1081,7 @@ export default function EquipmentSetupStep({
         showAllWhenEmpty={showAllWhenEmpty}
         onSelect={(item) => updateSlot(slot, item)}
         onClose={() => setActiveSlot(null)}
+        weaponAttStep={weaponAttStep}
       />
     );
   }

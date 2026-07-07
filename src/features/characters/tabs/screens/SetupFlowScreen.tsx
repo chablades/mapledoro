@@ -1,6 +1,6 @@
 import StepRenderer from "../../setup/StepRenderer";
 import type { PreviewPaneActions, PreviewPaneModel } from "../paneModels";
-import { readCharactersStore } from "../../model/charactersStore";
+import { readCharactersStore, linkSkillsStoredToDraftString } from "../../model/charactersStore";
 
 interface SetupFlowScreenProps {
   model: PreviewPaneModel;
@@ -20,11 +20,15 @@ export default function SetupFlowScreen({ model, actions }: SetupFlowScreenProps
     : model.directory.allCharacters;
 
   const worldLinkSkills = confirmed?.worldID !== undefined
-    ? (readCharactersStore().linkSkillsByWorld[String(confirmed.worldID)] ?? "")
+    ? linkSkillsStoredToDraftString(readCharactersStore().linkSkillsByWorld[String(confirmed.worldID)])
     : "";
 
   const worldScouterLegion = confirmed?.worldID !== undefined
     ? readCharactersStore().scouterLegionByWorld[String(confirmed.worldID)]
+    : undefined;
+
+  const worldLegionArtifact = confirmed?.worldID !== undefined
+    ? readCharactersStore().legionArtifactByWorld[String(confirmed.worldID)]
     : undefined;
 
   return (
@@ -38,6 +42,7 @@ export default function SetupFlowScreen({ model, actions }: SetupFlowScreenProps
       confirmedWorldId={confirmed?.worldID}
       worldLinkSkills={worldLinkSkills}
       worldScouterLegion={worldScouterLegion}
+      worldLegionArtifact={worldLegionArtifact}
       characterLevel={confirmed?.level}
       confirmedCharacterName={confirmed?.characterName}
       confirmedCharacterImgURL={confirmed?.characterImgURL}

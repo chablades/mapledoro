@@ -78,8 +78,54 @@ export interface StoredScouterData {
   weaponAtt?: number;
 }
 
+/** One Familiars preset's slot: a picked familiar plus its rolled lines.
+ *  `tier` is kept as a loose string (rather than importing `FamiliarTier` from
+ *  setup/data/familiarsData) to avoid the model layer depending on setup/data. */
+export interface StoredFamiliarSlot {
+  familiarId: number | null;
+  mobId: string;
+  name: string;
+  tier: string;
+  line1: string;
+  line2: string;
+}
+
+export interface StoredFamiliarPreset {
+  familiars: StoredFamiliarSlot[];
+  badges: string[];
+}
+
+/** Character-bound Familiars setup data — real per-character game data, not a tool
+ *  (no standalone `/tools/familiars` page reads/writes this). */
+export interface StoredFamiliarsData {
+  presets: StoredFamiliarPreset[];
+  /** Which preset (0-4) is the one actually equipped in-game. Always saved as 0 —
+   *  same policy as Equipment/Hyper Stat/Inner Ability/HEXA Stat's activePreset. */
+  activePreset: number;
+}
+
+/** Character-bound V Matrix node levels — real per-character game data, not a tool
+ *  (no standalone `/tools/v-matrix` page reads/writes this). */
+export interface StoredVMatrixData {
+  levels: Record<string, number>;
+}
+
 /** Wild Hunter legion-attacker grade (derived from the WH's level). */
 export type WhLegionRank = "B" | "A" | "S" | "SS" | "SSS";
+
+/** Per-world link skill levels, shared account-wide across a world's roster. */
+export type LinkSkillId =
+  | "unfairAdvantage" | "tideOfBattle" | "solus" | "timeToPrepare"
+  | "termsAndConditions" | "elementalism" | "qiCultivation" | "bravado"
+  | "empiricalKnowledge" | "thiefsСunning";
+
+export type LinkSkillsData = Partial<Record<LinkSkillId, number>>;
+
+const LINK_SKILL_IDS = new Set<LinkSkillId>([
+  "unfairAdvantage", "tideOfBattle", "solus", "timeToPrepare",
+  "termsAndConditions", "elementalism", "qiCultivation", "bravado",
+  "empiricalKnowledge", "thiefsСunning",
+]);
 
 /** Max percent for the "Damage of Final Attack Skills" Maple Union artifact. */
 export const LEGION_ARTIFACT_FINAL_ATK_MAX = 30;
@@ -96,8 +142,8 @@ export interface StoredLegionCrystal {
  * Per-world account-level scouter inputs (Legion is per-world). The WH rank is
  * derived from the highest Wild Hunter in that world's roster. `artifactExtraTarget`/
  * `artifactFinalAttackDmg` are the 2 fields MapleScouter's API needs; MapleScouter setup
- * asks for them directly, full_setup derives them from `artifactLevel`/`crystals` (the
- * full 9-crystal board) instead — see legionArtifactData.ts and
+ * asks for them directly, full_setup derives them from the real Legion Artifact board
+ * (`StoredLegionArtifact`, below) instead — see legionArtifactData.ts and
  * useCharacterSetupController.ts's applyScouterLegionForWorld.
  */
 export interface StoredScouterLegion {
@@ -106,6 +152,14 @@ export interface StoredScouterLegion {
   artifactExtraTarget?: boolean;
   /** "Damage of Final Attack Skills" artifact bonus, as a percent (1–30). */
   artifactFinalAttackDmg?: number;
+}
+
+/**
+ * Per-world account-level Legion Artifact progress — the real game data (full_setup's
+ * dedicated step), as opposed to `StoredScouterLegion`'s 2 fields derived FROM it for
+ * MapleScouter's API.
+ */
+export interface StoredLegionArtifact {
   /** Legion Artifact level (0-60); gates which of the 9 crystals are unlocked. */
   artifactLevel?: number;
   /** The 9 crystals, indexed to match LEGION_CRYSTALS order. */
@@ -233,6 +287,8 @@ export interface StoredCharacterRecord {
   equipment: StoredCharacterEquipment;
   tools?: Record<string, unknown>;
   scouter?: StoredScouterData;
+  familiars?: StoredFamiliarsData;
+  vMatrix?: StoredVMatrixData;
   meta: {
     addedAt: number;
     updatedAt: number;
@@ -247,10 +303,12 @@ export interface CharactersStore {
   // Per-world: worldID (as string key) -> character ids
   championCharacterIdsByWorld: Record<string, string[]>;
   charactersById: Record<string, StoredCharacterRecord>;
-  // Per-world: worldID (as string key) -> serialized link skills draft
-  linkSkillsByWorld: Record<string, string>;
+  // Per-world: worldID (as string key) -> committed link skill levels
+  linkSkillsByWorld: Record<string, LinkSkillsData>;
   // Per-world: worldID (as string key) -> account-level scouter inputs (WH legion, …)
   scouterLegionByWorld: Record<string, StoredScouterLegion>;
+  // Per-world: worldID (as string key) -> real Legion Artifact board progress
+  legionArtifactByWorld: Record<string, StoredLegionArtifact>;
   updatedAt: number;
 }
 
@@ -515,6 +573,7 @@ function createEmptyCharactersStore(): CharactersStore {
     charactersById: {},
     linkSkillsByWorld: {},
     scouterLegionByWorld: {},
+    legionArtifactByWorld: {},
     updatedAt: 0,
   };
 }
@@ -553,6 +612,10 @@ export function createStoredCharacterRecord(args: {
   };
 }
 
+function parseOptionalRecord<T>(value: unknown): T | undefined {
+  return isObject(value) ? (value as unknown as T) : undefined;
+}
+
 function parseStoredCharacterRecord(
   value: unknown,
   idHint: string | null,
@@ -577,8 +640,10 @@ function parseStoredCharacterRecord(
     soul: parseSoul(value.soul),
     stats: isStoredCharacterStats(value.stats) ? value.stats : createEmptyCharacterStats(),
     equipment: readStoredEquipment(value.equipment),
-    tools: isObject(value.tools) ? (value.tools as Record<string, unknown>) : undefined,
-    scouter: isObject(value.scouter) ? (value.scouter as StoredScouterData) : undefined,
+    tools: parseOptionalRecord<Record<string, unknown>>(value.tools),
+    scouter: parseOptionalRecord<StoredScouterData>(value.scouter),
+    familiars: parseOptionalRecord<StoredFamiliarsData>(value.familiars),
+    vMatrix: parseOptionalRecord<StoredVMatrixData>(value.vMatrix),
     meta: {
       addedAt: typeof meta.addedAt === "number" ? meta.addedAt : Date.now(),
       updatedAt: typeof meta.updatedAt === "number" ? meta.updatedAt : Date.now(),
@@ -614,13 +679,56 @@ function parseWorldScopedRoles(
   return { mainCharacterIdByWorld, championCharacterIdsByWorld };
 }
 
-function parseLinkSkillsByWorld(raw: unknown): Record<string, string> {
+function parseLinkSkillsEntry(val: Record<string, unknown>): LinkSkillsData {
+  const entry: LinkSkillsData = {};
+  for (const [skillId, level] of Object.entries(val)) {
+    if (!LINK_SKILL_IDS.has(skillId as LinkSkillId)) continue;
+    if (typeof level === "number") entry[skillId as LinkSkillId] = level;
+  }
+  return entry;
+}
+
+function parseLinkSkillsByWorld(raw: unknown): Record<string, LinkSkillsData> {
   if (!isObject(raw)) return {};
-  const result: Record<string, string> = {};
+  const result: Record<string, LinkSkillsData> = {};
   for (const [worldId, val] of Object.entries(raw)) {
-    if (typeof val === "string") result[worldId] = val;
+    if (!isObject(val)) continue;
+    const entry = parseLinkSkillsEntry(val);
+    if (Object.keys(entry).length > 0) result[worldId] = entry;
   }
   return result;
+}
+
+/** Converts the setup wizard's raw string-valued draft (`{"elementalism":"3",...}`)
+ *  into the typed, numeric shape committed to permanent storage. */
+export function linkSkillsDraftToStored(raw: string): LinkSkillsData {
+  if (!raw) return {};
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (!isObject(parsed)) return {};
+    const entry: LinkSkillsData = {};
+    for (const [skillId, val] of Object.entries(parsed)) {
+      if (!LINK_SKILL_IDS.has(skillId as LinkSkillId)) continue;
+      let level = NaN;
+      if (typeof val === "string") level = parseInt(val, 10);
+      else if (typeof val === "number") level = val;
+      if (!isNaN(level)) entry[skillId as LinkSkillId] = level;
+    }
+    return entry;
+  } catch {
+    return {};
+  }
+}
+
+/** Converts committed link skill levels back into the wizard's string-valued draft
+ *  format, for prefilling `LinkSkillsSetupStep` on first land. */
+export function linkSkillsStoredToDraftString(data: LinkSkillsData | undefined): string {
+  if (!data) return "";
+  const draft: Partial<Record<LinkSkillId, string>> = {};
+  for (const [skillId, level] of Object.entries(data)) {
+    draft[skillId as LinkSkillId] = String(level);
+  }
+  return JSON.stringify(draft);
 }
 
 const WH_LEGION_RANKS = new Set<string>(["B", "A", "S", "SS", "SSS"]);
@@ -644,6 +752,26 @@ function parseScouterLegionEntry(val: Record<string, unknown>): StoredScouterLeg
   if (typeof val.artifactFinalAttackDmg === "number" && val.artifactFinalAttackDmg > 0) {
     entry.artifactFinalAttackDmg = Math.min(Math.floor(val.artifactFinalAttackDmg), LEGION_ARTIFACT_FINAL_ATK_MAX);
   }
+  return entry;
+}
+
+function isEmptyScouterLegionEntry(entry: StoredScouterLegion): boolean {
+  return entry.wildHunterRank === undefined && !entry.artifactExtraTarget && entry.artifactFinalAttackDmg === undefined;
+}
+
+function parseScouterLegionByWorld(raw: unknown): Record<string, StoredScouterLegion> {
+  if (!isObject(raw)) return {};
+  const result: Record<string, StoredScouterLegion> = {};
+  for (const [worldId, val] of Object.entries(raw)) {
+    if (!isObject(val)) continue;
+    const entry = parseScouterLegionEntry(val);
+    if (!isEmptyScouterLegionEntry(entry)) result[worldId] = entry;
+  }
+  return result;
+}
+
+function parseLegionArtifactEntry(val: Record<string, unknown>): StoredLegionArtifact {
+  const entry: StoredLegionArtifact = {};
   if (typeof val.artifactLevel === "number") {
     entry.artifactLevel = Math.max(0, Math.min(MAX_LEGION_ARTIFACT_LEVEL, Math.floor(val.artifactLevel)));
   }
@@ -654,18 +782,17 @@ function parseScouterLegionEntry(val: Record<string, unknown>): StoredScouterLeg
   return entry;
 }
 
-function isEmptyScouterLegionEntry(entry: StoredScouterLegion): boolean {
-  return entry.wildHunterRank === undefined && !entry.artifactExtraTarget && entry.artifactFinalAttackDmg === undefined
-    && entry.artifactLevel === undefined && entry.crystals === undefined;
+function isEmptyLegionArtifactEntry(entry: StoredLegionArtifact): boolean {
+  return entry.artifactLevel === undefined && entry.crystals === undefined;
 }
 
-function parseScouterLegionByWorld(raw: unknown): Record<string, StoredScouterLegion> {
+function parseLegionArtifactByWorld(raw: unknown): Record<string, StoredLegionArtifact> {
   if (!isObject(raw)) return {};
-  const result: Record<string, StoredScouterLegion> = {};
+  const result: Record<string, StoredLegionArtifact> = {};
   for (const [worldId, val] of Object.entries(raw)) {
     if (!isObject(val)) continue;
-    const entry = parseScouterLegionEntry(val);
-    if (!isEmptyScouterLegionEntry(entry)) result[worldId] = entry;
+    const entry = parseLegionArtifactEntry(val);
+    if (!isEmptyLegionArtifactEntry(entry)) result[worldId] = entry;
   }
   return result;
 }
@@ -706,6 +833,7 @@ function parseCharactersStore(raw: string): CharactersStore | null {
       charactersById,
       linkSkillsByWorld: parseLinkSkillsByWorld(parsed.linkSkillsByWorld),
       scouterLegionByWorld: parseScouterLegionByWorld(parsed.scouterLegionByWorld),
+      legionArtifactByWorld: parseLegionArtifactByWorld(parsed.legionArtifactByWorld),
       updatedAt: typeof parsed.updatedAt === "number" ? parsed.updatedAt : Date.now(),
     };
   } catch {
@@ -713,7 +841,7 @@ function parseCharactersStore(raw: string): CharactersStore | null {
   }
 }
 
-export function writeLinkSkillsForWorld(worldId: number, value: string) {
+export function writeLinkSkillsForWorld(worldId: number, value: LinkSkillsData) {
   const store = readCharactersStore();
   writeCharactersStore({ ...store, linkSkillsByWorld: { ...store.linkSkillsByWorld, [String(worldId)]: value } });
 }
@@ -721,6 +849,11 @@ export function writeLinkSkillsForWorld(worldId: number, value: string) {
 export function writeScouterLegionForWorld(worldId: number, value: StoredScouterLegion) {
   const store = readCharactersStore();
   writeCharactersStore({ ...store, scouterLegionByWorld: { ...store.scouterLegionByWorld, [String(worldId)]: value } });
+}
+
+export function writeLegionArtifactForWorld(worldId: number, value: StoredLegionArtifact) {
+  const store = readCharactersStore();
+  writeCharactersStore({ ...store, legionArtifactByWorld: { ...store.legionArtifactByWorld, [String(worldId)]: value } });
 }
 
 export function writeCharactersStore(store: CharactersStore) {

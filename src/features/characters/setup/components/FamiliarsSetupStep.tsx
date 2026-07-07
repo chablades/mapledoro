@@ -8,7 +8,7 @@ import { searchAndRank } from "../../../../lib/searchMatch";
 import HoverTooltip from "../../../../components/HoverTooltip";
 import type { AppTheme } from "../../../../components/themes";
 import type { SetupStepDefinition } from "../steps";
-import { readCharacterToolData } from "../../../../features/tools/characterToolStorage";
+import { readCharactersStore, selectCharacterByIgn } from "../../model/charactersStore";
 import {
   TIER_LABELS, TIER_ORDER, getLinesForTier, BADGE_NAMES, BADGE_ID_MAP,
   FAMILIARS, getFamiliarDisplayLabel,
@@ -331,6 +331,7 @@ function LinePicker({ id, openId, onToggle, onClose, value, tier, placeholder, t
     items: filtered,
     resetKey: query,
     onSelect: (line) => select(line),
+    onClose,
   });
 
   function handleSearchKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
@@ -556,6 +557,7 @@ function FamiliarSlotCard({
     items: filtered,
     resetKey: query,
     onSelect: (entry) => onSetPending(entry),
+    onClose: onClosePicker,
   });
 
   function handleSearchKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
@@ -740,7 +742,7 @@ function filterBadges(query: string, excluded: ReadonlySet<string>): readonly st
 
 function BadgeSlot({
   badge, slotId, openId, query, theme, usedBadges,
-  onOpen, onQueryChange, onSelect, onClear,
+  onOpen, onQueryChange, onSelect, onClear, onClosePicker,
 }: {
   badge: string;
   slotId: string;
@@ -752,6 +754,7 @@ function BadgeSlot({
   onQueryChange: (q: string) => void;
   onSelect: (name: string) => void;
   onClear: () => void;
+  onClosePicker: () => void;
 }) {
   const isOpen = openId === slotId;
   const inputRef = useRef<HTMLInputElement>(null);
@@ -767,6 +770,7 @@ function BadgeSlot({
     items: filtered,
     resetKey: query,
     onSelect: (name) => onSelect(name),
+    onClose: onClosePicker,
   });
 
   function handleSearchKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
@@ -896,7 +900,7 @@ export default function FamiliarsSetupStep({
   useEffect(() => {
     if (initialValueRef.current) return;
     if (!confirmedCharacterName) return;
-    const saved = readCharacterToolData<FamiliarsValue>(confirmedCharacterName, "familiars");
+    const saved = selectCharacterByIgn(readCharactersStore(), confirmedCharacterName)?.familiars as FamiliarsValue | undefined;
     if (saved) onChange(JSON.stringify(saved));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -1012,6 +1016,7 @@ export default function FamiliarsSetupStep({
                         onQueryChange={setPickerQuery}
                         onSelect={(name) => { onChange(JSON.stringify(patchBadge(parsed, activePreset, i, name))); closePicker(); }}
                         onClear={() => { onChange(JSON.stringify(patchBadge(parsed, activePreset, i, ""))); closePicker(); }}
+                        onClosePicker={closePicker}
                       />
                     );
                   })}
@@ -1033,6 +1038,7 @@ export default function FamiliarsSetupStep({
                         onQueryChange={setPickerQuery}
                         onSelect={(name) => { onChange(JSON.stringify(patchBadge(parsed, activePreset, bi, name))); closePicker(); }}
                         onClear={() => { onChange(JSON.stringify(patchBadge(parsed, activePreset, bi, ""))); closePicker(); }}
+                        onClosePicker={closePicker}
                       />
                     );
                   })}

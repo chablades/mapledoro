@@ -27,6 +27,10 @@ interface UseKeyboardListNavOptions<T> {
   resetKey: unknown;
   isDisabled?: (item: T) => boolean;
   onSelect: (item: T, index: number) => void;
+  /** Escape closes the picker outright, in addition to arrow-key navigation. Optional
+   *  since some callers (e.g. a trigger button that opens/closes its own popover)
+   *  already handle Escape themselves before this hook ever sees the keystroke. */
+  onClose?: () => void;
 }
 
 interface UseKeyboardListNavResult {
@@ -38,14 +42,14 @@ interface UseKeyboardListNavResult {
 }
 
 /**
- * Shared Down/Up/Enter navigation for an open picker or dropdown list: arrow keys
- * move a highlighted index (skipping disabled entries), Enter selects it — so a
- * list can be driven end-to-end without a mouse. Reset via `resetKey` rather than
- * an effect (React's "adjust state during render" pattern), since the project's
- * lint rules disallow bare setState in useEffect.
+ * Shared Down/Up/Enter/Escape navigation for an open picker or dropdown list: arrow
+ * keys move a highlighted index (skipping disabled entries), Enter selects it, Escape
+ * closes it (when `onClose` is passed) — so a list can be driven end-to-end without a
+ * mouse. Reset via `resetKey` rather than an effect (React's "adjust state during
+ * render" pattern), since the project's lint rules disallow bare setState in useEffect.
  */
 export function useKeyboardListNav<T>({
-  items, resetKey, isDisabled, onSelect,
+  items, resetKey, isDisabled, onSelect, onClose,
 }: UseKeyboardListNavOptions<T>): UseKeyboardListNavResult {
   const [manualHighlight, setManualHighlight] = useState<number | null>(null);
   const [prevResetKey, setPrevResetKey] = useState(resetKey);
@@ -61,7 +65,10 @@ export function useKeyboardListNav<T>({
     : firstEnabledIndex(items, isDisabled);
 
   function onKeyDown(e: KeyboardEvent) {
-    if (e.key === "ArrowDown") {
+    if (e.key === "Escape" && onClose) {
+      e.preventDefault();
+      onClose();
+    } else if (e.key === "ArrowDown") {
       e.preventDefault();
       setManualHighlight(stepIndex(items, highlightedIndex, 1, isDisabled));
     } else if (e.key === "ArrowUp") {
