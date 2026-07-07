@@ -10,6 +10,7 @@ import {
   IA_TIER_LABELS, IA_TIER_ORDER, allowedLineTiers, getLinesForIATier, normalizeIA,
   type IADraft, type IAFull, type IALineFull, type IAPresetFull, type IATier,
 } from "../data/innerAbilityData";
+import { CopyFromPreset } from "./CopyFromPreset";
 
 const PRESET_COUNT = 3;
 
@@ -104,35 +105,40 @@ const presetButtonStyle = (theme: AppTheme, on: boolean): CSSProperties => ({
   background: on ? theme.accent : theme.bg,
   color: on ? "#fff" : theme.text,
   fontFamily: "inherit", fontWeight: 800, fontSize: "0.8rem",
-  width: 34, height: 32, cursor: "pointer",
+  width: 32, height: 32, cursor: "pointer",
 });
 
-function IAPresetBar({ theme, active, onSwitch }: {
+function IAPresetBar({ theme, active, onSwitch, onCopy, onClear }: {
   theme: AppTheme;
   active: number;
   onSwitch: (n: number) => void;
+  onCopy: (from: number) => void;
+  onClear: () => void;
 }) {
   const indices = Array.from({ length: PRESET_COUNT }, (_, i) => i);
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-      <span style={{ fontSize: "0.75rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.05em", color: theme.muted }}>
-        Preset
-      </span>
-      <div style={{ display: "flex", gap: 4 }}>
-        {indices.map((i) => {
-          const on = i === active;
-          return (
-            <button
-              key={i}
-              type="button"
-              onClick={() => onSwitch(i)}
-              style={presetButtonStyle(theme, on)}
-            >
-              {i + 1}
-            </button>
-          );
-        })}
+    <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 12 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <span style={{ fontSize: "0.75rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.05em", color: theme.muted }}>
+          Preset
+        </span>
+        <div style={{ display: "flex", gap: 4 }}>
+          {indices.map((i) => {
+            const on = i === active;
+            return (
+              <button
+                key={i}
+                type="button"
+                onClick={() => onSwitch(i)}
+                style={presetButtonStyle(theme, on)}
+              >
+                {i + 1}
+              </button>
+            );
+          })}
+        </div>
       </div>
+      <CopyFromPreset theme={theme} count={PRESET_COUNT} active={active} onCopy={onCopy} onClear={onClear} />
     </div>
   );
 }
@@ -364,6 +370,12 @@ export default function InnerAbilitySetupStep({ draft, onUpdate, theme }: {
     onUpdate({ ...ia, activePreset: n });
   }
 
+  function copyPreset(from: number) {
+    setOpenId(null);
+    const presets = ia.presets.map((p, i) => (i === ia.activePreset ? ia.presets[from] : p)) as IAFull["presets"];
+    onUpdate({ ...ia, presets });
+  }
+
   function setLine(lineIdx: number, patch: Partial<IALineFull>) {
     const presets = ia.presets.map((p, i) => {
       if (i !== ia.activePreset) return p;
@@ -409,7 +421,7 @@ export default function InnerAbilitySetupStep({ draft, onUpdate, theme }: {
 
   return (
     <div ref={zoneRef} style={{ maxWidth: 360, display: "flex", flexDirection: "column", gap: 6 }}>
-      <IAPresetBar theme={theme} active={ia.activePreset} onSwitch={setPreset} />
+      <IAPresetBar theme={theme} active={ia.activePreset} onSwitch={setPreset} onCopy={copyPreset} onClear={clearGrade} />
       <IAGradeHeader
         grade={ia.presets[ia.activePreset].lines[0].tier}
         openId={openId}

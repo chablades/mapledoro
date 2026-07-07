@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { numericKeyDown, sanitizeDigitsInput, decimalKeyDown, sanitizeDecimalInput } from "../../../../lib/inputUtils";
 import { joinWithAnd } from "../../../../lib/textUtils";
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import Image from "next/image";
 import { resourceImageUrl } from "../../../../lib/mapleResource";
 import type { AppTheme } from "../../../../components/themes";
@@ -12,6 +12,7 @@ import type { SetupStepDefinition } from "../steps";
 import type { SetupFlowId } from "../flows";
 import SetupStepFrame from "./SetupStepFrame";
 import InfoTooltip from "./InfoTooltip";
+import { CopyFromPreset } from "./CopyFromPreset";
 import { statInputStyle, inputSuffixStyle, ChecklistCheckbox, ChecklistGroup, LegionFinalAttackField, InputWarningBubble } from "./QuestionControls";
 import {
   CLASS_SKILL_DATA,
@@ -169,7 +170,7 @@ function presetButtonStyle(theme: AppTheme, on: boolean): CSSProperties {
     background: on ? theme.accent : theme.bg,
     color: on ? "#fff" : theme.text,
     fontFamily: "inherit", fontWeight: 800, fontSize: "0.8rem",
-    width: 34, height: 32, cursor: "pointer",
+    width: 32, height: 32, cursor: "pointer",
   };
 }
 
@@ -378,31 +379,40 @@ function TripleStatRow({
   );
 }
 
-function HyperPresetBar({ theme, active, onSwitch }: {
+function HyperPresetBar({ theme, active, onSwitch, onCopy, onClear, trailing }: {
   theme: AppTheme;
   active: number;
   onSwitch: (n: number) => void;
+  onCopy: (from: number) => void;
+  onClear: () => void;
+  trailing?: ReactNode;
 }) {
   const indices = Array.from({ length: HYPER_STAT_PRESET_COUNT }, (_, i) => i);
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-      <span style={{ fontSize: "0.75rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.05em", color: theme.muted }}>
-        Preset
-      </span>
-      <div style={{ display: "flex", gap: 4 }}>
-        {indices.map((i) => {
-          const on = i === active;
-          return (
-            <button
-              key={i}
-              type="button"
-              onClick={() => onSwitch(i)}
-              style={presetButtonStyle(theme, on)}
-            >
-              {i + 1}
-            </button>
-          );
-        })}
+    <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 12 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <span style={{ fontSize: "0.75rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.05em", color: theme.muted }}>
+          Preset
+        </span>
+        <div style={{ display: "flex", gap: 4 }}>
+          {indices.map((i) => {
+            const on = i === active;
+            return (
+              <button
+                key={i}
+                type="button"
+                onClick={() => onSwitch(i)}
+                style={presetButtonStyle(theme, on)}
+              >
+                {i + 1}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 6 }}>
+        <CopyFromPreset theme={theme} count={HYPER_STAT_PRESET_COUNT} active={active} onCopy={onCopy} onClear={onClear} />
+        {trailing}
       </div>
     </div>
   );
@@ -1117,6 +1127,16 @@ export default function StatsSetupStep({
     updateDraft({ hyperStat: { presets: hyper.presets, activePreset: n } });
   }
 
+  function copyHyperPreset(from: number) {
+    const presets = hyper.presets.map((p, i) => (i === hyper.activePreset ? hyper.presets[from] : p));
+    updateDraft({ hyperStat: { presets, activePreset: hyper.activePreset } });
+  }
+
+  function clearHyperPreset() {
+    const presets = hyper.presets.map((p, i) => (i === hyper.activePreset ? {} : p));
+    updateDraft({ hyperStat: { presets, activePreset: hyper.activePreset } });
+  }
+
   // Inner Ability is a Character Info fact (found in the in-game Stats window) that
   // Full setup collects in its own detailed substep; MapleScouter asks a simpler
   // version of the same question inline in substep 0 instead (no level gate — Inner
@@ -1284,14 +1304,18 @@ export default function StatsSetupStep({
         nextLabel="Continue"
         nextDisabled={anyPresetOverBudget}
       >
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.5rem" }}>
-          <HyperPresetBar theme={theme} active={hyper.activePreset} onSwitch={switchHyperPreset} />
-          {Number.isFinite(hyperBudget) && (
-            <span style={{ fontSize: "0.78rem", fontWeight: 800, color: hyperOverspent ? "#dc2626" : theme.muted, marginBottom: 12 }}>
+        <HyperPresetBar
+          theme={theme}
+          active={hyper.activePreset}
+          onSwitch={switchHyperPreset}
+          onCopy={copyHyperPreset}
+          onClear={clearHyperPreset}
+          trailing={Number.isFinite(hyperBudget) && (
+            <span style={{ fontSize: "0.78rem", fontWeight: 800, color: hyperOverspent ? "#dc2626" : theme.muted }}>
               {hyperSpent.toLocaleString()} / {hyperBudget.toLocaleString()} points used ({hyperStatBudgetSuffix(hyperBudget, hyperSpent)})
             </span>
           )}
-        </div>
+        />
         <div className="stats-hyper-grid" style={{ display: "flex", minWidth: 0 }}>
           {hyperCols.map((col, i) => (
             <div key={i} style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: "0.4rem" }}>

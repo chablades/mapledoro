@@ -18,6 +18,7 @@ import { HEXA_STAT_OPTIONS, HEXA_STAT_NODE_MAX_LEVEL, getHexaStatBonus, getMainS
 import { readCharacterToolData } from "../../../../features/tools/characterToolStorage";
 import SetupStepFrame from "./SetupStepFrame";
 import { HexaSkillIcon } from "../../../../components/ResourceImage";
+import { CopyFromPreset } from "./CopyFromPreset";
 
 interface HexaMatrixSetupStepProps {
   theme: AppTheme;
@@ -127,8 +128,8 @@ const statDropdownOptionStyle = (theme: AppTheme, isSelected: boolean, isDisable
 });
 
 const presetToggleButtonStyle = (theme: AppTheme, isActive: boolean): React.CSSProperties => ({
-  border: "none", borderRadius: "6px", cursor: "pointer",
-  padding: "0.25rem 0.7rem", fontFamily: "inherit",
+  border: "none", borderRadius: "7px", cursor: "pointer",
+  padding: "0.4rem 0.7rem", minHeight: 32, fontFamily: "inherit",
   fontSize: "0.78rem", fontWeight: 700,
   color: isActive ? "#fff" : theme.muted,
   background: isActive ? theme.accent : "transparent",
@@ -858,6 +859,22 @@ export default function HexaMatrixSetupStep({
     update({ hexaStat: next });
   }
 
+  function copyPreset(from: number) {
+    const next: [HexaStatNode, HexaStatNode, HexaStatNode] = [hexaStat[0], hexaStat[1], hexaStat[2]];
+    const presets: [HexaStatSlot, HexaStatSlot] = [...next[activeSlot].presets];
+    presets[activePreset] = presets[from];
+    next[activeSlot] = { ...next[activeSlot], presets };
+    update({ hexaStat: next });
+  }
+
+  function clearPreset() {
+    const next: [HexaStatNode, HexaStatNode, HexaStatNode] = [hexaStat[0], hexaStat[1], hexaStat[2]];
+    const presets: [HexaStatSlot, HexaStatSlot] = [...next[activeSlot].presets];
+    presets[activePreset] = emptySlot();
+    next[activeSlot] = { ...next[activeSlot], presets };
+    update({ hexaStat: next });
+  }
+
   return (
     <div key={1} style={substepAnimStyle}>
       <SetupStepFrame theme={theme} stepLabel="HEXA Stat" stepNumber={stepNumber} totalSteps={totalSteps}
@@ -932,6 +949,8 @@ export default function HexaMatrixSetupStep({
               {slotLevelSum} / {HEXA_STAT_NODE_MAX_LEVEL} levels used
             </span>
           </div>
+
+          <CopyFromPreset theme={theme} count={PRESET_LABELS.length} active={activePreset} onCopy={copyPreset} onClear={clearPreset} labels={PRESET_LABELS} />
 
           <div>
             <SectionLabel label="Main Stat" theme={theme} />

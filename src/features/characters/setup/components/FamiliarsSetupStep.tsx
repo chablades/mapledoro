@@ -16,6 +16,7 @@ import {
 } from "../data/familiarsData";
 import { resourceImageUrl, familiarBadgeUrl } from "../../../../lib/mapleResource";
 import SetupStepFrame from "./SetupStepFrame";
+import { CopyFromPreset } from "./CopyFromPreset";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -244,7 +245,7 @@ const badgeOptionStyle = (theme: AppTheme, isHighlighted: boolean): CSSPropertie
 });
 
 const presetSquareStyle = (theme: AppTheme, active: boolean): CSSProperties => ({
-  width: 28, height: 24, borderRadius: 6, padding: 0,
+  width: 32, height: 32, borderRadius: 7, padding: 0,
   border: `2px solid ${active ? theme.accent : theme.border}`,
   background: active ? theme.accent : "transparent",
   color: active ? "#fff" : theme.muted,
@@ -935,6 +936,20 @@ export default function FamiliarsSetupStep({
     setPendingFamiliar(null);
   }
 
+  function copyPreset(from: number) {
+    onChange(JSON.stringify({
+      presets: parsed.presets.map((p, i) => i === activePreset ? parsed.presets[from] : p),
+    }));
+    closePicker();
+  }
+
+  function clearPreset() {
+    onChange(JSON.stringify({
+      presets: parsed.presets.map((p, i) => i === activePreset ? emptyPreset() : p),
+    }));
+    closePicker();
+  }
+
   const badgeRowOffset = (BADGE_SIZE + BADGE_BORDER * 2 + 8) / 2;
 
   return (
@@ -949,7 +964,7 @@ export default function FamiliarsSetupStep({
       onFinish={onFinish}
     >
       {/* Preset tabs */}
-      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: "0.75rem" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: "0.65rem" }}>
         <span style={{ fontSize: "0.8rem", fontWeight: 700, color: theme.muted }}>Preset</span>
         {Array.from({ length: PRESET_COUNT }, (_, i) => (
           <button
@@ -961,6 +976,9 @@ export default function FamiliarsSetupStep({
             {i + 1}
           </button>
         ))}
+      </div>
+      <div style={{ marginBottom: "0.75rem" }}>
+        <CopyFromPreset theme={theme} count={PRESET_COUNT} active={activePreset} onCopy={copyPreset} onClear={clearPreset} />
       </div>
 
       <div>
