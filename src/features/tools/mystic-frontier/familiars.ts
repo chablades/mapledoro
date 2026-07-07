@@ -11,6 +11,9 @@ export interface MfFamiliar {
   name: string;
   label: string;
   mobId: string;
+  // Overrides mobId for sprite lookups when mobId itself has no sprite (e.g. Blue King
+  // Goblin). Mirrors FamiliarEntry.spriteMobId; the picker resolves `spriteMobId ?? mobId`.
+  spriteMobId?: string;
   cardId: string;
   type: MfType;
   element: MfElement;
@@ -24,6 +27,7 @@ export const MF_FAMILIARS: readonly MfFamiliar[] = FAMILIARS.flatMap((f) => {
     name: f.name,
     label: getFamiliarDisplayLabel(f),
     mobId: f.mobId,
+    spriteMobId: f.spriteMobId,
     cardId: f.cardId,
     type: traits[0],
     element: traits[1],

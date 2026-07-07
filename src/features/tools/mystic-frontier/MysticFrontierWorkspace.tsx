@@ -108,7 +108,7 @@ function SlotTrigger({ slot, theme }: { slot: SlotState; theme: AppTheme }) {
   }
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-      <FamiliarSprite fam={fam} size={FAM_SPRITE} />
+      <FamiliarSprite fam={fam} size={FAM_SPRITE} theme={theme} />
       <span style={{ fontSize: "0.78rem", fontWeight: 800, color: theme.text, textAlign: "center", lineHeight: 1.2 }}>
         {fam.label}
       </span>
@@ -263,37 +263,97 @@ function WaveSelector({ theme, activeWave, waveCount, filledCounts, onChange, in
   );
 }
 
-// ── result + rerolls ──────────────────────────────────────────────────────────
+// ── target score (per-wave, sits beside the wave selector) ─────────────────────
 
-function Stat({ label, value, theme, color }: {
-  label: string; value: string; theme: AppTheme; color?: string;
+function TargetInput({ theme, target, onChange, inputStyle }: {
+  theme: AppTheme; target: number; onChange: (v: number) => void; inputStyle: CSSProperties;
 }) {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-      <span style={{ fontSize: "0.7rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.05em", color: theme.muted }}>{label}</span>
-      <span style={{ fontSize: "1.1rem", fontWeight: 800, color: color ?? theme.text, lineHeight: 1 }}>{value}</span>
+    <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", flexWrap: "wrap" }}>
+      <div className="section-label" style={{ color: theme.muted, marginBottom: 0 }}>Target</div>
+      <input
+        className="tool-input"
+        type="number"
+        min={0}
+        inputMode="numeric"
+        aria-label="Target score"
+        value={target || ""}
+        placeholder="0"
+        onKeyDown={replaceZeroOnDigit}
+        onChange={(e) => onChange(Math.max(0, Math.floor(Number(e.target.value) || 0)))}
+        // Height matches the wave selector / character dropdown so the row aligns.
+        style={{ ...inputStyle, width: 110, height: 46 }}
+      />
     </div>
   );
 }
 
-function Op({ symbol, theme }: { symbol: string; theme: AppTheme }) {
+// ── result + rerolls ──────────────────────────────────────────────────────────
+
+const PASS_COLOR = "#16a34a";
+const FAIL_COLOR = "#dc2626";
+
+// Verdict-forward banner: the headline answer (pass/fail + score vs target), or a
+// prompt when there isn't enough entered yet to decide.
+function VerdictBanner({ result, target, passed, hasLineup, theme }: {
+  result: ScoreResult; target: number; passed: boolean; hasLineup: boolean; theme: AppTheme;
+}) {
+  const targetEntered = target > 0;
+  const decided = hasLineup && targetEntered;
+  const color = passed ? PASS_COLOR : FAIL_COLOR;
+
+  const borderColor = decided ? `${color}66` : theme.border;
+  const bannerStyle: CSSProperties = {
+    display: "flex", alignItems: "center", gap: "0.75rem", flexWrap: "wrap",
+    padding: "0.85rem 1rem", borderRadius: 12,
+    border: `1px solid ${borderColor}`,
+    background: decided ? `${color}14` : theme.bg,
+  };
+
+  const prompt = !hasLineup
+    ? "Add familiars to your lineup to see a result."
+    : "Enter a target score to check your roll.";
+
   return (
-    <span style={{ fontSize: "1.2rem", fontWeight: 700, color: theme.muted, lineHeight: 1, paddingBottom: 1 }}>
-      {symbol}
-    </span>
+    <div style={bannerStyle}>
+      {decided ? (
+        <span style={{
+          display: "inline-flex", alignItems: "center", gap: 6,
+          fontSize: "1rem", fontWeight: 900, letterSpacing: "0.04em", color,
+        }}>
+          <span aria-hidden style={{ fontSize: "1.1rem", lineHeight: 1 }}>{passed ? "✓" : "✗"}</span>
+          {passed ? "PASS" : "FAIL"}
+        </span>
+      ) : (
+        <span style={{ fontSize: "0.85rem", fontWeight: 700, color: theme.muted }}>{prompt}</span>
+      )}
+
+      {hasLineup && (
+        <span style={{ marginLeft: "auto", fontSize: "1.35rem", fontWeight: 900, color: theme.text, lineHeight: 1 }}>
+          {result.finalResult}
+          {targetEntered && (
+            <span style={{ fontSize: "1rem", fontWeight: 700, color: theme.muted }}>{` / ${target}`}</span>
+          )}
+        </span>
+      )}
+    </div>
   );
 }
 
-function ResultStats({ result, theme }: { result: ScoreResult; theme: AppTheme }) {
+// Muted supporting line showing how the final score was built.
+function ResultBreakdown({ result, theme }: { result: ScoreResult; theme: AppTheme }) {
+  const flatSign = result.totalFlat >= 0 ? "+" : "−";
   return (
-    <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", alignItems: "flex-end" }}>
-      <Stat label="Dice total" value={String(result.diceSum)} theme={theme} />
-      <Op symbol="+" theme={theme} />
-      <Stat label="Flat bonus" value={`${result.totalFlat >= 0 ? "+" : ""}${result.totalFlat}`} theme={theme} />
-      <Op symbol="×" theme={theme} />
-      <Stat label="Multiplier" value={result.totalMult === null ? "—" : `×${result.totalMult.toFixed(2)}`} theme={theme} />
-      <Op symbol="=" theme={theme} />
-      <Stat label="Final score" value={String(result.finalResult)} theme={theme} color={theme.accent} />
+    <div style={{
+      display: "flex", flexWrap: "wrap", alignItems: "baseline", gap: "0.35rem 0.55rem",
+      fontSize: "0.78rem", fontWeight: 600, color: theme.muted,
+    }}>
+      <span>{result.diceSum} dice</span>
+      {result.totalFlat !== 0 && (
+        <span>{`${flatSign}${Math.abs(result.totalFlat)} flat`}</span>
+      )}
+      {result.totalMult !== null && <span>{`× ${result.totalMult.toFixed(2)}`}</span>}
+      <span style={{ color: theme.text, fontWeight: 800 }}>{`= ${result.finalResult}`}</span>
     </div>
   );
 }
@@ -379,8 +439,6 @@ export default function MysticFrontierWorkspace({ theme }: { theme: AppTheme }) 
 
   if (!mf.mounted) return null;
 
-  const targetEntered = mf.target > 0;
-
   const equippedBonus = MF_BONUS_FAMILIES.flatMap((family) => {
     const color = mf.bonus[family];
     const item = color ? getBonusItem(family, color) : undefined;
@@ -404,7 +462,7 @@ export default function MysticFrontierWorkspace({ theme }: { theme: AppTheme }) 
           description="Set your active lineup, dice, and target, then see whether your roll passes and which rerolls would get you there."
         />
 
-        {/* Character + wave selector */}
+        {/* Character, wave, and target — the per-wave setup controls */}
         <div className="fade-in panel-card" style={styles.sectionPanel}>
           <div style={{ display: "flex", alignItems: "center", gap: "0.75rem 2rem", flexWrap: "wrap" }}>
             {mf.characters.length > 0 && (
@@ -416,14 +474,17 @@ export default function MysticFrontierWorkspace({ theme }: { theme: AppTheme }) 
                 inputStyle={styles.inputStyle}
               />
             )}
-            <WaveSelector
-              theme={theme}
-              activeWave={mf.activeWave}
-              waveCount={mf.waveCount}
-              filledCounts={mf.waveFilledCounts}
-              onChange={mf.setActiveWave}
-              inputStyle={styles.inputStyle}
-            />
+            <div className="mf-wave" style={{ display: "flex", alignItems: "center", gap: "1.5rem", flexWrap: "wrap" }}>
+              <WaveSelector
+                theme={theme}
+                activeWave={mf.activeWave}
+                waveCount={mf.waveCount}
+                filledCounts={mf.waveFilledCounts}
+                onChange={mf.setActiveWave}
+                inputStyle={styles.inputStyle}
+              />
+              <TargetInput theme={theme} target={mf.target} onChange={mf.setTarget} inputStyle={styles.inputStyle} />
+            </div>
           </div>
         </div>
 
@@ -487,32 +548,15 @@ export default function MysticFrontierWorkspace({ theme }: { theme: AppTheme }) 
         <div className="fade-in panel-card" style={styles.sectionPanel}>
           <div className="section-label" style={{ color: theme.muted }}>Result</div>
 
-          <div style={{ display: "flex", alignItems: "flex-end", gap: "1.5rem", flexWrap: "wrap" }}>
-            <Field label="Target score" style={styles.labelStyle} containerStyle={{ width: 130 }}>
-              <input
-                className="tool-input"
-                type="number"
-                min={0}
-                inputMode="numeric"
-                value={mf.target || ""}
-                placeholder="0"
-                onKeyDown={replaceZeroOnDigit}
-                onChange={(e) => mf.setTarget(Math.max(0, Math.floor(Number(e.target.value) || 0)))}
-                style={{ ...styles.inputStyle, width: "100%", boxSizing: "border-box" }}
-              />
-            </Field>
-            <ResultStats result={mf.result} theme={theme} />
-            {targetEntered && mf.hasLineup && (
-              <span style={{
-                marginLeft: "auto", padding: "0.3rem 0.9rem", borderRadius: 8, fontSize: "0.95rem", fontWeight: 900,
-                letterSpacing: "0.04em", color: "#fff", background: mf.passed ? "#16a34a" : "#dc2626",
-              }}>
-                {mf.passed ? "PASS" : "FAIL"}
-              </span>
-            )}
-          </div>
-
-          <div style={{ marginTop: "1.25rem", display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "1.15rem" }}>
+            <VerdictBanner
+              result={mf.result}
+              target={mf.target}
+              passed={mf.passed}
+              hasLineup={mf.hasLineup}
+              theme={theme}
+            />
+            {mf.hasLineup && <ResultBreakdown result={mf.result} theme={theme} />}
             <ActiveLines result={mf.result} theme={theme} />
             <RerollPanel rerolls={mf.rerolls} passed={mf.passed} theme={theme} />
           </div>
