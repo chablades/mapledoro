@@ -150,7 +150,7 @@ const IA_LINES: Record<IATier, string[]> = {
     "Attack +1 for every 10 levels", "Attack +1 for every 12 levels", "Attack +1 for every 14 levels", "Attack +1 for every 16 levels",
     "Magic Attack +1 for every 10 levels", "Magic Attack +1 for every 12 levels", "Magic Attack +1 for every 14 levels", "Magic Attack +1 for every 16 levels",
     "Attack Speed: +1 Level",
-    "Passive Skills: +1 Level",
+    "Passive Skills: +1 Level (excludes Active Hybrids, 5th job skills, 6th job skills)",
     "Number of enemies hit by multi-target skill +1",
     "Defense: +350", "Defense: +360", "Defense: +370", "Defense: +380", "Defense: +390", "Defense: +400",
     "DEF: +15%", "DEF: +16%", "DEF: +17%", "DEF: +18%", "DEF: +19%", "DEF: +20%",
@@ -169,7 +169,7 @@ export function getLinesForIATier(tier: IATier): string[] {
 // IA_LINE_OPTIONS) — full_setup derives its scouter-facing Inner Ability line answer by
 // checking for these exact strings in the Stats step's Inner Ability card instead of
 // asking again.
-export const IA_PASSIVE_PLUS_ONE_LINE = "Passive Skills: +1 Level";
+export const IA_PASSIVE_PLUS_ONE_LINE = "Passive Skills: +1 Level (excludes Active Hybrids, 5th job skills, 6th job skills)";
 export const IA_MULTI_TARGET_PLUS_ONE_LINE = "Number of enemies hit by multi-target skill +1";
 
 // ── Draft shape (setup UI) ───────────────────────────────────────────────────

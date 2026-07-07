@@ -26,7 +26,7 @@ import {
   writeLegionArtifactForWorld,
   writeCharactersStore,
 } from "../model/charactersStore";
-import { findClassById } from "../../tools/hexa-skills/hexa-classes";
+import { findClassById, type HexaSkillLevels } from "../../tools/hexa-skills/hexa-classes";
 import { getClassDataByNexonJobName } from "../setup/data/classSkillData";
 import { hexaStatHasData, type HexaStatNode } from "../setup/data/hexaStatData";
 import { IA_PASSIVE_PLUS_ONE_LINE, IA_MULTI_TARGET_PLUS_ONE_LINE } from "../setup/data/innerAbilityData";
@@ -113,8 +113,10 @@ interface EquipmentDraft {
   totem1?: EquipmentDraftItem; totem2?: EquipmentDraftItem; totem3?: EquipmentDraftItem;
   pet1?: EquipmentDraftItem; pet2?: EquipmentDraftItem; pet3?: EquipmentDraftItem;
   petEquip1?: EquipmentDraftItem; petEquip2?: EquipmentDraftItem; petEquip3?: EquipmentDraftItem;
-  /** Symbol levels keyed by region name; folded into tools.symbols (the calculator store). */
-  symbolLevels?: Record<string, number>;
+  /** Symbol levels keyed by region name; folded into tools.symbols (the calculator
+   *  store). String, not number — the setup step's draft keeps it blank until typed
+   *  (matching Oz Rings); converted to real numbers below. */
+  symbolLevels?: Record<string, string>;
 }
 
 function draftItem(v: EquipmentDraftItem) {
@@ -172,17 +174,18 @@ function findSymbolArea(name: string): { area: SymbolArea; type: SymbolType } | 
   return null;
 }
 
-function extractSymbolLevels(json: string): Record<string, number> | null {
+function extractSymbolLevels(json: string): Record<string, string> | null {
   const d = tryParseJson(json) as EquipmentDraft | null;
   if (!d || typeof d !== "object" || !d.symbolLevels) return null;
   return d.symbolLevels;
 }
 
 /** Merge per region: set level + enabled, preserving existing calculator fields. */
-function buildSymbolsToolData(existing: SavedSymbols | null, levels: Record<string, number>): SavedSymbols {
+function buildSymbolsToolData(existing: SavedSymbols | null, levels: Record<string, string>): SavedSymbols {
   const symbols: Record<string, SymbolState> = { ...(existing?.symbols ?? {}) };
-  for (const [name, level] of Object.entries(levels)) {
-    if (!Number.isFinite(level) || level < 1) continue;
+  for (const [name, raw] of Object.entries(levels)) {
+    const level = Number(raw) || 0;
+    if (level < 1) continue;
     const found = findSymbolArea(name);
     if (!found) continue;
     const prev = symbols[name];
@@ -337,7 +340,7 @@ function applyScouterLegionForWorld(
   // world finishing full_setup without revisiting Legion Artifacts).
   if (board) {
     const existingArtifact = store.legionArtifactByWorld[String(character.worldID)];
-    const artifactLevel = board.artifactLevel ?? existingArtifact?.artifactLevel;
+    const artifactLevel = board.artifactLevel !== undefined ? Number(board.artifactLevel) || 0 : existingArtifact?.artifactLevel;
     const crystals = toStoredLegionCrystals(board.crystals) ?? existingArtifact?.crystals;
     writeLegionArtifactForWorld(character.worldID, {
       ...(artifactLevel !== undefined ? { artifactLevel } : {}),
@@ -429,7 +432,7 @@ function deriveMaxedSacredSymbol(symbolsData: SavedSymbols | null): boolean {
 // wipe a value a different character already set here via maplescouter_setup.
 function deriveLegionArtifactFields(board: LegionArtifactBoardDraft): LegionArtifactsDraft | undefined {
   if (!hasAnyCrystalProgress(board.crystals)) return undefined;
-  const rawLevels = computeRawStatLevels(board.crystals, board.artifactLevel ?? 0);
+  const rawLevels = computeRawStatLevels(board.crystals, Number(board.artifactLevel) || 0);
   return {
     artifactExtraTarget: effectiveStatLevel(rawLevels.multiTargetExp) >= 1,
     artifactFinalAttackDmg: String(statBonusValue("finalAttackDamage", effectiveStatLevel(rawLevels.finalAttackDamage))),
@@ -611,18 +614,30 @@ function applyVMatrixDraftToRoster(
   upsertFn({ ...existing, vMatrix: vMatrixData });
 }
 
+// The setup step's own draft keeps skill levels as strings (blank until touched); the
+// calculator/profile side need real numbers, so convert here at the storage boundary.
+function toNumericHexaSkillLevels(raw: Record<string, unknown>): HexaSkillLevels {
+  const toNum = (v: unknown) => Number(v) || 0;
+  const toNumArr = (v: unknown) => (Array.isArray(v) ? v.map(toNum) : []);
+  return {
+    origin: Math.max(1, toNum(raw.origin) || 1),
+    ascent: toNum(raw.ascent),
+    mastery: toNumArr(raw.mastery),
+    enhancement: toNumArr(raw.enhancement),
+    common: toNumArr(raw.common),
+  };
+}
+
 // 6th-job HEXA Skills data (origin/mastery/enhancement/common/ascent), persisted to
 // tools.hexaSkills. HEXA Stat is stripped out — it lives in its own key (see below).
-function buildHexaSkillsToolData(jobName: string, hexaJson: string): { className: string; levels: unknown } | null {
+function buildHexaSkillsToolData(jobName: string, hexaJson: string): { className: string; levels: HexaSkillLevels } | null {
   try {
     const parsed = JSON.parse(hexaJson) as Record<string, unknown>;
     const classData = getClassDataByNexonJobName(jobName);
     const hexaClassId = classData?.id === "sia_astelle" ? "sia" : classData?.id;
     const classDef = hexaClassId ? findClassById(hexaClassId) : null;
     if (parsed && typeof parsed === "object" && classDef) {
-      const levels = { ...parsed };
-      delete levels.hexaStat;
-      return { className: classDef.className, levels };
+      return { className: classDef.className, levels: toNumericHexaSkillLevels(parsed) };
     }
   } catch { /* ignore */ }
   return null;

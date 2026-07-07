@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 
 function firstEnabledIndex<T>(items: readonly T[], isDisabled?: (item: T) => boolean): number {
   for (let i = 0; i < items.length; i++) {
@@ -80,6 +80,13 @@ export function useKeyboardListNav<T>({
     }
   }
 
+  // Scroll on highlight change only — not inside the ref callback below, which React
+  // re-invokes on every render (its identity changes each call), which would otherwise
+  // snap the list back to the highlighted row any time something unrelated re-renders.
+  useEffect(() => {
+    itemNodesRef.current.get(highlightedIndex)?.scrollIntoView({ block: "nearest" });
+  }, [highlightedIndex]);
+
   function itemRef(index: number) {
     return (el: HTMLElement | null) => {
       if (!el) {
@@ -87,7 +94,6 @@ export function useKeyboardListNav<T>({
         return;
       }
       itemNodesRef.current.set(index, el);
-      if (index === highlightedIndex) el.scrollIntoView({ block: "nearest" });
     };
   }
 

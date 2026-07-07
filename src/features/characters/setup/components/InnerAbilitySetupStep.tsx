@@ -307,7 +307,7 @@ function IALineBar({ lineIdx, line, grade, openId, theme, onToggle, onClose, onS
   return (
     <div ref={wrapperRef} style={{ position: "relative" }}>
       <button type="button" disabled={!grade} onClick={(e) => { e.stopPropagation(); onToggle(); }}
-        style={iaLineBarStyle(theme, c, grade)}>
+        title={label} style={iaLineBarStyle(theme, c, grade)}>
         {label}
       </button>
       {isOpen && grade && createPortal(

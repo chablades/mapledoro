@@ -2,7 +2,7 @@
 
 import { Fragment, useEffect, useRef } from "react";
 import type { CSSProperties } from "react";
-import { numericKeyDown } from "../../../../lib/inputUtils";
+import { numericKeyDown, sanitizeDigitsInput } from "../../../../lib/inputUtils";
 import Image from "next/image";
 import { resourceImageUrl } from "../../../../lib/mapleResource";
 import type { AppTheme } from "../../../../components/themes";
@@ -281,10 +281,10 @@ function LinkSkillRow({
           disabled={locked}
           title={locked ? "Locked because the character you're adding already brings this skill to Master Level 3" : undefined}
           onChange={(e) => {
-            const raw = e.target.value;
-            const n = parseInt(raw, 10);
+            const sanitized = sanitizeDigitsInput(e.target.value);
+            const n = parseInt(sanitized, 10);
             if (!isNaN(n) && n > skill.maxLevel) { onUpdate(skill.id, String(skill.maxLevel)); return; }
-            onUpdate(skill.id, raw);
+            onUpdate(skill.id, sanitized);
           }}
           onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
           onBlur={(e) => {

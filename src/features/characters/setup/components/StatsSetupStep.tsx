@@ -110,7 +110,11 @@ const IGNORE_ELEMENTAL_RESIST_MAX = 15;
 function clampIgnoreElementalResist(raw: string): string {
   const sanitized = sanitizeDecimalInput(raw);
   if (sanitized === "" || sanitized.endsWith(".")) return sanitized;
-  return String(Math.min(Number(sanitized), IGNORE_ELEMENTAL_RESIST_MAX));
+  // Only reformat when actually over the cap — round-tripping every keystroke through
+  // Number()/String() strips trailing zeros (e.g. "5.0" -> 5 -> "5"), fighting the user
+  // mid-type whenever they enter a decimal.
+  if (Number(sanitized) > IGNORE_ELEMENTAL_RESIST_MAX) return String(IGNORE_ELEMENTAL_RESIST_MAX);
+  return sanitized;
 }
 
 const MAIN_STAT_IDS = new Set<string>(["str", "dex", "int", "luk"]);
@@ -480,7 +484,7 @@ function CombatStatCell({
       <span style={{ fontSize: "0.78rem", color: theme.muted, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>{label}</span>
       <div style={{ position: "relative", flexShrink: 0 }}>
         <input type="text" aria-label={label} value={val} placeholder="0"
-          style={isRaw ? statInputStyle(theme, "4rem") : { ...statInputStyle(theme, "4rem"), paddingRight: "1.15rem" }}
+          style={isRaw ? statInputStyle(theme, "4.6rem") : { ...statInputStyle(theme, "4.6rem"), paddingRight: "1.15rem" }}
           onChange={(e) => {
             if (id === "ignoreElementalResistance") onUpdate(id, clampIgnoreElementalResist(e.target.value));
             else if (allowsDecimal) onUpdate(id, sanitizeDecimalInput(e.target.value));
@@ -532,7 +536,7 @@ function WeaponAttField({ label, usesMagicWeapon, value, onUpdate, theme }: {
               aria-label={label}
               value={value}
               placeholder="0"
-              style={statInputStyle(theme, "4rem")}
+              style={statInputStyle(theme, "4.6rem")}
               onChange={(e) => onUpdate(sanitizeDigitsInput(e.target.value))}
               onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
               onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}

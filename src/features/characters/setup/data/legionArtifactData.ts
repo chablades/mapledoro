@@ -99,7 +99,10 @@ export interface LegionCrystalDraft {
 }
 
 export interface LegionArtifactBoardDraft {
-  artifactLevel?: number;
+  // String, not number — matches Oz Rings' draft pattern so the input can stay blank
+  // until touched instead of a typed "0" collapsing back to an indistinguishable empty
+  // state (see the input's own sanitizer for the clamp/leading-zero handling).
+  artifactLevel?: string;
   crystals?: LegionCrystalDraft[];
 }
 

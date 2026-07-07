@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useLayoutEffect, useRef } from "react";
-import { numericKeyDown, clampNumber } from "../../../../lib/inputUtils";
+import { numericKeyDown, clampNumber, sanitizeDigitsInput } from "../../../../lib/inputUtils";
 import { joinWithAnd } from "../../../../lib/textUtils";
 import { useKeyboardListNav } from "../../../../lib/useKeyboardListNav";
 import Image from "next/image";
@@ -249,18 +249,40 @@ function parseNode(raw: unknown): HexaStatNode {
   return { presets: [parseSlot(raw), emptySlot()], activePreset: 0 };
 }
 
+// Skill levels are strings in the draft (blank until touched, matching Oz Rings) even
+// though the final stored HexaSkillLevels shape (and the standalone HEXA Skills
+// calculator that also reads it) stays numeric — the controller converts at save time.
+// Origin is the one exception: every character has it from level 1 on, so it's never
+// really "unset" the way ascent/mastery/enhancement/common are; clampLevelInput's `min`
+// keeps it from ever going blank.
+interface HexaSkillLevelsDraft {
+  origin: string;
+  ascent: string;
+  mastery: string[];
+  enhancement: string[];
+  common: string[];
+}
+
+// Clamps while preserving the string (blank stays blank unless min > 0, in which case
+// blank snaps to the min — see the origin note above).
+function clampLevelInput(raw: string, max: number, min = 0): string {
+  const digits = sanitizeDigitsInput(raw);
+  if (digits === "") return min > 0 ? String(min) : "";
+  return String(Math.max(min, Math.min(max, Number(digits))));
+}
+
 // The step's working draft carries both systems in one JSON value: the 6th-job
 // skill levels (persisted to tools.hexaSkills) plus the HEXA Stat nodes (persisted
 // separately to tools.hexaStat). The controller splits them on save.
-type HexaDraft = HexaSkillLevels & { hexaStat: [HexaStatNode, HexaStatNode, HexaStatNode] };
+type HexaDraft = HexaSkillLevelsDraft & { hexaStat: [HexaStatNode, HexaStatNode, HexaStatNode] };
 
 function emptyLevels(classDef: HexaClassDef): HexaDraft {
   return {
-    origin: 1,
-    mastery: classDef.mastery.map(() => 0),
-    enhancement: classDef.enhancement.map(() => 0),
-    common: COMMON_SKILLS.map(() => 0),
-    ascent: 0,
+    origin: "1",
+    mastery: classDef.mastery.map(() => ""),
+    enhancement: classDef.enhancement.map(() => ""),
+    common: COMMON_SKILLS.map(() => ""),
+    ascent: "",
     hexaStat: [emptyNode(), emptyNode(), emptyNode()],
   };
 }
@@ -269,21 +291,23 @@ function parseDraft(raw: string, classDef: HexaClassDef): HexaDraft {
   const empty = emptyLevels(classDef);
   if (!raw) return empty;
   try {
-    const parsed = JSON.parse(raw) as Partial<HexaDraft>;
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
     if (!parsed || typeof parsed !== "object") return empty;
-    const pad = (arr: unknown, len: number): number[] => {
+    // Normalizes to strings regardless of whether the source is a number (a prefill
+    // from real saved tool data) or already a string (a prior draft) — both land here.
+    const padBlank = (arr: unknown, len: number): string[] => {
       const a = Array.isArray(arr) ? arr : [];
-      const result = a.slice(0, len).map((v) => clampNumber(Number(v), MAX_LEVEL));
-      while (result.length < len) result.push(0);
+      const result = a.slice(0, len).map((v) => clampLevelInput(String(v ?? ""), MAX_LEVEL));
+      while (result.length < len) result.push("");
       return result;
     };
-    const rawSlots = Array.isArray(parsed.hexaStat) ? parsed.hexaStat : [];
+    const rawSlots = Array.isArray(parsed.hexaStat) ? (parsed.hexaStat as unknown[]) : [];
     return {
-      origin: Math.max(1, clampNumber(Number(parsed.origin) || 1, MAX_LEVEL)),
-      mastery: pad(parsed.mastery, classDef.mastery.length),
-      enhancement: pad(parsed.enhancement, classDef.enhancement.length),
-      common: pad(parsed.common, COMMON_SKILLS.length),
-      ascent: clampNumber(Number(parsed.ascent) || 0, MAX_LEVEL),
+      origin: clampLevelInput(String(parsed.origin ?? ""), MAX_LEVEL, 1),
+      mastery: padBlank(parsed.mastery, classDef.mastery.length),
+      enhancement: padBlank(parsed.enhancement, classDef.enhancement.length),
+      common: padBlank(parsed.common, COMMON_SKILLS.length),
+      ascent: clampLevelInput(String(parsed.ascent ?? ""), MAX_LEVEL),
       hexaStat: [parseNode(rawSlots[0]), parseNode(rawSlots[1]), parseNode(rawSlots[2])],
     };
   } catch { return empty; }
@@ -309,16 +333,23 @@ function SkillIcon({ skill, size = 28 }: { skill: HexaSkillDef; size?: number })
   );
 }
 
-function LevelInput({ value, onChange, theme, min = 0, max = MAX_LEVEL, label }: { value: number; onChange: (v: number) => void; theme: AppTheme; min?: number; max?: number; label?: string }) {
+// HexaStatEntry.level stays a real number (shared with the standalone HEXA Skills
+// calculator and profile display via HexaStatNode), so unlike the plain skill-level
+// tiles above, this can't just become a string draft. `touched` is a display-only flag
+// (not part of the saved data) so a 0 the user actually typed this session shows as a
+// literal "0" instead of collapsing back to the placeholder — see the `touchedLevels`
+// tracking in the main component below for how it's set.
+function LevelInput({ value, onChange, theme, min = 0, max = MAX_LEVEL, label, touched = false, onTouch }: { value: number; onChange: (v: number) => void; theme: AppTheme; min?: number; max?: number; label?: string; touched?: boolean; onTouch?: () => void }) {
+  const showBlank = value === 0 && !touched;
   return (
     <div style={{ display: "flex", alignItems: "center", gap: "0.3rem", flexShrink: 0 }}>
       <input
         type="text"
         inputMode="numeric"
         aria-label={label}
-        value={value === 0 ? "" : String(value)}
+        value={showBlank ? "" : String(value)}
         placeholder={String(min)}
-        onChange={(e) => onChange(clampNumber(Number(e.target.value) || 0, max, min))}
+        onChange={(e) => { onTouch?.(); onChange(clampNumber(Number(e.target.value) || 0, max, min)); }}
         onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
         onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
         onKeyDown={numericKeyDown}
@@ -366,13 +397,13 @@ function SectionLabel({ label, theme, onMaxAll, onClear }: { label: string; them
 /** Condensed icon tile: icon + level input, full skill name(s) shown via tooltip on hover/tap. */
 function HexaTile({ skill, level, onUpdate, theme, min = 0, max = MAX_LEVEL }: {
   skill: HexaSkillDef;
-  level: number;
-  onUpdate: (v: number) => void;
+  level: string;
+  onUpdate: (v: string) => void;
   theme: AppTheme;
   min?: number;
   max?: number;
 }) {
-  const filled = level > 0;
+  const filled = (Number(level) || 0) > 0;
   return (
     <HoverTooltip label={skill.name} theme={theme} style={hexaTileStyle(theme, filled)}>
       <div style={{ opacity: filled ? 1 : 0.5, filter: filled ? "none" : "grayscale(1)", lineHeight: 0 }}>
@@ -382,9 +413,9 @@ function HexaTile({ skill, level, onUpdate, theme, min = 0, max = MAX_LEVEL }: {
         type="text"
         inputMode="numeric"
         aria-label={`${skill.name} level`}
-        value={level === 0 ? "" : String(level)}
+        value={level}
         placeholder={String(min)}
-        onChange={(e) => onUpdate(clampNumber(Number(e.target.value) || 0, max, min))}
+        onChange={(e) => onUpdate(clampLevelInput(e.target.value, max, min))}
         onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
         onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
         onKeyDown={numericKeyDown}
@@ -531,7 +562,7 @@ function StatProgressBar({ level, theme }: { level: number; theme: AppTheme }) {
   );
 }
 
-function HexaStatRow({ entry, onUpdate, theme, isPrimary, classId, mainStatLabel, attackLabel, isError, disabledTypes }: {
+function HexaStatRow({ entry, onUpdate, theme, isPrimary, classId, mainStatLabel, attackLabel, isError, disabledTypes, levelTouched, onLevelTouch }: {
   entry: HexaStatEntry;
   onUpdate: (e: HexaStatEntry) => void;
   theme: AppTheme;
@@ -541,6 +572,8 @@ function HexaStatRow({ entry, onUpdate, theme, isPrimary, classId, mainStatLabel
   attackLabel: string;
   isError?: boolean;
   disabledTypes: Set<string>;
+  levelTouched: boolean;
+  onLevelTouch: () => void;
 }) {
   const bonus = getHexaStatBonus(entry.type, entry.level, isPrimary, classId);
   // Reserve the bonus column's width to the widest value any stat type could show at
@@ -573,7 +606,8 @@ function HexaStatRow({ entry, onUpdate, theme, isPrimary, classId, mainStatLabel
             {bonus}
           </span>
         </div>
-        <LevelInput value={entry.level} onChange={(v) => onUpdate({ ...entry, level: v })} theme={theme} max={MAX_STAT_ENTRY_LEVEL} label="Stat level" />
+        <LevelInput value={entry.level} onChange={(v) => onUpdate({ ...entry, level: v })} theme={theme} max={MAX_STAT_ENTRY_LEVEL} label="Stat level"
+          touched={levelTouched} onTouch={onLevelTouch} />
       </div>
       <StatProgressBar level={entry.level} theme={theme} />
     </div>
@@ -630,8 +664,8 @@ function HexaSkillLevelsSubstep({
 
           <div>
             <SectionLabel label="Origin & Ascent" theme={theme}
-              onMaxAll={() => update({ origin: MAX_LEVEL, ...(classDef.ascent ? { ascent: MAX_LEVEL } : {}) })}
-              onClear={() => update({ origin: 0, ...(classDef.ascent ? { ascent: 0 } : {}) })} />
+              onMaxAll={() => update({ origin: String(MAX_LEVEL), ...(classDef.ascent ? { ascent: String(MAX_LEVEL) } : {}) })}
+              onClear={() => update({ origin: "0", ...(classDef.ascent ? { ascent: "" } : {}) })} />
             <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
               <HexaTile skill={classDef.origin} level={levels.origin}
                 onUpdate={(v) => update({ origin: v })} theme={theme} min={1} />
@@ -644,12 +678,12 @@ function HexaSkillLevelsSubstep({
 
           <div>
             <SectionLabel label="Mastery" theme={theme}
-              onMaxAll={() => update({ mastery: classDef.mastery.map(() => MAX_LEVEL) })}
-              onClear={() => update({ mastery: classDef.mastery.map(() => 0) })} />
+              onMaxAll={() => update({ mastery: classDef.mastery.map(() => String(MAX_LEVEL)) })}
+              onClear={() => update({ mastery: classDef.mastery.map(() => "") })} />
             <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
               {classDef.mastery.map((node, i) => (
                 <HexaTile key={`mastery-${i}`} skill={{ iconId: node.iconId, iconUrl: node.iconUrl, name: node.skills.join("\n") }}
-                  level={levels.mastery[i] ?? 0}
+                  level={levels.mastery[i] ?? ""}
                   onUpdate={(v) => {
                     const next = [...levels.mastery];
                     next[i] = v;
@@ -663,11 +697,11 @@ function HexaSkillLevelsSubstep({
 
           <div>
             <SectionLabel label="Enhancement" theme={theme}
-              onMaxAll={() => update({ enhancement: classDef.enhancement.map(() => MAX_LEVEL) })}
-              onClear={() => update({ enhancement: classDef.enhancement.map(() => 0) })} />
+              onMaxAll={() => update({ enhancement: classDef.enhancement.map(() => String(MAX_LEVEL)) })}
+              onClear={() => update({ enhancement: classDef.enhancement.map(() => "") })} />
             <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
               {classDef.enhancement.map((skill, i) => (
-                <HexaTile key={`enhancement-${skill.name}`} skill={skill} level={levels.enhancement[i] ?? 0}
+                <HexaTile key={`enhancement-${skill.name}`} skill={skill} level={levels.enhancement[i] ?? ""}
                   onUpdate={(v) => {
                     const next = [...levels.enhancement];
                     next[i] = v;
@@ -681,11 +715,11 @@ function HexaSkillLevelsSubstep({
 
           <div>
             <SectionLabel label="Common" theme={theme}
-              onMaxAll={() => update({ common: COMMON_SKILLS.map(() => MAX_LEVEL) })}
-              onClear={() => update({ common: COMMON_SKILLS.map(() => 0) })} />
+              onMaxAll={() => update({ common: COMMON_SKILLS.map(() => String(MAX_LEVEL)) })}
+              onClear={() => update({ common: COMMON_SKILLS.map(() => "") })} />
             <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
               {COMMON_SKILLS.map((skill, i) => (
-                <HexaTile key={skill.name} skill={skill} level={levels.common[i] ?? 0}
+                <HexaTile key={skill.name} skill={skill} level={levels.common[i] ?? ""}
                   onUpdate={(v) => {
                     const next = [...levels.common];
                     next[i] = v;
@@ -720,6 +754,15 @@ export default function HexaMatrixSetupStep({
   const [substepDirection, setSubstepDirection] = useState<"forward" | "backward">("forward");
   const [hasSubstepSwitched, setHasSubstepSwitched] = useState(false);
   const [activeSlot, setActiveSlot] = useState(0);
+  // Display-only: tracks which HEXA Stat level fields the user has actually typed into
+  // this session, so a level they set to 0 shows a literal "0" instead of collapsing
+  // back to the placeholder (HexaStatEntry.level itself stays a real number — see
+  // LevelInput's comment). Resets on remount (e.g. leaving this step and coming back),
+  // which only affects the blank-vs-"0" look, never the saved value.
+  const [touchedLevels, setTouchedLevels] = useState<Set<string>>(() => new Set());
+  function markLevelTouched(key: string) {
+    setTouchedLevels((prev) => (prev.has(key) ? prev : new Set(prev).add(key)));
+  }
 
   useEffect(() => {
     if (initialValueRef.current) return;
@@ -895,6 +938,8 @@ export default function HexaMatrixSetupStep({
             <HexaStatRow entry={slot.main} theme={theme} isPrimary={true} isError={mainError}
               disabledTypes={mainDisabled}
               classId={classData?.id ?? ""} mainStatLabel={mainStatLabel} attackLabel={attackLabel}
+              levelTouched={touchedLevels.has(`${activeSlot}-${activePreset}-main`)}
+              onLevelTouch={() => markLevelTouched(`${activeSlot}-${activePreset}-main`)}
               onUpdate={(e) => setSlot({ ...slot, main: e })} />
           </div>
 
@@ -905,6 +950,8 @@ export default function HexaMatrixSetupStep({
                 <HexaStatRow key={i} entry={entry} theme={theme} isPrimary={false} isError={altErrors[i]}
                   disabledTypes={altDisabled[i]}
                   classId={classData?.id ?? ""} mainStatLabel={mainStatLabel} attackLabel={attackLabel}
+                  levelTouched={touchedLevels.has(`${activeSlot}-${activePreset}-alt${i}`)}
+                  onLevelTouch={() => markLevelTouched(`${activeSlot}-${activePreset}-alt${i}`)}
                   onUpdate={(e) => {
                     const newAlt: [HexaStatEntry, HexaStatEntry] = [slot.alt[0], slot.alt[1]];
                     newAlt[i] = e;

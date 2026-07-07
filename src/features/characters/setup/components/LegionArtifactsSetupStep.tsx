@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
-import { numericKeyDown, clampNumber } from "../../../../lib/inputUtils";
+import { numericKeyDown, sanitizeDigitsInput } from "../../../../lib/inputUtils";
 import { useKeyboardListNav } from "../../../../lib/useKeyboardListNav";
 import { searchAndRank } from "../../../../lib/searchMatch";
 import { legionCrystalIconUrl } from "../../../../lib/mapleResource";
@@ -48,6 +48,14 @@ const CRYSTAL_TILE_SIZE = 116;
 const CRYSTAL_TILE_SIZE_MOBILE = 100;
 const CRYSTAL_ICON_SIZE = 80;
 const EMPTY_CRYSTAL: LegionCrystalDraft = { level: MIN_CRYSTAL_LEVEL, stats: [...DEFAULT_CRYSTAL_STATS] };
+
+// Keeps the value a string (blank until touched) instead of clamping through Number(),
+// which would collapse a typed "0" back to an indistinguishable empty state.
+function clampArtifactLevelInput(raw: string): string {
+  const digits = sanitizeDigitsInput(raw);
+  if (digits === "") return "";
+  return String(Math.min(MAX_ARTIFACT_LEVEL, Number(digits)));
+}
 
 // ── Styles ────────────────────────────────────────────────────────────────────
 
@@ -401,7 +409,9 @@ export default function LegionArtifactsSetupStep({
   theme, step, stepNumber, totalSteps, worldLegionArtifact, value, onChange, onBack, onNext, onFinish,
 }: LegionArtifactsSetupStepProps) {
   const draft = parseLegionArtifactBoardDraft(value);
-  const artifactLevel = draft.artifactLevel ?? worldLegionArtifact?.artifactLevel ?? 0;
+  const artifactLevel = draft.artifactLevel
+    ?? (worldLegionArtifact?.artifactLevel !== undefined ? String(worldLegionArtifact.artifactLevel) : "");
+  const artifactLevelNum = Number(artifactLevel) || 0;
   const crystals: LegionCrystalDraft[] = draft.crystals
     ?? (worldLegionArtifact?.crystals as LegionCrystalDraft[] | undefined)
     ?? [];
@@ -425,7 +435,7 @@ export default function LegionArtifactsSetupStep({
     return () => document.removeEventListener("mousedown", handleMouseDown);
   }, [openCardIndex, openId]);
 
-  function updateArtifactLevel(next: number) {
+  function updateArtifactLevel(next: string) {
     onChange(serializeLegionArtifactBoardDraft({ artifactLevel: next, crystals }));
   }
 
@@ -485,9 +495,9 @@ export default function LegionArtifactsSetupStep({
             type="text"
             inputMode="numeric"
             aria-label="Legion Artifact level"
-            value={artifactLevel || ""}
+            value={artifactLevel}
             placeholder="0"
-            onChange={(e) => updateArtifactLevel(clampNumber(Math.floor(Number(e.target.value) || 0), MAX_ARTIFACT_LEVEL))}
+            onChange={(e) => updateArtifactLevel(clampArtifactLevelInput(e.target.value))}
             onKeyDown={numericKeyDown}
             style={levelInputStyle(theme, 56)}
           />
@@ -500,7 +510,7 @@ export default function LegionArtifactsSetupStep({
               index={index}
               def={def}
               crystal={crystals[index] ?? EMPTY_CRYSTAL}
-              unlocked={isCrystalUnlocked(index, artifactLevel)}
+              unlocked={isCrystalUnlocked(index, artifactLevelNum)}
               isCardOpen={openCardIndex === index}
               nestedOpenId={openId}
               theme={theme}

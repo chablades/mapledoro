@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { usePickerCoords } from "../hooks/usePickerCoords";
-import { numericKeyDown, clampNumber, sanitizeDigitsInput } from "../../../../lib/inputUtils";
+import { numericKeyDown, sanitizeDigitsInput } from "../../../../lib/inputUtils";
 import { useKeyboardListNav } from "../../../../lib/useKeyboardListNav";
 import { searchAndRank } from "../../../../lib/searchMatch";
 import type { AppTheme } from "../../../../components/themes";
@@ -66,8 +66,10 @@ interface EquipmentDraft extends Partial<Record<SharedSlotKey, EquipmentItem | n
   activePreset?: number;
   /** Preset indices that have been edited (split off from preset 1). Others mirror preset 1. */
   diverged?: number[];
-  /** Symbol levels keyed by region name; folded into the calculator's tools.symbols on finish. */
-  symbolLevels?: Record<string, number>;
+  /** Symbol levels keyed by region name; folded into the calculator's tools.symbols on
+   *  finish. String, not number — blank until touched, matching Oz Rings; the
+   *  controller converts to real numbers when building tools.symbols. */
+  symbolLevels?: Record<string, string>;
   /** Scouter-only weapon ATT/MATT, asked inline when picking a weapon in preset 1 (see
    *  WeaponAttStepView) — not equipment data, folded into `scouter.weaponAtt` on finish. */
   weaponAtt?: string;
@@ -760,14 +762,21 @@ function PresetBar({ theme, active, onSwitch }: {
 
 // ── Symbol level tile + section ──────────────────────────────────────────────
 
+// Clamps while preserving the string (blank until touched, matching Oz Rings).
+function clampSymbolLevelInput(raw: string, maxLevel: number): string {
+  const digits = sanitizeDigitsInput(raw);
+  if (digits === "") return "";
+  return String(Math.min(maxLevel, Number(digits)));
+}
+
 function SymbolLevelTile({ area, level, maxLevel, theme, onLevel }: {
   area: SymbolArea;
-  level: number;
+  level: string;
   maxLevel: number;
   theme: AppTheme;
-  onLevel: (level: number) => void;
+  onLevel: (level: string) => void;
 }) {
-  const placed = level >= 1;
+  const placed = (Number(level) || 0) >= 1;
   return (
     <div style={symbolTileStyle(theme, placed)}>
       <HoverTooltip label={area.name} theme={theme}>
@@ -779,9 +788,9 @@ function SymbolLevelTile({ area, level, maxLevel, theme, onLevel }: {
         type="text"
         inputMode="numeric"
         aria-label={`${area.name} symbol level`}
-        value={level || ""}
+        value={level}
         placeholder="0"
-        onChange={(e) => onLevel(clampNumber(Math.floor(Number(e.target.value) || 0), maxLevel))}
+        onChange={(e) => onLevel(clampSymbolLevelInput(e.target.value, maxLevel))}
         onKeyDown={numericKeyDown}
         style={symbolTileInputStyle(theme)}
       />
@@ -790,19 +799,19 @@ function SymbolLevelTile({ area, level, maxLevel, theme, onLevel }: {
 }
 
 function SymbolSection({ symbolLevels, activeTab, availableTabs, theme, onTabChange, onLevel }: {
-  symbolLevels: Record<string, number>;
+  symbolLevels: Record<string, string>;
   activeTab: SymbolTabKey;
   availableTabs: { key: SymbolTabKey; label: string }[];
   theme: AppTheme;
   onTabChange: (tab: SymbolTabKey) => void;
-  onLevel: (regionName: string, level: number) => void;
+  onLevel: (regionName: string, level: string) => void;
 }) {
   const maxLevel = activeTab === "arcane" ? ARCANE_MAX_LEVEL : SACRED_MAX_LEVEL;
   const renderTile = (area: SymbolArea) => (
     <SymbolLevelTile
       key={area.itemId}
       area={area}
-      level={symbolLevels[area.name] ?? 0}
+      level={symbolLevels[area.name] ?? ""}
       maxLevel={maxLevel}
       theme={theme}
       onLevel={(level) => onLevel(area.name, level)}
@@ -960,10 +969,11 @@ export default function EquipmentSetupStep({
     setActiveSlot((prev) => (prev === slot ? null : slot));
   }
 
-  function setSymbolLevel(regionName: string, level: number) {
-    const levels = { ...(draft.symbolLevels ?? {}) };
-    if (level >= 1) levels[regionName] = level;
-    else delete levels[regionName];
+  function setSymbolLevel(regionName: string, level: string) {
+    // Kept as a string (even "0" or "") rather than deleted, so the tile can
+    // distinguish "explicitly typed 0" from "never touched" — the controller already
+    // excludes sub-1 levels when building the calculator's real tools.symbols data.
+    const levels = { ...(draft.symbolLevels ?? {}), [regionName]: level };
     const next = { ...draft, symbolLevels: levels };
     setDraft(next);
     onChange(serialiseDraft(next));

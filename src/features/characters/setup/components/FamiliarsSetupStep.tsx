@@ -377,6 +377,7 @@ function LinePicker({ id, openId, onToggle, onClose, value, tier, placeholder, t
           if (!isOpen) setQuery("");
           onToggle();
         }}
+        title={value || placeholder}
         style={triggerStyle}
       >
         {value || placeholder}
@@ -659,7 +660,7 @@ function FamiliarSlotCard({
               <FamiliarCardSprite mobId={spriteMobId} familiarId={slot.familiarId} cardId={cardId} size={28} theme={theme} />
               <div style={{ overflow: "hidden", flex: 1 }}>
                 <p style={{ margin: 0, fontSize: "0.75rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.04em", color: theme.muted }}>Currently Selected</p>
-                <p style={{ margin: 0, fontSize: "0.8rem", fontWeight: 700, color: theme.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{displayName}</p>
+                <p title={displayName} style={{ margin: 0, fontSize: "0.8rem", fontWeight: 700, color: theme.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{displayName}</p>
               </div>
               {slot.tier && (
                 <span style={tierBadgeStyle(TIER_COLORS[slot.tier])}>
@@ -712,6 +713,7 @@ function FamiliarSlotCard({
                     ref={itemRef(i)}
                     type="button"
                     onClick={(e) => { e.stopPropagation(); onSetPending(entry); }}
+                    title={getFamiliarDisplayLabel(entry)}
                     style={familiarOptionStyle(theme, i === highlightedIndex)}
                     onMouseEnter={(e) => { e.currentTarget.style.background = `${theme.accent}22`; }}
                     onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
@@ -831,7 +833,7 @@ function BadgeSlot({
               <img src={familiarBadgeUrl(BADGE_ID_MAP[badge])} alt="" width={28} height={28} style={{ objectFit: "contain", flexShrink: 0 }} />
               <div style={{ overflow: "hidden", flex: 1 }}>
                 <p style={{ margin: 0, fontSize: "0.75rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.04em", color: theme.muted }}>Currently Selected</p>
-                <p style={{ margin: 0, fontSize: "0.8rem", fontWeight: 700, color: theme.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{badge}</p>
+                <p title={badge} style={{ margin: 0, fontSize: "0.8rem", fontWeight: 700, color: theme.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{badge}</p>
               </div>
             </div>
           )}

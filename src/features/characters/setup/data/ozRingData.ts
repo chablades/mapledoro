@@ -45,7 +45,7 @@ const WEAPON_JUMP_ICON_BY_STAT: Record<MainStatId, string> = {
 export interface OzClassStatInfo {
   /** Primary main stat (drives the Weapon Jump variant); null for classes without main-stat data. */
   primaryStat: MainStatId | null;
-  /** Display label for the Weapon Jump ring, e.g. "Weapon Jump (I)". */
+  /** Display label for the Weapon Jump ring, e.g. "Weapon Jump I". */
   weaponJumpLabel: string;
   /** Item icon id for the class's Weapon Jump ring variant. */
   weaponJumpIconId: string;
@@ -61,7 +61,7 @@ export interface OzClassStatInfo {
 export function getOzClassStatInfo(requiredStats: readonly string[]): OzClassStatInfo {
   const used = requiredStats.filter((s): s is MainStatId => MAIN_STAT_SET.has(s));
   const primaryStat = used[0] ?? null;
-  const weaponJumpLabel = primaryStat ? `Weapon Jump (${WEAPON_JUMP_LETTER[primaryStat]})` : "Weapon Jump";
+  const weaponJumpLabel = primaryStat ? `Weapon Jump ${WEAPON_JUMP_LETTER[primaryStat]}` : "Weapon Jump";
   const weaponJumpIconId = WEAPON_JUMP_ICON_BY_STAT[primaryStat ?? "str"];
   const totallingStats = MAIN_STATS.filter((s) => !used.includes(s));
   return { primaryStat, weaponJumpLabel, weaponJumpIconId, totallingStats };

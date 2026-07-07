@@ -38,7 +38,11 @@ const SETUP_FLOWS = [
     required: false,
     // The `stats` step is flow-aware (it adds the scouter questionnaire + weapon ATT);
     // `hexa_matrix` reuses the full-setup step as-is (auto-skipped below Lv 260).
-    steps: ["stats", "oz_rings", "buffs", "link_skills", "hexa_matrix"] as const,
+    // Ordered to minimize in-game window switching (2026-07-07): oz_rings right after
+    // stats (both touch Equipment/Inventory), then an uninterrupted Skill-window run
+    // (link_skills before hexa_matrix), with buffs last since it draws from Guild/Skills/
+    // Inventory and has no single fixed window affinity.
+    steps: ["stats", "oz_rings", "link_skills", "hexa_matrix", "buffs"] as const,
   },
   {
     id: "stats_flow",

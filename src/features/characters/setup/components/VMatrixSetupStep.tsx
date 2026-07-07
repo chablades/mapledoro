@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { numericKeyDown, clampNumber } from "../../../../lib/inputUtils";
+import { numericKeyDown, sanitizeDigitsInput } from "../../../../lib/inputUtils";
 import Image from "next/image";
 import type { AppTheme } from "../../../../components/themes";
 import HoverTooltip from "../../../../components/HoverTooltip";
@@ -63,13 +63,28 @@ const vMatrixInputStyle = (theme: AppTheme): React.CSSProperties => ({
   transition: "outline-color 0.15s ease",
 });
 
-function parseLevels(raw: string): Record<string, number> {
+// Draft levels are strings (blank until touched), matching Oz Rings' pattern so a
+// typed "0" doesn't collapse back into an indistinguishable empty state. Values are
+// normalized to strings here regardless of the raw JSON's own type, since a prefill
+// from saved tool data (real numbers) can land in the same draft as user-typed values.
+function parseLevels(raw: string): Record<string, string> {
   if (!raw) return {};
   try {
     const parsed = JSON.parse(raw) as unknown;
-    if (parsed && typeof parsed === "object") return parsed as Record<string, number>;
+    if (parsed && typeof parsed === "object") {
+      return Object.fromEntries(
+        Object.entries(parsed as Record<string, unknown>).map(([k, v]) => [k, String(v)]),
+      );
+    }
   } catch { /* ignore */ }
   return {};
+}
+
+// Clamps while preserving the string (see parseLevels above).
+function clampLevelInput(raw: string, max: number): string {
+  const digits = sanitizeDigitsInput(raw);
+  if (digits === "") return "";
+  return String(Math.min(max, Number(digits)));
 }
 
 function SkillIcon({ id, name, size = 28 }: { id: string; name: string; size?: number }) {
@@ -96,12 +111,12 @@ function SkillIcon({ id, name, size = 28 }: { id: string; name: string; size?: n
 function VMatrixTile({ id, name, level, max, onUpdate, theme }: {
   id: string;
   name: string;
-  level: number;
+  level: string;
   max: number;
-  onUpdate: (v: number) => void;
+  onUpdate: (v: string) => void;
   theme: AppTheme;
 }) {
-  const filled = level > 0;
+  const filled = (Number(level) || 0) > 0;
   return (
     <HoverTooltip label={name} theme={theme} style={vMatrixTileStyle(theme, filled)}>
       <div style={{ opacity: filled ? 1 : 0.5, filter: filled ? "none" : "grayscale(1)", lineHeight: 0 }}>
@@ -111,9 +126,9 @@ function VMatrixTile({ id, name, level, max, onUpdate, theme }: {
         type="text"
         inputMode="numeric"
         aria-label={`${name} level`}
-        value={level === 0 ? "" : String(level)}
+        value={level}
         placeholder="0"
-        onChange={(e) => onUpdate(clampNumber(Number(e.target.value) || 0, max))}
+        onChange={(e) => onUpdate(clampLevelInput(e.target.value, max))}
         onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
         onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
         onKeyDown={numericKeyDown}
@@ -150,20 +165,20 @@ function SectionLabel({ label, theme, onMaxAll, onClear }: { label: string; them
 function NodeSection({ label, nodes, levels, theme, onSet, onSetMany }: {
   label: string;
   nodes: VMatrixNode[];
-  levels: Record<string, number>;
+  levels: Record<string, string>;
   theme: AppTheme;
-  onSet: (name: string, level: number) => void;
-  onSetMany: (updates: Record<string, number>) => void;
+  onSet: (name: string, level: string) => void;
+  onSetMany: (updates: Record<string, string>) => void;
 }) {
   if (nodes.length === 0) return null;
   return (
     <div>
       <SectionLabel label={label} theme={theme}
-        onMaxAll={() => onSetMany(Object.fromEntries(nodes.map(([, name, max]) => [name, max])))}
-        onClear={() => onSetMany(Object.fromEntries(nodes.map(([, name]) => [name, 0])))} />
+        onMaxAll={() => onSetMany(Object.fromEntries(nodes.map(([, name, max]) => [name, String(max)])))}
+        onClear={() => onSetMany(Object.fromEntries(nodes.map(([, name]) => [name, ""])))} />
       <div className="vmatrix-grid" style={{ display: "grid", gap: "0.4rem" }}>
         {nodes.map(([id, name, max]) => (
-          <VMatrixTile key={name} id={id} name={name} level={levels[name] ?? 0} max={max} theme={theme}
+          <VMatrixTile key={name} id={id} name={name} level={levels[name] ?? ""} max={max} theme={theme}
             onUpdate={(v) => onSet(name, v)} />
         ))}
       </div>
@@ -192,17 +207,20 @@ export default function VMatrixSetupStep({
   useEffect(() => {
     if (initialValueRef.current || !confirmedCharacterName) return;
     const saved = selectCharacterByIgn(readCharactersStore(), confirmedCharacterName)?.vMatrix;
-    if (saved?.levels && Object.keys(saved.levels).length > 0) onChange(JSON.stringify(saved.levels));
+    if (saved?.levels && Object.keys(saved.levels).length > 0) {
+      const asStrings = Object.fromEntries(Object.entries(saved.levels).map(([k, v]) => [k, String(v)]));
+      onChange(JSON.stringify(asStrings));
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const levels = parseLevels(value);
 
-  function setLevel(name: string, level: number) {
+  function setLevel(name: string, level: string) {
     onChange(JSON.stringify({ ...levels, [name]: level }));
   }
 
-  function setLevels(updates: Record<string, number>) {
+  function setLevels(updates: Record<string, string>) {
     onChange(JSON.stringify({ ...levels, ...updates }));
   }
 
