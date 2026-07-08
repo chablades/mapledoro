@@ -937,14 +937,13 @@ function statsSubstepDescription(isScouter: boolean): string {
 // component's cognitive complexity under the sonarjs cap — MapleScouter's completion
 // gating added enough branches here to push it over.
 function StatsWindowSubstep({
-  theme, step, stepNumber, totalSteps, substep, substepCount, substepAnimStyle,
+  theme, stepNumber, totalSteps, substep, substepCount, substepAnimStyle,
   goToSubstep, hasMoreSubsteps, onNext, onFinish, onValidityChange,
   classData, characterLevel, tripleIds, draft,
   handleTripleUpdate, handleSingleUpdate, handleCooldownUpdate,
   showWeaponAtt, weaponAttLabel, usesMagicWeapon, isScouter,
 }: {
   theme: AppTheme;
-  step: SetupStepDefinition;
   stepNumber: number;
   totalSteps: number;
   substep: number;
@@ -996,7 +995,7 @@ function StatsWindowSubstep({
       theme={theme}
       substepIndex={substep}
       substepCount={substepCount}
-      stepLabel={step.label}
+      stepLabel="Character Info"
       stepNumber={stepNumber}
       totalSteps={totalSteps}
       description={statsSubstepDescription(isScouter)}
@@ -1080,7 +1079,7 @@ function StatsWindowSubstep({
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function StatsSetupStep({
-  theme, step, flowId, stepNumber, totalSteps, jobName = "", direction = "forward", targetSubstep, onValidityChange, characterLevel, characterRoster, confirmedWorldId, worldScouterLegion, value, onChange, onBack, onNext, onFinish,
+  theme, flowId, stepNumber, totalSteps, jobName = "", direction = "forward", targetSubstep, onValidityChange, characterLevel, characterRoster, confirmedWorldId, worldScouterLegion, value, onChange, onBack, onNext, onFinish,
 }: StatsSetupStepProps) {
   const classData = CLASS_SKILL_DATA.find((c) => c.nexonJobName === jobName);
   const draft = parseStatsStepDraft(value);
@@ -1257,7 +1256,7 @@ export default function StatsSetupStep({
 
   if (substep === 1) return (
     <StatsWindowSubstep
-      theme={theme} step={step} stepNumber={stepNumber} totalSteps={totalSteps}
+      theme={theme} stepNumber={stepNumber} totalSteps={totalSteps}
       substep={substep} substepCount={SUBSTEP_COUNT} substepAnimStyle={substepAnimStyle}
       goToSubstep={goToSubstep} hasMoreSubsteps={SUBSTEP_COUNT > 2} onNext={onNext} onFinish={onFinish} onValidityChange={onValidityChange}
       classData={classData} characterLevel={characterLevel} tripleIds={tripleIds} draft={draft}

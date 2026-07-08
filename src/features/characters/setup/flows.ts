@@ -278,7 +278,7 @@ export function getStepSubsteps(
     const showInnerAbility = !isScouter;
     return [
       "Quick Questions",
-      "Stats",
+      "Character Info",
       ...(showHyperStat ? ["Hyper Stats"] : []),
       ...(showInnerAbility ? ["Inner Ability"] : []),
     ];

@@ -897,7 +897,6 @@ function SectionHeading({ label, theme }: { label: string; theme: AppTheme }) {
 
 export default function EquipmentSetupStep({
   theme,
-  step,
   stepNumber,
   totalSteps,
   direction = "forward",
@@ -1291,7 +1290,7 @@ export default function EquipmentSetupStep({
     `}</style>
     <SetupStepFrame
       theme={theme}
-      stepLabel={step.label}
+      stepLabel="Equipment"
       stepNumber={stepNumber}
       totalSteps={totalSteps}
       substepIndex={substep}

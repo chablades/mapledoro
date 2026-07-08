@@ -36,14 +36,14 @@ const menuStyle = (theme: AppTheme, openAbove: boolean): CSSProperties => ({
   boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
 });
 
-function menuItemStyle(theme: AppTheme, active: boolean, fullWidth: boolean, disabled: boolean): CSSProperties {
+function menuItemStyle(theme: AppTheme, active: boolean, disabled: boolean): CSSProperties {
   const activeColor = active ? theme.accent : theme.text;
   return {
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
     gap: "0.4rem",
-    ...(fullWidth ? { width: "100%" } : { flex: 1, minWidth: 0 }),
+    width: "100%",
     border: "none",
     background: !disabled && active ? `${theme.accent}18` : "none",
     color: disabled ? theme.muted : activeColor,
@@ -58,14 +58,40 @@ function menuItemStyle(theme: AppTheme, active: boolean, fullWidth: boolean, dis
   };
 }
 
-function substepIndicatorStyle(theme: AppTheme, active: boolean): CSSProperties {
+// Wraps the mobile split-button row (label + separate expand toggle) so the pair reads
+// as ONE selection box, matching the desktop hover row where label+arrow are already a
+// single <button>. The two buttons inside stay functionally separate (label jumps,
+// toggle expands) but share this box's background/radius instead of each having their
+// own, which previously made them look like two disconnected chips.
+function splitRowContainerStyle(theme: AppTheme, active: boolean, disabled: boolean): CSSProperties {
   return {
-    flexShrink: 0,
-    color: active ? theme.accent : theme.muted,
+    display: "flex",
+    alignItems: "stretch",
+    borderRadius: "7px",
+    overflow: "hidden",
+    background: !disabled && active ? `${theme.accent}18` : "none",
   };
 }
 
-function tapToggleStyle(theme: AppTheme): CSSProperties {
+function splitLabelStyle(theme: AppTheme, active: boolean, disabled: boolean): CSSProperties {
+  const activeColor = active ? theme.accent : theme.text;
+  return {
+    flex: 1,
+    minWidth: 0,
+    border: "none",
+    background: "none",
+    color: disabled ? theme.muted : activeColor,
+    opacity: disabled ? 0.5 : 1,
+    fontFamily: "inherit",
+    fontWeight: !disabled && active ? 800 : 600,
+    fontSize: "0.82rem",
+    padding: "0.4rem 0.55rem",
+    textAlign: "left",
+    cursor: disabled ? "not-allowed" : "pointer",
+  };
+}
+
+function splitToggleStyle(theme: AppTheme, expanded: boolean): CSSProperties {
   return {
     display: "flex",
     alignItems: "center",
@@ -73,10 +99,17 @@ function tapToggleStyle(theme: AppTheme): CSSProperties {
     flexShrink: 0,
     width: "2rem",
     border: "none",
+    borderLeft: `1px solid ${theme.border}`,
     background: "none",
-    color: theme.muted,
-    borderRadius: "7px",
+    color: expanded ? theme.accent : theme.muted,
     cursor: "pointer",
+  };
+}
+
+function substepIndicatorStyle(theme: AppTheme, active: boolean): CSSProperties {
+  return {
+    flexShrink: 0,
+    color: active ? theme.accent : theme.muted,
   };
 }
 
@@ -288,7 +321,7 @@ export default function StepJumpMenu({
               const isTapExpanded = tapExpandedStep === step.index;
               return (
                 <div key={step.index}>
-                  <div style={{ display: "flex", alignItems: "stretch" }}>
+                  <div style={splitRowContainerStyle(theme, isActive, step.disabled)}>
                     <button
                       type="button"
                       disabled={step.disabled}
@@ -296,7 +329,7 @@ export default function StepJumpMenu({
                         onJumpStep(step.index);
                         setOpen(false);
                       }}
-                      style={menuItemStyle(theme, isActive, false, step.disabled)}
+                      style={splitLabelStyle(theme, isActive, step.disabled)}
                     >
                       {step.visibleNumber}. {step.label}
                     </button>
@@ -305,7 +338,7 @@ export default function StepJumpMenu({
                         type="button"
                         aria-label={isTapExpanded ? `Collapse ${step.label} substeps` : `Expand ${step.label} substeps`}
                         onClick={() => setTapExpandedStep((prev) => (prev === step.index ? null : step.index))}
-                        style={tapToggleStyle(theme)}
+                        style={splitToggleStyle(theme, isTapExpanded)}
                       >
                         <span style={{ display: "inline-block", transform: isTapExpanded ? "rotate(180deg)" : "none", transition: "transform 0.15s ease" }}>
                           ▾
@@ -341,7 +374,7 @@ export default function StepJumpMenu({
                   onJumpStep(step.index);
                   setOpen(false);
                 }}
-                style={menuItemStyle(theme, isActive, true, step.disabled)}
+                style={menuItemStyle(theme, isActive, step.disabled)}
                 onMouseEnter={(e) => {
                   if (!step.disabled && !isActive) e.currentTarget.style.background = `${theme.accent}18`;
                   handleRowEnter(step, e);
