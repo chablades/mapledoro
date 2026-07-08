@@ -262,7 +262,7 @@ export const SELECT_BUFFS: SelectBuff[] = [
     { label: "Decent Holy Symbol Level 1 (+20% EXP)", value: 20 },
     { label: "Decent Holy Symbol Level 30 (+35% EXP)", value: 35 },
     { label: "Holy Symbol (+50% EXP)", value: 50 },
-    { label: "Holy Symbol + Experience (+70% EXP)", value: 70 },
+    { label: "Holy Symbol + Holy Symbol - Experience (+70% EXP)", value: 70 },
   ] },
   { id: "tallahart", label: "Grand Sacred Symbol: Tallahart", icon: { type: "item", id: "01714000" }, options: grandSymbolOptions() },
   { id: "geardock", label: "Grand Sacred Symbol: Geardock", icon: { type: "item", id: "01714001" }, options: grandSymbolOptions() },
