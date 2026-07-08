@@ -11,6 +11,15 @@ interface ChangelogEntry {
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    date: "2026-07-08",
+    changes: [
+      { type: "changed", text: "The EXP Calculator now uses a wider layout with paired panels and compact icon tiles for additive buffs to reduce scrolling." },
+      { type: "changed", text: "Link skills, Roro's Experience Ring, Grand Sacred Symbols, Legion Artifact, Champion's Renown, and EXP nodestones in the EXP Calculator are now compact level tiles with hover tooltips instead of dropdowns." },
+      { type: "changed", text: "Pendant of the Spirit is now a toggle under Additive Buffs in the EXP Calculator." },
+      { type: "changed", text: "The EXP Calculator now shows Roll of the Dice only when the selected character is a Pirate class." },
+    ],
+  },
+  {
     date: "2026-07-07",
     changes: [
       { type: "added", text: "Added the EXP Calculator with GMS EXP Buffs + Monster EXP, All-in-One, and resource table tabs." },

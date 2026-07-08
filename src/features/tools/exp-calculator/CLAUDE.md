@@ -27,6 +27,11 @@ GMS naming/content decisions:
 - Penance/Cash Shop modifiers live under Reg Server Modifiers.
 - The only Cash Shop coupon is 2x and it only applies through level 250.
 
+Tile-rendered select buffs (`TILE_SELECT_IDS`) store the option *value* in `buffs.selects` like
+every other select buff; only the input surface maps level (option index) to value. The two EXP
+nodestone tiles (Mapae +33%, Roro +10%) are exclusive toggles over the single shared `exp-node`
+select value.
+
 Non-stacking rules:
 - EXP Accumulation Potion and Small Concentrated EXP Accumulation Potion are mutually exclusive.
 - MVP 50% Bonus EXP and MVP 70% Bonus EXP are mutually exclusive.

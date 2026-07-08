@@ -277,7 +277,7 @@ export const SELECT_BUFFS: SelectBuff[] = [
     { label: "+25% EXP (3 extra ring wearers in party)", value: 25 },
     { label: "+30% EXP (4 extra ring wearers in party)", value: 30 },
   ] },
-  { id: "eluna", label: "Eluna Earrings / Pendant", icon: { type: "item", id: "01032269" }, options: percentOptions([0, 2, 4, 6, 8, 10]) },
+  { id: "eluna", label: "Eluna Earrings / Pendant", icon: { type: "item", id: "01032279" }, options: percentOptions([0, 2, 4, 6, 8, 10]) },
   { id: "roll-of-the-dice", label: "Roll of the Dice", icon: { type: "skill", id: "35111013" }, options: percentOptions([0, 30, 40, 50]) },
 ];
 
@@ -301,7 +301,7 @@ const HYPER_STAT_EXP_BONUS = [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 6, 7, 8
 const SOL_JANUS_EXP_BONUS = [0, 10, 12, 14, 16, 18, 20, 22, 24, 26, 37, 39, 41, 43, 45, 47, 49, 51, 53, 55, 67, 69, 71, 73, 75, 77, 79, 81, 83, 85, 100];
 
 export const LEVEL_INPUT_BUFFS: InputBuff[] = [
-  { id: "hyper-stats", label: "Hyper Stats (EXP Obtained) Level (1-15)", max: 15, icon: { type: "erda-skill", id: "18112/rush/2" }, bonusByLevel: HYPER_STAT_EXP_BONUS },
+  { id: "hyper-stats", label: "EXP Hyper Stat Level (1-15)", max: 15, icon: { type: "erda-skill", id: "18112/rush/2" }, bonusByLevel: HYPER_STAT_EXP_BONUS },
   { id: "sol-janus", label: "Sol Janus Level (1-30)", max: 30, icon: { type: "skill", id: "500001000" }, bonusByLevel: SOL_JANUS_EXP_BONUS },
 ];
 

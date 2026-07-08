@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { CharacterDropdown } from "../../../components/CharacterSyncPanel";
+import HoverTooltip from "../../../components/HoverTooltip";
 import { ErdaSkillIcon, ItemIcon, MobSprite, SkillIcon } from "../../../components/ResourceImage";
 import { SegmentedToggle } from "../../../components/SegmentedToggle";
 import type { AppTheme } from "../../../components/themes";
@@ -130,6 +131,18 @@ const INPUT_BUFF_PANELS = [
   { title: "Custom Additive Inputs", buffs: INPUT_BUFFS },
 ];
 
+/** Select buffs rendered as compact icon + level tiles (char-flow symbol input style)
+ *  instead of dropdowns. The stored value stays the option value; the tile input maps
+ *  level (option index) to value. */
+const TILE_SELECT_IDS = new Set(["elven", "evan-link", "roro", "tallahart", "geardock", "union-artifact", "champion-renown"]);
+
+/** The two EXP node options rendered as exclusive toggle tiles; both write the
+ *  shared "exp-node" select value. */
+const EXP_NODE_TILES: { label: string; detail: string; short: string; value: number; icon: IconRef }[] = [
+  { label: "Mapae Nodestone", detail: "+33% EXP averaged", short: "+33%", value: 33, icon: { type: "item", id: "02638846" } },
+  { label: "Roro Nodestone", detail: "+10% EXP averaged", short: "+10%", value: 10, icon: { type: "item", id: "02831071" } },
+];
+
 const DAILY_REGIONS = [...new Set(DAILY_EXP_CONTENT.map((daily) => daily.region))];
 
 const iconRowStyle: React.CSSProperties = { display: "flex", alignItems: "center", gap: 8 };
@@ -217,8 +230,18 @@ function BuffsTab({ theme }: { theme: AppTheme }) {
   const visibleSelectBuffs = showRollOfTheDice
     ? SELECT_BUFFS
     : SELECT_BUFFS.filter((buff) => buff.id !== "roll-of-the-dice");
+  const tileSelectBuffs = SELECT_BUFFS.filter((buff) => TILE_SELECT_IDS.has(buff.id));
+  const dropdownSelectBuffs = visibleSelectBuffs.filter(
+    (buff) => !TILE_SELECT_IDS.has(buff.id) && buff.id !== "exp-node",
+  );
   const updateExclusiveBuff = (groupId: string, buffId: string) => {
     setBuffs((state) => ({ ...state, exclusive: { ...state.exclusive, [groupId]: buffId } }));
+  };
+  const updateSelectBuff = (id: string, value: number) => {
+    setBuffs((state) => ({ ...state, selects: { ...state.selects, [id]: value } }));
+  };
+  const toggleExpNode = (value: number) => {
+    updateSelectBuff("exp-node", (buffs.selects["exp-node"] ?? 0) === value ? 0 : value);
   };
   const updateInputBuff = (buff: InputBuff, raw: number) => {
     const value = Math.min(buff.max, Math.max(0, raw));
@@ -316,17 +339,17 @@ function BuffsTab({ theme }: { theme: AppTheme }) {
             {ADDITIVE_GROUP.buffs.map((buff) => {
               const selected = Boolean(buffs.additive[buff.id]);
               return (
-                <button
-                  key={buff.id}
-                  type="button"
-                  title={buff.label}
-                  aria-label={buff.label}
-                  aria-pressed={selected}
-                  onClick={() => setBuffs((state) => toggleAdditiveBuff(state, buff, !selected))}
-                  style={dailyTileStyle(theme, selected)}
-                >
-                  <BuffIcon icon={buff.icon} label={buff.label} />
-                </button>
+                <HoverTooltip key={buff.id} theme={theme} label={buff.label}>
+                  <button
+                    type="button"
+                    aria-label={buff.label}
+                    aria-pressed={selected}
+                    onClick={() => setBuffs((state) => toggleAdditiveBuff(state, buff, !selected))}
+                    style={dailyTileStyle(theme, selected)}
+                  >
+                    <BuffIcon icon={buff.icon} label={buff.label} />
+                  </button>
+                </HoverTooltip>
               );
             })}
           </div>
@@ -335,15 +358,36 @@ function BuffsTab({ theme }: { theme: AppTheme }) {
 
       <div className="fade-in" style={panelStyle}>
         <SectionTitle theme={theme} label="Selectable Buffs" />
-        <div className="exp-select-grid">
-          {visibleSelectBuffs.map((buff) => (
+        <div className="exp-tile-row">
+          {tileSelectBuffs.map((buff) => (
+            <SelectLevelTile
+              key={buff.id}
+              theme={theme}
+              buff={buff}
+              value={buffs.selects[buff.id] ?? 0}
+              inputStyle={styles.inputStyle}
+              onChange={(value) => updateSelectBuff(buff.id, value)}
+            />
+          ))}
+          {EXP_NODE_TILES.map((tile) => (
+            <ExpNodeTile
+              key={tile.value}
+              theme={theme}
+              tile={tile}
+              selected={(buffs.selects["exp-node"] ?? 0) === tile.value}
+              onToggle={() => toggleExpNode(tile.value)}
+            />
+          ))}
+        </div>
+        <div className="exp-select-grid" style={{ marginTop: 14 }}>
+          {dropdownSelectBuffs.map((buff) => (
             <Field key={buff.id} label={buff.label} style={labelStyle}>
               <div style={iconRowStyle}>
                 <BuffIcon icon={buff.icon} label={buff.label} />
                 <select
                   className="tool-select"
                   value={buffs.selects[buff.id] ?? 0}
-                  onChange={(e) => setBuffs((state) => ({ ...state, selects: { ...state.selects, [buff.id]: Number(e.target.value) } }))}
+                  onChange={(e) => updateSelectBuff(buff.id, Number(e.target.value))}
                   style={selectStyle}
                 >
                   {buff.options.map((option) => (
@@ -358,32 +402,34 @@ function BuffsTab({ theme }: { theme: AppTheme }) {
         </div>
       </div>
 
-      {INPUT_BUFF_PANELS.map((panel) => (
-        <div key={panel.title} className="fade-in" style={panelStyle}>
-          <SectionTitle theme={theme} label={panel.title} />
-          <div className="exp-grid">
-            {panel.buffs.map((buff) => (
-              <Field key={buff.id} label={buff.label} style={labelStyle}>
-                <div style={iconRowStyle}>
-                  <BuffIcon icon={buff.icon} label={buff.label} />
-                  <input
-                    className="tool-input"
-                    type="number"
-                    min={0}
-                    max={buff.max}
-                    step={buff.step ?? 1}
-                    value={buffs.inputs[buff.id] ?? 0}
-                    onFocus={(e) => e.currentTarget.select()}
-                    onKeyDown={replaceZeroOnDigit}
-                    onChange={(e) => updateInputBuff(buff, Number(e.target.value) || 0)}
-                    style={inputStyle}
-                  />
-                </div>
-              </Field>
-            ))}
+      <div className="exp-duo-grid">
+        {INPUT_BUFF_PANELS.map((panel) => (
+          <div key={panel.title} className="fade-in" style={panelStyle}>
+            <SectionTitle theme={theme} label={panel.title} />
+            <div className="exp-grid">
+              {panel.buffs.map((buff) => (
+                <Field key={buff.id} label={buff.label} style={labelStyle}>
+                  <div style={iconRowStyle}>
+                    <BuffIcon icon={buff.icon} label={buff.label} />
+                    <input
+                      className="tool-input"
+                      type="number"
+                      min={0}
+                      max={buff.max}
+                      step={buff.step ?? 1}
+                      value={buffs.inputs[buff.id] ?? 0}
+                      onFocus={(e) => e.currentTarget.select()}
+                      onKeyDown={replaceZeroOnDigit}
+                      onChange={(e) => updateInputBuff(buff, Number(e.target.value) || 0)}
+                      style={inputStyle}
+                    />
+                  </div>
+                </Field>
+              ))}
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
 
       <ExpOverviewPanel theme={theme} monster={monster} selectedMonster={selectedMonster} result={result} />
     </>
@@ -1047,6 +1093,111 @@ function BuffIcon({ icon, label }: { icon?: IconRef; label: string }) {
   if (icon.type === "skill") return <SkillIcon id={icon.id} size={32} alt={label} />;
   if (icon.type === "mob") return <MobSprite id={icon.id} size={32} alt={label} />;
   return <ItemIcon id={icon.id} shadow={icon.shadow} size={32} alt={label} />;
+}
+
+/** Vertical icon + level tile, matching the char-flow symbol level inputs. */
+function levelTileStyle(theme: AppTheme, active: boolean): React.CSSProperties {
+  return {
+    width: 74,
+    flexShrink: 0,
+    border: `1px solid ${active ? theme.accent : theme.border}`,
+    background: active ? theme.accentSoft : theme.panel,
+    borderRadius: 8,
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: 6,
+    padding: "8px 9px",
+  };
+}
+
+function tileIconStyle(active: boolean): React.CSSProperties {
+  return { opacity: active ? 1 : 0.35, filter: active ? "none" : "grayscale(1)", lineHeight: 0 };
+}
+
+function TileTooltipLabel({ theme, title, detail }: { theme: AppTheme; title: string; detail?: string }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+      <span>{title}</span>
+      {detail && <span style={{ opacity: 0.7, fontSize: "0.8em", color: theme.muted }}>{detail}</span>}
+    </div>
+  );
+}
+
+function SelectLevelTile({
+  theme,
+  buff,
+  value,
+  inputStyle,
+  onChange,
+}: {
+  theme: AppTheme;
+  buff: (typeof SELECT_BUFFS)[number];
+  value: number;
+  inputStyle: React.CSSProperties;
+  onChange: (value: number) => void;
+}) {
+  const maxLevel = buff.options.length - 1;
+  const level = Math.max(0, buff.options.findIndex((option) => option.value === value));
+  const active = level > 0;
+  return (
+    <div style={levelTileStyle(theme, active)}>
+      <HoverTooltip
+        theme={theme}
+        label={<TileTooltipLabel theme={theme} title={buff.label} detail={active ? buff.options[level].label : undefined} />}
+      >
+        <div style={tileIconStyle(active)}>
+          <BuffIcon icon={buff.icon} label={buff.label} />
+        </div>
+      </HoverTooltip>
+      <input
+        className="tool-input no-spinner"
+        type="number"
+        min={0}
+        max={maxLevel}
+        aria-label={`${buff.label} level`}
+        value={level}
+        onFocus={(e) => e.currentTarget.select()}
+        onKeyDown={replaceZeroOnDigit}
+        onChange={(e) => {
+          const nextLevel = Math.max(0, Math.min(maxLevel, Math.floor(Number(e.target.value) || 0)));
+          onChange(buff.options[nextLevel].value);
+        }}
+        style={{ ...inputStyle, width: 56, textAlign: "center", padding: "4px 6px" }}
+      />
+    </div>
+  );
+}
+
+function ExpNodeTile({
+  theme,
+  tile,
+  selected,
+  onToggle,
+}: {
+  theme: AppTheme;
+  tile: (typeof EXP_NODE_TILES)[number];
+  selected: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <HoverTooltip theme={theme} label={<TileTooltipLabel theme={theme} title={tile.label} detail={tile.detail} />}>
+      <button
+        type="button"
+        aria-label={tile.label}
+        aria-pressed={selected}
+        onClick={onToggle}
+        style={{ ...levelTileStyle(theme, selected), font: "inherit", cursor: "pointer" }}
+      >
+        <div style={tileIconStyle(selected)}>
+          <BuffIcon icon={tile.icon} label={tile.label} />
+        </div>
+        <span style={{ fontSize: "0.75rem", fontWeight: 800, padding: "4px 0", color: selected ? theme.accentText : theme.muted }}>
+          {tile.short}
+        </span>
+      </button>
+    </HoverTooltip>
+  );
 }
 
 function dailyTileStyle(theme: AppTheme, selected: boolean): React.CSSProperties {

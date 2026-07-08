@@ -171,6 +171,17 @@ html.scroll-locked body {
   cursor: pointer;
 }
 
+.no-spinner {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.no-spinner::-webkit-outer-spin-button,
+.no-spinner::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
 /* Uppercase field label sitting above a control */
 .tool-field-label {
   font-size: 0.75rem;
@@ -258,6 +269,47 @@ textarea:focus-visible {
   justify-content: center;
   padding: 14px 20px;
   border-radius: 14px;
+}
+
+/* Hover/tap tooltip bubble: shows on hover (desktop) or tap (touch); colors inline */
+.hover-tip {
+  position: relative;
+}
+
+.hover-tip-bubble {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: min(240px, 90vw);
+  width: max-content;
+  white-space: pre-line;
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.3;
+  padding: 0.35rem 0.6rem;
+  border-radius: 6px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.12s ease;
+  z-index: 30;
+}
+
+/* :hover triggers via mouse only — touch devices "sticky hover" on tap, which fought
+   with tap handlers that open something else (e.g. an item picker) on the same element. */
+@media (hover: hover) and (pointer: fine) {
+  .hover-tip:hover .hover-tip-bubble {
+    opacity: 1;
+    visibility: visible;
+  }
+}
+
+.hover-tip-bubble.is-open {
+  opacity: 1;
+  visibility: visible;
 }
 
 /* Tool page header block (back link + title + description) */
