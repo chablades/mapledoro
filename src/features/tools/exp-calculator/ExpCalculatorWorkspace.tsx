@@ -23,6 +23,7 @@ import {
   MAX_EXP_LEVEL,
   MIN_EXP_LEVEL,
   RESOURCE_TABLES,
+  ROLL_OF_THE_DICE_JOBS,
   SELECT_BUFFS,
   WEEKLY_EXP_CONTENT,
   calculateAllInOne,
@@ -152,6 +153,9 @@ export default function ExpCalculatorWorkspace({ theme }: { theme: AppTheme }) {
     <div className="page-content">
       <style>{`
         .exp-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; }
+        .exp-coupon-grid { grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); }
+        .exp-duo-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 14px; }
+        .exp-tile-row { display: flex; flex-wrap: wrap; gap: 10px; }
         .exp-select-grid { display: grid; grid-template-columns: repeat(2, minmax(260px, 1fr)); gap: 12px; }
         .exp-results { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
         .exp-overview-grid { display: grid; grid-template-columns: minmax(240px, 1.1fr) minmax(260px, 1fr); gap: 14px; }
@@ -161,6 +165,9 @@ export default function ExpCalculatorWorkspace({ theme }: { theme: AppTheme }) {
         .exp-monster-dropdown::-webkit-scrollbar { width: 8px; }
         .exp-monster-dropdown::-webkit-scrollbar-track { background: transparent; }
         .exp-monster-dropdown::-webkit-scrollbar-thumb { background: rgba(127,127,127,0.45); border-radius: 4px; }
+        @media (max-width: 900px) {
+          .exp-duo-grid { grid-template-columns: 1fr; }
+        }
         @media (max-width: 760px) {
           .exp-grid { grid-template-columns: 1fr; }
           .exp-select-grid { grid-template-columns: 1fr; }
@@ -168,7 +175,7 @@ export default function ExpCalculatorWorkspace({ theme }: { theme: AppTheme }) {
           .segmented-toggle-track { overflow-x: auto; }
         }
       `}</style>
-      <div className="tool-container">
+      <div className="tool-container" style={{ maxWidth: 1000 }}>
         <ToolHeader
           theme={theme}
           title="EXP Calculator"
@@ -205,6 +212,11 @@ function BuffsTab({ theme }: { theme: AppTheme }) {
   const [buffs, setBuffs] = useState<BuffState>(DEFAULT_BUFF_STATE);
   const result = useMemo(() => calculateMonsterExp(monster, buffs), [monster, buffs]);
   const characters = useMemo(() => selectCharactersList(readCharactersStore()), []);
+  const selectedCharacter = characters.find((character) => character.characterName === selectedCharName);
+  const showRollOfTheDice = !selectedCharacter || ROLL_OF_THE_DICE_JOBS.has(selectedCharacter.jobName);
+  const visibleSelectBuffs = showRollOfTheDice
+    ? SELECT_BUFFS
+    : SELECT_BUFFS.filter((buff) => buff.id !== "roll-of-the-dice");
   const updateExclusiveBuff = (groupId: string, buffId: string) => {
     setBuffs((state) => ({ ...state, exclusive: { ...state.exclusive, [groupId]: buffId } }));
   };
@@ -221,6 +233,9 @@ function BuffsTab({ theme }: { theme: AppTheme }) {
       playerLevel: selected.level,
       currentPercent: roundToThree(Math.min(99.999, Math.max(0, percentOfLevel(selected.level, selected.exp)))),
     }));
+    if (!ROLL_OF_THE_DICE_JOBS.has(selected.jobName)) {
+      setBuffs((state) => ({ ...state, selects: { ...state.selects, "roll-of-the-dice": 0 } }));
+    }
   };
   const updateSelectedMonster = (option: ExpMonster) => {
     setSelectedMonster(option);
@@ -233,78 +248,87 @@ function BuffsTab({ theme }: { theme: AppTheme }) {
 
   return (
     <>
-      <div className="fade-in" style={panelStyle}>
-        <SectionTitle theme={theme} label="Character" />
-        <Field label="Character" style={labelStyle}>
-          <CharacterDropdown
-            theme={theme}
-            characters={characters}
-            selectedCharName={selectedCharName}
-            onCharChange={updateCharacter}
-            inputStyle={characterDropdownInputStyle}
-            nullOption={{ label: "Manual Level", subtitle: "No character selected" }}
-            triggerStyle={{ maxWidth: "none", minWidth: 0, width: "100%" }}
-          />
-        </Field>
-        <div className="exp-grid" style={{ marginTop: 12 }}>
-          <NumberField label="Character Level" min={MIN_EXP_LEVEL} max={MAX_EXP_LEVEL - 1} value={monster.playerLevel} labelStyle={labelStyle} inputStyle={inputStyle} disabled={selectedCharName !== null} onChange={(value) => setMonster((state) => ({ ...state, playerLevel: value }))} />
-          <NumberField label="Current EXP %" min={0} max={99.999} step="0.001" value={monster.currentPercent} labelStyle={labelStyle} inputStyle={inputStyle} disabled={selectedCharName !== null} onChange={(value) => setMonster((state) => ({ ...state, currentPercent: value }))} />
-          <NumberField label="Hourly Kill Count" min={0} value={monster.hourlyKillCount} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => setMonster((state) => ({ ...state, hourlyKillCount: value }))} />
-        </div>
-      </div>
-
-      <div className="fade-in" style={panelStyle}>
-        <SectionTitle theme={theme} label="Monster" />
-        <MonsterSelector
-          theme={theme}
-          selected={selectedMonster}
-          inputStyle={inputStyle}
-          onSelect={updateSelectedMonster}
-        />
-        <div className="exp-grid" style={{ marginTop: 12 }}>
-          <NumberField label="Monster Level" min={1} max={MAX_EXP_LEVEL} value={monster.monsterLevel} labelStyle={labelStyle} inputStyle={inputStyle} disabled onChange={() => undefined} />
-          <NumberField label="Monster Base EXP" min={0} value={monster.monsterBaseExp} labelStyle={labelStyle} inputStyle={inputStyle} disabled onChange={() => undefined} />
-        </div>
-      </div>
-
-      {EXCLUSIVE_BUFF_SECTIONS.map((section) => (
-        <div key={section.title} className="fade-in" style={panelStyle}>
-          <SectionTitle theme={theme} label={section.title} />
-          <div className="exp-grid">
-            {section.buffs.map(({ groupId, buff }) => {
-              const selected = buffs.exclusive[groupId] === buff.id;
-              return (
-                <button
-                  type="button"
-                  key={buff.id}
-                  className="exp-buff-card panel-card"
-                  onClick={() => updateExclusiveBuff(groupId, selected ? "none" : buff.id)}
-                  style={buffButtonStyle(theme, selected)}
-                >
-                  <BuffIcon icon={buff.icon} label={buff.label} />
-                  <span>{buff.label}</span>
-                </button>
-              );
-            })}
+      <div className="exp-duo-grid">
+        <div className="fade-in" style={panelStyle}>
+          <Field label="Character" style={labelStyle}>
+            <CharacterDropdown
+              theme={theme}
+              characters={characters}
+              selectedCharName={selectedCharName}
+              onCharChange={updateCharacter}
+              inputStyle={characterDropdownInputStyle}
+              nullOption={{ label: "Manual Level", subtitle: "No character selected" }}
+              triggerStyle={{ maxWidth: "none", minWidth: 0, width: "100%" }}
+            />
+          </Field>
+          <div className="exp-grid" style={{ marginTop: 12 }}>
+            <NumberField label="Character Level" min={MIN_EXP_LEVEL} max={MAX_EXP_LEVEL - 1} value={monster.playerLevel} labelStyle={labelStyle} inputStyle={inputStyle} disabled={selectedCharName !== null} onChange={(value) => setMonster((state) => ({ ...state, playerLevel: value }))} />
+            <NumberField label="Current EXP %" min={0} max={99.999} step="0.001" value={monster.currentPercent} labelStyle={labelStyle} inputStyle={inputStyle} disabled={selectedCharName !== null} onChange={(value) => setMonster((state) => ({ ...state, currentPercent: value }))} />
+            <NumberField label="Hourly Kill Count" min={0} value={monster.hourlyKillCount} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => setMonster((state) => ({ ...state, hourlyKillCount: value }))} />
           </div>
         </div>
-      ))}
+
+        <div className="fade-in" style={panelStyle}>
+          <Field label="Monster" style={labelStyle}>
+            <MonsterSelector
+              theme={theme}
+              selected={selectedMonster}
+              inputStyle={inputStyle}
+              onSelect={updateSelectedMonster}
+            />
+          </Field>
+          <div className="exp-grid" style={{ marginTop: 12 }}>
+            <NumberField label="Monster Level" min={1} max={MAX_EXP_LEVEL} value={monster.monsterLevel} labelStyle={labelStyle} inputStyle={inputStyle} disabled onChange={() => undefined} />
+            <NumberField label="Monster Base EXP" min={0} value={monster.monsterBaseExp} labelStyle={labelStyle} inputStyle={inputStyle} disabled onChange={() => undefined} />
+          </div>
+        </div>
+      </div>
+
+      <div className="exp-duo-grid">
+        {EXCLUSIVE_BUFF_SECTIONS.map((section) => (
+          <div key={section.title} className="fade-in" style={panelStyle}>
+            <SectionTitle theme={theme} label={section.title} />
+            <div className={section.title === "Use Coupon" ? "exp-grid exp-coupon-grid" : "exp-grid"}>
+              {section.buffs.map(({ groupId, buff }) => {
+                const selected = buffs.exclusive[groupId] === buff.id;
+                return (
+                  <button
+                    type="button"
+                    key={buff.id}
+                    className="exp-buff-card panel-card"
+                    onClick={() => updateExclusiveBuff(groupId, selected ? "none" : buff.id)}
+                    style={buffButtonStyle(theme, selected)}
+                  >
+                    <BuffIcon icon={buff.icon} label={buff.label} />
+                    <span>{buff.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
 
       {ADDITIVE_GROUP && (
         <div className="fade-in" style={panelStyle}>
           <SectionTitle theme={theme} label={ADDITIVE_GROUP.section} />
-          <div className="exp-grid">
-            {ADDITIVE_GROUP.buffs.map((buff) => (
-              <label key={buff.id} className="exp-buff-card panel-card" style={buffButtonStyle(theme, Boolean(buffs.additive[buff.id]))}>
-                <input
-                  type="checkbox"
-                  checked={Boolean(buffs.additive[buff.id])}
-                  onChange={(e) => setBuffs((state) => toggleAdditiveBuff(state, buff, e.target.checked))}
-                />
-                <BuffIcon icon={buff.icon} label={buff.label} />
-                <span>{buff.label}</span>
-              </label>
-            ))}
+          <div className="exp-tile-row">
+            {ADDITIVE_GROUP.buffs.map((buff) => {
+              const selected = Boolean(buffs.additive[buff.id]);
+              return (
+                <button
+                  key={buff.id}
+                  type="button"
+                  title={buff.label}
+                  aria-label={buff.label}
+                  aria-pressed={selected}
+                  onClick={() => setBuffs((state) => toggleAdditiveBuff(state, buff, !selected))}
+                  style={dailyTileStyle(theme, selected)}
+                >
+                  <BuffIcon icon={buff.icon} label={buff.label} />
+                </button>
+              );
+            })}
           </div>
         </div>
       )}
@@ -312,7 +336,7 @@ function BuffsTab({ theme }: { theme: AppTheme }) {
       <div className="fade-in" style={panelStyle}>
         <SectionTitle theme={theme} label="Selectable Buffs" />
         <div className="exp-select-grid">
-          {SELECT_BUFFS.map((buff) => (
+          {visibleSelectBuffs.map((buff) => (
             <Field key={buff.id} label={buff.label} style={labelStyle}>
               <div style={iconRowStyle}>
                 <BuffIcon icon={buff.icon} label={buff.label} />
@@ -800,8 +824,9 @@ function AllInOneTab({ theme }: { theme: AppTheme }) {
         </div>
         {result.milestones.length > 0 && (
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 14 }}>
-            {result.milestones.slice(0, 24).map((milestone, index) => (
-              <span key={`${milestone.level}-${milestone.date}-${index}`} style={milestoneChipStyle(theme)}>
+            {/* Milestone levels strictly increase within a simulation, so level is a unique key. */}
+            {result.milestones.slice(0, 24).map((milestone) => (
+              <span key={milestone.level} style={milestoneChipStyle(theme)}>
                 Lv. {milestone.level} · {formatDate(milestone.date)}
               </span>
             ))}

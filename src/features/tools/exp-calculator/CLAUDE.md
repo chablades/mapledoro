@@ -22,6 +22,8 @@ GMS naming/content decisions:
 - Grand Authentic Symbols are labeled Grand Sacred Symbols.
 - Champion's Protection is Champion's Renown.
 - Lucky Dice is Roll of the Dice.
+- Roll of the Dice only shows when no character is selected or the selected character's job is in
+  `ROLL_OF_THE_DICE_JOBS` (all pirate branches); selecting a non-pirate zeroes the buff.
 - Penance/Cash Shop modifiers live under Reg Server Modifiers.
 - The only Cash Shop coupon is 2x and it only applies through level 250.
 

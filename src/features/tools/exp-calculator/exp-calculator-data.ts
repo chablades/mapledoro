@@ -190,9 +190,9 @@ export const CHECK_BUFF_GROUPS: CheckBuffGroup[] = [
     section: "Use Coupon",
     mode: "exclusive",
     buffs: [
-      { id: "use-2x", label: "2x EXP Coupon / Legion EXP", value: 2, icon: { type: "item", id: "02450064" } },
-      { id: "use-3x", label: "3x EXP Coupon", value: 3, icon: { type: "item", id: "02450163" } },
-      { id: "use-4x", label: "4x EXP Coupon", value: 4, icon: { type: "item", id: "02450187" } },
+      { id: "use-2x", label: "2x EXP", value: 2, icon: { type: "item", id: "02450064" } },
+      { id: "use-3x", label: "3x EXP", value: 3, icon: { type: "item", id: "02450163" } },
+      { id: "use-4x", label: "4x EXP", value: 4, icon: { type: "item", id: "02450187" } },
     ],
   },
   {
@@ -207,6 +207,7 @@ export const CHECK_BUFF_GROUPS: CheckBuffGroup[] = [
       { id: "mvp-50", label: "MVP 50% Bonus EXP (+50%)", value: 50, icon: { type: "item", id: "02023926" }, excludes: ["mvp-70"] },
       { id: "mvp-70", label: "MVP 70% Bonus EXP (+70%)", value: 70, icon: { type: "item", id: "02024275" }, excludes: ["mvp-50"] },
       { id: "exp-boost-ring-15", label: "EXP Boost Ring (+15%)", value: 15, icon: { type: "item", id: "01114326" } },
+      { id: "spirit", label: "Pendant of the Spirit (+30%)", value: 30, icon: { type: "item", id: "01122017" } },
       { id: "aut-cernium", label: "Sacred Symbol: Cernium MAX (+10%)", value: 10, icon: { type: "item", id: "01713000" } },
       { id: "aut-arcs", label: "Sacred Symbol: Arcus MAX (+10%)", value: 10, icon: { type: "item", id: "01713001" } },
       { id: "aut-odium", label: "Sacred Symbol: Odium MAX (+10%)", value: 10, icon: { type: "item", id: "01713002" } },
@@ -243,7 +244,6 @@ export const SELECT_BUFFS: SelectBuff[] = [
     { label: "+10% EXP (SS-rank)", value: 10 },
     { label: "+12% EXP (SSS-rank)", value: 12 },
   ] },
-  { id: "spirit", label: "Pendant of the Spirit", icon: { type: "item", id: "01122017" }, options: percentOptions([0, 30]) },
   { id: "burning", label: "Burning Field", icon: { type: "item", id: "01114400" }, options: percentOptions([0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]) },
   { id: "roro", label: "Roro's Experience Ring", icon: { type: "skill", id: "80012753" }, options: [
     { label: "N/A", value: 0 },
@@ -280,6 +280,22 @@ export const SELECT_BUFFS: SelectBuff[] = [
   { id: "eluna", label: "Eluna Earrings / Pendant", icon: { type: "item", id: "01032269" }, options: percentOptions([0, 2, 4, 6, 8, 10]) },
   { id: "roll-of-the-dice", label: "Roll of the Dice", icon: { type: "skill", id: "35111013" }, options: percentOptions([0, 30, 40, 50]) },
 ];
+
+/** Pirate-branch jobs that have Roll of the Dice / Loaded Dice (matches the
+ *  Loaded Dice warnings in classSkillData.ts). Roll of the Dice is hidden for
+ *  every other job when a character is selected. */
+export const ROLL_OF_THE_DICE_JOBS = new Set([
+  "Pirate",
+  "Buccaneer",
+  "Corsair",
+  "Cannoneer",
+  "Thunder Breaker",
+  "Shade",
+  "Mechanic",
+  "Angelic Buster",
+  "Ark",
+  "Mo Xuan",
+]);
 
 const HYPER_STAT_EXP_BONUS = [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 6, 7, 8, 9, 10];
 const SOL_JANUS_EXP_BONUS = [0, 10, 12, 14, 16, 18, 20, 22, 24, 26, 37, 39, 41, 43, 45, 47, 49, 51, 53, 55, 67, 69, 71, 73, 75, 77, 79, 81, 83, 85, 100];
