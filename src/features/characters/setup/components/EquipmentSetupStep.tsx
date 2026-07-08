@@ -59,6 +59,18 @@ const SUBSTEP_COUNT = 3;
 const SHARED_SLOTS: ReadonlySet<SlotKey> = new Set<SlotKey>(["title", "totem1", "totem2", "totem3", "pet1", "pet2", "pet3", "petEquip1", "petEquip2", "petEquip3"]);
 const isSharedSlot = (slot: SlotKey): slot is SharedSlotKey => SHARED_SLOTS.has(slot);
 
+// Reading-order chains for the two substeps whose slots line up top-to-bottom in a single
+// in-game window (Additional Equipment, Pets) — unlike the main grid's 2D spatial layout,
+// which has no unambiguous "next" order, so it isn't chained.
+const ADDITIONAL_EQUIP_CHAIN: readonly SlotKey[] = ["title", "totem1", "totem2", "totem3"];
+const PETS_CHAIN: readonly SlotKey[] = ["pet1", "petEquip1", "pet2", "petEquip2", "pet3", "petEquip3"];
+
+function chainForSlot(slot: SlotKey): readonly SlotKey[] | null {
+  if (ADDITIONAL_EQUIP_CHAIN.includes(slot)) return ADDITIONAL_EQUIP_CHAIN;
+  if (PETS_CHAIN.includes(slot)) return PETS_CHAIN;
+  return null;
+}
+
 interface EquipmentDraft extends Partial<Record<SharedSlotKey, EquipmentItem | null>> {
   /** Three equipment-grid presets. */
   presets?: SlotMap[];
@@ -354,7 +366,7 @@ function petEquipCompatible(petId: string, equipId: string): boolean {
 
 function ItemPicker({
   slot, current, theme, files, itemFilter, maxLevel, excludeIds, presetBaseItem, showAllWhenEmpty,
-  onSelect, onClose, weaponAttStep,
+  onSelect, onClose, onAdvance, onPrev, onNext, weaponAttStep,
 }: {
   slot: SlotKey;
   current: EquipmentItem | null | undefined;
@@ -370,6 +382,14 @@ function ItemPicker({
   showAllWhenEmpty?: boolean;
   onSelect: (item: EquipmentItem | null) => void;
   onClose: () => void;
+  /** Called (instead of onClose) after an actual pick, for slots that belong to a chained
+   *  group (e.g. Title → Totems, Pet 1 → Pet Equip 1 → Pet 2 → …). viaKeyboard distinguishes
+   *  an Enter-driven pick from a mouse click — only a keyboard pick jumps slots, since a
+   *  mouse click means the user's cursor is staying local. Slots outside a chain (the main
+   *  equipment grid) don't pass this, so a pick there always just closes, same as before. */
+  onAdvance?: (viaKeyboard: boolean) => void;
+  onPrev?: () => void;
+  onNext?: () => void;
   /** Weapon slot, preset 1 only: picking (or reviewing) an item shows a Weapon ATT/MATT
    *  ask in this same popover before committing, mirroring the Familiars tier-pick flow. */
   weaponAttStep?: {
@@ -384,10 +404,10 @@ function ItemPicker({
   const inputRef = useRef<HTMLInputElement>(null);
   const isAndroid = slot === "android";
 
-  function selectItem(item: EquipmentItem) {
+  function selectItem(item: EquipmentItem, viaKeyboard: boolean) {
     if (weaponAttStep) { setPendingItem(item); return; }
     onSelect(item);
-    onClose();
+    if (onAdvance) { onAdvance(viaKeyboard); } else { onClose(); }
   }
 
   const cacheKey = files.join("+");
@@ -431,8 +451,10 @@ function ItemPicker({
   const { highlightedIndex, onKeyDown: navKeyDown, itemRef } = useKeyboardListNav({
     items: displayed ?? [],
     resetKey: query,
-    onSelect: (item) => selectItem({ id: item.id, name: item.name }),
+    onSelect: (item) => selectItem({ id: item.id, name: item.name }, true),
     onClose,
+    onPrev,
+    onNext,
   });
 
   function handleSearchKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
@@ -496,7 +518,7 @@ function ItemPicker({
       {presetBaseItem && !presetBaseConflicts && (
         <button
           type="button"
-          onClick={() => selectItem({ id: presetBaseItem.id, name: presetBaseItem.name })}
+          onClick={() => selectItem({ id: presetBaseItem.id, name: presetBaseItem.name }, false)}
           style={presetBaseItemStyle(theme)}
         >
           {presetBaseItem.id && <ItemIcon id={presetBaseItem.id} size={28} revealed={isAndroid} />}
@@ -536,7 +558,7 @@ function ItemPicker({
                 key={item.id}
                 ref={itemRef(i)}
                 type="button"
-                onClick={() => selectItem({ id: item.id, name: item.name })}
+                onClick={() => selectItem({ id: item.id, name: item.name }, false)}
                 style={pickerItemStyle(theme, isCurrent, isHighlighted)}
                 onMouseEnter={(e) => { if (!isCurrent) e.currentTarget.style.background = `${theme.accent}22`; }}
                 onMouseLeave={(e) => { if (!isCurrent) e.currentTarget.style.background = "transparent"; }}
@@ -936,11 +958,14 @@ export default function EquipmentSetupStep({
 
   function updateSlot(slot: SlotKey, item: EquipmentItem | null) {
     if (isSharedSlot(slot)) {
-      // Changing the pet drops a paired equip it can no longer wear (cleared pet ⇒ always drop).
+      // Switching to a DIFFERENT pet that can't wear the paired equip drops it. Clearing
+      // the pet (item === null) does NOT drop it — in-game, an unequipped pet leaves its
+      // Pet Equip sitting there inert until a compatible pet re-fills the slot, it isn't
+      // force-unequipped.
       const pairedEquip = PET_TO_PET_EQUIP[slot];
-      if (pairedEquip && !sameItem(item, draft[slot])) {
+      if (pairedEquip && item && !sameItem(item, draft[slot])) {
         const equip = draft[pairedEquip];
-        if (equip && !(item && petEquipCompatible(item.id, equip.id))) {
+        if (equip && !petEquipCompatible(item.id, equip.id)) {
           commitDraft({ ...draft, [slot]: item, [pairedEquip]: null });
           return;
         }
@@ -1045,6 +1070,27 @@ export default function EquipmentSetupStep({
     return base;
   }
 
+  // Finishing a slot's picker — via Enter-picking or via an explicit Tab — only ever
+  // considers the next slot in the chain, and only jumps in if it's still empty; barging
+  // into a slot someone already filled (e.g. while correcting an earlier one) would be more
+  // surprising than helpful, so it just closes instead. Same rule as Familiars/Legion/IA.
+  function goToEquipSlot(chain: readonly SlotKey[], fromSlot: SlotKey): () => void {
+    const idx = chain.indexOf(fromSlot);
+    const next = idx >= 0 && idx < chain.length - 1 ? chain[idx + 1] : null;
+    return next && !readSlot(next) ? () => setActiveSlot(next) : () => setActiveSlot(null);
+  }
+
+  /** Prev/next navigation for a slot's chained group (Additional Equipment or Pets), if any. */
+  function chainNavForSlot(slot: SlotKey): { onPrev?: () => void; onNext?: () => void } {
+    const chain = chainForSlot(slot);
+    if (!chain) return {};
+    const idx = chain.indexOf(slot);
+    return {
+      onNext: goToEquipSlot(chain, slot),
+      onPrev: idx > 0 ? () => setActiveSlot(chain[idx - 1]) : undefined,
+    };
+  }
+
   function renderPicker(slot: SlotKey): ReactNode {
     if (activeSlot !== slot) return null;
     const source = resolvePickerSource(slot, classId, branchMask);
@@ -1078,6 +1124,8 @@ export default function EquipmentSetupStep({
       ? { label: weaponAttLabel, value: draft.weaponAtt ?? "", onChange: setWeaponAtt }
       : undefined;
 
+    const { onPrev: goPrev, onNext: goNext } = chainNavForSlot(slot);
+
     return (
       <ItemPicker
         slot={slot}
@@ -1091,6 +1139,9 @@ export default function EquipmentSetupStep({
         showAllWhenEmpty={showAllWhenEmpty}
         onSelect={(item) => updateSlot(slot, item)}
         onClose={() => setActiveSlot(null)}
+        onAdvance={goNext && ((viaKeyboard) => (viaKeyboard ? goNext() : setActiveSlot(null)))}
+        onPrev={goPrev}
+        onNext={goNext}
         weaponAttStep={weaponAttStep}
       />
     );

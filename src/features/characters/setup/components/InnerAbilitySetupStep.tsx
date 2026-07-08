@@ -144,14 +144,17 @@ function IAPresetBar({ theme, active, onSwitch, onCopy, onClear }: {
 }
 
 /** Colored grade banner ("Legendary Ability") that opens a 4-tier grade selector. */
-function IAGradeHeader({ grade, openId, theme, onToggle, onClose, onSelect, onClear }: {
+function IAGradeHeader({ grade, openId, theme, onToggle, onClose, onPick, onClear, onNext }: {
   grade: IATier | "";
   openId: string | null;
   theme: AppTheme;
   onToggle: () => void;
   onClose: () => void;
-  onSelect: (tier: IATier) => void;
+  /** viaKeyboard distinguishes an Enter-driven pick from a mouse click — only a keyboard
+   *  pick jumps to Line 1, since a mouse click means the user's cursor is staying local. */
+  onPick: (tier: IATier, viaKeyboard: boolean) => void;
   onClear: () => void;
+  onNext?: () => void;
 }) {
   const isOpen = openId === "ia-grade";
   const { ref: wrapperRef, portalRef } = usePickerCoords(isOpen, IA_PICKER_WIDTH);
@@ -160,7 +163,8 @@ function IAGradeHeader({ grade, openId, theme, onToggle, onClose, onSelect, onCl
   const { highlightedIndex, onKeyDown: navKeyDown, itemRef } = useKeyboardListNav({
     items: IA_TIER_ORDER,
     resetKey: isOpen,
-    onSelect: (t) => { onSelect(t); onClose(); },
+    onSelect: (t) => onPick(t, true),
+    onNext,
   });
 
   function handleTriggerKeyDown(e: React.KeyboardEvent) {
@@ -209,7 +213,7 @@ function IAGradeHeader({ grade, openId, theme, onToggle, onClose, onSelect, onCl
             const tc = IA_TIER_COLORS[t];
             const active = grade === t;
             return (
-              <button key={t} ref={itemRef(i)} type="button" onClick={() => { onSelect(t); onClose(); }}
+              <button key={t} ref={itemRef(i)} type="button" onClick={() => onPick(t, false)}
                 style={iaGradeOptionStyle(theme, tc, active, i === highlightedIndex)}
                 onMouseEnter={(e) => { if (!active) { e.currentTarget.style.background = tc.border; e.currentTarget.style.color = "#fff"; } }}
                 onMouseLeave={(e) => { if (!active) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = theme.text; } }}>
@@ -226,12 +230,17 @@ function IAGradeHeader({ grade, openId, theme, onToggle, onClose, onSelect, onCl
 }
 
 /** Search + value list for a line's chosen tier. Mounts when the line popover opens. */
-function IALineOptions({ tier, currentValue, theme, onPick, onClose }: {
+function IALineOptions({ tier, currentValue, theme, onPick, onClose, onPrev, onNext }: {
   tier: IATier;
   currentValue: string;
   theme: AppTheme;
-  onPick: (value: string) => void;
+  /** viaKeyboard distinguishes an Enter-driven pick from a mouse click — only a keyboard
+   *  pick jumps to the next line, since a mouse click means the user's cursor is staying
+   *  local. Always false for a clear (Backspace or the Clear button), which never jumps. */
+  onPick: (value: string, viaKeyboard: boolean) => void;
   onClose: () => void;
+  onPrev?: () => void;
+  onNext?: () => void;
 }) {
   const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -242,15 +251,17 @@ function IALineOptions({ tier, currentValue, theme, onPick, onClose }: {
   const { highlightedIndex, onKeyDown: navKeyDown, itemRef } = useKeyboardListNav({
     items: filtered,
     resetKey: query,
-    onSelect: (line) => onPick(line),
+    onSelect: (line) => onPick(line, true),
     onClose,
+    onPrev,
+    onNext,
   });
 
   function handleSearchKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     e.stopPropagation();
     if (e.key === "Backspace" && query === "" && currentValue) {
       e.preventDefault();
-      onPick("");
+      onPick("", false);
       return;
     }
     navKeyDown(e);
@@ -259,7 +270,7 @@ function IALineOptions({ tier, currentValue, theme, onPick, onClose }: {
   return (
     <>
       {currentValue && (
-        <button type="button" onClick={() => onPick("")}
+        <button type="button" onClick={() => onPick("", false)}
           style={pickerClearRowStyle(theme)}>
           — Clear —
         </button>
@@ -271,7 +282,7 @@ function IALineOptions({ tier, currentValue, theme, onPick, onClose }: {
       </div>
       <div style={{ maxHeight: 200, overflowY: "auto" }}>
         {filtered.map((line, i) => (
-          <button key={line} ref={itemRef(i)} type="button" onClick={() => onPick(line)}
+          <button key={line} ref={itemRef(i)} type="button" onClick={() => onPick(line, false)}
             style={iaLineOptionStyle(theme, i === highlightedIndex)}
             onMouseEnter={(e) => { e.currentTarget.style.background = `${theme.accent}22`; }}
             onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}>
@@ -287,7 +298,7 @@ function IALineOptions({ tier, currentValue, theme, onPick, onClose }: {
 }
 
 /** One colored line bar (tier color + value), opening a popover to pick its tier (≤ grade) and value. */
-function IALineBar({ lineIdx, line, grade, openId, theme, onToggle, onClose, onSetTier, onSetValue }: {
+function IALineBar({ lineIdx, line, grade, openId, theme, onToggle, onClose, onSetTier, onPick, onPrev, onNext }: {
   lineIdx: number;
   line: IALineFull;
   grade: IATier | "";
@@ -296,7 +307,9 @@ function IALineBar({ lineIdx, line, grade, openId, theme, onToggle, onClose, onS
   onToggle: () => void;
   onClose: () => void;
   onSetTier: (tier: IATier) => void;
-  onSetValue: (tier: IATier, value: string) => void;
+  onPick: (tier: IATier, value: string, viaKeyboard: boolean) => void;
+  onPrev?: () => void;
+  onNext?: () => void;
 }) {
   const isOpen = openId === `ia-line-${lineIdx}`;
   const { ref: wrapperRef, portalRef } = usePickerCoords(isOpen, IA_PICKER_WIDTH);
@@ -335,7 +348,8 @@ function IALineBar({ lineIdx, line, grade, openId, theme, onToggle, onClose, onS
           )}
           {tier ? (
             <IALineOptions tier={tier} currentValue={line.value} theme={theme}
-              onPick={(v) => { onSetValue(tier, v); onClose(); }} onClose={onClose} />
+              onPick={(v, viaKeyboard) => onPick(tier, v, viaKeyboard)} onClose={onClose}
+              onPrev={onPrev} onNext={onNext} />
           ) : (
             <p style={{ margin: 0, padding: "0.5rem 0.6rem", fontSize: "0.78rem", color: theme.muted, fontWeight: 600 }}>Pick a tier first</p>
           )}
@@ -408,6 +422,33 @@ export default function InnerAbilitySetupStep({ draft, onUpdate, theme }: {
     onUpdate({ ...ia, presets });
   }
 
+  // Jumps into line `idx`'s popover only if it's still untouched (empty value); barging
+  // into a line someone already filled (e.g. while correcting an earlier one) would be
+  // more surprising than helpful, so it just closes instead — same rule as Familiars/Legion.
+  function goToLine(idx: number) {
+    const target = ia.presets[ia.activePreset].lines[idx];
+    setOpenId(target && !target.value ? `ia-line-${idx}` : null);
+  }
+
+  // Grade → Line 1 hop: a real grade CHANGE always resets line 1's value to "" (see
+  // setGrade above), so that case is always worth jumping into regardless of line 1's
+  // pre-pick value. Only a mouse click, or re-picking the same grade with line 1 already
+  // filled, should just close instead.
+  function handleGradePick(tier: IATier, viaKeyboard: boolean) {
+    const changed = ia.presets[ia.activePreset].lines[0].tier !== tier;
+    setGrade(tier);
+    if (!viaKeyboard) { setOpenId(null); return; }
+    if (changed) { setOpenId("ia-line-0"); return; }
+    goToLine(0);
+  }
+
+  // Line N → Line N+1 hop, same "only if empty, only via keyboard" rule as the grade hop.
+  function handleLinePick(lineIdx: number, tier: IATier, value: string, viaKeyboard: boolean) {
+    setLine(lineIdx, { tier, value });
+    if (!value || !viaKeyboard || lineIdx >= 2) { setOpenId(null); return; }
+    goToLine(lineIdx + 1);
+  }
+
   // Closes the line/grade picker on outside clicks, scoped to this section's zone
   // (its portal popovers stop propagation, so they don't trigger this themselves).
   useEffect(() => {
@@ -428,8 +469,9 @@ export default function InnerAbilitySetupStep({ draft, onUpdate, theme }: {
         theme={theme}
         onToggle={() => toggle("ia-grade")}
         onClose={() => setOpenId(null)}
-        onSelect={setGrade}
+        onPick={handleGradePick}
         onClear={clearGrade}
+        onNext={() => goToLine(0)}
       />
       {ia.presets[ia.activePreset].lines.map((line, i) => (
         <IALineBar
@@ -442,7 +484,9 @@ export default function InnerAbilitySetupStep({ draft, onUpdate, theme }: {
           onToggle={() => toggle(`ia-line-${i}`)}
           onClose={() => setOpenId(null)}
           onSetTier={(t) => setLine(i, { tier: t, value: "" })}
-          onSetValue={(t, v) => setLine(i, { tier: t, value: v })}
+          onPick={(t, v, viaKeyboard) => handleLinePick(i, t, v, viaKeyboard)}
+          onPrev={() => setOpenId(i === 0 ? "ia-grade" : `ia-line-${i - 1}`)}
+          onNext={i < 2 ? () => goToLine(i + 1) : () => setOpenId(null)}
         />
       ))}
     </div>

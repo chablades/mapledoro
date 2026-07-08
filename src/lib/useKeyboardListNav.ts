@@ -31,6 +31,14 @@ interface UseKeyboardListNavOptions<T> {
    *  since some callers (e.g. a trigger button that opens/closes its own popover)
    *  already handle Escape themselves before this hook ever sees the keystroke. */
   onClose?: () => void;
+  /** Shift+Tab steps back to the previous field in a chained group (e.g. a familiar's
+   *  Line 2 back to Line 1). Optional — only chained-group pickers wire this up; plain
+   *  Shift+Tab falls through to native focus movement when omitted. */
+  onPrev?: () => void;
+  /** Tab steps forward to the next field in a chained group, WITHOUT picking anything —
+   *  ordinary form-tabbing semantics, distinct from Enter (which picks the highlighted
+   *  item). Optional — plain Tab falls through to native focus movement when omitted. */
+  onNext?: () => void;
 }
 
 interface UseKeyboardListNavResult {
@@ -49,7 +57,7 @@ interface UseKeyboardListNavResult {
  * render" pattern), since the project's lint rules disallow bare setState in useEffect.
  */
 export function useKeyboardListNav<T>({
-  items, resetKey, isDisabled, onSelect, onClose,
+  items, resetKey, isDisabled, onSelect, onClose, onPrev, onNext,
 }: UseKeyboardListNavOptions<T>): UseKeyboardListNavResult {
   const [manualHighlight, setManualHighlight] = useState<number | null>(null);
   const [prevResetKey, setPrevResetKey] = useState(resetKey);
@@ -74,6 +82,16 @@ export function useKeyboardListNav<T>({
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
       setManualHighlight(stepIndex(items, highlightedIndex, -1, isDisabled));
+    } else if (e.key === "Tab" && e.shiftKey) {
+      if (onPrev) {
+        e.preventDefault();
+        onPrev();
+      }
+    } else if (e.key === "Tab") {
+      if (onNext) {
+        e.preventDefault();
+        onNext();
+      }
     } else if (e.key === "Enter" && highlightedIndex >= 0 && highlightedIndex < items.length) {
       e.preventDefault();
       onSelect(items[highlightedIndex], highlightedIndex);

@@ -1575,7 +1575,44 @@ export const FAMILIARS: readonly FamiliarEntry[] = [
   {id:9970621,name:"Knight Seal",mobId:"9601982",cardId:"02871576"}
 ];
 
-// Returns deduplicated lines for the given tier and all tiers below it.
+// Ranks a line by "usefulness" for the picker's default (pre-search) order: combat %
+// stats first (boss damage → ATT% → ignore defense → crit damage → damage% → crit
+// rate% → all-stats%/main-stat%), then farming lines, then everything else (flat stats,
+// HP/MP, regen, party/nearby buffs, defensive effects, cosmetics) in original order.
+function lineRank(line: string): number {
+  if (/^Boss Damage \+/.test(line)) return 0;
+  if (/^(Attack Power|Magic ATT): \+\d+%/.test(line)) return 1;
+  if (/^Ignore Defense: \+/.test(line)) return 2;
+  if (/^Critical Damage: \+/.test(line)) return 3;
+  if (/^Damage \+/.test(line)) return 4;
+  if (/^Critical Rate: \+/.test(line)) return 5;
+  if (/^(All Stats|STR|DEX|INT|LUK): \+\d+%$/.test(line)) return 6;
+  if (/^(Item Drop Rate Boost|Item\/Meso Drop Rate Boost): \+/.test(line)) return 7;
+  if (/^Item Drop Rate: \+/.test(line)) return 8;
+  if (/^(Meso Drop Rate Boost|Mesos Obtained): \+/.test(line)) return 9;
+  return 10;
+}
+
+// First number in the line (e.g. "Boss Damage +50%" → 50), for ranking a stronger value
+// above a weaker one within the same category.
+function lineValue(line: string): number {
+  const match = /(\d+)/.exec(line);
+  return match ? Number(match[1]) : 0;
+}
+
+function sortLinesByUsefulness(lines: string[]): string[] {
+  return [...lines].sort((a, b) => {
+    const rankDiff = lineRank(a) - lineRank(b);
+    if (rankDiff !== 0) return rankDiff;
+    // The catch-all bucket keeps its original relative order (Array.sort is stable);
+    // only ranked categories get sorted by value.
+    if (lineRank(a) === 10) return 0;
+    return lineValue(b) - lineValue(a);
+  });
+}
+
+// Returns deduplicated lines for the given tier and all tiers below it, sorted by
+// usefulness (see sortLinesByUsefulness) rather than raw tier/data order.
 export function getLinesForTier(tier: FamiliarTier): string[] {
   const seen = new Set<string>();
   const result: string[] = [];
@@ -1588,7 +1625,7 @@ export function getLinesForTier(tier: FamiliarTier): string[] {
     }
     if (t === tier) break;
   }
-  return result;
+  return sortLinesByUsefulness(result);
 }
 
 export function getFamiliarDisplayLabel(f: FamiliarEntry): string {

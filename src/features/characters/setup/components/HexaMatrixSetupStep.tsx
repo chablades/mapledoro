@@ -4,6 +4,7 @@ import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { numericKeyDown, clampNumber, sanitizeDigitsInput } from "../../../../lib/inputUtils";
 import { joinWithAnd } from "../../../../lib/textUtils";
 import { useKeyboardListNav } from "../../../../lib/useKeyboardListNav";
+import { searchAndRank } from "../../../../lib/searchMatch";
 import Image from "next/image";
 import type { AppTheme } from "../../../../components/themes";
 import HoverTooltip from "../../../../components/HoverTooltip";
@@ -46,6 +47,9 @@ const MAX_STAT_ENTRY_LEVEL = 10;
 // Each HEXA Stat node holds two presets in-game: an active and a stored "saved" config.
 const PRESET_LABELS = ["Active", "Stored"] as const;
 const NODE_LABELS = ["I", "II", "III"] as const;
+// Reading order for a slot's 3 stat lines, matching the in-game window (Main → Alt 1 → Alt 2).
+const HEXA_STAT_FIELD_ORDER = ["main", "alt0", "alt1"] as const;
+type HexaStatField = (typeof HEXA_STAT_FIELD_ORDER)[number];
 
 // hexa-skill ids from the "hexaStat" section of the hexa-skill manifest
 const HEXA_STAT_DEFS: HexaSkillDef[] = [
@@ -110,21 +114,27 @@ const statDropdownClearRowStyle = (theme: AppTheme): React.CSSProperties => ({
   fontSize: "0.75rem", fontWeight: 600, color: theme.muted, textAlign: "left",
 });
 
+const statDropdownSearchInputStyle = (theme: AppTheme): React.CSSProperties => ({
+  width: "100%", boxSizing: "border-box", borderRadius: 6,
+  fontFamily: "inherit", fontSize: "0.78rem", fontWeight: 600,
+  padding: "0.3rem 0.5rem", outline: "none", border: `1px solid ${theme.border}`,
+  background: theme.bg, color: theme.text,
+});
+
 function statDropdownOptionBackground(theme: AppTheme, isSelected: boolean, isHighlighted: boolean): string {
   if (isSelected) return `${theme.accent}33`;
   if (isHighlighted) return `${theme.accent}22`;
   return "transparent";
 }
 
-const statDropdownOptionStyle = (theme: AppTheme, isSelected: boolean, isDisabled: boolean, isHighlighted: boolean): React.CSSProperties => ({
+const statDropdownOptionStyle = (theme: AppTheme, isSelected: boolean, isHighlighted: boolean): React.CSSProperties => ({
   display: "block", width: "100%", textAlign: "left",
   padding: "0.35rem 0.6rem", border: "none",
   borderBottom: `1px solid ${theme.border}`,
   background: statDropdownOptionBackground(theme, isSelected, isHighlighted),
-  color: isDisabled ? theme.muted : theme.text,
+  color: theme.text,
   fontFamily: "inherit", fontSize: "0.82rem", fontWeight: 700,
-  cursor: isDisabled ? "default" : "pointer",
-  opacity: isDisabled ? 0.4 : 1,
+  cursor: "pointer",
 });
 
 const presetToggleButtonStyle = (theme: AppTheme, isActive: boolean): React.CSSProperties => ({
@@ -426,63 +436,91 @@ function HexaTile({ skill, level, onUpdate, theme, min = 0, max = MAX_LEVEL }: {
   );
 }
 
-function StatDropdown({ value, options, onChange, theme, isError, disabledTypes }: {
+function StatDropdown({ value, options, onChange, onAdvance, isOpen, onToggle, onClose, theme, isError, disabledTypes }: {
   value: string;
   options: { value: string; label: string }[];
   onChange: (val: string) => void;
+  /** Called (instead of onClose) after an actual pick — opens the next line's dropdown, if
+   *  it's still unset. viaKeyboard distinguishes an Enter-driven pick from a mouse click —
+   *  only a keyboard pick jumps lines, since a mouse click means the user's cursor is
+   *  staying local. */
+  onAdvance?: (viaKeyboard: boolean) => void;
+  isOpen: boolean;
+  onToggle: () => void;
+  onClose: () => void;
   theme: AppTheme;
   isError?: boolean;
+  /** Stat types already used elsewhere (sibling lines, other nodes) — excluded from the
+   *  list entirely, not just greyed out, so there's nothing to accidentally pick. */
   disabledTypes: Set<string>;
 }) {
-  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
   const [openUpward, setOpenUpward] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (!open) return;
+    if (!isOpen) return;
     function onMouseDown(e: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) setOpen(false);
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) onClose();
     }
     document.addEventListener("mousedown", onMouseDown);
     return () => document.removeEventListener("mousedown", onMouseDown);
-  }, [open]);
+  }, [isOpen, onClose]);
 
   // Flip the menu above the trigger when there isn't enough room below in the viewport —
   // otherwise a dropdown opened near the bottom of the HEXA node grid forces the page to
   // grow to fit it, visibly pushing content past the footer.
   useLayoutEffect(() => {
-    if (!open) return;
+    if (!isOpen) return;
     const container = containerRef.current;
     const menu = menuRef.current;
     if (!container || !menu) return;
     const rect = container.getBoundingClientRect();
     const spaceBelow = window.innerHeight - rect.bottom;
     setOpenUpward(spaceBelow < menu.offsetHeight + 4 && rect.top > spaceBelow);
-  }, [open]);
+  }, [isOpen]);
 
-  const { highlightedIndex, onKeyDown: navKeyDown, itemRef } = useKeyboardListNav({
-    items: options,
-    resetKey: open,
-    isDisabled: (o) => disabledTypes.has(o.value),
-    onSelect: (o) => { onChange(o.value); setOpen(false); },
-  });
+  useEffect(() => {
+    if (isOpen) inputRef.current?.focus();
+  }, [isOpen]);
 
+  const available = options.filter((o) => !disabledTypes.has(o.value));
+  const filtered = query ? searchAndRank(available, query, (o) => o.label) : available;
   const selected = options.find((o) => o.value === value);
 
-  function handleTriggerKeyDown(e: React.KeyboardEvent) {
-    if (e.key === "Escape") { setOpen(false); return; }
-    if ((e.key === "Backspace" || e.key === "Delete") && selected) {
+  function pick(val: string, viaKeyboard: boolean) {
+    onChange(val);
+    if (onAdvance) { onAdvance(viaKeyboard); } else { onClose(); }
+  }
+
+  const { highlightedIndex, onKeyDown: navKeyDown, itemRef } = useKeyboardListNav({
+    items: filtered,
+    resetKey: query,
+    onSelect: (o) => pick(o.value, true),
+    onClose,
+  });
+
+  function handleSearchKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    e.stopPropagation();
+    if (e.key === "Backspace" && query === "" && selected) {
       e.preventDefault();
       onChange("");
-      setOpen(false);
-      return;
-    }
-    if (!open) {
-      if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); setOpen(true); }
+      onClose();
       return;
     }
     navKeyDown(e);
+  }
+
+  function handleTriggerKeyDown(e: React.KeyboardEvent) {
+    if (isOpen) return; // the search input inside the menu handles keys once it's open
+    if ((e.key === "Backspace" || e.key === "Delete") && selected) {
+      e.preventDefault();
+      onChange("");
+      return;
+    }
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); onToggle(); }
   }
   const triggerStyle: React.CSSProperties = {
     display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.4rem",
@@ -500,7 +538,7 @@ function StatDropdown({ value, options, onChange, theme, isError, disabledTypes 
     <div ref={containerRef} style={{ position: "relative", flex: 1, minWidth: 0 }}>
       <button
         type="button"
-        onClick={() => setOpen((p) => !p)}
+        onClick={onToggle}
         onKeyDown={handleTriggerKeyDown}
         onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
         onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
@@ -511,36 +549,53 @@ function StatDropdown({ value, options, onChange, theme, isError, disabledTypes 
         </span>
         <span style={{ fontSize: "0.75rem", flexShrink: 0, opacity: 0.6 }}>▾</span>
       </button>
-      {open && (
+      {isOpen && (
         <div ref={menuRef} style={statDropdownMenuStyle(theme, openUpward)}>
           {selected && (
             <button
               type="button"
-              onClick={() => { onChange(""); setOpen(false); }}
+              onClick={() => { onChange(""); onClose(); }}
               style={statDropdownClearRowStyle(theme)}
             >
               — Clear —
             </button>
           )}
-          {options.map((o, i) => {
-            const isDisabled = disabledTypes.has(o.value);
-            const isSelected = o.value === value;
-            const isHighlighted = i === highlightedIndex;
-            return (
-              <button
-                key={o.value}
-                ref={itemRef(i)}
-                type="button"
-                disabled={isDisabled}
-                onClick={() => { onChange(o.value); setOpen(false); }}
-                style={statDropdownOptionStyle(theme, isSelected, isDisabled, isHighlighted)}
-                onMouseEnter={(e) => { if (!isDisabled && !isSelected) e.currentTarget.style.background = `${theme.accent}22`; }}
-                onMouseLeave={(e) => { if (!isDisabled && !isSelected) e.currentTarget.style.background = "transparent"; }}
-              >
-                {o.label}
-              </button>
-            );
-          })}
+          <div style={{ padding: "0.3rem 0.4rem", borderBottom: `1px solid ${theme.border}` }}>
+            <input
+              ref={inputRef}
+              type="text"
+              aria-label="Search stats"
+              value={query}
+              placeholder="Search…"
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={handleSearchKeyDown}
+              style={statDropdownSearchInputStyle(theme)}
+            />
+          </div>
+          <div style={{ maxHeight: 220, overflowY: "auto" }}>
+            {filtered.map((o, i) => {
+              const isSelected = o.value === value;
+              const isHighlighted = i === highlightedIndex;
+              return (
+                <button
+                  key={o.value}
+                  ref={itemRef(i)}
+                  type="button"
+                  onClick={() => pick(o.value, false)}
+                  style={statDropdownOptionStyle(theme, isSelected, isHighlighted)}
+                  onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.background = `${theme.accent}22`; }}
+                  onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.background = "transparent"; }}
+                >
+                  {o.label}
+                </button>
+              );
+            })}
+            {filtered.length === 0 && (
+              <p style={{ margin: 0, padding: "0.4rem 0.5rem", fontSize: "0.75rem", color: theme.muted, fontWeight: 600 }}>
+                No results
+              </p>
+            )}
+          </div>
         </div>
       )}
     </div>
@@ -563,7 +618,10 @@ function StatProgressBar({ level, theme }: { level: number; theme: AppTheme }) {
   );
 }
 
-function HexaStatRow({ entry, onUpdate, theme, isPrimary, classId, mainStatLabel, attackLabel, isError, disabledTypes, levelTouched, onLevelTouch }: {
+function HexaStatRow({
+  entry, onUpdate, theme, isPrimary, classId, mainStatLabel, attackLabel, isError, disabledTypes,
+  levelTouched, onLevelTouch, isOpen, onToggle, onClose, onAdvance,
+}: {
   entry: HexaStatEntry;
   onUpdate: (e: HexaStatEntry) => void;
   theme: AppTheme;
@@ -575,6 +633,10 @@ function HexaStatRow({ entry, onUpdate, theme, isPrimary, classId, mainStatLabel
   disabledTypes: Set<string>;
   levelTouched: boolean;
   onLevelTouch: () => void;
+  isOpen: boolean;
+  onToggle: () => void;
+  onClose: () => void;
+  onAdvance?: (viaKeyboard: boolean) => void;
 }) {
   const bonus = getHexaStatBonus(entry.type, entry.level, isPrimary, classId);
   // Reserve the bonus column's width to the widest value any stat type could show at
@@ -596,6 +658,10 @@ function HexaStatRow({ entry, onUpdate, theme, isPrimary, classId, mainStatLabel
             value={entry.type}
             options={statOptions}
             onChange={(val) => onUpdate({ ...entry, type: val })}
+            onAdvance={onAdvance}
+            isOpen={isOpen}
+            onToggle={onToggle}
+            onClose={onClose}
             theme={theme}
             isError={isError}
             disabledTypes={disabledTypes}
@@ -755,6 +821,14 @@ export default function HexaMatrixSetupStep({
   const [substepDirection, setSubstepDirection] = useState<"forward" | "backward">("forward");
   const [hasSubstepSwitched, setHasSubstepSwitched] = useState(false);
   const [activeSlot, setActiveSlot] = useState(0);
+  // Which of the current slot's 3 stat-type dropdowns (if any) is open. Reset whenever the
+  // displayed slot changes (switching node or preset), so a stale open dropdown from the
+  // previous slot never lingers.
+  const [openField, setOpenField] = useState<"main" | "alt0" | "alt1" | null>(null);
+  function selectNode(i: number) {
+    setOpenField(null);
+    setActiveSlot(i);
+  }
   // Display-only: tracks which HEXA Stat level fields the user has actually typed into
   // this session, so a level they set to 0 shows a literal "0" instead of collapsing
   // back to the placeholder (HexaStatEntry.level itself stays a real number — see
@@ -845,6 +919,22 @@ export default function HexaMatrixSetupStep({
   const overLimitMessage = buildOverLimitMessage(hexaStat);
   const anyNodeOverLimit = overLimitMessage !== "";
 
+  function hexaStatFieldValue(field: HexaStatField): string {
+    if (field === "main") return slot.main.type;
+    const altIndex = field === "alt0" ? 0 : 1;
+    return slot.alt[altIndex].type;
+  }
+
+  // Picking a line's stat via Enter jumps to the next line in reading order, only if it's
+  // still unset (barging into a line someone already filled would be more surprising than
+  // helpful, so it just closes instead — same rule as every other picker in this flow). A
+  // mouse-clicked pick never jumps at all, handled by StatDropdown's own onAdvance branch.
+  function goToNextHexaStatField(from: HexaStatField): () => void {
+    const idx = HEXA_STAT_FIELD_ORDER.indexOf(from);
+    const next = idx < HEXA_STAT_FIELD_ORDER.length - 1 ? HEXA_STAT_FIELD_ORDER[idx + 1] : null;
+    return next && !hexaStatFieldValue(next) ? () => setOpenField(next) : () => setOpenField(null);
+  }
+
   function setSlot(s: HexaStatSlot) {
     const next: [HexaStatNode, HexaStatNode, HexaStatNode] = [hexaStat[0], hexaStat[1], hexaStat[2]];
     const presets: [HexaStatSlot, HexaStatSlot] = [...next[activeSlot].presets];
@@ -854,6 +944,7 @@ export default function HexaMatrixSetupStep({
   }
 
   function setActivePreset(p: number) {
+    setOpenField(null);
     const next: [HexaStatNode, HexaStatNode, HexaStatNode] = [hexaStat[0], hexaStat[1], hexaStat[2]];
     next[activeSlot] = { ...next[activeSlot], activePreset: p };
     update({ hexaStat: next });
@@ -906,10 +997,10 @@ export default function HexaMatrixSetupStep({
               };
               return (
                 <div key={i}
-                  onClick={locked ? undefined : () => setActiveSlot(i)}
+                  onClick={locked ? undefined : () => selectNode(i)}
                   role={locked ? undefined : "button"}
                   tabIndex={locked ? undefined : 0}
-                  onKeyDown={locked ? undefined : (e) => { if (e.key === "Enter" || e.key === " ") setActiveSlot(i); }}
+                  onKeyDown={locked ? undefined : (e) => { if (e.key === "Enter" || e.key === " ") selectNode(i); }}
                   style={tabStyle}
                 >
                   <HexaSkillIcon id={def.iconId} size={36} disabled={iconDisabled} />
@@ -959,25 +1050,37 @@ export default function HexaMatrixSetupStep({
               classId={classData?.id ?? ""} mainStatLabel={mainStatLabel} attackLabel={attackLabel}
               levelTouched={touchedLevels.has(`${activeSlot}-${activePreset}-main`)}
               onLevelTouch={() => markLevelTouched(`${activeSlot}-${activePreset}-main`)}
-              onUpdate={(e) => setSlot({ ...slot, main: e })} />
+              onUpdate={(e) => setSlot({ ...slot, main: e })}
+              isOpen={openField === "main"}
+              onToggle={() => setOpenField((f) => f === "main" ? null : "main")}
+              onClose={() => setOpenField(null)}
+              onAdvance={(viaKeyboard) => { if (viaKeyboard) { goToNextHexaStatField("main")(); } else { setOpenField(null); } }}
+            />
           </div>
 
           <div>
             <SectionLabel label="Alternative Stats" theme={theme} />
             <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>
-              {slot.alt.map((entry, i) => (
-                <HexaStatRow key={i} entry={entry} theme={theme} isPrimary={false} isError={altErrors[i]}
-                  disabledTypes={altDisabled[i]}
-                  classId={classData?.id ?? ""} mainStatLabel={mainStatLabel} attackLabel={attackLabel}
-                  levelTouched={touchedLevels.has(`${activeSlot}-${activePreset}-alt${i}`)}
-                  onLevelTouch={() => markLevelTouched(`${activeSlot}-${activePreset}-alt${i}`)}
-                  onUpdate={(e) => {
-                    const newAlt: [HexaStatEntry, HexaStatEntry] = [slot.alt[0], slot.alt[1]];
-                    newAlt[i] = e;
-                    setSlot({ ...slot, alt: newAlt });
-                  }}
-                />
-              ))}
+              {slot.alt.map((entry, i) => {
+                const field: HexaStatField = i === 0 ? "alt0" : "alt1";
+                return (
+                  <HexaStatRow key={i} entry={entry} theme={theme} isPrimary={false} isError={altErrors[i]}
+                    disabledTypes={altDisabled[i]}
+                    classId={classData?.id ?? ""} mainStatLabel={mainStatLabel} attackLabel={attackLabel}
+                    levelTouched={touchedLevels.has(`${activeSlot}-${activePreset}-alt${i}`)}
+                    onLevelTouch={() => markLevelTouched(`${activeSlot}-${activePreset}-alt${i}`)}
+                    onUpdate={(e) => {
+                      const newAlt: [HexaStatEntry, HexaStatEntry] = [slot.alt[0], slot.alt[1]];
+                      newAlt[i] = e;
+                      setSlot({ ...slot, alt: newAlt });
+                    }}
+                    isOpen={openField === field}
+                    onToggle={() => setOpenField((f) => f === field ? null : field)}
+                    onClose={() => setOpenField(null)}
+                    onAdvance={(viaKeyboard) => { if (viaKeyboard) { goToNextHexaStatField(field)(); } else { setOpenField(null); } }}
+                  />
+                );
+              })}
             </div>
           </div>
 

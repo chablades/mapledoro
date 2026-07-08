@@ -216,7 +216,7 @@ function LevelPipsEditable({ level, theme, onSetLevel }: { level: number; theme:
 // ── Stat slot chip (opens a popover to pick one of the 16 stats) ───────────────
 
 function StatSlotChip({
-  crystalIndex, slotIndex, statId, excludeIds, openId, theme, onToggle, onClose, onPick,
+  crystalIndex, slotIndex, statId, excludeIds, openId, theme, onToggle, onClose, onAdvance, onPrev, onNext, onPick,
 }: {
   crystalIndex: number;
   slotIndex: number;
@@ -226,6 +226,16 @@ function StatSlotChip({
   theme: AppTheme;
   onToggle: () => void;
   onClose: () => void;
+  /** Called (instead of onClose) after an actual pick — opens the next stat slot in the
+   *  crystal, or (on the last slot) jumps to the next unlocked crystal's first slot. Lets a
+   *  whole board be filled without re-clicking each chip. viaKeyboard distinguishes an
+   *  Enter-driven pick from a mouse click — only a keyboard pick jumps crystals, since a
+   *  mouse click means the user's cursor is staying local. */
+  onAdvance: (viaKeyboard: boolean) => void;
+  onPrev?: () => void;
+  /** Tab (no pick) — moves to the next slot untouched; on the last slot, jumps to the
+   *  next unlocked crystal's first slot. */
+  onNext?: () => void;
   onPick: (statId: LegionArtifactStatId | null) => void;
 }) {
   const pickerId = `${crystalIndex}-${slotIndex}`;
@@ -247,8 +257,10 @@ function StatSlotChip({
   const { highlightedIndex, onKeyDown: navKeyDown, itemRef } = useKeyboardListNav({
     items: filtered,
     resetKey: query,
-    onSelect: (opt) => { onPick(opt.id); onClose(); },
+    onSelect: (opt) => { onPick(opt.id); onAdvance(true); },
     onClose,
+    onPrev,
+    onNext,
   });
 
   function handleSearchKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
@@ -266,6 +278,7 @@ function StatSlotChip({
     <div ref={ref} style={{ position: "relative" }}>
       <button
         type="button"
+        data-legion-trigger
         aria-label={`Crystal ${crystalIndex + 1} stat slot ${slotIndex + 1}`}
         onClick={(e) => { e.stopPropagation(); if (!isOpen) { setQuery(""); } onToggle(); }}
         style={statChipStyle(theme, Boolean(def))}
@@ -302,7 +315,7 @@ function StatSlotChip({
                 key={opt.id}
                 ref={itemRef(i)}
                 type="button"
-                onClick={() => { onPick(opt.id); onClose(); }}
+                onClick={() => { onPick(opt.id); onAdvance(false); }}
                 style={popoverOptionStyle(theme, opt.id === statId, i === highlightedIndex)}
               >
                 {opt.label}
@@ -325,7 +338,7 @@ function StatSlotChip({
 
 function CrystalTile({
   index, def, crystal, unlocked, isCardOpen, nestedOpenId, theme,
-  onToggleCard, onSetLevel, onSetStat, onToggleSlot, onClosePicker,
+  onToggleCard, onSetLevel, onSetStat, onToggleSlot, onClosePicker, onNextCard,
 }: {
   index: number;
   def: LegionCrystalDef;
@@ -339,6 +352,9 @@ function CrystalTile({
   onSetStat: (slotIndex: number, statId: LegionArtifactStatId | null) => void;
   onToggleSlot: (slotIndex: number) => void;
   onClosePicker: () => void;
+  /** Tab from the last stat slot jumps here — opens the next unlocked crystal's first
+   *  slot directly. */
+  onNextCard: () => void;
 }) {
   const level = Math.max(MIN_CRYSTAL_LEVEL, crystal.level ?? MIN_CRYSTAL_LEVEL);
   const stats = crystal.stats ?? DEFAULT_CRYSTAL_STATS;
@@ -360,6 +376,7 @@ function CrystalTile({
       <button
         type="button"
         className="legion-crystal-tile"
+        data-legion-trigger
         title={def.name}
         aria-label={`${def.name}, level ${level}`}
         onClick={(e) => { e.stopPropagation(); onToggleCard(); }}
@@ -392,6 +409,14 @@ function CrystalTile({
                 theme={theme}
                 onToggle={() => onToggleSlot(slotIndex)}
                 onClose={onClosePicker}
+                // Only a keyboard pick (Enter) advances — a mouse click means the user's
+                // cursor is staying local, so just close for them either way.
+                onAdvance={(viaKeyboard) => {
+                  if (!viaKeyboard) { onClosePicker(); return; }
+                  if (slotIndex < CRYSTAL_STAT_SLOTS - 1) { onToggleSlot(slotIndex + 1); } else { onNextCard(); }
+                }}
+                onPrev={slotIndex > 0 ? () => onToggleSlot(slotIndex - 1) : undefined}
+                onNext={slotIndex < CRYSTAL_STAT_SLOTS - 1 ? () => onToggleSlot(slotIndex + 1) : onNextCard}
                 onPick={(statId) => onSetStat(slotIndex, statId)}
               />
             ))}
@@ -418,18 +443,23 @@ export default function LegionArtifactsSetupStep({
 
   const [openCardIndex, setOpenCardIndex] = useState<number | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
-  const zoneRef = useRef<HTMLDivElement>(null);
 
-  // Closes both the open crystal card and its nested stat picker on outside clicks; the
-  // popovers themselves stop propagation (mirrors the Equipment step's Inner Ability zone)
-  // so clicks inside them never reach here.
+  // Closes both the open crystal card and its nested stat picker on outside clicks. Both
+  // popovers are portaled straight to document.body (not nested inside any wrapping "zone"
+  // element here) and already stop propagation on their own onMouseDown, so any mousedown
+  // that reaches this listener is guaranteed to be outside them — no containment check
+  // needed (a zoneRef-based one used to leave dead zones in the grid's blank space, e.g.
+  // past the 3-column grid's fixed width inside its wider flex container). Trigger buttons
+  // (crystal tiles, stat chips) are excluded too — they only stop propagation on `click`,
+  // not `mousedown`, so without this exclusion this listener would force-close things a
+  // moment before the trigger's own onClick runs, breaking its own open/close toggle (the
+  // toggle's functional update would read the just-forced-null state and reopen instead).
   useEffect(() => {
     if (openCardIndex === null && !openId) return;
     function handleMouseDown(e: MouseEvent) {
-      if (zoneRef.current && !zoneRef.current.contains(e.target as Node)) {
-        setOpenCardIndex(null);
-        setOpenId(null);
-      }
+      if ((e.target as HTMLElement).closest("[data-legion-trigger]")) return;
+      setOpenCardIndex(null);
+      setOpenId(null);
     }
     document.addEventListener("mousedown", handleMouseDown);
     return () => document.removeEventListener("mousedown", handleMouseDown);
@@ -465,6 +495,31 @@ export default function LegionArtifactsSetupStep({
     setOpenId((cur) => (cur === id ? null : id));
   }
 
+  // Reaching the end of a crystal's 3 stat slots — via Enter-picking the last one or via an
+  // explicit Tab — only ever considers the next crystal in sequence (skipping over locked
+  // placeholders, which aren't real targets), and only jumps in if it's still untouched
+  // (level 1, stats still at the in-game default every crystal starts with — a crystal is
+  // never truly "blank" once unlocked, so we can't check for empty/null stats). Barging into
+  // a crystal someone already finished (e.g. while correcting an earlier one) would be more
+  // surprising than helpful, so it just closes the nested picker instead.
+  function goToNextCrystal(fromIndex: number) {
+    for (let i = fromIndex + 1; i < LEGION_CRYSTALS.length; i++) {
+      if (!isCrystalUnlocked(i, artifactLevelNum)) continue;
+      const candidate = crystals[i] ?? EMPTY_CRYSTAL;
+      const level = candidate.level ?? MIN_CRYSTAL_LEVEL;
+      const stats = candidate.stats ?? DEFAULT_CRYSTAL_STATS;
+      const isUntouched = level === MIN_CRYSTAL_LEVEL && DEFAULT_CRYSTAL_STATS.every((s, idx) => stats[idx] === s);
+      if (isUntouched) {
+        setOpenCardIndex(i);
+        setOpenId(`${i}-0`);
+      } else {
+        setOpenId(null);
+      }
+      return;
+    }
+    setOpenId(null);
+  }
+
   return (
     <SetupStepFrame
       theme={theme}
@@ -479,7 +534,7 @@ export default function LegionArtifactsSetupStep({
       <p style={{ margin: "0 0 1rem", fontSize: "0.75rem", color: theme.muted, fontWeight: 700 }}>
         These are shared across all characters on your world, and inherited automatically by new characters.
       </p>
-      <div ref={zoneRef} className="legion-artifacts-root" style={{ display: "flex", flexDirection: "column", gap: "1rem", maxWidth: 460 }}>
+      <div className="legion-artifacts-root" style={{ display: "flex", flexDirection: "column", gap: "1rem", maxWidth: 460 }}>
         <style>{`
           .legion-artifacts-root { container-type: inline-size; }
           .legion-crystal-grid { grid-template-columns: repeat(3, ${CRYSTAL_TILE_SIZE}px); }
@@ -519,6 +574,7 @@ export default function LegionArtifactsSetupStep({
               onSetStat={(slotIndex, statId) => setCrystalStat(index, slotIndex, statId)}
               onToggleSlot={(slotIndex) => toggleSlot(index, slotIndex)}
               onClosePicker={() => setOpenId(null)}
+              onNextCard={() => goToNextCrystal(index)}
             />
           ))}
         </div>

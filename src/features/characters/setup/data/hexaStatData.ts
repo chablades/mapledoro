@@ -50,14 +50,15 @@ export function hexaStatSlotLevelSum(slot: HexaStatSlot): number {
   return slot.main.level + slot.alt[0].level + slot.alt[1].level;
 }
 
-/** Labels for the two dynamic options — pass the result of getMainStatLabel / getAttackLabel. */
+/** Labels for the two dynamic options — pass the result of getMainStatLabel / getAttackLabel.
+ *  Ordered to match the in-game HEXA Stat dropdown. */
 export const HEXA_STAT_OPTIONS: { value: HexaStatType; label: string }[] = [
-  { value: "mainStat",       label: "Main Stat" },   // replaced at render time
-  { value: "attackPower",    label: "Attack" },       // replaced at render time
-  { value: "damage",         label: "Damage" },
+  { value: "criticalDamage", label: "Critical Damage" },
   { value: "bossDamage",     label: "Boss Damage" },
   { value: "ignoreDefense",  label: "Ignore Defense" },
-  { value: "criticalDamage", label: "Critical Damage" },
+  { value: "damage",         label: "Damage" },
+  { value: "attackPower",    label: "Attack" },       // replaced at render time
+  { value: "mainStat",       label: "Main Stat" },   // replaced at render time
 ];
 
 // Indexed by [level - 1], levels 1–10

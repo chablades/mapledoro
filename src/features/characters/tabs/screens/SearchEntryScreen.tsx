@@ -300,15 +300,12 @@ export default function SearchEntryScreen({ model, actions }: SearchEntryScreenP
       <div
         style={{
           marginTop: "0.75rem",
-          border: `1px solid ${theme.border}`,
-          background: theme.bg,
-          borderRadius: "14px",
-          padding: "0.8rem 0.95rem",
+          padding: "0 0.1rem",
         }}
       >
         <p
           style={{
-            fontSize: "0.9rem",
+            fontSize: "0.78rem",
             color: search.statusTone === "error" ? "#dc2626" : theme.muted,
             fontWeight: 700,
             margin: 0,

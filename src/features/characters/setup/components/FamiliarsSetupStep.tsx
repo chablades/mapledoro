@@ -300,16 +300,22 @@ function FamiliarCardSprite({ mobId, familiarId, cardId, size, theme }: { mobId:
 
 // ── Line picker ───────────────────────────────────────────────────────────
 
-function LinePicker({ id, openId, onToggle, onClose, value, tier, placeholder, theme, onChange }: {
+function LinePicker({ id, openId, onToggle, onClose, onPrev, onNext, value, tier, placeholder, theme, onChange }: {
   id: string;
   openId: string | null;
   onToggle: () => void;
   onClose: () => void;
+  onPrev?: () => void;
+  onNext?: () => void;
   value: string;
   tier: FamiliarTier;
   placeholder: string;
   theme: AppTheme;
-  onChange: (val: string) => void;
+  /** viaKeyboard distinguishes an Enter-driven pick from a mouse click — only a keyboard
+   *  pick should be allowed to jump to the next card, since a mouse click means the user's
+   *  cursor (and attention) is staying local, and teleporting the popover elsewhere would
+   *  just make them go hunt for it. */
+  onChange: (val: string, viaKeyboard: boolean) => void;
 }) {
   const isOpen = openId === id;
   const [query, setQuery] = useState("");
@@ -323,23 +329,27 @@ function LinePicker({ id, openId, onToggle, onClose, value, tier, placeholder, t
     if (isOpen) inputRef.current?.focus();
   }, [isOpen]);
 
-  function select(line: string) {
-    onChange(line);
-    onClose();
+  // Doesn't call onClose itself — the caller's onChange decides whether picking this
+  // value should advance to the next field in the group (e.g. Line 1 → Line 2) or close
+  // outright, so a real pick and an explicit close aren't conflated.
+  function select(line: string, viaKeyboard: boolean) {
+    onChange(line, viaKeyboard);
   }
 
   const { highlightedIndex, onKeyDown: navKeyDown, itemRef } = useKeyboardListNav({
     items: filtered,
     resetKey: query,
-    onSelect: (line) => select(line),
+    onSelect: (line) => select(line, true),
     onClose,
+    onPrev,
+    onNext,
   });
 
   function handleSearchKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     e.stopPropagation();
     if (e.key === "Backspace" && query === "" && value) {
       e.preventDefault();
-      select("");
+      select("", true);
       return;
     }
     navKeyDown(e);
@@ -399,7 +409,7 @@ function LinePicker({ id, openId, onToggle, onClose, value, tier, placeholder, t
           {value && (
             <button
               type="button"
-              onClick={() => select("")}
+              onClick={() => select("", false)}
               style={clearRowStyle(theme)}
             >
               — Clear —
@@ -423,7 +433,7 @@ function LinePicker({ id, openId, onToggle, onClose, value, tier, placeholder, t
                 key={line}
                 ref={itemRef(i)}
                 type="button"
-                onClick={() => select(line)}
+                onClick={() => select(line, false)}
                 style={lineOptionStyle(theme, i === highlightedIndex)}
                 onMouseEnter={(e) => { e.currentTarget.style.background = `${theme.accent}22`; }}
                 onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
@@ -475,7 +485,9 @@ function TierPickerView({ entry, theme, onBack, onSelect }: {
   entry: FamiliarEntry;
   theme: AppTheme;
   onBack: () => void;
-  onSelect: (tier: FamiliarTier) => void;
+  /** viaKeyboard distinguishes an Enter-driven pick from a mouse click — only a keyboard
+   *  pick jumps to Line 1, since a mouse click means the user's cursor is staying local. */
+  onSelect: (tier: FamiliarTier, viaKeyboard: boolean) => void;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   useEffect(() => { containerRef.current?.focus(); }, []);
@@ -483,7 +495,8 @@ function TierPickerView({ entry, theme, onBack, onSelect }: {
   const { highlightedIndex, onKeyDown: navKeyDown, itemRef } = useKeyboardListNav({
     items: TIER_ORDER,
     resetKey: entry.id,
-    onSelect: (t) => onSelect(t),
+    onSelect: (t) => onSelect(t, true),
+    onPrev: onBack,
   });
 
   function handleContainerKeyDown(e: React.KeyboardEvent) {
@@ -511,7 +524,7 @@ function TierPickerView({ entry, theme, onBack, onSelect }: {
             key={t}
             ref={itemRef(i)}
             type="button"
-            onClick={() => onSelect(t)}
+            onClick={() => onSelect(t, false)}
             style={tierOptionStyle(theme, c, i === highlightedIndex)}
           >
             {TIER_LABELS[t]}
@@ -525,7 +538,7 @@ function TierPickerView({ entry, theme, onBack, onSelect }: {
 function FamiliarSlotCard({
   slot, slotId, openId, query, pendingEntry, theme,
   onOpen, onQueryChange, onSelect, onClear, onLineChange, onSetPending,
-  onTogglePicker, onClosePicker,
+  onTogglePicker, onClosePicker, onNextCard,
 }: {
   slot: FamiliarSlot;
   slotId: string;
@@ -535,12 +548,15 @@ function FamiliarSlotCard({
   theme: AppTheme;
   onOpen: () => void;
   onQueryChange: (q: string) => void;
-  onSelect: (entry: FamiliarEntry, tier: FamiliarTier) => void;
+  onSelect: (entry: FamiliarEntry, tier: FamiliarTier, viaKeyboard: boolean) => void;
   onClear: () => void;
-  onLineChange: (field: "line1" | "line2", val: string) => void;
+  onLineChange: (field: "line1" | "line2", val: string, viaKeyboard: boolean) => void;
   onSetPending: (entry: FamiliarEntry | null) => void;
   onTogglePicker: (id: string) => void;
   onClosePicker: () => void;
+  /** Tab from Line 2 jumps here — opens the next familiar slot's search picker. Undefined
+   *  for the last slot, so Tab there just falls through to native focus movement. */
+  onNextCard?: () => void;
 }) {
   const isOpen = openId === slotId;
   const isEmpty = !slot.name;
@@ -570,6 +586,15 @@ function FamiliarSlotCard({
       return;
     }
     navKeyDown(e);
+  }
+
+  // Shift+Tab from Line 1 steps back to the tier picker for this same familiar, reopening
+  // the main popover directly on the tier-select step instead of the search list.
+  function backToTierPicker() {
+    if (matchedEntry) {
+      onOpen();
+      onSetPending(matchedEntry);
+    }
   }
 
   const tierBorderColor = slot.tier ? TIER_COLORS[slot.tier].border : null;
@@ -617,22 +642,26 @@ function FamiliarSlotCard({
                   openId={openId}
                   onToggle={() => onTogglePicker(`${slotId}-line1`)}
                   onClose={onClosePicker}
+                  onPrev={backToTierPicker}
+                  onNext={() => onTogglePicker(`${slotId}-line2`)}
                   value={slot.line1}
                   tier={slot.tier}
                   placeholder="Line 1…"
                   theme={theme}
-                  onChange={(v) => onLineChange("line1", v)}
+                  onChange={(v, viaKeyboard) => onLineChange("line1", v, viaKeyboard)}
                 />
                 <LinePicker
                   id={`${slotId}-line2`}
                   openId={openId}
                   onToggle={() => onTogglePicker(`${slotId}-line2`)}
                   onClose={onClosePicker}
+                  onPrev={() => onTogglePicker(`${slotId}-line1`)}
+                  onNext={onNextCard}
                   value={slot.line2}
                   tier={slot.tier}
                   placeholder="Line 2…"
                   theme={theme}
-                  onChange={(v) => onLineChange("line2", v)}
+                  onChange={(v, viaKeyboard) => onLineChange("line2", v, viaKeyboard)}
                 />
               </div>
             )}
@@ -685,7 +714,7 @@ function FamiliarSlotCard({
               entry={pendingEntry}
               theme={theme}
               onBack={() => onSetPending(null)}
-              onSelect={(tier) => { onSelect(pendingEntry, tier); }}
+              onSelect={(tier, viaKeyboard) => { onSelect(pendingEntry, tier, viaKeyboard); }}
             />
           ) : (
             <>
@@ -745,7 +774,7 @@ function filterBadges(query: string, excluded: ReadonlySet<string>): readonly st
 
 function BadgeSlot({
   badge, slotId, openId, query, theme, usedBadges,
-  onOpen, onQueryChange, onSelect, onClear, onClosePicker,
+  onOpen, onQueryChange, onPick, onAdvance, onClear, onPrev, onNext, onClosePicker,
 }: {
   badge: string;
   slotId: string;
@@ -755,8 +784,15 @@ function BadgeSlot({
   usedBadges: ReadonlySet<string>;
   onOpen: () => void;
   onQueryChange: (q: string) => void;
-  onSelect: (name: string) => void;
+  onPick: (name: string) => void;
+  /** Called (instead of onClose) after an actual pick — opens the next badge slot, if it's
+   *  still empty. viaKeyboard distinguishes an Enter-driven pick from a mouse click — only
+   *  a keyboard pick jumps slots, since a mouse click means the user's cursor is staying
+   *  local. */
+  onAdvance: (viaKeyboard: boolean) => void;
   onClear: () => void;
+  onPrev?: () => void;
+  onNext?: () => void;
   onClosePicker: () => void;
 }) {
   const isOpen = openId === slotId;
@@ -772,8 +808,10 @@ function BadgeSlot({
   const { highlightedIndex, onKeyDown: navKeyDown, itemRef } = useKeyboardListNav({
     items: filtered,
     resetKey: query,
-    onSelect: (name) => onSelect(name),
+    onSelect: (name) => { onPick(name); onAdvance(true); },
     onClose: onClosePicker,
+    onPrev,
+    onNext,
   });
 
   function handleSearchKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
@@ -870,7 +908,7 @@ function BadgeSlot({
                 key={name}
                 ref={itemRef(i)}
                 type="button"
-                onClick={() => onSelect(name)}
+                onClick={() => { onPick(name); onAdvance(false); }}
                 style={badgeOptionStyle(theme, i === highlightedIndex)}
                 onMouseEnter={(e) => { e.currentTarget.style.background = `${theme.accent}22`; }}
                 onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
@@ -986,6 +1024,13 @@ export default function FamiliarsSetupStep({
         <div ref={zoneRef} style={{ display: "flex", gap: 8, marginBottom: "1rem" }}>
           {preset.familiars.map((slot, i) => {
             const slotId = `f${i}`;
+            // Reaching the end of this card's chain — via Enter-picking Line 2 or via an
+            // explicit Tab — always lands here, so both paths behave identically. Only
+            // considers the immediately adjacent slot, and only jumps in if it's still
+            // empty; barging into a card someone already finished (e.g. while correcting
+            // an earlier one) would be more surprising than helpful, so it just closes.
+            const nextSlot = i < SLOT_COUNT - 1 ? preset.familiars[i + 1] : null;
+            const goToNextCard = nextSlot && !nextSlot.name ? () => openPicker(`f${i + 1}`) : closePicker;
             return (
               <FamiliarSlotCard
                 key={`${activePreset}-${i}`}
@@ -998,14 +1043,25 @@ export default function FamiliarsSetupStep({
                 onOpen={() => openPicker(slotId)}
                 onQueryChange={setPickerQuery}
                 onSetPending={setPendingFamiliar}
-                onSelect={(entry, tier) => {
+                onSelect={(entry, tier, viaKeyboard) => {
                   onChange(JSON.stringify(patchSlot(parsed, activePreset, i, { familiarId: entry.id, mobId: entry.mobId, name: entry.name, tier, line1: "", line2: "" })));
-                  closePicker();
+                  // Only a keyboard pick (Enter) jumps to Line 1 — a mouse click means the
+                  // user's cursor is staying local, so just close for them.
+                  if (viaKeyboard) { openPicker(`${slotId}-line1`); } else { closePicker(); }
                 }}
                 onClear={() => { onChange(JSON.stringify(patchSlot(parsed, activePreset, i, emptySlot()))); closePicker(); }}
-                onLineChange={(field, val) => onChange(JSON.stringify(patchSlot(parsed, activePreset, i, { [field]: val })))}
+                onLineChange={(field, val, viaKeyboard) => {
+                  onChange(JSON.stringify(patchSlot(parsed, activePreset, i, { [field]: val })));
+                  if (val === "") { closePicker(); return; }
+                  // Only a keyboard pick (Enter) jumps to the next line/card — a mouse click
+                  // means the user's cursor is staying local, so just close for them.
+                  if (!viaKeyboard) { closePicker(); return; }
+                  if (field === "line1") { openPicker(`${slotId}-line2`); return; }
+                  goToNextCard();
+                }}
                 onTogglePicker={openPicker}
                 onClosePicker={closePicker}
+                onNextCard={goToNextCard}
               />
             );
           })}
@@ -1018,11 +1074,21 @@ export default function FamiliarsSetupStep({
           </p>
           {(() => {
             const usedBadges = new Set(preset.badges.filter(Boolean));
+            // Reaching the end of a badge's picker — via Enter-picking a badge or via an
+            // explicit Tab — only ever considers the immediately adjacent badge slot, and
+            // only jumps in if it's still empty; barging into a slot someone already filled
+            // (e.g. while correcting an earlier one) would be more surprising than helpful,
+            // so it just closes instead.
+            function goToNextBadge(bi: number): () => void {
+              const nextBadge = bi < BADGE_COUNT - 1 ? preset.badges[bi + 1] : null;
+              return nextBadge !== null && !nextBadge ? () => openPicker(`b${bi + 1}`) : closePicker;
+            }
             return (
               <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-start" }}>
                 <div style={{ display: "flex", gap: 8 }}>
                   {preset.badges.slice(0, 4).map((badge, i) => {
                     const slotId = `b${i}`;
+                    const goNext = goToNextBadge(i);
                     return (
                       <BadgeSlot
                         key={i}
@@ -1034,8 +1100,11 @@ export default function FamiliarsSetupStep({
                         usedBadges={usedBadges}
                         onOpen={() => openPicker(slotId)}
                         onQueryChange={setPickerQuery}
-                        onSelect={(name) => { onChange(JSON.stringify(patchBadge(parsed, activePreset, i, name))); closePicker(); }}
+                        onPick={(name) => onChange(JSON.stringify(patchBadge(parsed, activePreset, i, name)))}
+                        onAdvance={(viaKeyboard) => { if (viaKeyboard) goNext(); else closePicker(); }}
                         onClear={() => { onChange(JSON.stringify(patchBadge(parsed, activePreset, i, ""))); closePicker(); }}
+                        onPrev={i > 0 ? () => openPicker(`b${i - 1}`) : undefined}
+                        onNext={goNext}
                         onClosePicker={closePicker}
                       />
                     );
@@ -1045,6 +1114,7 @@ export default function FamiliarsSetupStep({
                   {preset.badges.slice(4).map((badge, i) => {
                     const bi = i + 4;
                     const slotId = `b${bi}`;
+                    const goNext = goToNextBadge(bi);
                     return (
                       <BadgeSlot
                         key={bi}
@@ -1056,8 +1126,11 @@ export default function FamiliarsSetupStep({
                         usedBadges={usedBadges}
                         onOpen={() => openPicker(slotId)}
                         onQueryChange={setPickerQuery}
-                        onSelect={(name) => { onChange(JSON.stringify(patchBadge(parsed, activePreset, bi, name))); closePicker(); }}
+                        onPick={(name) => onChange(JSON.stringify(patchBadge(parsed, activePreset, bi, name)))}
+                        onAdvance={(viaKeyboard) => { if (viaKeyboard) goNext(); else closePicker(); }}
                         onClear={() => { onChange(JSON.stringify(patchBadge(parsed, activePreset, bi, ""))); closePicker(); }}
+                        onPrev={() => openPicker(`b${bi - 1}`)}
+                        onNext={goNext}
                         onClosePicker={closePicker}
                       />
                     );
