@@ -940,9 +940,11 @@ function ResourcesTab({ theme }: { theme: AppTheme }) {
 }
 
 function ResourceTableView({ theme, table }: { theme: AppTheme; table: ResourceTable }) {
-  const thStyle: React.CSSProperties = { padding: "8px 10px", borderBottom: `2px solid ${theme.border}`, color: theme.muted, fontSize: "0.75rem", fontWeight: 800, textAlign: "right", textTransform: "uppercase" };
-  const tdStyle: React.CSSProperties = { padding: "8px 10px", borderBottom: `1px solid ${theme.border}`, color: theme.text, fontSize: "0.8rem", fontWeight: 700, textAlign: "right" };
+  const thStyle: React.CSSProperties = { padding: "9px 12px", borderBottom: `2px solid ${theme.border}`, color: theme.muted, fontSize: "0.75rem", fontWeight: 800, textAlign: "right", textTransform: "uppercase", background: theme.panel };
+  const tdStyle: React.CSSProperties = { padding: "8px 12px", color: theme.text, fontSize: "0.8rem", fontWeight: 700, textAlign: "right" };
+  const levelTdStyle: React.CSSProperties = { ...tdStyle, textAlign: "left", color: theme.accent, fontWeight: 800 };
   const maxUnits = table.maxUnits;
+  const rowStyle = (index: number): React.CSSProperties => ({ background: index % 2 === 1 ? theme.timerBg : "transparent" });
 
   return (
     <div className="panel-card" style={{ marginTop: "1rem", background: theme.panel, border: `1px solid ${theme.border}`, borderRadius: 8, overflowX: "auto" }}>
@@ -953,35 +955,35 @@ function ResourceTableView({ theme, table }: { theme: AppTheme; table: ResourceT
             {table.kind === "epic" ? (
               <>
                 <th style={thStyle}>Base EXP</th>
-                <th style={thStyle}>5x EXP</th>
-                <th style={thStyle}>9x EXP</th>
+                <th style={thStyle} title="EXP when the weekly chest rolls the 5x reward tier">5x Reward</th>
+                <th style={thStyle} title="EXP when the weekly chest rolls the 9x reward tier">9x Reward</th>
               </>
             ) : (
               <>
-                <th style={thStyle}>EXP</th>
-                {maxUnits !== undefined && <th style={thStyle}>{maxUnits} Points</th>}
-                <th style={thStyle}>% TNL</th>
-                <th style={thStyle}>To Level</th>
+                <th style={thStyle}>EXP / Unit</th>
+                {maxUnits !== undefined && <th style={thStyle} title={`Total EXP for a full ${maxUnits.toLocaleString()}-point run`}>Full Run</th>}
+                <th style={thStyle} title="Share of this level earned per unit">% of Level</th>
+                <th style={thStyle} title="Units needed to gain one full level">Units / Level</th>
               </>
             )}
           </tr>
         </thead>
         <tbody>
           {table.kind === "epic"
-            ? (table.rows as EpicDungeonRow[]).map((row) => (
-                <tr key={row.level}>
-                  <td style={{ ...tdStyle, textAlign: "left", color: theme.accent }}>Lv. {row.level}</td>
+            ? (table.rows as EpicDungeonRow[]).map((row, index) => (
+                <tr key={row.level} style={rowStyle(index)}>
+                  <td style={levelTdStyle}>Lv. {row.level}</td>
                   <td style={tdStyle}>{formatMesoFull(row.baseExp)}</td>
                   <td style={tdStyle}>{formatMesoFull(row.fiveXExp)}</td>
                   <td style={tdStyle}>{formatMesoFull(row.nineXExp)}</td>
                 </tr>
               ))
-            : (table.rows as LevelResourceRow[]).map((row) => (
-                <tr key={row.level}>
-                  <td style={{ ...tdStyle, textAlign: "left", color: theme.accent }}>Lv. {row.level}</td>
+            : (table.rows as LevelResourceRow[]).map((row, index) => (
+                <tr key={row.level} style={rowStyle(index)}>
+                  <td style={levelTdStyle}>Lv. {row.level}</td>
                   <td style={tdStyle}>{formatMesoFull(row.exp)}</td>
                   {maxUnits !== undefined && <td style={tdStyle}>{formatMesoFull(row.exp * maxUnits)}</td>}
-                  <td style={tdStyle}>{percentOfLevel(row.level, row.exp).toFixed(6)}%</td>
+                  <td style={tdStyle}>{percentOfLevel(row.level, row.exp).toFixed(4)}%</td>
                   <td style={tdStyle}>{Math.ceil(expForLevel(row.level) / Math.max(1, row.exp)).toLocaleString()}</td>
                 </tr>
               ))}

@@ -381,7 +381,7 @@ export const RESOURCE_TABLES: ResourceTable[] = [
   {
     id: "exp-ticket",
     label: "EXP Ticket",
-    description: "CROWN+ EXP ticket values per ticket from the local EXP Ticket workbook.",
+    description: "KMS CROWN/GMS Ride the Lightning EXP ticket values per ticket from the local EXP Ticket workbook.",
     kind: "single-exp",
     rows: makeLevelRows(200, EXP_TICKET_CROWN),
   },
@@ -417,21 +417,21 @@ export const RESOURCE_TABLES: ResourceTable[] = [
   {
     id: "high-mountain",
     label: "Epic Dungeon: High Mountain",
-    description: "After-CROWN High Mountain weekly EXP table.",
+    description: "After KMS CROWN/GMS Ride the Lightning High Mountain weekly EXP table.",
     kind: "epic",
     rows: makeEpicRows(260, HIGH_MOUNTAIN_BASE),
   },
   {
     id: "angler-company",
     label: "Epic Dungeon: Angler Company",
-    description: "After-CROWN Angler Company weekly EXP table.",
+    description: "After KMS CROWN/GMS Ride the Lightning Angler Company weekly EXP table.",
     kind: "epic",
     rows: makeEpicRows(270, ANGLER_COMPANY_BASE),
   },
   {
     id: "nightmare-paradise",
     label: "Epic Dungeon: Nightmare Paradise",
-    description: "After-CROWN Nightmare Paradise weekly EXP table.",
+    description: "After KMS CROWN/GMS Ride the Lightning Nightmare Paradise weekly EXP table.",
     kind: "epic",
     rows: makeEpicRows(280, NIGHTMARE_PARADISE_BASE),
   },
