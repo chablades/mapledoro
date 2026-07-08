@@ -48,6 +48,7 @@ export interface BuffState {
 
 export interface MonsterExpInput {
   playerLevel: number;
+  targetLevel: number;
   currentPercent: number;
   monsterLevel: number;
   monsterBaseExp: number;
@@ -61,7 +62,7 @@ export interface MonsterExpResult {
   vipBoosterExp: number;
   goldClockworkExp: number;
   hourlyExp: number;
-  hoursToNextLevel: number;
+  hoursToTarget: number;
 }
 
 export interface LevelResourceRow {
@@ -550,10 +551,6 @@ export function expForLevel(level: number): number {
   return EXP_TO_NEXT_LEVEL_VALUES[level - MIN_EXP_LEVEL] ?? 0;
 }
 
-function levelExpRemaining(level: number, percent: number): number {
-  return Math.ceil(expForLevel(level) * (1 - clamp(percent, 0, 99.999) / 100));
-}
-
 function monsterLevelBonus(playerLevel: number, monsterLevel: number): number {
   const diff = Math.abs(monsterLevel - playerLevel);
   if (diff <= 1) return 1.2;
@@ -592,7 +589,9 @@ export function calculateMonsterExp(input: MonsterExpInput, buffs: BuffState): M
   const levelAdjustedBase = Math.ceil(Math.max(0, input.monsterBaseExp) * levelBonus);
   const normalExp = Math.ceil(levelAdjustedBase * buffMultiplier);
   const hourlyExp = normalExp * Math.max(0, input.hourlyKillCount);
-  const remainingExp = levelExpRemaining(input.playerLevel, input.currentPercent);
+  const target = clamp(Math.floor(input.targetLevel), MIN_EXP_LEVEL + 1, MAX_EXP_LEVEL);
+  const currentExp = expForLevel(input.playerLevel) * clamp(input.currentPercent, 0, 99.999) / 100;
+  const remainingExp = input.playerLevel >= target ? 0 : expNeededBetween(input.playerLevel, currentExp, target);
   return {
     monsterLevelBonus: levelBonus,
     buffMultiplier,
@@ -600,7 +599,7 @@ export function calculateMonsterExp(input: MonsterExpInput, buffs: BuffState): M
     vipBoosterExp: normalExp * 10,
     goldClockworkExp: normalExp * 200,
     hourlyExp,
-    hoursToNextLevel: hourlyExp > 0 ? remainingExp / hourlyExp : 0,
+    hoursToTarget: hourlyExp > 0 ? remainingExp / hourlyExp : 0,
   };
 }
 

@@ -18,6 +18,7 @@ const CHANGELOG: ChangelogEntry[] = [
       { type: "changed", text: "Pendant of the Spirit is now a toggle under Additive Buffs in the EXP Calculator." },
       { type: "changed", text: "The EXP Calculator now shows Roll of the Dice only when the selected character is a Pirate class." },
       { type: "changed", text: "The EXP Calculator Daily / Weekly tab now pairs panels side by side and uses compact run-count tiles for weekly content to reduce scrolling." },
+      { type: "added", text: "The EXP Calculator Farming Calculator now has a Target Level input, and the overview shows hours to reach that target level instead of just the next level." },
       { type: "changed", text: "Redesigned the Tools page into compact category panels so the full list of tools is easier to scan." },
       { type: "added", text: "Added an Endgame Preset and a Reset button to the Trace Restoration Calculator for quickly selecting or clearing missions." },
       { type: "fixed", text: "Fixed not being able to select Extreme Seren in the Trace Restoration Calculator." },

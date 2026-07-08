@@ -77,6 +77,7 @@ const TAB_LABELS: Record<ExpTab, string> = {
 
 const DEFAULT_MONSTER: MonsterExpInput = {
   playerLevel: 260,
+  targetLevel: 270,
   currentPercent: 0,
   monsterLevel: 260,
   monsterBaseExp: 680638,
@@ -287,6 +288,7 @@ function BuffsTab({ theme }: { theme: AppTheme }) {
           <div className="exp-grid" style={{ marginTop: 12 }}>
             <NumberField label="Character Level" min={MIN_EXP_LEVEL} max={MAX_EXP_LEVEL - 1} value={monster.playerLevel} labelStyle={labelStyle} inputStyle={inputStyle} disabled={selectedCharName !== null} onChange={(value) => setMonster((state) => ({ ...state, playerLevel: value }))} />
             <NumberField label="Current EXP %" min={0} max={99.999} step="0.001" value={monster.currentPercent} labelStyle={labelStyle} inputStyle={inputStyle} disabled={selectedCharName !== null} onChange={(value) => setMonster((state) => ({ ...state, currentPercent: value }))} />
+            <NumberField label="Target Level" min={MIN_EXP_LEVEL + 1} max={MAX_EXP_LEVEL} value={monster.targetLevel} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => setMonster((state) => ({ ...state, targetLevel: value }))} />
             <NumberField label="Hourly Kill Count" min={0} value={monster.hourlyKillCount} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => setMonster((state) => ({ ...state, hourlyKillCount: value }))} />
           </div>
         </div>
@@ -643,7 +645,7 @@ function ExpOverviewPanel({
           </div>
         </div>
         <div className="exp-results">
-          <MiniMetric theme={theme} label="Hours to Next Level" value={formatHours(result.hoursToNextLevel)} />
+          <MiniMetric theme={theme} label="Hours to Target Level" value={formatHours(result.hoursToTarget)} />
           <MiniMetric theme={theme} label="Hourly EXP" value={formatExpCompact(result.hourlyExp)} />
           <MiniMetric theme={theme} label="Total Multiplier" value={`${result.buffMultiplier.toFixed(3)}x`} />
           <MiniMetric theme={theme} label="Level Bonus" value={`${result.monsterLevelBonus.toFixed(2)}x`} />
