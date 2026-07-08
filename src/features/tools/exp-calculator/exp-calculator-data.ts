@@ -3,7 +3,8 @@ export const MAX_EXP_LEVEL = 300;
 
 export type IconRef =
   | { type: "item" | "skill"; id: string; shadow?: boolean }
-  | { type: "erda-skill"; id: string };
+  | { type: "erda-skill"; id: string }
+  | { type: "mob"; id: string };
 
 export interface CheckBuff {
   id: string;
@@ -81,22 +82,74 @@ export interface ResourceTable {
   description: string;
   kind: "single-exp" | "epic";
   rows: LevelResourceRow[] | EpicDungeonRow[];
-  allInOne?: { label: string; max?: number };
+  maxUnits?: number;
+}
+
+type BurningType = "" | "hyper" | "hyperMax" | "hyperMaxBeyond";
+
+interface ExpContentOption {
+  id: string;
+  label: string;
+  region: "Arcane River" | "Tenebris" | "Grandis";
+  minLevel: number;
+  exp: number;
+  icon?: IconRef;
+}
+
+interface EpicDungeonOption {
+  id: string;
+  label: string;
+  minLevel: number;
+  baseMultiplier: number;
+}
+
+interface GrowthPotionOption {
+  id: string;
+  label: string;
+  minLevel: number;
+  maxLevel: number;
+  icon?: IconRef;
 }
 
 export interface AllInOneInput {
   startLevel: number;
   startPercent: number;
   targetLevel: number;
-  resources: Record<string, number>;
-  customExp: number;
+  startDate: string;
+  endDate: string;
+  burningType: BurningType;
+  dailyIds: string[];
+  monsterParkRuns: number;
+  customDailyExp: number;
+  weeklyRuns: Record<string, number>;
+  mpeRuns: number;
+  epicDungeonId: string;
+  epicDungeonMultiplier: number;
+  strawberryTickets: number;
+  mechaberryTickets: number;
+  expTickets: number;
+  advancedExpTickets: number;
+  punchKingScore: number;
+  doubleUpPoints: number;
+  potions: Record<string, number>;
+  arcaneRiverBonus: number;
+  grandisBonus: number;
+  monsterParkBonus: number;
+  epicDungeonBonus: number;
 }
 
 interface AllInOneResult {
   level: number;
   percent: number;
+  endDateLevel: number;
+  endDatePercent: number;
   totalExp: number;
   remainingToTarget: number;
+  reachedTarget: boolean;
+  daysSimulated: number;
+  weeklyResets: number;
+  projectedDaysToTarget: number | null;
+  milestones: { level: number; date: number }[];
 }
 
 const EXP_TO_NEXT_LEVEL_VALUES = [
@@ -315,7 +368,6 @@ export const RESOURCE_TABLES: ResourceTable[] = [
     description: "CROWN+ EXP ticket values per ticket from the local EXP Ticket workbook.",
     kind: "single-exp",
     rows: makeLevelRows(200, EXP_TICKET_CROWN),
-    allInOne: { label: "EXP Tickets" },
   },
   {
     id: "advanced-exp-ticket",
@@ -323,7 +375,6 @@ export const RESOURCE_TABLES: ResourceTable[] = [
     description: "Advanced EXP ticket values per ticket from the local EXP Ticket workbook.",
     kind: "single-exp",
     rows: makeLevelRows(260, ADV_EXP_TICKET),
-    allInOne: { label: "Advanced EXP Tickets" },
   },
   {
     id: "punch-king",
@@ -331,7 +382,7 @@ export const RESOURCE_TABLES: ResourceTable[] = [
     description: "Spiegella's Golden Carriage Tomato Punch King EXP per point, max 1150 points per run.",
     kind: "single-exp",
     rows: makeLevelRows(200, PUNCH_KING),
-    allInOne: { label: "Punch King Points", max: 1150 },
+    maxUnits: 1150,
   },
   {
     id: "strawberry-farm",
@@ -339,7 +390,6 @@ export const RESOURCE_TABLES: ResourceTable[] = [
     description: "Spiegella's Golden Strawberry Farm / Midnight Dream Catcher EXP per monster.",
     kind: "single-exp",
     rows: makeLevelRows(200, STRAWBERRY_FARM),
-    allInOne: { label: "Berry Farm Monsters" },
   },
   {
     id: "mechaberry-farm",
@@ -347,7 +397,6 @@ export const RESOURCE_TABLES: ResourceTable[] = [
     description: "Mechaberry Farm EXP per run. The workbook notes these values are not affected by EXP multipliers.",
     kind: "single-exp",
     rows: makeLevelRows(280, MECHABERRY_FARM),
-    allInOne: { label: "Mechaberry Runs" },
   },
   {
     id: "high-mountain",
@@ -371,6 +420,108 @@ export const RESOURCE_TABLES: ResourceTable[] = [
     rows: makeEpicRows(280, NIGHTMARE_PARADISE_BASE),
   },
 ];
+
+export const DAILY_EXP_CONTENT: ExpContentOption[] = [
+  { id: "rte", label: "Vanishing Journey", region: "Arcane River", minLevel: 200, exp: 0x2ba373a2, icon: { type: "item", id: "01712001" } },
+  { id: "cci", label: "Chew Chew Island", region: "Arcane River", minLevel: 210, exp: 0x7fa71c86, icon: { type: "item", id: "01712002" } },
+  { id: "lach", label: "Lachelein", region: "Arcane River", minLevel: 220, exp: 0xbe15c70a, icon: { type: "item", id: "01712003" } },
+  { id: "arcana", label: "Arcana", region: "Arcane River", minLevel: 225, exp: 0xc5012937, icon: { type: "item", id: "01712004" } },
+  { id: "moras", label: "Morass", region: "Arcane River", minLevel: 230, exp: 0x106283735, icon: { type: "item", id: "01712005" } },
+  { id: "esf", label: "Esfera", region: "Arcane River", minLevel: 235, exp: 0x10e0f3132, icon: { type: "item", id: "01712006" } },
+  { id: "mb", label: "Moonbridge", region: "Tenebris", minLevel: 245, exp: 0x1f4886ce7, icon: { type: "mob", id: "8644614" } },
+  { id: "laby", label: "Labyrinth of Suffering", region: "Tenebris", minLevel: 250, exp: 905769e4, icon: { type: "mob", id: "8644706" } },
+  { id: "limen", label: "Limina", region: "Tenebris", minLevel: 255, exp: 0x261806f70, icon: { type: "mob", id: "8645010" } },
+  { id: "cern", label: "Cernium", region: "Grandis", minLevel: 260, exp: 0x3d4d5c820, icon: { type: "item", id: "01713000" } },
+  { id: "arcs", label: "Hotel Arcus", region: "Grandis", minLevel: 265, exp: 0x482b53349, icon: { type: "item", id: "01713001" } },
+  { id: "odium", label: "Odium", region: "Grandis", minLevel: 270, exp: 0x569941dd0, icon: { type: "item", id: "01713002" } },
+  { id: "sgl", label: "Shangri-La", region: "Grandis", minLevel: 275, exp: 0x77aeb5a38, icon: { type: "item", id: "01713003" } },
+  { id: "arteria", label: "Arteria", region: "Grandis", minLevel: 280, exp: 0x8fc5964a0, icon: { type: "item", id: "01713004" } },
+  { id: "carcion", label: "Carcion", region: "Grandis", minLevel: 285, exp: 0xaa0123d60, icon: { type: "item", id: "01713005" } },
+  { id: "tallahart", label: "Tallahart", region: "Grandis", minLevel: 290, exp: 0x14e46112c0, icon: { type: "item", id: "01714000" } },
+  { id: "geardock", label: "Geardock", region: "Grandis", minLevel: 295, exp: 0x1898b2ee80, icon: { type: "item", id: "01714001" } },
+];
+
+export const WEEKLY_EXP_CONTENT: ExpContentOption[] = [
+  { id: "erda-spectrum", label: "Erda Spectrum", region: "Arcane River", minLevel: 200, exp: 0xb30798c, icon: { type: "item", id: "01712001" } },
+  { id: "hungry-muto", label: "Hungry Muto", region: "Arcane River", minLevel: 210, exp: 0x20bb4264, icon: { type: "item", id: "01712002" } },
+  { id: "midnight-chaser", label: "Midnight Chaser", region: "Arcane River", minLevel: 220, exp: 0x30bd60fc, icon: { type: "item", id: "01712003" } },
+  { id: "spirit-savior", label: "Spirit Savior", region: "Arcane River", minLevel: 225, exp: 0x3283946a, icon: { type: "item", id: "01712004" } },
+  { id: "ranheim-defense", label: "Ranheim Defense", region: "Arcane River", minLevel: 230, exp: 0x433842ab, icon: { type: "item", id: "01712005" } },
+  { id: "protect-esfera", label: "Protect Esfera", region: "Arcane River", minLevel: 235, exp: 0x453ef8ec, icon: { type: "item", id: "01712006" } },
+];
+
+export const EPIC_DUNGEON_OPTIONS: EpicDungeonOption[] = [
+  { id: "high-mountain", label: "High Mountain", minLevel: 260, baseMultiplier: 1 },
+  { id: "angler-company", label: "Angler Company", minLevel: 270, baseMultiplier: 1.5 },
+  { id: "nightmare-paradise", label: "Nightmare Paradise", minLevel: 280, baseMultiplier: 2 },
+];
+
+export const GROWTH_POTION_OPTIONS: GrowthPotionOption[] = [
+  { id: "potion1", label: "Growth Potion 1", minLevel: 200, maxLevel: 209, icon: { type: "item", id: "02633425" } },
+  { id: "potion2", label: "Growth Potion 2", minLevel: 200, maxLevel: 219, icon: { type: "item", id: "02633424" } },
+  { id: "potion3", label: "Growth Potion 3", minLevel: 200, maxLevel: 229, icon: { type: "item", id: "02633423" } },
+  { id: "tgp", label: "Typhoon Growth Potion", minLevel: 200, maxLevel: 239, icon: { type: "item", id: "02439660" } },
+  { id: "mgp", label: "Mag Growth Potion", minLevel: 200, maxLevel: 249, icon: { type: "item", id: "02633621" } },
+  { id: "leapgp", label: "Leap Growth Potion", minLevel: 200, maxLevel: 259, icon: { type: "item", id: "02831238" } },
+  { id: "trgp", label: "Transcendent Potion", minLevel: 200, maxLevel: 269, icon: { type: "item", id: "02637134" } },
+  { id: "lgp", label: "Legendary Potion", minLevel: 200, maxLevel: 279, icon: { type: "item", id: "02831239" } },
+];
+
+const MONSTER_PARK_EXP = [
+  { minLevel: 200, exp: 0x1573de48 },
+  { minLevel: 210, exp: 0x4c98be98 },
+  { minLevel: 220, exp: 0xbfc99c3e },
+  { minLevel: 225, exp: 0x11897de7a },
+  { minLevel: 230, exp: 0x1653db880 },
+  { minLevel: 235, exp: 0x19c71beaa },
+  { minLevel: 240, exp: 0x207530148 },
+  { minLevel: 245, exp: 0x2ba5d6134 },
+  { minLevel: 250, exp: 14058901e3 },
+  { minLevel: 255, exp: 0x39f013158 },
+  { minLevel: 260, exp: 0x8b9a915ac },
+  { minLevel: 265, exp: 0xa588f1a1c },
+  { minLevel: 270, exp: 0xc4c3f7700 },
+  { minLevel: 275, exp: 76639838e3 },
+  { minLevel: 280, exp: 107204032e3 },
+  { minLevel: 285, exp: 156017856e3 },
+  { minLevel: 290, exp: 218575316e3 },
+];
+
+const MPE_EXP_FACTORS = [
+  2.04, 2.04, 2.04, 2.04, 2.04, 2.652, 2.652, 2.652, 2.652, 2.652,
+  4.2, 4.2, 4.2, 4.2, 4.2, 5.376, 5.376, 5.376, 5.376, 5.376,
+  5.832, 5.832, 5.832, 5.832, 5.832, 5.832, 5.832, 5.832, 5.832, 5.832,
+  5.832, 5.832, 5.832, 5.832, 5.832, 5.832, 5.832, 5.832, 5.832, 5.832,
+];
+
+const CHAMPION_DOUBLE_UP_ARCANE = [
+  98708, 101389, 104101, 107125, 109886, 112662, 115470, 118598, 121453, 124322,
+  248003, 253673, 260047, 265808, 271621, 278138, 284043, 290679, 296653, 303394,
+  309470, 316316, 322473, 329417, 335675, 342720, 349836, 356216, 363430, 370692,
+  393361, 401055, 408778, 415702, 423542, 431459, 439402, 446505, 454564, 462670,
+  470824, 485614, 494006, 501461, 509964, 518511, 527106, 535749, 544459, 553217,
+  584807, 594040, 603318, 612643, 622041, 631458, 640971, 650504, 661261, 670940,
+];
+
+const CHAMPION_DOUBLE_UP_GRANDIS = [
+  1725461, 1750290, 1775159, 1800203, 1828409, 2056794, 2085219, 2113572, 2145596, 2174274,
+  2445217, 2481337, 2513634, 2546149, 2582906, 2903024, 2939616, 2981010, 3017988, 3059716,
+  3436027, 3482914, 3524768, 3572010, 3614278, 4062965, 4110304, 4163751, 4217526, 4265489,
+  4793318, 4847012, 4907812, 4968977, 5023491, 5643220, 5711948, 5781080, 5842650, 5912186,
+];
+
+const PUNCH_KING_TIERS = [
+  { limit: 10, multiplier: 1500 },
+  { limit: 15, multiplier: 2000 },
+  { limit: 125, multiplier: 360 },
+  { limit: 250, multiplier: 240 },
+  { limit: 1200, multiplier: 75 },
+  { limit: 400, multiplier: 300 },
+  { limit: 50, multiplier: 1500 },
+];
+
+const DAY_MS = 86400000;
+const THURSDAY = 4;
 
 export const DEFAULT_BUFF_STATE: BuffState = {
   exclusive: {},
@@ -438,26 +589,31 @@ export function calculateMonsterExp(input: MonsterExpInput, buffs: BuffState): M
 }
 
 export function calculateAllInOne(input: AllInOneInput): AllInOneResult {
-  let level = clamp(Math.floor(input.startLevel), MIN_EXP_LEVEL, MAX_EXP_LEVEL - 1);
-  let currentExp = Math.floor(expForLevel(level) * clamp(input.startPercent, 0, 99.999) / 100);
-  const totalExp = allInOneExpAtLevel(level, input);
-  const applied = applyExp(level, currentExp, totalExp);
-  level = applied.level;
-  currentExp = applied.currentExp;
-  const target = clamp(Math.floor(input.targetLevel), level + 1, MAX_EXP_LEVEL);
+  const dateRange = normalizedDateRange(input.startDate, input.endDate);
+  let state = initialSimulationState(input);
+  const milestones = state.milestones;
+  state = applyStartingEventResources(state, input, dateRange.start);
+  for (let date = dateRange.start; date <= dateRange.end && state.level < MAX_EXP_LEVEL; date += DAY_MS) {
+    state = applyDailyWeeklyContent(state, input, date);
+  }
+  const endDateLevel = state.level;
+  const endDatePercent = expPercent(state.level, state.currentExp);
+  state = applyEndingEventResources(state, input, dateRange.end);
+  const target = clamp(Math.floor(input.targetLevel), MIN_EXP_LEVEL + 1, MAX_EXP_LEVEL);
+  const remainingToTarget = state.level >= target ? 0 : expNeededBetween(state.level, state.currentExp, target);
   return {
-    level,
-    percent: expForLevel(level) > 0 ? (currentExp / expForLevel(level)) * 100 : 0,
-    totalExp,
-    remainingToTarget: expNeededBetween(level, currentExp, target),
+    level: state.level,
+    percent: expPercent(state.level, state.currentExp),
+    endDateLevel,
+    endDatePercent,
+    totalExp: state.totalExp,
+    remainingToTarget,
+    reachedTarget: remainingToTarget <= 0,
+    daysSimulated: Math.floor((dateRange.end - dateRange.start) / DAY_MS) + 1,
+    weeklyResets: countThursdays(dateRange.start, dateRange.end),
+    projectedDaysToTarget: projectedDaysToTarget(state, input, target, remainingToTarget),
+    milestones,
   };
-}
-
-function resourceExpAtLevel(tableId: string, level: number): number {
-  const table = RESOURCE_TABLES.find((resource) => resource.id === tableId);
-  if (!table || table.kind !== "single-exp") return 0;
-  const rows = table.rows as LevelResourceRow[];
-  return rows.find((row) => row.level === level)?.exp ?? 0;
 }
 
 export function percentOfLevel(level: number, exp: number): number {
@@ -465,21 +621,206 @@ export function percentOfLevel(level: number, exp: number): number {
   return tnl > 0 ? (exp / tnl) * 100 : 0;
 }
 
-function allInOneExpAtLevel(level: number, input: AllInOneInput): number {
-  return RESOURCE_TABLES.reduce(
-    (sum, table) => (table.allInOne ? sum + resourceExpAtLevel(table.id, level) * Math.max(0, input.resources[table.id] ?? 0) : sum),
-    Math.max(0, input.customExp),
+interface SimulationState {
+  level: number;
+  currentExp: number;
+  totalExp: number;
+  burningType: BurningType;
+  milestones: { level: number; date: number }[];
+}
+
+function initialSimulationState(input: AllInOneInput): SimulationState {
+  const level = clamp(Math.floor(input.startLevel), MIN_EXP_LEVEL, MAX_EXP_LEVEL - 1);
+  return {
+    level,
+    currentExp: Math.floor(expForLevel(level) * clamp(input.startPercent, 0, 99.999) / 100),
+    totalExp: 0,
+    burningType: input.burningType,
+    milestones: [],
+  };
+}
+
+function applyStartingEventResources(state: SimulationState, input: AllInOneInput, date: number): SimulationState {
+  let next = applyResourceUnits(state, Math.max(0, input.strawberryTickets) * 1200, "strawberry-farm", date);
+  if (next.level >= 280) {
+    next = applyResourceUnits(next, Math.max(0, input.mechaberryTickets) * 9600, "mechaberry-farm", date);
+  }
+  return next;
+}
+
+function applyEndingEventResources(state: SimulationState, input: AllInOneInput, date: number): SimulationState {
+  let next = applyResourceUnits(state, Math.max(0, input.expTickets), "exp-ticket", date);
+  if (next.level >= 260) {
+    next = applyResourceUnits(next, Math.max(0, input.advancedExpTickets), "advanced-exp-ticket", date);
+  }
+  return applyGrowthPotions(next, input.potions, date);
+}
+
+function applyDailyWeeklyContent(state: SimulationState, input: AllInOneInput, date: number): SimulationState {
+  let next = applySimulationExp(state, dailyExpForState(state, input, date), date);
+  if (new Date(date).getDay() === THURSDAY) {
+    next = applySimulationExp(next, weeklyExpForState(next, input), date);
+  }
+  return next;
+}
+
+function dailyExpForState(state: SimulationState, input: AllInOneInput, date: number): number {
+  return (
+    selectedDailyExp(state.level, input) +
+    monsterParkExpForLevel(state.level, input.monsterParkRuns, input.monsterParkBonus, date) +
+    Math.max(0, input.customDailyExp)
   );
 }
 
-function applyExp(startLevel: number, startExp: number, gainedExp: number): { level: number; currentExp: number } {
-  let level = startLevel;
-  let currentExp = startExp + gainedExp;
+function weeklyExpForState(state: SimulationState, input: AllInOneInput): number {
+  return (
+    selectedWeeklyExp(state.level, input.weeklyRuns) +
+    monsterParkExtremeExpForLevel(state.level, input.mpeRuns, input.monsterParkBonus) +
+    epicDungeonExpForLevel(state.level, input) +
+    punchKingExpForLevel(state.level, input.punchKingScore) +
+    doubleUpExpForLevel(state.level, input.doubleUpPoints)
+  );
+}
+
+function selectedDailyExp(level: number, input: AllInOneInput): number {
+  return DAILY_EXP_CONTENT.filter((daily) => input.dailyIds.includes(daily.id) && level >= daily.minLevel)
+    .reduce((total, daily) => total + daily.exp + Math.ceil(daily.exp * dailyBonusPercent(daily, input) / 100), 0);
+}
+
+function selectedWeeklyExp(level: number, weeklyRuns: Record<string, number>): number {
+  return WEEKLY_EXP_CONTENT.reduce((total, weekly) => {
+    const runs = clamp(Math.floor(weeklyRuns[weekly.id] ?? 0), 0, 3);
+    return level >= weekly.minLevel ? total + weekly.exp * runs : total;
+  }, 0);
+}
+
+function dailyBonusPercent(daily: ExpContentOption, input: AllInOneInput): number {
+  return daily.region === "Grandis" ? Math.max(0, input.grandisBonus) : Math.max(0, input.arcaneRiverBonus);
+}
+
+function monsterParkExpForLevel(level: number, runs: number, bonusPercent: number, date: number): number {
+  const row = MONSTER_PARK_EXP.filter((entry) => entry.minLevel <= level).pop();
+  const base = row?.exp ?? 0;
+  const sundayMultiplier = new Date(date).getDay() === 0 ? 1.5 : 1;
+  return (Math.ceil(base * sundayMultiplier) + Math.ceil(base * Math.max(0, bonusPercent) / 100)) * Math.max(0, runs);
+}
+
+function monsterParkExtremeExpForLevel(level: number, runs: number, bonusPercent: number): number {
+  if (level < 260) return 0;
+  const base = level * (MPE_EXP_FACTORS[level - 260] ?? MPE_EXP_FACTORS[MPE_EXP_FACTORS.length - 1]) * 100000000;
+  return (Math.ceil(5 * base) + Math.ceil(5 * base * Math.max(0, bonusPercent) / 100)) * Math.max(0, runs);
+}
+
+function epicDungeonExpForLevel(level: number, input: AllInOneInput): number {
+  const dungeon = EPIC_DUNGEON_OPTIONS.find((entry) => entry.id === input.epicDungeonId);
+  if (!dungeon || level < dungeon.minLevel || input.epicDungeonMultiplier <= 0) return 0;
+  const base = HIGH_MOUNTAIN_BASE[level - 260] ?? HIGH_MOUNTAIN_BASE[HIGH_MOUNTAIN_BASE.length - 1];
+  return Math.floor(base * dungeon.baseMultiplier * (input.epicDungeonMultiplier + Math.max(0, input.epicDungeonBonus) / 100));
+}
+
+function punchKingExpForLevel(level: number, score: number): number {
+  const base = resourceExpWithFallback("punch-king", level) / 900;
+  let remaining = Math.max(0, Math.floor(score));
+  let total = 0;
+  for (const tier of PUNCH_KING_TIERS) {
+    const used = Math.min(remaining, tier.limit);
+    total += base * used * tier.multiplier;
+    remaining -= used;
+    if (remaining <= 0) break;
+  }
+  return total;
+}
+
+function doubleUpExpForLevel(level: number, points: number): number {
+  if (level < 200) return 0;
+  const source = level < 260 ? CHAMPION_DOUBLE_UP_ARCANE[level - 200] : CHAMPION_DOUBLE_UP_GRANDIS[level - 260];
+  return Math.ceil(3.5 * (source ?? CHAMPION_DOUBLE_UP_GRANDIS[CHAMPION_DOUBLE_UP_GRANDIS.length - 1])) * Math.max(0, points);
+}
+
+function applyResourceUnits(state: SimulationState, units: number, tableId: string, date: number): SimulationState {
+  let next = state;
+  let remainingUnits = Math.max(0, Math.floor(units));
+  while (remainingUnits > 0 && next.level < MAX_EXP_LEVEL) {
+    const unitExp = resourceExpWithFallback(tableId, next.level);
+    if (unitExp <= 0) break;
+    const unitsToLevel = Math.ceil((expForLevel(next.level) - next.currentExp) / unitExp);
+    const used = Math.min(remainingUnits, unitsToLevel);
+    next = applySimulationExp(next, used * unitExp, date);
+    remainingUnits -= used;
+  }
+  return next;
+}
+
+function applyGrowthPotions(state: SimulationState, potions: Record<string, number>, date: number): SimulationState {
+  let next = state;
+  for (const potion of GROWTH_POTION_OPTIONS) {
+    let qty = clamp(Math.floor(potions[potion.id] ?? 0), 0, 1000);
+    while (qty > 0 && next.level >= potion.minLevel && next.level <= potion.maxLevel && next.level < MAX_EXP_LEVEL) {
+      next = applySimulationExp(next, expForLevel(next.level), date);
+      qty -= 1;
+    }
+    if (qty > 0 && next.level < MAX_EXP_LEVEL) {
+      next = applySimulationExp(next, expForLevel(potion.maxLevel) * qty, date);
+    }
+  }
+  return next;
+}
+
+function applySimulationExp(state: SimulationState, gainedExp: number, date: number): SimulationState {
+  let level = state.level;
+  let currentExp = state.currentExp + Math.max(0, gainedExp);
+  const milestones = state.milestones;
   while (level < MAX_EXP_LEVEL && currentExp >= expForLevel(level)) {
     currentExp -= expForLevel(level);
-    level += 1;
+    level = nextLevelAfterGain(level, state.burningType);
+    milestones.push({ level, date });
   }
-  return { level, currentExp: level >= MAX_EXP_LEVEL ? 0 : currentExp };
+  return {
+    ...state,
+    level,
+    currentExp: level >= MAX_EXP_LEVEL ? 0 : currentExp,
+    totalExp: state.totalExp + Math.max(0, gainedExp),
+  };
+}
+
+function nextLevelAfterGain(level: number, burningType: BurningType): number {
+  if (!burningType) return level + 1;
+  if (level < 260) return Math.min(260, level + (burningType === "hyper" ? 3 : 5));
+  if (burningType === "hyperMaxBeyond" && level < 270) return Math.min(270, level + 2);
+  return level + 1;
+}
+
+function projectedDaysToTarget(state: SimulationState, input: AllInOneInput, target: number, remainingToTarget: number): number | null {
+  if (state.level >= target || remainingToTarget <= 0) return 0;
+  const averageDailyExp = dailyExpForState(state, input, Date.now()) + weeklyExpForState(state, input) / 7;
+  if (averageDailyExp <= 0) return null;
+  return Math.ceil(remainingToTarget / averageDailyExp);
+}
+
+function resourceExpWithFallback(tableId: string, level: number): number {
+  const table = RESOURCE_TABLES.find((resource) => resource.id === tableId);
+  if (!table || table.kind !== "single-exp") return 0;
+  const rows = table.rows as LevelResourceRow[];
+  return rows.find((row) => row.level === level)?.exp ?? rows[rows.length - 1]?.exp ?? 0;
+}
+
+function normalizedDateRange(startDate: string, endDate: string): { start: number; end: number } {
+  const today = Date.parse(new Date().toDateString());
+  const start = Date.parse(`${startDate}T00:00:00`) || today;
+  const end = Date.parse(`${endDate}T00:00:00`) || start;
+  return start <= end ? { start, end } : { start: end, end: start };
+}
+
+function countThursdays(start: number, end: number): number {
+  let count = 0;
+  for (let date = start; date <= end; date += DAY_MS) {
+    if (new Date(date).getDay() === THURSDAY) count += 1;
+  }
+  return count;
+}
+
+function expPercent(level: number, currentExp: number): number {
+  return expForLevel(level) > 0 ? (currentExp / expForLevel(level)) * 100 : 0;
 }
 
 function expNeededBetween(level: number, currentExp: number, targetLevel: number): number {

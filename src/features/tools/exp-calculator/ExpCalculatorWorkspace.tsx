@@ -10,17 +10,21 @@ import { ToolHeader } from "../../../components/ToolHeader";
 import { useMounted } from "../../../lib/useMounted";
 import { formatExpCompact, formatMesoFull } from "../format";
 import { replaceZeroOnDigit } from "../numberInputHandlers";
-import { Field } from "../shared-ui";
+import { Field, Toggle } from "../shared-ui";
 import { toolStyles } from "../tool-styles";
 import {
   CHECK_BUFF_GROUPS,
+  DAILY_EXP_CONTENT,
   DEFAULT_BUFF_STATE,
+  EPIC_DUNGEON_OPTIONS,
+  GROWTH_POTION_OPTIONS,
   INPUT_BUFFS,
   LEVEL_INPUT_BUFFS,
   MAX_EXP_LEVEL,
   MIN_EXP_LEVEL,
   RESOURCE_TABLES,
   SELECT_BUFFS,
+  WEEKLY_EXP_CONTENT,
   calculateAllInOne,
   calculateMonsterExp,
   expForLevel,
@@ -43,6 +47,24 @@ import {
 } from "../../characters/model/charactersStore";
 
 type ExpTab = "buffs" | "all-in-one" | "resources";
+type AllInOneNumberKey =
+  | "startLevel"
+  | "startPercent"
+  | "targetLevel"
+  | "monsterParkRuns"
+  | "customDailyExp"
+  | "mpeRuns"
+  | "epicDungeonMultiplier"
+  | "strawberryTickets"
+  | "mechaberryTickets"
+  | "expTickets"
+  | "advancedExpTickets"
+  | "punchKingScore"
+  | "doubleUpPoints"
+  | "arcaneRiverBonus"
+  | "grandisBonus"
+  | "monsterParkBonus"
+  | "epicDungeonBonus";
 
 const TAB_OPTIONS: ExpTab[] = ["buffs", "all-in-one", "resources"];
 const TAB_LABELS: Record<ExpTab, string> = {
@@ -59,17 +81,36 @@ const DEFAULT_MONSTER: MonsterExpInput = {
   hourlyKillCount: 18000,
 };
 
-const ALL_IN_ONE_RESOURCES = RESOURCE_TABLES.flatMap((table) =>
-  table.allInOne ? [{ id: table.id, ...table.allInOne }] : [],
-);
-
-const DEFAULT_ALL_IN_ONE: AllInOneInput = {
-  startLevel: 260,
-  startPercent: 0,
-  targetLevel: 270,
-  resources: Object.fromEntries(ALL_IN_ONE_RESOURCES.map((resource) => [resource.id, 0])),
-  customExp: 0,
-};
+function defaultAllInOneInput(): AllInOneInput {
+  const startDate = localDateInputValue(new Date());
+  const endDate = localDateInputValue(addDays(new Date(), 27));
+  return {
+    startLevel: 260,
+    startPercent: 0,
+    targetLevel: 270,
+    startDate,
+    endDate,
+    burningType: "",
+    dailyIds: DAILY_EXP_CONTENT.map((daily) => daily.id),
+    monsterParkRuns: 7,
+    customDailyExp: 0,
+    weeklyRuns: Object.fromEntries(WEEKLY_EXP_CONTENT.map((weekly) => [weekly.id, 1])),
+    mpeRuns: 1,
+    epicDungeonId: "high-mountain",
+    epicDungeonMultiplier: 1,
+    strawberryTickets: 0,
+    mechaberryTickets: 0,
+    expTickets: 0,
+    advancedExpTickets: 0,
+    punchKingScore: 0,
+    doubleUpPoints: 0,
+    potions: Object.fromEntries(GROWTH_POTION_OPTIONS.map((potion) => [potion.id, 0])),
+    arcaneRiverBonus: 0,
+    grandisBonus: 0,
+    monsterParkBonus: 0,
+    epicDungeonBonus: 0,
+  };
+}
 
 const EXCLUSIVE_BUFF_SECTIONS = CHECK_BUFF_GROUPS.filter((group) => group.mode === "exclusive").reduce<
   { title: string; buffs: { groupId: string; buff: CheckBuff }[] }[]
@@ -87,6 +128,8 @@ const INPUT_BUFF_PANELS = [
   { title: "Skill Levels", buffs: LEVEL_INPUT_BUFFS },
   { title: "Custom Additive Inputs", buffs: INPUT_BUFFS },
 ];
+
+const DAILY_REGIONS = [...new Set(DAILY_EXP_CONTENT.map((daily) => daily.region))];
 
 const iconRowStyle: React.CSSProperties = { display: "flex", alignItems: "center", gap: 8 };
 
@@ -430,7 +473,7 @@ function MonsterSelector({
           <MobSprite id={monster.id} size={32} alt={monster.name} />
           <span style={{ flex: 1, minWidth: 0 }}>
             <span style={{ display: "block", fontSize: "0.82rem", fontWeight: 800 }}>{monster.name}</span>
-            <span style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: theme.muted }}>
+            <span style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: theme.muted }}>
               Lv. {monster.level} | {monster.area}
             </span>
           </span>
@@ -512,7 +555,7 @@ function ExpOverviewPanel({
       <div className="exp-overview-grid">
         <div style={visualCardStyle}>
           <div style={{ width: 96, minHeight: 104, display: "grid", placeItems: "center" }}>
-            {selectedMonster ? <MobSprite id={selectedMonster.id} size={96} alt={selectedMonster.name} /> : <span style={{ color: theme.muted, fontSize: "0.72rem", fontWeight: 800 }}>Mob</span>}
+            {selectedMonster ? <MobSprite id={selectedMonster.id} size={96} alt={selectedMonster.name} /> : <span style={{ color: theme.muted, fontSize: "0.75rem", fontWeight: 800 }}>Mob</span>}
           </div>
           <div style={{ minWidth: 0 }}>
             <div style={{ color: theme.text, fontSize: "0.95rem", fontWeight: 900, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -570,38 +613,211 @@ function MiniMetric({ theme, label, value }: { theme: AppTheme; label: string; v
 function AllInOneTab({ theme }: { theme: AppTheme }) {
   const styles = toolStyles(theme);
   const inputStyle = fullWidthControl(styles.inputStyle);
+  const selectStyle = fullWidthControl(styles.selectStyle);
+  const characterDropdownInputStyle: React.CSSProperties = { ...styles.inputStyle, width: "100%" };
   const labelStyle = styles.labelStyle;
   const panelStyle = expPanelStyle(styles);
-  const [input, setInput] = useState<AllInOneInput>(DEFAULT_ALL_IN_ONE);
+  const [input, setInput] = useState<AllInOneInput>(() => defaultAllInOneInput());
+  const [selectedCharName, setSelectedCharName] = useState<string | null>(null);
+  const characters = useMemo(() => selectCharactersList(readCharactersStore()), []);
   const result = useMemo(() => calculateAllInOne(input), [input]);
+  const updateNumber = (key: AllInOneNumberKey, value: number) => {
+    setInput((state) => ({ ...state, [key]: value }));
+  };
+  const toggleDaily = (id: string) => {
+    setInput((state) => ({
+      ...state,
+      dailyIds: state.dailyIds.includes(id) ? state.dailyIds.filter((dailyId) => dailyId !== id) : [...state.dailyIds, id],
+    }));
+  };
+  const updateWeeklyRun = (id: string, runs: number) => {
+    setInput((state) => ({ ...state, weeklyRuns: { ...state.weeklyRuns, [id]: runs } }));
+  };
+  const updatePotion = (id: string, qty: number) => {
+    setInput((state) => ({ ...state, potions: { ...state.potions, [id]: qty } }));
+  };
+  const updateCharacter = (name: string | null) => {
+    setSelectedCharName(name);
+    const selected = characters.find((character) => character.characterName === name);
+    if (!selected) return;
+    setInput((state) => ({
+      ...state,
+      startLevel: selected.level,
+      startPercent: roundToThree(Math.min(99.999, Math.max(0, percentOfLevel(selected.level, selected.exp)))),
+    }));
+  };
 
   return (
     <>
       <div className="fade-in" style={panelStyle}>
-        <SectionTitle theme={theme} label="Starting Point" />
-        <div className="exp-grid">
-          <NumberField label="Current Level" min={MIN_EXP_LEVEL} max={MAX_EXP_LEVEL - 1} value={input.startLevel} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => setInput((state) => ({ ...state, startLevel: value }))} />
-          <NumberField label="Current EXP %" min={0} max={99.999} step="0.001" value={input.startPercent} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => setInput((state) => ({ ...state, startPercent: value }))} />
-          <NumberField label="Target Level" min={MIN_EXP_LEVEL + 1} max={MAX_EXP_LEVEL} value={input.targetLevel} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => setInput((state) => ({ ...state, targetLevel: value }))} />
-          <NumberField label="Custom EXP" min={0} value={input.customExp} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => setInput((state) => ({ ...state, customExp: value }))} />
+        <SectionTitle theme={theme} label="Character" />
+        <Field label="Character" style={labelStyle}>
+          <CharacterDropdown
+            theme={theme}
+            characters={characters}
+            selectedCharName={selectedCharName}
+            onCharChange={updateCharacter}
+            inputStyle={characterDropdownInputStyle}
+            nullOption={{ label: "Manual Level", subtitle: "No character selected" }}
+            triggerStyle={{ maxWidth: "none", minWidth: 0, width: "100%" }}
+          />
+        </Field>
+        <div className="exp-grid" style={{ marginTop: 12 }}>
+          <NumberField label="Current Level" min={MIN_EXP_LEVEL} max={MAX_EXP_LEVEL - 1} value={input.startLevel} labelStyle={labelStyle} inputStyle={inputStyle} disabled={selectedCharName !== null} onChange={(value) => updateNumber("startLevel", value)} />
+          <NumberField label="Current EXP %" min={0} max={99.999} step="0.001" value={input.startPercent} labelStyle={labelStyle} inputStyle={inputStyle} disabled={selectedCharName !== null} onChange={(value) => updateNumber("startPercent", value)} />
+          <NumberField label="Target Level" min={MIN_EXP_LEVEL + 1} max={MAX_EXP_LEVEL} value={input.targetLevel} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("targetLevel", value)} />
+          <Field label="Burning" style={labelStyle}>
+            <select className="tool-select" value={input.burningType} onChange={(e) => setInput((state) => ({ ...state, burningType: e.target.value as AllInOneInput["burningType"] }))} style={selectStyle}>
+              <option value="">None</option>
+              <option value="hyper">Hyper Burning</option>
+              <option value="hyperMax">Hyper Burning MAX</option>
+              <option value="hyperMaxBeyond">Hyper Burning MAX + Beyond</option>
+            </select>
+          </Field>
+          <DateField theme={theme} label="Start Date" value={input.startDate} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => setInput((state) => ({ ...state, startDate: value }))} />
+          <DateField theme={theme} label="End Date" value={input.endDate} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => setInput((state) => ({ ...state, endDate: value }))} />
         </div>
       </div>
 
       <div className="fade-in" style={panelStyle}>
-        <SectionTitle theme={theme} label="Resource Quantities" />
+        <SectionTitle theme={theme} label="Daily Content" />
+        {DAILY_REGIONS.map((region) => (
+          <div key={region} style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 8 }}>
+            <span className="tool-field-label" style={{ color: theme.muted, width: 86, flexShrink: 0 }}>{region}</span>
+            {DAILY_EXP_CONTENT.filter((daily) => daily.region === region).map((daily) => {
+              const selected = input.dailyIds.includes(daily.id);
+              return (
+                <button
+                  key={daily.id}
+                  type="button"
+                  title={`${daily.label} (Lv. ${daily.minLevel})`}
+                  aria-label={`${daily.label} (Lv. ${daily.minLevel})`}
+                  aria-pressed={selected}
+                  onClick={() => toggleDaily(daily.id)}
+                  style={dailyTileStyle(theme, selected)}
+                >
+                  <BuffIcon icon={daily.icon} label={daily.label} />
+                </button>
+              );
+            })}
+          </div>
+        ))}
+        <div className="exp-grid" style={{ marginTop: 12 }}>
+          <NumberField label="Custom Daily EXP" min={0} value={input.customDailyExp} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("customDailyExp", value)} />
+          <NumberField label="Arcane River Daily Bonus %" min={0} max={100} value={input.arcaneRiverBonus} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("arcaneRiverBonus", value)} />
+          <NumberField label="Grandis Daily Bonus %" min={0} max={100} value={input.grandisBonus} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("grandisBonus", value)} />
+        </div>
+      </div>
+
+      <div className="fade-in" style={panelStyle}>
+        <SectionTitle theme={theme} label="Monster Park" />
         <div className="exp-grid">
-          {ALL_IN_ONE_RESOURCES.map((resource) => (
-            <NumberField key={resource.id} label={resource.label} min={0} max={resource.max} value={input.resources[resource.id] ?? 0} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => setInput((state) => ({ ...state, resources: { ...state.resources, [resource.id]: value } }))} />
+          <NumberField label="Runs / Day" icon={{ type: "item", id: "05252030" }} min={0} max={7} value={input.monsterParkRuns} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("monsterParkRuns", value)} />
+          <NumberField label="Bonus EXP %" min={0} max={100} value={input.monsterParkBonus} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("monsterParkBonus", value)} />
+          <Field label="Monster Park Extreme" style={labelStyle}>
+            <Toggle theme={theme} label="1 clear / week" checked={input.mpeRuns > 0} onChange={(checked) => updateNumber("mpeRuns", checked ? 1 : 0)} style={{ height: 35, width: "100%" }} />
+          </Field>
+        </div>
+      </div>
+
+      <div className="fade-in" style={panelStyle}>
+        <SectionTitle theme={theme} label="Weekly Content" />
+        <div className="exp-grid">
+          {WEEKLY_EXP_CONTENT.map((weekly) => (
+            <Field key={weekly.id} label={`${weekly.label} (Lv. ${weekly.minLevel})`} style={labelStyle}>
+              <div style={iconRowStyle}>
+                <BuffIcon icon={weekly.icon} label={weekly.label} />
+                <select className="tool-select" value={input.weeklyRuns[weekly.id] ?? 0} onChange={(e) => updateWeeklyRun(weekly.id, Number(e.target.value))} style={selectStyle}>
+                  <option value={0}>0 runs</option>
+                  <option value={1}>1 run</option>
+                  <option value={2}>2 runs</option>
+                  <option value={3}>3 runs</option>
+                </select>
+              </div>
+            </Field>
+          ))}
+          <Field label="Epic Dungeon" style={labelStyle}>
+            <select className="tool-select" value={input.epicDungeonId} onChange={(e) => setInput((state) => ({ ...state, epicDungeonId: e.target.value }))} style={selectStyle}>
+              <option value="">No Epic Dungeon</option>
+              {EPIC_DUNGEON_OPTIONS.map((dungeon) => <option key={dungeon.id} value={dungeon.id}>{dungeon.label} (Lv. {dungeon.minLevel})</option>)}
+            </select>
+          </Field>
+          <Field label="Epic Dungeon Reward" style={labelStyle}>
+            <select className="tool-select" value={input.epicDungeonMultiplier} onChange={(e) => updateNumber("epicDungeonMultiplier", Number(e.target.value))} style={selectStyle}>
+              <option value={0}>0x</option>
+              <option value={1}>1x</option>
+              <option value={5}>5x</option>
+              <option value={9}>9x</option>
+            </select>
+          </Field>
+          <NumberField label="Epic Dungeon Bonus %" min={0} max={100} value={input.epicDungeonBonus} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("epicDungeonBonus", value)} />
+        </div>
+      </div>
+
+      <div className="fade-in" style={panelStyle}>
+        <SectionTitle theme={theme} label="Events and Tickets" />
+        <div className="exp-grid">
+          <NumberField label="Strawberry Farm Tickets" icon={{ type: "item", id: "02637501" }} min={0} value={input.strawberryTickets} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("strawberryTickets", value)} />
+          <NumberField label="Mechaberry Farm Tickets" icon={{ type: "item", id: "02831285" }} min={0} value={input.mechaberryTickets} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("mechaberryTickets", value)} />
+          <NumberField label="EXP Tickets" icon={{ type: "item", id: "02637353" }} min={0} value={input.expTickets} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("expTickets", value)} />
+          <NumberField label="Advanced EXP Tickets" icon={{ type: "item", id: "02638500" }} min={0} value={input.advancedExpTickets} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("advancedExpTickets", value)} />
+          <NumberField label="Punch King Score / Week" icon={{ type: "item", id: "02024279" }} min={0} max={2050} value={input.punchKingScore} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("punchKingScore", value)} />
+          <NumberField label="Double Up Points / Week" icon={{ type: "item", id: "04310359" }} min={0} value={input.doubleUpPoints} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("doubleUpPoints", value)} />
+        </div>
+      </div>
+
+      <div className="fade-in" style={panelStyle}>
+        <SectionTitle theme={theme} label="Growth Potions" />
+        <div className="exp-grid">
+          {GROWTH_POTION_OPTIONS.map((potion) => (
+            <NumberField key={potion.id} label={`${potion.label} (Lv. ${potion.minLevel}-${potion.maxLevel})`} icon={potion.icon} min={0} max={1000} value={input.potions[potion.id] ?? 0} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updatePotion(potion.id, value)} />
           ))}
         </div>
       </div>
 
-      <div className="exp-results fade-in">
-        <MetricCard theme={theme} label="Resource EXP" value={formatExpCompact(result.totalExp)} detail={formatMesoFull(result.totalExp)} />
-        <MetricCard theme={theme} label="After Resources" value={`Lv. ${result.level}`} detail={`${result.percent.toFixed(4)}%`} />
-        <MetricCard theme={theme} label="Target Remaining" value={formatExpCompact(result.remainingToTarget)} detail={`To Lv. ${input.targetLevel}`} />
+      <div className="fade-in" style={panelStyle}>
+        <SectionTitle theme={theme} label="Results" />
+        <div className="exp-overview-grid">
+          <div style={{ background: theme.timerBg, border: `1px solid ${theme.border}`, borderRadius: 14, padding: 14, minWidth: 0 }}>
+            <div className="tool-field-label" style={{ color: theme.muted }}>Final Level</div>
+            <div style={{ color: theme.text, fontSize: "1.7rem", fontWeight: 900, lineHeight: 1.1, marginTop: 4 }}>
+              Lv. {result.level}
+              <span style={{ fontSize: "0.95rem", fontWeight: 800, color: theme.muted, marginLeft: 8 }}>{formatPercent(result.percent)}%</span>
+            </div>
+            <div style={{ color: theme.text, fontSize: "0.9rem", fontWeight: 800, marginTop: 10 }}>
+              +{formatExpCompact(result.totalExp)} EXP
+            </div>
+            <div style={{ color: theme.muted, fontSize: "0.75rem", fontWeight: 700, marginTop: 2 }}>
+              {formatMesoFull(result.totalExp)} gained from all selected sources
+            </div>
+          </div>
+          <div style={{ minWidth: 0 }}>
+            <ResultRow theme={theme} label={`Target Lv. ${input.targetLevel}`} value={result.reachedTarget ? "Reached" : `${formatExpCompact(result.remainingToTarget)} left`} />
+            <ResultRow theme={theme} label="End Date (pre-tickets)" value={`Lv. ${result.endDateLevel} (${formatPercent(result.endDatePercent)}%)`} />
+            <ResultRow theme={theme} label="Duration" value={`${result.daysSimulated} days · ${result.weeklyResets} weekly reset${result.weeklyResets === 1 ? "" : "s"}`} />
+            <ResultRow theme={theme} label="Projected to Target" value={formatProjectedDays(result.projectedDaysToTarget)} />
+          </div>
+        </div>
+        {result.milestones.length > 0 && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 14 }}>
+            {result.milestones.slice(0, 24).map((milestone, index) => (
+              <span key={`${milestone.level}-${milestone.date}-${index}`} style={milestoneChipStyle(theme)}>
+                Lv. {milestone.level} · {formatDate(milestone.date)}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
     </>
+  );
+}
+
+function ResultRow({ theme, label, value }: { theme: AppTheme; label: string; value: string }) {
+  return (
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 12, padding: "7px 0", borderBottom: `1px solid ${theme.border}` }}>
+      <span className="tool-field-label" style={{ color: theme.muted }}>{label}</span>
+      <span style={{ color: theme.text, fontSize: "0.85rem", fontWeight: 800, textAlign: "right" }}>{value}</span>
+    </div>
   );
 }
 
@@ -645,7 +861,7 @@ function ResourcesTab({ theme }: { theme: AppTheme }) {
 function ResourceTableView({ theme, table }: { theme: AppTheme; table: ResourceTable }) {
   const thStyle: React.CSSProperties = { padding: "8px 10px", borderBottom: `2px solid ${theme.border}`, color: theme.muted, fontSize: "0.75rem", fontWeight: 800, textAlign: "right", textTransform: "uppercase" };
   const tdStyle: React.CSSProperties = { padding: "8px 10px", borderBottom: `1px solid ${theme.border}`, color: theme.text, fontSize: "0.8rem", fontWeight: 700, textAlign: "right" };
-  const maxUnits = table.allInOne?.max;
+  const maxUnits = table.maxUnits;
 
   return (
     <div className="panel-card" style={{ marginTop: "1rem", background: theme.panel, border: `1px solid ${theme.border}`, borderRadius: 8, overflowX: "auto" }}>
@@ -708,6 +924,7 @@ function NumberField({
   min,
   max,
   step,
+  icon,
   disabled = false,
   labelStyle,
   inputStyle,
@@ -718,56 +935,120 @@ function NumberField({
   min: number;
   max?: number;
   step?: string;
+  icon?: IconRef;
   disabled?: boolean;
   labelStyle: React.CSSProperties;
   inputStyle: React.CSSProperties;
   onChange: (value: number) => void;
 }) {
+  const input = (
+    <input
+      className="tool-input"
+      type="number"
+      value={Number.isFinite(value) ? value : 0}
+      min={min}
+      max={max}
+      step={step}
+      disabled={disabled}
+      onFocus={(e) => {
+        if (!disabled) e.currentTarget.select();
+      }}
+      onKeyDown={replaceZeroOnDigit}
+      onChange={(e) => {
+        if (!disabled) onChange(Number(e.target.value) || 0);
+      }}
+      style={{
+        ...inputStyle,
+        background: disabled ? inputStyle.background ?? "rgba(120, 120, 120, 0.12)" : inputStyle.background,
+        opacity: disabled ? 0.65 : inputStyle.opacity,
+        cursor: disabled ? "not-allowed" : inputStyle.cursor,
+      }}
+    />
+  );
+  return (
+    <Field label={label} style={labelStyle}>
+      {icon ? (
+        <div style={iconRowStyle}>
+          <BuffIcon icon={icon} label={label} />
+          {input}
+        </div>
+      ) : (
+        input
+      )}
+    </Field>
+  );
+}
+
+function DateField({
+  theme,
+  label,
+  value,
+  labelStyle,
+  inputStyle,
+  onChange,
+}: {
+  theme: AppTheme;
+  label: string;
+  value: string;
+  labelStyle: React.CSSProperties;
+  inputStyle: React.CSSProperties;
+  onChange: (value: string) => void;
+}) {
   return (
     <Field label={label} style={labelStyle}>
       <input
         className="tool-input"
-        type="number"
-        value={Number.isFinite(value) ? value : 0}
-        min={min}
-        max={max}
-        step={step}
-        disabled={disabled}
-        onFocus={(e) => {
-          if (!disabled) e.currentTarget.select();
-        }}
-        onKeyDown={replaceZeroOnDigit}
-        onChange={(e) => {
-          if (!disabled) onChange(Number(e.target.value) || 0);
-        }}
-        style={{
-          ...inputStyle,
-          background: disabled ? inputStyle.background ?? "rgba(120, 120, 120, 0.12)" : inputStyle.background,
-          opacity: disabled ? 0.65 : inputStyle.opacity,
-          cursor: disabled ? "not-allowed" : inputStyle.cursor,
-        }}
+        type="date"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        style={{ ...inputStyle, colorScheme: themeColorScheme(theme) }}
       />
     </Field>
   );
 }
 
-function MetricCard({ theme, label, value, detail }: { theme: AppTheme; label: string; value: string; detail: string }) {
-  return (
-    <div className="panel-card" style={{ background: theme.panel, border: `1px solid ${theme.border}`, padding: "1rem" }}>
-      <div className="tool-field-label" style={{ color: theme.muted, marginBottom: "6px" }}>
-        {label}
-      </div>
-      <div style={{ color: theme.text, fontSize: "1.25rem", fontWeight: 800, lineHeight: 1.15 }}>{value}</div>
-      <div style={{ color: theme.muted, fontSize: "0.75rem", fontWeight: 700, marginTop: "4px" }}>{detail}</div>
-    </div>
-  );
+/** Light/dark hint for native widgets (the date input's calendar icon), derived from the theme background. */
+function themeColorScheme(theme: AppTheme): "light" | "dark" {
+  const hex = theme.bg.replace("#", "");
+  const r = parseInt(hex.slice(0, 2), 16);
+  const g = parseInt(hex.slice(2, 4), 16);
+  const b = parseInt(hex.slice(4, 6), 16);
+  return (r * 299 + g * 587 + b * 114) / 1000 < 128 ? "dark" : "light";
 }
 
 function BuffIcon({ icon, label }: { icon?: IconRef; label: string }) {
   if (!icon) return null;
   if (icon.type === "erda-skill") return <ErdaSkillIcon id={icon.id} size={32} alt={label} />;
   if (icon.type === "skill") return <SkillIcon id={icon.id} size={32} alt={label} />;
+  if (icon.type === "mob") return <MobSprite id={icon.id} size={32} alt={label} />;
   return <ItemIcon id={icon.id} shadow={icon.shadow} size={32} alt={label} />;
+}
+
+function dailyTileStyle(theme: AppTheme, selected: boolean): React.CSSProperties {
+  return {
+    width: 44,
+    height: 44,
+    display: "grid",
+    placeItems: "center",
+    padding: 0,
+    border: `1px solid ${selected ? theme.accent : theme.border}`,
+    background: selected ? theme.accentSoft : theme.panel,
+    borderRadius: 8,
+    cursor: "pointer",
+    opacity: selected ? 1 : 0.55,
+  };
+}
+
+function milestoneChipStyle(theme: AppTheme): React.CSSProperties {
+  return {
+    background: theme.panel,
+    border: `1px solid ${theme.border}`,
+    color: theme.text,
+    borderRadius: 999,
+    padding: "3px 10px",
+    fontSize: "0.75rem",
+    fontWeight: 700,
+  };
 }
 
 function buffButtonStyle(theme: AppTheme, selected: boolean): React.CSSProperties {
@@ -794,10 +1075,37 @@ function toggleAdditiveBuff(state: BuffState, buff: CheckBuff, checked: boolean)
   return { ...state, additive };
 }
 
+function formatPercent(value: number): string {
+  return value.toFixed(3);
+}
+
 function formatHours(hours: number): string {
   if (!Number.isFinite(hours) || hours <= 0) return "N/A";
   if (hours < 1) return `${Math.ceil(hours * 60)} min`;
   return `${hours.toFixed(2)} hr`;
+}
+
+function formatProjectedDays(days: number | null): string {
+  if (days === null) return "N/A";
+  if (days === 0) return "Reached";
+  return `${days.toLocaleString()} day${days === 1 ? "" : "s"}`;
+}
+
+function formatDate(timestamp: number): string {
+  return new Date(timestamp).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+}
+
+function localDateInputValue(date: Date): string {
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, "0");
+  const day = `${date.getDate()}`.padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function addDays(date: Date, days: number): Date {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+  return next;
 }
 
 function roundToThree(value: number): number {

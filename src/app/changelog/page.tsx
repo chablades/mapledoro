@@ -14,6 +14,7 @@ const CHANGELOG: ChangelogEntry[] = [
     date: "2026-07-07",
     changes: [
       { type: "added", text: "Added the EXP Calculator with GMS EXP Buffs + Monster EXP, All-in-One, and resource table tabs." },
+      { type: "changed", text: "Rebuilt the EXP Calculator Daily / Weekly tab as a GMS content planner with dailies, weeklies, events, tickets, and growth potions." },
     ],
   },
   {
