@@ -780,68 +780,78 @@ function AllInOneTab({ theme }: { theme: AppTheme }) {
       </div>
 
       <div className="fade-in" style={panelStyle}>
-        <SectionTitle theme={theme} label="Monster Park" />
-        <div className="exp-grid">
-          <NumberField label="Runs / Day" icon={{ type: "item", id: "05252030" }} min={0} max={7} value={input.monsterParkRuns} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("monsterParkRuns", value)} />
-          <NumberField label="Bonus EXP %" min={0} max={100} value={input.monsterParkBonus} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("monsterParkBonus", value)} />
-          <Field label="Monster Park Extreme" style={labelStyle}>
-            <Toggle theme={theme} label="1 clear / week" checked={input.mpeRuns > 0} onChange={(checked) => updateNumber("mpeRuns", checked ? 1 : 0)} style={{ height: 35, width: "100%" }} />
-          </Field>
-        </div>
-      </div>
-
-      <div className="fade-in" style={panelStyle}>
         <SectionTitle theme={theme} label="Weekly Content" />
-        <div className="exp-grid">
+        <div className="exp-tile-row">
           {WEEKLY_EXP_CONTENT.map((weekly) => (
-            <Field key={weekly.id} label={`${weekly.label} (Lv. ${weekly.minLevel})`} style={labelStyle}>
-              <div style={iconRowStyle}>
-                <BuffIcon icon={weekly.icon} label={weekly.label} />
-                <select className="tool-select" value={input.weeklyRuns[weekly.id] ?? 0} onChange={(e) => updateWeeklyRun(weekly.id, Number(e.target.value))} style={selectStyle}>
-                  <option value={0}>0 runs</option>
-                  <option value={1}>1 run</option>
-                  <option value={2}>2 runs</option>
-                  <option value={3}>3 runs</option>
-                </select>
-              </div>
+            <IconLevelTile
+              key={weekly.id}
+              theme={theme}
+              icon={weekly.icon}
+              ariaLabel={`${weekly.label} runs`}
+              tooltip={<TileTooltipLabel theme={theme} title={weekly.label} detail={`Lv. ${weekly.minLevel} · runs / week`} />}
+              value={input.weeklyRuns[weekly.id] ?? 0}
+              max={3}
+              inputStyle={styles.inputStyle}
+              onChange={(runs) => updateWeeklyRun(weekly.id, runs)}
+            />
+          ))}
+        </div>
+      </div>
+
+      <div className="exp-duo-grid">
+        <div className="fade-in" style={panelStyle}>
+          <SectionTitle theme={theme} label="Monster Park" />
+          <div className="exp-grid">
+            <NumberField label="Runs / Day" icon={{ type: "item", id: "05252030" }} min={0} max={7} value={input.monsterParkRuns} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("monsterParkRuns", value)} />
+            <NumberField label="Bonus EXP %" min={0} max={100} value={input.monsterParkBonus} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("monsterParkBonus", value)} />
+            <Field label="Monster Park Extreme" style={labelStyle}>
+              <Toggle theme={theme} label="1 clear / week" checked={input.mpeRuns > 0} onChange={(checked) => updateNumber("mpeRuns", checked ? 1 : 0)} style={{ height: 35, width: "100%" }} />
             </Field>
-          ))}
-          <Field label="Epic Dungeon" style={labelStyle}>
-            <select className="tool-select" value={input.epicDungeonId} onChange={(e) => setInput((state) => ({ ...state, epicDungeonId: e.target.value }))} style={selectStyle}>
-              <option value="">No Epic Dungeon</option>
-              {EPIC_DUNGEON_OPTIONS.map((dungeon) => <option key={dungeon.id} value={dungeon.id}>{dungeon.label} (Lv. {dungeon.minLevel})</option>)}
-            </select>
-          </Field>
-          <Field label="Epic Dungeon Reward" style={labelStyle}>
-            <select className="tool-select" value={input.epicDungeonMultiplier} onChange={(e) => updateNumber("epicDungeonMultiplier", Number(e.target.value))} style={selectStyle}>
-              <option value={0}>0x</option>
-              <option value={1}>1x</option>
-              <option value={5}>5x</option>
-              <option value={9}>9x</option>
-            </select>
-          </Field>
-          <NumberField label="Epic Dungeon Bonus %" min={0} max={100} value={input.epicDungeonBonus} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("epicDungeonBonus", value)} />
+          </div>
+        </div>
+
+        <div className="fade-in" style={panelStyle}>
+          <SectionTitle theme={theme} label="Epic Dungeon" />
+          <div className="exp-grid">
+            <Field label="Epic Dungeon" style={labelStyle}>
+              <select className="tool-select" value={input.epicDungeonId} onChange={(e) => setInput((state) => ({ ...state, epicDungeonId: e.target.value }))} style={selectStyle}>
+                <option value="">No Epic Dungeon</option>
+                {EPIC_DUNGEON_OPTIONS.map((dungeon) => <option key={dungeon.id} value={dungeon.id}>{dungeon.label} (Lv. {dungeon.minLevel})</option>)}
+              </select>
+            </Field>
+            <Field label="Epic Dungeon Reward" style={labelStyle}>
+              <select className="tool-select" value={input.epicDungeonMultiplier} onChange={(e) => updateNumber("epicDungeonMultiplier", Number(e.target.value))} style={selectStyle}>
+                <option value={0}>0x</option>
+                <option value={1}>1x</option>
+                <option value={5}>5x</option>
+                <option value={9}>9x</option>
+              </select>
+            </Field>
+            <NumberField label="Bonus EXP %" min={0} max={100} value={input.epicDungeonBonus} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("epicDungeonBonus", value)} />
+          </div>
         </div>
       </div>
 
-      <div className="fade-in" style={panelStyle}>
-        <SectionTitle theme={theme} label="Events and Tickets" />
-        <div className="exp-grid">
-          <NumberField label="Strawberry Farm Tickets" icon={{ type: "item", id: "02637501" }} min={0} value={input.strawberryTickets} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("strawberryTickets", value)} />
-          <NumberField label="Mechaberry Farm Tickets" icon={{ type: "item", id: "02831285" }} min={0} value={input.mechaberryTickets} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("mechaberryTickets", value)} />
-          <NumberField label="EXP Tickets" icon={{ type: "item", id: "02637353" }} min={0} value={input.expTickets} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("expTickets", value)} />
-          <NumberField label="Advanced EXP Tickets" icon={{ type: "item", id: "02638500" }} min={0} value={input.advancedExpTickets} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("advancedExpTickets", value)} />
-          <NumberField label="Punch King Score / Week" icon={{ type: "item", id: "02024279" }} min={0} max={2050} value={input.punchKingScore} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("punchKingScore", value)} />
-          <NumberField label="Double Up Points / Week" icon={{ type: "item", id: "04310359" }} min={0} value={input.doubleUpPoints} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("doubleUpPoints", value)} />
+      <div className="exp-duo-grid">
+        <div className="fade-in" style={panelStyle}>
+          <SectionTitle theme={theme} label="Events and Tickets" />
+          <div className="exp-grid">
+            <NumberField label="Strawberry Farm Tickets" icon={{ type: "item", id: "02637501" }} min={0} value={input.strawberryTickets} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("strawberryTickets", value)} />
+            <NumberField label="Mechaberry Farm Tickets" icon={{ type: "item", id: "02831285" }} min={0} value={input.mechaberryTickets} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("mechaberryTickets", value)} />
+            <NumberField label="EXP Tickets" icon={{ type: "item", id: "02637353" }} min={0} value={input.expTickets} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("expTickets", value)} />
+            <NumberField label="Advanced EXP Tickets" icon={{ type: "item", id: "02638500" }} min={0} value={input.advancedExpTickets} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("advancedExpTickets", value)} />
+            <NumberField label="Punch King Score / Week" icon={{ type: "item", id: "02024279" }} min={0} max={2050} value={input.punchKingScore} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("punchKingScore", value)} />
+            <NumberField label="Double Up Points / Week" icon={{ type: "item", id: "04310359" }} min={0} value={input.doubleUpPoints} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("doubleUpPoints", value)} />
+          </div>
         </div>
-      </div>
 
-      <div className="fade-in" style={panelStyle}>
-        <SectionTitle theme={theme} label="Growth Potions" />
-        <div className="exp-grid">
-          {GROWTH_POTION_OPTIONS.map((potion) => (
-            <NumberField key={potion.id} label={`${potion.label} (Lv. ${potion.minLevel}-${potion.maxLevel})`} icon={potion.icon} min={0} max={1000} value={input.potions[potion.id] ?? 0} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updatePotion(potion.id, value)} />
-          ))}
+        <div className="fade-in" style={panelStyle}>
+          <SectionTitle theme={theme} label="Growth Potions" />
+          <div className="exp-grid">
+            {GROWTH_POTION_OPTIONS.map((potion) => (
+              <NumberField key={potion.id} label={`${potion.label} (Lv ${potion.minLevel}-${potion.maxLevel})`} icon={potion.icon} min={0} max={1000} value={input.potions[potion.id] ?? 0} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updatePotion(potion.id, value)} />
+            ))}
+          </div>
         </div>
       </div>
 
@@ -1124,6 +1134,50 @@ function TileTooltipLabel({ theme, title, detail }: { theme: AppTheme; title: st
   );
 }
 
+/** Presentational icon + numeric-stepper tile shared by select-buff levels and weekly run counts. */
+function IconLevelTile({
+  theme,
+  icon,
+  tooltip,
+  ariaLabel,
+  value,
+  max,
+  inputStyle,
+  onChange,
+}: {
+  theme: AppTheme;
+  icon?: IconRef;
+  tooltip: React.ReactNode;
+  ariaLabel: string;
+  value: number;
+  max: number;
+  inputStyle: React.CSSProperties;
+  onChange: (value: number) => void;
+}) {
+  const active = value > 0;
+  return (
+    <div style={levelTileStyle(theme, active)}>
+      <HoverTooltip theme={theme} label={tooltip}>
+        <div style={tileIconStyle(active)}>
+          <BuffIcon icon={icon} label={ariaLabel} />
+        </div>
+      </HoverTooltip>
+      <input
+        className="tool-input no-spinner"
+        type="number"
+        min={0}
+        max={max}
+        aria-label={ariaLabel}
+        value={value}
+        onFocus={(e) => e.currentTarget.select()}
+        onKeyDown={replaceZeroOnDigit}
+        onChange={(e) => onChange(Math.max(0, Math.min(max, Math.floor(Number(e.target.value) || 0))))}
+        style={{ ...inputStyle, width: 56, textAlign: "center", padding: "4px 6px" }}
+      />
+    </div>
+  );
+}
+
 function SelectLevelTile({
   theme,
   buff,
@@ -1139,33 +1193,17 @@ function SelectLevelTile({
 }) {
   const maxLevel = buff.options.length - 1;
   const level = Math.max(0, buff.options.findIndex((option) => option.value === value));
-  const active = level > 0;
   return (
-    <div style={levelTileStyle(theme, active)}>
-      <HoverTooltip
-        theme={theme}
-        label={<TileTooltipLabel theme={theme} title={buff.label} detail={active ? buff.options[level].label : undefined} />}
-      >
-        <div style={tileIconStyle(active)}>
-          <BuffIcon icon={buff.icon} label={buff.label} />
-        </div>
-      </HoverTooltip>
-      <input
-        className="tool-input no-spinner"
-        type="number"
-        min={0}
-        max={maxLevel}
-        aria-label={`${buff.label} level`}
-        value={level}
-        onFocus={(e) => e.currentTarget.select()}
-        onKeyDown={replaceZeroOnDigit}
-        onChange={(e) => {
-          const nextLevel = Math.max(0, Math.min(maxLevel, Math.floor(Number(e.target.value) || 0)));
-          onChange(buff.options[nextLevel].value);
-        }}
-        style={{ ...inputStyle, width: 56, textAlign: "center", padding: "4px 6px" }}
-      />
-    </div>
+    <IconLevelTile
+      theme={theme}
+      icon={buff.icon}
+      ariaLabel={`${buff.label} level`}
+      tooltip={<TileTooltipLabel theme={theme} title={buff.label} detail={level > 0 ? buff.options[level].label : undefined} />}
+      value={level}
+      max={maxLevel}
+      inputStyle={inputStyle}
+      onChange={(nextLevel) => onChange(buff.options[nextLevel].value)}
+    />
   );
 }
 

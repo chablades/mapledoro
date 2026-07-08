@@ -32,6 +32,10 @@ every other select buff; only the input surface maps level (option index) to val
 nodestone tiles (Mapae +33%, Roro +10%) are exclusive toggles over the single shared `exp-node`
 select value.
 
+`IconLevelTile` is the shared icon + numeric-stepper tile. Select buffs wrap it (mapping level to
+option value) via `SelectLevelTile`; the Daily / Weekly tab uses it directly for weekly run counts
+(value is the raw run count, 0-3).
+
 Non-stacking rules:
 - EXP Accumulation Potion and Small Concentrated EXP Accumulation Potion are mutually exclusive.
 - MVP 50% Bonus EXP and MVP 70% Bonus EXP are mutually exclusive.

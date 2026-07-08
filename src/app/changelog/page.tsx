@@ -17,6 +17,7 @@ const CHANGELOG: ChangelogEntry[] = [
       { type: "changed", text: "Link skills, Roro's Experience Ring, Grand Sacred Symbols, Legion Artifact, Champion's Renown, and EXP nodestones in the EXP Calculator are now compact level tiles with hover tooltips instead of dropdowns." },
       { type: "changed", text: "Pendant of the Spirit is now a toggle under Additive Buffs in the EXP Calculator." },
       { type: "changed", text: "The EXP Calculator now shows Roll of the Dice only when the selected character is a Pirate class." },
+      { type: "changed", text: "The EXP Calculator Daily / Weekly tab now pairs panels side by side and uses compact run-count tiles for weekly content to reduce scrolling." },
     ],
   },
   {

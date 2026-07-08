@@ -476,11 +476,11 @@ export const GROWTH_POTION_OPTIONS: GrowthPotionOption[] = [
   { id: "potion1", label: "Growth Potion 1", minLevel: 200, maxLevel: 209, icon: { type: "item", id: "02633425" } },
   { id: "potion2", label: "Growth Potion 2", minLevel: 200, maxLevel: 219, icon: { type: "item", id: "02633424" } },
   { id: "potion3", label: "Growth Potion 3", minLevel: 200, maxLevel: 229, icon: { type: "item", id: "02633423" } },
-  { id: "tgp", label: "Typhoon Growth Potion", minLevel: 200, maxLevel: 239, icon: { type: "item", id: "02439660" } },
-  { id: "mgp", label: "Mag Growth Potion", minLevel: 200, maxLevel: 249, icon: { type: "item", id: "02633621" } },
-  { id: "leapgp", label: "Leap Growth Potion", minLevel: 200, maxLevel: 259, icon: { type: "item", id: "02831238" } },
-  { id: "trgp", label: "Transcendent Potion", minLevel: 200, maxLevel: 269, icon: { type: "item", id: "02637134" } },
-  { id: "lgp", label: "Legendary Potion", minLevel: 200, maxLevel: 279, icon: { type: "item", id: "02831239" } },
+  { id: "tgp", label: "Typhoon Pot", minLevel: 200, maxLevel: 239, icon: { type: "item", id: "02439660" } },
+  { id: "mgp", label: "Mag Pot", minLevel: 200, maxLevel: 249, icon: { type: "item", id: "02633621" } },
+  { id: "leapgp", label: "Leap Pot", minLevel: 200, maxLevel: 259, icon: { type: "item", id: "02831238" } },
+  { id: "trgp", label: "Transc. Pot", minLevel: 200, maxLevel: 269, icon: { type: "item", id: "02637134" } },
+  { id: "lgp", label: "Legendary Pot", minLevel: 200, maxLevel: 279, icon: { type: "item", id: "02831239" } },
 ];
 
 const MONSTER_PARK_EXP = [
