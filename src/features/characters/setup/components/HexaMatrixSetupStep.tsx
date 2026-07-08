@@ -462,6 +462,19 @@ function StatDropdown({ value, options, onChange, onAdvance, isOpen, onToggle, o
   const menuRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // These 3 dropdowns (Main/Alt 1/Alt 2) are fixed, always-mounted instances shared
+  // across every node and preset (switching the active node/preset tab just feeds them
+  // different data, it never remounts them) — so a stale search term would otherwise
+  // ride along indefinitely across nodes/presets, not just within this one field.
+  // Reset synchronously during render on the open transition, per CLAUDE.md's
+  // set-state-in-effect rule (the "adjusting state on a prop change" pattern), rather
+  // than a bare setState in a useEffect.
+  const [wasOpen, setWasOpen] = useState(isOpen);
+  if (isOpen !== wasOpen) {
+    setWasOpen(isOpen);
+    if (isOpen) setQuery("");
+  }
+
   useEffect(() => {
     if (!isOpen) return;
     function onMouseDown(e: MouseEvent) {
