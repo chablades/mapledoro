@@ -15,6 +15,7 @@ const CHANGELOG: ChangelogEntry[] = [
     changes: [
       { type: "changed", text: "Redesigned the Tools page into compact category panels so the full list of tools is easier to scan." },
       { type: "added", text: "Added an Endgame Preset and a Reset button to the Trace Restoration Calculator for quickly selecting or clearing missions." },
+      { type: "fixed", text: "Fixed not being able to select Extreme Seren in the Trace Restoration Calculator." },
     ],
   },
   {
