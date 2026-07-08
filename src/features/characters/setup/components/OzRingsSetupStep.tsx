@@ -66,6 +66,7 @@ interface OzRingsSetupStepProps {
   onBack: () => void;
   onNext: () => void;
   onFinish: () => void;
+  onValidityChange?: (valid: boolean, substepIndex?: number) => void;
 }
 
 const sectionLabelStyle = (theme: AppTheme): CSSProperties => ({
@@ -187,7 +188,7 @@ function StatRow({ label, value, onChange, theme }: {
 }
 
 export default function OzRingsSetupStep({
-  theme, step, stepNumber, totalSteps, jobName = "", value, onChange, onBack, onNext, onFinish,
+  theme, step, stepNumber, totalSteps, jobName = "", value, onChange, onBack, onNext, onFinish, onValidityChange,
 }: OzRingsSetupStepProps) {
   const classData = CLASS_SKILL_DATA.find((c) => c.nexonJobName === jobName);
   const ozInfo = getOzClassStatInfo(classData?.requiredStats ?? []);
@@ -241,6 +242,7 @@ export default function OzRingsSetupStep({
       onNext={onNext}
       onFinish={onFinish}
       nextDisabled={hasInsaneTotallingStat}
+      onValidityChange={onValidityChange}
     >
       <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem", maxWidth: 360 }}>
         <div>

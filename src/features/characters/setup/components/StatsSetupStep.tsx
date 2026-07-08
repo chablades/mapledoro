@@ -64,6 +64,8 @@ interface StatsSetupStepProps {
   totalSteps: number;
   jobName?: string;
   direction?: "forward" | "backward";
+  targetSubstep?: number | null;
+  onValidityChange?: (valid: boolean, substepIndex?: number) => void;
   characterLevel?: number;
   characterRoster?: StoredCharacterRecord[];
   confirmedWorldId?: number;
@@ -783,7 +785,11 @@ function InnerAbilityLineQuestion({ sq, onUpdate, theme, required }: {
       question="Which Inner Ability line do you use for bossing?"
       options={IA_LINE_OPTIONS}
       value={sq.innerAbilityLine ?? null}
-      onToggle={(v) => onUpdate({ innerAbilityLine: v ?? undefined })}
+      // Deselect-to-clear maps to the real "neither" option, same as Wild Hunter's
+      // rank question maps to "none" — both exist as explicit radio options precisely
+      // so clicking the active one again lands on a real, complete answer instead of
+      // going fully blank (which would also fail the questionnaire-complete check).
+      onToggle={(v) => onUpdate({ innerAbilityLine: v ?? "neither" })}
       theme={theme}
       required={required}
       tooltip={{
@@ -932,7 +938,7 @@ function statsSubstepDescription(isScouter: boolean): string {
 // gating added enough branches here to push it over.
 function StatsWindowSubstep({
   theme, step, stepNumber, totalSteps, substep, substepCount, substepAnimStyle,
-  goToSubstep, hasMoreSubsteps, onNext, onFinish,
+  goToSubstep, hasMoreSubsteps, onNext, onFinish, onValidityChange,
   classData, characterLevel, tripleIds, draft,
   handleTripleUpdate, handleSingleUpdate, handleCooldownUpdate,
   showWeaponAtt, weaponAttLabel, usesMagicWeapon, isScouter,
@@ -948,6 +954,7 @@ function StatsWindowSubstep({
   hasMoreSubsteps: boolean;
   onNext: () => void;
   onFinish: () => void;
+  onValidityChange?: (valid: boolean, substepIndex?: number) => void;
   classData: ClassSkillData | undefined;
   characterLevel?: number;
   tripleIds: TripleStatFieldId[];
@@ -998,6 +1005,7 @@ function StatsWindowSubstep({
       onFinish={onFinish}
       nextLabel={hasMoreSubsteps ? "Continue" : undefined}
       nextDisabled={!statsComplete}
+      onValidityChange={onValidityChange}
     >
       <WarningList warnings={[...UNIVERSAL_WARNINGS, ...(classData?.warnings ?? [])]} theme={theme} characterLevel={characterLevel} />
       <BuffGuide classData={classData ?? null} theme={theme} characterLevel={characterLevel} />
@@ -1072,7 +1080,7 @@ function StatsWindowSubstep({
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function StatsSetupStep({
-  theme, step, flowId, stepNumber, totalSteps, jobName = "", direction = "forward", characterLevel, characterRoster, confirmedWorldId, worldScouterLegion, value, onChange, onBack, onNext, onFinish,
+  theme, step, flowId, stepNumber, totalSteps, jobName = "", direction = "forward", targetSubstep, onValidityChange, characterLevel, characterRoster, confirmedWorldId, worldScouterLegion, value, onChange, onBack, onNext, onFinish,
 }: StatsSetupStepProps) {
   const classData = CLASS_SKILL_DATA.find((c) => c.nexonJobName === jobName);
   const draft = parseStatsStepDraft(value);
@@ -1152,7 +1160,7 @@ export default function StatsSetupStep({
   const lastSubstep = Math.max(1, hyperStatSubstep, innerAbilitySubstep);
   const SUBSTEP_COUNT = lastSubstep + 1;
 
-  const [substep, setSubstep] = useState(() => direction === "backward" ? lastSubstep : 0);
+  const [substep, setSubstep] = useState(() => targetSubstep ?? (direction === "backward" ? lastSubstep : 0));
   const [substepDirection, setSubstepDirection] = useState<"forward" | "backward">("forward");
   const [hasSubstepSwitched, setHasSubstepSwitched] = useState(false);
 
@@ -1194,6 +1202,7 @@ export default function StatsSetupStep({
           onFinish={onFinish}
           nextLabel="Continue"
           nextDisabled={isScouter && !questionnaireComplete}
+          onValidityChange={onValidityChange}
         >
           <p style={sectionLabelStyle(theme)}>Character Info</p>
           <div style={{ marginBottom: "0.75rem" }}>
@@ -1250,7 +1259,7 @@ export default function StatsSetupStep({
     <StatsWindowSubstep
       theme={theme} step={step} stepNumber={stepNumber} totalSteps={totalSteps}
       substep={substep} substepCount={SUBSTEP_COUNT} substepAnimStyle={substepAnimStyle}
-      goToSubstep={goToSubstep} hasMoreSubsteps={SUBSTEP_COUNT > 2} onNext={onNext} onFinish={onFinish}
+      goToSubstep={goToSubstep} hasMoreSubsteps={SUBSTEP_COUNT > 2} onNext={onNext} onFinish={onFinish} onValidityChange={onValidityChange}
       classData={classData} characterLevel={characterLevel} tripleIds={tripleIds} draft={draft}
       handleTripleUpdate={handleTripleUpdate} handleSingleUpdate={handleSingleUpdate} handleCooldownUpdate={handleCooldownUpdate}
       showWeaponAtt={showWeaponAtt} weaponAttLabel={weaponAttLabel} usesMagicWeapon={usesMagicWeapon} isScouter={isScouter}
@@ -1303,6 +1312,7 @@ export default function StatsSetupStep({
         onFinish={onFinish}
         nextLabel="Continue"
         nextDisabled={anyPresetOverBudget}
+        onValidityChange={onValidityChange}
       >
         <HyperPresetBar
           theme={theme}
@@ -1354,6 +1364,7 @@ export default function StatsSetupStep({
         onBack={() => goToSubstep(hyperStatSubstep >= 0 ? hyperStatSubstep : 1)}
         onNext={onNext}
         onFinish={onFinish}
+        onValidityChange={onValidityChange}
       >
         <InnerAbilitySetupStep draft={draft.innerAbility} onUpdate={handleInnerAbilityUpdate} theme={theme} />
       </SetupStepFrame>

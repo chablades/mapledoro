@@ -26,6 +26,7 @@ interface SetupTransitionSetters {
   setSetupStepIndex: (value: number) => void;
   setSetupStepDirection: (value: "forward" | "backward") => void;
   setSetupStepTestByStep: (value: SetupStepInputById) => void;
+  setStepValidityById: (value: Record<string, boolean>) => void;
 }
 
 interface CommonTransitionCallbacks extends SetupTransitionSetters {
@@ -42,6 +43,7 @@ interface SetupFlowTransitionArgs {
   stepIndex: number;
   stepDirection: "forward" | "backward";
   stepData: SetupStepInputById;
+  stepValidityById: Record<string, boolean>;
 }
 
 interface TransitionSequenceOptions {
@@ -156,6 +158,7 @@ export function useSetupFlowTransitions() {
           setSetupPanelVisible(false);
           callbacks.setSetupStepIndex(0);
           callbacks.setSetupStepTestByStep({});
+          callbacks.setStepValidityById({});
           callbacks.resetSearchStateMessage();
         },
       });
@@ -180,6 +183,7 @@ export function useSetupFlowTransitions() {
           setSetupPanelVisible(false);
           callbacks.setSetupStepIndex(0);
           callbacks.setSetupStepTestByStep({});
+          callbacks.setStepValidityById({});
           if (nextMode === "search") {
             callbacks.resetSearchStateMessage();
           }
@@ -205,6 +209,7 @@ export function useSetupFlowTransitions() {
           setters.setSetupStepDirection(args.stepDirection);
           setters.setSetupStepIndex(args.stepIndex);
           setters.setSetupStepTestByStep(args.stepData);
+          setters.setStepValidityById(args.stepValidityById);
           setSetupPanelVisible(false);
         },
         onCommit: () => {

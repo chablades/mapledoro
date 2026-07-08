@@ -21,6 +21,12 @@ export interface SetupDraft {
   setupStepIndex: number;
   setupStepDirection: "forward" | "backward";
   setupStepTestByStep: SetupStepInputById;
+  /** Last-known Next-button validity per "stepId:substepIndex" (or
+   *  "flowId:stepId:substepIndex" for the few steps whose rule differs by flow) — see
+   *  SetupStepFrame's onValidityChange. Persisted alongside setupStepTestByStep so
+   *  resuming a draft that was left on invalid data doesn't silently forget that and
+   *  ungate the step-jump dropdown until the step happens to be revisited. */
+  stepValidityById: Record<string, boolean>;
   confirmedCharacter: NormalizedCharacterData | null;
   savedAt: number;
 }
@@ -41,6 +47,13 @@ function parseDraftCompletedFlowIds(value: unknown): SetupFlowId[] {
 
 function parseDraftStepTestByStep(value: unknown): SetupStepInputById {
   return value && typeof value === "object" ? (value as SetupStepInputById) : {};
+}
+
+function parseDraftStepValidityById(value: unknown): Record<string, boolean> {
+  if (!value || typeof value !== "object") return {};
+  const entries = Object.entries(value as Record<string, unknown>)
+    .filter((entry): entry is [string, boolean] => typeof entry[1] === "boolean");
+  return Object.fromEntries(entries);
 }
 
 function parseSetupDraft(raw: string): SetupDraft | null {
@@ -66,6 +79,7 @@ function parseSetupDraft(raw: string): SetupDraft | null {
       setupStepIndex: clampFlowStepIndex(activeFlowId, Number(parsed.setupStepIndex ?? 0)),
       setupStepDirection: parsed.setupStepDirection === "backward" ? "backward" : "forward",
       setupStepTestByStep: parseDraftStepTestByStep(parsed.setupStepTestByStep),
+      stepValidityById: parseDraftStepValidityById(parsed.stepValidityById),
       confirmedCharacter: parsed.confirmedCharacter,
       savedAt: Number(parsed.savedAt ?? Date.now()),
     };

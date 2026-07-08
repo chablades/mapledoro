@@ -1,13 +1,30 @@
+import type { CSSProperties } from "react";
 import { CHARACTERS_COPY } from "../content";
 import type { PreviewPaneActions, PreviewPaneModel } from "../paneModels";
 import { primaryButtonStyle, secondaryButtonStyle } from "../components/uiStyles";
-import { dialogPrimaryBtnColors } from "../../../../components/themes";
+import { dialogPrimaryBtnColors, type AppTheme } from "../../../../components/themes";
 import { getClassSetupOverrides } from "../../setup/data/nexonJobMapping";
 import { computeEffectiveFlowStart, getFlowStepCount } from "../../setup/flows";
 
 interface SetupIntroScreenProps {
   model: PreviewPaneModel;
   actions: PreviewPaneActions;
+}
+
+function skipButtonStyle(theme: AppTheme, disabled: boolean): CSSProperties {
+  return {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    border: "none",
+    background: "none",
+    color: theme.muted,
+    fontFamily: "inherit",
+    fontWeight: 700,
+    fontSize: "0.8rem",
+    padding: "0.3rem 0.4rem",
+    cursor: disabled ? "not-allowed" : "pointer",
+  };
 }
 
 export default function QuickSetupIntroScreen({ model, actions }: SetupIntroScreenProps) {
@@ -36,6 +53,21 @@ export default function QuickSetupIntroScreen({ model, actions }: SetupIntroScre
 
   return (
     <>
+      {/* Zero-like classes (no gender/marriage to ask) already get an equivalent
+          "Continue" button below in the quickSetupAllSkipped branch — a second skip
+          button here would just be a redundant way to do the same thing. */}
+      {!quickSetupAllSkipped && (
+        <button
+          type="button"
+          disabled={setup.isUiLocked}
+          onClick={() => actions.skipSetupEntirely()}
+          style={skipButtonStyle(theme, setup.isUiLocked)}
+          onMouseEnter={(e) => { e.currentTarget.style.color = theme.text; }}
+          onMouseLeave={(e) => { e.currentTarget.style.color = theme.muted; }}
+        >
+          Skip for now
+        </button>
+      )}
       <h2
         style={{
           margin: 0,
@@ -77,9 +109,9 @@ export default function QuickSetupIntroScreen({ model, actions }: SetupIntroScre
                 gap: "0.2rem",
               }}
             >
-              <span style={{ fontWeight: 900, fontSize: "0.9rem" }}>Continue</span>
+              <span style={{ fontWeight: 900, fontSize: "0.9rem" }}>Skip setup</span>
               <span style={{ fontWeight: 700, fontSize: "0.8rem", color: theme.muted }}>
-                Save and go to profile
+                Add character and go to profile
               </span>
             </button>
           </>

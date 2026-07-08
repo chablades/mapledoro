@@ -13,6 +13,7 @@ interface MarriageSetupStepProps {
   onBack: () => void;
   onNext: () => void;
   onFinish: () => void;
+  onValidityChange?: (valid: boolean, substepIndex?: number) => void;
 }
 
 function parseMarriageValue(raw: string): { married: boolean | null; partnerName: string } {
@@ -56,7 +57,7 @@ function partnerInputStyle(theme: AppTheme) {
 }
 
 export default function MarriageSetupStep({
-  theme, step, stepNumber, totalSteps, value, onChange, onBack, onNext, onFinish,
+  theme, step, stepNumber, totalSteps, value, onChange, onBack, onNext, onFinish, onValidityChange,
 }: MarriageSetupStepProps) {
   const { married, partnerName } = parseMarriageValue(value);
   const partnerNameTooShort = married === true && partnerName.length > 0 && partnerName.length < MIN_QUERY_LENGTH;
@@ -86,6 +87,7 @@ export default function MarriageSetupStep({
       onNext={onNext}
       onFinish={onFinish}
       nextDisabled={partnerNameTooShort}
+      onValidityChange={onValidityChange}
     >
       <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginBottom: "0.8rem" }}>
         <button

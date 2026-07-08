@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import type { ReactNode } from "react";
 import type { AppTheme } from "../../../../components/themes";
 
@@ -14,6 +15,11 @@ interface SetupStepFrameProps {
   nextLabel?: string;
   /** Disables the Next/Finish button, e.g. while required questions are unanswered. */
   nextDisabled?: boolean;
+  /** Reports this step/substep's own Next-button validity up to the setup controller
+   *  (along with which substep this is, since a step's substeps are gated per-substep,
+   *  not as one lump), so the step-jump dropdown can gate jumping past invalid/
+   *  incomplete data the same way the Next button already does. */
+  onValidityChange?: (valid: boolean, substepIndex?: number) => void;
   /** Zero-based index of the active substep within this step (for the substep pip row). */
   substepIndex?: number;
   /** Total substeps in this step; the pip row only renders when this is > 1. */
@@ -32,27 +38,19 @@ export default function SetupStepFrame({
   onFinish,
   nextLabel,
   nextDisabled,
+  onValidityChange,
   substepIndex = 0,
   substepCount = 0,
   children,
 }: SetupStepFrameProps) {
   const isLastStep = !nextLabel && stepNumber >= totalSteps;
 
+  useEffect(() => {
+    onValidityChange?.(!nextDisabled, substepIndex);
+  }, [nextDisabled, onValidityChange, substepIndex]);
+
   return (
     <>
-      <p
-        style={{
-          margin: 0,
-          marginBottom: "0.35rem",
-          fontSize: "0.8rem",
-          color: theme.muted,
-          fontWeight: 800,
-          letterSpacing: "0.03em",
-          textTransform: "uppercase",
-        }}
-      >
-        Step {stepNumber} of {totalSteps}
-      </p>
       {substepCount > 1 && (
         <div
           aria-label={`Part ${substepIndex + 1} of ${substepCount}`}

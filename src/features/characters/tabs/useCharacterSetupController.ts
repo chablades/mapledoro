@@ -68,6 +68,7 @@ import {
   clampFlowStepIndex,
   computeEffectiveFlowStart,
   flowIncludesStep,
+  getFirstInvalidStepIndex,
   getFlowStepByIndex,
   getFlowStepCount,
   getRequiredSetupFlowId,
@@ -765,6 +766,21 @@ export function useCharacterSetupController() {
 
   const [setupStepIndex, setSetupStepIndex] = useState(0);
   const [setupStepDirection, setSetupStepDirection] = useState<"forward" | "backward">("forward");
+  // Substep to force-open a step on (e.g. jumping straight to Stats' Inner Ability
+  // substep) — only set by jumpToSubstep below, and cleared by every other
+  // navigation action so it never overrides normal Prev/Next substep placement.
+  // substepJumpNonce forces a remount even when jumping to the same target substep
+  // twice in a row (the step component may have since navigated away internally).
+  const [setupTargetSubstep, setSetupTargetSubstep] = useState<number | null>(null);
+  const [substepJumpNonce, setSubstepJumpNonce] = useState(0);
+  // Last-known Next-button validity per step id (see SetupStepFrame's onValidityChange),
+  // for the ~5 steps that actually gate Next on something. Keyed by step id (not
+  // reset on navigation) because a step's draft data — and thus its validity — is
+  // shared across flows and outlives leaving that step; a naive "reset on navigate"
+  // version let you dodge the gate by backing out to an invalid step and switching
+  // flows instead of fixing it. Cleared only where setupStepTestByStep itself resets
+  // (switching to a different character's draft, or abandoning setup entirely).
+  const [stepValidityById, setStepValidityById] = useState<Record<string, boolean>>({});
   const [setupStepTestByStep, setSetupStepTestByStep] = useState<SetupStepInputById>({});
   const [draftSummaries, setDraftSummaries] = useState<SetupDraftSummary[]>([]);
   const [hasCompletedRequiredSetupEver, setHasCompletedRequiredSetupEver] = useState(false);
@@ -892,6 +908,9 @@ export function useCharacterSetupController() {
       setSetupStepIndex(draft.setupStepIndex);
       setSetupStepDirection(draft.setupStepDirection);
       setSetupStepTestByStep(draft.setupStepTestByStep ?? {});
+      // Restored from the draft (not wiped) — the draft's own step data can still be
+      // invalid, and forgetting that here is exactly what let people resume past it.
+      setStepValidityById(draft.stepValidityById ?? {});
       setConfirmedCharacter(draft.confirmedCharacter);
 
       if (options?.includeSetupMode) setSetupMode(draft.setupMode);
@@ -1167,6 +1186,7 @@ export function useCharacterSetupController() {
       setupStepIndex: clampFlowStepIndex(activeFlowId, setupStepIndex),
       setupStepDirection,
       setupStepTestByStep,
+      stepValidityById,
       confirmedCharacter,
       savedAt: Date.now(),
     };
@@ -1186,6 +1206,7 @@ export function useCharacterSetupController() {
     setupStepDirection,
     setupStepIndex,
     setupStepTestByStep,
+    stepValidityById,
     showCharacterDirectory,
     showFlowOverview,
   ]);
@@ -1210,6 +1231,7 @@ export function useCharacterSetupController() {
       stepIndex: number;
       stepDirection: "forward" | "backward";
       stepData: SetupStepInputById;
+      stepValidityById: Record<string, boolean>;
     }) => {
       transitions.beginSetupFlowTransition(args, {
         setSetupMode,
@@ -1223,6 +1245,7 @@ export function useCharacterSetupController() {
         setSetupStepIndex,
         setSetupStepDirection,
         setSetupStepTestByStep,
+        setStepValidityById,
       });
     },
     [transitions],
@@ -1249,6 +1272,7 @@ export function useCharacterSetupController() {
       setSetupStepIndex,
       setSetupStepDirection,
       setSetupStepTestByStep,
+      setStepValidityById,
     });
   }, [confirmedCharacter, lookup, transitions]);
 
@@ -1270,6 +1294,7 @@ export function useCharacterSetupController() {
         setSetupStepIndex,
         setSetupStepDirection,
         setSetupStepTestByStep,
+        setStepValidityById,
       });
     },
     [lookup, transitions],
@@ -1292,6 +1317,7 @@ export function useCharacterSetupController() {
       setSetupStepIndex(0);
       setSetupStepDirection("forward");
       setSetupStepTestByStep({});
+      setStepValidityById({});
       lookup.resetSearchStateMessage();
     });
   }, [confirmedCharacter, lookup, transitions]);
@@ -1308,8 +1334,11 @@ export function useCharacterSetupController() {
   }, [transitions]);
 
   const setSetupStepWithDirection = useCallback(
-    (nextStep: number) => {
-      const direction = nextStep > setupStepIndex ? "forward" : "backward";
+    (nextStep: number, forceDirection?: "forward" | "backward") => {
+      // Any normal navigation (Prev/Next/step-level jump) supersedes a prior
+      // substep-jump target — only jumpToSubstep below is allowed to set one.
+      setSetupTargetSubstep(null);
+      const direction = forceDirection ?? (nextStep > setupStepIndex ? "forward" : "backward");
       const jobName = confirmedCharacter?.jobName ?? "";
       const { gender, skipMarriage } = getClassSetupOverrides(jobName);
       const stepCount = getFlowStepCount(activeFlowId);
@@ -1320,11 +1349,46 @@ export function useCharacterSetupController() {
       }
       target = Math.max(0, Math.min(stepCount, target));
       if (target === setupStepIndex) return;
+      // Same rule as the Next button's own disabled state (SetupStepFrame's
+      // nextDisabled) — jumping forward past the earliest invalid/incomplete step (in
+      // THIS flow's order, since a stepId's validity can outlive leaving it) is
+      // blocked the same way advancing normally already is. Backward, and jumping onto
+      // the broken step itself, are always allowed.
+      if (target > setupStepIndex) {
+        const firstInvalid = getFirstInvalidStepIndex(activeFlowId, stepValidityById, gender, skipMarriage, characterLevel, jobName);
+        if (firstInvalid !== null && target > firstInvalid) return;
+      }
       setSetupStepDirection(direction);
       setSetupStepIndex(target);
     },
-    [activeFlowId, confirmedCharacter, setupStepIndex],
+    [activeFlowId, confirmedCharacter, setupStepIndex, stepValidityById],
   );
+
+  // Jumps directly into a specific substep of a step (e.g. Stats' Inner Ability) —
+  // the target step index is trusted to already be a visible, non-skipped step (the
+  // jump menu only offers substeps for steps it's already showing). substepJumpNonce
+  // always changes so the target step component remounts even when re-targeting the
+  // same substep it's already showing but has since navigated away from internally.
+  const jumpToSubstep = useCallback((nextStep: number, substepIndex: number) => {
+    const jobName = confirmedCharacter?.jobName ?? "";
+    const { gender, skipMarriage } = getClassSetupOverrides(jobName);
+    const characterLevel = confirmedCharacter?.level;
+    const stepCount = getFlowStepCount(activeFlowId);
+    const target = Math.max(0, Math.min(stepCount, nextStep));
+    const firstInvalid = getFirstInvalidStepIndex(activeFlowId, stepValidityById, gender, skipMarriage, characterLevel, jobName);
+    if (firstInvalid !== null && target > firstInvalid) return;
+    setSetupStepDirection("forward");
+    setSetupStepIndex(target);
+    setSetupTargetSubstep(substepIndex);
+    setSubstepJumpNonce((n) => n + 1);
+  }, [activeFlowId, confirmedCharacter, stepValidityById]);
+
+  // SetupStepFrame reports whichever step id is currently mounted's own Next-button
+  // validity here (see its onValidityChange prop) — bound to the active step id in
+  // SetupFlowScreen, since the frame itself only knows a plain valid/invalid boolean.
+  const reportStepValidity = useCallback((stepId: string, valid: boolean) => {
+    setStepValidityById((prev) => (prev[stepId] === valid ? prev : { ...prev, [stepId]: valid }));
+  }, []);
 
   const resumeDraft = useCallback(async (characterKey: string) => {
     if (immediateUiLockRef.current) return;
@@ -1370,6 +1434,7 @@ export function useCharacterSetupController() {
       ),
       stepDirection: draft.setupStepDirection,
       stepData: draft.setupStepTestByStep ?? {},
+      stepValidityById: draft.stepValidityById ?? {},
     });
 
     writeSetupDraft({
@@ -1420,6 +1485,7 @@ export function useCharacterSetupController() {
       ),
       stepDirection: draft.setupStepDirection,
       stepData: draft.setupStepTestByStep ?? {},
+      stepValidityById: draft.stepValidityById ?? {},
     });
   }, [beginSetupFlowTransition, foundCharacter, isResumableDraft, requiredFlowId]);
 
@@ -1455,6 +1521,7 @@ export function useCharacterSetupController() {
       stepIndex: 0,
       stepDirection: "forward",
       stepData: existingCharacterDraft?.setupStepTestByStep ?? {},
+      stepValidityById: existingCharacterDraft?.stepValidityById ?? {},
     });
   }, [
     beginSetupFlowTransition,
@@ -1473,40 +1540,48 @@ export function useCharacterSetupController() {
     confirmFoundCharacter();
   }, [confirmFoundCharacter, foundCharacter]);
 
-  const finishSetupFlow = useCallback((overrideFlowId?: SetupFlowId) => {
+  const finishSetupFlow = useCallback((overrideFlowId?: SetupFlowId, overrideStepData?: Record<string, string>) => {
     if (immediateUiLockRef.current) return;
     immediateUiLockRef.current = true;
     setIsFinishingSetup(true);
 
     transitions.queueTransitionTimer(() => {
       const effectiveFlowId = typeof overrideFlowId === "string" ? overrideFlowId : activeFlowId;
+      // overrideStepData lets a caller (e.g. skipSetupEntirely) force specific field
+      // values instead of whatever's sitting in the ambient draft — passing it as an
+      // argument (rather than writing setupStepTestByStep and calling finishSetupFlow
+      // right after) avoids relying on a state update landing before this closure reads
+      // it, which isn't guaranteed.
+      const effectiveStepData: SetupStepInputById = overrideStepData
+        ? { ...setupStepTestByStep, ...overrideStepData }
+        : setupStepTestByStep;
       const isQuickSetupFlow = effectiveFlowId === requiredFlowId;
       const isFullSetupFlow = effectiveFlowId === "full_setup";
       if ((isQuickSetupFlow || isFullSetupFlow) && confirmedCharacter) {
-        finalizeQuickOrFullSetupRecord(isFullSetupFlow, confirmedCharacter, setupStepTestByStep, upsertRosterCharacter);
+        finalizeQuickOrFullSetupRecord(isFullSetupFlow, confirmedCharacter, effectiveStepData, upsertRosterCharacter);
         setHasCompletedRequiredSetupEver(true);
         removeSetupDraftForCharacter(confirmedCharacter);
       }
 
       if (effectiveFlowId === "stats_flow") {
-        applyStatsDraftToRoster(confirmedCharacter, setupStepTestByStep.stats ?? "", upsertRosterCharacter);
+        applyStatsDraftToRoster(confirmedCharacter, effectiveStepData.stats ?? "", upsertRosterCharacter);
       }
 
       if (effectiveFlowId === "maplescouter_setup"
-        && applyMapleScouterFlow(confirmedCharacter, setupStepTestByStep, upsertRosterCharacter)) {
+        && applyMapleScouterFlow(confirmedCharacter, effectiveStepData, upsertRosterCharacter)) {
         setHasCompletedRequiredSetupEver(true);
       }
 
       // Gated by the flow actually being finished, not just "is this draft field non-empty" —
       // otherwise leftover data from a different, abandoned flow (e.g. Link Skills filled in
       // during Full Setup, then backing out to finish Quick Setup) silently leaks into storage.
-      const linkSkillsValue = setupStepTestByStep.link_skills;
+      const linkSkillsValue = effectiveStepData.link_skills;
       if (linkSkillsValue && confirmedCharacter && flowIncludesStep(effectiveFlowId, "link_skills")) {
         writeLinkSkillsForWorld(confirmedCharacter.worldID, linkSkillsDraftToStored(linkSkillsValue));
       }
 
       if (confirmedCharacter && !isFullSetupFlow) {
-        applyStandaloneToolDrafts(confirmedCharacter, setupStepTestByStep, upsertRosterCharacter, effectiveFlowId);
+        applyStandaloneToolDrafts(confirmedCharacter, effectiveStepData, upsertRosterCharacter, effectiveFlowId);
       }
 
       setIsAddingCharacter(false);
@@ -1574,6 +1649,7 @@ export function useCharacterSetupController() {
           stats: "",
           equipment: "",
         });
+        setStepValidityById({});
         transitions.setSetupPanelVisible(true);
         setIsSwitchingToProfile(false);
         immediateUiLockRef.current = false;
@@ -1787,6 +1863,7 @@ export function useCharacterSetupController() {
         setupStepIndex: targetStepIndex,
         setupStepDirection: targetStepDirection,
         setupStepTestByStep,
+        stepValidityById,
         confirmedCharacter,
         savedAt: existingDraft?.savedAt ?? 0,
       });
@@ -1797,6 +1874,7 @@ export function useCharacterSetupController() {
     confirmedCharacter,
     query,
     requiredFlowId,
+    stepValidityById,
     setupStepTestByStep,
     transitions,
   ]);
@@ -1893,6 +1971,9 @@ export function useCharacterSetupController() {
     worldIds,
     setupStepIndex,
     setupStepDirection,
+    setupTargetSubstep,
+    substepJumpNonce,
+    stepValidityById,
     draftSummaries,
     foundCharacterHasResumableDraft,
     hasCompletedRequiredSetupEver,
@@ -1927,6 +2008,8 @@ export function useCharacterSetupController() {
         }));
       },
       setSetupStepWithDirection,
+      jumpToSubstep,
+      onValidityChange: reportStepValidity,
       runBackToIntroTransition,
       runTransitionToMode,
       backFromSetupFlowToAddCharacter,
@@ -1970,6 +2053,19 @@ export function useCharacterSetupController() {
         setSetupStepDirection("forward");
         setShowFlowOverview(false);
         setShowCharacterDirectory(false);
+      },
+      skipSetupEntirely: () => {
+        if (immediateUiLockRef.current) return;
+        // Same as quick_setup's "all steps skipped" auto-finish (see startOptionalSetupFlow
+        // above, e.g. Zero), but user-triggered for any class. Skip must always produce a
+        // bare record: gender/marriage are forced blank (never whatever the ambient draft
+        // happens to hold from an abandoned Quick/Full Setup attempt on this character), with
+        // a class's fixedGender (e.g. Mihile, Angelic Buster) auto-filled since that's derived
+        // from class data, not user input.
+        const overrides = confirmedCharacter ? getClassSetupOverrides(confirmedCharacter.jobName) : null;
+        const fixedGender = overrides?.gender && overrides.gender !== "none" ? overrides.gender : null;
+        setActiveFlowId(requiredFlowId);
+        finishSetupFlow(requiredFlowId, { gender: fixedGender ?? "", marriage: "" });
       },
     },
   };

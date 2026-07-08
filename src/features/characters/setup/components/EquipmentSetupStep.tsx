@@ -93,6 +93,7 @@ interface EquipmentSetupStepProps {
   stepNumber: number;
   totalSteps: number;
   direction?: "forward" | "backward";
+  targetSubstep?: number | null;
   jobName?: string;
   characterLevel?: number;
   confirmedCharacterName?: string;
@@ -900,6 +901,7 @@ export default function EquipmentSetupStep({
   stepNumber,
   totalSteps,
   direction = "forward",
+  targetSubstep,
   jobName = "",
   characterLevel,
   confirmedCharacterImgURL,
@@ -936,7 +938,7 @@ export default function EquipmentSetupStep({
     const base = draft.presets ?? [];
     return Array.from({ length: PRESET_COUNT }, (_, i) => ({ ...(base[i] ?? {}) }));
   }
-  const [substep, setSubstep] = useState(() => direction === "backward" ? 2 : 0);
+  const [substep, setSubstep] = useState(() => targetSubstep ?? (direction === "backward" ? 2 : 0));
   const [substepDirection, setSubstepDirection] = useState<"forward" | "backward">("forward");
   const [hasSubstepSwitched, setHasSubstepSwitched] = useState(false);
   const [symbolTab, setSymbolTab] = useState<SymbolTabKey>(() => (showArcaneSymbols ? "arcane" : "sacred"));

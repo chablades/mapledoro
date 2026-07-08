@@ -115,6 +115,9 @@ export interface PreviewPaneModel {
     fastDirectoryRevealOnce: boolean;
     setupStepIndex: number;
     setupStepDirection: "forward" | "backward";
+    setupTargetSubstep: number | null;
+    substepJumpNonce: number;
+    stepValidityById: Record<string, boolean>;
     activeSetupStepValue: string;
   };
   profile: {
@@ -140,10 +143,13 @@ export interface PreviewPaneActions {
   confirmFoundCharacter: () => void;
   resumeFoundCharacterDraft: () => void;
   startFreshSetup: () => void;
-  setSetupStepWithDirection: (step: number) => void;
+  setSetupStepWithDirection: (step: number, forceDirection?: "forward" | "backward") => void;
+  jumpToSubstep: (step: number, substepIndex: number) => void;
+  onValidityChange: (stepId: string, valid: boolean) => void;
   stepValueChange: (value: string) => void;
   finishSetupFlow: () => void;
   openCharacterSearch: () => void;
   openCharacterProfile: (character: StoredCharacterRecord) => void;
   startOptionalFlow: (flowId: SetupFlowId) => void;
+  skipSetupEntirely: () => void;
 }

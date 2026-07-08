@@ -29,6 +29,8 @@ interface HexaMatrixSetupStepProps {
   totalSteps: number;
   jobName?: string;
   direction?: "forward" | "backward";
+  targetSubstep?: number | null;
+  onValidityChange?: (valid: boolean, substepIndex?: number) => void;
   characterRoster?: import("../../model/charactersStore").StoredCharacterRecord[];
   confirmedWorldId?: number;
   worldLinkSkills?: string;
@@ -547,7 +549,15 @@ function StatDropdown({ value, options, onChange, onAdvance, isOpen, onToggle, o
         <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
           {selected?.label ?? "Select stat…"}
         </span>
-        <span style={{ fontSize: "0.75rem", flexShrink: 0, opacity: 0.6 }}>▾</span>
+        <span
+          style={{
+            fontSize: "0.75rem", flexShrink: 0, opacity: 0.6,
+            display: "inline-block", transform: isOpen ? "rotate(180deg)" : "none",
+            transition: "transform 0.15s ease",
+          }}
+        >
+          ▾
+        </span>
       </button>
       {isOpen && (
         <div ref={menuRef} style={statDropdownMenuStyle(theme, openUpward)}>
@@ -697,7 +707,7 @@ function readSavedHexaValue(classDef: HexaClassDef | null, characterName: string
 // also the only substep the MapleScouter flow renders (skill levels, no HEXA Stat).
 function HexaSkillLevelsSubstep({
   theme, classDef, step, levels, update, stepNumber, totalSteps,
-  substepIndex, substepCount, animStyle, showHexaStat, onBack, onContinue, onNext, onFinish,
+  substepIndex, substepCount, animStyle, showHexaStat, onBack, onContinue, onNext, onFinish, onValidityChange,
 }: {
   theme: AppTheme;
   classDef: HexaClassDef;
@@ -714,6 +724,7 @@ function HexaSkillLevelsSubstep({
   onContinue: () => void;
   onNext: () => void;
   onFinish: () => void;
+  onValidityChange?: (valid: boolean, substepIndex?: number) => void;
 }) {
   const isShine = classDef.group === "SHINE";
   const stepLabel = isShine ? "Erda Link" : step.label;
@@ -721,6 +732,7 @@ function HexaSkillLevelsSubstep({
     <div key={0} style={animStyle}>
       <SetupStepFrame theme={theme} stepLabel={stepLabel} stepNumber={stepNumber} totalSteps={totalSteps}
         substepIndex={substepIndex} substepCount={substepCount}
+        onValidityChange={onValidityChange}
         description={isShine ? "Enter your Erda Link skill levels." : "Enter your HEXA skill levels."}
         onBack={onBack}
         onNext={showHexaStat ? onContinue : onNext}
@@ -805,7 +817,7 @@ function HexaSkillLevelsSubstep({
 }
 
 export default function HexaMatrixSetupStep({
-  theme, step, flowId, stepNumber, totalSteps, jobName = "", direction = "forward",
+  theme, step, flowId, stepNumber, totalSteps, jobName = "", direction = "forward", targetSubstep, onValidityChange,
   confirmedCharacterName, characterLevel, value, onChange, onBack, onNext, onFinish,
 }: HexaMatrixSetupStepProps) {
   // MapleScouter only needs hexa skill levels, so the HEXA Stat substep is gated out
@@ -817,7 +829,7 @@ export default function HexaMatrixSetupStep({
   const classDef = classData?.id ? findClassById(classData.id) : null;
   const initialValueRef = useRef(value);
 
-  const [substep, setSubstep] = useState(() => direction === "backward" && showHexaStat ? 1 : 0);
+  const [substep, setSubstep] = useState(() => targetSubstep ?? (direction === "backward" && showHexaStat ? 1 : 0));
   const [substepDirection, setSubstepDirection] = useState<"forward" | "backward">("forward");
   const [hasSubstepSwitched, setHasSubstepSwitched] = useState(false);
   const [activeSlot, setActiveSlot] = useState(0);
@@ -850,7 +862,7 @@ export default function HexaMatrixSetupStep({
     return (
       <SetupStepFrame theme={theme} stepLabel={step.label} stepNumber={stepNumber} totalSteps={totalSteps}
         description="HEXA Matrix data is not available for this class yet."
-        onBack={onBack} onNext={onNext} onFinish={onFinish}
+        onBack={onBack} onNext={onNext} onFinish={onFinish} onValidityChange={onValidityChange}
       >
         <p style={{ margin: 0, fontSize: "0.85rem", color: theme.muted, fontWeight: 700 }}>
           No data available for {jobName || "this class"}.
@@ -887,6 +899,7 @@ export default function HexaMatrixSetupStep({
         substepIndex={substep} substepCount={substepCount} animStyle={substepAnimStyle}
         showHexaStat={showHexaStat}
         onBack={onBack} onContinue={() => goToSubstep(1)} onNext={onNext} onFinish={onFinish}
+        onValidityChange={onValidityChange}
       />
     );
   }
@@ -972,7 +985,7 @@ export default function HexaMatrixSetupStep({
         substepIndex={substep} substepCount={substepCount}
         description="Set your HEXA Stat nodes."
         onBack={() => goToSubstep(0)} onNext={onNext} onFinish={onFinish}
-        nextDisabled={anyNodeOverLimit}
+        nextDisabled={anyNodeOverLimit} onValidityChange={onValidityChange}
       >
         <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
 

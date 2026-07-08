@@ -171,6 +171,9 @@ export default function CharacterSetupFlow({ theme, initialCharacterName, initia
       fastDirectoryRevealOnce: state.fastDirectoryRevealOnce,
       setupStepIndex: state.setupStepIndex,
       setupStepDirection: state.setupStepDirection,
+      setupTargetSubstep: state.setupTargetSubstep,
+      substepJumpNonce: state.substepJumpNonce,
+      stepValidityById: state.stepValidityById,
       activeSetupStepValue: state.activeSetupStepValue,
     },
     directory: {
@@ -190,11 +193,14 @@ export default function CharacterSetupFlow({ theme, initialCharacterName, initia
     resumeFoundCharacterDraft: actions.resumeFoundCharacterDraft,
     startFreshSetup: actions.startFreshSetup,
     setSetupStepWithDirection: actions.setSetupStepWithDirection,
+    jumpToSubstep: actions.jumpToSubstep,
+    onValidityChange: actions.onValidityChange,
     stepValueChange: actions.updateActiveStepValue,
     finishSetupFlow: actions.finishSetupFlow,
     openCharacterSearch: actions.openAddCharacterSearch,
     openCharacterProfile: actions.switchToCharacterProfile,
     startOptionalFlow: actions.startOptionalSetupFlow,
+    skipSetupEntirely: actions.skipSetupEntirely,
   };
 
   return (

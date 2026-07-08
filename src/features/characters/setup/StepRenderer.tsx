@@ -25,6 +25,9 @@ interface StepRendererProps {
   stepIndex: number;
   jobName?: string;
   direction?: "forward" | "backward";
+  targetSubstep?: number | null;
+  substepJumpNonce?: number;
+  onValidityChange?: (valid: boolean, substepIndex?: number) => void;
   characterRoster?: import("../model/charactersStore").StoredCharacterRecord[];
   confirmedWorldId?: number;
   worldLinkSkills?: string;
@@ -60,6 +63,9 @@ export default function StepRenderer({
   stepIndex,
   jobName = "",
   direction = "forward",
+  targetSubstep,
+  substepJumpNonce,
+  onValidityChange,
   characterRoster,
   confirmedWorldId,
   worldLinkSkills,
@@ -83,6 +89,10 @@ export default function StepRenderer({
 
   return (
     <StepComponent
+      // Remount on a substep jump even when stepIndex is unchanged (e.g. re-targeting
+      // Stats' Inner Ability while already on Stats) — substepJumpNonce always changes
+      // when jumpToSubstep fires, forcing the lazy substep-index initializer to rerun.
+      key={`${step.id}-${substepJumpNonce ?? 0}`}
       theme={theme}
       step={step}
       flowId={flowId}
@@ -90,6 +100,8 @@ export default function StepRenderer({
       totalSteps={visibleTotal}
       jobName={jobName}
       direction={direction}
+      targetSubstep={targetSubstep}
+      onValidityChange={onValidityChange}
       characterRoster={characterRoster}
       confirmedWorldId={confirmedWorldId}
       worldLinkSkills={worldLinkSkills}

@@ -5,6 +5,7 @@
 import type { SetupStepId } from "./steps";
 import { getSetupStepById, type SetupStepDefinition } from "./steps";
 import { isLegacyClass } from "./data/classSkillData";
+import { isHyperStatEligible } from "./data/statsStepDraft";
 
 type GenderOverride = "male" | "female" | "none" | null;
 
@@ -160,6 +161,137 @@ export function computeEffectiveFlowStart(
   return { startStep: stepCount + 1, autoFillGender };
 }
 
+export interface VisibleSetupStep {
+  /** Real (possibly-skipped-inclusive) index into the flow's step list — pass to setSetupStepWithDirection to jump here. */
+  index: number;
+  /** 1-based position among only the currently-visible steps. */
+  visibleNumber: number;
+  label: string;
+  stepId: SetupStepId;
+}
+
+/** Every non-skipped step in the flow, in order, for rendering a jump-to-step control. */
+export function getVisibleSteps(
+  flowId: SetupFlowId,
+  gender: GenderOverride,
+  skipMarriage: boolean,
+  characterLevel?: number,
+  jobName?: string,
+): VisibleSetupStep[] {
+  const stepCount = getFlowStepCount(flowId);
+  const steps: VisibleSetupStep[] = [];
+  for (let i = 1; i <= stepCount; i++) {
+    if (isStepSkippedForClass(flowId, i, gender, skipMarriage, characterLevel, jobName)) continue;
+    const step = getFlowStepByIndex(flowId, i);
+    if (!step) continue;
+    steps.push({ index: i, visibleNumber: steps.length + 1, label: step.label, stepId: step.id });
+  }
+  return steps;
+}
+
+// Stats' own Next-button validity genuinely differs by flow — MapleScouter requires
+// the full scouter questionnaire answered (questionnaireComplete) and strict per-stat
+// completeness (isStatsSubstepComplete), while Full Setup only checks values aren't
+// insane (isStatsSubstepSane), not that every field is filled. So a "false" reported
+// while MapleScouter was active doesn't necessarily still apply once Full Setup is —
+// its validity has to be tracked per flow. Every other gated step (Marriage, Oz Rings,
+// HEXA Matrix) uses the exact same rule regardless of which flow got there, so those
+// stay flow-agnostic and keep persisting across a flow switch without needing a revisit.
+function isFlowScopedValidityStep(stepId: SetupStepId): boolean {
+  return stepId === "stats";
+}
+
+/** The key SetupStepFrame's onValidityChange reports validity under for a given
+ *  step/substep — must be used identically when writing (SetupFlowScreen's callback)
+ *  and reading (the functions below), or the two will silently disagree. */
+export function getStepValidityKey(stepId: SetupStepId, substepIndex: number, flowId: SetupFlowId): string {
+  return isFlowScopedValidityStep(stepId) ? `${flowId}:${stepId}:${substepIndex}` : `${stepId}:${substepIndex}`;
+}
+
+// A step counts as invalid if ANY of its substeps' last report was false, since each
+// substep gates independently (e.g. Stats' Hyper Stat substep being over budget
+// shouldn't be forgotten just because Quick Questions, a different substep of the
+// same step, is fine).
+function stepHasInvalidSubstep(
+  stepId: SetupStepId,
+  flowId: SetupFlowId,
+  stepValidityById: Record<string, boolean>,
+  characterLevel?: number,
+): boolean {
+  return getFirstInvalidSubstepIndex(stepId, flowId, stepValidityById, characterLevel) !== null;
+}
+
+/** The earliest substep index (within one step) whose last-known validity is false,
+ *  or null if none are. Used both to decide a whole step's validity and to gate that
+ *  step's OWN substep entries in the jump dropdown (substeps before the broken one
+ *  stay reachable; only it and everything after are blocked). */
+export function getFirstInvalidSubstepIndex(
+  stepId: SetupStepId,
+  flowId: SetupFlowId,
+  stepValidityById: Record<string, boolean>,
+  characterLevel?: number,
+): number | null {
+  const substepCount = getStepSubsteps(stepId, flowId, characterLevel)?.length ?? 1;
+  for (let i = 0; i < substepCount; i++) {
+    if (stepValidityById[getStepValidityKey(stepId, i, flowId)] === false) return i;
+  }
+  return null;
+}
+
+/**
+ * The flow-index of the earliest visible step with an invalid substep (see
+ * stepHasInvalidSubstep above) — steps never reported on, or not part of this flow,
+ * don't count. Used to gate forward jumps in the step-jump dropdown: a step's own
+ * draft data (and thus its validity) is shared across flows and across navigating
+ * away from it, so this has to walk the CURRENT flow's steps fresh each time rather
+ * than trusting whichever step happened to be mounted most recently.
+ */
+export function getFirstInvalidStepIndex(
+  flowId: SetupFlowId,
+  stepValidityById: Record<string, boolean>,
+  gender: GenderOverride,
+  skipMarriage: boolean,
+  characterLevel?: number,
+  jobName?: string,
+): number | null {
+  const visible = getVisibleSteps(flowId, gender, skipMarriage, characterLevel, jobName);
+  const firstInvalid = visible.find((s) => stepHasInvalidSubstep(s.stepId, flowId, stepValidityById, characterLevel));
+  return firstInvalid?.index ?? null;
+}
+
+/**
+ * Substeps for the few step types that split one in-game window's worth of questions
+ * across multiple screens (Stats: Character Info window; Equipment: Equipment/Inventory
+ * window's main grid + Additional Equipment + Pets; HEXA Matrix: Skills window's skill
+ * levels + HEXA Stat). Mirrors each component's own substep show/hide conditions — keep
+ * in sync with StatsSetupStep/EquipmentSetupStep/HexaMatrixSetupStep if those change.
+ * Returns null for step types that don't split into substeps.
+ */
+export function getStepSubsteps(
+  stepId: SetupStepId,
+  flowId: SetupFlowId,
+  characterLevel?: number,
+): string[] | null {
+  const isScouter = flowId === "maplescouter_setup";
+  if (stepId === "stats") {
+    const showHyperStat = !isScouter && isHyperStatEligible(characterLevel);
+    const showInnerAbility = !isScouter;
+    return [
+      "Quick Questions",
+      "Stats",
+      ...(showHyperStat ? ["Hyper Stats"] : []),
+      ...(showInnerAbility ? ["Inner Ability"] : []),
+    ];
+  }
+  if (stepId === "equipment") {
+    return ["Equipment", "Additional Equipment", "Pets"];
+  }
+  if (stepId === "hexa_matrix") {
+    return isScouter ? null : ["HEXA Skills", "HEXA Stat"];
+  }
+  return null;
+}
+
 export function getVisibleStepInfo(
   flowId: SetupFlowId,
   stepIndex: number,
@@ -168,16 +300,11 @@ export function getVisibleStepInfo(
   characterLevel?: number,
   jobName?: string,
 ): { visibleNumber: number; visibleTotal: number } {
-  const stepCount = getFlowStepCount(flowId);
-  let visibleTotal = 0;
-  let visibleNumber = 0;
-  for (let i = 1; i <= stepCount; i++) {
-    if (!isStepSkippedForClass(flowId, i, gender, skipMarriage, characterLevel, jobName)) {
-      visibleTotal++;
-      if (i <= stepIndex) visibleNumber++;
-    }
-  }
-  return { visibleNumber, visibleTotal };
+  const steps = getVisibleSteps(flowId, gender, skipMarriage, characterLevel, jobName);
+  return {
+    visibleNumber: steps.filter((s) => s.index <= stepIndex).length,
+    visibleTotal: steps.length,
+  };
 }
 
 function isStepSkippedForLevel(stepId: SetupStepId, characterLevel?: number, jobName?: string): boolean {
