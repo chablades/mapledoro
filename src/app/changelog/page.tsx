@@ -11,6 +11,14 @@ interface ChangelogEntry {
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    date: "2026-07-08",
+    changes: [
+      { type: "changed", text: "Redesigned the Tools page into compact category panels so the full list of tools is easier to scan." },
+      { type: "added", text: "Added an Endgame Preset and a Reset button to the Trace Restoration Calculator for quickly selecting or clearing missions." },
+      { type: "fixed", text: "Fixed not being able to select Extreme Seren in the Trace Restoration Calculator." },
+    ],
+  },
+  {
     date: "2026-07-06",
     changes: [
       { type: "changed", text: "The Miracle Time panel on the homepage now hides itself when there is no upcoming schedule instead of showing an empty box." },
