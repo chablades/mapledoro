@@ -137,7 +137,7 @@ export default function InfoTooltip({ content, theme }: { content: TooltipConten
           <p style={{ margin: 0, marginBottom: "0.3rem", fontSize: "0.82rem", fontWeight: 800, color: theme.text }}>
             {content.title}
           </p>
-          <div style={{ fontSize: "0.78rem", color: theme.muted, lineHeight: 1.5 }}>
+          <div style={{ fontSize: "0.78rem", fontWeight: 400, color: theme.muted, lineHeight: 1.5 }}>
             {content.description}
           </div>
           {content.link && (
