@@ -14,6 +14,7 @@ const CHANGELOG: ChangelogEntry[] = [
     date: "2026-07-08",
     changes: [
       { type: "changed", text: "Redesigned the Tools page into compact category panels so the full list of tools is easier to scan." },
+      { type: "added", text: "Added an Endgame Preset and a Reset button to the Trace Restoration Calculator for quickly selecting or clearing missions." },
     ],
   },
   {

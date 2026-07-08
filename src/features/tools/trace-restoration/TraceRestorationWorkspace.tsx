@@ -21,6 +21,7 @@ import {
   TRACE_ITEMS,
   TRACE_BOSSES,
   MAX_POINTS_CAP,
+  ENDGAME_PRESET_MISSIONS,
   type WhisperBoss,
   type TraceBoss,
 } from "./trace-restoration-data";
@@ -284,6 +285,23 @@ function missionBtnStyle(theme: AppTheme, active: boolean): CSSProperties {
     background: active ? theme.accentSoft : "transparent",
     color: active ? theme.accentText : theme.text,
     fontWeight: active ? 700 : 500,
+  };
+}
+
+function presetBtnStyle(theme: AppTheme, primary: boolean): CSSProperties {
+  return {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 6,
+    padding: "8px 16px",
+    borderRadius: 9,
+    fontSize: "0.82rem",
+    fontWeight: 800,
+    cursor: "pointer",
+    border: `1px solid ${primary ? theme.accent : theme.border}`,
+    background: primary ? theme.accent : theme.timerBg,
+    color: primary ? "#fff" : theme.text,
+    boxShadow: primary ? `0 2px 6px ${theme.accent}44` : "none",
   };
 }
 
@@ -583,6 +601,14 @@ function TraceRestorationTab({ theme }: { theme: AppTheme }) {
     save({ ...state, selectedMissions: [...next, id] });
   }
 
+  function applyEndgamePreset() {
+    save({ ...state, selectedMissions: [...ENDGAME_PRESET_MISSIONS] });
+  }
+
+  function resetMissions() {
+    save({ ...state, selectedMissions: [] });
+  }
+
   const targetItem = TRACE_ITEMS_BY_ID.get(state.targetItemId) ?? TRACE_ITEMS[0];
   const { weekly, monthly } = computeWeeklyPointGain(state.selectedMissions, TRACE_BOSSES);
   const result = computeEstimate(state.currentPoints, targetItem.points, weekly, monthly);
@@ -591,6 +617,12 @@ function TraceRestorationTab({ theme }: { theme: AppTheme }) {
 
   return (
     <>
+      <style>{`
+        .trace-preset-btn { transition: transform 0.1s ease, filter 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease; }
+        .trace-preset-btn:hover { filter: brightness(1.08); transform: translateY(-1px); border-color: ${theme.accent}; }
+        .trace-preset-btn:active { transform: translateY(0); }
+      `}</style>
+
       {/* Target & progress */}
       <div style={panelStyle(theme)}>
         <div style={{ fontWeight: 700, color: theme.text, marginBottom: "1rem", fontSize: "1rem" }}>
@@ -670,6 +702,26 @@ function TraceRestorationTab({ theme }: { theme: AppTheme }) {
       {/* Point cap note */}
       <div style={{ fontSize: "0.75rem", color: theme.muted, marginBottom: "1rem", fontStyle: "italic" }}>
         Max {MAX_POINTS_CAP.toLocaleString()} points can be accumulated. Missions must be completed solo (no Champion Mode).
+      </div>
+
+      {/* Preset / reset controls */}
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginBottom: "1.25rem" }}>
+        <button
+          type="button"
+          className="tool-btn trace-preset-btn"
+          onClick={applyEndgamePreset}
+          style={presetBtnStyle(theme, true)}
+        >
+          Endgame Preset
+        </button>
+        <button
+          type="button"
+          className="tool-btn trace-preset-btn"
+          onClick={resetMissions}
+          style={presetBtnStyle(theme, false)}
+        >
+          Reset
+        </button>
       </div>
 
       {/* Boss mission cards */}

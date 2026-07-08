@@ -225,7 +225,7 @@ export const TRACE_BOSSES: TraceBoss[] = [
       { id: "bm-extreme", description: "Challenger in Extreme Mode", points: 16, exclusiveGroup: "difficulty" },
       { id: "bm-fd", description: "Final Damage: -20%", points: 12 },
       { id: "bm-dt", description: "Damage Taken: +10%", points: 12 },
-      { id: "bm-fulldc", description: "Clear Phase 1 and 2 with a full Death Count", points: 10 },
+      { id: "bm-fulldc", description: "Clear Phase 1 and Phase 2 with a full Death Count", points: 10 },
     ],
   },
   {
@@ -236,7 +236,8 @@ export const TRACE_BOSSES: TraceBoss[] = [
     maxPoints: 31,
     missions: [
       { id: "seren-normal", description: "Challenge on Normal Mode", points: 2, exclusiveGroup: "difficulty" },
-      { id: "seren-hard", description: "Challenge in Hard Mode (Extreme 2x Points)", points: 4, exclusiveGroup: "difficulty" },
+      { id: "seren-hard", description: "Challenge in Hard Mode", points: 4, exclusiveGroup: "difficulty" },
+      { id: "seren-extreme", description: "Challenge in Extreme Mode", points: 8, exclusiveGroup: "difficulty" },
       { id: "seren-dc2", description: "Start with a Death Count of 2", points: 6 },
       { id: "seren-fd", description: "Final Damage: -20%", points: 5 },
       { id: "seren-dt", description: "Damage Taken: +10%", points: 5 },
@@ -246,3 +247,29 @@ export const TRACE_BOSSES: TraceBoss[] = [
 ];
 
 export const MAX_POINTS_CAP = 2500;
+
+// Endgame preset: every mission ticked, choosing Extreme Lotus, Hard Seren, and
+// Hard (not Extreme) Black Mage for the mode missions, and the hardest available
+// mode for every other boss.
+export const ENDGAME_PRESET_MISSIONS: string[] = [
+  // Lotus — Extreme
+  "lotus-extreme", "lotus-dc2", "lotus-fd", "lotus-dt", "lotus-laser",
+  // Damien
+  "damien-hard", "damien-dc5", "damien-fd", "damien-dt", "damien-brand",
+  // Lucid — Hard
+  "lucid-hard", "lucid-dc5", "lucid-fd", "lucid-dt", "lucid-floor",
+  // Will — Hard
+  "will-hard", "will-dc5", "will-fd", "will-dt", "will-web",
+  // Darknell — Hard
+  "darknell-hard", "darknell-dc2", "darknell-fd", "darknell-dt", "darknell-pillar",
+  // Gloom — Chaos
+  "gloom-chaos", "gloom-dc2", "gloom-fd", "gloom-dt", "gloom-terror",
+  // Verus Hilla — Hard
+  "vhilla-hard", "vhilla-dc2", "vhilla-fd", "vhilla-dt", "vhilla-thread",
+  // Guardian Angel Slime — Chaos
+  "gas-chaos", "gas-dc2", "gas-fd", "gas-dt", "gas-gate",
+  // Black Mage — Hard (not Extreme)
+  "bm-hard", "bm-fd", "bm-dt", "bm-fulldc",
+  // Seren — Hard
+  "seren-hard", "seren-dc2", "seren-fd", "seren-dt", "seren-potion",
+];
