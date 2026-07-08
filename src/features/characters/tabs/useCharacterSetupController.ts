@@ -55,8 +55,12 @@ import {
 } from "../setup/data/scouterQuestionsData";
 import {
   computeRawStatLevels,
+  DEFAULT_CRYSTAL_STATS,
   effectiveStatLevel,
   hasAnyCrystalProgress,
+  isCrystalUnlocked,
+  LEGION_CRYSTALS,
+  MIN_CRYSTAL_LEVEL,
   parseLegionArtifactBoardDraft,
   sanitizeCrystalLevel,
   statBonusValue,
@@ -297,17 +301,60 @@ function finalizeQuickOrFullSetupRecord(
       : createStoredCharacterRecord({ character: confirmedCharacter, gender, marriage });
   }
   upsertRosterCharacter(storedRecord);
-  if (!isFullSetupFlow) syncWhLegionRankForWorld(confirmedCharacter.worldID, storedRecord);
+  if (!isFullSetupFlow) {
+    syncWhLegionRankForWorld(confirmedCharacter.worldID, storedRecord);
+    // full_setup already seeds this via buildFullSetupRecord → applyScouterLegionForWorld;
+    // Quick Setup never touches Legion data at all otherwise, but the data is account-level
+    // (per-world) and safe to assume regardless of entry path — see the helper's own comment.
+    ensureLegionArtifactDefaultForWorld(confirmedCharacter.worldID);
+  }
 }
 
 // The draft shape allows optional/sparse fields (mid-edit); storage wants every crystal
-// fully filled in (level defaults to 0, stats padded to 3 slots).
-function toStoredLegionCrystals(crystals: LegionCrystalDraft[] | undefined): StoredLegionCrystal[] | undefined {
+// fully filled in (level defaults to 0, stats padded to 3 slots). The setup step's own
+// draft densely pre-fills EVERY crystal slot (including still-locked ones) with default
+// level-1/allStats-hpMp-attMatt data the moment any single crystal is touched (see
+// updateCrystal's comment in LegionArtifactsSetupStep.tsx) — that's fine as scratch draft
+// state, but a locked crystal has no real in-game data, so storage must not persist it as
+// if it were unlocked. Force locked indices back to an explicit "no data" entry here,
+// at the actual persistence boundary.
+function toStoredLegionCrystals(
+  crystals: LegionCrystalDraft[] | undefined,
+  artifactLevel: number,
+): StoredLegionCrystal[] | undefined {
   if (!crystals) return undefined;
-  return crystals.map((c) => ({
-    level: sanitizeCrystalLevel(c?.level),
-    stats: [c?.stats?.[0] ?? null, c?.stats?.[1] ?? null, c?.stats?.[2] ?? null],
-  }));
+  return crystals.map((c, index) => {
+    if (!isCrystalUnlocked(index, artifactLevel)) return { level: 0, stats: [null, null, null] };
+    return {
+      level: sanitizeCrystalLevel(c?.level),
+      stats: [c?.stats?.[0] ?? null, c?.stats?.[1] ?? null, c?.stats?.[2] ?? null],
+    };
+  });
+}
+
+// A freshly-unlocked Legion Artifact starts at Artifact Level 1 (not 0 — namu.wiki's own
+// level table starts numbering at 1, same convention as character level), already with its
+// first 3 crystals (Orange Mushroom/Slime/Horny Mushroom) unlocked at Crystal Level 1 and
+// these exact 3 default lines — confirmed via namu.wiki (2026-07-08): "미변경 시 기본 할당
+// 옵션은 '올스탯 증가', '최대 HP/MP 증가', '공격력/마력 증가'이다" ("if unchanged, the
+// default assigned options are All Stat, Max HP/MP, ATT/Magic ATT"), and Crystal Grade 1
+// costs 0 AP (i.e. automatic, not a player action). None of our setup flows ask for a real
+// Artifact Level or crystal config, so this is the one piece of Legion Artifact data safe to
+// assume for literally every player, regardless of how far they've actually progressed.
+//
+// Seeded lazily, once per world, the first time ANY setup flow finishes for a character on
+// a world that doesn't have real Legion Artifact data yet — not just full_setup, since the
+// data is account-level (per-world) and independent of which flow happened to touch it.
+// Never overwrites real data (existence check only).
+function ensureLegionArtifactDefaultForWorld(worldId: number): void {
+  const store = readCharactersStore();
+  if (store.legionArtifactByWorld[String(worldId)]) return;
+  const crystals: StoredLegionCrystal[] = LEGION_CRYSTALS.map((_, index) =>
+    isCrystalUnlocked(index, 1)
+      ? { level: MIN_CRYSTAL_LEVEL, stats: [...DEFAULT_CRYSTAL_STATS] }
+      : { level: 0, stats: [null, null, null] },
+  );
+  writeLegionArtifactForWorld(worldId, { artifactLevel: 1, crystals });
 }
 
 /**
@@ -351,12 +398,13 @@ function applyScouterLegionForWorld(
   if (board) {
     const existingArtifact = store.legionArtifactByWorld[String(character.worldID)];
     const artifactLevel = board.artifactLevel !== undefined ? Number(board.artifactLevel) || 0 : existingArtifact?.artifactLevel;
-    const crystals = toStoredLegionCrystals(board.crystals) ?? existingArtifact?.crystals;
+    const crystals = toStoredLegionCrystals(board.crystals, artifactLevel ?? 0) ?? existingArtifact?.crystals;
     writeLegionArtifactForWorld(character.worldID, {
       ...(artifactLevel !== undefined ? { artifactLevel } : {}),
       ...(crystals ? { crystals } : {}),
     });
   }
+  ensureLegionArtifactDefaultForWorld(character.worldID);
 }
 
 /**

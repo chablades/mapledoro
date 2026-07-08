@@ -44,34 +44,48 @@ export type LegionArtifactStatId =
 export interface LegionArtifactStatDef {
   id: LegionArtifactStatId;
   label: string;
-  /** Bonus per point of a stat's effective (capped) total level. */
-  perLevel: number;
+  /** Increment granted at each of the 10 effective levels (index 0 = level 1, index 9 =
+   *  level 10). Almost every stat is a flat `perLevel` repeated 10x, but 4 stats (mesos,
+   *  itemDrop, multiTargetExp, statusResistance) actually double their per-level increment
+   *  at levels 5 and 10 specifically — confirmed against namu.wiki's per-stat footnotes
+   *  (2026-07-08), e.g. mesos: "레벨당 1%씩 증가. 단, 5레벨과 10레벨에는 2%씩 증가"
+   *  ("+1%/level, except levels 5 and 10 which give +2%"). A flat perLevel model landed on
+   *  the right TOTAL at level 10 (which is all the original Lv10-screenshot check verified)
+   *  but was wrong at every other level. */
+  levelSteps: number[];
   unit: "flat" | "percent";
   /** A level-independent flat effect this stat also grants once its total level is >= 1
    *  (e.g. "+1 target" alongside the scaling EXP% on the same line). */
   flagAtLevelOne?: string;
 }
 
-// perLevel = wiki's "up to X" max divided by MAX_STAT_TOTAL_LEVEL (10) — verified against
-// every stat shown in Yuki's Lv 10 screenshot (e.g. Skill Cooldown Bypass Chance: 7.5/10 =
-// 0.75%/level matched the screenshot's "+7.50%" exactly).
+function uniformSteps(perLevel: number): number[] {
+  return Array.from({ length: MAX_STAT_TOTAL_LEVEL }, () => perLevel);
+}
+
+// The 4 stepped stats: +1 per level, except levels 5 and 10 which grant +2 instead of +1.
+const STEPPED_PERCENT = [1, 1, 1, 1, 2, 1, 1, 1, 1, 2];
+
+// Verified against namu.wiki's Lv 10 effect text + per-stat footnotes (2026-07-08), which
+// give both the level-10 total AND (via footnotes) the per-level growth pattern — not just
+// a single-level screenshot check like the original sourcing.
 export const LEGION_ARTIFACT_STATS: LegionArtifactStatDef[] = [
-  { id: "allStats", label: "All Stats", perLevel: 15, unit: "flat" },
-  { id: "hpMp", label: "Max HP/MP", perLevel: 750, unit: "flat" },
-  { id: "attMatt", label: "Attack Power/Magic ATT", perLevel: 3, unit: "flat" },
-  { id: "damage", label: "Damage", perLevel: 1.5, unit: "percent" },
-  { id: "bossDamage", label: "Boss Damage", perLevel: 1.5, unit: "percent" },
-  { id: "ignoreDefense", label: "Ignore Defense", perLevel: 2, unit: "percent" },
-  { id: "buffDuration", label: "Buff Duration", perLevel: 2, unit: "percent" },
-  { id: "skipCooldown", label: "Skill Cooldown Bypass Chance", perLevel: 0.75, unit: "percent" },
-  { id: "mesos", label: "Meso Drop", perLevel: 1.2, unit: "percent" },
-  { id: "itemDrop", label: "Item Drop Rate", perLevel: 1.2, unit: "percent" },
-  { id: "criticalRate", label: "Critical Rate", perLevel: 2, unit: "percent" },
-  { id: "criticalDamage", label: "Critical Damage", perLevel: 0.4, unit: "percent" },
-  { id: "multiTargetExp", label: "Bonus EXP", perLevel: 1.2, unit: "percent", flagAtLevelOne: "Max AoE Skill Targets +1" },
-  { id: "statusResistance", label: "Status Resistance", perLevel: 1.2, unit: "flat" },
-  { id: "summonDuration", label: "Summon Duration", perLevel: 2, unit: "percent" },
-  { id: "finalAttackDamage", label: "Damage of Final Attack Skill", perLevel: 3, unit: "percent" },
+  { id: "allStats", label: "All Stats", levelSteps: uniformSteps(15), unit: "flat" },
+  { id: "hpMp", label: "Max HP/MP", levelSteps: uniformSteps(750), unit: "flat" },
+  { id: "attMatt", label: "Attack Power/Magic ATT", levelSteps: uniformSteps(3), unit: "flat" },
+  { id: "damage", label: "Damage", levelSteps: uniformSteps(1.5), unit: "percent" },
+  { id: "bossDamage", label: "Boss Damage", levelSteps: uniformSteps(1.5), unit: "percent" },
+  { id: "ignoreDefense", label: "Ignore Defense", levelSteps: uniformSteps(2), unit: "percent" },
+  { id: "buffDuration", label: "Buff Duration", levelSteps: uniformSteps(2), unit: "percent" },
+  { id: "skipCooldown", label: "Skill Cooldown Bypass Chance", levelSteps: uniformSteps(0.75), unit: "percent" },
+  { id: "mesos", label: "Meso Drop", levelSteps: STEPPED_PERCENT, unit: "percent" },
+  { id: "itemDrop", label: "Item Drop Rate", levelSteps: STEPPED_PERCENT, unit: "percent" },
+  { id: "criticalRate", label: "Critical Rate", levelSteps: uniformSteps(2), unit: "percent" },
+  { id: "criticalDamage", label: "Critical Damage", levelSteps: uniformSteps(0.4), unit: "percent" },
+  { id: "multiTargetExp", label: "Bonus EXP", levelSteps: STEPPED_PERCENT, unit: "percent", flagAtLevelOne: "Max AoE Skill Targets +1" },
+  { id: "statusResistance", label: "Status Resistance", levelSteps: STEPPED_PERCENT, unit: "flat" },
+  { id: "summonDuration", label: "Summon Duration", levelSteps: uniformSteps(2), unit: "percent" },
+  { id: "finalAttackDamage", label: "Damage of Final Attack Skill", levelSteps: uniformSteps(3), unit: "percent" },
 ];
 
 // Every crystal starts with these exact 3 lines (in this order) before the player spends
@@ -155,8 +169,9 @@ export function effectiveStatLevel(rawLevel: number | undefined): number {
 /** Numeric bonus value at a stat's effective level (before unit formatting). */
 export function statBonusValue(statId: LegionArtifactStatId, effectiveLevel: number): number {
   const def = STAT_BY_ID.get(statId);
-  if (!def) return 0;
-  return Math.round(def.perLevel * effectiveLevel * 10) / 10;
+  if (!def || effectiveLevel <= 0) return 0;
+  const sum = def.levelSteps.slice(0, effectiveLevel).reduce((total, step) => total + step, 0);
+  return Math.round(sum * 10) / 10;
 }
 
 /** Formats a stat's computed bonus at its effective level, e.g. "+45" or "+18%, Max AoE Skill Targets +1". */
