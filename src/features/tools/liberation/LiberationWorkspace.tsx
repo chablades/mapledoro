@@ -740,18 +740,14 @@ export default function LiberationWorkspace({ theme }: { theme: AppTheme }) {
           {/* Character + liberation progress share one panel to keep the page
               header area short. */}
           <div className="fade-in panel-card" style={sectionPanel}>
-            {characters.length > 0 && (
-              <>
-                <CharacterSyncPanel
-                  theme={theme}
-                  characters={characters}
-                  selectedCharName={selectedCharName}
-                  onCharChange={handleCharChange}
-                  inputStyle={inputStyle}
-                />
-                <PanelDivider theme={theme} />
-              </>
-            )}
+            <CharacterSyncPanel
+              theme={theme}
+              characters={characters}
+              selectedCharName={selectedCharName}
+              onCharChange={handleCharChange}
+              inputStyle={inputStyle}
+            />
+            <PanelDivider theme={theme} />
             <LiberationProgressBar
               theme={theme}
               tracesCompleted={tracesCompleted}
