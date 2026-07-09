@@ -60,7 +60,7 @@ const SHARED_SLOTS: ReadonlySet<SlotKey> = new Set<SlotKey>(["title", "totem1", 
 const isSharedSlot = (slot: SlotKey): slot is SharedSlotKey => SHARED_SLOTS.has(slot);
 
 // Reading-order chains for the two substeps whose slots line up top-to-bottom in a single
-// in-game window (Additional Equipment, Pets). The main grid's own chain (MAIN_GRID_CHAIN,
+// in-game window (Titles/Totems/Symbols, Pets). The main grid's own chain (MAIN_GRID_CHAIN,
 // defined below once its column layout constants exist) is a 2D spatial layout, but a
 // column-based reading order was worked out with Yuki (2026-07-08) — see its own comment.
 const ADDITIONAL_EQUIP_CHAIN: readonly SlotKey[] = ["title", "totem1", "totem2", "totem3"];
@@ -74,12 +74,13 @@ function chainForSlot(slot: SlotKey): readonly SlotKey[] | null {
 }
 
 interface EquipmentDraft extends Partial<Record<SharedSlotKey, EquipmentItem | null>> {
-  /** Three equipment-grid presets. */
+  /** Three equipment-grid presets. Presets 1-2 are sparse — a slot key is only present
+   *  once explicitly touched in that preset; untouched slots mirror preset 0 live (see
+   *  activeGrid below), matching in-game behavior where each slot mirrors independently
+   *  rather than a whole preset diverging at once. */
   presets?: SlotMap[];
   /** Which preset (0-2) is being edited / is primary. */
   activePreset?: number;
-  /** Preset indices that have been edited (split off from preset 1). Others mirror preset 1. */
-  diverged?: number[];
   /** Symbol levels keyed by region name; folded into the calculator's tools.symbols on
    *  finish. String, not number — blank until touched, matching Oz Rings; the
    *  controller converts to real numbers when building tools.symbols. */
@@ -96,6 +97,7 @@ interface EquipmentSetupStepProps {
   totalSteps: number;
   direction?: "forward" | "backward";
   targetSubstep?: number | null;
+  onSubstepChange?: (substepIndex: number) => void;
   jobName?: string;
   characterLevel?: number;
   confirmedCharacterName?: string;
@@ -972,6 +974,7 @@ export default function EquipmentSetupStep({
   totalSteps,
   direction = "forward",
   targetSubstep,
+  onSubstepChange,
   jobName = "",
   characterLevel,
   confirmedCharacterImgURL,
@@ -993,9 +996,14 @@ export default function EquipmentSetupStep({
   const [draft, setDraft] = useState<EquipmentDraft>(() => parseDraft(value));
   const [activeSlot, setActiveSlot] = useState<SlotKey | null>(null);
   const activePreset = draft.activePreset ?? 0;
-  // Preset 0 is the base; presets 1-2 mirror it until edited (then they're "diverged").
-  const isPresetDiverged = (n: number) => n === 0 || (draft.diverged ?? []).includes(n);
-  const activeGrid: SlotMap = (isPresetDiverged(activePreset) ? draft.presets?.[activePreset] : draft.presets?.[0]) ?? {};
+  // Preset 0 is the base. Presets 1-2 are sparse per-slot overrides on top of it — a
+  // slot present in the active preset's own map wins, otherwise it falls through to
+  // preset 0's value, so untouched slots keep mirroring preset 0 live even after other
+  // slots in the same preset have been customized (plain object spread already gives
+  // this "later/override keys win, missing keys fall through" merge for free).
+  const activeGrid: SlotMap = activePreset === 0
+    ? (draft.presets?.[0] ?? {})
+    : { ...(draft.presets?.[0] ?? {}), ...(draft.presets?.[activePreset] ?? {}) };
   const readSlot = (slot: SlotKey) => (isSharedSlot(slot) ? draft[slot] : activeGrid[slot]);
 
   function commitDraft(next: EquipmentDraft) {
@@ -1009,6 +1017,9 @@ export default function EquipmentSetupStep({
     return Array.from({ length: PRESET_COUNT }, (_, i) => ({ ...(base[i] ?? {}) }));
   }
   const [substep, setSubstep] = useState(() => targetSubstep ?? (direction === "backward" ? 2 : 0));
+  // Lets the setup controller persist which substep is active, so a full page reload
+  // can resume into it instead of always falling back to the mount-time default above.
+  useEffect(() => { onSubstepChange?.(substep); }, [substep, onSubstepChange]);
   const [substepDirection, setSubstepDirection] = useState<"forward" | "backward">("forward");
   const [hasSubstepSwitched, setHasSubstepSwitched] = useState(false);
   const [symbolTab, setSymbolTab] = useState<SymbolTabKey>(() => (showArcaneSymbols ? "arcane" : "sacred"));
@@ -1045,15 +1056,12 @@ export default function EquipmentSetupStep({
       commitDraft({ ...draft, [slot]: item });
       return;
     }
+    // Always writes into just this one slot of the active preset's own sparse map —
+    // every other slot stays absent, so it keeps falling through to preset 0 (see
+    // activeGrid above) rather than getting frozen by a whole-preset clone.
     const presets = clonePresets();
-    if (isPresetDiverged(activePreset)) {
-      presets[activePreset] = { ...presets[activePreset], [slot]: item };
-      commitDraft({ ...draft, presets });
-    } else {
-      // First edit of a mirrored preset: split it off with a full copy of preset 1 + this change.
-      presets[activePreset] = { ...presets[0], [slot]: item };
-      commitDraft({ ...draft, presets, diverged: [...(draft.diverged ?? []), activePreset] });
-    }
+    presets[activePreset] = { ...presets[activePreset], [slot]: item };
+    commitDraft({ ...draft, presets });
   }
 
   function switchPreset(n: number) {
@@ -1156,7 +1164,7 @@ export default function EquipmentSetupStep({
     return next && !readSlot(next) ? () => setActiveSlot(next) : () => setActiveSlot(null);
   }
 
-  /** Prev/next navigation for a slot's chained group (Additional Equipment or Pets), if any. */
+  /** Prev/next navigation for a slot's chained group (Titles/Totems/Symbols or Pets), if any. */
   function chainNavForSlot(slot: SlotKey): { onPrev?: () => void; onNext?: () => void } {
     const chain = chainForSlot(slot);
     if (!chain) return {};
@@ -1228,7 +1236,7 @@ export default function EquipmentSetupStep({
       <div key={1} style={substepAnimStyle}>
         <SetupStepFrame
           theme={theme}
-          stepLabel="Additional Equipment"
+          stepLabel="Titles, Totems & Symbols"
           stepNumber={stepNumber}
           totalSteps={totalSteps}
           substepIndex={substep}

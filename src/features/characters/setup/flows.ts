@@ -262,7 +262,7 @@ export function getFirstInvalidStepIndex(
 /**
  * Substeps for the few step types that split one in-game window's worth of questions
  * across multiple screens (Stats: Character Info window; Equipment: Equipment/Inventory
- * window's main grid + Additional Equipment + Pets; HEXA Matrix: Skills window's skill
+ * window's main grid + Titles/Totems/Symbols + Pets; HEXA Matrix: Skills window's skill
  * levels + HEXA Stat). Mirrors each component's own substep show/hide conditions — keep
  * in sync with StatsSetupStep/EquipmentSetupStep/HexaMatrixSetupStep if those change.
  * Returns null for step types that don't split into substeps.
@@ -284,7 +284,7 @@ export function getStepSubsteps(
     ];
   }
   if (stepId === "equipment") {
-    return ["Equipment", "Additional Equipment", "Pets"];
+    return ["Equipment", "Titles, Totems & Symbols", "Pets"];
   }
   if (stepId === "hexa_matrix") {
     return isScouter ? null : ["HEXA Skills", "HEXA Stat"];

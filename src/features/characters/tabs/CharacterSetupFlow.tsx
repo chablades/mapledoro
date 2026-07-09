@@ -195,6 +195,7 @@ export default function CharacterSetupFlow({ theme, initialCharacterName, initia
     setSetupStepWithDirection: actions.setSetupStepWithDirection,
     jumpToSubstep: actions.jumpToSubstep,
     onValidityChange: actions.onValidityChange,
+    reportCurrentSubstep: actions.reportCurrentSubstep,
     stepValueChange: actions.updateActiveStepValue,
     finishSetupFlow: actions.finishSetupFlow,
     openCharacterSearch: actions.openAddCharacterSearch,

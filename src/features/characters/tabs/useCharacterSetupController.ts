@@ -83,7 +83,6 @@ import {
 import type { SetupDraftSummary } from "./paneModels";
 import { getClassSetupOverrides } from "../setup/data/nexonJobMapping";
 import type { SetupStepInputById } from "../setup/types";
-import { LOOKUP_MESSAGES } from "./messages";
 import { useCharacterLookup } from "./useCharacterLookup";
 import {
   CHARACTERS_TRANSITION_MS,
@@ -110,10 +109,11 @@ interface EquipmentDraftPreset {
   android?: EquipmentDraftItem; heart?: EquipmentDraftItem; badge?: EquipmentDraftItem;
 }
 interface EquipmentDraft {
+  /** Presets 1-2 are sparse per-slot overrides on top of preset 0 — see
+   *  draftPresetToStored, which merges each slot individually rather than choosing one
+   *  whole preset or the other. */
   presets?: EquipmentDraftPreset[];
   activePreset?: number;
-  /** Preset indices that were edited; un-diverged presets are saved as copies of preset 1. */
-  diverged?: number[];
   // Shared across presets:
   title?: EquipmentDraftItem;
   totem1?: EquipmentDraftItem; totem2?: EquipmentDraftItem; totem3?: EquipmentDraftItem;
@@ -130,18 +130,29 @@ function draftItem(v: EquipmentDraftItem) {
   return v.id !== undefined ? { id: v.id, name: v.name } : { name: v.name };
 }
 
-function draftPresetToStored(p: EquipmentDraftPreset | undefined): StoredEquipmentPreset {
-  const d = p ?? {};
+// Merges each slot individually — a slot present in `overrides` (this preset's own
+// explicit picks) wins, otherwise it falls through to `base` (preset 0), so an
+// untouched slot keeps mirroring preset 0 even when other slots in the same preset
+// have been customized. Same per-slot model as EquipmentSetupStep.tsx's activeGrid;
+// matches in-game behavior where each equipment slot mirrors independently rather
+// than a whole preset diverging at once.
+function draftPresetToStored(
+  overrides: EquipmentDraftPreset | undefined,
+  base: EquipmentDraftPreset | undefined,
+): StoredEquipmentPreset {
+  const o = overrides ?? {};
+  const b = base ?? {};
+  const field = (key: keyof EquipmentDraftPreset) => draftItem((o[key] !== undefined ? o[key] : b[key]) ?? null);
   return {
-    rings: [draftItem(d.ring1 ?? null), draftItem(d.ring2 ?? null), draftItem(d.ring3 ?? null), draftItem(d.ring4 ?? null)],
-    face: draftItem(d.face ?? null), eye: draftItem(d.eye ?? null), earring: draftItem(d.earring ?? null),
-    pendants: [draftItem(d.pendant1 ?? null), draftItem(d.pendant2 ?? null)],
-    belt: draftItem(d.belt ?? null), pocket: draftItem(d.pocket ?? null),
-    hat: draftItem(d.hat ?? null), cape: draftItem(d.cape ?? null), top: draftItem(d.top ?? null),
-    glove: draftItem(d.glove ?? null), bottom: draftItem(d.bottom ?? null), shoe: draftItem(d.shoe ?? null),
-    shoulder: draftItem(d.shoulder ?? null), medal: draftItem(d.medal ?? null),
-    weapon: draftItem(d.weapon ?? null), secondary: draftItem(d.secondary ?? null), emblem: draftItem(d.emblem ?? null),
-    android: draftItem(d.android ?? null), heart: draftItem(d.heart ?? null), badge: draftItem(d.badge ?? null),
+    rings: [field("ring1"), field("ring2"), field("ring3"), field("ring4")],
+    face: field("face"), eye: field("eye"), earring: field("earring"),
+    pendants: [field("pendant1"), field("pendant2")],
+    belt: field("belt"), pocket: field("pocket"),
+    hat: field("hat"), cape: field("cape"), top: field("top"),
+    glove: field("glove"), bottom: field("bottom"), shoe: field("shoe"),
+    shoulder: field("shoulder"), medal: field("medal"),
+    weapon: field("weapon"), secondary: field("secondary"), emblem: field("emblem"),
+    android: field("android"), heart: field("heart"), badge: field("badge"),
   };
 }
 
@@ -149,9 +160,8 @@ function parseEquipmentDraft(json: string): StoredCharacterEquipment | null {
   try {
     const d = tryParseJson(json) as EquipmentDraft | null;
     if (!d || typeof d !== "object") return null;
-    // Un-diverged presets (those mirroring preset 1 in the UI) are saved as copies of preset 1.
-    const diverged = new Set<number>(Array.isArray(d.diverged) ? d.diverged : []);
-    const presetAt = (i: number) => draftPresetToStored(d.presets?.[i === 0 || diverged.has(i) ? i : 0]);
+    const base = d.presets?.[0];
+    const presetAt = (i: number) => draftPresetToStored(d.presets?.[i], base);
     return {
       presets: [presetAt(0), presetAt(1), presetAt(2)],
       // Always saved as preset 1, regardless of which tab was last open while editing —
@@ -821,6 +831,12 @@ export function useCharacterSetupController() {
   // twice in a row (the step component may have since navigated away internally).
   const [setupTargetSubstep, setSetupTargetSubstep] = useState<number | null>(null);
   const [substepJumpNonce, setSubstepJumpNonce] = useState(0);
+  // Live-tracks whichever substep the currently-mounted step (Stats/Equipment/HEXA
+  // Matrix) is actually showing, reported up via each step's onSubstepChange as it
+  // navigates internally (0 for step types without substeps). Persisted alongside
+  // setupStepIndex so a full page reload can restore into the exact substep the player
+  // left off on, instead of always falling back to substep 0.
+  const [setupSubstepIndex, setSetupSubstepIndex] = useState(0);
   // Last-known Next-button validity per step id (see SetupStepFrame's onValidityChange),
   // for the ~5 steps that actually gate Next on something. Keyed by step id (not
   // reset on navigation) because a step's draft data — and thus its validity — is
@@ -955,6 +971,13 @@ export function useCharacterSetupController() {
       setActiveFlowId(draft.activeFlowId);
       setSetupStepIndex(draft.setupStepIndex);
       setSetupStepDirection(draft.setupStepDirection);
+      setSetupSubstepIndex(draft.setupSubstepIndex ?? 0);
+      // Seeds the freshly-mounted step's initial substep (see targetSubstep ?? ...
+      // fallback in each of Stats/Equipment/HexaMatrixSetupStep) — safe to always set
+      // here since any subsequent normal navigation already clears it right back to
+      // null (see setSetupStepWithDirection), so it can't linger and force a stale
+      // substep after the player has since navigated elsewhere within the step.
+      setSetupTargetSubstep(draft.setupSubstepIndex ?? null);
       setSetupStepTestByStep(draft.setupStepTestByStep ?? {});
       // Restored from the draft (not wiped) — the draft's own step data can still be
       // invalid, and forgetting that here is exactly what let people resume past it.
@@ -1233,6 +1256,7 @@ export function useCharacterSetupController() {
       showCharacterDirectory,
       setupStepIndex: clampFlowStepIndex(activeFlowId, setupStepIndex),
       setupStepDirection,
+      setupSubstepIndex,
       setupStepTestByStep,
       stepValidityById,
       confirmedCharacter,
@@ -1253,6 +1277,7 @@ export function useCharacterSetupController() {
     setupMode,
     setupStepDirection,
     setupStepIndex,
+    setupSubstepIndex,
     setupStepTestByStep,
     stepValidityById,
     showCharacterDirectory,
@@ -1278,6 +1303,7 @@ export function useCharacterSetupController() {
       showCharacterDirectory: boolean;
       stepIndex: number;
       stepDirection: "forward" | "backward";
+      substepIndex: number;
       stepData: SetupStepInputById;
       stepValidityById: Record<string, boolean>;
     }) => {
@@ -1292,6 +1318,8 @@ export function useCharacterSetupController() {
         setShowCharacterDirectory,
         setSetupStepIndex,
         setSetupStepDirection,
+        setSetupTargetSubstep,
+        setSetupSubstepIndex,
         setSetupStepTestByStep,
         setStepValidityById,
       });
@@ -1319,6 +1347,8 @@ export function useCharacterSetupController() {
       setShowCharacterDirectory,
       setSetupStepIndex,
       setSetupStepDirection,
+      setSetupTargetSubstep,
+      setSetupSubstepIndex,
       setSetupStepTestByStep,
       setStepValidityById,
     });
@@ -1341,6 +1371,8 @@ export function useCharacterSetupController() {
         setShowCharacterDirectory,
         setSetupStepIndex,
         setSetupStepDirection,
+        setSetupTargetSubstep,
+        setSetupSubstepIndex,
         setSetupStepTestByStep,
         setStepValidityById,
       });
@@ -1438,6 +1470,13 @@ export function useCharacterSetupController() {
     setStepValidityById((prev) => (prev[stepId] === valid ? prev : { ...prev, [stepId]: valid }));
   }, []);
 
+  // Stats/Equipment/HEXA Matrix report their own current substep here (see each
+  // component's onSubstepChange), so it can be persisted for resume — see
+  // setupSubstepIndex above.
+  const reportCurrentSubstep = useCallback((substepIndex: number) => {
+    setSetupSubstepIndex((prev) => (prev === substepIndex ? prev : substepIndex));
+  }, []);
+
   const resumeDraft = useCallback(async (characterKey: string) => {
     if (immediateUiLockRef.current) return;
     const draft = readSetupDraftByKey(characterKey);
@@ -1481,6 +1520,7 @@ export function useCharacterSetupController() {
         draft.completedFlowIds?.includes(requiredFlowId) ? 0 : draft.setupStepIndex,
       ),
       stepDirection: draft.setupStepDirection,
+      substepIndex: draft.completedFlowIds?.includes(requiredFlowId) ? 0 : (draft.setupSubstepIndex ?? 0),
       stepData: draft.setupStepTestByStep ?? {},
       stepValidityById: draft.stepValidityById ?? {},
     });
@@ -1532,6 +1572,7 @@ export function useCharacterSetupController() {
         draft.completedFlowIds?.includes(requiredFlowId) ? 0 : draft.setupStepIndex,
       ),
       stepDirection: draft.setupStepDirection,
+      substepIndex: draft.completedFlowIds?.includes(requiredFlowId) ? 0 : (draft.setupSubstepIndex ?? 0),
       stepData: draft.setupStepTestByStep ?? {},
       stepValidityById: draft.stepValidityById ?? {},
     });
@@ -1568,6 +1609,7 @@ export function useCharacterSetupController() {
       showCharacterDirectory: false,
       stepIndex: 0,
       stepDirection: "forward",
+      substepIndex: 0,
       stepData: existingCharacterDraft?.setupStepTestByStep ?? {},
       stepValidityById: existingCharacterDraft?.stepValidityById ?? {},
     });
@@ -1649,11 +1691,6 @@ export function useCharacterSetupController() {
       setSetupStepIndex(0);
       setSetupStepDirection("forward");
 
-      if (isQuickSetupFlow || isFullSetupFlow) {
-        lookup.setStatusTone("neutral");
-        lookup.setStatusMessage(LOOKUP_MESSAGES.setupSaved);
-      }
-
       setIsFinishingSetup(false);
       immediateUiLockRef.current = false;
     }, CHARACTERS_TRANSITION_MS.standard);
@@ -1663,7 +1700,6 @@ export function useCharacterSetupController() {
     confirmedCharacter,
     requiredFlowId,
     setupStepTestByStep,
-    lookup,
     transitions,
     upsertRosterCharacter,
   ]);
@@ -1910,6 +1946,7 @@ export function useCharacterSetupController() {
         showCharacterDirectory: targetShowCharacterDirectory,
         setupStepIndex: targetStepIndex,
         setupStepDirection: targetStepDirection,
+        setupSubstepIndex: 0,
         setupStepTestByStep,
         stepValidityById,
         confirmedCharacter,
@@ -2058,6 +2095,7 @@ export function useCharacterSetupController() {
       setSetupStepWithDirection,
       jumpToSubstep,
       onValidityChange: reportStepValidity,
+      reportCurrentSubstep,
       runBackToIntroTransition,
       runTransitionToMode,
       backFromSetupFlowToAddCharacter,

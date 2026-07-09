@@ -17,6 +17,7 @@ interface GenericSetupStepProps {
   direction?: "forward" | "backward";
   targetSubstep?: number | null;
   onValidityChange?: (valid: boolean, substepIndex?: number) => void;
+  onSubstepChange?: (substepIndex: number) => void;
   characterRoster?: import("../../model/charactersStore").StoredCharacterRecord[];
   confirmedWorldId?: number;
   worldLinkSkills?: string;

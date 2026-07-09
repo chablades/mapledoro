@@ -97,6 +97,7 @@ export default function SetupFlowScreen({ model, actions }: SetupFlowScreenProps
         onValidityChange={currentStepId
           ? (valid: boolean, substepIndex = 0) => actions.onValidityChange(getStepValidityKey(currentStepId, substepIndex, setup.activeFlowId), valid)
           : undefined}
+        onSubstepChange={actions.reportCurrentSubstep}
         characterRoster={characterRoster}
         confirmedWorldId={confirmed?.worldID}
         worldLinkSkills={worldLinkSkills}

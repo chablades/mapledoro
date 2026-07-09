@@ -1,6 +1,6 @@
 "use client";
 
-import type { CSSProperties } from "react";
+import { useRef, type CSSProperties } from "react";
 import { numericKeyDown, sanitizeDigitsInput } from "../../../../lib/inputUtils";
 import { resourceImageUrl } from "../../../../lib/mapleResource";
 import type { AppTheme } from "../../../../components/themes";
@@ -23,7 +23,7 @@ import {
 } from "../data/ozRingData";
 import SetupStepFrame from "./SetupStepFrame";
 import InfoTooltip from "./InfoTooltip";
-import { InputWarningBubble } from "./QuestionControls";
+import { InputWarningBubble, scrollToFlaggedField } from "./QuestionControls";
 
 // MapleScouter's own sanity bound for the Totalling Ring off-stat fields (a 7-digit
 // entry gets rejected) — not a real game cap, so this warns instead of hard-blocking.
@@ -160,15 +160,24 @@ function RingModeTabs({ mode, onChange, theme }: {
   );
 }
 
-function StatRow({ label, value, onChange, theme }: {
+function StatRow({ label, value, onChange, theme, isFirst }: {
   label: string;
   value: string;
   onChange: (val: string) => void;
   theme: AppTheme;
+  /** The first row has no row above it to overlap, so its own bubble never needs the
+   *  extra clearance below. */
+  isFirst: boolean;
 }) {
   const showWarning = Number(value) >= TOTALLING_STAT_WARN_AT;
   return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.5rem" }}>
+    // Extra top clearance only when this row's own bubble is showing — it floats above
+    // the input (see inputWarningBubbleStyle), which otherwise overlaps the row above's
+    // input since the stack's own row gap (0.4rem) is far smaller than the bubble's
+    // 2-line-wrapped height. Only ever visible with multiple simultaneously-bad
+    // Totalling stat values, which real MapleScouter data wouldn't produce, but cheap
+    // to not have it break.
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.5rem", marginTop: showWarning && !isFirst ? "2.7rem" : undefined }}>
       <span style={{ fontSize: "0.85rem", fontWeight: 700, color: theme.text }}>{label}</span>
       <div style={{ position: "relative" }}>
         {showWarning && <InputWarningBubble message={`That ${label} value looks too large. Double check.`} theme={theme} />}
@@ -178,6 +187,7 @@ function StatRow({ label, value, onChange, theme }: {
           aria-label={`Totalling Ring ${label}`}
           value={value}
           placeholder="0"
+          data-flagged-field={showWarning ? "true" : undefined}
           onChange={(e) => onChange(sanitizeDigitsInput(e.target.value))}
           onKeyDown={numericKeyDown}
           style={statRowInputStyle(theme)}
@@ -230,6 +240,7 @@ export default function OzRingsSetupStep({
     : 0;
   const hasInsaneTotallingStat = insaneTotallingStatCount > 0;
   const flaggedValueWord = insaneTotallingStatCount > 1 ? "values" : "value";
+  const rootRef = useRef<HTMLDivElement>(null);
 
   return (
     <SetupStepFrame
@@ -244,7 +255,7 @@ export default function OzRingsSetupStep({
       nextDisabled={hasInsaneTotallingStat}
       onValidityChange={onValidityChange}
     >
-      <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem", maxWidth: 360 }}>
+      <div ref={rootRef} style={{ display: "flex", flexDirection: "column", gap: "1.25rem", maxWidth: 360 }}>
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", marginBottom: "0.4rem" }}>
             <span style={{ ...sectionLabelStyle(theme), margin: 0 }}>Ring Setup</span>
@@ -281,13 +292,14 @@ export default function OzRingsSetupStep({
               <div>
                 <p style={sectionLabelStyle(theme)}>Totalling Ring Stats</p>
                 <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
-                  {ozInfo.totallingStats.map((stat) => (
+                  {ozInfo.totallingStats.map((stat, index) => (
                     <StatRow
                       key={stat}
                       label={MAIN_STAT_LABELS[stat]}
                       value={draft.totallingStatValues[stat] ?? ""}
                       onChange={(v) => setTotallingStat(stat, v)}
                       theme={theme}
+                      isFirst={index === 0}
                     />
                   ))}
                 </div>
@@ -298,11 +310,24 @@ export default function OzRingsSetupStep({
       </div>
 
       {hasInsaneTotallingStat && (
-        <p style={{ margin: "0.75rem 0 0", fontSize: "0.78rem", fontWeight: 700, color: theme.muted }}>
-          {showTotallingStats
-            ? `Fix the flagged ${flaggedValueWord} above to continue.`
-            : `Switch to Standard ring setup and fix the flagged Totalling Ring ${flaggedValueWord} to continue.`}
-        </p>
+        showTotallingStats ? (
+          <button
+            type="button"
+            onClick={() => scrollToFlaggedField(rootRef.current)}
+            style={{
+              display: "block", margin: "0.75rem 0 0", padding: 0,
+              background: "none", border: "none", font: "inherit", textAlign: "left",
+              fontSize: "0.78rem", fontWeight: 700, color: theme.muted, cursor: "pointer",
+              textDecoration: "underline", textUnderlineOffset: "2px",
+            }}
+          >
+            {`Fix the flagged ${flaggedValueWord} above to continue.`}
+          </button>
+        ) : (
+          <p style={{ margin: "0.75rem 0 0", fontSize: "0.78rem", fontWeight: 700, color: theme.muted }}>
+            {`Switch to Standard ring setup and fix the flagged Totalling Ring ${flaggedValueWord} to continue.`}
+          </p>
+        )
       )}
     </SetupStepFrame>
   );

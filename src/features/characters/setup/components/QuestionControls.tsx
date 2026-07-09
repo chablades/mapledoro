@@ -79,6 +79,20 @@ export function InputWarningBubble({ message, theme }: { message: string; theme:
   );
 }
 
+// Jumps to whatever a "fix the flagged value" message is actually pointing at, since on
+// a long step that field can easily be scrolled out of view by the time the message
+// appears. Finds the first field marked `data-flagged-field="true"` — either an actual
+// bad value (next to its InputWarningBubble) or, in flows like MapleScouter where every
+// field must be filled, the first still-blank required field. No-op if none is present.
+export function scrollToFlaggedField(container: HTMLElement | null) {
+  if (!container) return;
+  const target = container.querySelector<HTMLElement>('[data-flagged-field="true"]');
+  if (!target) return;
+  target.scrollIntoView({ behavior: "smooth", block: "center" });
+  target.classList.add("jump-highlight");
+  window.setTimeout(() => target.classList.remove("jump-highlight"), 1100);
+}
+
 // ── Checklist-style question controls ──────────────────────────────────────────
 // Traits render as checkbox rows in a flat list rather than competing pill buttons,
 // so a "none of these" answer reads as one more line item, not a peer choice.

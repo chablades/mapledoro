@@ -28,6 +28,9 @@ interface StepRendererProps {
   targetSubstep?: number | null;
   substepJumpNonce?: number;
   onValidityChange?: (valid: boolean, substepIndex?: number) => void;
+  /** Reports the current substep of Stats/Equipment/HEXA Matrix as it navigates
+   *  internally, so the controller can persist it for resume across a full reload. */
+  onSubstepChange?: (substepIndex: number) => void;
   characterRoster?: import("../model/charactersStore").StoredCharacterRecord[];
   confirmedWorldId?: number;
   worldLinkSkills?: string;
@@ -66,6 +69,7 @@ export default function StepRenderer({
   targetSubstep,
   substepJumpNonce,
   onValidityChange,
+  onSubstepChange,
   characterRoster,
   confirmedWorldId,
   worldLinkSkills,
@@ -102,6 +106,7 @@ export default function StepRenderer({
       direction={direction}
       targetSubstep={targetSubstep}
       onValidityChange={onValidityChange}
+      onSubstepChange={onSubstepChange}
       characterRoster={characterRoster}
       confirmedWorldId={confirmedWorldId}
       worldLinkSkills={worldLinkSkills}

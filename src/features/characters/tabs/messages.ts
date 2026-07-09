@@ -26,5 +26,4 @@ export const LOOKUP_MESSAGES = {
   searchingSlow: "Still searching... high traffic may cause delays.",
   timeout: "Search timed out. Please retry in a few seconds.",
   failed: "Search failed. Please try again.",
-  setupSaved: "Setup progress saved. You can continue editing anytime.",
 } as const;

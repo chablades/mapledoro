@@ -146,6 +146,7 @@ export interface PreviewPaneActions {
   setSetupStepWithDirection: (step: number, forceDirection?: "forward" | "backward") => void;
   jumpToSubstep: (step: number, substepIndex: number) => void;
   onValidityChange: (stepId: string, valid: boolean) => void;
+  reportCurrentSubstep: (substepIndex: number) => void;
   stepValueChange: (value: string) => void;
   finishSetupFlow: () => void;
   openCharacterSearch: () => void;

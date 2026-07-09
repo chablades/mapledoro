@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { numericKeyDown, sanitizeDigitsInput, decimalKeyDown, sanitizeDecimalInput } from "../../../../lib/inputUtils";
 import { joinWithAnd } from "../../../../lib/textUtils";
 import type { CSSProperties, ReactNode } from "react";
@@ -13,7 +13,7 @@ import type { SetupFlowId } from "../flows";
 import SetupStepFrame from "./SetupStepFrame";
 import InfoTooltip from "./InfoTooltip";
 import { CopyFromPreset } from "./CopyFromPreset";
-import { statInputStyle, inputSuffixStyle, ChecklistCheckbox, ChecklistGroup, LegionFinalAttackField, InputWarningBubble } from "./QuestionControls";
+import { statInputStyle, inputSuffixStyle, ChecklistCheckbox, ChecklistGroup, LegionFinalAttackField, InputWarningBubble, scrollToFlaggedField } from "./QuestionControls";
 import {
   CLASS_SKILL_DATA,
   UNIVERSAL_BUFF_SKILLS,
@@ -66,6 +66,7 @@ interface StatsSetupStepProps {
   direction?: "forward" | "backward";
   targetSubstep?: number | null;
   onValidityChange?: (valid: boolean, substepIndex?: number) => void;
+  onSubstepChange?: (substepIndex: number) => void;
   characterLevel?: number;
   characterRoster?: StoredCharacterRecord[];
   confirmedWorldId?: number;
@@ -313,13 +314,15 @@ function BuffGuide({ classData, theme, characterLevel }: { classData: ClassSkill
 }
 
 function TripleStatRow({
-  id, draft, onUpdate, theme, isMainStat,
+  id, draft, onUpdate, theme, isMainStat, requireFilled,
 }: {
   id: TripleStatFieldId;
   draft: StatsStepDraft;
   onUpdate: (id: TripleStatFieldId, field: keyof TripleStatDraft, val: string) => void;
   theme: AppTheme;
   isMainStat: boolean;
+  /** MapleScouter only — a blank field here should jump-to-fix same as a bad value. */
+  requireFilled: boolean;
 }) {
   const d: TripleStatDraft = draft[id] ?? { base: "", percent: "", percentUnapplied: "" };
   const sub = statInputStyle(theme);
@@ -342,6 +345,7 @@ function TripleStatRow({
         <div style={{ flex: 1, position: "relative" }}>
           {showBaseWarning && <InputWarningBubble message={`That looks like your total ${label}, enter your Base Value for ${label}.`} theme={theme} />}
           <input type="text" aria-label={`${label} base value`} value={d.base} placeholder="0" style={sub}
+            data-flagged-field={showBaseWarning || (requireFilled && !d.base.trim()) ? "true" : undefined}
             onChange={(e) => onUpdate(id, "base", sanitizeDigitsInput(e.target.value))}
             onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
             onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
@@ -352,6 +356,7 @@ function TripleStatRow({
         <div style={{ flex: 1 }}>
           <div style={{ position: "relative" }}>
             <input type="text" aria-label={`${label} percent value`} value={d.percent} placeholder="0" style={{ ...sub, paddingRight: "1.15rem" }}
+              data-flagged-field={requireFilled && !d.percent.trim() ? "true" : undefined}
               onChange={(e) => onUpdate(id, "percent", sanitizeDigitsInput(e.target.value))}
               onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
               onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
@@ -366,6 +371,7 @@ function TripleStatRow({
             <div style={{ position: "relative" }}>
               {showPercentUnappliedWarning && <InputWarningBubble message={`That % looks too large, enter your % Value Not Applied for ${label}.`} theme={theme} />}
               <input type="text" aria-label={`${label} percent not applied`} value={d.percentUnapplied} placeholder="0" style={{ ...sub, paddingRight: "1.15rem" }}
+                data-flagged-field={showPercentUnappliedWarning || (requireFilled && !d.percentUnapplied.trim()) ? "true" : undefined}
                 onChange={(e) => onUpdate(id, "percentUnapplied", sanitizeDigitsInput(e.target.value))}
                 onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
                 onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
@@ -448,13 +454,15 @@ function HyperStatCell({
 }
 
 function CombatStatCell({
-  id, draft, onUpdate, onUpdateCooldown, theme,
+  id, draft, onUpdate, onUpdateCooldown, theme, requireFilled,
 }: {
   id: StatFieldId;
   draft: StatsStepDraft;
   onUpdate: (id: string, val: string) => void;
   onUpdateCooldown: (field: "seconds" | "percent", val: string) => void;
   theme: AppTheme;
+  /** MapleScouter only — a blank field here should jump-to-fix same as a bad value. */
+  requireFilled: boolean;
 }) {
   const label = STAT_LABELS[id] ?? id;
 
@@ -466,6 +474,7 @@ function CombatStatCell({
         <div style={{ display: "flex", alignItems: "center", gap: "0.3rem", flexShrink: 0 }}>
           <div style={{ position: "relative" }}>
             <input type="text" aria-label={`${label} seconds`} value={cd.seconds} placeholder="0" style={{ ...statInputStyle(theme, "2.9rem"), paddingRight: "1.05rem" }}
+              data-flagged-field={requireFilled && !cd.seconds.trim() ? "true" : undefined}
               onChange={(e) => onUpdateCooldown("seconds", sanitizeDigitsInput(e.target.value))}
               onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
               onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
@@ -475,6 +484,7 @@ function CombatStatCell({
           </div>
           <div style={{ position: "relative" }}>
             <input type="text" aria-label={`${label} percent`} value={cd.percent} placeholder="0" style={{ ...statInputStyle(theme, "2.9rem"), paddingRight: "1.05rem" }}
+              data-flagged-field={requireFilled && !cd.percent.trim() ? "true" : undefined}
               onChange={(e) => onUpdateCooldown("percent", sanitizeDigitsInput(e.target.value))}
               onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
               onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
@@ -497,6 +507,7 @@ function CombatStatCell({
       <div style={{ position: "relative", flexShrink: 0 }}>
         <input type="text" aria-label={label} value={val} placeholder="0"
           style={isRaw ? statInputStyle(theme, "4.6rem") : { ...statInputStyle(theme, "4.6rem"), paddingRight: "1.15rem" }}
+          data-flagged-field={requireFilled && !val.trim() ? "true" : undefined}
           onChange={(e) => {
             if (id === "ignoreElementalResistance") onUpdate(id, clampIgnoreElementalResist(e.target.value));
             else if (allowsDecimal) onUpdate(id, sanitizeDecimalInput(e.target.value));
@@ -549,6 +560,7 @@ function WeaponAttField({ label, usesMagicWeapon, value, onUpdate, theme }: {
               value={value}
               placeholder="0"
               style={statInputStyle(theme, "4.6rem")}
+              data-flagged-field={showWeaponAttWarning || !value.trim() ? "true" : undefined}
               onChange={(e) => onUpdate(sanitizeDigitsInput(e.target.value))}
               onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
               onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
@@ -905,6 +917,7 @@ function isStatsSubstepComplete(
     && isStatsSubstepSane(draft, tripleIds, primaryStat, requireWeaponAtt);
 }
 
+
 // "X left" / "X over" — pulled out of the main component (rather than an inline
 // ternary) purely to keep its cognitive complexity under the sonarjs cap.
 function hyperStatBudgetSuffix(budget: number, spent: number): string {
@@ -973,8 +986,9 @@ function StatsWindowSubstep({
   const statsComplete = isScouter
     ? isStatsSubstepComplete(draft, tripleIds, showWeaponAtt, primaryStat, showArcanePower, showSacredPower)
     : isStatsSubstepSane(draft, tripleIds, primaryStat, showWeaponAtt);
+  const rootRef = useRef<HTMLDivElement>(null);
   return (
-    <div key={1} className="stats-substep-root" style={substepAnimStyle}>
+    <div key={1} ref={rootRef} className="stats-substep-root" style={substepAnimStyle}>
     <style>{`
       .stats-substep-root { container-type: inline-size; }
       /* Collapse to one column on the panel's actual width, not the viewport — the
@@ -1022,7 +1036,7 @@ function StatsWindowSubstep({
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
             {tripleIds.map((id) => (
-              <TripleStatRow key={id} id={id} draft={draft} onUpdate={handleTripleUpdate} theme={theme} isMainStat={id === primaryStat} />
+              <TripleStatRow key={id} id={id} draft={draft} onUpdate={handleTripleUpdate} theme={theme} isMainStat={id === primaryStat} requireFilled={isScouter} />
             ))}
           </div>
         </div>
@@ -1033,12 +1047,12 @@ function StatsWindowSubstep({
         <div className="stats-combat-grid" style={{ display: "flex", minWidth: 0 }}>
           <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: "0.4rem" }}>
             {COMBAT_LEFT.map((id) => (
-              <CombatStatCell key={id} id={id} draft={draft} onUpdate={handleSingleUpdate} onUpdateCooldown={handleCooldownUpdate} theme={theme} />
+              <CombatStatCell key={id} id={id} draft={draft} onUpdate={handleSingleUpdate} onUpdateCooldown={handleCooldownUpdate} theme={theme} requireFilled={isScouter} />
             ))}
           </div>
           <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: "0.4rem" }}>
             {COMBAT_RIGHT.map((id) => (
-              <CombatStatCell key={id} id={id} draft={draft} onUpdate={handleSingleUpdate} onUpdateCooldown={handleCooldownUpdate} theme={theme} />
+              <CombatStatCell key={id} id={id} draft={draft} onUpdate={handleSingleUpdate} onUpdateCooldown={handleCooldownUpdate} theme={theme} requireFilled={isScouter} />
             ))}
           </div>
         </div>
@@ -1050,7 +1064,7 @@ function StatsWindowSubstep({
           <div className="stats-symbols-grid" style={{ minWidth: 0 }}>
             {symbolIds.map((id) => (
               <div key={id} style={{ minWidth: 0 }}>
-                <CombatStatCell id={id} draft={draft} onUpdate={handleSingleUpdate} onUpdateCooldown={handleCooldownUpdate} theme={theme} />
+                <CombatStatCell id={id} draft={draft} onUpdate={handleSingleUpdate} onUpdateCooldown={handleCooldownUpdate} theme={theme} requireFilled={isScouter} />
               </div>
             ))}
           </div>
@@ -1067,9 +1081,18 @@ function StatsWindowSubstep({
         />
       )}
       {!statsComplete && (
-        <p style={{ margin: "0.75rem 0 0", fontSize: "0.78rem", fontWeight: 700, color: theme.muted }}>
+        <button
+          type="button"
+          onClick={() => scrollToFlaggedField(rootRef.current)}
+          style={{
+            display: "block", margin: "0.75rem 0 0", padding: 0,
+            background: "none", border: "none", font: "inherit", textAlign: "left",
+            fontSize: "0.78rem", fontWeight: 700, color: theme.muted, cursor: "pointer",
+            textDecoration: "underline", textUnderlineOffset: "2px",
+          }}
+        >
           {isScouter ? "Fill in every stat above, and fix any flagged values, to continue." : "Fix the flagged value above to continue."}
-        </p>
+        </button>
       )}
     </SetupStepFrame>
     </div>
@@ -1079,7 +1102,7 @@ function StatsWindowSubstep({
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function StatsSetupStep({
-  theme, flowId, stepNumber, totalSteps, jobName = "", direction = "forward", targetSubstep, onValidityChange, characterLevel, characterRoster, confirmedWorldId, worldScouterLegion, value, onChange, onBack, onNext, onFinish,
+  theme, flowId, stepNumber, totalSteps, jobName = "", direction = "forward", targetSubstep, onValidityChange, onSubstepChange, characterLevel, characterRoster, confirmedWorldId, worldScouterLegion, value, onChange, onBack, onNext, onFinish,
 }: StatsSetupStepProps) {
   const classData = CLASS_SKILL_DATA.find((c) => c.nexonJobName === jobName);
   const draft = parseStatsStepDraft(value);
@@ -1160,6 +1183,9 @@ export default function StatsSetupStep({
   const SUBSTEP_COUNT = lastSubstep + 1;
 
   const [substep, setSubstep] = useState(() => targetSubstep ?? (direction === "backward" ? lastSubstep : 0));
+  // Lets the setup controller persist which substep is active, so a full page reload
+  // can resume into it instead of always falling back to the mount-time default above.
+  useEffect(() => { onSubstepChange?.(substep); }, [substep, onSubstepChange]);
   const [substepDirection, setSubstepDirection] = useState<"forward" | "backward">("forward");
   const [hasSubstepSwitched, setHasSubstepSwitched] = useState(false);
 

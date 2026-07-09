@@ -31,6 +31,7 @@ interface HexaMatrixSetupStepProps {
   direction?: "forward" | "backward";
   targetSubstep?: number | null;
   onValidityChange?: (valid: boolean, substepIndex?: number) => void;
+  onSubstepChange?: (substepIndex: number) => void;
   characterRoster?: import("../../model/charactersStore").StoredCharacterRecord[];
   confirmedWorldId?: number;
   worldLinkSkills?: string;
@@ -833,7 +834,7 @@ function HexaSkillLevelsSubstep({
 }
 
 export default function HexaMatrixSetupStep({
-  theme, step, flowId, stepNumber, totalSteps, jobName = "", direction = "forward", targetSubstep, onValidityChange,
+  theme, step, flowId, stepNumber, totalSteps, jobName = "", direction = "forward", targetSubstep, onValidityChange, onSubstepChange,
   confirmedCharacterName, characterLevel, value, onChange, onBack, onNext, onFinish,
 }: HexaMatrixSetupStepProps) {
   // MapleScouter only needs hexa skill levels, so the HEXA Stat substep is gated out
@@ -846,6 +847,9 @@ export default function HexaMatrixSetupStep({
   const initialValueRef = useRef(value);
 
   const [substep, setSubstep] = useState(() => targetSubstep ?? (direction === "backward" && showHexaStat ? 1 : 0));
+  // Lets the setup controller persist which substep is active, so a full page reload
+  // can resume into it instead of always falling back to the mount-time default above.
+  useEffect(() => { onSubstepChange?.(substep); }, [substep, onSubstepChange]);
   const [substepDirection, setSubstepDirection] = useState<"forward" | "backward">("forward");
   const [hasSubstepSwitched, setHasSubstepSwitched] = useState(false);
   const [activeSlot, setActiveSlot] = useState(0);

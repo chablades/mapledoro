@@ -25,6 +25,8 @@ interface SetupTransitionSetters {
   setShowCharacterDirectory: (value: boolean) => void;
   setSetupStepIndex: (value: number) => void;
   setSetupStepDirection: (value: "forward" | "backward") => void;
+  setSetupTargetSubstep: (value: number | null) => void;
+  setSetupSubstepIndex: (value: number) => void;
   setSetupStepTestByStep: (value: SetupStepInputById) => void;
   setStepValidityById: (value: Record<string, boolean>) => void;
 }
@@ -42,6 +44,9 @@ interface SetupFlowTransitionArgs {
   showCharacterDirectory: boolean;
   stepIndex: number;
   stepDirection: "forward" | "backward";
+  /** Which substep of stepIndex (if any) to land on — see setupSubstepIndex in
+   *  setupDraftStorage.ts for why this exists. */
+  substepIndex: number;
   stepData: SetupStepInputById;
   stepValidityById: Record<string, boolean>;
 }
@@ -157,6 +162,8 @@ export function useSetupFlowTransitions() {
           callbacks.setShowCharacterDirectory(false);
           setSetupPanelVisible(false);
           callbacks.setSetupStepIndex(0);
+          callbacks.setSetupTargetSubstep(null);
+          callbacks.setSetupSubstepIndex(0);
           callbacks.setSetupStepTestByStep({});
           callbacks.setStepValidityById({});
           callbacks.resetSearchStateMessage();
@@ -182,6 +189,8 @@ export function useSetupFlowTransitions() {
           callbacks.setShowCharacterDirectory(false);
           setSetupPanelVisible(false);
           callbacks.setSetupStepIndex(0);
+          callbacks.setSetupTargetSubstep(null);
+          callbacks.setSetupSubstepIndex(0);
           callbacks.setSetupStepTestByStep({});
           callbacks.setStepValidityById({});
           if (nextMode === "search") {
@@ -208,6 +217,12 @@ export function useSetupFlowTransitions() {
           setters.setShowCharacterDirectory(args.showCharacterDirectory);
           setters.setSetupStepDirection(args.stepDirection);
           setters.setSetupStepIndex(args.stepIndex);
+          // Safe to always set (not just when non-zero) — any subsequent normal
+          // navigation already clears setSetupTargetSubstep back to null (see
+          // setSetupStepWithDirection in useCharacterSetupController.ts), so it can't
+          // linger and force a stale substep later.
+          setters.setSetupTargetSubstep(args.substepIndex);
+          setters.setSetupSubstepIndex(args.substepIndex);
           setters.setSetupStepTestByStep(args.stepData);
           setters.setStepValidityById(args.stepValidityById);
           setSetupPanelVisible(false);
