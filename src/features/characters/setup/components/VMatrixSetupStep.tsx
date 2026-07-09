@@ -40,7 +40,7 @@ const catalogCache: Record<string, VMatrixData> = {};
 
 const sectionBtnStyle: React.CSSProperties = {
   background: "none", border: "none", padding: 0, font: "inherit",
-  fontSize: "0.75rem", fontWeight: 800, letterSpacing: "0.05em", textTransform: "uppercase",
+  fontSize: "0.75rem", fontWeight: 800,
   cursor: "pointer",
 };
 
@@ -150,10 +150,11 @@ function SectionLabel({ label, theme, onMaxAll, onClear }: { label: string; them
       }}>
         {label}
       </p>
-      <div style={{ display: "flex", gap: "1rem" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
         <button type="button" onClick={onClear} style={{ ...sectionBtnStyle, color: theme.muted }}>
           Clear
         </button>
+        <span style={{ width: 1, alignSelf: "stretch", background: theme.border, flexShrink: 0 }} />
         <button type="button" onClick={onMaxAll} style={{ ...sectionBtnStyle, color: theme.accent }}>
           Max All
         </button>

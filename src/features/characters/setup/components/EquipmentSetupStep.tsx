@@ -60,14 +60,16 @@ const SHARED_SLOTS: ReadonlySet<SlotKey> = new Set<SlotKey>(["title", "totem1", 
 const isSharedSlot = (slot: SlotKey): slot is SharedSlotKey => SHARED_SLOTS.has(slot);
 
 // Reading-order chains for the two substeps whose slots line up top-to-bottom in a single
-// in-game window (Additional Equipment, Pets) — unlike the main grid's 2D spatial layout,
-// which has no unambiguous "next" order, so it isn't chained.
+// in-game window (Additional Equipment, Pets). The main grid's own chain (MAIN_GRID_CHAIN,
+// defined below once its column layout constants exist) is a 2D spatial layout, but a
+// column-based reading order was worked out with Yuki (2026-07-08) — see its own comment.
 const ADDITIONAL_EQUIP_CHAIN: readonly SlotKey[] = ["title", "totem1", "totem2", "totem3"];
 const PETS_CHAIN: readonly SlotKey[] = ["pet1", "petEquip1", "pet2", "petEquip2", "pet3", "petEquip3"];
 
 function chainForSlot(slot: SlotKey): readonly SlotKey[] | null {
   if (ADDITIONAL_EQUIP_CHAIN.includes(slot)) return ADDITIONAL_EQUIP_CHAIN;
   if (PETS_CHAIN.includes(slot)) return PETS_CHAIN;
+  if (MAIN_GRID_CHAIN.includes(slot)) return MAIN_GRID_CHAIN;
   return null;
 }
 
@@ -146,6 +148,10 @@ const SLOT_SIZE = 68;
 const SEARCH_LIMIT = 60;
 // Center block spans weapon + secondary + emblem columns
 const CENTER_WIDTH = 3 * SLOT_SIZE + 2 * 4;
+const SYMBOL_TILE_SIZE = 74;
+// A symbol group's 3-column tile grid — used to align its Max All/Clear header to the
+// same width so those buttons can right-align against the actual last tile.
+const SYMBOL_GRID_WIDTH = 3 * SYMBOL_TILE_SIZE + 2 * 4;
 // Labels for the mobile equipment-grid carousel (one section visible at a time)
 const EQUIPMENT_PAGE_LABELS = ["Accessories", "Weapon", "Armor"];
 
@@ -155,6 +161,15 @@ const COL2_SLOTS: SlotKey[] = ["face", "eye", "earring", "pendant1", "pendant2"]
 const COL6_SLOTS: SlotKey[] = ["hat", "top", "bottom", "shoulder", "android"];
 const COL7_SLOTS: SlotKey[] = ["cape", "glove", "shoe", "medal", "heart", "badge"];
 const CENTER_BOTTOM_SLOTS: SlotKey[] = ["weapon", "secondary", "emblem"];
+
+// Reading-order chain for the main equipment grid (confirmed with Yuki, 2026-07-08): top to
+// bottom within each column, then the top of the next column, following the grid's own
+// left-to-right column order — rings/belt/pocket, then face/eye/earring/pendants, then
+// weapon/secondary/emblem, then hat/top/bottom/shoulder/android, then cape/glove/shoe/
+// medal/heart/badge. The sprite itself isn't a pickable slot, so it's naturally skipped.
+const MAIN_GRID_CHAIN: readonly SlotKey[] = [
+  ...COL1_SLOTS, ...COL2_SLOTS, ...CENTER_BOTTOM_SLOTS, ...COL6_SLOTS, ...COL7_SLOTS,
+];
 
 const equippedHeaderStyle = (theme: AppTheme, interactive: boolean): CSSProperties => ({
   display: "flex", alignItems: "center", gap: 8, width: "100%",
@@ -238,14 +253,25 @@ const presetButtonStyle = (theme: AppTheme, on: boolean): CSSProperties => ({
   width: 34, height: 32, cursor: "pointer",
 });
 
+// Deliberately no opacity on this container: it wraps a HoverTooltip bubble (a real DOM
+// child, not a native title), and CSS opacity compounds onto descendants — a dimmed tile
+// made its own tooltip render washed-out/translucent on hover. Locked is already visually
+// distinct via the icon's own dimming (below), the muted "Lv X+" badge, and the missing
+// input, so no separate container-level fade is needed.
 const symbolTileStyle = (theme: AppTheme, placed: boolean): CSSProperties => ({
-  width: 74, flexShrink: 0,
+  width: SYMBOL_TILE_SIZE, flexShrink: 0,
   border: `1px solid ${placed ? theme.accent : theme.border}`,
   borderRadius: 8,
   background: placed ? `${theme.accent}15` : theme.bg,
   display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
   padding: "8px 9px", boxSizing: "border-box",
 });
+
+const symbolSectionBtnStyle: CSSProperties = {
+  background: "none", border: "none", padding: 0, font: "inherit",
+  fontSize: "0.75rem", fontWeight: 800,
+  cursor: "pointer",
+};
 
 const symbolTileInputStyle = (theme: AppTheme): CSSProperties => ({
   width: 56, textAlign: "center",
@@ -478,7 +504,10 @@ function ItemPicker({
         value={weaponAttStep.value}
         onChange={weaponAttStep.onChange}
         onBack={() => setPendingItem(null)}
-        onConfirm={() => { onSelect(pendingItem); onClose(); }}
+        onConfirm={(viaKeyboard) => {
+          onSelect(pendingItem);
+          if (onAdvance) { onAdvance(viaKeyboard); } else { onClose(); }
+        }}
       />
     );
   }
@@ -608,7 +637,10 @@ function WeaponAttStepView({ item, theme, isAndroid, label, value, onChange, onB
   value: string;
   onChange: (v: string) => void;
   onBack: () => void;
-  onConfirm: () => void;
+  /** viaKeyboard distinguishes an Enter-driven confirm from a mouse click on Done — only a
+   *  keyboard confirm advances to the next slot in the chain, matching every other picker's
+   *  Enter-advances/click-just-closes convention. */
+  onConfirm: (viaKeyboard: boolean) => void;
 }) {
   const sane = isWeaponAttSane(value);
   const showWarning = Number(value) > WEAPON_ATT_WARN_AT;
@@ -621,7 +653,7 @@ function WeaponAttStepView({ item, theme, isAndroid, label, value, onChange, onB
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === "Escape") { onBack(); return; }
     if (e.key === "Enter") {
-      if (sane) onConfirm();
+      if (sane) onConfirm(true);
       return;
     }
     numericKeyDown(e);
@@ -661,7 +693,7 @@ function WeaponAttStepView({ item, theme, isAndroid, label, value, onChange, onB
           />
         </div>
         <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "0.6rem" }}>
-          <button type="button" disabled={!sane} onClick={onConfirm} style={weaponAttConfirmButtonStyle(theme, !sane)}>
+          <button type="button" disabled={!sane} onClick={() => onConfirm(false)} style={weaponAttConfirmButtonStyle(theme, !sane)}>
             Done
           </button>
         </div>
@@ -821,15 +853,44 @@ function SymbolLevelTile({ area, level, maxLevel, theme, onLevel }: {
   );
 }
 
-function SymbolSection({ symbolLevels, activeTab, availableTabs, theme, onTabChange, onLevel }: {
+function SymbolGroupHeader({ label, theme, onMaxAll, onClear }: {
+  label: string;
+  theme: AppTheme;
+  onMaxAll: () => void;
+  onClear: () => void;
+}) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.4rem" }}>
+      <p style={{ margin: 0, fontSize: "0.75rem", fontWeight: 800, color: theme.muted, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+        {label}
+      </p>
+      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+        <button type="button" onClick={onClear} style={{ ...symbolSectionBtnStyle, color: theme.muted }}>Clear</button>
+        <span style={{ width: 1, alignSelf: "stretch", background: theme.border, flexShrink: 0 }} />
+        <button type="button" onClick={onMaxAll} style={{ ...symbolSectionBtnStyle, color: theme.accent }}>Max All</button>
+      </div>
+    </div>
+  );
+}
+
+function SymbolSection({ symbolLevels, activeTab, availableTabs, characterLevel, theme, onTabChange, onLevel, onLevelMany }: {
   symbolLevels: Record<string, string>;
   activeTab: SymbolTabKey;
   availableTabs: { key: SymbolTabKey; label: string }[];
+  characterLevel?: number;
   theme: AppTheme;
   onTabChange: (tab: SymbolTabKey) => void;
   onLevel: (regionName: string, level: string) => void;
+  onLevelMany: (updates: Record<string, string>) => void;
 }) {
   const maxLevel = activeTab === "arcane" ? ARCANE_MAX_LEVEL : SACRED_MAX_LEVEL;
+  // Undefined level = assume eligible, same convention as isArcaneEligible/isSacredEligible
+  // (an unresolved lookup shouldn't wrongly hide every area). Areas the character hasn't
+  // reached yet are hidden entirely, not shown disabled — this is the setup flow, not the
+  // profile page, and the project's own convention (see isArcaneEligible/isSacredEligible
+  // hiding the whole tab) is that asking about content the character can't have yet is
+  // noise. The profile-page "show disabled with a reason" treatment doesn't apply here.
+  const isUnlocked = (area: SymbolArea) => characterLevel === undefined || characterLevel >= area.requiredLevel;
   const renderTile = (area: SymbolArea) => (
     <SymbolLevelTile
       key={area.itemId}
@@ -840,6 +901,25 @@ function SymbolSection({ symbolLevels, activeTab, availableTabs, theme, onTabCha
       onLevel={(level) => onLevel(area.name, level)}
     />
   );
+  // Whole group (including its Max All/Clear header) is skipped once none of its areas are
+  // unlocked yet — e.g. Grand Sacred (Lv 290+) for a freshly-260 character.
+  function renderGroup(label: string, areas: SymbolArea[], atMax: number) {
+    const unlockedAreas = areas.filter(isUnlocked);
+    if (unlockedAreas.length === 0) return null;
+    return (
+      <div style={{ width: SYMBOL_GRID_WIDTH }}>
+        <SymbolGroupHeader
+          label={label}
+          theme={theme}
+          onMaxAll={() => onLevelMany(Object.fromEntries(unlockedAreas.map((a) => [a.name, String(atMax)])))}
+          onClear={() => onLevelMany(Object.fromEntries(unlockedAreas.map((a) => [a.name, ""])))}
+        />
+        <div style={{ display: "grid", gridTemplateColumns: `repeat(3, ${SYMBOL_TILE_SIZE}px)`, gap: 4 }}>
+          {unlockedAreas.map(renderTile)}
+        </div>
+      </div>
+    );
+  }
   return (
     <div>
       {availableTabs.length > 1 && (
@@ -860,21 +940,12 @@ function SymbolSection({ symbolLevels, activeTab, availableTabs, theme, onTabCha
       </div>
       )}
       {activeTab === "arcane" ? (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 74px)", gap: 4 }}>
-          {ARCANE_AREAS.map(renderTile)}
-        </div>
+        renderGroup("Arcane", ARCANE_AREAS, ARCANE_MAX_LEVEL)
       ) : (
         <>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 74px)", gap: 4 }}>
-            {SACRED_AREAS.map(renderTile)}
-          </div>
-          <p style={{
-            margin: "0.75rem 0 0.5rem", fontSize: "0.75rem", fontWeight: 700, color: theme.muted,
-          }}>
-            Grand Sacred
-          </p>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 74px)", gap: 4 }}>
-            {GRAND_SACRED_AREAS.map(renderTile)}
+          {renderGroup("Sacred", SACRED_AREAS, SACRED_MAX_LEVEL)}
+          <div style={{ marginTop: "0.75rem" }}>
+            {renderGroup("Grand Sacred", GRAND_SACRED_AREAS, SACRED_MAX_LEVEL)}
           </div>
         </>
       )}
@@ -995,14 +1066,18 @@ export default function EquipmentSetupStep({
     setActiveSlot((prev) => (prev === slot ? null : slot));
   }
 
-  function setSymbolLevel(regionName: string, level: string) {
-    // Kept as a string (even "0" or "") rather than deleted, so the tile can
-    // distinguish "explicitly typed 0" from "never touched" — the controller already
-    // excludes sub-1 levels when building the calculator's real tools.symbols data.
-    const levels = { ...(draft.symbolLevels ?? {}), [regionName]: level };
+  function setSymbolLevels(updates: Record<string, string>) {
+    // Kept as strings (even "0" or "") rather than deleted, so a tile can distinguish
+    // "explicitly typed 0" from "never touched" — the controller already excludes sub-1
+    // levels when building the calculator's real tools.symbols data.
+    const levels = { ...(draft.symbolLevels ?? {}), ...updates };
     const next = { ...draft, symbolLevels: levels };
     setDraft(next);
     onChange(serialiseDraft(next));
+  }
+
+  function setSymbolLevel(regionName: string, level: string) {
+    setSymbolLevels({ [regionName]: level });
   }
 
   function setWeaponAtt(v: string) {
@@ -1199,9 +1274,11 @@ export default function EquipmentSetupStep({
                   symbolLevels={draft.symbolLevels ?? {}}
                   activeTab={symbolTab}
                   availableTabs={availableSymbolTabs}
+                  characterLevel={characterLevel}
                   theme={theme}
                   onTabChange={setSymbolTab}
                   onLevel={setSymbolLevel}
+                  onLevelMany={setSymbolLevels}
                 />
               </div>
             )}

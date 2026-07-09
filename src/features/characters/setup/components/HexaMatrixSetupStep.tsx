@@ -62,7 +62,7 @@ const HEXA_STAT_DEFS: HexaSkillDef[] = [
 
 const sectionBtnStyle: React.CSSProperties = {
   background: "none", border: "none", padding: 0, font: "inherit",
-  fontSize: "0.75rem", fontWeight: 800, letterSpacing: "0.05em", textTransform: "uppercase",
+  fontSize: "0.75rem", fontWeight: 800,
   cursor: "pointer",
 };
 
@@ -390,11 +390,14 @@ function SectionLabel({ label, theme, onMaxAll, onClear }: { label: string; them
         {label}
       </p>
       {(onMaxAll || onClear) && (
-        <div style={{ display: "flex", gap: "1rem" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
           {onClear && (
             <button type="button" onClick={onClear} style={{ ...sectionBtnStyle, color: theme.muted }}>
               Clear
             </button>
+          )}
+          {onClear && onMaxAll && (
+            <span style={{ width: 1, alignSelf: "stretch", background: theme.border, flexShrink: 0 }} />
           )}
           {onMaxAll && (
             <button type="button" onClick={onMaxAll} style={{ ...sectionBtnStyle, color: theme.accent }}>
