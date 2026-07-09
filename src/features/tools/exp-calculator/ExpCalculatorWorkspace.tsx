@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { CharacterDropdown } from "../../../components/CharacterSyncPanel";
 import HoverTooltip from "../../../components/HoverTooltip";
@@ -293,6 +293,12 @@ function expPanelStyle(styles: ReturnType<typeof toolStyles>): React.CSSProperti
   return { ...styles.sectionPanel, borderRadius: "14px" };
 }
 
+/** Surfaces nested inside a panel. `timerBg` separates them from the panel's own `panel` fill,
+ *  and the radius stays under the panel's 14px so the corners nest instead of fighting. */
+function innerCardStyle(theme: AppTheme): React.CSSProperties {
+  return { background: theme.timerBg, border: `1px solid ${theme.border}`, borderRadius: 12 };
+}
+
 function fullWidthControl(base: React.CSSProperties): React.CSSProperties {
   return { ...base, width: "100%", height: 35 };
 }
@@ -316,10 +322,21 @@ export default function ExpCalculatorWorkspace({ theme }: { theme: AppTheme }) {
         .exp-overview-grid { display: grid; grid-template-columns: minmax(240px, 1.1fr) minmax(260px, 1fr); gap: 14px; }
         .exp-table { min-width: 680px; }
         .exp-buff-card { min-height: 48px; }
-        .exp-monster-dropdown { scrollbar-width: thin; scrollbar-color: rgba(127,127,127,0.45) transparent; }
+        .exp-monster-dropdown { scrollbar-width: thin; scrollbar-color: ${theme.muted} transparent; }
         .exp-monster-dropdown::-webkit-scrollbar { width: 8px; }
         .exp-monster-dropdown::-webkit-scrollbar-track { background: transparent; }
-        .exp-monster-dropdown::-webkit-scrollbar-thumb { background: rgba(127,127,127,0.45); border-radius: 4px; }
+        .exp-monster-dropdown::-webkit-scrollbar-thumb { background: ${theme.muted}; border-radius: 4px; }
+        .exp-monster-search::placeholder { color: ${theme.muted}; opacity: 1; }
+        /* The ring belongs on the bordered trigger, not the borderless input inside it. */
+        .exp-monster-trigger:focus-within { outline: 2px solid; outline-offset: 2px; }
+        .exp-monster-search:focus-visible { outline: none; }
+        /* One entrance on the content that actually swapped, not one per panel. The
+           keyframe only has a from-state, so the visible style stays the default. */
+        .exp-tab-panel { animation: expTabIn 180ms ease-out; }
+        @keyframes expTabIn { from { opacity: 0; transform: translateY(4px); } }
+        @media (prefers-reduced-motion: reduce) {
+          .exp-tab-panel { animation: none; }
+        }
         @media (max-width: 900px) {
           .exp-duo-grid { grid-template-columns: 1fr; }
         }
@@ -346,9 +363,12 @@ export default function ExpCalculatorWorkspace({ theme }: { theme: AppTheme }) {
           sectionPanel={panelStyle}
         />
 
-        {tab === "buffs" && <BuffsTab theme={theme} />}
-        {tab === "all-in-one" && <AllInOneTab theme={theme} />}
-        {tab === "resources" && <ResourcesTab theme={theme} />}
+        {/* Keyed so switching tabs remounts the wrapper and replays the entrance. */}
+        <div key={tab} className="exp-tab-panel">
+          {tab === "buffs" && <BuffsTab theme={theme} />}
+          {tab === "all-in-one" && <AllInOneTab theme={theme} />}
+          {tab === "resources" && <ResourcesTab theme={theme} />}
+        </div>
       </div>
     </div>
   );
@@ -446,7 +466,7 @@ function BuffsTab({ theme }: { theme: AppTheme }) {
   return (
     <>
       <div className="exp-duo-grid">
-        <div className="fade-in" style={panelStyle}>
+        <div style={panelStyle}>
           <Field label="Character" style={labelStyle}>
             <CharacterDropdown
               theme={theme}
@@ -466,7 +486,7 @@ function BuffsTab({ theme }: { theme: AppTheme }) {
           </div>
         </div>
 
-        <div className="fade-in" style={panelStyle}>
+        <div style={panelStyle}>
           <Field label="Monster" style={labelStyle}>
             <MonsterSelector
               theme={theme}
@@ -485,7 +505,7 @@ function BuffsTab({ theme }: { theme: AppTheme }) {
 
       <div className="exp-duo-grid">
         {EXCLUSIVE_BUFF_SECTIONS.map((section) => (
-          <div key={section.title} className="fade-in" style={panelStyle}>
+          <div key={section.title} style={panelStyle}>
             <SectionTitle theme={theme} label={section.title} />
             <div className={section.title === "Use Coupon" ? "exp-grid exp-coupon-grid" : "exp-grid"}>
               {section.buffs.map(({ groupId, buff }) => {
@@ -509,7 +529,7 @@ function BuffsTab({ theme }: { theme: AppTheme }) {
       </div>
 
       {ADDITIVE_GROUP && (
-        <div className="fade-in" style={panelStyle}>
+        <div style={panelStyle}>
           <SectionTitle theme={theme} label={ADDITIVE_GROUP.section} />
           <div className="exp-tile-row">
             {ADDITIVE_GROUP.buffs.map((buff) => {
@@ -532,7 +552,7 @@ function BuffsTab({ theme }: { theme: AppTheme }) {
         </div>
       )}
 
-      <div className="fade-in" style={panelStyle}>
+      <div style={panelStyle}>
         <SectionTitle theme={theme} label="Selectable Buffs" />
         <div className="exp-tile-row">
           {tileSelectBuffs.map((buff) => (
@@ -580,7 +600,7 @@ function BuffsTab({ theme }: { theme: AppTheme }) {
 
       <div className="exp-duo-grid">
         {INPUT_BUFF_PANELS.map((panel) => (
-          <div key={panel.title} className="fade-in" style={panelStyle}>
+          <div key={panel.title} style={panelStyle}>
             <SectionTitle theme={theme} label={panel.title} />
             <div className="exp-grid">
               {panel.buffs.map((buff) => (
@@ -627,9 +647,11 @@ function MonsterSelector({
 }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [activeIndex, setActiveIndex] = useState(0);
   const triggerRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const [menuPos, setMenuPos] = useState<{ top: number; left: number; width: number } | null>(null);
+  const listId = useId();
 
   const positionMenu = () => {
     const trigger = triggerRef.current;
@@ -640,7 +662,16 @@ function MonsterSelector({
 
   useEffect(() => {
     if (!open) return;
-    const reposition = () => positionMenu();
+    // Scroll fires far faster than we can paint, and positionMenu both reads layout and
+    // re-renders the list, so coalesce to one measurement per frame.
+    let frame = 0;
+    const reposition = () => {
+      if (frame) return;
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        positionMenu();
+      });
+    };
     function handleClick(e: MouseEvent) {
       const target = e.target as Node;
       if (triggerRef.current?.contains(target) || menuRef.current?.contains(target)) return;
@@ -649,11 +680,12 @@ function MonsterSelector({
     function handleKey(e: KeyboardEvent) {
       if (e.key === "Escape") setOpen(false);
     }
-    window.addEventListener("scroll", reposition, true);
-    window.addEventListener("resize", reposition);
+    window.addEventListener("scroll", reposition, { capture: true, passive: true });
+    window.addEventListener("resize", reposition, { passive: true });
     document.addEventListener("mousedown", handleClick);
     document.addEventListener("keydown", handleKey);
     return () => {
+      if (frame) cancelAnimationFrame(frame);
       window.removeEventListener("scroll", reposition, true);
       window.removeEventListener("resize", reposition);
       document.removeEventListener("mousedown", handleClick);
@@ -670,6 +702,12 @@ function MonsterSelector({
       .slice(0, 60);
   }, [search, playerLevel]);
 
+  // Keeps the arrow-key highlight inside the scroll viewport. No state, so no re-render.
+  useEffect(() => {
+    if (!open) return;
+    menuRef.current?.querySelector<HTMLElement>('[data-active="true"]')?.scrollIntoView({ block: "nearest" });
+  }, [open, activeIndex]);
+
   const choose = (monster: ExpMonster) => {
     onSelect(monster);
     setSearch(monster.name);
@@ -678,13 +716,34 @@ function MonsterSelector({
 
   const openMenu = (clearSearch = false) => {
     if (clearSearch) setSearch("");
+    setActiveIndex(0);
     positionMenu();
     setOpen(true);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      e.preventDefault();
+      if (!open) return openMenu();
+      if (filtered.length === 0) return;
+      const delta = e.key === "ArrowDown" ? 1 : -1;
+      setActiveIndex((index) => (index + delta + filtered.length) % filtered.length);
+      return;
+    }
+    if (e.key === "Enter" && open && filtered[activeIndex]) {
+      e.preventDefault();
+      choose(filtered[activeIndex]);
+      return;
+    }
+    if (e.key === "Tab") setOpen(false);
   };
 
   const menu = open && menuPos && typeof document !== "undefined" && createPortal(
     <div
       ref={menuRef}
+      id={listId}
+      role="listbox"
+      aria-label="Monster results"
       className="panel-card exp-monster-dropdown"
       style={{
         position: "fixed",
@@ -697,51 +756,72 @@ function MonsterSelector({
         background: theme.panel,
         border: `1px solid ${theme.border}`,
         borderRadius: 8,
-        boxShadow: "0 8px 24px rgba(0,0,0,0.18)",
+        boxShadow: dropdownShadow(theme),
         padding: 4,
       }}
     >
       {filtered.length === 0 && <DropdownMessage theme={theme} text="No monsters found." />}
-      {filtered.map((monster) => (
-        <button
-          key={monster.key}
-          type="button"
-          onClick={() => choose(monster)}
-          style={{
-            width: "100%",
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-            padding: "7px 9px",
-            border: "none",
-            background: "transparent",
-            color: theme.text,
-            cursor: "pointer",
-            textAlign: "left",
-            borderRadius: 8,
-          }}
-        >
-          <MobSprite id={monster.id} size={32} alt={monster.name} />
-          <span style={{ flex: 1, minWidth: 0 }}>
-            <span style={{ display: "block", fontSize: "0.82rem", fontWeight: 800 }}>{monster.name}</span>
-            <span style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: theme.muted }}>
-              Lv. {monster.level} | {monster.area}
+      {filtered.map((monster, index) => {
+        const active = index === activeIndex;
+        return (
+          <button
+            key={monster.key}
+            type="button"
+            role="option"
+            id={`${listId}-${index}`}
+            aria-selected={active}
+            data-active={active}
+            tabIndex={-1}
+            // Keeps focus (and the combobox's activedescendant) on the input through the click.
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => choose(monster)}
+            style={{
+              width: "100%",
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              padding: "7px 9px",
+              border: "none",
+              background: active ? theme.accentSoft : "transparent",
+              color: active ? theme.accentText : theme.text,
+              cursor: "pointer",
+              textAlign: "left",
+              borderRadius: 8,
+            }}
+          >
+            {/* Decorative: the option's accessible name already comes from the text beside it. */}
+            <MobSprite id={monster.id} size={32} />
+            <span style={{ flex: 1, minWidth: 0 }}>
+              <span style={{ display: "block", fontSize: "0.82rem", fontWeight: 800 }}>{monster.name}</span>
+              <span style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: theme.muted }}>
+                Lv. {monster.level} | {monster.area}
+              </span>
             </span>
-          </span>
-        </button>
-      ))}
+          </button>
+        );
+      })}
     </div>,
     document.body,
   );
 
   return (
     <div style={{ position: "relative" }}>
-      <div ref={triggerRef} className="tool-input" style={{ ...inputStyle, height: 46, display: "flex", alignItems: "center", gap: 8 }}>
+      <div ref={triggerRef} className="tool-input exp-monster-trigger" style={{ ...inputStyle, height: 46, display: "flex", alignItems: "center", gap: 8 }}>
         {selected && <MobSprite id={selected.id} size={30} alt={selected.name} />}
         <input
+          className="exp-monster-search"
+          role="combobox"
+          aria-label="Monster"
+          aria-expanded={open}
+          aria-controls={open ? listId : undefined}
+          aria-autocomplete="list"
+          aria-activedescendant={open && filtered[activeIndex] ? `${listId}-${activeIndex}` : undefined}
           value={open ? search : selected?.name ?? search}
           placeholder="Search monster name"
           onFocus={() => openMenu(!open)}
+          // Picking an option keeps focus in the input, so a later click has no focus event to reopen on.
+          onClick={() => { if (!open) openMenu(true); }}
+          onKeyDown={handleKeyDown}
           onChange={(e) => {
             setSearch(e.target.value);
             openMenu();
@@ -749,7 +829,6 @@ function MonsterSelector({
           style={{
             border: "none",
             background: "transparent",
-            outline: "none",
             color: theme.text,
             width: "100%",
             fontFamily: "var(--font-body)",
@@ -757,6 +836,7 @@ function MonsterSelector({
           }}
         />
         <span
+          aria-hidden="true"
           style={{
             color: theme.muted,
             fontSize: "0.75rem",
@@ -771,6 +851,11 @@ function MonsterSelector({
       {menu}
     </div>
   );
+}
+
+/** A black drop shadow does nothing on a near-black panel, so deepen it in dark mode. */
+function dropdownShadow(theme: AppTheme): string {
+  return themeColorScheme(theme) === "dark" ? "0 12px 28px rgba(0,0,0,0.55)" : "0 8px 24px rgba(0,0,0,0.18)";
 }
 
 function DropdownMessage({ theme, text }: { theme: AppTheme; text: string }) {
@@ -790,9 +875,7 @@ function ExpOverviewPanel({
 }) {
   const panelStyle = expPanelStyle(toolStyles(theme));
   const visualCardStyle: React.CSSProperties = {
-    background: theme.timerBg,
-    border: `1px solid ${theme.border}`,
-    borderRadius: 14,
+    ...innerCardStyle(theme),
     padding: "14px",
     display: "grid",
     gridTemplateColumns: "96px 1fr",
@@ -801,7 +884,7 @@ function ExpOverviewPanel({
     minWidth: 0,
   };
   return (
-    <div className="fade-in" style={panelStyle}>
+    <div style={panelStyle}>
       <SectionTitle theme={theme} label="Overview" />
       <div className="exp-overview-grid">
         <div style={visualCardStyle}>
@@ -854,7 +937,7 @@ function ExpOverviewPanel({
 
 function MiniMetric({ theme, label, value }: { theme: AppTheme; label: string; value: string }) {
   return (
-    <div className="panel-card" style={{ background: theme.panel, border: `1px solid ${theme.border}`, padding: "0.85rem" }}>
+    <div style={{ ...innerCardStyle(theme), padding: "0.85rem" }}>
       <div className="tool-field-label" style={{ color: theme.muted, marginBottom: 5 }}>{label}</div>
       <div style={{ color: theme.text, fontSize: "1.08rem", fontWeight: 900, lineHeight: 1.15 }}>{value}</div>
     </div>
@@ -909,8 +992,7 @@ function AllInOneTab({ theme }: { theme: AppTheme }) {
 
   return (
     <>
-      <div className="fade-in" style={panelStyle}>
-        <SectionTitle theme={theme} label="Character" />
+      <div style={panelStyle}>
         <Field label="Character" style={labelStyle}>
           <CharacterDropdown
             theme={theme}
@@ -939,7 +1021,7 @@ function AllInOneTab({ theme }: { theme: AppTheme }) {
         </div>
       </div>
 
-      <div className="fade-in" style={panelStyle}>
+      <div style={panelStyle}>
         <SectionTitle theme={theme} label="Daily Content" />
         {DAILY_REGIONS.map((region) => (
           <div key={region} style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 8 }}>
@@ -969,7 +1051,7 @@ function AllInOneTab({ theme }: { theme: AppTheme }) {
         </div>
       </div>
 
-      <div className="fade-in" style={panelStyle}>
+      <div style={panelStyle}>
         <SectionTitle theme={theme} label="Weekly Content" />
         <div className="exp-tile-row">
           {WEEKLY_EXP_CONTENT.map((weekly) => (
@@ -989,7 +1071,7 @@ function AllInOneTab({ theme }: { theme: AppTheme }) {
       </div>
 
       <div className="exp-duo-grid">
-        <div className="fade-in" style={panelStyle}>
+        <div style={panelStyle}>
           <SectionTitle theme={theme} label="Monster Park" />
           <div className="exp-grid">
             <NumberField label="Runs / Day" icon={{ type: "item", id: "05252030" }} min={0} max={7} value={input.monsterParkRuns} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("monsterParkRuns", value)} />
@@ -1000,7 +1082,7 @@ function AllInOneTab({ theme }: { theme: AppTheme }) {
           </div>
         </div>
 
-        <div className="fade-in" style={panelStyle}>
+        <div style={panelStyle}>
           <SectionTitle theme={theme} label="Epic Dungeon" />
           <div className="exp-grid">
             <Field label="Epic Dungeon" style={labelStyle}>
@@ -1023,7 +1105,7 @@ function AllInOneTab({ theme }: { theme: AppTheme }) {
       </div>
 
       <div className="exp-duo-grid">
-        <div className="fade-in" style={panelStyle}>
+        <div style={panelStyle}>
           <SectionTitle theme={theme} label="Events and Tickets" />
           <div className="exp-grid">
             <NumberField label="Strawberry Farm Tickets" icon={{ type: "item", id: "02637501" }} min={0} value={input.strawberryTickets} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("strawberryTickets", value)} />
@@ -1035,7 +1117,7 @@ function AllInOneTab({ theme }: { theme: AppTheme }) {
           </div>
         </div>
 
-        <div className="fade-in" style={panelStyle}>
+        <div style={panelStyle}>
           <SectionTitle theme={theme} label="Growth Potions" />
           <div className="exp-grid">
             {GROWTH_POTION_OPTIONS.map((potion) => (
@@ -1045,10 +1127,10 @@ function AllInOneTab({ theme }: { theme: AppTheme }) {
         </div>
       </div>
 
-      <div className="fade-in" style={panelStyle}>
+      <div style={panelStyle}>
         <SectionTitle theme={theme} label="Results" />
         <div className="exp-overview-grid">
-          <div style={{ background: theme.timerBg, border: `1px solid ${theme.border}`, borderRadius: 14, padding: 14, minWidth: 0 }}>
+          <div style={{ ...innerCardStyle(theme), padding: 14, minWidth: 0 }}>
             <div className="tool-field-label" style={{ color: theme.muted }}>Final Level</div>
             <div style={{ color: theme.text, fontSize: "1.7rem", fontWeight: 900, lineHeight: 1.1, marginTop: 4 }}>
               Lv. {result.level}
@@ -1100,7 +1182,7 @@ function ResourcesTab({ theme }: { theme: AppTheme }) {
   const selected = RESOURCE_TABLES.find((table) => table.id === tableId) ?? RESOURCE_TABLES[0];
 
   return (
-    <div className="fade-in" style={panelStyle}>
+    <div style={panelStyle}>
       <div>
         <Field label="Resource Table" style={styles.labelStyle}>
           <select className="tool-select" value={selected.id} onChange={(e) => setTableId(e.target.value)} style={selectStyle}>
@@ -1130,14 +1212,15 @@ function ResourcesTab({ theme }: { theme: AppTheme }) {
 }
 
 function ResourceTableView({ theme, table }: { theme: AppTheme; table: ResourceTable }) {
-  const thStyle: React.CSSProperties = { padding: "9px 12px", borderBottom: `2px solid ${theme.border}`, color: theme.muted, fontSize: "0.75rem", fontWeight: 800, textAlign: "right", textTransform: "uppercase", background: theme.panel };
+  const thStyle: React.CSSProperties = { padding: "9px 12px", borderBottom: `2px solid ${theme.border}`, color: theme.muted, fontSize: "0.75rem", fontWeight: 800, textAlign: "right", textTransform: "uppercase", background: theme.timerBg };
   const tdStyle: React.CSSProperties = { padding: "8px 12px", color: theme.text, fontSize: "0.8rem", fontWeight: 700, textAlign: "right" };
   const levelTdStyle: React.CSSProperties = { ...tdStyle, textAlign: "left", color: theme.accent, fontWeight: 800 };
   const maxUnits = table.maxUnits;
-  const rowStyle = (index: number): React.CSSProperties => ({ background: index % 2 === 1 ? theme.timerBg : "transparent" });
+  // The wrapper is `timerBg`, so the zebra stripe is the lighter `panel` fill.
+  const rowStyle = (index: number): React.CSSProperties => ({ background: index % 2 === 1 ? theme.panel : "transparent" });
 
   return (
-    <div className="panel-card" style={{ marginTop: "1rem", background: theme.panel, border: `1px solid ${theme.border}`, borderRadius: 8, overflowX: "auto" }}>
+    <div style={{ ...innerCardStyle(theme), marginTop: "1rem", overflowX: "auto" }}>
       <table className="exp-table" style={{ width: "100%", borderCollapse: "collapse" }}>
         <thead>
           <tr>
@@ -1227,12 +1310,17 @@ function NumberField({
         if (!disabled) e.currentTarget.select();
       }}
       onKeyDown={replaceZeroOnDigit}
+      // `min`/`max` are advisory on type="number"; the browser won't stop a typed value.
+      // Only the ceiling is enforced per keystroke: clamping up to `min` mid-type would
+      // rewrite "2" into "200" before the user reaches "265". The floor lands on blur.
       onChange={(e) => {
-        if (!disabled) onChange(Number(e.target.value) || 0);
+        if (!disabled) onChange(clampMax(Number(e.target.value) || 0, max));
+      }}
+      onBlur={(e) => {
+        if (!disabled) onChange(Math.max(min, clampMax(Number(e.target.value) || 0, max)));
       }}
       style={{
         ...inputStyle,
-        background: disabled ? inputStyle.background ?? "rgba(120, 120, 120, 0.12)" : inputStyle.background,
         opacity: disabled ? 0.65 : inputStyle.opacity,
         cursor: disabled ? "not-allowed" : inputStyle.cursor,
       }}
@@ -1516,4 +1604,8 @@ function addDays(date: Date, days: number): Date {
 
 function roundToThree(value: number): number {
   return Math.floor(value * 1000) / 1000;
+}
+
+function clampMax(value: number, max: number | undefined): number {
+  return max === undefined ? value : Math.min(max, value);
 }
