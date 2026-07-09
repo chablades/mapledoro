@@ -44,7 +44,8 @@ export function useCharacterLookup({
   const [degradedCode, setDegradedCode] = useState<string | null>(null);
   const [nowMs, setNowMs] = useState(0);
   const [lastRequestAtMs, setLastRequestAtMs] = useState(0);
-  const cacheRef = useRef<Map<string, CharacterCacheEntry>>(new Map());
+  const cacheRef = useRef<Map<string, CharacterCacheEntry> | null>(null);
+  if (cacheRef.current === null) cacheRef.current = new Map();
 
   useEffect(() => {
     cacheRef.current = loadBrowserCharacterCache();
@@ -61,7 +62,7 @@ export function useCharacterLookup({
   const queryInvalid = !CHARACTER_NAME_REGEX.test(trimmedQuery);
 
   const persistCache = () => {
-    cacheRef.current = persistBrowserCharacterCache(cacheRef.current, MAX_BROWSER_CACHE_ENTRIES);
+    cacheRef.current = persistBrowserCharacterCache(cacheRef.current!, MAX_BROWSER_CACHE_ENTRIES);
   };
 
   const resetSearchStateMessage = () => {
@@ -79,7 +80,7 @@ export function useCharacterLookup({
   const applyLookupResult = (name: string, normalized: string, result: LookupResponse) => {
     const found = result.found;
     const resolvedName = found ? result.data.characterName : result.characterName || name;
-    cacheRef.current.set(normalized, {
+    cacheRef.current!.set(normalized, {
       characterName: resolvedName,
       found: result.found,
       expiresAt: result.expiresAt,
@@ -111,12 +112,12 @@ export function useCharacterLookup({
       return false;
     }
 
-    const cached = cacheRef.current.get(normalized);
+    const cached = cacheRef.current!.get(normalized);
     if (cached && Date.now() < cached.expiresAt) {
       return applyCachedLookupResult(cached);
     }
     if (cached && Date.now() >= cached.expiresAt) {
-      cacheRef.current.delete(normalized);
+      cacheRef.current!.delete(normalized);
       persistCache();
     }
 

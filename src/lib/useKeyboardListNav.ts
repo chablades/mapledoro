@@ -61,7 +61,8 @@ export function useKeyboardListNav<T>({
 }: UseKeyboardListNavOptions<T>): UseKeyboardListNavResult {
   const [manualHighlight, setManualHighlight] = useState<number | null>(null);
   const [prevResetKey, setPrevResetKey] = useState(resetKey);
-  const itemNodesRef = useRef<Map<number, HTMLElement>>(new Map());
+  const itemNodesRef = useRef<Map<number, HTMLElement> | null>(null);
+  if (itemNodesRef.current === null) itemNodesRef.current = new Map();
 
   if (prevResetKey !== resetKey) {
     setPrevResetKey(resetKey);
@@ -102,16 +103,16 @@ export function useKeyboardListNav<T>({
   // re-invokes on every render (its identity changes each call), which would otherwise
   // snap the list back to the highlighted row any time something unrelated re-renders.
   useEffect(() => {
-    itemNodesRef.current.get(highlightedIndex)?.scrollIntoView({ block: "nearest" });
+    itemNodesRef.current!.get(highlightedIndex)?.scrollIntoView({ block: "nearest" });
   }, [highlightedIndex]);
 
   function itemRef(index: number) {
     return (el: HTMLElement | null) => {
       if (!el) {
-        itemNodesRef.current.delete(index);
+        itemNodesRef.current!.delete(index);
         return;
       }
-      itemNodesRef.current.set(index, el);
+      itemNodesRef.current!.set(index, el);
     };
   }
 

@@ -11,6 +11,9 @@
 // A crystal can't be "unleveled": once unlocked it's always at least level 1 in-game.
 export const MIN_CRYSTAL_LEVEL = 1;
 export const MAX_CRYSTAL_LEVEL = 5;
+// Same idea one level up: a Legion that has an Artifact board at all starts at Artifact
+// Level 1, not 0 (namu.wiki's own level table starts numbering at 1).
+export const MIN_ARTIFACT_LEVEL = 1;
 export const MAX_ARTIFACT_LEVEL = 60;
 export const MAX_STAT_TOTAL_LEVEL = 10;
 export const CRYSTAL_STAT_SLOTS = 3;

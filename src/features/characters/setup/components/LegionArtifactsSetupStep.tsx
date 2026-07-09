@@ -16,6 +16,7 @@ import {
   LEGION_ARTIFACT_STATS,
   LEGION_CRYSTALS,
   MAX_ARTIFACT_LEVEL,
+  MIN_ARTIFACT_LEVEL,
   MAX_CRYSTAL_LEVEL,
   MIN_CRYSTAL_LEVEL,
   DEFAULT_CRYSTAL_STATS,
@@ -49,12 +50,26 @@ const CRYSTAL_TILE_SIZE_MOBILE = 100;
 const CRYSTAL_ICON_SIZE = 80;
 const EMPTY_CRYSTAL: LegionCrystalDraft = { level: MIN_CRYSTAL_LEVEL, stats: [...DEFAULT_CRYSTAL_STATS] };
 
+// A crystal newly unlocked by raising the Artifact Level can still be holding a stored
+// "no data" placeholder (level 0, all-null stats) from before it was reachable — e.g. this
+// world's Legion Artifact data already existed from an earlier character that stopped short
+// of this crystal's threshold. `crystals[i] ?? EMPTY_CRYSTAL` only catches a missing array
+// slot, not one that's present but still shaped like that placeholder, so it must be resolved
+// to the real level-1/default-3-lines state here — the same place every read of a crystal's
+// data goes through — rather than showing the stored nulls as empty "+ Pick stat" slots.
+function effectiveCrystal(crystal: LegionCrystalDraft | undefined, unlocked: boolean): LegionCrystalDraft {
+  if (!crystal) return EMPTY_CRYSTAL;
+  if (!unlocked) return crystal;
+  const hasRealData = (crystal.level ?? 0) > 0 || (crystal.stats ?? []).some((s) => s !== null && s !== undefined);
+  return hasRealData ? crystal : EMPTY_CRYSTAL;
+}
+
 // Keeps the value a string (blank until touched) instead of clamping through Number(),
 // which would collapse a typed "0" back to an indistinguishable empty state.
 function clampArtifactLevelInput(raw: string): string {
   const digits = sanitizeDigitsInput(raw);
   if (digits === "") return "";
-  return String(Math.min(MAX_ARTIFACT_LEVEL, Number(digits)));
+  return String(Math.min(MAX_ARTIFACT_LEVEL, Math.max(MIN_ARTIFACT_LEVEL, Number(digits))));
 }
 
 // ── Styles ────────────────────────────────────────────────────────────────────
@@ -505,7 +520,7 @@ export default function LegionArtifactsSetupStep({
     // Build a dense 9-length array (every slot filled) rather than writing into a
     // possibly-shorter array — leaving holes would serialize as `null` via
     // JSON.stringify, which every downstream reader would then have to guard against.
-    const nextCrystals = LEGION_CRYSTALS.map((_, i) => crystals[i] ?? EMPTY_CRYSTAL);
+    const nextCrystals = LEGION_CRYSTALS.map((_, i) => effectiveCrystal(crystals[i], isCrystalUnlocked(i, artifactLevelNum)));
     nextCrystals[index] = { ...nextCrystals[index], ...patch };
     onChange(serializeLegionArtifactBoardDraft({ artifactLevel, crystals: nextCrystals }));
   }
@@ -516,8 +531,9 @@ export default function LegionArtifactsSetupStep({
   // have nothing but a level to bulk-set.
   function setAllCrystalLevels(level: number) {
     const nextCrystals = LEGION_CRYSTALS.map((_, i) => {
-      const current = crystals[i] ?? EMPTY_CRYSTAL;
-      return isCrystalUnlocked(i, artifactLevelNum) ? { ...current, level } : current;
+      const unlocked = isCrystalUnlocked(i, artifactLevelNum);
+      const current = effectiveCrystal(crystals[i], unlocked);
+      return unlocked ? { ...current, level } : current;
     });
     onChange(serializeLegionArtifactBoardDraft({ artifactLevel, crystals: nextCrystals }));
   }
@@ -527,7 +543,7 @@ export default function LegionArtifactsSetupStep({
   }
 
   function setCrystalStat(index: number, slotIndex: number, statId: LegionArtifactStatId | null) {
-    const current = crystals[index] ?? EMPTY_CRYSTAL;
+    const current = effectiveCrystal(crystals[index], isCrystalUnlocked(index, artifactLevelNum));
     const nextStats = [...(current.stats ?? DEFAULT_CRYSTAL_STATS)];
     nextStats[slotIndex] = statId;
     updateCrystal(index, { stats: nextStats });
@@ -553,7 +569,7 @@ export default function LegionArtifactsSetupStep({
   function goToNextCrystal(fromIndex: number) {
     for (let i = fromIndex + 1; i < LEGION_CRYSTALS.length; i++) {
       if (!isCrystalUnlocked(i, artifactLevelNum)) continue;
-      const candidate = crystals[i] ?? EMPTY_CRYSTAL;
+      const candidate = effectiveCrystal(crystals[i], true);
       const level = candidate.level ?? MIN_CRYSTAL_LEVEL;
       const stats = candidate.stats ?? DEFAULT_CRYSTAL_STATS;
       const isUntouched = level === MIN_CRYSTAL_LEVEL && DEFAULT_CRYSTAL_STATS.every((s, idx) => stats[idx] === s);
@@ -601,7 +617,7 @@ export default function LegionArtifactsSetupStep({
             inputMode="numeric"
             aria-label="Legion Artifact level"
             value={artifactLevel}
-            placeholder="0"
+            placeholder="1"
             onChange={(e) => updateArtifactLevel(clampArtifactLevelInput(e.target.value))}
             onKeyDown={numericKeyDown}
             style={levelInputStyle(theme, 56)}
@@ -620,7 +636,7 @@ export default function LegionArtifactsSetupStep({
                 key={def.id}
                 index={index}
                 def={def}
-                crystal={crystals[index] ?? EMPTY_CRYSTAL}
+                crystal={effectiveCrystal(crystals[index], isCrystalUnlocked(index, artifactLevelNum))}
                 unlocked={isCrystalUnlocked(index, artifactLevelNum)}
                 isCardOpen={openCardIndex === index}
                 nestedOpenId={openId}
