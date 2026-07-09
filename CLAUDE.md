@@ -63,7 +63,7 @@ npm run lint
 
 **Shared tool controls:** Form controls split shape (global CSS classes) from theme colors (inline). Use `className="tool-input"` (text/number/date), `"tool-select"` (dropdowns), `"tool-field-label"` (uppercase labels), or `"tool-dialog-btn"` (modal buttons) for shape; pair with `toolStyles(theme)` (`tool-styles.ts`), which returns **colors only** (`background`/`borderColor`/`color`). Context sizing (widths, compact paddings) stays inline. `Field`, `Toggle`, and `PillGroup` live in `shared-ui.tsx`. Don't re-add radius/padding/font to the style helpers — extend the class instead.
 
-**Tool storage:** Per-character data (symbols, liberation, hexa skills) lives in each character's `tools` field in the character store (`mapledoro_characters_store_v1`), via `characterToolStorage.ts`. Global data (dailies, event planner, boss crystals, pitched boss drops, trace restoration) lives under one `mapledoro_tools_v1` key, via `globalToolsStore.ts`.
+**Tool storage:** Per-character data (symbols, liberation, hexa skills, exp calculator) lives in each character's `tools` field in the character store (`mapledoro_characters_store_v1`), via `characterToolStorage.ts`. Global data (dailies, event planner, boss crystals, pitched boss drops, trace restoration) lives under one `mapledoro_tools_v1` key, via `globalToolsStore.ts`.
 
 ## Image Policy
 

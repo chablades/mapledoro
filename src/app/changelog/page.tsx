@@ -11,6 +11,14 @@ interface ChangelogEntry {
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    date: "2026-07-09",
+    changes: [
+      { type: "added", text: "The EXP Calculator Farming Calculator now saves your buffs, target level, and hourly kill count per character, so switching back to a character restores what you set for them." },
+      { type: "changed", text: "The EXP Calculator Farming Calculator now opens on your main character instead of Manual Level." },
+      { type: "changed", text: "The EXP Calculator monster dropdown now lists monsters closest to your character's level first." },
+    ],
+  },
+  {
     date: "2026-07-08",
     changes: [
       { type: "changed", text: "The EXP Calculator now uses a wider layout with paired panels and compact icon tiles for additive buffs to reduce scrolling." },

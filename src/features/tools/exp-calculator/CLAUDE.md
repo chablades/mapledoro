@@ -1,6 +1,16 @@
 # EXP Calculator
 
-Keep this feature stateless. Do not add localStorage unless it becomes a saved plan/tracker.
+The Farming Calculator persists buff selections, target level, and hourly kill count per-character
+under the `expCalculator` tool key (`SavedExpState`) via `characterToolStorage.ts`. Character level
+and current EXP percent are not saved (they come from the character record), nor are monster level
+and base EXP (they come from the selected monster). The Daily / Weekly and Resources tabs stay
+entirely in memory. Do not persist them without a good reason.
+
+Writes go through `updateBuffs` and `updateSavedMonsterField` in `BuffsTab`, which write inside the
+state updater and no-op when no character is selected (Manual Level is never saved). Selecting a
+character flushes the outgoing character's state, then loads the incoming one's through
+`mergeSavedExpState`, so buff ids added after a save still get a default. Switching to Manual Level
+resets buffs, target level, and hourly kill count to the defaults.
 
 The monster search is local-only. Use `exp-monsters.ts`; do not add a runtime monster API or
 network lookup. Monster rows are `[id, name, level, exp, mapId]`, where `id` must render through
@@ -15,6 +25,14 @@ Character selection auto-fills level and current EXP percent. Convert stored raw
 of the selected level, truncate to 3 decimals, and disable level/percent inputs while a character
 is selected.
 
+The Farming Calculator opens on the roster's main character (`selectMainCharacter`) when there is
+one, falling back to Manual Level otherwise. `loadCharacterState` is shared by that mount-time seed
+and the dropdown's `updateCharacter`, so both paths apply saved state and job rules identically.
+
+The unsearched monster dropdown is ordered by distance from the current player level, so the
+nearest-level monsters seed the list. Search results stay in source order; do not reorder them by
+level.
+
 GMS naming/content decisions:
 - Penance Ring is Ring of Torment.
 - Ring of Clan is Kinship Ring, but keep the Ring of Clan option semantics.
@@ -23,7 +41,8 @@ GMS naming/content decisions:
 - Champion's Protection is Champion's Renown.
 - Lucky Dice is Roll of the Dice.
 - Roll of the Dice only shows when no character is selected or the selected character's job is in
-  `ROLL_OF_THE_DICE_JOBS` (all pirate branches); selecting a non-pirate zeroes the buff.
+  `ROLL_OF_THE_DICE_JOBS` (all pirate branches); selecting a non-pirate zeroes the buff and saves
+  the zero, so a stale value cannot survive in a non-pirate's stored buffs.
 - Penance/Cash Shop modifiers live under Reg Server Modifiers.
 - The only Cash Shop coupon is 2x and it only applies through level 250.
 

@@ -46,7 +46,10 @@ import { EXP_MONSTERS, type ExpMonster } from "./exp-monsters";
 import {
   readCharactersStore,
   selectCharactersList,
+  selectMainCharacter,
+  type StoredCharacterRecord,
 } from "../../characters/model/charactersStore";
+import { readCharacterToolData, writeCharacterToolData } from "../characterToolStorage";
 
 type ExpTab = "buffs" | "all-in-one" | "resources";
 type AllInOneNumberKey =
@@ -75,6 +78,8 @@ const TAB_LABELS: Record<ExpTab, string> = {
   resources: "Resources",
 };
 
+const EXP_CALCULATOR_TOOL_KEY = "expCalculator";
+
 const DEFAULT_MONSTER: MonsterExpInput = {
   playerLevel: 260,
   targetLevel: 270,
@@ -83,6 +88,67 @@ const DEFAULT_MONSTER: MonsterExpInput = {
   monsterBaseExp: 680638,
   hourlyKillCount: 18000,
 };
+
+/** Farming Calculator state saved per-character. Level/percent come from the character record,
+ *  and monster level/EXP come from the selected monster, so neither is saved. */
+interface SavedExpState {
+  buffs: BuffState;
+  targetLevel: number;
+  hourlyKillCount: number;
+}
+
+function toSavedExpState(buffs: BuffState, monster: MonsterExpInput): SavedExpState {
+  return { buffs, targetLevel: monster.targetLevel, hourlyKillCount: monster.hourlyKillCount };
+}
+
+/** Roll of the Dice is pirate-only, so a non-pirate can never carry a stored value for it. */
+function applyJobBuffRules(buffs: BuffState, jobName: string): BuffState {
+  if (ROLL_OF_THE_DICE_JOBS.has(jobName)) return buffs;
+  return { ...buffs, selects: { ...buffs.selects, "roll-of-the-dice": 0 } };
+}
+
+function characterPercent(character: StoredCharacterRecord): number {
+  return roundToThree(Math.min(99.999, Math.max(0, percentOfLevel(character.level, character.exp))));
+}
+
+/** Buffs + monster inputs for a character, from their saved state merged over the defaults. */
+function loadCharacterState(character: StoredCharacterRecord, monster: MonsterExpInput) {
+  const saved = mergeSavedExpState(
+    readCharacterToolData<Partial<SavedExpState>>(character.characterName, EXP_CALCULATOR_TOOL_KEY),
+  );
+  return {
+    buffs: applyJobBuffRules(saved.buffs, character.jobName),
+    monster: {
+      ...monster,
+      playerLevel: character.level,
+      currentPercent: characterPercent(character),
+      targetLevel: saved.targetLevel,
+      hourlyKillCount: saved.hourlyKillCount,
+    },
+  };
+}
+
+/** Opens on the main character when there is one, so the tool is useful without touching the dropdown. */
+function initialFarmingState() {
+  const main = selectMainCharacter(readCharactersStore());
+  if (!main) return { charName: null, buffs: DEFAULT_BUFF_STATE, monster: DEFAULT_MONSTER };
+  const { buffs, monster } = loadCharacterState(main, DEFAULT_MONSTER);
+  return { charName: main.characterName, buffs, monster };
+}
+
+/** Saved buffs can predate buff ids added since, so fill gaps from the defaults. */
+function mergeSavedExpState(saved: Partial<SavedExpState> | null): SavedExpState {
+  return {
+    buffs: {
+      exclusive: { ...saved?.buffs?.exclusive },
+      additive: { ...saved?.buffs?.additive },
+      selects: { ...DEFAULT_BUFF_STATE.selects, ...saved?.buffs?.selects },
+      inputs: { ...DEFAULT_BUFF_STATE.inputs, ...saved?.buffs?.inputs },
+    },
+    targetLevel: saved?.targetLevel ?? DEFAULT_MONSTER.targetLevel,
+    hourlyKillCount: saved?.hourlyKillCount ?? DEFAULT_MONSTER.hourlyKillCount,
+  };
+}
 
 function defaultAllInOneInput(): AllInOneInput {
   const startDate = localDateInputValue(new Date());
@@ -220,10 +286,11 @@ function BuffsTab({ theme }: { theme: AppTheme }) {
   const selectStyle = fullWidthControl(styles.selectStyle);
   const labelStyle = styles.labelStyle;
   const panelStyle = expPanelStyle(styles);
-  const [monster, setMonster] = useState<MonsterExpInput>(DEFAULT_MONSTER);
-  const [selectedCharName, setSelectedCharName] = useState<string | null>(null);
+  const [initial] = useState(initialFarmingState);
+  const [monster, setMonster] = useState<MonsterExpInput>(initial.monster);
+  const [selectedCharName, setSelectedCharName] = useState<string | null>(initial.charName);
   const [selectedMonster, setSelectedMonster] = useState<ExpMonster | null>(null);
-  const [buffs, setBuffs] = useState<BuffState>(DEFAULT_BUFF_STATE);
+  const [buffs, setBuffs] = useState<BuffState>(initial.buffs);
   const result = useMemo(() => calculateMonsterExp(monster, buffs), [monster, buffs]);
   const characters = useMemo(() => selectCharactersList(readCharactersStore()), []);
   const selectedCharacter = characters.find((character) => character.characterName === selectedCharName);
@@ -235,31 +302,62 @@ function BuffsTab({ theme }: { theme: AppTheme }) {
   const dropdownSelectBuffs = visibleSelectBuffs.filter(
     (buff) => !TILE_SELECT_IDS.has(buff.id) && buff.id !== "exp-node",
   );
+  /** Persists to the selected character as part of the state update; manual level stays in memory. */
+  const updateBuffs = (updater: (state: BuffState) => BuffState) => {
+    setBuffs((state) => {
+      const next = updater(state);
+      if (selectedCharName) {
+        writeCharacterToolData(selectedCharName, EXP_CALCULATOR_TOOL_KEY, toSavedExpState(next, monster));
+      }
+      return next;
+    });
+  };
+  /** Only for the persisted monster fields (target level, hourly kill count). */
+  const updateSavedMonsterField = (field: "targetLevel" | "hourlyKillCount", value: number) => {
+    setMonster((state) => {
+      const next = { ...state, [field]: value };
+      if (selectedCharName) {
+        writeCharacterToolData(selectedCharName, EXP_CALCULATOR_TOOL_KEY, toSavedExpState(buffs, next));
+      }
+      return next;
+    });
+  };
   const updateExclusiveBuff = (groupId: string, buffId: string) => {
-    setBuffs((state) => ({ ...state, exclusive: { ...state.exclusive, [groupId]: buffId } }));
+    updateBuffs((state) => ({ ...state, exclusive: { ...state.exclusive, [groupId]: buffId } }));
   };
   const updateSelectBuff = (id: string, value: number) => {
-    setBuffs((state) => ({ ...state, selects: { ...state.selects, [id]: value } }));
+    updateBuffs((state) => ({ ...state, selects: { ...state.selects, [id]: value } }));
   };
   const toggleExpNode = (value: number) => {
     updateSelectBuff("exp-node", (buffs.selects["exp-node"] ?? 0) === value ? 0 : value);
   };
   const updateInputBuff = (buff: InputBuff, raw: number) => {
     const value = Math.min(buff.max, Math.max(0, raw));
-    setBuffs((state) => ({ ...state, inputs: { ...state.inputs, [buff.id]: value } }));
+    updateBuffs((state) => ({ ...state, inputs: { ...state.inputs, [buff.id]: value } }));
   };
   const updateCharacter = (name: string | null) => {
+    if (selectedCharName) {
+      writeCharacterToolData(selectedCharName, EXP_CALCULATOR_TOOL_KEY, toSavedExpState(buffs, monster));
+    }
     setSelectedCharName(name);
     const selected = characters.find((character) => character.characterName === name);
-    if (!selected) return;
-    setMonster((state) => ({
-      ...state,
-      playerLevel: selected.level,
-      currentPercent: roundToThree(Math.min(99.999, Math.max(0, percentOfLevel(selected.level, selected.exp)))),
-    }));
-    if (!ROLL_OF_THE_DICE_JOBS.has(selected.jobName)) {
-      setBuffs((state) => ({ ...state, selects: { ...state.selects, "roll-of-the-dice": 0 } }));
+    if (!selected) {
+      setBuffs(DEFAULT_BUFF_STATE);
+      setMonster((state) => ({
+        ...state,
+        targetLevel: DEFAULT_MONSTER.targetLevel,
+        hourlyKillCount: DEFAULT_MONSTER.hourlyKillCount,
+      }));
+      return;
     }
+    const loaded = loadCharacterState(selected, monster);
+    setBuffs(loaded.buffs);
+    setMonster(loaded.monster);
+    writeCharacterToolData(
+      selected.characterName,
+      EXP_CALCULATOR_TOOL_KEY,
+      toSavedExpState(loaded.buffs, loaded.monster),
+    );
   };
   const updateSelectedMonster = (option: ExpMonster) => {
     setSelectedMonster(option);
@@ -288,8 +386,8 @@ function BuffsTab({ theme }: { theme: AppTheme }) {
           <div className="exp-grid" style={{ marginTop: 12 }}>
             <NumberField label="Character Level" min={MIN_EXP_LEVEL} max={MAX_EXP_LEVEL - 1} value={monster.playerLevel} labelStyle={labelStyle} inputStyle={inputStyle} disabled={selectedCharName !== null} onChange={(value) => setMonster((state) => ({ ...state, playerLevel: value }))} />
             <NumberField label="Current EXP %" min={0} max={99.999} step="0.001" value={monster.currentPercent} labelStyle={labelStyle} inputStyle={inputStyle} disabled={selectedCharName !== null} onChange={(value) => setMonster((state) => ({ ...state, currentPercent: value }))} />
-            <NumberField label="Target Level" min={MIN_EXP_LEVEL + 1} max={MAX_EXP_LEVEL} value={monster.targetLevel} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => setMonster((state) => ({ ...state, targetLevel: value }))} />
-            <NumberField label="Hourly Kill Count" min={0} value={monster.hourlyKillCount} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => setMonster((state) => ({ ...state, hourlyKillCount: value }))} />
+            <NumberField label="Target Level" min={MIN_EXP_LEVEL + 1} max={MAX_EXP_LEVEL} value={monster.targetLevel} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateSavedMonsterField("targetLevel", value)} />
+            <NumberField label="Hourly Kill Count" min={0} value={monster.hourlyKillCount} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateSavedMonsterField("hourlyKillCount", value)} />
           </div>
         </div>
 
@@ -298,6 +396,7 @@ function BuffsTab({ theme }: { theme: AppTheme }) {
             <MonsterSelector
               theme={theme}
               selected={selectedMonster}
+              playerLevel={monster.playerLevel}
               inputStyle={inputStyle}
               onSelect={updateSelectedMonster}
             />
@@ -346,7 +445,7 @@ function BuffsTab({ theme }: { theme: AppTheme }) {
                     type="button"
                     aria-label={buff.label}
                     aria-pressed={selected}
-                    onClick={() => setBuffs((state) => toggleAdditiveBuff(state, buff, !selected))}
+                    onClick={() => updateBuffs((state) => toggleAdditiveBuff(state, buff, !selected))}
                     style={dailyTileStyle(theme, selected)}
                   >
                     <BuffIcon icon={buff.icon} label={buff.label} />
@@ -441,11 +540,13 @@ function BuffsTab({ theme }: { theme: AppTheme }) {
 function MonsterSelector({
   theme,
   selected,
+  playerLevel,
   inputStyle,
   onSelect,
 }: {
   theme: AppTheme;
   selected: ExpMonster | null;
+  playerLevel: number;
   inputStyle: React.CSSProperties;
   onSelect: (monster: ExpMonster) => void;
 }) {
@@ -487,9 +588,12 @@ function MonsterSelector({
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return EXP_MONSTERS.slice(0, 60);
-    return EXP_MONSTERS.filter((monster) => monster.search.includes(q)).slice(0, 80);
-  }, [search]);
+    if (q) return EXP_MONSTERS.filter((monster) => monster.search.includes(q)).slice(0, 80);
+    // Unsearched, the useful monsters are the ones near the player's level, not the first 60 by id.
+    return [...EXP_MONSTERS]
+      .sort((a, b) => Math.abs(a.level - playerLevel) - Math.abs(b.level - playerLevel))
+      .slice(0, 60);
+  }, [search, playerLevel]);
 
   const choose = (monster: ExpMonster) => {
     onSelect(monster);
