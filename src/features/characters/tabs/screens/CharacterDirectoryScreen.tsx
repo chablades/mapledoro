@@ -15,6 +15,45 @@ import CharacterAvatar from "../components/CharacterAvatar";
 
 const rowStyle: CSSProperties = { display: "flex", flexWrap: "wrap", justifyContent: "flex-start", alignItems: "flex-start", gap: "0.6rem", width: "100%" };
 
+function directoryCardButtonStyle(theme: AppTheme): CSSProperties {
+  return {
+    display: "grid",
+    placeItems: "center",
+    gap: "0.35rem",
+    background: "transparent",
+    border: "none",
+    padding: 0,
+    color: theme.text,
+    cursor: "pointer",
+    fontFamily: "inherit",
+  };
+}
+
+function addCharacterButtonStyle(theme: AppTheme, canAddCharacter: boolean): CSSProperties {
+  return {
+    border: `1px solid ${theme.border}`,
+    borderRadius: "12px",
+    background: theme.bg,
+    color: theme.text,
+    fontFamily: "inherit",
+    fontWeight: 900,
+    fontSize: "1.45rem",
+    padding: "0.5rem 0.65rem",
+    flex: "0 0 auto",
+    minWidth: "160px",
+    maxWidth: "190px",
+    width: "min(190px, 100%)",
+    height: "120px",
+    display: "inline-flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "0.3rem",
+    opacity: canAddCharacter ? 1 : 0.55,
+    cursor: canAddCharacter ? "pointer" : "not-allowed",
+  };
+}
+
 // ─── Sub-components ────────────────────────────────────────────────────────
 
 function DirectoryCharacterAvatar({ character }: { character: StoredCharacterRecord }) {
@@ -75,17 +114,7 @@ function DirectoryCharacterCard({ character, showWorld, isUiLocked, theme, refre
         disabled={isUiLocked}
         onClick={() => onOpen(character)}
         title={`Last updated: ${formatFetchedAt(character.fetchedAt)}`}
-        style={{
-          display: "grid",
-          placeItems: "center",
-          gap: "0.35rem",
-          background: "transparent",
-          border: "none",
-          padding: 0,
-          color: theme.text,
-          cursor: "pointer",
-          fontFamily: "inherit",
-        }}
+        style={directoryCardButtonStyle(theme)}
       >
         <DirectoryCharacterAvatar
           key={`${character.characterName}:${character.characterImgURL}`}
@@ -239,7 +268,7 @@ function DirectoryRoleView({
         )}
       </section>
 
-      {(championCharactersForDirectory.length > 0 || isMainAlsoChampion) && (
+      {hasChampionSection && (
         <section style={getDirectoryRevealStyle(shouldShow && directoryRevealPhase >= 2)}>
           <div style={{ borderTop: `1px solid ${theme.border}`, marginBottom: "0.7rem" }} />
           <p className="section-label" style={{ color: theme.muted }}>
@@ -271,28 +300,7 @@ function DirectoryRoleView({
             type="button"
             onClick={onAddCharacter}
             disabled={!canAddCharacter || isUiLocked}
-            style={{
-              border: `1px solid ${theme.border}`,
-              borderRadius: "12px",
-              background: theme.bg,
-              color: theme.text,
-              fontFamily: "inherit",
-              fontWeight: 900,
-              fontSize: "1.45rem",
-              padding: "0.5rem 0.65rem",
-              flex: "0 0 auto",
-              minWidth: "160px",
-              maxWidth: "190px",
-              width: "min(190px, 100%)",
-              height: "120px",
-              display: "inline-flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "0.3rem",
-              opacity: canAddCharacter ? 1 : 0.55,
-              cursor: canAddCharacter ? "pointer" : "not-allowed",
-            }}
+            style={addCharacterButtonStyle(theme, canAddCharacter)}
           >
             <span>+</span>
             <span style={{ fontSize: "0.76rem", fontWeight: 800 }}>

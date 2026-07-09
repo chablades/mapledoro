@@ -1,6 +1,6 @@
 import type { SearchPaneActions, SearchPaneModel } from "../paneModels";
 import { CHARACTERS_COPY } from "../content";
-import { secondaryButtonStyle } from "../components/uiStyles";
+import { secondaryButtonStyle, dangerButtonStyle } from "../components/uiStyles";
 
 interface CharacterProfileActionsScreenProps {
   model: SearchPaneModel;
@@ -94,18 +94,7 @@ export default function CharacterProfileActionsScreen({
             disabled={shell.isUiLocked}
             onClick={onRequestRemove}
             aria-label="Remove character"
-            style={{
-              border: "1px solid #ef4444",
-              borderRadius: "999px",
-              background: "#fef2f2",
-              color: "#991b1b",
-              fontFamily: "inherit",
-              fontWeight: 800,
-              fontSize: "0.78rem",
-              padding: "0.28rem 0.62rem",
-              width: "fit-content",
-              cursor: "pointer",
-            }}
+            style={dangerButtonStyle()}
             >
             {`🗑 ${CHARACTERS_COPY.characterProfileActions.removeCharacterButton}`}
           </button>

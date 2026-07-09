@@ -1,8 +1,11 @@
+import type { CSSProperties } from "react";
 import { CHARACTERS_COPY } from "../content";
 import { resolveDisplayJobName } from "../../setup/data/nexonJobMapping";
 import type { SearchPaneActions, SearchPaneModel } from "../paneModels";
 import { secondaryButtonStyle } from "../components/uiStyles";
 import CharacterAvatar from "../components/CharacterAvatar";
+
+type ProfileRole = "main" | "champion" | "mule";
 
 function isCharacterStale(expiresAt: number): boolean {
   return Date.now() > expiresAt;
@@ -14,7 +17,7 @@ function formatFetchedAt(fetchedAt: number): string {
 
 function profileRoleBadgeStyle(
   theme: SearchPaneModel["theme"],
-  role: "main" | "champion" | "mule",
+  role: ProfileRole,
 ) {
   if (role === "main") {
     return {
@@ -37,10 +40,49 @@ function profileRoleBadgeStyle(
   };
 }
 
+const confirmedSummaryCardStyle: CSSProperties = {
+  width: "100%",
+  maxWidth: "300px",
+  margin: "0 auto",
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "flex-start",
+  textAlign: "center",
+  gap: "0.35rem",
+};
+
+const roleChipRowStyle: CSSProperties = {
+  display: "flex",
+  justifyContent: "center",
+  gap: "0.32rem",
+  flexWrap: "wrap",
+  width: "100%",
+  marginTop: "0.35rem",
+  marginBottom: "0.2rem",
+  minHeight: "26px",
+};
+
+function roleChipStyle(theme: SearchPaneModel["theme"], role: ProfileRole): CSSProperties {
+  return {
+    ...profileRoleBadgeStyle(theme, role),
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: "fit-content",
+    borderRadius: "999px",
+    padding: "0.22rem 0.68rem",
+    fontSize: "0.76rem",
+    fontWeight: 800,
+    letterSpacing: "0.02em",
+    textTransform: "uppercase",
+  };
+}
+
 function getProfileRoleChips(
   isCurrentMainCharacter: boolean,
   isCurrentChampionCharacter: boolean,
-): Array<"main" | "champion" | "mule"> {
+): Array<ProfileRole> {
   if (isCurrentMainCharacter && isCurrentChampionCharacter) return ["main", "champion"];
   if (isCurrentMainCharacter) return ["main"];
   if (isCurrentChampionCharacter) return ["champion"];
@@ -76,17 +118,7 @@ export default function CharacterProfileScreen({
         ]
           .filter(Boolean)
           .join(" ")}
-        style={{
-          width: "100%",
-          maxWidth: "300px",
-          margin: "0 auto",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "flex-start",
-          textAlign: "center",
-          gap: "0.35rem",
-        }}
+        style={confirmedSummaryCardStyle}
       >
         <div
           className="character-profile-nav-row"
@@ -196,35 +228,12 @@ export default function CharacterProfileScreen({
             Level {profile.confirmedCharacter.level}
           </p>
           {profile.canViewCharacterDirectory && (
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "center",
-                gap: "0.32rem",
-                flexWrap: "wrap",
-                width: "100%",
-                marginTop: "0.35rem",
-                marginBottom: "0.2rem",
-                minHeight: "26px",
-              }}
-            >
+            <div style={roleChipRowStyle}>
               {roleChips.map((role) => (
                 <span
                   key={role}
                   className="profile-role-chip"
-                  style={{
-                    ...profileRoleBadgeStyle(theme, role),
-                    display: "inline-flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    width: "fit-content",
-                    borderRadius: "999px",
-                    padding: "0.22rem 0.68rem",
-                    fontSize: "0.76rem",
-                    fontWeight: 800,
-                    letterSpacing: "0.02em",
-                    textTransform: "uppercase",
-                  }}
+                  style={roleChipStyle(theme, role)}
                 >
                   {{ main: "Main", champion: "Champion", mule: "Mule" }[role]}
                 </span>

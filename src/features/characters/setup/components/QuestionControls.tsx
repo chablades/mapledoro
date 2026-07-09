@@ -93,6 +93,17 @@ export function scrollToFlaggedField(container: HTMLElement | null) {
   window.setTimeout(() => target.classList.remove("jump-highlight"), 1100);
 }
 
+// "Fix the flagged value above" link button that triggers scrollToFlaggedField, shared
+// between Stats and Oz Rings (both can end a step with an unresolved flagged field).
+export function flaggedValueLinkStyle(theme: AppTheme): CSSProperties {
+  return {
+    display: "block", margin: "0.75rem 0 0", padding: 0,
+    background: "none", border: "none", font: "inherit", textAlign: "left",
+    fontSize: "0.78rem", fontWeight: 700, color: theme.muted, cursor: "pointer",
+    textDecoration: "underline", textUnderlineOffset: "2px",
+  };
+}
+
 // ── Checklist-style question controls ──────────────────────────────────────────
 // Traits render as checkbox rows in a flat list rather than competing pill buttons,
 // so a "none of these" answer reads as one more line item, not a peer choice.

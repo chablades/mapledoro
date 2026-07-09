@@ -13,7 +13,7 @@ import type { SetupFlowId } from "../flows";
 import SetupStepFrame from "./SetupStepFrame";
 import InfoTooltip from "./InfoTooltip";
 import { CopyFromPreset } from "./CopyFromPreset";
-import { statInputStyle, inputSuffixStyle, ChecklistCheckbox, ChecklistGroup, LegionFinalAttackField, InputWarningBubble, scrollToFlaggedField } from "./QuestionControls";
+import { statInputStyle, inputSuffixStyle, ChecklistCheckbox, ChecklistGroup, LegionFinalAttackField, InputWarningBubble, scrollToFlaggedField, flaggedValueLinkStyle } from "./QuestionControls";
 import {
   CLASS_SKILL_DATA,
   UNIVERSAL_BUFF_SKILLS,
@@ -1015,12 +1015,7 @@ function StatsWindowSubstep({
         <button
           type="button"
           onClick={() => scrollToFlaggedField(rootRef.current)}
-          style={{
-            display: "block", margin: "0.75rem 0 0", padding: 0,
-            background: "none", border: "none", font: "inherit", textAlign: "left",
-            fontSize: "0.78rem", fontWeight: 700, color: theme.muted, cursor: "pointer",
-            textDecoration: "underline", textUnderlineOffset: "2px",
-          }}
+          style={flaggedValueLinkStyle(theme)}
         >
           {isScouter ? "Fill in every stat above, and fix any flagged values, to continue." : "Fix the flagged value above to continue."}
         </button>

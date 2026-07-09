@@ -64,6 +64,21 @@ const searchInputStyle = (theme: Theme): CSSProperties => ({
   transition: "outline-color 0.2s ease",
 });
 
+const draftResumeButtonStyle = (disabled: boolean): CSSProperties => ({
+  flex: 1,
+  display: "flex",
+  alignItems: "center",
+  gap: "0.55rem",
+  background: "none",
+  border: "none",
+  borderRadius: "8px",
+  padding: "0.4rem 0.5rem",
+  font: "inherit",
+  textAlign: "left",
+  cursor: disabled ? "not-allowed" : "pointer",
+  minWidth: 0,
+});
+
 function draftStatusLine(draft: SetupDraftSummary): string {
   if (!draft.started) return "Not started";
   const step = Math.min(Math.max(draft.stepIndex, 1), draft.stepCount);
@@ -91,20 +106,7 @@ function DraftOption({
         disabled={disabled}
         onClick={onResume}
         className="draft-option"
-        style={{
-          flex: 1,
-          display: "flex",
-          alignItems: "center",
-          gap: "0.55rem",
-          background: "none",
-          border: "none",
-          borderRadius: "8px",
-          padding: "0.4rem 0.5rem",
-          font: "inherit",
-          textAlign: "left",
-          cursor: disabled ? "not-allowed" : "pointer",
-          minWidth: 0,
-        }}
+        style={draftResumeButtonStyle(disabled)}
       >
         <div style={{ width: 32, height: 32, borderRadius: "7px", overflow: "hidden", flexShrink: 0, border: `1px solid ${theme.border}` }}>
           {draft.imgUrl ? (

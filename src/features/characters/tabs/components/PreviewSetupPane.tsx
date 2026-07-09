@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useEffectEvent, useState } from "react";
 import type { CSSProperties } from "react";
-import { getDirectoryRevealDelays } from "../charactersDirectory";
+import { buildDirectoryGroups, getDirectoryRevealDelays } from "../charactersDirectory";
 import type { PreviewPaneActions, PreviewPaneModel } from "../paneModels";
 import CharacterDirectoryScreen from "../screens/CharacterDirectoryScreen";
 import CharacterProfileOverviewScreen from "../screens/CharacterProfileOverviewScreen";
@@ -126,6 +126,31 @@ export default function PreviewSetupPane({ model, actions }: PreviewSetupPanePro
       ? (directory.worldIds[0] ?? null)
       : directoryWorldFilterRaw;
 
+  // Mirrors CharacterDirectoryScreen's own world-scoping so the reveal-phase delay below
+  // matches whether the directory view it's about to animate actually has a champions
+  // section (an "all worlds" view has no such section, but hasChampionSection is false
+  // there too since mainCharacterKey/championCharacterKeys resolve to null/[]).
+  const activeDirectoryWorldId = directoryWorldFilter ?? directory.worldIds[0] ?? null;
+  const activeDirectoryMainKey =
+    directoryWorldFilter !== null && activeDirectoryWorldId !== null
+      ? (directory.mainCharacterKeyByWorld[String(activeDirectoryWorldId)] ?? null)
+      : null;
+  const activeDirectoryChampionKeys =
+    directoryWorldFilter !== null && activeDirectoryWorldId !== null
+      ? (directory.championCharacterKeysByWorld[String(activeDirectoryWorldId)] ?? [])
+      : [];
+  const hasChampionSection = buildDirectoryGroups({
+    allCharacters: directory.allCharacters,
+    sortBy: "name",
+    mainCharacterKey: activeDirectoryMainKey,
+    championCharacterKeys: activeDirectoryChampionKeys,
+    maxCharacters: directory.maxCharacters,
+  }).hasChampionSection;
+
+  const getRevealDelays = useEffectEvent(() =>
+    getDirectoryRevealDelays(setup.fastDirectoryRevealOnce, hasChampionSection),
+  );
+
   const [directoryRevealPhase, setDirectoryRevealPhase] = useState(0);
   const inCharacterDirectoryView = setup.showFlowOverview && setup.showCharacterDirectory;
   const shouldShowDirectoryPanel =
@@ -164,10 +189,7 @@ export default function PreviewSetupPane({ model, actions }: PreviewSetupPanePro
     const startPhaseTimer = window.setTimeout(() => {
       setDirectoryRevealPhase(0);
     }, 0);
-    const { mainDelay, championDelay, mulesDelay } = getDirectoryRevealDelays(
-      setup.fastDirectoryRevealOnce,
-      true,
-    );
+    const { mainDelay, championDelay, mulesDelay } = getRevealDelays();
     const mainTimer = window.setTimeout(() => setDirectoryRevealPhase(1), mainDelay);
     const championsTimer = window.setTimeout(() => setDirectoryRevealPhase(2), championDelay);
     const mulesTimer = window.setTimeout(() => setDirectoryRevealPhase(3), mulesDelay);

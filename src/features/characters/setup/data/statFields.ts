@@ -46,11 +46,6 @@ export interface SingleStatFieldDef {
   type: "single";
 }
 
-export type StatFieldDef =
-  | TripleStatFieldDef
-  | CooldownReductionStatFieldDef
-  | SingleStatFieldDef;
-
 // Triple stats: Base value, % value, % value not applied (3 separate screenshots)
 export const TRIPLE_STAT_FIELDS: TripleStatFieldDef[] = [
   { id: "str", label: "STR", type: "triple" },
@@ -83,9 +78,3 @@ export const COOLDOWN_REDUCTION_STAT_FIELD: CooldownReductionStatFieldDef = {
   label: "Cooldown Reduction",
   type: "cooldown_reduction",
 };
-
-export const ALL_STAT_FIELDS: StatFieldDef[] = [
-  ...TRIPLE_STAT_FIELDS,
-  COOLDOWN_REDUCTION_STAT_FIELD,
-  ...SINGLE_STAT_FIELDS,
-];

@@ -52,3 +52,18 @@ export function secondaryButtonStyle(theme: AppTheme, padding = "0.65rem 0.9rem"
     cursor: "pointer",
   };
 }
+
+export function dangerButtonStyle(padding = "0.28rem 0.62rem"): CSSProperties {
+  return {
+    border: "1px solid #ef4444",
+    borderRadius: "999px",
+    background: "#fef2f2",
+    color: "#991b1b",
+    fontFamily: "inherit",
+    fontWeight: 800,
+    fontSize: "0.78rem",
+    padding,
+    width: "fit-content",
+    cursor: "pointer",
+  };
+}

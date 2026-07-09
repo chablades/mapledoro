@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { useState, useMemo, useSyncExternalStore } from "react";
+import { useState, useMemo, useSyncExternalStore, type CSSProperties } from "react";
 import type { SetupFlowId } from "../../setup/flows";
 import type { PreviewPaneActions, PreviewPaneModel } from "../paneModels";
 import { primaryButtonStyle } from "../components/uiStyles";
@@ -27,6 +27,29 @@ const commonSlots: (HexaSkillDef | null)[] = [COMMON_SKILLS[0] ?? null, COMMON_S
 
 const MAIN_STAT_FIELDS = { str: "STR", dex: "DEX", int: "INT", luk: "LUK", hp: "HP" } as const;
 type MainStatKey = keyof typeof MAIN_STAT_FIELDS;
+
+const hexNodeLevelBadgeStyle: CSSProperties = {
+  position: "absolute", bottom: 1, left: "50%", transform: "translateX(-50%)",
+  fontSize: 12, fontWeight: 800, color: "#fff", background: "rgba(0,0,0,0.65)",
+  borderRadius: 999, padding: "0px 4px", lineHeight: 1.4, zIndex: 1, whiteSpace: "nowrap",
+};
+
+function hexNodeTileStyle(border: string, bg: string, showImage: boolean, locked: boolean | undefined): CSSProperties {
+  return {
+    width: 42, height: 42, borderRadius: 6, border: `1px solid ${border}`,
+    background: showImage ? "transparent" : bg, display: "flex", alignItems: "center",
+    justifyContent: "center", position: "relative", overflow: "hidden",
+    opacity: locked ? 0.22 : 1, flexShrink: 0,
+  };
+}
+
+function exportButtonStyle(theme: PreviewPaneModel["theme"]): CSSProperties {
+  return {
+    display: "flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 700,
+    color: theme.muted, background: theme.bg, border: `1px solid ${theme.border}`,
+    borderRadius: 999, padding: "3px 10px", cursor: "pointer", fontFamily: "inherit",
+  };
+}
 
 function WseSlot({
   label,
@@ -112,9 +135,9 @@ function HexNode({
   }
 
   return (
-    <div title={skill?.name} style={{ width: 42, height: 42, borderRadius: 6, border: `1px solid ${border}`, background: showImage ? "transparent" : bg, display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden", opacity: locked ? 0.22 : 1, flexShrink: 0 }}>
+    <div title={skill?.name} style={hexNodeTileStyle(border, bg, showImage, locked)}>
       {level !== undefined && !locked && (
-        <span style={{ position: "absolute", bottom: 1, left: "50%", transform: "translateX(-50%)", fontSize: 12, fontWeight: 800, color: "#fff", background: "rgba(0,0,0,0.65)", borderRadius: 999, padding: "0px 4px", lineHeight: 1.4, zIndex: 1, whiteSpace: "nowrap" }}>
+        <span style={hexNodeLevelBadgeStyle}>
           {String(level).padStart(2, "0")}
         </span>
       )}
@@ -226,7 +249,7 @@ function OverviewTab({ model }: { model: PreviewPaneModel }) {
         <button
           type="button"
           onClick={handleExport}
-          style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 700, color: theme.muted, background: theme.bg, border: `1px solid ${theme.border}`, borderRadius: 999, padding: "3px 10px", cursor: "pointer", fontFamily: "inherit" }}
+          style={exportButtonStyle(theme)}
         >
           {!exportFlash && (
             <svg width={11} height={11} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
@@ -438,7 +461,7 @@ export default function CharacterProfileOverviewScreen({
             onClick={() => setActiveTab(tab.id)}
             style={{
               padding: "8px 12px",
-              fontSize: 11,
+              fontSize: 12,
               fontWeight: 700,
               color: activeTab === tab.id ? theme.text : theme.muted,
               background: activeTab === tab.id ? theme.panel : theme.bg,

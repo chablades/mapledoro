@@ -22,7 +22,7 @@ import {
 } from "../data/ozRingData";
 import SetupStepFrame from "./SetupStepFrame";
 import InfoTooltip from "./InfoTooltip";
-import { InputWarningBubble, scrollToFlaggedField } from "./QuestionControls";
+import { InputWarningBubble, scrollToFlaggedField, flaggedValueLinkStyle } from "./QuestionControls";
 import { LeveledIconTile } from "./LeveledIconTile";
 
 // MapleScouter's own sanity bound for the Totalling Ring off-stat fields (a 7-digit
@@ -266,12 +266,7 @@ export default function OzRingsSetupStep({
           <button
             type="button"
             onClick={() => scrollToFlaggedField(rootRef.current)}
-            style={{
-              display: "block", margin: "0.75rem 0 0", padding: 0,
-              background: "none", border: "none", font: "inherit", textAlign: "left",
-              fontSize: "0.78rem", fontWeight: 700, color: theme.muted, cursor: "pointer",
-              textDecoration: "underline", textUnderlineOffset: "2px",
-            }}
+            style={flaggedValueLinkStyle(theme)}
           >
             {`Fix the flagged ${flaggedValueWord} above to continue.`}
           </button>
