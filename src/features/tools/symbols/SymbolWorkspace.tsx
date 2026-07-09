@@ -973,7 +973,7 @@ export default function SymbolWorkspace({ theme }: { theme: AppTheme }) {
                 options={["arcane", "sacred"] as const}
                 value={type}
                 labels={{ arcane: "Arcane Symbols", sacred: "Sacred Symbols" }}
-                trackStyle={{ flexShrink: 0, marginLeft: characters.length > 0 ? "auto" : undefined }}
+                trackStyle={{ flexShrink: 0, marginLeft: "auto" }}
                 btnClassName="sym-btn"
                 onChange={switchType}
               />

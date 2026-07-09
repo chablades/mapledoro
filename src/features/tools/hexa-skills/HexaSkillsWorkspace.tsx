@@ -321,17 +321,15 @@ export default function HexaSkillsWorkspace({ theme }: { theme: AppTheme }) {
             header area short. */}
         <div className="fade-in panel-card" style={sectionPanel}>
           <div style={{ display: "flex", alignItems: "center", gap: "0.75rem 2rem", flexWrap: "wrap" }}>
-            {characters.length > 0 && (
-              <div style={{ flex: "1 1 320px" }}>
-                <CharacterSyncPanel
-                  theme={theme}
-                  characters={characters}
-                  selectedCharName={selectedCharName}
-                  onCharChange={handleCharChange}
-                  inputStyle={inputStyle}
-                />
-              </div>
-            )}
+            <div style={{ flex: "1 1 320px" }}>
+              <CharacterSyncPanel
+                theme={theme}
+                characters={characters}
+                selectedCharName={selectedCharName}
+                onCharChange={handleCharChange}
+                inputStyle={inputStyle}
+              />
+            </div>
 
             <div style={{ flex: "1 1 280px" }}>
               <ClassSelector

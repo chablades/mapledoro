@@ -356,8 +356,6 @@ export function CharacterSyncPanel({
   inputStyle,
   sectionPanel,
 }: CharacterSyncPanelProps) {
-  if (characters.length === 0) return null;
-
   const row = (
     <div
       style={{
