@@ -47,6 +47,15 @@ export default function HoverTooltip({ label, theme, style, children }: {
   }, [open, recenter]);
 
   return (
+    // This wraps arbitrary children — sometimes a real interactive control (which already
+    // exposes this label via its own aria-label), sometimes a purely decorative icon with
+    // nothing focusable inside. Neither a real <button> (would nest inside an existing
+    // button in some call sites) nor an onKeyDown equivalent (would double-fire alongside
+    // the inner control's own Enter-activated click, canceling the toggle out) is safe
+    // here. Keyboard/focus visibility is instead handled by the .hover-tip:focus-within
+    // CSS rule in globals.css, which reveals the bubble whenever a focusable descendant
+    // gains focus, with no risk of double-toggling since it doesn't touch click logic.
+    // react-doctor-disable-next-line no-static-element-interactions, click-events-have-key-events
     <div
       ref={ref}
       className="hover-tip"

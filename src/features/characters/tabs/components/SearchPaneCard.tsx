@@ -18,13 +18,13 @@ export default function SearchPaneCard({ model, actions }: SearchPaneCardProps) 
   const searchCardRef = useRef<HTMLElement | null>(null);
   const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
 
-  useEffect(() => {
-    if (profile.confirmedCharacter) return;
-    const closeModalTimer = window.setTimeout(() => {
-      setShowRemoveConfirm(false);
-    }, 0);
-    return () => clearTimeout(closeModalTimer);
-  }, [profile.confirmedCharacter]);
+  // Reset the confirm-modal intent synchronously during render (not a watching effect)
+  // whenever there's no confirmed character, so it can't silently resurface if a
+  // different character is confirmed later. Terminates in one extra render since
+  // showRemoveConfirm becomes false, matching the condition that guards it.
+  if (!profile.confirmedCharacter && showRemoveConfirm) {
+    setShowRemoveConfirm(false);
+  }
 
   useEffect(() => {
     const element = searchCardRef.current;

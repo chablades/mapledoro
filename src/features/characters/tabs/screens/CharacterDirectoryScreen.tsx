@@ -158,6 +158,7 @@ function DirectoryControls({
       <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
         {worldIds.length > 0 && (
           <select
+            aria-label="Filter by world"
             disabled={isUiLocked || !hasMultipleWorlds}
             value={selectedWorldId ?? "all"}
             onChange={(e) => {
@@ -175,6 +176,7 @@ function DirectoryControls({
           </select>
         )}
         <select
+          aria-label="Sort characters by"
           disabled={isUiLocked}
           value={directorySortBy}
           onChange={(e) => onSortChange(e.target.value as DirectorySortBy)}

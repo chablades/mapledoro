@@ -329,6 +329,14 @@ textarea:focus-visible {
   visibility: visible;
 }
 
+/* Keyboard equivalent of :hover — reveals the bubble when a focusable descendant
+   (e.g. a wrapped <button>) receives keyboard focus, without needing the wrapper
+   itself to be a tab stop. */
+.hover-tip:focus-within .hover-tip-bubble {
+  opacity: 1;
+  visibility: visible;
+}
+
 /* Tool page header block (back link + title + description) */
 .tool-header {
   margin-bottom: 1.25rem;

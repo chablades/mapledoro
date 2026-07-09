@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState, useEffect, type CSSProperties } from "react";
+import Image from "next/image";
 import { createPortal } from "react-dom";
 import { usePickerCoords } from "../hooks/usePickerCoords";
 import { useKeyboardListNav } from "../../../../lib/useKeyboardListNav";
@@ -500,7 +501,7 @@ function TierPickerView({ entry, theme, onBack, onSelect }: {
   }
 
   return (
-    <div ref={containerRef} tabIndex={-1} onKeyDown={handleContainerKeyDown}
+    <div ref={containerRef} tabIndex={-1} role="group" aria-label="Pick rarity" onKeyDown={handleContainerKeyDown}
       style={{ padding: "0.5rem 0.6rem", display: "flex", flexDirection: "column", gap: 5, outline: "none" }}>
       <button
         type="button"
@@ -841,12 +842,12 @@ function BadgeSlot({
       >
         <div style={{ width: outerSize, height: outerSize, clipPath: PENTAGON, background: emptyBg, display: "flex", alignItems: "center", justifyContent: "center" }}>
           {badge ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <Image
               src={familiarBadgeUrl(BADGE_ID_MAP[badge])}
               alt={badge}
               width={outerSize}
               height={outerSize}
+              unoptimized
               style={{ objectFit: "cover", display: "block" }}
             />
           ) : (
@@ -863,8 +864,7 @@ function BadgeSlot({
         >
           {badge && (
             <div style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "0.4rem 0.6rem", borderBottom: `1px solid ${theme.border}` }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={familiarBadgeUrl(BADGE_ID_MAP[badge])} alt="" width={28} height={28} style={{ objectFit: "contain", flexShrink: 0 }} />
+              <Image src={familiarBadgeUrl(BADGE_ID_MAP[badge])} alt="" width={28} height={28} unoptimized style={{ objectFit: "contain", flexShrink: 0 }} />
               <div style={{ overflow: "hidden", flex: 1 }}>
                 <p style={{ margin: 0, fontSize: "0.75rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.04em", color: theme.muted }}>Currently Selected</p>
                 <p title={badge} style={{ margin: 0, fontSize: "0.8rem", fontWeight: 700, color: theme.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{badge}</p>
@@ -908,8 +908,7 @@ function BadgeSlot({
                 onMouseEnter={(e) => { e.currentTarget.style.background = `${theme.accent}22`; }}
                 onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={familiarBadgeUrl(BADGE_ID_MAP[name])} alt="" width={20} height={20} style={{ objectFit: "contain", flexShrink: 0 }} />
+                <Image src={familiarBadgeUrl(BADGE_ID_MAP[name])} alt="" width={20} height={20} unoptimized style={{ objectFit: "contain", flexShrink: 0 }} />
                 {name}
               </button>
             ))}
@@ -933,6 +932,11 @@ export default function FamiliarsSetupStep({
   const zoneRef = useRef<HTMLDivElement>(null);
   const initialValueRef = useRef(value);
 
+  // One-shot mount-time backfill from the character's saved tools data (only when this
+  // step lands blank) — can't run during render since it depends on a client-only
+  // localStorage read. Not worth lifting into the parent controller (which owns none of
+  // this step's domain logic) for a fetch that only ever fires once, at mount.
+  // react-doctor-disable-next-line no-pass-data-to-parent
   useEffect(() => {
     if (initialValueRef.current) return;
     if (!confirmedCharacterName) return;

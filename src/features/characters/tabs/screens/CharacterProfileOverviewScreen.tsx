@@ -226,7 +226,7 @@ function OverviewTab({ model }: { model: PreviewPaneModel }) {
         <button
           type="button"
           onClick={handleExport}
-          style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 700, color: theme.muted, background: theme.bg, border: `1px solid ${theme.border}`, borderRadius: 999, padding: "3px 10px", cursor: "pointer", fontFamily: "inherit" }}
+          style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 700, color: theme.muted, background: theme.bg, border: `1px solid ${theme.border}`, borderRadius: 999, padding: "3px 10px", cursor: "pointer", fontFamily: "inherit" }}
         >
           {!exportFlash && (
             <svg width={11} height={11} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>

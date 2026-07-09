@@ -29,6 +29,11 @@ export default function CharacterSetupFlow({ theme, initialCharacterName, initia
   const { state, transitions, actions } = controller;
 
   const initialActionAppliedRef = useRef(false);
+  // initialCharacterName/initialAction are one-time route intent (URL search params from
+  // page.tsx), not live events — this has to wait for state.isDraftHydrated (async
+  // localStorage read) before it can safely apply that intent, so there's no synchronous
+  // handler to move this into. The ref guard ensures it only ever runs once.
+  // react-doctor-disable-next-line no-event-handler
   useEffect(() => {
     if (!state.isDraftHydrated || initialActionAppliedRef.current) return;
     initialActionAppliedRef.current = true;

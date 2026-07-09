@@ -316,6 +316,12 @@ export default function LinkSkillsSetupStep({
     ? computeAutofill(characterRoster, confirmedWorldId)
     : { values: {}, sources: {} };
 
+  // One-shot mount-time backfill (world-store draft merged with same-world roster
+  // autofill), only when this step lands blank — can't run during render since it
+  // depends on a client-only localStorage read. Not worth lifting into the parent
+  // controller (which owns none of this step's domain logic) for a fetch that only ever
+  // fires once, at mount.
+  // react-doctor-disable-next-line no-pass-data-to-parent
   useEffect(() => {
     if (initialValueRef.current) return;
     const worldStore = parseDraft(worldLinkSkills);

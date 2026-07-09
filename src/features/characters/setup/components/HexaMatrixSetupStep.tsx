@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useLayoutEffect, useRef } from "react";
+import { useState, useEffect, useEffectEvent, useLayoutEffect, useRef } from "react";
 import { numericKeyDown, clampNumber, sanitizeDigitsInput, isStrayClick } from "../../../../lib/inputUtils";
 import { joinWithAnd } from "../../../../lib/textUtils";
 import { useKeyboardListNav } from "../../../../lib/useKeyboardListNav";
@@ -425,14 +425,15 @@ function StatDropdown({ value, options, onChange, onAdvance, isOpen, onToggle, o
     if (isOpen) setQuery("");
   }
 
+  const closeOnOutsideClick = useEffectEvent((e: MouseEvent) => {
+    if (containerRef.current && !containerRef.current.contains(e.target as Node)) onClose();
+  });
+
   useEffect(() => {
     if (!isOpen) return;
-    function onMouseDown(e: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) onClose();
-    }
-    document.addEventListener("mousedown", onMouseDown);
-    return () => document.removeEventListener("mousedown", onMouseDown);
-  }, [isOpen, onClose]);
+    document.addEventListener("mousedown", closeOnOutsideClick);
+    return () => document.removeEventListener("mousedown", closeOnOutsideClick);
+  }, [isOpen]);
 
   // Flip the menu above the trigger when there isn't enough room below in the viewport —
   // otherwise a dropdown opened near the bottom of the HEXA node grid forces the page to
@@ -832,6 +833,11 @@ export default function HexaMatrixSetupStep({
     setTouchedLevels((prev) => (prev.has(key) ? prev : new Set(prev).add(key)));
   }
 
+  // One-shot mount-time backfill from the character's saved tools data (only when this
+  // step lands blank) — can't run during render since it depends on a client-only
+  // localStorage read. Not worth lifting into the parent controller (which owns none of
+  // this step's domain logic) for a fetch that only ever fires once, at mount.
+  // react-doctor-disable-next-line no-pass-data-to-parent
   useEffect(() => {
     if (initialValueRef.current) return;
     const saved = readSavedHexaValue(classDef, confirmedCharacterName);
@@ -999,6 +1005,7 @@ export default function HexaMatrixSetupStep({
                   type="button"
                   onClick={() => selectNode(i)}
                   style={tabStyle}
+                  aria-label={def.name}
                 >
                   <HexaSkillIcon id={def.iconId} size={36} disabled={iconDisabled} />
                 </button>

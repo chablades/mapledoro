@@ -158,6 +158,10 @@ export default function VMatrixSetupStep({
   }, [classId]);
 
   // Prefill from saved tool data on first land (only when the step has no draft yet).
+  // Can't run during render since it depends on a client-only localStorage read. Not
+  // worth lifting into the parent controller (which owns none of this step's domain
+  // logic) for a fetch that only ever fires once, at mount.
+  // react-doctor-disable-next-line no-pass-data-to-parent
   useEffect(() => {
     if (initialValueRef.current || !confirmedCharacterName) return;
     const saved = selectCharacterByIgn(readCharactersStore(), confirmedCharacterName)?.vMatrix;
