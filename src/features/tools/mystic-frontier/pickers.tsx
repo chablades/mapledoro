@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type RefObject } from "react";
 import { createPortal } from "react-dom";
 import type { AppTheme } from "../../../components/themes";
-import { usePickerCoords } from "../../characters/setup/hooks/usePickerCoords";
+import { usePickerCoords } from "./usePickerCoords";
 import { resourceImageUrl } from "../../../lib/mapleResource";
 import { ItemIcon } from "../../../components/ResourceImage";
 import { MF_FAMILIARS, getMfFamiliar, type MfFamiliar } from "./familiars";

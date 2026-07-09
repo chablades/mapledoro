@@ -2,7 +2,7 @@
 // (names, sprites, card icons) and joins it with the per-id type/element traits.
 // This is what powers the lineup picker and the auto-populated type/element.
 
-import { FAMILIARS, getFamiliarDisplayLabel } from "../../characters/setup/data/familiarsData";
+import { FAMILIARS, getFamiliarDisplayLabel } from "./familiarsData";
 import { FAMILIAR_TRAITS } from "./familiarTraits";
 import type { MfElement, MfType } from "./types";
 
