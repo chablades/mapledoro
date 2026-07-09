@@ -475,6 +475,7 @@ export default function InnerAbilitySetupStep({ draft, onUpdate, theme }: {
         onNext={() => goToLine(0)}
       />
       {ia.presets[ia.activePreset].lines.map((line, i) => (
+        // react-doctor-disable-next-line no-array-index-as-key
         <IALineBar
           key={i}
           lineIdx={i}

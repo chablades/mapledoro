@@ -149,10 +149,12 @@ export default function VMatrixSetupStep({
 
   useEffect(() => {
     if (!classId || catalogCache[classId]) return;
+    let cancelled = false;
     fetch(`/data/vmatrix/${classId}.json`)
       .then((r) => r.json() as Promise<VMatrixData>)
-      .then((data) => { catalogCache[classId] = data; setCatalog(data); })
-      .catch(() => setLoadFailed(true));
+      .then((data) => { catalogCache[classId] = data; if (!cancelled) setCatalog(data); })
+      .catch(() => { if (!cancelled) setLoadFailed(true); });
+    return () => { cancelled = true; };
   }, [classId]);
 
   // Prefill from saved tool data on first land (only when the step has no draft yet).

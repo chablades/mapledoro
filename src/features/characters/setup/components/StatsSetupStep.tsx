@@ -1183,9 +1183,15 @@ export default function StatsSetupStep({
   const SUBSTEP_COUNT = lastSubstep + 1;
 
   const [substep, setSubstep] = useState(() => targetSubstep ?? (direction === "backward" ? lastSubstep : 0));
-  // Lets the setup controller persist which substep is active, so a full page reload
-  // can resume into it instead of always falling back to the mount-time default above.
-  useEffect(() => { onSubstepChange?.(substep); }, [substep, onSubstepChange]);
+  // Reports the mount-time default once (so entering a step "backward," which starts
+  // on a substep other than 0, still gets persisted for resume even if the player
+  // reloads before navigating again) — subsequent changes are reported directly from
+  // goToSubstep below instead of a substep-watching effect. Fully eliminating this last
+  // mount-time report would mean lifting substep into a value the parent controls
+  // directly, which isn't worth the blast radius for a bookkeeping report that never
+  // causes a visible re-render.
+  // react-doctor-disable-next-line no-prop-callback-in-effect, no-pass-live-state-to-parent
+  useEffect(() => { onSubstepChange?.(substep); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const [substepDirection, setSubstepDirection] = useState<"forward" | "backward">("forward");
   const [hasSubstepSwitched, setHasSubstepSwitched] = useState(false);
 
@@ -1193,6 +1199,7 @@ export default function StatsSetupStep({
     setHasSubstepSwitched(true);
     setSubstepDirection(next > substep ? "forward" : "backward");
     setSubstep(next);
+    onSubstepChange?.(next);
   }
 
   const substepAnimStyle = hasSubstepSwitched ? {
@@ -1353,6 +1360,7 @@ export default function StatsSetupStep({
         />
         <div className="stats-hyper-grid" style={{ display: "flex", minWidth: 0 }}>
           {hyperCols.map((col, i) => (
+            // react-doctor-disable-next-line no-array-index-as-key
             <div key={i} style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: "0.4rem" }}>
               {col.map((cat) => (
                 <HyperStatCell key={cat.id} cat={cat} value={hyper.presets[hyper.activePreset]?.[cat.id] ?? ""} onUpdate={handleHyperStatUpdate} theme={theme} />

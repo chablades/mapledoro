@@ -280,6 +280,7 @@ function OverviewTab({ model }: { model: PreviewPaneModel }) {
                 <div style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: theme.muted, marginBottom: 2 }}>Skill</div>
                 <div style={{ display: "flex", gap: 3, flexWrap: "wrap" as const }}>
                   {skillSlots.map((skill, i) => (
+                    // react-doctor-disable-next-line no-array-index-as-key
                     <HexNode
                       key={i}
                       variant={skill ? "purple" : "empty"}
@@ -295,6 +296,7 @@ function OverviewTab({ model }: { model: PreviewPaneModel }) {
                 <div style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: theme.muted, marginBottom: 2 }}>Common</div>
                 <div style={{ display: "flex", gap: 3, flexWrap: "wrap" as const }}>
                   {commonSlots.map((skill, i) => (
+                    // react-doctor-disable-next-line no-array-index-as-key
                     <HexNode
                       key={i}
                       variant={skill ? "blue" : "empty"}
@@ -316,6 +318,7 @@ function OverviewTab({ model }: { model: PreviewPaneModel }) {
                 <div style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: theme.muted, marginBottom: 2 }}>Mastery</div>
                 <div style={{ display: "flex", gap: 3, flexWrap: "wrap" as const }}>
                   {masterySlots.map((skill, i) => (
+                    // react-doctor-disable-next-line no-array-index-as-key
                     <HexNode key={i} variant="pink" skill={skill ?? undefined} level={masteryLevels[i] ?? 0} />
                   ))}
                 </div>
@@ -325,6 +328,7 @@ function OverviewTab({ model }: { model: PreviewPaneModel }) {
                 <div style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: theme.muted, marginBottom: 2 }}>Boost</div>
                 <div style={{ display: "flex", gap: 3, flexWrap: "wrap" as const }}>
                   {enhancementSlots.map((skill, i) => (
+                    // react-doctor-disable-next-line no-array-index-as-key
                     <HexNode key={i} variant="blue" skill={skill ?? undefined} level={enhancementLevels[i] ?? 0} />
                   ))}
                 </div>

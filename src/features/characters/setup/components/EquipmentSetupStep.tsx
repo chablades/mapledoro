@@ -451,14 +451,16 @@ function ItemPicker({
 
   useEffect(() => {
     if (cachedSlotItems[cacheKey]) return;
+    let cancelled = false;
     const fileList = cacheKey.split("+");
     Promise.all(fileList.map((f) => fetch(`/data/equipment/${f}.json`).then((r) => r.json() as Promise<RawCatalogEntry[]>)))
       .then((raws) => {
         const parsed = raws.flat().map(([id, name, stats]) => ({ id, name, reqJob: stats?.reqJob, reqLevel: stats?.reqLevel, onlyEquip: stats?.onlyEquip, wearablePets: stats?.wearablePets, wearableEquips: stats?.wearableEquips }));
         cachedSlotItems[cacheKey] = parsed;
-        setLoadedItems(parsed);
+        if (!cancelled) setLoadedItems(parsed);
       })
-      .catch(() => setLoadedItems([]));
+      .catch(() => { if (!cancelled) setLoadedItems([]); });
+    return () => { cancelled = true; };
   }, [cacheKey]);
 
   const sourceItems = items
@@ -1016,9 +1018,15 @@ export default function EquipmentSetupStep({
     return Array.from({ length: PRESET_COUNT }, (_, i) => ({ ...(base[i] ?? {}) }));
   }
   const [substep, setSubstep] = useState(() => targetSubstep ?? (direction === "backward" ? 2 : 0));
-  // Lets the setup controller persist which substep is active, so a full page reload
-  // can resume into it instead of always falling back to the mount-time default above.
-  useEffect(() => { onSubstepChange?.(substep); }, [substep, onSubstepChange]);
+  // Reports the mount-time default once (so entering a step "backward," which starts
+  // on a substep other than 0, still gets persisted for resume even if the player
+  // reloads before navigating again) — subsequent changes are reported directly from
+  // goToSubstep below instead of a substep-watching effect. Fully eliminating this last
+  // mount-time report would mean lifting substep into a value the parent controls
+  // directly, which isn't worth the blast radius for a bookkeeping report that never
+  // causes a visible re-render.
+  // react-doctor-disable-next-line no-prop-callback-in-effect, no-pass-live-state-to-parent
+  useEffect(() => { onSubstepChange?.(substep); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const [substepDirection, setSubstepDirection] = useState<"forward" | "backward">("forward");
   const [hasSubstepSwitched, setHasSubstepSwitched] = useState(false);
   const [symbolTab, setSymbolTab] = useState<SymbolTabKey>(() => (showArcaneSymbols ? "arcane" : "sacred"));
@@ -1029,6 +1037,7 @@ export default function EquipmentSetupStep({
     setSubstepDirection(next > substep ? "forward" : "backward");
     setActiveSlot(null);
     setSubstep(next);
+    onSubstepChange?.(next);
   }
 
   const substepAnimStyle: CSSProperties = hasSubstepSwitched ? {

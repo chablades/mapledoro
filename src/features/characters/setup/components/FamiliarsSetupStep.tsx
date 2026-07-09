@@ -1027,6 +1027,7 @@ export default function FamiliarsSetupStep({
             const nextSlot = i < SLOT_COUNT - 1 ? preset.familiars[i + 1] : null;
             const goToNextCard = nextSlot && !nextSlot.name ? () => openPicker(`f${i + 1}`) : closePicker;
             return (
+              // react-doctor-disable-next-line no-array-index-as-key
               <FamiliarSlotCard
                 key={`${activePreset}-${i}`}
                 slot={slot}
@@ -1085,6 +1086,7 @@ export default function FamiliarsSetupStep({
                     const slotId = `b${i}`;
                     const goNext = goToNextBadge(i);
                     return (
+                      // react-doctor-disable-next-line no-array-index-as-key
                       <BadgeSlot
                         key={i}
                         badge={badge}
@@ -1111,6 +1113,7 @@ export default function FamiliarsSetupStep({
                     const slotId = `b${bi}`;
                     const goNext = goToNextBadge(bi);
                     return (
+                      // react-doctor-disable-next-line no-array-index-as-key
                       <BadgeSlot
                         key={bi}
                         badge={badge}

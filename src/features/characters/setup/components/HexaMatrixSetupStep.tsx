@@ -726,6 +726,7 @@ function HexaSkillLevelsSubstep({
               {classDef.mastery.map((node, i) => {
                 const skill = { iconId: node.iconId, iconUrl: node.iconUrl, name: node.skills.join("\n") };
                 return (
+                  // react-doctor-disable-next-line no-array-index-as-key
                   <LeveledIconTile key={`mastery-${i}`} icon={<SkillIcon skill={skill} size={32} />} name={skill.name}
                     level={levels.mastery[i] ?? ""}
                     onLevel={(v) => {
@@ -801,9 +802,15 @@ export default function HexaMatrixSetupStep({
   const initialValueRef = useRef(value);
 
   const [substep, setSubstep] = useState(() => targetSubstep ?? (direction === "backward" && showHexaStat ? 1 : 0));
-  // Lets the setup controller persist which substep is active, so a full page reload
-  // can resume into it instead of always falling back to the mount-time default above.
-  useEffect(() => { onSubstepChange?.(substep); }, [substep, onSubstepChange]);
+  // Reports the mount-time default once (so entering a step "backward," which starts
+  // on a substep other than 0, still gets persisted for resume even if the player
+  // reloads before navigating again) — subsequent changes are reported directly from
+  // goToSubstep below instead of a substep-watching effect. Fully eliminating this last
+  // mount-time report would mean lifting substep into a value the parent controls
+  // directly, which isn't worth the blast radius for a bookkeeping report that never
+  // causes a visible re-render.
+  // react-doctor-disable-next-line no-prop-callback-in-effect, no-pass-live-state-to-parent
+  useEffect(() => { onSubstepChange?.(substep); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const [substepDirection, setSubstepDirection] = useState<"forward" | "backward">("forward");
   const [hasSubstepSwitched, setHasSubstepSwitched] = useState(false);
   const [activeSlot, setActiveSlot] = useState(0);
@@ -849,6 +856,7 @@ export default function HexaMatrixSetupStep({
     setHasSubstepSwitched(true);
     setSubstepDirection(next > substep ? "forward" : "backward");
     setSubstep(next);
+    onSubstepChange?.(next);
   }
 
   const substepAnimStyle: React.CSSProperties = hasSubstepSwitched ? {
@@ -986,6 +994,7 @@ export default function HexaMatrixSetupStep({
                 transition: "border-color 0.15s ease",
               };
               return (
+                // react-doctor-disable-next-line no-array-index-as-key
                 <button key={i}
                   type="button"
                   onClick={() => selectNode(i)}
@@ -1047,6 +1056,7 @@ export default function HexaMatrixSetupStep({
               {slot.alt.map((entry, i) => {
                 const field: HexaStatField = i === 0 ? "alt0" : "alt1";
                 return (
+                  // react-doctor-disable-next-line no-array-index-as-key
                   <HexaStatRow key={i} entry={entry} theme={theme} isPrimary={false} isError={altErrors[i]}
                     disabledTypes={altDisabled[i]}
                     classId={classData?.id ?? ""} mainStatLabel={mainStatLabel} attackLabel={attackLabel}
