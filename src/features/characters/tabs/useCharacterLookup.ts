@@ -24,6 +24,11 @@ import {
 } from "../model/browserCharacterCache";
 import type { LookupResponse, NormalizedCharacterData } from "../model/types";
 
+function clearLookupTimers(slowTimer: ReturnType<typeof setTimeout>, timeoutTimer: ReturnType<typeof setTimeout>) {
+  clearTimeout(slowTimer);
+  clearTimeout(timeoutTimer);
+}
+
 interface UseCharacterLookupArgs {
   query: string;
   onFoundCharacterChange: (character: NormalizedCharacterData | null) => void;
@@ -57,11 +62,6 @@ export function useCharacterLookup({
 
   const persistCache = () => {
     cacheRef.current = persistBrowserCharacterCache(cacheRef.current, MAX_BROWSER_CACHE_ENTRIES);
-  };
-
-  const clearLookupTimers = (slowTimer: ReturnType<typeof setTimeout>, timeoutTimer: ReturnType<typeof setTimeout>) => {
-    clearTimeout(slowTimer);
-    clearTimeout(timeoutTimer);
   };
 
   const resetSearchStateMessage = () => {

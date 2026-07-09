@@ -115,20 +115,6 @@ export interface LegionArtifactsDraft {
   artifactFinalAttackDmg?: string;
 }
 
-export function parseLegionArtifactsDraft(raw: string): LegionArtifactsDraft {
-  if (!raw) return {};
-  try {
-    const parsed = JSON.parse(raw);
-    return parsed && typeof parsed === "object" ? parsed as LegionArtifactsDraft : {};
-  } catch {
-    return {};
-  }
-}
-
-export function serializeLegionArtifactsDraft(draft: LegionArtifactsDraft): string {
-  return JSON.stringify(draft);
-}
-
 /**
  * Resolves the per-world legion artifact fields for a finish: the draft entry wins
  * (including clearing — an empty numeric field or "No" toggle removes the value),

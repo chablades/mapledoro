@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import { toCharacterKey } from "../../model/characterKeys";
 import { resolveDisplayJobName } from "../../setup/data/nexonJobMapping";
 import { WORLD_NAMES } from "../../model/constants";
@@ -12,6 +12,8 @@ import { CHARACTERS_COPY } from "../content";
 import type { PreviewPaneActions, PreviewPaneModel } from "../paneModels";
 import type { AppTheme } from "../../../../components/themes";
 import CharacterAvatar from "../components/CharacterAvatar";
+
+const rowStyle: CSSProperties = { display: "flex", flexWrap: "wrap", justifyContent: "flex-start", alignItems: "flex-start", gap: "0.6rem", width: "100%" };
 
 // ─── Sub-components ────────────────────────────────────────────────────────
 
@@ -215,7 +217,6 @@ function DirectoryRoleView({
   onOpen, onAddCharacter, refreshingKeys,
 }: DirectoryRoleViewProps) {
   const cardProps = { isUiLocked, theme, showWorld: false, onOpen, refreshingKeys };
-  const rowStyle = { display: "flex", flexWrap: "wrap" as const, justifyContent: "flex-start", alignItems: "flex-start", gap: "0.6rem", width: "100%" };
 
   return (
     <>

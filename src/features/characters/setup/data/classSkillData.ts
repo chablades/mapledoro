@@ -781,7 +781,3 @@ export function getClassDataByNexonJobName(jobName: string): ClassSkillData | un
 export function isLegacyClass(jobName: string): boolean {
   return CLASS_SKILL_DATA.find((c) => c.nexonJobName === jobName)?.isLegacy === true;
 }
-
-export function getClassDataById(id: string): ClassSkillData | undefined {
-  return CLASS_SKILL_DATA.find((c) => c.id === id);
-}

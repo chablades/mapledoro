@@ -2,9 +2,8 @@
   Maps Nexon's jobName strings to stable internal class IDs.
   Derived at module load from CLASS_SKILL_DATA — no manual maintenance needed.
 
-  validateNexonJobMapping() can be called once at app startup in dev to surface
-  issues early (duplicate nexonJobName entries, empty IDs, etc.).
-  Suggested call site: src/features/characters/tabs/useCharacterSetupController.ts on mount.
+  validateNexonJobMapping() surfaces issues early in dev (duplicate nexonJobName
+  entries, empty IDs, etc.) — called once on mount in useCharacterSetupController.ts.
 */
 
 import { CLASS_SKILL_DATA, type ClassSkillData } from "./classSkillData";
@@ -59,7 +58,7 @@ export function validateNexonJobMapping(): void {
     }
     if (seen.has(entry.nexonJobName)) {
       console.warn(
-        `[nexonJobMapping] Duplicate nexonJobName "${entry.nexonJobName}" — only the first entry will be used`,
+        `[nexonJobMapping] Duplicate nexonJobName "${entry.nexonJobName}" — only the last entry will be used`,
       );
     }
     seen.add(entry.nexonJobName);

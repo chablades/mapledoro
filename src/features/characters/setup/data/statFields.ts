@@ -89,7 +89,3 @@ export const ALL_STAT_FIELDS: StatFieldDef[] = [
   COOLDOWN_REDUCTION_STAT_FIELD,
   ...SINGLE_STAT_FIELDS,
 ];
-
-export function getStatFieldById(id: StatFieldId): StatFieldDef | undefined {
-  return ALL_STAT_FIELDS.find((f) => f.id === id);
-}

@@ -81,7 +81,7 @@ import {
   type SetupFlowId,
 } from "../setup/flows";
 import type { SetupDraftSummary } from "./paneModels";
-import { getClassSetupOverrides } from "../setup/data/nexonJobMapping";
+import { getClassSetupOverrides, validateNexonJobMapping } from "../setup/data/nexonJobMapping";
 import type { SetupStepInputById } from "../setup/types";
 import { useCharacterLookup } from "./useCharacterLookup";
 import {
@@ -817,6 +817,12 @@ export function useCharacterSetupController() {
   const [fastDirectoryRevealOnce, setFastDirectoryRevealOnce] = useState(false);
   const [characterRoster, setCharacterRoster] = useState<StoredCharacterRecord[]>([]);
   const [autoRefreshQueue, setAutoRefreshQueue] = useState<StoredCharacterRecord[]>([]);
+
+  // Dev-only: surfaces malformed CLASS_SKILL_DATA entries (empty id/nexonJobName,
+  // duplicate nexonJobName) as console warnings; no-op in production.
+  useEffect(() => {
+    validateNexonJobMapping();
+  }, []);
 
   // World-scoped main and champion keys
   const [mainCharacterKeyByWorld, setMainCharacterKeyByWorld] = useState<Record<string, string>>({});

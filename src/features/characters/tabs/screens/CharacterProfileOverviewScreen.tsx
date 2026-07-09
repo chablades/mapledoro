@@ -23,6 +23,8 @@ const TABS: { id: TabId; label: string }[] = [
   { id: "more", label: "More" },
 ];
 
+const commonSlots: (HexaSkillDef | null)[] = [COMMON_SKILLS[0] ?? null, COMMON_SKILLS[1] ?? null, null, null];
+
 const MAIN_STAT_FIELDS = { str: "STR", dex: "DEX", int: "INT", luk: "LUK", hp: "HP" } as const;
 type MainStatKey = keyof typeof MAIN_STAT_FIELDS;
 
@@ -61,7 +63,7 @@ function WseSlot({
         <div style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: theme.muted }}>
           {label}
         </div>
-        <div style={{ fontSize: 11, color: name ? theme.text : theme.muted, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 100 }}>
+        <div style={{ fontSize: 12, color: name ? theme.text : theme.muted, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 100 }}>
           {name ?? "not set up"}
         </div>
       </div>
@@ -91,7 +93,7 @@ function HexNode({
   let content: React.ReactNode;
   if (skill && !locked) {
     if (imgError || !iconSrc) {
-      content = <span style={{ fontSize: 10, fontWeight: 800, color: lvColor }}>{skill.name.charAt(0)}</span>;
+      content = <span style={{ fontSize: 12, fontWeight: 800, color: lvColor }}>{skill.name.charAt(0)}</span>;
     } else {
       content = (
         <Image
@@ -112,7 +114,7 @@ function HexNode({
   return (
     <div title={skill?.name} style={{ width: 42, height: 42, borderRadius: 6, border: `1px solid ${border}`, background: showImage ? "transparent" : bg, display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden", opacity: locked ? 0.22 : 1, flexShrink: 0 }}>
       {level !== undefined && !locked && (
-        <span style={{ position: "absolute", bottom: 3, left: "50%", transform: "translateX(-50%)", fontSize: 8, fontWeight: 800, color: "#fff", background: "rgba(0,0,0,0.65)", borderRadius: 999, padding: "1px 4px", lineHeight: 1.4, zIndex: 1, whiteSpace: "nowrap" }}>
+        <span style={{ position: "absolute", bottom: 1, left: "50%", transform: "translateX(-50%)", fontSize: 12, fontWeight: 800, color: "#fff", background: "rgba(0,0,0,0.65)", borderRadius: 999, padding: "0px 4px", lineHeight: 1.4, zIndex: 1, whiteSpace: "nowrap" }}>
           {String(level).padStart(2, "0")}
         </span>
       )}
@@ -207,7 +209,6 @@ function OverviewTab({ model }: { model: PreviewPaneModel }) {
     hexaLevels?.ascent ?? 0,
     0, 0, 0, 0,
   ];
-  const commonSlots: (HexaSkillDef | null)[] = [COMMON_SKILLS[0] ?? null, COMMON_SKILLS[1] ?? null, null, null];
   const commonLevels = [hexaLevels?.common[0] ?? 0, hexaLevels?.common[1] ?? 0, 0, 0];
   const masterySlots: (HexaSkillDef | null)[] = hexaClassDef
     ? hexaClassDef.mastery.map((node) => ({ name: node.skills[0], iconId: node.iconId, iconUrl: node.iconUrl }))
@@ -376,17 +377,18 @@ function InventoryTab({ model }: { model: PreviewPaneModel }) {
   );
 }
 
+const MORE_TAB_FLOWS: { id: SetupFlowId; label: string; desc: string }[] = [
+  { id: "v_matrix_flow", label: "V Matrix", desc: "Node slots and matrix details" },
+  { id: "familiars_flow", label: "Familiars", desc: "Familiar presets and badge effects" },
+  { id: "link_skills_flow", label: "Link Skills", desc: "Active link preset details" },
+  { id: "hexa_matrix_flow", label: "HEXA Matrix", desc: "HEXA skills and HEXA stat details" },
+];
+
 function MoreTab({ model, actions }: { model: PreviewPaneModel; actions: PreviewPaneActions }) {
   const { theme, setup } = model;
-  const flows: { id: SetupFlowId; label: string; desc: string }[] = [
-    { id: "v_matrix_flow", label: "V Matrix", desc: "Node slots and matrix details" },
-    { id: "familiars_flow", label: "Familiars", desc: "Familiar presets and badge effects" },
-    { id: "link_skills_flow", label: "Link Skills", desc: "Active link preset details" },
-    { id: "hexa_matrix_flow", label: "HEXA Matrix", desc: "HEXA skills and HEXA stat details" },
-  ];
   return (
     <div style={{ display: "grid", gap: "0.55rem" }}>
-      {flows.map((f) => (
+      {MORE_TAB_FLOWS.map((f) => (
         <div key={f.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.75rem", border: `1px solid ${theme.border}`, borderRadius: "12px", background: theme.bg, padding: "0.7rem 0.85rem" }}>
           <div style={{ minWidth: 0 }}>
             <p style={{ margin: 0, fontSize: "0.85rem", fontWeight: 800, color: theme.text, lineHeight: 1.2 }}>{f.label}</p>

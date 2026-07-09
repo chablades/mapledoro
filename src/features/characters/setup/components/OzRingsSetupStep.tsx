@@ -212,7 +212,7 @@ export default function OzRingsSetupStep({
           <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", marginBottom: "0.4rem" }}>
             <span style={{ ...sectionLabelStyle(theme), margin: 0 }}>Ring Setup</span>
             <InfoTooltip content={OZ_RING_TOOLTIP} theme={theme} />
-            <span style={{ fontSize: "0.72rem", fontWeight: 600, color: theme.muted, textTransform: "none", letterSpacing: "normal" }}>
+            <span style={{ fontSize: "0.75rem", fontWeight: 600, color: theme.muted, textTransform: "none", letterSpacing: "normal" }}>
               · choose one
             </span>
           </div>

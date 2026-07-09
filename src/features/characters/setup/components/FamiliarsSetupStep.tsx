@@ -254,13 +254,7 @@ const presetSquareStyle = (theme: AppTheme, active: boolean): CSSProperties => (
   cursor: "pointer",
 });
 
-// ── Familiar card sprite: mob → familiar → card icon → "?" placeholder ─────
-// Sequential fallback chain (per CLAUDE.md image policy: swap via onError, no
-// re-render). A single <img> walks the candidate list one request at a time —
-// on error it advances its src to the next source, and once exhausted it hides
-// itself and reveals the "?" placeholder. This is terminal: a fully spriteless
-// familiar (e.g. False Daimyo) settles on its card icon or the "?" instead of
-// re-fetching a broken URL forever. `key` remounts a fresh chain per slot.
+// Familiar sprite: sequential source fallback (mob → familiar → card), swapped via onError.
 
 function FamiliarCardSprite({ mobId, familiarId, cardId, size, theme }: { mobId: string; familiarId: number | null; cardId: string; size: number; theme: AppTheme }) {
   const sources = [

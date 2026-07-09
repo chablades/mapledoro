@@ -99,10 +99,6 @@ export function getLegionArtifactStat(id: LegionArtifactStatId): LegionArtifactS
   return STAT_BY_ID.get(id);
 }
 
-export function unlockedCrystalCount(artifactLevel: number): number {
-  return Math.min(LEGION_CRYSTALS.length, 3 + Math.floor(Math.max(0, artifactLevel) / 10));
-}
-
 export function isCrystalUnlocked(index: number, artifactLevel: number): boolean {
   return artifactLevel >= LEGION_CRYSTALS[index].requiredArtifactLevel;
 }
@@ -172,15 +168,6 @@ export function statBonusValue(statId: LegionArtifactStatId, effectiveLevel: num
   if (!def || effectiveLevel <= 0) return 0;
   const sum = def.levelSteps.slice(0, effectiveLevel).reduce((total, step) => total + step, 0);
   return Math.round(sum * 10) / 10;
-}
-
-/** Formats a stat's computed bonus at its effective level, e.g. "+45" or "+18%, Max AoE Skill Targets +1". */
-export function formatStatBonus(statId: LegionArtifactStatId, effectiveLevel: number): string {
-  const def = STAT_BY_ID.get(statId);
-  if (!def || effectiveLevel <= 0) return "+0";
-  const value = statBonusValue(statId, effectiveLevel);
-  const valueLabel = def.unit === "percent" ? `+${value}%` : `+${value}`;
-  return def.flagAtLevelOne ? `${valueLabel}, ${def.flagAtLevelOne}` : valueLabel;
 }
 
 export function hasAnyCrystalProgress(crystals: LegionCrystalDraft[] | undefined): boolean {
