@@ -5,6 +5,7 @@ import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { usePickerCoords } from "../hooks/usePickerCoords";
 import { useKeyboardListNav } from "../../../../lib/useKeyboardListNav";
 import { searchAndRank } from "../../../../lib/searchMatch";
+import { isStrayClick } from "../../../../lib/inputUtils";
 import type { AppTheme } from "../../../../components/themes";
 import {
   IA_TIER_LABELS, IA_TIER_ORDER, allowedLineTiers, getLinesForIATier, normalizeIA,
@@ -186,7 +187,7 @@ function IAGradeHeader({ grade, openId, theme, onToggle, onClose, onPick, onClea
     <div ref={wrapperRef} style={{ position: "relative" }}>
       <button
         type="button"
-        onClick={(e) => { e.stopPropagation(); onToggle(); }}
+        onClick={(e) => { e.stopPropagation(); if (isStrayClick(e)) { return; } onToggle(); }}
         onKeyDown={handleTriggerKeyDown}
         onMouseEnter={(e) => { e.currentTarget.style.borderColor = theme.accent; if (!c) e.currentTarget.style.background = theme.panel; }}
         onMouseLeave={(e) => { e.currentTarget.style.borderColor = c ? c.border : theme.border; if (!c) e.currentTarget.style.background = theme.bg; }}
@@ -325,7 +326,7 @@ function IALineBar({ lineIdx, line, grade, openId, theme, onToggle, onClose, onS
 
   return (
     <div ref={wrapperRef} style={{ position: "relative" }}>
-      <button type="button" disabled={!grade} onClick={(e) => { e.stopPropagation(); onToggle(); }}
+      <button type="button" disabled={!grade} onClick={(e) => { e.stopPropagation(); if (isStrayClick(e)) { return; } onToggle(); }}
         title={label} style={iaLineBarStyle(theme, c, grade)}>
         {label}
       </button>

@@ -1,13 +1,12 @@
 "use client";
 
 import { useState, useEffect, useLayoutEffect, useRef } from "react";
-import { numericKeyDown, clampNumber, sanitizeDigitsInput } from "../../../../lib/inputUtils";
+import { numericKeyDown, clampNumber, sanitizeDigitsInput, isStrayClick } from "../../../../lib/inputUtils";
 import { joinWithAnd } from "../../../../lib/textUtils";
 import { useKeyboardListNav } from "../../../../lib/useKeyboardListNav";
 import { searchAndRank } from "../../../../lib/searchMatch";
 import Image from "next/image";
 import type { AppTheme } from "../../../../components/themes";
-import HoverTooltip from "../../../../components/HoverTooltip";
 import type { SetupStepDefinition } from "../steps";
 import type { SetupFlowId } from "../flows";
 import type { HexaClassDef, HexaSkillDef, HexaSkillLevels } from "../../../../features/tools/hexa-skills/hexa-classes";
@@ -20,6 +19,7 @@ import { readCharacterToolData } from "../../../../features/tools/characterToolS
 import SetupStepFrame from "./SetupStepFrame";
 import { HexaSkillIcon } from "../../../../components/ResourceImage";
 import { CopyFromPreset } from "./CopyFromPreset";
+import { LeveledIconTile } from "./LeveledIconTile";
 
 interface HexaMatrixSetupStepProps {
   theme: AppTheme;
@@ -80,25 +80,6 @@ const levelRowInputStyle = (theme: AppTheme): React.CSSProperties => ({
   textAlign: "center",
   outline: "2px solid transparent",
   outlineOffset: "2px",
-  transition: "outline-color 0.15s ease",
-});
-
-const hexaTileStyle = (theme: AppTheme, filled: boolean): React.CSSProperties => ({
-  width: 60, flexShrink: 0,
-  border: `1px solid ${filled ? theme.accent : theme.border}`,
-  borderRadius: 8,
-  background: filled ? `${theme.accent}15` : theme.bg,
-  display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
-  padding: "6px 4px", boxSizing: "border-box",
-});
-
-const hexaTileInputStyle = (theme: AppTheme): React.CSSProperties => ({
-  width: 44, textAlign: "center",
-  border: `1px solid ${theme.border}`, borderRadius: 6,
-  background: theme.bg, color: theme.text,
-  fontFamily: "inherit", fontWeight: 700, fontSize: "0.78rem",
-  padding: "0.2rem", boxSizing: "border-box",
-  outline: "2px solid transparent", outlineOffset: "2px",
   transition: "outline-color 0.15s ease",
 });
 
@@ -192,10 +173,6 @@ function isNodeUnlocked(index: number, characterLevel: number): boolean {
   if (index === 1) return characterLevel >= 265;
   if (index === 2) return characterLevel >= 270;
   return true;
-}
-
-function lockHint(index: number): string {
-  return index === 1 ? "Lv. 265" : "Lv. 270";
 }
 
 // Returns stat types that must be disabled for the main stat dropdown of the given slot.
@@ -411,37 +388,6 @@ function SectionLabel({ label, theme, onMaxAll, onClear }: { label: string; them
   );
 }
 
-/** Condensed icon tile: icon + level input, full skill name(s) shown via tooltip on hover/tap. */
-function HexaTile({ skill, level, onUpdate, theme, min = 0, max = MAX_LEVEL }: {
-  skill: HexaSkillDef;
-  level: string;
-  onUpdate: (v: string) => void;
-  theme: AppTheme;
-  min?: number;
-  max?: number;
-}) {
-  const filled = (Number(level) || 0) > 0;
-  return (
-    <HoverTooltip label={skill.name} theme={theme} style={hexaTileStyle(theme, filled)}>
-      <div style={{ opacity: filled ? 1 : 0.5, filter: filled ? "none" : "grayscale(1)", lineHeight: 0 }}>
-        <SkillIcon skill={skill} size={28} />
-      </div>
-      <input
-        type="text"
-        inputMode="numeric"
-        aria-label={`${skill.name} level`}
-        value={level}
-        placeholder={String(min)}
-        onChange={(e) => onUpdate(clampLevelInput(e.target.value, max, min))}
-        onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
-        onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
-        onKeyDown={numericKeyDown}
-        style={hexaTileInputStyle(theme)}
-      />
-    </HoverTooltip>
-  );
-}
-
 function StatDropdown({ value, options, onChange, onAdvance, isOpen, onToggle, onClose, theme, isError, disabledTypes }: {
   value: string;
   options: { value: string; label: string }[];
@@ -557,7 +503,7 @@ function StatDropdown({ value, options, onChange, onAdvance, isOpen, onToggle, o
     <div ref={containerRef} style={{ position: "relative", flex: 1, minWidth: 0 }}>
       <button
         type="button"
-        onClick={onToggle}
+        onClick={(e) => { if (isStrayClick(e)) { return; } onToggle(); }}
         onKeyDown={handleTriggerKeyDown}
         onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
         onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
@@ -763,11 +709,11 @@ function HexaSkillLevelsSubstep({
               onMaxAll={() => update({ origin: String(MAX_LEVEL), ...(classDef.ascent ? { ascent: String(MAX_LEVEL) } : {}) })}
               onClear={() => update({ origin: "0", ...(classDef.ascent ? { ascent: "" } : {}) })} />
             <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
-              <HexaTile skill={classDef.origin} level={levels.origin}
-                onUpdate={(v) => update({ origin: v })} theme={theme} min={1} />
+              <LeveledIconTile icon={<SkillIcon skill={classDef.origin} size={32} />} name={classDef.origin.name} level={levels.origin}
+                onLevel={(v) => update({ origin: clampLevelInput(v, MAX_LEVEL, 1) })} max={MAX_LEVEL} min={1} theme={theme} />
               {classDef.ascent && (
-                <HexaTile skill={classDef.ascent} level={levels.ascent}
-                  onUpdate={(v) => update({ ascent: v })} theme={theme} />
+                <LeveledIconTile icon={<SkillIcon skill={classDef.ascent} size={32} />} name={classDef.ascent.name} level={levels.ascent}
+                  onLevel={(v) => update({ ascent: clampLevelInput(v, MAX_LEVEL) })} max={MAX_LEVEL} theme={theme} />
               )}
             </div>
           </div>
@@ -777,17 +723,21 @@ function HexaSkillLevelsSubstep({
               onMaxAll={() => update({ mastery: classDef.mastery.map(() => String(MAX_LEVEL)) })}
               onClear={() => update({ mastery: classDef.mastery.map(() => "") })} />
             <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
-              {classDef.mastery.map((node, i) => (
-                <HexaTile key={`mastery-${i}`} skill={{ iconId: node.iconId, iconUrl: node.iconUrl, name: node.skills.join("\n") }}
-                  level={levels.mastery[i] ?? ""}
-                  onUpdate={(v) => {
-                    const next = [...levels.mastery];
-                    next[i] = v;
-                    update({ mastery: next });
-                  }}
-                  theme={theme}
-                />
-              ))}
+              {classDef.mastery.map((node, i) => {
+                const skill = { iconId: node.iconId, iconUrl: node.iconUrl, name: node.skills.join("\n") };
+                return (
+                  <LeveledIconTile key={`mastery-${i}`} icon={<SkillIcon skill={skill} size={32} />} name={skill.name}
+                    level={levels.mastery[i] ?? ""}
+                    onLevel={(v) => {
+                      const next = [...levels.mastery];
+                      next[i] = clampLevelInput(v, MAX_LEVEL);
+                      update({ mastery: next });
+                    }}
+                    max={MAX_LEVEL}
+                    theme={theme}
+                  />
+                );
+              })}
             </div>
           </div>
 
@@ -797,12 +747,14 @@ function HexaSkillLevelsSubstep({
               onClear={() => update({ enhancement: classDef.enhancement.map(() => "") })} />
             <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
               {classDef.enhancement.map((skill, i) => (
-                <HexaTile key={`enhancement-${skill.name}`} skill={skill} level={levels.enhancement[i] ?? ""}
-                  onUpdate={(v) => {
+                <LeveledIconTile key={`enhancement-${skill.name}`} icon={<SkillIcon skill={skill} size={32} />} name={skill.name}
+                  level={levels.enhancement[i] ?? ""}
+                  onLevel={(v) => {
                     const next = [...levels.enhancement];
-                    next[i] = v;
+                    next[i] = clampLevelInput(v, MAX_LEVEL);
                     update({ enhancement: next });
                   }}
+                  max={MAX_LEVEL}
                   theme={theme}
                 />
               ))}
@@ -815,12 +767,14 @@ function HexaSkillLevelsSubstep({
               onClear={() => update({ common: COMMON_SKILLS.map(() => "") })} />
             <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
               {COMMON_SKILLS.map((skill, i) => (
-                <HexaTile key={skill.name} skill={skill} level={levels.common[i] ?? ""}
-                  onUpdate={(v) => {
+                <LeveledIconTile key={skill.name} icon={<SkillIcon skill={skill} size={32} />} name={skill.name}
+                  level={levels.common[i] ?? ""}
+                  onLevel={(v) => {
                     const next = [...levels.common];
-                    next[i] = v;
+                    next[i] = clampLevelInput(v, MAX_LEVEL);
                     update({ common: next });
                   }}
+                  max={MAX_LEVEL}
                   theme={theme}
                 />
               ))}
@@ -1011,10 +965,13 @@ export default function HexaMatrixSetupStep({
 
           <div style={{ display: "flex", gap: "0.4rem", alignItems: "flex-start" }}>
             {HEXA_STAT_DEFS.map((def, i) => {
-              const locked = !isNodeUnlocked(i, charLevel);
-              const hint = locked ? lockHint(i) : null;
-              const isActive = activeSlot === i && !locked;
-              const iconDisabled = locked || isNodeEmpty(hexaStat[i]);
+              // Nodes the character's level hasn't reached yet are hidden entirely, not
+              // shown disabled — matches the Symbols convention (see SymbolSection's
+              // isUnlocked comment): the setup flow doesn't preview content the character
+              // can't have yet, that's the profile page's job.
+              if (!isNodeUnlocked(i, charLevel)) return null;
+              const isActive = activeSlot === i;
+              const iconDisabled = isNodeEmpty(hexaStat[i]);
               const tabStyle: React.CSSProperties = {
                 display: "flex",
                 flexDirection: "column",
@@ -1024,25 +981,18 @@ export default function HexaMatrixSetupStep({
                 borderRadius: "8px",
                 padding: "3px",
                 background: "transparent",
-                cursor: locked ? "not-allowed" : "pointer",
-                opacity: locked ? 0.5 : 1,
-                transition: "border-color 0.15s ease, opacity 0.15s ease",
+                font: "inherit",
+                cursor: "pointer",
+                transition: "border-color 0.15s ease",
               };
               return (
-                <div key={i}
-                  onClick={locked ? undefined : () => selectNode(i)}
-                  role={locked ? undefined : "button"}
-                  tabIndex={locked ? undefined : 0}
-                  onKeyDown={locked ? undefined : (e) => { if (e.key === "Enter" || e.key === " ") selectNode(i); }}
+                <button key={i}
+                  type="button"
+                  onClick={() => selectNode(i)}
                   style={tabStyle}
                 >
                   <HexaSkillIcon id={def.iconId} size={36} disabled={iconDisabled} />
-                  {hint && (
-                    <span style={{ fontSize: "0.75rem", fontWeight: 700, color: theme.muted, lineHeight: 1 }}>
-                      {hint}
-                    </span>
-                  )}
-                </div>
+                </button>
               );
             })}
           </div>

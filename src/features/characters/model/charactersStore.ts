@@ -117,14 +117,14 @@ export type WhLegionRank = "B" | "A" | "S" | "SS" | "SSS";
 export type LinkSkillId =
   | "unfairAdvantage" | "tideOfBattle" | "solus" | "timeToPrepare"
   | "termsAndConditions" | "elementalism" | "qiCultivation" | "bravado"
-  | "empiricalKnowledge" | "thiefsСunning";
+  | "empiricalKnowledge" | "thiefsCunning";
 
 export type LinkSkillsData = Partial<Record<LinkSkillId, number>>;
 
 const LINK_SKILL_IDS = new Set<LinkSkillId>([
   "unfairAdvantage", "tideOfBattle", "solus", "timeToPrepare",
   "termsAndConditions", "elementalism", "qiCultivation", "bravado",
-  "empiricalKnowledge", "thiefsСunning",
+  "empiricalKnowledge", "thiefsCunning",
 ]);
 
 /** Max percent for the "Damage of Final Attack Skills" Maple Union artifact. */

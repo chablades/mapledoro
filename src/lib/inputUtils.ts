@@ -1,4 +1,4 @@
-import type { KeyboardEvent } from "react";
+import type { KeyboardEvent, MouseEvent as ReactMouseEvent } from "react";
 
 const EDIT_KEYS = ["Backspace","Delete","ArrowLeft","ArrowRight","Tab","Home","End"];
 
@@ -6,6 +6,29 @@ const EDIT_KEYS = ["Backspace","Delete","ArrowLeft","ArrowRight","Tab","Home","E
 export function numericKeyDown(e: KeyboardEvent<HTMLInputElement>) {
   if (e.ctrlKey || e.metaKey) return;
   if (!/^\d$/.test(e.key) && !EDIT_KEYS.includes(e.key)) e.preventDefault();
+}
+
+// Tracks where the most recent real mousedown landed. A capture-phase listener sees it
+// before any handler's stopPropagation() can interfere, and before React's own synthetic
+// event system re-dispatches it.
+let lastMouseDownTarget: EventTarget | null = null;
+if (typeof window !== "undefined") {
+  window.addEventListener("mousedown", (e) => { lastMouseDownTarget = e.target; }, true);
+}
+
+/**
+ * True if this click's originating press landed on a different element than the one now
+ * receiving the click. Browsers fire `click` on whichever element is under the pointer at
+ * mouseup, not wherever mousedown happened — so pressing down inside a search input,
+ * dragging (with or without actually selecting any text), and releasing over an unrelated
+ * tile still fires a genuine `click` on that tile. Guarding "open this picker"-style click
+ * handlers with this turns that leaked click back into the no-op it should've been.
+ * `e.detail === 0` marks a keyboard-triggered click (Enter/Space on a focused button),
+ * which has no real preceding mousedown to compare against, so those are always let through.
+ */
+export function isStrayClick(e: ReactMouseEvent): boolean {
+  if (e.detail === 0) return false;
+  return !!lastMouseDownTarget && !e.currentTarget.contains(lastMouseDownTarget as Node);
 }
 
 /**

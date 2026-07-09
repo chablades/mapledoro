@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { usePickerCoords } from "../hooks/usePickerCoords";
-import { numericKeyDown, sanitizeDigitsInput } from "../../../../lib/inputUtils";
+import { numericKeyDown, sanitizeDigitsInput, isStrayClick } from "../../../../lib/inputUtils";
 import { useKeyboardListNav } from "../../../../lib/useKeyboardListNav";
 import { searchAndRank } from "../../../../lib/searchMatch";
 import type { AppTheme } from "../../../../components/themes";
@@ -244,6 +244,7 @@ const slotCellStyle = (theme: AppTheme, isActive: boolean): CSSProperties => ({
   outline: "2px solid transparent", outlineOffset: 2,
   transition: "border-color 0.15s, background 0.15s",
   overflow: "hidden", padding: "2px 3px", boxSizing: "border-box",
+  font: "inherit", textAlign: "inherit",
 });
 
 const presetButtonStyle = (theme: AppTheme, on: boolean): CSSProperties => ({
@@ -718,13 +719,11 @@ function SlotCell({ slotKey, item, theme, isActive, onClick, picker }: {
 }) {
   const { ref: wrapperRef, portalRef } = usePickerCoords(isActive, PICKER_WIDTH);
   const button = (
-    <div
-      role="button"
-      tabIndex={0}
+    <button
+      type="button"
       data-slot={slotKey}
       aria-label={item ? `${SLOT_LABELS[slotKey]}: ${item.name}` : `Set ${SLOT_LABELS[slotKey]}`}
-      onClick={(e) => { e.stopPropagation(); onClick(); }}
-      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(); } }}
+      onClick={(e) => { e.stopPropagation(); if (isStrayClick(e)) { return; } onClick(); }}
       onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.borderColor = `${theme.accent}88`; }}
       onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.borderColor = theme.border; }}
       onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
@@ -738,7 +737,7 @@ function SlotCell({ slotKey, item, theme, isActive, onClick, picker }: {
           {SLOT_LABELS[slotKey]}
         </span>
       )}
-    </div>
+    </button>
   );
   return (
     <div ref={wrapperRef} style={{ position: "relative", width: SLOT_SIZE, flexShrink: 0 }}>
@@ -1099,10 +1098,11 @@ export default function EquipmentSetupStep({
   // left alone even if some other slot cell happens to sit underneath it at that point.
   useEffect(() => {
     if (!activeSlot) return;
-    // Tracks whether the mousedown that started this interaction was inside the picker,
-    // so a drag that ends outside it (e.g. selecting the weapon-ATT description text and
-    // releasing past the window edge) isn't mistaken for an outside click — only the
-    // click's landing point was checked before, not where the gesture began.
+    // Tracks whether the mousedown that started this interaction was inside the picker, so
+    // a drag that ends outside it isn't mistaken for a real gesture there — e.g. selecting
+    // the weapon-ATT description text (or a picker's search query) and releasing past the
+    // window edge, or over an unrelated slot cell, shouldn't close the picker or swap to
+    // that slot. Only the click's landing point was checked before, not where it began.
     let mouseDownInsidePicker = false;
     const handleMouseDown = (e: MouseEvent) => {
       mouseDownInsidePicker = document.elementsFromPoint(e.clientX, e.clientY)
@@ -1115,7 +1115,7 @@ export default function EquipmentSetupStep({
         if (el.hasAttribute("data-equipment-picker")) return;
         if (el.dataset.slot) {
           const slot = el.dataset.slot as SlotKey;
-          if (slot !== activeSlot) {
+          if (slot !== activeSlot && !mouseDownInsidePicker) {
             e.stopPropagation();
             setActiveSlot(slot);
           }

@@ -5,7 +5,6 @@ import { numericKeyDown, sanitizeDigitsInput } from "../../../../lib/inputUtils"
 import { resourceImageUrl } from "../../../../lib/mapleResource";
 import type { AppTheme } from "../../../../components/themes";
 import { ItemIcon } from "../../../../components/ResourceImage";
-import HoverTooltip from "../../../../components/HoverTooltip";
 import type { SetupStepDefinition } from "../steps";
 import { CLASS_SKILL_DATA } from "../data/classSkillData";
 import {
@@ -24,6 +23,7 @@ import {
 import SetupStepFrame from "./SetupStepFrame";
 import InfoTooltip from "./InfoTooltip";
 import { InputWarningBubble, scrollToFlaggedField } from "./QuestionControls";
+import { LeveledIconTile } from "./LeveledIconTile";
 
 // MapleScouter's own sanity bound for the Totalling Ring off-stat fields (a 7-digit
 // entry gets rejected) — not a real game cap, so this warns instead of hard-blocking.
@@ -83,23 +83,6 @@ const ringModeTabStyle = (theme: AppTheme, isActive: boolean): CSSProperties => 
   padding: "0.4rem 0.8rem", cursor: "pointer",
 });
 
-const ringTileStyle = (theme: AppTheme, placed: boolean): CSSProperties => ({
-  width: 74, flexShrink: 0,
-  border: `1px solid ${placed ? theme.accent : theme.border}`,
-  borderRadius: 8,
-  background: placed ? `${theme.accent}15` : theme.bg,
-  display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
-  padding: "8px 9px", boxSizing: "border-box",
-});
-
-const ringInputStyle = (theme: AppTheme): CSSProperties => ({
-  width: 56, textAlign: "center",
-  border: `1px solid ${theme.border}`, borderRadius: 6,
-  background: theme.bg, color: theme.text,
-  fontFamily: "inherit", fontWeight: 700, fontSize: "0.8rem",
-  padding: "0.25rem", boxSizing: "border-box",
-});
-
 const statRowInputStyle = (theme: AppTheme): CSSProperties => ({
   width: "5rem", textAlign: "center",
   border: `1px solid ${theme.border}`, borderRadius: 7,
@@ -107,37 +90,6 @@ const statRowInputStyle = (theme: AppTheme): CSSProperties => ({
   fontFamily: "inherit", fontWeight: 600, fontSize: "0.82rem",
   padding: "0.3rem 0.4rem", boxSizing: "border-box",
 });
-
-function RingTile({ iconId, name, level, onLevel, theme }: {
-  iconId: string;
-  name: string;
-  level: string;
-  onLevel: (val: string) => void;
-  theme: AppTheme;
-}) {
-  const placed = (Number.parseInt(level || "0", 10) || 0) >= 1;
-  return (
-    <div style={ringTileStyle(theme, placed)}>
-      <HoverTooltip label={name} theme={theme}>
-        <div style={{ opacity: placed ? 1 : 0.3, filter: placed ? "none" : "grayscale(1)", lineHeight: 0 }}>
-          <ItemIcon id={iconId} size={32} />
-        </div>
-      </HoverTooltip>
-      <input
-        type="number"
-        className="no-spinner"
-        min={0}
-        max={OZ_RING_MAX_LEVEL}
-        aria-label={`${name} level`}
-        value={level}
-        placeholder="0"
-        onChange={(e) => onLevel(e.target.value)}
-        onKeyDown={numericKeyDown}
-        style={ringInputStyle(theme)}
-      />
-    </div>
-  );
-}
 
 function RingModeTabs({ mode, onChange, theme }: {
   mode: OzRingMode;
@@ -272,20 +224,20 @@ export default function OzRingsSetupStep({
 
         {draft.ringMode === "continuous" && (
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-            <RingTile iconId={OZ_RING_ICON_IDS.continuous} name="Continuous Ring"
-              level={draft.levels.continuous ?? ""} onLevel={(v) => setLevel("continuous", v)} theme={theme} />
+            <LeveledIconTile icon={<ItemIcon id={OZ_RING_ICON_IDS.continuous} size={32} />} name="Continuous Ring"
+              level={draft.levels.continuous ?? ""} onLevel={(v) => setLevel("continuous", v)} max={OZ_RING_MAX_LEVEL} theme={theme} />
           </div>
         )}
 
         {draft.ringMode === "standard" && (
           <>
             <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-              <RingTile iconId={OZ_RING_ICON_IDS.restraint} name="Ring of Restraint"
-                level={draft.levels.restraint ?? ""} onLevel={(v) => setLevel("restraint", v)} theme={theme} />
-              <RingTile iconId={ozInfo.weaponJumpIconId} name={ozInfo.weaponJumpLabel}
-                level={draft.levels.weaponJump ?? ""} onLevel={(v) => setLevel("weaponJump", v)} theme={theme} />
-              <RingTile iconId={OZ_RING_ICON_IDS.totalling} name="Totalling Ring"
-                level={draft.levels.totalling ?? ""} onLevel={(v) => setLevel("totalling", v)} theme={theme} />
+              <LeveledIconTile icon={<ItemIcon id={OZ_RING_ICON_IDS.restraint} size={32} />} name="Ring of Restraint"
+                level={draft.levels.restraint ?? ""} onLevel={(v) => setLevel("restraint", v)} max={OZ_RING_MAX_LEVEL} theme={theme} />
+              <LeveledIconTile icon={<ItemIcon id={ozInfo.weaponJumpIconId} size={32} />} name={ozInfo.weaponJumpLabel}
+                level={draft.levels.weaponJump ?? ""} onLevel={(v) => setLevel("weaponJump", v)} max={OZ_RING_MAX_LEVEL} theme={theme} />
+              <LeveledIconTile icon={<ItemIcon id={OZ_RING_ICON_IDS.totalling} size={32} />} name="Totalling Ring"
+                level={draft.levels.totalling ?? ""} onLevel={(v) => setLevel("totalling", v)} max={OZ_RING_MAX_LEVEL} theme={theme} />
             </div>
 
             {showTotallingStats && (

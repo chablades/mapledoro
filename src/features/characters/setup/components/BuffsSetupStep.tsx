@@ -21,6 +21,7 @@ import {
   type StatId, type BoolBuffIconType,
 } from "../data/buffsData";
 import SetupStepFrame from "./SetupStepFrame";
+import { LeveledIconTile } from "./LeveledIconTile";
 
 interface BuffsSetupStepProps {
   theme: AppTheme;
@@ -43,14 +44,6 @@ const sectionLabel = (theme: AppTheme): CSSProperties => ({
   textTransform: "uppercase", letterSpacing: "0.05em", color: theme.muted,
 });
 
-const levelInput = (theme: AppTheme): CSSProperties => ({
-  width: 44, textAlign: "center",
-  border: `1px solid ${theme.border}`, borderRadius: 6,
-  background: theme.bg, color: theme.text,
-  fontFamily: "inherit", fontWeight: 700, fontSize: "0.8rem",
-  padding: "0.2rem", boxSizing: "border-box",
-});
-
 const boolTileStyle = (active: boolean, theme: AppTheme): CSSProperties => ({
   width: 52, height: 52, flexShrink: 0,
   border: `1px solid ${active ? theme.accent : theme.border}`,
@@ -58,15 +51,6 @@ const boolTileStyle = (active: boolean, theme: AppTheme): CSSProperties => ({
   background: active ? `${theme.accent}15` : theme.bg,
   cursor: "pointer", padding: 0, lineHeight: 0,
   display: "flex", alignItems: "center", justifyContent: "center",
-});
-
-const leveledBuffTileStyle = (theme: AppTheme, active: boolean): CSSProperties => ({
-  width: 68, flexShrink: 0,
-  border: `1px solid ${active ? theme.accent : theme.border}`,
-  borderRadius: 8,
-  background: active ? `${theme.accent}15` : theme.bg,
-  display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
-  padding: "7px 6px", boxSizing: "border-box",
 });
 
 const renownInputStyle = (theme: AppTheme, active: boolean): CSSProperties => ({
@@ -106,40 +90,6 @@ function buffIconOverride(id: BoolBuffId, primaryStat: StatId, jobName: string):
 function buffSecondIconOverride(id: BoolBuffId, jobName: string): BoolBuffIconType | undefined {
   if (id === "extremePotion" && !isHurricaneClass(jobName)) return { kind: "item", id: EXTREME_GREEN_POTION_ITEM_ID };
   return undefined;
-}
-
-// ── LeveledBuffTile ──────────────────────────────────────────────────────────
-
-function LeveledBuffTile({ skillId, name, level, max, onLevel, theme }: {
-  skillId: string;
-  name: string;
-  level: string;
-  max: number;
-  onLevel: (val: string) => void;
-  theme: AppTheme;
-}) {
-  const active = (Number.parseInt(level || "0", 10) || 0) > 0;
-  return (
-    <div style={leveledBuffTileStyle(theme, active)}>
-      <HoverTooltip label={name} theme={theme}>
-        <div style={{ opacity: active ? 1 : 0.35, filter: active ? "none" : "grayscale(1)", lineHeight: 0 }}>
-          <SkillIcon id={skillId} size={32} />
-        </div>
-      </HoverTooltip>
-      <input
-        type="number"
-        className="no-spinner"
-        min={0}
-        max={max}
-        aria-label={`${name} level`}
-        value={level}
-        placeholder="0"
-        onChange={(e) => onLevel(e.target.value)}
-        onKeyDown={numericKeyDown}
-        style={levelInput(theme)}
-      />
-    </div>
-  );
 }
 
 // ── BoolBuffTile ─────────────────────────────────────────────────────────────
@@ -320,9 +270,9 @@ export default function BuffsSetupStep({
           <p style={sectionLabel(theme)}>Guild Buffs</p>
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
             {GUILD_BUFFS.map((b) => (
-              <LeveledBuffTile
+              <LeveledIconTile
                 key={b.id}
-                skillId={b.skillId}
+                icon={<SkillIcon id={b.skillId} size={32} />}
                 name={b.name}
                 level={draft.guild[b.id] ?? ""}
                 max={GUILD_BUFF_MAX}

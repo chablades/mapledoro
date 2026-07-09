@@ -47,7 +47,7 @@ const LINK_SKILLS: LinkSkillDef[] = [
   { id: "qiCultivation",      name: "Qi Cultivation",      classes: ["Mo Xuan"],                                   maxLevel: 3, iconId: "170000241" },
   { id: "bravado",            name: "Bravado",             classes: ["Hoyoung"],                                   maxLevel: 3, iconId: "160000001" },
   { id: "empiricalKnowledge", name: "Empirical Knowledge", classes: ["Arch Mage (F/P)", "Arch Mage (I/L)", "Bishop"], maxLevel: 9, iconId: "0000255" },
-  { id: "thiefsСunning",      name: "Thief's Cunning",     classes: ["Night Lord", "Shadower", "Dual Blade"],      maxLevel: 9, iconId: "0000261" },
+  { id: "thiefsCunning",      name: "Thief's Cunning",     classes: ["Night Lord", "Shadower", "Dual Blade"],      maxLevel: 9, iconId: "0000261" },
 ];
 
 // nexonJobName → which skill it contributes to
@@ -63,9 +63,9 @@ const CLASS_TO_SKILL: Record<string, LinkSkillId> = {
   "Arch Mage (F/P)":  "empiricalKnowledge",
   "Arch Mage (I/L)":  "empiricalKnowledge",
   "Bishop":           "empiricalKnowledge",
-  "Night Lord":       "thiefsСunning",
-  "Shadower":         "thiefsСunning",
-  "Blade Master":     "thiefsСunning",
+  "Night Lord":       "thiefsCunning",
+  "Shadower":         "thiefsCunning",
+  "Blade Master":     "thiefsCunning",
 };
 
 type LinkSkillsDraft = Partial<Record<LinkSkillId, string>>;

@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { usePickerCoords } from "../hooks/usePickerCoords";
 import { useKeyboardListNav } from "../../../../lib/useKeyboardListNav";
 import { searchAndRank } from "../../../../lib/searchMatch";
+import { isStrayClick } from "../../../../lib/inputUtils";
 import HoverTooltip from "../../../../components/HoverTooltip";
 import type { AppTheme } from "../../../../components/themes";
 import type { SetupStepDefinition } from "../steps";
@@ -624,7 +625,7 @@ function FamiliarSlotCard({
       <div
         role="button"
         tabIndex={0}
-        onClick={() => { onOpen(); }}
+        onClick={(e) => { if (isStrayClick(e)) { return; } onOpen(); }}
         onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onOpen(); } }}
         style={cardStyle}
       >
@@ -841,7 +842,7 @@ function BadgeSlot({
         type="button"
         title={badge || "Add badge"}
         aria-label={badge || "Add badge"}
-        onClick={() => { onOpen(); }}
+        onClick={(e) => { if (isStrayClick(e)) { return; } onOpen(); }}
         style={{ cursor: "pointer", background: "none", border: "none", padding: 0 }}
       >
         <div style={{ width: outerSize, height: outerSize, clipPath: PENTAGON, background: emptyBg, display: "flex", alignItems: "center", justifyContent: "center" }}>

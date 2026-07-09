@@ -2,11 +2,12 @@
   Step renderer for setup flow.
   Centralizes step-to-component mapping so each step can be specialized later.
 */
+import type { ComponentType } from "react";
 import type { AppTheme } from "../../../components/themes";
 import { getFlowStepByIndex, getVisibleStepInfo, type SetupFlowId } from "./flows";
 import { getClassSetupOverrides } from "./data/nexonJobMapping";
-import type { SetupStepId } from "./steps";
-import GenericSetupStep from "./components/GenericSetupStep";
+import type { SetupStepId, SetupStepDefinition } from "./steps";
+import type { StoredCharacterRecord, StoredScouterLegion, StoredLegionArtifact } from "../model/charactersStore";
 import GenderSetupStep from "./components/GenderSetupStep";
 import MarriageSetupStep from "./components/MarriageSetupStep";
 import StatsSetupStep from "./components/StatsSetupStep";
@@ -46,7 +47,35 @@ interface StepRendererProps {
   onFinish: () => void;
 }
 
-const STEP_COMPONENTS: Record<SetupStepId, typeof GenericSetupStep> = {
+/** Superset props shape every step component must be assignable from — each concrete
+ *  component only destructures the subset it actually needs. */
+interface SetupStepComponentProps {
+  theme: AppTheme;
+  step: SetupStepDefinition;
+  flowId?: SetupFlowId;
+  stepNumber: number;
+  totalSteps: number;
+  jobName?: string;
+  direction?: "forward" | "backward";
+  targetSubstep?: number | null;
+  onValidityChange?: (valid: boolean, substepIndex?: number) => void;
+  onSubstepChange?: (substepIndex: number) => void;
+  characterRoster?: StoredCharacterRecord[];
+  confirmedWorldId?: number;
+  worldLinkSkills?: string;
+  worldScouterLegion?: StoredScouterLegion;
+  worldLegionArtifact?: StoredLegionArtifact;
+  characterLevel?: number;
+  confirmedCharacterName?: string;
+  confirmedCharacterImgURL?: string;
+  value: string;
+  onChange: (value: string) => void;
+  onBack: () => void;
+  onNext: () => void;
+  onFinish: () => void;
+}
+
+const STEP_COMPONENTS: Record<SetupStepId, ComponentType<SetupStepComponentProps>> = {
   gender: GenderSetupStep,
   marriage: MarriageSetupStep,
   stats: StatsSetupStep,
@@ -87,7 +116,7 @@ export default function StepRenderer({
   const step = getFlowStepByIndex(flowId, stepIndex);
   if (!step) return null;
 
-  const StepComponent = STEP_COMPONENTS[step.id] ?? GenericSetupStep;
+  const StepComponent = STEP_COMPONENTS[step.id];
   const { gender, skipMarriage } = getClassSetupOverrides(jobName);
   const { visibleNumber, visibleTotal } = getVisibleStepInfo(flowId, stepIndex, gender, skipMarriage, characterLevel, jobName);
 

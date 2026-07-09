@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
-import { numericKeyDown, sanitizeDigitsInput } from "../../../../lib/inputUtils";
+import { numericKeyDown, sanitizeDigitsInput, isStrayClick } from "../../../../lib/inputUtils";
 import { useKeyboardListNav } from "../../../../lib/useKeyboardListNav";
 import { searchAndRank } from "../../../../lib/searchMatch";
 import { legionCrystalIconUrl } from "../../../../lib/mapleResource";
@@ -305,7 +305,7 @@ function StatSlotChip({
         type="button"
         data-legion-trigger
         aria-label={`Crystal ${crystalIndex + 1} stat slot ${slotIndex + 1}`}
-        onClick={(e) => { e.stopPropagation(); if (!isOpen) { setQuery(""); } onToggle(); }}
+        onClick={(e) => { e.stopPropagation(); if (isStrayClick(e)) { return; } if (!isOpen) { setQuery(""); } onToggle(); }}
         style={statChipStyle(theme, Boolean(def))}
       >
         {def ? def.label : "+ Pick stat"}
@@ -408,7 +408,7 @@ function CrystalTile({
         data-legion-trigger
         title={def.name}
         aria-label={`${def.name}, level ${level}`}
-        onClick={(e) => { e.stopPropagation(); onToggleCard(); }}
+        onClick={(e) => { e.stopPropagation(); if (isStrayClick(e)) { return; } onToggleCard(); }}
         style={crystalTileStyle(theme, true, isCardOpen)}
       >
         <LevelPipsStatic level={level} theme={theme} />
