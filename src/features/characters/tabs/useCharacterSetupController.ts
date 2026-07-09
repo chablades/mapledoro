@@ -1450,13 +1450,13 @@ export function useCharacterSetupController() {
       // blocked the same way advancing normally already is. Backward, and jumping onto
       // the broken step itself, are always allowed.
       if (target > setupStepIndex) {
-        const firstInvalid = getFirstInvalidStepIndex(activeFlowId, stepValidityById, gender, skipMarriage, characterLevel, jobName);
+        const firstInvalid = getFirstInvalidStepIndex(activeFlowId, stepValidityById, gender, skipMarriage, setupStepTestByStep.stats ?? "", characterLevel, jobName);
         if (firstInvalid !== null && target > firstInvalid) return;
       }
       setSetupStepDirection(direction);
       setSetupStepIndex(target);
     },
-    [activeFlowId, confirmedCharacter, setupStepIndex, stepValidityById],
+    [activeFlowId, confirmedCharacter, setupStepIndex, stepValidityById, setupStepTestByStep],
   );
 
   // Jumps directly into a specific substep of a step (e.g. Stats' Inner Ability) —
@@ -1470,13 +1470,13 @@ export function useCharacterSetupController() {
     const characterLevel = confirmedCharacter?.level;
     const stepCount = getFlowStepCount(activeFlowId);
     const target = Math.max(0, Math.min(stepCount, nextStep));
-    const firstInvalid = getFirstInvalidStepIndex(activeFlowId, stepValidityById, gender, skipMarriage, characterLevel, jobName);
+    const firstInvalid = getFirstInvalidStepIndex(activeFlowId, stepValidityById, gender, skipMarriage, setupStepTestByStep.stats ?? "", characterLevel, jobName);
     if (firstInvalid !== null && target > firstInvalid) return;
     setSetupStepDirection("forward");
     setSetupStepIndex(target);
     setSetupTargetSubstep(substepIndex);
     setSubstepJumpNonce((n) => n + 1);
-  }, [activeFlowId, confirmedCharacter, stepValidityById]);
+  }, [activeFlowId, confirmedCharacter, stepValidityById, setupStepTestByStep]);
 
   // SetupStepFrame reports whichever step id is currently mounted's own Next-button
   // validity here (see its onValidityChange prop) — bound to the active step id in
@@ -2017,6 +2017,9 @@ export function useCharacterSetupController() {
   const activeSetupStepValue = activeSetupStep
     ? setupStepTestByStep[activeSetupStep.id] ?? ""
     : "";
+  // The Stats step's own draft, independent of which step is currently active — needed
+  // for its live-computed Character-Info substep gate (see getFirstInvalidStepIndex).
+  const statsRawValue = setupStepTestByStep.stats ?? "";
   const currentCharacterKey = confirmedCharacter ? toCharacterKey(confirmedCharacter) : null;
   const isCurrentMainCharacter = Boolean(
     currentCharacterKey && mainCharacterKey && currentCharacterKey === mainCharacterKey,
@@ -2080,6 +2083,7 @@ export function useCharacterSetupController() {
     isDraftHydrated,
     isUiLocked,
     activeSetupStepValue,
+    statsRawValue,
     isCurrentMainCharacter,
     isCurrentChampionCharacter,
     canSetCurrentChampion,

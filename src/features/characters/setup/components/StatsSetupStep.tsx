@@ -24,18 +24,25 @@ import {
   type ClassSkillData,
   type ClassWarning,
 } from "../data/classSkillData";
-import { TRIPLE_STAT_FIELDS, type StatFieldId, type TripleStatFieldId } from "../data/statFields";
+import type { StatFieldId, TripleStatFieldId } from "../data/statFields";
 import {
   GENESIS_LIBERATION_LEVEL,
   isArcaneEligible,
   isHyperStatEligible,
   isSacredEligible,
-  isWeaponAttSane,
   deriveWeaponAttLabel,
   WEAPON_ATT_WARN_AT,
   normalizeHyperStatDraft,
   parseStatsStepDraft,
   serializeStatsStepDraft,
+  isStatsSubstepSane,
+  isStatsSubstepComplete,
+  TRIPLE_IDS,
+  MAIN_STAT_IDS,
+  COMBAT_LEFT,
+  COMBAT_RIGHT,
+  MAIN_STAT_BASE_VALUE_WARN_AT,
+  MAIN_STAT_PERCENT_UNAPPLIED_WARN_AT,
   type HyperStatDraft,
   type StatsStepDraft,
   type TripleStatDraft,
@@ -81,32 +88,16 @@ interface StatsSetupStepProps {
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-const TRIPLE_IDS = new Set<string>(TRIPLE_STAT_FIELDS.map((f) => f.id));
-
 const TRIPLE_LABELS: Record<TripleStatFieldId, string> = {
   str: "STR", dex: "DEX", int: "INT", luk: "LUK", hp: "HP",
   attackPower: "Attack Power", magicAtt: "Magic ATT",
 };
-
-const COMBAT_LEFT: StatFieldId[] = [
-  "ignoreDefense", "cooldownReduction", "cooldownSkip", "additionalStatusDamage",
-];
-const COMBAT_RIGHT: StatFieldId[] = [
-  "damage", "bossDamage", "criticalRate", "criticalDamage", "buffDuration", "ignoreElementalResistance", "summonDuration",
-];
 
 // Stats where the value is a raw number, not a percentage
 const RAW_VALUE_STAT_IDS = new Set<StatFieldId>(["arcanePower", "sacredPower"]);
 
 // Combat stats that are always whole numbers in-game (unlike Boss Damage, Crit Damage, etc.)
 const NO_DECIMAL_STAT_IDS = new Set<StatFieldId>(["summonDuration", "buffDuration", "criticalRate"]);
-
-// Sanity thresholds mirroring MapleScouter's own input validation — catches the most
-// common mix-ups (Total vs. Base, character Magic ATT vs. weapon Magic ATT) before the
-// user ever hits MapleScouter's own (Korean-only) error popups. These are MapleScouter's
-// sanity bounds, not real game caps, so they warn instead of hard-blocking input.
-const MAIN_STAT_BASE_VALUE_WARN_AT = 10000;
-const MAIN_STAT_PERCENT_UNAPPLIED_WARN_AT = 40000;
 
 // Ignore Elemental Resistance actually caps at 15% in-game, so this one's a real,
 // stable limit worth hard-clamping (unlike the sanity thresholds above).
@@ -121,8 +112,6 @@ function clampIgnoreElementalResist(raw: string): string {
   if (Number(sanitized) > IGNORE_ELEMENTAL_RESIST_MAX) return String(IGNORE_ELEMENTAL_RESIST_MAX);
   return sanitized;
 }
-
-const MAIN_STAT_IDS = new Set<string>(["str", "dex", "int", "luk"]);
 
 const STAT_LABELS: Partial<Record<StatFieldId, string>> = {
   damage: "Damage",
@@ -858,64 +847,6 @@ function isScouterQuestionnaireComplete(
   if (!whSource && s.whLegion === undefined && whWorldRank === undefined) return false;
   if (s.innerAbilityLine === undefined) return false;
   return true;
-}
-
-function isTripleStatFilled(t: TripleStatDraft | undefined, id: TripleStatFieldId): boolean {
-  if (!t?.base?.trim() || !t?.percent?.trim()) return false;
-  const isAttack = id === "attackPower" || id === "magicAtt";
-  return isAttack || Boolean(t.percentUnapplied?.trim());
-}
-
-// Same thresholds as the warning bubbles — a value that's clearly the wrong kind of
-// number (Total instead of Base, etc.) shouldn't be submittable, not just flagged.
-// A blank/untouched field is always sane (Number("") is 0, not a violation) — this
-// only rejects a value that's actually been typed in and is clearly wrong.
-function isTripleStatSane(t: TripleStatDraft | undefined, isMainStat: boolean): boolean {
-  if (!isMainStat || !t) return true;
-  if (Number(t.base) >= MAIN_STAT_BASE_VALUE_WARN_AT) return false;
-  return Number(t.percentUnapplied) < MAIN_STAT_PERCENT_UNAPPLIED_WARN_AT;
-}
-
-function isCombatFieldFilled(draft: StatsStepDraft, id: StatFieldId): boolean {
-  if (id === "cooldownReduction") {
-    const cd = draft.cooldownReduction;
-    return Boolean(cd?.seconds?.trim() && cd?.percent?.trim());
-  }
-  const raw = (draft as Record<string, unknown>)[id];
-  return typeof raw === "string" && raw.trim().length > 0;
-}
-
-// Applies in EVERY flow, including full_setup: a blank/incomplete field is always
-// fine (full_setup stays otherwise optional), but a value that's clearly the wrong
-// kind of number (Total instead of Base, etc.) should never be saved, in any flow.
-function isStatsSubstepSane(
-  draft: StatsStepDraft,
-  tripleIds: TripleStatFieldId[],
-  primaryStat: TripleStatFieldId | undefined,
-  showWeaponAtt: boolean,
-): boolean {
-  const triplesSane = tripleIds.every((id) => isTripleStatSane(draft[id], id === primaryStat));
-  const weaponAttSane = !showWeaponAtt || isWeaponAttSane(draft.weaponAtt);
-  return triplesSane && weaponAttSane;
-}
-
-// MapleScouter's calculation needs a real number for every stat, including 0 — a blank
-// field is ambiguous (never entered vs. genuinely 0), so every stat shown must be
-// explicitly typed in. Scouter-only; full_setup relies on isStatsSubstepSane alone.
-function isStatsSubstepComplete(
-  draft: StatsStepDraft,
-  tripleIds: TripleStatFieldId[],
-  requireWeaponAtt: boolean,
-  primaryStat: TripleStatFieldId | undefined,
-  showArcanePower: boolean,
-  showSacredPower: boolean,
-): boolean {
-  const tripleFilled = tripleIds.every((id) => isTripleStatFilled(draft[id], id));
-  const combatFilled = [...COMBAT_LEFT, ...COMBAT_RIGHT].every((id) => isCombatFieldFilled(draft, id));
-  const symbolsFilled = (!showArcanePower || Boolean(draft.arcanePower?.trim())) && (!showSacredPower || Boolean(draft.sacredPower?.trim()));
-  const weaponAttFilled = !requireWeaponAtt || Boolean(draft.weaponAtt?.trim());
-  return tripleFilled && combatFilled && symbolsFilled && weaponAttFilled
-    && isStatsSubstepSane(draft, tripleIds, primaryStat, requireWeaponAtt);
 }
 
 // "X left" / "X over" — pulled out of the main component (rather than an inline

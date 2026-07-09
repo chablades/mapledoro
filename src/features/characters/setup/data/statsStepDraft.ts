@@ -8,7 +8,8 @@
 import type { CharacterMarriage, CharacterSoul, StoredCharacterStats, StoredHyperStat, StoredTripleStatField } from "../../model/charactersStore";
 import { HYPER_STAT_CATEGORIES, HYPER_STAT_PRESET_COUNT, parseStoredHyperStatLevel } from "./hyperStatData";
 import { convertInnerAbilityDraftToStored, type IADraft } from "./innerAbilityData";
-import type { ClassSkillData } from "./classSkillData";
+import { CLASS_SKILL_DATA, getRequiredStatsForClass, type ClassSkillData } from "./classSkillData";
+import { TRIPLE_STAT_FIELDS, type StatFieldId, type TripleStatFieldId } from "./statFields";
 
 export interface TripleStatDraft {
   base: string;
@@ -272,4 +273,117 @@ export function marriageDraftToStored(marriageRaw: string): CharacterMarriage | 
     return { isMarried: true, partnerName };
   }
   return null;
+}
+
+// ── Character-Info substep validity ─────────────────────────────────────────
+// Pulled out of StatsSetupStep so the setup controller can ask "is the Stats step's
+// data actually valid?" directly against the persisted draft, without needing that
+// component mounted. See isStatsWindowSubstepValid below for why this matters:
+// MapleScouter's per-substep validity used to be a self-reported cache that only
+// refreshed when its own component happened to remount, which went stale the moment
+// the shared draft changed under a DIFFERENT flow — this makes it a live, stateless
+// check instead, so there's no cache to go stale.
+
+export const TRIPLE_IDS = new Set<string>(TRIPLE_STAT_FIELDS.map((f) => f.id));
+export const MAIN_STAT_IDS = new Set<string>(["str", "dex", "int", "luk"]);
+export const COMBAT_LEFT: StatFieldId[] = [
+  "ignoreDefense", "cooldownReduction", "cooldownSkip", "additionalStatusDamage",
+];
+export const COMBAT_RIGHT: StatFieldId[] = [
+  "damage", "bossDamage", "criticalRate", "criticalDamage", "buffDuration", "ignoreElementalResistance", "summonDuration",
+];
+
+// Sanity thresholds mirroring MapleScouter's own input validation — catches the most
+// common mix-ups (Total vs. Base, character Magic ATT vs. weapon Magic ATT) before the
+// user ever hits MapleScouter's own (Korean-only) error popups. These are MapleScouter's
+// sanity bounds, not real game caps, so they warn instead of hard-blocking input.
+export const MAIN_STAT_BASE_VALUE_WARN_AT = 10000;
+export const MAIN_STAT_PERCENT_UNAPPLIED_WARN_AT = 40000;
+
+function isTripleStatFilled(t: TripleStatDraft | undefined, id: TripleStatFieldId): boolean {
+  if (!t?.base?.trim() || !t?.percent?.trim()) return false;
+  const isAttack = id === "attackPower" || id === "magicAtt";
+  return isAttack || Boolean(t.percentUnapplied?.trim());
+}
+
+// Same thresholds as the warning bubbles — a value that's clearly the wrong kind of
+// number (Total instead of Base, etc.) shouldn't be submittable, not just flagged.
+// A blank/untouched field is always sane (Number("") is 0, not a violation) — this
+// only rejects a value that's actually been typed in and is clearly wrong.
+function isTripleStatSane(t: TripleStatDraft | undefined, isMainStat: boolean): boolean {
+  if (!isMainStat || !t) return true;
+  if (Number(t.base) >= MAIN_STAT_BASE_VALUE_WARN_AT) return false;
+  return Number(t.percentUnapplied) < MAIN_STAT_PERCENT_UNAPPLIED_WARN_AT;
+}
+
+function isCombatFieldFilled(draft: StatsStepDraft, id: StatFieldId): boolean {
+  if (id === "cooldownReduction") {
+    const cd = draft.cooldownReduction;
+    return Boolean(cd?.seconds?.trim() && cd?.percent?.trim());
+  }
+  const raw = (draft as Record<string, unknown>)[id];
+  return typeof raw === "string" && raw.trim().length > 0;
+}
+
+// Applies in EVERY flow, including full_setup: a blank/incomplete field is always
+// fine (full_setup stays otherwise optional), but a value that's clearly the wrong
+// kind of number (Total instead of Base, etc.) should never be saved, in any flow.
+export function isStatsSubstepSane(
+  draft: StatsStepDraft,
+  tripleIds: TripleStatFieldId[],
+  primaryStat: TripleStatFieldId | undefined,
+  showWeaponAtt: boolean,
+): boolean {
+  const triplesSane = tripleIds.every((id) => isTripleStatSane(draft[id], id === primaryStat));
+  const weaponAttSane = !showWeaponAtt || isWeaponAttSane(draft.weaponAtt);
+  return triplesSane && weaponAttSane;
+}
+
+// MapleScouter's calculation needs a real number for every stat, including 0 — a blank
+// field is ambiguous (never entered vs. genuinely 0), so every stat shown must be
+// explicitly typed in. Scouter-only; full_setup relies on isStatsSubstepSane alone.
+export function isStatsSubstepComplete(
+  draft: StatsStepDraft,
+  tripleIds: TripleStatFieldId[],
+  requireWeaponAtt: boolean,
+  primaryStat: TripleStatFieldId | undefined,
+  showArcanePower: boolean,
+  showSacredPower: boolean,
+): boolean {
+  const tripleFilled = tripleIds.every((id) => isTripleStatFilled(draft[id], id));
+  const combatFilled = [...COMBAT_LEFT, ...COMBAT_RIGHT].every((id) => isCombatFieldFilled(draft, id));
+  const symbolsFilled = (!showArcanePower || Boolean(draft.arcanePower?.trim())) && (!showSacredPower || Boolean(draft.sacredPower?.trim()));
+  const weaponAttFilled = !requireWeaponAtt || Boolean(draft.weaponAtt?.trim());
+  return tripleFilled && combatFilled && symbolsFilled && weaponAttFilled
+    && isStatsSubstepSane(draft, tripleIds, primaryStat, requireWeaponAtt);
+}
+
+/** Whether the Stats step's Character-Info substep (the main stat/combat/symbol/weapon-
+ *  ATT fields) is valid, computed fresh from the raw stored draft string — not cached.
+ *
+ *  `requireComplete` is the ONLY thing that varies by flow: MapleScouter needs every
+ *  field explicitly filled in (isStatsSubstepComplete, which already ANDs in the sanity
+ *  check below), while every other flow that touches Stats (Full Setup, the standalone
+ *  Stats flow) only requires values that ARE filled in to be sane, not blank fields to be
+ *  filled. Sanity is therefore a floor every flow shares — a subset flow (MapleScouter)
+ *  can only add stricter requirements on top of it, never loosen it, and its own extra
+ *  strictness never applies back to a flow that didn't ask for it. */
+export function isStatsWindowSubstepValid(
+  rawValue: string,
+  jobName: string | undefined,
+  characterLevel: number | undefined,
+  requireComplete: boolean,
+): boolean {
+  const classData = CLASS_SKILL_DATA.find((c) => c.nexonJobName === jobName);
+  const draft = parseStatsStepDraft(rawValue);
+  const tripleIds = classData
+    ? getRequiredStatsForClass(classData).filter((id): id is TripleStatFieldId => TRIPLE_IDS.has(id))
+    : [];
+  const primaryStat = classData?.requiredStats.find((s): s is TripleStatFieldId => MAIN_STAT_IDS.has(s));
+  if (!requireComplete) {
+    return isStatsSubstepSane(draft, tripleIds, primaryStat, false);
+  }
+  const showArcanePower = isArcaneEligible(characterLevel, classData?.isLegacy);
+  const showSacredPower = isSacredEligible(characterLevel, classData?.isLegacy);
+  return isStatsSubstepComplete(draft, tripleIds, true, primaryStat, showArcanePower, showSacredPower);
 }

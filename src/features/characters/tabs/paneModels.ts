@@ -119,6 +119,7 @@ export interface PreviewPaneModel {
     substepJumpNonce: number;
     stepValidityById: Record<string, boolean>;
     activeSetupStepValue: string;
+    statsRawValue: string;
   };
   profile: {
     confirmedCharacter: StoredCharacterRecord | null;

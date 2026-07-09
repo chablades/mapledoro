@@ -175,6 +175,7 @@ export default function CharacterSetupFlow({ theme, initialCharacterName, initia
       substepJumpNonce: state.substepJumpNonce,
       stepValidityById: state.stepValidityById,
       activeSetupStepValue: state.activeSetupStepValue,
+      statsRawValue: state.statsRawValue,
     },
     directory: {
       allCharacters: state.characterRoster,

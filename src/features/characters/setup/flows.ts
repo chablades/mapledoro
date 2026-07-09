@@ -5,7 +5,12 @@
 import type { SetupStepId } from "./steps";
 import { getSetupStepById, type SetupStepDefinition } from "./steps";
 import { isLegacyClass } from "./data/classSkillData";
-import { isHyperStatEligible } from "./data/statsStepDraft";
+import { isHyperStatEligible, isStatsWindowSubstepValid } from "./data/statsStepDraft";
+
+/** Substep index of the Stats step's "Character Info" screen (main stat/combat/symbol/
+ *  weapon-ATT fields) — stable across every flow that includes Stats (see
+ *  getStepSubsteps below). The only substep whose validity genuinely differs by flow. */
+const STATS_WINDOW_SUBSTEP_INDEX = 1;
 
 type GenderOverride = "male" | "female" | "none" | null;
 
@@ -95,6 +100,8 @@ export type SetupFlowId = SetupFlowDefinition["id"];
 const FLOW_BY_ID = new Map<SetupFlowId, SetupFlowDefinition>(
   SETUP_FLOWS.map((flow) => [flow.id, flow]),
 );
+
+const SETUP_FLOW_IDS: readonly SetupFlowId[] = SETUP_FLOWS.map((flow) => flow.id);
 
 const QUICK_FLOW_ID: SetupFlowId = "quick_setup";
 
@@ -208,6 +215,53 @@ export function getStepValidityKey(stepId: SetupStepId, substepIndex: number, fl
   return isFlowScopedValidityStep(stepId) ? `${flowId}:${stepId}:${substepIndex}` : `${stepId}:${substepIndex}`;
 }
 
+// MapleScouter's Stats report is the only one with an extra "every field filled"
+// requirement layered on top of the shared sanity check (isStatsSubstepComplete
+// always calls isStatsSubstepSane too — see statsStepDraft/StatsSetupStep). So a
+// false reported by any OTHER stats-carrying flow is a pure sanity failure, which
+// also fails MapleScouter's check — it's safe (and necessary) to inherit. A
+// MapleScouter-only false might just mean blank fields, which is fine everywhere
+// else, so it must NOT inherit outward.
+function isSanityOnlyValidityFlow(stepId: SetupStepId, flowId: SetupFlowId): boolean {
+  return stepId === "stats" && flowId !== "maplescouter_setup";
+}
+
+/** Whether a step/substep's last-known validity report is false.
+ *
+ *  The Stats step's "Character Info" substep (STATS_WINDOW_SUBSTEP_INDEX) is a special
+ *  case: rather than trusting a self-reported cache (which only refreshes when that
+ *  substep's own component happens to mount under the CURRENT flow, and otherwise goes
+ *  silently stale the moment the shared draft changes under a DIFFERENT flow), its
+ *  validity is computed fresh from the persisted draft every time — see
+ *  isStatsWindowSubstepValid. There's no cache to go stale.
+ *
+ *  Every other flow-scoped substep (see isFlowScopedValidityStep) still uses the cache,
+ *  with one adjustment: a substep never revisited under the CURRENT flow doesn't default
+ *  to "valid" just because nothing's been reported here yet — it falls back to any other
+ *  sanity-only flow's report for that same substep (see isSanityOnlyValidityFlow). */
+function isSubstepKnownInvalid(
+  stepId: SetupStepId,
+  flowId: SetupFlowId,
+  substepIndex: number,
+  stepValidityById: Record<string, boolean>,
+  jobName: string | undefined,
+  statsRawValue: string,
+  characterLevel: number | undefined,
+): boolean {
+  if (stepId === "stats" && substepIndex === STATS_WINDOW_SUBSTEP_INDEX) {
+    const requireComplete = flowId === "maplescouter_setup";
+    return !isStatsWindowSubstepValid(statsRawValue, jobName, characterLevel, requireComplete);
+  }
+  const ownValue = stepValidityById[getStepValidityKey(stepId, substepIndex, flowId)];
+  if (ownValue !== undefined) return ownValue === false;
+  if (!isFlowScopedValidityStep(stepId)) return false;
+  return SETUP_FLOW_IDS.some((otherFlowId) => (
+    otherFlowId !== flowId
+    && isSanityOnlyValidityFlow(stepId, otherFlowId)
+    && stepValidityById[getStepValidityKey(stepId, substepIndex, otherFlowId)] === false
+  ));
+}
+
 // A step counts as invalid if ANY of its substeps' last report was false, since each
 // substep gates independently (e.g. Stats' Hyper Stat substep being over budget
 // shouldn't be forgotten just because Quick Questions, a different substep of the
@@ -216,24 +270,31 @@ function stepHasInvalidSubstep(
   stepId: SetupStepId,
   flowId: SetupFlowId,
   stepValidityById: Record<string, boolean>,
+  jobName: string | undefined,
+  statsRawValue: string,
   characterLevel?: number,
 ): boolean {
-  return getFirstInvalidSubstepIndex(stepId, flowId, stepValidityById, characterLevel) !== null;
+  return getFirstInvalidSubstepIndex(stepId, flowId, stepValidityById, jobName, statsRawValue, characterLevel) !== null;
 }
 
 /** The earliest substep index (within one step) whose last-known validity is false,
  *  or null if none are. Used both to decide a whole step's validity and to gate that
  *  step's OWN substep entries in the jump dropdown (substeps before the broken one
- *  stay reachable; only it and everything after are blocked). */
+ *  stay reachable; only it and everything after are blocked).
+ *
+ *  jobName/statsRawValue are only needed for the Stats step's live-computed substep
+ *  (see isSubstepKnownInvalid) — pass "" for statsRawValue when gating a non-Stats step. */
 export function getFirstInvalidSubstepIndex(
   stepId: SetupStepId,
   flowId: SetupFlowId,
   stepValidityById: Record<string, boolean>,
+  jobName: string | undefined,
+  statsRawValue: string,
   characterLevel?: number,
 ): number | null {
   const substepCount = getStepSubsteps(stepId, flowId, characterLevel)?.length ?? 1;
   for (let i = 0; i < substepCount; i++) {
-    if (stepValidityById[getStepValidityKey(stepId, i, flowId)] === false) return i;
+    if (isSubstepKnownInvalid(stepId, flowId, i, stepValidityById, jobName, statsRawValue, characterLevel)) return i;
   }
   return null;
 }
@@ -245,17 +306,22 @@ export function getFirstInvalidSubstepIndex(
  * draft data (and thus its validity) is shared across flows and across navigating
  * away from it, so this has to walk the CURRENT flow's steps fresh each time rather
  * than trusting whichever step happened to be mounted most recently.
+ *
+ * statsRawValue is the Stats step's own persisted draft string, needed for its live-
+ * computed Character-Info substep (see isSubstepKnownInvalid) — pass "" if unavailable
+ * or the flow doesn't include the Stats step.
  */
 export function getFirstInvalidStepIndex(
   flowId: SetupFlowId,
   stepValidityById: Record<string, boolean>,
   gender: GenderOverride,
   skipMarriage: boolean,
+  statsRawValue: string,
   characterLevel?: number,
   jobName?: string,
 ): number | null {
   const visible = getVisibleSteps(flowId, gender, skipMarriage, characterLevel, jobName);
-  const firstInvalid = visible.find((s) => stepHasInvalidSubstep(s.stepId, flowId, stepValidityById, characterLevel));
+  const firstInvalid = visible.find((s) => stepHasInvalidSubstep(s.stepId, flowId, stepValidityById, jobName, statsRawValue, characterLevel));
   return firstInvalid?.index ?? null;
 }
 

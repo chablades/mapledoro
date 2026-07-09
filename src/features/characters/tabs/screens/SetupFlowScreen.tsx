@@ -32,7 +32,7 @@ export default function SetupFlowScreen({ model, actions }: SetupFlowScreenProps
   // navigating away from it, so the block has to hold even after backing out or
   // switching flows entirely, not just while sitting on the broken step.
   const firstInvalidStepIndex = getFirstInvalidStepIndex(
-    setup.activeFlowId, setup.stepValidityById, gender, skipMarriage, confirmed?.level, jobName,
+    setup.activeFlowId, setup.stepValidityById, gender, skipMarriage, setup.statsRawValue, confirmed?.level, jobName,
   );
   const jumpSteps = visibleSteps.map((s) => {
     const stepDisabled = firstInvalidStepIndex !== null && s.index > firstInvalidStepIndex;
@@ -42,7 +42,7 @@ export default function SetupFlowScreen({ model, actions }: SetupFlowScreenProps
     // blocked, since jumping between substeps of the step you're actually fixing
     // doesn't skip past anything.
     const firstInvalidSubstep = s.index === firstInvalidStepIndex
-      ? getFirstInvalidSubstepIndex(s.stepId, setup.activeFlowId, setup.stepValidityById, confirmed?.level)
+      ? getFirstInvalidSubstepIndex(s.stepId, setup.activeFlowId, setup.stepValidityById, jobName, setup.statsRawValue, confirmed?.level)
       : null;
     const substeps = labels?.map((label, i) => ({
       label,
