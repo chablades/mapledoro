@@ -32,6 +32,13 @@ export const ALL_QUICK_TOOLS: QuickLink[] = [
     href: "/tools/flaming",
   },
   {
+    title: "EXP Calculator",
+    desc: "Buffs and EXP tables",
+    itemId: "02637353", // EXP Voucher
+    iconType: "item",
+    href: "/tools/exp-calculator",
+  },
+  {
     title: "HEXA Skills",
     desc: "Sol Erda planning",
     itemId: "04009613", // Sol Erda Fragment
