@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useId, useRef, useState, type CSSProperties } from "react";
 import type { AppTheme } from "../../../components/themes";
 import { ToolHeader } from "../../../components/ToolHeader";
 import { ConfirmButton } from "../../../components/ConfirmButton";
@@ -250,7 +250,7 @@ function WaveSelector({ theme, activeWave, waveCount, filledCounts, onChange, in
   inputStyle: CSSProperties;
 }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", flexWrap: "wrap" }}>
+    <div className="mf-wave" style={{ display: "flex", alignItems: "center", gap: "0.6rem", flexWrap: "wrap" }}>
       <div className="section-label" style={{ color: theme.muted, marginBottom: 0 }}>Wave</div>
       <select
         className="tool-select"
@@ -271,44 +271,53 @@ function WaveSelector({ theme, activeWave, waveCount, filledCounts, onChange, in
   );
 }
 
-// ── target score (per-wave, sits beside the wave selector) ─────────────────────
-
-function TargetInput({ theme, target, onChange, inputStyle }: {
-  theme: AppTheme; target: number; onChange: (v: number) => void; inputStyle: CSSProperties;
-}) {
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", flexWrap: "wrap" }}>
-      <div className="section-label" style={{ color: theme.muted, marginBottom: 0 }}>Target</div>
-      <input
-        className="tool-input"
-        type="number"
-        min={0}
-        inputMode="numeric"
-        aria-label="Target score"
-        value={target || ""}
-        placeholder="0"
-        onKeyDown={replaceZeroOnDigit}
-        onChange={(e) => onChange(Math.max(0, Math.floor(Number(e.target.value) || 0)))}
-        // Height matches the wave selector / character dropdown so the row aligns.
-        style={{ ...inputStyle, width: 110, height: 46 }}
-      />
-    </div>
-  );
-}
-
 // ── result + rerolls ──────────────────────────────────────────────────────────
 
 const PASS_COLOR = "#16a34a";
 const FAIL_COLOR = "#dc2626";
 
-// Verdict-forward banner: the headline answer (pass/fail + score vs target), or a
-// prompt when there isn't enough entered yet to decide.
-function VerdictBanner({ result, target, passed, hasLineup, theme }: {
-  result: ScoreResult; target: number; passed: boolean; hasLineup: boolean; theme: AppTheme;
+/** The target is the denominator of the headline score, so it's edited as the denominator
+ *  rather than as a field in the setup row three panels away. Shape and focus underline
+ *  come from `.mf-target`; only the type scale is inline. */
+function TargetScoreInput({ id, theme, target, onChange }: {
+  id: string; theme: AppTheme; target: number; onChange: (v: number) => void;
 }) {
-  const targetEntered = target > 0;
-  const decided = hasLineup && targetEntered;
+  // Grows with the number so "8" and "1200" both sit snug against the slash. The extra
+  // 1.25rem covers the well's horizontal padding, which `box-sizing: border-box` would
+  // otherwise take out of the digits.
+  const digits = Math.max(2, String(target || "").length);
+  return (
+    <input
+      id={id}
+      className="mf-target no-spinner"
+      type="number"
+      min={0}
+      inputMode="numeric"
+      value={target || ""}
+      placeholder="0"
+      onKeyDown={replaceZeroOnDigit}
+      onChange={(e) => onChange(Math.max(0, Math.floor(Number(e.target.value) || 0)))}
+      style={{ width: `calc(${digits}ch + 1.25rem)`, fontSize: "1.15rem", fontWeight: 800, color: theme.text }}
+    />
+  );
+}
+
+/** Inline `RESULT: 52` / `TARGET: 50` label. Groups with its value so the banner wraps
+ *  at the slash rather than orphaning a label from the number it names. */
+const scoreTermStyle: CSSProperties = {
+  display: "inline-flex", alignItems: "baseline", gap: 7, whiteSpace: "nowrap",
+};
+
+// Verdict-forward banner: the headline answer (pass/fail + score over an editable target),
+// or a prompt when there isn't enough entered yet to decide.
+function VerdictBanner({ result, target, passed, hasLineup, theme, onTargetChange }: {
+  result: ScoreResult; target: number; passed: boolean; hasLineup: boolean; theme: AppTheme;
+  onTargetChange: (v: number) => void;
+}) {
+  const targetId = useId();
+  const decided = hasLineup && target > 0;
   const color = passed ? PASS_COLOR : FAIL_COLOR;
+  const labelStyle: CSSProperties = { color: theme.muted, marginBottom: 0 };
 
   const borderColor = decided ? `${color}66` : theme.border;
   const bannerStyle: CSSProperties = {
@@ -336,14 +345,24 @@ function VerdictBanner({ result, target, passed, hasLineup, theme }: {
         <span style={{ fontSize: "0.85rem", fontWeight: 700, color: theme.muted }}>{prompt}</span>
       )}
 
-      {hasLineup && (
-        <span style={{ marginLeft: "auto", fontSize: "1.35rem", fontWeight: 900, color: theme.text, lineHeight: 1 }}>
-          {result.finalResult}
-          {targetEntered && (
-            <span style={{ fontSize: "1rem", fontWeight: 700, color: theme.muted }}>{` / ${target}`}</span>
-          )}
+      <div style={{ marginLeft: "auto", display: "flex", alignItems: "baseline", justifyContent: "flex-end", flexWrap: "wrap", gap: "4px 7px" }}>
+        {/* With no lineup there's no score to divide, so the target term stands alone. */}
+        {hasLineup && (
+          <>
+            <span style={scoreTermStyle}>
+              <span className="section-label" style={labelStyle}>Result:</span>
+              <span style={{ fontSize: "1.35rem", fontWeight: 900, color: theme.text, lineHeight: 1 }}>
+                {result.finalResult}
+              </span>
+            </span>
+            <span aria-hidden style={{ fontSize: "1rem", fontWeight: 700, color: theme.muted }}>/</span>
+          </>
+        )}
+        <span style={scoreTermStyle}>
+          <label htmlFor={targetId} className="section-label" style={labelStyle}>Target:</label>
+          <TargetScoreInput id={targetId} theme={theme} target={target} onChange={onTargetChange} />
         </span>
-      )}
+      </div>
     </div>
   );
 }
@@ -463,8 +482,27 @@ export default function MysticFrontierWorkspace({ theme }: { theme: AppTheme }) 
         .mf-option:hover, .mf-option:focus-visible { background: ${theme.accent}22; }
         /* The one moment worth animating: the verdict flipping between pass and fail. */
         .mf-verdict { transition: background 180ms ease-out, border-color 180ms ease-out; }
+        /* A filled well, not a box: enough surface to read as an input at a glance, but
+           open at the bottom so the target still sits inside the score expression it
+           divides. Type scale is inline; everything structural lives here. */
+        .mf-target {
+          border: none;
+          border-bottom: 2px solid ${theme.muted};
+          border-radius: 6px 6px 0 0;
+          background: ${theme.panel};
+          padding: 3px 8px 3px;
+          text-align: center;
+          cursor: text;
+          caret-color: ${theme.accent};
+          font-family: inherit;
+          font-variant-numeric: tabular-nums;
+          transition: border-color 150ms ease-out, background 150ms ease-out;
+        }
+        .mf-target:hover { border-bottom-color: ${theme.text}; }
+        .mf-target:focus { border-bottom-color: ${theme.accent}; }
+        .mf-target::placeholder { color: ${theme.muted}; opacity: 1; }
         @media (prefers-reduced-motion: reduce) {
-          .mf-verdict { transition: none; }
+          .mf-verdict, .mf-target { transition: none; }
         }
         @media (max-width: 760px) {
           .mf-lineup { grid-template-columns: 1fr !important; }
@@ -490,17 +528,14 @@ export default function MysticFrontierWorkspace({ theme }: { theme: AppTheme }) 
                 inputStyle={styles.inputStyle}
               />
             )}
-            <div className="mf-wave" style={{ display: "flex", alignItems: "center", gap: "1.5rem", flexWrap: "wrap" }}>
-              <WaveSelector
-                theme={theme}
-                activeWave={mf.activeWave}
-                waveCount={mf.waveCount}
-                filledCounts={mf.waveFilledCounts}
-                onChange={mf.setActiveWave}
-                inputStyle={styles.inputStyle}
-              />
-              <TargetInput theme={theme} target={mf.target} onChange={mf.setTarget} inputStyle={styles.inputStyle} />
-            </div>
+            <WaveSelector
+              theme={theme}
+              activeWave={mf.activeWave}
+              waveCount={mf.waveCount}
+              filledCounts={mf.waveFilledCounts}
+              onChange={mf.setActiveWave}
+              inputStyle={styles.inputStyle}
+            />
           </div>
         </div>
 
@@ -571,6 +606,7 @@ export default function MysticFrontierWorkspace({ theme }: { theme: AppTheme }) 
               passed={mf.passed}
               hasLineup={mf.hasLineup}
               theme={theme}
+              onTargetChange={mf.setTarget}
             />
             {mf.hasLineup && <ResultBreakdown result={mf.result} theme={theme} />}
             <ActiveLines result={mf.result} theme={theme} />
