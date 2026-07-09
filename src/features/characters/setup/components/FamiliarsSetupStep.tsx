@@ -458,9 +458,11 @@ function LinePicker({ id, openId, onToggle, onClose, onPrev, onNext, value, tier
 // character that picked one still resolves correctly via FAMILIARS.find().
 const SELECTABLE_FAMILIARS = FAMILIARS.filter((f) => f.duplicateOf === undefined);
 
+// Empty query: nothing (this catalog is too large to browse unfiltered, matching
+// Equipment's ItemPicker "huge catalogs require a search" convention).
 function filterFamiliars(query: string, excludeId: number | null): FamiliarEntry[] {
+  if (!query.trim()) return [];
   const pool = excludeId == null ? SELECTABLE_FAMILIARS : SELECTABLE_FAMILIARS.filter((f) => f.id !== excludeId);
-  if (!query.trim()) return pool.slice(0, 50);
   return searchAndRank(pool, query, getFamiliarDisplayLabel).slice(0, 50);
 }
 
