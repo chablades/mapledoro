@@ -1,16 +1,26 @@
 # EXP Calculator
 
-The Farming Calculator persists buff selections, target level, and hourly kill count per-character
-under the `expCalculator` tool key (`SavedExpState`) via `characterToolStorage.ts`. Character level
-and current EXP percent are not saved (they come from the character record), nor are monster level
-and base EXP (they come from the selected monster). The Daily / Weekly and Resources tabs stay
-entirely in memory. Do not persist them without a good reason.
+Each calculator tab persists per-character under its own tool key via `characterToolStorage.ts`,
+mirroring how the liberation page splits `liberation` and `astra`. Resources stays in memory.
 
-Writes go through `updateBuffs` and `updateSavedMonsterField` in `BuffsTab`, which write inside the
-state updater and no-op when no character is selected (Manual Level is never saved). Selecting a
-character flushes the outgoing character's state, then loads the incoming one's through
-`mergeSavedExpState`, so buff ids added after a save still get a default. Switching to Manual Level
-resets buffs, target level, and hourly kill count to the defaults.
+- `expFarming` (`SavedExpState`): buff selections, target level, hourly kill count.
+- `expDailyWeekly` (`SavedAllInOne`): the Daily Content, Weekly Content, Monster Park, and Epic
+  Dungeon panels, plus target level, burning, and the date window.
+
+Never persist values that are derived from elsewhere: character level and current EXP percent come
+from the character record, and monster level and base EXP come from the selected monster. Event
+tickets, growth potions, Punch King, and Double Up are deliberately not saved; they are one-off
+event resources, so they reset each visit.
+
+Writes go through the `updateBuffs` / `updateSavedMonsterField` / `updateInput` wrappers, which
+write inside the state updater and no-op when no character is selected (Manual Level is never
+saved). Do not call the raw `setBuffs` / `setMonster` / `setInput` from a handler or the write is
+silently skipped. Selecting a character flushes the outgoing character's state, then loads the
+incoming one's through `mergeSavedExpState` / `mergeSavedAllInOne`, so ids added after a save still
+get a default. Switching to Manual Level resets that tab to its defaults.
+
+`mergeSavedAllInOne` drops a saved date window whose end date has already passed and falls back to
+today through +27 days, so a stale plan cannot silently project EXP over dead dates.
 
 The monster search is local-only. Use `exp-monsters.ts`; do not add a runtime monster API or
 network lookup. Monster rows are `[id, name, level, exp, mapId]`, where `id` must render through
@@ -25,9 +35,10 @@ Character selection auto-fills level and current EXP percent. Convert stored raw
 of the selected level, truncate to 3 decimals, and disable level/percent inputs while a character
 is selected.
 
-The Farming Calculator opens on the roster's main character (`selectMainCharacter`) when there is
-one, falling back to Manual Level otherwise. `loadCharacterState` is shared by that mount-time seed
-and the dropdown's `updateCharacter`, so both paths apply saved state and job rules identically.
+Both calculator tabs open on the roster's main character (`selectMainCharacter`) when there is one,
+falling back to Manual Level otherwise. `loadCharacterState` / `loadCharacterAllInOne` are shared by
+the mount-time seed and the dropdown's `updateCharacter`, so both paths apply saved state and job
+rules identically. The seed runs in a lazy `useState` initializer, so it must not write.
 
 The unsearched monster dropdown is ordered by distance from the current player level, so the
 nearest-level monsters seed the list. Search results stay in source order; do not reorder them by

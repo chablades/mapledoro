@@ -78,7 +78,7 @@ const TAB_LABELS: Record<ExpTab, string> = {
   resources: "Resources",
 };
 
-const EXP_CALCULATOR_TOOL_KEY = "expCalculator";
+const FARMING_TOOL_KEY = "expFarming";
 
 const DEFAULT_MONSTER: MonsterExpInput = {
   playerLevel: 260,
@@ -114,7 +114,7 @@ function characterPercent(character: StoredCharacterRecord): number {
 /** Buffs + monster inputs for a character, from their saved state merged over the defaults. */
 function loadCharacterState(character: StoredCharacterRecord, monster: MonsterExpInput) {
   const saved = mergeSavedExpState(
-    readCharacterToolData<Partial<SavedExpState>>(character.characterName, EXP_CALCULATOR_TOOL_KEY),
+    readCharacterToolData<Partial<SavedExpState>>(character.characterName, FARMING_TOOL_KEY),
   );
   return {
     buffs: applyJobBuffRules(saved.buffs, character.jobName),
@@ -179,6 +179,81 @@ function defaultAllInOneInput(): AllInOneInput {
     monsterParkBonus: 0,
     epicDungeonBonus: 0,
   };
+}
+
+const DAILY_WEEKLY_TOOL_KEY = "expDailyWeekly";
+
+/** Daily / Weekly plan saved per-character: the Daily Content, Weekly Content, Monster Park, and
+ *  Epic Dungeon panels plus target level, burning, and the date window. Current level and percent
+ *  come from the character record; event tickets and growth potions stay in memory by design. */
+type SavedAllInOne = Pick<
+  AllInOneInput,
+  | "targetLevel"
+  | "startDate"
+  | "endDate"
+  | "burningType"
+  | "dailyIds"
+  | "customDailyExp"
+  | "arcaneRiverBonus"
+  | "grandisBonus"
+  | "weeklyRuns"
+  | "monsterParkRuns"
+  | "monsterParkBonus"
+  | "mpeRuns"
+  | "epicDungeonId"
+  | "epicDungeonMultiplier"
+  | "epicDungeonBonus"
+>;
+
+function toSavedAllInOne(input: AllInOneInput): SavedAllInOne {
+  return {
+    targetLevel: input.targetLevel,
+    startDate: input.startDate,
+    endDate: input.endDate,
+    burningType: input.burningType,
+    dailyIds: input.dailyIds,
+    customDailyExp: input.customDailyExp,
+    arcaneRiverBonus: input.arcaneRiverBonus,
+    grandisBonus: input.grandisBonus,
+    weeklyRuns: input.weeklyRuns,
+    monsterParkRuns: input.monsterParkRuns,
+    monsterParkBonus: input.monsterParkBonus,
+    mpeRuns: input.mpeRuns,
+    epicDungeonId: input.epicDungeonId,
+    epicDungeonMultiplier: input.epicDungeonMultiplier,
+    epicDungeonBonus: input.epicDungeonBonus,
+  };
+}
+
+function mergeSavedAllInOne(saved: Partial<SavedAllInOne> | null): AllInOneInput {
+  const defaults = defaultAllInOneInput();
+  if (!saved) return defaults;
+  const merged: AllInOneInput = {
+    ...defaults,
+    ...saved,
+    dailyIds: saved.dailyIds ?? defaults.dailyIds,
+    weeklyRuns: { ...defaults.weeklyRuns, ...saved.weeklyRuns },
+  };
+  // A saved window that already ended would silently project EXP over dead dates.
+  const expired = !saved.endDate || saved.endDate < localDateInputValue(new Date());
+  if (expired) {
+    merged.startDate = defaults.startDate;
+    merged.endDate = defaults.endDate;
+  }
+  return merged;
+}
+
+function loadCharacterAllInOne(character: StoredCharacterRecord): AllInOneInput {
+  const saved = mergeSavedAllInOne(
+    readCharacterToolData<Partial<SavedAllInOne>>(character.characterName, DAILY_WEEKLY_TOOL_KEY),
+  );
+  return { ...saved, startLevel: character.level, startPercent: characterPercent(character) };
+}
+
+function initialAllInOneState() {
+  const main = selectMainCharacter(readCharactersStore());
+  if (!main) return { charName: null, input: defaultAllInOneInput() };
+  return { charName: main.characterName, input: loadCharacterAllInOne(main) };
 }
 
 const EXCLUSIVE_BUFF_SECTIONS = CHECK_BUFF_GROUPS.filter((group) => group.mode === "exclusive").reduce<
@@ -307,7 +382,7 @@ function BuffsTab({ theme }: { theme: AppTheme }) {
     setBuffs((state) => {
       const next = updater(state);
       if (selectedCharName) {
-        writeCharacterToolData(selectedCharName, EXP_CALCULATOR_TOOL_KEY, toSavedExpState(next, monster));
+        writeCharacterToolData(selectedCharName, FARMING_TOOL_KEY, toSavedExpState(next, monster));
       }
       return next;
     });
@@ -317,7 +392,7 @@ function BuffsTab({ theme }: { theme: AppTheme }) {
     setMonster((state) => {
       const next = { ...state, [field]: value };
       if (selectedCharName) {
-        writeCharacterToolData(selectedCharName, EXP_CALCULATOR_TOOL_KEY, toSavedExpState(buffs, next));
+        writeCharacterToolData(selectedCharName, FARMING_TOOL_KEY, toSavedExpState(buffs, next));
       }
       return next;
     });
@@ -337,7 +412,7 @@ function BuffsTab({ theme }: { theme: AppTheme }) {
   };
   const updateCharacter = (name: string | null) => {
     if (selectedCharName) {
-      writeCharacterToolData(selectedCharName, EXP_CALCULATOR_TOOL_KEY, toSavedExpState(buffs, monster));
+      writeCharacterToolData(selectedCharName, FARMING_TOOL_KEY, toSavedExpState(buffs, monster));
     }
     setSelectedCharName(name);
     const selected = characters.find((character) => character.characterName === name);
@@ -355,7 +430,7 @@ function BuffsTab({ theme }: { theme: AppTheme }) {
     setMonster(loaded.monster);
     writeCharacterToolData(
       selected.characterName,
-      EXP_CALCULATOR_TOOL_KEY,
+      FARMING_TOOL_KEY,
       toSavedExpState(loaded.buffs, loaded.monster),
     );
   };
@@ -793,34 +868,43 @@ function AllInOneTab({ theme }: { theme: AppTheme }) {
   const characterDropdownInputStyle: React.CSSProperties = { ...styles.inputStyle, width: "100%" };
   const labelStyle = styles.labelStyle;
   const panelStyle = expPanelStyle(styles);
-  const [input, setInput] = useState<AllInOneInput>(() => defaultAllInOneInput());
-  const [selectedCharName, setSelectedCharName] = useState<string | null>(null);
+  const [initial] = useState(initialAllInOneState);
+  const [input, setInput] = useState<AllInOneInput>(initial.input);
+  const [selectedCharName, setSelectedCharName] = useState<string | null>(initial.charName);
   const characters = useMemo(() => selectCharactersList(readCharactersStore()), []);
   const result = useMemo(() => calculateAllInOne(input), [input]);
+  /** Persists to the selected character as part of the state update; manual level stays in memory. */
+  const updateInput = (updater: (state: AllInOneInput) => AllInOneInput) => {
+    setInput((state) => {
+      const next = updater(state);
+      if (selectedCharName) {
+        writeCharacterToolData(selectedCharName, DAILY_WEEKLY_TOOL_KEY, toSavedAllInOne(next));
+      }
+      return next;
+    });
+  };
   const updateNumber = (key: AllInOneNumberKey, value: number) => {
-    setInput((state) => ({ ...state, [key]: value }));
+    updateInput((state) => ({ ...state, [key]: value }));
   };
   const toggleDaily = (id: string) => {
-    setInput((state) => ({
+    updateInput((state) => ({
       ...state,
       dailyIds: state.dailyIds.includes(id) ? state.dailyIds.filter((dailyId) => dailyId !== id) : [...state.dailyIds, id],
     }));
   };
   const updateWeeklyRun = (id: string, runs: number) => {
-    setInput((state) => ({ ...state, weeklyRuns: { ...state.weeklyRuns, [id]: runs } }));
+    updateInput((state) => ({ ...state, weeklyRuns: { ...state.weeklyRuns, [id]: runs } }));
   };
   const updatePotion = (id: string, qty: number) => {
-    setInput((state) => ({ ...state, potions: { ...state.potions, [id]: qty } }));
+    updateInput((state) => ({ ...state, potions: { ...state.potions, [id]: qty } }));
   };
   const updateCharacter = (name: string | null) => {
+    if (selectedCharName) {
+      writeCharacterToolData(selectedCharName, DAILY_WEEKLY_TOOL_KEY, toSavedAllInOne(input));
+    }
     setSelectedCharName(name);
     const selected = characters.find((character) => character.characterName === name);
-    if (!selected) return;
-    setInput((state) => ({
-      ...state,
-      startLevel: selected.level,
-      startPercent: roundToThree(Math.min(99.999, Math.max(0, percentOfLevel(selected.level, selected.exp)))),
-    }));
+    setInput(selected ? loadCharacterAllInOne(selected) : defaultAllInOneInput());
   };
 
   return (
@@ -843,15 +927,15 @@ function AllInOneTab({ theme }: { theme: AppTheme }) {
           <NumberField label="Current EXP %" min={0} max={99.999} step="0.001" value={input.startPercent} labelStyle={labelStyle} inputStyle={inputStyle} disabled={selectedCharName !== null} onChange={(value) => updateNumber("startPercent", value)} />
           <NumberField label="Target Level" min={MIN_EXP_LEVEL + 1} max={MAX_EXP_LEVEL} value={input.targetLevel} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("targetLevel", value)} />
           <Field label="Burning" style={labelStyle}>
-            <select className="tool-select" value={input.burningType} onChange={(e) => setInput((state) => ({ ...state, burningType: e.target.value as AllInOneInput["burningType"] }))} style={selectStyle}>
+            <select className="tool-select" value={input.burningType} onChange={(e) => updateInput((state) => ({ ...state, burningType: e.target.value as AllInOneInput["burningType"] }))} style={selectStyle}>
               <option value="">None</option>
               <option value="hyper">Hyper Burning</option>
               <option value="hyperMax">Hyper Burning MAX</option>
               <option value="hyperMaxBeyond">Hyper Burning MAX + Beyond</option>
             </select>
           </Field>
-          <DateField theme={theme} label="Start Date" value={input.startDate} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => setInput((state) => ({ ...state, startDate: value }))} />
-          <DateField theme={theme} label="End Date" value={input.endDate} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => setInput((state) => ({ ...state, endDate: value }))} />
+          <DateField theme={theme} label="Start Date" value={input.startDate} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateInput((state) => ({ ...state, startDate: value }))} />
+          <DateField theme={theme} label="End Date" value={input.endDate} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateInput((state) => ({ ...state, endDate: value }))} />
         </div>
       </div>
 
@@ -920,7 +1004,7 @@ function AllInOneTab({ theme }: { theme: AppTheme }) {
           <SectionTitle theme={theme} label="Epic Dungeon" />
           <div className="exp-grid">
             <Field label="Epic Dungeon" style={labelStyle}>
-              <select className="tool-select" value={input.epicDungeonId} onChange={(e) => setInput((state) => ({ ...state, epicDungeonId: e.target.value }))} style={selectStyle}>
+              <select className="tool-select" value={input.epicDungeonId} onChange={(e) => updateInput((state) => ({ ...state, epicDungeonId: e.target.value }))} style={selectStyle}>
                 <option value="">No Epic Dungeon</option>
                 {EPIC_DUNGEON_OPTIONS.map((dungeon) => <option key={dungeon.id} value={dungeon.id}>{dungeon.label} (Lv. {dungeon.minLevel})</option>)}
               </select>
