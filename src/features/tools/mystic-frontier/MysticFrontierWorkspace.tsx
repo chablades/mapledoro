@@ -43,11 +43,14 @@ const FAM_SPRITE = 60;
 
 // ── small chips ───────────────────────────────────────────────────────────────
 
-function Chip({ label, color }: { label: string; color: string }) {
+// The hue identifies the element; the label is `theme.text`. Painting the label in the
+// hue over a 13% tint of itself left Holy at 1.2:1 and Lightning at 1.4:1 on the light
+// theme's white panel — the palette was only ever checked against the dark surface.
+function Chip({ label, color, theme }: { label: string; color: string; theme: AppTheme }) {
   return (
     <span style={{
-      padding: "0.1rem 0.45rem", borderRadius: 5, fontSize: "0.7rem", fontWeight: 800,
-      letterSpacing: "0.02em", background: `${color}22`, border: `1px solid ${color}`, color,
+      padding: "0.1rem 0.45rem", borderRadius: 5, fontSize: "0.75rem", fontWeight: 800,
+      letterSpacing: "0.02em", background: `${color}22`, border: `1px solid ${color}`, color: theme.text,
       whiteSpace: "nowrap", lineHeight: 1.5,
     }}>
       {label}
@@ -61,7 +64,9 @@ function DiePicker({ theme, value, max, onChange }: {
   theme: AppTheme; value: number; max: number; onChange: (v: number) => void;
 }) {
   return (
-    <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+    // Faces share the row width rather than sitting at a fixed 26px: full height for the
+    // tap target, and on the 1-column mobile lineup each face grows well past 44px wide.
+    <div style={{ display: "flex", gap: 6 }}>
       {Array.from({ length: max }, (_, i) => i + 1).map((n) => {
         const active = value === n;
         return (
@@ -71,7 +76,7 @@ function DiePicker({ theme, value, max, onChange }: {
             onClick={() => onChange(n)}
             aria-pressed={active}
             style={{
-              width: 26, height: 26, borderRadius: 6, padding: 0, cursor: "pointer",
+              flex: "1 1 0", minWidth: 0, height: 44, borderRadius: 6, padding: 0, cursor: "pointer",
               fontFamily: "inherit", fontWeight: 800, fontSize: "0.8rem",
               border: `1px solid ${active ? theme.accent : theme.border}`,
               background: active ? theme.accent : "transparent",
@@ -155,13 +160,15 @@ function LineupSlot({
       {present && (
         <>
           <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-            <Chip label={fam.type} color={theme.muted} />
-            <Chip label={fam.element === "None" ? "Non-elemental" : fam.element} color={ELEMENT_COLORS[fam.element]} />
+            <Chip label={fam.type} color={theme.muted} theme={theme} />
+            <Chip label={fam.element === "None" ? "Non-elemental" : fam.element} color={ELEMENT_COLORS[fam.element]} theme={theme} />
           </div>
 
           <Field label="Rarity" style={styles.labelStyle}>
             <select
               className="tool-select"
+              // `Field` renders its label as a div, so the control needs its own name.
+              aria-label={`Slot ${index + 1} rarity`}
               value={slot.rarity}
               onChange={(e) => mf.setRarity(index, e.target.value as MfRarity)}
               style={styles.selectStyle}
@@ -203,7 +210,7 @@ function EquippedBonusItem({ item, theme, onRemove }: {
       <ItemIcon id={item.id} size={32} />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: "0.82rem", fontWeight: 800, color: theme.text }}>{item.name}</div>
-        <div style={{ fontSize: "0.72rem", fontWeight: 600, color: theme.muted }}>{formatBonusEffect(item)}</div>
+        <div style={{ fontSize: "0.75rem", fontWeight: 600, color: theme.muted }}>{formatBonusEffect(item)}</div>
       </div>
       <button
         type="button"
@@ -243,10 +250,11 @@ function WaveSelector({ theme, activeWave, waveCount, filledCounts, onChange, in
   inputStyle: CSSProperties;
 }) {
   return (
-    <div className="mf-wave" style={{ display: "flex", alignItems: "center", gap: "0.6rem", flexWrap: "wrap" }}>
+    <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", flexWrap: "wrap" }}>
       <div className="section-label" style={{ color: theme.muted, marginBottom: 0 }}>Wave</div>
       <select
         className="tool-select"
+        aria-label="Wave"
         value={activeWave}
         onChange={(e) => onChange(Number(e.target.value))}
         // Height matches the CharacterDropdown trigger (34px avatar + padding + border).
@@ -315,7 +323,7 @@ function VerdictBanner({ result, target, passed, hasLineup, theme }: {
     : "Enter a target score to check your roll.";
 
   return (
-    <div style={bannerStyle}>
+    <div className="mf-verdict" style={bannerStyle}>
       {decided ? (
         <span style={{
           display: "inline-flex", alignItems: "center", gap: 6,
@@ -368,7 +376,7 @@ function ActiveLines({ result, theme }: { result: ScoreResult; theme: AppTheme }
           <span
             key={`${l.label}-${i}`}
             style={{
-              fontSize: "0.72rem", fontWeight: 600, padding: "0.2rem 0.5rem", borderRadius: 6,
+              fontSize: "0.75rem", fontWeight: 600, padding: "0.2rem 0.5rem", borderRadius: 6,
               background: `${theme.accent}1a`, border: `1px solid ${theme.accent}55`, color: theme.text,
             }}
           >
@@ -401,14 +409,14 @@ function RerollPanel({ rerolls, passed, theme }: {
                 border: `1px solid ${borderColor}`, background: theme.bg,
               }}
             >
-              <div style={{ fontSize: "0.74rem", fontWeight: 800, color: theme.text }}>
+              <div style={{ fontSize: "0.75rem", fontWeight: 800, color: theme.text }}>
                 {DIE_LABELS[s.slotIndex]} <span style={{ color: theme.muted, fontWeight: 600 }}>(now {s.currentDie}, d{s.maxDie})</span>
               </div>
               <div style={{ fontSize: "0.8rem", fontWeight: 700, color: possible ? theme.accent : theme.muted, marginTop: 4 }}>
                 {possible ? `Need: ${s.passingValues.join(", ")}` : "Can't pass alone"}
               </div>
               {possible && (
-                <div style={{ fontSize: "0.72rem", fontWeight: 600, color: theme.muted, marginTop: 2 }}>
+                <div style={{ fontSize: "0.75rem", fontWeight: 600, color: theme.muted, marginTop: 2 }}>
                   {Math.round(s.odds * 100)}% chance ({s.passingValues.length}/{s.maxDie})
                 </div>
               )}
@@ -450,6 +458,14 @@ export default function MysticFrontierWorkspace({ theme }: { theme: AppTheme }) 
     <div className="page-content">
       <style>{`
         .mf-wave { margin-left: auto; }
+        /* Also styles the portaled picker options: this sheet is global, the portals aren't scoped. */
+        .mf-option { background: transparent; }
+        .mf-option:hover, .mf-option:focus-visible { background: ${theme.accent}22; }
+        /* The one moment worth animating: the verdict flipping between pass and fail. */
+        .mf-verdict { transition: background 180ms ease-out, border-color 180ms ease-out; }
+        @media (prefers-reduced-motion: reduce) {
+          .mf-verdict { transition: none; }
+        }
         @media (max-width: 760px) {
           .mf-lineup { grid-template-columns: 1fr !important; }
           .mf-wave { margin-left: 0; flex-basis: 100%; }
@@ -463,7 +479,7 @@ export default function MysticFrontierWorkspace({ theme }: { theme: AppTheme }) 
         />
 
         {/* Character, wave, and target — the per-wave setup controls */}
-        <div className="fade-in panel-card" style={styles.sectionPanel}>
+        <div className="panel-card" style={styles.sectionPanel}>
           <div style={{ display: "flex", alignItems: "center", gap: "0.75rem 2rem", flexWrap: "wrap" }}>
             {mf.characters.length > 0 && (
               <CharacterSyncPanel
@@ -489,7 +505,7 @@ export default function MysticFrontierWorkspace({ theme }: { theme: AppTheme }) 
         </div>
 
         {/* Lineup */}
-        <div className="fade-in panel-card" style={styles.sectionPanel}>
+        <div className="panel-card" style={styles.sectionPanel}>
           <div style={{ display: "flex", alignItems: "center", gap: "1rem", marginBottom: "0.85rem" }}>
             <div className="section-label" style={{ color: theme.muted, marginBottom: 0, lineHeight: 1 }}>
               {`Active Lineup · Wave ${mf.activeWave + 1}`}
@@ -510,14 +526,14 @@ export default function MysticFrontierWorkspace({ theme }: { theme: AppTheme }) 
             ))}
           </div>
           {mf.diceCap !== null && (
-            <div style={{ marginTop: "0.75rem", fontSize: "0.74rem", fontWeight: 600, color: theme.muted }}>
+            <div style={{ marginTop: "0.75rem", fontSize: "0.75rem", fontWeight: 600, color: theme.muted }}>
               A &ldquo;Prevents dice from rolling over {mf.diceCap}&rdquo; line is active — every die is capped at {mf.diceCap}.
             </div>
           )}
         </div>
 
         {/* Bonus items */}
-        <div className="fade-in panel-card" style={styles.sectionPanel}>
+        <div className="panel-card" style={styles.sectionPanel}>
           <div className="section-label" style={{ color: theme.muted }}>Bonus Items</div>
           <div style={{ fontSize: "0.76rem", fontWeight: 600, color: theme.muted, marginBottom: "0.85rem" }}>
             Equipped dice items apply to every roll. Add the dice you own — one per type.
@@ -545,7 +561,7 @@ export default function MysticFrontierWorkspace({ theme }: { theme: AppTheme }) 
         </div>
 
         {/* Result */}
-        <div className="fade-in panel-card" style={styles.sectionPanel}>
+        <div className="panel-card" style={styles.sectionPanel}>
           <div className="section-label" style={{ color: theme.muted }}>Result</div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: "1.15rem" }}>

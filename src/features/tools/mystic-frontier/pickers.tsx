@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type RefObject } from "react";
 import { createPortal } from "react-dom";
 import type { AppTheme } from "../../../components/themes";
 import { usePickerCoords } from "../../characters/setup/hooks/usePickerCoords";
@@ -74,6 +74,33 @@ export function FamiliarSprite({ fam, size, theme }: { fam: MfFamiliar; size: nu
   );
 }
 
+// ── shared popover behavior ───────────────────────────────────────────────────
+
+/** Escape closes the popover and hands focus back to its trigger.
+ *  Capture phase on `window`: the search inputs call `stopPropagation()` in the bubble
+ *  phase, which would otherwise swallow the key before any ancestor listener saw it. */
+function useEscapeToClose(
+  isOpen: boolean,
+  onClose: () => void,
+  triggerRef: RefObject<HTMLButtonElement | null>,
+) {
+  const closeRef = useRef(onClose);
+  useEffect(() => {
+    closeRef.current = onClose;
+  });
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      e.stopPropagation();
+      closeRef.current();
+      triggerRef.current?.focus();
+    };
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
+  }, [isOpen, triggerRef]);
+}
+
 // ── shared popover styles ────────────────────────────────────────────────────
 
 const searchInputStyle: CSSProperties = {
@@ -95,6 +122,8 @@ const popoverVisualStyle: CSSProperties = {
   overflow: "hidden",
 };
 
+// No `background` here: hover and focus-visible are handled by the `.mf-option` rule in
+// the workspace's <style> block, and an inline background would outrank it.
 function optionButtonStyle(theme: AppTheme): CSSProperties {
   return {
     display: "flex",
@@ -102,7 +131,6 @@ function optionButtonStyle(theme: AppTheme): CSSProperties {
     gap: 8,
     width: "100%",
     padding: "0.35rem 0.6rem",
-    background: "transparent",
     border: "none",
     borderBottom: `1px solid ${theme.border}`,
     cursor: "pointer",
@@ -158,12 +186,14 @@ export function FamiliarPicker({
 }) {
   const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const { ref: wrapperRef, portalRef } = usePickerCoords(isOpen, FAM_PICKER_WIDTH);
   const filtered = useMemo(() => (isOpen ? filterFamiliars(query) : []), [isOpen, query]);
 
   useEffect(() => { if (isOpen) inputRef.current?.focus(); }, [isOpen]);
+  useEscapeToClose(isOpen, onClose, triggerRef);
 
-  function select(id: number | null) { onSelect(id); onClose(); }
+  function select(id: number | null) { onSelect(id); onClose(); triggerRef.current?.focus(); }
 
   const pickerStyle: CSSProperties = {
     ...popoverVisualStyle, position: "absolute", top: 0, left: 0,
@@ -173,14 +203,17 @@ export function FamiliarPicker({
   return (
     <div ref={wrapperRef} style={{ position: "relative", width: "100%" }}>
       <button
+        ref={triggerRef}
         type="button"
+        aria-haspopup="dialog"
+        aria-expanded={isOpen}
         onClick={() => { if (!isOpen) { setQuery(""); } onToggle(); }}
         style={{ background: "none", border: "none", padding: 0, font: "inherit", width: "100%", cursor: "pointer" }}
       >
         {children}
       </button>
       {isOpen && createPortal(
-        <div ref={portalRef} onMouseDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()} style={pickerStyle}>
+        <div ref={portalRef} role="dialog" aria-label="Select familiar" onMouseDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()} style={pickerStyle}>
           {familiarId !== null && <ClearRow theme={theme} label="— Clear slot —" onClear={() => select(null)} />}
           <div style={{ padding: "0.4rem 0.5rem", borderBottom: `1px solid ${theme.border}` }}>
             <input
@@ -203,10 +236,9 @@ export function FamiliarPicker({
                 <button
                   key={f.id}
                   type="button"
+                  className="mf-option"
                   onClick={() => select(f.id)}
                   style={optionButtonStyle(theme)}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = `${theme.accent}22`; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
                 >
                   <FamiliarSprite fam={f} size={28} theme={theme} />
                   <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.label}</span>
@@ -230,7 +262,7 @@ const lineTriggerStyle: CSSProperties = {
   boxSizing: "border-box",
   borderRadius: 6,
   fontFamily: "inherit",
-  fontSize: "0.72rem",
+  fontSize: "0.75rem",
   fontWeight: 600,
   padding: "0.3rem 0.45rem",
   borderWidth: 1,
@@ -254,6 +286,7 @@ export function LinePicker({
 }) {
   const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const { ref: wrapperRef, portalRef } = usePickerCoords(isOpen, LINE_PICKER_WIDTH);
 
   const options = useMemo(() => potentialsForRarity(rarity), [rarity]);
@@ -267,8 +300,9 @@ export function LinePicker({
   }, [options, value, query]);
 
   useEffect(() => { if (isOpen) inputRef.current?.focus(); }, [isOpen]);
+  useEscapeToClose(isOpen, onClose, triggerRef);
 
-  function select(id: number | null) { onChange(id); onClose(); }
+  function select(id: number | null) { onChange(id); onClose(); triggerRef.current?.focus(); }
 
   const pickerStyle: CSSProperties = {
     ...popoverVisualStyle, position: "absolute", top: 0, left: 0,
@@ -278,7 +312,10 @@ export function LinePicker({
   return (
     <div ref={wrapperRef} style={{ position: "relative", width: "100%" }}>
       <button
+        ref={triggerRef}
         type="button"
+        aria-haspopup="dialog"
+        aria-expanded={isOpen}
         onClick={() => { if (!isOpen) { setQuery(""); } onToggle(); }}
         style={{
           ...lineTriggerStyle, borderColor: theme.border, background: theme.bg,
@@ -288,7 +325,7 @@ export function LinePicker({
         {selected ? selected.label : placeholder}
       </button>
       {isOpen && createPortal(
-        <div ref={portalRef} onMouseDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()} style={pickerStyle}>
+        <div ref={portalRef} role="dialog" aria-label="Select potential line" onMouseDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()} style={pickerStyle}>
           {selected && <ClearRow theme={theme} label="— Clear line —" onClear={() => select(null)} />}
           <div style={{ padding: "0.4rem 0.5rem", borderBottom: `1px solid ${theme.border}` }}>
             <input
@@ -310,10 +347,9 @@ export function LinePicker({
               <button
                 key={p.id}
                 type="button"
+                className="mf-option"
                 onClick={() => select(p.id)}
                 style={{ ...optionButtonStyle(theme), lineHeight: 1.3 }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = `${theme.accent}22`; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
               >
                 {p.label}
               </button>
@@ -334,7 +370,7 @@ function bonusOptionLabel(theme: AppTheme, title: string, sub: string) {
   return (
     <span style={{ display: "flex", flexDirection: "column", gap: 1, minWidth: 0 }}>
       <span style={{ fontWeight: 800 }}>{title}</span>
-      <span style={{ fontSize: "0.7rem", fontWeight: 600, color: theme.muted }}>{sub}</span>
+      <span style={{ fontSize: "0.75rem", fontWeight: 600, color: theme.muted }}>{sub}</span>
     </span>
   );
 }
@@ -350,10 +386,9 @@ function BonusFamilyList({ theme, available, onPick }: {
           <button
             key={family}
             type="button"
+            className="mf-option"
             onClick={() => onPick(family)}
             style={optionButtonStyle(theme)}
-            onMouseEnter={(e) => { e.currentTarget.style.background = `${theme.accent}22`; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
           >
             {icon && <ItemIcon id={icon.id} size={28} />}
             {bonusOptionLabel(theme, `${family} Dice`, MF_BONUS_FAMILY_DESC[family])}
@@ -376,10 +411,9 @@ function BonusColorList({ theme, family, onPick }: {
           <button
             key={color}
             type="button"
+            className="mf-option"
             onClick={() => onPick(color)}
             style={optionButtonStyle(theme)}
-            onMouseEnter={(e) => { e.currentTarget.style.background = `${theme.accent}22`; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
           >
             <ItemIcon id={item.id} size={28} />
             {bonusOptionLabel(theme, color, formatBonusEffect(item))}
@@ -402,12 +436,16 @@ export function BonusItemPicker({
   children: React.ReactNode; // the trigger content (the "Add Bonus Item" affordance)
 }) {
   const [family, setFamily] = useState<MfBonusFamily | null>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const { ref: wrapperRef, portalRef } = usePickerCoords(isOpen, BONUS_PICKER_WIDTH);
+
+  useEscapeToClose(isOpen, onClose, triggerRef);
 
   function pickColor(color: MfBonusColor) {
     if (family) onSelect(family, color);
     setFamily(null);
     onClose();
+    triggerRef.current?.focus();
   }
 
   const pickerStyle: CSSProperties = {
@@ -420,14 +458,17 @@ export function BonusItemPicker({
     // trigger toggle (this picker lives outside the lineup's click zone).
     <div ref={wrapperRef} onMouseDown={(e) => e.stopPropagation()} style={{ position: "relative", width: "100%" }}>
       <button
+        ref={triggerRef}
         type="button"
+        aria-haspopup="dialog"
+        aria-expanded={isOpen}
         onClick={() => { if (!isOpen) { setFamily(null); } onToggle(); }}
         style={{ background: "none", border: "none", padding: 0, font: "inherit", width: "100%", cursor: "pointer" }}
       >
         {children}
       </button>
       {isOpen && createPortal(
-        <div ref={portalRef} onMouseDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()} style={pickerStyle}>
+        <div ref={portalRef} role="dialog" aria-label="Select bonus item" onMouseDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()} style={pickerStyle}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "0.4rem 0.6rem", borderBottom: `1px solid ${theme.border}` }}>
             {family && (
               <button
