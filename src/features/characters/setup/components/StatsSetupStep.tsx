@@ -36,6 +36,7 @@ import {
   normalizeHyperStatDraft,
   parseStatsStepDraft,
   serializeStatsStepDraft,
+  type HyperStatDraft,
   type StatsStepDraft,
   type TripleStatDraft,
 } from "../data/statsStepDraft";
@@ -917,7 +918,6 @@ function isStatsSubstepComplete(
     && isStatsSubstepSane(draft, tripleIds, primaryStat, requireWeaponAtt);
 }
 
-
 // "X left" / "X over" — pulled out of the main component (rather than an inline
 // ternary) purely to keep its cognitive complexity under the sonarjs cap.
 function hyperStatBudgetSuffix(budget: number, spent: number): string {
@@ -1099,6 +1099,247 @@ function StatsWindowSubstep({
   );
 }
 
+// ── Substep 0: quick questions ────────────────────────────────────────────────
+
+function QuickQuestionsSubstep({
+  theme, stepNumber, totalSteps, substepCount, substepAnimStyle,
+  onBack, onNext, onFinish, onValidityChange,
+  classData, draft, whSource, worldScouterLegion, isScouter, showWhLegion, characterLevel,
+  handleSetupOptUpdate, handleScouterQUpdate,
+}: {
+  theme: AppTheme;
+  stepNumber: number;
+  totalSteps: number;
+  substepCount: number;
+  substepAnimStyle: CSSProperties;
+  onBack: () => void;
+  onNext: () => void;
+  onFinish: () => void;
+  onValidityChange?: (valid: boolean, substepIndex?: number) => void;
+  classData: ClassSkillData | undefined;
+  draft: StatsStepDraft;
+  whSource: WhAutofillSource | null;
+  worldScouterLegion: StoredScouterLegion | undefined;
+  isScouter: boolean;
+  showWhLegion: boolean;
+  characterLevel?: number;
+  handleSetupOptUpdate: (patch: Partial<NonNullable<StatsStepDraft["setupOptions"]>>) => void;
+  handleScouterQUpdate: (patch: Partial<NonNullable<StatsStepDraft["scouterQuestions"]>>) => void;
+}) {
+  const questionnaireComplete = !isScouter || isScouterQuestionnaireComplete(
+    classData?.setupOptionsDef, draft.setupOptions, draft.scouterQuestions, whSource, worldScouterLegion?.wildHunterRank,
+  );
+  return (
+    <div key={0} style={substepAnimStyle}>
+      <SetupStepFrame
+        theme={theme}
+        substepIndex={0}
+        substepCount={substepCount}
+        stepLabel="Quick Questions"
+        stepNumber={stepNumber}
+        totalSteps={totalSteps}
+        description="Answer what applies to your character below."
+        onBack={onBack}
+        onNext={onNext}
+        onFinish={onFinish}
+        nextLabel="Continue"
+        nextDisabled={isScouter && !questionnaireComplete}
+        onValidityChange={onValidityChange}
+      >
+        <p style={sectionLabelStyle(theme)}>Character Info</p>
+        <div style={{ marginBottom: "0.75rem" }}>
+          <SetupOptionsSection
+            optsDef={classData?.setupOptionsDef}
+            draft={draft}
+            onUpdate={handleSetupOptUpdate}
+            theme={theme}
+            characterLevel={characterLevel}
+            required={isScouter}
+          />
+          {isScouter && (
+            <InnerAbilityLineQuestion sq={draft.scouterQuestions ?? {}} onUpdate={handleScouterQUpdate} theme={theme} required={isScouter} />
+          )}
+        </div>
+
+        {isScouter && (
+          <div style={{ marginBottom: "0.75rem" }}>
+            <p style={sectionLabelStyle(theme)}>Legion Artifact</p>
+            <LegionArtifactQuestions
+              sq={draft.scouterQuestions ?? {}}
+              worldLegion={worldScouterLegion}
+              onUpdate={handleScouterQUpdate}
+              theme={theme}
+            />
+          </div>
+        )}
+
+        {showWhLegion && (
+          <div>
+            <p style={sectionLabelStyle(theme)}>Mules</p>
+            <WildHunterRankQuestion
+              sq={draft.scouterQuestions ?? {}}
+              whSource={whSource}
+              worldLegion={worldScouterLegion}
+              onUpdate={handleScouterQUpdate}
+              theme={theme}
+              required={isScouter}
+            />
+          </div>
+        )}
+
+        {isScouter && !questionnaireComplete && (
+          <p style={{ margin: "0.4rem 0 0", fontSize: "0.78rem", fontWeight: 700, color: theme.muted }}>
+            Answer every starred question above to continue.
+          </p>
+        )}
+      </SetupStepFrame>
+    </div>
+  );
+}
+
+// ── Substep: hyper stat (Lv 140+, full setup only) ──────────────────────────────
+
+function HyperStatSubstep({
+  theme, stepNumber, totalSteps, substep, substepCount, substepAnimStyle,
+  onBack, onNext, onFinish, onValidityChange,
+  characterLevel, classData, hyper,
+  handleHyperStatUpdate, switchHyperPreset, copyHyperPreset, clearHyperPreset,
+}: {
+  theme: AppTheme;
+  stepNumber: number;
+  totalSteps: number;
+  substep: number;
+  substepCount: number;
+  substepAnimStyle: CSSProperties;
+  onBack: () => void;
+  onNext: () => void;
+  onFinish: () => void;
+  onValidityChange?: (valid: boolean, substepIndex?: number) => void;
+  characterLevel?: number;
+  classData: ClassSkillData | undefined;
+  hyper: HyperStatDraft;
+  handleHyperStatUpdate: (id: string, val: string) => void;
+  switchHyperPreset: (n: number) => void;
+  copyHyperPreset: (from: number) => void;
+  clearHyperPreset: () => void;
+}) {
+  // Arcane Power only appears in this window once the character can actually have
+  // Arcane Force — same eligibility as the Symbols section in the stat-window substep.
+  const hyperCategories = HYPER_STAT_CATEGORIES.filter(
+    (cat) => cat.id !== "arcanePower" || isArcaneEligible(characterLevel, classData?.isLegacy),
+  );
+  const hyperHalf = Math.ceil(hyperCategories.length / 2);
+  const hyperCols = [hyperCategories.slice(0, hyperHalf), hyperCategories.slice(hyperHalf)];
+  const hyperCategoryIds = hyperCategories.map((cat) => cat.id);
+  const activeHyperPreset = hyper.presets[hyper.activePreset] ?? {};
+  const hyperSpent = hyperStatPresetSpent(activeHyperPreset, hyperCategoryIds);
+  const hyperBudget = hyperStatBudget(characterLevel);
+  const hyperOverspent = hyperSpent > hyperBudget;
+  // All 3 presets persist to storage regardless of which is active, so Continue must
+  // stay blocked if ANY preset is over budget — otherwise switching to a valid preset
+  // silently bypasses the check while an overspent one is still saved (same class of
+  // bug as HEXA Stat's node/preset check).
+  const overBudgetPresetIndices = hyper.presets.reduce<number[]>((acc, p, i) => (
+    hyperStatPresetSpent(p, hyperCategoryIds) > hyperBudget ? [...acc, i] : acc
+  ), []);
+  const anyPresetOverBudget = overBudgetPresetIndices.length > 0;
+  return (
+    <div key={2} className="stats-hyper-root" style={substepAnimStyle}>
+    <style>{`
+      .stats-hyper-root { container-type: inline-size; }
+      /* Gap lives in CSS (not inline) so the container query can override it —
+         when the two columns stack, match the inter-column gap to the row gap so
+         the seam between the columns isn't wider than the rest of the list. */
+      .stats-hyper-grid { gap: 0.75rem; }
+      @container (max-width: 520px) { .stats-hyper-grid { flex-direction: column; gap: 0.4rem; } }
+    `}</style>
+    <SetupStepFrame
+      theme={theme}
+      substepIndex={substep}
+      substepCount={substepCount}
+      stepLabel="Hyper Stats"
+      stepNumber={stepNumber}
+      totalSteps={totalSteps}
+      description="Enter your Hyper Stat levels."
+      onBack={onBack}
+      onNext={onNext}
+      onFinish={onFinish}
+      nextLabel="Continue"
+      nextDisabled={anyPresetOverBudget}
+      onValidityChange={onValidityChange}
+    >
+      <HyperPresetBar
+        theme={theme}
+        active={hyper.activePreset}
+        onSwitch={switchHyperPreset}
+        onCopy={copyHyperPreset}
+        onClear={clearHyperPreset}
+        trailing={Number.isFinite(hyperBudget) && (
+          <span style={{ fontSize: "0.78rem", fontWeight: 800, color: hyperOverspent ? "#dc2626" : theme.muted }}>
+            {hyperSpent.toLocaleString()} / {hyperBudget.toLocaleString()} points used ({hyperStatBudgetSuffix(hyperBudget, hyperSpent)})
+          </span>
+        )}
+      />
+      <div className="stats-hyper-grid" style={{ display: "flex", minWidth: 0 }}>
+        {hyperCols.map((col, i) => (
+          // react-doctor-disable-next-line no-array-index-as-key
+          <div key={i} style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+            {col.map((cat) => (
+              <HyperStatCell key={cat.id} cat={cat} value={hyper.presets[hyper.activePreset]?.[cat.id] ?? ""} onUpdate={handleHyperStatUpdate} theme={theme} />
+            ))}
+          </div>
+        ))}
+      </div>
+      {anyPresetOverBudget && (
+        <p style={{ margin: "0.5rem 0 0", fontSize: "0.78rem", fontWeight: 700, color: theme.muted }}>
+          {hyperOverBudgetMessage(overBudgetPresetIndices)}
+        </p>
+      )}
+    </SetupStepFrame>
+    </div>
+  );
+}
+
+// ── Substep: inner ability (full setup only) ────────────────────────────────────
+
+function InnerAbilitySubstep({
+  theme, stepNumber, totalSteps, substep, substepCount, substepAnimStyle,
+  onBack, onNext, onFinish, onValidityChange, draft, onUpdate,
+}: {
+  theme: AppTheme;
+  stepNumber: number;
+  totalSteps: number;
+  substep: number;
+  substepCount: number;
+  substepAnimStyle: CSSProperties;
+  onBack: () => void;
+  onNext: () => void;
+  onFinish: () => void;
+  onValidityChange?: (valid: boolean, substepIndex?: number) => void;
+  draft: StatsStepDraft;
+  onUpdate: (next: IADraft) => void;
+}) {
+  return (
+    <div key={3} style={substepAnimStyle}>
+      <SetupStepFrame
+        theme={theme}
+        substepIndex={substep}
+        substepCount={substepCount}
+        stepLabel="Inner Ability"
+        stepNumber={stepNumber}
+        totalSteps={totalSteps}
+        description="Set your Inner Ability."
+        onBack={onBack}
+        onNext={onNext}
+        onFinish={onFinish}
+        onValidityChange={onValidityChange}
+      >
+        <InnerAbilitySetupStep draft={draft.innerAbility} onUpdate={onUpdate} theme={theme} />
+      </SetupStepFrame>
+    </div>
+  );
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function StatsSetupStep({
@@ -1216,74 +1457,15 @@ export default function StatsSetupStep({
   const { usesMagicWeapon, label: weaponAttLabel } = deriveWeaponAttLabel(classData);
 
   if (substep === 0) {
-    const questionnaireComplete = !isScouter || isScouterQuestionnaireComplete(
-      classData?.setupOptionsDef, draft.setupOptions, draft.scouterQuestions, whSource, worldScouterLegion?.wildHunterRank,
-    );
     return (
-      <div key={0} style={substepAnimStyle}>
-        <SetupStepFrame
-          theme={theme}
-          substepIndex={substep}
-          substepCount={SUBSTEP_COUNT}
-          stepLabel="Quick Questions"
-          stepNumber={stepNumber}
-          totalSteps={totalSteps}
-          description="Answer what applies to your character below."
-          onBack={onBack}
-          onNext={() => goToSubstep(1)}
-          onFinish={onFinish}
-          nextLabel="Continue"
-          nextDisabled={isScouter && !questionnaireComplete}
-          onValidityChange={onValidityChange}
-        >
-          <p style={sectionLabelStyle(theme)}>Character Info</p>
-          <div style={{ marginBottom: "0.75rem" }}>
-            <SetupOptionsSection
-              optsDef={classData?.setupOptionsDef}
-              draft={draft}
-              onUpdate={handleSetupOptUpdate}
-              theme={theme}
-              characterLevel={characterLevel}
-              required={isScouter}
-            />
-            {isScouter && (
-              <InnerAbilityLineQuestion sq={draft.scouterQuestions ?? {}} onUpdate={handleScouterQUpdate} theme={theme} required={isScouter} />
-            )}
-          </div>
-
-          {isScouter && (
-            <div style={{ marginBottom: "0.75rem" }}>
-              <p style={sectionLabelStyle(theme)}>Legion Artifact</p>
-              <LegionArtifactQuestions
-                sq={draft.scouterQuestions ?? {}}
-                worldLegion={worldScouterLegion}
-                onUpdate={handleScouterQUpdate}
-                theme={theme}
-              />
-            </div>
-          )}
-
-          {showWhLegion && (
-            <div>
-              <p style={sectionLabelStyle(theme)}>Mules</p>
-              <WildHunterRankQuestion
-                sq={draft.scouterQuestions ?? {}}
-                whSource={whSource}
-                worldLegion={worldScouterLegion}
-                onUpdate={handleScouterQUpdate}
-                theme={theme}
-                required={isScouter}
-              />
-            </div>
-          )}
-
-          {isScouter && !questionnaireComplete && (
-            <p style={{ margin: "0.4rem 0 0", fontSize: "0.78rem", fontWeight: 700, color: theme.muted }}>
-              Answer every starred question above to continue.
-            </p>
-          )}
-        </SetupStepFrame>
-      </div>
+      <QuickQuestionsSubstep
+        theme={theme} stepNumber={stepNumber} totalSteps={totalSteps}
+        substepCount={SUBSTEP_COUNT} substepAnimStyle={substepAnimStyle}
+        onBack={onBack} onNext={() => goToSubstep(1)} onFinish={onFinish} onValidityChange={onValidityChange}
+        classData={classData} draft={draft} whSource={whSource} worldScouterLegion={worldScouterLegion}
+        isScouter={isScouter} showWhLegion={showWhLegion} characterLevel={characterLevel}
+        handleSetupOptUpdate={handleSetupOptUpdate} handleScouterQUpdate={handleScouterQUpdate}
+      />
     );
   }
 
@@ -1300,81 +1482,16 @@ export default function StatsSetupStep({
 
   // Substep — Hyper Stat (Full setup, Lv 140+ only). Mirrors the in-game Hyper Stats
   // window: every category, level 0–15, entered directly into a two-column list.
-  // Arcane Power only appears in that window once the character can actually have
-  // Arcane Force — same eligibility as the Symbols section in substep 1.
   if (substep === hyperStatSubstep) {
-    const hyperCategories = HYPER_STAT_CATEGORIES.filter(
-      (cat) => cat.id !== "arcanePower" || isArcaneEligible(characterLevel, classData?.isLegacy),
-    );
-    const hyperHalf = Math.ceil(hyperCategories.length / 2);
-    const hyperCols = [hyperCategories.slice(0, hyperHalf), hyperCategories.slice(hyperHalf)];
-    const hyperCategoryIds = hyperCategories.map((cat) => cat.id);
-    const activeHyperPreset = hyper.presets[hyper.activePreset] ?? {};
-    const hyperSpent = hyperStatPresetSpent(activeHyperPreset, hyperCategoryIds);
-    const hyperBudget = hyperStatBudget(characterLevel);
-    const hyperOverspent = hyperSpent > hyperBudget;
-    // All 3 presets persist to storage regardless of which is active, so Continue must
-    // stay blocked if ANY preset is over budget — otherwise switching to a valid preset
-    // silently bypasses the check while an overspent one is still saved (same class of
-    // bug as HEXA Stat's node/preset check).
-    const overBudgetPresetIndices = hyper.presets.reduce<number[]>((acc, p, i) => (
-      hyperStatPresetSpent(p, hyperCategoryIds) > hyperBudget ? [...acc, i] : acc
-    ), []);
-    const anyPresetOverBudget = overBudgetPresetIndices.length > 0;
     return (
-      <div key={2} className="stats-hyper-root" style={substepAnimStyle}>
-      <style>{`
-        .stats-hyper-root { container-type: inline-size; }
-        /* Gap lives in CSS (not inline) so the container query can override it —
-           when the two columns stack, match the inter-column gap to the row gap so
-           the seam between the columns isn't wider than the rest of the list. */
-        .stats-hyper-grid { gap: 0.75rem; }
-        @container (max-width: 520px) { .stats-hyper-grid { flex-direction: column; gap: 0.4rem; } }
-      `}</style>
-      <SetupStepFrame
-        theme={theme}
-        substepIndex={substep}
-        substepCount={SUBSTEP_COUNT}
-        stepLabel="Hyper Stats"
-        stepNumber={stepNumber}
-        totalSteps={totalSteps}
-        description="Enter your Hyper Stat levels."
-        onBack={() => goToSubstep(1)}
-        onNext={() => goToSubstep(innerAbilitySubstep)}
-        onFinish={onFinish}
-        nextLabel="Continue"
-        nextDisabled={anyPresetOverBudget}
-        onValidityChange={onValidityChange}
-      >
-        <HyperPresetBar
-          theme={theme}
-          active={hyper.activePreset}
-          onSwitch={switchHyperPreset}
-          onCopy={copyHyperPreset}
-          onClear={clearHyperPreset}
-          trailing={Number.isFinite(hyperBudget) && (
-            <span style={{ fontSize: "0.78rem", fontWeight: 800, color: hyperOverspent ? "#dc2626" : theme.muted }}>
-              {hyperSpent.toLocaleString()} / {hyperBudget.toLocaleString()} points used ({hyperStatBudgetSuffix(hyperBudget, hyperSpent)})
-            </span>
-          )}
-        />
-        <div className="stats-hyper-grid" style={{ display: "flex", minWidth: 0 }}>
-          {hyperCols.map((col, i) => (
-            // react-doctor-disable-next-line no-array-index-as-key
-            <div key={i} style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: "0.4rem" }}>
-              {col.map((cat) => (
-                <HyperStatCell key={cat.id} cat={cat} value={hyper.presets[hyper.activePreset]?.[cat.id] ?? ""} onUpdate={handleHyperStatUpdate} theme={theme} />
-              ))}
-            </div>
-          ))}
-        </div>
-        {anyPresetOverBudget && (
-          <p style={{ margin: "0.5rem 0 0", fontSize: "0.78rem", fontWeight: 700, color: theme.muted }}>
-            {hyperOverBudgetMessage(overBudgetPresetIndices)}
-          </p>
-        )}
-      </SetupStepFrame>
-      </div>
+      <HyperStatSubstep
+        theme={theme} stepNumber={stepNumber} totalSteps={totalSteps}
+        substep={substep} substepCount={SUBSTEP_COUNT} substepAnimStyle={substepAnimStyle}
+        onBack={() => goToSubstep(1)} onNext={() => goToSubstep(innerAbilitySubstep)} onFinish={onFinish} onValidityChange={onValidityChange}
+        characterLevel={characterLevel} classData={classData} hyper={hyper}
+        handleHyperStatUpdate={handleHyperStatUpdate} switchHyperPreset={switchHyperPreset}
+        copyHyperPreset={copyHyperPreset} clearHyperPreset={clearHyperPreset}
+      />
     );
   }
 
@@ -1385,22 +1502,11 @@ export default function StatsSetupStep({
     updateDraft({ innerAbility: next });
   }
   return (
-    <div key={3} style={substepAnimStyle}>
-      <SetupStepFrame
-        theme={theme}
-        substepIndex={substep}
-        substepCount={SUBSTEP_COUNT}
-        stepLabel="Inner Ability"
-        stepNumber={stepNumber}
-        totalSteps={totalSteps}
-        description="Set your Inner Ability."
-        onBack={() => goToSubstep(hyperStatSubstep >= 0 ? hyperStatSubstep : 1)}
-        onNext={onNext}
-        onFinish={onFinish}
-        onValidityChange={onValidityChange}
-      >
-        <InnerAbilitySetupStep draft={draft.innerAbility} onUpdate={handleInnerAbilityUpdate} theme={theme} />
-      </SetupStepFrame>
-    </div>
+    <InnerAbilitySubstep
+      theme={theme} stepNumber={stepNumber} totalSteps={totalSteps}
+      substep={substep} substepCount={SUBSTEP_COUNT} substepAnimStyle={substepAnimStyle}
+      onBack={() => goToSubstep(hyperStatSubstep >= 0 ? hyperStatSubstep : 1)} onNext={onNext} onFinish={onFinish} onValidityChange={onValidityChange}
+      draft={draft} onUpdate={handleInnerAbilityUpdate}
+    />
   );
 }
