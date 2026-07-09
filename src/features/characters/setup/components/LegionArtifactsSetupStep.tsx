@@ -66,6 +66,12 @@ function sectionLabelStyle(theme: AppTheme): CSSProperties {
   };
 }
 
+const sectionBtnStyle: CSSProperties = {
+  background: "none", border: "none", padding: 0, font: "inherit",
+  fontSize: "0.75rem", fontWeight: 800,
+  cursor: "pointer",
+};
+
 function levelInputStyle(theme: AppTheme, width: number): CSSProperties {
   return {
     width, textAlign: "center",
@@ -94,6 +100,21 @@ function crystalTileStyle(theme: AppTheme, unlocked: boolean, isOpen: boolean): 
     fontFamily: "inherit",
     transition: "border-color 0.12s",
   };
+}
+
+function CrystalsSectionHeader({ theme, onMaxAll, onClear }: { theme: AppTheme; onMaxAll: () => void; onClear: () => void }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.4rem" }}>
+      <p style={{ margin: 0, fontSize: "0.75rem", fontWeight: 800, color: theme.muted, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+        Crystals
+      </p>
+      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+        <button type="button" onClick={onClear} style={{ ...sectionBtnStyle, color: theme.muted }}>Min All</button>
+        <span style={{ width: 1, alignSelf: "stretch", background: theme.border, flexShrink: 0 }} />
+        <button type="button" onClick={onMaxAll} style={{ ...sectionBtnStyle, color: theme.accent }}>Max All</button>
+      </div>
+    </div>
+  );
 }
 
 function crystalLockedBadgeStyle(theme: AppTheme): CSSProperties {
@@ -142,8 +163,12 @@ const cardPopoverShellStyle: CSSProperties = {
   padding: "0.6rem 0.6rem 0.7rem", boxSizing: "border-box",
 };
 
+const cardPopoverHeaderRowStyle: CSSProperties = {
+  display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: "0.5rem",
+};
+
 function cardPopoverTitleStyle(theme: AppTheme): CSSProperties {
-  return { margin: "0 0 0.5rem", fontSize: "0.8rem", fontWeight: 800, color: theme.text };
+  return { margin: 0, fontSize: "0.8rem", fontWeight: 800, color: theme.text };
 }
 
 const levelRowStyle: CSSProperties = {
@@ -338,7 +363,7 @@ function StatSlotChip({
 
 function CrystalTile({
   index, def, crystal, unlocked, isCardOpen, nestedOpenId, theme,
-  onToggleCard, onSetLevel, onSetStat, onToggleSlot, onClosePicker, onNextCard,
+  onToggleCard, onSetLevel, onSetStat, onToggleSlot, onClosePicker, onNextCard, onReset,
 }: {
   index: number;
   def: LegionCrystalDef;
@@ -355,6 +380,10 @@ function CrystalTile({
   /** Tab from the last stat slot jumps here — opens the next unlocked crystal's first
    *  slot directly. */
   onNextCard: () => void;
+  /** Resets this crystal back to level 1 with the same 3 default lines every crystal
+   *  starts with in-game (see DEFAULT_CRYSTAL_STATS) — not a blank/null state, since a
+   *  crystal is never actually empty once unlocked. */
+  onReset: () => void;
 }) {
   const level = Math.max(MIN_CRYSTAL_LEVEL, crystal.level ?? MIN_CRYSTAL_LEVEL);
   const stats = crystal.stats ?? DEFAULT_CRYSTAL_STATS;
@@ -392,7 +421,10 @@ function CrystalTile({
           onClick={(e) => e.stopPropagation()}
           style={{ ...cardPopoverShellStyle, background: theme.panel, border: `1px solid ${theme.accent}` }}
         >
-          <p style={cardPopoverTitleStyle(theme)}>{def.name}</p>
+          <div style={cardPopoverHeaderRowStyle}>
+            <p style={cardPopoverTitleStyle(theme)}>{def.name}</p>
+            <button type="button" onClick={onReset} style={{ ...sectionBtnStyle, color: theme.muted }}>Reset</button>
+          </div>
           <div style={levelRowStyle}>
             <span style={levelRowLabelStyle(theme)}>Level</span>
             <LevelPipsEditable level={level} theme={theme} onSetLevel={onSetLevel} />
@@ -478,6 +510,22 @@ export default function LegionArtifactsSetupStep({
     onChange(serializeLegionArtifactBoardDraft({ artifactLevel, crystals: nextCrystals }));
   }
 
+  // Bulk-sets every unlocked crystal's level only — stat picks stay per-crystal untouched,
+  // since the whole point of 9 crystals is deliberately different stats per crystal (totals
+  // sum across crystals, capped at 10 per stat), unlike the flat skill tiles elsewhere that
+  // have nothing but a level to bulk-set.
+  function setAllCrystalLevels(level: number) {
+    const nextCrystals = LEGION_CRYSTALS.map((_, i) => {
+      const current = crystals[i] ?? EMPTY_CRYSTAL;
+      return isCrystalUnlocked(i, artifactLevelNum) ? { ...current, level } : current;
+    });
+    onChange(serializeLegionArtifactBoardDraft({ artifactLevel, crystals: nextCrystals }));
+  }
+
+  function resetCrystal(index: number) {
+    updateCrystal(index, { level: MIN_CRYSTAL_LEVEL, stats: [...DEFAULT_CRYSTAL_STATS] });
+  }
+
   function setCrystalStat(index: number, slotIndex: number, statId: LegionArtifactStatId | null) {
     const current = crystals[index] ?? EMPTY_CRYSTAL;
     const nextStats = [...(current.stats ?? DEFAULT_CRYSTAL_STATS)];
@@ -539,9 +587,11 @@ export default function LegionArtifactsSetupStep({
           .legion-artifacts-root { container-type: inline-size; }
           .legion-crystal-grid { grid-template-columns: repeat(3, ${CRYSTAL_TILE_SIZE}px); }
           .legion-crystal-tile { width: ${CRYSTAL_TILE_SIZE}px; height: ${CRYSTAL_TILE_SIZE}px; }
+          .legion-crystal-section { width: calc((${CRYSTAL_TILE_SIZE}px * 3) + (0.6rem * 2)); }
           @container (max-width: 400px) {
             .legion-crystal-grid { grid-template-columns: repeat(3, ${CRYSTAL_TILE_SIZE_MOBILE}px); }
             .legion-crystal-tile { width: ${CRYSTAL_TILE_SIZE_MOBILE}px; height: ${CRYSTAL_TILE_SIZE_MOBILE}px; }
+            .legion-crystal-section { width: calc((${CRYSTAL_TILE_SIZE_MOBILE}px * 3) + (0.6rem * 2)); }
           }
         `}</style>
         <div>
@@ -558,25 +608,33 @@ export default function LegionArtifactsSetupStep({
           />
         </div>
 
-        <div className="legion-crystal-grid" style={crystalGridStyle}>
-          {LEGION_CRYSTALS.map((def, index) => (
-            <CrystalTile
-              key={def.id}
-              index={index}
-              def={def}
-              crystal={crystals[index] ?? EMPTY_CRYSTAL}
-              unlocked={isCrystalUnlocked(index, artifactLevelNum)}
-              isCardOpen={openCardIndex === index}
-              nestedOpenId={openId}
-              theme={theme}
-              onToggleCard={() => toggleCard(index)}
-              onSetLevel={(level) => updateCrystal(index, { level })}
-              onSetStat={(slotIndex, statId) => setCrystalStat(index, slotIndex, statId)}
-              onToggleSlot={(slotIndex) => toggleSlot(index, slotIndex)}
-              onClosePicker={() => setOpenId(null)}
-              onNextCard={() => goToNextCrystal(index)}
-            />
-          ))}
+        <div className="legion-crystal-section">
+          <CrystalsSectionHeader
+            theme={theme}
+            onMaxAll={() => setAllCrystalLevels(MAX_CRYSTAL_LEVEL)}
+            onClear={() => setAllCrystalLevels(MIN_CRYSTAL_LEVEL)}
+          />
+          <div className="legion-crystal-grid" style={crystalGridStyle}>
+            {LEGION_CRYSTALS.map((def, index) => (
+              <CrystalTile
+                key={def.id}
+                index={index}
+                def={def}
+                crystal={crystals[index] ?? EMPTY_CRYSTAL}
+                unlocked={isCrystalUnlocked(index, artifactLevelNum)}
+                isCardOpen={openCardIndex === index}
+                nestedOpenId={openId}
+                theme={theme}
+                onToggleCard={() => toggleCard(index)}
+                onSetLevel={(level) => updateCrystal(index, { level })}
+                onSetStat={(slotIndex, statId) => setCrystalStat(index, slotIndex, statId)}
+                onToggleSlot={(slotIndex) => toggleSlot(index, slotIndex)}
+                onClosePicker={() => setOpenId(null)}
+                onNextCard={() => goToNextCrystal(index)}
+                onReset={() => resetCrystal(index)}
+              />
+            ))}
+          </div>
         </div>
       </div>
     </SetupStepFrame>
