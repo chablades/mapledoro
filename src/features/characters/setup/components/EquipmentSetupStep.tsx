@@ -761,13 +761,13 @@ function SlotCell({ slotKey, item, theme, isActive, onClick, picker }: {
 
 // ── Column helper ──────────────────────────────────────────────────────────
 
-function SlotColumn({ slots, grid, theme, activeSlot, onToggle, renderPicker }: {
+function SlotColumn({ slots, grid, theme, activeSlot, onToggle, pickerCtx }: {
   slots: SlotKey[];
   grid: SlotMap;
   theme: AppTheme;
   activeSlot: SlotKey | null;
   onToggle: (slot: SlotKey) => void;
-  renderPicker: (slot: SlotKey) => ReactNode;
+  pickerCtx: SlotPickerContext;
 }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 4, flexShrink: 0 }}>
@@ -779,7 +779,7 @@ function SlotColumn({ slots, grid, theme, activeSlot, onToggle, renderPicker }: 
           theme={theme}
           isActive={activeSlot === slot}
           onClick={() => onToggle(slot)}
-          picker={renderPicker(slot)}
+          picker={<SlotPicker slot={slot} ctx={pickerCtx} />}
         />
       ))}
     </div>
@@ -876,6 +876,44 @@ function SymbolGroupHeader({ label, theme, onMaxAll, onClear }: {
   );
 }
 
+// Whole group (including its Max All/Clear header) is skipped once none of its areas are
+// unlocked yet — e.g. Grand Sacred (Lv 290+) for a freshly-260 character.
+function SymbolGroup({ label, areas, maxLevel, symbolLevels, theme, isUnlocked, onLevel, onLevelMany }: {
+  label: string;
+  areas: SymbolArea[];
+  maxLevel: number;
+  symbolLevels: Record<string, string>;
+  theme: AppTheme;
+  isUnlocked: (area: SymbolArea) => boolean;
+  onLevel: (regionName: string, level: string) => void;
+  onLevelMany: (updates: Record<string, string>) => void;
+}) {
+  const unlockedAreas = areas.filter(isUnlocked);
+  if (unlockedAreas.length === 0) return null;
+  return (
+    <div style={{ width: SYMBOL_GRID_WIDTH }}>
+      <SymbolGroupHeader
+        label={label}
+        theme={theme}
+        onMaxAll={() => onLevelMany(Object.fromEntries(unlockedAreas.map((a) => [a.name, String(maxLevel)])))}
+        onClear={() => onLevelMany(Object.fromEntries(unlockedAreas.map((a) => [a.name, ""])))}
+      />
+      <div style={{ display: "grid", gridTemplateColumns: `repeat(3, ${SYMBOL_TILE_SIZE}px)`, gap: 4 }}>
+        {unlockedAreas.map((area) => (
+          <SymbolLevelTile
+            key={area.itemId}
+            area={area}
+            level={symbolLevels[area.name] ?? ""}
+            maxLevel={maxLevel}
+            theme={theme}
+            onLevel={(level) => onLevel(area.name, level)}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function SymbolSection({ symbolLevels, activeTab, availableTabs, characterLevel, theme, onTabChange, onLevel, onLevelMany }: {
   symbolLevels: Record<string, string>;
   activeTab: SymbolTabKey;
@@ -886,7 +924,6 @@ function SymbolSection({ symbolLevels, activeTab, availableTabs, characterLevel,
   onLevel: (regionName: string, level: string) => void;
   onLevelMany: (updates: Record<string, string>) => void;
 }) {
-  const maxLevel = activeTab === "arcane" ? ARCANE_MAX_LEVEL : SACRED_MAX_LEVEL;
   // Undefined level = assume eligible, same convention as isArcaneEligible/isSacredEligible
   // (an unresolved lookup shouldn't wrongly hide every area). Areas the character hasn't
   // reached yet are hidden entirely, not shown disabled — this is the setup flow, not the
@@ -894,35 +931,6 @@ function SymbolSection({ symbolLevels, activeTab, availableTabs, characterLevel,
   // hiding the whole tab) is that asking about content the character can't have yet is
   // noise. The profile-page "show disabled with a reason" treatment doesn't apply here.
   const isUnlocked = (area: SymbolArea) => characterLevel === undefined || characterLevel >= area.requiredLevel;
-  const renderTile = (area: SymbolArea) => (
-    <SymbolLevelTile
-      key={area.itemId}
-      area={area}
-      level={symbolLevels[area.name] ?? ""}
-      maxLevel={maxLevel}
-      theme={theme}
-      onLevel={(level) => onLevel(area.name, level)}
-    />
-  );
-  // Whole group (including its Max All/Clear header) is skipped once none of its areas are
-  // unlocked yet — e.g. Grand Sacred (Lv 290+) for a freshly-260 character.
-  function renderGroup(label: string, areas: SymbolArea[], atMax: number) {
-    const unlockedAreas = areas.filter(isUnlocked);
-    if (unlockedAreas.length === 0) return null;
-    return (
-      <div style={{ width: SYMBOL_GRID_WIDTH }}>
-        <SymbolGroupHeader
-          label={label}
-          theme={theme}
-          onMaxAll={() => onLevelMany(Object.fromEntries(unlockedAreas.map((a) => [a.name, String(atMax)])))}
-          onClear={() => onLevelMany(Object.fromEntries(unlockedAreas.map((a) => [a.name, ""])))}
-        />
-        <div style={{ display: "grid", gridTemplateColumns: `repeat(3, ${SYMBOL_TILE_SIZE}px)`, gap: 4 }}>
-          {unlockedAreas.map(renderTile)}
-        </div>
-      </div>
-    );
-  }
   return (
     <div>
       {availableTabs.length > 1 && (
@@ -943,12 +951,12 @@ function SymbolSection({ symbolLevels, activeTab, availableTabs, characterLevel,
       </div>
       )}
       {activeTab === "arcane" ? (
-        renderGroup("Arcane", ARCANE_AREAS, ARCANE_MAX_LEVEL)
+        <SymbolGroup label="Arcane" areas={ARCANE_AREAS} maxLevel={ARCANE_MAX_LEVEL} symbolLevels={symbolLevels} theme={theme} isUnlocked={isUnlocked} onLevel={onLevel} onLevelMany={onLevelMany} />
       ) : (
         <>
-          {renderGroup("Sacred", SACRED_AREAS, SACRED_MAX_LEVEL)}
+          <SymbolGroup label="Sacred" areas={SACRED_AREAS} maxLevel={SACRED_MAX_LEVEL} symbolLevels={symbolLevels} theme={theme} isUnlocked={isUnlocked} onLevel={onLevel} onLevelMany={onLevelMany} />
           <div style={{ marginTop: "0.75rem" }}>
-            {renderGroup("Grand Sacred", GRAND_SACRED_AREAS, SACRED_MAX_LEVEL)}
+            <SymbolGroup label="Grand Sacred" areas={GRAND_SACRED_AREAS} maxLevel={SACRED_MAX_LEVEL} symbolLevels={symbolLevels} theme={theme} isUnlocked={isUnlocked} onLevel={onLevel} onLevelMany={onLevelMany} />
           </div>
         </>
       )}
@@ -964,6 +972,383 @@ function SectionHeading({ label, theme }: { label: string; theme: AppTheme }) {
     }}>
       {label}
     </p>
+  );
+}
+
+// ── Slot picker (per-slot ItemPicker wrapper) ────────────────────────────────
+
+/** Shared context every SlotPicker needs, built once per render by EquipmentSetupStep. */
+interface SlotPickerContext {
+  activeSlot: SlotKey | null;
+  classId: string | undefined;
+  branchMask: number;
+  weaponAttLabel: string;
+  activePreset: number;
+  draft: EquipmentDraft;
+  theme: AppTheme;
+  characterLevel?: number;
+  readSlot: (slot: SlotKey) => EquipmentItem | null | undefined;
+  siblingItemIds: (slot: SlotKey) => ReadonlySet<string> | undefined;
+  presetBaseItemFor: (slot: SlotKey) => EquipmentItem | null;
+  chainNavForSlot: (slot: SlotKey) => { onPrev?: () => void; onNext?: () => void };
+  updateSlot: (slot: SlotKey, item: EquipmentItem | null) => void;
+  setActiveSlot: (slot: SlotKey | null) => void;
+  setWeaponAtt: (v: string) => void;
+}
+
+function SlotPicker({ slot, ctx }: { slot: SlotKey; ctx: SlotPickerContext }) {
+  const {
+    activeSlot, classId, branchMask, weaponAttLabel, activePreset, draft, theme, characterLevel,
+    readSlot, siblingItemIds, presetBaseItemFor, chainNavForSlot, updateSlot, setActiveSlot, setWeaponAtt,
+  } = ctx;
+  if (activeSlot !== slot) return null;
+  const source = resolvePickerSource(slot, classId, branchMask);
+  let itemFilter = source.filter;
+  let showAllWhenEmpty = false;
+
+  const pairedPet = PET_EQUIP_TO_PET[slot]; // set ⇒ this is a petEquip slot
+  const pairedEquip = PET_TO_PET_EQUIP[slot]; // set ⇒ this is a pet slot
+  if (pairedPet) {
+    // Pet chosen: show only the equips it can wear — a short list, so reveal it without searching.
+    const pet = draft[pairedPet];
+    if (pet) {
+      itemFilter = (item) => source.filter(item) && (item.wearablePets?.includes(pet.id) ?? false);
+      showAllWhenEmpty = true;
+    }
+  } else if (pairedEquip && !readSlot(slot)) {
+    // Equip chosen but this pet slot is empty: narrow the pet list to its wearers (guides equip→pet
+    // order) and reveal that short list without searching.
+    const equip = draft[pairedEquip];
+    if (equip) {
+      itemFilter = (item) => source.filter(item) && (item.wearableEquips?.includes(equip.id) ?? false);
+      showAllWhenEmpty = true;
+    }
+  }
+
+  // Weapon ATT/MATT is scouter-only data, asked inline right after picking a weapon —
+  // but only for preset 1 (the one assumed to be the character's actual active
+  // loadout; see the activePreset fix elsewhere in this step), so filling in
+  // presets 2/3 doesn't ask the same question again for a build that isn't "active."
+  const weaponAttStep = slot === "weapon" && activePreset === 0
+    ? { label: weaponAttLabel, value: draft.weaponAtt ?? "", onChange: setWeaponAtt }
+    : undefined;
+
+  const { onPrev: goPrev, onNext: goNext } = chainNavForSlot(slot);
+
+  return (
+    <ItemPicker
+      slot={slot}
+      current={readSlot(slot)}
+      theme={theme}
+      presetBaseItem={presetBaseItemFor(slot)}
+      excludeIds={siblingItemIds(slot)}
+      files={source.files}
+      itemFilter={itemFilter}
+      maxLevel={characterLevel}
+      showAllWhenEmpty={showAllWhenEmpty}
+      onSelect={(item) => updateSlot(slot, item)}
+      onClose={() => setActiveSlot(null)}
+      onAdvance={goNext && ((viaKeyboard) => (viaKeyboard ? goNext() : setActiveSlot(null)))}
+      onPrev={goPrev}
+      onNext={goNext}
+      weaponAttStep={weaponAttStep}
+    />
+  );
+}
+
+// ── Substep 1: title, totems & symbols ────────────────────────────────────────
+
+function AdditionalEquipSubstep({
+  theme, stepNumber, totalSteps, substepAnimStyle, draft, activeSlot, toggleSlot, pickerCtx,
+  availableSymbolTabs, symbolTab, characterLevel, onTabChange, onLevel, onLevelMany,
+  onBack, onNext, onFinish,
+}: {
+  theme: AppTheme;
+  stepNumber: number;
+  totalSteps: number;
+  substepAnimStyle: CSSProperties;
+  draft: EquipmentDraft;
+  activeSlot: SlotKey | null;
+  toggleSlot: (slot: SlotKey) => void;
+  pickerCtx: SlotPickerContext;
+  availableSymbolTabs: { key: SymbolTabKey; label: string }[];
+  symbolTab: SymbolTabKey;
+  characterLevel?: number;
+  onTabChange: (tab: SymbolTabKey) => void;
+  onLevel: (regionName: string, level: string) => void;
+  onLevelMany: (updates: Record<string, string>) => void;
+  onBack: () => void;
+  onNext: () => void;
+  onFinish: () => void;
+}) {
+  return (
+    <div key={1} style={substepAnimStyle}>
+      <SetupStepFrame
+        theme={theme}
+        stepLabel="Titles, Totems & Symbols"
+        stepNumber={stepNumber}
+        totalSteps={totalSteps}
+        substepIndex={1}
+        substepCount={SUBSTEP_COUNT}
+        description="Set your title, totems, and symbol levels."
+        onBack={onBack}
+        onNext={onNext}
+        onFinish={onFinish}
+        nextLabel="Continue"
+      >
+        <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+          <div>
+            <SectionHeading label="Title" theme={theme} />
+            <SlotCell
+              slotKey="title"
+              item={draft.title}
+              theme={theme}
+              isActive={activeSlot === "title"}
+              onClick={() => toggleSlot("title")}
+              picker={<SlotPicker slot="title" ctx={pickerCtx} />}
+            />
+          </div>
+          <div>
+            <SectionHeading label="Totems" theme={theme} />
+            <div style={{ display: "flex", gap: 4 }}>
+              {(["totem1", "totem2", "totem3"] as const).map((slotKey) => (
+                <SlotCell
+                  key={slotKey}
+                  slotKey={slotKey}
+                  item={draft[slotKey]}
+                  theme={theme}
+                  isActive={activeSlot === slotKey}
+                  onClick={() => toggleSlot(slotKey)}
+                  picker={<SlotPicker slot={slotKey} ctx={pickerCtx} />}
+                />
+              ))}
+            </div>
+          </div>
+          {availableSymbolTabs.length > 0 && (
+            <div>
+              <SectionHeading label="Symbols" theme={theme} />
+              <SymbolSection
+                symbolLevels={draft.symbolLevels ?? {}}
+                activeTab={symbolTab}
+                availableTabs={availableSymbolTabs}
+                characterLevel={characterLevel}
+                theme={theme}
+                onTabChange={onTabChange}
+                onLevel={onLevel}
+                onLevelMany={onLevelMany}
+              />
+            </div>
+          )}
+        </div>
+      </SetupStepFrame>
+    </div>
+  );
+}
+
+// ── Substep 2: pets ────────────────────────────────────────────────────────────
+
+const PET_SLOT_TRIPLES = [
+  ["pet1", "petEquip1", "Pet 1"],
+  ["pet2", "petEquip2", "Pet 2"],
+  ["pet3", "petEquip3", "Pet 3"],
+] as const;
+
+function PetsSubstep({
+  theme, stepNumber, totalSteps, substepAnimStyle, draft, activeSlot, toggleSlot, pickerCtx,
+  onBack, onNext, onFinish,
+}: {
+  theme: AppTheme;
+  stepNumber: number;
+  totalSteps: number;
+  substepAnimStyle: CSSProperties;
+  draft: EquipmentDraft;
+  activeSlot: SlotKey | null;
+  toggleSlot: (slot: SlotKey) => void;
+  pickerCtx: SlotPickerContext;
+  onBack: () => void;
+  onNext: () => void;
+  onFinish: () => void;
+}) {
+  return (
+    <div key={2} style={substepAnimStyle}>
+      <SetupStepFrame
+        theme={theme}
+        stepLabel="Pets"
+        stepNumber={stepNumber}
+        totalSteps={totalSteps}
+        substepIndex={2}
+        substepCount={SUBSTEP_COUNT}
+        description="Choose your pets."
+        onBack={onBack}
+        onNext={onNext}
+        onFinish={onFinish}
+      >
+        <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+          {PET_SLOT_TRIPLES.map(([petKey, equipKey, label]) => (
+            <div key={petKey}>
+              <SectionHeading label={label} theme={theme} />
+              <div style={{ display: "flex", gap: 4 }}>
+                <SlotCell
+                  slotKey={petKey}
+                  item={draft[petKey]}
+                  theme={theme}
+                  isActive={activeSlot === petKey}
+                  onClick={() => toggleSlot(petKey)}
+                  picker={<SlotPicker slot={petKey} ctx={pickerCtx} />}
+                />
+                <SlotCell
+                  slotKey={equipKey}
+                  item={draft[equipKey]}
+                  theme={theme}
+                  isActive={activeSlot === equipKey}
+                  onClick={() => toggleSlot(equipKey)}
+                  picker={<SlotPicker slot={equipKey} ctx={pickerCtx} />}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </SetupStepFrame>
+    </div>
+  );
+}
+
+// ── Substep 0: main equipment grid ─────────────────────────────────────────────
+
+const navBtnStyle = (theme: AppTheme): CSSProperties => ({
+  border: `1px solid ${theme.border}`,
+  borderRadius: 8,
+  background: theme.bg,
+  color: theme.text,
+  fontFamily: "inherit", fontWeight: 800, fontSize: "1.5rem",
+  width: 44, height: 48, cursor: "pointer",
+});
+
+// Layout:
+// Col 1: ring1–4, belt, pocket
+// Col 2: face, eye, earring, pendant1, pendant2
+// Center block (3-col wide): sprite above, then weapon / secondary / emblem row
+// Col 6: hat, top, bottom, shoulder, android
+// Col 7: cape, glove, shoe, medal, heart, badge
+function EquipmentGridSubstep({
+  theme, stepNumber, totalSteps, substepAnimStyle, activeGrid, activeSlot, toggleSlot, pickerCtx,
+  activePreset, switchPreset, mobileGridPage, setMobileGridPage, confirmedCharacterImgURL,
+  onBack, onNext, onFinish,
+}: {
+  theme: AppTheme;
+  stepNumber: number;
+  totalSteps: number;
+  substepAnimStyle: CSSProperties;
+  activeGrid: SlotMap;
+  activeSlot: SlotKey | null;
+  toggleSlot: (slot: SlotKey) => void;
+  pickerCtx: SlotPickerContext;
+  activePreset: number;
+  switchPreset: (n: number) => void;
+  mobileGridPage: number;
+  setMobileGridPage: (updater: (p: number) => number) => void;
+  confirmedCharacterImgURL?: string;
+  onBack: () => void;
+  onNext: () => void;
+  onFinish: () => void;
+}) {
+  return (
+    <div key={0} className="eq-substep-root" style={substepAnimStyle}>
+    <style>{`
+      .eq-substep-root {
+        container-type: inline-size;
+      }
+      /* Carousel kicks in once the available width can't fit the full grid (~500px),
+         regardless of which page-layout breakpoint produced that width. */
+      @container (max-width: 520px) {
+        .eq-page-0 .eq-section-1, .eq-page-0 .eq-section-2,
+        .eq-page-1 .eq-section-0, .eq-page-1 .eq-section-2,
+        .eq-page-2 .eq-section-0, .eq-page-2 .eq-section-1 { display: none; }
+        .eq-page-label.eq-page-label { display: block; }
+        .eq-page-nav-btn.eq-page-nav-btn { display: flex; align-items: center; justify-content: center; }
+      }
+    `}</style>
+    <SetupStepFrame
+      theme={theme}
+      stepLabel="Equipment"
+      stepNumber={stepNumber}
+      totalSteps={totalSteps}
+      substepIndex={0}
+      substepCount={SUBSTEP_COUNT}
+      description="Choose your equipped gear."
+      onBack={onBack}
+      onNext={onNext}
+      onFinish={onFinish}
+      nextLabel="Continue"
+    >
+      <PresetBar theme={theme} active={activePreset} onSwitch={switchPreset} />
+      <p className="eq-page-label" style={{ margin: "0 0 8px", fontSize: "0.75rem", fontWeight: 800, color: theme.muted, textTransform: "uppercase", letterSpacing: "0.05em", textAlign: "center" }}>
+        {EQUIPMENT_PAGE_LABELS[mobileGridPage]}
+      </p>
+      {/* Equipment grid */}
+      <div className={`eq-page-${mobileGridPage}`}>
+      <div style={{ display: "flex", gap: 8, alignItems: "center", justifyContent: "center" }}>
+
+        <button type="button" className="eq-page-nav-btn" aria-label="Previous section" onClick={() => setMobileGridPage((p) => (p + 2) % 3)} style={navBtnStyle(theme)}>‹</button>
+
+        <div style={{ display: "flex", gap: 4, alignItems: "stretch" }}>
+
+          <div className="eq-section eq-section-0" style={{ gap: 4, flexShrink: 0 }}>
+            {/* Col 1 */}
+            <SlotColumn slots={COL1_SLOTS} grid={activeGrid} theme={theme} activeSlot={activeSlot} onToggle={toggleSlot} pickerCtx={pickerCtx} />
+
+            {/* Col 2 */}
+            <SlotColumn slots={COL2_SLOTS} grid={activeGrid} theme={theme} activeSlot={activeSlot} onToggle={toggleSlot} pickerCtx={pickerCtx} />
+          </div>
+
+          {/* Center block: sprite + weapon/sub/emblem */}
+          <div className="eq-section eq-section-1" style={{ flexDirection: "column", gap: 4, flexShrink: 0, width: CENTER_WIDTH }}>
+            <div style={spritePreviewStyle(theme)}>
+              {confirmedCharacterImgURL ? (
+                <CharacterAvatar
+                  src={confirmedCharacterImgURL}
+                  alt="Character preview"
+                  width={100}
+                  height={200}
+                  style={{ objectFit: "contain", width: 100, height: 200 }}
+                />
+              ) : (
+                <span style={{ fontSize: "0.75rem", color: theme.muted, fontWeight: 700, padding: "0.5rem", textAlign: "center" }}>
+                  No preview
+                </span>
+              )}
+            </div>
+            <div style={{ display: "flex", gap: 4 }}>
+              {CENTER_BOTTOM_SLOTS.map((slot) => (
+                <SlotCell
+                  key={slot}
+                  slotKey={slot}
+                  item={activeGrid[slot]}
+                  theme={theme}
+                  isActive={activeSlot === slot}
+                  onClick={() => toggleSlot(slot)}
+                  picker={<SlotPicker slot={slot} ctx={pickerCtx} />}
+                />
+              ))}
+            </div>
+          </div>
+
+          <div className="eq-section eq-section-2" style={{ gap: 4, flexShrink: 0 }}>
+            {/* Col 6 */}
+            <SlotColumn slots={COL6_SLOTS} grid={activeGrid} theme={theme} activeSlot={activeSlot} onToggle={toggleSlot} pickerCtx={pickerCtx} />
+
+            {/* Col 7 */}
+            <SlotColumn slots={COL7_SLOTS} grid={activeGrid} theme={theme} activeSlot={activeSlot} onToggle={toggleSlot} pickerCtx={pickerCtx} />
+          </div>
+
+        </div>
+
+        <button type="button" className="eq-page-nav-btn" aria-label="Next section" onClick={() => setMobileGridPage((p) => (p + 1) % 3)} style={navBtnStyle(theme)}>›</button>
+
+      </div>
+      </div>
+    </SetupStepFrame>
+    </div>
   );
 }
 
@@ -1184,284 +1569,71 @@ export default function EquipmentSetupStep({
     };
   }
 
-  function renderPicker(slot: SlotKey): ReactNode {
-    if (activeSlot !== slot) return null;
-    const source = resolvePickerSource(slot, classId, branchMask);
-    let itemFilter = source.filter;
-    let showAllWhenEmpty = false;
-
-    const pairedPet = PET_EQUIP_TO_PET[slot]; // set ⇒ this is a petEquip slot
-    const pairedEquip = PET_TO_PET_EQUIP[slot]; // set ⇒ this is a pet slot
-    if (pairedPet) {
-      // Pet chosen: show only the equips it can wear — a short list, so reveal it without searching.
-      const pet = draft[pairedPet];
-      if (pet) {
-        itemFilter = (item) => source.filter(item) && (item.wearablePets?.includes(pet.id) ?? false);
-        showAllWhenEmpty = true;
-      }
-    } else if (pairedEquip && !readSlot(slot)) {
-      // Equip chosen but this pet slot is empty: narrow the pet list to its wearers (guides equip→pet
-      // order) and reveal that short list without searching.
-      const equip = draft[pairedEquip];
-      if (equip) {
-        itemFilter = (item) => source.filter(item) && (item.wearableEquips?.includes(equip.id) ?? false);
-        showAllWhenEmpty = true;
-      }
-    }
-
-    // Weapon ATT/MATT is scouter-only data, asked inline right after picking a weapon —
-    // but only for preset 1 (the one assumed to be the character's actual active
-    // loadout; see the activePreset fix elsewhere in this step), so filling in
-    // presets 2/3 doesn't ask the same question again for a build that isn't "active."
-    const weaponAttStep = slot === "weapon" && activePreset === 0
-      ? { label: weaponAttLabel, value: draft.weaponAtt ?? "", onChange: setWeaponAtt }
-      : undefined;
-
-    const { onPrev: goPrev, onNext: goNext } = chainNavForSlot(slot);
-
-    return (
-      <ItemPicker
-        slot={slot}
-        current={readSlot(slot)}
-        theme={theme}
-        presetBaseItem={presetBaseItemFor(slot)}
-        excludeIds={siblingItemIds(slot)}
-        files={source.files}
-        itemFilter={itemFilter}
-        maxLevel={characterLevel}
-        showAllWhenEmpty={showAllWhenEmpty}
-        onSelect={(item) => updateSlot(slot, item)}
-        onClose={() => setActiveSlot(null)}
-        onAdvance={goNext && ((viaKeyboard) => (viaKeyboard ? goNext() : setActiveSlot(null)))}
-        onPrev={goPrev}
-        onNext={goNext}
-        weaponAttStep={weaponAttStep}
-      />
-    );
-  }
+  const pickerCtx: SlotPickerContext = {
+    activeSlot, classId, branchMask, weaponAttLabel, activePreset, draft, theme, characterLevel,
+    readSlot, siblingItemIds, presetBaseItemFor, chainNavForSlot, updateSlot, setActiveSlot, setWeaponAtt,
+  };
 
   if (substep === 1) {
     return (
-      <div key={1} style={substepAnimStyle}>
-        <SetupStepFrame
-          theme={theme}
-          stepLabel="Titles, Totems & Symbols"
-          stepNumber={stepNumber}
-          totalSteps={totalSteps}
-          substepIndex={substep}
-          substepCount={SUBSTEP_COUNT}
-          description="Set your title, totems, and symbol levels."
-          onBack={() => goToSubstep(0)}
-          onNext={() => goToSubstep(2)}
-          onFinish={onFinish}
-          nextLabel="Continue"
-        >
-          <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
-            <div>
-              <SectionHeading label="Title" theme={theme} />
-              <SlotCell
-                slotKey="title"
-                item={draft.title}
-                theme={theme}
-                isActive={activeSlot === "title"}
-                onClick={() => toggleSlot("title")}
-                picker={renderPicker("title")}
-              />
-            </div>
-            <div>
-              <SectionHeading label="Totems" theme={theme} />
-              <div style={{ display: "flex", gap: 4 }}>
-                {(["totem1", "totem2", "totem3"] as const).map((slotKey) => (
-                  <SlotCell
-                    key={slotKey}
-                    slotKey={slotKey}
-                    item={draft[slotKey]}
-                    theme={theme}
-                    isActive={activeSlot === slotKey}
-                    onClick={() => toggleSlot(slotKey)}
-                    picker={renderPicker(slotKey)}
-                  />
-                ))}
-              </div>
-            </div>
-            {availableSymbolTabs.length > 0 && (
-              <div>
-                <SectionHeading label="Symbols" theme={theme} />
-                <SymbolSection
-                  symbolLevels={draft.symbolLevels ?? {}}
-                  activeTab={symbolTab}
-                  availableTabs={availableSymbolTabs}
-                  characterLevel={characterLevel}
-                  theme={theme}
-                  onTabChange={setSymbolTab}
-                  onLevel={setSymbolLevel}
-                  onLevelMany={setSymbolLevels}
-                />
-              </div>
-            )}
-          </div>
-        </SetupStepFrame>
-      </div>
+      <AdditionalEquipSubstep
+        theme={theme}
+        stepNumber={stepNumber}
+        totalSteps={totalSteps}
+        substepAnimStyle={substepAnimStyle}
+        draft={draft}
+        activeSlot={activeSlot}
+        toggleSlot={toggleSlot}
+        pickerCtx={pickerCtx}
+        availableSymbolTabs={availableSymbolTabs}
+        symbolTab={symbolTab}
+        characterLevel={characterLevel}
+        onTabChange={setSymbolTab}
+        onLevel={setSymbolLevel}
+        onLevelMany={setSymbolLevels}
+        onBack={() => goToSubstep(0)}
+        onNext={() => goToSubstep(2)}
+        onFinish={onFinish}
+      />
     );
   }
 
   if (substep === 2) {
     return (
-      <div key={2} style={substepAnimStyle}>
-        <SetupStepFrame
-          theme={theme}
-          stepLabel="Pets"
-          stepNumber={stepNumber}
-          totalSteps={totalSteps}
-          substepIndex={substep}
-          substepCount={SUBSTEP_COUNT}
-          description="Choose your pets."
-          onBack={() => goToSubstep(1)}
-          onNext={onNext}
-          onFinish={onFinish}
-        >
-          <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
-            {([["pet1", "petEquip1", "Pet 1"], ["pet2", "petEquip2", "Pet 2"], ["pet3", "petEquip3", "Pet 3"]] as const).map(([petKey, equipKey, label]) => (
-              <div key={petKey}>
-                <SectionHeading label={label} theme={theme} />
-                <div style={{ display: "flex", gap: 4 }}>
-                  <SlotCell
-                    slotKey={petKey}
-                    item={draft[petKey]}
-                    theme={theme}
-                    isActive={activeSlot === petKey}
-                    onClick={() => toggleSlot(petKey)}
-                    picker={renderPicker(petKey)}
-                  />
-                  <SlotCell
-                    slotKey={equipKey}
-                    item={draft[equipKey]}
-                    theme={theme}
-                    isActive={activeSlot === equipKey}
-                    onClick={() => toggleSlot(equipKey)}
-                    picker={renderPicker(equipKey)}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        </SetupStepFrame>
-      </div>
+      <PetsSubstep
+        theme={theme}
+        stepNumber={stepNumber}
+        totalSteps={totalSteps}
+        substepAnimStyle={substepAnimStyle}
+        draft={draft}
+        activeSlot={activeSlot}
+        toggleSlot={toggleSlot}
+        pickerCtx={pickerCtx}
+        onBack={() => goToSubstep(1)}
+        onNext={onNext}
+        onFinish={onFinish}
+      />
     );
   }
 
-  // Layout:
-  // Col 1: ring1–4, belt, pocket
-  // Col 2: face, eye, earring, pendant1, pendant2
-  // Center block (3-col wide): sprite above, then weapon / secondary / emblem row
-  // Col 6: hat, top, bottom, shoulder, android
-  // Col 7: cape, glove, shoe, medal, heart, badge
-
-  const navBtnStyle: CSSProperties = {
-    border: `1px solid ${theme.border}`,
-    borderRadius: 8,
-    background: theme.bg,
-    color: theme.text,
-    fontFamily: "inherit", fontWeight: 800, fontSize: "1.5rem",
-    width: 44, height: 48, cursor: "pointer",
-  };
-
   return (
-    <div key={0} className="eq-substep-root" style={substepAnimStyle}>
-    <style>{`
-      .eq-substep-root {
-        container-type: inline-size;
-      }
-      /* Carousel kicks in once the available width can't fit the full grid (~500px),
-         regardless of which page-layout breakpoint produced that width. */
-      @container (max-width: 520px) {
-        .eq-page-0 .eq-section-1, .eq-page-0 .eq-section-2,
-        .eq-page-1 .eq-section-0, .eq-page-1 .eq-section-2,
-        .eq-page-2 .eq-section-0, .eq-page-2 .eq-section-1 { display: none; }
-        .eq-page-label.eq-page-label { display: block; }
-        .eq-page-nav-btn.eq-page-nav-btn { display: flex; align-items: center; justify-content: center; }
-      }
-    `}</style>
-    <SetupStepFrame
+    <EquipmentGridSubstep
       theme={theme}
-      stepLabel="Equipment"
       stepNumber={stepNumber}
       totalSteps={totalSteps}
-      substepIndex={substep}
-      substepCount={SUBSTEP_COUNT}
-      description="Choose your equipped gear."
+      substepAnimStyle={substepAnimStyle}
+      activeGrid={activeGrid}
+      activeSlot={activeSlot}
+      toggleSlot={toggleSlot}
+      pickerCtx={pickerCtx}
+      activePreset={activePreset}
+      switchPreset={switchPreset}
+      mobileGridPage={mobileGridPage}
+      setMobileGridPage={setMobileGridPage}
+      confirmedCharacterImgURL={confirmedCharacterImgURL}
       onBack={onBack}
       onNext={() => goToSubstep(1)}
       onFinish={onFinish}
-      nextLabel="Continue"
-    >
-      <PresetBar theme={theme} active={activePreset} onSwitch={switchPreset} />
-      <p className="eq-page-label" style={{ margin: "0 0 8px", fontSize: "0.75rem", fontWeight: 800, color: theme.muted, textTransform: "uppercase", letterSpacing: "0.05em", textAlign: "center" }}>
-        {EQUIPMENT_PAGE_LABELS[mobileGridPage]}
-      </p>
-      {/* Equipment grid */}
-      <div className={`eq-page-${mobileGridPage}`}>
-      <div style={{ display: "flex", gap: 8, alignItems: "center", justifyContent: "center" }}>
-
-        <button type="button" className="eq-page-nav-btn" aria-label="Previous section" onClick={() => setMobileGridPage((p) => (p + 2) % 3)} style={navBtnStyle}>‹</button>
-
-        <div style={{ display: "flex", gap: 4, alignItems: "stretch" }}>
-
-          <div className="eq-section eq-section-0" style={{ gap: 4, flexShrink: 0 }}>
-            {/* Col 1 */}
-            <SlotColumn slots={COL1_SLOTS} grid={activeGrid} theme={theme} activeSlot={activeSlot} onToggle={toggleSlot} renderPicker={renderPicker} />
-
-            {/* Col 2 */}
-            <SlotColumn slots={COL2_SLOTS} grid={activeGrid} theme={theme} activeSlot={activeSlot} onToggle={toggleSlot} renderPicker={renderPicker} />
-          </div>
-
-          {/* Center block: sprite + weapon/sub/emblem */}
-          <div className="eq-section eq-section-1" style={{ flexDirection: "column", gap: 4, flexShrink: 0, width: CENTER_WIDTH }}>
-            <div style={spritePreviewStyle(theme)}>
-              {confirmedCharacterImgURL ? (
-                <CharacterAvatar
-                  src={confirmedCharacterImgURL}
-                  alt="Character preview"
-                  width={100}
-                  height={200}
-                  style={{ objectFit: "contain", width: 100, height: 200 }}
-                />
-              ) : (
-                <span style={{ fontSize: "0.75rem", color: theme.muted, fontWeight: 700, padding: "0.5rem", textAlign: "center" }}>
-                  No preview
-                </span>
-              )}
-            </div>
-            <div style={{ display: "flex", gap: 4 }}>
-              {CENTER_BOTTOM_SLOTS.map((slot) => (
-                <SlotCell
-                  key={slot}
-                  slotKey={slot}
-                  item={activeGrid[slot]}
-                  theme={theme}
-                  isActive={activeSlot === slot}
-                  onClick={() => toggleSlot(slot)}
-                  picker={renderPicker(slot)}
-                />
-              ))}
-            </div>
-          </div>
-
-          <div className="eq-section eq-section-2" style={{ gap: 4, flexShrink: 0 }}>
-            {/* Col 6 */}
-            <SlotColumn slots={COL6_SLOTS} grid={activeGrid} theme={theme} activeSlot={activeSlot} onToggle={toggleSlot} renderPicker={renderPicker} />
-
-            {/* Col 7 */}
-            <SlotColumn slots={COL7_SLOTS} grid={activeGrid} theme={theme} activeSlot={activeSlot} onToggle={toggleSlot} renderPicker={renderPicker} />
-          </div>
-
-        </div>
-
-        <button type="button" className="eq-page-nav-btn" aria-label="Next section" onClick={() => setMobileGridPage((p) => (p + 1) % 3)} style={navBtnStyle}>›</button>
-
-      </div>
-      </div>
-    </SetupStepFrame>
-    </div>
+    />
   );
 }
