@@ -268,7 +268,7 @@ const MONSTER_ROWS = [
   ["8645465", "Phantasmal Guide", 294, 5023491, "map-tallahart"],
   ["8645464", "Night Guide", 294, 5023491, "map-tallahart"],
   ["8645481", "Patrol Securitron", 295, 5643220, "map-geardrak"],
-  ["8645487", "Surveillance Robot", 296, 5711948, "map-geardrak"],
+  ["8645438", "Strike Securitron", 296, 5711948, "map-geardrak"],
   ["8645483", "Combatron N", 297, 5781080, "map-geardrak"],
   ["8645484", "Combatron EX", 298, 5842650, "map-geardrak"],
   ["8645485", "Kronos's Remnant", 299, 5912186, "map-geardrak"],

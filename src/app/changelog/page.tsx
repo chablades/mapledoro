@@ -11,6 +11,12 @@ interface ChangelogEntry {
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    date: "2026-07-10",
+    changes: [
+      { type: "fixed", text: "The level 296 Geardock monster in the EXP Calculator is now Strike Securitron instead of Surveillance Robot." },
+    ],
+  },
+  {
     date: "2026-07-09",
     changes: [
       { type: "added", text: "Added Normal and Hard Malefic Star and Jupiter to the Boss Crystal Tracker." },
