@@ -1009,6 +1009,7 @@ export default function FamiliarsSetupStep({
           <button
             key={i}
             type="button"
+            className="tap-target-44"
             onClick={() => { setActivePreset(i); closePicker(); }}
             style={presetSquareStyle(theme, i === activePreset)}
           >

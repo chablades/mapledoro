@@ -244,6 +244,19 @@ textarea:focus-visible {
   cursor: pointer;
 }
 
+/* Expands a small button's actual clickable area toward the 44px WCAG minimum
+   via an invisible overlay, without growing its visible box (background/border
+   stay at the button's own small size). Needs position: relative — set here
+   since it's shape, not color. */
+.tap-target-44 {
+  position: relative;
+}
+.tap-target-44::before {
+  content: "";
+  position: absolute;
+  inset: -6px;
+}
+
 /* Pill-shaped toggle button */
 .pill-btn {
   padding: 6px 14px;

@@ -399,6 +399,7 @@ function HyperPresetBar({ theme, active, onSwitch, onCopy, onClear, trailing }: 
               <button
                 key={i}
                 type="button"
+                className="tap-target-44"
                 onClick={() => onSwitch(i)}
                 style={presetButtonStyle(theme, on)}
               >

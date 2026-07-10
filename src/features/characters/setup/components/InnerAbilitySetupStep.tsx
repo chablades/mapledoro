@@ -130,6 +130,7 @@ function IAPresetBar({ theme, active, onSwitch, onCopy, onClear }: {
               <button
                 key={i}
                 type="button"
+                className="tap-target-44"
                 onClick={() => onSwitch(i)}
                 style={presetButtonStyle(theme, on)}
               >

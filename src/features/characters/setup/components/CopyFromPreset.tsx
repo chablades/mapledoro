@@ -5,8 +5,9 @@ import type { AppTheme } from "../../../../components/themes";
 import ConfirmModal from "../../../../components/ConfirmModal";
 
 // Padding + min dimensions keep these at a real touch target size (~32px)
-// rather than hugging the label text, so adjacent buttons are harder to
-// misclick on a phone.
+// rather than hugging the label text; .tap-target-44 (globals.css) extends
+// the actual clickable area to the WCAG 2.5.5 minimum without growing the
+// visible box, so adjacent buttons are harder to misclick on a phone.
 const copyBtnStyle = (theme: AppTheme): CSSProperties => ({
   border: `1px dashed ${theme.border}`,
   borderRadius: 7,
@@ -71,14 +72,14 @@ export function CopyFromPreset({
         <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
           <span style={{ fontSize: "0.75rem", fontWeight: 700, color: theme.muted }}>Copy from</span>
           {others.map((i) => (
-            <button key={i} type="button" onClick={() => setPending({ type: "copy", from: i })} style={copyBtnStyle(theme)}>
+            <button key={i} type="button" className="tap-target-44" onClick={() => setPending({ type: "copy", from: i })} style={copyBtnStyle(theme)}>
               {labels ? labels[i] : i + 1}
             </button>
           ))}
         </div>
       )}
       {onClear && (
-        <button type="button" onClick={() => setPending({ type: "clear" })} style={clearBtnStyle}>
+        <button type="button" className="tap-target-44" onClick={() => setPending({ type: "clear" })} style={clearBtnStyle}>
           Clear preset
         </button>
       )}
