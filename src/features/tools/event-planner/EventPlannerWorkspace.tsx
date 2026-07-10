@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useRef, useEffect } from "react";
 import type { AppTheme } from "../../../components/themes";
+import { statusText } from "../../../components/statusColors";
 import { replaceZeroOnDigit } from "../numberInputHandlers";
 import { ToolHeader } from "../../../components/ToolHeader";
 import { ItemIcon as ResourceItemIcon } from "../../../components/ResourceImage";
@@ -130,6 +131,7 @@ function ItemSelector({
         className="tool-input"
         role="combobox"
         tabIndex={0}
+        aria-label="Item"
         aria-expanded={open}
         aria-controls="event-item-listbox"
         style={{
@@ -310,7 +312,7 @@ function PlanSummary({
         </div>
         <div>
           <div style={statLabel}>Expected Spares</div>
-          <div style={{ ...statValue, color: grandTotal.booms > 0 ? "#e05a5a" : theme.text }}>
+          <div style={{ ...statValue, color: grandTotal.booms > 0 ? statusText(theme, "danger") : theme.text }}>
             {grandTotal.booms === 0 ? "0" : grandTotal.booms.toFixed(1)}
           </div>
         </div>
@@ -397,7 +399,7 @@ function StatusCell({
   tdStyle: React.CSSProperties;
 }) {
   return (
-    <td style={{ ...tdStyle, textAlign: "center", color: on ? theme.accent : theme.muted }}>
+    <td style={{ ...tdStyle, textAlign: "center", color: on ? theme.accentText : theme.muted }}>
       {on ? "✓" : "—"}
     </td>
   );
@@ -452,7 +454,7 @@ function PlanRowCells({
       <td style={tdStyle} title={`${formatMesoFull(cost.cost)} mesos`}>
         {formatMeso(cost.cost)}
       </td>
-      <td style={{ ...tdStyle, color: cost.booms > 0 ? "#e05a5a" : theme.muted }}>
+      <td style={{ ...tdStyle, color: cost.booms > 0 ? statusText(theme, "danger") : theme.muted }}>
         {cost.booms === 0 ? "0" : cost.booms.toFixed(1)}
       </td>
       <StatusCell tdStyle={tdStyle} theme={theme} on={entry.starCatch} />
@@ -467,6 +469,8 @@ function PlanRowCells({
             type="button"
             className="tool-btn"
             onClick={() => removeEntry(entry.id)}
+            aria-label={`Remove ${item.name}`}
+            title="Remove item"
             style={removeStyle}
           >
             {"×"}
@@ -537,9 +541,9 @@ function CharacterPlanPanel({
       >
         <CharacterAvatarBox theme={theme} record={record} size={42} />
         <div>
-          <div style={{ fontSize: "0.82rem", fontWeight: 800, color: theme.text }}>
+          <h2 style={{ fontSize: "0.82rem", fontWeight: 800, color: theme.text, margin: 0 }}>
             {name}
-          </div>
+          </h2>
           {record && (
             <div style={{ fontSize: "0.75rem", fontWeight: 600, color: theme.muted }}>
               Lv.{record.level} {record.jobName}
@@ -688,10 +692,11 @@ function EventSettingsSection({
           value={boomTier}
           onChange={(e) => setBoomTier(Number(e.target.value))}
           aria-label="Enhancement Mode tier"
+          aria-valuetext={`Tier ${boomTier}`}
           style={{ flex: 1, minWidth: 140, accentColor: theme.accent, cursor: "pointer" }}
         />
-        <span style={{ fontSize: "0.8rem", fontWeight: 800, color: theme.text, minWidth: 24 }}>
-          {boomTier}×
+        <span style={{ fontSize: "0.8rem", fontWeight: 800, color: theme.text, minWidth: 52 }}>
+          Tier {boomTier}
         </span>
       </div>
     </div>
@@ -807,7 +812,7 @@ export default function EventPlannerWorkspace({ theme }: { theme: AppTheme }) {
 
   const clearAllButtonStyle: React.CSSProperties = {
     padding: "6px 14px", borderRadius: "8px", fontSize: "0.75rem", fontWeight: 700,
-    color: "#e05a5a", background: theme.timerBg, border: `1px solid ${theme.border}`,
+    color: statusText(theme, "danger"), background: theme.timerBg, border: `1px solid ${theme.border}`,
     userSelect: "none",
   };
 
