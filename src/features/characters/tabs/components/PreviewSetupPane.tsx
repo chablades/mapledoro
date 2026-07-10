@@ -130,13 +130,14 @@ export default function PreviewSetupPane({ model, actions }: PreviewSetupPanePro
   // matches whether the directory view it's about to animate actually has a champions
   // section (an "all worlds" view has no such section, but hasChampionSection is false
   // there too since mainCharacterKey/championCharacterKeys resolve to null/[]).
+  const showAllDirectoryWorlds = directoryWorldFilter === null && directory.worldIds.length > 1;
   const activeDirectoryWorldId = directoryWorldFilter ?? directory.worldIds[0] ?? null;
   const activeDirectoryMainKey =
-    directoryWorldFilter !== null && activeDirectoryWorldId !== null
+    !showAllDirectoryWorlds && activeDirectoryWorldId !== null
       ? (directory.mainCharacterKeyByWorld[String(activeDirectoryWorldId)] ?? null)
       : null;
   const activeDirectoryChampionKeys =
-    directoryWorldFilter !== null && activeDirectoryWorldId !== null
+    !showAllDirectoryWorlds && activeDirectoryWorldId !== null
       ? (directory.championCharacterKeysByWorld[String(activeDirectoryWorldId)] ?? [])
       : [];
   const hasChampionSection = buildDirectoryGroups({

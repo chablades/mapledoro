@@ -14,7 +14,7 @@ import type { AppTheme } from "../../../../components/themes";
 import { statusText } from "../../../../components/statusColors";
 import CharacterAvatar from "../components/CharacterAvatar";
 
-const rowStyle: CSSProperties = { display: "flex", flexWrap: "wrap", justifyContent: "flex-start", alignItems: "flex-start", gap: "0.6rem", width: "100%" };
+const rowStyle: CSSProperties = { display: "grid", gridTemplateColumns: "repeat(auto-fill, 190px)", justifyContent: "center", alignItems: "start", gap: "0.6rem", width: "100%" };
 
 function directoryCardButtonStyle(theme: AppTheme): CSSProperties {
   return {
@@ -167,50 +167,55 @@ function DirectoryControls({
     fontWeight: 700,
     padding: "0.25rem 0.4rem",
   };
-
   return (
     <div
       style={{
         display: "flex",
-        justifyContent: "space-between",
         alignItems: "center",
         gap: "0.65rem",
         border: `1px solid ${theme.border}`,
         borderRadius: "12px",
         background: theme.bg,
-        padding: "0.7rem",
+        padding: "0.55rem",
         flexWrap: "wrap",
       }}
     >
-      <span style={{ fontSize: "0.78rem", color: theme.muted, fontWeight: 800 }}>
-        {CHARACTERS_COPY.characterDirectory.sortRowsLabel}
-      </span>
-      <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
-        {worldIds.length > 0 && (
-          <select
-            aria-label="Filter by world"
-            disabled={isUiLocked || !hasMultipleWorlds}
-            value={selectedWorldId ?? "all"}
-            onChange={(e) => {
-              const val = e.target.value;
-              onWorldChange(val === "all" ? null : Number(val));
-            }}
-            style={selectStyle}
-          >
-            {worldIds.map((worldId) => (
-              <option key={worldId} value={worldId}>
-                {WORLD_NAMES[worldId] ?? `World ${worldId}`}
-              </option>
-            ))}
-            {hasMultipleWorlds && <option value="all">All worlds</option>}
-          </select>
-        )}
+      {worldIds.length > 0 && (
+        <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", background: theme.panel, border: `1px solid ${theme.border}`, borderRadius: "10px", padding: "0.3rem 0.55rem" }}>
+          <span style={{ fontSize: "0.7rem", fontWeight: 800, color: theme.muted }}>World</span>
+          {hasMultipleWorlds ? (
+            <select
+              aria-label="Filter by world"
+              disabled={isUiLocked}
+              value={selectedWorldId ?? "all"}
+              onChange={(e) => {
+                const val = e.target.value;
+                onWorldChange(val === "all" ? null : Number(val));
+              }}
+              style={{ ...selectStyle, border: "none", background: "transparent", padding: "0 0.2rem" }}
+            >
+              {worldIds.map((worldId) => (
+                <option key={worldId} value={worldId}>
+                  {WORLD_NAMES[worldId] ?? `World ${worldId}`}
+                </option>
+              ))}
+              <option value="all">All worlds</option>
+            </select>
+          ) : (
+            <span style={{ fontSize: "0.8rem", fontWeight: 700, color: theme.text }}>
+              {WORLD_NAMES[worldIds[0]] ?? `World ${worldIds[0]}`}
+            </span>
+          )}
+        </div>
+      )}
+      <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", background: theme.panel, border: `1px solid ${theme.border}`, borderRadius: "10px", padding: "0.3rem 0.55rem" }}>
+        <span style={{ fontSize: "0.7rem", fontWeight: 800, color: theme.muted }}>Sort</span>
         <select
           aria-label="Sort characters by"
           disabled={isUiLocked}
           value={directorySortBy}
           onChange={(e) => onSortChange(e.target.value as DirectorySortBy)}
-          style={selectStyle}
+          style={{ ...selectStyle, border: "none", background: "transparent", padding: "0 0.2rem" }}
         >
           <option value="name">{CHARACTERS_COPY.characterDirectory.sortAlphabeticalOption}</option>
           <option value="level">{CHARACTERS_COPY.characterDirectory.sortByLevelOption}</option>
@@ -337,7 +342,7 @@ function DirectoryWorldView({ theme, isUiLocked, worldIds, sortedCharacters, sho
             <p className="section-label" style={{ color: theme.muted }}>
               {WORLD_NAMES[worldId] ?? `World ${worldId}`}
             </p>
-            <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "flex-start", alignItems: "flex-start", gap: "0.6rem", width: "100%" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, 190px)", justifyContent: "center", alignItems: "start", gap: "0.6rem", width: "100%" }}>
               {worldChars.map((c) => (
                 <DirectoryCharacterCard key={toCharacterKey(c)} character={c} showWorld={false} isUiLocked={isUiLocked} theme={theme} refreshingKeys={refreshingKeys} onOpen={onOpen} />
               ))}
@@ -386,8 +391,8 @@ export default function CharacterDirectoryScreen({
   const groups = buildDirectoryGroups({
     allCharacters: filteredCharacters,
     sortBy: directorySortBy,
-    mainCharacterKey: selectedWorldId !== null ? activeMainKey : null,
-    championCharacterKeys: selectedWorldId !== null ? activeChampionKeys : [],
+    mainCharacterKey: showAllWorlds ? null : activeMainKey,
+    championCharacterKeys: showAllWorlds ? [] : activeChampionKeys,
     maxCharacters: directory.maxCharacters,
   });
 

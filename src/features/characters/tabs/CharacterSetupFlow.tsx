@@ -22,7 +22,7 @@ interface CharacterSetupFlowProps {
   initialAction?: string;
 }
 
-const MAX_ACCOUNT_CHARACTERS = 59;
+const MAX_ACCOUNT_CHARACTERS = 60;
 
 export default function CharacterSetupFlow({ theme, initialCharacterName, initialAction }: CharacterSetupFlowProps) {
   const controller = useCharacterSetupController();

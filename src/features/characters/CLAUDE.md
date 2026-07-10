@@ -13,3 +13,4 @@ When Nexon ships a new class, characters of that class appear in rankings **imme
 3. **`setup/data/buffsData.ts`** — if the class has a unique Echo of Hero / Exclusive Spell icon, add its `jobName` to `HERO_ECHO_SKILL_MAP` (and `heroEchoName` if the in-game name differs).
 4. **`tools/hexa-skills/hexa-classes.ts`** — add hexa skill/node data (mastery node count, etc.).
 5. **Regenerated data** — class may need inclusion in skill-guesser data and any manifest-derived generators.
+6. **Character slot cap** — Nexon generally adds +1 to the max characters per world with each new class. Bump both `MAX_ACCOUNT_CHARACTERS` (`tabs/CharacterSetupFlow.tsx`) and `IP_REQUESTS_PER_DAY_LIMIT`'s fallback (`src/app/api/characters/lookup/route.ts`) together, confirming the new number in-game first.
