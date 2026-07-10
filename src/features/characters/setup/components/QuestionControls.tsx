@@ -10,6 +10,7 @@ import { numericKeyDown, sanitizeDigitsInput, clampNumber } from "../../../../li
 import type { AppTheme } from "../../../../components/themes";
 import InfoTooltip, { type TooltipContent } from "./InfoTooltip";
 import { LEGION_ARTIFACT_FINAL_ATK_LIMIT } from "../data/scouterQuestionsData";
+import { statusText } from "../../../../components/statusColors";
 
 export function statInputStyle(theme: AppTheme, width?: string): CSSProperties {
   return {
@@ -57,7 +58,7 @@ function inputWarningBubbleStyle(theme: AppTheme): CSSProperties {
     zIndex: 20,
     background: theme.bg,
     border: "1px solid rgba(217, 119, 6, 0.6)",
-    color: "#d97706",
+    color: statusText(theme, "warning"),
     fontSize: "0.7rem",
     fontWeight: 700,
     padding: "0.35rem 0.55rem",

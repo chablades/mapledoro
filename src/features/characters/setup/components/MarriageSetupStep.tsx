@@ -1,4 +1,5 @@
 import type { AppTheme } from "../../../../components/themes";
+import { statusText } from "../../../../components/statusColors";
 import { CHARACTER_NAME_INPUT_FILTER_REGEX, MIN_QUERY_LENGTH } from "../../model/constants";
 import type { SetupStepDefinition } from "../steps";
 import SetupStepFrame from "./SetupStepFrame";
@@ -120,7 +121,7 @@ export default function MarriageSetupStep({
             style={partnerInputStyle(theme)}
           />
           {partnerNameTooShort && (
-            <p role="alert" style={{ margin: "-0.55rem 0 0.8rem", fontSize: "0.78rem", fontWeight: 700, color: "#dc2626" }}>
+            <p role="alert" style={{ margin: "-0.55rem 0 0.8rem", fontSize: "0.78rem", fontWeight: 700, color: statusText(theme, "danger") }}>
               IGNs are at least {MIN_QUERY_LENGTH} characters.
             </p>
           )}

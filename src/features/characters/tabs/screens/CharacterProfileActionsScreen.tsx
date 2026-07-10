@@ -94,7 +94,7 @@ export default function CharacterProfileActionsScreen({
             disabled={shell.isUiLocked}
             onClick={onRequestRemove}
             aria-label="Remove character"
-            style={dangerButtonStyle()}
+            style={dangerButtonStyle(theme)}
             >
             {`🗑 ${CHARACTERS_COPY.characterProfileActions.removeCharacterButton}`}
           </button>

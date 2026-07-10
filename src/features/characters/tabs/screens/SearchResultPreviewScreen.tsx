@@ -4,6 +4,7 @@ import { CHARACTERS_COPY } from "../content";
 import type { PreviewPaneActions, PreviewPaneModel } from "../paneModels";
 import CharacterAvatar from "../components/CharacterAvatar";
 import { panelCardStyle, primaryButtonStyle, secondaryButtonStyle } from "../components/uiStyles";
+import { statusText } from "../../../../components/statusColors";
 
 interface SearchResultPreviewScreenProps {
   model: PreviewPaneModel;
@@ -65,7 +66,7 @@ export default function SearchResultPreviewScreen({
             <>
               {preview.isStaleFallbackPreview ? (
                 <>
-                  <p style={{ fontSize: "0.86rem", color: "#dc2626", fontWeight: 700, margin: 0 }}>
+                  <p style={{ fontSize: "0.86rem", color: statusText(theme, "danger"), fontWeight: 700, margin: 0 }}>
                     {`Couldn't refresh ${preview.foundCharacter.characterName}'s data right now.`}
                   </p>
                   <p style={{ fontSize: "0.86rem", color: theme.text, fontWeight: 700, margin: 0, marginTop: "0.3rem", marginBottom: "0.72rem" }}>

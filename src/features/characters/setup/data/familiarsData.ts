@@ -10,6 +10,17 @@ export const TIER_LABELS: Record<FamiliarTier, string> = {
 
 export const TIER_ORDER: FamiliarTier[] = ["common", "rare", "epic", "unique", "legendary"];
 
+// Fixed rarity swatch per tier, independent of the site's light/dark theme
+// (matches in-game rarity framing). Shared with InnerAbilitySetupStep, which
+// uses the same four non-common tiers.
+export const TIER_COLORS: Record<FamiliarTier, { bg: string; border: string; text: string }> = {
+  common:    { bg: "#2a2a2a", border: "#777",    text: "#ccc" },
+  rare:      { bg: "#0d1e38", border: "#4080c0", text: "#6ab4ff" },
+  epic:      { bg: "#1e0d38", border: "#8040c0", text: "#c084fc" },
+  unique:    { bg: "#2a1e00", border: "#c08020", text: "#fbbf24" },
+  legendary: { bg: "#001e10", border: "#20a040", text: "#4ade80" },
+};
+
 export const LINES_BY_TIER: Record<FamiliarTier, readonly string[]> = {
   common: [
     "STR: +6", "DEX: +6", "INT: +6", "LUK: +6",

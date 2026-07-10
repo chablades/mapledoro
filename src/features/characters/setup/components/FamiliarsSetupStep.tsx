@@ -12,7 +12,7 @@ import type { AppTheme } from "../../../../components/themes";
 import type { SetupStepDefinition } from "../steps";
 import { readCharactersStore, selectCharacterByIgn } from "../../model/charactersStore";
 import {
-  TIER_LABELS, TIER_ORDER, getLinesForTier, BADGE_NAMES, BADGE_ID_MAP,
+  TIER_LABELS, TIER_ORDER, TIER_COLORS, getLinesForTier, BADGE_NAMES, BADGE_ID_MAP,
   FAMILIARS, getFamiliarDisplayLabel,
   type FamiliarTier, type FamiliarEntry,
 } from "../data/familiarsData";
@@ -65,15 +65,6 @@ const FAM_LIST_SIZE = 32;
 const BADGE_SIZE = 52;
 const BADGE_BORDER = 4;
 const PENTAGON = "polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%)";
-
-const TIER_COLORS: Record<FamiliarTier, { bg: string; border: string; text: string }> = {
-  common:    { bg: "#2a2a2a", border: "#777",    text: "#ccc" },
-  rare:      { bg: "#0d1e38", border: "#4080c0", text: "#6ab4ff" },
-  epic:      { bg: "#1e0d38", border: "#8040c0", text: "#c084fc" },
-  unique:    { bg: "#2a1e00", border: "#c08020", text: "#fbbf24" },
-  legendary: { bg: "#001e10", border: "#20a040", text: "#4ade80" },
-};
-
 
 // ── Parse / patch helpers ──────────────────────────────────────────────────
 

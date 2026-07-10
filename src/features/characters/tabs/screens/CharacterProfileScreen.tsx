@@ -4,6 +4,7 @@ import { resolveDisplayJobName } from "../../setup/data/nexonJobMapping";
 import type { SearchPaneActions, SearchPaneModel } from "../paneModels";
 import { secondaryButtonStyle } from "../components/uiStyles";
 import CharacterAvatar from "../components/CharacterAvatar";
+import { statusText } from "../../../../components/statusColors";
 
 function navBackButtonColorStyle(theme: SearchPaneModel["theme"]): CSSProperties {
   const { border, background, color } = secondaryButtonStyle(theme);
@@ -32,11 +33,11 @@ function profileRoleBadgeStyle(
     };
   }
   if (role === "champion") {
-    return {
-      background: "#fff4df",
-      border: "1px solid #d7a047",
-      color: "#8c5b16",
-    };
+    const { background, color } =
+      theme.colorMode === "dark"
+        ? { background: "#2a2008", color: "#f0c869" }
+        : { background: "#fff4df", color: "#8c5b16" };
+    return { background, border: "1px solid #d7a047", color };
   }
   return {
     background: theme.panel,
@@ -211,7 +212,7 @@ export default function CharacterProfileScreen({
             </div>
           )}
           {!profile.isAddingCharacter && !profile.setupStepActive && (
-            <p style={{ margin: 0, marginTop: "0.4rem", fontSize: "0.78rem", color: isStale ? "#d97706" : theme.muted, fontWeight: 700, lineHeight: 1.3 }}>
+            <p style={{ margin: 0, marginTop: "0.4rem", fontSize: "0.78rem", color: isStale ? statusText(theme, "warning") : theme.muted, fontWeight: 700, lineHeight: 1.3 }}>
               {profile.isRefreshing && <span className="char-refresh-spin" style={{ color: theme.muted }}>↻ </span>}
               {statusPrefix}Updated {formattedDate}
             </p>

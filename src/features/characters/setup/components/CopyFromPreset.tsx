@@ -2,6 +2,7 @@
 
 import { useState, type CSSProperties } from "react";
 import type { AppTheme } from "../../../../components/themes";
+import { statusText } from "../../../../components/statusColors";
 import ConfirmModal from "../../../../components/ConfirmModal";
 
 // Padding + min dimensions keep these at a real touch target size (~32px)
@@ -25,17 +26,20 @@ const copyBtnStyle = (theme: AppTheme): CSSProperties => ({
 // Styled as its own danger-tinted pill (not a bare text link) so it reads as
 // a distinct, deliberate action rather than sitting flush against the copy
 // buttons.
-const clearBtnStyle: CSSProperties = {
-  border: "1px solid #ef444440",
-  borderRadius: 7,
-  background: "transparent",
-  color: "#ef4444",
-  fontFamily: "inherit",
-  fontWeight: 700,
-  fontSize: "0.75rem",
-  padding: "6px 12px",
-  minHeight: 32,
-  cursor: "pointer",
+const clearBtnStyle = (theme: AppTheme): CSSProperties => {
+  const red = statusText(theme, "danger");
+  return {
+    border: `1px solid ${red}40`,
+    borderRadius: 7,
+    background: "transparent",
+    color: red,
+    fontFamily: "inherit",
+    fontWeight: 700,
+    fontSize: "0.75rem",
+    padding: "6px 12px",
+    minHeight: 32,
+    cursor: "pointer",
+  };
 };
 
 type PendingAction = { type: "copy"; from: number } | { type: "clear" };
@@ -79,7 +83,7 @@ export function CopyFromPreset({
         </div>
       )}
       {onClear && (
-        <button type="button" className="tap-target-44" onClick={() => setPending({ type: "clear" })} style={clearBtnStyle}>
+        <button type="button" className="tap-target-44" onClick={() => setPending({ type: "clear" })} style={clearBtnStyle(theme)}>
           Clear preset
         </button>
       )}

@@ -7,6 +7,7 @@ import { useKeyboardListNav } from "../../../../lib/useKeyboardListNav";
 import { searchAndRank } from "../../../../lib/searchMatch";
 import Image from "next/image";
 import type { AppTheme } from "../../../../components/themes";
+import { statusText } from "../../../../components/statusColors";
 import type { SetupStepDefinition } from "../steps";
 import type { SetupFlowId } from "../flows";
 import type { HexaClassDef, HexaSkillDef, HexaSkillLevels } from "../../../../features/tools/hexa-skills/hexa-classes";
@@ -1040,7 +1041,7 @@ export default function HexaMatrixSetupStep({
                 })}
               </div>
             </div>
-            <span style={{ fontSize: "0.78rem", fontWeight: 800, color: slotOverLimit ? "#dc2626" : theme.muted }}>
+            <span style={{ fontSize: "0.78rem", fontWeight: 800, color: slotOverLimit ? statusText(theme, "danger") : theme.muted }}>
               {slotLevelSum} / {HEXA_STAT_NODE_MAX_LEVEL} levels used
             </span>
           </div>

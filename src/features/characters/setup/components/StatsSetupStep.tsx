@@ -7,6 +7,7 @@ import type { CSSProperties, ReactNode } from "react";
 import Image from "next/image";
 import { resourceImageUrl } from "../../../../lib/mapleResource";
 import type { AppTheme } from "../../../../components/themes";
+import { statusText } from "../../../../components/statusColors";
 import HoverTooltip from "../../../../components/HoverTooltip";
 import type { SetupStepDefinition } from "../steps";
 import type { SetupFlowId } from "../flows";
@@ -247,8 +248,8 @@ function WarningList({ warnings, theme, characterLevel }: { warnings: ClassWarni
       {others.map((w) => (
         <div key={w.skill?.skillName ?? w.message}>
           <div style={{ display: "flex", alignItems: "center", gap: "0.45rem" }}>
-            <span style={{ fontSize: "0.75rem", color: "#d97706", flexShrink: 0, lineHeight: 1 }}>⚠</span>
-            <span style={{ fontSize: "0.82rem", color: "#d97706", fontWeight: 700 }}>{w.message}{w.skill ? ":" : ""}</span>
+            <span style={{ fontSize: "0.75rem", color: statusText(theme, "warning"), flexShrink: 0, lineHeight: 1 }}>⚠</span>
+            <span style={{ fontSize: "0.82rem", color: statusText(theme, "warning"), fontWeight: 700 }}>{w.message}{w.skill ? ":" : ""}</span>
             {w.tooltip && <InfoTooltip content={w.tooltip} theme={theme} />}
           </div>
           {w.skill && (
@@ -261,8 +262,8 @@ function WarningList({ warnings, theme, characterLevel }: { warnings: ClassWarni
       {doNotUse.length > 0 && (
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: "0.45rem", marginBottom: "0.45rem" }}>
-            <span style={{ fontSize: "0.75rem", color: "#d97706", flexShrink: 0, lineHeight: 1 }}>⚠</span>
-            <span style={{ fontSize: "0.82rem", color: "#d97706", fontWeight: 700 }}>Do not use the following skills:</span>
+            <span style={{ fontSize: "0.75rem", color: statusText(theme, "warning"), flexShrink: 0, lineHeight: 1 }}>⚠</span>
+            <span style={{ fontSize: "0.82rem", color: statusText(theme, "warning"), fontWeight: 700 }}>Do not use the following skills:</span>
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: "0.65rem", marginLeft: "1.2rem" }}>
             {doNotUse.map((w) => w.skill && (
@@ -1202,7 +1203,7 @@ function HyperStatSubstep({
         onCopy={copyHyperPreset}
         onClear={clearHyperPreset}
         trailing={Number.isFinite(hyperBudget) && (
-          <span style={{ fontSize: "0.78rem", fontWeight: 800, color: hyperOverspent ? "#dc2626" : theme.muted }}>
+          <span style={{ fontSize: "0.78rem", fontWeight: 800, color: hyperOverspent ? statusText(theme, "danger") : theme.muted }}>
             {hyperSpent.toLocaleString()} / {hyperBudget.toLocaleString()} points used ({hyperStatBudgetSuffix(hyperBudget, hyperSpent)})
           </span>
         )}

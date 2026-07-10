@@ -20,12 +20,12 @@ export const STATUS: Record<StatusKind, { fill: string; on: string }> = {
 
 // Hue and chroma match the fills; only lightness moves, far enough to clear
 // 4.5:1 on every surface in that color mode.
-const STATUS_TEXT: Record<ColorMode, Record<"success" | "danger", string>> = {
-  light: { success: "#00824f", danger: "#d82a31" },
-  dark: { success: "#10b981", danger: "#ef4544" },
+const STATUS_TEXT: Record<ColorMode, Record<"success" | "danger" | "warning", string>> = {
+  light: { success: "#00824f", danger: "#d82a31", warning: "#a15a04" },
+  dark: { success: "#10b981", danger: "#ef4544", warning: "#d97706" },
 };
 
 /** Status-colored *text* on a neutral surface, per color mode — like `accentText`. */
-export function statusText(theme: AppTheme, kind: "success" | "danger"): string {
+export function statusText(theme: AppTheme, kind: "success" | "danger" | "warning"): string {
   return STATUS_TEXT[theme.colorMode][kind];
 }

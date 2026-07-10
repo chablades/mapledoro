@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
 import type { AppTheme } from "../../../../components/themes";
+import { statusText } from "../../../../components/statusColors";
 
 export function panelCardStyle(theme: AppTheme, padding: string): CSSProperties {
   return {
@@ -53,12 +54,13 @@ export function secondaryButtonStyle(theme: AppTheme, padding = "0.65rem 0.9rem"
   };
 }
 
-export function dangerButtonStyle(padding = "0.28rem 0.62rem"): CSSProperties {
+export function dangerButtonStyle(theme: AppTheme, padding = "0.28rem 0.62rem"): CSSProperties {
+  const red = statusText(theme, "danger");
   return {
-    border: "1px solid #ef4444",
+    border: `1px solid ${red}`,
     borderRadius: "999px",
-    background: "#fef2f2",
-    color: "#991b1b",
+    background: theme.bg,
+    color: red,
     fontFamily: "inherit",
     fontWeight: 800,
     fontSize: "0.78rem",

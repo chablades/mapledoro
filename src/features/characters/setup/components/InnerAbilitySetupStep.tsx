@@ -11,18 +11,12 @@ import {
   IA_TIER_LABELS, IA_TIER_ORDER, allowedLineTiers, getLinesForIATier, normalizeIA,
   type IADraft, type IAFull, type IALineFull, type IAPresetFull, type IATier,
 } from "../data/innerAbilityData";
+import { TIER_COLORS as IA_TIER_COLORS } from "../data/familiarsData";
 import { CopyFromPreset } from "./CopyFromPreset";
 
 const PRESET_COUNT = 3;
 
 type SwatchColor = { bg: string; border: string; text: string };
-
-const IA_TIER_COLORS: Record<IATier, SwatchColor> = {
-  rare:      { bg: "#0d1e38", border: "#4080c0", text: "#6ab4ff" },
-  epic:      { bg: "#1e0d38", border: "#8040c0", text: "#c084fc" },
-  unique:    { bg: "#2a1e00", border: "#c08020", text: "#fbbf24" },
-  legendary: { bg: "#001e10", border: "#20a040", text: "#4ade80" },
-};
 
 const IA_PICKER_WIDTH = 240;
 

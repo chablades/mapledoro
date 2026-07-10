@@ -3,6 +3,7 @@ import { MAX_QUERY_LENGTH } from "../../model/constants";
 import { resolveDisplayJobName } from "../../setup/data/nexonJobMapping";
 import { CHARACTERS_COPY } from "../content";
 import type { SearchPaneActions, SearchPaneModel, SetupDraftSummary } from "../paneModels";
+import { statusText } from "../../../../components/statusColors";
 import CharacterAvatar from "../components/CharacterAvatar";
 import {
   primaryButtonStyle,
@@ -306,7 +307,7 @@ export default function SearchEntryScreen({ model, actions }: SearchEntryScreenP
         <p
           style={{
             fontSize: "0.78rem",
-            color: search.statusTone === "error" ? "#dc2626" : theme.muted,
+            color: search.statusTone === "error" ? statusText(theme, "danger") : theme.muted,
             fontWeight: 700,
             margin: 0,
           }}
@@ -314,7 +315,7 @@ export default function SearchEntryScreen({ model, actions }: SearchEntryScreenP
           {search.statusMessage}
         </p>
         {search.degradedCode && (
-          <p style={{ margin: 0, marginTop: "0.5rem", fontSize: "0.78rem", color: "#d97706", fontWeight: 700 }}>
+          <p style={{ margin: 0, marginTop: "0.5rem", fontSize: "0.78rem", color: statusText(theme, "warning"), fontWeight: 700 }}>
             Server issue [{search.degradedCode}]. Please let the developers know.
           </p>
         )}
