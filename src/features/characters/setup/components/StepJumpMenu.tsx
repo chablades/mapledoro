@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { CSSProperties, MouseEvent as ReactMouseEvent } from "react";
+import type { CSSProperties, KeyboardEvent as ReactKeyboardEvent } from "react";
 import type { AppTheme } from "../../../../components/themes";
 import type { VisibleSetupStep } from "../flows";
 
@@ -153,6 +153,11 @@ function flyoutPanelStyle(theme: AppTheme, top: number, left: number): CSSProper
   };
 }
 
+// Marks the top-level roving-nav stops (back-to-intro + step rows) regardless of
+// which layout (hover flyout vs. tap-to-expand) rendered them, since the two layouts
+// nest their row button at different DOM depths under the menu.
+const TOP_LEVEL_SELECTOR = '[data-jump-row="true"]:not(:disabled)';
+
 function backToIntroItemStyle(theme: AppTheme): CSSProperties {
   return {
     display: "block",
@@ -223,7 +228,18 @@ export default function StepJumpMenu({
   const [flyoutPos, setFlyoutPos] = useState<{ top: number; left: number } | null>(null);
   const [tapExpandedStep, setTapExpandedStep] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const flyoutRef = useRef<HTMLDivElement>(null);
+  const tapSubstepsRef = useRef<HTMLDivElement>(null);
+  const rowButtonRefs = useRef<Map<number, HTMLButtonElement>>(new Map());
+  // Set by the trigger's ArrowDown/ArrowUp handler when the menu is still closed —
+  // the menu (and its rows) don't exist in the DOM yet to focus this same tick, so the
+  // post-open effect below reads this once the rows have actually rendered.
+  const pendingFocusRef = useRef<"first" | "last" | null>(null);
+  // Same idea for the tap-to-expand layout's substeps: set by ArrowRight on a row
+  // that isn't expanded yet, read once the substeps effect below sees them mount.
+  const pendingSubstepFocusRef = useRef(false);
   // The row and flyout aren't touching (there's a small gap plus real cursor travel
   // time to cross it), so closing on the row's mouseleave the instant it fires would
   // unmount the flyout before the mouse ever reaches it. Close on a short delay
@@ -243,7 +259,7 @@ export default function StepJumpMenu({
     closeTimerRef.current = setTimeout(() => setActiveFlyoutStep(null), 250);
   }
 
-  function handleRowEnter(step: JumpStep, e: ReactMouseEvent<HTMLButtonElement>) {
+  function handleRowEnter(step: JumpStep, e: { currentTarget: HTMLButtonElement }) {
     if (!step.substeps || !containerRef.current) return;
     cancelFlyoutClose();
     const rowRect = e.currentTarget.getBoundingClientRect();
@@ -251,6 +267,101 @@ export default function StepJumpMenu({
     setFlyoutPos({ top: rowRect.top - containerRect.top, left: rowRect.right - containerRect.left + 4 });
     setActiveFlyoutStep(step.index);
   }
+
+  function focusTopLevelSibling(current: HTMLButtonElement, direction: 1 | -1) {
+    const buttons = Array.from(menuRef.current?.querySelectorAll<HTMLButtonElement>(TOP_LEVEL_SELECTOR) ?? []);
+    const nextIndex = buttons.indexOf(current) + direction;
+    if (nextIndex < 0) {
+      triggerRef.current?.focus();
+      return;
+    }
+    buttons[nextIndex]?.focus();
+  }
+
+  function handleRowKeyDown(e: ReactKeyboardEvent<HTMLButtonElement>, step: JumpStep) {
+    if (e.key === "ArrowRight" && step.substeps) {
+      e.preventDefault();
+      flyoutRef.current?.querySelector<HTMLButtonElement>("button:not(:disabled)")?.focus();
+      return;
+    }
+    if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+    e.preventDefault();
+    focusTopLevelSibling(e.currentTarget, e.key === "ArrowDown" ? 1 : -1);
+  }
+
+  // Tap-to-expand layout: substeps aren't rendered until `tapExpandedStep` opens
+  // them, so ArrowRight has to trigger that expansion first and defer the focus
+  // (via pendingSubstepFocusRef) to the effect below, once they've actually mounted.
+  function handleTapRowKeyDown(e: ReactKeyboardEvent<HTMLButtonElement>, step: JumpStep) {
+    if (e.key === "ArrowRight" && step.substeps) {
+      e.preventDefault();
+      if (tapExpandedStep === step.index) {
+        tapSubstepsRef.current?.querySelector<HTMLButtonElement>("button:not(:disabled)")?.focus();
+      } else {
+        pendingSubstepFocusRef.current = true;
+        setTapExpandedStep(step.index);
+      }
+      return;
+    }
+    if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+    e.preventDefault();
+    focusTopLevelSibling(e.currentTarget, e.key === "ArrowDown" ? 1 : -1);
+  }
+
+  function handleBackToIntroKeyDown(e: ReactKeyboardEvent<HTMLButtonElement>) {
+    if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+    e.preventDefault();
+    focusTopLevelSibling(e.currentTarget, e.key === "ArrowDown" ? 1 : -1);
+  }
+
+  function handleTriggerKeyDown(e: ReactKeyboardEvent<HTMLButtonElement>) {
+    if (!canJump || (e.key !== "ArrowDown" && e.key !== "ArrowUp")) return;
+    e.preventDefault();
+    if (!open) {
+      pendingFocusRef.current = e.key === "ArrowDown" ? "first" : "last";
+      setOpen(true);
+      return;
+    }
+    const buttons = Array.from(menuRef.current?.querySelectorAll<HTMLButtonElement>(TOP_LEVEL_SELECTOR) ?? []);
+    const target = e.key === "ArrowDown" ? buttons[0] : buttons[buttons.length - 1];
+    target?.focus();
+  }
+
+  // Shared by both substep layouts (hover flyout, tap-expanded inline list) — only
+  // the scope to search within and the "step back out" target differ between them.
+  function handleSubstepKeyDown(e: ReactKeyboardEvent<HTMLButtonElement>, scope: HTMLElement | null, backTarget: HTMLButtonElement | undefined) {
+    if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      backTarget?.focus();
+      return;
+    }
+    if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+    e.preventDefault();
+    const buttons = Array.from(scope?.querySelectorAll<HTMLButtonElement>("button:not(:disabled)") ?? []);
+    const currentIndex = buttons.indexOf(e.currentTarget);
+    if (currentIndex === -1) return;
+    const nextIndex = e.key === "ArrowDown" ? currentIndex + 1 : currentIndex - 1;
+    buttons[nextIndex]?.focus();
+  }
+
+  useEffect(() => {
+    if (!open || pendingFocusRef.current === null) return;
+    const buttons = Array.from(menuRef.current?.querySelectorAll<HTMLButtonElement>(TOP_LEVEL_SELECTOR) ?? []);
+    const target = pendingFocusRef.current === "first" ? buttons[0] : buttons[buttons.length - 1];
+    pendingFocusRef.current = null;
+    target?.focus();
+  }, [open]);
+
+  useEffect(() => {
+    if (tapExpandedStep === null || !pendingSubstepFocusRef.current) return;
+    pendingSubstepFocusRef.current = false;
+    tapSubstepsRef.current?.querySelector<HTMLButtonElement>("button:not(:disabled)")?.focus();
+  }, [tapExpandedStep]);
+
+  // Plain value derived during render (not read inside the flyout's ref-bearing JSX
+  // via a called function) — keeps `ref={flyoutRef}` in an ordinary conditional render
+  // instead of nested inside an IIFE, which the refs lint rule can't verify is safe.
+  const activeFlyoutSubsteps = (activeFlyoutStep !== null ? steps.find((s) => s.index === activeFlyoutStep)?.substeps : null) ?? [];
 
   useEffect(() => {
     if (!open) return;
@@ -284,8 +395,10 @@ export default function StepJumpMenu({
   return (
     <div ref={containerRef} style={{ position: "relative", display: "inline-block", marginBottom: "0.35rem" }}>
       <button
+        ref={triggerRef}
         type="button"
         onClick={() => canJump && setOpen((o) => !o)}
+        onKeyDown={handleTriggerKeyDown}
         style={triggerStyle(theme, canJump)}
       >
         Step {currentVisibleNumber} of {totalSteps}
@@ -310,6 +423,8 @@ export default function StepJumpMenu({
               style={backToIntroItemStyle(theme)}
               onMouseEnter={(e) => { e.currentTarget.style.background = `${theme.accent}18`; }}
               onMouseLeave={(e) => { e.currentTarget.style.background = "none"; }}
+              onKeyDown={handleBackToIntroKeyDown}
+              data-jump-row="true"
             >
               ◀ Setup selection
             </button>
@@ -323,6 +438,10 @@ export default function StepJumpMenu({
                 <div key={step.index}>
                   <div style={splitRowContainerStyle(theme, isActive, step.disabled)}>
                     <button
+                      ref={(el) => {
+                        if (el) rowButtonRefs.current.set(step.index, el);
+                        else rowButtonRefs.current.delete(step.index);
+                      }}
                       type="button"
                       disabled={step.disabled}
                       onClick={() => {
@@ -330,6 +449,8 @@ export default function StepJumpMenu({
                         setOpen(false);
                       }}
                       style={splitLabelStyle(theme, isActive, step.disabled)}
+                      onKeyDown={(e) => handleTapRowKeyDown(e, step)}
+                      data-jump-row="true"
                     >
                       {step.visibleNumber}. {step.label}
                     </button>
@@ -346,20 +467,25 @@ export default function StepJumpMenu({
                       </button>
                     )}
                   </div>
-                  {isTapExpanded && step.substeps?.map((substep, substepIndex) => (
-                    <button
-                      key={substep.label}
-                      type="button"
-                      disabled={substep.disabled}
-                      onClick={() => {
-                        onJumpSubstep(step.index, substepIndex);
-                        setOpen(false);
-                      }}
-                      style={substepItemStyle(theme, substep.disabled)}
-                    >
-                      {substep.label}
-                    </button>
-                  ))}
+                  {isTapExpanded && (
+                    <div ref={tapSubstepsRef}>
+                      {step.substeps?.map((substep, substepIndex) => (
+                        <button
+                          key={substep.label}
+                          type="button"
+                          disabled={substep.disabled}
+                          onClick={() => {
+                            onJumpSubstep(step.index, substepIndex);
+                            setOpen(false);
+                          }}
+                          style={substepItemStyle(theme, substep.disabled)}
+                          onKeyDown={(e) => handleSubstepKeyDown(e, tapSubstepsRef.current, rowButtonRefs.current.get(step.index))}
+                        >
+                          {substep.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               );
             }
@@ -368,6 +494,10 @@ export default function StepJumpMenu({
             return (
               <button
                 key={step.index}
+                ref={(el) => {
+                  if (el) rowButtonRefs.current.set(step.index, el);
+                  else rowButtonRefs.current.delete(step.index);
+                }}
                 type="button"
                 disabled={step.disabled}
                 onClick={() => {
@@ -383,6 +513,12 @@ export default function StepJumpMenu({
                   if (!step.disabled && !isActive) e.currentTarget.style.background = "none";
                   if (step.substeps) scheduleFlyoutClose();
                 }}
+                onFocus={(e) => handleRowEnter(step, e)}
+                onBlur={() => {
+                  if (step.substeps) scheduleFlyoutClose();
+                }}
+                onKeyDown={(e) => handleRowKeyDown(e, step)}
+                data-jump-row="true"
               >
                 <span>{step.visibleNumber}. {step.label}</span>
                 {step.substeps && (
@@ -393,34 +529,34 @@ export default function StepJumpMenu({
           })}
         </div>
       )}
-      {open && supportsHover && activeFlyoutStep !== null && flyoutPos && (() => {
-        const step = steps.find((s) => s.index === activeFlyoutStep);
-        if (!step?.substeps) return null;
-        return (
-          <div
-            style={flyoutPanelStyle(theme, flyoutPos.top, flyoutPos.left)}
-            onMouseEnter={cancelFlyoutClose}
-            onMouseLeave={scheduleFlyoutClose}
-          >
-            {step.substeps.map((substep, substepIndex) => (
-              <button
-                key={substep.label}
-                type="button"
-                disabled={substep.disabled}
-                onClick={() => {
-                  onJumpSubstep(step.index, substepIndex);
-                  setOpen(false);
-                }}
-                style={substepItemStyle(theme, substep.disabled)}
-                onMouseEnter={(e) => { if (!substep.disabled) e.currentTarget.style.background = `${theme.accent}18`; }}
-                onMouseLeave={(e) => { if (!substep.disabled) e.currentTarget.style.background = "none"; }}
-              >
-                {substep.label}
-              </button>
-            ))}
-          </div>
-        );
-      })()}
+      {open && supportsHover && activeFlyoutStep !== null && flyoutPos && activeFlyoutSubsteps.length > 0 && (
+        <div
+          ref={flyoutRef}
+          style={flyoutPanelStyle(theme, flyoutPos.top, flyoutPos.left)}
+          onMouseEnter={cancelFlyoutClose}
+          onMouseLeave={scheduleFlyoutClose}
+          onFocus={cancelFlyoutClose}
+          onBlur={scheduleFlyoutClose}
+        >
+          {activeFlyoutSubsteps.map((substep, substepIndex) => (
+            <button
+              key={substep.label}
+              type="button"
+              disabled={substep.disabled}
+              onClick={() => {
+                onJumpSubstep(activeFlyoutStep, substepIndex);
+                setOpen(false);
+              }}
+              style={substepItemStyle(theme, substep.disabled)}
+              onMouseEnter={(e) => { if (!substep.disabled) e.currentTarget.style.background = `${theme.accent}18`; }}
+              onMouseLeave={(e) => { if (!substep.disabled) e.currentTarget.style.background = "none"; }}
+              onKeyDown={(e) => handleSubstepKeyDown(e, flyoutRef.current, rowButtonRefs.current.get(activeFlyoutStep))}
+            >
+              {substep.label}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
