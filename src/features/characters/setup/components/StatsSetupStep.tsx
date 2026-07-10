@@ -1218,7 +1218,7 @@ function HyperStatSubstep({
         ))}
       </div>
       {anyPresetOverBudget && (
-        <p style={{ margin: "0.5rem 0 0", fontSize: "0.78rem", fontWeight: 700, color: theme.muted }}>
+        <p role="alert" style={{ margin: "0.5rem 0 0", fontSize: "0.78rem", fontWeight: 700, color: theme.muted }}>
           {hyperOverBudgetMessage(overBudgetPresetIndices)}
         </p>
       )}

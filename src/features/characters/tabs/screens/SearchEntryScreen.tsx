@@ -271,6 +271,7 @@ export default function SearchEntryScreen({ model, actions }: SearchEntryScreenP
       <form onSubmit={actions.searchSubmit} className="characters-search-row">
         <input
           type="text"
+          aria-label="In-Game Name"
           disabled={shell.isUiLocked}
           value={search.query}
           onChange={(event) => actions.queryChange(event.target.value)}

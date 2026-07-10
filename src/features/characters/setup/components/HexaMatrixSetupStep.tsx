@@ -1090,7 +1090,7 @@ export default function HexaMatrixSetupStep({
           </div>
 
           {anyNodeOverLimit && (
-            <p style={{ margin: 0, fontSize: "0.78rem", fontWeight: 700, color: theme.muted }}>
+            <p role="alert" style={{ margin: 0, fontSize: "0.78rem", fontWeight: 700, color: theme.muted }}>
               {overLimitMessage}
             </p>
           )}

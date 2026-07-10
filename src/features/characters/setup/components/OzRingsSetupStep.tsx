@@ -262,19 +262,21 @@ export default function OzRingsSetupStep({
       </div>
 
       {hasInsaneTotallingStat && (
-        showTotallingStats ? (
-          <button
-            type="button"
-            onClick={() => scrollToFlaggedField(rootRef.current)}
-            style={flaggedValueLinkStyle(theme)}
-          >
-            {`Fix the flagged ${flaggedValueWord} above to continue.`}
-          </button>
-        ) : (
-          <p style={{ margin: "0.75rem 0 0", fontSize: "0.78rem", fontWeight: 700, color: theme.muted }}>
-            {`Switch to Standard ring setup and fix the flagged Totalling Ring ${flaggedValueWord} to continue.`}
-          </p>
-        )
+        <div role="alert">
+          {showTotallingStats ? (
+            <button
+              type="button"
+              onClick={() => scrollToFlaggedField(rootRef.current)}
+              style={flaggedValueLinkStyle(theme)}
+            >
+              {`Fix the flagged ${flaggedValueWord} above to continue.`}
+            </button>
+          ) : (
+            <p style={{ margin: "0.75rem 0 0", fontSize: "0.78rem", fontWeight: 700, color: theme.muted }}>
+              {`Switch to Standard ring setup and fix the flagged Totalling Ring ${flaggedValueWord} to continue.`}
+            </p>
+          )}
+        </div>
       )}
     </SetupStepFrame>
   );

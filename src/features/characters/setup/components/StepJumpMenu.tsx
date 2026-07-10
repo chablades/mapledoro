@@ -97,7 +97,7 @@ function splitToggleStyle(theme: AppTheme, expanded: boolean): CSSProperties {
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
-    width: "2rem",
+    width: "2.75rem",
     border: "none",
     borderLeft: `1px solid ${theme.border}`,
     background: "none",
@@ -419,7 +419,7 @@ export default function StepJumpMenu({
         {canJump && (
           <span
             aria-hidden
-            style={{ display: "inline-block", transform: open ? "rotate(180deg)" : "none", transition: "transform 0.15s ease" }}
+            style={{ display: "inline-block", fontSize: "1.1rem", lineHeight: 1, transform: open ? "rotate(180deg)" : "none", transition: "transform 0.15s ease" }}
           >
             ▾
           </span>
@@ -475,7 +475,7 @@ export default function StepJumpMenu({
                         onClick={() => setTapExpandedStep((prev) => (prev === step.index ? null : step.index))}
                         style={splitToggleStyle(theme, isTapExpanded)}
                       >
-                        <span style={{ display: "inline-block", transform: isTapExpanded ? "rotate(180deg)" : "none", transition: "transform 0.15s ease" }}>
+                        <span style={{ display: "inline-block", fontSize: "1.5rem", lineHeight: 1, transform: isTapExpanded ? "rotate(180deg)" : "none", transition: "transform 0.15s ease" }}>
                           ▾
                         </span>
                       </button>

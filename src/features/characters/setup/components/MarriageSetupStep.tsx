@@ -120,7 +120,7 @@ export default function MarriageSetupStep({
             style={partnerInputStyle(theme)}
           />
           {partnerNameTooShort && (
-            <p style={{ margin: "-0.55rem 0 0.8rem", fontSize: "0.78rem", fontWeight: 700, color: "#dc2626" }}>
+            <p role="alert" style={{ margin: "-0.55rem 0 0.8rem", fontSize: "0.78rem", fontWeight: 700, color: "#dc2626" }}>
               IGNs are at least {MIN_QUERY_LENGTH} characters.
             </p>
           )}
