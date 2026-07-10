@@ -56,7 +56,7 @@ export default function CharacterProfileActionsScreen({
         >
           {!profile.isCurrentMainCharacter && (
             <button
-              className="profile-action-button"
+              className="profile-action-button tap-target-44"
               type="button"
               disabled={shell.isUiLocked}
               onClick={actions.setCurrentAsMain}
@@ -72,7 +72,7 @@ export default function CharacterProfileActionsScreen({
           )}
           {(profile.isCurrentChampionCharacter || profile.canSetCurrentChampion) && (
             <button
-              className="profile-action-button"
+              className="profile-action-button tap-target-44"
               type="button"
               disabled={shell.isUiLocked}
               onClick={actions.toggleCurrentChampion}
@@ -89,7 +89,7 @@ export default function CharacterProfileActionsScreen({
             </button>
           )}
           <button
-            className="profile-action-button profile-action-danger"
+            className="profile-action-button profile-action-danger tap-target-44"
             type="button"
             disabled={shell.isUiLocked}
             onClick={onRequestRemove}

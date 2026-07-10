@@ -358,9 +358,6 @@ function LinePicker({ id, openId, onToggle, onClose, onPrev, onNext, value, tier
     color: value ? theme.text : theme.muted,
     textAlign: "left",
     cursor: "pointer",
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-    whiteSpace: "nowrap",
     display: "block",
   };
 
@@ -379,6 +376,7 @@ function LinePicker({ id, openId, onToggle, onClose, onPrev, onNext, value, tier
     <div ref={wrapperRef} style={{ position: "relative", width: "100%" }}>
       <button
         type="button"
+        className="tap-target-44"
         onClick={(e) => {
           e.stopPropagation();
           if (!isOpen) setQuery("");
@@ -387,7 +385,9 @@ function LinePicker({ id, openId, onToggle, onClose, onPrev, onNext, value, tier
         title={value || placeholder}
         style={triggerStyle}
       >
-        {value || placeholder}
+        <span style={{ display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          {value || placeholder}
+        </span>
       </button>
       {isOpen && createPortal(
         <div
@@ -405,6 +405,7 @@ function LinePicker({ id, openId, onToggle, onClose, onPrev, onNext, value, tier
           {value && (
             <button
               type="button"
+              className="tap-target-44"
               onClick={() => select("", false)}
               style={clearRowStyle(theme)}
             >
@@ -504,9 +505,10 @@ function TierPickerView({ entry, theme, onBack, onSelect }: {
 
   return (
     <div ref={containerRef} tabIndex={-1} role="group" aria-label="Pick rarity" onKeyDown={handleContainerKeyDown}
-      style={{ padding: "0.5rem 0.6rem", display: "flex", flexDirection: "column", gap: 5, outline: "none" }}>
+      style={{ padding: "0.65rem 0.7rem", display: "flex", flexDirection: "column", gap: 5, outline: "none" }}>
       <button
         type="button"
+        className="tap-target-44"
         onClick={onBack}
         style={tierBackButtonStyle(theme)}
       >
@@ -701,6 +703,7 @@ function FamiliarSlotCard({
           {!isEmpty && !pendingEntry && (
             <button
               type="button"
+              className="tap-target-44"
               onClick={onClear}
               style={clearRowStyle(theme)}
             >
@@ -876,6 +879,7 @@ function BadgeSlot({
           {badge && (
             <button
               type="button"
+              className="tap-target-44"
               onClick={onClear}
               style={clearRowStyle(theme)}
             >

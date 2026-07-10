@@ -387,6 +387,7 @@ export default function LinkSkillsSetupStep({
           <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "0.5rem" }}>
             <button
               type="button"
+              className="tap-target-44"
               onClick={handleAutofill}
               style={autofillButtonStyle(theme)}
             >

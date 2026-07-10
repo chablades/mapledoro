@@ -105,6 +105,7 @@ export default function SetupStepFrame({
       >
         <button
           type="button"
+          className="tap-target-44"
           onClick={onBack}
           style={{
             border: "none",

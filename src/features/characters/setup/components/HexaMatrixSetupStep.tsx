@@ -1007,6 +1007,7 @@ export default function HexaMatrixSetupStep({
                 // react-doctor-disable-next-line no-array-index-as-key
                 <button key={i}
                   type="button"
+                  className="tap-target-44"
                   onClick={() => selectNode(i)}
                   style={tabStyle}
                   aria-label={def.name}
@@ -1032,7 +1033,7 @@ export default function HexaMatrixSetupStep({
                 {PRESET_LABELS.map((label, p) => {
                   const isActive = activePreset === p;
                   return (
-                    <button key={label} type="button" onClick={() => setActivePreset(p)} style={presetToggleButtonStyle(theme, isActive)}>
+                    <button key={label} type="button" className="tap-target-44" onClick={() => setActivePreset(p)} style={presetToggleButtonStyle(theme, isActive)}>
                       {label}
                     </button>
                   );

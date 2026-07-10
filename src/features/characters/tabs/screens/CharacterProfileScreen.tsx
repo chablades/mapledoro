@@ -122,7 +122,7 @@ export default function CharacterProfileScreen({
                 ? actions.toggleCharacterDirectory
                 : actions.backFromSetupFlow
             }
-            className="char-profile-back-btn"
+            className="char-profile-back-btn tap-target-44"
             style={{
               ...navBackButtonColorStyle(theme),
               fontFamily: "inherit",
@@ -219,6 +219,7 @@ export default function CharacterProfileScreen({
           {(isStale || profile.isRefreshing) && profile.onRefresh && (
             <button
               type="button"
+              className="tap-target-44"
               disabled={profile.isRefreshing}
               onClick={profile.onRefresh}
               style={{

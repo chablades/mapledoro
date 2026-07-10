@@ -335,12 +335,12 @@ function IALineBar({ lineIdx, line, grade, openId, theme, onToggle, onClose, onS
         <div ref={portalRef} onMouseDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()}
           style={{ ...IA_POPOVER_SHELL, background: theme.panel, border: `1px solid ${theme.accent}` }}>
           {showTierRow && (
-            <div style={{ display: "flex", gap: 4, padding: "0.4rem 0.5rem", borderBottom: `1px solid ${theme.border}` }}>
+            <div style={{ display: "flex", gap: 4, padding: "0.65rem 0.75rem", borderBottom: `1px solid ${theme.border}` }}>
               {allowed.map((t) => {
                 const tc = IA_TIER_COLORS[t];
                 const active = line.tier === t;
                 return (
-                  <button key={t} type="button" onClick={() => onSetTier(t)}
+                  <button key={t} type="button" className="tap-target-44" onClick={() => onSetTier(t)}
                     style={iaTierToggleStyle(theme, tc, active)}>
                     {IA_TIER_LABELS[t]}
                   </button>

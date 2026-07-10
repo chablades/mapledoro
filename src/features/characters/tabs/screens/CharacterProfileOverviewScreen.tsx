@@ -423,6 +423,7 @@ function MoreTab({ model, actions }: { model: PreviewPaneModel; actions: Preview
           </div>
           <button
             type="button"
+            className="tap-target-44"
             disabled={setup.isUiLocked}
             onClick={() => actions.startOptionalFlow(f.id)}
             style={{ ...primaryButtonStyle(theme, "0.4rem 0.75rem"), flexShrink: 0, fontSize: "0.8rem" }}
@@ -458,6 +459,7 @@ export default function CharacterProfileOverviewScreen({
           <button
             key={tab.id}
             type="button"
+            className="tap-target-44"
             onClick={() => setActiveTab(tab.id)}
             style={{
               padding: "8px 12px",
