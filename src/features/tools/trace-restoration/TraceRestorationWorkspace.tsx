@@ -803,6 +803,7 @@ export default function TraceRestorationWorkspace({ theme }: { theme: AppTheme }
           options={TAB_OPTIONS}
           value={tab}
           labels={TAB_LABELS}
+          ariaLabel="Tracker section"
           sectionPanel={styles.sectionPanel}
           onChange={setTab}
         />

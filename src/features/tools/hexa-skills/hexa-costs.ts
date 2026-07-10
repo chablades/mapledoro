@@ -12,6 +12,9 @@ export interface LevelCost {
   fragments: number;
 }
 
+/** Every HEXA skill caps at 30, which is why each cost table has 30 entries. */
+export const MAX_SKILL_LEVEL = 30;
+
 // ── Origin / Ascent ──────────────────────────────────────────────────────────
 
 export const ORIGIN_COSTS: LevelCost[] = [

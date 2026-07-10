@@ -19,9 +19,10 @@ interface CharacterSyncPanelProps {
 
 const AVATAR_SIZE = 34;
 
-/** Avatar + 2×5px padding + 2×1px border. Pinned because `.tool-input` carries a
- *  35px height for native inputs, which would crush the avatar. Exported so a
- *  control sitting beside the picker can match its height. */
+/** Avatar + 2×5px padding + 2×1px border. The trigger borrows `.tool-input` for
+ *  its chrome but is a div wrapping an avatar, so it sets its own height rather
+ *  than growing to whatever the text controls happen to be. Exported so a
+ *  control sitting beside the picker can match it. */
 export const CHARACTER_DROPDOWN_HEIGHT = AVATAR_SIZE + 12;
 
 /** Display labels for a non-character row (the null option or an extra option). */

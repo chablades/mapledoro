@@ -172,6 +172,10 @@ html.scroll-locked body {
 /* Shared form controls across tool workspaces.
    Static settings live here; dynamic theme colors (background, borderColor,
    color) and context-sensitive sizing (width, etc.) are applied inline. */
+/* No `height` here on purpose. Compact variants across the trackers shrink
+   themselves with `padding` + `font-size`, and a height on the shared class
+   silently overrides both (box-sizing: border-box). A form row that needs a
+   select and an input to line up pins the height inline instead. */
 .tool-input,
 .tool-select {
   font-family: var(--font-body);
@@ -180,9 +184,6 @@ html.scroll-locked body {
   border-radius: 8px;
   border: 1px solid; /* color supplied inline via borderColor */
   padding: 7px 10px;
-  /* Chrome gives <select> a taller intrinsic line box than <input>. Pinning both
-     keeps a select and an input sitting side by side in a form row aligned. */
-  height: 35px;
 }
 
 .tool-select {
@@ -290,6 +291,21 @@ textarea:focus-visible {
   border-radius: 8px;
   font-size: 0.75rem;
   font-weight: 800;
+}
+
+/* Responsive grid of selectable tool cards (bosses, symbols). Lives here rather
+   than in a workspace's <style> block so a section can be rendered outside the
+   workspace that used to inject it. */
+.tool-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 0.75rem;
+}
+
+@media (max-width: 860px) {
+  .tool-card-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Centered hero-number banner in calculator results; colors inline */

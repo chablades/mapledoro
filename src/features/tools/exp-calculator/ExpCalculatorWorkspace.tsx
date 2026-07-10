@@ -359,6 +359,7 @@ export default function ExpCalculatorWorkspace({ theme }: { theme: AppTheme }) {
           options={TAB_OPTIONS}
           labels={TAB_LABELS}
           value={tab}
+          ariaLabel="Calculator"
           onChange={setTab}
           sectionPanel={panelStyle}
         />
