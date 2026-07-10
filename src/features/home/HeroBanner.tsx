@@ -23,7 +23,7 @@ export default function HeroBanner({ theme }: { theme: AppTheme }) {
   const headingStyle: CSSProperties = {
     fontFamily: "var(--font-heading)",
     fontSize: "1.75rem",
-    color: theme.accent,
+    color: theme.accentText,
     margin: "0 0 0.15rem",
     lineHeight: 1.2,
   };

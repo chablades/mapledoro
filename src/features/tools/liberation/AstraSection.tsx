@@ -129,7 +129,7 @@ function AstraBossCard({
           </div>
         </div>
         {activeDiff && (
-          <div className="tool-badge" style={{ color: theme.accent, background: theme.accentSoft }}>
+          <div className="tool-badge" style={{ color: theme.accentText, background: theme.accentSoft }}>
             +{traces} / week
           </div>
         )}
@@ -456,7 +456,7 @@ function AstraProgressSection({
     <>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "8px" }}>
         <div className="section-label" style={{ color: theme.muted }}>Traces Progress</div>
-        <div style={{ fontSize: "0.78rem", fontWeight: 800, color: theme.accent }}>
+        <div style={{ fontSize: "0.78rem", fontWeight: 800, color: theme.accentText }}>
           {tracesCompleted.toLocaleString()} / {ASTRA_TOTAL_TRACES.toLocaleString()}
         </div>
       </div>
@@ -469,7 +469,7 @@ function AstraProgressSection({
       <div style={{ marginTop: "1rem" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "8px" }}>
           <div className="section-label" style={{ color: theme.muted }}>Fragments Progress</div>
-          <div style={{ fontSize: "0.78rem", fontWeight: 800, color: theme.accent }}>
+          <div style={{ fontSize: "0.78rem", fontWeight: 800, color: theme.accentText }}>
             {fragmentsCompleted.toLocaleString()} / {ASTRA_TOTAL_FRAGMENTS.toLocaleString()}
           </div>
         </div>
@@ -564,7 +564,7 @@ function AstraResultsSection({
               }}
             >
               <span style={{ color: theme.text }}>{m.mission.label}</span>
-              <span style={{ color: theme.accent, fontWeight: 800 }}>
+              <span style={{ color: theme.accentText, fontWeight: 800 }}>
                 {formatDate(m.completionDate)}
                 <span style={{ color: theme.muted, fontWeight: 700, marginLeft: "6px", fontSize: "0.75rem" }}>
                   ({m.weeksFromStart}w)
@@ -597,7 +597,7 @@ function AstraResultsSection({
                 }}
               >
                 <span style={{ color: theme.text }}>{b.bossName}</span>
-                <span style={{ color: theme.accent, fontWeight: 800 }}>
+                <span style={{ color: theme.accentText, fontWeight: 800 }}>
                   +{b.tracesPerWeek} traces
                   {b.voucherFragmentsPerWeek > 0 && (
                     <span style={{ color: theme.muted, marginLeft: "6px" }}>
@@ -615,7 +615,7 @@ function AstraResultsSection({
               <span style={{ fontFamily: "var(--font-heading)", fontSize: "0.9rem", color: theme.text }}>
                 Weekly Traces
               </span>
-              <span style={{ fontFamily: "var(--font-heading)", fontSize: "1rem", color: theme.accent }}>
+              <span style={{ fontFamily: "var(--font-heading)", fontSize: "1rem", color: theme.accentText }}>
                 {result.weeklyTraces.toLocaleString()}
               </span>
             </div>
@@ -623,7 +623,7 @@ function AstraResultsSection({
               <span style={{ fontFamily: "var(--font-heading)", fontSize: "0.9rem", color: theme.text }}>
                 Weekly Fragments (vouchers)
               </span>
-              <span style={{ fontFamily: "var(--font-heading)", fontSize: "1rem", color: theme.accent }}>
+              <span style={{ fontFamily: "var(--font-heading)", fontSize: "1rem", color: theme.accentText }}>
                 {result.weeklyVoucherFragments.toLocaleString()}
               </span>
             </div>
@@ -631,7 +631,7 @@ function AstraResultsSection({
               <span style={{ fontFamily: "var(--font-heading)", fontSize: "0.9rem", color: theme.text }}>
                 Weekly Fragments (dailies)
               </span>
-              <span style={{ fontFamily: "var(--font-heading)", fontSize: "1rem", color: theme.accent }}>
+              <span style={{ fontFamily: "var(--font-heading)", fontSize: "1rem", color: theme.accentText }}>
                 {result.weeklyDailyFragments.toLocaleString()}
               </span>
             </div>

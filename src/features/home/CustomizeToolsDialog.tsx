@@ -42,7 +42,7 @@ function ToolOption({
     flexShrink: 0,
     border: `1px solid ${selected ? theme.accent : theme.border}`,
     background: selected ? theme.accent : "transparent",
-    color: "#fff",
+    color: theme.accentOn,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",

@@ -459,7 +459,7 @@ function NoCharactersState({ theme }: { theme: AppTheme }) {
           fontWeight: 700,
           fontSize: "0.85rem",
           background: theme.accent,
-          color: "#fff",
+          color: theme.accentOn,
           textDecoration: "none",
         }}
       >

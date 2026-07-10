@@ -3,17 +3,23 @@
 import { useState, type CSSProperties } from "react";
 import ConfirmModal from "./ConfirmModal";
 import type { AppTheme } from "./themes";
+import { statusText } from "./statusColors";
 
-// Small destructive pill (Reset / Clear). Red outline; matches across the app.
-const dangerPillStyle: CSSProperties = {
+const dangerPillShape: CSSProperties = {
   padding: "5px 12px",
   borderRadius: "8px",
   fontSize: "0.75rem",
   fontWeight: 800,
-  color: "#ef4444",
   background: "transparent",
-  border: "1px solid #ef444433",
 };
+
+// Small destructive pill (Reset / Clear). The red is text on a neutral surface,
+// so it comes from `statusText`, not from the `danger` fill. "33" is the same
+// 20% alpha the outline has always used.
+function dangerPillStyle(theme: AppTheme): CSSProperties {
+  const red = statusText(theme, "danger");
+  return { ...dangerPillShape, color: red, border: `1px solid ${red}33` };
+}
 
 /** Destructive Reset/Clear button that opens a {@link ConfirmModal} before
  *  running `onConfirm`. Manages its own confirming state. */
@@ -44,7 +50,7 @@ export function ConfirmButton({
         type="button"
         className={triggerClass}
         onClick={() => setConfirming(true)}
-        style={{ ...dangerPillStyle, ...style }}
+        style={{ ...dangerPillStyle(theme), ...style }}
       >
         {label}
       </button>

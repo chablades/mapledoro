@@ -3,6 +3,7 @@
 import { useEffect, useReducer, useRef, useState, type CSSProperties } from "react";
 import Panel from "./Panel";
 import type { AppTheme } from "./themes";
+import { STATUS } from "./statusColors";
 import type { SunnySundayWeek, SunnySundayPayload } from "@/lib/sunnySunday";
 
 type FetchState = { weeks: SunnySundayWeek[]; loading: boolean; error: string | null };
@@ -31,8 +32,8 @@ const activeBadgeStyle: CSSProperties = {
   marginLeft: "auto",
   fontSize: "0.75rem",
   fontWeight: 800,
-  color: "#fff",
-  background: "#10b981",
+  color: STATUS.success.on,
+  background: STATUS.success.fill,
   padding: "2px 8px",
   borderRadius: "6px",
   letterSpacing: "0.05em",
@@ -81,7 +82,7 @@ function EventDetailsList({ details, theme }: { details: string[]; theme: AppThe
     <div style={{ padding: "0.5rem 0.75rem 0" }}>
       {details.map((line) => (
         <div key={line} style={detailRowStyle}>
-          <span style={{ flexShrink: 0, color: theme.accent }}>•</span>
+          <span style={{ flexShrink: 0, color: theme.accentText }}>•</span>
           {line}
         </div>
       ))}
@@ -113,7 +114,7 @@ function OtherWeeksAccordion({
     fontSize: "0.8rem",
     fontWeight: 600,
     fontFamily: "inherit",
-    color: theme.accent,
+    color: theme.accentText,
     transition: "background 0.2s, color 0.2s",
   };
 
@@ -171,7 +172,7 @@ function OtherWeeksAccordion({
                       lineHeight: 1.35,
                     }}
                   >
-                    <span style={{ flexShrink: 0, color: theme.accent }}>•</span>
+                    <span style={{ flexShrink: 0, color: theme.accentText }}>•</span>
                     {line}
                   </div>
                 ))}

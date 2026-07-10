@@ -1,13 +1,13 @@
 "use client";
 
-import { useReducer, useMemo, useCallback } from "react";
+import { useReducer, useMemo, useCallback, useDeferredValue, useId } from "react";
 import { useMounted } from "../../../lib/useMounted";
 import type { CSSProperties } from "react";
 import type { AppTheme } from "../../../components/themes";
 import { replaceZeroOnDigit } from "../numberInputHandlers";
 import { ToolHeader } from "../../../components/ToolHeader";
 import { Field, Toggle } from "../shared-ui";
-import { formatMesoFull } from "../format";
+import { formatMesoFull, formatPct } from "../format";
 import { toolStyles } from "../tool-styles";
 import {
   FLAME_CLASS_OPTIONS,
@@ -29,10 +29,9 @@ import {
   type FlameResults,
 } from "./flaming-data";
 
-function formatPctFull(pct: number): string {
-  if (pct >= 0.01) return `${pct.toFixed(4)}%`;
-  const s = pct.toPrecision(4);
-  return `${parseFloat(s)}%`;
+/** Meso costs only exist for Powerful flames; the guild discount rides on them. */
+function usesMeso(flameType: FlameType): boolean {
+  return flameType === "powerful";
 }
 
 // -- State --------------------------------------------------------------------
@@ -115,6 +114,11 @@ function reducer(state: CalcState, action: CalcAction): CalcState {
   }
 }
 
+/** Bonus stats are never negative, and a negative equivalence inverts the maths. */
+function toPositive(raw: string): number {
+  return Math.max(0, Number(raw) || 0);
+}
+
 // -- Sub-components -----------------------------------------------------------
 
 function EquivRow({
@@ -132,68 +136,27 @@ function EquivRow({
   theme: AppTheme;
   inputStyle: CSSProperties;
 }) {
+  const affixStyle: CSSProperties = { fontSize: "0.82rem", fontWeight: 700, color: theme.muted, whiteSpace: "nowrap" };
+
   return (
     <>
-      <span style={{ fontSize: "0.82rem", fontWeight: 700, color: theme.muted, whiteSpace: "nowrap", justifySelf: "end" }}>{prefix}</span>
+      {/* The affixes read as one sentence around the input, so they're hidden
+          from assistive tech and restated as the input's own label. */}
+      <span aria-hidden="true" style={{ ...affixStyle, justifySelf: "end" }}>{prefix}</span>
       <input
         className="tool-input"
         type="number"
         step={0.1}
+        min={0}
+        aria-label={`${prefix} ${suffix}`}
         value={value}
         onFocus={(e) => e.currentTarget.select()}
         onKeyDown={replaceZeroOnDigit}
-        onChange={(e) => onChange(Number(e.target.value) || 0)}
+        onChange={(e) => onChange(toPositive(e.target.value))}
         style={{ ...inputStyle, width: 70, textAlign: "center" }}
       />
-      <span style={{ fontSize: "0.82rem", fontWeight: 700, color: theme.muted, whiteSpace: "nowrap" }}>{suffix}</span>
+      <span aria-hidden="true" style={affixStyle}>{suffix}</span>
     </>
-  );
-}
-
-function ResultCard({
-  theme,
-  title,
-  heroValue,
-  heroLabel,
-  rows,
-}: {
-  theme: AppTheme;
-  title: string;
-  heroValue: string;
-  heroLabel: string;
-  rows: { label: string; value: string }[];
-}) {
-  const cardStyle: CSSProperties = {
-    background: theme.panel,
-    border: `1px solid ${theme.border}`,
-    padding: "1.25rem",
-  };
-  const rowStyle: CSSProperties = {
-    display: "flex", justifyContent: "space-between", alignItems: "center",
-    fontSize: "0.75rem", fontWeight: 700, color: theme.muted,
-    background: theme.timerBg, borderRadius: "8px", padding: "6px 10px",
-  };
-
-  return (
-    <div className="panel-card" style={cardStyle}>
-      <div className="tool-field-label" style={{ color: theme.muted, marginBottom: 0 }}>{title}</div>
-      <div style={{ margin: "8px 0 16px" }}>
-        <div style={{ fontSize: "1.5rem", fontWeight: 800, color: theme.text, lineHeight: 1.1 }}>
-          {heroValue}
-        </div>
-        <div style={{ fontSize: "0.75rem", fontWeight: 700, color: theme.muted, marginTop: "2px" }}>
-          {heroLabel}
-        </div>
-      </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-        {rows.map((row) => (
-          <div key={row.label} style={rowStyle}>
-            <span>{row.label}</span>
-            <span style={{ color: theme.accent, fontWeight: 800 }}>{row.value}</span>
-          </div>
-        ))}
-      </div>
-    </div>
   );
 }
 
@@ -214,20 +177,21 @@ function FlameSettingsPanel({
   labelStyle: CSSProperties;
   panelStyle: CSSProperties;
 }) {
+  const uid = useId();
   const needsGranular = state.flameClass === "da";
   const levelOptions = needsGranular ? GRANULAR_LEVELS : ARMOR_LEVELS;
   const showWeaponLevel = state.itemType === "weapon" && state.flameClass !== "da";
 
-  const guildDisabled = state.flameType === "eternal" || state.flameType === "reincarnation";
+  const guildDisabled = !usesMeso(state.flameType);
 
   return (
-    <div className="fade-in" style={panelStyle}>
-      <div className="tool-field-label" style={{ ...labelStyle, marginBottom: "12px", fontSize: "0.78rem" }}>
-        Flame Settings
-      </div>
+    <section className="fade-in" style={panelStyle}>
+      <h2 className="tool-panel-title" style={{ color: theme.text }}>Flame Settings</h2>
+
       <div className="flame-inputs-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "12px" }}>
-        <Field label="Class" style={labelStyle}>
+        <Field label="Class" htmlFor={`${uid}-class`} style={labelStyle}>
           <select
+            id={`${uid}-class`}
             className="tool-select"
             value={state.flameClass}
             onChange={(e) => dispatch({ type: "setClass", value: e.target.value as FlameClass })}
@@ -239,8 +203,9 @@ function FlameSettingsPanel({
           </select>
         </Field>
 
-        <Field label="Item Type" style={labelStyle}>
+        <Field label="Item Type" htmlFor={`${uid}-item-type`} style={labelStyle}>
           <select
+            id={`${uid}-item-type`}
             className="tool-select"
             value={state.itemType}
             onChange={(e) => dispatch({ type: "setItemType", value: e.target.value as ItemType })}
@@ -251,8 +216,9 @@ function FlameSettingsPanel({
           </select>
         </Field>
 
-        <Field label="Flame Type" style={labelStyle}>
+        <Field label="Flame Type" htmlFor={`${uid}-flame-type`} style={labelStyle}>
           <select
+            id={`${uid}-flame-type`}
             className="tool-select"
             value={state.flameType}
             onChange={(e) => dispatch({ type: "setFlameType", value: e.target.value as FlameType })}
@@ -264,9 +230,10 @@ function FlameSettingsPanel({
           </select>
         </Field>
 
-        <Field label="Item Level" style={labelStyle}>
+        <Field label="Item Level" htmlFor={`${uid}-item-level`} style={labelStyle}>
           {showWeaponLevel ? (
             <select
+              id={`${uid}-item-level`}
               className="tool-select"
               value={state.weaponLevel}
               onChange={(e) => dispatch({ type: "setWeaponLevel", value: e.target.value })}
@@ -278,6 +245,7 @@ function FlameSettingsPanel({
             </select>
           ) : (
             <select
+              id={`${uid}-item-level`}
               className="tool-select"
               value={state.itemLevel}
               onChange={(e) => dispatch({ type: "setItemLevel", value: e.target.value })}
@@ -291,15 +259,16 @@ function FlameSettingsPanel({
         </Field>
 
         {state.itemType === "weapon" && (
-          <Field label="Base Attack" style={labelStyle}>
+          <Field label="Base Attack" htmlFor={`${uid}-base-attack`} style={labelStyle}>
             <input
+              id={`${uid}-base-attack`}
               className="tool-input"
               type="number"
               min={0}
               value={state.baseAttack}
               onFocus={(e) => e.currentTarget.select()}
               onKeyDown={replaceZeroOnDigit}
-              onChange={(e) => dispatch({ type: "setBaseAttack", value: Math.max(0, Number(e.target.value) || 0) })}
+              onChange={(e) => dispatch({ type: "setBaseAttack", value: toPositive(e.target.value) })}
               style={{ ...inputStyle, width: "100%", padding: "8px 10px" }}
             />
           </Field>
@@ -313,16 +282,15 @@ function FlameSettingsPanel({
           checked={state.flameAdvantaged}
           onChange={(v) => dispatch({ type: "setFlameAdvantaged", value: v })}
         />
-        <div style={{ opacity: guildDisabled ? 0.4 : 1, pointerEvents: guildDisabled ? "none" : "auto" }}>
-          <Toggle
-            theme={theme}
-            label="Guild Discount on Flames"
-            checked={state.guildDiscount && !guildDisabled}
-            onChange={(v) => dispatch({ type: "setGuildDiscount", value: v })}
-          />
-        </div>
+        <Toggle
+          theme={theme}
+          label="Guild Discount on Flames"
+          checked={state.guildDiscount}
+          disabled={guildDisabled}
+          onChange={(v) => dispatch({ type: "setGuildDiscount", value: v })}
+        />
       </div>
-    </div>
+    </section>
   );
 }
 
@@ -331,14 +299,12 @@ function EquivalencesPanel({
   state,
   dispatch,
   inputStyle,
-  labelStyle,
   panelStyle,
 }: {
   theme: AppTheme;
   state: CalcState;
   dispatch: React.ActionDispatch<[action: CalcAction]>;
   inputStyle: CSSProperties;
-  labelStyle: CSSProperties;
   panelStyle: CSSProperties;
 }) {
   const cls = state.flameClass;
@@ -351,13 +317,11 @@ function EquivalencesPanel({
   if (cls === "da") return null;
 
   return (
-    <div className="fade-in" style={panelStyle}>
-      <div className="tool-field-label" style={{ ...labelStyle, marginBottom: "12px", fontSize: "0.78rem" }}>
-        Stat Equivalences
-      </div>
-      <div style={{ fontSize: "0.75rem", fontWeight: 600, color: theme.muted, marginBottom: "1rem" }}>
+    <section className="fade-in" style={panelStyle}>
+      <h2 className="tool-panel-title" style={{ color: theme.text }}>Stat Equivalences</h2>
+      <p style={{ fontSize: "0.75rem", fontWeight: 600, color: theme.muted, margin: "0 0 1rem" }}>
         Adjust these to match your character. Leave defaults if unsure.
-      </div>
+      </p>
 
       <div style={{ display: "grid", gridTemplateColumns: "max-content max-content max-content", alignItems: "center", gap: "0.5rem", justifyContent: "start" }}>
         <EquivRow prefix="1 All Stat % =" suffix="Main Stat" value={state.equivalences.allStat} onChange={(v) => setEquiv("allStat", v)} theme={theme} inputStyle={inputStyle} />
@@ -377,7 +341,7 @@ function EquivalencesPanel({
           <EquivRow prefix="1% Damage =" suffix="Main Stat" value={state.equivalences.dmg} onChange={(v) => setEquiv("dmg", v)} theme={theme} inputStyle={inputStyle} />
         )}
       </div>
-    </div>
+    </section>
   );
 }
 
@@ -386,86 +350,174 @@ function TargetPanel({
   state,
   dispatch,
   inputStyle,
-  labelStyle,
   panelStyle,
 }: {
   theme: AppTheme;
   state: CalcState;
   dispatch: React.ActionDispatch<[action: CalcAction]>;
   inputStyle: CSSProperties;
-  labelStyle: CSSProperties;
   panelStyle: CSSProperties;
 }) {
+  const uid = useId();
   const label = state.flameClass === "da" ? "Main Stat (HP Equivalent)" : "Main Stat";
 
   return (
-    <div className="fade-in" style={panelStyle}>
-      <div className="tool-field-label" style={{ ...labelStyle, marginBottom: "12px", fontSize: "0.78rem" }}>
-        Desired Stats
-      </div>
-      <div style={{ fontSize: "0.75rem", fontWeight: 600, color: theme.muted, marginBottom: "1rem" }}>
+    <section className="fade-in" style={panelStyle}>
+      <h2 className="tool-panel-title" style={{ color: theme.text }}>Desired Stats</h2>
+      <p style={{ fontSize: "0.75rem", fontWeight: 600, color: theme.muted, margin: "0 0 1rem" }}>
         Set the minimum bonus stat total you want to achieve.
-      </div>
+      </p>
 
       <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexWrap: "wrap" }}>
         <input
+          id={`${uid}-desired`}
           className="tool-input"
           type="number"
           min={0}
           value={state.desiredStat}
           onFocus={(e) => e.currentTarget.select()}
           onKeyDown={replaceZeroOnDigit}
-          onChange={(e) => dispatch({ type: "setDesiredStat", value: Math.max(0, Number(e.target.value) || 0) })}
+          onChange={(e) => dispatch({ type: "setDesiredStat", value: toPositive(e.target.value) })}
           style={{ ...inputStyle, width: 110, textAlign: "center" }}
         />
-        <span style={{ fontSize: "0.82rem", fontWeight: 700, color: theme.muted }}>{label}</span>
+        <label htmlFor={`${uid}-desired`} style={{ fontSize: "0.82rem", fontWeight: 700, color: theme.muted }}>
+          {label}
+        </label>
       </div>
+    </section>
+  );
+}
+
+// -- Results ------------------------------------------------------------------
+
+const RESULT_ROWS: { key: "mean" | "p75" | "p85" | "p95"; label: string }[] = [
+  { key: "mean", label: "Average" },
+  { key: "p75", label: "75th percentile" },
+  { key: "p85", label: "85th percentile" },
+  { key: "p95", label: "95th percentile" },
+];
+
+function mesoCell(flames: number, guildDiscount: boolean): string {
+  const cost = flameMesoCost(flames, guildDiscount);
+  return cost != null ? formatMesoFull(cost) : "N/A";
+}
+
+/** Spoken summary for the live region. Screen readers get the headline numbers
+ *  rather than the whole table re-read on every recalculation. */
+function resultsStatusText(results: FlameResults | null, showMeso: boolean, guildDiscount: boolean): string {
+  if (!results) return "Enter a desired stat total to calculate flames.";
+  if (results.probability === 0) return "The desired stat total is not reachable with these settings.";
+
+  const parts = [
+    `Probability ${formatPct(results.probability * 100)} per flame.`,
+    `Average ${formatFlames(results.mean)} ${results.flameTypeText}.`,
+  ];
+  if (showMeso) parts.push(`About ${mesoCell(results.mean, guildDiscount)} mesos.`);
+  return parts.join(" ");
+}
+
+function ResultsTable({ theme, results, showMeso, guildDiscount }: {
+  theme: AppTheme;
+  results: FlameResults;
+  showMeso: boolean;
+  guildDiscount: boolean;
+}) {
+  const unit = results.flameTypeText;
+  const flamesHeading = unit.charAt(0).toUpperCase() + unit.slice(1);
+
+  const headCell: CSSProperties = {
+    padding: "6px 10px",
+    fontSize: "0.75rem",
+    fontWeight: 700,
+    color: theme.muted,
+    borderBottom: `1px solid ${theme.border}`,
+    whiteSpace: "nowrap",
+  };
+  const rowHeadCell: CSSProperties = {
+    padding: "9px 10px",
+    fontSize: "0.82rem",
+    fontWeight: 700,
+    textAlign: "left",
+    whiteSpace: "nowrap",
+  };
+  const valueCell: CSSProperties = {
+    padding: "9px 10px",
+    textAlign: "right",
+    color: theme.text,
+    fontVariantNumeric: "tabular-nums",
+    whiteSpace: "nowrap",
+  };
+
+  return (
+    <div style={{ overflowX: "auto" }}>
+      <table style={{ width: "100%", borderCollapse: "collapse" }}>
+        <caption className="sr-only">Flames needed, and their meso cost, by outcome</caption>
+        <thead>
+          <tr>
+            <th scope="col" style={{ ...headCell, textAlign: "left" }}>Outcome</th>
+            <th scope="col" style={{ ...headCell, textAlign: "right" }}>{flamesHeading}</th>
+            {showMeso && <th scope="col" style={{ ...headCell, textAlign: "right" }}>Meso cost</th>}
+          </tr>
+        </thead>
+        <tbody>
+          {RESULT_ROWS.map((row, i) => {
+            // The average is the answer people came for; the percentiles qualify it.
+            const isAverage = i === 0;
+            const value: CSSProperties = {
+              ...valueCell,
+              fontWeight: isAverage ? 800 : 600,
+              fontSize: isAverage ? "0.95rem" : "0.82rem",
+            };
+            return (
+              <tr key={row.key} style={{ background: isAverage ? theme.timerBg : "transparent" }}>
+                <th scope="row" style={{ ...rowHeadCell, color: isAverage ? theme.text : theme.muted }}>
+                  {row.label}
+                </th>
+                <td style={value}>{formatFlames(results[row.key])}</td>
+                {showMeso && <td style={value}>{mesoCell(results[row.key], guildDiscount)}</td>}
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
     </div>
   );
 }
 
-function ResultsPanel({ theme, results, flameType, guildDiscount }: {
+function ResultsBody({ theme, results, showMeso, guildDiscount, desiredStat, targetNoun, summaryRowStyle }: {
   theme: AppTheme;
-  results: FlameResults;
-  flameType: FlameType;
+  results: FlameResults | null;
+  showMeso: boolean;
   guildDiscount: boolean;
+  desiredStat: number;
+  targetNoun: string;
+  summaryRowStyle: CSSProperties;
 }) {
-  const showMeso = flameType === "powerful";
-  const txt = results.flameTypeText;
+  const messageStyle: CSSProperties = { fontSize: "0.82rem", fontWeight: 600, color: theme.muted, margin: 0, lineHeight: 1.5 };
 
-  const meanCost = showMeso ? flameMesoCost(results.mean, guildDiscount) : null;
-  const fmtCost = (flames: number) => {
-    const c = flameMesoCost(flames, guildDiscount);
-    return c != null ? formatMesoFull(c) : "N/A";
-  };
+  if (!results) {
+    return <p style={messageStyle}>Enter a desired stat total above to see how many flames it takes.</p>;
+  }
+
+  if (results.probability === 0) {
+    return (
+      <p style={messageStyle}>
+        No combination of bonus stat lines reaches {desiredStat.toLocaleString("en-US")} {targetNoun} with these settings.
+        Lower the target, or try a different flame type or item level.
+      </p>
+    );
+  }
 
   return (
-    <div className="flame-results" style={{ display: "grid", gridTemplateColumns: showMeso ? "1fr 1fr" : "1fr", gap: "1rem", marginBottom: "1.25rem" }}>
-      <ResultCard
-        theme={theme}
-        title="Flame Count"
-        heroValue={`${formatFlames(results.mean)} ${txt}`}
-        heroLabel="Average flames"
-        rows={[
-          { label: "75th percentile", value: `${formatFlames(results.p75)} ${txt}` },
-          { label: "85th percentile", value: `${formatFlames(results.p85)} ${txt}` },
-          { label: "95th percentile", value: `${formatFlames(results.p95)} ${txt}` },
-        ]}
-      />
-      {showMeso && (
-        <ResultCard
-          theme={theme}
-          title="Meso Cost"
-          heroValue={meanCost != null ? `${formatMesoFull(meanCost)} mesos` : "N/A"}
-          heroLabel="Average cost"
-          rows={[
-            { label: "75th percentile", value: fmtCost(results.p75) },
-            { label: "85th percentile", value: fmtCost(results.p85) },
-            { label: "95th percentile", value: fmtCost(results.p95) },
-          ]}
-        />
-      )}
-    </div>
+    <>
+      <div style={summaryRowStyle}>
+        <span style={{ fontSize: "0.82rem", fontWeight: 700, color: theme.muted }}>Probability per flame</span>
+        <span style={{ fontSize: "1.15rem", fontWeight: 800, color: theme.accentText }}>
+          {formatPct(results.probability * 100)}
+        </span>
+      </div>
+      <ResultsTable theme={theme} results={results} showMeso={showMeso} guildDiscount={guildDiscount} />
+    </>
   );
 }
 
@@ -476,6 +528,7 @@ function FlameScorePanel({
   inputStyle,
   labelStyle,
   panelStyle,
+  summaryRowStyle,
 }: {
   theme: AppTheme;
   state: CalcState;
@@ -483,7 +536,9 @@ function FlameScorePanel({
   inputStyle: CSSProperties;
   labelStyle: CSSProperties;
   panelStyle: CSSProperties;
+  summaryRowStyle: CSSProperties;
 }) {
+  const uid = useId();
   const cls = state.flameClass;
   const setField = useCallback(
     (field: keyof FlameScoreInputs, value: number) => dispatch({ type: "setFlameScoreField", field, value }),
@@ -498,74 +553,57 @@ function FlameScorePanel({
   const fieldInputStyle: CSSProperties = { ...inputStyle, width: "100%", textAlign: "center", padding: "8px 10px" };
   const flexItem: CSSProperties = { flex: "1 1 0", minWidth: 0 };
 
+  const scoreField = (field: keyof FlameScoreInputs, label: string) => {
+    const id = `${uid}-${field}`;
+    return (
+      <Field label={label} htmlFor={id} style={labelStyle} containerStyle={flexItem}>
+        <input
+          id={id}
+          className="tool-input"
+          type="number"
+          min={0}
+          value={state.flameScore[field]}
+          onFocus={(e) => e.currentTarget.select()}
+          onKeyDown={replaceZeroOnDigit}
+          onChange={(e) => setField(field, toPositive(e.target.value))}
+          style={fieldInputStyle}
+        />
+      </Field>
+    );
+  };
+
   return (
-    <div className="fade-in" style={panelStyle}>
-      <div className="tool-field-label" style={{ ...labelStyle, marginBottom: "12px", fontSize: "0.78rem" }}>
-        Flame Score Checker
-      </div>
-      <div style={{ fontSize: "0.75rem", fontWeight: 600, color: theme.muted, marginBottom: "1rem" }}>
+    <section className="fade-in" style={panelStyle}>
+      <h2 className="tool-panel-title" style={{ color: theme.text }}>Flame Score Checker</h2>
+      <p style={{ fontSize: "0.75rem", fontWeight: 600, color: theme.muted, margin: "0 0 1rem" }}>
         Enter your current bonus stats to calculate your flame score.
-      </div>
+      </p>
 
       <div className="flame-score-fields" style={{ display: "flex", gap: "12px", marginBottom: "1rem" }}>
-        {cls !== "da" && (
-          <Field label="Main Stat" style={labelStyle} containerStyle={flexItem}>
-            <input className="tool-input" type="number" onFocus={(e) => e.currentTarget.select()} onKeyDown={replaceZeroOnDigit} value={state.flameScore.mainStat} onChange={(e) => setField("mainStat", Number(e.target.value) || 0)} style={fieldInputStyle} />
-          </Field>
-        )}
-        {cls === "da" && (
-          <Field label="HP" style={labelStyle} containerStyle={flexItem}>
-            <input className="tool-input" type="number" onFocus={(e) => e.currentTarget.select()} onKeyDown={replaceZeroOnDigit} value={state.flameScore.hp} onChange={(e) => setField("hp", Number(e.target.value) || 0)} style={fieldInputStyle} />
-          </Field>
-        )}
-        {cls === "other" && (
-          <Field label="Secondary Stat" style={labelStyle} containerStyle={flexItem}>
-            <input className="tool-input" type="number" onFocus={(e) => e.currentTarget.select()} onKeyDown={replaceZeroOnDigit} value={state.flameScore.secondaryStat} onChange={(e) => setField("secondaryStat", Number(e.target.value) || 0)} style={fieldInputStyle} />
-          </Field>
-        )}
+        {cls !== "da" && scoreField("mainStat", "Main Stat")}
+        {cls === "da" && scoreField("hp", "HP")}
+        {cls === "other" && scoreField("secondaryStat", "Secondary Stat")}
         {(cls === "db" || cls === "shadower" || cls === "cadena") && (
           <>
-            <Field label="DEX" style={labelStyle} containerStyle={flexItem}>
-              <input className="tool-input" type="number" onFocus={(e) => e.currentTarget.select()} onKeyDown={replaceZeroOnDigit} value={state.flameScore.dex} onChange={(e) => setField("dex", Number(e.target.value) || 0)} style={fieldInputStyle} />
-            </Field>
-            <Field label="STR" style={labelStyle} containerStyle={flexItem}>
-              <input className="tool-input" type="number" onFocus={(e) => e.currentTarget.select()} onKeyDown={replaceZeroOnDigit} value={state.flameScore.str} onChange={(e) => setField("str", Number(e.target.value) || 0)} style={fieldInputStyle} />
-            </Field>
+            {scoreField("dex", "DEX")}
+            {scoreField("str", "STR")}
           </>
         )}
-        {cls !== "da" && (
-          <Field label="All Stat %" style={labelStyle} containerStyle={flexItem}>
-            <input className="tool-input" type="number" onFocus={(e) => e.currentTarget.select()} onKeyDown={replaceZeroOnDigit} value={state.flameScore.allStatPct} onChange={(e) => setField("allStatPct", Number(e.target.value) || 0)} style={fieldInputStyle} />
-          </Field>
-        )}
-        <Field label="Attack Power" style={labelStyle} containerStyle={flexItem}>
-          <input className="tool-input" type="number" onFocus={(e) => e.currentTarget.select()} onKeyDown={replaceZeroOnDigit} value={state.flameScore.attack} onChange={(e) => setField("attack", Number(e.target.value) || 0)} style={fieldInputStyle} />
-        </Field>
+        {cls !== "da" && scoreField("allStatPct", "All Stat %")}
+        {scoreField("attack", "Attack Power")}
         {state.itemType === "weapon" && (
           <>
-            <Field label="Boss %" style={labelStyle} containerStyle={flexItem}>
-              <input className="tool-input" type="number" onFocus={(e) => e.currentTarget.select()} onKeyDown={replaceZeroOnDigit} value={state.flameScore.bossPct} onChange={(e) => setField("bossPct", Number(e.target.value) || 0)} style={fieldInputStyle} />
-            </Field>
-            <Field label="Damage %" style={labelStyle} containerStyle={flexItem}>
-              <input className="tool-input" type="number" onFocus={(e) => e.currentTarget.select()} onKeyDown={replaceZeroOnDigit} value={state.flameScore.dmgPct} onChange={(e) => setField("dmgPct", Number(e.target.value) || 0)} style={fieldInputStyle} />
-            </Field>
+            {scoreField("bossPct", "Boss %")}
+            {scoreField("dmgPct", "Damage %")}
           </>
         )}
       </div>
 
-      <div className="result-banner" style={{ background: theme.timerBg, border: `1px solid ${theme.border}` }}>
-        <div style={{ textAlign: "center" }}>
-          <div className="tool-field-label" style={{ color: theme.muted, marginBottom: 0 }}>
-            Flame Score
-          </div>
-          <div style={{ marginTop: "4px" }}>
-            <span style={{ fontSize: "1.15rem", fontWeight: 800, color: theme.accent }}>
-              {score}
-            </span>
-          </div>
-        </div>
+      <div style={summaryRowStyle}>
+        <span style={{ fontSize: "0.82rem", fontWeight: 700, color: theme.muted }}>Flame score</span>
+        <span style={{ fontSize: "1.15rem", fontWeight: 800, color: theme.accentText }}>{score}</span>
       </div>
-    </div>
+    </section>
   );
 }
 
@@ -576,31 +614,25 @@ export default function FlamingWorkspace({ theme }: { theme: AppTheme }) {
 
   const [state, dispatch] = useReducer(reducer, undefined, initState);
 
+  // The probability engine walks ~200k line/tier combinations (a few ms on
+  // desktop, more on phones). Deferring it lets React paint the typed character
+  // before recomputing against the settled state.
+  const deferred = useDeferredValue(state);
+
   const results = useMemo(() => {
     if (!mounted) return null;
     return computeFlameResults({
-      flameClass: state.flameClass,
-      itemType: state.itemType,
-      flameType: state.flameType,
-      itemLevel: state.itemLevel,
-      weaponLevel: state.weaponLevel,
-      baseAttack: state.baseAttack,
-      flameAdvantaged: state.flameAdvantaged,
-      desiredStat: state.desiredStat,
-      equivalences: state.equivalences,
+      flameClass: deferred.flameClass,
+      itemType: deferred.itemType,
+      flameType: deferred.flameType,
+      itemLevel: deferred.itemLevel,
+      weaponLevel: deferred.weaponLevel,
+      baseAttack: deferred.baseAttack,
+      flameAdvantaged: deferred.flameAdvantaged,
+      desiredStat: deferred.desiredStat,
+      equivalences: deferred.equivalences,
     });
-  }, [
-    mounted,
-    state.flameClass,
-    state.itemType,
-    state.flameType,
-    state.itemLevel,
-    state.weaponLevel,
-    state.baseAttack,
-    state.flameAdvantaged,
-    state.desiredStat,
-    state.equivalences,
-  ]);
+  }, [mounted, deferred]);
 
   const styles = toolStyles(theme);
   const inputStyle = styles.inputStyle;
@@ -618,28 +650,31 @@ export default function FlamingWorkspace({ theme }: { theme: AppTheme }) {
     borderRadius: "18px",
   };
 
-  const guildDiscount = state.flameType === "eternal" || state.flameType === "reincarnation"
-    ? false
-    : state.guildDiscount;
-
-  const probBadgeStyle: CSSProperties = {
+  // Tinted region, not a bordered box: a card inside a card is always wrong.
+  const summaryRowStyle: CSSProperties = {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: "1rem",
+    background: theme.timerBg,
+    borderRadius: "10px",
+    padding: "10px 14px",
     marginBottom: "1rem",
-    background: theme.panel,
-    border: `1px solid ${theme.border}`,
   };
+
+  const showMeso = usesMeso(deferred.flameType);
+  const guildDiscount = showMeso && deferred.guildDiscount;
+  const targetNoun = deferred.flameClass === "da" ? "main stat (HP equivalent)" : "main stat";
 
   return (
     <div className="page-content">
       <style>{`
         @media (max-width: 640px) {
-          .flame-results { grid-template-columns: 1fr !important; }
           .flame-score-fields { flex-wrap: wrap; }
-          .flame-eq-target-row { grid-template-columns: 1fr !important; }
           .flame-toggles { flex-direction: column; align-items: stretch !important; }
           .flame-toggles .tool-btn { width: 100%; }
         }
         @media (max-width: 860px) {
-          .flame-inputs-grid { grid-template-columns: 1fr !important; }
           .flame-eq-target-row { grid-template-columns: 1fr !important; }
         }
       `}</style>
@@ -654,32 +689,36 @@ export default function FlamingWorkspace({ theme }: { theme: AppTheme }) {
         <FlameSettingsPanel theme={theme} state={state} dispatch={dispatch} selectStyle={selectStyle} inputStyle={inputStyle} labelStyle={labelStyle} panelStyle={panelStyle} />
         {state.flameClass !== "da" ? (
           <div className="flame-eq-target-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1.25rem" }}>
-            <EquivalencesPanel theme={theme} state={state} dispatch={dispatch} inputStyle={inputStyle} labelStyle={labelStyle} panelStyle={{ ...panelStyle, marginBottom: 0 }} />
-            <TargetPanel theme={theme} state={state} dispatch={dispatch} inputStyle={inputStyle} labelStyle={labelStyle} panelStyle={{ ...panelStyle, marginBottom: 0 }} />
+            <EquivalencesPanel theme={theme} state={state} dispatch={dispatch} inputStyle={inputStyle} panelStyle={{ ...panelStyle, marginBottom: 0 }} />
+            <TargetPanel theme={theme} state={state} dispatch={dispatch} inputStyle={inputStyle} panelStyle={{ ...panelStyle, marginBottom: 0 }} />
           </div>
         ) : (
-          <TargetPanel theme={theme} state={state} dispatch={dispatch} inputStyle={inputStyle} labelStyle={labelStyle} panelStyle={panelStyle} />
+          <TargetPanel theme={theme} state={state} dispatch={dispatch} inputStyle={inputStyle} panelStyle={panelStyle} />
         )}
 
-        {results && (
-          <>
-            <div className="fade-in result-banner" style={probBadgeStyle}>
-              <div style={{ textAlign: "center" }}>
-                <div className="tool-field-label" style={{ color: theme.muted, marginBottom: 0 }}>
-                  Probability per flame
-                </div>
-                <div style={{ marginTop: "4px" }}>
-                  <span style={{ fontSize: "1.15rem", fontWeight: 800, color: theme.accent }}>
-                    {formatPctFull(results.probability * 100)}
-                  </span>
-                </div>
-              </div>
-            </div>
-            <ResultsPanel theme={theme} results={results} flameType={state.flameType} guildDiscount={guildDiscount} />
-          </>
-        )}
+        <section className="fade-in" style={panelStyle}>
+          <h2 className="tool-panel-title" style={{ color: theme.text }}>Results</h2>
+          <p className="sr-only" role="status">
+            {mounted ? resultsStatusText(results, showMeso, guildDiscount) : ""}
+          </p>
+          {/* Reserved height: results only exist after mount, and the panel
+              shouldn't jump once they land. */}
+          <div style={{ minHeight: 200 }}>
+            {mounted && (
+              <ResultsBody
+                theme={theme}
+                results={results}
+                showMeso={showMeso}
+                guildDiscount={guildDiscount}
+                desiredStat={deferred.desiredStat}
+                targetNoun={targetNoun}
+                summaryRowStyle={summaryRowStyle}
+              />
+            )}
+          </div>
+        </section>
 
-        <FlameScorePanel theme={theme} state={state} dispatch={dispatch} inputStyle={inputStyle} labelStyle={labelStyle} panelStyle={panelStyle} />
+        <FlameScorePanel theme={theme} state={state} dispatch={dispatch} inputStyle={inputStyle} labelStyle={labelStyle} panelStyle={panelStyle} summaryRowStyle={summaryRowStyle} />
       </div>
     </div>
   );

@@ -5,6 +5,7 @@ import type { CSSProperties } from "react";
 import Link from "next/link";
 import { Analytics } from "@vercel/analytics/next";
 import { useTheme } from "./ThemeContext";
+import type { AppTheme } from "./themes";
 
 const STORAGE_KEY = "mapledoro_analytics_consent";
 
@@ -61,7 +62,7 @@ function Banner({
   onAccept,
   onDecline,
 }: {
-  theme: { panel: string; border: string; text: string; muted: string; accent: string };
+  theme: AppTheme;
   onAccept: () => void;
   onDecline: () => void;
 }) {
@@ -88,7 +89,7 @@ function Banner({
         We use anonymous analytics to understand how the site is used and to improve your experience. No personal data is collected. Learn more in our{" "}
         <Link
           href="/privacy"
-          style={{ color: theme.accent, textDecoration: "underline" }}
+          style={{ color: theme.accentText, textDecoration: "underline" }}
         >
           Privacy Policy
         </Link>
@@ -105,7 +106,7 @@ function Banner({
         <button
           type="button"
           onClick={onAccept}
-          style={{ ...buttonBase, background: theme.accent, color: "#fff" }}
+          style={{ ...buttonBase, background: theme.accent, color: theme.accentOn }}
         >
           Accept
         </button>

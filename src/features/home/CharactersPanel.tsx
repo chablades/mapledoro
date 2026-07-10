@@ -125,11 +125,11 @@ export default function CharactersPanel({ theme, characters }: { theme: AppTheme
   const manageLink = useMemo(
     () =>
       hasCharacters && (
-        <Link href="/characters" className="accent-link" style={{ color: theme.accent }}>
+        <Link href="/characters" className="accent-link" style={{ color: theme.accentText }}>
           Manage →
         </Link>
       ),
-    [hasCharacters, theme.accent]
+    [hasCharacters, theme.accentText]
   );
   const emptyStateStyle: CSSProperties = {
     padding: "3rem 2rem",
@@ -148,7 +148,7 @@ export default function CharactersPanel({ theme, characters }: { theme: AppTheme
     padding: "0.55rem 1.25rem",
     borderRadius: "10px",
     background: theme.accent,
-    color: "#fff",
+    color: theme.accentOn,
     fontWeight: 800,
     fontSize: "0.85rem",
     textDecoration: "none",

@@ -58,6 +58,9 @@ const MAINTAIN_RATE: readonly number[] = [
   0.72, 0.744, 0.76, 0.776,0.792,   // 25-29
 ];
 
+/** Highest star the UI can enhance to. Index 29 is the last enhanceable star. */
+export const MAX_STAR = 30;
+
 /** When destroyed at star S, the trace restores to this star (GMS). */
 function restorePoint(star: number): number {
   if (star < 20)  return 12;
@@ -319,20 +322,63 @@ export function computeExpectedCosts(opts: StarForceOpts): StarResult[] {
   return results;
 }
 
+// -- Cost estimation ----------------------------------------------------------
+
+/**
+ * Expected number of enhancement attempts for one simulated run, booms and the
+ * rework they force included. Same recurrence as {@link computeExpectedCosts}
+ * with a unit cost per attempt.
+ *
+ * One attempt is one iteration of the simulation's inner loop, so this is a
+ * closed-form price tag for a run: multiply by the trial count. It matters
+ * because the cost is not linear in the target star. Reaching 30★ needs on the
+ * order of a million attempts per trial, since a boom at 29★ (19.8% chance
+ * against a 1% success rate) drops the item back to 20★.
+ */
+export function expectedAttempts(opts: StarForceOpts): number {
+  const { startStar, targetStar } = opts;
+  if (startStar >= targetStar) return 0;
+
+  const A: number[] = new Array(30).fill(0);
+  const lowestNeeded = Math.min(startStar, 12);
+  let total = 0;
+
+  for (let s = lowestNeeded; s < targetStar; s++) {
+    const { success, boom } = adjustedRates(s, opts);
+
+    if (boom === 0) {
+      A[s] = 1 / success;
+    } else {
+      const rp = restorePoint(s);
+      let rework = 0;
+      for (let i = rp; i < s; i++) rework += A[i];
+      A[s] = (1 + boom * rework) / success;
+    }
+
+    if (s >= startStar) total += A[s];
+  }
+
+  return total;
+}
+
 // -- Monte Carlo simulation ---------------------------------------------------
 
-/** Batched crypto RNG (avoids per-call overhead of getRandomValues). */
-class SecureRng {
-  private buf = new Uint32Array(2048);
-  private idx = 2048;
+/** mulberry32. Monte Carlo wants speed and uniformity, not cryptographic
+ *  strength; `crypto` is used once, for the seed. */
+function mulberry32(seed: number): () => number {
+  let a = seed | 0;
+  return () => {
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
 
-  next(): number {
-    if (this.idx >= this.buf.length) {
-      crypto.getRandomValues(this.buf);
-      this.idx = 0;
-    }
-    return this.buf[this.idx++] / 0x100000000;
-  }
+function randomSeed(): number {
+  const seed = new Uint32Array(1);
+  crypto.getRandomValues(seed);
+  return seed[0];
 }
 
 export interface SimulationResult {
@@ -346,74 +392,130 @@ export interface SimulationResult {
   minCost: number;
   maxCost: number;
   /** Per-trial totals, ascending — for distribution/histogram rendering. */
-  costs: number[];
-  booms: number[];
+  costs: Float64Array;
+  booms: Float64Array;
 }
 
-function percentile(sorted: number[], p: number): number {
+function percentile(sorted: Float64Array, p: number): number {
   const idx = Math.ceil(p * sorted.length) - 1;
   return sorted[Math.max(0, idx)];
 }
 
-export function simulate(opts: StarForceOpts, trials: number): SimulationResult {
-  const { level, startStar, targetStar, replacementCost } = opts;
+/** A simulation that can be advanced in slices and abandoned part-way. */
+export interface SimulationRun {
+  readonly trials: number;
+  /** Trials finished so far. */
+  readonly completed: number;
+  /** Advance for at most `budgetMs`. Returns true once every trial is done. */
+  step(budgetMs: number): boolean;
+  /** Aggregate the trials. Only meaningful once `step` has returned true. */
+  result(): SimulationResult;
+}
 
-  // Pre-compute per-star cost & rates
-  const costs: number[] = [];
-  const success: number[] = [];
-  const boom: number[] = [];
+// The clock is only consulted every N attempts: `performance.now()` costs more
+// than the loop body it guards.
+const DEADLINE_CHECK_INTERVAL = 4096;
+
+/**
+ * Monte Carlo star-force run, resumable mid-trial.
+ *
+ * A single trial toward 30★ can take over 100 ms on its own, so the budget is
+ * checked inside the attempt loop rather than between trials. That keeps the
+ * caller free to paint, report progress, and cancel.
+ */
+export function startSimulation(opts: StarForceOpts, trials: number): SimulationRun {
+  const { level, startStar, targetStar, replacementCost } = opts;
+  const total = startStar >= targetStar ? 0 : Math.max(0, trials);
+
+  // Per-star lookup tables. `keep` is the roll below which the item survives,
+  // i.e. 1 - boom: success and maintain both land under it. Precomputing it
+  // keeps the inner loop to one comparison per outcome.
+  const cost = new Float64Array(30);
+  const success = new Float64Array(30);
+  const keep = new Float64Array(30);
+  const restore = new Int32Array(30);
   for (let s = 0; s < 30; s++) {
-    costs[s] = attemptCost(level, s, opts);
+    cost[s] = attemptCost(level, s, opts);
     const r = adjustedRates(s, opts);
     success[s] = r.success;
-    boom[s] = r.boom;
+    keep[s] = 1 - r.boom;
+    restore[s] = restorePoint(s);
   }
 
-  const rng = new SecureRng();
-  const allCosts: number[] = new Array(trials);
-  const allBooms: number[] = new Array(trials);
+  const rng = mulberry32(randomSeed());
+  const allCosts = new Float64Array(total);
+  const allBooms = new Float64Array(total);
 
-  for (let t = 0; t < trials; t++) {
-    let star = startStar;
-    let totalCost = 0;
-    let totalBooms = 0;
-
-    while (star < targetStar) {
-      totalCost += costs[star];
-      const roll = rng.next();
-
-      if (roll < success[star]) {
-        star++;
-      } else if (roll < success[star] + (1 - success[star] - boom[star])) {
-        // Maintain
-      } else if (boom[star] > 0) {
-        totalBooms++;
-        totalCost += replacementCost;
-        star = restorePoint(star);
-      }
-    }
-
-    allCosts[t] = totalCost;
-    allBooms[t] = totalBooms;
-  }
-
-  allCosts.sort((a, b) => a - b);
-  allBooms.sort((a, b) => a - b);
-
-  const sumCost = allCosts.reduce((a, b) => a + b, 0);
-  const sumBooms = allBooms.reduce((a, b) => a + b, 0);
+  let completed = 0;
+  let star = startStar;
+  let trialCost = 0;
+  let trialBooms = 0;
 
   return {
-    meanCost: sumCost / trials,
-    medianCost: percentile(allCosts, 0.5),
-    meanBooms: sumBooms / trials,
-    medianBooms: percentile(allBooms, 0.5),
-    p75Cost: percentile(allCosts, 0.75),
-    p85Cost: percentile(allCosts, 0.85),
-    p95Cost: percentile(allCosts, 0.95),
-    minCost: allCosts[0],
-    maxCost: allCosts[allCosts.length - 1],
-    costs: allCosts,
-    booms: allBooms,
+    trials: total,
+    get completed() {
+      return completed;
+    },
+
+    step(budgetMs: number): boolean {
+      if (completed >= total) return true;
+      const deadline = performance.now() + budgetMs;
+      let sinceCheck = 0;
+
+      while (completed < total) {
+        if (star >= targetStar) {
+          allCosts[completed] = trialCost;
+          allBooms[completed] = trialBooms;
+          completed++;
+          star = startStar;
+          trialCost = 0;
+          trialBooms = 0;
+          continue;
+        }
+
+        trialCost += cost[star];
+        const roll = rng();
+        if (roll < success[star]) {
+          star++;
+        } else if (roll >= keep[star]) {
+          trialBooms++;
+          trialCost += replacementCost;
+          star = restore[star];
+        }
+        // Otherwise the item maintains: it cost a try and nothing moved.
+
+        if (++sinceCheck >= DEADLINE_CHECK_INTERVAL) {
+          sinceCheck = 0;
+          if (performance.now() >= deadline) return false;
+        }
+      }
+      return true;
+    },
+
+    result(): SimulationResult {
+      allCosts.sort();
+      allBooms.sort();
+
+      let sumCost = 0;
+      let sumBooms = 0;
+      for (let i = 0; i < total; i++) {
+        sumCost += allCosts[i];
+        sumBooms += allBooms[i];
+      }
+
+      return {
+        meanCost: sumCost / total,
+        medianCost: percentile(allCosts, 0.5),
+        meanBooms: sumBooms / total,
+        medianBooms: percentile(allBooms, 0.5),
+        p75Cost: percentile(allCosts, 0.75),
+        p85Cost: percentile(allCosts, 0.85),
+        p95Cost: percentile(allCosts, 0.95),
+        minCost: allCosts[0],
+        maxCost: allCosts[total - 1],
+        costs: allCosts,
+        booms: allBooms,
+      };
+    },
   };
 }

@@ -23,6 +23,23 @@ export function formatMesoFull(n: number): string {
   return mesoFormatter.format(Math.floor(n));
 }
 
+/** Whole count with thousands separators (cubes, flames). */
+export function formatCount(n: number): string {
+  if (!isFinite(n)) return "N/A";
+  return mesoFormatter.format(Math.round(n));
+}
+
+/** Percentage with precision scaled to its magnitude, so a whole number reads
+ *  as one: 34% / 4.5% / 0.9901% / 0.0012%. Floating-point drift (0.05 * 2 * 100
+ *  = 10.000000000000002) is what makes the rounding necessary at all; the
+ *  Number() round-trip then drops the zeros toFixed() padded back on. */
+export function formatPct(pct: number): string {
+  if (!isFinite(pct)) return "N/A";
+  if (pct >= 1) return `${Number(pct.toFixed(2))}%`;
+  if (pct >= 0.01) return `${Number(pct.toFixed(4))}%`;
+  return `${Number(pct.toPrecision(3))}%`;
+}
+
 /** Abbreviated EXP amount in the lowercase community convention (1.23q / 1.23t / 1.23b / 1.2m); full digits below 1M. */
 export function formatExpCompact(n: number): string {
   if (n >= 1_000_000_000_000_000) return `${(n / 1_000_000_000_000_000).toFixed(2)}q`;

@@ -161,7 +161,7 @@ function CharacterGuidesContent({ theme }: { theme: AppTheme }) {
             style={{
               fontSize: "0.78rem",
               fontWeight: 700,
-              color: theme.accent,
+              color: theme.accentText,
               textDecoration: "none",
               display: "inline-block",
               marginBottom: "0.75rem",
@@ -254,7 +254,7 @@ function CharacterGuidesContent({ theme }: { theme: AppTheme }) {
                   style={{
                     fontFamily: "var(--font-heading)",
                     fontSize: "1rem",
-                    color: theme.accent,
+                    color: theme.accentText,
                     marginBottom: "0.75rem",
                   }}
                 >
@@ -284,7 +284,7 @@ function CharacterGuidesContent({ theme }: { theme: AppTheme }) {
                 href="https://maplestory.nexon.net"
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{ color: theme.accent, textDecoration: "none" }}
+                style={{ color: theme.accentText, textDecoration: "none" }}
               >
                 Nexon
               </a>

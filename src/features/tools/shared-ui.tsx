@@ -3,21 +3,32 @@
 import type { AppTheme } from "../../components/themes";
 
 /** Label sitting above a control. Typography comes from `.tool-field-label`;
- *  pass `style` for the dynamic muted color (e.g. `styles.labelStyle`). */
+ *  pass `style` for the dynamic muted color (e.g. `styles.labelStyle`).
+ *
+ *  Pass `htmlFor` (matching an `id` on the control) whenever the child is a
+ *  single native input or select — it renders a real `<label>` so the control
+ *  gets an accessible name. Children that are custom widgets or buttons keep
+ *  the plain `<div>` and must name themselves via `aria-label`. */
 export function Field({
   label,
+  htmlFor,
   style,
   containerStyle,
   children,
 }: {
   label: string;
+  htmlFor?: string;
   style?: React.CSSProperties;
   containerStyle?: React.CSSProperties;
   children: React.ReactNode;
 }) {
   return (
     <div style={containerStyle}>
-      <div className="tool-field-label" style={style}>{label}</div>
+      {htmlFor ? (
+        <label className="tool-field-label" htmlFor={htmlFor} style={style}>{label}</label>
+      ) : (
+        <div className="tool-field-label" style={style}>{label}</div>
+      )}
       {children}
     </div>
   );
@@ -67,11 +78,14 @@ export function Toggle({
       type="button"
       className="tool-btn"
       disabled={disabled}
+      aria-pressed={checked}
       onClick={() => onChange(!checked)}
       style={mergedStyle}
     >
-      {/* The check slot always occupies space so toggling doesn't change the width. */}
-      <span style={{ visibility: checked ? "visible" : "hidden", marginRight: "0.35em" }}>
+      {/* The check slot always occupies space so toggling doesn't change the
+          width. `visibility: hidden` drops it from the accessibility tree, so
+          the pressed state is carried by `aria-pressed`, not by this glyph. */}
+      <span aria-hidden="true" style={{ visibility: checked ? "visible" : "hidden", marginRight: "0.35em" }}>
         {"\u2713"}
       </span>
       {label}
@@ -113,7 +127,7 @@ export function PillGroup<T extends string>({
             borderRadius: "8px",
             fontSize: "0.75rem",
             fontWeight: 700,
-            color: value === o.value ? "#fff" : theme.muted,
+            color: value === o.value ? theme.accentOn : theme.muted,
             background: value === o.value ? theme.accent : "transparent",
             userSelect: "none",
           }}
@@ -163,7 +177,7 @@ export function ActionButton({
         ...actionBtnBase,
         background: theme.accent,
         borderColor: theme.accent,
-        color: "#fff",
+        color: theme.accentOn,
         width: fullWidth ? "100%" : undefined,
         opacity: disabled ? 0.5 : 1,
         cursor: disabled ? "not-allowed" : "pointer",

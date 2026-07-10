@@ -30,7 +30,7 @@ export function primaryButtonStyle(theme: AppTheme, padding = "0.65rem 0.9rem"):
     border: "none",
     borderRadius: "10px",
     background: theme.accent,
-    color: "#fff",
+    color: theme.accentOn,
     fontFamily: "inherit",
     fontWeight: 800,
     fontSize: "0.9rem",

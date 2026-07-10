@@ -69,7 +69,7 @@ export default function PatchNotesPanel({ theme }: { theme: AppTheme }) {
     fontSize: "0.78rem",
     fontWeight: 700,
     fontFamily: "inherit",
-    color: theme.accent,
+    color: theme.accentText,
     transition: "background 0.15s",
   };
   return (
@@ -90,7 +90,7 @@ export default function PatchNotesPanel({ theme }: { theme: AppTheme }) {
             target="_blank"
             rel="noopener noreferrer"
             className="accent-link"
-            style={{ color: theme.accent }}
+            style={{ color: theme.accentText }}
           >
             All →
           </a>
@@ -138,7 +138,7 @@ export default function PatchNotesPanel({ theme }: { theme: AppTheme }) {
                   <span style={{ marginLeft: "auto", fontSize: "0.75rem", color: theme.muted }}>
                     {p.date}
                   </span>
-                  <span style={{ fontSize: "0.75rem", color: theme.accent, marginLeft: "4px" }}>
+                  <span style={{ fontSize: "0.75rem", color: theme.accentText, marginLeft: "4px" }}>
                     ↗
                   </span>
                 </div>

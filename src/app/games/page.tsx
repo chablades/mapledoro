@@ -75,7 +75,7 @@ function GamesContent({ theme }: { theme: AppTheme }) {
                   <div style={{ fontSize: "0.82rem", color: theme.muted, fontWeight: 600, lineHeight: 1.5 }}>
                     {game.description}
                   </div>
-                  <div style={{ marginTop: "1rem", fontSize: "0.78rem", fontWeight: 800, color: theme.accent }}>
+                  <div style={{ marginTop: "1rem", fontSize: "0.78rem", fontWeight: 800, color: theme.accentText }}>
                     Play →
                   </div>
                 </div>

@@ -1214,7 +1214,7 @@ function ResourcesTab({ theme }: { theme: AppTheme }) {
 function ResourceTableView({ theme, table }: { theme: AppTheme; table: ResourceTable }) {
   const thStyle: React.CSSProperties = { padding: "9px 12px", borderBottom: `2px solid ${theme.border}`, color: theme.muted, fontSize: "0.75rem", fontWeight: 800, textAlign: "right", textTransform: "uppercase", background: theme.timerBg };
   const tdStyle: React.CSSProperties = { padding: "8px 12px", color: theme.text, fontSize: "0.8rem", fontWeight: 700, textAlign: "right" };
-  const levelTdStyle: React.CSSProperties = { ...tdStyle, textAlign: "left", color: theme.accent, fontWeight: 800 };
+  const levelTdStyle: React.CSSProperties = { ...tdStyle, textAlign: "left", color: theme.accentText, fontWeight: 800 };
   const maxUnits = table.maxUnits;
   // The wrapper is `timerBg`, so the zebra stripe is the lighter `panel` fill.
   const rowStyle = (index: number): React.CSSProperties => ({ background: index % 2 === 1 ? theme.panel : "transparent" });

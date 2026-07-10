@@ -130,7 +130,7 @@ export default function SetupStepFrame({
             border: "none",
             borderRadius: "10px",
             background: nextDisabled ? theme.border : theme.accent,
-            color: nextDisabled ? theme.muted : "#fff",
+            color: nextDisabled ? theme.muted : theme.accentOn,
             fontFamily: "inherit",
             fontWeight: 800,
             fontSize: "0.88rem",
