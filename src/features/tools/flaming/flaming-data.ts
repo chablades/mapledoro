@@ -75,16 +75,15 @@ const WATT_PER_TIER_NON_ADV: Record<string, Record<number, number>> = {
 
 // -- Helpers ------------------------------------------------------------------
 
-function factorial(n: number): number {
-  let v = n;
-  for (let i = n - 1; i > 1; i--) v *= i;
-  return v;
-}
-
+// Multiplicative form. The factorial form overflows Number.MAX_SAFE_INTEGER
+// from n = 18 up, and the pool sizes here reach 21.
 function combination(n: number, r: number): number {
-  if (n === r || r === 0) return 1;
   if (r < 0 || r > n) return 0;
-  return factorial(n) / (factorial(r) * factorial(n - r));
+  if (r === 0 || r === n) return 1;
+  const k = Math.min(r, n - r);
+  let result = 1;
+  for (let i = 1; i <= k; i++) result = (result * (n - k + i)) / i;
+  return Math.round(result);
 }
 
 function makeNonAdvantaged(probs: Record<number, number>): Record<number, number> {
@@ -343,36 +342,46 @@ export function computeFlameResults(params: {
   const lo = getLowerTierLimit(flameType, nonAdvantaged);
   const hi = getUpperTierLimit(flameType, nonAdvantaged);
 
-  let totalProb = 0;
-  const tiers = new Int8Array(lines.length);
+  // The search below visits hundreds of thousands of leaves, so everything that
+  // depends only on the constants above is precomputed here rather than
+  // recomputed per leaf. The running tier probability is carried down the
+  // recursion instead of being rebuilt from a tier array at each leaf.
+  const lineProbByActive = new Float64Array(5);
+  for (let a = 1; a <= 4; a++) {
+    lineProbByActive[a] = getLineProbability(neutralCount, a, nonAdvantaged, totalPool);
+  }
 
-  function recurse(idx: number, active: number, score: number): void {
-    if (idx === lines.length) {
-      if (active > 0 && score >= desiredStat) {
-        const lineProb = getLineProbability(neutralCount, active, nonAdvantaged, totalPool);
-        let tierProb = 1;
-        for (let i = 0; i < lines.length; i++) {
-          if (tiers[i] > 0) tierProb *= tierProbs[tiers[i]];
-        }
-        totalProb += lineProb * tierProb;
-      }
+  const tierProbByTier = new Float64Array(hi);
+  for (let t = lo; t < hi; t++) tierProbByTier[t] = tierProbs[t];
+
+  const contribByLine = lines.map((line) => {
+    const arr = new Float64Array(hi);
+    for (let t = lo; t < hi; t++) arr[t] = line.contribution(t);
+    return arr;
+  });
+
+  const lineCount = lines.length;
+  let totalProb = 0;
+
+  function recurse(idx: number, active: number, score: number, tierProb: number): void {
+    if (idx === lineCount) {
+      if (active > 0 && score >= desiredStat) totalProb += lineProbByActive[active] * tierProb;
       return;
     }
 
     // Skip this line (tier = 0)
-    tiers[idx] = 0;
-    recurse(idx + 1, active, score);
+    recurse(idx + 1, active, score, tierProb);
 
     // Activate at each possible tier
     if (active < 4) {
+      const contrib = contribByLine[idx];
       for (let t = lo; t < hi; t++) {
-        tiers[idx] = t;
-        recurse(idx + 1, active + 1, score + lines[idx].contribution(t));
+        recurse(idx + 1, active + 1, score + contrib[t], tierProb * tierProbByTier[t]);
       }
     }
   }
 
-  recurse(0, 0, 0);
+  recurse(0, 0, 0, 1);
 
   if (totalProb <= 0) {
     return {

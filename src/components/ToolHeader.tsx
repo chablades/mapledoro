@@ -10,12 +10,12 @@ interface ToolHeaderProps {
 export function ToolHeader({ theme, title, description }: ToolHeaderProps) {
   return (
     <div className="tool-header">
-      <Link href="/tools" className="tool-header-back" style={{ color: theme.accent }}>
+      <Link href="/tools" className="tool-header-back" style={{ color: theme.accentText }}>
         ← Back to Tools
       </Link>
-      <div className="tool-header-title" style={{ color: theme.text }}>
+      <h1 className="tool-header-title" style={{ color: theme.text }}>
         {title}
-      </div>
+      </h1>
       <div className="tool-header-desc" style={{ color: theme.muted }}>
         {description}
       </div>

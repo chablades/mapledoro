@@ -3,6 +3,7 @@
 import { useState } from "react";
 import AppShell from "../../components/AppShell";
 import type { AppTheme } from "../../components/themes";
+import { STATUS, type StatusKind } from "../../components/statusColors";
 
 interface ChangelogEntry {
   date: string;
@@ -13,6 +14,17 @@ const CHANGELOG: ChangelogEntry[] = [
   {
     date: "2026-07-10",
     changes: [
+      { type: "changed", text: "Adjusted every color theme so text meets accessible contrast in both light and dark mode." },
+      { type: "fixed", text: "Fixed accent colored text being hard to read in dark mode across the site." },
+      { type: "fixed", text: "Fixed the Active badges, changelog tags, and Reset buttons having text that was too faint to read." },
+      { type: "fixed", text: "Fixed the completed count in the Daily Tracker and the correct and incorrect marks in Mapledle being hard to read." },
+      { type: "fixed", text: "Fixed the Star Force Calculator freezing the page when the target star was set to 29 or 30." },
+      { type: "fixed", text: "Fixed the Star Force Calculator Trials field snapping back to 1000 when you tried to clear it." },
+      { type: "fixed", text: "Fixed the Cubing Calculator clearing your Desired Stat when you edited the Item Level." },
+      { type: "fixed", text: "The Cubing Calculator Double Miracle Time toggle is now off for Occult, Master, and Meister cubes, which the event does not affect." },
+      { type: "changed", text: "The Star Force Calculator now warns you before an expensive run, shows progress while it works, and lets you stop it." },
+      { type: "changed", text: "The Cubing Calculator now updates as you change the form, so there is no Calculate button and results are never out of date." },
+      { type: "changed", text: "The Cubing Calculator now shows average and percentile costs in one table, with cube counts and meso costs side by side." },
       { type: "fixed", text: "The level 296 Geardock monster in the EXP Calculator is now Strike Securitron instead of Surveillance Robot." },
     ],
   },
@@ -289,10 +301,10 @@ const TYPE_LABEL: Record<ChangelogEntry["changes"][number]["type"], string> = {
   fixed: "Fixed",
 };
 
-const TYPE_COLOR: Record<ChangelogEntry["changes"][number]["type"], string> = {
-  added: "#10b981",
-  changed: "#3b82f6",
-  fixed: "#f59e0b",
+const TYPE_STATUS: Record<ChangelogEntry["changes"][number]["type"], StatusKind> = {
+  added: "success",
+  changed: "info",
+  fixed: "warning",
 };
 
 const ENTRIES_PER_PAGE = 7;
@@ -376,7 +388,8 @@ function ChangelogContent({ theme }: { theme: AppTheme }) {
                     <span
                       className="changelog-type-pill"
                       style={{
-                        background: TYPE_COLOR[change.type],
+                        background: STATUS[TYPE_STATUS[change.type]].fill,
+                        color: STATUS[TYPE_STATUS[change.type]].on,
                       }}
                     >
                       {TYPE_LABEL[change.type]}

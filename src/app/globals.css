@@ -46,6 +46,19 @@ html {
   color: #fff;
 }
 
+/* Content for assistive technology only: live-region status text, table captions. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
 html.scroll-locked,
 html.scroll-locked body {
   overflow: hidden;
@@ -167,6 +180,9 @@ html.scroll-locked body {
   border-radius: 8px;
   border: 1px solid; /* color supplied inline via borderColor */
   padding: 7px 10px;
+  /* Chrome gives <select> a taller intrinsic line box than <input>. Pinning both
+     keeps a select and an input sitting side by side in a form row aligned. */
+  height: 35px;
 }
 
 .tool-select {
@@ -186,6 +202,7 @@ html.scroll-locked body {
 
 /* Uppercase field label sitting above a control */
 .tool-field-label {
+  display: block;
   font-size: 0.75rem;
   font-weight: 800;
   text-transform: uppercase;
@@ -193,7 +210,18 @@ html.scroll-locked body {
   margin-bottom: 4px;
 }
 
+/* Section heading inside a tool panel. A real heading, not the uppercase
+   micro-label used for form fields. Color supplied inline. */
+.tool-panel-title {
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.3;
+  margin: 0 0 0.75rem;
+}
+
 input:focus-visible,
+select:focus-visible,
 textarea:focus-visible {
   outline: 2px solid;
   outline-offset: 2px;
@@ -242,7 +270,7 @@ textarea:focus-visible {
 
 /* Inner content container of a tool workspace (sits inside `.page-content`) */
 .tool-container {
-  max-width: 900px;
+  max-width: 1020px;
   margin: 0 auto;
 }
 
@@ -325,10 +353,13 @@ textarea:focus-visible {
   text-decoration: none;
 }
 
+/* Renders as <h1>; the explicit weight and margin keep it looking like the
+   <div> it replaced rather than picking up the UA heading defaults. */
 .tool-header-title {
   font-family: var(--font-heading);
   font-size: 1.5rem;
-  margin-top: 0.5rem;
+  font-weight: 400;
+  margin: 0.5rem 0 0;
 }
 
 .tool-header-desc {
@@ -359,11 +390,11 @@ textarea:focus-visible {
   user-select: none;
 }
 
+/* Colors (fill + ink) supplied inline from `STATUS`; only shape lives here. */
 .changelog-type-pill {
   flex-shrink: 0;
   font-size: 0.75rem;
   font-weight: 800;
-  color: #fff;
   padding: 2px 8px;
   border-radius: 6px;
   letter-spacing: 0.04em;

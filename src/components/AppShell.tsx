@@ -82,7 +82,7 @@ export default function AppShell({ currentPath, children }: AppShellProps) {
                 style={{
                   fontSize: "0.78rem",
                   fontWeight: 800,
-                  color: theme.accent,
+                  color: theme.accentText,
                   textDecoration: "none",
                 }}
               >

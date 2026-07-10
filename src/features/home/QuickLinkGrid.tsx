@@ -95,7 +95,7 @@ export function QuickLinkGrid({
             </button>
           )}
         </div>
-        <Link href={allHref} className="accent-link" style={{ color: theme.accent }}>
+        <Link href={allHref} className="accent-link" style={{ color: theme.accentText }}>
           {allLabel}
         </Link>
       </div>

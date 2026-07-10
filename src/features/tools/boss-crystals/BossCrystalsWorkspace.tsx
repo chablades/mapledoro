@@ -52,7 +52,7 @@ function bcAvatarFallbackStyle(theme: AppTheme): CSSProperties {
     alignItems: "center",
     justifyContent: "center",
     fontSize: "1.2rem",
-    color: theme.accent,
+    color: theme.accentText,
     fontWeight: 800,
     flexShrink: 0,
   };
@@ -173,7 +173,7 @@ function bcSummaryValueStyle(theme: AppTheme): CSSProperties {
   return {
     fontFamily: "var(--font-heading)",
     fontSize: "1.2rem",
-    color: theme.accent,
+    color: theme.accentText,
   };
 }
 
@@ -398,7 +398,7 @@ function CharacterCard({
                 }}
               >
                 {b.cleared && (
-                  <span style={{ color: "#fff", fontSize: "0.6rem", fontWeight: 900, lineHeight: 1 }}>
+                  <span style={{ color: theme.accentOn, fontSize: "0.6rem", fontWeight: 900, lineHeight: 1 }}>
                     ✓
                   </span>
                 )}
@@ -781,7 +781,7 @@ function BossSelectionDialog({
                       }}
                     >
                       {checked && (
-                        <span style={{ color: "#fff", fontSize: "0.75rem", fontWeight: 900 }}>
+                        <span style={{ color: theme.accentOn, fontSize: "0.75rem", fontWeight: 900 }}>
                           ✓
                         </span>
                       )}
@@ -865,7 +865,7 @@ function BossSelectionDialog({
             {preview.crystals}/14
           </span>
           {" crystals · "}
-          <span style={{ color: theme.accent }}>{formatMesoFull(preview.meso)}</span>
+          <span style={{ color: theme.accentText }}>{formatMesoFull(preview.meso)}</span>
           {" mesos"}
         </div>
 

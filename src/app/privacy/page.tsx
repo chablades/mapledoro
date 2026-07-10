@@ -19,7 +19,7 @@ function PrivacyContent({ theme }: { theme: AppTheme }) {
           href="https://vercel.com/docs/analytics"
           target="_blank"
           rel="noopener noreferrer"
-          style={{ color: theme.accent, textDecoration: "none" }}
+          style={{ color: theme.accentText, textDecoration: "none" }}
         >
           Vercel Analytics
         </a>{" "}
@@ -34,7 +34,7 @@ function PrivacyContent({ theme }: { theme: AppTheme }) {
           href="https://vercel.com/docs/analytics/privacy-policy"
           target="_blank"
           rel="noopener noreferrer"
-          style={{ color: theme.accent, textDecoration: "none" }}
+          style={{ color: theme.accentText, textDecoration: "none" }}
         >
           privacy policy
         </a>

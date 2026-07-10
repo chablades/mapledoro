@@ -209,7 +209,7 @@ function ToolRow({ tool, theme }: { tool: ToolCard; theme: AppTheme }) {
         </div>
       </div>
       {!tool.comingSoon && (
-        <span className="tool-row-arrow" style={{ ...rowArrowBase, color: theme.accent }}>
+        <span className="tool-row-arrow" style={{ ...rowArrowBase, color: theme.accentText }}>
           →
         </span>
       )}

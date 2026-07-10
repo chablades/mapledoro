@@ -160,7 +160,7 @@ function EstimateResult({
     const diffDays = Math.round((result.date.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
     if (diffDays <= 0) {
       return (
-        <span style={{ fontWeight: 700, color: theme.accent, fontSize: "0.85rem" }}>
+        <span style={{ fontWeight: 700, color: theme.accentText, fontSize: "0.85rem" }}>
           Target reached!
         </span>
       );

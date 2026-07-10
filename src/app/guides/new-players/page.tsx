@@ -89,7 +89,7 @@ function ClassRandomizer({ theme }: { theme: AppTheme }) {
         className="guide-primary-btn"
         style={{
           background: theme.accent,
-          color: "#fff",
+          color: theme.accentOn,
         }}
         onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.85")}
         onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
@@ -129,7 +129,7 @@ function ClassRandomizer({ theme }: { theme: AppTheme }) {
               style={{
                 fontFamily: "var(--font-heading)",
                 fontSize: "1.05rem",
-                color: theme.accent,
+                color: theme.accentText,
                 marginBottom: "0.5rem",
               }}
             >
@@ -196,7 +196,7 @@ function ClassInfoPanel({ cls, theme }: { cls: ClassEntry; theme: AppTheme }) {
           style={{
             fontFamily: "var(--font-heading)",
             fontSize: "0.95rem",
-            color: theme.accent,
+            color: theme.accentText,
             marginBottom: "0.4rem",
           }}
         >
@@ -257,7 +257,7 @@ function ClassDirectory({ theme }: { theme: AppTheme }) {
             style={{
               fontFamily: "var(--font-heading)",
               fontSize: "0.85rem",
-              color: theme.accent,
+              color: theme.accentText,
               marginBottom: "0.75rem",
             }}
           >
@@ -422,7 +422,7 @@ function NewPlayersContent({ theme }: { theme: AppTheme }) {
             href="/guides"
             className="guide-back-link"
             style={{
-              color: theme.accent,
+              color: theme.accentText,
             }}
           >
             ← Back to Guides
@@ -479,7 +479,7 @@ function NewPlayersContent({ theme }: { theme: AppTheme }) {
                   style={{
                     fontSize: "0.82rem",
                     fontWeight: 600,
-                    color: theme.accent,
+                    color: theme.accentText,
                     textDecoration: "none",
                   }}
                 >

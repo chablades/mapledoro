@@ -3,6 +3,7 @@
 import type { CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import type { AppTheme } from "./themes";
+import { STATUS } from "./statusColors";
 
 function modalPanelStyle(theme: AppTheme): CSSProperties {
   return {
@@ -36,8 +37,8 @@ function confirmButtonStyle(theme: AppTheme, danger: boolean): CSSProperties {
   return {
     border: danger ? "1px solid #fca5a5" : `1px solid ${theme.accent}`,
     borderRadius: "10px",
-    background: danger ? "#ef4444" : theme.accent,
-    color: "#fff",
+    background: danger ? STATUS.danger.fill : theme.accent,
+    color: danger ? STATUS.danger.on : theme.accentOn,
     fontFamily: "inherit",
     fontWeight: 800,
     fontSize: "0.86rem",

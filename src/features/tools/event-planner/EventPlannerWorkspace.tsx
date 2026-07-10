@@ -304,7 +304,7 @@ function PlanSummary({
       >
         <div>
           <div style={statLabel}>Total Expected Cost</div>
-          <div style={{ ...statValue, color: theme.accent }}>
+          <div style={{ ...statValue, color: theme.accentText }}>
             {formatMesoFull(grandTotal.cost)} mesos
           </div>
         </div>
@@ -551,7 +551,7 @@ function CharacterPlanPanel({
             marginLeft: "auto",
             fontSize: "0.78rem",
             fontWeight: 700,
-            color: theme.accent,
+            color: theme.accentText,
           }}
         >
           {formatMesoFull(subtotal)} mesos
