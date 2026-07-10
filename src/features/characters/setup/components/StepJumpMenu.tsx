@@ -113,6 +113,18 @@ function substepIndicatorStyle(theme: AppTheme, active: boolean): CSSProperties 
   };
 }
 
+// Mobile tap-to-expand substeps otherwise share near-identical padding/font/color with
+// their parent row (desktop's hover flyout gets nesting for free from being a visually
+// separate side panel) — an indent plus a connecting rail marks them as children of the
+// row above instead of more flat list entries.
+function tapSubstepListStyle(theme: AppTheme): CSSProperties {
+  return {
+    marginLeft: "0.9rem",
+    paddingLeft: "0.6rem",
+    borderLeft: `2px solid ${theme.border}`,
+  };
+}
+
 function substepItemStyle(theme: AppTheme, disabled: boolean): CSSProperties {
   return {
     display: "block",
@@ -470,7 +482,7 @@ export default function StepJumpMenu({
                     )}
                   </div>
                   {isTapExpanded && (
-                    <div ref={tapSubstepsRef}>
+                    <div ref={tapSubstepsRef} style={tapSubstepListStyle(theme)}>
                       {step.substeps?.map((substep, substepIndex) => (
                         <button
                           key={substep.label}

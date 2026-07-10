@@ -270,9 +270,13 @@ const symbolTileStyle = (theme: AppTheme, placed: boolean): CSSProperties => ({
   padding: "8px 9px", boxSizing: "border-box",
 });
 
+// Padding + matching negative margin grows the actual clickable box toward a 44px
+// touch target without shifting surrounding layout — the button still occupies its
+// original space, it just responds to taps/clicks a bit outside its visible text.
 const symbolSectionBtnStyle: CSSProperties = {
-  background: "none", border: "none", padding: 0, font: "inherit",
+  background: "none", border: "none", font: "inherit",
   fontSize: "0.75rem", fontWeight: 800,
+  padding: "15px 6px", margin: "-15px -6px",
   cursor: "pointer",
 };
 
@@ -806,6 +810,7 @@ function PresetBar({ theme, active, onSwitch }: {
             <button
               key={i}
               type="button"
+              className="tap-target-44"
               onClick={() => onSwitch(i)}
               style={presetButtonStyle(theme, on)}
             >

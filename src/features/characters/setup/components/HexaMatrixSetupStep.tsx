@@ -61,9 +61,13 @@ const HEXA_STAT_DEFS: HexaSkillDef[] = [
   { iconId: "50000002", name: "HEXA Stat III" },
 ];
 
+// Padding + matching negative margin grows the actual clickable box toward a 44px
+// touch target without shifting surrounding layout — the button still occupies its
+// original space, it just responds to taps/clicks a bit outside its visible text.
 const sectionBtnStyle: React.CSSProperties = {
-  background: "none", border: "none", padding: 0, font: "inherit",
+  background: "none", border: "none", font: "inherit",
   fontSize: "0.75rem", fontWeight: 800,
+  padding: "15px 6px", margin: "-15px -6px",
   cursor: "pointer",
 };
 
