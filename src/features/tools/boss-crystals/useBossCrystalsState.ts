@@ -9,22 +9,31 @@ import type { StoredCharacterRecord } from "../../characters/model/charactersSto
 import {
   type BossRow,
   type CharacterEntry,
+  type CharacterProgress,
   type DialogState,
+  type ServerType,
   createBosses,
   getDisabledSet,
   calcCharacterProgress,
   currentWeekId,
+  currentMonthId,
+  worldServerType,
   loadState,
   saveState,
   clearState,
 } from "./boss-crystals-types";
+import { MONTHLY_INDICES } from "./bosses";
 import { exportBossCrystals } from "./exportBossCrystals";
 
 // Module-level so the per-boss `.map` callbacks don't deepen hook nesting.
-function resetClearedFlags(chars: CharacterEntry[]): CharacterEntry[] {
+// `monthly` selects which cadence rolled over: true wipes monthly bosses (Black
+// Mage), false wipes weekly bosses, so each resets on its own schedule.
+function resetClearedFlags(chars: CharacterEntry[], monthly: boolean): CharacterEntry[] {
   return chars.map((c) => ({
     ...c,
-    bosses: c.bosses.map((b) => (b.cleared ? { ...b, cleared: false } : b)),
+    bosses: c.bosses.map((b, bi) =>
+      b.cleared && MONTHLY_INDICES.has(bi) === monthly ? { ...b, cleared: false } : b,
+    ),
   }));
 }
 
@@ -62,6 +71,7 @@ export function useBossCrystalsState(mounted: boolean) {
   const [characters, setCharacters] = useState<CharacterEntry[]>([]);
   const loadedRef = useRef<true | null>(null);
   const weekRef = useRef<string | null>(null);
+  const monthRef = useRef<string | null>(null);
 
   // Dialog state
   const [dialog, setDialog] = useState<DialogState>(null);
@@ -76,7 +86,10 @@ export function useBossCrystalsState(mounted: boolean) {
       loadedRef.current = true;
       const saved = loadState();
       if (saved) {
-        setServer(saved.server);
+        // If every saved character shares one world, open on that world so the
+        // view is never empty and interactive-only rosters default to Interactive.
+        const worlds = new Set(saved.characters.map((c) => c.world));
+        setServer(worlds.size === 1 ? [...worlds][0] : saved.server);
         setCharacters(saved.characters);
       }
     }
@@ -87,31 +100,49 @@ export function useBossCrystalsState(mounted: boolean) {
     if (loadedRef.current != null) saveState(server, characters);
   }, [server, characters]);
 
-  // Weekly reset (Thursday 00:00 UTC) while the page stays open.
+  // Period resets while the page stays open: weekly bosses on Thursday 00:00 UTC,
+  // monthly bosses (Black Mage) on the 1st at 00:00 UTC.
   useEffect(() => {
     if (!mounted) return undefined;
     if (weekRef.current === null) weekRef.current = currentWeekId();
+    if (monthRef.current === null) monthRef.current = currentMonthId();
     const id = setInterval(() => {
       const wk = currentWeekId();
-      if (wk === weekRef.current) return;
-      weekRef.current = wk;
-      setCharacters(resetClearedFlags);
+      if (wk !== weekRef.current) {
+        weekRef.current = wk;
+        setCharacters((prev) => resetClearedFlags(prev, false));
+      }
+      const mo = currentMonthId();
+      if (mo !== monthRef.current) {
+        monthRef.current = mo;
+        setCharacters((prev) => resetClearedFlags(prev, true));
+      }
     }, 60 * 1000);
     return () => clearInterval(id);
   }, [mounted]);
 
   // -- Calculations --
-  const charIncomes = useMemo(
-    () => characters.map((c) => calcCharacterProgress(c.bosses, server)),
-    [characters, server],
-  );
-  let totalMeso = 0;
+  // Only characters in the selected world are shown; totals (income and the
+  // per-world 180 crystal cap) scope to them. `index` keeps the position in the
+  // full `characters` array so edit/delete/reorder/toggle handlers stay correct.
+  const visibleCharacters = useMemo(() => {
+    const out: { char: CharacterEntry; index: number; income: CharacterProgress }[] = [];
+    characters.forEach((char, index) => {
+      if (char.world !== server) return;
+      out.push({ char, index, income: calcCharacterProgress(char.bosses, server) });
+    });
+    return out;
+  }, [characters, server]);
+  let totalWeeklyMeso = 0;
+  let totalMonthlyMeso = 0;
   let totalCrystals = 0;
   let clearedMeso = 0;
   let clearedCrystals = 0;
-  for (const income of charIncomes) {
-    totalMeso += income.meso;
-    totalCrystals += income.crystals;
+  for (const { income } of visibleCharacters) {
+    totalWeeklyMeso += income.weeklyMeso;
+    totalMonthlyMeso += income.monthlyMeso;
+    // Monthly crystals count toward the 180 total but not a character's 14 cap.
+    totalCrystals += income.crystals + income.monthlyCrystals;
     clearedMeso += income.clearedMeso;
     clearedCrystals += income.clearedCrystals;
   }
@@ -125,8 +156,14 @@ export function useBossCrystalsState(mounted: boolean) {
   const availableStoreChars = useMemo(() => {
     if (!mounted) return [];
     const all = selectCharactersList(readCharactersStore());
-    return all.filter((c) => !usedNames.has(c.characterName.toLowerCase()));
-  }, [mounted, usedNames]);
+    // Only offer characters from the world currently in view, so an import lands
+    // in the same world it was picked under and stays visible after adding.
+    return all.filter(
+      (c) =>
+        !usedNames.has(c.characterName.toLowerCase()) &&
+        worldServerType(c.worldID) === server,
+    );
+  }, [mounted, usedNames, server]);
 
   // Dialog computed
   const dialogDisabled = useMemo(() => getDisabledSet(dialogBosses), [dialogBosses]);
@@ -155,15 +192,20 @@ export function useBossCrystalsState(mounted: boolean) {
     if (!pendingName) return;
     const imageURL =
       nameMode === "select" ? (selectedStoreChar?.characterImgURL ?? null) : null;
+    // Imported characters take their real world; typed ones take the current view.
+    const world: ServerType =
+      nameMode === "select" && selectedStoreChar
+        ? worldServerType(selectedStoreChar.worldID)
+        : (server as ServerType);
     setDialogBosses(createBosses(""));
-    setDialog({ type: "add-bosses", name: pendingName, imageURL });
-  }, [pendingName, nameMode, selectedStoreChar]);
+    setDialog({ type: "add-bosses", name: pendingName, imageURL, world });
+  }, [pendingName, nameMode, selectedStoreChar, server]);
 
   const confirmAdd = useCallback(() => {
     if (dialog?.type !== "add-bosses") return;
     setCharacters((prev) => [
       ...prev,
-      { name: dialog.name, imageURL: dialog.imageURL, bosses: dialogBosses },
+      { name: dialog.name, imageURL: dialog.imageURL, world: dialog.world, bosses: dialogBosses },
     ]);
     setDialog(null);
   }, [dialog, dialogBosses]);
@@ -238,15 +280,16 @@ export function useBossCrystalsState(mounted: boolean) {
   const goBackToAddName = useCallback(() => setDialog({ type: "add-name" }), []);
 
   const exportXlsx = useCallback(() => {
-    exportBossCrystals(characters, server);
-  }, [server, characters]);
+    // Export the world currently in view; its meso values use that server's mult.
+    exportBossCrystals(visibleCharacters.map((v) => v.char), server);
+  }, [server, visibleCharacters]);
 
   return {
     server,
     setServer,
-    characters,
-    charIncomes,
-    totalMeso,
+    visibleCharacters,
+    totalWeeklyMeso,
+    totalMonthlyMeso,
     totalCrystals,
     clearedMeso,
     clearedCrystals,

@@ -226,6 +226,18 @@ function CharacterCard({
   );
   const allCleared = selected.length > 0 && selected.every((b) => b.cleared);
 
+  // `muted` reads too dim in dark mode; lift the subtext halfway to `text` there.
+  const subtitleRowStyle: CSSProperties = {
+    fontSize: "0.85rem",
+    fontWeight: 700,
+    color:
+      theme.colorMode === "dark"
+        ? `color-mix(in srgb, ${theme.muted}, ${theme.text})`
+        : theme.muted,
+    whiteSpace: "nowrap",
+    lineHeight: 1.4,
+  };
+
   return (
     <div
       className="fade-in bc-card panel-card"
@@ -239,79 +251,17 @@ function CharacterCard({
         border: `1px solid ${isDropTarget ? theme.accent : theme.border}`,
         borderRadius: "14px",
         padding: "1.25rem",
-        position: "relative",
         opacity: isDragging ? 0.4 : 1,
         cursor: "grab",
       }}
     >
-      {/* Top-right actions */}
-      <div
-        style={{
-          position: "absolute",
-          top: "0.75rem",
-          right: "0.75rem",
-          display: "flex",
-          gap: "4px",
-        }}
-      >
-        <button
-          type="button"
-          className="btn-reset bc-btn"
-          onClick={onDelete}
-          title="Remove character"
-          style={{ ...bcIconBtnStyle(theme), color: "#e05a5a" }}
-        >
-          ✕
-        </button>
-        <button
-          type="button"
-          className="btn-reset bc-btn"
-          onClick={onEdit}
-          title="Edit bosses"
-          style={{
-            padding: "5px",
-            borderRadius: "8px",
-            background: theme.timerBg,
-            border: `1px solid ${theme.border}`,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <svg viewBox="0 0 24 24" width="14" height="14" fill={theme.muted}>
-            <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
-          </svg>
-        </button>
-        <button
-          type="button"
-          className="btn-reset bc-btn"
-          aria-pressed={allCleared}
-          onClick={() => onSetAllCleared(!allCleared)}
-          title={allCleared ? "Unmark all bosses" : "Mark all bosses cleared"}
-          style={{
-            padding: "5px",
-            borderRadius: "8px",
-            background: allCleared ? theme.accentSoft : theme.timerBg,
-            border: `1px solid ${allCleared ? theme.accent : theme.border}`,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <svg viewBox="0 0 24 24" width="14" height="14" fill={allCleared ? theme.accent : theme.muted}>
-            <path d="M18 7l-1.41-1.41-6.34 6.34 1.41 1.41L18 7zm4.24-1.41L11.66 16.17 7.48 12l-1.41 1.41L11.66 19l12-12-1.42-1.41zM.41 13.41L6 19l1.41-1.41L1.83 12 .41 13.41z" />
-          </svg>
-        </button>
-      </div>
-
       {/* Character header */}
       <div
         style={{
           display: "flex",
-          alignItems: "center",
+          alignItems: "flex-start",
           gap: "0.75rem",
           marginBottom: "0.75rem",
-          paddingRight: "5.5rem",
         }}
       >
         {char.imageURL ? (
@@ -333,20 +283,81 @@ function CharacterCard({
             {char.name.charAt(0).toUpperCase()}
           </div>
         )}
-        <div>
-          <div
-            style={{
-              fontFamily: "var(--font-heading)",
-              fontSize: "0.95rem",
-              fontWeight: 800,
-              color: theme.text,
-            }}
-          >
-            {char.name}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {/* Name + actions on one row */}
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.2rem" }}>
+            <div
+              style={{
+                flex: 1,
+                minWidth: 0,
+                fontFamily: "var(--font-heading)",
+                fontSize: "0.95rem",
+                fontWeight: 800,
+                color: theme.text,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {char.name}
+            </div>
+            <div style={{ display: "flex", gap: "4px", flexShrink: 0 }}>
+              <button
+                type="button"
+                className="btn-reset bc-btn"
+                onClick={onDelete}
+                title="Remove character"
+                style={{ ...bcIconBtnStyle(theme), color: "#e05a5a" }}
+              >
+                ✕
+              </button>
+              <button
+                type="button"
+                className="btn-reset bc-btn"
+                onClick={onEdit}
+                title="Edit bosses"
+                style={{
+                  padding: "5px",
+                  borderRadius: "8px",
+                  background: theme.timerBg,
+                  border: `1px solid ${theme.border}`,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <svg viewBox="0 0 24 24" width="14" height="14" fill={theme.muted}>
+                  <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                className="btn-reset bc-btn"
+                aria-pressed={allCleared}
+                onClick={() => onSetAllCleared(!allCleared)}
+                title={allCleared ? "Unmark all bosses" : "Mark all bosses cleared"}
+                style={{
+                  padding: "5px",
+                  borderRadius: "8px",
+                  background: allCleared ? theme.accentSoft : theme.timerBg,
+                  border: `1px solid ${allCleared ? theme.accent : theme.border}`,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <svg viewBox="0 0 24 24" width="14" height="14" fill={allCleared ? theme.accent : theme.muted}>
+                  <path d="M18 7l-1.41-1.41-6.34 6.34 1.41 1.41L18 7zm4.24-1.41L11.66 16.17 7.48 12l-1.41 1.41L11.66 19l12-12-1.42-1.41zM.41 13.41L6 19l1.41-1.41L1.83 12 .41 13.41z" />
+                </svg>
+              </button>
+            </div>
           </div>
-          <div style={{ fontSize: "0.75rem", color: theme.muted, fontWeight: 700 }}>
-            {income.crystals}/14 crystals · {formatMesoFull(income.meso)} mesos
+          {/* Crystal count and meso count, one per row */}
+          <div style={subtitleRowStyle}>
+            {income.crystals}/14
+            {income.monthlyCrystals > 0 ? ` +${income.monthlyCrystals}` : ""} crystals
           </div>
+          <div style={subtitleRowStyle}>{formatMesoFull(income.meso)} mesos</div>
         </div>
       </div>
 
@@ -662,7 +673,7 @@ function BossSelectionDialog({
   serverMult: number;
   bosses: BossRow[];
   disabled: Set<number>;
-  preview: { meso: number; crystals: number };
+  preview: { meso: number; crystals: number; monthlyCrystals: number };
   showBack: boolean;
   confirmLabel: string;
   onToggle: (bi: number) => void;
@@ -863,6 +874,7 @@ function BossSelectionDialog({
             }}
           >
             {preview.crystals}/14
+            {preview.monthlyCrystals > 0 ? ` +${preview.monthlyCrystals}` : ""}
           </span>
           {" crystals · "}
           <span style={{ color: theme.accentText }}>{formatMesoFull(preview.meso)}</span>
@@ -1010,13 +1022,15 @@ function BossCrystalsControls({
 
 function BossCrystalsSummary({
   theme,
-  totalMeso,
+  totalWeeklyMeso,
+  totalMonthlyMeso,
   totalCrystals,
   clearedMeso,
   clearedCrystals,
 }: {
   theme: AppTheme;
-  totalMeso: number;
+  totalWeeklyMeso: number;
+  totalMonthlyMeso: number;
   totalCrystals: number;
   clearedMeso: number;
   clearedCrystals: number;
@@ -1027,7 +1041,12 @@ function BossCrystalsSummary({
       <div className="bc-weekly" style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
         <div className="bc-summary-headline" style={{ display: "flex", alignItems: "baseline", gap: "6px", flexWrap: "wrap" }}>
           <span style={bcSummaryLabelStyle(theme)}>Weekly:</span>
-          <span className="bc-summary-value" style={bcSummaryValueStyle(theme)}>{formatMesoFull(totalMeso)} mesos</span>
+          <span className="bc-summary-value" style={bcSummaryValueStyle(theme)}>{formatMesoFull(totalWeeklyMeso)} mesos</span>
+          {totalMonthlyMeso > 0 && (
+            <span style={{ fontSize: "0.85rem", fontWeight: 700, color: theme.muted }}>
+              + {formatMesoFull(totalMonthlyMeso)} mesos (monthly)
+            </span>
+          )}
         </div>
         <div
           className="bc-pill"
@@ -1076,8 +1095,8 @@ export default function BossCrystalsWorkspace({ theme }: { theme: AppTheme }) {
   const mounted = useMounted();
 
   const {
-    server, setServer, characters, charIncomes,
-    totalMeso, totalCrystals, clearedMeso, clearedCrystals, serverMult,
+    server, setServer, visibleCharacters,
+    totalWeeklyMeso, totalMonthlyMeso, totalCrystals, clearedMeso, clearedCrystals, serverMult,
     dialog, dialogBosses, dialogDisabled, dialogPreview,
     dialogTitle, showBossDialog, pendingName,
     nameMode, setNameMode, typedName, setTypedName,
@@ -1179,7 +1198,8 @@ export default function BossCrystalsWorkspace({ theme }: { theme: AppTheme }) {
 
           <BossCrystalsSummary
             theme={theme}
-            totalMeso={totalMeso}
+            totalWeeklyMeso={totalWeeklyMeso}
+            totalMonthlyMeso={totalMonthlyMeso}
             totalCrystals={totalCrystals}
             clearedMeso={clearedMeso}
             clearedCrystals={clearedCrystals}
@@ -1194,23 +1214,23 @@ export default function BossCrystalsWorkspace({ theme }: { theme: AppTheme }) {
               alignItems: "start",
             }}
           >
-            {characters.map((char, ci) => (
+            {visibleCharacters.map(({ char, index, income }) => (
               <CharacterCard
                 key={char.name}
                 theme={theme}
                 char={char}
-                income={charIncomes[ci]}
+                income={income}
                 serverMult={serverMult}
-                isDragging={dragIndex === ci}
-                isDropTarget={overIndex === ci && dragIndex !== null && dragIndex !== ci}
-                onDragStart={(e) => handleDragStart(e, ci)}
-                onDragOver={(e) => handleDragOver(e, ci)}
-                onDrop={(e) => handleDrop(e, ci)}
+                isDragging={dragIndex === index}
+                isDropTarget={overIndex === index && dragIndex !== null && dragIndex !== index}
+                onDragStart={(e) => handleDragStart(e, index)}
+                onDragOver={(e) => handleDragOver(e, index)}
+                onDrop={(e) => handleDrop(e, index)}
                 onDragEnd={handleDragEnd}
-                onEdit={() => openEdit(ci)}
-                onDelete={() => deleteCharacter(ci)}
-                onToggleCleared={(bi) => toggleBossCleared(ci, bi)}
-                onSetAllCleared={(cleared) => setAllBossesCleared(ci, cleared)}
+                onEdit={() => openEdit(index)}
+                onDelete={() => deleteCharacter(index)}
+                onToggleCleared={(bi) => toggleBossCleared(index, bi)}
+                onSetAllCleared={(cleared) => setAllBossesCleared(index, cleared)}
               />
             ))}
 

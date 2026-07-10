@@ -6,6 +6,12 @@ export interface Boss {
   meso: number;
   shared?: string[];
   preset?: string[];
+  /**
+   * Monthly boss (Black Mage): resets on the 1st at 00:00 UTC instead of the
+   * weekly Thursday reset, and its crystal is exempt from the per-character 14
+   * crystal cap while still counting toward the account-wide 180 weekly total.
+   */
+  monthly?: boolean;
 }
 
 // haku.network `ui/boss` icon by id (ids from `manifests/v268/boss.json`).
@@ -67,7 +73,16 @@ export const BOSSES: Boss[] = [
   { name: "Malefic Star (Hard)", icon: icon("37"), meso: 3990000000, shared: ["Malefic Star (Normal)"] },
   { name: "Jupiter (Normal)", icon: icon("38"), meso: 2965000000, shared: ["Jupiter (Hard)"] },
   { name: "Jupiter (Hard)", icon: icon("38"), meso: 5954000000, shared: ["Jupiter (Normal)"] },
+  // Monthly boss. Keep last so its rows stay contiguous for the XLSX top-14 formula.
+  { name: "Black Mage (Hard)", icon: icon("25"), meso: 4500000000, monthly: true, shared: ["Black Mage (Extreme)"] },
+  { name: "Black Mage (Extreme)", icon: icon("25"), meso: 18000000000, monthly: true, shared: ["Black Mage (Hard)"] },
 ];
+
+// Boss indices flagged `monthly` (Black Mage). Used to reset their cleared flags
+// on the monthly cadence and to exempt them from the per-character 14 crystal cap.
+export const MONTHLY_INDICES: ReadonlySet<number> = new Set(
+  BOSSES.flatMap((b, i) => (b.monthly ? [i] : [])),
+);
 
 // Precomputed: for each boss index, the indices of its shared bosses
 const _nameToIdx = new Map(BOSSES.map((b, i) => [b.name, i]));

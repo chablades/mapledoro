@@ -14,6 +14,9 @@ const CHANGELOG: ChangelogEntry[] = [
   {
     date: "2026-07-10",
     changes: [
+      { type: "added", text: "Added Hard and Extreme Black Mage to the Boss Crystal Tracker as a monthly boss that resets on the first of each month and does not count against a character's 14 crystal limit." },
+      { type: "changed", text: "The Boss Crystal Tracker Heroic and Interactive toggle now filters your characters by world instead of just changing crystal prices." },
+      { type: "changed", text: "The Boss Crystal Tracker now opens on Interactive when all your characters are in Interactive worlds." },
       { type: "changed", text: "Adjusted every color theme so text meets accessible contrast in both light and dark mode." },
       { type: "fixed", text: "Fixed accent colored text being hard to read in dark mode across the site." },
       { type: "fixed", text: "Fixed the Active badges, changelog tags, and Reset buttons having text that was too faint to read." },
