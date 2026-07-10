@@ -1,3 +1,5 @@
+import { cubeRates } from "./cubing-data";
+
 // ---------- Category enum ----------
 
 export const enum Cat {
@@ -78,13 +80,13 @@ export const STAT_TYPES: { value: string; label: string }[] = [
 
 // ---------- Cube constants ----------
 
-export const MAX_CUBE_TIER: Record<CubeKey, number> = {
-  occult: 1,
-  master: 2,
-  meister: 3,
-  red: 3,
-  black: 3,
-};
+export const MIN_ITEM_LEVEL = 71;
+export const MAX_ITEM_LEVEL = 250;
+
+/** Double Miracle Time doubles tier-up rates for these cubes only. The other
+ *  three are unaffected by the in-game event, so `TIER_RATES_DMT` reuses their
+ *  base rates and the toggle stays disabled while they're selected. */
+export const DMT_CUBES: ReadonlySet<CubeKey> = new Set<CubeKey>(["red", "black"]);
 
 export const TIER_RATES: Record<CubeKey, Record<number, number>> = {
   occult: { 0: 0.009901 },
@@ -138,6 +140,17 @@ export function convertItemType(itemType: ItemCategory): ItemDataKey {
   if (itemType === "accessory") return "ring";
   if (itemType === "badge") return "heart";
   return itemType as ItemDataKey;
+}
+
+/** Tiers this cube has rate tables for, on this item. The Desired Tier options
+ *  are driven straight off this, which is what keeps `getProbability` from ever
+ *  missing its lookup and dividing by a zero probability. Always contiguous, so
+ *  first and last bound the range. */
+export function availableDesiredTiers(itemType: ItemCategory, cubeType: CubeKey): number[] {
+  const item = convertItemType(itemType);
+  return TIERS.map((t) => t.value).filter(
+    (tier) => `${item}/${cubeType}/${TIER_NUMBER_TO_TEXT[tier]}` in cubeRates.lookup,
+  );
 }
 
 // ---------- Category max-occurrence limits (special lines) ----------
@@ -207,7 +220,15 @@ export interface QuantileResult {
   ninety_fifth: number;
 }
 
+/** Cubes needed to hit a per-cube chance of `p`, at each quantile.
+ *
+ *  A certain outcome takes exactly one cube, and the log form degenerates there:
+ *  `Math.log(1 - 1)` is -Infinity, and a probability summed out of the rate
+ *  tables can land a hair above 1, making `Math.log` of a negative return NaN.
+ *  Callers must reject `p <= 0` before calling; there is no finite answer for an
+ *  outcome that never happens. */
 export function geoDistrQuantile(p: number): QuantileResult {
+  if (p >= 1) return { mean: 1, median: 1, seventy_fifth: 1, eighty_fifth: 1, ninety_fifth: 1 };
   return {
     mean: 1 / p,
     median: Math.log(1 - 0.5) / Math.log(1 - p),
@@ -219,18 +240,40 @@ export function geoDistrQuantile(p: number): QuantileResult {
 
 // ---------- Tier-up cost ----------
 
+export interface TierStep {
+  from: string;
+  to: string;
+  probability: number;
+}
+
+/** The per-cube tier-up chance at each step between the two tiers. Both the
+ *  displayed rates and the summed cost below read from this, so they can't drift. */
+export function tierUpSteps(
+  currentTier: number,
+  desiredTier: number,
+  cubeType: CubeKey,
+  dmt: boolean,
+): TierStep[] {
+  const rates = dmt ? TIER_RATES_DMT : TIER_RATES;
+  const steps: TierStep[] = [];
+  for (let i = currentTier; i < desiredTier; i++) {
+    const probability = rates[cubeType][i];
+    if (probability != null) {
+      steps.push({ from: TIERS[i].label, to: TIERS[i + 1].label, probability });
+    }
+  }
+  return steps;
+}
+
 export function getTierUpCosts(
   currentTier: number,
   desiredTier: number,
   cubeType: CubeKey,
   dmt: boolean,
 ): QuantileResult {
-  const rates = dmt ? TIER_RATES_DMT : TIER_RATES;
   let mean = 0, median = 0, s75 = 0, s85 = 0, s95 = 0;
-  for (let i = currentTier; i < desiredTier; i++) {
-    const p = rates[cubeType][i];
-    if (p == null) continue;
-    const stats = geoDistrQuantile(p);
+  for (const step of tierUpSteps(currentTier, desiredTier, cubeType, dmt)) {
+    const stats = geoDistrQuantile(step.probability);
     mean += Math.round(stats.mean);
     median += Math.round(stats.median);
     s75 += Math.round(stats.seventy_fifth);
@@ -246,6 +289,13 @@ export interface StatOption {
   value: string;
   label: string;
   group: string;
+}
+
+/** Option labels sit in a native <select>, which can't wrap or truncate
+ *  gracefully. They stay terse: "Lines" not "Line(s) of", "+" not "and",
+ *  "Meso%" not "Mesos Obtained%". */
+function lines(n: number): string {
+  return n === 1 ? "1 Line" : `${n} Lines`;
 }
 
 const STAT_DISPLAY: Record<string, { valueName: string; display: string }> = {
@@ -269,8 +319,11 @@ function get3LStatAmounts(prime: number): number[] {
   return [ppp - 18, ppp - 15, ppp - 12, ppp - 9, ...get3LAtkAmounts(prime)].filter((x) => x > 0);
 }
 
+/** Filtered like the 3-line amounts: at Rare tier the prime line is only 3%, so
+ *  the low end lands on 0. A "0%+ Attack" target matches every roll, which drives
+ *  the probability to 1 and the quantile logs to -Infinity. */
 function get2LAtkAmounts(prime: number): number[] {
-  return [prime * 2 - 6, prime * 2 - 3, prime * 2];
+  return [prime * 2 - 6, prime * 2 - 3, prime * 2].filter((x) => x > 0);
 }
 
 function buildWSEOptions(itemType: ItemCategory, desiredTier: number, itemLevel: number): StatOption[] {
@@ -283,17 +336,17 @@ function buildWSEOptions(itemType: ItemCategory, desiredTier: number, itemLevel:
     opts.push({ value: `percAtt+${v}`, label: `${v}%+ Attack`, group: "Attack" });
   }
   for (const v of twoL) {
-    opts.push({ value: `lineIed+1&percAtt+${v}`, label: `${v}%+ Attack and IED`, group: "Attack With 1 Line of IED" });
+    opts.push({ value: `lineIed+1&percAtt+${v}`, label: `${v}%+ Attack + 1 Line IED`, group: "Attack With 1 Line of IED" });
   }
 
   const showBoss = itemType !== "emblem" && desiredTier >= 2;
-  const anyLabel = `Attack% ${showBoss ? "or Boss% " : ""}or IED`;
+  const anyLabel = showBoss ? "Attack%/Boss%/IED" : "Attack%/IED";
   for (let i = 1; i <= 3; i++) {
-    opts.push({ value: `lineAttOrBossOrIed+${i}`, label: `${i} Line ${anyLabel}`, group: "Any Useful Lines" });
+    opts.push({ value: `lineAttOrBossOrIed+${i}`, label: `${lines(i)} ${anyLabel}`, group: "Any Useful Lines" });
   }
-  opts.push({ value: "lineAtt+1&lineAttOrBossOrIed+2", label: `1 Line attack with 1 Line ${anyLabel}`, group: "Attack + Any Useful Lines" });
-  opts.push({ value: "lineAtt+1&lineAttOrBossOrIed+3", label: `1 Line attack with 2 Line ${anyLabel}`, group: "Attack + Any Useful Lines" });
-  opts.push({ value: "lineAtt+2&lineAttOrBossOrIed+3", label: `2 Line attack with 1 Line ${anyLabel}`, group: "Attack + Any Useful Lines" });
+  opts.push({ value: "lineAtt+1&lineAttOrBossOrIed+2", label: `1 Line Attack + 1 Line ${anyLabel}`, group: "Attack + Any Useful Lines" });
+  opts.push({ value: "lineAtt+1&lineAttOrBossOrIed+3", label: `1 Line Attack + 2 Lines ${anyLabel}`, group: "Attack + Any Useful Lines" });
+  opts.push({ value: "lineAtt+2&lineAttOrBossOrIed+3", label: `2 Lines Attack + 1 Line ${anyLabel}`, group: "Attack + Any Useful Lines" });
 
   if (itemType !== "emblem" && desiredTier >= 2) {
     opts.push(...buildBossOptions(prime, desiredTier));
@@ -303,18 +356,21 @@ function buildWSEOptions(itemType: ItemCategory, desiredTier: number, itemLevel:
 
 function buildBossOptions(prime: number, desiredTier: number): StatOption[] {
   const opts: StatOption[] = [];
-  const [, pn, pp] = get2LAtkAmounts(prime);
+  // The two upper 2-line amounts. Computed rather than read out of
+  // get2LAtkAmounts by index, which now filters and can change length.
+  const pn = prime * 2 - 3;
+  const pp = prime * 2;
   opts.push({ value: "lineAtt+1&lineBoss+1", label: "1 Line Attack% + 1 Line Boss%", group: "Attack and Boss Damage" });
-  opts.push({ value: "lineAtt+1&lineBoss+2", label: "1 Line Attack% + 2 Line Boss%", group: "Attack and Boss Damage" });
-  opts.push({ value: "lineAtt+2&lineBoss+1", label: "2 Line Attack% + 1 Line Boss%", group: "Attack and Boss Damage" });
-  opts.push({ value: `percAtt+${pn}&percBoss+30`, label: `${pn}%+ Attack and 30%+ Boss`, group: "Attack and Boss Damage" });
+  opts.push({ value: "lineAtt+1&lineBoss+2", label: "1 Line Attack% + 2 Lines Boss%", group: "Attack and Boss Damage" });
+  opts.push({ value: "lineAtt+2&lineBoss+1", label: "2 Lines Attack% + 1 Line Boss%", group: "Attack and Boss Damage" });
+  opts.push({ value: `percAtt+${pn}&percBoss+30`, label: `${pn}%+ Attack + 30%+ Boss`, group: "Attack and Boss Damage" });
   if (desiredTier === 3) {
-    opts.push({ value: `percAtt+${pn}&percBoss+35`, label: `${pn}%+ Attack and 35%+ Boss`, group: "Attack and Boss Damage" });
-    opts.push({ value: `percAtt+${pn}&percBoss+40`, label: `${pn}%+ Attack and 40%+ Boss`, group: "Attack and Boss Damage" });
+    opts.push({ value: `percAtt+${pn}&percBoss+35`, label: `${pn}%+ Attack + 35%+ Boss`, group: "Attack and Boss Damage" });
+    opts.push({ value: `percAtt+${pn}&percBoss+40`, label: `${pn}%+ Attack + 40%+ Boss`, group: "Attack and Boss Damage" });
   }
-  opts.push({ value: `percAtt+${pp}&percBoss+30`, label: `${pp}%+ Attack and 30%+ Boss`, group: "Attack and Boss Damage" });
+  opts.push({ value: `percAtt+${pp}&percBoss+30`, label: `${pp}%+ Attack + 30%+ Boss`, group: "Attack and Boss Damage" });
   for (let i = 1; i <= 3; i++) {
-    opts.push({ value: `lineAttOrBoss+${i}`, label: `${i} Line Attack% or Boss%`, group: "Attack or Boss Damage" });
+    opts.push({ value: `lineAttOrBoss+${i}`, label: `${lines(i)} Attack% or Boss%`, group: "Attack or Boss Damage" });
   }
   return opts;
 }
@@ -329,22 +385,22 @@ function buildNonWSEStatOptions(desiredTier: number, itemLevel: number, statType
 function buildCritDamageOptions(valueName: string, display: string): StatOption[] {
   const opts: StatOption[] = [];
   for (let i = 1; i <= 3; i++) {
-    opts.push({ value: `lineCritDamage+${i}`, label: `${i} Line Crit Dmg%`, group: "Crit Damage" });
+    opts.push({ value: `lineCritDamage+${i}`, label: `${lines(i)} Crit Dmg%`, group: "Crit Damage" });
   }
-  opts.push({ value: `lineCritDamage+1&line${valueName}+1`, label: `1 Line Crit Dmg% and 1 line ${display}`, group: "Crit Damage" });
-  opts.push({ value: `lineCritDamage+1&line${valueName}+2`, label: `1 Line Crit Dmg% and 2 line ${display}`, group: "Crit Damage" });
-  opts.push({ value: `lineCritDamage+2&line${valueName}+1`, label: `2 Line Crit Dmg% and 1 line ${display}`, group: "Crit Damage" });
+  opts.push({ value: `lineCritDamage+1&line${valueName}+1`, label: `1 Line Crit Dmg% + 1 Line ${display}`, group: "Crit Damage" });
+  opts.push({ value: `lineCritDamage+1&line${valueName}+2`, label: `1 Line Crit Dmg% + 2 Lines ${display}`, group: "Crit Damage" });
+  opts.push({ value: `lineCritDamage+2&line${valueName}+1`, label: `2 Lines Crit Dmg% + 1 Line ${display}`, group: "Crit Damage" });
   return opts;
 }
 
 function buildAutoStealOptions(valueName: string, display: string): StatOption[] {
   const opts: StatOption[] = [];
   for (let i = 1; i <= 3; i++) {
-    opts.push({ value: `lineAutoSteal+${i}`, label: `${i} Line Auto Steal%`, group: "Auto Steal" });
+    opts.push({ value: `lineAutoSteal+${i}`, label: `${lines(i)} Auto Steal%`, group: "Auto Steal" });
   }
-  opts.push({ value: `lineAutoSteal+1&line${valueName}+1`, label: `1 Line Auto Steal% and 1 line ${display}`, group: "Auto Steal" });
-  opts.push({ value: `lineAutoSteal+1&line${valueName}+2`, label: `1 Line Auto Steal% and 2 line ${display}`, group: "Auto Steal" });
-  opts.push({ value: `lineAutoSteal+2&line${valueName}+1`, label: `2 Line Auto Steal% and 1 line ${display}`, group: "Auto Steal" });
+  opts.push({ value: `lineAutoSteal+1&line${valueName}+1`, label: `1 Line Auto Steal% + 1 Line ${display}`, group: "Auto Steal" });
+  opts.push({ value: `lineAutoSteal+1&line${valueName}+2`, label: `1 Line Auto Steal% + 2 Lines ${display}`, group: "Auto Steal" });
+  opts.push({ value: `lineAutoSteal+2&line${valueName}+1`, label: `2 Lines Auto Steal% + 1 Line ${display}`, group: "Auto Steal" });
   return opts;
 }
 
@@ -358,7 +414,7 @@ function buildGlovesOptions(cubeType: CubeKey, desiredTier: number, valueName: s
     for (let i = 1; i <= 2; i++) {
       for (let j = 1; j <= 2; j++) {
         if (i + j <= 3) {
-          opts.push({ value: `lineAutoSteal+${i}&lineCritDamage+${j}`, label: `${i} Line Auto Steal% and ${j} Line Crit Dmg%`, group: "Wombo Combo" });
+          opts.push({ value: `lineAutoSteal+${i}&lineCritDamage+${j}`, label: `${lines(i)} Auto Steal% + ${lines(j)} Crit Dmg%`, group: "Wombo Combo" });
         }
       }
     }
@@ -368,32 +424,30 @@ function buildGlovesOptions(cubeType: CubeKey, desiredTier: number, valueName: s
 
 function buildAccessoryOptions(valueName: string, display: string): StatOption[] {
   return [
-    { value: "lineMeso+1", label: "1 Line Mesos Obtained%", group: "Drop/Meso" },
-    { value: "lineDrop+1", label: "1 Line Item Drop%", group: "Drop/Meso" },
-    { value: "lineMesoOrDrop+1", label: "1 Line of Item Drop% or Mesos Obtained%", group: "Drop/Meso" },
-    { value: "lineMeso+2", label: "2 Line Mesos Obtained%", group: "Drop/Meso" },
-    { value: "lineDrop+2", label: "2 Line Item Drop%", group: "Drop/Meso" },
-    { value: "lineMesoOrDrop+2", label: "2 Lines Involving Item Drop% or Mesos Obtained%", group: "Drop/Meso" },
-    { value: "lineMeso+3", label: "3 Line Mesos Obtained%", group: "Drop/Meso" },
-    { value: "lineDrop+3", label: "3 Line Drop%", group: "Drop/Meso" },
-    { value: `lineMeso+1&line${valueName}+1`, label: `1 Line Mesos Obtained% and 1 line ${display}`, group: "Drop/Meso" },
-    { value: `lineDrop+1&line${valueName}+1`, label: `1 Line Item Drop% and 1 line ${display}`, group: "Drop/Meso" },
-    { value: `lineMesoOrDrop+1&line${valueName}+1`, label: `1 Line of (Item Drop% or Mesos Obtained%) with 1 line ${display}`, group: "Drop/Meso" },
+    { value: "lineMeso+1", label: "1 Line Meso%", group: "Drop/Meso" },
+    { value: "lineDrop+1", label: "1 Line Drop%", group: "Drop/Meso" },
+    { value: "lineMesoOrDrop+1", label: "1 Line Drop% or Meso%", group: "Drop/Meso" },
+    { value: "lineMeso+2", label: "2 Lines Meso%", group: "Drop/Meso" },
+    { value: "lineDrop+2", label: "2 Lines Drop%", group: "Drop/Meso" },
+    { value: "lineMesoOrDrop+2", label: "2 Lines Drop% or Meso%", group: "Drop/Meso" },
+    { value: "lineMeso+3", label: "3 Lines Meso%", group: "Drop/Meso" },
+    { value: "lineDrop+3", label: "3 Lines Drop%", group: "Drop/Meso" },
+    { value: `lineMeso+1&line${valueName}+1`, label: `1 Line Meso% + 1 Line ${display}`, group: "Drop/Meso" },
+    { value: `lineDrop+1&line${valueName}+1`, label: `1 Line Drop% + 1 Line ${display}`, group: "Drop/Meso" },
+    { value: `lineMesoOrDrop+1&line${valueName}+1`, label: `1 Line Drop% or Meso% + 1 Line ${display}`, group: "Drop/Meso" },
   ];
 }
 
 function buildHatOptions(valueName: string, display: string): StatOption[] {
-  return [
-    { value: "secCooldown+2", label: "-2sec+ CD Reduction", group: "Cooldown" },
-    { value: "secCooldown+3", label: "-3sec+ CD Reduction", group: "Cooldown" },
-    { value: "secCooldown+4", label: "-4sec+ CD Reduction", group: "Cooldown" },
-    { value: "secCooldown+5", label: "-5sec+ CD Reduction", group: "Cooldown" },
-    { value: "secCooldown+6", label: "-6sec+ CD Reduction", group: "Cooldown" },
-    { value: `secCooldown+2&line${valueName}+1`, label: `-2sec+ CD Reduction and 1 Line ${display}`, group: "Cooldown" },
-    { value: `secCooldown+2&line${valueName}+2`, label: `-2sec+ CD Reduction and 2 Line ${display}`, group: "Cooldown" },
-    { value: `secCooldown+3&line${valueName}+1`, label: `-3sec+ CD Reduction and 1 Line ${display}`, group: "Cooldown" },
-    { value: `secCooldown+4&line${valueName}+1`, label: `-4sec+ CD Reduction and 1 Line ${display}`, group: "Cooldown" },
-  ];
+  const opts: StatOption[] = [];
+  for (let sec = 2; sec <= 6; sec++) {
+    opts.push({ value: `secCooldown+${sec}`, label: `-${sec}sec+ CD Reduction`, group: "Cooldown" });
+  }
+  opts.push({ value: `secCooldown+2&line${valueName}+1`, label: `-2sec+ CD Reduction + 1 Line ${display}`, group: "Cooldown" });
+  opts.push({ value: `secCooldown+2&line${valueName}+2`, label: `-2sec+ CD Reduction + 2 Lines ${display}`, group: "Cooldown" });
+  opts.push({ value: `secCooldown+3&line${valueName}+1`, label: `-3sec+ CD Reduction + 1 Line ${display}`, group: "Cooldown" });
+  opts.push({ value: `secCooldown+4&line${valueName}+1`, label: `-4sec+ CD Reduction + 1 Line ${display}`, group: "Cooldown" });
+  return opts;
 }
 
 export function buildStatOptions(

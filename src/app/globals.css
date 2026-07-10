@@ -180,6 +180,9 @@ html.scroll-locked body {
   border-radius: 8px;
   border: 1px solid; /* color supplied inline via borderColor */
   padding: 7px 10px;
+  /* Chrome gives <select> a taller intrinsic line box than <input>. Pinning both
+     keeps a select and an input sitting side by side in a form row aligned. */
+  height: 35px;
 }
 
 .tool-select {
@@ -218,6 +221,7 @@ html.scroll-locked body {
 }
 
 input:focus-visible,
+select:focus-visible,
 textarea:focus-visible {
   outline: 2px solid;
   outline-offset: 2px;

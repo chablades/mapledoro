@@ -7,7 +7,7 @@ import type { AppTheme } from "../../../components/themes";
 import { replaceZeroOnDigit } from "../numberInputHandlers";
 import { ToolHeader } from "../../../components/ToolHeader";
 import { Field, Toggle } from "../shared-ui";
-import { formatMesoFull } from "../format";
+import { formatMesoFull, formatPct } from "../format";
 import { toolStyles } from "../tool-styles";
 import {
   FLAME_CLASS_OPTIONS,
@@ -28,12 +28,6 @@ import {
   type FlameScoreInputs,
   type FlameResults,
 } from "./flaming-data";
-
-function formatPctFull(pct: number): string {
-  if (pct >= 0.01) return `${pct.toFixed(4)}%`;
-  const s = pct.toPrecision(4);
-  return `${parseFloat(s)}%`;
-}
 
 /** Meso costs only exist for Powerful flames; the guild discount rides on them. */
 function usesMeso(flameType: FlameType): boolean {
@@ -415,7 +409,7 @@ function resultsStatusText(results: FlameResults | null, showMeso: boolean, guil
   if (results.probability === 0) return "The desired stat total is not reachable with these settings.";
 
   const parts = [
-    `Probability ${formatPctFull(results.probability * 100)} per flame.`,
+    `Probability ${formatPct(results.probability * 100)} per flame.`,
     `Average ${formatFlames(results.mean)} ${results.flameTypeText}.`,
   ];
   if (showMeso) parts.push(`About ${mesoCell(results.mean, guildDiscount)} mesos.`);
@@ -519,7 +513,7 @@ function ResultsBody({ theme, results, showMeso, guildDiscount, desiredStat, tar
       <div style={summaryRowStyle}>
         <span style={{ fontSize: "0.82rem", fontWeight: 700, color: theme.muted }}>Probability per flame</span>
         <span style={{ fontSize: "1.15rem", fontWeight: 800, color: theme.accentText }}>
-          {formatPctFull(results.probability * 100)}
+          {formatPct(results.probability * 100)}
         </span>
       </div>
       <ResultsTable theme={theme} results={results} showMeso={showMeso} guildDiscount={guildDiscount} />
