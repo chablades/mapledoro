@@ -2,22 +2,13 @@
 
 /*
   Tools landing page.
-  Displays a grid of available tool cards that link to their sub-routes.
+  Groups tools into one panel per category, each tool a compact linked row.
 */
 import type { CSSProperties } from "react";
 import Link from "next/link";
 import AppShell from "../../components/AppShell";
 import { ItemIcon } from "../../components/ResourceImage";
 import type { AppTheme } from "../../components/themes";
-
-// Uppercase section heading above each tool group; color (theme.muted) inline.
-const sectionLabelBase: CSSProperties = {
-  fontWeight: 700,
-  fontSize: "0.85rem",
-  textTransform: "uppercase",
-  letterSpacing: "0.04em",
-  marginBottom: "0.75rem",
-};
 
 type ToolCard = {
   title: string;
@@ -50,23 +41,31 @@ const CALCULATORS: ToolCard[] = [
     iconType: "item",
     href: "/tools/flaming",
   },
+  {
+    title: "EXP Calculator",
+    description:
+      "Calculate EXP buffs, monster EXP, event resources, and level progress from 200 to 300.",
+    itemId: "02637353", // EXP Voucher
+    iconType: "item",
+    href: "/tools/exp-calculator",
+  },
 ];
 
 const OTHER_TOOLS: ToolCard[] = [
   {
     title: "Event Planner",
     description:
-      "Plan your star force spending for the next event. Estimates total meso cost and spare items needed.",
+      "Plan star force spending for the next event, estimating meso cost and spare items needed.",
     icon: "📅",
     href: "/tools/event-planner",
   },
   {
     title: "Mystic Frontier Solver",
     description:
-      "Import your familiars and dice target to determine whether rerolls are needed.",
-    icon: "🎲",
-    href: "#",
-    comingSoon: true,
+      "Set your familiars, dice, and target score to see if your roll passes and calculate rerolls.",
+    itemId: "03802172", // Blessed Orange Dice
+    iconType: "item",
+    href: "/tools/mystic-frontier",
   },
 ];
 
@@ -128,77 +127,102 @@ const TRACKERS: ToolCard[] = [
   },
 ];
 
-function ToolCardInner({ tool, theme }: { tool: ToolCard; theme: AppTheme }) {
-  return (
-    <div
-      className={`panel-card${tool.comingSoon ? "" : " hover-lift-card"}`}
-      style={{
-        background: tool.comingSoon ? `color-mix(in srgb, ${theme.panel} 50%, transparent)` : theme.panel,
-        border: `1px solid ${theme.border}`,
-        padding: "1.5rem",
-        cursor: tool.comingSoon ? "default" : "pointer",
-        opacity: tool.comingSoon ? 0.7 : 1,
-      }}
-    >
-      <div style={{ fontSize: "2rem", marginBottom: "0.75rem", height: 36, display: "flex", alignItems: "center" }}>
-        {tool.iconType === "item" ? (
-          <ItemIcon id={tool.itemId} size={36} />
-        ) : (
-          tool.icon
-        )}
-      </div>
-      <div
-        className="panel-header-title"
-        style={{ color: theme.text, fontSize: "1.1rem", marginBottom: "0.5rem" }}
-      >
-        {tool.title}
-      </div>
-      <div
-        style={{
-          fontSize: "0.82rem",
-          color: theme.muted,
-          fontWeight: 600,
-          lineHeight: 1.5,
-        }}
-      >
-        {tool.description}
-      </div>
-      <div
-        style={{
-          marginTop: "1rem",
-          fontSize: "0.78rem",
-          fontWeight: 800,
-          color: tool.comingSoon ? theme.muted : theme.accent,
-        }}
-      >
-        {tool.comingSoon ? "Coming soon" : "Open tool →"}
-      </div>
-    </div>
-  );
-}
+const SECTIONS: { label: string; tools: ToolCard[] }[] = [
+  { label: "Calculators", tools: CALCULATORS },
+  { label: "Trackers", tools: TRACKERS },
+  { label: "Other Tools", tools: OTHER_TOOLS },
+];
 
-function ToolGrid({ tools, theme }: { tools: ToolCard[]; theme: AppTheme }) {
-  return (
-    <div
-      className="fade-in tools-grid"
-      style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-        gap: "1.25rem",
-      }}
-    >
-      {tools.map((tool) =>
-        tool.comingSoon ? (
-          <div key={tool.title}>
-            <ToolCardInner tool={tool} theme={theme} />
-          </div>
-        ) : (
-          <Link key={tool.href} href={tool.href} style={{ textDecoration: "none" }}>
-            <ToolCardInner tool={tool} theme={theme} />
-          </Link>
-        ),
+// Uppercase category label inside each panel; color (theme.muted) inline.
+const panelLabelBase: CSSProperties = {
+  fontWeight: 700,
+  fontSize: "0.85rem",
+  textTransform: "uppercase",
+  letterSpacing: "0.04em",
+  padding: "1.15rem 1.4rem 0.2rem",
+};
+
+const rowGridStyle: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fill, minmax(min(380px, 100%), 1fr))",
+  columnGap: "0.5rem",
+  padding: "0.35rem 0.65rem 0.65rem",
+};
+
+const rowBaseStyle: CSSProperties = {
+  display: "flex",
+  alignItems: "flex-start",
+  gap: "0.85rem",
+  padding: "0.7rem 0.75rem",
+  borderRadius: 12,
+  textDecoration: "none",
+};
+
+// Fixed square behind each icon so titles align on one vertical scan line.
+const iconTileBase: CSSProperties = {
+  width: 40,
+  height: 40,
+  borderRadius: 10,
+  flex: "none",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  fontSize: "1.25rem",
+};
+
+const rowArrowBase: CSSProperties = {
+  marginLeft: "auto",
+  alignSelf: "center",
+  fontWeight: 800,
+  fontSize: "0.9rem",
+};
+
+function ToolRow({ tool, theme }: { tool: ToolCard; theme: AppTheme }) {
+  const inner = (
+    <>
+      <div style={{ ...iconTileBase, background: theme.bg }}>
+        {tool.iconType === "item" ? <ItemIcon id={tool.itemId} size={26} /> : tool.icon}
+      </div>
+      <div style={{ minWidth: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+          <span style={{ fontWeight: 700, fontSize: "0.92rem", color: theme.text }}>
+            {tool.title}
+          </span>
+          {tool.comingSoon && (
+            <span className="tool-badge" style={{ background: theme.badge, color: theme.badgeText }}>
+              Soon
+            </span>
+          )}
+        </div>
+        <div
+          className="tool-row-desc"
+          style={{
+            fontSize: "0.78rem",
+            color: theme.muted,
+            fontWeight: 500,
+            lineHeight: 1.45,
+            marginTop: "0.15rem",
+            overflowWrap: "break-word",
+          }}
+        >
+          {tool.description}
+        </div>
+      </div>
+      {!tool.comingSoon && (
+        <span className="tool-row-arrow" style={{ ...rowArrowBase, color: theme.accent }}>
+          →
+        </span>
       )}
-    </div>
+    </>
+  );
+
+  if (tool.comingSoon) {
+    return <div style={{ ...rowBaseStyle, opacity: 0.55 }}>{inner}</div>;
+  }
+  return (
+    <Link href={tool.href} className="tool-row" style={rowBaseStyle}>
+      {inner}
+    </Link>
   );
 }
 
@@ -206,9 +230,19 @@ function ToolsContent({ theme }: { theme: AppTheme }) {
   return (
     <>
       <style>{`
-        .hover-lift-card:hover { border-color: ${theme.accent} !important; }
-        @media (max-width: 860px) {
-          .tools-grid { grid-template-columns: 1fr !important; }
+        .tool-row { transition: background 0.15s ease; }
+        .tool-row:hover, .tool-row:focus-visible { background: ${theme.accentSoft}; }
+        .tool-row .tool-row-arrow { opacity: 0; transition: opacity 0.15s ease; }
+        .tool-row:hover .tool-row-arrow, .tool-row:focus-visible .tool-row-arrow { opacity: 1; }
+        /* Equal-height rows where two columns render; mobile wraps naturally. */
+        @media (min-width: 861px) {
+          .tool-row-desc {
+            min-height: calc(0.78rem * 1.45 * 2);
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2;
+            overflow: hidden;
+          }
         }
       `}</style>
 
@@ -221,23 +255,24 @@ function ToolsContent({ theme }: { theme: AppTheme }) {
             MapleStory calculators, trackers, and utilities
           </div>
 
-          <div style={{ ...sectionLabelBase, color: theme.muted }}>
-            Calculators
+          <div className="fade-in" style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+            {SECTIONS.map((section) => (
+              <div
+                key={section.label}
+                className="panel-card"
+                style={{ background: theme.panel, border: `1px solid ${theme.border}` }}
+              >
+                <div style={{ ...panelLabelBase, color: theme.muted }}>
+                  {section.label}
+                </div>
+                <div style={rowGridStyle}>
+                  {section.tools.map((tool) => (
+                    <ToolRow key={tool.title} tool={tool} theme={theme} />
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
-
-          <ToolGrid tools={CALCULATORS} theme={theme} />
-
-          <div style={{ ...sectionLabelBase, color: theme.muted, marginTop: "2rem" }}>
-            Trackers
-          </div>
-
-          <ToolGrid tools={TRACKERS} theme={theme} />
-
-          <div style={{ ...sectionLabelBase, color: theme.muted, marginTop: "2rem" }}>
-            Other Tools
-          </div>
-
-          <ToolGrid tools={OTHER_TOOLS} theme={theme} />
         </div>
       </div>
     </>

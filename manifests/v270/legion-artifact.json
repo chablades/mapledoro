@@ -1,0 +1,336 @@
+{
+  "_meta": {
+    "assets": [
+      "icon.png",
+      "icon2.png",
+      "disabled.png"
+    ],
+    "urlPattern": "/api/img/legion-artifact/{id}/{grade}/{asset}"
+  },
+  "entries": {
+    "0": {
+      "name": "Crystal: Orange Mushroom",
+      "reqLv": 0,
+      "grades": [
+        {
+          "grade": 0,
+          "hasIcon": true,
+          "hasIcon2": true,
+          "hasDisabled": true
+        },
+        {
+          "grade": 1,
+          "hasIcon": true,
+          "hasIcon2": true,
+          "hasDisabled": true
+        },
+        {
+          "grade": 2,
+          "hasIcon": true,
+          "hasIcon2": true,
+          "hasDisabled": true
+        },
+        {
+          "grade": 3,
+          "hasIcon": true,
+          "hasIcon2": true,
+          "hasDisabled": true
+        },
+        {
+          "grade": 4,
+          "hasIcon": true,
+          "hasIcon2": true,
+          "hasDisabled": true
+        }
+      ]
+    },
+    "1": {
+      "name": "Crystal: Slime",
+      "reqLv": 0,
+      "grades": [
+        {
+          "grade": 0,
+          "hasIcon": true,
+          "hasIcon2": true,
+          "hasDisabled": true
+        },
+        {
+          "grade": 1,
+          "hasIcon": true,
+          "hasIcon2": true,
+          "hasDisabled": true
+        },
+        {
+          "grade": 2,
+          "hasIcon": true,
+          "hasIcon2": true,
+          "hasDisabled": true
+        },
+        {
+          "grade": 3,
+          "hasIcon": true,
+          "hasIcon2": true,
+          "hasDisabled": true
+        },
+        {
+          "grade": 4,
+          "hasIcon": true,
+          "hasIcon2": true,
+          "hasDisabled": true
+        }
+      ]
+    },
+    "2": {
+      "name": "Crystal: Horny Mushroom",
+      "reqLv": 0,
+      "grades": [
+        {
+          "grade": 0,
+          "hasIcon": true,
+          "hasIcon2": true,
+          "hasDisabled": true
+        },
+        {
+          "grade": 1,
+          "hasIcon": true,
+          "hasIcon2": true,
+          "hasDisabled": true
+        },
+        {
+          "grade": 2,
+          "hasIcon": true,
+          "hasIcon2": true,
+          "hasDisabled": true
+        },
+        {
+          "grade": 3,
+          "hasIcon": true,
+          "hasIcon2": true,
+          "hasDisabled": true
+        },
+        {
+          "grade": 4,
+          "hasIcon": true,
+          "hasIcon2": true,
+          "hasDisabled": true
+        }
+      ]
+    },
+    "3": {
+      "name": "Crystal: Stump",
+      "reqLv": 10,
+      "grades": [
+        {
+          "grade": 0,
+          "hasIcon": true,
+          "hasIcon2": true,
+          "hasDisabled": true
+        },
+        {
+          "grade": 1,
+          "hasIcon": true,
+          "hasIcon2": true,
+          "hasDisabled": true
+        },
+        {
+          "grade": 2,
+          "hasIcon": true,
+          "hasIcon2": true,
+          "hasDisabled": true
+        },
+        {
+          "grade": 3,
+          "hasIcon": true,
+          "hasIcon2": true,
+          "hasDisabled": true
+        },
+        {
+          "grade": 4,
+          "hasIcon": true,
+          "hasIcon2": true,
+          "hasDisabled": true
+        }
+      ]
+    },
+    "4": {
+      "name": "Crystal: Stone Golem",
+      "reqLv": 20,
+      "grades": [
+        {
+          "grade": 0,
+          "hasIcon": true,
+          "hasIcon2": true,
+          "hasDisabled": true
+        },
+        {
+          "grade": 1,
+          "hasIcon": true,
+          "hasIcon2": true,
+          "hasDisabled": true
+        },
+        {
+          "grade": 2,
+          "hasIcon": true,
+          "hasIcon2": true,
+          "hasDisabled": true
+        },
+        {
+          "grade": 3,
+          "hasIcon": true,
+          "hasIcon2": true,
+          "hasDisabled": true
+        },
+        {
+          "grade": 4,
+          "hasIcon": true,
+          "hasIcon2": true,
+          "hasDisabled": true
+        }
+      ]
+    },
+    "5": {
+      "name": "Crystal: Balrog",
+      "reqLv": 30,
+      "grades": [
+        {
+          "grade": 0,
+          "hasIcon": true,
+          "hasIcon2": true,
+          "hasDisabled": true
+        },
+        {
+          "grade": 1,
+          "hasIcon": true,
+          "hasIcon2": true,
+          "hasDisabled": true
+        },
+        {
+          "grade": 2,
+          "hasIcon": true,
+          "hasIcon2": true,
+          "hasDisabled": true
+        },
+        {
+          "grade": 3,
+          "hasIcon": true,
+          "hasIcon2": true,
+          "hasDisabled": true
+        },
+        {
+          "grade": 4,
+          "hasIcon": true,
+          "hasIcon2": true,
+          "hasDisabled": true
+        }
+      ]
+    },
+    "6": {
+      "name": "Crystal: Zakum",
+      "reqLv": 40,
+      "grades": [
+        {
+          "grade": 0,
+          "hasIcon": true,
+          "hasIcon2": true,
+          "hasDisabled": true
+        },
+        {
+          "grade": 1,
+          "hasIcon": true,
+          "hasIcon2": true,
+          "hasDisabled": true
+        },
+        {
+          "grade": 2,
+          "hasIcon": true,
+          "hasIcon2": true,
+          "hasDisabled": true
+        },
+        {
+          "grade": 3,
+          "hasIcon": true,
+          "hasIcon2": true,
+          "hasDisabled": true
+        },
+        {
+          "grade": 4,
+          "hasIcon": true,
+          "hasIcon2": true,
+          "hasDisabled": true
+        }
+      ]
+    },
+    "7": {
+      "name": "Crystal: Pink Bean",
+      "reqLv": 50,
+      "grades": [
+        {
+          "grade": 0,
+          "hasIcon": true,
+          "hasIcon2": true,
+          "hasDisabled": true
+        },
+        {
+          "grade": 1,
+          "hasIcon": true,
+          "hasIcon2": true,
+          "hasDisabled": true
+        },
+        {
+          "grade": 2,
+          "hasIcon": true,
+          "hasIcon2": true,
+          "hasDisabled": true
+        },
+        {
+          "grade": 3,
+          "hasIcon": true,
+          "hasIcon2": true,
+          "hasDisabled": true
+        },
+        {
+          "grade": 4,
+          "hasIcon": true,
+          "hasIcon2": true,
+          "hasDisabled": true
+        }
+      ]
+    },
+    "8": {
+      "name": "Crystal: Papulatus",
+      "reqLv": 60,
+      "grades": [
+        {
+          "grade": 0,
+          "hasIcon": true,
+          "hasIcon2": true,
+          "hasDisabled": true
+        },
+        {
+          "grade": 1,
+          "hasIcon": true,
+          "hasIcon2": true,
+          "hasDisabled": true
+        },
+        {
+          "grade": 2,
+          "hasIcon": true,
+          "hasIcon2": true,
+          "hasDisabled": true
+        },
+        {
+          "grade": 3,
+          "hasIcon": true,
+          "hasIcon2": true,
+          "hasDisabled": true
+        },
+        {
+          "grade": 4,
+          "hasIcon": true,
+          "hasIcon2": true,
+          "hasDisabled": true
+        }
+      ]
+    }
+  }
+}

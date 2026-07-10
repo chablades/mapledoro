@@ -662,18 +662,14 @@ export default function AstraSection({ theme }: { theme: AppTheme }) {
       {/* Character + mission progress share one panel to keep the page header
           area short. */}
       <div className="fade-in panel-card" style={sectionPanel}>
-        {state.characters.length > 0 && (
-          <>
-            <CharacterSyncPanel
-              theme={theme}
-              characters={state.characters}
-              selectedCharName={state.selectedCharName}
-              onCharChange={state.handleCharChange}
-              inputStyle={inputStyle}
-            />
-            <PanelDivider theme={theme} />
-          </>
-        )}
+        <CharacterSyncPanel
+          theme={theme}
+          characters={state.characters}
+          selectedCharName={state.selectedCharName}
+          onCharChange={state.handleCharChange}
+          inputStyle={inputStyle}
+        />
+        <PanelDivider theme={theme} />
         <AstraProgressSection
           theme={theme}
           tracesCompleted={state.tracesCompleted}

@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-MapleDoro — free, open-source MapleStory community web app (character tracking, gameplay tools, live event info). All user data lives in localStorage; server-side caching uses Redis. Not affiliated with Nexon.
+MapleDoro — MapleStory community web app (character tracking, gameplay tools, live event info). All user data lives in localStorage; server-side caching uses Redis. Not affiliated with Nexon.
 
 ## Tech Stack
 
@@ -47,7 +47,7 @@ npm run lint
 - **Clickable elements:** Prefer a real `<button>` (reset via `background: none; border: none; padding: 0; font: inherit; text-align: inherit`) for free semantics/focus/keyboard. Fall back to `<div>`/`<span>` + `role="button"` + `tabIndex={0}` + Enter/Space `onKeyDown` only when `<button>` can't work (e.g. nested interactive content).
 - **Minimum font size:** 0.75rem (12px). No sub-12px text anywhere.
 - **Image error fallbacks:** For a static fallback, use dual-render with refs (`display:none` on fallback, swap via `onError`), not `useState` — avoids a re-render on error. State is fine when the fallback needs logic the ref swap can't express (e.g. `CharacterAvatar`'s retry-with-query-param + load-timeout flow).
-- **No `autoFocus` attribute.** Use a ref callback with a guard: `ref={(el) => { if (el && document.activeElement !== el) el.focus(); }}`.
+- **No `autoFocus` attribute.** Use a ref callback that focuses once on mount, guarded by a `useRef` flag: `const hasAutoFocusedRef = useRef(false); ... ref={(el) => { if (el && !hasAutoFocusedRef.current) { hasAutoFocusedRef.current = true; el.focus(); } }}`. Don't guard on `document.activeElement !== el` alone — that re-fires on every render (not just mount) and will steal focus back any time the user has deliberately moved it elsewhere, if anything else causes the component to re-render meanwhile.
 - **localStorage writes:** Write synchronously inside state updaters, not in a `useEffect` watching state. Keeps the write atomic with the state change.
 - **Internal links → `next/link`. Images → `next/image` with `unoptimized`** for game art (the optimizer wastes transformations and degrades small pixel sprites). Raw `<img>` only when `next/image` can't work (e.g. `CharacterAvatar`'s load-retry), with an `eslint-disable @next/next/no-img-element`.
 - **No unused `export`s** — don't `export` a type used only in its own file (react-doctor's Knip check flags them).
@@ -63,7 +63,7 @@ npm run lint
 
 **Shared tool controls:** Form controls split shape (global CSS classes) from theme colors (inline). Use `className="tool-input"` (text/number/date), `"tool-select"` (dropdowns), `"tool-field-label"` (uppercase labels), or `"tool-dialog-btn"` (modal buttons) for shape; pair with `toolStyles(theme)` (`tool-styles.ts`), which returns **colors only** (`background`/`borderColor`/`color`). Context sizing (widths, compact paddings) stays inline. `Field`, `Toggle`, and `PillGroup` live in `shared-ui.tsx`. Don't re-add radius/padding/font to the style helpers — extend the class instead.
 
-**Tool storage:** Per-character data (symbols, liberation, hexa skills) lives in each character's `tools` field in the character store (`mapledoro_characters_store_v1`), via `characterToolStorage.ts`. Global data (dailies, event planner, boss crystals, pitched boss drops, trace restoration) lives under one `mapledoro_tools_v1` key, via `globalToolsStore.ts`.
+**Tool storage:** Per-character data (symbols, liberation, hexa skills, exp calculator) lives in each character's `tools` field in the character store (`mapledoro_characters_store_v1`), via `characterToolStorage.ts`. Global data (dailies, event planner, boss crystals, pitched boss drops, trace restoration) lives under one `mapledoro_tools_v1` key, via `globalToolsStore.ts`.
 
 ## Image Policy
 
@@ -72,7 +72,7 @@ Game art comes from the self-hosted **MapleResource API** (`haku.network`), via 
 - **Item icons** default to shadowless `iconRaw.png`; pass `shadow` for framed `icon.png` (inventory only). Some items (e.g. androids) also have a `revealed` variant (`iconD`/`iconRawD`) for their actual appearance once equipped, vs. the default pre-equip icon (e.g. an android's egg form); check the manifest's `hasIconD`/`hasIconRawD` flags before assuming it exists for a given item.
 - **Boss icons** have no component — use `bossIconUrl(id)` (`ui/boss` URL); stored as `icon` strings in boss data (`bosses.ts`, `liberation-data.ts`, `astra-data.ts`, `trace-restoration-data.ts`).
 - **Familiars:** `<FamiliarSprite>` is direct-sprite only; mob/card-backed ones use `<MobSprite>`/`<ItemIcon>` per manifest `spriteFrom`.
-- **Finding IDs:** search committed `manifests/v<version>/<type>.json` by `name`, hardcode the id with a name comment. No name→ID map; manifests are dev-only, never bundled (`item.json` ~17 MB). The current game version is **v269** — use the `manifests/v269/` manifests when implementing features.
+- **Finding IDs:** search committed `manifests/v<version>/<type>.json` by `name`, hardcode the id with a name comment. No name→ID map; manifests are dev-only, never bundled (`item.json` ~17 MB). The current game version is **v270** — use the `manifests/v270/` manifests when implementing features.
 
 ## Feature Docs
 

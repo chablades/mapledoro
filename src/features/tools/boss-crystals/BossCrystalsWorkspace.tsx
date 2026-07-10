@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useMounted } from "../../../lib/useMounted";
 import Image from "next/image";
 import type { CSSProperties } from "react";
@@ -474,6 +474,10 @@ function AddNameDialog({
 }) {
   const hasAvailable = available.length > 0;
   const styles = toolStyles(theme);
+  // Focus once on mount only — re-running this on every render would fight the user
+  // for focus (e.g. after they click away to select text elsewhere), silently
+  // clearing whatever they were doing.
+  const hasAutoFocusedRef = useRef(false);
 
   return (
     <div className="bc-overlay" role="button" tabIndex={0} onClick={onClose} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClose(); } }}>
@@ -534,7 +538,12 @@ function AddNameDialog({
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && typedName.trim()) onNext();
                 }}
-                ref={(el) => { if (el && document.activeElement !== el) el.focus(); }}
+                ref={(el) => {
+                  if (el && !hasAutoFocusedRef.current) {
+                    hasAutoFocusedRef.current = true;
+                    el.focus();
+                  }
+                }}
                 className="tool-input"
                 style={{
                   ...styles.inputStyle,

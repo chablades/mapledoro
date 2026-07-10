@@ -11,6 +11,43 @@ interface ChangelogEntry {
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    date: "2026-07-10",
+    changes: [
+      { type: "fixed", text: "The level 296 Geardock monster in the EXP Calculator is now Strike Securitron instead of Surveillance Robot." },
+    ],
+  },
+  {
+    date: "2026-07-09",
+    changes: [
+      { type: "added", text: "Added Normal and Hard Malefic Star and Jupiter to the Boss Crystal Tracker." },
+      { type: "added", text: "The EXP Calculator Farming Calculator now saves your buffs, target level, and hourly kill count per character, so switching back to a character restores what you set for them." },
+      { type: "added", text: "The EXP Calculator Daily / Weekly Calculator now saves your target level, burning, date range, daily and weekly content, Monster Park, and Epic Dungeon settings per character." },
+      { type: "changed", text: "The EXP Calculator now opens on your main character instead of Manual Level." },
+      { type: "changed", text: "The EXP Calculator monster dropdown now lists monsters closest to your character's level first." },
+    ],
+  },
+  {
+    date: "2026-07-08",
+    changes: [
+      { type: "changed", text: "The EXP Calculator now uses a wider layout with paired panels and compact icon tiles for additive buffs to reduce scrolling." },
+      { type: "changed", text: "Link skills, Roro's Experience Ring, Grand Sacred Symbols, Legion Artifact, Champion's Renown, and EXP nodestones in the EXP Calculator are now compact level tiles with hover tooltips instead of dropdowns." },
+      { type: "changed", text: "Pendant of the Spirit is now a toggle under Additive Buffs in the EXP Calculator." },
+      { type: "changed", text: "The EXP Calculator now shows Roll of the Dice only when the selected character is a Pirate class." },
+      { type: "changed", text: "The EXP Calculator Daily / Weekly tab now pairs panels side by side and uses compact run-count tiles for weekly content to reduce scrolling." },
+      { type: "added", text: "The EXP Calculator Farming Calculator now has a Target Level input, and the overview shows hours to reach that target level instead of just the next level." },
+      { type: "changed", text: "Redesigned the Tools page into compact category panels so the full list of tools is easier to scan." },
+      { type: "added", text: "Added an Endgame Preset and a Reset button to the Trace Restoration Calculator for quickly selecting or clearing missions." },
+      { type: "fixed", text: "Fixed not being able to select Extreme Seren in the Trace Restoration Calculator." },
+    ],
+  },
+  {
+    date: "2026-07-07",
+    changes: [
+      { type: "added", text: "Added the EXP Calculator with GMS EXP Buffs + Monster EXP, All-in-One, and resource table tabs." },
+      { type: "changed", text: "Rebuilt the EXP Calculator Daily / Weekly tab as a GMS content planner with dailies, weeklies, events, tickets, and growth potions." },
+    ],
+  },
+  {
     date: "2026-07-06",
     changes: [
       { type: "changed", text: "The Miracle Time panel on the homepage now hides itself when there is no upcoming schedule instead of showing an empty box." },

@@ -59,9 +59,11 @@ html.scroll-locked body {
   overflow: hidden;
 }
 
+/* The visible state is the default; the keyframes only animate toward it. Gating
+   visibility on the animation would ship blank panels wherever it never runs
+   (background tabs, headless renderers). */
 .fade-in {
-  animation: fadeUp 0.5s ease forwards;
-  opacity: 0;
+  animation: fadeUp 0.5s ease;
 }
 
 @keyframes fadeUp {
@@ -165,7 +167,7 @@ html.scroll-locked body {
 /* Uppercase label for sections or field groups */
 .section-label {
   margin: 0;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.1em;
