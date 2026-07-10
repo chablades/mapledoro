@@ -25,6 +25,7 @@ const CHANGELOG: ChangelogEntry[] = [
       { type: "changed", text: "The Star Force Calculator now warns you before an expensive run, shows progress while it works, and lets you stop it." },
       { type: "changed", text: "The Cubing Calculator now updates as you change the form, so there is no Calculate button and results are never out of date." },
       { type: "changed", text: "The Cubing Calculator now shows average and percentile costs in one table, with cube counts and meso costs side by side." },
+      { type: "fixed", text: "The level 296 Geardock monster in the EXP Calculator is now Strike Securitron instead of Surveillance Robot." },
     ],
   },
   {
