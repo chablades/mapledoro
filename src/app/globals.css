@@ -46,6 +46,19 @@ html {
   color: #fff;
 }
 
+/* Content for assistive technology only: live-region status text, table captions. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
 html.scroll-locked,
 html.scroll-locked body {
   overflow: hidden;
@@ -186,11 +199,22 @@ html.scroll-locked body {
 
 /* Uppercase field label sitting above a control */
 .tool-field-label {
+  display: block;
   font-size: 0.75rem;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   margin-bottom: 4px;
+}
+
+/* Section heading inside a tool panel. A real heading, not the uppercase
+   micro-label used for form fields. Color supplied inline. */
+.tool-panel-title {
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.3;
+  margin: 0 0 0.75rem;
 }
 
 input:focus-visible,
@@ -325,10 +349,13 @@ textarea:focus-visible {
   text-decoration: none;
 }
 
+/* Renders as <h1>; the explicit weight and margin keep it looking like the
+   <div> it replaced rather than picking up the UA heading defaults. */
 .tool-header-title {
   font-family: var(--font-heading);
   font-size: 1.5rem;
-  margin-top: 0.5rem;
+  font-weight: 400;
+  margin: 0.5rem 0 0;
 }
 
 .tool-header-desc {
