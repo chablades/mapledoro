@@ -13,6 +13,7 @@ const CHANGELOG: ChangelogEntry[] = [
   {
     date: "2026-07-09",
     changes: [
+      { type: "added", text: "Added Normal and Hard Malefic Star and Jupiter to the Boss Crystal Tracker." },
       { type: "added", text: "The EXP Calculator Farming Calculator now saves your buffs, target level, and hourly kill count per character, so switching back to a character restores what you set for them." },
       { type: "added", text: "The EXP Calculator Daily / Weekly Calculator now saves your target level, burning, date range, daily and weekly content, Monster Park, and Epic Dungeon settings per character." },
       { type: "changed", text: "The EXP Calculator now opens on your main character instead of Manual Level." },

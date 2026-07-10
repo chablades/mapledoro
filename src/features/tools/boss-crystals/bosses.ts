@@ -63,6 +63,10 @@ export const BOSSES: Boss[] = [
   { name: "Limbo (Hard)", icon: icon("33"), meso: 3745000000, shared: ["Limbo (Normal)"] },
   { name: "Baldrix (Normal)", icon: icon("34"), meso: 2800000000, shared: ["Baldrix (Hard)"] },
   { name: "Baldrix (Hard)", icon: icon("34"), meso: 6026000000, shared: ["Baldrix (Normal)"] },
+  { name: "Malefic Star (Normal)", icon: icon("37"), meso: 1452000000, shared: ["Malefic Star (Hard)"] },
+  { name: "Malefic Star (Hard)", icon: icon("37"), meso: 3990000000, shared: ["Malefic Star (Normal)"] },
+  { name: "Jupiter (Normal)", icon: icon("38"), meso: 2965000000, shared: ["Jupiter (Hard)"] },
+  { name: "Jupiter (Hard)", icon: icon("38"), meso: 5954000000, shared: ["Jupiter (Normal)"] },
 ];
 
 // Precomputed: for each boss index, the indices of its shared bosses
