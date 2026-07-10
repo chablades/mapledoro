@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import type { AppTheme } from "../../../components/themes";
 import { ProgressBar } from "../../../components/ProgressBar";
 import { ToolHeader } from "../../../components/ToolHeader";
-import { CharacterSyncPanel } from "../../../components/CharacterSyncPanel";
+import { CHARACTER_DROPDOWN_HEIGHT, CharacterSyncPanel } from "../../../components/CharacterSyncPanel";
 import {
   COMMON_SKILLS,
   getClassGroups,
@@ -65,6 +65,7 @@ function ClassSelector({
       style={{
         display: "flex",
         alignItems: "center",
+        justifyContent: "flex-end",
         gap: "0.75rem",
         flexWrap: "wrap",
       }}
@@ -84,6 +85,8 @@ function ClassSelector({
           ...inputStyle,
           flex: 1,
           maxWidth: "280px",
+          // Overrides `.tool-input`'s 35px so it matches the character picker beside it.
+          height: CHARACTER_DROPDOWN_HEIGHT,
           cursor: disabled ? "not-allowed" : "pointer",
           opacity: disabled ? 0.6 : 1,
         }}
