@@ -21,6 +21,14 @@ html {
   box-sizing: border-box;
 }
 
+/* Native buttons: no default iOS tap-highlight flash (its box scales with the
+   full clickable area, including invisible touch-target padding, so it reads
+   as an oversized gray block) and no accidental text selection on a tap-hold. */
+button {
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
 .skip-link {
   position: absolute;
   left: -9999px;

@@ -440,7 +440,7 @@ export default function StepJumpMenu({
               onKeyDown={handleBackToIntroKeyDown}
               data-jump-row="true"
             >
-              ◀ Setup selection
+              ← Setup selection
             </button>
           )}
           {steps.map((step) => {

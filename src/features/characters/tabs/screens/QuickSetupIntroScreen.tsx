@@ -76,6 +76,9 @@ export default function QuickSetupIntroScreen({ model, actions }: SetupIntroScre
           fontSize: "1.3rem",
           lineHeight: 1.2,
           color: theme.text,
+          // Skip button floats top-right via position:absolute — reserve room so long
+          // titles wrap before reaching its corner instead of rendering underneath it.
+          paddingRight: quickSetupAllSkipped ? 0 : "6.5rem",
         }}
       >
         {title}
