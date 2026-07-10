@@ -41,17 +41,17 @@ function bcIconBtnStyle(theme: AppTheme): CSSProperties {
   };
 }
 
-// 48px card-header avatar fallback (picker rows use CharacterPickerRow).
+// 64px card-header avatar fallback (picker rows use CharacterPickerRow).
 function bcAvatarFallbackStyle(theme: AppTheme): CSSProperties {
   return {
-    width: 48,
-    height: 48,
+    width: 64,
+    height: 64,
     borderRadius: "10px",
     background: theme.accentSoft,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontSize: "1.2rem",
+    fontSize: "1.5rem",
     color: theme.accentText,
     fontWeight: 800,
     flexShrink: 0,
@@ -268,8 +268,8 @@ function CharacterCard({
           <Image
             src={char.imageURL}
             alt={char.name}
-            width={48}
-            height={48}
+            width={64}
+            height={64}
             unoptimized
             style={{
               borderRadius: "10px",
