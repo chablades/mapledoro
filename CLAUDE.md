@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-MapleDoro — free, open-source MapleStory community web app (character tracking, gameplay tools, live event info). All user data lives in localStorage; server-side caching uses Redis. Not affiliated with Nexon.
+MapleDoro — MapleStory community web app (character tracking, gameplay tools, live event info). All user data lives in localStorage; server-side caching uses Redis. Not affiliated with Nexon.
 
 ## Tech Stack
 
@@ -72,7 +72,7 @@ Game art comes from the self-hosted **MapleResource API** (`haku.network`), via 
 - **Item icons** default to shadowless `iconRaw.png`; pass `shadow` for framed `icon.png` (inventory only).
 - **Boss icons** have no component — use `bossIconUrl(id)` (`ui/boss` URL); stored as `icon` strings in boss data (`bosses.ts`, `liberation-data.ts`, `astra-data.ts`, `trace-restoration-data.ts`).
 - **Familiars:** `<FamiliarSprite>` is direct-sprite only; mob/card-backed ones use `<MobSprite>`/`<ItemIcon>` per manifest `spriteFrom`.
-- **Finding IDs:** search committed `manifests/v<version>/<type>.json` by `name`, hardcode the id with a name comment. No name→ID map; manifests are dev-only, never bundled (`item.json` ~17 MB). The current game version is **v269** — use the `manifests/v269/` manifests when implementing features.
+- **Finding IDs:** search committed `manifests/v<version>/<type>.json` by `name`, hardcode the id with a name comment. No name→ID map; manifests are dev-only, never bundled (`item.json` ~17 MB). The current game version is **v270** — use the `manifests/v270/` manifests when implementing features.
 
 ## Feature Docs
 

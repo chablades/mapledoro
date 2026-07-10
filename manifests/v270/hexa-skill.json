@@ -1,0 +1,2591 @@
+{
+  "_meta": {
+    "assets": [
+      "icon.png",
+      "iconDisabled.png"
+    ],
+    "urlPattern": "/api/img/hexa-skill/{id}/{asset}"
+  },
+  "entries": {
+    "10000000": {
+      "name": "Spirit Calibur",
+      "desc": "Channels your spirit into your sword and cuts everything down.",
+      "section": "hexaSkill"
+    },
+    "10000001": {
+      "name": "Sacred Bastion",
+      "desc": "The Holy Knight shimmers brilliantly, casting judgment upon enemies and relief upon allies.",
+      "section": "hexaSkill"
+    },
+    "10000002": {
+      "name": "Dead Space",
+      "desc": "Throws a spear charged with dark energy to pierce nearby enemies.",
+      "section": "hexaSkill"
+    },
+    "10000003": {
+      "name": "Infernal Venom",
+      "desc": "Unleashes the incarnations of fire and poison to devastate your surroundings with the ultimate fusion of magic.",
+      "section": "hexaSkill"
+    },
+    "10000004": {
+      "name": "Frozen Lightning",
+      "desc": "Rains icy bolts of lightning around you, freezing and shattering anything struck.",
+      "section": "hexaSkill"
+    },
+    "10000005": {
+      "name": "Holy Advent",
+      "desc": "Unlocks your inner divine power, summoning archangels down from the heavens to wage holy war.",
+      "section": "hexaSkill"
+    },
+    "10000006": {
+      "name": "Ascendant Shadow",
+      "desc": "Unleashes a barrage of arrows that blankets the sky, casting a foreboding shadow over the area.",
+      "section": "hexaSkill"
+    },
+    "10000007": {
+      "name": "Final Aim",
+      "desc": "Attains the pinnacle of sniping to accurately spot and pin down far away enemies.",
+      "section": "hexaSkill"
+    },
+    "10000008": {
+      "name": "Forsaken Relic",
+      "desc": "Deftly imbues your arrows with the cursed relic\u0027s power.",
+      "section": "hexaSkill"
+    },
+    "10000009": {
+      "name": "Life and Death",
+      "desc": "Traps enemies within a prison of frozen time, wielding the power of life and death over all living beings.",
+      "section": "hexaSkill"
+    },
+    "10000010": {
+      "name": "Halve Cut",
+      "desc": "Punishes enemies stealthily and swiftly.",
+      "section": "hexaSkill"
+    },
+    "10000011": {
+      "name": "Karma Blade",
+      "desc": "The God of Hellfire descends into your sword, transforming it into a Karma Blade.",
+      "section": "hexaSkill"
+    },
+    "10000012": {
+      "name": "Unleash Neptunus",
+      "desc": "Awakens Neptunus, the original sea serpent lurking beneath the abyssal sea.",
+      "section": "hexaSkill"
+    },
+    "10000013": {
+      "name": "The Dreadnought",
+      "desc": "A large naval vessel emerges from the mists, having traveled unknown seas under the command of a captain who knows no fear.",
+      "section": "hexaSkill"
+    },
+    "10000014": {
+      "name": "Super Cannon Explosion",
+      "desc": "Fires a large cannon that decimates everything in its wake.",
+      "section": "hexaSkill"
+    },
+    "10000015": {
+      "name": "Durendal",
+      "desc": "Annihilates evil with a sword of light that never dulls.",
+      "section": "hexaSkill"
+    },
+    "10000016": {
+      "name": "Astral Blitz",
+      "desc": "A sword forged from your own soul cuts the formless space to reproduce the Big Bang.",
+      "section": "hexaSkill"
+    },
+    "10000017": {
+      "name": "Eternity",
+      "desc": "The phoenix that rules over the cycle of life and death manifests, bringing death to all.",
+      "section": "hexaSkill"
+    },
+    "10000018": {
+      "name": "Mistral Spring",
+      "desc": "A spring of wind bursts from the powerful emerald, drawing in any curious spirits that cross its path.",
+      "section": "hexaSkill"
+    },
+    "10000019": {
+      "name": "Silence",
+      "desc": "With the power of infinite darkness, calls forth the Shadow Bat to silence enemies with fear.",
+      "section": "hexaSkill"
+    },
+    "10000020": {
+      "name": "Thunder Wall Sea Wave",
+      "desc": "Pummels foes with a fist of lightning that splits the seas.",
+      "section": "hexaSkill"
+    },
+    "10000021": {
+      "name": "Endgame",
+      "desc": "Unleashes the power of Maha to end any fight in a single blow.",
+      "section": "hexaSkill"
+    },
+    "10000022": {
+      "name": "Zodiac Burst",
+      "desc": "Evan and Mir harness the resonance of the stars to create a giant constellation.",
+      "section": "hexaSkill"
+    },
+    "10000023": {
+      "name": "Harmonic Paradox",
+      "desc": "Summons an entity in harmonious balance between the forces of light and darkness.",
+      "section": "hexaSkill"
+    },
+    "10000024": {
+      "name": "Unfading Glory",
+      "desc": "The noble soul of a beloved ruler is granted glory by the Great Spirit and Ancient Spirit King.",
+      "section": "hexaSkill"
+    },
+    "10000025": {
+      "name": "Defying Fate",
+      "desc": "Strikes back against fate itself by the power of the hero\u0027s will.",
+      "section": "hexaSkill"
+    },
+    "10000026": {
+      "name": "Advent of the Fox",
+      "desc": "Channels the power of the Fox God through the Fox Marble to awaken the spirits inside Shade.",
+      "section": "hexaSkill"
+    },
+    "10000027": {
+      "name": "Final Destroyer",
+      "desc": "Pushes the power of the Arm Cannon to its limit before taking to the air and raining destruction.",
+      "section": "hexaSkill"
+    },
+    "10000028": {
+      "name": "Crimson Pact",
+      "desc": "The dark spirit awakens fully to complete its bloody pact.",
+      "section": "hexaSkill"
+    },
+    "10000029": {
+      "name": "Synchronous Hunt",
+      "desc": "Link with Jaguar to unleash a perfectly synchronized attack.",
+      "section": "hexaSkill"
+    },
+    "10000030": {
+      "name": "Artificial Evolution",
+      "desc": "Achieves the Xenoroid\u0027s ultimate evolution.",
+      "section": "hexaSkill"
+    },
+    "10000031": {
+      "name": "Ground Zero",
+      "desc": "Unleashes a large-scale missile system maintained by the Resistance to completely obliterate the target.",
+      "section": "hexaSkill"
+    },
+    "10000032": {
+      "name": "Nightmare",
+      "desc": "The roiling Demon Fury plunges your surroundings into a demonic abyss.",
+      "section": "hexaSkill"
+    },
+    "10000033": {
+      "name": "Requiem",
+      "desc": "Summons the Requiem Demon Sword to fulfill your thirst for vengeance.",
+      "section": "hexaSkill"
+    },
+    "10000034": {
+      "name": "Nova Triumphant",
+      "desc": "Punishes all enemies threatening the safety of the Nova as you carry out your duty as a guardian, just as your predecessors have done for generations.",
+      "section": "hexaSkill"
+    },
+    "10000035": {
+      "name": "Total Annihilation",
+      "desc": "Unleashes the power of the Black Nova and strikes down anyone nearby with pure malice.",
+      "section": "hexaSkill"
+    },
+    "10000036": {
+      "name": "Chain Arts: Grand Arsenal",
+      "desc": "Mobilizes all available weapons to completely demolish any who oppose you.",
+      "section": "hexaSkill"
+    },
+    "10000037": {
+      "name": "Grand Finale",
+      "desc": "Drops an entire concert on the spot for Angelic Buster, MapleStory\u0027s top pop star.",
+      "section": "hexaSkill"
+    },
+    "10000038": {
+      "name": "End Time",
+      "desc": "Breaks free of the imperfect timeline and joins forces in true sincerity, unleashing the power of the Transcendent.",
+      "section": "hexaSkill"
+    },
+    "10000039": {
+      "name": "From Another Realm",
+      "desc": "Drops matter from the Otherworld through a spacial rift to devastate the landscape.",
+      "section": "hexaSkill"
+    },
+    "10000040": {
+      "name": "Maestro",
+      "desc": "Commands a flurry of swords from the aether to sweep the battleground.",
+      "section": "hexaSkill"
+    },
+    "10000041": {
+      "name": "Mytocrystal Expanse",
+      "desc": "Unleashes the infinite magic power contained in the mytocrystal, causing it to explode and summon more mytocrystals.",
+      "section": "hexaSkill"
+    },
+    "10000042": {
+      "name": "Hex: Sandstorm",
+      "desc": "Stirs up a powerful sandstorm with the chakram that sweeps the battleground clean.",
+      "section": "hexaSkill"
+    },
+    "10000043": {
+      "name": "Primordial Abyss",
+      "desc": "Wreath yourself in the power of the Specter, taken from the source of the most ancient abyss.",
+      "section": "hexaSkill"
+    },
+    "10000044": {
+      "name": "Universe in Bloom",
+      "desc": "The Mountain, River, Wind, and Sunlight Spirits gather along a ley line to release a pulse of vibrant, blooming energies.",
+      "section": "hexaSkill"
+    },
+    "10000045": {
+      "name": "Sage: Apotheosis",
+      "desc": "Reaches the extremes of heaven, earth, and humanity to end the chaos of conflict and reveal a new world.",
+      "section": "hexaSkill"
+    },
+    "10000046": {
+      "name": "Shin Quick Draw",
+      "desc": "Akatsuki Style Ultimate Technique.\\r\\nAdopt the Shin Quick Draw stance to deal great damage.",
+      "section": "hexaSkill"
+    },
+    "10000047": {
+      "name": "[Divine Will] Advent of Crimson",
+      "desc": "In accordance with the Crimson Covenant, #cOni# is summoned in her true form. Queen Rakuya the Conquerer, the pinnacle of all oni, brings an end to all who oppose her.",
+      "section": "hexaSkill"
+    },
+    "10000048": {
+      "name": "Source Flow",
+      "desc": "Draws out the natural power of the Samsara Spring, awakening all the Spirit Guides to another level to deal a strike with all their might on the enemy.",
+      "section": "hexaSkill"
+    },
+    "10000049": {
+      "name": "Soul Art: Jianghu Dragon",
+      "desc": "Leaps high into the air before descending upon an enemy with the unbound fury of a dragon, shattering the very earth in an explosion of divine power.",
+      "section": "hexaSkill"
+    },
+    "10000050": {
+      "name": "Rising Azure Dragon: Divided Heavens",
+      "desc": "Lets loose the power of the heavens, as the perfect fusion of your inner strength with Saya\u0027s bequeathed power grants your sword the might of the Azure Dragon.",
+      "section": "hexaSkill"
+    },
+    "10000051": {
+      "name": "Celestial Design",
+      "desc": "Summons the primordial starlight of the universe\u0027s birth, which bursts out in an explosion.",
+      "section": "hexaSkill"
+    },
+    "10000052": {
+      "name": "Ultrasonic Slash",
+      "desc": "Unleashes a slash from the pinnacle of sword mastery, where sound itself is cut.",
+      "section": "hexaSkill"
+    },
+    "10000053": {
+      "name": "Dominus Oblivion",
+      "desc": "Grants the blessing of holy light, armoring you in light and striking out with a blow of implacable justice.",
+      "section": "hexaSkill"
+    },
+    "10000054": {
+      "name": "Dark Halidom",
+      "desc": "Launches a spear imbued with the power of your dark contract, bringing utter destruction to your enemies.",
+      "section": "hexaSkill"
+    },
+    "10000055": {
+      "name": "Immortal Flame",
+      "desc": "Engulfs the battlefield in a torrent of purest flame.",
+      "section": "hexaSkill"
+    },
+    "10000056": {
+      "name": "Parabolic Bolt",
+      "desc": "Summons a bolt of primordial lightning to wash across the battlefield like an electric tide.",
+      "section": "hexaSkill"
+    },
+    "10000057": {
+      "name": "Commandment of Heaven",
+      "desc": "Purifies the world with the holy aid of an angel of compassion and vengeance.",
+      "section": "hexaSkill"
+    },
+    "10000058": {
+      "name": "Flashpoint",
+      "desc": "Fires a storm of arrows wreathed with illusion magic and lethal energy. ",
+      "section": "hexaSkill"
+    },
+    "10000059": {
+      "name": "Fatal Trigger",
+      "desc": "Dual-fires annihilation arrows that wipe out everything in their path.",
+      "section": "hexaSkill"
+    },
+    "10000060": {
+      "name": "Piercing Relic",
+      "desc": "Concentrates the cursed power of the relic into a dark arrow, which pierces every enemy on the battlefield.",
+      "section": "hexaSkill"
+    },
+    "10000061": {
+      "name": "Deep Strike",
+      "desc": "Targets the enemy\u0027s most guarded weaknesses, eradicating their resistance with talismans of unfathomable power.",
+      "section": "hexaSkill"
+    },
+    "10000062": {
+      "name": "Covetous Darkness",
+      "desc": "Slashes with a dagger edged with utter darkness, scattering gold coins like a grasping rain.",
+      "section": "hexaSkill"
+    },
+    "10000063": {
+      "name": "Yama\u0027s Decree",
+      "desc": "Pronounces the judgement of just punishment, delivering your enemies to their well-earned execution.",
+      "section": "hexaSkill"
+    },
+    "10000064": {
+      "name": "Haymaker",
+      "desc": "Overwhelms enemies with an unstoppable punch, then obliterates them with a kick while they\u0027re still reeling",
+      "section": "hexaSkill"
+    },
+    "10000065": {
+      "name": "Firecracker Fusillade",
+      "desc": "Aims your cannons toward heaven to fill the sky with shot, obliterating the earth below in a fusillade firestorm.",
+      "section": "hexaSkill"
+    },
+    "10000066": {
+      "name": "Barrel of Monkeys",
+      "desc": "Detonates a rocket over the battlefield, demolishing it in a storm of cataclysmic explosions.",
+      "section": "hexaSkill"
+    },
+    "10000067": {
+      "name": "Knights Immortal",
+      "desc": "#c[Radiant Soul Skill]#\\nSummons the Knights Immortal, whose undying valor lives on in eternal light.",
+      "section": "hexaSkill"
+    },
+    "10000068": {
+      "name": "Totality",
+      "desc": "Harmonizes your soul with the power of the cosmos. Using the skill again while the soul aura is active will demolish your enemies with the explosive power of cosmic creation.",
+      "section": "hexaSkill"
+    },
+    "10000069": {
+      "name": "Flame Concerto",
+      "desc": "Invokes the spirts of fire in a triumphant concerto of flame.",
+      "section": "hexaSkill"
+    },
+    "10000070": {
+      "name": "Elemental Tempest",
+      "desc": "Calls forth the tempest from your heart, first scouring enemies around you and then channeling the gale through Irena\u0027s bow, annihilating enemies in a deluge of arrows.",
+      "section": "hexaSkill"
+    },
+    "10000071": {
+      "name": "Stygian Command",
+      "desc": "Dons a mantle of deepest darkness to dominate your foes.",
+      "section": "hexaSkill"
+    },
+    "10000072": {
+      "name": "Annihilating Rush",
+      "desc": "Annihilates enemies with the terrible fury of a crashing wave.",
+      "section": "hexaSkill"
+    },
+    "10000073": {
+      "name": "Hailstorm Howl",
+      "desc": "Summons the howling fury of a hailstorm, crushing enemies in a lethal torrent of ice. ",
+      "section": "hexaSkill"
+    },
+    "10000074": {
+      "name": "United Horizons",
+      "desc": "Projects Mir and Evan\u0027s united power and opens the door to unforeseen possibilities.",
+      "section": "hexaSkill"
+    },
+    "10000075": {
+      "name": "Lustrous Orb",
+      "desc": "Shroud the world in the power darkness, amplifying the concentrated power of light.",
+      "section": "hexaSkill"
+    },
+    "10000076": {
+      "name": "Primeval Spirits",
+      "desc": "Calls upon the eternal spirits of nature to bless your arrows with the strength to vanquish the wicked.",
+      "section": "hexaSkill"
+    },
+    "10000077": {
+      "name": "Moonlit Serenade",
+      "desc": "Veils the world in brilliant blue moonlight, which dances with the power of Aria\u0027s soul.",
+      "section": "hexaSkill"
+    },
+    "10000078": {
+      "name": "Promise Unbroken",
+      "desc": "Channels the purest power of the Fox God through the Fox Marble, weakening the boundary separating the spirit world and calling on the spirits to chastise your foes.",
+      "section": "hexaSkill"
+    },
+    "10000079": {
+      "name": "Vanguard Strike",
+      "desc": "Charges the Arm Cannon\u0027s pile bunker with ultra-compressed energy, firing bullets that cause massive shockwaves upon impact and cover the battlefield with burning fuel.",
+      "section": "hexaSkill"
+    },
+    "10000080": {
+      "name": "Duskbound Aura",
+      "desc": "Cloaks the battlefield in an aura of deepest darkness, drowning your enemies in the tenebrous energy of death.",
+      "section": "hexaSkill"
+    },
+    "10000081": {
+      "name": "Gear Storm",
+      "desc": "Summons a large ballista built with the Resistance\u0027s cutting-edge engineering, which obliterates every enemy on the battlefield.",
+      "section": "hexaSkill"
+    },
+    "10000082": {
+      "name": "Neoteric Snap",
+      "desc": "Twists the fabric of space with a single snap of the Whip Blade.",
+      "section": "hexaSkill"
+    },
+    "10000083": {
+      "name": "Mechanized Extinction",
+      "desc": "Summons a massive mech built from the Resistance\u0027s latest technology to exterminate everything on the battlefield.",
+      "section": "hexaSkill"
+    },
+    "10000084": {
+      "name": "Amethystine Incursion",
+      "desc": "Crystalizes your boundless fury, exploding to shatter the ranks of all who stand against you.",
+      "section": "hexaSkill"
+    },
+    "10000085": {
+      "name": "Rageborne Devil",
+      "desc": "Rips holes in the fabric of reality with your boundless wrath.",
+      "section": "hexaSkill"
+    },
+    "10000086": {
+      "name": "Pyroclastic Instinct",
+      "desc": "Awakens the ancient dragon within your sword, which bursts forth with the flames of the world\u0027s fiery creation.",
+      "section": "hexaSkill"
+    },
+    "10000087": {
+      "name": "Churning Malice",
+      "desc": "Calcifies your unforgotten loss and thirst for vengeance into malice, marking your enemy\u0027s heart and executing them with a lethal blow.",
+      "section": "hexaSkill"
+    },
+    "10000088": {
+      "name": "Brutal Rampage",
+      "desc": "Binds the battlefield with weapons forged with the secrets of Shadowdealers.",
+      "section": "hexaSkill"
+    },
+    "10000089": {
+      "name": "Surprise Encore",
+      "desc": "Photographs your adoration for your fans, sending the crowd wild.",
+      "section": "hexaSkill"
+    },
+    "10000090": {
+      "name": "Bitemporis",
+      "desc": "Awakens the inherent power of Lapis and Lazuli, breaking down the boundaries of time to destroy an enemy\u0027s past while obliterating their future.",
+      "section": "hexaSkill"
+    },
+    "10000091": {
+      "name": "Fractal Horizon",
+      "desc": "Unleashes endlessly duplicating matter from the Otherworld to ensnare an area in a unbreakable fractal structure.",
+      "section": "hexaSkill"
+    },
+    "10000092": {
+      "name": "Einheit",
+      "desc": "Carves up the battlefield with countless aether swords moving as one.",
+      "section": "hexaSkill"
+    },
+    "10000093": {
+      "name": "Excidium",
+      "desc": "Draws on the full power of the mytocrystal to fire the orbital weapon, Excidium.",
+      "section": "hexaSkill"
+    },
+    "10000094": {
+      "name": "Wake the Void",
+      "desc": "Awakens the power of the desert shadow, then manifests voidbound chakri to grant your enemies absolution beneath the endless sands.",
+      "section": "hexaSkill"
+    },
+    "10000095": {
+      "name": "Whisper of Deepest Abyss",
+      "desc": "Calls forth a whisper from the deepest abyss to bedevil your foes.",
+      "section": "hexaSkill"
+    },
+    "10000096": {
+      "name": "Rising Azure Dragon: Heartbound Verse",
+      "desc": "No blossom flowers without someday falling...and once they have, no power can make them bloom again, even though the heavens shake.",
+      "section": "hexaSkill"
+    },
+    "10000097": {
+      "name": "Cornucopia",
+      "desc": "Inspires the boundless joy of Mother Nature\u0027s land spirits to blossom as a flower, purifying enemies with nature\u0027s bounty.",
+      "section": "hexaSkill"
+    },
+    "10000098": {
+      "name": "Millennium Spirit",
+      "desc": "Summons the power of heaven and earth with a flourish of your fan, born of the realm of the sages.",
+      "section": "hexaSkill"
+    },
+    "10000099": {
+      "name": "[Divine Will] Final Rest",
+      "desc": "#cOrochi# unleashes unbelievable power for a moment, severing every chain that would bind her with her ivory fangs.",
+      "section": "hexaSkill"
+    },
+    "10000100": {
+      "name": "Fleeting Breath",
+      "desc": "Akatsuki Style Ultimate Technique.\\r\\nEven with your dying breath, you know only one truth: to cut.",
+      "section": "hexaSkill"
+    },
+    "10000101": {
+      "name": "Soul Art: Where Destiny Falls",
+      "desc": "Soars into the sky with the fate-breaking power of Wu Shen, before striking down to obliterate everything beneath.",
+      "section": "hexaSkill"
+    },
+    "10000102": {
+      "name": "Wild Hunt",
+      "desc": "Looses Paeon to pursue the enemies of the forest, with no foes escaping the bite of his fangs.",
+      "section": "hexaSkill"
+    },
+    "20000000": {
+      "name": "HEXA Raging Blow",
+      "desc": "Instantly slashes several times at multiple enemies in front of you.",
+      "section": "hexaSkill"
+    },
+    "20000001": {
+      "name": "HEXA Blast/HEXA Divine Judgment",
+      "desc": "[HEXA Blast]: Calls upon the full divine might of the Paladin to deal a powerful blow to your enemies.\\n[HEXA Divine Judgment]: Marks enemies struck by your Blast skill with a Divine Brand.",
+      "section": "hexaSkill"
+    },
+    "20000002": {
+      "name": "HEXA Gungnir\u0027s Descent",
+      "desc": "Throws a mythical spear to deal fatal damage.",
+      "section": "hexaSkill"
+    },
+    "20000003": {
+      "name": "HEXA Flame Sweep",
+      "desc": "Sweeps the area in front of you with a powerful flame.",
+      "section": "hexaSkill"
+    },
+    "20000004": {
+      "name": "HEXA Chain Lightning",
+      "desc": "Attacks the target with a high-voltage attack that chains to nearby enemies, stunning them.",
+      "section": "hexaSkill"
+    },
+    "20000005": {
+      "name": "HEXA Angel Ray",
+      "desc": "Attacks with a holy sword, dealing tremendous holy damage.",
+      "section": "hexaSkill"
+    },
+    "20000006": {
+      "name": "HEXA Hurricane",
+      "desc": "Launches a catastrophic swarm of arrows at tremendous speed.",
+      "section": "hexaSkill"
+    },
+    "20000007": {
+      "name": "HEXA Snipe",
+      "desc": "Fires a carefully-aimed shot to deal severe damage.",
+      "section": "hexaSkill"
+    },
+    "20000008": {
+      "name": "HEXA Cardinal Burst/HEXA Bountiful Burst",
+      "desc": "[HEXA Cardinal Burst]: An archery technique that launches an explosive arrow of condensed energy that flies straight ahead.\\n[HEXA Bountiful Burst]: Manifests the power stored within the relic to call forth magical arrows.",
+      "section": "hexaSkill"
+    },
+    "20000009": {
+      "name": "HEXA Quad Star",
+      "desc": "Masterfully unleashes four throwing stars.",
+      "section": "hexaSkill"
+    },
+    "20000010": {
+      "name": "HEXA Assassinate",
+      "desc": "Attacks an enemy\u0027s vital points over and over to deal tremendous damage.",
+      "section": "hexaSkill"
+    },
+    "20000011": {
+      "name": "HEXA Phantom Blow",
+      "desc": "The secret technique of raging Secret Garden. Deals a flurry of piercing attacks against enemies in front.",
+      "section": "hexaSkill"
+    },
+    "20000012": {
+      "name": "HEXA Octopunch",
+      "desc": "Pummel enemies in front.",
+      "section": "hexaSkill"
+    },
+    "20000013": {
+      "name": "HEXA Rapid Fire",
+      "desc": "Fires a hail of energy bolts.",
+      "section": "hexaSkill"
+    },
+    "20000014": {
+      "name": "HEXA Cannon Barrage",
+      "desc": "Fires multiple cannonballs at once, focusing on enemies in your path.",
+      "section": "hexaSkill"
+    },
+    "20000015": {
+      "name": "HEXA Radiant Cross",
+      "desc": "[HEXA Radiant Cross]: Focuses light energy and attacks with a cross-shaped cut.\\n[HEXA Radiant Cross - Assault]: Slice ahead diagonally by sharply focusing the power of light.",
+      "section": "hexaSkill"
+    },
+    "20000016": {
+      "name": "HEXA Solar Slash/HEXA Luna Divide",
+      "desc": "[HEXA Solar Slash]: Attacks enemies in front with the power of the sun.\\n[HEXA Luna Divide]: Instantly cuts enemies in front with the moon.",
+      "section": "hexaSkill"
+    },
+    "20000017": {
+      "name": "HEXA Orbital Flame",
+      "desc": "Mastering fire magic enhances Orbital Flame\u0027s damage.",
+      "section": "hexaSkill"
+    },
+    "20000018": {
+      "name": "HEXA Song of Heaven",
+      "desc": "Plays the celestial song of the heavens to sweep away enemies.",
+      "section": "hexaSkill"
+    },
+    "20000019": {
+      "name": "HEXA Quintuple Star",
+      "desc": "Throws 5 Throwing Stars in a row at the target.",
+      "section": "hexaSkill"
+    },
+    "20000020": {
+      "name": "HEXA Annihilate/Lightning Strike",
+      "desc": "[HEXA Annihilate]: Summon a massive charge of electricity to blast enemies in front of you.\\n[Lightning Strike]: Attack an enemy branded by the Lightning Brand, dropping lightning on them.",
+      "section": "hexaSkill"
+    },
+    "20000021": {
+      "name": "HEXA Beyond Blade",
+      "desc": "Aran sweeps away enemies.",
+      "section": "hexaSkill"
+    },
+    "20000022": {
+      "name": "HEXA Mana Burst",
+      "desc": "Through mastery of mana, bursts of highly condensed mana attack enemies in front, twice in a row.",
+      "section": "hexaSkill"
+    },
+    "20000023": {
+      "name": "HEXA Ender",
+      "desc": "Attacks enemies with a giant blade that deals great damage.",
+      "section": "hexaSkill"
+    },
+    "20000024": {
+      "name": "HEXA Ishtar\u0027s Ring",
+      "desc": "Borrows the power of Ishtar, a legendary weapon, to rapidly fire arrows at enemies ahead of you.",
+      "section": "hexaSkill"
+    },
+    "20000025": {
+      "name": "HEXA Tempest",
+      "desc": "Creates a tornado of cards to blast through enemies like blades.",
+      "section": "hexaSkill"
+    },
+    "20000026": {
+      "name": "HEXA Spirit Claw",
+      "desc": "Summons a wind spirit to slash enemies.",
+      "section": "hexaSkill"
+    },
+    "20000027": {
+      "name": "HEXA Magnum Punch/HEXA Double Blast",
+      "desc": "[HEXA Magnum Punch]: Unleashes a more powerful straight punch in front of you with the explosive power of the Arm Cannon.\\n[HEXA Double Blast]: Performs a more powerful 2-hit combo in the direction you\u0027re facing using the momentum from your Arm Cannon.",
+      "section": "hexaSkill"
+    },
+    "20000028": {
+      "name": "HEXA Condemnation",
+      "desc": "Seals a pact with a dark spirit.",
+      "section": "hexaSkill"
+    },
+    "20000029": {
+      "name": "HEXA Wild Arrow Blast: Apex",
+      "desc": "Rapidly loose arrows to pierce the enemy.",
+      "section": "hexaSkill"
+    },
+    "20000030": {
+      "name": "HEXA Mecha Purge",
+      "desc": "[HEXA Mecha Purge: Snipe]: Roo-D scans for a critical weakness, then attacks with a high-tech sniper rifle to inflict severe damage to the target, creating an explosion.\\n[HEXA Mecha Purge: Bombardment]: Roo-D\u0027s bomber fires a barrage of missiles and lasers at enemies.",
+      "section": "hexaSkill"
+    },
+    "20000031": {
+      "name": "HEXA Heavy Salvo Plus/HEXA AP Salvo Plus",
+      "desc": "[HEXA Heavy Salvo Plus]: Fires off all Humanoid Mech ordnance at once to scatter your attacks across multiple enemies.\\n[HEXA AP Salvo Plus]: Fires explosive armor-piercing shells from the Tank Mech to land concentrated attacks on a small number of enemies.",
+      "section": "hexaSkill"
+    },
+    "20000032": {
+      "name": "HEXA Demon Impact",
+      "desc": "Releases the power of the Demon to deal critical damage to multiple enemies in front of you.",
+      "section": "hexaSkill"
+    },
+    "20000033": {
+      "name": "HEXA Nether Shield",
+      "desc": "Enchants your shield with a tracking spirit.",
+      "section": "hexaSkill"
+    },
+    "20000034": {
+      "name": "HEXA Gigas Wave",
+      "desc": "Blasts enemies with a powerful slash of your blade.",
+      "section": "hexaSkill"
+    },
+    "20000035": {
+      "name": "HEXA Falling Dust/HEXA Poison Needle",
+      "desc": "[HEXA Falling Dust]: Leap up high and shoots shock arrows downward.\\n[HEXA Poison Needle]: Slash the enemy to the front with a wide spin. Then somersault and shoot poison needles in all directions.",
+      "section": "hexaSkill"
+    },
+    "20000036": {
+      "name": "HEXA Chain Arts: Thrash",
+      "desc": "Whips your chain forward, then brings it crashing down.",
+      "section": "hexaSkill"
+    },
+    "20000037": {
+      "name": "HEXA Trinity",
+      "desc": "Summons spotlights that resonate with love and justice, and dazzle your enemies with your stage presence.",
+      "section": "hexaSkill"
+    },
+    "20000038": {
+      "name": "HEXA Wind Cutter/HEXA Giga Crash",
+      "desc": "[HEXA Wind Cutter]: Attack enemies in front of you, and create a vortex at the target location that causes additional damage.\\n[HEXA Wind Striker]: Attack enemies in front of you and release a vortex.\\n[HEXA Storm Break]: Attack the enemies in front of you, creating a whirlpool which pushes forward and deals additional damage to enemies in its path.\\n[HEXA Giga Crash]: Hammer the ground with your sword to attack front enemies.\\n[HEXA Falling Star]: Jump into the air, driving your sword into the ground in one decisive blow.\\n[HEXA Groundbreaker]: Jump high into the air, bringing down the Great Sword hard enough to split the ground beneath you.\\n[Time Piece]: Assist using temporal traces from Alpha and Beta.",
+      "section": "hexaSkill"
+    },
+    "20000039": {
+      "name": "HEXA Ultimate: Pressure/HEXA Ultimate: Check",
+      "desc": "[HEXA Ultimate: Pressure]: Warp space with powerful psychokinesis to create micro black holes.\\n[HEXA Ultimate: Check]: Create orbs of psychokinetic energy and launch them at an enemy to drive them to a vulnerable position.",
+      "section": "hexaSkill"
+    },
+    "20000040": {
+      "name": "HEXA Cleave/HEXA Magic Dispatch/HEXA Aetherial Arms",
+      "desc": "[HEXA Cleave]: Creates a massive sword to cut enemies ahead of you.\\n[HEXA Magic Dispatch]: Creates a magical shard that hunts down an enemy.\\n[HEXA Aetherial Arms]: Automatically creates shards when attacking.",
+      "section": "hexaSkill"
+    },
+    "20000041": {
+      "name": "HEXA Radiant Javelin/HEXA Winged Javelin",
+      "desc": "[HEXA Radiant Javelin]: Conjures a magical javelin that darts back and forth between enemies.\\n[HEXA Winged Javelin]: A javelin enhanced by the power of your Wings of Glory.",
+      "section": "hexaSkill"
+    },
+    "20000042": {
+      "name": "HEXA Arts: Flurry/HEXA Arts: Crescentum",
+      "desc": "[HEXA Arts: Flurry]: Deals powerful slashes to the enemy in front without ever being seen.\\n[HEXA Arts: Crescentum]: Instantly turns to sweep the surrounding enemies.",
+      "section": "hexaSkill"
+    },
+    "20000043": {
+      "name": "HEXA Basic Charge Drive/HEXA Scarlet Charge Drive/HEXA Gust Charge Drive/HEXA Abyssal Charge Drive",
+      "desc": "[HEXA Basic Charge Drive]: Uses magically-enhanced strength to attack your enemies.\\n[HEXA Scarlet Charge Drive]: Harnesses fire magic and charges forward.\\n[HEXA Gust Charge Drive]: Harnesses gust magic and strikes down from mid-air.\\n[HEXA Abyssal Charge Drive]: Unleash Abyssal magic during an attack.\\n[Awakened Abyss]: An enhanced body and stronger Spectra allows more Spectral power to be drawn upon.",
+      "section": "hexaSkill"
+    },
+    "20000044": {
+      "name": "HEXA Essence Sprinkle",
+      "desc": "Draws out the earth\u0027s flowing essence to attack enemies.",
+      "section": "hexaSkill"
+    },
+    "20000045": {
+      "name": "HEXA Heaven: Consuming Flames/HEXA Earth: Stone Tremor/HEXA Humanity: Gold-Banded Cudgel",
+      "desc": "[HEXA Heaven: Consuming Flames]: Fans the flames of destruction.\\n[HEXA Earth: Stone Tremor]: Slams the ground hard, causing massive stones to jut out from the earth.\\n[HEXA Humanity: Gold-Banded Cudgel]: Summons the weapon of an ancient sage, delivering a series of quick blows to your enemies.\\n[Universal Harmony]: Enlightened with the harmony of all creation to use more enhanced Heaven, Earth, and Humanity skills.",
+      "section": "hexaSkill"
+    },
+    "20000046": {
+      "name": "HEXA [Shinsoku] Mist Slash/HEXA [Shinsoku] Afterimage Slash",
+      "desc": "[HEXA [Shinsoku] Mist Slash]: #cShinsoku# Akatsuki Style First Form.\\r\\nCut with enough speed to cut the mist itself.\\n[HEXA [Shinsoku] Afterimage Slash]: #cShinsoku# Akatsuki Style Eighth Form.\\r\\nnCharge forward, slashing enemies in your path and leaving behind an #cAfterimage#. Press the skill key again before the skill ends to return to your #cAfterimage#, slashing enemies along the path and then unleashing an AoE attack.",
+      "section": "hexaSkill"
+    },
+    "20000047": {
+      "name": "HEXA Soul-Shatter Talisman: Dance / HEXA Heart-Wreck Talisman",
+      "desc": "[HEXA Soul-Shatter Talisman: Dance]: Attack enemies by flinging exorcism talismans in front of you.\\n[HEXA Heart-Wreck Talisman]: Throw talismans across a wide area, filling it with an energy that harms your enemies.",
+      "section": "hexaSkill"
+    },
+    "20000048": {
+      "name": "HEXA Strike",
+      "desc": "Spirit Guide [Pan] fully awakens, then swings his paws broadly in front to deal powerful damage. ",
+      "section": "hexaSkill"
+    },
+    "20000049": {
+      "name": "HEXA Xuanshan Arts [Tian] / [Di]",
+      "desc": "#c[Xuanshan Form]# Further refines the techniques of the Xuanshan School.\\nTap the skill key repeatedly to advance up to 2 ranks per form.",
+      "section": "hexaSkill"
+    },
+    "20000050": {
+      "name": "HEXA Rising Rage",
+      "desc": "Manifest the rage of the ancients to wipe out the enemy in front of you.",
+      "section": "hexaSkill"
+    },
+    "20000051": {
+      "name": "HEXA Divine Charge/HEXA Divine Mark/Falling Justice",
+      "desc": "[HEXA Divine Charge]: Instantly conjure a holy hammer that slams your enemies, silencing them and inflicting damage.\\n[HEXA Divine Mark]: Detonate the stigmata of light using a holy hammer, inflicting damage upon the enemies and silencing them.\\n[Falling Justice]: Enact justice with holy power.",
+      "section": "hexaSkill"
+    },
+    "20000052": {
+      "name": "HEXA Dark Impale/HEXA Nightshade Explosion",
+      "desc": "[HEXA Dark Impale]: Launch rapid spear thrusts on multiple enemies.\\n[HEXA Nightshade Explosion]: Release your inner power to lay waste to nearby enemies.",
+      "section": "hexaSkill"
+    },
+    "20000053": {
+      "name": "HEXA Flame Haze/HEXA Mist Eruption",
+      "desc": "[HEXA Flame Haze]: Shroud the enemy in blazing, poisonous fog.\\n[HEXA Mist Eruption]: Detonate the nearby poison mist to inflict devastating damage on the enemies.",
+      "section": "hexaSkill"
+    },
+    "20000054": {
+      "name": "HEXA Frozen Orb/HEXA Blizzard",
+      "desc": "[HEXA Frozen Orb]: Create and throw a Frozen Orb, which fires ice shards everywhere.\\n[HEXA Blizzard]: Summon spears of ice from the sky, showering multiple enemies with a nasty blizzard to freeze them.",
+      "section": "hexaSkill"
+    },
+    "20000055": {
+      "name": "HEXA Big Bang/HEXA Triumph Feather",
+      "desc": "[HEXA Big Bang]: Holy power spreads out, culminating in a holy explosion. The holy power drastically increases in intervals, allowing you to create a powerful #cHoly Explosion# across a larger area.\\n[HEXA Triumph Feather]: #c[Vengeance]# Harness the power of the Angel of Victory.",
+      "section": "hexaSkill"
+    },
+    "20000056": {
+      "name": "HEXA Arrow Blaster/HEXA Arrow Stream",
+      "desc": "[HEXA Arrow Blaster]: Shoot an arrow at a high angle.\\n[HEXA Arrow Stream]: Shoot a wild flurry of arrows straight ahead. Your concentration is increased in intervals, triggering the #cenhanced Arrow Stream#.",
+      "section": "hexaSkill"
+    },
+    "20000057": {
+      "name": "HEXA Piercing Arrow",
+      "desc": "Fire an arrow. Its effect increases with each enemy it hits.",
+      "section": "hexaSkill"
+    },
+    "20000058": {
+      "name": "HEXA Cardinal Deluge/HEXA Bountiful Deluge",
+      "desc": "[HEXA Cardinal Deluge]: An archery technique that zeroes in on targets within range.\\n[HEXA Bountiful Deluge]: Manifest the power stored within the relic to call forth magical arrows that chase and attack enemies in range for a set amount of time.",
+      "section": "hexaSkill"
+    },
+    "20000059": {
+      "name": "HEXA Assassin\u0027s Mark",
+      "desc": "Has a chance to tag the enemy with the assassin\u0027s mark when attacking.",
+      "section": "hexaSkill"
+    },
+    "20000060": {
+      "name": "HEXA Meso Explosion",
+      "desc": "Moves the fallen coins with Pick Pocket to attack the enemy.",
+      "section": "hexaSkill"
+    },
+    "20000061": {
+      "name": "HEXA Asura\u0027s Anger",
+      "desc": "Create a vortex of wind blades, damaging nearby enemies.",
+      "section": "hexaSkill"
+    },
+    "20000062": {
+      "name": "HEXA Sea Serpent/HEXA Sea Serpent\u0027s Rage/HEXA Sea Serpent Burst/Nautilus Strike",
+      "desc": "[HEXA Sea Serpent]: Master the powers of the Sea Serpent.\\n[HEXA Nautilus Strike]: Order the Nautilus to strike, attacking multiple enemies at once.",
+      "section": "hexaSkill"
+    },
+    "20000063": {
+      "name": "HEXA Broadside/HEXA Tempest Bombardment",
+      "desc": "[HEXA Broadside]: Summon the pirate ship Nautilus.\\n[HEXA Tempest Bombardment]: The Nautilus unleashes an overwhelming bombardment. ",
+      "section": "hexaSkill"
+    },
+    "20000064": {
+      "name": "HEXA Cannon Bazooka/HEXA Monkey Mortar/HEXA Anchors Aweigh/HEXA Nautilus Strike",
+      "desc": "[HEXA Monkey Mortar]: Fire Monkey into the air on a mortar shell, which then detonates.\\n[HEXA Cannon Bazooka]: Fire a powerful cannon full of compressed gunpowder to burn enemies ahead of you to the ground.\\n[HEXA Anchors Aweigh]: Place an anchor that creates a strong magnetic field.\\n[HEXA Nautilus Strike]: Order the Nautilus to attack multiple enemies at once.",
+      "section": "hexaSkill"
+    },
+    "20000065": {
+      "name": "HEXA Royal Guard",
+      "desc": "Soul Shield nullifies enemy attacks and counterattacks the enemy. ",
+      "section": "hexaSkill"
+    },
+    "20000066": {
+      "name": "HEXA Cosmic Shower",
+      "desc": "[HEXA Cosmic Shower]: Use the dormant power in the orbs to create a meteor shower zone that continuously attacks your surroundings for a set time.\\n[Equinox Power]: Detonate the power within the merged celestial body, consecutively triggering the sword energy of blinding sun rays and cold moonlight.",
+      "section": "hexaSkill"
+    },
+    "20000067": {
+      "name": "HEXA Blazing Extinction",
+      "desc": "Compress the high-temperature flame into a sphere and fire it.",
+      "section": "hexaSkill"
+    },
+    "20000068": {
+      "name": "HEXA Trifling Wind",
+      "desc": "Harass enemies with constant gale-force winds. ",
+      "section": "hexaSkill"
+    },
+    "20000069": {
+      "name": "HEXA Shadow Bat/HEXA Ravenous Bat",
+      "desc": "[HEXA Shadow Bat]: Summon a Shadow Bat.\\n[HEXA Ravenous Bat]: Summon a Ravenous Bat, thirsting for even more blood.",
+      "section": "hexaSkill"
+    },
+    "20000070": {
+      "name": "HEXA Thunderbolt",
+      "desc": "Call down a destructive bolt of electricity in front of you.",
+      "section": "hexaSkill"
+    },
+    "20000071": {
+      "name": "HEXA Finisher - Hunter\u0027s Prey",
+      "desc": "Stores strength before unleashing a powerful polearm attack.",
+      "section": "hexaSkill"
+    },
+    "20000072": {
+      "name": "HEXA Dragon Flash/HEXA Thunder Circle/HEXA Thunder Flash/HEXA Wind Flash",
+      "desc": "[HEXA Dragon Flash]: Mir flashes between enemies, attacking all in his way.\\n[HEXA Thunder Circle]: Create a pentacle of thunder to decimate enemies nearby.\\n[HEXA Thunder Flash]: Five pentacles of thunder appear and crash into enemies as Mir\u0027s Dragon Flash melds with Evan\u0027s magic.\\n[HEXA Wind Flash]: Sharp blades of wind blast enemies as Mir\u0027s Dragon Flash melds with Evan\u0027s magic.",
+      "section": "hexaSkill"
+    },
+    "20000073": {
+      "name": "HEXA Reflection/Endless Darkness",
+      "desc": "[HEXA Reflection]: Emit a powerful arrow of light.\\n[Endless Darkness]: The darkness that lies dormant within the enemy arises and consumes them.",
+      "section": "hexaSkill"
+    },
+    "20000074": {
+      "name": "HEXA Leaf Tornado/HEXA Spikes Royale/HEXA Wrath of Enlil",
+      "desc": "[HEXA Leaf Tornado]: Spin in mid-air and fire a hail of arrows all around you.\\n[HEXA Spikes Royale]: Jump into the air while raining down legendary spears that deal damage to multiple enemies.\\n[HEXA Wrath of Enlil]: Unleash Enlil\u0027s fury on enemies.",
+      "section": "hexaSkill"
+    },
+    "20000075": {
+      "name": "HEXA Mille Aiguilles",
+      "desc": "[HEXA Mille Aiguilles]: Fly into a stabbing frenzy, jabbing your enemies with blinding speed.\\n[Fate Shuffle]: Draw a card to read your own fate.",
+      "section": "hexaSkill"
+    },
+    "20000076": {
+      "name": "HEXA Fox Spirits",
+      "desc": "Landing Shade\u0027s skills has a chance to summon fox spirits.",
+      "section": "hexaSkill"
+    },
+    "20000077": {
+      "name": "HEXA Bunker Buster Explosion",
+      "desc": "Deplete the Dynamo Gauge to release massive explosions and shockwaves. Using it a set amount of times enables the use of #cBurst Pile Bunker#, which can create powerful explosions from the fully charged cylinder.",
+      "section": "hexaSkill"
+    },
+    "20000078": {
+      "name": "HEXA Finishing Blow/HEXA Sweeping Staff",
+      "desc": "[HEXA Finishing Blow]: Quickly deal 6 attacks on multiple enemies.\\n[HEXA Sweeping Staff]: Summon a magic staff to sweep out the enemies and cause an explosion.",
+      "section": "hexaSkill"
+    },
+    "20000079": {
+      "name": "HEXA Assist",
+      "desc": "[HEXA Assist: Rending Swipe]: Manifest the Spirit Jaguar form when Ashlii\u0027s power of nature lands a Crossbow skill.\\n[HEXA Assist: Snapping Fangs]: The Spirit Jaguar mercilessly bites the enemy.\\n[HEXA Assist: Skull Bash]: The Spirit Jaguar tackles the enemy.",
+      "section": "hexaSkill"
+    },
+    "20000080": {
+      "name": "HEXA Triangulation/HEXA Hypogram Field",
+      "desc": "[HEXA Triangulation]: Grants a chance to attach Airframes to enemies.\\n[HEXA Hypogram Field]: Deploy the Hypogram Field.",
+      "section": "hexaSkill"
+    },
+    "20000081": {
+      "name": "HEXA Homing Beacon",
+      "desc": "Launch a Homing Beacon to attack multiple enemies.",
+      "section": "hexaSkill"
+    },
+    "20000082": {
+      "name": "HEXA Demon Lash/HEXA Infernal Concussion",
+      "desc": "[HEXA Demon Lash]: Mash the attack key to perform a series of attacks on the enemy.\\n[HEXA Infernal Concussion]: Draw up dark energy and detonate it.",
+      "section": "hexaSkill"
+    },
+    "20000083": {
+      "name": "HEXA Exceed: Execution",
+      "desc": "Use the true powers of the Demon to deal a powerful slash.",
+      "section": "hexaSkill"
+    },
+    "20000084": {
+      "name": "HEXA Blade Burst/HEXA Tempest Blades",
+      "desc": "[HEXA Blade Burst]: Summon multiple swords that strike and explode, dealing attacks.\\n[HEXA Tempest Blades]: Periodically summon 5 swords to track and attack enemies.\\nThe ancient dragon\u0027s fury marks enemies hit by these swords. If the dormant dragon mark is hit by HEXA Tempest Blades again, it will awaken, activating Dragon Blow If the enemy is hit with Gigas Wave or Draco Surge.",
+      "section": "hexaSkill"
+    },
+    "20000085": {
+      "name": "HEXA Strike Arrow/HEXA Scattering Shot/HEXA Tearing Knife/HEXA Chain Sickle",
+      "desc": "[HEXA Strike Arrow]: Lay down multi-arrow suppression fire.\\n[HEXA Scattering Shot]: Scatter arrows across a wide arc.\\n[HEXA Tearing Knife]: Stab the enemy with a sharp dagger, then rip it out for fatal damage.\\n[HEXA Chain Sickle]: Throw a chain sickle, which swings wide in front of you. Then grab the chain and swing it downward.",
+      "section": "hexaSkill"
+    },
+    "20000086": {
+      "name": "HEXA Muscle Memory",
+      "desc": "Your continued training and familiarity with your weapons further enhances their deadliness.",
+      "section": "hexaSkill"
+    },
+    "20000087": {
+      "name": "HEXA Soul Seeker/HEXA Soul Seeker Expert",
+      "desc": "[HEXA Soul Seeker]: Compresses the essence of Eskalade\u0027s power, then launches it at the enemy.\\n[HEXA Soul Seeker Expert]: Grants a chance to automatically create a Soul Seeker when your attack skill successfully hits the enemy (excludes Soul Buster, Soul Seeker, and Spotlight).",
+      "section": "hexaSkill"
+    },
+    "20000088": {
+      "name": "HEXA Spin Driver/HEXA Rolling Cross",
+      "desc": "[HEXA Rolling Cross]: Spin at very high speed, leaping forward and upward, cutting through enemies in your path.\\n[HEXA Rolling Assault]: Advance forward while spinning at high speed.\\n[HEXA Spin Driver]: Use your Great Sword\u0027s weight to revolve in place, creating a whirlwhind that pulls enemies in. Also permanently enhances Time Piece.\\n[HEXA Wheel Wind]: Spin like a whirlwind for a short time, pulling and attacking enemies nearby.",
+      "section": "hexaSkill"
+    },
+    "20000089": {
+      "name": "HEXA Psychic Smash",
+      "desc": "Lifts an Otherworld object and slams it down toward the enemy. ",
+      "section": "hexaSkill"
+    },
+    "20000090": {
+      "name": "HEXA Hunting Decree/HEXA Plummet",
+      "desc": "[HEXA Hunting Decree]: Command nearby aether swords created with Aether Forge to pursue the enemy.\\n[HEXA Plummet]: Wrap your body in potent magic and dive upon your foes.",
+      "section": "hexaSkill"
+    },
+    "20000091": {
+      "name": "HEXA Reaction - Domination/HEXA Reaction - Destruction/HEXA Vortex Wings",
+      "desc": "[HEXA Reaction - Domination]: Triggers when your crystal comes into contact with a Radiant Orb. Strike nearby enemies, marking them with an#c Umbral Brand#.\\n[HEXA Reaction - Destruction]: Triggers when Radiant Javelin or Longinus Spear come into contact with your crystal. Release a destructive blast that strikes nearby enemies 2 times, marking them with an #cUmbral Brand#.\\n[HEXA Vortex Wings]: Focus all your magic into your wings to deliver a brutal spin attack.",
+      "section": "hexaSkill"
+    },
+    "20000092": {
+      "name": "HEXA Void Rush/HEXA Void Blitz/HEXA Hex: Chakram Split",
+      "desc": "[HEXA Void Rush]: Move quickly in one direction, leaving only an afterimage.\\n[HEXA Void Blitz]: Amplify the power of the afterimage to pour out several afterimages in front.\\n[HEXA Hex: Chakram Split]: Throw multiple large chakrams that attack enemies in front several times.",
+      "section": "hexaSkill"
+    },
+    "20000093": {
+      "name": "HEXA Grievous Wound/HEXA Insatiable Hunger/HEXA Unbridled Chaos",
+      "desc": "[HEXA Grievous Wound]: Transform your body into a spear that pierces your enemies.\\n[HEXA Insatiable Hunger]: Call forth an Abyssal Beast to attack enemies.\\n[HEXA Unbridled Chaos]: Causes you to move lightning fast, ruthlessly clawing at everything nearby.",
+      "section": "hexaSkill"
+    },
+    "20000094": {
+      "name": "HEXA Dragon Vein Eruption/HEXA Eruption: Heaving River/HEXA Eruption: Whirlwind/HEXA Eruption: Sunrise Well",
+      "desc": "[HEXA Dragon Vein Eruption]: Consume the surrounding Dragon Veins, causing their dormant power to erupt.\\n[HEXA Heaving River]: Several River Spirits combine into a giant form. Periodically causes a surge that attacks the surroundings.\\n[HEXA Whirlwind]: Wind Spirits periodically exhale a sweeping gust of breath.\\n[HEXA Sunrise Well]: Several Sunlight Spirits join together into a frightening giant form, then scatter to cover the surroundings with lava.",
+      "section": "hexaSkill"
+    },
+    "20000095": {
+      "name": "HEXA Heaven: Iron Fan Gale/HEXA Earth: Ground-Shattering Wave/HEXA Humanity: As-You-Will Fan",
+      "desc": "[HEXA Heaven: Iron Fan Gale]: Summon a giant fan to blow a gale downward.\\n[HEXA Earth: Ground-Shattering Wave]: Kick the ground to unleash a shockwave along the surface.\\n[HEXA Humanity: As-You-Will Fan]: Swing a massive fan.",
+      "section": "hexaSkill"
+    },
+    "20000096": {
+      "name": "HEXA [Shinsoku] Crescent Moon Cut/HEXA [Shinsoku] Silent Arc",
+      "desc": "[HEXA [Shinsoku] Crescent Moon Cut]: #cShinsoku# Akatsuki Style Sixth Form.\\r\\nCharge forward and slash along the arc of the crescent moon.\\n[HEXA [Shinsoku] Silent Arc]: #cShinsoku# Akatsuki Style Secret Technique.\\r\\nArc your blade through the air without a sound.",
+      "section": "hexaSkill"
+    },
+    "20000097": {
+      "name": "HEXA: Summon Oni / HEXA [Order] Spinning Strike / HEXA [Order] Pulverizing Strike",
+      "desc": "[HEXA Oni]: Summon the #cOni# Shikigami.\\n#cOni# automatically tracks enemies within range and attacks them with her giant club. She uses the skills she knows at will.\\n[HEXA [Order] Spinning Strike]: Order #cOni# to use Spinning Strike.\\nOrder #cOni# to use Pulverizing Strike.",
+      "section": "hexaSkill"
+    },
+    "20000098": {
+      "name": "HEXA Sneak Attack/HEXA Raid",
+      "desc": "[HEXA Sneak Attack]: Paeon hides and waits for an opportunity to use a powerful sneak attack. Once the opportunity arises, he appears to deal a ferocious additional attack.\\n[HEXA Raid]: Paeon swiftly pierces enemies to deal a devastating attack.",
+      "section": "hexaSkill"
+    },
+    "20000099": {
+      "name": "HEXA Divine Art: Howling Storm/HEXA Divine Art: Erupting Flame/HEXA Divine Art: Righteous Thunder",
+      "desc": "[HEXA Divine Art: Howling Storm]: Lashes out with a forward strike, then gathers qi to deliver a devastating final blow.\\n[HEXA Divine Art: Erupting Flame]: Throws an upward punch strengthened by the power of Wu Shen, overwhelming your target with a powerful blow.\\n[HEXA Divine Art: Righteous Thunder]: Unleashes an intense qi shockwave to attack enemies.",
+      "section": "hexaSkill"
+    },
+    "20000100": {
+      "name": "HEXA Beam Blade/Rending Edge",
+      "desc": "[HEXA Beam Blade]: Launches out blades that tear your enemies apart.\\n[Rending Edge]: Use masterful swordsmanship to create grievous sword scars.",
+      "section": "hexaSkill"
+    },
+    "20000101": {
+      "name": "HEXA Heaven\u0027s Hammer",
+      "desc": "Slam a large hammer into the ground, dealing damage to multiple enemies.",
+      "section": "hexaSkill"
+    },
+    "20000102": {
+      "name": "HEXA Final Attack/HEXA Revenge of the Evil Eye",
+      "desc": "[HEXA Final Attack]: Chance to deal an additional hit after landing a direct attack skill.\\n[HEXA Revenge of the Evil Eye]: Evil Eye counterattacks the enemy.",
+      "section": "hexaSkill"
+    },
+    "20000103": {
+      "name": "HEXA Ignite/HEXA Ifrit/HEXA Inferno Aura",
+      "desc": "[HEXA Ignite]: Grants Fire magic a chance to#c create a wall of fire at the target location# (excludes Inferno Aura).\\n[HEXA Ifrit]: Summons a fire ifrit that attacks multiple enemies for a short time.\\n[HEXA Inferno Aura]: Channel fire chakras to burst into flame, damaging nearby enemies.",
+      "section": "hexaSkill"
+    },
+    "20000104": {
+      "name": "HEXA Lightning Orb/Cryo Shock",
+      "desc": "[HEXA Lightning Orb]: Creates a large, unstable sphere of electricity to continuously zap enemies.\\n[Cryo Shock]: Flash-freeze enemies and deliver an electrifying pulse.",
+      "section": "hexaSkill"
+    },
+    "20000105": {
+      "name": "HEXA Angelic Wrath/HEXA Fountain of Vengeance/HEXA Bahamut",
+      "desc": "[HEXA Angelic Wrath]: #c[Vengeance]# Calls down an avenging angel to strike the enemy, creating a relic at the point of contact that continuously weakens the enemy.\\n[HEXA Fountain of Vengeance]: #c[Vengeance]# Summon a divine talisman of vengeance that punishes nearby enemies.\\n[HEXA Bahamut]: Temporarily summons Bahamut to deal Holy damage.",
+      "section": "hexaSkill"
+    },
+    "20000106": {
+      "name": "HEXA Quiver Cartridge/HEXA Phoenix/Extra Quiver Cartridge",
+      "desc": "[HEXA Quiver Cartridge]: Use a special arrowhead.\\n[HEXA Phoenix]: Temporarily summon a Phoenix to deal Fire damage.\\n[Extra Quiver Cartridge]: Load an extra Quiver Cartridge use special arrowheads.",
+      "section": "hexaSkill"
+    },
+    "20000107": {
+      "name": "HEXA Frostprey/HEXA Bolt Burst",
+      "desc": "[HEXA Frostprey]: Temporarily summons a Frostprey to deal Ice damage.\\n[HEXA Bolt Burst]: Fires arrows in all directions, striking multiple enemies nearby.",
+      "section": "hexaSkill"
+    },
+    "20000108": {
+      "name": "HEXA Cardinal Torrent/HEXA Glyph of Impalement/HEXA Ancient Astra",
+      "desc": "[HEXA Cardinal Torrent]: An archery technique used to achieve high mobility. Release Swiftstrike Energy stored in your weapon as a short burst of speed that propels you to your destination, then swing your weapon to attack nearby enemies.\\n[HEXA Glyph of Impalement]: Call forth spears of dark energy imbued with the power of the Ancient Curse to attacks nearby enemies.\\n[HEXA Ancient Astra]: Manifest arrows like those spoken of in legend to rain destruction upon your foes.",
+      "section": "hexaSkill"
+    },
+    "20000109": {
+      "name": "HEXA Dark Flare/HEXA Showdown/Darkness Shuriken",
+      "desc": "[HEXA Dark Flare]: Summon a large knife, which releases dark energy to attack nearby enemies for a set time.\\n[HEXA Showdown]: Attacks up to 6 enemies with a knife and provokes them, making them untouchable.\\n[Darkness Shuriken]: A throwing star with a will appears from the darkness.",
+      "section": "hexaSkill"
+    },
+    "20000110": {
+      "name": "HEXA Dark Flare/HEXA Cruel Stab",
+      "desc": "[HEXA Dark Flare]: Summon a large knife, which releases dark energy to attack nearby enemies for a set time.\\n[HEXA Cruel Stab]: Inflicts a brutal stab with the dagger.",
+      "section": "hexaSkill"
+    },
+    "20000111": {
+      "name": "HEXA Blade Clone/Mortality",
+      "desc": "[HEXA Blade Clone]: Summons a dagger from the Secret Garden to deal powerful bonus damage with all your attacks.\\n[Mortality]: Summon Yaksha, god of the netherworld, to descend and annihilate nearby enemies.",
+      "section": "hexaSkill"
+    },
+    "20000112": {
+      "name": "HEXA Serpent Scale",
+      "desc": "Harnessing the power of the Sea Serpent periodically creates Serpent Scales which can be consumed to activate more powerful Sea Serpent Skills.",
+      "section": "hexaSkill"
+    },
+    "20000113": {
+      "name": "HEXA Brain Scrambler/HEXA Eight-Legs Easton",
+      "desc": "[HEXA Brain Scrambler]: Shoots the target in its squishy bits to deal heavy damage to it.\\n[HEXA Eight-Legs Easton]: Fire a hefty barrage of bullets.",
+      "section": "hexaSkill"
+    },
+    "20000114": {
+      "name": "HEXA Rolling Rainbow",
+      "desc": "Order the Cannoneer\u0027s reliable assistants to summon multiple cannons and mercilessly roast enemies ahead of you.",
+      "section": "hexaSkill"
+    },
+    "20000115": {
+      "name": "HEXA Install Shield/HEXA Charging Light",
+      "desc": "[HEXA Install Shield]: Summons the Soul Shield containing the power of light.\\n[HEXA Charging Light]: Summons the mighty Knight of Light that can use the power of the soul to carry out a deadly charge.",
+      "section": "hexaSkill"
+    },
+    "20000116": {
+      "name": "HEXA Cosmic Burst",
+      "desc": "Releases cosmic orbs to attack.",
+      "section": "hexaSkill"
+    },
+    "20000117": {
+      "name": "HEXA Orbital Explosion/HEXA Phoenix Drive",
+      "desc": "[HEXA Orbital Explosion]: Harness and release the essence of the flame.\\n[HEXA Phoenix Drive]: Incarnate the ever-burning Phoenix to remake the world in the flames of fiery rebirth.",
+      "section": "hexaSkill"
+    },
+    "20000118": {
+      "name": "HEXA Fairy Spiral/HEXA Storm Bringer/HEXA Monsoon",
+      "desc": "[HEXA Fairy Spiral]: Swing the bow lightly in place, as if dancing with the wind, to create a strong gale that attacks enemies.\\n[HEXA Storm Bringer]: Calls down a torrential storm on your enemies.\\n[HEXA Monsoon]: Summons the seasonal winds to cover the world.",
+      "section": "hexaSkill"
+    },
+    "20000119": {
+      "name": "HEXA Dark Omen",
+      "desc": "Summons a pack of bats to attack enemies.",
+      "section": "hexaSkill"
+    },
+    "20000120": {
+      "name": "HEXA Typhoon/HEXA Deep Rising",
+      "desc": "[HEXA Typhoon]: #c[Link Mastery Skill]# Enhances Gale to maximize energy collection from using linked skills, transforming it into a devastating typhoon.\\n[HEXA Deep Rising]: Summons the great sea god, damaging enemies on land.",
+      "section": "hexaSkill"
+    },
+    "20000121": {
+      "name": "HEXA Hyper Finisher - Last Stand",
+      "desc": "Harness the unbreakable will of a hero to unleash a slash enhanced with Maha\u0027s power.",
+      "section": "hexaSkill"
+    },
+    "20000122": {
+      "name": "HEXA Dragon Dive/HEXA Thunder Dive/HEXA Earth Circle/HEXA Earth Dive",
+      "desc": "[HEXA Dragon Dive]: Mir dives in front of Evan, creating shockwaves with the beating of his wings.\\n[HEXA Thunder Dive]: Generates powerful orbs of electricity when Mir\u0027s Dragon Dive melds with Evan\u0027s magic.\\n[HEXA Earth Circle]: Forms an irregular pentacle that raises the ground and damages enemies.\\n[HEXA Earth Dive]: Smashes a boulder into enemies in front when Mir\u0027s Dragon Dive melds with Evan\u0027s magic.",
+      "section": "hexaSkill"
+    },
+    "20000123": {
+      "name": "HEXA Apocalypse/Eternal Light",
+      "desc": "[HEXA Apocalypse]: Open up the dark dimension to summon hellfire.\\n[Eternal Light]: Erase enemies in a flash of blinding light.",
+      "section": "hexaSkill"
+    },
+    "20000124": {
+      "name": "HEXA Unicorn Spike/HEXA Gust Dive/HEXA Stunning Strikes",
+      "desc": "[HEXA Unicorn Spike]: Summons a sacred unicorn to blast through enemies and weaken them for a short time.\\n[HEXA Gust Dive]: Uses the power of wind to dive down onto multiple enemies, dealing damage to all of them.\\n[HEXA Stunning Strikes]: Quickly fire multiple arrows to the front.",
+      "section": "hexaSkill"
+    },
+    "20000125": {
+      "name": "HEXA Carte Noir",
+      "desc": "Each critical attack directly from Phantom has a chance to produce a card that attacks nearby enemies automatically.",
+      "section": "hexaSkill"
+    },
+    "20000126": {
+      "name": "HEXA Bomb Punch/HEXA Death Mark/Dusk Blow",
+      "desc": "[HEXA Bomb Punch]: Summons a nature spirit to attack multiple enemies in front of you.\\n[HEXA Death Mark]: Summons a grim spirit to attack enemies in front of you. Attacked enemies receive Death Marks.\\n[Dusk Blow]: Harness spirit energy to deliver three consecutive punches.",
+      "section": "hexaSkill"
+    },
+    "20000127": {
+      "name": "HEXA Revolving Cannon Mastery/HEXA Hammer Smash/HEXA Shotgun Punch",
+      "desc": "[HEXA Revolving Cannon Mastery]: Any enemies attacked directly by an Arm Cannon will receive additional damage due to the excess heat.\\n[HEXA Hammer Smash]: Strike the ground to maintain balance.\\n[HEXA Shotgun Punch]: Fire a Screw Blow.",
+      "section": "hexaSkill"
+    },
+    "20000128": {
+      "name": "HEXA Dark Shock",
+      "desc": "While this skill is active, using Combat Teleport will create a streak of black lightning between your starting and ending positions, injuring enemies and marking them with a Dark Brand.",
+      "section": "hexaSkill"
+    },
+    "20000129": {
+      "name": "HEXA Command",
+      "desc": "[HEXA Command: Alpha Surge]: Resonate with Ashlii to take direct control over nature\u0027s great power.\\n[HEXA Command: Titan Pounce]: A giant Spirit Jaguar pounces on the enemy.",
+      "section": "hexaSkill"
+    },
+    "20000130": {
+      "name": "HEXA Salvo System/HEXA Orbital Cataclysm",
+      "desc": "[HEXA Salvo System]: Fires rockets at enemies within range upon landing attacking skills.\\n[HEXA Orbital Cataclysm]: Fires a powerful orbital laser cannon that can incinerate anything on the ground.",
+      "section": "hexaSkill"
+    },
+    "20000131": {
+      "name": "HEXA Distortion Bomb",
+      "desc": "Detonates a special Resistance bomb to create a distortion field.",
+      "section": "hexaSkill"
+    },
+    "20000132": {
+      "name": "HEXA Demon Cry/HEXA Dark Metamorphosis",
+      "desc": "[HEXA Demon Cry]: Releases your inner demons to intimidate and deal damage to multiple nearby enemies.\\n[HEXA Dark Metamorphosis]: Unbind your demonic might to mark enemies within range for a set time.",
+      "section": "hexaSkill"
+    },
+    "20000133": {
+      "name": "HEXA Exceed: Lunar Slash/Maximal Exceed",
+      "desc": "[HEXA Exceed: Lunar Slash]: Attacks enemies to the front and back.\\n[Maximal Exceed]: Manifest overflowing rage as a Desperado.",
+      "section": "hexaSkill"
+    },
+    "20000134": {
+      "name": "HEXA Inferno Breath",
+      "desc": "Summons an ancient dragon that breathes fire.",
+      "section": "hexaSkill"
+    },
+    "20000135": {
+      "name": "HEXA Dragon Fang/HEXA Shaft Break/HEXA Phantom Blade/HEXA Lasting Grudge",
+      "desc": "[HEXA Dragon Fang]: Enticed by the scent of death, the fangs of the Devil Dragon materialize on the physical plane.\\n[HEXA Shaft Break]: Fires piercing arrows, which then collapse together, pulling the enemies with them, and explode.\\n[HEXA Phantom Blade]: Deploy the Whispershot\u0027s hidden blade to shank enemies in front of you.\\n[HEXA Lasting Grudge]: Materialized malice gathers and crystallizes.",
+      "section": "hexaSkill"
+    },
+    "20000136": {
+      "name": "HEXA Summon Scimitar/HEXA Summon Claw/HEXA Summon Shuriken/HEXA Summon Spiked Bat/HEXA Chain Arts: Crush",
+      "desc": "[HEXA Summon Scimitar]: Summons a scimitar to instantly cut through enemies.\\n[HEXA Summon Claw]: Summons a claw weapon that strikes downward diagonally.\\n[HEXA Summon Shuriken]: SSummons a spinning shuriken that then explodes, maiming enemies and knocking them back.\\n[HEXA Summon Spiked Bat]: Summons a spiked bat that crashes down on foes.\\n[HEXA Chain Arts: Crush]: Chains crash down from above, striking your enemies.",
+      "section": "hexaSkill"
+    },
+    "20000137": {
+      "name": "HEXA Supreme Supernova",
+      "desc": "Places an energy orb that emits the power of Eskalade in all directions.",
+      "section": "hexaSkill"
+    },
+    "20000138": {
+      "name": "HEXA Flash Assault/HEXA Flash Cut",
+      "desc": "[HEXA Flash Assault]: Instantly moves forward, damaging enemies in your path.\\n[HEXA Blade Ring]: Attack enemies with spinning strikes, and adds a blade that pierces through on both sides for additional damage.\\n[HEXA Flash Cut]: Forcefully swing your long sword to attack multiple enemies in front of you.\\n[HEXA Throwing Weapon]: Throw your Great Sword with all of your might, cleaving through all enemies in its path.",
+      "section": "hexaSkill"
+    },
+    "20000139": {
+      "name": "HEXA Ultimate: Opening/HEXA Ultimate: Gambit",
+      "desc": "[HEXA Ultimate: Opening]: Increase gravitational forces around an enemy as a strategic opening move.\\n[HEXA Ultimate: Gambit]: Crashes an empty train into an enemy at high speed.",
+      "section": "hexaSkill"
+    },
+    "20000140": {
+      "name": "HEXA Impale/HEXA Resonance Rush/HEXA Noble Summons/HEXA Aether Bloom",
+      "desc": "[HEXA Impale]: Creates an aether sword that can be launched.\\n[HEXA Resonance Rush]: Creates a large aether sword that resonates with a nearby aether crystal, causing you to rush towards the crystal.\\n[HEXA Noble Summons]: Order aether swords affected by Hunting Decree to return.\\n[HEXA Aether Bloom]: Releases a bloom of magic from each Hunting Decree sword.",
+      "section": "hexaSkill"
+    },
+    "20000141": {
+      "name": "HEXA Ex/HEXA Machina/HEXA Crystal Skill - Deus",
+      "desc": "[HEXA Ex]: Summons your trustworthy robo-companion, Ex.\\n[HEXA Machina]: Summons your mechanical friend Machina.\\n[HEXA Crystal Skill - Deus]: Unites the powers of Ex and Machina to summon Deus.",
+      "section": "hexaSkill"
+    },
+    "20000142": {
+      "name": "HEXA Hex: Chakram Sweep/HEXA Hex: Chakram Fury/HEXA Death Blossom",
+      "desc": "[HEXA Hex: Chakram Sweep]: Throw a large chakram in front and use the recoil to jump backward.\\n[HEXA Hex: Chakram Fury]: Spreads a domain of suffering that tears the surrounding enemy into pieces.\\n[HEXA Death Blossom]: A rose of despair made of sand blooms.",
+      "section": "hexaSkill"
+    },
+    "20000143": {
+      "name": "HEXA Vengeful Hate/HEXA Blissful Restraint/HEXA Endless Agony",
+      "desc": "[HEXA Vengeful Hate]: Summon an Abyssal Aura in the form of a devastating blade.\\n[HEXA Blissful Restraint]: Charges forward and creates an Abyssal Prison that binds and holds the enemy.\\n[HEXA Endless Agony]: Open the gate to the abyss, attacking forward for a moment, then summon an Abyssal Guard for the final blow.",
+      "section": "hexaSkill"
+    },
+    "20000144": {
+      "name": "HEXA Dragon Vein Absorption/HEXA Absorption: River Puddle Douse/HEXA Absorption: Fierce Wind/HEXA Absorption: Sunlit Grain",
+      "desc": "[HEXA Dragon Vein Absorption]: Consumes the surrounding dragon vein to absorb the dormant powers within.\\n[HEXA Absorption: River Puddle Douse]: When Essence Sprinkle hits, a mischievous River Spirit appears, along with a small body of water, and attacks enemies by dousing them.\\n[HEXA Absorption: Fierce Wind]: When Essence Sprinkle hits, a Wind Spirit appears and causes a fierce wind that deals continuous damage to enemies.\\n[HEXA Absorption: Sunlit Grain]: When Essence Sprinkle hits, the Sunlight Spirits gather together to emit spheres of condensed sunlight that pursue and attack enemies.",
+      "section": "hexaSkill"
+    },
+    "20000145": {
+      "name": "HEXA Talisman: Clone/HEXA Talisman: Seeking Ghost Flame",
+      "desc": "[HEXA Talisman: Clone]: Conjures a clone to trick enemies with sly attacks.\\n[HEXA Talisman: Seeking Ghost Flame]: Conjures a living flame to chase and attack enemies.",
+      "section": "hexaSkill"
+    },
+    "20000146": {
+      "name": "HEXA Puncture/HEXA Final Attack/HEXA Cry Valhalla",
+      "desc": "[HEXA Puncture]: Pour your swordsman\u0027s spirit into a forward-downward strike.\\n[HEXA Final Attack]: Chance to deal an additional hit after landing a direct attack skill.\\n[HEXA Cry Valhalla]: Call upon the power of the ancients to defend you.",
+      "section": "hexaSkill"
+    },
+    "20000147": {
+      "name": "HEXA Final Attack/Rising Justice",
+      "desc": "[HEXA Final Attack]: Chance to deal a powerful additional hit after landing a direct attack skill.\\n[Rising Justice]: After attacking with Falling Justice, creates a Lasting Judgment.",
+      "section": "hexaSkill"
+    },
+    "20000148": {
+      "name": "HEXA Evil Eye Shock",
+      "desc": "The Evil Eye lets out a scream to stun and deal damage to nearby enemies.",
+      "section": "hexaSkill"
+    },
+    "20000149": {
+      "name": "HEXA Creeping Toxin/HEXA Meteor Shower/HEXA Megiddo Flame",
+      "desc": "[HEXA Creeping Toxin]: Conjures a poison-attribute totem, which spreads a toxic pool.\\n[HEXA Meteor Shower]: Summon countless meteorites to inflict intense fire damage.\\n[HEXA Megiddo Flame]: Fires a blue flame that burns the enemy to the very soul.",
+      "section": "hexaSkill"
+    },
+    "20000150": {
+      "name": "HEXA Thunder Sphere/HEXA Elquines",
+      "desc": "[HEXA Thunder Sphere]: Summon an orb of condensed lightning.\\n[HEXA Elquines]: Summons Elquines for a short time.",
+      "section": "hexaSkill"
+    },
+    "20000151": {
+      "name": "HEXA Genesis/HEXA Heaven\u0027s Door",
+      "desc": "[HEXA Genesis]: A holy ray of light shines down from the sky, dealing tremendous holy damage. Permanently adds a chance to inflict#cAngel\u0027s Punishment# upon landing a direct skill attack.\\n[HEXA Heaven\u0027s Door]: Knocks on the door to the heavens to punish enemies and bless your party members at the same time.",
+      "section": "hexaSkill"
+    },
+    "20000152": {
+      "name": "HEXA Speed Mirage/HEXA Gritty Gust",
+      "desc": "[HEXA Speed Mirage]: Fire arrows fast enough to leave an afterimage.\\n[HEXA Gritty Gust]: Blasts nearby enemies with a gust of wind to tear them apart.",
+      "section": "hexaSkill"
+    },
+    "20000153": {
+      "name": "HEXA Final Attack/HEXA High Speed Shot",
+      "desc": "[HEXA Final Attack]: Chance to deal an additional hit after landing a direct attack skill.\\n[HEXA High Speed Shot]: Fires off a focused shot that pierces all enemies within range.",
+      "section": "hexaSkill"
+    },
+    "20000154": {
+      "name": "HEXA Shadow Raven/HEXA Combo Assault/Manifest Curse",
+      "desc": "[HEXA Shadow Raven]: Call forth a dark-elemental Raven for a period of time.\\n[HEXA Combo Assault]: Attack nearby enemies with your bow, then let loose a magical arrow to attack enemies in a wider range.\\n[Manifest Curse]: Gain full control of the relic\u0027s power to manifest the curse.",
+      "section": "hexaSkill"
+    },
+    "20000155": {
+      "name": "HEXA Sudden Raid/HEXA Death Star",
+      "desc": "[HEXA Sudden Raid]: Call in a horde of friends to attack enemies.\\n[HEXA Death Star]: Summons 4 shurikens that combine into one giant shuriken.",
+      "section": "hexaSkill"
+    },
+    "20000156": {
+      "name": "HEXA Sudden Raid/HEXA Shadow Veil/Covert Edge",
+      "desc": "[HEXA Sudden Raid]: Call in a horde of friends to attack enemies.\\n[HEXA Shadow Veil]: Summons a dark ally to deal damage over time.\\n[Covert Edge]: Deal a devastating blow from the shadows.",
+      "section": "hexaSkill"
+    },
+    "20000157": {
+      "name": "HEXA Blade Fury/HEXA Sudden Raid",
+      "desc": "[HEXA Blade Fury]: The secret technique of Secret Garden\u0027s tornado. Spin furiously with the two blades in your hands to damage nearby enemies.\\n[HEXA Sudden Raid]: Call in a horde of friends to attack enemies.",
+      "section": "hexaSkill"
+    },
+    "20000158": {
+      "name": "HEXA Hook Bomber",
+      "desc": "Throws a punch that attacks the enemy in front with a powerful explosive energy.",
+      "section": "hexaSkill"
+    },
+    "20000159": {
+      "name": "HEXA Siege Bomber/HEXA Scurvy Summons/HEXA Nautilus Strike/HEXA Ugly Bomb",
+      "desc": "[HEXA Siege Bomber]: Set up a stationary cannon to temporarily bombard nearby enemies.\\n[HEXA Scurvy Summons]: Summon a brave crewman from the Nautilus.\\n[HEXA Nautilus Strike]: Order the Nautilus to attack multiple enemies at once.\\n[HEXA Ugly Bomb]: Fires a really weird-looking bomb that you... where did you buy this thing?",
+      "section": "hexaSkill"
+    },
+    "20000160": {
+      "name": "HEXA Monkey Fury/HEXA Support Monkey",
+      "desc": "[HEXA Monkey Fury]: Fire a special elastic cannonball that coats all enemies ahead of you with gunpowder to deal damage over time. Greatly enhances Cannoneer\u0027s attack effects.\\n[HEXA Support Monkey]: Summon an elite monkey artillerist to aid you in battle.",
+      "section": "hexaSkill"
+    },
+    "20000161": {
+      "name": "HEXA Offensive Defense/HEXA Final Attack/HEXA Soul Majesty",
+      "desc": "[HEXA Offensive Defense]: The power of the shield protecting the Empress makes enemies vulnerable to Mihile\u0027s #cRadiant Soul#.\\n[HEXA Final Attack]: Chance to deal an additional hit after landing a direct attack skill.\\n[HEXA Soul Majesty]: Your firm belief to guard the Empress and allies makes the Soul Shield and Radiant Soul skill to display a stronger power.",
+      "section": "hexaSkill"
+    },
+    "20000162": {
+      "name": "HEXA Equinox Slash/Equinox Power II",
+      "desc": "[HEXA Equinox Slash]: Charges forward and slashes the enemy.\\n[Equinox Power II]: Fully awaken the merged celestial body to loose a grand attack.",
+      "section": "hexaSkill"
+    },
+    "20000163": {
+      "name": "HEXA Towering Inferno",
+      "desc": "[HEXA Towering Inferno: Blazing Lion]: Concentrates the flow of flames into a single spot.\\n[HEXA Towering Inferno: Flame Fox]: Sweep the surroundings in pure flame. ",
+      "section": "hexaSkill"
+    },
+    "20000164": {
+      "name": "HEXA Storm Whim/Anemoi",
+      "desc": "[HEXA Storm Whim]: The blessing of the Spirit of Wind temporarily allows you to control the power of the extreme storms.\\n[Anemoi]: Manifest the Great Spirit of Wind to call upon the winds of victory.",
+      "section": "hexaSkill"
+    },
+    "20000165": {
+      "name": "HEXA Dominion/Abyssal Darkness",
+      "desc": "[HEXA Dominion]: Unleashes the power of darkness, creating an area of supernatural force around you.\\n[Abyssal Darkness]: Master the darkness to strike enemy weak points.",
+      "section": "hexaSkill"
+    },
+    "20000166": {
+      "name": "HEXA Sea Wave/Deep Reinforcement",
+      "desc": "[HEXA Sea Wave]: Linking the skill imbues it with the power of lightning and creates a wave that flows towards the enemy.\\n[Deep Reinforcement]: Linking the skill instantly creates a shield through the combined powers of the sea and lightning that weakens enemy attacks.",
+      "section": "hexaSkill"
+    },
+    "20000167": {
+      "name": "HEXA Permafrost/HEXA Adrenaline Overload/HEXA Final Attack",
+      "desc": "[HEXA Permafrost]: Summon the bitter cold within Maha as a polearm that freezes the very air around it for a set duration.\\n[HEXA Adrenaline Overload]: Harmonize the full power of Maha and your combos with the remembered thrill of a thousand battlefields, surpassing Adrenaline Rush.\\n[HEXA Final Attack]: Chance to deal an additional hit after landing a direct attack skill.",
+      "section": "hexaSkill"
+    },
+    "20000168": {
+      "name": "HEXA Wind Circle/HEXA Dragon Spark/HEXA Magic Debris/HEXA Dragon Breath/HEXA Earth Breath/HEXA Wind Breath",
+      "desc": "[HEXA Wind Circle]: Launches a gust of wind to push enemies aside and deal damage.\\n[HEXA Dragon Spark]: Whenever Evan makes a direct attack, Mir attacks, too.\\n[HEXA Magic Debris]: Powerful Magic debris forms around enemies hit by fusion skills.\\n[HEXA Dragon Breath]: Releases a fiery breath that scorches enemies in front.\\n[HEXA Earth Breath]: Mir breathes out flames that homes in on enemies when his Dragon Breath melds with Evan\u0027s magic.\\n[HEXA Wind Breath]: Mir breathes out a storm of flames that deal a tremendous amount of damage when his Dragon Breath melds with Evan\u0027s magic.",
+      "section": "hexaSkill"
+    },
+    "20000169": {
+      "name": "HEXA Twilight Nova",
+      "desc": "[HEXA Twilight Nova]: Explode with the power of light and darkness.",
+      "section": "hexaSkill"
+    },
+    "20000170": {
+      "name": "HEXA Elemental Knights/HEXA Final Attack",
+      "desc": "[HEXA Elemental Knights]: Randomly summons an Ice Spirit, Fire Spirit, or Shadow Spirit to aid you in battle.\\n[HEXA Final Attack]: Chance to deal an additional hit after landing a direct attack skill.",
+      "section": "hexaSkill"
+    },
+    "20000171": {
+      "name": "HEXA Rose Carte Finale/La Mort Carte",
+      "desc": "[HEXA Rose Carte Finale]: Tosses a bouquet of cards into the air that drop and continue to damage enemies.\\n[La Mort Carte]: Replace Carte Noir with the Death Card that tests destiny.",
+      "section": "hexaSkill"
+    },
+    "20000172": {
+      "name": "HEXA Spirit Frenzy",
+      "desc": "Opens a path to the spirit world, creating a wall of frenzied spirits.",
+      "section": "hexaSkill"
+    },
+    "20000173": {
+      "name": "HEXA Revolving Cannon/HEXA Ballistic Hurricane",
+      "desc": "[HEXA Revolving Cannon]: Use your Arm Cannon to create additional explosions and deal damage.\\n[HEXA Ballistic Hurricane]: Unleash all of your fighting prowess to create a storm that sweeps enemies in a wide range. ",
+      "section": "hexaSkill"
+    },
+    "20000174": {
+      "name": "HEXA Dark Genesis",
+      "desc": "Uses deadly lightning to hit and temporarily stun multiple enemies.",
+      "section": "hexaSkill"
+    },
+    "20000175": {
+      "name": "HEXA Another Bite/HEXA Final Attack/HEXA Trap Seed",
+      "desc": "[HEXA Another Bite]: Carve your foes with the rage of the wild when your Spirit Jaguar lands an attack.\\n[HEXA Final Attack]: Has a chance to trigger an additional hit when a direct attack Crossbow skill lands.\\n[HEXA Trap Seed]: Place a support unit that scatters mines. The mines explode when an enemy touches them.",
+      "section": "hexaSkill"
+    },
+    "20000176": {
+      "name": "HEXA Beam Dance",
+      "desc": "Unleash a flurry with your Whip Blade to damage nearby enemies.",
+      "section": "hexaSkill"
+    },
+    "20000177": {
+      "name": "HEXA Robo Launcher RM7/HEXA Rock \u0027n Shock/HEXA Bots \u0027n Tots/Robo Conversion: CB-P1",
+      "desc": "[HEXA Robo Launcher RM7]: Places a fixed artillery piece, the RM7.\\n[HEXA Rock \u0027n Shock]: Place up to 3 \u003CRock \u0027n Shock\u003E coils, which continuously attack and possibly stun enemies.\\n[HEXA Bots \u0027n Tots]: Place a robot factory that summons toy robots.\\n[HEXA Bots \u0027n Tots]: Place a Bots \u0027n Tots which continuously summons toy robots.\\n[Robo Conversion: CB-P1]: Swaps HEXA Robo Launcher RM7, HEXA Rock \u0027n Shock, and HEXA Bots \u0027n Tots between Static and Summon Configurations.",
+      "section": "hexaSkill"
+    },
+    "20000178": {
+      "name": "HEXA Cerberus Chomp/Demonic Plume",
+      "desc": "[HEXA Cerberus Chomp]: Utilize the power of the nether world to damage enemies and rob them of their souls.\\n[Demonic Plume]: Lash out with the latent power of your noble blood to damage nearby enemies.",
+      "section": "hexaSkill"
+    },
+    "20000179": {
+      "name": "HEXA Thousand Swords/HEXA Infernal Exceed",
+      "desc": "[HEXA Thousand Swords]: Summons a veil of darkness, then slashes through enemies at the speed of light.\\n[HEXA Infernal Exceed]: Permanently adds a chance for an additional attack after the Exceed attack.",
+      "section": "hexaSkill"
+    },
+    "20000180": {
+      "name": "HEXA Wing Beat/HEXA Stone Dragon",
+      "desc": "[HEXA Wing Beat]: Creates a whirlwind that attacks enemies until certain targets are defeated.\\n[HEXA Stone Dragon]: Summons a dragon statue that pulls in enemies and attacks with a chance to Slow.",
+      "section": "hexaSkill"
+    },
+    "20000181": {
+      "name": "HEXA Death\u0027s Blessing/HEXA Chasing Shot/HEXA Unseen Sniper",
+      "desc": "[HEXA Death\u0027s Blessing]: Gives the blessing of death to enemies exposed to malice.\\n[HEXA Chasing Shot]: Shoot an arrow that chases the enemy.\\n[HEXA Unseen Sniper]: Focus your intentions toward a distant enemy, then fire before they see you.",
+      "section": "hexaSkill"
+    },
+    "20000182": {
+      "name": "HEXA Summon Shotgun/HEXA Summon Daggers/HEXA Summon Decoy Bomb/HEXA Summon Brick/HEXA Chain Arts: Beatdown/HEXA Veteran Shadowdealer",
+      "desc": "[HEXA Summon Shotgun]: Summons a shotgun that fires a fan-shaped blast with enough power to knock you back.\\n[HEXA Summon Daggers]: Summons 2 daggers to instantly slash upward.\\n[HEXA Summon Decoy Bomb]: Jumps backwards while releasing a series of explosives.\\n[HEXA Summon Brick]: Summons a huge brick and jumps forward, using your chains to bring it crashing down.\\n[HEXA Chain Arts: Beatdown]: Whips your chain out far and fast, binding the enemy within range with the chain.\\n[HEXA Veteran Shadowdealer]: Your continued weapons training has made you adept in many types of combat.",
+      "section": "hexaSkill"
+    },
+    "20000183": {
+      "name": "HEXA Celestial Roar/Encore Ribbon",
+      "desc": "[HEXA Celestial Roar]: Send out the soul-shaking wave.\\n[Encore Ribbon]: Send out a ribbon charged with love and justice to deal an additional hit after landing a direct attack skill.",
+      "section": "hexaSkill"
+    },
+    "20000184": {
+      "name": "HEXA Moon Strike/HEXA Rising Slash/HEXA Shadow Rain/Infinite Resonance",
+      "desc": "[HEXA Moon Strike]: Attacks distant enemies and pulls them towards you.\\n[HEXA Piercing Thrust]: Thrusts your Long Sword forward to knock back enemies with the tip.\\n[HEXA Shadow Strike]: Slash the enemy in front of you.\\n[HEXA Rising Slash]: Launches enemies in front of you into the air.\\n[HEXA Air Raid]: Attacks enemies in front of you.\\n[HEXA Shadow Rain]: Alpha and Beta\u0027s combination attack.\\n[Infinite Resonance]: Resonate the power of the Transcendent divided between Alpha and Beta.",
+      "section": "hexaSkill"
+    },
+    "20000185": {
+      "name": "HEXA Kinetic Combo",
+      "desc": "[HEXA Kinetic Combo]: Upon landing a direct attack skill, condensed energy explodes, causing an additional attack.",
+      "section": "hexaSkill"
+    },
+    "20000186": {
+      "name": "HEXA Aether Forge/HEXA Reign of Destruction/HEXA Shardbreaker",
+      "desc": "[HEXA Aether Forge]: Creates a number of aether swords around your body using all available aether.\\n[HEXA Reign of Destruction]: Summon countless swords across a large area.\\n[HEXA Shardbreaker]: Fill the shard with magic to make it grow and then shatter.",
+      "section": "hexaSkill"
+    },
+    "20000187": {
+      "name": "HEXA Longinus/HEXA Umbral Brand III/HEXA Longinus Zone",
+      "desc": "[HEXA Longinus]: Casts the holy spear Longinus.\\n[HEXA Umbral Brand III]: Deals a powerful additional hit to enemies marked with the Umbral Brand.\\n[HEXA Longinus Zone]: Summons 7 Longinus Spears to unleash a devastating attack over a large area.",
+      "section": "hexaSkill"
+    },
+    "20000188": {
+      "name": "HEXA Resonate/HEXA Deceiving Blade",
+      "desc": "[HEXA Resonate]: Manifests chakri summoned by a strong magic power to be moved freely.\\n[HEXA Deceiving Blade]: Absorbs the enemy\u0027s shadow and converts it to energy.",
+      "section": "hexaSkill"
+    },
+    "20000189": {
+      "name": "HEXA Ominous Nightmare/HEXA Ominous Dream",
+      "desc": "[HEXA Ominous Nightmare]: Inflict extreme lacerations on enemies using your specter hand.\\n[HEXA Ominous Dream]: Inflict extreme lacerations on enemies using your specter hand.",
+      "section": "hexaSkill"
+    },
+    "20000190": {
+      "name": "HEXA Wakeup Call",
+      "desc": "Awaken multiple dormant Dragon Veins in the area, all at once. The awakened Dragon Veins emanate intangible forces, which pursue and attack nearby enemies.",
+      "section": "hexaSkill"
+    },
+    "20000191": {
+      "name": "HEXA Scroll: Star Vortex/HEXA Scroll: Butterfly Dream",
+      "desc": "[HEXA Scroll: Star Vortex]: Summons a powerful vortex that absorbs the enemies\u0027 energy.\\n[HEXA Scroll: Butterfly Dream]: Summons a swarm of colorful but deadly flowers.",
+      "section": "hexaSkill"
+    },
+    "20000192": {
+      "name": "HEXA [Battou] Dark Moon Cut",
+      "desc": "[HEXA [Battou] Dark Moon Cut]: #cBattou# Akatsuki Style Fifth Form.\\r\\nDraw your blade and trace the arc of the dark moon.",
+      "section": "hexaSkill"
+    },
+    "20000193": {
+      "name": "HEXA Summon Tengu / HEXA [Order] Shade-Fletched Arrow",
+      "desc": "[HEXA Tengu]: Summon the #cTengu# Shikigami.\\n#cTengu# automatically tracks and attacks enemies in a wide range. She uses the skills she knows at will.\\n[HEXA [Order] Shade-Fletched Arrow]: Order #cTengu# to use Shade-Fletched Arrow.",
+      "section": "hexaSkill"
+    },
+    "20000194": {
+      "name": "HEXA Peck",
+      "desc": "[HEXA Peck]: Penni flies about and automatically attacks enemies.",
+      "section": "hexaSkill"
+    },
+    "20000195": {
+      "name": "HEXA Divine Art: Swirling Tide/HEXA Divine Art: Tearing Wind/HEXA Soul Art: Black Wind",
+      "desc": "[HEXA Divine Art: Swirling Tide]: Whirls with a spinning kick that damages nearby enemies.\\n[HEXA Divine Art: Tearing Wind]: Attacks an enemy in front with a strong side kick imbued with the power of Wu Shen.\\n[HEXA Soul Art: Black Wind]: Raises a whirling typhoon of dark qi from the depths of your spirit, harnessing every moment of rage and pain ever experienced by an inheritor of the Divine Fist without succumbing to the flood.",
+      "section": "hexaSkill"
+    },
+    "20000196": {
+      "name": "HEXA [Battou] Full Moon\u0027s Rage",
+      "desc": "[HEXA [Battou] Full Moon\u0027s Rage]: #cBattou# Akatsuki Style Secret Technique.\\r\\nInstantly draw your sword, unleashing a strike that evokes a roaring red moon.",
+      "section": "hexaSkill"
+    },
+    "20000197": {
+      "name": "HEXA Summon Orochi / HEXA [Order] Execute",
+      "desc": "[HEXA Orochi]: Summon the #cOrochi# Shikigami.\\n#cOrochi# automatically tracks enemies within range and attacks with chained scythes. She uses the skills she knows at will.\\n[HEXA [Order] Execute]: Order #cOrochi# to use Execute.",
+      "section": "hexaSkill"
+    },
+    "20000198": {
+      "name": "HEXA [Focus] Heal/HEXA [Focus] Forest Protection/HEXA Mother Nature\u0027s Touch",
+      "desc": "[HEXA [Focus] Heal]: Breathes the lifeforce of nature into the current Focal Target, providing periodical healing.\\n[HEXA [Focus] Forest Protection]: Materializes the power of the forest into a protective barrier around the current Focal Target.\\n[HEXA Mother Nature\u0027s Touch]: Shares the lifeforce of Mother Nature with all party members to provide healing effects.",
+      "section": "hexaSkill"
+    },
+    "20000199": {
+      "name": "HEXA Secret Art: Qi Projection",
+      "desc": "[HEXA Secret Art: Qi Projection]: Projects your qi out around you, allowing you to pursue and attack nearby enemies faster than the eye can follow.",
+      "section": "hexaSkill"
+    },
+    "20000200": {
+      "name": "HEXA Plum Blossom Sword: Storm",
+      "desc": "Cuts down the enemies before you in a storm of blinding speed, a founding technique of the Plum Blossom Sword.",
+      "section": "hexaSkill"
+    },
+    "20000201": {
+      "name": "HEXA Imugi Spirit Sword: Spirit Strike/HEXA Second Imugi Spirit Sword: Serpent\u0027s Fang",
+      "desc": "[HEXA Imugi Spirit Sword: Spirit Strike]: Deepens your connection to Saya\u0027s power further, enhancing the additional strike unleashed when you hit an enemy with Dancing Annihilation or a founding Plum Blossom Sword technique.\\n[HEXA Second Imugi Spirit Sword: Serpent\u0027s Fang]: Ignites the power Saya invested in your heart, giving it a chance to deal an additional attack when a direct skill attack lands.",
+      "section": "hexaSkill"
+    },
+    "20000202": {
+      "name": "HEXA Wish Unending/HEXA Final Imugi Spirit Sword: Burrowing Earth/HEXA Final Imugi Spirit Sword: Ravenous Spirit/HEXA Final Imugi Spirit Sword: Years Uncounted",
+      "desc": "[HEXA Wish Unending]: Obliterates your enemies with blasts of Saya\u0027s power after the Final Imugi Spirit Sword techniques have been used a certain number of times.\\n[HEXA Final Imugi Spirit Sword: Burrowing Earth]: Splits the earth with a sword strike infused with the strength of a burrowing imugi.\\n[HEXA Final Imugi Spirit Sword: Ravenous Spirit]: Strikes with a sword infused with Saya\u0027s power, which surges forward to devour your foes with the fury of a ravenous imugi.\\n[HEXA Final Imugi Spirit Sword: Years Uncounted]: Unleashes countless sword strikes, each marking a milestone on an imugi\u0027s path to become a dragon.",
+      "section": "hexaSkill"
+    },
+    "20000203": {
+      "name": "HEXA Second Plum Blossom Sword: Raining Blossoms/HEXA Third Plum Blossom Sword: Riotous Heart",
+      "desc": "[HEXA Second Plum Blossom Sword: Raining Blossoms]: Transforms the spiritual energy lingering over enemies you attack, showering them in slicing petals. \\n[HEXA Third Plum Blossom Sword: Riotous Heart]: Projects the sword-sharp edges of your heart, creating a sphere of power that moves forward to cut down anything in its path.",
+      "section": "hexaSkill"
+    },
+    "20000204": {
+      "name": "SHINE Ray/SHINE Stellar I - Antares",
+      "desc": "[SHINE Ray]: Weaves starlight with the power of the Guide of the Stars and records Ray on the Stellagram.\\n[SHINE Stellar I - Antares]: Complete the Antares fusion to summon a rabbit hole.",
+      "section": "hexaSkill"
+    },
+    "30000000": {
+      "name": "Burning Soul Blade",
+      "desc": "Boosts Burning Soul Blade.",
+      "section": "hexaSkill"
+    },
+    "30000001": {
+      "name": "Instinctual Combo",
+      "desc": "Boosts Instinctual Combo.",
+      "section": "hexaSkill"
+    },
+    "30000002": {
+      "name": "Worldreaver",
+      "desc": "Boosts Worldreaver.",
+      "section": "hexaSkill"
+    },
+    "30000003": {
+      "name": "Sword Illusion",
+      "desc": "Boosts Sword Illusion.",
+      "section": "hexaSkill"
+    },
+    "30000004": {
+      "name": "Divine Echo",
+      "desc": "Boosts Divine Echo.",
+      "section": "hexaSkill"
+    },
+    "30000005": {
+      "name": "Hammers of the Righteous",
+      "desc": "Boosts Hammers of the Righteous.",
+      "section": "hexaSkill"
+    },
+    "30000006": {
+      "name": "Grand Guardian",
+      "desc": "Boosts Grand Guardian.",
+      "section": "hexaSkill"
+    },
+    "30000007": {
+      "name": "Mighty Mjolnir",
+      "desc": "Boosts Mighty Mjolnir.",
+      "section": "hexaSkill"
+    },
+    "30000008": {
+      "name": "Spear of Darkness",
+      "desc": "Boosts Spear of Darkness.",
+      "section": "hexaSkill"
+    },
+    "30000009": {
+      "name": "Radiant Evil",
+      "desc": "Boosts Radiant Evil.",
+      "section": "hexaSkill"
+    },
+    "30000010": {
+      "name": "Calamitous Cyclone",
+      "desc": "Boosts Calamitous Cyclone.",
+      "section": "hexaSkill"
+    },
+    "30000011": {
+      "name": "Darkness Aura",
+      "desc": "Boosts Darkness Aura.",
+      "section": "hexaSkill"
+    },
+    "30000012": {
+      "name": "DoT Punisher",
+      "desc": "Boosts DoT Punisher.",
+      "section": "hexaSkill"
+    },
+    "30000013": {
+      "name": "Poison Nova",
+      "desc": "Boosts Poison Nova.",
+      "section": "hexaSkill"
+    },
+    "30000014": {
+      "name": "Elemental Fury",
+      "desc": "Boosts Elemental Fury.",
+      "section": "hexaSkill"
+    },
+    "30000015": {
+      "name": "Poison Chain",
+      "desc": "Boosts Poison Chain.",
+      "section": "hexaSkill"
+    },
+    "30000016": {
+      "name": "Frost Ark",
+      "desc": "Boosts Frost Ark.",
+      "section": "hexaSkill"
+    },
+    "30000017": {
+      "name": "Bolt Barrage",
+      "desc": "Boosts Bolt Barrage.",
+      "section": "hexaSkill"
+    },
+    "30000018": {
+      "name": "Spirit of Snow",
+      "desc": "Boosts Spirit of Snow.",
+      "section": "hexaSkill"
+    },
+    "30000019": {
+      "name": "Jupiter Thunder",
+      "desc": "Boosts Jupiter Thunder.",
+      "section": "hexaSkill"
+    },
+    "30000020": {
+      "name": "Benediction",
+      "desc": "Boosts Benediction.",
+      "section": "hexaSkill"
+    },
+    "30000021": {
+      "name": "Angel of Balance",
+      "desc": "Boosts Angel of Balance.",
+      "section": "hexaSkill"
+    },
+    "30000022": {
+      "name": "Peacemaker",
+      "desc": "Boosts Peacemaker.",
+      "section": "hexaSkill"
+    },
+    "30000023": {
+      "name": "Divine Punishment",
+      "desc": "Boosts Divine Punishment.",
+      "section": "hexaSkill"
+    },
+    "30000024": {
+      "name": "Storm of Arrows",
+      "desc": "Boosts Storm of Arrows.",
+      "section": "hexaSkill"
+    },
+    "30000025": {
+      "name": "Inhuman Speed",
+      "desc": "Boosts Inhuman Speed.",
+      "section": "hexaSkill"
+    },
+    "30000026": {
+      "name": "Quiver Barrage",
+      "desc": "Boosts Quiver Barrage.",
+      "section": "hexaSkill"
+    },
+    "30000027": {
+      "name": "Silhouette Mirage",
+      "desc": "Boosts Silhouette Mirage.",
+      "section": "hexaSkill"
+    },
+    "30000028": {
+      "name": "Perfect Shot",
+      "desc": "Boosts Perfect Shot.",
+      "section": "hexaSkill"
+    },
+    "30000029": {
+      "name": "Split Shot",
+      "desc": "Boosts Split Shot.",
+      "section": "hexaSkill"
+    },
+    "30000030": {
+      "name": "Surge Bolt",
+      "desc": "Boosts Surge Bolt.",
+      "section": "hexaSkill"
+    },
+    "30000031": {
+      "name": "Repeating Crossbow Cartridge",
+      "desc": "Boosts Repeating Crossbow Cartridge.",
+      "section": "hexaSkill"
+    },
+    "30000032": {
+      "name": "Nova Blast",
+      "desc": "Boosts Nova Blast.",
+      "section": "hexaSkill"
+    },
+    "30000033": {
+      "name": "Raven Tempest/Fury of the Wild Tempest",
+      "desc": "Boosts Raven Tempest and Fury of the Wild Tempest.",
+      "section": "hexaSkill"
+    },
+    "30000034": {
+      "name": "Obsidian Barrier",
+      "desc": "Boosts Obsidian Barrier.",
+      "section": "hexaSkill"
+    },
+    "30000035": {
+      "name": "Relic Unbound",
+      "desc": "Boosts Relic Unbound.",
+      "section": "hexaSkill"
+    },
+    "30000036": {
+      "name": "Throwing Star Barrage",
+      "desc": "Boosts Throwing Star Barrage.",
+      "section": "hexaSkill"
+    },
+    "30000037": {
+      "name": "Shurrikane",
+      "desc": "Boosts Shurrikane.",
+      "section": "hexaSkill"
+    },
+    "30000038": {
+      "name": "Dark Lord\u0027s Omen",
+      "desc": "Boosts Dark Lord\u0027s Omen.",
+      "section": "hexaSkill"
+    },
+    "30000039": {
+      "name": "Throw Blasting",
+      "desc": "Boosts Throw Blasting.",
+      "section": "hexaSkill"
+    },
+    "30000040": {
+      "name": "Shadow Assault",
+      "desc": "Boosts Shadow Assault.",
+      "section": "hexaSkill"
+    },
+    "30000041": {
+      "name": "Trickblade",
+      "desc": "Boosts Trickblade.",
+      "section": "hexaSkill"
+    },
+    "30000042": {
+      "name": "Sonic Blow",
+      "desc": "Boosts Sonic Blow.",
+      "section": "hexaSkill"
+    },
+    "30000043": {
+      "name": "Slash Shadow Formation",
+      "desc": "Boosts Slash Shadow Formation.",
+      "section": "hexaSkill"
+    },
+    "30000044": {
+      "name": "Blade Storm",
+      "desc": "Boosts Blade Storm.",
+      "section": "hexaSkill"
+    },
+    "30000045": {
+      "name": "Blades of Destiny",
+      "desc": "Boosts Blades of Destiny.",
+      "section": "hexaSkill"
+    },
+    "30000046": {
+      "name": "Blade Tornado",
+      "desc": "Boosts Blade Tornado.",
+      "section": "hexaSkill"
+    },
+    "30000047": {
+      "name": "Haunted Edge",
+      "desc": "Boosts Haunted Edge.",
+      "section": "hexaSkill"
+    },
+    "30000048": {
+      "name": "Lightning Form",
+      "desc": "Boosts Lightning Form.",
+      "section": "hexaSkill"
+    },
+    "30000049": {
+      "name": "Lord of the Deep",
+      "desc": "Boosts Lord of the Deep.",
+      "section": "hexaSkill"
+    },
+    "30000050": {
+      "name": "Serpent Vortex",
+      "desc": "Boosts Serpent Vortex.",
+      "section": "hexaSkill"
+    },
+    "30000051": {
+      "name": "Howling Fist",
+      "desc": "Boosts Howling Fist.",
+      "section": "hexaSkill"
+    },
+    "30000052": {
+      "name": "Bullet Barrage",
+      "desc": "Boosts Bullet Barrage.",
+      "section": "hexaSkill"
+    },
+    "30000053": {
+      "name": "Target Lock",
+      "desc": "Boosts Target Lock.",
+      "section": "hexaSkill"
+    },
+    "30000054": {
+      "name": "Nautilus Assault",
+      "desc": "Boosts Nautilus Assault.",
+      "section": "hexaSkill"
+    },
+    "30000055": {
+      "name": "Death Trigger",
+      "desc": "Boosts Death Trigger.",
+      "section": "hexaSkill"
+    },
+    "30000056": {
+      "name": "Cannon of Mass Destruction",
+      "desc": "Boosts Cannon of Mass Destruction.",
+      "section": "hexaSkill"
+    },
+    "30000057": {
+      "name": "The Nuclear Option Boost",
+      "desc": "Boosts The Nuclear Option.",
+      "section": "hexaSkill"
+    },
+    "30000058": {
+      "name": "Monkey Business",
+      "desc": "Boosts Monkey Business.",
+      "section": "hexaSkill"
+    },
+    "30000059": {
+      "name": "Poolmaker",
+      "desc": "Boosts Poolmaker.",
+      "section": "hexaSkill"
+    },
+    "30000060": {
+      "name": "Cosmos",
+      "desc": "Boosts Cosmos.",
+      "section": "hexaSkill"
+    },
+    "30000061": {
+      "name": "Rift of Damnation",
+      "desc": "Boosts Rift of Damnation.",
+      "section": "hexaSkill"
+    },
+    "30000062": {
+      "name": "Soul Eclipse",
+      "desc": "Boosts Soul Eclipse.",
+      "section": "hexaSkill"
+    },
+    "30000063": {
+      "name": "Flare Slash",
+      "desc": "Boosts Flare Slash.",
+      "section": "hexaSkill"
+    },
+    "30000064": {
+      "name": "Orbital Inferno",
+      "desc": "Boosts Orbital Inferno.",
+      "section": "hexaSkill"
+    },
+    "30000065": {
+      "name": "Savage Flame",
+      "desc": "Boosts Savage Flame.",
+      "section": "hexaSkill"
+    },
+    "30000066": {
+      "name": "Inferno Sphere",
+      "desc": "Boosts Inferno Sphere.",
+      "section": "hexaSkill"
+    },
+    "30000067": {
+      "name": "Salamander Mischief",
+      "desc": "Boosts Salamander Mischief.",
+      "section": "hexaSkill"
+    },
+    "30000068": {
+      "name": "Howling Gale",
+      "desc": "Boosts Howling Gale.",
+      "section": "hexaSkill"
+    },
+    "30000069": {
+      "name": "Merciless Winds",
+      "desc": "Boosts Merciless Winds.",
+      "section": "hexaSkill"
+    },
+    "30000070": {
+      "name": "Gale Barrier",
+      "desc": "Boosts Gale Barrier.",
+      "section": "hexaSkill"
+    },
+    "30000071": {
+      "name": "Vortex Sphere",
+      "desc": "Boosts Vortex Sphere.",
+      "section": "hexaSkill"
+    },
+    "30000072": {
+      "name": "Shadow Spear",
+      "desc": "Boosts Shadow Spear.",
+      "section": "hexaSkill"
+    },
+    "30000073": {
+      "name": "Greater Dark Servant/Shadow Slide",
+      "desc": "Boosts Greater Dark Servant and Shadow Slide.",
+      "section": "hexaSkill"
+    },
+    "30000074": {
+      "name": "Shadow Bite",
+      "desc": "Boosts Shadow Bite.",
+      "section": "hexaSkill"
+    },
+    "30000075": {
+      "name": "Rapid Throw",
+      "desc": "Boosts Rapid Throw.",
+      "section": "hexaSkill"
+    },
+    "30000076": {
+      "name": "Lightning Cascade",
+      "desc": "Boosts Lightning Cascade.",
+      "section": "hexaSkill"
+    },
+    "30000077": {
+      "name": "Shark Torpedo",
+      "desc": "Boosts Shark Torpedo.",
+      "section": "hexaSkill"
+    },
+    "30000078": {
+      "name": "Lightning God Spear Strike",
+      "desc": "Boosts Lightning God Spear Strike.",
+      "section": "hexaSkill"
+    },
+    "30000079": {
+      "name": "Lightning Spear Multistrike",
+      "desc": "Boosts Lightning Spear Multistrike.",
+      "section": "hexaSkill"
+    },
+    "30000080": {
+      "name": "Finisher - Adrenaline Surge",
+      "desc": "Boosts Finisher - Adrenaline Surge/Hyper Finisher - Adrenaline Surge.",
+      "section": "hexaSkill"
+    },
+    "30000081": {
+      "name": "Maha\u0027s Carnage",
+      "desc": "Boosts Maha\u0027s Carnage.",
+      "section": "hexaSkill"
+    },
+    "30000082": {
+      "name": "Final Beyond Blade - White Tiger",
+      "desc": "Boosts Final Beyond Blade - White Tiger.",
+      "section": "hexaSkill"
+    },
+    "30000083": {
+      "name": "Blizzard Tempest",
+      "desc": "Boosts Blizzard Tempest.",
+      "section": "hexaSkill"
+    },
+    "30000084": {
+      "name": "Elemental Barrage",
+      "desc": "Boosts Elemental Barrage.",
+      "section": "hexaSkill"
+    },
+    "30000085": {
+      "name": "Dragon Slam",
+      "desc": "Boosts Dragon Slam, Wyrmking\u0027s Breath, and Ludicrous Speed.",
+      "section": "hexaSkill"
+    },
+    "30000086": {
+      "name": "Elemental Radiance",
+      "desc": "Boosts Elemental Radiance.",
+      "section": "hexaSkill"
+    },
+    "30000087": {
+      "name": "Spiral of Mana",
+      "desc": "Boosts Spiral of Mana.",
+      "section": "hexaSkill"
+    },
+    "30000088": {
+      "name": "Spirit of Elluel",
+      "desc": "Boosts Spirit of Elluel.",
+      "section": "hexaSkill"
+    },
+    "30000089": {
+      "name": "Sylvidia\u0027s Flight",
+      "desc": "Boosts Sylvidia\u0027s Flight.",
+      "section": "hexaSkill"
+    },
+    "30000090": {
+      "name": "Irkalla\u0027s Wrath",
+      "desc": "Boosts Irkalla\u0027s Wrath.",
+      "section": "hexaSkill"
+    },
+    "30000091": {
+      "name": "Royal Knights",
+      "desc": "Boosts Royal Knights.",
+      "section": "hexaSkill"
+    },
+    "30000092": {
+      "name": "Luck of the Draw",
+      "desc": "Boosts Luck of the Draw.",
+      "section": "hexaSkill"
+    },
+    "30000093": {
+      "name": "Ace in the Hole",
+      "desc": "Boosts Ace in the Hole.",
+      "section": "hexaSkill"
+    },
+    "30000094": {
+      "name": "Phantom\u0027s Mark",
+      "desc": "Boosts Phantom\u0027s Mark.",
+      "section": "hexaSkill"
+    },
+    "30000095": {
+      "name": "Rift Break",
+      "desc": "Boosts Rift Break.",
+      "section": "hexaSkill"
+    },
+    "30000096": {
+      "name": "Fox God Flash",
+      "desc": "Boosts Fox God Flash.",
+      "section": "hexaSkill"
+    },
+    "30000097": {
+      "name": "Spiritgate",
+      "desc": "Boosts Spiritgate.",
+      "section": "hexaSkill"
+    },
+    "30000098": {
+      "name": "True Spirit Claw",
+      "desc": "Boosts True Spirit Claw.",
+      "section": "hexaSkill"
+    },
+    "30000099": {
+      "name": "Smashing Multipunch",
+      "desc": "Boosts Smashing Multipunch.",
+      "section": "hexaSkill"
+    },
+    "30000100": {
+      "name": "Gate of Light",
+      "desc": "Boosts Gate of Light.",
+      "section": "hexaSkill"
+    },
+    "30000101": {
+      "name": "Aether Conduit",
+      "desc": "Boosts Aether Conduit.",
+      "section": "hexaSkill"
+    },
+    "30000102": {
+      "name": "Baptism of Light and Darkness",
+      "desc": "Boosts Baptism of Light and Darkness.",
+      "section": "hexaSkill"
+    },
+    "30000103": {
+      "name": "Liberation Orb",
+      "desc": "Boosts Liberation Orb.",
+      "section": "hexaSkill"
+    },
+    "30000104": {
+      "name": "Demon Awakening",
+      "desc": "Boosts Demon Awakening.",
+      "section": "hexaSkill"
+    },
+    "30000105": {
+      "name": "Spirit of Rage",
+      "desc": "Boosts Spirit of Rage.",
+      "section": "hexaSkill"
+    },
+    "30000106": {
+      "name": "Orthrus",
+      "desc": "Boosts Orthrus.",
+      "section": "hexaSkill"
+    },
+    "30000107": {
+      "name": "Demon Bane",
+      "desc": "Boosts Demon Bane.",
+      "section": "hexaSkill"
+    },
+    "30000108": {
+      "name": "Demonic Frenzy",
+      "desc": "Boosts Demonic Frenzy.",
+      "section": "hexaSkill"
+    },
+    "30000109": {
+      "name": "Demonic Blast",
+      "desc": "Boosts Demonic Blast.",
+      "section": "hexaSkill"
+    },
+    "30000110": {
+      "name": "Dimensional Sword",
+      "desc": "Boosts Dimensional Sword.",
+      "section": "hexaSkill"
+    },
+    "30000111": {
+      "name": "Revenant",
+      "desc": "Boosts Revenant.",
+      "section": "hexaSkill"
+    },
+    "30000112": {
+      "name": "Aura Scythe",
+      "desc": "Boosts Ambassador Scythe.",
+      "section": "hexaSkill"
+    },
+    "30000113": {
+      "name": "Altar of Annihilation",
+      "desc": "Boosts Altar of Annihilation.",
+      "section": "hexaSkill"
+    },
+    "30000114": {
+      "name": "Grim Harvest",
+      "desc": "Boosts Grim Harvest.",
+      "section": "hexaSkill"
+    },
+    "30000115": {
+      "name": "Abyssal Lightning",
+      "desc": "Boosts Abyssal Lightning.",
+      "section": "hexaSkill"
+    },
+    "30000116": {
+      "name": "Command: Predator\u0027s Eye",
+      "desc": "Boosts Command: Predator\u0027s Eye.",
+      "section": "hexaSkill"
+    },
+    "30000117": {
+      "name": "Overbite",
+      "desc": "Boosts Overbite.",
+      "section": "hexaSkill"
+    },
+    "30000118": {
+      "name": "Primal Bloom",
+      "desc": "Boosts Primal Bloom.",
+      "section": "hexaSkill"
+    },
+    "30000119": {
+      "name": "Wild Arrow Blast: Overdrive",
+      "desc": "Boosts Wild Arrow Blast: Overdrive.",
+      "section": "hexaSkill"
+    },
+    "30000120": {
+      "name": "Doomsday Device",
+      "desc": "Boosts Doomsday Device.",
+      "section": "hexaSkill"
+    },
+    "30000121": {
+      "name": "Mobile Missile Battery",
+      "desc": "Boosts Mobile Missile Battery.",
+      "section": "hexaSkill"
+    },
+    "30000122": {
+      "name": "Full Metal Barrage",
+      "desc": "Boosts Full Metal Barrage.",
+      "section": "hexaSkill"
+    },
+    "30000123": {
+      "name": "Mecha Carrier",
+      "desc": "Boosts Mecha Carrier.",
+      "section": "hexaSkill"
+    },
+    "30000124": {
+      "name": "Omega Blaster",
+      "desc": "Boosts Omega Blaster.",
+      "section": "hexaSkill"
+    },
+    "30000125": {
+      "name": "Core Overload",
+      "desc": "Boosts Core Overload.",
+      "section": "hexaSkill"
+    },
+    "30000126": {
+      "name": "Hypogram Field: Fusion",
+      "desc": "Boosts Hypogram Field: Fusion.",
+      "section": "hexaSkill"
+    },
+    "30000127": {
+      "name": "Photon Ray",
+      "desc": "Boosts Photon Ray.",
+      "section": "hexaSkill"
+    },
+    "30000128": {
+      "name": "Rocket Punch",
+      "desc": "Boosts Rocket Punch.",
+      "section": "hexaSkill"
+    },
+    "30000129": {
+      "name": "Gatling Punch",
+      "desc": "Boosts Gatling Punch.",
+      "section": "hexaSkill"
+    },
+    "30000130": {
+      "name": "Bullet Blast",
+      "desc": "Boosts Bullet Blast.",
+      "section": "hexaSkill"
+    },
+    "30000131": {
+      "name": "Afterimage Shock",
+      "desc": "Boosts Afterimage Shock.",
+      "section": "hexaSkill"
+    },
+    "30000132": {
+      "name": "Shield of Light",
+      "desc": "Boosts Shield of Light.",
+      "section": "hexaSkill"
+    },
+    "30000133": {
+      "name": "Sword of Light",
+      "desc": "Boosts Sword of Light.",
+      "section": "hexaSkill"
+    },
+    "30000134": {
+      "name": "Radiant Soul",
+      "desc": "Boosts Radiant Soul.",
+      "section": "hexaSkill"
+    },
+    "30000135": {
+      "name": "Light of Courage",
+      "desc": "Boosts Light of Courage.",
+      "section": "hexaSkill"
+    },
+    "30000136": {
+      "name": "Nova Guardians",
+      "desc": "Boosts Nova Guardians.",
+      "section": "hexaSkill"
+    },
+    "30000137": {
+      "name": "Bladefall",
+      "desc": "Boosts Bladefall.",
+      "section": "hexaSkill"
+    },
+    "30000138": {
+      "name": "Draco Surge",
+      "desc": "Boosts Draco Surge.",
+      "section": "hexaSkill"
+    },
+    "30000139": {
+      "name": "Dragonflare",
+      "desc": "Boosts Dragonflare.",
+      "section": "hexaSkill"
+    },
+    "30000140": {
+      "name": "Dragon Burst",
+      "desc": "Boosts Dragon Burst.",
+      "section": "hexaSkill"
+    },
+    "30000141": {
+      "name": "Fatal Blitz",
+      "desc": "Boosts Fatal Blitz.",
+      "section": "hexaSkill"
+    },
+    "30000142": {
+      "name": "Thanatos Descent",
+      "desc": "Boosts Thanatos Descent.",
+      "section": "hexaSkill"
+    },
+    "30000143": {
+      "name": "Grip of Agony",
+      "desc": "Boosts Grip of Agony.",
+      "section": "hexaSkill"
+    },
+    "30000144": {
+      "name": "Chain Arts: Void Strike",
+      "desc": "Boosts Chain Arts: Void Strike.",
+      "section": "hexaSkill"
+    },
+    "30000145": {
+      "name": "Apocalypse Cannon",
+      "desc": "Boosts Apocalypse Cannon.",
+      "section": "hexaSkill"
+    },
+    "30000146": {
+      "name": "Chain Arts: Maelstrom",
+      "desc": "Boosts Chain Arts: Maelstrom.",
+      "section": "hexaSkill"
+    },
+    "30000147": {
+      "name": "Muscle Memory Finale",
+      "desc": "Boosts Muscle Memory Finale.",
+      "section": "hexaSkill"
+    },
+    "30000148": {
+      "name": "Sparkle Burst",
+      "desc": "Boosts Sparkle Burst.",
+      "section": "hexaSkill"
+    },
+    "30000149": {
+      "name": "Superstar Spotlight",
+      "desc": "Boosts Superstar Spotlight.",
+      "section": "hexaSkill"
+    },
+    "30000150": {
+      "name": "Mighty Mascot",
+      "desc": "Boosts Mighty Mascot.",
+      "section": "hexaSkill"
+    },
+    "30000151": {
+      "name": "Trinity Fusion",
+      "desc": "Boosts Trinity Fusion.",
+      "section": "hexaSkill"
+    },
+    "30000152": {
+      "name": "Chrono Break",
+      "desc": "Boosts Chrono Break.",
+      "section": "hexaSkill"
+    },
+    "30000153": {
+      "name": "Twin Blades of Time",
+      "desc": "Boosts Twin Blades of Time.",
+      "section": "hexaSkill"
+    },
+    "30000154": {
+      "name": "Shadow Flash",
+      "desc": "Boosts Shadow Flash.",
+      "section": "hexaSkill"
+    },
+    "30000155": {
+      "name": "Ego Weapon",
+      "desc": "Boosts Ego Weapon.",
+      "section": "hexaSkill"
+    },
+    "30000156": {
+      "name": "Ultimate: Checkmate",
+      "desc": "Enhances Ultimate: Checkmate.",
+      "section": "hexaSkill"
+    },
+    "30000157": {
+      "name": "Psychic Nova",
+      "desc": "Enhances Psychic Nova.",
+      "section": "hexaSkill"
+    },
+    "30000158": {
+      "name": "Psychic Shockwave",
+      "desc": "Enhances Psychic Shockwave.",
+      "section": "hexaSkill"
+    },
+    "30000159": {
+      "name": "Psychic Castle",
+      "desc": "Enhances Psychic Castle.",
+      "section": "hexaSkill"
+    },
+    "30000160": {
+      "name": "Ruin",
+      "desc": "Boosts Ruin.",
+      "section": "hexaSkill"
+    },
+    "30000161": {
+      "name": "Infinity Blade",
+      "desc": "Boosts Infinity Blade.",
+      "section": "hexaSkill"
+    },
+    "30000162": {
+      "name": "Legacy Restoration",
+      "desc": "Boosts Legacy Restoration.",
+      "section": "hexaSkill"
+    },
+    "30000163": {
+      "name": "Storm",
+      "desc": "Boosts Storm.",
+      "section": "hexaSkill"
+    },
+    "30000164": {
+      "name": "Crystal Ignition",
+      "desc": "Boosts Crystal Ignition and Reaction - Spectral Blast.",
+      "section": "hexaSkill"
+    },
+    "30000165": {
+      "name": "Templar Knight",
+      "desc": "Boosts Templar Knight.",
+      "section": "hexaSkill"
+    },
+    "30000166": {
+      "name": "Crystalline Spirit",
+      "desc": "Boosts Crystalline Spirit.",
+      "section": "hexaSkill"
+    },
+    "30000167": {
+      "name": "Crystal Gate",
+      "desc": "Boosts Crystal Gate.",
+      "section": "hexaSkill"
+    },
+    "30000168": {
+      "name": "Hex: Pandemonium",
+      "desc": "Boosts Hex: Pandemonium.",
+      "section": "hexaSkill"
+    },
+    "30000169": {
+      "name": "Void Burst",
+      "desc": "Boosts Void Burst.",
+      "section": "hexaSkill"
+    },
+    "30000170": {
+      "name": "Arts: Astra",
+      "desc": "Boosts Arts: Astra.",
+      "section": "hexaSkill"
+    },
+    "30000171": {
+      "name": "Resonate: Ultimatum",
+      "desc": "Boosts Resonate: Ultimatum.",
+      "section": "hexaSkill"
+    },
+    "30000172": {
+      "name": "Abyssal Recall",
+      "desc": "Boosts Abyssal Recall.",
+      "section": "hexaSkill"
+    },
+    "30000173": {
+      "name": "Infinity Spell",
+      "desc": "Boosts Infinity Spell.",
+      "section": "hexaSkill"
+    },
+    "30000174": {
+      "name": "Devious Nightmare/Devious Dream",
+      "desc": "Boosts Devious Nightmare and Devious Dream.",
+      "section": "hexaSkill"
+    },
+    "30000175": {
+      "name": "Endlessly Starving Beast",
+      "desc": "Boosts Endlessly Starving Beast.",
+      "section": "hexaSkill"
+    },
+    "30000176": {
+      "name": "Big Stretch",
+      "desc": "Boosts Big Stretch.",
+      "section": "hexaSkill"
+    },
+    "30000177": {
+      "name": "Land\u0027s Connection",
+      "desc": "Boosts Land\u0027s Connection.",
+      "section": "hexaSkill"
+    },
+    "30000178": {
+      "name": "Surging Essence",
+      "desc": "Boosts Surging Essence.",
+      "section": "hexaSkill"
+    },
+    "30000179": {
+      "name": "Winding Mountain Ridge",
+      "desc": "Boosts Winding Mountain Ridge.",
+      "section": "hexaSkill"
+    },
+    "30000180": {
+      "name": "Sage: Clone Rampage",
+      "desc": "Boosts Sage: Clone Rampage.",
+      "section": "hexaSkill"
+    },
+    "30000181": {
+      "name": "Scroll: Tiger of Songyu",
+      "desc": "Boosts Scroll: Tiger of Songyu.",
+      "section": "hexaSkill"
+    },
+    "30000182": {
+      "name": "Sage: Wrath of Gods",
+      "desc": "Boosts Sage: Wrath of Gods.",
+      "section": "hexaSkill"
+    },
+    "30000183": {
+      "name": "Sage: Three Paths Apparition",
+      "desc": "Boosts Sage: Three Paths Apparition.",
+      "section": "hexaSkill"
+    },
+    "30000184": {
+      "name": "Shogetsu Form Boost",
+      "desc": "Boosts Shogetsu Form.",
+      "section": "hexaSkill"
+    },
+    "30000185": {
+      "name": "[Shinsoku] Crashing Tide",
+      "desc": "Boosts [Shinsoku] Crashing Tide.",
+      "section": "hexaSkill"
+    },
+    "30000186": {
+      "name": "[Shinsoku] Light Cutter",
+      "desc": "Boosts [Shinsoku] Light Cutter.",
+      "section": "hexaSkill"
+    },
+    "30000187": {
+      "name": "[Battou] Wailing Heavens",
+      "desc": "Boosts [Battou] Wailing Heavens.",
+      "section": "hexaSkill"
+    },
+    "30000188": {
+      "name": "[Spirit] Hakumenkonmou Juubi Boost",
+      "desc": "Boosts [Spirit] Hakumenkonmou Juubi.",
+      "section": "hexaSkill"
+    },
+    "30000189": {
+      "name": "[Spirit] Unleash the Radiant Flame",
+      "desc": "Boosts [Phantom] Unleash the Radiant Flame.",
+      "section": "hexaSkill"
+    },
+    "30000190": {
+      "name": "[Spirit] Unleash Black-Winged Destruction Boost",
+      "desc": "Boosts [Spirit] Unleash Black-Winged Destruction.",
+      "section": "hexaSkill"
+    },
+    "30000191": {
+      "name": "[Spirit] Unleash Soul-Searing Venom Boost",
+      "desc": "Boosts [Spirit] Unleash Soul-Searing Venom.",
+      "section": "hexaSkill"
+    },
+    "30000192": {
+      "name": "Beast\u0027s Rage Boost",
+      "desc": "Boosts Beast\u0027s Rage.",
+      "section": "hexaSkill"
+    },
+    "30000193": {
+      "name": "Beak Strike Boost",
+      "desc": "Boosts Beak Strike.",
+      "section": "hexaSkill"
+    },
+    "30000194": {
+      "name": "[Focus] Awaken Boost",
+      "desc": "Boosts [Focus] Awaken.",
+      "section": "hexaSkill"
+    },
+    "30000195": {
+      "name": "Nature\u0027s Grace Boost",
+      "desc": "Boosts Nature\u0027s Grace.",
+      "section": "hexaSkill"
+    },
+    "30000196": {
+      "name": "Soul Art: Beneath Heaven Boost",
+      "desc": "Boosts Soul Art: Beneath Heaven.",
+      "section": "hexaSkill"
+    },
+    "30000197": {
+      "name": "Soul Art: The Conquered Self Boost",
+      "desc": "Boosts Soul Art: The Conquered Self.",
+      "section": "hexaSkill"
+    },
+    "30000198": {
+      "name": "Soul Art: The Opened Gate Boost",
+      "desc": "Boosts Soul Art: The Opened Gate.",
+      "section": "hexaSkill"
+    },
+    "30000199": {
+      "name": "Divine Art: Crashing Earth Boost",
+      "desc": "Boosts Divine Art: Crashing Earth.",
+      "section": "hexaSkill"
+    },
+    "30000206": {
+      "name": "Stellar XI - Sirius Boost",
+      "desc": "Boosts Stellar XI - Sirius.",
+      "section": "hexaSkill"
+    },
+    "30000209": {
+      "name": "Final Plum Blossom Sword: Thousand Blossom Flurry",
+      "desc": "Boosts Final Plum Blossom Sword: Thousand Blossom Flurry.",
+      "section": "hexaSkill"
+    },
+    "30000210": {
+      "name": "Soul Immeasurable",
+      "desc": "Boosts Soul Immeasurable.",
+      "section": "hexaSkill"
+    },
+    "30000211": {
+      "name": "Final Plum Blossom Sword: Dancing Annihilation",
+      "desc": "Boosts Final Plum Blossom Sword: Dancing Annihilation.",
+      "section": "hexaSkill"
+    },
+    "30000212": {
+      "name": "Final Imugi Spirit Sword: Blade of the Unbound Heart",
+      "desc": "Boosts Final Imugi Spirit Sword: Blade of the Unbound Heart.",
+      "section": "hexaSkill"
+    },
+    "50000000": {
+      "name": "Stat Node I",
+      "desc": "Activating the node allows you to receive the power of the Sol Erda and obtain stats.\\nAvailable starting from #cLv. 260#.",
+      "section": "hexaStat"
+    },
+    "50000001": {
+      "name": "Stat Node II",
+      "desc": "Activating the node allows you to receive the power of the Sol Erda and obtain stats.\\nAvailable starting from #cLv. 265#.",
+      "section": "hexaStat"
+    },
+    "50000002": {
+      "name": "Stat Node III",
+      "desc": "Activating the node allows you to receive the power of the Sol Erda and obtain stats.\\nAvailable starting from #cLv. 270#.",
+      "section": "hexaStat"
+    }
+  }
+}

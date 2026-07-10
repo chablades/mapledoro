@@ -1,0 +1,180 @@
+{
+  "_meta": {
+    "assets": [
+      "icon.png",
+      "iconDisabled.png",
+      "iconMouseover.png"
+    ],
+    "urlPattern": "/api/img/erda-skill/{outerId}/{type}/{id}/{asset}"
+  },
+  "entries": {
+    "18112/boost/300": {
+      "name": "Fruits of Mastery",
+      "desc": "Increases EXP by 30% for 30 seconds for every 250 Combo Kills"
+    },
+    "18112/boost/303": {
+      "name": "Sacred Power",
+      "desc": "Increases Sacred Power by 10."
+    },
+    "18112/origin/10000": {
+      "name": "Fall of Melin",
+      "desc": "Slashes with the legendary Spear of Light that left a scar of darkness, dealing continuous damage to enemies in a large area. Then it immediately deals a final blow, dealing additional continuous damage to enemies in a large area.\\n#cLv. 10 - Ignore Defense: \u002B20%\\nLv. 20 - Boss Damage: \u002B20%\\nLv. 30 - Ignore Defense: \u002B30%, Boss Damage: \u002B30%#"
+    },
+    "18112/origin/10001": {
+      "name": "Radiant Spear",
+      "desc": "Launches you high into the air, hurling a giant spear of condensed light to pierce enemies.\\n\\n#cLv. 10 - Ignore Defense: \u002B10%, Boss Damage: \u002B10%\\nLv. 20 - Ignore Defense: \u002B10%, Boss Damage: \u002B10%\\nLv. 30 - Ignore Defense: \u002B20%#"
+    },
+    "18112/rush/1": {
+      "name": "Normal Enemy Damage",
+      "desc": "Increases Normal Enemy Damage by 2%."
+    },
+    "18112/rush/12": {
+      "name": "DEX",
+      "desc": "Increases DEX by 200."
+    },
+    "18112/rush/13": {
+      "name": "STR",
+      "desc": "Increases STR by 150."
+    },
+    "18112/rush/14": {
+      "name": "All Stats",
+      "desc": "Increases All Stats by 2%."
+    },
+    "18112/rush/16": {
+      "name": "Damage Percentile",
+      "desc": "Increases Damage by 1%."
+    },
+    "18112/rush/2": {
+      "name": "EXP Obtained",
+      "desc": "Increases EXP Obtained by 1%."
+    },
+    "18112/rush/23": {
+      "name": "Ignore Defense",
+      "desc": "Increases Ignore Defense by 2%."
+    },
+    "18112/rush/24": {
+      "name": "Ignore Defense",
+      "desc": "Increases Ignore Defense by 1%."
+    },
+    "18112/rush/27": {
+      "name": "Critical Damage",
+      "desc": "Increases Critical Damage by 1%."
+    },
+    "18112/rush/32": {
+      "name": "Boss Damage",
+      "desc": "Increases Boss Damage by 1%."
+    },
+    "18112/rush/33": {
+      "name": "Buff Duration",
+      "desc": "Increases Buff Duration by 2%."
+    },
+    "18112/rush/34": {
+      "name": "Critical Rate",
+      "desc": "Increases Critical Rate by 1%."
+    },
+    "18112/rush/37": {
+      "name": "Abnormal Status Damage Boost",
+      "desc": "Increases damage to targets with an Abnormal Status by 1%."
+    },
+    "18112/rush/46": {
+      "name": "Attack Power",
+      "desc": "Increases Attack Power by 8."
+    },
+    "18112/rush/6": {
+      "name": "Mesos Obtained",
+      "desc": "Increases Mesos Obtained by 1%."
+    },
+    "18112/rush/8": {
+      "name": "Item Drop Rate",
+      "desc": "Increases Item Drop Rate by 1%."
+    },
+    "18112/skill/100": {
+      "name": "Sol Janus",
+      "desc": "Draws the power of Sol Erda\u0027s origin in two forms."
+    },
+    "18112/skill/101": {
+      "name": "Eternal Light",
+      "desc": "[Passive Trigger Conditions] Additionally activates Eternal Light when using Spear of Lugh.\\r\\n\r\n[Eternal Light] Manifests the blinding light of eternity to deal damage to enemies within an area. Has a reactivation cooldown.\\r\\n\r\n[Radiant Sentinel] Eternal Light summons 1 Radiant Sentinel for a period of time when activated. The Radiant Sentinel finds and deals damage to the nearest enemy in range. If there is a boss within range, the sentinel will prioritize that boss."
+    },
+    "18112/skill/102": {
+      "name": "Sentinel Rise",
+      "desc": "Rallies the Shining Sentinels to fight against the darkness. Shining Sentinel summoned with this skill persist for a short period of time and disappear once their attack ends. "
+    },
+    "18112/skill/104": {
+      "name": "Eternal Guardian",
+      "desc": "Summons the Sentinel Captain, materialized from divine power, and marks enemies with your Guardian\u0027s Gaze. Landing Roan attack skills a certain number of times while Guardian\u0027s Gaze is active will trigger Judgment of Light, which attacks the enemies marked by Guardian\u0027s Gaze.\\nAttacks the boss with the highest Max HP first, and is unaffected by attack reflection."
+    },
+    "18112/skill/106": {
+      "name": "Destruction of Roan",
+      "desc": "Releases an explosive flash that destroys darkness, dealing continuous damage to enemies in a wide range. While casting, you are immune to knockback and debilitating status conditions. Unaffected by attack reflection."
+    },
+    "18112/skill/108": {
+      "name": "Sol Hecate",
+      "desc": "Coalesce Sol Erda drawn to the Adversary\u0027s determination into a guardian spirit."
+    },
+    "18112/ultimate/500": {
+      "name": "SHINE Spear of Lugh",
+      "desc": "Enhances Spear of Lugh.\\nSummons the Sentinel Captain after using Spear of Lugh certain number of times, dealing additional attacks."
+    },
+    "18112/ultimate/501": {
+      "name": "SHINE Fury of Roan/SHINE Sting of Roan",
+      "desc": "[SHINE Fury of Roan]: Sweep Roan\u0027s spear, which is strengthened by rage, to deal damage to enemies in front of you.\\nCan be used without casting while attacking with Spear of Lugh.\\n\r\nNot affected by cooldown reset effects.\\n[SHINE Sting of Roan]: Strike true with Roan\u0027s spear and deal damage to enemies in front of you.\\nCan be used without casting while attacking with Spear of Lugh.\\n\r\nNot affected by cooldown reset effects."
+    },
+    "18212/origin/10000": {
+      "name": "Celestial Design",
+      "desc": "Summons the primordial starlight of the universe\u0027s birth, which bursts out in an explosion."
+    },
+    "18212/origin/10001": {
+      "name": "Starlit Cosmos",
+      "desc": "Draw upon the light of blooming star flowers to awaken a newborn star."
+    },
+    "18212/rush/12": {
+      "name": "LUK",
+      "desc": "Increases LUK by 200."
+    },
+    "18212/rush/13": {
+      "name": "INT",
+      "desc": "Increases INT by 150."
+    },
+    "18212/rush/34": {
+      "name": "Summon Duration",
+      "desc": "Increases Summon Duration by 2%."
+    },
+    "18212/rush/35": {
+      "name": "Buff Duration",
+      "desc": "Increases Buff Duration by 2%."
+    },
+    "18212/rush/42": {
+      "name": "Buff Duration",
+      "desc": "Increases Buff Duration by 2%."
+    },
+    "18212/rush/46": {
+      "name": "Magic ATT",
+      "desc": "Increases Magic ATT by 8."
+    },
+    "18212/skill/101": {
+      "name": "Stellar XI - Sirius Boost",
+      "desc": "Boosts Stellar XI - Sirius."
+    },
+    "18212/skill/102": {
+      "name": "Shine Boost",
+      "desc": "Boosts Shine."
+    },
+    "18212/skill/104": {
+      "name": "Stellar XII - Sadalsuud Boost",
+      "desc": "Boosts Stellar XII - Sadalsuud."
+    },
+    "18212/skill/106": {
+      "name": "Savior\u0027s Circle Boost",
+      "desc": "Boosts Savior\u0027s Circle."
+    },
+    "18212/ultimate/500": {
+      "name": "SHINE Ray/SHINE Antares",
+      "desc": "[SHINE Ray]: Weaves starlight with the power of the Guide of the Stars and records Ray on the Stellagram.\\n[SHINE Antares]: Complete the Antares fusion to summon a rabbit hole."
+    },
+    "18212/ultimate/501": {
+      "name": "SHINE Boom/SHINE Algol/SHINE Formalhaut",
+      "desc": "[SHINE Boom]: Explodes with starlight that records Boom on the Stellagram.\\n[SHINE Algol]: Complete the Algol fusion to summon Algol as a lizard.\\nThe lizard #ctracks and charges towards nearby enemies within a set area#.\\nThe lizard targets bosses with high Max HP first and is unaffected by attack reflection.\\n[SHINE Fomalhaut]: Complete the Fomalhaut fusion to summon Fomalhaut as a horned conch for a set duration.\\nThe conch #cspins around you and damages nearby enemies#. 4 will be summoned if the buff is active.\\nThe conches are unaffected by attack reflection."
+    }
+  }
+}

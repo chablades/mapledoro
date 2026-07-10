@@ -1,0 +1,151 @@
+{
+  "_meta": {
+    "assets": [
+      "icon.png"
+    ],
+    "urlPattern": "/api/img/ui/familiar/{id}/icon.png"
+  },
+  "entries": {
+    "0": {
+      "name": "Starter Badge"
+    },
+    "1": {
+      "name": "Snowflake Badge"
+    },
+    "10": {
+      "name": "Mineral Badge"
+    },
+    "11": {
+      "name": "Sandy Badge"
+    },
+    "12": {
+      "name": "Machine Badge"
+    },
+    "13": {
+      "name": "Toy Badge"
+    },
+    "14": {
+      "name": "Clockwork Badge"
+    },
+    "15": {
+      "name": "Forest Badge"
+    },
+    "16": {
+      "name": "Wave Badge"
+    },
+    "17": {
+      "name": "Wings Badge"
+    },
+    "18": {
+      "name": "Snow Badge"
+    },
+    "19": {
+      "name": "Depths Badge"
+    },
+    "2": {
+      "name": "Oppressor Badge"
+    },
+    "20": {
+      "name": "Cloud Badge"
+    },
+    "21": {
+      "name": "Hatching Badge"
+    },
+    "22": {
+      "name": "Time Badge"
+    },
+    "23": {
+      "name": "Shrine Badge"
+    },
+    "24": {
+      "name": "Shuriken Badge"
+    },
+    "25": {
+      "name": "Showa Badge"
+    },
+    "26": {
+      "name": "City Badge"
+    },
+    "27": {
+      "name": "Mighty Badge"
+    },
+    "28": {
+      "name": "Exorcism Badge"
+    },
+    "29": {
+      "name": "Tyrant Badge"
+    },
+    "3": {
+      "name": "Shadow Badge"
+    },
+    "30": {
+      "name": "Lion Badge"
+    },
+    "31": {
+      "name": "Future Badge"
+    },
+    "32": {
+      "name": "Mariner Badge"
+    },
+    "33": {
+      "name": "Cursed Badge"
+    },
+    "34": {
+      "name": "Commerci Badge"
+    },
+    "36": {
+      "name": "Mushking Badge"
+    },
+    "37": {
+      "name": "Darkness Badge"
+    },
+    "38": {
+      "name": "Dragon Badge"
+    },
+    "4": {
+      "name": "Magical Badge"
+    },
+    "40": {
+      "name": "Void Badge"
+    },
+    "41": {
+      "name": "Labyrinth Badge"
+    },
+    "42": {
+      "name": "Apocalypse Badge"
+    },
+    "43": {
+      "name": "Ocean Badge"
+    },
+    "44": {
+      "name": "Swamp Badge"
+    },
+    "45": {
+      "name": "Holy Badge"
+    },
+    "46": {
+      "name": "Wasteland Badge"
+    },
+    "47": {
+      "name": "Researcher Badge"
+    },
+    "48": {
+      "name": "Flora Army Badge"
+    },
+    "5": {
+      "name": "Secret Badge"
+    },
+    "6": {
+      "name": "Mesa Badge"
+    },
+    "7": {
+      "name": "Peaceful Badge"
+    },
+    "8": {
+      "name": "Beach Badge"
+    },
+    "9": {
+      "name": "Rebel Badge"
+    }
+  }
+}
