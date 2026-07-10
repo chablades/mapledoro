@@ -1,20 +1,23 @@
 "use client";
 
-import { useReducer, useMemo, useState, useEffect, type ComponentType } from "react";
-import { useMounted } from "../../../lib/useMounted";
+import { useReducer, useMemo, useState, useEffect, useRef, type ComponentType } from "react";
 import type { AppTheme } from "../../../components/themes";
+import { statusText } from "../../../components/statusColors";
 import type { ChartOptions, ChartData, TooltipItem } from "chart.js";
 import { replaceZeroOnDigit } from "../numberInputHandlers";
 import { ToolHeader } from "../../../components/ToolHeader";
 import {
   attemptCost,
   computeExpectedCosts,
-  simulate,
+  expectedAttempts,
+  startSimulation,
   BOOM_TIER_COUNT,
+  MAX_STAR,
   type StarForceOpts,
   type MvpTier,
   type StarResult,
   type SimulationResult,
+  type SimulationRun,
 } from "./star-force-data";
 import { formatMeso, formatMesoFull } from "../format";
 import { Toggle, PillGroup, ActionButton } from "../shared-ui";
@@ -23,20 +26,42 @@ import { toolStyles } from "../tool-styles";
 
 // -- Helpers ------------------------------------------------------------------
 
-const STAR_OPTIONS = Array.from({ length: 31 }, (_, i) => i);
+const STAR_OPTIONS = Array.from({ length: MAX_STAR + 1 }, (_, i) => i);
+const MAX_TRIALS = 100_000;
 
 function pct(n: number): string {
-  if (n === 0) return "—";
   return (n * 100).toFixed(1) + "%";
 }
+
+const compactFmt = new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 });
+
+function formatDuration(seconds: number): string {
+  if (seconds < 1) return "under a second";
+  if (seconds < 60) return `about ${Math.round(seconds)}s`;
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.round(seconds % 60);
+  return secs === 0 ? `about ${mins}m` : `about ${mins}m ${secs}s`;
+}
+
+// Coarse throughput constant for the pre-run estimate. Measured around 80M
+// attempts/sec; halved so the warning errs toward "slower than promised". Once
+// a run starts, the remaining time is measured rather than guessed.
+const ESTIMATED_ATTEMPTS_PER_SECOND = 40_000_000;
+
+// Above this the run is worth warning about before it starts.
+const HEAVY_RUN_SECONDS = 2;
+
+// Time slice per animation frame. Long enough to make progress, short enough
+// to leave the frame budget alone.
+const FRAME_BUDGET_MS = 24;
 
 // Shared height so textboxes, dropdowns, and toggles line up (slider excluded).
 const CONTROL_HEIGHT = 34;
 
-// Common control width per grid column (left: Item Level / Target Star / Trials;
-// right: Current Star / Replace Cost / MVP).
-const LEFT_COL_WIDTH = 110;
-const RIGHT_COL_WIDTH = 130;
+// Every input and select is the same width, and every row's label sits in the
+// same gutter (`.sf-label`), so the controls line up down a column and across
+// both columns.
+const CONTROL_WIDTH = 140;
 
 const controlSizeStyle: React.CSSProperties = {
   height: CONTROL_HEIGHT,
@@ -49,10 +74,12 @@ const toggleControlStyle: React.CSSProperties = {
   alignItems: "center",
 };
 
+// Same gap as an input row, so a row that opens with `.sf-label` starts its
+// first control on the same vertical line as the textboxes above it.
 const optionRowStyle: React.CSSProperties = {
   display: "flex",
   flexWrap: "wrap",
-  gap: "0.75rem",
+  gap: "0.5rem",
   alignItems: "center",
 };
 
@@ -75,6 +102,19 @@ const optionsPanelBase: React.CSSProperties = {
   gap: "1rem",
 };
 
+const panelCardBase: React.CSSProperties = {
+  padding: "1.25rem",
+  marginBottom: "1.25rem",
+  borderRadius: "14px",
+};
+
+const panelTitleStyle: React.CSSProperties = {
+  fontFamily: "var(--font-heading)",
+  fontSize: "1rem",
+  fontWeight: 400,
+  margin: 0,
+};
+
 // -- Sub-components -----------------------------------------------------------
 
 function InputRow({
@@ -88,10 +128,7 @@ function InputRow({
 }) {
   return (
     <label className="sf-input-row" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-      <span
-        className="section-label"
-        style={{ color: theme.muted, minWidth: 96, marginBottom: 0 }}
-      >
+      <span className="section-label sf-label" style={{ color: theme.muted, marginBottom: 0 }}>
         {label}
       </span>
       {children}
@@ -112,6 +149,7 @@ function SimulationPanel({
   targetStar: number;
   trials: number;
 }) {
+  const boomRed = statusText(theme, "danger");
   const statStyle: React.CSSProperties = { flex: "1 1 140px" };
   const labelStyle: React.CSSProperties = {
     fontSize: "0.75rem",
@@ -130,24 +168,11 @@ function SimulationPanel({
   return (
     <div
       className="fade-in panel-card"
-      style={{
-        background: theme.panel,
-        border: `1px solid ${theme.border}`,
-        padding: "1.25rem",
-        marginBottom: "1.25rem",
-        borderRadius: "14px",
-      }}
+      style={{ ...panelCardBase, background: theme.panel, border: `1px solid ${theme.border}` }}
     >
-      <div
-        style={{
-          fontFamily: "var(--font-heading)",
-          fontSize: "1rem",
-          color: theme.text,
-          marginBottom: "0.25rem",
-        }}
-      >
+      <h2 style={{ ...panelTitleStyle, color: theme.text, marginBottom: "0.25rem" }}>
         {startStar}★ → {targetStar}★ Simulation
-      </div>
+      </h2>
       <div style={{ fontSize: "0.75rem", fontWeight: 600, color: theme.muted, marginBottom: "1rem" }}>
         {trials.toLocaleString()} trials
       </div>
@@ -169,49 +194,33 @@ function SimulationPanel({
         </div>
         <div style={statStyle}>
           <div style={labelStyle}>Mean Booms</div>
-          <div style={{ ...valueStyle, color: sim.meanBooms > 0 ? "#e05a5a" : theme.text }}>
+          <div style={{ ...valueStyle, color: sim.meanBooms > 0 ? boomRed : theme.text }}>
             {sim.meanBooms === 0 ? "0" : sim.meanBooms.toFixed(1)}
           </div>
         </div>
         <div style={statStyle}>
           <div style={labelStyle}>Median Booms</div>
-          <div style={{ ...valueStyle, color: sim.medianBooms > 0 ? "#e05a5a" : theme.text }}>
+          <div style={{ ...valueStyle, color: sim.medianBooms > 0 ? boomRed : theme.text }}>
             {sim.medianBooms}
           </div>
         </div>
       </div>
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem" }}>
-        <div style={statStyle}>
-          <div style={labelStyle}>Best Case</div>
-          <div style={{ fontSize: "0.85rem", fontWeight: 700, color: theme.text }}>
-            {formatMeso(sim.minCost)}
+        {([
+          ["Best Case", sim.minCost],
+          ["75th %ile", sim.p75Cost],
+          ["85th %ile", sim.p85Cost],
+          ["95th %ile", sim.p95Cost],
+          ["Worst Case", sim.maxCost],
+        ] as const).map(([label, value]) => (
+          <div key={label} style={statStyle}>
+            <div style={labelStyle}>{label}</div>
+            <div style={{ fontSize: "0.85rem", fontWeight: 700, color: theme.text }}>
+              {formatMeso(value)}
+            </div>
           </div>
-        </div>
-        <div style={statStyle}>
-          <div style={labelStyle}>75th %ile</div>
-          <div style={{ fontSize: "0.85rem", fontWeight: 700, color: theme.text }}>
-            {formatMeso(sim.p75Cost)}
-          </div>
-        </div>
-        <div style={statStyle}>
-          <div style={labelStyle}>85th %ile</div>
-          <div style={{ fontSize: "0.85rem", fontWeight: 700, color: theme.text }}>
-            {formatMeso(sim.p85Cost)}
-          </div>
-        </div>
-        <div style={statStyle}>
-          <div style={labelStyle}>95th %ile</div>
-          <div style={{ fontSize: "0.85rem", fontWeight: 700, color: theme.text }}>
-            {formatMeso(sim.p95Cost)}
-          </div>
-        </div>
-        <div style={statStyle}>
-          <div style={labelStyle}>Worst Case</div>
-          <div style={{ fontSize: "0.85rem", fontWeight: 700, color: theme.text }}>
-            {formatMeso(sim.maxCost)}
-          </div>
-        </div>
+        ))}
       </div>
     </div>
   );
@@ -227,7 +236,10 @@ const METRIC_OPTIONS: { value: HistMetric; label: string }[] = [
   { value: "booms", label: "Booms" },
 ];
 
-const COST_BIN_COUNT = 30;
+const BIN_COUNT = 30;
+// Beyond this many distinct boom counts, one bar per count stops being a chart.
+// A 0★→28★ run can produce trials with 16,000 booms.
+const MAX_BOOM_BARS = 40;
 
 interface Bins {
   labels: string[];
@@ -241,32 +253,38 @@ function withCumulative(counts: number[]): number[] {
   return counts.map((c) => (run += c));
 }
 
-/** Equal-width bins across the cost range (sorted ascending). */
-function buildCostBins(sorted: number[]): Bins {
+/** Equal-width bins across the value range (input sorted ascending). */
+function buildRangeBins(sorted: Float64Array, format: (n: number) => string): Bins {
   const min = sorted[0];
   const max = sorted[sorted.length - 1];
   if (max <= min) {
     const one = [sorted.length];
-    return { labels: [formatMeso(min)], counts: one, rangeLabels: [formatMeso(min)], cumulative: one };
+    return { labels: [format(min)], counts: one, rangeLabels: [format(min)], cumulative: one };
   }
-  const width = (max - min) / COST_BIN_COUNT;
-  const counts = new Array<number>(COST_BIN_COUNT).fill(0);
+
+  const width = (max - min) / BIN_COUNT;
+  const counts = new Array<number>(BIN_COUNT).fill(0);
   for (const v of sorted) {
-    counts[Math.min(COST_BIN_COUNT - 1, Math.floor((v - min) / width))]++;
+    counts[Math.min(BIN_COUNT - 1, Math.floor((v - min) / width))]++;
   }
+
   const labels: string[] = [];
   const rangeLabels: string[] = [];
-  for (let i = 0; i < COST_BIN_COUNT; i++) {
+  for (let i = 0; i < BIN_COUNT; i++) {
     const lo = min + i * width;
-    labels.push(formatMeso(lo));
-    rangeLabels.push(`${formatMeso(lo)} – ${formatMeso(lo + width)}`);
+    labels.push(format(lo));
+    rangeLabels.push(`${format(lo)} – ${format(lo + width)}`);
   }
   return { labels, counts, rangeLabels, cumulative: withCumulative(counts) };
 }
 
-/** One bar per integer boom count (sorted ascending). */
-function buildBoomBins(sorted: number[]): Bins {
+/** One bar per integer boom count, unless the spread is too wide to draw. */
+function buildBoomBins(sorted: Float64Array): Bins {
   const max = sorted[sorted.length - 1];
+  if (max + 1 > MAX_BOOM_BARS) {
+    return buildRangeBins(sorted, (n) => Math.round(n).toLocaleString());
+  }
+
   const counts = new Array<number>(max + 1).fill(0);
   for (const v of sorted) counts[v]++;
   const labels = counts.map((_, i) => String(i));
@@ -276,6 +294,33 @@ function buildBoomBins(sorted: number[]): Bins {
     rangeLabels: labels.map((l) => `${l} boom${l === "1" ? "" : "s"}`),
     cumulative: withCumulative(counts),
   };
+}
+
+/** The chart is a canvas. This is the same data, for screen readers. */
+function HistogramTable({ bins, total, metric }: { bins: Bins; total: number; metric: HistMetric }) {
+  return (
+    <table className="sr-only">
+      <caption>{metric === "cost" ? "Meso cost" : "Boom count"} distribution across {total.toLocaleString()} trials</caption>
+      <thead>
+        <tr>
+          <th scope="col">{metric === "cost" ? "Cost range" : "Booms"}</th>
+          <th scope="col">Trials</th>
+          <th scope="col">Share</th>
+          <th scope="col">Cumulative</th>
+        </tr>
+      </thead>
+      <tbody>
+        {bins.counts.map((count, i) => (
+          <tr key={bins.rangeLabels[i]}>
+            <th scope="row">{bins.rangeLabels[i]}</th>
+            <td>{count.toLocaleString()}</td>
+            <td>{((count / total) * 100).toFixed(1)}%</td>
+            <td>{((bins.cumulative[i] / total) * 100).toFixed(1)}%</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
 }
 
 function HistogramPanel({ theme, sim }: { theme: AppTheme; sim: SimulationResult }) {
@@ -304,66 +349,76 @@ function HistogramPanel({ theme, sim }: { theme: AppTheme; sim: SimulationResult
   }, []);
 
   const bins = useMemo(
-    () => (metric === "cost" ? buildCostBins(sim.costs) : buildBoomBins(sim.booms)),
+    () => (metric === "cost" ? buildRangeBins(sim.costs, formatMeso) : buildBoomBins(sim.booms)),
     [metric, sim],
   );
   const total = sim.costs.length;
 
-  const data: ChartData<"bar"> = {
-    labels: bins.labels,
-    datasets: [
-      {
-        label: "Trials",
-        data: bins.counts,
-        backgroundColor: theme.accent,
-        borderRadius: 3,
-        categoryPercentage: 1,
-        barPercentage: metric === "cost" ? 1 : 0.9,
-      },
-    ],
-  };
+  const data: ChartData<"bar"> = useMemo(
+    () => ({
+      labels: bins.labels,
+      datasets: [
+        {
+          label: "Trials",
+          data: bins.counts,
+          backgroundColor: theme.accent,
+          borderRadius: 3,
+          categoryPercentage: 1,
+          barPercentage: metric === "cost" ? 1 : 0.9,
+        },
+      ],
+    }),
+    [bins, metric, theme.accent],
+  );
 
-  const options: ChartOptions<"bar"> = {
-    responsive: true,
-    maintainAspectRatio: false,
-    animation: false,
-    plugins: {
-      legend: { display: false },
-      tooltip: {
-        callbacks: {
-          title: (items: TooltipItem<"bar">[]) => bins.rangeLabels[items[0].dataIndex],
-          label: (item: TooltipItem<"bar">) => {
-            const c = item.parsed.y ?? 0;
-            return `${c.toLocaleString()} trials (${((c / total) * 100).toFixed(1)}%)`;
+  const options: ChartOptions<"bar"> = useMemo(
+    () => ({
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: theme.panel,
+          titleColor: theme.text,
+          bodyColor: theme.text,
+          borderColor: theme.border,
+          borderWidth: 1,
+          callbacks: {
+            title: (items: TooltipItem<"bar">[]) => bins.rangeLabels[items[0].dataIndex],
+            label: (item: TooltipItem<"bar">) => {
+              const c = item.parsed.y ?? 0;
+              return `${c.toLocaleString()} trials (${((c / total) * 100).toFixed(1)}%)`;
+            },
+            afterLabel: (item: TooltipItem<"bar">) =>
+              `Cumulative: ${((bins.cumulative[item.dataIndex] / total) * 100).toFixed(1)}%`,
           },
-          afterLabel: (item: TooltipItem<"bar">) =>
-            `Cumulative: ${((bins.cumulative[item.dataIndex] / total) * 100).toFixed(1)}%`,
         },
       },
-    },
-    scales: {
-      x: {
-        ticks: { color: theme.muted, maxRotation: 0, autoSkip: true, maxTicksLimit: 8 },
-        grid: { display: false },
+      scales: {
+        x: {
+          ticks: { color: theme.muted, maxRotation: 0, autoSkip: true, maxTicksLimit: 8 },
+          grid: { display: false },
+        },
+        y: {
+          beginAtZero: true,
+          ticks: { color: theme.muted },
+          grid: { color: theme.border },
+        },
       },
-      y: {
-        beginAtZero: true,
-        ticks: { color: theme.muted },
-        grid: { color: theme.border },
-      },
-    },
-  };
+    }),
+    [bins, total, theme.panel, theme.text, theme.border, theme.muted],
+  );
+
+  const chartLabel =
+    metric === "cost"
+      ? `Bar chart: meso cost distribution across ${total.toLocaleString()} trials, from ${formatMeso(sim.minCost)} to ${formatMeso(sim.maxCost)}.`
+      : `Bar chart: boom count distribution across ${total.toLocaleString()} trials, from ${sim.booms[0]} to ${sim.booms[sim.booms.length - 1]} booms.`;
 
   return (
     <div
       className="fade-in panel-card"
-      style={{
-        background: theme.panel,
-        border: `1px solid ${theme.border}`,
-        padding: "1.25rem",
-        marginBottom: "1.25rem",
-        borderRadius: "14px",
-      }}
+      style={{ ...panelCardBase, background: theme.panel, border: `1px solid ${theme.border}` }}
     >
       <div
         style={{
@@ -375,17 +430,21 @@ function HistogramPanel({ theme, sim }: { theme: AppTheme; sim: SimulationResult
           marginBottom: "1rem",
         }}
       >
-        <div style={{ fontFamily: "var(--font-heading)", fontSize: "1rem", color: theme.text }}>
+        <h2 style={{ ...panelTitleStyle, color: theme.text }}>
           {metric === "cost" ? "Cost Distribution" : "Boom Distribution"}
-        </div>
+        </h2>
         <PillGroup theme={theme} options={METRIC_OPTIONS} value={metric} onChange={setMetric} />
       </div>
-      <div style={{ height: 280 }}>{Bar ? <Bar data={data} options={options} /> : null}</div>
+      <div style={{ height: 280 }} role="img" aria-label={chartLabel}>
+        {Bar ? <Bar data={data} options={options} /> : null}
+      </div>
+      <HistogramTable bins={bins} total={total} metric={metric} />
     </div>
   );
 }
 
 function BreakdownTable({ theme, results }: { theme: AppTheme; results: StarResult[] }) {
+  const boomRed = statusText(theme, "danger");
   const thStyle: React.CSSProperties = {
     padding: "8px 10px",
     fontSize: "0.75rem",
@@ -415,35 +474,28 @@ function BreakdownTable({ theme, results }: { theme: AppTheme; results: StarResu
         overflow: "hidden",
       }}
     >
-      <div
-        style={{
-          padding: "1.25rem 1.25rem 0.75rem",
-          fontFamily: "var(--font-heading)",
-          fontSize: "1rem",
-          color: theme.text,
-        }}
-      >
+      <h2 style={{ ...panelTitleStyle, color: theme.text, padding: "1.25rem 1.25rem 0.75rem" }}>
         Per-Star Breakdown
-      </div>
+      </h2>
       <div style={{ overflowX: "auto" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 560 }}>
           <thead>
             <tr>
-              <th style={{ ...thStyle, textAlign: "left" }}>Star</th>
-              <th style={thStyle}>Success</th>
-              <th style={thStyle}>Destroy</th>
-              <th style={thStyle}>Cost / Try</th>
-              <th style={thStyle}>Expected Cost</th>
+              <th scope="col" style={{ ...thStyle, textAlign: "left" }}>Star</th>
+              <th scope="col" style={thStyle}>Success</th>
+              <th scope="col" style={thStyle}>Destroy</th>
+              <th scope="col" style={thStyle}>Cost / Try</th>
+              <th scope="col" style={thStyle}>Expected Cost</th>
             </tr>
           </thead>
           <tbody>
             {results.map((r) => (
               <tr key={r.star}>
-                <td style={{ ...tdStyle, textAlign: "left", color: theme.accentText }}>
+                <th scope="row" style={{ ...tdStyle, textAlign: "left", fontWeight: 700, color: theme.accentText }}>
                   {r.star}★ → {r.star + 1}★
-                </td>
+                </th>
                 <td style={tdStyle}>{pct(r.success)}</td>
-                <td style={{ ...tdStyle, color: r.destroy > 0 ? "#e05a5a" : theme.muted }}>
+                <td style={{ ...tdStyle, color: r.destroy > 0 ? boomRed : theme.muted }}>
                   {pct(r.destroy)}
                 </td>
                 <td style={tdStyle}>{formatMeso(r.cost)}</td>
@@ -470,8 +522,8 @@ interface CalcState {
   safeguard: boolean;
   mvp: MvpTier;
   boomTier: number;
-  trials: number;
-  simGen: number;
+  /** Raw text so the field can be emptied while typing. */
+  trials: string;
 }
 type CalcAction =
   | { type: "setLevel"; value: number }
@@ -484,8 +536,115 @@ type CalcAction =
   | { type: "setSafeguard"; value: boolean }
   | { type: "setMvp"; value: MvpTier }
   | { type: "setBoomTier"; value: number }
-  | { type: "setTrials"; value: number }
-  | { type: "reroll" };
+  | { type: "setTrials"; value: string };
+
+function reducer(state: CalcState, action: CalcAction): CalcState {
+  switch (action.type) {
+    case "setLevel": return { ...state, level: action.value };
+    // Target must stay above current; the dropdowns can't express otherwise.
+    case "setStartStar": return { ...state, startStar: action.value, targetStar: Math.max(state.targetStar, action.value + 1) };
+    case "setTargetStar": return { ...state, targetStar: Math.max(action.value, state.startStar + 1) };
+    case "setReplacementCost": return { ...state, replacementCost: action.value };
+    case "setCostDiscount": return { ...state, costDiscount: action.value };
+    case "setBoomReduction": return { ...state, boomReduction: action.value };
+    case "setStarCatch": return { ...state, starCatch: action.value };
+    case "setSafeguard": return { ...state, safeguard: action.value };
+    case "setMvp": return { ...state, mvp: action.value };
+    case "setBoomTier": return { ...state, boomTier: action.value };
+    case "setTrials": return { ...state, trials: action.value };
+  }
+}
+
+function parseTrials(raw: string): number {
+  const n = Number.parseInt(raw, 10);
+  if (!Number.isFinite(n)) return 0;
+  return Math.max(0, Math.min(MAX_TRIALS, n));
+}
+
+// -- Run controls -------------------------------------------------------------
+
+type RunPhase = "idle" | "running" | "done" | "cancelled";
+
+interface RunEstimate {
+  attempts: number;
+  seconds: number;
+  heavy: boolean;
+}
+
+function RunControls({
+  theme,
+  phase,
+  trials,
+  completed,
+  elapsedMs,
+  estimate,
+  stale,
+  onRun,
+  onCancel,
+  cancelStyle,
+}: {
+  theme: AppTheme;
+  phase: RunPhase;
+  trials: number;
+  completed: number;
+  elapsedMs: number;
+  estimate: RunEstimate;
+  stale: boolean;
+  onRun: () => void;
+  onCancel: () => void;
+  cancelStyle: React.CSSProperties;
+}) {
+  const noteStyle: React.CSSProperties = { fontSize: "0.75rem", fontWeight: 600, color: theme.muted, lineHeight: 1.5 };
+
+  if (phase === "running") {
+    const fraction = trials > 0 ? completed / trials : 0;
+    const remainingMs = completed > 0 ? (elapsedMs / completed) * (trials - completed) : null;
+
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>
+        <div
+          role="progressbar"
+          aria-label="Simulation progress"
+          aria-valuemin={0}
+          aria-valuemax={trials}
+          aria-valuenow={completed}
+          style={{ height: 6, borderRadius: 999, background: theme.timerBg, overflow: "hidden" }}
+        >
+          <div style={{ width: `${fraction * 100}%`, height: "100%", background: theme.accent }} />
+        </div>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.75rem", flexWrap: "wrap" }}>
+          <span style={noteStyle}>
+            Running {completed.toLocaleString()} of {trials.toLocaleString()} trials
+            {remainingMs != null && completed > 20 ? `, ${formatDuration(remainingMs / 1000)} left` : ""}
+          </span>
+          <button type="button" className="tool-btn tool-dialog-btn" onClick={onCancel} style={cancelStyle}>
+            Stop
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>
+      <ActionButton
+        theme={theme}
+        label={phase === "done" || phase === "cancelled" ? "Run Simulation Again" : "Run Simulation"}
+        fullWidth
+        disabled={trials < 1}
+        onClick={onRun}
+      />
+      {trials < 1 && <span style={noteStyle}>Enter a trial count between 1 and {MAX_TRIALS.toLocaleString()}.</span>}
+      {trials >= 1 && estimate.heavy && (
+        <span style={noteStyle}>
+          Heavy run: roughly {compactFmt.format(estimate.attempts)} enhancement attempts,{" "}
+          {formatDuration(estimate.seconds)}. You can stop it once it starts.
+        </span>
+      )}
+      {stale && <span style={noteStyle}>Settings changed since the last run.</span>}
+    </div>
+  );
+}
 
 // -- Inputs + options panel ---------------------------------------------------
 
@@ -497,6 +656,7 @@ function StarForceForm({
   previewResult,
   inputStyle,
   selectStyle,
+  runControls,
 }: {
   theme: AppTheme;
   calc: CalcState;
@@ -505,10 +665,13 @@ function StarForceForm({
   previewResult: StarResult | null;
   inputStyle: React.CSSProperties;
   selectStyle: React.CSSProperties;
+  runControls: React.ReactNode;
 }) {
   // The 30% events stack with Enhancement Mode, but we don't assume safeguard
   // does — so only safeguard is disabled when a tier above baseline is active.
   const tierActive = calc.boomTier > 1;
+  const boomRed = statusText(theme, "danger");
+  const trials = parseTrials(calc.trials);
 
   return (
     <div
@@ -530,7 +693,7 @@ function StarForceForm({
             onFocus={(e) => e.currentTarget.select()}
             onKeyDown={replaceZeroOnDigit}
             onChange={(e) => dispatch({ type: "setLevel", value: Math.max(0, Math.min(300, Number(e.target.value) || 0)) })}
-            style={{ ...inputStyle, width: LEFT_COL_WIDTH }}
+            style={{ ...inputStyle, width: CONTROL_WIDTH }}
           />
         </InputRow>
 
@@ -539,9 +702,9 @@ function StarForceForm({
             className="tool-select"
             value={calc.startStar}
             onChange={(e) => dispatch({ type: "setStartStar", value: Number(e.target.value) })}
-            style={{ ...selectStyle, width: RIGHT_COL_WIDTH }}
+            style={{ ...selectStyle, width: CONTROL_WIDTH }}
           >
-            {STAR_OPTIONS.slice(0, 30).map((s) => (
+            {STAR_OPTIONS.slice(0, MAX_STAR).map((s) => (
               <option key={s} value={s}>{s}★</option>
             ))}
           </select>
@@ -552,9 +715,9 @@ function StarForceForm({
             className="tool-select"
             value={calc.targetStar}
             onChange={(e) => dispatch({ type: "setTargetStar", value: Number(e.target.value) })}
-            style={{ ...selectStyle, width: LEFT_COL_WIDTH }}
+            style={{ ...selectStyle, width: CONTROL_WIDTH }}
           >
-            {STAR_OPTIONS.slice(1).map((s) => (
+            {STAR_OPTIONS.filter((s) => s > calc.startStar).map((s) => (
               <option key={s} value={s}>{s}★</option>
             ))}
           </select>
@@ -569,7 +732,7 @@ function StarForceForm({
             onFocus={(e) => e.currentTarget.select()}
             onKeyDown={replaceZeroOnDigit}
             onChange={(e) => dispatch({ type: "setReplacementCost", value: Math.max(0, Number(e.target.value) || 0) })}
-            style={{ ...inputStyle, width: RIGHT_COL_WIDTH }}
+            style={{ ...inputStyle, width: CONTROL_WIDTH }}
             placeholder="0"
           />
         </InputRow>
@@ -579,11 +742,14 @@ function StarForceForm({
             className="tool-input"
             type="number"
             min={1}
-            max={100000}
+            max={MAX_TRIALS}
             value={calc.trials}
             onFocus={(e) => e.currentTarget.select()}
-            onChange={(e) => dispatch({ type: "setTrials", value: Math.max(1, Math.min(100000, Number(e.target.value) || 1000)) })}
-            style={{ ...inputStyle, width: LEFT_COL_WIDTH }}
+            onKeyDown={replaceZeroOnDigit}
+            onChange={(e) => dispatch({ type: "setTrials", value: e.target.value })}
+            // Normalize on the way out, so clamping never fights the keystroke.
+            onBlur={() => trials >= 1 && dispatch({ type: "setTrials", value: String(trials) })}
+            style={{ ...inputStyle, width: CONTROL_WIDTH }}
           />
         </InputRow>
 
@@ -592,7 +758,7 @@ function StarForceForm({
             className="tool-select"
             value={calc.mvp}
             onChange={(e) => dispatch({ type: "setMvp", value: e.target.value as MvpTier })}
-            style={{ ...selectStyle, width: RIGHT_COL_WIDTH }}
+            style={{ ...selectStyle, width: CONTROL_WIDTH }}
           >
             {MVP_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>{o.label}</option>
@@ -604,14 +770,14 @@ function StarForceForm({
       {/* Events + Options, aligned with the inputs grid columns */}
       <div className="sf-inputs-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
         <div className="sf-option-row" style={optionRowStyle}>
-          <span className="section-label" style={{ color: theme.muted, minWidth: 96, marginBottom: 0 }}>
+          <span className="section-label sf-label" style={{ color: theme.muted, marginBottom: 0 }}>
             Events
           </span>
           <Toggle theme={theme} label="30% Off" checked={calc.costDiscount} style={toggleControlStyle} onChange={(v) => dispatch({ type: "setCostDiscount", value: v })} />
           <Toggle theme={theme} label="30% Boom Reduction" checked={calc.boomReduction} style={toggleControlStyle} onChange={(v) => dispatch({ type: "setBoomReduction", value: v })} />
         </div>
         <div className="sf-option-row" style={optionRowStyle}>
-          <span className="section-label" style={{ color: theme.muted, minWidth: 96, marginBottom: 0 }}>
+          <span className="section-label sf-label" style={{ color: theme.muted, marginBottom: 0 }}>
             Options
           </span>
           <Toggle theme={theme} label="Star Catching" checked={calc.starCatch} style={toggleControlStyle} onChange={(v) => dispatch({ type: "setStarCatch", value: v })} />
@@ -620,7 +786,7 @@ function StarForceForm({
       </div>
 
       <div className="sf-slider-row" style={optionRowStyle}>
-        <span className="section-label" style={{ color: theme.muted, minWidth: 96, marginBottom: 0 }}>
+        <span className="section-label" style={{ color: theme.muted, marginBottom: 0, whiteSpace: "nowrap" }}>
           Enhancement Mode
         </span>
         <div className="sf-slider-controls" style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
@@ -632,16 +798,17 @@ function StarForceForm({
             value={calc.boomTier}
             onChange={(e) => dispatch({ type: "setBoomTier", value: Number(e.target.value) })}
             aria-label="Enhancement Mode tier"
+            aria-valuetext={`Tier ${calc.boomTier}`}
             style={{ width: 160, accentColor: theme.accent, cursor: "pointer" }}
           />
-          <span style={{ fontSize: "0.8rem", fontWeight: 800, color: theme.text, minWidth: 28 }}>
-            {calc.boomTier}×
+          <span style={{ fontSize: "0.8rem", fontWeight: 800, color: theme.text, minWidth: 52 }}>
+            Tier {calc.boomTier}
           </span>
         </div>
         <span style={{ fontSize: "0.75rem", fontWeight: 600, color: theme.muted }}>
           {tierActive
             ? "Applies to 15★→22★. Higher tiers cost more for less destruction."
-            : "1× is the normal rate. Drag right to trade higher cost for fewer booms (15★→22★)."}
+            : "Tier 1 is the normal rate. Drag right to trade higher cost for fewer booms (15★→22★)."}
         </span>
       </div>
 
@@ -662,62 +829,50 @@ function StarForceForm({
             </span>
             {previewResult.destroy > 0 && (
               <span>
-                Destroy: <span style={{ color: "#e05a5a" }}>{pct(previewResult.destroy)}</span>
+                Destroy: <span style={{ color: boomRed }}>{pct(previewResult.destroy)}</span>
               </span>
             )}
           </>
         )}
       </div>
 
-      <ActionButton
-        theme={theme}
-        label="Simulate"
-        fullWidth
-        onClick={() => dispatch({ type: "reroll" })}
-      />
+      {runControls}
     </div>
   );
 }
 
 // -- Main workspace -----------------------------------------------------------
 
-export default function StarForceWorkspace({ theme }: { theme: AppTheme }) {
-  const mounted = useMounted();
+interface SimSnapshot {
+  startStar: number;
+  targetStar: number;
+  trials: number;
+}
 
-  const [calc, dispatch] = useReducer(
-    (state: CalcState, action: CalcAction): CalcState => {
-      switch (action.type) {
-        case "setLevel": return { ...state, level: action.value };
-        case "setStartStar": return { ...state, startStar: action.value };
-        case "setTargetStar": return { ...state, targetStar: action.value };
-        case "setReplacementCost": return { ...state, replacementCost: action.value };
-        case "setCostDiscount": return { ...state, costDiscount: action.value };
-        case "setBoomReduction": return { ...state, boomReduction: action.value };
-        case "setStarCatch": return { ...state, starCatch: action.value };
-        case "setSafeguard": return { ...state, safeguard: action.value };
-        case "setMvp": return { ...state, mvp: action.value };
-        case "setBoomTier": return { ...state, boomTier: action.value };
-        case "setTrials": return { ...state, trials: action.value };
-        case "reroll": return { ...state, simGen: state.simGen + 1 };
-      }
-    },
-    {
-      level: 200,
-      startStar: 0,
-      targetStar: 22,
-      replacementCost: 0,
-      costDiscount: false,
-      boomReduction: false,
-      starCatch: true,
-      safeguard: false,
-      mvp: "none" as MvpTier,
-      boomTier: 1,
-      trials: 1000,
-      simGen: 0,
-    },
+function simulationSummary(sim: SimulationResult, snapshot: SimSnapshot): string {
+  return (
+    `Simulation complete. ${snapshot.trials.toLocaleString()} trials from ${snapshot.startStar} to ${snapshot.targetStar} stars. ` +
+    `Mean cost ${formatMesoFull(sim.meanCost)} mesos, median ${formatMesoFull(sim.medianCost)} mesos, ` +
+    `mean ${sim.meanBooms.toFixed(1)} booms.`
   );
+}
 
-  const effectiveTarget = Math.max(calc.targetStar, calc.startStar + 1);
+export default function StarForceWorkspace({ theme }: { theme: AppTheme }) {
+  const [calc, dispatch] = useReducer(reducer, {
+    level: 200,
+    startStar: 0,
+    targetStar: 22,
+    replacementCost: 0,
+    costDiscount: false,
+    boomReduction: false,
+    starCatch: true,
+    safeguard: false,
+    mvp: "none" as MvpTier,
+    boomTier: 1,
+    trials: "1000",
+  });
+
+  const trials = parseTrials(calc.trials);
 
   // The 30% events stack with Enhancement Mode, but safeguard is ignored when a
   // tier above baseline is active (we can't assume that one stacks).
@@ -727,7 +882,7 @@ export default function StarForceWorkspace({ theme }: { theme: AppTheme }) {
     () => ({
       level: calc.level,
       startStar: calc.startStar,
-      targetStar: effectiveTarget,
+      targetStar: calc.targetStar,
       replacementCost: calc.replacementCost,
       costDiscount: calc.costDiscount,
       boomReduction: calc.boomReduction,
@@ -736,36 +891,110 @@ export default function StarForceWorkspace({ theme }: { theme: AppTheme }) {
       mvp: calc.mvp,
       boomTier: calc.boomTier,
     }),
-    [calc.level, calc.startStar, effectiveTarget, calc.replacementCost, calc.costDiscount, calc.boomReduction, calc.starCatch, calc.safeguard, calc.mvp, calc.boomTier, tierActive],
+    [calc.level, calc.startStar, calc.targetStar, calc.replacementCost, calc.costDiscount, calc.boomReduction, calc.starCatch, calc.safeguard, calc.mvp, calc.boomTier, tierActive],
   );
 
+  // Closed form, cheap, always live. Only the Monte Carlo run is gated.
   const results = useMemo(() => computeExpectedCosts(opts), [opts]);
-
-  const sim = useMemo(() => {
-    if (!mounted || calc.startStar >= effectiveTarget || calc.trials <= 0) return null;
-    return simulate(opts, calc.trials);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mounted, opts, calc.trials, calc.simGen]);
-
-  const previewCost = useMemo(
-    () => attemptCost(calc.level, calc.startStar, opts),
-    [calc.level, calc.startStar, opts],
-  );
-
-  // Preview rates for the first star
+  const previewCost = useMemo(() => attemptCost(calc.level, calc.startStar, opts), [calc.level, calc.startStar, opts]);
   const previewResult = results.length > 0 ? results[0] : null;
+
+  const estimate: RunEstimate = useMemo(() => {
+    const attempts = expectedAttempts(opts) * trials;
+    const seconds = attempts / ESTIMATED_ATTEMPTS_PER_SECOND;
+    return { attempts, seconds, heavy: seconds >= HEAVY_RUN_SECONDS };
+  }, [opts, trials]);
+
+  // A run is a snapshot: it keeps the settings it started with, and goes stale
+  // when they change underneath it.
+  const settingsKey = useMemo(() => JSON.stringify([opts, trials]), [opts, trials]);
+
+  const runRef = useRef<SimulationRun | null>(null);
+  const startedAtRef = useRef(0);
+  const [phase, setPhase] = useState<RunPhase>("idle");
+  const [progress, setProgress] = useState({ completed: 0, elapsedMs: 0 });
+  const [sim, setSim] = useState<SimulationResult | null>(null);
+  const [snapshot, setSnapshot] = useState<SimSnapshot | null>(null);
+  const [runKey, setRunKey] = useState("");
+
+  useEffect(() => {
+    if (phase !== "running") return;
+
+    let frame = 0;
+    const tick = () => {
+      const run = runRef.current;
+      if (!run) return;
+
+      const finished = run.step(FRAME_BUDGET_MS);
+      setProgress({ completed: run.completed, elapsedMs: performance.now() - startedAtRef.current });
+
+      if (finished) {
+        setSim(run.result());
+        setPhase("done");
+        runRef.current = null;
+      } else {
+        frame = requestAnimationFrame(tick);
+      }
+    };
+
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [phase]);
+
+  const handleRun = () => {
+    if (trials < 1) return;
+    runRef.current = startSimulation(opts, trials);
+    startedAtRef.current = performance.now();
+    setProgress({ completed: 0, elapsedMs: 0 });
+    setSim(null);
+    setSnapshot({ startStar: calc.startStar, targetStar: calc.targetStar, trials });
+    setRunKey(settingsKey);
+    setPhase("running");
+  };
+
+  const handleCancel = () => {
+    runRef.current = null;
+    setPhase("cancelled");
+  };
 
   const styles = toolStyles(theme);
   const inputStyle: React.CSSProperties = { ...styles.inputStyle, ...controlSizeStyle };
   const selectStyle: React.CSSProperties = { ...styles.selectStyle, ...controlSizeStyle };
 
+  const stale = phase === "done" && runKey !== settingsKey;
+  const showResults = sim !== null && snapshot !== null;
+
+  const announcement = (() => {
+    if (phase === "cancelled") return "Simulation stopped.";
+    if (phase === "done" && sim && snapshot) return simulationSummary(sim, snapshot);
+    return "";
+  })();
+
+  const emptyNoteStyle: React.CSSProperties = {
+    ...panelCardBase,
+    background: theme.panel,
+    border: `1px solid ${theme.border}`,
+    fontSize: "0.82rem",
+    fontWeight: 600,
+    color: theme.muted,
+    lineHeight: 1.5,
+  };
+
   return (
     <div className="page-content">
       <style>{`
+        /* Shared gutter, so the first control of every row in a column starts on
+           the same vertical line. Sized for the longest label that uses it,
+           "Current Star" / "Replace Cost"; nowrap keeps a row one line high if a
+           font swap overruns it. The Enhancement Mode row opts out: its label is
+           wider than the gutter, and it spans the panel rather than a column. */
+        .sf-label { width: 116px; flex-shrink: 0; white-space: nowrap; }
+
         @media (max-width: 860px) {
           .sf-inputs-grid { grid-template-columns: 1fr !important; }
           .sf-input-row .tool-input, .sf-input-row .tool-select { flex: 1; min-width: 0; }
           .sf-option-row, .sf-slider-row { flex-direction: column; align-items: stretch !important; gap: 0.5rem; }
+          .sf-option-row .sf-label { width: auto; }
           .sf-option-row .tool-btn { width: 100%; }
           .sf-slider-row input[type="range"] { flex: 1; min-width: 0; }
         }
@@ -778,7 +1007,6 @@ export default function StarForceWorkspace({ theme }: { theme: AppTheme }) {
           description="Enter your item level, current star, and target star, then run the simulation to see expected meso costs."
         />
 
-        {/* -- Inputs + options --------------------------------------------- */}
         <StarForceForm
           theme={theme}
           calc={calc}
@@ -787,26 +1015,44 @@ export default function StarForceWorkspace({ theme }: { theme: AppTheme }) {
           previewResult={previewResult}
           inputStyle={inputStyle}
           selectStyle={selectStyle}
+          runControls={
+            <RunControls
+              theme={theme}
+              phase={phase}
+              trials={trials}
+              completed={progress.completed}
+              elapsedMs={progress.elapsedMs}
+              estimate={estimate}
+              stale={stale}
+              onRun={handleRun}
+              onCancel={handleCancel}
+              cancelStyle={styles.dialogBtnStyle}
+            />
+          }
         />
 
-        {/* -- Results ------------------------------------------------------- */}
-        {calc.startStar < calc.targetStar && sim && (
-          <SimulationPanel
-            theme={theme}
-            sim={sim}
-            startStar={calc.startStar}
-            targetStar={effectiveTarget}
-            trials={calc.trials}
-          />
+        <p className="sr-only" role="status">{announcement}</p>
+
+        {showResults ? (
+          <>
+            <SimulationPanel
+              theme={theme}
+              sim={sim}
+              startStar={snapshot.startStar}
+              targetStar={snapshot.targetStar}
+              trials={snapshot.trials}
+            />
+            <HistogramPanel theme={theme} sim={sim} />
+          </>
+        ) : (
+          <div style={emptyNoteStyle}>
+            {phase === "cancelled"
+              ? "Simulation stopped before it finished. Run it again, or lower the trial count or target star."
+              : "Run the simulation to see the cost distribution, percentiles, and boom counts. The per-star breakdown below is exact and needs no simulation."}
+          </div>
         )}
 
-        {calc.startStar < calc.targetStar && sim && (
-          <HistogramPanel theme={theme} sim={sim} />
-        )}
-
-        {calc.startStar < calc.targetStar && results.length > 0 && (
-          <BreakdownTable theme={theme} results={results} />
-        )}
+        {results.length > 0 && <BreakdownTable theme={theme} results={results} />}
       </div>
     </div>
   );

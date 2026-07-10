@@ -266,7 +266,7 @@ textarea:focus-visible {
 
 /* Inner content container of a tool workspace (sits inside `.page-content`) */
 .tool-container {
-  max-width: 900px;
+  max-width: 1020px;
   margin: 0 auto;
 }
 

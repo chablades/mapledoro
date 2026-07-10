@@ -57,7 +57,7 @@ npm run lint
 
 **Route pages** (`src/app/{tools,games}/<name>/page.tsx`) are thin `"use client"` shells wrapping a workspace in `AppShell`.
 
-**Workspace layout:** outer padding `1.5rem 1.5rem 2rem 2.75rem`, inner `maxWidth: 900, margin: "0 auto"`. `<ToolHeader>` first, then panel sections.
+**Workspace layout:** outer padding `1.5rem 1.5rem 2rem 2.75rem`, inner `.tool-container` (`maxWidth: 1020, margin: "0 auto"`). `<ToolHeader>` first, then panel sections.
 
 **SSR/client gate:** `useMounted()` (`src/lib/useMounted.ts`) for localStorage reads — false during SSR/hydration, true after mount.
 
