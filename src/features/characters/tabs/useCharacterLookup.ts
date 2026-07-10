@@ -51,10 +51,26 @@ export function useCharacterLookup({
     cacheRef.current = loadBrowserCharacterCache();
   }, []);
 
+  // Only ticks while an actual cooldown is counting down, not for the hook's whole
+  // lifetime — a fresh interval starts per lookup and self-clears once that lookup's
+  // cooldown window ends, instead of re-rendering every second indefinitely.
   useEffect(() => {
+    if (lastRequestAtMs === 0) return;
+    const remaining = COOLDOWN_MS - (Date.now() - lastRequestAtMs);
+    if (remaining <= 0) return;
     const id = setInterval(() => setNowMs(Date.now()), 1000);
-    return () => clearInterval(id);
-  }, []);
+    const stopId = setTimeout(() => {
+      clearInterval(id);
+      // One last update at the true end time — the interval's own ticks land on
+      // 1000ms boundaries from effect start, not on the cooldown's exact end, so
+      // without this the final render is stuck showing ~1s remaining forever.
+      setNowMs(Date.now());
+    }, remaining);
+    return () => {
+      clearInterval(id);
+      clearTimeout(stopId);
+    };
+  }, [lastRequestAtMs]);
 
   const cooldownRemainingMs =
     lastRequestAtMs === 0 ? 0 : Math.max(0, COOLDOWN_MS - (nowMs - lastRequestAtMs));

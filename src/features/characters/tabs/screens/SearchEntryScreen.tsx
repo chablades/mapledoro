@@ -182,7 +182,7 @@ function DraftPicker({
       <button
         type="button"
         disabled={disabled}
-        aria-haspopup="listbox"
+        aria-haspopup="true"
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
         style={triggerStyle}
@@ -191,10 +191,7 @@ function DraftPicker({
         <span aria-hidden>{open ? "▴" : "▾"}</span>
       </button>
       {open && (
-        <div
-          role="listbox"
-          style={draftListboxStyle(theme)}
-        >
+        <div style={draftListboxStyle(theme)}>
           {drafts.map((draft) => (
             <DraftOption
               key={draft.characterKey}
