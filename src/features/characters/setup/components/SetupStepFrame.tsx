@@ -97,7 +97,7 @@ export default function SetupStepFrame({
             border: "none",
             borderRadius: "10px",
             background: theme.accent,
-            color: "#fff",
+            color: theme.accentOn,
             fontFamily: "inherit",
             fontWeight: 800,
             fontSize: "0.88rem",

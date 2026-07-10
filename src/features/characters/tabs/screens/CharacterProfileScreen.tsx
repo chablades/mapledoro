@@ -19,7 +19,7 @@ function profileRoleBadgeStyle(
     return {
       background: theme.accentSoft,
       border: `1px solid ${theme.accent}`,
-      color: theme.accent,
+      color: theme.accentText,
     };
   }
   if (role === "champion") {

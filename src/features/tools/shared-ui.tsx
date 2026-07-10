@@ -127,7 +127,7 @@ export function PillGroup<T extends string>({
             borderRadius: "8px",
             fontSize: "0.75rem",
             fontWeight: 700,
-            color: value === o.value ? "#fff" : theme.muted,
+            color: value === o.value ? theme.accentOn : theme.muted,
             background: value === o.value ? theme.accent : "transparent",
             userSelect: "none",
           }}
@@ -177,7 +177,7 @@ export function ActionButton({
         ...actionBtnBase,
         background: theme.accent,
         borderColor: theme.accent,
-        color: "#fff",
+        color: theme.accentOn,
         width: fullWidth ? "100%" : undefined,
         opacity: disabled ? 0.5 : 1,
         cursor: disabled ? "not-allowed" : "pointer",

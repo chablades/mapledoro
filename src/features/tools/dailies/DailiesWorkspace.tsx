@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import type { AppTheme } from "../../../components/themes";
+import { STATUS, statusText } from "../../../components/statusColors";
 import { ToolHeader } from "../../../components/ToolHeader";
 import CharacterChip from "../../../components/CharacterChip";
 import { WORLD_NAMES } from "../../characters/model/constants";
@@ -110,7 +111,7 @@ function accentBtnStyle(
   return {
     padding,
     background: theme.accent,
-    color: "#fff",
+    color: theme.accentOn,
     border: "none",
   };
 }
@@ -138,7 +139,7 @@ function addCharLinkStyle(theme: AppTheme): React.CSSProperties {
     padding: "0.55rem 1.25rem",
     borderRadius: 10,
     background: theme.accent,
-    color: "#fff",
+    color: theme.accentOn,
     fontWeight: 800,
     fontSize: "0.85rem",
     textDecoration: "none",
@@ -421,7 +422,7 @@ function CardHeader({
             style={{
               width: "100%",
               height: "100%",
-              background: complete ? "#10b981" : theme.accent,
+              background: complete ? STATUS.success.fill : theme.accent,
               transform: `scaleX(${pct / 100})`,
               transformOrigin: "left",
               transition: "transform 0.25s",
@@ -432,7 +433,7 @@ function CardHeader({
           style={{
             fontSize: "0.75rem",
             fontWeight: 800,
-            color: complete ? "#10b981" : theme.muted,
+            color: complete ? statusText(theme, "success") : theme.muted,
             flexShrink: 0,
           }}
         >

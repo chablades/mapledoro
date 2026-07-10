@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import Panel from "./Panel";
 import type { AppTheme } from "./themes";
+import { STATUS } from "./statusColors";
 import { useClock } from "@/lib/useClock";
 import type { MiracleTimeSlot, MiracleTimePayload } from "@/lib/miracleTime";
 
@@ -17,8 +18,8 @@ const activeBadgeStyle: CSSProperties = {
   marginLeft: "auto",
   fontSize: "0.75rem",
   fontWeight: 800,
-  color: "#fff",
-  background: "#10b981",
+  color: STATUS.success.on,
+  background: STATUS.success.fill,
   padding: "2px 8px",
   borderRadius: "6px",
   letterSpacing: "0.05em",

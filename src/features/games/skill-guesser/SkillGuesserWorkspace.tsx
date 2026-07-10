@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import Link from "next/link";
 import type { AppTheme } from "../../../components/themes";
+import { STATUS, statusText } from "../../../components/statusColors";
 import { useMounted } from "../../../lib/useMounted";
 import { ActionButton } from "../../tools/shared-ui";
 import { toolStyles } from "../../tools/tool-styles";
@@ -26,8 +27,6 @@ import {
   type SkillGuesserResult,
 } from "./storage";
 
-const HIT_GREEN = "#2d8a2d";
-const MISS_RED = "#c44040";
 
 /* Puzzles roll over at 00:00 UTC, so the date label is formatted in UTC too. */
 const PUZZLE_DATE_FMT = new Intl.DateTimeFormat(undefined, {
@@ -73,7 +72,6 @@ const guessSlot: CSSProperties = {
 
 const distBar: CSSProperties = {
   borderRadius: 4,
-  color: "#fff",
   fontSize: "0.75rem",
   fontWeight: 800,
   padding: "1px 6px",
@@ -302,9 +300,10 @@ function GuessSlots({
       {Array.from({ length: MAX_GUESSES }, (_, i) => {
         const guess = guesses[i];
         const correct = guess === answer;
+        const verdict = statusText(theme, correct ? "success" : "danger");
         const filled: CSSProperties = guess
           ? {
-              border: `1px solid ${correct ? HIT_GREEN : MISS_RED}`,
+              border: `1px solid ${verdict}`,
               background: theme.panel,
               color: theme.text,
             }
@@ -320,7 +319,7 @@ function GuessSlots({
           >
             {guess ? (
               <>
-                <span aria-hidden="true" style={{ color: correct ? HIT_GREEN : MISS_RED, fontWeight: 800 }}>
+                <span aria-hidden="true" style={{ color: verdict, fontWeight: 800 }}>
                   {correct ? "✓" : "✗"}
                 </span>
                 <span>{guess}</span>
@@ -425,7 +424,8 @@ function StatsPanel({
                     ...distBar,
                     width: `${(count / maxCount) * 100}%`,
                     minWidth: count > 0 ? 26 : 8,
-                    background: i < MAX_GUESSES ? theme.accent : MISS_RED,
+                    background: i < MAX_GUESSES ? theme.accent : STATUS.danger.fill,
+                    color: i < MAX_GUESSES ? theme.accentOn : STATUS.danger.on,
                     opacity: count > 0 ? 1 : 0.25,
                   }}
                 >
@@ -636,7 +636,7 @@ export default function SkillGuesserWorkspace({ theme }: { theme: AppTheme }) {
         <style>{`.sg-option:hover:not(:disabled) { background: ${theme.accentSoft}; }
 @media (max-width: 560px) { .sg-hints { grid-template-columns: 1fr !important; } }`}</style>
         <div className="tool-header">
-          <Link href="/games" className="tool-header-back" style={{ color: theme.accent }}>
+          <Link href="/games" className="tool-header-back" style={{ color: theme.accentText }}>
             ← Back to Games
           </Link>
           <div className="tool-header-title" style={{ color: theme.text }}>

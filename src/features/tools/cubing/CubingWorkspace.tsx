@@ -410,7 +410,7 @@ function ProbabilityBadge({ theme, probability }: { theme: AppTheme; probability
           Probability per cube
         </div>
         <div style={{ marginTop: "4px" }}>
-          <span style={{ fontSize: "1.15rem", fontWeight: 800, color: theme.accent }}>
+          <span style={{ fontSize: "1.15rem", fontWeight: 800, color: theme.accentText }}>
             {display}
           </span>
         </div>
@@ -439,7 +439,7 @@ function TierUpProbabilities({ theme, steps }: { theme: AppTheme; steps: TierSte
               {step.from} → {step.to}
             </div>
             <div style={{ marginTop: "4px" }}>
-              <span style={{ fontSize: "1.15rem", fontWeight: 800, color: theme.accent }}>
+              <span style={{ fontSize: "1.15rem", fontWeight: 800, color: theme.accentText }}>
                 {display}
               </span>
             </div>
@@ -501,7 +501,7 @@ function ResultCard({
         {rows.map((row) => (
           <div key={row.label} style={rowStyle}>
             <span>{row.label}</span>
-            <span style={{ color: theme.accent, fontWeight: 800 }}>{format(row.value)}</span>
+            <span style={{ color: theme.accentText, fontWeight: 800 }}>{format(row.value)}</span>
           </div>
         ))}
       </div>

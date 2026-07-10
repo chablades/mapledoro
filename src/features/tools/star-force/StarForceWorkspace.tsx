@@ -155,7 +155,7 @@ function SimulationPanel({
       <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem", marginBottom: "1rem" }}>
         <div style={statStyle}>
           <div style={labelStyle}>Mean Cost</div>
-          <div style={{ ...valueStyle, color: theme.accent }}>{formatMeso(sim.meanCost)}</div>
+          <div style={{ ...valueStyle, color: theme.accentText }}>{formatMeso(sim.meanCost)}</div>
           <div style={{ fontSize: "0.75rem", color: theme.muted, fontWeight: 600 }}>
             {formatMesoFull(sim.meanCost)} mesos
           </div>
@@ -439,7 +439,7 @@ function BreakdownTable({ theme, results }: { theme: AppTheme; results: StarResu
           <tbody>
             {results.map((r) => (
               <tr key={r.star}>
-                <td style={{ ...tdStyle, textAlign: "left", color: theme.accent }}>
+                <td style={{ ...tdStyle, textAlign: "left", color: theme.accentText }}>
                   {r.star}★ → {r.star + 1}★
                 </td>
                 <td style={tdStyle}>{pct(r.success)}</td>

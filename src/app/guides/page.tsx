@@ -98,7 +98,7 @@ function GuidesContent({ theme }: { theme: AppTheme }) {
                       marginTop: "1rem",
                       fontSize: "0.78rem",
                       fontWeight: 800,
-                      color: theme.accent,
+                      color: theme.accentText,
                     }}
                   >
                     Read guide →

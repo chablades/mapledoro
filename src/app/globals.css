@@ -386,11 +386,11 @@ textarea:focus-visible {
   user-select: none;
 }
 
+/* Colors (fill + ink) supplied inline from `STATUS`; only shape lives here. */
 .changelog-type-pill {
   flex-shrink: 0;
   font-size: 0.75rem;
   font-weight: 800;
-  color: #fff;
   padding: 2px 8px;
   border-radius: 6px;
   letter-spacing: 0.04em;

@@ -77,7 +77,7 @@ function SkillIcon({ iconId, iconUrl, name, theme, size = 32 }: { iconId: string
           background: theme.accentSoft,
           border: `1px solid ${theme.border}`,
           fontSize: size * 0.35,
-          color: theme.accent,
+          color: theme.accentText,
         }}
       >
         {name.charAt(0)}
@@ -91,7 +91,7 @@ function SkillIcon({ iconId, iconUrl, name, theme, size = 32 }: { iconId: string
 function CostBadge({ cost, theme, compact }: { cost: SkillCostSummary; theme: AppTheme; compact?: boolean }) {
   if (cost.solErda === 0 && cost.fragments === 0) {
     return (
-      <span style={{ fontSize: "0.75rem", fontWeight: 800, color: theme.accent }}>
+      <span style={{ fontSize: "0.75rem", fontWeight: 800, color: theme.accentText }}>
         MAXED
       </span>
     );
@@ -100,9 +100,9 @@ function CostBadge({ cost, theme, compact }: { cost: SkillCostSummary; theme: Ap
   const fs = compact ? "0.68rem" : "0.75rem";
   return (
     <span style={{ fontSize: fs, fontWeight: 700, color: theme.muted }}>
-      <span style={{ color: theme.accent, fontWeight: 800 }}>{fmtNum(cost.solErda)}</span>
+      <span style={{ color: theme.accentText, fontWeight: 800 }}>{fmtNum(cost.solErda)}</span>
       {" Sol Erda  "}
-      <span style={{ color: theme.accent, fontWeight: 800 }}>{fmtNum(cost.fragments)}</span>
+      <span style={{ color: theme.accentText, fontWeight: 800 }}>{fmtNum(cost.fragments)}</span>
       {" Fragments"}
     </span>
   );

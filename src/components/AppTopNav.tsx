@@ -146,7 +146,7 @@ export default function AppTopNav({
               style={{ display: "block", borderRadius: "4px" }}
             />
           </div>
-          <span className={styles.brandText} style={{ color: theme.accent }}>
+          <span className={styles.brandText} style={{ color: theme.accentText }}>
             MapleDoro
           </span>
         </Link>

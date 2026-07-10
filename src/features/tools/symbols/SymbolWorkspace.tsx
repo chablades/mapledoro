@@ -296,7 +296,7 @@ function SymbolLevelControls({
             flex: 1,
             fontSize: "0.82rem",
             fontWeight: 800,
-            color: theme.accent,
+            color: theme.accentText,
             textAlign: "center",
             padding: "8px 0",
           }}
@@ -542,7 +542,7 @@ function SymbolCard({
       <div style={areaProgressStyle}>
         <span>{areaPct.toFixed(1)}% complete</span>
         {!isMaxed && isTracked && days !== Infinity && (
-          <span style={{ color: theme.accent, fontWeight: 800 }}>
+          <span style={{ color: theme.accentText, fontWeight: 800 }}>
             {addDays(days)}
           </span>
         )}
@@ -582,7 +582,7 @@ function OverallProgressPanel({
           style={{
             fontSize: "0.78rem",
             fontWeight: 800,
-            color: theme.accent,
+            color: theme.accentText,
           }}
         >
           {noneTracked
@@ -689,7 +689,7 @@ function CompletionSummaryPanel({
           style={{
             fontSize: "0.88rem",
             fontWeight: 700,
-            color: theme.accent,
+            color: theme.accentText,
             textAlign: "center",
             padding: "1rem 0",
           }}

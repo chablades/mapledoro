@@ -103,7 +103,7 @@ function BossCard({
         {activeDiff && (
           <div
             className="tool-badge"
-            style={{ color: theme.accent, background: theme.accentSoft }}
+            style={{ color: theme.accentText, background: theme.accentSoft }}
           >
             +{traces} / {boss.reset === "monthly" ? "month" : "week"}
           </div>
@@ -392,7 +392,7 @@ function LiberationProgressBar({
           style={{
             fontSize: "0.78rem",
             fontWeight: 800,
-            color: theme.accent,
+            color: theme.accentText,
           }}
         >
           {tracesCompleted.toLocaleString()} / {totalNeeded.toLocaleString()} {traceNameShort}
@@ -542,7 +542,7 @@ function LiberationResultsSection({
                     ({isFinal ? "liberation" : "bar full"})
                   </span>
                 </span>
-                <span style={{ color: theme.accent, fontWeight: 800 }}>
+                <span style={{ color: theme.accentText, fontWeight: 800 }}>
                   {formatDate(m.completionDate)}
                   <span
                     style={{
@@ -605,7 +605,7 @@ function LiberationResultsSection({
                   </span>
                 )}
               </span>
-              <span style={{ color: theme.accent, fontWeight: 800 }}>
+              <span style={{ color: theme.accentText, fontWeight: 800 }}>
                 +{b.traces}
               </span>
             </div>
@@ -632,7 +632,7 @@ function LiberationResultsSection({
               style={{
                 fontFamily: "var(--font-heading)",
                 fontSize: "1rem",
-                color: theme.accent,
+                color: theme.accentText,
               }}
             >
               ~{Math.floor(result.effectiveWeekly).toLocaleString()} {traceNameShort.toLowerCase()}

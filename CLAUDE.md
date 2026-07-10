@@ -65,6 +65,37 @@ npm run lint
 
 **Tool storage:** Per-character data (symbols, liberation, hexa skills, exp calculator) lives in each character's `tools` field in the character store (`mapledoro_characters_store_v1`), via `characterToolStorage.ts`. Global data (dailies, event planner, boss crystals, pitched boss drops, trace restoration) lives under one `mapledoro_tools_v1` key, via `globalToolsStore.ts`.
 
+## Color & Contrast
+
+Themes live in `src/components/themes.ts`: a `ColorModeBase` (light/dark neutrals) merged with one of 12 `ACCENT_THEMES` by `composeTheme()`.
+
+**The palette is tuned to WCAG AA (4.5:1) and must stay there.** Every `text` / `muted` / `accentText` value has been slid in OKLCH (hue and chroma preserved, lightness adjusted) until it clears 4.5:1 against every surface it can land on. Some values look arbitrary; they are the result of that fit. Don't "clean them up" to rounder hex.
+
+Three accent tokens, each with one job:
+
+| Token | Role | Rule |
+|---|---|---|
+| `accent` | Fills and borders | **Never a text color.** It's one hex shared by both color modes, so it can't be readable ink in both. |
+| `accentText` | Accent-colored *text* | Per color mode. Clears 4.5:1 on `bg`, `panel`, `timerBg`, `sidebar`, and its own `accentSoft`. |
+| `accentOn` | Ink *on top of* an `accent` fill | Derived, not authored. `composeTheme` picks white or ink from the accent's luminance. |
+
+Why `accent` can't be text: a white-text fill needs relative luminance ≤ 0.183, and readable text on `#101014` needs ≥ 0.199. The windows don't overlap. So `color: theme.accent` is always a bug — use `accentText`. Likewise `color: "#fff"` on an accent fill is a bug — use `accentOn` (bright accents like Ludibrium and Juno take dark ink, not white).
+
+**When adding or changing an accent theme**, check the new color against every surface in both modes before committing. Watch for the luminance dead zone (~0.183–0.218) where *neither* white nor ink clears 4.5:1 on the fill — `cha` was moved out of it.
+
+### Status colors
+
+`src/components/statusColors.ts` applies the same split to success / danger / info / warning. Never hardcode `#10b981`, `#ef4444`, and friends.
+
+- `STATUS[kind].fill` + `STATUS[kind].on` for a filled pill or badge. `on` comes from the shared `inkOn()` in `themes.ts`, the same helper that derives `accentOn`.
+- `statusText(theme, kind)` for status-colored *text* on a neutral surface. Needs `theme.colorMode`, which is why `composeTheme` puts it on `AppTheme`.
+
+The one hand-authored deviation: `danger.fill` is `#dd3135`, darkened from `#ef4444` so white ink clears 4.5:1. Dark ink also clears on the original red, but white-on-red is what makes a destructive button read as destructive.
+
+**Still hardcoded, still failing:** `DIFFICULTY_COLORS` and `RESOURCE_TYPE_COLORS` in the character guides are categorical text colors with no per-mode variants (worst: `#c49a2a` at 2.62:1 on a light panel). They need the same `statusText`-style treatment.
+
+**Known gap:** `accent` used as a 1px state border (selected chips, checked boxes) misses the 3:1 non-text ratio of WCAG 1.4.11 in 16 of 24 theme×mode combinations, worst at `arcaneriver` dark (1.65:1). Fixing it means routing state borders through `accentText`, which is a separate pass across ~38 sites.
+
 ## Image Policy
 
 Game art comes from the self-hosted **MapleResource API** (`haku.network`), via pure id→URL components in `src/components/ResourceImage.tsx` (`src/lib/mapleResource.ts`): `<ItemIcon>`, `<MobSprite>`, `<SkillIcon>`, `<HexaSkillIcon>`, `<ErdaSkillIcon>`, `<FamiliarSprite>`. Host = `NEXT_PUBLIC_RESOURCE_BASE`; new hosts go in `next.config.mjs` `remotePatterns`.

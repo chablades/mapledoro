@@ -3,6 +3,7 @@
 import { useState } from "react";
 import AppShell from "../../components/AppShell";
 import type { AppTheme } from "../../components/themes";
+import { STATUS, type StatusKind } from "../../components/statusColors";
 
 interface ChangelogEntry {
   date: string;
@@ -10,6 +11,17 @@ interface ChangelogEntry {
 }
 
 const CHANGELOG: ChangelogEntry[] = [
+  {
+    date: "2026-07-10",
+    changes: [
+      { type: "changed", text: "Adjusted every color theme so text meets accessible contrast in both light and dark mode." },
+      { type: "changed", text: "Buttons on bright themes like Ludibrium and Juno now use dark text instead of white, so the labels are readable." },
+      { type: "changed", text: "The Cha theme accent is slightly darker so text on it stays legible." },
+      { type: "fixed", text: "Fixed accent colored text being hard to read in dark mode across the site." },
+      { type: "fixed", text: "Fixed the Active badges, changelog tags, and Reset buttons having text that was too faint to read." },
+      { type: "fixed", text: "Fixed the completed count in the Daily Tracker and the correct and incorrect marks in Mapledle being hard to read." },
+    ],
+  },
   {
     date: "2026-07-09",
     changes: [
@@ -283,10 +295,10 @@ const TYPE_LABEL: Record<ChangelogEntry["changes"][number]["type"], string> = {
   fixed: "Fixed",
 };
 
-const TYPE_COLOR: Record<ChangelogEntry["changes"][number]["type"], string> = {
-  added: "#10b981",
-  changed: "#3b82f6",
-  fixed: "#f59e0b",
+const TYPE_STATUS: Record<ChangelogEntry["changes"][number]["type"], StatusKind> = {
+  added: "success",
+  changed: "info",
+  fixed: "warning",
 };
 
 const ENTRIES_PER_PAGE = 7;
@@ -370,7 +382,8 @@ function ChangelogContent({ theme }: { theme: AppTheme }) {
                     <span
                       className="changelog-type-pill"
                       style={{
-                        background: TYPE_COLOR[change.type],
+                        background: STATUS[TYPE_STATUS[change.type]].fill,
+                        color: STATUS[TYPE_STATUS[change.type]].on,
                       }}
                     >
                       {TYPE_LABEL[change.type]}

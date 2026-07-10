@@ -38,7 +38,7 @@ export default function HomeDashboard({ theme }: { theme: AppTheme }) {
         .char-row-icon-btn { transition: transform 0.1s ease, background 0.15s ease; }
         .char-row-icon-btn:hover { transform: translateY(-1px); background: ${theme.accentSoft} !important; }
 
-        .add-character-link:hover { border-color: ${theme.accent} !important; color: ${theme.accent} !important; }
+        .add-character-link:hover { border-color: ${theme.accent} !important; color: ${theme.accentText} !important; }
         .patch-show-more:hover { background: ${theme.accentSoft} !important; }
 
         .hero-banner {
@@ -81,7 +81,7 @@ export default function HomeDashboard({ theme }: { theme: AppTheme }) {
         }
 
         .customize-btn { transition: border-color 0.15s ease, color 0.15s ease; }
-        .customize-btn:hover { border-color: ${theme.accent} !important; color: ${theme.accent} !important; }
+        .customize-btn:hover { border-color: ${theme.accent} !important; color: ${theme.accentText} !important; }
 
         .hover-lift-card:hover { border-color: ${theme.accent} !important; }
 

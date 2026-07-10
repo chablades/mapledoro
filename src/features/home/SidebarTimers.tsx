@@ -3,6 +3,7 @@
 import type { CSSProperties } from "react";
 import Panel from "../../components/Panel";
 import type { AppTheme } from "../../components/themes";
+import { STATUS } from "../../components/statusColors";
 import { formatCountdown, formatCountdownDays, getNextReset } from "../../lib/time";
 import { getUrsusStatus } from "../../lib/ursus";
 
@@ -10,8 +11,8 @@ const PLACEHOLDER_COUNTDOWN = "--:--:--";
 
 const activeBadgeStyle: CSSProperties = {
   marginLeft: "auto",
-  color: "#fff",
-  background: "#10b981",
+  color: STATUS.success.on,
+  background: STATUS.success.fill,
   letterSpacing: "0.05em",
 };
 
@@ -59,7 +60,7 @@ export function UrsusPanel({ theme, now }: { theme: AppTheme; now: Date | null }
           <div className="section-label" style={{ color: theme.muted, marginBottom: "6px" }}>
             {ursus?.active ? "Ends In" : "Starts In"}
           </div>
-          <div className="timer-countdown" style={{ color: theme.accent }}>
+          <div className="timer-countdown" style={{ color: theme.accentText }}>
             {ursusCountdown}
           </div>
         </div>
@@ -92,7 +93,7 @@ export function ResetTimerPanels({ theme, now }: { theme: AppTheme; now: Date | 
             <div className="section-label" style={{ color: theme.muted, marginBottom: "6px" }}>
               {r.label}
             </div>
-            <div className="timer-countdown" style={{ color: theme.accent }}>
+            <div className="timer-countdown" style={{ color: theme.accentText }}>
               {r.countdown}
             </div>
           </div>

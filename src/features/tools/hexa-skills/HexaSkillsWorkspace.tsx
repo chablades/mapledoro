@@ -127,7 +127,7 @@ function SummaryStat({
           {label}
         </div>
         <div style={{ fontSize: "1.3rem", fontWeight: 800, lineHeight: 1.1 }}>
-          <span style={{ color: theme.accent }}>{fmtNum(value)}</span>
+          <span style={{ color: theme.accentText }}>{fmtNum(value)}</span>
           <span style={{ fontSize: "0.9rem", fontWeight: 600, color: theme.muted }}> remaining</span>
         </div>
         <div style={{ fontSize: "0.75rem", fontWeight: 600, color: theme.muted, marginTop: "3px" }}>
