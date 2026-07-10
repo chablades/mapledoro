@@ -5,6 +5,11 @@ import type { SearchPaneActions, SearchPaneModel } from "../paneModels";
 import { secondaryButtonStyle } from "../components/uiStyles";
 import CharacterAvatar from "../components/CharacterAvatar";
 
+function navBackButtonColorStyle(theme: SearchPaneModel["theme"]): CSSProperties {
+  const { border, background, color } = secondaryButtonStyle(theme);
+  return { border, background, color };
+}
+
 type ProfileRole = "main" | "champion" | "mule";
 
 function isCharacterStale(expiresAt: number): boolean {
@@ -40,21 +45,8 @@ function profileRoleBadgeStyle(
   };
 }
 
-const confirmedSummaryCardStyle: CSSProperties = {
-  width: "100%",
-  maxWidth: "300px",
-  margin: "0 auto",
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  justifyContent: "flex-start",
-  textAlign: "center",
-  gap: "0.35rem",
-};
-
 const roleChipRowStyle: CSSProperties = {
   display: "flex",
-  justifyContent: "center",
   gap: "0.32rem",
   flexWrap: "wrap",
   width: "100%",
@@ -114,21 +106,13 @@ export default function CharacterProfileScreen({
       <div
         className={[
           "confirmed-summary-card",
+          profile.isSetupContext ? "confirmed-summary-card--setup" : "",
           shell.isBackTransitioning ? "preview-confirm-fade" : "",
         ]
           .filter(Boolean)
           .join(" ")}
-        style={confirmedSummaryCardStyle}
       >
-        <div
-          className="character-profile-nav-row"
-          style={{
-            width: "100%",
-            display: "flex",
-            justifyContent: "flex-start",
-            marginBottom: "0.65rem",
-          }}
-        >
+        <div className="character-profile-nav-row">
           <button
             type="button"
             disabled={shell.isUiLocked}
@@ -138,12 +122,13 @@ export default function CharacterProfileScreen({
                 ? actions.toggleCharacterDirectory
                 : actions.backFromSetupFlow
             }
+            className="char-profile-back-btn"
             style={{
-              ...secondaryButtonStyle(theme, "0.38rem 0.62rem"),
-              fontSize: "0.76rem",
+              ...navBackButtonColorStyle(theme),
+              fontFamily: "inherit",
+              cursor: "pointer",
               fontWeight: 800,
               whiteSpace: "nowrap",
-              borderRadius: "999px",
               alignSelf: "flex-start",
             }}
           >
@@ -161,7 +146,6 @@ export default function CharacterProfileScreen({
         </div>
         <div
           className={`confirmed-avatar-wrap ${!profile.confirmedImageLoaded ? "image-skeleton-wrap" : ""}`}
-          style={{ width: "210px", height: "210px", borderRadius: "22px" }}
         >
           <CharacterAvatar
             key={profile.confirmedCharacter.characterImgURL}
@@ -171,23 +155,9 @@ export default function CharacterProfileScreen({
             height={210}
             onReady={actions.confirmedImageLoaded}
             className={`image-fade-in ${profile.confirmedImageLoaded ? "image-loaded" : ""}`}
-            style={{
-              borderRadius: "22px",
-              objectFit: "contain",
-              objectPosition: "center bottom",
-              display: "block",
-            }}
           />
         </div>
-        <div
-          style={{
-            width: "100%",
-            flex: 1,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-          }}
-        >
+        <div className="confirmed-summary-info">
           <p
             style={{
               margin: 0,
@@ -228,7 +198,7 @@ export default function CharacterProfileScreen({
             Level {profile.confirmedCharacter.level}
           </p>
           {profile.canViewCharacterDirectory && (
-            <div style={roleChipRowStyle}>
+            <div className="profile-role-chip-row" style={roleChipRowStyle}>
               {roleChips.map((role) => (
                 <span
                   key={role}

@@ -107,6 +107,7 @@ export default function CharacterSetupFlow({ theme, initialCharacterName, initia
       setupStepActive:
         !(state.showFlowOverview && state.showCharacterDirectory) &&
         (state.setupStepIndex > 0 || !currentCharacterHasCompletedRequiredFlow),
+      isSetupContext: layout.setupActive,
       isCurrentMainCharacter: state.isCurrentMainCharacter,
       isCurrentChampionCharacter: state.isCurrentChampionCharacter,
       canSetCurrentChampion: state.canSetCurrentChampion,

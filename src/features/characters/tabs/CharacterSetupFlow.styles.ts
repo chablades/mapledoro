@@ -125,6 +125,53 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
         .confirmed-avatar-wrap {
           overflow: hidden;
           flex: 0 0 auto;
+          width: 210px;
+          height: 210px;
+          border-radius: 22px;
+        }
+
+        .confirmed-avatar-wrap img {
+          border-radius: 22px;
+          object-fit: contain;
+          object-position: center bottom;
+          display: block;
+        }
+
+        .confirmed-summary-card {
+          width: 100%;
+          max-width: 300px;
+          margin: 0 auto;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: flex-start;
+          text-align: center;
+          gap: 0.35rem;
+        }
+
+        .character-profile-nav-row {
+          width: 100%;
+          display: flex;
+          justify-content: flex-start;
+          margin-bottom: 0.65rem;
+        }
+
+        .confirmed-summary-info {
+          width: 100%;
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+        }
+
+        .profile-role-chip-row {
+          justify-content: center;
+        }
+
+        .char-profile-back-btn {
+          border-radius: 999px;
+          font-size: 0.76rem;
+          padding: 0.38rem 0.62rem;
         }
 
         .image-skeleton-wrap::after {
@@ -459,27 +506,32 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
           }
 
           .confirmed-summary-card {
-            min-height: 0 !important;
-            max-width: 152px !important;
-            gap: 0.1rem !important;
+            min-height: 0;
+            max-width: 152px;
+            gap: 0.1rem;
           }
 
           .confirmed-summary-card .confirmed-avatar-wrap {
-            width: 64px !important;
-            height: 64px !important;
-            border-radius: 8px !important;
+            width: 64px;
+            height: 64px;
+            border-radius: 8px;
           }
 
           .confirmed-summary-card .confirmed-avatar-wrap img {
             width: 100% !important;
             height: 100% !important;
-            border-radius: 8px !important;
-            object-fit: cover !important;
+            border-radius: 8px;
+            object-fit: cover;
           }
 
-          .confirmed-summary-card button {
+          .confirmed-summary-card button:not(.char-profile-back-btn) {
             font-size: 0.74rem !important;
             padding: 0.32rem 0.52rem !important;
+          }
+
+          .confirmed-summary-card .char-profile-back-btn {
+            font-size: 0.74rem;
+            padding: 0.32rem 0.52rem;
           }
 
           .confirmed-summary-card p:first-of-type {
@@ -492,58 +544,52 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
             line-height: 1.2 !important;
           }
 
-          /* Setup card: horizontal layout — round back icon | bigger avatar | info.
-             Scoped to setup-active so the profile-view card is untouched. To switch
-             to the "stacked, big centered avatar" variant later, drop the row override
-             on .confirmed-summary-card and bump the avatar size. */
-          .characters-content.setup-active .confirmed-summary-card {
-            flex-direction: row !important;
-            align-items: center !important;
-            justify-content: center !important;
-            max-width: 100% !important;
-            gap: 0.7rem !important;
-            text-align: left !important;
+          /* Setup card: horizontal layout — round back pill | bigger avatar | info.
+             The card adds this modifier class itself (SearchPaneModel.profile.isSetupContext),
+             so these rules just cascade over the base .confirmed-summary-card rules above —
+             no ancestor scoping or !important needed. */
+          .confirmed-summary-card--setup {
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            max-width: 100%;
+            gap: 0.7rem;
+            text-align: left;
           }
 
-          .characters-content.setup-active .confirmed-summary-card .character-profile-nav-row {
-            width: auto !important;
-            margin: 0 !important;
-            flex: 0 0 auto !important;
+          .confirmed-summary-card--setup .character-profile-nav-row {
+            width: auto;
+            margin: 0;
+            flex: 0 0 auto;
           }
 
-          .characters-content.setup-active .confirmed-summary-card .character-profile-nav-row button {
-            width: auto !important;
-            height: auto !important;
-            padding: 0.4rem 0.72rem !important;
-            font-size: 0.8rem !important;
-            font-weight: 800 !important;
-            border-radius: 9px !important;
-            white-space: nowrap !important;
+          .confirmed-summary-card--setup .char-profile-back-btn {
+            padding: 0.4rem 0.72rem;
+            font-size: 0.8rem;
+            border-radius: 9px;
           }
 
-          .characters-content.setup-active .confirmed-summary-card .confirmed-avatar-wrap {
-            width: 84px !important;
-            height: 84px !important;
-            border-radius: 12px !important;
-            flex: 0 0 auto !important;
+          .confirmed-summary-card--setup .confirmed-avatar-wrap {
+            width: 84px;
+            height: 84px;
+            border-radius: 12px;
+            flex: 0 0 auto;
           }
 
-          .characters-content.setup-active .confirmed-summary-card .confirmed-avatar-wrap img {
-            object-fit: cover !important;
-            object-position: center top !important;
-            border-radius: 12px !important;
+          .confirmed-summary-card--setup .confirmed-avatar-wrap img {
+            border-radius: 12px;
+            object-position: center top;
           }
 
-          .characters-content.setup-active .confirmed-summary-card > div:last-child {
-            width: auto !important;
-            flex: 0 1 auto !important;
-            min-width: 0 !important;
-            align-items: flex-start !important;
-            text-align: left !important;
+          .confirmed-summary-card--setup .confirmed-summary-info {
+            width: auto;
+            flex: 0 1 auto;
+            min-width: 0;
+            align-items: flex-start;
           }
 
-          .characters-content.setup-active .confirmed-summary-card > div:last-child > div {
-            justify-content: flex-start !important;
+          .confirmed-summary-card--setup .profile-role-chip-row {
+            justify-content: flex-start;
           }
 
           .preview-pane,

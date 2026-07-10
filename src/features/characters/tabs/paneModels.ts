@@ -54,6 +54,10 @@ export interface SearchPaneModel {
     canViewCharacterDirectory: boolean;
     isAddingCharacter: boolean;
     setupStepActive: boolean;
+    // True while the summary card renders inside the active setup flow's narrow
+    // sidebar, vs. the standalone profile view — drives the card's own mobile
+    // layout (compact horizontal row) instead of an ancestor-scoped CSS override.
+    isSetupContext: boolean;
     isCurrentMainCharacter: boolean;
     isCurrentChampionCharacter: boolean;
     canSetCurrentChampion: boolean;
