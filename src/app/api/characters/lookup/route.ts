@@ -336,6 +336,48 @@ function getExactRankRow(payload: unknown, expectedName: string): MapleRankRow |
   return null;
 }
 
+// Canary for upstream drift: if Nexon renames/drops/retypes a ranking field, the row still
+// gets cast as MapleRankRow with no runtime check, so bad data would otherwise flow through
+// silently. This only logs, it never blocks the response, and warns once per process.
+const EXPECTED_RANK_ROW_FIELDS: [keyof MapleRankRow, "string" | "number" | "boolean"][] = [
+  ["characterID", "number"],
+  ["characterName", "string"],
+  ["exp", "number"],
+  ["gap", "number"],
+  ["level", "number"],
+  ["rank", "number"],
+  ["startRank", "number"],
+  ["worldID", "number"],
+  ["characterImgURL", "string"],
+  ["jobName", "string"],
+  ["isSearchTarget", "boolean"],
+  ["legionLevel", "number"],
+  ["raidPower", "number"],
+  ["tierID", "number"],
+  ["score", "number"],
+];
+
+let hasWarnedRankRowShape = false;
+
+function warnIfRankRowShapeChanged(row: MapleRankRow): void {
+  if (hasWarnedRankRowShape) return;
+  const issues: string[] = [];
+  for (const [key, type] of EXPECTED_RANK_ROW_FIELDS) {
+    const value = row[key];
+    if (value === undefined) {
+      issues.push(`"${key}" is missing`);
+    } else if (typeof value !== type) {
+      issues.push(`"${key}" is type "${typeof value}" (expected "${type}")`);
+    }
+  }
+  if (issues.length > 0) {
+    hasWarnedRankRowShape = true;
+    console.warn(
+      `[lookup] Nexon ranking row shape looks different than expected: ${issues.join(", ")}. The upstream API may have changed.`,
+    );
+  }
+}
+
 function getFallbackCacheHit(nameKey: string): CacheEntry | null {
   const entry = fallbackInMemoryCache.get(nameKey);
   if (!entry) return null;
@@ -510,6 +552,8 @@ async function buildLookup(characterName: string, key: string): Promise<LookupRe
     });
     return result;
   }
+
+  warnIfRankRowShapeChanged(overallRow);
 
   const fetchedAt = Date.now();
   const expiresAt = getNextUtcMidnightMs(fetchedAt);

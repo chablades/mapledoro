@@ -744,7 +744,9 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
   { id: "blade_recruit", nexonJobName: "Blade Recruit", buffSkills: [], requiredStats: [], isLegacy: true },
   { id: "blade_specialist", nexonJobName: "Blade Specialist", buffSkills: [], requiredStats: [], isLegacy: true },
   { id: "brawler", nexonJobName: "Brawler", buffSkills: [], requiredStats: [], isLegacy: true },
-  { id: "cannon_master", nexonJobName: "Cannon Master", buffSkills: [], requiredStats: [], isLegacy: true },
+  // id kept as "cannon_master" for classBranch.ts continuity, but this is the OLD, pre-revamp jobName.
+  // The modern, currently-played Cannoneer's live jobName is actually "Cannon Master" (see the "cannoneer" entry above).
+  { id: "cannon_master", nexonJobName: "Cannoneer", buffSkills: [], requiredStats: [], isLegacy: true },
   { id: "cannon_trooper", nexonJobName: "Cannon Trooper", buffSkills: [], requiredStats: [], isLegacy: true },
   { id: "chief_bandit", nexonJobName: "Chief Bandit", buffSkills: [], requiredStats: [], isLegacy: true },
   { id: "citizen", nexonJobName: "Citizen", buffSkills: [], requiredStats: [], isLegacy: true },
