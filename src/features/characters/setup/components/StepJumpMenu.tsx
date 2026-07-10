@@ -158,6 +158,25 @@ function flyoutPanelStyle(theme: AppTheme, top: number, left: number): CSSProper
 // nest their row button at different DOM depths under the menu.
 const TOP_LEVEL_SELECTOR = '[data-jump-row="true"]:not(:disabled)';
 
+// Shared by both substep layouts (hover flyout, tap-expanded inline list) — only
+// the scope to search within and the "step back out" target differ between them.
+// Takes no component state, so it lives at module scope instead of being rebuilt
+// every render.
+function handleSubstepKeyDown(e: ReactKeyboardEvent<HTMLButtonElement>, scope: HTMLElement | null, backTarget: HTMLButtonElement | undefined) {
+  if (e.key === "ArrowLeft") {
+    e.preventDefault();
+    backTarget?.focus();
+    return;
+  }
+  if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+  e.preventDefault();
+  const buttons = Array.from(scope?.querySelectorAll<HTMLButtonElement>("button:not(:disabled)") ?? []);
+  const currentIndex = buttons.indexOf(e.currentTarget);
+  if (currentIndex === -1) return;
+  const nextIndex = e.key === "ArrowDown" ? currentIndex + 1 : currentIndex - 1;
+  buttons[nextIndex]?.focus();
+}
+
 function backToIntroItemStyle(theme: AppTheme): CSSProperties {
   return {
     display: "block",
@@ -325,23 +344,6 @@ export default function StepJumpMenu({
     const buttons = Array.from(menuRef.current?.querySelectorAll<HTMLButtonElement>(TOP_LEVEL_SELECTOR) ?? []);
     const target = e.key === "ArrowDown" ? buttons[0] : buttons[buttons.length - 1];
     target?.focus();
-  }
-
-  // Shared by both substep layouts (hover flyout, tap-expanded inline list) — only
-  // the scope to search within and the "step back out" target differ between them.
-  function handleSubstepKeyDown(e: ReactKeyboardEvent<HTMLButtonElement>, scope: HTMLElement | null, backTarget: HTMLButtonElement | undefined) {
-    if (e.key === "ArrowLeft") {
-      e.preventDefault();
-      backTarget?.focus();
-      return;
-    }
-    if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
-    e.preventDefault();
-    const buttons = Array.from(scope?.querySelectorAll<HTMLButtonElement>("button:not(:disabled)") ?? []);
-    const currentIndex = buttons.indexOf(e.currentTarget);
-    if (currentIndex === -1) return;
-    const nextIndex = e.key === "ArrowDown" ? currentIndex + 1 : currentIndex - 1;
-    buttons[nextIndex]?.focus();
   }
 
   useEffect(() => {
