@@ -54,6 +54,7 @@ const NODE_LABELS = ["I", "II", "III"] as const;
 // Reading order for a slot's 3 stat lines, matching the in-game window (Main → Alt 1 → Alt 2).
 const HEXA_STAT_FIELD_ORDER = ["main", "alt0", "alt1"] as const;
 type HexaStatField = (typeof HEXA_STAT_FIELD_ORDER)[number];
+type OpenHexaStatField = HexaStatField | null;
 
 // hexa-skill ids from the "hexaStat" section of the hexa-skill manifest
 const HEXA_STAT_DEFS: HexaSkillDef[] = [
@@ -794,109 +795,37 @@ function HexaSkillLevelsSubstep({
   );
 }
 
-export default function HexaMatrixSetupStep({
-  theme, step, flowId, stepNumber, totalSteps, jobName = "", direction = "forward", targetSubstep, onValidityChange, onSubstepChange,
-  confirmedCharacterName, characterLevel, value, onChange, onBack, onNext, onFinish,
-}: HexaMatrixSetupStepProps) {
-  // MapleScouter only needs hexa skill levels, so the HEXA Stat substep is gated out
-  // of that flow (mirrors how Stats gates its hyper-stat substep). Two substeps
-  // everywhere else: skill levels, then HEXA Stat.
-  const showHexaStat = flowId !== "maplescouter_setup";
-  const substepCount = showHexaStat ? 2 : 1;
-  const classData = getClassDataByNexonJobName(jobName);
-  const classDef = classData?.id ? findClassById(classData.id) : null;
-  const initialValueRef = useRef(value);
-
-  const [substep, setSubstep] = useState(() => targetSubstep ?? (direction === "backward" && showHexaStat ? 1 : 0));
-  // Reports the mount-time default once (so entering a step "backward," which starts
-  // on a substep other than 0, still gets persisted for resume even if the player
-  // reloads before navigating again) — subsequent changes are reported directly from
-  // goToSubstep below instead of a substep-watching effect. Fully eliminating this last
-  // mount-time report would mean lifting substep into a value the parent controls
-  // directly, which isn't worth the blast radius for a bookkeeping report that never
-  // causes a visible re-render.
-  // react-doctor-disable-next-line no-prop-callback-in-effect, no-pass-live-state-to-parent
-  useEffect(() => { onSubstepChange?.(substep); }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  const [substepDirection, setSubstepDirection] = useState<"forward" | "backward">("forward");
-  const [hasSubstepSwitched, setHasSubstepSwitched] = useState(false);
-  const [activeSlot, setActiveSlot] = useState(0);
-  // Which of the current slot's 3 stat-type dropdowns (if any) is open. Reset whenever the
-  // displayed slot changes (switching node or preset), so a stale open dropdown from the
-  // previous slot never lingers.
-  const [openField, setOpenField] = useState<"main" | "alt0" | "alt1" | null>(null);
-  function selectNode(i: number) {
-    setOpenField(null);
-    setActiveSlot(i);
-  }
-  // Display-only: tracks which HEXA Stat level fields the user has actually typed into
-  // this session, so a level they set to 0 shows a literal "0" instead of collapsing
-  // back to the placeholder (HexaStatEntry.level itself stays a real number — see
-  // LevelInput's comment). Resets on remount (e.g. leaving this step and coming back),
-  // which only affects the blank-vs-"0" look, never the saved value.
-  const [touchedLevels, setTouchedLevels] = useState<Set<string>>(() => new Set());
-  function markLevelTouched(key: string) {
-    setTouchedLevels((prev) => (prev.has(key) ? prev : new Set(prev).add(key)));
-  }
-
-  // One-shot mount-time backfill from the character's saved tools data (only when this
-  // step lands blank) — can't run during render since it depends on a client-only
-  // localStorage read. Not worth lifting into the parent controller (which owns none of
-  // this step's domain logic) for a fetch that only ever fires once, at mount.
-  // react-doctor-disable-next-line no-pass-data-to-parent
-  useEffect(() => {
-    if (initialValueRef.current) return;
-    const saved = readSavedHexaValue(classDef, confirmedCharacterName);
-    if (saved) onChange(saved);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  if (!classDef) {
-    return (
-      <SetupStepFrame theme={theme} stepLabel={step.label} stepNumber={stepNumber} totalSteps={totalSteps}
-        description="HEXA Matrix data is not available for this class yet."
-        onBack={onBack} onNext={onNext} onFinish={onFinish} onValidityChange={onValidityChange}
-      >
-        <p style={{ margin: 0, fontSize: "0.85rem", color: theme.muted, fontWeight: 700 }}>
-          No data available for {jobName || "this class"}.
-        </p>
-      </SetupStepFrame>
-    );
-  }
-
-  function goToSubstep(next: number) {
-    setHasSubstepSwitched(true);
-    setSubstepDirection(next > substep ? "forward" : "backward");
-    setSubstep(next);
-    onSubstepChange?.(next);
-  }
-
-  const substepAnimStyle: React.CSSProperties = hasSubstepSwitched ? {
-    animationName: substepDirection === "forward" ? "setupStepSlideForward" : "setupStepSlideBackward",
-    animationDuration: "var(--characters-standard)",
-    animationTimingFunction: "ease",
-    animationFillMode: "both",
-  } : {};
-
-  const levels = parseDraft(value, classDef);
-  const hexaStat = levels.hexaStat;
-
-  function update(patch: Partial<HexaDraft>) {
-    onChange(JSON.stringify({ ...levels, ...patch }));
-  }
-
-  if (substep === 0) {
-    return (
-      <HexaSkillLevelsSubstep
-        theme={theme} classDef={classDef} step={step} levels={levels} update={update}
-        stepNumber={stepNumber} totalSteps={totalSteps}
-        substepIndex={substep} substepCount={substepCount} animStyle={substepAnimStyle}
-        showHexaStat={showHexaStat}
-        onBack={onBack} onContinue={() => goToSubstep(1)} onNext={onNext} onFinish={onFinish}
-        onValidityChange={onValidityChange}
-      />
-    );
-  }
-
+// Substep 1: the HEXA Stat node/preset editor. Extracted for the same reason as
+// HexaSkillLevelsSubstep above — keeps the main step component under the
+// cognitive-complexity cap. State (activeSlot/openField/touchedLevels) stays owned by
+// the parent and is passed down, so switching back and forth between substeps doesn't
+// reset it (this component mounts/unmounts with the substep, the parent doesn't).
+function HexaStatSubstep({
+  theme, stepNumber, totalSteps, substepCount, animStyle,
+  characterLevel, classData, hexaStat, activeSlot, selectNode,
+  openField, setOpenField, touchedLevels, markLevelTouched,
+  update, onBack, onNext, onFinish, onValidityChange,
+}: {
+  theme: AppTheme;
+  stepNumber: number;
+  totalSteps: number;
+  substepCount: number;
+  animStyle: React.CSSProperties;
+  characterLevel?: number;
+  classData?: import("../data/classSkillData").ClassSkillData;
+  hexaStat: [HexaStatNode, HexaStatNode, HexaStatNode];
+  activeSlot: number;
+  selectNode: (i: number) => void;
+  openField: OpenHexaStatField;
+  setOpenField: (updater: OpenHexaStatField | ((f: OpenHexaStatField) => OpenHexaStatField)) => void;
+  touchedLevels: Set<string>;
+  markLevelTouched: (key: string) => void;
+  update: (patch: Partial<HexaDraft>) => void;
+  onBack: () => void;
+  onNext: () => void;
+  onFinish: () => void;
+  onValidityChange?: (valid: boolean, substepIndex?: number) => void;
+}) {
   const charLevel = characterLevel ?? Infinity;
   const activeNode = hexaStat[activeSlot];
   const activePreset = activeNode.activePreset;
@@ -973,11 +902,11 @@ export default function HexaMatrixSetupStep({
   }
 
   return (
-    <div key={1} style={substepAnimStyle}>
+    <div key={1} style={animStyle}>
       <SetupStepFrame theme={theme} stepLabel="HEXA Stat" stepNumber={stepNumber} totalSteps={totalSteps}
-        substepIndex={substep} substepCount={substepCount}
+        substepIndex={1} substepCount={substepCount}
         description="Set your HEXA Stat nodes."
-        onBack={() => goToSubstep(0)} onNext={onNext} onFinish={onFinish}
+        onBack={onBack} onNext={onNext} onFinish={onFinish}
         nextDisabled={anyNodeOverLimit} onValidityChange={onValidityChange}
       >
         <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
@@ -1099,5 +1028,122 @@ export default function HexaMatrixSetupStep({
         </div>
       </SetupStepFrame>
     </div>
+  );
+}
+
+export default function HexaMatrixSetupStep({
+  theme, step, flowId, stepNumber, totalSteps, jobName = "", direction = "forward", targetSubstep, onValidityChange, onSubstepChange,
+  confirmedCharacterName, characterLevel, value, onChange, onBack, onNext, onFinish,
+}: HexaMatrixSetupStepProps) {
+  // MapleScouter only needs hexa skill levels, so the HEXA Stat substep is gated out
+  // of that flow (mirrors how Stats gates its hyper-stat substep). Two substeps
+  // everywhere else: skill levels, then HEXA Stat.
+  const showHexaStat = flowId !== "maplescouter_setup";
+  const substepCount = showHexaStat ? 2 : 1;
+  const classData = getClassDataByNexonJobName(jobName);
+  const classDef = classData?.id ? findClassById(classData.id) : null;
+  const initialValueRef = useRef(value);
+
+  const [substep, setSubstep] = useState(() => targetSubstep ?? (direction === "backward" && showHexaStat ? 1 : 0));
+  // Reports the mount-time default once (so entering a step "backward," which starts
+  // on a substep other than 0, still gets persisted for resume even if the player
+  // reloads before navigating again) — subsequent changes are reported directly from
+  // goToSubstep below instead of a substep-watching effect. Fully eliminating this last
+  // mount-time report would mean lifting substep into a value the parent controls
+  // directly, which isn't worth the blast radius for a bookkeeping report that never
+  // causes a visible re-render.
+  // react-doctor-disable-next-line no-prop-callback-in-effect, no-pass-live-state-to-parent
+  useEffect(() => { onSubstepChange?.(substep); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const [substepDirection, setSubstepDirection] = useState<"forward" | "backward">("forward");
+  const [hasSubstepSwitched, setHasSubstepSwitched] = useState(false);
+  const [activeSlot, setActiveSlot] = useState(0);
+  // Which of the current slot's 3 stat-type dropdowns (if any) is open. Reset whenever the
+  // displayed slot changes (switching node or preset), so a stale open dropdown from the
+  // previous slot never lingers.
+  const [openField, setOpenField] = useState<"main" | "alt0" | "alt1" | null>(null);
+  function selectNode(i: number) {
+    setOpenField(null);
+    setActiveSlot(i);
+  }
+  // Display-only: tracks which HEXA Stat level fields the user has actually typed into
+  // this session, so a level they set to 0 shows a literal "0" instead of collapsing
+  // back to the placeholder (HexaStatEntry.level itself stays a real number — see
+  // LevelInput's comment). Resets on remount (e.g. leaving this step and coming back),
+  // which only affects the blank-vs-"0" look, never the saved value.
+  const [touchedLevels, setTouchedLevels] = useState<Set<string>>(() => new Set());
+  function markLevelTouched(key: string) {
+    setTouchedLevels((prev) => (prev.has(key) ? prev : new Set(prev).add(key)));
+  }
+
+  // One-shot mount-time backfill from the character's saved tools data (only when this
+  // step lands blank) — can't run during render since it depends on a client-only
+  // localStorage read. Not worth lifting into the parent controller (which owns none of
+  // this step's domain logic) for a fetch that only ever fires once, at mount.
+  // react-doctor-disable-next-line no-pass-data-to-parent
+  useEffect(() => {
+    if (initialValueRef.current) return;
+    const saved = readSavedHexaValue(classDef, confirmedCharacterName);
+    if (saved) onChange(saved);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  if (!classDef) {
+    return (
+      <SetupStepFrame theme={theme} stepLabel={step.label} stepNumber={stepNumber} totalSteps={totalSteps}
+        description="HEXA Matrix data is not available for this class yet."
+        onBack={onBack} onNext={onNext} onFinish={onFinish} onValidityChange={onValidityChange}
+      >
+        <p style={{ margin: 0, fontSize: "0.85rem", color: theme.muted, fontWeight: 700 }}>
+          No data available for {jobName || "this class"}.
+        </p>
+      </SetupStepFrame>
+    );
+  }
+
+  function goToSubstep(next: number) {
+    setHasSubstepSwitched(true);
+    setSubstepDirection(next > substep ? "forward" : "backward");
+    setSubstep(next);
+    onSubstepChange?.(next);
+  }
+
+  const substepAnimStyle: React.CSSProperties = hasSubstepSwitched ? {
+    animationName: substepDirection === "forward" ? "setupStepSlideForward" : "setupStepSlideBackward",
+    animationDuration: "var(--characters-standard)",
+    animationTimingFunction: "ease",
+    animationFillMode: "both",
+  } : {};
+
+  const levels = parseDraft(value, classDef);
+  const hexaStat = levels.hexaStat;
+
+  function update(patch: Partial<HexaDraft>) {
+    onChange(JSON.stringify({ ...levels, ...patch }));
+  }
+
+  if (substep === 0) {
+    return (
+      <HexaSkillLevelsSubstep
+        theme={theme} classDef={classDef} step={step} levels={levels} update={update}
+        stepNumber={stepNumber} totalSteps={totalSteps}
+        substepIndex={substep} substepCount={substepCount} animStyle={substepAnimStyle}
+        showHexaStat={showHexaStat}
+        onBack={onBack} onContinue={() => goToSubstep(1)} onNext={onNext} onFinish={onFinish}
+        onValidityChange={onValidityChange}
+      />
+    );
+  }
+
+  return (
+    <HexaStatSubstep
+      theme={theme} stepNumber={stepNumber} totalSteps={totalSteps} substepCount={substepCount}
+      animStyle={substepAnimStyle}
+      characterLevel={characterLevel} classData={classData} hexaStat={hexaStat}
+      activeSlot={activeSlot} selectNode={selectNode}
+      openField={openField} setOpenField={setOpenField}
+      touchedLevels={touchedLevels} markLevelTouched={markLevelTouched}
+      update={update}
+      onBack={() => goToSubstep(0)} onNext={onNext} onFinish={onFinish} onValidityChange={onValidityChange}
+    />
   );
 }

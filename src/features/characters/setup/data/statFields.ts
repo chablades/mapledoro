@@ -34,18 +34,6 @@ export interface TripleStatFieldDef {
   type: "triple";
 }
 
-export interface CooldownReductionStatFieldDef {
-  id: "cooldownReduction";
-  label: string;
-  type: "cooldown_reduction";
-}
-
-export interface SingleStatFieldDef {
-  id: SingleStatFieldId;
-  label: string;
-  type: "single";
-}
-
 // Triple stats: Base value, % value, % value not applied (3 separate screenshots)
 export const TRIPLE_STAT_FIELDS: TripleStatFieldDef[] = [
   { id: "str", label: "STR", type: "triple" },
@@ -57,24 +45,3 @@ export const TRIPLE_STAT_FIELDS: TripleStatFieldDef[] = [
   { id: "magicAtt", label: "Magic ATT", type: "triple" },
 ];
 
-// Single-value stats
-export const SINGLE_STAT_FIELDS: SingleStatFieldDef[] = [
-  { id: "damage", label: "Damage", type: "single" },
-  { id: "bossDamage", label: "Boss Damage", type: "single" },
-  { id: "ignoreDefense", label: "Ignore Enemy DEF", type: "single" },
-  { id: "criticalRate", label: "Critical Rate", type: "single" },
-  { id: "criticalDamage", label: "Critical Damage", type: "single" },
-  { id: "buffDuration", label: "Buff Duration", type: "single" },
-  { id: "cooldownSkip", label: "Cooldown Skip Chance", type: "single" },
-  { id: "ignoreElementalResistance", label: "Ignore Elemental Resistance", type: "single" },
-  { id: "additionalStatusDamage", label: "Additional Status Damage", type: "single" },
-  { id: "summonDuration", label: "Summons Duration Increase", type: "single" },
-  { id: "arcanePower", label: "Arcane Force", type: "single" },
-  { id: "sacredPower", label: "Sacred Power", type: "single" },
-];
-
-export const COOLDOWN_REDUCTION_STAT_FIELD: CooldownReductionStatFieldDef = {
-  id: "cooldownReduction",
-  label: "Cooldown Reduction",
-  type: "cooldown_reduction",
-};

@@ -47,10 +47,10 @@ function CharacterAvatarImage({
   onReady,
 }: CharacterAvatarProps) {
   const [displaySrc, setDisplaySrc] = useState(src);
-  const [retryAttempt, setRetryAttempt] = useState(0);
   const [settled, setSettled] = useState(() => isCached(src));
   const readySrcRef = useRef<string | null>(null);
   const retryTimeoutRef = useRef<number | null>(null);
+  const retryAttemptRef = useRef(0);
 
   useEffect(() => {
     if (settled) return;
@@ -87,10 +87,10 @@ function CharacterAvatarImage({
       decoding="async"
       onLoad={() => setSettled(true)}
       onError={() => {
-        if (retryAttempt < AVATAR_MAX_RETRIES) {
-          const next = retryAttempt + 1;
+        if (retryAttemptRef.current < AVATAR_MAX_RETRIES) {
+          const next = retryAttemptRef.current + 1;
           retryTimeoutRef.current = window.setTimeout(() => {
-            setRetryAttempt(next);
+            retryAttemptRef.current = next;
             setDisplaySrc(appendRetryParam(src, next));
           }, AVATAR_RETRY_DELAY_MS);
           return;
