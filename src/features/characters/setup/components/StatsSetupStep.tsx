@@ -289,8 +289,8 @@ function BuffGuide({ classData, theme, characterLevel }: { classData: ClassSkill
       padding: "0.65rem 0.85rem",
     }}>
       <div style={{ display: "flex", alignItems: "center", gap: "0.45rem", marginBottom: "0.5rem" }}>
-        <span style={{ fontSize: "0.75rem", color: "#16a34a", flexShrink: 0, lineHeight: 1 }}>★</span>
-        <p style={{ margin: 0, fontSize: "0.82rem", color: "#16a34a", fontWeight: 700 }}>
+        <span style={{ fontSize: "0.75rem", color: statusText(theme, "success"), flexShrink: 0, lineHeight: 1 }}>★</span>
+        <p style={{ margin: 0, fontSize: "0.82rem", color: statusText(theme, "success"), fontWeight: 700 }}>
           Activate these buffs before entering stats:
         </p>
       </div>
