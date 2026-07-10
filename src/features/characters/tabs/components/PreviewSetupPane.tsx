@@ -215,7 +215,7 @@ export default function PreviewSetupPane({ model, actions }: PreviewSetupPanePro
           style={setupPanelStyle}
         >
           <div
-            key={`preview-screen-${activeScreenId}-${setup.activeFlowId}-${setup.setupStepIndex}-${setup.showCharacterDirectory ? "directory" : "profile"}`}
+            key={`preview-screen-${activeScreenId}-${setup.activeFlowId}-${setup.setupStepIndex}-${setup.substepJumpNonce}-${setup.showCharacterDirectory ? "directory" : "profile"}`}
             className={activeScreenClassName}
           >
             {activeScreenId === "directory" && (
