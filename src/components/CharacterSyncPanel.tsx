@@ -19,6 +19,11 @@ interface CharacterSyncPanelProps {
 
 const AVATAR_SIZE = 34;
 
+/** Avatar + 2×5px padding + 2×1px border. Pinned because `.tool-input` carries a
+ *  35px height for native inputs, which would crush the avatar. Exported so a
+ *  control sitting beside the picker can match its height. */
+export const CHARACTER_DROPDOWN_HEIGHT = AVATAR_SIZE + 12;
+
 /** Display labels for a non-character row (the null option or an extra option). */
 interface OptionLabels {
   label: string;
@@ -235,6 +240,7 @@ export function CharacterDropdown({
     flex: 1,
     minWidth: 220,
     maxWidth: 320,
+    height: CHARACTER_DROPDOWN_HEIGHT,
     display: "flex",
     alignItems: "center",
     gap: "0.6rem",
