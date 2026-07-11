@@ -259,7 +259,8 @@ const bossChipBase: CSSProperties = {
   userSelect: "none",
 };
 
-const checkSlotStyle: CSSProperties = { visibility: "hidden" };
+const checkSlotStyle: CSSProperties = { marginRight: "0.35em" };
+const hiddenCheckSlotStyle: CSSProperties = { ...checkSlotStyle, visibility: "hidden" };
 
 function bossChipStyle(theme: AppTheme, active: boolean): CSSProperties {
   return {
@@ -421,7 +422,7 @@ function CrystalSection({
                   onClick={() => onBossToggle(boss.id)}
                   style={bossChipStyle(theme, active)}
                 >
-                  <span aria-hidden="true" style={active ? undefined : checkSlotStyle}>✓</span> {boss.name}
+                  <span aria-hidden="true" style={active ? checkSlotStyle : hiddenCheckSlotStyle}>✓</span>{boss.name}
                 </button>
               );
             })}
@@ -442,7 +443,7 @@ function CrystalSection({
                   onClick={() => onBossToggle(boss.id)}
                   style={bossChipStyle(theme, active)}
                 >
-                  <span aria-hidden="true" style={active ? undefined : checkSlotStyle}>✓</span> {boss.name}
+                  <span aria-hidden="true" style={active ? checkSlotStyle : hiddenCheckSlotStyle}>✓</span>{boss.name}
                 </button>
               );
             })}
@@ -568,7 +569,7 @@ function BossMissionCard({
               style={missionBtnStyle(theme, active)}
             >
               <span>
-                <span aria-hidden="true" style={active ? undefined : checkSlotStyle}>✓</span> {mission.description}
+                <span aria-hidden="true" style={active ? checkSlotStyle : hiddenCheckSlotStyle}>✓</span>{mission.description}
               </span>
               <span style={{ fontWeight: 800, fontSize: "0.75rem", color: active ? theme.accentText : theme.muted }}>
                 +{mission.points}
@@ -801,27 +802,35 @@ export default function TraceRestorationWorkspace({ theme }: { theme: AppTheme }
   if (!mounted) return null;
 
   return (
-    <div className="page-content">
-      <div className="tool-container">
-        <ToolHeader
-          theme={theme}
-          title="Trace Restoration Tracker"
-          description="Track your Star Force Research whisper crystals and Trace Restoration mission progress."
-        />
+    <>
+      <style>{`
+        @media (max-width: 860px) {
+          .segmented-toggle-track { flex-wrap: wrap; }
+        }
+      `}</style>
 
-        <SegmentedToggle
-          theme={theme}
-          options={TAB_OPTIONS}
-          value={tab}
-          labels={TAB_LABELS}
-          ariaLabel="Tracker section"
-          sectionPanel={styles.sectionPanel}
-          onChange={setTab}
-        />
+      <div className="page-content">
+        <div className="tool-container">
+          <ToolHeader
+            theme={theme}
+            title="Trace Restoration Tracker"
+            description="Track your Star Force Research whisper crystals and Trace Restoration mission progress."
+          />
 
-        {tab === "research" && <StarForceResearchTab theme={theme} />}
-        {tab === "restoration" && <TraceRestorationTab theme={theme} />}
+          <SegmentedToggle
+            theme={theme}
+            options={TAB_OPTIONS}
+            value={tab}
+            labels={TAB_LABELS}
+            ariaLabel="Tracker section"
+            sectionPanel={styles.sectionPanel}
+            onChange={setTab}
+          />
+
+          {tab === "research" && <StarForceResearchTab theme={theme} />}
+          {tab === "restoration" && <TraceRestorationTab theme={theme} />}
+        </div>
       </div>
-    </div>
+    </>
   );
 }

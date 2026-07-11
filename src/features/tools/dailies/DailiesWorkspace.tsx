@@ -262,9 +262,6 @@ function CardHeader({
   name,
   storeChar,
   worldLabel,
-  pos,
-  total,
-  onMove,
   progress,
   onDelete,
   onCheckAll,
@@ -274,9 +271,6 @@ function CardHeader({
   name: string;
   storeChar: StoredCharacterRecord | null;
   worldLabel: string | null;
-  pos: number;
-  total: number;
-  onMove: (toPos: number) => void;
   progress: { done: number; total: number };
   onDelete: () => void;
   onCheckAll: (done: boolean) => void;
@@ -306,10 +300,6 @@ function CardHeader({
         />
         <CardActions
           theme={theme}
-          pos={pos}
-          total={total}
-          onMove={onMove}
-          label={name}
           onDelete={onDelete}
           onEdit={onEdit}
           editTitle="Edit tracked tasks"
@@ -700,9 +690,6 @@ function CharacterCard({
   name,
   storeChar,
   cs,
-  index,
-  count,
-  reorder,
   isDragging,
   isDropTarget,
   dragProps,
@@ -717,9 +704,6 @@ function CharacterCard({
   name: string;
   storeChar: StoredCharacterRecord | null;
   cs: CharDailyState;
-  index: number;
-  count: number;
-  reorder: (from: number, to: number) => void;
   isDragging: boolean;
   isDropTarget: boolean;
   dragProps: CardDragProps;
@@ -745,6 +729,7 @@ function CharacterCard({
         borderRadius: 14,
         padding: "1.1rem",
         opacity: isDragging ? 0.4 : 1,
+        cursor: "grab",
       }}
     >
       <CardHeader
@@ -752,9 +737,6 @@ function CharacterCard({
         name={name}
         storeChar={storeChar}
         worldLabel={worldLabel}
-        pos={index}
-        total={count}
-        onMove={(to) => reorder(index, to)}
         progress={progress}
         onDelete={onDelete}
         onCheckAll={onCheckAll}
@@ -846,9 +828,6 @@ export default function DailiesWorkspace({ theme }: { theme: AppTheme }) {
                 name={char.name}
                 storeChar={getStoreChar(char.name)}
                 cs={char.state}
-                index={index}
-                count={characters.length}
-                reorder={reorderCharacters}
                 isDragging={isDragging(index)}
                 isDropTarget={isDropTarget(index)}
                 dragProps={dragProps(index)}

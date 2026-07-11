@@ -166,9 +166,6 @@ function CharacterCard({
   char,
   income,
   serverMult,
-  pos,
-  total,
-  onMove,
   isDragging,
   isDropTarget,
   dragProps,
@@ -181,9 +178,6 @@ function CharacterCard({
   char: CharacterEntry;
   income: CharacterProgress;
   serverMult: number;
-  pos: number;
-  total: number;
-  onMove: (toPos: number) => void;
   isDragging: boolean;
   isDropTarget: boolean;
   dragProps: CardDragProps;
@@ -219,6 +213,7 @@ function CharacterCard({
         borderRadius: "14px",
         padding: "1.25rem",
         opacity: isDragging ? 0.4 : 1,
+        cursor: "grab",
       }}
     >
       {/* Character header */}
@@ -269,10 +264,6 @@ function CharacterCard({
             </div>
             <CardActions
               theme={theme}
-              pos={pos}
-              total={total}
-              onMove={onMove}
-              label={char.name}
               onDelete={onDelete}
               onEdit={onEdit}
               editTitle="Edit bosses"
@@ -843,8 +834,13 @@ export default function BossCrystalsWorkspace({ theme }: { theme: AppTheme }) {
             width: 100%;
             margin-left: 0 !important;
             flex-direction: column;
-            align-items: flex-start;
+            align-items: center;
             gap: 0.1rem;
+            text-align: center;
+          }
+          .bc-summary-headline {
+            width: 100%;
+            justify-content: center;
           }
           .bc-summary-value { font-size: 1.15rem !important; }
           .bc-pill {
@@ -898,16 +894,13 @@ export default function BossCrystalsWorkspace({ theme }: { theme: AppTheme }) {
               alignItems: "start",
             }}
           >
-            {visibleCharacters.map(({ char, index, income }, pos) => (
+            {visibleCharacters.map(({ char, index, income }) => (
               <CharacterCard
                 key={char.name}
                 theme={theme}
                 char={char}
                 income={income}
                 serverMult={serverMult}
-                pos={pos}
-                total={visibleCharacters.length}
-                onMove={(to) => reorderCharacters(index, visibleCharacters[to].index)}
                 isDragging={isDragging(index)}
                 isDropTarget={isDropTarget(index)}
                 dragProps={dragProps(index)}

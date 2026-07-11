@@ -345,7 +345,7 @@ export default function ExpCalculatorWorkspace({ theme }: { theme: AppTheme }) {
           .exp-grid { grid-template-columns: 1fr; }
           .exp-select-grid { grid-template-columns: 1fr; }
           .exp-overview-grid { grid-template-columns: 1fr; }
-          .segmented-toggle-track { overflow-x: auto; }
+          .segmented-toggle-track { flex-wrap: wrap; }
         }
       `}</style>
       <div className="tool-container" style={{ maxWidth: 1000 }}>
