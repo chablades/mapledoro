@@ -219,7 +219,7 @@ export default function SunnySundayPanel({ theme }: SunnySundayPanelProps) {
   else statusText = "No data";
 
   return (
-    <Panel theme={theme} delay="0.15s">
+    <Panel theme={theme}>
       {/* Header */}
       <div className="panel-header" style={{ borderBottom: `1px solid ${theme.border}` }}>
         <span>☀️</span>
