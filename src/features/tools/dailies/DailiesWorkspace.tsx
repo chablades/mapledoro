@@ -27,6 +27,8 @@ import RemindersConfigBar from "./RemindersConfigBar";
 import { ActionButton } from "../shared-ui";
 import { AddCharacterNameDialog } from "../AddCharacterNameDialog";
 import { AddCharacterCard } from "../AddCharacterCard";
+import { CardActions } from "../TrackerCard";
+import { ToolDialog } from "../ToolDialog";
 import { useCardReorder, type CardDragProps } from "../useCardReorder";
 
 // -- Style helpers ------------------------------------------------------------
@@ -69,33 +71,6 @@ function counterBtnStyle(
   };
 }
 
-function dialogOverlayStyle(): React.CSSProperties {
-  return {
-    position: "fixed",
-    inset: 0,
-    background: "rgba(0,0,0,0.55)",
-    zIndex: 20,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: "1rem",
-  };
-}
-
-function dialogPanelStyle(theme: AppTheme): React.CSSProperties {
-  return {
-    background: theme.panel,
-    border: `1px solid ${theme.border}`,
-    borderRadius: 14,
-    padding: "1.5rem",
-    width: "100%",
-    maxWidth: 560,
-    maxHeight: "90vh",
-    display: "flex",
-    flexDirection: "column",
-  };
-}
-
 // Colors only; shape comes from the `.tool-dialog-btn` class.
 function dialogCancelBtnStyle(theme: AppTheme): React.CSSProperties {
   return {
@@ -105,33 +80,11 @@ function dialogCancelBtnStyle(theme: AppTheme): React.CSSProperties {
   };
 }
 
-function accentBtnStyle(
-  theme: AppTheme,
-  padding = "0.5rem 1.25rem",
-): React.CSSProperties {
+function accentBtnStyle(theme: AppTheme): React.CSSProperties {
   return {
-    padding,
     background: theme.accent,
     color: theme.accentOn,
     border: "none",
-  };
-}
-
-function iconBtn(theme: AppTheme, color: string): React.CSSProperties {
-  return {
-    width: 28,
-    height: 28,
-    borderRadius: 8,
-    border: `1px solid ${theme.border}`,
-    background: theme.timerBg,
-    color,
-    cursor: "pointer",
-    fontWeight: 800,
-    fontSize: "0.85rem",
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    lineHeight: 1,
   };
 }
 
@@ -174,18 +127,23 @@ function CounterRow({
   task,
   value,
   worldTotal,
+  worldLabel,
   onChange,
 }: {
   theme: AppTheme;
   task: CounterTask;
   value: number;
   worldTotal: number;
+  worldLabel: string | null;
   onChange: (v: number) => void;
 }) {
   const worldMax = task.worldMax ?? task.max;
   const worldCapped = worldTotal >= worldMax;
   const done = worldCapped || value >= task.max;
-  const cannotIncrement = worldCapped || value >= task.max;
+  // The world line only helps when the cap is genuinely shared (worldMax > max)
+  // and the character belongs to a real world; typed characters count in a
+  // private bucket, so their per-character line already tells the whole story.
+  const showWorld = worldLabel !== null && worldMax > task.max;
   return (
     <div
       style={{
@@ -208,17 +166,19 @@ function CounterRow({
         >
           {task.label}
         </div>
-        <div
-          style={{
-            fontSize: "0.75rem",
-            color: worldCapped ? theme.accent : theme.muted,
-            fontWeight: 700,
-            marginTop: 1,
-          }}
-        >
-          World: {worldTotal}/{worldMax}
-          {worldCapped ? " · cap reached" : ""}
-        </div>
+        {showWorld && (
+          <div
+            style={{
+              fontSize: "0.75rem",
+              color: worldCapped ? theme.accentText : theme.muted,
+              fontWeight: 700,
+              marginTop: 1,
+            }}
+          >
+            {worldLabel}: {worldTotal}/{worldMax}
+            {worldCapped ? " · cap reached" : ""}
+          </div>
+        )}
       </div>
       <button
         type="button"
@@ -235,7 +195,7 @@ function CounterRow({
           textAlign: "center",
           fontSize: "0.8rem",
           fontWeight: 800,
-          color: done ? theme.accent : theme.muted,
+          color: done ? theme.accentText : theme.muted,
         }}
       >
         {value}/{task.max}
@@ -243,9 +203,9 @@ function CounterRow({
       <button
         type="button"
         onClick={() => onChange(value + 1)}
-        disabled={cannotIncrement}
+        disabled={done}
         title={worldCapped ? "World cap reached" : undefined}
-        style={counterBtnStyle(theme, cannotIncrement)}
+        style={counterBtnStyle(theme, done)}
         aria-label={`Increment ${task.label}`}
       >
         +
@@ -311,6 +271,10 @@ function CardHeader({
   theme,
   name,
   storeChar,
+  worldLabel,
+  pos,
+  total,
+  onMove,
   progress,
   onDelete,
   onCheckAll,
@@ -319,6 +283,10 @@ function CardHeader({
   theme: AppTheme;
   name: string;
   storeChar: StoredCharacterRecord | null;
+  worldLabel: string | null;
+  pos: number;
+  total: number;
+  onMove: (toPos: number) => void;
   progress: { done: number; total: number };
   onDelete: () => void;
   onCheckAll: (done: boolean) => void;
@@ -326,11 +294,9 @@ function CardHeader({
 }) {
   const pct = progress.total > 0 ? (progress.done / progress.total) * 100 : 0;
   const complete = progress.done >= progress.total && progress.total > 0;
-  let subtitle = "";
-  if (storeChar) {
-    const worldName = WORLD_NAMES[storeChar.worldID] ?? `World ${storeChar.worldID}`;
-    subtitle = `Lv.${storeChar.level} ${storeChar.jobName} · ${worldName}`;
-  }
+  const subtitle = storeChar
+    ? `Lv.${storeChar.level} ${storeChar.jobName} · ${worldLabel}`
+    : "";
 
   return (
     <>
@@ -351,40 +317,20 @@ function CardHeader({
           subtitleFontSize="0.72rem"
           subtitleFontWeight={700}
         />
-        <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
-          <button
-            type="button"
-            onClick={onDelete}
-            title="Remove character"
-            aria-label="Remove character"
-            style={iconBtn(theme, "#e05a5a")}
-          >
-            ✕
-          </button>
-          <button
-            type="button"
-            onClick={onEdit}
-            title="Edit tracked tasks"
-            aria-label="Edit tracked tasks"
-            style={iconBtn(theme, theme.muted)}
-          >
-            ✎
-          </button>
-          <button
-            type="button"
-            aria-pressed={complete}
-            onClick={() => onCheckAll(!complete)}
-            title={complete ? "Clear all" : "Mark all complete"}
-            aria-label={complete ? "Clear all" : "Mark all complete"}
-            style={{
-              ...iconBtn(theme, complete ? theme.accent : theme.muted),
-              background: complete ? theme.accentSoft : theme.timerBg,
-              borderColor: complete ? theme.accent : theme.border,
-            }}
-          >
-            ✓
-          </button>
-        </div>
+        <CardActions
+          theme={theme}
+          pos={pos}
+          total={total}
+          onMove={onMove}
+          label={name}
+          onDelete={onDelete}
+          onEdit={onEdit}
+          editTitle="Edit tracked tasks"
+          allDone={complete}
+          onToggleAll={onCheckAll}
+          toggleOnTitle="Mark all complete"
+          toggleOffTitle="Clear all"
+        />
       </div>
       <div
         style={{
@@ -434,6 +380,7 @@ function CardBody({
   theme,
   cs,
   worldTotalFor,
+  worldLabel,
   onToggle,
   onCounterChange,
   onEdit,
@@ -441,6 +388,7 @@ function CardBody({
   theme: AppTheme;
   cs: CharDailyState;
   worldTotalFor: (counterId: string) => number;
+  worldLabel: string | null;
   onToggle: (section: TaskSection, id: string) => void;
   onCounterChange: (task: CounterTask, next: number) => void;
   onEdit: () => void;
@@ -534,6 +482,7 @@ function CardBody({
                   task={c}
                   value={cs.counters[c.id] ?? 0}
                   worldTotal={worldTotalFor(c.id)}
+                  worldLabel={worldLabel}
                   onChange={(v) => onCounterChange(c, v)}
                 />
               ))}
@@ -660,122 +609,100 @@ function DailiesSelectionDialog({
     setDraft((prev) => ({ ...prev, [key]: ids }));
   };
 
+  const footer = (
+    <>
+      {mode === "add" && (
+        <button
+          type="button"
+          onClick={onBack}
+          className="tool-dialog-btn"
+          style={{ ...dialogCancelBtnStyle(theme), marginRight: "auto" }}
+        >
+          Back
+        </button>
+      )}
+      <button
+        type="button"
+        onClick={onCancel}
+        className="tool-dialog-btn"
+        style={dialogCancelBtnStyle(theme)}
+      >
+        Cancel
+      </button>
+      <button
+        type="button"
+        onClick={onConfirm}
+        className="tool-dialog-btn"
+        style={accentBtnStyle(theme)}
+      >
+        {mode === "add" ? "Add" : "Save"}
+      </button>
+    </>
+  );
+
   return (
-    <div
-      role="button"
-      tabIndex={0}
-      onClick={onCancel}
-      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onCancel(); } }}
-      style={dialogOverlayStyle()}
+    <ToolDialog
+      theme={theme}
+      title={mode === "add" ? "Select Tasks" : "Edit Tracked Tasks"}
+      description={
+        <>
+          Choose what to track for <strong style={{ color: theme.text }}>{charName}</strong>.
+        </>
+      }
+      onClose={onCancel}
+      footer={footer}
     >
       <div
-        role="button"
-        tabIndex={0}
-        onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); } }}
-        style={dialogPanelStyle(theme)}
+        className="tool-dialog-scroll"
+        style={{ overflowY: "auto", flex: 1, minHeight: 0, paddingRight: "0.25rem" }}
       >
-        <div
-          style={{
-            fontFamily: "var(--font-heading)",
-            fontSize: "1.1rem",
-            color: theme.text,
-            marginBottom: "0.25rem",
+        <DialogSection
+          theme={theme}
+          title="Arcane Symbols"
+          tasks={ARCANE_SYMBOL_QUESTS}
+          selected={draft.arcane}
+          onToggle={(id) => toggleIn("arcane", id)}
+          onAll={() => setAll("arcane", ARCANE_SYMBOL_QUESTS.map((t) => t.id))}
+          onNone={() => setAll("arcane", [])}
+        />
+        <DialogSection
+          theme={theme}
+          title="Sacred Symbols"
+          tasks={SACRED_SYMBOL_QUESTS}
+          selected={draft.sacred}
+          onToggle={(id) => toggleIn("sacred", id)}
+          onAll={() => setAll("sacred", SACRED_SYMBOL_QUESTS.map((t) => t.id))}
+          onNone={() => setAll("sacred", [])}
+        />
+        <DialogSection
+          theme={theme}
+          title="Daily Bosses"
+          tasks={DAILY_BOSSES}
+          selected={draft.bosses}
+          onToggle={(id) => toggleIn("bosses", id)}
+          onAll={() => setAll("bosses", DAILY_BOSSES.map((t) => t.id))}
+          onNone={() => setAll("bosses", [])}
+        />
+        <DialogSection
+          theme={theme}
+          title="Daily Content"
+          tasks={[...DAILY_ACTIVITIES, ...DAILY_CONTENT]}
+          selected={[...draft.activities, ...draft.content]}
+          onToggle={(id) => {
+            if (DAILY_ACTIVITIES.some((t) => t.id === id)) toggleIn("activities", id);
+            else toggleIn("content", id);
           }}
-        >
-          {mode === "add" ? "Select Tasks" : "Edit Tracked Tasks"}
-        </div>
-        <div style={{ fontSize: "0.78rem", color: theme.muted, marginBottom: "1rem" }}>
-          Choose what to track for <strong style={{ color: theme.text }}>{charName}</strong>.
-        </div>
-
-        <div className="tool-dialog-scroll" style={{ overflowY: "auto", flex: 1, paddingRight: "0.25rem" }}>
-          <DialogSection
-            theme={theme}
-            title="Arcane Symbols"
-            tasks={ARCANE_SYMBOL_QUESTS}
-            selected={draft.arcane}
-            onToggle={(id) => toggleIn("arcane", id)}
-            onAll={() => setAll("arcane", ARCANE_SYMBOL_QUESTS.map((t) => t.id))}
-            onNone={() => setAll("arcane", [])}
-          />
-          <DialogSection
-            theme={theme}
-            title="Sacred Symbols"
-            tasks={SACRED_SYMBOL_QUESTS}
-            selected={draft.sacred}
-            onToggle={(id) => toggleIn("sacred", id)}
-            onAll={() => setAll("sacred", SACRED_SYMBOL_QUESTS.map((t) => t.id))}
-            onNone={() => setAll("sacred", [])}
-          />
-          <DialogSection
-            theme={theme}
-            title="Daily Bosses"
-            tasks={DAILY_BOSSES}
-            selected={draft.bosses}
-            onToggle={(id) => toggleIn("bosses", id)}
-            onAll={() => setAll("bosses", DAILY_BOSSES.map((t) => t.id))}
-            onNone={() => setAll("bosses", [])}
-          />
-          <DialogSection
-            theme={theme}
-            title="Daily Content"
-            tasks={[...DAILY_ACTIVITIES, ...DAILY_CONTENT]}
-            selected={[...draft.activities, ...draft.content]}
-            onToggle={(id) => {
-              if (DAILY_ACTIVITIES.some((t) => t.id === id)) toggleIn("activities", id);
-              else toggleIn("content", id);
-            }}
-            onAll={() => {
-              setAll("activities", DAILY_ACTIVITIES.map((t) => t.id));
-              setAll("content", DAILY_CONTENT.map((t) => t.id));
-            }}
-            onNone={() => {
-              setAll("activities", []);
-              setAll("content", []);
-            }}
-          />
-        </div>
-
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "flex-end",
-            gap: "0.5rem",
-            marginTop: "1rem",
-            paddingTop: "0.75rem",
-            borderTop: `1px solid ${theme.border}`,
+          onAll={() => {
+            setAll("activities", DAILY_ACTIVITIES.map((t) => t.id));
+            setAll("content", DAILY_CONTENT.map((t) => t.id));
           }}
-        >
-          {mode === "add" && (
-            <button
-              type="button"
-              onClick={onBack}
-              className="tool-dialog-btn"
-              style={{ ...dialogCancelBtnStyle(theme), marginRight: "auto" }}
-            >
-              Back
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={onCancel}
-            className="tool-dialog-btn"
-            style={dialogCancelBtnStyle(theme)}
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={onConfirm}
-            className="tool-dialog-btn"
-            style={accentBtnStyle(theme)}
-          >
-            {mode === "add" ? "Add" : "Save"}
-          </button>
-        </div>
+          onNone={() => {
+            setAll("activities", []);
+            setAll("content", []);
+          }}
+        />
       </div>
-    </div>
+    </ToolDialog>
   );
 }
 
@@ -786,6 +713,9 @@ function CharacterCard({
   name,
   storeChar,
   cs,
+  index,
+  count,
+  reorder,
   isDragging,
   isDropTarget,
   dragProps,
@@ -800,6 +730,9 @@ function CharacterCard({
   name: string;
   storeChar: StoredCharacterRecord | null;
   cs: CharDailyState;
+  index: number;
+  count: number;
+  reorder: (from: number, to: number) => void;
   isDragging: boolean;
   isDropTarget: boolean;
   dragProps: CardDragProps;
@@ -811,6 +744,9 @@ function CharacterCard({
   onDelete: () => void;
 }) {
   const progress = computeProgress(cs);
+  const worldLabel = storeChar
+    ? (WORLD_NAMES[storeChar.worldID] ?? `World ${storeChar.worldID}`)
+    : null;
 
   return (
     <div
@@ -822,13 +758,16 @@ function CharacterCard({
         borderRadius: 14,
         padding: "1.1rem",
         opacity: isDragging ? 0.4 : 1,
-        cursor: "grab",
       }}
     >
       <CardHeader
         theme={theme}
         name={name}
         storeChar={storeChar}
+        worldLabel={worldLabel}
+        pos={index}
+        total={count}
+        onMove={(to) => reorder(index, to)}
         progress={progress}
         onDelete={onDelete}
         onCheckAll={onCheckAll}
@@ -838,6 +777,7 @@ function CharacterCard({
         theme={theme}
         cs={cs}
         worldTotalFor={worldTotalFor}
+        worldLabel={worldLabel}
         onToggle={onToggle}
         onCounterChange={onCounterChange}
         onEdit={onEdit}
@@ -893,7 +833,6 @@ export default function DailiesWorkspace({ theme }: { theme: AppTheme }) {
         .dailies-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 1.1rem; align-items: start; }
         .dailies-card { transition: box-shadow 0.15s, opacity 0.15s, border-color 0.15s; }
         .dailies-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
-        .dailies-card:active { cursor: grabbing; }
         @media (max-width: 860px) {
           .dailies-grid { grid-template-columns: 1fr !important; }
         }
@@ -920,6 +859,9 @@ export default function DailiesWorkspace({ theme }: { theme: AppTheme }) {
                 name={char.name}
                 storeChar={getStoreChar(char.name)}
                 cs={char.state}
+                index={index}
+                count={characters.length}
+                reorder={reorderCharacters}
                 isDragging={isDragging(index)}
                 isDropTarget={isDropTarget(index)}
                 dragProps={dragProps(index)}
