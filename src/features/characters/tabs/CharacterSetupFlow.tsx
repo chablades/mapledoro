@@ -5,6 +5,7 @@
   Keeps rendering focused while the controller hook owns state and navigation.
 */
 import { useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import type { AppTheme } from "../../../components/themes";
 import { deriveCharactersLayout } from "./charactersLayout";
 import { getCharacterSetupFlowStyles } from "./CharacterSetupFlow.styles";
@@ -27,8 +28,15 @@ const MAX_ACCOUNT_CHARACTERS = 60;
 export default function CharacterSetupFlow({ theme, initialCharacterName, initialAction }: CharacterSetupFlowProps) {
   const controller = useCharacterSetupController();
   const { state, transitions, actions } = controller;
+  const router = useRouter();
 
   const initialActionAppliedRef = useRef(false);
+  // Tracks whether the URL still needs to catch up to a route intent (initialCharacterName/
+  // initialAction) applied below. The URL-sync effect further down waits for this to clear
+  // before touching the address bar, so a deep link isn't briefly overwritten with the
+  // default "/characters" while the async transition it kicked off is still in flight.
+  const pendingInitialIntentRef = useRef(Boolean(initialCharacterName) || initialAction === "add");
+  const sawInitialLockRef = useRef(false);
   // initialCharacterName/initialAction are one-time route intent (URL search params from
   // page.tsx), not live events — this has to wait for state.isDraftHydrated (async
   // localStorage read) before it can safely apply that intent, so there's no synchronous
@@ -40,11 +48,59 @@ export default function CharacterSetupFlow({ theme, initialCharacterName, initia
     if (initialCharacterName) {
       const key = normalizeCharacterName(initialCharacterName);
       const character = state.characterRoster.find((c) => toCharacterKey(c) === key);
-      if (character) actions.switchToCharacterProfile(character);
+      if (character) {
+        actions.switchToCharacterProfile(character);
+      } else {
+        pendingInitialIntentRef.current = false;
+      }
     } else if (initialAction === "add") {
       actions.openAddCharacterSearch();
+    } else {
+      pendingInitialIntentRef.current = false;
     }
   }, [state.isDraftHydrated, state.characterRoster, initialCharacterName, initialAction, actions]);
+
+  // Keep the address bar in sync with in-tool navigation (selecting a character, opening
+  // the add-character flow, returning to the directory) the same way a fresh homepage deep
+  // link already does on load, so mid-session state stays bookmarkable/shareable and reflects
+  // in browser back/forward. Skipped while a transition is animating (isUiLocked) so the URL
+  // updates once the new screen has settled, not mid-fade.
+  useEffect(() => {
+    if (!state.isDraftHydrated) return;
+    if (state.isUiLocked) sawInitialLockRef.current = true;
+
+    if (pendingInitialIntentRef.current) {
+      if (!sawInitialLockRef.current || state.isUiLocked) return;
+      pendingInitialIntentRef.current = false;
+    } else if (state.isUiLocked) {
+      return;
+    }
+
+    const showingCharacterContext =
+      Boolean(state.confirmedCharacter) &&
+      state.setupFlowStarted &&
+      !state.showCharacterDirectory &&
+      !state.isAddingCharacter;
+
+    let target = "/characters";
+    if (state.isAddingCharacter) {
+      target = "/characters?action=add";
+    } else if (showingCharacterContext && state.confirmedCharacter) {
+      target = `/characters?character=${encodeURIComponent(state.confirmedCharacter.characterName)}`;
+    }
+
+    if (`${window.location.pathname}${window.location.search}` !== target) {
+      router.replace(target, { scroll: false });
+    }
+  }, [
+    state.isDraftHydrated,
+    state.isUiLocked,
+    state.isAddingCharacter,
+    state.setupFlowStarted,
+    state.showCharacterDirectory,
+    state.confirmedCharacter,
+    router,
+  ]);
 
   const confirmedCharacterKey = state.confirmedCharacter
       ? toCharacterKey(state.confirmedCharacter)
