@@ -190,7 +190,7 @@ function DirectoryControls({
     >
       {worldIds.length > 0 && (
         <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", background: theme.panel, border: `1px solid ${theme.border}`, borderRadius: "10px", padding: "0.3rem 0.55rem" }}>
-          <span style={{ fontSize: "0.7rem", fontWeight: 800, color: theme.muted }}>World</span>
+          <span style={{ fontSize: "0.75rem", fontWeight: 800, color: theme.muted }}>World</span>
           {hasMultipleWorlds ? (
             <select
               aria-label="Filter by world"
@@ -217,7 +217,7 @@ function DirectoryControls({
         </div>
       )}
       <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", background: theme.panel, border: `1px solid ${theme.border}`, borderRadius: "10px", padding: "0.3rem 0.55rem" }}>
-        <span style={{ fontSize: "0.7rem", fontWeight: 800, color: theme.muted }}>Sort</span>
+        <span style={{ fontSize: "0.75rem", fontWeight: 800, color: theme.muted }}>Sort</span>
         <select
           aria-label="Sort characters by"
           disabled={isUiLocked}
