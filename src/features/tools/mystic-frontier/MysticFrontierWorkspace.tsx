@@ -10,7 +10,8 @@ import { toolStyles } from "../tool-styles";
 import { Field } from "../shared-ui";
 import { replaceZeroOnDigit } from "../numberInputHandlers";
 import { useMysticFrontierState, type SlotState } from "./useMysticFrontierState";
-import { BonusItemPicker, FamiliarPicker, FamiliarSprite, LinePicker, getMfFamiliar } from "./pickers";
+import { BonusItemPicker, FamiliarPicker, FamiliarSprite, LinePicker } from "./pickers";
+import { getMfFamiliar } from "./familiars";
 import {
   MF_RARITY_DICE, MF_RARITY_LABELS, MF_RARITY_ORDER, type MfElement, type MfRarity,
 } from "./types";
