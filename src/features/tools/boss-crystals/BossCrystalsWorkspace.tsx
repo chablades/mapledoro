@@ -912,7 +912,7 @@ export default function BossCrystalsWorkspace({ theme }: { theme: AppTheme }) {
             ))}
 
             {/* Add character card */}
-            <AddCharacterCard theme={theme} onClick={openAdd} />
+            <AddCharacterCard key={server} theme={theme} onClick={openAdd} />
           </div>
         </div>
       </div>
