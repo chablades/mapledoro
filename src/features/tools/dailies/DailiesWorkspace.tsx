@@ -1,7 +1,5 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
 import type { AppTheme } from "../../../components/themes";
 import { STATUS, statusText } from "../../../components/statusColors";
 import { ToolHeader } from "../../../components/ToolHeader";
@@ -27,6 +25,9 @@ import {
 } from "./useDailiesState";
 import RemindersConfigBar from "./RemindersConfigBar";
 import { ActionButton } from "../shared-ui";
+import { AddCharacterNameDialog } from "../AddCharacterNameDialog";
+import { AddCharacterCard } from "../AddCharacterCard";
+import { useCardReorder, type CardDragProps } from "../useCardReorder";
 
 // -- Style helpers ------------------------------------------------------------
 
@@ -116,33 +117,21 @@ function accentBtnStyle(
   };
 }
 
-function emptyStateContainerStyle(theme: AppTheme): React.CSSProperties {
+function iconBtn(theme: AppTheme, color: string): React.CSSProperties {
   return {
-    background: theme.panel,
-    border: `1px dashed ${theme.border}`,
-    padding: "3rem 2rem",
-    textAlign: "center",
-    color: theme.muted,
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    gap: "0.75rem",
-  };
-}
-
-function addCharLinkStyle(theme: AppTheme): React.CSSProperties {
-  return {
-    marginTop: "0.5rem",
-    display: "inline-flex",
-    alignItems: "center",
-    gap: 6,
-    padding: "0.55rem 1.25rem",
-    borderRadius: 10,
-    background: theme.accent,
-    color: theme.accentOn,
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    border: `1px solid ${theme.border}`,
+    background: theme.timerBg,
+    color,
+    cursor: "pointer",
     fontWeight: 800,
     fontSize: "0.85rem",
-    textDecoration: "none",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    lineHeight: 1,
   };
 }
 
@@ -160,9 +149,7 @@ function CheckboxItem({
   onToggle: () => void;
 }) {
   return (
-    <label
-      style={checkboxItemStyle(theme, checked)}
-    >
+    <label style={checkboxItemStyle(theme, checked)}>
       <input
         type="checkbox"
         checked={checked}
@@ -195,7 +182,8 @@ function CounterRow({
   worldTotal: number;
   onChange: (v: number) => void;
 }) {
-  const worldCapped = worldTotal >= task.max;
+  const worldMax = task.worldMax ?? task.max;
+  const worldCapped = worldTotal >= worldMax;
   const done = worldCapped || value >= task.max;
   const cannotIncrement = worldCapped || value >= task.max;
   return (
@@ -228,7 +216,7 @@ function CounterRow({
             marginTop: 1,
           }}
         >
-          World: {worldTotal}/{task.max}
+          World: {worldTotal}/{worldMax}
           {worldCapped ? " · cap reached" : ""}
         </div>
       </div>
@@ -321,26 +309,28 @@ function TaskGrid({
 
 function CardHeader({
   theme,
-  char,
+  name,
+  storeChar,
   progress,
-  onReset,
+  onDelete,
   onCheckAll,
   onEdit,
-  onToggleCollapsed,
-  collapsed,
 }: {
   theme: AppTheme;
-  char: StoredCharacterRecord;
+  name: string;
+  storeChar: StoredCharacterRecord | null;
   progress: { done: number; total: number };
-  onReset: () => void;
-  onCheckAll: () => void;
+  onDelete: () => void;
+  onCheckAll: (done: boolean) => void;
   onEdit: () => void;
-  onToggleCollapsed: () => void;
-  collapsed: boolean;
 }) {
   const pct = progress.total > 0 ? (progress.done / progress.total) * 100 : 0;
   const complete = progress.done >= progress.total && progress.total > 0;
-  const worldName = WORLD_NAMES[char.worldID] ?? `World ${char.worldID}`;
+  let subtitle = "";
+  if (storeChar) {
+    const worldName = WORLD_NAMES[storeChar.worldID] ?? `World ${storeChar.worldID}`;
+    subtitle = `Lv.${storeChar.level} ${storeChar.jobName} · ${worldName}`;
+  }
 
   return (
     <>
@@ -354,14 +344,23 @@ function CardHeader({
       >
         <CharacterChip
           theme={theme}
-          characterImgURL={char.characterImgURL}
-          characterName={char.characterName}
-          subtitle={`Lv.${char.level} ${char.jobName} · ${worldName}`}
+          characterImgURL={storeChar?.characterImgURL ?? ""}
+          characterName={name}
+          subtitle={subtitle}
           nameFontSize="0.95rem"
           subtitleFontSize="0.72rem"
           subtitleFontWeight={700}
         />
         <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
+          <button
+            type="button"
+            onClick={onDelete}
+            title="Remove character"
+            aria-label="Remove character"
+            style={iconBtn(theme, "#e05a5a")}
+          >
+            ✕
+          </button>
           <button
             type="button"
             onClick={onEdit}
@@ -373,30 +372,17 @@ function CardHeader({
           </button>
           <button
             type="button"
-            onClick={onCheckAll}
-            title="Mark all complete"
-            aria-label="Mark all complete"
-            style={iconBtn(theme, complete ? theme.accent : theme.muted)}
+            aria-pressed={complete}
+            onClick={() => onCheckAll(!complete)}
+            title={complete ? "Clear all" : "Mark all complete"}
+            aria-label={complete ? "Clear all" : "Mark all complete"}
+            style={{
+              ...iconBtn(theme, complete ? theme.accent : theme.muted),
+              background: complete ? theme.accentSoft : theme.timerBg,
+              borderColor: complete ? theme.accent : theme.border,
+            }}
           >
             ✓
-          </button>
-          <button
-            type="button"
-            onClick={onReset}
-            title="Reset this character"
-            aria-label="Reset character"
-            style={iconBtn(theme, theme.muted)}
-          >
-            ⟳
-          </button>
-          <button
-            type="button"
-            onClick={onToggleCollapsed}
-            title={collapsed ? "Expand" : "Collapse"}
-            aria-label={collapsed ? "Expand" : "Collapse"}
-            style={iconBtn(theme, theme.muted)}
-          >
-            {collapsed ? "▾" : "▴"}
           </button>
         </div>
       </div>
@@ -405,7 +391,7 @@ function CardHeader({
           display: "flex",
           alignItems: "center",
           gap: "0.5rem",
-          marginBottom: collapsed ? 0 : "0.25rem",
+          marginBottom: "0.25rem",
         }}
       >
         <div
@@ -442,24 +428,6 @@ function CardHeader({
       </div>
     </>
   );
-}
-
-function iconBtn(theme: AppTheme, color: string): React.CSSProperties {
-  return {
-    width: 28,
-    height: 28,
-    borderRadius: 8,
-    border: `1px solid ${theme.border}`,
-    background: theme.timerBg,
-    color,
-    cursor: "pointer",
-    fontWeight: 800,
-    fontSize: "0.85rem",
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    lineHeight: 1,
-  };
 }
 
 function CardBody({
@@ -619,18 +587,10 @@ function DialogSection({
         >
           {title}
         </div>
-        <button
-          type="button"
-          onClick={onAll}
-          style={dialogPillBtn(theme)}
-        >
+        <button type="button" onClick={onAll} style={dialogPillBtn(theme)}>
           All
         </button>
-        <button
-          type="button"
-          onClick={onNone}
-          style={dialogPillBtn(theme)}
-        >
+        <button type="button" onClick={onNone} style={dialogPillBtn(theme)}>
           None
         </button>
       </div>
@@ -672,17 +632,21 @@ function dialogPillBtn(theme: AppTheme): React.CSSProperties {
 function DailiesSelectionDialog({
   theme,
   charName,
+  mode,
   draft,
   setDraft,
+  onBack,
   onCancel,
   onConfirm,
 }: {
   theme: AppTheme;
   charName: string;
+  mode: "add" | "edit";
   draft: SelectedTasks;
   setDraft: (updater: (prev: SelectedTasks) => SelectedTasks) => void;
+  onBack: () => void;
   onCancel: () => void;
-  onConfirm: (next: SelectedTasks) => void;
+  onConfirm: () => void;
 }) {
   const toggleIn = (key: keyof SelectedTasks, id: string) => {
     setDraft((prev) => {
@@ -719,13 +683,13 @@ function DailiesSelectionDialog({
             marginBottom: "0.25rem",
           }}
         >
-          Edit Tracked Tasks
+          {mode === "add" ? "Select Tasks" : "Edit Tracked Tasks"}
         </div>
         <div style={{ fontSize: "0.78rem", color: theme.muted, marginBottom: "1rem" }}>
           Choose what to track for <strong style={{ color: theme.text }}>{charName}</strong>.
         </div>
 
-        <div style={{ overflowY: "auto", flex: 1, paddingRight: "0.25rem" }}>
+        <div className="tool-dialog-scroll" style={{ overflowY: "auto", flex: 1, paddingRight: "0.25rem" }}>
           <DialogSection
             theme={theme}
             title="Arcane Symbols"
@@ -783,6 +747,16 @@ function DailiesSelectionDialog({
             borderTop: `1px solid ${theme.border}`,
           }}
         >
+          {mode === "add" && (
+            <button
+              type="button"
+              onClick={onBack}
+              className="tool-dialog-btn"
+              style={{ ...dialogCancelBtnStyle(theme), marginRight: "auto" }}
+            >
+              Back
+            </button>
+          )}
           <button
             type="button"
             onClick={onCancel}
@@ -793,11 +767,11 @@ function DailiesSelectionDialog({
           </button>
           <button
             type="button"
-            onClick={() => onConfirm(draft)}
+            onClick={onConfirm}
             className="tool-dialog-btn"
             style={accentBtnStyle(theme)}
           >
-            Save
+            {mode === "add" ? "Add" : "Save"}
           </button>
         </div>
       </div>
@@ -809,124 +783,117 @@ function DailiesSelectionDialog({
 
 function CharacterCard({
   theme,
-  char,
+  name,
+  storeChar,
   cs,
+  isDragging,
+  isDropTarget,
+  dragProps,
   worldTotalFor,
   onToggle,
   onCounterChange,
-  onReset,
   onCheckAll,
   onEdit,
-  onToggleCollapsed,
+  onDelete,
 }: {
   theme: AppTheme;
-  char: StoredCharacterRecord;
+  name: string;
+  storeChar: StoredCharacterRecord | null;
   cs: CharDailyState;
+  isDragging: boolean;
+  isDropTarget: boolean;
+  dragProps: CardDragProps;
   worldTotalFor: (counterId: string) => number;
   onToggle: (section: TaskSection, id: string) => void;
   onCounterChange: (task: CounterTask, next: number) => void;
-  onReset: () => void;
-  onCheckAll: () => void;
+  onCheckAll: (done: boolean) => void;
   onEdit: () => void;
-  onToggleCollapsed: () => void;
+  onDelete: () => void;
 }) {
   const progress = computeProgress(cs);
-  const collapsed = !!cs.collapsed;
 
   return (
     <div
-      className="fade-in panel-card"
+      className="fade-in dailies-card panel-card"
+      {...dragProps}
       style={{
         background: theme.panel,
-        border: `1px solid ${theme.border}`,
+        border: `1px solid ${isDropTarget ? theme.accent : theme.border}`,
         borderRadius: 14,
         padding: "1.1rem",
+        opacity: isDragging ? 0.4 : 1,
+        cursor: "grab",
       }}
     >
       <CardHeader
         theme={theme}
-        char={char}
+        name={name}
+        storeChar={storeChar}
         progress={progress}
-        onReset={onReset}
+        onDelete={onDelete}
         onCheckAll={onCheckAll}
         onEdit={onEdit}
-        onToggleCollapsed={onToggleCollapsed}
-        collapsed={collapsed}
       />
-      {!collapsed && (
-        <CardBody
-          theme={theme}
-          cs={cs}
-          worldTotalFor={worldTotalFor}
-          onToggle={onToggle}
-          onCounterChange={onCounterChange}
-          onEdit={onEdit}
-        />
-      )}
-    </div>
-  );
-}
-
-// -- Empty state --------------------------------------------------------------
-
-function EmptyState({ theme }: { theme: AppTheme }) {
-  return (
-    <div
-      className="panel-card"
-      style={emptyStateContainerStyle(theme)}
-    >
-      <div style={{ fontSize: "2rem" }}>📋</div>
-      <div style={{ fontWeight: 700, fontSize: "0.95rem", color: theme.text }}>
-        No characters yet
-      </div>
-      <div style={{ fontSize: "0.8rem", maxWidth: 360 }}>
-        Add a character to start tracking daily symbols, bosses, and content.
-      </div>
-      <Link
-        href="/characters"
-        style={addCharLinkStyle(theme)}
-      >
-        + Add Character
-      </Link>
+      <CardBody
+        theme={theme}
+        cs={cs}
+        worldTotalFor={worldTotalFor}
+        onToggle={onToggle}
+        onCounterChange={onCounterChange}
+        onEdit={onEdit}
+      />
     </div>
   );
 }
 
 // -- Workspace ----------------------------------------------------------------
 
-function cloneSelectedTasks(selected: SelectedTasks): SelectedTasks {
-  return {
-    arcane: [...selected.arcane],
-    sacred: [...selected.sacred],
-    bosses: [...selected.bosses],
-    activities: [...selected.activities],
-    content: [...selected.content],
-  };
-}
-
 export default function DailiesWorkspace({ theme }: { theme: AppTheme }) {
   const {
     mounted,
     characters,
-    getCharState,
+    getStoreChar,
     getWorldCounterTotal,
+    availableStoreChars,
+    dialog,
+    nameMode,
+    setNameMode,
+    typedName,
+    setTypedName,
+    selectedStoreChar,
+    setSelectedStoreChar,
+    pendingName,
+    draft,
+    setDraft,
+    openAdd,
+    proceedToTasks,
+    confirmAdd,
+    openEdit,
+    confirmEdit,
+    deleteCharacter,
+    reorderCharacters,
     toggleTask,
     setCounter,
-    resetCharacter,
-    toggleCollapsed,
-    setSelected,
-    checkAll,
+    setAllTasks,
+    closeDialog,
+    goBackToAddName,
   } = useDailiesState();
 
-  const [editingChar, setEditingChar] = useState<string | null>(null);
-  const [editingDraft, setEditingDraft] = useState<SelectedTasks | null>(null);
+  const { dragProps, isDragging, isDropTarget } = useCardReorder(reorderCharacters);
 
   if (!mounted) return null;
+
+  let dialogCharName = "";
+  if (dialog?.type === "add-tasks") dialogCharName = dialog.name;
+  else if (dialog?.type === "edit") dialogCharName = characters[dialog.index]?.name ?? "";
 
   return (
     <>
       <style>{`
-        .dailies-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 1.1rem; }
+        .dailies-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 1.1rem; align-items: start; }
+        .dailies-card { transition: box-shadow 0.15s, opacity 0.15s, border-color 0.15s; }
+        .dailies-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+        .dailies-card:active { cursor: grabbing; }
         @media (max-width: 860px) {
           .dailies-grid { grid-template-columns: 1fr !important; }
         }
@@ -945,53 +912,66 @@ export default function DailiesWorkspace({ theme }: { theme: AppTheme }) {
 
           <RemindersConfigBar theme={theme} />
 
-          {characters.length === 0 ? (
-            <EmptyState theme={theme} />
-          ) : (
-            <div className="dailies-grid">
-              {characters.map((char) => (
-                <CharacterCard
-                  key={char.characterName}
-                  theme={theme}
-                  char={char}
-                  cs={getCharState(char.characterName)}
-                  worldTotalFor={(cid) => getWorldCounterTotal(char.worldID, cid)}
-                  onToggle={(section, id) => toggleTask(char.characterName, section, id)}
-                  onCounterChange={(task, next) =>
-                    setCounter(char.characterName, task.id, next, task.max)
-                  }
-                  onReset={() => resetCharacter(char.characterName)}
-                  onCheckAll={() => checkAll(char.characterName)}
-                  onEdit={() => {
-                    setEditingChar(char.characterName);
-                    setEditingDraft(cloneSelectedTasks(getCharState(char.characterName).selected));
-                  }}
-                  onToggleCollapsed={() => toggleCollapsed(char.characterName)}
-                />
-              ))}
-            </div>
-          )}
+          <div className="dailies-grid">
+            {characters.map((char, index) => (
+              <CharacterCard
+                key={char.name}
+                theme={theme}
+                name={char.name}
+                storeChar={getStoreChar(char.name)}
+                cs={char.state}
+                isDragging={isDragging(index)}
+                isDropTarget={isDropTarget(index)}
+                dragProps={dragProps(index)}
+                worldTotalFor={(cid) => getWorldCounterTotal(char.name, cid)}
+                onToggle={(section, id) => toggleTask(index, section, id)}
+                onCounterChange={(task, next) =>
+                  setCounter(index, task.id, next, task.max, task.worldMax ?? task.max)
+                }
+                onCheckAll={(done) => setAllTasks(index, done)}
+                onEdit={() => openEdit(index)}
+                onDelete={() => deleteCharacter(index)}
+              />
+            ))}
+
+            {/* Add character card */}
+            <AddCharacterCard theme={theme} onClick={openAdd} />
+          </div>
         </div>
       </div>
 
-      {editingChar && editingDraft && (
-        <DailiesSelectionDialog
-          key={editingChar}
+      {/* Dialogs */}
+      {dialog?.type === "add-name" && (
+        <AddCharacterNameDialog
           theme={theme}
-          charName={editingChar}
-          draft={editingDraft}
-          setDraft={(updater) => {
-            setEditingDraft((prev) => (prev ? updater(prev) : prev));
+          available={availableStoreChars}
+          nameMode={nameMode}
+          onNameMode={(m) => {
+            setNameMode(m);
+            if (m === "type") setSelectedStoreChar(null);
+            else setTypedName("");
           }}
-          onCancel={() => {
-            setEditingChar(null);
-            setEditingDraft(null);
-          }}
-          onConfirm={(next) => {
-            setSelected(editingChar, next);
-            setEditingChar(null);
-            setEditingDraft(null);
-          }}
+          typedName={typedName}
+          onTypedName={setTypedName}
+          selectedChar={selectedStoreChar}
+          onSelectedChar={setSelectedStoreChar}
+          pendingName={pendingName}
+          onNext={proceedToTasks}
+          onClose={closeDialog}
+        />
+      )}
+
+      {(dialog?.type === "add-tasks" || dialog?.type === "edit") && (
+        <DailiesSelectionDialog
+          key={dialogCharName}
+          theme={theme}
+          charName={dialogCharName}
+          mode={dialog.type === "add-tasks" ? "add" : "edit"}
+          draft={draft}
+          setDraft={(updater) => setDraft(updater)}
+          onBack={goBackToAddName}
+          onCancel={closeDialog}
+          onConfirm={dialog.type === "add-tasks" ? confirmAdd : confirmEdit}
         />
       )}
     </>

@@ -6,7 +6,10 @@ export interface DailyTask {
 export interface CounterTask {
   id: string;
   label: string;
+  /** Per-character run cap. */
   max: number;
+  /** Shared cap across all characters on the same world. Defaults to `max`. */
+  worldMax?: number;
 }
 
 export const ARCANE_SYMBOL_QUESTS: DailyTask[] = [
@@ -26,6 +29,7 @@ export const SACRED_SYMBOL_QUESTS: DailyTask[] = [
   { id: "arteria", label: "Arteria" },
   { id: "carcion", label: "Carcion" },
   { id: "tallahart", label: "Tallahart" },
+  { id: "geardock", label: "Geardock" },
 ];
 
 export const DAILY_BOSSES: DailyTask[] = [
@@ -46,7 +50,7 @@ export const DAILY_BOSSES: DailyTask[] = [
 ];
 
 export const DAILY_CONTENT: CounterTask[] = [
-  { id: "monster_park", label: "Monster Park", max: 7 },
+  { id: "monster_park", label: "Monster Park", max: 7, worldMax: 14 },
   { id: "maple_tour", label: "Maple Tour", max: 7 },
 ];
 

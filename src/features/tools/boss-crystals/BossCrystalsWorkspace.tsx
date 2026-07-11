@@ -1,6 +1,5 @@
 "use client";
 
-import { useRef, useState } from "react";
 import { useMounted } from "../../../lib/useMounted";
 import Image from "next/image";
 import type { CSSProperties } from "react";
@@ -12,7 +11,6 @@ import {
   PRESETS,
 } from "./bosses";
 import { formatMesoFull } from "../format";
-import type { StoredCharacterRecord } from "../../characters/model/charactersStore";
 import {
   type BossRow,
   type CharacterEntry,
@@ -20,8 +18,9 @@ import {
   checkBg,
 } from "./boss-crystals-types";
 import { useBossCrystalsState } from "./useBossCrystalsState";
-import { CharacterPickerRow } from "../CharacterPickerRow";
-import { toolStyles } from "../tool-styles";
+import { AddCharacterNameDialog } from "../AddCharacterNameDialog";
+import { AddCharacterCard } from "../AddCharacterCard";
+import { useCardReorder, type CardDragProps } from "../useCardReorder";
 import { ConfirmButton } from "../../../components/ConfirmButton";
 
 // -- Style helpers ------------------------------------------------------------
@@ -86,20 +85,6 @@ function bcSummaryBarStyle(theme: AppTheme): CSSProperties {
     alignItems: "center",
     gap: "1rem",
     boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
-  };
-}
-
-function bcAddCardStyle(theme: AppTheme): CSSProperties {
-  return {
-    background: theme.timerBg,
-    border: `2px dashed ${theme.border}`,
-    borderRadius: "14px",
-    padding: "1.25rem",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    minHeight: 180,
   };
 }
 
@@ -197,10 +182,7 @@ function CharacterCard({
   serverMult,
   isDragging,
   isDropTarget,
-  onDragStart,
-  onDragOver,
-  onDrop,
-  onDragEnd,
+  dragProps,
   onEdit,
   onDelete,
   onToggleCleared,
@@ -212,10 +194,7 @@ function CharacterCard({
   serverMult: number;
   isDragging: boolean;
   isDropTarget: boolean;
-  onDragStart: (e: React.DragEvent<HTMLDivElement>) => void;
-  onDragOver: (e: React.DragEvent<HTMLDivElement>) => void;
-  onDrop: (e: React.DragEvent<HTMLDivElement>) => void;
-  onDragEnd: () => void;
+  dragProps: CardDragProps;
   onEdit: () => void;
   onDelete: () => void;
   onToggleCleared: (bossIndex: number) => void;
@@ -241,11 +220,7 @@ function CharacterCard({
   return (
     <div
       className="fade-in bc-card panel-card"
-      draggable
-      onDragStart={onDragStart}
-      onDragOver={onDragOver}
-      onDrop={onDrop}
-      onDragEnd={onDragEnd}
+      {...dragProps}
       style={{
         background: theme.panel,
         border: `1px solid ${isDropTarget ? theme.accent : theme.border}`,
@@ -453,200 +428,6 @@ function CharacterCard({
             </div>
           ))
         )}
-      </div>
-    </div>
-  );
-}
-
-function AddNameDialog({
-  theme,
-  available,
-  nameMode,
-  onNameMode,
-  typedName,
-  onTypedName,
-  selectedChar,
-  onSelectedChar,
-  pendingName,
-  onNext,
-  onClose,
-}: {
-  theme: AppTheme;
-  available: StoredCharacterRecord[];
-  nameMode: "type" | "select";
-  onNameMode: (m: "type" | "select") => void;
-  typedName: string;
-  onTypedName: (v: string) => void;
-  selectedChar: StoredCharacterRecord | null;
-  onSelectedChar: (c: StoredCharacterRecord) => void;
-  pendingName: string;
-  onNext: () => void;
-  onClose: () => void;
-}) {
-  const hasAvailable = available.length > 0;
-  const styles = toolStyles(theme);
-  // Focus once on mount only — re-running this on every render would fight the user
-  // for focus (e.g. after they click away to select text elsewhere), silently
-  // clearing whatever they were doing.
-  const hasAutoFocusedRef = useRef(false);
-
-  return (
-    <div className="bc-overlay" role="button" tabIndex={0} onClick={onClose} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClose(); } }}>
-      <div
-        className="bc-dialog"
-        role="button"
-        tabIndex={0}
-        onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") e.stopPropagation(); }}
-        style={{ padding: "1.5rem" }}
-      >
-        <div
-          style={{
-            fontFamily: "var(--font-heading)",
-            fontSize: "1.1rem",
-            color: theme.text,
-            marginBottom: "1.25rem",
-          }}
-        >
-          Add Character
-        </div>
-
-        {hasAvailable ? (
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: "0.75rem",
-              marginBottom: "1.25rem",
-            }}
-          >
-            <label
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "0.5rem",
-                cursor: "pointer",
-              }}
-            >
-              <input
-                type="radio"
-                name="bc-name-mode"
-                checked={nameMode === "type"}
-                onChange={() => onNameMode("type")}
-                style={{ accentColor: theme.accent }}
-              />
-              <span style={{ fontSize: "0.85rem", fontWeight: 700, color: theme.text }}>
-                Type a name
-              </span>
-            </label>
-            {nameMode === "type" && (
-              <input
-                type="text"
-                placeholder="Character name"
-                maxLength={14}
-                value={typedName}
-                onChange={(e) => onTypedName(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && typedName.trim()) onNext();
-                }}
-                ref={(el) => {
-                  if (el && !hasAutoFocusedRef.current) {
-                    hasAutoFocusedRef.current = true;
-                    el.focus();
-                  }
-                }}
-                className="tool-input"
-                style={{
-                  ...styles.inputStyle,
-                  width: "calc(100% - 1.5rem)",
-                  marginLeft: "1.5rem",
-                }}
-              />
-            )}
-
-            <label
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "0.5rem",
-                cursor: "pointer",
-              }}
-            >
-              <input
-                type="radio"
-                name="bc-name-mode"
-                checked={nameMode === "select"}
-                onChange={() => onNameMode("select")}
-                style={{ accentColor: theme.accent }}
-              />
-              <span style={{ fontSize: "0.85rem", fontWeight: 700, color: theme.text }}>
-                Select from imported characters
-              </span>
-            </label>
-            {nameMode === "select" && (
-              <div
-                style={{
-                  marginLeft: "1.5rem",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "0.4rem",
-                  maxHeight: "40vh",
-                  overflowY: "auto",
-                }}
-              >
-                {available.map((c) => (
-                  <CharacterPickerRow
-                    key={c.characterName}
-                    theme={theme}
-                    character={c}
-                    selected={selectedChar?.characterName === c.characterName}
-                    onSelect={() => onSelectedChar(c)}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-        ) : (
-          <div style={{ marginBottom: "1.25rem" }}>
-            <input
-              type="text"
-              placeholder="Character name"
-              maxLength={14}
-              value={typedName}
-              onChange={(e) => onTypedName(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && typedName.trim()) onNext();
-              }}
-              ref={(el) => el?.focus()}
-              className="tool-input"
-              style={{ ...styles.inputStyle, width: "100%" }}
-            />
-          </div>
-        )}
-
-        <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.5rem" }}>
-          <button
-            type="button"
-            className="btn-reset bc-btn tool-dialog-btn"
-            onClick={onClose}
-            style={styles.dialogBtnStyle}
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            className="btn-reset bc-btn tool-dialog-btn"
-            disabled={!pendingName}
-            onClick={onNext}
-            style={{
-              ...(pendingName ? styles.dialogPrimaryBtnStyle : styles.dialogBtnStyle),
-              opacity: pendingName ? 1 : 0.5,
-              cursor: pendingName ? "pointer" : "not-allowed",
-            }}
-          >
-            Next
-          </button>
-        </div>
       </div>
     </div>
   );
@@ -1106,34 +887,7 @@ export default function BossCrystalsWorkspace({ theme }: { theme: AppTheme }) {
     clearData, closeDialog, goBackToAddName, exportXlsx,
   } = useBossCrystalsState(mounted);
 
-  const [dragIndex, setDragIndex] = useState<number | null>(null);
-  const [overIndex, setOverIndex] = useState<number | null>(null);
-
-  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, idx: number) => {
-    e.dataTransfer.effectAllowed = "move";
-    e.dataTransfer.setData("text/plain", String(idx));
-    setTimeout(() => setDragIndex(idx), 0);
-  };
-
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>, idx: number) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = "move";
-    if (overIndex !== idx) setOverIndex(idx);
-  };
-
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>, idx: number) => {
-    e.preventDefault();
-    if (dragIndex !== null && dragIndex !== idx) {
-      reorderCharacters(dragIndex, idx);
-    }
-    setDragIndex(null);
-    setOverIndex(null);
-  };
-
-  const handleDragEnd = () => {
-    setDragIndex(null);
-    setOverIndex(null);
-  };
+  const { dragProps, isDragging, isDropTarget } = useCardReorder(reorderCharacters);
 
   // -- Render -----------------------------------------------------------------
 
@@ -1147,12 +901,9 @@ export default function BossCrystalsWorkspace({ theme }: { theme: AppTheme }) {
         .bc-card:active { cursor: grabbing; }
         .bc-btn { transition: background 0.15s, transform 0.1s; cursor: pointer; user-select: none; }
         .bc-action-btn:hover, .bc-action-btn:active { transform: none; }
-        .bc-add-card { transition: border-color 0.15s, background 0.15s; cursor: pointer; }
-        .bc-add-card:hover { border-color: ${theme.accent} !important; background: ${theme.accentSoft} !important; }
         .bc-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 1rem; }
         .bc-dialog { background: ${theme.panel}; border: 1px solid ${theme.border}; border-radius: 16px; max-width: 600px; width: 100%; max-height: 80vh; overflow-y: auto; box-shadow: 0 8px 32px rgba(0,0,0,0.15); }
         .bc-boss-row:hover { background: ${theme.accentSoft} !important; }
-        .char-pick-row:hover { border-color: ${theme.accent} !important; }
         @media (max-width: 860px) {
           .bc-server-group { width: 100%; }
           .bc-server-opt { flex: 1; }
@@ -1221,12 +972,9 @@ export default function BossCrystalsWorkspace({ theme }: { theme: AppTheme }) {
                 char={char}
                 income={income}
                 serverMult={serverMult}
-                isDragging={dragIndex === index}
-                isDropTarget={overIndex === index && dragIndex !== null && dragIndex !== index}
-                onDragStart={(e) => handleDragStart(e, index)}
-                onDragOver={(e) => handleDragOver(e, index)}
-                onDrop={(e) => handleDrop(e, index)}
-                onDragEnd={handleDragEnd}
+                isDragging={isDragging(index)}
+                isDropTarget={isDropTarget(index)}
+                dragProps={dragProps(index)}
                 onEdit={() => openEdit(index)}
                 onDelete={() => deleteCharacter(index)}
                 onToggleCleared={(bi) => toggleBossCleared(index, bi)}
@@ -1235,34 +983,14 @@ export default function BossCrystalsWorkspace({ theme }: { theme: AppTheme }) {
             ))}
 
             {/* Add character card */}
-            <button
-              type="button"
-              className="btn-reset fade-in bc-add-card panel-card"
-              onClick={openAdd}
-              title="Add character"
-              style={bcAddCardStyle(theme)}
-            >
-              <svg viewBox="0 0 24 24" width="36" height="36" fill={theme.muted}>
-                <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
-              </svg>
-              <span
-                style={{
-                  fontSize: "0.8rem",
-                  fontWeight: 700,
-                  color: theme.muted,
-                  marginTop: "0.5rem",
-                }}
-              >
-                Add character
-              </span>
-            </button>
+            <AddCharacterCard theme={theme} onClick={openAdd} />
           </div>
         </div>
       </div>
 
       {/* Dialogs */}
       {dialog?.type === "add-name" && (
-        <AddNameDialog
+        <AddCharacterNameDialog
           theme={theme}
           available={availableStoreChars}
           nameMode={nameMode}

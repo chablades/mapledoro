@@ -258,6 +258,23 @@ textarea:focus-visible {
   cursor: pointer;
 }
 
+/* Thin, translucent scrollbar for scroll areas inside tool dialogs. Matches
+   the character-sync dropdown; theme-neutral so it reads in light and dark. */
+.tool-dialog-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(127, 127, 127, 0.45) transparent;
+}
+.tool-dialog-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+.tool-dialog-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.tool-dialog-scroll::-webkit-scrollbar-thumb {
+  background: rgba(127, 127, 127, 0.45);
+  border-radius: 4px;
+}
+
 /* Pill-shaped toggle button */
 .pill-btn {
   padding: 6px 14px;
