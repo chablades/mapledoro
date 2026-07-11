@@ -271,7 +271,7 @@ const ADDITIVE_GROUP = CHECK_BUFF_GROUPS.find((group) => group.mode === "multi")
 
 const INPUT_BUFF_PANELS = [
   { title: "Skill Levels", buffs: LEVEL_INPUT_BUFFS },
-  { title: "Custom Additive Inputs", buffs: INPUT_BUFFS },
+  { title: "Others", buffs: INPUT_BUFFS },
 ];
 
 /** Select buffs rendered as compact icon + level tiles (char-flow symbol input style)
@@ -1270,9 +1270,9 @@ function ResourceTableView({ theme, table }: { theme: AppTheme; table: ResourceT
 
 function SectionTitle({ theme, label }: { theme: AppTheme; label: string }) {
   return (
-    <div className="tool-field-label" style={{ color: theme.muted, marginBottom: "12px", fontSize: "0.75rem" }}>
+    <h2 className="tool-panel-title" style={{ color: theme.text }}>
       {label}
-    </div>
+    </h2>
   );
 }
 
