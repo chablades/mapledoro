@@ -628,7 +628,7 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
           display: flex;
           align-items: stretch;
           width: 100%;
-          border-radius: 18px;
+          border-radius: 20px;
           overflow: hidden;
         }
 
@@ -645,6 +645,7 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
           flex-shrink: 0;
           padding: 10px 6px;
           width: 108px;
+          background: ${theme.bg};
         }
 
         .profile-bookmark-tab {
@@ -687,7 +688,6 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
         @media (max-width: 860px) {
           .profile-binder {
             flex-direction: column;
-            border-radius: 14px;
           }
 
           .profile-binder-spine {

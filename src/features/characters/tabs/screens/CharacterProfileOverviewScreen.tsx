@@ -708,7 +708,7 @@ function BookmarkSpine({
             className={["profile-bookmark-tab", "tap-target-44", active ? "profile-bookmark-tab--active" : ""].filter(Boolean).join(" ")}
             onClick={() => onSelect(b.id)}
             onKeyDown={(e) => handleKeyDown(e, i)}
-            style={{ background: active ? theme.panel : "transparent", color: active ? theme.accentText : theme.muted }}
+            style={{ background: active ? `${theme.accent}18` : "transparent", color: active ? theme.accentText : theme.muted }}
           >
             {b.tabLabel}
           </button>
@@ -738,10 +738,9 @@ export default function CharacterProfileOverviewScreen({
   }
 
   return (
-    <div className="profile-binder" style={{ border: `1px solid ${theme.border}`, background: theme.bg }}>
+    <div className="profile-binder">
       <div
         className="profile-binder-page"
-        style={{ background: theme.panel }}
         role="tabpanel"
         id={`profile-page-${active.id}`}
         aria-labelledby={`profile-tab-${active.id}`}

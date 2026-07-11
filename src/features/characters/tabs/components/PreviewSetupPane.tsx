@@ -94,12 +94,16 @@ function getSetupPanelInlineStyle(
   theme: PreviewPaneModel["theme"],
   inCharacterDirectoryView: boolean,
   shouldShowDirectoryPanel: boolean,
+  isProfileOverview: boolean,
 ): CSSProperties {
   const visibility: CSSProperties["visibility"] =
     inCharacterDirectoryView && !shouldShowDirectoryPanel ? "hidden" : "visible";
 
   return {
-    ...panelCardStyle(theme, "1rem"),
+    // The binder's spine fills flush to the card edges (see CharacterSetupFlow.styles.ts),
+    // so it supplies its own inset via profile-binder-page's padding instead of relying on
+    // the card's outer padding, which would leave a gap around the spine's background.
+    ...panelCardStyle(theme, isProfileOverview ? "0" : "1rem"),
     position: "relative" as const,
     opacity: inCharacterDirectoryView && !shouldShowDirectoryPanel ? 0 : 1,
     transform:
@@ -191,6 +195,7 @@ export default function PreviewSetupPane({ model, actions }: PreviewSetupPanePro
     theme,
     inCharacterDirectoryView,
     shouldShowDirectoryPanel,
+    activeScreenId === "profile-overview",
   );
 
   // Persist world filter changes — stores the explicit user choice
