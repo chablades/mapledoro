@@ -6,7 +6,8 @@ import type { CSSProperties } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { ItemIcon } from "./pitched-boss-ui";
-import { panelStyle } from "./pitched-boss-styles";
+import { toolStyles } from "../tool-styles";
+import { controlHeightStyle } from "../shared-styles";
 import { ItemIcon as ResourceItemIcon } from "../../../components/ResourceImage";
 import type { AppTheme } from "../../../components/themes";
 import { ToolHeader } from "../../../components/ToolHeader";
@@ -65,13 +66,7 @@ function writeStore(store: PitchedBossDropsStore): void {
 
 // Colors + context sizing; static settings come from the `.tool-select` class.
 function filterSelectStyle(theme: AppTheme): CSSProperties {
-  return {
-    background: theme.timerBg,
-    color: theme.text,
-    borderColor: theme.border,
-    height: 34,
-    boxSizing: "border-box",
-  };
+  return { ...toolStyles(theme).selectStyle, ...controlHeightStyle };
 }
 
 function thStyle(theme: AppTheme): CSSProperties {
@@ -279,7 +274,7 @@ function DropLogTable({
                       background: "transparent",
                       color: theme.text,
                       borderColor: theme.border,
-                      fontSize: "0.8rem",
+                      fontSize: "0.82rem",
                     }}
                   />
                 </td>
@@ -340,7 +335,7 @@ function FilterBar({
         marginBottom: "0.85rem",
       }}
     >
-      <h2 style={{ fontWeight: 700, color: theme.text, fontSize: "1rem", margin: 0, marginRight: "auto" }}>
+      <h2 className="tool-panel-title" style={{ margin: 0, marginRight: "auto", color: theme.text }}>
         Drop Log
       </h2>
       <select
@@ -459,13 +454,13 @@ function NoCharactersState({ theme }: { theme: AppTheme }) {
           </span>
         ))}
       </div>
-      <div style={{ fontWeight: 700, color: theme.text, fontSize: "1.05rem", marginBottom: "0.4rem" }}>
+      <div style={{ fontWeight: 700, color: theme.text, fontSize: "1rem", marginBottom: "0.4rem" }}>
         Track your boss drops
       </div>
       <div
         style={{
           color: theme.muted,
-          fontSize: "0.85rem",
+          fontSize: "0.82rem",
           maxWidth: 360,
           lineHeight: 1.5,
           marginBottom: "1.25rem",
@@ -483,7 +478,7 @@ function NoCharactersState({ theme }: { theme: AppTheme }) {
           padding: "0.5rem 1.25rem",
           borderRadius: 8,
           fontWeight: 700,
-          fontSize: "0.85rem",
+          fontSize: "0.82rem",
           background: theme.accent,
           color: theme.accentOn,
           textDecoration: "none",
@@ -575,12 +570,12 @@ export default function PitchedBossDropsWorkspace({ theme }: { theme: AppTheme }
         />
 
         {!hasCharacters ? (
-          <div style={panelStyle(theme)}>
+          <div className="panel-card" style={toolStyles(theme).sectionPanel}>
             <NoCharactersState theme={theme} />
           </div>
         ) : (
           <>
-            <div style={panelStyle(theme)}>
+            <div className="panel-card" style={toolStyles(theme).sectionPanel}>
               <FilterBar
                 theme={theme}
                 filters={filters}

@@ -101,7 +101,7 @@ export function BossCard({
           style={{ ...iconStyle, background: theme.panel, border: `1px solid ${theme.border}` }}
         />
         <div style={{ flex: 1, minWidth: 0 }}>
-          <h3 style={{ fontFamily: "var(--font-heading)", fontSize: "0.9rem", fontWeight: 400, margin: 0, color: theme.text }}>
+          <h3 style={{ fontFamily: "var(--font-heading)", fontSize: "0.9rem", margin: 0, color: theme.text }}>
             {name}
           </h3>
         </div>
@@ -145,7 +145,7 @@ export function BossCard({
               onPartySizeChange(v);
             }}
             className="tool-input"
-            style={{ ...inputStyle, width: "48px", textAlign: "center", padding: "4px 6px", fontSize: "0.78rem", cursor: isActive ? "text" : "not-allowed" }}
+            style={{ ...inputStyle, width: "48px", textAlign: "center", padding: "4px 6px", fontSize: "0.75rem", cursor: isActive ? "text" : "not-allowed" }}
           />
         </div>
 

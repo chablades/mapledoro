@@ -27,7 +27,7 @@ function PickerAvatar({ theme, name, imgURL }: { theme: AppTheme; name: string; 
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontSize: "0.85rem",
+    fontSize: "0.82rem",
     color: theme.accentText,
     fontWeight: 800,
     flexShrink: 0,

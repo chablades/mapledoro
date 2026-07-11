@@ -387,7 +387,7 @@ function ChangelogContent({ theme }: { theme: AppTheme }) {
                       gap: "0.6rem",
                       fontSize: "0.88rem",
                       color: theme.text,
-                      fontWeight: 500,
+                      fontWeight: 400,
                       lineHeight: 1.6,
                     }}
                   >

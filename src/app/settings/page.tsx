@@ -183,7 +183,7 @@ function SettingsContent({ theme }: { theme: AppTheme }) {
                           background: accent.accent,
                         }}
                       />
-                      <span style={{ fontWeight: active ? 800 : 500 }}>{accent.name}</span>
+                      <span style={{ fontWeight: active ? 800 : 600 }}>{accent.name}</span>
                     </button>
                   );
                 })}

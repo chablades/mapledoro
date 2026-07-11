@@ -160,7 +160,7 @@ function EstimateResult({
     const diffDays = Math.round((result.date.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
     if (diffDays <= 0) {
       return (
-        <span style={{ fontWeight: 700, color: theme.accentText, fontSize: "0.85rem" }}>
+        <span style={{ fontWeight: 700, color: theme.accentText, fontSize: "0.82rem" }}>
           Target reached!
         </span>
       );
@@ -175,14 +175,14 @@ function EstimateResult({
       timeLabel = diffDays === 1 ? "1 day" : `${diffDays} days`;
     }
     return (
-      <span style={{ fontSize: "0.85rem", color: theme.text }}>
+      <span style={{ fontSize: "0.82rem", color: theme.text }}>
         <span style={{ fontWeight: 700 }}>Expected: </span>
         {formatDateShort(result.date)} ({timeLabel})
       </span>
     );
   }
   return (
-    <span style={{ fontSize: "0.85rem", color: theme.muted }}>
+    <span style={{ fontSize: "0.82rem", color: theme.muted }}>
       {emptyMessage}
     </span>
   );
@@ -247,16 +247,6 @@ function TrackerProgressBar({
   );
 }
 
-function panelStyle(theme: AppTheme): CSSProperties {
-  return {
-    background: theme.panel,
-    border: `1px solid ${theme.border}`,
-    borderRadius: 12,
-    padding: "1.25rem",
-    marginBottom: "1.5rem",
-  };
-}
-
 const bossChipBase: CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
@@ -298,7 +288,7 @@ function missionBtnStyle(theme: AppTheme, active: boolean): CSSProperties {
     ...missionBtnBase,
     background: active ? theme.accentSoft : "transparent",
     color: active ? theme.accentText : theme.text,
-    fontWeight: active ? 700 : 500,
+    fontWeight: active ? 700 : 600,
   };
 }
 
@@ -358,10 +348,10 @@ function CrystalSection({
   const progress = targetCost > 0 ? Math.min(1, count / targetCost) : 0;
 
   return (
-    <div style={panelStyle(theme)}>
+    <div className="panel-card" style={styles.sectionPanel}>
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: "1rem" }}>
         <ItemIcon id={iconId} size={24} />
-        <h2 style={{ margin: 0, fontWeight: 700, color: theme.text, fontSize: "1rem" }}>{title}</h2>
+        <h2 className="tool-panel-title" style={{ margin: 0, color: theme.text }}>{title}</h2>
       </div>
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem", alignItems: "flex-end", marginBottom: "1.25rem" }}>
@@ -560,7 +550,7 @@ function BossMissionCard({
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: "0.75rem" }}>
         <Image src={boss.icon} alt="" width={32} height={32} unoptimized className="pixelated-img" />
         <div>
-          <h3 style={{ margin: 0, fontWeight: 700, color: theme.text, fontSize: "0.85rem" }}>{boss.name}</h3>
+          <h3 style={{ margin: 0, fontWeight: 700, color: theme.text, fontSize: "0.82rem" }}>{boss.name}</h3>
           <div style={{ fontSize: "0.75rem", color: theme.muted }}>
             {total}/{boss.maxPoints} pts • {boss.frequency}
           </div>
@@ -642,8 +632,8 @@ function TraceRestorationTab({ theme }: { theme: AppTheme }) {
       `}</style>
 
       {/* Target & progress */}
-      <div style={panelStyle(theme)}>
-        <h2 style={{ margin: 0, marginBottom: "1rem", fontWeight: 700, color: theme.text, fontSize: "1rem" }}>
+      <div className="panel-card" style={styles.sectionPanel}>
+        <h2 className="tool-panel-title" style={{ marginBottom: "1rem", color: theme.text }}>
           Restoration Target
         </h2>
 
@@ -746,7 +736,7 @@ function TraceRestorationTab({ theme }: { theme: AppTheme }) {
       </div>
 
       {/* Boss mission cards */}
-      <h2 style={{ margin: 0, marginBottom: "0.75rem", fontWeight: 700, color: theme.text, fontSize: "0.9rem" }}>
+      <h2 className="tool-panel-title" style={{ color: theme.text }}>
         Weekly Missions
       </h2>
       <div
@@ -768,7 +758,7 @@ function TraceRestorationTab({ theme }: { theme: AppTheme }) {
         ))}
       </div>
 
-      <h2 style={{ margin: 0, marginBottom: "0.75rem", fontWeight: 700, color: theme.text, fontSize: "0.9rem" }}>
+      <h2 className="tool-panel-title" style={{ color: theme.text }}>
         Monthly Missions
       </h2>
       <div

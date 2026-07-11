@@ -13,6 +13,7 @@ import { formatExpCompact, formatMesoFull } from "../format";
 import { replaceZeroOnDigit } from "../numberInputHandlers";
 import { Field, Toggle } from "../shared-ui";
 import { toolStyles } from "../tool-styles";
+import { dataTableTh } from "../shared-styles";
 import {
   CHECK_BUFF_GROUPS,
   DAILY_EXP_CONTENT,
@@ -860,7 +861,7 @@ function dropdownShadow(theme: AppTheme): string {
 }
 
 function DropdownMessage({ theme, text }: { theme: AppTheme; text: string }) {
-  return <div style={{ padding: "9px 10px", color: theme.muted, fontSize: "0.8rem", fontWeight: 700 }}>{text}</div>;
+  return <div style={{ padding: "9px 10px", color: theme.muted, fontSize: "0.82rem", fontWeight: 700 }}>{text}</div>;
 }
 
 function ExpOverviewPanel({
@@ -893,13 +894,13 @@ function ExpOverviewPanel({
             {selectedMonster ? <MobSprite id={selectedMonster.id} size={96} alt={selectedMonster.name} /> : <span style={{ color: theme.muted, fontSize: "0.75rem", fontWeight: 800 }}>Mob</span>}
           </div>
           <div style={{ minWidth: 0 }}>
-            <div style={{ color: theme.text, fontSize: "0.95rem", fontWeight: 900, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            <div style={{ color: theme.text, fontSize: "0.9rem", fontWeight: 800, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
               {selectedMonster?.name ?? "Select a monster"}
             </div>
-            <div style={{ color: theme.muted, fontSize: "0.76rem", fontWeight: 800, marginTop: 3 }}>
+            <div style={{ color: theme.muted, fontSize: "0.75rem", fontWeight: 800, marginTop: 3 }}>
               Lv. {monster.monsterLevel} | Base {formatMesoFull(monster.monsterBaseExp)} EXP
             </div>
-            <div style={{ color: theme.text, fontSize: "1.1rem", fontWeight: 900, marginTop: 8 }}>
+            <div style={{ color: theme.text, fontSize: "1.15rem", fontWeight: 800, marginTop: 8 }}>
               {formatExpCompact(result.normalExp)}
             </div>
             <div className="tool-field-label" style={{ color: theme.muted, marginTop: 2 }}>
@@ -940,7 +941,7 @@ function MiniMetric({ theme, label, value }: { theme: AppTheme; label: string; v
   return (
     <div style={{ ...innerCardStyle(theme), padding: "0.85rem" }}>
       <div className="tool-field-label" style={{ color: theme.muted, marginBottom: 5 }}>{label}</div>
-      <div style={{ color: theme.text, fontSize: "1.08rem", fontWeight: 900, lineHeight: 1.15 }}>{value}</div>
+      <div style={{ color: theme.text, fontSize: "1.15rem", fontWeight: 800, lineHeight: 1.15 }}>{value}</div>
     </div>
   );
 }
@@ -1133,9 +1134,9 @@ function AllInOneTab({ theme }: { theme: AppTheme }) {
         <div className="exp-overview-grid">
           <div style={{ ...innerCardStyle(theme), padding: 14, minWidth: 0 }}>
             <div className="tool-field-label" style={{ color: theme.muted }}>Final Level</div>
-            <div style={{ color: theme.text, fontSize: "1.7rem", fontWeight: 900, lineHeight: 1.1, marginTop: 4 }}>
+            <div style={{ color: theme.text, fontSize: "1.5rem", fontWeight: 800, lineHeight: 1.1, marginTop: 4 }}>
               Lv. {result.level}
-              <span style={{ fontSize: "0.95rem", fontWeight: 800, color: theme.muted, marginLeft: 8 }}>{formatPercent(result.percent)}%</span>
+              <span style={{ fontSize: "0.9rem", fontWeight: 800, color: theme.muted, marginLeft: 8 }}>{formatPercent(result.percent)}%</span>
             </div>
             <div style={{ color: theme.text, fontSize: "0.9rem", fontWeight: 800, marginTop: 10 }}>
               +{formatExpCompact(result.totalExp)} EXP
@@ -1170,7 +1171,7 @@ function ResultRow({ theme, label, value }: { theme: AppTheme; label: string; va
   return (
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 12, padding: "7px 0", borderBottom: `1px solid ${theme.border}` }}>
       <span className="tool-field-label" style={{ color: theme.muted }}>{label}</span>
-      <span style={{ color: theme.text, fontSize: "0.85rem", fontWeight: 800, textAlign: "right" }}>{value}</span>
+      <span style={{ color: theme.text, fontSize: "0.82rem", fontWeight: 800, textAlign: "right" }}>{value}</span>
     </div>
   );
 }
@@ -1197,7 +1198,7 @@ function ResourcesTab({ theme }: { theme: AppTheme }) {
         <div
           style={{
             color: theme.muted,
-            fontSize: "0.8rem",
+            fontSize: "0.82rem",
             fontWeight: 700,
             lineHeight: 1.45,
             marginTop: 8,
@@ -1213,8 +1214,8 @@ function ResourcesTab({ theme }: { theme: AppTheme }) {
 }
 
 function ResourceTableView({ theme, table }: { theme: AppTheme; table: ResourceTable }) {
-  const thStyle: React.CSSProperties = { padding: "9px 12px", borderBottom: `2px solid ${theme.border}`, color: theme.muted, fontSize: "0.75rem", fontWeight: 800, textAlign: "right", textTransform: "uppercase", background: theme.timerBg };
-  const tdStyle: React.CSSProperties = { padding: "8px 12px", color: theme.text, fontSize: "0.8rem", fontWeight: 700, textAlign: "right" };
+  const thStyle: React.CSSProperties = { ...dataTableTh(theme), textAlign: "right", background: theme.timerBg };
+  const tdStyle: React.CSSProperties = { padding: "8px 12px", color: theme.text, fontSize: "0.82rem", fontWeight: 700, textAlign: "right" };
   const levelTdStyle: React.CSSProperties = { ...tdStyle, textAlign: "left", color: theme.accentText, fontWeight: 800 };
   const maxUnits = table.maxUnits;
   // The wrapper is `timerBg`, so the zebra stripe is the lighter `panel` fill.
@@ -1269,7 +1270,7 @@ function ResourceTableView({ theme, table }: { theme: AppTheme; table: ResourceT
 
 function SectionTitle({ theme, label }: { theme: AppTheme; label: string }) {
   return (
-    <div className="tool-field-label" style={{ color: theme.muted, marginBottom: "12px", fontSize: "0.78rem" }}>
+    <div className="tool-field-label" style={{ color: theme.muted, marginBottom: "12px", fontSize: "0.75rem" }}>
       {label}
     </div>
   );
@@ -1410,7 +1411,7 @@ function TileTooltipLabel({ theme, title, detail }: { theme: AppTheme; title: st
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
       <span>{title}</span>
-      {detail && <span style={{ opacity: 0.7, fontSize: "0.8em", color: theme.muted }}>{detail}</span>}
+      {detail && <span style={{ opacity: 0.7, color: theme.muted }}>{detail}</span>}
     </div>
   );
 }
@@ -1557,7 +1558,7 @@ function buffButtonStyle(theme: AppTheme, selected: boolean): React.CSSPropertie
     color: selected ? theme.accentText : theme.text,
     borderRadius: 8,
     padding: "9px 10px",
-    fontSize: "0.78rem",
+    fontSize: "0.75rem",
     fontWeight: 800,
     textAlign: "left",
     cursor: "pointer",

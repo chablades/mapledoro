@@ -90,7 +90,7 @@ export function AddCharacterNameDialog({
               onChange={() => onNameMode("type")}
               style={{ accentColor: theme.accent }}
             />
-            <span style={{ fontSize: "0.85rem", fontWeight: 700, color: theme.text }}>
+            <span style={{ fontSize: "0.82rem", fontWeight: 700, color: theme.text }}>
               Type a name
             </span>
           </label>
@@ -124,7 +124,7 @@ export function AddCharacterNameDialog({
               onChange={() => onNameMode("select")}
               style={{ accentColor: theme.accent }}
             />
-            <span style={{ fontSize: "0.85rem", fontWeight: 700, color: theme.text }}>
+            <span style={{ fontSize: "0.82rem", fontWeight: 700, color: theme.text }}>
               Select from imported characters
             </span>
           </label>

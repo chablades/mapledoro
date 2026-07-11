@@ -16,6 +16,7 @@ import { Toggle, PanelDivider, ActionButton } from "../shared-ui";
 import { MVP_OPTIONS } from "../shared-data";
 import { BOOM_TIER_COUNT, type MvpTier } from "../star-force/star-force-data";
 import { toolStyles } from "../tool-styles";
+import { controlHeightStyle, dataTableTd, statValueStyle, toggleControlStyle } from "../shared-styles";
 import {
   EVENT_ITEMS,
   EVENT_ITEMS_BY_ID,
@@ -194,7 +195,7 @@ function ItemSelector({
             <div
               style={{
                 padding: "12px",
-                fontSize: "0.8rem",
+                fontSize: "0.82rem",
                 color: theme.muted,
                 textAlign: "center",
               }}
@@ -281,19 +282,8 @@ function PlanSummary({
   panelStyle: React.CSSProperties;
   clearAllButtonStyle: React.CSSProperties;
 }) {
-  const statLabel: React.CSSProperties = {
-    fontSize: "0.75rem",
-    fontWeight: 800,
-    textTransform: "uppercase",
-    letterSpacing: "0.04em",
-    color: theme.muted,
-    marginBottom: "0.15rem",
-  };
-  const statValue: React.CSSProperties = {
-    fontFamily: "var(--font-heading)",
-    fontSize: "1.15rem",
-    color: theme.text,
-  };
+  const statLabel: React.CSSProperties = { color: theme.muted };
+  const statValue = statValueStyle(theme);
   return (
     <div className="fade-in panel-card" style={panelStyle}>
       <div
@@ -305,19 +295,19 @@ function PlanSummary({
         }}
       >
         <div>
-          <div style={statLabel}>Total Expected Cost</div>
+          <div className="tool-field-label" style={statLabel}>Total Expected Cost</div>
           <div style={{ ...statValue, color: theme.accentText }}>
             {formatMesoFull(grandTotal.cost)} mesos
           </div>
         </div>
         <div>
-          <div style={statLabel}>Expected Spares</div>
+          <div className="tool-field-label" style={statLabel}>Expected Spares</div>
           <div style={{ ...statValue, color: grandTotal.booms > 0 ? statusText(theme, "danger") : theme.text }}>
             {grandTotal.booms === 0 ? "0" : grandTotal.booms.toFixed(1)}
           </div>
         </div>
         <div>
-          <div style={statLabel}>Items</div>
+          <div className="tool-field-label" style={statLabel}>Items</div>
           <div style={statValue}>{entryCount}</div>
         </div>
         <ConfirmButton
@@ -427,7 +417,7 @@ function PlanRowCells({
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontSize: "0.85rem",
+    fontSize: "0.82rem",
     fontWeight: 700,
     color: theme.muted,
     background: theme.timerBg,
@@ -520,13 +510,9 @@ function CharacterPlanPanel({
     whiteSpace: "nowrap",
   };
   const tdStyle: React.CSSProperties = {
-    padding: "6px 12px",
-    fontSize: "0.8rem",
-    fontWeight: 700,
-    color: theme.text,
+    ...dataTableTd(theme),
     textAlign: "right",
     whiteSpace: "nowrap",
-    borderBottom: `1px solid ${theme.border}`,
   };
 
   return (
@@ -541,7 +527,7 @@ function CharacterPlanPanel({
       >
         <CharacterAvatarBox theme={theme} record={record} size={42} />
         <div>
-          <h2 style={{ fontSize: "0.82rem", fontWeight: 800, color: theme.text, margin: 0 }}>
+          <h2 style={{ fontSize: "0.9rem", fontWeight: 800, color: theme.text, margin: 0 }}>
             {name}
           </h2>
           {record && (
@@ -553,7 +539,7 @@ function CharacterPlanPanel({
         <div
           style={{
             marginLeft: "auto",
-            fontSize: "0.78rem",
+            fontSize: "0.75rem",
             fontWeight: 700,
             color: theme.accentText,
           }}
@@ -619,15 +605,6 @@ function CharacterPlanPanel({
 }
 
 // ── Event settings ───────────────────────────────────────────────────────────
-
-// Pin toggles, selects, and form controls to one height so the rows line up
-// (same control height as the star force calculator).
-const controlHeightStyle: React.CSSProperties = { height: 34, boxSizing: "border-box" };
-const toggleControlStyle: React.CSSProperties = {
-  ...controlHeightStyle,
-  display: "flex",
-  alignItems: "center",
-};
 
 function EventSettingsSection({
   theme, costDiscount, boomReduction, starCatch, safeguard, mvp, boomTier,
@@ -695,7 +672,7 @@ function EventSettingsSection({
           aria-valuetext={`Tier ${boomTier}`}
           style={{ flex: 1, minWidth: 140, accentColor: theme.accent, cursor: "pointer" }}
         />
-        <span style={{ fontSize: "0.8rem", fontWeight: 800, color: theme.text, minWidth: 52 }}>
+        <span style={{ fontSize: "0.82rem", fontWeight: 800, color: theme.text, minWidth: 52 }}>
           Tier {boomTier}
         </span>
       </div>
@@ -747,7 +724,7 @@ function AddItemForm({
           <select className="tool-select" value={form.currentStar} onChange={(e) => dispatchForm({ type: "setCurrentStar", value: Number(e.target.value) })} style={{ ...styles.selectStyle, width: 80 }}>
             {Array.from({ length: itemMaxStar }, (_, i) => i).map((s) => <option key={s} value={s}>{s}★</option>)}
           </select>
-          <span style={{ color: theme.muted, fontWeight: 700, fontSize: "0.85rem" }}>→</span>
+          <span style={{ color: theme.muted, fontWeight: 700, fontSize: "0.82rem" }}>→</span>
           <select className="tool-select" value={form.targetStar} onChange={(e) => dispatchForm({ type: "setTargetStar", value: Number(e.target.value) })} style={{ ...styles.selectStyle, width: 80 }}>
             {Array.from({ length: itemMaxStar }, (_, i) => i + 1).map((s) => <option key={s} value={s}>{s}★</option>)}
           </select>
@@ -808,7 +785,7 @@ export default function EventPlannerWorkspace({ theme }: { theme: AppTheme }) {
 
   // ── Styles ──
 
-  const panelStyle: React.CSSProperties = { ...styles.sectionPanel, borderRadius: "14px" };
+  const panelStyle: React.CSSProperties = styles.sectionPanel;
 
   const clearAllButtonStyle: React.CSSProperties = {
     padding: "6px 14px", borderRadius: "8px", fontSize: "0.75rem", fontWeight: 700,

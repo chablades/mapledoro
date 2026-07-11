@@ -65,7 +65,7 @@ function VoucherInput({
           onVouchersKeptChange(v);
         }}
         className="tool-input"
-        style={{ ...inputStyle, width: "48px", textAlign: "center", padding: "4px 6px", fontSize: "0.78rem", cursor: isActive ? "text" : "not-allowed" }}
+        style={{ ...inputStyle, width: "48px", textAlign: "center", padding: "4px 6px", fontSize: "0.75rem", cursor: isActive ? "text" : "not-allowed" }}
       />
       <span style={{ fontSize: "0.75rem", fontWeight: 600, color: theme.muted }}>
         / {activeDiff.voucherCount} ({activeDiff.voucherValue} frags ea.)
@@ -102,20 +102,14 @@ function AstraConfigSection({
   onStartDateChange: (v: string) => void;
 }) {
   const uid = useId();
-  const fieldLabel: React.CSSProperties = {
-    display: "block",
-    fontSize: "0.78rem",
-    fontWeight: 700,
-    color: theme.text,
-    marginBottom: "4px",
-  };
+  const fieldLabel: React.CSSProperties = { color: theme.muted };
 
   return (
     <section className="fade-in panel-card" style={sectionPanel}>
       <h2 className="tool-panel-title" style={{ color: theme.text }}>Configuration</h2>
       <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem", alignItems: "flex-end" }}>
         <div style={{ flex: "1 1 220px" }}>
-          <label htmlFor={`${uid}-mission`} style={fieldLabel}>Current Mission</label>
+          <label className="tool-field-label" htmlFor={`${uid}-mission`} style={fieldLabel}>Current Mission</label>
           <select
             id={`${uid}-mission`}
             className="tool-select"
@@ -136,7 +130,7 @@ function AstraConfigSection({
         </div>
 
         <div style={{ flex: "0 1 130px" }}>
-          <label htmlFor={`${uid}-traces`} style={fieldLabel}>Current Traces</label>
+          <label className="tool-field-label" htmlFor={`${uid}-traces`} style={fieldLabel}>Current Traces</label>
           <input
             id={`${uid}-traces`}
             className="tool-input"
@@ -157,7 +151,7 @@ function AstraConfigSection({
         </div>
 
         <div style={{ flex: "0 1 130px" }}>
-          <label htmlFor={`${uid}-frags`} style={fieldLabel}>Current Fragments</label>
+          <label className="tool-field-label" htmlFor={`${uid}-frags`} style={fieldLabel}>Current Fragments</label>
           <input
             id={`${uid}-frags`}
             className="tool-input"
@@ -176,7 +170,7 @@ function AstraConfigSection({
         </div>
 
         <div style={{ flex: "0 1 160px" }}>
-          <label htmlFor={`${uid}-start`} style={fieldLabel}>Start Date (UTC)</label>
+          <label className="tool-field-label" htmlFor={`${uid}-start`} style={fieldLabel}>Start Date (UTC)</label>
           <input
             id={`${uid}-start`}
             className="tool-input"
@@ -219,20 +213,14 @@ function AstraDailyQuestSection({
   onFutureQuestIdChange: (v: string) => void;
 }) {
   const uid = useId();
-  const fieldLabel: React.CSSProperties = {
-    display: "block",
-    fontSize: "0.78rem",
-    fontWeight: 700,
-    color: theme.text,
-    marginBottom: "4px",
-  };
+  const fieldLabel: React.CSSProperties = { color: theme.muted };
 
   return (
     <section className="fade-in panel-card" style={sectionPanel}>
       <h2 className="tool-panel-title" style={{ color: theme.text }}>Daily Quests (Erion&apos;s Fragments)</h2>
       <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem", alignItems: "flex-end" }}>
         <div style={{ flex: "1 1 250px" }}>
-          <label htmlFor={`${uid}-quest`} style={fieldLabel}>Highest Daily Quest</label>
+          <label className="tool-field-label" htmlFor={`${uid}-quest`} style={fieldLabel}>Highest Daily Quest</label>
           <select
             id={`${uid}-quest`}
             className="tool-select"
@@ -249,7 +237,7 @@ function AstraDailyQuestSection({
         </div>
 
         <div style={{ flex: "0 1 100px" }}>
-          <label htmlFor={`${uid}-days`} style={fieldLabel}>Days / Week</label>
+          <label className="tool-field-label" htmlFor={`${uid}-days`} style={fieldLabel}>Days / Week</label>
           <input
             id={`${uid}-days`}
             className="tool-input"
@@ -271,12 +259,12 @@ function AstraDailyQuestSection({
       </div>
 
       <div style={{ marginTop: "1rem", paddingTop: "0.75rem", borderTop: `1px solid ${theme.border}` }}>
-        <h3 style={{ fontSize: "0.78rem", fontWeight: 700, color: theme.muted, margin: "0 0 6px" }}>
+        <h3 style={{ fontSize: "0.75rem", fontWeight: 700, color: theme.muted, margin: "0 0 6px" }}>
           Future Quest Upgrade (optional)
         </h3>
         <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem", alignItems: "flex-end" }}>
           <div style={{ flex: "0 1 160px" }}>
-            <label htmlFor={`${uid}-upgrade-date`} style={fieldLabel}>Upgrade Date</label>
+            <label className="tool-field-label" htmlFor={`${uid}-upgrade-date`} style={fieldLabel}>Upgrade Date</label>
             <input
               id={`${uid}-upgrade-date`}
               className="tool-input"
@@ -287,7 +275,7 @@ function AstraDailyQuestSection({
             />
           </div>
           <div style={{ flex: "1 1 250px" }}>
-            <label htmlFor={`${uid}-new-quest`} style={fieldLabel}>New Quest</label>
+            <label className="tool-field-label" htmlFor={`${uid}-new-quest`} style={fieldLabel}>New Quest</label>
             <select
               id={`${uid}-new-quest`}
               className="tool-select"
@@ -329,7 +317,7 @@ function AstraProgressSection({
     <>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "8px" }}>
         <h2 className="tool-panel-title" style={{ margin: 0, color: theme.text }}>Traces Progress</h2>
-        <div style={{ fontSize: "0.78rem", fontWeight: 800, color: theme.accentText }}>
+        <div style={{ fontSize: "0.75rem", fontWeight: 800, color: theme.accentText }}>
           {tracesCompleted.toLocaleString()} / {ASTRA_TOTAL_TRACES.toLocaleString()}
         </div>
       </div>
@@ -342,7 +330,7 @@ function AstraProgressSection({
       <div style={{ marginTop: "1rem" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "8px" }}>
           <h2 className="tool-panel-title" style={{ margin: 0, color: theme.text }}>Fragments Progress</h2>
-          <div style={{ fontSize: "0.78rem", fontWeight: 800, color: theme.accentText }}>
+          <div style={{ fontSize: "0.75rem", fontWeight: 800, color: theme.accentText }}>
             {fragmentsCompleted.toLocaleString()} / {ASTRA_TOTAL_FRAGMENTS.toLocaleString()}
           </div>
         </div>

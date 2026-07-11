@@ -23,6 +23,7 @@ import { formatMeso, formatMesoFull } from "../format";
 import { Toggle, PillGroup, ActionButton } from "../shared-ui";
 import { MVP_OPTIONS } from "../shared-data";
 import { toolStyles } from "../tool-styles";
+import { controlHeightStyle, dataTableTd, dataTableTh, statValueStyle, toggleControlStyle } from "../shared-styles";
 
 // -- Helpers ------------------------------------------------------------------
 
@@ -55,24 +56,10 @@ const HEAVY_RUN_SECONDS = 2;
 // to leave the frame budget alone.
 const FRAME_BUDGET_MS = 24;
 
-// Shared height so textboxes, dropdowns, and toggles line up (slider excluded).
-const CONTROL_HEIGHT = 34;
-
 // Every input and select is the same width, and every row's label sits in the
 // same gutter (`.sf-label`), so the controls line up down a column and across
 // both columns.
 const CONTROL_WIDTH = 140;
-
-const controlSizeStyle: React.CSSProperties = {
-  height: CONTROL_HEIGHT,
-  boxSizing: "border-box",
-};
-
-const toggleControlStyle: React.CSSProperties = {
-  ...controlSizeStyle,
-  display: "flex",
-  alignItems: "center",
-};
 
 // Same gap as an input row, so a row that opens with `.sf-label` starts its
 // first control on the same vertical line as the textboxes above it.
@@ -89,30 +76,8 @@ const previewBarBase: React.CSSProperties = {
   display: "flex",
   flexWrap: "wrap",
   gap: "1.25rem",
-  fontSize: "0.78rem",
+  fontSize: "0.75rem",
   fontWeight: 700,
-};
-
-const optionsPanelBase: React.CSSProperties = {
-  padding: "1.25rem",
-  marginBottom: "1.25rem",
-  borderRadius: "14px",
-  display: "flex",
-  flexDirection: "column",
-  gap: "1rem",
-};
-
-const panelCardBase: React.CSSProperties = {
-  padding: "1.25rem",
-  marginBottom: "1.25rem",
-  borderRadius: "14px",
-};
-
-const panelTitleStyle: React.CSSProperties = {
-  fontFamily: "var(--font-heading)",
-  fontSize: "1rem",
-  fontWeight: 400,
-  margin: 0,
 };
 
 // -- Sub-components -----------------------------------------------------------
@@ -151,26 +116,12 @@ function SimulationPanel({
 }) {
   const boomRed = statusText(theme, "danger");
   const statStyle: React.CSSProperties = { flex: "1 1 140px" };
-  const labelStyle: React.CSSProperties = {
-    fontSize: "0.75rem",
-    fontWeight: 800,
-    textTransform: "uppercase" as const,
-    letterSpacing: "0.04em",
-    color: theme.muted,
-    marginBottom: "0.2rem",
-  };
-  const valueStyle: React.CSSProperties = {
-    fontFamily: "var(--font-heading)",
-    fontSize: "1.15rem",
-    color: theme.text,
-  };
+  const labelStyle: React.CSSProperties = { color: theme.muted };
+  const valueStyle = statValueStyle(theme);
 
   return (
-    <div
-      className="fade-in panel-card"
-      style={{ ...panelCardBase, background: theme.panel, border: `1px solid ${theme.border}` }}
-    >
-      <h2 style={{ ...panelTitleStyle, color: theme.text, marginBottom: "0.25rem" }}>
+    <div className="fade-in panel-card" style={toolStyles(theme).sectionPanel}>
+      <h2 className="tool-panel-title" style={{ color: theme.text, marginBottom: "0.25rem" }}>
         {startStar}★ → {targetStar}★ Simulation
       </h2>
       <div style={{ fontSize: "0.75rem", fontWeight: 600, color: theme.muted, marginBottom: "1rem" }}>
@@ -179,27 +130,27 @@ function SimulationPanel({
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem", marginBottom: "1rem" }}>
         <div style={statStyle}>
-          <div style={labelStyle}>Mean Cost</div>
+          <div className="tool-field-label" style={labelStyle}>Mean Cost</div>
           <div style={{ ...valueStyle, color: theme.accentText }}>{formatMeso(sim.meanCost)}</div>
           <div style={{ fontSize: "0.75rem", color: theme.muted, fontWeight: 600 }}>
             {formatMesoFull(sim.meanCost)} mesos
           </div>
         </div>
         <div style={statStyle}>
-          <div style={labelStyle}>Median Cost</div>
+          <div className="tool-field-label" style={labelStyle}>Median Cost</div>
           <div style={valueStyle}>{formatMeso(sim.medianCost)}</div>
           <div style={{ fontSize: "0.75rem", color: theme.muted, fontWeight: 600 }}>
             {formatMesoFull(sim.medianCost)} mesos
           </div>
         </div>
         <div style={statStyle}>
-          <div style={labelStyle}>Mean Booms</div>
+          <div className="tool-field-label" style={labelStyle}>Mean Booms</div>
           <div style={{ ...valueStyle, color: sim.meanBooms > 0 ? boomRed : theme.text }}>
             {sim.meanBooms === 0 ? "0" : sim.meanBooms.toFixed(1)}
           </div>
         </div>
         <div style={statStyle}>
-          <div style={labelStyle}>Median Booms</div>
+          <div className="tool-field-label" style={labelStyle}>Median Booms</div>
           <div style={{ ...valueStyle, color: sim.medianBooms > 0 ? boomRed : theme.text }}>
             {sim.medianBooms}
           </div>
@@ -215,8 +166,8 @@ function SimulationPanel({
           ["Worst Case", sim.maxCost],
         ] as const).map(([label, value]) => (
           <div key={label} style={statStyle}>
-            <div style={labelStyle}>{label}</div>
-            <div style={{ fontSize: "0.85rem", fontWeight: 700, color: theme.text }}>
+            <div className="tool-field-label" style={labelStyle}>{label}</div>
+            <div style={{ fontSize: "0.82rem", fontWeight: 700, color: theme.text }}>
               {formatMeso(value)}
             </div>
           </div>
@@ -418,7 +369,7 @@ function HistogramPanel({ theme, sim }: { theme: AppTheme; sim: SimulationResult
   return (
     <div
       className="fade-in panel-card"
-      style={{ ...panelCardBase, background: theme.panel, border: `1px solid ${theme.border}` }}
+      style={toolStyles(theme).sectionPanel}
     >
       <div
         style={{
@@ -430,7 +381,7 @@ function HistogramPanel({ theme, sim }: { theme: AppTheme; sim: SimulationResult
           marginBottom: "1rem",
         }}
       >
-        <h2 style={{ ...panelTitleStyle, color: theme.text }}>
+        <h2 className="tool-panel-title" style={{ margin: 0, color: theme.text }}>
           {metric === "cost" ? "Cost Distribution" : "Boom Distribution"}
         </h2>
         <PillGroup theme={theme} options={METRIC_OPTIONS} value={metric} onChange={setMetric} />
@@ -445,24 +396,8 @@ function HistogramPanel({ theme, sim }: { theme: AppTheme; sim: SimulationResult
 
 function BreakdownTable({ theme, results }: { theme: AppTheme; results: StarResult[] }) {
   const boomRed = statusText(theme, "danger");
-  const thStyle: React.CSSProperties = {
-    padding: "8px 10px",
-    fontSize: "0.75rem",
-    fontWeight: 800,
-    textTransform: "uppercase",
-    letterSpacing: "0.04em",
-    color: theme.muted,
-    textAlign: "right",
-    borderBottom: `2px solid ${theme.border}`,
-  };
-  const tdStyle: React.CSSProperties = {
-    padding: "8px 10px",
-    fontSize: "0.8rem",
-    fontWeight: 700,
-    color: theme.text,
-    textAlign: "right",
-    borderBottom: `1px solid ${theme.border}`,
-  };
+  const thStyle: React.CSSProperties = { ...dataTableTh(theme), textAlign: "right" };
+  const tdStyle: React.CSSProperties = { ...dataTableTd(theme), textAlign: "right" };
 
   return (
     <div
@@ -470,11 +405,10 @@ function BreakdownTable({ theme, results }: { theme: AppTheme; results: StarResu
       style={{
         background: theme.panel,
         border: `1px solid ${theme.border}`,
-        borderRadius: "14px",
         overflow: "hidden",
       }}
     >
-      <h2 style={{ ...panelTitleStyle, color: theme.text, padding: "1.25rem 1.25rem 0.75rem" }}>
+      <h2 className="tool-panel-title" style={{ margin: 0, color: theme.text, padding: "1.25rem 1.25rem 0.75rem" }}>
         Per-Star Breakdown
       </h2>
       <div style={{ overflowX: "auto" }}>
@@ -677,11 +611,14 @@ function StarForceForm({
     <div
       className="fade-in panel-card"
       style={{
-        ...optionsPanelBase,
-        background: theme.panel,
-        border: `1px solid ${theme.border}`,
+        ...toolStyles(theme).sectionPanel,
+        display: "flex",
+        flexDirection: "column",
+        gap: "1rem",
       }}
     >
+      {/* The panel's flex gap provides the spacing below, so the title's own margin is zeroed. */}
+      <h2 className="tool-panel-title" style={{ margin: 0, color: theme.text }}>Star Force Settings</h2>
       <div className="sf-inputs-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
         <InputRow label="Item Level" theme={theme}>
           <input
@@ -801,7 +738,7 @@ function StarForceForm({
             aria-valuetext={`Tier ${calc.boomTier}`}
             style={{ width: 160, accentColor: theme.accent, cursor: "pointer" }}
           />
-          <span style={{ fontSize: "0.8rem", fontWeight: 800, color: theme.text, minWidth: 52 }}>
+          <span style={{ fontSize: "0.82rem", fontWeight: 800, color: theme.text, minWidth: 52 }}>
             Tier {calc.boomTier}
           </span>
         </div>
@@ -958,8 +895,8 @@ export default function StarForceWorkspace({ theme }: { theme: AppTheme }) {
   };
 
   const styles = toolStyles(theme);
-  const inputStyle: React.CSSProperties = { ...styles.inputStyle, ...controlSizeStyle };
-  const selectStyle: React.CSSProperties = { ...styles.selectStyle, ...controlSizeStyle };
+  const inputStyle: React.CSSProperties = { ...styles.inputStyle, ...controlHeightStyle };
+  const selectStyle: React.CSSProperties = { ...styles.selectStyle, ...controlHeightStyle };
 
   const stale = phase === "done" && runKey !== settingsKey;
   const showResults = sim !== null && snapshot !== null;
@@ -971,9 +908,7 @@ export default function StarForceWorkspace({ theme }: { theme: AppTheme }) {
   })();
 
   const emptyNoteStyle: React.CSSProperties = {
-    ...panelCardBase,
-    background: theme.panel,
-    border: `1px solid ${theme.border}`,
+    ...styles.sectionPanel,
     fontSize: "0.82rem",
     fontWeight: 600,
     color: theme.muted,

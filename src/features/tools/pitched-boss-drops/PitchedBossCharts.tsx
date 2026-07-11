@@ -1,6 +1,6 @@
 "use client";
 
-import { panelStyle } from "./pitched-boss-styles";
+import { toolStyles } from "../tool-styles";
 import { useEffect, useState, type ComponentType } from "react";
 import type { AppTheme } from "../../../components/themes";
 import { chartSeriesColor } from "../../../components/chartColors";
@@ -133,13 +133,6 @@ function lineOptions(theme: AppTheme) {
 /*  Component                                                          */
 /* ------------------------------------------------------------------ */
 
-const chartTitleStyle = (theme: AppTheme): React.CSSProperties => ({
-  fontWeight: 700,
-  color: theme.text,
-  margin: "0 0 0.85rem",
-  fontSize: "0.95rem",
-});
-
 export default function PitchedBossCharts({
   theme,
   drops,
@@ -184,14 +177,14 @@ export default function PitchedBossCharts({
 
   return (
     <>
-      <div style={panelStyle(theme)}>
-        <h2 style={chartTitleStyle(theme)}>Drops by Item</h2>
+      <div className="panel-card" style={toolStyles(theme).sectionPanel}>
+        <h2 className="tool-panel-title" style={{ color: theme.text }}>Drops by Item</h2>
         <div style={{ height: barHeight }}>
           <Bar data={buildItemBarData(drops, theme)} options={barOptions(theme)} />
         </div>
       </div>
-      <div style={panelStyle(theme)}>
-        <h2 style={chartTitleStyle(theme)}>Monthly Drops by Character</h2>
+      <div className="panel-card" style={toolStyles(theme).sectionPanel}>
+        <h2 className="tool-panel-title" style={{ color: theme.text }}>Monthly Drops by Character</h2>
         <Line data={buildMonthlyData(drops, theme)} options={lineOptions(theme)} />
       </div>
     </>

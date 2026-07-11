@@ -21,7 +21,7 @@ function reminderItemStyle(
     cursor: "pointer",
     background: done ? theme.accentSoft : theme.timerBg,
     border: `1px solid ${done ? theme.accent : theme.border}`,
-    fontSize: "0.78rem",
+    fontSize: "0.75rem",
     fontWeight: 700,
     color: done ? theme.accentText : theme.text,
     userSelect: "none",
@@ -52,7 +52,7 @@ function ReminderCheckItem({
         {"itemId" in def ? (
           <ItemIcon id={def.itemId} size={16} />
         ) : (
-          <span style={{ fontSize: "0.85rem" }}>{def.icon}</span>
+          <span style={{ fontSize: "0.82rem" }}>{def.icon}</span>
         )}
         <span style={{ textDecoration: done ? "line-through" : "none" }}>
           {def.title}
