@@ -4,6 +4,7 @@ import { resolveDisplayJobName } from "../../setup/data/nexonJobMapping";
 import type { SearchPaneActions, SearchPaneModel } from "../paneModels";
 import { secondaryButtonStyle } from "../components/uiStyles";
 import CharacterAvatar from "../components/CharacterAvatar";
+import RefreshSpinnerIcon from "../components/RefreshSpinnerIcon";
 import { statusText } from "../../../../components/statusColors";
 
 function navBackButtonColorStyle(theme: SearchPaneModel["theme"]): CSSProperties {
@@ -213,7 +214,14 @@ export default function CharacterProfileScreen({
           )}
           {!profile.isAddingCharacter && !profile.setupStepActive && (
             <p style={{ margin: 0, marginTop: "0.4rem", fontSize: "0.78rem", color: isStale ? statusText(theme, "warning") : theme.muted, fontWeight: 700, lineHeight: 1.3 }}>
-              {profile.isRefreshing && <span className="char-refresh-spin" style={{ color: theme.muted }}>↻ </span>}
+              {profile.isRefreshing && (
+                <RefreshSpinnerIcon
+                  aria-label="Refreshing"
+                  color={theme.muted}
+                  className="char-refresh-spin"
+                  style={{ marginRight: "0.2rem", verticalAlign: "middle" }}
+                />
+              )}
               {statusPrefix}Updated {formattedDate}
             </p>
           )}

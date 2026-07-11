@@ -13,6 +13,7 @@ import type { PreviewPaneActions, PreviewPaneModel } from "../paneModels";
 import type { AppTheme } from "../../../../components/themes";
 import { statusText } from "../../../../components/statusColors";
 import CharacterAvatar from "../components/CharacterAvatar";
+import RefreshSpinnerIcon from "../components/RefreshSpinnerIcon";
 
 const rowStyle: CSSProperties = { display: "grid", gridTemplateColumns: "repeat(auto-fill, 190px)", justifyContent: "center", alignItems: "start", gap: "0.6rem", width: "100%" };
 
@@ -123,7 +124,14 @@ function DirectoryCharacterCard({ character, showWorld, isUiLocked, theme, refre
         />
         <span style={{ fontSize: "0.78rem", fontWeight: 800, lineHeight: 1.15, color: theme.text, textAlign: "center", maxWidth: "100%", whiteSpace: "nowrap" }}>
           {character.characterName}
-          {isRefreshing && <span aria-label="Refreshing" className="char-refresh-spin" style={{ color: theme.muted, marginLeft: "0.2rem" }}>↻</span>}
+          {isRefreshing && (
+            <RefreshSpinnerIcon
+              aria-label="Refreshing"
+              color={theme.muted}
+              className="char-refresh-spin"
+              style={{ marginLeft: "0.2rem", verticalAlign: "middle" }}
+            />
+          )}
           {stale && <span aria-label="Data outdated" style={{ color: statusText(theme, "warning"), marginLeft: "0.2rem" }}>⚠</span>}
         </span>
         <span style={{ fontSize: "0.75rem", fontWeight: 700, lineHeight: 1.1, color: theme.muted, textAlign: "center" }}>

@@ -62,7 +62,7 @@ function getActiveScreenClassName(
   activeScreenId: PreviewScreenId,
   setupStepDirection: PreviewPaneModel["setup"]["setupStepDirection"],
 ) {
-  if (activeScreenId === "directory" || activeScreenId === "profile-overview" || activeScreenId === "none") {
+  if (activeScreenId === "directory" || activeScreenId === "none") {
     return "setup-step-content directory-step-content";
   }
   const directionClass = setupStepDirection === "forward" ? "step-forward" : "step-backward";

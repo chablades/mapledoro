@@ -1732,7 +1732,6 @@ export function useCharacterSetupController() {
         setSetupMode("search");
         setSetupFlowStarted(true);
         setShowCharacterDirectory(false);
-        setSetupStepDirection("backward");
         setActiveFlowId(requiredFlowId);
         setCompletedFlowIds([requiredFlowId]);
         setShowFlowOverview(false);
@@ -1750,6 +1749,7 @@ export function useCharacterSetupController() {
         });
         setStepValidityById({});
         transitions.setSetupPanelVisible(true);
+        transitions.playSearchFadeIn();
         setIsSwitchingToProfile(false);
         immediateUiLockRef.current = false;
       }, CHARACTERS_TRANSITION_MS.fast);

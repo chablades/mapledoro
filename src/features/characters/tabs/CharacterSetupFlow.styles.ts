@@ -8,9 +8,9 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
           to { transform: rotate(360deg); }
         }
         .char-refresh-spin {
-          display: inline-block;
           animation: char-spin 0.9s linear infinite;
-          line-height: 1;
+          transform-box: fill-box;
+          transform-origin: center;
         }
 
         :root {
