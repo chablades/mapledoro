@@ -78,6 +78,7 @@ export interface SearchPaneActions {
   resumeDraft: (characterKey: string) => void;
   clearDraft: (characterKey: string) => void;
   setCurrentAsMain: () => void;
+  removeCurrentAsMain: () => void;
   toggleCurrentChampion: () => void;
   removeCurrentCharacter: () => void;
   searchSubmit: (event: React.FormEvent<HTMLFormElement>) => void;

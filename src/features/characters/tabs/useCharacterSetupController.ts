@@ -1852,6 +1852,13 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
     );
   }, []);
 
+  const removeMainCharacter = useCallback((character: StoredCharacterRecord) => {
+    setMainCharacterKeyByWorld((prev) => {
+      if (getMainKeyForWorld(prev, character.worldID) !== toCharacterKey(character)) return prev;
+      return setMainKeyForWorld(prev, character.worldID, null);
+    });
+  }, []);
+
   const toggleChampionCharacter = useCallback((character: StoredCharacterRecord) => {
     const key = toCharacterKey(character);
     const worldId = character.worldID;
@@ -2201,6 +2208,7 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
       startFreshSetup,
       finishSetupFlow,
       setMainCharacter,
+      removeMainCharacter,
       toggleChampionCharacter,
       switchToCharacterProfile,
       toggleCharacterDirectory,

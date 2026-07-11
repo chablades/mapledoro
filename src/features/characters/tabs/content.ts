@@ -40,6 +40,7 @@ export const CHARACTERS_COPY = {
   },
   characterProfileActions: {
     setMainButton: "Set main",
+    removeMainButton: "Remove main",
     setChampionButton: "Set champion",
     removeChampionButton: "Remove champion",
     removeCharacterButton: "Remove",

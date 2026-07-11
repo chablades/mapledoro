@@ -160,6 +160,10 @@ export default function CharacterSetupFlow({ theme, initialCharacterName, initia
       if (!confirmedStoredCharacter) return;
       actions.setMainCharacter(confirmedStoredCharacter);
     },
+    removeCurrentAsMain: () => {
+      if (!confirmedStoredCharacter) return;
+      actions.removeMainCharacter(confirmedStoredCharacter);
+    },
     toggleCurrentChampion: () => {
       if (!confirmedStoredCharacter) return;
       actions.toggleChampionCharacter(confirmedStoredCharacter);

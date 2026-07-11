@@ -54,22 +54,22 @@ export default function CharacterProfileActionsScreen({
             boxShadow: "0 8px 20px rgba(0,0,0,0.10)",
           }}
         >
-          {!profile.isCurrentMainCharacter && (
-            <button
-              className="profile-action-button tap-target-44"
-              type="button"
-              disabled={shell.isUiLocked}
-              onClick={actions.setCurrentAsMain}
-              style={{
-                ...secondaryButtonStyle(theme, "0.28rem 0.62rem"),
-                borderRadius: "999px",
-                width: "fit-content",
-                fontSize: "0.78rem",
-              }}
-            >
-              {CHARACTERS_COPY.characterProfileActions.setMainButton}
-            </button>
-          )}
+          <button
+            className="profile-action-button tap-target-44"
+            type="button"
+            disabled={shell.isUiLocked}
+            onClick={profile.isCurrentMainCharacter ? actions.removeCurrentAsMain : actions.setCurrentAsMain}
+            style={{
+              ...secondaryButtonStyle(theme, "0.28rem 0.62rem"),
+              borderRadius: "999px",
+              width: "fit-content",
+              fontSize: "0.78rem",
+            }}
+          >
+            {profile.isCurrentMainCharacter
+              ? CHARACTERS_COPY.characterProfileActions.removeMainButton
+              : CHARACTERS_COPY.characterProfileActions.setMainButton}
+          </button>
           {(profile.isCurrentChampionCharacter || profile.canSetCurrentChampion) && (
             <button
               className="profile-action-button tap-target-44"
