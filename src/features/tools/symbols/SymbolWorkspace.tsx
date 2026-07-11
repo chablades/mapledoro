@@ -114,7 +114,6 @@ function SymbolCardHeader({
           style={{
             fontFamily: "var(--font-heading)",
             fontSize: "0.9rem",
-            fontWeight: 400,
             margin: 0,
             color: theme.text,
           }}
@@ -197,7 +196,7 @@ function SymbolLevelControls({
     ...inputStyle,
     textAlign: "center",
     padding: "4px 6px",
-    fontSize: "0.78rem",
+    fontSize: "0.75rem",
   };
 
   return (
@@ -253,7 +252,7 @@ function SymbolLevelControls({
               }}
               style={{ ...compactInput, width: "64px" }}
             />
-            <span style={{ fontSize: "0.78rem", fontWeight: 700, color: theme.muted }}>
+            <span style={{ fontSize: "0.75rem", fontWeight: 700, color: theme.muted }}>
               / {levelMax.toLocaleString()}
             </span>
           </div>
@@ -556,7 +555,7 @@ function OverallProgressPanel({
         <h2 className="tool-panel-title" style={{ margin: 0, color: theme.text }}>Overall Progress</h2>
         <div
           style={{
-            fontSize: "0.78rem",
+            fontSize: "0.75rem",
             fontWeight: 800,
             color: theme.accentText,
           }}
@@ -612,7 +611,7 @@ function CompletionSummaryPanel({
       className="fade-in panel-card"
       style={{ ...sectionPanel, marginBottom: "1.25rem" }}
     >
-      <h2 className="tool-panel-title" style={{ fontSize: "1.15rem", marginBottom: "1rem", color: theme.text }}>
+      <h2 className="tool-panel-title" style={{ marginBottom: "1rem", color: theme.text }}>
         Completion Summary
       </h2>
 
@@ -636,7 +635,7 @@ function CompletionSummaryPanel({
       {!noneTracked && incomplete.length === 0 && (
         <div
           style={{
-            fontSize: "0.88rem",
+            fontSize: "0.9rem",
             fontWeight: 700,
             color: theme.accentText,
             textAlign: "center",
@@ -883,7 +882,6 @@ function CompletionTimelineChart({
       <h2
         className="tool-panel-title"
         style={{
-          fontSize: "1.15rem",
           color: theme.text,
           marginBottom: "1rem",
           paddingBottom: "0.8rem",

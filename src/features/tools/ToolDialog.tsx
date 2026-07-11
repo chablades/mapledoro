@@ -141,7 +141,7 @@ export function ToolDialog({
           id={titleId}
           style={{
             fontFamily: "var(--font-heading)",
-            fontSize: "1.1rem",
+            fontSize: "1.15rem",
             color: theme.text,
             marginBottom: description ? "0.25rem" : "1rem",
           }}
@@ -149,7 +149,7 @@ export function ToolDialog({
           {title}
         </div>
         {description && (
-          <div style={{ fontSize: "0.78rem", color: theme.muted, marginBottom: "1rem" }}>
+          <div style={{ fontSize: "0.75rem", color: theme.muted, marginBottom: "1rem" }}>
             {description}
           </div>
         )}

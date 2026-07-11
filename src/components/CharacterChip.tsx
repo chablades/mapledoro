@@ -6,9 +6,6 @@ interface CharacterChipProps {
   characterImgURL: string;
   characterName: string;
   subtitle: string;
-  nameFontSize?: string;
-  subtitleFontSize?: string;
-  subtitleFontWeight?: number;
 }
 
 export default function CharacterChip({
@@ -16,9 +13,6 @@ export default function CharacterChip({
   characterImgURL,
   characterName,
   subtitle,
-  nameFontSize = "0.9rem",
-  subtitleFontSize = "0.75rem",
-  subtitleFontWeight = 600,
 }: CharacterChipProps) {
   return (
     <>
@@ -48,7 +42,7 @@ export default function CharacterChip({
         <div
           style={{
             fontWeight: 800,
-            fontSize: nameFontSize,
+            fontSize: "0.9rem",
             color: theme.text,
             overflow: "hidden",
             textOverflow: "ellipsis",
@@ -59,9 +53,9 @@ export default function CharacterChip({
         </div>
         <div
           style={{
-            fontSize: subtitleFontSize,
+            fontSize: "0.75rem",
             color: theme.muted,
-            fontWeight: subtitleFontWeight,
+            fontWeight: 600,
             marginTop: 1,
           }}
         >

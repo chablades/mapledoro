@@ -8,7 +8,7 @@ import CookieConsentBanner from "../components/CookieConsentBanner";
 
 const nunito = Nunito({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
+  weight: ["400", "600", "700", "800"],
   variable: "--font-body",
   display: "swap",
 });

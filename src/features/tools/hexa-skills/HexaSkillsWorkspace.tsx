@@ -263,7 +263,7 @@ function EmptyState({ theme, sectionPanel }: { theme: AppTheme; sectionPanel: Re
         padding: "3rem 1.5rem",
       }}
     >
-      <h2 className="tool-panel-title" style={{ fontSize: "1.15rem", color: theme.text }}>
+      <h2 className="tool-panel-title" style={{ color: theme.text }}>
         Select a class above to start tracking your HEXA skills.
       </h2>
       <p style={{ fontSize: "0.82rem", color: theme.muted, fontWeight: 600, margin: 0 }}>

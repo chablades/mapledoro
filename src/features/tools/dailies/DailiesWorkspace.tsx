@@ -46,7 +46,7 @@ function checkboxItemStyle(
     cursor: "pointer",
     background: checked ? theme.accentSoft : theme.timerBg,
     border: `1px solid ${checked ? theme.accent : theme.border}`,
-    fontSize: "0.78rem",
+    fontSize: "0.75rem",
     fontWeight: 700,
     color: checked ? theme.accentText : theme.text,
     userSelect: "none",
@@ -159,7 +159,7 @@ function CounterRow({
       <div style={{ flex: 1, minWidth: 0 }}>
         <div
           style={{
-            fontSize: "0.8rem",
+            fontSize: "0.82rem",
             fontWeight: 700,
             color: done ? theme.accentText : theme.text,
           }}
@@ -193,7 +193,7 @@ function CounterRow({
         style={{
           minWidth: 32,
           textAlign: "center",
-          fontSize: "0.8rem",
+          fontSize: "0.82rem",
           fontWeight: 800,
           color: done ? theme.accentText : theme.muted,
         }}
@@ -216,17 +216,7 @@ function CounterRow({
 
 function SectionHeader({ theme, label }: { theme: AppTheme; label: string }) {
   return (
-    <div
-      style={{
-        fontSize: "0.75rem",
-        fontWeight: 800,
-        textTransform: "uppercase",
-        letterSpacing: "0.08em",
-        color: theme.muted,
-        marginBottom: "0.4rem",
-        marginTop: "0.8rem",
-      }}
-    >
+    <div className="section-label" style={{ color: theme.muted, marginTop: "0.8rem", marginBottom: "0.4rem" }}>
       {label}
     </div>
   );
@@ -272,9 +262,6 @@ function CardHeader({
   name,
   storeChar,
   worldLabel,
-  pos,
-  total,
-  onMove,
   progress,
   onDelete,
   onCheckAll,
@@ -284,9 +271,6 @@ function CardHeader({
   name: string;
   storeChar: StoredCharacterRecord | null;
   worldLabel: string | null;
-  pos: number;
-  total: number;
-  onMove: (toPos: number) => void;
   progress: { done: number; total: number };
   onDelete: () => void;
   onCheckAll: (done: boolean) => void;
@@ -313,16 +297,9 @@ function CardHeader({
           characterImgURL={storeChar?.characterImgURL ?? ""}
           characterName={name}
           subtitle={subtitle}
-          nameFontSize="0.95rem"
-          subtitleFontSize="0.72rem"
-          subtitleFontWeight={700}
         />
         <CardActions
           theme={theme}
-          pos={pos}
-          total={total}
-          onMove={onMove}
-          label={name}
           onDelete={onDelete}
           onEdit={onEdit}
           editTitle="Edit tracked tasks"
@@ -713,9 +690,6 @@ function CharacterCard({
   name,
   storeChar,
   cs,
-  index,
-  count,
-  reorder,
   isDragging,
   isDropTarget,
   dragProps,
@@ -730,9 +704,6 @@ function CharacterCard({
   name: string;
   storeChar: StoredCharacterRecord | null;
   cs: CharDailyState;
-  index: number;
-  count: number;
-  reorder: (from: number, to: number) => void;
   isDragging: boolean;
   isDropTarget: boolean;
   dragProps: CardDragProps;
@@ -758,6 +729,7 @@ function CharacterCard({
         borderRadius: 14,
         padding: "1.1rem",
         opacity: isDragging ? 0.4 : 1,
+        cursor: "grab",
       }}
     >
       <CardHeader
@@ -765,9 +737,6 @@ function CharacterCard({
         name={name}
         storeChar={storeChar}
         worldLabel={worldLabel}
-        pos={index}
-        total={count}
-        onMove={(to) => reorder(index, to)}
         progress={progress}
         onDelete={onDelete}
         onCheckAll={onCheckAll}
@@ -859,9 +828,6 @@ export default function DailiesWorkspace({ theme }: { theme: AppTheme }) {
                 name={char.name}
                 storeChar={getStoreChar(char.name)}
                 cs={char.state}
-                index={index}
-                count={characters.length}
-                reorder={reorderCharacters}
                 isDragging={isDragging(index)}
                 isDropTarget={isDropTarget(index)}
                 dragProps={dragProps(index)}

@@ -47,7 +47,7 @@ function ToolOption({
     alignItems: "center",
     justifyContent: "center",
     fontSize: "0.78rem",
-    fontWeight: 900,
+    fontWeight: 800,
   };
   return (
     <button

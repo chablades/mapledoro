@@ -42,7 +42,7 @@ export function PanelDivider({ theme }: { theme: AppTheme }) {
 const toggleBase: React.CSSProperties = {
   padding: "8px 16px",
   borderRadius: "10px",
-  fontSize: "0.8rem",
+  fontSize: "0.82rem",
   lineHeight: 1,
   fontWeight: 700,
   cursor: "pointer",
@@ -147,7 +147,7 @@ const actionBtnBase: React.CSSProperties = {
   borderRadius: "10px",
   border: "1px solid",
   fontFamily: "var(--font-body)",
-  fontSize: "0.85rem",
+  fontSize: "0.82rem",
   fontWeight: 800,
   textAlign: "center",
 };

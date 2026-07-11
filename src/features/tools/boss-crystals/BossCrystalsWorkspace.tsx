@@ -18,6 +18,8 @@ import {
   type CharacterProgress,
   checkBg,
 } from "./boss-crystals-types";
+import { toolStyles } from "../tool-styles";
+import { statValueStyle } from "../shared-styles";
 import { useBossCrystalsState } from "./useBossCrystalsState";
 import { AddCharacterNameDialog } from "../AddCharacterNameDialog";
 import { AddCharacterCard } from "../AddCharacterCard";
@@ -92,10 +94,7 @@ function bcSummaryBarStyle(theme: AppTheme): CSSProperties {
 
 function bcControlsPanelStyle(theme: AppTheme): CSSProperties {
   return {
-    background: theme.panel,
-    border: `1px solid ${theme.border}`,
-    padding: "1.25rem",
-    marginBottom: "1.25rem",
+    ...toolStyles(theme).sectionPanel,
     display: "flex",
     flexWrap: "wrap",
     gap: "0.75rem",
@@ -146,11 +145,7 @@ function bcSummaryLabelStyle(theme: AppTheme): CSSProperties {
 }
 
 function bcSummaryValueStyle(theme: AppTheme): CSSProperties {
-  return {
-    fontFamily: "var(--font-heading)",
-    fontSize: "1.2rem",
-    color: theme.accentText,
-  };
+  return { ...statValueStyle(theme), color: theme.accentText };
 }
 
 function bcBossGroupLabelStyle(theme: AppTheme): CSSProperties {
@@ -171,9 +166,6 @@ function CharacterCard({
   char,
   income,
   serverMult,
-  pos,
-  total,
-  onMove,
   isDragging,
   isDropTarget,
   dragProps,
@@ -186,9 +178,6 @@ function CharacterCard({
   char: CharacterEntry;
   income: CharacterProgress;
   serverMult: number;
-  pos: number;
-  total: number;
-  onMove: (toPos: number) => void;
   isDragging: boolean;
   isDropTarget: boolean;
   dragProps: CardDragProps;
@@ -204,7 +193,7 @@ function CharacterCard({
 
   // `muted` reads too dim in dark mode; lift the subtext halfway to `text` there.
   const subtitleRowStyle: CSSProperties = {
-    fontSize: "0.85rem",
+    fontSize: "0.82rem",
     fontWeight: 700,
     color:
       theme.colorMode === "dark"
@@ -224,6 +213,7 @@ function CharacterCard({
         borderRadius: "14px",
         padding: "1.25rem",
         opacity: isDragging ? 0.4 : 1,
+        cursor: "grab",
       }}
     >
       {/* Character header */}
@@ -262,7 +252,7 @@ function CharacterCard({
                 flex: 1,
                 minWidth: 0,
                 fontFamily: "var(--font-heading)",
-                fontSize: "0.95rem",
+                fontSize: "0.9rem",
                 fontWeight: 800,
                 color: theme.text,
                 overflow: "hidden",
@@ -274,10 +264,6 @@ function CharacterCard({
             </div>
             <CardActions
               theme={theme}
-              pos={pos}
-              total={total}
-              onMove={onMove}
-              label={char.name}
               onDelete={onDelete}
               onEdit={onEdit}
               editTitle="Edit bosses"
@@ -344,7 +330,7 @@ function CharacterCard({
                 }}
               >
                 {b.cleared && (
-                  <span style={{ color: theme.accentOn, fontSize: "0.6rem", fontWeight: 900, lineHeight: 1 }}>
+                  <span style={{ color: theme.accentOn, fontSize: "0.75rem", fontWeight: 800, lineHeight: 1 }}>
                     ✓
                   </span>
                 )}
@@ -424,41 +410,33 @@ function BossSelectionDialog({
   onCancel: () => void;
   onConfirm: () => void;
 }) {
-  const dialogActionBtnStyle = (variant: "secondary" | "primary"): CSSProperties => ({
-    padding: "8px 16px",
-    borderRadius: "10px",
-    fontSize: "0.82rem",
-    fontWeight: 800,
-    color: variant === "primary" ? theme.accentText : theme.muted,
-    background: variant === "primary" ? theme.accentSoft : theme.timerBg,
-    border: `1px solid ${variant === "primary" ? theme.accent : theme.border}`,
-  });
+  const styles = toolStyles(theme);
 
   const footer = (
     <>
       {showBack && (
         <button
           type="button"
-          className="btn-reset bc-btn"
+          className="tool-btn tool-dialog-btn"
           onClick={onBack}
-          style={{ ...dialogActionBtnStyle("secondary"), marginRight: "auto" }}
+          style={{ ...styles.dialogBtnStyle, marginRight: "auto" }}
         >
           Back
         </button>
       )}
       <button
         type="button"
-        className="btn-reset bc-btn"
+        className="tool-btn tool-dialog-btn"
         onClick={onCancel}
-        style={dialogActionBtnStyle("secondary")}
+        style={styles.dialogBtnStyle}
       >
         Cancel
       </button>
       <button
         type="button"
-        className="btn-reset bc-btn"
+        className="tool-btn tool-dialog-btn"
         onClick={onConfirm}
-        style={dialogActionBtnStyle("primary")}
+        style={styles.dialogPrimaryBtnStyle}
       >
         {confirmLabel}
       </button>
@@ -558,7 +536,7 @@ function BossSelectionDialog({
                     }}
                   >
                     {checked && (
-                      <span style={{ color: theme.accentOn, fontSize: "0.75rem", fontWeight: 900 }}>
+                      <span style={{ color: theme.accentOn, fontSize: "0.75rem", fontWeight: 800 }}>
                         ✓
                       </span>
                     )}
@@ -583,7 +561,7 @@ function BossSelectionDialog({
                     style={{
                       flex: 1,
                       textAlign: "left",
-                      fontSize: "0.78rem",
+                      fontSize: "0.75rem",
                       fontWeight: 700,
                       color: theme.text,
                       cursor: isDisabled ? "not-allowed" : "pointer",
@@ -686,7 +664,7 @@ function BossCrystalsControls({
             style={{
               padding: "6px 14px",
               borderRadius: "8px",
-              fontSize: "0.85rem",
+              fontSize: "0.82rem",
               fontWeight: 800,
               textAlign: "center",
               color: server === s ? theme.accentText : theme.muted,
@@ -706,7 +684,7 @@ function BossCrystalsControls({
           confirmLabel="Wipe all"
           onConfirm={onClear}
           className="bc-btn bc-action-btn"
-          style={{ padding: "6px 14px", borderRadius: "10px", fontSize: "0.78rem", textAlign: "center" }}
+          style={{ padding: "6px 14px", borderRadius: "10px", fontSize: "0.75rem", textAlign: "center" }}
         />
         <button
           type="button"
@@ -715,7 +693,7 @@ function BossCrystalsControls({
           style={{
             padding: "6px 14px",
             borderRadius: "10px",
-            fontSize: "0.78rem",
+            fontSize: "0.75rem",
             fontWeight: 800,
             textAlign: "center",
             color: theme.accentText,
@@ -754,7 +732,7 @@ function BossCrystalsSummary({
           <span style={bcSummaryLabelStyle(theme)}>Weekly:</span>
           <span className="bc-summary-value" style={bcSummaryValueStyle(theme)}>{formatMesoFull(totalWeeklyMeso)} mesos</span>
           {totalMonthlyMeso > 0 && (
-            <span style={{ fontSize: "0.85rem", fontWeight: 700, color: theme.muted }}>
+            <span style={{ fontSize: "0.82rem", fontWeight: 700, color: theme.muted }}>
               + {formatMesoFull(totalMonthlyMeso)} mesos (monthly)
             </span>
           )}
@@ -765,7 +743,7 @@ function BossCrystalsSummary({
             padding: "4px 12px",
             borderRadius: "10px",
             background: overCap ? `${STATUS.danger.fill}22` : theme.accentSoft,
-            fontSize: "0.78rem",
+            fontSize: "0.75rem",
             fontWeight: 800,
             whiteSpace: "nowrap",
             color: overCap ? statusText(theme, "danger") : theme.accentText,
@@ -786,7 +764,7 @@ function BossCrystalsSummary({
               padding: "4px 12px",
               borderRadius: "10px",
               background: allCleared ? theme.accent : theme.accentSoft,
-              fontSize: "0.78rem",
+              fontSize: "0.75rem",
               fontWeight: 800,
               whiteSpace: "nowrap",
               color: allCleared ? theme.accentOn : theme.accentText,
@@ -804,18 +782,11 @@ function BossCrystalsEmptyState({ theme, server }: { theme: AppTheme; server: st
   return (
     <div
       className="fade-in panel-card"
-      style={{
-        background: theme.panel,
-        border: `1px solid ${theme.border}`,
-        borderRadius: "14px",
-        padding: "1.5rem",
-        marginBottom: "1.25rem",
-        textAlign: "center",
-      }}
+      style={{ ...toolStyles(theme).sectionPanel, padding: "1.5rem", textAlign: "center" }}
     >
-      <div style={{ fontFamily: "var(--font-heading)", fontSize: "1rem", color: theme.text, marginBottom: "0.35rem" }}>
+      <h2 className="tool-panel-title" style={{ marginBottom: "0.35rem", color: theme.text }}>
         No {server === "heroic" ? "Heroic" : "Interactive"} characters yet
-      </div>
+      </h2>
       <div style={{ fontSize: "0.82rem", color: theme.muted, fontWeight: 600 }}>
         Add a character to start tracking weekly boss crystals and meso income. Your totals appear here once you do.
       </div>
@@ -863,8 +834,13 @@ export default function BossCrystalsWorkspace({ theme }: { theme: AppTheme }) {
             width: 100%;
             margin-left: 0 !important;
             flex-direction: column;
-            align-items: flex-start;
+            align-items: center;
             gap: 0.1rem;
+            text-align: center;
+          }
+          .bc-summary-headline {
+            width: 100%;
+            justify-content: center;
           }
           .bc-summary-value { font-size: 1.15rem !important; }
           .bc-pill {
@@ -918,16 +894,13 @@ export default function BossCrystalsWorkspace({ theme }: { theme: AppTheme }) {
               alignItems: "start",
             }}
           >
-            {visibleCharacters.map(({ char, index, income }, pos) => (
+            {visibleCharacters.map(({ char, index, income }) => (
               <CharacterCard
                 key={char.name}
                 theme={theme}
                 char={char}
                 income={income}
                 serverMult={serverMult}
-                pos={pos}
-                total={visibleCharacters.length}
-                onMove={(to) => reorderCharacters(index, visibleCharacters[to].index)}
                 isDragging={isDragging(index)}
                 isDropTarget={isDropTarget(index)}
                 dragProps={dragProps(index)}

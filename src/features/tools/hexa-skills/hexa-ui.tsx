@@ -34,7 +34,7 @@ const skillNameOverflow: React.CSSProperties = {
 };
 
 const masteryNameStyle: React.CSSProperties = {
-  fontSize: "0.78rem",
+  fontSize: "0.75rem",
   fontWeight: 600,
   lineHeight: 1.4,
   ...skillNameOverflow,
@@ -114,7 +114,7 @@ function CostBadge({ cost, theme }: { cost: SkillCostSummary; theme: AppTheme })
 const levelInputOverride: React.CSSProperties = {
   textAlign: "center",
   padding: "4px 4px",
-  fontSize: "0.78rem",
+  fontSize: "0.75rem",
 };
 
 function clampInput(raw: string, min: number, max: number): number {
