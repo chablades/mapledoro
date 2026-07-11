@@ -1846,15 +1846,11 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
     [applyConfirmedProfileView, transitions],
   );
 
-  const setMainCharacter = useCallback(
-    (character: StoredCharacterRecord) => {
-      setMainCharacterKeyByWorld((prev) =>
-        setMainKeyForWorld(prev, character.worldID, toCharacterKey(character)),
-      );
-      switchToCharacterProfile(character);
-    },
-    [switchToCharacterProfile],
-  );
+  const setMainCharacter = useCallback((character: StoredCharacterRecord) => {
+    setMainCharacterKeyByWorld((prev) =>
+      setMainKeyForWorld(prev, character.worldID, toCharacterKey(character)),
+    );
+  }, []);
 
   const toggleChampionCharacter = useCallback((character: StoredCharacterRecord) => {
     const key = toCharacterKey(character);
