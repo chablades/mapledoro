@@ -5,7 +5,7 @@ import {
   MAX_QUERY_LENGTH,
   type SetupMode,
 } from "../model/constants";
-import { findRosterCharacterByName, toCharacterKey } from "../model/characterKeys";
+import { findRosterCharacterByName, normalizeCharacterName, toCharacterKey } from "../model/characterKeys";
 import {
   createStoredCharacterRecord,
   hasStoredCompletedRequiredSetup,
@@ -796,7 +796,22 @@ function setChampionKeysForWorld(
   return { ...prev, [String(worldId)]: keys };
 }
 
-export function useCharacterSetupController() {
+interface InitialRouteIntent {
+  characterName?: string;
+  action?: string;
+}
+
+export function useCharacterSetupController(initialRouteIntent?: InitialRouteIntent) {
+  // Frozen at mount via the lazy useState initializer (only evaluated once): once the
+  // URL-sync effect in CharacterSetupFlow.tsx starts mirroring in-app navigation back into
+  // the address bar, the caller's initialRouteIntent prop changes right along with it.
+  // Reading it live here would make handleDraftHydration's identity change too, which would
+  // re-fire the one-time hydration effect below on every navigation and stomp the state that
+  // navigation just set (e.g. going back to the directory would immediately get overridden
+  // back to the profile).
+  const [frozenRouteIntent] = useState(() => initialRouteIntent);
+  const initialCharacterName = frozenRouteIntent?.characterName;
+  const initialAction = frozenRouteIntent?.action;
   const immediateUiLockRef = useRef(false);
   const [query, setQuery] = useState("");
   const [foundCharacter, setFoundCharacter] = useState<NormalizedCharacterData | null>(null);
@@ -907,6 +922,7 @@ export function useCharacterSetupController() {
   const {
     setSetupPanelVisible,
     setSuppressLayoutTransition,
+    queueTransitionTimer,
   } = transitions;
   const requiredFlowId = getRequiredSetupFlowId();
   const isUiLocked =
@@ -1009,6 +1025,52 @@ export function useCharacterSetupController() {
     [],
   );
 
+  // Shared by switchToCharacterProfile (mid-session, animated) and the initial hydration
+  // route-intent resolution below (first paint, no animation needed since there's nothing
+  // on screen yet to transition from).
+  const applyConfirmedProfileView = useCallback(
+    (character: StoredCharacterRecord) => {
+      setIsAddingCharacter(false);
+      const store = readCharactersStore();
+      const storedCharacter = selectCharacterById(store, toCharacterKey(character));
+      setConfirmedCharacter(character);
+      setSetupMode("search");
+      setSetupFlowStarted(true);
+      setShowCharacterDirectory(false);
+      setActiveFlowId(requiredFlowId);
+      setCompletedFlowIds([requiredFlowId]);
+      setShowFlowOverview(false);
+      setSetupStepIndex(0);
+      setSetupStepDirection("forward");
+      const savedMarriage = storedCharacter?.marriage;
+      let marriageValue = "";
+      if (savedMarriage?.isMarried === true) marriageValue = savedMarriage.partnerName ? `yes|${savedMarriage.partnerName}` : "yes";
+      else if (savedMarriage?.isMarried === false) marriageValue = "no";
+      setSetupStepTestByStep({
+        gender: storedCharacter?.gender ?? "",
+        marriage: marriageValue,
+        stats: "",
+        equipment: "",
+      });
+      setStepValidityById({});
+    },
+    [requiredFlowId],
+  );
+
+  // Shared by openAddCharacterSearch (mid-session, animated) and the initial hydration
+  // route-intent resolution below.
+  const applyAddCharacterView = useCallback(() => {
+    setIsAddingCharacter(true);
+    setShowCharacterDirectory(false);
+    setShowFlowOverview(false);
+    setSetupMode("search");
+    setSetupFlowStarted(false);
+    setFoundCharacter(null);
+    setConfirmedCharacter(null);
+    setQuery("");
+    lookup.resetSearchStateMessage();
+  }, [lookup]);
+
   const showCompletedDirectoryState = useCallback(
     (
       store: ReturnType<typeof readCharactersStore>,
@@ -1078,6 +1140,31 @@ export function useCharacterSetupController() {
       storedRoster: StoredCharacterRecord[],
       accountHasCompletedRequiredFlow: boolean,
     ) => {
+      // Route intent (?character=/?action=add from a fresh navigation) resolves straight to
+      // its target here, before first paint, instead of restoring the last session's draft/
+      // directory state and correcting course afterward — that two-step "restore, then
+      // redirect" is what caused a visible flash of the wrong screen on a deep-linked reload.
+      if (initialCharacterName) {
+        const key = normalizeCharacterName(initialCharacterName);
+        const character = storedRoster.find((c) => toCharacterKey(c) === key);
+        if (character) {
+          setCharacterRoster(storedRoster);
+          setMainCharacterKeyByWorld(store.mainCharacterIdByWorld);
+          setChampionCharacterKeysByWorld(store.championCharacterIdsByWorld);
+          setHasCompletedRequiredSetupEver(true);
+          applyConfirmedProfileView(character);
+          setSetupPanelVisible(true);
+          return;
+        }
+      } else if (initialAction === "add") {
+        setCharacterRoster(storedRoster);
+        setMainCharacterKeyByWorld(store.mainCharacterIdByWorld);
+        setChampionCharacterKeysByWorld(store.championCharacterIdsByWorld);
+        setHasCompletedRequiredSetupEver(accountHasCompletedRequiredFlow);
+        applyAddCharacterView();
+        return;
+      }
+
       if (!draft) {
         if (accountHasCompletedRequiredFlow) {
           showCompletedDirectoryState(store, storedRoster);
@@ -1097,9 +1184,14 @@ export function useCharacterSetupController() {
       }
     },
     [
+      applyAddCharacterView,
+      applyConfirmedProfileView,
       applyDraftFlowState,
       hydrateDraftCommonState,
+      initialAction,
+      initialCharacterName,
       restoreCompletedFlowState,
+      setSetupPanelVisible,
       showCompletedDirectoryState,
     ],
   );
@@ -1129,6 +1221,15 @@ export function useCharacterSetupController() {
   }, [foundCharacter]);
 
   useEffect(() => {
+    // Meant to run exactly once per mount. handleDraftHydration (and its dependency
+    // applyAddCharacterView) transitively depends on `lookup`, which useCharacterLookup
+    // returns as a fresh object every render — so without this guard, this effect's own
+    // [handleDraftHydration, refreshDraftSummaries] deps would churn on every render and
+    // re-run hydration, stomping whatever state the user had navigated to since (e.g.
+    // wiping the search query on every keystroke, or snapping back to the initial route
+    // intent's screen instead of wherever the user just clicked).
+    if (hasHydratedSetupDraftRef.current) return;
+
     const draft = readLastSetupDraft();
     const store = readCharactersStore();
     const storedRoster = selectCharactersList(store);
@@ -1136,9 +1237,19 @@ export function useCharacterSetupController() {
 
     const hydrateTimer = window.setTimeout(() => {
       handleDraftHydration(draft, store, storedRoster, accountHasCompletedRequiredFlow);
+      // handleDraftHydration's branches (showCompletedDirectoryState etc.) reset this to
+      // false; set it after so it wins for this batch. Suppresses the search-pane/preview-
+      // pane width transition for this first resolved paint only — without it, the pane
+      // visibly animates from its collapsed pre-hydration width up to its final width, and
+      // content that wraps at narrow widths (e.g. the HEXA skill icon row) visibly reflows
+      // mid-transition. Cleared a beat later so normal in-session transitions keep animating.
+      setSuppressLayoutTransition(true);
       hasHydratedSetupDraftRef.current = true;
       setIsDraftHydrated(true);
       refreshDraftSummaries();
+      queueTransitionTimer(() => {
+        setSuppressLayoutTransition(false);
+      }, CHARACTERS_TRANSITION_MS.standard);
 
       // Compute stale main+champions for background auto-refresh
       const now = Date.now();
@@ -1158,7 +1269,7 @@ export function useCharacterSetupController() {
       if (stale.length > 0) setAutoRefreshQueue(stale);
     }, 0);
     return () => clearTimeout(hydrateTimer);
-  }, [handleDraftHydration, refreshDraftSummaries]);
+  }, [handleDraftHydration, queueTransitionTimer, refreshDraftSummaries, setSuppressLayoutTransition]);
 
   // Keep the resumable-draft list fresh each time the search-entry screen is shown
   // (covers add-character, back navigation, and post-finish returns). The setState
@@ -1725,36 +1836,14 @@ export function useCharacterSetupController() {
       immediateUiLockRef.current = true;
       setIsSwitchingToProfile(true);
       transitions.queueTransitionTimer(() => {
-        setIsAddingCharacter(false);
-        const store = readCharactersStore();
-        const storedCharacter = selectCharacterById(store, toCharacterKey(character));
-        setConfirmedCharacter(character);
-        setSetupMode("search");
-        setSetupFlowStarted(true);
-        setShowCharacterDirectory(false);
-        setActiveFlowId(requiredFlowId);
-        setCompletedFlowIds([requiredFlowId]);
-        setShowFlowOverview(false);
-        setSetupStepIndex(0);
-        setSetupStepDirection("forward");
-        const savedMarriage = storedCharacter?.marriage;
-        let marriageValue = "";
-        if (savedMarriage?.isMarried === true) marriageValue = savedMarriage.partnerName ? `yes|${savedMarriage.partnerName}` : "yes";
-        else if (savedMarriage?.isMarried === false) marriageValue = "no";
-        setSetupStepTestByStep({
-          gender: storedCharacter?.gender ?? "",
-          marriage: marriageValue,
-          stats: "",
-          equipment: "",
-        });
-        setStepValidityById({});
+        applyConfirmedProfileView(character);
         transitions.setSetupPanelVisible(true);
         transitions.playSearchFadeIn();
         setIsSwitchingToProfile(false);
         immediateUiLockRef.current = false;
       }, CHARACTERS_TRANSITION_MS.fast);
     },
-    [requiredFlowId, transitions],
+    [applyConfirmedProfileView, transitions],
   );
 
   const setMainCharacter = useCallback(
@@ -1904,18 +1993,8 @@ export function useCharacterSetupController() {
   const openAddCharacterSearch = useCallback(() => {
     if (immediateUiLockRef.current) return;
     immediateUiLockRef.current = true;
-    transitions.runBackTransition(() => {
-      setIsAddingCharacter(true);
-      setShowCharacterDirectory(false);
-      setShowFlowOverview(false);
-      setSetupMode("search");
-      setSetupFlowStarted(false);
-      setFoundCharacter(null);
-      setConfirmedCharacter(null);
-      setQuery("");
-      lookup.resetSearchStateMessage();
-    });
-  }, [lookup, transitions]);
+    transitions.runBackTransition(applyAddCharacterView);
+  }, [applyAddCharacterView, transitions]);
 
   const backFromAddCharacter = useCallback(() => {
     if (immediateUiLockRef.current) return;

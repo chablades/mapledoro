@@ -106,6 +106,7 @@ export interface PreviewPaneModel {
   setup: {
     setupFlowStarted: boolean;
     setupPanelVisible: boolean;
+    suppressLayoutTransition: boolean;
     isBackTransitioning: boolean;
     isFinishingSetup: boolean;
     isSwitchingToDirectory: boolean;

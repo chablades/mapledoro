@@ -61,9 +61,17 @@ function getActiveScreenId(setup: PreviewPaneModel["setup"]): PreviewScreenId {
 function getActiveScreenClassName(
   activeScreenId: PreviewScreenId,
   setupStepDirection: PreviewPaneModel["setup"]["setupStepDirection"],
+  suppressLayoutTransition: boolean,
 ) {
   if (activeScreenId === "directory" || activeScreenId === "none") {
     return "setup-step-content directory-step-content";
+  }
+  // Landing straight on the profile-overview panel (refresh, deep link): use the same
+  // simple fade as the profile card beside it instead of the step-forward slide, which
+  // combined with the pane's own width transition (briefly suppressed here too) caused
+  // flex-wrapped rows like the HEXA skill grid to visibly reflow mid-animation.
+  if (activeScreenId === "profile-overview" && suppressLayoutTransition) {
+    return "setup-step-content initial-reveal-fade";
   }
   const directionClass = setupStepDirection === "forward" ? "step-forward" : "step-backward";
   return `setup-step-content ${directionClass}`;
@@ -159,9 +167,24 @@ export default function PreviewSetupPane({ model, actions }: PreviewSetupPanePro
     !setup.isSwitchingToDirectory &&
     directoryRevealPhase > 0;
   const activeScreenId = getActiveScreenId(setup);
+  const contentKey = `preview-screen-${activeScreenId}-${setup.activeFlowId}-${setup.setupStepIndex}-${setup.substepJumpNonce}-${setup.showCharacterDirectory ? "directory" : "profile"}`;
+  // Locks the initial-reveal-fade decision to whichever content key was showing the moment
+  // suppressLayoutTransition was first observed true, instead of re-reading that flag live.
+  // suppressLayoutTransition clears itself ~220ms after hydration regardless of whether this
+  // same profile-overview content is still on screen; reading it live would flip the content
+  // class back to step-forward mid-animation (or after), restarting a second, different
+  // animation on top of one that had already played. Setting state during render (rather
+  // than a ref) is the React-sanctioned way to derive a value once and hold it across
+  // renders — see "adjusting state when a prop changes" in the React docs.
+  const [lockedInitialRevealKey, setLockedInitialRevealKey] = useState<string | null>(null);
+  if (lockedInitialRevealKey === null && setup.suppressLayoutTransition) {
+    setLockedInitialRevealKey(contentKey);
+  }
+  const isInitialReveal = activeScreenId === "profile-overview" && lockedInitialRevealKey === contentKey;
   const activeScreenClassName = getActiveScreenClassName(
     activeScreenId,
     setup.setupStepDirection,
+    isInitialReveal,
   );
   const setupPanelClassName = getSetupPanelClassName(setup);
   const setupPanelStyle = getSetupPanelInlineStyle(
@@ -216,7 +239,7 @@ export default function PreviewSetupPane({ model, actions }: PreviewSetupPanePro
           style={setupPanelStyle}
         >
           <div
-            key={`preview-screen-${activeScreenId}-${setup.activeFlowId}-${setup.setupStepIndex}-${setup.substepJumpNonce}-${setup.showCharacterDirectory ? "directory" : "profile"}`}
+            key={contentKey}
             className={activeScreenClassName}
           >
             {activeScreenId === "directory" && (

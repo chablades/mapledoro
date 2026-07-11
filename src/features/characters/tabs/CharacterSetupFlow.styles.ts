@@ -101,6 +101,20 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
           animation: searchCardFadeIn var(--characters-search-fade) ease;
         }
 
+        /* Same entrance as .search-fade-in, reused for the preview pane's initial-load
+           reveal (landing straight on a profile on refresh/deep link) instead of the
+           step-forward slide used for in-session navigation, so it matches the profile
+           card beside it. Longhand (not the animation: shorthand) deliberately, to match
+           .step-forward/.step-backward below: the shorthand resets animation-fill-mode to
+           its default (none), so once the animation finished the element would snap back
+           to .setup-step-content's static opacity: 0 instead of holding the fade's end
+           state — this way it keeps inheriting fill-mode: both from that base rule. */
+        .setup-step-content.initial-reveal-fade {
+          animation-name: searchCardFadeIn;
+          animation-duration: var(--characters-search-fade);
+          animation-timing-function: ease;
+        }
+
         .preview-card {
           transition:
             opacity var(--characters-standard) ease,

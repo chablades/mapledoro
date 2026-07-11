@@ -4,8 +4,7 @@
   Character setup flow shell.
   Keeps rendering focused while the controller hook owns state and navigation.
 */
-import { useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import type { AppTheme } from "../../../components/themes";
 import { deriveCharactersLayout } from "./charactersLayout";
 import { getCharacterSetupFlowStyles } from "./CharacterSetupFlow.styles";
@@ -14,7 +13,6 @@ import SearchPaneCard from "./components/SearchPaneCard";
 import type { PreviewPaneActions, PreviewPaneModel, SearchPaneActions, SearchPaneModel } from "./paneModels";
 import { useCharacterSetupController, MAX_CHAMPIONS } from "./useCharacterSetupController";
 import { toCharacterKey } from "../model/characterKeys";
-import { normalizeCharacterName } from "../model/characterKeys";
 import type { StoredCharacterRecord } from "../model/charactersStore";
 
 interface CharacterSetupFlowProps {
@@ -26,55 +24,27 @@ interface CharacterSetupFlowProps {
 const MAX_ACCOUNT_CHARACTERS = 60;
 
 export default function CharacterSetupFlow({ theme, initialCharacterName, initialAction }: CharacterSetupFlowProps) {
-  const controller = useCharacterSetupController();
+  // initialCharacterName/initialAction (URL search params read once in page.tsx) are resolved
+  // directly during the controller's hydration, landing on the right screen on first paint
+  // instead of restoring the last session's state and redirecting afterward, which used to
+  // flash the wrong screen for a moment on a deep-linked reload.
+  const controller = useCharacterSetupController({ characterName: initialCharacterName, action: initialAction });
   const { state, transitions, actions } = controller;
-  const router = useRouter();
-
-  const initialActionAppliedRef = useRef(false);
-  // Tracks whether the URL still needs to catch up to a route intent (initialCharacterName/
-  // initialAction) applied below. The URL-sync effect further down waits for this to clear
-  // before touching the address bar, so a deep link isn't briefly overwritten with the
-  // default "/characters" while the async transition it kicked off is still in flight.
-  const pendingInitialIntentRef = useRef(Boolean(initialCharacterName) || initialAction === "add");
-  const sawInitialLockRef = useRef(false);
-  // initialCharacterName/initialAction are one-time route intent (URL search params from
-  // page.tsx), not live events — this has to wait for state.isDraftHydrated (async
-  // localStorage read) before it can safely apply that intent, so there's no synchronous
-  // handler to move this into. The ref guard ensures it only ever runs once.
-  // react-doctor-disable-next-line no-event-handler
-  useEffect(() => {
-    if (!state.isDraftHydrated || initialActionAppliedRef.current) return;
-    initialActionAppliedRef.current = true;
-    if (initialCharacterName) {
-      const key = normalizeCharacterName(initialCharacterName);
-      const character = state.characterRoster.find((c) => toCharacterKey(c) === key);
-      if (character) {
-        actions.switchToCharacterProfile(character);
-      } else {
-        pendingInitialIntentRef.current = false;
-      }
-    } else if (initialAction === "add") {
-      actions.openAddCharacterSearch();
-    } else {
-      pendingInitialIntentRef.current = false;
-    }
-  }, [state.isDraftHydrated, state.characterRoster, initialCharacterName, initialAction, actions]);
 
   // Keep the address bar in sync with in-tool navigation (selecting a character, opening
   // the add-character flow, returning to the directory) the same way a fresh homepage deep
   // link already does on load, so mid-session state stays bookmarkable/shareable and reflects
   // in browser back/forward. Skipped while a transition is animating (isUiLocked) so the URL
   // updates once the new screen has settled, not mid-fade.
+  //
+  // Deliberately uses the raw History API instead of next/navigation's router.replace():
+  // router.replace() re-triggers the App Router's navigation machinery (re-reading
+  // useSearchParams() up in page.tsx, which flows back down as this component's
+  // initialCharacterName/initialAction props), which reset the controller's hydration and
+  // stomped whatever the user had just navigated to. history.replaceState only rewrites the
+  // visible URL, no navigation, no re-render of anything upstream.
   useEffect(() => {
-    if (!state.isDraftHydrated) return;
-    if (state.isUiLocked) sawInitialLockRef.current = true;
-
-    if (pendingInitialIntentRef.current) {
-      if (!sawInitialLockRef.current || state.isUiLocked) return;
-      pendingInitialIntentRef.current = false;
-    } else if (state.isUiLocked) {
-      return;
-    }
+    if (!state.isDraftHydrated || state.isUiLocked) return;
 
     const showingCharacterContext =
       Boolean(state.confirmedCharacter) &&
@@ -90,7 +60,7 @@ export default function CharacterSetupFlow({ theme, initialCharacterName, initia
     }
 
     if (`${window.location.pathname}${window.location.search}` !== target) {
-      router.replace(target, { scroll: false });
+      window.history.replaceState(null, "", target);
     }
   }, [
     state.isDraftHydrated,
@@ -99,7 +69,6 @@ export default function CharacterSetupFlow({ theme, initialCharacterName, initia
     state.setupFlowStarted,
     state.showCharacterDirectory,
     state.confirmedCharacter,
-    router,
   ]);
 
   const confirmedCharacterKey = state.confirmedCharacter
@@ -220,6 +189,7 @@ export default function CharacterSetupFlow({ theme, initialCharacterName, initia
     setup: {
       setupFlowStarted: state.setupFlowStarted,
       setupPanelVisible: transitions.setupPanelVisible,
+      suppressLayoutTransition: transitions.suppressLayoutTransition,
       isBackTransitioning: transitions.isBackTransitioning,
       isFinishingSetup: state.isFinishingSetup,
       isSwitchingToDirectory: state.isSwitchingToDirectory,
