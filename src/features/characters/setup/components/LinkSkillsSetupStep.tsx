@@ -300,7 +300,6 @@ export default function LinkSkillsSetupStep({
   // depends on a client-only localStorage read. Not worth lifting into the parent
   // controller (which owns none of this step's domain logic) for a fetch that only ever
   // fires once, at mount.
-  // react-doctor-disable-next-line no-pass-data-to-parent
   useEffect(() => {
     if (initialValueRef.current) return;
     const worldStore = parseDraft(worldLinkSkills);
@@ -309,6 +308,7 @@ export default function LinkSkillsSetupStep({
       : {};
     const merged = { ...worldStore, ...roster };
     if (Object.keys(merged).length > 0) {
+      // react-doctor-disable-next-line no-pass-data-to-parent
       onChange(JSON.stringify(merged));
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
