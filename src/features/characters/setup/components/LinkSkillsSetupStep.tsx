@@ -186,9 +186,9 @@ const linkLevelInputStyle = (theme: AppTheme, locked: boolean | undefined): CSSP
 
 const autofillButtonStyle = (theme: AppTheme): CSSProperties => ({
   border: `1px solid ${theme.accent}`,
-  borderRadius: "7px",
+  borderRadius: "8px",
   background: "transparent",
-  color: theme.accent,
+  color: theme.accentText,
   fontFamily: "inherit",
   fontWeight: 800,
   fontSize: "0.75rem",

@@ -141,11 +141,11 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
           flex: 0 0 auto;
           width: 210px;
           height: 210px;
-          border-radius: 22px;
+          border-radius: 18px;
         }
 
         .confirmed-avatar-wrap img {
-          border-radius: 22px;
+          border-radius: 18px;
           object-fit: contain;
           object-position: center bottom;
           display: block;
@@ -580,7 +580,7 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
           .confirmed-summary-card--setup .char-profile-back-btn {
             padding: 0.4rem 0.72rem;
             font-size: 0.8rem;
-            border-radius: 9px;
+            border-radius: 10px;
           }
 
           .confirmed-summary-card--setup .confirmed-avatar-wrap {
