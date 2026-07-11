@@ -980,7 +980,7 @@ export default function StarForceWorkspace({ theme }: { theme: AppTheme }) {
             <HistogramPanel theme={theme} sim={sim} />
           </>
         ) : (
-          <div style={emptyNoteStyle}>
+          <div className="fade-in panel-card" style={emptyNoteStyle}>
             {phase === "cancelled"
               ? "Simulation stopped before it finished. Run it again, or lower the trial count or target star."
               : "Run the simulation to see the cost distribution, percentiles, and boom counts. The per-star breakdown below is exact and needs no simulation."}
