@@ -28,7 +28,7 @@ interface LinkSkillsSetupStepProps {
   onFinish: () => void;
 }
 
-interface LinkSkillDef {
+export interface LinkSkillDef {
   id: LinkSkillId;
   name: string;
   classes: string[];
@@ -37,7 +37,7 @@ interface LinkSkillDef {
   iconId: string;
 }
 
-const LINK_SKILLS: LinkSkillDef[] = [
+export const LINK_SKILLS: LinkSkillDef[] = [
   { id: "unfairAdvantage",    name: "Unfair Advantage",    classes: ["Cadena"],                                    maxLevel: 3, iconId: "60020218" },
   { id: "tideOfBattle",       name: "Tide of Battle",      classes: ["Illium"],                                    maxLevel: 3, iconId: "150000017" },
   { id: "solus",              name: "Solus",               classes: ["Ark"],                                       maxLevel: 3, iconId: "150010241" },

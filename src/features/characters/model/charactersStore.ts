@@ -52,6 +52,7 @@ export interface StoredScouterBuffs {
   legionMight?: true;
   masarayuGift?: true;
   extremePotion?: true;
+  extremeGreenPotion?: true;
   mvpSuperpower?: true;
   vipBuff?: true;
   brightMoonlight?: true;

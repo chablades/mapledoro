@@ -622,5 +622,95 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
             padding: 1.1rem !important;
           }
         }
+
+        /* Profile "binder": thumb-index bookmark spine + page-swap panel. */
+        .profile-binder {
+          display: flex;
+          align-items: stretch;
+          width: 100%;
+          border-radius: 18px;
+          overflow: hidden;
+        }
+
+        .profile-binder-page {
+          flex: 1;
+          min-width: 0;
+          padding: 1rem 1.15rem;
+        }
+
+        .profile-binder-spine {
+          display: flex;
+          flex-direction: column;
+          gap: 3px;
+          flex-shrink: 0;
+          padding: 10px 6px;
+          width: 108px;
+        }
+
+        .profile-bookmark-tab {
+          display: block;
+          width: 100%;
+          border: none;
+          border-radius: 0 8px 8px 0;
+          padding: 7px 10px;
+          min-height: 32px;
+          font-size: 0.72rem;
+          font-weight: 800;
+          line-height: 1.25;
+          text-align: left;
+          cursor: pointer;
+          font-family: inherit;
+          transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
+        }
+
+        .profile-bookmark-tab--active {
+          transform: translateX(4px);
+        }
+
+        @keyframes profile-page-reveal {
+          from { opacity: 0; transform: translateY(4px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        .profile-binder-page-content {
+          animation: profile-page-reveal 0.2s ease-out both;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .profile-bookmark-tab,
+          .profile-binder-page-content {
+            animation: none !important;
+            transition: none !important;
+          }
+        }
+
+        @media (max-width: 860px) {
+          .profile-binder {
+            flex-direction: column;
+            border-radius: 14px;
+          }
+
+          .profile-binder-spine {
+            flex-direction: row;
+            width: 100%;
+            overflow-x: auto;
+            padding: 8px;
+          }
+
+          .profile-bookmark-tab {
+            width: auto;
+            flex-shrink: 0;
+            border-radius: 999px;
+            white-space: nowrap;
+          }
+
+          .profile-bookmark-tab--active {
+            transform: none;
+          }
+
+          .profile-binder-page {
+            padding: 0.9rem 1rem;
+          }
+        }
   `;
 }
