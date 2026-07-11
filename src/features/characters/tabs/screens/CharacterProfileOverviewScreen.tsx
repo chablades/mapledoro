@@ -12,7 +12,7 @@ import { resourceImageUrl } from "../../../../lib/mapleResource";
 import { readCharactersStore } from "../../model/charactersStore";
 import type { StoredCharacterEquipment, StoredCharacterRecord } from "../../model/charactersStore";
 import { LEGION_CRYSTALS } from "../../setup/data/legionArtifactData";
-import { LINK_SKILLS } from "../../setup/components/LinkSkillsSetupStep";
+import { LINK_SKILLS } from "../../setup/data/linkSkillsData";
 import { GUILD_BUFFS, BOOL_BUFFS, RENOWN_STATS } from "../../setup/data/buffsData";
 
 interface CharacterProfileOverviewScreenProps {
