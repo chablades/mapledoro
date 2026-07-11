@@ -22,6 +22,11 @@ function formatFetchedAt(fetchedAt: number): string {
   return new Date(fetchedAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
 }
 
+function genderSymbolColor(theme: SearchPaneModel["theme"], gender: "male" | "female"): string {
+  if (gender === "male") return theme.colorMode === "dark" ? "#3b7cff" : "#2563eb";
+  return theme.colorMode === "dark" ? "#eb3a84" : "#d82274";
+}
+
 function profileRoleBadgeStyle(
   theme: SearchPaneModel["theme"],
   role: ProfileRole,
@@ -174,12 +179,12 @@ export default function CharacterProfileScreen({
           >
             {profile.confirmedCharacter.characterName}
             {profile.currentCharacterGender === "male" && (
-              <span aria-label="Male" title="Male" style={{ color: "#2563eb", fontSize: "1.02rem", lineHeight: 1 }}>
+              <span aria-label="Male" title="Male" style={{ color: genderSymbolColor(theme, "male"), fontSize: "1.02rem", lineHeight: 1 }}>
                 ♂
               </span>
             )}
             {profile.currentCharacterGender === "female" && (
-              <span aria-label="Female" title="Female" style={{ color: "#db2777", fontSize: "1.02rem", lineHeight: 1 }}>
+              <span aria-label="Female" title="Female" style={{ color: genderSymbolColor(theme, "female"), fontSize: "1.02rem", lineHeight: 1 }}>
                 ♀
               </span>
             )}
@@ -187,7 +192,7 @@ export default function CharacterProfileScreen({
               <span
                 aria-label="Married"
                 title={profile.currentCharacterPartnerName ? `Married to ${profile.currentCharacterPartnerName}` : "Married"}
-                style={{ color: "#db2777", fontSize: "1.02rem", lineHeight: 1 }}
+                style={{ color: genderSymbolColor(theme, "female"), fontSize: "1.02rem", lineHeight: 1 }}
               >
                 ♥
               </span>
