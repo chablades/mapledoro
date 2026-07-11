@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useId, useState, useMemo } from "react";
 import type { AppTheme } from "../../../components/themes";
 import { ProgressBar } from "../../../components/ProgressBar";
 import { ToolHeader } from "../../../components/ToolHeader";
@@ -14,7 +14,7 @@ import {
   useHexaSkillsState,
   type SkillCostSummary,
 } from "./useHexaSkillsState";
-import { COMMON_COSTS, getCostRange } from "./hexa-costs";
+import { COMMON_COSTS, MAX_SKILL_LEVEL, getCostRange } from "./hexa-costs";
 import { SkillSection, MasterySection } from "./hexa-ui";
 import { fmtNum } from "./hexa-format";
 import { toolStyles } from "../tool-styles";
@@ -58,6 +58,7 @@ function ClassSelector({
   onClassChange: (name: string | null) => void;
   disabled?: boolean;
 }) {
+  const uid = useId();
   const groups = getClassGroups();
 
   return (
@@ -70,14 +71,16 @@ function ClassSelector({
         flexWrap: "wrap",
       }}
     >
-      <div
+      <label
+        htmlFor={uid}
         className="section-label"
         style={{ color: theme.muted, marginBottom: 0 }}
       >
         Class
-      </div>
+      </label>
       <select
-        className="tool-input"
+        id={uid}
+        className="tool-select"
         value={selectedClassName ?? ""}
         onChange={(e) => onClassChange(e.target.value || null)}
         disabled={disabled}
@@ -85,7 +88,7 @@ function ClassSelector({
           ...inputStyle,
           flex: 1,
           maxWidth: "280px",
-          // Overrides `.tool-input`'s 35px so it matches the character picker beside it.
+          // Matches the character picker beside it, which sizes to its avatar.
           height: CHARACTER_DROPDOWN_HEIGHT,
           cursor: disabled ? "not-allowed" : "pointer",
           opacity: disabled ? 0.6 : 1,
@@ -108,7 +111,9 @@ function ClassSelector({
 
 // ── Summary Stat ────────────────────────────────────────────────────────────
 
-function SummaryStat({
+/** Label and sub-caption left, the one number that matters right, on a tint.
+ *  Not a bordered box: a card inside a card is always wrong. */
+function ResourceRow({
   label,
   iconId,
   value,
@@ -123,20 +128,28 @@ function SummaryStat({
 }) {
   const accumulated = max - value;
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-      <ItemIcon id={iconId} size={36} alt={label} />
-      <div>
-        <div style={{ fontSize: "0.75rem", fontWeight: 700, color: theme.muted, marginBottom: "3px" }}>
-          {label}
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "10px",
+        background: theme.timerBg,
+        borderRadius: "10px",
+        padding: "10px 14px",
+      }}
+    >
+      <ItemIcon id={iconId} size={28} alt="" />
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: "0.82rem", fontWeight: 700, color: theme.muted }}>
+          {label} remaining
         </div>
-        <div style={{ fontSize: "1.3rem", fontWeight: 800, lineHeight: 1.1 }}>
-          <span style={{ color: theme.accentText }}>{fmtNum(value)}</span>
-          <span style={{ fontSize: "0.9rem", fontWeight: 600, color: theme.muted }}> remaining</span>
-        </div>
-        <div style={{ fontSize: "0.75rem", fontWeight: 600, color: theme.muted, marginTop: "3px" }}>
+        <div style={{ fontSize: "0.75rem", fontWeight: 600, color: theme.muted }}>
           {fmtNum(accumulated)} / {fmtNum(max)} accumulated
         </div>
       </div>
+      <span style={{ fontSize: "1.15rem", fontWeight: 800, color: theme.accentText }}>
+        {fmtNum(value)}
+      </span>
     </div>
   );
 }
@@ -172,9 +185,9 @@ function SummaryPanel({
           gap: "6px",
         }}
       >
-        <div className="section-label" style={{ color: theme.muted, marginBottom: 0 }}>
+        <h2 className="tool-panel-title" style={{ margin: 0, color: theme.text }}>
           Overall Progress
-        </div>
+        </h2>
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
           <label
             style={{ ...checkboxLabelStyle, color: theme.muted }}
@@ -197,15 +210,22 @@ function SummaryPanel({
         </div>
       </div>
 
-      <div style={{ display: "flex", gap: "2rem", marginBottom: "12px", flexWrap: "wrap" }}>
-        <SummaryStat
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+          gap: "0.5rem",
+          marginBottom: "12px",
+        }}
+      >
+        <ResourceRow
           label="Sol Erda"
           iconId={SOL_ERDA_ITEM_ID}
           value={grand.solErda}
           max={maxGrand.solErda}
           theme={theme}
         />
-        <SummaryStat
+        <ResourceRow
           label="Sol Erda Fragments"
           iconId={SOL_ERDA_FRAGMENT_ITEM_ID}
           value={grand.fragments}
@@ -214,7 +234,7 @@ function SummaryPanel({
         />
       </div>
 
-      <ProgressBar pct={progressPct} theme={theme} />
+      <ProgressBar pct={progressPct} theme={theme} label="Overall HEXA skill progress" />
       <div
         style={{
           display: "flex",
@@ -235,7 +255,7 @@ function SummaryPanel({
 
 function EmptyState({ theme, sectionPanel }: { theme: AppTheme; sectionPanel: React.CSSProperties }) {
   return (
-    <div
+    <section
       className="fade-in panel-card"
       style={{
         ...sectionPanel,
@@ -243,13 +263,13 @@ function EmptyState({ theme, sectionPanel }: { theme: AppTheme; sectionPanel: Re
         padding: "3rem 1.5rem",
       }}
     >
-      <div style={{ fontSize: "1.5rem", marginBottom: "0.75rem" }}>
+      <h2 className="tool-panel-title" style={{ fontSize: "1.15rem", color: theme.text }}>
         Select a class above to start tracking your HEXA skills.
-      </div>
-      <div style={{ fontSize: "0.82rem", color: theme.muted, fontWeight: 600 }}>
+      </h2>
+      <p style={{ fontSize: "0.82rem", color: theme.muted, fontWeight: 600, margin: 0 }}>
         Choose a character to auto-fill your class, or pick one manually.
-      </div>
-    </div>
+      </p>
+    </section>
   );
 }
 
@@ -284,8 +304,13 @@ export default function HexaSkillsWorkspace({ theme }: { theme: AppTheme }) {
 
   const adjusted = useMemo(() => {
     if (includeJanus) return { grand: costs.grand, maxGrand: costs.maxGrand, progressPct: costs.progressPct };
-    const janusCost = costs.common.perSkill[0] ?? { solErda: 0, fragments: 0 };
-    const janusMaxCost = getCostRange(COMMON_COSTS, 0, desiredLevels.common[0] ?? 30);
+    // Found by name: COMMON_SKILLS' order is data, and an index would silently
+    // start subtracting Sol Hecate if the list were ever reordered.
+    const janusIdx = COMMON_SKILLS.findIndex((s) => s.name === "Sol Janus");
+    const janusCost = costs.common.perSkill[janusIdx] ?? { solErda: 0, fragments: 0 };
+    const janusMaxCost = janusIdx < 0
+      ? { solErda: 0, fragments: 0 }
+      : getCostRange(COMMON_COSTS, 0, desiredLevels.common[janusIdx] ?? MAX_SKILL_LEVEL);
     const grand = {
       solErda: costs.grand.solErda - janusCost.solErda,
       fragments: costs.grand.fragments - janusCost.fragments,

@@ -186,6 +186,13 @@ export function inkOn(fill: string): string {
   return whiteContrast >= 4.5 ? "#ffffff" : ACCENT_INK;
 }
 
+/** A translucent version of a solid theme color, for state borders and tints.
+ *  Replaces appending alpha hex digits to the color string, which silently
+ *  produces garbage for any notation other than a 6-digit hex. */
+export function alpha(color: string, opacity: number): string {
+  return `color-mix(in srgb, ${color} ${Math.round(opacity * 100)}%, transparent)`;
+}
+
 export function composeTheme(accentKey: string, colorMode: ColorMode): AppTheme {
   const accent = ACCENT_THEMES[accentKey] ?? ACCENT_THEMES["default"];
   const base = COLOR_MODE_BASES[colorMode];

@@ -6,7 +6,7 @@ import type { AppTheme } from "../../../components/themes";
 import { usePickerCoords } from "./usePickerCoords";
 import { resourceImageUrl } from "../../../lib/mapleResource";
 import { ItemIcon } from "../../../components/ResourceImage";
-import { MF_FAMILIARS, getMfFamiliar, type MfFamiliar } from "./familiars";
+import { MF_FAMILIARS, type MfFamiliar } from "./familiars";
 import { potentialsForRarity, type ResolvedPotential } from "./potentialEngine";
 import {
   MF_BONUS_COLORS, MF_BONUS_FAMILY_DESC, formatBonusEffect, getBonusItem,
@@ -492,5 +492,3 @@ export function BonusItemPicker({
     </div>
   );
 }
-
-export { getMfFamiliar };

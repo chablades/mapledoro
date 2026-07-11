@@ -151,6 +151,7 @@ function ItemPicker({
         className="pbd-combobox tool-input"
         role="combobox"
         tabIndex={0}
+        aria-label="Item dropped"
         aria-expanded={open}
         aria-controls="pbd-item-listbox"
         onClick={() => setOpen(true)}
@@ -304,16 +305,17 @@ export default function LogDropDialog({
         .pbd-option:hover { background: ${theme.accentSoft}; }
         .char-pick-row:hover { border-color: ${theme.accent} !important; }
       `}</style>
-        <div
+        <h2
           style={{
             fontFamily: "var(--font-heading)",
             fontSize: "1.1rem",
+            fontWeight: 700,
             color: theme.text,
-            marginBottom: "1.25rem",
+            margin: "0 0 1.25rem",
           }}
         >
           Log a Drop
-        </div>
+        </h2>
 
         <div style={{ display: "flex", flexWrap: "wrap", gap: "1.25rem" }}>
           {/* Character column */}

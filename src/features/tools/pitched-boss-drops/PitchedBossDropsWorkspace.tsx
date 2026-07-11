@@ -166,30 +166,48 @@ function SortableTh({
   width?: number;
 }) {
   const active = sort.key === sortKey;
+  const ascending = sort.dir === "asc";
   let arrow = "";
-  if (active) arrow = sort.dir === "asc" ? " ▲" : " ▼";
+  let ariaSort: "ascending" | "descending" | "none" = "none";
+  if (active) {
+    arrow = ascending ? "▲" : "▼";
+    ariaSort = ascending ? "ascending" : "descending";
+  }
   return (
     <th
-      role="button"
-      tabIndex={0}
-      onClick={() => onSort(sortKey)}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onSort(sortKey);
-        }
-      }}
+      aria-sort={ariaSort}
       style={{
         ...thStyle(theme),
         ...(width ? { width } : {}),
-        cursor: "pointer",
-        userSelect: "none",
-        color: active ? theme.text : theme.muted,
+        padding: 0,
         whiteSpace: "nowrap",
       }}
     >
-      {label}
-      {arrow}
+      <button
+        type="button"
+        onClick={() => onSort(sortKey)}
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 4,
+          width: "100%",
+          padding: "0.5rem 0.75rem",
+          background: "none",
+          border: "none",
+          font: "inherit",
+          fontWeight: 700,
+          fontSize: "0.75rem",
+          textTransform: "uppercase",
+          letterSpacing: "0.04em",
+          textAlign: "left",
+          cursor: "pointer",
+          userSelect: "none",
+          color: active ? theme.text : theme.muted,
+        }}
+      >
+        {label}
+        {arrow && <span aria-hidden="true">{arrow}</span>}
+      </button>
     </th>
   );
 }
@@ -248,6 +266,7 @@ function DropLogTable({
                     type="text"
                     defaultValue={drop.note ?? ""}
                     placeholder="Add note…"
+                    aria-label={`Note for ${item?.name ?? drop.itemId} drop`}
                     onBlur={(e) => {
                       const v = e.target.value.trim();
                       if (v !== (drop.note ?? "")) onNote(drop.id, v);
@@ -268,14 +287,21 @@ function DropLogTable({
                   <button
                     onClick={() => onDelete(drop.id)}
                     style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      minWidth: 30,
+                      minHeight: 30,
                       background: "none",
                       border: "none",
                       color: theme.muted,
                       cursor: "pointer",
-                      fontSize: "0.8rem",
-                      padding: "2px 6px",
-                      borderRadius: 4,
+                      fontSize: "0.9rem",
+                      lineHeight: 1,
+                      padding: 4,
+                      borderRadius: 6,
                     }}
+                    aria-label={`Delete ${item?.name ?? drop.itemId} drop`}
                     title="Delete drop"
                   >
                     ✕
@@ -314,9 +340,9 @@ function FilterBar({
         marginBottom: "0.85rem",
       }}
     >
-      <div style={{ fontWeight: 700, color: theme.text, fontSize: "1rem", marginRight: "auto" }}>
+      <h2 style={{ fontWeight: 700, color: theme.text, fontSize: "1rem", margin: 0, marginRight: "auto" }}>
         Drop Log
-      </div>
+      </h2>
       <select
         className="tool-select"
         value={filters.character}

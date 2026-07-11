@@ -374,7 +374,9 @@ export default function CubingWorkspace({ theme }: { theme: AppTheme }) {
 
   const styles = toolStyles(theme);
   const labelStyle = styles.labelStyle;
-  const controlStyle: CSSProperties = { ...styles.selectStyle, width: "100%" };
+  // Height pinned here, not on `.tool-select`: Chrome gives a <select> a taller
+  // intrinsic line box than an <input>, and this form puts them side by side.
+  const controlStyle: CSSProperties = { ...styles.selectStyle, width: "100%", height: "35px" };
   const panelStyle: CSSProperties = { ...styles.sectionPanel, borderRadius: "18px" };
 
   // Tinted region, not a bordered box: a card inside a card is always wrong.

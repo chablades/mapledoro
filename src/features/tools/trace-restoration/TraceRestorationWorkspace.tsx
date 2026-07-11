@@ -194,12 +194,14 @@ function EstimateResult({
 
 function TrackerProgressBar({
   theme,
+  label,
   current,
   total,
   remaining,
   progress,
 }: {
   theme: AppTheme;
+  label: string;
   current: string;
   total: string;
   remaining: string;
@@ -216,6 +218,12 @@ function TrackerProgressBar({
         </span>
       </div>
       <div
+        role="progressbar"
+        aria-label={label}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={Math.round(progress * 100)}
+        aria-valuetext={`${current} of ${total}`}
         style={{
           height: 8,
           background: theme.timerBg,
@@ -250,6 +258,9 @@ function panelStyle(theme: AppTheme): CSSProperties {
 }
 
 const bossChipBase: CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  minHeight: 34,
   padding: "5px 10px",
   borderRadius: 8,
   fontSize: "0.75rem",
@@ -257,6 +268,8 @@ const bossChipBase: CSSProperties = {
   cursor: "pointer",
   userSelect: "none",
 };
+
+const checkSlotStyle: CSSProperties = { visibility: "hidden" };
 
 function bossChipStyle(theme: AppTheme, active: boolean): CSSProperties {
   return {
@@ -271,6 +284,7 @@ const missionBtnBase: CSSProperties = {
   display: "flex",
   justifyContent: "space-between",
   alignItems: "center",
+  minHeight: 34,
   padding: "5px 8px",
   border: "none",
   borderRadius: 6,
@@ -300,7 +314,7 @@ function presetBtnStyle(theme: AppTheme, primary: boolean): CSSProperties {
     cursor: "pointer",
     border: `1px solid ${primary ? theme.accent : theme.border}`,
     background: primary ? theme.accent : theme.timerBg,
-    color: primary ? "#fff" : theme.text,
+    color: primary ? theme.accentOn : theme.text,
     boxShadow: primary ? `0 2px 6px ${theme.accent}44` : "none",
   };
 }
@@ -347,7 +361,7 @@ function CrystalSection({
     <div style={panelStyle(theme)}>
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: "1rem" }}>
         <ItemIcon id={iconId} size={24} />
-        <span style={{ fontWeight: 700, color: theme.text, fontSize: "1rem" }}>{title}</span>
+        <h2 style={{ margin: 0, fontWeight: 700, color: theme.text, fontSize: "1rem" }}>{title}</h2>
       </div>
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem", alignItems: "flex-end", marginBottom: "1.25rem" }}>
@@ -357,6 +371,7 @@ function CrystalSection({
             className="tool-input"
             type="number"
             min={0}
+            aria-label={`${title} current count`}
             value={count}
             onFocus={(e) => e.currentTarget.select()}
             onKeyDown={replaceZeroOnDigit}
@@ -369,6 +384,7 @@ function CrystalSection({
             <div className="tool-field-label" style={styles.labelStyle}>Target</div>
             <select
               className="tool-select"
+              aria-label={`${title} target`}
               value={target}
               onChange={(e) => onTargetChange(e.target.value)}
               style={{ ...styles.selectStyle, width: "100%" }}
@@ -393,6 +409,7 @@ function CrystalSection({
 
       <TrackerProgressBar
         theme={theme}
+        label={`${title} progress`}
         current={String(count)}
         total={String(targetCost)}
         remaining={String(remaining)}
@@ -414,7 +431,7 @@ function CrystalSection({
                   onClick={() => onBossToggle(boss.id)}
                   style={bossChipStyle(theme, active)}
                 >
-                  {active ? "✓ " : ""}{boss.name}
+                  <span aria-hidden="true" style={active ? undefined : checkSlotStyle}>✓</span> {boss.name}
                 </button>
               );
             })}
@@ -435,7 +452,7 @@ function CrystalSection({
                   onClick={() => onBossToggle(boss.id)}
                   style={bossChipStyle(theme, active)}
                 >
-                  {active ? "✓ " : ""}{boss.name}
+                  <span aria-hidden="true" style={active ? undefined : checkSlotStyle}>✓</span> {boss.name}
                 </button>
               );
             })}
@@ -447,7 +464,6 @@ function CrystalSection({
       <div
         style={{
           background: theme.timerBg,
-          border: `1px solid ${theme.border}`,
           borderRadius: 10,
           padding: "0.75rem 1rem",
         }}
@@ -544,7 +560,7 @@ function BossMissionCard({
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: "0.75rem" }}>
         <Image src={boss.icon} alt="" width={32} height={32} unoptimized className="pixelated-img" />
         <div>
-          <div style={{ fontWeight: 700, color: theme.text, fontSize: "0.85rem" }}>{boss.name}</div>
+          <h3 style={{ margin: 0, fontWeight: 700, color: theme.text, fontSize: "0.85rem" }}>{boss.name}</h3>
           <div style={{ fontSize: "0.75rem", color: theme.muted }}>
             {total}/{boss.maxPoints} pts • {boss.frequency}
           </div>
@@ -561,8 +577,10 @@ function BossMissionCard({
               onClick={() => onToggleMission(mission.id)}
               style={missionBtnStyle(theme, active)}
             >
-              <span>{active ? "✓ " : ""}{mission.description}</span>
-              <span style={{ fontWeight: 800, fontSize: "0.75rem", color: active ? theme.accent : theme.muted }}>
+              <span>
+                <span aria-hidden="true" style={active ? undefined : checkSlotStyle}>✓</span> {mission.description}
+              </span>
+              <span style={{ fontWeight: 800, fontSize: "0.75rem", color: active ? theme.accentText : theme.muted }}>
                 +{mission.points}
               </span>
             </button>
@@ -625,9 +643,9 @@ function TraceRestorationTab({ theme }: { theme: AppTheme }) {
 
       {/* Target & progress */}
       <div style={panelStyle(theme)}>
-        <div style={{ fontWeight: 700, color: theme.text, marginBottom: "1rem", fontSize: "1rem" }}>
+        <h2 style={{ margin: 0, marginBottom: "1rem", fontWeight: 700, color: theme.text, fontSize: "1rem" }}>
           Restoration Target
-        </div>
+        </h2>
 
         <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem", alignItems: "flex-end", marginBottom: "1.25rem" }}>
           <div>
@@ -637,6 +655,7 @@ function TraceRestorationTab({ theme }: { theme: AppTheme }) {
               type="number"
               min={0}
               max={MAX_POINTS_CAP}
+              aria-label="Current points"
               value={state.currentPoints}
               onFocus={(e) => e.currentTarget.select()}
               onKeyDown={replaceZeroOnDigit}
@@ -648,6 +667,7 @@ function TraceRestorationTab({ theme }: { theme: AppTheme }) {
             <div className="tool-field-label" style={styles.labelStyle}>Target Item</div>
             <select
               className="tool-select"
+              aria-label="Target item"
               value={state.targetItemId}
               onChange={(e) => save({ ...state, targetItemId: e.target.value })}
               style={{ ...styles.selectStyle, width: "100%" }}
@@ -663,6 +683,7 @@ function TraceRestorationTab({ theme }: { theme: AppTheme }) {
 
         <TrackerProgressBar
           theme={theme}
+          label="Restoration progress"
           current={state.currentPoints.toLocaleString()}
           total={targetItem.points.toLocaleString()}
           remaining={remaining.toLocaleString()}
@@ -725,9 +746,9 @@ function TraceRestorationTab({ theme }: { theme: AppTheme }) {
       </div>
 
       {/* Boss mission cards */}
-      <div style={{ fontWeight: 700, color: theme.text, marginBottom: "0.75rem", fontSize: "0.9rem" }}>
+      <h2 style={{ margin: 0, marginBottom: "0.75rem", fontWeight: 700, color: theme.text, fontSize: "0.9rem" }}>
         Weekly Missions
-      </div>
+      </h2>
       <div
         style={{
           display: "grid",
@@ -747,9 +768,9 @@ function TraceRestorationTab({ theme }: { theme: AppTheme }) {
         ))}
       </div>
 
-      <div style={{ fontWeight: 700, color: theme.text, marginBottom: "0.75rem", fontSize: "0.9rem" }}>
+      <h2 style={{ margin: 0, marginBottom: "0.75rem", fontWeight: 700, color: theme.text, fontSize: "0.9rem" }}>
         Monthly Missions
-      </div>
+      </h2>
       <div
         style={{
           display: "grid",
@@ -803,6 +824,7 @@ export default function TraceRestorationWorkspace({ theme }: { theme: AppTheme }
           options={TAB_OPTIONS}
           value={tab}
           labels={TAB_LABELS}
+          ariaLabel="Tracker section"
           sectionPanel={styles.sectionPanel}
           onChange={setTab}
         />
