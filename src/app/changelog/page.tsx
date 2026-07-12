@@ -15,6 +15,7 @@ const CHANGELOG: ChangelogEntry[] = [
     date: "2026-07-12",
     changes: [
       { type: "fixed", text: "Fixed the EXP Calculator not letting you type a Current EXP % below 1, like 0.5." },
+      { type: "fixed", text: "Fixed text boxes, dropdowns, and date pickers sitting in the same row being slightly different heights in the Liberation Tracker, the Trace Restoration Tracker, and the Flame Calculator." },
     ],
   },
   {

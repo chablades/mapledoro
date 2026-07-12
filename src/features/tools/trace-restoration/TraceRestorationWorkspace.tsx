@@ -355,7 +355,7 @@ function CrystalSection({
         <h2 className="tool-panel-title" style={{ margin: 0, color: theme.text }}>{title}</h2>
       </div>
 
-      <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem", alignItems: "flex-end", marginBottom: "1.25rem" }}>
+      <div className="tool-control-row" style={{ marginBottom: "1.25rem" }}>
         <div>
           <div className="tool-field-label" style={styles.labelStyle}>Current Count</div>
           <input
@@ -391,7 +391,12 @@ function CrystalSection({
         {!targetOptions && (
           <div>
             <div className="tool-field-label" style={styles.labelStyle}>Target</div>
-            <div className="tool-input" style={{ ...styles.inputStyle, background: "transparent", border: "none", padding: 0, fontWeight: 700 }}>
+            {/* Not a control, but it sits in a control row, so it takes the row's
+                pinned height and centers its text to line up with the input. */}
+            <div
+              className="tool-input"
+              style={{ ...styles.inputStyle, background: "transparent", border: "none", padding: 0, fontWeight: 700, display: "flex", alignItems: "center" }}
+            >
               Dawn Boss Set Equipment (65 crystals)
             </div>
           </div>
@@ -638,7 +643,7 @@ function TraceRestorationTab({ theme }: { theme: AppTheme }) {
           Restoration Target
         </h2>
 
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem", alignItems: "flex-end", marginBottom: "1.25rem" }}>
+        <div className="tool-control-row" style={{ marginBottom: "1.25rem" }}>
           <div>
             <div className="tool-field-label" style={styles.labelStyle}>Current Points</div>
             <input
