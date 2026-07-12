@@ -68,12 +68,12 @@ function ArtifactStatRow({ theme, label, level, wasted, wastedCrystals, value }:
           <strong style={{ color: theme.text, fontWeight: 800 }}>{name}</strong>
         </span>
       ))}
-      {" "}have this stat assigned. Reassign one of these to stop wasting levels.
+      {" "}have this stat assigned. Reassign these to stop wasting levels.
     </>
   ) : undefined;
   const wastedPlural = wasted === 1 ? "" : "s";
   const wastedAriaLabel = wastedCrystals?.length
-    ? `${wasted} level${wastedPlural} wasted. ${wastedCrystals.join(", ")} have this stat assigned. Reassign one of these to stop wasting levels.`
+    ? `${wasted} level${wastedPlural} wasted. ${wastedCrystals.join(", ")} have this stat assigned. Reassign these to stop wasting levels.`
     : undefined;
   return (
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", padding: "6px 0", borderBottom: `1px solid ${theme.border}` }}>
