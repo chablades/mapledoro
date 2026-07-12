@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 const AVATAR_LOAD_TIMEOUT_MS = 8000;
 const AVATAR_MAX_RETRIES = 2;
 const AVATAR_RETRY_DELAY_MS = 350;
-const FALLBACK_SRC =
+export const FALLBACK_SRC =
   "https://haku.network/api/img/avatar/2000/stand1.png";
 
 function appendRetryParam(src: string, attempt: number) {

@@ -14,6 +14,7 @@ import type { AppTheme } from "../../../../components/themes";
 import { statusText } from "../../../../components/statusColors";
 import CharacterAvatar from "../components/CharacterAvatar";
 import RefreshSpinnerIcon from "../components/RefreshSpinnerIcon";
+import LegionPanel from "./LegionPanel";
 
 const rowStyle: CSSProperties = { display: "grid", gridTemplateColumns: "repeat(auto-fill, 190px)", justifyContent: "center", alignItems: "start", gap: "0.6rem", width: "100%" };
 
@@ -234,6 +235,30 @@ function DirectoryControls({
   );
 }
 
+// Legion Artifact and Link Skills are shared across every character on a world, not
+// tied to any one character — this button opens a dedicated panel (LegionPanel)
+// instead of living as a per-character tab. It's a genuine screen swap, not a card
+// interaction, so it's just a button here rather than a card with its own content.
+function LegionButtonRow({ theme, onOpen }: { theme: AppTheme; onOpen: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      style={{
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        border: `1px solid ${theme.border}`, borderRadius: "12px", background: theme.bg,
+        padding: "0.55rem 0.7rem", cursor: "pointer", fontFamily: "inherit", width: "100%",
+      }}
+    >
+      <span style={{ fontSize: "0.85rem", fontWeight: 800, color: theme.text }}>Legion</span>
+      <span style={{ fontSize: "0.75rem", fontWeight: 700, color: theme.muted, display: "flex", alignItems: "center", gap: "0.3rem" }}>
+        Legion Artifact &amp; Link Skills
+        <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6" /></svg>
+      </span>
+    </button>
+  );
+}
+
 interface DirectoryRoleViewProps {
   theme: AppTheme;
   isUiLocked: boolean;
@@ -379,6 +404,7 @@ export default function CharacterDirectoryScreen({
   directoryWorldFilter, onDirectoryWorldFilterChange, directoryRevealPhase,
 }: CharacterDirectoryScreenProps) {
   const { theme, setup, directory } = model;
+  const [legionPanelOpen, setLegionPanelOpen] = useState(false);
 
   const inCharacterDirectoryView = setup.showFlowOverview && setup.showCharacterDirectory;
   if (!inCharacterDirectoryView) return null;
@@ -404,8 +430,19 @@ export default function CharacterDirectoryScreen({
     maxCharacters: directory.maxCharacters,
   });
 
+  if (legionPanelOpen && !showAllWorlds && activeWorldId !== null) {
+    return (
+      <LegionPanel
+        theme={theme}
+        worldId={activeWorldId}
+        worldCharacters={filteredCharacters}
+        onBack={() => setLegionPanelOpen(false)}
+      />
+    );
+  }
+
   return (
-    <div>
+    <div className="fade-in">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.75rem", marginBottom: "0.75rem" }}>
         <h2 style={{ margin: 0, fontFamily: "var(--font-heading)", fontSize: "1.2rem", lineHeight: 1.2, color: theme.text }}>
           {CHARACTERS_COPY.characterDirectory.title}
@@ -422,6 +459,9 @@ export default function CharacterDirectoryScreen({
           onWorldChange={onDirectoryWorldFilterChange}
           onSortChange={onDirectorySortByChange}
         />
+        {!showAllWorlds && activeWorldId !== null && (
+          <LegionButtonRow theme={theme} onOpen={() => setLegionPanelOpen(true)} />
+        )}
         <div style={{ borderTop: `1px solid ${theme.border}` }} />
         {showAllWorlds ? (
           <DirectoryWorldView
