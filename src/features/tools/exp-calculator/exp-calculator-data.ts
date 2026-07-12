@@ -4,6 +4,7 @@ export const MAX_EXP_LEVEL = 300;
 export type IconRef =
   | { type: "item" | "skill"; id: string; shadow?: boolean }
   | { type: "erda-skill"; id: string }
+  | { type: "familiar-badge"; id: string }
   | { type: "mob"; id: string };
 
 export interface CheckBuff {
@@ -104,6 +105,13 @@ interface EpicDungeonOption {
   baseMultiplier: number;
 }
 
+export interface MonsterParkOption {
+  id: string;
+  label: string;
+  minLevel: number;
+  exp: number;
+}
+
 interface GrowthPotionOption {
   id: string;
   label: string;
@@ -120,8 +128,14 @@ export interface AllInOneInput {
   endDate: string;
   burningType: BurningType;
   dailyIds: string[];
+  /** A Monster Park dungeon id, or "" for whichever eligible dungeon gives the most EXP. */
+  monsterParkId: string;
   monsterParkRuns: number;
+  /** "flat" uses `customDailyExp` as-is; "hourly" derives it from farming rate x hours. */
+  customDailyMode: "flat" | "hourly";
   customDailyExp: number;
+  customHourlyExp: number;
+  customHoursPerDay: number;
   weeklyRuns: Record<string, number>;
   mpeRuns: number;
   epicDungeonId: string;
@@ -136,7 +150,8 @@ export interface AllInOneInput {
   arcaneRiverBonus: number;
   grandisBonus: number;
   monsterParkBonus: number;
-  epicDungeonBonus: number;
+  /** Event EXP multiplier on Epic Dungeon rewards (1 = no event). Recent events run 1.5x - 4x. */
+  epicDungeonExpMultiplier: number;
 }
 
 interface AllInOneResult {
@@ -445,9 +460,10 @@ export const DAILY_EXP_CONTENT: ExpContentOption[] = [
   { id: "arcana", label: "Arcana", region: "Arcane River", minLevel: 225, exp: 0xc5012937, icon: { type: "item", id: "01712004" } },
   { id: "moras", label: "Morass", region: "Arcane River", minLevel: 230, exp: 0x106283735, icon: { type: "item", id: "01712005" } },
   { id: "esf", label: "Esfera", region: "Arcane River", minLevel: 235, exp: 0x10e0f3132, icon: { type: "item", id: "01712006" } },
-  { id: "mb", label: "Moonbridge", region: "Tenebris", minLevel: 245, exp: 0x1f4886ce7, icon: { type: "mob", id: "8644614" } },
-  { id: "laby", label: "Labyrinth of Suffering", region: "Tenebris", minLevel: 250, exp: 905769e4, icon: { type: "mob", id: "8644706" } },
-  { id: "limen", label: "Limina", region: "Tenebris", minLevel: 255, exp: 0x261806f70, icon: { type: "mob", id: "8645010" } },
+  // Tenebris has no Maple Guide crest, so the region's familiar badges stand in (ui-familiar.json).
+  { id: "mb", label: "Moonbridge", region: "Tenebris", minLevel: 245, exp: 0x1f4886ce7, icon: { type: "familiar-badge", id: "40" } },
+  { id: "laby", label: "Labyrinth of Suffering", region: "Tenebris", minLevel: 250, exp: 905769e4, icon: { type: "familiar-badge", id: "41" } },
+  { id: "limen", label: "Limina", region: "Tenebris", minLevel: 255, exp: 0x261806f70, icon: { type: "familiar-badge", id: "42" } },
   { id: "cern", label: "Cernium", region: "Grandis", minLevel: 260, exp: 0x3d4d5c820, icon: { type: "item", id: "01713000" } },
   { id: "arcs", label: "Hotel Arcus", region: "Grandis", minLevel: 265, exp: 0x482b53349, icon: { type: "item", id: "01713001" } },
   { id: "odium", label: "Odium", region: "Grandis", minLevel: 270, exp: 0x569941dd0, icon: { type: "item", id: "01713002" } },
@@ -484,25 +500,41 @@ export const GROWTH_POTION_OPTIONS: GrowthPotionOption[] = [
   { id: "lgp", label: "Legendary Pot", minLevel: 200, maxLevel: 279, icon: { type: "item", id: "02831239" } },
 ];
 
-const MONSTER_PARK_EXP = [
-  { minLevel: 200, exp: 0x1573de48 },
-  { minLevel: 210, exp: 0x4c98be98 },
-  { minLevel: 220, exp: 0xbfc99c3e },
-  { minLevel: 225, exp: 0x11897de7a },
-  { minLevel: 230, exp: 0x1653db880 },
-  { minLevel: 235, exp: 0x19c71beaa },
-  { minLevel: 240, exp: 0x207530148 },
-  { minLevel: 245, exp: 0x2ba5d6134 },
-  { minLevel: 250, exp: 14058901e3 },
-  { minLevel: 255, exp: 0x39f013158 },
-  { minLevel: 260, exp: 0x8b9a915ac },
-  { minLevel: 265, exp: 0xa588f1a1c },
-  { minLevel: 270, exp: 0xc4c3f7700 },
-  { minLevel: 275, exp: 76639838e3 },
-  { minLevel: 280, exp: 107204032e3 },
-  { minLevel: 285, exp: 156017856e3 },
-  { minLevel: 290, exp: 218575316e3 },
+/** The Intermediate (Lv. 200+) and Advanced (Lv. 260+) Monster Park dungeons, ordered by EXP so
+ *  the last dungeon a character qualifies for is also the most rewarding one. Entry levels are the
+ *  gate's own minimums, not a 5-level ladder: Arcana opens at 230, not 225. */
+export const MONSTER_PARK_OPTIONS: MonsterParkOption[] = [
+  { id: "spirit-valley", label: "Spirit Valley", minLevel: 200, exp: 81300870 },
+  { id: "vj", label: "Vanishing Journey", minLevel: 200, exp: 359915080 },
+  { id: "cci", label: "Chu Chu Island", minLevel: 210, exp: 1285078680 },
+  { id: "lach", label: "Lachelein", minLevel: 220, exp: 3217660990 },
+  { id: "arcana", label: "Arcana", minLevel: 230, exp: 4707573370 },
+  { id: "moras", label: "Morass", minLevel: 235, exp: 5993511040 },
+  { id: "esf", label: "Esfera", minLevel: 240, exp: 6919667370 },
+  { id: "sellas", label: "Sellas", minLevel: 245, exp: 8712814920 },
+  { id: "mb", label: "Moonbridge", minLevel: 250, exp: 11716616500 },
+  { id: "laby", label: "Labyrinth of Suffering", minLevel: 255, exp: 14058901000 },
+  { id: "limen", label: "Limina", minLevel: 260, exp: 15552557400 },
+  { id: "cern", label: "Cernium", minLevel: 260, exp: 37474604460 },
+  { id: "arcs", label: "Arcus", minLevel: 265, exp: 44435446300 },
+  { id: "odium", label: "Odium", minLevel: 270, exp: 52818835200 },
+  { id: "sgl", label: "Shangri-La", minLevel: 275, exp: 76639838000 },
+  { id: "arteria", label: "Arteria", minLevel: 280, exp: 107204032000 },
+  { id: "carcion", label: "Carcion", minLevel: 285, exp: 156017856000 },
+  { id: "tallahart", label: "Tallahart", minLevel: 290, exp: 218575316000 },
 ];
+
+/** The most rewarding dungeon the level can enter, which is what a player would actually run. */
+export function bestMonsterParkForLevel(level: number): MonsterParkOption | undefined {
+  return MONSTER_PARK_OPTIONS.filter((park) => park.minLevel <= level).pop();
+}
+
+/** Falls back to the best available whenever the pinned dungeon is unset or out of reach, so a
+ *  saved pick can never silently zero out Monster Park EXP. */
+function resolveMonsterPark(level: number, parkId: string): MonsterParkOption | undefined {
+  const pinned = MONSTER_PARK_OPTIONS.find((park) => park.id === parkId);
+  return pinned && level >= pinned.minLevel ? pinned : bestMonsterParkForLevel(level);
+}
 
 const MPE_EXP_FACTORS = [
   2.04, 2.04, 2.04, 2.04, 2.04, 2.652, 2.652, 2.652, 2.652, 2.652,
@@ -658,7 +690,7 @@ function initialSimulationState(input: AllInOneInput): SimulationState {
 function applyStartingEventResources(state: SimulationState, input: AllInOneInput, date: number): SimulationState {
   let next = applyResourceUnits(state, Math.max(0, input.strawberryTickets) * 1200, "strawberry-farm", date);
   if (next.level >= 280) {
-    next = applyResourceUnits(next, Math.max(0, input.mechaberryTickets) * 9600, "mechaberry-farm", date);
+    next = applyResourceUnits(next, Math.max(0, input.mechaberryTickets), "mechaberry-farm", date);
   }
   return next;
 }
@@ -682,9 +714,16 @@ function applyDailyWeeklyContent(state: SimulationState, input: AllInOneInput, d
 function dailyExpForState(state: SimulationState, input: AllInOneInput, date: number): number {
   return (
     selectedDailyExp(state.level, input) +
-    monsterParkExpForLevel(state.level, input.monsterParkRuns, input.monsterParkBonus, date) +
-    Math.max(0, input.customDailyExp)
+    monsterParkExpForLevel(state.level, input, date) +
+    customDailyExp(input)
   );
+}
+
+/** The Custom Daily panel is either a flat EXP figure or a farming rate the player sustains for a
+ *  set number of hours a day. Both land in the same daily bucket. */
+export function customDailyExp(input: AllInOneInput): number {
+  if (input.customDailyMode === "flat") return Math.max(0, input.customDailyExp);
+  return Math.floor(Math.max(0, input.customHourlyExp) * Math.max(0, input.customHoursPerDay));
 }
 
 function weeklyExpForState(state: SimulationState, input: AllInOneInput): number {
@@ -713,11 +752,13 @@ function dailyBonusPercent(daily: ExpContentOption, input: AllInOneInput): numbe
   return daily.region === "Grandis" ? Math.max(0, input.grandisBonus) : Math.max(0, input.arcaneRiverBonus);
 }
 
-function monsterParkExpForLevel(level: number, runs: number, bonusPercent: number, date: number): number {
-  const row = MONSTER_PARK_EXP.filter((entry) => entry.minLevel <= level).pop();
-  const base = row?.exp ?? 0;
+function monsterParkExpForLevel(level: number, input: AllInOneInput, date: number): number {
+  const base = resolveMonsterPark(level, input.monsterParkId)?.exp ?? 0;
+  const bonusPercent = Math.max(0, input.monsterParkBonus);
   const sundayMultiplier = new Date(date).getDay() === 0 ? 1.5 : 1;
-  return (Math.ceil(base * sundayMultiplier) + Math.ceil(base * Math.max(0, bonusPercent) / 100)) * Math.max(0, runs);
+  return (
+    (Math.ceil(base * sundayMultiplier) + Math.ceil(base * bonusPercent / 100)) * Math.max(0, input.monsterParkRuns)
+  );
 }
 
 function monsterParkExtremeExpForLevel(level: number, runs: number, bonusPercent: number): number {
@@ -730,7 +771,8 @@ function epicDungeonExpForLevel(level: number, input: AllInOneInput): number {
   const dungeon = EPIC_DUNGEON_OPTIONS.find((entry) => entry.id === input.epicDungeonId);
   if (!dungeon || level < dungeon.minLevel || input.epicDungeonMultiplier <= 0) return 0;
   const base = HIGH_MOUNTAIN_BASE[level - 260] ?? HIGH_MOUNTAIN_BASE[HIGH_MOUNTAIN_BASE.length - 1];
-  return Math.floor(base * dungeon.baseMultiplier * (input.epicDungeonMultiplier + Math.max(0, input.epicDungeonBonus) / 100));
+  const event = clamp(input.epicDungeonExpMultiplier, 1, 4);
+  return Math.floor(base * dungeon.baseMultiplier * input.epicDungeonMultiplier * event);
 }
 
 function punchKingExpForLevel(level: number, score: number): number {

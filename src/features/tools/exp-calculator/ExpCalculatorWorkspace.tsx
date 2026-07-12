@@ -4,7 +4,7 @@ import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { CharacterDropdown } from "../../../components/CharacterSyncPanel";
 import HoverTooltip from "../../../components/HoverTooltip";
-import { ErdaSkillIcon, ItemIcon, MobSprite, SkillIcon } from "../../../components/ResourceImage";
+import { ErdaSkillIcon, FamiliarBadgeIcon, ItemIcon, MobSprite, SkillIcon } from "../../../components/ResourceImage";
 import { SegmentedToggle } from "../../../components/SegmentedToggle";
 import type { AppTheme } from "../../../components/themes";
 import { ToolHeader } from "../../../components/ToolHeader";
@@ -24,10 +24,12 @@ import {
   LEVEL_INPUT_BUFFS,
   MAX_EXP_LEVEL,
   MIN_EXP_LEVEL,
+  MONSTER_PARK_OPTIONS,
   RESOURCE_TABLES,
   ROLL_OF_THE_DICE_JOBS,
   SELECT_BUFFS,
   WEEKLY_EXP_CONTENT,
+  bestMonsterParkForLevel,
   calculateAllInOne,
   calculateMonsterExp,
   expForLevel,
@@ -50,6 +52,7 @@ import {
   selectMainCharacter,
   type StoredCharacterRecord,
 } from "../../characters/model/charactersStore";
+import { worldServerType } from "../boss-crystals/boss-crystals-types";
 import { readCharacterToolData, writeCharacterToolData } from "../characterToolStorage";
 
 type ExpTab = "buffs" | "all-in-one" | "resources";
@@ -59,6 +62,8 @@ type AllInOneNumberKey =
   | "targetLevel"
   | "monsterParkRuns"
   | "customDailyExp"
+  | "customHourlyExp"
+  | "customHoursPerDay"
   | "mpeRuns"
   | "epicDungeonMultiplier"
   | "strawberryTickets"
@@ -70,7 +75,7 @@ type AllInOneNumberKey =
   | "arcaneRiverBonus"
   | "grandisBonus"
   | "monsterParkBonus"
-  | "epicDungeonBonus";
+  | "epicDungeonExpMultiplier";
 
 const TAB_OPTIONS: ExpTab[] = ["buffs", "all-in-one", "resources"];
 const TAB_LABELS: Record<ExpTab, string> = {
@@ -90,16 +95,27 @@ const DEFAULT_MONSTER: MonsterExpInput = {
   hourlyKillCount: 18000,
 };
 
-/** Farming Calculator state saved per-character. Level/percent come from the character record,
- *  and monster level/EXP come from the selected monster, so neither is saved. */
+/** Farming Calculator state saved per-character. Level/percent come from the character record and
+ *  monster level/EXP come from the selected monster, so none of those are saved: only the monster's
+ *  key, which is enough to reproduce the hourly rate on the next visit. */
 interface SavedExpState {
   buffs: BuffState;
   targetLevel: number;
   hourlyKillCount: number;
+  monsterKey: string | null;
 }
 
-function toSavedExpState(buffs: BuffState, monster: MonsterExpInput): SavedExpState {
-  return { buffs, targetLevel: monster.targetLevel, hourlyKillCount: monster.hourlyKillCount };
+function toSavedExpState(
+  buffs: BuffState,
+  monster: MonsterExpInput,
+  selectedMonster: ExpMonster | null,
+): SavedExpState {
+  return {
+    buffs,
+    targetLevel: monster.targetLevel,
+    hourlyKillCount: monster.hourlyKillCount,
+    monsterKey: selectedMonster?.key ?? null,
+  };
 }
 
 /** Roll of the Dice is pirate-only, so a non-pirate can never carry a stored value for it. */
@@ -117,14 +133,18 @@ function loadCharacterState(character: StoredCharacterRecord, monster: MonsterEx
   const saved = mergeSavedExpState(
     readCharacterToolData<Partial<SavedExpState>>(character.characterName, FARMING_TOOL_KEY),
   );
+  const selectedMonster = EXP_MONSTERS.find((option) => option.key === saved.monsterKey) ?? null;
   return {
     buffs: applyJobBuffRules(saved.buffs, character.jobName),
+    selectedMonster,
     monster: {
       ...monster,
       playerLevel: character.level,
       currentPercent: characterPercent(character),
       targetLevel: saved.targetLevel,
       hourlyKillCount: saved.hourlyKillCount,
+      monsterLevel: selectedMonster?.level ?? monster.monsterLevel,
+      monsterBaseExp: selectedMonster?.exp ?? monster.monsterBaseExp,
     },
   };
 }
@@ -132,9 +152,11 @@ function loadCharacterState(character: StoredCharacterRecord, monster: MonsterEx
 /** Opens on the main character when there is one, so the tool is useful without touching the dropdown. */
 function initialFarmingState() {
   const main = selectMainCharacter(readCharactersStore());
-  if (!main) return { charName: null, buffs: DEFAULT_BUFF_STATE, monster: DEFAULT_MONSTER };
-  const { buffs, monster } = loadCharacterState(main, DEFAULT_MONSTER);
-  return { charName: main.characterName, buffs, monster };
+  if (!main) {
+    return { charName: null, buffs: DEFAULT_BUFF_STATE, monster: DEFAULT_MONSTER, selectedMonster: null };
+  }
+  const { buffs, monster, selectedMonster } = loadCharacterState(main, DEFAULT_MONSTER);
+  return { charName: main.characterName, buffs, monster, selectedMonster };
 }
 
 /** Saved buffs can predate buff ids added since, so fill gaps from the defaults. */
@@ -148,6 +170,7 @@ function mergeSavedExpState(saved: Partial<SavedExpState> | null): SavedExpState
     },
     targetLevel: saved?.targetLevel ?? DEFAULT_MONSTER.targetLevel,
     hourlyKillCount: saved?.hourlyKillCount ?? DEFAULT_MONSTER.hourlyKillCount,
+    monsterKey: saved?.monsterKey ?? null,
   };
 }
 
@@ -162,8 +185,12 @@ function defaultAllInOneInput(): AllInOneInput {
     endDate,
     burningType: "",
     dailyIds: DAILY_EXP_CONTENT.map((daily) => daily.id),
+    monsterParkId: "",
     monsterParkRuns: 7,
+    customDailyMode: "flat",
     customDailyExp: 0,
+    customHourlyExp: 0,
+    customHoursPerDay: 2,
     weeklyRuns: Object.fromEntries(WEEKLY_EXP_CONTENT.map((weekly) => [weekly.id, 1])),
     mpeRuns: 1,
     epicDungeonId: "high-mountain",
@@ -178,7 +205,7 @@ function defaultAllInOneInput(): AllInOneInput {
     arcaneRiverBonus: 0,
     grandisBonus: 0,
     monsterParkBonus: 0,
-    epicDungeonBonus: 0,
+    epicDungeonExpMultiplier: 1,
   };
 }
 
@@ -194,16 +221,20 @@ type SavedAllInOne = Pick<
   | "endDate"
   | "burningType"
   | "dailyIds"
+  | "customDailyMode"
   | "customDailyExp"
+  | "customHourlyExp"
+  | "customHoursPerDay"
   | "arcaneRiverBonus"
   | "grandisBonus"
   | "weeklyRuns"
+  | "monsterParkId"
   | "monsterParkRuns"
   | "monsterParkBonus"
   | "mpeRuns"
   | "epicDungeonId"
   | "epicDungeonMultiplier"
-  | "epicDungeonBonus"
+  | "epicDungeonExpMultiplier"
 >;
 
 function toSavedAllInOne(input: AllInOneInput): SavedAllInOne {
@@ -213,16 +244,20 @@ function toSavedAllInOne(input: AllInOneInput): SavedAllInOne {
     endDate: input.endDate,
     burningType: input.burningType,
     dailyIds: input.dailyIds,
+    customDailyMode: input.customDailyMode,
     customDailyExp: input.customDailyExp,
+    customHourlyExp: input.customHourlyExp,
+    customHoursPerDay: input.customHoursPerDay,
     arcaneRiverBonus: input.arcaneRiverBonus,
     grandisBonus: input.grandisBonus,
     weeklyRuns: input.weeklyRuns,
+    monsterParkId: input.monsterParkId,
     monsterParkRuns: input.monsterParkRuns,
     monsterParkBonus: input.monsterParkBonus,
     mpeRuns: input.mpeRuns,
     epicDungeonId: input.epicDungeonId,
     epicDungeonMultiplier: input.epicDungeonMultiplier,
-    epicDungeonBonus: input.epicDungeonBonus,
+    epicDungeonExpMultiplier: input.epicDungeonExpMultiplier,
   };
 }
 
@@ -251,10 +286,16 @@ function loadCharacterAllInOne(character: StoredCharacterRecord): AllInOneInput 
   return { ...saved, startLevel: character.level, startPercent: characterPercent(character) };
 }
 
-function initialAllInOneState() {
+/** `importedHourlyExp` is the Farming tab's hourly rate handed over by the import link. It seeds
+ *  the Custom Daily panel into hourly mode; the rest of the plan still comes from the save. */
+function initialAllInOneState(importedHourlyExp: number | null) {
   const main = selectMainCharacter(readCharactersStore());
-  if (!main) return { charName: null, input: defaultAllInOneInput() };
-  return { charName: main.characterName, input: loadCharacterAllInOne(main) };
+  const base = main ? loadCharacterAllInOne(main) : defaultAllInOneInput();
+  const input: AllInOneInput =
+    importedHourlyExp === null
+      ? base
+      : { ...base, customDailyMode: "hourly", customHourlyExp: Math.floor(importedHourlyExp) };
+  return { charName: main?.characterName ?? null, input };
 }
 
 const EXCLUSIVE_BUFF_SECTIONS = CHECK_BUFF_GROUPS.filter((group) => group.mode === "exclusive").reduce<
@@ -290,6 +331,15 @@ const DAILY_REGIONS = [...new Set(DAILY_EXP_CONTENT.map((daily) => daily.region)
 
 const iconRowStyle: React.CSSProperties = { display: "flex", alignItems: "center", gap: 8 };
 
+// Sol Erda (manifests/v270/item.json), the Epic Dungeon reward currency.
+const SOL_ERDA_ICON: IconRef = { type: "item", id: "05066300" };
+
+// Monster Park entry ticket (manifests/v270/item.json).
+const MONSTER_PARK_ICON: IconRef = { type: "item", id: "05252030" };
+
+/** The level past which no Burning type grants extra levels. */
+const BURNING_MAX_LEVEL = 270;
+
 function expPanelStyle(styles: ReturnType<typeof toolStyles>): React.CSSProperties {
   return { ...styles.sectionPanel, borderRadius: "14px" };
 }
@@ -304,10 +354,47 @@ function fullWidthControl(base: React.CSSProperties): React.CSSProperties {
   return { ...base, width: "100%", height: 35 };
 }
 
+function disabledControl(base: React.CSSProperties): React.CSSProperties {
+  return { ...base, opacity: 0.65, cursor: "not-allowed" };
+}
+
+/** Button reset, so `tool-header-back` can carry the look of the back link. `margin-left: auto` on
+ *  a fit-width block is what pushes it to the panel's right edge. */
+function importLinkStyle(theme: AppTheme): React.CSSProperties {
+  return {
+    display: "block",
+    width: "fit-content",
+    marginLeft: "auto",
+    marginTop: 14,
+    background: "none",
+    border: "none",
+    padding: 0,
+    font: "inherit",
+    fontSize: "0.75rem",
+    fontWeight: 800,
+    textAlign: "right",
+    cursor: "pointer",
+    color: theme.accentText,
+  };
+}
+
 export default function ExpCalculatorWorkspace({ theme }: { theme: AppTheme }) {
   const mounted = useMounted();
   const [tab, setTab] = useState<ExpTab>("buffs");
+  const [importedHourlyExp, setImportedHourlyExp] = useState<number | null>(null);
   const panelStyle = expPanelStyle(toolStyles(theme));
+
+  // Each tab unmounts when it isn't showing, so the import is a one-shot handoff: the Farming tab
+  // stashes its hourly rate here, the Daily / Weekly tab seeds itself from it on mount, and leaving
+  // that tab spends it. Without spending it, a later visit would re-seed and stomp the plan again.
+  const importHourlyExp = (hourlyExp: number) => {
+    setImportedHourlyExp(hourlyExp);
+    setTab("all-in-one");
+  };
+  const changeTab = (next: ExpTab) => {
+    if (tab === "all-in-one") setImportedHourlyExp(null);
+    setTab(next);
+  };
 
   if (!mounted) return null;
 
@@ -316,6 +403,10 @@ export default function ExpCalculatorWorkspace({ theme }: { theme: AppTheme }) {
       <style>{`
         .exp-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; }
         .exp-coupon-grid { grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); }
+        /* The dungeon name plus its Sol Erda icon needs the room; the reward dropdown only ever
+           holds "0x" - "9x", so it gives that room back. */
+        .exp-epic-grid { grid-template-columns: minmax(0, 1.5fr) minmax(0, 0.5fr); }
+        .exp-epic-grid-solo { grid-template-columns: minmax(0, 1fr); }
         .exp-duo-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 14px; }
         .exp-tile-row { display: flex; flex-wrap: wrap; gap: 10px; }
         .exp-select-grid { display: grid; grid-template-columns: repeat(2, minmax(260px, 1fr)); gap: 12px; }
@@ -361,14 +452,14 @@ export default function ExpCalculatorWorkspace({ theme }: { theme: AppTheme }) {
           labels={TAB_LABELS}
           value={tab}
           ariaLabel="Calculator"
-          onChange={setTab}
+          onChange={changeTab}
           sectionPanel={panelStyle}
         />
 
         {/* Keyed so switching tabs remounts the wrapper and replays the entrance. */}
         <div key={tab} className="exp-tab-panel">
-          {tab === "buffs" && <BuffsTab theme={theme} />}
-          {tab === "all-in-one" && <AllInOneTab theme={theme} />}
+          {tab === "buffs" && <BuffsTab theme={theme} onImportHourlyExp={importHourlyExp} />}
+          {tab === "all-in-one" && <AllInOneTab theme={theme} importedHourlyExp={importedHourlyExp} />}
           {tab === "resources" && <ResourcesTab theme={theme} />}
         </div>
       </div>
@@ -376,7 +467,7 @@ export default function ExpCalculatorWorkspace({ theme }: { theme: AppTheme }) {
   );
 }
 
-function BuffsTab({ theme }: { theme: AppTheme }) {
+function BuffsTab({ theme, onImportHourlyExp }: { theme: AppTheme; onImportHourlyExp: (hourlyExp: number) => void }) {
   const styles = toolStyles(theme);
   const inputStyle = fullWidthControl(styles.inputStyle);
   const characterDropdownInputStyle: React.CSSProperties = { ...styles.inputStyle, width: "100%" };
@@ -386,7 +477,7 @@ function BuffsTab({ theme }: { theme: AppTheme }) {
   const [initial] = useState(initialFarmingState);
   const [monster, setMonster] = useState<MonsterExpInput>(initial.monster);
   const [selectedCharName, setSelectedCharName] = useState<string | null>(initial.charName);
-  const [selectedMonster, setSelectedMonster] = useState<ExpMonster | null>(null);
+  const [selectedMonster, setSelectedMonster] = useState<ExpMonster | null>(initial.selectedMonster);
   const [buffs, setBuffs] = useState<BuffState>(initial.buffs);
   const result = useMemo(() => calculateMonsterExp(monster, buffs), [monster, buffs]);
   const characters = useMemo(() => selectCharactersList(readCharactersStore()), []);
@@ -404,7 +495,7 @@ function BuffsTab({ theme }: { theme: AppTheme }) {
     setBuffs((state) => {
       const next = updater(state);
       if (selectedCharName) {
-        writeCharacterToolData(selectedCharName, FARMING_TOOL_KEY, toSavedExpState(next, monster));
+        writeCharacterToolData(selectedCharName, FARMING_TOOL_KEY, toSavedExpState(next, monster, selectedMonster));
       }
       return next;
     });
@@ -414,7 +505,7 @@ function BuffsTab({ theme }: { theme: AppTheme }) {
     setMonster((state) => {
       const next = { ...state, [field]: value };
       if (selectedCharName) {
-        writeCharacterToolData(selectedCharName, FARMING_TOOL_KEY, toSavedExpState(buffs, next));
+        writeCharacterToolData(selectedCharName, FARMING_TOOL_KEY, toSavedExpState(buffs, next, selectedMonster));
       }
       return next;
     });
@@ -434,7 +525,7 @@ function BuffsTab({ theme }: { theme: AppTheme }) {
   };
   const updateCharacter = (name: string | null) => {
     if (selectedCharName) {
-      writeCharacterToolData(selectedCharName, FARMING_TOOL_KEY, toSavedExpState(buffs, monster));
+      writeCharacterToolData(selectedCharName, FARMING_TOOL_KEY, toSavedExpState(buffs, monster, selectedMonster));
     }
     setSelectedCharName(name);
     const selected = characters.find((character) => character.characterName === name);
@@ -450,19 +541,22 @@ function BuffsTab({ theme }: { theme: AppTheme }) {
     const loaded = loadCharacterState(selected, monster);
     setBuffs(loaded.buffs);
     setMonster(loaded.monster);
+    setSelectedMonster(loaded.selectedMonster);
     writeCharacterToolData(
       selected.characterName,
       FARMING_TOOL_KEY,
-      toSavedExpState(loaded.buffs, loaded.monster),
+      toSavedExpState(loaded.buffs, loaded.monster, loaded.selectedMonster),
     );
   };
   const updateSelectedMonster = (option: ExpMonster) => {
     setSelectedMonster(option);
-    setMonster((state) => ({
-      ...state,
-      monsterLevel: option.level,
-      monsterBaseExp: option.exp,
-    }));
+    setMonster((state) => {
+      const next = { ...state, monsterLevel: option.level, monsterBaseExp: option.exp };
+      if (selectedCharName) {
+        writeCharacterToolData(selectedCharName, FARMING_TOOL_KEY, toSavedExpState(buffs, next, option));
+      }
+      return next;
+    });
   };
 
   return (
@@ -629,7 +723,13 @@ function BuffsTab({ theme }: { theme: AppTheme }) {
         ))}
       </div>
 
-      <ExpOverviewPanel theme={theme} monster={monster} selectedMonster={selectedMonster} result={result} />
+      <ExpOverviewPanel
+        theme={theme}
+        monster={monster}
+        selectedMonster={selectedMonster}
+        result={result}
+        onImportHourlyExp={onImportHourlyExp}
+      />
     </>
   );
 }
@@ -869,11 +969,13 @@ function ExpOverviewPanel({
   monster,
   selectedMonster,
   result,
+  onImportHourlyExp,
 }: {
   theme: AppTheme;
   monster: MonsterExpInput;
   selectedMonster: ExpMonster | null;
   result: MonsterExpResult;
+  onImportHourlyExp: (hourlyExp: number) => void;
 }) {
   const panelStyle = expPanelStyle(toolStyles(theme));
   const visualCardStyle: React.CSSProperties = {
@@ -915,6 +1017,18 @@ function ExpOverviewPanel({
           <MiniMetric theme={theme} label="Level Bonus" value={`${result.monsterLevelBonus.toFixed(2)}x`} />
         </div>
       </div>
+      {/* Switches tabs and seeds state rather than navigating, so it's a button wearing the
+          back-link's clothes. Hidden at 0 hourly EXP, where there is nothing to carry over. */}
+      {result.hourlyExp > 0 && (
+        <button
+          type="button"
+          className="tool-header-back"
+          onClick={() => onImportHourlyExp(result.hourlyExp)}
+          style={importLinkStyle(theme)}
+        >
+          Import Into Daily/Weekly Calculator →
+        </button>
+      )}
       {/* Booster and clockwork proc panels are intentionally hidden while the EXP source modeling is refined.
       <div className="exp-results" style={{ marginTop: 14 }}>
         <VisualMetric
@@ -946,18 +1060,35 @@ function MiniMetric({ theme, label, value }: { theme: AppTheme; label: string; v
   );
 }
 
-function AllInOneTab({ theme }: { theme: AppTheme }) {
+function AllInOneTab({ theme, importedHourlyExp }: { theme: AppTheme; importedHourlyExp: number | null }) {
   const styles = toolStyles(theme);
   const inputStyle = fullWidthControl(styles.inputStyle);
   const selectStyle = fullWidthControl(styles.selectStyle);
   const characterDropdownInputStyle: React.CSSProperties = { ...styles.inputStyle, width: "100%" };
   const labelStyle = styles.labelStyle;
   const panelStyle = expPanelStyle(styles);
-  const [initial] = useState(initialAllInOneState);
+  const [initial] = useState(() => initialAllInOneState(importedHourlyExp));
   const [input, setInput] = useState<AllInOneInput>(initial.input);
   const [selectedCharName, setSelectedCharName] = useState<string | null>(initial.charName);
   const characters = useMemo(() => selectCharactersList(readCharactersStore()), []);
-  const result = useMemo(() => calculateAllInOne(input), [input]);
+  const selectedChar = characters.find((character) => character.characterName === selectedCharName);
+  const heroicWorld = selectedChar ? worldServerType(selectedChar.worldID) === "heroic" : false;
+  // Every Burning type stops accelerating levels at 270 (see `nextLevelAfterGain`), so past that
+  // the dropdown is a dead control.
+  const burningSpent = input.startLevel >= BURNING_MAX_LEVEL;
+  // Neither override is written back to state: both depend on the character, and clobbering the
+  // stored pick would lose it for a character the option still applies to.
+  const effectiveInput = useMemo(
+    () => ({
+      ...input,
+      ...(heroicWorld && { epicDungeonMultiplier: 1 }),
+      ...(burningSpent && { burningType: "" as const }),
+    }),
+    [input, heroicWorld, burningSpent],
+  );
+  const result = useMemo(() => calculateAllInOne(effectiveInput), [effectiveInput]);
+  const eligibleParks = MONSTER_PARK_OPTIONS.filter((park) => park.minLevel <= input.startLevel);
+  const bestPark = bestMonsterParkForLevel(input.startLevel);
   /** Persists to the selected character as part of the state update; manual level stays in memory. */
   const updateInput = (updater: (state: AllInOneInput) => AllInOneInput) => {
     setInput((state) => {
@@ -1011,8 +1142,14 @@ function AllInOneTab({ theme }: { theme: AppTheme }) {
           <NumberField label="Current EXP %" min={0} max={99.999} decimal value={input.startPercent} labelStyle={labelStyle} inputStyle={inputStyle} disabled={selectedCharName !== null} onChange={(value) => updateNumber("startPercent", value)} />
           <NumberField label="Target Level" min={MIN_EXP_LEVEL + 1} max={MAX_EXP_LEVEL} value={input.targetLevel} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("targetLevel", value)} />
           <Field label="Burning" style={labelStyle}>
-            <select className="tool-select" value={input.burningType} onChange={(e) => updateInput((state) => ({ ...state, burningType: e.target.value as AllInOneInput["burningType"] }))} style={selectStyle}>
-              <option value="">None</option>
+            <select
+              className="tool-select"
+              value={burningSpent ? "" : input.burningType}
+              disabled={burningSpent}
+              onChange={(e) => updateInput((state) => ({ ...state, burningType: e.target.value as AllInOneInput["burningType"] }))}
+              style={burningSpent ? disabledControl(selectStyle) : selectStyle}
+            >
+              <option value="">{burningSpent ? "None (past Lv. 270)" : "None"}</option>
               <option value="hyper">Hyper Burning</option>
               <option value="hyperMax">Hyper Burning MAX</option>
               <option value="hyperMaxBeyond">Hyper Burning MAX + Beyond</option>
@@ -1028,28 +1165,54 @@ function AllInOneTab({ theme }: { theme: AppTheme }) {
         {DAILY_REGIONS.map((region) => (
           <div key={region} style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 8 }}>
             <span className="tool-field-label" style={{ color: theme.muted, width: 86, flexShrink: 0 }}>{region}</span>
+            {/* Deliberately not level-gated: the plan can carry the character past a daily's
+                unlock level, and the simulation already skips it until they get there. */}
             {DAILY_EXP_CONTENT.filter((daily) => daily.region === region).map((daily) => {
               const selected = input.dailyIds.includes(daily.id);
               return (
-                <button
+                <HoverTooltip
                   key={daily.id}
-                  type="button"
-                  title={`${daily.label} (Lv. ${daily.minLevel})`}
-                  aria-label={`${daily.label} (Lv. ${daily.minLevel})`}
-                  aria-pressed={selected}
-                  onClick={() => toggleDaily(daily.id)}
-                  style={dailyTileStyle(theme, selected)}
+                  theme={theme}
+                  label={<TileTooltipLabel theme={theme} title={daily.label} detail={`Lv. ${daily.minLevel}`} />}
                 >
-                  <BuffIcon icon={daily.icon} label={daily.label} />
-                </button>
+                  <button
+                    type="button"
+                    aria-label={`${daily.label} (Lv. ${daily.minLevel})`}
+                    aria-pressed={selected}
+                    onClick={() => toggleDaily(daily.id)}
+                    style={dailyTileStyle(theme, selected)}
+                  >
+                    <BuffIcon icon={daily.icon} label={daily.label} />
+                  </button>
+                </HoverTooltip>
               );
             })}
           </div>
         ))}
         <div className="exp-grid" style={{ marginTop: 12 }}>
-          <NumberField label="Custom Daily EXP" min={0} value={input.customDailyExp} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("customDailyExp", value)} />
           <NumberField label="Arcane River Daily Bonus %" min={0} max={100} value={input.arcaneRiverBonus} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("arcaneRiverBonus", value)} />
           <NumberField label="Grandis Daily Bonus %" min={0} max={100} value={input.grandisBonus} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("grandisBonus", value)} />
+        </div>
+        <div className="exp-grid" style={{ marginTop: 12 }}>
+          <Field label="Custom Daily" style={labelStyle}>
+            <select
+              className="tool-select"
+              value={input.customDailyMode}
+              onChange={(e) => updateInput((state) => ({ ...state, customDailyMode: e.target.value as AllInOneInput["customDailyMode"] }))}
+              style={selectStyle}
+            >
+              <option value="flat">Flat EXP / Day</option>
+              <option value="hourly">Farming Rate</option>
+            </select>
+          </Field>
+          {input.customDailyMode === "flat" ? (
+            <NumberField label="Custom Daily EXP" min={0} value={input.customDailyExp} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("customDailyExp", value)} />
+          ) : (
+            <>
+              <NumberField label="Hourly EXP" min={0} value={input.customHourlyExp} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("customHourlyExp", value)} />
+              <NumberField label="Hours Farmed / Day" min={0} max={24} step="0.5" value={input.customHoursPerDay} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("customHoursPerDay", value)} />
+            </>
+          )}
         </div>
       </div>
 
@@ -1076,7 +1239,18 @@ function AllInOneTab({ theme }: { theme: AppTheme }) {
         <div style={panelStyle}>
           <SectionTitle theme={theme} label="Monster Park" />
           <div className="exp-grid">
-            <NumberField label="Runs / Day" icon={{ type: "item", id: "05252030" }} min={0} max={7} value={input.monsterParkRuns} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("monsterParkRuns", value)} />
+            <Field label="Dungeon" style={labelStyle}>
+              <div style={iconRowStyle}>
+                <BuffIcon icon={MONSTER_PARK_ICON} label="Monster Park" />
+                {/* An unset pick shows the dungeon it resolves to rather than a sentinel option.
+                    It stays unset until the player actually changes it, so a plan that levels them
+                    into a better dungeon still upgrades on its own. */}
+                <select className="tool-select" value={input.monsterParkId || bestPark?.id || ""} onChange={(e) => updateInput((state) => ({ ...state, monsterParkId: e.target.value }))} style={selectStyle}>
+                  {eligibleParks.map((park) => <option key={park.id} value={park.id}>{park.label}</option>)}
+                </select>
+              </div>
+            </Field>
+            <NumberField label="Runs / Day" min={0} max={7} value={input.monsterParkRuns} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("monsterParkRuns", value)} />
             <NumberField label="Bonus EXP %" min={0} max={100} value={input.monsterParkBonus} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("monsterParkBonus", value)} />
             <Field label="Monster Park Extreme" style={labelStyle}>
               <Toggle theme={theme} label="1 clear / week" checked={input.mpeRuns > 0} onChange={(checked) => updateNumber("mpeRuns", checked ? 1 : 0)} style={{ height: 35, width: "100%" }} />
@@ -1086,22 +1260,30 @@ function AllInOneTab({ theme }: { theme: AppTheme }) {
 
         <div style={panelStyle}>
           <SectionTitle theme={theme} label="Epic Dungeon" />
-          <div className="exp-grid">
+          {/* Heroic worlds have no reward multiplier to buy, so the dropdown drops out. The two
+              remaining fields each get their own row: side by side, the long label and the
+              stepper's buttons crowd the dungeon dropdown. */}
+          <div className={heroicWorld ? "exp-grid exp-epic-grid-solo" : "exp-grid exp-epic-grid"}>
             <Field label="Epic Dungeon" style={labelStyle}>
-              <select className="tool-select" value={input.epicDungeonId} onChange={(e) => updateInput((state) => ({ ...state, epicDungeonId: e.target.value }))} style={selectStyle}>
-                <option value="">No Epic Dungeon</option>
-                {EPIC_DUNGEON_OPTIONS.map((dungeon) => <option key={dungeon.id} value={dungeon.id}>{dungeon.label} (Lv. {dungeon.minLevel})</option>)}
-              </select>
+              <div style={iconRowStyle}>
+                <BuffIcon icon={SOL_ERDA_ICON} label="Epic Dungeon" />
+                <select className="tool-select" value={input.epicDungeonId} onChange={(e) => updateInput((state) => ({ ...state, epicDungeonId: e.target.value }))} style={selectStyle}>
+                  <option value="">No Epic Dungeon</option>
+                  {EPIC_DUNGEON_OPTIONS.map((dungeon) => <option key={dungeon.id} value={dungeon.id}>{dungeon.label} (Lv. {dungeon.minLevel})</option>)}
+                </select>
+              </div>
             </Field>
-            <Field label="Epic Dungeon Reward" style={labelStyle}>
-              <select className="tool-select" value={input.epicDungeonMultiplier} onChange={(e) => updateNumber("epicDungeonMultiplier", Number(e.target.value))} style={selectStyle}>
-                <option value={0}>0x</option>
-                <option value={1}>1x</option>
-                <option value={5}>5x</option>
-                <option value={9}>9x</option>
-              </select>
-            </Field>
-            <NumberField label="Bonus EXP %" min={0} max={100} value={input.epicDungeonBonus} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("epicDungeonBonus", value)} />
+            {!heroicWorld && (
+              <Field label="Reward" style={labelStyle}>
+                <select className="tool-select" value={input.epicDungeonMultiplier} onChange={(e) => updateNumber("epicDungeonMultiplier", Number(e.target.value))} style={selectStyle}>
+                  <option value={0}>0x</option>
+                  <option value={1}>1x</option>
+                  <option value={5}>5x</option>
+                  <option value={9}>9x</option>
+                </select>
+              </Field>
+            )}
+            <NumberField label="Bonus Multiplier (1-4x)" min={1} max={4} step="0.5" value={input.epicDungeonExpMultiplier} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("epicDungeonExpMultiplier", value)} />
           </div>
         </div>
       </div>
@@ -1352,7 +1534,13 @@ function NumberField({
       step={step}
       onKeyDown={replaceZeroOnDigit}
       onChange={(e) => {
-        if (!disabled) onChange(clampMax(Number(e.target.value) || 0, max));
+        if (disabled) return;
+        // A number input reports a half-typed decimal ("2.") as an empty string. Pushing 0 here
+        // would re-render the box to "0" and eat the point, so "2.5" could never be typed on a
+        // fractional-step field. Leaving state alone keeps the DOM holding the raw keystrokes;
+        // an actually-empty box lands on `min` at blur.
+        if (e.target.value === "") return;
+        onChange(clampMax(Number(e.target.value) || 0, max));
       }}
       onBlur={(e) => {
         if (!disabled) onChange(Math.max(min, clampMax(Number(e.target.value) || 0, max)));
@@ -1402,6 +1590,7 @@ function DateField({
 function BuffIcon({ icon, label }: { icon?: IconRef; label: string }) {
   if (!icon) return null;
   if (icon.type === "erda-skill") return <ErdaSkillIcon id={icon.id} size={32} alt={label} />;
+  if (icon.type === "familiar-badge") return <FamiliarBadgeIcon id={icon.id} size={32} alt={label} />;
   if (icon.type === "skill") return <SkillIcon id={icon.id} size={32} alt={label} />;
   if (icon.type === "mob") return <MobSprite id={icon.id} size={32} alt={label} />;
   return <ItemIcon id={icon.id} shadow={icon.shadow} size={32} alt={label} />;
