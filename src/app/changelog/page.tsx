@@ -14,6 +14,13 @@ const CHANGELOG: ChangelogEntry[] = [
   {
     date: "2026-07-12",
     changes: [
+      { type: "added", text: "The EXP Calculator Farming tab now has an Import Into Daily/Weekly Calculator link that carries your hourly EXP over to your plan." },
+      { type: "added", text: "The EXP Calculator now remembers the monster you picked in the Farming tab for each character." },
+      { type: "added", text: "The EXP Calculator now lets you pick which Monster Park dungeon you run, defaulting to the best one your level can enter." },
+      { type: "changed", text: "The EXP Calculator Epic Dungeon panel now takes a Bonus Multiplier, so you can enter event rates like 1.5x, 2.5x, or 4x directly." },
+      { type: "changed", text: "The EXP Calculator now hides the Epic Dungeon reward multiplier for characters in Heroic worlds, which cannot buy one." },
+      { type: "changed", text: "The EXP Calculator now disables the Burning dropdown at level 270 and up, where no Burning type grants extra levels." },
+      { type: "fixed", text: "Fixed Mechaberry Farm Tickets in the EXP Calculator granting thousands of times too much EXP." },
       { type: "fixed", text: "Fixed the EXP Calculator not letting you type a Current EXP % below 1, like 0.5." },
       { type: "fixed", text: "Fixed text boxes, dropdowns, and date pickers sitting in the same row being slightly different heights in the Liberation Tracker, the Trace Restoration Tracker, and the Flame Calculator." },
     ],

@@ -8,9 +8,19 @@ mirroring how the liberation page splits `liberation` and `astra`. Resources sta
   Dungeon panels, plus target level, burning, and the date window.
 
 Never persist values that are derived from elsewhere: character level and current EXP percent come
-from the character record, and monster level and base EXP come from the selected monster. Event
-tickets, growth potions, Punch King, and Double Up are deliberately not saved; they are one-off
-event resources, so they reset each visit.
+from the character record, and monster level and base EXP come from the selected monster. What
+`expFarming` saves of the monster is its `key` alone (`monsterKey`), and level/EXP are rehydrated
+from `EXP_MONSTERS` on load, so the saved state is enough to reproduce the hourly rate without
+duplicating the monster table. Event tickets, growth potions, Punch King, and Double Up are
+deliberately not saved; they are one-off event resources, so they reset each visit.
+
+The Farming tab's Overview has an "Import Into Daily/Weekly Calculator" link. Tabs unmount when
+they aren't showing, so the import is a one-shot handoff through `importedHourlyExp` on the
+workspace: Farming stashes its hourly rate, Daily / Weekly seeds `customDailyMode: "hourly"` from
+it in its lazy initializer, and `changeTab` spends it on the way out. Do not skip the spend, or a
+later visit to the tab would re-seed and stomp whatever the player had set. Custom Daily is either
+a flat figure (`customDailyExp`) or a rate (`customHourlyExp` x `customHoursPerDay`), resolved by
+`customDailyExp()` in the data module.
 
 Writes go through the `updateBuffs` / `updateSavedMonsterField` / `updateInput` wrappers, which
 write inside the state updater and no-op when no character is selected (Manual Level is never
@@ -76,3 +86,26 @@ rune scenarios.
 
 Overview should stay compact. The selected monster card owns the monster identity and final kill
 EXP; avoid duplicating selected monster details elsewhere.
+
+`MONSTER_PARK_OPTIONS` is ordered by EXP, so "the dungeon a player would actually run" is just the
+last entry whose `minLevel` the character meets. `monsterParkId` is a pin, and `""` means that
+auto-pick, which keeps upgrading as the plan levels the character. `resolveMonsterPark` falls back
+to the auto-pick when a pinned dungeon is out of reach, so a stale save cannot silently zero out
+Monster Park EXP. Entry levels are the game's real gate minimums (Arcana is 230), not a 5-level
+ladder.
+
+Epic Dungeon EXP is `base x dungeon.baseMultiplier x reward multiplier x epicDungeonExpMultiplier`.
+The last is the event rate (1x when no event is running, 1.5x - 4x during one) and is a typed
+number, not a dropdown, because the rate changes every event.
+
+Heroic (Reboot) worlds have no reward multiplier to buy, so its dropdown is hidden for a selected
+Heroic character and `effectiveInput` pins `epicDungeonMultiplier` to 1 for the calculation only.
+World class comes from `worldServerType` (boss-crystals), which counts Solis as Heroic alongside
+Kronos and Hyperion. `effectiveInput` likewise blanks `burningType` at level 270+, where no Burning
+type grants extra levels and the dropdown is disabled. Neither override is written back to state:
+the same plan is reused across characters, and clobbering a stored pick would lose it for one the
+option still applies to.
+
+Daily content tiles are deliberately *not* level-gated. A plan can carry the character past a
+daily's unlock level inside the date window, so the tiles stay selectable and `selectedDailyExp`
+skips a daily per simulated day until the level is reached.
