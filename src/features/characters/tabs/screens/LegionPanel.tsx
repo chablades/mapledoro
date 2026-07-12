@@ -578,7 +578,9 @@ function LinkSkillsSection({ theme, worldId, worldCharacters }: { theme: AppThem
 }
 
 export default function LegionPanel({ theme, worldId, worldCharacters, onBack }: LegionPanelProps) {
-  const [section, setSection] = useState<LegionSection>("artifact");
+  // Link Skills is the landing tab: in-game, the Legion Artifact only unlocks after
+  // accumulating Link Skill levels, so Link Skills is the thing every account has.
+  const [section, setSection] = useState<LegionSection>("linkSkills");
   const worldName = WORLD_NAMES[worldId] ?? `World ${worldId}`;
 
   return (
@@ -598,17 +600,32 @@ export default function LegionPanel({ theme, worldId, worldCharacters, onBack }:
       </div>
 
       <div style={{ display: "flex", gap: 3, padding: 3, background: theme.bg, border: `1px solid ${theme.border}`, borderRadius: 12, marginBottom: "0.75rem" }} role="tablist" aria-label="Legion sections">
-        <button type="button" role="tab" aria-selected={section === "artifact"} onClick={() => setSection("artifact")} style={segmentButtonStyle(theme, section === "artifact")}>
-          Legion Artifact
-        </button>
         <button type="button" role="tab" aria-selected={section === "linkSkills"} onClick={() => setSection("linkSkills")} style={segmentButtonStyle(theme, section === "linkSkills")}>
           Link Skills
         </button>
+        <button type="button" role="tab" aria-selected={section === "artifact"} onClick={() => setSection("artifact")} style={segmentButtonStyle(theme, section === "artifact")}>
+          Legion Artifact
+        </button>
       </div>
 
-      {section === "artifact"
-        ? <LegionArtifactSection theme={theme} worldId={worldId} />
-        : <LinkSkillsSection theme={theme} worldId={worldId} worldCharacters={worldCharacters} />}
+      {/* Same page-swap read as the profile binder's 0.2s fade-up: the key remount
+          re-runs the entrance whenever the tab changes. Visible state is the default,
+          the keyframes only animate toward it. */}
+      <style>{`
+        @keyframes legion-section-reveal {
+          from { opacity: 0; transform: translateY(4px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .legion-section-content { animation: legion-section-reveal 0.2s ease-out both; }
+        @media (prefers-reduced-motion: reduce) {
+          .legion-section-content { animation: none !important; }
+        }
+      `}</style>
+      <div key={section} className="legion-section-content">
+        {section === "artifact"
+          ? <LegionArtifactSection theme={theme} worldId={worldId} />
+          : <LinkSkillsSection theme={theme} worldId={worldId} worldCharacters={worldCharacters} />}
+      </div>
     </div>
   );
 }
