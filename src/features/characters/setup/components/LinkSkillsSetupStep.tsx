@@ -7,8 +7,8 @@ import Image from "next/image";
 import { resourceImageUrl } from "../../../../lib/mapleResource";
 import type { AppTheme } from "../../../../components/themes";
 import type { SetupStepDefinition } from "../steps";
-import type { StoredCharacterRecord, LinkSkillId } from "../../model/charactersStore";
-import { LINK_SKILLS, type LinkSkillDef } from "../data/linkSkillsData";
+import { linkSkillsDraftToStored, type StoredCharacterRecord, type LinkSkillId } from "../../model/charactersStore";
+import { LINK_SKILLS, CLASS_TO_SKILL, computeLinkSkillsFromRoster, reconcileLinkSkills, inferLinkLevel, type LinkSkillDef } from "../data/linkSkillsData";
 import SetupStepFrame from "./SetupStepFrame";
 import InfoTooltip, { type TooltipContent } from "./InfoTooltip";
 
@@ -29,71 +29,7 @@ interface LinkSkillsSetupStepProps {
   onFinish: () => void;
 }
 
-// nexonJobName → which skill it contributes to
-const CLASS_TO_SKILL: Record<string, LinkSkillId> = {
-  "Cadena":           "unfairAdvantage",
-  "Illium":           "tideOfBattle",
-  "Ark":              "solus",
-  "Kain":             "timeToPrepare",
-  "Angelic Buster":   "termsAndConditions",
-  "Kanna":            "elementalism",
-  "Mo Xuan":          "qiCultivation",
-  "Hoyoung":          "bravado",
-  "Arch Mage (F/P)":  "empiricalKnowledge",
-  "Arch Mage (I/L)":  "empiricalKnowledge",
-  "Bishop":           "empiricalKnowledge",
-  "Night Lord":       "thiefsCunning",
-  "Shadower":         "thiefsCunning",
-  "Blade Master":     "thiefsCunning",
-};
-
 type LinkSkillsDraft = Partial<Record<LinkSkillId, string>>;
-type AutofillSources = Partial<Record<LinkSkillId, string[]>>;
-
-function inferLinkLevel(level: number): number {
-  if (level >= 210) return 3;
-  if (level >= 120) return 2;
-  if (level >= 70)  return 1;
-  return 0;
-}
-
-function computeAutofill(
-  roster: StoredCharacterRecord[],
-  worldId: number,
-): { values: LinkSkillsDraft; sources: AutofillSources } {
-  const sameWorld = roster.filter((c) => c.worldID === worldId);
-  const bySkill: Record<string, { name: string; level: number; contribution: number }[]> = {};
-
-  for (const char of sameWorld) {
-    const skillId = CLASS_TO_SKILL[char.jobName];
-    if (!skillId) continue;
-    const contribution = inferLinkLevel(char.level);
-    if (contribution === 0) continue;
-    if (!bySkill[skillId]) bySkill[skillId] = [];
-    bySkill[skillId].push({ name: char.characterName, level: char.level, contribution });
-  }
-
-  const values: LinkSkillsDraft = {};
-  const sources: AutofillSources = {};
-
-  for (const [skillId, entries] of Object.entries(bySkill)) {
-    const skill = LINK_SKILLS.find((s) => s.id === skillId);
-    if (!skill) continue;
-
-    if (skill.maxLevel === 3) {
-      const best = entries.reduce((a, b) => a.contribution > b.contribution ? a : b);
-      values[skillId as LinkSkillId] = String(best.contribution);
-      sources[skillId as LinkSkillId] = [`${best.name} (Lv ${best.level})`];
-    } else {
-      const total = Math.min(entries.reduce((sum, e) => sum + e.contribution, 0), skill.maxLevel);
-      const alphabetical = entries.toSorted((a, b) => a.name.localeCompare(b.name));
-      values[skillId as LinkSkillId] = String(total);
-      sources[skillId as LinkSkillId] = alphabetical.map((e) => `${e.name} (Lv ${e.level})`);
-    }
-  }
-
-  return { values, sources };
-}
 
 // manifests/v269/skill.json
 const LINK_MANAGER_SKILL_ID = "0001251"; // "Link Manager"
@@ -292,22 +228,25 @@ export default function LinkSkillsSetupStep({
   const initialValueRef = useRef(value);
 
   const { values: autofillValues, sources } = confirmedWorldId !== undefined
-    ? computeAutofill(characterRoster, confirmedWorldId)
+    ? computeLinkSkillsFromRoster(characterRoster, confirmedWorldId)
     : { values: {}, sources: {} };
 
-  // One-shot mount-time backfill (world-store draft merged with same-world roster
-  // autofill), only when this step lands blank — can't run during render since it
-  // depends on a client-only localStorage read. Not worth lifting into the parent
+  // One-shot mount-time backfill (stored world total reconciled against same-world roster
+  // autofill, never letting a lower roster-computed value clobber a higher stored one,
+  // see reconcileLinkSkills), only when this step lands blank: can't run during render
+  // since it depends on a client-only localStorage read. Not worth lifting into the parent
   // controller (which owns none of this step's domain logic) for a fetch that only ever
   // fires once, at mount.
   useEffect(() => {
     if (initialValueRef.current) return;
-    const worldStore = parseDraft(worldLinkSkills);
-    const roster = confirmedWorldId !== undefined
-      ? computeAutofill(characterRoster, confirmedWorldId).values
-      : {};
-    const merged = { ...worldStore, ...roster };
-    if (Object.keys(merged).length > 0) {
+    const stored = linkSkillsDraftToStored(worldLinkSkills);
+    const reconciled = confirmedWorldId !== undefined
+      ? reconcileLinkSkills(stored, characterRoster, confirmedWorldId)
+      : stored;
+    if (Object.keys(reconciled).length > 0) {
+      const merged = Object.fromEntries(
+        Object.entries(reconciled).map(([id, level]) => [id, String(level)]),
+      );
       // react-doctor-disable-next-line no-pass-data-to-parent
       onChange(JSON.stringify(merged));
     }
@@ -319,7 +258,10 @@ export default function LinkSkillsSetupStep({
   }
 
   function handleAutofill() {
-    onChange(JSON.stringify({ ...draft, ...autofillValues }));
+    const stringified = Object.fromEntries(
+      Object.entries(autofillValues).map(([id, level]) => [id, String(level)]),
+    );
+    onChange(JSON.stringify({ ...draft, ...stringified }));
   }
 
   const confirmedSkillId = CLASS_TO_SKILL[jobName];
@@ -385,7 +327,7 @@ export default function LinkSkillsSetupStep({
             onUpdate={handleUpdate}
             theme={theme}
             locked={skill.id === lockedSkillId}
-            min={autofillValues[skill.id] ? Number(autofillValues[skill.id]) : undefined}
+            min={autofillValues[skill.id]}
           />
         ))}
         {multiSkills.map((skill) => (
@@ -397,7 +339,7 @@ export default function LinkSkillsSetupStep({
             onUpdate={handleUpdate}
             theme={theme}
             fullWidth
-            min={autofillValues[skill.id] ? Number(autofillValues[skill.id]) : undefined}
+            min={autofillValues[skill.id]}
           />
         ))}
       </div>

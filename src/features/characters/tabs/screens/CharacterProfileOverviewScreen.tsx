@@ -9,10 +9,10 @@ import { readCharacterToolData } from "../../../tools/characterToolStorage";
 import { resolveClassId, getClassSetupOverrides } from "../../setup/data/nexonJobMapping";
 import { CLASS_SKILL_DATA } from "../../setup/data/classSkillData";
 import { resourceImageUrl } from "../../../../lib/mapleResource";
-import { readCharactersStore } from "../../model/charactersStore";
+import { readCharactersStore, selectCharactersList } from "../../model/charactersStore";
 import type { StoredCharacterEquipment, StoredCharacterRecord } from "../../model/charactersStore";
 import { LEGION_CRYSTALS } from "../../setup/data/legionArtifactData";
-import { LINK_SKILLS } from "../../setup/data/linkSkillsData";
+import { LINK_SKILLS, reconcileLinkSkills } from "../../setup/data/linkSkillsData";
 import { GUILD_BUFFS, BOOL_BUFFS, RENOWN_STATS } from "../../setup/data/buffsData";
 
 interface CharacterProfileOverviewScreenProps {
@@ -454,7 +454,8 @@ function LinkSkillsBookmark({ theme, character }: { theme: Theme; character: Sto
   const worldId = character?.worldID;
   const levels = useMemo(() => {
     if (!mounted || worldId === undefined) return null;
-    return readCharactersStore().linkSkillsByWorld[String(worldId)] ?? null;
+    const store = readCharactersStore();
+    return reconcileLinkSkills(store.linkSkillsByWorld[String(worldId)], selectCharactersList(store), worldId);
   }, [mounted, worldId]);
   if (!levels) return null;
   const rows = LINK_SKILLS
@@ -633,8 +634,9 @@ function isBookmarkFilled(id: BookmarkId, character: StoredCharacterRecord | nul
     }
     case "link_skills": {
       if (!mounted) return false;
-      const levels = readCharactersStore().linkSkillsByWorld[String(character.worldID)];
-      return Boolean(levels && Object.values(levels).some((v) => v));
+      const store = readCharactersStore();
+      const levels = reconcileLinkSkills(store.linkSkillsByWorld[String(character.worldID)], selectCharactersList(store), character.worldID);
+      return Object.values(levels).some((v) => v);
     }
     case "v_matrix": {
       const levels = character.vMatrix?.levels;
