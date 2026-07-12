@@ -857,7 +857,7 @@ function MonsterSelector({
 
 /** A black drop shadow does nothing on a near-black panel, so deepen it in dark mode. */
 function dropdownShadow(theme: AppTheme): string {
-  return themeColorScheme(theme) === "dark" ? "0 12px 28px rgba(0,0,0,0.55)" : "0 8px 24px rgba(0,0,0,0.18)";
+  return theme.colorMode === "dark" ? "0 12px 28px rgba(0,0,0,0.55)" : "0 8px 24px rgba(0,0,0,0.18)";
 }
 
 function DropdownMessage({ theme, text }: { theme: AppTheme; text: string }) {
@@ -1018,8 +1018,8 @@ function AllInOneTab({ theme }: { theme: AppTheme }) {
               <option value="hyperMaxBeyond">Hyper Burning MAX + Beyond</option>
             </select>
           </Field>
-          <DateField theme={theme} label="Start Date" value={input.startDate} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateInput((state) => ({ ...state, startDate: value }))} />
-          <DateField theme={theme} label="End Date" value={input.endDate} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateInput((state) => ({ ...state, endDate: value }))} />
+          <DateField label="Start Date" value={input.startDate} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateInput((state) => ({ ...state, startDate: value }))} />
+          <DateField label="End Date" value={input.endDate} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateInput((state) => ({ ...state, endDate: value }))} />
         </div>
       </div>
 
@@ -1374,14 +1374,12 @@ function NumberField({
 }
 
 function DateField({
-  theme,
   label,
   value,
   labelStyle,
   inputStyle,
   onChange,
 }: {
-  theme: AppTheme;
   label: string;
   value: string;
   labelStyle: React.CSSProperties;
@@ -1395,19 +1393,10 @@ function DateField({
         type="date"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        style={{ ...inputStyle, colorScheme: themeColorScheme(theme) }}
+        style={inputStyle}
       />
     </Field>
   );
-}
-
-/** Light/dark hint for native widgets (the date input's calendar icon), derived from the theme background. */
-function themeColorScheme(theme: AppTheme): "light" | "dark" {
-  const hex = theme.bg.replace("#", "");
-  const r = parseInt(hex.slice(0, 2), 16);
-  const g = parseInt(hex.slice(2, 4), 16);
-  const b = parseInt(hex.slice(4, 6), 16);
-  return (r * 299 + g * 587 + b * 114) / 1000 < 128 ? "dark" : "light";
 }
 
 function BuffIcon({ icon, label }: { icon?: IconRef; label: string }) {
