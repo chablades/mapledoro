@@ -9,7 +9,7 @@ import { ToolHeader } from "../../../components/ToolHeader";
 import { Field, Toggle } from "../shared-ui";
 import { formatMesoFull, formatPct } from "../format";
 import { toolStyles } from "../tool-styles";
-import { resultsMessageStyle, resultsTableStyles, summaryRowStyle as summaryRowBase } from "../shared-styles";
+import { controlHeightStyle, resultsMessageStyle, resultsTableStyles, summaryRowStyle as summaryRowBase } from "../shared-styles";
 import {
   FLAME_CLASS_OPTIONS,
   FLAME_TYPE_OPTIONS,
@@ -189,7 +189,9 @@ function FlameSettingsPanel({
     <section className="fade-in panel-card" style={panelStyle}>
       <h2 className="tool-panel-title" style={{ color: theme.text }}>Flame Settings</h2>
 
-      <div className="flame-inputs-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "12px" }}>
+      {/* auto-fit, not auto-fill: auto-fill keeps the empty tracks that don't hold
+          a field, so the fields stop short of the panel edge. */}
+      <div className="flame-inputs-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "12px" }}>
         <Field label="Class" htmlFor={`${uid}-class`} style={labelStyle}>
           <select
             id={`${uid}-class`}
@@ -270,7 +272,7 @@ function FlameSettingsPanel({
               onFocus={(e) => e.currentTarget.select()}
               onKeyDown={replaceZeroOnDigit}
               onChange={(e) => dispatch({ type: "setBaseAttack", value: toPositive(e.target.value) })}
-              style={{ ...inputStyle, width: "100%", padding: "8px 10px" }}
+              style={{ ...inputStyle, ...controlHeightStyle, width: "100%", padding: "8px 10px" }}
             />
           </Field>
         )}
@@ -616,6 +618,7 @@ export default function FlamingWorkspace({ theme }: { theme: AppTheme }) {
 
   const selectStyle: CSSProperties = {
     ...styles.selectStyle,
+    ...controlHeightStyle,
     width: "100%",
     padding: "8px 10px",
     appearance: "auto" as const,

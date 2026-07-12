@@ -71,14 +71,7 @@ function LiberationConfigSection({
   return (
     <section className="fade-in panel-card" style={sectionPanel}>
       <h2 className="tool-panel-title" style={{ color: theme.text }}>Configuration</h2>
-      <div
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: "1rem",
-          alignItems: "flex-end",
-        }}
-      >
+      <div className="tool-control-row">
         <div style={{ flex: "1 1 220px" }}>
           <label className="tool-field-label" htmlFor={questId} style={fieldLabel}>Current Quest</label>
           <select
@@ -102,7 +95,9 @@ function LiberationConfigSection({
           </select>
         </div>
 
-        <div style={{ flex: "0 1 140px" }}>
+        {/* "CURRENT DETERMINATION" is wider than "CURRENT TRACES"; give it enough
+            basis to stay on one line, taking the width from the quest select. */}
+        <div style={{ flex: `0 1 ${type === "genesis" ? 140 : 180}px` }}>
           <label className="tool-field-label" htmlFor={tracesId} style={fieldLabel}>Current {traceNameShort}</label>
           <input
             id={tracesId}

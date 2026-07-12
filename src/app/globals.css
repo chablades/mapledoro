@@ -175,7 +175,7 @@ html.scroll-locked body {
 /* No `height` here on purpose. Compact variants across the trackers shrink
    themselves with `padding` + `font-size`, and a height on the shared class
    silently overrides both (box-sizing: border-box). A form row that needs a
-   select and an input to line up pins the height inline instead. */
+   select and an input to line up opts into `.tool-control-row` below. */
 .tool-input,
 .tool-select {
   font-family: var(--font-body);
@@ -188,6 +188,37 @@ html.scroll-locked body {
 
 .tool-select {
   cursor: pointer;
+}
+
+/* A row of labelled controls that must line up. Equal font-size and padding is
+   NOT enough to make them equal height: Chromium's UA sheet forces
+   `line-height: normal` on <select> (so line-height can't be used to square
+   them up), and a date input carries its own picker chrome, so a text input, a
+   date input, and a select each fall back to a different intrinsic height. The
+   row aligns on flex-end, so those few pixels of difference also drag the
+   labels above them out of line. Pinning one height on every control in the row
+   is what fixes it. Compact controls (boss cards, drop tables) are not in such
+   a row and keep shrinking via padding + font-size. Grid-based forms (star
+   force, flaming, event planner) pin the same 34px per control through
+   `controlHeightStyle` in `features/tools/shared-styles.ts` — keep the two in
+   step. */
+.tool-control-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-end;
+}
+
+.tool-control-row .tool-input,
+.tool-control-row .tool-select {
+  height: 34px;
+}
+
+/* A wrapped label would defeat the point of the row: it makes one column taller
+   than the rest and pushes its control out of line. Each column is sized to fit
+   its own label, so this only guards against that. */
+.tool-control-row .tool-field-label {
+  white-space: nowrap;
 }
 
 .no-spinner {

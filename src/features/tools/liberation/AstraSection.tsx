@@ -107,8 +107,8 @@ function AstraConfigSection({
   return (
     <section className="fade-in panel-card" style={sectionPanel}>
       <h2 className="tool-panel-title" style={{ color: theme.text }}>Configuration</h2>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem", alignItems: "flex-end" }}>
-        <div style={{ flex: "1 1 220px" }}>
+      <div className="tool-control-row">
+        <div style={{ flex: "1 1 180px" }}>
           <label className="tool-field-label" htmlFor={`${uid}-mission`} style={fieldLabel}>Current Mission</label>
           <select
             id={`${uid}-mission`}
@@ -150,7 +150,7 @@ function AstraConfigSection({
           />
         </div>
 
-        <div style={{ flex: "0 1 130px" }}>
+        <div style={{ flex: "0 1 165px" }}>
           <label className="tool-field-label" htmlFor={`${uid}-frags`} style={fieldLabel}>Current Fragments</label>
           <input
             id={`${uid}-frags`}
@@ -218,7 +218,7 @@ function AstraDailyQuestSection({
   return (
     <section className="fade-in panel-card" style={sectionPanel}>
       <h2 className="tool-panel-title" style={{ color: theme.text }}>Daily Quests (Erion&apos;s Fragments)</h2>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem", alignItems: "flex-end" }}>
+      <div className="tool-control-row">
         <div style={{ flex: "1 1 250px" }}>
           <label className="tool-field-label" htmlFor={`${uid}-quest`} style={fieldLabel}>Highest Daily Quest</label>
           <select
@@ -262,7 +262,7 @@ function AstraDailyQuestSection({
         <h3 style={{ fontSize: "0.75rem", fontWeight: 700, color: theme.muted, margin: "0 0 6px" }}>
           Future Quest Upgrade (optional)
         </h3>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem", alignItems: "flex-end" }}>
+        <div className="tool-control-row">
           <div style={{ flex: "0 1 160px" }}>
             <label className="tool-field-label" htmlFor={`${uid}-upgrade-date`} style={fieldLabel}>Upgrade Date</label>
             <input
