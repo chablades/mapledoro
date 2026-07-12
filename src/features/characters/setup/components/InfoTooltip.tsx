@@ -73,7 +73,7 @@ function TooltipImage({ src, scale = 1, offsetY = 0 }: { src: string; scale?: nu
             if (fallbackRef.current) fallbackRef.current.style.display = "block";
           }}
           style={{
-            borderRadius: "5px", display: "block", objectFit: "contain",
+            borderRadius: "6px", display: "block", objectFit: "contain",
             transform: transforms || undefined,
           }}
         />

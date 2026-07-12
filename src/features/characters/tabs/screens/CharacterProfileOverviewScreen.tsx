@@ -615,6 +615,17 @@ function BuffsBookmark({ theme, character }: { theme: Theme; character: StoredCh
   );
 }
 
+function isHexaMatrixFilled(character: StoredCharacterRecord, mounted: boolean): boolean {
+  if (character.level < 260) return false;
+  const classId = resolveClassId(character.jobName);
+  const classData = classId ? CLASS_SKILL_DATA.find((c) => c.id === classId) : undefined;
+  const isLegacyClass = classData !== undefined && classData.buffSkills.length === 0 && classData.requiredStats.length === 0;
+  if (isLegacyClass) return true;
+  if (!mounted) return false;
+  const fromState = (character.tools?.hexaSkills as { levels?: HexaSkillLevels } | undefined)?.levels;
+  return Boolean(fromState ?? readHexaLevels(character.characterName));
+}
+
 function isBookmarkFilled(id: BookmarkId, character: StoredCharacterRecord | null, mounted: boolean): boolean {
   if (!character) return false;
   switch (id) {
@@ -642,7 +653,7 @@ function isBookmarkFilled(id: BookmarkId, character: StoredCharacterRecord | nul
       const levels = character.vMatrix?.levels;
       return Boolean(levels && Object.values(levels).some((v) => v > 0));
     }
-    case "hexa_matrix": return character.level >= 260;
+    case "hexa_matrix": return isHexaMatrixFilled(character, mounted);
     case "legion_artifacts": {
       if (!mounted) return false;
       const artifact = readCharactersStore().legionArtifactByWorld[String(character.worldID)];
