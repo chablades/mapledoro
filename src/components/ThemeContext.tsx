@@ -37,11 +37,12 @@ export function ThemeProvider({
 
   const theme = composeTheme(themeKey, colorMode);
 
-  // Keep the <html> background (set server-side in layout.tsx for iOS Safari
-  // toolbar tint / overscroll) in sync with theme changes.
+  // Keep the <html> background and color-scheme (both set server-side in
+  // layout.tsx) in sync with theme changes.
   useEffect(() => {
     document.documentElement.style.background = theme.bg;
-  }, [theme.bg]);
+    document.documentElement.style.colorScheme = theme.colorMode;
+  }, [theme.bg, theme.colorMode]);
 
   const value = useMemo(
     () => ({ themeKey, theme, setThemeKey, colorMode, setColorMode }),

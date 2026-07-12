@@ -48,15 +48,18 @@ export default async function RootLayout({
     cookieColorMode === "light" || cookieColorMode === "dark" ? cookieColorMode : "light";
 
   // Theme background on <html> so iOS Safari's toolbar tint and overscroll
-  // rubber-band reveal the theme color, not default white. Kept in sync after
-  // theme changes by ThemeProvider.
+  // rubber-band reveal the theme color, not default white. `color-scheme` tells
+  // the browser which way to paint native widget chrome it draws itself (the
+  // date input's calendar icon, scrollbars, <select> menus) — without it they
+  // stay light and the dark icon disappears against a dark input. Both are kept
+  // in sync after theme changes by ThemeProvider.
   const initialBg = composeTheme(initialThemeKey, initialColorMode).bg;
 
   return (
     <html
       lang="en"
       className={`${nunito.variable} ${fredoka.variable}`}
-      style={{ background: initialBg }}
+      style={{ background: initialBg, colorScheme: initialColorMode }}
     >
       <body>
         <ThemeProvider initialThemeKey={initialThemeKey} initialColorMode={initialColorMode}>
