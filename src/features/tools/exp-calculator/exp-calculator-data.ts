@@ -269,7 +269,6 @@ export const SELECT_BUFFS: SelectBuff[] = [
   { id: "geardock", label: "Grand Sacred Symbol: Geardock", icon: { type: "item", id: "01714001" }, options: grandSymbolOptions() },
   { id: "union-artifact", label: "Legion Artifact (EXP)", icon: { type: "item", id: "05681074" }, options: levelPercentOptions([1, 2, 3, 4, 6, 7, 8, 9, 10, 12]) },
   { id: "champion-renown", label: "Champion's Renown", icon: { type: "skill", id: "80003819" }, options: levelPercentOptions([5, 10, 15, 20, 25]) },
-  { id: "caretaker", label: "Caretaker's Buff", icon: { type: "skill", id: "80011827" }, options: levelPercentOptions([5, 6, 7, 8, 9, 10]) },
   { id: "kinship", label: "Kinship Ring", icon: { type: "item", id: "01114000" }, options: [
     { label: "N/A", value: 0 },
     { label: "+10% EXP (Player wears ring)", value: 10 },
@@ -278,6 +277,7 @@ export const SELECT_BUFFS: SelectBuff[] = [
     { label: "+25% EXP (3 extra ring wearers in party)", value: 25 },
     { label: "+30% EXP (4 extra ring wearers in party)", value: 30 },
   ] },
+  { id: "caretaker", label: "Caretaker's Buff", icon: { type: "skill", id: "80011827" }, options: levelPercentOptions([5, 6, 7, 8, 9, 10]) },
   { id: "eluna", label: "Eluna Earrings / Pendant", icon: { type: "item", id: "01032279" }, options: percentOptions([0, 2, 4, 6, 8, 10]) },
   { id: "roll-of-the-dice", label: "Roll of the Dice", icon: { type: "skill", id: "35111013" }, options: percentOptions([0, 30, 40, 50]) },
 ];

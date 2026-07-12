@@ -482,7 +482,7 @@ function BuffsTab({ theme }: { theme: AppTheme }) {
           </Field>
           <div className="exp-grid" style={{ marginTop: 12 }}>
             <NumberField label="Character Level" min={MIN_EXP_LEVEL} max={MAX_EXP_LEVEL - 1} value={monster.playerLevel} labelStyle={labelStyle} inputStyle={inputStyle} disabled={selectedCharName !== null} onChange={(value) => setMonster((state) => ({ ...state, playerLevel: value }))} />
-            <NumberField label="Current EXP %" min={0} max={99.999} step="0.001" value={monster.currentPercent} labelStyle={labelStyle} inputStyle={inputStyle} disabled={selectedCharName !== null} onChange={(value) => setMonster((state) => ({ ...state, currentPercent: value }))} />
+            <NumberField label="Current EXP %" min={0} max={99.999} decimal value={monster.currentPercent} labelStyle={labelStyle} inputStyle={inputStyle} disabled={selectedCharName !== null} onChange={(value) => setMonster((state) => ({ ...state, currentPercent: value }))} />
             <NumberField label="Target Level" min={MIN_EXP_LEVEL + 1} max={MAX_EXP_LEVEL} value={monster.targetLevel} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateSavedMonsterField("targetLevel", value)} />
             <NumberField label="Hourly Kill Count" min={0} value={monster.hourlyKillCount} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateSavedMonsterField("hourlyKillCount", value)} />
           </div>
@@ -1008,7 +1008,7 @@ function AllInOneTab({ theme }: { theme: AppTheme }) {
         </Field>
         <div className="exp-grid" style={{ marginTop: 12 }}>
           <NumberField label="Current Level" min={MIN_EXP_LEVEL} max={MAX_EXP_LEVEL - 1} value={input.startLevel} labelStyle={labelStyle} inputStyle={inputStyle} disabled={selectedCharName !== null} onChange={(value) => updateNumber("startLevel", value)} />
-          <NumberField label="Current EXP %" min={0} max={99.999} step="0.001" value={input.startPercent} labelStyle={labelStyle} inputStyle={inputStyle} disabled={selectedCharName !== null} onChange={(value) => updateNumber("startPercent", value)} />
+          <NumberField label="Current EXP %" min={0} max={99.999} decimal value={input.startPercent} labelStyle={labelStyle} inputStyle={inputStyle} disabled={selectedCharName !== null} onChange={(value) => updateNumber("startPercent", value)} />
           <NumberField label="Target Level" min={MIN_EXP_LEVEL + 1} max={MAX_EXP_LEVEL} value={input.targetLevel} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("targetLevel", value)} />
           <Field label="Burning" style={labelStyle}>
             <select className="tool-select" value={input.burningType} onChange={(e) => updateInput((state) => ({ ...state, burningType: e.target.value as AllInOneInput["burningType"] }))} style={selectStyle}>
@@ -1282,6 +1282,7 @@ function NumberField({
   min,
   max,
   step,
+  decimal = false,
   icon,
   disabled = false,
   labelStyle,
@@ -1293,38 +1294,68 @@ function NumberField({
   min: number;
   max?: number;
   step?: string;
+  decimal?: boolean;
   icon?: IconRef;
   disabled?: boolean;
   labelStyle: React.CSSProperties;
   inputStyle: React.CSSProperties;
   onChange: (value: number) => void;
 }) {
-  const input = (
+  // A type="number" input reports a half-typed decimal ("0.") as an empty value, and React
+  // re-syncs the box from `value` after every change, so the point is wiped as soon as it is
+  // typed and 0.x is unreachable. Decimal fields are text inputs holding the raw keystrokes
+  // until they parse; `draft` is null whenever `value` is the source of truth.
+  const [draft, setDraft] = useState<string | null>(null);
+  const safeValue = Number.isFinite(value) ? value : 0;
+  const commonProps = {
+    className: "tool-input",
+    disabled,
+    onFocus: (e: React.FocusEvent<HTMLInputElement>) => {
+      if (!disabled) e.currentTarget.select();
+    },
+    style: {
+      ...inputStyle,
+      opacity: disabled ? 0.65 : inputStyle.opacity,
+      cursor: disabled ? "not-allowed" : inputStyle.cursor,
+    },
+  };
+  // `min`/`max` are advisory on type="number"; the browser won't stop a typed value.
+  // Only the ceiling is enforced per keystroke: clamping up to `min` mid-type would
+  // rewrite "2" into "200" before the user reaches "265". The floor lands on blur.
+  const input = decimal ? (
     <input
-      className="tool-input"
+      {...commonProps}
+      type="text"
+      inputMode="decimal"
+      value={draft ?? String(safeValue)}
+      onChange={(e) => {
+        if (disabled) return;
+        const raw = sanitizeDecimal(e.target.value);
+        setDraft(raw);
+        const parsed = Number(raw);
+        if (raw !== "" && Number.isFinite(parsed)) onChange(clampMax(parsed, max));
+      }}
+      onBlur={() => {
+        if (disabled) return;
+        const next = Math.max(min, clampMax(Number(draft ?? safeValue) || 0, max));
+        setDraft(null);
+        onChange(next);
+      }}
+    />
+  ) : (
+    <input
+      {...commonProps}
       type="number"
-      value={Number.isFinite(value) ? value : 0}
+      value={safeValue}
       min={min}
       max={max}
       step={step}
-      disabled={disabled}
-      onFocus={(e) => {
-        if (!disabled) e.currentTarget.select();
-      }}
       onKeyDown={replaceZeroOnDigit}
-      // `min`/`max` are advisory on type="number"; the browser won't stop a typed value.
-      // Only the ceiling is enforced per keystroke: clamping up to `min` mid-type would
-      // rewrite "2" into "200" before the user reaches "265". The floor lands on blur.
       onChange={(e) => {
         if (!disabled) onChange(clampMax(Number(e.target.value) || 0, max));
       }}
       onBlur={(e) => {
         if (!disabled) onChange(Math.max(min, clampMax(Number(e.target.value) || 0, max)));
-      }}
-      style={{
-        ...inputStyle,
-        opacity: disabled ? 0.65 : inputStyle.opacity,
-        cursor: disabled ? "not-allowed" : inputStyle.cursor,
       }}
     />
   );
@@ -1610,4 +1641,11 @@ function roundToThree(value: number): number {
 
 function clampMax(value: number, max: number | undefined): number {
   return max === undefined ? value : Math.min(max, value);
+}
+
+/** Keeps only what can grow into a number: digits and a single leading decimal point. */
+function sanitizeDecimal(raw: string): string {
+  const cleaned = raw.replace(/[^\d.]/g, "");
+  const [whole, ...rest] = cleaned.split(".");
+  return rest.length === 0 ? whole : `${whole}.${rest.join("")}`;
 }

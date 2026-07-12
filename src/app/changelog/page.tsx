@@ -12,6 +12,12 @@ interface ChangelogEntry {
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    date: "2026-07-12",
+    changes: [
+      { type: "fixed", text: "Fixed the EXP Calculator not letting you type a Current EXP % below 1, like 0.5." },
+    ],
+  },
+  {
     date: "2026-07-10",
     changes: [
       { type: "changed", text: "The Daily Tracker now works like the Boss Crystal Tracker: add characters yourself with the Add character card, pick each one from your imports or type a name, and drag the cards to reorder them." },
