@@ -22,6 +22,7 @@ import {
   DEFAULT_CRYSTAL_STATS,
   getLegionArtifactStat,
   isCrystalUnlocked,
+  effectiveCrystal,
   parseLegionArtifactBoardDraft,
   serializeLegionArtifactBoardDraft,
   type LegionArtifactStatId,
@@ -46,24 +47,7 @@ interface LegionArtifactsSetupStepProps {
 const PICKER_WIDTH = 230;
 const CARD_POPOVER_WIDTH = 240;
 const CRYSTAL_TILE_SIZE = 116;
-const CRYSTAL_TILE_SIZE_MOBILE = 100;
 const CRYSTAL_ICON_SIZE = 80;
-const EMPTY_CRYSTAL: LegionCrystalDraft = { level: MIN_CRYSTAL_LEVEL, stats: [...DEFAULT_CRYSTAL_STATS] };
-
-// A crystal newly unlocked by raising the Artifact Level can still be holding a stored
-// "no data" placeholder (level 0, all-null stats) from before it was reachable — e.g. this
-// world's Legion Artifact data already existed from an earlier character that stopped short
-// of this crystal's threshold. `crystals[i] ?? EMPTY_CRYSTAL` only catches a missing array
-// slot, not one that's present but still shaped like that placeholder, so it must be resolved
-// to the real level-1/default-3-lines state here — the same place every read of a crystal's
-// data goes through — rather than showing the stored nulls as empty "+ Pick stat" slots.
-function effectiveCrystal(crystal: LegionCrystalDraft | undefined, unlocked: boolean): LegionCrystalDraft {
-  if (!crystal) return EMPTY_CRYSTAL;
-  if (!unlocked) return crystal;
-  const hasRealData = (crystal.level ?? 0) > 0 || (crystal.stats ?? []).some((s) => s !== null && s !== undefined);
-  return hasRealData ? crystal : EMPTY_CRYSTAL;
-}
-
 // Keeps the value a string (blank until touched) instead of clamping through Number(),
 // which would collapse a typed "0" back to an indistinguishable empty state.
 function clampArtifactLevelInput(raw: string): string {
@@ -111,6 +95,7 @@ function crystalTileStyle(theme: AppTheme, unlocked: boolean, isOpen: boolean): 
   return {
     position: "relative",
     display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 6,
+    width: "100%", aspectRatio: "1", minWidth: 0,
     borderRadius: 12, border: `2px solid ${isOpen ? theme.accent : theme.border}`,
     background: unlocked ? theme.bg : `${theme.muted}0d`,
     opacity: unlocked ? 1 : 0.55,
@@ -420,7 +405,7 @@ function CrystalTile({
   }
 
   return (
-    <div ref={ref} style={{ position: "relative" }}>
+    <div ref={ref} style={{ position: "relative", width: "100%", minWidth: 0 }}>
       <button
         type="button"
         className="legion-crystal-tile"
@@ -565,18 +550,21 @@ export default function LegionArtifactsSetupStep({
 
   // Reaching the end of a crystal's 3 stat slots — via Enter-picking the last one or via an
   // explicit Tab — only ever considers the next crystal in sequence (skipping over locked
-  // placeholders, which aren't real targets), and only jumps in if it's still untouched
-  // (level 1, stats still at the in-game default every crystal starts with — a crystal is
-  // never truly "blank" once unlocked, so we can't check for empty/null stats). Barging into
-  // a crystal someone already finished (e.g. while correcting an earlier one) would be more
+  // placeholders, which aren't real targets), and only jumps in if its stat lines are still
+  // untouched (still the in-game default 3 lines every crystal starts with — a crystal is
+  // never truly "blank" once unlocked, so we can't check for empty/null stats). Level is
+  // deliberately not part of this check: bulk actions like "Max All" only ever change level,
+  // never stat picks (see setAllCrystalLevels), so a maxed crystal can still have fully
+  // unpicked default stats and should still get walked through. Barging into a crystal whose
+  // stats were actually chosen already (e.g. while correcting an earlier one) would be more
   // surprising than helpful, so it just closes the nested picker instead.
   function goToNextCrystal(fromIndex: number) {
     for (let i = fromIndex + 1; i < LEGION_CRYSTALS.length; i++) {
       if (!isCrystalUnlocked(i, artifactLevelNum)) continue;
       const candidate = effectiveCrystal(crystals[i], true);
-      const level = candidate.level ?? MIN_CRYSTAL_LEVEL;
       const stats = candidate.stats ?? DEFAULT_CRYSTAL_STATS;
-      const isUntouched = level === MIN_CRYSTAL_LEVEL && DEFAULT_CRYSTAL_STATS.every((s, idx) => stats[idx] === s);
+      const isUntouched = stats.length === DEFAULT_CRYSTAL_STATS.length
+        && DEFAULT_CRYSTAL_STATS.every((s, idx) => stats[idx] === s);
       if (isUntouched) {
         setOpenCardIndex(i);
         setOpenId(`${i}-0`);
@@ -605,14 +593,13 @@ export default function LegionArtifactsSetupStep({
       <div className="legion-artifacts-root" style={{ display: "flex", flexDirection: "column", gap: "1rem", maxWidth: 460 }}>
         <style>{`
           .legion-artifacts-root { container-type: inline-size; }
-          .legion-crystal-grid { grid-template-columns: repeat(3, ${CRYSTAL_TILE_SIZE}px); }
-          .legion-crystal-tile { width: ${CRYSTAL_TILE_SIZE}px; height: ${CRYSTAL_TILE_SIZE}px; }
-          .legion-crystal-section { width: calc((${CRYSTAL_TILE_SIZE}px * 3) + (0.6rem * 2)); }
-          @container (max-width: 400px) {
-            .legion-crystal-grid { grid-template-columns: repeat(3, ${CRYSTAL_TILE_SIZE_MOBILE}px); }
-            .legion-crystal-tile { width: ${CRYSTAL_TILE_SIZE_MOBILE}px; height: ${CRYSTAL_TILE_SIZE_MOBILE}px; }
-            .legion-crystal-section { width: calc((${CRYSTAL_TILE_SIZE_MOBILE}px * 3) + (0.6rem * 2)); }
-          }
+          /* minmax(0, ...) lets each column shrink past its preferred size instead of a
+             fixed px track, which refuses to compress below its own content and forces the
+             whole grid to overflow on narrow phones no matter what breakpoint number a
+             fallback size uses. Tile sizing itself is 100%/aspect-ratio (crystalTileStyle),
+             so this scales fluidly with zero breakpoints needed. */
+          .legion-crystal-grid { grid-template-columns: repeat(3, minmax(0, ${CRYSTAL_TILE_SIZE}px)); min-width: 0; }
+          .legion-crystal-section { max-width: calc((${CRYSTAL_TILE_SIZE}px * 3) + (0.6rem * 2)); width: 100%; min-width: 0; }
         `}</style>
         <div>
           <p style={sectionLabelStyle(theme)}>Artifact Level</p>

@@ -269,6 +269,7 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
 
         .characters-content.directory-view .preview-pane {
           flex: 1 1 auto;
+          min-width: 0;
           max-width: 100%;
           width: 100%;
           opacity: 1;
@@ -280,6 +281,7 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
 
         .preview-pane > .character-search-panel {
           width: 100%;
+          min-width: 0;
         }
 
         .preview-content {

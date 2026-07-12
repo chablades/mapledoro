@@ -1,10 +1,18 @@
 import { useEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
+import Image from "next/image";
 import { WORLD_NAMES } from "../../model/constants";
 import { readCharactersStore, type StoredCharacterRecord } from "../../model/charactersStore";
-import { LEGION_CRYSTALS, MAX_ARTIFACT_LEVEL } from "../../setup/data/legionArtifactData";
+import {
+  LEGION_CRYSTALS, MAX_ARTIFACT_LEVEL, MIN_CRYSTAL_LEVEL, MAX_CRYSTAL_LEVEL, MAX_STAT_TOTAL_LEVEL,
+  LEGION_ARTIFACT_STATS, getLegionArtifactStat, isCrystalUnlocked, effectiveCrystal,
+  computeRawStatLevels, effectiveStatLevel, statBonusValue,
+  type LegionCrystalDraft, type LegionCrystalDef,
+} from "../../setup/data/legionArtifactData";
 import { LINK_SKILLS, CLASS_TO_SKILL, reconcileLinkSkills } from "../../setup/data/linkSkillsData";
 import type { AppTheme } from "../../../../components/themes";
+import { statusText } from "../../../../components/statusColors";
 import { SkillIcon } from "../../../../components/ResourceImage";
+import { legionCrystalIconUrl } from "../../../../lib/mapleResource";
 import CharacterAvatar, { FALLBACK_SRC } from "../components/CharacterAvatar";
 
 type LegionSection = "artifact" | "linkSkills";
@@ -43,27 +51,247 @@ function segmentButtonStyle(theme: AppTheme, active: boolean): CSSProperties {
   };
 }
 
+function ArtifactStatRow({ theme, label, level, wasted, wastedCrystals, value }: {
+  theme: AppTheme; label: string; level?: number; wasted?: number;
+  wastedCrystals?: string[]; value: string;
+}) {
+  const levelBadge = (
+    <span style={{ fontSize: 12, fontWeight: 700, color: wasted ? statusText(theme, "danger") : theme.muted }}>
+      Lv. {level}{wasted ? ` · +${wasted} wasted` : ""}
+    </span>
+  );
+  const wastedSublabel = wastedCrystals?.length ? (
+    <>
+      {wastedCrystals.map((name, i) => (
+        <span key={name}>
+          {i > 0 && ", "}
+          <strong style={{ color: theme.text, fontWeight: 800 }}>{name}</strong>
+        </span>
+      ))}
+      {" "}have this stat assigned. Reassign one of these to stop wasting levels.
+    </>
+  ) : undefined;
+  const wastedPlural = wasted === 1 ? "" : "s";
+  const wastedAriaLabel = wastedCrystals?.length
+    ? `${wasted} level${wastedPlural} wasted. ${wastedCrystals.join(", ")} have this stat assigned. Reassign one of these to stop wasting levels.`
+    : undefined;
+  return (
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", padding: "6px 0", borderBottom: `1px solid ${theme.border}` }}>
+      <span style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+        {level !== undefined && wasted && wastedCrystals?.length ? (
+          <HoverTooltip
+            theme={theme}
+            label={`${wasted} level${wastedPlural} wasted`}
+            sublabel={wastedSublabel}
+            ariaLabel={wastedAriaLabel}
+            wrapSublabel
+          >
+            {levelBadge}
+          </HoverTooltip>
+        ) : (level !== undefined && levelBadge)}
+        <span style={{ fontSize: 12, color: theme.muted }}>{label}</span>
+      </span>
+      <span style={{ fontSize: 13, fontWeight: 700, color: theme.text }}>{value}</span>
+    </div>
+  );
+}
+
+// Same 5-diamond pip read as the setup step's LevelPipsStatic, just re-declared here
+// since it's a tiny static render and the setup step doesn't export it.
+function CrystalPips({ level, theme }: { level: number; theme: AppTheme }) {
+  return (
+    <div style={{ display: "flex", gap: 3 }}>
+      {Array.from({ length: MAX_CRYSTAL_LEVEL }, (_, i) => (
+        // react-doctor-disable-next-line no-array-index-as-key
+        <span
+          key={i}
+          style={{
+            width: 7, height: 7, borderRadius: 1.5,
+            background: i < level ? theme.accent : "transparent",
+            border: `1.5px solid ${i < level ? theme.accent : theme.border}`,
+            transform: "rotate(45deg)", boxSizing: "border-box", flexShrink: 0, display: "block",
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+const crystalTileIconStyle: CSSProperties = { width: "68%", height: "68%", borderRadius: 8, objectFit: "contain" };
+
+function crystalTileStyle(theme: AppTheme, unlocked: boolean): CSSProperties {
+  return {
+    display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 6,
+    width: "100%", aspectRatio: "1", minWidth: 0,
+    borderRadius: 12, border: `2px solid ${theme.border}`,
+    background: unlocked ? theme.bg : `${theme.muted}0d`,
+    opacity: unlocked ? 1 : 0.55, boxSizing: "border-box",
+  };
+}
+
+// Read-only mirror of the setup step's crystal tile: same icon + level-pip look, but a
+// hover tooltip stands in for the setup step's click-to-open stat picker, since there's
+// nothing to edit here.
+function CrystalTile({ theme, index, def, crystal, unlocked }: {
+  theme: AppTheme;
+  index: number;
+  def: LegionCrystalDef;
+  crystal: LegionCrystalDraft;
+  unlocked: boolean;
+}) {
+  const level = crystal.level ?? MIN_CRYSTAL_LEVEL;
+  const iconSrc = legionCrystalIconUrl(index, Math.max(0, level - 1), unlocked ? "icon" : "disabled");
+
+  if (!unlocked) {
+    return (
+      <div className="legion-crystal-tile" style={crystalTileStyle(theme, false)} title={`${def.name}, Lv ${def.requiredArtifactLevel}+ required`}>
+        <Image src={iconSrc} alt="" width={80} height={80} unoptimized style={crystalTileIconStyle} />
+        <span style={{ fontSize: "0.75rem", fontWeight: 800, color: theme.muted, textTransform: "uppercase", letterSpacing: "0.03em" }}>
+          Lv {def.requiredArtifactLevel}+
+        </span>
+      </div>
+    );
+  }
+
+  const statNames = (crystal.stats ?? [])
+    .map((id) => (id ? getLegionArtifactStat(id)?.label : null))
+    .filter((name): name is string => Boolean(name));
+
+  return (
+    <HoverTooltip theme={theme} label={def.name} sublabel={statNames.join(" · ")} wrapperStyle={{ width: "100%" }}>
+      <div className="legion-crystal-tile" style={crystalTileStyle(theme, true)}>
+        <CrystalPips level={level} theme={theme} />
+        <Image src={iconSrc} alt={def.name} width={80} height={80} unoptimized style={crystalTileIconStyle} />
+      </div>
+    </HoverTooltip>
+  );
+}
+
 function LegionArtifactSection({ theme, worldId }: { theme: AppTheme; worldId: number }) {
   const mounted = useSyncExternalStore(() => () => undefined, () => true, () => false);
   const legion = mounted ? readCharactersStore().legionArtifactByWorld[String(worldId)] : undefined;
-  const legionLevel = legion?.artifactLevel;
-  const unlockedCrystals = legionLevel !== undefined
-    ? LEGION_CRYSTALS.filter((c) => legionLevel >= c.requiredArtifactLevel).length
-    : 0;
+  const artifactLevel = legion?.artifactLevel;
 
-  if (!legionLevel) {
+  if (!artifactLevel) {
     return <p style={{ margin: 0, fontSize: 13, color: theme.muted, fontWeight: 700 }}>Not set up yet.</p>;
   }
 
+  // Resolved once so the crystal grid and the total-bonuses list always agree, even when
+  // storage happens to hold a stale locked placeholder for a crystal instead of real data
+  // (see effectiveCrystal's own comment).
+  const resolvedCrystals = LEGION_CRYSTALS.map((_, i) =>
+    effectiveCrystal(legion?.crystals?.[i] as LegionCrystalDraft | undefined, isCrystalUnlocked(i, artifactLevel)));
+
+  // Which unlocked crystals assign a given stat, so a "wasted" warning can point at exactly
+  // which crystals to reassign instead of just naming a number.
+  const crystalsByStat = new Map<string, string[]>();
+  resolvedCrystals.forEach((crystal, i) => {
+    if (!isCrystalUnlocked(i, artifactLevel)) return;
+    (crystal.stats ?? []).forEach((statId) => {
+      if (!statId) return;
+      const list = crystalsByStat.get(statId) ?? [];
+      list.push(LEGION_CRYSTALS[i].name);
+      crystalsByStat.set(statId, list);
+    });
+  });
+
+  const rawTotals = computeRawStatLevels(resolvedCrystals, artifactLevel);
+  const bonusRows = LEGION_ARTIFACT_STATS
+    .map((stat) => {
+      const raw = rawTotals[stat.id] ?? 0;
+      return { stat, raw, effective: effectiveStatLevel(raw) };
+    })
+    .filter((row) => row.effective > 0)
+    .map(({ stat, raw, effective }) => {
+      const unitSuffix = stat.unit === "percent" ? "%" : "";
+      const flag = stat.flagAtLevelOne ? `, ${stat.flagAtLevelOne}` : "";
+      // In-game itself is inconsistent about naming here: the crystal stat picker calls
+      // these lines "Meso Drop"/"Bonus EXP" (LEGION_ARTIFACT_STATS' shared labels, kept
+      // as-is there), but the Artifact tab's own bonus summary calls them "Mesos Obtained"/
+      // "EXP Obtained". That rename is scoped only to this display, not the shared label,
+      // so the picker stays true to what it actually says in-game.
+      const labelOverrides: Partial<Record<typeof stat.id, string>> = { mesos: "Mesos Obtained", multiTargetExp: "EXP Obtained" };
+      const label = labelOverrides[stat.id] ?? stat.label;
+      // A stat whose per-level steps are all whole numbers can never produce a fractional
+      // total (verified against LEGION_ARTIFACT_STATS' own levelSteps, not hardcoded per
+      // stat), so it's shown as a plain integer instead of a padded "12.00".
+      const isWholeStat = stat.levelSteps.every(Number.isInteger);
+      const rawValue = statBonusValue(stat.id, effective);
+      const formattedValue = isWholeStat ? String(rawValue) : rawValue.toFixed(2);
+      // Assigning the same stat to more crystals than it takes to hit the level 10 cap is a
+      // real, easy-to-make mistake (e.g. 3 crystals at Lv 5 on one stat is only worth 10, not
+      // 15). Flagging the excess here is the whole point of this feature, so the player
+      // notices and can reassign a crystal onto something that isn't already capped.
+      const wasted = Math.max(0, raw - MAX_STAT_TOTAL_LEVEL);
+      const wastedCrystals = wasted > 0 ? crystalsByStat.get(stat.id) : undefined;
+      return { id: stat.id, label, effective, wasted, wastedCrystals, display: `+${formattedValue}${unitSuffix}${flag}` };
+    });
+
   return (
-    <div style={{ display: "grid", gap: 10 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", padding: "6px 0", borderBottom: `1px solid ${theme.border}` }}>
-        <span style={{ fontSize: 12, color: theme.muted }}>Artifact Level</span>
-        <span style={{ fontSize: 13, fontWeight: 700, color: theme.text }}>{legionLevel} / {MAX_ARTIFACT_LEVEL}</span>
-      </div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", padding: "6px 0", borderBottom: `1px solid ${theme.border}` }}>
-        <span style={{ fontSize: 12, color: theme.muted }}>Crystals Unlocked</span>
-        <span style={{ fontSize: 13, fontWeight: 700, color: theme.text }}>{unlockedCrystals} / {LEGION_CRYSTALS.length}</span>
+    <div className="legion-artifact-root" style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+      <style>{`
+        .legion-artifact-root { container-type: inline-size; }
+        /* minmax(0, 116px) lets each column shrink past its 116px preferred size instead
+           of a fixed px track, which refuses to compress below its own content and forces
+           the whole grid to overflow on narrow phones no matter what breakpoint number a
+           fallback size uses. Tile sizing itself is 100%/aspect-ratio (crystalTileStyle),
+           so this scales fluidly with zero breakpoints needed. */
+        .legion-artifact-crystal-grid { grid-template-columns: repeat(3, minmax(0, 116px)); min-width: 0; }
+        .legion-artifact-layout { display: grid; grid-template-columns: auto 1fr; gap: 24px; align-items: stretch; }
+        .legion-artifact-crystal-col { display: flex; flex-direction: column; justify-content: center; min-width: 0; }
+        @container (max-width: 620px) {
+          .legion-artifact-layout { grid-template-columns: 1fr; }
+        }
+      `}</style>
+      <div className="legion-artifact-layout">
+        {/* Artifact Level travels with the crystal grid as one block, not a separate
+            full-width header, so the two stay visually attached when this column gets
+            vertically centered against a much longer Artifact Bonuses list. */}
+        <div className="legion-artifact-crystal-col">
+          <div style={{ display: "flex", flexDirection: "column", gap: 14, minWidth: 0, width: "100%" }}>
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: theme.muted, marginBottom: 4 }}>
+                Artifact Level
+              </div>
+              <div style={{ fontFamily: "var(--font-heading)", fontSize: "1.8rem", fontWeight: 700, color: theme.text, lineHeight: 1 }}>
+                {artifactLevel}
+                <span style={{ fontSize: "1rem", fontWeight: 700, color: theme.muted }}> / {MAX_ARTIFACT_LEVEL}</span>
+              </div>
+            </div>
+            <div className="legion-artifact-crystal-grid" style={{ display: "grid", gap: "0.6rem", maxWidth: 366 }}>
+              {LEGION_CRYSTALS.map((def, index) => (
+                <CrystalTile
+                  key={def.id}
+                  theme={theme}
+                  index={index}
+                  def={def}
+                  crystal={resolvedCrystals[index]}
+                  unlocked={isCrystalUnlocked(index, artifactLevel)}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+        {bonusRows.length > 0 && (
+          <div>
+            <p style={{ margin: "0 0 0.4rem", fontSize: "0.75rem", fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase", color: theme.muted }}>
+              Artifact Bonuses
+            </p>
+            <div>
+              {bonusRows.map((row) => (
+                <ArtifactStatRow
+                  key={row.id}
+                  theme={theme}
+                  label={row.label}
+                  level={row.effective}
+                  wasted={row.wasted}
+                  wastedCrystals={row.wastedCrystals}
+                  value={row.display}
+                />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -73,7 +301,10 @@ function LegionArtifactSection({ theme, worldId }: { theme: AppTheme; worldId: n
 // InfoTooltip popup, which is left-anchored and fixed-width for its own "?" button
 // context), nudging sideways via shiftX only when centering would clip past the
 // viewport edge, same idea as InfoTooltip's own edge-avoidance but centered by default.
-function HoverTooltip({ theme, label, sublabel, children }: { theme: AppTheme; label: string; sublabel?: string; children: ReactNode }) {
+function HoverTooltip({ theme, label, sublabel, ariaLabel, wrapSublabel, wrapperStyle, children }: {
+  theme: AppTheme; label: string; sublabel?: ReactNode; ariaLabel?: string; wrapSublabel?: boolean;
+  wrapperStyle?: CSSProperties; children: ReactNode;
+}) {
   const [open, setOpen] = useState(false);
   const [shiftX, setShiftX] = useState(0);
   // Touch devices have no hover at all, so mouseenter/mouseleave never fire there,
@@ -121,8 +352,8 @@ function HoverTooltip({ theme, label, sublabel, children }: { theme: AppTheme; l
       ref={containerRef}
       role="button"
       tabIndex={0}
-      aria-label={sublabel ? `${label}, ${sublabel}` : label}
-      style={{ position: "relative", display: "inline-flex", cursor: supportsHover ? "default" : "pointer" }}
+      aria-label={ariaLabel ?? (typeof sublabel === "string" ? `${label}, ${sublabel}` : label)}
+      style={{ position: "relative", display: "inline-flex", cursor: supportsHover ? "default" : "pointer", minWidth: 0, ...wrapperStyle }}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setOpen((o) => !o); }
       }}
@@ -137,13 +368,13 @@ function HoverTooltip({ theme, label, sublabel, children }: { theme: AppTheme; l
             transform: `translateX(calc(-50% + ${shiftX}px))`,
             zIndex: 200, background: theme.bg, border: `1px solid ${theme.border}`,
             borderRadius: 10, padding: "0.4rem 0.6rem",
-            width: "max-content", maxWidth: "calc(100vw - 16px)",
+            width: wrapSublabel ? 220 : "max-content", maxWidth: "calc(100vw - 16px)",
             boxShadow: "0 4px 20px rgba(0,0,0,0.15)", textAlign: "center",
           }}
         >
           <p style={{ margin: 0, fontSize: "0.8rem", fontWeight: 800, color: theme.text, whiteSpace: "nowrap" }}>{label}</p>
           {sublabel && (
-            <p style={{ margin: 0, marginTop: "0.1rem", fontSize: "0.72rem", color: theme.muted, whiteSpace: "nowrap" }}>{sublabel}</p>
+            <p style={{ margin: 0, marginTop: "0.1rem", fontSize: "0.75rem", color: theme.muted, whiteSpace: wrapSublabel ? "normal" : "nowrap" }}>{sublabel}</p>
           )}
         </div>
       )}
@@ -321,7 +552,7 @@ function LinkSkillsSection({ theme, worldId, worldCharacters }: { theme: AppThem
       )}
       {chips.length > 0 && (
         <div>
-          <p style={{ margin: "0 0 0.5rem", fontSize: "0.72rem", fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase", color: theme.muted }}>
+          <p style={{ margin: "0 0 0.5rem", fontSize: "0.75rem", fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase", color: theme.muted }}>
             No progress ({chips.length})
           </p>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>

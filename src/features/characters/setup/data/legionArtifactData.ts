@@ -165,14 +165,35 @@ export function effectiveStatLevel(rawLevel: number | undefined): number {
   return Math.min(MAX_STAT_TOTAL_LEVEL, Math.max(0, rawLevel ?? 0));
 }
 
-/** Numeric bonus value at a stat's effective level (before unit formatting). */
+/** Numeric bonus value at a stat's effective level (before unit formatting). Rounded to 2
+ *  decimals, not 1 — Skill Cooldown Bypass Chance's 0.75/level step produces real values
+ *  like 2.25 and 6.75 that a 1-decimal round would corrupt (2.25 -> 2.3). */
 export function statBonusValue(statId: LegionArtifactStatId, effectiveLevel: number): number {
   const def = STAT_BY_ID.get(statId);
   if (!def || effectiveLevel <= 0) return 0;
   const sum = def.levelSteps.slice(0, effectiveLevel).reduce((total, step) => total + step, 0);
-  return Math.round(sum * 10) / 10;
+  return Math.round(sum * 100) / 100;
 }
 
 export function hasAnyCrystalProgress(crystals: LegionCrystalDraft[] | undefined): boolean {
   return (crystals ?? []).some((c) => c && (c.level ?? 0) > 0);
+}
+
+export const EMPTY_CRYSTAL: LegionCrystalDraft = { level: MIN_CRYSTAL_LEVEL, stats: [...DEFAULT_CRYSTAL_STATS] };
+
+/**
+ * A crystal newly unlocked by raising the Artifact Level can still be holding a stored
+ * "no data" placeholder (level 0, all-null stats) from before it was reachable — e.g. this
+ * world's Legion Artifact data already existed from an earlier character that stopped short
+ * of this crystal's threshold. `crystals[i] ?? EMPTY_CRYSTAL` only catches a missing array
+ * slot, not one that's present but still shaped like that placeholder, so it must be resolved
+ * to the real level-1/default-3-lines state here — the same place every read of a crystal's
+ * data goes through (setup editing and read-only display alike) — rather than showing the
+ * stored nulls as empty.
+ */
+export function effectiveCrystal(crystal: LegionCrystalDraft | undefined, unlocked: boolean): LegionCrystalDraft {
+  if (!crystal) return EMPTY_CRYSTAL;
+  if (!unlocked) return crystal;
+  const hasRealData = (crystal.level ?? 0) > 0 || (crystal.stats ?? []).some((s) => s !== null && s !== undefined);
+  return hasRealData ? crystal : EMPTY_CRYSTAL;
 }
