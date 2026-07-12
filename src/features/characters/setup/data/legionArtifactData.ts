@@ -8,6 +8,8 @@
   (max value / 10 per level) for every stat shown at Lv 10.
 */
 
+import type { StoredLegionCrystal } from "../../model/charactersStore";
+
 // A crystal can't be "unleveled": once unlocked it's always at least level 1 in-game.
 export const MIN_CRYSTAL_LEVEL = 1;
 export const MAX_CRYSTAL_LEVEL = 5;
@@ -135,6 +137,37 @@ export function serializeLegionArtifactBoardDraft(draft: LegionArtifactBoardDraf
 
 export function sanitizeCrystalLevel(level: number | undefined): number {
   return Math.max(MIN_CRYSTAL_LEVEL, Math.min(MAX_CRYSTAL_LEVEL, Math.floor(level ?? MIN_CRYSTAL_LEVEL)));
+}
+
+// The draft shape allows optional/sparse fields (mid-edit); storage wants every crystal
+// fully filled in (level defaults to 0, stats padded to 3 slots). The setup step's own
+// draft densely pre-fills EVERY crystal slot (including still-locked ones) with default
+// level-1/allStats-hpMp-attMatt data the moment any single crystal is touched (see
+// updateCrystal's comment in LegionArtifactsSetupStep.tsx) — that's fine as scratch draft
+// state, but a locked crystal has no real in-game data, so storage must not persist it as
+// if it were unlocked. Force locked indices back to an explicit "no data" entry here,
+// at the actual persistence boundary.
+//
+// The reverse transition (locked -> unlocked, e.g. raising Artifact Level on a later visit)
+// needs the same treatment in the other direction: a crystal that was previously stored as
+// locked (all-null stats) has no real picks yet, so newly unlocking it should backfill the
+// same level-1/default-3-lines state every crystal starts with in-game, not carry the
+// all-null placeholder through as if the player had actually cleared it.
+export function toStoredLegionCrystals(
+  crystals: LegionCrystalDraft[] | undefined,
+  artifactLevel: number,
+): StoredLegionCrystal[] | undefined {
+  if (!crystals) return undefined;
+  return crystals.map((c, index) => {
+    if (!isCrystalUnlocked(index, artifactLevel)) return { level: 0, stats: [null, null, null] };
+    const hasRealStats = c?.stats?.some((s) => s !== null && s !== undefined) ?? false;
+    return {
+      level: sanitizeCrystalLevel(c?.level),
+      stats: hasRealStats
+        ? [c?.stats?.[0] ?? null, c?.stats?.[1] ?? null, c?.stats?.[2] ?? null]
+        : [...DEFAULT_CRYSTAL_STATS],
+    };
+  });
 }
 
 /**

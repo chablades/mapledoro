@@ -1,14 +1,21 @@
 import { useEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
 import Image from "next/image";
 import { WORLD_NAMES } from "../../model/constants";
-import { readCharactersStore, type StoredCharacterRecord } from "../../model/charactersStore";
 import {
-  LEGION_CRYSTALS, MAX_ARTIFACT_LEVEL, MIN_CRYSTAL_LEVEL, MAX_CRYSTAL_LEVEL, MAX_STAT_TOTAL_LEVEL,
+  readCharactersStore, linkSkillsDraftToStored, linkSkillsStoredToDraftString,
+  writeLinkSkillsForWorld, writeLegionArtifactForWorld,
+  type StoredCharacterRecord, type StoredLegionArtifact,
+} from "../../model/charactersStore";
+import {
+  LEGION_CRYSTALS, MAX_ARTIFACT_LEVEL, MIN_ARTIFACT_LEVEL, MIN_CRYSTAL_LEVEL, MAX_CRYSTAL_LEVEL, MAX_STAT_TOTAL_LEVEL,
   LEGION_ARTIFACT_STATS, getLegionArtifactStat, isCrystalUnlocked, effectiveCrystal,
-  computeRawStatLevels, effectiveStatLevel, statBonusValue,
+  computeRawStatLevels, effectiveStatLevel, statBonusValue, toStoredLegionCrystals,
+  parseLegionArtifactBoardDraft,
   type LegionCrystalDraft, type LegionCrystalDef,
 } from "../../setup/data/legionArtifactData";
 import { LINK_SKILLS, CLASS_TO_SKILL, reconcileLinkSkills } from "../../setup/data/linkSkillsData";
+import { LinkSkillsEditor } from "../../setup/components/LinkSkillsSetupStep";
+import { LegionArtifactsEditor } from "../../setup/components/LegionArtifactsSetupStep";
 import type { AppTheme } from "../../../../components/themes";
 import { statusText } from "../../../../components/statusColors";
 import { SkillIcon } from "../../../../components/ResourceImage";
@@ -49,6 +56,57 @@ function segmentButtonStyle(theme: AppTheme, active: boolean): CSSProperties {
     fontFamily: "inherit", fontSize: "0.78rem", fontWeight: 800,
     padding: "0.45rem 0.6rem", borderRadius: 9, cursor: "pointer",
   };
+}
+
+// Same pencil affordance as the profile binder's BookmarkPageHeader
+// (CharacterProfileOverviewScreen.tsx), re-declared here since it isn't exported.
+function pencilButtonStyle(theme: AppTheme): CSSProperties {
+  return {
+    display: "flex", alignItems: "center", justifyContent: "center",
+    width: 26, height: 26, flexShrink: 0,
+    color: theme.muted, background: theme.bg, border: `1px solid ${theme.border}`,
+    borderRadius: 8, cursor: "pointer",
+  };
+}
+
+function PencilIcon() {
+  return (
+    <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 20h9" />
+      <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+    </svg>
+  );
+}
+
+function saveButtonStyle(theme: AppTheme): CSSProperties {
+  return {
+    border: "none", borderRadius: 8,
+    background: theme.accent, color: theme.accentOn,
+    fontFamily: "inherit", fontWeight: 800, fontSize: "0.75rem",
+    padding: "0.4rem 0.7rem", cursor: "pointer",
+  };
+}
+
+function EditPencilButton({ theme, label, onEdit }: { theme: AppTheme; label: string; onEdit: () => void }) {
+  return (
+    <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 10 }}>
+      <button type="button" aria-label={`Edit ${label}`} title={`Edit ${label}`} onClick={onEdit} style={pencilButtonStyle(theme)}>
+        <PencilIcon />
+      </button>
+    </div>
+  );
+}
+
+// Sits inside each *EditPanel (not the read-only view) so Save only ever commits the
+// draft it's rendered next to — pressing it is the one moment edits actually persist to
+// the world store; switching tabs or backing out first discards them (the edit panel
+// unmounts, taking its local draft state with it).
+function SaveButtonRow({ theme, onSave }: { theme: AppTheme; onSave: () => void }) {
+  return (
+    <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 10 }}>
+      <button type="button" onClick={onSave} style={saveButtonStyle(theme)}>Save</button>
+    </div>
+  );
 }
 
 function ArtifactStatRow({ theme, label, level, wasted, wastedCrystals, value }: {
@@ -167,13 +225,52 @@ function CrystalTile({ theme, index, def, crystal, unlocked }: {
   );
 }
 
+// A dedicated component so its local draft state naturally resets each time the user
+// re-enters edit mode (it only mounts while editing=true). The draft is purely local
+// until Save — closing without saving (tab switch, back to Directory) just unmounts
+// this component and discards it, same as backing out of the wizard mid-step.
+function LegionArtifactEditPanel({ theme, worldId, worldLegionArtifact, onSave }: {
+  theme: AppTheme; worldId: number; worldLegionArtifact?: StoredLegionArtifact; onSave: () => void;
+}) {
+  const [value, setValue] = useState("");
+  function handleSave() {
+    const parsed = parseLegionArtifactBoardDraft(value);
+    // The level input allows a blank mid-typing state (see clampArtifactLevelInput's own
+    // comment), which Number() would otherwise collapse to 0 — a level below the real
+    // minimum that wipes the whole board back to "Not set up yet." A blank field on Save
+    // means "didn't touch this," not "reset to 0," so it falls back to whatever was
+    // already stored (or the real starting level, if this is a first-time setup).
+    const artifactLevel = parsed.artifactLevel
+      ? Number(parsed.artifactLevel)
+      : worldLegionArtifact?.artifactLevel ?? MIN_ARTIFACT_LEVEL;
+    writeLegionArtifactForWorld(worldId, { artifactLevel, crystals: toStoredLegionCrystals(parsed.crystals, artifactLevel) });
+    onSave();
+  }
+  return (
+    <div>
+      <SaveButtonRow theme={theme} onSave={handleSave} />
+      <LegionArtifactsEditor theme={theme} worldLegionArtifact={worldLegionArtifact} value={value} onChange={setValue} />
+    </div>
+  );
+}
+
 function LegionArtifactSection({ theme, worldId }: { theme: AppTheme; worldId: number }) {
   const mounted = useSyncExternalStore(() => () => undefined, () => true, () => false);
+  const [editing, setEditing] = useState(false);
   const legion = mounted ? readCharactersStore().legionArtifactByWorld[String(worldId)] : undefined;
   const artifactLevel = legion?.artifactLevel;
 
+  if (editing) {
+    return <LegionArtifactEditPanel theme={theme} worldId={worldId} worldLegionArtifact={legion} onSave={() => setEditing(false)} />;
+  }
+
   if (!artifactLevel) {
-    return <p style={{ margin: 0, fontSize: 13, color: theme.muted, fontWeight: 700 }}>Not set up yet.</p>;
+    return (
+      <div>
+        <EditPencilButton theme={theme} label="Legion Artifact" onEdit={() => setEditing(true)} />
+        <p style={{ margin: 0, fontSize: 13, color: theme.muted, fontWeight: 700 }}>Not set up yet.</p>
+      </div>
+    );
   }
 
   // Resolved once so the crystal grid and the total-bonuses list always agree, even when
@@ -230,6 +327,7 @@ function LegionArtifactSection({ theme, worldId }: { theme: AppTheme; worldId: n
 
   return (
     <div className="legion-artifact-root" style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+      <EditPencilButton theme={theme} label="Legion Artifact" onEdit={() => setEditing(true)} />
       <style>{`
         .legion-artifact-root { container-type: inline-size; }
         /* minmax(0, 116px) lets each column shrink past its 116px preferred size instead
@@ -494,18 +592,62 @@ function DormantSkillChip({ theme, skill }: { theme: AppTheme; skill: (typeof LI
   );
 }
 
+// A dedicated component so its local draft state naturally resets each time the user
+// re-enters edit mode (it only mounts while editing=true). The draft is purely local
+// until Save — closing without saving (tab switch, back to Directory) just unmounts
+// this component and discards it, same as backing out of the wizard mid-step.
+function LinkSkillsEditPanel({ theme, worldId, worldCharacters, worldLinkSkills, onSave }: {
+  theme: AppTheme; worldId: number; worldCharacters: StoredCharacterRecord[]; worldLinkSkills: string; onSave: () => void;
+}) {
+  const [value, setValue] = useState("");
+  function handleSave() {
+    writeLinkSkillsForWorld(worldId, linkSkillsDraftToStored(value));
+    onSave();
+  }
+  return (
+    <div>
+      <SaveButtonRow theme={theme} onSave={handleSave} />
+      <LinkSkillsEditor
+        theme={theme}
+        characterRoster={worldCharacters}
+        confirmedWorldId={worldId}
+        worldLinkSkills={worldLinkSkills}
+        value={value}
+        onChange={setValue}
+      />
+    </div>
+  );
+}
+
 function LinkSkillsSection({ theme, worldId, worldCharacters }: { theme: AppTheme; worldId: number; worldCharacters: StoredCharacterRecord[] }) {
   const mounted = useSyncExternalStore(() => () => undefined, () => true, () => false);
+  const [editing, setEditing] = useState(false);
   const stored = mounted ? readCharactersStore().linkSkillsByWorld[String(worldId)] : undefined;
   const levels = mounted ? reconcileLinkSkills(stored, worldCharacters, worldId) : undefined;
+
+  if (editing) {
+    return (
+      <LinkSkillsEditPanel
+        theme={theme}
+        worldId={worldId}
+        worldCharacters={worldCharacters}
+        worldLinkSkills={linkSkillsStoredToDraftString(stored)}
+        onSave={() => setEditing(false)}
+      />
+    );
+  }
 
   const withEligibility = LINK_SKILLS.map((skill) => ({
     skill,
     eligible: worldCharacters.filter((c) => CLASS_TO_SKILL[c.jobName] === skill.id),
     level: levels?.[skill.id],
   }));
-  const active = withEligibility.filter(({ eligible, level }) => eligible.length > 0 || level !== undefined);
-  const dormant = withEligibility.filter(({ eligible, level }) => eligible.length === 0 && level === undefined);
+  // A skill explicitly set to 0 (no progress yet) reads the same as never having been
+  // touched — level 0 with no eligible tracked character still belongs in the dormant
+  // chip list, not the full sprite card (which would otherwise render an empty "no
+  // tracked character" placeholder for a skill that has no real data either way).
+  const active = withEligibility.filter(({ eligible, level }) => eligible.length > 0 || Boolean(level));
+  const dormant = withEligibility.filter(({ eligible, level }) => eligible.length === 0 && !level);
   // Skills shared across several classes (Thief's Cunning, Empirical Knowledge: 3
   // member classes each) need room for more sprites per card than a single-class skill
   // ever will, so they get their own wider, separately-uniform grid, shown last.
@@ -527,6 +669,7 @@ function LinkSkillsSection({ theme, worldId, worldCharacters }: { theme: AppThem
 
   return (
     <div className="legion-link-skills-root" style={{ display: "grid", gap: 14 }}>
+      <EditPencilButton theme={theme} label="Link Skills" onEdit={() => setEditing(true)} />
       <style>{`
         .legion-link-skills-root { container-type: inline-size; }
         .legion-single-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }

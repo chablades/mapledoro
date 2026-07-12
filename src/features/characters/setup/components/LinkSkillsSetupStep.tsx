@@ -12,18 +12,21 @@ import { LINK_SKILLS, CLASS_TO_SKILL, computeLinkSkillsFromRoster, reconcileLink
 import SetupStepFrame from "./SetupStepFrame";
 import InfoTooltip, { type TooltipContent } from "./InfoTooltip";
 
-interface LinkSkillsSetupStepProps {
+interface LinkSkillsEditorProps {
   theme: AppTheme;
-  step: SetupStepDefinition;
-  stepNumber: number;
-  totalSteps: number;
   jobName?: string;
-  direction?: "forward" | "backward";
   characterRoster?: StoredCharacterRecord[];
   confirmedWorldId?: number;
   worldLinkSkills?: string;
   value: string;
   onChange: (value: string) => void;
+}
+
+interface LinkSkillsSetupStepProps extends LinkSkillsEditorProps {
+  step: SetupStepDefinition;
+  stepNumber: number;
+  totalSteps: number;
+  direction?: "forward" | "backward";
   onBack: () => void;
   onNext: () => void;
   onFinish: () => void;
@@ -220,10 +223,13 @@ function LinkSkillRow({
   );
 }
 
-export default function LinkSkillsSetupStep({
-  theme, step, stepNumber, totalSteps, jobName = "", value, onChange, onBack, onNext, onFinish,
+/** The Link Skills step's actual editable content, with no wizard-frame chrome — reused
+ *  standalone by LegionPanel's edit-in-place view (world-scoped, no confirmed character
+ *  needed) as well as by the wizard step below. */
+export function LinkSkillsEditor({
+  theme, jobName = "", value, onChange,
   characterRoster = [], confirmedWorldId, worldLinkSkills = "",
-}: LinkSkillsSetupStepProps) {
+}: LinkSkillsEditorProps) {
   const draft = parseDraft(value);
   const initialValueRef = useRef(value);
 
@@ -274,17 +280,7 @@ export default function LinkSkillsSetupStep({
   const multiSkills  = LINK_SKILLS.filter((s) => s.maxLevel > 3);
 
   return (
-    <SetupStepFrame
-      theme={theme}
-      stepLabel={step.label}
-      stepNumber={stepNumber}
-      totalSteps={totalSteps}
-      description="Enter your link skill levels."
-      onBack={onBack}
-      onNext={onNext}
-      onFinish={onFinish}
-    >
-      <div className="link-skills-root">
+    <div className="link-skills-root">
       <style>{`
         .link-skills-root { container-type: inline-size; }
         .link-skills-grid { grid-template-columns: 1fr 1fr; }
@@ -343,7 +339,25 @@ export default function LinkSkillsSetupStep({
           />
         ))}
       </div>
-      </div>
+    </div>
+  );
+}
+
+export default function LinkSkillsSetupStep({
+  theme, step, stepNumber, totalSteps, onBack, onNext, onFinish, ...editorProps
+}: LinkSkillsSetupStepProps) {
+  return (
+    <SetupStepFrame
+      theme={theme}
+      stepLabel={step.label}
+      stepNumber={stepNumber}
+      totalSteps={totalSteps}
+      description="Enter your link skill levels."
+      onBack={onBack}
+      onNext={onNext}
+      onFinish={onFinish}
+    >
+      <LinkSkillsEditor theme={theme} {...editorProps} />
     </SetupStepFrame>
   );
 }

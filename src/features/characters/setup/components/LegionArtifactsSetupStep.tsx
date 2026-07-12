@@ -31,14 +31,17 @@ import {
 } from "../data/legionArtifactData";
 import SetupStepFrame from "./SetupStepFrame";
 
-interface LegionArtifactsSetupStepProps {
+interface LegionArtifactsEditorProps {
   theme: AppTheme;
-  step: SetupStepDefinition;
-  stepNumber: number;
-  totalSteps: number;
   worldLegionArtifact?: StoredLegionArtifact;
   value: string;
   onChange: (value: string) => void;
+}
+
+interface LegionArtifactsSetupStepProps extends LegionArtifactsEditorProps {
+  step: SetupStepDefinition;
+  stepNumber: number;
+  totalSteps: number;
   onBack: () => void;
   onNext: () => void;
   onFinish: () => void;
@@ -466,9 +469,12 @@ function CrystalTile({
 
 // ── Main component ───────────────────────────────────────────────────────────
 
-export default function LegionArtifactsSetupStep({
-  theme, step, stepNumber, totalSteps, worldLegionArtifact, value, onChange, onBack, onNext, onFinish,
-}: LegionArtifactsSetupStepProps) {
+/** The Legion Artifact step's actual editable content, with no wizard-frame chrome —
+ *  reused standalone by LegionPanel's edit-in-place view (world-scoped, no confirmed
+ *  character needed) as well as by the wizard step below. */
+export function LegionArtifactsEditor({
+  theme, worldLegionArtifact, value, onChange,
+}: LegionArtifactsEditorProps) {
   const draft = parseLegionArtifactBoardDraft(value);
   const artifactLevel = draft.artifactLevel
     ?? (worldLegionArtifact?.artifactLevel !== undefined ? String(worldLegionArtifact.artifactLevel) : "");
@@ -577,16 +583,7 @@ export default function LegionArtifactsSetupStep({
   }
 
   return (
-    <SetupStepFrame
-      theme={theme}
-      stepLabel={step.label}
-      stepNumber={stepNumber}
-      totalSteps={totalSteps}
-      description="Set your Legion Artifact level and crystals."
-      onBack={onBack}
-      onNext={onNext}
-      onFinish={onFinish}
-    >
+    <>
       <p style={{ margin: "0 0 1rem", fontSize: "0.75rem", color: theme.muted, fontWeight: 700 }}>
         These are shared across all characters on your world, and inherited automatically by new characters.
       </p>
@@ -644,6 +641,25 @@ export default function LegionArtifactsSetupStep({
           </div>
         </div>
       </div>
+    </>
+  );
+}
+
+export default function LegionArtifactsSetupStep({
+  theme, step, stepNumber, totalSteps, onBack, onNext, onFinish, ...editorProps
+}: LegionArtifactsSetupStepProps) {
+  return (
+    <SetupStepFrame
+      theme={theme}
+      stepLabel={step.label}
+      stepNumber={stepNumber}
+      totalSteps={totalSteps}
+      description="Set your Legion Artifact level and crystals."
+      onBack={onBack}
+      onNext={onNext}
+      onFinish={onFinish}
+    >
+      <LegionArtifactsEditor theme={theme} {...editorProps} />
     </SetupStepFrame>
   );
 }

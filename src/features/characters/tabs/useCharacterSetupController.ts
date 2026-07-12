@@ -62,10 +62,9 @@ import {
   LEGION_CRYSTALS,
   MIN_CRYSTAL_LEVEL,
   parseLegionArtifactBoardDraft,
-  sanitizeCrystalLevel,
   statBonusValue,
+  toStoredLegionCrystals,
   type LegionArtifactBoardDraft,
-  type LegionCrystalDraft,
 } from "../setup/data/legionArtifactData";
 import type { NormalizedCharacterData } from "../model/types";
 import {
@@ -320,37 +319,6 @@ function finalizeQuickOrFullSetupRecord(
   }
 }
 
-// The draft shape allows optional/sparse fields (mid-edit); storage wants every crystal
-// fully filled in (level defaults to 0, stats padded to 3 slots). The setup step's own
-// draft densely pre-fills EVERY crystal slot (including still-locked ones) with default
-// level-1/allStats-hpMp-attMatt data the moment any single crystal is touched (see
-// updateCrystal's comment in LegionArtifactsSetupStep.tsx) — that's fine as scratch draft
-// state, but a locked crystal has no real in-game data, so storage must not persist it as
-// if it were unlocked. Force locked indices back to an explicit "no data" entry here,
-// at the actual persistence boundary.
-//
-// The reverse transition (locked -> unlocked, e.g. raising Artifact Level on a later visit)
-// needs the same treatment in the other direction: a crystal that was previously stored as
-// locked (all-null stats) has no real picks yet, so newly unlocking it should backfill the
-// same level-1/default-3-lines state every crystal starts with in-game, not carry the
-// all-null placeholder through as if the player had actually cleared it.
-function toStoredLegionCrystals(
-  crystals: LegionCrystalDraft[] | undefined,
-  artifactLevel: number,
-): StoredLegionCrystal[] | undefined {
-  if (!crystals) return undefined;
-  return crystals.map((c, index) => {
-    if (!isCrystalUnlocked(index, artifactLevel)) return { level: 0, stats: [null, null, null] };
-    const hasRealStats = c?.stats?.some((s) => s !== null && s !== undefined) ?? false;
-    return {
-      level: sanitizeCrystalLevel(c?.level),
-      stats: hasRealStats
-        ? [c?.stats?.[0] ?? null, c?.stats?.[1] ?? null, c?.stats?.[2] ?? null]
-        : [...DEFAULT_CRYSTAL_STATS],
-    };
-  });
-}
-
 // A freshly-unlocked Legion Artifact starts at Artifact Level 1 (not 0 — namu.wiki's own
 // level table starts numbering at 1, same convention as character level), already with its
 // first 3 crystals (Orange Mushroom/Slime/Horny Mushroom) unlocked at Crystal Level 1 and
@@ -416,7 +384,11 @@ function applyScouterLegionForWorld(
   // world finishing full_setup without revisiting Legion Artifacts).
   if (board) {
     const existingArtifact = store.legionArtifactByWorld[String(character.worldID)];
-    const artifactLevel = board.artifactLevel !== undefined ? Number(board.artifactLevel) || 0 : existingArtifact?.artifactLevel;
+    // board.artifactLevel is a string that can be "" (level input cleared mid-edit, see
+    // clampArtifactLevelInput's own comment) without being undefined — a truthy check (not
+    // !== undefined) is required so a blank field is treated the same as "didn't touch it"
+    // and falls back to existingArtifact, instead of Number("") silently collapsing to 0.
+    const artifactLevel = board.artifactLevel ? Number(board.artifactLevel) : existingArtifact?.artifactLevel;
     const crystals = toStoredLegionCrystals(board.crystals, artifactLevel ?? 0) ?? existingArtifact?.crystals;
     writeLegionArtifactForWorld(character.worldID, {
       ...(artifactLevel !== undefined ? { artifactLevel } : {}),
