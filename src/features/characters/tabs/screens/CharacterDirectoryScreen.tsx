@@ -32,6 +32,14 @@ function directoryCardButtonStyle(theme: AppTheme): CSSProperties {
   };
 }
 
+function legionButtonRowStyle(theme: AppTheme): CSSProperties {
+  return {
+    display: "flex", alignItems: "center", justifyContent: "space-between",
+    border: `1px solid ${theme.border}`, borderRadius: "12px", background: theme.bg,
+    padding: "0.55rem 0.7rem", cursor: "pointer", fontFamily: "inherit", width: "100%",
+  };
+}
+
 function addCharacterButtonStyle(theme: AppTheme, canAddCharacter: boolean): CSSProperties {
   return {
     border: `1px solid ${theme.border}`,
@@ -244,11 +252,7 @@ function LegionButtonRow({ theme, onOpen }: { theme: AppTheme; onOpen: () => voi
     <button
       type="button"
       onClick={onOpen}
-      style={{
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        border: `1px solid ${theme.border}`, borderRadius: "12px", background: theme.bg,
-        padding: "0.55rem 0.7rem", cursor: "pointer", fontFamily: "inherit", width: "100%",
-      }}
+      style={legionButtonRowStyle(theme)}
     >
       <span style={{ fontSize: "0.85rem", fontWeight: 800, color: theme.text }}>Legion</span>
       <span style={{ fontSize: "0.75rem", fontWeight: 700, color: theme.muted, display: "flex", alignItems: "center", gap: "0.3rem" }}>
@@ -264,15 +268,7 @@ interface DirectoryRoleViewProps {
   isUiLocked: boolean;
   shouldShow: boolean;
   directoryRevealPhase: number;
-  hasChampionSection: boolean;
-  isMainAlsoChampion: boolean;
-  mainCharacter: StoredCharacterRecord | null;
-  championCharacters: StoredCharacterRecord[];
-  championCharactersForDirectory: StoredCharacterRecord[];
-  otherCharacters: StoredCharacterRecord[];
-  sortedCharacters: StoredCharacterRecord[];
-  muleCapacity: number;
-  canAddCharacter: boolean;
+  groups: ReturnType<typeof buildDirectoryGroups>;
   maxChampions: number;
   onOpen: (character: StoredCharacterRecord) => void;
   onAddCharacter: () => void;
@@ -280,12 +276,14 @@ interface DirectoryRoleViewProps {
 }
 
 function DirectoryRoleView({
-  theme, isUiLocked, shouldShow, directoryRevealPhase,
-  hasChampionSection, isMainAlsoChampion, mainCharacter,
-  championCharacters, championCharactersForDirectory, otherCharacters,
-  sortedCharacters, muleCapacity, canAddCharacter, maxChampions,
+  theme, isUiLocked, shouldShow, directoryRevealPhase, groups, maxChampions,
   onOpen, onAddCharacter, refreshingKeys,
 }: DirectoryRoleViewProps) {
+  const {
+    hasChampionSection, isMainAlsoChampion, mainCharacter,
+    championCharacters, championCharactersForDirectory, otherCharacters,
+    sortedCharacters, muleCapacity, canAddCharacter,
+  } = groups;
   const cardProps = { isUiLocked, theme, showWorld: false, onOpen, refreshingKeys };
 
   return (
@@ -480,15 +478,7 @@ export default function CharacterDirectoryScreen({
             isUiLocked={setup.isUiLocked}
             shouldShow={shouldShowDirectoryPanel}
             directoryRevealPhase={directoryRevealPhase}
-            hasChampionSection={groups.hasChampionSection}
-            isMainAlsoChampion={groups.isMainAlsoChampion}
-            mainCharacter={groups.mainCharacter}
-            championCharacters={groups.championCharacters}
-            championCharactersForDirectory={groups.championCharactersForDirectory}
-            otherCharacters={groups.otherCharacters}
-            sortedCharacters={groups.sortedCharacters}
-            muleCapacity={groups.muleCapacity}
-            canAddCharacter={groups.canAddCharacter}
+            groups={groups}
             maxChampions={directory.maxChampions}
             refreshingKeys={directory.refreshingKeys}
             onOpen={actions.openCharacterProfile}

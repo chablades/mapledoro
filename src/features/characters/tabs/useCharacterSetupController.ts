@@ -840,6 +840,8 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
   const [isAddingCharacter, setIsAddingCharacter] = useState(false);
   const [fastDirectoryRevealOnce, setFastDirectoryRevealOnce] = useState(false);
   const [characterRoster, setCharacterRoster] = useState<StoredCharacterRecord[]>([]);
+  const characterRosterRef = useRef(characterRoster);
+  useEffect(() => { characterRosterRef.current = characterRoster; });
   const [autoRefreshQueue, setAutoRefreshQueue] = useState<StoredCharacterRecord[]>([]);
 
   // Dev-only: surfaces malformed CLASS_SKILL_DATA entries (empty id/nexonJobName,
@@ -887,20 +889,19 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
 
   const handleRefreshed = useCallback((fresh: NormalizedCharacterData) => {
     const key = toCharacterKey(fresh);
-    let refreshedRecord: StoredCharacterRecord | null = null;
+    const existing = characterRosterRef.current.find((c) => toCharacterKey(c) === key);
+    if (!existing) return;
+    const updated = createStoredCharacterRecord({
+      character: fresh,
+      gender: existing.gender,
+      stats: existing.stats,
+      equipment: existing.equipment,
+      tools: existing.tools,
+      addedAt: existing.meta.addedAt,
+    });
     setCharacterRoster((prev) => {
       const existingIndex = prev.findIndex((c) => toCharacterKey(c) === key);
       if (existingIndex === -1) return prev;
-      const existing = prev[existingIndex];
-      const updated = createStoredCharacterRecord({
-        character: fresh,
-        gender: existing.gender,
-        stats: existing.stats,
-        equipment: existing.equipment,
-        tools: existing.tools,
-        addedAt: existing.meta.addedAt,
-      });
-      refreshedRecord = updated;
       const next = [...prev];
       next[existingIndex] = updated;
       return next;
@@ -910,7 +911,7 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
     // refreshed record explicitly as `base` — the roster in localStorage still has
     // this character's PRE-refresh level at this point, since the persistence effect
     // for `characterRoster` hasn't run yet.
-    syncWhLegionRankAfterRefresh(refreshedRecord);
+    syncWhLegionRankAfterRefresh(updated);
   }, []);
 
   const { refreshingKeys, refreshSingle } = useAutoRefresh({
@@ -953,6 +954,7 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
   const refreshDraftSummaries = useCallback(() => {
     const now = Date.now();
     setDraftSummaries(
+      // react-doctor-disable-next-line js-combine-iterations -- pruneAndReadSetupDrafts is capped at MAX_SETUP_DRAFTS (5), extra pass is negligible per the rule's own FP criteria
       pruneAndReadSetupDrafts()
         .filter((draft) => isResumableDraft(draft))
         .map((draft) => ({
@@ -1183,6 +1185,7 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
         applyDraftFlowState(draft, nextCompletedFlowIds);
       }
     },
+    // react-doctor-disable-next-line exhaustive-deps -- deliberately depends on `initialCharacterName`/`initialAction` (derived once from `frozenRouteIntent`, itself frozen at mount via useState's lazy initializer and never updated after), not the source object
     [
       applyAddCharacterView,
       applyConfirmedProfileView,
@@ -1412,6 +1415,7 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
 
   useEffect(() => {
     immediateUiLockRef.current = isUiLocked;
+  // react-doctor-disable-next-line exhaustive-deps -- deliberately depends on the derived `isUiLocked` boolean, not the 7 raw fields it's computed from, since any change to those fields changes isUiLocked too
   }, [isUiLocked]);
 
   useEffect(() => {

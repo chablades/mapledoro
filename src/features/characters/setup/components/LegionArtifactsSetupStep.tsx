@@ -314,7 +314,7 @@ function StatSlotChip({
       >
         {def ? def.label : "+ Pick stat"}
       </button>
-      {isOpen && createPortal(
+      {isOpen && typeof document !== "undefined" && createPortal(
         <div
           ref={portalRef}
           onMouseDown={(e) => e.stopPropagation()}
@@ -418,7 +418,7 @@ function CrystalTile({
         <LevelPipsStatic level={level} theme={theme} />
         <Image src={iconSrc} alt="" width={CRYSTAL_ICON_SIZE} height={CRYSTAL_ICON_SIZE} unoptimized style={crystalIconImgStyle} />
       </button>
-      {isCardOpen && createPortal(
+      {isCardOpen && typeof document !== "undefined" && createPortal(
         <div
           ref={portalRef}
           onMouseDown={(e) => e.stopPropagation()}

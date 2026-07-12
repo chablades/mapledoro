@@ -196,6 +196,7 @@ function LegionArtifactSection({ theme, worldId }: { theme: AppTheme; worldId: n
   });
 
   const rawTotals = computeRawStatLevels(resolvedCrystals, artifactLevel);
+  // react-doctor-disable-next-line js-combine-iterations -- LEGION_ARTIFACT_STATS is a small fixed 16-item array, extra pass is negligible per the rule's own FP criteria
   const bonusRows = LEGION_ARTIFACT_STATS
     .map((stat) => {
       const raw = rawTotals[stat.id] ?? 0;
@@ -301,6 +302,17 @@ function LegionArtifactSection({ theme, worldId }: { theme: AppTheme; worldId: n
 // InfoTooltip popup, which is left-anchored and fixed-width for its own "?" button
 // context), nudging sideways via shiftX only when centering would clip past the
 // viewport edge, same idea as InfoTooltip's own edge-avoidance but centered by default.
+function hoverTooltipPopupStyle(theme: AppTheme, shiftX: number, wrapSublabel?: boolean): CSSProperties {
+  return {
+    position: "absolute", bottom: "calc(100% + 0.4rem)", left: "50%",
+    transform: `translateX(calc(-50% + ${shiftX}px))`,
+    zIndex: 200, background: theme.bg, border: `1px solid ${theme.border}`,
+    borderRadius: 10, padding: "0.4rem 0.6rem",
+    width: wrapSublabel ? 220 : "max-content", maxWidth: "calc(100vw - 16px)",
+    boxShadow: "0 4px 20px rgba(0,0,0,0.15)", textAlign: "center",
+  };
+}
+
 function HoverTooltip({ theme, label, sublabel, ariaLabel, wrapSublabel, wrapperStyle, children }: {
   theme: AppTheme; label: string; sublabel?: ReactNode; ariaLabel?: string; wrapSublabel?: boolean;
   wrapperStyle?: CSSProperties; children: ReactNode;
@@ -308,10 +320,16 @@ function HoverTooltip({ theme, label, sublabel, ariaLabel, wrapSublabel, wrapper
   const [open, setOpen] = useState(false);
   const [shiftX, setShiftX] = useState(0);
   // Touch devices have no hover at all, so mouseenter/mouseleave never fire there,
-  // so fall back to tap-to-toggle instead. Checked once at mount, same pattern as
-  // StepJumpMenu's hover-flyout: hover support doesn't change mid-session for any real
-  // device this app needs to support.
-  const [supportsHover] = useState(() => typeof window !== "undefined" && window.matchMedia("(hover: hover)").matches);
+  // so fall back to tap-to-toggle instead. Hover support doesn't change mid-session for
+  // any real device this app needs to support. Read via useSyncExternalStore (not a lazy
+  // useState initializer) since this value feeds an unconditional inline style below —
+  // a plain useState would seed the server's `false` and never reconcile it against the
+  // client's real value, causing a hydration mismatch on hover-capable devices.
+  const supportsHover = useSyncExternalStore(
+    () => () => undefined,
+    () => typeof window !== "undefined" && window.matchMedia("(hover: hover)").matches,
+    () => false,
+  );
   const containerRef = useRef<HTMLDivElement>(null);
   const popupRef = useRef<HTMLDivElement>(null);
 
@@ -363,14 +381,7 @@ function HoverTooltip({ theme, label, sublabel, ariaLabel, wrapSublabel, wrapper
       {open && (
         <div
           ref={popupRef}
-          style={{
-            position: "absolute", bottom: "calc(100% + 0.4rem)", left: "50%",
-            transform: `translateX(calc(-50% + ${shiftX}px))`,
-            zIndex: 200, background: theme.bg, border: `1px solid ${theme.border}`,
-            borderRadius: 10, padding: "0.4rem 0.6rem",
-            width: wrapSublabel ? 220 : "max-content", maxWidth: "calc(100vw - 16px)",
-            boxShadow: "0 4px 20px rgba(0,0,0,0.15)", textAlign: "center",
-          }}
+          style={hoverTooltipPopupStyle(theme, shiftX, wrapSublabel)}
         >
           <p style={{ margin: 0, fontSize: "0.8rem", fontWeight: 800, color: theme.text, whiteSpace: "nowrap" }}>{label}</p>
           {sublabel && (

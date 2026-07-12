@@ -197,7 +197,7 @@ function IAGradeHeader({ grade, openId, theme, onToggle, onClose, onPick, onClea
           <path d="M6 9l6 6 6-6" />
         </svg>
       </button>
-      {isOpen && createPortal(
+      {isOpen && typeof document !== "undefined" && createPortal(
         <div ref={portalRef} onMouseDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()}
           style={{ ...IA_POPOVER_SHELL, background: theme.panel, border: `1px solid ${theme.accent}` }}>
           {grade && (
@@ -325,7 +325,7 @@ function IALineBar({ lineIdx, line, grade, openId, theme, onToggle, onClose, onS
         title={label} style={iaLineBarStyle(theme, c, grade)}>
         {label}
       </button>
-      {isOpen && grade && createPortal(
+      {isOpen && grade && typeof document !== "undefined" && createPortal(
         <div ref={portalRef} onMouseDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()}
           style={{ ...IA_POPOVER_SHELL, background: theme.panel, border: `1px solid ${theme.accent}` }}>
           {showTierRow && (
@@ -402,6 +402,7 @@ export default function InnerAbilitySetupStep({ draft, onUpdate, theme }: {
     if (active.lines[0].tier === grade) return;
     const lines = active.lines.map((l, idx) => {
       if (idx === 0) return { tier: grade, value: "" };
+      // react-doctor-disable-next-line js-set-map-lookups -- IA_TIER_ORDER has only 4 entries, below the rule's own "~10 items" FP threshold
       return allowedLineTiers(grade, idx).includes(l.tier as IATier) ? l : { tier: "", value: "" };
     }) as IAPresetFull["lines"];
     const presets = ia.presets.map((p, i) => (i === ia.activePreset ? { lines } : p)) as IAFull["presets"];

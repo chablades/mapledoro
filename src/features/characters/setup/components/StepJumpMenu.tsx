@@ -408,7 +408,10 @@ export default function StepJumpMenu({
   const [openAbove, setOpenAbove] = useState(false);
   // Touch devices have no hover at all, so the hover-reveal flyout is unreachable
   // there — fall back to tap-to-toggle instead. Checked once at mount: hover support
-  // doesn't change mid-session for any real device this app needs to support.
+  // doesn't change mid-session for any real device this app needs to support. Safe as a
+  // lazy useState initializer (not useSyncExternalStore) since every usage below is
+  // nested behind `open &&`, which is false on both server and first client render.
+  // react-doctor-disable-next-line no-match-media-in-state-initializer
   const [supportsHover] = useState(() => typeof window !== "undefined" && window.matchMedia("(hover: hover)").matches);
   const [activeFlyoutStep, setActiveFlyoutStep] = useState<number | null>(null);
   const [flyoutPos, setFlyoutPos] = useState<{ top: number; left: number } | null>(null);

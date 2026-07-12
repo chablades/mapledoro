@@ -259,7 +259,7 @@ function FamiliarCardSprite({ mobId, familiarId, cardId, size, theme }: { mobId:
   ];
   return (
     <span style={{ width: size, height: size, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}{/* react-doctor-disable-next-line nextjs-no-img-element -- needs a sequential onError fallback chain (mob -> familiar -> card) that next/image's declarative API can't express */}
       <img
         key={`${mobId}/${familiarId}/${cardId}`}
         src={sources[0]}
@@ -380,7 +380,7 @@ function LinePicker({ id, openId, onToggle, onClose, onPrev, onNext, value, tier
           {value || placeholder}
         </span>
       </button>
-      {isOpen && createPortal(
+      {isOpen && typeof document !== "undefined" && createPortal(
         <div
           ref={portalRef}
           onMouseDown={(e) => e.stopPropagation()}
@@ -660,7 +660,7 @@ function FamiliarSlotCard({
         )}
       </div>
 
-      {isOpen && createPortal(
+      {isOpen && typeof document !== "undefined" && createPortal(
         <div
           ref={portalRef}
           onMouseDown={(e) => e.stopPropagation()}
@@ -851,7 +851,7 @@ function BadgeSlot({
           )}
         </div>
       </button>
-      {isOpen && createPortal(
+      {isOpen && typeof document !== "undefined" && createPortal(
         <div
           ref={portalRef}
           onMouseDown={(e) => e.stopPropagation()}
@@ -933,11 +933,11 @@ export default function FamiliarsSetupStep({
   // step lands blank) — can't run during render since it depends on a client-only
   // localStorage read. Not worth lifting into the parent controller (which owns none of
   // this step's domain logic) for a fetch that only ever fires once, at mount.
-  // react-doctor-disable-next-line no-pass-data-to-parent
   useEffect(() => {
     if (initialValueRef.current) return;
     if (!confirmedCharacterName) return;
     const saved = selectCharacterByIgn(readCharactersStore(), confirmedCharacterName)?.familiars as FamiliarsValue | undefined;
+    // react-doctor-disable-next-line no-pass-data-to-parent
     if (saved) onChange(JSON.stringify(saved));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

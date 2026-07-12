@@ -211,6 +211,7 @@ export default function PreviewSetupPane({ model, actions }: PreviewSetupPanePro
       }, 0);
       return () => clearTimeout(resetPhaseTimer);
     }
+  // react-doctor-disable-next-line exhaustive-deps -- deliberately depends on the narrowed `setup.isSwitchingToDirectory` primitive, not the whole `setup` object, to avoid re-running when unrelated fields change
   }, [inCharacterDirectoryView, setup.isSwitchingToDirectory]);
 
   useEffect(() => {
@@ -228,6 +229,7 @@ export default function PreviewSetupPane({ model, actions }: PreviewSetupPanePro
       clearTimeout(championsTimer);
       clearTimeout(mulesTimer);
     };
+  // react-doctor-disable-next-line exhaustive-deps -- deliberately depends on narrowed `setup.*` primitives, not the whole `setup` object, to avoid re-running when unrelated fields change
   }, [
     inCharacterDirectoryView,
     setup.fastDirectoryRevealOnce,

@@ -1079,10 +1079,10 @@ export default function HexaMatrixSetupStep({
   // step lands blank) — can't run during render since it depends on a client-only
   // localStorage read. Not worth lifting into the parent controller (which owns none of
   // this step's domain logic) for a fetch that only ever fires once, at mount.
-  // react-doctor-disable-next-line no-pass-data-to-parent
   useEffect(() => {
     if (initialValueRef.current) return;
     const saved = readSavedHexaValue(classDef, confirmedCharacterName);
+    // react-doctor-disable-next-line no-pass-data-to-parent
     if (saved) onChange(saved);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

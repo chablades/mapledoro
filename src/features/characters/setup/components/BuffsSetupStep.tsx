@@ -355,6 +355,7 @@ export default function BuffsSetupStep({
                 <span style={pickOneLabelStyle(theme)}>
                   pick one
                 </span>
+                {/* react-doctor-disable-next-line js-combine-iterations -- BOOL_BUFFS is a small fixed roster, extra pass is negligible per the rule's own FP criteria */}
                 {BOOL_BUFFS.filter((b) => groupSet.has(b.id)).map((b) => (
                   <BoolBuffTile
                     key={b.id}

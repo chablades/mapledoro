@@ -12,6 +12,7 @@ import InfoTooltip, { type TooltipContent } from "./InfoTooltip";
 import { LEGION_ARTIFACT_FINAL_ATK_LIMIT } from "../data/scouterQuestionsData";
 import { statusText } from "../../../../components/statusColors";
 
+// react-doctor-disable-next-line only-export-components -- intentionally grouped with the components that use it; not worth fragmenting the file just to buy back Fast Refresh (dev-only)
 export function statInputStyle(theme: AppTheme, width?: string): CSSProperties {
   return {
     border: `1px solid ${theme.border}`,
@@ -33,6 +34,7 @@ export function statInputStyle(theme: AppTheme, width?: string): CSSProperties {
 
 // Unit suffix ("%", "s", …) rendered inside a stat input box, anchored to its right
 // edge. Keeps the input as the full visual box; pointer-events off so clicks reach it.
+// react-doctor-disable-next-line only-export-components -- intentionally grouped with the components that use it; not worth fragmenting the file just to buy back Fast Refresh (dev-only)
 export function inputSuffixStyle(theme: AppTheme): CSSProperties {
   return {
     position: "absolute",
@@ -85,6 +87,7 @@ export function InputWarningBubble({ message, theme }: { message: string; theme:
 // appears. Finds the first field marked `data-flagged-field="true"` — either an actual
 // bad value (next to its InputWarningBubble) or, in flows like MapleScouter where every
 // field must be filled, the first still-blank required field. No-op if none is present.
+// react-doctor-disable-next-line only-export-components -- intentionally grouped with the components that use it; not worth fragmenting the file just to buy back Fast Refresh (dev-only)
 export function scrollToFlaggedField(container: HTMLElement | null) {
   if (!container) return;
   const target = container.querySelector<HTMLElement>('[data-flagged-field="true"]');
@@ -96,6 +99,7 @@ export function scrollToFlaggedField(container: HTMLElement | null) {
 
 // "Fix the flagged value above" link button that triggers scrollToFlaggedField, shared
 // between Stats and Oz Rings (both can end a step with an unresolved flagged field).
+// react-doctor-disable-next-line only-export-components -- intentionally grouped with the components that use it; not worth fragmenting the file just to buy back Fast Refresh (dev-only)
 export function flaggedValueLinkStyle(theme: AppTheme): CSSProperties {
   return {
     display: "block", margin: "0.75rem 0 0", padding: 0,

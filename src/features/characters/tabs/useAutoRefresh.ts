@@ -41,6 +41,7 @@ export function useAutoRefresh({
   const onRefreshedRef = useRef(onRefreshed);
   useEffect(() => { onRefreshedRef.current = onRefreshed; });
 
+  // react-doctor-disable-next-line no-fetch-in-effect -- one-shot fetch with proper AbortController cleanup; this project hasn't adopted a data-fetching library, matches the rule's own documented FP criteria
   useEffect(() => {
     if (queue.length === 0) return;
     const controller = new AbortController();

@@ -165,12 +165,12 @@ export default function VMatrixSetupStep({
   // Can't run during render since it depends on a client-only localStorage read. Not
   // worth lifting into the parent controller (which owns none of this step's domain
   // logic) for a fetch that only ever fires once, at mount.
-  // react-doctor-disable-next-line no-pass-data-to-parent
   useEffect(() => {
     if (initialValueRef.current || !confirmedCharacterName) return;
     const saved = selectCharacterByIgn(readCharactersStore(), confirmedCharacterName)?.vMatrix;
     if (saved?.levels && Object.keys(saved.levels).length > 0) {
       const asStrings = Object.fromEntries(Object.entries(saved.levels).map(([k, v]) => [k, String(v)]));
+      // react-doctor-disable-next-line no-pass-data-to-parent
       onChange(JSON.stringify(asStrings));
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps

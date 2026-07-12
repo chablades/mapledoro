@@ -748,7 +748,7 @@ function SlotCell({ slotKey, item, theme, isActive, onClick, picker }: {
   return (
     <div ref={wrapperRef} style={{ position: "relative", width: SLOT_SIZE, flexShrink: 0 }}>
       {item ? <HoverTooltip label={item.name} theme={theme}>{button}</HoverTooltip> : button}
-      {picker && createPortal(
+      {isActive && typeof document !== "undefined" && createPortal(
         <div
           ref={portalRef}
           data-equipment-picker

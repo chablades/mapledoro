@@ -77,7 +77,7 @@ function CharacterAvatarImage({
   }, [onReady, settled, src]);
 
   return (
-    // eslint-disable-next-line @next/next/no-img-element
+    /* eslint-disable-next-line @next/next/no-img-element */ /* react-doctor-disable-next-line nextjs-no-img-element -- needs an onError-driven retry/fallback chain (timeout, retry with cache-busting param, then a fallback avatar) that next/image's declarative API can't express */
     <img
       src={displaySrc}
       alt={alt}

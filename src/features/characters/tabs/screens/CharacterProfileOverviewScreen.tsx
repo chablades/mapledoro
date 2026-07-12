@@ -388,12 +388,15 @@ function EquipmentBookmark({ theme, character }: { theme: Theme; character: Stor
   const preset = equip?.presets?.[equip.activePreset] ?? equip?.presets?.[0];
   if (!preset) return null;
 
+  // react-doctor-disable-next-line js-combine-iterations -- EQUIPMENT_SLOT_LABELS is a small fixed roster, extra pass is negligible per the rule's own FP criteria
   const filledSlots = EQUIPMENT_SLOT_LABELS
     .map(([key, label]) => ({ label, name: preset[key]?.name }))
     .filter((row) => row.name);
+  // react-doctor-disable-next-line js-combine-iterations -- preset.rings is a small fixed-size array, extra pass is negligible per the rule's own FP criteria
   const ringRows = preset.rings
     .map((ring, i) => ({ label: `Ring ${i + 1}`, name: ring?.name }))
     .filter((row) => row.name);
+  // react-doctor-disable-next-line js-combine-iterations -- preset.pendants is a small fixed-size array, extra pass is negligible per the rule's own FP criteria
   const pendantRows = preset.pendants
     .map((pendant, i) => ({ label: `Pendant ${i + 1}`, name: pendant?.name }))
     .filter((row) => row.name);
@@ -456,8 +459,10 @@ function LinkSkillsBookmark({ theme, character }: { theme: Theme; character: Sto
     if (!mounted || worldId === undefined) return null;
     const store = readCharactersStore();
     return reconcileLinkSkills(store.linkSkillsByWorld[String(worldId)], selectCharactersList(store), worldId);
+  // react-doctor-disable-next-line exhaustive-deps -- deliberately depends on the narrowed `worldId` primitive, not the whole `character` object, to avoid re-running when unrelated fields change
   }, [mounted, worldId]);
   if (!levels) return null;
+  // react-doctor-disable-next-line js-combine-iterations -- LINK_SKILLS is a small fixed roster, extra pass is negligible per the rule's own FP criteria
   const rows = LINK_SKILLS
     .map((skill) => ({ label: skill.name, level: levels[skill.id] }))
     .filter((row) => row.level);
@@ -487,6 +492,7 @@ function HexaMatrixBookmark({ theme, character }: { theme: Theme; character: Sto
     const fromState = (character?.tools?.hexaSkills as { levels?: HexaSkillLevels } | undefined)?.levels;
     if (fromState) return fromState;
     return readHexaLevels(charName);
+  // react-doctor-disable-next-line exhaustive-deps -- deliberately depends on the narrowed `charName` primitive, not the whole `character` object, to avoid re-running when unrelated fields change
   }, [mounted, charName, character?.tools]);
 
   const classId = character ? resolveClassId(character.jobName) : undefined;
@@ -571,6 +577,7 @@ function LegionArtifactsBookmark({ theme, character }: { theme: Theme; character
   const artifact = useMemo(() => {
     if (!mounted || worldId === undefined) return null;
     return readCharactersStore().legionArtifactByWorld[String(worldId)] ?? null;
+  // react-doctor-disable-next-line exhaustive-deps -- deliberately depends on the narrowed `worldId` primitive, not the whole `character` object, to avoid re-running when unrelated fields change
   }, [mounted, worldId]);
   if (!artifact?.artifactLevel) return null;
   const unlocked = LEGION_CRYSTALS.filter((c) => artifact.artifactLevel! >= c.requiredArtifactLevel).length;
@@ -586,11 +593,14 @@ function BuffsBookmark({ theme, character }: { theme: Theme; character: StoredCh
   const buffs = character?.scouter?.buffs;
   if (!buffs) return null;
 
+  // react-doctor-disable-next-line js-combine-iterations -- GUILD_BUFFS is a small fixed roster, extra pass is negligible per the rule's own FP criteria
   const guildRows = GUILD_BUFFS
     .map((b) => ({ label: b.name, level: buffs[b.id] }))
     .filter((row) => row.level);
+  // react-doctor-disable-next-line js-combine-iterations -- BOOL_BUFFS is a small fixed roster, extra pass is negligible per the rule's own FP criteria
   const activeChips = BOOL_BUFFS.filter((b) => buffs[b.id]).map((b) => b.name);
   const renownRows = buffs.renown
+    // react-doctor-disable-next-line js-combine-iterations -- RENOWN_STATS is a small fixed roster, extra pass is negligible per the rule's own FP criteria
     ? RENOWN_STATS
         .map((stat) => ({ label: stat.label, value: buffs.renown?.[stat.id] }))
         .filter((row) => row.value)
