@@ -7,7 +7,7 @@ import { useKeyboardListNav } from "../../../../lib/useKeyboardListNav";
 import { searchAndRank } from "../../../../lib/searchMatch";
 import Image from "next/image";
 import type { AppTheme } from "../../../../components/themes";
-import { statusText } from "../../../../components/statusColors";
+import { STATUS, statusText } from "../../../../components/statusColors";
 import type { SetupStepDefinition } from "../steps";
 import type { SetupFlowId } from "../flows";
 import type { HexaClassDef, HexaSkillDef, HexaSkillLevels } from "../../../../features/tools/hexa-skills/hexa-classes";
@@ -128,10 +128,10 @@ const statDropdownOptionStyle = (theme: AppTheme, isSelected: boolean, isHighlig
 });
 
 const presetToggleButtonStyle = (theme: AppTheme, isActive: boolean): React.CSSProperties => ({
-  border: "none", borderRadius: "7px", cursor: "pointer",
+  border: "none", borderRadius: "8px", cursor: "pointer",
   padding: "0.4rem 0.7rem", minHeight: 32, fontFamily: "inherit",
   fontSize: "0.78rem", fontWeight: 700,
-  color: isActive ? "#fff" : theme.muted,
+  color: isActive ? theme.accentOn : theme.muted,
   background: isActive ? theme.accent : "transparent",
 });
 
@@ -322,10 +322,10 @@ function SkillIcon({ skill, size = 28 }: { skill: HexaSkillDef; size?: number })
             if (wrapperRef.current) wrapperRef.current.style.display = "none";
             if (fallbackRef.current) fallbackRef.current.style.display = "block";
           }}
-          style={{ borderRadius: "5px", display: "block" }}
+          style={{ borderRadius: "6px", display: "block" }}
         />
       </div>
-      <div ref={fallbackRef} style={{ display: "none", width: size, height: size, borderRadius: "5px", flexShrink: 0 }} />
+      <div ref={fallbackRef} style={{ display: "none", width: size, height: size, borderRadius: "6px", flexShrink: 0 }} />
     </>
   );
 }
@@ -497,7 +497,7 @@ function StatDropdown({ value, options, onChange, onAdvance, isOpen, onToggle, o
   const triggerStyle: React.CSSProperties = {
     display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.4rem",
     flex: 1, minWidth: 0, width: "100%",
-    border: `1px solid ${isError ? "#ef4444" : theme.border}`,
+    border: `1px solid ${isError ? STATUS.danger.fill : theme.border}`,
     borderRadius: "6px", background: theme.bg,
     color: selected ? theme.text : theme.muted,
     fontFamily: "inherit", fontSize: "0.82rem", fontWeight: 700,
@@ -589,7 +589,7 @@ function StatProgressBar({ level, theme }: { level: number; theme: AppTheme }) {
         <div key={i} style={{
           flex: 1,
           height: "3px",
-          borderRadius: "2px",
+          borderRadius: "999px",
           background: i < level ? theme.accent : theme.border,
           transition: "background 0.1s ease",
         }} />
@@ -958,7 +958,7 @@ function HexaStatSubstep({
               </span>
               <div style={{
                 display: "flex", gap: "3px", padding: "3px",
-                border: `1px solid ${theme.border}`, borderRadius: "9px",
+                border: `1px solid ${theme.border}`, borderRadius: "10px",
               }}>
                 {PRESET_LABELS.map((label, p) => {
                   const isActive = activePreset === p;

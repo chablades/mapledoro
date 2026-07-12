@@ -84,10 +84,10 @@ function SkillIcon({ id, name, size = 28 }: { id: string; name: string; size?: n
             if (wrapperRef.current) wrapperRef.current.style.display = "none";
             if (fallbackRef.current) fallbackRef.current.style.display = "block";
           }}
-          style={{ borderRadius: "5px", display: "block" }}
+          style={{ borderRadius: "6px", display: "block" }}
         />
       </div>
-      <div ref={fallbackRef} style={{ display: "none", width: size, height: size, borderRadius: "5px", flexShrink: 0, background: "rgba(127,127,127,0.18)" }} />
+      <div ref={fallbackRef} style={{ display: "none", width: size, height: size, borderRadius: "6px", flexShrink: 0, background: "rgba(127,127,127,0.18)" }} />
     </>
   );
 }

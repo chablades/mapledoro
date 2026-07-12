@@ -292,7 +292,7 @@ const symbolTabStyle = (theme: AppTheme, isActive: boolean): CSSProperties => ({
   border: `1px solid ${isActive ? theme.accent : theme.border}`,
   borderRadius: 8,
   background: isActive ? theme.accent : theme.bg,
-  color: isActive ? "#fff" : theme.text,
+  color: isActive ? theme.accentOn : theme.text,
   fontFamily: "inherit", fontWeight: 800, fontSize: "0.8rem",
   padding: "0.4rem 0.8rem", cursor: "pointer",
 });

@@ -35,7 +35,7 @@ function cancelButtonStyle(theme: AppTheme): CSSProperties {
 
 function confirmButtonStyle(theme: AppTheme, danger: boolean): CSSProperties {
   return {
-    border: danger ? "1px solid #fca5a5" : `1px solid ${theme.accent}`,
+    border: `1px solid ${danger ? STATUS.danger.fill : theme.accent}`,
     borderRadius: "10px",
     background: danger ? STATUS.danger.fill : theme.accent,
     color: danger ? STATUS.danger.on : theme.accentOn,

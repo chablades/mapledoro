@@ -51,7 +51,7 @@ function menuItemStyle(theme: AppTheme, active: boolean, disabled: boolean): CSS
     fontWeight: !disabled && active ? 800 : 600,
     fontSize: "0.82rem",
     padding: "0.4rem 0.55rem",
-    borderRadius: "7px",
+    borderRadius: "8px",
     textAlign: "left",
     cursor: disabled ? "not-allowed" : "pointer",
   };
@@ -66,7 +66,7 @@ function splitRowContainerStyle(theme: AppTheme, active: boolean, disabled: bool
   return {
     display: "flex",
     alignItems: "stretch",
-    borderRadius: "7px",
+    borderRadius: "8px",
     overflow: "hidden",
     background: !disabled && active ? `${theme.accent}18` : "none",
   };
@@ -136,7 +136,7 @@ function substepItemStyle(theme: AppTheme, disabled: boolean): CSSProperties {
     fontWeight: 600,
     fontSize: "0.8rem",
     padding: "0.4rem 0.55rem",
-    borderRadius: "7px",
+    borderRadius: "8px",
     textAlign: "left",
     whiteSpace: "nowrap",
     cursor: disabled ? "not-allowed" : "pointer",

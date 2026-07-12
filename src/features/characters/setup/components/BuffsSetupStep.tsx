@@ -3,6 +3,7 @@
 import type { CSSProperties, ReactNode } from "react";
 import { numericKeyDown } from "../../../../lib/inputUtils";
 import type { AppTheme } from "../../../../components/themes";
+import { statusText } from "../../../../components/statusColors";
 import { ItemIcon, SkillIcon } from "../../../../components/ResourceImage";
 import HoverTooltip from "../../../../components/HoverTooltip";
 import type { SetupStepDefinition } from "../steps";
@@ -170,10 +171,10 @@ function sparklingRedStarTooltip(theme: AppTheme): ReactNode {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
       <span>Sparkling Red Star Potion</span>
-      <span style={{ fontSize: "0.8em", color: "#f87171", paddingLeft: "0.6em", fontStyle: "italic" }}>cannot be used with Blue Star Potion</span>
-      <span style={{ opacity: 0.6, fontSize: "0.8em", color: theme.muted }}>or</span>
+      <span style={{ color: statusText(theme, "danger"), paddingLeft: "0.6em", fontStyle: "italic" }}>cannot be used with Blue Star Potion</span>
+      <span style={{ opacity: 0.6, color: theme.muted }}>or</span>
       <span>Advanced Boss Rush Boost Potion</span>
-      <span style={{ opacity: 0.7, fontSize: "0.8em", color: theme.muted }}>+20% Boss DMG</span>
+      <span style={{ opacity: 0.7, color: theme.muted }}>+20% Boss DMG</span>
     </div>
   );
 }
@@ -182,7 +183,7 @@ function extremePotionMergedTooltip(theme: AppTheme, primaryStat: StatId): React
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
       <span>{extremePotionLabel(primaryStat)}</span>
-      <span style={{ opacity: 0.6, fontSize: "0.8em", color: theme.muted }}>and</span>
+      <span style={{ opacity: 0.6, color: theme.muted }}>and</span>
       <span>Extreme Green Potion</span>
     </div>
   );
@@ -195,7 +196,7 @@ function boolBuffLabel(id: BoolBuffEntry["id"], primaryStat: ReturnType<typeof p
   if (id === "maxedSacredSymbol") return (
     <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
       <span>Lv. 11 Sacred Symbols</span>
-      <span style={{ opacity: 0.7, fontSize: "0.8em", color: theme.muted }}>+20% DMG vs. each region&apos;s boss</span>
+      <span style={{ opacity: 0.7, color: theme.muted }}>+20% DMG vs. each region&apos;s boss</span>
     </div>
   );
   return undefined;
@@ -310,10 +311,10 @@ export default function BuffsSetupStep({
                       const t = getStatPotionTiers(s)[9];
                       return [
                         <span key={`${s}-potion`}>{t.name}</span>,
-                        <span key={`${s}-pill`} style={{ opacity: 0.6, fontSize: "0.8em", color: theme.muted, paddingLeft: "0.6em" }}>or {t.pillName}</span>,
+                        <span key={`${s}-pill`} style={{ opacity: 0.6, color: theme.muted, paddingLeft: "0.6em" }}>or {t.pillName}</span>,
                       ];
                     })}
-                    <span style={{ opacity: 0.7, fontSize: "0.8em" }}>
+                    <span style={{ opacity: 0.7 }}>
                       +30 {stats.map(statAbbrev).join(", ")}
                     </span>
                   </div>
