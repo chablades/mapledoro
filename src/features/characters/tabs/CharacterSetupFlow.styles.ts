@@ -279,6 +279,15 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
             transform var(--characters-standard) ease;
         }
 
+        /* .characters-main vertically centers its content by default, which is fine for
+           panels of roughly consistent height, but the directory screen swaps between very
+           different content heights (a tall character grid vs. the much shorter Legion
+           panel tabs) without a page navigation in between. Re-centering on every swap reads
+           as a jarring jump; pinning this family to the top removes the jump entirely. */
+        .characters-content.directory-view {
+          align-self: flex-start;
+        }
+
         .preview-pane > .character-search-panel {
           width: 100%;
           min-width: 0;
