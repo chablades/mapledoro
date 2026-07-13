@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useImperativeHandle, useRef, useState, useSyncExternalStore, type CSSProperties, type ReactNode, type Ref } from "react";
 import Image from "next/image";
 import { WORLD_NAMES } from "../../model/constants";
 import {
@@ -23,6 +23,11 @@ import { legionCrystalIconUrl } from "../../../../lib/mapleResource";
 import CharacterAvatar, { FALLBACK_SRC } from "../components/CharacterAvatar";
 
 type LegionSection = "artifact" | "linkSkills";
+
+// Lets the header's Save button (see LegionPanel) trigger whichever *EditPanel is
+// currently mounted, without lifting its local draft state up out of the component
+// that owns it.
+type EditorHandle = { save: () => void };
 
 interface LegionPanelProps {
   theme: AppTheme;
@@ -85,28 +90,6 @@ function saveButtonStyle(theme: AppTheme): CSSProperties {
     fontFamily: "inherit", fontWeight: 800, fontSize: "0.75rem",
     padding: "0.4rem 0.7rem", cursor: "pointer",
   };
-}
-
-function EditPencilButton({ theme, label, onEdit }: { theme: AppTheme; label: string; onEdit: () => void }) {
-  return (
-    <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 10 }}>
-      <button type="button" aria-label={`Edit ${label}`} title={`Edit ${label}`} onClick={onEdit} style={pencilButtonStyle(theme)}>
-        <PencilIcon />
-      </button>
-    </div>
-  );
-}
-
-// Sits inside each *EditPanel (not the read-only view) so Save only ever commits the
-// draft it's rendered next to — pressing it is the one moment edits actually persist to
-// the world store; switching tabs or backing out first discards them (the edit panel
-// unmounts, taking its local draft state with it).
-function SaveButtonRow({ theme, onSave }: { theme: AppTheme; onSave: () => void }) {
-  return (
-    <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 10 }}>
-      <button type="button" onClick={onSave} style={saveButtonStyle(theme)}>Save</button>
-    </div>
-  );
 }
 
 function ArtifactStatRow({ theme, label, level, wasted, wastedCrystals, value }: {
@@ -229,8 +212,8 @@ function CrystalTile({ theme, index, def, crystal, unlocked }: {
 // re-enters edit mode (it only mounts while editing=true). The draft is purely local
 // until Save — closing without saving (tab switch, back to Directory) just unmounts
 // this component and discards it, same as backing out of the wizard mid-step.
-function LegionArtifactEditPanel({ theme, worldId, worldLegionArtifact, onSave }: {
-  theme: AppTheme; worldId: number; worldLegionArtifact?: StoredLegionArtifact; onSave: () => void;
+function LegionArtifactEditPanel({ theme, worldId, worldLegionArtifact, onSave, ref }: {
+  theme: AppTheme; worldId: number; worldLegionArtifact?: StoredLegionArtifact; onSave: () => void; ref?: Ref<EditorHandle>;
 }) {
   const [value, setValue] = useState("");
   function handleSave() {
@@ -246,31 +229,23 @@ function LegionArtifactEditPanel({ theme, worldId, worldLegionArtifact, onSave }
     writeLegionArtifactForWorld(worldId, { artifactLevel, crystals: toStoredLegionCrystals(parsed.crystals, artifactLevel) });
     onSave();
   }
-  return (
-    <div>
-      <SaveButtonRow theme={theme} onSave={handleSave} />
-      <LegionArtifactsEditor theme={theme} worldLegionArtifact={worldLegionArtifact} value={value} onChange={setValue} />
-    </div>
-  );
+  useImperativeHandle(ref, () => ({ save: handleSave }));
+  return <LegionArtifactsEditor theme={theme} worldLegionArtifact={worldLegionArtifact} value={value} onChange={setValue} />;
 }
 
-function LegionArtifactSection({ theme, worldId }: { theme: AppTheme; worldId: number }) {
+function LegionArtifactSection({ theme, worldId, editing, onEditDone, editorRef }: {
+  theme: AppTheme; worldId: number; editing: boolean; onEditDone: () => void; editorRef: Ref<EditorHandle>;
+}) {
   const mounted = useSyncExternalStore(() => () => undefined, () => true, () => false);
-  const [editing, setEditing] = useState(false);
   const legion = mounted ? readCharactersStore().legionArtifactByWorld[String(worldId)] : undefined;
   const artifactLevel = legion?.artifactLevel;
 
   if (editing) {
-    return <LegionArtifactEditPanel theme={theme} worldId={worldId} worldLegionArtifact={legion} onSave={() => setEditing(false)} />;
+    return <LegionArtifactEditPanel theme={theme} worldId={worldId} worldLegionArtifact={legion} onSave={onEditDone} ref={editorRef} />;
   }
 
   if (!artifactLevel) {
-    return (
-      <div>
-        <EditPencilButton theme={theme} label="Legion Artifact" onEdit={() => setEditing(true)} />
-        <p style={{ margin: 0, fontSize: 13, color: theme.muted, fontWeight: 700 }}>Not set up yet.</p>
-      </div>
-    );
+    return <p style={{ margin: 0, fontSize: 13, color: theme.muted, fontWeight: 700 }}>Not set up yet.</p>;
   }
 
   // Resolved once so the crystal grid and the total-bonuses list always agree, even when
@@ -327,7 +302,6 @@ function LegionArtifactSection({ theme, worldId }: { theme: AppTheme; worldId: n
 
   return (
     <div className="legion-artifact-root" style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-      <EditPencilButton theme={theme} label="Legion Artifact" onEdit={() => setEditing(true)} />
       <style>{`
         .legion-artifact-root { container-type: inline-size; }
         /* minmax(0, 116px) lets each column shrink past its 116px preferred size instead
@@ -596,32 +570,31 @@ function DormantSkillChip({ theme, skill }: { theme: AppTheme; skill: (typeof LI
 // re-enters edit mode (it only mounts while editing=true). The draft is purely local
 // until Save — closing without saving (tab switch, back to Directory) just unmounts
 // this component and discards it, same as backing out of the wizard mid-step.
-function LinkSkillsEditPanel({ theme, worldId, worldCharacters, worldLinkSkills, onSave }: {
-  theme: AppTheme; worldId: number; worldCharacters: StoredCharacterRecord[]; worldLinkSkills: string; onSave: () => void;
+function LinkSkillsEditPanel({ theme, worldId, worldCharacters, worldLinkSkills, onSave, ref }: {
+  theme: AppTheme; worldId: number; worldCharacters: StoredCharacterRecord[]; worldLinkSkills: string; onSave: () => void; ref?: Ref<EditorHandle>;
 }) {
   const [value, setValue] = useState("");
   function handleSave() {
     writeLinkSkillsForWorld(worldId, linkSkillsDraftToStored(value));
     onSave();
   }
+  useImperativeHandle(ref, () => ({ save: handleSave }));
   return (
-    <div>
-      <SaveButtonRow theme={theme} onSave={handleSave} />
-      <LinkSkillsEditor
-        theme={theme}
-        characterRoster={worldCharacters}
-        confirmedWorldId={worldId}
-        worldLinkSkills={worldLinkSkills}
-        value={value}
-        onChange={setValue}
-      />
-    </div>
+    <LinkSkillsEditor
+      theme={theme}
+      characterRoster={worldCharacters}
+      confirmedWorldId={worldId}
+      worldLinkSkills={worldLinkSkills}
+      value={value}
+      onChange={setValue}
+    />
   );
 }
 
-function LinkSkillsSection({ theme, worldId, worldCharacters }: { theme: AppTheme; worldId: number; worldCharacters: StoredCharacterRecord[] }) {
+function LinkSkillsSection({ theme, worldId, worldCharacters, editing, onEditDone, editorRef }: {
+  theme: AppTheme; worldId: number; worldCharacters: StoredCharacterRecord[]; editing: boolean; onEditDone: () => void; editorRef: Ref<EditorHandle>;
+}) {
   const mounted = useSyncExternalStore(() => () => undefined, () => true, () => false);
-  const [editing, setEditing] = useState(false);
   const stored = mounted ? readCharactersStore().linkSkillsByWorld[String(worldId)] : undefined;
   const levels = mounted ? reconcileLinkSkills(stored, worldCharacters, worldId) : undefined;
 
@@ -632,7 +605,8 @@ function LinkSkillsSection({ theme, worldId, worldCharacters }: { theme: AppThem
         worldId={worldId}
         worldCharacters={worldCharacters}
         worldLinkSkills={linkSkillsStoredToDraftString(stored)}
-        onSave={() => setEditing(false)}
+        onSave={onEditDone}
+        ref={editorRef}
       />
     );
   }
@@ -669,7 +643,6 @@ function LinkSkillsSection({ theme, worldId, worldCharacters }: { theme: AppThem
 
   return (
     <div className="legion-link-skills-root" style={{ display: "grid", gap: 14 }}>
-      <EditPencilButton theme={theme} label="Link Skills" onEdit={() => setEditing(true)} />
       <style>{`
         .legion-link-skills-root { container-type: inline-size; }
         .legion-single-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
@@ -724,7 +697,18 @@ export default function LegionPanel({ theme, worldId, worldCharacters, onBack }:
   // Link Skills is the landing tab: in-game, the Legion Artifact only unlocks after
   // accumulating Link Skill levels, so Link Skills is the thing every account has.
   const [section, setSection] = useState<LegionSection>("linkSkills");
+  const [editing, setEditing] = useState(false);
+  const editorRef = useRef<EditorHandle>(null);
   const worldName = WORLD_NAMES[worldId] ?? `World ${worldId}`;
+  const sectionLabel = section === "artifact" ? "Legion Artifact" : "Link Skills";
+
+  // The section content remounts on tab switch (key={section} below), which already
+  // discards any in-progress edit draft, so editing must reset here too or the newly
+  // mounted section would open straight into edit mode.
+  function selectSection(next: LegionSection) {
+    setSection(next);
+    setEditing(false);
+  }
 
   return (
     <div className="fade-in">
@@ -732,21 +716,31 @@ export default function LegionPanel({ theme, worldId, worldCharacters, onBack }:
         <button type="button" onClick={onBack} aria-label="Back to directory" style={backButtonStyle(theme)}>
           <BackIcon />
         </button>
-        <div style={{ display: "flex", flexDirection: "column", gap: 1, minWidth: 0 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 1, minWidth: 0, flex: 1 }}>
           <span style={{ fontSize: "0.75rem", fontWeight: 800, letterSpacing: "0.06em", textTransform: "uppercase", color: theme.muted }}>
             Legion &middot; {worldName}
           </span>
           <h2 style={{ margin: 0, fontFamily: "var(--font-heading)", fontSize: "1.1rem", lineHeight: 1.2, color: theme.text }}>
-            {section === "artifact" ? "Legion Artifact" : "Link Skills"}
+            {sectionLabel}
           </h2>
         </div>
+        {/* Lives in the header (fixed regardless of tab/edit state) instead of inside each
+            section's own content, so opening the editor (and its Save button replacing
+            this one) never shifts anything below it. */}
+        {editing
+          ? <button type="button" onClick={() => editorRef.current?.save()} style={saveButtonStyle(theme)}>Save</button>
+          : (
+            <button type="button" aria-label={`Edit ${sectionLabel}`} title={`Edit ${sectionLabel}`} onClick={() => setEditing(true)} style={pencilButtonStyle(theme)}>
+              <PencilIcon />
+            </button>
+          )}
       </div>
 
       <div style={{ display: "flex", gap: 3, padding: 3, background: theme.bg, border: `1px solid ${theme.border}`, borderRadius: 12, marginBottom: "0.75rem" }} role="tablist" aria-label="Legion sections">
-        <button type="button" role="tab" aria-selected={section === "linkSkills"} onClick={() => setSection("linkSkills")} style={segmentButtonStyle(theme, section === "linkSkills")}>
+        <button type="button" role="tab" aria-selected={section === "linkSkills"} onClick={() => selectSection("linkSkills")} style={segmentButtonStyle(theme, section === "linkSkills")}>
           Link Skills
         </button>
-        <button type="button" role="tab" aria-selected={section === "artifact"} onClick={() => setSection("artifact")} style={segmentButtonStyle(theme, section === "artifact")}>
+        <button type="button" role="tab" aria-selected={section === "artifact"} onClick={() => selectSection("artifact")} style={segmentButtonStyle(theme, section === "artifact")}>
           Legion Artifact
         </button>
       </div>
@@ -766,8 +760,8 @@ export default function LegionPanel({ theme, worldId, worldCharacters, onBack }:
       `}</style>
       <div key={section} className="legion-section-content">
         {section === "artifact"
-          ? <LegionArtifactSection theme={theme} worldId={worldId} />
-          : <LinkSkillsSection theme={theme} worldId={worldId} worldCharacters={worldCharacters} />}
+          ? <LegionArtifactSection theme={theme} worldId={worldId} editing={editing} onEditDone={() => setEditing(false)} editorRef={editorRef} />
+          : <LinkSkillsSection theme={theme} worldId={worldId} worldCharacters={worldCharacters} editing={editing} onEditDone={() => setEditing(false)} editorRef={editorRef} />}
       </div>
     </div>
   );
