@@ -21,7 +21,7 @@ import {
   formatDate,
 } from "./useAstraState";
 import { toolStyles } from "../tool-styles";
-import { PanelDivider } from "../shared-ui";
+import { PanelDivider, ToolNumberInput } from "../shared-ui";
 import { ConfirmButton } from "../../../components/ConfirmButton";
 import { BossCard } from "./BossCard";
 import { ResultsPanel, type ResultRow } from "./ResultsPanel";
@@ -49,22 +49,15 @@ function VoucherInput({
   return (
     <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
       <label htmlFor={uid} style={{ fontSize: "0.75rem", fontWeight: 700, color: theme.muted }}>Vouchers</label>
-      <input
+      <ToolNumberInput
         id={uid}
-        type="number"
         min={0}
         max={maxV}
+        integer
         value={vouchersKept}
         disabled={!isActive}
-        onFocus={(e) => e.currentTarget.select()}
         onKeyDown={replaceZeroOnDigit}
-        onChange={(e) => {
-          let v = parseInt(e.target.value) || 0;
-          if (v < 0) v = 0;
-          if (v > maxV) v = maxV;
-          onVouchersKeptChange(v);
-        }}
-        className="tool-input"
+        onCommit={onVouchersKeptChange}
         style={{ ...inputStyle, width: "48px", textAlign: "center", padding: "4px 6px", fontSize: "0.75rem", cursor: isActive ? "text" : "not-allowed" }}
       />
       <span style={{ fontSize: "0.75rem", fontWeight: 600, color: theme.muted }}>
@@ -131,21 +124,14 @@ function AstraConfigSection({
 
         <div style={{ flex: "0 1 130px" }}>
           <label className="tool-field-label" htmlFor={`${uid}-traces`} style={fieldLabel}>Current Traces</label>
-          <input
+          <ToolNumberInput
             id={`${uid}-traces`}
-            className="tool-input"
-            type="number"
             min={0}
             max={MAX_TRACES_CAPACITY}
+            integer
             value={currentTraces}
-            onFocus={(e) => e.currentTarget.select()}
             onKeyDown={replaceZeroOnDigit}
-            onChange={(e) => {
-              let v = parseInt(e.target.value) || 0;
-              if (v < 0) v = 0;
-              if (v > MAX_TRACES_CAPACITY) v = MAX_TRACES_CAPACITY;
-              onCurrentTracesChange(v);
-            }}
+            onCommit={onCurrentTracesChange}
             style={{ ...inputStyle, width: "100%" }}
           />
         </div>
@@ -238,21 +224,14 @@ function AstraDailyQuestSection({
 
         <div style={{ flex: "0 1 100px" }}>
           <label className="tool-field-label" htmlFor={`${uid}-days`} style={fieldLabel}>Days / Week</label>
-          <input
+          <ToolNumberInput
             id={`${uid}-days`}
-            className="tool-input"
-            type="number"
             min={0}
             max={7}
+            integer
             value={daysPerWeek}
-            onFocus={(e) => e.currentTarget.select()}
             onKeyDown={replaceZeroOnDigit}
-            onChange={(e) => {
-              let v = parseInt(e.target.value) || 0;
-              if (v < 0) v = 0;
-              if (v > 7) v = 7;
-              onDaysPerWeekChange(v);
-            }}
+            onCommit={onDaysPerWeekChange}
             style={{ ...inputStyle, width: "100%" }}
           />
         </div>

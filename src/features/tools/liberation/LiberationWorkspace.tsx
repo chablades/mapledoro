@@ -20,7 +20,7 @@ import {
   formatDate,
 } from "./useLiberationState";
 import { toolStyles } from "../tool-styles";
-import { PanelDivider, Toggle } from "../shared-ui";
+import { PanelDivider, Toggle, ToolNumberInput } from "../shared-ui";
 import { ConfirmButton } from "../../../components/ConfirmButton";
 import { BossCard } from "./BossCard";
 import { ResultsPanel, type ResultRow } from "./ResultsPanel";
@@ -99,22 +99,14 @@ function LiberationConfigSection({
             basis to stay on one line, taking the width from the quest select. */}
         <div style={{ flex: `0 1 ${type === "genesis" ? 140 : 180}px` }}>
           <label className="tool-field-label" htmlFor={tracesId} style={fieldLabel}>Current {traceNameShort}</label>
-          <input
+          <ToolNumberInput
             id={tracesId}
-            className="tool-input"
-            type="number"
             min={0}
             max={quests[questIdx]?.required ?? 9999}
+            integer
             value={currentTraces}
-            onFocus={(e) => e.currentTarget.select()}
             onKeyDown={replaceZeroOnDigit}
-            onChange={(e) => {
-              let v = parseInt(e.target.value) || 0;
-              if (v < 0) v = 0;
-              const max = quests[questIdx]?.required ?? 9999;
-              if (v > max) v = max;
-              onCurrentTracesChange(v);
-            }}
+            onCommit={onCurrentTracesChange}
             style={{ ...inputStyle, width: "100%" }}
           />
         </div>

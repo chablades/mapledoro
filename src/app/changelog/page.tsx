@@ -24,6 +24,7 @@ const CHANGELOG: ChangelogEntry[] = [
       { type: "fixed", text: "Fixed the EXP Calculator not letting you type a Current EXP % below 1, like 0.5." },
       { type: "fixed", text: "Fixed text boxes, dropdowns, and date pickers sitting in the same row being slightly different heights in the Liberation Tracker, the Trace Restoration Tracker, and the Flame Calculator." },
       { type: "fixed", text: "Fixed Daily Tracker characters added by typing a name showing a default avatar instead of their first letter like the Boss Crystal Tracker." },
+      { type: "fixed", text: "Fixed number boxes in the EXP Calculator, Star Force Calculator, Symbol Calculator, Liberation Tracker, Trace Restoration Tracker, and HEXA Skills tool fighting your typing when a value hit its cap, so they now let you finish typing and settle when you click away." },
     ],
   },
   {

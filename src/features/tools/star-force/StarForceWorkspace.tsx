@@ -20,7 +20,7 @@ import {
   type SimulationRun,
 } from "./star-force-data";
 import { formatMeso, formatMesoFull } from "../format";
-import { Toggle, PillGroup, ActionButton } from "../shared-ui";
+import { Toggle, PillGroup, ActionButton, ToolNumberInput } from "../shared-ui";
 import { MVP_OPTIONS } from "../shared-data";
 import { toolStyles } from "../tool-styles";
 import { controlHeightStyle, dataTableTd, dataTableTh, statValueStyle, toggleControlStyle } from "../shared-styles";
@@ -621,15 +621,12 @@ function StarForceForm({
       <h2 className="tool-panel-title" style={{ margin: 0, color: theme.text }}>Star Force Settings</h2>
       <div className="sf-inputs-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
         <InputRow label="Item Level" theme={theme}>
-          <input
-            className="tool-input"
-            type="number"
+          <ToolNumberInput
             min={0}
             max={300}
             value={calc.level}
-            onFocus={(e) => e.currentTarget.select()}
             onKeyDown={replaceZeroOnDigit}
-            onChange={(e) => dispatch({ type: "setLevel", value: Math.max(0, Math.min(300, Number(e.target.value) || 0)) })}
+            onCommit={(value) => dispatch({ type: "setLevel", value })}
             style={{ ...inputStyle, width: CONTROL_WIDTH }}
           />
         </InputRow>

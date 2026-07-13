@@ -5,6 +5,7 @@ import Image from "next/image";
 import type { AppTheme } from "../../../components/themes";
 import { resourceImageUrl } from "../../../lib/mapleResource";
 import { replaceZeroOnDigit, replaceOneOnDigit } from "../numberInputHandlers";
+import { ToolNumberInput } from "../shared-ui";
 import type { HexaSkillDef, HexaClassDef } from "./hexa-classes";
 import type { SkillCostSummary, SectionCost } from "./useHexaSkillsState";
 import { MAX_SKILL_LEVEL } from "./hexa-costs";
@@ -117,14 +118,6 @@ const levelInputOverride: React.CSSProperties = {
   fontSize: "0.75rem",
 };
 
-function clampInput(raw: string, min: number, max: number): number {
-  let v = parseInt(raw);
-  if (isNaN(v)) v = min;
-  if (v < min) v = min;
-  if (v > max) v = max;
-  return v;
-}
-
 function LevelInput({
   skillName,
   value,
@@ -153,42 +146,38 @@ function LevelInput({
 
   // The two levels are a range: a desired level under the current one has no
   // cost, which used to render as a spurious "MAXED". Reconcile on blur rather
-  // than per keystroke, since clamping mid-edit fights the typist (a "1" on the
-  // way to "15" would snap back and the next digit would append to it).
-  const reconcile = () => {
-    if (hasDesired && desiredValue < value) onDesiredChange(value);
-  };
-
+  // than per keystroke, using the value the blur just committed — the prop can
+  // be a render behind it.
   return (
     <div style={{ display: "flex", alignItems: "center", gap: "4px", flexShrink: 0 }}>
       <span aria-hidden="true" style={{ fontSize: "0.75rem", fontWeight: 700, color: theme.muted }}>Lv</span>
-      <input
-        type="number"
+      <ToolNumberInput
         min={min}
         max={MAX_SKILL_LEVEL}
+        integer
         value={value}
         aria-label={`${skillName} current level`}
-        onFocus={(e) => e.currentTarget.select()}
-        onBlur={reconcile}
         onKeyDown={replaceBaseOnDigit}
-        onChange={(e) => onChange(clampInput(e.target.value, min, MAX_SKILL_LEVEL))}
-        className="tool-input"
+        onCommit={onChange}
+        onCommittedBlur={(v) => {
+          if (hasDesired && desiredValue < v) onDesiredChange(v);
+        }}
         style={{ ...inputStyle, ...levelInputOverride, width: w }}
       />
       {hasDesired && (
         <>
           <span aria-hidden="true" style={{ fontSize: "0.75rem", fontWeight: 700, color: theme.muted }}>/</span>
-          <input
-            type="number"
+          <ToolNumberInput
             min={min}
             max={MAX_SKILL_LEVEL}
+            integer
             value={desiredValue}
             aria-label={`${skillName} desired level`}
-            onFocus={(e) => e.currentTarget.select()}
-            onBlur={reconcile}
             onKeyDown={replaceBaseOnDigit}
-            onChange={(e) => onDesiredChange(clampInput(e.target.value, min, MAX_SKILL_LEVEL))}
-            className="tool-input"
+            onCommit={onDesiredChange}
+            onCommittedBlur={(v) => {
+              if (v < value) onDesiredChange(value);
+            }}
             style={{ ...inputStyle, ...levelInputOverride, width: w }}
           />
         </>
