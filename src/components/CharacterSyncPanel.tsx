@@ -382,11 +382,6 @@ export function CharacterSyncPanel({
         onCharChange={onCharChange}
         inputStyle={inputStyle}
       />
-      {selectedCharName && (
-        <span style={{ fontSize: "0.78rem", fontWeight: 700, color: theme.accentText }}>
-          Synced
-        </span>
-      )}
     </div>
   );
 
