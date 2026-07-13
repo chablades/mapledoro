@@ -30,12 +30,21 @@ Whenever a change makes a user-facing difference (bug fix, new feature, or behav
 
 ## Build & Lint
 
-Both must pass before any implementation is considered complete:
+Both must pass before any implementation is considered complete. Skip `npm run build` for text-only changes (copy/string edits, changelog entries, comments) that touch no JSX structure, types, or logic — `npm run lint` alone covers those. Scope lint to changed files rather than the whole repo, and suppress output on success so a passing run doesn't burn tokens on route tables and file lists — only surface output when a command fails:
 
 ```sh
-npm run build
-npm run lint
+# bash
+out=$(npm run build 2>&1); [ $? -ne 0 ] && echo "$out"
+out=$(npx eslint $(git diff --name-only --diff-filter=ACM -- '*.ts' '*.tsx') 2>&1); [ $? -ne 0 ] && echo "$out"
 ```
+
+```powershell
+# PowerShell
+$out = npm run build 2>&1; if ($LASTEXITCODE -ne 0) { $out }
+$out = npx eslint (git diff --name-only --diff-filter=ACM -- '*.ts' '*.tsx') 2>&1; if ($LASTEXITCODE -ne 0) { $out }
+```
+
+Run the full unscoped `npm run lint` (not just changed files) before treating work as complete if the change touches shared config, a widely-imported helper, or anything else where scoping to the diff could miss a ripple effect.
 
 ### Lint Gotchas
 
