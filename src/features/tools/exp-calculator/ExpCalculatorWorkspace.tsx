@@ -1496,8 +1496,13 @@ function NumberField({
     },
   };
   // `min`/`max` are advisory on type="number"; the browser won't stop a typed value.
-  // Only the ceiling is enforced per keystroke: clamping up to `min` mid-type would
-  // rewrite "2" into "200" before the user reaches "265". The floor lands on blur.
+  // While focused, the box shows the raw keystrokes (`draft`) and only the *state* is
+  // ceiling-clamped, so committed values never exceed `max` but the DOM is never
+  // rewritten mid-type. Rewriting it (e.g. "350" -> "300") desyncs the box from state
+  // once state pins at `max` (identical-state updates skip the re-render), which made
+  // backspacing through a clamped value erratic. Clamping up to `min` mid-type would
+  // rewrite "2" into "200" before the user reaches "265", so the floor lands on blur,
+  // where clearing `draft` also snaps the box back to the clamped state value.
   const input = decimal ? (
     <input
       {...commonProps}
@@ -1522,13 +1527,14 @@ function NumberField({
     <input
       {...commonProps}
       type="number"
-      value={safeValue}
+      value={draft ?? String(safeValue)}
       min={min}
       max={max}
       step={step}
       onKeyDown={replaceZeroOnDigit}
       onChange={(e) => {
         if (disabled) return;
+        setDraft(e.target.value);
         // A number input reports a half-typed decimal ("2.") as an empty string. Pushing 0 here
         // would re-render the box to "0" and eat the point, so "2.5" could never be typed on a
         // fractional-step field. Leaving state alone keeps the DOM holding the raw keystrokes;
@@ -1537,7 +1543,9 @@ function NumberField({
         onChange(clampMax(Number(e.target.value) || 0, max));
       }}
       onBlur={(e) => {
-        if (!disabled) onChange(Math.max(min, clampMax(Number(e.target.value) || 0, max)));
+        if (disabled) return;
+        setDraft(null);
+        onChange(Math.max(min, clampMax(Number(e.target.value) || 0, max)));
       }}
     />
   );
