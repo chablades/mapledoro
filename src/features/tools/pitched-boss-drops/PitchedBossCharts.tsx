@@ -177,13 +177,13 @@ export default function PitchedBossCharts({
 
   return (
     <>
-      <div className="panel-card" style={toolStyles(theme).sectionPanel}>
+      <div className="fade-in panel-card" style={toolStyles(theme).sectionPanel}>
         <h2 className="tool-panel-title" style={{ color: theme.text }}>Drops by Item</h2>
         <div style={{ height: barHeight }}>
           <Bar data={buildItemBarData(drops, theme)} options={barOptions(theme)} />
         </div>
       </div>
-      <div className="panel-card" style={toolStyles(theme).sectionPanel}>
+      <div className="fade-in panel-card" style={toolStyles(theme).sectionPanel}>
         <h2 className="tool-panel-title" style={{ color: theme.text }}>Monthly Drops by Character</h2>
         <Line data={buildMonthlyData(drops, theme)} options={lineOptions(theme)} />
       </div>

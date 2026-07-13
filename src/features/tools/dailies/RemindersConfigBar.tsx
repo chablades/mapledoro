@@ -69,7 +69,7 @@ export default function RemindersConfigBar({ theme }: { theme: AppTheme }) {
 
   return (
     <div
-      className="panel-card"
+      className="fade-in panel-card"
       style={{
         background: theme.panel,
         border: `1px solid ${theme.border}`,
