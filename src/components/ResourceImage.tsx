@@ -1,6 +1,6 @@
 import Image from "next/image";
 import type { CSSProperties } from "react";
-import { familiarBadgeIconUrl, resourceImageUrl } from "../lib/mapleResource";
+import { markIconUrl, resourceImageUrl } from "../lib/mapleResource";
 
 // Reusable templates for game art served by the MapleResource API (haku.network).
 // One pure id->URL builder per resource type. IDs come from the committed manifests
@@ -58,13 +58,13 @@ export function ErdaSkillIcon({ id, ...rest }: ResourceIconProps) {
   return <ResourceImage src={resourceImageUrl("erda-skill", id, "icon.png")} {...rest} />;
 }
 
+// World map area mark. IDs come from `ui-mark.json`.
+export function MarkIcon({ id, ...rest }: ResourceIconProps) {
+  return <ResourceImage src={markIconUrl(id)} {...rest} />;
+}
+
 // Direct familiar sprite only. For mob- or card-backed familiars (manifest
 // `spriteFrom` = "mob" / null), use <MobSprite id={mobId}> or <ItemIcon id={cardId}>.
 export function FamiliarSprite({ id, ...rest }: ResourceIconProps) {
   return <ResourceImage src={resourceImageUrl("familiar", id, "sprite.png")} {...rest} />;
-}
-
-// Familiar region badge (crest), not a familiar itself. IDs come from `ui-familiar.json`.
-export function FamiliarBadgeIcon({ id, ...rest }: ResourceIconProps) {
-  return <ResourceImage src={familiarBadgeIconUrl(id)} {...rest} />;
 }
