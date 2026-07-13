@@ -4,7 +4,7 @@ export const MAX_EXP_LEVEL = 300;
 export type IconRef =
   | { type: "item" | "skill"; id: string; shadow?: boolean }
   | { type: "erda-skill"; id: string }
-  | { type: "familiar-badge"; id: string }
+  | { type: "mark"; id: string }
   | { type: "mob"; id: string };
 
 export interface CheckBuff {
@@ -460,10 +460,10 @@ export const DAILY_EXP_CONTENT: ExpContentOption[] = [
   { id: "arcana", label: "Arcana", region: "Arcane River", minLevel: 225, exp: 0xc5012937, icon: { type: "item", id: "01712004" } },
   { id: "moras", label: "Morass", region: "Arcane River", minLevel: 230, exp: 0x106283735, icon: { type: "item", id: "01712005" } },
   { id: "esf", label: "Esfera", region: "Arcane River", minLevel: 235, exp: 0x10e0f3132, icon: { type: "item", id: "01712006" } },
-  // Tenebris has no Maple Guide crest, so the region's familiar badges stand in (ui-familiar.json).
-  { id: "mb", label: "Moonbridge", region: "Tenebris", minLevel: 245, exp: 0x1f4886ce7, icon: { type: "familiar-badge", id: "40" } },
-  { id: "laby", label: "Labyrinth of Suffering", region: "Tenebris", minLevel: 250, exp: 905769e4, icon: { type: "familiar-badge", id: "41" } },
-  { id: "limen", label: "Limina", region: "Tenebris", minLevel: 255, exp: 0x261806f70, icon: { type: "familiar-badge", id: "42" } },
+  // Tenebris has no Maple Guide crest, so the areas' world map marks stand in (ui-mark.json).
+  { id: "mb", label: "Moonbridge", region: "Tenebris", minLevel: 245, exp: 0x1f4886ce7, icon: { type: "mark", id: "moonBridge" } },
+  { id: "laby", label: "Labyrinth of Suffering", region: "Tenebris", minLevel: 250, exp: 905769e4, icon: { type: "mark", id: "TheLabyrinthOfSuffering" } },
+  { id: "limen", label: "Limina", region: "Tenebris", minLevel: 255, exp: 0x261806f70, icon: { type: "mark", id: "Limen" } },
   { id: "cern", label: "Cernium", region: "Grandis", minLevel: 260, exp: 0x3d4d5c820, icon: { type: "item", id: "01713000" } },
   { id: "arcs", label: "Hotel Arcus", region: "Grandis", minLevel: 265, exp: 0x482b53349, icon: { type: "item", id: "01713001" } },
   { id: "odium", label: "Odium", region: "Grandis", minLevel: 270, exp: 0x569941dd0, icon: { type: "item", id: "01713002" } },

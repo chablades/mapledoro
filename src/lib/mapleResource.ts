@@ -10,14 +10,14 @@ export function resourceImageUrl(type: ResourceType, id: string, asset: string):
   return `${RESOURCE_BASE}/api/img/${type}/${id}/${asset}`;
 }
 
+// World map area mark (haku.network `ui/mark` namespace). IDs are looked up by hand
+// from `manifests/v<version>/ui-mark.json` and hardcoded at the call site.
+export function markIconUrl(id: string): string {
+  return `${RESOURCE_BASE}/api/img/ui/mark/${id}/icon.png`;
+}
+
 // Boss Maple Guide icon (haku.network `ui/boss` namespace). IDs are looked up by hand
 // from `manifests/v<version>/boss.json` and hardcoded at the call site.
 export function bossIconUrl(id: string): string {
   return `${RESOURCE_BASE}/api/img/ui/boss/${id}/icon.png`;
-}
-
-// Familiar badge icon (haku.network `ui/familiar` namespace), the region crests shown on the
-// familiar UI. IDs come from `manifests/v<version>/ui-familiar.json`.
-export function familiarBadgeIconUrl(id: string): string {
-  return `${RESOURCE_BASE}/api/img/ui/familiar/${id}/icon.png`;
 }

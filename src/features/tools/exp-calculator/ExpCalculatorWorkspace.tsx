@@ -4,7 +4,7 @@ import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { CharacterDropdown } from "../../../components/CharacterSyncPanel";
 import HoverTooltip from "../../../components/HoverTooltip";
-import { ErdaSkillIcon, FamiliarBadgeIcon, ItemIcon, MobSprite, SkillIcon } from "../../../components/ResourceImage";
+import { ErdaSkillIcon, ItemIcon, MarkIcon, MobSprite, SkillIcon } from "../../../components/ResourceImage";
 import { SegmentedToggle } from "../../../components/SegmentedToggle";
 import type { AppTheme } from "../../../components/themes";
 import { ToolHeader } from "../../../components/ToolHeader";
@@ -1567,7 +1567,7 @@ function DateField({
 function BuffIcon({ icon, label }: { icon?: IconRef; label: string }) {
   if (!icon) return null;
   if (icon.type === "erda-skill") return <ErdaSkillIcon id={icon.id} size={32} alt={label} />;
-  if (icon.type === "familiar-badge") return <FamiliarBadgeIcon id={icon.id} size={32} alt={label} />;
+  if (icon.type === "mark") return <MarkIcon id={icon.id} size={32} alt={label} />;
   if (icon.type === "skill") return <SkillIcon id={icon.id} size={32} alt={label} />;
   if (icon.type === "mob") return <MobSprite id={icon.id} size={32} alt={label} />;
   return <ItemIcon id={icon.id} shadow={icon.shadow} size={32} alt={label} />;
