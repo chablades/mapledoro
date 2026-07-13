@@ -1287,11 +1287,11 @@ function AllInOneTab({ theme, importedHourlyExp }: { theme: AppTheme; importedHo
           <div className="exp-grid">
             <NumberField label="Strawberry Farm Tickets" icon={{ type: "item", id: "02637501" }} min={0} value={input.strawberryTickets} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("strawberryTickets", value)} />
             <NumberField label="Mechaberry Farm Tickets" icon={{ type: "item", id: "02831285" }} min={0} value={input.mechaberryTickets} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("mechaberryTickets", value)} />
+            <NumberField label="Punch King Score / Week" icon={{ type: "item", id: "02637502" }} min={0} max={2050} value={input.punchKingScore} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("punchKingScore", value)} />
+            <NumberField label="Luxe Sauna / MVP Resort Hrs" icon={{ type: "mark", id: "mvpResort" }} min={0} decimal value={input.luxeSaunaHours} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("luxeSaunaHours", value)} />
             <NumberField label="EXP Tickets" icon={{ type: "item", id: "02637353" }} min={0} value={input.expTickets} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("expTickets", value)} />
             <NumberField label="Advanced EXP Tickets" icon={{ type: "item", id: "02638500" }} min={0} value={input.advancedExpTickets} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("advancedExpTickets", value)} />
-            <NumberField label="Punch King Score / Week" icon={{ type: "item", id: "02024279" }} min={0} max={2050} value={input.punchKingScore} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("punchKingScore", value)} />
             <NumberField label="Double Up Points / Week" icon={{ type: "item", id: "04310359" }} min={0} value={input.doubleUpPoints} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("doubleUpPoints", value)} />
-            <NumberField label="Luxe Sauna / MVP Resort Hrs" icon={{ type: "mark", id: "mvpResort" }} min={0} decimal value={input.luxeSaunaHours} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("luxeSaunaHours", value)} />
           </div>
         </div>
 
