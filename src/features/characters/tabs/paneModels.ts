@@ -119,6 +119,10 @@ export interface PreviewPaneModel {
     showCharacterDirectory: boolean;
     hasCompletedRequiredSetupEver: boolean;
     fastDirectoryRevealOnce: boolean;
+    // Which profile bookmark to return to once the profile-overview screen remounts
+    // after an optional flow finishes (that screen's own "active bookmark" state is
+    // local and doesn't survive the unmount) — null means no bookmark to restore.
+    lastActiveBookmarkId: string | null;
     setupStepIndex: number;
     setupStepDirection: "forward" | "backward";
     setupTargetSubstep: number | null;
@@ -160,4 +164,5 @@ export interface PreviewPaneActions {
   openCharacterProfile: (character: StoredCharacterRecord) => void;
   startOptionalFlow: (flowId: SetupFlowId) => void;
   skipSetupEntirely: () => void;
+  rememberActiveBookmark: (id: string) => void;
 }

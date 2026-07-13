@@ -16,6 +16,20 @@ type GenderOverride = "male" | "female" | "none" | null;
 
 const SETUP_FLOWS = [
   {
+    id: "gender_flow",
+    label: "Gender",
+    description: "Set this character's gender.",
+    required: false,
+    steps: ["gender"] as const,
+  },
+  {
+    id: "marriage_flow",
+    label: "Marriage",
+    description: "Set this character's marriage status and partner.",
+    required: false,
+    steps: ["marriage"] as const,
+  },
+  {
     id: "quick_setup",
     label: "Quick Setup",
     description: "Fast onboarding for one character.",

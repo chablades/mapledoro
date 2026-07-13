@@ -205,6 +205,7 @@ export default function CharacterSetupFlow({ theme, initialCharacterName, initia
       showCharacterDirectory: state.showCharacterDirectory,
       hasCompletedRequiredSetupEver: state.hasCompletedRequiredSetupEver,
       fastDirectoryRevealOnce: state.fastDirectoryRevealOnce,
+      lastActiveBookmarkId: state.lastActiveBookmarkId,
       setupStepIndex: state.setupStepIndex,
       setupStepDirection: state.setupStepDirection,
       setupTargetSubstep: state.setupTargetSubstep,
@@ -239,6 +240,7 @@ export default function CharacterSetupFlow({ theme, initialCharacterName, initia
     openCharacterProfile: actions.switchToCharacterProfile,
     startOptionalFlow: actions.startOptionalSetupFlow,
     skipSetupEntirely: actions.skipSetupEntirely,
+    rememberActiveBookmark: actions.rememberActiveBookmark,
   };
 
   return (

@@ -44,6 +44,11 @@ export default function SetupStepFrame({
   children,
 }: SetupStepFrameProps) {
   const isLastStep = !nextLabel && stepNumber >= totalSteps;
+  // "Prev Step" implies an earlier step to go back to — true from step 2 onward, but
+  // on step 1 of any flow (single-step or not) there's no previous step within the
+  // flow itself; the button still works (it exits back to the profile/intro), it's
+  // just not a "step" it's going back to.
+  const backLabel = stepNumber > 1 ? "← Prev Step" : "← Back";
 
   useEffect(() => {
     onValidityChange?.(!nextDisabled, substepIndex);
@@ -120,7 +125,7 @@ export default function SetupStepFrame({
           onMouseEnter={(e) => { e.currentTarget.style.color = theme.text; }}
           onMouseLeave={(e) => { e.currentTarget.style.color = theme.muted; }}
         >
-          ← Prev Step
+          {backLabel}
         </button>
         <button
           type="button"

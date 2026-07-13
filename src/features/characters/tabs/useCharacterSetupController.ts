@@ -601,6 +601,40 @@ function applyStandaloneToolDrafts(
   if (stepData.familiars && flowIncludesStep(flowId, "familiars")) {
     applyFamiliarsDraftToRoster(character, stepData.familiars, upsertFn);
   }
+  // Unlike the fields above, an empty draft is a legitimate final value here (clearing
+  // gender/marriage back to "not set" is a real, intentional choice from the Biography
+  // blocks), so these two aren't gated on the draft string being truthy — only on the
+  // flow actually being the one that owns the field. quick_setup/full_setup already
+  // persist both via finalizeQuickOrFullSetupRecord, so this only fires for the
+  // standalone single-step flows the Biography blocks use.
+  if (flowId === "gender_flow") {
+    applyGenderDraftToRoster(character, stepData.gender, upsertFn);
+  }
+  if (flowId === "marriage_flow") {
+    applyMarriageDraftToRoster(character, stepData.marriage, upsertFn);
+  }
+}
+
+function applyGenderDraftToRoster(
+  character: NormalizedCharacterData,
+  genderRaw: string | undefined,
+  upsertFn: (c: StoredCharacterRecord) => void,
+) {
+  const gender = normalizeGenderValue(genderRaw);
+  const store = readCharactersStore();
+  const existing = selectCharacterById(store, toCharacterKey(character));
+  upsertFn(existing ? { ...existing, gender } : createStoredCharacterRecord({ character, gender }));
+}
+
+function applyMarriageDraftToRoster(
+  character: NormalizedCharacterData,
+  marriageRaw: string | undefined,
+  upsertFn: (c: StoredCharacterRecord) => void,
+) {
+  const marriage = marriageDraftToStored(marriageRaw ?? "");
+  const store = readCharactersStore();
+  const existing = selectCharacterById(store, toCharacterKey(character));
+  upsertFn(existing ? { ...existing, marriage } : createStoredCharacterRecord({ character, marriage }));
 }
 
 // The setup step's own draft never carries an activePreset at all (its preset tab is
@@ -826,6 +860,15 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
   const [mainCharacterKeyByWorld, setMainCharacterKeyByWorld] = useState<Record<string, string>>({});
   const [championCharacterKeysByWorld, setChampionCharacterKeysByWorld] = useState<Record<string, string[]>>({});
 
+  // Which profile bookmark to return to after finishing an optional flow started from
+  // it (e.g. a Biography block, or any bookmark's edit pencil) — the profile-overview
+  // screen unmounts while a flow is active (see PreviewSetupPane's contentKey), so its
+  // own local "active bookmark" state can't survive the round trip on its own. Keyed to
+  // the character it was captured for so it never leaks into a later, unrelated visit
+  // to a different character's profile (see currentCharacterKey / restorableBookmarkId
+  // below, which is what actually gets exposed to the screen).
+  const [lastActiveBookmark, setLastActiveBookmark] = useState<{ characterKey: string; bookmarkId: string } | null>(null);
+
   const [setupStepIndex, setSetupStepIndex] = useState(0);
   const [setupStepDirection, setSetupStepDirection] = useState<"forward" | "backward">("forward");
   // Substep to force-open a step on (e.g. jumping straight to Stats' Inner Ability
@@ -1008,6 +1051,11 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
       const store = readCharactersStore();
       const storedCharacter = selectCharacterById(store, toCharacterKey(character));
       setConfirmedCharacter(character);
+      // Every fresh arrival at a profile (from the directory, search, or first paint)
+      // should land on Overview — the remembered bookmark only applies to returning
+      // from a flow started mid-session on this same still-open profile, not to a
+      // later, separate visit to it.
+      setLastActiveBookmark(null);
       setSetupMode("search");
       setSetupFlowStarted(true);
       setShowCharacterDirectory(false);
@@ -2079,6 +2127,9 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
   // for its live-computed Character-Info substep gate (see getFirstInvalidStepIndex).
   const statsRawValue = setupStepTestByStep.stats ?? "";
   const currentCharacterKey = confirmedCharacter ? toCharacterKey(confirmedCharacter) : null;
+  const restorableBookmarkId = lastActiveBookmark && lastActiveBookmark.characterKey === currentCharacterKey
+    ? lastActiveBookmark.bookmarkId
+    : null;
   const isCurrentMainCharacter = Boolean(
     currentCharacterKey && mainCharacterKey && currentCharacterKey === mainCharacterKey,
   );
@@ -2130,6 +2181,7 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
     mainCharacterKeyByWorld,
     championCharacterKeysByWorld,
     worldIds,
+    lastActiveBookmarkId: restorableBookmarkId,
     setupStepIndex,
     setupStepDirection,
     setupTargetSubstep,
@@ -2194,6 +2246,10 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
       refreshSingle,
       handleQueryInput,
       handleSearchSubmit,
+      rememberActiveBookmark: (bookmarkId: string) => {
+        if (!currentCharacterKey) return;
+        setLastActiveBookmark({ characterKey: currentCharacterKey, bookmarkId });
+      },
       startOptionalSetupFlow: (flowId: SetupFlowId) => {
         if (immediateUiLockRef.current) return;
         const overrides = confirmedCharacter

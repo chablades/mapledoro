@@ -29,7 +29,7 @@ interface BookmarkDef {
 
 const ALL_BOOKMARKS: BookmarkDef[] = [
   { id: "overview", tabLabel: "Overview", pageLabel: "Overview", flowId: null },
-  { id: "gender_marriage", tabLabel: "Gender & Married", pageLabel: "Gender & Marriage", flowId: "quick_setup" },
+  { id: "gender_marriage", tabLabel: "Bio", pageLabel: "Biography", flowId: "quick_setup" },
   { id: "stats", tabLabel: "Stats", pageLabel: "Stats", flowId: "stats_flow" },
   { id: "equipment", tabLabel: "Gear", pageLabel: "Equipment", flowId: "equipment_flow" },
   { id: "v_matrix", tabLabel: "V Matrix", pageLabel: "V Matrix", flowId: "v_matrix_flow" },
@@ -51,6 +51,8 @@ const commonSlots: (HexaSkillDef | null)[] = [COMMON_SKILLS[0] ?? null, COMMON_S
 
 const MAIN_STAT_FIELDS = { str: "STR", dex: "DEX", int: "INT", luk: "LUK", hp: "HP" } as const;
 type MainStatKey = keyof typeof MAIN_STAT_FIELDS;
+
+const GENDER_LABELS: Record<"male" | "female", string> = { male: "Male", female: "Female" };
 
 const hexNodeLevelBadgeStyle: CSSProperties = {
   position: "absolute", bottom: 1, left: "50%", transform: "translateX(-50%)",
@@ -93,6 +95,14 @@ function PencilIcon() {
   );
 }
 
+function SetupTabIcon() {
+  return (
+    <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+    </svg>
+  );
+}
+
 function BookmarkPageHeader({ theme, label, onEdit, disabled }: { theme: Theme; label: string; onEdit: (() => void) | null; disabled: boolean }) {
   return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, gap: 10 }}>
@@ -128,6 +138,100 @@ function EmptyBookmarkState({ theme, label, onSetup, disabled }: { theme: Theme;
         >
           {`Set up ${label}`}
         </button>
+      )}
+    </div>
+  );
+}
+
+function GenderPlaceholderIcon() {
+  return (
+    <svg width={40} height={40} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M9.3 9.2a2.7 2.7 0 1 1 3.9 2.4c-.8.4-1.2 1-1.2 1.9v.4" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="12" cy="16.6" r="0.6" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+function PartnerPlaceholderIcon() {
+  return (
+    <svg width={40} height={40} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6}>
+      <circle cx="12" cy="8.5" r="3.4" />
+      <path d="M5.5 19c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+// Portrait-shaped (not a plain row) so the "Partner" block can later swap in an actual
+// character avatar in the same footprint once marriage data links to a tracked
+// character. Each block is its own real button: tapping it jumps straight into that
+// one setup step (gender or marriage) instead of a single combined "Set up" action.
+function biographyBlockStyle(theme: Theme, filled: boolean): CSSProperties {
+  return {
+    flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8,
+    aspectRatio: "3 / 4", borderRadius: 14, background: theme.bg, cursor: "pointer", fontFamily: "inherit", textAlign: "center",
+    border: filled ? `1px solid ${theme.border}` : `1px dashed ${theme.border}`,
+  };
+}
+
+function BiographyBlock({ theme, icon, label, caption, filled, onClick, disabled }: {
+  theme: Theme; icon: ReactNode; label: string; caption: string; filled: boolean; onClick: () => void; disabled: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      className="tap-target-44"
+      onClick={onClick}
+      disabled={disabled}
+      style={biographyBlockStyle(theme, filled)}
+    >
+      <div style={{ color: filled ? theme.accentText : theme.muted }}>{icon}</div>
+      <div style={{ fontSize: 13, fontWeight: 800, color: theme.text }}>{label}</div>
+      <div style={{ fontSize: 12, color: theme.muted }}>{caption}</div>
+    </button>
+  );
+}
+
+function resolveMarriageCaption(marriage: StoredCharacterRecord["marriage"] | undefined): string {
+  if (!marriage || marriage.isMarried === null) return "No partner yet";
+  if (!marriage.isMarried) return "Not married";
+  return marriage.partnerName ? `Married to ${marriage.partnerName}` : "Married";
+}
+
+function BiographyPanel({ theme, character, onEditStep, disabled }: {
+  theme: Theme; character: StoredCharacterRecord | null; onEditStep: (flowId: SetupFlowId) => void; disabled: boolean;
+}) {
+  const overrides = character ? getClassSetupOverrides(character.jobName) : null;
+  const showGender = !overrides || overrides.gender === null;
+  const showMarriage = !overrides || !overrides.skipMarriage;
+
+  const gender = character?.gender === "male" || character?.gender === "female" ? character.gender : null;
+  const marriage = character?.marriage;
+  const hasMarriage = Boolean(marriage && marriage.isMarried !== null);
+
+  return (
+    <div style={{ display: "flex", gap: 14 }}>
+      {showGender && (
+        <BiographyBlock
+          theme={theme}
+          filled={Boolean(gender)}
+          icon={gender ? <GenderIcon gender={gender} /> : <GenderPlaceholderIcon />}
+          label="Gender"
+          caption={gender ? GENDER_LABELS[gender] : "Not set"}
+          onClick={() => onEditStep("gender_flow")}
+          disabled={disabled}
+        />
+      )}
+      {showMarriage && (
+        <BiographyBlock
+          theme={theme}
+          filled={hasMarriage}
+          icon={hasMarriage && marriage ? <MarriageIcon married={Boolean(marriage.isMarried)} /> : <PartnerPlaceholderIcon />}
+          label="Partner"
+          caption={resolveMarriageCaption(marriage)}
+          onClick={() => onEditStep("marriage_flow")}
+          disabled={disabled}
+        />
       )}
     </div>
   );
@@ -311,28 +415,29 @@ function OverviewBookmark({ model }: { model: PreviewPaneModel }) {
   );
 }
 
-function GenderMarriageBookmark({ theme, character }: { theme: Theme; character: StoredCharacterRecord | null }) {
-  const overrides = character ? getClassSetupOverrides(character.jobName) : null;
-  const showGender = !overrides || overrides.gender === null;
-  const showMarriage = !overrides || !overrides.skipMarriage;
-
-  let genderLabel: string | null = null;
-  if (character?.gender === "male") genderLabel = "Male";
-  else if (character?.gender === "female") genderLabel = "Female";
-
-  const marriage = character?.marriage;
-  const hasMarriage = marriage && marriage.isMarried !== null;
-
+function GenderIcon({ gender }: { gender: "male" | "female" }) {
+  if (gender === "male") {
+    return (
+      <svg width={40} height={40} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="9" cy="15" r="6" />
+        <path d="M13.5 10.5L20 4M14 4h6v6" />
+      </svg>
+    );
+  }
   return (
-    <div>
-      {showGender && genderLabel && <SummaryRow label="Gender" value={genderLabel} theme={theme} />}
-      {showMarriage && hasMarriage && (
-        <>
-          <SummaryRow label="Status" value={marriage.isMarried ? "Married" : "Not married"} theme={theme} />
-          {marriage.isMarried && marriage.partnerName && <SummaryRow label="Partner" value={marriage.partnerName} theme={theme} />}
-        </>
-      )}
-    </div>
+    <svg width={40} height={40} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="9" r="6" />
+      <path d="M12 15v6M9 18h6" />
+    </svg>
+  );
+}
+
+function MarriageIcon({ married }: { married: boolean }) {
+  return (
+    <svg width={40} height={40} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+      <circle cx="9" cy="14" r="5" opacity={married ? 1 : 0.4} />
+      <circle cx="15" cy="14" r="5" opacity={married ? 1 : 0.4} />
+    </svg>
   );
 }
 
@@ -539,8 +644,7 @@ function isBookmarkFilled(id: BookmarkId, character: StoredCharacterRecord | nul
   }
 }
 
-const BOOKMARK_CONTENT: Record<Exclude<BookmarkId, "overview" | "setup">, (props: { theme: Theme; character: StoredCharacterRecord | null }) => ReactNode> = {
-  gender_marriage: GenderMarriageBookmark,
+const BOOKMARK_CONTENT: Record<Exclude<BookmarkId, "overview" | "setup" | "gender_marriage">, (props: { theme: Theme; character: StoredCharacterRecord | null }) => ReactNode> = {
   stats: StatsBookmark,
   equipment: EquipmentBookmark,
   familiars: FamiliarsBookmark,
@@ -561,7 +665,7 @@ function SetupBookmark({ model, actions }: { model: PreviewPaneModel; actions: P
 }
 
 function BookmarkPageBody({
-  model, actions, active, filled, ContentComponent, onEdit,
+  model, actions, active, filled, ContentComponent, onEdit, onEditStep,
 }: {
   model: PreviewPaneModel;
   actions: PreviewPaneActions;
@@ -569,6 +673,7 @@ function BookmarkPageBody({
   filled: boolean;
   ContentComponent: ((props: { theme: Theme; character: StoredCharacterRecord | null }) => ReactNode) | null;
   onEdit: () => void;
+  onEditStep: (flowId: SetupFlowId) => void;
 }) {
   const { theme, profile, setup } = model;
   const character = profile.confirmedCharacter;
@@ -576,10 +681,27 @@ function BookmarkPageBody({
   if (active.id === "overview") return <OverviewBookmark model={model} />;
 
   if (active.id === "setup") {
+    // SetupFlowButtons calls actions.startOptionalFlow directly (it's also reused
+    // standalone on the first-run intro screen, which has no bookmark to remember), so
+    // route its calls through onEditStep here to keep the remembered-bookmark tracking
+    // correct for Quick/Full/MapleScouter Setup launched from this bookmark too.
+    const setupBookmarkActions: PreviewPaneActions = { ...actions, startOptionalFlow: onEditStep };
     return (
       <>
         <BookmarkPageHeader theme={theme} label={active.pageLabel} onEdit={null} disabled={setup.isUiLocked} />
-        <SetupBookmark model={model} actions={actions} />
+        <SetupBookmark model={model} actions={setupBookmarkActions} />
+      </>
+    );
+  }
+
+  // Gender and marriage each edit independently (tap a block to jump straight into that
+  // step), so there's no single combined "edit this bookmark" action for the header
+  // pencil or a bottom "Set up" button the way every other bookmark has.
+  if (active.id === "gender_marriage") {
+    return (
+      <>
+        <BookmarkPageHeader theme={theme} label={active.pageLabel} onEdit={null} disabled={setup.isUiLocked} />
+        <BiographyPanel theme={theme} character={character} onEditStep={onEditStep} disabled={setup.isUiLocked} />
       </>
     );
   }
@@ -623,7 +745,7 @@ function BookmarkSpine({
     <div className="profile-binder-spine" role="tablist" aria-label="Character profile sections" aria-orientation="vertical">
       {bookmarks.map((b, i) => {
         const active = b.id === activeId;
-        return (
+        const tab = (
           <button
             key={b.id}
             ref={(el) => { if (el) tabRefs.current.set(b.id, el); else tabRefs.current.delete(b.id); }}
@@ -636,10 +758,26 @@ function BookmarkSpine({
             className={["profile-bookmark-tab", "tap-target-44", active ? "profile-bookmark-tab--active" : ""].filter(Boolean).join(" ")}
             onClick={() => onSelect(b.id)}
             onKeyDown={(e) => handleKeyDown(e, i)}
-            style={{ background: active ? `${theme.accent}18` : "transparent", color: active ? theme.accentText : theme.muted }}
+            style={{
+              background: active ? `${theme.accent}18` : "transparent",
+              color: active ? theme.accentText : theme.muted,
+              gap: 6,
+            }}
           >
+            {b.id === "setup" && <SetupTabIcon />}
             {b.tabLabel}
           </button>
+        );
+        if (b.id !== "setup") return tab;
+        // Pinned to the bottom of the spine's own box (not just the end of the list) via
+        // margin-top: auto on this wrapper, with its own standalone divider above the tab
+        // (not a border on the button itself, which caused an optical illusion where the
+        // label read as off-center even though its padding was symmetric).
+        return (
+          <div key={b.id} className="profile-bookmark-pinned-group">
+            <div className="profile-bookmark-divider" />
+            {tab}
+          </div>
         );
       })}
     </div>
@@ -655,14 +793,25 @@ export default function CharacterProfileOverviewScreen({
   const mounted = useSyncExternalStore(() => () => undefined, () => true, () => false);
 
   const bookmarks = useMemo(() => getVisibleBookmarks(character?.jobName), [character?.jobName]);
-  const [activeId, setActiveId] = useState<BookmarkId>("overview");
+  // Restores whichever bookmark was active before an optional flow was started from
+  // here — this screen unmounts while the flow runs, so plain useState("overview")
+  // would otherwise always land back on Overview once the flow finishes.
+  const [activeId, setActiveId] = useState<BookmarkId>(() => {
+    const remembered = model.setup.lastActiveBookmarkId;
+    return remembered && bookmarks.some((b) => b.id === remembered) ? (remembered as BookmarkId) : "overview";
+  });
   const active = bookmarks.find((b) => b.id === activeId) ?? bookmarks[0];
 
   const filled = isBookmarkFilled(active.id, character, mounted);
-  const ContentComponent = active.id === "overview" || active.id === "setup" ? null : BOOKMARK_CONTENT[active.id];
+  const ContentComponent = active.id === "overview" || active.id === "setup" || active.id === "gender_marriage" ? null : BOOKMARK_CONTENT[active.id];
+
+  function startOptionalFlowRemembered(flowId: SetupFlowId) {
+    actions.rememberActiveBookmark(active.id);
+    actions.startOptionalFlow(flowId);
+  }
 
   function handleEdit() {
-    if (active.flowId) actions.startOptionalFlow(active.flowId);
+    if (active.flowId) startOptionalFlowRemembered(active.flowId);
   }
 
   return (
@@ -675,7 +824,7 @@ export default function CharacterProfileOverviewScreen({
         tabIndex={0}
       >
         <div key={active.id} className="profile-binder-page-content">
-          <BookmarkPageBody model={model} actions={actions} active={active} filled={filled} ContentComponent={ContentComponent} onEdit={handleEdit} />
+          <BookmarkPageBody model={model} actions={actions} active={active} filled={filled} ContentComponent={ContentComponent} onEdit={handleEdit} onEditStep={startOptionalFlowRemembered} />
         </div>
       </div>
       <BookmarkSpine theme={theme} bookmarks={bookmarks} activeId={active.id} onSelect={setActiveId} />

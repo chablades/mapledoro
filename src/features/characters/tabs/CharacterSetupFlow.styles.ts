@@ -711,6 +711,25 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
           transform: translateX(4px);
         }
 
+        /* Sits at the end of the list already (last in ALL_BOOKMARKS); this pushes it to
+           the bottom of the spine's own box instead of just the end of a content-length
+           list, so it reads as detached from the data bookmarks above it regardless of
+           how many of those there are. */
+        .profile-bookmark-pinned-group {
+          margin-top: auto;
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+
+        /* A standalone element (not a border on the button) with its own margin on both
+           sides, so it never sits flush against the tab label above or below it — a hard
+           line touching the text caused an optical illusion in an earlier attempt. */
+        .profile-bookmark-divider {
+          border-top: 1px solid ${theme.border};
+          margin: 0 4px;
+        }
+
         @keyframes profile-page-reveal {
           from { opacity: 0; transform: translateY(4px); }
           to { opacity: 1; transform: translateY(0); }
@@ -745,6 +764,17 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
             flex-shrink: 0;
             border-radius: 999px;
             white-space: nowrap;
+          }
+
+          /* The vertical pin + divider don't translate to the horizontal scroll strip
+             mobile uses instead; Setup just flows as the last tab in the row here. */
+          .profile-bookmark-pinned-group {
+            margin-top: 0;
+            display: contents;
+          }
+
+          .profile-bookmark-divider {
+            display: none;
           }
 
           .profile-bookmark-tab--active {
