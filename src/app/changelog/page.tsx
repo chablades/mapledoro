@@ -12,6 +12,12 @@ interface ChangelogEntry {
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    date: "2026-07-13",
+    changes: [
+      { type: "added", text: "The EXP Calculator Daily / Weekly Calculator now takes Luxe Sauna / MVP Resort hours, with the sauna's EXP table in the Resources tab." },
+    ],
+  },
+  {
     date: "2026-07-12",
     changes: [
       { type: "added", text: "The EXP Calculator Farming tab now has an Import Into Daily/Weekly Calculator link that carries your hourly EXP over to your plan." },
