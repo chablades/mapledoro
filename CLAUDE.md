@@ -9,7 +9,7 @@ MapleDoro — MapleStory community web app (character tracking, gameplay tools, 
 - **Next.js 16** (App Router), **React 19**, **TypeScript** (strict)
 - **Styling:** Inline styles for dynamic theming + global CSS (no Tailwind, no CSS-in-JS)
 - **State:** React hooks + Context (theme) + localStorage
-- **Server:** Redis (ioredis) char-lookup cache, Nexon CDN patch notes, Discord Sunny Sunday events
+- **Server:** Redis (ioredis) char-lookup cache, Nexon CDN patch notes, Discord Sunny Sunday + Miracle Time events
 - **Linting:** ESLint 9 (eslint-config-next + eslint-plugin-sonarjs)
 - **Charts:** `react-chartjs-2` / `chart.js` for standard charts; hand-rolled SVG for small one-offs
 
@@ -21,21 +21,27 @@ MapleDoro — MapleStory community web app (character tracking, gameplay tools, 
 
 ## Changelog
 
-Whenever a change makes a user-facing difference (bug fix, new feature, or behavior change), add a matching entry to the `CHANGELOG` array in `src/app/changelog/page.tsx` as part of the same work. Skip purely internal changes (refactors, tests, tooling, docs) that users would never notice.
+When a change gives players something new or fixes something broken (bug fix, new tool or capability, meaningful behavior change), add a matching entry to the `CHANGELOG` array in `src/app/changelog/page.tsx` as part of the same work. Skip internal changes (refactors, tests, tooling, docs) and minor polish players wouldn't consciously register: layout or spacing tweaks, reordering inputs, restyling, small copy edits. When in doubt, leave it out.
 
-- Add changes to the entry for today's date, creating a new entry at the top of the array if one does not exist (newest first).
+- Add changes to the entry for today's date, creating a new entry at the top of the array if one does not exist (newest first). The array is long; Read only its head when adding an entry.
 - Pick the right `type`: `added` for new tools or capabilities, `changed` for tweaks to existing behavior, `fixed` for bug fixes.
 - Match the tone and structure of existing entries: one short, plain sentence per change, written for players, naming the tool affected (for example "Fixed the Liberation Tracker wiping saved progress in some cases.").
 - Do not use em dashes in entry text.
 
 ## Build & Lint
 
-Both must pass before any implementation is considered complete:
+Both must pass before any implementation is considered complete. Skip `npm run build` for text-only changes (copy/string edits, changelog entries, comments) that touch no JSX structure, types, or logic — `npm run lint` alone covers those. Scope lint to changed files rather than the whole repo, and suppress output on success so a passing run doesn't burn tokens on route tables and file lists — only surface output when a command fails:
 
-```sh
-npm run build
-npm run lint
+```powershell
+$out = npm run build 2>&1; if ($LASTEXITCODE -ne 0) { $out }
+$out = npx eslint (git diff --name-only --diff-filter=ACM -- '*.ts' '*.tsx') 2>&1; if ($LASTEXITCODE -ne 0) { $out }
 ```
+
+(bash: same pattern with `out=$(<cmd> 2>&1); [ $? -ne 0 ] && echo "$out"`)
+
+Run the full unscoped `npm run lint` (not just changed files) before treating work as complete if the change touches shared config, a widely-imported helper, or anything else where scoping to the diff could miss a ripple effect.
+
+Same spirit for reads: large data modules (`hexa-classes.ts`, `exp-monsters.ts`, `cubing-data.ts`, mystic-frontier `*Data.ts`, `puzzle-data.generated.ts`) run to hundreds or thousands of lines. Grep for the entries you need instead of Reading them whole.
 
 ### Lint Gotchas
 
@@ -47,7 +53,7 @@ npm run lint
 - **Clickable elements:** Prefer a real `<button>` (reset via `background: none; border: none; padding: 0; font: inherit; text-align: inherit`) for free semantics/focus/keyboard. Fall back to `<div>`/`<span>` + `role="button"` + `tabIndex={0}` + Enter/Space `onKeyDown` only when `<button>` can't work (e.g. nested interactive content).
 - **Minimum font size:** 0.75rem (12px). No sub-12px text anywhere.
 - **Image error fallbacks:** For a static fallback, use dual-render with refs (`display:none` on fallback, swap via `onError`), not `useState` — avoids a re-render on error. State is fine when the fallback needs logic the ref swap can't express (e.g. `CharacterAvatar`'s retry-with-query-param + load-timeout flow).
-- **No `autoFocus` attribute.** Use a ref callback that focuses once on mount, guarded by a `useRef` flag: `const hasAutoFocusedRef = useRef(false); ... ref={(el) => { if (el && !hasAutoFocusedRef.current) { hasAutoFocusedRef.current = true; el.focus(); } }}`. Don't guard on `document.activeElement !== el` alone — that re-fires on every render (not just mount) and will steal focus back any time the user has deliberately moved it elsewhere, if anything else causes the component to re-render meanwhile.
+- **No `autoFocus` attribute.** Focus once on mount via a ref callback guarded by a `useRef(false)` flag: `ref={(el) => { if (el && !hasAutoFocusedRef.current) { hasAutoFocusedRef.current = true; el.focus(); } }}`. Don't guard on `document.activeElement` alone: it re-fires on every render and steals back focus the user moved elsewhere.
 - **localStorage writes:** Write synchronously inside state updaters, not in a `useEffect` watching state. Keeps the write atomic with the state change.
 - **Internal links → `next/link`. Images → `next/image` with `unoptimized`** for game art (the optimizer wastes transformations and degrades small pixel sprites). Raw `<img>` only when `next/image` can't work (e.g. `CharacterAvatar`'s load-retry), with an `eslint-disable @next/next/no-img-element`.
 - **No unused `export`s** — don't `export` a type used only in its own file (react-doctor's Knip check flags them).
@@ -67,34 +73,21 @@ npm run lint
 
 ## Color & Contrast
 
-Themes live in `src/components/themes.ts`: a `ColorModeBase` (light/dark neutrals) merged with one of 12 `ACCENT_THEMES` by `composeTheme()`.
-
-**The palette is tuned to WCAG AA (4.5:1) and must stay there.** Every `text` / `muted` / `accentText` value has been slid in OKLCH (hue and chroma preserved, lightness adjusted) until it clears 4.5:1 against every surface it can land on. Some values look arbitrary; they are the result of that fit. Don't "clean them up" to rounder hex.
+Themes live in `src/components/themes.ts`: a `ColorModeBase` (light/dark neutrals) merged with one of 12 `ACCENT_THEMES` by `composeTheme()`. **The palette is tuned to WCAG AA (4.5:1) and must stay there.** Odd-looking hex values are OKLCH contrast fits; don't round them. Full rationale (luminance windows, dead zone) lives in the `themes.ts` comments.
 
 Three accent tokens, each with one job:
 
 | Token | Role | Rule |
 |---|---|---|
-| `accent` | Fills and borders | **Never a text color.** It's one hex shared by both color modes, so it can't be readable ink in both. |
-| `accentText` | Accent-colored *text* | Per color mode. Clears 4.5:1 on `bg`, `panel`, `timerBg`, `sidebar`, and its own `accentSoft`. |
-| `accentOn` | Ink *on top of* an `accent` fill | Derived, not authored. `composeTheme` picks white or ink from the accent's luminance. |
+| `accent` | Fills and borders | **Never a text color** (one hex can't be readable ink in both modes). `color: theme.accent` is always a bug; use `accentText`. |
+| `accentText` | Accent-colored *text* | Per color mode; clears 4.5:1 on every surface. |
+| `accentOn` | Ink *on top of* an `accent` fill | Derived by `composeTheme`. `color: "#fff"` on an accent fill is a bug; bright accents take dark ink. |
 
-Why `accent` can't be text: a white-text fill needs relative luminance ≤ 0.183, and readable text on `#101014` needs ≥ 0.199. The windows don't overlap. So `color: theme.accent` is always a bug — use `accentText`. Likewise `color: "#fff"` on an accent fill is a bug — use `accentOn` (bright accents like Ludibrium and Juno take dark ink, not white).
+When adding or changing an accent theme, check the new color against every surface in both modes before committing (see the dead-zone note in `themes.ts`).
 
-**When adding or changing an accent theme**, check the new color against every surface in both modes before committing. Watch for the luminance dead zone (~0.183–0.218) where *neither* white nor ink clears 4.5:1 on the fill — `cha` was moved out of it.
+**Status colors:** `src/components/statusColors.ts` applies the same split to success / danger / info / warning; never hardcode `#10b981`, `#ef4444`, and friends. `STATUS[kind].fill` + `.on` for filled pills/badges; `statusText(theme, kind)` for status-colored *text* on a neutral surface.
 
-### Status colors
-
-`src/components/statusColors.ts` applies the same split to success / danger / info / warning. Never hardcode `#10b981`, `#ef4444`, and friends.
-
-- `STATUS[kind].fill` + `STATUS[kind].on` for a filled pill or badge. `on` comes from the shared `inkOn()` in `themes.ts`, the same helper that derives `accentOn`.
-- `statusText(theme, kind)` for status-colored *text* on a neutral surface. Needs `theme.colorMode`, which is why `composeTheme` puts it on `AppTheme`.
-
-The one hand-authored deviation: `danger.fill` is `#dd3135`, darkened from `#ef4444` so white ink clears 4.5:1. Dark ink also clears on the original red, but white-on-red is what makes a destructive button read as destructive.
-
-**Still hardcoded, still failing:** `DIFFICULTY_COLORS` and `RESOURCE_TYPE_COLORS` in the character guides are categorical text colors with no per-mode variants (worst: `#c49a2a` at 2.62:1 on a light panel). They need the same `statusText`-style treatment.
-
-**Known gap:** `accent` used as a 1px state border (selected chips, checked boxes) misses the 3:1 non-text ratio of WCAG 1.4.11 in 16 of 24 theme×mode combinations, worst at `arcaneriver` dark (1.65:1). Fixing it means routing state borders through `accentText`, which is a separate pass across ~38 sites.
+Known gaps: `DIFFICULTY_COLORS` / `RESOURCE_TYPE_COLORS` in the character guides still hardcode categorical text colors that fail contrast (they need the `statusText` treatment), and `accent` as a 1px state border misses WCAG 1.4.11's 3:1 in 16 of 24 theme/mode combos (fix: route state borders through `accentText`, a separate ~38-site pass).
 
 ## Image Policy
 
@@ -103,7 +96,7 @@ Game art comes from the self-hosted **MapleResource API** (`haku.network`), via 
 - **Item icons** default to shadowless `iconRaw.png`; pass `shadow` for framed `icon.png` (inventory only). Some items (e.g. androids) also have a `revealed` variant (`iconD`/`iconRawD`) for their actual appearance once equipped, vs. the default pre-equip icon (e.g. an android's egg form); check the manifest's `hasIconD`/`hasIconRawD` flags before assuming it exists for a given item.
 - **Boss icons** have no component — use `bossIconUrl(id)` (`ui/boss` URL); stored as `icon` strings in boss data (`bosses.ts`, `liberation-data.ts`, `astra-data.ts`, `trace-restoration-data.ts`).
 - **Familiars:** `<FamiliarSprite>` is direct-sprite only; mob/card-backed ones use `<MobSprite>`/`<ItemIcon>` per manifest `spriteFrom`.
-- **Finding IDs:** search committed `manifests/v<version>/<type>.json` by `name`, hardcode the id with a name comment. No name→ID map; manifests are dev-only, never bundled (`item.json` ~17 MB). The current game version is **v270** — use the `manifests/v270/` manifests when implementing features.
+- **Finding IDs:** Grep committed `manifests/v<version>/<type>.json` by `name` (never Read a manifest whole; `item.json` ~17 MB), hardcode the id with a name comment. No name→ID map; manifests are dev-only, never bundled. The current game version is **v270** — use the `manifests/v270/` manifests when implementing features. Older features whose generated data was built from an earlier manifest (and says so) are correct as-is.
 
 ## Feature Docs
 

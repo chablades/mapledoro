@@ -37,9 +37,10 @@ network lookup. Monster rows are `[id, name, level, exp, mapId]`, where `id` mus
 `MobSprite` and `name` should be the GMS display name. `ExpMonster.key` is generated from row
 position because multiple source mobs can intentionally collapse to the same display mob.
 
-Monster dropdown behavior should match character dropdown patterns: portaled fixed-position menu,
-thin scrollbar styling, arrow rotation, and click-away preserving the selected monster. Reopening
-the closed monster dropdown clears only the search text.
+The monster dropdown mirrors the character dropdown patterns (portaled fixed-position menu, thin
+scrollbar, arrow rotation, click-away keeps the selection); reopening it clears only the search
+text. Unsearched, it is ordered by distance from the current player level; search results stay in
+source order — do not reorder them by level.
 
 Character selection auto-fills level and current EXP percent. Convert stored raw EXP to percent
 of the selected level, truncate to 3 decimals, and disable level/percent inputs while a character
@@ -49,10 +50,6 @@ Both calculator tabs open on the roster's main character (`selectMainCharacter`)
 falling back to Manual Level otherwise. `loadCharacterState` / `loadCharacterAllInOne` are shared by
 the mount-time seed and the dropdown's `updateCharacter`, so both paths apply saved state and job
 rules identically. The seed runs in a lazy `useState` initializer, so it must not write.
-
-The unsearched monster dropdown is ordered by distance from the current player level, so the
-nearest-level monsters seed the list. Search results stay in source order; do not reorder them by
-level.
 
 GMS naming/content decisions:
 - Penance Ring is Ring of Torment.
@@ -84,8 +81,8 @@ Rune inputs are intentionally simplified: use Rune Persistence (Evan Link Skill)
 instead of separate Liberated Rune/Rune of Blessings dropdowns. Do not add impossible full-uptime
 rune scenarios.
 
-Overview should stay compact. The selected monster card owns the monster identity and final kill
-EXP; avoid duplicating selected monster details elsewhere.
+Overview stays compact: the selected monster card owns the monster identity and final kill EXP;
+don't duplicate its details elsewhere.
 
 `MONSTER_PARK_OPTIONS` is ordered by EXP, so "the dungeon a player would actually run" is just the
 last entry whose `minLevel` the character meets. `monsterParkId` is a pin, and `""` means that

@@ -77,8 +77,15 @@ const COLOR_MODE_BASES: Record<ColorMode, ColorModeBase> = {
 };
 
 // Every `accentText` here clears 4.5:1 against its own `accentSoft` and against
-// every surface in its color mode. `accent` is exempt: it is a fill, and
-// `accentOn` supplies the ink that sits on it.
+// every surface in its color mode (bg, panel, timerBg, sidebar). Values were slid
+// in OKLCH (hue and chroma preserved, lightness adjusted) until they fit; don't
+// round them to cleaner hex. `accent` is exempt: it is a fill, and `accentOn`
+// supplies the ink that sits on it. `accent` can never itself be readable text in
+// both modes: a fill white text can sit on needs relative luminance <= 0.183,
+// while readable text on #101014 needs >= 0.199, and the windows don't overlap.
+// When adding an accent, also avoid the ~0.183-0.218 luminance dead zone where
+// neither white nor ACCENT_INK clears 4.5:1 on the fill (`cha` was moved out of
+// it); bright accents like Ludibrium and Juno correctly take dark ink, not white.
 export const ACCENT_THEMES: Record<string, AccentTheme> = {
   aranya: {
     name: "Aranya",
