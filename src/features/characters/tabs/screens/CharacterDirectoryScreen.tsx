@@ -5,7 +5,9 @@ import { WORLD_NAMES } from "../../model/constants";
 import type { StoredCharacterRecord } from "../../model/charactersStore";
 import {
   buildDirectoryGroups,
+  buildMergedDirectoryGroups,
   getDirectoryRevealStyle,
+  paginate,
   type DirectorySortBy,
 } from "../charactersDirectory";
 import { CHARACTERS_COPY } from "../content";
@@ -17,6 +19,12 @@ import RefreshSpinnerIcon from "../components/RefreshSpinnerIcon";
 import LegionPanel from "./LegionPanel";
 
 const rowStyle: CSSProperties = { display: "grid", gridTemplateColumns: "repeat(auto-fill, 190px)", justifyContent: "center", alignItems: "start", gap: "0.6rem", width: "100%" };
+
+// Main is always small (one per world), but Champions and Mules can both reach real size
+// once several worlds are tracked at once (All Worlds view merges every world's list into
+// one), so both paginate at the same size. 10 lands on exactly 2 rows at fullscreen desktop
+// width (5 cards per row at the 190px card width).
+const DIRECTORY_PAGE_SIZE = 10;
 
 function directoryCardButtonStyle(theme: AppTheme): CSSProperties {
   return {
@@ -163,6 +171,7 @@ interface DirectoryControlsProps {
   theme: AppTheme;
   isUiLocked: boolean;
   hasMultipleWorlds: boolean;
+  showAllWorlds: boolean;
   worldIds: number[];
   selectedWorldId: number | null;
   directorySortBy: DirectorySortBy;
@@ -171,7 +180,7 @@ interface DirectoryControlsProps {
 }
 
 function DirectoryControls({
-  theme, isUiLocked, hasMultipleWorlds, worldIds, selectedWorldId,
+  theme, isUiLocked, hasMultipleWorlds, showAllWorlds, worldIds, selectedWorldId,
   directorySortBy, onWorldChange, onSortChange,
 }: DirectoryControlsProps) {
   const selectStyle = {
@@ -237,6 +246,9 @@ function DirectoryControls({
           <option value="name">{CHARACTERS_COPY.characterDirectory.sortAlphabeticalOption}</option>
           <option value="level">{CHARACTERS_COPY.characterDirectory.sortByLevelOption}</option>
           <option value="class">{CHARACTERS_COPY.characterDirectory.sortByClassOption}</option>
+          {showAllWorlds && (
+            <option value="world">{CHARACTERS_COPY.characterDirectory.sortByWorldOption}</option>
+          )}
         </select>
       </div>
     </div>
@@ -263,6 +275,52 @@ function LegionButtonRow({ theme, onOpen }: { theme: AppTheme; onOpen: () => voi
   );
 }
 
+function pagerButtonStyle(theme: AppTheme, disabled: boolean): CSSProperties {
+  return {
+    border: `1px solid ${theme.border}`,
+    borderRadius: "8px",
+    background: theme.bg,
+    color: disabled ? theme.muted : theme.text,
+    fontFamily: "inherit",
+    fontWeight: 800,
+    fontSize: "0.78rem",
+    padding: "0.35rem 0.65rem",
+    cursor: disabled ? "not-allowed" : "pointer",
+    opacity: disabled ? 0.55 : 1,
+  };
+}
+
+function DirectoryPager({ theme, isUiLocked, page, pageCount, onPageChange }: {
+  theme: AppTheme; isUiLocked: boolean; page: number; pageCount: number; onPageChange: (page: number) => void;
+}) {
+  if (pageCount <= 1) return null;
+  const atStart = page <= 0;
+  const atEnd = page >= pageCount - 1;
+  return (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.6rem", marginTop: "0.65rem" }}>
+      <button
+        type="button"
+        disabled={isUiLocked || atStart}
+        onClick={() => onPageChange(page - 1)}
+        style={pagerButtonStyle(theme, isUiLocked || atStart)}
+      >
+        ‹ Prev
+      </button>
+      <span style={{ fontSize: "0.78rem", fontWeight: 700, color: theme.muted }}>
+        Page {page + 1} of {pageCount}
+      </span>
+      <button
+        type="button"
+        disabled={isUiLocked || atEnd}
+        onClick={() => onPageChange(page + 1)}
+        style={pagerButtonStyle(theme, isUiLocked || atEnd)}
+      >
+        Next ›
+      </button>
+    </div>
+  );
+}
+
 interface DirectoryRoleViewProps {
   theme: AppTheme;
   isUiLocked: boolean;
@@ -270,6 +328,8 @@ interface DirectoryRoleViewProps {
   directoryRevealPhase: number;
   groups: ReturnType<typeof buildDirectoryGroups>;
   maxChampions: number;
+  mulesPage: number;
+  onMulesPageChange: (page: number) => void;
   onOpen: (character: StoredCharacterRecord) => void;
   onAddCharacter: () => void;
   refreshingKeys: ReadonlySet<string>;
@@ -277,7 +337,7 @@ interface DirectoryRoleViewProps {
 
 function DirectoryRoleView({
   theme, isUiLocked, shouldShow, directoryRevealPhase, groups, maxChampions,
-  onOpen, onAddCharacter, refreshingKeys,
+  mulesPage, onMulesPageChange, onOpen, onAddCharacter, refreshingKeys,
 }: DirectoryRoleViewProps) {
   const {
     hasChampionSection, isMainAlsoChampion, mainCharacter,
@@ -285,6 +345,9 @@ function DirectoryRoleView({
     sortedCharacters, muleCapacity, canAddCharacter,
   } = groups;
   const cardProps = { isUiLocked, theme, showWorld: false, onOpen, refreshingKeys };
+  const { pageItems: mulesPageItems, pageCount: mulesPageCount, clampedPage: mulesClampedPage } =
+    paginate(otherCharacters, mulesPage, DIRECTORY_PAGE_SIZE);
+  const isLastMulesPage = mulesClampedPage === mulesPageCount - 1;
 
   return (
     <>
@@ -330,57 +393,112 @@ function DirectoryRoleView({
           {CHARACTERS_COPY.characterDirectory.mulesLabel} ({otherCharacters.length}/{muleCapacity})
         </p>
         <div style={{ ...rowStyle, overflow: "hidden", paddingBottom: "0.15rem" }}>
-          {otherCharacters.map((c) => (
+          {mulesPageItems.map((c) => (
             <DirectoryCharacterCard key={toCharacterKey(c)} character={c} {...cardProps} />
           ))}
-          <button
-            type="button"
-            onClick={onAddCharacter}
-            disabled={!canAddCharacter || isUiLocked}
-            style={addCharacterButtonStyle(theme, canAddCharacter)}
-          >
-            <span>+</span>
-            <span style={{ fontSize: "0.76rem", fontWeight: 800 }}>
-              {CHARACTERS_COPY.characterDirectory.addCharacterButton}
-            </span>
-          </button>
+          {isLastMulesPage && (
+            <button
+              type="button"
+              onClick={onAddCharacter}
+              disabled={!canAddCharacter || isUiLocked}
+              style={addCharacterButtonStyle(theme, canAddCharacter)}
+            >
+              <span>+</span>
+              <span style={{ fontSize: "0.76rem", fontWeight: 800 }}>
+                {CHARACTERS_COPY.characterDirectory.addCharacterButton}
+              </span>
+            </button>
+          )}
         </div>
+        <DirectoryPager theme={theme} isUiLocked={isUiLocked} page={mulesClampedPage} pageCount={mulesPageCount} onPageChange={onMulesPageChange} />
       </section>
     </>
   );
 }
 
-interface DirectoryWorldViewProps {
+interface DirectoryAllWorldsViewProps {
   theme: AppTheme;
   isUiLocked: boolean;
-  worldIds: number[];
-  sortedCharacters: StoredCharacterRecord[];
+  mergedGroups: ReturnType<typeof buildMergedDirectoryGroups>;
   shouldShow: boolean;
   directoryRevealPhase: number;
+  championsPage: number;
+  onChampionsPageChange: (page: number) => void;
+  mulesPage: number;
+  onMulesPageChange: (page: number) => void;
   refreshingKeys: ReadonlySet<string>;
   onOpen: (character: StoredCharacterRecord) => void;
 }
 
-function DirectoryWorldView({ theme, isUiLocked, worldIds, sortedCharacters, shouldShow, directoryRevealPhase, refreshingKeys, onOpen }: DirectoryWorldViewProps) {
+// All Worlds merges every tracked world's Main/Champions/Mules into three flat sections
+// (each card badged with its world via showWorld) instead of repeating the single-world
+// view's three-tier structure once per world — that would mean up to 6 stacked sets of
+// headers plus 6 separate pagers for a player with characters on every world. Main is
+// always small (one per world) and never paginates, but Champions and Mules both can reach
+// real size once merged across several worlds (up to MAX_CHAMPIONS per world for Champions),
+// so both paginate the same way.
+function DirectoryAllWorldsView({
+  theme, isUiLocked, mergedGroups, shouldShow, directoryRevealPhase,
+  championsPage, onChampionsPageChange, mulesPage, onMulesPageChange, refreshingKeys, onOpen,
+}: DirectoryAllWorldsViewProps) {
+  const { sortedCharacters, mainCharacters, championCharacters, otherCharacters } = mergedGroups;
+  const cardProps = { isUiLocked, theme, showWorld: true, onOpen, refreshingKeys };
+  const hasChampions = championCharacters.length > 0;
+  const { pageItems: championsPageItems, pageCount: championsPageCount, clampedPage: championsClampedPage } =
+    paginate(championCharacters, championsPage, DIRECTORY_PAGE_SIZE);
+  const { pageItems: mulesPageItems, pageCount: mulesPageCount, clampedPage: mulesClampedPage } =
+    paginate(otherCharacters, mulesPage, DIRECTORY_PAGE_SIZE);
+
   return (
     <>
-      {worldIds.map((worldId, i) => {
-        const worldChars = sortedCharacters.filter((c) => c.worldID === worldId);
-        if (worldChars.length === 0) return null;
-        return (
-          <section key={worldId} style={getDirectoryRevealStyle(shouldShow && directoryRevealPhase >= 1)}>
-            {i > 0 && <div style={{ borderTop: `1px solid ${theme.border}`, marginBottom: "0.7rem" }} />}
-            <p className="section-label" style={{ color: theme.muted }}>
-              {WORLD_NAMES[worldId] ?? `World ${worldId}`}
-            </p>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, 190px)", justifyContent: "center", alignItems: "start", gap: "0.6rem", width: "100%" }}>
-              {worldChars.map((c) => (
-                <DirectoryCharacterCard key={toCharacterKey(c)} character={c} showWorld={false} isUiLocked={isUiLocked} theme={theme} refreshingKeys={refreshingKeys} onOpen={onOpen} />
-              ))}
-            </div>
-          </section>
-        );
-      })}
+      <section style={getDirectoryRevealStyle(shouldShow && directoryRevealPhase >= 1)}>
+        <p className="section-label" style={{ color: theme.muted }}>
+          {CHARACTERS_COPY.characterDirectory.mainCharacterLabel}
+        </p>
+        {mainCharacters.length > 0 ? (
+          <div style={rowStyle}>
+            {mainCharacters.map((c) => (
+              <DirectoryCharacterCard key={toCharacterKey(c)} character={c} {...cardProps} />
+            ))}
+          </div>
+        ) : (
+          <p style={{ margin: 0, color: theme.muted, fontWeight: 700 }}>
+            {sortedCharacters.length > 0
+              ? CHARACTERS_COPY.characterDirectory.noMainSelectedMessage
+              : CHARACTERS_COPY.characterDirectory.noCharactersAddedMessage}
+          </p>
+        )}
+      </section>
+
+      {hasChampions && (
+        <section style={getDirectoryRevealStyle(shouldShow && directoryRevealPhase >= 2)}>
+          <div style={{ borderTop: `1px solid ${theme.border}`, marginBottom: "0.7rem" }} />
+          <p className="section-label" style={{ color: theme.muted }}>
+            {CHARACTERS_COPY.characterDirectory.championsLabel} ({championCharacters.length})
+          </p>
+          <div style={{ ...rowStyle, overflow: "hidden", paddingBottom: "0.15rem" }}>
+            {championsPageItems.map((c) => (
+              <DirectoryCharacterCard key={toCharacterKey(c)} character={c} {...cardProps} />
+            ))}
+          </div>
+          <DirectoryPager theme={theme} isUiLocked={isUiLocked} page={championsClampedPage} pageCount={championsPageCount} onPageChange={onChampionsPageChange} />
+        </section>
+      )}
+
+      {otherCharacters.length > 0 && (
+        <section style={getDirectoryRevealStyle(shouldShow && directoryRevealPhase >= (hasChampions ? 3 : 2))}>
+          <div style={{ borderTop: `1px solid ${theme.border}`, marginBottom: "0.7rem" }} />
+          <p className="section-label" style={{ color: theme.muted }}>
+            {CHARACTERS_COPY.characterDirectory.mulesLabel} ({otherCharacters.length})
+          </p>
+          <div style={{ ...rowStyle, overflow: "hidden", paddingBottom: "0.15rem" }}>
+            {mulesPageItems.map((c) => (
+              <DirectoryCharacterCard key={toCharacterKey(c)} character={c} {...cardProps} />
+            ))}
+          </div>
+          <DirectoryPager theme={theme} isUiLocked={isUiLocked} page={mulesClampedPage} pageCount={mulesPageCount} onPageChange={onMulesPageChange} />
+        </section>
+      )}
     </>
   );
 }
@@ -403,6 +521,11 @@ export default function CharacterDirectoryScreen({
 }: CharacterDirectoryScreenProps) {
   const { theme, setup, directory } = model;
   const [legionPanelOpen, setLegionPanelOpen] = useState(false);
+  // Keyed on whatever view/sort is active, so switching worlds, toggling All Worlds, or
+  // re-sorting naturally resets a section back to page 1 instead of clamping onto whatever
+  // page number happened to be set for a totally different list.
+  const [championsPagerState, setChampionsPagerState] = useState<{ key: string; page: number }>({ key: "", page: 0 });
+  const [mulesPagerState, setMulesPagerState] = useState<{ key: string; page: number }>({ key: "", page: 0 });
 
   const inCharacterDirectoryView = setup.showFlowOverview && setup.showCharacterDirectory;
   if (!inCharacterDirectoryView) return null;
@@ -428,6 +551,26 @@ export default function CharacterDirectoryScreen({
     maxCharacters: directory.maxCharacters,
   });
 
+  const mergedMainKeys = new Set<string>();
+  const mergedChampionKeys = new Set<string>();
+  directory.worldIds.forEach((worldId) => {
+    const mainKey = directory.mainCharacterKeyByWorld[String(worldId)];
+    if (mainKey) mergedMainKeys.add(mainKey);
+    (directory.championCharacterKeysByWorld[String(worldId)] ?? []).forEach((key) => mergedChampionKeys.add(key));
+  });
+  const mergedGroups = buildMergedDirectoryGroups({
+    allCharacters: filteredCharacters,
+    sortBy: directorySortBy,
+    mainCharacterKeys: mergedMainKeys,
+    championCharacterKeys: mergedChampionKeys,
+  });
+
+  const pagerKey = `${showAllWorlds ? "all" : activeWorldId}:${directorySortBy}`;
+  const championsPage = championsPagerState.key === pagerKey ? championsPagerState.page : 0;
+  const handleChampionsPageChange = (page: number) => setChampionsPagerState({ key: pagerKey, page });
+  const mulesPage = mulesPagerState.key === pagerKey ? mulesPagerState.page : 0;
+  const handleMulesPageChange = (page: number) => setMulesPagerState({ key: pagerKey, page });
+
   if (legionPanelOpen && !showAllWorlds && activeWorldId !== null) {
     return (
       <LegionPanel
@@ -451,6 +594,7 @@ export default function CharacterDirectoryScreen({
           theme={theme}
           isUiLocked={setup.isUiLocked}
           hasMultipleWorlds={hasMultipleWorlds}
+          showAllWorlds={showAllWorlds}
           worldIds={directory.worldIds}
           selectedWorldId={selectedWorldId}
           directorySortBy={directorySortBy}
@@ -462,13 +606,16 @@ export default function CharacterDirectoryScreen({
         )}
         <div style={{ borderTop: `1px solid ${theme.border}` }} />
         {showAllWorlds ? (
-          <DirectoryWorldView
+          <DirectoryAllWorldsView
             theme={theme}
             isUiLocked={setup.isUiLocked}
-            worldIds={directory.worldIds}
-            sortedCharacters={groups.sortedCharacters}
+            mergedGroups={mergedGroups}
             shouldShow={shouldShowDirectoryPanel}
             directoryRevealPhase={directoryRevealPhase}
+            championsPage={championsPage}
+            onChampionsPageChange={handleChampionsPageChange}
+            mulesPage={mulesPage}
+            onMulesPageChange={handleMulesPageChange}
             refreshingKeys={directory.refreshingKeys}
             onOpen={actions.openCharacterProfile}
           />
@@ -480,6 +627,8 @@ export default function CharacterDirectoryScreen({
             directoryRevealPhase={directoryRevealPhase}
             groups={groups}
             maxChampions={directory.maxChampions}
+            mulesPage={mulesPage}
+            onMulesPageChange={handleMulesPageChange}
             refreshingKeys={directory.refreshingKeys}
             onOpen={actions.openCharacterProfile}
             onAddCharacter={actions.openCharacterSearch}

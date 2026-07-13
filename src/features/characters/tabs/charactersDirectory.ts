@@ -2,7 +2,7 @@ import type { StoredCharacterRecord } from "../model/charactersStore";
 import { toCharacterKey } from "../model/characterKeys";
 import { CHARACTERS_TRANSITION_MS } from "./useSetupFlowTransitions";
 
-export type DirectorySortBy = "name" | "level" | "class";
+export type DirectorySortBy = "name" | "level" | "class" | "world";
 
 function sortCharacters(
   characters: StoredCharacterRecord[],
@@ -17,6 +17,13 @@ function sortCharacters(
     entries.sort(
       (a, b) => a.jobName.localeCompare(b.jobName) || a.characterName.localeCompare(b.characterName),
     );
+    return entries;
+  }
+  // Only meaningful in All Worlds view, where the merged Champions/Mules sections would
+  // otherwise interleave characters from different worlds with nothing but the small
+  // per-card world badge to tell them apart.
+  if (sortBy === "world") {
+    entries.sort((a, b) => a.worldID - b.worldID || a.characterName.localeCompare(b.characterName));
     return entries;
   }
   entries.sort((a, b) => a.characterName.localeCompare(b.characterName));
@@ -69,6 +76,41 @@ export function buildDirectoryGroups(args: {
     hasChampionSection: championCharactersForDirectory.length > 0 || isMainAlsoChampion,
     isMainAlsoChampion,
   };
+}
+
+// All Worlds view merges every tracked world's Main/Champions/Mules into three flat
+// buckets instead of repeating the three-tier structure (and its own Mules pagination)
+// once per world, which stacks badly once a player has several worlds. Character keys
+// are globally unique by name (not per-world scoped, see characters/CLAUDE.md), so a
+// Set of keys collected across every world's main/champion lookups is a safe way to
+// classify the merged roster with no cross-world collision risk.
+export function buildMergedDirectoryGroups(args: {
+  allCharacters: StoredCharacterRecord[];
+  sortBy: DirectorySortBy;
+  mainCharacterKeys: ReadonlySet<string>;
+  championCharacterKeys: ReadonlySet<string>;
+}) {
+  const sortedCharacters = sortCharacters(args.allCharacters, args.sortBy);
+  const mainCharacters = sortedCharacters.filter((character) =>
+    args.mainCharacterKeys.has(toCharacterKey(character)),
+  );
+  const championCharacters = sortedCharacters.filter((character) => {
+    const key = toCharacterKey(character);
+    return args.championCharacterKeys.has(key) && !args.mainCharacterKeys.has(key);
+  });
+  const otherCharacters = sortedCharacters.filter((character) => {
+    const key = toCharacterKey(character);
+    return !args.mainCharacterKeys.has(key) && !args.championCharacterKeys.has(key);
+  });
+
+  return { sortedCharacters, mainCharacters, championCharacters, otherCharacters };
+}
+
+export function paginate<T>(items: T[], page: number, pageSize: number) {
+  const pageCount = Math.max(1, Math.ceil(items.length / pageSize));
+  const clampedPage = Math.min(Math.max(0, page), pageCount - 1);
+  const start = clampedPage * pageSize;
+  return { pageItems: items.slice(start, start + pageSize), pageCount, clampedPage };
 }
 
 export function getDirectoryRevealDelays(

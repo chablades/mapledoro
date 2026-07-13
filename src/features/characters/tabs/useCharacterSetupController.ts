@@ -88,7 +88,7 @@ import {
   useSetupFlowTransitions,
 } from "./useSetupFlowTransitions";
 
-export const MAX_CHAMPIONS = 4;
+export const MAX_CHAMPIONS = 5;
 
 function tryParseJson(raw: string): unknown {
   try { return JSON.parse(raw); } catch { return null; }

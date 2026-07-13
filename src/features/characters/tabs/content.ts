@@ -51,6 +51,7 @@ export const CHARACTERS_COPY = {
     sortAlphabeticalOption: "Alphabetical",
     sortByLevelOption: "By Level",
     sortByClassOption: "By Class",
+    sortByWorldOption: "By World",
     mainCharacterLabel: "Main Character",
     championsLabel: "Champions",
     mulesLabel: "Mules",

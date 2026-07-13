@@ -1,6 +1,6 @@
 import { useEffect, useEffectEvent, useState } from "react";
 import type { CSSProperties } from "react";
-import { buildDirectoryGroups, getDirectoryRevealDelays } from "../charactersDirectory";
+import { buildDirectoryGroups, getDirectoryRevealDelays, type DirectorySortBy } from "../charactersDirectory";
 import type { PreviewPaneActions, PreviewPaneModel } from "../paneModels";
 import CharacterDirectoryScreen from "../screens/CharacterDirectoryScreen";
 import CharacterProfileOverviewScreen from "../screens/CharacterProfileOverviewScreen";
@@ -115,7 +115,7 @@ function getSetupPanelInlineStyle(
 
 export default function PreviewSetupPane({ model, actions }: PreviewSetupPaneProps) {
   const { theme, setup, directory } = model;
-  const [directorySortBy, setDirectorySortBy] = useState<"name" | "level" | "class">("name");
+  const [directorySortBy, setDirectorySortBy] = useState<DirectorySortBy>("name");
 
   // "unset" means no explicit user choice yet — resolve to first world during render.
   // null means user explicitly chose "All worlds".
