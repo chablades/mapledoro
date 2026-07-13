@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import type { AppTheme } from "../../components/themes";
 
 /** Label sitting above a control. Typography comes from `.tool-field-label`;
@@ -42,7 +43,7 @@ export function PanelDivider({ theme }: { theme: AppTheme }) {
 const toggleBase: React.CSSProperties = {
   padding: "8px 16px",
   borderRadius: "10px",
-  fontSize: "0.8rem",
+  fontSize: "0.82rem",
   lineHeight: 1,
   fontWeight: 700,
   cursor: "pointer",
@@ -139,6 +140,72 @@ export function PillGroup<T extends string>({
   );
 }
 
+/** Controlled `type="number"` input that never rewrites the box mid-type.
+ *
+ *  Clamping the box per keystroke desyncs it from state: once state pins at
+ *  `max`, further over-max keystrokes produce identical-state updates that skip
+ *  the re-render, leaving the DOM holding text state never saw and making
+ *  backspace erratic. Instead the box holds the raw keystrokes (`draft`) while
+ *  focused, every commit is clamped to `[min, max]` so downstream math never
+ *  sees an out-of-range value, and blur clears `draft`, snapping the box back
+ *  to the committed value. */
+export function ToolNumberInput({
+  value,
+  min,
+  max,
+  integer = false,
+  onCommit,
+  onCommittedBlur,
+  className = "tool-input",
+  ...inputProps
+}: {
+  value: number;
+  min: number;
+  max?: number;
+  /** Truncate typed decimals, matching the `parseInt` these boxes used before. */
+  integer?: boolean;
+  onCommit: (value: number) => void;
+  /** Runs after the blur commit with the final value (cross-field reconciles). */
+  onCommittedBlur?: (value: number) => void;
+  className?: string;
+} & Omit<
+  React.InputHTMLAttributes<HTMLInputElement>,
+  "value" | "min" | "max" | "type" | "onChange" | "onBlur" | "className"
+>) {
+  const [draft, setDraft] = useState<string | null>(null);
+  const safeValue = Number.isFinite(value) ? value : 0;
+  const clamp = (raw: string) => {
+    const parsed = Number(raw) || 0;
+    const whole = integer ? Math.trunc(parsed) : parsed;
+    return Math.max(min, max === undefined ? whole : Math.min(max, whole));
+  };
+  return (
+    <input
+      type="number"
+      className={className}
+      value={draft ?? String(safeValue)}
+      min={min}
+      max={max}
+      onFocus={(e) => e.currentTarget.select()}
+      {...inputProps}
+      onChange={(e) => {
+        setDraft(e.target.value);
+        // A number input reports partial entries ("2.", or anything mid-edit that
+        // doesn't parse) as "". Committing 0 for those would be wrong; the box
+        // keeps the keystrokes and the blur commit settles it.
+        if (e.target.value === "") return;
+        onCommit(clamp(e.target.value));
+      }}
+      onBlur={(e) => {
+        const next = clamp(e.target.value);
+        setDraft(null);
+        onCommit(next);
+        onCommittedBlur?.(next);
+      }}
+    />
+  );
+}
+
 // Primary call-to-action button: solid accent fill, used for the main action of
 // a tool (Simulate, Calculate, Log a Drop, …). Colors come from the theme; shape
 // is fixed here so every tool's CTA matches.
@@ -147,7 +214,7 @@ const actionBtnBase: React.CSSProperties = {
   borderRadius: "10px",
   border: "1px solid",
   fontFamily: "var(--font-body)",
-  fontSize: "0.85rem",
+  fontSize: "0.82rem",
   fontWeight: 800,
   textAlign: "center",
 };

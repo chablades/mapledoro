@@ -5,8 +5,10 @@ import Image from "next/image";
 import type { AppTheme } from "../../../components/themes";
 import { resourceImageUrl } from "../../../lib/mapleResource";
 import { replaceZeroOnDigit, replaceOneOnDigit } from "../numberInputHandlers";
+import { ToolNumberInput } from "../shared-ui";
 import type { HexaSkillDef, HexaClassDef } from "./hexa-classes";
 import type { SkillCostSummary, SectionCost } from "./useHexaSkillsState";
+import { MAX_SKILL_LEVEL } from "./hexa-costs";
 import { fmtNum } from "./hexa-format";
 
 // ── Skill Icon ───────────────────────────────────────────────────────────────
@@ -33,7 +35,7 @@ const skillNameOverflow: React.CSSProperties = {
 };
 
 const masteryNameStyle: React.CSSProperties = {
-  fontSize: "0.78rem",
+  fontSize: "0.75rem",
   fontWeight: 600,
   lineHeight: 1.4,
   ...skillNameOverflow,
@@ -88,7 +90,7 @@ function SkillIcon({ iconId, iconUrl, name, theme, size = 32 }: { iconId: string
 
 // ── Cost Badge ───────────────────────────────────────────────────────────────
 
-function CostBadge({ cost, theme, compact }: { cost: SkillCostSummary; theme: AppTheme; compact?: boolean }) {
+function CostBadge({ cost, theme }: { cost: SkillCostSummary; theme: AppTheme }) {
   if (cost.solErda === 0 && cost.fragments === 0) {
     return (
       <span style={{ fontSize: "0.75rem", fontWeight: 800, color: theme.accentText }}>
@@ -97,9 +99,9 @@ function CostBadge({ cost, theme, compact }: { cost: SkillCostSummary; theme: Ap
     );
   }
 
-  const fs = compact ? "0.68rem" : "0.75rem";
+  // 0.75rem (12px) is the floor; the old compact 0.68rem read below it.
   return (
-    <span style={{ fontSize: fs, fontWeight: 700, color: theme.muted }}>
+    <span style={{ fontSize: "0.75rem", fontWeight: 700, color: theme.muted }}>
       <span style={{ color: theme.accentText, fontWeight: 800 }}>{fmtNum(cost.solErda)}</span>
       {" Sol Erda  "}
       <span style={{ color: theme.accentText, fontWeight: 800 }}>{fmtNum(cost.fragments)}</span>
@@ -113,18 +115,11 @@ function CostBadge({ cost, theme, compact }: { cost: SkillCostSummary; theme: Ap
 const levelInputOverride: React.CSSProperties = {
   textAlign: "center",
   padding: "4px 4px",
-  fontSize: "0.78rem",
+  fontSize: "0.75rem",
 };
 
-function clampInput(raw: string, min: number, max: number): number {
-  let v = parseInt(raw);
-  if (isNaN(v)) v = min;
-  if (v < min) v = min;
-  if (v > max) v = max;
-  return v;
-}
-
 function LevelInput({
+  skillName,
   value,
   min = 0,
   desiredValue,
@@ -133,6 +128,9 @@ function LevelInput({
   theme,
   inputStyle,
 }: {
+  /** Names the pair of spinbuttons, which otherwise read as two anonymous
+   *  numbers separated by a slash. */
+  skillName: string;
   value: number;
   min?: number;
   desiredValue?: number;
@@ -146,32 +144,40 @@ function LevelInput({
   // Origin starts at level 1, so its resting value is "1"; everything else rests at "0".
   const replaceBaseOnDigit = min === 1 ? replaceOneOnDigit : replaceZeroOnDigit;
 
+  // The two levels are a range: a desired level under the current one has no
+  // cost, which used to render as a spurious "MAXED". Reconcile on blur rather
+  // than per keystroke, using the value the blur just committed — the prop can
+  // be a render behind it.
   return (
     <div style={{ display: "flex", alignItems: "center", gap: "4px", flexShrink: 0 }}>
-      <span style={{ fontSize: "0.75rem", fontWeight: 700, color: theme.muted }}>Lv</span>
-      <input
-        type="number"
+      <span aria-hidden="true" style={{ fontSize: "0.75rem", fontWeight: 700, color: theme.muted }}>Lv</span>
+      <ToolNumberInput
         min={min}
-        max={30}
+        max={MAX_SKILL_LEVEL}
+        integer
         value={value}
-        onFocus={(e) => e.currentTarget.select()}
+        aria-label={`${skillName} current level`}
         onKeyDown={replaceBaseOnDigit}
-        onChange={(e) => onChange(clampInput(e.target.value, min, 30))}
-        className="tool-input"
+        onCommit={onChange}
+        onCommittedBlur={(v) => {
+          if (hasDesired && desiredValue < v) onDesiredChange(v);
+        }}
         style={{ ...inputStyle, ...levelInputOverride, width: w }}
       />
-      {desiredValue !== undefined && onDesiredChange && (
+      {hasDesired && (
         <>
-          <span style={{ fontSize: "0.75rem", fontWeight: 700, color: theme.muted }}>/</span>
-          <input
-            type="number"
+          <span aria-hidden="true" style={{ fontSize: "0.75rem", fontWeight: 700, color: theme.muted }}>/</span>
+          <ToolNumberInput
             min={min}
-            max={30}
+            max={MAX_SKILL_LEVEL}
+            integer
             value={desiredValue}
-            onFocus={(e) => e.currentTarget.select()}
+            aria-label={`${skillName} desired level`}
             onKeyDown={replaceBaseOnDigit}
-            onChange={(e) => onDesiredChange(clampInput(e.target.value, min, 30))}
-            className="tool-input"
+            onCommit={onDesiredChange}
+            onCommittedBlur={(v) => {
+              if (v < value) onDesiredChange(value);
+            }}
             style={{ ...inputStyle, ...levelInputOverride, width: w }}
           />
         </>
@@ -182,8 +188,10 @@ function LevelInput({
 
 // ── Skill Progress Bar ──────────────────────────────────────────────────────
 
-function SkillProgressBar({ level, max = 30, theme }: { level: number; max?: number; theme: AppTheme }) {
-  const pct = max > 0 ? Math.min(100, (level / max) * 100) : 100;
+/** Fill is progress toward the *desired* level, so an untouched skill with no
+ *  target reads as empty rather than complete. */
+function SkillProgressBar({ level, max = MAX_SKILL_LEVEL, theme }: { level: number; max?: number; theme: AppTheme }) {
+  const pct = max > 0 ? Math.min(100, (level / max) * 100) : 0;
   return (
     <div
       style={{
@@ -221,10 +229,10 @@ function SectionHeader({ title, cost, theme }: { title: string; cost?: SkillCost
         marginBottom: "4px",
       }}
     >
-      <div className="section-label" style={{ color: theme.muted, marginBottom: 0 }}>
+      <h2 className="tool-panel-title" style={{ margin: 0, color: theme.text }}>
         {title}
-      </div>
-      {cost && <CostBadge cost={cost} theme={theme} compact />}
+      </h2>
+      {cost && <CostBadge cost={cost} theme={theme} />}
     </div>
   );
 }
@@ -273,10 +281,11 @@ function SkillRow({
         >
           {skill.name}
         </div>
-        <CostBadge cost={cost} theme={theme} compact />
+        <CostBadge cost={cost} theme={theme} />
         <SkillProgressBar level={level} max={desiredLevel} theme={theme} />
       </div>
       <LevelInput
+        skillName={skill.name}
         value={level}
         min={min}
         desiredValue={desiredLevel}
@@ -385,10 +394,11 @@ export function MasterySection({
                 {skillName}
               </div>
             ))}
-            <CostBadge cost={sectionCost.perSkill[i]} theme={theme} compact />
+            <CostBadge cost={sectionCost.perSkill[i]} theme={theme} />
             <SkillProgressBar level={levels[i]} max={desiredLevels?.[i]} theme={theme} />
           </div>
           <LevelInput
+            skillName={node.skills.join(", ")}
             value={levels[i]}
             desiredValue={desiredLevels?.[i]}
             onDesiredChange={onDesiredLevelChange ? (v) => onDesiredLevelChange(i, v) : undefined}

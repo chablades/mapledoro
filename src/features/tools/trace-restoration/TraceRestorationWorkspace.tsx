@@ -6,6 +6,7 @@ import type { CSSProperties } from "react";
 import Image from "next/image";
 import type { AppTheme } from "../../../components/themes";
 import { replaceZeroOnDigit } from "../numberInputHandlers";
+import { ToolNumberInput } from "../shared-ui";
 import { ItemIcon } from "../../../components/ResourceImage";
 import { ToolHeader } from "../../../components/ToolHeader";
 import { SegmentedToggle } from "../../../components/SegmentedToggle";
@@ -160,7 +161,7 @@ function EstimateResult({
     const diffDays = Math.round((result.date.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
     if (diffDays <= 0) {
       return (
-        <span style={{ fontWeight: 700, color: theme.accentText, fontSize: "0.85rem" }}>
+        <span style={{ fontWeight: 700, color: theme.accentText, fontSize: "0.82rem" }}>
           Target reached!
         </span>
       );
@@ -175,14 +176,14 @@ function EstimateResult({
       timeLabel = diffDays === 1 ? "1 day" : `${diffDays} days`;
     }
     return (
-      <span style={{ fontSize: "0.85rem", color: theme.text }}>
+      <span style={{ fontSize: "0.82rem", color: theme.text }}>
         <span style={{ fontWeight: 700 }}>Expected: </span>
         {formatDateShort(result.date)} ({timeLabel})
       </span>
     );
   }
   return (
-    <span style={{ fontSize: "0.85rem", color: theme.muted }}>
+    <span style={{ fontSize: "0.82rem", color: theme.muted }}>
       {emptyMessage}
     </span>
   );
@@ -194,12 +195,14 @@ function EstimateResult({
 
 function TrackerProgressBar({
   theme,
+  label,
   current,
   total,
   remaining,
   progress,
 }: {
   theme: AppTheme;
+  label: string;
   current: string;
   total: string;
   remaining: string;
@@ -216,6 +219,12 @@ function TrackerProgressBar({
         </span>
       </div>
       <div
+        role="progressbar"
+        aria-label={label}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={Math.round(progress * 100)}
+        aria-valuetext={`${current} of ${total}`}
         style={{
           height: 8,
           background: theme.timerBg,
@@ -239,17 +248,10 @@ function TrackerProgressBar({
   );
 }
 
-function panelStyle(theme: AppTheme): CSSProperties {
-  return {
-    background: theme.panel,
-    border: `1px solid ${theme.border}`,
-    borderRadius: 12,
-    padding: "1.25rem",
-    marginBottom: "1.5rem",
-  };
-}
-
 const bossChipBase: CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  minHeight: 34,
   padding: "5px 10px",
   borderRadius: 8,
   fontSize: "0.75rem",
@@ -257,6 +259,9 @@ const bossChipBase: CSSProperties = {
   cursor: "pointer",
   userSelect: "none",
 };
+
+const checkSlotStyle: CSSProperties = { marginRight: "0.35em" };
+const hiddenCheckSlotStyle: CSSProperties = { ...checkSlotStyle, visibility: "hidden" };
 
 function bossChipStyle(theme: AppTheme, active: boolean): CSSProperties {
   return {
@@ -271,6 +276,7 @@ const missionBtnBase: CSSProperties = {
   display: "flex",
   justifyContent: "space-between",
   alignItems: "center",
+  minHeight: 34,
   padding: "5px 8px",
   border: "none",
   borderRadius: 6,
@@ -284,7 +290,7 @@ function missionBtnStyle(theme: AppTheme, active: boolean): CSSProperties {
     ...missionBtnBase,
     background: active ? theme.accentSoft : "transparent",
     color: active ? theme.accentText : theme.text,
-    fontWeight: active ? 700 : 500,
+    fontWeight: active ? 700 : 600,
   };
 }
 
@@ -300,7 +306,7 @@ function presetBtnStyle(theme: AppTheme, primary: boolean): CSSProperties {
     cursor: "pointer",
     border: `1px solid ${primary ? theme.accent : theme.border}`,
     background: primary ? theme.accent : theme.timerBg,
-    color: primary ? "#fff" : theme.text,
+    color: primary ? theme.accentOn : theme.text,
     boxShadow: primary ? `0 2px 6px ${theme.accent}44` : "none",
   };
 }
@@ -344,19 +350,20 @@ function CrystalSection({
   const progress = targetCost > 0 ? Math.min(1, count / targetCost) : 0;
 
   return (
-    <div style={panelStyle(theme)}>
+    <div className="fade-in panel-card" style={styles.sectionPanel}>
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: "1rem" }}>
         <ItemIcon id={iconId} size={24} />
-        <span style={{ fontWeight: 700, color: theme.text, fontSize: "1rem" }}>{title}</span>
+        <h2 className="tool-panel-title" style={{ margin: 0, color: theme.text }}>{title}</h2>
       </div>
 
-      <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem", alignItems: "flex-end", marginBottom: "1.25rem" }}>
+      <div className="tool-control-row" style={{ marginBottom: "1.25rem" }}>
         <div>
           <div className="tool-field-label" style={styles.labelStyle}>Current Count</div>
           <input
             className="tool-input"
             type="number"
             min={0}
+            aria-label={`${title} current count`}
             value={count}
             onFocus={(e) => e.currentTarget.select()}
             onKeyDown={replaceZeroOnDigit}
@@ -369,6 +376,7 @@ function CrystalSection({
             <div className="tool-field-label" style={styles.labelStyle}>Target</div>
             <select
               className="tool-select"
+              aria-label={`${title} target`}
               value={target}
               onChange={(e) => onTargetChange(e.target.value)}
               style={{ ...styles.selectStyle, width: "100%" }}
@@ -384,7 +392,12 @@ function CrystalSection({
         {!targetOptions && (
           <div>
             <div className="tool-field-label" style={styles.labelStyle}>Target</div>
-            <div className="tool-input" style={{ ...styles.inputStyle, background: "transparent", border: "none", padding: 0, fontWeight: 700 }}>
+            {/* Not a control, but it sits in a control row, so it takes the row's
+                pinned height and centers its text to line up with the input. */}
+            <div
+              className="tool-input"
+              style={{ ...styles.inputStyle, background: "transparent", border: "none", padding: 0, fontWeight: 700, display: "flex", alignItems: "center" }}
+            >
               Dawn Boss Set Equipment (65 crystals)
             </div>
           </div>
@@ -393,6 +406,7 @@ function CrystalSection({
 
       <TrackerProgressBar
         theme={theme}
+        label={`${title} progress`}
         current={String(count)}
         total={String(targetCost)}
         remaining={String(remaining)}
@@ -414,7 +428,7 @@ function CrystalSection({
                   onClick={() => onBossToggle(boss.id)}
                   style={bossChipStyle(theme, active)}
                 >
-                  {active ? "✓ " : ""}{boss.name}
+                  <span aria-hidden="true" style={active ? checkSlotStyle : hiddenCheckSlotStyle}>✓</span>{boss.name}
                 </button>
               );
             })}
@@ -435,7 +449,7 @@ function CrystalSection({
                   onClick={() => onBossToggle(boss.id)}
                   style={bossChipStyle(theme, active)}
                 >
-                  {active ? "✓ " : ""}{boss.name}
+                  <span aria-hidden="true" style={active ? checkSlotStyle : hiddenCheckSlotStyle}>✓</span>{boss.name}
                 </button>
               );
             })}
@@ -447,7 +461,6 @@ function CrystalSection({
       <div
         style={{
           background: theme.timerBg,
-          border: `1px solid ${theme.border}`,
           borderRadius: 10,
           padding: "0.75rem 1rem",
         }}
@@ -544,7 +557,7 @@ function BossMissionCard({
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: "0.75rem" }}>
         <Image src={boss.icon} alt="" width={32} height={32} unoptimized className="pixelated-img" />
         <div>
-          <div style={{ fontWeight: 700, color: theme.text, fontSize: "0.85rem" }}>{boss.name}</div>
+          <h3 style={{ margin: 0, fontWeight: 700, color: theme.text, fontSize: "0.82rem" }}>{boss.name}</h3>
           <div style={{ fontSize: "0.75rem", color: theme.muted }}>
             {total}/{boss.maxPoints} pts • {boss.frequency}
           </div>
@@ -561,8 +574,10 @@ function BossMissionCard({
               onClick={() => onToggleMission(mission.id)}
               style={missionBtnStyle(theme, active)}
             >
-              <span>{active ? "✓ " : ""}{mission.description}</span>
-              <span style={{ fontWeight: 800, fontSize: "0.75rem", color: active ? theme.accent : theme.muted }}>
+              <span>
+                <span aria-hidden="true" style={active ? checkSlotStyle : hiddenCheckSlotStyle}>✓</span>{mission.description}
+              </span>
+              <span style={{ fontWeight: 800, fontSize: "0.75rem", color: active ? theme.accentText : theme.muted }}>
                 +{mission.points}
               </span>
             </button>
@@ -624,23 +639,22 @@ function TraceRestorationTab({ theme }: { theme: AppTheme }) {
       `}</style>
 
       {/* Target & progress */}
-      <div style={panelStyle(theme)}>
-        <div style={{ fontWeight: 700, color: theme.text, marginBottom: "1rem", fontSize: "1rem" }}>
+      <div className="fade-in panel-card" style={styles.sectionPanel}>
+        <h2 className="tool-panel-title" style={{ marginBottom: "1rem", color: theme.text }}>
           Restoration Target
-        </div>
+        </h2>
 
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem", alignItems: "flex-end", marginBottom: "1.25rem" }}>
+        <div className="tool-control-row" style={{ marginBottom: "1.25rem" }}>
           <div>
             <div className="tool-field-label" style={styles.labelStyle}>Current Points</div>
-            <input
-              className="tool-input"
-              type="number"
+            <ToolNumberInput
               min={0}
               max={MAX_POINTS_CAP}
+              integer
+              aria-label="Current points"
               value={state.currentPoints}
-              onFocus={(e) => e.currentTarget.select()}
               onKeyDown={replaceZeroOnDigit}
-              onChange={(e) => save({ ...state, currentPoints: Math.min(MAX_POINTS_CAP, Math.max(0, parseInt(e.target.value, 10) || 0)) })}
+              onCommit={(v) => save({ ...state, currentPoints: v })}
               style={{ ...styles.inputStyle, width: 110 }}
             />
           </div>
@@ -648,6 +662,7 @@ function TraceRestorationTab({ theme }: { theme: AppTheme }) {
             <div className="tool-field-label" style={styles.labelStyle}>Target Item</div>
             <select
               className="tool-select"
+              aria-label="Target item"
               value={state.targetItemId}
               onChange={(e) => save({ ...state, targetItemId: e.target.value })}
               style={{ ...styles.selectStyle, width: "100%" }}
@@ -663,6 +678,7 @@ function TraceRestorationTab({ theme }: { theme: AppTheme }) {
 
         <TrackerProgressBar
           theme={theme}
+          label="Restoration progress"
           current={state.currentPoints.toLocaleString()}
           total={targetItem.points.toLocaleString()}
           remaining={remaining.toLocaleString()}
@@ -725,9 +741,9 @@ function TraceRestorationTab({ theme }: { theme: AppTheme }) {
       </div>
 
       {/* Boss mission cards */}
-      <div style={{ fontWeight: 700, color: theme.text, marginBottom: "0.75rem", fontSize: "0.9rem" }}>
+      <h2 className="tool-panel-title" style={{ color: theme.text }}>
         Weekly Missions
-      </div>
+      </h2>
       <div
         style={{
           display: "grid",
@@ -747,9 +763,9 @@ function TraceRestorationTab({ theme }: { theme: AppTheme }) {
         ))}
       </div>
 
-      <div style={{ fontWeight: 700, color: theme.text, marginBottom: "0.75rem", fontSize: "0.9rem" }}>
+      <h2 className="tool-panel-title" style={{ color: theme.text }}>
         Monthly Missions
-      </div>
+      </h2>
       <div
         style={{
           display: "grid",
@@ -790,26 +806,35 @@ export default function TraceRestorationWorkspace({ theme }: { theme: AppTheme }
   if (!mounted) return null;
 
   return (
-    <div className="page-content">
-      <div className="tool-container">
-        <ToolHeader
-          theme={theme}
-          title="Trace Restoration Tracker"
-          description="Track your Star Force Research whisper crystals and Trace Restoration mission progress."
-        />
+    <>
+      <style>{`
+        @media (max-width: 860px) {
+          .segmented-toggle-track { flex-wrap: wrap; }
+        }
+      `}</style>
 
-        <SegmentedToggle
-          theme={theme}
-          options={TAB_OPTIONS}
-          value={tab}
-          labels={TAB_LABELS}
-          sectionPanel={styles.sectionPanel}
-          onChange={setTab}
-        />
+      <div className="page-content">
+        <div className="tool-container">
+          <ToolHeader
+            theme={theme}
+            title="Trace Restoration Tracker"
+            description="Track your Star Force Research whisper crystals and Trace Restoration mission progress."
+          />
 
-        {tab === "research" && <StarForceResearchTab theme={theme} />}
-        {tab === "restoration" && <TraceRestorationTab theme={theme} />}
+          <SegmentedToggle
+            theme={theme}
+            options={TAB_OPTIONS}
+            value={tab}
+            labels={TAB_LABELS}
+            ariaLabel="Tracker section"
+            sectionPanel={styles.sectionPanel}
+            onChange={setTab}
+          />
+
+          {tab === "research" && <StarForceResearchTab theme={theme} />}
+          {tab === "restoration" && <TraceRestorationTab theme={theme} />}
+        </div>
       </div>
-    </div>
+    </>
   );
 }

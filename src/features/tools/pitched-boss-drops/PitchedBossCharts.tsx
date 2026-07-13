@@ -1,8 +1,9 @@
 "use client";
 
-import { panelStyle } from "./pitched-boss-styles";
+import { toolStyles } from "../tool-styles";
 import { useEffect, useState, type ComponentType } from "react";
 import type { AppTheme } from "../../../components/themes";
+import { chartSeriesColor } from "../../../components/chartColors";
 import { DROP_ITEMS_BY_ID } from "./pitched-items";
 
 type ChartComponent = ComponentType<{ data: unknown; options: unknown }>;
@@ -17,19 +18,6 @@ interface PitchedBossDrop {
   timestamp: number;
   note?: string;
 }
-
-const CHART_COLORS = [
-  "#e07840",
-  "#40b040",
-  "#7c6aff",
-  "#e05a5a",
-  "#40b8ff",
-  "#d4a02a",
-  "#d460a0",
-  "#60a060",
-  "#a090dd",
-  "#c08060",
-];
 
 function getLastNMonths(n: number): string[] {
   const months: string[] = [];
@@ -51,7 +39,7 @@ function formatMonth(ym: string): string {
 /*  Chart data builders                                                */
 /* ------------------------------------------------------------------ */
 
-function buildItemBarData(drops: PitchedBossDrop[]) {
+function buildItemBarData(drops: PitchedBossDrop[], theme: AppTheme) {
   const counts = new Map<string, number>();
   for (const drop of drops) {
     counts.set(drop.itemId, (counts.get(drop.itemId) ?? 0) + 1);
@@ -59,7 +47,7 @@ function buildItemBarData(drops: PitchedBossDrop[]) {
   const entries = Array.from(counts.entries())
     .flatMap(([itemId, count]) => {
       const item = DROP_ITEMS_BY_ID.get(itemId);
-      return item ? [{ name: item.name, count }] : [];
+      return item ? [{ itemId, name: item.name, count }] : [];
     })
     .sort((a, b) => b.count - a.count);
 
@@ -69,7 +57,8 @@ function buildItemBarData(drops: PitchedBossDrop[]) {
       {
         label: "Drops",
         data: entries.map((e) => e.count),
-        backgroundColor: entries.map((_, i) => CHART_COLORS[i % CHART_COLORS.length]),
+        // Keyed by item identity, not rank, so a bar keeps its color as counts shift.
+        backgroundColor: entries.map((e) => chartSeriesColor(theme, e.itemId)),
         borderRadius: 6,
         borderSkipped: false,
       },
@@ -77,23 +66,26 @@ function buildItemBarData(drops: PitchedBossDrop[]) {
   };
 }
 
-function buildMonthlyData(drops: PitchedBossDrop[]) {
+function buildMonthlyData(drops: PitchedBossDrop[], theme: AppTheme) {
   const months = getLastNMonths(6);
   const labels = months.map(formatMonth);
   const charNames = Array.from(new Set(drops.map((d) => d.characterName)));
 
-  const datasets = charNames.map((name, i) => ({
-    label: name,
-    data: months.map(
-      (month) => drops.filter((d) => d.characterName === name && d.date.startsWith(month)).length,
-    ),
-    borderColor: CHART_COLORS[i % CHART_COLORS.length],
-    backgroundColor: CHART_COLORS[i % CHART_COLORS.length],
-    tension: 0.25,
-    pointRadius: 4,
-    pointHoverRadius: 6,
-    borderWidth: 2.5,
-  }));
+  const datasets = charNames.map((name) => {
+    const color = chartSeriesColor(theme, name);
+    return {
+      label: name,
+      data: months.map(
+        (month) => drops.filter((d) => d.characterName === name && d.date.startsWith(month)).length,
+      ),
+      borderColor: color,
+      backgroundColor: color,
+      tension: 0.25,
+      pointRadius: 4,
+      pointHoverRadius: 6,
+      borderWidth: 2.5,
+    };
+  });
 
   return { labels, datasets };
 }
@@ -141,13 +133,6 @@ function lineOptions(theme: AppTheme) {
 /*  Component                                                          */
 /* ------------------------------------------------------------------ */
 
-const chartTitleStyle = (theme: AppTheme): React.CSSProperties => ({
-  fontWeight: 700,
-  color: theme.text,
-  marginBottom: "0.85rem",
-  fontSize: "0.95rem",
-});
-
 export default function PitchedBossCharts({
   theme,
   drops,
@@ -192,15 +177,15 @@ export default function PitchedBossCharts({
 
   return (
     <>
-      <div style={panelStyle(theme)}>
-        <div style={chartTitleStyle(theme)}>Drops by Item</div>
+      <div className="fade-in panel-card" style={toolStyles(theme).sectionPanel}>
+        <h2 className="tool-panel-title" style={{ color: theme.text }}>Drops by Item</h2>
         <div style={{ height: barHeight }}>
-          <Bar data={buildItemBarData(drops)} options={barOptions(theme)} />
+          <Bar data={buildItemBarData(drops, theme)} options={barOptions(theme)} />
         </div>
       </div>
-      <div style={panelStyle(theme)}>
-        <div style={chartTitleStyle(theme)}>Monthly Drops by Character</div>
-        <Line data={buildMonthlyData(drops)} options={lineOptions(theme)} />
+      <div className="fade-in panel-card" style={toolStyles(theme).sectionPanel}>
+        <h2 className="tool-panel-title" style={{ color: theme.text }}>Monthly Drops by Character</h2>
+        <Line data={buildMonthlyData(drops, theme)} options={lineOptions(theme)} />
       </div>
     </>
   );

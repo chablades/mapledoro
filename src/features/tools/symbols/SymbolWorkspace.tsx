@@ -1,26 +1,17 @@
 "use client";
 
-// react-doctor-disable-next-line react-doctor/prefer-dynamic-import
-import { Line } from "react-chartjs-2";
-// react-doctor-disable-next-line react-doctor/prefer-dynamic-import
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Tooltip,
-  Legend,
-  type ChartOptions,
-} from "chart.js";
-import type { AppTheme } from "../../../components/themes";
+import { useEffect, useId, useMemo, useState, type ComponentType } from "react";
+import type { ChartOptions } from "chart.js";
+import { alpha, type AppTheme } from "../../../components/themes";
+import { statusText } from "../../../components/statusColors";
 import { replaceZeroOnDigit } from "../numberInputHandlers";
 import { ToolHeader } from "../../../components/ToolHeader";
 import { ItemIcon } from "../../../components/ResourceImage";
 import { CharacterSyncPanel } from "../../../components/CharacterSyncPanel";
 import { SegmentedToggle } from "../../../components/SegmentedToggle";
+import { ProgressBar } from "../../../components/ProgressBar";
 import { toolStyles } from "../tool-styles";
-import { PanelDivider } from "../shared-ui";
+import { PanelDivider, ToolNumberInput } from "../shared-ui";
 import { ConfirmButton } from "../../../components/ConfirmButton";
 import { utcDateStr } from "../date";
 import {
@@ -36,66 +27,69 @@ import {
   type SymbolStats,
 } from "./useSymbolState";
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend);
-
 // -- Constants ----------------------------------------------------------------
 
 const DAILY_EVENT_BONUS = 6;
 
-// Grand Sacred Symbols get a violet-tinted card to set them apart from regular
-// Sacred Symbols. Translucent over the panel so it reads on both light and dark.
-const GRAND_CARD_BG = "rgba(139, 92, 246, 0.13)";
-const GRAND_CARD_BORDER = "rgba(139, 92, 246, 0.45)";
+// Grand Sacred Symbols take the accent's own soft surface rather than a fixed
+// violet, which read as a foreign color on the themes that aren't blue-purple.
+// They stay distinguishable from a maxed card, which is marked on the border.
 
 // -- Helpers ------------------------------------------------------------------
+
+// Hoisted: chart.js calls addDays from its axis-tick and tooltip callbacks on
+// every draw and hover frame, and building an Intl.DateTimeFormat is the
+// expensive half of toLocaleDateString.
+const DATE_FORMAT = new Intl.DateTimeFormat("en-US", {
+  year: "numeric",
+  month: "short",
+  day: "numeric",
+  timeZone: "UTC",
+});
 
 function addDays(days: number): string {
   const d = new Date(utcDateStr() + "T00:00:00Z");
   d.setUTCDate(d.getUTCDate() + days);
-  return d.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    timeZone: "UTC",
-  });
+  return DATE_FORMAT.format(d);
 }
 
 // -- Symbol Card: Header ------------------------------------------------------
 
 function SymbolCardHeader({
   area,
-  state,
   days,
   isMaxed,
-  isTracked,
-  isSacred,
+  isLocked,
   theme,
-  updateSymbol,
 }: {
   area: SymbolArea;
-  state: SymbolState;
   days: number;
   isMaxed: boolean;
-  isTracked: boolean;
-  isSacred: boolean;
+  isLocked: boolean;
   theme: AppTheme;
-  updateSymbol: (areaName: string, patch: Partial<SymbolState>) => void;
 }) {
-  const trackBtnStyle: React.CSSProperties = {
-    cursor: "pointer",
-    color: isTracked ? theme.accentText : theme.muted,
-    background: isTracked ? theme.accentSoft : "transparent",
-    border: `1px solid ${isTracked ? theme.accent + "44" : theme.border}`,
-  };
+  // `accentOn` on an accent fill, `accentText` on the soft tint. Bright accents
+  // (Ludibrium, Juno) take dark ink, so neither can be a hardcoded white.
   let badgeColor: string;
-  if (isMaxed) badgeColor = "#fff";
-  else if (days === Infinity) badgeColor = "#e05a5a";
-  else badgeColor = theme.accent;
+  if (isMaxed) badgeColor = theme.accentOn;
+  else if (days === Infinity) badgeColor = statusText(theme, "danger");
+  else badgeColor = theme.accentText;
 
   const daysBadgeStyle: React.CSSProperties = {
     color: badgeColor,
     background: isMaxed ? theme.accent : theme.accentSoft,
   };
+
+  const lockedBadgeStyle: React.CSSProperties = {
+    color: theme.muted,
+    background: "transparent",
+    border: `1px solid ${theme.border}`,
+  };
+
+  let badgeLabel: string;
+  if (isMaxed) badgeLabel = "MAX";
+  else if (days === Infinity) badgeLabel = "--";
+  else badgeLabel = `~${days}d`;
 
   return (
     <div
@@ -109,7 +103,7 @@ function SymbolCardHeader({
       <ItemIcon
         id={area.itemId}
         size={38}
-        alt={area.name}
+        alt=""
         style={{
           borderRadius: "8px",
           flexShrink: 0,
@@ -119,15 +113,16 @@ function SymbolCardHeader({
         }}
       />
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div
+        <h3
           style={{
             fontFamily: "var(--font-heading)",
             fontSize: "0.9rem",
+            margin: 0,
             color: theme.text,
           }}
         >
           {area.name}
-        </div>
+        </h3>
         <div
           style={{
             fontSize: "0.75rem",
@@ -139,28 +134,15 @@ function SymbolCardHeader({
         </div>
       </div>
 
-      {isSacred && (
-        <button
-          type="button"
-          className="btn-reset sym-btn tool-chip-btn"
-          onClick={() => updateSymbol(area.name, { enabled: !state.enabled })}
-          style={trackBtnStyle}
-        >
-          {isTracked ? "Tracking" : "Not tracking"}
-        </button>
+      {isLocked ? (
+        <div className="tool-badge" style={lockedBadgeStyle}>
+          LOCKED
+        </div>
+      ) : (
+        <div className="tool-badge" style={daysBadgeStyle}>
+          {badgeLabel}
+        </div>
       )}
-
-      {(!isSacred || isTracked) && (() => {
-        let badgeLabel: string;
-        if (isMaxed) badgeLabel = "MAX";
-        else if (days === Infinity) badgeLabel = "--";
-        else badgeLabel = `~${days}d`;
-        return (
-          <div className="tool-badge" style={daysBadgeStyle}>
-            {badgeLabel}
-          </div>
-        );
-      })()}
     </div>
   );
 }
@@ -188,6 +170,23 @@ function SymbolLevelControls({
   theme: AppTheme;
   updateSymbol: (areaName: string, patch: Partial<SymbolState>) => void;
 }) {
+  const uid = useId();
+  const levelId = `${uid}-level`;
+  const currentId = `${uid}-current`;
+  const subLabel: React.CSSProperties = {
+    display: "block",
+    fontSize: "0.75rem",
+    fontWeight: 700,
+    color: theme.muted,
+    marginBottom: "3px",
+  };
+  const compactInput: React.CSSProperties = {
+    ...inputStyle,
+    textAlign: "center",
+    padding: "4px 6px",
+    fontSize: "0.75rem",
+  };
+
   return (
     <div
       style={{
@@ -195,36 +194,18 @@ function SymbolLevelControls({
         gap: "0.5rem",
         alignItems: "center",
         marginBottom: "0.5rem",
-        opacity: disabled ? 0.4 : 1,
-        transition: "opacity 0.15s",
       }}
     >
       <div style={{ flex: "0 0 auto" }}>
-        <div
-          style={{
-            fontSize: "0.75rem",
-            fontWeight: 700,
-            color: theme.muted,
-            marginBottom: "3px",
-          }}
-        >
-          Level
-        </div>
+        <label htmlFor={levelId} style={subLabel}>Level</label>
         <select
-          className="tool-input"
+          id={levelId}
+          className="tool-select"
+          aria-label={`${area.name} symbol level`}
           value={state.level}
           disabled={disabled}
-          onChange={(e) => {
-            const newLevel = Number(e.target.value);
-            updateSymbol(area.name, { level: newLevel, current: 0 });
-          }}
-          style={{
-            ...inputStyle,
-            width: "70px",
-            cursor: disabled ? "not-allowed" : "pointer",
-            padding: "4px 6px",
-            fontSize: "0.78rem",
-          }}
+          onChange={(e) => updateSymbol(area.name, { level: Number(e.target.value), current: 0 })}
+          style={{ ...compactInput, width: "70px", cursor: disabled ? "not-allowed" : "pointer" }}
         >
           {Array.from({ length: maxLevel }, (_, i) => i + 1).map((lvl) => (
             <option key={lvl} value={lvl}>
@@ -236,54 +217,21 @@ function SymbolLevelControls({
 
       {!isMaxed && (
         <div style={{ flex: 1 }}>
-          <div
-            style={{
-              fontSize: "0.75rem",
-              fontWeight: 700,
-              color: theme.muted,
-              marginBottom: "3px",
-            }}
-          >
-            Current / Needed
-          </div>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "4px",
-            }}
-          >
-            <input
-              className="tool-input"
-              type="number"
+          <label htmlFor={currentId} style={subLabel}>Current / Needed</label>
+          <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+            <ToolNumberInput
+              id={currentId}
               min={0}
               max={levelMax}
+              integer
+              aria-label={`${area.name} symbols collected toward the next level`}
               value={state.current}
               disabled={disabled}
-              onFocus={(e) => e.currentTarget.select()}
               onKeyDown={replaceZeroOnDigit}
-              onChange={(e) => {
-                let v = parseInt(e.target.value) || 0;
-                if (v < 0) v = 0;
-                if (v > levelMax) v = levelMax;
-                updateSymbol(area.name, { current: v });
-              }}
-              style={{
-                ...inputStyle,
-                width: "64px",
-                textAlign: "center",
-                padding: "4px 6px",
-                fontSize: "0.78rem",
-                cursor: disabled ? "not-allowed" : "text",
-              }}
+              onCommit={(v) => updateSymbol(area.name, { current: v })}
+              style={{ ...compactInput, width: "64px" }}
             />
-            <span
-              style={{
-                fontSize: "0.78rem",
-                fontWeight: 700,
-                color: theme.muted,
-              }}
-            >
+            <span style={{ fontSize: "0.75rem", fontWeight: 700, color: theme.muted }}>
               / {levelMax.toLocaleString()}
             </span>
           </div>
@@ -329,6 +277,7 @@ function SymbolIncomeControls({
   theme: AppTheme;
   updateSymbol: (areaName: string, patch: Partial<SymbolState>) => void;
 }) {
+  const dailyId = useId();
   return (
     <div
       style={{
@@ -336,8 +285,6 @@ function SymbolIncomeControls({
         gap: "0.75rem",
         alignItems: "center",
         marginBottom: "0.6rem",
-        opacity: disabled ? 0.4 : 1,
-        transition: "opacity 0.15s",
       }}
     >
       <div
@@ -347,7 +294,8 @@ function SymbolIncomeControls({
           gap: "4px",
         }}
       >
-        <span
+        <label
+          htmlFor={dailyId}
           style={{
             fontSize: "0.75rem",
             fontWeight: 700,
@@ -355,22 +303,17 @@ function SymbolIncomeControls({
           }}
         >
           Daily
-        </span>
-        <input
-          type="number"
+        </label>
+        <ToolNumberInput
+          id={dailyId}
           min={0}
-          className="tool-input"
           max={dailyMax}
+          integer
+          aria-label={`${area.name} symbols earned per day`}
           value={state.daily}
           disabled={disabled}
-          onFocus={(e) => e.currentTarget.select()}
           onKeyDown={replaceZeroOnDigit}
-          onChange={(e) => {
-            let v = parseInt(e.target.value) || 0;
-            if (v < 0) v = 0;
-            if (v > dailyMax) v = dailyMax;
-            updateSymbol(area.name, { daily: v });
-          }}
+          onCommit={(v) => updateSymbol(area.name, { daily: v })}
           style={{
             ...inputStyle,
             width: "52px",
@@ -385,18 +328,18 @@ function SymbolIncomeControls({
       {!isSacred && (
         <button
           type="button"
-          className="btn-reset sym-btn"
+          className="btn-reset sym-btn tool-chip-btn"
+          aria-pressed={state.weeklyEnabled}
+          aria-label={`${area.name} weekly dungeon symbols`}
+          disabled={disabled}
           onClick={() =>
             updateSymbol(area.name, { weeklyEnabled: !state.weeklyEnabled })
           }
           style={{
-            padding: "4px 10px",
-            borderRadius: "8px",
-            fontSize: "0.75rem",
-            fontWeight: 800,
+            cursor: disabled ? "not-allowed" : "pointer",
             color: state.weeklyEnabled ? theme.accentText : theme.muted,
             background: state.weeklyEnabled ? theme.accentSoft : "transparent",
-            border: `1px solid ${state.weeklyEnabled ? theme.accent + "44" : theme.border}`,
+            border: `1px solid ${state.weeklyEnabled ? alpha(theme.accent, 0.27) : theme.border}`,
           }}
         >
           Weekly {state.weeklyEnabled ? "120" : "OFF"}
@@ -415,7 +358,7 @@ function SymbolCard({
   consumed,
   levelMax,
   isMaxed,
-  isTracked,
+  isUnlocked,
   type,
   maxLevel,
   totalForOneArea,
@@ -429,7 +372,7 @@ function SymbolCard({
   consumed: number;
   levelMax: number;
   isMaxed: boolean;
-  isTracked: boolean;
+  isUnlocked: boolean;
   type: SymbolType;
   maxLevel: number;
   totalForOneArea: number;
@@ -445,11 +388,11 @@ function SymbolCard({
   const isSacred = type === "sacred";
   const isGrand = isSacred && isGrandSacredArea(area);
   const dailyMax = area.daily + DAILY_EVENT_BONUS;
-  const disabledSacred = isSacred && !isTracked;
+  const isLocked = !isUnlocked;
 
   let cardBorderColor: string;
-  if (isMaxed && isTracked) cardBorderColor = theme.accent + "55";
-  else if (isGrand) cardBorderColor = GRAND_CARD_BORDER;
+  if (isMaxed && isUnlocked) cardBorderColor = alpha(theme.accent, 0.33);
+  else if (isGrand) cardBorderColor = alpha(theme.accent, 0.5);
   else cardBorderColor = theme.border;
 
   const levelBarContainerStyle: React.CSSProperties = {
@@ -459,8 +402,6 @@ function SymbolCard({
     border: `1px solid ${theme.border}`,
     overflow: "hidden",
     marginBottom: "0.6rem",
-    opacity: disabledSacred ? 0.4 : 1,
-    transition: "opacity 0.15s",
   };
 
   const areaProgressStyle: React.CSSProperties = {
@@ -470,37 +411,32 @@ function SymbolCard({
     fontSize: "0.75rem",
     fontWeight: 700,
     color: theme.muted,
-    opacity: disabledSacred ? 0.4 : 1,
-    transition: "opacity 0.15s",
   };
 
   return (
     <div
       style={{
-        background: isGrand ? GRAND_CARD_BG : theme.timerBg,
+        background: isGrand ? theme.accentSoft : theme.timerBg,
         border: `1px solid ${cardBorderColor}`,
         borderRadius: "14px",
         padding: "1rem",
         transition: "border-color 0.15s, opacity 0.15s",
-        opacity: disabledSacred ? 0.5 : 1,
+        opacity: isLocked ? 0.55 : 1,
       }}
     >
       <SymbolCardHeader
         area={area}
-        state={state}
         days={days}
         isMaxed={isMaxed}
-        isTracked={isTracked}
-        isSacred={isSacred}
+        isLocked={isLocked}
         theme={theme}
-        updateSymbol={updateSymbol}
       />
 
       <SymbolLevelControls
         area={area}
         state={state}
         isMaxed={isMaxed}
-        disabled={disabledSacred}
+        disabled={isLocked}
         maxLevel={maxLevel}
         levelMax={levelMax}
         inputStyle={inputStyle}
@@ -508,46 +444,53 @@ function SymbolCard({
         updateSymbol={updateSymbol}
       />
 
-      {/* Level progress bar */}
-      {!isMaxed && (
-        <div style={levelBarContainerStyle}>
-          <div
-            style={{
-              height: "100%",
-              width: "100%",
-              background: theme.accent,
-              borderRadius: "3px",
-              transition: "transform 0.25s ease",
-              transformOrigin: "left",
-              transform: `scaleX(${levelPct / 100})`,
-            }}
-          />
-        </div>
-      )}
-
-      {!isMaxed && (
-        <SymbolIncomeControls
-          area={area}
-          state={state}
-          disabled={disabledSacred}
-          isSacred={isSacred}
-          dailyMax={dailyMax}
-          inputStyle={inputStyle}
-          theme={theme}
-          updateSymbol={updateSymbol}
+      {/* Level progress bar. Always rendered (full at max) so completing a
+          symbol fills the bar instead of collapsing the card's height. Not the
+          shared <ProgressBar>: this one sits on the card surface, so its track
+          takes `panel` rather than the component's fixed `timerBg`. */}
+      <div
+        role="progressbar"
+        aria-label={`${area.name} progress to the next symbol level`}
+        aria-valuenow={Math.round(levelPct)}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        style={levelBarContainerStyle}
+      >
+        <div
+          style={{
+            height: "100%",
+            width: "100%",
+            background: theme.accent,
+            borderRadius: "3px",
+            transition: "transform 0.25s ease",
+            transformOrigin: "left",
+            transform: `scaleX(${levelPct / 100})`,
+          }}
         />
-      )}
+      </div>
+
+      <SymbolIncomeControls
+        area={area}
+        state={state}
+        disabled={isLocked || isMaxed}
+        isSacred={isSacred}
+        dailyMax={dailyMax}
+        inputStyle={inputStyle}
+        theme={theme}
+        updateSymbol={updateSymbol}
+      />
 
       {/* Overall area progress + completion */}
       <div style={areaProgressStyle}>
         <span>{areaPct.toFixed(1)}% complete</span>
-        {!isMaxed && isTracked && days !== Infinity && (
+        {isLocked && <span>Requires Lv. {area.requiredLevel}</span>}
+        {!isLocked && !isMaxed && days !== Infinity && (
           <span style={{ color: theme.accentText, fontWeight: 800 }}>
             {addDays(days)}
           </span>
         )}
-        {!isMaxed && isTracked && days === Infinity && (
-          <span style={{ color: "#e05a5a", fontWeight: 800 }}>
+        {!isLocked && !isMaxed && days === Infinity && (
+          <span style={{ color: statusText(theme, "danger"), fontWeight: 800 }}>
             No income set
           </span>
         )}
@@ -565,7 +508,7 @@ function OverallProgressPanel({
   theme: AppTheme;
   stats: SymbolStats;
 }) {
-  const { noneTracked, totalConsumed, totalSymbolsNeeded, overallPct, allMaxed, anyInfinite, maxDaysVal } = stats;
+  const { noneUnlocked, totalConsumed, totalSymbolsNeeded, overallPct, allMaxed, anyInfinite, maxDaysVal } = stats;
 
   return (
     <>
@@ -577,40 +520,20 @@ function OverallProgressPanel({
           marginBottom: "8px",
         }}
       >
-        <div className="section-label" style={{ color: theme.muted }}>Overall Progress</div>
+        <h2 className="tool-panel-title" style={{ margin: 0, color: theme.text }}>Overall Progress</h2>
         <div
           style={{
-            fontSize: "0.78rem",
+            fontSize: "0.75rem",
             fontWeight: 800,
             color: theme.accentText,
           }}
         >
-          {noneTracked
-            ? "No symbols tracked"
+          {noneUnlocked
+            ? "No symbols unlocked"
             : `${totalConsumed.toLocaleString()} / ${totalSymbolsNeeded.toLocaleString()} symbols`}
         </div>
       </div>
-      <div
-        style={{
-          height: "12px",
-          borderRadius: "6px",
-          background: theme.timerBg,
-          border: `1px solid ${theme.border}`,
-          overflow: "hidden",
-        }}
-      >
-        <div
-          style={{
-            height: "100%",
-            width: "100%",
-            background: theme.accent,
-            borderRadius: "6px",
-            transition: "transform 0.35s ease",
-            transformOrigin: "left",
-            transform: `scaleX(${overallPct / 100})`,
-          }}
-        />
-      </div>
+      <ProgressBar pct={overallPct} theme={theme} label="Overall symbol progress" />
       <div
         style={{
           display: "flex",
@@ -623,13 +546,13 @@ function OverallProgressPanel({
       >
         <span>
           {(() => {
-            if (noneTracked) return "Select symbols below to start tracking";
+            if (noneUnlocked) return "This character has not reached any symbol area yet";
             if (allMaxed) return "All symbols maxed!";
             if (anyInfinite) return "Set daily symbols to estimate completion";
             return `All maxed in ~${maxDaysVal} days (${addDays(maxDaysVal)})`;
           })()}
         </span>
-        <span>{noneTracked ? "" : `${overallPct.toFixed(1)}%`}</span>
+        <span>{noneUnlocked ? "" : `${overallPct.toFixed(1)}%`}</span>
       </div>
     </>
   );
@@ -641,33 +564,24 @@ function CompletionSummaryPanel({
   theme,
   sectionPanel,
   stats,
-  type,
 }: {
   theme: AppTheme;
   sectionPanel: React.CSSProperties;
   stats: SymbolStats;
-  type: SymbolType;
 }) {
-  const { tracked, noneTracked, allMaxed, anyInfinite, maxDaysVal } = stats;
-  const incomplete = tracked.filter((p) => !p.isMaxed);
+  const { unlocked, noneUnlocked, allMaxed, anyInfinite, maxDaysVal } = stats;
+  const incomplete = unlocked.filter((p) => !p.isMaxed);
 
   return (
     <div
       className="fade-in panel-card"
       style={{ ...sectionPanel, marginBottom: "1.25rem" }}
     >
-      <div
-        style={{
-          fontFamily: "var(--font-heading)",
-          fontSize: "1.15rem",
-          color: theme.text,
-          marginBottom: "1rem",
-        }}
-      >
+      <h2 className="tool-panel-title" style={{ marginBottom: "1rem", color: theme.text }}>
         Completion Summary
-      </div>
+      </h2>
 
-      {noneTracked && (
+      {noneUnlocked && (
         <div
           style={{
             fontSize: "0.82rem",
@@ -678,27 +592,25 @@ function CompletionSummaryPanel({
             padding: "1rem 0",
           }}
         >
-          {type === "sacred"
-            ? "Enable symbols above to see completion estimates."
-            : "No symbols to track."}
+          Level up to unlock these symbols and see completion estimates.
         </div>
       )}
 
-      {!noneTracked && incomplete.length === 0 && (
+      {!noneUnlocked && incomplete.length === 0 && (
         <div
           style={{
-            fontSize: "0.88rem",
+            fontSize: "0.9rem",
             fontWeight: 700,
             color: theme.accentText,
             textAlign: "center",
             padding: "1rem 0",
           }}
         >
-          All {type === "arcane" ? "Arcane" : "tracked Sacred"} Symbols are maxed!
+          Every unlocked symbol is maxed!
         </div>
       )}
 
-      {!noneTracked && incomplete.length > 0 && (
+      {!noneUnlocked && incomplete.length > 0 && (
         <>
           {incomplete
             .toSorted((a, b) => {
@@ -733,7 +645,7 @@ function CompletionSummaryPanel({
                 </span>
                 <span
                   style={{
-                    color: days === Infinity ? "#e05a5a" : theme.accent,
+                    color: days === Infinity ? statusText(theme, "danger") : theme.accentText,
                     fontWeight: 800,
                   }}
                 >
@@ -763,7 +675,7 @@ function CompletionSummaryPanel({
               style={{
                 fontFamily: "var(--font-heading)",
                 fontSize: "1rem",
-                color: anyInfinite ? "#e05a5a" : theme.accent,
+                color: anyInfinite ? statusText(theme, "danger") : theme.accentText,
               }}
             >
               {(() => {
@@ -781,10 +693,19 @@ function CompletionSummaryPanel({
 
 // -- Completion Timeline Chart ------------------------------------------------
 
-const TIMELINE_COLORS = [
-  "#e07840", "#40b040", "#7c6aff", "#e05a5a", "#40b8ff",
-  "#d4a02a", "#d460a0", "#60a060", "#a090dd", "#c08060",
-];
+// Categorical series colors, per color mode. Each clears 3:1 against its own
+// mode's panel (WCAG 1.4.11, non-text), and the hues stay distinguishable in
+// order. Ten entries covers every area; an eleventh would wrap and collide.
+const TIMELINE_COLORS: Record<"light" | "dark", string[]> = {
+  light: [
+    "#b45309", "#15803d", "#5b46d9", "#be123c", "#0369a1",
+    "#a16207", "#a21caf", "#3f6212", "#6d28d9", "#9a3412",
+  ],
+  dark: [
+    "#f0954a", "#4ecb62", "#9d8bff", "#f2707a", "#5cc4f5",
+    "#e0b64a", "#e884cf", "#9dc46a", "#b8a6f0", "#e39a72",
+  ],
+};
 
 function computeLevelDays(
   state: SymbolState,
@@ -808,6 +729,8 @@ function computeLevelDays(
   return points;
 }
 
+type LineChartComponent = ComponentType<{ data: unknown; options: unknown }>;
+
 function CompletionTimelineChart({
   theme,
   sectionPanel,
@@ -823,20 +746,49 @@ function CompletionTimelineChart({
   maxLevel: number;
   type: SymbolType;
 }) {
+  // chart.js and react-chartjs-2 are ~180 KB and this panel is often absent
+  // (nothing tracked, or nothing with income). Load them only once it renders,
+  // matching StarForceWorkspace's HistogramPanel and PitchedBossCharts.
+  const [Line, setLine] = useState<LineChartComponent | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    async function loadChart() {
+      const [chartModule, lineModule] = await Promise.all([
+        import("chart.js"),
+        import("react-chartjs-2"),
+      ]);
+      chartModule.Chart.register(
+        chartModule.CategoryScale,
+        chartModule.LinearScale,
+        chartModule.PointElement,
+        chartModule.LineElement,
+        chartModule.Tooltip,
+        chartModule.Legend,
+      );
+      if (alive) setLine(() => lineModule.Line as LineChartComponent);
+    }
+    loadChart();
+    return () => {
+      alive = false;
+    };
+  }, []);
+
   const series: { name: string; points: ReturnType<typeof computeLevelDays> }[] = [];
-  for (const p of stats.tracked) {
+  for (const p of stats.unlocked) {
     if (p.isMaxed || p.days === Infinity) continue;
     const points = computeLevelDays(p.state, growth, maxLevel, type);
     if (points.length > 1) series.push({ name: p.area.name, points });
   }
 
   const maxDay = Math.max(...series.flatMap((s) => s.points.map((p) => p.day)), 1);
+  const palette = TIMELINE_COLORS[theme.colorMode];
 
   const datasets = series.map((s, i) => ({
     label: s.name,
     data: s.points.map((p) => ({ x: p.day, y: p.level })),
-    borderColor: TIMELINE_COLORS[i % TIMELINE_COLORS.length],
-    backgroundColor: TIMELINE_COLORS[i % TIMELINE_COLORS.length],
+    borderColor: palette[i % palette.length],
+    backgroundColor: palette[i % palette.length],
     tension: 0.2,
     pointRadius: 3,
     pointHoverRadius: 5,
@@ -845,7 +797,10 @@ function CompletionTimelineChart({
 
   const chartData = { datasets };
 
-  const options: ChartOptions<"line"> = {
+  // react-chartjs-2 watches `options` by reference: a fresh object each render
+  // makes it reassign chart.options and re-lay-out both scales even when only a
+  // daily count changed. These three inputs hold steady across most edits.
+  const options: ChartOptions<"line"> = useMemo(() => ({
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
@@ -885,16 +840,15 @@ function CompletionTimelineChart({
         title: { display: true, text: "Level", color: theme.muted, font: { size: 12 } },
       },
     },
-  };
+  }), [theme.muted, theme.border, maxDay, maxLevel]);
 
   if (series.length === 0) return null;
 
   return (
-    <div className="fade-in panel-card" style={{ ...sectionPanel, marginBottom: "1.25rem" }}>
-      <div
+    <section className="fade-in panel-card" style={{ ...sectionPanel, marginBottom: "1.25rem" }}>
+      <h2
+        className="tool-panel-title"
         style={{
-          fontFamily: "var(--font-heading)",
-          fontSize: "1.15rem",
           color: theme.text,
           marginBottom: "1rem",
           paddingBottom: "0.8rem",
@@ -902,11 +856,11 @@ function CompletionTimelineChart({
         }}
       >
         Completion Timeline
-      </div>
+      </h2>
       <div style={{ position: "relative", height: 300 }}>
-        <Line data={chartData} options={options} />
+        {Line && <Line data={chartData} options={options} />}
       </div>
-    </div>
+    </section>
   );
 }
 
@@ -936,7 +890,6 @@ export default function SymbolWorkspace({ theme }: { theme: AppTheme }) {
       <style>{`
         .sym-btn { transition: background 0.15s, transform 0.1s; cursor: pointer; user-select: none; }
         @media (max-width: 860px) {
-          .sym-grid { grid-template-columns: 1fr !important; }
           .sym-controls .segmented-toggle-track { margin-left: 0 !important; flex: 1 1 100%; }
         }
       `}</style>
@@ -973,6 +926,7 @@ export default function SymbolWorkspace({ theme }: { theme: AppTheme }) {
                 options={["arcane", "sacred"] as const}
                 value={type}
                 labels={{ arcane: "Arcane Symbols", sacred: "Sacred Symbols" }}
+                ariaLabel="Symbol type"
                 trackStyle={{ flexShrink: 0, marginLeft: "auto" }}
                 btnClassName="sym-btn"
                 onChange={switchType}
@@ -983,7 +937,7 @@ export default function SymbolWorkspace({ theme }: { theme: AppTheme }) {
           </div>
 
           {/* Symbol Cards */}
-          <div className="fade-in panel-card" style={styles.sectionPanel}>
+          <section className="fade-in panel-card" style={styles.sectionPanel}>
             <div
               style={{
                 display: "flex",
@@ -993,9 +947,9 @@ export default function SymbolWorkspace({ theme }: { theme: AppTheme }) {
                 marginBottom: "1rem",
               }}
             >
-              <div className="section-label" style={{ color: theme.muted, marginBottom: 0 }}>
+              <h2 className="tool-panel-title" style={{ margin: 0, color: theme.text }}>
                 {type === "arcane" ? "Arcane River" : "Grandis"} Symbols
-              </div>
+              </h2>
               <div style={{ marginLeft: "auto" }}>
                 <ConfirmButton
                   theme={theme}
@@ -1007,15 +961,8 @@ export default function SymbolWorkspace({ theme }: { theme: AppTheme }) {
               </div>
             </div>
 
-            <div
-              className="sym-grid"
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-                gap: "0.75rem",
-              }}
-            >
-              {stats.perSymbol.map(({ area, state, days, levelMax, isMaxed, isTracked, consumed }) => (
+            <div className="tool-card-grid">
+              {stats.perSymbol.map(({ area, state, days, levelMax, isMaxed, isUnlocked, consumed }) => (
                 <SymbolCard
                   key={area.name}
                   area={area}
@@ -1024,7 +971,7 @@ export default function SymbolWorkspace({ theme }: { theme: AppTheme }) {
                   consumed={consumed}
                   levelMax={levelMax}
                   isMaxed={isMaxed}
-                  isTracked={isTracked}
+                  isUnlocked={isUnlocked}
                   type={type}
                   maxLevel={maxLevel}
                   totalForOneArea={stats.totalForOneArea}
@@ -1034,9 +981,9 @@ export default function SymbolWorkspace({ theme }: { theme: AppTheme }) {
                 />
               ))}
             </div>
-          </div>
+          </section>
 
-          <CompletionSummaryPanel theme={theme} sectionPanel={styles.sectionPanel} stats={stats} type={type} />
+          <CompletionSummaryPanel theme={theme} sectionPanel={styles.sectionPanel} stats={stats} />
 
           <CompletionTimelineChart theme={theme} sectionPanel={styles.sectionPanel} stats={stats} growth={growth} maxLevel={maxLevel} type={type} />
         </div>

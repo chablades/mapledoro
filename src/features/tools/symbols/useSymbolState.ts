@@ -11,6 +11,7 @@ import {
   type SymbolType,
   type SymbolArea,
   ARCANE_AREAS,
+  SACRED_AREAS,
   ALL_SACRED_AREAS,
   ARCANE_GROWTH,
   SACRED_GROWTH,
@@ -29,7 +30,6 @@ export interface SymbolState {
   current: number;
   daily: number;
   weeklyEnabled: boolean;
-  enabled: boolean;
 }
 
 interface SavedState {
@@ -45,12 +45,12 @@ interface PerSymbolData {
   consumed: number;
   levelMax: number;
   isMaxed: boolean;
-  isTracked: boolean;
+  isUnlocked: boolean;
 }
 
 export interface SymbolStats {
   perSymbol: PerSymbolData[];
-  tracked: PerSymbolData[];
+  unlocked: PerSymbolData[];
   totalConsumed: number;
   totalSymbolsNeeded: number;
   totalForOneArea: number;
@@ -58,7 +58,7 @@ export interface SymbolStats {
   overallPct: number;
   allMaxed: boolean;
   anyInfinite: boolean;
-  noneTracked: boolean;
+  noneUnlocked: boolean;
 }
 
 // -- Constants ----------------------------------------------------------------
@@ -73,7 +73,6 @@ function defaultSymbolState(area: SymbolArea, symbolType: SymbolType): SymbolSta
     current: 0,
     daily: area.daily,
     weeklyEnabled: symbolType === "arcane",
-    enabled: symbolType === "arcane",
   };
 }
 
@@ -89,12 +88,23 @@ export function effectiveWeekly(symbolType: SymbolType, weeklyEnabled: boolean):
   return symbolType === "arcane" && weeklyEnabled ? WEEKLY_SYMBOLS : 0;
 }
 
+/**
+ * A symbol is unlocked when the selected character has reached the area's
+ * required level. With no character selected there is no level to check
+ * against, so every symbol is treated as unlocked and the tool stays usable
+ * standalone.
+ */
+function isAreaUnlocked(area: SymbolArea, charLevel: number | null): boolean {
+  return charLevel === null || charLevel >= area.requiredLevel;
+}
+
 function computeSymbolStats(
   areas: SymbolArea[],
   symbols: Record<string, SymbolState>,
   growth: number[],
   type: SymbolType,
   maxLevel: number,
+  charLevel: number | null,
 ): SymbolStats {
   let totalConsumed = 0;
   let totalSymbolsNeeded = 0;
@@ -104,14 +114,14 @@ function computeSymbolStats(
 
   for (const area of areas) {
     const s = getSymbolState(symbols, area, type);
-    const isTracked = type === "arcane" || s.enabled;
+    const isUnlocked = isAreaUnlocked(area, charLevel);
     const weekly = effectiveWeekly(type, s.weeklyEnabled);
     const remaining = symbolsRemaining(growth, s.level, s.current);
     const days = daysToMax(remaining, s.daily, weekly);
     const consumed = symbolsConsumed(growth, s.level, s.current, maxLevel);
     const isMaxed = s.level >= maxLevel;
 
-    if (isTracked) {
+    if (isUnlocked) {
       totalConsumed += consumed;
       totalSymbolsNeeded += totalForOneArea;
       if (days !== Infinity && days > maxDaysVal) maxDaysVal = days;
@@ -120,20 +130,20 @@ function computeSymbolStats(
     perSymbol.push({
       area, state: s, remaining, days, consumed,
       levelMax: symbolsForLevel(growth, s.level),
-      isMaxed, isTracked,
+      isMaxed, isUnlocked,
     });
   }
 
-  const tracked = perSymbol.filter((p) => p.isTracked);
+  const unlocked = perSymbol.filter((p) => p.isUnlocked);
   const overallPct = totalSymbolsNeeded > 0
     ? Math.min(100, (totalConsumed / totalSymbolsNeeded) * 100)
     : 0;
 
   return {
-    perSymbol, tracked, totalConsumed, totalSymbolsNeeded, totalForOneArea, maxDaysVal, overallPct,
-    allMaxed: tracked.length > 0 && tracked.every((p) => p.isMaxed),
-    anyInfinite: tracked.some((p) => p.days === Infinity && !p.isMaxed),
-    noneTracked: tracked.length === 0,
+    perSymbol, unlocked, totalConsumed, totalSymbolsNeeded, totalForOneArea, maxDaysVal, overallPct,
+    allMaxed: unlocked.length > 0 && unlocked.every((p) => p.isMaxed),
+    anyInfinite: unlocked.some((p) => p.days === Infinity && !p.isMaxed),
+    noneUnlocked: unlocked.length === 0,
   };
 }
 
@@ -188,19 +198,11 @@ export function useSymbolState() {
         if (saved) {
           setForm({ type: saved.type, symbols: saved.symbols });
         } else {
+          // A character already in Grandis lands on the Sacred tab; everyone
+          // else starts on Arcane.
           const char = characters.find((c) => c.characterName === charName);
-          if (char && char.level >= 260) {
-            const sacredSymbols: Record<string, SymbolState> = {};
-            for (const area of ALL_SACRED_AREAS) {
-              sacredSymbols[area.name] = {
-                ...defaultSymbolState(area, "sacred"),
-                enabled: char.level >= area.requiredLevel,
-              };
-            }
-            setForm({ type: "sacred", symbols: sacredSymbols });
-          } else {
-            setForm(defaultFormState);
-          }
+          const inGrandis = char !== undefined && char.level >= SACRED_AREAS[0].requiredLevel;
+          setForm({ type: inGrandis ? "sacred" : "arcane", symbols: {} });
         }
       } else {
         setForm(defaultFormState);
@@ -246,7 +248,11 @@ export function useSymbolState() {
     });
   }, [updateForm]);
 
-  const stats = computeSymbolStats(areas, symbols, growth, type, maxLevel);
+  const charLevel = selectedCharName
+    ? characters.find((c) => c.characterName === selectedCharName)?.level ?? null
+    : null;
+
+  const stats = computeSymbolStats(areas, symbols, growth, type, maxLevel, charLevel);
 
   return {
     mounted,

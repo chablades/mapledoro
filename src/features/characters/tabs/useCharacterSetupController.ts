@@ -195,7 +195,7 @@ function extractSymbolLevels(json: string): Record<string, string> | null {
   return d.symbolLevels;
 }
 
-/** Merge per region: set level + enabled, preserving existing calculator fields. */
+/** Merge per region: set level, preserving existing calculator fields. */
 function buildSymbolsToolData(existing: SavedSymbols | null, levels: Record<string, string>): SavedSymbols {
   const symbols: Record<string, SymbolState> = { ...(existing?.symbols ?? {}) };
   for (const [name, raw] of Object.entries(levels)) {
@@ -205,8 +205,8 @@ function buildSymbolsToolData(existing: SavedSymbols | null, levels: Record<stri
     if (!found) continue;
     const prev = symbols[name];
     symbols[name] = prev
-      ? { ...prev, level, enabled: true }
-      : { level, current: 0, daily: found.area.daily, weeklyEnabled: found.type === "arcane", enabled: true };
+      ? { ...prev, level }
+      : { level, current: 0, daily: found.area.daily, weeklyEnabled: found.type === "arcane" };
   }
   return { type: existing?.type ?? "arcane", symbols };
 }

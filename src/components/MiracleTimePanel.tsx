@@ -104,7 +104,7 @@ export default function MiracleTimePanel({ theme }: { theme: AppTheme }) {
 
   return (
     <div style={{ marginTop: "0.75rem" }}>
-      <Panel theme={theme} delay="0.2s">
+      <Panel theme={theme}>
         <div className="panel-header" style={{ borderBottom: `1px solid ${theme.border}` }}>
           <span>🎲</span>
           <div style={{ flex: 1 }}>

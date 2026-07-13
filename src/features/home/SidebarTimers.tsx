@@ -50,7 +50,6 @@ export function UrsusPanel({ theme, now }: { theme: AppTheme; now: Date | null }
   return (
     <Panel
       theme={theme}
-      delay="0.25s"
       icon="🐻"
       title="Ursus 2× Meso"
       headerRight={ursus?.active && activeBadge}
@@ -86,7 +85,7 @@ export function ResetTimerPanels({ theme, now }: { theme: AppTheme; now: Date | 
       ];
 
   return (
-    <Panel theme={theme} delay="0.2s" icon="⏱" title="Reset Timers">
+    <Panel theme={theme} icon="⏱" title="Reset Timers">
       <div style={{ padding: "0.75rem", display: "flex", flexDirection: "column", gap: "0.6rem" }}>
         {resets.map((r) => (
           <div key={r.label} style={timerRowStyle(theme)}>

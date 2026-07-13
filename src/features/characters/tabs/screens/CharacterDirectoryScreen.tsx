@@ -47,7 +47,7 @@ function addCharacterButtonStyle(theme: AppTheme, canAddCharacter: boolean): CSS
     background: theme.bg,
     color: theme.text,
     fontFamily: "inherit",
-    fontWeight: 900,
+    fontWeight: 800,
     fontSize: "1.45rem",
     padding: "0.5rem 0.65rem",
     flex: "0 0 auto",

@@ -12,8 +12,30 @@ interface ChangelogEntry {
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    date: "2026-07-12",
+    changes: [
+      { type: "added", text: "The EXP Calculator Farming tab now has an Import Into Daily/Weekly Calculator link that carries your hourly EXP over to your plan." },
+      { type: "added", text: "The EXP Calculator now remembers the monster you picked in the Farming tab for each character." },
+      { type: "added", text: "The EXP Calculator now lets you pick which Monster Park dungeon you run, defaulting to the best one your level can enter." },
+      { type: "changed", text: "The EXP Calculator Epic Dungeon panel now takes a Bonus Multiplier, so you can enter event rates like 1.5x, 2.5x, or 4x directly." },
+      { type: "changed", text: "The EXP Calculator now hides the Epic Dungeon reward multiplier for characters in Heroic worlds, which cannot buy one." },
+      { type: "changed", text: "The EXP Calculator now disables the Burning dropdown at level 270 and up, where no Burning type grants extra levels." },
+      { type: "fixed", text: "Fixed Mechaberry Farm Tickets in the EXP Calculator granting thousands of times too much EXP." },
+      { type: "fixed", text: "Fixed the EXP Calculator not letting you type a Current EXP % below 1, like 0.5." },
+      { type: "fixed", text: "Fixed text boxes, dropdowns, and date pickers sitting in the same row being slightly different heights in the Liberation Tracker, the Trace Restoration Tracker, and the Flame Calculator." },
+      { type: "fixed", text: "Fixed Daily Tracker characters added by typing a name showing a default avatar instead of their first letter like the Boss Crystal Tracker." },
+      { type: "fixed", text: "Fixed number boxes in the EXP Calculator, Star Force Calculator, Symbol Calculator, Liberation Tracker, Trace Restoration Tracker, and HEXA Skills tool fighting your typing when a value hit its cap, so they now let you finish typing and settle when you click away." },
+    ],
+  },
+  {
     date: "2026-07-10",
     changes: [
+      { type: "changed", text: "The Daily Tracker now works like the Boss Crystal Tracker: add characters yourself with the Add character card, pick each one from your imports or type a name, and drag the cards to reorder them." },
+      { type: "added", text: "Added the Geardock Sacred Symbol daily to the Daily Tracker." },
+      { type: "changed", text: "The Daily Tracker now allows up to 14 Monster Park runs per world, so two characters can each do their 7." },
+      { type: "added", text: "Added Hard and Extreme Black Mage to the Boss Crystal Tracker as a monthly boss that resets on the first of each month and does not count against a character's 14 crystal limit." },
+      { type: "changed", text: "The Boss Crystal Tracker Heroic and Interactive toggle now filters your characters by world instead of just changing crystal prices." },
+      { type: "changed", text: "The Boss Crystal Tracker now opens on Interactive when all your characters are in Interactive worlds." },
       { type: "changed", text: "Adjusted every color theme so text meets accessible contrast in both light and dark mode." },
       { type: "fixed", text: "Fixed accent colored text being hard to read in dark mode across the site." },
       { type: "fixed", text: "Fixed the Active badges, changelog tags, and Reset buttons having text that was too faint to read." },
@@ -381,7 +403,7 @@ function ChangelogContent({ theme }: { theme: AppTheme }) {
                       gap: "0.6rem",
                       fontSize: "0.88rem",
                       color: theme.text,
-                      fontWeight: 500,
+                      fontWeight: 400,
                       lineHeight: 1.6,
                     }}
                   >

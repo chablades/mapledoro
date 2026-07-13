@@ -29,14 +29,13 @@ export default function HomeDashboard({ theme }: { theme: AppTheme }) {
     <>
       <style>{`
         .panel { transition: background 0.35s ease, border-color 0.35s ease; }
-        .panel:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
 
         .row-hover:hover { background: ${theme.accentSoft} !important; }
 
         .char-row-icons { opacity: 0; pointer-events: none; transition: opacity 0.15s ease; }
         .char-row:hover .char-row-icons { opacity: 1; pointer-events: auto; }
-        .char-row-icon-btn { transition: transform 0.1s ease, background 0.15s ease; }
-        .char-row-icon-btn:hover { transform: translateY(-1px); background: ${theme.accentSoft} !important; }
+        .char-row-icon-btn { transition: background 0.15s ease; }
+        .char-row-icon-btn:hover { background: ${theme.accentSoft} !important; }
 
         .add-character-link:hover { border-color: ${theme.accent} !important; color: ${theme.accentText} !important; }
         .patch-show-more:hover { background: ${theme.accentSoft} !important; }
@@ -141,7 +140,6 @@ export default function HomeDashboard({ theme }: { theme: AppTheme }) {
               items={QUICK_GUIDES}
               gridClassName="quick-guides-grid"
               columns={QUICK_GUIDES.length}
-              animationDelay="0.25s"
             />
             <CharactersPanel theme={theme} characters={characters} />
           </div>

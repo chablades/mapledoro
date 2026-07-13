@@ -9,6 +9,7 @@ import { ToolHeader } from "../../../components/ToolHeader";
 import { Field, Toggle } from "../shared-ui";
 import { formatMesoFull, formatPct } from "../format";
 import { toolStyles } from "../tool-styles";
+import { controlHeightStyle, resultsMessageStyle, resultsTableStyles, summaryRowStyle as summaryRowBase } from "../shared-styles";
 import {
   FLAME_CLASS_OPTIONS,
   FLAME_TYPE_OPTIONS,
@@ -185,10 +186,12 @@ function FlameSettingsPanel({
   const guildDisabled = !usesMeso(state.flameType);
 
   return (
-    <section className="fade-in" style={panelStyle}>
+    <section className="fade-in panel-card" style={panelStyle}>
       <h2 className="tool-panel-title" style={{ color: theme.text }}>Flame Settings</h2>
 
-      <div className="flame-inputs-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "12px" }}>
+      {/* auto-fit, not auto-fill: auto-fill keeps the empty tracks that don't hold
+          a field, so the fields stop short of the panel edge. */}
+      <div className="flame-inputs-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "12px" }}>
         <Field label="Class" htmlFor={`${uid}-class`} style={labelStyle}>
           <select
             id={`${uid}-class`}
@@ -269,7 +272,7 @@ function FlameSettingsPanel({
               onFocus={(e) => e.currentTarget.select()}
               onKeyDown={replaceZeroOnDigit}
               onChange={(e) => dispatch({ type: "setBaseAttack", value: toPositive(e.target.value) })}
-              style={{ ...inputStyle, width: "100%", padding: "8px 10px" }}
+              style={{ ...inputStyle, ...controlHeightStyle, width: "100%", padding: "8px 10px" }}
             />
           </Field>
         )}
@@ -317,7 +320,7 @@ function EquivalencesPanel({
   if (cls === "da") return null;
 
   return (
-    <section className="fade-in" style={panelStyle}>
+    <section className="fade-in panel-card" style={panelStyle}>
       <h2 className="tool-panel-title" style={{ color: theme.text }}>Stat Equivalences</h2>
       <p style={{ fontSize: "0.75rem", fontWeight: 600, color: theme.muted, margin: "0 0 1rem" }}>
         Adjust these to match your character. Leave defaults if unsure.
@@ -362,7 +365,7 @@ function TargetPanel({
   const label = state.flameClass === "da" ? "Main Stat (HP Equivalent)" : "Main Stat";
 
   return (
-    <section className="fade-in" style={panelStyle}>
+    <section className="fade-in panel-card" style={panelStyle}>
       <h2 className="tool-panel-title" style={{ color: theme.text }}>Desired Stats</h2>
       <p style={{ fontSize: "0.75rem", fontWeight: 600, color: theme.muted, margin: "0 0 1rem" }}>
         Set the minimum bonus stat total you want to achieve.
@@ -425,28 +428,7 @@ function ResultsTable({ theme, results, showMeso, guildDiscount }: {
   const unit = results.flameTypeText;
   const flamesHeading = unit.charAt(0).toUpperCase() + unit.slice(1);
 
-  const headCell: CSSProperties = {
-    padding: "6px 10px",
-    fontSize: "0.75rem",
-    fontWeight: 700,
-    color: theme.muted,
-    borderBottom: `1px solid ${theme.border}`,
-    whiteSpace: "nowrap",
-  };
-  const rowHeadCell: CSSProperties = {
-    padding: "9px 10px",
-    fontSize: "0.82rem",
-    fontWeight: 700,
-    textAlign: "left",
-    whiteSpace: "nowrap",
-  };
-  const valueCell: CSSProperties = {
-    padding: "9px 10px",
-    textAlign: "right",
-    color: theme.text,
-    fontVariantNumeric: "tabular-nums",
-    whiteSpace: "nowrap",
-  };
+  const { headCell, rowHeadCell, valueCellFor } = resultsTableStyles(theme);
 
   return (
     <div style={{ overflowX: "auto" }}>
@@ -463,11 +445,7 @@ function ResultsTable({ theme, results, showMeso, guildDiscount }: {
           {RESULT_ROWS.map((row, i) => {
             // The average is the answer people came for; the percentiles qualify it.
             const isAverage = i === 0;
-            const value: CSSProperties = {
-              ...valueCell,
-              fontWeight: isAverage ? 800 : 600,
-              fontSize: isAverage ? "0.95rem" : "0.82rem",
-            };
+            const value = valueCellFor(isAverage);
             return (
               <tr key={row.key} style={{ background: isAverage ? theme.timerBg : "transparent" }}>
                 <th scope="row" style={{ ...rowHeadCell, color: isAverage ? theme.text : theme.muted }}>
@@ -493,7 +471,7 @@ function ResultsBody({ theme, results, showMeso, guildDiscount, desiredStat, tar
   targetNoun: string;
   summaryRowStyle: CSSProperties;
 }) {
-  const messageStyle: CSSProperties = { fontSize: "0.82rem", fontWeight: 600, color: theme.muted, margin: 0, lineHeight: 1.5 };
+  const messageStyle = resultsMessageStyle(theme);
 
   if (!results) {
     return <p style={messageStyle}>Enter a desired stat total above to see how many flames it takes.</p>;
@@ -573,7 +551,7 @@ function FlameScorePanel({
   };
 
   return (
-    <section className="fade-in" style={panelStyle}>
+    <section className="fade-in panel-card" style={panelStyle}>
       <h2 className="tool-panel-title" style={{ color: theme.text }}>Flame Score Checker</h2>
       <p style={{ fontSize: "0.75rem", fontWeight: 600, color: theme.muted, margin: "0 0 1rem" }}>
         Enter your current bonus stats to calculate your flame score.
@@ -640,27 +618,15 @@ export default function FlamingWorkspace({ theme }: { theme: AppTheme }) {
 
   const selectStyle: CSSProperties = {
     ...styles.selectStyle,
+    ...controlHeightStyle,
     width: "100%",
     padding: "8px 10px",
     appearance: "auto" as const,
   };
 
-  const panelStyle: CSSProperties = {
-    ...styles.sectionPanel,
-    borderRadius: "18px",
-  };
+  const panelStyle: CSSProperties = styles.sectionPanel;
 
-  // Tinted region, not a bordered box: a card inside a card is always wrong.
-  const summaryRowStyle: CSSProperties = {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    gap: "1rem",
-    background: theme.timerBg,
-    borderRadius: "10px",
-    padding: "10px 14px",
-    marginBottom: "1rem",
-  };
+  const summaryRowStyle: CSSProperties = { ...summaryRowBase(theme), marginBottom: "1rem" };
 
   const showMeso = usesMeso(deferred.flameType);
   const guildDiscount = showMeso && deferred.guildDiscount;
@@ -696,7 +662,7 @@ export default function FlamingWorkspace({ theme }: { theme: AppTheme }) {
           <TargetPanel theme={theme} state={state} dispatch={dispatch} inputStyle={inputStyle} panelStyle={panelStyle} />
         )}
 
-        <section className="fade-in" style={panelStyle}>
+        <section className="fade-in panel-card" style={panelStyle}>
           <h2 className="tool-panel-title" style={{ color: theme.text }}>Results</h2>
           <p className="sr-only" role="status">
             {mounted ? resultsStatusText(results, showMeso, guildDiscount) : ""}

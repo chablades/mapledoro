@@ -199,7 +199,7 @@ function ToolRow({ tool, theme }: { tool: ToolCard; theme: AppTheme }) {
           style={{
             fontSize: "0.78rem",
             color: theme.muted,
-            fontWeight: 500,
+            fontWeight: 600,
             lineHeight: 1.45,
             marginTop: "0.15rem",
             overflowWrap: "break-word",

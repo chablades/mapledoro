@@ -26,12 +26,24 @@ export function exportBossCrystals(characters: CharacterEntry[], server: string)
   const charTotalRowIdx = rows.length;
   {
     const ks = "{1,2,3,4,5,6,7,8,9,10,11,12,13,14}";
+    // Monthly bosses (Black Mage) are kept last in BOSSES; they are exempt from
+    // the 14 crystal cap, so cap the top-14 over the non-monthly rows only and
+    // add each monthly boss on top.
+    const monthlyRowIdxs: number[] = [];
+    let lastCappedRow = lastBossRow;
+    for (let bi = 0; bi < BOSSES.length; bi++) {
+      if (BOSSES[bi].monthly) monthlyRowIdxs.push(firstDataRow + bi);
+    }
+    if (monthlyRowIdxs.length > 0) lastCappedRow = monthlyRowIdxs[0] - 1;
     const row: Cell[] = ["Character Total", null];
     for (let ci = 0; ci < characters.length; ci++) {
       const cc = colLetter(2 + ci);
-      const range = `${cc}${firstDataRow}:${cc}${lastBossRow}`;
-      const mesos = `B${firstDataRow}:B${lastBossRow}`;
-      row.push(f(`SUM(LARGE(IF(${range}<>"",${mesos}/${range},0),${ks}))`, true));
+      const range = `${cc}${firstDataRow}:${cc}${lastCappedRow}`;
+      const mesos = `B${firstDataRow}:B${lastCappedRow}`;
+      const monthly = monthlyRowIdxs
+        .map((r) => `+IF(${cc}${r}<>"",B${r}/${cc}${r},0)`)
+        .join("");
+      row.push(f(`SUM(LARGE(IF(${range}<>"",${mesos}/${range},0),${ks}))${monthly}`, true));
     }
     rows.push(row);
   }

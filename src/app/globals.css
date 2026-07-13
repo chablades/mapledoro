@@ -48,7 +48,7 @@ button {
   z-index: 30;
   padding: 0.75rem 1.5rem;
   font-weight: 700;
-  font-size: 0.875rem;
+  font-size: 0.9rem;
   border-radius: 0 0 8px;
   text-decoration: none;
   color: #fff;
@@ -107,6 +107,12 @@ html.scroll-locked body {
   }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .fade-in {
+    animation: none;
+  }
+}
+
 .page-shell {
   display: flex;
   flex: 1;
@@ -132,7 +138,7 @@ html.scroll-locked body {
 }
 
 .page-subtitle {
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   font-weight: 600;
   margin-bottom: 1.5rem;
 }
@@ -172,7 +178,7 @@ html.scroll-locked body {
 /* Accent "All → / Manage →" link in a panel or section header; color inline. */
 .accent-link {
   margin-left: auto;
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   font-weight: 800;
   text-decoration: none;
 }
@@ -191,12 +197,16 @@ html.scroll-locked body {
 .empty-state {
   padding: 2rem 1.25rem;
   text-align: center;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
 }
 
 /* Shared form controls across tool workspaces.
    Static settings live here; dynamic theme colors (background, borderColor,
    color) and context-sensitive sizing (width, etc.) are applied inline. */
+/* No `height` here on purpose. Compact variants across the trackers shrink
+   themselves with `padding` + `font-size`, and a height on the shared class
+   silently overrides both (box-sizing: border-box). A form row that needs a
+   select and an input to line up opts into `.tool-control-row` below. */
 .tool-input,
 .tool-select {
   font-family: var(--font-body);
@@ -205,13 +215,41 @@ html.scroll-locked body {
   border-radius: 8px;
   border: 1px solid; /* color supplied inline via borderColor */
   padding: 7px 10px;
-  /* Chrome gives <select> a taller intrinsic line box than <input>. Pinning both
-     keeps a select and an input sitting side by side in a form row aligned. */
-  height: 35px;
 }
 
 .tool-select {
   cursor: pointer;
+}
+
+/* A row of labelled controls that must line up. Equal font-size and padding is
+   NOT enough to make them equal height: Chromium's UA sheet forces
+   `line-height: normal` on <select> (so line-height can't be used to square
+   them up), and a date input carries its own picker chrome, so a text input, a
+   date input, and a select each fall back to a different intrinsic height. The
+   row aligns on flex-end, so those few pixels of difference also drag the
+   labels above them out of line. Pinning one height on every control in the row
+   is what fixes it. Compact controls (boss cards, drop tables) are not in such
+   a row and keep shrinking via padding + font-size. Grid-based forms (star
+   force, flaming, event planner) pin the same 34px per control through
+   `controlHeightStyle` in `features/tools/shared-styles.ts` — keep the two in
+   step. */
+.tool-control-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-end;
+}
+
+.tool-control-row .tool-input,
+.tool-control-row .tool-select {
+  height: 34px;
+}
+
+/* A wrapped label would defeat the point of the row: it makes one column taller
+   than the rest and pushes its control out of line. Each column is sized to fit
+   its own label, so this only guards against that. */
+.tool-control-row .tool-field-label {
+  white-space: nowrap;
 }
 
 /* Hide native number-input spinner arrows */
@@ -295,11 +333,28 @@ textarea:focus-visible {
   inset: -6px;
 }
 
+/* Thin, translucent scrollbar for scroll areas inside tool dialogs. Matches
+   the character-sync dropdown; theme-neutral so it reads in light and dark. */
+.tool-dialog-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(127, 127, 127, 0.45) transparent;
+}
+.tool-dialog-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+.tool-dialog-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.tool-dialog-scroll::-webkit-scrollbar-thumb {
+  background: rgba(127, 127, 127, 0.45);
+  border-radius: 4px;
+}
+
 /* Pill-shaped toggle button */
 .pill-btn {
   padding: 6px 14px;
   border-radius: 8px;
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   font-weight: 800;
   cursor: pointer;
   user-select: none;
@@ -330,13 +385,19 @@ textarea:focus-visible {
   font-weight: 800;
 }
 
-/* Centered hero-number banner in calculator results; colors inline */
-.result-banner {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 14px 20px;
-  border-radius: 14px;
+/* Responsive grid of selectable tool cards (bosses, symbols). Lives here rather
+   than in a workspace's <style> block so a section can be rendered outside the
+   workspace that used to inject it. */
+.tool-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 0.75rem;
+}
+
+@media (max-width: 860px) {
+  .tool-card-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Hover/tap tooltip bubble: shows on hover (desktop) or tap (touch); colors inline */
@@ -394,7 +455,7 @@ textarea:focus-visible {
 }
 
 .tool-header-back {
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   font-weight: 800;
   text-decoration: none;
 }
@@ -409,7 +470,7 @@ textarea:focus-visible {
 }
 
 .tool-header-desc {
-  font-size: 0.8rem;
+  font-size: 0.82rem;
   font-weight: 600;
   margin-top: 0.15rem;
   line-height: 1.5;
@@ -428,7 +489,7 @@ textarea:focus-visible {
   border: none;
   border-radius: 8px;
   font-family: var(--font-body);
-  font-size: 0.88rem;
+  font-size: 0.9rem;
   font-weight: 800;
   text-align: center;
   white-space: nowrap;
@@ -455,7 +516,7 @@ textarea:focus-visible {
   margin-top: 1rem;
   font-size: 0.9rem;
   line-height: 1.7;
-  font-weight: 500;
+  font-weight: 400;
 }
 
 .guide-randomizer {

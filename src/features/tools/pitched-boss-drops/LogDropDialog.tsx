@@ -39,13 +39,7 @@ function fieldStyle(theme: AppTheme): CSSProperties {
 }
 
 function labelStyle(theme: AppTheme): CSSProperties {
-  return {
-    display: "block",
-    fontSize: "0.75rem",
-    fontWeight: 700,
-    color: theme.muted,
-    marginBottom: 4,
-  };
+  return { color: theme.muted };
 }
 
 /* ------------------------------------------------------------------ */
@@ -151,6 +145,7 @@ function ItemPicker({
         className="pbd-combobox tool-input"
         role="combobox"
         tabIndex={0}
+        aria-label="Item dropped"
         aria-expanded={open}
         aria-controls="pbd-item-listbox"
         onClick={() => setOpen(true)}
@@ -181,7 +176,7 @@ function ItemPicker({
             color: theme.text,
             outline: "none",
             width: "100%",
-            fontSize: "0.85rem",
+            fontSize: "0.82rem",
             padding: 0,
             cursor: "inherit",
           }}
@@ -193,7 +188,7 @@ function ItemPicker({
       {open && (
         <div id="pbd-item-listbox" role="listbox" style={menuStyle}>
           {filtered.length === 0 && (
-            <div style={{ padding: 12, fontSize: "0.8rem", color: theme.muted, textAlign: "center" }}>
+            <div style={{ padding: 12, fontSize: "0.82rem", color: theme.muted, textAlign: "center" }}>
               No items found
             </div>
           )}
@@ -304,21 +299,21 @@ export default function LogDropDialog({
         .pbd-option:hover { background: ${theme.accentSoft}; }
         .char-pick-row:hover { border-color: ${theme.accent} !important; }
       `}</style>
-        <div
+        <h2
           style={{
             fontFamily: "var(--font-heading)",
-            fontSize: "1.1rem",
+            fontSize: "1.15rem",
             color: theme.text,
-            marginBottom: "1.25rem",
+            margin: "0 0 1.25rem",
           }}
         >
           Log a Drop
-        </div>
+        </h2>
 
         <div style={{ display: "flex", flexWrap: "wrap", gap: "1.25rem" }}>
           {/* Character column */}
           <div style={{ flex: "1 1 220px", minWidth: 220 }}>
-            <span style={labelStyle(theme)}>Character</span>
+            <span className="tool-field-label" style={labelStyle(theme)}>Character</span>
             <CharacterPicker
               theme={theme}
               characters={characters}
@@ -330,13 +325,13 @@ export default function LogDropDialog({
           {/* Drop details column */}
           <div style={{ flex: "1 1 260px", minWidth: 260, display: "flex", flexDirection: "column", gap: "0.85rem" }}>
             <div>
-              <span style={labelStyle(theme)}>Item Dropped</span>
+              <span className="tool-field-label" style={labelStyle(theme)}>Item Dropped</span>
               <ItemPicker theme={theme} value={itemId} onChange={setItemId} />
             </div>
 
             <div style={{ display: "flex", gap: "0.75rem" }}>
-              <label style={{ ...labelStyle(theme), flex: "0 0 90px" }}>
-                Channel
+              <label style={{ flex: "0 0 90px" }}>
+                <span className="tool-field-label" style={labelStyle(theme)}>Channel</span>
                 <input
                   type="number"
                   min={1}
@@ -349,8 +344,8 @@ export default function LogDropDialog({
                   style={fieldStyle(theme)}
                 />
               </label>
-              <label style={{ ...labelStyle(theme), flex: 1 }}>
-                Date
+              <label style={{ flex: 1 }}>
+                <span className="tool-field-label" style={labelStyle(theme)}>Date</span>
                 <input
                   type="date"
                   value={date}
@@ -361,8 +356,8 @@ export default function LogDropDialog({
               </label>
             </div>
 
-            <label style={labelStyle(theme)}>
-              Note (optional)
+            <label>
+              <span className="tool-field-label" style={labelStyle(theme)}>Note (optional)</span>
               <input
                 type="text"
                 value={note}

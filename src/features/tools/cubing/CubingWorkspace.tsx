@@ -8,6 +8,7 @@ import { Field, Toggle } from "../shared-ui";
 import { ToolHeader } from "../../../components/ToolHeader";
 import { formatCount, formatMesoFull, formatPct } from "../format";
 import { toolStyles } from "../tool-styles";
+import { resultsMessageStyle, resultsTableStyles, summaryRowStyle as summaryRowBase } from "../shared-styles";
 import { getProbability } from "./cubing-engine";
 import {
   availableDesiredTiers,
@@ -216,28 +217,7 @@ function SummaryRow({ theme, label, value, style }: {
 }
 
 function ResultsTable({ theme, rows, cubeLabel }: { theme: AppTheme; rows: ResultRow[]; cubeLabel: string }) {
-  const headCell: CSSProperties = {
-    padding: "6px 10px",
-    fontSize: "0.75rem",
-    fontWeight: 700,
-    color: theme.muted,
-    borderBottom: `1px solid ${theme.border}`,
-    whiteSpace: "nowrap",
-  };
-  const rowHeadCell: CSSProperties = {
-    padding: "9px 10px",
-    fontSize: "0.82rem",
-    fontWeight: 700,
-    textAlign: "left",
-    whiteSpace: "nowrap",
-  };
-  const valueCell: CSSProperties = {
-    padding: "9px 10px",
-    textAlign: "right",
-    color: theme.text,
-    fontVariantNumeric: "tabular-nums",
-    whiteSpace: "nowrap",
-  };
+  const { headCell, rowHeadCell, valueCellFor } = resultsTableStyles(theme);
 
   return (
     <div style={{ overflowX: "auto" }}>
@@ -254,11 +234,7 @@ function ResultsTable({ theme, rows, cubeLabel }: { theme: AppTheme; rows: Resul
           {rows.map((row, i) => {
             // The average is the answer people came for; the percentiles qualify it.
             const isAverage = i === 0;
-            const value: CSSProperties = {
-              ...valueCell,
-              fontWeight: isAverage ? 800 : 600,
-              fontSize: isAverage ? "0.95rem" : "0.82rem",
-            };
+            const value = valueCellFor(isAverage);
             return (
               <tr key={row.label} style={{ background: isAverage ? theme.timerBg : "transparent" }}>
                 <th scope="row" style={{ ...rowHeadCell, color: isAverage ? theme.text : theme.muted }}>
@@ -281,7 +257,7 @@ function ResultsBody({ theme, outcome, cubeLabel, summaryRowStyle }: {
   cubeLabel: string;
   summaryRowStyle: CSSProperties;
 }) {
-  const messageStyle: CSSProperties = { fontSize: "0.82rem", fontWeight: 600, color: theme.muted, margin: 0, lineHeight: 1.5 };
+  const messageStyle = resultsMessageStyle(theme);
 
   if (outcome.status === "invalidLevel") {
     return (
@@ -374,20 +350,11 @@ export default function CubingWorkspace({ theme }: { theme: AppTheme }) {
 
   const styles = toolStyles(theme);
   const labelStyle = styles.labelStyle;
-  const controlStyle: CSSProperties = { ...styles.selectStyle, width: "100%" };
-  const panelStyle: CSSProperties = { ...styles.sectionPanel, borderRadius: "18px" };
+  // Height pinned here, not on `.tool-select`: Chrome gives a <select> a taller
+  // intrinsic line box than an <input>, and this form puts them side by side.
+  const controlStyle: CSSProperties = { ...styles.selectStyle, width: "100%", height: "35px" };
 
-  // Tinted region, not a bordered box: a card inside a card is always wrong.
-  const summaryRowStyle: CSSProperties = {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    gap: "1rem",
-    background: theme.timerBg,
-    borderRadius: "10px",
-    padding: "10px 14px",
-    marginBottom: "0.5rem",
-  };
+  const summaryRowStyle: CSSProperties = { ...summaryRowBase(theme), marginBottom: "0.5rem" };
 
   const hintStyle: CSSProperties = { margin: "4px 0 0", fontSize: "0.75rem", fontWeight: 600, color: theme.muted, lineHeight: 1.4 };
   const errorStyle: CSSProperties = { ...hintStyle, fontWeight: 700, color: statusText(theme, "danger") };
@@ -421,7 +388,7 @@ export default function CubingWorkspace({ theme }: { theme: AppTheme }) {
           description="Select your item category, cube type, and item level, then choose your current and desired tier to see expected costs."
         />
 
-        <section className="fade-in" style={panelStyle}>
+        <section className="fade-in panel-card" style={styles.sectionPanel}>
           <h2 className="tool-panel-title" style={{ color: theme.text }}>Cube Settings</h2>
 
           <div className="cubing-fields" style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "12px" }}>
@@ -560,7 +527,7 @@ export default function CubingWorkspace({ theme }: { theme: AppTheme }) {
           </div>
         </section>
 
-        <section className="fade-in" style={panelStyle}>
+        <section className="fade-in panel-card" style={styles.sectionPanel}>
           <h2 className="tool-panel-title" style={{ color: theme.text }}>Results</h2>
           <p className="sr-only" role="status">{resultsStatusText(outcome, cubeLabel)}</p>
           {/* No reserved height: the panel sizes to its content, so a message state

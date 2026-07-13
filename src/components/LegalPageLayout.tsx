@@ -23,7 +23,7 @@ export function LegalSection({
       >
         {title}
       </div>
-      <div style={{ color: theme.text, fontSize: "0.88rem", lineHeight: 1.7, fontWeight: 500 }}>
+      <div style={{ color: theme.text, fontSize: "0.88rem", lineHeight: 1.7, fontWeight: 400 }}>
         {children}
       </div>
     </div>
