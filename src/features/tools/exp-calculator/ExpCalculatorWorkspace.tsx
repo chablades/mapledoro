@@ -72,6 +72,7 @@ type AllInOneNumberKey =
   | "advancedExpTickets"
   | "punchKingScore"
   | "doubleUpPoints"
+  | "luxeSaunaHours"
   | "arcaneRiverBonus"
   | "grandisBonus"
   | "monsterParkBonus"
@@ -201,6 +202,7 @@ function defaultAllInOneInput(): AllInOneInput {
     advancedExpTickets: 0,
     punchKingScore: 0,
     doubleUpPoints: 0,
+    luxeSaunaHours: 0,
     potions: Object.fromEntries(GROWTH_POTION_OPTIONS.map((potion) => [potion.id, 0])),
     arcaneRiverBonus: 0,
     grandisBonus: 0,
@@ -1289,6 +1291,7 @@ function AllInOneTab({ theme, importedHourlyExp }: { theme: AppTheme; importedHo
             <NumberField label="Advanced EXP Tickets" icon={{ type: "item", id: "02638500" }} min={0} value={input.advancedExpTickets} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("advancedExpTickets", value)} />
             <NumberField label="Punch King Score / Week" icon={{ type: "item", id: "02024279" }} min={0} max={2050} value={input.punchKingScore} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("punchKingScore", value)} />
             <NumberField label="Double Up Points / Week" icon={{ type: "item", id: "04310359" }} min={0} value={input.doubleUpPoints} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("doubleUpPoints", value)} />
+            <NumberField label="Luxe Sauna / MVP Resort Hrs" icon={{ type: "mark", id: "mvpResort" }} min={0} decimal value={input.luxeSaunaHours} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("luxeSaunaHours", value)} />
           </div>
         </div>
 
@@ -1391,6 +1394,7 @@ function ResourceTableView({ theme, table }: { theme: AppTheme; table: ResourceT
   const tdStyle: React.CSSProperties = { padding: "8px 12px", color: theme.text, fontSize: "0.82rem", fontWeight: 700, textAlign: "right" };
   const levelTdStyle: React.CSSProperties = { ...tdStyle, textAlign: "left", color: theme.accentText, fontWeight: 800 };
   const maxUnits = table.maxUnits;
+  const unitsPerHour = table.unitsPerHour;
   // The wrapper is `timerBg`, so the zebra stripe is the lighter `panel` fill.
   const rowStyle = (index: number): React.CSSProperties => ({ background: index % 2 === 1 ? theme.panel : "transparent" });
 
@@ -1410,8 +1414,17 @@ function ResourceTableView({ theme, table }: { theme: AppTheme; table: ResourceT
               <>
                 <th style={thStyle}>EXP / Unit</th>
                 {maxUnits !== undefined && <th style={thStyle} title={`Total EXP for a full ${maxUnits.toLocaleString()}-point run`}>Full Run</th>}
-                <th style={thStyle} title="Share of this level earned per unit">% of Level</th>
-                <th style={thStyle} title="Units needed to gain one full level">Units / Level</th>
+                {unitsPerHour !== undefined ? (
+                  <>
+                    <th style={thStyle} title="Share of this level earned per hour">% / Hour</th>
+                    <th style={thStyle} title="Hours needed to gain one full level">Hours / Level</th>
+                  </>
+                ) : (
+                  <>
+                    <th style={thStyle} title="Share of this level earned per unit">% of Level</th>
+                    <th style={thStyle} title="Units needed to gain one full level">Units / Level</th>
+                  </>
+                )}
               </>
             )}
           </tr>
@@ -1431,8 +1444,12 @@ function ResourceTableView({ theme, table }: { theme: AppTheme; table: ResourceT
                   <td style={levelTdStyle}>Lv. {row.level}</td>
                   <td style={tdStyle}>{formatMesoFull(row.exp)}</td>
                   {maxUnits !== undefined && <td style={tdStyle}>{formatMesoFull(row.exp * maxUnits)}</td>}
-                  <td style={tdStyle}>{percentOfLevel(row.level, row.exp).toFixed(4)}%</td>
-                  <td style={tdStyle}>{Math.ceil(expForLevel(row.level) / Math.max(1, row.exp)).toLocaleString()}</td>
+                  <td style={tdStyle}>{percentOfLevel(row.level, row.exp * (unitsPerHour ?? 1)).toFixed(4)}%</td>
+                  {unitsPerHour !== undefined ? (
+                    <td style={tdStyle}>{(expForLevel(row.level) / Math.max(1, row.exp * unitsPerHour)).toLocaleString(undefined, { maximumFractionDigits: 2 })}</td>
+                  ) : (
+                    <td style={tdStyle}>{Math.ceil(expForLevel(row.level) / Math.max(1, row.exp)).toLocaleString()}</td>
+                  )}
                 </tr>
               ))}
         </tbody>
