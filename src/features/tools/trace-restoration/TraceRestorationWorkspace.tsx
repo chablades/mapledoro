@@ -6,6 +6,7 @@ import type { CSSProperties } from "react";
 import Image from "next/image";
 import type { AppTheme } from "../../../components/themes";
 import { replaceZeroOnDigit } from "../numberInputHandlers";
+import { ToolNumberInput } from "../shared-ui";
 import { ItemIcon } from "../../../components/ResourceImage";
 import { ToolHeader } from "../../../components/ToolHeader";
 import { SegmentedToggle } from "../../../components/SegmentedToggle";
@@ -646,16 +647,14 @@ function TraceRestorationTab({ theme }: { theme: AppTheme }) {
         <div className="tool-control-row" style={{ marginBottom: "1.25rem" }}>
           <div>
             <div className="tool-field-label" style={styles.labelStyle}>Current Points</div>
-            <input
-              className="tool-input"
-              type="number"
+            <ToolNumberInput
               min={0}
               max={MAX_POINTS_CAP}
+              integer
               aria-label="Current points"
               value={state.currentPoints}
-              onFocus={(e) => e.currentTarget.select()}
               onKeyDown={replaceZeroOnDigit}
-              onChange={(e) => save({ ...state, currentPoints: Math.min(MAX_POINTS_CAP, Math.max(0, parseInt(e.target.value, 10) || 0)) })}
+              onCommit={(v) => save({ ...state, currentPoints: v })}
               style={{ ...styles.inputStyle, width: 110 }}
             />
           </div>

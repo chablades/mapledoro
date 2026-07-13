@@ -11,7 +11,7 @@ import { ToolHeader } from "../../../components/ToolHeader";
 import { useMounted } from "../../../lib/useMounted";
 import { formatExpCompact, formatMesoFull } from "../format";
 import { replaceZeroOnDigit } from "../numberInputHandlers";
-import { Field, Toggle } from "../shared-ui";
+import { Field, Toggle, ToolNumberInput } from "../shared-ui";
 import { toolStyles } from "../tool-styles";
 import { dataTableTh } from "../shared-styles";
 import {
@@ -697,16 +697,13 @@ function BuffsTab({ theme, onImportHourlyExp }: { theme: AppTheme; onImportHourl
                 <Field key={buff.id} label={buff.label} style={labelStyle}>
                   <div style={iconRowStyle}>
                     <BuffIcon icon={buff.icon} label={buff.label} />
-                    <input
-                      className="tool-input"
-                      type="number"
+                    <ToolNumberInput
                       min={0}
                       max={buff.max}
                       step={buff.step ?? 1}
                       value={buffs.inputs[buff.id] ?? 0}
-                      onFocus={(e) => e.currentTarget.select()}
                       onKeyDown={replaceZeroOnDigit}
-                      onChange={(e) => updateInputBuff(buff, Number(e.target.value) || 0)}
+                      onCommit={(value) => updateInputBuff(buff, value)}
                       style={inputStyle}
                     />
                   </div>
@@ -1495,14 +1492,6 @@ function NumberField({
       cursor: disabled ? "not-allowed" : inputStyle.cursor,
     },
   };
-  // `min`/`max` are advisory on type="number"; the browser won't stop a typed value.
-  // While focused, the box shows the raw keystrokes (`draft`) and only the *state* is
-  // ceiling-clamped, so committed values never exceed `max` but the DOM is never
-  // rewritten mid-type. Rewriting it (e.g. "350" -> "300") desyncs the box from state
-  // once state pins at `max` (identical-state updates skip the re-render), which made
-  // backspacing through a clamped value erratic. Clamping up to `min` mid-type would
-  // rewrite "2" into "200" before the user reaches "265", so the floor lands on blur,
-  // where clearing `draft` also snaps the box back to the clamped state value.
   const input = decimal ? (
     <input
       {...commonProps}
@@ -1524,29 +1513,15 @@ function NumberField({
       }}
     />
   ) : (
-    <input
-      {...commonProps}
-      type="number"
-      value={draft ?? String(safeValue)}
+    <ToolNumberInput
+      disabled={disabled}
+      value={safeValue}
       min={min}
       max={max}
       step={step}
       onKeyDown={replaceZeroOnDigit}
-      onChange={(e) => {
-        if (disabled) return;
-        setDraft(e.target.value);
-        // A number input reports a half-typed decimal ("2.") as an empty string. Pushing 0 here
-        // would re-render the box to "0" and eat the point, so "2.5" could never be typed on a
-        // fractional-step field. Leaving state alone keeps the DOM holding the raw keystrokes;
-        // an actually-empty box lands on `min` at blur.
-        if (e.target.value === "") return;
-        onChange(clampMax(Number(e.target.value) || 0, max));
-      }}
-      onBlur={(e) => {
-        if (disabled) return;
-        setDraft(null);
-        onChange(Math.max(min, clampMax(Number(e.target.value) || 0, max)));
-      }}
+      onCommit={onChange}
+      style={commonProps.style}
     />
   );
   return (
@@ -1655,16 +1630,15 @@ function IconLevelTile({
           <BuffIcon icon={icon} label={ariaLabel} />
         </div>
       </HoverTooltip>
-      <input
+      <ToolNumberInput
         className="tool-input no-spinner"
-        type="number"
         min={0}
         max={max}
+        integer
         aria-label={ariaLabel}
         value={value}
-        onFocus={(e) => e.currentTarget.select()}
         onKeyDown={replaceZeroOnDigit}
-        onChange={(e) => onChange(Math.max(0, Math.min(max, Math.floor(Number(e.target.value) || 0))))}
+        onCommit={onChange}
         style={{ ...inputStyle, width: 56, textAlign: "center", padding: "4px 6px" }}
       />
     </div>

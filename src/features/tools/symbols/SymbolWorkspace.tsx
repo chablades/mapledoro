@@ -11,7 +11,7 @@ import { CharacterSyncPanel } from "../../../components/CharacterSyncPanel";
 import { SegmentedToggle } from "../../../components/SegmentedToggle";
 import { ProgressBar } from "../../../components/ProgressBar";
 import { toolStyles } from "../tool-styles";
-import { PanelDivider } from "../shared-ui";
+import { PanelDivider, ToolNumberInput } from "../shared-ui";
 import { ConfirmButton } from "../../../components/ConfirmButton";
 import { utcDateStr } from "../date";
 import {
@@ -219,23 +219,16 @@ function SymbolLevelControls({
         <div style={{ flex: 1 }}>
           <label htmlFor={currentId} style={subLabel}>Current / Needed</label>
           <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-            <input
+            <ToolNumberInput
               id={currentId}
-              className="tool-input"
-              type="number"
               min={0}
               max={levelMax}
+              integer
               aria-label={`${area.name} symbols collected toward the next level`}
               value={state.current}
               disabled={disabled}
-              onFocus={(e) => e.currentTarget.select()}
               onKeyDown={replaceZeroOnDigit}
-              onChange={(e) => {
-                let v = parseInt(e.target.value) || 0;
-                if (v < 0) v = 0;
-                if (v > levelMax) v = levelMax;
-                updateSymbol(area.name, { current: v });
-              }}
+              onCommit={(v) => updateSymbol(area.name, { current: v })}
               style={{ ...compactInput, width: "64px" }}
             />
             <span style={{ fontSize: "0.75rem", fontWeight: 700, color: theme.muted }}>
@@ -311,23 +304,16 @@ function SymbolIncomeControls({
         >
           Daily
         </label>
-        <input
+        <ToolNumberInput
           id={dailyId}
-          type="number"
           min={0}
-          className="tool-input"
           max={dailyMax}
+          integer
           aria-label={`${area.name} symbols earned per day`}
           value={state.daily}
           disabled={disabled}
-          onFocus={(e) => e.currentTarget.select()}
           onKeyDown={replaceZeroOnDigit}
-          onChange={(e) => {
-            let v = parseInt(e.target.value) || 0;
-            if (v < 0) v = 0;
-            if (v > dailyMax) v = dailyMax;
-            updateSymbol(area.name, { daily: v });
-          }}
+          onCommit={(v) => updateSymbol(area.name, { daily: v })}
           style={{
             ...inputStyle,
             width: "52px",
