@@ -149,6 +149,9 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
           object-fit: contain;
           object-position: center bottom;
           display: block;
+          /* Pixel-art sprite scaled well past its native resolution; the browser's default
+             bilinear smoothing blurs it, nearest-neighbor keeps the pixel edges crisp. */
+          image-rendering: pixelated;
         }
 
         .confirmed-summary-card {
@@ -547,6 +550,10 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
             height: 100% !important;
             border-radius: 8px;
             object-fit: cover;
+            /* At this display size the sprite is close to (or below) its native
+               resolution, so nearest-neighbor scaling reads as chunky/blocky rather than
+               crisp — only worth it at the full 210px desktop size. */
+            image-rendering: auto;
           }
 
           .confirmed-summary-card button:not(.char-profile-back-btn) {
@@ -604,6 +611,7 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
           .confirmed-summary-card--setup .confirmed-avatar-wrap img {
             border-radius: 12px;
             object-position: center top;
+            image-rendering: auto;
           }
 
           .confirmed-summary-card--setup .confirmed-summary-info {
