@@ -518,7 +518,7 @@ export default function MysticFrontierWorkspace({ theme }: { theme: AppTheme }) 
         />
 
         {/* Character, wave, and target — the per-wave setup controls */}
-        <div className="panel-card" style={styles.sectionPanel}>
+        <div className="fade-in panel-card" style={styles.sectionPanel}>
           <div style={{ display: "flex", alignItems: "center", gap: "0.75rem 2rem", flexWrap: "wrap" }}>
             {mf.characters.length > 0 && (
               <CharacterSyncPanel
@@ -541,7 +541,7 @@ export default function MysticFrontierWorkspace({ theme }: { theme: AppTheme }) 
         </div>
 
         {/* Lineup */}
-        <div className="panel-card" style={styles.sectionPanel}>
+        <div className="fade-in panel-card" style={styles.sectionPanel}>
           <div style={{ display: "flex", alignItems: "center", gap: "1rem", marginBottom: "0.85rem" }}>
             <h2 className="tool-panel-title" style={{ margin: 0, color: theme.text }}>
               {`Active Lineup · Wave ${mf.activeWave + 1}`}
@@ -569,7 +569,7 @@ export default function MysticFrontierWorkspace({ theme }: { theme: AppTheme }) 
         </div>
 
         {/* Bonus items */}
-        <div className="panel-card" style={styles.sectionPanel}>
+        <div className="fade-in panel-card" style={styles.sectionPanel}>
           <h2 className="tool-panel-title" style={{ marginBottom: "0.25rem", color: theme.text }}>Bonus Items</h2>
           <div style={{ fontSize: "0.75rem", fontWeight: 600, color: theme.muted, marginBottom: "0.85rem" }}>
             Equipped dice items apply to every roll. Add the dice you own — one per type.
@@ -597,7 +597,7 @@ export default function MysticFrontierWorkspace({ theme }: { theme: AppTheme }) 
         </div>
 
         {/* Result */}
-        <div className="panel-card" style={styles.sectionPanel}>
+        <div className="fade-in panel-card" style={styles.sectionPanel}>
           <h2 className="tool-panel-title" style={{ color: theme.text }}>Result</h2>
 
           <div style={{ display: "flex", flexDirection: "column", gap: "1.15rem" }}>

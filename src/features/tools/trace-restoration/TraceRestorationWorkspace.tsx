@@ -349,7 +349,7 @@ function CrystalSection({
   const progress = targetCost > 0 ? Math.min(1, count / targetCost) : 0;
 
   return (
-    <div className="panel-card" style={styles.sectionPanel}>
+    <div className="fade-in panel-card" style={styles.sectionPanel}>
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: "1rem" }}>
         <ItemIcon id={iconId} size={24} />
         <h2 className="tool-panel-title" style={{ margin: 0, color: theme.text }}>{title}</h2>
@@ -638,7 +638,7 @@ function TraceRestorationTab({ theme }: { theme: AppTheme }) {
       `}</style>
 
       {/* Target & progress */}
-      <div className="panel-card" style={styles.sectionPanel}>
+      <div className="fade-in panel-card" style={styles.sectionPanel}>
         <h2 className="tool-panel-title" style={{ marginBottom: "1rem", color: theme.text }}>
           Restoration Target
         </h2>

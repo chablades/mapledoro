@@ -422,13 +422,6 @@ export default function ExpCalculatorWorkspace({ theme }: { theme: AppTheme }) {
         /* The ring belongs on the bordered trigger, not the borderless input inside it. */
         .exp-monster-trigger:focus-within { outline: 2px solid; outline-offset: 2px; }
         .exp-monster-search:focus-visible { outline: none; }
-        /* One entrance on the content that actually swapped, not one per panel. The
-           keyframe only has a from-state, so the visible style stays the default. */
-        .exp-tab-panel { animation: expTabIn 180ms ease-out; }
-        @keyframes expTabIn { from { opacity: 0; transform: translateY(4px); } }
-        @media (prefers-reduced-motion: reduce) {
-          .exp-tab-panel { animation: none; }
-        }
         @media (max-width: 900px) {
           .exp-duo-grid { grid-template-columns: 1fr; }
         }
@@ -456,8 +449,9 @@ export default function ExpCalculatorWorkspace({ theme }: { theme: AppTheme }) {
           sectionPanel={panelStyle}
         />
 
-        {/* Keyed so switching tabs remounts the wrapper and replays the entrance. */}
-        <div key={tab} className="exp-tab-panel">
+        {/* One entrance on the content that actually swapped, not one per panel; keyed
+            so switching tabs remounts the wrapper and replays the site-wide fade. */}
+        <div key={tab} className="fade-in">
           {tab === "buffs" && <BuffsTab theme={theme} onImportHourlyExp={importHourlyExp} />}
           {tab === "all-in-one" && <AllInOneTab theme={theme} importedHourlyExp={importedHourlyExp} />}
           {tab === "resources" && <ResourcesTab theme={theme} />}

@@ -570,12 +570,12 @@ export default function PitchedBossDropsWorkspace({ theme }: { theme: AppTheme }
         />
 
         {!hasCharacters ? (
-          <div className="panel-card" style={toolStyles(theme).sectionPanel}>
+          <div className="fade-in panel-card" style={toolStyles(theme).sectionPanel}>
             <NoCharactersState theme={theme} />
           </div>
         ) : (
           <>
-            <div className="panel-card" style={toolStyles(theme).sectionPanel}>
+            <div className="fade-in panel-card" style={toolStyles(theme).sectionPanel}>
               <FilterBar
                 theme={theme}
                 filters={filters}

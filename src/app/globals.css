@@ -82,6 +82,12 @@ html.scroll-locked body {
   }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .fade-in {
+    animation: none;
+  }
+}
+
 .page-shell {
   display: flex;
   flex: 1;
