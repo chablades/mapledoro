@@ -27,6 +27,108 @@ function skipButtonStyle(theme: AppTheme, disabled: boolean): CSSProperties {
   };
 }
 
+/** The Quick/MapleScouter/Full setup flow picker — shared between the first-run intro
+ *  screen and the profile binder's "Setup" bookmark (re-entering setup later). */
+export function SetupFlowButtons({ model, actions }: SetupIntroScreenProps) {
+  const { theme, setup } = model;
+  const jobName = model.profile.confirmedCharacter?.jobName ?? "";
+  const overrides = getClassSetupOverrides(jobName);
+  const quickStepCount = getFlowStepCount("quick_setup");
+  const characterLevel = model.profile.confirmedCharacter?.level;
+  const { startStep: quickStartStep } = computeEffectiveFlowStart(
+    "quick_setup", overrides.gender, overrides.skipMarriage, characterLevel, jobName,
+  );
+  const quickSetupAllSkipped = quickStartStep > quickStepCount;
+  const genderSkipped = overrides.gender !== null;
+  let quickSetupSubtitle = "Gender & marriage only";
+  if (genderSkipped) quickSetupSubtitle = "Marriage only";
+  else if (overrides.skipMarriage) quickSetupSubtitle = "Gender only";
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>
+      {quickSetupAllSkipped ? (
+        <>
+          <p style={{ margin: 0, fontSize: "0.85rem", color: theme.muted, fontWeight: 700 }}>
+            This character has no gender or marriage to configure.
+          </p>
+          <button
+            type="button"
+            disabled={setup.isUiLocked}
+            onClick={() => actions.startOptionalFlow("quick_setup")}
+            style={{
+              ...secondaryButtonStyle(theme, "0.65rem 0.9rem"),
+              textAlign: "left",
+              display: "flex",
+              flexDirection: "column",
+              gap: "0.2rem",
+            }}
+          >
+            <span style={{ fontWeight: 900, fontSize: "0.9rem" }}>Skip setup</span>
+            <span style={{ fontWeight: 700, fontSize: "0.8rem", color: theme.muted }}>
+              Add character and go to profile
+            </span>
+          </button>
+        </>
+      ) : (
+        <button
+          type="button"
+          disabled={setup.isUiLocked}
+          onClick={() => actions.startOptionalFlow("quick_setup")}
+          style={{
+            ...secondaryButtonStyle(theme, "0.65rem 0.9rem"),
+            textAlign: "left",
+            display: "flex",
+            flexDirection: "column",
+            gap: "0.2rem",
+          }}
+        >
+          <span style={{ fontWeight: 900, fontSize: "0.9rem" }}>Quick setup</span>
+          <span style={{ fontWeight: 700, fontSize: "0.8rem", color: theme.muted }}>
+            {quickSetupSubtitle}
+          </span>
+        </button>
+      )}
+      <button
+        type="button"
+        disabled={setup.isUiLocked}
+        onClick={() => actions.startOptionalFlow("maplescouter_setup")}
+        style={{
+          ...secondaryButtonStyle(theme, "0.65rem 0.9rem"),
+          ...dialogPrimaryBtnColors(theme),
+          color: theme.text,
+          borderColor: theme.border,
+          textAlign: "left",
+          display: "flex",
+          flexDirection: "column",
+          gap: "0.2rem",
+        }}
+      >
+        <span style={{ fontWeight: 900, fontSize: "0.9rem" }}>MapleScouter setup</span>
+        <span style={{ fontWeight: 700, fontSize: "0.8rem", color: theme.muted }}>
+          Stats, buffs, and skill levels, for MapleScouter calculations
+        </span>
+      </button>
+      <button
+        type="button"
+        disabled={setup.isUiLocked}
+        onClick={() => actions.startOptionalFlow("full_setup")}
+        style={{
+          ...primaryButtonStyle(theme, "0.65rem 0.9rem"),
+          textAlign: "left",
+          display: "flex",
+          flexDirection: "column",
+          gap: "0.2rem",
+        }}
+      >
+        <span style={{ fontWeight: 900, fontSize: "0.9rem" }}>Full setup</span>
+        <span style={{ fontWeight: 700, fontSize: "0.8rem", opacity: 0.8 }}>
+          Stats, equipment, skills, and more. All steps are optional.
+        </span>
+      </button>
+    </div>
+  );
+}
+
 export default function QuickSetupIntroScreen({ model, actions }: SetupIntroScreenProps) {
   const { theme, setup } = model;
   if (setup.showFlowOverview || setup.setupStepIndex !== 0) return null;
@@ -46,10 +148,6 @@ export default function QuickSetupIntroScreen({ model, actions }: SetupIntroScre
     "quick_setup", overrides.gender, overrides.skipMarriage, characterLevel, jobName,
   );
   const quickSetupAllSkipped = quickStartStep > quickStepCount;
-  const genderSkipped = overrides.gender !== null;
-  let quickSetupSubtitle = "Gender & marriage only";
-  if (genderSkipped) quickSetupSubtitle = "Marriage only";
-  else if (overrides.skipMarriage) quickSetupSubtitle = "Gender only";
 
   return (
     <>
@@ -94,87 +192,7 @@ export default function QuickSetupIntroScreen({ model, actions }: SetupIntroScre
       >
         {subtitle}
       </p>
-      <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>
-        {quickSetupAllSkipped ? (
-          <>
-            <p style={{ margin: 0, fontSize: "0.85rem", color: theme.muted, fontWeight: 700 }}>
-              This character has no gender or marriage to configure.
-            </p>
-            <button
-              type="button"
-              disabled={setup.isUiLocked}
-              onClick={() => actions.startOptionalFlow("quick_setup")}
-              style={{
-                ...secondaryButtonStyle(theme, "0.65rem 0.9rem"),
-                textAlign: "left",
-                display: "flex",
-                flexDirection: "column",
-                gap: "0.2rem",
-              }}
-            >
-              <span style={{ fontWeight: 900, fontSize: "0.9rem" }}>Skip setup</span>
-              <span style={{ fontWeight: 700, fontSize: "0.8rem", color: theme.muted }}>
-                Add character and go to profile
-              </span>
-            </button>
-          </>
-        ) : (
-          <button
-            type="button"
-            disabled={setup.isUiLocked}
-            onClick={() => actions.startOptionalFlow("quick_setup")}
-            style={{
-              ...secondaryButtonStyle(theme, "0.65rem 0.9rem"),
-              textAlign: "left",
-              display: "flex",
-              flexDirection: "column",
-              gap: "0.2rem",
-            }}
-          >
-            <span style={{ fontWeight: 900, fontSize: "0.9rem" }}>Quick setup</span>
-            <span style={{ fontWeight: 700, fontSize: "0.8rem", color: theme.muted }}>
-              {quickSetupSubtitle}
-            </span>
-          </button>
-        )}
-        <button
-          type="button"
-          disabled={setup.isUiLocked}
-          onClick={() => actions.startOptionalFlow("maplescouter_setup")}
-          style={{
-            ...secondaryButtonStyle(theme, "0.65rem 0.9rem"),
-            ...dialogPrimaryBtnColors(theme),
-            color: theme.text,
-            borderColor: theme.border,
-            textAlign: "left",
-            display: "flex",
-            flexDirection: "column",
-            gap: "0.2rem",
-          }}
-        >
-          <span style={{ fontWeight: 900, fontSize: "0.9rem" }}>MapleScouter setup</span>
-          <span style={{ fontWeight: 700, fontSize: "0.8rem", color: theme.muted }}>
-            Stats, buffs, and skill levels, for MapleScouter calculations
-          </span>
-        </button>
-        <button
-          type="button"
-          disabled={setup.isUiLocked}
-          onClick={() => actions.startOptionalFlow("full_setup")}
-          style={{
-            ...primaryButtonStyle(theme, "0.65rem 0.9rem"),
-            textAlign: "left",
-            display: "flex",
-            flexDirection: "column",
-            gap: "0.2rem",
-          }}
-        >
-          <span style={{ fontWeight: 900, fontSize: "0.9rem" }}>Full setup</span>
-          <span style={{ fontWeight: 700, fontSize: "0.8rem", opacity: 0.8 }}>
-            Stats, equipment, skills, and more. All steps are optional.
-          </span>
-        </button>
-      </div>
+      <SetupFlowButtons model={model} actions={actions} />
     </>
   );
 }

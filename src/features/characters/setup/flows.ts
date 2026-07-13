@@ -85,48 +85,6 @@ const SETUP_FLOWS = [
     required: false,
     steps: ["familiars"] as const,
   },
-  {
-    id: "link_skills_flow",
-    label: "Link Skills",
-    description: "Add active link preset details.",
-    required: false,
-    steps: ["link_skills"] as const,
-  },
-  {
-    id: "gender_flow",
-    label: "Gender",
-    description: "Set this character's gender.",
-    required: false,
-    steps: ["gender"] as const,
-  },
-  {
-    id: "marriage_flow",
-    label: "Marriage",
-    description: "Set marriage status and partner IGN.",
-    required: false,
-    steps: ["marriage"] as const,
-  },
-  {
-    id: "oz_rings_flow",
-    label: "Oz Rings",
-    description: "Add Oz ring levels.",
-    required: false,
-    steps: ["oz_rings"] as const,
-  },
-  {
-    id: "legion_artifacts_flow",
-    label: "Legion Artifacts",
-    description: "Add Legion Artifact level and crystal details.",
-    required: false,
-    steps: ["legion_artifacts"] as const,
-  },
-  {
-    id: "buffs_flow",
-    label: "Buffs",
-    description: "Add active buffs for MapleScouter.",
-    required: false,
-    steps: ["buffs"] as const,
-  },
 ] as const;
 
 type SetupFlowDefinition = (typeof SETUP_FLOWS)[number];

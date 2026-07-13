@@ -9,11 +9,8 @@ import { readCharacterToolData } from "../../../tools/characterToolStorage";
 import { resolveClassId, getClassSetupOverrides } from "../../setup/data/nexonJobMapping";
 import { CLASS_SKILL_DATA } from "../../setup/data/classSkillData";
 import { resourceImageUrl } from "../../../../lib/mapleResource";
-import { readCharactersStore, selectCharactersList } from "../../model/charactersStore";
 import type { StoredCharacterEquipment, StoredCharacterRecord } from "../../model/charactersStore";
-import { LEGION_CRYSTALS } from "../../setup/data/legionArtifactData";
-import { LINK_SKILLS, reconcileLinkSkills } from "../../setup/data/linkSkillsData";
-import { GUILD_BUFFS, BOOL_BUFFS, RENOWN_STATS } from "../../setup/data/buffsData";
+import { SetupFlowButtons } from "./QuickSetupIntroScreen";
 
 interface CharacterProfileOverviewScreenProps {
   model: PreviewPaneModel;
@@ -21,7 +18,7 @@ interface CharacterProfileOverviewScreenProps {
 }
 
 type Theme = PreviewPaneModel["theme"];
-type BookmarkId = "overview" | SetupStepId;
+type BookmarkId = "overview" | "gender_marriage" | Exclude<SetupStepId, "gender" | "marriage" | "link_skills" | "legion_artifacts" | "buffs" | "oz_rings"> | "setup";
 
 interface BookmarkDef {
   id: BookmarkId;
@@ -32,27 +29,22 @@ interface BookmarkDef {
 
 const ALL_BOOKMARKS: BookmarkDef[] = [
   { id: "overview", tabLabel: "Overview", pageLabel: "Overview", flowId: null },
-  { id: "gender", tabLabel: "Gender", pageLabel: "Gender", flowId: "gender_flow" },
-  { id: "marriage", tabLabel: "Married", pageLabel: "Marriage", flowId: "marriage_flow" },
+  { id: "gender_marriage", tabLabel: "Gender & Married", pageLabel: "Gender & Marriage", flowId: "quick_setup" },
   { id: "stats", tabLabel: "Stats", pageLabel: "Stats", flowId: "stats_flow" },
   { id: "equipment", tabLabel: "Gear", pageLabel: "Equipment", flowId: "equipment_flow" },
-  { id: "oz_rings", tabLabel: "Oz Rings", pageLabel: "Oz Rings", flowId: "oz_rings_flow" },
-  { id: "familiars", tabLabel: "Familiars", pageLabel: "Familiars", flowId: "familiars_flow" },
-  { id: "link_skills", tabLabel: "Link Skills", pageLabel: "Link Skills", flowId: "link_skills_flow" },
   { id: "v_matrix", tabLabel: "V Matrix", pageLabel: "V Matrix", flowId: "v_matrix_flow" },
   { id: "hexa_matrix", tabLabel: "HEXA", pageLabel: "HEXA Matrix", flowId: "hexa_matrix_flow" },
-  { id: "legion_artifacts", tabLabel: "Legion", pageLabel: "Legion Artifacts", flowId: "legion_artifacts_flow" },
-  { id: "buffs", tabLabel: "Buffs", pageLabel: "Buffs", flowId: "buffs_flow" },
+  { id: "familiars", tabLabel: "Familiars", pageLabel: "Familiars", flowId: "familiars_flow" },
+  { id: "setup", tabLabel: "Setup", pageLabel: "Setup", flowId: null },
 ];
 
 function getVisibleBookmarks(jobName: string | undefined): BookmarkDef[] {
   if (!jobName) return ALL_BOOKMARKS;
   const overrides = getClassSetupOverrides(jobName);
-  return ALL_BOOKMARKS.filter((b) => {
-    if (b.id === "gender" && overrides.gender !== null) return false;
-    if (b.id === "marriage" && overrides.skipMarriage) return false;
-    return true;
-  });
+  if (overrides.gender !== null && overrides.skipMarriage) {
+    return ALL_BOOKMARKS.filter((b) => b.id !== "gender_marriage");
+  }
+  return ALL_BOOKMARKS;
 }
 
 const commonSlots: (HexaSkillDef | null)[] = [COMMON_SKILLS[0] ?? null, COMMON_SKILLS[1] ?? null, null, null];
@@ -146,25 +138,6 @@ function SummaryRow({ label, value, theme }: { label: string; value: string; the
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 10, padding: "6px 0", borderBottom: `1px solid ${theme.border}` }}>
       <span style={{ fontSize: 12, color: theme.muted }}>{label}</span>
       <span style={{ fontSize: 13, fontWeight: 700, color: theme.text, textAlign: "right" }}>{value}</span>
-    </div>
-  );
-}
-
-function ChipList({ items, theme }: { items: string[]; theme: Theme }) {
-  if (items.length === 0) return null;
-  return (
-    <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-      {items.map((item) => (
-        <span
-          key={item}
-          style={{
-            fontSize: 12, fontWeight: 700, color: theme.text, background: theme.bg,
-            border: `1px solid ${theme.border}`, borderRadius: 999, padding: "3px 9px",
-          }}
-        >
-          {item}
-        </span>
-      ))}
     </div>
   );
 }
@@ -338,23 +311,28 @@ function OverviewBookmark({ model }: { model: PreviewPaneModel }) {
   );
 }
 
-function GenderBookmark({ theme, character }: { theme: Theme; character: StoredCharacterRecord | null }) {
-  let label: string | null = null;
-  if (character?.gender === "male") label = "Male";
-  else if (character?.gender === "female") label = "Female";
-  if (!label) return null;
-  return <SummaryRow label="Gender" value={label} theme={theme} />;
-}
+function GenderMarriageBookmark({ theme, character }: { theme: Theme; character: StoredCharacterRecord | null }) {
+  const overrides = character ? getClassSetupOverrides(character.jobName) : null;
+  const showGender = !overrides || overrides.gender === null;
+  const showMarriage = !overrides || !overrides.skipMarriage;
 
-function MarriageBookmark({ theme, character }: { theme: Theme; character: StoredCharacterRecord | null }) {
+  let genderLabel: string | null = null;
+  if (character?.gender === "male") genderLabel = "Male";
+  else if (character?.gender === "female") genderLabel = "Female";
+
   const marriage = character?.marriage;
-  if (!marriage || marriage.isMarried === null) return null;
-  if (marriage.isMarried === false) return <SummaryRow label="Status" value="Not married" theme={theme} />;
+  const hasMarriage = marriage && marriage.isMarried !== null;
+
   return (
-    <>
-      <SummaryRow label="Status" value="Married" theme={theme} />
-      {marriage.partnerName && <SummaryRow label="Partner" value={marriage.partnerName} theme={theme} />}
-    </>
+    <div>
+      {showGender && genderLabel && <SummaryRow label="Gender" value={genderLabel} theme={theme} />}
+      {showMarriage && hasMarriage && (
+        <>
+          <SummaryRow label="Status" value={marriage.isMarried ? "Married" : "Not married"} theme={theme} />
+          {marriage.isMarried && marriage.partnerName && <SummaryRow label="Partner" value={marriage.partnerName} theme={theme} />}
+        </>
+      )}
+    </div>
   );
 }
 
@@ -414,27 +392,6 @@ function EquipmentBookmark({ theme, character }: { theme: Theme; character: Stor
   );
 }
 
-function OzRingsBookmark({ theme, character }: { theme: Theme; character: StoredCharacterRecord | null }) {
-  const ozRings = character?.scouter?.ozRings;
-  if (!ozRings) return null;
-  const isContinuous = ozRings.ringMode === "continuous";
-  const rows = isContinuous
-    ? [{ label: "Continuous", level: ozRings.levels.continuous }]
-    : [
-        { label: "Restraint", level: ozRings.levels.restraint },
-        { label: "Weapon Jump", level: ozRings.levels.weaponJump },
-        { label: "Totalling", level: ozRings.levels.totalling },
-      ];
-  return (
-    <div>
-      <SummaryRow label="Mode" value={isContinuous ? "Continuous" : "Standard"} theme={theme} />
-      {rows.map((r) => (
-        <SummaryRow key={r.label} label={r.label} value={r.level ? `Lv. ${r.level}` : "—"} theme={theme} />
-      ))}
-    </div>
-  );
-}
-
 function FamiliarsBookmark({ theme, character }: { theme: Theme; character: StoredCharacterRecord | null }) {
   const data = character?.familiars;
   const preset = data?.presets?.[data.activePreset];
@@ -448,30 +405,6 @@ function FamiliarsBookmark({ theme, character }: { theme: Theme; character: Stor
         <SummaryRow key={i} label={f.tier ? `${f.tier} Familiar` : "Familiar"} value={f.name} theme={theme} />
       ))}
       {preset.badges.length > 0 && <SummaryRow label="Badges" value={`${preset.badges.length} equipped`} theme={theme} />}
-    </div>
-  );
-}
-
-function LinkSkillsBookmark({ theme, character }: { theme: Theme; character: StoredCharacterRecord | null }) {
-  const mounted = useSyncExternalStore(() => () => undefined, () => true, () => false);
-  const worldId = character?.worldID;
-  const levels = useMemo(() => {
-    if (!mounted || worldId === undefined) return null;
-    const store = readCharactersStore();
-    return reconcileLinkSkills(store.linkSkillsByWorld[String(worldId)], selectCharactersList(store), worldId);
-  // react-doctor-disable-next-line exhaustive-deps -- deliberately depends on the narrowed `worldId` primitive, not the whole `character` object, to avoid re-running when unrelated fields change
-  }, [mounted, worldId]);
-  if (!levels) return null;
-  // react-doctor-disable-next-line js-combine-iterations -- LINK_SKILLS is a small fixed roster, extra pass is negligible per the rule's own FP criteria
-  const rows = LINK_SKILLS
-    .map((skill) => ({ label: skill.name, level: levels[skill.id] }))
-    .filter((row) => row.level);
-  if (rows.length === 0) return null;
-  return (
-    <div>
-      {rows.map((r) => (
-        <SummaryRow key={r.label} label={r.label} value={`Lv. ${r.level}`} theme={theme} />
-      ))}
     </div>
   );
 }
@@ -571,60 +504,6 @@ function HexaMatrixBookmark({ theme, character }: { theme: Theme; character: Sto
   );
 }
 
-function LegionArtifactsBookmark({ theme, character }: { theme: Theme; character: StoredCharacterRecord | null }) {
-  const mounted = useSyncExternalStore(() => () => undefined, () => true, () => false);
-  const worldId = character?.worldID;
-  const artifact = useMemo(() => {
-    if (!mounted || worldId === undefined) return null;
-    return readCharactersStore().legionArtifactByWorld[String(worldId)] ?? null;
-  // react-doctor-disable-next-line exhaustive-deps -- deliberately depends on the narrowed `worldId` primitive, not the whole `character` object, to avoid re-running when unrelated fields change
-  }, [mounted, worldId]);
-  if (!artifact?.artifactLevel) return null;
-  const unlocked = LEGION_CRYSTALS.filter((c) => artifact.artifactLevel! >= c.requiredArtifactLevel).length;
-  return (
-    <div>
-      <SummaryRow label="Artifact Level" value={String(artifact.artifactLevel)} theme={theme} />
-      <SummaryRow label="Crystals Unlocked" value={`${unlocked} / ${LEGION_CRYSTALS.length}`} theme={theme} />
-    </div>
-  );
-}
-
-function BuffsBookmark({ theme, character }: { theme: Theme; character: StoredCharacterRecord | null }) {
-  const buffs = character?.scouter?.buffs;
-  if (!buffs) return null;
-
-  // react-doctor-disable-next-line js-combine-iterations -- GUILD_BUFFS is a small fixed roster, extra pass is negligible per the rule's own FP criteria
-  const guildRows = GUILD_BUFFS
-    .map((b) => ({ label: b.name, level: buffs[b.id] }))
-    .filter((row) => row.level);
-  // react-doctor-disable-next-line js-combine-iterations -- BOOL_BUFFS is a small fixed roster, extra pass is negligible per the rule's own FP criteria
-  const activeChips = BOOL_BUFFS.filter((b) => buffs[b.id]).map((b) => b.name);
-  const renownRows = buffs.renown
-    // react-doctor-disable-next-line js-combine-iterations -- RENOWN_STATS is a small fixed roster, extra pass is negligible per the rule's own FP criteria
-    ? RENOWN_STATS
-        .map((stat) => ({ label: stat.label, value: buffs.renown?.[stat.id] }))
-        .filter((row) => row.value)
-    : [];
-
-  const hasAny = guildRows.length > 0 || activeChips.length > 0 || renownRows.length > 0 || buffs.statPotionValue;
-  if (!hasAny) return null;
-
-  return (
-    <div style={{ display: "grid", gap: 10 }}>
-      {guildRows.map((r) => (
-        <SummaryRow key={r.label} label={r.label} value={`Lv. ${r.level}`} theme={theme} />
-      ))}
-      {renownRows.map((r) => (
-        <SummaryRow key={r.label} label={`Renown ${r.label}`} value={`+${r.value}`} theme={theme} />
-      ))}
-      {buffs.statPotionValue !== undefined && (
-        <SummaryRow label="Stat Potion" value={`+${buffs.statPotionValue}`} theme={theme} />
-      )}
-      {activeChips.length > 0 && <ChipList items={activeChips} theme={theme} />}
-    </div>
-  );
-}
-
 function isHexaMatrixFilled(character: StoredCharacterRecord, mounted: boolean): boolean {
   if (character.level < 260) return false;
   const classId = resolveClassId(character.jobName);
@@ -640,53 +519,79 @@ function isBookmarkFilled(id: BookmarkId, character: StoredCharacterRecord | nul
   if (!character) return false;
   switch (id) {
     case "overview": return true;
-    case "gender": return character.gender !== null;
-    case "marriage": return character.marriage !== null && character.marriage.isMarried !== null;
+    case "gender_marriage": return character.gender !== null || (character.marriage !== null && character.marriage.isMarried !== null);
     case "stats": return isStatsFilled(character);
     case "equipment": {
       const equip = character.equipment;
       const preset = equip?.presets?.[equip.activePreset] ?? equip?.presets?.[0];
       return Boolean(equip?.title || preset && Object.values(preset).some((v) => v && typeof v === "object" && "name" in v && v.name));
     }
-    case "oz_rings": return Boolean(character.scouter?.ozRings);
     case "familiars": {
       const preset = character.familiars?.presets?.[character.familiars.activePreset];
       return Boolean(preset && (preset.familiars.some((f) => f.name) || preset.badges.length > 0));
-    }
-    case "link_skills": {
-      if (!mounted) return false;
-      const store = readCharactersStore();
-      const levels = reconcileLinkSkills(store.linkSkillsByWorld[String(character.worldID)], selectCharactersList(store), character.worldID);
-      return Object.values(levels).some((v) => v);
     }
     case "v_matrix": {
       const levels = character.vMatrix?.levels;
       return Boolean(levels && Object.values(levels).some((v) => v > 0));
     }
     case "hexa_matrix": return isHexaMatrixFilled(character, mounted);
-    case "legion_artifacts": {
-      if (!mounted) return false;
-      const artifact = readCharactersStore().legionArtifactByWorld[String(character.worldID)];
-      return Boolean(artifact?.artifactLevel);
-    }
-    case "buffs": return Boolean(character.scouter?.buffs);
     default: return false;
   }
 }
 
-const BOOKMARK_CONTENT: Record<Exclude<BookmarkId, "overview">, (props: { theme: Theme; character: StoredCharacterRecord | null }) => ReactNode> = {
-  gender: GenderBookmark,
-  marriage: MarriageBookmark,
+const BOOKMARK_CONTENT: Record<Exclude<BookmarkId, "overview" | "setup">, (props: { theme: Theme; character: StoredCharacterRecord | null }) => ReactNode> = {
+  gender_marriage: GenderMarriageBookmark,
   stats: StatsBookmark,
   equipment: EquipmentBookmark,
-  oz_rings: OzRingsBookmark,
   familiars: FamiliarsBookmark,
-  link_skills: LinkSkillsBookmark,
   v_matrix: VMatrixBookmark,
   hexa_matrix: HexaMatrixBookmark,
-  legion_artifacts: LegionArtifactsBookmark,
-  buffs: BuffsBookmark,
 };
+
+function SetupBookmark({ model, actions }: { model: PreviewPaneModel; actions: PreviewPaneActions }) {
+  const { theme } = model;
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      <p style={{ margin: 0, fontSize: 12, color: theme.muted, fontWeight: 700 }}>
+        Re-run a whole setup flow for this character without starting over from the directory.
+      </p>
+      <SetupFlowButtons model={model} actions={actions} />
+    </div>
+  );
+}
+
+function BookmarkPageBody({
+  model, actions, active, filled, ContentComponent, onEdit,
+}: {
+  model: PreviewPaneModel;
+  actions: PreviewPaneActions;
+  active: BookmarkDef;
+  filled: boolean;
+  ContentComponent: ((props: { theme: Theme; character: StoredCharacterRecord | null }) => ReactNode) | null;
+  onEdit: () => void;
+}) {
+  const { theme, profile, setup } = model;
+  const character = profile.confirmedCharacter;
+
+  if (active.id === "overview") return <OverviewBookmark model={model} />;
+
+  if (active.id === "setup") {
+    return (
+      <>
+        <BookmarkPageHeader theme={theme} label={active.pageLabel} onEdit={null} disabled={setup.isUiLocked} />
+        <SetupBookmark model={model} actions={actions} />
+      </>
+    );
+  }
+
+  return (
+    <>
+      <BookmarkPageHeader theme={theme} label={active.pageLabel} onEdit={filled ? onEdit : null} disabled={setup.isUiLocked} />
+      {filled && ContentComponent ? <ContentComponent theme={theme} character={character} /> : null}
+      {!filled && <EmptyBookmarkState theme={theme} label={active.pageLabel} onSetup={onEdit} disabled={setup.isUiLocked} />}
+    </>
+  );
+}
 
 function BookmarkSpine({
   theme, bookmarks, activeId, onSelect,
@@ -745,7 +650,7 @@ export default function CharacterProfileOverviewScreen({
   model,
   actions,
 }: CharacterProfileOverviewScreenProps) {
-  const { theme, profile, setup } = model;
+  const { theme, profile } = model;
   const character = profile.confirmedCharacter;
   const mounted = useSyncExternalStore(() => () => undefined, () => true, () => false);
 
@@ -754,7 +659,7 @@ export default function CharacterProfileOverviewScreen({
   const active = bookmarks.find((b) => b.id === activeId) ?? bookmarks[0];
 
   const filled = isBookmarkFilled(active.id, character, mounted);
-  const ContentComponent = active.id === "overview" ? null : BOOKMARK_CONTENT[active.id];
+  const ContentComponent = active.id === "overview" || active.id === "setup" ? null : BOOKMARK_CONTENT[active.id];
 
   function handleEdit() {
     if (active.flowId) actions.startOptionalFlow(active.flowId);
@@ -770,15 +675,7 @@ export default function CharacterProfileOverviewScreen({
         tabIndex={0}
       >
         <div key={active.id} className="profile-binder-page-content">
-          {active.id === "overview" ? (
-            <OverviewBookmark model={model} />
-          ) : (
-            <>
-              <BookmarkPageHeader theme={theme} label={active.pageLabel} onEdit={filled ? handleEdit : null} disabled={setup.isUiLocked} />
-              {filled && ContentComponent ? <ContentComponent theme={theme} character={character} /> : null}
-              {!filled && <EmptyBookmarkState theme={theme} label={active.pageLabel} onSetup={handleEdit} disabled={setup.isUiLocked} />}
-            </>
-          )}
+          <BookmarkPageBody model={model} actions={actions} active={active} filled={filled} ContentComponent={ContentComponent} onEdit={handleEdit} />
         </div>
       </div>
       <BookmarkSpine theme={theme} bookmarks={bookmarks} activeId={active.id} onSelect={setActiveId} />

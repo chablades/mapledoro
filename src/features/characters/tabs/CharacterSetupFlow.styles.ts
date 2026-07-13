@@ -634,11 +634,31 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
           }
         }
 
-        /* Profile "binder": thumb-index bookmark spine + page-swap panel. */
+        /* Profile "binder": thumb-index bookmark spine + page-swap panel. Stretched
+           (via the chain below) to match the confirmed-summary-card's height beside it
+           instead of sizing to its own content, so it doesn't read as visually
+           unbalanced next to a taller card; .profile-binder-page centers its content
+           vertically to absorb whatever extra room that leaves on shorter pages. */
+        .preview-pane:has(.profile-binder) {
+          align-items: stretch;
+        }
+
+        .preview-pane:has(.profile-binder) > aside {
+          display: flex;
+          flex-direction: column;
+        }
+
+        .preview-pane:has(.profile-binder) > aside > .setup-step-content {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+        }
+
         .profile-binder {
           display: flex;
           align-items: stretch;
           width: 100%;
+          flex: 1;
           border-radius: 20px;
           overflow: hidden;
         }
@@ -647,6 +667,9 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
           flex: 1;
           min-width: 0;
           padding: 1rem 1.15rem;
+          display: flex;
+          flex-direction: column;
+          justify-content: flex-start;
         }
 
         .profile-binder-spine {
@@ -660,7 +683,8 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
         }
 
         .profile-bookmark-tab {
-          display: block;
+          display: flex;
+          align-items: center;
           width: 100%;
           border: none;
           border-radius: 0 8px 8px 0;
