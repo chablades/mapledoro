@@ -3,7 +3,7 @@ import { useMemo, useRef, useState, useSyncExternalStore, type CSSProperties, ty
 import type { SetupFlowId } from "../../setup/flows";
 import type { SetupStepId } from "../../setup/steps";
 import type { PreviewPaneActions, PreviewPaneModel } from "../paneModels";
-import { primaryButtonStyle, secondaryButtonStyle } from "../components/uiStyles";
+import { primaryButtonStyle, secondaryButtonStyle, successButtonStyle } from "../components/uiStyles";
 import { findClassById, COMMON_SKILLS, type HexaSkillDef, type HexaSkillLevels } from "../../../tools/hexa-skills/hexa-classes";
 import { readCharacterToolData } from "../../../tools/characterToolStorage";
 import { resolveClassId, getClassSetupOverrides } from "../../setup/data/nexonJobMapping";
@@ -16,6 +16,7 @@ import { HYPER_STAT_CATEGORIES } from "../../setup/data/hyperStatData";
 import { isHyperStatEligible } from "../../setup/data/statsStepDraft";
 import { IA_TIER_LABELS } from "../../setup/data/innerAbilityData";
 import { TIER_COLORS as IA_TIER_COLORS } from "../../setup/data/familiarsData";
+import { statusText } from "../../../../components/statusColors";
 
 interface CharacterProfileOverviewScreenProps {
   model: PreviewPaneModel;
@@ -475,6 +476,12 @@ function StatBlock({ label, theme, children }: { label: string; theme: Theme; ch
 
 type StatsView = "stats" | "hyperStat" | "ability";
 
+function statsBookmarkHeaderLabel(view: StatsView, defaultLabel: string): string {
+  if (view === "hyperStat") return "Hyper Stats";
+  if (view === "ability") return "Inner Ability";
+  return defaultLabel;
+}
+
 function StatsActionBar({ view, theme, onSelect }: { view: StatsView; theme: Theme; onSelect: (v: StatsView) => void }) {
   const btnStyle: CSSProperties = { ...secondaryButtonStyle(theme, "8px 0"), width: "100%", fontSize: 12, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 };
   return (
@@ -491,36 +498,94 @@ function StatsActionBar({ view, theme, onSelect }: { view: StatsView; theme: The
   );
 }
 
-function PresetTabs({ theme, active, onSelect }: { theme: Theme; active: number; onSelect: (n: number) => void }) {
+function presetTabButtonStyle(theme: Theme, on: boolean): CSSProperties {
+  return {
+    position: "relative",
+    border: `1px solid ${on ? theme.accent : theme.border}`,
+    borderRadius: 8,
+    background: on ? theme.accent : theme.bg,
+    color: on ? theme.accentOn : theme.text,
+    fontFamily: "inherit", fontWeight: 800, fontSize: "0.8rem",
+    width: 32, height: 32, cursor: "pointer",
+  };
+}
+
+function PresetTabs({
+  theme, active, activePreset, onSelect, onSetActive,
+}: {
+  theme: Theme; active: number; activePreset: number; onSelect: (n: number) => void; onSetActive: ((presetIndex: number) => void) | null;
+}) {
+  const isPreviewingActive = active === activePreset;
   return (
-    <div style={{ display: "flex", gap: 6 }}>
-      {[0, 1, 2].map((i) => (
-        <button
-          key={i}
-          type="button"
-          onClick={() => onSelect(i)}
-          style={{
-            width: 24, height: 24, borderRadius: 999, cursor: "pointer", fontFamily: "inherit", fontSize: 12, fontWeight: 800,
-            border: `1px solid ${active === i ? theme.accent : theme.border}`,
-            background: active === i ? theme.accent : theme.bg,
-            color: active === i ? theme.accentOn : theme.muted,
-          }}
-        >
-          {i + 1}
-        </button>
-      ))}
+    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <span style={{ fontSize: "0.75rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.05em", color: theme.muted }}>Preset</span>
+        <div style={{ display: "flex", gap: 4 }}>
+          {[0, 1, 2].map((i) => {
+            const on = i === active;
+            return (
+              <button
+                key={i}
+                type="button"
+                className="tap-target-44"
+                onClick={() => onSelect(i)}
+                title={i === activePreset ? `Preset ${i + 1} (active in-game)` : `Preset ${i + 1}`}
+                style={presetTabButtonStyle(theme, on)}
+              >
+                {i + 1}
+                {i === activePreset && (
+                  <span
+                    aria-hidden="true"
+                    style={{
+                      position: "absolute", top: -3, right: -3, width: 9, height: 9, borderRadius: 999,
+                      background: statusText(theme, "success"), border: `1.5px solid ${theme.bg}`,
+                    }}
+                  />
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+        <span style={{ fontSize: "0.75rem", fontWeight: 700, color: isPreviewingActive ? statusText(theme, "success") : theme.muted }}>
+          Preset {activePreset + 1} is active in-game
+        </span>
+        {/* Always rendered (never unmounted) so its space stays reserved — unmounting on
+            preset switch shifted everything below it up/down. Only ever set visibility to
+            "hidden" here, never "visible": this component's own outer wrapper (in
+            StatsBookmark) is also visibility-toggled when a sibling sub-view is active, and
+            visibility is inherited — an explicit "visible" here would override that ancestor
+            and punch the button through even while its whole view is hidden. */}
+        {onSetActive && (
+          <button
+            type="button"
+            tabIndex={isPreviewingActive ? -1 : 0}
+            aria-hidden={isPreviewingActive}
+            onClick={() => onSetActive(active)}
+            style={{ ...successButtonStyle(theme, "0.2rem 0.5rem"), visibility: isPreviewingActive ? "hidden" : undefined }}
+          >
+            Set preset {active + 1} as active
+          </button>
+        )}
+      </div>
     </div>
   );
 }
 
-function HyperStatView({ theme, hyperStat }: { theme: Theme; hyperStat: StoredHyperStat | undefined }) {
-  const [presetIdx, setPresetIdx] = useState(hyperStat?.activePreset ?? 0);
+function HyperStatView({
+  theme, hyperStat, onSetActivePreset,
+}: {
+  theme: Theme; hyperStat: StoredHyperStat | undefined; onSetActivePreset: ((presetIndex: number) => void) | null;
+}) {
+  const activePreset = hyperStat?.activePreset ?? 0;
+  const [presetIdx, setPresetIdx] = useState(activePreset);
   const preset = hyperStat?.presets?.[presetIdx];
   const half = Math.ceil(HYPER_STAT_CATEGORIES.length / 2);
   const cols = [HYPER_STAT_CATEGORIES.slice(0, half), HYPER_STAT_CATEGORIES.slice(half)];
   return (
     <div>
-      <PresetTabs theme={theme} active={presetIdx} onSelect={setPresetIdx} />
+      <PresetTabs theme={theme} active={presetIdx} activePreset={activePreset} onSelect={setPresetIdx} onSetActive={hyperStat ? onSetActivePreset : null} />
       <div style={{ display: "flex", gap: 16, marginTop: 10 }}>
         {cols.map((col, i) => (
           // react-doctor-disable-next-line no-array-index-as-key
@@ -547,12 +612,17 @@ function IALineRow({ line, theme }: { line: { tier: StoredIATier; value: string 
   );
 }
 
-function AbilityView({ theme, innerAbility }: { theme: Theme; innerAbility: StoredInnerAbility | undefined }) {
-  const [presetIdx, setPresetIdx] = useState(innerAbility?.activePreset ?? 0);
+function AbilityView({
+  theme, innerAbility, onSetActivePreset,
+}: {
+  theme: Theme; innerAbility: StoredInnerAbility | undefined; onSetActivePreset: ((presetIndex: number) => void) | null;
+}) {
+  const activePreset = innerAbility?.activePreset ?? 0;
+  const [presetIdx, setPresetIdx] = useState(activePreset);
   const preset = innerAbility?.presets?.[presetIdx];
   return (
     <div>
-      <PresetTabs theme={theme} active={presetIdx} onSelect={setPresetIdx} />
+      <PresetTabs theme={theme} active={presetIdx} activePreset={activePreset} onSelect={setPresetIdx} onSetActive={innerAbility ? onSetActivePreset : null} />
       <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 10 }}>
         {[0, 1, 2].map((i) => (
           <IALineRow key={i} line={preset?.lines?.[i] ?? { tier: "", value: "" }} theme={theme} />
@@ -563,9 +633,10 @@ function AbilityView({ theme, innerAbility }: { theme: Theme; innerAbility: Stor
 }
 
 function StatsBookmark({
-  theme, character, view, onViewChange,
+  theme, character, view, onViewChange, onSetActivePreset,
 }: {
   theme: Theme; character: StoredCharacterRecord | null; view: StatsView; onViewChange: (v: StatsView) => void;
+  onSetActivePreset: (field: "hyperStat" | "innerAbility", presetIndex: number) => void;
 }) {
   const s = character?.stats;
   const notCollected = "—";
@@ -635,10 +706,20 @@ function StatsBookmark({
           </StatBlock>
         </div>
         <div style={{ gridArea: "1 / 1", visibility: view === "hyperStat" ? "visible" : "hidden" }}>
-          <HyperStatView key={character?.characterName} theme={theme} hyperStat={s?.hyperStat} />
+          <HyperStatView
+            key={character?.characterName}
+            theme={theme}
+            hyperStat={s?.hyperStat}
+            onSetActivePreset={(presetIndex) => onSetActivePreset("hyperStat", presetIndex)}
+          />
         </div>
         <div style={{ gridArea: "1 / 1", visibility: view === "ability" ? "visible" : "hidden" }}>
-          <AbilityView key={character?.characterName} theme={theme} innerAbility={s?.innerAbility} />
+          <AbilityView
+            key={character?.characterName}
+            theme={theme}
+            innerAbility={s?.innerAbility}
+            onSetActivePreset={(presetIndex) => onSetActivePreset("innerAbility", presetIndex)}
+          />
         </div>
       </div>
       <div style={{ paddingTop: 14 }}>
@@ -908,10 +989,19 @@ function BookmarkPageBody({
   if (active.id === "stats") {
     const editStats = () => { if (active.flowId) onEditStep(active.flowId, statsTargetSubstep(statsView, character?.level), true); };
     const setUpStats = () => { if (active.flowId) onEditStep(active.flowId); };
+    const statsHeaderLabel = statsBookmarkHeaderLabel(statsView, active.pageLabel);
     return (
       <>
-        <BookmarkPageHeader theme={theme} label={active.pageLabel} onEdit={filled ? editStats : null} disabled={setup.isUiLocked} />
-        {filled ? <StatsBookmark theme={theme} character={character} view={statsView} onViewChange={setStatsView} /> : null}
+        <BookmarkPageHeader theme={theme} label={statsHeaderLabel} onEdit={filled ? editStats : null} disabled={setup.isUiLocked} />
+        {filled ? (
+          <StatsBookmark
+            theme={theme}
+            character={character}
+            view={statsView}
+            onViewChange={setStatsView}
+            onSetActivePreset={actions.setStatsActivePreset}
+          />
+        ) : null}
         {!filled && <EmptyBookmarkState theme={theme} label={active.pageLabel} onSetup={setUpStats} disabled={setup.isUiLocked} />}
       </>
     );

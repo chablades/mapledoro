@@ -175,7 +175,7 @@ function presetButtonStyle(theme: AppTheme, on: boolean): CSSProperties {
     border: `1px solid ${on ? theme.accent : theme.border}`,
     borderRadius: 8,
     background: on ? theme.accent : theme.bg,
-    color: on ? "#fff" : theme.text,
+    color: on ? theme.accentOn : theme.text,
     fontFamily: "inherit", fontWeight: 800, fontSize: "0.8rem",
     width: 32, height: 32, cursor: "pointer",
   };

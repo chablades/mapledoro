@@ -69,3 +69,19 @@ export function dangerButtonStyle(theme: AppTheme, padding = "0.28rem 0.62rem"):
     cursor: "pointer",
   };
 }
+
+export function successButtonStyle(theme: AppTheme, padding = "0.28rem 0.62rem"): CSSProperties {
+  const green = statusText(theme, "success");
+  return {
+    border: `1px solid ${green}`,
+    borderRadius: "999px",
+    background: theme.bg,
+    color: green,
+    fontFamily: "inherit",
+    fontWeight: 800,
+    fontSize: "0.78rem",
+    padding,
+    width: "fit-content",
+    cursor: "pointer",
+  };
+}

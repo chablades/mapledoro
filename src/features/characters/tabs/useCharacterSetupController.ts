@@ -1011,6 +1011,18 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
     });
   }, []);
 
+  // Profile-page correction for which Hyper Stat/Inner Ability preset is actually
+  // equipped in-game — these are saved as preset 1 by default at setup time (never asked),
+  // so this is the only way that value ever becomes accurate. No-ops if the character
+  // never collected that field at all (nothing to mark active).
+  const setStatsActivePreset = useCallback((field: "hyperStat" | "innerAbility", presetIndex: number) => {
+    if (!confirmedCharacter) return;
+    const existing = selectCharacterById(readCharactersStore(), toCharacterKey(confirmedCharacter));
+    const current = existing?.stats?.[field];
+    if (!existing || !current) return;
+    upsertRosterCharacter({ ...existing, stats: { ...existing.stats, [field]: { ...current, activePreset: presetIndex } } });
+  }, [confirmedCharacter, upsertRosterCharacter]);
+
   const applyDraftFlowState = useCallback(
     (
       draft: SetupDraft,
@@ -2258,6 +2270,7 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
       setMainCharacter,
       removeMainCharacter,
       toggleChampionCharacter,
+      setStatsActivePreset,
       switchToCharacterProfile,
       toggleCharacterDirectory,
       removeCurrentCharacter,

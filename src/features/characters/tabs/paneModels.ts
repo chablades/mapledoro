@@ -170,4 +170,5 @@ export interface PreviewPaneActions {
   startOptionalFlow: (flowId: SetupFlowId, targetSubstep?: number, confineToSubstep?: boolean) => void;
   skipSetupEntirely: () => void;
   rememberActiveBookmark: (id: string) => void;
+  setStatsActivePreset: (field: "hyperStat" | "innerAbility", presetIndex: number) => void;
 }
