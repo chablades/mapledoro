@@ -45,3 +45,21 @@ export const TRIPLE_STAT_FIELDS: TripleStatFieldDef[] = [
   { id: "magicAtt", label: "Magic ATT", type: "triple" },
 ];
 
+// Labels for the single-value combat/symbol fields, shared between the setup step's own
+// question labels and the profile's read-only Stats bookmark.
+export const STAT_LABELS: Partial<Record<StatFieldId, string>> = {
+  damage: "Damage",
+  bossDamage: "Boss Damage",
+  ignoreDefense: "Ignore DEF",
+  criticalRate: "Critical Rate",
+  criticalDamage: "Critical Damage",
+  buffDuration: "Buff Duration",
+  cooldownReduction: "Cooldown Reduction",
+  cooldownSkip: "Cooldown Not Applied",
+  ignoreElementalResistance: "Ignore Elem. Resist.",
+  additionalStatusDamage: "Addl. Status Damage",
+  summonDuration: "Summons Duration Inc.",
+  arcanePower: "Arcane Power",
+  sacredPower: "Sacred Power",
+};
+

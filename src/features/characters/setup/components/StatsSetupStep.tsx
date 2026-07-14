@@ -25,7 +25,7 @@ import {
   type ClassSkillData,
   type ClassWarning,
 } from "../data/classSkillData";
-import type { StatFieldId, TripleStatFieldId } from "../data/statFields";
+import { STAT_LABELS, type StatFieldId, type TripleStatFieldId } from "../data/statFields";
 import {
   GENESIS_LIBERATION_LEVEL,
   isArcaneEligible,
@@ -118,22 +118,6 @@ function clampIgnoreElementalResist(raw: string): string {
   if (Number(sanitized) > IGNORE_ELEMENTAL_RESIST_MAX) return String(IGNORE_ELEMENTAL_RESIST_MAX);
   return sanitized;
 }
-
-export const STAT_LABELS: Partial<Record<StatFieldId, string>> = {
-  damage: "Damage",
-  bossDamage: "Boss Damage",
-  ignoreDefense: "Ignore DEF",
-  criticalRate: "Critical Rate",
-  criticalDamage: "Critical Damage",
-  buffDuration: "Buff Duration",
-  cooldownReduction: "Cooldown Reduction",
-  cooldownSkip: "Cooldown Not Applied",
-  ignoreElementalResistance: "Ignore Elem. Resist.",
-  additionalStatusDamage: "Addl. Status Damage",
-  summonDuration: "Summons Duration Inc.",
-  arcanePower: "Arcane Power",
-  sacredPower: "Sacred Power",
-};
 
 interface ConfinableFrameProps {
   substepIndex: number;

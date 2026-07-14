@@ -11,7 +11,7 @@ import { CLASS_SKILL_DATA } from "../../setup/data/classSkillData";
 import { resourceImageUrl } from "../../../../lib/mapleResource";
 import type { StoredCharacterEquipment, StoredCharacterRecord, StoredHyperStat, StoredInnerAbility, StoredIATier } from "../../model/charactersStore";
 import { SetupFlowButtons } from "./QuickSetupIntroScreen";
-import { STAT_LABELS } from "../../setup/components/StatsSetupStep";
+import { STAT_LABELS } from "../../setup/data/statFields";
 import { HYPER_STAT_CATEGORIES } from "../../setup/data/hyperStatData";
 import { isHyperStatEligible } from "../../setup/data/statsStepDraft";
 import { IA_TIER_LABELS } from "../../setup/data/innerAbilityData";
@@ -500,7 +500,7 @@ function PresetTabs({ theme, active, onSelect }: { theme: Theme; active: number;
           type="button"
           onClick={() => onSelect(i)}
           style={{
-            width: 24, height: 24, borderRadius: 999, cursor: "pointer", fontFamily: "inherit", fontSize: 11, fontWeight: 800,
+            width: 24, height: 24, borderRadius: 999, cursor: "pointer", fontFamily: "inherit", fontSize: 12, fontWeight: 800,
             border: `1px solid ${active === i ? theme.accent : theme.border}`,
             background: active === i ? theme.accent : theme.bg,
             color: active === i ? theme.accentOn : theme.muted,
