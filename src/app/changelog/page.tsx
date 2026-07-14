@@ -12,6 +12,13 @@ interface ChangelogEntry {
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    date: "2026-07-14",
+    changes: [
+      { type: "added", text: "The HEXA Skill Tracker now has a Guide tab that lists which skills to level next, ordered by final damage gained per Sol Erda Fragment." },
+      { type: "added", text: "The HEXA Skill Tracker now has an FD Breakdown tab showing how much final damage each HEXA skill gives you at its current level." },
+    ],
+  },
+  {
     date: "2026-07-13",
     changes: [
       { type: "added", text: "The EXP Calculator Daily / Weekly Calculator now takes Luxe Sauna / MVP Resort hours, with the sauna's EXP table in the Resources tab." },

@@ -451,6 +451,20 @@ textarea:focus-visible {
   user-select: none;
 }
 
+/* Header stat sits at the right on a shared row; when the header wraps on mobile
+   it drops to its own line and left-aligns under the title. */
+.hexa-header-stat {
+  margin-left: auto;
+  text-align: right;
+}
+
+@media (max-width: 860px) {
+  .hexa-header-stat {
+    margin-left: 0;
+    text-align: left;
+  }
+}
+
 /* Colors (fill + ink) supplied inline from `STATUS`; only shape lives here. */
 .changelog-type-pill {
   flex-shrink: 0;
