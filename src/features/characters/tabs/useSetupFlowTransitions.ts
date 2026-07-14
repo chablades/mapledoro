@@ -26,6 +26,7 @@ interface SetupTransitionSetters {
   setSetupStepIndex: (value: number) => void;
   setSetupStepDirection: (value: "forward" | "backward") => void;
   setSetupTargetSubstep: (value: number | null) => void;
+  setSetupConfineToSubstep: (value: boolean) => void;
   setSetupSubstepIndex: (value: number) => void;
   setSetupStepTestByStep: (value: SetupStepInputById) => void;
   setStepValidityById: (value: Record<string, boolean>) => void;
@@ -163,6 +164,7 @@ export function useSetupFlowTransitions() {
           setSetupPanelVisible(false);
           callbacks.setSetupStepIndex(0);
           callbacks.setSetupTargetSubstep(null);
+          callbacks.setSetupConfineToSubstep(false);
           callbacks.setSetupSubstepIndex(0);
           callbacks.setSetupStepTestByStep({});
           callbacks.setStepValidityById({});
@@ -190,6 +192,7 @@ export function useSetupFlowTransitions() {
           setSetupPanelVisible(false);
           callbacks.setSetupStepIndex(0);
           callbacks.setSetupTargetSubstep(null);
+          callbacks.setSetupConfineToSubstep(false);
           callbacks.setSetupSubstepIndex(0);
           callbacks.setSetupStepTestByStep({});
           callbacks.setStepValidityById({});
@@ -222,6 +225,7 @@ export function useSetupFlowTransitions() {
           // setSetupStepWithDirection in useCharacterSetupController.ts), so it can't
           // linger and force a stale substep later.
           setters.setSetupTargetSubstep(args.substepIndex);
+          setters.setSetupConfineToSubstep(false);
           setters.setSetupSubstepIndex(args.substepIndex);
           setters.setSetupStepTestByStep(args.stepData);
           setters.setStepValidityById(args.stepValidityById);

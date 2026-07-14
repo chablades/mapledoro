@@ -3,14 +3,19 @@ import { useMemo, useRef, useState, useSyncExternalStore, type CSSProperties, ty
 import type { SetupFlowId } from "../../setup/flows";
 import type { SetupStepId } from "../../setup/steps";
 import type { PreviewPaneActions, PreviewPaneModel } from "../paneModels";
-import { primaryButtonStyle } from "../components/uiStyles";
+import { primaryButtonStyle, secondaryButtonStyle } from "../components/uiStyles";
 import { findClassById, COMMON_SKILLS, type HexaSkillDef, type HexaSkillLevels } from "../../../tools/hexa-skills/hexa-classes";
 import { readCharacterToolData } from "../../../tools/characterToolStorage";
 import { resolveClassId, getClassSetupOverrides } from "../../setup/data/nexonJobMapping";
 import { CLASS_SKILL_DATA } from "../../setup/data/classSkillData";
 import { resourceImageUrl } from "../../../../lib/mapleResource";
-import type { StoredCharacterEquipment, StoredCharacterRecord } from "../../model/charactersStore";
+import type { StoredCharacterEquipment, StoredCharacterRecord, StoredHyperStat, StoredInnerAbility, StoredIATier } from "../../model/charactersStore";
 import { SetupFlowButtons } from "./QuickSetupIntroScreen";
+import { STAT_LABELS } from "../../setup/components/StatsSetupStep";
+import { HYPER_STAT_CATEGORIES } from "../../setup/data/hyperStatData";
+import { isHyperStatEligible } from "../../setup/data/statsStepDraft";
+import { IA_TIER_LABELS } from "../../setup/data/innerAbilityData";
+import { TIER_COLORS as IA_TIER_COLORS } from "../../setup/data/familiarsData";
 
 interface CharacterProfileOverviewScreenProps {
   model: PreviewPaneModel;
@@ -441,27 +446,204 @@ function MarriageIcon({ married }: { married: boolean }) {
   );
 }
 
-function StatsBookmark({ theme, character }: { theme: Theme; character: StoredCharacterRecord | null }) {
-  const s = character?.stats;
-  const rows = [
-    { label: "Attack Power", value: s?.attackPower?.base },
-    { label: "Boss Damage", value: s?.bossDamage },
-    { label: "Ignore Enemy DEF", value: s?.ignoreDefense },
-    { label: "Critical Rate", value: s?.criticalRate },
-    { label: "Critical Damage", value: s?.criticalDamage },
-    { label: "Damage", value: s?.damage },
-    { label: "Buff Duration", value: s?.buffDuration },
-    { label: "Cooldown Skip", value: s?.cooldownSkip },
-    { label: "STR", value: s?.str?.base },
-    { label: "DEX", value: s?.dex?.base },
-    { label: "INT", value: s?.int?.base },
-    { label: "LUK", value: s?.luk?.base },
-  ];
+const RAW_VALUE_STAT_LABELS = new Set(["arcanePower", "sacredPower"]);
+
+function pctStat(raw: string | undefined, id: string): string {
+  if (!raw) return "—";
+  return RAW_VALUE_STAT_LABELS.has(id) ? raw : `${raw}%`;
+}
+
+function cooldownReductionValue(cr: { seconds: string; percent: string } | undefined): string {
+  if (!cr?.seconds && !cr?.percent) return "—";
+  return `${cr.seconds || "0"} sec / ${cr.percent || "0"}%`;
+}
+
+const statGridStyle: CSSProperties = { display: "grid", gridTemplateColumns: "1fr 1fr", columnGap: 16 };
+
+const statBlockLabelStyle: CSSProperties = { fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10 };
+
+// Nested content panel (DESIGN.md: 14px radius, theme.panel on theme.bg) so each group of
+// stats reads as its own block instead of blurring into the per-row underlines below it.
+function StatBlock({ label, theme, children }: { label: string; theme: Theme; children: ReactNode }) {
+  return (
+    <div style={{ background: theme.panel, border: `1px solid ${theme.border}`, borderRadius: 14, padding: "12px 14px" }}>
+      <div style={{ ...statBlockLabelStyle, color: theme.muted }}>{label}</div>
+      {children}
+    </div>
+  );
+}
+
+type StatsView = "stats" | "hyperStat" | "ability";
+
+function StatsActionBar({ view, theme, onSelect }: { view: StatsView; theme: Theme; onSelect: (v: StatsView) => void }) {
+  const btnStyle: CSSProperties = { ...secondaryButtonStyle(theme, "8px 0"), width: "100%", fontSize: 12, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 };
+  return (
+    <div style={{ display: "flex", gap: 10 }}>
+      <div style={{ flex: 1 }}>
+        {view === "stats" && <button type="button" style={btnStyle} onClick={() => onSelect("hyperStat")}><span aria-hidden="true">‹</span> Hyper Stats</button>}
+        {view === "ability" && <button type="button" style={btnStyle} onClick={() => onSelect("stats")}><span aria-hidden="true">‹</span> Stats</button>}
+      </div>
+      <div style={{ flex: 1 }}>
+        {view === "stats" && <button type="button" style={btnStyle} onClick={() => onSelect("ability")}>Ability <span aria-hidden="true">›</span></button>}
+        {view === "hyperStat" && <button type="button" style={btnStyle} onClick={() => onSelect("stats")}>Stats <span aria-hidden="true">›</span></button>}
+      </div>
+    </div>
+  );
+}
+
+function PresetTabs({ theme, active, onSelect }: { theme: Theme; active: number; onSelect: (n: number) => void }) {
+  return (
+    <div style={{ display: "flex", gap: 6 }}>
+      {[0, 1, 2].map((i) => (
+        <button
+          key={i}
+          type="button"
+          onClick={() => onSelect(i)}
+          style={{
+            width: 24, height: 24, borderRadius: 999, cursor: "pointer", fontFamily: "inherit", fontSize: 11, fontWeight: 800,
+            border: `1px solid ${active === i ? theme.accent : theme.border}`,
+            background: active === i ? theme.accent : theme.bg,
+            color: active === i ? theme.accentOn : theme.muted,
+          }}
+        >
+          {i + 1}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function HyperStatView({ theme, hyperStat }: { theme: Theme; hyperStat: StoredHyperStat | undefined }) {
+  const [presetIdx, setPresetIdx] = useState(hyperStat?.activePreset ?? 0);
+  const preset = hyperStat?.presets?.[presetIdx];
+  const half = Math.ceil(HYPER_STAT_CATEGORIES.length / 2);
+  const cols = [HYPER_STAT_CATEGORIES.slice(0, half), HYPER_STAT_CATEGORIES.slice(half)];
   return (
     <div>
-      {rows.map((r) => (
-        <SummaryRow key={r.label} label={r.label} value={r.value || "—"} theme={theme} />
-      ))}
+      <PresetTabs theme={theme} active={presetIdx} onSelect={setPresetIdx} />
+      <div style={{ display: "flex", gap: 16, marginTop: 10 }}>
+        {cols.map((col, i) => (
+          // react-doctor-disable-next-line no-array-index-as-key
+          <div key={i} style={{ flex: 1, minWidth: 0 }}>
+            {col.map((cat) => (
+              <SummaryRow key={cat.id} label={cat.label} value={`Lv. ${preset?.[cat.id] ?? 0}`} theme={theme} />
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function IALineRow({ line, theme }: { line: { tier: StoredIATier; value: string }; theme: Theme }) {
+  const colors = line.tier ? IA_TIER_COLORS[line.tier] : null;
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 2, padding: "8px 10px", borderRadius: 8, border: `1px solid ${colors?.border ?? theme.border}`, background: colors?.bg ?? theme.bg }}>
+      <span style={{ fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.05em", color: colors?.text ?? theme.muted }}>
+        {line.tier ? IA_TIER_LABELS[line.tier] : "Unset"}
+      </span>
+      <span style={{ fontSize: 12, fontWeight: 700, color: theme.text }}>{line.value || "—"}</span>
+    </div>
+  );
+}
+
+function AbilityView({ theme, innerAbility }: { theme: Theme; innerAbility: StoredInnerAbility | undefined }) {
+  const [presetIdx, setPresetIdx] = useState(innerAbility?.activePreset ?? 0);
+  const preset = innerAbility?.presets?.[presetIdx];
+  return (
+    <div>
+      <PresetTabs theme={theme} active={presetIdx} onSelect={setPresetIdx} />
+      <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 10 }}>
+        {[0, 1, 2].map((i) => (
+          <IALineRow key={i} line={preset?.lines?.[i] ?? { tier: "", value: "" }} theme={theme} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function StatsBookmark({
+  theme, character, view, onViewChange,
+}: {
+  theme: Theme; character: StoredCharacterRecord | null; view: StatsView; onViewChange: (v: StatsView) => void;
+}) {
+  const s = character?.stats;
+  const notCollected = "—";
+
+  // Order mirrors the in-game Character Info window, row by row (left column then right column).
+  const primaryCells: { label: string; value: string }[] = [
+    { label: "HP", value: s?.hp?.base || notCollected },
+    { label: "MP", value: notCollected },
+    { label: "STR", value: s?.str?.base || notCollected },
+    { label: "DEX", value: s?.dex?.base || notCollected },
+    { label: "INT", value: s?.int?.base || notCollected },
+    { label: "LUK", value: s?.luk?.base || notCollected },
+  ];
+
+  const combatCells: { label: string; value: string }[] = [
+    { label: "Damage Range", value: notCollected },
+    { label: STAT_LABELS.damage ?? "Damage", value: pctStat(s?.damage, "damage") },
+    { label: "Final Damage", value: notCollected },
+    { label: STAT_LABELS.bossDamage ?? "Boss Damage", value: pctStat(s?.bossDamage, "bossDamage") },
+    { label: STAT_LABELS.ignoreDefense ?? "Ignore DEF", value: pctStat(s?.ignoreDefense, "ignoreDefense") },
+    { label: "Normal Enemy Damage", value: notCollected },
+    { label: "Attack Power", value: s?.attackPower?.base || notCollected },
+    { label: STAT_LABELS.criticalRate ?? "Critical Rate", value: pctStat(s?.criticalRate, "criticalRate") },
+    { label: "Magic ATT", value: s?.magicAtt?.base || notCollected },
+    { label: STAT_LABELS.criticalDamage ?? "Critical Damage", value: pctStat(s?.criticalDamage, "criticalDamage") },
+    { label: STAT_LABELS.cooldownReduction ?? "Cooldown Reduction", value: cooldownReductionValue(s?.cooldownReduction) },
+    { label: STAT_LABELS.buffDuration ?? "Buff Duration", value: pctStat(s?.buffDuration, "buffDuration") },
+    { label: STAT_LABELS.cooldownSkip ?? "Cooldown Not Applied", value: pctStat(s?.cooldownSkip, "cooldownSkip") },
+    { label: STAT_LABELS.ignoreElementalResistance ?? "Ignore Elem. Resist.", value: pctStat(s?.ignoreElementalResistance, "ignoreElementalResistance") },
+    { label: STAT_LABELS.additionalStatusDamage ?? "Addl. Status Damage", value: pctStat(s?.additionalStatusDamage, "additionalStatusDamage") },
+    { label: STAT_LABELS.summonDuration ?? "Summons Duration Inc.", value: pctStat(s?.summonDuration, "summonDuration") },
+  ];
+
+  const powerCells: { label: string; value: string }[] = [
+    { label: STAT_LABELS.arcanePower ?? "Arcane Power", value: pctStat(s?.arcanePower, "arcanePower") },
+    { label: STAT_LABELS.sacredPower ?? "Sacred Power", value: pctStat(s?.sacredPower, "sacredPower") },
+  ];
+
+  // The 3 views are stacked in the same grid cell (all present, only one visible) so the
+  // row auto-sizes to the tallest of the three — visibility:hidden keeps its box for that
+  // sizing (unlike display:none), which is what stops the action bar below from jumping
+  // up when a shorter view (Hyper Stat/Ability) becomes active.
+  return (
+    <div>
+      <div style={{ display: "grid" }}>
+        <div style={{ gridArea: "1 / 1", visibility: view === "stats" ? "visible" : "hidden", display: "flex", flexDirection: "column", gap: 12 }}>
+          <StatBlock label="Basic Stats" theme={theme}>
+            <div style={statGridStyle}>
+              {primaryCells.map((c) => (
+                <SummaryRow key={c.label} label={c.label} value={c.value} theme={theme} />
+              ))}
+            </div>
+          </StatBlock>
+          <StatBlock label="Combat Stats" theme={theme}>
+            <div style={statGridStyle}>
+              {combatCells.map((c) => (
+                <SummaryRow key={c.label} label={c.label} value={c.value} theme={theme} />
+              ))}
+            </div>
+          </StatBlock>
+          <StatBlock label="Symbols" theme={theme}>
+            <div style={statGridStyle}>
+              {powerCells.map((c) => (
+                <SummaryRow key={c.label} label={c.label} value={c.value} theme={theme} />
+              ))}
+            </div>
+          </StatBlock>
+        </div>
+        <div style={{ gridArea: "1 / 1", visibility: view === "hyperStat" ? "visible" : "hidden" }}>
+          <HyperStatView key={character?.characterName} theme={theme} hyperStat={s?.hyperStat} />
+        </div>
+        <div style={{ gridArea: "1 / 1", visibility: view === "ability" ? "visible" : "hidden" }}>
+          <AbilityView key={character?.characterName} theme={theme} innerAbility={s?.innerAbility} />
+        </div>
+      </div>
+      <div style={{ paddingTop: 14 }}>
+        <StatsActionBar view={view} theme={theme} onSelect={onViewChange} />
+      </div>
     </div>
   );
 }
@@ -644,8 +826,7 @@ function isBookmarkFilled(id: BookmarkId, character: StoredCharacterRecord | nul
   }
 }
 
-const BOOKMARK_CONTENT: Record<Exclude<BookmarkId, "overview" | "setup" | "gender_marriage">, (props: { theme: Theme; character: StoredCharacterRecord | null }) => ReactNode> = {
-  stats: StatsBookmark,
+const BOOKMARK_CONTENT: Record<Exclude<BookmarkId, "overview" | "setup" | "gender_marriage" | "stats">, (props: { theme: Theme; character: StoredCharacterRecord | null }) => ReactNode> = {
   equipment: EquipmentBookmark,
   familiars: FamiliarsBookmark,
   v_matrix: VMatrixBookmark,
@@ -664,6 +845,18 @@ function SetupBookmark({ model, actions }: { model: PreviewPaneModel; actions: P
   );
 }
 
+// The Stats step's substeps are 0: quick questions, 1: Character Info (Basic/Combat/
+// Symbols — everything the "stats" bookmark view shows), then Hyper Stat and Inner
+// Ability, whose indices shift depending on Hyper Stat eligibility (StatsSetupStep
+// hides that substep below Lv 140). Mirrors that same substep numbering so the edit
+// pencil opens on the substep the bookmark is actually showing, not substep 0.
+function statsTargetSubstep(view: StatsView, characterLevel: number | undefined): number {
+  const hyperEligible = isHyperStatEligible(characterLevel);
+  if (view === "hyperStat") return hyperEligible ? 2 : 1;
+  if (view === "ability") return hyperEligible ? 3 : 2;
+  return 1;
+}
+
 function BookmarkPageBody({
   model, actions, active, filled, ContentComponent, onEdit, onEditStep,
 }: {
@@ -673,10 +866,11 @@ function BookmarkPageBody({
   filled: boolean;
   ContentComponent: ((props: { theme: Theme; character: StoredCharacterRecord | null }) => ReactNode) | null;
   onEdit: () => void;
-  onEditStep: (flowId: SetupFlowId) => void;
+  onEditStep: (flowId: SetupFlowId, targetSubstep?: number, confineToSubstep?: boolean) => void;
 }) {
   const { theme, profile, setup } = model;
   const character = profile.confirmedCharacter;
+  const [statsView, setStatsView] = useState<StatsView>("stats");
 
   if (active.id === "overview") return <OverviewBookmark model={model} />;
 
@@ -702,6 +896,23 @@ function BookmarkPageBody({
       <>
         <BookmarkPageHeader theme={theme} label={active.pageLabel} onEdit={null} disabled={setup.isUiLocked} />
         <BiographyPanel theme={theme} character={character} onEditStep={onEditStep} disabled={setup.isUiLocked} />
+      </>
+    );
+  }
+
+  // Stats has 3 swappable sub-views (Stats/Hyper Stat/Ability) sharing one edit flow, so
+  // the pencil needs to know which one is showing to open the matching substep instead of
+  // always restarting at substep 0 — see statsTargetSubstep. Editing an already-filled
+  // view is also confined to that one substep (no Back/Next into its siblings); setting
+  // up from scratch still walks the full substep sequence starting at substep 0.
+  if (active.id === "stats") {
+    const editStats = () => { if (active.flowId) onEditStep(active.flowId, statsTargetSubstep(statsView, character?.level), true); };
+    const setUpStats = () => { if (active.flowId) onEditStep(active.flowId); };
+    return (
+      <>
+        <BookmarkPageHeader theme={theme} label={active.pageLabel} onEdit={filled ? editStats : null} disabled={setup.isUiLocked} />
+        {filled ? <StatsBookmark theme={theme} character={character} view={statsView} onViewChange={setStatsView} /> : null}
+        {!filled && <EmptyBookmarkState theme={theme} label={active.pageLabel} onSetup={setUpStats} disabled={setup.isUiLocked} />}
       </>
     );
   }
@@ -803,11 +1014,11 @@ export default function CharacterProfileOverviewScreen({
   const active = bookmarks.find((b) => b.id === activeId) ?? bookmarks[0];
 
   const filled = isBookmarkFilled(active.id, character, mounted);
-  const ContentComponent = active.id === "overview" || active.id === "setup" || active.id === "gender_marriage" ? null : BOOKMARK_CONTENT[active.id];
+  const ContentComponent = active.id === "overview" || active.id === "setup" || active.id === "gender_marriage" || active.id === "stats" ? null : BOOKMARK_CONTENT[active.id];
 
-  function startOptionalFlowRemembered(flowId: SetupFlowId) {
+  function startOptionalFlowRemembered(flowId: SetupFlowId, targetSubstep?: number, confineToSubstep?: boolean) {
     actions.rememberActiveBookmark(active.id);
-    actions.startOptionalFlow(flowId);
+    actions.startOptionalFlow(flowId, targetSubstep, confineToSubstep);
   }
 
   function handleEdit() {

@@ -209,6 +209,7 @@ export default function CharacterSetupFlow({ theme, initialCharacterName, initia
       setupStepIndex: state.setupStepIndex,
       setupStepDirection: state.setupStepDirection,
       setupTargetSubstep: state.setupTargetSubstep,
+      setupConfineToSubstep: state.setupConfineToSubstep,
       substepJumpNonce: state.substepJumpNonce,
       stepValidityById: state.stepValidityById,
       activeSetupStepValue: state.activeSetupStepValue,

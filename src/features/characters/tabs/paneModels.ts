@@ -126,6 +126,11 @@ export interface PreviewPaneModel {
     setupStepIndex: number;
     setupStepDirection: "forward" | "backward";
     setupTargetSubstep: number | null;
+    // When true, the step currently mounted at setupTargetSubstep should present itself
+    // as if it were the step's only substep (no pips, Back/Finish instead of Prev/Continue
+    // to a sibling substep) — set when a profile bookmark's edit pencil opens straight into
+    // one specific substep, so navigating to its siblings isn't offered.
+    setupConfineToSubstep: boolean;
     substepJumpNonce: number;
     stepValidityById: Record<string, boolean>;
     activeSetupStepValue: string;
@@ -162,7 +167,7 @@ export interface PreviewPaneActions {
   finishSetupFlow: () => void;
   openCharacterSearch: () => void;
   openCharacterProfile: (character: StoredCharacterRecord) => void;
-  startOptionalFlow: (flowId: SetupFlowId) => void;
+  startOptionalFlow: (flowId: SetupFlowId, targetSubstep?: number, confineToSubstep?: boolean) => void;
   skipSetupEntirely: () => void;
   rememberActiveBookmark: (id: string) => void;
 }

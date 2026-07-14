@@ -92,6 +92,7 @@ export default function SetupFlowScreen({ model, actions }: SetupFlowScreenProps
         jobName={jobName}
         direction={setup.setupStepDirection}
         targetSubstep={setup.setupTargetSubstep}
+        confineToSubstep={setup.setupConfineToSubstep}
         substepJumpNonce={setup.substepJumpNonce}
         onValidityChange={currentStepId
           ? (valid: boolean, substepIndex = 0) => actions.onValidityChange(getStepValidityKey(currentStepId, substepIndex, setup.activeFlowId), valid)

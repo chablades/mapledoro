@@ -43,7 +43,10 @@ import {
   writeSetupDraft,
 } from "../model/setupDraftStorage";
 import type { StoredCharacterRecord } from "../model/charactersStore";
-import { convertStatsStepDraftToStored, marriageDraftToStored, parseStatsStepDraft } from "../setup/data/statsStepDraft";
+import {
+  convertStatsStepDraftToStored, marriageDraftToStored, parseStatsStepDraft,
+  serializeStatsStepDraft, storedStatsToStatsStepDraft,
+} from "../setup/data/statsStepDraft";
 import { convertOzRingsDraftToStored, parseOzRingsDraft } from "../setup/data/ozRingData";
 import { convertBuffsDraftToStored, parseBuffsDraft } from "../setup/data/buffsData";
 import {
@@ -877,6 +880,9 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
   // substepJumpNonce forces a remount even when jumping to the same target substep
   // twice in a row (the step component may have since navigated away internally).
   const [setupTargetSubstep, setSetupTargetSubstep] = useState<number | null>(null);
+  // Paired with setupTargetSubstep, reset to false everywhere that clears it back to
+  // null — see startOptionalSetupFlow for where it's actually set true.
+  const [setupConfineToSubstep, setSetupConfineToSubstep] = useState(false);
   const [substepJumpNonce, setSubstepJumpNonce] = useState(0);
   // Live-tracks whichever substep the currently-mounted step (Stats/Equipment/HEXA
   // Matrix) is actually showing, reported up via each step's onSubstepChange as it
@@ -1026,6 +1032,9 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
       // null (see setSetupStepWithDirection), so it can't linger and force a stale
       // substep after the player has since navigated elsewhere within the step.
       setSetupTargetSubstep(draft.setupSubstepIndex ?? null);
+      // A draft resume is always normal full navigation, never a bookmark's confined
+      // single-substep edit.
+      setSetupConfineToSubstep(false);
       setSetupStepTestByStep(draft.setupStepTestByStep ?? {});
       // Restored from the draft (not wiped) — the draft's own step data can still be
       // invalid, and forgetting that here is exactly what let people resume past it.
@@ -1071,7 +1080,11 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
       setSetupStepTestByStep({
         gender: storedCharacter?.gender ?? "",
         marriage: marriageValue,
-        stats: "",
+        // Seeded from the character's already-saved stats (not blank) — the Stats
+        // step's finish path merges its draft onto the existing record wholesale
+        // (see applyStatsDraftToRoster), so starting blank meant finishing without
+        // retyping every field silently wiped whatever wasn't retyped.
+        stats: storedCharacter ? serializeStatsStepDraft(storedStatsToStatsStepDraft(storedCharacter)) : "",
         equipment: "",
       });
       setStepValidityById({});
@@ -1469,6 +1482,7 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
         setSetupStepIndex,
         setSetupStepDirection,
         setSetupTargetSubstep,
+        setSetupConfineToSubstep,
         setSetupSubstepIndex,
         setSetupStepTestByStep,
         setStepValidityById,
@@ -1498,6 +1512,7 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
       setSetupStepIndex,
       setSetupStepDirection,
       setSetupTargetSubstep,
+      setSetupConfineToSubstep,
       setSetupSubstepIndex,
       setSetupStepTestByStep,
       setStepValidityById,
@@ -1522,6 +1537,7 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
         setSetupStepIndex,
         setSetupStepDirection,
         setSetupTargetSubstep,
+        setSetupConfineToSubstep,
         setSetupSubstepIndex,
         setSetupStepTestByStep,
         setStepValidityById,
@@ -1568,6 +1584,7 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
       // Any normal navigation (Prev/Next/step-level jump) supersedes a prior
       // substep-jump target — only jumpToSubstep below is allowed to set one.
       setSetupTargetSubstep(null);
+      setSetupConfineToSubstep(false);
       const direction = forceDirection ?? (nextStep > setupStepIndex ? "forward" : "backward");
       const jobName = confirmedCharacter?.jobName ?? "";
       const { gender, skipMarriage } = getClassSetupOverrides(jobName);
@@ -1610,6 +1627,8 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
     setSetupStepDirection("forward");
     setSetupStepIndex(target);
     setSetupTargetSubstep(substepIndex);
+    // The step-jump menu is general free-roam navigation, never a confined bookmark edit.
+    setSetupConfineToSubstep(false);
     setSubstepJumpNonce((n) => n + 1);
   }, [activeFlowId, confirmedCharacter, stepValidityById, setupStepTestByStep]);
 
@@ -2185,6 +2204,7 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
     setupStepIndex,
     setupStepDirection,
     setupTargetSubstep,
+    setupConfineToSubstep,
     substepJumpNonce,
     stepValidityById,
     draftSummaries,
@@ -2250,7 +2270,7 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
         if (!currentCharacterKey) return;
         setLastActiveBookmark({ characterKey: currentCharacterKey, bookmarkId });
       },
-      startOptionalSetupFlow: (flowId: SetupFlowId) => {
+      startOptionalSetupFlow: (flowId: SetupFlowId, targetSubstep?: number, confineToSubstep?: boolean) => {
         if (immediateUiLockRef.current) return;
         const overrides = confirmedCharacter
           ? getClassSetupOverrides(confirmedCharacter.jobName)
@@ -2271,6 +2291,12 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
         setActiveFlowId(flowId);
         setSetupStepIndex(startStep);
         setSetupStepDirection("forward");
+        // Seeds the freshly-mounted step's initial substep — same mechanism used to
+        // resume a draft mid-substep (see applyDraftFlowState above). Lets a bookmark
+        // like Stats' Hyper Stat/Inner Ability sub-views open the edit flow straight on
+        // the substep they're showing instead of always restarting at substep 0.
+        setSetupTargetSubstep(targetSubstep ?? null);
+        setSetupConfineToSubstep(Boolean(confineToSubstep));
         setShowFlowOverview(false);
         setShowCharacterDirectory(false);
       },

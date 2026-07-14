@@ -5,7 +5,7 @@
 
 */
 
-import type { CharacterMarriage, CharacterSoul, StoredCharacterStats, StoredHyperStat, StoredTripleStatField } from "../../model/charactersStore";
+import type { CharacterMarriage, CharacterSoul, StoredCharacterStats, StoredHyperStat, StoredInnerAbility, StoredTripleStatField } from "../../model/charactersStore";
 import { HYPER_STAT_CATEGORIES, HYPER_STAT_PRESET_COUNT, parseStoredHyperStatLevel } from "./hyperStatData";
 import { convertInnerAbilityDraftToStored, type IADraft } from "./innerAbilityData";
 import { CLASS_SKILL_DATA, getRequiredStatsForClass, type ClassSkillData } from "./classSkillData";
@@ -238,6 +238,79 @@ export function convertStatsStepDraftToStored(
       sacredPower: draft.sacredPower ?? "",
       hyperStat: draftHyperStatToStored(draft.hyperStat),
       innerAbility: convertInnerAbilityDraftToStored(draft.innerAbility),
+    },
+  };
+}
+
+function storedTripleToDraft(t: StoredTripleStatField): TripleStatDraft {
+  return { base: t.base, percent: t.percent, percentUnapplied: t.percentUnapplied };
+}
+
+function storedHyperStatToDraft(stored: StoredHyperStat | undefined): HyperStatDraft {
+  if (!stored) return { presets: [{}, {}, {}], activePreset: 0 };
+  return {
+    presets: stored.presets.map((p) => Object.fromEntries(Object.entries(p).map(([id, level]) => [id, String(level)]))),
+    activePreset: stored.activePreset,
+  };
+}
+
+function storedInnerAbilityToDraft(stored: StoredInnerAbility | undefined): IADraft {
+  if (!stored) return {};
+  return {
+    activePreset: stored.activePreset,
+    presets: stored.presets.map((p) => ({
+      lines: p.lines.map((l) => ({ tier: l.tier, value: l.value })),
+    })),
+  };
+}
+
+/**
+ * Reverse of convertStatsStepDraftToStored — rebuilds a StatsStepDraft from a
+ * character's already-saved stats. Without this, opening the Stats step for an
+ * already-set-up character (e.g. the profile bookmark's edit pencil) starts from a
+ * blank draft; since convertStatsStepDraftToStored always emits a fully-populated
+ * `Partial<StoredCharacterStats>` (blank defaults for anything not in the draft) and
+ * the finish path merges that wholesale onto the existing record, finishing without
+ * retyping every field silently blanks whatever wasn't retyped. Seed the draft from
+ * this before starting an edit session on a character that already has data.
+ */
+export function storedStatsToStatsStepDraft(record: {
+  stats: StoredCharacterStats;
+  isLiberated: boolean | null;
+  weaponHand: "1h" | "2h" | null;
+  hasRuinForceShield: boolean | null;
+  soul: CharacterSoul | null;
+}): StatsStepDraft {
+  const { stats, isLiberated, weaponHand, hasRuinForceShield, soul } = record;
+  return {
+    str: storedTripleToDraft(stats.str),
+    dex: storedTripleToDraft(stats.dex),
+    int: storedTripleToDraft(stats.int),
+    luk: storedTripleToDraft(stats.luk),
+    hp: storedTripleToDraft(stats.hp),
+    attackPower: storedTripleToDraft(stats.attackPower),
+    magicAtt: storedTripleToDraft(stats.magicAtt),
+    damage: stats.damage,
+    bossDamage: stats.bossDamage,
+    ignoreDefense: stats.ignoreDefense,
+    criticalRate: stats.criticalRate,
+    criticalDamage: stats.criticalDamage,
+    buffDuration: stats.buffDuration,
+    cooldownReduction: { seconds: stats.cooldownReduction.seconds, percent: stats.cooldownReduction.percent },
+    cooldownSkip: stats.cooldownSkip,
+    ignoreElementalResistance: stats.ignoreElementalResistance,
+    additionalStatusDamage: stats.additionalStatusDamage,
+    summonDuration: stats.summonDuration,
+    arcanePower: stats.arcanePower,
+    sacredPower: stats.sacredPower,
+    hyperStat: storedHyperStatToDraft(stats.hyperStat),
+    innerAbility: storedInnerAbilityToDraft(stats.innerAbility),
+    setupOptions: {
+      isLiberated: isLiberated ?? undefined,
+      weaponHand: weaponHand ?? undefined,
+      hasRuinForceShield: hasRuinForceShield ?? undefined,
+      soulType: soul?.type ?? undefined,
+      epheniaLevel: soul?.epheniaLevel ?? undefined,
     },
   };
 }

@@ -27,6 +27,9 @@ interface StepRendererProps {
   jobName?: string;
   direction?: "forward" | "backward";
   targetSubstep?: number | null;
+  /** When true, the step should present targetSubstep as if it were the step's only
+   *  substep — see StatsSetupStep's confineToSubstep prop. */
+  confineToSubstep?: boolean;
   substepJumpNonce?: number;
   onValidityChange?: (valid: boolean, substepIndex?: number) => void;
   /** Reports the current substep of Stats/Equipment/HEXA Matrix as it navigates
@@ -58,6 +61,7 @@ interface SetupStepComponentProps {
   jobName?: string;
   direction?: "forward" | "backward";
   targetSubstep?: number | null;
+  confineToSubstep?: boolean;
   onValidityChange?: (valid: boolean, substepIndex?: number) => void;
   onSubstepChange?: (substepIndex: number) => void;
   characterRoster?: StoredCharacterRecord[];
@@ -96,6 +100,7 @@ export default function StepRenderer({
   jobName = "",
   direction = "forward",
   targetSubstep,
+  confineToSubstep,
   substepJumpNonce,
   onValidityChange,
   onSubstepChange,
@@ -134,6 +139,7 @@ export default function StepRenderer({
       jobName={jobName}
       direction={direction}
       targetSubstep={targetSubstep}
+      confineToSubstep={confineToSubstep}
       onValidityChange={onValidityChange}
       onSubstepChange={onSubstepChange}
       characterRoster={characterRoster}

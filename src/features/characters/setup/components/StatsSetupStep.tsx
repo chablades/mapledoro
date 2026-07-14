@@ -74,6 +74,11 @@ interface StatsSetupStepProps {
   jobName?: string;
   direction?: "forward" | "backward";
   targetSubstep?: number | null;
+  /** When true, targetSubstep is the substep opened from a profile bookmark's edit
+   *  pencil — it should present as if it were this step's only substep (no pips,
+   *  Back exits the step directly instead of going to a sibling substep, and
+   *  Next/Continue finishes the step instead of advancing to one). */
+  confineToSubstep?: boolean;
   onValidityChange?: (valid: boolean, substepIndex?: number) => void;
   onSubstepChange?: (substepIndex: number) => void;
   characterLevel?: number;
@@ -114,7 +119,7 @@ function clampIgnoreElementalResist(raw: string): string {
   return sanitized;
 }
 
-const STAT_LABELS: Partial<Record<StatFieldId, string>> = {
+export const STAT_LABELS: Partial<Record<StatFieldId, string>> = {
   damage: "Damage",
   bossDamage: "Boss Damage",
   ignoreDefense: "Ignore DEF",
@@ -129,6 +134,30 @@ const STAT_LABELS: Partial<Record<StatFieldId, string>> = {
   arcanePower: "Arcane Power",
   sacredPower: "Sacred Power",
 };
+
+interface ConfinableFrameProps {
+  substepIndex: number;
+  substepCount: number;
+  onBack: () => void;
+  onNext: () => void;
+  nextLabel?: string;
+}
+
+/** When confined (opened straight from a profile bookmark's edit pencil), a substep
+ *  presents as this step's only one: no pips, Back exits the step directly instead of
+ *  going to a sibling substep, and Next/Continue finishes the step instead of advancing
+ *  to one. Otherwise the substep's own normal sibling-navigation props pass through
+ *  unchanged. Centralized here (rather than a confineToSubstep ternary per prop in each
+ *  substep) to keep each substep's own cognitive complexity under the sonarjs cap. */
+function confinableFrameProps(
+  confineToSubstep: boolean | undefined,
+  onExitStep: () => void,
+  onFinish: () => void,
+  normal: ConfinableFrameProps,
+): ConfinableFrameProps {
+  if (!confineToSubstep) return normal;
+  return { substepIndex: 0, substepCount: 1, onBack: onExitStep, onNext: onFinish, nextLabel: undefined };
+}
 
 // ── Styles ────────────────────────────────────────────────────────────────────
 
@@ -885,6 +914,7 @@ function statsSubstepDescription(isScouter: boolean): string {
 function StatsWindowSubstep({
   theme, stepNumber, totalSteps, substep, substepCount, substepAnimStyle,
   goToSubstep, hasMoreSubsteps, onNext, onFinish, onValidityChange,
+  confineToSubstep, onExitStep,
   classData, characterLevel, tripleIds, draft,
   handleTripleUpdate, handleSingleUpdate, handleCooldownUpdate,
   showWeaponAtt, weaponAttLabel, usesMagicWeapon, isScouter,
@@ -900,6 +930,12 @@ function StatsWindowSubstep({
   onNext: () => void;
   onFinish: () => void;
   onValidityChange?: (valid: boolean, substepIndex?: number) => void;
+  /** True when opened from a profile bookmark's edit pencil, straight into this
+   *  substep — see confineToSubstep on the default export. */
+  confineToSubstep?: boolean;
+  /** The step-level Back (leaves the "stats" step entirely) — used in place of
+   *  goToSubstep(0) when confined, since substep 0 isn't reachable there. */
+  onExitStep: () => void;
   classData: ClassSkillData | undefined;
   characterLevel?: number;
   tripleIds: TripleStatFieldId[];
@@ -920,6 +956,13 @@ function StatsWindowSubstep({
     ? isStatsSubstepComplete(draft, tripleIds, showWeaponAtt, primaryStat, showArcanePower, showSacredPower)
     : isStatsSubstepSane(draft, tripleIds, primaryStat, showWeaponAtt);
   const rootRef = useRef<HTMLDivElement>(null);
+  const frame = confinableFrameProps(confineToSubstep, onExitStep, onFinish, {
+    substepIndex: substep,
+    substepCount,
+    onBack: () => goToSubstep(0),
+    onNext: hasMoreSubsteps ? () => goToSubstep(2) : onNext,
+    nextLabel: hasMoreSubsteps ? "Continue" : undefined,
+  });
   return (
     <div key={1} ref={rootRef} className="stats-substep-root" style={substepAnimStyle}>
     <style>{`
@@ -940,16 +983,16 @@ function StatsWindowSubstep({
     `}</style>
     <SetupStepFrame
       theme={theme}
-      substepIndex={substep}
-      substepCount={substepCount}
+      substepIndex={frame.substepIndex}
+      substepCount={frame.substepCount}
       stepLabel="Character Info"
       stepNumber={stepNumber}
       totalSteps={totalSteps}
       description={statsSubstepDescription(isScouter)}
-      onBack={() => goToSubstep(0)}
-      onNext={hasMoreSubsteps ? () => goToSubstep(2) : onNext}
+      onBack={frame.onBack}
+      onNext={frame.onNext}
       onFinish={onFinish}
-      nextLabel={hasMoreSubsteps ? "Continue" : undefined}
+      nextLabel={frame.nextLabel}
       nextDisabled={!statsComplete}
       onValidityChange={onValidityChange}
     >
@@ -1129,7 +1172,7 @@ function QuickQuestionsSubstep({
 
 function HyperStatSubstep({
   theme, stepNumber, totalSteps, substep, substepCount, substepAnimStyle,
-  onBack, onNext, onFinish, onValidityChange,
+  onBack, onNext, onFinish, onValidityChange, nextLabel,
   characterLevel, classData, hyper,
   handleHyperStatUpdate, switchHyperPreset, copyHyperPreset, clearHyperPreset,
 }: {
@@ -1143,6 +1186,7 @@ function HyperStatSubstep({
   onNext: () => void;
   onFinish: () => void;
   onValidityChange?: (valid: boolean, substepIndex?: number) => void;
+  nextLabel?: string;
   characterLevel?: number;
   classData: ClassSkillData | undefined;
   hyper: HyperStatDraft;
@@ -1192,7 +1236,7 @@ function HyperStatSubstep({
       onBack={onBack}
       onNext={onNext}
       onFinish={onFinish}
-      nextLabel="Continue"
+      nextLabel={nextLabel}
       nextDisabled={anyPresetOverBudget}
       onValidityChange={onValidityChange}
     >
@@ -1271,7 +1315,7 @@ function InnerAbilitySubstep({
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function StatsSetupStep({
-  theme, flowId, stepNumber, totalSteps, jobName = "", direction = "forward", targetSubstep, onValidityChange, onSubstepChange, characterLevel, characterRoster, confirmedWorldId, worldScouterLegion, value, onChange, onBack, onNext, onFinish,
+  theme, flowId, stepNumber, totalSteps, jobName = "", direction = "forward", targetSubstep, confineToSubstep, onValidityChange, onSubstepChange, characterLevel, characterRoster, confirmedWorldId, worldScouterLegion, value, onChange, onBack, onNext, onFinish,
 }: StatsSetupStepProps) {
   const classData = CLASS_SKILL_DATA.find((c) => c.nexonJobName === jobName);
   const draft = parseStatsStepDraft(value);
@@ -1402,6 +1446,7 @@ export default function StatsSetupStep({
       theme={theme} stepNumber={stepNumber} totalSteps={totalSteps}
       substep={substep} substepCount={SUBSTEP_COUNT} substepAnimStyle={substepAnimStyle}
       goToSubstep={goToSubstep} hasMoreSubsteps={SUBSTEP_COUNT > 2} onNext={onNext} onFinish={onFinish} onValidityChange={onValidityChange}
+      confineToSubstep={confineToSubstep} onExitStep={onBack}
       classData={classData} characterLevel={characterLevel} tripleIds={tripleIds} draft={draft}
       handleTripleUpdate={handleTripleUpdate} handleSingleUpdate={handleSingleUpdate} handleCooldownUpdate={handleCooldownUpdate}
       showWeaponAtt={showWeaponAtt} weaponAttLabel={weaponAttLabel} usesMagicWeapon={usesMagicWeapon} isScouter={isScouter}
@@ -1411,11 +1456,19 @@ export default function StatsSetupStep({
   // Substep — Hyper Stat (Full setup, Lv 140+ only). Mirrors the in-game Hyper Stats
   // window: every category, level 0–15, entered directly into a two-column list.
   if (substep === hyperStatSubstep) {
+    const hyperFrame = confinableFrameProps(confineToSubstep, onBack, onFinish, {
+      substepIndex: substep,
+      substepCount: SUBSTEP_COUNT,
+      onBack: () => goToSubstep(1),
+      onNext: () => goToSubstep(innerAbilitySubstep),
+      nextLabel: "Continue",
+    });
     return (
       <HyperStatSubstep
         theme={theme} stepNumber={stepNumber} totalSteps={totalSteps}
-        substep={substep} substepCount={SUBSTEP_COUNT} substepAnimStyle={substepAnimStyle}
-        onBack={() => goToSubstep(1)} onNext={() => goToSubstep(innerAbilitySubstep)} onFinish={onFinish} onValidityChange={onValidityChange}
+        substep={hyperFrame.substepIndex} substepCount={hyperFrame.substepCount} substepAnimStyle={substepAnimStyle}
+        onBack={hyperFrame.onBack} onNext={hyperFrame.onNext} nextLabel={hyperFrame.nextLabel}
+        onFinish={onFinish} onValidityChange={onValidityChange}
         characterLevel={characterLevel} classData={classData} hyper={hyper}
         handleHyperStatUpdate={handleHyperStatUpdate} switchHyperPreset={switchHyperPreset}
         copyHyperPreset={copyHyperPreset} clearHyperPreset={clearHyperPreset}
@@ -1429,11 +1482,18 @@ export default function StatsSetupStep({
   function handleInnerAbilityUpdate(next: IADraft) {
     updateDraft({ innerAbility: next });
   }
+  const iaFrame = confinableFrameProps(confineToSubstep, onBack, onFinish, {
+    substepIndex: substep,
+    substepCount: SUBSTEP_COUNT,
+    onBack: () => goToSubstep(hyperStatSubstep >= 0 ? hyperStatSubstep : 1),
+    onNext,
+  });
   return (
     <InnerAbilitySubstep
       theme={theme} stepNumber={stepNumber} totalSteps={totalSteps}
-      substep={substep} substepCount={SUBSTEP_COUNT} substepAnimStyle={substepAnimStyle}
-      onBack={() => goToSubstep(hyperStatSubstep >= 0 ? hyperStatSubstep : 1)} onNext={onNext} onFinish={onFinish} onValidityChange={onValidityChange}
+      substep={iaFrame.substepIndex} substepCount={iaFrame.substepCount} substepAnimStyle={substepAnimStyle}
+      onBack={iaFrame.onBack}
+      onNext={onNext} onFinish={onFinish} onValidityChange={onValidityChange}
       draft={draft} onUpdate={handleInnerAbilityUpdate}
     />
   );
