@@ -20,10 +20,6 @@ function fmtPct(n: number): string {
   return `${n.toFixed(2)}%`;
 }
 
-// Cap the rendered next-to-level list; a fresh character has ~330 steps and the
-// guide's job is what to do next, not to print the whole path.
-const VISIBLE_STEPS = 60;
-
 // ── Shared row chrome ────────────────────────────────────────────────────────
 
 const rowStyle: CSSProperties = {
@@ -110,6 +106,15 @@ const guideArrow: CSSProperties = {
   userSelect: "none",
 };
 
+const hecateBanner: CSSProperties = {
+  padding: "8px 12px",
+  borderRadius: "8px",
+  fontSize: "0.75rem",
+  fontWeight: 600,
+  lineHeight: 1.5,
+  marginBottom: "12px",
+};
+
 function GuideTip({ step, rank, theme }: { step: GuideStep; rank: number; theme: AppTheme }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 3, textAlign: "left" }}>
@@ -171,8 +176,6 @@ export function GuideView({
     );
   }
 
-  const visible = guide.steps.slice(0, VISIBLE_STEPS);
-
   return (
     // overflow visible so the tile tooltips can draw over the panel's border
     // (.panel-card clips to its rounded corners by default).
@@ -196,11 +199,17 @@ export function GuideView({
         </div>
       </div>
 
+      {guide.hecateFdMissing && (
+        <div style={{ ...hecateBanner, background: theme.timerBg, border: `1px solid ${theme.border}`, color: theme.muted }}>
+          Sol Hecate&apos;s final damage values aren&apos;t available yet, so it isn&apos;t in this guide. Check your class Discord for the latest leveling order.
+        </div>
+      )}
+
       <div style={guideGrid}>
-        {visible.map((step, i) => (
+        {guide.steps.map((step, i) => (
           <div key={`${step.code}-${step.toLevel}`} style={guideCell}>
             <GuideTile step={step} rank={i + 1} theme={theme} />
-            {i < visible.length - 1 && (
+            {i < guide.steps.length - 1 && (
               <span aria-hidden="true" style={{ ...guideArrow, color: theme.muted }}>
                 →
               </span>
@@ -208,12 +217,6 @@ export function GuideView({
           </div>
         ))}
       </div>
-
-      {guide.steps.length > VISIBLE_STEPS && (
-        <p style={{ ...subStyle, color: theme.muted, margin: "10px 0 0", textAlign: "center" }}>
-          + {guide.steps.length - VISIBLE_STEPS} more steps to reach your desired levels.
-        </p>
-      )}
     </section>
   );
 }
