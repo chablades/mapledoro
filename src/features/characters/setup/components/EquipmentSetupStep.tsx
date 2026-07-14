@@ -1405,23 +1405,44 @@ function EquipmentGridSubstep({
 
 // ── Main component ─────────────────────────────────────────────────────────
 
-export default function EquipmentSetupStep({
-  theme,
-  stepNumber,
-  totalSteps,
-  direction = "forward",
-  targetSubstep,
-  onSubstepChange,
-  jobName = "",
-  characterLevel,
-  confirmedCharacterName,
-  confirmedCharacterImgURL,
-  value,
-  onChange,
-  onBack,
-  onNext,
-  onFinish,
-}: EquipmentSetupStepProps) {
+interface EquipmentStepState {
+  draft: EquipmentDraft;
+  activeSlot: SlotKey | null;
+  toggleSlot: (slot: SlotKey) => void;
+  activePreset: number;
+  activeGrid: SlotMap;
+  substep: number;
+  substepAnimStyle: CSSProperties;
+  symbolTab: SymbolTabKey;
+  setSymbolTab: (tab: SymbolTabKey) => void;
+  mobileGridPage: number;
+  setMobileGridPage: (updater: (p: number) => number) => void;
+  availableSymbolTabs: { key: SymbolTabKey; label: string }[];
+  goToSubstep: (next: number) => void;
+  switchPreset: (n: number) => void;
+  setSymbolLevel: (regionName: string, level: string) => void;
+  setSymbolLevels: (updates: Record<string, string>) => void;
+  pickerCtx: SlotPickerContext;
+}
+
+/** All of EquipmentSetupStep's state, derived values, and slot/substep handlers, kept in
+ *  one hook so the component itself stays a thin substep dispatcher. Depends on several
+ *  file-local types (SlotKey, EquipmentDraft, etc.), so it stays in this file rather than
+ *  becoming a standalone hook module. */
+function useEquipmentStepState({
+  theme, jobName, characterLevel, confirmedCharacterName,
+  direction, targetSubstep, onSubstepChange, value, onChange,
+}: {
+  theme: AppTheme;
+  jobName: string;
+  characterLevel?: number;
+  confirmedCharacterName?: string;
+  direction: "forward" | "backward";
+  targetSubstep?: number | null;
+  onSubstepChange?: (substepIndex: number) => void;
+  value: string;
+  onChange: (value: string) => void;
+}): EquipmentStepState {
   const classData = getClassDataByNexonJobName(jobName);
   const classId = classData?.id;
   const branchMask = branchMaskForClass(classId);
@@ -1642,6 +1663,38 @@ export default function EquipmentSetupStep({
     activeSlot, classId, branchMask, weaponAttLabel, activePreset, draft, theme, characterLevel,
     readSlot, siblingItemIds, presetBaseItemFor, chainNavForSlot, updateSlot, setActiveSlot, setWeaponAtt,
   };
+
+  return {
+    draft, activeSlot, toggleSlot, activePreset, activeGrid, substep, substepAnimStyle,
+    symbolTab, setSymbolTab, mobileGridPage, setMobileGridPage, availableSymbolTabs,
+    goToSubstep, switchPreset, setSymbolLevel, setSymbolLevels, pickerCtx,
+  };
+}
+
+export default function EquipmentSetupStep({
+  theme,
+  stepNumber,
+  totalSteps,
+  direction = "forward",
+  targetSubstep,
+  onSubstepChange,
+  jobName = "",
+  characterLevel,
+  confirmedCharacterName,
+  confirmedCharacterImgURL,
+  value,
+  onChange,
+  onBack,
+  onNext,
+  onFinish,
+}: EquipmentSetupStepProps) {
+  const {
+    draft, activeSlot, toggleSlot, activePreset, activeGrid, substep, substepAnimStyle,
+    symbolTab, setSymbolTab, mobileGridPage, setMobileGridPage, availableSymbolTabs,
+    goToSubstep, switchPreset, setSymbolLevel, setSymbolLevels, pickerCtx,
+  } = useEquipmentStepState({
+    theme, jobName, characterLevel, confirmedCharacterName, direction, targetSubstep, onSubstepChange, value, onChange,
+  });
 
   if (substep === 1) {
     return (
