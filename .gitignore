@@ -13,5 +13,8 @@ next-env.d.ts
 /data/
 public/cache/
 .cache/
+# Android signing keys — never commit
+*.jks
+*.keystore
 .claude/settings.local.json
 /.claude/skills/react-doctor
