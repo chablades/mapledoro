@@ -3,7 +3,7 @@
 import type { CSSProperties } from "react";
 import Panel from "../../components/Panel";
 import type { AppTheme } from "../../components/themes";
-import { STATUS } from "../../components/statusColors";
+import { STATUS, statusText } from "../../components/statusColors";
 import { formatCountdown, formatCountdownDays, getNextReset } from "../../lib/time";
 import { getUrsusStatus } from "../../lib/ursus";
 
@@ -71,6 +71,74 @@ export function UrsusPanel({ theme, now }: { theme: AppTheme; now: Date | null }
         )}
       </div>
     </Panel>
+  );
+}
+
+const stripCellStyle: CSSProperties = {
+  textAlign: "center",
+  padding: "0 0.4rem",
+  minWidth: 0,
+};
+
+const stripCountdownStyle: CSSProperties = {
+  fontFamily: "var(--font-heading)",
+  fontSize: "clamp(0.8rem, 4.2vw, 1.1rem)",
+  lineHeight: 1,
+  letterSpacing: "0.03em",
+  whiteSpace: "nowrap",
+};
+
+/** Compact Daily / Weekly / Ursus countdown row shown only when the sidebar
+ *  timer panels are hidden (≤1200px); visibility lives in HomeDashboard CSS. */
+export function MobileTimerStrip({ theme, now }: { theme: AppTheme; now: Date | null }) {
+  const ursus = now ? getUrsusStatus(now) : null;
+  let ursusCountdown = PLACEHOLDER_COUNTDOWN;
+  if (ursus) {
+    ursusCountdown = formatCountdown(ursus.active ? ursus.remaining : ursus.until);
+  }
+  const cells = [
+    {
+      key: "daily",
+      label: "Daily",
+      value: now ? formatCountdown(getNextReset(now, 0).getTime() - now.getTime()) : PLACEHOLDER_COUNTDOWN,
+      active: false,
+    },
+    {
+      key: "weekly",
+      label: "Weekly",
+      value: now ? formatCountdownDays(getNextReset(now, 0, 4).getTime() - now.getTime()) : PLACEHOLDER_COUNTDOWN,
+      active: false,
+    },
+    {
+      key: "ursus",
+      label: ursus?.active ? "Ursus Ends" : "Ursus Starts",
+      value: ursusCountdown,
+      active: ursus?.active ?? false,
+    },
+  ];
+
+  const stripStyle: CSSProperties = {
+    background: theme.timerBg,
+    border: `1px solid ${theme.border}`,
+    borderRadius: 14,
+    padding: "0.75rem 0.25rem",
+    animationDelay: "0.15s",
+    transition: "background 0.35s, border-color 0.35s",
+  };
+
+  return (
+    <div className="dash-sec sec-timers mobile-timer-strip fade-in" style={stripStyle}>
+      {cells.map((c, i) => (
+        <div key={c.key} style={{ ...stripCellStyle, borderLeft: i > 0 ? `1px solid ${theme.border}` : undefined }}>
+          <div className="section-label" style={{ color: theme.muted, marginBottom: "6px" }}>
+            {c.label}
+          </div>
+          <div style={{ ...stripCountdownStyle, color: c.active ? statusText(theme, "success") : theme.accentText }}>
+            {c.value}
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }
 
