@@ -198,7 +198,14 @@ export interface GuideResult {
   totalSolErda: number;
   /** FD still to gain by following every remaining step (to desired levels). */
   remainingFd: number;
+  /** Sol Hecate has no FD curve for this class, so it is absent from the order. */
+  hecateFdMissing: boolean;
 }
+
+// Sol Hecate's FD curve is missing for a handful of classes; when it is, the skill
+// never appears in the recommended order, so the guide flags it and points players
+// at their class Discord instead of silently omitting it.
+const HECATE_INDEX = COMMON_SKILLS.findIndex((s) => s.name === "Sol Hecate");
 
 /** A run of consecutive same-skill levels not yet emitted (all 0% FD so far). */
 interface PendingRun {
@@ -311,5 +318,8 @@ export function computeGuide(
   // range (a skill, or its upper levels, that gives 0% FD). It has no milestone,
   // so the guide drops it rather than showing a step worth 0% final damage.
 
-  return { steps, totalFrag: cumFrag, totalSolErda, remainingFd };
+  const hecateCurve = fd.common[HECATE_INDEX] ?? [];
+  const hecateFdMissing = hecateCurve.every((v) => v === 0);
+
+  return { steps, totalFrag: cumFrag, totalSolErda, remainingFd, hecateFdMissing };
 }
