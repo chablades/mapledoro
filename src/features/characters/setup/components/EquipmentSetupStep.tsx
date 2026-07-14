@@ -16,9 +16,11 @@ import {
   ARCANE_AREAS, SACRED_AREAS, GRAND_SACRED_AREAS,
   ARCANE_MAX_LEVEL, SACRED_MAX_LEVEL, type SymbolArea,
 } from "../../../tools/symbols/symbol-data";
+import type { SymbolState } from "../../../tools/symbols/useSymbolState";
 import { getClassDataByNexonJobName } from "../data/classSkillData";
 import { isArcaneEligible, isSacredEligible, isWeaponAttSane, deriveWeaponAttLabel, WEAPON_ATT_WARN_AT } from "../data/statsStepDraft";
 import { branchMaskForClass, weaponPrefixesForClass, secondarySpecForClass, isShieldId } from "../data/classBranch";
+import { readCharactersStore, selectCharacterByIgn, type StoredCharacterEquipment, type StoredEquipmentItem, type StoredEquipmentPreset } from "../../model/charactersStore";
 import { InputWarningBubble } from "./QuestionControls";
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -315,6 +317,50 @@ function parseDraft(raw: string): EquipmentDraft {
 
 function serialiseDraft(draft: EquipmentDraft): string {
   return JSON.stringify(draft);
+}
+
+function toDraftItem(item: StoredEquipmentItem | null): EquipmentItem | null {
+  if (!item) return null;
+  return { id: item.id ?? "", name: item.name };
+}
+
+function storedPresetToDraft(preset: StoredEquipmentPreset): SlotMap {
+  return {
+    ring1: toDraftItem(preset.rings[0]), ring2: toDraftItem(preset.rings[1]),
+    ring3: toDraftItem(preset.rings[2]), ring4: toDraftItem(preset.rings[3]),
+    face: toDraftItem(preset.face), eye: toDraftItem(preset.eye), earring: toDraftItem(preset.earring),
+    pendant1: toDraftItem(preset.pendants[0]), pendant2: toDraftItem(preset.pendants[1]),
+    belt: toDraftItem(preset.belt), pocket: toDraftItem(preset.pocket),
+    hat: toDraftItem(preset.hat), cape: toDraftItem(preset.cape), top: toDraftItem(preset.top),
+    glove: toDraftItem(preset.glove), bottom: toDraftItem(preset.bottom), shoe: toDraftItem(preset.shoe),
+    shoulder: toDraftItem(preset.shoulder), medal: toDraftItem(preset.medal),
+    weapon: toDraftItem(preset.weapon), secondary: toDraftItem(preset.secondary), emblem: toDraftItem(preset.emblem),
+    android: toDraftItem(preset.android), heart: toDraftItem(preset.heart), badge: toDraftItem(preset.badge),
+  };
+}
+
+/** Reverse of parseDraft/applyEquipmentDraftToRoster — rebuilds this step's draft shape
+ *  from a character's already-saved equipment/symbols/weapon ATT, so the mount-time
+ *  backfill below (matching V Matrix/HEXA Matrix/Familiars' own pattern) can seed an
+ *  edit session from real data instead of landing blank. Without this, editing an
+ *  already-equipped character's gear started blank, and finishing without re-picking
+ *  every slot wholesale-replaced the stored equipment with whatever partial state was
+ *  typed (applyEquipmentDraftToRoster does a full replace, not a merge). */
+function storedEquipmentToDraft(
+  equipment: StoredCharacterEquipment,
+  symbols: Record<string, SymbolState> | undefined,
+  weaponAtt: number | undefined,
+): EquipmentDraft {
+  return {
+    presets: equipment.presets.map(storedPresetToDraft),
+    activePreset: 0,
+    title: toDraftItem(equipment.title),
+    totem1: toDraftItem(equipment.totems[0]), totem2: toDraftItem(equipment.totems[1]), totem3: toDraftItem(equipment.totems[2]),
+    pet1: toDraftItem(equipment.pets[0]), pet2: toDraftItem(equipment.pets[1]), pet3: toDraftItem(equipment.pets[2]),
+    petEquip1: toDraftItem(equipment.petEquips[0]), petEquip2: toDraftItem(equipment.petEquips[1]), petEquip3: toDraftItem(equipment.petEquips[2]),
+    ...(symbols ? { symbolLevels: Object.fromEntries(Object.entries(symbols).map(([name, s]) => [name, String(s.level)])) } : {}),
+    ...(weaponAtt !== undefined ? { weaponAtt: String(weaponAtt) } : {}),
+  };
 }
 
 // ── Item search ─────────────────────────────────────────────────────────────
@@ -1368,6 +1414,7 @@ export default function EquipmentSetupStep({
   onSubstepChange,
   jobName = "",
   characterLevel,
+  confirmedCharacterName,
   confirmedCharacterImgURL,
   value,
   onChange,
@@ -1384,7 +1431,13 @@ export default function EquipmentSetupStep({
   const availableSymbolTabs = SYMBOL_TABS.filter(
     (tab) => (tab.key === "arcane" ? showArcaneSymbols : showSacredSymbols),
   );
-  const [draft, setDraft] = useState<EquipmentDraft>(() => parseDraft(value));
+  // Derived fresh from `value` every render (not mirrored into its own useState) so the
+  // one-shot backfill effect below can update it by calling onChange alone, matching
+  // V Matrix/HEXA Matrix/Familiars' pattern — a local mirror would go stale the moment
+  // the backfill wrote to `value` without a matching setDraft, silently reintroducing
+  // the wholesale-overwrite bug the backfill exists to fix.
+  const draft = parseDraft(value);
+  const initialValueRef = useRef(value);
   const [activeSlot, setActiveSlot] = useState<SlotKey | null>(null);
   const activePreset = draft.activePreset ?? 0;
   // Preset 0 is the base. Presets 1-2 are sparse per-slot overrides on top of it — a
@@ -1398,9 +1451,22 @@ export default function EquipmentSetupStep({
   const readSlot = (slot: SlotKey) => (isSharedSlot(slot) ? draft[slot] : activeGrid[slot]);
 
   function commitDraft(next: EquipmentDraft) {
-    setDraft(next);
     onChange(serialiseDraft(next));
   }
+
+  // One-shot mount-time backfill from the character's saved equipment/symbols/weapon
+  // ATT (only when this step lands blank) — matches V Matrix/HEXA Matrix/Familiars'
+  // own pattern. Can't run during render since it depends on a client-only localStorage
+  // read.
+  useEffect(() => {
+    if (initialValueRef.current || !confirmedCharacterName) return;
+    const saved = selectCharacterByIgn(readCharactersStore(), confirmedCharacterName);
+    if (!saved) return;
+    const symbols = saved.tools?.symbols as { symbols?: Record<string, SymbolState> } | undefined;
+    // react-doctor-disable-next-line no-pass-data-to-parent
+    commitDraft(storedEquipmentToDraft(saved.equipment, symbols?.symbols, saved.scouter?.weaponAtt));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   /** A fresh length-3 array of preset grids (cloned), so edits don't mutate state. */
   function clonePresets(): SlotMap[] {
@@ -1477,9 +1543,7 @@ export default function EquipmentSetupStep({
     // "explicitly typed 0" from "never touched" — the controller already excludes sub-1
     // levels when building the calculator's real tools.symbols data.
     const levels = { ...(draft.symbolLevels ?? {}), ...updates };
-    const next = { ...draft, symbolLevels: levels };
-    setDraft(next);
-    onChange(serialiseDraft(next));
+    commitDraft({ ...draft, symbolLevels: levels });
   }
 
   function setSymbolLevel(regionName: string, level: string) {
