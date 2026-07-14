@@ -667,7 +667,7 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
           align-items: stretch;
           width: 100%;
           flex: 1;
-          border-radius: 20px;
+          border-radius: 18px;
           overflow: hidden;
         }
 
@@ -698,7 +698,7 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
           border-radius: 0 8px 8px 0;
           padding: 7px 10px;
           min-height: 32px;
-          font-size: 0.72rem;
+          font-size: 0.75rem;
           font-weight: 800;
           line-height: 1.25;
           text-align: left;
