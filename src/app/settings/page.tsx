@@ -6,6 +6,10 @@ import type { AppTheme } from "../../components/themes";
 import { ACCENT_THEMES, dialogBtnColors, dialogPrimaryBtnColors } from "../../components/themes";
 import { useTheme } from "../../components/ThemeContext";
 import { ConfirmButton } from "../../components/ConfirmButton";
+import { SegmentedToggle } from "../../components/SegmentedToggle";
+
+const COLOR_MODES = ["light", "dark"] as const;
+const COLOR_MODE_LABELS = { light: "Light", dark: "Dark" } as const;
 
 function hardReset() {
   const keys = Object.keys(localStorage).filter((k) => k.startsWith("mapledoro"));
@@ -31,7 +35,7 @@ function exportData() {
 }
 
 function SettingsContent({ theme }: { theme: AppTheme }) {
-  const { themeKey, setThemeKey } = useTheme();
+  const { themeKey, setThemeKey, colorMode, setColorMode } = useTheme();
   const [importStatus, setImportStatus] = useState<string | null>(null);
   const [accentDropdownOpen, setAccentDropdownOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -114,6 +118,25 @@ function SettingsContent({ theme }: { theme: AppTheme }) {
         </div>
         <div className="page-subtitle" style={{ color: theme.muted }}>
           Customize your MapleDoro experience
+        </div>
+
+        {/* Color mode (same setting as the sun/moon toggle in the top nav) */}
+        <div
+          className="fade-in panel-card settings-row-panel"
+          style={panelStyle}
+        >
+          <div>
+            <p style={labelStyle}>Appearance</p>
+            <p style={descStyle}>Switch between light and dark mode.</p>
+          </div>
+          <SegmentedToggle
+            theme={theme}
+            options={COLOR_MODES}
+            value={colorMode}
+            labels={COLOR_MODE_LABELS}
+            ariaLabel="Color mode"
+            onChange={setColorMode}
+          />
         </div>
 
         {/* Accent theme selector */}
