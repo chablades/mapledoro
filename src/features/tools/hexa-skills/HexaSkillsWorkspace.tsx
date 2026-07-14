@@ -16,11 +16,18 @@ import {
 } from "./useHexaSkillsState";
 import { COMMON_COSTS, MAX_SKILL_LEVEL, getCostRange } from "./hexa-costs";
 import { SkillSection, MasterySection } from "./hexa-ui";
+import { GuideView, FdBreakdownView } from "./hexa-fd-ui";
+import { hasFdData, computeGuide, computeFdBreakdown } from "./hexa-fd";
 import { fmtNum } from "./hexa-format";
 import { toolStyles } from "../tool-styles";
 import { PanelDivider } from "../shared-ui";
+import { SegmentedToggle } from "../../../components/SegmentedToggle";
 import { ConfirmButton } from "../../../components/ConfirmButton";
 import { ItemIcon } from "../../../components/ResourceImage";
+
+type HexaTab = "overview" | "guide" | "fd";
+const TAB_LABELS: Record<HexaTab, string> = { overview: "Overview", guide: "Guide", fd: "FD Breakdown" };
+const HEXA_TABS: readonly HexaTab[] = ["overview", "guide", "fd"];
 
 // Item ids (manifests/v269/item.json): Sol Erda, Sol Erda Fragment
 const SOL_ERDA_ITEM_ID = "05066300";
@@ -301,6 +308,19 @@ export default function HexaSkillsWorkspace({ theme }: { theme: AppTheme }) {
   } = useHexaSkillsState();
 
   const [includeJanus, setIncludeJanus] = useState(true);
+  const [tab, setTab] = useState<HexaTab>("overview");
+
+  const showFd = classDef != null && hasFdData(className);
+  const activeTab: HexaTab = showFd ? tab : "overview";
+
+  const guide = useMemo(
+    () => (showFd ? computeGuide(className, classDef, levels, desiredLevels) : null),
+    [showFd, className, classDef, levels, desiredLevels],
+  );
+  const breakdown = useMemo(
+    () => (showFd ? computeFdBreakdown(className, classDef, levels, desiredLevels) : null),
+    [showFd, className, classDef, levels, desiredLevels],
+  );
 
   const adjusted = useMemo(() => {
     if (includeJanus) return { grand: costs.grand, maxGrand: costs.maxGrand, progressPct: costs.progressPct };
@@ -403,7 +423,29 @@ export default function HexaSkillsWorkspace({ theme }: { theme: AppTheme }) {
           </div>
         )}
 
-        {classDef ? (
+        {showFd && (
+          <SegmentedToggle
+            theme={theme}
+            options={HEXA_TABS}
+            value={activeTab}
+            labels={TAB_LABELS}
+            ariaLabel="HEXA view"
+            trackStyle={{ marginBottom: "1.25rem" }}
+            onChange={setTab}
+          />
+        )}
+
+        {!classDef && <EmptyState theme={theme} sectionPanel={sectionPanel} />}
+
+        {classDef && activeTab === "guide" && guide && (
+          <GuideView theme={theme} guide={guide} sectionPanel={sectionPanel} />
+        )}
+
+        {classDef && activeTab === "fd" && breakdown && (
+          <FdBreakdownView theme={theme} breakdown={breakdown} sectionPanel={sectionPanel} />
+        )}
+
+        {classDef && activeTab === "overview" && (
           <>
             {/* Origin + Ascent */}
             <div style={{ display: "flex", gap: "1.25rem", flexWrap: "wrap", marginBottom: "1.25rem" }}>
@@ -477,8 +519,6 @@ export default function HexaSkillsWorkspace({ theme }: { theme: AppTheme }) {
               inputStyle={inputStyle}
             />
           </>
-        ) : (
-          <EmptyState theme={theme} sectionPanel={sectionPanel} />
         )}
       </div>
     </div>
