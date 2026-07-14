@@ -200,10 +200,61 @@ export interface GuideResult {
   remainingFd: number;
 }
 
+/** A run of consecutive same-skill levels not yet emitted (all 0% FD so far). */
+interface PendingRun {
+  fromLevel: number;
+  frags: number;
+  solErda: number;
+}
+
+interface MergedStep {
+  fromLevel: number;
+  toLevel: number;
+  fdGain: number;
+  frags: number;
+  solErda: number;
+}
+
+/**
+ * Fold one level of `node` into the guide. A 0% level is banked in `pending` and
+ * returns null; an FD-granting level returns the merged step (banked frags + this
+ * one) and clears the bank. Levels of a node are sequential, so a bank always
+ * chains straight into the next FD level.
+ */
+function foldLevel(node: FdNode, toLevel: number, pending: Map<string, PendingRun>): MergedStep | null {
+  const cost = node.costs[toLevel - 1];
+  const fdGain = node.curve[toLevel - 1] ?? 0;
+  const run = pending.get(node.code);
+
+  if (fdGain === 0) {
+    if (run) {
+      run.frags += cost.fragments;
+      run.solErda += cost.solErda;
+    } else {
+      pending.set(node.code, { fromLevel: toLevel - 1, frags: cost.fragments, solErda: cost.solErda });
+    }
+    return null;
+  }
+
+  pending.delete(node.code);
+  return {
+    fromLevel: run ? run.fromLevel : toLevel - 1,
+    toLevel,
+    fdGain,
+    frags: (run?.frags ?? 0) + cost.fragments,
+    solErda: (run?.solErda ?? 0) + cost.solErda,
+  };
+}
+
 /**
  * Replay the recommended order, emitting the steps still ahead of the character's
  * current levels (and within their desired levels). Each node code in the order
  * means "raise that node one level", so its target level is the running count.
+ *
+ * Levels that grant 0% FD are folded forward into that skill's next FD-granting
+ * level: a skill's levels are sequential, so 1→2→3 at 0% then 3→4 at 0.5% becomes
+ * a single 1→4 step whose frag cost includes the intermediate levels. This keeps
+ * the guide to actual milestones instead of one row per level.
  */
 export function computeGuide(
   className: string | null,
@@ -218,22 +269,15 @@ export function computeGuide(
 
   const byCode = new Map(nodes.map((n) => [n.code, n]));
   const running: Record<string, number> = {};
+  const pending = new Map<string, PendingRun>();
   const steps: GuideStep[] = [];
   let cumFrag = 0;
   let totalSolErda = 0;
   let remainingFd = 0;
 
-  for (const code of fd.order) {
-    if (code.startsWith("#")) continue;
-    const node = byCode.get(code);
-    if (!node) continue;
-    const toLevel = (running[code] = (running[code] ?? 0) + 1);
-    if (toLevel <= node.level || toLevel > node.desired) continue;
-
-    const cost = node.costs[toLevel - 1];
-    const fdGain = node.curve[toLevel - 1] ?? 0;
-    cumFrag += cost.fragments;
-    totalSolErda += cost.solErda;
+  const emit = (node: FdNode, fromLevel: number, toLevel: number, fdGain: number, frags: number, solErda: number) => {
+    cumFrag += frags;
+    totalSolErda += solErda;
     remainingFd += fdGain;
     steps.push({
       code: node.code,
@@ -242,15 +286,30 @@ export function computeGuide(
       extraSkills: node.extraSkills,
       iconId: node.iconId,
       iconUrl: node.iconUrl,
-      fromLevel: toLevel - 1,
+      fromLevel,
       toLevel,
       fdGain,
-      fragCost: cost.fragments,
-      solErdaCost: cost.solErda,
-      fdPerFrag: cost.fragments > 0 ? fdGain / cost.fragments : 0,
+      fragCost: frags,
+      solErdaCost: solErda,
+      fdPerFrag: frags > 0 ? fdGain / frags : 0,
       cumFrag,
     });
+  };
+
+  for (const code of fd.order) {
+    if (code.startsWith("#")) continue;
+    const node = byCode.get(code);
+    if (!node) continue;
+    const toLevel = (running[code] = (running[code] ?? 0) + 1);
+    if (toLevel <= node.level || toLevel > node.desired) continue;
+
+    const step = foldLevel(node, toLevel, pending);
+    if (step) emit(node, step.fromLevel, step.toLevel, step.fdGain, step.frags, step.solErda);
   }
+
+  // Any run still pending never reached an FD-granting level within the desired
+  // range (a skill, or its upper levels, that gives 0% FD). It has no milestone,
+  // so the guide drops it rather than showing a step worth 0% final damage.
 
   return { steps, totalFrag: cumFrag, totalSolErda, remainingFd };
 }

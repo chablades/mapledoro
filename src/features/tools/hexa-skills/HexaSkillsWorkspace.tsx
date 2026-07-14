@@ -26,7 +26,7 @@ import { ConfirmButton } from "../../../components/ConfirmButton";
 import { ItemIcon } from "../../../components/ResourceImage";
 
 type HexaTab = "overview" | "guide" | "fd";
-const TAB_LABELS: Record<HexaTab, string> = { overview: "Overview", guide: "Guide", fd: "FD Breakdown" };
+const TAB_LABELS: Record<HexaTab, string> = { overview: "Overview", guide: "Leveling Guide", fd: "FD Breakdown" };
 const HEXA_TABS: readonly HexaTab[] = ["overview", "guide", "fd"];
 
 // Item ids (manifests/v269/item.json): Sol Erda, Sol Erda Fragment
@@ -424,15 +424,18 @@ export default function HexaSkillsWorkspace({ theme }: { theme: AppTheme }) {
         )}
 
         {showFd && (
-          <SegmentedToggle
-            theme={theme}
-            options={HEXA_TABS}
-            value={activeTab}
-            labels={TAB_LABELS}
-            ariaLabel="HEXA view"
-            trackStyle={{ marginBottom: "1.25rem" }}
-            onChange={setTab}
-          />
+          <div className="fade-in">
+            <SegmentedToggle
+              theme={theme}
+              options={HEXA_TABS}
+              value={activeTab}
+              labels={TAB_LABELS}
+              ariaLabel="HEXA view"
+              // flexWrap so the three labels stack instead of overflowing on narrow screens.
+              trackStyle={{ marginBottom: "1.25rem", flexWrap: "wrap" }}
+              onChange={setTab}
+            />
+          </div>
         )}
 
         {!classDef && <EmptyState theme={theme} sectionPanel={sectionPanel} />}
