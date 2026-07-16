@@ -610,12 +610,32 @@ export function expForLevel(level: number): number {
   return EXP_TO_NEXT_LEVEL_VALUES[level - MIN_EXP_LEVEL] ?? 0;
 }
 
+/** Final level-difference EXP multiplier: the game scales every EXP source by how far the monster
+ *  sits from the character. Within 10 levels it is a bonus (up to 1.2x at +/-1); past that it decays,
+ *  and the decay is asymmetric. Values from the KMS table (MapleStory Wiki, "Experience").
+ *  `diff > 0` means the monster is below the player (over-leveled farming). */
 function monsterLevelBonus(playerLevel: number, monsterLevel: number): number {
-  const diff = Math.abs(monsterLevel - playerLevel);
-  if (diff <= 1) return 1.2;
-  if (diff <= 4) return 1.1;
-  if (diff <= 9) return 1.05;
-  return 1;
+  const diff = playerLevel - monsterLevel;
+  const gap = Math.abs(diff);
+  if (gap <= 1) return 1.2;
+  if (gap <= 4) return 1.1;
+  if (gap <= 9) return 1.05;
+  if (gap === 10) return 1;
+  return diff > 0 ? monsterBelowPenalty(diff) : monsterAbovePenalty(-diff);
+}
+
+/** Monster below the player (over-leveled). Shallow decay from 0.99 down to a 0.70 floor. */
+function monsterBelowPenalty(diff: number): number {
+  if (diff <= 20) return 0.99 - Math.floor((diff - 11) / 2) * 0.01; // 0.99..0.95, one step per 2 levels
+  if (diff <= 39) return 0.89 - (diff - 21) * 0.01; // 0.89..0.71
+  return 0.7;
+}
+
+/** Monster above the player (under-leveled). Steep decay from 0.99 down to a 0.10 floor. */
+function monsterAbovePenalty(above: number): number {
+  if (above <= 20) return 0.99 - (above - 11) * 0.01; // 0.99..0.90
+  if (above <= 35) return 0.7 - (above - 21) * 0.04; // 0.70..0.14
+  return 0.1;
 }
 
 function calculateBuffMultiplier(state: BuffState, playerLevel: number): number {
