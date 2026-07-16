@@ -12,6 +12,12 @@ interface ChangelogEntry {
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    date: "2026-07-16",
+    changes: [
+      { type: "fixed", text: "The EXP Calculator Farming tab now scales EXP down for monsters far above or below your level, instead of only applying the bonus for monsters within 10 levels." },
+    ],
+  },
+  {
     date: "2026-07-14",
     changes: [
       { type: "added", text: "The HEXA Skill Tracker now has a Guide tab that lists which skills to level next, ordered by final damage gained per Sol Erda Fragment." },
