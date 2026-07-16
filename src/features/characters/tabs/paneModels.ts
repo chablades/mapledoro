@@ -123,6 +123,9 @@ export interface PreviewPaneModel {
     // after an optional flow finishes (that screen's own "active bookmark" state is
     // local and doesn't survive the unmount) — null means no bookmark to restore.
     lastActiveBookmarkId: string | null;
+    // Sub-view within lastActiveBookmarkId to restore (e.g. Stats' Hyper Stat/Ability
+    // toggle) — only meaningful alongside a matching lastActiveBookmarkId.
+    lastActiveBookmarkSubView: string | null;
     setupStepIndex: number;
     setupStepDirection: "forward" | "backward";
     setupTargetSubstep: number | null;
@@ -169,6 +172,6 @@ export interface PreviewPaneActions {
   openCharacterProfile: (character: StoredCharacterRecord) => void;
   startOptionalFlow: (flowId: SetupFlowId, targetSubstep?: number, confineToSubstep?: boolean) => void;
   skipSetupEntirely: () => void;
-  rememberActiveBookmark: (id: string) => void;
+  rememberActiveBookmark: (id: string, subView?: string) => void;
   setStatsActivePreset: (field: "hyperStat" | "innerAbility", presetIndex: number) => void;
 }

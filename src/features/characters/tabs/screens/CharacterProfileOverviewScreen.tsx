@@ -600,16 +600,43 @@ function HyperStatView({
   );
 }
 
-function IALineRow({ line, theme }: { line: { tier: StoredIATier; value: string }; theme: Theme }) {
-  const colors = line.tier ? IA_TIER_COLORS[line.tier] : null;
+// Mirrors InnerAbilitySetupStep's iaGradeButtonStyle/iaLineBarStyle so the profile's
+// read-only view matches the setup step's selector visual, minus the interactive affordances.
+const iaGradeChipStyle = (theme: Theme, c: { border: string } | null): CSSProperties => ({
+  display: "flex", alignItems: "center", gap: 8, width: "100%",
+  padding: "0.5rem 0.7rem", borderRadius: 8,
+  border: `1px solid ${c ? c.border : theme.border}`,
+  background: c ? c.border : theme.bg,
+  color: c ? "#fff" : theme.muted,
+  fontFamily: "inherit", fontWeight: 800, fontSize: "0.9rem", textAlign: "left",
+});
+
+const iaLineChipStyle = (theme: Theme, c: { border: string } | null, grade: StoredIATier | ""): CSSProperties => ({
+  display: "block", width: "100%", padding: "0.5rem 0.7rem", borderRadius: 8,
+  border: c ? `1px solid ${c.border}` : `1px dashed ${theme.border}`,
+  background: c ? c.border : theme.bg,
+  color: c ? "#fff" : theme.muted,
+  fontFamily: "inherit", fontWeight: 700, fontSize: "0.82rem", textAlign: "left",
+  opacity: grade ? 1 : 0.55,
+  overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+});
+
+function AbilityGradeChip({ grade, theme }: { grade: StoredIATier | ""; theme: Theme }) {
+  const c = grade ? IA_TIER_COLORS[grade] : null;
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 2, padding: "8px 10px", borderRadius: 8, border: `1px solid ${colors?.border ?? theme.border}`, background: colors?.bg ?? theme.bg }}>
-      <span style={{ fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.05em", color: colors?.text ?? theme.muted }}>
-        {line.tier ? IA_TIER_LABELS[line.tier] : "Unset"}
-      </span>
-      <span style={{ fontSize: 12, fontWeight: 700, color: theme.text }}>{line.value || "—"}</span>
+    <div style={iaGradeChipStyle(theme, c)}>
+      <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="currentColor" style={{ flexShrink: 0 }}>
+        <path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z" />
+      </svg>
+      {grade ? `${IA_TIER_LABELS[grade]} Ability` : "No Ability Grade"}
     </div>
   );
+}
+
+function IALineChip({ line, grade, theme }: { line: { tier: StoredIATier; value: string }; grade: StoredIATier | ""; theme: Theme }) {
+  const c = line.tier ? IA_TIER_COLORS[line.tier] : null;
+  const label = !grade ? "Set ability grade first" : (line.value || "Unset");
+  return <div style={iaLineChipStyle(theme, c, grade)}>{label}</div>;
 }
 
 function AbilityView({
@@ -620,12 +647,14 @@ function AbilityView({
   const activePreset = innerAbility?.activePreset ?? 0;
   const [presetIdx, setPresetIdx] = useState(activePreset);
   const preset = innerAbility?.presets?.[presetIdx];
+  const grade = preset?.lines?.[0]?.tier ?? "";
   return (
     <div>
       <PresetTabs theme={theme} active={presetIdx} activePreset={activePreset} onSelect={setPresetIdx} onSetActive={innerAbility ? onSetActivePreset : null} />
-      <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 10 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 10, maxWidth: 360 }}>
+        <AbilityGradeChip grade={grade} theme={theme} />
         {[0, 1, 2].map((i) => (
-          <IALineRow key={i} line={preset?.lines?.[i] ?? { tier: "", value: "" }} theme={theme} />
+          <IALineChip key={i} line={preset?.lines?.[i] ?? { tier: "", value: "" }} grade={grade} theme={theme} />
         ))}
       </div>
     </div>
@@ -640,11 +669,14 @@ function StatsBookmark({
 }) {
   const s = character?.stats;
   const notCollected = "—";
+  const classId = character ? resolveClassId(character.jobName) : undefined;
+  const classData = classId ? CLASS_SKILL_DATA.find((c) => c.id === classId) : undefined;
+  const resourceLabel = classData?.resourceLabel ?? "MP";
 
   // Order mirrors the in-game Character Info window, row by row (left column then right column).
   const primaryCells: { label: string; value: string }[] = [
     { label: "HP", value: s?.hp?.base || notCollected },
-    { label: "MP", value: notCollected },
+    { label: resourceLabel, value: s?.mp || notCollected },
     { label: "STR", value: s?.str?.base || notCollected },
     { label: "DEX", value: s?.dex?.base || notCollected },
     { label: "INT", value: s?.int?.base || notCollected },
@@ -657,7 +689,7 @@ function StatsBookmark({
     { label: "Final Damage", value: notCollected },
     { label: STAT_LABELS.bossDamage ?? "Boss Damage", value: pctStat(s?.bossDamage, "bossDamage") },
     { label: STAT_LABELS.ignoreDefense ?? "Ignore DEF", value: pctStat(s?.ignoreDefense, "ignoreDefense") },
-    { label: "Normal Enemy Damage", value: notCollected },
+    { label: STAT_LABELS.normalEnemyDamage ?? "Normal Enemy Damage", value: pctStat(s?.normalEnemyDamage, "normalEnemyDamage") },
     { label: "Attack Power", value: s?.attackPower?.base || notCollected },
     { label: STAT_LABELS.criticalRate ?? "Critical Rate", value: pctStat(s?.criticalRate, "criticalRate") },
     { label: "Magic ATT", value: s?.magicAtt?.base || notCollected },
@@ -947,11 +979,14 @@ function BookmarkPageBody({
   filled: boolean;
   ContentComponent: ((props: { theme: Theme; character: StoredCharacterRecord | null }) => ReactNode) | null;
   onEdit: () => void;
-  onEditStep: (flowId: SetupFlowId, targetSubstep?: number, confineToSubstep?: boolean) => void;
+  onEditStep: (flowId: SetupFlowId, targetSubstep?: number, confineToSubstep?: boolean, subView?: string) => void;
 }) {
   const { theme, profile, setup } = model;
   const character = profile.confirmedCharacter;
-  const [statsView, setStatsView] = useState<StatsView>("stats");
+  const [statsView, setStatsView] = useState<StatsView>(() => {
+    const remembered = setup.lastActiveBookmarkSubView;
+    return active.id === "stats" && (remembered === "hyperStat" || remembered === "ability") ? remembered : "stats";
+  });
 
   if (active.id === "overview") return <OverviewBookmark model={model} />;
 
@@ -987,7 +1022,7 @@ function BookmarkPageBody({
   // view is also confined to that one substep (no Back/Next into its siblings); setting
   // up from scratch still walks the full substep sequence starting at substep 0.
   if (active.id === "stats") {
-    const editStats = () => { if (active.flowId) onEditStep(active.flowId, statsTargetSubstep(statsView, character?.level), true); };
+    const editStats = () => { if (active.flowId) onEditStep(active.flowId, statsTargetSubstep(statsView, character?.level), true, statsView); };
     const setUpStats = () => { if (active.flowId) onEditStep(active.flowId); };
     const statsHeaderLabel = statsBookmarkHeaderLabel(statsView, active.pageLabel);
     return (
@@ -1106,8 +1141,8 @@ export default function CharacterProfileOverviewScreen({
   const filled = isBookmarkFilled(active.id, character, mounted);
   const ContentComponent = active.id === "overview" || active.id === "setup" || active.id === "gender_marriage" || active.id === "stats" ? null : BOOKMARK_CONTENT[active.id];
 
-  function startOptionalFlowRemembered(flowId: SetupFlowId, targetSubstep?: number, confineToSubstep?: boolean) {
-    actions.rememberActiveBookmark(active.id);
+  function startOptionalFlowRemembered(flowId: SetupFlowId, targetSubstep?: number, confineToSubstep?: boolean, subView?: string) {
+    actions.rememberActiveBookmark(active.id, subView);
     actions.startOptionalFlow(flowId, targetSubstep, confineToSubstep);
   }
 

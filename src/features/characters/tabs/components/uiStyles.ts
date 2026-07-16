@@ -6,7 +6,7 @@ export function panelCardStyle(theme: AppTheme, padding: string): CSSProperties 
   return {
     background: theme.panel,
     border: `1px solid ${theme.border}`,
-    borderRadius: "20px",
+    borderRadius: "18px",
     padding,
     boxShadow: "0 12px 36px rgba(0,0,0,0.08)",
   };

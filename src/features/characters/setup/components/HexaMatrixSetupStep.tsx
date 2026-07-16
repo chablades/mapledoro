@@ -664,7 +664,7 @@ function HexaStatRow({
 // Loads any previously-saved hexa data for this character into the step's draft value,
 // or null when there's nothing to prefill. Kept out of the component to hold its
 // cognitive complexity down.
-function readSavedHexaValue(classDef: HexaClassDef | null, characterName: string | undefined): string | null {
+export function readSavedHexaValue(classDef: HexaClassDef | null, characterName: string | undefined): string | null {
   if (!classDef || !characterName) return null;
   const savedSkills = readCharacterToolData<{ levels?: HexaSkillLevels }>(characterName, "hexaSkills");
   const savedStat = readCharacterToolData<{ nodes?: HexaStatNode[] }>(characterName, "hexaStat");

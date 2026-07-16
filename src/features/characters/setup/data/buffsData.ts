@@ -321,6 +321,37 @@ function collectRenown(draft: BuffsDraft): Partial<Record<RenownStatId, number>>
   return Object.keys(renown).length > 0 ? renown : null;
 }
 
+/** Reverse of convertBuffsDraftToStored — rebuilds a BuffsDraft from a character's
+ *  already-saved buffs. Without this, opening the Buffs step for an already-set-up
+ *  character (full_setup/maplescouter_setup revisited, or a future profile pencil)
+ *  starts from a blank draft; since convertBuffsDraftToStored/the scouter merge
+ *  replace the whole `buffs` object wholesale, finishing without re-checking every
+ *  previously-set flag silently drops it. Seed the draft from this before starting an
+ *  edit session on a character that already has buffs saved. */
+export function storedBuffsToDraft(stored: StoredScouterBuffs | undefined): BuffsDraft {
+  if (!stored) return emptyBuffsDraft();
+  const guild: Partial<Record<GuildBuffId, string>> = {};
+  for (const { id } of GUILD_BUFFS) {
+    const level = stored[id];
+    if (typeof level === "number") guild[id] = String(level);
+  }
+  let statPotionTier = "0";
+  if (typeof stored.statPotionValue === "number") {
+    const tier = Object.entries(STAT_POTION_STAT_VALUE).find(([, v]) => v === stored.statPotionValue)?.[0];
+    if (tier) statPotionTier = tier;
+  }
+  const bools: Partial<Record<BoolBuffId, boolean>> = {};
+  for (const { id } of BOOL_BUFFS) {
+    if (stored[id] === true) bools[id] = true;
+  }
+  const renown: Partial<Record<RenownStatId, string>> = {};
+  for (const { id } of RENOWN_STATS) {
+    const level = stored.renown?.[id];
+    if (typeof level === "number") renown[id] = String(level);
+  }
+  return { guild, statPotionTier, bools, renown };
+}
+
 export function convertBuffsDraftToStored(draft: BuffsDraft): StoredScouterBuffs | null {
   const out: Record<string, unknown> = {};
 

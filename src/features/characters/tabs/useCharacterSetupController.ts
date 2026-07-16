@@ -42,12 +42,14 @@ import {
   type SetupDraft,
   writeSetupDraft,
 } from "../model/setupDraftStorage";
-import type { StoredCharacterRecord } from "../model/charactersStore";
+import type { StoredCharacterRecord, StoredCharacterStats } from "../model/charactersStore";
 import {
   convertStatsStepDraftToStored, marriageDraftToStored, parseStatsStepDraft,
   serializeStatsStepDraft, storedStatsToStatsStepDraft,
 } from "../setup/data/statsStepDraft";
-import { convertOzRingsDraftToStored, parseOzRingsDraft } from "../setup/data/ozRingData";
+import { serialiseDraft as serialiseEquipmentDraft, storedEquipmentToDraft } from "../setup/components/EquipmentSetupStep";
+import { readSavedHexaValue } from "../setup/components/HexaMatrixSetupStep";
+import { convertOzRingsDraftToStored, ozRingsTotallingStatOverrides, parseOzRingsDraft, type MainStatId } from "../setup/data/ozRingData";
 import { convertBuffsDraftToStored, parseBuffsDraft } from "../setup/data/buffsData";
 import {
   convertScouterQuestionsDraftToStored,
@@ -237,6 +239,7 @@ function applyStatsDraftToRoster(
   if (!existing) return;
   const { stats, isLiberated, weaponHand, hasRuinForceShield, soul } =
     convertStatsStepDraftToStored(parseStatsStepDraft(rawDraft), character.level);
+  preserveExistingActivePresets(stats, existing);
   upsertFn({ ...existing, stats: { ...existing.stats, ...stats }, isLiberated, weaponHand, hasRuinForceShield, soul });
 }
 
@@ -427,7 +430,9 @@ function applyMapleScouterFlow(
 
   const { stats, isLiberated, weaponHand, hasRuinForceShield, soul } =
     convertStatsStepDraftToStored(statsDraft, character.level);
-  const ozRings = convertOzRingsDraftToStored(parseOzRingsDraft(stepData.oz_rings ?? ""));
+  const ozRingsDraft = parseOzRingsDraft(stepData.oz_rings ?? "");
+  applyOzRingsStatOverrides(stats, ozRingsDraft);
+  const ozRings = convertOzRingsDraftToStored(ozRingsDraft);
   const buffs = convertBuffsDraftToStored(parseBuffsDraft(stepData.buffs ?? ""));
   const scouterQ = convertScouterQuestionsDraftToStored(statsDraft);
   const scouterPatch = ozRings || buffs || scouterQ
@@ -490,6 +495,40 @@ function deriveLegionArtifactFields(board: LegionArtifactBoardDraft): LegionArti
   };
 }
 
+// Hyper Stat/Inner Ability's activePreset always converts to 0 from the draft (see
+// draftHyperStatToStored/convertInnerAbilityDraftToStored) — the preset tab switcher
+// used while editing lines isn't an explicit "make this active in-game" choice, so it
+// can't be trusted for a brand-new character either. But for an already-set-up
+// character, the profile's dedicated "Set preset X as active" button is the only
+// authoritative way to change it — re-running this step (e.g. a bookmark's confined
+// edit pencil) must never silently reset it back to preset 1 just because Finish was
+// pressed. Restores whichever preset was actually active before this edit.
+function preserveExistingActivePresets(
+  stats: Partial<StoredCharacterStats>,
+  existing: StoredCharacterRecord | null,
+): void {
+  if (!existing) return;
+  if (stats.hyperStat) stats.hyperStat.activePreset = existing.stats.hyperStat?.activePreset ?? 0;
+  if (stats.innerAbility) stats.innerAbility.activePreset = existing.stats.innerAbility?.activePreset ?? 0;
+}
+
+// The Oz Ring Totalling Ring's off-stats (STR/DEX/INT/LUK not already part of the
+// class's build) are the SAME real stat the Stats step's profile pencil collects, not
+// a private copy — see ozRingsTotallingStatOverrides. Merges any typed here directly
+// into stats.str/dex/int/luk.base so both surfaces share one source of truth instead
+// of the player typing the same number twice.
+function applyOzRingsStatOverrides(
+  stats: Partial<StoredCharacterStats>,
+  ozRingsDraft: import("../setup/data/ozRingData").OzRingsDraft,
+): void {
+  const overrides = ozRingsTotallingStatOverrides(ozRingsDraft);
+  for (const stat of Object.keys(overrides) as MainStatId[]) {
+    const value = overrides[stat];
+    if (value === undefined) continue;
+    stats[stat] = { ...(stats[stat] ?? { base: "", percent: "", percentUnapplied: "" }), base: value };
+  }
+}
+
 function buildFullSetupRecord(
   character: NormalizedCharacterData,
   stepData: import("../setup/types").SetupStepInputById,
@@ -502,6 +541,7 @@ function buildFullSetupRecord(
   const statsDraft = parseStatsStepDraft(stepData.stats ?? "");
   const legionBoard = parseLegionArtifactBoardDraft(stepData.legion_artifacts ?? "");
   const store = readCharactersStore();
+  const existing = selectCharacterById(store, toCharacterKey(character));
   applyScouterLegionForWorld(
     store,
     character,
@@ -513,6 +553,9 @@ function buildFullSetupRecord(
 
   const { stats, isLiberated, weaponHand, hasRuinForceShield, soul } =
     convertStatsStepDraftToStored(statsDraft, character.level);
+  preserveExistingActivePresets(stats, existing);
+  const ozRingsDraft = parseOzRingsDraft(stepData.oz_rings ?? "");
+  applyOzRingsStatOverrides(stats, ozRingsDraft);
   const hexaSkillsToolData = buildHexaSkillsToolData(character.jobName, stepData.hexa_matrix ?? "");
   const hexaStatToolData = buildHexaStatToolData(stepData.hexa_matrix ?? "");
   const vMatrixData = buildVMatrixDataForRecord(stepData.v_matrix ?? "");
@@ -526,10 +569,17 @@ function buildFullSetupRecord(
     ...(symbolsData ? { symbols: symbolsData } : null),
   };
 
-  const ozRings = convertOzRingsDraftToStored(parseOzRingsDraft(stepData.oz_rings ?? ""));
+  const ozRings = convertOzRingsDraftToStored(ozRingsDraft);
   const buffsConverted = convertBuffsDraftToStored(parseBuffsDraft(stepData.buffs ?? ""));
+  // Based on the EXISTING stored buffs, not just buffsConverted — Buffs now backfills
+  // on mount (see BuffsSetupStep's own effect), so a visited-and-finished step's
+  // buffsConverted already reflects the full true state. But if Buffs wasn't visited
+  // this session at all (buffsConverted null) and this character's Sacred Symbols
+  // just happen to be maxed, forcing maxedSacredSymbol:true here without this base
+  // would still replace the whole `buffs` object with just that one flag, dropping
+  // everything else already saved.
   const buffs = deriveMaxedSacredSymbol(symbolsData)
-    ? { ...(buffsConverted ?? {}), maxedSacredSymbol: true as const }
+    ? { ...existing?.scouter?.buffs, ...(buffsConverted ?? {}), maxedSacredSymbol: true as const }
     : buffsConverted;
   const innerAbilityLine = deriveInnerAbilityLine(stats.innerAbility);
   // full_setup asks Weapon ATT inline in the Equipment step's weapon picker, not Stats
@@ -549,7 +599,13 @@ function buildFullSetupRecord(
     isLiberated, weaponHand, hasRuinForceShield, soul, tools,
     familiars: familiarsData ?? base.familiars,
     vMatrix: vMatrixData ?? base.vMatrix,
-    ...(Object.keys(scouterPatch).length > 0 ? { scouter: scouterPatch } : {}),
+    // Merged against the EXISTING record's scouter (not `base`, which is always a
+    // fresh blank object here — see the equipment/familiars/vMatrix comment above for
+    // why that matters): scouterPatch only holds whichever of ozRings/buffs/weaponAtt/
+    // innerAbilityLine actually got recomputed THIS run. Replacing scouter outright
+    // (the old behavior) silently dropped the other three whenever a redo of full
+    // setup didn't happen to revisit Oz Rings/Buffs/Equipment this time.
+    scouter: { ...existing?.scouter, ...scouterPatch },
   };
 }
 
@@ -810,6 +866,46 @@ interface InitialRouteIntent {
   action?: string;
 }
 
+/** Seeds every step draft that has its own "starts blank, silently wipes on Finish"
+ *  risk (see applyConfirmedProfileView/finishSetupFlow) from the character's actual
+ *  stored data. Equipment/V Matrix/HEXA Matrix/Familiars each only backfill via their
+ *  own step component's mount-time effect, which only fires once that component
+ *  actually renders — if a session jumps/skips past one of them, or a stale draft
+ *  from an earlier abandoned flow lingers in memory, Finish's `<field>Data ??
+ *  base.<field>` fallback (or, for Stats' weaponAtt, a step that just never asks
+ *  about it) can write over real data with blank/stale values. Used both when first
+ *  landing on a profile AND right after any Finish, so the in-memory drafts always
+ *  resync to the just-saved truth instead of leaving other steps' untouched drafts
+ *  stale for the rest of the session. */
+function buildSeededStepTestByStep(jobName: string, storedCharacter: StoredCharacterRecord | null): SetupStepInputById {
+  const savedMarriage = storedCharacter?.marriage;
+  let marriageValue = "";
+  if (savedMarriage?.isMarried === true) marriageValue = savedMarriage.partnerName ? `yes|${savedMarriage.partnerName}` : "yes";
+  else if (savedMarriage?.isMarried === false) marriageValue = "no";
+  const equipmentSymbols = storedCharacter?.tools?.symbols as { symbols?: Record<string, SymbolState> } | undefined;
+  const classData = getClassDataByNexonJobName(jobName);
+  const hexaClassDef = classData?.id ? findClassById(classData.id) : null;
+  return {
+    gender: storedCharacter?.gender ?? "",
+    marriage: marriageValue,
+    // Seeded from the character's already-saved stats (not blank) — the Stats
+    // step's finish path merges its draft onto the existing record wholesale
+    // (see applyStatsDraftToRoster), so starting blank meant finishing without
+    // retyping every field silently wiped whatever wasn't retyped.
+    stats: storedCharacter
+      ? serializeStatsStepDraft(storedStatsToStatsStepDraft({ ...storedCharacter, weaponAtt: storedCharacter.scouter?.weaponAtt }))
+      : "",
+    equipment: storedCharacter
+      ? serialiseEquipmentDraft(storedEquipmentToDraft(storedCharacter.equipment, equipmentSymbols?.symbols, storedCharacter.scouter?.weaponAtt))
+      : "",
+    v_matrix: storedCharacter?.vMatrix?.levels && Object.keys(storedCharacter.vMatrix.levels).length > 0
+      ? JSON.stringify(Object.fromEntries(Object.entries(storedCharacter.vMatrix.levels).map(([k, v]) => [k, String(v)])))
+      : "",
+    hexa_matrix: readSavedHexaValue(hexaClassDef, storedCharacter?.ign) ?? "",
+    familiars: storedCharacter?.familiars ? JSON.stringify(storedCharacter.familiars) : "",
+  };
+}
+
 export function useCharacterSetupController(initialRouteIntent?: InitialRouteIntent) {
   // Frozen at mount via the lazy useState initializer (only evaluated once): once the
   // URL-sync effect in CharacterSetupFlow.tsx starts mirroring in-app navigation back into
@@ -870,7 +966,10 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
   // the character it was captured for so it never leaks into a later, unrelated visit
   // to a different character's profile (see currentCharacterKey / restorableBookmarkId
   // below, which is what actually gets exposed to the screen).
-  const [lastActiveBookmark, setLastActiveBookmark] = useState<{ characterKey: string; bookmarkId: string } | null>(null);
+  // subView additionally remembers a bookmark's own internal sub-view (e.g. Stats'
+  // Hyper Stat/Ability toggle), so editing from one of those lands back on it too
+  // instead of the bookmark's default sub-view once the round trip above completes.
+  const [lastActiveBookmark, setLastActiveBookmark] = useState<{ characterKey: string; bookmarkId: string; subView?: string } | null>(null);
 
   const [setupStepIndex, setSetupStepIndex] = useState(0);
   const [setupStepDirection, setSetupStepDirection] = useState<"forward" | "backward">("forward");
@@ -994,7 +1093,14 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
     );
   }, [isResumableDraft]);
 
+  // Tracks the freshest record passed to upsertRosterCharacter this tick — the actual
+  // localStorage write only happens later, in the writeCharactersStore effect below
+  // (keyed off the characterRoster state this schedules, not a synchronous write), so
+  // anything that needs the just-upserted data immediately after calling this (see
+  // finishSetupFlow's resync) would otherwise read stale storage.
+  const lastUpsertedCharacterRef = useRef<StoredCharacterRecord | null>(null);
   const upsertRosterCharacter = useCallback((character: StoredCharacterRecord) => {
+    lastUpsertedCharacterRef.current = character;
     setCharacterRoster((prev) => {
       const key = toCharacterKey(character);
       const existingIndex = prev.findIndex((entry) => toCharacterKey(entry) === key);
@@ -1085,20 +1191,7 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
       setShowFlowOverview(false);
       setSetupStepIndex(0);
       setSetupStepDirection("forward");
-      const savedMarriage = storedCharacter?.marriage;
-      let marriageValue = "";
-      if (savedMarriage?.isMarried === true) marriageValue = savedMarriage.partnerName ? `yes|${savedMarriage.partnerName}` : "yes";
-      else if (savedMarriage?.isMarried === false) marriageValue = "no";
-      setSetupStepTestByStep({
-        gender: storedCharacter?.gender ?? "",
-        marriage: marriageValue,
-        // Seeded from the character's already-saved stats (not blank) — the Stats
-        // step's finish path merges its draft onto the existing record wholesale
-        // (see applyStatsDraftToRoster), so starting blank meant finishing without
-        // retyping every field silently wiped whatever wasn't retyped.
-        stats: storedCharacter ? serializeStatsStepDraft(storedStatsToStatsStepDraft(storedCharacter)) : "",
-        equipment: "",
-      });
+      setSetupStepTestByStep(buildSeededStepTestByStep(character.jobName, storedCharacter));
       setStepValidityById({});
     },
     [requiredFlowId],
@@ -1619,6 +1712,21 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
       }
       setSetupStepDirection(direction);
       setSetupStepIndex(target);
+      // Backing out of an optional flow to the profile overview (step 0) abandons
+      // whatever wasn't Finished — for an ALREADY-CONFIRMED character (storedCharacter
+      // exists), there's no "resume this later" feature for that abandoned edit the
+      // way brand-new characters' Quick/Full Setup onboarding drafts have, so discard
+      // it here by reseeding straight from the stored truth instead of leaving a stale
+      // draft sitting in memory for the rest of the session (only a full page reload
+      // used to clear it). A character with no stored record yet (still mid-onboarding,
+      // never confirmed) is left alone — that's exactly the case the separate
+      // setupDraftStorage resumable-draft system exists to preserve.
+      if (target === 0 && confirmedCharacter) {
+        const storedCharacter = selectCharacterById(readCharactersStore(), toCharacterKey(confirmedCharacter));
+        if (storedCharacter) {
+          setSetupStepTestByStep(buildSeededStepTestByStep(confirmedCharacter.jobName, storedCharacter));
+        }
+      }
     },
     [activeFlowId, confirmedCharacter, setupStepIndex, stepValidityById, setupStepTestByStep],
   );
@@ -1817,6 +1925,10 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
     setIsFinishingSetup(true);
 
     transitions.queueTransitionTimer(() => {
+      // Reset so the post-commit resync below can tell whether THIS finish actually
+      // upserted anything, rather than reusing a leftover reference from an earlier,
+      // unrelated finish this session.
+      lastUpsertedCharacterRef.current = null;
       const effectiveFlowId = typeof overrideFlowId === "string" ? overrideFlowId : activeFlowId;
       // overrideStepData lets a caller (e.g. skipSetupEntirely) force specific field
       // values instead of whatever's sitting in the ambient draft — passing it as an
@@ -1853,6 +1965,24 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
 
       if (confirmedCharacter && !isFullSetupFlow) {
         applyStandaloneToolDrafts(confirmedCharacter, effectiveStepData, upsertRosterCharacter, effectiveFlowId);
+      }
+
+      // Resyncs every step draft to the just-committed truth — without this, a stale
+      // or stepped-past draft for a DIFFERENT step (e.g. a random Weapon ATT typed
+      // into an abandoned MapleScouter Setup attempt, never cleared) keeps sitting in
+      // memory and can outlive this Finish, surfacing again the next time some other
+      // flow touches that same step this session (only a full page reload used to fix
+      // it, since that's the only other place this same seeding ran).
+      if (confirmedCharacter) {
+        // Uses the just-upserted record directly (lastUpsertedCharacterRef), NOT a
+        // fresh readCharactersStore() read — the actual localStorage write happens in
+        // a separate effect keyed off the characterRoster state upsertRosterCharacter
+        // just scheduled, which hasn't run yet in this same synchronous tick. Reading
+        // storage here would see the PRE-finish data, seeding the resync with stale
+        // values despite everything above having just committed correctly.
+        const freshStored = lastUpsertedCharacterRef.current
+          ?? selectCharacterById(readCharactersStore(), toCharacterKey(confirmedCharacter));
+        setSetupStepTestByStep(buildSeededStepTestByStep(confirmedCharacter.jobName, freshStored ?? null));
       }
 
       setIsAddingCharacter(false);
@@ -2161,6 +2291,7 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
   const restorableBookmarkId = lastActiveBookmark && lastActiveBookmark.characterKey === currentCharacterKey
     ? lastActiveBookmark.bookmarkId
     : null;
+  const restorableBookmarkSubView = restorableBookmarkId ? lastActiveBookmark?.subView ?? null : null;
   const isCurrentMainCharacter = Boolean(
     currentCharacterKey && mainCharacterKey && currentCharacterKey === mainCharacterKey,
   );
@@ -2213,6 +2344,7 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
     championCharacterKeysByWorld,
     worldIds,
     lastActiveBookmarkId: restorableBookmarkId,
+    lastActiveBookmarkSubView: restorableBookmarkSubView,
     setupStepIndex,
     setupStepDirection,
     setupTargetSubstep,
@@ -2279,9 +2411,9 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
       refreshSingle,
       handleQueryInput,
       handleSearchSubmit,
-      rememberActiveBookmark: (bookmarkId: string) => {
+      rememberActiveBookmark: (bookmarkId: string, subView?: string) => {
         if (!currentCharacterKey) return;
-        setLastActiveBookmark({ characterKey: currentCharacterKey, bookmarkId });
+        setLastActiveBookmark({ characterKey: currentCharacterKey, bookmarkId, subView });
       },
       startOptionalSetupFlow: (flowId: SetupFlowId, targetSubstep?: number, confineToSubstep?: boolean) => {
         if (immediateUiLockRef.current) return;

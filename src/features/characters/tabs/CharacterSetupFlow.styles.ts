@@ -436,7 +436,7 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
           }
 
           .profile-role-chip {
-            font-size: 0.62rem !important;
+            font-size: 0.75rem !important;
             padding: 0.1rem 0.42rem !important;
           }
 
@@ -557,12 +557,12 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
           }
 
           .confirmed-summary-card button:not(.char-profile-back-btn) {
-            font-size: 0.74rem !important;
+            font-size: 0.75rem !important;
             padding: 0.32rem 0.52rem !important;
           }
 
           .confirmed-summary-card .char-profile-back-btn {
-            font-size: 0.74rem;
+            font-size: 0.75rem;
             padding: 0.32rem 0.52rem;
           }
 
@@ -572,7 +572,7 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
 
           .confirmed-summary-card p:nth-of-type(2),
           .confirmed-summary-card p:nth-of-type(3) {
-            font-size: 0.72rem !important;
+            font-size: 0.75rem !important;
             line-height: 1.2 !important;
           }
 

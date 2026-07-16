@@ -130,26 +130,36 @@ function collectStoredRingLevels(draft: OzRingsDraft): Record<string, number> {
   return out;
 }
 
-/** Stored Totalling Ring off-stat values (positive integers only). */
-function collectStoredTotallingStats(draft: OzRingsDraft): Record<string, number> {
-  const out: Record<string, number> = {};
-  for (const stat of MAIN_STATS) {
-    const raw = draft.totallingStatValues[stat];
-    const n = raw ? Number.parseInt(raw, 10) : Number.NaN;
-    if (Number.isFinite(n) && n > 0) out[stat] = n;
-  }
-  return out;
-}
-
 /**
  * Converts a draft to its stored shape, keeping every ring level the user entered
- * across both modes (not just the currently active one) plus Totalling stats when
- * its level > 0. `ringMode` is stored only as a flag for which build is active.
- * Returns null when nothing was entered.
+ * across both modes (not just the currently active one). `ringMode` is stored only
+ * as a flag for which build is active. Returns null when nothing was entered.
+ *
+ * The Totalling Ring's off-stat values are NOT part of this — they're the character's
+ * own STR/DEX/INT/LUK, the same real stat the Stats step's profile pencil already
+ * collects, not a private copy for this ring alone. See ozRingsTotallingStatOverrides.
  */
 export function convertOzRingsDraftToStored(draft: OzRingsDraft): StoredOzRings | null {
   const levels = collectStoredRingLevels(draft);
-  const totallingStats = levels.totalling ? collectStoredTotallingStats(draft) : {};
-  if (Object.keys(levels).length === 0 && Object.keys(totallingStats).length === 0) return null;
-  return { ringMode: draft.ringMode, levels, totallingStats };
+  if (Object.keys(levels).length === 0) return null;
+  return { ringMode: draft.ringMode, levels };
+}
+
+/**
+ * Totalling Ring off-stat values to merge into the character's own shared
+ * stats.str/dex/int/luk.base — the SAME real stat, not a private duplicate, so
+ * whichever surface (this ring or the Stats profile pencil) was typed into last
+ * wins. Only returns entries when the Totalling Ring is actually in use (level > 0)
+ * and the value is a real positive number; blank/untouched off-stats are omitted so
+ * they don't overwrite an already-set value with nothing.
+ */
+export function ozRingsTotallingStatOverrides(draft: OzRingsDraft): Partial<Record<MainStatId, string>> {
+  const totallingLevel = parseOzRingLevel(draft.levels.totalling);
+  if (totallingLevel === null) return {};
+  const out: Partial<Record<MainStatId, string>> = {};
+  for (const stat of MAIN_STATS) {
+    const raw = draft.totallingStatValues[stat]?.trim();
+    if (raw && Number.parseInt(raw, 10) > 0) out[stat] = raw;
+  }
+  return out;
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import type { CSSProperties, ReactNode } from "react";
+import { useEffect, useRef, type CSSProperties, type ReactNode } from "react";
 import { numericKeyDown } from "../../../../lib/inputUtils";
 import type { AppTheme } from "../../../../components/themes";
 import { statusText } from "../../../../components/statusColors";
@@ -9,11 +9,12 @@ import HoverTooltip from "../../../../components/HoverTooltip";
 import type { SetupStepDefinition } from "../steps";
 import type { SetupFlowId } from "../flows";
 import { CLASS_SKILL_DATA } from "../data/classSkillData";
+import { readCharactersStore, selectCharacterByIgn } from "../../model/charactersStore";
 import {
   GUILD_BUFFS, GUILD_BUFF_MAX,
   BOOL_BUFFS, BUFF_GROUP_A, BUFF_GROUP_B,
   RENOWN_STATS, RENOWN_MAX, RENOWN_SKILL_ID,
-  parseBuffsDraft, serializeBuffsDraft,
+  parseBuffsDraft, serializeBuffsDraft, storedBuffsToDraft,
   sanitizeGuildLevel, sanitizeRenownLevel, toggleBoolBuff,
   primaryStatForClass, mainStatsForClass, getStatPotionTiers, statAbbrev,
   extremePotionIconId, extremePotionLabel, heroEchoSkillId, heroEchoName,
@@ -31,6 +32,7 @@ interface BuffsSetupStepProps {
   stepNumber: number;
   totalSteps: number;
   jobName?: string;
+  confirmedCharacterName?: string;
   value: string;
   onChange: (value: string) => void;
   onBack: () => void;
@@ -74,7 +76,7 @@ const pickOneGroupStyle = (theme: AppTheme): CSSProperties => ({
 
 const pickOneLabelStyle = (theme: AppTheme): CSSProperties => ({
   position: "absolute", top: -9, left: 8,
-  fontSize: "0.65rem", fontWeight: 700, textTransform: "uppercase",
+  fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase",
   letterSpacing: "0.04em", color: theme.muted,
   background: theme.bg, padding: "0 4px",
 });
@@ -205,7 +207,7 @@ function boolBuffLabel(id: BoolBuffEntry["id"], primaryStat: ReturnType<typeof p
 // ── Main component ───────────────────────────────────────────────────────────
 
 export default function BuffsSetupStep({
-  theme, step, flowId, stepNumber, totalSteps, jobName = "", value, onChange, onBack, onNext, onFinish,
+  theme, step, flowId, stepNumber, totalSteps, jobName = "", confirmedCharacterName, value, onChange, onBack, onNext, onFinish,
 }: BuffsSetupStepProps) {
   const classData = CLASS_SKILL_DATA.find((c) => c.nexonJobName === jobName);
   const requiredStats = classData?.requiredStats ?? [];
@@ -219,10 +221,26 @@ export default function BuffsSetupStep({
   const showMaxedSacredSymbol = flowId === "maplescouter_setup";
 
   const draft = parseBuffsDraft(value);
+  const initialValueRef = useRef(value);
 
   function update(patch: Partial<typeof draft>) {
     onChange(serializeBuffsDraft({ ...draft, ...patch }));
   }
+
+  // One-shot mount-time backfill from the character's saved buffs (only when this step
+  // lands blank) — matches Equipment/V Matrix/HEXA Matrix/Familiars' own pattern.
+  // Without this, editing an already-set-up character's buffs started blank, and
+  // finishing without re-checking every previously-set flag wholesale-replaced the
+  // stored buffs with whatever partial state was checked this time (the scouter merge
+  // replaces the whole `buffs` object, it doesn't merge per-flag).
+  useEffect(() => {
+    if (initialValueRef.current || !confirmedCharacterName) return;
+    const saved = selectCharacterByIgn(readCharactersStore(), confirmedCharacterName)?.scouter?.buffs;
+    if (!saved) return;
+    // react-doctor-disable-next-line no-pass-data-to-parent
+    onChange(serializeBuffsDraft(storedBuffsToDraft(saved)));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function setGuildLevel(id: GuildBuffId, val: string) {
     update({ guild: { ...draft.guild, [id]: sanitizeGuildLevel(val) } });

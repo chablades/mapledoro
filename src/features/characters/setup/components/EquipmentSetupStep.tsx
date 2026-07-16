@@ -315,7 +315,7 @@ function parseDraft(raw: string): EquipmentDraft {
   try { return JSON.parse(raw) as EquipmentDraft; } catch { return {}; }
 }
 
-function serialiseDraft(draft: EquipmentDraft): string {
+export function serialiseDraft(draft: EquipmentDraft): string {
   return JSON.stringify(draft);
 }
 
@@ -339,6 +339,21 @@ function storedPresetToDraft(preset: StoredEquipmentPreset): SlotMap {
   };
 }
 
+/** Presets 1-2 are stored dense (every slot resolved, see draftPresetToStored's own
+ *  fallback-to-base merge), but the draft/activeGrid model needs them sparse — only a
+ *  slot actually diverged from preset 0 should appear, so untouched slots keep mirroring
+ *  preset 0 live. Diffs the stored preset against the stored base and keeps only the
+ *  slots that differ. */
+function storedPresetOverlayToDraft(preset: StoredEquipmentPreset, base: StoredEquipmentPreset): SlotMap {
+  const full = storedPresetToDraft(preset);
+  const baseFull = storedPresetToDraft(base);
+  const overlay: SlotMap = {};
+  for (const key of Object.keys(full) as (keyof SlotMap)[]) {
+    if (!sameItem(full[key], baseFull[key])) overlay[key] = full[key];
+  }
+  return overlay;
+}
+
 /** Reverse of parseDraft/applyEquipmentDraftToRoster — rebuilds this step's draft shape
  *  from a character's already-saved equipment/symbols/weapon ATT, so the mount-time
  *  backfill below (matching V Matrix/HEXA Matrix/Familiars' own pattern) can seed an
@@ -346,13 +361,17 @@ function storedPresetToDraft(preset: StoredEquipmentPreset): SlotMap {
  *  already-equipped character's gear started blank, and finishing without re-picking
  *  every slot wholesale-replaced the stored equipment with whatever partial state was
  *  typed (applyEquipmentDraftToRoster does a full replace, not a merge). */
-function storedEquipmentToDraft(
+export function storedEquipmentToDraft(
   equipment: StoredCharacterEquipment,
   symbols: Record<string, SymbolState> | undefined,
   weaponAtt: number | undefined,
 ): EquipmentDraft {
   return {
-    presets: equipment.presets.map(storedPresetToDraft),
+    presets: [
+      storedPresetToDraft(equipment.presets[0]),
+      storedPresetOverlayToDraft(equipment.presets[1], equipment.presets[0]),
+      storedPresetOverlayToDraft(equipment.presets[2], equipment.presets[0]),
+    ],
     activePreset: 0,
     title: toDraftItem(equipment.title),
     totem1: toDraftItem(equipment.totems[0]), totem2: toDraftItem(equipment.totems[1]), totem3: toDraftItem(equipment.totems[2]),

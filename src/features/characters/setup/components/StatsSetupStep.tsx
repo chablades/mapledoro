@@ -25,7 +25,7 @@ import {
   type ClassSkillData,
   type ClassWarning,
 } from "../data/classSkillData";
-import { STAT_LABELS, type StatFieldId, type TripleStatFieldId } from "../data/statFields";
+import { STAT_LABELS, TRIPLE_STAT_FIELDS, type StatFieldId, type TripleStatFieldId } from "../data/statFields";
 import {
   GENESIS_LIBERATION_LEVEL,
   isArcaneEligible,
@@ -170,6 +170,16 @@ const warningBoxStyle: CSSProperties = {
   gap: "0.4rem",
 };
 
+// Same alpha-tint derivation as warningBoxStyle above (dark-mode statusText hue, 0.08
+// fill / 0.35 border) — rgb(16, 185, 129) is #10b981, dark mode's success statusText.
+const successBoxStyle: CSSProperties = {
+  marginBottom: "0.4rem",
+  background: "rgba(16, 185, 129, 0.08)",
+  border: "1px solid rgba(16, 185, 129, 0.35)",
+  borderRadius: "10px",
+  padding: "0.65rem 0.85rem",
+};
+
 function presetButtonStyle(theme: AppTheme, on: boolean): CSSProperties {
   return {
     border: `1px solid ${on ? theme.accent : theme.border}`,
@@ -215,7 +225,7 @@ function SkillIconBadge({ skill, theme, size = 32, style }: { skill: BuffSkill; 
   const fallbackRef = useRef<HTMLDivElement>(null);
   const iconUrl = skill.skillIconUrl;
   const placeholder = (
-    <div style={{ width: size, height: size, borderRadius: "4px", background: theme.border }} />
+    <div style={{ width: size, height: size, borderRadius: "6px", background: theme.border }} />
   );
   return (
     <HoverTooltip
@@ -228,7 +238,7 @@ function SkillIconBadge({ skill, theme, size = 32, style }: { skill: BuffSkill; 
     >
       {iconUrl ? (
         <>
-          <div ref={wrapperRef} style={{ width: size, height: size, borderRadius: "4px", overflow: "hidden" }}>
+          <div ref={wrapperRef} style={{ width: size, height: size, borderRadius: "6px", overflow: "hidden" }}>
             <Image
               src={iconUrl!}
               alt={skill.skillName}
@@ -238,11 +248,11 @@ function SkillIconBadge({ skill, theme, size = 32, style }: { skill: BuffSkill; 
                 if (wrapperRef.current) wrapperRef.current.style.display = "none";
                 if (fallbackRef.current) fallbackRef.current.style.display = "block";
               }}
-              style={{ borderRadius: "4px", display: "block" }}
+              style={{ borderRadius: "6px", display: "block" }}
               unoptimized
             />
           </div>
-          <div ref={fallbackRef} style={{ display: "none", width: size, height: size, borderRadius: "4px", background: theme.border }} />
+          <div ref={fallbackRef} style={{ display: "none", width: size, height: size, borderRadius: "6px", background: theme.border }} />
         </>
       ) : placeholder}
     </HoverTooltip>
@@ -294,13 +304,7 @@ function BuffGuide({ classData, theme, characterLevel }: { classData: ClassSkill
     .filter((skill) => isSkillUnlocked(skill, characterLevel));
   return (
     <>
-    <div style={{
-      marginBottom: "0.4rem",
-      background: "rgba(22, 163, 74, 0.07)",
-      border: "1px solid rgba(22, 163, 74, 0.35)",
-      borderRadius: "10px",
-      padding: "0.65rem 0.85rem",
-    }}>
+    <div style={successBoxStyle}>
       <div style={{ display: "flex", alignItems: "center", gap: "0.45rem", marginBottom: "0.5rem" }}>
         <span style={{ fontSize: "0.75rem", color: statusText(theme, "success"), flexShrink: 0, lineHeight: 1 }}>★</span>
         <p style={{ margin: 0, fontSize: "0.82rem", color: statusText(theme, "success"), fontWeight: 700 }}>
@@ -317,8 +321,14 @@ function BuffGuide({ classData, theme, characterLevel }: { classData: ClassSkill
   );
 }
 
+// Fixed 3-column grid (Base Value / % Value / % Not Applied), each field pinned to an
+// explicit gridColumn — a stat that skips a column (Attack Power's Base-only, HP's
+// missing % Not Applied for most classes) still lines up under the stats that have
+// all 3, instead of the remaining columns stretching to fill the row.
+const tripleStatGridStyle: CSSProperties = { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "0.35rem" };
+
 function TripleStatRow({
-  id, draft, onUpdate, theme, isMainStat, requireFilled,
+  id, draft, onUpdate, theme, isMainStat, requireFilled, showHpPercentUnapplied, showPercentColumns = true,
 }: {
   id: TripleStatFieldId;
   draft: StatsStepDraft;
@@ -327,15 +337,28 @@ function TripleStatRow({
   isMainStat: boolean;
   /** MapleScouter only — a blank field here should jump-to-fix same as a bad value. */
   requireFilled: boolean;
+  /** Only Demon Avenger's HP feeds a %-not-applied-style calculation (its Demon Fury
+   *  scaling) — every other class's HP is flavor/context only, so this column would be
+   *  meaningless noise for them. Guided flows never hit this (HP only ever appears in
+   *  tripleIds for Demon Avenger there already); only showAllStats' "every class, every
+   *  field" profile pencil actually needs the distinction. */
+  showHpPercentUnapplied?: boolean;
+  /** False for Attack Power/Magic ATT when it isn't the class's actual weapon stat
+   *  (e.g. Attack Power for a mage that fights with Magic ATT) — shows only the Base
+   *  Value, since that stat's percentages have nothing real to enter. Guided flows
+   *  never hit this either, same reasoning as showHpPercentUnapplied. */
+  showPercentColumns?: boolean;
 }) {
   const d: TripleStatDraft = draft[id] ?? { base: "", percent: "", percentUnapplied: "" };
   const sub = statInputStyle(theme);
   const label = TRIPLE_LABELS[id];
-  // "% Not Applied" is shown for every stat EXCEPT ATT, in all flows. For ATT it's
-  // meaningless — it only ever existed as a legacy scouter workaround for
-  // pre-remaster Kanna's HP→MATT conversion, and a stray value produces an invalid
-  // range; MapleScouter always sends ATT % not applied as 0.
+  // "% Not Applied" is shown for every stat EXCEPT ATT (meaningless there — it only
+  // ever existed as a legacy scouter workaround for pre-remaster Kanna's HP→MATT
+  // conversion, and a stray value produces an invalid range; MapleScouter always sends
+  // ATT % not applied as 0) and HP for classes where it isn't their Demon Fury-style
+  // scaling stat.
   const isAttack = id === "attackPower" || id === "magicAtt";
+  const hidePercentUnapplied = isAttack || (id === "hp" && !showHpPercentUnapplied);
   // Only the class's main stat (STR/DEX/INT/LUK) is at risk of the Total-vs-Base
   // mix-up MapleScouter itself warns about — HP/ATT/MATT don't have that ambiguity.
   const showBaseWarning = isMainStat && Number(d.base) >= MAIN_STAT_BASE_VALUE_WARN_AT;
@@ -345,8 +368,8 @@ function TripleStatRow({
       <p style={{ margin: 0, marginBottom: "0.25rem", fontSize: "0.82rem", fontWeight: 800, color: theme.text }}>
         {label}
       </p>
-      <div style={{ display: "flex", gap: "0.35rem" }}>
-        <div style={{ flex: 1, position: "relative" }}>
+      <div style={tripleStatGridStyle}>
+        <div style={{ gridColumn: 1, position: "relative" }}>
           {showBaseWarning && <InputWarningBubble message={`That looks like your total ${label}, enter your Base Value for ${label}.`} theme={theme} />}
           <input type="text" aria-label={`${label} base value`} value={d.base} placeholder="0" style={sub}
             data-flagged-field={showBaseWarning || (requireFilled && !d.base.trim()) ? "true" : undefined}
@@ -357,7 +380,8 @@ function TripleStatRow({
           />
           <p style={{ margin: 0, marginTop: "0.15rem", fontSize: "0.75rem", color: theme.muted, fontWeight: 700, textAlign: "center" }}>Base Value</p>
         </div>
-        <div style={{ flex: 1 }}>
+        {showPercentColumns && (
+        <div style={{ gridColumn: 2 }}>
           <div style={{ position: "relative" }}>
             <input type="text" aria-label={`${label} percent value`} value={d.percent} placeholder="0" style={{ ...sub, paddingRight: "1.15rem" }}
               data-flagged-field={requireFilled && !d.percent.trim() ? "true" : undefined}
@@ -370,8 +394,9 @@ function TripleStatRow({
           </div>
           <p style={{ margin: 0, marginTop: "0.15rem", fontSize: "0.75rem", color: theme.muted, fontWeight: 700, textAlign: "center" }}>% Value</p>
         </div>
-        {!isAttack && (
-          <div style={{ flex: 1 }}>
+        )}
+        {showPercentColumns && !hidePercentUnapplied && (
+          <div style={{ gridColumn: 3 }}>
             <div style={{ position: "relative" }}>
               {showPercentUnappliedWarning && <InputWarningBubble message={`That % looks too large, enter your % Value Not Applied for ${label}.`} theme={theme} />}
               <input type="text" aria-label={`${label} percent not applied`} value={d.percentUnapplied} placeholder="0" style={{ ...sub, paddingRight: "1.15rem" }}
@@ -386,6 +411,40 @@ function TripleStatRow({
             <p style={{ margin: 0, marginTop: "0.15rem", fontSize: "0.75rem", color: theme.muted, fontWeight: 700, textAlign: "center" }}>% Not Applied</p>
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+// Same heading + boxed-input chrome as TripleStatRow, for a single-value field (no
+// %/% Not Applied columns) — keeps the profile-only MP/DF/TF/PP row visually
+// consistent with the rest of Basic Stats instead of the compact Combat Stats row style.
+function SingleStatRow({
+  id, label, draft, onUpdate, theme,
+}: {
+  id: StatFieldId;
+  label: string;
+  draft: StatsStepDraft;
+  onUpdate: (id: string, val: string) => void;
+  theme: AppTheme;
+}) {
+  const raw = (draft as Record<string, unknown>)[id];
+  const value = typeof raw === "string" ? raw : "";
+  return (
+    <div>
+      <p style={{ margin: 0, marginBottom: "0.25rem", fontSize: "0.82rem", fontWeight: 800, color: theme.text }}>
+        {label}
+      </p>
+      <div style={tripleStatGridStyle}>
+        <div style={{ gridColumn: 1 }}>
+          <input type="text" aria-label={`${label} value`} value={value} placeholder="0" style={statInputStyle(theme)}
+            onChange={(e) => onUpdate(id, sanitizeDigitsInput(e.target.value))}
+            onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
+            onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
+            onKeyDown={numericKeyDown}
+          />
+          <p style={{ margin: 0, marginTop: "0.15rem", fontSize: "0.75rem", color: theme.muted, fontWeight: 700, textAlign: "center" }}>Base Value</p>
+        </div>
       </div>
     </div>
   );
@@ -901,7 +960,7 @@ function StatsWindowSubstep({
   confineToSubstep, onExitStep,
   classData, characterLevel, tripleIds, draft,
   handleTripleUpdate, handleSingleUpdate, handleCooldownUpdate,
-  showWeaponAtt, weaponAttLabel, usesMagicWeapon, isScouter,
+  showWeaponAtt, weaponAttLabel, usesMagicWeapon, isScouter, showAllStats,
 }: {
   theme: AppTheme;
   stepNumber: number;
@@ -931,8 +990,17 @@ function StatsWindowSubstep({
   weaponAttLabel: string;
   usesMagicWeapon: boolean;
   isScouter: boolean;
+  /** Profile-pencil only (stats_flow) — shows the resource bar (MP/DF/TF/PP) and
+   *  Normal Enemy Damage, which the guided Setup flows never ask for. */
+  showAllStats: boolean;
 }) {
   const primaryStat = classData?.requiredStats.find((s): s is TripleStatFieldId => MAIN_STAT_IDS.has(s));
+  const resourceLabel = classData?.resourceLabel ?? "MP";
+  // Profile-pencil only: Normal Enemy Damage slots in right after Boss Damage, above
+  // Critical Rate — matching where it sits in the in-game Character Info window.
+  const combatRightIds: StatFieldId[] = showAllStats
+    ? [...COMBAT_RIGHT.slice(0, 2), "normalEnemyDamage", ...COMBAT_RIGHT.slice(2)]
+    : COMBAT_RIGHT;
   const showArcanePower = isArcaneEligible(characterLevel, classData?.isLegacy);
   const showSacredPower = isSacredEligible(characterLevel, classData?.isLegacy);
   const symbolIds = ([showArcanePower && "arcanePower", showSacredPower && "sacredPower"] as const).filter(Boolean) as StatFieldId[];
@@ -995,9 +1063,21 @@ function StatsWindowSubstep({
             />
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-            {tripleIds.map((id) => (
-              <TripleStatRow key={id} id={id} draft={draft} onUpdate={handleTripleUpdate} theme={theme} isMainStat={id === primaryStat} requireFilled={isScouter} />
-            ))}
+            {tripleIds.map((id) => {
+              const isAttackField = id === "attackPower" || id === "magicAtt";
+              const showPercentColumns = !(showAllStats && isAttackField && !classData?.requiredStats.includes(id));
+              return (
+                <TripleStatRow
+                  key={id} id={id} draft={draft} onUpdate={handleTripleUpdate} theme={theme}
+                  isMainStat={id === primaryStat} requireFilled={isScouter}
+                  showHpPercentUnapplied={classData?.requiredStats.includes("hp")}
+                  showPercentColumns={showPercentColumns}
+                />
+              );
+            })}
+            {showAllStats && (
+              <SingleStatRow id="mp" label={resourceLabel} draft={draft} onUpdate={handleSingleUpdate} theme={theme} />
+            )}
           </div>
         </div>
       )}
@@ -1011,7 +1091,7 @@ function StatsWindowSubstep({
             ))}
           </div>
           <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: "0.4rem" }}>
-            {COMBAT_RIGHT.map((id) => (
+            {combatRightIds.map((id) => (
               <CombatStatCell key={id} id={id} draft={draft} onUpdate={handleSingleUpdate} onUpdateCooldown={handleCooldownUpdate} theme={theme} requireFilled={isScouter} />
             ))}
           </div>
@@ -1156,7 +1236,7 @@ function QuickQuestionsSubstep({
 
 function HyperStatSubstep({
   theme, stepNumber, totalSteps, substep, substepCount, substepAnimStyle,
-  onBack, onNext, onFinish, onValidityChange, nextLabel,
+  onBack, onNext, onFinish, onValidityChange, nextLabel, confineToSubstep,
   characterLevel, classData, hyper,
   handleHyperStatUpdate, switchHyperPreset, copyHyperPreset, clearHyperPreset,
 }: {
@@ -1171,6 +1251,10 @@ function HyperStatSubstep({
   onFinish: () => void;
   onValidityChange?: (valid: boolean, substepIndex?: number) => void;
   nextLabel?: string;
+  /** True when opened from a profile bookmark's edit pencil — the profile already has
+   *  its own "Set preset X as active" control, so the first-time-setup hint below
+   *  (which only applies before that control has ever been reached) doesn't apply. */
+  confineToSubstep?: boolean;
   characterLevel?: number;
   classData: ClassSkillData | undefined;
   hyper: HyperStatDraft;
@@ -1236,6 +1320,11 @@ function HyperStatSubstep({
           </span>
         )}
       />
+      {!confineToSubstep && (
+        <p style={{ margin: "0 0 0.75rem", fontSize: "0.75rem", fontWeight: 600, color: theme.muted }}>
+          You can set which preset is active in-game later, from your profile.
+        </p>
+      )}
       <div className="stats-hyper-grid" style={{ display: "flex", minWidth: 0 }}>
         {hyperCols.map((col, i) => (
           // react-doctor-disable-next-line no-array-index-as-key
@@ -1260,7 +1349,7 @@ function HyperStatSubstep({
 
 function InnerAbilitySubstep({
   theme, stepNumber, totalSteps, substep, substepCount, substepAnimStyle,
-  onBack, onNext, onFinish, onValidityChange, draft, onUpdate,
+  onBack, onNext, onFinish, onValidityChange, draft, onUpdate, confineToSubstep,
 }: {
   theme: AppTheme;
   stepNumber: number;
@@ -1274,6 +1363,9 @@ function InnerAbilitySubstep({
   onValidityChange?: (valid: boolean, substepIndex?: number) => void;
   draft: StatsStepDraft;
   onUpdate: (next: IADraft) => void;
+  /** True when opened from a profile bookmark's edit pencil — see HyperStatSubstep's
+   *  same prop for why this suppresses the first-time-setup active-preset hint. */
+  confineToSubstep?: boolean;
 }) {
   return (
     <div key={3} style={substepAnimStyle}>
@@ -1290,7 +1382,7 @@ function InnerAbilitySubstep({
         onFinish={onFinish}
         onValidityChange={onValidityChange}
       >
-        <InnerAbilitySetupStep draft={draft.innerAbility} onUpdate={onUpdate} theme={theme} />
+        <InnerAbilitySetupStep draft={draft.innerAbility} onUpdate={onUpdate} theme={theme} showActivePresetHint={!confineToSubstep} />
       </SetupStepFrame>
     </div>
   );
@@ -1406,9 +1498,15 @@ export default function StatsSetupStep({
     animationFillMode: "both" as const,
   } : {};
 
-  const tripleIds = classData
+  // stats_flow is only ever reached from the profile bookmark's edit pencil (or a
+  // future "set up now" empty-state CTA) — never part of Full Setup/MapleScouter
+  // Setup's guided sequence, so it's a safe signal to show every stat field
+  // regardless of class ("save people time" gating stays intact for the guided flows).
+  const showAllStats = flowId === "stats_flow";
+  const classRequiredTripleIds = classData
     ? getRequiredStatsForClass(classData).filter((id): id is TripleStatFieldId => TRIPLE_IDS.has(id))
     : [];
+  const tripleIds = showAllStats ? TRIPLE_STAT_FIELDS.map((f) => f.id) : classRequiredTripleIds;
 
   const { usesMagicWeapon, label: weaponAttLabel } = deriveWeaponAttLabel(classData);
 
@@ -1434,6 +1532,7 @@ export default function StatsSetupStep({
       classData={classData} characterLevel={characterLevel} tripleIds={tripleIds} draft={draft}
       handleTripleUpdate={handleTripleUpdate} handleSingleUpdate={handleSingleUpdate} handleCooldownUpdate={handleCooldownUpdate}
       showWeaponAtt={showWeaponAtt} weaponAttLabel={weaponAttLabel} usesMagicWeapon={usesMagicWeapon} isScouter={isScouter}
+      showAllStats={showAllStats}
     />
   );
 
@@ -1452,7 +1551,7 @@ export default function StatsSetupStep({
         theme={theme} stepNumber={stepNumber} totalSteps={totalSteps}
         substep={hyperFrame.substepIndex} substepCount={hyperFrame.substepCount} substepAnimStyle={substepAnimStyle}
         onBack={hyperFrame.onBack} onNext={hyperFrame.onNext} nextLabel={hyperFrame.nextLabel}
-        onFinish={onFinish} onValidityChange={onValidityChange}
+        onFinish={onFinish} onValidityChange={onValidityChange} confineToSubstep={confineToSubstep}
         characterLevel={characterLevel} classData={classData} hyper={hyper}
         handleHyperStatUpdate={handleHyperStatUpdate} switchHyperPreset={switchHyperPreset}
         copyHyperPreset={copyHyperPreset} clearHyperPreset={clearHyperPreset}
@@ -1478,7 +1577,7 @@ export default function StatsSetupStep({
       substep={iaFrame.substepIndex} substepCount={iaFrame.substepCount} substepAnimStyle={substepAnimStyle}
       onBack={iaFrame.onBack}
       onNext={onNext} onFinish={onFinish} onValidityChange={onValidityChange}
-      draft={draft} onUpdate={handleInnerAbilityUpdate}
+      draft={draft} onUpdate={handleInnerAbilityUpdate} confineToSubstep={confineToSubstep}
     />
   );
 }

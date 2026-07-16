@@ -1,12 +1,13 @@
 "use client";
 
-import { useRef, type CSSProperties } from "react";
+import { useEffect, useRef, type CSSProperties } from "react";
 import { numericKeyDown, sanitizeDigitsInput } from "../../../../lib/inputUtils";
 import { resourceImageUrl } from "../../../../lib/mapleResource";
 import type { AppTheme } from "../../../../components/themes";
 import { ItemIcon } from "../../../../components/ResourceImage";
 import type { SetupStepDefinition } from "../steps";
 import { CLASS_SKILL_DATA } from "../data/classSkillData";
+import { readCharactersStore, selectCharacterByIgn } from "../../model/charactersStore";
 import {
   MAIN_STAT_LABELS,
   OZ_RING_ICON_IDS,
@@ -61,6 +62,7 @@ interface OzRingsSetupStepProps {
   stepNumber: number;
   totalSteps: number;
   jobName?: string;
+  confirmedCharacterName?: string;
   value: string;
   onChange: (value: string) => void;
   onBack: () => void;
@@ -150,15 +152,36 @@ function StatRow({ label, value, onChange, theme, isFirst }: {
 }
 
 export default function OzRingsSetupStep({
-  theme, step, stepNumber, totalSteps, jobName = "", value, onChange, onBack, onNext, onFinish, onValidityChange,
+  theme, step, stepNumber, totalSteps, jobName = "", confirmedCharacterName, value, onChange, onBack, onNext, onFinish, onValidityChange,
 }: OzRingsSetupStepProps) {
   const classData = CLASS_SKILL_DATA.find((c) => c.nexonJobName === jobName);
   const ozInfo = getOzClassStatInfo(classData?.requiredStats ?? []);
   const draft = parseOzRingsDraft(value);
+  const initialValueRef = useRef(value);
 
   function update(patch: Partial<OzRingsDraft>) {
     onChange(serializeOzRingsDraft({ ...draft, ...patch }));
   }
+
+  // One-shot mount-time backfill: the Totalling Ring's off-stats are the character's
+  // own shared stats.str/dex/int/luk (see ozRingsTotallingStatOverrides), not a
+  // private copy — so if they were already entered elsewhere (the Stats profile
+  // pencil, or a previous Oz Rings pass), seed them here instead of asking again.
+  useEffect(() => {
+    if (initialValueRef.current || !confirmedCharacterName) return;
+    const saved = selectCharacterByIgn(readCharactersStore(), confirmedCharacterName);
+    const s = saved?.stats;
+    if (!s) return;
+    const seeded: Partial<Record<MainStatId, string>> = {};
+    for (const stat of ozInfo.totallingStats) {
+      const base = s[stat]?.base;
+      if (base) seeded[stat] = base;
+    }
+    if (Object.keys(seeded).length === 0) return;
+    // react-doctor-disable-next-line no-pass-data-to-parent
+    update({ totallingStatValues: { ...draft.totallingStatValues, ...seeded } });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Standard and Continuous are alternate builds — only the active one gets converted
   // to stored/scouter data (see convertOzRingsDraftToStored), so switching tabs doesn't

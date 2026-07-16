@@ -74,6 +74,12 @@ export interface StatsStepDraft {
   arcanePower?: string;
   sacredPower?: string;
 
+  // Profile-pencil-only fields (stats_flow): never asked in the guided Setup flows,
+  // see StatsSetupStep's showAllStats. mp is a raw number (labeled per-class via
+  // ClassSkillData.resourceLabel), normalEnemyDamage a plain percentage like bossDamage.
+  mp?: string;
+  normalEnemyDamage?: string;
+
   // Hyper Stat allocation (Full setup only): 3 swappable presets, each a map of
   // HyperStatCategoryId → raw level string as typed in the substep.
   hyperStat?: HyperStatDraft;
@@ -236,6 +242,8 @@ export function convertStatsStepDraftToStored(
       summonDuration: draft.summonDuration ?? "",
       arcanePower: draft.arcanePower ?? "",
       sacredPower: draft.sacredPower ?? "",
+      mp: draft.mp ?? "",
+      normalEnemyDamage: draft.normalEnemyDamage ?? "",
       hyperStat: draftHyperStatToStored(draft.hyperStat),
       innerAbility: convertInnerAbilityDraftToStored(draft.innerAbility),
     },
@@ -280,8 +288,13 @@ export function storedStatsToStatsStepDraft(record: {
   weaponHand: "1h" | "2h" | null;
   hasRuinForceShield: boolean | null;
   soul: CharacterSoul | null;
+  /** full_setup asks this inline in the Equipment step's weapon picker, not Stats —
+   *  but maplescouter_setup (and the standalone stats_flow) ask it directly in Stats,
+   *  since maplescouter_setup has no Equipment step. Without seeding it here too,
+   *  weaponAtt already entered via a previous full_setup pass gets asked again. */
+  weaponAtt?: number;
 }): StatsStepDraft {
-  const { stats, isLiberated, weaponHand, hasRuinForceShield, soul } = record;
+  const { stats, isLiberated, weaponHand, hasRuinForceShield, soul, weaponAtt } = record;
   return {
     str: storedTripleToDraft(stats.str),
     dex: storedTripleToDraft(stats.dex),
@@ -303,8 +316,11 @@ export function storedStatsToStatsStepDraft(record: {
     summonDuration: stats.summonDuration,
     arcanePower: stats.arcanePower,
     sacredPower: stats.sacredPower,
+    mp: stats.mp,
+    normalEnemyDamage: stats.normalEnemyDamage,
     hyperStat: storedHyperStatToDraft(stats.hyperStat),
     innerAbility: storedInnerAbilityToDraft(stats.innerAbility),
+    weaponAtt: weaponAtt !== undefined ? String(weaponAtt) : undefined,
     setupOptions: {
       isLiberated: isLiberated ?? undefined,
       weaponHand: weaponHand ?? undefined,

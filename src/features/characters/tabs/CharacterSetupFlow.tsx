@@ -206,6 +206,7 @@ export default function CharacterSetupFlow({ theme, initialCharacterName, initia
       hasCompletedRequiredSetupEver: state.hasCompletedRequiredSetupEver,
       fastDirectoryRevealOnce: state.fastDirectoryRevealOnce,
       lastActiveBookmarkId: state.lastActiveBookmarkId,
+      lastActiveBookmarkSubView: state.lastActiveBookmarkSubView,
       setupStepIndex: state.setupStepIndex,
       setupStepDirection: state.setupStepDirection,
       setupTargetSubstep: state.setupTargetSubstep,

@@ -24,7 +24,15 @@ export type SingleStatFieldId =
   | "additionalStatusDamage"
   | "summonDuration"
   | "arcanePower"
-  | "sacredPower";
+  | "sacredPower"
+  // Resource bar shown alongside HP — a raw number, not a percentage. Labeled "MP" by
+  // default; some classes replace MP with their own resource entirely (Demon Fury,
+  // Time Force, Psychic Points) via ClassSkillData.resourceLabel. Profile-pencil only
+  // (stats_flow) — never asked in the guided Setup flows, see StatsSetupStep's
+  // showAllStats.
+  | "mp"
+  // In-game Character Info window stat, profile-pencil only (same reasoning as mp).
+  | "normalEnemyDamage";
 
 export type StatFieldId = TripleStatFieldId | "cooldownReduction" | SingleStatFieldId;
 
@@ -61,5 +69,8 @@ export const STAT_LABELS: Partial<Record<StatFieldId, string>> = {
   summonDuration: "Summons Duration Inc.",
   arcanePower: "Arcane Power",
   sacredPower: "Sacred Power",
+  // Default label; ClassSkillData.resourceLabel overrides this per class (DF/TF/PP).
+  mp: "MP",
+  normalEnemyDamage: "Normal Enemy Damage",
 };
 

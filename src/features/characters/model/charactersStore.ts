@@ -31,11 +31,12 @@ export interface StoredHyperStat {
   activePreset: number;
 }
 
-/** Oz ring levels (OzRingId → 1–6) + the Totalling Ring's off-stat values. */
+/** Oz ring levels (OzRingId → 1–6). The Totalling Ring's off-stat values aren't
+ *  stored here — they're the character's own stats.str/dex/int/luk (see
+ *  ozRingsTotallingStatOverrides in ozRingData.ts), not a private copy. */
 export interface StoredOzRings {
   ringMode: "standard" | "continuous";
   levels: Record<string, number>;
-  totallingStats: Record<string, number>;
 }
 
 /** Buffs entered in the MapleScouter buffs step. */
@@ -188,6 +189,14 @@ export interface StoredCharacterStats {
   summonDuration: string;
   arcanePower: string;
   sacredPower: string;
+  /** Resource bar shown alongside HP — a raw number, not a triple field. Labeled "MP"
+   *  by default; some classes replace it entirely (Demon Fury/Time Force/Psychic
+   *  Points), see ClassSkillData.resourceLabel. Profile-pencil only (never asked in
+   *  the guided Setup flows), and optional for back-compat with records saved before
+   *  it was collected. */
+  mp?: string;
+  /** In-game Character Info window stat. Profile-pencil only, same reasoning as mp. */
+  normalEnemyDamage?: string;
   /** Hyper Stat allocation (3 swappable presets). Optional for back-compat with
    *  records saved before hyper stat was collected. */
   hyperStat?: StoredHyperStat;
@@ -368,6 +377,8 @@ function createEmptyCharacterStats(): StoredCharacterStats {
     summonDuration: "",
     arcanePower: "",
     sacredPower: "",
+    mp: "",
+    normalEnemyDamage: "",
     hyperStat: { presets: [{}, {}, {}], activePreset: 0 },
     innerAbility: createEmptyInnerAbility(),
   };

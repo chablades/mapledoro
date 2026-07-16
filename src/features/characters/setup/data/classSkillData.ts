@@ -64,6 +64,10 @@ export interface ClassSkillData {
   skipGender?: true;
   /** Skip the marriage setup step (class cannot participate in marriage, e.g. Zero) */
   skipMarriage?: true;
+  /** Override the "MP" label for classes with their own resource bar instead of MP:
+   *  Demon Avenger/Demon Slayer (Demon Fury "DF"), Zero (Time Force "TF"), Kinesis
+   *  (Psychic Points "PP"). */
+  resourceLabel?: string;
   /** Warnings shown before the buff guide. Use skill for "do not use X" entries. */
   warnings?: ClassWarning[];
   /** Class-specific setup option toggles shown on the stats step. */
@@ -297,6 +301,7 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
     nexonJobName: "Demon Avenger",
     warnings: [{ message: "Do not use", skill: OVERLOAD_RELEASE }],
     setupOptionsDef: { ruinForceShield: true, epheniaSoul: true },
+    resourceLabel: "DF",
     buffSkills: [
       DSE,
       DCO,
@@ -308,6 +313,7 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
     id: "demon_slayer",
     nexonJobName: "Demon Slayer",
     setupOptionsDef: { ruinForceShield: true },
+    resourceLabel: "DF",
     buffSkills: [
       DSE,
       DCO,
@@ -513,6 +519,7 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
   {
     id: "kinesis",
     nexonJobName: "Kinesis",
+    resourceLabel: "PP",
     buffSkills: [DSE, DCO],
     requiredStats: ["int", "luk", "magicAtt"],
   },
@@ -726,6 +733,7 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
     nexonJobName: "Zero",
     skipGender: true,
     skipMarriage: true,
+    resourceLabel: "TF",
     warnings: [{ message: "Must be in Beta status" }],
     buffSkills: [DSE, DCO],
     requiredStats: ["str", "dex", "attackPower"],

@@ -168,7 +168,7 @@ function checklistRadioStyle(theme: AppTheme, active: boolean): CSSProperties {
 }
 
 function checklistMarkStyle(color: string): CSSProperties {
-  return { fontSize: "0.72rem", fontWeight: 900, lineHeight: 1, color };
+  return { fontSize: "0.75rem", fontWeight: 900, lineHeight: 1, color };
 }
 
 function checklistRadioDotStyle(theme: AppTheme): CSSProperties {

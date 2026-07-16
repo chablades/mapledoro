@@ -109,7 +109,7 @@ function DraftOption({
         className="draft-option"
         style={draftResumeButtonStyle(disabled)}
       >
-        <div style={{ width: 32, height: 32, borderRadius: "7px", overflow: "hidden", flexShrink: 0, border: `1px solid ${theme.border}` }}>
+        <div style={{ width: 32, height: 32, borderRadius: "8px", overflow: "hidden", flexShrink: 0, border: `1px solid ${theme.border}` }}>
           {draft.imgUrl ? (
             <CharacterAvatar
               src={draft.imgUrl}

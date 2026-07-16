@@ -91,7 +91,7 @@ const iaTierToggleStyle = (theme: AppTheme, tc: SwatchColor, active: boolean): C
   flex: 1, padding: "0.3rem", borderRadius: 6,
   border: `1px solid ${active ? tc.border : theme.border}`,
   background: active ? tc.border : theme.bg, color: active ? "#fff" : theme.muted,
-  fontFamily: "inherit", fontWeight: 800, fontSize: "0.72rem", cursor: "pointer",
+  fontFamily: "inherit", fontWeight: 800, fontSize: "0.75rem", cursor: "pointer",
 });
 
 const presetButtonStyle = (theme: AppTheme, on: boolean): CSSProperties => ({
@@ -361,10 +361,15 @@ function IALineBar({ lineIdx, line, grade, openId, theme, onToggle, onClose, onS
 // opening a portal popover. Owns its own "which popover is open" state and closes it
 // on an outside click, scoped to its own zone ref (popovers stop propagation).
 
-export default function InnerAbilitySetupStep({ draft, onUpdate, theme }: {
+export default function InnerAbilitySetupStep({ draft, onUpdate, theme, showActivePresetHint }: {
   draft: IADraft | undefined;
   onUpdate: (next: IADraft) => void;
   theme: AppTheme;
+  /** Shows a hint that the active preset can be set later from the profile — only
+   *  true during first-time full setup; false when opened from a profile bookmark's
+   *  edit pencil, since the profile's own "Set preset X as active" control is right
+   *  there already. */
+  showActivePresetHint?: boolean;
 }) {
   const [openId, setOpenId] = useState<string | null>(null);
   const zoneRef = useRef<HTMLDivElement>(null);
@@ -460,6 +465,11 @@ export default function InnerAbilitySetupStep({ draft, onUpdate, theme }: {
   return (
     <div ref={zoneRef} style={{ maxWidth: 360, display: "flex", flexDirection: "column", gap: 6 }}>
       <IAPresetBar theme={theme} active={ia.activePreset} onSwitch={setPreset} onCopy={copyPreset} onClear={clearGrade} />
+      {showActivePresetHint && (
+        <p style={{ margin: "0 0 6px", fontSize: "0.75rem", fontWeight: 600, color: theme.muted }}>
+          You can set which preset is active in-game later, from your profile.
+        </p>
+      )}
       <IAGradeHeader
         grade={ia.presets[ia.activePreset].lines[0].tier}
         openId={openId}
