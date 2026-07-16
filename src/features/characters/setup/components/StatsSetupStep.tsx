@@ -1508,7 +1508,13 @@ export default function StatsSetupStep({
   const classRequiredTripleIds = classData
     ? getRequiredStatsForClass(classData).filter((id): id is TripleStatFieldId => TRIPLE_IDS.has(id))
     : [];
-  const tripleIds = showAllStats ? TRIPLE_STAT_FIELDS.map((f) => f.id) : classRequiredTripleIds;
+  // A class with no known required stats (every legacy job, or any jobName not yet
+  // mapped in CLASS_SKILL_DATA) would otherwise render zero Basic Stats fields at all —
+  // "don't know what's required" should fall back to showing everything, same rationale
+  // showAllStats already uses, not silently hide the whole section.
+  const tripleIds = showAllStats || classRequiredTripleIds.length === 0
+    ? TRIPLE_STAT_FIELDS.map((f) => f.id)
+    : classRequiredTripleIds;
 
   const { usesMagicWeapon, label: weaponAttLabel } = deriveWeaponAttLabel(classData);
 

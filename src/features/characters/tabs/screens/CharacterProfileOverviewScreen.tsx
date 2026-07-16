@@ -12,8 +12,8 @@ import { resourceImageUrl } from "../../../../lib/mapleResource";
 import type { StoredCharacterEquipment, StoredCharacterRecord, StoredHyperStat, StoredInnerAbility, StoredIATier } from "../../model/charactersStore";
 import { SetupFlowButtons } from "./QuickSetupIntroScreen";
 import { STAT_LABELS } from "../../setup/data/statFields";
-import { HYPER_STAT_CATEGORIES } from "../../setup/data/hyperStatData";
-import { isHyperStatEligible } from "../../setup/data/statsStepDraft";
+import { HYPER_STAT_CATEGORIES, type HyperStatCategoryDef } from "../../setup/data/hyperStatData";
+import { isHyperStatEligible, isArcaneEligible, isSacredEligible, HYPER_STAT_LEVEL, ARCANE_POWER_LEVEL, SACRED_POWER_LEVEL } from "../../setup/data/statsStepDraft";
 import { IA_TIER_LABELS } from "../../setup/data/innerAbilityData";
 import { TIER_COLORS as IA_TIER_COLORS } from "../../setup/data/familiarsData";
 import { statusText } from "../../../../components/statusColors";
@@ -43,15 +43,6 @@ const ALL_BOOKMARKS: BookmarkDef[] = [
   { id: "familiars", tabLabel: "Familiars", pageLabel: "Familiars", flowId: "familiars_flow" },
   { id: "setup", tabLabel: "Setup", pageLabel: "Setup", flowId: null },
 ];
-
-function getVisibleBookmarks(jobName: string | undefined): BookmarkDef[] {
-  if (!jobName) return ALL_BOOKMARKS;
-  const overrides = getClassSetupOverrides(jobName);
-  if (overrides.gender !== null && overrides.skipMarriage) {
-    return ALL_BOOKMARKS.filter((b) => b.id !== "gender_marriage");
-  }
-  return ALL_BOOKMARKS;
-}
 
 const commonSlots: (HexaSkillDef | null)[] = [COMMON_SKILLS[0] ?? null, COMMON_SKILLS[1] ?? null, null, null];
 
@@ -204,48 +195,59 @@ function resolveMarriageCaption(marriage: StoredCharacterRecord["marriage"] | un
   return marriage.partnerName ? `Married to ${marriage.partnerName}` : "Married";
 }
 
+function resolveGenderCaption(genderOverride: "male" | "female" | "none" | null | undefined, gender: "male" | "female" | null, locked: boolean): string {
+  if (genderOverride === "none") return "No gender for this class";
+  if (!gender) return "Not set";
+  return locked ? `${GENDER_LABELS[gender]} (Locked)` : GENDER_LABELS[gender];
+}
+
 function BiographyPanel({ theme, character, onEditStep, disabled }: {
   theme: Theme; character: StoredCharacterRecord | null; onEditStep: (flowId: SetupFlowId) => void; disabled: boolean;
 }) {
   const overrides = character ? getClassSetupOverrides(character.jobName) : null;
-  const showGender = !overrides || overrides.gender === null;
-  const showMarriage = !overrides || !overrides.skipMarriage;
+  // Both cards always show (never hidden) — a class-level lock is a permanent, correct
+  // state to display, not missing data. "none" (Zero: no gender concept at all) is
+  // distinct from a fixedGender lock (Mihile: locked to a specific, already-set value).
+  const genderLocked = Boolean(overrides?.gender);
+  const marriageLocked = Boolean(overrides?.skipMarriage);
 
   const gender = character?.gender === "male" || character?.gender === "female" ? character.gender : null;
   const marriage = character?.marriage;
   const hasMarriage = Boolean(marriage && marriage.isMarried !== null);
 
+  const genderCaption = resolveGenderCaption(overrides?.gender, gender, genderLocked);
+  const marriageCaption = marriageLocked ? "Not available for this class" : resolveMarriageCaption(marriage);
+
   return (
     <div style={{ display: "flex", gap: 14 }}>
-      {showGender && (
-        <BiographyBlock
-          theme={theme}
-          filled={Boolean(gender)}
-          icon={gender ? <GenderIcon gender={gender} /> : <GenderPlaceholderIcon />}
-          label="Gender"
-          caption={gender ? GENDER_LABELS[gender] : "Not set"}
-          onClick={() => onEditStep("gender_flow")}
-          disabled={disabled}
-        />
-      )}
-      {showMarriage && (
-        <BiographyBlock
-          theme={theme}
-          filled={hasMarriage}
-          icon={hasMarriage && marriage ? <MarriageIcon married={Boolean(marriage.isMarried)} /> : <PartnerPlaceholderIcon />}
-          label="Partner"
-          caption={resolveMarriageCaption(marriage)}
-          onClick={() => onEditStep("marriage_flow")}
-          disabled={disabled}
-        />
-      )}
+      <BiographyBlock
+        theme={theme}
+        filled={Boolean(gender) || overrides?.gender === "none"}
+        icon={gender ? <GenderIcon gender={gender} /> : <GenderPlaceholderIcon />}
+        label="Gender"
+        caption={genderCaption}
+        onClick={() => onEditStep("gender_flow")}
+        disabled={disabled || genderLocked}
+      />
+      <BiographyBlock
+        theme={theme}
+        filled={hasMarriage}
+        icon={hasMarriage && marriage ? <MarriageIcon married={Boolean(marriage.isMarried)} /> : <PartnerPlaceholderIcon />}
+        label="Partner"
+        caption={marriageCaption}
+        onClick={() => onEditStep("marriage_flow")}
+        disabled={disabled || marriageLocked}
+      />
     </div>
   );
 }
 
-function SummaryRow({ label, value, theme }: { label: string; value: string; theme: Theme }) {
+// `locked` marks a field that isn't obtainable yet at this character's level (e.g. Arcane
+// Power below Lv 200) — distinct from "eligible but not filled in" (notCollected's plain
+// "—"), so it dims the row instead of reading like an ordinary data-entry gap.
+function SummaryRow({ label, value, theme, locked }: { label: string; value: string; theme: Theme; locked?: boolean }) {
   return (
-    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 10, padding: "6px 0", borderBottom: `1px solid ${theme.border}` }}>
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 10, padding: "6px 0", borderBottom: `1px solid ${theme.border}`, opacity: locked ? 0.55 : 1 }}>
       <span style={{ fontSize: 12, color: theme.muted }}>{label}</span>
       <span style={{ fontSize: 13, fontWeight: 700, color: theme.text, textAlign: "right" }}>{value}</span>
     </div>
@@ -573,13 +575,35 @@ function PresetTabs({
   );
 }
 
+// A legacy (pre-revamp) class never gets Arcane/Sacred Power by leveling — it'd need to
+// advance past the legacy job entirely — so its locked label can't promise a level, unlike
+// an ordinary under-leveled character that will unlock it later. Mirrors resolveHexaNotice's
+// same legacy-vs-under-leveled distinction for the HEXA panel below.
+function lockedStatLabel(isLegacy: boolean | undefined, unlockLevel: number): string {
+  return isLegacy ? "Not available for this class" : `Locked (Lv. ${unlockLevel}+)`;
+}
+
+// Arcane Power is a Hyper Stat category too (boosts Arcane Force gain), gated by the same
+// eligibility as the Symbols section's Arcane Power stat — Setup filters this category out
+// of the grid entirely below that level; the profile dims it + labels it instead, same as
+// the Symbols row, so it doesn't read as "eligible but unallocated."
+function hyperStatCellDisplay(cat: HyperStatCategoryDef, presetValue: number | undefined, arcaneEligible: boolean, arcaneLockedLabel: string): { value: string; locked: boolean } {
+  if (cat.id === "arcanePower" && !arcaneEligible) return { value: arcaneLockedLabel, locked: true };
+  return { value: `Lv. ${presetValue ?? 0}`, locked: false };
+}
+
 function HyperStatView({
-  theme, hyperStat, onSetActivePreset,
+  theme, hyperStat, onSetActivePreset, eligible, arcaneEligible, arcaneLockedLabel,
 }: {
-  theme: Theme; hyperStat: StoredHyperStat | undefined; onSetActivePreset: ((presetIndex: number) => void) | null;
+  theme: Theme; hyperStat: StoredHyperStat | undefined; onSetActivePreset: ((presetIndex: number) => void) | null; eligible: boolean; arcaneEligible: boolean; arcaneLockedLabel: string;
 }) {
   const activePreset = hyperStat?.activePreset ?? 0;
   const [presetIdx, setPresetIdx] = useState(activePreset);
+  // Mirrors resolveHexaNotice's pattern below (HEXA panel) — a whole-panel lock message
+  // instead of preset switching that wouldn't make sense pre-unlock anyway.
+  if (!eligible) {
+    return <p style={{ fontSize: 12, color: theme.muted, fontStyle: "italic", margin: 0 }}>{`Hyper Stats unlock at Lv. ${HYPER_STAT_LEVEL}.`}</p>;
+  }
   const preset = hyperStat?.presets?.[presetIdx];
   const half = Math.ceil(HYPER_STAT_CATEGORIES.length / 2);
   const cols = [HYPER_STAT_CATEGORIES.slice(0, half), HYPER_STAT_CATEGORIES.slice(half)];
@@ -590,9 +614,10 @@ function HyperStatView({
         {cols.map((col, i) => (
           // react-doctor-disable-next-line no-array-index-as-key
           <div key={i} style={{ flex: 1, minWidth: 0 }}>
-            {col.map((cat) => (
-              <SummaryRow key={cat.id} label={cat.label} value={`Lv. ${preset?.[cat.id] ?? 0}`} theme={theme} />
-            ))}
+            {col.map((cat) => {
+              const cell = hyperStatCellDisplay(cat, preset?.[cat.id], arcaneEligible, arcaneLockedLabel);
+              return <SummaryRow key={cat.id} label={cat.label} value={cell.value} theme={theme} locked={cell.locked} />;
+            })}
           </div>
         ))}
       </div>
@@ -635,8 +660,7 @@ function AbilityGradeChip({ grade, theme }: { grade: StoredIATier | ""; theme: T
 
 function IALineChip({ line, grade, theme }: { line: { tier: StoredIATier; value: string }; grade: StoredIATier | ""; theme: Theme }) {
   const c = line.tier ? IA_TIER_COLORS[line.tier] : null;
-  const label = !grade ? "Set ability grade first" : (line.value || "Unset");
-  return <div style={iaLineChipStyle(theme, c, grade)}>{label}</div>;
+  return <div style={iaLineChipStyle(theme, c, grade)}>{line.value || "Unset"}</div>;
 }
 
 function AbilityView({
@@ -702,9 +726,16 @@ function StatsBookmark({
     { label: STAT_LABELS.summonDuration ?? "Summons Duration Inc.", value: pctStat(s?.summonDuration, "summonDuration") },
   ];
 
-  const powerCells: { label: string; value: string }[] = [
-    { label: STAT_LABELS.arcanePower ?? "Arcane Power", value: pctStat(s?.arcanePower, "arcanePower") },
-    { label: STAT_LABELS.sacredPower ?? "Sacred Power", value: pctStat(s?.sacredPower, "sacredPower") },
+  const showArcanePower = isArcaneEligible(character?.level, classData?.isLegacy);
+  const showSacredPower = isSacredEligible(character?.level, classData?.isLegacy);
+  const arcaneLockedLabel = lockedStatLabel(classData?.isLegacy, ARCANE_POWER_LEVEL);
+  const powerCells: { label: string; value: string; locked?: boolean }[] = [
+    showArcanePower
+      ? { label: STAT_LABELS.arcanePower ?? "Arcane Power", value: pctStat(s?.arcanePower, "arcanePower") }
+      : { label: STAT_LABELS.arcanePower ?? "Arcane Power", value: arcaneLockedLabel, locked: true },
+    showSacredPower
+      ? { label: STAT_LABELS.sacredPower ?? "Sacred Power", value: pctStat(s?.sacredPower, "sacredPower") }
+      : { label: STAT_LABELS.sacredPower ?? "Sacred Power", value: lockedStatLabel(classData?.isLegacy, SACRED_POWER_LEVEL), locked: true },
   ];
 
   // The 3 views are stacked in the same grid cell (all present, only one visible) so the
@@ -732,7 +763,7 @@ function StatsBookmark({
           <StatBlock label="Symbols" theme={theme}>
             <div style={statGridStyle}>
               {powerCells.map((c) => (
-                <SummaryRow key={c.label} label={c.label} value={c.value} theme={theme} />
+                <SummaryRow key={c.label} label={c.label} value={c.value} theme={theme} locked={c.locked} />
               ))}
             </div>
           </StatBlock>
@@ -742,6 +773,9 @@ function StatsBookmark({
             key={character?.characterName}
             theme={theme}
             hyperStat={s?.hyperStat}
+            eligible={isHyperStatEligible(character?.level)}
+            arcaneEligible={showArcanePower}
+            arcaneLockedLabel={arcaneLockedLabel}
             onSetActivePreset={(presetIndex) => onSetActivePreset("hyperStat", presetIndex)}
           />
         </div>
@@ -1018,26 +1052,22 @@ function BookmarkPageBody({
 
   // Stats has 3 swappable sub-views (Stats/Hyper Stat/Ability) sharing one edit flow, so
   // the pencil needs to know which one is showing to open the matching substep instead of
-  // always restarting at substep 0 — see statsTargetSubstep. Editing an already-filled
-  // view is also confined to that one substep (no Back/Next into its siblings); setting
-  // up from scratch still walks the full substep sequence starting at substep 0.
+  // always restarting at substep 0 — see statsTargetSubstep. Always confined to that one
+  // substep (no Back/Next into its siblings), filled or not — each sub-view's pencil edits
+  // just that piece of data, the same way every other bookmark's pencil is scoped to it.
   if (active.id === "stats") {
     const editStats = () => { if (active.flowId) onEditStep(active.flowId, statsTargetSubstep(statsView, character?.level), true, statsView); };
-    const setUpStats = () => { if (active.flowId) onEditStep(active.flowId); };
     const statsHeaderLabel = statsBookmarkHeaderLabel(statsView, active.pageLabel);
     return (
       <>
-        <BookmarkPageHeader theme={theme} label={statsHeaderLabel} onEdit={filled ? editStats : null} disabled={setup.isUiLocked} />
-        {filled ? (
-          <StatsBookmark
-            theme={theme}
-            character={character}
-            view={statsView}
-            onViewChange={setStatsView}
-            onSetActivePreset={actions.setStatsActivePreset}
-          />
-        ) : null}
-        {!filled && <EmptyBookmarkState theme={theme} label={active.pageLabel} onSetup={setUpStats} disabled={setup.isUiLocked} />}
+        <BookmarkPageHeader theme={theme} label={statsHeaderLabel} onEdit={editStats} disabled={setup.isUiLocked} />
+        <StatsBookmark
+          theme={theme}
+          character={character}
+          view={statsView}
+          onViewChange={setStatsView}
+          onSetActivePreset={actions.setStatsActivePreset}
+        />
       </>
     );
   }
@@ -1128,7 +1158,7 @@ export default function CharacterProfileOverviewScreen({
   const character = profile.confirmedCharacter;
   const mounted = useSyncExternalStore(() => () => undefined, () => true, () => false);
 
-  const bookmarks = useMemo(() => getVisibleBookmarks(character?.jobName), [character?.jobName]);
+  const bookmarks = ALL_BOOKMARKS;
   // Restores whichever bookmark was active before an optional flow was started from
   // here — this screen unmounts while the flow runs, so plain useState("overview")
   // would otherwise always land back on Overview once the flow finishes.

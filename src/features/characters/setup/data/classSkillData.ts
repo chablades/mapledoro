@@ -769,6 +769,7 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
   { id: "mage_i_l", nexonJobName: "Mage (I/L)", displayName: "Mage (Ice/Lightning)", buffSkills: [], requiredStats: [], isLegacy: true },
   { id: "magician", nexonJobName: "Magician", buffSkills: [], requiredStats: [], isLegacy: true },
   { id: "marauder", nexonJobName: "Marauder", buffSkills: [], requiredStats: [], isLegacy: true },
+  { id: "noblesse", nexonJobName: "Noblesse", buffSkills: [], requiredStats: [], isLegacy: true },
   { id: "outlaw", nexonJobName: "Outlaw", buffSkills: [], requiredStats: [], isLegacy: true },
   { id: "page", nexonJobName: "Page", buffSkills: [], requiredStats: [], isLegacy: true },
   { id: "pirate", nexonJobName: "Pirate", buffSkills: [], requiredStats: [], isLegacy: true },
