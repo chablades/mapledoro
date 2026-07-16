@@ -1001,6 +1001,8 @@ function StatsWindowSubstep({
   const combatRightIds: StatFieldId[] = showAllStats
     ? [...COMBAT_RIGHT.slice(0, 2), "normalEnemyDamage", ...COMBAT_RIGHT.slice(2)]
     : COMBAT_RIGHT;
+  const requiredStatsSet = new Set(classData?.requiredStats ?? []);
+  const showHpPercentUnapplied = requiredStatsSet.has("hp");
   const showArcanePower = isArcaneEligible(characterLevel, classData?.isLegacy);
   const showSacredPower = isSacredEligible(characterLevel, classData?.isLegacy);
   const symbolIds = ([showArcanePower && "arcanePower", showSacredPower && "sacredPower"] as const).filter(Boolean) as StatFieldId[];
@@ -1065,12 +1067,12 @@ function StatsWindowSubstep({
           <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
             {tripleIds.map((id) => {
               const isAttackField = id === "attackPower" || id === "magicAtt";
-              const showPercentColumns = !(showAllStats && isAttackField && !classData?.requiredStats.includes(id));
+              const showPercentColumns = !(showAllStats && isAttackField && !requiredStatsSet.has(id));
               return (
                 <TripleStatRow
                   key={id} id={id} draft={draft} onUpdate={handleTripleUpdate} theme={theme}
                   isMainStat={id === primaryStat} requireFilled={isScouter}
-                  showHpPercentUnapplied={classData?.requiredStats.includes("hp")}
+                  showHpPercentUnapplied={showHpPercentUnapplied}
                   showPercentColumns={showPercentColumns}
                 />
               );

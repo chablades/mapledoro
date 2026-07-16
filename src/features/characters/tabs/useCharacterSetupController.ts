@@ -47,8 +47,8 @@ import {
   convertStatsStepDraftToStored, marriageDraftToStored, parseStatsStepDraft,
   serializeStatsStepDraft, storedStatsToStatsStepDraft,
 } from "../setup/data/statsStepDraft";
-import { serialiseDraft as serialiseEquipmentDraft, storedEquipmentToDraft } from "../setup/components/EquipmentSetupStep";
-import { readSavedHexaValue } from "../setup/components/HexaMatrixSetupStep";
+import { serializeEquipmentStepDraft, storedEquipmentToDraft } from "../setup/data/equipmentStepDraft";
+import { readSavedHexaValue } from "../setup/data/hexaMatrixDraft";
 import { convertOzRingsDraftToStored, ozRingsTotallingStatOverrides, parseOzRingsDraft, type MainStatId } from "../setup/data/ozRingData";
 import { convertBuffsDraftToStored, parseBuffsDraft } from "../setup/data/buffsData";
 import {
@@ -896,7 +896,7 @@ function buildSeededStepTestByStep(jobName: string, storedCharacter: StoredChara
       ? serializeStatsStepDraft(storedStatsToStatsStepDraft({ ...storedCharacter, weaponAtt: storedCharacter.scouter?.weaponAtt }))
       : "",
     equipment: storedCharacter
-      ? serialiseEquipmentDraft(storedEquipmentToDraft(storedCharacter.equipment, equipmentSymbols?.symbols, storedCharacter.scouter?.weaponAtt))
+      ? serializeEquipmentStepDraft(storedEquipmentToDraft(storedCharacter.equipment, equipmentSymbols?.symbols, storedCharacter.scouter?.weaponAtt))
       : "",
     v_matrix: storedCharacter?.vMatrix?.levels && Object.keys(storedCharacter.vMatrix.levels).length > 0
       ? JSON.stringify(Object.fromEntries(Object.entries(storedCharacter.vMatrix.levels).map(([k, v]) => [k, String(v)])))

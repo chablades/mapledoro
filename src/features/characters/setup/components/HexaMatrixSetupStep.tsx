@@ -10,13 +10,13 @@ import type { AppTheme } from "../../../../components/themes";
 import { STATUS, statusText } from "../../../../components/statusColors";
 import type { SetupStepDefinition } from "../steps";
 import type { SetupFlowId } from "../flows";
-import type { HexaClassDef, HexaSkillDef, HexaSkillLevels } from "../../../../features/tools/hexa-skills/hexa-classes";
+import type { HexaClassDef, HexaSkillDef } from "../../../../features/tools/hexa-skills/hexa-classes";
 import { findClassById, COMMON_SKILLS } from "../../../../features/tools/hexa-skills/hexa-classes";
 import { resourceImageUrl } from "../../../../lib/mapleResource";
 import { getClassDataByNexonJobName } from "../data/classSkillData";
 import type { HexaStatEntry, HexaStatSlot, HexaStatNode } from "../data/hexaStatData";
 import { HEXA_STAT_OPTIONS, HEXA_STAT_NODE_MAX_LEVEL, getHexaStatBonus, getMainStatLabel, getAttackLabel, hexaStatSlotLevelSum } from "../data/hexaStatData";
-import { readCharacterToolData } from "../../../../features/tools/characterToolStorage";
+import { readSavedHexaValue } from "../data/hexaMatrixDraft";
 import SetupStepFrame from "./SetupStepFrame";
 import { HexaSkillIcon } from "../../../../components/ResourceImage";
 import { CopyFromPreset } from "./CopyFromPreset";
@@ -659,17 +659,6 @@ function HexaStatRow({
       <StatProgressBar level={entry.level} theme={theme} />
     </div>
   );
-}
-
-// Loads any previously-saved hexa data for this character into the step's draft value,
-// or null when there's nothing to prefill. Kept out of the component to hold its
-// cognitive complexity down.
-export function readSavedHexaValue(classDef: HexaClassDef | null, characterName: string | undefined): string | null {
-  if (!classDef || !characterName) return null;
-  const savedSkills = readCharacterToolData<{ levels?: HexaSkillLevels }>(characterName, "hexaSkills");
-  const savedStat = readCharacterToolData<{ nodes?: HexaStatNode[] }>(characterName, "hexaStat");
-  if (!savedSkills?.levels && !savedStat?.nodes) return null;
-  return JSON.stringify({ ...(savedSkills?.levels ?? {}), hexaStat: savedStat?.nodes });
 }
 
 // Substep 0: the hexa skill-level grid (origin/ascent, mastery, enhancement, common).
