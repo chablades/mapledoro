@@ -328,7 +328,7 @@ function BuffGuide({ classData, theme, characterLevel }: { classData: ClassSkill
 const tripleStatGridStyle: CSSProperties = { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "0.35rem" };
 
 function TripleStatRow({
-  id, draft, onUpdate, theme, isMainStat, requireFilled, showHpPercentUnapplied, showPercentColumns = true,
+  id, draft, onUpdate, theme, isMainStat, requireFilled, showHpPercentUnapplied,
 }: {
   id: TripleStatFieldId;
   draft: StatsStepDraft;
@@ -343,11 +343,6 @@ function TripleStatRow({
    *  tripleIds for Demon Avenger there already); only showAllStats' "every class, every
    *  field" profile pencil actually needs the distinction. */
   showHpPercentUnapplied?: boolean;
-  /** False for Attack Power/Magic ATT when it isn't the class's actual weapon stat
-   *  (e.g. Attack Power for a mage that fights with Magic ATT) — shows only the Base
-   *  Value, since that stat's percentages have nothing real to enter. Guided flows
-   *  never hit this either, same reasoning as showHpPercentUnapplied. */
-  showPercentColumns?: boolean;
 }) {
   const d: TripleStatDraft = draft[id] ?? { base: "", percent: "", percentUnapplied: "" };
   const sub = statInputStyle(theme);
@@ -380,7 +375,6 @@ function TripleStatRow({
           />
           <p style={{ margin: 0, marginTop: "0.15rem", fontSize: "0.75rem", color: theme.muted, fontWeight: 700, textAlign: "center" }}>Base Value</p>
         </div>
-        {showPercentColumns && (
         <div style={{ gridColumn: 2 }}>
           <div style={{ position: "relative" }}>
             <input type="text" aria-label={`${label} percent value`} value={d.percent} placeholder="0" style={{ ...sub, paddingRight: "1.15rem" }}
@@ -394,8 +388,7 @@ function TripleStatRow({
           </div>
           <p style={{ margin: 0, marginTop: "0.15rem", fontSize: "0.75rem", color: theme.muted, fontWeight: 700, textAlign: "center" }}>% Value</p>
         </div>
-        )}
-        {showPercentColumns && !hidePercentUnapplied && (
+        {!hidePercentUnapplied && (
           <div style={{ gridColumn: 3 }}>
             <div style={{ position: "relative" }}>
               {showPercentUnappliedWarning && <InputWarningBubble message={`That % looks too large, enter your % Value Not Applied for ${label}.`} theme={theme} />}
@@ -1065,18 +1058,13 @@ function StatsWindowSubstep({
             />
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-            {tripleIds.map((id) => {
-              const isAttackField = id === "attackPower" || id === "magicAtt";
-              const showPercentColumns = !(showAllStats && isAttackField && !requiredStatsSet.has(id));
-              return (
-                <TripleStatRow
-                  key={id} id={id} draft={draft} onUpdate={handleTripleUpdate} theme={theme}
-                  isMainStat={id === primaryStat} requireFilled={isScouter}
-                  showHpPercentUnapplied={showHpPercentUnapplied}
-                  showPercentColumns={showPercentColumns}
-                />
-              );
-            })}
+            {tripleIds.map((id) => (
+              <TripleStatRow
+                key={id} id={id} draft={draft} onUpdate={handleTripleUpdate} theme={theme}
+                isMainStat={id === primaryStat} requireFilled={isScouter}
+                showHpPercentUnapplied={showHpPercentUnapplied}
+              />
+            ))}
             {showAllStats && (
               <SingleStatRow id="mp" label={resourceLabel} draft={draft} onUpdate={handleSingleUpdate} theme={theme} />
             )}

@@ -1,4 +1,6 @@
 import Image from "next/image";
+import katex from "katex";
+import "katex/dist/katex.min.css";
 import { useMemo, useRef, useState, useSyncExternalStore, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
 import type { SetupFlowId } from "../../setup/flows";
 import type { SetupStepId } from "../../setup/steps";
@@ -9,7 +11,7 @@ import { readCharacterToolData } from "../../../tools/characterToolStorage";
 import { resolveClassId, getClassSetupOverrides } from "../../setup/data/nexonJobMapping";
 import { CLASS_SKILL_DATA } from "../../setup/data/classSkillData";
 import { resourceImageUrl } from "../../../../lib/mapleResource";
-import type { StoredCharacterEquipment, StoredCharacterRecord, StoredHyperStat, StoredInnerAbility, StoredIATier } from "../../model/charactersStore";
+import type { StoredCharacterEquipment, StoredCharacterRecord, StoredHyperStat, StoredInnerAbility, StoredIATier, StoredTripleStatField } from "../../model/charactersStore";
 import { SetupFlowButtons } from "./QuickSetupIntroScreen";
 import { STAT_LABELS } from "../../setup/data/statFields";
 import { HYPER_STAT_CATEGORIES, type HyperStatCategoryDef } from "../../setup/data/hyperStatData";
@@ -17,6 +19,7 @@ import { isHyperStatEligible, isArcaneEligible, isSacredEligible, HYPER_STAT_LEV
 import { IA_TIER_LABELS } from "../../setup/data/innerAbilityData";
 import { TIER_COLORS as IA_TIER_COLORS } from "../../setup/data/familiarsData";
 import { statusText } from "../../../../components/statusColors";
+import InfoTooltip, { type TooltipContent } from "../../setup/components/InfoTooltip";
 
 interface CharacterProfileOverviewScreenProps {
   model: PreviewPaneModel;
@@ -456,6 +459,71 @@ function pctStat(raw: string | undefined, id: string): string {
   return RAW_VALUE_STAT_LABELS.has(id) ? raw : `${raw}%`;
 }
 
+// MapleStory's own final-stat formula (confirmed against Yuki's in-game tooltips):
+// floor(Base Value × (1 + % Value/100)) + % Value Not Applied. The 3 inputs are exactly
+// what the Character Info window's [Applied Value] breakdown shows per stat — except that
+// window never itemizes familiar stat lines at all (confirmed: a flat "DEX: +24" and a
+// percent "INT: +6%" familiar line both reproduced an otherwise-unexplained gap exactly
+// when folded into base/percent here), so those need adding back in separately.
+function tripleStatTotal(field: StoredTripleStatField | undefined, familiarBonus?: FamiliarStatBonus): string {
+  if (!field?.base) return "—";
+  const base = (Number(field.base) || 0) + (familiarBonus?.flat ?? 0);
+  const percent = (Number(field.percent) || 0) + (familiarBonus?.percent ?? 0);
+  const percentUnapplied = Number(field.percentUnapplied) || 0;
+  const total = Math.floor(base * (1 + percent / 100)) + percentUnapplied;
+  return total.toLocaleString("en-US");
+}
+
+interface FamiliarStatBonus { flat: number; percent: number }
+// Attack Power/Magic ATT deliberately excluded — folding a familiar's ATT line into base/
+// percent the same way as the main stats made Fuwaki's Attack Power/Magic ATT come out
+// wrong (confirmed live), unlike STR/DEX/INT/LUK/HP where it reproduced the real value
+// exactly. Whatever the game does with a familiar's ATT bonus, it isn't this.
+type FamiliarBonusStatId = "hp" | "str" | "dex" | "int" | "luk";
+type FamiliarBonusMap = Record<FamiliarBonusStatId, FamiliarStatBonus>;
+
+function emptyFamiliarBonusMap(): FamiliarBonusMap {
+  return {
+    hp: { flat: 0, percent: 0 }, str: { flat: 0, percent: 0 }, dex: { flat: 0, percent: 0 },
+    int: { flat: 0, percent: 0 }, luk: { flat: 0, percent: 0 },
+  };
+}
+
+// Familiar lines are picked from a fixed, closed list per tier (LINES_BY_TIER in
+// familiarsData.ts), always in this "Label: +N" or "Label: +N%" shape — not free text,
+// so this is a reliable parse, not a guess. "All Stats" only ever means STR/DEX/INT/LUK
+// (matches strategywiki's own "All Stats % ... same as STR%, DEX%, INT% and LUK%" note),
+// never HP/ATT/MATT. Attack Power/Magic ATT lines are intentionally not mapped here.
+const FAMILIAR_LINE_PATTERN = /^(STR|DEX|INT|LUK|Max HP|All Stats): \+(\d+)(%)?$/;
+const FAMILIAR_LINE_STAT_IDS: Record<string, FamiliarBonusStatId[]> = {
+  STR: ["str"], DEX: ["dex"], INT: ["int"], LUK: ["luk"],
+  "Max HP": ["hp"],
+  "All Stats": ["str", "dex", "int", "luk"],
+};
+
+function addFamiliarLine(bonuses: FamiliarBonusMap, line: string): void {
+  const match = FAMILIAR_LINE_PATTERN.exec(line);
+  if (!match) return;
+  const [, label, amount, isPercent] = match;
+  const value = Number(amount);
+  for (const id of FAMILIAR_LINE_STAT_IDS[label]) {
+    if (isPercent) bonuses[id].percent += value;
+    else bonuses[id].flat += value;
+  }
+}
+
+function familiarStatBonuses(character: StoredCharacterRecord | null): FamiliarBonusMap {
+  const bonuses = emptyFamiliarBonusMap();
+  const data = character?.familiars;
+  const preset = data?.presets?.[data.activePreset];
+  if (!preset) return bonuses;
+  for (const slot of preset.familiars) {
+    addFamiliarLine(bonuses, slot.line1);
+    addFamiliarLine(bonuses, slot.line2);
+  }
+  return bonuses;
+}
+
 function cooldownReductionValue(cr: { seconds: string; percent: string } | undefined): string {
   if (!cr?.seconds && !cr?.percent) return "—";
   return `${cr.seconds || "0"} sec / ${cr.percent || "0"}%`;
@@ -467,14 +535,70 @@ const statBlockLabelStyle: CSSProperties = { fontSize: 12, fontWeight: 700, text
 
 // Nested content panel (DESIGN.md: 14px radius, theme.panel on theme.bg) so each group of
 // stats reads as its own block instead of blurring into the per-row underlines below it.
-function StatBlock({ label, theme, children }: { label: string; theme: Theme; children: ReactNode }) {
+function StatBlock({ label, theme, children, info }: { label: string; theme: Theme; children: ReactNode; info?: TooltipContent }) {
   return (
     <div style={{ background: theme.panel, border: `1px solid ${theme.border}`, borderRadius: 14, padding: "12px 14px" }}>
-      <div style={{ ...statBlockLabelStyle, color: theme.muted }}>{label}</div>
+      <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", marginBottom: 10 }}>
+        <div style={{ ...statBlockLabelStyle, margin: 0, color: theme.muted }}>{label}</div>
+        {info && <InfoTooltip content={info} theme={theme} />}
+      </div>
       {children}
     </div>
   );
 }
+
+// KaTeX's displaystyle metrics (fraction stacking, floor brackets) run large even at a
+// small container font-size, and the tooltip popup is only ~240px wide — inline mode
+// (displayMode: false) uses KaTeX's more compact textstyle sizing, and the small
+// fontSize here shrinks it further to actually fit.
+const formulaHtmlStyle: CSSProperties = { overflowX: "auto", padding: "0.2rem 0", fontSize: "0.7rem" };
+
+// Renders a LaTeX string to static HTML via KaTeX at module load — pure function of the
+// tex string, no DOM/layout dependency, so this is safe to call outside a component.
+function formulaHtml(tex: string): string {
+  return katex.renderToString(tex, { throwOnError: false, displayMode: false });
+}
+
+function Formula({ tex }: { tex: string }) {
+  // eslint-disable-next-line react/no-danger -- KaTeX's own static-HTML output, not user input
+  return <div style={formulaHtmlStyle} dangerouslySetInnerHTML={{ __html: formulaHtml(tex) }} />;
+}
+
+// Split across 2 Formula blocks (each its own div, stacking naturally) rather than one
+// long inline string — at tooltip width, letting this wrap on its own broke mid-formula
+// right after the "+", which read as accidental rather than a deliberate line break.
+const BASIC_STATS_FORMULA_TEX_LINE1 = String.raw`\lfloor \text{Base Value} \times \left(1 + \dfrac{\%\text{ Value}}{100}\right) \rfloor`;
+const BASIC_STATS_FORMULA_TEX_LINE2 = String.raw`+\ \%\text{ Value Not Applied}`;
+const COMBAT_STATS_FORMULA_TEX = String.raw`\lfloor \text{Base Value} \times \left(1 + \dfrac{\%\text{ Value}}{100}\right) \rfloor`;
+
+const BASIC_STATS_INFO: TooltipContent = {
+  title: "Basic Stats",
+  description: (
+    <>
+      There may be a slight discrepancy in a stat&apos;s calculated value.
+      <br />
+      <br />
+      Stat bonuses from your active familiar preset are automatically included.
+      <br />
+      <br />
+      Formula used:
+      <Formula tex={BASIC_STATS_FORMULA_TEX_LINE1} />
+      <Formula tex={BASIC_STATS_FORMULA_TEX_LINE2} />
+    </>
+  ),
+};
+const COMBAT_STATS_INFO: TooltipContent = {
+  title: "Combat Stats",
+  description: (
+    <>
+      There may be a slight discrepancy in Attack Power and Magic ATT&apos;s calculated value.
+      <br />
+      <br />
+      Formula used:
+      <Formula tex={COMBAT_STATS_FORMULA_TEX} />
+    </>
+  ),
+};
 
 type StatsView = "stats" | "hyperStat" | "ability";
 
@@ -696,15 +820,16 @@ function StatsBookmark({
   const classId = character ? resolveClassId(character.jobName) : undefined;
   const classData = classId ? CLASS_SKILL_DATA.find((c) => c.id === classId) : undefined;
   const resourceLabel = classData?.resourceLabel ?? "MP";
+  const familiarBonus = familiarStatBonuses(character);
 
   // Order mirrors the in-game Character Info window, row by row (left column then right column).
   const primaryCells: { label: string; value: string }[] = [
-    { label: "HP", value: s?.hp?.base || notCollected },
+    { label: "HP", value: tripleStatTotal(s?.hp, familiarBonus.hp) },
     { label: resourceLabel, value: s?.mp || notCollected },
-    { label: "STR", value: s?.str?.base || notCollected },
-    { label: "DEX", value: s?.dex?.base || notCollected },
-    { label: "INT", value: s?.int?.base || notCollected },
-    { label: "LUK", value: s?.luk?.base || notCollected },
+    { label: "STR", value: tripleStatTotal(s?.str, familiarBonus.str) },
+    { label: "DEX", value: tripleStatTotal(s?.dex, familiarBonus.dex) },
+    { label: "INT", value: tripleStatTotal(s?.int, familiarBonus.int) },
+    { label: "LUK", value: tripleStatTotal(s?.luk, familiarBonus.luk) },
   ];
 
   const combatCells: { label: string; value: string }[] = [
@@ -714,9 +839,9 @@ function StatsBookmark({
     { label: STAT_LABELS.bossDamage ?? "Boss Damage", value: pctStat(s?.bossDamage, "bossDamage") },
     { label: STAT_LABELS.ignoreDefense ?? "Ignore DEF", value: pctStat(s?.ignoreDefense, "ignoreDefense") },
     { label: STAT_LABELS.normalEnemyDamage ?? "Normal Enemy Damage", value: pctStat(s?.normalEnemyDamage, "normalEnemyDamage") },
-    { label: "Attack Power", value: s?.attackPower?.base || notCollected },
+    { label: "Attack Power", value: tripleStatTotal(s?.attackPower) },
     { label: STAT_LABELS.criticalRate ?? "Critical Rate", value: pctStat(s?.criticalRate, "criticalRate") },
-    { label: "Magic ATT", value: s?.magicAtt?.base || notCollected },
+    { label: "Magic ATT", value: tripleStatTotal(s?.magicAtt) },
     { label: STAT_LABELS.criticalDamage ?? "Critical Damage", value: pctStat(s?.criticalDamage, "criticalDamage") },
     { label: STAT_LABELS.cooldownReduction ?? "Cooldown Reduction", value: cooldownReductionValue(s?.cooldownReduction) },
     { label: STAT_LABELS.buffDuration ?? "Buff Duration", value: pctStat(s?.buffDuration, "buffDuration") },
@@ -746,14 +871,14 @@ function StatsBookmark({
     <div>
       <div style={{ display: "grid" }}>
         <div style={{ gridArea: "1 / 1", visibility: view === "stats" ? "visible" : "hidden", display: "flex", flexDirection: "column", gap: 12 }}>
-          <StatBlock label="Basic Stats" theme={theme}>
+          <StatBlock label="Basic Stats" theme={theme} info={BASIC_STATS_INFO}>
             <div style={statGridStyle}>
               {primaryCells.map((c) => (
                 <SummaryRow key={c.label} label={c.label} value={c.value} theme={theme} />
               ))}
             </div>
           </StatBlock>
-          <StatBlock label="Combat Stats" theme={theme}>
+          <StatBlock label="Combat Stats" theme={theme} info={COMBAT_STATS_INFO}>
             <div style={statGridStyle}>
               {combatCells.map((c) => (
                 <SummaryRow key={c.label} label={c.label} value={c.value} theme={theme} />
