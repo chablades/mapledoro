@@ -12,6 +12,13 @@ interface ChangelogEntry {
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    date: "2026-07-17",
+    changes: [
+      { type: "changed", text: "The HEXA Skill Tracker Guide tab now combines back to back levels of the same skill into one step, so leveling a skill from 8 to 10 shows as a single 8 to 10 step." },
+      { type: "changed", text: "The HEXA Skill Tracker FD Breakdown tab no longer lists Sol Janus." },
+    ],
+  },
+  {
     date: "2026-07-16",
     changes: [
       { type: "fixed", text: "The EXP Calculator Farming tab now scales EXP down for monsters far above or below your level, instead of only applying the bonus for monsters within 10 levels." },

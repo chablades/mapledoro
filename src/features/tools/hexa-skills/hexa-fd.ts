@@ -162,7 +162,8 @@ export function computeFdBreakdown(
 
   let totalCurrent = 0;
   let totalMax = 0;
-  const contributions = nodes.map((node) => {
+  // Sol Janus is an EXP skill with no FD curve, so it only ever renders a 0% row.
+  const contributions = nodes.filter((node) => node.name !== "Sol Janus").map((node) => {
     const currentFd = sumRange(node.curve, 0, node.level);
     const maxFd = sumRange(node.curve, 0, node.curve.length);
     totalCurrent += currentFd;
@@ -260,8 +261,9 @@ function foldLevel(node: FdNode, toLevel: number, pending: Map<string, PendingRu
  *
  * Levels that grant 0% FD are folded forward into that skill's next FD-granting
  * level: a skill's levels are sequential, so 1→2→3 at 0% then 3→4 at 0.5% becomes
- * a single 1→4 step whose frag cost includes the intermediate levels. This keeps
- * the guide to actual milestones instead of one row per level.
+ * a single 1→4 step whose frag cost includes the intermediate levels. Adjacent
+ * steps for the same skill (nothing else leveled between them) are then merged, so a
+ * run like 8→9 then 9→10 collapses to one 8→10 step instead of one row per level.
  */
 export function computeGuide(
   className: string | null,
@@ -286,6 +288,18 @@ export function computeGuide(
     cumFrag += frags;
     totalSolErda += solErda;
     remainingFd += fdGain;
+    // Adjacent steps for the same node (nothing else emitted between them) are one
+    // run of leveling, so fold them into a single step (e.g. 8 → 9 then 9 → 10 → 8 → 10).
+    const last = steps[steps.length - 1];
+    if (last && last.code === node.code) {
+      last.toLevel = toLevel;
+      last.fdGain += fdGain;
+      last.fragCost += frags;
+      last.solErdaCost += solErda;
+      last.fdPerFrag = last.fragCost > 0 ? last.fdGain / last.fragCost : 0;
+      last.cumFrag = cumFrag;
+      return;
+    }
     steps.push({
       code: node.code,
       kind: node.kind,
