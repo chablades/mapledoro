@@ -12,6 +12,32 @@ interface ChangelogEntry {
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    date: "2026-07-17",
+    changes: [
+      { type: "changed", text: "The HEXA Skill Tracker Guide tab now combines back to back levels of the same skill into one step, so leveling a skill from 8 to 10 shows as a single 8 to 10 step." },
+      { type: "changed", text: "The HEXA Skill Tracker FD Breakdown tab no longer lists Sol Janus." },
+    ],
+  },
+  {
+    date: "2026-07-16",
+    changes: [
+      { type: "fixed", text: "The EXP Calculator Farming tab now scales EXP down for monsters far above or below your level, instead of only applying the bonus for monsters within 10 levels." },
+    ],
+  },
+  {
+    date: "2026-07-14",
+    changes: [
+      { type: "added", text: "The HEXA Skill Tracker now has a Guide tab that lists which skills to level next, ordered by final damage gained per Sol Erda Fragment." },
+      { type: "added", text: "The HEXA Skill Tracker now has an FD Breakdown tab showing how much final damage each HEXA skill gives you at its current level." },
+    ],
+  },
+  {
+    date: "2026-07-13",
+    changes: [
+      { type: "added", text: "The EXP Calculator Daily / Weekly Calculator now takes Luxe Sauna / MVP Resort hours, with the sauna's EXP table in the Resources tab." },
+    ],
+  },
+  {
     date: "2026-07-12",
     changes: [
       { type: "added", text: "The EXP Calculator Farming tab now has an Import Into Daily/Weekly Calculator link that carries your hourly EXP over to your plan." },

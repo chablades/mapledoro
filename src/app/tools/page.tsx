@@ -82,7 +82,8 @@ const TRACKERS: ToolCard[] = [
     title: "Daily Tracker",
     description:
       "Track symbol dailies, daily bosses, and daily content across all your characters.",
-    icon: "📋",
+    itemId: "04001886", // Intense Power Crystal (Daily)
+    iconType: "item",
     href: "/tools/dailies",
   },
   {

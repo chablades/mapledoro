@@ -43,7 +43,7 @@ const masteryNameStyle: React.CSSProperties = {
 
 // Renders the in-game HEXA Matrix icon (haku.network `hexa-skill` id), or an `iconUrl`
 // override when no id exists yet. A missing icon or load error falls back to the initial.
-function SkillIcon({ iconId, iconUrl, name, theme, size = 32 }: { iconId: string; iconUrl?: string; name: string; theme: AppTheme; size?: number }) {
+export function SkillIcon({ iconId, iconUrl, name, theme, size = 32 }: { iconId: string; iconUrl?: string; name: string; theme: AppTheme; size?: number }) {
   const imgRef = useRef<HTMLImageElement>(null);
   const fallbackRef = useRef<HTMLDivElement>(null);
   const src = iconUrl ?? (iconId !== "" ? resourceImageUrl("hexa-skill", iconId, "icon.png") : null);

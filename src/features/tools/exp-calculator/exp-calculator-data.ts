@@ -85,6 +85,8 @@ export interface ResourceTable {
   kind: "single-exp" | "epic";
   rows: LevelResourceRow[] | EpicDungeonRow[];
   maxUnits?: number;
+  /** Units consumed per hour for time-based sources; switches the % column to % per hour. */
+  unitsPerHour?: number;
 }
 
 type BurningType = "" | "hyper" | "hyperMax" | "hyperMaxBeyond";
@@ -146,6 +148,7 @@ export interface AllInOneInput {
   advancedExpTickets: number;
   punchKingScore: number;
   doubleUpPoints: number;
+  luxeSaunaHours: number;
   potions: Record<string, number>;
   arcaneRiverBonus: number;
   grandisBonus: number;
@@ -372,6 +375,22 @@ const MECHABERRY_FARM = [
   6896248444800, 6896248444800, 6896248444800, 6896248444800,
 ];
 
+// EXP per 5 seconds of sauna time, so decimal hour inputs convert to whole units (720/hour).
+const LUXE_SAUNA = [
+  5346684, 5491905, 5638805, 5802605, 5952159, 6102525, 6254625, 6424059, 6578705, 6734109,
+  13433496, 13740621, 14085880, 14397934, 14712805, 15065809, 15385663, 15745113, 16068705, 16433842,
+  24069889, 24602356, 25081234, 25621323, 26108056, 26656000, 27209467, 27705689, 28266778, 28831600,
+  30594745, 31193167, 31793845, 32332378, 32942156, 33557923, 34175712, 34728167, 35354978, 35985445,
+  36619645, 37769978, 38422689, 39002523, 39663867, 40328634, 40997134, 41669367, 42346812, 43027989,
+  45484989, 46203112, 46924734, 47650012, 48380967, 49113400, 49853300, 50594756, 51431412, 52184223,
+  218558394, 221703400, 224853474, 228025714, 231598474, 260527240, 264127740, 267719120, 271775494, 275408040,
+  288082560, 301751414, 305679094, 322512207, 327168094, 367716374, 372351360, 377594600, 382278480, 387564027,
+  435230087, 441169107, 446470614, 452454600, 457808547, 514642234, 520638507, 527408460, 534219960, 540295274,
+  607153614, 613954854, 621656187, 629403754, 636308860, 714807867, 723513414, 732270134, 740069000, 748876894,
+];
+
+const LUXE_SAUNA_UNITS_PER_HOUR = 720;
+
 const HIGH_MOUNTAIN_BASE = [
   260900000000, 264700000000, 268500000000, 272200000000, 276500000000, 311000000000, 315300000000, 319600000000,
   324500000000, 328800000000, 369800000000, 375200000000, 380100000000, 385000000000, 390600000000, 439000000000,
@@ -429,6 +448,14 @@ export const RESOURCE_TABLES: ResourceTable[] = [
     description: "Mechaberry Farm EXP per run. The workbook notes these values are not affected by EXP multipliers.",
     kind: "single-exp",
     rows: makeLevelRows(280, MECHABERRY_FARM),
+  },
+  {
+    id: "luxe-sauna",
+    label: "Luxe Sauna / MVP Resort",
+    description: "Luxe Sauna (MVP Resort) AFK EXP per 5 seconds of sauna time (720 units per hour).",
+    kind: "single-exp",
+    rows: makeLevelRows(200, LUXE_SAUNA),
+    unitsPerHour: LUXE_SAUNA_UNITS_PER_HOUR,
   },
   {
     id: "high-mountain",
@@ -583,12 +610,32 @@ export function expForLevel(level: number): number {
   return EXP_TO_NEXT_LEVEL_VALUES[level - MIN_EXP_LEVEL] ?? 0;
 }
 
+/** Final level-difference EXP multiplier: the game scales every EXP source by how far the monster
+ *  sits from the character. Within 10 levels it is a bonus (up to 1.2x at +/-1); past that it decays,
+ *  and the decay is asymmetric. Values from the KMS table (MapleStory Wiki, "Experience").
+ *  `diff > 0` means the monster is below the player (over-leveled farming). */
 function monsterLevelBonus(playerLevel: number, monsterLevel: number): number {
-  const diff = Math.abs(monsterLevel - playerLevel);
-  if (diff <= 1) return 1.2;
-  if (diff <= 4) return 1.1;
-  if (diff <= 9) return 1.05;
-  return 1;
+  const diff = playerLevel - monsterLevel;
+  const gap = Math.abs(diff);
+  if (gap <= 1) return 1.2;
+  if (gap <= 4) return 1.1;
+  if (gap <= 9) return 1.05;
+  if (gap === 10) return 1;
+  return diff > 0 ? monsterBelowPenalty(diff) : monsterAbovePenalty(-diff);
+}
+
+/** Monster below the player (over-leveled). Shallow decay from 0.99 down to a 0.70 floor. */
+function monsterBelowPenalty(diff: number): number {
+  if (diff <= 20) return 0.99 - Math.floor((diff - 11) / 2) * 0.01; // 0.99..0.95, one step per 2 levels
+  if (diff <= 39) return 0.89 - (diff - 21) * 0.01; // 0.89..0.71
+  return 0.7;
+}
+
+/** Monster above the player (under-leveled). Steep decay from 0.99 down to a 0.10 floor. */
+function monsterAbovePenalty(above: number): number {
+  if (above <= 20) return 0.99 - (above - 11) * 0.01; // 0.99..0.90
+  if (above <= 35) return 0.7 - (above - 21) * 0.04; // 0.70..0.14
+  return 0.1;
 }
 
 function calculateBuffMultiplier(state: BuffState, playerLevel: number): number {
@@ -689,6 +736,7 @@ function initialSimulationState(input: AllInOneInput): SimulationState {
 
 function applyStartingEventResources(state: SimulationState, input: AllInOneInput, date: number): SimulationState {
   let next = applyResourceUnits(state, Math.max(0, input.strawberryTickets) * 1200, "strawberry-farm", date);
+  next = applyResourceUnits(next, Math.max(0, input.luxeSaunaHours) * LUXE_SAUNA_UNITS_PER_HOUR, "luxe-sauna", date);
   if (next.level >= 280) {
     next = applyResourceUnits(next, Math.max(0, input.mechaberryTickets), "mechaberry-farm", date);
   }
