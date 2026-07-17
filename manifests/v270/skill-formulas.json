@@ -311,6 +311,26 @@
         "bdR": "log20(x)*20\u002Blog30(x)*30"
       }
     },
+    "1120003": {
+      "name": "Advanced Combo",
+      "jobId": "112",
+      "maxLevel": 30,
+      "stats": [
+        {
+          "key": "mastery",
+          "label": "Mastery",
+          "formula": "55\u002Bd(x/2)",
+          "alwaysOn": true,
+          "flaggedForReview": false
+        }
+      ],
+      "rawFormulas": {
+        "damR": "u(x/6)",
+        "x": "5\u002Bd(x/6)",
+        "v": "5\u002Bu(x/6)",
+        "prop": "20\u002B2*x"
+      }
+    },
     "1120010": {
       "name": "Enrage",
       "jobId": "112",
@@ -359,6 +379,21 @@
         "ignoreMobpdpR": "x",
         "w": "3"
       }
+    },
+    "1120043": {
+      "name": "Advanced Combo Attack - Reinforce",
+      "jobId": "112",
+      "maxLevel": 1,
+      "stats": [
+        {
+          "key": "damR",
+          "label": "Final Damage",
+          "formula": "2",
+          "alwaysOn": true,
+          "flaggedForReview": false
+        }
+      ],
+      "rawFormulas": {}
     },
     "112100010": {
       "name": "Deadly Fangs",
@@ -2846,6 +2881,21 @@
         "ignoreMobpdpR": "x"
       }
     },
+    "164110014": {
+      "name": "Scroll Energy",
+      "jobId": "16411",
+      "maxLevel": 1,
+      "stats": [
+        {
+          "key": "x",
+          "label": "final damage",
+          "formula": "5",
+          "alwaysOn": true,
+          "flaggedForReview": false
+        }
+      ],
+      "rawFormulas": {}
+    },
     "164120010": {
       "name": "Advanced Ritual Fan Mastery",
       "jobId": "16412",
@@ -4429,6 +4479,14 @@
       "maxLevel": 20,
       "stats": [
         {
+          "key": "x",
+          "label": "Final damage",
+          "formula": "4",
+          "alwaysOn": false,
+          "flaggedForReview": false,
+          "reason": "stacking/proc phrasing in tooltip (per stack, upon using, up to, ...)"
+        },
+        {
           "key": "pdR",
           "label": "Final Damage",
           "formula": "7\u002Bd(x/2)",
@@ -4439,7 +4497,6 @@
       "rawFormulas": {
         "prop": "5\u002B3*d(x/4)",
         "y": "5",
-        "x": "4",
         "subTime": "45",
         "padX": "2*x",
         "u": "-1"
@@ -6053,6 +6110,28 @@
         "time": "15\u002Bd(x/2)",
         "x": "3",
         "y": "10"
+      }
+    },
+    "400001023": {
+      "name": "Shadow Walker",
+      "jobId": "40000",
+      "maxLevel": 30,
+      "stats": [
+        {
+          "key": "y",
+          "label": "Final Damage",
+          "formula": "8\u002Bd(x/5)",
+          "alwaysOn": false,
+          "flaggedForReview": true,
+          "reason": "has a buff/cast mechanic (time or mpCon) but no [Passive Effect(s)] tooltip marker \u2014 verify by hand"
+        }
+      ],
+      "rawFormulas": {
+        "mpCon": "850",
+        "time": "20",
+        "speed": "0",
+        "x": "1",
+        "cooltime": "150-x"
       }
     },
     "400001045": {
@@ -20151,6 +20230,38 @@
         "dummyStr7": "1"
       }
     },
+    "42141019": {
+      "name": "HEXA Summon Orochi",
+      "jobId": "4214",
+      "maxLevel": 30,
+      "stats": [
+        {
+          "key": "dummyStr11",
+          "label": "Final Damage",
+          "formula": "30",
+          "alwaysOn": false,
+          "flaggedForReview": true,
+          "reason": "has a buff/cast mechanic (time or mpCon) but no [Passive Effect(s)] tooltip marker \u2014 verify by hand"
+        }
+      ],
+      "rawFormulas": {
+        "mpCon": "80\u002Bd(x/3)",
+        "cooltime": "120",
+        "time": "25",
+        "cancelableTime": "180",
+        "x": "30",
+        "dummyStr": "7",
+        "dummyStr2": "460\u002B8*x",
+        "dummyStr3": "12",
+        "dummyStr4": "1",
+        "dummyStr5": "90\u002Bx",
+        "dummyStr6": "50",
+        "dummyStr7": "8",
+        "dummyStr8": "620\u002B11*x",
+        "dummyStr9": "8",
+        "dummyStr10": "3"
+      }
+    },
     "4220012": {
       "name": "Dagger Expert",
       "jobId": "422",
@@ -23208,6 +23319,25 @@
       ],
       "rawFormulas": {}
     },
+    "500004184": {
+      "name": "Shogetsu Form Boost",
+      "jobId": "50000",
+      "maxLevel": 30,
+      "stats": [
+        {
+          "key": "w",
+          "label": "Final Damage",
+          "formula": "100\u002Bu(x/3)",
+          "alwaysOn": false,
+          "flaggedForReview": true,
+          "reason": "has a buff/cast mechanic (time or mpCon) but no [Passive Effect(s)] tooltip marker \u2014 verify by hand"
+        }
+      ],
+      "rawFormulas": {
+        "x": "50\u002Bx",
+        "time": "30\u002Bd(x/3)"
+      }
+    },
     "500004185": {
       "name": "[Shinsoku] Crashing Tide Boost",
       "jobId": "50000",
@@ -24393,6 +24523,21 @@
       "rawFormulas": {
         "x": "6*x"
       }
+    },
+    "60010217": {
+      "name": "True Heart Inheritance",
+      "jobId": "6001",
+      "maxLevel": 1,
+      "stats": [
+        {
+          "key": "mastery",
+          "label": "Mastery",
+          "formula": "10",
+          "alwaysOn": true,
+          "flaggedForReview": false
+        }
+      ],
+      "rawFormulas": {}
     },
     "61100006": {
       "name": "Sword Mastery",
