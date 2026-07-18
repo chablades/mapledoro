@@ -115,6 +115,7 @@ export function computeDamageRange(
   const damagePercent = Number(stats.damage) || 0;
 
   const upperActual = Math.round((multiplier * statValue * totalJobAtt) / 100);
+  if (upperActual === 0) return undefined;
   const lowerActual = Math.round((upperActual * masteryPercent) / 100);
 
   const upperShown = Math.floor(upperActual * (1 + damagePercent / 100) * (1 + finalDamagePercent / 100));

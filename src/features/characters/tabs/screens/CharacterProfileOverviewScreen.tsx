@@ -519,7 +519,7 @@ function damageRangeDisplay(
 ): string {
   const result = computeDamageRange(classId, level, weaponHand ?? undefined, isLiberated, stats, tier, familiars, worldId, hasRuinForceShield);
   if (!result) return "—";
-  return `${result.lower.toLocaleString("en-US")} ~ ${result.upper.toLocaleString("en-US")}`;
+  return result.upper.toLocaleString("en-US");
 }
 
 const statGridStyle: CSSProperties = { display: "grid", gridTemplateColumns: "1fr 1fr", columnGap: 16 };

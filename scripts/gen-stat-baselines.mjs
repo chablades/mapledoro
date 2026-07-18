@@ -142,7 +142,7 @@ const FINAL_DAMAGE_RECIPES = {
     { id: "12120009", name: "Pure Magic", expected: 50 },
   ],
   dawn_warrior: [
-    { id: "11120019", name: "Soul Blessing III", expected: 17 },
+    { id: "11120019", name: "Soul Blessing III", expected: 17, job4: false }, // hard-capped at 10, "does not apply Combat Orders" per wiki
     { id: "11120009", name: "Master of the Sword", expected: 25 },
   ],
   mihile: [
@@ -179,7 +179,7 @@ const FINAL_DAMAGE_RECIPES = {
   ],
   bow_master: [
     { id: "3110019", name: "Reckless Hunt: Bow", expected: 30, job4: false }, // 3rd job
-    { id: "3120022", name: "Enchanted Quiver", expected: 6 },
+    { id: "3120022", name: "Enchanted Quiver", expected: 6, job4: false }, // hard-capped at 10, "does not apply Combat Orders" per wiki
     { id: "3120018", name: "Armor Break", expected: 16 },
   ],
   buccaneer: [
@@ -241,7 +241,7 @@ const FINAL_DAMAGE_RECIPES = {
     { id: "155110010", name: "Advanced Fusion", expected: 12, job4: false }, // 3rd job
     { id: "155120014", name: "Battle Frenzy", expected: 20 },
   ],
-  illium: [{ id: "152120015", name: "Wisdom of the Crystal", expected: 50 }],
+  illium: [{ id: "152120015", name: "Wisdom of the Crystal", expected: 50, job4: false }], // no DCO/CO note per wiki, single unambiguous page confirming maxLevel 30
   khali: [
     { id: "154110008", name: "Intuition", expected: 28, job4: false }, // 3rd job
     { id: "154120011", name: "Redemption", expected: 35 },
@@ -293,7 +293,7 @@ const FINAL_DAMAGE_RECIPES = {
   ],
   kaiser: [{ id: "61110004", name: "Catalyze", expected: 33, job4: false }], // 3rd job
   kinesis: [
-    { id: "142120004", name: "Mind Break", expected: 40 },
+    { id: "142120004", name: "Mind Break", expected: 40, job4: false }, // hard-capped at 30, no DCO/CO bump despite being job4 (confirmed via in-game skill window)
     { id: "142120006", name: "Telepath Tactics", expected: 20 },
     { id: "142120003", name: "Mind Quake", expected: 15 },
     { id: "142120010", name: "Awakening", expected: 15 },
@@ -363,30 +363,30 @@ const MASTERY_SKILL_RECIPES = {
   dawn_warrior: [{ id: "11120007", name: "Student of the Blade", expected: 70 }],
   thunder_breaker: [{ id: "15120006", name: "Knuckle Expert", expected: 70 }],
   night_walker: [{ id: "14120005", name: "Throwing Expert", expected: 70 }],
-  wind_archer: [{ id: "3120005", name: "Bow Expert", expected: 70 }],
+  wind_archer: [{ id: "13120006", name: "Bow Expert", expected: 70 }],
   blaze_wizard: [{ id: "12120009", name: "Pure Magic", expected: 70 }],
   mihile: [{ id: "51120001", name: "Expert Sword Mastery", expected: 70 }],
   mercedes: [{ id: "23120009", name: "Dual Bowguns Expert", expected: 70 }],
   aran: [{ id: "21120001", name: "High Mastery", expected: 70 }],
   phantom: [{ id: "24120006", name: "Cane Expert", expected: 70 }],
-  luminous: [{ id: "22170071", name: "Magic Mastery", expected: 70 }],
+  luminous: [{ id: "27120007", name: "Magic Mastery", expected: 70 }],
   evan: [{ id: "22170071", name: "Magic Mastery", expected: 70 }],
   shade: [{ id: "25120113", name: "Advanced Knuckle Mastery", expected: 70 }],
   battle_mage: [{ id: "32120016", name: "Staff Expert", expected: 70 }],
   blaster: [{ id: "37120010", name: "Gauntlet Expert", expected: 70 }],
   mechanic: [{ id: "35120000", name: "Extreme Mech", expected: 70 }],
-  wild_hunter: [{ id: "3220004", name: "Crossbow Expert", expected: 70 }],
+  wild_hunter: [{ id: "33120010", name: "Crossbow Expert", expected: 70 }],
   xenon: [{ id: "36120006", name: "Xenon Expert", expected: 70 }],
-  demon_slayer: [{ id: "1320018", name: "Barricade Mastery", expected: 70 }],
+  demon_slayer: [{ id: "31120008", name: "Barricade Mastery", expected: 70 }],
   demon_avenger: [{ id: "31220006", name: "Advanced Desperado Mastery", expected: 70 }],
-  kaiser: [{ id: "51120001", name: "Expert Sword Mastery", expected: 70 }],
+  kaiser: [{ id: "61120012", name: "Expert Sword Mastery", expected: 70 }],
   cadena: [{ id: "64120008", name: "Weapons Expert", expected: 70 }],
   kain: [{ id: "63120013", name: "Whispershot Mastery", expected: 70 }],
   kanna: [{ id: "42120019", name: "Kasen", expected: 70 }],
   hayato: [{ id: "40010000", name: "Natural Talent", expected: 80, job4: false }], // Beginner Skill
   adele: [{ id: "151120007", name: "Bladecaster Expertise", expected: 70 }],
-  ark: [{ id: "15120006", name: "Knuckle Expert", expected: 70 }],
-  illium: [{ id: "152120015", name: "Wisdom of the Crystal", expected: 70 }],
+  ark: [{ id: "155120010", name: "Knuckle Expert", expected: 70 }],
+  illium: [{ id: "152120015", name: "Wisdom of the Crystal", expected: 70, job4: false }], // no DCO/CO note per wiki, single unambiguous page confirming maxLevel 30
   khali: [{ id: "154120007", name: "Chakram Expert", expected: 70 }],
   hoyoung: [{ id: "164120010", name: "Advanced Ritual Fan Mastery", expected: 70 }],
   lara: [{ id: "162120025", name: "Advanced Wand Mastery", expected: 70 }],
