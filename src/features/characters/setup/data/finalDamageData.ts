@@ -13,13 +13,21 @@ export { BASE_FINAL_DAMAGE_PERCENT };
 
 const GENESIS_LIBERATION_MULTIPLIER = 1.1;
 
-/** Applies the +10% Genesis Liberation multiplier and, if on a Reboot world, the level-bracketed
- *  Reboot Final Damage bonus (0 for Interactive — see rebootData.ts's isRebootWorld). */
+// strategywiki: Ruin Force Shield (Demon Slayer/Demon Avenger exclusive secondary weapon) grants a
+// flat, always-on Final Damage +10% while equipped — folds in as another multiplicative source,
+// same as the tiered Combat Orders baseline (see the file-level comment).
+const RUIN_FORCE_SHIELD_MULTIPLIER = 1.1;
+
+/** Applies the +10% Genesis Liberation multiplier, the Ruin Force Shield +10% (Demon Slayer/Demon
+ *  Avenger only, see classSkillData.ts's ruinForceShield setup option), and, if on a Reboot world,
+ *  the level-bracketed Reboot Final Damage bonus (0 for Interactive — see rebootData.ts's
+ *  isRebootWorld). */
 export function resolveFinalDamagePercent(
   classId: string | undefined,
   isLiberated: boolean | undefined,
   tier: ComboOrdersTier,
   rebootBonusPercent = 0,
+  hasRuinForceShield = false,
 ): number | undefined {
   if (!classId) return undefined;
   const base = BASE_FINAL_DAMAGE_PERCENT[classId]?.[tier];
@@ -29,6 +37,7 @@ export function resolveFinalDamagePercent(
   // issue at the source). Round only when displaying this percent to the player.
   let multiplier = 1 + base / 100;
   if (isLiberated) multiplier *= GENESIS_LIBERATION_MULTIPLIER;
+  if (hasRuinForceShield) multiplier *= RUIN_FORCE_SHIELD_MULTIPLIER;
   if (rebootBonusPercent) multiplier *= 1 + rebootBonusPercent / 100;
   return (multiplier - 1) * 100;
 }

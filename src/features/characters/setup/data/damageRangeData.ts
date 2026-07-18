@@ -86,12 +86,13 @@ export function computeDamageRange(
   tier: ComboOrdersTier,
   familiars: StoredFamiliarsData | undefined,
   worldId: number | undefined,
+  hasRuinForceShield?: boolean | null,
 ): DamageRangeResult | undefined {
   if (!classId || !stats || level === undefined) return undefined;
 
   const multiplier = resolveWeaponMultiplier(classId, weaponHand);
   const rebootBonusPercent = isRebootWorld(worldId) ? rebootFinalDamageBonusPercent(level) : 0;
-  const finalDamagePercent = resolveFinalDamagePercent(classId, isLiberated ?? undefined, tier, rebootBonusPercent);
+  const finalDamagePercent = resolveFinalDamagePercent(classId, isLiberated ?? undefined, tier, rebootBonusPercent, hasRuinForceShield ?? false);
   const masteryPercent = resolveMasteryPercent(classId, weaponHand, tier);
   if (multiplier === undefined || finalDamagePercent === undefined || masteryPercent === undefined) return undefined;
 

@@ -497,9 +497,10 @@ function finalDamageDisplay(
   tier: ComboOrdersTier,
   level: number | undefined,
   worldId: number | undefined,
+  hasRuinForceShield: boolean | null | undefined,
 ): string {
   const rebootBonusPercent = level !== undefined && isRebootWorld(worldId) ? rebootFinalDamageBonusPercent(level) : 0;
-  const percent = resolveFinalDamagePercent(classId, isLiberated ?? undefined, tier, rebootBonusPercent);
+  const percent = resolveFinalDamagePercent(classId, isLiberated ?? undefined, tier, rebootBonusPercent, hasRuinForceShield ?? false);
   return percent === undefined ? "—" : `${percent.toFixed(2)}%`;
 }
 
@@ -514,8 +515,9 @@ function damageRangeDisplay(
   tier: ComboOrdersTier,
   familiars: StoredCharacterRecord["familiars"] | undefined,
   worldId: number | undefined,
+  hasRuinForceShield: boolean | null | undefined,
 ): string {
-  const result = computeDamageRange(classId, level, weaponHand ?? undefined, isLiberated, stats, tier, familiars, worldId);
+  const result = computeDamageRange(classId, level, weaponHand ?? undefined, isLiberated, stats, tier, familiars, worldId, hasRuinForceShield);
   if (!result) return "—";
   return `${result.lower.toLocaleString("en-US")} ~ ${result.upper.toLocaleString("en-US")}`;
 }
@@ -832,9 +834,9 @@ function StatsBookmark({
   ];
 
   const combatCells: { label: string; value: string }[] = [
-    { label: "Damage Range", value: damageRangeDisplay(classId, character?.level, character?.weaponHand, character?.isLiberated, s, comboOrdersTier, character?.familiars, character?.worldId) },
+    { label: "Damage Range", value: damageRangeDisplay(classId, character?.level, character?.weaponHand, character?.isLiberated, s, comboOrdersTier, character?.familiars, character?.worldId, character?.hasRuinForceShield) },
     { label: STAT_LABELS.damage ?? "Damage", value: pctStat(s?.damage, "damage") },
-    { label: "Final Damage", value: finalDamageDisplay(classId, character?.isLiberated, comboOrdersTier, character?.level, character?.worldId) },
+    { label: "Final Damage", value: finalDamageDisplay(classId, character?.isLiberated, comboOrdersTier, character?.level, character?.worldId, character?.hasRuinForceShield) },
     { label: STAT_LABELS.bossDamage ?? "Boss Damage", value: pctStat(s?.bossDamage, "bossDamage") },
     { label: STAT_LABELS.ignoreDefense ?? "Ignore DEF", value: pctStat(s?.ignoreDefense, "ignoreDefense") },
     { label: STAT_LABELS.normalEnemyDamage ?? "Normal Enemy Damage", value: pctStat(s?.normalEnemyDamage, "normalEnemyDamage") },
