@@ -92,25 +92,36 @@ function resolvePinned(classId, statLabel, pin) {
  * resolvePinned elsewhere, and this reuses the same verified id/formula, just at a different x.
  */
 function resolvePinnedAtLevel(pin, statLabel, levelOffset) {
+  // Decent Combat Orders / Passive Skills+1 only bump 4th-job skill levels — a pin explicitly
+  // marked `job4: false` stays frozen at its tier-0 value regardless of the requested tier.
+  const offset = pin.job4 === false ? 0 : levelOffset;
   const entry = entries[pin.id];
   const stat = statsWithLabel(entry, statLabel).find((s) => Math.abs(evalFormula(s.formula, entry.maxLevel) - pin.expected) < 0.01);
   if (!stat) {
     const rawKey = RAW_FORMULA_FALLBACK[pin.id];
-    if (rawKey) return evalFormula(entry.rawFormulas[rawKey], entry.maxLevel + levelOffset);
+    if (rawKey) return evalFormula(entry.rawFormulas[rawKey], entry.maxLevel + offset);
     throw new Error(`[gen-stat-baselines] tiered lookup: no matching stat for pinned id ${pin.id} — resolvePinned should have already thrown.`);
   }
-  return evalFormula(stat.formula, entry.maxLevel + levelOffset);
+  return evalFormula(stat.formula, entry.maxLevel + offset);
 }
 
 // ---------------------------------------------------------------------------------------------
 // Final Damage recipes — one entry per class, ids pinned via the 2026-07-17 live-verification
 // pass (FINAL_DAMAGE_DATA.md). Combined multiplicatively.
 // ---------------------------------------------------------------------------------------------
+// `job4: false` marks a pin whose skill is NOT the class's 4th-job advancement — Decent Combat
+// Orders / Passive Skills+1 IA only bump 4th-job skill levels (confirmed 2026-07-18 against a real
+// Ren tier-2 capture: the generator's old uniform "+tier to every pinned skill" logic overshot her
+// real 89.40% Final Damage by bumping 2nd-job Serene Verse II too; freezing it at tier0 reproduces
+// 89.40% exactly). Job-advancement per skill was cross-checked against Grandis Library for every
+// pin in both recipe tables below (2026-07-18) — pins with no `job4` field are confirmed 4th job
+// and get the normal tier offset; `job4: false` pins are frozen at their tier-0 value regardless of
+// requested tier. See resolvePinnedAtLevel's job4 gating.
 const FINAL_DAMAGE_RECIPES = {
   hoyoung: [
-    { id: "160000076", name: "Fiend Seal", expected: 10 },
-    { id: "164100013", name: "Fortune Fitness", expected: 5 },
-    { id: "164110011", name: "Asura", expected: 9 },
+    { id: "160000076", name: "Fiend Seal", expected: 10, job4: false }, // Beginner Skill
+    { id: "164100013", name: "Fortune Fitness", expected: 5, job4: false }, // 2nd job
+    { id: "164110011", name: "Asura", expected: 9, job4: false }, // 3rd job
     { id: "164120010", name: "Advanced Ritual Fan Mastery", expected: 33 },
     { id: "164120012", name: "Dragon's Eye", expected: 10 },
   ],
@@ -119,15 +130,15 @@ const FINAL_DAMAGE_RECIPES = {
     { id: "162120027", name: "Insight", expected: 45 },
   ],
   ren: [
-    { id: "161000005", name: "Serene Verse", expected: 5 },
-    { id: "161100008", name: "Serene Verse II", expected: 10 },
-    { id: "161110009", name: "Serene Verse III", expected: 10 },
+    { id: "161000005", name: "Serene Verse", expected: 5, job4: false }, // 1st job
+    { id: "161100008", name: "Serene Verse II", expected: 10, job4: false }, // 2nd job
+    { id: "161110009", name: "Serene Verse III", expected: 10, job4: false }, // 3rd job
     { id: "161120011", name: "Exquisite Sword Mastery", expected: 11 },
     { id: "161120012", name: "Serene Verse IV", expected: 20 },
   ],
   blaze_wizard: [
-    { id: "12110025", name: "Liberated Magic", expected: 25 },
-    { id: "12110026", name: "Burning Focus", expected: 8 },
+    { id: "12110025", name: "Liberated Magic", expected: 25, job4: false }, // 3rd job
+    { id: "12110026", name: "Burning Focus", expected: 8, job4: false }, // 3rd job
     { id: "12120009", name: "Pure Magic", expected: 50 },
   ],
   dawn_warrior: [
@@ -135,39 +146,39 @@ const FINAL_DAMAGE_RECIPES = {
     { id: "11120009", name: "Master of the Sword", expected: 25 },
   ],
   mihile: [
-    { id: "51100001", name: "Sword Mastery", expected: 20 },
-    { id: "51110001", name: "Loyal Oath", expected: 25 },
+    { id: "51100001", name: "Sword Mastery", expected: 20, job4: false }, // 2nd job
+    { id: "51110001", name: "Loyal Oath", expected: 25, job4: false }, // 3rd job
     { id: "51121006", name: "Roiling Soul", expected: 25 },
   ],
   night_walker: [
-    { id: "14110032", name: "Shadow Momentum", expected: 15 },
+    { id: "14110032", name: "Shadow Momentum", expected: 15, job4: false }, // 3rd job
     { id: "14120006", name: "Dark Blessing", expected: 12 },
   ],
   thunder_breaker: [
-    { id: "15100023", name: "Knuckle Mastery", expected: 7 },
+    { id: "15100023", name: "Knuckle Mastery", expected: 7, job4: false }, // 2nd job
     { id: "15120006", name: "Knuckle Expert", expected: 18 },
   ],
   wind_archer: [
-    { id: "13100025", name: "Bow Mastery", expected: 10 },
-    { id: "13110028", name: "Eagle Eye", expected: 12 },
+    { id: "13100025", name: "Bow Mastery", expected: 10, job4: false }, // 2nd job
+    { id: "13110028", name: "Eagle Eye", expected: 12, job4: false }, // 3rd job
     { id: "13120006", name: "Bow Expert", expected: 35 },
   ],
   arch_mage_f_p: [
-    { id: "2110015", name: "Elemental Decrease", expected: 40 },
+    { id: "2110015", name: "Elemental Decrease", expected: 40, job4: false }, // 3rd job
     { id: "2120004", name: "Infinity", expected: 91 },
   ],
   arch_mage_i_l: [
-    { id: "2110015", name: "Elemental Decrease", expected: 40 },
+    { id: "2110015", name: "Elemental Decrease", expected: 40, job4: false }, // 3rd job
     { id: "2120004", name: "Infinity", expected: 91 },
   ],
   bishop: [
     { id: "2320013", name: "Blessed Harmony", expected: 10 },
     { id: "2120004", name: "Infinity", expected: 91 },
     { id: "2320012", name: "Buff Mastery", expected: 11 },
-    { id: "2321054", name: "Righteously Indignant", expected: 30 },
+    { id: "2321054", name: "Righteously Indignant", expected: 30, job4: false }, // Hyper Skill
   ],
   bow_master: [
-    { id: "3110019", name: "Reckless Hunt: Bow", expected: 30 },
+    { id: "3110019", name: "Reckless Hunt: Bow", expected: 30, job4: false }, // 3rd job
     { id: "3120022", name: "Enchanted Quiver", expected: 6 },
     { id: "3120018", name: "Armor Break", expected: 16 },
   ],
@@ -177,110 +188,110 @@ const FINAL_DAMAGE_RECIPES = {
     { id: "5120014", name: "Typhoon Crush", expected: 10 },
   ],
   cannoneer: [
-    { id: "5311004", name: "Forty Winks", expected: 10 },
-    { id: "5310006", name: "Reinforced Cannon", expected: 5 },
-    { id: "5310009", name: "Counter Crush", expected: 5 },
+    { id: "5311004", name: "Forty Winks", expected: 10, job4: false }, // 3rd job
+    { id: "5310006", name: "Reinforced Cannon", expected: 5, job4: false }, // 3rd job
+    { id: "5310009", name: "Counter Crush", expected: 5, job4: false }, // 3rd job
     { id: "5320009", name: "Cannon Overload", expected: 32 },
   ],
   corsair: [
-    { id: "5210013", name: "Fullmetal Jacket", expected: 20 },
+    { id: "5210013", name: "Fullmetal Jacket", expected: 20, job4: false }, // 3rd job
     { id: "5221015", name: "Parrotargetting", expected: 25 },
     { id: "5220020", name: "Majestic Presence", expected: 8 },
   ],
   dark_knight: [
-    { id: "1311015", name: "Cross Surge", expected: 50 },
+    { id: "1311015", name: "Cross Surge", expected: 50, job4: false }, // 3rd job
     { id: "1320016", name: "Final Pact", expected: 30 },
   ],
   blade_master: [
-    { id: "4320005", name: "Venom", expected: 9 },
-    { id: "4330009", name: "Shadow Meld", expected: 8 },
+    { id: "4320005", name: "Venom", expected: 9, job4: false }, // 2nd job
+    { id: "4330009", name: "Shadow Meld", expected: 8, job4: false }, // 3rd job
     { id: "4340013", name: "Katara Expert", expected: 20 },
   ],
   hero: [
-    { id: "1100000", name: "Weapon Mastery", expected: 10 },
+    { id: "1100000", name: "Weapon Mastery", expected: 10, job4: false }, // 2nd job
     { id: "1120010", name: "Enrage", expected: 25 },
   ],
   marksman: [
-    { id: "3200000", name: "Crossbow Mastery", expected: 20 },
+    { id: "3200000", name: "Crossbow Mastery", expected: 20, job4: false }, // 2nd job
     { id: "3220021", name: "Greater Empowered Arrows", expected: 8 },
     { id: "3220015", name: "Bolt Surplus", expected: 15 },
     { id: "3220016", name: "Last Man Standing", expected: 13 },
   ],
   night_lord: [
-    { id: "4110012", name: "Expert Throwing Star Handling", expected: 29 },
+    { id: "4110012", name: "Expert Throwing Star Handling", expected: 29, job4: false }, // 3rd job
     { id: "4120014", name: "Dark Harmony", expected: 15 },
   ],
   paladin: [{ id: "1220018", name: "High Paladin", expected: 35 }],
   pathfinder: [
-    { id: "3310006", name: "Guidance of the Ancients", expected: 28 },
+    { id: "3310006", name: "Guidance of the Ancients", expected: 28, job4: false }, // 3rd job
     { id: "3320010", name: "Ancient Bow Expertise", expected: 12 },
   ],
   shadower: [
-    { id: "4200000", name: "Dagger Mastery", expected: 9 },
+    { id: "4200000", name: "Dagger Mastery", expected: 9, job4: false }, // 2nd job
     { id: "4221017", name: "Cruel Stab", expected: 24 },
     { id: "4220013", name: "Shadower Instinct", expected: 16 },
   ],
   adele: [
-    { id: "151100015", name: "Will to Live", expected: 10 },
-    { id: "151110006", name: "Ascent", expected: 17 },
+    { id: "151100015", name: "Will to Live", expected: 10, job4: false }, // 2nd job
+    { id: "151110006", name: "Ascent", expected: 17, job4: false }, // 3rd job
     { id: "151120009", name: "Ruination", expected: 30 },
   ],
   ark: [
-    { id: "155100007", name: "Knuckle Mastery", expected: 5 },
-    { id: "155110010", name: "Advanced Fusion", expected: 12 },
+    { id: "155100007", name: "Knuckle Mastery", expected: 5, job4: false }, // 2nd job
+    { id: "155110010", name: "Advanced Fusion", expected: 12, job4: false }, // 3rd job
     { id: "155120014", name: "Battle Frenzy", expected: 20 },
   ],
   illium: [{ id: "152120015", name: "Wisdom of the Crystal", expected: 50 }],
   khali: [
-    { id: "154110008", name: "Intuition", expected: 28 },
+    { id: "154110008", name: "Intuition", expected: 28, job4: false }, // 3rd job
     { id: "154120011", name: "Redemption", expected: 35 },
   ],
   aran: [
-    { id: "21100000", name: "Polearm Mastery", expected: 10 },
+    { id: "21100000", name: "Polearm Mastery", expected: 10, job4: false }, // 2nd job
     { id: "21120001", name: "High Mastery", expected: 21 },
   ],
   evan: [
-    { id: "22141016", name: "Elemental Decrease", expected: 18 },
-    { id: "22140020", name: "Magic Amplification", expected: 30 },
+    { id: "22141016", name: "Elemental Decrease", expected: 18, job4: false }, // 3rd job
+    { id: "22140020", name: "Magic Amplification", expected: 30, job4: false }, // 3rd job
   ],
   luminous: [
     { id: "27121113", name: "Twilight Nova", expected: 33 },
     { id: "27121006", name: "Arcane Pitch", expected: 40 },
   ],
   mercedes: [
-    { id: "23110004", name: "Ignis Roar", expected: 17 },
+    { id: "23110004", name: "Ignis Roar", expected: 17, job4: false }, // 3rd job
     { id: "23120010", name: "Defense Break", expected: 20 },
-    { id: "23121054", name: "Elvish Blessing", expected: 6 },
+    { id: "23121054", name: "Elvish Blessing", expected: 6, job4: false }, // Hyper Skill
   ],
   phantom: [
-    { id: "24110007", name: "Piercing Vision", expected: 30 },
+    { id: "24110007", name: "Piercing Vision", expected: 30, job4: false }, // 3rd job
     { id: "24120006", name: "Cane Expert", expected: 31 },
   ],
   shade: [
-    { id: "25100106", name: "Knuckle Mastery", expected: 10 },
-    { id: "25110107", name: "Spirit Bond 3", expected: 15 },
+    { id: "25100106", name: "Knuckle Mastery", expected: 10, job4: false }, // 2nd job
+    { id: "25110107", name: "Spirit Bond 3", expected: 15, job4: false }, // 3rd job
     { id: "25120113", name: "Advanced Knuckle Mastery", expected: 16 },
     { id: "25120214", name: "Critical Insight", expected: 10 },
     { id: "25120019", name: "Skulk Solidarity", expected: 14 },
   ],
   lynn: [{ id: "172120003", name: "Guardian's Signet", expected: 60 }],
   mo_xuan: [
-    { id: "170000001", name: "Xuanshan Spirit", expected: 10 },
-    { id: "175121041", name: "Secret Art: Strength Within", expected: 10 },
+    { id: "170000001", name: "Xuanshan Spirit", expected: 10, job4: false }, // Beginner Skill
+    { id: "175121041", name: "Secret Art: Strength Within", expected: 10, job4: false }, // Hyper Skill
   ],
   angelic_buster: [
-    { id: "65100004", name: "Beautiful Soul", expected: 5 },
-    { id: "65110008", name: "Blossoming Star", expected: 14 },
-    { id: "65110006", name: "Affinity Heart III", expected: 12 },
+    { id: "65100004", name: "Beautiful Soul", expected: 5, job4: false }, // 2nd job
+    { id: "65110008", name: "Blossoming Star", expected: 14, job4: false }, // 3rd job
+    { id: "65110006", name: "Affinity Heart III", expected: 12, job4: false }, // 3rd job
     { id: "65120005", name: "Soul Shooter Expert", expected: 21 },
   ],
-  cadena: [{ id: "64110014", name: "Keen Eye", expected: 4 }],
+  cadena: [{ id: "64110014", name: "Keen Eye", expected: 4, job4: false }], // 3rd job
   kain: [
-    { id: "63110014", name: "Natural Born Instinct", expected: 25 },
+    { id: "63110014", name: "Natural Born Instinct", expected: 25, job4: false }, // 3rd job
     { id: "63120012", name: "Dogma", expected: 30 },
     { id: "63120013", name: "Whispershot Mastery", expected: 37 },
   ],
-  kaiser: [{ id: "61110004", name: "Catalyze", expected: 33 }],
+  kaiser: [{ id: "61110004", name: "Catalyze", expected: 33, job4: false }], // 3rd job
   kinesis: [
     { id: "142120004", name: "Mind Break", expected: 40 },
     { id: "142120006", name: "Telepath Tactics", expected: 20 },
@@ -288,44 +299,44 @@ const FINAL_DAMAGE_RECIPES = {
     { id: "142120010", name: "Awakening", expected: 15 },
   ],
   zero: [
-    { id: "100000279", name: "Resolution Time", expected: 17 },
-    { id: "101000203", name: "Long Sword Mastery", expected: 26 },
+    { id: "100000279", name: "Resolution Time", expected: 17, job4: false }, // Transcendent Skill
+    { id: "101000203", name: "Long Sword Mastery", expected: 26, job4: false }, // Lv. 100 unlock, not job-tiered
   ],
   battle_mage: [
-    { id: "32110001", name: "Battle Mastery", expected: 30 },
+    { id: "32110001", name: "Battle Mastery", expected: 30, job4: false }, // 3rd job
     { id: "32120020", name: "Spell Boost", expected: 22 },
   ],
   blaster: [
-    { id: "37110008", name: "Shield Training", expected: 10 },
+    { id: "37110008", name: "Shield Training", expected: 10, job4: false }, // 3rd job
     { id: "37120012", name: "Combo Training II", expected: 70 },
   ],
   demon_avenger: [{ id: "31220004", name: "Overwhelming Power", expected: 19 }],
   demon_slayer: [
-    { id: "1100000", name: "Weapon Mastery", expected: 10 },
-    { id: "31110007", name: "Focused Fury", expected: 32 },
+    { id: "1100000", name: "Weapon Mastery", expected: 10, job4: false }, // 2nd job
+    { id: "31110007", name: "Focused Fury", expected: 32, job4: false }, // 3rd job
   ],
-  mechanic: [{ id: "35110016", name: "Overclock", expected: 42 }],
+  mechanic: [{ id: "35110016", name: "Overclock", expected: 42, job4: false }], // 3rd job
   wild_hunter: [
-    { id: "33100009", name: "Primal Edge", expected: 14 },
-    { id: "33110011", name: "Feral Resonance", expected: 15 },
+    { id: "33100009", name: "Primal Edge", expected: 14, job4: false }, // 2nd job
+    { id: "33110011", name: "Feral Resonance", expected: 15, job4: false }, // 3rd job
     { id: "33120009", name: "Extended Magazine", expected: 30 },
     { id: "33120010", name: "Crossbow Expert", expected: 10 },
     { id: "33120012", name: "Wild Instinct", expected: 10 },
   ],
   xenon: [{ id: "36120016", name: "Multilateral VI", expected: 17 }],
-  hayato: [{ id: "41110007", name: "Endless Rain", expected: 15 }],
+  hayato: [{ id: "41110007", name: "Endless Rain", expected: 15, job4: false }], // 3rd job
   kanna: [],
   erel_light: [
-    { id: "181000004", name: "Radiant Vision", expected: 10 },
-    { id: "181100005", name: "Radiant Pulse", expected: 10 },
-    { id: "181100007", name: "Gram Mastery", expected: 10 },
-    { id: "181110004", name: "Radiant Control", expected: 15 },
-    { id: "181110005", name: "Radiant Shock", expected: 10 },
+    { id: "181000004", name: "Radiant Vision", expected: 10, job4: false }, // 1st job
+    { id: "181100005", name: "Radiant Pulse", expected: 10, job4: false }, // 2nd job
+    { id: "181100007", name: "Gram Mastery", expected: 10, job4: false }, // 2nd job
+    { id: "181110004", name: "Radiant Control", expected: 15, job4: false }, // 3rd job
+    { id: "181110005", name: "Radiant Shock", expected: 10, job4: false }, // 3rd job
     { id: "181120007", name: "Radiant Dawn", expected: 20 },
     { id: "181120008", name: "Gram Expert", expected: 20 },
   ],
   sia_astelle: [
-    { id: "182110000", name: "Stellar Enhancement I", expected: 25 },
+    { id: "182110000", name: "Stellar Enhancement I", expected: 25, job4: false }, // 3rd job
     { id: "182120000", name: "Stellar Enhancement II", expected: 35 },
   ],
 };
@@ -339,7 +350,7 @@ const MASTERY_SKILL_RECIPES = {
   hero: [{ id: "1120003", name: "Advanced Combo", expected: 70 }],
   paladin: [{ id: "1220018", name: "High Paladin", expected: 70 }],
   dark_knight: [{ id: "1320018", name: "Barricade Mastery", expected: 70 }],
-  bishop: [{ id: "2310008", name: "Holy Focus", expected: 70 }],
+  bishop: [{ id: "2310008", name: "Holy Focus", expected: 70, job4: false }], // 3rd job — Bishop's Mastery is flat across all 3 tiers
   blade_master: [{ id: "4340013", name: "Katara Expert", expected: 70 }],
   shadower: [{ id: "4220012", name: "Dagger Expert", expected: 70 }],
   night_lord: [{ id: "4120012", name: "Claw Expert", expected: 70 }],
@@ -372,7 +383,7 @@ const MASTERY_SKILL_RECIPES = {
   cadena: [{ id: "64120008", name: "Weapons Expert", expected: 70 }],
   kain: [{ id: "63120013", name: "Whispershot Mastery", expected: 70 }],
   kanna: [{ id: "42120019", name: "Kasen", expected: 70 }],
-  hayato: [{ id: "40010000", name: "Natural Talent", expected: 80 }],
+  hayato: [{ id: "40010000", name: "Natural Talent", expected: 80, job4: false }], // Beginner Skill
   adele: [{ id: "151120007", name: "Bladecaster Expertise", expected: 70 }],
   ark: [{ id: "15120006", name: "Knuckle Expert", expected: 70 }],
   illium: [{ id: "152120015", name: "Wisdom of the Crystal", expected: 70 }],
@@ -385,9 +396,9 @@ const MASTERY_SKILL_RECIPES = {
   sia_astelle: [{ id: "182120002", name: "Astral Assimilation", expected: 70 }],
   erel_light: [{ id: "181120008", name: "Gram Expert", expected: 70 }],
   kinesis: [{ id: "142120013", name: "Mastery", expected: 70 }],
-  zero: [{ id: "101000203", name: "Long Sword Mastery", expected: 70 }],
+  zero: [{ id: "101000203", name: "Long Sword Mastery", expected: 70, job4: false }], // Lv. 100 unlock, not job-tiered
   angelic_buster: [
-    { id: "60010217", name: "True Heart Inheritance", expected: 10 },
+    { id: "60010217", name: "True Heart Inheritance", expected: 10, job4: false }, // Beginner Skill
     { id: "65120005", name: "Soul Shooter Expert", expected: 70 },
   ],
   arch_mage_f_p: [{ id: "2121005", name: "Ifrit", expected: 70 }],
