@@ -49,7 +49,7 @@ import {
 } from "../setup/data/statsStepDraft";
 import { serializeEquipmentStepDraft, storedEquipmentToDraft } from "../setup/data/equipmentStepDraft";
 import { readSavedHexaValue } from "../setup/data/hexaMatrixDraft";
-import { convertOzRingsDraftToStored, ozRingsTotallingStatOverrides, parseOzRingsDraft, type MainStatId } from "../setup/data/ozRingData";
+import { convertOzRingsDraftToStored, ozRingsTotallingStatOverrides, parseOzRingsDraft, serializeOzRingsDraft, storedOzRingsToOzRingsDraft, type MainStatId } from "../setup/data/ozRingData";
 import { convertBuffsDraftToStored, parseBuffsDraft } from "../setup/data/buffsData";
 import {
   convertScouterQuestionsDraftToStored,
@@ -893,7 +893,11 @@ function buildSeededStepTestByStep(jobName: string, storedCharacter: StoredChara
     // (see applyStatsDraftToRoster), so starting blank meant finishing without
     // retyping every field silently wiped whatever wasn't retyped.
     stats: storedCharacter
-      ? serializeStatsStepDraft(storedStatsToStatsStepDraft({ ...storedCharacter, weaponAtt: storedCharacter.scouter?.weaponAtt }))
+      ? serializeStatsStepDraft(storedStatsToStatsStepDraft({
+          ...storedCharacter,
+          weaponAtt: storedCharacter.scouter?.weaponAtt,
+          innerAbilityLine: storedCharacter.scouter?.innerAbilityLine,
+        }))
       : "",
     equipment: storedCharacter
       ? serializeEquipmentStepDraft(storedEquipmentToDraft(storedCharacter.equipment, equipmentSymbols?.symbols, storedCharacter.scouter?.weaponAtt))
@@ -903,6 +907,12 @@ function buildSeededStepTestByStep(jobName: string, storedCharacter: StoredChara
       : "",
     hexa_matrix: readSavedHexaValue(hexaClassDef, storedCharacter?.ign) ?? "",
     familiars: storedCharacter?.familiars ? JSON.stringify(storedCharacter.familiars) : "",
+    // Never seeded before (a real gap, not intentional — every other step above is):
+    // reopening Oz Rings on a character that already answered it always started blank,
+    // even though the stored ring levels were intact (its own useEffect only backfills
+    // the Totalling Ring's off-stats from stats.str/dex/int/luk, not the ring levels
+    // themselves). Confirmed as a real bug 2026-07-18.
+    oz_rings: storedCharacter ? serializeOzRingsDraft(storedOzRingsToOzRingsDraft(storedCharacter.scouter?.ozRings)) : "",
   };
 }
 
@@ -1963,7 +1973,17 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
         writeLinkSkillsForWorld(confirmedCharacter.worldID, linkSkillsDraftToStored(linkSkillsValue));
       }
 
-      if (confirmedCharacter && !isFullSetupFlow) {
+      // maplescouter_setup, like full_setup, already handles every step it owns (stats,
+      // oz_rings, buffs, hexa_matrix) inside applyMapleScouterFlow's own single upsert above.
+      // Running applyStandaloneToolDrafts afterward re-processed hexa_matrix a second time
+      // against a STALE readCharactersStore() snapshot (the first upsert's write hasn't
+      // reached storage yet this tick — see upsertRosterCharacter's own comment), silently
+      // reverting stats/isLiberated/weaponHand/scouter answers back to their pre-finish
+      // values while only hexa_matrix appeared to actually save. Confirmed as a real bug
+      // 2026-07-18: re-running MapleScouter Setup on an existing character via the profile's
+      // Setup bookmark wiped the whole finish except HEXA.
+      const isMapleScouterFlow = effectiveFlowId === "maplescouter_setup";
+      if (confirmedCharacter && !isFullSetupFlow && !isMapleScouterFlow) {
         applyStandaloneToolDrafts(confirmedCharacter, effectiveStepData, upsertRosterCharacter, effectiveFlowId);
       }
 

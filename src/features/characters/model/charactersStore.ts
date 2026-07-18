@@ -74,8 +74,9 @@ export interface StoredScouterBuffs {
 export interface StoredScouterData {
   ozRings?: StoredOzRings;
   buffs?: StoredScouterBuffs;
-  /** Scouter-relevant legendary Inner Ability line, if any. */
-  innerAbilityLine?: "passive" | "multiTarget";
+  /** Scouter-relevant legendary Inner Ability line. "neither" is a real, deliberate answer
+   *  (not the same as unanswered/undefined) — must round-trip like any other value. */
+  innerAbilityLine?: "passive" | "multiTarget" | "neither";
   /** Weapon's attack value — the "+X" Attack Power / Magic ATT shown on the weapon tooltip. */
   weaponAtt?: number;
 }

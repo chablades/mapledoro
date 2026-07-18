@@ -147,7 +147,7 @@ export function convertScouterQuestionsDraftToStored(
   draft: StatsStepDraft,
 ): Pick<StoredScouterData, "innerAbilityLine" | "weaponAtt"> | null {
   const line = draft.scouterQuestions?.innerAbilityLine;
-  const innerAbilityLine = line === "passive" || line === "multiTarget" ? line : undefined;
+  const innerAbilityLine = line === "passive" || line === "multiTarget" || line === "neither" ? line : undefined;
   const weaponAtt = parseWeaponAtt(draft.weaponAtt);
   if (innerAbilityLine === undefined && weaponAtt === undefined) return null;
   return {

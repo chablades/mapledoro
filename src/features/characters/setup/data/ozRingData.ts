@@ -145,6 +145,21 @@ export function convertOzRingsDraftToStored(draft: OzRingsDraft): StoredOzRings 
   return { ringMode: draft.ringMode, levels };
 }
 
+/** Reverse of convertOzRingsDraftToStored — seeds the step's draft from what's already
+ *  stored, so reopening Oz Rings on a character that already answered it doesn't start
+ *  blank (the step has no other way to recover its own ring-level selections; they're
+ *  only ever seeded via this, unlike the Totalling Ring's off-stats, which the step
+ *  backfills itself from stats.str/dex/int/luk directly). */
+export function storedOzRingsToOzRingsDraft(stored: StoredOzRings | undefined): OzRingsDraft {
+  if (!stored) return emptyOzRingsDraft();
+  const levels: Partial<Record<OzRingId, string>> = {};
+  for (const ring of ALL_RING_IDS) {
+    const lvl = stored.levels[ring];
+    if (lvl !== undefined) levels[ring] = String(lvl);
+  }
+  return { ringMode: stored.ringMode, levels, totallingStatValues: {} };
+}
+
 /**
  * Totalling Ring off-stat values to merge into the character's own shared
  * stats.str/dex/int/luk.base — the SAME real stat, not a private duplicate, so

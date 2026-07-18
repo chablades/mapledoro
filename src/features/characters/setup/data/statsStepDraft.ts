@@ -293,8 +293,12 @@ export function storedStatsToStatsStepDraft(record: {
    *  since maplescouter_setup has no Equipment step. Without seeding it here too,
    *  weaponAtt already entered via a previous full_setup pass gets asked again. */
   weaponAtt?: number;
+  /** MapleScouter-only, stored in the `scouter` blob (StoredScouterData.innerAbilityLine).
+   *  Without seeding it here, reopening MapleScouter Setup on a character that already
+   *  answered this always shows it unanswered, even though the stored value is intact. */
+  innerAbilityLine?: string;
 }): StatsStepDraft {
-  const { stats, isLiberated, weaponHand, hasRuinForceShield, soul, weaponAtt } = record;
+  const { stats, isLiberated, weaponHand, hasRuinForceShield, soul, weaponAtt, innerAbilityLine } = record;
   return {
     str: storedTripleToDraft(stats.str),
     dex: storedTripleToDraft(stats.dex),
@@ -321,6 +325,7 @@ export function storedStatsToStatsStepDraft(record: {
     hyperStat: storedHyperStatToDraft(stats.hyperStat),
     innerAbility: storedInnerAbilityToDraft(stats.innerAbility),
     weaponAtt: weaponAtt !== undefined ? String(weaponAtt) : undefined,
+    scouterQuestions: innerAbilityLine !== undefined ? { innerAbilityLine } : undefined,
     setupOptions: {
       isLiberated: isLiberated ?? undefined,
       weaponHand: weaponHand ?? undefined,

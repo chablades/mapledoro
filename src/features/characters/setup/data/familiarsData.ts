@@ -1642,3 +1642,62 @@ export function getLinesForTier(tier: FamiliarTier): string[] {
 export function getFamiliarDisplayLabel(f: FamiliarEntry): string {
   return f.name.replace(/ Familiar$/i, "");
 }
+
+// ── Familiar stat-line bonus folding ────────────────────────────────────────────
+// The Character Info stat tooltip window never itemizes familiar stat lines at all
+// (confirmed: a flat "DEX: +24" and a percent "INT: +6%" familiar line both reproduced an
+// otherwise-unexplained gap between the tooltip's own self-consistent breakdown and the real
+// displayed total, exactly once folded into base/percent the same way as the tooltip's own
+// listed Base Value/% Value) — so these need adding back in separately wherever a stat total
+// is computed, not just Basic Stats. Shared by CharacterProfileOverviewScreen.tsx (Basic
+// Stats) and damageRangeData.ts (StatValue for Damage Range) — both need identical folding.
+
+export interface FamiliarStatBonus { flat: number; percent: number }
+
+// Attack Power/Magic ATT deliberately excluded — folding a familiar's ATT line into base/
+// percent the same way as the main stats made a real character's Attack Power/Magic ATT come
+// out wrong (confirmed live), unlike STR/DEX/INT/LUK/HP where it reproduced the real value
+// exactly. Whatever the game does with a familiar's ATT bonus, it isn't this.
+export type FamiliarBonusStatId = "hp" | "str" | "dex" | "int" | "luk";
+export type FamiliarBonusMap = Record<FamiliarBonusStatId, FamiliarStatBonus>;
+
+export function emptyFamiliarBonusMap(): FamiliarBonusMap {
+  return {
+    hp: { flat: 0, percent: 0 }, str: { flat: 0, percent: 0 }, dex: { flat: 0, percent: 0 },
+    int: { flat: 0, percent: 0 }, luk: { flat: 0, percent: 0 },
+  };
+}
+
+// Familiar lines are picked from a fixed, closed list per tier (LINES_BY_TIER above), always
+// in this "Label: +N" or "Label: +N%" shape — not free text, so this is a reliable parse, not
+// a guess. "All Stats" only ever means STR/DEX/INT/LUK (matches strategywiki's own "All Stats
+// % ... same as STR%, DEX%, INT% and LUK%" note), never HP/ATT/MATT. Attack Power/Magic ATT
+// lines are intentionally not mapped here.
+const FAMILIAR_LINE_PATTERN = /^(STR|DEX|INT|LUK|Max HP|All Stats): \+(\d+)(%)?$/;
+const FAMILIAR_LINE_STAT_IDS: Record<string, FamiliarBonusStatId[]> = {
+  STR: ["str"], DEX: ["dex"], INT: ["int"], LUK: ["luk"],
+  "Max HP": ["hp"],
+  "All Stats": ["str", "dex", "int", "luk"],
+};
+
+function addFamiliarLine(bonuses: FamiliarBonusMap, line: string): void {
+  const match = FAMILIAR_LINE_PATTERN.exec(line);
+  if (!match) return;
+  const [, label, amount, isPercent] = match;
+  const value = Number(amount);
+  for (const id of FAMILIAR_LINE_STAT_IDS[label]) {
+    if (isPercent) bonuses[id].percent += value;
+    else bonuses[id].flat += value;
+  }
+}
+
+export function familiarStatBonuses(data: { presets: { familiars: { line1: string; line2: string }[] }[]; activePreset: number } | undefined): FamiliarBonusMap {
+  const bonuses = emptyFamiliarBonusMap();
+  const preset = data?.presets?.[data.activePreset];
+  if (!preset) return bonuses;
+  for (const slot of preset.familiars) {
+    addFamiliarLine(bonuses, slot.line1);
+    addFamiliarLine(bonuses, slot.line2);
+  }
+  return bonuses;
+}

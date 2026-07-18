@@ -162,8 +162,11 @@ const HERO_ECHO_SKILL_MAP: Partial<Record<string, string>> = {
   "Kaiser": "60001005", "Angelic Buster": "60001005", "Cadena": "60001005", "Kain": "60001005",
   // Flora — Exclusive Spell (each class has a distinct icon)
   "Illium": "150001005", "Ark": "150011005", "Adele": "150021005", "Khali": "150031005",
-  // Anima — Exclusive Spell (shared icon across branch)
-  "Hoyoung": "160001005", "Lara": "160001005", "Ren": "160001005",
+  // Anima — Exclusive Spell. Hoyoung and Lara share one generic icon (maplestorywiki's own
+  // Exclusive Spell page shows a single "(Anima)" file used for both); only Ren has her own
+  // distinct icon (own "(Ren)" file), confirmed via her skills page 2026-07-18 — her flavor
+  // skills ("Return (Ren)", "Grounded Body") sit in the 160020xxx block, giving 160021005.
+  "Hoyoung": "160001005", "Lara": "160001005", "Ren": "160021005",
   // Jianghu
   "Mo Xuan": "170001005",
   // Shine (shared "Stellar Equalize" icon)

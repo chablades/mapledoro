@@ -11,13 +11,17 @@ import { readCharacterToolData } from "../../../tools/characterToolStorage";
 import { resolveClassId, getClassSetupOverrides } from "../../setup/data/nexonJobMapping";
 import { CLASS_SKILL_DATA } from "../../setup/data/classSkillData";
 import { resourceImageUrl } from "../../../../lib/mapleResource";
-import type { StoredCharacterEquipment, StoredCharacterRecord, StoredHyperStat, StoredInnerAbility, StoredIATier, StoredTripleStatField } from "../../model/charactersStore";
+import type { StoredCharacterEquipment, StoredCharacterRecord, StoredCharacterStats, StoredHyperStat, StoredInnerAbility, StoredIATier, StoredTripleStatField } from "../../model/charactersStore";
 import { SetupFlowButtons } from "./QuickSetupIntroScreen";
 import { STAT_LABELS } from "../../setup/data/statFields";
 import { HYPER_STAT_CATEGORIES, type HyperStatCategoryDef } from "../../setup/data/hyperStatData";
 import { isHyperStatEligible, isArcaneEligible, isSacredEligible, HYPER_STAT_LEVEL, ARCANE_POWER_LEVEL, SACRED_POWER_LEVEL } from "../../setup/data/statsStepDraft";
 import { IA_TIER_LABELS } from "../../setup/data/innerAbilityData";
-import { TIER_COLORS as IA_TIER_COLORS } from "../../setup/data/familiarsData";
+import { resolveFinalDamagePercent } from "../../setup/data/finalDamageData";
+import { computeDamageRange } from "../../setup/data/damageRangeData";
+import { resolveComboOrdersTier, type ComboOrdersTier } from "../../setup/data/comboOrdersData";
+import { isRebootWorld, rebootFinalDamageBonusPercent } from "../../setup/data/rebootData";
+import { TIER_COLORS as IA_TIER_COLORS, familiarStatBonuses, type FamiliarStatBonus } from "../../setup/data/familiarsData";
 import { statusText } from "../../../../components/statusColors";
 import InfoTooltip, { type TooltipContent } from "../../setup/components/InfoTooltip";
 
@@ -453,18 +457,24 @@ function MarriageIcon({ married }: { married: boolean }) {
 }
 
 const RAW_VALUE_STAT_LABELS = new Set(["arcanePower", "sacredPower"]);
+// Mirrors StatsSetupStep.tsx's NO_DECIMAL_STAT_IDS — these 3 combat stats are always whole
+// numbers in-game, unlike Boss Damage/Crit Damage/Ignore DEF/etc. which commonly carry 2 decimal
+// places. Without this, display consistency depends on whether the player happened to type
+// trailing zeros during setup (e.g. "82" vs "82.00" for the exact same in-game value).
+const NO_DECIMAL_STAT_LABELS = new Set(["summonDuration", "buffDuration", "criticalRate"]);
 
 function pctStat(raw: string | undefined, id: string): string {
   if (!raw) return "—";
-  return RAW_VALUE_STAT_LABELS.has(id) ? raw : `${raw}%`;
+  if (RAW_VALUE_STAT_LABELS.has(id)) return raw;
+  if (NO_DECIMAL_STAT_LABELS.has(id)) return `${raw}%`;
+  const numeric = Number(raw);
+  return Number.isFinite(numeric) ? `${numeric.toFixed(2)}%` : `${raw}%`;
 }
 
 // MapleStory's own final-stat formula (confirmed against Yuki's in-game tooltips):
 // floor(Base Value × (1 + % Value/100)) + % Value Not Applied. The 3 inputs are exactly
 // what the Character Info window's [Applied Value] breakdown shows per stat — except that
-// window never itemizes familiar stat lines at all (confirmed: a flat "DEX: +24" and a
-// percent "INT: +6%" familiar line both reproduced an otherwise-unexplained gap exactly
-// when folded into base/percent here), so those need adding back in separately.
+// window never itemizes familiar stat lines at all, see familiarStatBonuses in familiarsData.ts.
 function tripleStatTotal(field: StoredTripleStatField | undefined, familiarBonus?: FamiliarStatBonus): string {
   if (!field?.base) return "—";
   const base = (Number(field.base) || 0) + (familiarBonus?.flat ?? 0);
@@ -474,59 +484,40 @@ function tripleStatTotal(field: StoredTripleStatField | undefined, familiarBonus
   return total.toLocaleString("en-US");
 }
 
-interface FamiliarStatBonus { flat: number; percent: number }
-// Attack Power/Magic ATT deliberately excluded — folding a familiar's ATT line into base/
-// percent the same way as the main stats made Fuwaki's Attack Power/Magic ATT come out
-// wrong (confirmed live), unlike STR/DEX/INT/LUK/HP where it reproduced the real value
-// exactly. Whatever the game does with a familiar's ATT bonus, it isn't this.
-type FamiliarBonusStatId = "hp" | "str" | "dex" | "int" | "luk";
-type FamiliarBonusMap = Record<FamiliarBonusStatId, FamiliarStatBonus>;
-
-function emptyFamiliarBonusMap(): FamiliarBonusMap {
-  return {
-    hp: { flat: 0, percent: 0 }, str: { flat: 0, percent: 0 }, dex: { flat: 0, percent: 0 },
-    int: { flat: 0, percent: 0 }, luk: { flat: 0, percent: 0 },
-  };
-}
-
-// Familiar lines are picked from a fixed, closed list per tier (LINES_BY_TIER in
-// familiarsData.ts), always in this "Label: +N" or "Label: +N%" shape — not free text,
-// so this is a reliable parse, not a guess. "All Stats" only ever means STR/DEX/INT/LUK
-// (matches strategywiki's own "All Stats % ... same as STR%, DEX%, INT% and LUK%" note),
-// never HP/ATT/MATT. Attack Power/Magic ATT lines are intentionally not mapped here.
-const FAMILIAR_LINE_PATTERN = /^(STR|DEX|INT|LUK|Max HP|All Stats): \+(\d+)(%)?$/;
-const FAMILIAR_LINE_STAT_IDS: Record<string, FamiliarBonusStatId[]> = {
-  STR: ["str"], DEX: ["dex"], INT: ["int"], LUK: ["luk"],
-  "Max HP": ["hp"],
-  "All Stats": ["str", "dex", "int", "luk"],
-};
-
-function addFamiliarLine(bonuses: FamiliarBonusMap, line: string): void {
-  const match = FAMILIAR_LINE_PATTERN.exec(line);
-  if (!match) return;
-  const [, label, amount, isPercent] = match;
-  const value = Number(amount);
-  for (const id of FAMILIAR_LINE_STAT_IDS[label]) {
-    if (isPercent) bonuses[id].percent += value;
-    else bonuses[id].flat += value;
-  }
-}
-
-function familiarStatBonuses(character: StoredCharacterRecord | null): FamiliarBonusMap {
-  const bonuses = emptyFamiliarBonusMap();
-  const data = character?.familiars;
-  const preset = data?.presets?.[data.activePreset];
-  if (!preset) return bonuses;
-  for (const slot of preset.familiars) {
-    addFamiliarLine(bonuses, slot.line1);
-    addFamiliarLine(bonuses, slot.line2);
-  }
-  return bonuses;
-}
-
 function cooldownReductionValue(cr: { seconds: string; percent: string } | undefined): string {
   if (!cr?.seconds && !cr?.percent) return "—";
   return `${cr.seconds || "0"} sec / ${cr.percent || "0"}%`;
+}
+
+// classId is undefined for an unresolved jobName; resolveFinalDamagePercent itself returns
+// undefined for legacy classes, which never got a verified baseline (see finalDamageData.ts).
+function finalDamageDisplay(
+  classId: string | undefined,
+  isLiberated: boolean | null | undefined,
+  tier: ComboOrdersTier,
+  level: number | undefined,
+  worldId: number | undefined,
+): string {
+  const rebootBonusPercent = level !== undefined && isRebootWorld(worldId) ? rebootFinalDamageBonusPercent(level) : 0;
+  const percent = resolveFinalDamagePercent(classId, isLiberated ?? undefined, tier, rebootBonusPercent);
+  return percent === undefined ? "—" : `${percent.toFixed(2)}%`;
+}
+
+// computeDamageRange returns undefined for legacy classes, Zero/Demon Avenger's unhandled
+// sub-cases, or a character missing stats — same "—" treatment as every other unavailable cell.
+function damageRangeDisplay(
+  classId: string | undefined,
+  level: number | undefined,
+  weaponHand: "1h" | "2h" | null | undefined,
+  isLiberated: boolean | null | undefined,
+  stats: StoredCharacterStats | undefined,
+  tier: ComboOrdersTier,
+  familiars: StoredCharacterRecord["familiars"] | undefined,
+  worldId: number | undefined,
+): string {
+  const result = computeDamageRange(classId, level, weaponHand ?? undefined, isLiberated, stats, tier, familiars, worldId);
+  if (!result) return "—";
+  return `${result.lower.toLocaleString("en-US")} ~ ${result.upper.toLocaleString("en-US")}`;
 }
 
 const statGridStyle: CSSProperties = { display: "grid", gridTemplateColumns: "1fr 1fr", columnGap: 16 };
@@ -592,6 +583,13 @@ const COMBAT_STATS_INFO: TooltipContent = {
   description: (
     <>
       There may be a slight discrepancy in Attack Power and Magic ATT&apos;s calculated value.
+      <br />
+      <br />
+      Final Damage is calculated from your class&apos;s always-on skills, Genesis Liberation status,
+      Decent Combat Orders (assumed active per your class&apos;s buff guide, plus Passive Skills +1
+      if your Inner Ability has it), and your world&apos;s Reboot bonus if applicable. It doesn&apos;t
+      account for other temporary buffs. Damage Range uses the same Final Damage and Mastery figures,
+      so it carries the same caveat. Neither is available for legacy (pre-revamp) classes.
       <br />
       <br />
       Formula used:
@@ -820,7 +818,8 @@ function StatsBookmark({
   const classId = character ? resolveClassId(character.jobName) : undefined;
   const classData = classId ? CLASS_SKILL_DATA.find((c) => c.id === classId) : undefined;
   const resourceLabel = classData?.resourceLabel ?? "MP";
-  const familiarBonus = familiarStatBonuses(character);
+  const familiarBonus = familiarStatBonuses(character?.familiars);
+  const comboOrdersTier = resolveComboOrdersTier(classId, s?.innerAbility, character?.scouter?.innerAbilityLine);
 
   // Order mirrors the in-game Character Info window, row by row (left column then right column).
   const primaryCells: { label: string; value: string }[] = [
@@ -833,9 +832,9 @@ function StatsBookmark({
   ];
 
   const combatCells: { label: string; value: string }[] = [
-    { label: "Damage Range", value: notCollected },
+    { label: "Damage Range", value: damageRangeDisplay(classId, character?.level, character?.weaponHand, character?.isLiberated, s, comboOrdersTier, character?.familiars, character?.worldId) },
     { label: STAT_LABELS.damage ?? "Damage", value: pctStat(s?.damage, "damage") },
-    { label: "Final Damage", value: notCollected },
+    { label: "Final Damage", value: finalDamageDisplay(classId, character?.isLiberated, comboOrdersTier, character?.level, character?.worldId) },
     { label: STAT_LABELS.bossDamage ?? "Boss Damage", value: pctStat(s?.bossDamage, "bossDamage") },
     { label: STAT_LABELS.ignoreDefense ?? "Ignore DEF", value: pctStat(s?.ignoreDefense, "ignoreDefense") },
     { label: STAT_LABELS.normalEnemyDamage ?? "Normal Enemy Damage", value: pctStat(s?.normalEnemyDamage, "normalEnemyDamage") },
