@@ -1469,7 +1469,7 @@ export default function StatsSetupStep({
   // mount-time report would mean lifting substep into a value the parent controls
   // directly, which isn't worth the blast radius for a bookkeeping report that never
   // causes a visible re-render.
-  // react-doctor-disable-next-line no-prop-callback-in-effect, no-pass-live-state-to-parent
+  // react-doctor-disable-next-line no-prop-callback-in-effect, no-pass-live-state-to-parent, react-doctor/no-pass-data-to-parent
   useEffect(() => { onSubstepChange?.(substep); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const [substepDirection, setSubstepDirection] = useState<"forward" | "backward">("forward");
   const [hasSubstepSwitched, setHasSubstepSwitched] = useState(false);

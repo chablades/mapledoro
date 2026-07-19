@@ -11,6 +11,14 @@ interface SetupIntroScreenProps {
   actions: PreviewPaneActions;
 }
 
+interface SetupFlowButtonsProps extends SetupIntroScreenProps {
+  /** True when reused from the profile's "Setup" bookmark rather than the first-run
+   *  intro screen — the character already exists, so the "Skip setup, add character
+   *  and go to profile" copy/action (for classes with nothing for Quick Setup to ask,
+   *  e.g. Zero) doesn't apply and the whole Quick Setup entry is hidden instead. */
+  isProfileBookmark?: boolean;
+}
+
 function skipButtonStyle(theme: AppTheme, disabled: boolean): CSSProperties {
   return {
     position: "absolute",
@@ -29,7 +37,7 @@ function skipButtonStyle(theme: AppTheme, disabled: boolean): CSSProperties {
 
 /** The Quick/MapleScouter/Full setup flow picker — shared between the first-run intro
  *  screen and the profile binder's "Setup" bookmark (re-entering setup later). */
-export function SetupFlowButtons({ model, actions }: SetupIntroScreenProps) {
+export function SetupFlowButtons({ model, actions, isProfileBookmark }: SetupFlowButtonsProps) {
   const { theme, setup } = model;
   const jobName = model.profile.confirmedCharacter?.jobName ?? "";
   const overrides = getClassSetupOverrides(jobName);
@@ -43,10 +51,14 @@ export function SetupFlowButtons({ model, actions }: SetupIntroScreenProps) {
   let quickSetupSubtitle = "Gender & marriage only";
   if (genderSkipped) quickSetupSubtitle = "Marriage only";
   else if (overrides.skipMarriage) quickSetupSubtitle = "Gender only";
+  // In the profile's Setup bookmark, the character already exists — there's nothing
+  // for Quick Setup to do for a quickSetupAllSkipped class (e.g. Zero), so the entry
+  // is hidden entirely rather than showing the intro screen's "add character" copy.
+  const hideQuickSetup = quickSetupAllSkipped && isProfileBookmark;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>
-      {quickSetupAllSkipped ? (
+      {quickSetupAllSkipped && !hideQuickSetup && (
         <>
           <p style={{ margin: 0, fontSize: "0.85rem", color: theme.muted, fontWeight: 700 }}>
             This character has no gender or marriage to configure.
@@ -69,7 +81,8 @@ export function SetupFlowButtons({ model, actions }: SetupIntroScreenProps) {
             </span>
           </button>
         </>
-      ) : (
+      )}
+      {!quickSetupAllSkipped && (
         <button
           type="button"
           disabled={setup.isUiLocked}

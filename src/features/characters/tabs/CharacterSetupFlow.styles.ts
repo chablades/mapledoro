@@ -739,6 +739,20 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
           animation: profile-page-reveal 0.2s ease-out both;
         }
 
+        /* Combat/Basic Stats' label+value pairs — side by side on desktop (plenty of room for
+           even a long "15,069,287"), stacked on mobile (see mobile override below) where the
+           2-column stat grid leaves too little width per value for that to keep fitting. */
+        .summary-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: baseline;
+          gap: 10px;
+        }
+
+        .summary-row-value {
+          text-align: right;
+        }
+
         @media (prefers-reduced-motion: reduce) {
           .profile-bookmark-tab,
           .profile-binder-page-content {
@@ -783,6 +797,16 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
 
           .profile-binder-page {
             padding: 0.9rem 1rem;
+          }
+
+          .summary-row {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 2px;
+          }
+
+          .summary-row-value {
+            align-self: flex-end;
           }
         }
   `;

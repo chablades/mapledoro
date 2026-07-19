@@ -1,7 +1,7 @@
 import Image from "next/image";
 import katex from "katex";
 import "katex/dist/katex.min.css";
-import { useMemo, useRef, useState, useSyncExternalStore, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
+import { Fragment, useMemo, useRef, useState, useSyncExternalStore, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
 import type { SetupFlowId } from "../../setup/flows";
 import type { SetupStepId } from "../../setup/steps";
 import type { PreviewPaneActions, PreviewPaneModel } from "../paneModels";
@@ -252,11 +252,34 @@ function BiographyPanel({ theme, character, onEditStep, disabled }: {
 // `locked` marks a field that isn't obtainable yet at this character's level (e.g. Arcane
 // Power below Lv 200) — distinct from "eligible but not filled in" (notCollected's plain
 // "—"), so it dims the row instead of reading like an ordinary data-entry gap.
+// A long unbroken value (e.g. Damage Range's "15,069,287") has no spaces to wrap at, so it
+// spills into the next grid column instead of staying inside its own — overflowWrap:"anywhere"
+// fixed that but over-applied, forcing even short values like "115.00%" to wrap awkwardly
+// mid-string whenever their column got remotely tight. A <wbr/> after each comma group gives
+// the browser a break point only where a big number can naturally take one; short values with
+// no commas get no forced break point at all, so they render on one line exactly as before.
+function BreakableValue({ value }: { value: string }) {
+  const parts = value.split(",");
+  if (parts.length === 1) return <>{value}</>;
+  return (
+    <>
+      {parts.map((part, i) => (
+        <Fragment key={i}>
+          {part}
+          {i < parts.length - 1 && <>,<wbr /></>}
+        </Fragment>
+      ))}
+    </>
+  );
+}
+
 function SummaryRow({ label, value, theme, locked }: { label: string; value: string; theme: Theme; locked?: boolean }) {
   return (
-    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 10, padding: "6px 0", borderBottom: `1px solid ${theme.border}`, opacity: locked ? 0.55 : 1 }}>
+    <div className="summary-row" style={{ padding: "6px 0", borderBottom: `1px solid ${theme.border}`, opacity: locked ? 0.55 : 1 }}>
       <span style={{ fontSize: 12, color: theme.muted }}>{label}</span>
-      <span style={{ fontSize: 13, fontWeight: 700, color: theme.text, textAlign: "right" }}>{value}</span>
+      <span className="summary-row-value" style={{ fontSize: 13, fontWeight: 700, color: theme.text }}>
+        <BreakableValue value={value} />
+      </span>
     </div>
   );
 }
@@ -522,7 +545,10 @@ function damageRangeDisplay(
   return result.upper.toLocaleString("en-US");
 }
 
-const statGridStyle: CSSProperties = { display: "grid", gridTemplateColumns: "1fr 1fr", columnGap: 16 };
+// minmax(0, 1fr), not bare 1fr — a bare 1fr column refuses to shrink below its content's
+// natural width, so a long label/value SummaryRow pair could force this grid (and everything
+// clipped inside .profile-binder's overflow:hidden) wider than the available space.
+const statGridStyle: CSSProperties = { display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)", columnGap: 16 };
 
 const statBlockLabelStyle: CSSProperties = { fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10 };
 
@@ -580,25 +606,33 @@ const BASIC_STATS_INFO: TooltipContent = {
     </>
   ),
 };
-const COMBAT_STATS_INFO: TooltipContent = {
-  title: "Combat Stats",
-  description: (
-    <>
-      There may be a slight discrepancy in Attack Power and Magic ATT&apos;s calculated value.
-      <br />
-      <br />
-      Final Damage is calculated from your class&apos;s always-on skills, Genesis Liberation status,
-      Decent Combat Orders (assumed active per your class&apos;s buff guide, plus Passive Skills +1
-      if your Inner Ability has it), and your world&apos;s Reboot bonus if applicable. It doesn&apos;t
-      account for other temporary buffs. Damage Range uses the same Final Damage and Mastery figures,
-      so it carries the same caveat. Neither is available for legacy (pre-revamp) classes.
-      <br />
-      <br />
-      Formula used:
-      <Formula tex={COMBAT_STATS_FORMULA_TEX} />
-    </>
-  ),
-};
+// Paladin's buff guide requires the single higher-tier "Combat Orders" (every other class
+// requires "Decent Combat Orders"), so the label can't be one static string — see
+// comboOrdersData.ts's resolveComboOrdersTier.
+function combatStatsInfo(classId: string | undefined): TooltipContent {
+  const comboOrdersLabel = classId === "paladin"
+    ? "Combat Orders"
+    : "Decent Combat Orders and/or Passive Skills +1 Inner Ability";
+  return {
+    title: "Combat Stats",
+    description: (
+      <>
+        There may be a slight discrepancy in Attack Power, Magic ATT, and Damage Range&apos;s calculated value.
+        <br />
+        <br />
+        Final Damage is calculated from your class&apos;s passive skills with {comboOrdersLabel} active,
+        plus a bonus if your world is Reboot. Not available for legacy classes.
+        <br />
+        <br />
+        Formula used (ATT):
+        <Formula tex={COMBAT_STATS_FORMULA_TEX} />
+        <br />
+        Damage Range factors in your class&apos;s weapon multiplier and stat formula, then applies
+        DMG% and Final Damage% on top.
+      </>
+    ),
+  };
+}
 
 type StatsView = "stats" | "hyperStat" | "ability";
 
@@ -879,7 +913,7 @@ function StatsBookmark({
               ))}
             </div>
           </StatBlock>
-          <StatBlock label="Combat Stats" theme={theme} info={COMBAT_STATS_INFO}>
+          <StatBlock label="Combat Stats" theme={theme} info={combatStatsInfo(classId)}>
             <div style={statGridStyle}>
               {combatCells.map((c) => (
                 <SummaryRow key={c.label} label={c.label} value={c.value} theme={theme} />
@@ -1113,7 +1147,7 @@ function SetupBookmark({ model, actions }: { model: PreviewPaneModel; actions: P
       <p style={{ margin: 0, fontSize: 12, color: theme.muted, fontWeight: 700 }}>
         Re-run a whole setup flow for this character without starting over from the directory.
       </p>
-      <SetupFlowButtons model={model} actions={actions} />
+      <SetupFlowButtons model={model} actions={actions} isProfileBookmark />
     </div>
   );
 }

@@ -136,10 +136,12 @@ export function resolveLegionArtifacts(
 
 // ── Conversion ─────────────────────────────────────────────────────────────────
 
-/** Parses the weapon ATT/MATT field into a positive integer, or undefined if blank/invalid. */
+/** Parses the weapon ATT/MATT field into a non-negative integer, or undefined if blank/invalid. */
 export function parseWeaponAtt(raw: string | undefined): number | undefined {
-  const n = Number(raw?.trim());
-  return Number.isFinite(n) && n > 0 ? Math.floor(n) : undefined;
+  const trimmed = raw?.trim();
+  if (!trimmed) return undefined;
+  const n = Number(trimmed);
+  return Number.isFinite(n) && n >= 0 ? Math.floor(n) : undefined;
 }
 
 /** Pulls the per-character scouter inputs (Inner Ability line + weapon ATT) out of the stats draft. */

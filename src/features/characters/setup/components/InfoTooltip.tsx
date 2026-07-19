@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import type { CSSProperties, ReactNode } from "react";
 import Image from "next/image";
 import type { AppTheme } from "../../../../components/themes";
@@ -38,11 +39,15 @@ const infoButtonStyle = (theme: AppTheme, open: boolean): CSSProperties => ({
   transition: "color 0.1s, background 0.1s",
 });
 
-const infoPopupStyle = (theme: AppTheme, shiftX: number, openAbove: boolean): CSSProperties => ({
-  position: "absolute",
-  ...(openAbove ? { bottom: "calc(100% + 0.4rem)" } : { top: "calc(100% + 0.4rem)" }),
-  left: 0,
-  transform: shiftX ? `translateX(${shiftX}px)` : undefined,
+// Rendered via a portal straight to document.body (position: fixed, viewport coordinates) rather
+// than position: absolute within the page flow — any ancestor with overflow other than "visible"
+// (even just overflow-x, which silently forces overflow-y to "auto" too, see AppShell.tsx) turns
+// into an accidental clipping container for an absolutely-positioned popup. Fixed + portal sidesteps
+// the whole class of "which ancestor is clipping it this time" bugs instead of chasing each one.
+const infoPopupStyle = (theme: AppTheme, top: number, left: number): CSSProperties => ({
+  position: "fixed",
+  top,
+  left,
   zIndex: 200,
   background: theme.bg,
   border: `1px solid ${theme.border}`,
@@ -83,12 +88,27 @@ function TooltipImage({ src, scale = 1, offsetY = 0 }: { src: string; scale?: nu
   );
 }
 
+// 0.4rem gap between trigger and popup, matching the original CSS-based spacing — computed off
+// the root font-size rather than hardcoded 16px in case the user has browser text zoom active.
+function remToPx(rem: number): number {
+  if (typeof document === "undefined") return rem * 16;
+  return rem * parseFloat(getComputedStyle(document.documentElement).fontSize);
+}
+
 export default function InfoTooltip({ content, theme }: { content: TooltipContent; theme: AppTheme }) {
   const [open, setOpen] = useState(false);
-  const [shiftX, setShiftX] = useState(0);
-  const [openAbove, setOpenAbove] = useState(false);
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const popupRef = useRef<HTMLDivElement>(null);
+
+  function handleToggle() {
+    const next = !open;
+    if (next && containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      setPos({ top: rect.bottom + remToPx(0.4), left: rect.left });
+    }
+    setOpen(next);
+  }
 
   useEffect(() => {
     if (!open) return;
@@ -96,36 +116,51 @@ export default function InfoTooltip({ content, theme }: { content: TooltipConten
     const popup = popupRef.current;
     if (container && popup) {
       const margin = 8;
+      const gap = remToPx(0.4);
       const rect = container.getBoundingClientRect();
-      const naturalRight = rect.left + popup.offsetWidth;
-      setShiftX(naturalRight > window.innerWidth - margin ? window.innerWidth - margin - naturalRight : 0);
       // Flip above the trigger when there isn't enough room below in the viewport —
       // otherwise a tooltip opened near the bottom of a step forces the page to grow
       // to fit it, visibly pushing content past the footer.
       const spaceBelow = window.innerHeight - rect.bottom;
-      setOpenAbove(spaceBelow < popup.offsetHeight + margin && rect.top > spaceBelow);
+      const openAbove = spaceBelow < popup.offsetHeight + margin && rect.top > spaceBelow;
+      const top = openAbove ? rect.top - popup.offsetHeight - gap : rect.bottom + gap;
+      const naturalRight = rect.left + popup.offsetWidth;
+      let left = rect.left;
+      if (naturalRight > window.innerWidth - margin) left = window.innerWidth - margin - popup.offsetWidth;
+      if (left < margin) left = margin;
+      setPos({ top, left });
     }
     function handleMouseDown(e: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
+      const target = e.target as Node;
+      if (containerRef.current?.contains(target)) return;
+      if (popupRef.current?.contains(target)) return;
+      setOpen(false);
+    }
+    // Fixed positioning is computed once at open time, not tracked live — closing on scroll
+    // avoids the popup visibly detaching from its trigger as the page moves under it.
+    function handleScroll() {
+      setOpen(false);
     }
     document.addEventListener("mousedown", handleMouseDown);
-    return () => document.removeEventListener("mousedown", handleMouseDown);
+    window.addEventListener("scroll", handleScroll, true);
+    return () => {
+      document.removeEventListener("mousedown", handleMouseDown);
+      window.removeEventListener("scroll", handleScroll, true);
+    };
   }, [open]);
 
   return (
     <div ref={containerRef} style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
       <button
         type="button"
-        onClick={() => setOpen((o) => !o)}
+        onClick={handleToggle}
         aria-label="More information"
         style={infoButtonStyle(theme, open)}
       >
         ?
       </button>
-      {open && (
-        <div ref={popupRef} style={infoPopupStyle(theme, shiftX, openAbove)}>
+      {open && pos && typeof document !== "undefined" && createPortal(
+        <div ref={popupRef} style={infoPopupStyle(theme, pos.top, pos.left)}>
           {content.imageUrls && content.imageUrls.length > 0 && (
             <div style={{ display: "flex", gap: "0.35rem", marginBottom: "0.4rem" }}>
               {content.imageUrls.map((entry) => {
@@ -150,7 +185,8 @@ export default function InfoTooltip({ content, theme }: { content: TooltipConten
               {content.link.label} →
             </a>
           )}
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   );
