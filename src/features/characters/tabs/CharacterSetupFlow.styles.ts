@@ -753,6 +753,17 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
           text-align: right;
         }
 
+        /* Gear bookmark's "Titles, Totems & Symbols" nav button — full label on desktop,
+           a shorter one on mobile (see mobile override below) so it fits on one line instead
+           of wrapping and blowing up the button's height next to its "Pets"/"Gear" sibling. */
+        .equipment-action-label-full {
+          display: inline;
+        }
+
+        .equipment-action-label-short {
+          display: none;
+        }
+
         @media (prefers-reduced-motion: reduce) {
           .profile-bookmark-tab,
           .profile-binder-page-content {
@@ -807,6 +818,14 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
 
           .summary-row-value {
             align-self: flex-end;
+          }
+
+          .equipment-action-label-full {
+            display: none;
+          }
+
+          .equipment-action-label-short {
+            display: inline;
           }
         }
   `;

@@ -5,6 +5,8 @@
   flags non-component exports living in a component file.
 */
 
+import type { CSSProperties } from "react";
+import type { AppTheme } from "../../../../components/themes";
 import type { StoredCharacterEquipment, StoredEquipmentItem, StoredEquipmentPreset } from "../../model/charactersStore";
 import type { SymbolState } from "../../../tools/symbols/useSymbolState";
 
@@ -59,12 +61,14 @@ export function serializeEquipmentStepDraft(draft: EquipmentDraft): string {
   return JSON.stringify(draft);
 }
 
-function toDraftItem(item: StoredEquipmentItem | null): EquipmentItem | null {
+export function toDraftItem(item: StoredEquipmentItem | null): EquipmentItem | null {
   if (!item) return null;
   return { id: item.id ?? "", name: item.name };
 }
 
-function storedPresetToDraft(preset: StoredEquipmentPreset): SlotMap {
+/** Converts a stored equipment preset (grid slots) into the draft's SlotMap shape — shared
+ *  by the setup step's own backfill (below) and the profile Gear bookmark's read view. */
+export function storedPresetToDraft(preset: StoredEquipmentPreset): SlotMap {
   return {
     ring1: toDraftItem(preset.rings[0]), ring2: toDraftItem(preset.rings[1]),
     ring3: toDraftItem(preset.rings[2]), ring4: toDraftItem(preset.rings[3]),
@@ -122,3 +126,59 @@ export function storedEquipmentToDraft(
     ...(weaponAtt !== undefined ? { weaponAtt: String(weaponAtt) } : {}),
   };
 }
+
+// ── Equipment grid layout constants + shared tile/nav styles ────────────────
+// Also pulled out of EquipmentSetupStep.tsx for the same only-export-components reason as
+// the rest of this file — these are plain data/style values shared with the profile Gear
+// bookmark (CharacterProfileOverviewScreen.tsx), not component-local.
+
+export const SLOT_LABELS: Record<SlotKey, string> = {
+  ring1: "Ring", ring2: "Ring", ring3: "Ring", ring4: "Ring",
+  face: "Face", eye: "Eye", earring: "Earring",
+  pendant1: "Pendant", pendant2: "Pendant",
+  belt: "Belt", pocket: "Pocket",
+  hat: "Hat", cape: "Cape", top: "Top",
+  glove: "Gloves", bottom: "Bottom", shoe: "Shoes",
+  shoulder: "Shoulder", medal: "Medal",
+  weapon: "Weapon", secondary: "Secondary", emblem: "Emblem",
+  android: "Android", heart: "Heart", badge: "Badge", title: "Title",
+  totem1: "Totem", totem2: "Totem", totem3: "Totem",
+  pet1: "Pet", pet2: "Pet", pet3: "Pet",
+  petEquip1: "Pet Equip", petEquip2: "Pet Equip", petEquip3: "Pet Equip",
+};
+
+export const SLOT_SIZE = 68;
+// Center block spans weapon + secondary + emblem columns
+export const CENTER_WIDTH = 3 * SLOT_SIZE + 2 * 4;
+export const SYMBOL_TILE_SIZE = 74;
+// Labels for the mobile equipment-grid carousel (one section visible at a time)
+export const EQUIPMENT_PAGE_LABELS = ["Accessories", "Weapon", "Armor"];
+
+// Equipment grid column layouts (static slot key lists).
+export const COL1_SLOTS: SlotKey[] = ["ring1", "ring2", "ring3", "ring4", "belt", "pocket"];
+export const COL2_SLOTS: SlotKey[] = ["face", "eye", "earring", "pendant1", "pendant2"];
+export const COL6_SLOTS: SlotKey[] = ["hat", "top", "bottom", "shoulder", "android"];
+export const COL7_SLOTS: SlotKey[] = ["cape", "glove", "shoe", "medal", "heart", "badge"];
+export const CENTER_BOTTOM_SLOTS: SlotKey[] = ["weapon", "secondary", "emblem"];
+
+export const slotCellStyle = (theme: AppTheme, isActive: boolean): CSSProperties => ({
+  width: SLOT_SIZE, height: SLOT_SIZE,
+  border: `1px solid ${isActive ? theme.accent : theme.border}`,
+  borderRadius: 8,
+  background: isActive ? `${theme.accent}15` : theme.bg,
+  display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+  gap: 2, cursor: "pointer",
+  outline: "2px solid transparent", outlineOffset: 2,
+  transition: "border-color 0.15s, background 0.15s",
+  overflow: "hidden", padding: "2px 3px", boxSizing: "border-box",
+  font: "inherit", textAlign: "inherit",
+});
+
+export const navBtnStyle = (theme: AppTheme): CSSProperties => ({
+  border: `1px solid ${theme.border}`,
+  borderRadius: 8,
+  background: theme.bg,
+  color: theme.text,
+  fontFamily: "inherit", fontWeight: 800, fontSize: "1.5rem",
+  width: 44, height: 48, cursor: "pointer",
+});

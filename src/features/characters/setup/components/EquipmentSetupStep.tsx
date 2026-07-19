@@ -23,6 +23,9 @@ import { branchMaskForClass, weaponPrefixesForClass, secondarySpecForClass, isSh
 import { readCharactersStore, selectCharacterByIgn } from "../../model/charactersStore";
 import {
   isSharedSlot, sameItem, parseEquipmentStepDraft, serializeEquipmentStepDraft, storedEquipmentToDraft,
+  SLOT_LABELS, SLOT_SIZE, CENTER_WIDTH, SYMBOL_TILE_SIZE, EQUIPMENT_PAGE_LABELS,
+  COL1_SLOTS, COL2_SLOTS, COL6_SLOTS, COL7_SLOTS, CENTER_BOTTOM_SLOTS,
+  slotCellStyle, navBtnStyle,
   type SlotKey, type SharedSlotKey, type SlotMap, type EquipmentItem, type EquipmentDraft,
 } from "../data/equipmentStepDraft";
 import { InputWarningBubble } from "./QuestionControls";
@@ -68,6 +71,10 @@ interface EquipmentSetupStepProps {
   totalSteps: number;
   direction?: "forward" | "backward";
   targetSubstep?: number | null;
+  /** When true, targetSubstep is the substep opened from a profile bookmark's edit
+   *  pencil — it should present as if it were this step's only substep, mirroring
+   *  StatsSetupStep's own confineToSubstep prop. */
+  confineToSubstep?: boolean;
   onSubstepChange?: (substepIndex: number) => void;
   jobName?: string;
   characterLevel?: number;
@@ -81,21 +88,8 @@ interface EquipmentSetupStepProps {
 }
 
 // ── Constants ──────────────────────────────────────────────────────────────
-
-const SLOT_LABELS: Record<SlotKey, string> = {
-  ring1: "Ring", ring2: "Ring", ring3: "Ring", ring4: "Ring",
-  face: "Face", eye: "Eye", earring: "Earring",
-  pendant1: "Pendant", pendant2: "Pendant",
-  belt: "Belt", pocket: "Pocket",
-  hat: "Hat", cape: "Cape", top: "Top",
-  glove: "Gloves", bottom: "Bottom", shoe: "Shoes",
-  shoulder: "Shoulder", medal: "Medal",
-  weapon: "Weapon", secondary: "Secondary", emblem: "Emblem",
-  android: "Android", heart: "Heart", badge: "Badge", title: "Title",
-  totem1: "Totem", totem2: "Totem", totem3: "Totem",
-  pet1: "Pet", pet2: "Pet", pet3: "Pet",
-  petEquip1: "Pet Equip", petEquip2: "Pet Equip", petEquip3: "Pet Equip",
-};
+// SLOT_LABELS, sizing/layout constants, and the shared tile/nav styles live in
+// equipmentStepDraft.ts (react-doctor's only-export-components rule), imported above.
 
 const SLOT_DATA_FILE: Record<SlotKey, string> = {
   ring1: "ring", ring2: "ring", ring3: "ring", ring4: "ring",
@@ -117,23 +111,10 @@ const SYMBOL_TABS: { key: SymbolTabKey; label: string }[] = [
   { key: "sacred", label: "Sacred" },
 ];
 
-const SLOT_SIZE = 68;
 const SEARCH_LIMIT = 60;
-// Center block spans weapon + secondary + emblem columns
-const CENTER_WIDTH = 3 * SLOT_SIZE + 2 * 4;
-const SYMBOL_TILE_SIZE = 74;
 // A symbol group's 3-column tile grid — used to align its Max All/Clear header to the
 // same width so those buttons can right-align against the actual last tile.
 const SYMBOL_GRID_WIDTH = 3 * SYMBOL_TILE_SIZE + 2 * 4;
-// Labels for the mobile equipment-grid carousel (one section visible at a time)
-const EQUIPMENT_PAGE_LABELS = ["Accessories", "Weapon", "Armor"];
-
-// Equipment grid column layouts (static slot key lists).
-const COL1_SLOTS: SlotKey[] = ["ring1", "ring2", "ring3", "ring4", "belt", "pocket"];
-const COL2_SLOTS: SlotKey[] = ["face", "eye", "earring", "pendant1", "pendant2"];
-const COL6_SLOTS: SlotKey[] = ["hat", "top", "bottom", "shoulder", "android"];
-const COL7_SLOTS: SlotKey[] = ["cape", "glove", "shoe", "medal", "heart", "badge"];
-const CENTER_BOTTOM_SLOTS: SlotKey[] = ["weapon", "secondary", "emblem"];
 
 // Reading-order chain for the main equipment grid (confirmed with Yuki, 2026-07-08): top to
 // bottom within each column, then the top of the next column, following the grid's own
@@ -205,19 +186,6 @@ const pickerItemStyle = (theme: AppTheme, isCurrent: boolean, isHighlighted: boo
   fontSize: "0.8rem", fontWeight: 600, color: theme.text, textAlign: "left",
 });
 
-const slotCellStyle = (theme: AppTheme, isActive: boolean): CSSProperties => ({
-  width: SLOT_SIZE, height: SLOT_SIZE,
-  border: `1px solid ${isActive ? theme.accent : theme.border}`,
-  borderRadius: 8,
-  background: isActive ? `${theme.accent}15` : theme.bg,
-  display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-  gap: 2, cursor: "pointer",
-  outline: "2px solid transparent", outlineOffset: 2,
-  transition: "border-color 0.15s, background 0.15s",
-  overflow: "hidden", padding: "2px 3px", boxSizing: "border-box",
-  font: "inherit", textAlign: "inherit",
-});
-
 const presetButtonStyle = (theme: AppTheme, on: boolean): CSSProperties => ({
   border: `1px solid ${on ? theme.accent : theme.border}`,
   borderRadius: 8,
@@ -237,6 +205,20 @@ const symbolTileStyle = (theme: AppTheme, placed: boolean): CSSProperties => ({
   border: `1px solid ${placed ? theme.accent : theme.border}`,
   borderRadius: 8,
   background: placed ? `${theme.accent}15` : theme.bg,
+  display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
+  padding: "8px 9px", boxSizing: "border-box",
+});
+
+// Read-only counterpart: no accent highlight, since there's nothing being "selected" on a
+// display-only tile — placed-vs-unplaced already reads from the icon's own opacity/grayscale.
+// Locked gets a dashed border on top of that (mirrors iaLineChipStyle's own dashed-when-unset
+// convention) so it doesn't just look like an emptier version of "unlocked but 0" — it reads
+// as a different kind of empty.
+const readOnlySymbolTileStyle = (theme: AppTheme, locked?: boolean): CSSProperties => ({
+  width: SYMBOL_TILE_SIZE, flexShrink: 0,
+  border: locked ? `1px dashed ${theme.border}` : `1px solid ${theme.border}`,
+  borderRadius: 8,
+  background: theme.bg,
   display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
   padding: "8px 9px", boxSizing: "border-box",
 });
@@ -719,6 +701,61 @@ function SlotCell({ slotKey, item, theme, isActive, onClick, picker }: {
   );
 }
 
+/** Read-only counterpart to SlotCell for the profile Gear bookmark — same icon/empty-label
+ *  box and sizing (slotCellStyle/SLOT_SIZE), but no button semantics, hover-swap, or picker
+ *  portal, since nothing here is clickable. */
+export function ReadOnlySlotTile({ slotKey, item, theme }: {
+  slotKey: SlotKey;
+  item: EquipmentItem | null | undefined;
+  theme: AppTheme;
+}) {
+  const box = (
+    <div style={{ ...slotCellStyle(theme, false), cursor: "default", width: SLOT_SIZE, flexShrink: 0 }}>
+      {item ? (
+        <ItemIcon id={item.id} size={48} revealed={slotKey === "android"} />
+      ) : (
+        <span style={{ fontSize: "0.75rem", color: theme.muted, fontWeight: 700, lineHeight: 1.2, textAlign: "center", whiteSpace: "nowrap", overflow: "hidden" }}>
+          {SLOT_LABELS[slotKey]}
+        </span>
+      )}
+    </div>
+  );
+  return item ? <HoverTooltip label={item.name} theme={theme}>{box}</HoverTooltip> : box;
+}
+
+/** Read-only counterpart to SymbolLevelTile for the profile Gear bookmark — same icon tile,
+ *  but the level renders as plain text instead of an input. Three visually distinct states:
+ *  placed (leveled, full color), unlocked-but-unleveled (lightly dimmed, still a normal solid
+ *  border — it's available, just empty), and `locked` (character hasn't reached this area's
+ *  required level yet — heavily dimmed + grayscale + dashed border + the unlock level instead
+ *  of a real always-0 level), so a locked area reads as "not unlocked yet" rather than either
+ *  "bugged" or "just an emptier version of unleveled." */
+function symbolTileIconOpacity(locked: boolean | undefined, placed: boolean): number {
+  if (locked) return 0.3;
+  return placed ? 1 : 0.6;
+}
+
+export function ReadOnlySymbolTile({ area, level, theme, locked }: {
+  area: SymbolArea;
+  level: number;
+  theme: AppTheme;
+  locked?: boolean;
+}) {
+  const placed = !locked && level >= 1;
+  const label = locked ? `Lv. ${area.requiredLevel}+` : `Lv. ${level}`;
+  const iconOpacity = symbolTileIconOpacity(locked, placed);
+  return (
+    <HoverTooltip label={area.name} theme={theme}>
+      <div style={readOnlySymbolTileStyle(theme, locked)}>
+        <div style={{ opacity: iconOpacity, filter: locked ? "grayscale(1)" : "none", lineHeight: 0 }}>
+          <ItemIcon id={area.itemId} size={32} />
+        </div>
+        <span style={{ fontFamily: "inherit", fontWeight: 700, fontSize: "0.8rem", color: placed ? theme.text : theme.muted }}>{label}</span>
+      </div>
+    </HoverTooltip>
+  );
+}
+
 // ── Column helper ──────────────────────────────────────────────────────────
 
 function SlotColumn({ slots, grid, theme, activeSlot, onToggle, pickerCtx }: {
@@ -1017,12 +1054,34 @@ function SlotPicker({ slot, ctx }: { slot: SlotKey; ctx: SlotPickerContext }) {
   );
 }
 
+interface ConfinableFrameProps {
+  substepIndex: number;
+  substepCount: number;
+  onBack: () => void;
+  onNext: () => void;
+  nextLabel?: string;
+}
+
+/** When confined (opened straight from a profile bookmark's edit pencil), a substep
+ *  presents as this step's only one: no pips, Back exits the step directly instead of
+ *  going to a sibling substep, and Next/Continue finishes the step instead of advancing
+ *  to a sibling substep. Mirrors StatsSetupStep's own confinableFrameProps. */
+function confinableFrameProps(
+  confineToSubstep: boolean | undefined,
+  onExitStep: () => void,
+  onFinish: () => void,
+  normal: ConfinableFrameProps,
+): ConfinableFrameProps {
+  if (!confineToSubstep) return normal;
+  return { substepIndex: 0, substepCount: 1, onBack: onExitStep, onNext: onFinish, nextLabel: undefined };
+}
+
 // ── Substep 1: title, totems & symbols ────────────────────────────────────────
 
 function AdditionalEquipSubstep({
   theme, stepNumber, totalSteps, substepAnimStyle, draft, activeSlot, toggleSlot, pickerCtx,
   availableSymbolTabs, symbolTab, characterLevel, onTabChange, onLevel, onLevelMany,
-  onBack, onNext, onFinish,
+  substepIndex, substepCount, onBack, onNext, onFinish, nextLabel,
 }: {
   theme: AppTheme;
   stepNumber: number;
@@ -1038,9 +1097,12 @@ function AdditionalEquipSubstep({
   onTabChange: (tab: SymbolTabKey) => void;
   onLevel: (regionName: string, level: string) => void;
   onLevelMany: (updates: Record<string, string>) => void;
+  substepIndex: number;
+  substepCount: number;
   onBack: () => void;
   onNext: () => void;
   onFinish: () => void;
+  nextLabel?: string;
 }) {
   return (
     <div key={1} style={substepAnimStyle}>
@@ -1049,13 +1111,13 @@ function AdditionalEquipSubstep({
         stepLabel="Titles, Totems & Symbols"
         stepNumber={stepNumber}
         totalSteps={totalSteps}
-        substepIndex={1}
-        substepCount={SUBSTEP_COUNT}
+        substepIndex={substepIndex}
+        substepCount={substepCount}
         description="Set your title, totems, and symbol levels."
         onBack={onBack}
         onNext={onNext}
         onFinish={onFinish}
-        nextLabel="Continue"
+        nextLabel={nextLabel}
       >
         <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
           <div>
@@ -1116,7 +1178,7 @@ const PET_SLOT_TRIPLES = [
 
 function PetsSubstep({
   theme, stepNumber, totalSteps, substepAnimStyle, draft, activeSlot, toggleSlot, pickerCtx,
-  onBack, onNext, onFinish,
+  substepIndex, substepCount, onBack, onNext, onFinish, nextLabel,
 }: {
   theme: AppTheme;
   stepNumber: number;
@@ -1126,9 +1188,12 @@ function PetsSubstep({
   activeSlot: SlotKey | null;
   toggleSlot: (slot: SlotKey) => void;
   pickerCtx: SlotPickerContext;
+  substepIndex: number;
+  substepCount: number;
   onBack: () => void;
   onNext: () => void;
   onFinish: () => void;
+  nextLabel?: string;
 }) {
   return (
     <div key={2} style={substepAnimStyle}>
@@ -1137,12 +1202,13 @@ function PetsSubstep({
         stepLabel="Pets"
         stepNumber={stepNumber}
         totalSteps={totalSteps}
-        substepIndex={2}
-        substepCount={SUBSTEP_COUNT}
+        substepIndex={substepIndex}
+        substepCount={substepCount}
         description="Choose your pets."
         onBack={onBack}
         onNext={onNext}
         onFinish={onFinish}
+        nextLabel={nextLabel}
       >
         <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
           {PET_SLOT_TRIPLES.map(([petKey, equipKey, label]) => (
@@ -1176,15 +1242,6 @@ function PetsSubstep({
 
 // ── Substep 0: main equipment grid ─────────────────────────────────────────────
 
-const navBtnStyle = (theme: AppTheme): CSSProperties => ({
-  border: `1px solid ${theme.border}`,
-  borderRadius: 8,
-  background: theme.bg,
-  color: theme.text,
-  fontFamily: "inherit", fontWeight: 800, fontSize: "1.5rem",
-  width: 44, height: 48, cursor: "pointer",
-});
-
 // Layout:
 // Col 1: ring1–4, belt, pocket
 // Col 2: face, eye, earring, pendant1, pendant2
@@ -1194,7 +1251,7 @@ const navBtnStyle = (theme: AppTheme): CSSProperties => ({
 function EquipmentGridSubstep({
   theme, stepNumber, totalSteps, substepAnimStyle, activeGrid, activeSlot, toggleSlot, pickerCtx,
   activePreset, switchPreset, mobileGridPage, setMobileGridPage, confirmedCharacterImgURL,
-  onBack, onNext, onFinish,
+  substepIndex, substepCount, onBack, onNext, onFinish, nextLabel,
 }: {
   theme: AppTheme;
   stepNumber: number;
@@ -1209,9 +1266,12 @@ function EquipmentGridSubstep({
   mobileGridPage: number;
   setMobileGridPage: (updater: (p: number) => number) => void;
   confirmedCharacterImgURL?: string;
+  substepIndex: number;
+  substepCount: number;
   onBack: () => void;
   onNext: () => void;
   onFinish: () => void;
+  nextLabel?: string;
 }) {
   return (
     <div key={0} className="eq-substep-root" style={substepAnimStyle}>
@@ -1234,13 +1294,13 @@ function EquipmentGridSubstep({
       stepLabel="Equipment"
       stepNumber={stepNumber}
       totalSteps={totalSteps}
-      substepIndex={0}
-      substepCount={SUBSTEP_COUNT}
+      substepIndex={substepIndex}
+      substepCount={substepCount}
       description="Choose your equipped gear."
       onBack={onBack}
       onNext={onNext}
       onFinish={onFinish}
-      nextLabel="Continue"
+      nextLabel={nextLabel}
     >
       <PresetBar theme={theme} active={activePreset} onSwitch={switchPreset} />
       <p className="eq-page-label" style={{ margin: "0 0 8px", fontSize: "0.75rem", fontWeight: 800, color: theme.muted, textTransform: "uppercase", letterSpacing: "0.05em", textAlign: "center" }}>
@@ -1587,6 +1647,7 @@ export default function EquipmentSetupStep({
   totalSteps,
   direction = "forward",
   targetSubstep,
+  confineToSubstep,
   onSubstepChange,
   jobName = "",
   characterLevel,
@@ -1607,6 +1668,9 @@ export default function EquipmentSetupStep({
   });
 
   if (substep === 1) {
+    const frame = confinableFrameProps(confineToSubstep, onBack, onFinish, {
+      substepIndex: 1, substepCount: SUBSTEP_COUNT, onBack: () => goToSubstep(0), onNext: () => goToSubstep(2), nextLabel: "Continue",
+    });
     return (
       <AdditionalEquipSubstep
         theme={theme}
@@ -1623,14 +1687,20 @@ export default function EquipmentSetupStep({
         onTabChange={setSymbolTab}
         onLevel={setSymbolLevel}
         onLevelMany={setSymbolLevels}
-        onBack={() => goToSubstep(0)}
-        onNext={() => goToSubstep(2)}
+        substepIndex={frame.substepIndex}
+        substepCount={frame.substepCount}
+        onBack={frame.onBack}
+        onNext={frame.onNext}
         onFinish={onFinish}
+        nextLabel={frame.nextLabel}
       />
     );
   }
 
   if (substep === 2) {
+    const frame = confinableFrameProps(confineToSubstep, onBack, onFinish, {
+      substepIndex: 2, substepCount: SUBSTEP_COUNT, onBack: () => goToSubstep(1), onNext,
+    });
     return (
       <PetsSubstep
         theme={theme}
@@ -1641,13 +1711,19 @@ export default function EquipmentSetupStep({
         activeSlot={activeSlot}
         toggleSlot={toggleSlot}
         pickerCtx={pickerCtx}
-        onBack={() => goToSubstep(1)}
-        onNext={onNext}
+        substepIndex={frame.substepIndex}
+        substepCount={frame.substepCount}
+        onBack={frame.onBack}
+        onNext={frame.onNext}
         onFinish={onFinish}
+        nextLabel={frame.nextLabel}
       />
     );
   }
 
+  const frame = confinableFrameProps(confineToSubstep, onBack, onFinish, {
+    substepIndex: 0, substepCount: SUBSTEP_COUNT, onBack, onNext: () => goToSubstep(1), nextLabel: "Continue",
+  });
   return (
     <EquipmentGridSubstep
       theme={theme}
@@ -1663,9 +1739,12 @@ export default function EquipmentSetupStep({
       mobileGridPage={mobileGridPage}
       setMobileGridPage={setMobileGridPage}
       confirmedCharacterImgURL={confirmedCharacterImgURL}
-      onBack={onBack}
-      onNext={() => goToSubstep(1)}
+      substepIndex={frame.substepIndex}
+      substepCount={frame.substepCount}
+      onBack={frame.onBack}
+      onNext={frame.onNext}
       onFinish={onFinish}
+      nextLabel={frame.nextLabel}
     />
   );
 }

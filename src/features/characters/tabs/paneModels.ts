@@ -174,4 +174,5 @@ export interface PreviewPaneActions {
   skipSetupEntirely: () => void;
   rememberActiveBookmark: (id: string, subView?: string) => void;
   setStatsActivePreset: (field: "hyperStat" | "innerAbility", presetIndex: number) => void;
+  setEquipmentActivePreset: (presetIndex: number) => void;
 }

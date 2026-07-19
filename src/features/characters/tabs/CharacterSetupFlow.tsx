@@ -244,6 +244,7 @@ export default function CharacterSetupFlow({ theme, initialCharacterName, initia
     skipSetupEntirely: actions.skipSetupEntirely,
     rememberActiveBookmark: actions.rememberActiveBookmark,
     setStatsActivePreset: actions.setStatsActivePreset,
+    setEquipmentActivePreset: actions.setEquipmentActivePreset,
   };
 
   return (

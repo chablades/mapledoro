@@ -24,6 +24,14 @@ import { isRebootWorld, rebootFinalDamageBonusPercent } from "../../setup/data/r
 import { TIER_COLORS as IA_TIER_COLORS, familiarStatBonuses, type FamiliarStatBonus } from "../../setup/data/familiarsData";
 import { statusText } from "../../../../components/statusColors";
 import InfoTooltip, { type TooltipContent } from "../../setup/components/InfoTooltip";
+import { ReadOnlySlotTile, ReadOnlySymbolTile } from "../../setup/components/EquipmentSetupStep";
+import {
+  storedPresetToDraft, toDraftItem, type SlotMap, type SlotKey,
+  CENTER_WIDTH, COL1_SLOTS, COL2_SLOTS, COL6_SLOTS, COL7_SLOTS, CENTER_BOTTOM_SLOTS,
+  SYMBOL_TILE_SIZE, EQUIPMENT_PAGE_LABELS, navBtnStyle,
+} from "../../setup/data/equipmentStepDraft";
+import { ARCANE_AREAS, SACRED_AREAS, GRAND_SACRED_AREAS, type SymbolArea } from "../../../tools/symbols/symbol-data";
+import type { SymbolState } from "../../../tools/symbols/useSymbolState";
 
 interface CharacterProfileOverviewScreenProps {
   model: PreviewPaneModel;
@@ -289,7 +297,7 @@ function WseSlot({ label, name, theme }: { label: string; name: string | null | 
     <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 8px", border: `1px solid ${theme.border}`, borderRadius: 10, background: theme.bg }}>
       <div style={{ width: 26, height: 26, borderRadius: 4, background: theme.border, flexShrink: 0, opacity: 0.5 }} />
       <div style={{ minWidth: 0 }}>
-        <div style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: theme.muted }}>{label}</div>
+        <div style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: theme.muted }}>{label}</div>
         <div style={{ fontSize: 12, color: name ? theme.text : theme.muted, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 100 }}>
           {name ?? "not set up"}
         </div>
@@ -368,21 +376,17 @@ function readHexaLevels(charName: string | undefined): HexaSkillLevels | null {
   return saved?.levels ?? null;
 }
 
+function readSymbolLevels(charName: string | undefined): Record<string, SymbolState> | null {
+  if (!charName) return null;
+  const saved = readCharacterToolData<{ symbols?: Record<string, SymbolState> }>(charName, "symbols");
+  return saved?.symbols ?? null;
+}
+
 function isStatsFilled(character: StoredCharacterRecord | null): boolean {
   if (!character) return false;
   const s = character.stats;
   return Boolean(s.attackPower.base || s.bossDamage || s.str.base || s.dex.base || s.int.base || s.luk.base || s.hp.base);
 }
-
-type SingleEquipSlotKey = Exclude<keyof StoredCharacterEquipment["presets"][number], "rings" | "pendants">;
-
-const EQUIPMENT_SLOT_LABELS: [SingleEquipSlotKey, string][] = [
-  ["weapon", "Weapon"], ["secondary", "Secondary"], ["emblem", "Emblem"],
-  ["badge", "Badge"], ["medal", "Medal"], ["hat", "Hat"], ["top", "Top"], ["bottom", "Bottom"],
-  ["shoe", "Shoes"], ["glove", "Gloves"], ["cape", "Cape"], ["shoulder", "Shoulder"],
-  ["belt", "Belt"], ["eye", "Eye Accessory"], ["face", "Face Accessory"], ["earring", "Earrings"],
-  ["pocket", "Pocket"], ["heart", "Heart"], ["android", "Android"],
-];
 
 function OverviewBookmark({ model }: { model: PreviewPaneModel }) {
   const { theme, profile } = model;
@@ -427,7 +431,7 @@ function OverviewBookmark({ model }: { model: PreviewPaneModel }) {
       <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 16, marginBottom: 14, alignItems: "start" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
           <div style={{ marginBottom: 8 }}>
-            <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: theme.muted, marginBottom: 2 }}>HEXA Stat</div>
+            <div style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: theme.muted, marginBottom: 2 }}>HEXA Stat</div>
             <div style={{ fontSize: 20, fontWeight: 800, color: theme.muted, lineHeight: 1, fontFamily: "var(--font-heading)" }}>—</div>
           </div>
           <div>
@@ -570,7 +574,7 @@ function StatBlock({ label, theme, children, info }: { label: string; theme: The
 // small container font-size, and the tooltip popup is only ~240px wide — inline mode
 // (displayMode: false) uses KaTeX's more compact textstyle sizing, and the small
 // fontSize here shrinks it further to actually fit.
-const formulaHtmlStyle: CSSProperties = { overflowX: "auto", padding: "0.2rem 0", fontSize: "0.7rem" };
+const formulaHtmlStyle: CSSProperties = { overflowX: "auto", padding: "0.2rem 0", fontSize: "0.75rem" };
 
 // Renders a LaTeX string to static HTML via KaTeX at module load — pure function of the
 // tex string, no DOM/layout dependency, so this is safe to call outside a component.
@@ -955,33 +959,317 @@ function StatsBookmark({
   );
 }
 
-function EquipmentBookmark({ theme, character }: { theme: Theme; character: StoredCharacterRecord | null }) {
-  const equip = character?.equipment;
-  const preset = equip?.presets?.[equip.activePreset] ?? equip?.presets?.[0];
-  if (!preset) return null;
+type EquipmentBookmarkView = "gear" | "titles" | "pets";
+type SymbolViewTab = "arcane" | "sacred";
 
-  // react-doctor-disable-next-line js-combine-iterations -- EQUIPMENT_SLOT_LABELS is a small fixed roster, extra pass is negligible per the rule's own FP criteria
-  const filledSlots = EQUIPMENT_SLOT_LABELS
-    .map(([key, label]) => ({ label, name: preset[key]?.name }))
-    .filter((row) => row.name);
-  // react-doctor-disable-next-line js-combine-iterations -- preset.rings is a small fixed-size array, extra pass is negligible per the rule's own FP criteria
-  const ringRows = preset.rings
-    .map((ring, i) => ({ label: `Ring ${i + 1}`, name: ring?.name }))
-    .filter((row) => row.name);
-  // react-doctor-disable-next-line js-combine-iterations -- preset.pendants is a small fixed-size array, extra pass is negligible per the rule's own FP criteria
-  const pendantRows = preset.pendants
-    .map((pendant, i) => ({ label: `Pendant ${i + 1}`, name: pendant?.name }))
-    .filter((row) => row.name);
-  const rows = [...filledSlots, ...ringRows, ...pendantRows];
+function equipmentBookmarkHeaderLabel(view: EquipmentBookmarkView, defaultLabel: string): string {
+  if (view === "titles") return "Titles, Totems & Symbols";
+  if (view === "pets") return "Pets";
+  return defaultLabel;
+}
 
-  if (rows.length === 0 && !equip?.title) return null;
+const equipmentActionArrowStyle: CSSProperties = { flexShrink: 0 };
 
+function EquipmentActionBar({ view, theme, onSelect }: { view: EquipmentBookmarkView; theme: Theme; onSelect: (v: EquipmentBookmarkView) => void }) {
+  // height: "100%" + the parent row's default stretch alignment keeps both buttons equal
+  // height even when one label (e.g. "Titles, Totems & Symbols") wraps to 2 lines and its
+  // sibling doesn't. The label is its own <span> (not a bare text node beside the arrow's
+  // span) so it wraps as a normal flex item instead of the arrow drifting to the edge.
+  const btnStyle: CSSProperties = { ...secondaryButtonStyle(theme, "8px 0"), width: "100%", height: "100%", fontSize: 12, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 };
+  return (
+    <div style={{ display: "flex", gap: 10 }}>
+      <div style={{ flex: 1 }}>
+        {view === "gear" && (
+          <button type="button" style={btnStyle} onClick={() => onSelect("titles")}>
+            <span aria-hidden="true" style={equipmentActionArrowStyle}>‹</span>
+            <span className="equipment-action-label-full">Titles, Totems & Symbols</span>
+            <span className="equipment-action-label-short">Titles & Symbols</span>
+          </button>
+        )}
+        {view === "pets" && (
+          <button type="button" style={btnStyle} onClick={() => onSelect("gear")}>
+            <span aria-hidden="true" style={equipmentActionArrowStyle}>‹</span>
+            <span>Gear</span>
+          </button>
+        )}
+      </div>
+      <div style={{ flex: 1 }}>
+        {view === "gear" && (
+          <button type="button" style={btnStyle} onClick={() => onSelect("pets")}>
+            <span>Pets</span>
+            <span aria-hidden="true" style={equipmentActionArrowStyle}>›</span>
+          </button>
+        )}
+        {view === "titles" && (
+          <button type="button" style={btnStyle} onClick={() => onSelect("gear")}>
+            <span>Gear</span>
+            <span aria-hidden="true" style={equipmentActionArrowStyle}>›</span>
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function BookmarkSectionLabel({ label, theme }: { label: string; theme: Theme }) {
+  return (
+    <p style={{ margin: "0 0 6px", fontSize: "0.75rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.05em", color: theme.muted }}>
+      {label}
+    </p>
+  );
+}
+
+function ReadOnlySlotColumn({ slots, grid, theme }: { slots: SlotKey[]; grid: SlotMap; theme: Theme }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 4, flexShrink: 0 }}>
+      {slots.map((slot) => (
+        <ReadOnlySlotTile key={slot} slotKey={slot} item={grid[slot]} theme={theme} />
+      ))}
+    </div>
+  );
+}
+
+const SYMBOL_VIEW_TABS: { key: SymbolViewTab; label: string }[] = [
+  { key: "arcane", label: "Arcane" },
+  { key: "sacred", label: "Sacred" },
+];
+
+function symbolTabButtonStyle(theme: Theme, active: boolean): CSSProperties {
+  return {
+    border: `1px solid ${active ? theme.accent : theme.border}`,
+    borderRadius: 8,
+    background: active ? theme.accent : theme.bg,
+    color: active ? theme.accentOn : theme.text,
+    fontFamily: "inherit", fontWeight: 800, fontSize: "0.8rem",
+    padding: "0.4rem 0.8rem", cursor: "pointer",
+  };
+}
+
+function symbolAreaLevel(levels: Record<string, SymbolState> | null, area: SymbolArea): number {
+  return levels?.[area.name]?.level ?? 0;
+}
+
+// Every area always renders (never hidden) — an area the character hasn't reached yet shows
+// as a locked tile (dimmed icon + its unlock level) via ReadOnlySymbolTile's `locked` prop,
+// rather than vanishing outright. Covers per-zone gaps within an eligible tier (Chu Chu
+// Island at 210 while Arcane-eligible from 200) the same way it covers a whole tier being
+// out of reach (Grand Sacred at 290+ while only Sacred-eligible) — hiding any of these read
+// as "bugged or missing" rather than "not unlocked yet" per Yuki's ask. Legacy is handled a
+// level up, in SymbolLevelsDisplay, so this only ever runs for a non-legacy character.
+function SymbolAreaGroup({ label, areas, levels, characterLevel, theme }: {
+  label: string; areas: SymbolArea[]; levels: Record<string, SymbolState> | null; characterLevel: number | undefined; theme: Theme;
+}) {
   return (
     <div>
-      {equip?.title?.name && <SummaryRow label="Title" value={equip.title.name} theme={theme} />}
-      {rows.map((r) => (
-        <SummaryRow key={r.label} label={r.label} value={r.name ?? "—"} theme={theme} />
+      <BookmarkSectionLabel label={label} theme={theme} />
+      <div style={{ display: "grid", gridTemplateColumns: `repeat(3, ${SYMBOL_TILE_SIZE}px)`, gap: 4 }}>
+        {areas.map((area) => {
+          const locked = characterLevel !== undefined && characterLevel < area.requiredLevel;
+          return <ReadOnlySymbolTile key={area.name} area={area} level={symbolAreaLevel(levels, area)} locked={locked} theme={theme} />;
+        })}
+      </div>
+    </div>
+  );
+}
+
+function SymbolLevelsDisplay({
+  theme, levels, characterLevel, isLegacy, activeTab, onTabChange,
+}: {
+  theme: Theme;
+  levels: Record<string, SymbolState> | null;
+  characterLevel: number | undefined;
+  isLegacy: boolean | undefined;
+  activeTab: SymbolViewTab;
+  onTabChange: (tab: SymbolViewTab) => void;
+}) {
+  // A legacy class can never advance to unlock any symbol type at all, so it gets one
+  // blanket message with no tab switcher and no per-tier labels — nothing here to switch
+  // between, showing the buttons anyway would just invite clicking through to the same
+  // message twice.
+  if (isLegacy) {
+    return <p style={{ margin: 0, fontSize: 12, color: theme.muted, fontStyle: "italic" }}>Not available for this class.</p>;
+  }
+  return (
+    <div>
+      <div style={{ display: "flex", gap: 4, marginBottom: "0.6rem" }}>
+        {SYMBOL_VIEW_TABS.map((tab) => (
+          <button key={tab.key} type="button" onClick={() => onTabChange(tab.key)} style={symbolTabButtonStyle(theme, tab.key === activeTab)}>
+            {tab.label}
+          </button>
+        ))}
+      </div>
+      {activeTab === "arcane" ? (
+        <SymbolAreaGroup label="Arcane" areas={ARCANE_AREAS} levels={levels} characterLevel={characterLevel} theme={theme} />
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+          <SymbolAreaGroup label="Sacred" areas={SACRED_AREAS} levels={levels} characterLevel={characterLevel} theme={theme} />
+          <SymbolAreaGroup label="Grand Sacred" areas={GRAND_SACRED_AREAS} levels={levels} characterLevel={characterLevel} theme={theme} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function TitlesView({
+  theme, equip, symbolLevels, characterLevel, isLegacy, symbolTab, onSymbolTabChange,
+}: {
+  theme: Theme;
+  equip: StoredCharacterEquipment | undefined;
+  symbolLevels: Record<string, SymbolState> | null;
+  characterLevel: number | undefined;
+  isLegacy: boolean | undefined;
+  symbolTab: SymbolViewTab;
+  onSymbolTabChange: (tab: SymbolViewTab) => void;
+}) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+      <div>
+        <BookmarkSectionLabel label="Title" theme={theme} />
+        <ReadOnlySlotTile slotKey="title" item={toDraftItem(equip?.title ?? null)} theme={theme} />
+      </div>
+      <div>
+        <BookmarkSectionLabel label="Totems" theme={theme} />
+        <div style={{ display: "flex", gap: 4 }}>
+          {(["totem1", "totem2", "totem3"] as const).map((slotKey, i) => (
+            <ReadOnlySlotTile key={slotKey} slotKey={slotKey} item={toDraftItem(equip?.totems?.[i] ?? null)} theme={theme} />
+          ))}
+        </div>
+      </div>
+      <div>
+        <BookmarkSectionLabel label="Symbols" theme={theme} />
+        <SymbolLevelsDisplay
+          theme={theme}
+          levels={symbolLevels}
+          characterLevel={characterLevel}
+          isLegacy={isLegacy}
+          activeTab={symbolTab}
+          onTabChange={onSymbolTabChange}
+        />
+      </div>
+    </div>
+  );
+}
+
+const GEAR_PET_TRIPLES: readonly [SlotKey, SlotKey, string][] = [
+  ["pet1", "petEquip1", "Pet 1"],
+  ["pet2", "petEquip2", "Pet 2"],
+  ["pet3", "petEquip3", "Pet 3"],
+];
+
+function PetsView({ theme, equip }: { theme: Theme; equip: StoredCharacterEquipment | undefined }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+      {GEAR_PET_TRIPLES.map(([petKey, equipKey, label], i) => (
+        <div key={petKey}>
+          <BookmarkSectionLabel label={label} theme={theme} />
+          <div style={{ display: "flex", gap: 4 }}>
+            <ReadOnlySlotTile slotKey={petKey} item={toDraftItem(equip?.pets?.[i] ?? null)} theme={theme} />
+            <ReadOnlySlotTile slotKey={equipKey} item={toDraftItem(equip?.petEquips?.[i] ?? null)} theme={theme} />
+          </div>
+        </div>
       ))}
+    </div>
+  );
+}
+
+function EquipmentBookmark({
+  theme, character, view, onViewChange, onSetActivePreset,
+}: {
+  theme: Theme; character: StoredCharacterRecord | null; view: EquipmentBookmarkView; onViewChange: (v: EquipmentBookmarkView) => void;
+  onSetActivePreset: (presetIndex: number) => void;
+}) {
+  const equip = character?.equipment;
+  const activePresetStored = equip?.activePreset ?? 0;
+  const [presetIdx, setPresetIdx] = useState(activePresetStored);
+  const [symbolTab, setSymbolTab] = useState<SymbolViewTab>("arcane");
+  const [mobileGridPage, setMobileGridPage] = useState(0);
+
+  const classId = character ? resolveClassId(character.jobName) : undefined;
+  const classData = classId ? CLASS_SKILL_DATA.find((c) => c.id === classId) : undefined;
+
+  const preset = equip?.presets?.[presetIdx];
+  const activeGrid: SlotMap = preset ? storedPresetToDraft(preset) : {};
+
+  const charName = character?.characterName;
+  const mounted = useSyncExternalStore(() => () => undefined, () => true, () => false);
+  const symbolLevels = useMemo(() => {
+    if (!mounted) return null;
+    const fromState = (character?.tools?.symbols as { symbols?: Record<string, SymbolState> } | undefined)?.symbols;
+    if (fromState) return fromState;
+    return readSymbolLevels(charName);
+  // react-doctor-disable-next-line exhaustive-deps -- deliberately depends on the narrowed `charName` primitive, not the whole `character` object, to avoid re-running when unrelated fields change, mirrors readHexaLevels' own pattern above
+  }, [mounted, charName, character?.tools]);
+
+  // The 3 views are stacked in the same grid cell (all present, only one visible) so the
+  // row auto-sizes to the tallest of the three, matching StatsBookmark's own pattern.
+  return (
+    <div>
+      <div style={{ display: "grid" }}>
+        <div style={{ gridArea: "1 / 1", visibility: view === "gear" ? "visible" : "hidden", display: "flex", flexDirection: "column", gap: 10 }}>
+          <PresetTabs theme={theme} active={presetIdx} activePreset={activePresetStored} onSelect={setPresetIdx} onSetActive={equip ? onSetActivePreset : null} />
+          {/* Same container-query carousel as EquipmentSetupStep's EquipmentGridSubstep — kicks
+              in once the panel itself (not the viewport) narrows past ~520px, reusing the same
+              .eq-* global classes so a narrow Gear bookmark gets the identical prev/next,
+              one-section-at-a-time behavior instead of trying to cram all 3 columns in. */}
+          <div className="eq-substep-root">
+            <style>{`
+              .eq-substep-root {
+                container-type: inline-size;
+              }
+              @container (max-width: 520px) {
+                .eq-page-0 .eq-section-1, .eq-page-0 .eq-section-2,
+                .eq-page-1 .eq-section-0, .eq-page-1 .eq-section-2,
+                .eq-page-2 .eq-section-0, .eq-page-2 .eq-section-1 { display: none; }
+                .eq-page-label.eq-page-label { display: block; }
+                .eq-page-nav-btn.eq-page-nav-btn { display: flex; align-items: center; justify-content: center; }
+              }
+            `}</style>
+            <p className="eq-page-label" style={{ margin: "0 0 8px", fontSize: "0.75rem", fontWeight: 800, color: theme.muted, textTransform: "uppercase", letterSpacing: "0.05em", textAlign: "center" }}>
+              {EQUIPMENT_PAGE_LABELS[mobileGridPage]}
+            </p>
+            <div className={`eq-page-${mobileGridPage}`}>
+              <div style={{ display: "flex", gap: 8, alignItems: "center", justifyContent: "center" }}>
+                <button type="button" className="eq-page-nav-btn" aria-label="Previous section" onClick={() => setMobileGridPage((p) => (p + 2) % 3)} style={navBtnStyle(theme)}>‹</button>
+                <div style={{ display: "flex", gap: 4, alignItems: "stretch" }}>
+                  <div className="eq-section eq-section-0" style={{ gap: 4, flexShrink: 0 }}>
+                    <ReadOnlySlotColumn slots={COL1_SLOTS} grid={activeGrid} theme={theme} />
+                    <ReadOnlySlotColumn slots={COL2_SLOTS} grid={activeGrid} theme={theme} />
+                  </div>
+                  <div className="eq-section eq-section-1" style={{ flexDirection: "column", justifyContent: "flex-end", gap: 4, flexShrink: 0, width: CENTER_WIDTH }}>
+                    <div style={{ display: "flex", gap: 4 }}>
+                      {CENTER_BOTTOM_SLOTS.map((slot) => (
+                        <ReadOnlySlotTile key={slot} slotKey={slot} item={activeGrid[slot]} theme={theme} />
+                      ))}
+                    </div>
+                  </div>
+                  <div className="eq-section eq-section-2" style={{ gap: 4, flexShrink: 0 }}>
+                    <ReadOnlySlotColumn slots={COL6_SLOTS} grid={activeGrid} theme={theme} />
+                    <ReadOnlySlotColumn slots={COL7_SLOTS} grid={activeGrid} theme={theme} />
+                  </div>
+                </div>
+                <button type="button" className="eq-page-nav-btn" aria-label="Next section" onClick={() => setMobileGridPage((p) => (p + 1) % 3)} style={navBtnStyle(theme)}>›</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style={{ gridArea: "1 / 1", visibility: view === "titles" ? "visible" : "hidden" }}>
+          <TitlesView
+            theme={theme}
+            equip={equip}
+            symbolLevels={symbolLevels}
+            characterLevel={character?.level}
+            isLegacy={classData?.isLegacy}
+            symbolTab={symbolTab}
+            onSymbolTabChange={setSymbolTab}
+          />
+        </div>
+        <div style={{ gridArea: "1 / 1", visibility: view === "pets" ? "visible" : "hidden" }}>
+          <PetsView theme={theme} equip={equip} />
+        </div>
+      </div>
+      <div style={{ paddingTop: 14 }}>
+        <EquipmentActionBar view={view} theme={theme} onSelect={onViewChange} />
+      </div>
     </div>
   );
 }
@@ -1052,7 +1340,7 @@ function HexaMatrixBookmark({ theme, character }: { theme: Theme; character: Sto
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1px 1fr", gap: 14, alignItems: "start" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            <div style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: theme.muted, marginBottom: 2 }}>Skill</div>
+            <div style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: theme.muted, marginBottom: 2 }}>Skill</div>
             <div style={{ display: "flex", gap: 3, flexWrap: "wrap" as const }}>
               {skillSlots.map((skill, i) => (
                 // react-doctor-disable-next-line no-array-index-as-key
@@ -1062,7 +1350,7 @@ function HexaMatrixBookmark({ theme, character }: { theme: Theme; character: Sto
           </div>
           <div style={{ height: 1, background: theme.border }} />
           <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            <div style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: theme.muted, marginBottom: 2 }}>Common</div>
+            <div style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: theme.muted, marginBottom: 2 }}>Common</div>
             <div style={{ display: "flex", gap: 3, flexWrap: "wrap" as const }}>
               {commonSlots.map((skill, i) => (
                 // react-doctor-disable-next-line no-array-index-as-key
@@ -1074,7 +1362,7 @@ function HexaMatrixBookmark({ theme, character }: { theme: Theme; character: Sto
         <div style={{ background: theme.border, alignSelf: "stretch" }} />
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            <div style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: theme.muted, marginBottom: 2 }}>Mastery</div>
+            <div style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: theme.muted, marginBottom: 2 }}>Mastery</div>
             <div style={{ display: "flex", gap: 3, flexWrap: "wrap" as const }}>
               {masterySlots.map((skill, i) => (
                 // react-doctor-disable-next-line no-array-index-as-key
@@ -1084,7 +1372,7 @@ function HexaMatrixBookmark({ theme, character }: { theme: Theme; character: Sto
           </div>
           <div style={{ height: 1, background: theme.border }} />
           <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            <div style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: theme.muted, marginBottom: 2 }}>Boost</div>
+            <div style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: theme.muted, marginBottom: 2 }}>Boost</div>
             <div style={{ display: "flex", gap: 3, flexWrap: "wrap" as const }}>
               {enhancementSlots.map((skill, i) => (
                 // react-doctor-disable-next-line no-array-index-as-key
@@ -1133,8 +1421,7 @@ function isBookmarkFilled(id: BookmarkId, character: StoredCharacterRecord | nul
   }
 }
 
-const BOOKMARK_CONTENT: Record<Exclude<BookmarkId, "overview" | "setup" | "gender_marriage" | "stats">, (props: { theme: Theme; character: StoredCharacterRecord | null }) => ReactNode> = {
-  equipment: EquipmentBookmark,
+const BOOKMARK_CONTENT: Record<Exclude<BookmarkId, "overview" | "setup" | "gender_marriage" | "stats" | "equipment">, (props: { theme: Theme; character: StoredCharacterRecord | null }) => ReactNode> = {
   familiars: FamiliarsBookmark,
   v_matrix: VMatrixBookmark,
   hexa_matrix: HexaMatrixBookmark,
@@ -1164,6 +1451,15 @@ function statsTargetSubstep(view: StatsView, characterLevel: number | undefined)
   return 1;
 }
 
+// equipment_flow has exactly one step ("equipment") with 3 fixed substeps (0: main grid,
+// 1: titles/totems/symbols, 2: pets — see EquipmentSetupStep.tsx's SUBSTEP_COUNT), so
+// unlike statsTargetSubstep there's no eligibility-based index shifting to account for.
+function equipmentTargetSubstep(view: EquipmentBookmarkView): number {
+  if (view === "titles") return 1;
+  if (view === "pets") return 2;
+  return 0;
+}
+
 function BookmarkPageBody({
   model, actions, active, filled, ContentComponent, onEdit, onEditStep,
 }: {
@@ -1180,6 +1476,10 @@ function BookmarkPageBody({
   const [statsView, setStatsView] = useState<StatsView>(() => {
     const remembered = setup.lastActiveBookmarkSubView;
     return active.id === "stats" && (remembered === "hyperStat" || remembered === "ability") ? remembered : "stats";
+  });
+  const [equipmentView, setEquipmentView] = useState<EquipmentBookmarkView>(() => {
+    const remembered = setup.lastActiveBookmarkSubView;
+    return active.id === "equipment" && (remembered === "titles" || remembered === "pets") ? remembered : "gear";
   });
 
   if (active.id === "overview") return <OverviewBookmark model={model} />;
@@ -1227,6 +1527,27 @@ function BookmarkPageBody({
           view={statsView}
           onViewChange={setStatsView}
           onSetActivePreset={actions.setStatsActivePreset}
+        />
+      </>
+    );
+  }
+
+  // Same shape as Stats above: 3 swappable sub-views sharing the equipment_flow's 3 fixed
+  // substeps (see equipmentTargetSubstep), pencil always confined to whichever sub-view is
+  // showing, no EmptyBookmarkState — the read view shows empty-slot placeholders instead.
+  if (active.id === "equipment") {
+    const editEquipment = () => { if (active.flowId) onEditStep(active.flowId, equipmentTargetSubstep(equipmentView), true, equipmentView); };
+    const equipmentHeaderLabel = equipmentBookmarkHeaderLabel(equipmentView, active.pageLabel);
+    return (
+      <>
+        <BookmarkPageHeader theme={theme} label={equipmentHeaderLabel} onEdit={editEquipment} disabled={setup.isUiLocked} />
+        <EquipmentBookmark
+          key={character?.characterName}
+          theme={theme}
+          character={character}
+          view={equipmentView}
+          onViewChange={setEquipmentView}
+          onSetActivePreset={actions.setEquipmentActivePreset}
         />
       </>
     );
@@ -1329,7 +1650,7 @@ export default function CharacterProfileOverviewScreen({
   const active = bookmarks.find((b) => b.id === activeId) ?? bookmarks[0];
 
   const filled = isBookmarkFilled(active.id, character, mounted);
-  const ContentComponent = active.id === "overview" || active.id === "setup" || active.id === "gender_marriage" || active.id === "stats" ? null : BOOKMARK_CONTENT[active.id];
+  const ContentComponent = active.id === "overview" || active.id === "setup" || active.id === "gender_marriage" || active.id === "stats" || active.id === "equipment" ? null : BOOKMARK_CONTENT[active.id];
 
   function startOptionalFlowRemembered(flowId: SetupFlowId, targetSubstep?: number, confineToSubstep?: boolean, subView?: string) {
     actions.rememberActiveBookmark(active.id, subView);

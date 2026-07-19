@@ -205,10 +205,13 @@ function buildSymbolsToolData(existing: SavedSymbols | null, levels: Record<stri
   const symbols: Record<string, SymbolState> = { ...(existing?.symbols ?? {}) };
   for (const [name, raw] of Object.entries(levels)) {
     const level = Number(raw) || 0;
-    if (level < 1) continue;
     const found = findSymbolArea(name);
     if (!found) continue;
     const prev = symbols[name];
+    // Skip only when there's nothing to update yet (an untouched area shouldn't create a
+    // fresh 0-level calculator entry) — an existing entry must still update down to 0, or
+    // clearing/zeroing a level in the equipment step silently no-ops.
+    if (!prev && level < 1) continue;
     symbols[name] = prev
       ? { ...prev, level }
       : { level, current: 0, daily: found.area.daily, weeklyEnabled: found.type === "arcane" };
@@ -1137,6 +1140,15 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
     const current = existing?.stats?.[field];
     if (!existing || !current) return;
     upsertRosterCharacter({ ...existing, stats: { ...existing.stats, [field]: { ...current, activePreset: presetIndex } } });
+  }, [confirmedCharacter, upsertRosterCharacter]);
+
+  // Same profile-page correction as setStatsActivePreset above, for which equipment
+  // preset (0-2) is actually equipped in-game.
+  const setEquipmentActivePreset = useCallback((presetIndex: number) => {
+    if (!confirmedCharacter) return;
+    const existing = selectCharacterById(readCharactersStore(), toCharacterKey(confirmedCharacter));
+    if (!existing) return;
+    upsertRosterCharacter({ ...existing, equipment: { ...existing.equipment, activePreset: presetIndex } });
   }, [confirmedCharacter, upsertRosterCharacter]);
 
   const applyDraftFlowState = useCallback(
@@ -2423,6 +2435,7 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
       removeMainCharacter,
       toggleChampionCharacter,
       setStatsActivePreset,
+      setEquipmentActivePreset,
       switchToCharacterProfile,
       toggleCharacterDirectory,
       removeCurrentCharacter,
