@@ -9,7 +9,7 @@ import { primaryButtonStyle, secondaryButtonStyle, successButtonStyle } from "..
 import { findClassById, COMMON_SKILLS, type HexaSkillDef, type HexaSkillLevels } from "../../../tools/hexa-skills/hexa-classes";
 import { readCharacterToolData } from "../../../tools/characterToolStorage";
 import { resolveClassId, getClassSetupOverrides } from "../../setup/data/nexonJobMapping";
-import { CLASS_SKILL_DATA } from "../../setup/data/classSkillData";
+import { CLASS_SKILL_DATA, getClassDataByNexonJobName, isLegacyClass } from "../../setup/data/classSkillData";
 import { resourceImageUrl } from "../../../../lib/mapleResource";
 import type { StoredCharacterEquipment, StoredCharacterRecord, StoredCharacterStats, StoredHyperStat, StoredInnerAbility, StoredIATier, StoredTripleStatField } from "../../model/charactersStore";
 import { SetupFlowButtons } from "./QuickSetupIntroScreen";
@@ -25,6 +25,8 @@ import { TIER_COLORS as IA_TIER_COLORS, familiarStatBonuses, type FamiliarStatBo
 import { statusText } from "../../../../components/statusColors";
 import InfoTooltip, { type TooltipContent } from "../../setup/components/InfoTooltip";
 import { ReadOnlySlotTile, ReadOnlySymbolTile } from "../../setup/components/EquipmentSetupStep";
+import { ReadOnlyLeveledIconTile } from "../../setup/components/LeveledIconTile";
+import { VMatrixNodeIcon, useVMatrixCatalog, type VMatrixNode } from "../../setup/components/VMatrixSetupStep";
 import {
   storedPresetToDraft, toDraftItem, type SlotMap, type SlotKey,
   CENTER_WIDTH, COL1_SLOTS, COL2_SLOTS, COL6_SLOTS, COL7_SLOTS, CENTER_BOTTOM_SLOTS,
@@ -174,14 +176,15 @@ function PartnerPlaceholderIcon() {
   );
 }
 
-// Portrait-shaped (not a plain row) so the "Partner" block can later swap in an actual
-// character avatar in the same footprint once marriage data links to a tracked
-// character. Each block is its own real button: tapping it jumps straight into that
-// one setup step (gender or marriage) instead of a single combined "Set up" action.
+// Stretches to fill the bookmark panel (rather than a fixed portrait aspect-ratio) so the
+// "Partner" block has more room to later swap in an actual character avatar once marriage
+// data links to a tracked character. Each block is its own real button: tapping it jumps
+// straight into that one setup step (gender or marriage) instead of a single combined
+// "Set up" action.
 function biographyBlockStyle(theme: Theme, filled: boolean): CSSProperties {
   return {
     flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8,
-    aspectRatio: "3 / 4", borderRadius: 14, background: theme.bg, cursor: "pointer", fontFamily: "inherit", textAlign: "center",
+    borderRadius: 14, background: theme.bg, cursor: "pointer", fontFamily: "inherit", textAlign: "center",
     border: filled ? `1px solid ${theme.border}` : `1px dashed ${theme.border}`,
   };
 }
@@ -234,7 +237,7 @@ function BiographyPanel({ theme, character, onEditStep, disabled }: {
   const marriageCaption = marriageLocked ? "Not available for this class" : resolveMarriageCaption(marriage);
 
   return (
-    <div style={{ display: "flex", gap: 14 }}>
+    <div style={{ display: "flex", gap: 14, flex: 1 }}>
       <BiographyBlock
         theme={theme}
         filled={Boolean(gender) || overrides?.gender === "none"}
@@ -1291,11 +1294,106 @@ function FamiliarsBookmark({ theme, character }: { theme: Theme; character: Stor
   );
 }
 
+// Reuses StatBlock (DESIGN.md: 14px radius, theme.panel on theme.bg) so each node group reads
+// as its own boxed section, matching the in-game V Matrix panel's per-category framing.
+function VMatrixNodeSection({ label, nodes, levels, theme }: {
+  label: string; nodes: VMatrixNode[]; levels: Record<string, number>; theme: Theme;
+}) {
+  if (nodes.length === 0) return null;
+  return (
+    <StatBlock label={label} theme={theme}>
+      <div className="vmatrix-grid" style={{ display: "grid", gap: "0.4rem" }}>
+        {nodes.map(([id, name, max]) => (
+          <ReadOnlyLeveledIconTile key={name} icon={<VMatrixNodeIcon id={id} name={name} size={32} />} name={name} level={levels[name] ?? 0} max={max} theme={theme} />
+        ))}
+      </div>
+    </StatBlock>
+  );
+}
+
+function LockIcon() {
+  return (
+    <svg width={36} height={36} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6}>
+      <rect x="5" y="11" width="14" height="9" rx="2" />
+      <path d="M8 11V7.5a4 4 0 0 1 8 0V11" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function gatedFeatureNoticeStyle(theme: Theme): CSSProperties {
+  return {
+    flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8,
+    padding: "2.75rem 1.5rem", borderRadius: 14, background: theme.bg,
+    border: `1px dashed ${theme.border}`, textAlign: "center",
+  };
+}
+
+// Mirrors the Bio bookmark's own empty-state language (dashed border + centered icon/label/
+// caption) rather than a bare line of text under the header, so an entirely-gated bookmark
+// still reads as a deliberate, full-size state instead of an empty panel with a stray caption.
+function GatedFeatureNotice({ theme, title, description }: { theme: Theme; title: string; description: string }) {
+  return (
+    <div style={gatedFeatureNoticeStyle(theme)}>
+      <div style={{ color: theme.muted }}><LockIcon /></div>
+      <div style={{ fontSize: 14, fontWeight: 800, color: theme.text }}>{title}</div>
+      <div style={{ fontSize: 13, color: theme.muted, maxWidth: 280 }}>{description}</div>
+    </div>
+  );
+}
+
+// V Matrix unlocks at level 200 and is unavailable to legacy (pre-5th-job) classes — mirrors
+// flows.ts's isStepSkippedForLevel, the setup step's own gate for this same step. See the
+// characters CLAUDE.md "Level/legacy gating" table: the bookmark has to re-check this itself
+// since it renders independently of the setup step registry. Also drives whether
+// BookmarkPageBody shows the edit pencil — there's nothing to edit on a gated character.
+function isVMatrixAvailable(character: StoredCharacterRecord | null): boolean {
+  if (!character) return false;
+  return character.level >= 200 && !isLegacyClass(character.jobName);
+}
+
+function resolveVMatrixNotice(hasVMatrix: boolean, legacy: boolean): string | null {
+  if (!hasVMatrix) {
+    return legacy ? "V Matrix is not available for this job." : "V Matrix unlocks at level 200.";
+  }
+  return null;
+}
+
+// Reuses VMatrixSetupStep's own catalog fetch (same classId → same node grid), read-only, so
+// the bookmark always shows the same node layout the setup step does: all-zero dimmed tiles
+// when nothing's set up yet, leveled tiles once it is, instead of the old bare summary line.
 function VMatrixBookmark({ theme, character }: { theme: Theme; character: StoredCharacterRecord | null }) {
-  const levels = character?.vMatrix?.levels;
-  const leveled = levels ? Object.values(levels).filter((v) => v > 0).length : 0;
-  if (leveled === 0) return null;
-  return <SummaryRow label="Nodes leveled" value={String(leveled)} theme={theme} />;
+  const legacy = character ? isLegacyClass(character.jobName) : false;
+  const hasVMatrix = isVMatrixAvailable(character);
+  const notice = resolveVMatrixNotice(hasVMatrix, legacy);
+  const classId = character ? getClassDataByNexonJobName(character.jobName)?.id : undefined;
+  const { catalog, loadFailed } = useVMatrixCatalog(hasVMatrix ? classId : undefined);
+  const levels = character?.vMatrix?.levels ?? {};
+
+  if (notice !== null) {
+    return <GatedFeatureNotice theme={theme} title="Not Available" description={notice} />;
+  }
+  if (!classId || loadFailed) {
+    return <GatedFeatureNotice theme={theme} title="Not Available" description="Not available for this class." />;
+  }
+  if (!catalog) return null;
+
+  return (
+    <div className="vmatrix-root" style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+      <style>{`
+        .vmatrix-root { container-type: inline-size; }
+        .vmatrix-grid { grid-template-columns: repeat(6, 68px); }
+        /* 6 tiles × 68px + 5 × 0.4rem gaps = 440px, plus StatBlock's own 14px padding + 1px
+           border on each side (30px) the grid sits inside here — the fixed 6-column grid needs
+           the container to be at least 470px before it fits without overflowing the card. */
+        @container (max-width: 480px) {
+          .vmatrix-grid { grid-template-columns: repeat(auto-fill, 68px); }
+        }
+      `}</style>
+      <VMatrixNodeSection label="Job Nodes" nodes={catalog.job} levels={levels} theme={theme} />
+      <VMatrixNodeSection label="Boost Nodes" nodes={catalog.boost} levels={levels} theme={theme} />
+      <VMatrixNodeSection label="Common Nodes" nodes={catalog.common} levels={levels} theme={theme} />
+    </div>
+  );
 }
 
 function HexaMatrixBookmark({ theme, character }: { theme: Theme; character: StoredCharacterRecord | null }) {
@@ -1312,10 +1410,9 @@ function HexaMatrixBookmark({ theme, character }: { theme: Theme; character: Sto
 
   const classId = character ? resolveClassId(character.jobName) : undefined;
   const hexaClassDef = resolveHexaClassDef(classId);
-  const classData = classId ? CLASS_SKILL_DATA.find((c) => c.id === classId) : undefined;
-  const isLegacyClass = classData !== undefined && classData.buffSkills.length === 0 && classData.requiredStats.length === 0;
-  const hasHexa = level >= 260 && !isLegacyClass;
-  const hexaNotice = resolveHexaNotice(hasHexa, isLegacyClass);
+  const legacy = character ? isLegacyClass(character.jobName) : false;
+  const hasHexa = level >= 260 && !legacy;
+  const hexaNotice = resolveHexaNotice(hasHexa, legacy);
 
   if (hexaNotice !== null) {
     return <p style={{ fontSize: 12, color: theme.muted, fontStyle: "italic", margin: 0 }}>{hexaNotice}</p>;
@@ -1388,10 +1485,7 @@ function HexaMatrixBookmark({ theme, character }: { theme: Theme; character: Sto
 
 function isHexaMatrixFilled(character: StoredCharacterRecord, mounted: boolean): boolean {
   if (character.level < 260) return false;
-  const classId = resolveClassId(character.jobName);
-  const classData = classId ? CLASS_SKILL_DATA.find((c) => c.id === classId) : undefined;
-  const isLegacyClass = classData !== undefined && classData.buffSkills.length === 0 && classData.requiredStats.length === 0;
-  if (isLegacyClass) return true;
+  if (isLegacyClass(character.jobName)) return true;
   if (!mounted) return false;
   const fromState = (character.tools?.hexaSkills as { levels?: HexaSkillLevels } | undefined)?.levels;
   return Boolean(fromState ?? readHexaLevels(character.characterName));
@@ -1421,9 +1515,8 @@ function isBookmarkFilled(id: BookmarkId, character: StoredCharacterRecord | nul
   }
 }
 
-const BOOKMARK_CONTENT: Record<Exclude<BookmarkId, "overview" | "setup" | "gender_marriage" | "stats" | "equipment">, (props: { theme: Theme; character: StoredCharacterRecord | null }) => ReactNode> = {
+const BOOKMARK_CONTENT: Record<Exclude<BookmarkId, "overview" | "setup" | "gender_marriage" | "stats" | "equipment" | "v_matrix">, (props: { theme: Theme; character: StoredCharacterRecord | null }) => ReactNode> = {
   familiars: FamiliarsBookmark,
-  v_matrix: VMatrixBookmark,
   hexa_matrix: HexaMatrixBookmark,
 };
 
@@ -1553,6 +1646,18 @@ function BookmarkPageBody({
     );
   }
 
+  // Same shape as Equipment above: no EmptyBookmarkState — the read view mirrors
+  // VMatrixSetupStep's own node grid with all-zero tiles when nothing's set up yet, so the
+  // edit pencil is always available instead of gated behind a separate "Set up" button.
+  if (active.id === "v_matrix") {
+    return (
+      <>
+        <BookmarkPageHeader theme={theme} label={active.pageLabel} onEdit={isVMatrixAvailable(character) ? onEdit : null} disabled={setup.isUiLocked} />
+        <VMatrixBookmark theme={theme} character={character} />
+      </>
+    );
+  }
+
   return (
     <>
       <BookmarkPageHeader theme={theme} label={active.pageLabel} onEdit={filled ? onEdit : null} disabled={setup.isUiLocked} />
@@ -1650,7 +1755,7 @@ export default function CharacterProfileOverviewScreen({
   const active = bookmarks.find((b) => b.id === activeId) ?? bookmarks[0];
 
   const filled = isBookmarkFilled(active.id, character, mounted);
-  const ContentComponent = active.id === "overview" || active.id === "setup" || active.id === "gender_marriage" || active.id === "stats" || active.id === "equipment" ? null : BOOKMARK_CONTENT[active.id];
+  const ContentComponent = active.id === "overview" || active.id === "setup" || active.id === "gender_marriage" || active.id === "stats" || active.id === "equipment" || active.id === "v_matrix" ? null : BOOKMARK_CONTENT[active.id];
 
   function startOptionalFlowRemembered(flowId: SetupFlowId, targetSubstep?: number, confineToSubstep?: boolean, subView?: string) {
     actions.rememberActiveBookmark(active.id, subView);

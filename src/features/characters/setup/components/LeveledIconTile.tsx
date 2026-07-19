@@ -22,6 +22,17 @@ const leveledIconTileInputStyle = (theme: AppTheme): CSSProperties => ({
   padding: "0.2rem", boxSizing: "border-box",
 });
 
+// Read-only counterpart: no accent highlight, since there's nothing being "selected" on a
+// display-only tile (mirrors EquipmentSetupStep's ReadOnlySymbolTile convention).
+const readOnlyLeveledIconTileStyle = (theme: AppTheme): CSSProperties => ({
+  width: 68, flexShrink: 0,
+  border: `1px solid ${theme.border}`,
+  borderRadius: 8,
+  background: theme.bg,
+  display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
+  padding: "7px 6px", boxSizing: "border-box",
+});
+
 /**
  * Shared icon + level-input tile used across the HEXA Matrix, V Matrix, Oz Rings, and
  * Buffs setup steps. Dims/greyscales the icon and shows the full name via tooltip when
@@ -57,5 +68,32 @@ export function LeveledIconTile({ icon, name, level, onLevel, max, min = 0, them
         style={leveledIconTileInputStyle(theme)}
       />
     </div>
+  );
+}
+
+/**
+ * Read-only counterpart to LeveledIconTile for profile bookmarks — same icon tile, but the
+ * level renders as plain "level/max" text (matching the in-game V Matrix readout) instead of
+ * an input.
+ */
+export function ReadOnlyLeveledIconTile({ icon, name, level, max, theme }: {
+  icon: ReactNode;
+  name: string;
+  level: number;
+  max: number;
+  theme: AppTheme;
+}) {
+  const active = level > 0;
+  return (
+    <HoverTooltip label={name} theme={theme}>
+      <div style={readOnlyLeveledIconTileStyle(theme)}>
+        <div style={{ opacity: active ? 1 : 0.35, filter: active ? "none" : "grayscale(1)", lineHeight: 0 }}>
+          {icon}
+        </div>
+        <span style={{ fontFamily: "inherit", fontWeight: 700, fontSize: "0.8rem", color: active ? theme.text : theme.muted }}>
+          {level}/{max}
+        </span>
+      </div>
+    </HoverTooltip>
   );
 }

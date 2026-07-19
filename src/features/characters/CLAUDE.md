@@ -25,3 +25,24 @@ A substantial kit rework on an *existing* class isn't covered by the new-class c
 - **V Matrix** (`tools/gen-vmatrix.mjs`, hardcoded per-class node exclusions) — a revamp can renumber/rename skills, breaking hardcoded node-id lists.
 - **`tools/hexa-skills/hexa-classes.ts`** — hexa node data may shift too.
 - **`buffsData.ts`** (`HERO_ECHO_SKILL_MAP`) — if the class's Echo of Hero/Exclusive Spell skill changes.
+
+## Level / legacy gating
+
+Several features are unavailable below a level threshold, or for legacy (pre-revamp, no 5th job)
+classes. `flows.ts`'s `isStepSkippedForLevel` is the source of truth for which *setup steps* get
+skipped — but **profile bookmarks render independently of the step registry and must re-check
+eligibility themselves**, since nothing wires a bookmark's render path to the step registry's
+skip logic. Check this table before adding or reworking a bookmark:
+
+| Feature | Unlocks at | Legacy classes | Setup source | Bookmark check |
+|---|---|---|---|---|
+| Hyper Stat | Lv 140 | n/a | `isHyperStatEligible` (`statsStepDraft.ts`) | Stats bookmark's sub-view switcher |
+| Arcane Symbols/Force | Lv 200 | excluded | `isArcaneEligible` (`statsStepDraft.ts`) | `SymbolLevelsDisplay`/`SymbolAreaGroup` (per-area `locked`, blanket legacy message) |
+| V Matrix | Lv 200 | excluded | `isStepSkippedForLevel` (`flows.ts`) | `VMatrixBookmark`'s `resolveVMatrixNotice` |
+| Genesis Liberation | Lv 255 | n/a | `GENESIS_LIBERATION_LEVEL` (`statsStepDraft.ts`) | — |
+| Sacred Symbols/Power | Lv 260 | excluded | `isSacredEligible` (`statsStepDraft.ts`) | `SymbolLevelsDisplay`/`SymbolAreaGroup` |
+| HEXA Matrix | Lv 260 | excluded | `isStepSkippedForLevel` (`flows.ts`) | `HexaMatrixBookmark`'s `resolveHexaNotice` |
+
+Legacy-class exclusion for V Matrix/HEXA is `isLegacyClass(jobName)` (reads `ClassSkillData.isLegacy`
+in `classSkillData.ts`) — the same field `flows.ts` gates on. Use this directly for any legacy-class
+check rather than re-deriving it from other `ClassSkillData` fields.

@@ -737,6 +737,9 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
 
         .profile-binder-page-content {
           animation: profile-page-reveal 0.2s ease-out both;
+          display: flex;
+          flex-direction: column;
+          flex: 1;
         }
 
         /* Combat/Basic Stats' label+value pairs — side by side on desktop (plenty of room for
