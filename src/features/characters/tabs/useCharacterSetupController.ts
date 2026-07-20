@@ -17,6 +17,7 @@ import {
   type StoredLegionCrystal,
   type StoredInnerAbility,
   type StoredFamiliarsData,
+  type StoredFamiliarSlot,
   type StoredVMatrixData,
   type WhLegionRank,
   selectCharactersList,
@@ -28,7 +29,7 @@ import {
 } from "../model/charactersStore";
 import { findClassById, type HexaSkillLevels } from "../../tools/hexa-skills/hexa-classes";
 import { getClassDataByNexonJobName } from "../setup/data/classSkillData";
-import { hexaStatHasData, type HexaStatNode } from "../setup/data/hexaStatData";
+import { hexaStatHasData, type HexaStatNode, type HexaStatEntry, type HexaStatSlot } from "../setup/data/hexaStatData";
 import { IA_PASSIVE_PLUS_ONE_LINE, IA_MULTI_TARGET_PLUS_ONE_LINE } from "../setup/data/innerAbilityData";
 import { ARCANE_AREAS, ALL_SACRED_AREAS, SACRED_AREAS, SACRED_MAX_LEVEL, type SymbolArea, type SymbolType } from "../../tools/symbols/symbol-data";
 import type { SymbolState } from "../../tools/symbols/useSymbolState";
@@ -445,6 +446,7 @@ function applyMapleScouterFlow(
   // we still build it so any value the step autofilled from existing data is preserved.
   const hexaSkillsToolData = buildHexaSkillsToolData(character.jobName, stepData.hexa_matrix ?? "");
   const hexaStatToolData = buildHexaStatToolData(stepData.hexa_matrix ?? "");
+  preserveExistingHexaStatActivePresets(hexaStatToolData, existing);
   const tools = {
     ...base.tools,
     ...(hexaSkillsToolData ? { hexaSkills: hexaSkillsToolData } : null),
@@ -514,6 +516,34 @@ function preserveExistingActivePresets(
   if (stats.innerAbility) stats.innerAbility.activePreset = existing.stats.innerAbility?.activePreset ?? 0;
 }
 
+// Same "the profile's Set-active correction is the only authoritative source" rule as
+// preserveExistingActivePresets above, for Equipment/Familiars/HEXA Stat's own presets --
+// parseEquipmentDraft/buildFamiliarsDataForRecord/buildHexaStatToolData all hardcode a
+// fresh activePreset (0, or 0 per node) since a setup draft never carries one, so every
+// write of these fields must restore it afterward or silently discard a profile correction.
+function preserveExistingEquipmentActivePreset(
+  equipment: StoredCharacterEquipment | null,
+  existing: StoredCharacterRecord | null,
+): void {
+  if (equipment && existing?.equipment) equipment.activePreset = existing.equipment.activePreset;
+}
+
+function preserveExistingFamiliarsActivePreset(
+  familiars: StoredFamiliarsData | null,
+  existing: StoredCharacterRecord | null,
+): void {
+  if (familiars && existing?.familiars) familiars.activePreset = existing.familiars.activePreset;
+}
+
+function preserveExistingHexaStatActivePresets(
+  hexaStatToolData: { nodes: HexaStatNode[] } | null,
+  existing: StoredCharacterRecord | null,
+): void {
+  const existingNodes = (existing?.tools?.hexaStat as { nodes?: HexaStatNode[] } | undefined)?.nodes;
+  if (!hexaStatToolData || !existingNodes) return;
+  hexaStatToolData.nodes = hexaStatToolData.nodes.map((n, i) => ({ ...n, activePreset: existingNodes[i]?.activePreset ?? n.activePreset }));
+}
+
 // The Oz Ring Totalling Ring's off-stats (STR/DEX/INT/LUK not already part of the
 // class's build) are the SAME real stat the Stats step's profile pencil collects, not
 // a private copy — see ozRingsTotallingStatOverrides. Merges any typed here directly
@@ -560,9 +590,12 @@ function buildFullSetupRecord(
   applyOzRingsStatOverrides(stats, ozRingsDraft);
   const hexaSkillsToolData = buildHexaSkillsToolData(character.jobName, stepData.hexa_matrix ?? "");
   const hexaStatToolData = buildHexaStatToolData(stepData.hexa_matrix ?? "");
+  preserveExistingHexaStatActivePresets(hexaStatToolData, existing);
   const vMatrixData = buildVMatrixDataForRecord(stepData.v_matrix ?? "");
   const familiarsData = buildFamiliarsDataForRecord(stepData.familiars ?? "");
+  preserveExistingFamiliarsActivePreset(familiarsData, existing);
   const equipmentData = stepData.equipment ? parseEquipmentDraft(stepData.equipment) : null;
+  preserveExistingEquipmentActivePreset(equipmentData, existing);
   const symbolsData = stepData.equipment ? buildSymbolsToolDataForRecord(character, stepData.equipment) : null;
   const tools = {
     ...base.tools,
@@ -630,6 +663,7 @@ function applyEquipmentDraftToRoster(
   const store = readCharactersStore();
   const existing = selectCharacterById(store, toCharacterKey(character));
   if (!existing) return;
+  preserveExistingEquipmentActivePreset(equipment, existing);
   const symbolsData = buildSymbolsToolDataForRecord(character, equipmentJson);
   const weaponAtt = extractWeaponAttFromEquipmentDraft(equipmentJson);
   upsertFn({
@@ -718,7 +752,22 @@ function applyFamiliarsDraftToRoster(
   const store = readCharactersStore();
   const existing = selectCharacterById(store, toCharacterKey(character));
   if (!existing) return;
+  preserveExistingFamiliarsActivePreset(data, existing);
   upsertFn({ ...existing, familiars: data });
+}
+
+function emptyHexaStatNodeShell(): HexaStatNode {
+  const emptyEntry = (): HexaStatEntry => ({ type: "", level: 0 });
+  const emptySlot = (): HexaStatSlot => ({ main: emptyEntry(), alt: [emptyEntry(), emptyEntry()] });
+  return { presets: [emptySlot(), emptySlot()], activePreset: 0 };
+}
+
+function emptyStoredFamiliarsData(): StoredFamiliarsData {
+  const emptySlot = (): StoredFamiliarSlot => ({ familiarId: null, mobId: "", name: "", tier: "", line1: "", line2: "" });
+  return {
+    presets: Array.from({ length: 5 }, () => ({ familiars: Array.from({ length: 3 }, emptySlot), badges: Array<string>(8).fill("") })),
+    activePreset: 0,
+  };
 }
 
 function applyHexaDraftToRoster(
@@ -733,6 +782,7 @@ function applyHexaDraftToRoster(
   const store = readCharactersStore();
   const existing = selectCharacterById(store, toCharacterKey(character));
   if (!existing) return;
+  preserveExistingHexaStatActivePresets(hexaStatData, existing);
   // Preserve any calculator-only fields (e.g. desiredLevels) already in tools.hexaSkills.
   const existingHexaSkills = existing.tools?.hexaSkills as Record<string, unknown> | undefined;
   upsertFn({
@@ -1171,13 +1221,32 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
   // which of a single HEXA Stat node's 2 presets is actually equipped in-game — each node has
   // its own independent activePreset. No-ops if the character has no saved HEXA Stat data at
   // all, or hasn't reached that node's index yet.
+  // Unlike setStatsActivePreset/setEquipmentActivePreset above, HEXA Stat and Familiars
+  // (below) are collected by optional, standalone flows never bundled into the character's
+  // required setup — a character can exist in the roster with no saved data for either at
+  // all, which used to make this a silent no-op (and the profile's "Set active" button
+  // never showing at all, since it's gated on the same saved data existing). Both now build
+  // an empty shell on demand instead, so setting the active preset works even before the
+  // step has ever been visited.
   const setHexaStatActivePreset = useCallback((nodeIndex: number, presetIndex: number) => {
     if (!confirmedCharacter) return;
     const existing = selectCharacterById(readCharactersStore(), toCharacterKey(confirmedCharacter));
-    const saved = existing?.tools?.hexaStat as { nodes?: HexaStatNode[] } | undefined;
-    if (!existing || !saved?.nodes?.[nodeIndex]) return;
-    const nextNodes = saved.nodes.map((n, i) => (i === nodeIndex ? { ...n, activePreset: presetIndex } : n));
-    upsertRosterCharacter({ ...existing, tools: { ...existing.tools, hexaStat: { ...saved, nodes: nextNodes } } });
+    if (!existing) return;
+    const saved = (existing.tools?.hexaStat as { nodes?: HexaStatNode[] } | undefined) ?? { nodes: [] };
+    const nodes = [...(saved.nodes ?? [])];
+    while (nodes.length <= nodeIndex) nodes.push(emptyHexaStatNodeShell());
+    nodes[nodeIndex] = { ...nodes[nodeIndex], activePreset: presetIndex };
+    upsertRosterCharacter({ ...existing, tools: { ...existing.tools, hexaStat: { ...saved, nodes } } });
+  }, [confirmedCharacter, upsertRosterCharacter]);
+
+  // Same profile-page correction as setStatsActivePreset/setEquipmentActivePreset above, for
+  // which familiars preset (0-4) is actually equipped in-game.
+  const setFamiliarsActivePreset = useCallback((presetIndex: number) => {
+    if (!confirmedCharacter) return;
+    const existing = selectCharacterById(readCharactersStore(), toCharacterKey(confirmedCharacter));
+    if (!existing) return;
+    const familiars = existing.familiars ?? emptyStoredFamiliarsData();
+    upsertRosterCharacter({ ...existing, familiars: { ...familiars, activePreset: presetIndex } });
   }, [confirmedCharacter, upsertRosterCharacter]);
 
   const applyDraftFlowState = useCallback(
@@ -2466,6 +2535,7 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
       setStatsActivePreset,
       setEquipmentActivePreset,
       setHexaStatActivePreset,
+      setFamiliarsActivePreset,
       switchToCharacterProfile,
       toggleCharacterDirectory,
       removeCurrentCharacter,
@@ -2483,6 +2553,18 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
       clearRestoredBookmark: () => setLastActiveBookmark(null),
       startOptionalSetupFlow: (flowId: SetupFlowId, targetSubstep?: number, confineToSubstep?: boolean) => {
         if (immediateUiLockRef.current) return;
+        // Re-seeds from the freshest stored record before entering the flow — mirrors the
+        // resync that already runs right after Finish (see its own comment below), just on
+        // the opposite end. Without this, re-running an optional flow (e.g. Full Setup again
+        // from the profile's Setup bookmark, or a bookmark's confined pencil edit) reused
+        // whatever setupStepTestByStep last held from the PREVIOUS run — stale enough to
+        // still be missing any profile-page-only correction made since (e.g. HEXA Stat/
+        // Equipment/Familiars/Hyper Stat's "Set preset X as active" button), so finishing
+        // without touching that field silently reverted the correction back to preset 1.
+        if (confirmedCharacter) {
+          const freshStored = selectCharacterById(readCharactersStore(), toCharacterKey(confirmedCharacter));
+          setSetupStepTestByStep(buildSeededStepTestByStep(confirmedCharacter.jobName, freshStored ?? null));
+        }
         const overrides = confirmedCharacter
           ? getClassSetupOverrides(confirmedCharacter.jobName)
           : null;

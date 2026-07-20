@@ -177,4 +177,5 @@ export interface PreviewPaneActions {
   setStatsActivePreset: (field: "hyperStat" | "innerAbility", presetIndex: number) => void;
   setEquipmentActivePreset: (presetIndex: number) => void;
   setHexaStatActivePreset: (nodeIndex: number, presetIndex: number) => void;
+  setFamiliarsActivePreset: (presetIndex: number) => void;
 }

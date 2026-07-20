@@ -1,13 +1,24 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import type { AppTheme } from "./themes";
 
 const EDGE_MARGIN = 8;
+const GAP = 6;
+
+function isHoverCapable(): boolean {
+  return typeof window !== "undefined" && window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+}
 
 /**
- * Wraps children with a name bubble that shows on hover (desktop) or tap (touch).
- * Replaces the native `title` attribute, which only works on hover and is unreachable on touch.
+ * Wraps children with a name bubble that shows on hover (desktop), tap (touch), or keyboard
+ * focus. Replaces the native `title` attribute, which only works on hover and is unreachable
+ * on touch. Rendered via a portal to document.body (position: fixed) rather than position:
+ * absolute within the page flow -- any ancestor with overflow other than "visible" (e.g.
+ * .profile-binder's intentional overflow:hidden for its height-pinning trick, see
+ * CharacterSetupFlow.styles.ts) silently clips an absolutely-positioned bubble. InfoTooltip.tsx
+ * hit the same class of bug earlier and uses the same fix.
  */
 export default function HoverTooltip({ label, theme, style, children }: {
   label: ReactNode;
@@ -15,36 +26,71 @@ export default function HoverTooltip({ label, theme, style, children }: {
   style?: CSSProperties;
   children: ReactNode;
 }) {
-  const [open, setOpen] = useState(false);
+  const [hoverOpen, setHoverOpen] = useState(false);
+  const [clickOpen, setClickOpen] = useState(false);
+  const [focusOpen, setFocusOpen] = useState(false);
+  const [pos, setPos] = useState<{ left: number; bottom: number } | null>(null);
   const [shiftX, setShiftX] = useState(0);
   const ref = useRef<HTMLDivElement>(null);
   const bubbleRef = useRef<HTMLDivElement>(null);
+  const open = hoverOpen || clickOpen || focusOpen;
 
-  // Computed from the wrapper's natural center (unaffected by any prior shift), so this
-  // doesn't need shiftX as a dependency and can stay stable across renders.
-  const recenter = useCallback(() => {
+  // Anchored via `bottom` (distance from the viewport's bottom edge) rather than `top`, so the
+  // browser positions the bubble correctly on its very first paint without JS already knowing
+  // the bubble's own (not-yet-measured) height.
+  const place = useCallback(() => {
     const wrapper = ref.current;
+    if (!wrapper) return;
+    const rect = wrapper.getBoundingClientRect();
+    setPos({ left: rect.left + rect.width / 2, bottom: window.innerHeight - rect.top + GAP });
+  }, []);
+
+  // Horizontal viewport-edge clamp -- needs the bubble's actual width, so it can only run once
+  // the bubble has mounted and been measured (mirrors the old recenter()'s shiftX math).
+  const clamp = useCallback(() => {
     const bubble = bubbleRef.current;
-    if (!wrapper || !bubble) return;
-    const wrapperRect = wrapper.getBoundingClientRect();
+    if (!bubble || !pos) return;
     const bubbleWidth = bubble.offsetWidth;
-    const centerX = wrapperRect.left + wrapperRect.width / 2;
-    const naturalLeft = centerX - bubbleWidth / 2;
-    const naturalRight = centerX + bubbleWidth / 2;
+    const naturalLeft = pos.left - bubbleWidth / 2;
+    const naturalRight = pos.left + bubbleWidth / 2;
     if (naturalLeft < EDGE_MARGIN) setShiftX(EDGE_MARGIN - naturalLeft);
     else if (naturalRight > window.innerWidth - EDGE_MARGIN) setShiftX(window.innerWidth - EDGE_MARGIN - naturalRight);
     else setShiftX(0);
-  }, []);
+  }, [pos]);
 
   useEffect(() => {
-    if (!open) return;
-    recenter();
+    if (open) place();
+  }, [open, place]);
+
+  useEffect(() => {
+    if (open && pos) clamp();
+  }, [open, pos, clamp]);
+
+  useEffect(() => {
+    if (!clickOpen) return;
     function handlePointerDown(e: PointerEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      const target = e.target as Node;
+      if (ref.current?.contains(target)) return;
+      if (bubbleRef.current?.contains(target)) return;
+      setClickOpen(false);
     }
     document.addEventListener("pointerdown", handlePointerDown);
     return () => document.removeEventListener("pointerdown", handlePointerDown);
-  }, [open, recenter]);
+  }, [clickOpen]);
+
+  // Position is computed once per open rather than tracked live, so letting the page scroll
+  // under a `fixed` bubble would visibly detach it from its trigger -- close instead (same
+  // tradeoff InfoTooltip makes).
+  useEffect(() => {
+    if (!open) return;
+    function handleScroll() {
+      setHoverOpen(false);
+      setClickOpen(false);
+      setFocusOpen(false);
+    }
+    window.addEventListener("scroll", handleScroll, true);
+    return () => window.removeEventListener("scroll", handleScroll, true);
+  }, [open]);
 
   return (
     // This wraps arbitrary children — sometimes a real interactive control (which already
@@ -52,30 +98,41 @@ export default function HoverTooltip({ label, theme, style, children }: {
     // nothing focusable inside. Neither a real <button> (would nest inside an existing
     // button in some call sites) nor an onKeyDown equivalent (would double-fire alongside
     // the inner control's own Enter-activated click, canceling the toggle out) is safe
-    // here. Keyboard/focus visibility is instead handled by the .hover-tip:focus-within
-    // CSS rule in globals.css, which reveals the bubble whenever a focusable descendant
-    // gains focus, with no risk of double-toggling since it doesn't touch click logic.
+    // here. Keyboard visibility is instead handled by onFocus/onBlur below, which reveal
+    // the bubble whenever a focusable descendant gains focus, with no risk of double-
+    // toggling since it doesn't touch click logic.
     // react-doctor-disable-next-line no-static-element-interactions, click-events-have-key-events
     <div
       ref={ref}
       className="hover-tip"
       style={style}
-      onClick={() => setOpen((o) => !o)}
-      onMouseEnter={recenter}
+      onClick={() => setClickOpen((o) => !o)}
+      onMouseEnter={() => { if (isHoverCapable()) setHoverOpen(true); }}
+      onMouseLeave={() => { if (isHoverCapable()) setHoverOpen(false); }}
+      onFocus={() => setFocusOpen(true)}
+      onBlur={(e) => {
+        if (ref.current && e.relatedTarget instanceof Node && ref.current.contains(e.relatedTarget)) return;
+        setFocusOpen(false);
+      }}
     >
       {children}
-      <div
-        ref={bubbleRef}
-        className={`hover-tip-bubble${open ? " is-open" : ""}`}
-        style={{
-          background: theme.panel,
-          color: theme.text,
-          border: `1px solid ${theme.border}`,
-          transform: `translateX(calc(-50% + ${shiftX}px))`,
-        }}
-      >
-        {label}
-      </div>
+      {open && pos && typeof document !== "undefined" && createPortal(
+        <div
+          ref={bubbleRef}
+          className="hover-tip-bubble"
+          style={{
+            left: pos.left,
+            bottom: pos.bottom,
+            transform: `translateX(calc(-50% + ${shiftX}px))`,
+            background: theme.panel,
+            color: theme.text,
+            border: `1px solid ${theme.border}`,
+          }}
+        >
+          {label}
+        </div>,
+        document.body,
+      )}
     </div>
   );
 }

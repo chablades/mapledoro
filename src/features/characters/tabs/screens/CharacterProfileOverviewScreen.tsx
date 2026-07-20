@@ -11,7 +11,7 @@ import { readCharacterToolData } from "../../../tools/characterToolStorage";
 import { resolveClassId, getClassSetupOverrides } from "../../setup/data/nexonJobMapping";
 import { CLASS_SKILL_DATA, getClassDataByNexonJobName, isLegacyClass, type ClassSkillData } from "../../setup/data/classSkillData";
 import { HEXA_STAT_OPTIONS, getHexaStatBonus, getMainStatLabel, getAttackLabel, type HexaStatNode, type HexaStatEntry, type HexaStatSlot } from "../../setup/data/hexaStatData";
-import type { StoredCharacterEquipment, StoredCharacterRecord, StoredCharacterStats, StoredHyperStat, StoredInnerAbility, StoredIATier, StoredTripleStatField } from "../../model/charactersStore";
+import type { StoredCharacterEquipment, StoredCharacterRecord, StoredCharacterStats, StoredHyperStat, StoredInnerAbility, StoredIATier, StoredTripleStatField, StoredFamiliarSlot } from "../../model/charactersStore";
 import { SetupFlowButtons } from "./QuickSetupIntroScreen";
 import { STAT_LABELS } from "../../setup/data/statFields";
 import { HYPER_STAT_CATEGORIES, type HyperStatCategoryDef } from "../../setup/data/hyperStatData";
@@ -28,6 +28,7 @@ import InfoTooltip, { type TooltipContent } from "../../setup/components/InfoToo
 import { ReadOnlySlotTile, ReadOnlySymbolTile } from "../../setup/components/EquipmentSetupStep";
 import { ReadOnlyLeveledIconTile } from "../../setup/components/LeveledIconTile";
 import { VMatrixNodeIcon, useVMatrixCatalog, type VMatrixNode } from "../../setup/components/VMatrixSetupStep";
+import { ReadOnlyFamiliarSlotCard, ReadOnlyBadgeSlot, PRESET_COUNT as FAMILIAR_PRESET_COUNT, BADGE_SIZE as FAMILIAR_BADGE_SIZE, BADGE_BORDER as FAMILIAR_BADGE_BORDER } from "../../setup/components/FamiliarsSetupStep";
 import {
   storedPresetToDraft, toDraftItem, type SlotMap, type SlotKey,
   CENTER_WIDTH, COL1_SLOTS, COL2_SLOTS, COL6_SLOTS, COL7_SLOTS, CENTER_BOTTOM_SLOTS,
@@ -1253,19 +1254,58 @@ function EquipmentBookmark({
   );
 }
 
-function FamiliarsBookmark({ theme, character }: { theme: Theme; character: StoredCharacterRecord | null }) {
+const EMPTY_FAMILIAR_SLOT: StoredFamiliarSlot = { familiarId: null, mobId: "", name: "", tier: "", line1: "", line2: "" };
+const EMPTY_FAMILIAR_SLOTS: StoredFamiliarSlot[] = Array(3).fill(EMPTY_FAMILIAR_SLOT);
+const EMPTY_FAMILIAR_BADGES: string[] = Array(8).fill("");
+
+// Mirrors FamiliarsSetupStep's own 3-card + staggered-4+4-badge layout, read-only. No
+// EmptyBookmarkState (matches V Matrix/Equipment/HEXA's convention) — the read view shows
+// empty dashed cards/pentagons when nothing's set up yet, so the edit pencil is always
+// available instead of gated behind a separate "Set up" button.
+function FamiliarsBookmark({
+  theme, character, onSetActivePreset,
+}: {
+  theme: Theme; character: StoredCharacterRecord | null; onSetActivePreset: (presetIndex: number) => void;
+}) {
   const data = character?.familiars;
-  const preset = data?.presets?.[data.activePreset];
-  if (!preset) return null;
-  const filled = preset.familiars.filter((f) => f.name);
-  if (filled.length === 0 && preset.badges.length === 0) return null;
+  const activePresetStored = data?.activePreset ?? 0;
+  const [presetIdx, setPresetIdx] = useState(activePresetStored);
+  const preset = data?.presets?.[presetIdx];
+  const familiars = preset?.familiars ?? EMPTY_FAMILIAR_SLOTS;
+  const badges = preset?.badges ?? EMPTY_FAMILIAR_BADGES;
+  const badgeRowOffset = (FAMILIAR_BADGE_SIZE + FAMILIAR_BADGE_BORDER * 2 + 8) / 2;
   return (
-    <div>
-      {filled.map((f, i) => (
-        // react-doctor-disable-next-line no-array-index-as-key
-        <SummaryRow key={i} label={f.tier ? `${f.tier} Familiar` : "Familiar"} value={f.name} theme={theme} />
-      ))}
-      {preset.badges.length > 0 && <SummaryRow label="Badges" value={`${preset.badges.length} equipped`} theme={theme} />}
+    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      {/* Gated on `character`, not `data` -- Familiars is an optional standalone flow never
+          bundled into required setup, so a character can exist with no saved familiars data
+          at all. onSetActivePreset (see useCharacterSetupController) builds an empty shell
+          on demand, so this works even before the step has ever been visited. */}
+      <PresetTabs theme={theme} active={presetIdx} activePreset={activePresetStored} onSelect={setPresetIdx} onSetActive={character ? onSetActivePreset : null} count={FAMILIAR_PRESET_COUNT} />
+      <div style={{ display: "flex", gap: 8 }}>
+        {familiars.map((slot, i) => (
+          // react-doctor-disable-next-line no-array-index-as-key
+          <ReadOnlyFamiliarSlotCard key={i} slot={slot} theme={theme} />
+        ))}
+      </div>
+      <div>
+        <p style={{ margin: "0 0 8px", fontSize: "0.75rem", fontWeight: 800, color: theme.muted, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+          Equipped Badges
+        </p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-start" }}>
+          <div style={{ display: "flex", gap: 8 }}>
+            {badges.slice(0, 4).map((badge, i) => (
+              // react-doctor-disable-next-line no-array-index-as-key
+              <ReadOnlyBadgeSlot key={i} badge={badge} theme={theme} />
+            ))}
+          </div>
+          <div style={{ display: "flex", gap: 8, marginLeft: badgeRowOffset }}>
+            {badges.slice(4).map((badge, i) => (
+              // react-doctor-disable-next-line no-array-index-as-key
+              <ReadOnlyBadgeSlot key={i} badge={badge} theme={theme} />
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -1535,12 +1575,16 @@ function HexaStatBookmarkView({ theme, character, classData, hexaStatNodes, onSe
         {lockedCaption && <p style={{ margin: "6px 0 0", fontSize: 12, color: theme.muted, fontWeight: 700 }}>{lockedCaption}</p>}
       </div>
 
+      {/* Gated on `character`, not `hexaStatNodes` -- HEXA Stat is a substep of an optional
+          flow, so a character can exist with no saved HEXA Stat data at all. onSetActivePreset
+          (see useCharacterSetupController) builds an empty node shell on demand, so this works
+          even before the substep has ever been visited. */}
       <PresetTabs
         theme={theme}
         active={presetIdx}
         activePreset={activeNode.activePreset}
         onSelect={setPresetIdx}
-        onSetActive={hexaStatNodes ? (p) => onSetActivePreset(activeSlot, p) : null}
+        onSetActive={character ? (p) => onSetActivePreset(activeSlot, p) : null}
         count={2}
       />
 
@@ -1703,9 +1747,7 @@ function isBookmarkFilled(id: BookmarkId, character: StoredCharacterRecord | nul
   }
 }
 
-const BOOKMARK_CONTENT: Record<Exclude<BookmarkId, "overview" | "setup" | "gender_marriage" | "stats" | "equipment" | "v_matrix" | "hexa_matrix">, (props: { theme: Theme; character: StoredCharacterRecord | null }) => ReactNode> = {
-  familiars: FamiliarsBookmark,
-};
+const BOOKMARK_CONTENT: Record<Exclude<BookmarkId, "overview" | "setup" | "gender_marriage" | "stats" | "equipment" | "v_matrix" | "hexa_matrix" | "familiars">, (props: { theme: Theme; character: StoredCharacterRecord | null }) => ReactNode> = {};
 
 function SetupBookmark({ model, actions }: { model: PreviewPaneModel; actions: PreviewPaneActions }) {
   const { theme } = model;
@@ -1872,6 +1914,18 @@ function BookmarkPageBody({
     );
   }
 
+  // Same shape as V Matrix above: no gating (Familiars has none) and no sub-views, so this
+  // needs neither an eligibility check nor a targetSubstep helper — the pencil just opens
+  // familiars_flow's single step directly.
+  if (active.id === "familiars") {
+    return (
+      <>
+        <BookmarkPageHeader theme={theme} label={active.pageLabel} onEdit={onEdit} disabled={setup.isUiLocked} />
+        <FamiliarsBookmark theme={theme} character={character} onSetActivePreset={actions.setFamiliarsActivePreset} />
+      </>
+    );
+  }
+
   return (
     <>
       <BookmarkPageHeader theme={theme} label={active.pageLabel} onEdit={filled ? onEdit : null} disabled={setup.isUiLocked} />
@@ -1975,7 +2029,7 @@ export default function CharacterProfileOverviewScreen({
   useEffect(() => { actions.clearRestoredBookmark(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const filled = isBookmarkFilled(active.id, character, mounted);
-  const ContentComponent = active.id === "overview" || active.id === "setup" || active.id === "gender_marriage" || active.id === "stats" || active.id === "equipment" || active.id === "v_matrix" || active.id === "hexa_matrix" ? null : BOOKMARK_CONTENT[active.id];
+  const ContentComponent = active.id === "overview" || active.id === "setup" || active.id === "gender_marriage" || active.id === "stats" || active.id === "equipment" || active.id === "v_matrix" || active.id === "hexa_matrix" || active.id === "familiars" ? null : BOOKMARK_CONTENT[active.id];
 
   function startOptionalFlowRemembered(flowId: SetupFlowId, targetSubstep?: number, confineToSubstep?: boolean, subView?: string) {
     actions.rememberActiveBookmark(active.id, subView);

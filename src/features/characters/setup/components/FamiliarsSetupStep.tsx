@@ -10,7 +10,7 @@ import { isStrayClick } from "../../../../lib/inputUtils";
 import HoverTooltip from "../../../../components/HoverTooltip";
 import type { AppTheme } from "../../../../components/themes";
 import type { SetupStepDefinition } from "../steps";
-import { readCharactersStore, selectCharacterByIgn } from "../../model/charactersStore";
+import { readCharactersStore, selectCharacterByIgn, type StoredFamiliarSlot } from "../../model/charactersStore";
 import {
   TIER_LABELS, TIER_ORDER, TIER_COLORS, getLinesForTier, BADGE_NAMES, BADGE_ID_MAP,
   FAMILIARS, getFamiliarDisplayLabel,
@@ -55,16 +55,16 @@ interface FamiliarsSetupStepProps {
 
 // ── Constants ──────────────────────────────────────────────────────────────
 
-const PRESET_COUNT = 5;
-const SLOT_COUNT = 3;
-const BADGE_COUNT = 8;
+export const PRESET_COUNT = 5;
+export const SLOT_COUNT = 3;
+export const BADGE_COUNT = 8;
 const VALID_TIERS = new Set<string>(TIER_ORDER);
 
-const FAM_CARD_SIZE = 64;
+export const FAM_CARD_SIZE = 64;
 const FAM_LIST_SIZE = 32;
-const BADGE_SIZE = 52;
-const BADGE_BORDER = 4;
-const PENTAGON = "polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%)";
+export const BADGE_SIZE = 52;
+export const BADGE_BORDER = 4;
+export const PENTAGON = "polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%)";
 
 // ── Parse / patch helpers ──────────────────────────────────────────────────
 
@@ -247,8 +247,9 @@ const presetSquareStyle = (theme: AppTheme, active: boolean): CSSProperties => (
 });
 
 // Familiar sprite: sequential source fallback (mob → familiar → card), swapped via onError.
+// Exported for the profile Familiars bookmark's read-only cards.
 
-function FamiliarCardSprite({ mobId, familiarId, cardId, size, theme }: { mobId: string; familiarId: number | null; cardId: string; size: number; theme: AppTheme }) {
+export function FamiliarCardSprite({ mobId, familiarId, cardId, size, theme }: { mobId: string; familiarId: number | null; cardId: string; size: number; theme: AppTheme }) {
   const sources = [
     resourceImageUrl("mob", mobId, "sprite.png"),
     // "familiar" sprites are keyed by the familiar's OWN id, not mobId — these are
@@ -756,6 +757,59 @@ function FamiliarSlotCard({
   );
 }
 
+function ReadOnlyLineChip({ value, theme }: { value: string; theme: AppTheme }) {
+  return (
+    <div style={{ ...lineSelectStyle, borderColor: theme.border, background: theme.bg, color: value ? theme.text : theme.muted, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+      {value || "—"}
+    </div>
+  );
+}
+
+/** Read-only counterpart to FamiliarSlotCard for the profile Familiars bookmark — same
+ *  sprite/tier-border card and Line 1/Line 2 chips, no search picker or interactivity. */
+export function ReadOnlyFamiliarSlotCard({ slot, theme }: { slot: StoredFamiliarSlot; theme: AppTheme }) {
+  const isEmpty = !slot.name;
+  const displayName = slot.name.replace(/ Familiar$/i, "");
+  const matchedEntry = FAMILIARS.find((f) => f.id === slot.familiarId);
+  const cardId = matchedEntry?.cardId ?? "";
+  const spriteMobId = matchedEntry?.spriteMobId ?? slot.mobId;
+  const tier = VALID_TIERS.has(slot.tier) ? (slot.tier as FamiliarTier) : null;
+  const cardStyle: CSSProperties = {
+    ...slotCardBase,
+    borderWidth: 1,
+    borderColor: tier ? TIER_COLORS[tier].border : theme.border,
+    borderStyle: isEmpty ? "dashed" : "solid",
+    background: isEmpty ? "transparent" : theme.panel,
+    justifyContent: isEmpty ? "center" : "flex-start",
+    cursor: "default",
+  };
+  return (
+    <div style={{ flex: 1, minWidth: 0 }}>
+      <div style={cardStyle}>
+        {isEmpty ? (
+          // No "+" here, unlike the editable FamiliarSlotCard above -- this card isn't
+          // clickable, and a "+" reads as an invitation to tap it. The dashed border alone
+          // already signals "empty" (matches ReadOnlyBadgeSlot's empty pentagon, which has
+          // no glyph either).
+          <span style={{ fontSize: "0.75rem", color: theme.muted, fontWeight: 700 }}>Empty</span>
+        ) : (
+          <>
+            <HoverTooltip label={displayName} theme={theme}>
+              <FamiliarCardSprite mobId={spriteMobId} familiarId={slot.familiarId} cardId={cardId} size={FAM_CARD_SIZE} theme={theme} />
+            </HoverTooltip>
+            {tier && (
+              <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 3, marginTop: 2 }}>
+                <ReadOnlyLineChip value={slot.line1} theme={theme} />
+                <ReadOnlyLineChip value={slot.line2} theme={theme} />
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ── Badge slot (pentagon) ──────────────────────────────────────────────────
 
 function filterBadges(query: string, excluded: ReadonlySet<string>): readonly string[] {
@@ -915,6 +969,20 @@ function BadgeSlot({
       )}
     </div>
   );
+}
+
+/** Read-only counterpart to BadgeSlot for the profile Familiars bookmark — same pentagon
+ *  tile, no picker or interactivity. */
+export function ReadOnlyBadgeSlot({ badge, theme }: { badge: string; theme: AppTheme }) {
+  const outerSize = BADGE_SIZE + BADGE_BORDER * 2;
+  const pentagon = (
+    <div style={{ width: outerSize, height: outerSize, clipPath: PENTAGON, background: badge ? undefined : `${theme.muted}28` }}>
+      {badge && (
+        <Image src={familiarBadgeUrl(BADGE_ID_MAP[badge])} alt={badge} width={outerSize} height={outerSize} unoptimized style={{ objectFit: "cover", display: "block" }} />
+      )}
+    </div>
+  );
+  return badge ? <HoverTooltip label={badge} theme={theme}>{pentagon}</HoverTooltip> : pentagon;
 }
 
 // ── Main component ─────────────────────────────────────────────────────────

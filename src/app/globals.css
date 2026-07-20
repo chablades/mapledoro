@@ -400,16 +400,22 @@ textarea:focus-visible {
   }
 }
 
-/* Hover/tap tooltip bubble: shows on hover (desktop) or tap (touch); colors inline */
+/* Hover/tap/focus tooltip bubble: portalled to document.body (position: fixed, JS-computed
+   coordinates in HoverTooltip.tsx) so it isn't clipped by an ancestor's overflow:hidden.
+   Visibility is conditional rendering, not CSS toggling; shape/typography here, position
+   and colors inline. */
+/* inline-flex, not the block default -- a bare block div stretches to its parent's full
+   width whenever nothing else in that context constrains it (e.g. ReadOnlySlotTile sitting
+   directly in a plain <div>), which throws off the bubble's horizontal centering in
+   HoverTooltip.tsx (computed from this wrapper's own midpoint). inline-flex always
+   shrink-wraps to the wrapped icon/button instead, regardless of surrounding context. */
 .hover-tip {
   position: relative;
+  display: inline-flex;
 }
 
 .hover-tip-bubble {
-  position: absolute;
-  bottom: calc(100% + 6px);
-  left: 50%;
-  transform: translateX(-50%);
+  position: fixed;
   max-width: min(240px, 90vw);
   width: max-content;
   white-space: pre-line;
@@ -421,32 +427,7 @@ textarea:focus-visible {
   border-radius: 6px;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
   pointer-events: none;
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.12s ease;
-  z-index: 30;
-}
-
-/* :hover triggers via mouse only — touch devices "sticky hover" on tap, which fought
-   with tap handlers that open something else (e.g. an item picker) on the same element. */
-@media (hover: hover) and (pointer: fine) {
-  .hover-tip:hover .hover-tip-bubble {
-    opacity: 1;
-    visibility: visible;
-  }
-}
-
-.hover-tip-bubble.is-open {
-  opacity: 1;
-  visibility: visible;
-}
-
-/* Keyboard equivalent of :hover — reveals the bubble when a focusable descendant
-   (e.g. a wrapped <button>) receives keyboard focus, without needing the wrapper
-   itself to be a tab stop. */
-.hover-tip:focus-within .hover-tip-bubble {
-  opacity: 1;
-  visibility: visible;
+  z-index: 200;
 }
 
 /* Tool page header block (back link + title + description) */

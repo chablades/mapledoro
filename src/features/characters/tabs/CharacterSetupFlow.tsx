@@ -247,6 +247,7 @@ export default function CharacterSetupFlow({ theme, initialCharacterName, initia
     setStatsActivePreset: actions.setStatsActivePreset,
     setEquipmentActivePreset: actions.setEquipmentActivePreset,
     setHexaStatActivePreset: actions.setHexaStatActivePreset,
+    setFamiliarsActivePreset: actions.setFamiliarsActivePreset,
   };
 
   return (
