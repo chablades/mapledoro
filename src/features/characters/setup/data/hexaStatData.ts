@@ -24,9 +24,10 @@ export interface HexaStatSlot {
   alt: [HexaStatEntry, HexaStatEntry];
 }
 /**
- * A single HEXA Stat node (Hexa Stat I/II/III). In-game each node holds two
- * independent presets — Active and Stored — with its own active selection.
- * {@link activePreset} is 0 (Active) or 1 (Stored).
+ * A single HEXA Stat node (Hexa Stat I/II/III). Each node holds two independent
+ * presets with its own active selection — numbered (Preset 1/Preset 2) like every
+ * other preset system in the app, not given special names.
+ * {@link activePreset} is 0 (Preset 1) or 1 (Preset 2).
  */
 export interface HexaStatNode {
   presets: [HexaStatSlot, HexaStatSlot];

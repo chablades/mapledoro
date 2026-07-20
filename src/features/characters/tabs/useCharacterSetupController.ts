@@ -48,7 +48,6 @@ import {
   serializeStatsStepDraft, storedStatsToStatsStepDraft,
 } from "../setup/data/statsStepDraft";
 import { serializeEquipmentStepDraft, storedEquipmentToDraft } from "../setup/data/equipmentStepDraft";
-import { readSavedHexaValue } from "../setup/data/hexaMatrixDraft";
 import { convertOzRingsDraftToStored, ozRingsTotallingStatOverrides, parseOzRingsDraft, serializeOzRingsDraft, storedOzRingsToOzRingsDraft, type MainStatId } from "../setup/data/ozRingData";
 import { convertBuffsDraftToStored, parseBuffsDraft } from "../setup/data/buffsData";
 import {
@@ -806,9 +805,10 @@ function buildHexaStatToolData(hexaJson: string): { nodes: HexaStatNode[] } | nu
     const parsed = JSON.parse(hexaJson) as { hexaStat?: unknown };
     const nodes = parsed?.hexaStat;
     if (Array.isArray(nodes) && hexaStatHasData(nodes as HexaStatNode[])) {
-      // Always saved as Active (preset 0) per node — the Active/Stored toggle used while
-      // editing isn't an explicit "this is what's live in-game" choice, so trusting it
-      // would silently save whichever one was last open while editing.
+      // Always saved as preset 0 per node — the preset toggle used while editing isn't an
+      // explicit "this is what's live in-game" choice, so trusting it would silently save
+      // whichever one was last open while editing. Correcting a node's real active preset
+      // happens on the profile page instead, via setHexaStatActivePreset below.
       return { nodes: (nodes as HexaStatNode[]).map((n) => ({ ...n, activePreset: 0 })) };
     }
   } catch { /* ignore */ }
@@ -880,6 +880,22 @@ interface InitialRouteIntent {
  *  landing on a profile AND right after any Finish, so the in-memory drafts always
  *  resync to the just-saved truth instead of leaving other steps' untouched drafts
  *  stale for the rest of the session. */
+// Mirrors hexaMatrixDraft.ts's readSavedHexaValue, but derives the draft from the passed-in
+// storedCharacter directly instead of an independent readCharacterToolData/localStorage read.
+// The right-after-Finish seeding call site passes lastUpsertedCharacterRef.current specifically
+// because the roster's actual localStorage write is still pending in a separate effect at that
+// point (see the "Resyncs every step draft" comment below) — an independent localStorage read
+// here would silently re-seed hexa_matrix with the pre-Finish value, so the profile's HEXA edit
+// pencil always showed a stale level right after saving a new one. Confirmed as a real bug
+// 2026-07-20 (Yuki: typed a new HEXA level, it saved, but reopening the pencil showed the old one).
+function hexaValueFromStoredCharacter(hexaClassDef: ReturnType<typeof findClassById>, storedCharacter: StoredCharacterRecord | null): string {
+  if (!hexaClassDef || !storedCharacter) return "";
+  const savedSkills = storedCharacter.tools?.hexaSkills as { levels?: HexaSkillLevels } | undefined;
+  const savedStat = storedCharacter.tools?.hexaStat as { nodes?: HexaStatNode[] } | undefined;
+  if (!savedSkills?.levels && !savedStat?.nodes) return "";
+  return JSON.stringify({ ...(savedSkills?.levels ?? {}), hexaStat: savedStat?.nodes });
+}
+
 function buildSeededStepTestByStep(jobName: string, storedCharacter: StoredCharacterRecord | null): SetupStepInputById {
   const savedMarriage = storedCharacter?.marriage;
   let marriageValue = "";
@@ -908,7 +924,7 @@ function buildSeededStepTestByStep(jobName: string, storedCharacter: StoredChara
     v_matrix: storedCharacter?.vMatrix?.levels && Object.keys(storedCharacter.vMatrix.levels).length > 0
       ? JSON.stringify(Object.fromEntries(Object.entries(storedCharacter.vMatrix.levels).map(([k, v]) => [k, String(v)])))
       : "",
-    hexa_matrix: readSavedHexaValue(hexaClassDef, storedCharacter?.ign) ?? "",
+    hexa_matrix: hexaValueFromStoredCharacter(hexaClassDef, storedCharacter),
     familiars: storedCharacter?.familiars ? JSON.stringify(storedCharacter.familiars) : "",
     // Never seeded before (a real gap, not intentional — every other step above is):
     // reopening Oz Rings on a character that already answered it always started blank,
@@ -1149,6 +1165,19 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
     const existing = selectCharacterById(readCharactersStore(), toCharacterKey(confirmedCharacter));
     if (!existing) return;
     upsertRosterCharacter({ ...existing, equipment: { ...existing.equipment, activePreset: presetIndex } });
+  }, [confirmedCharacter, upsertRosterCharacter]);
+
+  // Same profile-page correction as setStatsActivePreset/setEquipmentActivePreset above, for
+  // which of a single HEXA Stat node's 2 presets is actually equipped in-game — each node has
+  // its own independent activePreset. No-ops if the character has no saved HEXA Stat data at
+  // all, or hasn't reached that node's index yet.
+  const setHexaStatActivePreset = useCallback((nodeIndex: number, presetIndex: number) => {
+    if (!confirmedCharacter) return;
+    const existing = selectCharacterById(readCharactersStore(), toCharacterKey(confirmedCharacter));
+    const saved = existing?.tools?.hexaStat as { nodes?: HexaStatNode[] } | undefined;
+    if (!existing || !saved?.nodes?.[nodeIndex]) return;
+    const nextNodes = saved.nodes.map((n, i) => (i === nodeIndex ? { ...n, activePreset: presetIndex } : n));
+    upsertRosterCharacter({ ...existing, tools: { ...existing.tools, hexaStat: { ...saved, nodes: nextNodes } } });
   }, [confirmedCharacter, upsertRosterCharacter]);
 
   const applyDraftFlowState = useCallback(
@@ -2436,6 +2465,7 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
       toggleChampionCharacter,
       setStatsActivePreset,
       setEquipmentActivePreset,
+      setHexaStatActivePreset,
       switchToCharacterProfile,
       toggleCharacterDirectory,
       removeCurrentCharacter,
@@ -2448,6 +2478,9 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
         if (!currentCharacterKey) return;
         setLastActiveBookmark({ characterKey: currentCharacterKey, bookmarkId, subView });
       },
+      // Called once by the screen right after it consumes lastActiveBookmark, so it doesn't
+      // linger and get re-read on a later, unrelated bookmark switch.
+      clearRestoredBookmark: () => setLastActiveBookmark(null),
       startOptionalSetupFlow: (flowId: SetupFlowId, targetSubstep?: number, confineToSubstep?: boolean) => {
         if (immediateUiLockRef.current) return;
         const overrides = confirmedCharacter

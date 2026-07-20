@@ -1,17 +1,16 @@
-import Image from "next/image";
 import katex from "katex";
 import "katex/dist/katex.min.css";
-import { Fragment, useMemo, useRef, useState, useSyncExternalStore, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState, useSyncExternalStore, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
 import type { SetupFlowId } from "../../setup/flows";
 import type { SetupStepId } from "../../setup/steps";
 import type { PreviewPaneActions, PreviewPaneModel } from "../paneModels";
 import { primaryButtonStyle, secondaryButtonStyle, successButtonStyle } from "../components/uiStyles";
-import { findClassById, COMMON_SKILLS, type HexaSkillDef, type HexaSkillLevels } from "../../../tools/hexa-skills/hexa-classes";
+import { findClassById, COMMON_SKILLS, type HexaSkillDef, type HexaSkillLevels, type HexaMasteryNode } from "../../../tools/hexa-skills/hexa-classes";
+import { SkillIcon as HexaSkillTileIcon } from "../../../tools/hexa-skills/hexa-ui";
 import { readCharacterToolData } from "../../../tools/characterToolStorage";
 import { resolveClassId, getClassSetupOverrides } from "../../setup/data/nexonJobMapping";
 import { CLASS_SKILL_DATA, getClassDataByNexonJobName, isLegacyClass, type ClassSkillData } from "../../setup/data/classSkillData";
-import { HEXA_STAT_OPTIONS, getHexaStatBonus, getMainStatLabel, getAttackLabel, type HexaStatNode, type HexaStatEntry } from "../../setup/data/hexaStatData";
-import { resourceImageUrl } from "../../../../lib/mapleResource";
+import { HEXA_STAT_OPTIONS, getHexaStatBonus, getMainStatLabel, getAttackLabel, type HexaStatNode, type HexaStatEntry, type HexaStatSlot } from "../../setup/data/hexaStatData";
 import type { StoredCharacterEquipment, StoredCharacterRecord, StoredCharacterStats, StoredHyperStat, StoredInnerAbility, StoredIATier, StoredTripleStatField } from "../../model/charactersStore";
 import { SetupFlowButtons } from "./QuickSetupIntroScreen";
 import { STAT_LABELS } from "../../setup/data/statFields";
@@ -24,6 +23,7 @@ import { resolveComboOrdersTier, type ComboOrdersTier } from "../../setup/data/c
 import { isRebootWorld, rebootFinalDamageBonusPercent } from "../../setup/data/rebootData";
 import { TIER_COLORS as IA_TIER_COLORS, familiarStatBonuses, type FamiliarStatBonus } from "../../setup/data/familiarsData";
 import { statusText } from "../../../../components/statusColors";
+import { HexaSkillIcon } from "../../../../components/ResourceImage";
 import InfoTooltip, { type TooltipContent } from "../../setup/components/InfoTooltip";
 import { ReadOnlySlotTile, ReadOnlySymbolTile } from "../../setup/components/EquipmentSetupStep";
 import { ReadOnlyLeveledIconTile } from "../../setup/components/LeveledIconTile";
@@ -62,27 +62,10 @@ const ALL_BOOKMARKS: BookmarkDef[] = [
   { id: "setup", tabLabel: "Setup", pageLabel: "Setup", flowId: null },
 ];
 
-const commonSlots: (HexaSkillDef | null)[] = [COMMON_SKILLS[0] ?? null, COMMON_SKILLS[1] ?? null, null, null];
-
 const MAIN_STAT_FIELDS = { str: "STR", dex: "DEX", int: "INT", luk: "LUK", hp: "HP" } as const;
 type MainStatKey = keyof typeof MAIN_STAT_FIELDS;
 
 const GENDER_LABELS: Record<"male" | "female", string> = { male: "Male", female: "Female" };
-
-const hexNodeLevelBadgeStyle: CSSProperties = {
-  position: "absolute", bottom: 1, left: "50%", transform: "translateX(-50%)",
-  fontSize: 12, fontWeight: 800, color: "#fff", background: "rgba(0,0,0,0.65)",
-  borderRadius: 999, padding: "0px 4px", lineHeight: 1.4, zIndex: 1, whiteSpace: "nowrap",
-};
-
-function hexNodeTileStyle(border: string, bg: string, showImage: boolean, locked: boolean | undefined): CSSProperties {
-  return {
-    width: 42, height: 42, borderRadius: 6, border: `1px solid ${border}`,
-    background: showImage ? "transparent" : bg, display: "flex", alignItems: "center",
-    justifyContent: "center", position: "relative", overflow: "hidden",
-    opacity: locked ? 0.22 : 1, flexShrink: 0,
-  };
-}
 
 function exportButtonStyle(theme: Theme): CSSProperties {
   return {
@@ -306,46 +289,6 @@ function WseSlot({ label, name, theme }: { label: string; name: string | null | 
           {name ?? "not set up"}
         </div>
       </div>
-    </div>
-  );
-}
-
-function HexNode({ level, variant, locked, skill }: { level?: number; variant: "purple" | "blue" | "pink" | "empty"; locked?: boolean; skill?: HexaSkillDef }) {
-  const [imgError, setImgError] = useState(false);
-  const bg = { purple: "#1e1245", blue: "#0d1e38", pink: "#2a0a2a", empty: "transparent" }[variant];
-  const border = { purple: "#7055c8", blue: "#4080c0", pink: "#c055c8", empty: "#c8c0b8" }[variant];
-  const lvColor = { purple: "#a090d8", blue: "#6ea8d8", pink: "#d890d8", empty: "#999" }[variant];
-
-  const iconSrc = skill?.iconUrl ?? (skill?.iconId ? resourceImageUrl("hexa-skill", skill.iconId, "icon.png") : null);
-  const showImage = !!(skill && !locked && !imgError && iconSrc);
-
-  let content: ReactNode;
-  if (skill && !locked) {
-    if (imgError || !iconSrc) {
-      content = <span style={{ fontSize: 12, fontWeight: 800, color: lvColor }}>{skill.name.charAt(0)}</span>;
-    } else {
-      content = (
-        <Image
-          src={iconSrc}
-          alt={skill.name}
-          fill
-          sizes="42px"
-          unoptimized
-          onError={() => setImgError(true)}
-          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain" }}
-        />
-      );
-    }
-  } else {
-    content = <div style={{ width: 22, height: 22, borderRadius: 3, background: locked ? "rgba(200,192,184,0.12)" : "rgba(255,255,255,0.07)" }} />;
-  }
-
-  return (
-    <div title={skill?.name} style={hexNodeTileStyle(border, bg, showImage, locked)}>
-      {level !== undefined && !locked && (
-        <span style={hexNodeLevelBadgeStyle}>{String(level).padStart(2, "0")}</span>
-      )}
-      {content}
     </div>
   );
 }
@@ -693,9 +636,9 @@ function presetTabButtonStyle(theme: Theme, on: boolean): CSSProperties {
 }
 
 function PresetTabs({
-  theme, active, activePreset, onSelect, onSetActive,
+  theme, active, activePreset, onSelect, onSetActive, count = 3,
 }: {
-  theme: Theme; active: number; activePreset: number; onSelect: (n: number) => void; onSetActive: ((presetIndex: number) => void) | null;
+  theme: Theme; active: number; activePreset: number; onSelect: (n: number) => void; onSetActive: ((presetIndex: number) => void) | null; count?: number;
 }) {
   const isPreviewingActive = active === activePreset;
   return (
@@ -703,7 +646,7 @@ function PresetTabs({
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
         <span style={{ fontSize: "0.75rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.05em", color: theme.muted }}>Preset</span>
         <div style={{ display: "flex", gap: 4 }}>
-          {[0, 1, 2].map((i) => {
+          {Array.from({ length: count }, (_, i) => i).map((i) => {
             const on = i === active;
             return (
               <button
@@ -923,9 +866,12 @@ function StatsBookmark({
   // The 3 views are stacked in the same grid cell (all present, only one visible) so the
   // row auto-sizes to the tallest of the three — visibility:hidden keeps its box for that
   // sizing (unlike display:none), which is what stops the action bar below from jumping
-  // up when a shorter view (Hyper Stat/Ability) becomes active.
+  // up when a shorter view (Hyper Stat/Ability) becomes active. The outer flex:1 fills
+  // whatever height the panel's own min-height reserves beyond this bookmark's actual
+  // content, and marginTop: "auto" on the action bar's wrapper pins it to the panel's real
+  // bottom edge instead of sitting right under a shorter view's content.
   return (
-    <div>
+    <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
       <div style={{ display: "grid" }}>
         <div style={{ gridArea: "1 / 1", visibility: view === "stats" ? "visible" : "hidden", display: "flex", flexDirection: "column", gap: 12 }}>
           <StatBlock label="Basic Stats" theme={theme} info={BASIC_STATS_INFO}>
@@ -970,7 +916,7 @@ function StatsBookmark({
           />
         </div>
       </div>
-      <div style={{ paddingTop: 14 }}>
+      <div style={{ paddingTop: 14, marginTop: "auto" }}>
         <StatsActionBar view={view} theme={theme} onSelect={onViewChange} />
       </div>
     </div>
@@ -1074,8 +1020,8 @@ function symbolAreaLevel(levels: Record<string, SymbolState> | null, area: Symbo
 // out of reach (Grand Sacred at 290+ while only Sacred-eligible) — hiding any of these read
 // as "bugged or missing" rather than "not unlocked yet" per Yuki's ask. Legacy is handled a
 // level up, in SymbolLevelsDisplay, so this only ever runs for a non-legacy character.
-function SymbolAreaGroup({ label, areas, levels, characterLevel, theme }: {
-  label: string; areas: SymbolArea[]; levels: Record<string, SymbolState> | null; characterLevel: number | undefined; theme: Theme;
+function SymbolAreaGroup({ label, areas, levels, loadImages, characterLevel, theme }: {
+  label: string; areas: SymbolArea[]; levels: Record<string, SymbolState> | null; loadImages: boolean; characterLevel: number | undefined; theme: Theme;
 }) {
   return (
     <div>
@@ -1083,7 +1029,7 @@ function SymbolAreaGroup({ label, areas, levels, characterLevel, theme }: {
       <div style={{ display: "grid", gridTemplateColumns: `repeat(3, ${SYMBOL_TILE_SIZE}px)`, gap: 4 }}>
         {areas.map((area) => {
           const locked = characterLevel !== undefined && characterLevel < area.requiredLevel;
-          return <ReadOnlySymbolTile key={area.name} area={area} level={symbolAreaLevel(levels, area)} locked={locked} theme={theme} />;
+          return <ReadOnlySymbolTile key={area.name} area={area} level={symbolAreaLevel(levels, area)} locked={locked} loadImage={loadImages} theme={theme} />;
         })}
       </div>
     </div>
@@ -1091,10 +1037,11 @@ function SymbolAreaGroup({ label, areas, levels, characterLevel, theme }: {
 }
 
 function SymbolLevelsDisplay({
-  theme, levels, characterLevel, isLegacy, activeTab, onTabChange,
+  theme, levels, loadImages, characterLevel, isLegacy, activeTab, onTabChange,
 }: {
   theme: Theme;
   levels: Record<string, SymbolState> | null;
+  loadImages: boolean;
   characterLevel: number | undefined;
   isLegacy: boolean | undefined;
   activeTab: SymbolViewTab;
@@ -1117,11 +1064,11 @@ function SymbolLevelsDisplay({
         ))}
       </div>
       {activeTab === "arcane" ? (
-        <SymbolAreaGroup label="Arcane" areas={ARCANE_AREAS} levels={levels} characterLevel={characterLevel} theme={theme} />
+        <SymbolAreaGroup label="Arcane" areas={ARCANE_AREAS} levels={levels} loadImages={loadImages} characterLevel={characterLevel} theme={theme} />
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-          <SymbolAreaGroup label="Sacred" areas={SACRED_AREAS} levels={levels} characterLevel={characterLevel} theme={theme} />
-          <SymbolAreaGroup label="Grand Sacred" areas={GRAND_SACRED_AREAS} levels={levels} characterLevel={characterLevel} theme={theme} />
+          <SymbolAreaGroup label="Sacred" areas={SACRED_AREAS} levels={levels} loadImages={loadImages} characterLevel={characterLevel} theme={theme} />
+          <SymbolAreaGroup label="Grand Sacred" areas={GRAND_SACRED_AREAS} levels={levels} loadImages={loadImages} characterLevel={characterLevel} theme={theme} />
         </div>
       )}
     </div>
@@ -1129,11 +1076,12 @@ function SymbolLevelsDisplay({
 }
 
 function TitlesView({
-  theme, equip, symbolLevels, characterLevel, isLegacy, symbolTab, onSymbolTabChange,
+  theme, equip, symbolLevels, loadSymbolImages, characterLevel, isLegacy, symbolTab, onSymbolTabChange,
 }: {
   theme: Theme;
   equip: StoredCharacterEquipment | undefined;
   symbolLevels: Record<string, SymbolState> | null;
+  loadSymbolImages: boolean;
   characterLevel: number | undefined;
   isLegacy: boolean | undefined;
   symbolTab: SymbolViewTab;
@@ -1158,6 +1106,7 @@ function TitlesView({
         <SymbolLevelsDisplay
           theme={theme}
           levels={symbolLevels}
+          loadImages={loadSymbolImages}
           characterLevel={characterLevel}
           isLegacy={isLegacy}
           activeTab={symbolTab}
@@ -1201,6 +1150,15 @@ function EquipmentBookmark({
   const [presetIdx, setPresetIdx] = useState(activePresetStored);
   const [symbolTab, setSymbolTab] = useState<SymbolViewTab>("arcane");
   const [mobileGridPage, setMobileGridPage] = useState(0);
+  // Titles/Pets stay mounted (visibility-toggled, not conditionally rendered) so the panel
+  // auto-sizes to the tallest of the 3 sub-views instead of jumping height on switch — but
+  // that means every icon across every sub-view loads immediately on arrival, even ones never
+  // clicked into, hammering the image host for no reason. Deferring real item/symbol data
+  // until a sub-view's first visit (see equip={} below) keeps the exact same box sizes (an
+  // empty slot renders at the same dimensions as a filled one) so the sizing trick is
+  // unaffected, while the actual <Image> elements simply don't exist until then.
+  const [visitedViews, setVisitedViews] = useState<Set<EquipmentBookmarkView>>(() => new Set([view]));
+  if (!visitedViews.has(view)) setVisitedViews((prev) => new Set(prev).add(view));
 
   const classId = character ? resolveClassId(character.jobName) : undefined;
   const classData = classId ? CLASS_SKILL_DATA.find((c) => c.id === classId) : undefined;
@@ -1219,9 +1177,11 @@ function EquipmentBookmark({
   }, [mounted, charName, character?.tools]);
 
   // The 3 views are stacked in the same grid cell (all present, only one visible) so the
-  // row auto-sizes to the tallest of the three, matching StatsBookmark's own pattern.
+  // row auto-sizes to the tallest of the three, matching StatsBookmark's own pattern —
+  // including the outer flex:1 + action bar's marginTop: "auto" that pins it to the panel's
+  // real bottom edge, see StatsBookmark's own comment above for why.
   return (
-    <div>
+    <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
       <div style={{ display: "grid" }}>
         <div style={{ gridArea: "1 / 1", visibility: view === "gear" ? "visible" : "hidden", display: "flex", flexDirection: "column", gap: 10 }}>
           <PresetTabs theme={theme} active={presetIdx} activePreset={activePresetStored} onSelect={setPresetIdx} onSetActive={equip ? onSetActivePreset : null} />
@@ -1273,8 +1233,9 @@ function EquipmentBookmark({
         <div style={{ gridArea: "1 / 1", visibility: view === "titles" ? "visible" : "hidden" }}>
           <TitlesView
             theme={theme}
-            equip={equip}
-            symbolLevels={symbolLevels}
+            equip={visitedViews.has("titles") ? equip : undefined}
+            symbolLevels={visitedViews.has("titles") ? symbolLevels : null}
+            loadSymbolImages={visitedViews.has("titles")}
             characterLevel={character?.level}
             isLegacy={classData?.isLegacy}
             symbolTab={symbolTab}
@@ -1282,10 +1243,10 @@ function EquipmentBookmark({
           />
         </div>
         <div style={{ gridArea: "1 / 1", visibility: view === "pets" ? "visible" : "hidden" }}>
-          <PetsView theme={theme} equip={equip} />
+          <PetsView theme={theme} equip={visitedViews.has("pets") ? equip : undefined} />
         </div>
       </div>
-      <div style={{ paddingTop: 14 }}>
+      <div style={{ paddingTop: 14, marginTop: "auto" }}>
         <EquipmentActionBar view={view} theme={theme} onSelect={onViewChange} />
       </div>
     </div>
@@ -1326,9 +1287,9 @@ function VMatrixNodeSection({ label, nodes, levels, theme }: {
   );
 }
 
-function LockIcon() {
+function LockIcon({ size = 36 }: { size?: number }) {
   return (
-    <svg width={36} height={36} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6}>
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6}>
       <rect x="5" y="11" width="14" height="9" rx="2" />
       <path d="M8 11V7.5a4 4 0 0 1 8 0V11" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
@@ -1450,9 +1411,44 @@ const HEXA_STAT_NODE_LABELS = ["HEXA Stat I", "HEXA Stat II", "HEXA Stat III"];
 // Node I is always accessible (HEXA Matrix implies 6th job); II/III have their own level
 // gates on top of that — mirrors HexaMatrixSetupStep's own isNodeUnlocked.
 const HEXA_STAT_UNLOCK_LEVELS = [0, 265, 270];
+// Mirrors HexaMatrixSetupStep's own MAX_STAT_ENTRY_LEVEL — each HEXA Stat line caps at 10.
+const HEXA_STAT_ENTRY_MAX_LEVEL = 10;
+// Mirrors HexaMatrixSetupStep's own local HEXA_STAT_DEFS iconIds (from the "hexaStat" section
+// of the hexa-skill manifest) — not exported there, duplicated here like the unlock levels above.
+const HEXA_STAT_NODE_ICON_IDS = ["50000000", "50000001", "50000002"];
 
 function emptyHexaStatEntry(): HexaStatEntry {
   return { type: "", level: 0 };
+}
+
+function emptyHexaStatSlot(): HexaStatSlot {
+  return { main: emptyHexaStatEntry(), alt: [emptyHexaStatEntry(), emptyHexaStatEntry()] };
+}
+
+function emptyHexaStatNode(): HexaStatNode {
+  return { presets: [emptyHexaStatSlot(), emptyHexaStatSlot()], activePreset: 0 };
+}
+
+// Mirrors HexaMatrixSetupStep's own isNodeEmpty — true when neither preset of a node has any
+// stat chosen, used to dim a node's tab icon the same way the setup step does.
+function isHexaStatNodeEmpty(node: HexaStatNode): boolean {
+  const slotEmpty = (s: HexaStatSlot) => !s.main.type && !s.alt[0].type && !s.alt[1].type;
+  return slotEmpty(node.presets[0]) && slotEmpty(node.presets[1]);
+}
+
+function hexaStatLockedNodesCaption(unlocked: boolean[]): string {
+  const parts = HEXA_STAT_NODE_LABELS
+    .map((label, i) => (unlocked[i] ? null : `${label} unlocks at level ${HEXA_STAT_UNLOCK_LEVELS[i]}`))
+    .filter((s): s is string => s !== null);
+  return parts.length > 0 ? `${parts.join(", ")}.` : "";
+}
+
+function hexaStatNodeTabStyle(theme: Theme, isActive: boolean): CSSProperties {
+  return {
+    display: "flex", alignItems: "center", justifyContent: "center",
+    border: `2px solid ${isActive ? theme.accent : theme.border}`, borderRadius: 8, padding: 3,
+    background: "transparent", cursor: "pointer",
+  };
 }
 
 function hexaStatLineLabel(type: string, mainStatLabel: string, attackLabel: string): string {
@@ -1461,121 +1457,171 @@ function hexaStatLineLabel(type: string, mainStatLabel: string, attackLabel: str
   return HEXA_STAT_OPTIONS.find((o) => o.value === type)?.label ?? type;
 }
 
-function hexaStatLineValue(entry: HexaStatEntry, isPrimary: boolean, classId: string | undefined, mainStatLabel: string, attackLabel: string): string {
-  if (!entry.type) return "Not set";
-  const bonus = getHexaStatBonus(entry.type, entry.level, isPrimary, classId);
-  const bonusSuffix = bonus ? ` (${bonus})` : "";
-  return `${hexaStatLineLabel(entry.type, mainStatLabel, attackLabel)} · Lv ${entry.level}${bonusSuffix}`;
-}
-
-// Shows the node's active preset only (not the alternate "Stored" preset) — matches the
-// profile's read-only-summary role rather than replicating the setup step's full editor.
-function HexaStatNodeCard({ label, node, locked, unlockLevel, classData, theme }: {
-  label: string; node: HexaStatNode | undefined; locked: boolean; unlockLevel: number;
-  classData: ClassSkillData | undefined; theme: Theme;
-}) {
-  if (locked) {
-    return (
-      <StatBlock label={label} theme={theme}>
-        <p style={{ margin: 0, fontSize: 12, color: theme.muted, fontWeight: 700 }}>Unlocks at level {unlockLevel}.</p>
-      </StatBlock>
-    );
-  }
-  const slot = node ? node.presets[node.activePreset] : { main: emptyHexaStatEntry(), alt: [emptyHexaStatEntry(), emptyHexaStatEntry()] as [HexaStatEntry, HexaStatEntry] };
-  const primaryStat = classData?.requiredStats[0] ?? "";
-  const mainStatLabel = getMainStatLabel(classData?.id ?? "", primaryStat);
-  const attackLabel = getAttackLabel(primaryStat);
+// Mirrors HexaMatrixSetupStep's own StatProgressBar (10 filled/unfilled segments), read-only.
+function HexaStatProgressBar({ level, theme }: { level: number; theme: Theme }) {
   return (
-    <StatBlock label={label} theme={theme}>
-      <SummaryRow label="Main Stat" value={hexaStatLineValue(slot.main, true, classData?.id, mainStatLabel, attackLabel)} theme={theme} />
-      <SummaryRow label="Alt 1" value={hexaStatLineValue(slot.alt[0], false, classData?.id, mainStatLabel, attackLabel)} theme={theme} />
-      <SummaryRow label="Alt 2" value={hexaStatLineValue(slot.alt[1], false, classData?.id, mainStatLabel, attackLabel)} theme={theme} />
-    </StatBlock>
-  );
-}
-
-function HexaStatBookmarkView({ theme, character, classData, hexaStatNodes }: {
-  theme: Theme; character: StoredCharacterRecord | null; classData: ClassSkillData | undefined; hexaStatNodes: HexaStatNode[] | null;
-}) {
-  const level = character?.level ?? 0;
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-      {HEXA_STAT_NODE_LABELS.map((label, i) => (
-        <HexaStatNodeCard key={label} label={label} node={hexaStatNodes?.[i]} locked={level < HEXA_STAT_UNLOCK_LEVELS[i]} unlockLevel={HEXA_STAT_UNLOCK_LEVELS[i]} classData={classData} theme={theme} />
+    <div style={{ display: "flex", gap: 2 }}>
+      {Array.from({ length: HEXA_STAT_ENTRY_MAX_LEVEL }, (_, i) => (
+        // react-doctor-disable-next-line no-array-index-as-key
+        <div key={i} style={{ flex: 1, height: 3, borderRadius: 999, background: i < level ? theme.accent : theme.border }} />
       ))}
     </div>
   );
 }
 
-function HexaSkillsBookmarkView({ theme, hexaClassDef, hexaLevels }: {
-  theme: Theme; hexaClassDef: ReturnType<typeof resolveHexaClassDef>; hexaLevels: HexaSkillLevels;
+// Mirrors HexaMatrixSetupStep's own HexaStatRow layout (stat name + accent-colored bonus on
+// the left, level on the right, with a segmented progress bar below) instead of a single
+// flattened string.
+function HexaStatLine({ entry, isPrimary, classId, mainStatLabel, attackLabel, theme }: {
+  entry: HexaStatEntry; isPrimary: boolean; classId: string | undefined;
+  mainStatLabel: string; attackLabel: string; theme: Theme;
 }) {
-  const skillSlots: (HexaSkillDef | null)[] = [hexaClassDef?.origin ?? null, hexaClassDef?.ascent ?? null, null, null, null, null];
-  const skillLevels = [hexaLevels.origin ?? 0, hexaLevels.ascent ?? 0, 0, 0, 0, 0];
-  const commonLevels = [hexaLevels.common[0] ?? 0, hexaLevels.common[1] ?? 0, 0, 0];
-  const masterySlots: (HexaSkillDef | null)[] = hexaClassDef
-    ? hexaClassDef.mastery.map((node) => ({ name: node.skills[0], iconId: node.iconId, iconUrl: node.iconUrl }))
-    : [null, null, null, null];
-  const masteryLevels = hexaLevels.mastery ?? [0, 0, 0, 0];
-  const enhancementSlots: (HexaSkillDef | null)[] = hexaClassDef?.enhancement ?? [null, null, null, null];
-  const enhancementLevels = hexaLevels.enhancement ?? [0, 0, 0, 0];
+  const hasValue = Boolean(entry.type);
+  const bonus = hasValue ? getHexaStatBonus(entry.type, entry.level, isPrimary, classId) : "";
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+          <span style={{ fontSize: 13, fontWeight: 700, color: hasValue ? theme.text : theme.muted }}>
+            {hasValue ? hexaStatLineLabel(entry.type, mainStatLabel, attackLabel) : "Not set"}
+          </span>
+          {bonus && <span style={{ fontSize: 12, fontWeight: 800, color: theme.accentText }}>{bonus}</span>}
+        </div>
+        <span style={{ fontSize: 12, fontWeight: 700, color: theme.muted, flexShrink: 0 }}>Lv {entry.level}</span>
+      </div>
+      <HexaStatProgressBar level={entry.level} theme={theme} />
+    </div>
+  );
+}
+
+// Mirrors HexaMatrixSetupStep's own HexaStatSubstep as closely as a read-only view can: node
+// icon tabs to switch between HEXA Stat I/II/III, then the same PresetTabs (2 presets, not the
+// usual 3) Stats/Equipment already use to preview + correct which preset is really active
+// in-game, and the same Main Stat/Alt rows below. Each node has its own independent preset
+// pair, so presetIdx resets to that node's real activePreset on every node switch.
+function HexaStatBookmarkView({ theme, character, classData, hexaStatNodes, onSetActivePreset }: {
+  theme: Theme; character: StoredCharacterRecord | null; classData: ClassSkillData | undefined;
+  hexaStatNodes: HexaStatNode[] | null; onSetActivePreset: (nodeIndex: number, presetIndex: number) => void;
+}) {
+  const level = character?.level ?? 0;
+  const unlocked = HEXA_STAT_UNLOCK_LEVELS.map((min) => level >= min);
+  const nodes = HEXA_STAT_NODE_LABELS.map((_, i) => hexaStatNodes?.[i] ?? emptyHexaStatNode());
+  const [activeSlot, setActiveSlot] = useState(0);
+  const [presetIdx, setPresetIdx] = useState(nodes[0].activePreset);
+
+  function selectNode(i: number) {
+    setActiveSlot(i);
+    setPresetIdx(nodes[i].activePreset);
+  }
+
+  const activeNode = nodes[activeSlot];
+  const slot = activeNode.presets[presetIdx];
+  const primaryStat = classData?.requiredStats[0] ?? "";
+  const mainStatLabel = getMainStatLabel(classData?.id ?? "", primaryStat);
+  const attackLabel = getAttackLabel(primaryStat);
+  const lockedCaption = hexaStatLockedNodesCaption(unlocked);
 
   return (
-    <div>
-      <div style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: theme.muted, marginBottom: 10 }}>
-        {hexaClassDef?.group === "SHINE" ? "Erda Link" : "6th Job · HEXA Skills"}
+    <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+      <div>
+        <div style={{ display: "flex", gap: "0.4rem" }}>
+          {HEXA_STAT_NODE_LABELS.map((label, i) => unlocked[i] && (
+            <button key={label} type="button" className="tap-target-44" onClick={() => selectNode(i)}
+              aria-label={label} aria-pressed={activeSlot === i} style={hexaStatNodeTabStyle(theme, activeSlot === i)}>
+              <HexaSkillIcon id={HEXA_STAT_NODE_ICON_IDS[i]} size={36} disabled={isHexaStatNodeEmpty(nodes[i])} />
+            </button>
+          ))}
+        </div>
+        {lockedCaption && <p style={{ margin: "6px 0 0", fontSize: 12, color: theme.muted, fontWeight: 700 }}>{lockedCaption}</p>}
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1px 1fr", gap: 14, alignItems: "start" }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: theme.muted, marginBottom: 2 }}>Skill</div>
-            <div style={{ display: "flex", gap: 3, flexWrap: "wrap" as const }}>
-              {skillSlots.map((skill, i) => (
-                // react-doctor-disable-next-line no-array-index-as-key
-                <HexNode key={i} variant={skill ? "purple" : "empty"} skill={skill ?? undefined} locked={!skill} level={skill ? skillLevels[i] : undefined} />
-              ))}
-            </div>
+
+      <PresetTabs
+        theme={theme}
+        active={presetIdx}
+        activePreset={activeNode.activePreset}
+        onSelect={setPresetIdx}
+        onSetActive={hexaStatNodes ? (p) => onSetActivePreset(activeSlot, p) : null}
+        count={2}
+      />
+
+      <div style={{ display: "flex", flexDirection: "column", gap: "0.7rem" }}>
+        <StatBlock label="Main Stat" theme={theme}>
+          <HexaStatLine entry={slot.main} isPrimary={true} classId={classData?.id} mainStatLabel={mainStatLabel} attackLabel={attackLabel} theme={theme} />
+        </StatBlock>
+        <StatBlock label="Alternative Stats" theme={theme}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>
+            <HexaStatLine entry={slot.alt[0]} isPrimary={false} classId={classData?.id} mainStatLabel={mainStatLabel} attackLabel={attackLabel} theme={theme} />
+            <HexaStatLine entry={slot.alt[1]} isPrimary={false} classId={classData?.id} mainStatLabel={mainStatLabel} attackLabel={attackLabel} theme={theme} />
           </div>
-          <div style={{ height: 1, background: theme.border }} />
-          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: theme.muted, marginBottom: 2 }}>Common</div>
-            <div style={{ display: "flex", gap: 3, flexWrap: "wrap" as const }}>
-              {commonSlots.map((skill, i) => (
-                // react-doctor-disable-next-line no-array-index-as-key
-                <HexNode key={i} variant={skill ? "blue" : "empty"} skill={skill ?? undefined} locked={!skill} level={skill ? commonLevels[i] : undefined} />
-              ))}
-            </div>
-          </div>
-        </div>
-        <div style={{ background: theme.border, alignSelf: "stretch" }} />
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: theme.muted, marginBottom: 2 }}>Mastery</div>
-            <div style={{ display: "flex", gap: 3, flexWrap: "wrap" as const }}>
-              {masterySlots.map((skill, i) => (
-                // react-doctor-disable-next-line no-array-index-as-key
-                <HexNode key={i} variant="pink" skill={skill ?? undefined} level={masteryLevels[i] ?? 0} />
-              ))}
-            </div>
-          </div>
-          <div style={{ height: 1, background: theme.border }} />
-          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: theme.muted, marginBottom: 2 }}>Boost</div>
-            <div style={{ display: "flex", gap: 3, flexWrap: "wrap" as const }}>
-              {enhancementSlots.map((skill, i) => (
-                // react-doctor-disable-next-line no-array-index-as-key
-                <HexNode key={i} variant="blue" skill={skill ?? undefined} level={enhancementLevels[i] ?? 0} />
-              ))}
-            </div>
-          </div>
-        </div>
+        </StatBlock>
       </div>
     </div>
   );
 }
 
-function HexaMatrixBookmark({ theme, character, view, onViewChange }: {
+// Mirrors HexaMatrixSetupStep's own MAX_LEVEL — every HEXA skill/mastery/boost/common node
+// caps at 30.
+const HEXA_SKILL_MAX_LEVEL = 30;
+
+function hexaMasteryNodeToSkillDef(node: HexaMasteryNode): HexaSkillDef {
+  return { name: node.skills.join(" / "), iconId: node.iconId, iconUrl: node.iconUrl };
+}
+
+// Same StatBlock + grid treatment as VMatrixNodeSection — one tile per real node, no padding
+// for slots the class doesn't have (matches both VMatrixBookmark and the setup step's own
+// substep, neither of which model "reserved future slots").
+function HexaSkillNodeSection({ label, skills, levels, theme }: {
+  label: string; skills: HexaSkillDef[]; levels: number[]; theme: Theme;
+}) {
+  if (skills.length === 0) return null;
+  return (
+    <StatBlock label={label} theme={theme}>
+      <div className="hexa-skill-grid" style={{ display: "grid", gap: "0.4rem" }}>
+        {skills.map((skill, i) => (
+          <ReadOnlyLeveledIconTile
+            key={skill.name}
+            icon={<HexaSkillTileIcon iconId={skill.iconId} iconUrl={skill.iconUrl} name={skill.name} theme={theme} size={32} />}
+            name={skill.name}
+            level={levels[i] ?? 0}
+            max={HEXA_SKILL_MAX_LEVEL}
+            theme={theme}
+          />
+        ))}
+      </div>
+    </StatBlock>
+  );
+}
+
+// Reuses VMatrixBookmark's own card-grid look (StatBlock sections of ReadOnlyLeveledIconTile),
+// so HEXA Skills reads as the same established pattern instead of the old multicolor flat grid.
+function HexaSkillsBookmarkView({ theme, hexaClassDef, hexaLevels }: {
+  theme: Theme; hexaClassDef: ReturnType<typeof resolveHexaClassDef>; hexaLevels: HexaSkillLevels;
+}) {
+  const skillNodes: HexaSkillDef[] = [hexaClassDef?.origin, hexaClassDef?.ascent].filter((s): s is HexaSkillDef => Boolean(s));
+  const skillLevels = [hexaLevels.origin ?? 0, hexaLevels.ascent ?? 0];
+  const masteryNodes = (hexaClassDef?.mastery ?? []).map(hexaMasteryNodeToSkillDef);
+  const boostNodes = hexaClassDef?.enhancement ?? [];
+
+  return (
+    <div className="hexa-skills-root" style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+      <style>{`
+        .hexa-skills-root { container-type: inline-size; }
+        .hexa-skill-grid { grid-template-columns: repeat(6, 68px); }
+        @container (max-width: 480px) {
+          .hexa-skill-grid { grid-template-columns: repeat(auto-fill, 68px); }
+        }
+      `}</style>
+      <HexaSkillNodeSection label="Skill Nodes" skills={skillNodes} levels={skillLevels} theme={theme} />
+      <HexaSkillNodeSection label="Mastery Nodes" skills={masteryNodes} levels={hexaLevels.mastery ?? []} theme={theme} />
+      <HexaSkillNodeSection label="Boost Nodes" skills={boostNodes} levels={hexaLevels.enhancement ?? []} theme={theme} />
+      <HexaSkillNodeSection label="Common Nodes" skills={COMMON_SKILLS} levels={hexaLevels.common ?? []} theme={theme} />
+    </div>
+  );
+}
+
+function HexaMatrixBookmark({ theme, character, view, onViewChange, onSetActivePreset }: {
   theme: Theme; character: StoredCharacterRecord | null; view: HexaBookmarkView; onViewChange: (v: HexaBookmarkView) => void;
+  onSetActivePreset: (nodeIndex: number, presetIndex: number) => void;
 }) {
   const mounted = useSyncExternalStore(() => () => undefined, () => true, () => false);
   const charName = character?.characterName;
@@ -1605,18 +1651,20 @@ function HexaMatrixBookmark({ theme, character, view, onViewChange }: {
   }
 
   // The 2 views are stacked in the same grid cell (both present, only one visible) so the
-  // row auto-sizes to the taller of the two, matching EquipmentBookmark's own pattern.
+  // row auto-sizes to the taller of the two, matching EquipmentBookmark's own pattern —
+  // including the outer flex:1 + action bar's marginTop: "auto", see StatsBookmark's own
+  // comment for why.
   return (
-    <div>
+    <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
       <div style={{ display: "grid" }}>
         <div style={{ gridArea: "1 / 1", visibility: view === "skills" ? "visible" : "hidden" }}>
           <HexaSkillsBookmarkView theme={theme} hexaClassDef={hexaClassDef} hexaLevels={hexaLevels ?? EMPTY_HEXA_LEVELS} />
         </div>
         <div style={{ gridArea: "1 / 1", visibility: view === "stat" ? "visible" : "hidden" }}>
-          <HexaStatBookmarkView theme={theme} character={character} classData={classData} hexaStatNodes={hexaStatNodes} />
+          <HexaStatBookmarkView theme={theme} character={character} classData={classData} hexaStatNodes={hexaStatNodes} onSetActivePreset={onSetActivePreset} />
         </div>
       </div>
-      <div style={{ paddingTop: 14 }}>
+      <div style={{ paddingTop: 14, marginTop: "auto" }}>
         <HexaActionBar view={view} theme={theme} onSelect={onViewChange} />
       </div>
     </div>
@@ -1819,7 +1867,7 @@ function BookmarkPageBody({
     return (
       <>
         <BookmarkPageHeader theme={theme} label={hexaHeaderLabel} onEdit={hexaAvailable ? editHexa : null} disabled={setup.isUiLocked} />
-        <HexaMatrixBookmark theme={theme} character={character} view={hexaView} onViewChange={setHexaView} />
+        <HexaMatrixBookmark theme={theme} character={character} view={hexaView} onViewChange={setHexaView} onSetActivePreset={actions.setHexaStatActivePreset} />
       </>
     );
   }
@@ -1919,6 +1967,12 @@ export default function CharacterProfileOverviewScreen({
     return remembered && bookmarks.some((b) => b.id === remembered) ? (remembered as BookmarkId) : "overview";
   });
   const active = bookmarks.find((b) => b.id === activeId) ?? bookmarks[0];
+
+  // The remembered bookmark/sub-view is only meant for this one restore, read via the lazy
+  // initializer above — clear it so a later switch away and back (BookmarkPageBody remounts
+  // per key={active.id} below) doesn't keep re-restoring the same stale sub-view.
+  // react-doctor-disable-next-line no-prop-callback-in-effect, no-pass-live-state-to-parent
+  useEffect(() => { actions.clearRestoredBookmark(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const filled = isBookmarkFilled(active.id, character, mounted);
   const ContentComponent = active.id === "overview" || active.id === "setup" || active.id === "gender_marriage" || active.id === "stats" || active.id === "equipment" || active.id === "v_matrix" || active.id === "hexa_matrix" ? null : BOOKMARK_CONTENT[active.id];

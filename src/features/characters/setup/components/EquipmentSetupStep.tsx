@@ -735,11 +735,15 @@ function symbolTileIconOpacity(locked: boolean | undefined, placed: boolean): nu
   return placed ? 1 : 0.6;
 }
 
-export function ReadOnlySymbolTile({ area, level, theme, locked }: {
+// `loadImage=false` renders an empty box at the same size instead of the real icon — used by
+// the profile Gear bookmark to defer a not-yet-visited sub-view's images (see EquipmentBookmark's
+// visitedViews) without affecting layout, since the icon's box size doesn't depend on its content.
+export function ReadOnlySymbolTile({ area, level, theme, locked, loadImage = true }: {
   area: SymbolArea;
   level: number;
   theme: AppTheme;
   locked?: boolean;
+  loadImage?: boolean;
 }) {
   const placed = !locked && level >= 1;
   const label = locked ? `Lv. ${area.requiredLevel}+` : `Lv. ${level}`;
@@ -748,7 +752,7 @@ export function ReadOnlySymbolTile({ area, level, theme, locked }: {
     <HoverTooltip label={area.name} theme={theme}>
       <div style={readOnlySymbolTileStyle(theme, locked)}>
         <div style={{ opacity: iconOpacity, filter: locked ? "grayscale(1)" : "none", lineHeight: 0 }}>
-          <ItemIcon id={area.itemId} size={32} />
+          {loadImage ? <ItemIcon id={area.itemId} size={32} /> : <div style={{ width: 32, height: 32 }} />}
         </div>
         <span style={{ fontFamily: "inherit", fontWeight: 700, fontSize: "0.8rem", color: placed ? theme.text : theme.muted }}>{label}</span>
       </div>

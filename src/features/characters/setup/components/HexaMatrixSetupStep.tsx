@@ -52,8 +52,9 @@ interface HexaMatrixSetupStepProps {
 const MAX_LEVEL = 30;
 const MAX_STAT_ENTRY_LEVEL = 10;
 
-// Each HEXA Stat node holds two presets in-game: an active and a stored "saved" config.
-const PRESET_LABELS = ["Active", "Stored"] as const;
+// Each HEXA Stat node holds two presets — numbered like every other preset system in the app
+// (Equipment/Hyper Stat/Inner Ability), not given special names.
+const PRESET_LABELS = ["1", "2"] as const;
 const NODE_LABELS = ["I", "II", "III"] as const;
 // Reading order for a slot's 3 stat lines, matching the in-game window (Main → Alt 1 → Alt 2).
 const HEXA_STAT_FIELD_ORDER = ["main", "alt0", "alt1"] as const;
@@ -167,10 +168,10 @@ function buildOverLimitMessage(hexaStat: [HexaStatNode, HexaStatNode, HexaStatNo
   }
 
   const labels = affectedIndices.map((i) => {
-    const [activeOver, storedOver] = perNode[i];
-    let suffix = `${PRESET_LABELS[0]} preset`;
-    if (activeOver && storedOver) suffix = "both presets";
-    else if (storedOver) suffix = `${PRESET_LABELS[1]} preset`;
+    const [preset1Over, preset2Over] = perNode[i];
+    let suffix = "Preset 1";
+    if (preset1Over && preset2Over) suffix = "both presets";
+    else if (preset2Over) suffix = "Preset 2";
     return `HEXA Stat ${NODE_LABELS[i]} (${suffix})`;
   });
   const verb = labels.length > 1 ? "have" : "has";
@@ -651,7 +652,7 @@ function HexaStatRow({
             disabledTypes={disabledTypes}
           />
           <span style={{
-            fontSize: "0.8rem", fontWeight: 700, color: theme.accent, flexShrink: 0,
+            fontSize: "0.8rem", fontWeight: 700, color: theme.accentText, flexShrink: 0,
             width: `${maxBonusWidth}ch`, textAlign: "right", fontVariantNumeric: "tabular-nums",
           }}>
             {bonus}
@@ -969,7 +970,7 @@ function HexaStatSubstep({
             </span>
           </div>
 
-          <CopyFromPreset theme={theme} count={PRESET_LABELS.length} active={activePreset} onCopy={copyPreset} onClear={clearPreset} labels={PRESET_LABELS} />
+          <CopyFromPreset theme={theme} count={PRESET_LABELS.length} active={activePreset} onCopy={copyPreset} onClear={clearPreset} />
 
           <div>
             <SectionLabel label="Main Stat" theme={theme} />

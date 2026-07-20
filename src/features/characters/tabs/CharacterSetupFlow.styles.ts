@@ -669,6 +669,18 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
           flex: 1;
           border-radius: 18px;
           overflow: hidden;
+          /* Pinned to V Matrix's measured height (the tallest bookmark as of this writing) so
+             switching between bookmarks doesn't resize the row and shift the spine tabs (and
+             the mouse's position over them) — shorter bookmarks (Overview, HEXA Stat) just sit
+             in extra empty space below their content instead. A bookmark taller than this still
+             grows the row past it; only the shrink direction is pinned. Has to live here, not on
+             .profile-binder-page below — this element's own overflow:hidden clips a nested
+             child's min-height demand instead of letting it grow the flex row that stretches
+             against the confirmed-summary-card sibling. 665px was measured on
+             .profile-binder-page-content, which sits inside .profile-binder-page's own vertical
+             padding (1rem top + 1rem bottom = 2rem) — added back here since this min-height
+             applies one level higher, outside that padding. */
+          min-height: calc(665px + 2rem);
         }
 
         .profile-binder-page {
@@ -778,6 +790,10 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
         @media (max-width: 860px) {
           .profile-binder {
             flex-direction: column;
+            /* The spine stacks above the page here instead of beside it, so a shorter page
+               never shifts the spine's position — the desktop-only min-height would just
+               waste screen space on a phone. */
+            min-height: auto;
           }
 
           .profile-binder-spine {
