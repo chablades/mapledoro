@@ -31,6 +31,10 @@ interface HexaMatrixSetupStepProps {
   jobName?: string;
   direction?: "forward" | "backward";
   targetSubstep?: number | null;
+  /** When true, targetSubstep is the substep opened from a profile bookmark's edit
+   *  pencil — it should present as if it were this step's only substep, mirroring
+   *  EquipmentSetupStep/StatsSetupStep's own confineToSubstep prop. */
+  confineToSubstep?: boolean;
   onValidityChange?: (valid: boolean, substepIndex?: number) => void;
   onSubstepChange?: (substepIndex: number) => void;
   characterRoster?: import("../../model/charactersStore").StoredCharacterRecord[];
@@ -790,7 +794,7 @@ function HexaSkillLevelsSubstep({
 // the parent and is passed down, so switching back and forth between substeps doesn't
 // reset it (this component mounts/unmounts with the substep, the parent doesn't).
 function HexaStatSubstep({
-  theme, stepNumber, totalSteps, substepCount, animStyle,
+  theme, stepNumber, totalSteps, substepIndex, substepCount, animStyle,
   characterLevel, classData, hexaStat, activeSlot, selectNode,
   openField, setOpenField, touchedLevels, markLevelTouched,
   update, onBack, onNext, onFinish, onValidityChange,
@@ -798,6 +802,7 @@ function HexaStatSubstep({
   theme: AppTheme;
   stepNumber: number;
   totalSteps: number;
+  substepIndex: number;
   substepCount: number;
   animStyle: React.CSSProperties;
   characterLevel?: number;
@@ -893,7 +898,7 @@ function HexaStatSubstep({
   return (
     <div key={1} style={animStyle}>
       <SetupStepFrame theme={theme} stepLabel="HEXA Stat" stepNumber={stepNumber} totalSteps={totalSteps}
-        substepIndex={1} substepCount={substepCount}
+        substepIndex={substepIndex} substepCount={substepCount}
         description="Set your HEXA Stat nodes."
         onBack={onBack} onNext={onNext} onFinish={onFinish}
         nextDisabled={anyNodeOverLimit} onValidityChange={onValidityChange}
@@ -1020,8 +1025,27 @@ function HexaStatSubstep({
   );
 }
 
+// Confinement resolvers for each substep — extracted so the main component's own branching
+// doesn't also have to hold this logic inline (mirrors EquipmentSetupStep's confinableFrameProps,
+// split into two since HexaSkillLevelsSubstep's confinement also touches showHexaStat/onContinue,
+// which don't fit that generic single-shape helper).
+function hexaSkillFrameProps(
+  confined: boolean, showHexaStat: boolean, substep: number, substepCount: number,
+  onContinue: () => void, onNext: () => void, onFinish: () => void,
+): { substepIndex: number; substepCount: number; showHexaStat: boolean; onContinue: () => void; onNext: () => void } {
+  if (!confined) return { substepIndex: substep, substepCount, showHexaStat, onContinue, onNext };
+  return { substepIndex: 0, substepCount: 1, showHexaStat: false, onContinue: onFinish, onNext: onFinish };
+}
+
+function hexaStatFrameProps(
+  confined: boolean, substepCount: number, onGoBackToSkills: () => void, onExitStep: () => void,
+): { substepIndex: number; substepCount: number; onBack: () => void } {
+  if (!confined) return { substepIndex: 1, substepCount, onBack: onGoBackToSkills };
+  return { substepIndex: 0, substepCount: 1, onBack: onExitStep };
+}
+
 export default function HexaMatrixSetupStep({
-  theme, step, flowId, stepNumber, totalSteps, jobName = "", direction = "forward", targetSubstep, onValidityChange, onSubstepChange,
+  theme, step, flowId, stepNumber, totalSteps, jobName = "", direction = "forward", targetSubstep, confineToSubstep, onValidityChange, onSubstepChange,
   confirmedCharacterName, characterLevel, value, onChange, onBack, onNext, onFinish,
 }: HexaMatrixSetupStepProps) {
   // MapleScouter only needs hexa skill levels, so the HEXA Stat substep is gated out
@@ -1110,29 +1134,38 @@ export default function HexaMatrixSetupStep({
     onChange(JSON.stringify({ ...levels, ...patch }));
   }
 
+  // Under confinement (opened from a profile bookmark's edit pencil for just one sub-view),
+  // the step presents as if it had only the substep it was targeted at: no Continue/Back into
+  // the sibling substep, Next/Continue finishes the step directly instead. Mirrors
+  // EquipmentSetupStep/StatsSetupStep's own confinableFrameProps.
+  const confined = confineToSubstep === true;
+
   if (substep === 0) {
+    const frame = hexaSkillFrameProps(confined, showHexaStat, substep, substepCount, () => goToSubstep(1), onNext, onFinish);
     return (
       <HexaSkillLevelsSubstep
         theme={theme} classDef={classDef} step={step} levels={levels} update={update}
         stepNumber={stepNumber} totalSteps={totalSteps}
-        substepIndex={substep} substepCount={substepCount} animStyle={substepAnimStyle}
-        showHexaStat={showHexaStat}
-        onBack={onBack} onContinue={() => goToSubstep(1)} onNext={onNext} onFinish={onFinish}
+        substepIndex={frame.substepIndex} substepCount={frame.substepCount} animStyle={substepAnimStyle}
+        showHexaStat={frame.showHexaStat}
+        onBack={onBack} onContinue={frame.onContinue} onNext={frame.onNext} onFinish={onFinish}
         onValidityChange={onValidityChange}
       />
     );
   }
 
+  const statFrame = hexaStatFrameProps(confined, substepCount, () => goToSubstep(0), onBack);
   return (
     <HexaStatSubstep
-      theme={theme} stepNumber={stepNumber} totalSteps={totalSteps} substepCount={substepCount}
+      theme={theme} stepNumber={stepNumber} totalSteps={totalSteps}
+      substepIndex={statFrame.substepIndex} substepCount={statFrame.substepCount}
       animStyle={substepAnimStyle}
       characterLevel={characterLevel} classData={classData} hexaStat={hexaStat}
       activeSlot={activeSlot} selectNode={selectNode}
       openField={openField} setOpenField={setOpenField}
       touchedLevels={touchedLevels} markLevelTouched={markLevelTouched}
       update={update}
-      onBack={() => goToSubstep(0)} onNext={onNext} onFinish={onFinish} onValidityChange={onValidityChange}
+      onBack={statFrame.onBack} onNext={onNext} onFinish={onFinish} onValidityChange={onValidityChange}
     />
   );
 }

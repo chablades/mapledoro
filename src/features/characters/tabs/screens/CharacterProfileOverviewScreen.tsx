@@ -9,7 +9,8 @@ import { primaryButtonStyle, secondaryButtonStyle, successButtonStyle } from "..
 import { findClassById, COMMON_SKILLS, type HexaSkillDef, type HexaSkillLevels } from "../../../tools/hexa-skills/hexa-classes";
 import { readCharacterToolData } from "../../../tools/characterToolStorage";
 import { resolveClassId, getClassSetupOverrides } from "../../setup/data/nexonJobMapping";
-import { CLASS_SKILL_DATA, getClassDataByNexonJobName, isLegacyClass } from "../../setup/data/classSkillData";
+import { CLASS_SKILL_DATA, getClassDataByNexonJobName, isLegacyClass, type ClassSkillData } from "../../setup/data/classSkillData";
+import { HEXA_STAT_OPTIONS, getHexaStatBonus, getMainStatLabel, getAttackLabel, type HexaStatNode, type HexaStatEntry } from "../../setup/data/hexaStatData";
 import { resourceImageUrl } from "../../../../lib/mapleResource";
 import type { StoredCharacterEquipment, StoredCharacterRecord, StoredCharacterStats, StoredHyperStat, StoredInnerAbility, StoredIATier, StoredTripleStatField } from "../../model/charactersStore";
 import { SetupFlowButtons } from "./QuickSetupIntroScreen";
@@ -356,10 +357,18 @@ function resolveHexaClassDef(classId: string | undefined) {
 function resolveHexaNotice(hasHexa: boolean, isLegacyClass: boolean): string | null {
   if (!hasHexa) {
     return isLegacyClass
-      ? "HEXA skills are not available. This job requires 5th job advancement to access the HEXA Matrix."
-      : "HEXA skills unlock at level 260.";
+      ? "HEXA Matrix is not available.\nThis job cannot advance to 6th job."
+      : "HEXA Matrix unlocks at level 260.";
   }
   return null;
+}
+
+// HEXA Matrix unlocks at level 260 and is unavailable to legacy (pre-5th-job) classes — see
+// the characters CLAUDE.md "Level/legacy gating" table. Also drives whether BookmarkPageBody
+// shows the edit pencil — there's nothing to edit on a gated character.
+function isHexaMatrixAvailable(character: StoredCharacterRecord | null): boolean {
+  if (!character) return false;
+  return character.level >= 260 && !isLegacyClass(character.jobName);
 }
 
 function resolveMainStatValue(character: StoredCharacterRecord | null, primaryId: string | undefined): string | null {
@@ -377,6 +386,12 @@ function readHexaLevels(charName: string | undefined): HexaSkillLevels | null {
   if (!charName) return null;
   const saved = readCharacterToolData<{ levels?: HexaSkillLevels }>(charName, "hexaSkills");
   return saved?.levels ?? null;
+}
+
+function readHexaStatNodes(charName: string | undefined): HexaStatNode[] | null {
+  if (!charName) return null;
+  const saved = readCharacterToolData<{ nodes?: HexaStatNode[] }>(charName, "hexaStat");
+  return saved?.nodes ?? null;
 }
 
 function readSymbolLevels(charName: string | undefined): Record<string, SymbolState> | null {
@@ -1336,7 +1351,7 @@ function GatedFeatureNotice({ theme, title, description }: { theme: Theme; title
     <div style={gatedFeatureNoticeStyle(theme)}>
       <div style={{ color: theme.muted }}><LockIcon /></div>
       <div style={{ fontSize: 14, fontWeight: 800, color: theme.text }}>{title}</div>
-      <div style={{ fontSize: 13, color: theme.muted, maxWidth: 280 }}>{description}</div>
+      <div style={{ fontSize: 13, color: theme.muted, maxWidth: 280, whiteSpace: "pre-line" }}>{description}</div>
     </div>
   );
 }
@@ -1353,7 +1368,7 @@ function isVMatrixAvailable(character: StoredCharacterRecord | null): boolean {
 
 function resolveVMatrixNotice(hasVMatrix: boolean, legacy: boolean): string | null {
   if (!hasVMatrix) {
-    return legacy ? "V Matrix is not available for this job." : "V Matrix unlocks at level 200.";
+    return legacy ? "V Matrix is not available.\nThis job cannot advance to 5th job." : "V Matrix unlocks at level 200.";
   }
   return null;
 }
@@ -1396,29 +1411,105 @@ function VMatrixBookmark({ theme, character }: { theme: Theme; character: Stored
   );
 }
 
-function HexaMatrixBookmark({ theme, character }: { theme: Theme; character: StoredCharacterRecord | null }) {
-  const mounted = useSyncExternalStore(() => () => undefined, () => true, () => false);
-  const charName = character?.characterName;
-  const level = character?.level ?? 0;
-  const hexaLevels = useMemo(() => {
-    if (!mounted) return null;
-    const fromState = (character?.tools?.hexaSkills as { levels?: HexaSkillLevels } | undefined)?.levels;
-    if (fromState) return fromState;
-    return readHexaLevels(charName);
-  // react-doctor-disable-next-line exhaustive-deps -- deliberately depends on the narrowed `charName` primitive, not the whole `character` object, to avoid re-running when unrelated fields change
-  }, [mounted, charName, character?.tools]);
+type HexaBookmarkView = "skills" | "stat";
 
-  const classId = character ? resolveClassId(character.jobName) : undefined;
-  const hexaClassDef = resolveHexaClassDef(classId);
-  const legacy = character ? isLegacyClass(character.jobName) : false;
-  const hasHexa = level >= 260 && !legacy;
-  const hexaNotice = resolveHexaNotice(hasHexa, legacy);
+// A character with no saved HEXA Skills tool data at all (level-eligible but never ran the
+// step) used to render nothing below the header — this fills in the same all-zero, dimmed
+// shape VMatrixBookmark shows for an untouched V Matrix, instead of a blank panel.
+const EMPTY_HEXA_LEVELS: HexaSkillLevels = { origin: 0, ascent: 0, mastery: [], enhancement: [], common: [] };
 
-  if (hexaNotice !== null) {
-    return <p style={{ fontSize: 12, color: theme.muted, fontStyle: "italic", margin: 0 }}>{hexaNotice}</p>;
+function hexaMatrixBookmarkHeaderLabel(view: HexaBookmarkView, defaultLabel: string): string {
+  return view === "stat" ? "HEXA Stat" : defaultLabel;
+}
+
+function HexaActionBar({ view, theme, onSelect }: { view: HexaBookmarkView; theme: Theme; onSelect: (v: HexaBookmarkView) => void }) {
+  const btnStyle: CSSProperties = { ...secondaryButtonStyle(theme, "8px 0"), width: "100%", height: "100%", fontSize: 12, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 };
+  return (
+    <div style={{ display: "flex", gap: 10 }}>
+      <div style={{ flex: 1 }}>
+        {view === "stat" && (
+          <button type="button" style={btnStyle} onClick={() => onSelect("skills")}>
+            <span aria-hidden="true" style={equipmentActionArrowStyle}>‹</span>
+            <span>HEXA Skills</span>
+          </button>
+        )}
+      </div>
+      <div style={{ flex: 1 }}>
+        {view === "skills" && (
+          <button type="button" style={btnStyle} onClick={() => onSelect("stat")}>
+            <span>HEXA Stat</span>
+            <span aria-hidden="true" style={equipmentActionArrowStyle}>›</span>
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+const HEXA_STAT_NODE_LABELS = ["HEXA Stat I", "HEXA Stat II", "HEXA Stat III"];
+// Node I is always accessible (HEXA Matrix implies 6th job); II/III have their own level
+// gates on top of that — mirrors HexaMatrixSetupStep's own isNodeUnlocked.
+const HEXA_STAT_UNLOCK_LEVELS = [0, 265, 270];
+
+function emptyHexaStatEntry(): HexaStatEntry {
+  return { type: "", level: 0 };
+}
+
+function hexaStatLineLabel(type: string, mainStatLabel: string, attackLabel: string): string {
+  if (type === "mainStat") return mainStatLabel;
+  if (type === "attackPower") return attackLabel;
+  return HEXA_STAT_OPTIONS.find((o) => o.value === type)?.label ?? type;
+}
+
+function hexaStatLineValue(entry: HexaStatEntry, isPrimary: boolean, classId: string | undefined, mainStatLabel: string, attackLabel: string): string {
+  if (!entry.type) return "Not set";
+  const bonus = getHexaStatBonus(entry.type, entry.level, isPrimary, classId);
+  const bonusSuffix = bonus ? ` (${bonus})` : "";
+  return `${hexaStatLineLabel(entry.type, mainStatLabel, attackLabel)} · Lv ${entry.level}${bonusSuffix}`;
+}
+
+// Shows the node's active preset only (not the alternate "Stored" preset) — matches the
+// profile's read-only-summary role rather than replicating the setup step's full editor.
+function HexaStatNodeCard({ label, node, locked, unlockLevel, classData, theme }: {
+  label: string; node: HexaStatNode | undefined; locked: boolean; unlockLevel: number;
+  classData: ClassSkillData | undefined; theme: Theme;
+}) {
+  if (locked) {
+    return (
+      <StatBlock label={label} theme={theme}>
+        <p style={{ margin: 0, fontSize: 12, color: theme.muted, fontWeight: 700 }}>Unlocks at level {unlockLevel}.</p>
+      </StatBlock>
+    );
   }
-  if (!hexaLevels) return null;
+  const slot = node ? node.presets[node.activePreset] : { main: emptyHexaStatEntry(), alt: [emptyHexaStatEntry(), emptyHexaStatEntry()] as [HexaStatEntry, HexaStatEntry] };
+  const primaryStat = classData?.requiredStats[0] ?? "";
+  const mainStatLabel = getMainStatLabel(classData?.id ?? "", primaryStat);
+  const attackLabel = getAttackLabel(primaryStat);
+  return (
+    <StatBlock label={label} theme={theme}>
+      <SummaryRow label="Main Stat" value={hexaStatLineValue(slot.main, true, classData?.id, mainStatLabel, attackLabel)} theme={theme} />
+      <SummaryRow label="Alt 1" value={hexaStatLineValue(slot.alt[0], false, classData?.id, mainStatLabel, attackLabel)} theme={theme} />
+      <SummaryRow label="Alt 2" value={hexaStatLineValue(slot.alt[1], false, classData?.id, mainStatLabel, attackLabel)} theme={theme} />
+    </StatBlock>
+  );
+}
 
+function HexaStatBookmarkView({ theme, character, classData, hexaStatNodes }: {
+  theme: Theme; character: StoredCharacterRecord | null; classData: ClassSkillData | undefined; hexaStatNodes: HexaStatNode[] | null;
+}) {
+  const level = character?.level ?? 0;
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+      {HEXA_STAT_NODE_LABELS.map((label, i) => (
+        <HexaStatNodeCard key={label} label={label} node={hexaStatNodes?.[i]} locked={level < HEXA_STAT_UNLOCK_LEVELS[i]} unlockLevel={HEXA_STAT_UNLOCK_LEVELS[i]} classData={classData} theme={theme} />
+      ))}
+    </div>
+  );
+}
+
+function HexaSkillsBookmarkView({ theme, hexaClassDef, hexaLevels }: {
+  theme: Theme; hexaClassDef: ReturnType<typeof resolveHexaClassDef>; hexaLevels: HexaSkillLevels;
+}) {
   const skillSlots: (HexaSkillDef | null)[] = [hexaClassDef?.origin ?? null, hexaClassDef?.ascent ?? null, null, null, null, null];
   const skillLevels = [hexaLevels.origin ?? 0, hexaLevels.ascent ?? 0, 0, 0, 0, 0];
   const commonLevels = [hexaLevels.common[0] ?? 0, hexaLevels.common[1] ?? 0, 0, 0];
@@ -1483,6 +1574,55 @@ function HexaMatrixBookmark({ theme, character }: { theme: Theme; character: Sto
   );
 }
 
+function HexaMatrixBookmark({ theme, character, view, onViewChange }: {
+  theme: Theme; character: StoredCharacterRecord | null; view: HexaBookmarkView; onViewChange: (v: HexaBookmarkView) => void;
+}) {
+  const mounted = useSyncExternalStore(() => () => undefined, () => true, () => false);
+  const charName = character?.characterName;
+  const hexaLevels = useMemo(() => {
+    if (!mounted) return null;
+    const fromState = (character?.tools?.hexaSkills as { levels?: HexaSkillLevels } | undefined)?.levels;
+    if (fromState) return fromState;
+    return readHexaLevels(charName);
+  // react-doctor-disable-next-line exhaustive-deps -- deliberately depends on the narrowed `charName` primitive, not the whole `character` object, to avoid re-running when unrelated fields change
+  }, [mounted, charName, character?.tools]);
+  const hexaStatNodes = useMemo(() => {
+    if (!mounted) return null;
+    const fromState = (character?.tools?.hexaStat as { nodes?: HexaStatNode[] } | undefined)?.nodes;
+    if (fromState) return fromState;
+    return readHexaStatNodes(charName);
+  // react-doctor-disable-next-line exhaustive-deps -- same narrowed-dependency reasoning as hexaLevels above
+  }, [mounted, charName, character?.tools]);
+
+  const classId = character ? resolveClassId(character.jobName) : undefined;
+  const hexaClassDef = resolveHexaClassDef(classId);
+  const classData = classId ? CLASS_SKILL_DATA.find((c) => c.id === classId) : undefined;
+  const hasHexa = isHexaMatrixAvailable(character);
+  const hexaNotice = resolveHexaNotice(hasHexa, character ? isLegacyClass(character.jobName) : false);
+
+  if (hexaNotice !== null) {
+    return <GatedFeatureNotice theme={theme} title="Not Available" description={hexaNotice} />;
+  }
+
+  // The 2 views are stacked in the same grid cell (both present, only one visible) so the
+  // row auto-sizes to the taller of the two, matching EquipmentBookmark's own pattern.
+  return (
+    <div>
+      <div style={{ display: "grid" }}>
+        <div style={{ gridArea: "1 / 1", visibility: view === "skills" ? "visible" : "hidden" }}>
+          <HexaSkillsBookmarkView theme={theme} hexaClassDef={hexaClassDef} hexaLevels={hexaLevels ?? EMPTY_HEXA_LEVELS} />
+        </div>
+        <div style={{ gridArea: "1 / 1", visibility: view === "stat" ? "visible" : "hidden" }}>
+          <HexaStatBookmarkView theme={theme} character={character} classData={classData} hexaStatNodes={hexaStatNodes} />
+        </div>
+      </div>
+      <div style={{ paddingTop: 14 }}>
+        <HexaActionBar view={view} theme={theme} onSelect={onViewChange} />
+      </div>
+    </div>
+  );
+}
+
 function isHexaMatrixFilled(character: StoredCharacterRecord, mounted: boolean): boolean {
   if (character.level < 260) return false;
   if (isLegacyClass(character.jobName)) return true;
@@ -1515,9 +1655,8 @@ function isBookmarkFilled(id: BookmarkId, character: StoredCharacterRecord | nul
   }
 }
 
-const BOOKMARK_CONTENT: Record<Exclude<BookmarkId, "overview" | "setup" | "gender_marriage" | "stats" | "equipment" | "v_matrix">, (props: { theme: Theme; character: StoredCharacterRecord | null }) => ReactNode> = {
+const BOOKMARK_CONTENT: Record<Exclude<BookmarkId, "overview" | "setup" | "gender_marriage" | "stats" | "equipment" | "v_matrix" | "hexa_matrix">, (props: { theme: Theme; character: StoredCharacterRecord | null }) => ReactNode> = {
   familiars: FamiliarsBookmark,
-  hexa_matrix: HexaMatrixBookmark,
 };
 
 function SetupBookmark({ model, actions }: { model: PreviewPaneModel; actions: PreviewPaneActions }) {
@@ -1553,6 +1692,13 @@ function equipmentTargetSubstep(view: EquipmentBookmarkView): number {
   return 0;
 }
 
+// hexa_matrix_flow's HexaMatrixSetupStep has 2 substeps (0: skill levels, 1: HEXA Stat) for
+// every flow that reaches this bookmark's edit pencil (only maplescouter_setup skips HEXA
+// Stat entirely, and that flow has no profile bookmark pencil of its own).
+function hexaMatrixTargetSubstep(view: HexaBookmarkView): number {
+  return view === "stat" ? 1 : 0;
+}
+
 function BookmarkPageBody({
   model, actions, active, filled, ContentComponent, onEdit, onEditStep,
 }: {
@@ -1573,6 +1719,10 @@ function BookmarkPageBody({
   const [equipmentView, setEquipmentView] = useState<EquipmentBookmarkView>(() => {
     const remembered = setup.lastActiveBookmarkSubView;
     return active.id === "equipment" && (remembered === "titles" || remembered === "pets") ? remembered : "gear";
+  });
+  const [hexaView, setHexaView] = useState<HexaBookmarkView>(() => {
+    const remembered = setup.lastActiveBookmarkSubView;
+    return active.id === "hexa_matrix" && remembered === "stat" ? remembered : "skills";
   });
 
   if (active.id === "overview") return <OverviewBookmark model={model} />;
@@ -1654,6 +1804,22 @@ function BookmarkPageBody({
       <>
         <BookmarkPageHeader theme={theme} label={active.pageLabel} onEdit={isVMatrixAvailable(character) ? onEdit : null} disabled={setup.isUiLocked} />
         <VMatrixBookmark theme={theme} character={character} />
+      </>
+    );
+  }
+
+  // Same shape as V Matrix above: gated by level/legacy (isHexaMatrixAvailable), no
+  // EmptyBookmarkState, pencil hidden when gated. 2 swappable sub-views (Skills/Stat)
+  // sharing hexa_matrix_flow's 2 fixed substeps (see hexaMatrixTargetSubstep), pencil
+  // confined to whichever sub-view is showing, same as Equipment/Stats.
+  if (active.id === "hexa_matrix") {
+    const hexaAvailable = isHexaMatrixAvailable(character);
+    const editHexa = () => { if (active.flowId) onEditStep(active.flowId, hexaMatrixTargetSubstep(hexaView), true, hexaView); };
+    const hexaHeaderLabel = hexaMatrixBookmarkHeaderLabel(hexaView, active.pageLabel);
+    return (
+      <>
+        <BookmarkPageHeader theme={theme} label={hexaHeaderLabel} onEdit={hexaAvailable ? editHexa : null} disabled={setup.isUiLocked} />
+        <HexaMatrixBookmark theme={theme} character={character} view={hexaView} onViewChange={setHexaView} />
       </>
     );
   }
@@ -1755,7 +1921,7 @@ export default function CharacterProfileOverviewScreen({
   const active = bookmarks.find((b) => b.id === activeId) ?? bookmarks[0];
 
   const filled = isBookmarkFilled(active.id, character, mounted);
-  const ContentComponent = active.id === "overview" || active.id === "setup" || active.id === "gender_marriage" || active.id === "stats" || active.id === "equipment" || active.id === "v_matrix" ? null : BOOKMARK_CONTENT[active.id];
+  const ContentComponent = active.id === "overview" || active.id === "setup" || active.id === "gender_marriage" || active.id === "stats" || active.id === "equipment" || active.id === "v_matrix" || active.id === "hexa_matrix" ? null : BOOKMARK_CONTENT[active.id];
 
   function startOptionalFlowRemembered(flowId: SetupFlowId, targetSubstep?: number, confineToSubstep?: boolean, subView?: string) {
     actions.rememberActiveBookmark(active.id, subView);
