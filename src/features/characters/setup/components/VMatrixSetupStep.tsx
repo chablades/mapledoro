@@ -48,7 +48,10 @@ export function useVMatrixCatalog(classId: string | undefined): { catalog: VMatr
     if (!classId || catalogCache[classId]) return;
     let cancelled = false;
     fetch(`/data/vmatrix/${classId}.json`)
-      .then((r) => r.json() as Promise<VMatrixData>)
+      .then((r) => {
+        if (!r.ok) throw new Error(`Failed to load V Matrix catalog for ${classId}`);
+        return r.json() as Promise<VMatrixData>;
+      })
       .then((data) => { catalogCache[classId] = data; if (!cancelled) setCatalog(data); })
       .catch(() => { if (!cancelled) setLoadFailed(true); });
     return () => { cancelled = true; };

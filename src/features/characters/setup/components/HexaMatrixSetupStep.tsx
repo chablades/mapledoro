@@ -160,7 +160,10 @@ function isNodeEmpty(node: HexaStatNode): boolean {
 // affected on both presets (worst case: nothing left to name, so just say "every node").
 function buildOverLimitMessage(hexaStat: [HexaStatNode, HexaStatNode, HexaStatNode]): string {
   const perNode = hexaStat.map((node) => node.presets.map((p) => hexaStatSlotLevelSum(p) > HEXA_STAT_NODE_MAX_LEVEL));
-  const affectedIndices = perNode.reduce<number[]>((acc, presets, i) => (presets.some(Boolean) ? [...acc, i] : acc), []);
+  const affectedIndices = perNode.reduce<number[]>((acc, presets, i) => {
+    if (presets.some(Boolean)) acc.push(i);
+    return acc;
+  }, []);
   if (affectedIndices.length === 0) return "";
 
   if (affectedIndices.length === 3 && affectedIndices.every((i) => perNode[i].every(Boolean))) {

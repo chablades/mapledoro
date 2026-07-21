@@ -395,7 +395,10 @@ function ItemPicker({
     if (cachedSlotItems[cacheKey]) return;
     let cancelled = false;
     const fileList = cacheKey.split("+");
-    Promise.all(fileList.map((f) => fetch(`/data/equipment/${f}.json`).then((r) => r.json() as Promise<RawCatalogEntry[]>)))
+    Promise.all(fileList.map((f) => fetch(`/data/equipment/${f}.json`).then((r) => {
+      if (!r.ok) throw new Error(`Failed to load equipment data for ${f}`);
+      return r.json() as Promise<RawCatalogEntry[]>;
+    })))
       .then((raws) => {
         const parsed = raws.flat().map(([id, name, stats]) => ({ id, name, reqJob: stats?.reqJob, reqLevel: stats?.reqLevel, onlyEquip: stats?.onlyEquip, wearablePets: stats?.wearablePets, wearableEquips: stats?.wearableEquips }));
         cachedSlotItems[cacheKey] = parsed;

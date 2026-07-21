@@ -1283,9 +1283,10 @@ function HyperStatSubstep({
   // stay blocked if ANY preset is over budget — otherwise switching to a valid preset
   // silently bypasses the check while an overspent one is still saved (same class of
   // bug as HEXA Stat's node/preset check).
-  const overBudgetPresetIndices = hyper.presets.reduce<number[]>((acc, p, i) => (
-    hyperStatPresetSpent(p, hyperCategoryIds) > hyperBudget ? [...acc, i] : acc
-  ), []);
+  const overBudgetPresetIndices = hyper.presets.reduce<number[]>((acc, p, i) => {
+    if (hyperStatPresetSpent(p, hyperCategoryIds) > hyperBudget) acc.push(i);
+    return acc;
+  }, []);
   const anyPresetOverBudget = overBudgetPresetIndices.length > 0;
   return (
     <div key={2} className="stats-hyper-root" style={substepAnimStyle}>
