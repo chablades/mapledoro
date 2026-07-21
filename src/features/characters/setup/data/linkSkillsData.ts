@@ -52,18 +52,22 @@ export const CLASS_TO_SKILL: Record<string, LinkSkillId> = {
 };
 
 /** Winning (highest-level) tracked character per class, keyed by the class's jobName. */
-type ClassWinner = { name: string; level: number; contribution: number };
+type ClassWinner = { character: StoredCharacterRecord; contribution: number };
 
 /** What the tracked roster proves each link skill is worth: per member class, only the
  *  single best tracked character of that class counts (link skill mastery is per-class,
  *  not per-character, so a second alt of an already-mastered class contributes nothing),
  *  then those per-class bests are summed across the skill's member classes. This is a
  *  lower bound on the true total, never an overstatement, which is what makes it safe to
- *  reconcile against a stored total with a plain max (see reconcileLinkSkills). */
+ *  reconcile against a stored total with a plain max (see reconcileLinkSkills).
+ *  `winners` is the actual per-class winning character records -- the only ones that
+ *  really contribute -- for callers (LegionPanel's sprite row) that need more than just
+ *  a formatted name/level string; `sources` derives its display strings from the same
+ *  reduction so the two never drift apart. */
 export function computeLinkSkillsFromRoster(
   roster: StoredCharacterRecord[],
   worldId: number,
-): { values: LinkSkillsData; sources: Partial<Record<LinkSkillId, string[]>> } {
+): { values: LinkSkillsData; sources: Partial<Record<LinkSkillId, string[]>>; winners: Partial<Record<LinkSkillId, StoredCharacterRecord[]>> } {
   const sameWorld = roster.filter((c) => c.worldID === worldId);
   const bestByClass: Partial<Record<LinkSkillId, Record<string, ClassWinner>>> = {};
 
@@ -74,19 +78,26 @@ export function computeLinkSkillsFromRoster(
     if (contribution === 0) continue;
     const perClass = (bestByClass[skillId] ??= {});
     const existing = perClass[char.jobName];
-    if (!existing || contribution > existing.contribution) {
-      perClass[char.jobName] = { name: char.characterName, level: char.level, contribution };
+    // Compare char.level, not contribution -- inferLinkLevel caps at 3 for any level
+    // 210+, so a 295 and a 210 of the same class tie on contribution and the first one
+    // seen would otherwise "win" and never get replaced by the genuinely higher character.
+    // level is monotonic with contribution, so this can never pick a lower-contribution
+    // character over a higher one either.
+    if (!existing || char.level > existing.character.level) {
+      perClass[char.jobName] = { character: char, contribution };
     }
   }
 
   const values: LinkSkillsData = {};
   const sources: Partial<Record<LinkSkillId, string[]>> = {};
+  const winners: Partial<Record<LinkSkillId, StoredCharacterRecord[]>> = {};
   for (const [skillId, perClass] of Object.entries(bestByClass)) {
-    const winners = Object.values(perClass).toSorted((a, b) => a.name.localeCompare(b.name));
-    values[skillId as LinkSkillId] = winners.reduce((sum, w) => sum + w.contribution, 0);
-    sources[skillId as LinkSkillId] = winners.map((w) => `${w.name} (Lv ${w.level})`);
+    const classWinners = Object.values(perClass).toSorted((a, b) => a.character.characterName.localeCompare(b.character.characterName));
+    values[skillId as LinkSkillId] = classWinners.reduce((sum, w) => sum + w.contribution, 0);
+    sources[skillId as LinkSkillId] = classWinners.map((w) => `${w.character.characterName} (Lv ${w.character.level})`);
+    winners[skillId as LinkSkillId] = classWinners.map((w) => w.character);
   }
-  return { values, sources };
+  return { values, sources, winners };
 }
 
 /** Reconciles a stored link skill total with what the current roster proves. Since

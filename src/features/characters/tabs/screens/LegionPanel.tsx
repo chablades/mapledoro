@@ -13,7 +13,7 @@ import {
   parseLegionArtifactBoardDraft,
   type LegionCrystalDraft, type LegionCrystalDef,
 } from "../../setup/data/legionArtifactData";
-import { LINK_SKILLS, CLASS_TO_SKILL, reconcileLinkSkills } from "../../setup/data/linkSkillsData";
+import { LINK_SKILLS, computeLinkSkillsFromRoster, reconcileLinkSkills } from "../../setup/data/linkSkillsData";
 import { LinkSkillsEditor } from "../../setup/components/LinkSkillsSetupStep";
 import { LegionArtifactsEditor } from "../../setup/components/LegionArtifactsSetupStep";
 import type { AppTheme } from "../../../../components/themes";
@@ -465,22 +465,30 @@ function HoverTooltip({ theme, label, sublabel, ariaLabel, wrapSublabel, wrapper
   );
 }
 
-function SpriteRow({ theme, characters, size }: { theme: AppTheme; characters: StoredCharacterRecord[]; size: number }) {
-  if (characters.length === 0) {
-    return (
-      <HoverTooltip theme={theme} label="No tracked character">
-        <div style={{ width: size, height: size, opacity: 0.6 }}>
-          <CharacterAvatar
-            src={FALLBACK_SRC}
-            alt="No tracked character"
-            width={size}
-            height={size}
-            style={{ objectFit: "contain", objectPosition: "center bottom" }}
-          />
-        </div>
-      </HoverTooltip>
-    );
-  }
+function MissingCharacterSlot({ theme, size }: { theme: AppTheme; size: number }) {
+  return (
+    <HoverTooltip theme={theme} label="No tracked character">
+      <div style={{ width: size, height: size, opacity: 0.6 }}>
+        <CharacterAvatar
+          src={FALLBACK_SRC}
+          alt="No tracked character"
+          width={size}
+          height={size}
+          style={{ objectFit: "contain", objectPosition: "center bottom" }}
+        />
+      </div>
+    </HoverTooltip>
+  );
+}
+
+// missingCount fills out the row to the skill's real member-class count -- a multi-class
+// skill (Empirical Knowledge/Thief's Cunning, 3 classes each) showing only 2 real sprites
+// otherwise reads as "why is this 9/9 with only 2 characters," when the 3rd class's
+// contribution is really just an untracked lump baked into the stored total (see
+// computeLinkSkillsFromRoster's own doc comment on that limitation).
+function SpriteRow({ theme, characters, missingCount, size }: {
+  theme: AppTheme; characters: StoredCharacterRecord[]; missingCount: number; size: number;
+}) {
   return (
     <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "flex-end", gap: 6 }}>
       {characters.map((c) => (
@@ -495,6 +503,10 @@ function SpriteRow({ theme, characters, size }: { theme: AppTheme; characters: S
             />
           </div>
         </HoverTooltip>
+      ))}
+      {Array.from({ length: missingCount }, (_, i) => (
+        // react-doctor-disable-next-line no-array-index-as-key -- interchangeable placeholder slots, no identity to key on
+        <MissingCharacterSlot key={`missing-${i}`} theme={theme} size={size} />
       ))}
     </div>
   );
@@ -543,7 +555,7 @@ function LinkSkillCard({ theme, skill, eligible, level, spriteSize, dormant = fa
       </div>
       {!dormant && (
         <div style={{ justifySelf: "end" }}>
-          <SpriteRow theme={theme} characters={eligible} size={spriteSize} />
+          <SpriteRow theme={theme} characters={eligible} missingCount={skill.classes.length - eligible.length} size={spriteSize} />
         </div>
       )}
     </div>
@@ -597,6 +609,11 @@ function LinkSkillsSection({ theme, worldId, worldCharacters, editing, onEditDon
   const mounted = useSyncExternalStore(() => () => undefined, () => true, () => false);
   const stored = mounted ? readCharactersStore().linkSkillsByWorld[String(worldId)] : undefined;
   const levels = mounted ? reconcileLinkSkills(stored, worldCharacters, worldId) : undefined;
+  // Only the per-class winner (highest level) actually contributes to the account-wide
+  // total -- a second tracked alt of an already-mastered class contributes nothing (see
+  // computeLinkSkillsFromRoster's own doc comment) -- so the sprite row must show only
+  // that winner, not every tracked character of a qualifying class.
+  const { winners } = computeLinkSkillsFromRoster(worldCharacters, worldId);
 
   if (editing) {
     return (
@@ -613,7 +630,7 @@ function LinkSkillsSection({ theme, worldId, worldCharacters, editing, onEditDon
 
   const withEligibility = LINK_SKILLS.map((skill) => ({
     skill,
-    eligible: worldCharacters.filter((c) => CLASS_TO_SKILL[c.jobName] === skill.id),
+    eligible: winners[skill.id] ?? [],
     level: levels?.[skill.id],
   }));
   // A skill explicitly set to 0 (no progress yet) reads the same as never having been
