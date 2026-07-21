@@ -11,7 +11,8 @@ import { readCharacterToolData } from "../../../tools/characterToolStorage";
 import { resolveClassId, getClassSetupOverrides } from "../../setup/data/nexonJobMapping";
 import { CLASS_SKILL_DATA, getClassDataByNexonJobName, isLegacyClass, type ClassSkillData } from "../../setup/data/classSkillData";
 import { HEXA_STAT_OPTIONS, getHexaStatBonus, getMainStatLabel, getAttackLabel, type HexaStatNode, type HexaStatEntry, type HexaStatSlot } from "../../setup/data/hexaStatData";
-import type { StoredCharacterEquipment, StoredCharacterRecord, StoredCharacterStats, StoredHyperStat, StoredInnerAbility, StoredIATier, StoredTripleStatField, StoredFamiliarSlot } from "../../model/charactersStore";
+import { readCharactersStore, selectCharacterByIgn } from "../../model/charactersStore";
+import type { StoredCharacterEquipment, StoredCharacterRecord, StoredCharacterStats, StoredEquipmentItem, StoredHyperStat, StoredInnerAbility, StoredIATier, StoredTripleStatField, StoredFamiliarSlot } from "../../model/charactersStore";
 import { SetupFlowButtons } from "./QuickSetupIntroScreen";
 import { STAT_LABELS } from "../../setup/data/statFields";
 import { HYPER_STAT_CATEGORIES, type HyperStatCategoryDef } from "../../setup/data/hyperStatData";
@@ -21,14 +22,15 @@ import { resolveFinalDamagePercent } from "../../setup/data/finalDamageData";
 import { computeDamageRange } from "../../setup/data/damageRangeData";
 import { resolveComboOrdersTier, type ComboOrdersTier } from "../../setup/data/comboOrdersData";
 import { isRebootWorld, rebootFinalDamageBonusPercent } from "../../setup/data/rebootData";
-import { TIER_COLORS as IA_TIER_COLORS, familiarStatBonuses, type FamiliarStatBonus } from "../../setup/data/familiarsData";
+import { TIER_COLORS as IA_TIER_COLORS, TIER_COLORS as FAMILIAR_TIER_COLORS, FAMILIARS, familiarStatBonuses, type FamiliarStatBonus, type FamiliarTier } from "../../setup/data/familiarsData";
 import { statusText } from "../../../../components/statusColors";
-import { HexaSkillIcon } from "../../../../components/ResourceImage";
+import { HexaSkillIcon, ItemIcon } from "../../../../components/ResourceImage";
+import HoverTooltip from "../../../../components/HoverTooltip";
 import InfoTooltip, { type TooltipContent } from "../../setup/components/InfoTooltip";
 import { ReadOnlySlotTile, ReadOnlySymbolTile } from "../../setup/components/EquipmentSetupStep";
 import { ReadOnlyLeveledIconTile } from "../../setup/components/LeveledIconTile";
 import { VMatrixNodeIcon, useVMatrixCatalog, type VMatrixNode } from "../../setup/components/VMatrixSetupStep";
-import { ReadOnlyFamiliarSlotCard, ReadOnlyBadgeSlot, PRESET_COUNT as FAMILIAR_PRESET_COUNT, BADGE_SIZE as FAMILIAR_BADGE_SIZE, BADGE_BORDER as FAMILIAR_BADGE_BORDER } from "../../setup/components/FamiliarsSetupStep";
+import { ReadOnlyFamiliarSlotCard, ReadOnlyBadgeSlot, FamiliarCardSprite, PRESET_COUNT as FAMILIAR_PRESET_COUNT, BADGE_SIZE as FAMILIAR_BADGE_SIZE, BADGE_BORDER as FAMILIAR_BADGE_BORDER } from "../../setup/components/FamiliarsSetupStep";
 import {
   storedPresetToDraft, toDraftItem, type SlotMap, type SlotKey,
   CENTER_WIDTH, COL1_SLOTS, COL2_SLOTS, COL6_SLOTS, COL7_SLOTS, CENTER_BOTTOM_SLOTS,
@@ -63,18 +65,7 @@ const ALL_BOOKMARKS: BookmarkDef[] = [
   { id: "setup", tabLabel: "Setup", pageLabel: "Setup", flowId: null },
 ];
 
-const MAIN_STAT_FIELDS = { str: "STR", dex: "DEX", int: "INT", luk: "LUK", hp: "HP" } as const;
-type MainStatKey = keyof typeof MAIN_STAT_FIELDS;
-
 const GENDER_LABELS: Record<"male" | "female", string> = { male: "Male", female: "Female" };
-
-function exportButtonStyle(theme: Theme): CSSProperties {
-  return {
-    display: "flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 700,
-    color: theme.muted, background: theme.bg, border: `1px solid ${theme.border}`,
-    borderRadius: 999, padding: "3px 10px", cursor: "pointer", fontFamily: "inherit",
-  };
-}
 
 function pencilButtonStyle(theme: Theme): CSSProperties {
   return {
@@ -100,6 +91,32 @@ function SetupTabIcon() {
       <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
     </svg>
   );
+}
+
+function ExportTabIcon() {
+  return (
+    <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
+      <path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M12 4v12m-4-4l4 4 4-4" />
+    </svg>
+  );
+}
+
+// Reads fresh from the store rather than trusting whatever `character` object got passed
+// down -- mirrors readHexaLevels/readHexaStatNodes above, which exist for the same reason:
+// tool writes elsewhere in the app don't always make it into an already-rendered `character`
+// prop. Exports the whole record (stats/equipment/tools and everything else) so this doubles
+// as an import source later -- same shape a re-import would need to reconstruct the character.
+function exportCharacterJson(charName: string | undefined) {
+  if (!charName) return;
+  const character = selectCharacterByIgn(readCharactersStore(), charName);
+  if (!character) return;
+  const blob = new Blob([JSON.stringify(character, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `mapledoro-${charName.toLowerCase()}-${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 function BookmarkPageHeader({ theme, label, onEdit, disabled }: { theme: Theme; label: string; onEdit: (() => void) | null; disabled: boolean }) {
@@ -280,17 +297,18 @@ function SummaryRow({ label, value, theme, locked }: { label: string; value: str
   );
 }
 
-function WseSlot({ label, name, theme }: { label: string; name: string | null | undefined; theme: Theme }) {
+// Compact icon-only slot (name + status live in the tooltip) so Weapon/Secondary/Emblem
+// fit in a tight row instead of the old bordered label+name boxes. An empty slot shows the
+// label's own first letter instead of a contentless placeholder square -- 3 identical grey
+// boxes side by side gave no clue what they even were without hovering each one.
+function WseSlot({ label, item, theme }: { label: string; item: StoredEquipmentItem | null | undefined; theme: Theme }) {
+  const name = item?.name;
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 8px", border: `1px solid ${theme.border}`, borderRadius: 10, background: theme.bg }}>
-      <div style={{ width: 26, height: 26, borderRadius: 4, background: theme.border, flexShrink: 0, opacity: 0.5 }} />
-      <div style={{ minWidth: 0 }}>
-        <div style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: theme.muted }}>{label}</div>
-        <div style={{ fontSize: 12, color: name ? theme.text : theme.muted, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 100 }}>
-          {name ?? "not set up"}
-        </div>
+    <HoverTooltip label={name ? `${label}: ${name}` : `${label}: not set up`} theme={theme}>
+      <div style={{ width: 44, height: 44, borderRadius: 8, border: `1px solid ${theme.border}`, background: theme.bg, display: "flex", alignItems: "center", justifyContent: "center", opacity: item ? 1 : 0.4, flexShrink: 0 }}>
+        {item?.id ? <ItemIcon id={item.id} size={36} /> : <span style={{ fontSize: 12, fontWeight: 800, color: theme.muted }}>{label[0]}</span>}
       </div>
-    </div>
+    </HoverTooltip>
   );
 }
 
@@ -313,17 +331,6 @@ function resolveHexaNotice(hasHexa: boolean, isLegacyClass: boolean): string | n
 function isHexaMatrixAvailable(character: StoredCharacterRecord | null): boolean {
   if (!character) return false;
   return character.level >= 260 && !isLegacyClass(character.jobName);
-}
-
-function resolveMainStatValue(character: StoredCharacterRecord | null, primaryId: string | undefined): string | null {
-  if (!character || !primaryId) return null;
-  const s = character.stats;
-  if (primaryId === "str") return s.str.base || null;
-  if (primaryId === "dex") return s.dex.base || null;
-  if (primaryId === "int") return s.int.base || null;
-  if (primaryId === "luk") return s.luk.base || null;
-  if (primaryId === "hp") return s.hp.base || null;
-  return null;
 }
 
 function readHexaLevels(charName: string | undefined): HexaSkillLevels | null {
@@ -350,71 +357,487 @@ function isStatsFilled(character: StoredCharacterRecord | null): boolean {
   return Boolean(s.attackPower.base || s.bossDamage || s.str.base || s.dex.base || s.int.base || s.luk.base || s.hp.base);
 }
 
-function OverviewBookmark({ model }: { model: PreviewPaneModel }) {
-  const { theme, profile } = model;
-  const character = profile.confirmedCharacter;
-  const stats = character?.stats;
-  const equip = character?.equipment;
-  const equipGrid = equip?.presets?.[equip.activePreset] ?? equip?.presets?.[0];
+// Placeholder headline figure -- unwired for now, reserved for a MapleScouter-style overall
+// score (see project_combat_power_investigation_2026_07_20 -- parked, no formula reproduces
+// cleanly across characters yet). This is a first pass at Juno's default-layout mockup;
+// expect the exact figure/sections here to keep changing.
+function OverviewFigure({ label, value, theme }: { label: string; value: string; theme: Theme }) {
+  return (
+    <div>
+      <div style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: theme.muted, marginBottom: 2 }}>{label}</div>
+      <div style={{ fontSize: 20, fontWeight: 800, color: theme.muted, lineHeight: 1, fontFamily: "var(--font-heading)" }}>{value}</div>
+    </div>
+  );
+}
 
-  const [exportFlash, setExportFlash] = useState(false);
-  function handleExport() {
-    setExportFlash(true);
-    setTimeout(() => setExportFlash(false), 2000);
-  }
+function overviewGroupHeaderStyle(theme: Theme): CSSProperties {
+  return { fontSize: 12, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.08em", color: theme.muted, paddingBottom: 8, marginBottom: 12, borderBottom: `1px solid ${theme.border}` };
+}
 
-  const classId = character ? resolveClassId(character.jobName) : undefined;
-  const classData = classId ? CLASS_SKILL_DATA.find((c) => c.id === classId) : undefined;
-  const primaryId = classData?.requiredStats[0];
-  const mainStatLabel = (primaryId && primaryId in MAIN_STAT_FIELDS) ? MAIN_STAT_FIELDS[primaryId as MainStatKey] : "Main Stat";
-  const mainStatValue = resolveMainStatValue(character, primaryId);
+function overviewSubLabelStyle(theme: Theme): CSSProperties {
+  return { fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: theme.muted, marginBottom: 8 };
+}
 
-  const keyStats = [
-    { label: mainStatLabel, display: mainStatValue ?? "—" },
-    { label: "Boss DMG", display: stats?.bossDamage ? `${stats.bossDamage}%` : "—" },
-    { label: "IED", display: stats?.ignoreDefense ? `${stats.ignoreDefense}%` : "—" },
-    { label: "Crit DMG", display: stats?.criticalDamage ? `${stats.criticalDamage}%` : "—" },
+// classData.requiredStats is always [...raw main stats, attackPower|magicAtt] -- most classes
+// have 2 raw stats (e.g. Warrior: str/dex), but a handful are genuinely tri-stat (Dual Blade/
+// Shadower/Cadena: luk/dex/str, Xenon: str/dex/luk), so this can't hardcode indices [0]/[1].
+// Filtering by isRawStatId both picks out however many raw stats the class actually has and
+// excludes the trailing attackPower/magicAtt entry, which is handled separately. Mirrors the
+// old (deleted) resolveMainStatValue, but reuses tripleStatTotal for the same "Applied Value"
+// total the Stats bookmark shows, instead of a raw base-only number.
+const RAW_STAT_LABELS = { str: "STR", dex: "DEX", int: "INT", luk: "LUK", hp: "HP" } as const;
+type RawStatId = keyof typeof RAW_STAT_LABELS;
+
+function isRawStatId(id: string): id is RawStatId {
+  return id in RAW_STAT_LABELS;
+}
+
+function rawStatDisplay(s: StoredCharacterStats | undefined, familiarBonus: ReturnType<typeof familiarStatBonuses>, id: RawStatId): { label: string; value: string } {
+  return { label: RAW_STAT_LABELS[id], value: tripleStatTotal(s?.[id], familiarBonus[id]) };
+}
+
+// classSkillData.ts's own top-of-file convention: an unpopulated requiredStats (Noblesse,
+// legacy's own unbranched "Pirate" stub, an unresolved classId) means "we genuinely don't
+// know which stat(s) this class uses" -- the UI falls back to showing every main stat rather
+// than a single blank "Main Stat —" placeholder. HP excluded: it's Demon Avenger's own
+// special case, already correctly assigned, never a fallback candidate.
+const ALL_MAIN_STAT_IDS: RawStatId[] = ["str", "dex", "int", "luk"];
+
+// The most-glanced-at stats: every main stat total the class actually uses, plus the 3 big
+// damage-multiplier percentages. Shown regardless of HEXA eligibility -- unlike the sections
+// below, these don't depend on 6th job at all.
+function OverviewKeyStatsSection({ theme, character, classData }: {
+  theme: Theme; character: StoredCharacterRecord | null; classData: ClassSkillData | undefined;
+}) {
+  const s = character?.stats;
+  const familiarBonus = familiarStatBonuses(character?.familiars);
+  const rawStatIds = (classData?.requiredStats ?? []).filter(isRawStatId);
+  const effectiveStatIds = rawStatIds.length > 0 ? rawStatIds : ALL_MAIN_STAT_IDS;
+  const statCells = effectiveStatIds.map((id) => rawStatDisplay(s, familiarBonus, id));
+  const cells = [
+    ...statCells,
+    { label: STAT_LABELS.bossDamage ?? "Boss Damage", value: pctStat(s?.bossDamage, "bossDamage") },
+    { label: STAT_LABELS.ignoreDefense ?? "Ignore DEF", value: pctStat(s?.ignoreDefense, "ignoreDefense") },
+    { label: STAT_LABELS.criticalDamage ?? "Critical Damage", value: pctStat(s?.criticalDamage, "criticalDamage") },
   ];
+  return (
+    <div style={{ display: "flex", gap: 22, flexWrap: "wrap" }}>
+      {cells.map((c) => (
+        <div key={c.label}>
+          <div style={{ fontSize: 12, color: theme.muted, marginBottom: 2 }}>{c.label}</div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: c.value !== "—" ? theme.text : theme.muted }}>{c.value}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Same node-tab + Main/Alt-stat readout as HexaStatBookmarkView, but flattened (no
+// StatBlock panel wrapping, no preset toggle) to match the plainer "6th job" section look
+// Juno's mockup uses -- always reads the node's own activePreset rather than letting the
+// user switch, since Overview is meant to be a glance, not an editor.
+function OverviewHexaStatSection({ theme, character, classData, hexaStatNodes }: {
+  theme: Theme; character: StoredCharacterRecord | null; classData: ClassSkillData | undefined; hexaStatNodes: HexaStatNode[] | null;
+}) {
+  const level = character?.level ?? 0;
+  const unlocked = HEXA_STAT_UNLOCK_LEVELS.map((min) => level >= min);
+  const nodes = HEXA_STAT_NODE_LABELS.map((_, i) => hexaStatNodes?.[i] ?? emptyHexaStatNode());
+  const [activeSlot, setActiveSlot] = useState(0);
+  const activeNode = nodes[activeSlot];
+  const slot = activeNode.presets[activeNode.activePreset];
+  const primaryStat = classData?.requiredStats[0] ?? "";
+  const mainStatLabel = getMainStatLabel(classData?.id ?? "", primaryStat);
+  const attackLabel = getAttackLabel(primaryStat);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-        <h3 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 800, color: theme.text }}>Overview</h3>
-        <button type="button" onClick={handleExport} style={exportButtonStyle(theme)}>
-          {!exportFlash && (
-            <svg width={11} height={11} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
-              <path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M12 4v12m-4-4l4 4 4-4" />
-            </svg>
-          )}
-          {exportFlash ? "Coming soon" : "Export"}
-        </button>
+    <div>
+      <div style={overviewGroupHeaderStyle(theme)}>HEXA Stat</div>
+      <div style={{ display: "flex", gap: "0.4rem", marginBottom: 14 }}>
+        {HEXA_STAT_NODE_LABELS.map((label, i) => unlocked[i] && (
+          <button key={label} type="button" className="tap-target-44" onClick={() => setActiveSlot(i)}
+            aria-label={label} aria-pressed={activeSlot === i} style={hexaStatNodeTabStyle(theme, activeSlot === i)}>
+            <HexaSkillIcon id={HEXA_STAT_NODE_ICON_IDS[i]} size={36} disabled={isHexaStatNodeEmpty(nodes[i])} />
+          </button>
+        ))}
       </div>
-
-      <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 16, marginBottom: 14, alignItems: "start" }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
-          <div style={{ marginBottom: 8 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: theme.muted, marginBottom: 2 }}>HEXA Stat</div>
-            <div style={{ fontSize: 20, fontWeight: 800, color: theme.muted, lineHeight: 1, fontFamily: "var(--font-heading)" }}>—</div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        <div>
+          <div style={overviewSubLabelStyle(theme)}>Main Stat</div>
+          <HexaStatLine entry={slot.main} isPrimary={true} classId={classData?.id} mainStatLabel={mainStatLabel} attackLabel={attackLabel} theme={theme} />
+        </div>
+        <div>
+          <div style={overviewSubLabelStyle(theme)}>Alternative Stats</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <HexaStatLine entry={slot.alt[0]} isPrimary={false} classId={classData?.id} mainStatLabel={mainStatLabel} attackLabel={attackLabel} theme={theme} />
+            <HexaStatLine entry={slot.alt[1]} isPrimary={false} classId={classData?.id} mainStatLabel={mainStatLabel} attackLabel={attackLabel} theme={theme} />
           </div>
-          <div>
-            {keyStats.map((s) => (
-              <div key={s.label} style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", padding: "4px 0", borderBottom: `1px solid ${theme.border}` }}>
-                <span style={{ fontSize: 12, color: theme.muted }}>{s.label}</span>
-                <span style={{ fontSize: 13, fontWeight: 700, color: s.display !== "—" ? theme.text : theme.muted }}>{s.display}</span>
-              </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Smaller than ReadOnlyLeveledIconTile's 68px -- the level renders as a badge overlaid on
+// the icon itself instead of a text row underneath, so a whole group of tiles is roughly
+// half the height of the old grid. Shared by both the HEXA and V Matrix sections below
+// (each just supplies its own icon) since both are the same "read-only glance" shape.
+const OVERVIEW_TILE_SIZE = 48;
+
+// Static (no theme/prop dependency) -- fixed dark scrim + white text regardless of theme, so
+// the level number stays readable over any icon art, unlike text colored via theme tokens.
+const overviewLevelBadgeStyle: CSSProperties = {
+  position: "absolute", left: 2, right: 2, bottom: 2, textAlign: "center",
+  fontSize: 12, fontWeight: 800, color: "#fff", background: "rgba(0,0,0,0.6)", borderRadius: 4, lineHeight: 1.5,
+};
+
+function OverviewLevelTile({ icon, name, level, theme }: { icon: ReactNode; name: string; level: number; theme: Theme }) {
+  const active = level > 0;
+  return (
+    <HoverTooltip label={name} theme={theme}>
+      <div style={{
+        position: "relative", width: OVERVIEW_TILE_SIZE, height: OVERVIEW_TILE_SIZE, flexShrink: 0,
+        borderRadius: 8, border: `1px solid ${active ? theme.accent : theme.border}`, background: theme.bg,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        opacity: active ? 1 : 0.35, filter: active ? "none" : "grayscale(1)",
+      }}>
+        {icon}
+        {active && <div style={overviewLevelBadgeStyle}>{level}</div>}
+      </div>
+    </HoverTooltip>
+  );
+}
+
+function OverviewHexaTile({ skill, level, theme }: { skill: HexaSkillDef; level: number; theme: Theme }) {
+  return (
+    <OverviewLevelTile
+      icon={<HexaSkillTileIcon iconId={skill.iconId} iconUrl={skill.iconUrl} name={skill.name} theme={theme} size={OVERVIEW_TILE_SIZE - 10} />}
+      name={skill.name}
+      level={level}
+      theme={theme}
+    />
+  );
+}
+
+function OverviewHexaTileGroup({ label, skills, levels, theme }: {
+  label: string; skills: HexaSkillDef[]; levels: number[]; theme: Theme;
+}) {
+  if (skills.length === 0) return null;
+  return (
+    <div>
+      <div style={overviewSubLabelStyle(theme)}>{label}</div>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        {skills.map((skill, i) => (
+          <OverviewHexaTile key={skill.name} skill={skill} level={levels[i] ?? 0} theme={theme} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function OverviewVMatrixTile({ id, name, level, theme }: { id: string; name: string; level: number; theme: Theme }) {
+  return (
+    <OverviewLevelTile
+      icon={<VMatrixNodeIcon id={id} name={name} size={OVERVIEW_TILE_SIZE - 10} />}
+      name={name}
+      level={level}
+      theme={theme}
+    />
+  );
+}
+
+function OverviewVMatrixTileGroup({ label, nodes, levels, theme }: {
+  label: string; nodes: VMatrixNode[]; levels: Record<string, number>; theme: Theme;
+}) {
+  if (nodes.length === 0) return null;
+  return (
+    <div>
+      <div style={overviewSubLabelStyle(theme)}>{label}</div>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        {nodes.map(([id, name]) => (
+          <OverviewVMatrixTile key={name} id={id} name={name} level={levels[name] ?? 0} theme={theme} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// The middle gating tier: level 200-259 non-legacy characters have real V Matrix data (unlike
+// under-200/legacy, which have nothing here) but aren't 260 yet, so this fills the same slot
+// OverviewHexaStatSection/OverviewHexaSkillsSection occupy for a 260+ character, instead of
+// showing a blank "Not Available" notice for a whole 60-level range that has real data.
+function OverviewVMatrixSection({ theme, character }: { theme: Theme; character: StoredCharacterRecord | null }) {
+  const classId = character ? getClassDataByNexonJobName(character.jobName)?.id : undefined;
+  const { catalog, loadFailed } = useVMatrixCatalog(classId);
+  const levels = character?.vMatrix?.levels ?? {};
+
+  if (!classId || loadFailed) {
+    return <GatedFeatureNotice theme={theme} title="Not Available" description="Not available for this class." />;
+  }
+  if (!catalog) return null;
+
+  return (
+    <div>
+      <div style={overviewGroupHeaderStyle(theme)}>V Matrix</div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <OverviewVMatrixTileGroup label="Job" nodes={catalog.job} levels={levels} theme={theme} />
+        <OverviewVMatrixTileGroup label="Boost" nodes={catalog.boost} levels={levels} theme={theme} />
+        <OverviewVMatrixTileGroup label="Common" nodes={catalog.common} levels={levels} theme={theme} />
+      </div>
+    </div>
+  );
+}
+
+// Arcane unlocks at the same level (200) as V Matrix and stays relevant at 260+ too (Sacred
+// layers on top of it, doesn't replace it), so this is shown alongside whichever of
+// OverviewVMatrixSection/OverviewHexaStatSection+OverviewHexaSkillsSection applies, not
+// swapped between tiers the way those are. Locked-but-not-yet-reached areas within Arcane
+// (e.g. Chu Chu Island's own higher per-zone requiredLevel) show as a dimmed 0-level tile,
+// same treatment OverviewHexaTile/OverviewVMatrixTile give an unleveled node -- but unlike
+// those, the tooltip names the unlock level too: a fresh Lv 200 player has no other way to
+// know a still-locked area even exists here, let alone when they'll get it.
+function OverviewSymbolTile({ area, level, locked, theme }: { area: SymbolArea; level: number; locked: boolean; theme: Theme }) {
+  const name = locked ? `${area.name} (unlocks at Lv. ${area.requiredLevel})` : area.name;
+  return <OverviewLevelTile icon={<ItemIcon id={area.itemId} size={OVERVIEW_TILE_SIZE - 10} />} name={name} level={level} theme={theme} />;
+}
+
+function OverviewSymbolSection({ theme, symbolLevels, characterLevel }: {
+  theme: Theme; symbolLevels: Record<string, SymbolState> | null; characterLevel: number | undefined;
+}) {
+  return (
+    <div>
+      <div style={overviewGroupHeaderStyle(theme)}>Arcane Symbols</div>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        {ARCANE_AREAS.map((area) => {
+          const locked = characterLevel !== undefined && characterLevel < area.requiredLevel;
+          return <OverviewSymbolTile key={area.name} area={area} level={symbolAreaLevel(symbolLevels, area)} locked={locked} theme={theme} />;
+        })}
+      </div>
+    </div>
+  );
+}
+
+// Skill+Common on the left, Mastery+Boost on the right with a vertical divider between --
+// closer to an earlier layout pass than the flat chip rows this replaces, and more compact
+// than either: room's being cleared here for Main/Alt HEXA Stat lines to eventually sit
+// alongside this same panel.
+function OverviewHexaSkillsSection({ theme, hexaClassDef, hexaLevels }: {
+  theme: Theme; hexaClassDef: ReturnType<typeof resolveHexaClassDef>; hexaLevels: HexaSkillLevels;
+}) {
+  const skillNodes: HexaSkillDef[] = [hexaClassDef?.origin, hexaClassDef?.ascent].filter((s): s is HexaSkillDef => Boolean(s));
+  const skillLevels = [hexaLevels.origin ?? 0, hexaLevels.ascent ?? 0];
+  const masteryNodes = (hexaClassDef?.mastery ?? []).map(hexaMasteryNodeToSkillDef);
+  const boostNodes = hexaClassDef?.enhancement ?? [];
+
+  return (
+    <div>
+      <div style={overviewGroupHeaderStyle(theme)}>HEXA Skills</div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: "1.2rem" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <OverviewHexaTileGroup label="Skill" skills={skillNodes} levels={skillLevels} theme={theme} />
+          <OverviewHexaTileGroup label="Common" skills={COMMON_SKILLS} levels={hexaLevels.common ?? []} theme={theme} />
+        </div>
+        <div style={{ width: 1, background: theme.border }} />
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <OverviewHexaTileGroup label="Mastery" skills={masteryNodes} levels={hexaLevels.mastery ?? []} theme={theme} />
+          <OverviewHexaTileGroup label="Boost" skills={boostNodes} levels={hexaLevels.enhancement ?? []} theme={theme} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// A legacy character has no V Matrix/HEXA/Arcane ever, so gear IS effectively their whole
+// build -- shows the entire grid (COL6+COL7 armor, COL1+COL2 accessories), not just the
+// curated 7-piece armor set tried first. Weapon/Secondary/Emblem already have their own WSE
+// row up top, so CENTER_BOTTOM_SLOTS isn't repeated here.
+function OverviewGearSection({ theme, equipGrid }: { theme: Theme; equipGrid: SlotMap }) {
+  return (
+    <div>
+      <div style={overviewGroupHeaderStyle(theme)}>Gear</div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <div>
+          <div style={overviewSubLabelStyle(theme)}>Armor</div>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {[...COL6_SLOTS, ...COL7_SLOTS].map((slotKey) => (
+              <ReadOnlySlotTile key={slotKey} slotKey={slotKey} item={equipGrid[slotKey]} theme={theme} />
             ))}
           </div>
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 5, paddingTop: 30 }}>
-          <WseSlot label="Weapon" name={equipGrid?.weapon?.name} theme={theme} />
-          <WseSlot label="Secondary" name={equipGrid?.secondary?.name} theme={theme} />
-          <WseSlot label="Emblem" name={equipGrid?.emblem?.name} theme={theme} />
+        <div>
+          <div style={overviewSubLabelStyle(theme)}>Accessories</div>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {[...COL1_SLOTS, ...COL2_SLOTS].map((slotKey) => (
+              <ReadOnlySlotTile key={slotKey} slotKey={slotKey} item={equipGrid[slotKey]} theme={theme} />
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Bigger than the shared OVERVIEW_TILE_SIZE (48px) -- with only 3 tiles ever in this row
+// (vs. HEXA/V Matrix's much longer node lists), there's plenty of width to spare, and 48px
+// left this section looking noticeably sparser than the rest of the panel.
+const OVERVIEW_FAMILIAR_TILE_SIZE = 96;
+
+// No numeric level to badge-overlay here (a familiar's tier isn't a 1-30 progress number the
+// way HEXA/V Matrix nodes are), so the tier shows as the tile's own border color instead --
+// same FAMILIAR_TIER_COLORS the dedicated Familiars bookmark's card border already uses.
+function OverviewFamiliarTile({ slot, theme }: { slot: StoredFamiliarSlot; theme: Theme }) {
+  const filled = Boolean(slot.name);
+  const matchedEntry = FAMILIARS.find((f) => f.id === slot.familiarId);
+  const cardId = matchedEntry?.cardId ?? "";
+  const spriteMobId = matchedEntry?.spriteMobId ?? slot.mobId;
+  const tier = filled && slot.tier in FAMILIAR_TIER_COLORS ? (slot.tier as FamiliarTier) : null;
+  const displayName = slot.name.replace(/ Familiar$/i, "");
+  const familiarLines = [slot.line1, slot.line2].filter(Boolean);
+  // Name in its own bolder row, lines dimmed below -- all 3 rows read as the same weight
+  // otherwise, since hover-tip-bubble's own styling (0.75rem/700) applies uniformly to a
+  // plain string with no way to tell "this is the title" from "these are just its stats."
+  const tooltipLabel = filled ? (
+    <>
+      <div style={{ fontSize: "0.8rem", fontWeight: 800 }}>{displayName}</div>
+      {familiarLines.length > 0 && (
+        <div style={{ fontWeight: 500, opacity: 0.7, marginTop: 2 }}>
+          {familiarLines.map((line) => <div key={line}>{line}</div>)}
+        </div>
+      )}
+    </>
+  ) : "Empty";
+  return (
+    <HoverTooltip label={tooltipLabel} theme={theme}>
+      <div style={{
+        width: OVERVIEW_FAMILIAR_TILE_SIZE, height: OVERVIEW_FAMILIAR_TILE_SIZE, flexShrink: 0,
+        borderRadius: 8, border: `1px solid ${tier ? FAMILIAR_TIER_COLORS[tier].border : theme.border}`, background: theme.bg,
+        display: "flex", alignItems: "center", justifyContent: "center", opacity: filled ? 1 : 0.4,
+      }}>
+        {filled ? (
+          <FamiliarCardSprite mobId={spriteMobId} familiarId={slot.familiarId} cardId={cardId} size={OVERVIEW_FAMILIAR_TILE_SIZE - 16} theme={theme} />
+        ) : (
+          <span style={{ fontSize: 12, fontWeight: 800, color: theme.muted }}>?</span>
+        )}
+      </div>
+    </HoverTooltip>
+  );
+}
+
+function OverviewFamiliarsSection({ theme, character }: { theme: Theme; character: StoredCharacterRecord | null }) {
+  const data = character?.familiars;
+  const preset = data?.presets?.[data.activePreset];
+  const familiars = preset?.familiars ?? EMPTY_FAMILIAR_SLOTS;
+  return (
+    <div>
+      <div style={overviewGroupHeaderStyle(theme)}>Familiars</div>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        {familiars.map((slot, i) => (
+          // react-doctor-disable-next-line no-array-index-as-key
+          <OverviewFamiliarTile key={i} slot={slot} theme={theme} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Same AbilityGradeChip/IALineChip as AbilityView, but always reads the character's own
+// activePreset instead of offering a tab switcher -- mirrors OverviewHexaStatSection's own
+// "glance, not an editor" reasoning.
+function OverviewInnerAbilitySection({ theme, innerAbility }: { theme: Theme; innerAbility: StoredInnerAbility | undefined }) {
+  const preset = innerAbility?.presets?.[innerAbility?.activePreset ?? 0];
+  const grade = preset?.lines?.[0]?.tier ?? "";
+  return (
+    <div>
+      <div style={overviewGroupHeaderStyle(theme)}>Inner Ability</div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 6, maxWidth: 360 }}>
+        <AbilityGradeChip grade={grade} theme={theme} />
+        {[0, 1, 2].map((i) => (
+          <IALineChip key={i} line={preset?.lines?.[i] ?? { tier: "", value: "" }} grade={grade} theme={theme} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function OverviewBookmark({ model }: { model: PreviewPaneModel }) {
+  const { theme, profile } = model;
+  const character = profile.confirmedCharacter;
+  const equip = character?.equipment;
+  const equipGrid = equip?.presets?.[equip.activePreset] ?? equip?.presets?.[0];
+
+  const classId = character ? resolveClassId(character.jobName) : undefined;
+  const classData = classId ? CLASS_SKILL_DATA.find((c) => c.id === classId) : undefined;
+  const hexaClassDef = resolveHexaClassDef(classId);
+
+  const mounted = useSyncExternalStore(() => () => undefined, () => true, () => false);
+  const charName = character?.characterName;
+  const hexaLevels = useMemo(() => {
+    if (!mounted) return null;
+    const fromState = (character?.tools?.hexaSkills as { levels?: HexaSkillLevels } | undefined)?.levels;
+    if (fromState) return fromState;
+    return readHexaLevels(charName);
+  // react-doctor-disable-next-line exhaustive-deps -- deliberately depends on the narrowed `charName` primitive, not the whole `character` object, to avoid re-running when unrelated fields change
+  }, [mounted, charName, character?.tools]);
+  const hexaStatNodes = useMemo(() => {
+    if (!mounted) return null;
+    const fromState = (character?.tools?.hexaStat as { nodes?: HexaStatNode[] } | undefined)?.nodes;
+    if (fromState) return fromState;
+    return readHexaStatNodes(charName);
+  // react-doctor-disable-next-line exhaustive-deps -- same narrowed-dependency reasoning as hexaLevels above
+  }, [mounted, charName, character?.tools]);
+  const symbolLevels = useMemo(() => {
+    if (!mounted) return null;
+    const fromState = (character?.tools?.symbols as { symbols?: Record<string, SymbolState> } | undefined)?.symbols;
+    if (fromState) return fromState;
+    return readSymbolLevels(charName);
+  // react-doctor-disable-next-line exhaustive-deps -- same narrowed-dependency reasoning as hexaLevels above
+  }, [mounted, charName, character?.tools]);
+
+  // 3 tiers, mirroring the characters CLAUDE.md gating table exactly: 260+ non-legacy gets
+  // HEXA (the endgame default), 200-259 non-legacy has real V Matrix data worth showing
+  // instead of a blank notice, and the bottom tier splits again by legacy vs. not -- a legacy
+  // character's whole gear grid genuinely IS its whole build (no V Matrix/HEXA/Arcane ever,
+  // and a 2nd-line-legendary Inner Ability is rare enough on legacy classes that it's not
+  // worth a default slot), while a sub-200 non-legacy character is still actively leveling,
+  // so Familiars (no level gate, commonly touched well before 200) + Inner Ability read as
+  // more "in progress" than static gear there. Hyper Stat was considered for this tier too
+  // but has its own level gate at 140, reintroducing "gated content in the gated tier's default."
+  const hasHexa = isHexaMatrixAvailable(character);
+  const hasVMatrix = isVMatrixAvailable(character);
+  const legacy = character ? isLegacyClass(character.jobName) : false;
+  // Arcane only fills the 200-259 tier's Overview -- once a character is 260+, HEXA is the
+  // default and Arcane goes back to living on its own Gear bookmark tab like everything else.
+  const showArcane = !hasHexa && isArcaneEligible(character?.level, classData?.isLegacy);
+  const draftEquipGrid: SlotMap = equipGrid ? storedPresetToDraft(equipGrid) : {};
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 18, flex: 1 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16 }}>
+        <OverviewFigure label="Scouter" value="—" theme={theme} />
+        <div style={{ display: "flex", gap: 6 }}>
+          <WseSlot label="Weapon" item={equipGrid?.weapon} theme={theme} />
+          <WseSlot label="Secondary" item={equipGrid?.secondary} theme={theme} />
+          <WseSlot label="Emblem" item={equipGrid?.emblem} theme={theme} />
         </div>
       </div>
 
-      <p style={{ margin: 0, fontSize: 12, color: theme.muted, fontStyle: "italic" }}>
-        Flip to a bookmark on the right for the full details behind each of these numbers.
-      </p>
+      <OverviewKeyStatsSection theme={theme} character={character} classData={classData} />
+
+      {showArcane && <OverviewSymbolSection theme={theme} symbolLevels={symbolLevels} characterLevel={character?.level} />}
+
+      {hasHexa && (
+        <>
+          <OverviewHexaStatSection theme={theme} character={character} classData={classData} hexaStatNodes={hexaStatNodes} />
+          <OverviewHexaSkillsSection theme={theme} hexaClassDef={hexaClassDef} hexaLevels={hexaLevels ?? EMPTY_HEXA_LEVELS} />
+        </>
+      )}
+      {!hasHexa && hasVMatrix && <OverviewVMatrixSection theme={theme} character={character} />}
+      {!hasHexa && !hasVMatrix && legacy && <OverviewGearSection theme={theme} equipGrid={draftEquipGrid} />}
+      {!hasHexa && !hasVMatrix && !legacy && (
+        <>
+          <OverviewFamiliarsSection theme={theme} character={character} />
+          <OverviewInnerAbilitySection theme={theme} innerAbility={character?.stats?.innerAbility} />
+        </>
+      )}
     </div>
   );
 }
@@ -1936,12 +2359,13 @@ function BookmarkPageBody({
 }
 
 function BookmarkSpine({
-  theme, bookmarks, activeId, onSelect,
+  theme, bookmarks, activeId, onSelect, charName,
 }: {
   theme: Theme;
   bookmarks: BookmarkDef[];
   activeId: BookmarkId;
   onSelect: (id: BookmarkId) => void;
+  charName: string | undefined;
 }) {
   const tabRefs = useRef<Map<BookmarkId, HTMLButtonElement>>(new Map());
 
@@ -1996,6 +2420,15 @@ function BookmarkSpine({
         return (
           <div key={b.id} className="profile-bookmark-pinned-group">
             <div className="profile-bookmark-divider" />
+            <button
+              type="button"
+              className="profile-bookmark-tab tap-target-44"
+              onClick={() => exportCharacterJson(charName)}
+              style={{ background: "transparent", color: theme.muted, gap: 6 }}
+            >
+              <ExportTabIcon />
+              Export
+            </button>
             {tab}
           </div>
         );
@@ -2053,7 +2486,7 @@ export default function CharacterProfileOverviewScreen({
           <BookmarkPageBody model={model} actions={actions} active={active} filled={filled} ContentComponent={ContentComponent} onEdit={handleEdit} onEditStep={startOptionalFlowRemembered} />
         </div>
       </div>
-      <BookmarkSpine theme={theme} bookmarks={bookmarks} activeId={active.id} onSelect={setActiveId} />
+      <BookmarkSpine theme={theme} bookmarks={bookmarks} activeId={active.id} onSelect={setActiveId} charName={character?.characterName} />
     </div>
   );
 }

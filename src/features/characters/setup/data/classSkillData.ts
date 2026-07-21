@@ -741,48 +741,72 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
 
   // ── Legacy classes (no buff guide, shows all stat fields) ───────────────────
 
-  { id: "ancient_archer", nexonJobName: "Ancient Archer", buffSkills: [], requiredStats: [], isLegacy: true },
-  { id: "archer", nexonJobName: "Archer", buffSkills: [], requiredStats: [], isLegacy: true },
-  { id: "assassin", nexonJobName: "Assassin", buffSkills: [], requiredStats: [], isLegacy: true },
-  { id: "bandit", nexonJobName: "Bandit", buffSkills: [], requiredStats: [], isLegacy: true },
+  // requiredStats below are populated per classBranch.ts's own EQUIP_BRANCH mapping (already
+  // vetted against grandislibrary) for the branches that are internally stat-uniform
+  // (warrior/magician/bowman are the same main stat regardless of which sub-job), cross-
+  // checked against each branch's real 4th-job analog entry above (Hero/Bishop/Marksman) for
+  // the exact primary/secondary order. Thief and Pirate are NOT internally uniform, so those
+  // needed the real job-tree lineage, not just classBranch.ts's coarser 5-way bucket:
+  //   Thief: Rogue(1st) -> Assassin/Hermit -> Night Lord (claw, simple luk/dex) is a DIFFERENT
+  //   lineage from Bandit/Chief Bandit -> Shadower (dagger, tri-stat luk/dex/str) -- these were
+  //   all wrongly assigned the Night Lord shape on the first pass, since classBranch.ts groups
+  //   both lineages under one "thief" bucket for equip-filtering purposes only.
+  //   Pirate: Brawler/Marauder->Buccaneer (STR) and Gunslinger/Outlaw->Corsair (DEX) are
+  //   genuinely different primary stats with no shared lineage-wide default the way Rogue has
+  //   (LUK/DEX either way) -- Yuki confirmed dormant "Pirate"-jobName characters observed in
+  //   practice consistently land DEX/STR (Corsair), so that's what's assigned below.
+  // beginner/citizen/noblesse stay empty: no real job/branch to derive a stat from (Noblesse
+  // precedes Cygnus Knights' own 5-way branch split, which spans all 4 main stats with no
+  // overlap) -- Overview/Stats fall back to showing all 4 main stats for these.
+  // ancient_archer/soulchaser are Pathfinder's 2nd/3rd job (bowman), confirmed by Yuki.
+  { id: "ancient_archer", nexonJobName: "Ancient Archer", buffSkills: [], requiredStats: ["dex", "str", "attackPower"], isLegacy: true },
+  { id: "archer", nexonJobName: "Archer", buffSkills: [], requiredStats: ["dex", "str", "attackPower"], isLegacy: true },
+  { id: "assassin", nexonJobName: "Assassin", buffSkills: [], requiredStats: ["luk", "dex", "attackPower"], isLegacy: true },
+  // Bandit -> Chief Bandit -> Shadower lineage (dagger), NOT the Assassin/Hermit -> Night Lord
+  // lineage (claw) -- tri-stat like Shadower/Dual Blade/Cadena, not simple luk/dex.
+  { id: "bandit", nexonJobName: "Bandit", buffSkills: [], requiredStats: ["luk", "dex", "str", "attackPower"], isLegacy: true },
   { id: "beginner", nexonJobName: "Beginner", buffSkills: [], requiredStats: [], isLegacy: true },
-  { id: "berserker", nexonJobName: "Berserker", buffSkills: [], requiredStats: [], isLegacy: true },
-  { id: "blade_acolyte", nexonJobName: "Blade Acolyte", buffSkills: [], requiredStats: [], isLegacy: true },
-  { id: "blade_lord", nexonJobName: "Blade Lord", buffSkills: [], requiredStats: [], isLegacy: true },
-  { id: "blade_recruit", nexonJobName: "Blade Recruit", buffSkills: [], requiredStats: [], isLegacy: true },
-  { id: "blade_specialist", nexonJobName: "Blade Specialist", buffSkills: [], requiredStats: [], isLegacy: true },
-  { id: "brawler", nexonJobName: "Brawler", buffSkills: [], requiredStats: [], isLegacy: true },
+  { id: "berserker", nexonJobName: "Berserker", buffSkills: [], requiredStats: ["str", "dex", "attackPower"], isLegacy: true },
+  { id: "blade_acolyte", nexonJobName: "Blade Acolyte", buffSkills: [], requiredStats: ["luk", "dex", "str", "attackPower"], isLegacy: true },
+  { id: "blade_lord", nexonJobName: "Blade Lord", buffSkills: [], requiredStats: ["luk", "dex", "str", "attackPower"], isLegacy: true },
+  { id: "blade_recruit", nexonJobName: "Blade Recruit", buffSkills: [], requiredStats: ["luk", "dex", "str", "attackPower"], isLegacy: true },
+  { id: "blade_specialist", nexonJobName: "Blade Specialist", buffSkills: [], requiredStats: ["luk", "dex", "str", "attackPower"], isLegacy: true },
+  { id: "brawler", nexonJobName: "Brawler", buffSkills: [], requiredStats: ["str", "dex", "attackPower"], isLegacy: true },
   // id kept as "cannon_master" for classBranch.ts continuity, but this is the OLD, pre-revamp jobName.
   // The modern, currently-played Cannoneer's live jobName is actually "Cannon Master" (see the "cannoneer" entry above).
-  { id: "cannon_master", nexonJobName: "Cannoneer", buffSkills: [], requiredStats: [], isLegacy: true },
-  { id: "cannon_trooper", nexonJobName: "Cannon Trooper", buffSkills: [], requiredStats: [], isLegacy: true },
-  { id: "chief_bandit", nexonJobName: "Chief Bandit", buffSkills: [], requiredStats: [], isLegacy: true },
+  { id: "cannon_master", nexonJobName: "Cannoneer", buffSkills: [], requiredStats: ["str", "dex", "attackPower"], isLegacy: true },
+  { id: "cannon_trooper", nexonJobName: "Cannon Trooper", buffSkills: [], requiredStats: ["str", "dex", "attackPower"], isLegacy: true },
+  // Same Shadower lineage as Bandit above -- tri-stat, not simple luk/dex.
+  { id: "chief_bandit", nexonJobName: "Chief Bandit", buffSkills: [], requiredStats: ["luk", "dex", "str", "attackPower"], isLegacy: true },
   { id: "citizen", nexonJobName: "Citizen", buffSkills: [], requiredStats: [], isLegacy: true },
-  { id: "cleric", nexonJobName: "Cleric", buffSkills: [], requiredStats: [], isLegacy: true },
-  { id: "crossbowman", nexonJobName: "Crossbowman", buffSkills: [], requiredStats: [], isLegacy: true },
-  { id: "crusader", nexonJobName: "Crusader", buffSkills: [], requiredStats: [], isLegacy: true },
-  { id: "fighter", nexonJobName: "Fighter", buffSkills: [], requiredStats: [], isLegacy: true },
-  { id: "gunslinger", nexonJobName: "Gunslinger", buffSkills: [], requiredStats: [], isLegacy: true },
-  { id: "hermit", nexonJobName: "Hermit", buffSkills: [], requiredStats: [], isLegacy: true },
-  { id: "hunter", nexonJobName: "Hunter", buffSkills: [], requiredStats: [], isLegacy: true },
-  { id: "mage_f_p", nexonJobName: "Mage (F/P)", displayName: "Mage (Fire/Poison)", buffSkills: [], requiredStats: [], isLegacy: true },
-  { id: "mage_i_l", nexonJobName: "Mage (I/L)", displayName: "Mage (Ice/Lightning)", buffSkills: [], requiredStats: [], isLegacy: true },
-  { id: "magician", nexonJobName: "Magician", buffSkills: [], requiredStats: [], isLegacy: true },
-  { id: "marauder", nexonJobName: "Marauder", buffSkills: [], requiredStats: [], isLegacy: true },
+  { id: "cleric", nexonJobName: "Cleric", buffSkills: [], requiredStats: ["int", "luk", "magicAtt"], isLegacy: true },
+  { id: "crossbowman", nexonJobName: "Crossbowman", buffSkills: [], requiredStats: ["dex", "str", "attackPower"], isLegacy: true },
+  { id: "crusader", nexonJobName: "Crusader", buffSkills: [], requiredStats: ["str", "dex", "attackPower"], isLegacy: true },
+  { id: "fighter", nexonJobName: "Fighter", buffSkills: [], requiredStats: ["str", "dex", "attackPower"], isLegacy: true },
+  { id: "gunslinger", nexonJobName: "Gunslinger", buffSkills: [], requiredStats: ["dex", "str", "attackPower"], isLegacy: true },
+  { id: "hermit", nexonJobName: "Hermit", buffSkills: [], requiredStats: ["luk", "dex", "attackPower"], isLegacy: true },
+  { id: "hunter", nexonJobName: "Hunter", buffSkills: [], requiredStats: ["dex", "str", "attackPower"], isLegacy: true },
+  { id: "mage_f_p", nexonJobName: "Mage (F/P)", displayName: "Mage (Fire/Poison)", buffSkills: [], requiredStats: ["int", "luk", "magicAtt"], isLegacy: true },
+  { id: "mage_i_l", nexonJobName: "Mage (I/L)", displayName: "Mage (Ice/Lightning)", buffSkills: [], requiredStats: ["int", "luk", "magicAtt"], isLegacy: true },
+  { id: "magician", nexonJobName: "Magician", buffSkills: [], requiredStats: ["int", "luk", "magicAtt"], isLegacy: true },
+  { id: "marauder", nexonJobName: "Marauder", buffSkills: [], requiredStats: ["str", "dex", "attackPower"], isLegacy: true },
   { id: "noblesse", nexonJobName: "Noblesse", buffSkills: [], requiredStats: [], isLegacy: true },
-  { id: "outlaw", nexonJobName: "Outlaw", buffSkills: [], requiredStats: [], isLegacy: true },
-  { id: "page", nexonJobName: "Page", buffSkills: [], requiredStats: [], isLegacy: true },
-  { id: "pirate", nexonJobName: "Pirate", buffSkills: [], requiredStats: [], isLegacy: true },
-  { id: "priest", nexonJobName: "Priest", buffSkills: [], requiredStats: [], isLegacy: true },
-  { id: "ranger", nexonJobName: "Ranger", buffSkills: [], requiredStats: [], isLegacy: true },
-  { id: "rogue", nexonJobName: "Rogue", buffSkills: [], requiredStats: [], isLegacy: true },
-  { id: "sniper", nexonJobName: "Sniper", buffSkills: [], requiredStats: [], isLegacy: true },
-  { id: "soulchaser", nexonJobName: "Soulchaser", buffSkills: [], requiredStats: [], isLegacy: true },
-  { id: "spearman", nexonJobName: "Spearman", buffSkills: [], requiredStats: [], isLegacy: true },
-  { id: "swordman", nexonJobName: "Swordman", buffSkills: [], requiredStats: [], isLegacy: true },
-  { id: "white_knight", nexonJobName: "White Knight", buffSkills: [], requiredStats: [], isLegacy: true },
-  { id: "wizard_f_p", nexonJobName: "Wizard (F/P)", displayName: "Wizard (Fire/Poison)", buffSkills: [], requiredStats: [], isLegacy: true },
-  { id: "wizard_i_l", nexonJobName: "Wizard (I/L)", displayName: "Wizard (Ice/Lightning)", buffSkills: [], requiredStats: [], isLegacy: true },
+  { id: "outlaw", nexonJobName: "Outlaw", buffSkills: [], requiredStats: ["dex", "str", "attackPower"], isLegacy: true },
+  { id: "page", nexonJobName: "Page", buffSkills: [], requiredStats: ["str", "dex", "attackPower"], isLegacy: true },
+  // Yuki: dormant "Pirate"-jobName characters observed in practice are consistently
+  // DEX/STR (Corsair lineage), not the STR/DEX Buccaneer side.
+  { id: "pirate", nexonJobName: "Pirate", buffSkills: [], requiredStats: ["dex", "str", "attackPower"], isLegacy: true },
+  { id: "priest", nexonJobName: "Priest", buffSkills: [], requiredStats: ["int", "luk", "magicAtt"], isLegacy: true },
+  { id: "ranger", nexonJobName: "Ranger", buffSkills: [], requiredStats: ["dex", "str", "attackPower"], isLegacy: true },
+  { id: "rogue", nexonJobName: "Rogue", buffSkills: [], requiredStats: ["luk", "dex", "attackPower"], isLegacy: true },
+  { id: "sniper", nexonJobName: "Sniper", buffSkills: [], requiredStats: ["dex", "str", "attackPower"], isLegacy: true },
+  // Pathfinder's 3rd job (bowman), same lineage as ancient_archer below it.
+  { id: "soulchaser", nexonJobName: "Soulchaser", buffSkills: [], requiredStats: ["dex", "str", "attackPower"], isLegacy: true },
+  { id: "spearman", nexonJobName: "Spearman", buffSkills: [], requiredStats: ["str", "dex", "attackPower"], isLegacy: true },
+  { id: "swordman", nexonJobName: "Swordman", buffSkills: [], requiredStats: ["str", "dex", "attackPower"], isLegacy: true },
+  { id: "white_knight", nexonJobName: "White Knight", buffSkills: [], requiredStats: ["str", "dex", "attackPower"], isLegacy: true },
+  { id: "wizard_f_p", nexonJobName: "Wizard (F/P)", displayName: "Wizard (Fire/Poison)", buffSkills: [], requiredStats: ["int", "luk", "magicAtt"], isLegacy: true },
+  { id: "wizard_i_l", nexonJobName: "Wizard (I/L)", displayName: "Wizard (Ice/Lightning)", buffSkills: [], requiredStats: ["int", "luk", "magicAtt"], isLegacy: true },
 ];
 
 export function getClassDataByNexonJobName(jobName: string): ClassSkillData | undefined {

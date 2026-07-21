@@ -55,6 +55,8 @@ const CLASS_BRANCHES: Record<string, EquipBranch[]> = {
   // legacy bowman advancements
   archer: ["bowman"], hunter: ["bowman"], ranger: ["bowman"],
   crossbowman: ["bowman"], sniper: ["bowman"], ancient_archer: ["bowman"],
+  // Pathfinder's own 2nd/3rd job legacy names (ancient_archer above, soulchaser here)
+  soulchaser: ["bowman"],
 
   // ── Thief ──
   night_lord: ["thief"], shadower: ["thief"], blade_master: ["thief"],
@@ -82,7 +84,7 @@ const CLASS_BRANCHES: Record<string, EquipBranch[]> = {
 
 /**
  * reqJob bitmask a class can equip. 0 = unknown/unfiltered (show everything):
- * beginner/citizen/soulchaser, and any class not mapped above.
+ * beginner/citizen, and any class not mapped above.
  */
 export function branchMaskForClass(classId: string | undefined): number {
   if (!classId) return 0;

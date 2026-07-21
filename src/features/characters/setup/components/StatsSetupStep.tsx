@@ -119,6 +119,19 @@ function clampIgnoreElementalResist(raw: string): string {
   return sanitized;
 }
 
+// Ignore DEF's own compounding formula (100 - 100×product of each source's remainder)
+// mathematically approaches but never exceeds 100% from real sources — and the since-removed
+// "Quick Reload" node once granted a flat, confirmed 100% Ignore DEF for its duration, so 100
+// is a real, stable ceiling worth hard-clamping the same way as Ignore Elemental Resistance.
+const IGNORE_DEFENSE_MAX = 100;
+
+function clampIgnoreDefense(raw: string): string {
+  const sanitized = sanitizeDecimalInput(raw);
+  if (sanitized === "" || sanitized.endsWith(".")) return sanitized;
+  if (Number(sanitized) > IGNORE_DEFENSE_MAX) return String(IGNORE_DEFENSE_MAX);
+  return sanitized;
+}
+
 interface ConfinableFrameProps {
   substepIndex: number;
   substepCount: number;
@@ -567,6 +580,7 @@ function CombatStatCell({
           data-flagged-field={requireFilled && !val.trim() ? "true" : undefined}
           onChange={(e) => {
             if (id === "ignoreElementalResistance") onUpdate(id, clampIgnoreElementalResist(e.target.value));
+            else if (id === "ignoreDefense") onUpdate(id, clampIgnoreDefense(e.target.value));
             else if (allowsDecimal) onUpdate(id, sanitizeDecimalInput(e.target.value));
             else onUpdate(id, sanitizeDigitsInput(e.target.value));
           }}
