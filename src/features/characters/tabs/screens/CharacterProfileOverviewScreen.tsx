@@ -1,5 +1,6 @@
 import katex from "katex";
 import "katex/dist/katex.min.css";
+import Link from "next/link";
 import { Fragment, useEffect, useMemo, useRef, useState, useSyncExternalStore, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
 import type { SetupFlowId } from "../../setup/flows";
 import type { SetupStepId } from "../../setup/steps";
@@ -297,17 +298,27 @@ function SummaryRow({ label, value, theme, locked }: { label: string; value: str
   );
 }
 
+function wseSlotButtonStyle(theme: Theme, filled: boolean): CSSProperties {
+  return {
+    width: 44, height: 44, borderRadius: 8, border: `1px solid ${theme.border}`, background: theme.bg,
+    display: "flex", alignItems: "center", justifyContent: "center", opacity: filled ? 1 : 0.4, flexShrink: 0,
+    padding: 0, font: "inherit", cursor: "pointer",
+  };
+}
+
 // Compact icon-only slot (name + status live in the tooltip) so Weapon/Secondary/Emblem
 // fit in a tight row instead of the old bordered label+name boxes. An empty slot shows the
 // label's own first letter instead of a contentless placeholder square -- 3 identical grey
 // boxes side by side gave no clue what they even were without hovering each one.
-function WseSlot({ label, item, theme }: { label: string; item: StoredEquipmentItem | null | undefined; theme: Theme }) {
+function WseSlot({ label, item, theme, onNavigate }: {
+  label: string; item: StoredEquipmentItem | null | undefined; theme: Theme; onNavigate: () => void;
+}) {
   const name = item?.name;
   return (
     <HoverTooltip label={name ? `${label}: ${name}` : `${label}: not set up`} theme={theme}>
-      <div style={{ width: 44, height: 44, borderRadius: 8, border: `1px solid ${theme.border}`, background: theme.bg, display: "flex", alignItems: "center", justifyContent: "center", opacity: item ? 1 : 0.4, flexShrink: 0 }}>
+      <button type="button" onClick={onNavigate} style={wseSlotButtonStyle(theme, Boolean(item))}>
         {item?.id ? <ItemIcon id={item.id} size={36} /> : <span style={{ fontSize: 12, fontWeight: 800, color: theme.muted }}>{label[0]}</span>}
-      </div>
+      </button>
     </HoverTooltip>
   );
 }
@@ -370,8 +381,77 @@ function OverviewFigure({ label, value, theme }: { label: string; value: string;
   );
 }
 
-function overviewGroupHeaderStyle(theme: Theme): CSSProperties {
-  return { fontSize: 12, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.08em", color: theme.muted, paddingBottom: 8, marginBottom: 12, borderBottom: `1px solid ${theme.border}` };
+function overviewGroupHeaderRowStyle(theme: Theme): CSSProperties {
+  return { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, paddingBottom: 8, marginBottom: 12, borderBottom: `1px solid ${theme.border}` };
+}
+
+// Matching BookmarkPageHeader's plain-body h3 just traded one collision (vs. the small-caps
+// sub-labels below it) for another (vs. HexaStatLine's own 13px/700/theme.text stat values,
+// which read at nearly the same weight in the same body font). Switching to the app's
+// distinct heading typeface (--font-heading, Fredoka vs. the body's Nunito -- see LegionPanel/
+// BossCard/CharacterDirectoryScreen's own h2/h3s) separates "this is a section title" from
+// "this is data" by typeface, not just size, so it no longer competes with either neighbor.
+function overviewGroupHeaderButtonStyle(theme: Theme): CSSProperties {
+  return {
+    display: "flex", alignItems: "center", gap: 4,
+    background: "none", border: "none", padding: 0, font: "inherit", textAlign: "inherit", cursor: "pointer",
+    fontFamily: "var(--font-heading)", fontSize: "1.05rem", fontWeight: 700, color: theme.text,
+  };
+}
+
+function overviewToolLinkStyle(theme: Theme): CSSProperties {
+  return { display: "flex", alignItems: "center", justifyContent: "center", width: 20, height: 20, flexShrink: 0, color: theme.muted };
+}
+
+function OverviewToolLinkIcon() {
+  return (
+    <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+      <polyline points="15 3 21 3 21 9" />
+      <line x1="10" y1="14" x2="21" y2="3" />
+    </svg>
+  );
+}
+
+// Shared by every Overview section header that also links out to a standalone calculator
+// tool -- the tools read the character back via their existing `?character=` convention
+// (useApplyCharacterQueryParam), so this just needs to build a matching URL.
+function overviewToolHref(base: string, charName: string | undefined): string | undefined {
+  return charName ? `${base}?character=${encodeURIComponent(charName)}` : undefined;
+}
+
+// Every Overview section header doubles as a link to the matching profile bookmark (a
+// same-page tab switch, so it's always the primary click target) — bookmarkLabel names
+// that target's real page label (e.g. "Equipment", "HEXA Matrix") for the hover tooltip,
+// since the section label shown here doesn't always match 1:1 (Gear/Arcane Symbols both
+// land on the Equipment bookmark). Sections that also have a standalone tool covering the
+// same data (currently just HEXA Skills and Arcane Symbols; HEXA Stat has no tool of its
+// own yet, hexa-skills only tracks Skill progress) get a second, visually distinct
+// icon-button link to that tool, since one click target can't mean two destinations.
+// toolHref carries the character along via the tools' shared `?character=` convention
+// (useApplyCharacterQueryParam) so the tool opens pre-loaded. toolLabel is the tool's real
+// name (per its /tools listing card, e.g. "HEXA Skill Tracker") rather than the section
+// label, since they don't always match either.
+function OverviewGroupHeader({ label, theme, onNavigate, bookmarkLabel, toolHref, toolLabel }: {
+  label: string; theme: Theme; onNavigate: () => void; bookmarkLabel: string; toolHref?: string; toolLabel?: string;
+}) {
+  return (
+    <div style={overviewGroupHeaderRowStyle(theme)}>
+      <HoverTooltip label={`View in ${bookmarkLabel} bookmark`} theme={theme}>
+        <button type="button" onClick={onNavigate} style={overviewGroupHeaderButtonStyle(theme)}>
+          {label}
+          <span aria-hidden="true" style={{ fontFamily: "var(--font-body)", fontSize: 17, fontWeight: 700, lineHeight: 1 }}>›</span>
+        </button>
+      </HoverTooltip>
+      {toolHref && (
+        <HoverTooltip label={`Open in ${toolLabel ?? label}`} theme={theme}>
+          <Link href={toolHref} aria-label={`Open in ${toolLabel ?? label}`} style={overviewToolLinkStyle(theme)}>
+            <OverviewToolLinkIcon />
+          </Link>
+        </HoverTooltip>
+      )}
+    </div>
+  );
 }
 
 function overviewSubLabelStyle(theme: Theme): CSSProperties {
@@ -405,7 +485,10 @@ const ALL_MAIN_STAT_IDS: RawStatId[] = ["str", "dex", "int", "luk"];
 
 // The most-glanced-at stats: every main stat total the class actually uses, plus the 3 big
 // damage-multiplier percentages. Shown regardless of HEXA eligibility -- unlike the sections
-// below, these don't depend on 6th job at all.
+// below, these don't depend on 6th job at all. Deliberately NOT a link to the Stats bookmark
+// like the other Overview sections -- these numbers are exactly the kind of thing someone
+// wants to double-click/drag-select and paste elsewhere (e.g. to a friend), and wrapping
+// them in a clickable button would fire navigation on that same click instead.
 function OverviewKeyStatsSection({ theme, character, classData }: {
   theme: Theme; character: StoredCharacterRecord | null; classData: ClassSkillData | undefined;
 }) {
@@ -436,8 +519,9 @@ function OverviewKeyStatsSection({ theme, character, classData }: {
 // StatBlock panel wrapping, no preset toggle) to match the plainer "6th job" section look
 // Juno's mockup uses -- always reads the node's own activePreset rather than letting the
 // user switch, since Overview is meant to be a glance, not an editor.
-function OverviewHexaStatSection({ theme, character, classData, hexaStatNodes }: {
+function OverviewHexaStatSection({ theme, character, classData, hexaStatNodes, onNavigateToBookmark }: {
   theme: Theme; character: StoredCharacterRecord | null; classData: ClassSkillData | undefined; hexaStatNodes: HexaStatNode[] | null;
+  onNavigateToBookmark: (id: BookmarkId, subView?: string) => void;
 }) {
   const level = character?.level ?? 0;
   const unlocked = HEXA_STAT_UNLOCK_LEVELS.map((min) => level >= min);
@@ -451,7 +535,7 @@ function OverviewHexaStatSection({ theme, character, classData, hexaStatNodes }:
 
   return (
     <div>
-      <div style={overviewGroupHeaderStyle(theme)}>HEXA Stat</div>
+      <OverviewGroupHeader label="HEXA Stat" theme={theme} onNavigate={() => onNavigateToBookmark("hexa_matrix", "stat")} bookmarkLabel="HEXA" />
       <div style={{ display: "flex", gap: "0.4rem", marginBottom: 14 }}>
         {HEXA_STAT_NODE_LABELS.map((label, i) => unlocked[i] && (
           <button key={label} type="button" className="tap-target-44" onClick={() => setActiveSlot(i)}
@@ -565,7 +649,9 @@ function OverviewVMatrixTileGroup({ label, nodes, levels, theme }: {
 // under-200/legacy, which have nothing here) but aren't 260 yet, so this fills the same slot
 // OverviewHexaStatSection/OverviewHexaSkillsSection occupy for a 260+ character, instead of
 // showing a blank "Not Available" notice for a whole 60-level range that has real data.
-function OverviewVMatrixSection({ theme, character }: { theme: Theme; character: StoredCharacterRecord | null }) {
+function OverviewVMatrixSection({ theme, character, onNavigateToBookmark }: {
+  theme: Theme; character: StoredCharacterRecord | null; onNavigateToBookmark: (id: BookmarkId, subView?: string) => void;
+}) {
   const classId = character ? getClassDataByNexonJobName(character.jobName)?.id : undefined;
   const { catalog, loadFailed } = useVMatrixCatalog(classId);
   const levels = character?.vMatrix?.levels ?? {};
@@ -577,7 +663,7 @@ function OverviewVMatrixSection({ theme, character }: { theme: Theme; character:
 
   return (
     <div>
-      <div style={overviewGroupHeaderStyle(theme)}>V Matrix</div>
+      <OverviewGroupHeader label="V Matrix" theme={theme} onNavigate={() => onNavigateToBookmark("v_matrix")} bookmarkLabel="V Matrix" />
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         <OverviewVMatrixTileGroup label="Job" nodes={catalog.job} levels={levels} theme={theme} />
         <OverviewVMatrixTileGroup label="Boost" nodes={catalog.boost} levels={levels} theme={theme} />
@@ -600,12 +686,20 @@ function OverviewSymbolTile({ area, level, locked, theme }: { area: SymbolArea; 
   return <OverviewLevelTile icon={<ItemIcon id={area.itemId} size={OVERVIEW_TILE_SIZE - 10} />} name={name} level={level} theme={theme} />;
 }
 
-function OverviewSymbolSection({ theme, symbolLevels, characterLevel }: {
-  theme: Theme; symbolLevels: Record<string, SymbolState> | null; characterLevel: number | undefined;
+function OverviewSymbolSection({ theme, symbolLevels, characterLevel, charName, onNavigateToBookmark }: {
+  theme: Theme; symbolLevels: Record<string, SymbolState> | null; characterLevel: number | undefined; charName: string | undefined;
+  onNavigateToBookmark: (id: BookmarkId, subView?: string) => void;
 }) {
   return (
     <div>
-      <div style={overviewGroupHeaderStyle(theme)}>Arcane Symbols</div>
+      <OverviewGroupHeader
+        label="Arcane Symbols"
+        theme={theme}
+        onNavigate={() => onNavigateToBookmark("equipment", "titles")}
+        bookmarkLabel="Gear"
+        toolHref={overviewToolHref("/tools/symbols", charName)}
+        toolLabel="Symbol Tracker"
+      />
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
         {ARCANE_AREAS.map((area) => {
           const locked = characterLevel !== undefined && characterLevel < area.requiredLevel;
@@ -620,8 +714,9 @@ function OverviewSymbolSection({ theme, symbolLevels, characterLevel }: {
 // closer to an earlier layout pass than the flat chip rows this replaces, and more compact
 // than either: room's being cleared here for Main/Alt HEXA Stat lines to eventually sit
 // alongside this same panel.
-function OverviewHexaSkillsSection({ theme, hexaClassDef, hexaLevels }: {
-  theme: Theme; hexaClassDef: ReturnType<typeof resolveHexaClassDef>; hexaLevels: HexaSkillLevels;
+function OverviewHexaSkillsSection({ theme, hexaClassDef, hexaLevels, charName, onNavigateToBookmark }: {
+  theme: Theme; hexaClassDef: ReturnType<typeof resolveHexaClassDef>; hexaLevels: HexaSkillLevels; charName: string | undefined;
+  onNavigateToBookmark: (id: BookmarkId, subView?: string) => void;
 }) {
   const skillNodes: HexaSkillDef[] = [hexaClassDef?.origin, hexaClassDef?.ascent].filter((s): s is HexaSkillDef => Boolean(s));
   const skillLevels = [hexaLevels.origin ?? 0, hexaLevels.ascent ?? 0];
@@ -630,7 +725,14 @@ function OverviewHexaSkillsSection({ theme, hexaClassDef, hexaLevels }: {
 
   return (
     <div>
-      <div style={overviewGroupHeaderStyle(theme)}>HEXA Skills</div>
+      <OverviewGroupHeader
+        label="HEXA Skills"
+        theme={theme}
+        onNavigate={() => onNavigateToBookmark("hexa_matrix", "skills")}
+        bookmarkLabel="HEXA"
+        toolHref={overviewToolHref("/tools/hexa-skills", charName)}
+        toolLabel="HEXA Skill Tracker"
+      />
       <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: "1.2rem" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <OverviewHexaTileGroup label="Skill" skills={skillNodes} levels={skillLevels} theme={theme} />
@@ -650,10 +752,12 @@ function OverviewHexaSkillsSection({ theme, hexaClassDef, hexaLevels }: {
 // build -- shows the entire grid (COL6+COL7 armor, COL1+COL2 accessories), not just the
 // curated 7-piece armor set tried first. Weapon/Secondary/Emblem already have their own WSE
 // row up top, so CENTER_BOTTOM_SLOTS isn't repeated here.
-function OverviewGearSection({ theme, equipGrid }: { theme: Theme; equipGrid: SlotMap }) {
+function OverviewGearSection({ theme, equipGrid, onNavigateToBookmark }: {
+  theme: Theme; equipGrid: SlotMap; onNavigateToBookmark: (id: BookmarkId, subView?: string) => void;
+}) {
   return (
     <div>
-      <div style={overviewGroupHeaderStyle(theme)}>Gear</div>
+      <OverviewGroupHeader label="Gear" theme={theme} onNavigate={() => onNavigateToBookmark("equipment", "gear")} bookmarkLabel="Gear" />
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         <div>
           <div style={overviewSubLabelStyle(theme)}>Armor</div>
@@ -722,13 +826,15 @@ function OverviewFamiliarTile({ slot, theme }: { slot: StoredFamiliarSlot; theme
   );
 }
 
-function OverviewFamiliarsSection({ theme, character }: { theme: Theme; character: StoredCharacterRecord | null }) {
+function OverviewFamiliarsSection({ theme, character, onNavigateToBookmark }: {
+  theme: Theme; character: StoredCharacterRecord | null; onNavigateToBookmark: (id: BookmarkId, subView?: string) => void;
+}) {
   const data = character?.familiars;
   const preset = data?.presets?.[data.activePreset];
   const familiars = preset?.familiars ?? EMPTY_FAMILIAR_SLOTS;
   return (
     <div>
-      <div style={overviewGroupHeaderStyle(theme)}>Familiars</div>
+      <OverviewGroupHeader label="Familiars" theme={theme} onNavigate={() => onNavigateToBookmark("familiars")} bookmarkLabel="Familiars" />
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
         {familiars.map((slot, i) => (
           // react-doctor-disable-next-line no-array-index-as-key
@@ -742,12 +848,14 @@ function OverviewFamiliarsSection({ theme, character }: { theme: Theme; characte
 // Same AbilityGradeChip/IALineChip as AbilityView, but always reads the character's own
 // activePreset instead of offering a tab switcher -- mirrors OverviewHexaStatSection's own
 // "glance, not an editor" reasoning.
-function OverviewInnerAbilitySection({ theme, innerAbility }: { theme: Theme; innerAbility: StoredInnerAbility | undefined }) {
+function OverviewInnerAbilitySection({ theme, innerAbility, onNavigateToBookmark }: {
+  theme: Theme; innerAbility: StoredInnerAbility | undefined; onNavigateToBookmark: (id: BookmarkId, subView?: string) => void;
+}) {
   const preset = innerAbility?.presets?.[innerAbility?.activePreset ?? 0];
   const grade = preset?.lines?.[0]?.tier ?? "";
   return (
     <div>
-      <div style={overviewGroupHeaderStyle(theme)}>Inner Ability</div>
+      <OverviewGroupHeader label="Inner Ability" theme={theme} onNavigate={() => onNavigateToBookmark("stats", "ability")} bookmarkLabel="Stats" />
       <div style={{ display: "flex", flexDirection: "column", gap: 6, maxWidth: 360 }}>
         <AbilityGradeChip grade={grade} theme={theme} />
         {[0, 1, 2].map((i) => (
@@ -758,7 +866,9 @@ function OverviewInnerAbilitySection({ theme, innerAbility }: { theme: Theme; in
   );
 }
 
-function OverviewBookmark({ model }: { model: PreviewPaneModel }) {
+function OverviewBookmark({ model, onNavigateToBookmark, onNavigateToGearSlot }: {
+  model: PreviewPaneModel; onNavigateToBookmark: (id: BookmarkId, subView?: string) => void; onNavigateToGearSlot: (slotKey: SlotKey) => void;
+}) {
   const { theme, profile } = model;
   const character = profile.confirmedCharacter;
   const equip = character?.equipment;
@@ -814,28 +924,36 @@ function OverviewBookmark({ model }: { model: PreviewPaneModel }) {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16 }}>
         <OverviewFigure label="Scouter" value="—" theme={theme} />
         <div style={{ display: "flex", gap: 6 }}>
-          <WseSlot label="Weapon" item={equipGrid?.weapon} theme={theme} />
-          <WseSlot label="Secondary" item={equipGrid?.secondary} theme={theme} />
-          <WseSlot label="Emblem" item={equipGrid?.emblem} theme={theme} />
+          <WseSlot label="Weapon" item={equipGrid?.weapon} theme={theme} onNavigate={() => onNavigateToGearSlot("weapon")} />
+          <WseSlot label="Secondary" item={equipGrid?.secondary} theme={theme} onNavigate={() => onNavigateToGearSlot("secondary")} />
+          <WseSlot label="Emblem" item={equipGrid?.emblem} theme={theme} onNavigate={() => onNavigateToGearSlot("emblem")} />
         </div>
       </div>
 
       <OverviewKeyStatsSection theme={theme} character={character} classData={classData} />
 
-      {showArcane && <OverviewSymbolSection theme={theme} symbolLevels={symbolLevels} characterLevel={character?.level} />}
+      {showArcane && (
+        <OverviewSymbolSection
+          theme={theme}
+          symbolLevels={symbolLevels}
+          characterLevel={character?.level}
+          charName={charName}
+          onNavigateToBookmark={onNavigateToBookmark}
+        />
+      )}
 
       {hasHexa && (
         <>
-          <OverviewHexaStatSection theme={theme} character={character} classData={classData} hexaStatNodes={hexaStatNodes} />
-          <OverviewHexaSkillsSection theme={theme} hexaClassDef={hexaClassDef} hexaLevels={hexaLevels ?? EMPTY_HEXA_LEVELS} />
+          <OverviewHexaStatSection theme={theme} character={character} classData={classData} hexaStatNodes={hexaStatNodes} onNavigateToBookmark={onNavigateToBookmark} />
+          <OverviewHexaSkillsSection theme={theme} hexaClassDef={hexaClassDef} hexaLevels={hexaLevels ?? EMPTY_HEXA_LEVELS} charName={charName} onNavigateToBookmark={onNavigateToBookmark} />
         </>
       )}
-      {!hasHexa && hasVMatrix && <OverviewVMatrixSection theme={theme} character={character} />}
-      {!hasHexa && !hasVMatrix && legacy && <OverviewGearSection theme={theme} equipGrid={draftEquipGrid} />}
+      {!hasHexa && hasVMatrix && <OverviewVMatrixSection theme={theme} character={character} onNavigateToBookmark={onNavigateToBookmark} />}
+      {!hasHexa && !hasVMatrix && legacy && <OverviewGearSection theme={theme} equipGrid={draftEquipGrid} onNavigateToBookmark={onNavigateToBookmark} />}
       {!hasHexa && !hasVMatrix && !legacy && (
         <>
-          <OverviewFamiliarsSection theme={theme} character={character} />
-          <OverviewInnerAbilitySection theme={theme} innerAbility={character?.stats?.innerAbility} />
+          <OverviewFamiliarsSection theme={theme} character={character} onNavigateToBookmark={onNavigateToBookmark} />
+          <OverviewInnerAbilitySection theme={theme} innerAbility={character?.stats?.innerAbility} onNavigateToBookmark={onNavigateToBookmark} />
         </>
       )}
     </div>
@@ -968,7 +1086,6 @@ function formulaHtml(tex: string): string {
 }
 
 function Formula({ tex }: { tex: string }) {
-  // eslint-disable-next-line react/no-danger -- KaTeX's own static-HTML output, not user input
   return <div style={formulaHtmlStyle} dangerouslySetInnerHTML={{ __html: formulaHtml(tex) }} />;
 }
 
@@ -1564,16 +1681,45 @@ function PetsView({ theme, equip }: { theme: Theme; equip: StoredCharacterEquipm
 }
 
 function EquipmentBookmark({
-  theme, character, view, onViewChange, onSetActivePreset,
+  theme, character, view, onViewChange, onSetActivePreset, highlightSlotKey, onHighlightSlotConsumed,
 }: {
   theme: Theme; character: StoredCharacterRecord | null; view: EquipmentBookmarkView; onViewChange: (v: EquipmentBookmarkView) => void;
   onSetActivePreset: (presetIndex: number) => void;
+  highlightSlotKey?: SlotKey | null;
+  onHighlightSlotConsumed?: () => void;
 }) {
   const equip = character?.equipment;
   const activePresetStored = equip?.activePreset ?? 0;
   const [presetIdx, setPresetIdx] = useState(activePresetStored);
   const [symbolTab, setSymbolTab] = useState<SymbolViewTab>("arcane");
-  const [mobileGridPage, setMobileGridPage] = useState(0);
+  // Starts on the Weapon page (index 1) when arriving to highlight a WSE slot (Overview's
+  // Weapon/Secondary/Emblem tiles all live in that page's CENTER_BOTTOM_SLOTS section) --
+  // otherwise a mobile visitor lands on Accessories (index 0) and the highlighted slot is
+  // never actually on screen.
+  const [mobileGridPage, setMobileGridPage] = useState(() => (highlightSlotKey && CENTER_BOTTOM_SLOTS.includes(highlightSlotKey) ? 1 : 0));
+  const gearGridRef = useRef<HTMLDivElement>(null);
+
+  // One-shot: scrolls to and flashes the slot Overview linked to, the same jump-highlight
+  // pulse the setup flow uses for a flagged/missing field (scrollToFlaggedField in
+  // QuestionControls.tsx) -- reused here via the same CSS class rather than that helper
+  // directly, since this needs to target one specific slot, not "the first flagged field."
+  // Mount-only: this component remounts fresh every time the profile switches into the
+  // Equipment bookmark (BookmarkPageBody's key={active.id} above), so a plain empty deps
+  // array is the right scope -- and onHighlightSlotConsumed clears the parent's state
+  // right after, so switching away and back later (a fresh mount with no slot to highlight)
+  // doesn't replay it.
+  // react-doctor-disable-next-line no-prop-callback-in-effect, no-pass-live-state-to-parent
+  useEffect(() => {
+    if (!highlightSlotKey) return;
+    const target = gearGridRef.current?.querySelector<HTMLElement>(`[data-slot-key="${highlightSlotKey}"]`);
+    if (target) {
+      target.scrollIntoView({ behavior: "smooth", block: "center" });
+      target.classList.add("jump-highlight");
+      window.setTimeout(() => target.classList.remove("jump-highlight"), 1100);
+    }
+    onHighlightSlotConsumed?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only, see comment above
+  }, []);
   // Titles/Pets stay mounted (visibility-toggled, not conditionally rendered) so the panel
   // auto-sizes to the tallest of the 3 sub-views instead of jumping height on switch — but
   // that means every icon across every sub-view loads immediately on arrival, even ones never
@@ -1613,7 +1759,7 @@ function EquipmentBookmark({
               in once the panel itself (not the viewport) narrows past ~520px, reusing the same
               .eq-* global classes so a narrow Gear bookmark gets the identical prev/next,
               one-section-at-a-time behavior instead of trying to cram all 3 columns in. */}
-          <div className="eq-substep-root">
+          <div className="eq-substep-root" ref={gearGridRef}>
             <style>{`
               .eq-substep-root {
                 container-type: inline-size;
@@ -2213,7 +2359,7 @@ function hexaMatrixTargetSubstep(view: HexaBookmarkView): number {
 }
 
 function BookmarkPageBody({
-  model, actions, active, filled, ContentComponent, onEdit, onEditStep,
+  model, actions, active, filled, ContentComponent, onEdit, onEditStep, onNavigateToBookmark, onNavigateToGearSlot, highlightSlotKey, onHighlightSlotConsumed,
 }: {
   model: PreviewPaneModel;
   actions: PreviewPaneActions;
@@ -2222,6 +2368,10 @@ function BookmarkPageBody({
   ContentComponent: ((props: { theme: Theme; character: StoredCharacterRecord | null }) => ReactNode) | null;
   onEdit: () => void;
   onEditStep: (flowId: SetupFlowId, targetSubstep?: number, confineToSubstep?: boolean, subView?: string) => void;
+  onNavigateToBookmark: (id: BookmarkId, subView?: string) => void;
+  onNavigateToGearSlot: (slotKey: SlotKey) => void;
+  highlightSlotKey: SlotKey | null;
+  onHighlightSlotConsumed: () => void;
 }) {
   const { theme, profile, setup } = model;
   const character = profile.confirmedCharacter;
@@ -2238,7 +2388,7 @@ function BookmarkPageBody({
     return active.id === "hexa_matrix" && remembered === "stat" ? remembered : "skills";
   });
 
-  if (active.id === "overview") return <OverviewBookmark model={model} />;
+  if (active.id === "overview") return <OverviewBookmark model={model} onNavigateToBookmark={onNavigateToBookmark} onNavigateToGearSlot={onNavigateToGearSlot} />;
 
   if (active.id === "setup") {
     // SetupFlowButtons calls actions.startOptionalFlow directly (it's also reused
@@ -2304,6 +2454,8 @@ function BookmarkPageBody({
           view={equipmentView}
           onViewChange={setEquipmentView}
           onSetActivePreset={actions.setEquipmentActivePreset}
+          highlightSlotKey={highlightSlotKey}
+          onHighlightSlotConsumed={onHighlightSlotConsumed}
         />
       </>
     );
@@ -2455,11 +2607,15 @@ export default function CharacterProfileOverviewScreen({
   });
   const active = bookmarks.find((b) => b.id === activeId) ?? bookmarks[0];
 
-  // The remembered bookmark/sub-view is only meant for this one restore, read via the lazy
-  // initializer above — clear it so a later switch away and back (BookmarkPageBody remounts
-  // per key={active.id} below) doesn't keep re-restoring the same stale sub-view.
+  // The remembered bookmark/sub-view is only meant for one restore, read via a lazy
+  // initializer (this one above for activeId, BookmarkPageBody's own for the sub-view) —
+  // clear it after every switch (not just the initial mount) so a later, unrelated switch
+  // away and back (BookmarkPageBody remounts per key={active.id} below) doesn't keep
+  // re-restoring a stale sub-view. Covers both the original flow-restore case (screen
+  // remounts fresh, this fires once on that mount) and OverviewBookmark's section links
+  // below (screen stays mounted, activeId just changes, so the effect needs to key off it).
   // react-doctor-disable-next-line no-prop-callback-in-effect, no-pass-live-state-to-parent
-  useEffect(() => { actions.clearRestoredBookmark(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { actions.clearRestoredBookmark(); }, [activeId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const filled = isBookmarkFilled(active.id, character, mounted);
   const ContentComponent = active.id === "overview" || active.id === "setup" || active.id === "gender_marriage" || active.id === "stats" || active.id === "equipment" || active.id === "v_matrix" || active.id === "hexa_matrix" || active.id === "familiars" ? null : BOOKMARK_CONTENT[active.id];
@@ -2473,6 +2629,24 @@ export default function CharacterProfileOverviewScreen({
     if (active.flowId) startOptionalFlowRemembered(active.flowId);
   }
 
+  // Lets Overview's own section links (e.g. "HEXA Stat" jumping to the HEXA bookmark)
+  // switch tabs and, unlike a plain setActiveId, also seed the target bookmark's own
+  // sub-view state via the same remembered-bookmark mechanism startOptionalFlowRemembered
+  // uses for flow restores — safe to reuse now that the clear effect above keys off
+  // activeId instead of only firing once on mount.
+  function navigateToBookmark(id: BookmarkId, subView?: string) {
+    actions.rememberActiveBookmark(id, subView);
+    setActiveId(id);
+  }
+
+  // Same navigation as above, plus which Gear slot to scroll to and flash once the
+  // Equipment bookmark mounts (see EquipmentBookmark's own highlightSlotKey effect).
+  const [highlightSlotKey, setHighlightSlotKey] = useState<SlotKey | null>(null);
+  function navigateToGearSlot(slotKey: SlotKey) {
+    setHighlightSlotKey(slotKey);
+    navigateToBookmark("equipment", "gear");
+  }
+
   return (
     <div className="profile-binder">
       <div
@@ -2483,7 +2657,19 @@ export default function CharacterProfileOverviewScreen({
         tabIndex={0}
       >
         <div key={active.id} className="profile-binder-page-content">
-          <BookmarkPageBody model={model} actions={actions} active={active} filled={filled} ContentComponent={ContentComponent} onEdit={handleEdit} onEditStep={startOptionalFlowRemembered} />
+          <BookmarkPageBody
+            model={model}
+            actions={actions}
+            active={active}
+            filled={filled}
+            ContentComponent={ContentComponent}
+            onEdit={handleEdit}
+            onEditStep={startOptionalFlowRemembered}
+            onNavigateToBookmark={navigateToBookmark}
+            onNavigateToGearSlot={navigateToGearSlot}
+            highlightSlotKey={highlightSlotKey}
+            onHighlightSlotConsumed={() => setHighlightSlotKey(null)}
+          />
         </div>
       </div>
       <BookmarkSpine theme={theme} bookmarks={bookmarks} activeId={active.id} onSelect={setActiveId} charName={character?.characterName} />

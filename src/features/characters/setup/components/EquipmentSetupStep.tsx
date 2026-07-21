@@ -713,7 +713,7 @@ export function ReadOnlySlotTile({ slotKey, item, theme }: {
   theme: AppTheme;
 }) {
   const box = (
-    <div style={{ ...slotCellStyle(theme, false), cursor: "default", width: SLOT_SIZE, flexShrink: 0 }}>
+    <div data-slot-key={slotKey} style={{ ...slotCellStyle(theme, false), cursor: "default", width: SLOT_SIZE, flexShrink: 0 }}>
       {item ? (
         <ItemIcon id={item.id} size={48} revealed={slotKey === "android"} />
       ) : (
