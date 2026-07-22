@@ -11080,7 +11080,7 @@
     "source": "FamiliarOption"
   },
   "133173": {
-    "string": "If all dice roll 4 or less, Dice Total: \u002B#add",
+    "string": "If all dice roll 4 or higher, Dice Total: \u002B#add",
     "level": {
       "add": 15
     },
@@ -11088,7 +11088,7 @@
     "source": "FamiliarOption"
   },
   "133174": {
-    "string": "If all dice roll 4 or less, Dice Total: \u002B#add",
+    "string": "If all dice roll 4 or higher, Dice Total: \u002B#add",
     "level": {
       "add": 14
     },
@@ -11096,7 +11096,7 @@
     "source": "FamiliarOption"
   },
   "133175": {
-    "string": "If all dice roll 4 or less, Dice Total: \u002B#add",
+    "string": "If all dice roll 4 or higher, Dice Total: \u002B#add",
     "level": {
       "add": 13
     },
@@ -11104,7 +11104,7 @@
     "source": "FamiliarOption"
   },
   "133176": {
-    "string": "If all dice roll 4 or less, Dice Total: x#mul",
+    "string": "If all dice roll 4 or higher, Dice Total: x#mul",
     "level": {
       "mul": 3.8
     },
@@ -11112,7 +11112,7 @@
     "source": "FamiliarOption"
   },
   "133177": {
-    "string": "If all dice roll 4 or less, Dice Total: x#mul",
+    "string": "If all dice roll 4 or higher, Dice Total: x#mul",
     "level": {
       "mul": 3.6
     },
@@ -11120,7 +11120,7 @@
     "source": "FamiliarOption"
   },
   "133178": {
-    "string": "If all dice roll 4 or less, Dice Total: x#mul",
+    "string": "If all dice roll 4 or higher, Dice Total: x#mul",
     "level": {
       "mul": 3.4
     },
@@ -14736,7 +14736,7 @@
     "source": "FamiliarOption"
   },
   "143173": {
-    "string": "If all dice roll 4 or less, Dice Total: \u002B#add",
+    "string": "If all dice roll 4 or higher, Dice Total: \u002B#add",
     "level": {
       "add": 19
     },
@@ -14744,7 +14744,7 @@
     "source": "FamiliarOption"
   },
   "143174": {
-    "string": "If all dice roll 4 or less, Dice Total: \u002B#add",
+    "string": "If all dice roll 4 or higher, Dice Total: \u002B#add",
     "level": {
       "add": 18
     },
@@ -14752,7 +14752,7 @@
     "source": "FamiliarOption"
   },
   "143175": {
-    "string": "If all dice roll 4 or less, Dice Total: \u002B#add",
+    "string": "If all dice roll 4 or higher, Dice Total: \u002B#add",
     "level": {
       "add": 17
     },
@@ -14760,7 +14760,7 @@
     "source": "FamiliarOption"
   },
   "143176": {
-    "string": "If all dice roll 4 or less, Dice Total: x#mul",
+    "string": "If all dice roll 4 or higher, Dice Total: x#mul",
     "level": {
       "mul": 4.2
     },
@@ -14768,7 +14768,7 @@
     "source": "FamiliarOption"
   },
   "143177": {
-    "string": "If all dice roll 4 or less, Dice Total: x#mul",
+    "string": "If all dice roll 4 or higher, Dice Total: x#mul",
     "level": {
       "mul": 4
     },
@@ -14776,7 +14776,7 @@
     "source": "FamiliarOption"
   },
   "143178": {
-    "string": "If all dice roll 4 or less, Dice Total: x#mul",
+    "string": "If all dice roll 4 or higher, Dice Total: x#mul",
     "level": {
       "mul": 3.8
     },
@@ -18392,7 +18392,7 @@
     "source": "FamiliarOption"
   },
   "153173": {
-    "string": "If all dice roll 4 or less, Dice Total: \u002B#add",
+    "string": "If all dice roll 4 or higher, Dice Total: \u002B#add",
     "level": {
       "add": 24
     },
@@ -18400,7 +18400,7 @@
     "source": "FamiliarOption"
   },
   "153174": {
-    "string": "If all dice roll 4 or less, Dice Total: \u002B#add",
+    "string": "If all dice roll 4 or higher, Dice Total: \u002B#add",
     "level": {
       "add": 23
     },
@@ -18408,7 +18408,7 @@
     "source": "FamiliarOption"
   },
   "153175": {
-    "string": "If all dice roll 4 or less, Dice Total: \u002B#add",
+    "string": "If all dice roll 4 or higher, Dice Total: \u002B#add",
     "level": {
       "add": 22
     },
@@ -18416,7 +18416,7 @@
     "source": "FamiliarOption"
   },
   "153176": {
-    "string": "If all dice roll 4 or less, Dice Total: x#mul",
+    "string": "If all dice roll 4 or higher, Dice Total: x#mul",
     "level": {
       "mul": 4.4
     },
@@ -18424,7 +18424,7 @@
     "source": "FamiliarOption"
   },
   "153177": {
-    "string": "If all dice roll 4 or less, Dice Total: x#mul",
+    "string": "If all dice roll 4 or higher, Dice Total: x#mul",
     "level": {
       "mul": 4.2
     },
@@ -18432,7 +18432,7 @@
     "source": "FamiliarOption"
   },
   "153178": {
-    "string": "If all dice roll 4 or less, Dice Total: x#mul",
+    "string": "If all dice roll 4 or higher, Dice Total: x#mul",
     "level": {
       "mul": 4
     },
