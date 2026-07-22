@@ -599,7 +599,12 @@ function buildFullSetupRecord(
   const equipmentData = stepData.equipment ? parseEquipmentDraft(stepData.equipment) : null;
   preserveExistingEquipmentActivePreset(equipmentData, existing);
   const symbolsData = stepData.equipment ? buildSymbolsToolDataForRecord(character, stepData.equipment) : null;
+  // Spread existing.tools first (not just base.tools, which is a fresh blank record's
+  // empty tools) so tool data this flow never touches -- liberation, astra, symbols,
+  // exp-calculator, mystic-frontier -- survives a full-setup redo instead of being
+  // dropped. hexaSkills/hexaStat/symbols then overlay only when this run produced them.
   const tools = {
+    ...existing?.tools,
     ...base.tools,
     ...(hexaSkillsToolData ? { hexaSkills: hexaSkillsToolData } : null),
     ...(hexaStatToolData ? { hexaStat: hexaStatToolData } : null),
@@ -629,13 +634,18 @@ function buildFullSetupRecord(
     ...(innerAbilityLine ? { innerAbilityLine } : {}),
   };
 
+  // equipment/familiars/vMatrix fall back to `existing` (not `base`, which is always a
+  // fresh blank record here) when this run's steps produced no draft data -- e.g. a
+  // full-setup redo that didn't revisit them, or a step skipped by level/legacy gating.
+  // Falling back to the blank base instead would silently wipe them. This is the same
+  // merge-against-existing rule the scouter/expHistory fields below already follow.
   return {
     ...base,
     stats: { ...base.stats, ...stats },
-    equipment: equipmentData ?? base.equipment,
+    equipment: equipmentData ?? existing?.equipment ?? base.equipment,
     isLiberated, weaponHand, hasRuinForceShield, soul, tools,
-    familiars: familiarsData ?? base.familiars,
-    vMatrix: vMatrixData ?? base.vMatrix,
+    familiars: familiarsData ?? existing?.familiars ?? base.familiars,
+    vMatrix: vMatrixData ?? existing?.vMatrix ?? base.vMatrix,
     expHistory: existing ? appendExpHistoryEntry(existing.expHistory, character.level, character.exp) : base.expHistory,
     // Merged against the EXISTING record's scouter (not `base`, which is always a
     // fresh blank object here — see the equipment/familiars/vMatrix comment above for
