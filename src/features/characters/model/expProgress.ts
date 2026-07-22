@@ -47,14 +47,21 @@ export interface ExpDelta {
 
 /** Compares the character's current level/exp against the entry before it in expHistory
  *  (the current entry is always the last one, appended on the same write). Returns null
- *  when there's no prior snapshot to compare against, or no real progress was made. */
+ *  when there's no prior snapshot to compare against, or nothing changed. A same-level
+ *  percentDelta can come back negative -- EXP loss (e.g. dying to a boss in some modes)
+ *  is a real, if rare, in-game scenario, unlike a de-level, which isn't and stays guarded
+ *  against below. netExpPercentGained isn't used here for the same-level case since it
+ *  clamps losses to 0, which is correct for the EXP chart (an intentionally climbing-only
+ *  line, see ExpChart) but would hide a real loss here. */
 export function resolveExpDelta(character: StoredCharacterRecord): ExpDelta | null {
   const history = character.expHistory;
   if (!history || history.length < 2) return null;
   const prev = history[history.length - 2];
   const levelDelta = character.level - prev.level;
   if (levelDelta < 0) return null;
-  const percentDelta = netExpPercentGained(prev.level, prev.exp, character.level, character.exp);
-  if (percentDelta <= 0) return null;
+  const percentDelta = levelDelta === 0
+    ? percentOfLevel(character.level, character.exp) - percentOfLevel(prev.level, prev.exp)
+    : netExpPercentGained(prev.level, prev.exp, character.level, character.exp);
+  if (percentDelta === 0) return null;
   return { levelDelta, percentDelta };
 }

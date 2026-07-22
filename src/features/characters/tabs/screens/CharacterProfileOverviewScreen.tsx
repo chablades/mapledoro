@@ -14,7 +14,7 @@ import { CLASS_SKILL_DATA, getClassDataByNexonJobName, isLegacyClass, type Class
 import { HEXA_STAT_OPTIONS, getHexaStatBonus, getMainStatLabel, getAttackLabel, type HexaStatNode, type HexaStatEntry, type HexaStatSlot } from "../../setup/data/hexaStatData";
 import { readCharactersStore, selectCharacterByIgn } from "../../model/charactersStore";
 import type { StoredCharacterEquipment, StoredCharacterRecord, StoredCharacterStats, StoredEquipmentItem, StoredHyperStat, StoredInnerAbility, StoredIATier, StoredTripleStatField, StoredFamiliarSlot, ExpHistoryEntry } from "../../model/charactersStore";
-import { isExpTrackingAvailable, resolveExpDelta, characterExpPercent, netExpPercentGained, netExpGained } from "../../model/expProgress";
+import { isExpTrackingAvailable, resolveExpDelta, characterExpPercent, netExpGained } from "../../model/expProgress";
 import ExpDeltaBadge from "../components/ExpDeltaBadge";
 import { formatExpCompact } from "../../../tools/format";
 import { PillGroup } from "../../../tools/shared-ui";
@@ -63,12 +63,12 @@ interface BookmarkDef {
 const ALL_BOOKMARKS: BookmarkDef[] = [
   { id: "overview", tabLabel: "Overview", pageLabel: "Overview", flowId: null },
   { id: "gender_marriage", tabLabel: "Bio", pageLabel: "Biography", flowId: "quick_setup" },
+  { id: "exp", tabLabel: "EXP", pageLabel: "EXP", flowId: null },
   { id: "stats", tabLabel: "Stats", pageLabel: "Stats", flowId: "stats_flow" },
   { id: "equipment", tabLabel: "Gear", pageLabel: "Equipment", flowId: "equipment_flow" },
   { id: "v_matrix", tabLabel: "V Matrix", pageLabel: "V Matrix", flowId: "v_matrix_flow" },
   { id: "hexa_matrix", tabLabel: "HEXA", pageLabel: "HEXA Matrix", flowId: "hexa_matrix_flow" },
   { id: "familiars", tabLabel: "Familiars", pageLabel: "Familiars", flowId: "familiars_flow" },
-  { id: "exp", tabLabel: "EXP", pageLabel: "EXP", flowId: null },
   { id: "setup", tabLabel: "Setup", pageLabel: "Setup", flowId: null },
 ];
 
@@ -2308,6 +2308,7 @@ type ExpRangeDays = "7" | "14" | "30" | "90";
 const EXP_HISTORY_DAY_MS = 24 * 60 * 60 * 1000;
 
 type LineChartComponent = (typeof import("react-chartjs-2"))["Line"];
+type BarChartComponent = (typeof import("react-chartjs-2"))["Bar"];
 
 // Dynamically imports chart.js + react-chartjs-2 rather than a static import, mirroring
 // StarForceWorkspace's HistogramPanel -- keeps the chart libraries out of every profile
@@ -2316,14 +2317,31 @@ interface ExpChartPoint {
   x: number;
   y: number;
   level: number;
-  rawPercent: number;
+  percent: number;
   expGained: number | null;
 }
 
-// Above this point count, always-on labels would overlap too much to read (e.g. a 90-day
-// window can pack in ~90 daily points) -- the tooltip still shows the same info on hover
-// regardless of range.
-const EXP_GAIN_LABEL_MAX_POINTS = 14;
+// Shared by ExpChart and ExpGainBarChart below. y is a fractional level (level +
+// percent/100) rather than the raw EXP percent -- the raw percent alone visibly drops
+// back toward 0 on every level-up inside the window, which reads as a regression even
+// though real progress only ever goes up. Folding the level into the number keeps the
+// line always climbing while still landing on real level numbers on the axis; `percent`
+// is kept per-point for the tooltip, which shows the real Lv/% breakdown. expGained is
+// the raw EXP earned since the previous entry (null for the baseline point, which has
+// nothing before it to diff against). A same-level expGained is a raw signed diff rather
+// than netExpGained (which clamps a loss to 0) so a real EXP loss -- dying to a boss in
+// some modes -- comes through as negative instead of getting hidden, same reasoning as
+// resolveExpDelta in expProgress.ts.
+function computeExpChartPoints(entries: ExpHistoryEntry[]): ExpChartPoint[] {
+  return entries.map((e, i) => {
+    const percent = characterExpPercent(e.level, e.exp);
+    const y = e.level + percent / 100;
+    if (i === 0) return { x: e.date, y, level: e.level, percent, expGained: null };
+    const prev = entries[i - 1];
+    const expGained = prev.level === e.level ? e.exp - prev.exp : netExpGained(prev.level, prev.exp, e.level, e.exp);
+    return { x: e.date, y, level: e.level, percent, expGained };
+  });
+}
 
 function ExpChart({ theme, entries }: { theme: Theme; entries: ExpHistoryEntry[] }) {
   const [Line, setLine] = useState<LineChartComponent | null>(null);
@@ -2341,61 +2359,7 @@ function ExpChart({ theme, entries }: { theme: Theme; entries: ExpHistoryEntry[]
     return () => { mounted = false; };
   }, []);
 
-  // Plotting raw per-level percent would drop back toward 0 every time a level-up falls
-  // inside the window, even though real progress only ever goes up -- misleading as a trend
-  // line. Instead each point is cumulative percent gained since the window's first entry
-  // (netExpPercentGained sums 100% per level crossed), so the line only climbs. The real
-  // per-level percent/level is kept per-point for the tooltip, where it's still useful context.
-  const points = useMemo<ExpChartPoint[]>(() => {
-    if (entries.length === 0) return [];
-    const baseline = entries[0];
-    return entries.map((e, i) => ({
-      x: e.date,
-      y: netExpPercentGained(baseline.level, baseline.exp, e.level, e.exp),
-      level: e.level,
-      rawPercent: characterExpPercent(e.level, e.exp),
-      expGained: i === 0 ? null : netExpGained(entries[i - 1].level, entries[i - 1].exp, e.level, e.exp),
-    }));
-  }, [entries]);
-
-  // Draws "+1.89t"-style raw EXP-gained-since-the-previous-point labels above each dot,
-  // mirroring MapleRanks' always-visible per-bar amount. A plugin (not a dataset label
-  // option) since it needs pixel positions off the rendered points, and scoped to this
-  // chart instance via the `plugins` prop rather than Chart.register so it doesn't leak
-  // into other charts (e.g. StarForceWorkspace's bar chart) sharing the same chart.js runtime.
-  const expGainLabelPlugin = useMemo<Plugin<"line">>(() => ({
-    id: "expGainLabels",
-    afterDatasetsDraw(chart) {
-      if (points.length > EXP_GAIN_LABEL_MAX_POINTS) return;
-      const meta = chart.getDatasetMeta(0);
-      const { ctx, chartArea } = chart;
-      ctx.save();
-      ctx.font = "700 10px 'Nunito', sans-serif";
-      ctx.fillStyle = theme.muted;
-      ctx.textBaseline = "bottom";
-      const edgePad = 4;
-      // Chart.js's internal rendered point elements (meta.data) can briefly lag one render
-      // behind this plugin's own `points` when the dataset's length changes between renders
-      // (e.g. switching from 14D to 7D) -- drawing against a stale, differently-sized meta.data
-      // would pair each label with the wrong point. The <Line> below is keyed on point count
-      // specifically to force a clean remount on exactly this kind of change, but bail here too
-      // as a hard guarantee against ever drawing a mismatched label.
-      if (meta.data.length !== points.length) { ctx.restore(); return; }
-      meta.data.forEach((el, index) => {
-        const point = points[index];
-        if (!point || point.expGained === null || point.expGained <= 0) return;
-        // Center-aligned text on the edge-most points overflows the canvas and gets clipped
-        // (the last point in particular, since MapleDoro's own gained-since-yesterday label
-        // tends to run longer than a bare percent). Align inward once a point sits within
-        // edgePad of either side instead of always centering.
-        if (el.x <= chartArea.left + edgePad) ctx.textAlign = "left";
-        else if (el.x >= chartArea.right - edgePad) ctx.textAlign = "right";
-        else ctx.textAlign = "center";
-        ctx.fillText(`+${formatExpCompact(point.expGained)}`, el.x, el.y - 8);
-      });
-      ctx.restore();
-    },
-  }), [points, theme.muted]);
+  const points = useMemo(() => computeExpChartPoints(entries), [entries]);
 
   const data: ChartData<"line"> = useMemo(() => ({
     datasets: [{
@@ -2413,6 +2377,11 @@ function ExpChart({ theme, entries }: { theme: Theme; entries: ExpHistoryEntry[]
     responsive: true,
     maintainAspectRatio: false,
     animation: false,
+    // Hovering anywhere along a point's x-slice shows its tooltip, not just the exact
+    // pixel the dot sits on -- matters most for the bar chart's own use of this same
+    // interaction mode (a 0 EXP day renders as a zero-height bar with nothing to land on),
+    // but applied here too so both charts behave the same way.
+    interaction: { mode: "index", intersect: false },
     plugins: {
       legend: { display: false },
       tooltip: {
@@ -2425,7 +2394,7 @@ function ExpChart({ theme, entries }: { theme: Theme; entries: ExpHistoryEntry[]
           title: (items: TooltipItem<"line">[]) => new Date((items[0].raw as ExpChartPoint).x).toLocaleDateString(undefined, { month: "short", day: "numeric" }),
           label: (item: TooltipItem<"line">) => {
             const raw = item.raw as ExpChartPoint;
-            return `Lv ${raw.level} · ${raw.rawPercent.toFixed(3)}%`;
+            return `Lv ${raw.level} · ${raw.percent.toFixed(3)}%`;
           },
         },
       },
@@ -2447,11 +2416,18 @@ function ExpChart({ theme, entries }: { theme: Theme; entries: ExpHistoryEntry[]
         afterBuildTicks: (axis) => {
           const n = points.length;
           if (n === 0) { axis.ticks = []; return; }
+          const dateLabel = (x: number) => new Date(x).toLocaleDateString(undefined, { month: "short", day: "numeric" });
           const maxTicks = 6;
           const step = Math.max(1, Math.ceil((n - 1) / (maxTicks - 1)));
           const values: number[] = [];
           for (let i = 0; i < n; i += step) values.push(points[i].x);
-          if (values[values.length - 1] !== points[n - 1].x) values.push(points[n - 1].x);
+          const lastX = points[n - 1].x;
+          // Always includes the rightmost edge, but not if it'd print the same calendar-day
+          // label a second time in a row -- expHistory gets an entry per refresh, not once
+          // a day, so two entries can land on the same real date right at the window's edge.
+          if (values[values.length - 1] !== lastX && dateLabel(values[values.length - 1]) !== dateLabel(lastX)) {
+            values.push(lastX);
+          }
           axis.ticks = values.map((value) => ({ value }));
         },
         ticks: {
@@ -2462,16 +2438,167 @@ function ExpChart({ theme, entries }: { theme: Theme; entries: ExpHistoryEntry[]
         grid: { display: false },
       },
       y: {
-        beginAtZero: true,
-        ticks: { color: theme.muted },
+        // Not beginAtZero -- y is a fractional level (e.g. ~260.45), not a percent, so
+        // starting the axis at 0 would flatten the whole climb into an unreadable sliver
+        // near the top. Ticks split the fractional part back out into "Lv Pct%" (mirrors
+        // MapleRanks' own axis style), rounded to a whole percent since sub-percent
+        // precision isn't meaningful as an axis label -- the tooltip has the exact figure.
+        ticks: {
+          color: theme.muted,
+          callback: (value) => {
+            const v = Number(value);
+            const level = Math.floor(v);
+            return `${level} ${Math.round((v - level) * 100)}%`;
+          },
+        },
         grid: { color: theme.border },
       },
     },
   }), [theme.panel, theme.text, theme.border, theme.muted, points]);
 
   return (
-    <div style={{ height: 220 }} role="img" aria-label={`Line chart: cumulative EXP percent progress over time across ${points.length} data points.`}>
-      {Line ? <Line key={points.length} data={data} options={options} plugins={[expGainLabelPlugin]} /> : null}
+    <div style={{ height: 220 }} role="img" aria-label={`Line chart: EXP percent over time across ${points.length} data points.`}>
+      {Line ? <Line key={points.length} data={data} options={options} /> : null}
+    </div>
+  );
+}
+
+interface DailyExpPoint {
+  label: string;
+  expGained: number;
+}
+
+// expHistory gets an entry on every refresh/setup-flow lookup, not once a day (see
+// appendExpHistoryEntry in charactersStore.ts) -- a bar per raw entry could put several
+// bars under the same calendar date, which then desyncs from the x-axis's autoSkip'd
+// labels. Summing into one bar per real calendar day (keyed by the same locale string
+// used as its label, so the two can never drift apart) keeps "Daily EXP" honest and each
+// label lined up under its own bar.
+function aggregateDailyExpGain(entries: ExpHistoryEntry[]): DailyExpPoint[] {
+  const points = computeExpChartPoints(entries).filter((p): p is ExpChartPoint & { expGained: number } => p.expGained !== null);
+  const byDay = new Map<string, DailyExpPoint>();
+  for (const p of points) {
+    const label = new Date(p.x).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+    const existing = byDay.get(label);
+    if (existing) existing.expGained += p.expGained;
+    else byDay.set(label, { label, expGained: p.expGained });
+  }
+  return Array.from(byDay.values());
+}
+
+// Above this bar count, an always-on "+X" label per bar overlaps too much to read (14D's
+// own bars are already narrow enough that labels collide) -- the tooltip still shows the
+// same amount on hover regardless of range. 7 keeps this to the 7D range only.
+const DAILY_EXP_LABEL_MAX_POINTS = 7;
+
+// A gain reads bare ("1.89T"); only a real loss gets a sign ("-1.89T") -- everyone
+// refreshing this chart is here to see progress, so a "+" on every normal day is noise.
+function formatSignedExp(n: number): string {
+  return n < 0 ? `-${formatExpCompact(-n).toUpperCase()}` : formatExpCompact(n).toUpperCase();
+}
+
+function ExpGainBarChart({ theme, entries }: { theme: Theme; entries: ExpHistoryEntry[] }) {
+  const [Bar, setBar] = useState<BarChartComponent | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    async function loadChart() {
+      const [chartModule, barModule] = await Promise.all([import("chart.js"), import("react-chartjs-2")]);
+      chartModule.Chart.register(
+        chartModule.CategoryScale, chartModule.LinearScale, chartModule.BarElement, chartModule.Tooltip,
+      );
+      if (mounted) setBar(() => barModule.Bar as BarChartComponent);
+    }
+    loadChart();
+    return () => { mounted = false; };
+  }, []);
+
+  const points = useMemo(() => aggregateDailyExpGain(entries), [entries]);
+
+  // Draws a "+1.89t"-style total above each bar, mirroring MapleRanks' always-visible
+  // per-bar amount (the line chart used to do this per-point before Daily EXP took over
+  // that job). A plugin rather than a dataset label option since it needs the bar's
+  // rendered pixel position, and scoped to this chart instance via the `plugins` prop
+  // rather than Chart.register so it doesn't leak into other bar charts (e.g.
+  // StarForceWorkspace's histogram) sharing the same chart.js runtime.
+  const dailyExpLabelPlugin = useMemo<Plugin<"bar">>(() => ({
+    id: "dailyExpLabels",
+    afterDatasetsDraw(chart) {
+      if (points.length > DAILY_EXP_LABEL_MAX_POINTS) return;
+      const meta = chart.getDatasetMeta(0);
+      const { ctx, chartArea } = chart;
+      ctx.save();
+      ctx.font = "700 10px 'Nunito', sans-serif";
+      ctx.fillStyle = theme.muted;
+      ctx.textBaseline = "bottom";
+      const edgePad = 4;
+      // Same staleness guard as the old line-chart label plugin: meta.data can briefly lag
+      // one render behind `points` when the dataset length changes (e.g. switching ranges).
+      if (meta.data.length !== points.length) { ctx.restore(); return; }
+      meta.data.forEach((el, index) => {
+        const point = points[index];
+        if (!point) return;
+        if (el.x <= chartArea.left + edgePad) ctx.textAlign = "left";
+        else if (el.x >= chartArea.right - edgePad) ctx.textAlign = "right";
+        else ctx.textAlign = "center";
+        ctx.fillText(formatSignedExp(point.expGained), el.x, el.y - 4);
+      });
+      ctx.restore();
+    },
+  }), [points, theme.muted]);
+
+  const data: ChartData<"bar"> = useMemo(() => ({
+    labels: points.map((p) => p.label),
+    datasets: [{
+      data: points.map((p) => p.expGained),
+      backgroundColor: theme.accent,
+      borderRadius: 3,
+      categoryPercentage: 0.8,
+      barPercentage: 0.8,
+    }],
+  }), [points, theme.accent]);
+
+  const options: ChartOptions<"bar"> = useMemo(() => ({
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: false,
+    layout: { padding: { top: 16 } },
+    // Hovering anywhere in a bar's x-slice shows its tooltip, not just the bar itself --
+    // a 0 EXP day renders as a zero-height bar with no pixels to land on otherwise.
+    interaction: { mode: "index", intersect: false },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: theme.panel,
+        titleColor: theme.text,
+        bodyColor: theme.text,
+        borderColor: theme.border,
+        borderWidth: 1,
+        callbacks: {
+          title: (items: TooltipItem<"bar">[]) => points[items[0].dataIndex]?.label ?? "",
+          label: (item: TooltipItem<"bar">) => {
+            const p = points[item.dataIndex];
+            return p ? formatSignedExp(p.expGained) : "";
+          },
+        },
+      },
+    },
+    scales: {
+      x: {
+        ticks: { color: theme.muted, maxRotation: 0, autoSkip: true, maxTicksLimit: 6 },
+        grid: { display: false },
+      },
+      y: {
+        beginAtZero: true,
+        ticks: { color: theme.muted, callback: (value) => formatSignedExp(Number(value)) },
+        grid: { color: theme.border },
+      },
+    },
+  }), [points, theme.panel, theme.text, theme.border, theme.muted]);
+
+  return (
+    <div style={{ height: 160 }} role="img" aria-label={`Bar chart: daily EXP gained across ${points.length} days.`}>
+      {Bar ? <Bar key={points.length} data={data} options={options} plugins={[dailyExpLabelPlugin]} /> : null}
     </div>
   );
 }
@@ -2511,11 +2638,16 @@ function ExpBookmark({ theme, character }: { theme: Theme; character: StoredChar
       </StatBlock>
       <StatBlock label="EXP Over Time" theme={theme}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.75rem", marginBottom: "0.75rem", flexWrap: "wrap" }}>
-          <p style={{ margin: 0, fontSize: "0.75rem", color: theme.muted }}>Cumulative progress since the start of this range.</p>
+          <p style={{ margin: 0, fontSize: "0.75rem", color: theme.muted }}>Progress since the start of this range.</p>
           <PillGroup theme={theme} options={EXP_RANGE_OPTIONS} value={range} onChange={setRange} />
         </div>
         {expWindow.entries.length >= 2 ? (
-          <ExpChart theme={theme} entries={expWindow.entries} />
+          <>
+            <p style={{ margin: "0 0 0.5rem", fontSize: "0.75rem", color: theme.muted, fontWeight: 700 }}>Daily EXP</p>
+            <ExpGainBarChart theme={theme} entries={expWindow.entries} />
+            <p style={{ margin: "1rem 0 0.5rem", fontSize: "0.75rem", color: theme.muted, fontWeight: 700 }}>Level Progress</p>
+            <ExpChart theme={theme} entries={expWindow.entries} />
+          </>
         ) : (
           <p style={{ margin: 0, fontSize: "0.8rem", color: theme.muted, textAlign: "center", padding: "2rem 0" }}>
             Not enough data yet. Check back after refreshing this character a few more times.

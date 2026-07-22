@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { CHARACTERS_COPY } from "../content";
 import { resolveDisplayJobName } from "../../setup/data/nexonJobMapping";
 import type { SearchPaneActions, SearchPaneModel } from "../paneModels";
@@ -90,9 +90,16 @@ function getProfileRoleChips(
   return ["mule"];
 }
 
-function expDeltaTooltipLabel(delta: ExpDelta): string {
-  const pct = `+${delta.percentDelta.toFixed(3)}%`;
-  return delta.levelDelta > 0 ? `${pct} (+${delta.levelDelta} Lv)` : pct;
+function expDeltaTooltipLabel(theme: SearchPaneModel["theme"], delta: ExpDelta): ReactNode {
+  const lost = delta.percentDelta < 0;
+  const sign = delta.percentDelta > 0 ? "+" : "";
+  const pct = `${sign}${delta.percentDelta.toFixed(3)}%`;
+  return (
+    <>
+      <span style={{ color: statusText(theme, lost ? "danger" : "success") }}>{pct}</span>
+      {delta.levelDelta > 0 && ` (+${delta.levelDelta} Lv)`}
+    </>
+  );
 }
 
 const genderMarriageIconRowStyle: CSSProperties = {
@@ -140,15 +147,20 @@ function GenderMarriageIcons({
 // since the last snapshot -- hovering/focusing the whole thing reveals the actual delta
 // (and any level-ups crossed) rather than showing that number inline all the time.
 function ExpPercentIndicator({ theme, percent, delta }: { theme: SearchPaneModel["theme"]; percent: number; delta: ExpDelta | null }) {
+  const lost = delta !== null && delta.percentDelta < 0;
   const content = (
     <span style={{ display: "inline-flex", alignItems: "center", gap: "0.2rem" }}>
-      {delta && <span aria-hidden="true" style={{ color: statusText(theme, "success") }}>&#9650;</span>}
+      {delta && (
+        <span aria-hidden="true" style={{ color: statusText(theme, lost ? "danger" : "success") }}>
+          {lost ? "▼" : "▲"}
+        </span>
+      )}
       {percent.toFixed(3)}%
     </span>
   );
   if (!delta) return content;
   return (
-    <HoverTooltip theme={theme} label={expDeltaTooltipLabel(delta)}>
+    <HoverTooltip theme={theme} label={expDeltaTooltipLabel(theme, delta)}>
       {content}
     </HoverTooltip>
   );
@@ -251,24 +263,19 @@ export default function CharacterProfileScreen({
             {resolveDisplayJobName(profile.confirmedCharacter.jobName)}
           </p>
           {/* A div, not a <p> -- HoverTooltip (inside ExpPercentIndicator) renders a <div>,
-              which isn't valid inside a <p> and causes a hydration mismatch. Level is
-              centered as the sole flex child on the outer row; the % indicator is
-              absolutely positioned off the inner span's right edge so it doesn't shift
-              Level off-center the way a plain inline-flex gap would. */}
-          <div style={{ margin: 0, width: "100%", fontSize: "1rem", color: theme.muted, fontWeight: 700, lineHeight: 1.3, display: "flex", justifyContent: "center" }}>
-            <span style={{ position: "relative" }}>
-              Level {profile.confirmedCharacter.level}
-              {isExpTrackingAvailable(profile.confirmedCharacter.level) && (
-                <span style={{ position: "absolute", left: "100%", top: 0, marginLeft: "0.5rem", whiteSpace: "nowrap" }}>
-                  <ExpPercentIndicator
-                    theme={theme}
-                    percent={characterExpPercent(profile.confirmedCharacter.level, profile.confirmedCharacter.exp)}
-                    delta={expDelta}
-                  />
-                </span>
-              )}
-            </span>
+              which isn't valid inside a <p> and causes a hydration mismatch. */}
+          <div style={{ margin: 0, width: "100%", fontSize: "1rem", color: theme.muted, fontWeight: 700, lineHeight: 1.3, textAlign: "center" }}>
+            Level {profile.confirmedCharacter.level}
           </div>
+          {isExpTrackingAvailable(profile.confirmedCharacter.level) && (
+            <div style={{ margin: 0, width: "100%", fontSize: "0.85rem", color: theme.muted, fontWeight: 700, lineHeight: 1.3, display: "flex", justifyContent: "center" }}>
+              <ExpPercentIndicator
+                theme={theme}
+                percent={characterExpPercent(profile.confirmedCharacter.level, profile.confirmedCharacter.exp)}
+                delta={expDelta}
+              />
+            </div>
+          )}
           {profile.canViewCharacterDirectory && (
             <div className="profile-role-chip-row" style={roleChipRowStyle}>
               {roleChips.map((role) => (
