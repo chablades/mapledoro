@@ -3,14 +3,14 @@ import Image from "next/image";
 import { WORLD_NAMES } from "../../model/constants";
 import {
   readCharactersStore, linkSkillsDraftToStored, linkSkillsStoredToDraftString,
-  writeLinkSkillsForWorld, writeLegionArtifactForWorld,
+  writeLinkSkillsForWorld, writeLegionArtifactForWorld, writeScouterLegionForWorld,
   type StoredCharacterRecord, type StoredLegionArtifact,
 } from "../../model/charactersStore";
 import {
   LEGION_CRYSTALS, MAX_ARTIFACT_LEVEL, MIN_ARTIFACT_LEVEL, MIN_CRYSTAL_LEVEL, MAX_CRYSTAL_LEVEL, MAX_STAT_TOTAL_LEVEL,
   LEGION_ARTIFACT_STATS, getLegionArtifactStat, isCrystalUnlocked, effectiveCrystal,
   computeRawStatLevels, effectiveStatLevel, statBonusValue, toStoredLegionCrystals,
-  parseLegionArtifactBoardDraft,
+  parseLegionArtifactBoardDraft, deriveLegionArtifactFields,
   type LegionCrystalDraft, type LegionCrystalDef,
 } from "../../setup/data/legionArtifactData";
 import { LINK_SKILLS, computeLinkSkillsFromRoster, reconcileLinkSkills } from "../../setup/data/linkSkillsData";
@@ -208,6 +208,19 @@ function CrystalTile({ theme, index, def, crystal, unlocked }: {
   );
 }
 
+// Resolves one scouter-facing field against a board edit's before/after derivation:
+// fresh proof always wins; a field the board used to prove (wasProvenBefore) but no
+// longer does gets cleared (a respec correctly un-derives); a field NEITHER the old nor
+// new board ever proved is left alone, since it could be a manual Quick Questions answer
+// this board edit has no bearing on at all. Takes a bool for "was proven before" rather
+// than the before value itself, since the board's derived shape (a string percent) and
+// the stored scouter shape (a number) differ for artifactFinalAttackDmg.
+function resolveResyncedField<T>(wasProvenBefore: boolean, after: T | undefined, existing: T | undefined): T | undefined {
+  if (after !== undefined) return after;
+  if (wasProvenBefore) return undefined;
+  return existing;
+}
+
 // A dedicated component so its local draft state naturally resets each time the user
 // re-enters edit mode (it only mounts while editing=true). The draft is purely local
 // until Save — closing without saving (tab switch, back to Directory) just unmounts
@@ -226,7 +239,38 @@ function LegionArtifactEditPanel({ theme, worldId, worldLegionArtifact, onSave, 
     const artifactLevel = parsed.artifactLevel
       ? Number(parsed.artifactLevel)
       : worldLegionArtifact?.artifactLevel ?? MIN_ARTIFACT_LEVEL;
-    writeLegionArtifactForWorld(worldId, { artifactLevel, crystals: toStoredLegionCrystals(parsed.crystals, artifactLevel) });
+    const crystals = toStoredLegionCrystals(parsed.crystals, artifactLevel);
+    writeLegionArtifactForWorld(worldId, { artifactLevel, crystals });
+    // Resync scouterLegionByWorld's 2 derived fields against this edit, per field:
+    // - The fresh board proves a value -> write it (real board evidence always wins).
+    // - The board USED to prove a value (before this edit) but no longer does -> clear
+    //   it (a respec correctly un-derives, doesn't leave a stale value stuck forever —
+    //   this was the original bug: a full reset left artifactExtraTarget/
+    //   artifactFinalAttackDmg stuck at their old board-derived values).
+    // - Neither the old nor the new board ever proved it -> leave whatever's already
+    //   stored completely untouched. That existing value could be a manual Quick
+    //   Questions answer with no board backing at all (e.g. someone typed 20% Final
+    //   Attack Damage with an untouched board) — this edit provides no new evidence
+    //   about it, so it must not be silently erased just by opening this editor and
+    //   hitting Save without customizing anything.
+    const before = deriveLegionArtifactFields({
+      artifactLevel: worldLegionArtifact?.artifactLevel !== undefined ? String(worldLegionArtifact.artifactLevel) : undefined,
+      crystals: worldLegionArtifact?.crystals as LegionCrystalDraft[] | undefined,
+    });
+    const after = deriveLegionArtifactFields({ artifactLevel: String(artifactLevel), crystals: crystals as LegionCrystalDraft[] | undefined });
+    const store = readCharactersStore();
+    const existingScouter = store.scouterLegionByWorld[String(worldId)];
+    const extraTarget = resolveResyncedField(before?.artifactExtraTarget !== undefined, after?.artifactExtraTarget, existingScouter?.artifactExtraTarget);
+    const finalAtk = resolveResyncedField(
+      before?.artifactFinalAttackDmg !== undefined,
+      after?.artifactFinalAttackDmg !== undefined ? Number(after.artifactFinalAttackDmg) : undefined,
+      existingScouter?.artifactFinalAttackDmg,
+    );
+    writeScouterLegionForWorld(worldId, {
+      ...(existingScouter?.wildHunterRank ? { wildHunterRank: existingScouter.wildHunterRank } : {}),
+      ...(extraTarget !== undefined ? { artifactExtraTarget: extraTarget } : {}),
+      ...(finalAtk !== undefined ? { artifactFinalAttackDmg: finalAtk } : {}),
+    });
     onSave();
   }
   useImperativeHandle(ref, () => ({ save: handleSave }));

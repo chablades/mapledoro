@@ -103,6 +103,8 @@ export default function SetupFlowScreen({ model, actions }: SetupFlowScreenProps
         worldLinkSkills={worldLinkSkills}
         worldScouterLegion={worldScouterLegion}
         worldLegionArtifact={worldLegionArtifact}
+        equipmentRawValue={setup.equipmentRawValue}
+        legionArtifactsRawValue={setup.legionArtifactsRawValue}
         characterLevel={confirmed?.level}
         confirmedCharacterName={confirmed?.characterName}
         confirmedCharacterImgURL={confirmed?.characterImgURL}

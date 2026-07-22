@@ -6,6 +6,7 @@
 */
 
 import type { CharacterMarriage, CharacterSoul, StoredCharacterStats, StoredHyperStat, StoredInnerAbility, StoredTripleStatField } from "../../model/charactersStore";
+import type { EquipmentLike } from "./equipmentStepDraft";
 import { HYPER_STAT_CATEGORIES, HYPER_STAT_PRESET_COUNT, parseStoredHyperStatLevel } from "./hyperStatData";
 import { convertInnerAbilityDraftToStored, type IADraft } from "./innerAbilityData";
 import { CLASS_SKILL_DATA, getRequiredStatsForClass, type ClassSkillData } from "./classSkillData";
@@ -122,6 +123,41 @@ export interface StatsStepDraft {
 
 /** Minimum character level to unlock Genesis Liberation. */
 export const GENESIS_LIBERATION_LEVEL = 255;
+
+// Both are real per-class weapon names (e.g. "Genesis Sword"/"Destiny Sword") only
+// obtainable by completing the Genesis Liberation questline — Destiny is the weapon's
+// pre-upgrade form, Genesis its fully-grown one. Equipping either is definitive proof
+// of liberation, unlike most setup questions which are genuine self-reports.
+const LIBERATION_WEAPON_NAME_PREFIXES = ["Genesis ", "Destiny "];
+
+/** The active preset's weapon name, if it's a Genesis/Destiny liberation weapon — lets
+ *  the UI name the specific weapon it detected instead of just saying "your weapon". */
+export function getLiberationWeaponName(equipment: EquipmentLike | null | undefined): string | undefined {
+  const weaponName = equipment?.presets?.[equipment.activePreset]?.weapon?.name;
+  if (!weaponName) return undefined;
+  return LIBERATION_WEAPON_NAME_PREFIXES.some((prefix) => weaponName.startsWith(prefix)) ? weaponName : undefined;
+}
+
+/** True/false whenever the active preset has a weapon on file — Genesis Liberation's
+ *  Final Damage bonus lives on the weapon item itself (not a permanent character-wide
+ *  flag), so a real, non-genesis weapon there is just as definitive proof of "not
+ *  liberated right now" as a Genesis/Destiny one is proof of "liberated". Undefined only
+ *  when there's no weapon there at all yet (Equipment step not entered for this preset) —
+ *  genuinely ambiguous, not proof either way. */
+export function deriveIsLiberatedFromWeapon(equipment: EquipmentLike | null | undefined): boolean | undefined {
+  const weaponName = equipment?.presets?.[equipment.activePreset]?.weapon?.name;
+  if (!weaponName) return undefined;
+  return LIBERATION_WEAPON_NAME_PREFIXES.some((prefix) => weaponName.startsWith(prefix));
+}
+
+/** True/false whenever the active preset's secondary slot has an item on file; undefined
+ *  when it's empty (ambiguous: never equipped there, or Equipment step never entered — an
+ *  empty secondary is also just a normal, common real state for most classes). */
+export function deriveHasRuinForceShield(equipment: EquipmentLike | null | undefined): boolean | undefined {
+  const secondary = equipment?.presets?.[equipment.activePreset]?.secondary;
+  if (!secondary) return undefined;
+  return secondary.name === "Ruin Force Shield";
+}
 
 /** Minimum character level to unlock Arcane Symbols / Arcane Force. */
 export const ARCANE_POWER_LEVEL = 200;

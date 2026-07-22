@@ -427,6 +427,15 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
         }
 
         @media (max-width: 860px) {
+          /* Absolutely positioned off the name's right edge on desktop (see
+             genderMarriageIconRowStyle's comment) so their width never pulls the name
+             off-center -- on a narrow viewport with a long IGN that overflows the card
+             and can clip/cause horizontal scroll. Static on mobile trades perfect
+             centering for never overflowing, which is the right call at this width. */
+          .gender-marriage-icons {
+            position: static !important;
+          }
+
           .desktop-back-label {
             display: none;
           }
@@ -622,7 +631,7 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
           }
 
           .confirmed-summary-card--setup .profile-role-chip-row {
-            justify-content: flex-start;
+            justify-content: center;
           }
 
           .preview-pane,

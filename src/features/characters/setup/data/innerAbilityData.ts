@@ -241,3 +241,25 @@ export function convertInnerAbilityDraftToStored(draft: IADraft | undefined): St
     presets: [draftIAPresetToStored(presets[0]), draftIAPresetToStored(presets[1]), draftIAPresetToStored(presets[2])],
   };
 }
+
+// ── Scouter-facing derivation ────────────────────────────────────────────────
+// The only two legendary Inner Ability lines MapleScouter cares about — both full_setup
+// and maplescouter_setup derive their scouter-facing answer from the active preset's
+// lines instead of asking the question separately (see scouterQuestionsData.ts's
+// IA_LINE_OPTIONS for the manual-ask fallback used when there's no IA data yet).
+
+/** True if the active preset has any real line filled in (a tier + value), as opposed to
+ *  a brand-new/untouched record — distinguishes "definitely neither special line" from
+ *  "we don't know yet". */
+export function innerAbilityHasData(innerAbility: StoredInnerAbility | undefined): boolean {
+  const preset = innerAbility?.presets[innerAbility.activePreset];
+  return (preset?.lines ?? []).some((l) => l.tier && l.value);
+}
+
+export function deriveInnerAbilityLine(innerAbility: StoredInnerAbility | undefined): "passive" | "multiTarget" | undefined {
+  const preset = innerAbility?.presets[innerAbility.activePreset];
+  const values = preset?.lines.map((l) => l.value) ?? [];
+  if (values.includes(IA_PASSIVE_PLUS_ONE_LINE)) return "passive";
+  if (values.includes(IA_MULTI_TARGET_PLUS_ONE_LINE)) return "multiTarget";
+  return undefined;
+}

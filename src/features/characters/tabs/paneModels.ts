@@ -138,6 +138,8 @@ export interface PreviewPaneModel {
     stepValidityById: Record<string, boolean>;
     activeSetupStepValue: string;
     statsRawValue: string;
+    equipmentRawValue: string;
+    legionArtifactsRawValue: string;
   };
   profile: {
     confirmedCharacter: StoredCharacterRecord | null;

@@ -333,6 +333,30 @@ textarea:focus-visible {
   inset: -6px;
 }
 
+/* Setup questionnaire's checklist-style rows (ChecklistCheckbox/ChecklistGroup in
+   QuestionControls.tsx). Desktop keeps its current compact padding; below 860px each
+   row grows to a real 44px WCAG-minimum tap target, and stacked checkboxes get a much
+   bigger gap between them, since fast taps on adjacent small rows were misfiring on a
+   real iPhone (confirmed via zoom testing, not a double-tap-zoom gesture issue).
+   Desktop mouse clicks don't have this precision problem, so it stays untouched there. */
+.checklist-row {
+  padding-top: 0.3rem;
+  padding-bottom: 0.3rem;
+}
+.checklist-checkbox-row {
+  margin-bottom: 0.15rem;
+}
+@media (max-width: 860px) {
+  .checklist-row {
+    min-height: 44px;
+    padding-top: 0.55rem;
+    padding-bottom: 0.55rem;
+  }
+  .checklist-checkbox-row {
+    margin-bottom: 0.6rem;
+  }
+}
+
 /* Thin, translucent scrollbar for scroll areas inside tool dialogs. Matches
    the character-sync dropdown; theme-neutral so it reads in light and dark. */
 .tool-dialog-scroll {

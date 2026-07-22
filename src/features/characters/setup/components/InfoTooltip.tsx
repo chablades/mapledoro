@@ -19,12 +19,12 @@ export interface TooltipContent {
   link?: { href: string; label: string };
 }
 
-const infoButtonStyle = (theme: AppTheme, open: boolean): CSSProperties => ({
+const infoButtonStyle = (theme: AppTheme, open: boolean, bordered: boolean): CSSProperties => ({
   width: "1rem",
   height: "1rem",
-  borderRadius: "50%",
-  border: `1.5px solid ${theme.muted}`,
-  background: open ? `${theme.accent}18` : "transparent",
+  borderRadius: bordered ? "50%" : 0,
+  border: bordered ? `1.5px solid ${theme.muted}` : "none",
+  background: bordered && open ? `${theme.accent}18` : "transparent",
   color: open ? theme.accent : theme.muted,
   fontSize: "0.75rem",
   fontWeight: 900,
@@ -38,6 +38,26 @@ const infoButtonStyle = (theme: AppTheme, open: boolean): CSSProperties => ({
   lineHeight: 1,
   transition: "color 0.1s, background 0.1s",
 });
+
+// A plain SVG rather than the U+1F512 emoji: iOS renders emoji through its own emoji
+// font (a colorful padlock, not the flat glyph other platforms show), which reads as
+// visually inconsistent next to the "?" tooltip trigger. `currentColor` follows the
+// button's own color, so it dims to theme.muted / lights to theme.accent the same way
+// the "?" text already does, with no extra color prop to keep in sync.
+export function LockGlyph() {
+  return (
+    <svg viewBox="0 0 16 16" width="0.95rem" height="0.95rem" aria-hidden="true">
+      <path
+        d="M5 7V5a3 3 0 0 1 6 0v2M4 7h8v6H4z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
 
 // Rendered via a portal straight to document.body (position: fixed, viewport coordinates) rather
 // than position: absolute within the page flow — any ancestor with overflow other than "visible"
@@ -95,7 +115,19 @@ function remToPx(rem: number): number {
   return rem * parseFloat(getComputedStyle(document.documentElement).fontSize);
 }
 
-export default function InfoTooltip({ content, theme }: { content: TooltipContent; theme: AppTheme }) {
+export default function InfoTooltip({ content, theme, icon = "?", label = "More information", bordered = true }: {
+  content: TooltipContent;
+  theme: AppTheme;
+  /** Glyph shown in the trigger button, defaults to "?". Pass a different glyph (e.g. a
+   *  lock) for a tooltip with a different job, like explaining why a field is locked
+   *  rather than what the field means. */
+  icon?: ReactNode;
+  /** aria-label for the trigger button, should match what `icon` communicates. */
+  label?: string;
+  /** The circular border/background chrome that makes "?" read as a button. A glyph
+   *  that already reads as clickable on its own (e.g. a lock) can skip it. */
+  bordered?: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -154,10 +186,10 @@ export default function InfoTooltip({ content, theme }: { content: TooltipConten
       <button
         type="button"
         onClick={handleToggle}
-        aria-label="More information"
-        style={infoButtonStyle(theme, open)}
+        aria-label={label}
+        style={infoButtonStyle(theme, open, bordered)}
       >
-        ?
+        {icon}
       </button>
       {open && pos && typeof document !== "undefined" && createPortal(
         <div ref={popupRef} style={infoPopupStyle(theme, pos.top, pos.left)}>

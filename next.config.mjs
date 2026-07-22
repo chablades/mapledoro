@@ -15,9 +15,14 @@ const nextConfig = {
       },
     ];
   },
+  // Bare hostnames only (no protocol/port) -- Next.js compares these directly against
+  // the Origin header's hostname, so "http://host:port" never actually matches anything.
   allowedDevOrigins: [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
+    "127.0.0.1",
+    // Local-network hostname for testing the dev server from a phone/tablet on the same
+    // Wi-Fi -- set DEV_LAN_ORIGIN in .env.local (gitignored) rather than hardcoding an
+    // IP here, since it's specific to whoever's machine is running `next dev`.
+    ...(process.env.DEV_LAN_ORIGIN ? [process.env.DEV_LAN_ORIGIN] : []),
   ],
   experimental: {
     optimizePackageImports: ["chart.js", "react-chartjs-2"],

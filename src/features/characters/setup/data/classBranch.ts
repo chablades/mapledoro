@@ -17,6 +17,8 @@
   the next coarser layer. Beginner/citizen and unknown ids get mask 0 (show everything).
 */
 
+import type { EquipmentLike } from "./equipmentStepDraft";
+
 export type EquipBranch = "warrior" | "magician" | "bowman" | "thief" | "pirate";
 
 /** reqJob bitmask bit per branch (matches the item data's `reqJob`). */
@@ -153,6 +155,23 @@ export function weaponPrefixesForClass(classId: string | undefined): string[] | 
   const types = CLASS_WEAPON_TYPES[classId];
   if (!types) return null;
   return types.map((t) => WEAPON_TYPE_PREFIX[t]);
+}
+
+/** Weapon-id prefix -> which hand it is. Only meaningful for the 3 classes whose weapon
+ *  choice actually varies by hand (hero/paladin/dawn_warrior); every other class's
+ *  weapon type is fixed, so a lookup miss here just means "not hand-ambiguous". */
+const WEAPON_HAND_BY_PREFIX: Record<string, "1h" | "2h"> = Object.fromEntries(
+  Object.entries(WEAPON_TYPE_PREFIX)
+    .filter(([type]) => type.startsWith("oneH") || type.startsWith("twoH"))
+    .map(([type, prefix]) => [prefix, type.startsWith("oneH") ? "1h" : "2h"]),
+);
+
+/** Derives 1H/2H from the active preset's equipped weapon id; undefined if there's no
+ *  weapon on file there, or its prefix isn't a known one/two-handed type. */
+export function deriveWeaponHandFromWeapon(equipment: EquipmentLike | null | undefined): "1h" | "2h" | undefined {
+  const weaponId = equipment?.presets?.[equipment.activePreset]?.weapon?.id;
+  if (!weaponId) return undefined;
+  return WEAPON_HAND_BY_PREFIX[weaponId.slice(0, 5)];
 }
 
 // ── Secondary-type filtering ─────────────────────────────────────────────────

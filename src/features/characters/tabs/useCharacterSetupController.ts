@@ -30,8 +30,9 @@ import {
 } from "../model/charactersStore";
 import { findClassById, type HexaSkillLevels } from "../../tools/hexa-skills/hexa-classes";
 import { getClassDataByNexonJobName } from "../setup/data/classSkillData";
+import { deriveWeaponHandFromWeapon } from "../setup/data/classBranch";
 import { hexaStatHasData, type HexaStatNode, type HexaStatEntry, type HexaStatSlot } from "../setup/data/hexaStatData";
-import { IA_PASSIVE_PLUS_ONE_LINE, IA_MULTI_TARGET_PLUS_ONE_LINE } from "../setup/data/innerAbilityData";
+import { deriveInnerAbilityLine, innerAbilityHasData } from "../setup/data/innerAbilityData";
 import { ARCANE_AREAS, ALL_SACRED_AREAS, SACRED_AREAS, SACRED_MAX_LEVEL, type SymbolArea, type SymbolType } from "../../tools/symbols/symbol-data";
 import type { SymbolState } from "../../tools/symbols/useSymbolState";
 import {
@@ -46,8 +47,8 @@ import {
 } from "../model/setupDraftStorage";
 import type { StoredCharacterRecord, StoredCharacterStats } from "../model/charactersStore";
 import {
-  convertStatsStepDraftToStored, marriageDraftToStored, parseStatsStepDraft,
-  serializeStatsStepDraft, storedStatsToStatsStepDraft,
+  convertStatsStepDraftToStored, deriveHasRuinForceShield, deriveIsLiberatedFromWeapon, marriageDraftToStored,
+  parseStatsStepDraft, serializeStatsStepDraft, storedStatsToStatsStepDraft,
 } from "../setup/data/statsStepDraft";
 import { serializeEquipmentStepDraft, storedEquipmentToDraft } from "../setup/data/equipmentStepDraft";
 import { convertOzRingsDraftToStored, ozRingsTotallingStatOverrides, parseOzRingsDraft, serializeOzRingsDraft, storedOzRingsToOzRingsDraft, type MainStatId } from "../setup/data/ozRingData";
@@ -60,15 +61,12 @@ import {
   type LegionArtifactsDraft,
 } from "../setup/data/scouterQuestionsData";
 import {
-  computeRawStatLevels,
   DEFAULT_CRYSTAL_STATS,
-  effectiveStatLevel,
-  hasAnyCrystalProgress,
+  deriveLegionArtifactFields,
   isCrystalUnlocked,
   LEGION_CRYSTALS,
   MIN_CRYSTAL_LEVEL,
   parseLegionArtifactBoardDraft,
-  statBonusValue,
   toStoredLegionCrystals,
   type LegionArtifactBoardDraft,
 } from "../setup/data/legionArtifactData";
@@ -241,10 +239,27 @@ function applyStatsDraftToRoster(
   const store = readCharactersStore();
   const existing = selectCharacterById(store, toCharacterKey(character));
   if (!existing) return;
+  const statsDraft = parseStatsStepDraft(rawDraft);
   const { stats, isLiberated, weaponHand, hasRuinForceShield, soul } =
-    convertStatsStepDraftToStored(parseStatsStepDraft(rawDraft), character.level);
+    convertStatsStepDraftToStored(statsDraft, character.level);
   preserveExistingActivePresets(stats, existing);
-  upsertFn({ ...existing, stats: { ...existing.stats, ...stats }, isLiberated, weaponHand, hasRuinForceShield, soul });
+  // Same derive-over-manual-answer rule as buildFullSetupRecord/applyMapleScouterFlow:
+  // a Genesis/Destiny weapon already on file is definitive, and this step's own Inner
+  // Ability card (if edited) fully determines the scouter-facing line — but now that
+  // this question also shows a real manual ask (see InnerAbilityLineQuestion) whenever
+  // the card has no data yet, fall back to that manual answer instead of discarding it.
+  const innerAbilityLine = innerAbilityHasData(stats.innerAbility)
+    ? (deriveInnerAbilityLine(stats.innerAbility) ?? "neither")
+    : convertScouterQuestionsDraftToStored(statsDraft)?.innerAbilityLine;
+  upsertFn({
+    ...existing,
+    stats: { ...existing.stats, ...stats },
+    isLiberated: deriveIsLiberatedFromWeapon(existing.equipment) ?? isLiberated,
+    weaponHand: deriveWeaponHandFromWeapon(existing.equipment) ?? weaponHand,
+    hasRuinForceShield: deriveHasRuinForceShield(existing.equipment) ?? hasRuinForceShield,
+    soul,
+    scouter: innerAbilityLine ? { ...existing.scouter, innerAbilityLine } : existing.scouter,
+  });
 }
 
 const WH_LEGION_RANK_SET = new Set<string>(["B", "A", "S", "SS", "SSS"]);
@@ -268,15 +283,21 @@ function resolveWhLegionRank(
 /**
  * Re-derives the world's WH Legion rank from its current roster and persists it if
  * it changed. `applyScouterLegionForWorld` only runs when a Full/MapleScouter setup
- * finishes, so it misses two roster changes that should also keep this in sync: a
- * new character added via quick setup (no Stats questionnaire at all), and an
- * existing Wild Hunter leveling into a new bracket via auto-refresh. A no-WH-in-
- * roster result never touches storage — that would erase a legitimate manual pick
- * for a Wild Hunter who just isn't in this local roster.
+ * finishes, so it misses roster changes that should also keep this in sync: a new
+ * character added via quick setup (no Stats questionnaire at all), an existing Wild
+ * Hunter leveling into a new bracket via auto-refresh, and a character being deleted
+ * from the roster (`excludeKey`, so a just-removed Wild Hunter can't still count toward
+ * its own re-derivation — without it, deleting the world's HIGHEST-ranked Wild Hunter
+ * would leave the rank stuck rather than recomputing down to the next-highest one still
+ * in the roster). A no-WH-in-roster result never touches storage — that would erase a
+ * legitimate manual pick for a Wild Hunter who just isn't in this local roster (this
+ * applies identically after a delete: the real in-game Wild Hunter may still exist even
+ * though it's no longer tracked locally, so its rank isn't actively cleared to "none").
  */
-function syncWhLegionRankForWorld(worldId: number, base?: StoredCharacterRecord): void {
+function syncWhLegionRankForWorld(worldId: number, base?: StoredCharacterRecord, excludeKey?: string): void {
   const store = readCharactersStore();
-  const worldRoster = selectCharactersList(store).filter((c) => c.worldID === worldId);
+  const worldRoster = selectCharactersList(store)
+    .filter((c) => c.worldID === worldId && (!excludeKey || toCharacterKey(c) !== excludeKey));
   const legionRoster = base && !worldRoster.some((c) => toCharacterKey(c) === toCharacterKey(base))
     ? [...worldRoster, base]
     : worldRoster;
@@ -439,8 +460,21 @@ function applyMapleScouterFlow(
   const ozRings = convertOzRingsDraftToStored(ozRingsDraft);
   const buffs = convertBuffsDraftToStored(parseBuffsDraft(stepData.buffs ?? ""));
   const scouterQ = convertScouterQuestionsDraftToStored(statsDraft);
-  const scouterPatch = ozRings || buffs || scouterQ
-    ? { ...base.scouter, ...(ozRings ? { ozRings } : {}), ...(buffs ? { buffs } : {}), ...(scouterQ ?? {}) }
+  // maplescouter_setup has no Inner Ability substep of its own, so this is the only place
+  // that can derive it — from whatever this character's Stats bookmark/full_setup already
+  // recorded, same rule as buildFullSetupRecord/applyStatsDraftToRoster. Only overrides the
+  // direct-ask answer when the active preset's lines are actually known.
+  const innerAbilityLine = innerAbilityHasData(base.stats.innerAbility)
+    ? (deriveInnerAbilityLine(base.stats.innerAbility) ?? "neither")
+    : scouterQ?.innerAbilityLine;
+  const scouterPatch = ozRings || buffs || scouterQ || innerAbilityLine
+    ? {
+        ...base.scouter,
+        ...(ozRings ? { ozRings } : {}),
+        ...(buffs ? { buffs } : {}),
+        ...(scouterQ?.weaponAtt !== undefined ? { weaponAtt: scouterQ.weaponAtt } : {}),
+        ...(innerAbilityLine !== undefined ? { innerAbilityLine } : {}),
+      }
     : base.scouter;
   // The scouter flow reuses the full-setup HEXA Matrix step (skill-levels substep only),
   // persisting to the same tool homes as full setup. HEXA Stat isn't collected here, but
@@ -456,26 +490,18 @@ function applyMapleScouterFlow(
   upsertFn({
     ...base,
     stats: { ...base.stats, ...stats },
-    isLiberated, weaponHand, hasRuinForceShield, soul,
+    // Same Genesis/Destiny-weapon-is-definitive rule as the other finalize paths — this
+    // flow has no Equipment step, so the only source is whatever's already on file.
+    isLiberated: deriveIsLiberatedFromWeapon(base.equipment) ?? isLiberated,
+    weaponHand: deriveWeaponHandFromWeapon(base.equipment) ?? weaponHand,
+    hasRuinForceShield: deriveHasRuinForceShield(base.equipment) ?? hasRuinForceShield,
+    soul,
     scouter: scouterPatch,
     tools,
     expHistory: appendExpHistoryEntry(base.expHistory, character.level, character.exp),
   });
   if (created) removeSetupDraftForCharacter(character);
   return created;
-}
-
-// The only two legendary Inner Ability lines MapleScouter cares about — full_setup
-// derives its scouter-facing answer from the Stats step's Inner Ability card's active
-// preset instead of asking the question again (maplescouter_setup, which has no Inner
-// Ability substep, still asks directly; see ScouterQuestionsSection's showArtifactsAndIA
-// in StatsSetupStep).
-function deriveInnerAbilityLine(innerAbility: StoredInnerAbility | undefined): "passive" | "multiTarget" | undefined {
-  const preset = innerAbility?.presets[innerAbility.activePreset];
-  const values = preset?.lines.map((l) => l.value) ?? [];
-  if (values.includes(IA_PASSIVE_PLUS_ONE_LINE)) return "passive";
-  if (values.includes(IA_MULTI_TARGET_PLUS_ONE_LINE)) return "multiTarget";
-  return undefined;
 }
 
 // "Lv. 11 Sacred Symbols" (the Buffs step's maxedSacredSymbol tile) is about the 6 boss
@@ -485,20 +511,6 @@ function deriveInnerAbilityLine(innerAbility: StoredInnerAbility | undefined): "
 function deriveMaxedSacredSymbol(symbolsData: SavedSymbols | null): boolean {
   if (!symbolsData) return false;
   return SACRED_AREAS.every((a) => (symbolsData.symbols[a.name]?.level ?? 0) >= SACRED_MAX_LEVEL);
-}
-
-// The scouter API only needs 2 of the 16 Legion Artifact stats — derive them from the
-// full board full_setup collects instead of storing a separately-entered value. Only
-// derives (and thus only overrides whatever's already stored for this world) when this
-// session's board actually has crystal progress — an empty/untouched board must NOT
-// wipe a value a different character already set here via maplescouter_setup.
-function deriveLegionArtifactFields(board: LegionArtifactBoardDraft): LegionArtifactsDraft | undefined {
-  if (!hasAnyCrystalProgress(board.crystals)) return undefined;
-  const rawLevels = computeRawStatLevels(board.crystals, Number(board.artifactLevel) || 0);
-  return {
-    artifactExtraTarget: effectiveStatLevel(rawLevels.multiTargetExp) >= 1,
-    artifactFinalAttackDmg: String(statBonusValue("finalAttackDamage", effectiveStatLevel(rawLevels.finalAttackDamage))),
-  };
 }
 
 // Hyper Stat/Inner Ability's activePreset always converts to 0 from the draft (see
@@ -581,7 +593,15 @@ function buildFullSetupRecord(
     character,
     base,
     statsDraft.scouterQuestions?.whLegion,
-    deriveLegionArtifactFields(legionBoard),
+    // Per-field merge, not whole-object fallback: deriveLegionArtifactFields can return
+    // just ONE of the two fields (e.g. only Bonus EXP was ever assigned to a crystal this
+    // session) -- a `??` on the whole object would let that partial result silently win
+    // over a real manual answer for the OTHER field, reintroducing the same silent-
+    // discard bug this fallback was meant to fix. Spreading the manual answer first, then
+    // overlaying only whichever field(s) the board actually proved, keeps each field's
+    // own fallback chain independent: board-derived (if that stat's ever been assigned)
+    // -> this session's manual answer -> whatever was already stored.
+    { ...statsDraft.scouterQuestions, ...deriveLegionArtifactFields(legionBoard) },
     legionBoard,
   );
 
@@ -623,7 +643,13 @@ function buildFullSetupRecord(
   const buffs = deriveMaxedSacredSymbol(symbolsData)
     ? { ...existing?.scouter?.buffs, ...(buffsConverted ?? {}), maxedSacredSymbol: true as const }
     : buffsConverted;
-  const innerAbilityLine = deriveInnerAbilityLine(stats.innerAbility);
+  // Same derive-over-manual-answer rule as applyStatsDraftToRoster/applyMapleScouterFlow:
+  // real Inner Ability card data wins when it exists; otherwise fall back to this
+  // session's manual Quick Questions answer (see InnerAbilityLineQuestion) instead of
+  // discarding it.
+  const innerAbilityLine = innerAbilityHasData(stats.innerAbility)
+    ? (deriveInnerAbilityLine(stats.innerAbility) ?? "neither")
+    : convertScouterQuestionsDraftToStored(statsDraft)?.innerAbilityLine;
   // full_setup asks Weapon ATT inline in the Equipment step's weapon picker, not Stats
   // (maplescouter_setup has no Equipment step, so it's the only flow still asking in Stats).
   const weaponAtt = stepData.equipment ? extractWeaponAttFromEquipmentDraft(stepData.equipment) : undefined;
@@ -639,11 +665,18 @@ function buildFullSetupRecord(
   // full-setup redo that didn't revisit them, or a step skipped by level/legacy gating.
   // Falling back to the blank base instead would silently wipe them. This is the same
   // merge-against-existing rule the scouter/expHistory fields below already follow.
+  const knownEquipment = equipmentData ?? existing?.equipment ?? base.equipment;
   return {
     ...base,
     stats: { ...base.stats, ...stats },
-    equipment: equipmentData ?? existing?.equipment ?? base.equipment,
-    isLiberated, weaponHand, hasRuinForceShield, soul, tools,
+    equipment: knownEquipment,
+    // A Genesis/Destiny weapon already known (this run's Equipment step, or a prior
+    // run's) is definitive proof either way — takes priority over the manual checkbox
+    // answer, same rule as applyStatsDraftToRoster/applyEquipmentDraftToRoster.
+    isLiberated: deriveIsLiberatedFromWeapon(knownEquipment) ?? isLiberated,
+    weaponHand: deriveWeaponHandFromWeapon(knownEquipment) ?? weaponHand,
+    hasRuinForceShield: deriveHasRuinForceShield(knownEquipment) ?? hasRuinForceShield,
+    soul, tools,
     familiars: familiarsData ?? existing?.familiars ?? base.familiars,
     vMatrix: vMatrixData ?? existing?.vMatrix ?? base.vMatrix,
     expHistory: existing ? appendExpHistoryEntry(existing.expHistory, character.level, character.exp) : base.expHistory,
@@ -679,11 +712,28 @@ function applyEquipmentDraftToRoster(
   preserveExistingEquipmentActivePreset(equipment, existing);
   const symbolsData = buildSymbolsToolDataForRecord(character, equipmentJson);
   const weaponAtt = extractWeaponAttFromEquipmentDraft(equipmentJson);
+  // Same resync buildFullSetupRecord already does for a full Setup finish (see its own
+  // deriveMaxedSacredSymbol comment) — without it, editing Symbols from the Equipment
+  // bookmark's pencil (outside Setup entirely) could cross the Lv. 11 Sacred Symbols
+  // threshold and leave this buff flag stale until the next full Setup run happens to
+  // touch it. Positive-only (never clears back to unset), matching buildFullSetupRecord's
+  // own established behavior for this same flag.
+  const scouterBuffs = symbolsData && deriveMaxedSacredSymbol(symbolsData)
+    ? { ...existing.scouter?.buffs, maxedSacredSymbol: true as const }
+    : existing.scouter?.buffs;
   upsertFn({
     ...existing,
     equipment,
+    // Genesis Liberation's Final Damage bonus lives on the weapon item itself, so a
+    // newly-picked weapon is just as definitive proof of losing it as gaining it —
+    // re-derive from whichever preset is active rather than only ever setting true.
+    isLiberated: deriveIsLiberatedFromWeapon(equipment) ?? existing.isLiberated,
+    weaponHand: deriveWeaponHandFromWeapon(equipment) ?? existing.weaponHand,
+    hasRuinForceShield: deriveHasRuinForceShield(equipment) ?? existing.hasRuinForceShield,
     tools: symbolsData ? { ...existing.tools, symbols: symbolsData } : existing.tools,
-    scouter: weaponAtt !== undefined ? { ...existing.scouter, weaponAtt } : existing.scouter,
+    scouter: weaponAtt !== undefined || scouterBuffs !== existing.scouter?.buffs
+      ? { ...existing.scouter, ...(weaponAtt !== undefined ? { weaponAtt } : {}), ...(scouterBuffs ? { buffs: scouterBuffs } : {}) }
+      : existing.scouter,
   });
 }
 
@@ -1234,7 +1284,21 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
     const existing = selectCharacterById(readCharactersStore(), toCharacterKey(confirmedCharacter));
     const current = existing?.stats?.[field];
     if (!existing || !current) return;
-    upsertRosterCharacter({ ...existing, stats: { ...existing.stats, [field]: { ...current, activePreset: presetIndex } } });
+    const updated = { ...current, activePreset: presetIndex };
+    // Switching to a different active Inner Ability preset can change the scouter-facing
+    // line (Passive/Multi Target +1) — recompute it here too, or it goes stale relative to
+    // whatever preset is now actually active. Only ever sets a real derived answer, never
+    // clears one back to unset (matches the other derive-over-manual call sites).
+    let innerAbilityLine: "passive" | "multiTarget" | "neither" | undefined;
+    if (field === "innerAbility") {
+      const updatedIA = updated as StoredInnerAbility;
+      if (innerAbilityHasData(updatedIA)) innerAbilityLine = deriveInnerAbilityLine(updatedIA) ?? "neither";
+    }
+    upsertRosterCharacter({
+      ...existing,
+      stats: { ...existing.stats, [field]: updated },
+      scouter: innerAbilityLine ? { ...existing.scouter, innerAbilityLine } : existing.scouter,
+    });
   }, [confirmedCharacter, upsertRosterCharacter]);
 
   // Same profile-page correction as setStatsActivePreset above, for which equipment
@@ -1243,7 +1307,17 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
     if (!confirmedCharacter) return;
     const existing = selectCharacterById(readCharactersStore(), toCharacterKey(confirmedCharacter));
     if (!existing) return;
-    upsertRosterCharacter({ ...existing, equipment: { ...existing.equipment, activePreset: presetIndex } });
+    const updated = { ...existing.equipment, activePreset: presetIndex };
+    upsertRosterCharacter({
+      ...existing,
+      equipment: updated,
+      // Whichever preset is now active is the definitive one — re-derive against it
+      // rather than only ever flipping true, since switching presets can genuinely
+      // gain or lose Genesis Liberation/weapon hand/Ruin Force Shield.
+      isLiberated: deriveIsLiberatedFromWeapon(updated) ?? existing.isLiberated,
+      weaponHand: deriveWeaponHandFromWeapon(updated) ?? existing.weaponHand,
+      hasRuinForceShield: deriveHasRuinForceShield(updated) ?? existing.hasRuinForceShield,
+    });
   }, [confirmedCharacter, upsertRosterCharacter]);
 
   // Same profile-page correction as setStatsActivePreset/setEquipmentActivePreset above, for
@@ -2250,6 +2324,10 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
       (entry) => toCharacterKey(entry) !== removedKey,
     );
     const isLastCharacter = remainingRoster.length === 0;
+    // Re-derive the world's WH Legion rank excluding the character being removed, so
+    // deleting the world's highest-ranked Wild Hunter correctly falls to the next-
+    // highest one still in the roster instead of leaving the stale rank stuck.
+    syncWhLegionRankForWorld(removedWorldId, undefined, removedKey);
 
     // Clean up world-scoped champion keys
     const nextChampionKeysByWorld = { ...championCharacterKeysByWorld };
@@ -2446,6 +2524,14 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
   // The Stats step's own draft, independent of which step is currently active — needed
   // for its live-computed Character-Info substep gate (see getFirstInvalidStepIndex).
   const statsRawValue = setupStepTestByStep.stats ?? "";
+  // Equipment/Legion Artifacts' own drafts, independent of which step is currently
+  // active — the Stats step's Quick Questions derives Genesis Liberation/Weapon Hand/
+  // Ruin Force Shield/Legion Artifacts from whichever of these is most current, and a
+  // live in-session edit to either step (not yet Finished) should win over whatever's
+  // still sitting in storage from before this session, so it can't stay stuck locked to
+  // a stale answer until a full Finish-then-reopen round trip.
+  const equipmentRawValue = setupStepTestByStep.equipment ?? "";
+  const legionArtifactsRawValue = setupStepTestByStep.legion_artifacts ?? "";
   const currentCharacterKey = confirmedCharacter ? toCharacterKey(confirmedCharacter) : null;
   const restorableBookmarkId = lastActiveBookmark && lastActiveBookmark.characterKey === currentCharacterKey
     ? lastActiveBookmark.bookmarkId
@@ -2517,6 +2603,8 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
     isUiLocked,
     activeSetupStepValue,
     statsRawValue,
+    equipmentRawValue,
+    legionArtifactsRawValue,
     isCurrentMainCharacter,
     isCurrentChampionCharacter,
     canSetCurrentChampion,

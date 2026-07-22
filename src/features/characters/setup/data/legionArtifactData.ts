@@ -212,6 +212,42 @@ export function hasAnyCrystalProgress(crystals: LegionCrystalDraft[] | undefined
   return (crystals ?? []).some((c) => c && (c.level ?? 0) > 0);
 }
 
+/** True if a crystal still holds its untouched-default 3 lines (in original order) —
+ *  a crystal starts here in-game the moment it's unlocked, so this alone doesn't mean
+ *  "never opened", only "never rerolled". */
+export function isCrystalUntouched(crystal: LegionCrystalDraft | undefined): boolean {
+  const stats = crystal?.stats ?? DEFAULT_CRYSTAL_STATS;
+  return stats.length === DEFAULT_CRYSTAL_STATS.length
+    && DEFAULT_CRYSTAL_STATS.every((s, idx) => stats[idx] === s);
+}
+
+/**
+ * The scouter API only needs 2 of the 16 Legion Artifact stats — derive them from the
+ * full board instead of storing a separately-entered value. Each field derives
+ * independently: a crystal's default 3 lines never include multiTargetExp/
+ * finalAttackDamage (see DEFAULT_CRYSTAL_STATS), so computeRawStatLevels only produces an
+ * entry for one of these stats once it's been assigned to an unlocked crystal at least
+ * once — that's real proof for THAT stat specifically, not a signal about the other one
+ * or about the board in general. Locking both fields off "some crystal was customized
+ * somewhere" would be wrong: assigning Bonus EXP to one crystal says nothing about
+ * whether Final Attack Damage has ever been touched. Deliberately asserts both true AND
+ * false once a stat is assigned (not positive-only) so a later respec correctly
+ * un-derives back down instead of getting stuck on a stale true — this is also why the UI
+ * must call this directly to decide whether a field is locked, rather than trusting a
+ * stored value's mere presence (which could just be a prior manual answer, not proof).
+ */
+export function deriveLegionArtifactFields(board: LegionArtifactBoardDraft): { artifactExtraTarget?: boolean; artifactFinalAttackDmg?: string } | undefined {
+  const artifactLevel = Number(board.artifactLevel) || 0;
+  const rawLevels = computeRawStatLevels(board.crystals, artifactLevel);
+  const hasExtraTarget = rawLevels.multiTargetExp !== undefined;
+  const hasFinalAtk = rawLevels.finalAttackDamage !== undefined;
+  if (!hasExtraTarget && !hasFinalAtk) return undefined;
+  return {
+    ...(hasExtraTarget ? { artifactExtraTarget: effectiveStatLevel(rawLevels.multiTargetExp) >= 1 } : {}),
+    ...(hasFinalAtk ? { artifactFinalAttackDmg: String(statBonusValue("finalAttackDamage", effectiveStatLevel(rawLevels.finalAttackDamage))) } : {}),
+  };
+}
+
 export const EMPTY_CRYSTAL: LegionCrystalDraft = { level: MIN_CRYSTAL_LEVEL, stats: [...DEFAULT_CRYSTAL_STATS] };
 
 /**

@@ -215,6 +215,8 @@ export default function CharacterSetupFlow({ theme, initialCharacterName, initia
       stepValidityById: state.stepValidityById,
       activeSetupStepValue: state.activeSetupStepValue,
       statsRawValue: state.statsRawValue,
+      equipmentRawValue: state.equipmentRawValue,
+      legionArtifactsRawValue: state.legionArtifactsRawValue,
     },
     directory: {
       allCharacters: state.characterRoster,

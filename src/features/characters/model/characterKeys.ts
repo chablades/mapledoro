@@ -16,10 +16,10 @@ export function toCharacterKey(character: HasCharacterName) {
   return normalizeCharacterName(character.characterName);
 }
 
-export function findRosterCharacterByName(
-  roster: HasCharacterName[],
+export function findRosterCharacterByName<T extends HasCharacterName>(
+  roster: T[],
   name: string,
-) {
+): T | undefined {
   const normalizedName = normalizeCharacterName(name);
   return roster.find(
     (entry) => normalizeCharacterName(entry.characterName) === normalizedName,

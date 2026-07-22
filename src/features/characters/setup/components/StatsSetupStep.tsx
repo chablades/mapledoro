@@ -12,7 +12,7 @@ import HoverTooltip from "../../../../components/HoverTooltip";
 import type { SetupStepDefinition } from "../steps";
 import type { SetupFlowId } from "../flows";
 import SetupStepFrame from "./SetupStepFrame";
-import InfoTooltip from "./InfoTooltip";
+import InfoTooltip, { LockGlyph } from "./InfoTooltip";
 import { CopyFromPreset } from "./CopyFromPreset";
 import { statInputStyle, inputSuffixStyle, ChecklistCheckbox, ChecklistGroup, LegionFinalAttackField, InputWarningBubble, scrollToFlaggedField, flaggedValueLinkStyle } from "./QuestionControls";
 import {
@@ -26,12 +26,17 @@ import {
   type ClassWarning,
 } from "../data/classSkillData";
 import { STAT_LABELS, TRIPLE_STAT_FIELDS, type StatFieldId, type TripleStatFieldId } from "../data/statFields";
+import { deriveWeaponHandFromWeapon } from "../data/classBranch";
+import { equipmentLikeFromDraft, parseEquipmentStepDraft, type EquipmentLike } from "../data/equipmentStepDraft";
 import {
   GENESIS_LIBERATION_LEVEL,
   isArcaneEligible,
   isHyperStatEligible,
   isSacredEligible,
   deriveWeaponAttLabel,
+  deriveIsLiberatedFromWeapon,
+  deriveHasRuinForceShield,
+  getLiberationWeaponName,
   WEAPON_ATT_WARN_AT,
   normalizeHyperStatDraft,
   parseStatsStepDraft,
@@ -54,9 +59,11 @@ import {
   type HyperStatCategoryDef,
 } from "../data/hyperStatData";
 import { IA_LINE_OPTIONS, WH_RANK_OPTIONS, whAutofillSourceFromRoster, type WhAutofillSource } from "../data/scouterQuestionsData";
-import type { IADraft } from "../data/innerAbilityData";
+import { deriveInnerAbilityLine, innerAbilityHasData, normalizeIA, type IADraft } from "../data/innerAbilityData";
+import { deriveLegionArtifactFields, parseLegionArtifactBoardDraft, type LegionArtifactBoardDraft, type LegionCrystalDraft } from "../data/legionArtifactData";
 import InnerAbilitySetupStep from "./InnerAbilitySetupStep";
-import type { StoredCharacterRecord, StoredScouterLegion, WhLegionRank } from "../../model/charactersStore";
+import type { StoredCharacterRecord, StoredLegionArtifact, StoredScouterLegion, WhLegionRank } from "../../model/charactersStore";
+import { findRosterCharacterByName } from "../../model/characterKeys";
 
 // Soul Weapon tooltip illustrations. Every stat-variant "Soul" item (Beefy/Swift/Clever/
 // etc.) shares the identical icon, pixel-verified 2026-07-01 — these are just one
@@ -84,7 +91,16 @@ interface StatsSetupStepProps {
   characterLevel?: number;
   characterRoster?: StoredCharacterRecord[];
   confirmedWorldId?: number;
+  confirmedCharacterName?: string;
   worldScouterLegion?: StoredScouterLegion;
+  worldLegionArtifact?: StoredLegionArtifact;
+  /** This session's own live Equipment/Legion Artifacts step drafts, independent of
+   *  which step is currently active — takes priority over worldLegionArtifact/the
+   *  roster's persisted equipment when non-empty, so clearing a weapon or a Legion
+   *  Artifact line mid-session and coming back to Quick Questions reflects it
+   *  immediately instead of only after a Finish-then-reopen round trip. */
+  equipmentRawValue?: string;
+  legionArtifactsRawValue?: string;
   value: string;
   onChange: (value: string) => void;
   onBack: () => void;
@@ -595,6 +611,9 @@ function CombatStatCell({
 }
 
 // Scouter-only weapon ATT/MATT field — the "+X" attack value shown on the weapon hover.
+// Already known (locked, read-only) whenever full_setup or a prior scouter run already
+// recorded it (draft.weaponAtt is seeded from scouter.weaponAtt regardless of flow — see
+// storedStatsToStatsStepDraft's caller) — only genuinely asks when it's still blank.
 function WeaponAttField({ label, usesMagicWeapon, value, onUpdate, theme }: {
   label: string;
   usesMagicWeapon: boolean;
@@ -604,6 +623,7 @@ function WeaponAttField({ label, usesMagicWeapon, value, onUpdate, theme }: {
 }) {
   const statName = usesMagicWeapon ? "Magic ATT" : "Attack Power";
   const statShortName = usesMagicWeapon ? "Magic ATT" : "ATT";
+  const locked = value.trim() !== "";
   // MapleScouter flags this Total-vs-Weapon-only mix-up for every class, not just
   // magic ones — same threshold either way.
   const showWeaponAttWarning = Number(value) > WEAPON_ATT_WARN_AT;
@@ -621,6 +641,15 @@ function WeaponAttField({ label, usesMagicWeapon, value, onUpdate, theme }: {
               }}
               theme={theme}
             />
+            {locked && (
+              <InfoTooltip
+                content={{ title: "Why this is locked", description: "Auto-filled from your Equipment." }}
+                theme={theme}
+                icon={<LockGlyph />}
+                label="Why this is locked"
+                bordered={false}
+              />
+            )}
           </div>
           <div style={{ position: "relative", flexShrink: 0 }}>
             {showWeaponAttWarning && <InputWarningBubble message={`That looks like your total ${statShortName}, enter your weapon's ${statShortName}.`} theme={theme} />}
@@ -630,9 +659,10 @@ function WeaponAttField({ label, usesMagicWeapon, value, onUpdate, theme }: {
               aria-label={label}
               value={value}
               placeholder="0"
-              style={statInputStyle(theme, "4.6rem")}
+              readOnly={locked}
+              style={{ ...statInputStyle(theme, "4.6rem"), ...(locked ? { borderColor: theme.muted, cursor: "default" } : {}) }}
               data-flagged-field={showWeaponAttWarning || !value.trim() ? "true" : undefined}
-              onChange={(e) => onUpdate(sanitizeDigitsInput(e.target.value))}
+              onChange={(e) => { if (!locked) onUpdate(sanitizeDigitsInput(e.target.value)); }}
               onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
               onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
               onKeyDown={numericKeyDown}
@@ -647,7 +677,7 @@ function WeaponAttField({ label, usesMagicWeapon, value, onUpdate, theme }: {
 // ── Setup options section ─────────────────────────────────────────────────────
 
 function SetupOptionsSection({
-  optsDef, draft, onUpdate, theme, characterLevel, required,
+  optsDef, draft, onUpdate, theme, characterLevel, required, existingEquipment,
 }: {
   optsDef: ClassSetupOptionsDef | undefined;
   draft: StatsStepDraft;
@@ -655,10 +685,20 @@ function SetupOptionsSection({
   theme: AppTheme;
   characterLevel?: number;
   required?: boolean;
+  existingEquipment?: EquipmentLike | null;
 }) {
   const opts = draft.setupOptions ?? {};
   const isDA = Boolean(optsDef?.epheniaSoul);
   const isLiberationEligible = characterLevel === undefined || characterLevel >= GENESIS_LIBERATION_LEVEL;
+  // A weapon already on file at the active preset is definitive proof either way —
+  // Genesis Liberation's Final Damage bonus lives on the weapon item itself, so a real,
+  // non-genesis weapon there proves "not liberated right now" just as surely as a
+  // Genesis/Destiny one proves "liberated" — so it's shown locked, same treatment as
+  // Wild Hunter rank, whenever the active preset's weapon is known at all.
+  const isLiberatedByWeapon = deriveIsLiberatedFromWeapon(existingEquipment);
+  const liberationWeaponName = getLiberationWeaponName(existingEquipment);
+  const derivedWeaponHand = deriveWeaponHandFromWeapon(existingEquipment);
+  const derivedRuinForceShield = deriveHasRuinForceShield(existingEquipment);
 
   let soulValue: string | null = null;
   if (opts.soulType === "mugong") soulValue = "mugong";
@@ -692,27 +732,39 @@ function SetupOptionsSection({
       {isLiberationEligible && (
         <ChecklistCheckbox
           label="Genesis Liberation complete?"
-          checked={opts.isLiberated}
+          checked={isLiberatedByWeapon ?? opts.isLiberated}
           onToggle={(v) => onUpdate({ isLiberated: v })}
           theme={theme}
+          disabled={isLiberatedByWeapon !== undefined}
           tooltip={{
             title: "Genesis Liberation",
             description: <>Unlocked in Limina (Lv. 255) after defeating the Black Mage in Story Mode at least once. You can start this quest with <a href="https://maplestorywiki.net/w/(Genesis_Weapon)_Trailing_the_Traces_of_the_Black_Mage" target="_blank" rel="noreferrer" style={{ color: theme.accent, fontWeight: 700, textDecoration: "none" }}>[Genesis Weapon] Trailing the Traces of the Black Mage</a>. Completing the full questline is called liberation.</>,
             link: { href: "https://maplestorywiki.net/w/Genesis_Weapon", label: "See more on the wiki" },
+          }}
+          lockTooltip={{
+            title: "Why this is locked",
+            description: isLiberatedByWeapon
+              ? <>Auto-filled because <strong>{liberationWeaponName}</strong> is in your active Equipment preset.</>
+              : "Auto-filled because your active Equipment preset's weapon isn't a Genesis or Destiny weapon.",
           }}
         />
       )}
       {optsDef?.ruinForceShield && (
         <ChecklistCheckbox
           label="Ruin Force Shield equipped?"
-          checked={opts.hasRuinForceShield}
+          checked={derivedRuinForceShield ?? opts.hasRuinForceShield}
           onToggle={(v) => onUpdate({ hasRuinForceShield: v })}
           theme={theme}
+          disabled={derivedRuinForceShield !== undefined}
           tooltip={{
             title: "Ruin Force Shield",
             description: "A secondary weapon exclusive to Demon Slayer and Demon Avenger, providing Final Damage +10% and Max HP +560 at the cost of increased damage taken.",
             imageUrls: [resourceImageUrl("item", RUIN_FORCE_SHIELD_ITEM_ID, "iconRaw.png")],
             link: { href: "https://maplestorywiki.net/w/Ruin_Force_Shield", label: "See more on the wiki" },
+          }}
+          lockTooltip={{
+            title: "Why this is locked",
+            description: "Auto-filled from your active Equipment preset's secondary slot.",
           }}
         />
       )}
@@ -734,18 +786,37 @@ function SetupOptionsSection({
         />
       )}
       {optsDef?.weaponType && (
-        <ChecklistGroup
-          question="What weapon type are you using?"
-          options={[{ value: "1h", label: "One-Handed" }, { value: "2h", label: "Two-Handed" }]}
-          value={opts.weaponHand ?? null}
-          onToggle={(v) => onUpdate({ weaponHand: (v as "1h" | "2h") ?? undefined })}
-          theme={theme}
-          required={required}
-          tooltip={{
-            title: "Weapon Type",
-            description: "Hover over your weapon in your equipment inventory and look to the right of the item icon to find your weapon type.",
-          }}
-        />
+        derivedWeaponHand !== undefined ? (
+          <ChecklistGroup
+            question="What weapon type are you using?"
+            options={[{ value: derivedWeaponHand, label: derivedWeaponHand === "1h" ? "One-Handed" : "Two-Handed" }]}
+            value={derivedWeaponHand}
+            onToggle={() => {}}
+            theme={theme}
+            disabled
+            tooltip={{
+              title: "Weapon Type",
+              description: "Hover over your weapon in your equipment inventory and look to the right of the item icon to find your weapon type.",
+            }}
+            lockTooltip={{
+              title: "Why this is locked",
+              description: "Auto-filled from your active Equipment preset's weapon.",
+            }}
+          />
+        ) : (
+          <ChecklistGroup
+            question="What weapon type are you using?"
+            options={[{ value: "1h", label: "One-Handed" }, { value: "2h", label: "Two-Handed" }]}
+            value={opts.weaponHand ?? null}
+            onToggle={(v) => onUpdate({ weaponHand: (v as "1h" | "2h") ?? undefined })}
+            theme={theme}
+            required={required}
+            tooltip={{
+              title: "Weapon Type",
+              description: "Hover over your weapon in your equipment inventory and look to the right of the item icon to find your weapon type.",
+            }}
+          />
+        )
       )}
       {soulOptions.length > 1 && (
         <ChecklistGroup
@@ -789,19 +860,18 @@ function WildHunterRankQuestion({ sq, whSource, worldLegion, onUpdate, theme, re
     // so showing them would just be dead, unclickable clutter.
     const matchedOption = WH_RANK_OPTIONS.find((o) => o.value === whSource.rank);
     return (
-      <div>
-        <ChecklistGroup
-          question="What's your Wild Hunter's level?"
-          options={matchedOption ? [matchedOption] : []}
-          value={whSource.rank}
-          onToggle={() => {}}
-          theme={theme}
-          disabled
-        />
-        <p style={{ margin: "-0.5rem 0 0.9rem", fontSize: "0.75rem", fontWeight: 700, color: theme.muted }}>
-          Auto-filled from <span style={{ color: theme.accent }}>{whSource.name}</span> (Lv {whSource.level}).
-        </p>
-      </div>
+      <ChecklistGroup
+        question="What's your Wild Hunter's level?"
+        options={matchedOption ? [matchedOption] : []}
+        value={whSource.rank}
+        onToggle={() => {}}
+        theme={theme}
+        disabled
+        lockTooltip={{
+          title: "Why this is locked",
+          description: <>Auto-filled from <strong>{whSource.name}</strong> (Lv {whSource.level}). Wild Hunter&apos;s rank is shared across your whole Legion in this world.</>,
+        }}
+      />
     );
   }
   // No Wild Hunter in the roster — let the user set the world's rank manually.
@@ -823,46 +893,95 @@ function WildHunterRankQuestion({ sq, whSource, worldLegion, onUpdate, theme, re
 }
 
 // The two Maple Union artifacts, both sourced from the Legion window's Artifacts tab.
-// Scouter-only: full_setup collects the whole 9-crystal board on its own dedicated
-// Legion Artifacts step instead of asking these two flattened fields again.
-function LegionArtifactQuestions({ sq, worldLegion, onUpdate, theme }: {
+// Shown in both flows: full_setup's own dedicated Legion Artifacts step feeds these same
+// two fields (see deriveLegionArtifactFields), so they render here too, locked whenever
+// that board is actually customized — same superset-with-locking treatment as every
+// other field in this questionnaire.
+function LegionArtifactQuestions({ sq, worldLegion, board, onUpdate, theme }: {
   sq: NonNullable<StatsStepDraft["scouterQuestions"]>;
   worldLegion: StoredScouterLegion | undefined;
+  /** The effective (live-session-preferred, else persisted) Legion Artifact board — see
+   *  resolveEffectiveLegionBoard. */
+  board: LegionArtifactBoardDraft | null;
   onUpdate: (patch: Partial<NonNullable<StatsStepDraft["scouterQuestions"]>>) => void;
   theme: AppTheme;
 }) {
-  const finalAtkValue = sq.artifactFinalAttackDmg
-    ?? (worldLegion?.artifactFinalAttackDmg != null ? String(worldLegion.artifactFinalAttackDmg) : "");
+  // A value merely being STORED in worldLegion could just be an earlier manual answer
+  // (not proof) — same as Wild Hunter's own manual fallback never locking just because a
+  // value is already on file (see WildHunterRankQuestion). Re-derive straight from the
+  // real crystal board instead, so each field only locks once IT specifically has been
+  // assigned to a crystal — assigning Bonus EXP somewhere says nothing about whether
+  // Final Attack Damage has ever been touched, so the two must lock independently.
+  const boardDerived = board ? deriveLegionArtifactFields(board) : undefined;
+  const extraTargetDerived = boardDerived?.artifactExtraTarget;
+  const finalAtkDerived = boardDerived?.artifactFinalAttackDmg;
+  const extraTargetLocked = extraTargetDerived !== undefined;
+  const finalAtkLocked = finalAtkDerived !== undefined;
+  const lockTooltip = { title: "Why this is locked", description: "Auto-filled from this world's Legion Artifacts." };
+  const manualFinalAtk = sq.artifactFinalAttackDmg ?? (worldLegion?.artifactFinalAttackDmg != null ? String(worldLegion.artifactFinalAttackDmg) : "");
   return (
     <>
       <ChecklistCheckbox
         label="Increases Bonus EXP stat?"
-        checked={sq.artifactExtraTarget ?? worldLegion?.artifactExtraTarget}
+        checked={extraTargetLocked ? extraTargetDerived : (sq.artifactExtraTarget ?? worldLegion?.artifactExtraTarget)}
         onToggle={(v) => onUpdate({ artifactExtraTarget: v })}
         theme={theme}
+        disabled={extraTargetLocked}
         tooltip={{
           title: "Increases Bonus EXP",
           description: <>Found in your Legion window, in the Artifacts tab. Assigning the <strong>Increases Bonus EXP</strong> stat to a crystal also grants <strong>Max AoE Skill Targets: +1</strong>, listed under Artifact Bonuses.</>,
         }}
+        lockTooltip={lockTooltip}
       />
       <LegionFinalAttackField
-        value={finalAtkValue}
+        value={finalAtkLocked ? finalAtkDerived : manualFinalAtk}
         onUpdate={(v) => onUpdate({ artifactFinalAttackDmg: v })}
         theme={theme}
+        locked={finalAtkLocked}
+        lockTooltip={lockTooltip}
       />
     </>
   );
 }
 
-// Inner Ability line is scouter-only (full_setup derives it from the Equipment IA
-// card instead) but is a per-character fact like Liberated/Soul/weapon type, so it
-// groups with Character Info rather than Artifacts or Legion.
-function InnerAbilityLineQuestion({ sq, onUpdate, theme, required }: {
+type InnerAbilityDerivedLine = "passive" | "multiTarget" | "neither" | undefined;
+
+// Inner Ability line is a per-character fact like Liberated/Soul/weapon type, so it
+// groups with Character Info rather than Artifacts or Legion. Same superset treatment as
+// Weapon Hand/Ruin Force Shield/Legion Artifacts: shown as a normal manual ask in BOTH
+// flows whenever the active preset's real lines aren't known yet, locked once they are
+// — full_setup having its own dedicated Inner Ability substep later in this same step
+// doesn't mean hiding this one, same reasoning that unhid Legion Artifacts.
+function InnerAbilityLineQuestion({ sq, onUpdate, theme, required, derivedLine }: {
   sq: NonNullable<StatsStepDraft["scouterQuestions"]>;
   onUpdate: (patch: Partial<NonNullable<StatsStepDraft["scouterQuestions"]>>) => void;
   theme: AppTheme;
   required?: boolean;
+  /** The active preset's real line, or "neither" if known-but-absent, or undefined if
+   *  there's no Inner Ability data on file/entered yet at all. */
+  derivedLine: InnerAbilityDerivedLine;
 }) {
+  if (derivedLine !== undefined) {
+    const matchedOption = IA_LINE_OPTIONS.find((o) => o.value === derivedLine);
+    return (
+      <ChecklistGroup
+        question="Which Inner Ability line do you use for bossing?"
+        options={matchedOption ? [matchedOption] : IA_LINE_OPTIONS}
+        value={derivedLine}
+        onToggle={() => {}}
+        theme={theme}
+        disabled
+        tooltip={{
+          title: "Inner Ability",
+          description: <>Found in your Stats window: click <strong>Detail</strong>, then the <strong>Ability</strong> button at the bottom right. Only a Legendary-rank Inner Ability can roll these lines.</>,
+        }}
+        lockTooltip={{
+          title: "Why this is locked",
+          description: "Auto-filled from your active Inner Ability preset.",
+        }}
+      />
+    );
+  }
   return (
     <ChecklistGroup
       question="Which Inner Ability line do you use for bossing?"
@@ -895,10 +1014,27 @@ function deriveScouterWhSource(
   return whAutofillSourceFromRoster(worldRoster);
 }
 
-// WH Legion rank is shared between full_setup and maplescouter_setup (full_setup is a
-// superset); Legion artifacts + Inner Ability line stay scouter-only. Weapon ATT is
-// scouter-ONLY here — full_setup asks it in the Equipment step's weapon picker instead,
-// since maplescouter_setup has no Equipment step to move it into.
+// The Inner Ability line question needs the REAL active preset (whichever one the
+// profile's "Set Active" button last confirmed, existingActivePreset) — NOT this
+// draft's own tab switcher, which is just a viewing convenience while editing and isn't
+// an authoritative "this is what's equipped" choice (same reasoning
+// convertInnerAbilityDraftToStored's own comment gives for why it always saves preset 0).
+// Line VALUES still come from the live draft, so an edit made to that preset later in
+// this same session (full_setup's own Inner Ability substep) is reflected immediately.
+function deriveKnownInnerAbilityLine(
+  draftIA: IADraft | undefined,
+  existingActivePreset: number | undefined,
+): InnerAbilityDerivedLine {
+  const full = normalizeIA(draftIA);
+  const known = { activePreset: existingActivePreset ?? 0, presets: full.presets };
+  return innerAbilityHasData(known) ? (deriveInnerAbilityLine(known) ?? "neither") : undefined;
+}
+
+// WH Legion rank, Legion Artifacts, and Inner Ability line are all shared between
+// full_setup and maplescouter_setup (full_setup is a superset — see WildHunterRankQuestion/
+// LegionArtifactQuestions/InnerAbilityLineQuestion above). Weapon ATT is the one deliberate
+// exception, scouter-ONLY here — full_setup asks it in the Equipment step's weapon picker
+// instead, since maplescouter_setup has no Equipment step to move it into.
 function deriveScouterVisibility(flowId: SetupFlowId | undefined): { isScouter: boolean; showWhLegion: boolean; showWeaponAtt: boolean } {
   const isScouter = flowId === "maplescouter_setup";
   return { isScouter, showWhLegion: isScouter || flowId === "full_setup", showWeaponAtt: isScouter };
@@ -917,16 +1053,22 @@ function isScouterQuestionnaireComplete(
   sq: NonNullable<StatsStepDraft["scouterQuestions"]> | undefined,
   whSource: WhAutofillSource | null,
   whWorldRank: WhLegionRank | undefined,
+  derivedInnerAbilityLine: InnerAbilityDerivedLine,
+  derivedWeaponHand: "1h" | "2h" | undefined,
 ): boolean {
   const o = opts ?? {};
   const s = sq ?? {};
   const isDA = Boolean(optsDef?.epheniaSoul);
-  if (optsDef?.weaponType && o.weaponHand === undefined) return false;
+  // A locked, derived weapon hand (see SetupOptionsSection) counts as answered too — it's
+  // never written into o.weaponHand since there's nothing to ask.
+  if (optsDef?.weaponType && o.weaponHand === undefined && derivedWeaponHand === undefined) return false;
   if (isDA && o.soulType === undefined) return false;
   // A rank already showing on screen via the world fallback (see WildHunterRankQuestion)
   // counts as answered — s.whLegion alone doesn't know about that fallback.
   if (!whSource && s.whLegion === undefined && whWorldRank === undefined) return false;
-  if (s.innerAbilityLine === undefined) return false;
+  // A locked, derived answer (see InnerAbilityLineQuestion) counts as answered too — it's
+  // never written into s.innerAbilityLine since there's nothing to ask.
+  if (derivedInnerAbilityLine === undefined && s.innerAbilityLine === undefined) return false;
   return true;
 }
 
@@ -1140,10 +1282,42 @@ function StatsWindowSubstep({
 
 // ── Substep 0: quick questions ────────────────────────────────────────────────
 
+// A live, not-yet-saved Equipment draft from THIS session (any non-empty raw value —
+// the Equipment step's own mount-time backfill from storage means even an untouched-
+// this-session visit produces a full snapshot, not a partial one) always wins over
+// whatever's already persisted from before this session, so clearing a weapon mid-
+// session is reflected immediately instead of only after a Finish-then-reopen round
+// trip. Falls back to the roster's persisted equipment when Equipment hasn't been
+// visited THIS session at all.
+function resolveEffectiveEquipment(
+  equipmentRawValue: string | undefined,
+  existingEquipment: EquipmentLike | null | undefined,
+): EquipmentLike | null | undefined {
+  if (!equipmentRawValue?.trim()) return existingEquipment;
+  return equipmentLikeFromDraft(parseEquipmentStepDraft(equipmentRawValue));
+}
+
+// Same reasoning as resolveEffectiveEquipment above, for Legion Artifacts — a live
+// in-session board draft (once any crystal's been touched) already carries forward
+// every other crystal's real persisted data via updateCrystal's own dense rebuild (see
+// LegionArtifactsSetupStep.tsx), so it's a safe, complete snapshot to prefer wholesale.
+function resolveEffectiveLegionBoard(
+  legionArtifactsRawValue: string | undefined,
+  worldLegionArtifact: StoredLegionArtifact | undefined,
+): LegionArtifactBoardDraft | null {
+  if (legionArtifactsRawValue?.trim()) return parseLegionArtifactBoardDraft(legionArtifactsRawValue);
+  if (!worldLegionArtifact) return null;
+  return {
+    artifactLevel: worldLegionArtifact.artifactLevel !== undefined ? String(worldLegionArtifact.artifactLevel) : undefined,
+    crystals: worldLegionArtifact.crystals as LegionCrystalDraft[] | undefined,
+  };
+}
+
 function QuickQuestionsSubstep({
   theme, stepNumber, totalSteps, substepCount, substepAnimStyle,
   onBack, onNext, onFinish, onValidityChange,
-  classData, draft, whSource, worldScouterLegion, isScouter, showWhLegion, characterLevel,
+  classData, draft, whSource, worldScouterLegion, worldLegionArtifact, equipmentRawValue, legionArtifactsRawValue,
+  isScouter, showWhLegion, characterLevel, existingRecord,
   handleSetupOptUpdate, handleScouterQUpdate,
 }: {
   theme: AppTheme;
@@ -1159,14 +1333,23 @@ function QuickQuestionsSubstep({
   draft: StatsStepDraft;
   whSource: WhAutofillSource | null;
   worldScouterLegion: StoredScouterLegion | undefined;
+  worldLegionArtifact: StoredLegionArtifact | undefined;
+  equipmentRawValue: string | undefined;
+  legionArtifactsRawValue: string | undefined;
   isScouter: boolean;
   showWhLegion: boolean;
   characterLevel?: number;
+  existingRecord: StoredCharacterRecord | null;
   handleSetupOptUpdate: (patch: Partial<NonNullable<StatsStepDraft["setupOptions"]>>) => void;
   handleScouterQUpdate: (patch: Partial<NonNullable<StatsStepDraft["scouterQuestions"]>>) => void;
 }) {
+  const effectiveEquipment = resolveEffectiveEquipment(equipmentRawValue, existingRecord?.equipment);
+  const effectiveLegionBoard = resolveEffectiveLegionBoard(legionArtifactsRawValue, worldLegionArtifact);
+  const derivedInnerAbilityLine = deriveKnownInnerAbilityLine(draft.innerAbility, existingRecord?.stats?.innerAbility?.activePreset);
+  const derivedWeaponHand = deriveWeaponHandFromWeapon(effectiveEquipment);
   const questionnaireComplete = !isScouter || isScouterQuestionnaireComplete(
     classData?.setupOptionsDef, draft.setupOptions, draft.scouterQuestions, whSource, worldScouterLegion?.wildHunterRank,
+    derivedInnerAbilityLine, derivedWeaponHand,
   );
   return (
     <div key={0} style={substepAnimStyle}>
@@ -1194,23 +1377,27 @@ function QuickQuestionsSubstep({
             theme={theme}
             characterLevel={characterLevel}
             required={isScouter}
+            existingEquipment={effectiveEquipment}
           />
-          {isScouter && (
-            <InnerAbilityLineQuestion sq={draft.scouterQuestions ?? {}} onUpdate={handleScouterQUpdate} theme={theme} required={isScouter} />
-          )}
+          <InnerAbilityLineQuestion
+            sq={draft.scouterQuestions ?? {}}
+            onUpdate={handleScouterQUpdate}
+            theme={theme}
+            required={isScouter}
+            derivedLine={derivedInnerAbilityLine}
+          />
         </div>
 
-        {isScouter && (
-          <div style={{ marginBottom: "0.75rem" }}>
-            <p style={sectionLabelStyle(theme)}>Legion Artifact</p>
-            <LegionArtifactQuestions
-              sq={draft.scouterQuestions ?? {}}
-              worldLegion={worldScouterLegion}
-              onUpdate={handleScouterQUpdate}
-              theme={theme}
-            />
-          </div>
-        )}
+        <div style={{ marginBottom: "0.75rem" }}>
+          <p style={sectionLabelStyle(theme)}>Legion Artifact</p>
+          <LegionArtifactQuestions
+            sq={draft.scouterQuestions ?? {}}
+            worldLegion={worldScouterLegion}
+            board={effectiveLegionBoard}
+            onUpdate={handleScouterQUpdate}
+            theme={theme}
+          />
+        </div>
 
         {showWhLegion && (
           <div>
@@ -1396,10 +1583,16 @@ function InnerAbilitySubstep({
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function StatsSetupStep({
-  theme, flowId, stepNumber, totalSteps, jobName = "", direction = "forward", targetSubstep, confineToSubstep, onValidityChange, onSubstepChange, characterLevel, characterRoster, confirmedWorldId, worldScouterLegion, value, onChange, onBack, onNext, onFinish,
+  theme, flowId, stepNumber, totalSteps, jobName = "", direction = "forward", targetSubstep, confineToSubstep, onValidityChange, onSubstepChange, characterLevel, characterRoster, confirmedWorldId, confirmedCharacterName, worldScouterLegion, worldLegionArtifact, equipmentRawValue, legionArtifactsRawValue, value, onChange, onBack, onNext, onFinish,
 }: StatsSetupStepProps) {
   const classData = CLASS_SKILL_DATA.find((c) => c.nexonJobName === jobName);
   const draft = parseStatsStepDraft(value);
+  // This character's already-saved record (if any) — the source for deriving already-
+  // known Genesis/Destiny liberation and Inner Ability answers below, since Equipment
+  // isn't part of this step's own draft at all.
+  const existingRecord = confirmedCharacterName
+    ? findRosterCharacterByName(characterRoster ?? [], confirmedCharacterName) ?? null
+    : null;
   // Hyper Stat is a Full-setup detail that MapleScouter never uses, so it gets its
   // own substep everywhere EXCEPT the scouter flow. ("% Not Applied" is NOT flow-
   // specific — it shows for every non-ATT stat in all flows; see TripleStatRow.)
@@ -1527,8 +1720,9 @@ export default function StatsSetupStep({
         theme={theme} stepNumber={stepNumber} totalSteps={totalSteps}
         substepCount={SUBSTEP_COUNT} substepAnimStyle={substepAnimStyle}
         onBack={onBack} onNext={() => goToSubstep(1)} onFinish={onFinish} onValidityChange={onValidityChange}
-        classData={classData} draft={draft} whSource={whSource} worldScouterLegion={worldScouterLegion}
-        isScouter={isScouter} showWhLegion={showWhLegion} characterLevel={characterLevel}
+        classData={classData} draft={draft} whSource={whSource} worldScouterLegion={worldScouterLegion} worldLegionArtifact={worldLegionArtifact}
+        equipmentRawValue={equipmentRawValue} legionArtifactsRawValue={legionArtifactsRawValue}
+        isScouter={isScouter} showWhLegion={showWhLegion} characterLevel={characterLevel} existingRecord={existingRecord}
         handleSetupOptUpdate={handleSetupOptUpdate} handleScouterQUpdate={handleScouterQUpdate}
       />
     );

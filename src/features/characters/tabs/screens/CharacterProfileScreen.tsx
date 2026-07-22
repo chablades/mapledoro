@@ -123,7 +123,7 @@ function GenderMarriageIcons({
 }) {
   if (!gender && !married) return null;
   return (
-    <span style={genderMarriageIconRowStyle}>
+    <span className="gender-marriage-icons" style={genderMarriageIconRowStyle}>
       {gender === "male" && (
         <HoverTooltip theme={theme} label="Male">
           <span aria-label="Male" style={{ color: genderSymbolColor(theme, "male"), fontSize: "1.02rem", lineHeight: 1 }}>♂</span>
@@ -259,7 +259,7 @@ export default function CharacterProfileScreen({
               />
             </span>
           </div>
-          <p style={{ margin: 0, fontSize: "0.95rem", color: theme.muted, fontWeight: 700, lineHeight: 1.3 }}>
+          <p style={{ margin: 0, width: "100%", fontSize: "0.95rem", color: theme.muted, fontWeight: 700, lineHeight: 1.3, textAlign: "center" }}>
             {resolveDisplayJobName(profile.confirmedCharacter.jobName)}
           </p>
           {/* A div, not a <p> -- HoverTooltip (inside ExpPercentIndicator) renders a <div>,

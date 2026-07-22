@@ -22,6 +22,7 @@ import {
   DEFAULT_CRYSTAL_STATS,
   getLegionArtifactStat,
   isCrystalUnlocked,
+  isCrystalUntouched,
   effectiveCrystal,
   parseLegionArtifactBoardDraft,
   serializeLegionArtifactBoardDraft,
@@ -342,17 +343,22 @@ function StatSlotChip({
             />
           </div>
           <div style={{ maxHeight: 240, overflowY: "auto" }}>
-            {filtered.map((opt, i) => (
-              <button
-                key={opt.id}
-                ref={itemRef(i)}
-                type="button"
-                onClick={() => { onPick(opt.id); onAdvance(false); }}
-                style={popoverOptionStyle(theme, opt.id === statId, i === highlightedIndex)}
-              >
-                {opt.label}
-              </button>
-            ))}
+            {filtered.map((opt, i) => {
+              const isCurrent = opt.id === statId;
+              return (
+                <button
+                  key={opt.id}
+                  ref={itemRef(i)}
+                  type="button"
+                  onClick={() => { onPick(opt.id); onAdvance(false); }}
+                  style={popoverOptionStyle(theme, isCurrent, i === highlightedIndex)}
+                  onMouseEnter={(e) => { if (!isCurrent) e.currentTarget.style.background = `${theme.accent}22`; }}
+                  onMouseLeave={(e) => { if (!isCurrent) e.currentTarget.style.background = "transparent"; }}
+                >
+                  {opt.label}
+                </button>
+              );
+            })}
             {filtered.length === 0 && (
               <p style={{ margin: 0, padding: "0.5rem 0.6rem", fontSize: "0.75rem", color: theme.muted, fontWeight: 600 }}>
                 No results
@@ -568,10 +574,7 @@ export function LegionArtifactsEditor({
     for (let i = fromIndex + 1; i < LEGION_CRYSTALS.length; i++) {
       if (!isCrystalUnlocked(i, artifactLevelNum)) continue;
       const candidate = effectiveCrystal(crystals[i], true);
-      const stats = candidate.stats ?? DEFAULT_CRYSTAL_STATS;
-      const isUntouched = stats.length === DEFAULT_CRYSTAL_STATS.length
-        && DEFAULT_CRYSTAL_STATS.every((s, idx) => stats[idx] === s);
-      if (isUntouched) {
+      if (isCrystalUntouched(candidate)) {
         setOpenCardIndex(i);
         setOpenId(`${i}-0`);
       } else {

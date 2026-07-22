@@ -61,6 +61,46 @@ export function serializeEquipmentStepDraft(draft: EquipmentDraft): string {
   return JSON.stringify(draft);
 }
 
+/** Minimal item shape both StoredEquipmentItem (id optional) and this file's own
+ *  EquipmentItem (id required) satisfy structurally. */
+export interface EquipmentLikeItem {
+  id?: string;
+  name: string;
+}
+
+/** Minimal shape the Genesis Liberation/Weapon Hand/Ruin Force Shield derivations need
+ *  from an equipment object — satisfied by both a real StoredCharacterEquipment and the
+ *  synthesized object equipmentLikeFromDraft below produces, so those derivations can
+ *  run against either source with the same functions. */
+export interface EquipmentLike {
+  activePreset: number;
+  presets: { weapon?: EquipmentLikeItem | null; secondary?: EquipmentLikeItem | null }[];
+}
+
+/**
+ * The active preset's effective weapon/secondary from a live, not-yet-saved Equipment
+ * step draft — accounting for presets 1-2 being sparse per-slot overlays on preset 0
+ * (see EquipmentDraft's own comment above), same per-slot merge as draftPresetToStored
+ * in useCharacterSetupController.ts. Lets the Stats step's Quick Questions re-derive
+ * Genesis Liberation/Weapon Hand/Ruin Force Shield from this session's own in-progress
+ * Equipment edits, instead of only whatever's already persisted from before this
+ * session — without this, clearing the weapon/secondary mid-session and going back to
+ * Quick Questions would keep showing the stale, already-persisted locked answer until a
+ * full Finish-then-reopen round trip.
+ */
+export function equipmentLikeFromDraft(draft: EquipmentDraft): EquipmentLike {
+  const activePreset = draft.activePreset ?? 0;
+  const base = draft.presets?.[0] ?? {};
+  const overrides = draft.presets?.[activePreset] ?? {};
+  return {
+    activePreset: 0,
+    presets: [{
+      weapon: overrides.weapon !== undefined ? overrides.weapon : base.weapon,
+      secondary: overrides.secondary !== undefined ? overrides.secondary : base.secondary,
+    }],
+  };
+}
+
 export function toDraftItem(item: StoredEquipmentItem | null): EquipmentItem | null {
   if (!item) return null;
   return { id: item.id ?? "", name: item.name };

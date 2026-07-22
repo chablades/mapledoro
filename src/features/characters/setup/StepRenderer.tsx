@@ -40,6 +40,13 @@ interface StepRendererProps {
   worldLinkSkills?: string;
   worldScouterLegion?: import("../model/charactersStore").StoredScouterLegion;
   worldLegionArtifact?: import("../model/charactersStore").StoredLegionArtifact;
+  /** This session's own live Equipment/Legion Artifacts step drafts, independent of
+   *  which step is currently active — lets the Stats step's Quick Questions re-derive
+   *  its locked answers from this session's own in-progress edits, not just whatever's
+   *  already persisted (see StatsSetupStep.tsx's resolveEffectiveEquipment/
+   *  resolveEffectiveLegionBoard). */
+  equipmentRawValue?: string;
+  legionArtifactsRawValue?: string;
   characterLevel?: number;
   confirmedCharacterName?: string;
   confirmedCharacterImgURL?: string;
@@ -69,6 +76,8 @@ interface SetupStepComponentProps {
   worldLinkSkills?: string;
   worldScouterLegion?: StoredScouterLegion;
   worldLegionArtifact?: StoredLegionArtifact;
+  equipmentRawValue?: string;
+  legionArtifactsRawValue?: string;
   characterLevel?: number;
   confirmedCharacterName?: string;
   confirmedCharacterImgURL?: string;
@@ -109,6 +118,8 @@ export default function StepRenderer({
   worldLinkSkills,
   worldScouterLegion,
   worldLegionArtifact,
+  equipmentRawValue,
+  legionArtifactsRawValue,
   characterLevel,
   confirmedCharacterName,
   confirmedCharacterImgURL,
@@ -147,6 +158,8 @@ export default function StepRenderer({
       worldLinkSkills={worldLinkSkills}
       worldScouterLegion={worldScouterLegion}
       worldLegionArtifact={worldLegionArtifact}
+      equipmentRawValue={equipmentRawValue}
+      legionArtifactsRawValue={legionArtifactsRawValue}
       characterLevel={characterLevel}
       confirmedCharacterName={confirmedCharacterName}
       confirmedCharacterImgURL={confirmedCharacterImgURL}
