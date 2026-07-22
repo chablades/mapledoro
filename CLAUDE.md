@@ -97,6 +97,7 @@ Game art comes from the self-hosted **MapleResource API** (`haku.network`), via 
 - **Boss icons** have no component — use `bossIconUrl(id)` (`ui/boss` URL); stored as `icon` strings in boss data (`bosses.ts`, `liberation-data.ts`, `astra-data.ts`, `trace-restoration-data.ts`).
 - **Familiars:** `<FamiliarSprite>` is direct-sprite only; mob/card-backed ones use `<MobSprite>`/`<ItemIcon>` per manifest `spriteFrom`.
 - **Finding IDs:** Grep committed `manifests/v<version>/<type>.json` by `name` (never Read a manifest whole; `item.json` ~17 MB), hardcode the id with a name comment. No name→ID map; manifests are dev-only, never bundled. The current game version is **v270** — use the `manifests/v270/` manifests when implementing features. Older features whose generated data was built from an earlier manifest (and says so) are correct as-is.
+- **Bumping the current version:** every `scripts/gen-*.mjs`/`generate-*.mjs` generator has a hardcoded or default manifest path (e.g. `manifests/v269/...`). Bumping the version above does not update these automatically — grep `scripts/` for the old version string and update every hit together, otherwise a generator silently keeps reading the old manifest with no error, masking real data drift (e.g. a build-time self-check passing clean because it never saw the new data at all).
 
 ## Feature Docs
 

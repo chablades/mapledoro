@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /*
   Regenerates Mastery%/Final Damage% baselines for the 53 non-legacy classes from
-  manifests/v269/skill-formulas.json.
+  manifests/v270/skill-formulas.json.
 
   Each class's baseline is pinned by skill id (RECIPES below) rather than resolved by name at
   runtime — same pattern as gen-vmatrix.mjs's EXCLUDED_NODE_IDS. Every pinned entry also carries
@@ -26,7 +26,7 @@ import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
-const MANIFEST_PATH = path.join(ROOT, "manifests/v269/skill-formulas.json");
+const MANIFEST_PATH = path.join(ROOT, "manifests/v270/skill-formulas.json");
 const DATA_DIR = path.join(ROOT, "src/features/characters/setup/data");
 
 const manifest = JSON.parse(fs.readFileSync(MANIFEST_PATH, "utf8"));
@@ -293,10 +293,13 @@ const FINAL_DAMAGE_RECIPES = {
   ],
   kaiser: [{ id: "61110004", name: "Catalyze", expected: 33, job4: false }], // 3rd job
   kinesis: [
-    { id: "142120004", name: "Mind Break", expected: 40, job4: false }, // hard-capped at 30, no DCO/CO bump despite being job4 (confirmed via in-game skill window)
-    { id: "142120006", name: "Telepath Tactics", expected: 20 },
-    { id: "142120003", name: "Mind Quake", expected: 15 },
-    { id: "142120010", name: "Awakening", expected: 15 },
+    // 2026-07-22 revamp: full kit renumbering, re-verified against a real character (Yuki).
+    { id: "142100005", name: "Mental Strength", expected: 10, job4: false }, // 2nd job
+    { id: "142110008", name: "Psychic Reinforcement", expected: 15, job4: false }, // 3rd job
+    { id: "142120006", name: "ESP Expert", expected: 10 },
+    { id: "142120008", name: "Concentration", expected: 18 },
+    { id: "142120007", name: "Awakening", expected: 26 },
+    { id: "142120009", name: "Critical Rush", expected: 20 },
   ],
   zero: [
     { id: "100000279", name: "Resolution Time", expected: 17, job4: false }, // Transcendent Skill
@@ -395,7 +398,10 @@ const MASTERY_SKILL_RECIPES = {
   mo_xuan: [{ id: "175120014", name: "Boundless", expected: 70 }],
   sia_astelle: [{ id: "182120002", name: "Astral Assimilation", expected: 70 }],
   erel_light: [{ id: "181120008", name: "Gram Expert", expected: 70 }],
-  kinesis: [{ id: "142120013", name: "Mastery", expected: 70 }],
+  // 2026-07-22 revamp: ESP Mastery (job 1, own tooltip "Psy-limiter Mastery: +50%") is
+  // deliberately excluded — it's the lower-tier Mastery skill, superseded (not stacked) by
+  // ESP Expert once learned, same as every other class's single-highest-tier-only recipe.
+  kinesis: [{ id: "142120006", name: "ESP Expert", expected: 73 }],
   zero: [{ id: "101000203", name: "Long Sword Mastery", expected: 70, job4: false }], // Lv. 100 unlock, not job-tiered
   angelic_buster: [
     { id: "60010217", name: "True Heart Inheritance", expected: 10, job4: false }, // Beginner Skill

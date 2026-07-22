@@ -4,7 +4,7 @@
   Usage: node scripts/generate-skill-guesser-data.mjs
 
   Sources:
-  - manifests/v269/skill.json — skill id -> name. MapleStory skill ids encode the
+  - manifests/v270/skill.json — skill id -> name. MapleStory skill ids encode the
     owning job: floor(id / 10000) is the job id (e.g. 1121011 -> 112 = Hero 4th job).
     Each class's HEXA job group (x14/x20/x36) carries the origin/ascent skills and
     mastery add-on skills with their own per-skill icons, so HEXA content is
@@ -156,7 +156,7 @@ function shuffle(arr, rng) {
 
 // ── Load sources ────────────────────────────────────────────────────────────
 
-const skillManifest = JSON.parse(readFileSync(join(ROOT, "manifests/v269/skill.json"), "utf8")).entries;
+const skillManifest = JSON.parse(readFileSync(join(ROOT, "manifests/v270/skill.json"), "utf8")).entries;
 
 const classesTs = readFileSync(join(ROOT, "src/features/games/skill-guesser/classes.ts"), "utf8");
 const answerPool = new Set([...classesTs.matchAll(/name: "([^"]+)"/g)].map((m) => m[1]));

@@ -50,7 +50,7 @@ export const BASE_MASTERY_PERCENT: Record<string, [number, number, number]> = {
   mo_xuan: [90, 91, 92],
   sia_astelle: [95, 98, 98],
   erel_light: [90, 91, 91],
-  kinesis: [90, 92, 94],
+  kinesis: [93, 94, 94],
   zero: [90, 90, 90],
   angelic_buster: [95, 96, 96],
   arch_mage_f_p: [95, 96, 96],

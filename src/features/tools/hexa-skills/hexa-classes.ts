@@ -631,12 +631,13 @@ const KINESIS: HexaClassDef = {
   group: "Friends World",
   origin: s("From Another Realm", "10000039"),
   mastery: [
-    node("20000039", "HEXA Ultimate - Metal Press"),
-    node("20000089", "HEXA Psychic Grab", "HEXA Ultimate - Psychic Shot"),
-    node("20000139", "HEXA Ultimate - Trainwreck", "HEXA Ultimate - B.P.M."),
+    node("20000039", "HEXA Ultimate: Pressure", "HEXA Ultimate: Check"),
+    node("20000089", "HEXA Psychic Smash"),
+    node("20000139", "HEXA Ultimate: Opening", "HEXA Ultimate: Gambit"),
     node("20000185", "HEXA Kinetic Combo"),
   ],
-  enhancement: [s("Psychic Tornado", "30000156"), s("Ultimate - Mind Over Matter", "30000157"), s("Ultimate - Psychic Shockwave", "30000158"), s("Law of Gravity", "30000159")],
+  // 2026-07-22 revamp: enhancement node ids unchanged, but each now enhances a different job skill.
+  enhancement: [s("Ultimate: Checkmate", "30000156"), s("Psychic Nova", "30000157"), s("Psychic Shockwave", "30000158"), s("Psychic Castle", "30000159")],
   ascent: s("Fractal Horizon", "10000091"),
 };
 

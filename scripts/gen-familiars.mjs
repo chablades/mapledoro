@@ -3,14 +3,14 @@
  * Regenerates the FAMILIARS array in familiarsData.ts from a familiar manifest.
  *
  * Usage:
- *   node scripts/gen-familiars.mjs manifests/v269/familiar.json
+ *   node scripts/gen-familiars.mjs manifests/v270/familiar.json
  *
  * Set FAMILIAR_DUMP_DIR to the local WZ image dump's output root (the dir containing
  * `mob/`, `familiar/`, etc.) to enable pixel-hash dedup of same-name familiars that
  * render an identical sprite (e.g. card reissues): the redundant entries get a
  * `duplicateOf` pointer instead of being removed, so old saved characters that
  * picked one still resolve fine — they just stop showing up as a second picker result.
- *   FAMILIAR_DUMP_DIR=/path/to/dump node scripts/gen-familiars.mjs manifests/v269/familiar.json
+ *   FAMILIAR_DUMP_DIR=/path/to/dump node scripts/gen-familiars.mjs manifests/v270/familiar.json
  *
  * The script splices only the FAMILIARS constant — everything else in the
  * file (types, tier data, helper functions) is left untouched.

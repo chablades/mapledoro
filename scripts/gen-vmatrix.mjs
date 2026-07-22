@@ -3,11 +3,11 @@
  * Generates per-class V Matrix node catalogs from the WZ-dumped manifest.
  * Output: public/data/vmatrix/<classId>.json
  *   { job: Node[], boost: Node[], common: Node[] }  where Node = [id, displayName, maxLevel].
- *   id is the manifests/v269/v-matrix.json entry id, used directly for the
+ *   id is the manifests/v270/v-matrix.json entry id, used directly for the
  *   haku.network v-matrix icon (resourceImageUrl("v-matrix", id, "icon.png")).
  *   maxLevel is per-entry, read from the manifest (job=30, boost=60, common=30).
  *
- * Source: manifests/v269/v-matrix.json `entries`, each keyed by id:
+ * Source: manifests/v270/v-matrix.json `entries`, each keyed by id:
  *   - type 0 with `className`, id >= 10010000: job nodes (jobs === [class's own job code])
  *   - type 1 with `className` set: boost nodes (already fused per matrix slot)
  *   - type 0 without `className`: common nodes — universal (jobs === ["all"])
@@ -27,7 +27,7 @@
 import { readFileSync, writeFileSync, mkdirSync } from "fs";
 import { resolve } from "path";
 
-const manifestPath = process.argv[2] ?? "manifests/v269/v-matrix.json";
+const manifestPath = process.argv[2] ?? "manifests/v270/v-matrix.json";
 const OUTPUT_DIR = resolve("public/data/vmatrix");
 
 const SLUG_OVERRIDES = { Bowmaster: "bow_master", "Dual Blade": "blade_master" };
@@ -37,12 +37,14 @@ const classIdFor = (className) => SLUG_OVERRIDES[className] ?? slugify(className
 // Removed classes still present in the manifest — Jett and old Beast Tamer ("11212").
 const EXCLUDED_CLASSES = new Set(["Jett's Return", "11212"]);
 
-// Job entries the manifest over-includes. These Kinesis ids (Psychic Shockwave, Psychic
-// Nova, Ultimate: Checkmate, Psychic Castle) are newer/HEXA-era skills, NOT real V matrix
-// job nodes — Kinesis has 4 job nodes in-game (confirmed by Yuki), but the manifest lists 8
-// with no field to tell them apart, so they're excluded by id. The job-count guard below
-// will surface any future class that drifts from the 4-job / 6-boost shape.
-const EXCLUDED_NODE_IDS = new Set(["10020058", "10020059", "10020060", "10020061"]);
+// Job entries the manifest over-includes. Kinesis has 4 job nodes in-game (confirmed by
+// Yuki), but the manifest lists 8 with no field to tell them apart, so the extras are
+// excluded by id. Kinesis's 2026-07-22 revamp swapped which 4 are real: Psychic Tornado,
+// Ultimate - Mind Over Matter, Ultimate - Psychic Shockwave, and Law of Gravity are no
+// longer V matrix job nodes, replaced by Psychic Shockwave, Psychic Nova, Ultimate:
+// Checkmate, and Psychic Castle. The job-count guard below will surface any future class
+// that drifts from the 4-job / 6-boost shape.
+const EXCLUDED_NODE_IDS = new Set(["10020006", "10020018", "10020031", "10020042"]);
 
 const maxLevelFor = (id, e) => e.maxLevel;
 
