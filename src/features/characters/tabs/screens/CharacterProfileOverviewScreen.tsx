@@ -13,7 +13,12 @@ import { resolveClassId, getClassSetupOverrides } from "../../setup/data/nexonJo
 import { CLASS_SKILL_DATA, getClassDataByNexonJobName, isLegacyClass, type ClassSkillData } from "../../setup/data/classSkillData";
 import { HEXA_STAT_OPTIONS, getHexaStatBonus, getMainStatLabel, getAttackLabel, type HexaStatNode, type HexaStatEntry, type HexaStatSlot } from "../../setup/data/hexaStatData";
 import { readCharactersStore, selectCharacterByIgn } from "../../model/charactersStore";
-import type { StoredCharacterEquipment, StoredCharacterRecord, StoredCharacterStats, StoredEquipmentItem, StoredHyperStat, StoredInnerAbility, StoredIATier, StoredTripleStatField, StoredFamiliarSlot } from "../../model/charactersStore";
+import type { StoredCharacterEquipment, StoredCharacterRecord, StoredCharacterStats, StoredEquipmentItem, StoredHyperStat, StoredInnerAbility, StoredIATier, StoredTripleStatField, StoredFamiliarSlot, ExpHistoryEntry } from "../../model/charactersStore";
+import { isExpTrackingAvailable, resolveExpDelta, characterExpPercent, netExpPercentGained, netExpGained } from "../../model/expProgress";
+import ExpDeltaBadge from "../components/ExpDeltaBadge";
+import { formatExpCompact } from "../../../tools/format";
+import { PillGroup } from "../../../tools/shared-ui";
+import type { ChartData, ChartOptions, Plugin, TooltipItem } from "chart.js";
 import { SetupFlowButtons } from "./QuickSetupIntroScreen";
 import { STAT_LABELS } from "../../setup/data/statFields";
 import { HYPER_STAT_CATEGORIES, type HyperStatCategoryDef } from "../../setup/data/hyperStatData";
@@ -46,7 +51,7 @@ interface CharacterProfileOverviewScreenProps {
 }
 
 type Theme = PreviewPaneModel["theme"];
-type BookmarkId = "overview" | "gender_marriage" | Exclude<SetupStepId, "gender" | "marriage" | "link_skills" | "legion_artifacts" | "buffs" | "oz_rings"> | "setup";
+type BookmarkId = "overview" | "gender_marriage" | Exclude<SetupStepId, "gender" | "marriage" | "link_skills" | "legion_artifacts" | "buffs" | "oz_rings"> | "exp" | "setup";
 
 interface BookmarkDef {
   id: BookmarkId;
@@ -63,6 +68,7 @@ const ALL_BOOKMARKS: BookmarkDef[] = [
   { id: "v_matrix", tabLabel: "V Matrix", pageLabel: "V Matrix", flowId: "v_matrix_flow" },
   { id: "hexa_matrix", tabLabel: "HEXA", pageLabel: "HEXA Matrix", flowId: "hexa_matrix_flow" },
   { id: "familiars", tabLabel: "Familiars", pageLabel: "Familiars", flowId: "familiars_flow" },
+  { id: "exp", tabLabel: "EXP", pageLabel: "EXP", flowId: null },
   { id: "setup", tabLabel: "Setup", pageLabel: "Setup", flowId: null },
 ];
 
@@ -2284,6 +2290,242 @@ function HexaMatrixBookmark({ theme, character, view, onViewChange, onSetActiveP
   );
 }
 
+// EXP % is just arithmetic on level+exp (characterExpPercent), real for every class once
+// past level 200 -- unlike V Matrix/HEXA there's no legacy-class exclusion, the EXP-table
+// itself (exp-calculator-data.ts) only covers 200-300, the same floor the calculator uses.
+function resolveExpNotice(character: StoredCharacterRecord | null): string | null {
+  if (!character) return null;
+  return isExpTrackingAvailable(character.level) ? null : "EXP tracking unlocks at level 200.";
+}
+
+const EXP_RANGE_OPTIONS: { value: ExpRangeDays; label: string }[] = [
+  { value: "7", label: "7D" },
+  { value: "14", label: "14D" },
+  { value: "30", label: "30D" },
+  { value: "90", label: "90D" },
+];
+type ExpRangeDays = "7" | "14" | "30" | "90";
+const EXP_HISTORY_DAY_MS = 24 * 60 * 60 * 1000;
+
+type LineChartComponent = (typeof import("react-chartjs-2"))["Line"];
+
+// Dynamically imports chart.js + react-chartjs-2 rather than a static import, mirroring
+// StarForceWorkspace's HistogramPanel -- keeps the chart libraries out of every profile
+// load for characters that never open this bookmark.
+interface ExpChartPoint {
+  x: number;
+  y: number;
+  level: number;
+  rawPercent: number;
+  expGained: number | null;
+}
+
+// Above this point count, always-on labels would overlap too much to read (e.g. a 90-day
+// window can pack in ~90 daily points) -- the tooltip still shows the same info on hover
+// regardless of range.
+const EXP_GAIN_LABEL_MAX_POINTS = 14;
+
+function ExpChart({ theme, entries }: { theme: Theme; entries: ExpHistoryEntry[] }) {
+  const [Line, setLine] = useState<LineChartComponent | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    async function loadChart() {
+      const [chartModule, lineModule] = await Promise.all([import("chart.js"), import("react-chartjs-2")]);
+      chartModule.Chart.register(
+        chartModule.LinearScale, chartModule.PointElement, chartModule.LineElement, chartModule.Tooltip, chartModule.Filler,
+      );
+      if (mounted) setLine(() => lineModule.Line as LineChartComponent);
+    }
+    loadChart();
+    return () => { mounted = false; };
+  }, []);
+
+  // Plotting raw per-level percent would drop back toward 0 every time a level-up falls
+  // inside the window, even though real progress only ever goes up -- misleading as a trend
+  // line. Instead each point is cumulative percent gained since the window's first entry
+  // (netExpPercentGained sums 100% per level crossed), so the line only climbs. The real
+  // per-level percent/level is kept per-point for the tooltip, where it's still useful context.
+  const points = useMemo<ExpChartPoint[]>(() => {
+    if (entries.length === 0) return [];
+    const baseline = entries[0];
+    return entries.map((e, i) => ({
+      x: e.date,
+      y: netExpPercentGained(baseline.level, baseline.exp, e.level, e.exp),
+      level: e.level,
+      rawPercent: characterExpPercent(e.level, e.exp),
+      expGained: i === 0 ? null : netExpGained(entries[i - 1].level, entries[i - 1].exp, e.level, e.exp),
+    }));
+  }, [entries]);
+
+  // Draws "+1.89t"-style raw EXP-gained-since-the-previous-point labels above each dot,
+  // mirroring MapleRanks' always-visible per-bar amount. A plugin (not a dataset label
+  // option) since it needs pixel positions off the rendered points, and scoped to this
+  // chart instance via the `plugins` prop rather than Chart.register so it doesn't leak
+  // into other charts (e.g. StarForceWorkspace's bar chart) sharing the same chart.js runtime.
+  const expGainLabelPlugin = useMemo<Plugin<"line">>(() => ({
+    id: "expGainLabels",
+    afterDatasetsDraw(chart) {
+      if (points.length > EXP_GAIN_LABEL_MAX_POINTS) return;
+      const meta = chart.getDatasetMeta(0);
+      const { ctx, chartArea } = chart;
+      ctx.save();
+      ctx.font = "700 10px 'Nunito', sans-serif";
+      ctx.fillStyle = theme.muted;
+      ctx.textBaseline = "bottom";
+      const edgePad = 4;
+      // Chart.js's internal rendered point elements (meta.data) can briefly lag one render
+      // behind this plugin's own `points` when the dataset's length changes between renders
+      // (e.g. switching from 14D to 7D) -- drawing against a stale, differently-sized meta.data
+      // would pair each label with the wrong point. The <Line> below is keyed on point count
+      // specifically to force a clean remount on exactly this kind of change, but bail here too
+      // as a hard guarantee against ever drawing a mismatched label.
+      if (meta.data.length !== points.length) { ctx.restore(); return; }
+      meta.data.forEach((el, index) => {
+        const point = points[index];
+        if (!point || point.expGained === null || point.expGained <= 0) return;
+        // Center-aligned text on the edge-most points overflows the canvas and gets clipped
+        // (the last point in particular, since MapleDoro's own gained-since-yesterday label
+        // tends to run longer than a bare percent). Align inward once a point sits within
+        // edgePad of either side instead of always centering.
+        if (el.x <= chartArea.left + edgePad) ctx.textAlign = "left";
+        else if (el.x >= chartArea.right - edgePad) ctx.textAlign = "right";
+        else ctx.textAlign = "center";
+        ctx.fillText(`+${formatExpCompact(point.expGained)}`, el.x, el.y - 8);
+      });
+      ctx.restore();
+    },
+  }), [points, theme.muted]);
+
+  const data: ChartData<"line"> = useMemo(() => ({
+    datasets: [{
+      data: points,
+      borderColor: theme.accent,
+      backgroundColor: `${theme.accent}33`,
+      fill: true,
+      tension: 0,
+      pointRadius: 3,
+      pointBackgroundColor: theme.accent,
+    }],
+  }), [points, theme.accent]);
+
+  const options: ChartOptions<"line"> = useMemo(() => ({
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: theme.panel,
+        titleColor: theme.text,
+        bodyColor: theme.text,
+        borderColor: theme.border,
+        borderWidth: 1,
+        callbacks: {
+          title: (items: TooltipItem<"line">[]) => new Date((items[0].raw as ExpChartPoint).x).toLocaleDateString(undefined, { month: "short", day: "numeric" }),
+          label: (item: TooltipItem<"line">) => {
+            const raw = item.raw as ExpChartPoint;
+            return `Lv ${raw.level} · ${raw.rawPercent.toFixed(3)}%`;
+          },
+        },
+      },
+    },
+    scales: {
+      x: {
+        type: "linear",
+        // Bounded to the actual first/last plotted point rather than the selected range's
+        // exact start/end -- entries land at whatever time of day a refresh happened, not
+        // exactly "now" or "now minus N days", so pinning to the range's exact timestamps
+        // left visible gaps between the axis edges and the dots.
+        min: points[0]?.x,
+        max: points[points.length - 1]?.x,
+        // A linear scale's default auto-generated ticks are evenly spaced across [min, max]
+        // by value, not snapped to real data points -- entries aren't always exactly 24h
+        // apart, so a tick could land between two points and read as though it belongs to
+        // whichever one it's visually closer to. Overriding ticks to the real point x-values
+        // (evenly sampled down to ~6) guarantees every date label sits exactly on its point.
+        afterBuildTicks: (axis) => {
+          const n = points.length;
+          if (n === 0) { axis.ticks = []; return; }
+          const maxTicks = 6;
+          const step = Math.max(1, Math.ceil((n - 1) / (maxTicks - 1)));
+          const values: number[] = [];
+          for (let i = 0; i < n; i += step) values.push(points[i].x);
+          if (values[values.length - 1] !== points[n - 1].x) values.push(points[n - 1].x);
+          axis.ticks = values.map((value) => ({ value }));
+        },
+        ticks: {
+          color: theme.muted,
+          maxRotation: 0,
+          callback: (value) => new Date(value as number).toLocaleDateString(undefined, { month: "short", day: "numeric" }),
+        },
+        grid: { display: false },
+      },
+      y: {
+        beginAtZero: true,
+        ticks: { color: theme.muted },
+        grid: { color: theme.border },
+      },
+    },
+  }), [theme.panel, theme.text, theme.border, theme.muted, points]);
+
+  return (
+    <div style={{ height: 220 }} role="img" aria-label={`Line chart: cumulative EXP percent progress over time across ${points.length} data points.`}>
+      {Line ? <Line key={points.length} data={data} options={options} plugins={[expGainLabelPlugin]} /> : null}
+    </div>
+  );
+}
+
+interface ExpHistoryWindow {
+  entries: ExpHistoryEntry[];
+  start: number;
+  end: number;
+}
+
+function windowExpHistory(entries: ExpHistoryEntry[], days: number): ExpHistoryWindow {
+  const end = Date.now();
+  const start = end - days * EXP_HISTORY_DAY_MS;
+  return { entries: entries.filter((e) => e.date >= start), start, end };
+}
+
+// Read-only, auto-populated from every refresh/setup-flow lookup (see appendExpHistoryEntry
+// in charactersStore.ts) -- no edit pencil, same as Overview/Setup.
+function ExpBookmark({ theme, character }: { theme: Theme; character: StoredCharacterRecord | null }) {
+  const [range, setRange] = useState<ExpRangeDays>("7");
+  const notice = resolveExpNotice(character);
+  if (notice !== null) return <GatedFeatureNotice theme={theme} title="Not Available" description={notice} />;
+  if (!character) return null;
+
+  const expWindow = windowExpHistory(character.expHistory ?? [], Number(range));
+  const percent = characterExpPercent(character.level, character.exp);
+  const delta = resolveExpDelta(character);
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+      <StatBlock label="Current Progress" theme={theme}>
+        <div style={{ display: "flex", alignItems: "baseline", gap: "0.6rem" }}>
+          <span style={{ fontSize: "1.6rem", fontWeight: 800, color: theme.text }}>{percent.toFixed(3)}%</span>
+          {delta && <ExpDeltaBadge theme={theme} delta={delta} fontSize="0.85rem" />}
+        </div>
+        <div style={{ fontSize: "0.75rem", color: theme.muted, marginTop: 4 }}>Level {character.level}</div>
+      </StatBlock>
+      <StatBlock label="EXP Over Time" theme={theme}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.75rem", marginBottom: "0.75rem", flexWrap: "wrap" }}>
+          <p style={{ margin: 0, fontSize: "0.75rem", color: theme.muted }}>Cumulative progress since the start of this range.</p>
+          <PillGroup theme={theme} options={EXP_RANGE_OPTIONS} value={range} onChange={setRange} />
+        </div>
+        {expWindow.entries.length >= 2 ? (
+          <ExpChart theme={theme} entries={expWindow.entries} />
+        ) : (
+          <p style={{ margin: 0, fontSize: "0.8rem", color: theme.muted, textAlign: "center", padding: "2rem 0" }}>
+            Not enough data yet. Check back after refreshing this character a few more times.
+          </p>
+        )}
+      </StatBlock>
+    </div>
+  );
+}
+
 function isHexaMatrixFilled(character: StoredCharacterRecord, mounted: boolean): boolean {
   if (character.level < 260) return false;
   if (isLegacyClass(character.jobName)) return true;
@@ -2312,11 +2554,12 @@ function isBookmarkFilled(id: BookmarkId, character: StoredCharacterRecord | nul
       return Boolean(levels && Object.values(levels).some((v) => v > 0));
     }
     case "hexa_matrix": return isHexaMatrixFilled(character, mounted);
+    case "exp": return true;
     default: return false;
   }
 }
 
-const BOOKMARK_CONTENT: Record<Exclude<BookmarkId, "overview" | "setup" | "gender_marriage" | "stats" | "equipment" | "v_matrix" | "hexa_matrix" | "familiars">, (props: { theme: Theme; character: StoredCharacterRecord | null }) => ReactNode> = {};
+const BOOKMARK_CONTENT: Record<Exclude<BookmarkId, "overview" | "setup" | "gender_marriage" | "stats" | "equipment" | "v_matrix" | "hexa_matrix" | "familiars" | "exp">, (props: { theme: Theme; character: StoredCharacterRecord | null }) => ReactNode> = {};
 
 function SetupBookmark({ model, actions }: { model: PreviewPaneModel; actions: PreviewPaneActions }) {
   const { theme } = model;
@@ -2358,6 +2601,10 @@ function hexaMatrixTargetSubstep(view: HexaBookmarkView): number {
   return view === "stat" ? 1 : 0;
 }
 
+// A flat dispatch of per-bookmark branches; each branch is its own cohesive, low-complexity
+// block, splitting further would just move the same branches into an equally-long if/else
+// chain of function calls.
+// eslint-disable-next-line sonarjs/cognitive-complexity
 function BookmarkPageBody({
   model, actions, active, filled, ContentComponent, onEdit, onEditStep, onNavigateToBookmark, onNavigateToGearSlot, highlightSlotKey, onHighlightSlotConsumed,
 }: {
@@ -2501,6 +2748,17 @@ function BookmarkPageBody({
     );
   }
 
+  // Read-only and auto-populated (see ExpBookmark's own comment) -- no edit pencil, same
+  // shape as Overview/Setup/Bio rather than Equipment/V Matrix's gated-but-editable pattern.
+  if (active.id === "exp") {
+    return (
+      <>
+        <BookmarkPageHeader theme={theme} label={active.pageLabel} onEdit={null} disabled={setup.isUiLocked} />
+        <ExpBookmark theme={theme} character={character} />
+      </>
+    );
+  }
+
   return (
     <>
       <BookmarkPageHeader theme={theme} label={active.pageLabel} onEdit={filled ? onEdit : null} disabled={setup.isUiLocked} />
@@ -2618,7 +2876,7 @@ export default function CharacterProfileOverviewScreen({
   useEffect(() => { actions.clearRestoredBookmark(); }, [activeId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const filled = isBookmarkFilled(active.id, character, mounted);
-  const ContentComponent = active.id === "overview" || active.id === "setup" || active.id === "gender_marriage" || active.id === "stats" || active.id === "equipment" || active.id === "v_matrix" || active.id === "hexa_matrix" || active.id === "familiars" ? null : BOOKMARK_CONTENT[active.id];
+  const ContentComponent = active.id === "overview" || active.id === "setup" || active.id === "gender_marriage" || active.id === "stats" || active.id === "equipment" || active.id === "v_matrix" || active.id === "hexa_matrix" || active.id === "familiars" || active.id === "exp" ? null : BOOKMARK_CONTENT[active.id];
 
   function startOptionalFlowRemembered(flowId: SetupFlowId, targetSubstep?: number, confineToSubstep?: boolean, subView?: string) {
     actions.rememberActiveBookmark(active.id, subView);

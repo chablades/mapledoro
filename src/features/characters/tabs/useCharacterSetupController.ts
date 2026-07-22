@@ -7,6 +7,7 @@ import {
 } from "../model/constants";
 import { findRosterCharacterByName, normalizeCharacterName, toCharacterKey } from "../model/characterKeys";
 import {
+  appendExpHistoryEntry,
   createStoredCharacterRecord,
   hasStoredCompletedRequiredSetup,
   readCharactersStore,
@@ -315,7 +316,7 @@ function finalizeQuickOrFullSetupRecord(
     // familiars/tools that a prior Full Setup (or standalone tool flow) already saved.
     const existing = selectCharacterById(readCharactersStore(), toCharacterKey(confirmedCharacter));
     storedRecord = existing
-      ? { ...existing, gender, marriage }
+      ? { ...existing, gender, marriage, expHistory: appendExpHistoryEntry(existing.expHistory, confirmedCharacter.level, confirmedCharacter.exp) }
       : createStoredCharacterRecord({ character: confirmedCharacter, gender, marriage });
   }
   upsertRosterCharacter(storedRecord);
@@ -458,6 +459,7 @@ function applyMapleScouterFlow(
     isLiberated, weaponHand, hasRuinForceShield, soul,
     scouter: scouterPatch,
     tools,
+    expHistory: appendExpHistoryEntry(base.expHistory, character.level, character.exp),
   });
   if (created) removeSetupDraftForCharacter(character);
   return created;
@@ -634,6 +636,7 @@ function buildFullSetupRecord(
     isLiberated, weaponHand, hasRuinForceShield, soul, tools,
     familiars: familiarsData ?? base.familiars,
     vMatrix: vMatrixData ?? base.vMatrix,
+    expHistory: existing ? appendExpHistoryEntry(existing.expHistory, character.level, character.exp) : base.expHistory,
     // Merged against the EXISTING record's scouter (not `base`, which is always a
     // fresh blank object here — see the equipment/familiars/vMatrix comment above for
     // why that matters): scouterPatch only holds whichever of ozRings/buffs/weaponAtt/
@@ -1090,14 +1093,30 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
     const key = toCharacterKey(fresh);
     const existing = characterRosterRef.current.find((c) => toCharacterKey(c) === key);
     if (!existing) return;
-    const updated = createStoredCharacterRecord({
-      character: fresh,
-      gender: existing.gender,
-      stats: existing.stats,
-      equipment: existing.equipment,
-      tools: existing.tools,
-      addedAt: existing.meta.addedAt,
-    });
+    // Refreshing only ever brings back fresh rank/level/exp-shaped data from Nexon (see
+    // NormalizedCharacterData) -- everything else on the record (marriage, liberation/
+    // weapon-hand/Ruin Force Shield/soul flags, scouter/familiars/V Matrix data) has to be
+    // explicitly carried over from `existing` or createStoredCharacterRecord defaults it
+    // back to null/undefined, silently wiping it on every auto-refresh.
+    const updated: StoredCharacterRecord = {
+      ...createStoredCharacterRecord({
+        character: fresh,
+        gender: existing.gender,
+        marriage: existing.marriage,
+        isLiberated: existing.isLiberated,
+        weaponHand: existing.weaponHand,
+        hasRuinForceShield: existing.hasRuinForceShield,
+        soul: existing.soul,
+        stats: existing.stats,
+        equipment: existing.equipment,
+        tools: existing.tools,
+        expHistory: appendExpHistoryEntry(existing.expHistory, fresh.level, fresh.exp),
+        addedAt: existing.meta.addedAt,
+      }),
+      scouter: existing.scouter,
+      familiars: existing.familiars,
+      vMatrix: existing.vMatrix,
+    };
     setCharacterRoster((prev) => {
       const existingIndex = prev.findIndex((c) => toCharacterKey(c) === key);
       if (existingIndex === -1) return prev;

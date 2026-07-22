@@ -266,6 +266,35 @@ export interface StoredCharacterEquipment {
   petEquips: [StoredEquipmentItem | null, StoredEquipmentItem | null, StoredEquipmentItem | null];
 }
 
+export interface ExpHistoryEntry {
+  date: number;
+  level: number;
+  exp: number;
+}
+
+const EXP_HISTORY_MAX_DAYS = 90;
+const EXP_HISTORY_DAY_MS = 24 * 60 * 60 * 1000;
+
+function isSameUtcDay(a: number, b: number): boolean {
+  return Math.floor(a / EXP_HISTORY_DAY_MS) === Math.floor(b / EXP_HISTORY_DAY_MS);
+}
+
+/** Appends an EXP/level snapshot, deduping to at most one entry per UTC day and pruning
+ *  entries past the 90-day tracking window. A no-op when level/exp match the last entry,
+ *  so repeat refreshes with no real progress don't grow the array. */
+export function appendExpHistoryEntry(
+  existing: ExpHistoryEntry[] | undefined,
+  level: number,
+  exp: number,
+  now: number = Date.now(),
+): ExpHistoryEntry[] {
+  const pruned = (existing ?? []).filter((e) => now - e.date <= EXP_HISTORY_MAX_DAYS * EXP_HISTORY_DAY_MS);
+  const last = pruned[pruned.length - 1];
+  if (last && last.level === level && last.exp === exp) return pruned;
+  if (last && isSameUtcDay(last.date, now)) return [...pruned.slice(0, -1), { date: now, level, exp }];
+  return [...pruned, { date: now, level, exp }];
+}
+
 export interface StoredCharacterRecord {
   ign: string;
   worldId: number;
@@ -297,6 +326,7 @@ export interface StoredCharacterRecord {
   stats: StoredCharacterStats;
   equipment: StoredCharacterEquipment;
   tools?: Record<string, unknown>;
+  expHistory?: ExpHistoryEntry[];
   scouter?: StoredScouterData;
   familiars?: StoredFamiliarsData;
   vMatrix?: StoredVMatrixData;
@@ -602,6 +632,7 @@ export function createStoredCharacterRecord(args: {
   stats?: StoredCharacterStats;
   equipment?: StoredCharacterEquipment;
   tools?: Record<string, unknown>;
+  expHistory?: ExpHistoryEntry[];
   addedAt?: number;
   updatedAt?: number;
 }): StoredCharacterRecord {
@@ -618,6 +649,7 @@ export function createStoredCharacterRecord(args: {
     stats: args.stats ?? createEmptyCharacterStats(),
     equipment: args.equipment ?? createEmptyCharacterEquipment(),
     tools: args.tools,
+    expHistory: args.expHistory ?? appendExpHistoryEntry(undefined, args.character.level, args.character.exp, args.updatedAt),
     meta: {
       addedAt: args.addedAt ?? Date.now(),
       updatedAt: args.updatedAt ?? Date.now(),
@@ -627,6 +659,14 @@ export function createStoredCharacterRecord(args: {
 
 function parseOptionalRecord<T>(value: unknown): T | undefined {
   return isObject(value) ? (value as unknown as T) : undefined;
+}
+
+function isExpHistoryEntry(value: unknown): value is ExpHistoryEntry {
+  return isObject(value) && typeof value.date === "number" && typeof value.level === "number" && typeof value.exp === "number";
+}
+
+function parseExpHistory(value: unknown): ExpHistoryEntry[] | undefined {
+  return Array.isArray(value) && value.every(isExpHistoryEntry) ? value : undefined;
 }
 
 function parseStoredCharacterRecord(
@@ -654,6 +694,7 @@ function parseStoredCharacterRecord(
     stats: isStoredCharacterStats(value.stats) ? value.stats : createEmptyCharacterStats(),
     equipment: readStoredEquipment(value.equipment),
     tools: parseOptionalRecord<Record<string, unknown>>(value.tools),
+    expHistory: parseExpHistory(value.expHistory),
     scouter: parseOptionalRecord<StoredScouterData>(value.scouter),
     familiars: parseOptionalRecord<StoredFamiliarsData>(value.familiars),
     vMatrix: parseOptionalRecord<StoredVMatrixData>(value.vMatrix),

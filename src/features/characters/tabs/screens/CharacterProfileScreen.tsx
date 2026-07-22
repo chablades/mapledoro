@@ -5,7 +5,9 @@ import type { SearchPaneActions, SearchPaneModel } from "../paneModels";
 import { secondaryButtonStyle } from "../components/uiStyles";
 import CharacterAvatar from "../components/CharacterAvatar";
 import RefreshSpinnerIcon from "../components/RefreshSpinnerIcon";
+import HoverTooltip from "../../../../components/HoverTooltip";
 import { statusText } from "../../../../components/statusColors";
+import { characterExpPercent, isExpTrackingAvailable, resolveExpDelta, type ExpDelta } from "../../model/expProgress";
 
 function navBackButtonColorStyle(theme: SearchPaneModel["theme"]): CSSProperties {
   const { border, background, color } = secondaryButtonStyle(theme);
@@ -88,6 +90,70 @@ function getProfileRoleChips(
   return ["mule"];
 }
 
+function expDeltaTooltipLabel(delta: ExpDelta): string {
+  const pct = `+${delta.percentDelta.toFixed(3)}%`;
+  return delta.levelDelta > 0 ? `${pct} (+${delta.levelDelta} Lv)` : pct;
+}
+
+const genderMarriageIconRowStyle: CSSProperties = {
+  position: "absolute",
+  left: "100%",
+  top: 0,
+  marginLeft: "0.35rem",
+  display: "inline-flex",
+  alignItems: "center",
+  gap: "0.35rem",
+  whiteSpace: "nowrap",
+};
+
+function GenderMarriageIcons({
+  theme, gender, married, partnerName,
+}: {
+  theme: SearchPaneModel["theme"];
+  gender: "male" | "female" | null;
+  married: boolean;
+  partnerName: string | null;
+}) {
+  if (!gender && !married) return null;
+  return (
+    <span style={genderMarriageIconRowStyle}>
+      {gender === "male" && (
+        <HoverTooltip theme={theme} label="Male">
+          <span aria-label="Male" style={{ color: genderSymbolColor(theme, "male"), fontSize: "1.02rem", lineHeight: 1 }}>♂</span>
+        </HoverTooltip>
+      )}
+      {gender === "female" && (
+        <HoverTooltip theme={theme} label="Female">
+          <span aria-label="Female" style={{ color: genderSymbolColor(theme, "female"), fontSize: "1.02rem", lineHeight: 1 }}>♀</span>
+        </HoverTooltip>
+      )}
+      {married && (
+        <HoverTooltip theme={theme} label={partnerName ? `Married to ${partnerName}` : "Married"}>
+          <span aria-label="Married" style={{ color: genderSymbolColor(theme, "female"), fontSize: "1.02rem", lineHeight: 1 }}>♥</span>
+        </HoverTooltip>
+      )}
+    </span>
+  );
+}
+
+// Current EXP percent, decorated with a green up-arrow when there's been real progress
+// since the last snapshot -- hovering/focusing the whole thing reveals the actual delta
+// (and any level-ups crossed) rather than showing that number inline all the time.
+function ExpPercentIndicator({ theme, percent, delta }: { theme: SearchPaneModel["theme"]; percent: number; delta: ExpDelta | null }) {
+  const content = (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: "0.2rem" }}>
+      {delta && <span aria-hidden="true" style={{ color: statusText(theme, "success") }}>&#9650;</span>}
+      {percent.toFixed(3)}%
+    </span>
+  );
+  if (!delta) return content;
+  return (
+    <HoverTooltip theme={theme} label={expDeltaTooltipLabel(delta)}>
+      {content}
+    </HoverTooltip>
+  );
+}
+
 interface CharacterProfileScreenProps {
   model: SearchPaneModel;
   actions: SearchPaneActions;
@@ -105,6 +171,7 @@ export default function CharacterProfileScreen({
   );
   const isStale = isCharacterStale(profile.confirmedCharacter.expiresAt);
   const formattedDate = formatFetchedAt(profile.confirmedCharacter.fetchedAt);
+  const expDelta = resolveExpDelta(profile.confirmedCharacter);
   let statusPrefix: string | null = null;
   if (!profile.isRefreshing && isStale) statusPrefix = "⚠ ";
 
@@ -165,45 +232,43 @@ export default function CharacterProfileScreen({
           />
         </div>
         <div className="confirmed-summary-info">
-          <p
-            style={{
-              margin: 0,
-              fontSize: "1.32rem",
-              fontWeight: 800,
-              lineHeight: 1.15,
-              color: theme.text,
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "0.35rem",
-            }}
-          >
-            {profile.confirmedCharacter.characterName}
-            {profile.currentCharacterGender === "male" && (
-              <span aria-label="Male" title="Male" style={{ color: genderSymbolColor(theme, "male"), fontSize: "1.02rem", lineHeight: 1 }}>
-                ♂
-              </span>
-            )}
-            {profile.currentCharacterGender === "female" && (
-              <span aria-label="Female" title="Female" style={{ color: genderSymbolColor(theme, "female"), fontSize: "1.02rem", lineHeight: 1 }}>
-                ♀
-              </span>
-            )}
-            {profile.currentCharacterMarried === true && (
-              <span
-                aria-label="Married"
-                title={profile.currentCharacterPartnerName ? `Married to ${profile.currentCharacterPartnerName}` : "Married"}
-                style={{ color: genderSymbolColor(theme, "female"), fontSize: "1.02rem", lineHeight: 1 }}
-              >
-                ♥
-              </span>
-            )}
-          </p>
+          {/* Name centered as the sole flex child; gender/marriage icons are absolutely
+              positioned off its right edge (same pattern as the Level/% row below) so their
+              width doesn't pull the name itself off-center. A div, not a <p> -- HoverTooltip
+              (inside GenderMarriageIcons) renders a <div>, invalid inside a <p>. */}
+          <div style={{ margin: 0, width: "100%", fontSize: "1.32rem", fontWeight: 800, lineHeight: 1.15, color: theme.text, display: "flex", justifyContent: "center" }}>
+            <span style={{ position: "relative" }}>
+              {profile.confirmedCharacter.characterName}
+              <GenderMarriageIcons
+                theme={theme}
+                gender={profile.currentCharacterGender}
+                married={profile.currentCharacterMarried === true}
+                partnerName={profile.currentCharacterPartnerName}
+              />
+            </span>
+          </div>
           <p style={{ margin: 0, fontSize: "0.95rem", color: theme.muted, fontWeight: 700, lineHeight: 1.3 }}>
             {resolveDisplayJobName(profile.confirmedCharacter.jobName)}
           </p>
-          <p style={{ margin: 0, fontSize: "1rem", color: theme.muted, fontWeight: 700, lineHeight: 1.3 }}>
-            Level {profile.confirmedCharacter.level}
-          </p>
+          {/* A div, not a <p> -- HoverTooltip (inside ExpPercentIndicator) renders a <div>,
+              which isn't valid inside a <p> and causes a hydration mismatch. Level is
+              centered as the sole flex child on the outer row; the % indicator is
+              absolutely positioned off the inner span's right edge so it doesn't shift
+              Level off-center the way a plain inline-flex gap would. */}
+          <div style={{ margin: 0, width: "100%", fontSize: "1rem", color: theme.muted, fontWeight: 700, lineHeight: 1.3, display: "flex", justifyContent: "center" }}>
+            <span style={{ position: "relative" }}>
+              Level {profile.confirmedCharacter.level}
+              {isExpTrackingAvailable(profile.confirmedCharacter.level) && (
+                <span style={{ position: "absolute", left: "100%", top: 0, marginLeft: "0.5rem", whiteSpace: "nowrap" }}>
+                  <ExpPercentIndicator
+                    theme={theme}
+                    percent={characterExpPercent(profile.confirmedCharacter.level, profile.confirmedCharacter.exp)}
+                    delta={expDelta}
+                  />
+                </span>
+              )}
+            </span>
+          </div>
           {profile.canViewCharacterDirectory && (
             <div className="profile-role-chip-row" style={roleChipRowStyle}>
               {roleChips.map((role) => (
