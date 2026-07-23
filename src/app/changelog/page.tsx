@@ -16,6 +16,7 @@ const CHANGELOG: ChangelogEntry[] = [
     changes: [
       { type: "added", text: "The EXP Calculator Daily / Weekly Calculator now takes Express Boosters." },
       { type: "added", text: "The EXP Calculator Resources tab now has EXP tables for Express Booster and Haste Fever Time." },
+      { type: "fixed", text: "The EXP Calculator Import Into Daily/Weekly Calculator link now imports to the character selected in the Farming tab instead of your main, and the imported rate is saved to that character." },
     ],
   },
   {

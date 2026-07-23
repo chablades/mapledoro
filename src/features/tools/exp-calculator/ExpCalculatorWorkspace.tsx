@@ -215,6 +215,13 @@ function defaultAllInOneInput(): AllInOneInput {
 
 const DAILY_WEEKLY_TOOL_KEY = "expDailyWeekly";
 
+/** The Farming tab's hourly rate and the character it was calculated for, handed to the
+ *  Daily / Weekly tab by the import link. `charName` is null for Manual Level. */
+interface ImportedFarmingRate {
+  charName: string | null;
+  hourlyExp: number;
+}
+
 /** Daily / Weekly plan saved per-character: the Daily Content, Weekly Content, Monster Park, and
  *  Epic Dungeon panels plus target level, burning, and the date window. Current level and percent
  *  come from the character record; event tickets and growth potions stay in memory by design. */
@@ -290,16 +297,37 @@ function loadCharacterAllInOne(character: StoredCharacterRecord): AllInOneInput 
   return { ...saved, startLevel: character.level, startPercent: characterPercent(character) };
 }
 
-/** `importedHourlyExp` is the Farming tab's hourly rate handed over by the import link. It seeds
- *  the Custom Daily panel into hourly mode; the rest of the plan still comes from the save. */
-function initialAllInOneState(importedHourlyExp: number | null) {
-  const main = selectMainCharacter(readCharactersStore());
-  const base = main ? loadCharacterAllInOne(main) : defaultAllInOneInput();
+/** Writes the imported rate into the character's saved plan at import time. The Daily / Weekly seed
+ *  runs in a lazy initializer and so must not write, so the click handler is what makes an import
+ *  outlive the visit to the tab. */
+function persistImportedHourlyExp(charName: string, hourlyExp: number) {
+  const saved = mergeSavedAllInOne(
+    readCharacterToolData<Partial<SavedAllInOne>>(charName, DAILY_WEEKLY_TOOL_KEY),
+  );
+  writeCharacterToolData(
+    charName,
+    DAILY_WEEKLY_TOOL_KEY,
+    toSavedAllInOne({ ...saved, customDailyMode: "hourly", customHourlyExp: Math.floor(hourlyExp) }),
+  );
+}
+
+/** `imported` is the Farming tab's hourly rate handed over by the import link, plus the character
+ *  it was calculated for. It seeds the Custom Daily panel into hourly mode; the rest of the plan
+ *  still comes from the save. */
+function initialAllInOneState(imported: ImportedFarmingRate | null) {
+  const store = readCharactersStore();
+  // An import opens on whichever character the Farming tab had selected, Manual Level included, so
+  // the rate lands on the plan the player was just looking at. Without one, open on the main.
+  const character =
+    imported === null
+      ? selectMainCharacter(store)
+      : selectCharactersList(store).find((option) => option.characterName === imported.charName);
+  const base = character ? loadCharacterAllInOne(character) : defaultAllInOneInput();
   const input: AllInOneInput =
-    importedHourlyExp === null
+    imported === null
       ? base
-      : { ...base, customDailyMode: "hourly", customHourlyExp: Math.floor(importedHourlyExp) };
-  return { charName: main?.characterName ?? null, input };
+      : { ...base, customDailyMode: "hourly", customHourlyExp: Math.floor(imported.hourlyExp) };
+  return { charName: character?.characterName ?? null, input };
 }
 
 const EXCLUSIVE_BUFF_SECTIONS = CHECK_BUFF_GROUPS.filter((group) => group.mode === "exclusive").reduce<
@@ -388,18 +416,20 @@ function importLinkStyle(theme: AppTheme): React.CSSProperties {
 export default function ExpCalculatorWorkspace({ theme }: { theme: AppTheme }) {
   const mounted = useMounted();
   const [tab, setTab] = useState<ExpTab>("buffs");
-  const [importedHourlyExp, setImportedHourlyExp] = useState<number | null>(null);
+  const [imported, setImported] = useState<ImportedFarmingRate | null>(null);
   const panelStyle = expPanelStyle(toolStyles(theme));
 
   // Each tab unmounts when it isn't showing, so the import is a one-shot handoff: the Farming tab
-  // stashes its hourly rate here, the Daily / Weekly tab seeds itself from it on mount, and leaving
-  // that tab spends it. Without spending it, a later visit would re-seed and stomp the plan again.
-  const importHourlyExp = (hourlyExp: number) => {
-    setImportedHourlyExp(hourlyExp);
+  // stashes its hourly rate and character here, the Daily / Weekly tab seeds itself from it on
+  // mount, and leaving that tab spends it. Without spending it, a later visit would re-seed and
+  // stomp the plan again. The save is written here, not in the seed, which must stay a pure read.
+  const importHourlyExp = (hourlyExp: number, charName: string | null) => {
+    if (charName) persistImportedHourlyExp(charName, hourlyExp);
+    setImported({ charName, hourlyExp });
     setTab("all-in-one");
   };
   const changeTab = (next: ExpTab) => {
-    if (tab === "all-in-one") setImportedHourlyExp(null);
+    if (tab === "all-in-one") setImported(null);
     setTab(next);
   };
 
@@ -460,7 +490,7 @@ export default function ExpCalculatorWorkspace({ theme }: { theme: AppTheme }) {
             so switching tabs remounts the wrapper and replays the site-wide fade. */}
         <div key={tab} className="fade-in">
           {tab === "buffs" && <BuffsTab theme={theme} onImportHourlyExp={importHourlyExp} />}
-          {tab === "all-in-one" && <AllInOneTab theme={theme} importedHourlyExp={importedHourlyExp} />}
+          {tab === "all-in-one" && <AllInOneTab theme={theme} imported={imported} />}
           {tab === "resources" && <ResourcesTab theme={theme} />}
         </div>
       </div>
@@ -468,7 +498,13 @@ export default function ExpCalculatorWorkspace({ theme }: { theme: AppTheme }) {
   );
 }
 
-function BuffsTab({ theme, onImportHourlyExp }: { theme: AppTheme; onImportHourlyExp: (hourlyExp: number) => void }) {
+function BuffsTab({
+  theme,
+  onImportHourlyExp,
+}: {
+  theme: AppTheme;
+  onImportHourlyExp: (hourlyExp: number, charName: string | null) => void;
+}) {
   const styles = toolStyles(theme);
   const inputStyle = fullWidthControl(styles.inputStyle);
   const characterDropdownInputStyle: React.CSSProperties = { ...styles.inputStyle, width: "100%" };
@@ -726,7 +762,7 @@ function BuffsTab({ theme, onImportHourlyExp }: { theme: AppTheme; onImportHourl
         monster={monster}
         selectedMonster={selectedMonster}
         result={result}
-        onImportHourlyExp={onImportHourlyExp}
+        onImportHourlyExp={(hourlyExp) => onImportHourlyExp(hourlyExp, selectedCharName)}
       />
     </>
   );
@@ -1058,14 +1094,14 @@ function MiniMetric({ theme, label, value }: { theme: AppTheme; label: string; v
   );
 }
 
-function AllInOneTab({ theme, importedHourlyExp }: { theme: AppTheme; importedHourlyExp: number | null }) {
+function AllInOneTab({ theme, imported }: { theme: AppTheme; imported: ImportedFarmingRate | null }) {
   const styles = toolStyles(theme);
   const inputStyle = fullWidthControl(styles.inputStyle);
   const selectStyle = fullWidthControl(styles.selectStyle);
   const characterDropdownInputStyle: React.CSSProperties = { ...styles.inputStyle, width: "100%" };
   const labelStyle = styles.labelStyle;
   const panelStyle = expPanelStyle(styles);
-  const [initial] = useState(() => initialAllInOneState(importedHourlyExp));
+  const [initial] = useState(() => initialAllInOneState(imported));
   const [input, setInput] = useState<AllInOneInput>(initial.input);
   const [selectedCharName, setSelectedCharName] = useState<string | null>(initial.charName);
   const characters = useMemo(() => selectCharactersList(readCharactersStore()), []);
