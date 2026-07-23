@@ -17,7 +17,8 @@ export default function CharacterProfileActionsScreen({
   const canShow =
     profile.confirmedCharacter &&
     profile.canViewCharacterDirectory &&
-    !profile.showCharacterDirectory;
+    !profile.showCharacterDirectory &&
+    !profile.setupStepActive;
   if (!canShow) return null;
 
   return (

@@ -5,6 +5,7 @@
   Keeps rendering focused while the controller hook owns state and navigation.
 */
 import { useEffect } from "react";
+import { createPortal } from "react-dom";
 import type { AppTheme } from "../../../components/themes";
 import { deriveCharactersLayout } from "./charactersLayout";
 import { getCharacterSetupFlowStyles } from "./CharacterSetupFlow.styles";
@@ -268,10 +269,16 @@ export default function CharacterSetupFlow({ theme, initialCharacterName, initia
           <PreviewSetupPane model={previewPaneModel} actions={previewPaneActions} />
         </div>
 
-        {state.deleteNoticeCharacterName && (
+        {/* position: fixed + a document.body portal (not absolute inside .characters-main)
+            so this centers on the actual viewport regardless of page height -- an
+            absolutely-positioned inset:0 here centers within .characters-main's own box,
+            which on a directory tall enough to scroll extends well past the visible
+            viewport, pushing the notice down toward the bottom of the screen instead
+            of the center. Same fix ConfirmModal already relies on for this reason. */}
+        {state.deleteNoticeCharacterName && typeof document !== "undefined" && createPortal(
           <div
             style={{
-              position: "absolute",
+              position: "fixed",
               inset: 0,
               display: "grid",
               placeItems: "center",
@@ -297,7 +304,8 @@ export default function CharacterSetupFlow({ theme, initialCharacterName, initia
             >
               {state.deleteNoticeCharacterName} was deleted.
             </div>
-          </div>
+          </div>,
+          document.body,
         )}
       </main>
     </>

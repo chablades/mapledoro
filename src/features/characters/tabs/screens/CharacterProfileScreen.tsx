@@ -264,7 +264,7 @@ export default function CharacterProfileScreen({
           </p>
           {/* A div, not a <p> -- HoverTooltip (inside ExpPercentIndicator) renders a <div>,
               which isn't valid inside a <p> and causes a hydration mismatch. */}
-          <div style={{ margin: 0, width: "100%", fontSize: "1rem", color: theme.muted, fontWeight: 700, lineHeight: 1.3, textAlign: "center" }}>
+          <div style={{ margin: 0, width: "100%", fontSize: "0.95rem", color: theme.muted, fontWeight: 700, lineHeight: 1.3, textAlign: "center" }}>
             Level {profile.confirmedCharacter.level}
           </div>
           {isExpTrackingAvailable(profile.confirmedCharacter.level) && (
@@ -302,7 +302,7 @@ export default function CharacterProfileScreen({
               {statusPrefix}Updated {formattedDate}
             </p>
           )}
-          {(isStale || profile.isRefreshing) && profile.onRefresh && (
+          {(isStale || profile.isRefreshing) && profile.onRefresh && !profile.isAddingCharacter && !profile.setupStepActive && (
             <button
               type="button"
               className="tap-target-44"

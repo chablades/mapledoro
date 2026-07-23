@@ -91,6 +91,7 @@ export default function SearchPaneCard({ model, actions }: SearchPaneCardProps) 
           theme={theme}
           title={`Remove ${profile.confirmedCharacter.characterName}?`}
           description="This removes the character and local setup data for this profile."
+          warning="If you haven't exported it, this data cannot be recovered."
           confirmLabel="Remove"
           confirmDanger
           onConfirm={() => {
