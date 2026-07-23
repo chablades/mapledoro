@@ -161,6 +161,7 @@ export function weaponPrefixesForClass(classId: string | undefined): string[] | 
  *  choice actually varies by hand (hero/paladin/dawn_warrior); every other class's
  *  weapon type is fixed, so a lookup miss here just means "not hand-ambiguous". */
 const WEAPON_HAND_BY_PREFIX: Record<string, "1h" | "2h"> = Object.fromEntries(
+  // react-doctor-disable-next-line js-combine-iterations -- module-load-time only, over a small fixed table, not a per-render hot path.
   Object.entries(WEAPON_TYPE_PREFIX)
     .filter(([type]) => type.startsWith("oneH") || type.startsWith("twoH"))
     .map(([type, prefix]) => [prefix, type.startsWith("oneH") ? "1h" : "2h"]),

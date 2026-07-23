@@ -12,7 +12,7 @@ import { readCharacterToolData } from "../../../tools/characterToolStorage";
 import { resolveClassId, getClassSetupOverrides } from "../../setup/data/nexonJobMapping";
 import { CLASS_SKILL_DATA, getClassDataByNexonJobName, isLegacyClass, type ClassSkillData } from "../../setup/data/classSkillData";
 import { HEXA_STAT_OPTIONS, getHexaStatBonus, getMainStatLabel, getAttackLabel, type HexaStatNode, type HexaStatEntry, type HexaStatSlot } from "../../setup/data/hexaStatData";
-import { readCharactersStore, selectCharacterByIgn } from "../../model/charactersStore";
+import { EXP_HISTORY_DAY_MS, nexonDayIndex, NEXON_DAILY_UPDATE_CUTOFF_HOUR_UTC, readCharactersStore, selectCharacterByIgn } from "../../model/charactersStore";
 import type { StoredCharacterEquipment, StoredCharacterRecord, StoredCharacterStats, StoredEquipmentItem, StoredHyperStat, StoredInnerAbility, StoredIATier, StoredTripleStatField, StoredFamiliarSlot, ExpHistoryEntry } from "../../model/charactersStore";
 import { isExpTrackingAvailable, resolveExpDelta, characterExpPercent, netExpGained } from "../../model/expProgress";
 import ExpDeltaBadge from "../components/ExpDeltaBadge";
@@ -2298,6 +2298,25 @@ function resolveExpNotice(character: StoredCharacterRecord | null): string | nul
   return isExpTrackingAvailable(character.level) ? null : "EXP tracking unlocks at level 200.";
 }
 
+const EXP_OVER_TIME_INFO: TooltipContent = {
+  title: "EXP Over Time",
+  description: (
+    <>
+      Character rankings refresh once per day, starting around 16:00 UTC and usually
+      finishing within an hour or two.
+      <br />
+      <br />
+      This chart reflects that daily snapshot, not your live in-game progress, so it only
+      updates once each real-world day at most.
+      <br />
+      <br />
+      The very first tracked day for a character won&apos;t show a bar on Daily EXP, since
+      there&apos;s nothing earlier yet to measure a gain against. It&apos;ll start filling in
+      from the next update onward.
+    </>
+  ),
+};
+
 const EXP_RANGE_OPTIONS: { value: ExpRangeDays; label: string }[] = [
   { value: "7", label: "7D" },
   { value: "14", label: "14D" },
@@ -2305,7 +2324,6 @@ const EXP_RANGE_OPTIONS: { value: ExpRangeDays; label: string }[] = [
   { value: "90", label: "90D" },
 ];
 type ExpRangeDays = "7" | "14" | "30" | "90";
-const EXP_HISTORY_DAY_MS = 24 * 60 * 60 * 1000;
 
 type LineChartComponent = (typeof import("react-chartjs-2"))["Line"];
 type BarChartComponent = (typeof import("react-chartjs-2"))["Bar"];
@@ -2321,29 +2339,75 @@ interface ExpChartPoint {
   expGained: number | null;
 }
 
+// The number of real calendar days between labeled ticks. Forcing a fixed tick COUNT (the
+// previous approach) breaks down whenever the day-span isn't a clean multiple of that count
+// -- e.g. 14 daily points split into 6 ticks unavoidably alternates between 2-day and 3-day
+// steps, which reads as jittery even though every point is genuinely one real day apart.
+// Picking a fixed day INTERVAL instead (and simply not labeling whichever point falls at the
+// very end of a partial interval) guarantees every labeled gap is identical. Values chosen so
+// the common window sizes divide evenly: 14/2=7, 30/5=6, 90/15=6 ticks. A small window has
+// room to label every single day.
+function resolveExpTickIntervalDays(n: number): number {
+  if (n <= 8) return 1;
+  if (n <= 16) return 2;
+  if (n <= 35) return 5;
+  return 15;
+}
+
+// Indices of the data points (already one per Nexon day, see nexonDayAnchorMs above) that
+// get an axis tick -- every `interval`-th day starting from the first point. Shared by the
+// line chart (linear scale) and the bar chart (category scale) so both land on the exact same
+// dates. The very last point isn't force-included if it doesn't fall on the interval, same as
+// how most chart libraries handle "nice" tick spacing -- forcing it back in is what produced
+// the earlier crammed/stretched end-of-axis look.
+function pickTickIndices(n: number): number[] {
+  const interval = resolveExpTickIntervalDays(n);
+  const indices: number[] = [];
+  for (let i = 0; i < n; i += interval) indices.push(i);
+  return indices;
+}
+
+// Normalizes a raw entry timestamp down to a stable anchor point for its Nexon day (see
+// nexonDayIndex in charactersStore.ts) -- the same day-boundary used to decide which day an
+// EXP snapshot belongs to when it's recorded. Refreshes land at whatever time of day a
+// refresh happened, not a fixed time -- plotting the raw timestamp made every chart's
+// x-spacing wobble by however many hours apart two same-day-count-adjacent entries happened
+// to be recorded (e.g. a 2am refresh followed by an 11pm one reads as a ~45h gap), even
+// though the real day gap was identical to every other pair. Anchoring removes that jitter
+// while still preserving real MULTI-day gaps (a skipped day still shows as a wider gap, just
+// measured in whole days) -- and keeping this in UTC (rather than the viewer's local
+// midnight) means every viewer sees the exact same date labels for the same snapshot,
+// regardless of their own timezone.
+function nexonDayAnchorMs(timestamp: number): number {
+  return nexonDayIndex(timestamp) * EXP_HISTORY_DAY_MS + NEXON_DAILY_UPDATE_CUTOFF_HOUR_UTC * 60 * 60 * 1000;
+}
+
 // Shared by ExpChart and ExpGainBarChart below. y is a fractional level (level +
 // percent/100) rather than the raw EXP percent -- the raw percent alone visibly drops
 // back toward 0 on every level-up inside the window, which reads as a regression even
 // though real progress only ever goes up. Folding the level into the number keeps the
 // line always climbing while still landing on real level numbers on the axis; `percent`
 // is kept per-point for the tooltip, which shows the real Lv/% breakdown. expGained is
-// the raw EXP earned since the previous entry (null for the baseline point, which has
-// nothing before it to diff against). A same-level expGained is a raw signed diff rather
-// than netExpGained (which clamps a loss to 0) so a real EXP loss -- dying to a boss in
-// some modes -- comes through as negative instead of getting hidden, same reasoning as
-// resolveExpDelta in expProgress.ts.
-function computeExpChartPoints(entries: ExpHistoryEntry[]): ExpChartPoint[] {
+// the raw EXP earned since the previous entry (or since `anchor` for the first point --
+// the last real snapshot before the selected window, if any -- so the first in-window
+// day still gets a real diff instead of being nulled out; only null when there's truly
+// nothing before it, i.e. the very first snapshot ever recorded). A same-level expGained
+// is a raw signed diff rather than netExpGained (which clamps a loss to 0) so a real EXP
+// loss -- dying to a boss in some modes -- comes through as negative instead of getting
+// hidden, same reasoning as resolveExpDelta in expProgress.ts.
+function computeExpChartPoints(entries: ExpHistoryEntry[], anchor: ExpHistoryEntry | null = null): ExpChartPoint[] {
   return entries.map((e, i) => {
     const percent = characterExpPercent(e.level, e.exp);
     const y = e.level + percent / 100;
-    if (i === 0) return { x: e.date, y, level: e.level, percent, expGained: null };
-    const prev = entries[i - 1];
+    const x = nexonDayAnchorMs(e.date);
+    const prev = i === 0 ? anchor : entries[i - 1];
+    if (!prev) return { x, y, level: e.level, percent, expGained: null };
     const expGained = prev.level === e.level ? e.exp - prev.exp : netExpGained(prev.level, prev.exp, e.level, e.exp);
-    return { x: e.date, y, level: e.level, percent, expGained };
+    return { x, y, level: e.level, percent, expGained };
   });
 }
 
-function ExpChart({ theme, entries }: { theme: Theme; entries: ExpHistoryEntry[] }) {
+function ExpChart({ theme, entries, anchor }: { theme: Theme; entries: ExpHistoryEntry[]; anchor: ExpHistoryEntry | null }) {
   const [Line, setLine] = useState<LineChartComponent | null>(null);
 
   useEffect(() => {
@@ -2359,7 +2423,7 @@ function ExpChart({ theme, entries }: { theme: Theme; entries: ExpHistoryEntry[]
     return () => { mounted = false; };
   }, []);
 
-  const points = useMemo(() => computeExpChartPoints(entries), [entries]);
+  const points = useMemo(() => computeExpChartPoints(entries, anchor), [entries, anchor]);
 
   const data: ChartData<"line"> = useMemo(() => ({
     datasets: [{
@@ -2391,7 +2455,7 @@ function ExpChart({ theme, entries }: { theme: Theme; entries: ExpHistoryEntry[]
         borderColor: theme.border,
         borderWidth: 1,
         callbacks: {
-          title: (items: TooltipItem<"line">[]) => new Date((items[0].raw as ExpChartPoint).x).toLocaleDateString(undefined, { month: "short", day: "numeric" }),
+          title: (items: TooltipItem<"line">[]) => new Date((items[0].raw as ExpChartPoint).x).toLocaleDateString(undefined, { month: "short", day: "numeric", timeZone: "UTC" }),
           label: (item: TooltipItem<"line">) => {
             const raw = item.raw as ExpChartPoint;
             return `Lv ${raw.level} · ${raw.percent.toFixed(3)}%`;
@@ -2409,31 +2473,19 @@ function ExpChart({ theme, entries }: { theme: Theme; entries: ExpHistoryEntry[]
         min: points[0]?.x,
         max: points[points.length - 1]?.x,
         // A linear scale's default auto-generated ticks are evenly spaced across [min, max]
-        // by value, not snapped to real data points -- entries aren't always exactly 24h
-        // apart, so a tick could land between two points and read as though it belongs to
-        // whichever one it's visually closer to. Overriding ticks to the real point x-values
-        // (evenly sampled down to ~6) guarantees every date label sits exactly on its point.
+        // by value, not snapped to real data points -- a tick could land between two points
+        // and read as though it belongs to whichever one it's visually closer to.
+        // pickTickIndices picks a fixed real-day interval instead (shared with the bar chart
+        // below, so both axes always agree on which dates to show), guaranteeing every
+        // labeled gap is identical.
         afterBuildTicks: (axis) => {
-          const n = points.length;
-          if (n === 0) { axis.ticks = []; return; }
-          const dateLabel = (x: number) => new Date(x).toLocaleDateString(undefined, { month: "short", day: "numeric" });
-          const maxTicks = 6;
-          const step = Math.max(1, Math.ceil((n - 1) / (maxTicks - 1)));
-          const values: number[] = [];
-          for (let i = 0; i < n; i += step) values.push(points[i].x);
-          const lastX = points[n - 1].x;
-          // Always includes the rightmost edge, but not if it'd print the same calendar-day
-          // label a second time in a row -- expHistory gets an entry per refresh, not once
-          // a day, so two entries can land on the same real date right at the window's edge.
-          if (values[values.length - 1] !== lastX && dateLabel(values[values.length - 1]) !== dateLabel(lastX)) {
-            values.push(lastX);
-          }
-          axis.ticks = values.map((value) => ({ value }));
+          const indices = pickTickIndices(points.length);
+          axis.ticks = indices.map((i) => ({ value: points[i].x }));
         },
         ticks: {
           color: theme.muted,
           maxRotation: 0,
-          callback: (value) => new Date(value as number).toLocaleDateString(undefined, { month: "short", day: "numeric" }),
+          callback: (value) => new Date(value as number).toLocaleDateString(undefined, { month: "short", day: "numeric", timeZone: "UTC" }),
         },
         grid: { display: false },
       },
@@ -2470,15 +2522,15 @@ interface DailyExpPoint {
 
 // expHistory gets an entry on every refresh/setup-flow lookup, not once a day (see
 // appendExpHistoryEntry in charactersStore.ts) -- a bar per raw entry could put several
-// bars under the same calendar date, which then desyncs from the x-axis's autoSkip'd
-// labels. Summing into one bar per real calendar day (keyed by the same locale string
-// used as its label, so the two can never drift apart) keeps "Daily EXP" honest and each
-// label lined up under its own bar.
-function aggregateDailyExpGain(entries: ExpHistoryEntry[]): DailyExpPoint[] {
-  const points = computeExpChartPoints(entries).filter((p): p is ExpChartPoint & { expGained: number } => p.expGained !== null);
+// bars under the same calendar date, which then desyncs from the x-axis's ticks. Summing
+// into one bar per real calendar day (keyed by the same locale string used as its label, so
+// the two can never drift apart) keeps "Daily EXP" honest and each label lined up under its
+// own bar.
+function aggregateDailyExpGain(entries: ExpHistoryEntry[], anchor: ExpHistoryEntry | null): DailyExpPoint[] {
+  const points = computeExpChartPoints(entries, anchor).filter((p): p is ExpChartPoint & { expGained: number } => p.expGained !== null);
   const byDay = new Map<string, DailyExpPoint>();
   for (const p of points) {
-    const label = new Date(p.x).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+    const label = new Date(p.x).toLocaleDateString(undefined, { month: "short", day: "numeric", timeZone: "UTC" });
     const existing = byDay.get(label);
     if (existing) existing.expGained += p.expGained;
     else byDay.set(label, { label, expGained: p.expGained });
@@ -2497,7 +2549,7 @@ function formatSignedExp(n: number): string {
   return n < 0 ? `-${formatExpCompact(-n).toUpperCase()}` : formatExpCompact(n).toUpperCase();
 }
 
-function ExpGainBarChart({ theme, entries }: { theme: Theme; entries: ExpHistoryEntry[] }) {
+function ExpGainBarChart({ theme, entries, anchor }: { theme: Theme; entries: ExpHistoryEntry[]; anchor: ExpHistoryEntry | null }) {
   const [Bar, setBar] = useState<BarChartComponent | null>(null);
 
   useEffect(() => {
@@ -2513,7 +2565,7 @@ function ExpGainBarChart({ theme, entries }: { theme: Theme; entries: ExpHistory
     return () => { mounted = false; };
   }, []);
 
-  const points = useMemo(() => aggregateDailyExpGain(entries), [entries]);
+  const points = useMemo(() => aggregateDailyExpGain(entries, anchor), [entries, anchor]);
 
   // Draws a "+1.89t"-style total above each bar, mirroring MapleRanks' always-visible
   // per-bar amount (the line chart used to do this per-point before Daily EXP took over
@@ -2585,7 +2637,15 @@ function ExpGainBarChart({ theme, entries }: { theme: Theme; entries: ExpHistory
     },
     scales: {
       x: {
-        ticks: { color: theme.muted, maxRotation: 0, autoSkip: true, maxTicksLimit: 6 },
+        // A category scale's own autoSkip picks evenly-spaced-by-index labels using its own
+        // internal rules, which can disagree with the line chart's picks. Using the same
+        // pickTickIndices logic as the line chart's x-axis instead keeps both charts showing
+        // the exact same subset of dates.
+        afterBuildTicks: (axis) => {
+          const indices = pickTickIndices(points.length);
+          axis.ticks = indices.map((value) => ({ value }));
+        },
+        ticks: { color: theme.muted, maxRotation: 0, autoSkip: false },
         grid: { display: false },
       },
       y: {
@@ -2605,6 +2665,11 @@ function ExpGainBarChart({ theme, entries }: { theme: Theme; entries: ExpHistory
 
 interface ExpHistoryWindow {
   entries: ExpHistoryEntry[];
+  // Last real snapshot before the window start, if any -- lets the first in-window point
+  // still compute a real expGained diff (see computeExpChartPoints) instead of being
+  // treated as a baseline with nothing before it, which previously dropped that day's bar
+  // entirely and made e.g. a 7D range visibly show only 6 days of bars.
+  anchor: ExpHistoryEntry | null;
   start: number;
   end: number;
 }
@@ -2612,7 +2677,8 @@ interface ExpHistoryWindow {
 function windowExpHistory(entries: ExpHistoryEntry[], days: number): ExpHistoryWindow {
   const end = Date.now();
   const start = end - days * EXP_HISTORY_DAY_MS;
-  return { entries: entries.filter((e) => e.date >= start), start, end };
+  const before = entries.filter((e) => e.date < start);
+  return { entries: entries.filter((e) => e.date >= start), anchor: before[before.length - 1] ?? null, start, end };
 }
 
 // Read-only, auto-populated from every refresh/setup-flow lookup (see appendExpHistoryEntry
@@ -2636,7 +2702,7 @@ function ExpBookmark({ theme, character }: { theme: Theme; character: StoredChar
         </div>
         <div style={{ fontSize: "0.75rem", color: theme.muted, marginTop: 4 }}>Level {character.level}</div>
       </StatBlock>
-      <StatBlock label="EXP Over Time" theme={theme}>
+      <StatBlock label="EXP Over Time" theme={theme} info={EXP_OVER_TIME_INFO}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.75rem", marginBottom: "0.75rem", flexWrap: "wrap" }}>
           <p style={{ margin: 0, fontSize: "0.75rem", color: theme.muted }}>Progress since the start of this range.</p>
           <PillGroup theme={theme} options={EXP_RANGE_OPTIONS} value={range} onChange={setRange} />
@@ -2644,9 +2710,9 @@ function ExpBookmark({ theme, character }: { theme: Theme; character: StoredChar
         {expWindow.entries.length >= 2 ? (
           <>
             <p style={{ margin: "0 0 0.5rem", fontSize: "0.75rem", color: theme.muted, fontWeight: 700 }}>Daily EXP</p>
-            <ExpGainBarChart theme={theme} entries={expWindow.entries} />
+            <ExpGainBarChart theme={theme} entries={expWindow.entries} anchor={expWindow.anchor} />
             <p style={{ margin: "1rem 0 0.5rem", fontSize: "0.75rem", color: theme.muted, fontWeight: 700 }}>Level Progress</p>
-            <ExpChart theme={theme} entries={expWindow.entries} />
+            <ExpChart theme={theme} entries={expWindow.entries} anchor={expWindow.anchor} />
           </>
         ) : (
           <p style={{ margin: 0, fontSize: "0.8rem", color: theme.muted, textAlign: "center", padding: "2rem 0" }}>

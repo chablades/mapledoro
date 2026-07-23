@@ -892,6 +892,8 @@ function WildHunterRankQuestion({ sq, whSource, worldLegion, onUpdate, theme, re
   );
 }
 
+const LEGION_ARTIFACT_LOCK_TOOLTIP = { title: "Why this is locked", description: "Auto-filled from this world's Legion Artifacts." };
+
 // The two Maple Union artifacts, both sourced from the Legion window's Artifacts tab.
 // Shown in both flows: full_setup's own dedicated Legion Artifacts step feeds these same
 // two fields (see deriveLegionArtifactFields), so they render here too, locked whenever
@@ -917,7 +919,6 @@ function LegionArtifactQuestions({ sq, worldLegion, board, onUpdate, theme }: {
   const finalAtkDerived = boardDerived?.artifactFinalAttackDmg;
   const extraTargetLocked = extraTargetDerived !== undefined;
   const finalAtkLocked = finalAtkDerived !== undefined;
-  const lockTooltip = { title: "Why this is locked", description: "Auto-filled from this world's Legion Artifacts." };
   const manualFinalAtk = sq.artifactFinalAttackDmg ?? (worldLegion?.artifactFinalAttackDmg != null ? String(worldLegion.artifactFinalAttackDmg) : "");
   return (
     <>
@@ -931,14 +932,14 @@ function LegionArtifactQuestions({ sq, worldLegion, board, onUpdate, theme }: {
           title: "Increases Bonus EXP",
           description: <>Found in your Legion window, in the Artifacts tab. Assigning the <strong>Increases Bonus EXP</strong> stat to a crystal also grants <strong>Max AoE Skill Targets: +1</strong>, listed under Artifact Bonuses.</>,
         }}
-        lockTooltip={lockTooltip}
+        lockTooltip={LEGION_ARTIFACT_LOCK_TOOLTIP}
       />
       <LegionFinalAttackField
         value={finalAtkLocked ? finalAtkDerived : manualFinalAtk}
         onUpdate={(v) => onUpdate({ artifactFinalAttackDmg: v })}
         theme={theme}
         locked={finalAtkLocked}
-        lockTooltip={lockTooltip}
+        lockTooltip={LEGION_ARTIFACT_LOCK_TOOLTIP}
       />
     </>
   );

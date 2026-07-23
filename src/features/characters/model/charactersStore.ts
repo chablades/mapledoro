@@ -273,15 +273,31 @@ export interface ExpHistoryEntry {
 }
 
 const EXP_HISTORY_MAX_DAYS = 90;
-const EXP_HISTORY_DAY_MS = 24 * 60 * 60 * 1000;
+export const EXP_HISTORY_DAY_MS = 24 * 60 * 60 * 1000;
 
-function isSameUtcDay(a: number, b: number): boolean {
-  return Math.floor(a / EXP_HISTORY_DAY_MS) === Math.floor(b / EXP_HISTORY_DAY_MS);
+// Nexon's own character/ranking data only actually refreshes once per real-world day,
+// typically somewhere in the ~16:00-19:00 UTC range (occasionally later) -- not at UTC
+// midnight. A refresh taken before that update lands still returns the PREVIOUS day's frozen
+// snapshot, so which day a snapshot belongs to needs to be anchored to Nexon's own update
+// cadence, not literal UTC midnight-to-midnight. Padded a few hours past the typical window
+// so an occasionally-delayed update doesn't get misread as having already landed for the day.
+export const NEXON_DAILY_UPDATE_CUTOFF_HOUR_UTC = 21;
+
+/** Which "Nexon day" a timestamp falls into -- an integer that's equal for any two
+ *  timestamps between one NEXON_DAILY_UPDATE_CUTOFF_HOUR_UTC and the next. Shared with the
+ *  EXP chart's own date-bucketing/labeling so storage and display always agree. */
+export function nexonDayIndex(ms: number): number {
+  return Math.floor((ms - NEXON_DAILY_UPDATE_CUTOFF_HOUR_UTC * 60 * 60 * 1000) / EXP_HISTORY_DAY_MS);
 }
 
-/** Appends an EXP/level snapshot, deduping to at most one entry per UTC day and pruning
- *  entries past the 90-day tracking window. A no-op when level/exp match the last entry,
- *  so repeat refreshes with no real progress don't grow the array. */
+function isSameNexonDay(a: number, b: number): boolean {
+  return nexonDayIndex(a) === nexonDayIndex(b);
+}
+
+/** Appends an EXP/level snapshot, deduping to at most one entry per Nexon day (see
+ *  nexonDayIndex) and pruning entries past the 90-day tracking window. A no-op when
+ *  level/exp match the last entry, so repeat refreshes with no real progress don't grow
+ *  the array. */
 export function appendExpHistoryEntry(
   existing: ExpHistoryEntry[] | undefined,
   level: number,
@@ -291,7 +307,7 @@ export function appendExpHistoryEntry(
   const pruned = (existing ?? []).filter((e) => now - e.date <= EXP_HISTORY_MAX_DAYS * EXP_HISTORY_DAY_MS);
   const last = pruned[pruned.length - 1];
   if (last && last.level === level && last.exp === exp) return pruned;
-  if (last && isSameUtcDay(last.date, now)) return [...pruned.slice(0, -1), { date: now, level, exp }];
+  if (last && isSameNexonDay(last.date, now)) return [...pruned.slice(0, -1), { date: now, level, exp }];
   return [...pruned, { date: now, level, exp }];
 }
 
