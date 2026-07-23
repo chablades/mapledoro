@@ -12,19 +12,19 @@
   "dependencies": {
     "@vercel/analytics": "^2.0.1",
     "chart.js": "^4.5.1",
-    "ioredis": "^5.9.3",
-    "next": "^16.2.10",
-    "react": "19.2.7",
+    "ioredis": "^5.11.1",
+    "next": "^16.2.11",
+    "react": "19.2.8",
     "react-chartjs-2": "^5.3.1",
-    "react-dom": "19.2.7"
+    "react-dom": "19.2.8"
   },
   "devDependencies": {
     "@types/node": "^22",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
-    "eslint": "^9.39.4",
-    "eslint-config-next": "^16.2.10",
-    "eslint-plugin-sonarjs": "^4.1.0",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^16.2.11",
+    "eslint-plugin-sonarjs": "^4.2.0",
     "typescript": "^5.9.3"
   },
   "browserslist": [
@@ -35,6 +35,7 @@
   ],
   "overrides": {
     "js-yaml": "4.3.0",
-    "postcss": "8.5.16"
+    "postcss": "8.5.22",
+    "sharp": "0.35.3"
   }
 }
