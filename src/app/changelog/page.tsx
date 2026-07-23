@@ -12,6 +12,12 @@ interface ChangelogEntry {
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    date: "2026-07-19",
+    changes: [
+      { type: "added", text: "Added a back to top button that appears in the corner once you scroll down a page." },
+    ],
+  },
+  {
     date: "2026-07-10",
     changes: [
       { type: "added", text: "Added a compact strip with the daily, weekly, and Ursus timers to the home screen on phones and small windows." },
