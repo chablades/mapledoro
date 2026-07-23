@@ -12,6 +12,13 @@ interface ChangelogEntry {
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    date: "2026-07-23",
+    changes: [
+      { type: "added", text: "The EXP Calculator Daily / Weekly Calculator now takes Express Boosters." },
+      { type: "added", text: "The EXP Calculator Resources tab now has EXP tables for Express Booster and Haste Fever Time." },
+    ],
+  },
+  {
     date: "2026-07-17",
     changes: [
       { type: "changed", text: "The HEXA Skill Tracker Guide tab now combines back to back levels of the same skill into one step, so leveling a skill from 8 to 10 shows as a single 8 to 10 step." },

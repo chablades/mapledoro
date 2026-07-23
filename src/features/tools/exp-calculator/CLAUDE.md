@@ -84,6 +84,15 @@ rune scenarios.
 Overview stays compact: the selected monster card owns the monster identity and final kill EXP;
 don't duplicate its details elsewhere.
 
+`BASE_MONSTER_EXP_ARCANE` / `BASE_MONSTER_EXP_GRANDIS` are the game's base monster EXP per character
+level (200-259 and 260-299). Champion Double Up (3.5x), Haste Fever Time (7x), and Express Booster
+all derive from them, so keep them as one shared pair rather than copying the numbers per feature.
+Express Booster Flame EXP steps by level band off the Grandis table and stops scaling past Lv. 294;
+the Lv. 265 value is measured, not band-fit, and the post-294 flatten really is a drop. None of these
+event resources take EXP buffs, which is why they live in `RESOURCE_TABLES` and are applied through
+`applyResourceUnits` instead of the buff multiplier. Haste Fever Time is a reference table only for
+now: it has no Daily / Weekly input, pending a home in its own category.
+
 `MONSTER_PARK_OPTIONS` is ordered by EXP, so "the dungeon a player would actually run" is just the
 last entry whose `minLevel` the character meets. `monsterParkId` is a pin, and `""` means that
 auto-pick, which keeps upgrading as the plan levels the character. `resolveMonsterPark` falls back

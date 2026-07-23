@@ -85,6 +85,10 @@ export interface ResourceTable {
   kind: "single-exp" | "epic";
   rows: LevelResourceRow[] | EpicDungeonRow[];
   maxUnits?: number;
+  /** Header for the `maxUnits` total column. Defaults to "Full Run". */
+  maxUnitsLabel?: string;
+  /** Drops the per-unit % of level column, for sources where one unit is a negligible slice. */
+  hidePercentOfLevel?: boolean;
   /** Units consumed per hour for time-based sources; switches the % column to % per hour. */
   unitsPerHour?: number;
 }
@@ -144,6 +148,7 @@ export interface AllInOneInput {
   epicDungeonMultiplier: number;
   strawberryTickets: number;
   mechaberryTickets: number;
+  expressBoosters: number;
   expTickets: number;
   advancedExpTickets: number;
   punchKingScore: number;
@@ -285,7 +290,7 @@ export const SELECT_BUFFS: SelectBuff[] = [
   ] },
   { id: "tallahart", label: "Grand Sacred Symbol: Tallahart", icon: { type: "item", id: "01714000" }, options: grandSymbolOptions() },
   { id: "geardock", label: "Grand Sacred Symbol: Geardock", icon: { type: "item", id: "01714001" }, options: grandSymbolOptions() },
-  { id: "union-artifact", label: "Legion Artifact (EXP)", icon: { type: "item", id: "05681074" }, options: levelPercentOptions([1, 2, 3, 4, 6, 7, 8, 9, 10, 12]) },
+  { id: "union-artifact", label: "Legion Artifact (Passive EXP)", icon: { type: "item", id: "05681074" }, options: levelPercentOptions([1, 2, 3, 4, 6, 7, 8, 9, 10, 12]) },
   { id: "champion-renown", label: "Champion's Renown", icon: { type: "skill", id: "80003819" }, options: levelPercentOptions([5, 10, 15, 20, 25]) },
   { id: "kinship", label: "Kinship Ring", icon: { type: "item", id: "01114000" }, options: [
     { label: "N/A", value: 0 },
@@ -412,6 +417,58 @@ const NIGHTMARE_PARADISE_BASE = [
   1519200000000, 1519200000000, 1519200000000, 1519200000000,
 ];
 
+/** Base monster EXP by character level: Arcane River covers Lv. 200-259, Grandis Lv. 260-299.
+ *  Champion Double Up, Haste Fever Time, and Express Booster all scale off these. */
+const BASE_MONSTER_EXP_ARCANE = [
+  98708, 101389, 104101, 107125, 109886, 112662, 115470, 118598, 121453, 124322,
+  248003, 253673, 260047, 265808, 271621, 278138, 284043, 290679, 296653, 303394,
+  309470, 316316, 322473, 329417, 335675, 342720, 349836, 356216, 363430, 370692,
+  393361, 401055, 408778, 415702, 423542, 431459, 439402, 446505, 454564, 462670,
+  470824, 485614, 494006, 501461, 509964, 518511, 527106, 535749, 544459, 553217,
+  584807, 594040, 603318, 612643, 622041, 631458, 640971, 650504, 661261, 670940,
+];
+
+const BASE_MONSTER_EXP_GRANDIS = [
+  1725461, 1750290, 1775159, 1800203, 1828409, 2056794, 2085219, 2113572, 2145596, 2174274,
+  2445217, 2481337, 2513634, 2546149, 2582906, 2903024, 2939616, 2981010, 3017988, 3059716,
+  3436027, 3482914, 3524768, 3572010, 3614278, 4062965, 4110304, 4163751, 4217526, 4265489,
+  4793318, 4847012, 4907812, 4968977, 5023491, 5643220, 5711948, 5781080, 5842650, 5912186,
+];
+
+/** Haste Inferno monsters are worth 7x the level's base monster EXP. */
+const HASTE_INFERNO_MULTIPLIER = 7;
+
+/** Kills a single Haste Fever Time can yield. */
+const HASTE_INFERNO_MAX_KILLS = 10000;
+
+/** One Express Booster spawns 19 waves of 10 flames. */
+const EXPRESS_BOOSTER_FLAMES = 190;
+
+/** The level past which Express Booster Flames stop scaling. */
+const EXPRESS_BOOSTER_MAX_LEVEL = 294;
+
+/** EXP per Express Booster Flame, a band-stepped multiple of the level's base monster EXP.
+ *  Lv. 265 is a measured value rather than a band fit, and past Lv. 294 the flames flatten to the
+ *  lowest band on the Lv. 294 base, so the value drops there. Both quirks match the source table. */
+function expressBoosterFlameExp(level: number): number {
+  const base = BASE_MONSTER_EXP_GRANDIS[level - 260] ?? 0;
+  if (level === 265) return 454179859;
+  if (level <= 264) return Math.round(192 * base);
+  if (level <= 269) return Math.round(220.8 * base);
+  if (level <= 279) return Math.round(268.8 * base);
+  if (level <= 289) return Math.round(240 * base);
+  if (level <= EXPRESS_BOOSTER_MAX_LEVEL) return Math.round(220.8 * base);
+  return Math.round(192 * BASE_MONSTER_EXP_GRANDIS[EXPRESS_BOOSTER_MAX_LEVEL - 260]);
+}
+
+const HASTE_INFERNO_EXP = [...BASE_MONSTER_EXP_ARCANE, ...BASE_MONSTER_EXP_GRANDIS].map(
+  (base) => base * HASTE_INFERNO_MULTIPLIER,
+);
+
+const EXPRESS_BOOSTER_EXP = BASE_MONSTER_EXP_GRANDIS.map(
+  (_, index) => expressBoosterFlameExp(260 + index) * EXPRESS_BOOSTER_FLAMES,
+);
+
 export const RESOURCE_TABLES: ResourceTable[] = [
   {
     id: "exp-ticket",
@@ -456,6 +513,23 @@ export const RESOURCE_TABLES: ResourceTable[] = [
     kind: "single-exp",
     rows: makeLevelRows(200, LUXE_SAUNA),
     unitsPerHour: LUXE_SAUNA_UNITS_PER_HOUR,
+  },
+  {
+    id: "express-booster",
+    label: "Express Booster",
+    description: "EXP per Express Booster, which spawns 190 Express Booster Flames. Not affected by EXP buffs.",
+    kind: "single-exp",
+    rows: makeLevelRows(260, EXPRESS_BOOSTER_EXP),
+  },
+  {
+    id: "haste-inferno",
+    label: "Haste Fever Time",
+    description: "EXP per Haste Inferno monster killed during Haste Fever Time, up to 10,000 kills. Not affected by EXP buffs.",
+    kind: "single-exp",
+    rows: makeLevelRows(200, HASTE_INFERNO_EXP),
+    maxUnits: HASTE_INFERNO_MAX_KILLS,
+    maxUnitsLabel: "EXP / 10k Units",
+    hidePercentOfLevel: true,
   },
   {
     id: "high-mountain",
@@ -568,22 +642,6 @@ const MPE_EXP_FACTORS = [
   4.2, 4.2, 4.2, 4.2, 4.2, 5.376, 5.376, 5.376, 5.376, 5.376,
   5.832, 5.832, 5.832, 5.832, 5.832, 5.832, 5.832, 5.832, 5.832, 5.832,
   5.832, 5.832, 5.832, 5.832, 5.832, 5.832, 5.832, 5.832, 5.832, 5.832,
-];
-
-const CHAMPION_DOUBLE_UP_ARCANE = [
-  98708, 101389, 104101, 107125, 109886, 112662, 115470, 118598, 121453, 124322,
-  248003, 253673, 260047, 265808, 271621, 278138, 284043, 290679, 296653, 303394,
-  309470, 316316, 322473, 329417, 335675, 342720, 349836, 356216, 363430, 370692,
-  393361, 401055, 408778, 415702, 423542, 431459, 439402, 446505, 454564, 462670,
-  470824, 485614, 494006, 501461, 509964, 518511, 527106, 535749, 544459, 553217,
-  584807, 594040, 603318, 612643, 622041, 631458, 640971, 650504, 661261, 670940,
-];
-
-const CHAMPION_DOUBLE_UP_GRANDIS = [
-  1725461, 1750290, 1775159, 1800203, 1828409, 2056794, 2085219, 2113572, 2145596, 2174274,
-  2445217, 2481337, 2513634, 2546149, 2582906, 2903024, 2939616, 2981010, 3017988, 3059716,
-  3436027, 3482914, 3524768, 3572010, 3614278, 4062965, 4110304, 4163751, 4217526, 4265489,
-  4793318, 4847012, 4907812, 4968977, 5023491, 5643220, 5711948, 5781080, 5842650, 5912186,
 ];
 
 const PUNCH_KING_TIERS = [
@@ -737,6 +795,9 @@ function initialSimulationState(input: AllInOneInput): SimulationState {
 function applyStartingEventResources(state: SimulationState, input: AllInOneInput, date: number): SimulationState {
   let next = applyResourceUnits(state, Math.max(0, input.strawberryTickets) * 1200, "strawberry-farm", date);
   next = applyResourceUnits(next, Math.max(0, input.luxeSaunaHours) * LUXE_SAUNA_UNITS_PER_HOUR, "luxe-sauna", date);
+  if (next.level >= 260) {
+    next = applyResourceUnits(next, Math.max(0, input.expressBoosters), "express-booster", date);
+  }
   if (next.level >= 280) {
     next = applyResourceUnits(next, Math.max(0, input.mechaberryTickets), "mechaberry-farm", date);
   }
@@ -838,8 +899,8 @@ function punchKingExpForLevel(level: number, score: number): number {
 
 function doubleUpExpForLevel(level: number, points: number): number {
   if (level < 200) return 0;
-  const source = level < 260 ? CHAMPION_DOUBLE_UP_ARCANE[level - 200] : CHAMPION_DOUBLE_UP_GRANDIS[level - 260];
-  return Math.ceil(3.5 * (source ?? CHAMPION_DOUBLE_UP_GRANDIS[CHAMPION_DOUBLE_UP_GRANDIS.length - 1])) * Math.max(0, points);
+  const source = level < 260 ? BASE_MONSTER_EXP_ARCANE[level - 200] : BASE_MONSTER_EXP_GRANDIS[level - 260];
+  return Math.ceil(3.5 * (source ?? BASE_MONSTER_EXP_GRANDIS[BASE_MONSTER_EXP_GRANDIS.length - 1])) * Math.max(0, points);
 }
 
 function applyResourceUnits(state: SimulationState, units: number, tableId: string, date: number): SimulationState {

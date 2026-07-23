@@ -68,6 +68,7 @@ type AllInOneNumberKey =
   | "epicDungeonMultiplier"
   | "strawberryTickets"
   | "mechaberryTickets"
+  | "expressBoosters"
   | "expTickets"
   | "advancedExpTickets"
   | "punchKingScore"
@@ -198,6 +199,7 @@ function defaultAllInOneInput(): AllInOneInput {
     epicDungeonMultiplier: 1,
     strawberryTickets: 0,
     mechaberryTickets: 0,
+    expressBoosters: 0,
     expTickets: 0,
     advancedExpTickets: 0,
     punchKingScore: 0,
@@ -320,7 +322,7 @@ const INPUT_BUFF_PANELS = [
 /** Select buffs rendered as compact icon + level tiles (char-flow symbol input style)
  *  instead of dropdowns. The stored value stays the option value; the tile input maps
  *  level (option index) to value. */
-const TILE_SELECT_IDS = new Set(["elven", "evan-link", "roro", "tallahart", "geardock", "union-artifact", "champion-renown"]);
+const TILE_SELECT_IDS = new Set(["elven", "evan-link", "roro", "tallahart", "geardock", "champion-renown"]);
 
 /** The two EXP node options rendered as exclusive toggle tiles; both write the
  *  shared "exp-node" select value. */
@@ -338,6 +340,9 @@ const SOL_ERDA_ICON: IconRef = { type: "item", id: "05066300" };
 
 // Monster Park entry ticket (manifests/v270/item.json).
 const MONSTER_PARK_ICON: IconRef = { type: "item", id: "05252030" };
+
+// The Express Booster Flame, listed as Intensifying Flame in manifests/v270/mob.json.
+const EXPRESS_BOOSTER_ICON: IconRef = { type: "mob", id: "9834700" };
 
 /** The level past which no Burning type grants extra levels. */
 const BURNING_MAX_LEVEL = 270;
@@ -1157,7 +1162,9 @@ function AllInOneTab({ theme, importedHourlyExp }: { theme: AppTheme; importedHo
         <SectionTitle theme={theme} label="Daily Content" />
         {DAILY_REGIONS.map((region) => (
           <div key={region} style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 8 }}>
-            <span className="tool-field-label" style={{ color: theme.muted, width: 86, flexShrink: 0 }}>{region}</span>
+            {/* Wide enough for "Arcane River" on one line, with `nowrap` as the backstop: the
+                fixed width is what keeps the icon columns aligned across the three regions. */}
+            <span className="tool-field-label" style={{ color: theme.muted, width: 104, flexShrink: 0, whiteSpace: "nowrap" }}>{region}</span>
             {/* Deliberately not level-gated: the plan can carry the character past a daily's
                 unlock level, and the simulation already skips it until they get there. */}
             {DAILY_EXP_CONTENT.filter((daily) => daily.region === region).map((daily) => {
@@ -1288,10 +1295,11 @@ function AllInOneTab({ theme, importedHourlyExp }: { theme: AppTheme; importedHo
             <NumberField label="Strawberry Farm Tickets" icon={{ type: "item", id: "02637501" }} min={0} value={input.strawberryTickets} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("strawberryTickets", value)} />
             <NumberField label="Mechaberry Farm Tickets" icon={{ type: "item", id: "02831285" }} min={0} value={input.mechaberryTickets} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("mechaberryTickets", value)} />
             <NumberField label="Punch King Score / Week" icon={{ type: "item", id: "02637502" }} min={0} max={2050} value={input.punchKingScore} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("punchKingScore", value)} />
+            <NumberField label="Express Boosters (Lv. 260+)" icon={EXPRESS_BOOSTER_ICON} min={0} value={input.expressBoosters} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("expressBoosters", value)} />
+            <NumberField label="Double Up Points / Week" icon={{ type: "item", id: "04310359" }} min={0} value={input.doubleUpPoints} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("doubleUpPoints", value)} />
             <NumberField label="Luxe Sauna / MVP Resort Hrs" icon={{ type: "mark", id: "mvpResort" }} min={0} decimal value={input.luxeSaunaHours} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("luxeSaunaHours", value)} />
             <NumberField label="EXP Tickets" icon={{ type: "item", id: "02637353" }} min={0} value={input.expTickets} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("expTickets", value)} />
             <NumberField label="Advanced EXP Tickets" icon={{ type: "item", id: "02638500" }} min={0} value={input.advancedExpTickets} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("advancedExpTickets", value)} />
-            <NumberField label="Double Up Points / Week" icon={{ type: "item", id: "04310359" }} min={0} value={input.doubleUpPoints} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("doubleUpPoints", value)} />
           </div>
         </div>
 
@@ -1413,7 +1421,7 @@ function ResourceTableView({ theme, table }: { theme: AppTheme; table: ResourceT
             ) : (
               <>
                 <th style={thStyle}>EXP / Unit</th>
-                {maxUnits !== undefined && <th style={thStyle} title={`Total EXP for a full ${maxUnits.toLocaleString()}-point run`}>Full Run</th>}
+                {maxUnits !== undefined && <th style={thStyle} title={`Total EXP for a full ${maxUnits.toLocaleString()}-unit run`}>{table.maxUnitsLabel ?? "Full Run"}</th>}
                 {unitsPerHour !== undefined ? (
                   <>
                     <th style={thStyle} title="Share of this level earned per hour">% / Hour</th>
@@ -1421,7 +1429,7 @@ function ResourceTableView({ theme, table }: { theme: AppTheme; table: ResourceT
                   </>
                 ) : (
                   <>
-                    <th style={thStyle} title="Share of this level earned per unit">% of Level</th>
+                    {!table.hidePercentOfLevel && <th style={thStyle} title="Share of this level earned per unit">% of Level</th>}
                     <th style={thStyle} title="Units needed to gain one full level">Units / Level</th>
                   </>
                 )}
@@ -1444,7 +1452,7 @@ function ResourceTableView({ theme, table }: { theme: AppTheme; table: ResourceT
                   <td style={levelTdStyle}>Lv. {row.level}</td>
                   <td style={tdStyle}>{formatMesoFull(row.exp)}</td>
                   {maxUnits !== undefined && <td style={tdStyle}>{formatMesoFull(row.exp * maxUnits)}</td>}
-                  <td style={tdStyle}>{percentOfLevel(row.level, row.exp * (unitsPerHour ?? 1)).toFixed(4)}%</td>
+                  {!table.hidePercentOfLevel && <td style={tdStyle}>{percentOfLevel(row.level, row.exp * (unitsPerHour ?? 1)).toFixed(4)}%</td>}
                   {unitsPerHour !== undefined ? (
                     <td style={tdStyle}>{(expForLevel(row.level) / Math.max(1, row.exp * unitsPerHour)).toLocaleString(undefined, { maximumFractionDigits: 2 })}</td>
                   ) : (
