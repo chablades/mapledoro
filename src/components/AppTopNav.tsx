@@ -8,6 +8,19 @@ import type { NavLinkItem } from "./nav-links";
 import type { AppTheme } from "./themes";
 import type { ColorMode } from "./themes";
 
+// Clicking the nav link for the section you're already on is a same-route Next.js
+// navigation, which doesn't remount the page -- pages with their own in-memory session
+// state (e.g. an in-progress character setup/edit flow) never notice the URL changed and
+// just keep rendering whatever was on screen, silently desyncing the URL from the UI. A
+// full navigation forces a real remount, resetting that state the way a user clicking
+// their current section's own nav link almost certainly intends.
+function forceFullNavigation(href: string) {
+  return (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    window.location.href = href;
+  };
+}
+
 function UtcClocks({ mobileClassName, desktopClassName, style }: { mobileClassName: string; desktopClassName: string; style: React.CSSProperties }) {
   const mobileRef = useRef<HTMLSpanElement>(null);
   const desktopRef = useRef<HTMLSpanElement>(null);
@@ -173,6 +186,7 @@ export default function AppTopNav({
                     className={styles.navLink}
                     aria-current={active ? "page" : undefined}
                     style={style}
+                    onClick={active ? forceFullNavigation(link.href) : undefined}
                   >
                     {link.label}
                   </Link>
@@ -272,7 +286,7 @@ export default function AppTopNav({
                   <Link
                     key={`m-${link.label}`}
                     href={link.href}
-                    onClick={() => setMobileMenuOpen(false)}
+                    onClick={active ? forceFullNavigation(link.href) : () => setMobileMenuOpen(false)}
                     aria-current={active ? "page" : undefined}
                     style={style}
                   >
