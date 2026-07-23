@@ -162,10 +162,11 @@ function parseDateLine(line: string): { label: string; iso: string } | null {
   return { label, iso: d.toISOString() };
 }
 
-/** Strip markdown formatting and Discord timestamp tags from detail lines */
+/** Strip markdown formatting, Discord timestamp tags, and custom emoji tags from detail lines */
 function cleanDetail(line: string): string {
   return line
-    .replace(/<t:\d+:[A-Za-z]>/g, "")  // remove Discord timestamps
+    .replace(/<t:\d+:[A-Za-z]>/g, "")   // remove Discord timestamps
+    .replace(/<a?:\w+:\d+>/g, "")       // remove custom emoji tags, e.g. <a:animated_sparkle:123>
     .replace(/^-\s*/, "")               // remove leading "- "
     .replace(/^\*\s*/, "  • ")          // convert "* " sub-items to indented bullet
     .replace(/\*/g, "")                 // remove remaining bold/italic markers
