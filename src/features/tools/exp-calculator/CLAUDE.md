@@ -15,12 +15,20 @@ duplicating the monster table. Event tickets, growth potions, Punch King, and Do
 deliberately not saved; they are one-off event resources, so they reset each visit.
 
 The Farming tab's Overview has an "Import Into Daily/Weekly Calculator" link. Tabs unmount when
-they aren't showing, so the import is a one-shot handoff through `importedHourlyExp` on the
-workspace: Farming stashes its hourly rate, Daily / Weekly seeds `customDailyMode: "hourly"` from
-it in its lazy initializer, and `changeTab` spends it on the way out. Do not skip the spend, or a
-later visit to the tab would re-seed and stomp whatever the player had set. Custom Daily is either
-a flat figure (`customDailyExp`) or a rate (`customHourlyExp` x `customHoursPerDay`), resolved by
-`customDailyExp()` in the data module.
+they aren't showing, so the import is a one-shot handoff through `imported` (an
+`ImportedFarmingRate`) on the workspace: Farming stashes its hourly rate, Daily / Weekly seeds
+`customDailyMode: "hourly"` from it in its lazy initializer, and `changeTab` spends it on the way
+out. Do not skip the spend, or a later visit to the tab would re-seed and stomp whatever the player
+had set. Custom Daily is either a flat figure (`customDailyExp`) or a rate (`customHourlyExp` x
+`customHoursPerDay`), resolved by `customDailyExp()` in the data module.
+
+The handoff carries the Farming tab's `charName` alongside the rate, and Daily / Weekly opens on
+that character rather than the roster main: the two tabs track their selection separately, so
+importing to the main would drop the rate on a plan the player was not looking at. `charName` is
+null for Manual Level, which is a real selection here and must not fall back to the main either.
+`importHourlyExp` also writes the rate into that character's save through
+`persistImportedHourlyExp` before switching tabs. That write cannot move into the seed (lazy
+initializers must not write), and without it an import survives only until the tab unmounts.
 
 Writes go through the `updateBuffs` / `updateSavedMonsterField` / `updateInput` wrappers, which
 write inside the state updater and no-op when no character is selected (Manual Level is never
