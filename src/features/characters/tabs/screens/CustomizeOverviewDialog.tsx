@@ -12,13 +12,14 @@ export interface OverviewAnchorDef {
   sections: OverviewSectionId[];
 }
 
+const DRAG_HANDLE_COLS = [7, 15];
+const DRAG_HANDLE_ROWS = [4, 12, 20];
+
 // Grip icon on the right of a shown row, signaling it's draggable to reorder.
 function DragHandleIcon({ theme }: { theme: AppTheme }) {
-  const cols = [7, 15];
-  const rows = [4, 12, 20];
   return (
     <svg width={12} height={20} viewBox="0 0 24 24" aria-hidden="true">
-      {cols.flatMap((cx) => rows.map((cy) => <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r={1.4} fill={theme.muted} />))}
+      {DRAG_HANDLE_COLS.flatMap((cx) => DRAG_HANDLE_ROWS.map((cy) => <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r={1.4} fill={theme.muted} />))}
     </svg>
   );
 }
@@ -36,11 +37,30 @@ function cardStyle(theme: AppTheme, accented: boolean, isDropTarget: boolean, is
   };
 }
 
+function removeButtonStyle(theme: AppTheme): CSSProperties {
+  return {
+    width: 20,
+    height: 20,
+    borderRadius: 6,
+    flexShrink: 0,
+    border: `1px solid ${theme.accent}`,
+    background: theme.accent,
+    color: theme.accentOn,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "0.78rem",
+    fontWeight: 800,
+    cursor: "pointer",
+    padding: 0,
+  };
+}
+
 // A currently-shown section, in the Order column: draggable to reorder, click to remove.
 function OrderCard({
-  theme, label, isLarge, isDragging, isDropTarget, dragProps, onRemove,
+  theme, label, isDragging, isDropTarget, dragProps, onRemove,
 }: {
-  theme: AppTheme; label: string; isLarge: boolean; isDragging: boolean; isDropTarget: boolean; dragProps: CardDragProps; onRemove: () => void;
+  theme: AppTheme; label: string; isDragging: boolean; isDropTarget: boolean; dragProps: CardDragProps; onRemove: () => void;
 }) {
   return (
     <div {...dragProps} style={{ ...cardStyle(theme, true, isDropTarget, isDragging), cursor: "grab" }}>
@@ -48,12 +68,11 @@ function OrderCard({
         type="button"
         aria-label={`Remove ${label}`}
         onClick={onRemove}
-        style={{ width: 20, height: 20, borderRadius: 6, flexShrink: 0, border: `1px solid ${theme.accent}`, background: theme.accent, color: theme.accentOn, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.78rem", fontWeight: 800, cursor: "pointer", padding: 0 }}
+        style={removeButtonStyle(theme)}
       >
         ✓
       </button>
       <span style={{ flex: 1, fontWeight: 700, fontSize: "0.82rem", color: theme.text }}>{label}</span>
-      {isLarge && <LargeBadge theme={theme} />}
       <DragHandleIcon theme={theme} />
     </div>
   );
@@ -101,17 +120,6 @@ function cardGridStyle(): CSSProperties {
   return { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: "0.5rem" };
 }
 
-// Flags a section whose grid can genuinely run long (Gear/V Matrix) -- these are only ever
-// picked through the Anchor group below (alone, or paired with Arcane), never as an add-on,
-// since picking one already uses up all the room a quick-glance summary has.
-function LargeBadge({ theme }: { theme: AppTheme }) {
-  return (
-    <span style={{ fontSize: "0.68rem", fontWeight: 800, color: theme.muted, border: `1px solid ${theme.border}`, borderRadius: 999, padding: "1px 6px", flexShrink: 0 }}>
-      Large
-    </span>
-  );
-}
-
 // Lets a player show/hide and reorder any Overview section their character is currently
 // eligible for -- not just the ones their level/legacy tier defaults to (e.g. a 260+ player
 // re-adding Gear or Familiars). Two tiers:
@@ -157,6 +165,10 @@ export default function CustomizeOverviewDialog({
   // pre-select it so continuity carries over from whatever tier default was already showing.
   const [order, setOrder] = useState<OverviewSectionId[]>(() => current);
   const [anchorId, setAnchorId] = useState<string | null>(() => {
+    // Both arrays are single-digit in length (a handful of anchors, at most 2 sections each)
+    // and this runs once on mount, not per render -- a Set would add indirection with no
+    // measurable benefit at this scale.
+    // react-doctor-disable-next-line js-set-map-lookups
     const match = anchors.find((a) => a.sections.length === current.length && a.sections.every((id) => current.includes(id)));
     return match?.id ?? null;
   });
@@ -170,7 +182,6 @@ export default function CustomizeOverviewDialog({
     });
   });
 
-  const isLargeById = new Map(eligibleSections.map((s) => [s.id, s.isLarge]));
   const labelsById = new Map(eligibleSections.map((s) => [s.id, s.label]));
   const activeAnchorSections = anchors.find((a) => a.id === anchorId)?.sections ?? [];
   // Any picked anchor (not just a "large" one) is already a fitted bundle -- HEXA Stat +
@@ -193,7 +204,11 @@ export default function CustomizeOverviewDialog({
   };
 
   // Large sections only ever come from the Anchor group above -- excluded here so there's
-  // exactly one path to picking Gear/V Matrix, not two that could disagree.
+  // exactly one path to picking Gear/V Matrix, not two that could disagree. `eligibleSections`
+  // and `order` are both single-digit in length (at most 9 catalog sections, at most 3
+  // shown), and this only re-runs when the user opens this dialog and clicks around in it,
+  // not on any hot path -- a Set would add indirection with no measurable benefit here.
+  // react-doctor-disable-next-line js-set-map-lookups
   const availableAddons = eligibleSections.filter((s) => !s.isLarge && !order.includes(s.id));
 
   return (
@@ -261,7 +276,6 @@ export default function CustomizeOverviewDialog({
                 key={id}
                 theme={theme}
                 label={labelsById.get(id) ?? id}
-                isLarge={Boolean(isLargeById.get(id))}
                 isDragging={isDragging(index)}
                 isDropTarget={isDropTarget(index)}
                 dragProps={dragProps(index)}
