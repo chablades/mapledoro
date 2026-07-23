@@ -141,7 +141,7 @@ function OtherWeeksAccordion({
         <div style={{ marginTop: "0.5rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
           {weeks.map((week) => (
             <div
-              key={week.date}
+              key={week.dateISO}
               style={{
                 borderRadius: "10px",
                 border: `1px solid ${theme.border}`,
@@ -157,7 +157,7 @@ function OtherWeeksAccordion({
                   background: theme.bg,
                 }}
               >
-                {week.date}
+                {formatLocalDate(week.dateISO)}
               </div>
               <div style={{ padding: "0.3rem 0.75rem 0.45rem" }}>
                 {week.details.map((line) => (
