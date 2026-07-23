@@ -3,6 +3,7 @@
 import { useId, type CSSProperties, type ReactNode } from "react";
 import Image from "next/image";
 import { alpha, type AppTheme } from "../../../components/themes";
+import { ToolNumberInput } from "../shared-ui";
 
 /** The shape both Liberation and Astra bosses share. Astra difficulties add a
  *  voucher marker; Liberation bosses add a monthly reset. */
@@ -101,7 +102,7 @@ export function BossCard({
           style={{ ...iconStyle, background: theme.panel, border: `1px solid ${theme.border}` }}
         />
         <div style={{ flex: 1, minWidth: 0 }}>
-          <h3 style={{ fontFamily: "var(--font-heading)", fontSize: "0.9rem", fontWeight: 400, margin: 0, color: theme.text }}>
+          <h3 style={{ fontFamily: "var(--font-heading)", fontSize: "0.9rem", margin: 0, color: theme.text }}>
             {name}
           </h3>
         </div>
@@ -130,22 +131,15 @@ export function BossCard({
       <div style={{ ...controlRowStyle, opacity: isActive ? 1 : 0.4 }}>
         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
           <label htmlFor={partyId} style={{ ...affixStyle, color: theme.muted }}>Party</label>
-          <input
+          <ToolNumberInput
             id={partyId}
-            type="number"
             min={1}
             max={maxParty}
+            integer
             value={partySize}
             disabled={!isActive}
-            onFocus={(e) => e.currentTarget.select()}
-            onChange={(e) => {
-              let v = parseInt(e.target.value) || 1;
-              if (v < 1) v = 1;
-              if (v > maxParty) v = maxParty;
-              onPartySizeChange(v);
-            }}
-            className="tool-input"
-            style={{ ...inputStyle, width: "48px", textAlign: "center", padding: "4px 6px", fontSize: "0.78rem", cursor: isActive ? "text" : "not-allowed" }}
+            onCommit={onPartySizeChange}
+            style={{ ...inputStyle, width: "48px", textAlign: "center", padding: "4px 6px", fontSize: "0.75rem", cursor: isActive ? "text" : "not-allowed" }}
           />
         </div>
 

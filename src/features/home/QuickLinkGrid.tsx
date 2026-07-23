@@ -35,7 +35,6 @@ export function QuickLinkGrid({
   items,
   gridClassName,
   columns,
-  animationDelay,
   onCustomize,
 }: {
   theme: AppTheme;
@@ -45,7 +44,6 @@ export function QuickLinkGrid({
   items: QuickLink[];
   gridClassName: string;
   columns: number;
-  animationDelay: string;
   onCustomize?: () => void;
 }) {
   const cardStyle: CSSProperties = {
@@ -76,7 +74,7 @@ export function QuickLinkGrid({
   };
 
   return (
-    <div className="fade-in" style={{ marginBottom: "1.25rem", animationDelay }}>
+    <div className="fade-in" style={{ marginBottom: "1.25rem" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.75rem" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
           <span className="panel-header-title" style={{ color: theme.text, fontSize: "1rem" }}>
@@ -147,7 +145,6 @@ export function QuickToolsGrid({ theme }: { theme: AppTheme }) {
         items={selectedTools}
         gridClassName="quick-tools-grid"
         columns={HOME_TOOLS_COUNT}
-        animationDelay="0.2s"
         onCustomize={() => setEditing(true)}
       />
       {editing && (

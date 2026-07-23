@@ -73,7 +73,7 @@ export default function PatchNotesPanel({ theme }: { theme: AppTheme }) {
     transition: "background 0.15s",
   };
   return (
-    <Panel theme={theme} delay="0.3s">
+    <Panel theme={theme}>
       <div
         style={{
           padding: "0.9rem 1.25rem 0.5rem",

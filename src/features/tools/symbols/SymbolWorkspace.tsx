@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useState, type ComponentType } from "react";
+import { useEffect, useId, useMemo, useState, type ComponentType } from "react";
 import type { ChartOptions } from "chart.js";
 import { alpha, type AppTheme } from "../../../components/themes";
 import { statusText } from "../../../components/statusColors";
@@ -11,7 +11,7 @@ import { CharacterSyncPanel } from "../../../components/CharacterSyncPanel";
 import { SegmentedToggle } from "../../../components/SegmentedToggle";
 import { ProgressBar } from "../../../components/ProgressBar";
 import { toolStyles } from "../tool-styles";
-import { PanelDivider } from "../shared-ui";
+import { PanelDivider, ToolNumberInput } from "../shared-ui";
 import { ConfirmButton } from "../../../components/ConfirmButton";
 import { utcDateStr } from "../date";
 import {
@@ -37,45 +37,37 @@ const DAILY_EVENT_BONUS = 6;
 
 // -- Helpers ------------------------------------------------------------------
 
+// Hoisted: chart.js calls addDays from its axis-tick and tooltip callbacks on
+// every draw and hover frame, and building an Intl.DateTimeFormat is the
+// expensive half of toLocaleDateString.
+const DATE_FORMAT = new Intl.DateTimeFormat("en-US", {
+  year: "numeric",
+  month: "short",
+  day: "numeric",
+  timeZone: "UTC",
+});
+
 function addDays(days: number): string {
   const d = new Date(utcDateStr() + "T00:00:00Z");
   d.setUTCDate(d.getUTCDate() + days);
-  return d.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    timeZone: "UTC",
-  });
+  return DATE_FORMAT.format(d);
 }
 
 // -- Symbol Card: Header ------------------------------------------------------
 
 function SymbolCardHeader({
   area,
-  state,
   days,
   isMaxed,
-  isTracked,
-  isSacred,
+  isLocked,
   theme,
-  updateSymbol,
 }: {
   area: SymbolArea;
-  state: SymbolState;
   days: number;
   isMaxed: boolean;
-  isTracked: boolean;
-  isSacred: boolean;
+  isLocked: boolean;
   theme: AppTheme;
-  updateSymbol: (areaName: string, patch: Partial<SymbolState>) => void;
 }) {
-  const trackBtnStyle: React.CSSProperties = {
-    cursor: "pointer",
-    color: isTracked ? theme.accentText : theme.muted,
-    background: isTracked ? theme.accentSoft : "transparent",
-    border: `1px solid ${isTracked ? alpha(theme.accent, 0.27) : theme.border}`,
-  };
-
   // `accentOn` on an accent fill, `accentText` on the soft tint. Bright accents
   // (Ludibrium, Juno) take dark ink, so neither can be a hardcoded white.
   let badgeColor: string;
@@ -87,6 +79,17 @@ function SymbolCardHeader({
     color: badgeColor,
     background: isMaxed ? theme.accent : theme.accentSoft,
   };
+
+  const lockedBadgeStyle: React.CSSProperties = {
+    color: theme.muted,
+    background: "transparent",
+    border: `1px solid ${theme.border}`,
+  };
+
+  let badgeLabel: string;
+  if (isMaxed) badgeLabel = "MAX";
+  else if (days === Infinity) badgeLabel = "--";
+  else badgeLabel = `~${days}d`;
 
   return (
     <div
@@ -114,7 +117,6 @@ function SymbolCardHeader({
           style={{
             fontFamily: "var(--font-heading)",
             fontSize: "0.9rem",
-            fontWeight: 400,
             margin: 0,
             color: theme.text,
           }}
@@ -132,30 +134,15 @@ function SymbolCardHeader({
         </div>
       </div>
 
-      {isSacred && (
-        <button
-          type="button"
-          className="btn-reset sym-btn tool-chip-btn"
-          aria-pressed={isTracked}
-          aria-label={`Track ${area.name}`}
-          onClick={() => updateSymbol(area.name, { enabled: !state.enabled })}
-          style={trackBtnStyle}
-        >
-          {isTracked ? "Tracking" : "Not tracking"}
-        </button>
+      {isLocked ? (
+        <div className="tool-badge" style={lockedBadgeStyle}>
+          LOCKED
+        </div>
+      ) : (
+        <div className="tool-badge" style={daysBadgeStyle}>
+          {badgeLabel}
+        </div>
       )}
-
-      {(!isSacred || isTracked) && (() => {
-        let badgeLabel: string;
-        if (isMaxed) badgeLabel = "MAX";
-        else if (days === Infinity) badgeLabel = "--";
-        else badgeLabel = `~${days}d`;
-        return (
-          <div className="tool-badge" style={daysBadgeStyle}>
-            {badgeLabel}
-          </div>
-        );
-      })()}
     </div>
   );
 }
@@ -197,7 +184,7 @@ function SymbolLevelControls({
     ...inputStyle,
     textAlign: "center",
     padding: "4px 6px",
-    fontSize: "0.78rem",
+    fontSize: "0.75rem",
   };
 
   return (
@@ -207,8 +194,6 @@ function SymbolLevelControls({
         gap: "0.5rem",
         alignItems: "center",
         marginBottom: "0.5rem",
-        opacity: disabled ? 0.4 : 1,
-        transition: "opacity 0.15s",
       }}
     >
       <div style={{ flex: "0 0 auto" }}>
@@ -234,26 +219,19 @@ function SymbolLevelControls({
         <div style={{ flex: 1 }}>
           <label htmlFor={currentId} style={subLabel}>Current / Needed</label>
           <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-            <input
+            <ToolNumberInput
               id={currentId}
-              className="tool-input"
-              type="number"
               min={0}
               max={levelMax}
+              integer
               aria-label={`${area.name} symbols collected toward the next level`}
               value={state.current}
               disabled={disabled}
-              onFocus={(e) => e.currentTarget.select()}
               onKeyDown={replaceZeroOnDigit}
-              onChange={(e) => {
-                let v = parseInt(e.target.value) || 0;
-                if (v < 0) v = 0;
-                if (v > levelMax) v = levelMax;
-                updateSymbol(area.name, { current: v });
-              }}
+              onCommit={(v) => updateSymbol(area.name, { current: v })}
               style={{ ...compactInput, width: "64px" }}
             />
-            <span style={{ fontSize: "0.78rem", fontWeight: 700, color: theme.muted }}>
+            <span style={{ fontSize: "0.75rem", fontWeight: 700, color: theme.muted }}>
               / {levelMax.toLocaleString()}
             </span>
           </div>
@@ -307,8 +285,6 @@ function SymbolIncomeControls({
         gap: "0.75rem",
         alignItems: "center",
         marginBottom: "0.6rem",
-        opacity: disabled ? 0.4 : 1,
-        transition: "opacity 0.15s",
       }}
     >
       <div
@@ -328,23 +304,16 @@ function SymbolIncomeControls({
         >
           Daily
         </label>
-        <input
+        <ToolNumberInput
           id={dailyId}
-          type="number"
           min={0}
-          className="tool-input"
           max={dailyMax}
+          integer
           aria-label={`${area.name} symbols earned per day`}
           value={state.daily}
           disabled={disabled}
-          onFocus={(e) => e.currentTarget.select()}
           onKeyDown={replaceZeroOnDigit}
-          onChange={(e) => {
-            let v = parseInt(e.target.value) || 0;
-            if (v < 0) v = 0;
-            if (v > dailyMax) v = dailyMax;
-            updateSymbol(area.name, { daily: v });
-          }}
+          onCommit={(v) => updateSymbol(area.name, { daily: v })}
           style={{
             ...inputStyle,
             width: "52px",
@@ -359,17 +328,15 @@ function SymbolIncomeControls({
       {!isSacred && (
         <button
           type="button"
-          className="btn-reset sym-btn"
+          className="btn-reset sym-btn tool-chip-btn"
           aria-pressed={state.weeklyEnabled}
           aria-label={`${area.name} weekly dungeon symbols`}
+          disabled={disabled}
           onClick={() =>
             updateSymbol(area.name, { weeklyEnabled: !state.weeklyEnabled })
           }
           style={{
-            padding: "4px 10px",
-            borderRadius: "8px",
-            fontSize: "0.75rem",
-            fontWeight: 800,
+            cursor: disabled ? "not-allowed" : "pointer",
             color: state.weeklyEnabled ? theme.accentText : theme.muted,
             background: state.weeklyEnabled ? theme.accentSoft : "transparent",
             border: `1px solid ${state.weeklyEnabled ? alpha(theme.accent, 0.27) : theme.border}`,
@@ -391,7 +358,7 @@ function SymbolCard({
   consumed,
   levelMax,
   isMaxed,
-  isTracked,
+  isUnlocked,
   type,
   maxLevel,
   totalForOneArea,
@@ -405,7 +372,7 @@ function SymbolCard({
   consumed: number;
   levelMax: number;
   isMaxed: boolean;
-  isTracked: boolean;
+  isUnlocked: boolean;
   type: SymbolType;
   maxLevel: number;
   totalForOneArea: number;
@@ -421,10 +388,10 @@ function SymbolCard({
   const isSacred = type === "sacred";
   const isGrand = isSacred && isGrandSacredArea(area);
   const dailyMax = area.daily + DAILY_EVENT_BONUS;
-  const disabledSacred = isSacred && !isTracked;
+  const isLocked = !isUnlocked;
 
   let cardBorderColor: string;
-  if (isMaxed && isTracked) cardBorderColor = alpha(theme.accent, 0.33);
+  if (isMaxed && isUnlocked) cardBorderColor = alpha(theme.accent, 0.33);
   else if (isGrand) cardBorderColor = alpha(theme.accent, 0.5);
   else cardBorderColor = theme.border;
 
@@ -435,8 +402,6 @@ function SymbolCard({
     border: `1px solid ${theme.border}`,
     overflow: "hidden",
     marginBottom: "0.6rem",
-    opacity: disabledSacred ? 0.4 : 1,
-    transition: "opacity 0.15s",
   };
 
   const areaProgressStyle: React.CSSProperties = {
@@ -446,8 +411,6 @@ function SymbolCard({
     fontSize: "0.75rem",
     fontWeight: 700,
     color: theme.muted,
-    opacity: disabledSacred ? 0.4 : 1,
-    transition: "opacity 0.15s",
   };
 
   return (
@@ -458,25 +421,22 @@ function SymbolCard({
         borderRadius: "14px",
         padding: "1rem",
         transition: "border-color 0.15s, opacity 0.15s",
-        opacity: disabledSacred ? 0.5 : 1,
+        opacity: isLocked ? 0.55 : 1,
       }}
     >
       <SymbolCardHeader
         area={area}
-        state={state}
         days={days}
         isMaxed={isMaxed}
-        isTracked={isTracked}
-        isSacred={isSacred}
+        isLocked={isLocked}
         theme={theme}
-        updateSymbol={updateSymbol}
       />
 
       <SymbolLevelControls
         area={area}
         state={state}
         isMaxed={isMaxed}
-        disabled={disabledSacred}
+        disabled={isLocked}
         maxLevel={maxLevel}
         levelMax={levelMax}
         inputStyle={inputStyle}
@@ -484,45 +444,52 @@ function SymbolCard({
         updateSymbol={updateSymbol}
       />
 
-      {/* Level progress bar */}
-      {!isMaxed && (
-        <div style={levelBarContainerStyle}>
-          <div
-            style={{
-              height: "100%",
-              width: "100%",
-              background: theme.accent,
-              borderRadius: "3px",
-              transition: "transform 0.25s ease",
-              transformOrigin: "left",
-              transform: `scaleX(${levelPct / 100})`,
-            }}
-          />
-        </div>
-      )}
-
-      {!isMaxed && (
-        <SymbolIncomeControls
-          area={area}
-          state={state}
-          disabled={disabledSacred}
-          isSacred={isSacred}
-          dailyMax={dailyMax}
-          inputStyle={inputStyle}
-          theme={theme}
-          updateSymbol={updateSymbol}
+      {/* Level progress bar. Always rendered (full at max) so completing a
+          symbol fills the bar instead of collapsing the card's height. Not the
+          shared <ProgressBar>: this one sits on the card surface, so its track
+          takes `panel` rather than the component's fixed `timerBg`. */}
+      <div
+        role="progressbar"
+        aria-label={`${area.name} progress to the next symbol level`}
+        aria-valuenow={Math.round(levelPct)}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        style={levelBarContainerStyle}
+      >
+        <div
+          style={{
+            height: "100%",
+            width: "100%",
+            background: theme.accent,
+            borderRadius: "3px",
+            transition: "transform 0.25s ease",
+            transformOrigin: "left",
+            transform: `scaleX(${levelPct / 100})`,
+          }}
         />
-      )}
+      </div>
+
+      <SymbolIncomeControls
+        area={area}
+        state={state}
+        disabled={isLocked || isMaxed}
+        isSacred={isSacred}
+        dailyMax={dailyMax}
+        inputStyle={inputStyle}
+        theme={theme}
+        updateSymbol={updateSymbol}
+      />
 
       {/* Overall area progress + completion */}
       <div style={areaProgressStyle}>
         <span>{areaPct.toFixed(1)}% complete</span>
-        {!isMaxed && isTracked && days !== Infinity && (
+        {isLocked && <span>Requires Lv. {area.requiredLevel}</span>}
+        {!isLocked && !isMaxed && days !== Infinity && (
           <span style={{ color: theme.accentText, fontWeight: 800 }}>
             {addDays(days)}
           </span>
         )}
-        {!isMaxed && isTracked && days === Infinity && (
+        {!isLocked && !isMaxed && days === Infinity && (
           <span style={{ color: statusText(theme, "danger"), fontWeight: 800 }}>
             No income set
           </span>
@@ -541,7 +508,7 @@ function OverallProgressPanel({
   theme: AppTheme;
   stats: SymbolStats;
 }) {
-  const { noneTracked, totalConsumed, totalSymbolsNeeded, overallPct, allMaxed, anyInfinite, maxDaysVal } = stats;
+  const { noneUnlocked, totalConsumed, totalSymbolsNeeded, overallPct, allMaxed, anyInfinite, maxDaysVal } = stats;
 
   return (
     <>
@@ -556,13 +523,13 @@ function OverallProgressPanel({
         <h2 className="tool-panel-title" style={{ margin: 0, color: theme.text }}>Overall Progress</h2>
         <div
           style={{
-            fontSize: "0.78rem",
+            fontSize: "0.75rem",
             fontWeight: 800,
             color: theme.accentText,
           }}
         >
-          {noneTracked
-            ? "No symbols tracked"
+          {noneUnlocked
+            ? "No symbols unlocked"
             : `${totalConsumed.toLocaleString()} / ${totalSymbolsNeeded.toLocaleString()} symbols`}
         </div>
       </div>
@@ -579,13 +546,13 @@ function OverallProgressPanel({
       >
         <span>
           {(() => {
-            if (noneTracked) return "Select symbols below to start tracking";
+            if (noneUnlocked) return "This character has not reached any symbol area yet";
             if (allMaxed) return "All symbols maxed!";
             if (anyInfinite) return "Set daily symbols to estimate completion";
             return `All maxed in ~${maxDaysVal} days (${addDays(maxDaysVal)})`;
           })()}
         </span>
-        <span>{noneTracked ? "" : `${overallPct.toFixed(1)}%`}</span>
+        <span>{noneUnlocked ? "" : `${overallPct.toFixed(1)}%`}</span>
       </div>
     </>
   );
@@ -597,26 +564,24 @@ function CompletionSummaryPanel({
   theme,
   sectionPanel,
   stats,
-  type,
 }: {
   theme: AppTheme;
   sectionPanel: React.CSSProperties;
   stats: SymbolStats;
-  type: SymbolType;
 }) {
-  const { tracked, noneTracked, allMaxed, anyInfinite, maxDaysVal } = stats;
-  const incomplete = tracked.filter((p) => !p.isMaxed);
+  const { unlocked, noneUnlocked, allMaxed, anyInfinite, maxDaysVal } = stats;
+  const incomplete = unlocked.filter((p) => !p.isMaxed);
 
   return (
     <div
       className="fade-in panel-card"
       style={{ ...sectionPanel, marginBottom: "1.25rem" }}
     >
-      <h2 className="tool-panel-title" style={{ fontSize: "1.15rem", marginBottom: "1rem", color: theme.text }}>
+      <h2 className="tool-panel-title" style={{ marginBottom: "1rem", color: theme.text }}>
         Completion Summary
       </h2>
 
-      {noneTracked && (
+      {noneUnlocked && (
         <div
           style={{
             fontSize: "0.82rem",
@@ -627,27 +592,25 @@ function CompletionSummaryPanel({
             padding: "1rem 0",
           }}
         >
-          {type === "sacred"
-            ? "Enable symbols above to see completion estimates."
-            : "No symbols to track."}
+          Level up to unlock these symbols and see completion estimates.
         </div>
       )}
 
-      {!noneTracked && incomplete.length === 0 && (
+      {!noneUnlocked && incomplete.length === 0 && (
         <div
           style={{
-            fontSize: "0.88rem",
+            fontSize: "0.9rem",
             fontWeight: 700,
             color: theme.accentText,
             textAlign: "center",
             padding: "1rem 0",
           }}
         >
-          All {type === "arcane" ? "Arcane" : "tracked Sacred"} Symbols are maxed!
+          Every unlocked symbol is maxed!
         </div>
       )}
 
-      {!noneTracked && incomplete.length > 0 && (
+      {!noneUnlocked && incomplete.length > 0 && (
         <>
           {incomplete
             .toSorted((a, b) => {
@@ -812,7 +775,7 @@ function CompletionTimelineChart({
   }, []);
 
   const series: { name: string; points: ReturnType<typeof computeLevelDays> }[] = [];
-  for (const p of stats.tracked) {
+  for (const p of stats.unlocked) {
     if (p.isMaxed || p.days === Infinity) continue;
     const points = computeLevelDays(p.state, growth, maxLevel, type);
     if (points.length > 1) series.push({ name: p.area.name, points });
@@ -834,7 +797,10 @@ function CompletionTimelineChart({
 
   const chartData = { datasets };
 
-  const options: ChartOptions<"line"> = {
+  // react-chartjs-2 watches `options` by reference: a fresh object each render
+  // makes it reassign chart.options and re-lay-out both scales even when only a
+  // daily count changed. These three inputs hold steady across most edits.
+  const options: ChartOptions<"line"> = useMemo(() => ({
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
@@ -874,7 +840,7 @@ function CompletionTimelineChart({
         title: { display: true, text: "Level", color: theme.muted, font: { size: 12 } },
       },
     },
-  };
+  }), [theme.muted, theme.border, maxDay, maxLevel]);
 
   if (series.length === 0) return null;
 
@@ -883,7 +849,6 @@ function CompletionTimelineChart({
       <h2
         className="tool-panel-title"
         style={{
-          fontSize: "1.15rem",
           color: theme.text,
           marginBottom: "1rem",
           paddingBottom: "0.8rem",
@@ -997,7 +962,7 @@ export default function SymbolWorkspace({ theme }: { theme: AppTheme }) {
             </div>
 
             <div className="tool-card-grid">
-              {stats.perSymbol.map(({ area, state, days, levelMax, isMaxed, isTracked, consumed }) => (
+              {stats.perSymbol.map(({ area, state, days, levelMax, isMaxed, isUnlocked, consumed }) => (
                 <SymbolCard
                   key={area.name}
                   area={area}
@@ -1006,7 +971,7 @@ export default function SymbolWorkspace({ theme }: { theme: AppTheme }) {
                   consumed={consumed}
                   levelMax={levelMax}
                   isMaxed={isMaxed}
-                  isTracked={isTracked}
+                  isUnlocked={isUnlocked}
                   type={type}
                   maxLevel={maxLevel}
                   totalForOneArea={stats.totalForOneArea}
@@ -1018,7 +983,7 @@ export default function SymbolWorkspace({ theme }: { theme: AppTheme }) {
             </div>
           </section>
 
-          <CompletionSummaryPanel theme={theme} sectionPanel={styles.sectionPanel} stats={stats} type={type} />
+          <CompletionSummaryPanel theme={theme} sectionPanel={styles.sectionPanel} stats={stats} />
 
           <CompletionTimelineChart theme={theme} sectionPanel={styles.sectionPanel} stats={stats} growth={growth} maxLevel={maxLevel} type={type} />
         </div>

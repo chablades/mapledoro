@@ -46,7 +46,7 @@ export function AddCharacterCard({
         </svg>
         <span
           style={{
-            fontSize: "0.8rem",
+            fontSize: "0.82rem",
             fontWeight: 700,
             color: theme.muted,
             marginTop: "0.5rem",

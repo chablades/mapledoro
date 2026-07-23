@@ -4,6 +4,7 @@ export const MAX_EXP_LEVEL = 300;
 export type IconRef =
   | { type: "item" | "skill"; id: string; shadow?: boolean }
   | { type: "erda-skill"; id: string }
+  | { type: "mark"; id: string }
   | { type: "mob"; id: string };
 
 export interface CheckBuff {
@@ -84,6 +85,12 @@ export interface ResourceTable {
   kind: "single-exp" | "epic";
   rows: LevelResourceRow[] | EpicDungeonRow[];
   maxUnits?: number;
+  /** Header for the `maxUnits` total column. Defaults to "Full Run". */
+  maxUnitsLabel?: string;
+  /** Drops the per-unit % of level column, for sources where one unit is a negligible slice. */
+  hidePercentOfLevel?: boolean;
+  /** Units consumed per hour for time-based sources; switches the % column to % per hour. */
+  unitsPerHour?: number;
 }
 
 type BurningType = "" | "hyper" | "hyperMax" | "hyperMaxBeyond";
@@ -104,6 +111,13 @@ interface EpicDungeonOption {
   baseMultiplier: number;
 }
 
+export interface MonsterParkOption {
+  id: string;
+  label: string;
+  minLevel: number;
+  exp: number;
+}
+
 interface GrowthPotionOption {
   id: string;
   label: string;
@@ -120,23 +134,32 @@ export interface AllInOneInput {
   endDate: string;
   burningType: BurningType;
   dailyIds: string[];
+  /** A Monster Park dungeon id, or "" for whichever eligible dungeon gives the most EXP. */
+  monsterParkId: string;
   monsterParkRuns: number;
+  /** "flat" uses `customDailyExp` as-is; "hourly" derives it from farming rate x hours. */
+  customDailyMode: "flat" | "hourly";
   customDailyExp: number;
+  customHourlyExp: number;
+  customHoursPerDay: number;
   weeklyRuns: Record<string, number>;
   mpeRuns: number;
   epicDungeonId: string;
   epicDungeonMultiplier: number;
   strawberryTickets: number;
   mechaberryTickets: number;
+  expressBoosters: number;
   expTickets: number;
   advancedExpTickets: number;
   punchKingScore: number;
   doubleUpPoints: number;
+  luxeSaunaHours: number;
   potions: Record<string, number>;
   arcaneRiverBonus: number;
   grandisBonus: number;
   monsterParkBonus: number;
-  epicDungeonBonus: number;
+  /** Event EXP multiplier on Epic Dungeon rewards (1 = no event). Recent events run 1.5x - 4x. */
+  epicDungeonExpMultiplier: number;
 }
 
 interface AllInOneResult {
@@ -267,9 +290,8 @@ export const SELECT_BUFFS: SelectBuff[] = [
   ] },
   { id: "tallahart", label: "Grand Sacred Symbol: Tallahart", icon: { type: "item", id: "01714000" }, options: grandSymbolOptions() },
   { id: "geardock", label: "Grand Sacred Symbol: Geardock", icon: { type: "item", id: "01714001" }, options: grandSymbolOptions() },
-  { id: "union-artifact", label: "Legion Artifact (EXP)", icon: { type: "item", id: "05681074" }, options: levelPercentOptions([1, 2, 3, 4, 6, 7, 8, 9, 10, 12]) },
+  { id: "union-artifact", label: "Legion Artifact (Passive EXP)", icon: { type: "item", id: "05681074" }, options: levelPercentOptions([1, 2, 3, 4, 6, 7, 8, 9, 10, 12]) },
   { id: "champion-renown", label: "Champion's Renown", icon: { type: "skill", id: "80003819" }, options: levelPercentOptions([5, 10, 15, 20, 25]) },
-  { id: "caretaker", label: "Caretaker's Buff", icon: { type: "skill", id: "80011827" }, options: levelPercentOptions([5, 6, 7, 8, 9, 10]) },
   { id: "kinship", label: "Kinship Ring", icon: { type: "item", id: "01114000" }, options: [
     { label: "N/A", value: 0 },
     { label: "+10% EXP (Player wears ring)", value: 10 },
@@ -278,6 +300,7 @@ export const SELECT_BUFFS: SelectBuff[] = [
     { label: "+25% EXP (3 extra ring wearers in party)", value: 25 },
     { label: "+30% EXP (4 extra ring wearers in party)", value: 30 },
   ] },
+  { id: "caretaker", label: "Caretaker's Buff", icon: { type: "skill", id: "80011827" }, options: levelPercentOptions([5, 6, 7, 8, 9, 10]) },
   { id: "eluna", label: "Eluna Earrings / Pendant", icon: { type: "item", id: "01032279" }, options: percentOptions([0, 2, 4, 6, 8, 10]) },
   { id: "roll-of-the-dice", label: "Roll of the Dice", icon: { type: "skill", id: "35111013" }, options: percentOptions([0, 30, 40, 50]) },
 ];
@@ -307,8 +330,8 @@ export const LEVEL_INPUT_BUFFS: InputBuff[] = [
 ];
 
 export const INPUT_BUFFS: InputBuff[] = [
-  { id: "legion-board", label: "Legion Board EXP Obtained", max: 10, step: 0.25 },
-  { id: "event-title", label: "Events / Event Titles", max: 100, step: 0.5 },
+  { id: "legion-board", label: "Legion Board EXP (0-10%)", max: 10, step: 0.25 },
+  { id: "event-title", label: "Events / Titles / Other (%)", max: 100, step: 0.5 },
 ];
 
 const EXP_TICKET_CROWN = [
@@ -357,6 +380,22 @@ const MECHABERRY_FARM = [
   6896248444800, 6896248444800, 6896248444800, 6896248444800,
 ];
 
+// EXP per 5 seconds of sauna time, so decimal hour inputs convert to whole units (720/hour).
+const LUXE_SAUNA = [
+  5346684, 5491905, 5638805, 5802605, 5952159, 6102525, 6254625, 6424059, 6578705, 6734109,
+  13433496, 13740621, 14085880, 14397934, 14712805, 15065809, 15385663, 15745113, 16068705, 16433842,
+  24069889, 24602356, 25081234, 25621323, 26108056, 26656000, 27209467, 27705689, 28266778, 28831600,
+  30594745, 31193167, 31793845, 32332378, 32942156, 33557923, 34175712, 34728167, 35354978, 35985445,
+  36619645, 37769978, 38422689, 39002523, 39663867, 40328634, 40997134, 41669367, 42346812, 43027989,
+  45484989, 46203112, 46924734, 47650012, 48380967, 49113400, 49853300, 50594756, 51431412, 52184223,
+  218558394, 221703400, 224853474, 228025714, 231598474, 260527240, 264127740, 267719120, 271775494, 275408040,
+  288082560, 301751414, 305679094, 322512207, 327168094, 367716374, 372351360, 377594600, 382278480, 387564027,
+  435230087, 441169107, 446470614, 452454600, 457808547, 514642234, 520638507, 527408460, 534219960, 540295274,
+  607153614, 613954854, 621656187, 629403754, 636308860, 714807867, 723513414, 732270134, 740069000, 748876894,
+];
+
+const LUXE_SAUNA_UNITS_PER_HOUR = 720;
+
 const HIGH_MOUNTAIN_BASE = [
   260900000000, 264700000000, 268500000000, 272200000000, 276500000000, 311000000000, 315300000000, 319600000000,
   324500000000, 328800000000, 369800000000, 375200000000, 380100000000, 385000000000, 390600000000, 439000000000,
@@ -377,6 +416,58 @@ const NIGHTMARE_PARADISE_BASE = [
   1275400000000, 1290000000000, 1449600000000, 1465800000000, 1484200000000, 1502800000000, 1519200000000, 1519200000000,
   1519200000000, 1519200000000, 1519200000000, 1519200000000,
 ];
+
+/** Base monster EXP by character level: Arcane River covers Lv. 200-259, Grandis Lv. 260-299.
+ *  Champion Double Up, Haste Fever Time, and Express Booster all scale off these. */
+const BASE_MONSTER_EXP_ARCANE = [
+  98708, 101389, 104101, 107125, 109886, 112662, 115470, 118598, 121453, 124322,
+  248003, 253673, 260047, 265808, 271621, 278138, 284043, 290679, 296653, 303394,
+  309470, 316316, 322473, 329417, 335675, 342720, 349836, 356216, 363430, 370692,
+  393361, 401055, 408778, 415702, 423542, 431459, 439402, 446505, 454564, 462670,
+  470824, 485614, 494006, 501461, 509964, 518511, 527106, 535749, 544459, 553217,
+  584807, 594040, 603318, 612643, 622041, 631458, 640971, 650504, 661261, 670940,
+];
+
+const BASE_MONSTER_EXP_GRANDIS = [
+  1725461, 1750290, 1775159, 1800203, 1828409, 2056794, 2085219, 2113572, 2145596, 2174274,
+  2445217, 2481337, 2513634, 2546149, 2582906, 2903024, 2939616, 2981010, 3017988, 3059716,
+  3436027, 3482914, 3524768, 3572010, 3614278, 4062965, 4110304, 4163751, 4217526, 4265489,
+  4793318, 4847012, 4907812, 4968977, 5023491, 5643220, 5711948, 5781080, 5842650, 5912186,
+];
+
+/** Haste Inferno monsters are worth 7x the level's base monster EXP. */
+const HASTE_INFERNO_MULTIPLIER = 7;
+
+/** Kills a single Haste Fever Time can yield. */
+const HASTE_INFERNO_MAX_KILLS = 10000;
+
+/** One Express Booster spawns 19 waves of 10 flames. */
+const EXPRESS_BOOSTER_FLAMES = 190;
+
+/** The level past which Express Booster Flames stop scaling. */
+const EXPRESS_BOOSTER_MAX_LEVEL = 294;
+
+/** EXP per Express Booster Flame, a band-stepped multiple of the level's base monster EXP.
+ *  Lv. 265 is a measured value rather than a band fit, and past Lv. 294 the flames flatten to the
+ *  lowest band on the Lv. 294 base, so the value drops there. Both quirks match the source table. */
+function expressBoosterFlameExp(level: number): number {
+  const base = BASE_MONSTER_EXP_GRANDIS[level - 260] ?? 0;
+  if (level === 265) return 454179859;
+  if (level <= 264) return Math.round(192 * base);
+  if (level <= 269) return Math.round(220.8 * base);
+  if (level <= 279) return Math.round(268.8 * base);
+  if (level <= 289) return Math.round(240 * base);
+  if (level <= EXPRESS_BOOSTER_MAX_LEVEL) return Math.round(220.8 * base);
+  return Math.round(192 * BASE_MONSTER_EXP_GRANDIS[EXPRESS_BOOSTER_MAX_LEVEL - 260]);
+}
+
+const HASTE_INFERNO_EXP = [...BASE_MONSTER_EXP_ARCANE, ...BASE_MONSTER_EXP_GRANDIS].map(
+  (base) => base * HASTE_INFERNO_MULTIPLIER,
+);
+
+const EXPRESS_BOOSTER_EXP = BASE_MONSTER_EXP_GRANDIS.map(
+  (_, index) => expressBoosterFlameExp(260 + index) * EXPRESS_BOOSTER_FLAMES,
+);
 
 export const RESOURCE_TABLES: ResourceTable[] = [
   {
@@ -416,6 +507,31 @@ export const RESOURCE_TABLES: ResourceTable[] = [
     rows: makeLevelRows(280, MECHABERRY_FARM),
   },
   {
+    id: "luxe-sauna",
+    label: "Luxe Sauna / MVP Resort",
+    description: "Luxe Sauna (MVP Resort) AFK EXP per 5 seconds of sauna time (720 units per hour).",
+    kind: "single-exp",
+    rows: makeLevelRows(200, LUXE_SAUNA),
+    unitsPerHour: LUXE_SAUNA_UNITS_PER_HOUR,
+  },
+  {
+    id: "express-booster",
+    label: "Express Booster",
+    description: "EXP per Express Booster, which spawns 190 Express Booster Flames. Not affected by EXP buffs.",
+    kind: "single-exp",
+    rows: makeLevelRows(260, EXPRESS_BOOSTER_EXP),
+  },
+  {
+    id: "haste-inferno",
+    label: "Haste Fever Time",
+    description: "EXP per Haste Inferno monster killed during Haste Fever Time, up to 10,000 kills. Not affected by EXP buffs.",
+    kind: "single-exp",
+    rows: makeLevelRows(200, HASTE_INFERNO_EXP),
+    maxUnits: HASTE_INFERNO_MAX_KILLS,
+    maxUnitsLabel: "EXP / 10k Units",
+    hidePercentOfLevel: true,
+  },
+  {
     id: "high-mountain",
     label: "Epic Dungeon: High Mountain",
     description: "After KMS CROWN/GMS Ride the Lightning High Mountain weekly EXP table.",
@@ -445,9 +561,10 @@ export const DAILY_EXP_CONTENT: ExpContentOption[] = [
   { id: "arcana", label: "Arcana", region: "Arcane River", minLevel: 225, exp: 0xc5012937, icon: { type: "item", id: "01712004" } },
   { id: "moras", label: "Morass", region: "Arcane River", minLevel: 230, exp: 0x106283735, icon: { type: "item", id: "01712005" } },
   { id: "esf", label: "Esfera", region: "Arcane River", minLevel: 235, exp: 0x10e0f3132, icon: { type: "item", id: "01712006" } },
-  { id: "mb", label: "Moonbridge", region: "Tenebris", minLevel: 245, exp: 0x1f4886ce7, icon: { type: "mob", id: "8644614" } },
-  { id: "laby", label: "Labyrinth of Suffering", region: "Tenebris", minLevel: 250, exp: 905769e4, icon: { type: "mob", id: "8644706" } },
-  { id: "limen", label: "Limina", region: "Tenebris", minLevel: 255, exp: 0x261806f70, icon: { type: "mob", id: "8645010" } },
+  // Tenebris has no Maple Guide crest, so the areas' world map marks stand in (ui-mark.json).
+  { id: "mb", label: "Moonbridge", region: "Tenebris", minLevel: 245, exp: 0x1f4886ce7, icon: { type: "mark", id: "moonBridge" } },
+  { id: "laby", label: "Labyrinth of Suffering", region: "Tenebris", minLevel: 250, exp: 905769e4, icon: { type: "mark", id: "TheLabyrinthOfSuffering" } },
+  { id: "limen", label: "Limina", region: "Tenebris", minLevel: 255, exp: 0x261806f70, icon: { type: "mark", id: "Limen" } },
   { id: "cern", label: "Cernium", region: "Grandis", minLevel: 260, exp: 0x3d4d5c820, icon: { type: "item", id: "01713000" } },
   { id: "arcs", label: "Hotel Arcus", region: "Grandis", minLevel: 265, exp: 0x482b53349, icon: { type: "item", id: "01713001" } },
   { id: "odium", label: "Odium", region: "Grandis", minLevel: 270, exp: 0x569941dd0, icon: { type: "item", id: "01713002" } },
@@ -484,47 +601,47 @@ export const GROWTH_POTION_OPTIONS: GrowthPotionOption[] = [
   { id: "lgp", label: "Legendary Pot", minLevel: 200, maxLevel: 279, icon: { type: "item", id: "02831239" } },
 ];
 
-const MONSTER_PARK_EXP = [
-  { minLevel: 200, exp: 0x1573de48 },
-  { minLevel: 210, exp: 0x4c98be98 },
-  { minLevel: 220, exp: 0xbfc99c3e },
-  { minLevel: 225, exp: 0x11897de7a },
-  { minLevel: 230, exp: 0x1653db880 },
-  { minLevel: 235, exp: 0x19c71beaa },
-  { minLevel: 240, exp: 0x207530148 },
-  { minLevel: 245, exp: 0x2ba5d6134 },
-  { minLevel: 250, exp: 14058901e3 },
-  { minLevel: 255, exp: 0x39f013158 },
-  { minLevel: 260, exp: 0x8b9a915ac },
-  { minLevel: 265, exp: 0xa588f1a1c },
-  { minLevel: 270, exp: 0xc4c3f7700 },
-  { minLevel: 275, exp: 76639838e3 },
-  { minLevel: 280, exp: 107204032e3 },
-  { minLevel: 285, exp: 156017856e3 },
-  { minLevel: 290, exp: 218575316e3 },
+/** The Intermediate (Lv. 200+) and Advanced (Lv. 260+) Monster Park dungeons, ordered by EXP so
+ *  the last dungeon a character qualifies for is also the most rewarding one. Entry levels are the
+ *  gate's own minimums, not a 5-level ladder: Arcana opens at 230, not 225. */
+export const MONSTER_PARK_OPTIONS: MonsterParkOption[] = [
+  { id: "spirit-valley", label: "Spirit Valley", minLevel: 200, exp: 81300870 },
+  { id: "vj", label: "Vanishing Journey", minLevel: 200, exp: 359915080 },
+  { id: "cci", label: "Chu Chu Island", minLevel: 210, exp: 1285078680 },
+  { id: "lach", label: "Lachelein", minLevel: 220, exp: 3217660990 },
+  { id: "arcana", label: "Arcana", minLevel: 230, exp: 4707573370 },
+  { id: "moras", label: "Morass", minLevel: 235, exp: 5993511040 },
+  { id: "esf", label: "Esfera", minLevel: 240, exp: 6919667370 },
+  { id: "sellas", label: "Sellas", minLevel: 245, exp: 8712814920 },
+  { id: "mb", label: "Moonbridge", minLevel: 250, exp: 11716616500 },
+  { id: "laby", label: "Labyrinth of Suffering", minLevel: 255, exp: 14058901000 },
+  { id: "limen", label: "Limina", minLevel: 260, exp: 15552557400 },
+  { id: "cern", label: "Cernium", minLevel: 260, exp: 37474604460 },
+  { id: "arcs", label: "Arcus", minLevel: 265, exp: 44435446300 },
+  { id: "odium", label: "Odium", minLevel: 270, exp: 52818835200 },
+  { id: "sgl", label: "Shangri-La", minLevel: 275, exp: 76639838000 },
+  { id: "arteria", label: "Arteria", minLevel: 280, exp: 107204032000 },
+  { id: "carcion", label: "Carcion", minLevel: 285, exp: 156017856000 },
+  { id: "tallahart", label: "Tallahart", minLevel: 290, exp: 218575316000 },
 ];
+
+/** The most rewarding dungeon the level can enter, which is what a player would actually run. */
+export function bestMonsterParkForLevel(level: number): MonsterParkOption | undefined {
+  return MONSTER_PARK_OPTIONS.filter((park) => park.minLevel <= level).pop();
+}
+
+/** Falls back to the best available whenever the pinned dungeon is unset or out of reach, so a
+ *  saved pick can never silently zero out Monster Park EXP. */
+function resolveMonsterPark(level: number, parkId: string): MonsterParkOption | undefined {
+  const pinned = MONSTER_PARK_OPTIONS.find((park) => park.id === parkId);
+  return pinned && level >= pinned.minLevel ? pinned : bestMonsterParkForLevel(level);
+}
 
 const MPE_EXP_FACTORS = [
   2.04, 2.04, 2.04, 2.04, 2.04, 2.652, 2.652, 2.652, 2.652, 2.652,
   4.2, 4.2, 4.2, 4.2, 4.2, 5.376, 5.376, 5.376, 5.376, 5.376,
   5.832, 5.832, 5.832, 5.832, 5.832, 5.832, 5.832, 5.832, 5.832, 5.832,
   5.832, 5.832, 5.832, 5.832, 5.832, 5.832, 5.832, 5.832, 5.832, 5.832,
-];
-
-const CHAMPION_DOUBLE_UP_ARCANE = [
-  98708, 101389, 104101, 107125, 109886, 112662, 115470, 118598, 121453, 124322,
-  248003, 253673, 260047, 265808, 271621, 278138, 284043, 290679, 296653, 303394,
-  309470, 316316, 322473, 329417, 335675, 342720, 349836, 356216, 363430, 370692,
-  393361, 401055, 408778, 415702, 423542, 431459, 439402, 446505, 454564, 462670,
-  470824, 485614, 494006, 501461, 509964, 518511, 527106, 535749, 544459, 553217,
-  584807, 594040, 603318, 612643, 622041, 631458, 640971, 650504, 661261, 670940,
-];
-
-const CHAMPION_DOUBLE_UP_GRANDIS = [
-  1725461, 1750290, 1775159, 1800203, 1828409, 2056794, 2085219, 2113572, 2145596, 2174274,
-  2445217, 2481337, 2513634, 2546149, 2582906, 2903024, 2939616, 2981010, 3017988, 3059716,
-  3436027, 3482914, 3524768, 3572010, 3614278, 4062965, 4110304, 4163751, 4217526, 4265489,
-  4793318, 4847012, 4907812, 4968977, 5023491, 5643220, 5711948, 5781080, 5842650, 5912186,
 ];
 
 const PUNCH_KING_TIERS = [
@@ -551,12 +668,32 @@ export function expForLevel(level: number): number {
   return EXP_TO_NEXT_LEVEL_VALUES[level - MIN_EXP_LEVEL] ?? 0;
 }
 
+/** Final level-difference EXP multiplier: the game scales every EXP source by how far the monster
+ *  sits from the character. Within 10 levels it is a bonus (up to 1.2x at +/-1); past that it decays,
+ *  and the decay is asymmetric. Values from the KMS table (MapleStory Wiki, "Experience").
+ *  `diff > 0` means the monster is below the player (over-leveled farming). */
 function monsterLevelBonus(playerLevel: number, monsterLevel: number): number {
-  const diff = Math.abs(monsterLevel - playerLevel);
-  if (diff <= 1) return 1.2;
-  if (diff <= 4) return 1.1;
-  if (diff <= 9) return 1.05;
-  return 1;
+  const diff = playerLevel - monsterLevel;
+  const gap = Math.abs(diff);
+  if (gap <= 1) return 1.2;
+  if (gap <= 4) return 1.1;
+  if (gap <= 9) return 1.05;
+  if (gap === 10) return 1;
+  return diff > 0 ? monsterBelowPenalty(diff) : monsterAbovePenalty(-diff);
+}
+
+/** Monster below the player (over-leveled). Shallow decay from 0.99 down to a 0.70 floor. */
+function monsterBelowPenalty(diff: number): number {
+  if (diff <= 20) return 0.99 - Math.floor((diff - 11) / 2) * 0.01; // 0.99..0.95, one step per 2 levels
+  if (diff <= 39) return 0.89 - (diff - 21) * 0.01; // 0.89..0.71
+  return 0.7;
+}
+
+/** Monster above the player (under-leveled). Steep decay from 0.99 down to a 0.10 floor. */
+function monsterAbovePenalty(above: number): number {
+  if (above <= 20) return 0.99 - (above - 11) * 0.01; // 0.99..0.90
+  if (above <= 35) return 0.7 - (above - 21) * 0.04; // 0.70..0.14
+  return 0.1;
 }
 
 function calculateBuffMultiplier(state: BuffState, playerLevel: number): number {
@@ -657,8 +794,12 @@ function initialSimulationState(input: AllInOneInput): SimulationState {
 
 function applyStartingEventResources(state: SimulationState, input: AllInOneInput, date: number): SimulationState {
   let next = applyResourceUnits(state, Math.max(0, input.strawberryTickets) * 1200, "strawberry-farm", date);
+  next = applyResourceUnits(next, Math.max(0, input.luxeSaunaHours) * LUXE_SAUNA_UNITS_PER_HOUR, "luxe-sauna", date);
+  if (next.level >= 260) {
+    next = applyResourceUnits(next, Math.max(0, input.expressBoosters), "express-booster", date);
+  }
   if (next.level >= 280) {
-    next = applyResourceUnits(next, Math.max(0, input.mechaberryTickets) * 9600, "mechaberry-farm", date);
+    next = applyResourceUnits(next, Math.max(0, input.mechaberryTickets), "mechaberry-farm", date);
   }
   return next;
 }
@@ -682,9 +823,16 @@ function applyDailyWeeklyContent(state: SimulationState, input: AllInOneInput, d
 function dailyExpForState(state: SimulationState, input: AllInOneInput, date: number): number {
   return (
     selectedDailyExp(state.level, input) +
-    monsterParkExpForLevel(state.level, input.monsterParkRuns, input.monsterParkBonus, date) +
-    Math.max(0, input.customDailyExp)
+    monsterParkExpForLevel(state.level, input, date) +
+    customDailyExp(input)
   );
+}
+
+/** The Custom Daily panel is either a flat EXP figure or a farming rate the player sustains for a
+ *  set number of hours a day. Both land in the same daily bucket. */
+export function customDailyExp(input: AllInOneInput): number {
+  if (input.customDailyMode === "flat") return Math.max(0, input.customDailyExp);
+  return Math.floor(Math.max(0, input.customHourlyExp) * Math.max(0, input.customHoursPerDay));
 }
 
 function weeklyExpForState(state: SimulationState, input: AllInOneInput): number {
@@ -713,11 +861,13 @@ function dailyBonusPercent(daily: ExpContentOption, input: AllInOneInput): numbe
   return daily.region === "Grandis" ? Math.max(0, input.grandisBonus) : Math.max(0, input.arcaneRiverBonus);
 }
 
-function monsterParkExpForLevel(level: number, runs: number, bonusPercent: number, date: number): number {
-  const row = MONSTER_PARK_EXP.filter((entry) => entry.minLevel <= level).pop();
-  const base = row?.exp ?? 0;
+function monsterParkExpForLevel(level: number, input: AllInOneInput, date: number): number {
+  const base = resolveMonsterPark(level, input.monsterParkId)?.exp ?? 0;
+  const bonusPercent = Math.max(0, input.monsterParkBonus);
   const sundayMultiplier = new Date(date).getDay() === 0 ? 1.5 : 1;
-  return (Math.ceil(base * sundayMultiplier) + Math.ceil(base * Math.max(0, bonusPercent) / 100)) * Math.max(0, runs);
+  return (
+    (Math.ceil(base * sundayMultiplier) + Math.ceil(base * bonusPercent / 100)) * Math.max(0, input.monsterParkRuns)
+  );
 }
 
 function monsterParkExtremeExpForLevel(level: number, runs: number, bonusPercent: number): number {
@@ -730,7 +880,8 @@ function epicDungeonExpForLevel(level: number, input: AllInOneInput): number {
   const dungeon = EPIC_DUNGEON_OPTIONS.find((entry) => entry.id === input.epicDungeonId);
   if (!dungeon || level < dungeon.minLevel || input.epicDungeonMultiplier <= 0) return 0;
   const base = HIGH_MOUNTAIN_BASE[level - 260] ?? HIGH_MOUNTAIN_BASE[HIGH_MOUNTAIN_BASE.length - 1];
-  return Math.floor(base * dungeon.baseMultiplier * (input.epicDungeonMultiplier + Math.max(0, input.epicDungeonBonus) / 100));
+  const event = clamp(input.epicDungeonExpMultiplier, 1, 4);
+  return Math.floor(base * dungeon.baseMultiplier * input.epicDungeonMultiplier * event);
 }
 
 function punchKingExpForLevel(level: number, score: number): number {
@@ -748,8 +899,8 @@ function punchKingExpForLevel(level: number, score: number): number {
 
 function doubleUpExpForLevel(level: number, points: number): number {
   if (level < 200) return 0;
-  const source = level < 260 ? CHAMPION_DOUBLE_UP_ARCANE[level - 200] : CHAMPION_DOUBLE_UP_GRANDIS[level - 260];
-  return Math.ceil(3.5 * (source ?? CHAMPION_DOUBLE_UP_GRANDIS[CHAMPION_DOUBLE_UP_GRANDIS.length - 1])) * Math.max(0, points);
+  const source = level < 260 ? BASE_MONSTER_EXP_ARCANE[level - 200] : BASE_MONSTER_EXP_GRANDIS[level - 260];
+  return Math.ceil(3.5 * (source ?? BASE_MONSTER_EXP_GRANDIS[BASE_MONSTER_EXP_GRANDIS.length - 1])) * Math.max(0, points);
 }
 
 function applyResourceUnits(state: SimulationState, units: number, tableId: string, date: number): SimulationState {

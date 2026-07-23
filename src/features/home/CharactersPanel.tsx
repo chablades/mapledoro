@@ -175,7 +175,6 @@ export default function CharactersPanel({ theme, characters }: { theme: AppTheme
   return (
     <Panel
       theme={theme}
-      delay="0.25s"
       icon="⭐"
       title="My Characters"
       headerRight={manageLink}

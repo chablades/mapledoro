@@ -20,7 +20,7 @@ import {
   formatDate,
 } from "./useLiberationState";
 import { toolStyles } from "../tool-styles";
-import { PanelDivider, Toggle } from "../shared-ui";
+import { PanelDivider, Toggle, ToolNumberInput } from "../shared-ui";
 import { ConfirmButton } from "../../../components/ConfirmButton";
 import { BossCard } from "./BossCard";
 import { ResultsPanel, type ResultRow } from "./ResultsPanel";
@@ -66,27 +66,14 @@ function LiberationConfigSection({
   const questId = `${uid}-quest`;
   const tracesId = `${uid}-traces`;
   const startId = `${uid}-start`;
-  const fieldLabel: React.CSSProperties = {
-    display: "block",
-    fontSize: "0.78rem",
-    fontWeight: 700,
-    color: theme.text,
-    marginBottom: "4px",
-  };
+  const fieldLabel: React.CSSProperties = { color: theme.muted };
 
   return (
     <section className="fade-in panel-card" style={sectionPanel}>
       <h2 className="tool-panel-title" style={{ color: theme.text }}>Configuration</h2>
-      <div
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: "1rem",
-          alignItems: "flex-end",
-        }}
-      >
+      <div className="tool-control-row">
         <div style={{ flex: "1 1 220px" }}>
-          <label htmlFor={questId} style={fieldLabel}>Current Quest</label>
+          <label className="tool-field-label" htmlFor={questId} style={fieldLabel}>Current Quest</label>
           <select
             id={questId}
             className="tool-select"
@@ -108,30 +95,24 @@ function LiberationConfigSection({
           </select>
         </div>
 
-        <div style={{ flex: "0 1 140px" }}>
-          <label htmlFor={tracesId} style={fieldLabel}>Current {traceNameShort}</label>
-          <input
+        {/* "CURRENT DETERMINATION" is wider than "CURRENT TRACES"; give it enough
+            basis to stay on one line, taking the width from the quest select. */}
+        <div style={{ flex: `0 1 ${type === "genesis" ? 140 : 180}px` }}>
+          <label className="tool-field-label" htmlFor={tracesId} style={fieldLabel}>Current {traceNameShort}</label>
+          <ToolNumberInput
             id={tracesId}
-            className="tool-input"
-            type="number"
             min={0}
             max={quests[questIdx]?.required ?? 9999}
+            integer
             value={currentTraces}
-            onFocus={(e) => e.currentTarget.select()}
             onKeyDown={replaceZeroOnDigit}
-            onChange={(e) => {
-              let v = parseInt(e.target.value) || 0;
-              if (v < 0) v = 0;
-              const max = quests[questIdx]?.required ?? 9999;
-              if (v > max) v = max;
-              onCurrentTracesChange(v);
-            }}
+            onCommit={onCurrentTracesChange}
             style={{ ...inputStyle, width: "100%" }}
           />
         </div>
 
         <div style={{ flex: "0 1 160px" }}>
-          <label htmlFor={startId} style={fieldLabel}>Start Date (UTC)</label>
+          <label className="tool-field-label" htmlFor={startId} style={fieldLabel}>Start Date (UTC)</label>
           <input
             id={startId}
             className="tool-input"
@@ -146,7 +127,7 @@ function LiberationConfigSection({
           <div style={{ flex: "0 0 auto", alignSelf: "stretch", display: "flex", flexDirection: "column" }}>
             {/* Phantom label matching the other columns so the toggle below
                 stretches to exactly the input height */}
-            <div aria-hidden style={{ fontSize: "0.78rem", fontWeight: 700, marginBottom: "4px" }}>
+            <div aria-hidden style={{ fontSize: "0.75rem", fontWeight: 700, marginBottom: "4px" }}>
               {"\u00A0"}
             </div>
             <Toggle
@@ -195,7 +176,7 @@ function LiberationProgressBar({
         <h2 className="tool-panel-title" style={{ margin: 0, color: theme.text }}>Liberation Progress</h2>
         <div
           style={{
-            fontSize: "0.78rem",
+            fontSize: "0.75rem",
             fontWeight: 800,
             color: theme.accentText,
           }}

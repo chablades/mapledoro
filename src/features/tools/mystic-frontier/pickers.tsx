@@ -69,7 +69,7 @@ export function FamiliarSprite({ fam, size, theme }: { fam: MfFamiliar; size: nu
           }
         }}
       />
-      <span aria-hidden style={{ display: "none", fontSize: size * 0.5, fontWeight: 300, lineHeight: 1, color: theme.muted }}>?</span>
+      <span aria-hidden style={{ display: "none", fontSize: size * 0.5, fontWeight: 400, lineHeight: 1, color: theme.muted }}>?</span>
     </span>
   );
 }
@@ -108,7 +108,7 @@ const searchInputStyle: CSSProperties = {
   boxSizing: "border-box",
   borderRadius: 6,
   fontFamily: "inherit",
-  fontSize: "0.78rem",
+  fontSize: "0.75rem",
   fontWeight: 600,
   padding: "0.3rem 0.5rem",
   outline: "none",

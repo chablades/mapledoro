@@ -6447,8 +6447,9 @@
       ],
       "className": "Kinesis",
       "iconSkills": [
-        "142111002",
-        "142001000"
+        "142001000",
+        "142101000",
+        "142111000"
       ],
       "hasIcon": true
     },
@@ -6466,8 +6467,8 @@
       ],
       "className": "Kinesis",
       "iconSkills": [
-        "142101009",
-        "142001001"
+        "142100001",
+        "142121001"
       ],
       "hasIcon": true
     },
@@ -6484,8 +6485,7 @@
       ],
       "className": "Kinesis",
       "iconSkills": [
-        "142111007",
-        "142101002"
+        "142121000"
       ],
       "hasIcon": true
     },
@@ -6503,8 +6503,8 @@
       ],
       "className": "Kinesis",
       "iconSkills": [
-        "142121005",
-        "142101003"
+        "142121002",
+        "142111001"
       ],
       "hasIcon": true
     },
@@ -6521,8 +6521,7 @@
       ],
       "className": "Kinesis",
       "iconSkills": [
-        "142110011",
-        "142121030"
+        "142110006"
       ],
       "hasIcon": true
     },
@@ -6539,8 +6538,7 @@
       ],
       "className": "Kinesis",
       "iconSkills": [
-        "142121031",
-        "142001002"
+        "142121043"
       ],
       "hasIcon": true
     },

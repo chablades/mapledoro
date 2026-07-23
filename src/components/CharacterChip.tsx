@@ -6,9 +6,6 @@ interface CharacterChipProps {
   characterImgURL: string;
   characterName: string;
   subtitle: string;
-  nameFontSize?: string;
-  subtitleFontSize?: string;
-  subtitleFontWeight?: number;
 }
 
 export default function CharacterChip({
@@ -16,9 +13,6 @@ export default function CharacterChip({
   characterImgURL,
   characterName,
   subtitle,
-  nameFontSize = "0.9rem",
-  subtitleFontSize = "0.75rem",
-  subtitleFontWeight = 600,
 }: CharacterChipProps) {
   return (
     <>
@@ -28,7 +22,7 @@ export default function CharacterChip({
           height: 48,
           borderRadius: "12px",
           overflow: "hidden",
-          background: theme.timerBg,
+          background: characterImgURL ? theme.timerBg : theme.accentSoft,
           border: `1px solid ${theme.border}`,
           flexShrink: 0,
           display: "flex",
@@ -36,19 +30,25 @@ export default function CharacterChip({
           justifyContent: "center",
         }}
       >
-        <CharacterAvatar
-          src={characterImgURL}
-          alt={characterName}
-          width={48}
-          height={48}
-          style={{ objectFit: "contain" }}
-        />
+        {characterImgURL ? (
+          <CharacterAvatar
+            src={characterImgURL}
+            alt={characterName}
+            width={48}
+            height={48}
+            style={{ objectFit: "contain" }}
+          />
+        ) : (
+          <span style={{ fontSize: "1.125rem", fontWeight: 800, color: theme.accentText }}>
+            {characterName.charAt(0).toUpperCase()}
+          </span>
+        )}
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div
           style={{
             fontWeight: 800,
-            fontSize: nameFontSize,
+            fontSize: "0.9rem",
             color: theme.text,
             overflow: "hidden",
             textOverflow: "ellipsis",
@@ -59,9 +59,9 @@ export default function CharacterChip({
         </div>
         <div
           style={{
-            fontSize: subtitleFontSize,
+            fontSize: "0.75rem",
             color: theme.muted,
-            fontWeight: subtitleFontWeight,
+            fontWeight: 600,
             marginTop: 1,
           }}
         >

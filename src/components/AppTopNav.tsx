@@ -31,14 +31,17 @@ function UtcClocks({ mobileClassName, desktopClassName, style }: { mobileClassNa
   );
 }
 
+/** The sun/moon read as themselves, not as the accent: both clear 3:1 against
+ *  the knob they sit on (moon on #1a1a22, sun on #ffffff). */
+const SUN_COLOR = "#d97706";
+const MOON_COLOR = "#f2d98b";
+
 function ColorModeToggle({
   colorMode,
   onToggle,
-  theme,
 }: {
   colorMode: ColorMode;
   onToggle: () => void;
-  theme: AppTheme;
 }) {
   const isDark = colorMode === "dark";
 
@@ -67,8 +70,8 @@ function ColorModeToggle({
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
             <path
               d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"
-              fill={theme.accent}
-              stroke={theme.accent}
+              fill={MOON_COLOR}
+              stroke={MOON_COLOR}
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -76,15 +79,15 @@ function ColorModeToggle({
           </svg>
         ) : (
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-            <circle cx="12" cy="12" r="5" fill={theme.accent} stroke={theme.accent} strokeWidth="2" />
-            <line x1="12" y1="1" x2="12" y2="3" stroke={theme.accent} strokeWidth="2" strokeLinecap="round" />
-            <line x1="12" y1="21" x2="12" y2="23" stroke={theme.accent} strokeWidth="2" strokeLinecap="round" />
-            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" stroke={theme.accent} strokeWidth="2" strokeLinecap="round" />
-            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" stroke={theme.accent} strokeWidth="2" strokeLinecap="round" />
-            <line x1="1" y1="12" x2="3" y2="12" stroke={theme.accent} strokeWidth="2" strokeLinecap="round" />
-            <line x1="21" y1="12" x2="23" y2="12" stroke={theme.accent} strokeWidth="2" strokeLinecap="round" />
-            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" stroke={theme.accent} strokeWidth="2" strokeLinecap="round" />
-            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" stroke={theme.accent} strokeWidth="2" strokeLinecap="round" />
+            <circle cx="12" cy="12" r="5" fill={SUN_COLOR} stroke={SUN_COLOR} strokeWidth="2" />
+            <line x1="12" y1="1" x2="12" y2="3" stroke={SUN_COLOR} strokeWidth="2" strokeLinecap="round" />
+            <line x1="12" y1="21" x2="12" y2="23" stroke={SUN_COLOR} strokeWidth="2" strokeLinecap="round" />
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" stroke={SUN_COLOR} strokeWidth="2" strokeLinecap="round" />
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" stroke={SUN_COLOR} strokeWidth="2" strokeLinecap="round" />
+            <line x1="1" y1="12" x2="3" y2="12" stroke={SUN_COLOR} strokeWidth="2" strokeLinecap="round" />
+            <line x1="21" y1="12" x2="23" y2="12" stroke={SUN_COLOR} strokeWidth="2" strokeLinecap="round" />
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" stroke={SUN_COLOR} strokeWidth="2" strokeLinecap="round" />
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" stroke={SUN_COLOR} strokeWidth="2" strokeLinecap="round" />
           </svg>
         )}
       </span>
@@ -190,7 +193,7 @@ export default function AppTopNav({
           </div>
         </div>
 
-        <ColorModeToggle colorMode={colorMode} onToggle={toggleColorMode} theme={theme} />
+        <ColorModeToggle colorMode={colorMode} onToggle={toggleColorMode} />
 
         <UtcClocks mobileClassName={styles.mobileUtc} desktopClassName={styles.desktopUtc} style={{ color: theme.muted }} />
         <button
@@ -294,7 +297,7 @@ export default function AppTopNav({
             <span style={{ fontSize: "0.82rem", fontWeight: 700, color: theme.muted }}>
               {colorMode === "dark" ? "Dark" : "Light"} mode
             </span>
-            <ColorModeToggle colorMode={colorMode} onToggle={toggleColorMode} theme={theme} />
+            <ColorModeToggle colorMode={colorMode} onToggle={toggleColorMode} />
           </div>
         </nav>
       )}

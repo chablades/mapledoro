@@ -8,11 +8,11 @@ export default function HeroBanner({ theme }: { theme: AppTheme }) {
   const bannerStyle: CSSProperties = {
     position: "relative",
     textAlign: "center",
-    padding: "2rem 2rem 1.5rem",
+    padding: "0.85rem 1.25rem 1.35rem",
     borderRadius: 22,
     overflow: "hidden",
     border: `1px solid ${theme.border}`,
-    marginBottom: "1.25rem",
+    marginBottom: "1rem",
   };
   const glowStyle: CSSProperties = {
     position: "absolute",
@@ -32,7 +32,7 @@ export default function HeroBanner({ theme }: { theme: AppTheme }) {
     color: theme.muted,
     fontWeight: 600,
     maxWidth: 460,
-    margin: "0 auto 0.5rem",
+    margin: "0 auto",
     lineHeight: 1.5,
   };
 
@@ -43,10 +43,9 @@ export default function HeroBanner({ theme }: { theme: AppTheme }) {
         <Image
           src="/icons/doro.png"
           alt=""
-          width={52}
-          height={52}
+          width={84}
+          height={84}
           unoptimized
-          style={{ marginBottom: "0.5rem" }}
         />
         <h1 style={headingStyle}>MapleDoro</h1>
         <p style={{ fontSize: "0.88rem", fontWeight: 700, color: theme.text, margin: "0 0 0.5rem" }}>

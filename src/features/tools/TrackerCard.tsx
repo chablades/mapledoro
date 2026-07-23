@@ -25,14 +25,6 @@ function actionBtnStyle(theme: AppTheme, active = false): CSSProperties {
   };
 }
 
-function GripIcon({ color }: { color: string }) {
-  return (
-    <svg viewBox="0 0 24 24" width="14" height="14" fill={color} aria-hidden="true">
-      <path d="M9 5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0 7a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0 7a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm9-14a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0 7a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0 7a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z" />
-    </svg>
-  );
-}
-
 function RemoveIcon({ color }: { color: string }) {
   return (
     <svg viewBox="0 0 24 24" width="14" height="14" fill={color} aria-hidden="true">
@@ -57,74 +49,10 @@ function CheckAllIcon({ color }: { color: string }) {
   );
 }
 
-/** Grab handle. Mouse drag still works from the card body (the whole card is
- *  `draggable`); this gives the affordance a home and, crucially, a keyboard
- *  path: arrow keys move the card, Home/End send it to the ends. Works in
- *  display-position space (`pos` / `total`); the parent maps a target position
- *  onto whatever index its reorder expects. */
-function DragHandle({
-  theme,
-  pos,
-  total,
-  onMove,
-  label,
-}: {
-  theme: AppTheme;
-  pos: number;
-  total: number;
-  onMove: (toPos: number) => void;
-  label: string;
-}) {
-  const move = (to: number) => {
-    if (to < 0 || to >= total || to === pos) return;
-    onMove(to);
-  };
-  return (
-    <button
-      type="button"
-      className="btn-reset"
-      aria-label={`Reorder ${label}. Use arrow keys to move.`}
-      title="Drag to reorder"
-      onKeyDown={(e) => {
-        switch (e.key) {
-          case "ArrowUp":
-          case "ArrowLeft":
-            e.preventDefault();
-            move(pos - 1);
-            break;
-          case "ArrowDown":
-          case "ArrowRight":
-            e.preventDefault();
-            move(pos + 1);
-            break;
-          case "Home":
-            e.preventDefault();
-            move(0);
-            break;
-          case "End":
-            e.preventDefault();
-            move(total - 1);
-            break;
-          default:
-            break;
-        }
-      }}
-      style={{ ...actionBtnStyle(theme), cursor: "grab" }}
-    >
-      <GripIcon color={theme.muted} />
-    </button>
-  );
-}
-
 /** Delete / edit / mark-all cluster, shared so both trackers use one icon set.
- *  `pos` / `total` / `onMove` drive the drag handle's keyboard reordering in
- *  display order. */
+ *  Reordering comes from the draggable card body, not from a separate handle. */
 export function CardActions({
   theme,
-  pos,
-  total,
-  onMove,
-  label,
   onDelete,
   onEdit,
   editTitle,
@@ -134,10 +62,6 @@ export function CardActions({
   toggleOffTitle,
 }: {
   theme: AppTheme;
-  pos: number;
-  total: number;
-  onMove: (toPos: number) => void;
-  label: string;
   onDelete: () => void;
   onEdit: () => void;
   editTitle: string;
@@ -148,7 +72,6 @@ export function CardActions({
 }) {
   return (
     <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
-      <DragHandle theme={theme} pos={pos} total={total} onMove={onMove} label={label} />
       <button
         type="button"
         className="btn-reset"

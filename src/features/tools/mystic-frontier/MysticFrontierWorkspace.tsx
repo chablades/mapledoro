@@ -78,7 +78,7 @@ function DiePicker({ theme, value, max, onChange }: {
             aria-pressed={active}
             style={{
               flex: "1 1 0", minWidth: 0, height: 44, borderRadius: 6, padding: 0, cursor: "pointer",
-              fontFamily: "inherit", fontWeight: 800, fontSize: "0.8rem",
+              fontFamily: "inherit", fontWeight: 800, fontSize: "0.82rem",
               border: `1px solid ${active ? theme.accent : theme.border}`,
               background: active ? theme.accent : "transparent",
               color: active ? "#fff" : theme.muted,
@@ -107,7 +107,7 @@ function SlotTrigger({ slot, theme }: { slot: SlotState; theme: AppTheme }) {
   if (!fam) {
     return (
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, minHeight: FAM_SPRITE + 22, justifyContent: "center" }}>
-        <span style={{ fontSize: 22, color: theme.muted, lineHeight: 1, fontWeight: 300 }}>+</span>
+        <span style={{ fontSize: 22, color: theme.muted, lineHeight: 1, fontWeight: 400 }}>+</span>
         <span style={{ fontSize: "0.75rem", fontWeight: 700, color: theme.muted }}>Add familiar</span>
       </div>
     );
@@ -115,7 +115,7 @@ function SlotTrigger({ slot, theme }: { slot: SlotState; theme: AppTheme }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
       <FamiliarSprite fam={fam} size={FAM_SPRITE} theme={theme} />
-      <span style={{ fontSize: "0.78rem", fontWeight: 800, color: theme.text, textAlign: "center", lineHeight: 1.2 }}>
+      <span style={{ fontSize: "0.75rem", fontWeight: 800, color: theme.text, textAlign: "center", lineHeight: 1.2 }}>
         {fam.label}
       </span>
     </div>
@@ -219,7 +219,7 @@ function EquippedBonusItem({ item, theme, onRemove }: {
         aria-label={`Remove ${item.name}`}
         style={{
           background: "none", border: "none", padding: "0 0.25rem", cursor: "pointer",
-          color: theme.muted, fontSize: "1.2rem", fontWeight: 700, lineHeight: 1, flexShrink: 0,
+          color: theme.muted, fontSize: "1.15rem", fontWeight: 700, lineHeight: 1, flexShrink: 0,
         }}
       >
         ×
@@ -234,8 +234,8 @@ function AddBonusTrigger({ theme }: { theme: AppTheme }) {
       display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
       padding: "0.6rem", borderRadius: 10, border: `1px dashed ${theme.border}`, color: theme.muted,
     }}>
-      <span style={{ fontSize: 18, lineHeight: 1, fontWeight: 300 }}>+</span>
-      <span style={{ fontSize: "0.8rem", fontWeight: 800 }}>Add Bonus Item</span>
+      <span style={{ fontSize: 18, lineHeight: 1, fontWeight: 400 }}>+</span>
+      <span style={{ fontSize: "0.82rem", fontWeight: 800 }}>Add Bonus Item</span>
     </div>
   );
 }
@@ -337,13 +337,13 @@ function VerdictBanner({ result, target, passed, hasLineup, theme, onTargetChang
       {decided ? (
         <span style={{
           display: "inline-flex", alignItems: "center", gap: 6,
-          fontSize: "1rem", fontWeight: 900, letterSpacing: "0.04em", color,
+          fontSize: "1rem", fontWeight: 800, letterSpacing: "0.04em", color,
         }}>
-          <span aria-hidden style={{ fontSize: "1.1rem", lineHeight: 1 }}>{passed ? "✓" : "✗"}</span>
+          <span aria-hidden style={{ fontSize: "1.15rem", lineHeight: 1 }}>{passed ? "✓" : "✗"}</span>
           {passed ? "PASS" : "FAIL"}
         </span>
       ) : (
-        <span style={{ fontSize: "0.85rem", fontWeight: 700, color: theme.muted }}>{prompt}</span>
+        <span style={{ fontSize: "0.82rem", fontWeight: 700, color: theme.muted }}>{prompt}</span>
       )}
 
       <div style={{ marginLeft: "auto", display: "flex", alignItems: "baseline", justifyContent: "flex-end", flexWrap: "wrap", gap: "4px 7px" }}>
@@ -352,7 +352,7 @@ function VerdictBanner({ result, target, passed, hasLineup, theme, onTargetChang
           <>
             <span style={scoreTermStyle}>
               <span className="section-label" style={labelStyle}>Result:</span>
-              <span style={{ fontSize: "1.35rem", fontWeight: 900, color: theme.text, lineHeight: 1 }}>
+              <span style={{ fontSize: "1.15rem", fontWeight: 800, color: theme.text, lineHeight: 1 }}>
                 {result.finalResult}
               </span>
             </span>
@@ -374,7 +374,7 @@ function ResultBreakdown({ result, theme }: { result: ScoreResult; theme: AppThe
   return (
     <div style={{
       display: "flex", flexWrap: "wrap", alignItems: "baseline", gap: "0.35rem 0.55rem",
-      fontSize: "0.78rem", fontWeight: 600, color: theme.muted,
+      fontSize: "0.75rem", fontWeight: 600, color: theme.muted,
     }}>
       <span>{result.diceSum} dice</span>
       {result.totalFlat !== 0 && (
@@ -390,7 +390,7 @@ function ActiveLines({ result, theme }: { result: ScoreResult; theme: AppTheme }
   if (result.activeLines.length === 0) return null;
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-      <div style={{ fontSize: "0.78rem", fontWeight: 800, color: theme.text }}>Active potential lines</div>
+      <div style={{ fontSize: "0.75rem", fontWeight: 800, color: theme.text }}>Active potential lines</div>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
         {result.activeLines.map((l, i) => (
           <span
@@ -416,7 +416,7 @@ function RerollPanel({ rerolls, passed, theme }: {
   if (passed || rerolls.length === 0) return null;
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-      <div style={{ fontSize: "0.78rem", fontWeight: 800, color: theme.text }}>Rerolls that would pass</div>
+      <div style={{ fontSize: "0.75rem", fontWeight: 800, color: theme.text }}>Rerolls that would pass</div>
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
         {rerolls.map((s) => {
           const possible = s.passingValues.length > 0;
@@ -432,7 +432,7 @@ function RerollPanel({ rerolls, passed, theme }: {
               <div style={{ fontSize: "0.75rem", fontWeight: 800, color: theme.text }}>
                 {DIE_LABELS[s.slotIndex]} <span style={{ color: theme.muted, fontWeight: 600 }}>(now {s.currentDie}, d{s.maxDie})</span>
               </div>
-              <div style={{ fontSize: "0.8rem", fontWeight: 700, color: possible ? theme.accent : theme.muted, marginTop: 4 }}>
+              <div style={{ fontSize: "0.82rem", fontWeight: 700, color: possible ? theme.accent : theme.muted, marginTop: 4 }}>
                 {possible ? `Need: ${s.passingValues.join(", ")}` : "Can't pass alone"}
               </div>
               {possible && (
@@ -518,7 +518,7 @@ export default function MysticFrontierWorkspace({ theme }: { theme: AppTheme }) 
         />
 
         {/* Character, wave, and target — the per-wave setup controls */}
-        <div className="panel-card" style={styles.sectionPanel}>
+        <div className="fade-in panel-card" style={styles.sectionPanel}>
           <div style={{ display: "flex", alignItems: "center", gap: "0.75rem 2rem", flexWrap: "wrap" }}>
             {mf.characters.length > 0 && (
               <CharacterSyncPanel
@@ -541,11 +541,11 @@ export default function MysticFrontierWorkspace({ theme }: { theme: AppTheme }) 
         </div>
 
         {/* Lineup */}
-        <div className="panel-card" style={styles.sectionPanel}>
+        <div className="fade-in panel-card" style={styles.sectionPanel}>
           <div style={{ display: "flex", alignItems: "center", gap: "1rem", marginBottom: "0.85rem" }}>
-            <div className="section-label" style={{ color: theme.muted, marginBottom: 0, lineHeight: 1 }}>
+            <h2 className="tool-panel-title" style={{ margin: 0, color: theme.text }}>
               {`Active Lineup · Wave ${mf.activeWave + 1}`}
-            </div>
+            </h2>
             <ConfirmButton
               theme={theme}
               label="Reset wave"
@@ -569,14 +569,14 @@ export default function MysticFrontierWorkspace({ theme }: { theme: AppTheme }) 
         </div>
 
         {/* Bonus items */}
-        <div className="panel-card" style={styles.sectionPanel}>
-          <div className="section-label" style={{ color: theme.muted }}>Bonus Items</div>
-          <div style={{ fontSize: "0.76rem", fontWeight: 600, color: theme.muted, marginBottom: "0.85rem" }}>
+        <div className="fade-in panel-card" style={styles.sectionPanel}>
+          <h2 className="tool-panel-title" style={{ marginBottom: "0.25rem", color: theme.text }}>Bonus Items</h2>
+          <div style={{ fontSize: "0.75rem", fontWeight: 600, color: theme.muted, marginBottom: "0.85rem" }}>
             Equipped dice items apply to every roll. Add the dice you own — one per type.
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {equippedBonus.length === 0 && (
-              <div style={{ fontSize: "0.78rem", fontWeight: 600, color: theme.muted }}>No bonus dice equipped yet.</div>
+              <div style={{ fontSize: "0.75rem", fontWeight: 600, color: theme.muted }}>No bonus dice equipped yet.</div>
             )}
             {equippedBonus.map(({ family, item }) => (
               <EquippedBonusItem key={family} item={item} theme={theme} onRemove={() => mf.setBonus(family, null)} />
@@ -597,8 +597,8 @@ export default function MysticFrontierWorkspace({ theme }: { theme: AppTheme }) 
         </div>
 
         {/* Result */}
-        <div className="panel-card" style={styles.sectionPanel}>
-          <div className="section-label" style={{ color: theme.muted }}>Result</div>
+        <div className="fade-in panel-card" style={styles.sectionPanel}>
+          <h2 className="tool-panel-title" style={{ color: theme.text }}>Result</h2>
 
           <div style={{ display: "flex", flexDirection: "column", gap: "1.15rem" }}>
             <VerdictBanner

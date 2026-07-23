@@ -12,9 +12,59 @@ interface ChangelogEntry {
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    date: "2026-07-23",
+    changes: [
+      { type: "added", text: "The EXP Calculator Daily / Weekly Calculator now takes Express Boosters." },
+      { type: "added", text: "The EXP Calculator Resources tab now has EXP tables for Express Booster and Haste Fever Time." },
+      { type: "fixed", text: "The EXP Calculator Import Into Daily/Weekly Calculator link now imports to the character selected in the Farming tab instead of your main, and the imported rate is saved to that character." },
+    ],
+  },
+  {
     date: "2026-07-19",
     changes: [
       { type: "added", text: "Added a back to top button that appears in the corner once you scroll down a page." },
+    ],
+  },
+  {
+    date: "2026-07-17",
+    changes: [
+      { type: "changed", text: "The HEXA Skill Tracker Guide tab now combines back to back levels of the same skill into one step, so leveling a skill from 8 to 10 shows as a single 8 to 10 step." },
+      { type: "changed", text: "The HEXA Skill Tracker FD Breakdown tab no longer lists Sol Janus." },
+    ],
+  },
+  {
+    date: "2026-07-16",
+    changes: [
+      { type: "fixed", text: "The EXP Calculator Farming tab now scales EXP down for monsters far above or below your level, instead of only applying the bonus for monsters within 10 levels." },
+    ],
+  },
+  {
+    date: "2026-07-14",
+    changes: [
+      { type: "added", text: "The HEXA Skill Tracker now has a Guide tab that lists which skills to level next, ordered by final damage gained per Sol Erda Fragment." },
+      { type: "added", text: "The HEXA Skill Tracker now has an FD Breakdown tab showing how much final damage each HEXA skill gives you at its current level." },
+    ],
+  },
+  {
+    date: "2026-07-13",
+    changes: [
+      { type: "added", text: "The EXP Calculator Daily / Weekly Calculator now takes Luxe Sauna / MVP Resort hours, with the sauna's EXP table in the Resources tab." },
+    ],
+  },
+  {
+    date: "2026-07-12",
+    changes: [
+      { type: "added", text: "The EXP Calculator Farming tab now has an Import Into Daily/Weekly Calculator link that carries your hourly EXP over to your plan." },
+      { type: "added", text: "The EXP Calculator now remembers the monster you picked in the Farming tab for each character." },
+      { type: "added", text: "The EXP Calculator now lets you pick which Monster Park dungeon you run, defaulting to the best one your level can enter." },
+      { type: "changed", text: "The EXP Calculator Epic Dungeon panel now takes a Bonus Multiplier, so you can enter event rates like 1.5x, 2.5x, or 4x directly." },
+      { type: "changed", text: "The EXP Calculator now hides the Epic Dungeon reward multiplier for characters in Heroic worlds, which cannot buy one." },
+      { type: "changed", text: "The EXP Calculator now disables the Burning dropdown at level 270 and up, where no Burning type grants extra levels." },
+      { type: "fixed", text: "Fixed Mechaberry Farm Tickets in the EXP Calculator granting thousands of times too much EXP." },
+      { type: "fixed", text: "Fixed the EXP Calculator not letting you type a Current EXP % below 1, like 0.5." },
+      { type: "fixed", text: "Fixed text boxes, dropdowns, and date pickers sitting in the same row being slightly different heights in the Liberation Tracker, the Trace Restoration Tracker, and the Flame Calculator." },
+      { type: "fixed", text: "Fixed Daily Tracker characters added by typing a name showing a default avatar instead of their first letter like the Boss Crystal Tracker." },
+      { type: "fixed", text: "Fixed number boxes in the EXP Calculator, Star Force Calculator, Symbol Calculator, Liberation Tracker, Trace Restoration Tracker, and HEXA Skills tool fighting your typing when a value hit its cap, so they now let you finish typing and settle when you click away." },
     ],
   },
   {
@@ -396,7 +446,7 @@ function ChangelogContent({ theme }: { theme: AppTheme }) {
                       gap: "0.6rem",
                       fontSize: "0.88rem",
                       color: theme.text,
-                      fontWeight: 500,
+                      fontWeight: 400,
                       lineHeight: 1.6,
                     }}
                   >
