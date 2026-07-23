@@ -61,6 +61,9 @@ export const BADGE_COUNT = 8;
 const VALID_TIERS = new Set<string>(TIER_ORDER);
 
 export const FAM_CARD_SIZE = 64;
+// Bigger than the editable setup-step card's sprite -- the profile bookmark's read-only card
+// has no search picker to leave room for, so it can afford a taller card and a larger sprite.
+const FAM_CARD_SIZE_READONLY = 96;
 const FAM_LIST_SIZE = 32;
 export const BADGE_SIZE = 52;
 export const BADGE_BORDER = 4;
@@ -249,7 +252,7 @@ const presetSquareStyle = (theme: AppTheme, active: boolean): CSSProperties => (
 // Familiar sprite: sequential source fallback (mob → familiar → card), swapped via onError.
 // Exported for the profile Familiars bookmark's read-only cards.
 
-export function FamiliarCardSprite({ mobId, familiarId, cardId, size, theme }: { mobId: string; familiarId: number | null; cardId: string; size: number; theme: AppTheme }) {
+export function FamiliarCardSprite({ mobId, familiarId, cardId, size, theme, fill }: { mobId: string; familiarId: number | null; cardId: string; size: number; theme: AppTheme; fill?: boolean }) {
   const sources = [
     resourceImageUrl("mob", mobId, "sprite.png"),
     // "familiar" sprites are keyed by the familiar's OWN id, not mobId — these are
@@ -258,16 +261,20 @@ export function FamiliarCardSprite({ mobId, familiarId, cardId, size, theme }: {
     ...(familiarId !== null ? [resourceImageUrl("familiar", String(familiarId), "sprite.png")] : []),
     ...(cardId ? [resourceImageUrl("item", cardId, "icon.png")] : []),
   ];
+  // `fill` sizes the sprite off its (flex-grown) container instead of a fixed px square --
+  // used by the read-only profile card so the sprite expands to soak up whatever vertical
+  // space the card has left over, rather than sitting at a fixed size with dead space around it.
+  const dims: CSSProperties = fill ? { width: "100%", height: "100%" } : { width: size, height: size };
   return (
-    <span style={{ width: size, height: size, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+    <span style={{ ...dims, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
       {/* eslint-disable-next-line @next/next/no-img-element */}{/* react-doctor-disable-next-line nextjs-no-img-element -- needs a sequential onError fallback chain (mob -> familiar -> card) that next/image's declarative API can't express */}
       <img
         key={`${mobId}/${familiarId}/${cardId}`}
         src={sources[0]}
         alt=""
-        width={size}
-        height={size}
-        style={{ objectFit: "contain", width: size, height: size, display: "block" }}
+        width={fill ? undefined : size}
+        height={fill ? undefined : size}
+        style={{ objectFit: "contain", ...dims, display: "block" }}
         onError={(e) => {
           const img = e.currentTarget;
           const next = Number(img.dataset.step ?? "0") + 1;
@@ -757,12 +764,15 @@ function FamiliarSlotCard({
   );
 }
 
+// Wrapped in HoverTooltip (only once a line is actually set) so a truncated potential line
+// can still be read in full on hover/tap, matching the sprite/badge tooltips already on this card.
 function ReadOnlyLineChip({ value, theme }: { value: string; theme: AppTheme }) {
-  return (
+  const chip = (
     <div style={{ ...lineSelectStyle, borderColor: theme.border, background: theme.bg, color: value ? theme.text : theme.muted, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
       {value || "—"}
     </div>
   );
+  return value ? <HoverTooltip label={value} theme={theme}>{chip}</HoverTooltip> : chip;
 }
 
 /** Read-only counterpart to FamiliarSlotCard for the profile Familiars bookmark — same
@@ -782,7 +792,23 @@ export function ReadOnlyFamiliarSlotCard({ slot, theme }: { slot: StoredFamiliar
     background: isEmpty ? "transparent" : theme.panel,
     justifyContent: isEmpty ? "center" : "flex-start",
     cursor: "default",
+    // Taller than the editable card (slotCardBase's 140) -- gives the enlarged sprite below
+    // room to breathe instead of cramming it against the Line 1/Line 2 chips.
+    minHeight: 200,
   };
+  const sprite = tier ? (
+    // flex: 1 so the sprite grows to fill whatever vertical room the card has past the chips
+    // below it, instead of sitting at a fixed size with dead space under it.
+    <div style={{ flex: 1, minHeight: 0, width: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <HoverTooltip label={displayName} theme={theme}>
+        <FamiliarCardSprite mobId={spriteMobId} familiarId={slot.familiarId} cardId={cardId} size={FAM_CARD_SIZE_READONLY} fill theme={theme} />
+      </HoverTooltip>
+    </div>
+  ) : (
+    <HoverTooltip label={displayName} theme={theme}>
+      <FamiliarCardSprite mobId={spriteMobId} familiarId={slot.familiarId} cardId={cardId} size={FAM_CARD_SIZE_READONLY} theme={theme} />
+    </HoverTooltip>
+  );
   return (
     <div style={{ flex: 1, minWidth: 0 }}>
       <div style={cardStyle}>
@@ -794,9 +820,7 @@ export function ReadOnlyFamiliarSlotCard({ slot, theme }: { slot: StoredFamiliar
           <span style={{ fontSize: "0.75rem", color: theme.muted, fontWeight: 700 }}>Empty</span>
         ) : (
           <>
-            <HoverTooltip label={displayName} theme={theme}>
-              <FamiliarCardSprite mobId={spriteMobId} familiarId={slot.familiarId} cardId={cardId} size={FAM_CARD_SIZE} theme={theme} />
-            </HoverTooltip>
+            {sprite}
             {tier && (
               <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 3, marginTop: 2 }}>
                 <ReadOnlyLineChip value={slot.line1} theme={theme} />

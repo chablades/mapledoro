@@ -132,17 +132,18 @@ function BookmarkPageHeader({ theme, label, onEdit, disabled }: { theme: Theme; 
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, gap: 10 }}>
       <h3 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 800, color: theme.text }}>{label}</h3>
       {onEdit !== null && (
-        <button
-          type="button"
-          className="tap-target-44"
-          aria-label={`Edit ${label}`}
-          title={`Edit ${label}`}
-          disabled={disabled}
-          onClick={onEdit}
-          style={pencilButtonStyle(theme)}
-        >
-          <PencilIcon />
-        </button>
+        <HoverTooltip label={`Edit ${label}`} theme={theme}>
+          <button
+            type="button"
+            className="tap-target-44"
+            aria-label={`Edit ${label}`}
+            disabled={disabled}
+            onClick={onEdit}
+            style={pencilButtonStyle(theme)}
+          >
+            <PencilIcon />
+          </button>
+        </HoverTooltip>
       )}
     </div>
   );

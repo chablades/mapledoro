@@ -791,9 +791,11 @@ export default function LegionPanel({ theme, worldId, worldCharacters, onBack }:
         {editing
           ? <button type="button" onClick={() => editorRef.current?.save()} style={saveButtonStyle(theme)}>Save</button>
           : (
-            <button type="button" aria-label={`Edit ${sectionLabel}`} title={`Edit ${sectionLabel}`} onClick={() => setEditing(true)} style={pencilButtonStyle(theme)}>
-              <PencilIcon />
-            </button>
+            <HoverTooltip label={`Edit ${sectionLabel}`} theme={theme}>
+              <button type="button" aria-label={`Edit ${sectionLabel}`} onClick={() => setEditing(true)} style={pencilButtonStyle(theme)}>
+                <PencilIcon />
+              </button>
+            </HoverTooltip>
           )}
       </div>
 
