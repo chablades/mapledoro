@@ -1,6 +1,6 @@
 import type { AppTheme } from "../../../components/themes";
 import type { NormalizedCharacterData } from "../model/types";
-import type { StoredCharacterRecord } from "../model/charactersStore";
+import type { OverviewSectionId, StoredCharacterRecord } from "../model/charactersStore";
 import type { SetupFlowId } from "../setup/flows";
 import type { SetupMode } from "../model/constants";
 
@@ -180,4 +180,5 @@ export interface PreviewPaneActions {
   setEquipmentActivePreset: (presetIndex: number) => void;
   setHexaStatActivePreset: (nodeIndex: number, presetIndex: number) => void;
   setFamiliarsActivePreset: (presetIndex: number) => void;
+  setOverviewLayout: (layout: OverviewSectionId[] | null) => void;
 }

@@ -45,7 +45,7 @@ import {
   type SetupDraft,
   writeSetupDraft,
 } from "../model/setupDraftStorage";
-import type { StoredCharacterRecord, StoredCharacterStats } from "../model/charactersStore";
+import type { OverviewSectionId, StoredCharacterRecord, StoredCharacterStats } from "../model/charactersStore";
 import {
   convertStatsStepDraftToStored, deriveHasRuinForceShield, deriveIsLiberatedFromWeapon, marriageDraftToStored,
   parseStatsStepDraft, serializeStatsStepDraft, storedStatsToStatsStepDraft,
@@ -1352,6 +1352,15 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
     upsertRosterCharacter({ ...existing, familiars: { ...familiars, activePreset: presetIndex } });
   }, [confirmedCharacter, upsertRosterCharacter]);
 
+  // Persists the Overview bookmark's per-character customized section list (order +
+  // visibility). `null` clears back to the tier default rather than saving an empty array.
+  const setOverviewLayout = useCallback((layout: OverviewSectionId[] | null) => {
+    if (!confirmedCharacter) return;
+    const existing = selectCharacterById(readCharactersStore(), toCharacterKey(confirmedCharacter));
+    if (!existing) return;
+    upsertRosterCharacter({ ...existing, overviewLayout: layout ?? undefined });
+  }, [confirmedCharacter, upsertRosterCharacter]);
+
   const applyDraftFlowState = useCallback(
     (
       draft: SetupDraft,
@@ -2653,6 +2662,7 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
       setEquipmentActivePreset,
       setHexaStatActivePreset,
       setFamiliarsActivePreset,
+      setOverviewLayout,
       switchToCharacterProfile,
       toggleCharacterDirectory,
       removeCurrentCharacter,

@@ -311,6 +311,19 @@ export function appendExpHistoryEntry(
   return [...pruned, { date: now, level, exp }];
 }
 
+// Key Stats is deliberately not one of these -- it's fixed chrome at the top of every
+// Overview layout (alongside the Scouter figure/WSE row), never customizable.
+export type OverviewSectionId =
+  | "arcaneSymbols"
+  | "hexaStat"
+  | "hexaSkills"
+  | "vMatrix"
+  | "gear"
+  | "familiars"
+  | "innerAbility"
+  | "expBar"
+  | "expLevel";
+
 export interface StoredCharacterRecord {
   ign: string;
   worldId: number;
@@ -346,6 +359,7 @@ export interface StoredCharacterRecord {
   scouter?: StoredScouterData;
   familiars?: StoredFamiliarsData;
   vMatrix?: StoredVMatrixData;
+  overviewLayout?: OverviewSectionId[];
   meta: {
     addedAt: number;
     updatedAt: number;
@@ -685,6 +699,15 @@ function parseExpHistory(value: unknown): ExpHistoryEntry[] | undefined {
   return Array.isArray(value) && value.every(isExpHistoryEntry) ? value : undefined;
 }
 
+const OVERVIEW_SECTION_IDS: readonly OverviewSectionId[] = [
+  "arcaneSymbols", "hexaStat", "hexaSkills", "vMatrix", "gear", "familiars", "innerAbility", "expBar", "expLevel",
+];
+
+function parseOverviewLayout(value: unknown): OverviewSectionId[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  return value.filter((id): id is OverviewSectionId => OVERVIEW_SECTION_IDS.includes(id as OverviewSectionId));
+}
+
 function parseStoredCharacterRecord(
   value: unknown,
   idHint: string | null,
@@ -714,6 +737,7 @@ function parseStoredCharacterRecord(
     scouter: parseOptionalRecord<StoredScouterData>(value.scouter),
     familiars: parseOptionalRecord<StoredFamiliarsData>(value.familiars),
     vMatrix: parseOptionalRecord<StoredVMatrixData>(value.vMatrix),
+    overviewLayout: parseOverviewLayout(value.overviewLayout),
     meta: {
       addedAt: typeof meta.addedAt === "number" ? meta.addedAt : Date.now(),
       updatedAt: typeof meta.updatedAt === "number" ? meta.updatedAt : Date.now(),

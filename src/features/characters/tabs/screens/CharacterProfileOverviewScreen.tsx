@@ -13,7 +13,8 @@ import { resolveClassId, getClassSetupOverrides } from "../../setup/data/nexonJo
 import { CLASS_SKILL_DATA, getClassDataByNexonJobName, isLegacyClass, type ClassSkillData } from "../../setup/data/classSkillData";
 import { HEXA_STAT_OPTIONS, getHexaStatBonus, getMainStatLabel, getAttackLabel, type HexaStatNode, type HexaStatEntry, type HexaStatSlot } from "../../setup/data/hexaStatData";
 import { EXP_HISTORY_DAY_MS, nexonDayIndex, NEXON_DAILY_UPDATE_CUTOFF_HOUR_UTC, readCharactersStore, selectCharacterByIgn } from "../../model/charactersStore";
-import type { StoredCharacterEquipment, StoredCharacterRecord, StoredCharacterStats, StoredEquipmentItem, StoredHyperStat, StoredInnerAbility, StoredIATier, StoredTripleStatField, StoredFamiliarSlot, ExpHistoryEntry } from "../../model/charactersStore";
+import type { StoredCharacterEquipment, StoredCharacterRecord, StoredCharacterStats, StoredEquipmentItem, StoredHyperStat, StoredInnerAbility, StoredIATier, StoredTripleStatField, StoredFamiliarSlot, ExpHistoryEntry, OverviewSectionId } from "../../model/charactersStore";
+import CustomizeOverviewDialog, { type OverviewAnchorDef } from "./CustomizeOverviewDialog";
 import { isExpTrackingAvailable, resolveExpDelta, characterExpPercent, netExpGained } from "../../model/expProgress";
 import ExpDeltaBadge from "../components/ExpDeltaBadge";
 import { formatExpCompact } from "../../../tools/format";
@@ -692,25 +693,49 @@ function OverviewSymbolTile({ area, level, locked, theme }: { area: SymbolArea; 
   return <OverviewLevelTile icon={<ItemIcon id={area.itemId} size={OVERVIEW_TILE_SIZE - 10} />} name={name} level={level} theme={theme} />;
 }
 
-function OverviewSymbolSection({ theme, symbolLevels, characterLevel, charName, onNavigateToBookmark }: {
-  theme: Theme; symbolLevels: Record<string, SymbolState> | null; characterLevel: number | undefined; charName: string | undefined;
+// A row of tiles for one symbol group (Arcane/Sacred/Grand Sacred) -- extracted so
+// OverviewSymbolSection can stack multiple groups once Sacred unlocks at 260, same layering
+// the Equipment bookmark's own SymbolAreaGroup already does for this data.
+function OverviewSymbolAreaRow({ areas, symbolLevels, characterLevel, theme }: {
+  areas: SymbolArea[]; symbolLevels: Record<string, SymbolState> | null; characterLevel: number | undefined; theme: Theme;
+}) {
+  return (
+    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+      {areas.map((area) => {
+        const locked = characterLevel !== undefined && characterLevel < area.requiredLevel;
+        return <OverviewSymbolTile key={area.name} area={area} level={symbolAreaLevel(symbolLevels, area)} locked={locked} theme={theme} />;
+      })}
+    </div>
+  );
+}
+
+// Sacred layers on top of Arcane rather than replacing it (see the characters CLAUDE.md
+// "Level/legacy gating" table: Arcane unlocks at 200, Sacred at 260, both excluded for
+// legacy) -- so this section grows a second (and, past Sacred, a third for Grand Sacred) tile
+// row once a character reaches that point, instead of ever swapping Arcane out.
+function OverviewSymbolSection({ theme, symbolLevels, characterLevel, isLegacy, charName, onNavigateToBookmark }: {
+  theme: Theme; symbolLevels: Record<string, SymbolState> | null; characterLevel: number | undefined; isLegacy: boolean | undefined; charName: string | undefined;
   onNavigateToBookmark: (id: BookmarkId, subView?: string) => void;
 }) {
+  const showSacred = isSacredEligible(characterLevel, isLegacy);
   return (
     <div>
       <OverviewGroupHeader
-        label="Arcane Symbols"
+        label="Symbols"
         theme={theme}
         onNavigate={() => onNavigateToBookmark("equipment", "titles")}
         bookmarkLabel="Gear"
         toolHref={overviewToolHref("/tools/symbols", charName)}
         toolLabel="Symbol Tracker"
       />
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-        {ARCANE_AREAS.map((area) => {
-          const locked = characterLevel !== undefined && characterLevel < area.requiredLevel;
-          return <OverviewSymbolTile key={area.name} area={area} level={symbolAreaLevel(symbolLevels, area)} locked={locked} theme={theme} />;
-        })}
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <OverviewSymbolAreaRow areas={ARCANE_AREAS} symbolLevels={symbolLevels} characterLevel={characterLevel} theme={theme} />
+        {showSacred && (
+          <>
+            <OverviewSymbolAreaRow areas={SACRED_AREAS} symbolLevels={symbolLevels} characterLevel={characterLevel} theme={theme} />
+            <OverviewSymbolAreaRow areas={GRAND_SACRED_AREAS} symbolLevels={symbolLevels} characterLevel={characterLevel} theme={theme} />
+          </>
+        )}
       </div>
     </div>
   );
@@ -872,8 +897,176 @@ function OverviewInnerAbilitySection({ theme, innerAbility, onNavigateToBookmark
   );
 }
 
-function OverviewBookmark({ model, onNavigateToBookmark, onNavigateToGearSlot }: {
-  model: PreviewPaneModel; onNavigateToBookmark: (id: BookmarkId, subView?: string) => void; onNavigateToGearSlot: (slotKey: SlotKey) => void;
+// A fixed 7-day window, no range picker -- Overview is a quick glance, not the full EXP
+// bookmark's own interactive chart. `windowExpHistory`/`ExpGainBarChart` are defined further
+// down in this file (both plain function declarations, so hoisting makes the reference here
+// safe) alongside the full ExpBookmark they were originally built for.
+function OverviewExpBarSection({ theme, character, onNavigateToBookmark }: {
+  theme: Theme; character: StoredCharacterRecord | null; onNavigateToBookmark: (id: BookmarkId, subView?: string) => void;
+}) {
+  const expWindow = windowExpHistory(character?.expHistory ?? [], 7);
+  return (
+    <div>
+      <OverviewGroupHeader label="Daily EXP" theme={theme} onNavigate={() => onNavigateToBookmark("exp")} bookmarkLabel="EXP" />
+      {expWindow.entries.length >= 2 ? (
+        <ExpGainBarChart theme={theme} entries={expWindow.entries} anchor={expWindow.anchor} />
+      ) : (
+        <p style={{ margin: 0, fontSize: "0.78rem", color: theme.muted }}>Not enough data yet.</p>
+      )}
+    </div>
+  );
+}
+
+function OverviewExpLevelSection({ theme, character, onNavigateToBookmark }: {
+  theme: Theme; character: StoredCharacterRecord | null; onNavigateToBookmark: (id: BookmarkId, subView?: string) => void;
+}) {
+  const expWindow = windowExpHistory(character?.expHistory ?? [], 7);
+  return (
+    <div>
+      <OverviewGroupHeader label="Level Progress" theme={theme} onNavigate={() => onNavigateToBookmark("exp")} bookmarkLabel="EXP" />
+      {expWindow.entries.length >= 2 ? (
+        <ExpChart theme={theme} entries={expWindow.entries} anchor={expWindow.anchor} />
+      ) : (
+        <p style={{ margin: 0, fontSize: "0.78rem", color: theme.muted }}>Not enough data yet.</p>
+      )}
+    </div>
+  );
+}
+
+// Canonical catalog of every customizable Overview section, in the default browse order
+// shown by CustomizeOverviewDialog. Excludes Key Stats and the Scouter figure/WSE row, which
+// stay fixed chrome (not customizable) at the top of OverviewBookmark -- Key Stats is the one
+// section that makes sense for every layout regardless of tier, same reasoning as Scouter/WSE.
+// `isLarge` flags the two sections whose tile grids can genuinely wrap across a lot of
+// content (Gear's full armor+accessory grid, V Matrix's Job/Boost/Common node lists) --
+// everything else renders as a compact, roughly fixed-size block regardless of class.
+const OVERVIEW_SECTION_DEFS: { id: OverviewSectionId; label: string; isLarge: boolean }[] = [
+  { id: "arcaneSymbols", label: "Symbols", isLarge: false },
+  { id: "hexaStat", label: "HEXA Stat", isLarge: false },
+  { id: "hexaSkills", label: "HEXA Skills", isLarge: false },
+  { id: "vMatrix", label: "V Matrix", isLarge: true },
+  { id: "gear", label: "Gear", isLarge: true },
+  { id: "familiars", label: "Familiars", isLarge: false },
+  { id: "innerAbility", label: "Inner Ability", isLarge: false },
+  { id: "expBar", label: "Daily EXP", isLarge: false },
+  { id: "expLevel", label: "Level Progress", isLarge: false },
+];
+
+// Curated bundles for the two "large" sections (Gear/V Matrix), the only ones vetted to fit
+// alongside a large section -- CustomizeOverviewDialog offers these as one-click anchors
+// instead of letting Gear/V Matrix combine freely with arbitrary add-ons.
+const OVERVIEW_ANCHORS: OverviewAnchorDef[] = [
+  { id: "hexa", label: "HEXA (Stat + Skills)", sections: ["hexaStat", "hexaSkills"] },
+  { id: "vmatrix_arcane", label: "V Matrix + Symbols", sections: ["vMatrix", "arcaneSymbols"] },
+  { id: "gear_arcane", label: "Gear + Symbols", sections: ["gear", "arcaneSymbols"] },
+  { id: "vmatrix_alone", label: "V Matrix", sections: ["vMatrix"] },
+  { id: "gear_alone", label: "Gear", sections: ["gear"] },
+];
+
+// Overview is a quick-glance summary, not a full profile -- capping how many add-ons a
+// player can add on top of an anchor (or on their own, with no anchor) keeps it compact.
+const MAX_OVERVIEW_ADDONS = 2;
+
+// A section's eligibility is a hard requirement (does this character even have the data?),
+// separate from whether it's shown by default -- see the characters CLAUDE.md "Level/legacy
+// gating" table. Customization can only choose among eligible sections, never force one a
+// character doesn't qualify for.
+function isOverviewSectionEligible(
+  id: OverviewSectionId,
+  character: StoredCharacterRecord | null,
+  classData: ClassSkillData | undefined,
+  hasHexa: boolean,
+  hasVMatrix: boolean,
+): boolean {
+  switch (id) {
+    case "gear":
+    case "familiars":
+    case "innerAbility":
+      return true;
+    case "arcaneSymbols":
+      return isArcaneEligible(character?.level, classData?.isLegacy);
+    case "hexaStat":
+    case "hexaSkills":
+      return hasHexa;
+    case "vMatrix":
+      return hasVMatrix;
+    case "expBar":
+    case "expLevel":
+      return character ? isExpTrackingAvailable(character.level) : false;
+  }
+}
+
+// The tier defaults from the original (pre-customization) design -- used whenever a
+// character has no saved overviewLayout yet. Key Stats is no longer part of this list (it's
+// fixed chrome now). Each of these also happens to exactly match one of the OVERVIEW_ANCHORS
+// below (or, for the sub-200 tier, a plain 2-add-on combo with no anchor), so
+// CustomizeOverviewDialog can pre-select the right anchor when it opens.
+function defaultOverviewSections(hasHexa: boolean, hasVMatrix: boolean, legacy: boolean): OverviewSectionId[] {
+  if (hasHexa) return ["hexaStat", "hexaSkills"];
+  if (hasVMatrix) return ["arcaneSymbols", "vMatrix"];
+  if (legacy) return ["gear"];
+  return ["familiars", "innerAbility"];
+}
+
+function CustomizeLayoutIcon() {
+  return (
+    <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="3" width="7" height="7" rx="1.5" />
+      <rect x="14" y="3" width="7" height="7" rx="1.5" />
+      <rect x="3" y="14" width="7" height="7" rx="1.5" />
+      <rect x="14" y="14" width="7" height="7" rx="1.5" />
+    </svg>
+  );
+}
+
+interface OverviewSectionRenderCtx {
+  theme: Theme;
+  character: StoredCharacterRecord | null;
+  classData: ClassSkillData | undefined;
+  hexaClassDef: ReturnType<typeof resolveHexaClassDef>;
+  hexaLevels: HexaSkillLevels | null;
+  hexaStatNodes: HexaStatNode[] | null;
+  symbolLevels: Record<string, SymbolState> | null;
+  charName: string | undefined;
+  draftEquipGrid: SlotMap;
+  onNavigateToBookmark: (id: BookmarkId, subView?: string) => void;
+}
+
+function renderOverviewSection(id: OverviewSectionId, ctx: OverviewSectionRenderCtx): ReactNode {
+  const { theme, character, classData, hexaClassDef, hexaLevels, hexaStatNodes, symbolLevels, charName, draftEquipGrid, onNavigateToBookmark } = ctx;
+  switch (id) {
+    case "arcaneSymbols":
+      return (
+        <OverviewSymbolSection
+          theme={theme}
+          symbolLevels={symbolLevels}
+          characterLevel={character?.level}
+          isLegacy={classData?.isLegacy}
+          charName={charName}
+          onNavigateToBookmark={onNavigateToBookmark}
+        />
+      );
+    case "hexaStat":
+      return <OverviewHexaStatSection theme={theme} character={character} classData={classData} hexaStatNodes={hexaStatNodes} onNavigateToBookmark={onNavigateToBookmark} />;
+    case "hexaSkills":
+      return <OverviewHexaSkillsSection theme={theme} hexaClassDef={hexaClassDef} hexaLevels={hexaLevels ?? EMPTY_HEXA_LEVELS} charName={charName} onNavigateToBookmark={onNavigateToBookmark} />;
+    case "vMatrix":
+      return <OverviewVMatrixSection theme={theme} character={character} onNavigateToBookmark={onNavigateToBookmark} />;
+    case "gear":
+      return <OverviewGearSection theme={theme} equipGrid={draftEquipGrid} onNavigateToBookmark={onNavigateToBookmark} />;
+    case "familiars":
+      return <OverviewFamiliarsSection theme={theme} character={character} onNavigateToBookmark={onNavigateToBookmark} />;
+    case "innerAbility":
+      return <OverviewInnerAbilitySection theme={theme} innerAbility={character?.stats?.innerAbility} onNavigateToBookmark={onNavigateToBookmark} />;
+    case "expBar":
+      return <OverviewExpBarSection theme={theme} character={character} onNavigateToBookmark={onNavigateToBookmark} />;
+    case "expLevel":
+      return <OverviewExpLevelSection theme={theme} character={character} onNavigateToBookmark={onNavigateToBookmark} />;
+  }
+}
+
+function OverviewBookmark({ model, onNavigateToBookmark, onNavigateToGearSlot, onSetOverviewLayout }: {
+  model: PreviewPaneModel; onNavigateToBookmark: (id: BookmarkId, subView?: string) => void; onNavigateToGearSlot: (slotKey: SlotKey) => void; onSetOverviewLayout: (layout: OverviewSectionId[] | null) => void;
 }) {
   const { theme, profile } = model;
   const character = profile.confirmedCharacter;
@@ -886,6 +1079,7 @@ function OverviewBookmark({ model, onNavigateToBookmark, onNavigateToGearSlot }:
 
   const mounted = useSyncExternalStore(() => () => undefined, () => true, () => false);
   const charName = character?.characterName;
+  const [customizing, setCustomizing] = useState(false);
   const hexaLevels = useMemo(() => {
     if (!mounted) return null;
     const fromState = (character?.tools?.hexaSkills as { levels?: HexaSkillLevels } | undefined)?.levels;
@@ -917,16 +1111,36 @@ function OverviewBookmark({ model, onNavigateToBookmark, onNavigateToGearSlot }:
   // so Familiars (no level gate, commonly touched well before 200) + Inner Ability read as
   // more "in progress" than static gear there. Hyper Stat was considered for this tier too
   // but has its own level gate at 140, reintroducing "gated content in the gated tier's default."
+  // These tiers are only the DEFAULT now -- a saved `overviewLayout` overrides them entirely
+  // (see CustomizeOverviewDialog), still filtered against eligibility below in case saved data
+  // and current eligibility ever disagree (e.g. corrupted/stale localStorage).
   const hasHexa = isHexaMatrixAvailable(character);
   const hasVMatrix = isVMatrixAvailable(character);
   const legacy = character ? isLegacyClass(character.jobName) : false;
-  // Arcane only fills the 200-259 tier's Overview -- once a character is 260+, HEXA is the
-  // default and Arcane goes back to living on its own Gear bookmark tab like everything else.
-  const showArcane = !hasHexa && isArcaneEligible(character?.level, classData?.isLegacy);
   const draftEquipGrid: SlotMap = equipGrid ? storedPresetToDraft(equipGrid) : {};
+
+  const effectiveSections = (character?.overviewLayout ?? defaultOverviewSections(hasHexa, hasVMatrix, legacy))
+    .filter((id) => isOverviewSectionEligible(id, character, classData, hasHexa, hasVMatrix));
+  const eligibleSections = OVERVIEW_SECTION_DEFS.filter(({ id }) => isOverviewSectionEligible(id, character, classData, hasHexa, hasVMatrix));
+  const eligibleAnchors = OVERVIEW_ANCHORS.filter((a) => a.sections.every((id) => isOverviewSectionEligible(id, character, classData, hasHexa, hasVMatrix)));
+  const renderCtx: OverviewSectionRenderCtx = { theme, character, classData, hexaClassDef, hexaLevels, hexaStatNodes, symbolLevels, charName, draftEquipGrid, onNavigateToBookmark };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 18, flex: 1 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+        <h3 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 800, color: theme.text }}>Overview</h3>
+        <HoverTooltip label="Customize Layout" theme={theme}>
+          <button
+            type="button"
+            aria-label="Customize Layout"
+            onClick={() => setCustomizing(true)}
+            style={pencilButtonStyle(theme)}
+          >
+            <CustomizeLayoutIcon />
+          </button>
+        </HoverTooltip>
+      </div>
+
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16 }}>
         <OverviewFigure label="Scouter" value="—" theme={theme} />
         <div style={{ display: "flex", gap: 6 }}>
@@ -938,29 +1152,26 @@ function OverviewBookmark({ model, onNavigateToBookmark, onNavigateToGearSlot }:
 
       <OverviewKeyStatsSection theme={theme} character={character} classData={classData} />
 
-      {showArcane && (
-        <OverviewSymbolSection
-          theme={theme}
-          symbolLevels={symbolLevels}
-          characterLevel={character?.level}
-          charName={charName}
-          onNavigateToBookmark={onNavigateToBookmark}
-        />
-      )}
+      {effectiveSections.map((id) => <Fragment key={id}>{renderOverviewSection(id, renderCtx)}</Fragment>)}
 
-      {hasHexa && (
-        <>
-          <OverviewHexaStatSection theme={theme} character={character} classData={classData} hexaStatNodes={hexaStatNodes} onNavigateToBookmark={onNavigateToBookmark} />
-          <OverviewHexaSkillsSection theme={theme} hexaClassDef={hexaClassDef} hexaLevels={hexaLevels ?? EMPTY_HEXA_LEVELS} charName={charName} onNavigateToBookmark={onNavigateToBookmark} />
-        </>
-      )}
-      {!hasHexa && hasVMatrix && <OverviewVMatrixSection theme={theme} character={character} onNavigateToBookmark={onNavigateToBookmark} />}
-      {!hasHexa && !hasVMatrix && legacy && <OverviewGearSection theme={theme} equipGrid={draftEquipGrid} onNavigateToBookmark={onNavigateToBookmark} />}
-      {!hasHexa && !hasVMatrix && !legacy && (
-        <>
-          <OverviewFamiliarsSection theme={theme} character={character} onNavigateToBookmark={onNavigateToBookmark} />
-          <OverviewInnerAbilitySection theme={theme} innerAbility={character?.stats?.innerAbility} onNavigateToBookmark={onNavigateToBookmark} />
-        </>
+      {customizing && (
+        <CustomizeOverviewDialog
+          theme={theme}
+          eligibleSections={eligibleSections}
+          anchors={eligibleAnchors}
+          maxAddons={MAX_OVERVIEW_ADDONS}
+          current={effectiveSections}
+          canReset={character?.overviewLayout != null}
+          onClose={() => setCustomizing(false)}
+          onSave={(next) => {
+            onSetOverviewLayout(next);
+            setCustomizing(false);
+          }}
+          onReset={() => {
+            onSetOverviewLayout(null);
+            setCustomizing(false);
+          }}
+        />
       )}
     </div>
   );
@@ -2833,7 +3044,7 @@ function BookmarkPageBody({
     return active.id === "hexa_matrix" && remembered === "stat" ? remembered : "skills";
   });
 
-  if (active.id === "overview") return <OverviewBookmark model={model} onNavigateToBookmark={onNavigateToBookmark} onNavigateToGearSlot={onNavigateToGearSlot} />;
+  if (active.id === "overview") return <OverviewBookmark model={model} onNavigateToBookmark={onNavigateToBookmark} onNavigateToGearSlot={onNavigateToGearSlot} onSetOverviewLayout={actions.setOverviewLayout} />;
 
   if (active.id === "setup") {
     // SetupFlowButtons calls actions.startOptionalFlow directly (it's also reused

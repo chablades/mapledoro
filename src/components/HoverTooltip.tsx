@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import type { AppTheme } from "./themes";
+import { MODAL_OPENED_EVENT } from "./ModalShell";
 
 const EDGE_MARGIN = 8;
 const GAP = 6;
@@ -78,19 +79,32 @@ export default function HoverTooltip({ label, theme, style, children }: {
     return () => document.removeEventListener("pointerdown", handlePointerDown);
   }, [clickOpen]);
 
+  const closeAll = useCallback(() => {
+    setHoverOpen(false);
+    setClickOpen(false);
+    setFocusOpen(false);
+  }, []);
+
   // Position is computed once per open rather than tracked live, so letting the page scroll
   // under a `fixed` bubble would visibly detach it from its trigger -- close instead (same
   // tradeoff InfoTooltip makes).
   useEffect(() => {
     if (!open) return;
-    function handleScroll() {
-      setHoverOpen(false);
-      setClickOpen(false);
-      setFocusOpen(false);
-    }
-    window.addEventListener("scroll", handleScroll, true);
-    return () => window.removeEventListener("scroll", handleScroll, true);
-  }, [open]);
+    window.addEventListener("scroll", closeAll, true);
+    return () => window.removeEventListener("scroll", closeAll, true);
+  }, [open, closeAll]);
+
+  // A trigger whose own click opens a ModalShell dialog (rather than navigating elsewhere,
+  // which would unmount this component and clear its state for free) goes inert once
+  // showModal() runs -- it stops receiving the mouse/focus events this component would
+  // otherwise rely on to close itself, including its own clickOpen toggle from that same
+  // click. ModalShell broadcasts this event right as it opens so the bubble doesn't linger
+  // stuck floating over the modal.
+  useEffect(() => {
+    if (!open) return;
+    window.addEventListener(MODAL_OPENED_EVENT, closeAll);
+    return () => window.removeEventListener(MODAL_OPENED_EVENT, closeAll);
+  }, [open, closeAll]);
 
   return (
     // This wraps arbitrary children — sometimes a real interactive control (which already
@@ -106,7 +120,17 @@ export default function HoverTooltip({ label, theme, style, children }: {
       ref={ref}
       className="hover-tip"
       style={style}
-      onClick={() => setClickOpen((o) => !o)}
+      // A click supersedes whatever passive hover/focus state was showing -- important when
+      // the wrapped element's own click handler opens a native <dialog>, which makes the
+      // background (including this trigger) inert and stops delivering further mouse/focus
+      // events to it. Without this, hoverOpen/focusOpen can freeze true from the instant of
+      // the click and the bubble stays stuck floating over the modal until an unrelated
+      // pointerdown inside the dialog happens to close clickOpen via the effect below.
+      onClick={() => {
+        setHoverOpen(false);
+        setFocusOpen(false);
+        setClickOpen((o) => !o);
+      }}
       onMouseEnter={() => { if (isHoverCapable()) setHoverOpen(true); }}
       onMouseLeave={() => { if (isHoverCapable()) setHoverOpen(false); }}
       onFocus={() => setFocusOpen(true)}

@@ -250,6 +250,7 @@ export default function CharacterSetupFlow({ theme, initialCharacterName, initia
     setEquipmentActivePreset: actions.setEquipmentActivePreset,
     setHexaStatActivePreset: actions.setHexaStatActivePreset,
     setFamiliarsActivePreset: actions.setFamiliarsActivePreset,
+    setOverviewLayout: actions.setOverviewLayout,
   };
 
   return (
