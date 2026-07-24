@@ -51,7 +51,7 @@ export default function HeroBanner({ theme }: { theme: AppTheme }) {
         <p style={{ fontSize: "0.88rem", fontWeight: 700, color: theme.text, margin: "0 0 0.5rem" }}>
           Your MapleStory Companion
         </p>
-        <p style={descStyle}>
+        <p className="hero-desc" style={descStyle}>
           Free, open-source tools for tracking characters, planning progression,
           calculating upgrades, and staying on top of game events.
         </p>

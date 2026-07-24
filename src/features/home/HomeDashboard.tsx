@@ -15,7 +15,7 @@ import HeroBanner from "./HeroBanner";
 import PatchNotesPanel from "./PatchNotesPanel";
 import { QuickLinkGrid, QuickToolsGrid } from "./QuickLinkGrid";
 import { QUICK_GUIDES } from "./quickTools";
-import { ResetTimerPanels, UrsusPanel } from "./SidebarTimers";
+import { MobileTimerStrip, ResetTimerPanels, UrsusPanel } from "./SidebarTimers";
 
 export default function HomeDashboard({ theme }: { theme: AppTheme }) {
   const mounted = useMounted();
@@ -78,6 +78,8 @@ export default function HomeDashboard({ theme }: { theme: AppTheme }) {
           position: sticky;
           top: 72px;
         }
+        .sec-sunny { margin-bottom: 0.75rem; }
+        .mobile-timer-strip { display: none; }
 
         .customize-btn { transition: border-color 0.15s ease, color 0.15s ease; }
         .customize-btn:hover { border-color: ${theme.accent} !important; color: ${theme.accentText} !important; }
@@ -97,12 +99,23 @@ export default function HomeDashboard({ theme }: { theme: AppTheme }) {
           .characters-grid-two-col { grid-template-columns: 1fr 1fr; }
         }
 
+        /* ≤1200px: flatten the three columns into one ordered stack so
+           sidebar panels can interleave with main-column sections. */
         @media (max-width: 1200px) {
-          .dashboard-layout { flex-direction: column; align-items: center; gap: 0.35rem; }
-          .dashboard-sidebar-left { width: 100%; max-width: 900px; position: static; order: 1; }
-          .dashboard-sidebar-right { width: 100%; max-width: 900px; position: static; order: 2; }
-          .dashboard-main { width: 100%; max-width: 900px; order: 0; }
+          .dashboard-layout { flex-direction: column; align-items: center; gap: 0; }
+          .dashboard-sidebar-left, .dashboard-sidebar-right, .dashboard-main { display: contents; }
+          .dash-sec { width: 100%; max-width: 900px; margin-bottom: 1.25rem; }
+          .dash-sec:empty { display: none; }
+          .sec-hero { order: 0; }
+          .sec-timers { order: 1; }
+          .sec-miracle { order: 2; }
+          .sec-tools { order: 3; }
+          .sec-characters { order: 4; }
+          .sec-guides { order: 5; }
+          .sec-sunny { order: 6; }
+          .sec-patch { order: 7; }
           .hide-mobile { display: none; }
+          .mobile-timer-strip { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
         }
 
         @media (max-width: 860px) {
@@ -115,6 +128,8 @@ export default function HomeDashboard({ theme }: { theme: AppTheme }) {
           .quick-tools-grid { grid-template-columns: repeat(2, 1fr) !important; }
           .quick-guides-grid { grid-template-columns: repeat(2, 1fr) !important; }
           .timer-countdown { font-size: 1.5rem !important; }
+          .hero-banner { padding: 1.25rem 1rem 1rem !important; }
+          .hero-desc { display: none; }
         }
       `}</style>
 
@@ -127,27 +142,40 @@ export default function HomeDashboard({ theme }: { theme: AppTheme }) {
                 <UrsusPanel theme={theme} now={now} />
               </div>
             </div>
-            <MiracleTimePanel theme={theme} />
+            <div className="dash-sec sec-miracle">
+              <MiracleTimePanel theme={theme} />
+            </div>
           </aside>
           <div className="dashboard-main">
-            <HeroBanner theme={theme} />
-            <QuickToolsGrid theme={theme} />
-            <QuickLinkGrid
-              theme={theme}
-              title="Guides"
-              allHref="/guides"
-              allLabel="All guides →"
-              items={QUICK_GUIDES}
-              gridClassName="quick-guides-grid"
-              columns={QUICK_GUIDES.length}
-            />
-            <CharactersPanel theme={theme} characters={characters} />
+            <div className="dash-sec sec-hero">
+              <HeroBanner theme={theme} />
+            </div>
+            <MobileTimerStrip theme={theme} now={now} />
+            <div className="dash-sec sec-tools">
+              <QuickToolsGrid theme={theme} />
+            </div>
+            <div className="dash-sec sec-guides">
+              <QuickLinkGrid
+                theme={theme}
+                title="Guides"
+                allHref="/guides"
+                allLabel="All guides →"
+                items={QUICK_GUIDES}
+                gridClassName="quick-guides-grid"
+                columns={QUICK_GUIDES.length}
+              />
+            </div>
+            <div className="dash-sec sec-characters">
+              <CharactersPanel theme={theme} characters={characters} />
+            </div>
           </div>
           <aside className="dashboard-sidebar-right">
-            <div style={{ marginBottom: "0.75rem" }}>
+            <div className="dash-sec sec-sunny">
               <SunnySundayPanel theme={theme} />
             </div>
-            <PatchNotesPanel theme={theme} />
+            <div className="dash-sec sec-patch">
+              <PatchNotesPanel theme={theme} />
+            </div>
           </aside>
         </div>
       </div>

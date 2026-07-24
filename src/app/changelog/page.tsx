@@ -20,6 +20,12 @@ const CHANGELOG: ChangelogEntry[] = [
     ],
   },
   {
+    date: "2026-07-19",
+    changes: [
+      { type: "added", text: "Added a back to top button that appears in the corner once you scroll down a page." },
+    ],
+  },
+  {
     date: "2026-07-17",
     changes: [
       { type: "changed", text: "The HEXA Skill Tracker Guide tab now combines back to back levels of the same skill into one step, so leveling a skill from 8 to 10 shows as a single 8 to 10 step." },
@@ -64,6 +70,9 @@ const CHANGELOG: ChangelogEntry[] = [
   {
     date: "2026-07-10",
     changes: [
+      { type: "added", text: "Added a compact strip with the daily, weekly, and Ursus timers to the home screen on phones and small windows." },
+      { type: "changed", text: "The Miracle Time panel now appears right below the timers on the phone home screen instead of near the bottom." },
+      { type: "changed", text: "The home screen banner is now smaller on phones so tools and timers show up sooner." },
       { type: "changed", text: "The Daily Tracker now works like the Boss Crystal Tracker: add characters yourself with the Add character card, pick each one from your imports or type a name, and drag the cards to reorder them." },
       { type: "added", text: "Added the Geardock Sacred Symbol daily to the Daily Tracker." },
       { type: "changed", text: "The Daily Tracker now allows up to 14 Monster Park runs per world, so two characters can each do their 7." },

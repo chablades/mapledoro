@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import AppTopNav from "./AppTopNav";
 import { NAV_LINKS } from "./nav-links";
+import ScrollToTopButton from "./ScrollToTopButton";
 import type { AppTheme } from "./themes";
 import { useTheme } from "./ThemeContext";
 
@@ -115,6 +116,8 @@ export default function AppShell({ currentPath, children }: AppShellProps) {
           </div>
         </div>
       </footer>
+
+      <ScrollToTopButton theme={theme} />
     </div>
   );
 }
