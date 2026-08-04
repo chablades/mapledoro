@@ -94,6 +94,7 @@ Game art comes from the self-hosted **MapleResource API** (`haku.network`), via 
 
 Some generated data comes from live external sites rather than WZ manifests, and needs re-running on its own trigger, not the game-version bump above:
 
+- `scripts/generate-bgm-guesser-data.mjs` → `src/features/games/bgm-guesser/puzzle-data.generated.ts`. Combines `manifests/v270/bgm.json` with a hand-curated track→answer allowlist in the script itself, fetching [maplebgm-db](https://github.com/maplestory-music/maplebgm-db) at generation time for track titles. Re-run only when the curation changes; it exits non-zero if a curated track or answer icon no longer resolves. New BGMs are *not* picked up automatically by design (see the feature CLAUDE.md).
 - `scripts/scrape-bosscut.mjs` → `src/features/characters/scouter/bosscut-data.generated.ts`. MapleScouter's crowdsourced Boss Clear (Cut) thresholds and boss requirement physics. Re-run whenever a MapleStory version drops — MapleScouter tends to add new bosses ahead of the official patch, so this both picks up new content and re-syncs any community-revised numbers. It scrapes by content-fingerprinting the data's object shape rather than any hardcoded module ID or chunk filename, since both reshuffle on every MapleScouter deploy — if a run fails to find either fingerprint, or its output stops matching real in-game results, that means MapleScouter changed the shape of the data or the underlying formula itself, not just an ID, and needs investigation before trusting the output.
 
 ## Feature Docs

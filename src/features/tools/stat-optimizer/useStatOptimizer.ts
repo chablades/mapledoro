@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMounted } from "../../../lib/useMounted";
 import {
   readCharactersStore,
@@ -91,6 +91,21 @@ export function useStatOptimizer() {
   );
 
   const [mode, setMode] = useState<OptimizerMode>("hyper");
+  const applyModeParam = useCallback(() => {
+    if (new URLSearchParams(window.location.search).get("mode") === "hexa") setMode("hexa");
+  }, []);
+  // Reads `?mode=hexa` (e.g. a link from the Stats bookmark's HEXA Stat view) once after
+  // mount, same as useApplyCharacterQueryParam below -- the mode toggle renders outside
+  // the mounted skeleton gate (StatOptimizerWorkspace), so seeding this from the query
+  // string in useState's initializer would read "hexa" on the client but "hyper" during
+  // SSR (no window there), a hydration mismatch. Applying it as a post-mount effect keeps
+  // both renders starting from the same "hyper" default.
+  const appliedModeParamRef = useRef(false);
+  useEffect(() => {
+    if (appliedModeParamRef.current || !mounted) return;
+    appliedModeParamRef.current = true;
+    applyModeParam();
+  }, [mounted, applyModeParam]);
   const [selectedCharName, setSelectedCharName] = useState<string | null>(null);
   // The optimizer works standalone: state always exists (blank until a character
   // is picked, which autopopulates it). Edits stay in memory and are intentionally

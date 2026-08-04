@@ -626,6 +626,31 @@ function overviewToolHref(base: Route, charName: string | undefined): Route | un
   return charName ? `${base}?character=${encodeURIComponent(charName)}` : undefined;
 }
 
+function optimizeToolLinkStyle(theme: Theme): CSSProperties {
+  return { display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12, fontWeight: 700, color: theme.accentText, textDecoration: "none" };
+}
+
+/** Bottom-of-panel link from a Stats bookmark sub-view into the Stat Optimizer tool,
+ *  preselecting this character and (for HEXA) its mode via `?mode=hexa` -- see
+ *  useStatOptimizer's initialModeFromQueryParam. Omitted with no character selected,
+ *  same as every other tool link in this file. `marginTop` is caller-supplied since the
+ *  two sub-views' content stacks up to it differently (HEXA's StatBlock sections already
+ *  carry their own bottom spacing, Hyper Stat's flat row list doesn't). */
+function OptimizeToolLink({ theme, charName, mode, label, marginTop }: { theme: Theme; charName: string | undefined; mode: "hexa" | null; label: string; marginTop: number }) {
+  if (!charName) return null;
+  const href: Route = mode
+    ? `/tools/stat-optimizer?character=${encodeURIComponent(charName)}&mode=${mode}`
+    : `/tools/stat-optimizer?character=${encodeURIComponent(charName)}`;
+  return (
+    <div style={{ textAlign: "center", marginTop }}>
+      <Link href={href} style={optimizeToolLinkStyle(theme)}>
+        {label}
+        <OverviewToolLinkIcon />
+      </Link>
+    </div>
+  );
+}
+
 // Every Overview section header doubles as a link to the matching profile bookmark (a
 // same-page tab switch, so it's always the primary click target) — bookmarkLabel names
 // that target's real page label (e.g. "Equipment", "HEXA Matrix") for the hover tooltip,
@@ -1675,9 +1700,9 @@ function hyperStatCellDisplay(cat: HyperStatCategoryDef, presetValue: number | u
 }
 
 function HyperStatView({
-  theme, hyperStat, onSetActivePreset, eligible, arcaneEligible, arcaneLockedLabel,
+  theme, hyperStat, onSetActivePreset, eligible, arcaneEligible, arcaneLockedLabel, charName,
 }: {
-  theme: Theme; hyperStat: StoredHyperStat | undefined; onSetActivePreset: ((presetIndex: number) => void) | null; eligible: boolean; arcaneEligible: boolean; arcaneLockedLabel: string;
+  theme: Theme; hyperStat: StoredHyperStat | undefined; onSetActivePreset: ((presetIndex: number) => void) | null; eligible: boolean; arcaneEligible: boolean; arcaneLockedLabel: string; charName: string | undefined;
 }) {
   const activePreset = hyperStat?.activePreset ?? 0;
   const [presetIdx, setPresetIdx] = useState(activePreset);
@@ -1703,6 +1728,7 @@ function HyperStatView({
           </div>
         ))}
       </div>
+      <OptimizeToolLink theme={theme} charName={charName} mode={null} label="Optimize Hyper Stats" marginTop={16} />
     </div>
   );
 }
@@ -1868,6 +1894,7 @@ function StatsBookmark({
             arcaneEligible={showArcanePower}
             arcaneLockedLabel={arcaneLockedLabel}
             onSetActivePreset={(presetIndex) => onSetActivePreset("hyperStat", presetIndex)}
+            charName={character?.characterName}
           />
         </div>
         <div className={`bookmark-subview${view === "ability" ? " bookmark-subview-active" : ""}`} style={{ gridArea: "1 / 1", visibility: view === "ability" ? "visible" : "hidden" }}>
@@ -2594,6 +2621,7 @@ function HexaStatBookmarkView({ theme, character, classData, hexaStatNodes, onSe
           </div>
         </StatBlock>
       </div>
+      <OptimizeToolLink theme={theme} charName={character?.characterName} mode="hexa" label="Optimize HEXA Stat" marginTop={0} />
     </div>
   );
 }

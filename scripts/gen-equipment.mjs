@@ -34,8 +34,10 @@
  * Ring" ids at +5 vs +7 all stat) — drops confirmed leftover/regional-ghost/cafe-only
  * ids entirely and appends a disambiguating label to the served `name` for the rest,
  * so the picker never shows two indistinguishable rows. Skipped (served names
- * unchanged) if unset. Pet/pet-equip are out of scope (deferred — class/branch
- * filtering already keeps their duplicates from co-occurring in any picker).
+ * unchanged) if unset. Pet/pet-equip are out of scope (every class can equip every
+ * pet, so unlike weapon/secondary there's no branch filter downstream to keep same-name
+ * survivors from co-occurring in the picker — but that's handled by dedupeByName's
+ * setItemID exclusion below, not this verdicts file).
  */
 
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from "fs";
@@ -170,15 +172,25 @@ function wearableLinks(slot, entry) {
  * at 10 vs. 9 slots) — this isn't a different item the way an Eternal Wedding Ring's
  * +5-vs-+7 stat difference is, it's incidental drop variance the picker has no use for
  * (found affecting 67 of 75 duplicate-name weapon groups alone).
+ *
+ * Pet/pet-equip also exclude `setItemID` (event/promo bundle id — incidental, like
+ * `upgradeSlots`; confirmed differing on 300+ of pet.json's 307 duplicate-name groups,
+ * e.g. Florence's 3 ids). `collabo` (real-IP collab reissue, e.g. BUGCAT CAPOO) is kept
+ * in the comparison since it's a genuine distinction, same treatment as the Eternal
+ * Wedding Ring's stat difference — the 7 duplicate-name groups that differ only by
+ * `collabo` stay split.
  * @param {Array<[string,string]|[string,string,object]>} items
  * @param {"wearableEquips"|"wearablePets"} [linkKey] omitted for slots with no cross-slot links
  * @param {boolean} [requireSamePrefix]
+ * @param {boolean} [excludeSetItemID] pet/petequip only, see above
  */
-function dedupeByName(items, linkKey, requireSamePrefix) {
+function dedupeByName(items, linkKey, requireSamePrefix, excludeSetItemID) {
   const byKey = new Map();
   const canonicalById = new Map();
   for (const [id, name, stats] of items) {
-    const compareStats = stats ? { ...stats, upgradeSlots: undefined, ...(linkKey ? { [linkKey]: undefined } : null) } : stats;
+    const compareStats = stats
+      ? { ...stats, upgradeSlots: undefined, ...(linkKey ? { [linkKey]: undefined } : null), ...(excludeSetItemID ? { setItemID: undefined } : null) }
+      : stats;
     const typePrefix = id.slice(0, 5);
     const statsKey = compareStats ? JSON.stringify(compareStats) : `noStats:${typePrefix}`;
     const key = requireSamePrefix ? `${name} ${iconHash(id)} ${typePrefix} ${statsKey}` : `${name} ${iconHash(id)} ${statsKey}`;
@@ -283,8 +295,8 @@ if (!ICON_DIR || !existsSync(ICON_DIR)) {
   console.warn(`⚠ EQUIP_ICON_DIR ${ICON_DIR ? `(${ICON_DIR}) not found` : "unset"} — skipping all slot dedup. Picker may show duplicate names.`);
 } else {
   if (outputs.pet && outputs.petequip) {
-    const pet = dedupeByName(outputs.pet, "wearableEquips");
-    const petequip = dedupeByName(outputs.petequip, "wearablePets");
+    const pet = dedupeByName(outputs.pet, "wearableEquips", false, true);
+    const petequip = dedupeByName(outputs.petequip, "wearablePets", false, true);
     remapLinks(pet.deduped, "wearableEquips", petequip.canonicalById);
     remapLinks(petequip.deduped, "wearablePets", pet.canonicalById);
     outputs.pet = pet.deduped;

@@ -24,6 +24,12 @@ const GAMES: GameCard[] = [
     icon: "🎯",
     href: "/games/skill-guesser",
   },
+  {
+    title: "BGM Guesser",
+    description: "Name the area or boss the daily MapleStory track plays for in 3 tries.",
+    icon: "🎵",
+    href: "/games/bgm-guesser",
+  },
 ];
 
 // Uppercase category label inside the panel; color (theme.muted) inline.

@@ -1,0 +1,3383 @@
+{
+  "_meta": {
+    "assets": [
+      "track.mp3"
+    ],
+    "urlPattern": "/api/bgm/{group}/{trackName}/track.mp3",
+    "note": "Key is \u0022{group}/{trackName}\u0022: trackName alone is NOT unique across groups (32 confirmed collisions, e.g. \u0022Title\u0022 in both Bgm48 and BgmUI) \u2014 always join group \u002B trackName."
+  },
+  "entries": {
+    "Bgm00/DragonDream": {
+      "lengthMs": 126119
+    },
+    "Bgm00/FloralLife": {
+      "lengthMs": 137639
+    },
+    "Bgm00/GoPicnic": {
+      "lengthMs": 72829
+    },
+    "Bgm00/Nightmare": {
+      "lengthMs": 190746
+    },
+    "Bgm00/RestNPeace": {
+      "lengthMs": 175151
+    },
+    "Bgm00/Silence": {
+      "lengthMs": 10083
+    },
+    "Bgm00/SleepyWood": {
+      "lengthMs": 166635
+    },
+    "Bgm00/neneSound": {
+      "lengthMs": 20035
+    },
+    "Bgm01/AncientMove": {
+      "lengthMs": 260336
+    },
+    "Bgm01/BadGuys": {
+      "lengthMs": 218305
+    },
+    "Bgm01/CavaBien": {
+      "lengthMs": 128000
+    },
+    "Bgm01/HighlandStar": {
+      "lengthMs": 237113
+    },
+    "Bgm01/MoonlightShadow": {
+      "lengthMs": 158511
+    },
+    "Bgm01/WhereTheBarlogFrom": {
+      "lengthMs": 188081
+    },
+    "Bgm02/AboveTheTreetops": {
+      "lengthMs": 271386
+    },
+    "Bgm02/EvilEyes": {
+      "lengthMs": 327392
+    },
+    "Bgm02/JungleBook": {
+      "lengthMs": 216711
+    },
+    "Bgm02/MissingYou": {
+      "lengthMs": 146938
+    },
+    "Bgm02/WhenTheMorningComes": {
+      "lengthMs": 187742
+    },
+    "Bgm03/Beachway": {
+      "lengthMs": 196388
+    },
+    "Bgm03/BlueSky": {
+      "lengthMs": 161253
+    },
+    "Bgm03/Elfwood": {
+      "lengthMs": 87640
+    },
+    "Bgm03/SnowyVillage": {
+      "lengthMs": 155089
+    },
+    "Bgm03/Subway": {
+      "lengthMs": 198948
+    },
+    "Bgm04/ArabPirate": {
+      "lengthMs": 284212
+    },
+    "Bgm04/PlayWithMe": {
+      "lengthMs": 164205
+    },
+    "Bgm04/Shinin\u0027Harbor": {
+      "lengthMs": 115722
+    },
+    "Bgm04/UponTheSky": {
+      "lengthMs": 179591
+    },
+    "Bgm04/WarmRegard": {
+      "lengthMs": 168124
+    },
+    "Bgm04/WhiteChristmas": {
+      "lengthMs": 125126
+    },
+    "Bgm05/AbandonedMine": {
+      "lengthMs": 178416
+    },
+    "Bgm05/DownToTheCave": {
+      "lengthMs": 260336
+    },
+    "Bgm05/HellGate": {
+      "lengthMs": 149446
+    },
+    "Bgm05/MineQuest": {
+      "lengthMs": 185573
+    },
+    "Bgm05/WolfWood": {
+      "lengthMs": 164702
+    },
+    "Bgm06/ComeWithMe": {
+      "lengthMs": 200515
+    },
+    "Bgm06/FantasticThinking": {
+      "lengthMs": 148271
+    },
+    "Bgm06/FinalFight": {
+      "lengthMs": 88111
+    },
+    "Bgm06/FlyingInABlueDream": {
+      "lengthMs": 169848
+    },
+    "Bgm06/WelcomeToTheHell": {
+      "lengthMs": 178886
+    },
+    "Bgm07/Fantasia": {
+      "lengthMs": 151040
+    },
+    "Bgm07/FunnyTimeMaker": {
+      "lengthMs": 119431
+    },
+    "Bgm07/HighEnough": {
+      "lengthMs": 216920
+    },
+    "Bgm07/WaltzForWork": {
+      "lengthMs": 94824
+    },
+    "Bgm07/WhereverYouAre": {
+      "lengthMs": 187559
+    },
+    "Bgm08/FindingForest": {
+      "lengthMs": 150099
+    },
+    "Bgm08/ForTheGlory": {
+      "lengthMs": 177084
+    },
+    "Bgm08/LetsHuntAliens": {
+      "lengthMs": 127503
+    },
+    "Bgm08/LetsMarch": {
+      "lengthMs": 139363
+    },
+    "Bgm08/PlotOfPixie": {
+      "lengthMs": 131265
+    },
+    "Bgm09/DarkShadow": {
+      "lengthMs": 128809
+    },
+    "Bgm09/FairyTale": {
+      "lengthMs": 149890
+    },
+    "Bgm09/FairyTalediffvers": {
+      "lengthMs": 164649
+    },
+    "Bgm09/TheyMenacingYou": {
+      "lengthMs": 136254
+    },
+    "Bgm09/TimeAttack": {
+      "lengthMs": 117446
+    },
+    "Bgm10/BizarreTales": {
+      "lengthMs": 165694
+    },
+    "Bgm10/Eregos": {
+      "lengthMs": 133485
+    },
+    "Bgm10/TheWayGrotesque": {
+      "lengthMs": 201717
+    },
+    "Bgm10/Timeless": {
+      "lengthMs": 117289
+    },
+    "Bgm10/TimelessB": {
+      "lengthMs": 115670
+    },
+    "Bgm11/Aquarium": {
+      "lengthMs": 145319
+    },
+    "Bgm11/BlueWorld": {
+      "lengthMs": 136385
+    },
+    "Bgm11/DarkMountain": {
+      "lengthMs": 173479
+    },
+    "Bgm11/DownTown": {
+      "lengthMs": 168098
+    },
+    "Bgm11/ShiningSea": {
+      "lengthMs": 177789
+    },
+    "Bgm12/AcientRemain": {
+      "lengthMs": 124003
+    },
+    "Bgm12/AquaCave": {
+      "lengthMs": 149942
+    },
+    "Bgm12/DeepSee": {
+      "lengthMs": 154984
+    },
+    "Bgm12/Dispute": {
+      "lengthMs": 155689
+    },
+    "Bgm12/RuinCastle": {
+      "lengthMs": 146991
+    },
+    "Bgm12/WaterWay": {
+      "lengthMs": 154984
+    },
+    "Bgm13/AcientForest": {
+      "lengthMs": 142132
+    },
+    "Bgm13/FightSand": {
+      "lengthMs": 128104
+    },
+    "Bgm13/Leafre": {
+      "lengthMs": 157231
+    },
+    "Bgm13/Minar\u0027sDream": {
+      "lengthMs": 132022
+    },
+    "Bgm13/TowerOfGoddess": {
+      "lengthMs": 133198
+    },
+    "Bgm14/Ariant": {
+      "lengthMs": 141505
+    },
+    "Bgm14/CaveOfHontale": {
+      "lengthMs": 141949
+    },
+    "Bgm14/DragonLoad": {
+      "lengthMs": 153260
+    },
+    "Bgm14/DragonNest": {
+      "lengthMs": 145711
+    },
+    "Bgm14/DragonRider": {
+      "lengthMs": 132884
+    },
+    "Bgm14/HonTale": {
+      "lengthMs": 143699
+    },
+    "Bgm14/HotDesert": {
+      "lengthMs": 138710
+    },
+    "Bgm15/CocoIsland": {
+      "lengthMs": 122279
+    },
+    "Bgm15/DeepCave": {
+      "lengthMs": 180114
+    },
+    "Bgm15/ElinCave": {
+      "lengthMs": 205818
+    },
+    "Bgm15/ElinForest": {
+      "lengthMs": 140669
+    },
+    "Bgm15/MureungForest": {
+      "lengthMs": 141897
+    },
+    "Bgm15/MureungHill": {
+      "lengthMs": 151092
+    },
+    "Bgm15/Nautilus": {
+      "lengthMs": 122279
+    },
+    "Bgm15/Pirate": {
+      "lengthMs": 151693
+    },
+    "Bgm15/PoisonForest": {
+      "lengthMs": 145946
+    },
+    "Bgm15/QueensHideout": {
+      "lengthMs": 152006
+    },
+    "Bgm15/SunsetDesert": {
+      "lengthMs": 157492
+    },
+    "Bgm15/WhiteHerb": {
+      "lengthMs": 145528
+    },
+    "Bgm15/inNautilus": {
+      "lengthMs": 152084
+    },
+    "Bgm16/Duskofgod": {
+      "lengthMs": 128783
+    },
+    "Bgm16/FightingPinkBeen": {
+      "lengthMs": 146651
+    },
+    "Bgm16/Forgetfulness": {
+      "lengthMs": 151301
+    },
+    "Bgm16/InWartime": {
+      "lengthMs": 123768
+    },
+    "Bgm16/RedWitch": {
+      "lengthMs": 124708
+    },
+    "Bgm16/Remembrance": {
+      "lengthMs": 134504
+    },
+    "Bgm16/Repentance": {
+      "lengthMs": 160888
+    },
+    "Bgm16/RustyThrone": {
+      "lengthMs": 134661
+    },
+    "Bgm16/TimeTemple": {
+      "lengthMs": 136881
+    },
+    "Bgm17/EvolvingWorld": {
+      "lengthMs": 129515
+    },
+    "Bgm17/GoldBeach": {
+      "lengthMs": 138449
+    },
+    "Bgm17/MureungSchool1": {
+      "lengthMs": 48091
+    },
+    "Bgm17/MureungSchool2": {
+      "lengthMs": 57025
+    },
+    "Bgm17/MureungSchool3": {
+      "lengthMs": 52192
+    },
+    "Bgm17/MureungSchool4": {
+      "lengthMs": 50468
+    },
+    "Bgm17/secretFlower": {
+      "lengthMs": 147461
+    },
+    "Bgm18/BlackWing": {
+      "lengthMs": 128104
+    },
+    "Bgm18/DrillHall": {
+      "lengthMs": 124604
+    },
+    "Bgm18/Injustice": {
+      "lengthMs": 127059
+    },
+    "Bgm18/QueensGarden": {
+      "lengthMs": 119588
+    },
+    "Bgm18/RaindropFlower": {
+      "lengthMs": 122331
+    },
+    "Bgm18/WolfAndSheep": {
+      "lengthMs": 152058
+    },
+    "Bgm19/BambooGym": {
+      "lengthMs": 272796
+    },
+    "Bgm19/CrystalCave": {
+      "lengthMs": 141453
+    },
+    "Bgm19/DancingWitnTheMoon": {
+      "lengthMs": 134452
+    },
+    "Bgm19/FlytotheMoon": {
+      "lengthMs": 151588
+    },
+    "Bgm19/MushCatle": {
+      "lengthMs": 161253
+    },
+    "Bgm19/RienVillage": {
+      "lengthMs": 192809
+    },
+    "Bgm19/SnowDrop": {
+      "lengthMs": 170083
+    },
+    "Bgm20/GhostShip": {
+      "lengthMs": 132911
+    },
+    "Bgm20/NetsPiramid": {
+      "lengthMs": 115252
+    },
+    "Bgm20/NetsPiramid2": {
+      "lengthMs": 115252
+    },
+    "Bgm20/UnderSubway": {
+      "lengthMs": 128052
+    },
+    "Bgm20/UnderSubway2": {
+      "lengthMs": 128052
+    },
+    "Bgm21/2021year": {
+      "lengthMs": 139049
+    },
+    "Bgm21/2099year": {
+      "lengthMs": 144483
+    },
+    "Bgm21/2215year": {
+      "lengthMs": 122044
+    },
+    "Bgm21/2230year": {
+      "lengthMs": 133433
+    },
+    "Bgm21/2503year": {
+      "lengthMs": 122540
+    },
+    "Bgm21/KerningSquare": {
+      "lengthMs": 182517
+    },
+    "Bgm21/KerningSquareField": {
+      "lengthMs": 147748
+    },
+    "Bgm21/KerningSquareSubway": {
+      "lengthMs": 159660
+    },
+    "Bgm21/LoversIntheAfternoon": {
+      "lengthMs": 81710
+    },
+    "Bgm21/TeraForest": {
+      "lengthMs": 149472
+    },
+    "Bgm22/DecisiveBattle": {
+      "lengthMs": 120685
+    },
+    "Bgm22/DespairOnDevil": {
+      "lengthMs": 125622
+    },
+    "Bgm22/EdelsteinCity": {
+      "lengthMs": 138240
+    },
+    "Bgm22/GelimerLab": {
+      "lengthMs": 133276
+    },
+    "Bgm22/LowGradeOre": {
+      "lengthMs": 152633
+    },
+    "Bgm22/NationalPark": {
+      "lengthMs": 134452
+    },
+    "Bgm22/PowerStation": {
+      "lengthMs": 124186
+    },
+    "Bgm22/UndergroundPlace": {
+      "lengthMs": 146834
+    },
+    "Bgm23/BlizzardCastle": {
+      "lengthMs": 173557
+    },
+    "Bgm23/CastleBoss": {
+      "lengthMs": 147957
+    },
+    "Bgm23/CastleInside": {
+      "lengthMs": 132414
+    },
+    "Bgm23/CastleOutSide": {
+      "lengthMs": 139676
+    },
+    "Bgm23/CrimsonTower": {
+      "lengthMs": 161175
+    },
+    "Bgm23/LionHeart": {
+      "lengthMs": 174132
+    },
+    "Bgm23/MPBonusMap": {
+      "lengthMs": 64783
+    },
+    "Bgm24/KreaseAgit": {
+      "lengthMs": 138083
+    },
+    "Bgm24/KreaseColosseum": {
+      "lengthMs": 159555
+    },
+    "Bgm24/KreaseField": {
+      "lengthMs": 125649
+    },
+    "Bgm24/battleBGMTypeA": {
+      "lengthMs": 125413
+    },
+    "Bgm24/battleBGMTypeB": {
+      "lengthMs": 121495
+    },
+    "Bgm24/battleBGMTypeC": {
+      "lengthMs": 137116
+    },
+    "Bgm24/battleBGMTypeD": {
+      "lengthMs": 140982
+    },
+    "Bgm24/battleEntrance": {
+      "lengthMs": 135941
+    },
+    "Bgm24/monsterPark": {
+      "lengthMs": 138083
+    },
+    "Bgm25/AltarOfAkayrum": {
+      "lengthMs": 124003
+    },
+    "Bgm25/CrackOfDimension": {
+      "lengthMs": 117133
+    },
+    "Bgm25/CygnusGarden": {
+      "lengthMs": 156969
+    },
+    "Bgm25/FlowerInBlue": {
+      "lengthMs": 130115
+    },
+    "Bgm25/SoundOfElf": {
+      "lengthMs": 23222
+    },
+    "Bgm25/WindAndFlower": {
+      "lengthMs": 134295
+    },
+    "Bgm25/destructionPerion": {
+      "lengthMs": 129933
+    },
+    "Bgm25/destructionPerionShelter": {
+      "lengthMs": 123611
+    },
+    "Bgm25/destructionTown": {
+      "lengthMs": 154514
+    },
+    "Bgm25/knightsStronghold": {
+      "lengthMs": 156551
+    },
+    "Bgm25/profession": {
+      "lengthMs": 113162
+    },
+    "Bgm25/timeGate": {
+      "lengthMs": 147017
+    },
+    "Bgm26/BurningWoods": {
+      "lengthMs": 123402
+    },
+    "Bgm26/DarkMage": {
+      "lengthMs": 129149
+    },
+    "Bgm26/DarkWoods": {
+      "lengthMs": 135157
+    },
+    "Bgm26/FinalFight": {
+      "lengthMs": 98115
+    },
+    "Bgm26/Flood": {
+      "lengthMs": 91010
+    },
+    "Bgm26/PeacefulWoods": {
+      "lengthMs": 131604
+    },
+    "Bgm26/Serenity": {
+      "lengthMs": 125962
+    },
+    "Bgm26/SpeakInTheVoid": {
+      "lengthMs": 124369
+    },
+    "Bgm27/AngelsRoom": {
+      "lengthMs": 31190
+    },
+    "Bgm27/BaseOfBetrayers": {
+      "lengthMs": 120111
+    },
+    "Bgm27/BorderArea": {
+      "lengthMs": 129123
+    },
+    "Bgm27/GreatTemple": {
+      "lengthMs": 137743
+    },
+    "Bgm27/NovaSanctum": {
+      "lengthMs": 151928
+    },
+    "Bgm27/Pantheon": {
+      "lengthMs": 148244
+    },
+    "Bgm27/PantheonField": {
+      "lengthMs": 124525
+    },
+    "Bgm27/StepOfKaiser": {
+      "lengthMs": 125022
+    },
+    "Bgm27/TrappedKaiser": {
+      "lengthMs": 127425
+    },
+    "Bgm28/citadelofTyrant": {
+      "lengthMs": 120633
+    },
+    "Bgm28/funkyBlackmarket": {
+      "lengthMs": 132832
+    },
+    "Bgm28/helisiumField": {
+      "lengthMs": 125805
+    },
+    "Bgm28/helisiumMysticforest": {
+      "lengthMs": 136463
+    },
+    "Bgm28/helisiumWarcry": {
+      "lengthMs": 128052
+    },
+    "Bgm28/retake": {
+      "lengthMs": 122331
+    },
+    "Bgm28/thefinalWar": {
+      "lengthMs": 127268
+    },
+    "Bgm28/trinityForce": {
+      "lengthMs": 127555
+    },
+    "Bgm29/AbyssCave": {
+      "lengthMs": 132127
+    },
+    "Bgm29/JoyfulTeaParty": {
+      "lengthMs": 127111
+    },
+    "Bgm29/QueenPalace": {
+      "lengthMs": 134008
+    },
+    "Bgm29/TimeChaos": {
+      "lengthMs": 146233
+    },
+    "Bgm29/YggdrasilPrayer": {
+      "lengthMs": 134243
+    },
+    "Bgm29/banbantime": {
+      "lengthMs": 11728
+    },
+    "Bgm30/5thSpotLightFlyAway": {
+      "lengthMs": 40800
+    },
+    "Bgm30/6thGrandFinaleStarBubble": {
+      "lengthMs": 39209
+    },
+    "Bgm30/flyAwayFull": {
+      "lengthMs": 62694
+    },
+    "Bgm30/flyAwayRemixFull": {
+      "lengthMs": 188682
+    },
+    "Bgm30/fromUnderToUpper": {
+      "lengthMs": 130533
+    },
+    "Bgm30/inAllVerity": {
+      "lengthMs": 124551
+    },
+    "Bgm30/pulseResonance": {
+      "lengthMs": 132545
+    },
+    "Bgm30/shiningHeart": {
+      "lengthMs": 22040
+    },
+    "Bgm30/shiningHeartFull": {
+      "lengthMs": 207673
+    },
+    "Bgm30/starBubbleFull": {
+      "lengthMs": 179670
+    },
+    "Bgm30/thePhoto": {
+      "lengthMs": 119118
+    },
+    "Bgm30/underside": {
+      "lengthMs": 130063
+    },
+    "Bgm31/fadedCitadel": {
+      "lengthMs": 150099
+    },
+    "Bgm31/itsmonstersLife": {
+      "lengthMs": 128470
+    },
+    "Bgm31/itsmonstersLife2": {
+      "lengthMs": 127764
+    },
+    "Bgm31/journey": {
+      "lengthMs": 43337
+    },
+    "Bgm31/scholarsLibrary": {
+      "lengthMs": 132675
+    },
+    "Bgm31/specialtyStore": {
+      "lengthMs": 129724
+    },
+    "Bgm31/specialtyStoreRemix": {
+      "lengthMs": 128365
+    },
+    "Bgm32/TheColossalHeart": {
+      "lengthMs": 130351
+    },
+    "Bgm32/TheLivingMountain": {
+      "lengthMs": 136542
+    },
+    "Bgm32/TheRaiders": {
+      "lengthMs": 126746
+    },
+    "Bgm32/TheRush": {
+      "lengthMs": 127399
+    },
+    "Bgm33/AriantInMirror": {
+      "lengthMs": 128130
+    },
+    "Bgm33/BeBornZero": {
+      "lengthMs": 125753
+    },
+    "Bgm33/DisputeInMirror": {
+      "lengthMs": 120633
+    },
+    "Bgm33/EdelsteinCityInMirror": {
+      "lengthMs": 118700
+    },
+    "Bgm33/FantasticThinkingInMirror": {
+      "lengthMs": 123507
+    },
+    "Bgm33/FloralLifeInMirror": {
+      "lengthMs": 120711
+    },
+    "Bgm33/LeafreInMirror": {
+      "lengthMs": 124787
+    },
+    "Bgm33/MureungHillInMirror": {
+      "lengthMs": 130533
+    },
+    "Bgm33/NastyLiar": {
+      "lengthMs": 126093
+    },
+    "Bgm33/RedRoom": {
+      "lengthMs": 132545
+    },
+    "Bgm33/ShadowKnight": {
+      "lengthMs": 125831
+    },
+    "Bgm33/ShadowTemple": {
+      "lengthMs": 125622
+    },
+    "Bgm33/SmileZero": {
+      "lengthMs": 123507
+    },
+    "Bgm33/TimeTempleInMirror": {
+      "lengthMs": 134008
+    },
+    "Bgm34/AgainstTheDark": {
+      "lengthMs": 125309
+    },
+    "Bgm34/DimensionLibrary": {
+      "lengthMs": 122697
+    },
+    "Bgm34/GlacierAdventure": {
+      "lengthMs": 123611
+    },
+    "Bgm34/GoFight!ShowYourEnergy!": {
+      "lengthMs": 102924
+    },
+    "Bgm34/MapleLeaf": {
+      "lengthMs": 129123
+    },
+    "Bgm34/MoleKingRises": {
+      "lengthMs": 117289
+    },
+    "Bgm34/Sailing": {
+      "lengthMs": 132127
+    },
+    "Bgm34/TheAurora": {
+      "lengthMs": 139624
+    },
+    "Bgm34/TheFairyAcademy": {
+      "lengthMs": 126929
+    },
+    "Bgm34/TheFairyForest": {
+      "lengthMs": 124551
+    },
+    "Bgm34/TheStormyForest": {
+      "lengthMs": 144718
+    },
+    "Bgm34/WoundedLeaf": {
+      "lengthMs": 140695
+    },
+    "Bgm35/Hekaton": {
+      "lengthMs": 121626
+    },
+    "Bgm35/InRuinInVain": {
+      "lengthMs": 162011
+    },
+    "Bgm35/StopInEnds": {
+      "lengthMs": 126746
+    },
+    "Bgm35/StopInHundreds": {
+      "lengthMs": 130925
+    },
+    "Bgm35/TragicForest": {
+      "lengthMs": 122305
+    },
+    "Bgm35/TragicRestart": {
+      "lengthMs": 122880
+    },
+    "Bgm36/Dominion": {
+      "lengthMs": 20032
+    },
+    "Bgm36/HappyTimeLong": {
+      "lengthMs": 132440
+    },
+    "Bgm36/HappyTimeShort": {
+      "lengthMs": 26462
+    },
+    "Bgm36/LightOfTheFoxGoddess": {
+      "lengthMs": 30465
+    },
+    "Bgm36/RoyalGuard": {
+      "lengthMs": 133825
+    },
+    "Bgm36/decision": {
+      "lengthMs": 74840
+    },
+    "Bgm36/foxvillage": {
+      "lengthMs": 128966
+    },
+    "Bgm36/sadfoxvillage": {
+      "lengthMs": 137273
+    },
+    "Bgm37/AmusingStoryInTheFairyTale": {
+      "lengthMs": 127686
+    },
+    "Bgm37/HazardFromCave": {
+      "lengthMs": 132440
+    },
+    "Bgm37/JungleInTheSea": {
+      "lengthMs": 135392
+    },
+    "Bgm37/StrangeSortOfStory": {
+      "lengthMs": 128261
+    },
+    "Bgm37/TheBottomOfTheSea": {
+      "lengthMs": 125309
+    },
+    "Bgm37/VentureIntoTheUnkown": {
+      "lengthMs": 36179
+    },
+    "Bgm38/FlowerVioleta": {
+      "lengthMs": 24111
+    },
+    "Bgm38/HollowAttack": {
+      "lengthMs": 120843
+    },
+    "Bgm38/LifeIsComedy": {
+      "lengthMs": 85916
+    },
+    "Bgm38/MushroomCastle": {
+      "lengthMs": 117133
+    },
+    "Bgm38/SchoolLife": {
+      "lengthMs": 139536
+    },
+    "Bgm38/UrbanStreet": {
+      "lengthMs": 121391
+    },
+    "Bgm38/VikingShip": {
+      "lengthMs": 119144
+    },
+    "Bgm38/VikingSkipper": {
+      "lengthMs": 121521
+    },
+    "Bgm38/WarMushCastle": {
+      "lengthMs": 130481
+    },
+    "Bgm38/battlefield": {
+      "lengthMs": 121286
+    },
+    "Bgm39/InvitavionStarplanet": {
+      "lengthMs": 45531
+    },
+    "Bgm39/StarPlanetGameField": {
+      "lengthMs": 131578
+    },
+    "Bgm39/StarPlanetMainEvent": {
+      "lengthMs": 130142
+    },
+    "Bgm39/StarPlanetWaitField": {
+      "lengthMs": 127634
+    },
+    "Bgm39/StarPlanetWorldEvent": {
+      "lengthMs": 125283
+    },
+    "Bgm39/TodaysFortune": {
+      "lengthMs": 28760
+    },
+    "Bgm39/VirtualArena": {
+      "lengthMs": 142785
+    },
+    "Bgm39/YUTYUTYUT": {
+      "lengthMs": 122279
+    },
+    "Bgm39/masterOfKeyBoard": {
+      "lengthMs": 127059
+    },
+    "Bgm40/BattleOnTheDeck": {
+      "lengthMs": 138997
+    },
+    "Bgm40/BlackHeavenTheme": {
+      "lengthMs": 108773
+    },
+    "Bgm40/BlackHeavenTheme_parade": {
+      "lengthMs": 124578
+    },
+    "Bgm40/HeroComes": {
+      "lengthMs": 126693
+    },
+    "Bgm40/JunkYard": {
+      "lengthMs": 126929
+    },
+    "Bgm40/RabbitsDream": {
+      "lengthMs": 131761
+    },
+    "Bgm40/SecretMission": {
+      "lengthMs": 91062
+    },
+    "Bgm40/SecretMissionBase": {
+      "lengthMs": 20323
+    },
+    "Bgm40/TheDollMaster": {
+      "lengthMs": 129750
+    },
+    "Bgm41/BigMachine": {
+      "lengthMs": 130716
+    },
+    "Bgm41/BigMachine_mission": {
+      "lengthMs": 135105
+    },
+    "Bgm41/Gravity Core": {
+      "lengthMs": 125544
+    },
+    "Bgm41/Gravity Lord": {
+      "lengthMs": 127660
+    },
+    "Bgm41/Gravity Lord Rise": {
+      "lengthMs": 128496
+    },
+    "Bgm41/Haven Theme": {
+      "lengthMs": 132806
+    },
+    "Bgm41/HeavenAgain": {
+      "lengthMs": 172643
+    },
+    "Bgm41/HeavenAgain_reprise": {
+      "lengthMs": 54909
+    },
+    "Bgm41/PromiseOfHeaven": {
+      "lengthMs": 143124
+    },
+    "Bgm41/PromiseOfHeaven_vocaless": {
+      "lengthMs": 140747
+    },
+    "Bgm41/Suu1phase": {
+      "lengthMs": 98308
+    },
+    "Bgm41/Suu2phase": {
+      "lengthMs": 158404
+    },
+    "Bgm41/Suu3phase": {
+      "lengthMs": 92595
+    },
+    "Bgm42/Catch Your Dreams! full": {
+      "lengthMs": 225384
+    },
+    "Bgm42/Catch Your Dreams! intro": {
+      "lengthMs": 16039
+    },
+    "Bgm42/Catch Your Dreams! play": {
+      "lengthMs": 210808
+    },
+    "Bgm42/Catch Your Dreams! vocaless": {
+      "lengthMs": 225384
+    },
+    "Bgm42/Demon\u0027s eye": {
+      "lengthMs": 14080
+    },
+    "Bgm42/Demon\u0027s eye2": {
+      "lengthMs": 12956
+    },
+    "Bgm42/TheBeast": {
+      "lengthMs": 90096
+    },
+    "Bgm42/TheBeast2": {
+      "lengthMs": 140016
+    },
+    "Bgm43/Dancing With Ghosts": {
+      "lengthMs": 124395
+    },
+    "Bgm43/Kinesis Theme I": {
+      "lengthMs": 133903
+    },
+    "Bgm43/Kinesis Theme II": {
+      "lengthMs": 126511
+    },
+    "Bgm43/Kinesis Theme Skill": {
+      "lengthMs": 26031
+    },
+    "Bgm43/PsychicBoard": {
+      "lengthMs": 26031
+    },
+    "Bgm43/Skyscraper": {
+      "lengthMs": 127947
+    },
+    "Bgm43/This too shall pass away": {
+      "lengthMs": 139650
+    },
+    "Bgm43/TresureGameMulti": {
+      "lengthMs": 121025
+    },
+    "Bgm43/TresureGameSingle": {
+      "lengthMs": 124630
+    },
+    "Bgm43/Unexpected crisis": {
+      "lengthMs": 137247
+    },
+    "Bgm43/Unknown Part Of City": {
+      "lengthMs": 136698
+    },
+    "Bgm43/Unleash": {
+      "lengthMs": 30850
+    },
+    "Bgm43/Welcome To The Creepy Ghost Park": {
+      "lengthMs": 131604
+    },
+    "Bgm43/monsterWorld": {
+      "lengthMs": 126929
+    },
+    "Bgm44/Desperately": {
+      "lengthMs": 131291
+    },
+    "Bgm44/DragonTigerDungeon": {
+      "lengthMs": 63982
+    },
+    "Bgm44/DragonTigerField": {
+      "lengthMs": 55061
+    },
+    "Bgm44/Hieijan_KR": {
+      "lengthMs": 64052
+    },
+    "Bgm44/Hieijan_nohime_KR": {
+      "lengthMs": 66533
+    },
+    "Bgm44/InsideHonnouji_KR": {
+      "lengthMs": 129071
+    },
+    "Bgm44/Kecon_KR": {
+      "lengthMs": 128287
+    },
+    "Bgm44/MomijiNoSakamichi_KR": {
+      "lengthMs": 120711
+    },
+    "Bgm44/Momijigaoka_KR": {
+      "lengthMs": 134086
+    },
+    "Bgm44/SheSellsALuckyThing": {
+      "lengthMs": 125100
+    },
+    "Bgm44/TheKingOfDestruction": {
+      "lengthMs": 62693
+    },
+    "Bgm44/TheSilentWar": {
+      "lengthMs": 303934
+    },
+    "Bgm44/WildFury": {
+      "lengthMs": 120659
+    },
+    "Bgm45/Anthem For Heroes": {
+      "lengthMs": 134295
+    },
+    "Bgm45/Army Of Fears Theme": {
+      "lengthMs": 122748
+    },
+    "Bgm45/Climbing Up The WorldTree": {
+      "lengthMs": 122279
+    },
+    "Bgm45/Demian": {
+      "lengthMs": 81188
+    },
+    "Bgm45/Demian Spine": {
+      "lengthMs": 81188
+    },
+    "Bgm45/Demian True": {
+      "lengthMs": 91480
+    },
+    "Bgm45/Endless Journey": {
+      "lengthMs": 135262
+    },
+    "Bgm45/God Of Control - Lobby": {
+      "lengthMs": 130220
+    },
+    "Bgm45/God Of Control - Stage": {
+      "lengthMs": 134948
+    },
+    "Bgm45/Heroes Of Maple Theme": {
+      "lengthMs": 132405
+    },
+    "Bgm45/Heroes Of Maple Theme Piano": {
+      "lengthMs": 132405
+    },
+    "Bgm45/Jazz For Dr Lim": {
+      "lengthMs": 127973
+    },
+    "Bgm45/Pain And Sorrow": {
+      "lengthMs": 125645
+    },
+    "Bgm45/Pain To Hope": {
+      "lengthMs": 139493
+    },
+    "Bgm45/Showtime!": {
+      "lengthMs": 121782
+    },
+    "Bgm45/The Devil Is Coming": {
+      "lengthMs": 128078
+    },
+    "Bgm45/Through The Blizzard": {
+      "lengthMs": 124679
+    },
+    "Bgm45/Time Is Gold": {
+      "lengthMs": 126667
+    },
+    "Bgm45/Timeless Beholder": {
+      "lengthMs": 130063
+    },
+    "Bgm45/Travelers": {
+      "lengthMs": 145658
+    },
+    "Bgm46/BrokenDream": {
+      "lengthMs": 80754
+    },
+    "Bgm46/Cave Of Rest": {
+      "lengthMs": 74971
+    },
+    "Bgm46/ChewChew MainTheme": {
+      "lengthMs": 68466
+    },
+    "Bgm46/ChewChew WildWorld": {
+      "lengthMs": 75728
+    },
+    "Bgm46/ClockTowerofNightmare": {
+      "lengthMs": 104646
+    },
+    "Bgm46/LachelntheIllusionCity": {
+      "lengthMs": 81580
+    },
+    "Bgm46/Lake Of Oblivion": {
+      "lengthMs": 94850
+    },
+    "Bgm46/Volcanic Zone Of Extinction": {
+      "lengthMs": 83853
+    },
+    "Bgm46/WierldForestIntheGirlsdream": {
+      "lengthMs": 88161
+    },
+    "Bgm47/ArcanaBoss": {
+      "lengthMs": 93091
+    },
+    "Bgm47/Asylum": {
+      "lengthMs": 98099
+    },
+    "Bgm47/AsylumAmbience": {
+      "lengthMs": 99925
+    },
+    "Bgm47/AsylumAmbiencePiano": {
+      "lengthMs": 69511
+    },
+    "Bgm47/AsylumPiano": {
+      "lengthMs": 99168
+    },
+    "Bgm47/CrystalAcademia": {
+      "lengthMs": 92700
+    },
+    "Bgm47/DancesWithAliens": {
+      "lengthMs": 92107
+    },
+    "Bgm47/DeathOfAsylum": {
+      "lengthMs": 62834
+    },
+    "Bgm47/DeathOfAsylumChoir": {
+      "lengthMs": 62704
+    },
+    "Bgm47/DeathOfAsylumChoirExtended": {
+      "lengthMs": 118835
+    },
+    "Bgm47/GoGoRangers!": {
+      "lengthMs": 97541
+    },
+    "Bgm47/HuntingGround": {
+      "lengthMs": 95973
+    },
+    "Bgm47/IlliumRebirth": {
+      "lengthMs": 43976
+    },
+    "Bgm47/MrHazard": {
+      "lengthMs": 87066
+    },
+    "Bgm47/SavageTerminal": {
+      "lengthMs": 104646
+    },
+    "Bgm47/TheTuneOfAzureLight": {
+      "lengthMs": 171232
+    },
+    "Bgm47/TheTuneOfAzureLight2": {
+      "lengthMs": 173793
+    },
+    "Bgm47/VacuumCleaner": {
+      "lengthMs": 90697
+    },
+    "Bgm48/BlackDungeon": {
+      "lengthMs": 10057
+    },
+    "Bgm48/Doomsday_FULL": {
+      "lengthMs": 99586
+    },
+    "Bgm48/Doomsday_LOOP": {
+      "lengthMs": 30021
+    },
+    "Bgm48/EveningPrimrose": {
+      "lengthMs": 101542
+    },
+    "Bgm48/ForgottenNames": {
+      "lengthMs": 95242
+    },
+    "Bgm48/Memory": {
+      "lengthMs": 101203
+    },
+    "Bgm48/MemoryOfKritias": {
+      "lengthMs": 99064
+    },
+    "Bgm48/Nowhere": {
+      "lengthMs": 116488
+    },
+    "Bgm48/Outpost": {
+      "lengthMs": 89439
+    },
+    "Bgm48/OverTheClouds": {
+      "lengthMs": 88422
+    },
+    "Bgm48/OverTheClouds_RhythmicVer": {
+      "lengthMs": 79945
+    },
+    "Bgm48/SwampOfMemoryMoras": {
+      "lengthMs": 100911
+    },
+    "Bgm48/Title": {
+      "lengthMs": 376947
+    },
+    "Bgm48/VerdelDungeon": {
+      "lengthMs": 101907
+    },
+    "Bgm48/VerdelField": {
+      "lengthMs": 74161
+    },
+    "Bgm48/VerdelTown": {
+      "lengthMs": 74161
+    },
+    "Bgm48/WayBackHome": {
+      "lengthMs": 96404
+    },
+    "Bgm48/gloryWing": {
+      "lengthMs": 20297
+    },
+    "Bgm48/noname": {
+      "lengthMs": 28499
+    },
+    "Bgm49/BloodCage": {
+      "lengthMs": 94380
+    },
+    "Bgm49/ConteminatedSea": {
+      "lengthMs": 95465
+    },
+    "Bgm49/DepthOfPain": {
+      "lengthMs": 102272
+    },
+    "Bgm49/Diffraction": {
+      "lengthMs": 94981
+    },
+    "Bgm49/DuskHallucination": {
+      "lengthMs": 92074
+    },
+    "Bgm49/EternalSwamp": {
+      "lengthMs": 113984
+    },
+    "Bgm49/FerociousBattlefield": {
+      "lengthMs": 108611
+    },
+    "Bgm49/FerociousBattlefield_RiserEdit": {
+      "lengthMs": 56861
+    },
+    "Bgm49/FerociousBattlefield_ShortEdit": {
+      "lengthMs": 54696
+    },
+    "Bgm49/FerociousBattlefield_loop": {
+      "lengthMs": 23088
+    },
+    "Bgm49/HeartofSuffering": {
+      "lengthMs": 113684
+    },
+    "Bgm49/MirrorCage": {
+      "lengthMs": 89312
+    },
+    "Bgm49/SecretLabyrinth": {
+      "lengthMs": 90430
+    },
+    "Bgm49/SoupOfLife": {
+      "lengthMs": 111610
+    },
+    "Bgm49/StrangeFog": {
+      "lengthMs": 105560
+    },
+    "Bgm49/TempleInTheMirror": {
+      "lengthMs": 96117
+    },
+    "Bgm49/WarCloud": {
+      "lengthMs": 86205
+    },
+    "Bgm49/WaveofEmptiness": {
+      "lengthMs": 95908
+    },
+    "Bgm50/BlackFury": {
+      "lengthMs": 100675
+    },
+    "Bgm50/LostSpace": {
+      "lengthMs": 56131
+    },
+    "Bgm50/NewBeginningNotTheEnd": {
+      "lengthMs": 162664
+    },
+    "Bgm50/SubterminalPoint": {
+      "lengthMs": 95111
+    },
+    "Bgm50/TearsOfTheWorld": {
+      "lengthMs": 93570
+    },
+    "Bgm50/TempleOfDarkness": {
+      "lengthMs": 96235
+    },
+    "Bgm50/TheWorld\u2019sEnd": {
+      "lengthMs": 86334
+    },
+    "Bgm50/ThroneOfDarkness": {
+      "lengthMs": 120737
+    },
+    "Bgm50/WorldHorizon": {
+      "lengthMs": 79464
+    },
+    "Bgm51/LosGurugers": {
+      "lengthMs": 90587
+    },
+    "Bgm51/LuensHouse": {
+      "lengthMs": 108826
+    },
+    "Bgm51/MapleSquadS1": {
+      "lengthMs": 101537
+    },
+    "Bgm51/MysteriousTotemintheJungle": {
+      "lengthMs": 63956
+    },
+    "Bgm51/Pathfinder": {
+      "lengthMs": 91917
+    },
+    "Bgm51/PathfinderRelicEvolution": {
+      "lengthMs": 36989
+    },
+    "Bgm51/SecretElodin": {
+      "lengthMs": 97070
+    },
+    "Bgm51/ThePartemRuins": {
+      "lengthMs": 93247
+    },
+    "Bgm51/TheVillageOfKarupa": {
+      "lengthMs": 87118
+    },
+    "Bgm51/battleHorizonTheme": {
+      "lengthMs": 94719
+    },
+    "Bgm52/Borderless": {
+      "lengthMs": 87327
+    },
+    "Bgm52/JourneyMusicBox": {
+      "lengthMs": 40959
+    },
+    "Bgm52/LiberatedEdelsteinCity": {
+      "lengthMs": 129227
+    },
+    "Bgm53/5thAdelesOathInfinite": {
+      "lengthMs": 22040
+    },
+    "Bgm53/AdelesOath": {
+      "lengthMs": 104098
+    },
+    "Bgm53/Apostles": {
+      "lengthMs": 97812
+    },
+    "Bgm53/AwakeningOfOldGod": {
+      "lengthMs": 144648
+    },
+    "Bgm53/BattleOfCernium": {
+      "lengthMs": 91585
+    },
+    "Bgm53/BurningCity": {
+      "lengthMs": 95137
+    },
+    "Bgm53/CheongUn": {
+      "lengthMs": 89857
+    },
+    "Bgm53/CreepyTemple": {
+      "lengthMs": 103107
+    },
+    "Bgm53/ForEinherjar": {
+      "lengthMs": 105794
+    },
+    "Bgm53/GraveyardOfSword": {
+      "lengthMs": 96052
+    },
+    "Bgm53/HolyWar": {
+      "lengthMs": 91585
+    },
+    "Bgm53/MaskedHeart": {
+      "lengthMs": 88005
+    },
+    "Bgm53/OverlordOfLife": {
+      "lengthMs": 92212
+    },
+    "Bgm53/PrimalBloom": {
+      "lengthMs": 23475
+    },
+    "Bgm53/RedMoon": {
+      "lengthMs": 85944
+    },
+    "Bgm53/RidingOnTheClouds": {
+      "lengthMs": 88735
+    },
+    "Bgm53/RidingOnTheCloudsGodComing": {
+      "lengthMs": 20032
+    },
+    "Bgm53/RisingSun": {
+      "lengthMs": 95843
+    },
+    "Bgm53/RomanticSunset": {
+      "lengthMs": 100890
+    },
+    "Bgm53/SanctuaryOfMitra": {
+      "lengthMs": 89521
+    },
+    "Bgm53/SeaWave": {
+      "lengthMs": 13609
+    },
+    "Bgm53/SeonYuSan": {
+      "lengthMs": 88865
+    },
+    "Bgm53/Streetpiano": {
+      "lengthMs": 33645
+    },
+    "Bgm53/TheHolyLand": {
+      "lengthMs": 102530
+    },
+    "Bgm53/TheWallsofTragedy": {
+      "lengthMs": 92496
+    },
+    "Bgm53/WhereTheSecretLies": {
+      "lengthMs": 115079
+    },
+    "Bgm54/FungusForest": {
+      "lengthMs": 87666
+    },
+    "Bgm54/FungusForestB": {
+      "lengthMs": 79736
+    },
+    "Bgm54/IlliyardMoor": {
+      "lengthMs": 125335
+    },
+    "Bgm54/MemoryOfSunset": {
+      "lengthMs": 112314
+    },
+    "Bgm54/MushbudForest": {
+      "lengthMs": 106608
+    },
+    "Bgm54/ReverseCity": {
+      "lengthMs": 113566
+    },
+    "Bgm54/ReverseCity2": {
+      "lengthMs": 93404
+    },
+    "Bgm54/T-bomb": {
+      "lengthMs": 91187
+    },
+    "Bgm55/GoodbyeMyFriends": {
+      "lengthMs": 97176
+    },
+    "Bgm55/JazzForDrLimRadio": {
+      "lengthMs": 153396
+    },
+    "Bgm55/MyPrinceMyKingdom": {
+      "lengthMs": 120110
+    },
+    "Bgm55/SinkingThings": {
+      "lengthMs": 117168
+    },
+    "Bgm55/TheKnightOfSharenian": {
+      "lengthMs": 86543
+    },
+    "Bgm55/WhaleBelly": {
+      "lengthMs": 114720
+    },
+    "Bgm55/WhereStarsRest": {
+      "lengthMs": 125232
+    },
+    "Bgm55/WhiteNight": {
+      "lengthMs": 97828
+    },
+    "Bgm56/5thKainThanatosDescent": {
+      "lengthMs": 45035
+    },
+    "Bgm56/DispossessedAnger": {
+      "lengthMs": 89208
+    },
+    "Bgm56/DoubtYou": {
+      "lengthMs": 87693
+    },
+    "Bgm56/HappyBirthdayMyDear": {
+      "lengthMs": 189649
+    },
+    "Bgm56/HappyBirthdayMyDearShort": {
+      "lengthMs": 85394
+    },
+    "Bgm56/HeavyRain": {
+      "lengthMs": 6008
+    },
+    "Bgm56/Malice": {
+      "lengthMs": 190380
+    },
+    "Bgm56/TheDispossessed": {
+      "lengthMs": 101041
+    },
+    "Bgm56/ToolenCity": {
+      "lengthMs": 97097
+    },
+    "Bgm57/A mechanic with a wander": {
+      "lengthMs": 104019
+    },
+    "Bgm57/AnotherdayOfTheAtelier": {
+      "lengthMs": 97916
+    },
+    "Bgm57/AnotherdayOfTheAtelier_NoIntro": {
+      "lengthMs": 93247
+    },
+    "Bgm57/BetweenAlley": {
+      "lengthMs": 77009
+    },
+    "Bgm57/DestroyedFourSeasons": {
+      "lengthMs": 65077
+    },
+    "Bgm57/FadedWinter": {
+      "lengthMs": 61217
+    },
+    "Bgm57/FuryOfTheWatcher": {
+      "lengthMs": 95817
+    },
+    "Bgm57/Historical Site of Slime": {
+      "lengthMs": 76763
+    },
+    "Bgm57/HyperLifeIsFullOfHappinessHomeOfSpirits": {
+      "lengthMs": 20032
+    },
+    "Bgm57/Invasion": {
+      "lengthMs": 61687
+    },
+    "Bgm57/LifeIsFullOfHappiness": {
+      "lengthMs": 115304
+    },
+    "Bgm57/Lonesome Cinema": {
+      "lengthMs": 84897
+    },
+    "Bgm57/OccupiedFortress": {
+      "lengthMs": 93074
+    },
+    "Bgm57/Once upon a time in Karotte": {
+      "lengthMs": 116715
+    },
+    "Bgm57/OnedayAtTheAtelier": {
+      "lengthMs": 94223
+    },
+    "Bgm57/PreparationForBreakthrough": {
+      "lengthMs": 120110
+    },
+    "Bgm57/RuinationOfFourSeasons": {
+      "lengthMs": 127547
+    },
+    "Bgm57/Train heading nowhere": {
+      "lengthMs": 96052
+    },
+    "Bgm57/Wayout of the wilderness": {
+      "lengthMs": 91402
+    },
+    "Bgm57/Welcome to Hotel Arcs": {
+      "lengthMs": 98455
+    },
+    "Bgm57/Welcome to Ramuramu Valley": {
+      "lengthMs": 69720
+    },
+    "Bgm57/WonderfulMomentsInNarin": {
+      "lengthMs": 103366
+    },
+    "Bgm58/Alley on the Other Side": {
+      "lengthMs": 90587
+    },
+    "Bgm58/Endless Curse": {
+      "lengthMs": 124600
+    },
+    "Bgm58/Four Perils Astray": {
+      "lengthMs": 152326
+    },
+    "Bgm58/Irreversible Abomination": {
+      "lengthMs": 87796
+    },
+    "Bgm58/Just Another Maple Leaf": {
+      "lengthMs": 84118
+    },
+    "Bgm58/Knight of Light": {
+      "lengthMs": 103916
+    },
+    "Bgm58/Noblesse nostalgia": {
+      "lengthMs": 97421
+    },
+    "Bgm58/Resting place of God": {
+      "lengthMs": 112393
+    },
+    "Bgm58/Sunshine blurring the Unknown": {
+      "lengthMs": 96470
+    },
+    "Bgm58/The Beginnig of The Adventure": {
+      "lengthMs": 165968
+    },
+    "Bgm58/The Lost City among the Clouds": {
+      "lengthMs": 111454
+    },
+    "Bgm58/The other side of the dimension": {
+      "lengthMs": 104411
+    },
+    "Bgm58/Warning! Unknown Area": {
+      "lengthMs": 81562
+    },
+    "Bgm59/Advance of Alliance": {
+      "lengthMs": 78354
+    },
+    "Bgm59/Carnival of the Night": {
+      "lengthMs": 94421
+    },
+    "Bgm59/Cygnus\u0027s rest": {
+      "lengthMs": 144710
+    },
+    "Bgm59/Fierce fortress": {
+      "lengthMs": 88187
+    },
+    "Bgm59/Four Auspicious Beasts": {
+      "lengthMs": 79945
+    },
+    "Bgm59/Lord\u0027s Castle": {
+      "lengthMs": 174184
+    },
+    "Bgm59/Oasis in the Desert": {
+      "lengthMs": 95152
+    },
+    "Bgm59/Oblivion": {
+      "lengthMs": 35369
+    },
+    "Bgm59/Outskirts of Erimos": {
+      "lengthMs": 87926
+    },
+    "Bgm59/Painful and lingering death": {
+      "lengthMs": 84718
+    },
+    "Bgm59/Radiant Triumph": {
+      "lengthMs": 138319
+    },
+    "Bgm59/Radiant Triumph Reprise": {
+      "lengthMs": 31352
+    },
+    "Bgm59/Realize truth": {
+      "lengthMs": 72068
+    },
+    "Bgm59/Shadowy passage": {
+      "lengthMs": 95908
+    },
+    "Bgm59/Tangled Nebula": {
+      "lengthMs": 92212
+    },
+    "Bgm59/The land of peach blossoms": {
+      "lengthMs": 83936
+    },
+    "Bgm59/The other side of ShangriLa": {
+      "lengthMs": 83936
+    },
+    "Bgm60/Adventurers from Beyond": {
+      "lengthMs": 181853
+    },
+    "Bgm60/After Ragnarok": {
+      "lengthMs": 114844
+    },
+    "Bgm60/Aidan": {
+      "lengthMs": 112561
+    },
+    "Bgm60/An approaching abyss": {
+      "lengthMs": 100473
+    },
+    "Bgm60/An invitation to the night": {
+      "lengthMs": 113905
+    },
+    "Bgm60/An occupied coast": {
+      "lengthMs": 93743
+    },
+    "Bgm60/Ancient Ruins of Blue Jade": {
+      "lengthMs": 88292
+    },
+    "Bgm60/Azmoth Canyon Boundary": {
+      "lengthMs": 117635
+    },
+    "Bgm60/Azmoth Canyon Boundary_slow": {
+      "lengthMs": 95934
+    },
+    "Bgm60/Blazing Canyon": {
+      "lengthMs": 75850
+    },
+    "Bgm60/Cocked pistol": {
+      "lengthMs": 95360
+    },
+    "Bgm60/Emerald Jungle": {
+      "lengthMs": 79945
+    },
+    "Bgm60/Encounter_Arena": {
+      "lengthMs": 113293
+    },
+    "Bgm60/Encounter_Chapel": {
+      "lengthMs": 90383
+    },
+    "Bgm60/Encounter_Lab": {
+      "lengthMs": 88816
+    },
+    "Bgm60/Hunting_Arena": {
+      "lengthMs": 113293
+    },
+    "Bgm60/Hunting_Chapel": {
+      "lengthMs": 90383
+    },
+    "Bgm60/Hunting_Lab": {
+      "lengthMs": 88816
+    },
+    "Bgm60/Infernus of Doom": {
+      "lengthMs": 121573
+    },
+    "Bgm60/Kind Azrael": {
+      "lengthMs": 117446
+    },
+    "Bgm60/Last requiem": {
+      "lengthMs": 110671
+    },
+    "Bgm60/Passageway in the abyss": {
+      "lengthMs": 75850
+    },
+    "Bgm60/Reborn gods": {
+      "lengthMs": 112184
+    },
+    "Bgm60/Reproduced Abyss C": {
+      "lengthMs": 102742
+    },
+    "Bgm60/Reproduced Abyss D": {
+      "lengthMs": 102742
+    },
+    "Bgm60/Shooting_Lab": {
+      "lengthMs": 64574
+    },
+    "Bgm60/Showdown in the Inverted Realm": {
+      "lengthMs": 136228
+    },
+    "Bgm60/Tears of eternity": {
+      "lengthMs": 179792
+    },
+    "Bgm60/Tears of eternity_loop": {
+      "lengthMs": 89074
+    },
+    "Bgm60/The Knight Commander": {
+      "lengthMs": 102086
+    },
+    "Bgm60/The eyes of the ishfira": {
+      "lengthMs": 104646
+    },
+    "Bgm60/The fate of an immortal": {
+      "lengthMs": 108376
+    },
+    "Bgm60/The great tropics": {
+      "lengthMs": 87561
+    },
+    "Bgm60/The neglected solitude of the sanctuary": {
+      "lengthMs": 107228
+    },
+    "Bgm60/The neglected solitude of the sanctuary_loop": {
+      "lengthMs": 97473
+    },
+    "Bgm60/The saddest sanctuary, Sephiroth": {
+      "lengthMs": 96287
+    },
+    "Bgm60/Turbulent Realm": {
+      "lengthMs": 100466
+    },
+    "Bgm60/Wanderer\u0027s Hut": {
+      "lengthMs": 92465
+    },
+    "Bgm61/Ashes of spring": {
+      "lengthMs": 112169
+    },
+    "Bgm61/City of Eternal Night": {
+      "lengthMs": 118679
+    },
+    "Bgm61/Courage Unbreakable": {
+      "lengthMs": 139858
+    },
+    "Bgm61/Feast of evil spirits": {
+      "lengthMs": 114129
+    },
+    "Bgm61/Gate of Proof": {
+      "lengthMs": 77937
+    },
+    "Bgm61/GuildCastle_Comfort": {
+      "lengthMs": 99090
+    },
+    "Bgm61/GuildCastle_FallenApart": {
+      "lengthMs": 95360
+    },
+    "Bgm61/GuildCastle_FollowTheLightLeaks": {
+      "lengthMs": 103916
+    },
+    "Bgm61/GuildCastle_FullofJoyandLaughter": {
+      "lengthMs": 81067
+    },
+    "Bgm61/GuildCastle_HisReminiscence": {
+      "lengthMs": 70164
+    },
+    "Bgm61/GuildCastle_Lobby": {
+      "lengthMs": 89935
+    },
+    "Bgm61/GuildCastle_Room": {
+      "lengthMs": 89935
+    },
+    "Bgm61/GuildCastle_Teatime": {
+      "lengthMs": 86335
+    },
+    "Bgm61/If you follow the mountain path": {
+      "lengthMs": 104698
+    },
+    "Bgm61/Irresistible Calling": {
+      "lengthMs": 97838
+    },
+    "Bgm61/Malefic Sonata": {
+      "lengthMs": 141441
+    },
+    "Bgm61/Neo Vandalism": {
+      "lengthMs": 102664
+    },
+    "Bgm61/Port city of Balora": {
+      "lengthMs": 138111
+    },
+    "Bgm61/Pristine, Tender Illusion": {
+      "lengthMs": 99925
+    },
+    "Bgm61/Rebirth of life": {
+      "lengthMs": 92813
+    },
+    "Bgm61/Rest of the Broken Truth": {
+      "lengthMs": 114558
+    },
+    "Bgm61/Serpent\u0027s Lake": {
+      "lengthMs": 118966
+    },
+    "Bgm61/Silent Protocol": {
+      "lengthMs": 126165
+    },
+    "Bgm61/Succession Bloom": {
+      "lengthMs": 104568
+    },
+    "Bgm61/The downfall": {
+      "lengthMs": 90383
+    },
+    "Bgm61/Unveiled Deformity": {
+      "lengthMs": 99925
+    },
+    "Bgm61/Voice of Verdict": {
+      "lengthMs": 139858
+    },
+    "Bgm61/Voltage Overdrive": {
+      "lengthMs": 95386
+    },
+    "Bgm61/When the wind blows": {
+      "lengthMs": 104229
+    },
+    "Bgm61/Wind flowing in the harbor": {
+      "lengthMs": 181905
+    },
+    "Bgm61/Wisdom Beyond Aspirations": {
+      "lengthMs": 139858
+    },
+    "Bgm62/A desolate and lonely furnace": {
+      "lengthMs": 100675
+    },
+    "Bgm62/Secrets Hidden Under the Sand": {
+      "lengthMs": 114766
+    },
+    "Bgm62/The Arena of Rules and Rupture": {
+      "lengthMs": 90044
+    },
+    "Bgm62/The Ghosts of the Sleepless Gods": {
+      "lengthMs": 102455
+    },
+    "Bgm62/The crossroads of control and disobedience": {
+      "lengthMs": 94317
+    },
+    "Bgm62/The furnace that swallowed the gods": {
+      "lengthMs": 152848
+    },
+    "Bgm62/The gaze of abandoned robots": {
+      "lengthMs": 94839
+    },
+    "BgmAoT/Traning": {
+      "lengthMs": 61637
+    },
+    "BgmAoT/Wall01": {
+      "lengthMs": 61194
+    },
+    "BgmAoT/Wall02": {
+      "lengthMs": 96757
+    },
+    "BgmAoT/WallLoadCity": {
+      "lengthMs": 61351
+    },
+    "BgmBT/BeastTamerColloseum": {
+      "lengthMs": 152267
+    },
+    "BgmBT/BeastTamerKoboltCave": {
+      "lengthMs": 106736
+    },
+    "BgmBT/BeastTamerWoodTown": {
+      "lengthMs": 56058
+    },
+    "BgmBT/ComeWithMeAll": {
+      "lengthMs": 200515
+    },
+    "BgmBT/FightingPinkBeenHawk": {
+      "lengthMs": 146651
+    },
+    "BgmBT/RemembranceBear": {
+      "lengthMs": 134504
+    },
+    "BgmBT/commercIng": {
+      "lengthMs": 128486
+    },
+    "BgmBT/commerceBattle": {
+      "lengthMs": 88787
+    },
+    "BgmBT/commerzBeach": {
+      "lengthMs": 79867
+    },
+    "BgmBT/commerzCanal": {
+      "lengthMs": 123924
+    },
+    "BgmBT/commerzForest": {
+      "lengthMs": 78053
+    },
+    "BgmBT/rock\u0027nBattle": {
+      "lengthMs": 38781
+    },
+    "BgmBT/rock\u0027nBattleTiger": {
+      "lengthMs": 38781
+    },
+    "BgmBT/velludBossBattle": {
+      "lengthMs": 78053
+    },
+    "BgmBT/velludfieldBattle": {
+      "lengthMs": 78053
+    },
+    "BgmCN/DragonTigerDungeon": {
+      "lengthMs": 63982
+    },
+    "BgmCN/DragonTigerField": {
+      "lengthMs": 55061
+    },
+    "BgmCN/DragonTigerField2": {
+      "lengthMs": 59115
+    },
+    "BgmCN/ShanghaiField": {
+      "lengthMs": 133433
+    },
+    "BgmCN/Yuyuan": {
+      "lengthMs": 132101
+    },
+    "BgmCN/chair_3016101": {
+      "lengthMs": 15858
+    },
+    "BgmCN/newNanjinglu": {
+      "lengthMs": 53335
+    },
+    "BgmCN/newWaitan": {
+      "lengthMs": 81953
+    },
+    "BgmCN/newYuyuan": {
+      "lengthMs": 49865
+    },
+    "BgmCN/shaolinBoss": {
+      "lengthMs": 64451
+    },
+    "BgmCN/shaolin_cangjingge": {
+      "lengthMs": 157387
+    },
+    "BgmCN/shaolin_daxiongbaodian": {
+      "lengthMs": 147409
+    },
+    "BgmCN/shaolin_mishi": {
+      "lengthMs": 132858
+    },
+    "BgmCN/shaolin_shan": {
+      "lengthMs": 153182
+    },
+    "BgmCN/shaolin_songshan": {
+      "lengthMs": 138919
+    },
+    "BgmED/Blurry Memory": {
+      "lengthMs": 84062
+    },
+    "BgmED/Infiltration": {
+      "lengthMs": 114337
+    },
+    "BgmED/Into the Deep": {
+      "lengthMs": 115252
+    },
+    "BgmED/Predator of the Deep Sea": {
+      "lengthMs": 98795
+    },
+    "BgmED/What Flowed In": {
+      "lengthMs": 109792
+    },
+    "BgmED/highMountain_b": {
+      "lengthMs": 101151
+    },
+    "BgmED/highMountain_n": {
+      "lengthMs": 119879
+    },
+    "BgmEvent/17th_Event": {
+      "lengthMs": 106631
+    },
+    "BgmEvent/18th_Event": {
+      "lengthMs": 91917
+    },
+    "BgmEvent/19th_Event": {
+      "lengthMs": 167115
+    },
+    "BgmEvent/Aquarium_Lofi": {
+      "lengthMs": 321790
+    },
+    "BgmEvent/FrozenLink_Lofi": {
+      "lengthMs": 304079
+    },
+    "BgmEvent/FunnyRabbit": {
+      "lengthMs": 105717
+    },
+    "BgmEvent/FunnyRabbitFaster": {
+      "lengthMs": 96130
+    },
+    "BgmEvent/GalaxyisDangerous": {
+      "lengthMs": 82240
+    },
+    "BgmEvent/HiddenCatch": {
+      "lengthMs": 83382
+    },
+    "BgmEvent/IlliyardMoor_Lofi": {
+      "lengthMs": 356011
+    },
+    "BgmEvent/Leafre_Lofi": {
+      "lengthMs": 390806
+    },
+    "BgmEvent/LittleMaplePlanet": {
+      "lengthMs": 91917
+    },
+    "BgmEvent/NeoCastle": {
+      "lengthMs": 94213
+    },
+    "BgmEvent/NewLogin_Jazz": {
+      "lengthMs": 183183
+    },
+    "BgmEvent/RabbitInvasion": {
+      "lengthMs": 121469
+    },
+    "BgmEvent/RaindropFlower_Jazz": {
+      "lengthMs": 145258
+    },
+    "BgmEvent/StarlightSymphony": {
+      "lengthMs": 147513
+    },
+    "BgmEvent/TheCygnusGarden_Jazz": {
+      "lengthMs": 176166
+    },
+    "BgmEvent/TheFantasticThinking_Jazz": {
+      "lengthMs": 167637
+    },
+    "BgmEvent/WelcomeToThe15thStreet": {
+      "lengthMs": 114938
+    },
+    "BgmEvent/awake_Event": {
+      "lengthMs": 106736
+    },
+    "BgmEvent/captureTheFlag": {
+      "lengthMs": 127007
+    },
+    "BgmEvent/chuchu": {
+      "lengthMs": 95908
+    },
+    "BgmEvent/coordiKing": {
+      "lengthMs": 123402
+    },
+    "BgmEvent/dolphin_night": {
+      "lengthMs": 151640
+    },
+    "BgmEvent/dolphin_noon": {
+      "lengthMs": 138083
+    },
+    "BgmEvent/fullMoonParty": {
+      "lengthMs": 81536
+    },
+    "BgmEvent/halloweenMainHall": {
+      "lengthMs": 123977
+    },
+    "BgmEvent/halloweenParty": {
+      "lengthMs": 122383
+    },
+    "BgmEvent/halloweenracing": {
+      "lengthMs": 121469
+    },
+    "BgmEvent/ignition": {
+      "lengthMs": 66434
+    },
+    "BgmEvent/mapleGalaxy": {
+      "lengthMs": 91995
+    },
+    "BgmEvent/mapleGalaxy2": {
+      "lengthMs": 84640
+    },
+    "BgmEvent/mapleLIVE": {
+      "lengthMs": 86492
+    },
+    "BgmEvent/mapleLIVE_pinkbean": {
+      "lengthMs": 36440
+    },
+    "BgmEvent/maxLevelChair": {
+      "lengthMs": 80587
+    },
+    "BgmEvent/salonRise": {
+      "lengthMs": 90587
+    },
+    "BgmEvent/wedding": {
+      "lengthMs": 127294
+    },
+    "BgmEvent/weddingDance": {
+      "lengthMs": 146729
+    },
+    "BgmEvent/wichTower": {
+      "lengthMs": 160052
+    },
+    "BgmEvent2/Busters_Hog": {
+      "lengthMs": 142106
+    },
+    "BgmEvent2/Busters_Mushroom": {
+      "lengthMs": 142106
+    },
+    "BgmEvent2/Busters_Necki": {
+      "lengthMs": 142106
+    },
+    "BgmEvent2/Mashup": {
+      "lengthMs": 298657
+    },
+    "BgmEvent2/Newtro_ChuChu": {
+      "lengthMs": 72019
+    },
+    "BgmEvent2/Newtro_Disco": {
+      "lengthMs": 129123
+    },
+    "BgmEvent2/Newtro_FlorinaBeach": {
+      "lengthMs": 197119
+    },
+    "BgmEvent2/Newtro_Henesys": {
+      "lengthMs": 140120
+    },
+    "BgmEvent2/Newtro_Kingdom": {
+      "lengthMs": 142106
+    },
+    "BgmEvent2/Newtro_Login": {
+      "lengthMs": 365113
+    },
+    "BgmEvent2/Newtro_Ludibrium": {
+      "lengthMs": 146546
+    },
+    "BgmEvent2/Newtro_Orbis": {
+      "lengthMs": 280110
+    },
+    "BgmEvent2/VEvent": {
+      "lengthMs": 98011
+    },
+    "BgmEvent2/WaterGunGame": {
+      "lengthMs": 108663
+    },
+    "BgmEvent2/adventureIsland": {
+      "lengthMs": 88973
+    },
+    "BgmEvent2/battleHorizon": {
+      "lengthMs": 138997
+    },
+    "BgmEvent2/clubHalloween": {
+      "lengthMs": 88813
+    },
+    "BgmEvent2/glory_Base": {
+      "lengthMs": 96052
+    },
+    "BgmEvent2/goblinMarket": {
+      "lengthMs": 103968
+    },
+    "BgmEvent2/kiteBgm": {
+      "lengthMs": 183614
+    },
+    "BgmEvent2/miniGameStation": {
+      "lengthMs": 125727
+    },
+    "BgmEvent2/pinkbeanSpotlight": {
+      "lengthMs": 32000
+    },
+    "BgmEvent2/rhythmBgm1": {
+      "lengthMs": 142289
+    },
+    "BgmEvent2/rhythmBgm2": {
+      "lengthMs": 157126
+    },
+    "BgmEvent2/risingStar": {
+      "lengthMs": 104568
+    },
+    "BgmEvent2/risingStar2": {
+      "lengthMs": 104568
+    },
+    "BgmEvent2/santaBeats": {
+      "lengthMs": 123507
+    },
+    "BgmEvent2/santaRocks": {
+      "lengthMs": 160391
+    },
+    "BgmEvent2/tenthBoard": {
+      "lengthMs": 121391
+    },
+    "BgmEvent2/unionArena": {
+      "lengthMs": 98673
+    },
+    "BgmEvent2/unionArena2": {
+      "lengthMs": 45176
+    },
+    "BgmEvent3/2024Halloween_dimentionHauntedMansion": {
+      "lengthMs": 101072
+    },
+    "BgmEvent3/21st_mapleRacingIngame": {
+      "lengthMs": 103889
+    },
+    "BgmEvent3/21st_mapleRacingLobby": {
+      "lengthMs": 174289
+    },
+    "BgmEvent3/21st_mapleSoccerOnline": {
+      "lengthMs": 82162
+    },
+    "BgmEvent3/Abyss_AbysmalRavine": {
+      "lengthMs": 95934
+    },
+    "BgmEvent3/Abyss_MysteriousJourney": {
+      "lengthMs": 106446
+    },
+    "BgmEvent3/Abyss_TheBottomEnd": {
+      "lengthMs": 100081
+    },
+    "BgmEvent3/Abyss_WeAreNotAfraid": {
+      "lengthMs": 88344
+    },
+    "BgmEvent3/Abyss_WheretheGreatExpeditionBegins_02": {
+      "lengthMs": 95934
+    },
+    "BgmEvent3/An Old Story from Grandma": {
+      "lengthMs": 209946
+    },
+    "BgmEvent3/ChipmunkSweepers_Marionette": {
+      "lengthMs": 112666
+    },
+    "BgmEvent3/ChipmunkSweepers_Mouse": {
+      "lengthMs": 118413
+    },
+    "BgmEvent3/ChipmunkSweepers_Snake": {
+      "lengthMs": 168724
+    },
+    "BgmEvent3/Dancing_Sea_Otter": {
+      "lengthMs": 86543
+    },
+    "BgmEvent3/Dancing_Sea_Otter_Festival": {
+      "lengthMs": 79945
+    },
+    "BgmEvent3/Dave_the_Diver_01_Seals_and_Dolphins": {
+      "lengthMs": 127503
+    },
+    "BgmEvent3/Dave_the_Diver_02_The_Blue_Hole": {
+      "lengthMs": 149498
+    },
+    "BgmEvent3/Dave_the_Diver_03_Diver": {
+      "lengthMs": 105743
+    },
+    "BgmEvent3/Dave_the_Diver_04_Darker_Trenches": {
+      "lengthMs": 141609
+    },
+    "BgmEvent3/Dave_the_Diver_05_Restaraunt_Prep": {
+      "lengthMs": 99108
+    },
+    "BgmEvent3/Dave_the_Diver_06_Serve,_Sushi,_Serve!": {
+      "lengthMs": 94275
+    },
+    "BgmEvent3/Dave_the_Diver_09_On_the_boat": {
+      "lengthMs": 72150
+    },
+    "BgmEvent3/Dave_the_Diver_13_Tunnel_of_Darkness": {
+      "lengthMs": 72097
+    },
+    "BgmEvent3/Dave_the_Diver_16_Timeworn_Tunnel": {
+      "lengthMs": 172068
+    },
+    "BgmEvent3/Dave_the_Diver_21_Sharks_Like_Games_Too": {
+      "lengthMs": 92290
+    },
+    "BgmEvent3/LucidDream": {
+      "lengthMs": 119357
+    },
+    "BgmEvent3/LucidDream2": {
+      "lengthMs": 88109
+    },
+    "BgmEvent3/LucidDream3": {
+      "lengthMs": 84431
+    },
+    "BgmEvent3/Mapril_Island": {
+      "lengthMs": 88764
+    },
+    "BgmEvent3/MashUp_Dance1": {
+      "lengthMs": 95973
+    },
+    "BgmEvent3/MashUp_Dance2": {
+      "lengthMs": 90827
+    },
+    "BgmEvent3/Minar_Autumn_Picnic": {
+      "lengthMs": 95099
+    },
+    "BgmEvent3/Mycin.T x ned - Story of Maple_AR": {
+      "lengthMs": 212976
+    },
+    "BgmEvent3/OriginOfRecords": {
+      "lengthMs": 102977
+    },
+    "BgmEvent3/Pan - Fairytale (Pan Remix)": {
+      "lengthMs": 128992
+    },
+    "BgmEvent3/Parang - The Tune of the Azure Light (Parang Remix)": {
+      "lengthMs": 102112
+    },
+    "BgmEvent3/Paul Bazooka - Moonlight Shadow (Paul Bazooka Remix)": {
+      "lengthMs": 156865
+    },
+    "BgmEvent3/SOPHI - Missing You (SOPHI Remix)": {
+      "lengthMs": 133851
+    },
+    "BgmEvent3/VictoriaCup_Day": {
+      "lengthMs": 98542
+    },
+    "BgmEvent3/VictoriaCup_Night": {
+      "lengthMs": 121000
+    },
+    "BgmEvent3/We Are Not Afraid_Boss_Master_Loop": {
+      "lengthMs": 88344
+    },
+    "BgmEvent3/Xmas_01_Henesys": {
+      "lengthMs": 102533
+    },
+    "BgmEvent3/Xmas_02_Leafre": {
+      "lengthMs": 72407
+    },
+    "BgmEvent3/Xmas_03_TheLakeofOblivion": {
+      "lengthMs": 100081
+    },
+    "BgmEvent3/Xmas_04_Cernium": {
+      "lengthMs": 112210
+    },
+    "BgmEvent3/Xmas_05_Odium": {
+      "lengthMs": 96430
+    },
+    "BgmEvent3/ignitionFullMoonParty": {
+      "lengthMs": 99221
+    },
+    "BgmEvent3/jam-jam - The Lake of Oblivion(jam-jam Remix)": {
+      "lengthMs": 126197
+    },
+    "BgmEvent3/mapleDanmak": {
+      "lengthMs": 61637
+    },
+    "BgmEvent3/maprilAdventure": {
+      "lengthMs": 376947
+    },
+    "BgmEvent3/ned - Ariant (ned Remix)": {
+      "lengthMs": 131944
+    },
+    "BgmEvent3/sunset over the horizon": {
+      "lengthMs": 76189
+    },
+    "BgmEvent3/wonstaurant": {
+      "lengthMs": 81588
+    },
+    "BgmEvent4/A twilight eve festival": {
+      "lengthMs": 98438
+    },
+    "BgmEvent4/CarcionOctofestival": {
+      "lengthMs": 106863
+    },
+    "BgmEvent4/CarcionOctofestivalwitheveryone": {
+      "lengthMs": 106315
+    },
+    "BgmEvent4/Ending_NextTo": {
+      "lengthMs": 228545
+    },
+    "BgmEvent4/FlowerscentedCorridor": {
+      "lengthMs": 116696
+    },
+    "BgmEvent4/HopeBlossoms": {
+      "lengthMs": 153917
+    },
+    "BgmEvent4/IllusionFantasia": {
+      "lengthMs": 84275
+    },
+    "BgmEvent4/Intro_NextOne": {
+      "lengthMs": 203702
+    },
+    "BgmEvent4/MonsterParkStaffRounge": {
+      "lengthMs": 89387
+    },
+    "BgmEvent4/MvpResortBGM": {
+      "lengthMs": 89364
+    },
+    "BgmEvent4/PlayWithMeAgain": {
+      "lengthMs": 165029
+    },
+    "BgmEvent4/PlayWithMeAllDay": {
+      "lengthMs": 155613
+    },
+    "BgmEvent4/StarryDawngarden": {
+      "lengthMs": 102977
+    },
+    "BgmEvent4/VirtualCombatSystemPhase1": {
+      "lengthMs": 96247
+    },
+    "BgmEvent4/VirtualCombatSystemPhase2": {
+      "lengthMs": 96247
+    },
+    "BgmEvent4/WarmRegard_Night": {
+      "lengthMs": 75954
+    },
+    "BgmFT/FantasticThemePark": {
+      "lengthMs": 144091
+    },
+    "BgmFT/FantasticThemePark2017": {
+      "lengthMs": 87483
+    },
+    "BgmGL/009_Conversation": {
+      "lengthMs": 966
+    },
+    "BgmGL/010_Unlock": {
+      "lengthMs": 2194
+    },
+    "BgmGL/011_Mach": {
+      "lengthMs": 2925
+    },
+    "BgmGL/012_Mach_Err": {
+      "lengthMs": 3186
+    },
+    "BgmGL/013_BurnOut": {
+      "lengthMs": 3369
+    },
+    "BgmGL/014_Turn on": {
+      "lengthMs": 2821
+    },
+    "BgmGL/6th_skill": {
+      "lengthMs": 3838
+    },
+    "BgmGL/Amorianchallenge": {
+      "lengthMs": 168045
+    },
+    "BgmGL/Bigfoot": {
+      "lengthMs": 128052
+    },
+    "BgmGL/Blackgate": {
+      "lengthMs": 59637
+    },
+    "BgmGL/BrokenDream": {
+      "lengthMs": 161512
+    },
+    "BgmGL/CosmosKnockout": {
+      "lengthMs": 129515
+    },
+    "BgmGL/CosmosKnockout1": {
+      "lengthMs": 159660
+    },
+    "BgmGL/Courtyard": {
+      "lengthMs": 144065
+    },
+    "BgmGL/CrimsonwoodKeep": {
+      "lengthMs": 150099
+    },
+    "BgmGL/CrimsonwoodKeepInterior": {
+      "lengthMs": 207020
+    },
+    "BgmGL/DarkMaplemasEve": {
+      "lengthMs": 103967
+    },
+    "BgmGL/FamiliarAdventure": {
+      "lengthMs": 105141
+    },
+    "BgmGL/GLBurningSanta": {
+      "lengthMs": 125126
+    },
+    "BgmGL/GoWest_MapleBoys": {
+      "lengthMs": 97577
+    },
+    "BgmGL/GoWest_MapleBoys_Loop": {
+      "lengthMs": 5652
+    },
+    "BgmGL/GoWest_MaplePunk": {
+      "lengthMs": 120398
+    },
+    "BgmGL/GrandmastersGauntlet": {
+      "lengthMs": 256966
+    },
+    "BgmGL/HauntedHouse": {
+      "lengthMs": 140826
+    },
+    "BgmGL/Image1": {
+      "lengthMs": 3838
+    },
+    "BgmGL/MBlockbusterC": {
+      "lengthMs": 103418
+    },
+    "BgmGL/MBlockbusterE1": {
+      "lengthMs": 123062
+    },
+    "BgmGL/MBlockbusterE2": {
+      "lengthMs": 123062
+    },
+    "BgmGL/MBlockbusterJ": {
+      "lengthMs": 95033
+    },
+    "BgmGL/MBlockbuster_1": {
+      "lengthMs": 5186
+    },
+    "BgmGL/MBlockbuster_2": {
+      "lengthMs": 4821
+    },
+    "BgmGL/MBlockbuster_3": {
+      "lengthMs": 5212
+    },
+    "BgmGL/MBlockbuster_4": {
+      "lengthMs": 4977
+    },
+    "BgmGL/MadHouse": {
+      "lengthMs": 125596
+    },
+    "BgmGL/MadHouseEnding": {
+      "lengthMs": 53864
+    },
+    "BgmGL/NLC_boss": {
+      "lengthMs": 124917
+    },
+    "BgmGL/NLC_field": {
+      "lengthMs": 121626
+    },
+    "BgmGL/NLC_kidnap": {
+      "lengthMs": 132127
+    },
+    "BgmGL/NLC_town": {
+      "lengthMs": 128261
+    },
+    "BgmGL/NLChunt": {
+      "lengthMs": 144404
+    },
+    "BgmGL/NLCtown": {
+      "lengthMs": 138057
+    },
+    "BgmGL/NLCupbeat": {
+      "lengthMs": 152006
+    },
+    "BgmGL/OHolyFright": {
+      "lengthMs": 67108
+    },
+    "BgmGL/OldMaple": {
+      "lengthMs": 116375
+    },
+    "BgmGL/PartyQuestGL": {
+      "lengthMs": 169795
+    },
+    "BgmGL/PhantomForest": {
+      "lengthMs": 150047
+    },
+    "BgmGL/SavageTerminal": {
+      "lengthMs": 104646
+    },
+    "BgmGL/SlayRide": {
+      "lengthMs": 56293
+    },
+    "BgmGL/TheNewLeafMall": {
+      "lengthMs": 157256
+    },
+    "BgmGL/TheWholeNewLeafMall": {
+      "lengthMs": 144919
+    },
+    "BgmGL/VHIFIVE": {
+      "lengthMs": 298083
+    },
+    "BgmGL/amoria": {
+      "lengthMs": 159738
+    },
+    "BgmGL/cathedral": {
+      "lengthMs": 127294
+    },
+    "BgmGL/chapel": {
+      "lengthMs": 146729
+    },
+    "BgmGL/event": {
+      "lengthMs": 94552
+    },
+    "BgmGL2D/china": {
+      "lengthMs": 36591
+    },
+    "BgmGL2D/europe": {
+      "lengthMs": 29675
+    },
+    "BgmGL2D/japan": {
+      "lengthMs": 38530
+    },
+    "BgmGL2D/malaysia": {
+      "lengthMs": 27559
+    },
+    "BgmGL2D/mrleeisland": {
+      "lengthMs": 37459
+    },
+    "BgmGL2D/singapore": {
+      "lengthMs": 30615
+    },
+    "BgmGL2D/taiwan": {
+      "lengthMs": 46262
+    },
+    "BgmGL2D/thailand": {
+      "lengthMs": 39471
+    },
+    "BgmJp/Bathroom": {
+      "lengthMs": 56372
+    },
+    "BgmJp/BattleField": {
+      "lengthMs": 203990
+    },
+    "BgmJp/BizarreForest": {
+      "lengthMs": 110889
+    },
+    "BgmJp/CastleBoss": {
+      "lengthMs": 147957
+    },
+    "BgmJp/CastleInside": {
+      "lengthMs": 132414
+    },
+    "BgmJp/CastleOutSide": {
+      "lengthMs": 139676
+    },
+    "BgmJp/CastleTrap": {
+      "lengthMs": 136359
+    },
+    "BgmJp/Elfwoods": {
+      "lengthMs": 87640
+    },
+    "BgmJp/Feeling": {
+      "lengthMs": 152581
+    },
+    "BgmJp/FirstStepMaster": {
+      "lengthMs": 171258
+    },
+    "BgmJp/Hana": {
+      "lengthMs": 157466
+    },
+    "BgmJp/WhenTheMorningComes": {
+      "lengthMs": 187742
+    },
+    "BgmJp/Yume": {
+      "lengthMs": 157257
+    },
+    "BgmJp2/Akiabara": {
+      "lengthMs": 122044
+    },
+    "BgmJp2/Kamuna": {
+      "lengthMs": 149472
+    },
+    "BgmJp2/Odaiba": {
+      "lengthMs": 144483
+    },
+    "BgmJp2/Office": {
+      "lengthMs": 133433
+    },
+    "BgmJp2/Park": {
+      "lengthMs": 139049
+    },
+    "BgmJp2/Rockbongi1": {
+      "lengthMs": 117315
+    },
+    "BgmJp2/Rockbongi2": {
+      "lengthMs": 254798
+    },
+    "BgmJp2/Tokyosky": {
+      "lengthMs": 122540
+    },
+    "BgmJp3/Hieijan": {
+      "lengthMs": 64052
+    },
+    "BgmJp3/Hieijan_nohime": {
+      "lengthMs": 66533
+    },
+    "BgmJp3/InsideHonnouji": {
+      "lengthMs": 129071
+    },
+    "BgmJp3/Kecon": {
+      "lengthMs": 128287
+    },
+    "BgmJp3/MomijiNoSakamichi": {
+      "lengthMs": 120711
+    },
+    "BgmJp3/Momijigaoka": {
+      "lengthMs": 134086
+    },
+    "BgmJp3/SengokuBoss": {
+      "lengthMs": 120529
+    },
+    "BgmJp4_Zipang/BizarreForest": {
+      "lengthMs": 110889
+    },
+    "BgmJp4_Zipang/Feeling": {
+      "lengthMs": 152581
+    },
+    "BgmJp4_Zipang/Kamuna": {
+      "lengthMs": 149472
+    },
+    "BgmJp4_Zipang/LegendOfZipang": {
+      "lengthMs": 167559
+    },
+    "BgmJp4_Zipang/LegendOfZipang_Reprise": {
+      "lengthMs": 77311
+    },
+    "BgmJp4_Zipang/LegendOfZipang_Sad": {
+      "lengthMs": 131225
+    },
+    "BgmJp4_Zipang/LegendOfZipang_Silence": {
+      "lengthMs": 95986
+    },
+    "BgmJp4_Zipang/LivingAgain": {
+      "lengthMs": 98021
+    },
+    "BgmJp4_Zipang/LivingAgain_Reprise": {
+      "lengthMs": 47289
+    },
+    "BgmJp4_Zipang/Tengou\u0027sTrial": {
+      "lengthMs": 90770
+    },
+    "BgmJp4_Zipang/YokaiBoso": {
+      "lengthMs": 85501
+    },
+    "BgmJp4_Zipang/ZipangHero": {
+      "lengthMs": 86753
+    },
+    "BgmLYNN/DeerMyDear": {
+      "lengthMs": 133859
+    },
+    "BgmLYNN/EmptyWishes": {
+      "lengthMs": 132503
+    },
+    "BgmLYNN/IntoTheWoods": {
+      "lengthMs": 96273
+    },
+    "BgmLYNN/MyLittleCottage": {
+      "lengthMs": 112158
+    },
+    "BgmLYNN/OurStoryGoesOn": {
+      "lengthMs": 119879
+    },
+    "BgmLYNN/SomewhereBeyondTheCliff": {
+      "lengthMs": 107072
+    },
+    "BgmLYNN/WhispersOfTheTrees": {
+      "lengthMs": 109732
+    },
+    "BgmMH/5thHyunsanpaUnleashedEnergy": {
+      "lengthMs": 32078
+    },
+    "BgmMH/Fate": {
+      "lengthMs": 5189
+    },
+    "BgmMH/GodOfWar": {
+      "lengthMs": 97854
+    },
+    "BgmMH/Hajin": {
+      "lengthMs": 88058
+    },
+    "BgmMH/Hyunsan": {
+      "lengthMs": 78915
+    },
+    "BgmMH/Hyunsanpa": {
+      "lengthMs": 120737
+    },
+    "BgmMH/Indomitable": {
+      "lengthMs": 129071
+    },
+    "BgmMH/Threat": {
+      "lengthMs": 96313
+    },
+    "BgmMY/Highland": {
+      "lengthMs": 144091
+    },
+    "BgmMY/KualaLumpur": {
+      "lengthMs": 135680
+    },
+    "BgmPL/DiceMaster": {
+      "lengthMs": 91820
+    },
+    "BgmPL/Eluna": {
+      "lengthMs": 96978
+    },
+    "BgmPL/ElunaExpress": {
+      "lengthMs": 99056
+    },
+    "BgmPL/GL_AdvPQ": {
+      "lengthMs": 91969
+    },
+    "BgmPL/GodOfBrain": {
+      "lengthMs": 90952
+    },
+    "BgmPL/GunMan": {
+      "lengthMs": 98595
+    },
+    "BgmPL/HiddenCatch": {
+      "lengthMs": 83382
+    },
+    "BgmPL/HiddenTales_Mystery": {
+      "lengthMs": 98151
+    },
+    "BgmPL/HiddenTales_Sorrow": {
+      "lengthMs": 103942
+    },
+    "BgmPL/HiddenTales_Tension": {
+      "lengthMs": 89465
+    },
+    "BgmPL/LandofContemplation_Day": {
+      "lengthMs": 125591
+    },
+    "BgmPL/LandofContemplation_Night": {
+      "lengthMs": 138424
+    },
+    "BgmPL/LandofInnocence_Day": {
+      "lengthMs": 90509
+    },
+    "BgmPL/LandofInnocence_Night": {
+      "lengthMs": 106993
+    },
+    "BgmPL/LandofRiches_Day": {
+      "lengthMs": 103237
+    },
+    "BgmPL/LandofRiches_Night": {
+      "lengthMs": 110202
+    },
+    "BgmPL/LandofWarriors_Day": {
+      "lengthMs": 87796
+    },
+    "BgmPL/LandofWarriors_Night": {
+      "lengthMs": 96430
+    },
+    "BgmPL/MBlockbusterE1": {
+      "lengthMs": 123062
+    },
+    "BgmPL/MBlockbusterE2": {
+      "lengthMs": 123062
+    },
+    "BgmPL/MD_AcornDetective_AR": {
+      "lengthMs": 80613
+    },
+    "BgmPL/MD_AcornDetective_MR": {
+      "lengthMs": 80613
+    },
+    "BgmPL/MD_InvadeOperation": {
+      "lengthMs": 104176
+    },
+    "BgmPL/RetroWorldBoss": {
+      "lengthMs": 85420
+    },
+    "BgmPL/RetroWorldDungeon": {
+      "lengthMs": 91135
+    },
+    "BgmPL/RetroWorldMiniGame": {
+      "lengthMs": 79449
+    },
+    "BgmPL/RetroWorldTown": {
+      "lengthMs": 71963
+    },
+    "BgmPL/SongOfTheNati": {
+      "lengthMs": 96404
+    },
+    "BgmPL/SpiritualWeight": {
+      "lengthMs": 93926
+    },
+    "BgmPL/UnexploredEluna": {
+      "lengthMs": 109097
+    },
+    "BgmPL/WeAreThePioneers": {
+      "lengthMs": 132072
+    },
+    "BgmPL/WinterCastle": {
+      "lengthMs": 100205
+    },
+    "BgmPL/WinterCastle_DownHill": {
+      "lengthMs": 86414
+    },
+    "BgmPL/amoria": {
+      "lengthMs": 159738
+    },
+    "BgmPL2/Abrup": {
+      "lengthMs": 113371
+    },
+    "BgmPL2/Appearance": {
+      "lengthMs": 150099
+    },
+    "BgmPL2/Attack": {
+      "lengthMs": 84062
+    },
+    "BgmPL2/FallenThings": {
+      "lengthMs": 85185
+    },
+    "BgmPL2/Julietta": {
+      "lengthMs": 119092
+    },
+    "BgmPL2/Labor": {
+      "lengthMs": 117394
+    },
+    "BgmPL2/Labor_MR": {
+      "lengthMs": 107519
+    },
+    "BgmPL2/PL_MooIsland_Main": {
+      "lengthMs": 103837
+    },
+    "BgmPL2/PL_MooIsland_Play": {
+      "lengthMs": 87613
+    },
+    "BgmPL2/PL_MooIsland_Rest": {
+      "lengthMs": 95491
+    },
+    "BgmPL2/Reunite": {
+      "lengthMs": 124995
+    },
+    "BgmPL2/SleepingForest": {
+      "lengthMs": 95634
+    },
+    "BgmPL2/SongOfHawar": {
+      "lengthMs": 31800
+    },
+    "BgmPL2/SongOfHawar_MR": {
+      "lengthMs": 31800
+    },
+    "BgmPL2/TheWaytoHope": {
+      "lengthMs": 94563
+    },
+    "BgmPL2/TheWaytoHope_MR": {
+      "lengthMs": 90070
+    },
+    "BgmPL2/TheWaytoHope_gloomy": {
+      "lengthMs": 104542
+    },
+    "BgmPL2/TheWaytoHope_gloomy_MR": {
+      "lengthMs": 90070
+    },
+    "BgmPL2/Turbulence": {
+      "lengthMs": 104071
+    },
+    "BgmPL2/WalkTogether": {
+      "lengthMs": 113893
+    },
+    "BgmSG/BoatQuay_field": {
+      "lengthMs": 131735
+    },
+    "BgmSG/BoatQuay_town": {
+      "lengthMs": 164989
+    },
+    "BgmSG/CBD_field": {
+      "lengthMs": 169508
+    },
+    "BgmSG/CBD_town": {
+      "lengthMs": 183849
+    },
+    "BgmSG/Ghostship": {
+      "lengthMs": 161201
+    },
+    "BgmSG/Ulu_field": {
+      "lengthMs": 152084
+    },
+    "BgmSG_Event/FlyAway_Vocal": {
+      "lengthMs": 31190
+    },
+    "BgmSG_Event/Lucid in the Dream": {
+      "lengthMs": 109889
+    },
+    "BgmSG_Event/Lucid in the Dream_Mum": {
+      "lengthMs": 24700
+    },
+    "BgmSG_Event/ShiningHeart_Vocal": {
+      "lengthMs": 207673
+    },
+    "BgmSG_Event/StarBubble_Vocal": {
+      "lengthMs": 39209
+    },
+    "BgmStarPlanet_JP/DAYBREAK": {
+      "lengthMs": 273640
+    },
+    "BgmStarPlanet_JP/Monokuro": {
+      "lengthMs": 241306
+    },
+    "BgmStarPlanet_JP/Sprechchor": {
+      "lengthMs": 291611
+    },
+    "BgmStarPlanet_JP/StarStepBGM": {
+      "lengthMs": 59187
+    },
+    "BgmStarPlanet_JP/next": {
+      "lengthMs": 180907
+    },
+    "BgmTH/goldTempleDungeonTH": {
+      "lengthMs": 223085
+    },
+    "BgmTH/goldTempleFieldTH": {
+      "lengthMs": 149342
+    },
+    "BgmTH/goldTempleTownTH": {
+      "lengthMs": 150752
+    },
+    "BgmTW/101Building": {
+      "lengthMs": 182465
+    },
+    "BgmTW/101BuildingField": {
+      "lengthMs": 147748
+    },
+    "BgmTW/101BuildingSubway": {
+      "lengthMs": 159660
+    },
+    "BgmTW/CakeMap": {
+      "lengthMs": 123298
+    },
+    "BgmTW/CakeMap4th": {
+      "lengthMs": 134060
+    },
+    "BgmTW/ChivalrousFighter": {
+      "lengthMs": 132571
+    },
+    "BgmTW/FishingSystem": {
+      "lengthMs": 160888
+    },
+    "BgmTW/GachaponHousing": {
+      "lengthMs": 138579
+    },
+    "BgmTW/MapleHighSchool": {
+      "lengthMs": 124003
+    },
+    "BgmTW/NightField": {
+      "lengthMs": 148114
+    },
+    "BgmTW/NightMarket": {
+      "lengthMs": 158171
+    },
+    "BgmTW/YoTaipei": {
+      "lengthMs": 133433
+    },
+    "BgmTW/arisanBoss": {
+      "lengthMs": 61335
+    },
+    "BgmTW/arisanCity": {
+      "lengthMs": 56215
+    },
+    "BgmTW/arisanField": {
+      "lengthMs": 56946
+    },
+    "BgmTW/arisanForest": {
+      "lengthMs": 64052
+    },
+    "BgmTW/arisanTrain": {
+      "lengthMs": 27297
+    },
+    "BgmTW/concertchair_bass": {
+      "lengthMs": 58327
+    },
+    "BgmTW/concertchair_drum": {
+      "lengthMs": 59135
+    },
+    "BgmTW/concertchair_drum_bass": {
+      "lengthMs": 59135
+    },
+    "BgmTW/concertchair_drum_bass_keyboard": {
+      "lengthMs": 59135
+    },
+    "BgmTW/concertchair_drum_bass_keyboard_guitar": {
+      "lengthMs": 59135
+    },
+    "BgmTW/concertchair_guitar": {
+      "lengthMs": 57546
+    },
+    "BgmTW/concertchair_keyboard": {
+      "lengthMs": 57546
+    },
+    "BgmUI/CashShop": {
+      "lengthMs": 85501
+    },
+    "BgmUI/NxLogo": {
+      "lengthMs": 1882
+    },
+    "BgmUI/ShopBgm": {
+      "lengthMs": 88738
+    },
+    "BgmUI/Title": {
+      "lengthMs": 111036
+    },
+    "BgmUI/Title_old1": {
+      "lengthMs": 116375
+    },
+    "BgmUI/Title_old2": {
+      "lengthMs": 111036
+    },
+    "BgmUI/Title_old3": {
+      "lengthMs": 95334
+    },
+    "BgmUI/WCSelect": {
+      "lengthMs": 15490
+    },
+    "BgmUI/WzLogo": {
+      "lengthMs": 6739
+    },
+    "BgmWz2/Abyss_AbysmalRavine": {
+      "lengthMs": 95934
+    },
+    "BgmWz2/Abyss_MysteriousJourney": {
+      "lengthMs": 106446
+    },
+    "BgmWz2/Abyss_TheBottomEnd": {
+      "lengthMs": 100081
+    },
+    "BgmWz2/Abyss_WeAreNotAfraid": {
+      "lengthMs": 88344
+    },
+    "BgmWz2/Abyss_WheretheGreatExpeditionBegins_01": {
+      "lengthMs": 95934
+    },
+    "BgmWz2/Abyss_WheretheGreatExpeditionBegins_02": {
+      "lengthMs": 95934
+    },
+    "BgmWz2/BaekChoBoatParty_Muffled_NightFestival": {
+      "lengthMs": 130155
+    },
+    "BgmWz2/BaekChoBoatParty_NightFestival": {
+      "lengthMs": 130155
+    },
+    "BgmWz2/CNY_LoveLetter": {
+      "lengthMs": 94160
+    },
+    "BgmWz2/CNY_LoveLetterA": {
+      "lengthMs": 35968
+    },
+    "BgmWz2/CNY_LoveLetterB": {
+      "lengthMs": 61217
+    },
+    "BgmWz2/Capoo\u0027s_Adventure": {
+      "lengthMs": 71963
+    },
+    "BgmWz2/CoronaFestival": {
+      "lengthMs": 83513
+    },
+    "BgmWz2/CoronaFestival2": {
+      "lengthMs": 83513
+    },
+    "BgmWz2/CoronaFestival3": {
+      "lengthMs": 83513
+    },
+    "BgmWz2/Dizzy_BumperCar": {
+      "lengthMs": 82266
+    },
+    "BgmWz2/ExcitingDiving_In_Glacier": {
+      "lengthMs": 91630
+    },
+    "BgmWz2/Factoryofthedream_NightFestival": {
+      "lengthMs": 108897
+    },
+    "BgmWz2/FlowerPig_DreamRider": {
+      "lengthMs": 84249
+    },
+    "BgmWz2/FlowingTime_NightFestival": {
+      "lengthMs": 80128
+    },
+    "BgmWz2/FunnyTimeMaker_Orchestra_NightFestival": {
+      "lengthMs": 140093
+    },
+    "BgmWz2/GuildCastle_Comfort": {
+      "lengthMs": 99090
+    },
+    "BgmWz2/GuildCastle_FallenApart": {
+      "lengthMs": 95360
+    },
+    "BgmWz2/GuildCastle_FollowTheLightLeaks": {
+      "lengthMs": 103916
+    },
+    "BgmWz2/GuildCastle_FullofJoyandLaughter": {
+      "lengthMs": 81067
+    },
+    "BgmWz2/GuildCastle_HisReminiscence": {
+      "lengthMs": 70164
+    },
+    "BgmWz2/GuildCastle_Lobby": {
+      "lengthMs": 89935
+    },
+    "BgmWz2/GuildCastle_Piano_01_Borderless": {
+      "lengthMs": 243669
+    },
+    "BgmWz2/GuildCastle_Piano_02_NeoCastle": {
+      "lengthMs": 264184
+    },
+    "BgmWz2/GuildCastle_Piano_03_ForEinherjar": {
+      "lengthMs": 265985
+    },
+    "BgmWz2/GuildCastle_Piano_04_TempleofTime": {
+      "lengthMs": 374874
+    },
+    "BgmWz2/GuildCastle_Piano_05_Pantheon": {
+      "lengthMs": 342014
+    },
+    "BgmWz2/GuildCastle_Piano_06_MyPrinceMyKingdom": {
+      "lengthMs": 278487
+    },
+    "BgmWz2/GuildCastle_Piano_07_OutlawoftheLonelyIsland": {
+      "lengthMs": 274389
+    },
+    "BgmWz2/GuildCastle_Piano_08_HelisiumForest": {
+      "lengthMs": 327920
+    },
+    "BgmWz2/GuildCastle_Piano_09_SecretElodin": {
+      "lengthMs": 234873
+    },
+    "BgmWz2/GuildCastle_Piano_10_TheVillageofKarupa": {
+      "lengthMs": 252909
+    },
+    "BgmWz2/GuildCastle_Piano_11_FairyTale": {
+      "lengthMs": 344259
+    },
+    "BgmWz2/GuildCastle_Piano_12_Login": {
+      "lengthMs": 395937
+    },
+    "BgmWz2/GuildCastle_Room": {
+      "lengthMs": 89935
+    },
+    "BgmWz2/GuildCastle_Teatime": {
+      "lengthMs": 86335
+    },
+    "BgmWz2/JazzOfMaple_Ariant": {
+      "lengthMs": 154387
+    },
+    "BgmWz2/JazzOfMaple_Cygnus": {
+      "lengthMs": 176166
+    },
+    "BgmWz2/JazzOfMaple_Login": {
+      "lengthMs": 183183
+    },
+    "BgmWz2/JazzOfMaple_Raindrop": {
+      "lengthMs": 145258
+    },
+    "BgmWz2/JazzOfMaple_Rudibrium": {
+      "lengthMs": 167637
+    },
+    "BgmWz2/MIstyIsland_HugeRuinCenters": {
+      "lengthMs": 88970
+    },
+    "BgmWz2/MistyIsland_TempHeadquaters": {
+      "lengthMs": 93587
+    },
+    "BgmWz2/MureungFesta_NightFestival": {
+      "lengthMs": 106680
+    },
+    "BgmWz2/MureungFightFloor_NightFestival": {
+      "lengthMs": 86857
+    },
+    "BgmWz2/MyHomeJazz_Elnath": {
+      "lengthMs": 103785
+    },
+    "BgmWz2/MyHomeJazz_Home": {
+      "lengthMs": 101877
+    },
+    "BgmWz2/MyHomeJazz_Village": {
+      "lengthMs": 135346
+    },
+    "BgmWz2/NightFestival_In_Henesys": {
+      "lengthMs": 86073
+    },
+    "BgmWz2/NightFestival_In_Nautilus_Festival": {
+      "lengthMs": 97201
+    },
+    "BgmWz2/NightFestival_In_Nautilus_Food Party": {
+      "lengthMs": 92055
+    },
+    "BgmWz2/NightFestival_In_Nautilus_Minigame": {
+      "lengthMs": 56816
+    },
+    "BgmWz2/NightFestival_In_Nautilus_Pub": {
+      "lengthMs": 104698
+    },
+    "BgmWz2/NightFestival_In_Rien": {
+      "lengthMs": 85683
+    },
+    "BgmWz2/TheFantasticThinking_NightFestival": {
+      "lengthMs": 140850
+    },
+    "BgmWz2/TreasureOfPharaoh_Boss": {
+      "lengthMs": 89726
+    },
+    "BgmWz2/TreasureOfPharaoh_Chap1": {
+      "lengthMs": 89935
+    },
+    "BgmWz2/TreasureOfPharaoh_Chap2": {
+      "lengthMs": 85657
+    },
+    "BgmWz2/TreasureOfPharaoh_Chap3": {
+      "lengthMs": 87926
+    },
+    "BgmWz2/TreasureOfPharaoh_Chap4": {
+      "lengthMs": 81171
+    },
+    "BgmWz2/TreasureOfPharaoh_Chap5": {
+      "lengthMs": 91839
+    },
+    "BgmWz2/TreasureOfPharaoh_Enter": {
+      "lengthMs": 83518
+    },
+    "BgmWz2/TreasureOfPharaoh_Shop": {
+      "lengthMs": 83023
+    },
+    "BgmWz2/UnchartedIsland_Day": {
+      "lengthMs": 86101
+    },
+    "BgmWz2/UnchartedIsland_Night": {
+      "lengthMs": 79449
+    },
+    "BgmWz2/UnchartedIsland_Raid": {
+      "lengthMs": 102950
+    },
+    "BgmWz2/myHome_room": {
+      "lengthMs": 50599
+    },
+    "BgmWz2/myHome_room2": {
+      "lengthMs": 50599
+    },
+    "BgmWz2/myHome_village": {
+      "lengthMs": 109792
+    },
+    "BgmWz2Chair/BaekChoBoatParty_Chair": {
+      "lengthMs": 29161
+    },
+    "BgmWz2Chair/SuperstarPinkBeanChairBGM.wav": {
+      "lengthMs": 11571
+    },
+    "Bgm_Picture/4350034": {
+      "lengthMs": 140093
+    },
+    "Bgm_Picture/4350039": {
+      "lengthMs": 106680
+    }
+  }
+}

@@ -44,6 +44,14 @@ export function bossDifficultyIconUrl(id: string, difficulty: string): string {
   return `${RESOURCE_BASE}/api/img/${namespace}/${id}/${lower}.png`;
 }
 
+// Background music track (haku.network `bgm` namespace, an mp3 rather than an image).
+// The key is `{group}/{trackName}` from `manifests/v<version>/bgm.json` -- track names
+// are NOT unique across groups, so both halves are required. Segments are encoded
+// because track names contain spaces, apostrophes and `!`.
+export function bgmTrackUrl(group: string, track: string): string {
+  return `${RESOURCE_BASE}/api/bgm/${encodeURIComponent(group)}/${encodeURIComponent(track)}/track.mp3`;
+}
+
 // Familiar badge icon (haku.network `ui/familiar` namespace). IDs come from
 // `manifests/v<version>/…` ui/familiar extraction; see BADGE_ID_MAP in familiarsData.ts.
 export function familiarBadgeUrl(id: number): string {
