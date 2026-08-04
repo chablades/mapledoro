@@ -24,7 +24,7 @@ export interface BossCutEntry {
   renewalDetail: string;
 }
 
-export const BOSSCUT_SCRAPED_AT = "2026-07-29";
+export const BOSSCUT_SCRAPED_AT = "2026-08-04";
 
 export const BOSSCUT_DATA: BossCutEntry[] = [
   { boss: "유피테르", name: "jupiter", difficulty: "Hard", level: 295, guard: 380, arcaneForce: null, authenticForce: 810, partyLimit: 3, bossCut: null, partyBossCut: 125600, easyRate: 0.93024, challenger: null, renewalDate: "", renewalDetail: "" },
