@@ -3,6 +3,7 @@ import "katex/dist/katex.min.css";
 import type { Route } from "next";
 import Link from "next/link";
 import Image from "next/image";
+import { createPortal } from "react-dom";
 import { classPortraitUrl } from "../../../../lib/classPortraits";
 import { worldIconUrl } from "../../../../lib/mapleResource";
 import { Fragment, useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
@@ -23,6 +24,8 @@ import { EXP_HISTORY_DAY_MS, nexonDayIndex, NEXON_DAILY_UPDATE_CUTOFF_HOUR_UTC, 
 import { WORLD_NAMES } from "../../model/constants";
 import type { StoredCharacterEquipment, StoredCharacterRecord, StoredCharacterStats, StoredEquipmentItem, StoredHyperStat, StoredInnerAbility, StoredIATier, StoredTripleStatField, StoredFamiliarSlot, ExpHistoryEntry, OverviewSectionId } from "../../model/charactersStore";
 import CustomizeOverviewDialog, { type OverviewAnchorDef } from "./CustomizeOverviewDialog";
+import ProfileShareCard from "./ProfileShareCard";
+import { usePickerCoords } from "../../setup/hooks/usePickerCoords";
 import { isExpTrackingAvailable, resolveExpDelta, characterExpPercent, netExpGained } from "../../model/expProgress";
 import ExpDeltaBadge from "../components/ExpDeltaBadge";
 import { formatExpCompact } from "../../../tools/format";
@@ -119,6 +122,8 @@ function SetupTabIcon() {
   );
 }
 
+const EXPORT_MENU_WIDTH = 170;
+
 export function ExportTabIcon({ strokeWidth = 1.5 }: { strokeWidth?: number }) {
   return (
     <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth}>
@@ -143,6 +148,38 @@ function exportCharacterJson(charName: string | undefined) {
   a.download = `mapledoro-${charName.toLowerCase()}-${new Date().toISOString().slice(0, 10)}.json`;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+function downloadBytes(bytes: Uint8Array, filename: string, mimeType: string) {
+  const blob = new Blob([new Uint8Array(bytes)], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// Renders ProfileShareCard into `cardNode` (an always-mounted, visually hidden container
+// alongside the live profile, grabbed via ref -- simplest lifecycle for v1, no imperative
+// mount/unmount plumbing), rasterizes it, embeds the full character record into a custom
+// PNG chunk (Koikatsu-card style: the downloaded file itself carries the data, no server
+// involved, matching the privacy policy's "everything stays on your device"), and
+// downloads it. Mirrors exportCharacterJson's read-fresh-from-store pattern.
+async function exportCharacterImage(charName: string | undefined, cardNode: HTMLElement | null) {
+  if (!charName || !cardNode) return;
+  const character = selectCharacterByIgn(readCharactersStore(), charName);
+  if (!character) return;
+
+  const { toBlob } = await import("html-to-image");
+  const blob = await toBlob(cardNode, { pixelRatio: 2 });
+  if (!blob) return;
+  const pngBytes = new Uint8Array(await blob.arrayBuffer());
+
+  const { embedJsonInPng } = await import("../../../../lib/pngDataChunk");
+  const embedded = await embedJsonInPng(pngBytes, JSON.stringify(character));
+
+  downloadBytes(embedded, `mapledoro-${charName.toLowerCase()}-${new Date().toISOString().slice(0, 10)}.png`, "image/png");
 }
 
 function BookmarkPageHeader({ theme, label, onEdit, disabled }: { theme: Theme; label: string; onEdit: (() => void) | null; disabled: boolean }) {
@@ -3559,13 +3596,14 @@ function BookmarkPageBody({
 }
 
 function BookmarkSpine({
-  theme, bookmarks, activeId, onSelect, charName,
+  theme, bookmarks, activeId, onSelect, charName, shareCardRef,
 }: {
   theme: Theme;
   bookmarks: BookmarkDef[];
   activeId: BookmarkId;
   onSelect: (id: BookmarkId) => void;
   charName: string | undefined;
+  shareCardRef: React.RefObject<HTMLDivElement | null>;
 }) {
   // react-doctor false positive: empty new Map() is a trivial allocation, not worth lazy-init ceremony.
   // react-doctor-disable-next-line react-doctor/rerender-lazy-ref-init
@@ -3587,6 +3625,28 @@ function BookmarkSpine({
     const t = setTimeout(() => setExported(false), 400);
     return () => clearTimeout(t);
   }, [exported]);
+
+  // Export now offers a choice (JSON or Image) instead of firing immediately -- reuses
+  // the same usePickerCoords hook the setup flow's search pickers and BossClearGrid's
+  // BossPicker already use for portal positioning (above/below flip, viewport clamping
+  // on both edges, iOS Safari's position:fixed-inside-overflow-ancestor quirk), rather
+  // than hand-rolling a second one-off positioning solution. wrapperRef goes on a
+  // position:relative box around the trigger; portalRef goes on the portaled menu,
+  // coords applied imperatively by the hook.
+  const [exportMenuOpen, setExportMenuOpen] = useState(false);
+  const { ref: exportWrapperRef, portalRef: exportPortalRef } = usePickerCoords(exportMenuOpen, EXPORT_MENU_WIDTH);
+  useEffect(() => {
+    if (!exportMenuOpen) return;
+    function handlePointerDown(e: PointerEvent) {
+      const target = e.target as Node;
+      if (exportWrapperRef.current?.contains(target)) return;
+      if (exportPortalRef.current?.contains(target)) return;
+      setExportMenuOpen(false);
+    }
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [exportMenuOpen, exportWrapperRef, exportPortalRef]);
+  const [imageExporting, setImageExporting] = useState(false);
 
   // A page tablist should switch content immediately as focus moves (WAI-ARIA APG's
   // automatic-activation pattern) — unlike this codebase's picker-oriented
@@ -3653,20 +3713,70 @@ function BookmarkSpine({
         return (
           <div key={b.id} className="profile-bookmark-pinned-group">
             <div className="profile-bookmark-divider" />
-            <button
-              type="button"
-              className="profile-bookmark-tab tap-target-44"
-              onClick={() => { exportCharacterJson(charName); setExported(true); }}
-              style={{
-                background: exported ? `${theme.accent}33` : "transparent",
-                color: exported ? theme.accentText : theme.muted,
-                gap: 6,
-                transition: "background 0.3s ease, color 0.3s ease",
-              }}
-            >
-              <ExportTabIcon />
-              Export
-            </button>
+            <div ref={exportWrapperRef} style={{ position: "relative" }}>
+              <button
+                type="button"
+                className="profile-bookmark-tab tap-target-44"
+                aria-haspopup="menu"
+                aria-expanded={exportMenuOpen}
+                onClick={() => setExportMenuOpen((o) => !o)}
+                style={{
+                  background: exported ? `${theme.accent}33` : "transparent",
+                  color: exported ? theme.accentText : theme.muted,
+                  gap: 6,
+                  transition: "background 0.3s ease, color 0.3s ease",
+                }}
+              >
+                <ExportTabIcon />
+                Export
+              </button>
+              {exportMenuOpen && typeof document !== "undefined" && createPortal(
+                <div
+                  ref={exportPortalRef}
+                  role="menu"
+                  onMouseDown={(e) => e.stopPropagation()}
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    width: EXPORT_MENU_WIDTH,
+                    background: theme.panel,
+                    border: `1px solid ${theme.border}`,
+                    borderRadius: 10,
+                    boxShadow: "0 4px 16px rgba(0,0,0,0.18)",
+                    overflow: "hidden",
+                    zIndex: 310,
+                  }}
+                >
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="tap-target-44"
+                    onClick={() => { exportCharacterJson(charName); setExported(true); setExportMenuOpen(false); }}
+                    style={{ display: "block", width: "100%", textAlign: "left", padding: "0.55rem 0.8rem", background: "none", border: "none", font: "inherit", fontWeight: 700, fontSize: "0.82rem", color: theme.text, cursor: "pointer" }}
+                  >
+                    Export as JSON
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="tap-target-44"
+                    disabled={imageExporting}
+                    onClick={async () => {
+                      setExportMenuOpen(false);
+                      setImageExporting(true);
+                      await exportCharacterImage(charName, shareCardRef.current);
+                      setImageExporting(false);
+                      setExported(true);
+                    }}
+                    style={{ display: "block", width: "100%", textAlign: "left", padding: "0.55rem 0.8rem", background: "none", border: "none", borderTop: `1px solid ${theme.border}`, font: "inherit", fontWeight: 700, fontSize: "0.82rem", color: theme.text, cursor: imageExporting ? "wait" : "pointer", opacity: imageExporting ? 0.6 : 1 }}
+                  >
+                    {imageExporting ? "Exporting…" : "Export as Image"}
+                  </button>
+                </div>,
+                document.body,
+              )}
+            </div>
             {tab}
           </div>
         );
@@ -3682,6 +3792,9 @@ export default function CharacterProfileOverviewScreen({
   const { theme, profile } = model;
   const character = profile.confirmedCharacter;
   const mounted = useMounted();
+  // Always-mounted, visually hidden -- exportCharacterImage rasterizes this node on
+  // demand rather than imperatively mounting/unmounting a capture-only tree per click.
+  const shareCardRef = useRef<HTMLDivElement>(null);
 
   const bookmarks = ALL_BOOKMARKS;
   // Restores whichever bookmark was active before an optional flow was started from
@@ -3758,7 +3871,17 @@ export default function CharacterProfileOverviewScreen({
           />
         </div>
       </div>
-      <BookmarkSpine theme={theme} bookmarks={bookmarks} activeId={active.id} onSelect={setActiveId} charName={character?.characterName} />
+      <BookmarkSpine theme={theme} bookmarks={bookmarks} activeId={active.id} onSelect={setActiveId} charName={character?.characterName} shareCardRef={shareCardRef} />
+      {character && (
+        // Positioned off-screen (not visibility: hidden) -- html-to-image needs the node
+        // genuinely laid out and painted to capture it correctly; visibility: hidden
+        // produced a blank/white capture even though the node was technically present.
+        <div style={{ position: "fixed", left: -9999, top: 0, pointerEvents: "none" }} aria-hidden="true">
+          <div ref={shareCardRef}>
+            <ProfileShareCard theme={theme} character={character} />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -10,6 +10,7 @@ import {
   type StoredCharacterRecord,
 } from "../../model/charactersStore";
 import { toCharacterKey } from "../../model/characterKeys";
+import { extractJsonFromPng, isPngSignature } from "../../../../lib/pngDataChunk";
 import { resolveDisplayJobName } from "../../setup/data/nexonJobMapping";
 import { statusText } from "../../../../components/statusColors";
 import { CHARACTERS_COPY } from "../content";
@@ -43,9 +44,27 @@ type ImportState =
   | { status: "championSwap"; record: StoredCharacterRecord; champions: StoredCharacterRecord[] };
 
 async function readImportFile(file: File): Promise<ImportState> {
+  const bytes = new Uint8Array(await file.arrayBuffer());
+
+  let jsonText: string;
+  if (isPngSignature(bytes)) {
+    // Koikatsu-card style: a character exported as an image carries its own data in a
+    // custom PNG chunk (see pngDataChunk.ts), so it's exactly as valid an import source
+    // as the plain .json export -- everything downstream (shape validation, the
+    // isTrustedCharacterImageUrl re-check inside parseImportedCharacterRecord, conflict
+    // detection) is untouched and treats it identically either way.
+    const extracted = await extractJsonFromPng(bytes);
+    if (extracted === null) {
+      return { status: "error", message: CHARACTERS_COPY.importCharacter.invalidPngError };
+    }
+    jsonText = extracted;
+  } else {
+    jsonText = new TextDecoder().decode(bytes);
+  }
+
   let parsedJson: unknown;
   try {
-    parsedJson = JSON.parse(await file.text());
+    parsedJson = JSON.parse(jsonText);
   } catch {
     return { status: "error", message: CHARACTERS_COPY.importCharacter.invalidJsonError };
   }
@@ -323,7 +342,7 @@ export default function ImportModeScreen({ model, actions }: ImportModeScreenPro
       <input
         ref={fileInputRef}
         type="file"
-        accept="application/json"
+        accept="application/json,image/png,.json,.png"
         onChange={handleFileChange}
         style={{ display: "none" }}
       />

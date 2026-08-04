@@ -3,6 +3,8 @@
   XLSX = ZIP (STORE, no compression) containing Office Open XML parts.
 */
 
+import { crc32 } from "../../../lib/crc32";
+
 export interface FormulaCell {
   formula: string;
   array?: boolean; // emit as CSE array formula
@@ -14,21 +16,6 @@ export interface Sheet {
   name: string;
   rows: Cell[][];
   colWidths?: number[];
-}
-
-// -- CRC-32 -------------------------------------------------------------------
-
-function crc32(buf: Uint8Array): number {
-  const table = new Uint32Array(256);
-  for (let i = 0; i < 256; i++) {
-    let c = i;
-    for (let j = 0; j < 8; j++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
-    table[i] = c;
-  }
-  let crc = 0xffffffff;
-  for (let i = 0; i < buf.length; i++)
-    crc = table[(crc ^ buf[i]) & 0xff] ^ (crc >>> 8);
-  return (crc ^ 0xffffffff) >>> 0;
 }
 
 // -- Tiny ZIP (STORE only) ----------------------------------------------------
