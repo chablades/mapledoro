@@ -1,3 +1,5 @@
+import { formatCount } from "../format";
+
 export const MIN_EXP_LEVEL = 200;
 export const MAX_EXP_LEVEL = 300;
 
@@ -64,31 +66,43 @@ export interface MonsterExpResult {
   hoursToTarget: number;
 }
 
-export interface LevelResourceRow {
+interface LevelResourceRow {
   level: number;
   exp: number;
 }
 
-export interface EpicDungeonRow {
-  level: number;
-  baseExp: number;
-  fiveXExp: number;
-  nineXExp: number;
+/** EXP per unit of an event resource, by character level. The `id` is what both the Daily / Weekly
+ *  simulator and the Resources breakdown look a table up with. */
+interface ResourceTable {
+  id: string;
+  rows: LevelResourceRow[];
 }
 
-export interface ResourceTable {
+/** One figure in the Resources breakdown. `detail` names which variant of the source it is (reward
+ *  tier, box grade, day of the week) and is absent when its group produces only one figure. */
+export interface BreakdownValue {
+  id: string;
+  detail?: string;
+  exp: number;
+}
+
+/** One source, with every figure it produces stacked under a single icon and name. */
+export interface BreakdownGroup {
   id: string;
   label: string;
-  description: string;
-  kind: "single-exp" | "epic";
-  rows: LevelResourceRow[] | EpicDungeonRow[];
-  maxUnits?: number;
-  /** Header for the `maxUnits` total column. Defaults to "Full Run". */
-  maxUnitsLabel?: string;
-  /** Drops the per-unit % of level column, for sources where one unit is a negligible slice. */
-  hidePercentOfLevel?: boolean;
-  /** Units consumed per hour for time-based sources; switches the % column to % per hour. */
-  unitsPerHour?: number;
+  icon?: IconRef;
+  /** Set on the first group of a run to break the grid and label what follows. */
+  heading?: string;
+  values: BreakdownValue[];
+}
+
+export interface BreakdownSection {
+  id: string;
+  title: string;
+  note?: string;
+  /** The knobs this section's card renders above its groups. */
+  controls: BreakdownControlId[];
+  groups: BreakdownGroup[];
 }
 
 type BurningType = "" | "hyper" | "hyperMax" | "hyperMaxBeyond";
@@ -394,25 +408,18 @@ const LUXE_SAUNA = [
 
 const LUXE_SAUNA_UNITS_PER_HOUR = 720;
 
+/** Monsters one Golden Strawberry Farm ticket spawns, which is what the table's per-monster EXP
+ *  has to be multiplied by to price a ticket. */
+const STRAWBERRY_KILLS_PER_TICKET = 1200;
+
+/** High Mountain's weekly base EXP by character level (Lv. 260+). Angler Company and Nightmare
+ *  Paradise are exact 1.5x / 2x multiples of it, so they derive off this one table. */
 const HIGH_MOUNTAIN_BASE = [
   260900000000, 264700000000, 268500000000, 272200000000, 276500000000, 311000000000, 315300000000, 319600000000,
   324500000000, 328800000000, 369800000000, 375200000000, 380100000000, 385000000000, 390600000000, 439000000000,
   444500000000, 450800000000, 456400000000, 462700000000, 519600000000, 526700000000, 533000000000, 540100000000,
   546500000000, 614400000000, 621500000000, 629600000000, 637700000000, 645000000000, 724800000000, 732900000000,
   742100000000, 751400000000, 759600000000, 759600000000, 759600000000, 759600000000, 759600000000, 759600000000,
-];
-
-const ANGLER_COMPANY_BASE = [
-  554700000000, 562800000000, 570150000000, 577500000000, 585900000000, 658500000000, 666750000000, 676200000000,
-  684600000000, 694050000000, 779400000000, 790050000000, 799500000000, 810150000000, 819750000000, 921600000000,
-  932250000000, 944400000000, 956550000000, 967500000000, 1087200000000, 1099350000000, 1113150000000, 1127100000000,
-  1139400000000, 1139400000000, 1139400000000, 1139400000000, 1139400000000, 1139400000000,
-];
-
-const NIGHTMARE_PARADISE_BASE = [
-  1039200000000, 1053400000000, 1066000000000, 1080200000000, 1093000000000, 1228800000000, 1243000000000, 1259200000000,
-  1275400000000, 1290000000000, 1449600000000, 1465800000000, 1484200000000, 1502800000000, 1519200000000, 1519200000000,
-  1519200000000, 1519200000000, 1519200000000, 1519200000000,
 ];
 
 /** Base monster EXP by character level: Arcane River covers Lv. 200-259, Grandis Lv. 260-299.
@@ -433,14 +440,17 @@ const BASE_MONSTER_EXP_GRANDIS = [
   4793318, 4847012, 4907812, 4968977, 5023491, 5643220, 5711948, 5781080, 5842650, 5912186,
 ];
 
-/** Haste Inferno monsters are worth 7x the level's base monster EXP. */
+/** Haste Inferno monsters are worth 7x the level's base monster EXP, and one Champion Double Up
+ *  point is worth 3.5x. */
 const HASTE_INFERNO_MULTIPLIER = 7;
+const CHAMPION_DOUBLE_UP_MULTIPLIER = 3.5;
 
 /** Kills a single Haste Fever Time can yield. */
 const HASTE_INFERNO_MAX_KILLS = 10000;
 
-/** One Express Booster spawns 19 waves of 10 flames. */
+/** One Express Booster spawns 19 waves of 10 flames, and only Grandis monsters drop them. */
 const EXPRESS_BOOSTER_FLAMES = 190;
+export const EXPRESS_BOOSTER_MIN_LEVEL = 260;
 
 /** The level past which Express Booster Flames stop scaling. */
 const EXPRESS_BOOSTER_MAX_LEVEL = 294;
@@ -467,94 +477,90 @@ const EXPRESS_BOOSTER_EXP = BASE_MONSTER_EXP_GRANDIS.map(
   (_, index) => expressBoosterFlameExp(260 + index) * EXPRESS_BOOSTER_FLAMES,
 );
 
-export const RESOURCE_TABLES: ResourceTable[] = [
+/** Per-unit EXP for every event resource, from the local EXP Ticket workbook (after KMS CROWN /
+ *  GMS Ride the Lightning). None of these take EXP buffs, which is why they are looked up by level
+ *  instead of run through `calculateBuffMultiplier`. */
+const RESOURCE_TABLES: ResourceTable[] = [
+  { id: "exp-ticket", rows: makeLevelRows(200, EXP_TICKET_CROWN) },
+  { id: "advanced-exp-ticket", rows: makeLevelRows(260, ADV_EXP_TICKET) },
+  { id: "punch-king", rows: makeLevelRows(200, PUNCH_KING) },
+  { id: "strawberry-farm", rows: makeLevelRows(200, STRAWBERRY_FARM) },
+  { id: "mechaberry-farm", rows: makeLevelRows(280, MECHABERRY_FARM) },
+  { id: "luxe-sauna", rows: makeLevelRows(200, LUXE_SAUNA) },
+  { id: "express-booster", rows: makeLevelRows(260, EXPRESS_BOOSTER_EXP) },
+  { id: "haste-inferno", rows: makeLevelRows(200, HASTE_INFERNO_EXP) },
+];
+
+/* Icons for the sources that have no options array of their own to hang one off. Ids come from
+ * manifests/v270/item.json (or mob.json / ui-mark.json) and are named here so the Daily / Weekly
+ * inputs and the Resources breakdown can't drift apart. */
+export const SOL_ERDA_ICON: IconRef = { type: "item", id: "05066300" }; // Sol Erda, the Epic Dungeon reward
+export const MONSTER_PARK_ICON: IconRef = { type: "item", id: "05252030" }; // Monster Park entry ticket
+export const EXPRESS_BOOSTER_ICON: IconRef = { type: "mob", id: "9834700" }; // Intensifying Flame
+export const HASTE_INFERNO_ICON: IconRef = { type: "mob", id: "9834720" }; // Haste Inferno A
+export const EXP_TICKET_ICON: IconRef = { type: "item", id: "02637353" };
+export const ADV_EXP_TICKET_ICON: IconRef = { type: "item", id: "02638500" };
+export const PUNCH_KING_ICON: IconRef = { type: "item", id: "02637502" };
+export const STRAWBERRY_FARM_ICON: IconRef = { type: "item", id: "02637501" };
+export const MECHABERRY_FARM_ICON: IconRef = { type: "item", id: "02831285" };
+export const HASTE_FEVER_ICON: IconRef = { type: "item", id: "02831711" }; // Haste Fever Time Booster
+export const DOUBLE_UP_ICON: IconRef = { type: "item", id: "04310359" };
+export const LUXE_SAUNA_ICON: IconRef = { type: "mark", id: "mvpResort" };
+
+interface TreasureBox {
+  id: string;
+  label: string;
+  minLevel: number;
+  icon: IconRef;
+  /** Grades in ascending order, each a flat multiple of the monster's base EXP. */
+  grades: { grade: string; multiplier: number }[];
+}
+
+/** Hunting-ground treasure boxes. Each grade pays a fixed multiple of base monster EXP and takes no
+ *  EXP buffs at all. The icons are the EXP Gem the box drops (manifests/v270/item.json); the boxes
+ *  themselves have no item icon. */
+const TREASURE_BOXES: TreasureBox[] = [
   {
-    id: "exp-ticket",
-    label: "EXP Ticket",
-    description: "KMS CROWN/GMS Ride the Lightning EXP ticket values per ticket from the local EXP Ticket workbook.",
-    kind: "single-exp",
-    rows: makeLevelRows(200, EXP_TICKET_CROWN),
+    id: "pollo-frito",
+    label: "Pollo / Frito Treasure Box",
+    minLevel: 200,
+    icon: { type: "item", id: "02024280" }, // Gold EXP Gem (Rare)
+    grades: [
+      { grade: "Rare", multiplier: 3000 },
+      { grade: "Epic", multiplier: 6000 },
+      { grade: "Unique", multiplier: 12000 },
+      { grade: "Legendary", multiplier: 24000 },
+    ],
   },
   {
-    id: "advanced-exp-ticket",
-    label: "Advanced EXP Ticket",
-    description: "Advanced EXP ticket values per ticket from the local EXP Ticket workbook.",
-    kind: "single-exp",
-    rows: makeLevelRows(260, ADV_EXP_TICKET),
+    id: "especia",
+    label: "Especia Treasure Box",
+    minLevel: 230,
+    icon: { type: "item", id: "02024284" }, // Diamond EXP Gem (Rare)
+    grades: [
+      { grade: "Rare", multiplier: 30000 },
+      { grade: "Epic", multiplier: 60000 },
+      { grade: "Unique", multiplier: 120000 },
+      { grade: "Legendary", multiplier: 240000 },
+    ],
   },
   {
-    id: "punch-king",
-    label: "EXP Punch King",
-    description: "Spiegella's Golden Carriage Tomato Punch King EXP per point, max 1150 points per run.",
-    kind: "single-exp",
-    rows: makeLevelRows(200, PUNCH_KING),
-    maxUnits: 1150,
-  },
-  {
-    id: "strawberry-farm",
-    label: "Strawberry Farm",
-    description: "Spiegella's Golden Strawberry Farm / Midnight Dream Catcher EXP per monster.",
-    kind: "single-exp",
-    rows: makeLevelRows(200, STRAWBERRY_FARM),
-  },
-  {
-    id: "mechaberry-farm",
-    label: "Mechaberry Farm",
-    description: "Mechaberry Farm EXP per run. The workbook notes these values are not affected by EXP multipliers.",
-    kind: "single-exp",
-    rows: makeLevelRows(280, MECHABERRY_FARM),
-  },
-  {
-    id: "luxe-sauna",
-    label: "Luxe Sauna / MVP Resort",
-    description: "Luxe Sauna (MVP Resort) AFK EXP per 5 seconds of sauna time (720 units per hour).",
-    kind: "single-exp",
-    rows: makeLevelRows(200, LUXE_SAUNA),
-    unitsPerHour: LUXE_SAUNA_UNITS_PER_HOUR,
-  },
-  {
-    id: "express-booster",
-    label: "Express Booster",
-    description: "EXP per Express Booster, which spawns 190 Express Booster Flames. Not affected by EXP buffs.",
-    kind: "single-exp",
-    rows: makeLevelRows(260, EXPRESS_BOOSTER_EXP),
-  },
-  {
-    id: "haste-inferno",
-    label: "Haste Fever Time",
-    description: "EXP per Haste Inferno monster killed during Haste Fever Time, up to 10,000 kills. Not affected by EXP buffs.",
-    kind: "single-exp",
-    rows: makeLevelRows(200, HASTE_INFERNO_EXP),
-    maxUnits: HASTE_INFERNO_MAX_KILLS,
-    maxUnitsLabel: "EXP / 10k Units",
-    hidePercentOfLevel: true,
-  },
-  {
-    id: "high-mountain",
-    label: "Epic Dungeon: High Mountain",
-    description: "After KMS CROWN/GMS Ride the Lightning High Mountain weekly EXP table.",
-    kind: "epic",
-    rows: makeEpicRows(260, HIGH_MOUNTAIN_BASE),
-  },
-  {
-    id: "angler-company",
-    label: "Epic Dungeon: Angler Company",
-    description: "After KMS CROWN/GMS Ride the Lightning Angler Company weekly EXP table.",
-    kind: "epic",
-    rows: makeEpicRows(270, ANGLER_COMPANY_BASE),
-  },
-  {
-    id: "nightmare-paradise",
-    label: "Epic Dungeon: Nightmare Paradise",
-    description: "After KMS CROWN/GMS Ride the Lightning Nightmare Paradise weekly EXP table.",
-    kind: "epic",
-    rows: makeEpicRows(280, NIGHTMARE_PARADISE_BASE),
+    id: "haste",
+    label: "Haste Treasure Box",
+    minLevel: 200,
+    icon: { type: "item", id: "02024324" }, // Haste EXP Gem (Rare)
+    grades: [
+      { grade: "Rare", multiplier: 24000 },
+      { grade: "Epic", multiplier: 36000 },
+      { grade: "Unique", multiplier: 54000 },
+      { grade: "Legendary", multiplier: 81000 },
+    ],
   },
 ];
 
 export const DAILY_EXP_CONTENT: ExpContentOption[] = [
   { id: "rte", label: "Vanishing Journey", region: "Arcane River", minLevel: 200, exp: 0x2ba373a2, icon: { type: "item", id: "01712001" } },
-  { id: "cci", label: "Chew Chew Island", region: "Arcane River", minLevel: 210, exp: 0x7fa71c86, icon: { type: "item", id: "01712002" } },
+  { id: "cci", label: "Chu Chu Island", region: "Arcane River", minLevel: 210, exp: 0x7fa71c86, icon: { type: "item", id: "01712002" } },
   { id: "lach", label: "Lachelein", region: "Arcane River", minLevel: 220, exp: 0xbe15c70a, icon: { type: "item", id: "01712003" } },
   { id: "arcana", label: "Arcana", region: "Arcane River", minLevel: 225, exp: 0xc5012937, icon: { type: "item", id: "01712004" } },
   { id: "moras", label: "Morass", region: "Arcane River", minLevel: 230, exp: 0x106283735, icon: { type: "item", id: "01712005" } },
@@ -641,6 +647,16 @@ const MPE_EXP_FACTORS = [
   5.832, 5.832, 5.832, 5.832, 5.832, 5.832, 5.832, 5.832, 5.832, 5.832,
   5.832, 5.832, 5.832, 5.832, 5.832, 5.832, 5.832, 5.832, 5.832, 5.832,
 ];
+
+/** Sunday's Monster Park bonus, and what one Extreme clear pays over its level factor. Extreme is a
+ *  single clear a week, so the 5 is part of the payout, not a run count. */
+const MONSTER_PARK_SUNDAY_MULTIPLIER = 1.5;
+const MPE_CLEAR_FACTOR = 5;
+
+/** Points a Punch King run is capped at. Per-point EXP comes from the `punch-king` table, never from
+ *  base monster EXP x 900: that holds for most levels but not all, and the table plateaus from
+ *  Lv. 290 up, so computing it overpays the top ten levels by as much as 39%. */
+export const PUNCH_KING_MAX_POINTS = 1150;
 
 const PUNCH_KING_TIERS = [
   { limit: 10, multiplier: 1500 },
@@ -789,7 +805,12 @@ function initialSimulationState(input: AllInOneInput): SimulationState {
 }
 
 function applyStartingEventResources(state: SimulationState, input: AllInOneInput, date: number): SimulationState {
-  let next = applyResourceUnits(state, Math.max(0, input.strawberryTickets) * 1200, "strawberry-farm", date);
+  let next = applyResourceUnits(
+    state,
+    Math.max(0, input.strawberryTickets) * STRAWBERRY_KILLS_PER_TICKET,
+    "strawberry-farm",
+    date,
+  );
   next = applyResourceUnits(next, Math.max(0, input.luxeSaunaHours) * LUXE_SAUNA_UNITS_PER_HOUR, "luxe-sauna", date);
   if (next.level >= 260) {
     next = applyResourceUnits(next, Math.max(0, input.expressBoosters), "express-booster", date);
@@ -842,8 +863,14 @@ function weeklyExpForState(state: SimulationState, input: AllInOneInput): number
 }
 
 function selectedDailyExp(level: number, input: AllInOneInput): number {
+  // The simulator only asks for two bonuses, and its Tenebris dailies ride the Arcane River one.
+  const bonuses: RegionBonus = {
+    "Arcane River": input.arcaneRiverBonus,
+    Tenebris: input.arcaneRiverBonus,
+    Grandis: input.grandisBonus,
+  };
   return DAILY_EXP_CONTENT.filter((daily) => input.dailyIds.includes(daily.id) && level >= daily.minLevel)
-    .reduce((total, daily) => total + daily.exp + Math.ceil(daily.exp * dailyBonusPercent(daily, input) / 100), 0);
+    .reduce((total, daily) => total + dailyExpWithBonus(daily, bonuses), 0);
 }
 
 function selectedWeeklyExp(level: number, weeklyRuns: Record<string, number>): number {
@@ -853,23 +880,24 @@ function selectedWeeklyExp(level: number, weeklyRuns: Record<string, number>): n
   }, 0);
 }
 
-function dailyBonusPercent(daily: ExpContentOption, input: AllInOneInput): number {
-  return daily.region === "Grandis" ? Math.max(0, input.grandisBonus) : Math.max(0, input.arcaneRiverBonus);
+/** Each region carries its own daily EXP bonus stat, so the caller supplies one percent per region. */
+type RegionBonus = Record<ExpContentOption["region"], number>;
+
+function dailyExpWithBonus(daily: ExpContentOption, bonuses: RegionBonus): number {
+  return withBonus(daily.exp, 1, bonuses[daily.region]);
 }
 
 function monsterParkExpForLevel(level: number, input: AllInOneInput, date: number): number {
   const base = resolveMonsterPark(level, input.monsterParkId)?.exp ?? 0;
-  const bonusPercent = Math.max(0, input.monsterParkBonus);
-  const sundayMultiplier = new Date(date).getUTCDay() === 0 ? 1.5 : 1;
-  return (
-    (Math.ceil(base * sundayMultiplier) + Math.ceil(base * bonusPercent / 100)) * Math.max(0, input.monsterParkRuns)
-  );
+  const dayMultiplier = new Date(date).getUTCDay() === 0 ? MONSTER_PARK_SUNDAY_MULTIPLIER : 1;
+  return withBonus(base, dayMultiplier, input.monsterParkBonus) * Math.max(0, input.monsterParkRuns);
 }
 
-function monsterParkExtremeExpForLevel(level: number, runs: number, bonusPercent: number): number {
+/** `weeks` counts full weekly allowances, not individual runs. */
+function monsterParkExtremeExpForLevel(level: number, weeks: number, bonusPercent: number): number {
   if (level < 260) return 0;
   const base = level * (MPE_EXP_FACTORS[level - 260] ?? MPE_EXP_FACTORS[MPE_EXP_FACTORS.length - 1]) * 100000000;
-  return (Math.ceil(5 * base) + Math.ceil(5 * base * Math.max(0, bonusPercent) / 100)) * Math.max(0, runs);
+  return withBonus(base, MPE_CLEAR_FACTOR, bonusPercent * MPE_CLEAR_FACTOR) * Math.max(0, weeks);
 }
 
 function epicDungeonExpForLevel(level: number, input: AllInOneInput): number {
@@ -881,6 +909,7 @@ function epicDungeonExpForLevel(level: number, input: AllInOneInput): number {
 }
 
 function punchKingExpForLevel(level: number, score: number): number {
+  // The tier multipliers are quoted against the monster's base EXP, and the table is 900x that.
   const base = resourceExpWithFallback("punch-king", level) / 900;
   let remaining = Math.max(0, Math.floor(score));
   let total = 0;
@@ -894,9 +923,14 @@ function punchKingExpForLevel(level: number, score: number): number {
 }
 
 function doubleUpExpForLevel(level: number, points: number): number {
-  if (level < 200) return 0;
+  if (level < MIN_MONSTER_LEVEL) return 0;
+  return Math.ceil(CHAMPION_DOUBLE_UP_MULTIPLIER * baseMonsterExpForLevel(level)) * Math.max(0, points);
+}
+
+/** The level's plain monster EXP, which Champion Double Up and the Treasure Boxes both scale off. */
+function baseMonsterExpForLevel(level: number): number {
   const source = level < 260 ? BASE_MONSTER_EXP_ARCANE[level - 200] : BASE_MONSTER_EXP_GRANDIS[level - 260];
-  return Math.ceil(3.5 * (source ?? BASE_MONSTER_EXP_GRANDIS[BASE_MONSTER_EXP_GRANDIS.length - 1])) * Math.max(0, points);
+  return source ?? BASE_MONSTER_EXP_GRANDIS[BASE_MONSTER_EXP_GRANDIS.length - 1];
 }
 
 function applyResourceUnits(state: SimulationState, units: number, tableId: string, date: number): SimulationState {
@@ -960,9 +994,8 @@ function projectedDaysToTarget(state: SimulationState, input: AllInOneInput, tar
 }
 
 function resourceExpWithFallback(tableId: string, level: number): number {
-  const table = RESOURCE_TABLES.find((resource) => resource.id === tableId);
-  if (!table || table.kind !== "single-exp") return 0;
-  const rows = table.rows as LevelResourceRow[];
+  const rows = RESOURCE_TABLES.find((resource) => resource.id === tableId)?.rows;
+  if (!rows) return 0;
   return rows.find((row) => row.level === level)?.exp ?? rows[rows.length - 1]?.exp ?? 0;
 }
 
@@ -991,6 +1024,446 @@ function countThursdays(start: number, end: number): number {
 
 function expPercent(level: number, currentExp: number): number {
   return expForLevel(level) > 0 ? (currentExp / expForLevel(level)) * 100 : 0;
+}
+
+/* --------------------------------------------------------------------------------------------
+ * Resources breakdown. What every GMS EXP source is worth at a given character level, section by
+ * section, with the same knobs the game gives the player: region EXP bonuses, run counts, ticket
+ * counts, and the monster level a drop-based source rolls against.
+ *
+ * GMS-only: no Singapore, Malaysia, Blood Moon Forest, or Sunday Maple. Figures are unbuffed,
+ * because every source here either ignores EXP buffs outright or is quoted before them. Sources a
+ * level cannot reach are dropped rather than shown as zero, and a section left with no groups is
+ * dropped whole.
+ * ------------------------------------------------------------------------------------------ */
+
+/** Lowest and highest monster level the base-monster-EXP tables cover. */
+export const MIN_MONSTER_LEVEL = 200;
+export const MAX_MONSTER_LEVEL = 299;
+
+/** Every knob a breakdown section can expose. The tab owns the state; the section names which of
+ *  these it renders, so a control and the figure it drives can't drift apart. */
+export type BreakdownControlId =
+  | "arcaneRiverBonus"
+  | "grandisBonus"
+  | "epicDungeonBonus"
+  | "treasureMonsterLevel"
+  | "treasureBonus"
+  | "monsterParkId"
+  | "monsterParkRuns"
+  | "monsterParkBonus"
+  | "expTickets"
+  | "punchKingPoints"
+  | "strawberryTickets"
+  | "strawberryBonus"
+  | "mechaberryTickets"
+  | "expressMonsterLevel"
+  | "hasteMonsterLevel"
+  | "hasteKills"
+  | "saunaHours"
+  | "doubleUpPoints";
+
+export interface ResourceBreakdownInput {
+  level: number;
+  arcaneRiverBonus: number;
+  grandisBonus: number;
+  epicDungeonBonus: number;
+  treasureMonsterLevel: number;
+  treasureBonus: number;
+  monsterParkId: string;
+  monsterParkRuns: number;
+  monsterParkBonus: number;
+  expTickets: number;
+  punchKingPoints: number;
+  strawberryTickets: number;
+  strawberryBonus: number;
+  mechaberryTickets: number;
+  expressMonsterLevel: number;
+  hasteMonsterLevel: number;
+  hasteKills: number;
+  saunaHours: number;
+  doubleUpPoints: number;
+}
+
+/** Monster levels open on the character's own level, the way they would be farming at level. */
+export function defaultBreakdownInput(level: number): ResourceBreakdownInput {
+  return {
+    level,
+    arcaneRiverBonus: 0,
+    grandisBonus: 0,
+    epicDungeonBonus: 0,
+    treasureMonsterLevel: clamp(level, MIN_MONSTER_LEVEL, MAX_MONSTER_LEVEL),
+    treasureBonus: 0,
+    monsterParkId: "",
+    monsterParkRuns: 1,
+    monsterParkBonus: 0,
+    expTickets: 1,
+    punchKingPoints: PUNCH_KING_MAX_POINTS,
+    strawberryTickets: 1,
+    strawberryBonus: 0,
+    mechaberryTickets: 1,
+    expressMonsterLevel: clamp(level, EXPRESS_BOOSTER_MIN_LEVEL, MAX_MONSTER_LEVEL),
+    hasteMonsterLevel: clamp(level, MIN_MONSTER_LEVEL, MAX_MONSTER_LEVEL),
+    hasteKills: HASTE_INFERNO_MAX_KILLS,
+    saunaHours: 1,
+    doubleUpPoints: 1,
+  };
+}
+
+export function buildResourceBreakdown(input: ResourceBreakdownInput): BreakdownSection[] {
+  return [
+    dailySection(input),
+    weeklySection(input.level),
+    epicDungeonSection(input),
+    growthPotionSection(input.level),
+    treasureBoxSection(input),
+    monsterParkSection(input),
+    expTicketSection(input),
+    punchKingSection(input),
+    strawberryFarmSection(input),
+    mechaberryFarmSection(input),
+    expressBoosterSection(input),
+    hasteFeverSection(input),
+    afkSection(input),
+    doubleUpSection(input),
+  ].filter((section) => section.groups.length > 0);
+}
+
+/** A percent bonus that adds to a base multiplier rather than compounding with it, which is how
+ *  every EXP bonus here behaves: 5x rewards with +20% pays 5.2x base, not 6x. */
+function withBonus(base: number, multiplier: number, bonusPercent: number): number {
+  return Math.ceil(base * (multiplier + Math.max(0, bonusPercent) / 100));
+}
+
+function dailySection(input: ResourceBreakdownInput): BreakdownSection {
+  const bonuses: RegionBonus = {
+    "Arcane River": input.arcaneRiverBonus,
+    Tenebris: input.arcaneRiverBonus,
+    Grandis: input.grandisBonus,
+  };
+  let region = "";
+  return {
+    id: "dailies",
+    title: "Dailies",
+    note: "Arcane River, Tenebris and Grandis symbol dailies, per clear.",
+    controls: ["arcaneRiverBonus", "grandisBonus"],
+    groups: DAILY_EXP_CONTENT.filter((daily) => input.level >= daily.minLevel).map((daily) => {
+      // Dailies run in region order, so the first of each region opens that region's row band.
+      const heading = daily.region === region ? undefined : daily.region;
+      region = daily.region;
+      return {
+        id: daily.id,
+        label: daily.label,
+        icon: daily.icon,
+        heading,
+        values: [{ id: daily.id, exp: dailyExpWithBonus(daily, bonuses) }],
+      };
+    }),
+  };
+}
+
+function weeklySection(level: number): BreakdownSection {
+  return {
+    id: "weeklies",
+    title: "Arcane River Weeklies",
+    note: "Per run, up to three runs a week.",
+    controls: [],
+    groups: WEEKLY_EXP_CONTENT.filter((weekly) => level >= weekly.minLevel).map((weekly) => ({
+      id: weekly.id,
+      label: weekly.label,
+      icon: weekly.icon,
+      values: [{ id: weekly.id, exp: weekly.exp }],
+    })),
+  };
+}
+
+const EPIC_REWARD_TIERS = [1, 5, 9];
+
+function epicDungeonSection(input: ResourceBreakdownInput): BreakdownSection {
+  const base = HIGH_MOUNTAIN_BASE[input.level - 260] ?? HIGH_MOUNTAIN_BASE[HIGH_MOUNTAIN_BASE.length - 1];
+  return {
+    id: "epic-dungeon",
+    title: "Epic Dungeon",
+    note: "One weekly clear, by reward tier.",
+    controls: ["epicDungeonBonus"],
+    groups: EPIC_DUNGEON_OPTIONS.filter((dungeon) => input.level >= dungeon.minLevel).map((dungeon) => ({
+      id: dungeon.id,
+      label: dungeon.label,
+      icon: SOL_ERDA_ICON,
+      values: EPIC_REWARD_TIERS.map((tier) => ({
+        id: `${dungeon.id}-${tier}`,
+        detail: `${tier}x rewards`,
+        exp: withBonus(base * dungeon.baseMultiplier, tier, input.epicDungeonBonus),
+      })),
+    })),
+  };
+}
+
+function growthPotionSection(level: number): BreakdownSection {
+  return {
+    id: "growth-potions",
+    title: "Growth Potions",
+    note: "One potion is a full level, capped at the potion's top level.",
+    controls: [],
+    groups: GROWTH_POTION_OPTIONS.map((potion) => ({
+      id: potion.id,
+      label: potion.label,
+      icon: potion.icon,
+      values: [
+        {
+          id: potion.id,
+          detail: `Lv. ${potion.minLevel}-${potion.maxLevel}`,
+          exp: expForLevel(Math.min(level, potion.maxLevel)),
+        },
+      ],
+    })),
+  };
+}
+
+function treasureBoxSection(input: ResourceBreakdownInput): BreakdownSection {
+  const base = baseMonsterExpForLevel(input.treasureMonsterLevel);
+  return {
+    id: "treasure-boxes",
+    title: "Treasure Boxes",
+    note: "A flat multiple of the monster's base EXP.",
+    controls: ["treasureMonsterLevel", "treasureBonus"],
+    groups: TREASURE_BOXES.filter((box) => input.level >= box.minLevel).map((box) => ({
+      id: box.id,
+      label: box.label,
+      icon: box.icon,
+      values: box.grades.map((grade) => ({
+        id: `${box.id}-${grade.grade}`,
+        detail: grade.grade,
+        exp: withBonus(base * grade.multiplier, 1, input.treasureBonus),
+      })),
+    })),
+  };
+}
+
+/** Extreme rides along here because it shares the Monster Park EXP bonus stat. Only that bonus
+ *  reaches it: the dungeon pick and run count are the normal park's, since Extreme is one fixed
+ *  dungeon on a fixed weekly allowance. */
+function monsterParkSection(input: ResourceBreakdownInput): BreakdownSection {
+  const park = resolveMonsterPark(input.level, input.monsterParkId);
+  const groups: BreakdownGroup[] = [];
+  if (park) {
+    groups.push({
+      id: park.id,
+      label: park.label,
+      icon: MONSTER_PARK_ICON,
+      values: [
+        { id: "weekday", detail: "Mon-Sat", exp: monsterParkRunExp(park.exp, 1, input) },
+        {
+          id: "sunday",
+          detail: "Sunday",
+          exp: monsterParkRunExp(park.exp, MONSTER_PARK_SUNDAY_MULTIPLIER, input),
+        },
+      ],
+    });
+  }
+  const extremeWeekly = monsterParkExtremeExpForLevel(input.level, 1, input.monsterParkBonus);
+  if (extremeWeekly > 0) {
+    groups.push({
+      id: "mpe",
+      label: "Monster Park Extreme",
+      icon: MONSTER_PARK_ICON,
+      values: [{ id: "mpe-week", detail: "One clear a week", exp: extremeWeekly }],
+    });
+  }
+  return {
+    id: "monster-park",
+    title: "Monster Park",
+    note: "Sunday pays 1.5x. Extreme clears once a week.",
+    controls: ["monsterParkId", "monsterParkRuns", "monsterParkBonus"],
+    groups,
+  };
+}
+
+/** The run count multiplies the normal park only, which is why Extreme does not call this. */
+function monsterParkRunExp(base: number, dayMultiplier: number, input: ResourceBreakdownInput): number {
+  return withBonus(base, dayMultiplier, input.monsterParkBonus) * Math.max(0, input.monsterParkRuns);
+}
+
+function expTicketSection(input: ResourceBreakdownInput): BreakdownSection {
+  const tickets = Math.max(0, input.expTickets);
+  const groups: BreakdownGroup[] = [
+    {
+      id: "exp-ticket",
+      label: "EXP Ticket",
+      icon: EXP_TICKET_ICON,
+      values: [{ id: "exp-ticket", exp: resourceExpWithFallback("exp-ticket", input.level) * tickets }],
+    },
+  ];
+  if (input.level >= 260) {
+    groups.push({
+      id: "advanced-exp-ticket",
+      label: "Advanced EXP Ticket",
+      icon: ADV_EXP_TICKET_ICON,
+      values: [
+        { id: "advanced-exp-ticket", exp: resourceExpWithFallback("advanced-exp-ticket", input.level) * tickets },
+      ],
+    });
+  }
+  return {
+    id: "exp-tickets",
+    title: "EXP Tickets",
+    note: "Per ticket used.",
+    controls: ["expTickets"],
+    groups,
+  };
+}
+
+function punchKingSection(input: ResourceBreakdownInput): BreakdownSection {
+  const perPoint = resourceExpWithFallback("punch-king", input.level);
+  return {
+    id: "punch-king",
+    title: "EXP Punch King",
+    note: `Spiegelmann's Golden Carriage, max ${formatCount(PUNCH_KING_MAX_POINTS)} points a run.`,
+    controls: ["punchKingPoints"],
+    groups: [
+      {
+        id: "punch-king",
+        label: "EXP Punch King",
+        icon: PUNCH_KING_ICON,
+        values: [{ id: "golden", exp: perPoint * Math.max(0, input.punchKingPoints) }],
+      },
+    ],
+  };
+}
+
+function strawberryFarmSection(input: ResourceBreakdownInput): BreakdownSection {
+  const perTicket = resourceExpWithFallback("strawberry-farm", input.level) * STRAWBERRY_KILLS_PER_TICKET;
+  return {
+    id: "strawberry-farm",
+    title: "Golden Strawberry Farm",
+    note: `Per ticket used. Affected by EXP multipliers.`,
+    controls: ["strawberryTickets", "strawberryBonus"],
+    groups: [
+      {
+        id: "strawberry-farm",
+        label: "Golden Strawberry Farm",
+        icon: STRAWBERRY_FARM_ICON,
+        values: [
+          {
+            id: "strawberry-farm",
+            exp: withBonus(perTicket, 1, input.strawberryBonus) * Math.max(0, input.strawberryTickets),
+          },
+        ],
+      },
+    ],
+  };
+}
+
+function mechaberryFarmSection(input: ResourceBreakdownInput): BreakdownSection {
+  return {
+    id: "mechaberry-farm",
+    title: "Mechaberry Farm",
+    note: "Per ticket used. NOT affected by EXP multipliers.",
+    controls: ["mechaberryTickets"],
+    groups:
+      input.level >= 280
+        ? [
+            {
+              id: "mechaberry-farm",
+              label: "Mechaberry Farm",
+              icon: MECHABERRY_FARM_ICON,
+              values: [
+                {
+                  id: "mechaberry-farm",
+                  exp: resourceExpWithFallback("mechaberry-farm", input.level) * Math.max(0, input.mechaberryTickets),
+                },
+              ],
+            },
+          ]
+        : [],
+  };
+}
+
+function expressBoosterSection(input: ResourceBreakdownInput): BreakdownSection {
+  const perFlame = expressBoosterFlameExp(input.expressMonsterLevel);
+  return {
+    id: "express-booster",
+    title: "Express Booster",
+    note: `10 flames a spawn, ${EXPRESS_BOOSTER_FLAMES} flames a booster.`,
+    controls: ["expressMonsterLevel"],
+    groups:
+      input.level >= EXPRESS_BOOSTER_MIN_LEVEL
+        ? [
+            {
+              id: "express-booster",
+              label: "Express Booster Flame",
+              icon: EXPRESS_BOOSTER_ICON,
+              values: [
+                { id: "express-flame", detail: "Per flame", exp: perFlame },
+                { id: "express-booster", detail: "Per booster", exp: perFlame * EXPRESS_BOOSTER_FLAMES },
+              ],
+            },
+          ]
+        : [],
+  };
+}
+
+function hasteFeverSection(input: ResourceBreakdownInput): BreakdownSection {
+  const perKill = baseMonsterExpForLevel(input.hasteMonsterLevel) * HASTE_INFERNO_MULTIPLIER;
+  return {
+    id: "haste-fever",
+    title: "Haste Fever Time",
+    note: `${HASTE_INFERNO_MULTIPLIER}x the monster's base EXP a kill.`,
+    controls: ["hasteMonsterLevel", "hasteKills"],
+    groups: [
+      {
+        id: "haste-inferno",
+        label: "Haste Inferno",
+        icon: HASTE_INFERNO_ICON,
+        values: [
+          { id: "haste-kill", detail: "Per kill", exp: perKill },
+          { id: "haste-total", detail: "Total", exp: perKill * Math.max(0, input.hasteKills) },
+        ],
+      },
+    ],
+  };
+}
+
+function afkSection(input: ResourceBreakdownInput): BreakdownSection {
+  const perUnit = resourceExpWithFallback("luxe-sauna", input.level);
+  return {
+    id: "afk",
+    title: "AFK Contents",
+    note: "Sauna EXP ticks every 5 seconds.",
+    controls: ["saunaHours"],
+    groups: [
+      {
+        id: "luxe-sauna",
+        label: "Luxe Sauna / MVP Resort",
+        icon: LUXE_SAUNA_ICON,
+        values: [
+          { id: "sauna-tick", detail: "Per 5 secs", exp: perUnit },
+          {
+            id: "sauna-total",
+            detail: "Total",
+            exp: perUnit * LUXE_SAUNA_UNITS_PER_HOUR * Math.max(0, input.saunaHours),
+          },
+        ],
+      },
+    ],
+  };
+}
+
+function doubleUpSection(input: ResourceBreakdownInput): BreakdownSection {
+  return {
+    id: "double-up",
+    title: "Champion Double Up",
+    note: `${CHAMPION_DOUBLE_UP_MULTIPLIER}x the level's base monster EXP a point.`,
+    controls: ["doubleUpPoints"],
+    groups: [
+      {
+        id: "double-up",
+        label: "Champion Double Up",
+        icon: DOUBLE_UP_ICON,
+        values: [{ id: "double-up", exp: doubleUpExpForLevel(input.level, input.doubleUpPoints) }],
+      },
+    ],
+  };
 }
 
 function expNeededBetween(level: number, currentExp: number, targetLevel: number): number {
@@ -1036,15 +1509,6 @@ function runeExpBonus(evanLinkLevel: number, runeDay: number): number {
 
 function makeLevelRows(startLevel: number, values: number[]): LevelResourceRow[] {
   return values.map((exp, index) => ({ level: startLevel + index, exp }));
-}
-
-function makeEpicRows(startLevel: number, baseValues: number[]): EpicDungeonRow[] {
-  return baseValues.map((baseExp, index) => ({
-    level: startLevel + index,
-    baseExp,
-    fiveXExp: baseExp * 5,
-    nineXExp: baseExp * 9,
-  }));
 }
 
 function clamp(n: number, min: number, max: number): number {

@@ -6,11 +6,8 @@
   Legacy classes (lower job advancements, not accepted by MapleScouter) have empty
   buffSkills and requiredStats — the UI will fall back to showing all stat fields.
 
-  TODO: Some classes have setup option variants noted inline:
-    - dawn_warrior, hero, paladin: One-Handed vs Two-Handed Weapon
-    - demon_avenger: Ephinea Soul or Mu Gong Soul; optional Ruin Force Shield
-    - demon_slayer: optional Ruin Force Shield
-  These will be handled by a future setupOptions system on ClassSkillData.
+  Classes with setup option variants (weapon hand, soul weapon type, Ruin Force Shield)
+  set them via setupOptionsDef below.
 */
 
 import type { StatFieldId } from "./statFields";
@@ -720,11 +717,11 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
     id: "erel_light",
     nexonJobName: "Erel Light",
     // STR warrior (Shine). Gram weapon / Keir secondary — see classBranch.ts.
-    // No fixed gender. buffSkills are the universal decent skills only for now:
-    // Erel is too new for MapleScouter to list its buffs yet, so we can't confirm
-    // which always-on skills raise stat-window values. TODO: revisit once MapleScouter
-    // adds Erel Light and add the class-specific buff(s) (candidates: Light Enchant,
-    // Helian Blessing, and the other no-cooldown actives — see new-class-checklist memory).
+    // No fixed gender. buffSkills are the universal decent skills only: MapleScouter
+    // doesn't support Erel Light at all yet (SCOUTER_UNSUPPORTED_CLASS_IDS), so there's
+    // no live capture to confirm which class-specific always-on skills raise stat-window
+    // values. Revisit once MapleScouter adds support and add the class-specific buff(s)
+    // (candidates: Light Enchant, Helian Blessing, and the other no-cooldown actives).
     buffSkills: [DSE, DCO],
     requiredStats: ["str", "dex", "attackPower"],
   },
@@ -753,12 +750,12 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
   //   both lineages under one "thief" bucket for equip-filtering purposes only.
   //   Pirate: Brawler/Marauder->Buccaneer (STR) and Gunslinger/Outlaw->Corsair (DEX) are
   //   genuinely different primary stats with no shared lineage-wide default the way Rogue has
-  //   (LUK/DEX either way) -- Yuki confirmed dormant "Pirate"-jobName characters observed in
-  //   practice consistently land DEX/STR (Corsair), so that's what's assigned below.
+  //   (LUK/DEX either way) -- dormant "Pirate"-jobName characters observed in practice
+  //   consistently land DEX/STR (Corsair), so that's what's assigned below.
   // beginner/citizen/noblesse stay empty: no real job/branch to derive a stat from (Noblesse
   // precedes Cygnus Knights' own 5-way branch split, which spans all 4 main stats with no
   // overlap) -- Overview/Stats fall back to showing all 4 main stats for these.
-  // ancient_archer/soulchaser are Pathfinder's 2nd/3rd job (bowman), confirmed by Yuki.
+  // ancient_archer/soulchaser are Pathfinder's 2nd/3rd job (bowman), confirmed directly.
   { id: "ancient_archer", nexonJobName: "Ancient Archer", buffSkills: [], requiredStats: ["dex", "str", "attackPower"], isLegacy: true },
   { id: "archer", nexonJobName: "Archer", buffSkills: [], requiredStats: ["dex", "str", "attackPower"], isLegacy: true },
   { id: "assassin", nexonJobName: "Assassin", buffSkills: [], requiredStats: ["luk", "dex", "attackPower"], isLegacy: true },
@@ -793,8 +790,8 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
   { id: "noblesse", nexonJobName: "Noblesse", buffSkills: [], requiredStats: [], isLegacy: true },
   { id: "outlaw", nexonJobName: "Outlaw", buffSkills: [], requiredStats: ["dex", "str", "attackPower"], isLegacy: true },
   { id: "page", nexonJobName: "Page", buffSkills: [], requiredStats: ["str", "dex", "attackPower"], isLegacy: true },
-  // Yuki: dormant "Pirate"-jobName characters observed in practice are consistently
-  // DEX/STR (Corsair lineage), not the STR/DEX Buccaneer side.
+  // Dormant "Pirate"-jobName characters observed in practice are consistently DEX/STR
+  // (Corsair lineage), not the STR/DEX Buccaneer side.
   { id: "pirate", nexonJobName: "Pirate", buffSkills: [], requiredStats: ["dex", "str", "attackPower"], isLegacy: true },
   { id: "priest", nexonJobName: "Priest", buffSkills: [], requiredStats: ["int", "luk", "magicAtt"], isLegacy: true },
   { id: "ranger", nexonJobName: "Ranger", buffSkills: [], requiredStats: ["dex", "str", "attackPower"], isLegacy: true },

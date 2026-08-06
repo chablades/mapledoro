@@ -39,7 +39,7 @@ export interface StoredHyperStat {
  *  in-game effect scales off "the sum of all your stats," so this is a real displayed
  *  total, not stats.str/dex/int/luk.base). Kept as its own private value rather than
  *  synced with the Stats step's Base field -- an earlier design did sync them, reverted
- *  2026-07-27 after it silently corrupted a character's real Base stats. */
+ *  after it silently corrupted a character's real Base stats. */
 export interface StoredOzRings {
   ringMode: "standard" | "continuous";
   levels: Record<string, number>;
@@ -427,7 +427,7 @@ export type ImportSectionId =
   | "overviewLayout";
 
 // Display order for the import conflict picker -- tuned by hand, not derived from any
-// other ordering (e.g. the profile's own bookmark order) -- see Yuki if this needs revisiting.
+// other ordering (e.g. the profile's own bookmark order).
 export const IMPORT_SECTION_DEFS: { id: ImportSectionId; label: string }[] = [
   { id: "overviewLayout", label: "Overview Layout" },
   { id: "identity", label: "Gender & Marriage" },

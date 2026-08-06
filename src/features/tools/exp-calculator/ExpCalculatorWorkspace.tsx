@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { CharacterDropdown } from "../../../components/CharacterSyncPanel";
 import HoverTooltip from "../../../components/HoverTooltip";
@@ -9,42 +9,56 @@ import { SegmentedToggle } from "../../../components/SegmentedToggle";
 import type { AppTheme } from "../../../components/themes";
 import { ToolHeader } from "../../../components/ToolHeader";
 import { useMounted } from "../../../lib/useMounted";
-import { formatExpCompact, formatMesoFull } from "../format";
+import { formatExpCompact, formatMesoFull, formatPct } from "../format";
 import { formatShortDate } from "../date";
 import { replaceZeroOnDigit } from "../numberInputHandlers";
 import { Field, Toggle, ToolNumberInput } from "../shared-ui";
 import { toolStyles } from "../tool-styles";
-import { dataTableTh, dropdownShadow } from "../shared-styles";
+import { dropdownShadow } from "../shared-styles";
 import {
+  ADV_EXP_TICKET_ICON,
   CHECK_BUFF_GROUPS,
   DAILY_EXP_CONTENT,
   DEFAULT_BUFF_STATE,
+  DOUBLE_UP_ICON,
   EPIC_DUNGEON_OPTIONS,
+  EXPRESS_BOOSTER_ICON,
+  EXPRESS_BOOSTER_MIN_LEVEL,
+  EXP_TICKET_ICON,
   GROWTH_POTION_OPTIONS,
   INPUT_BUFFS,
   LEVEL_INPUT_BUFFS,
+  LUXE_SAUNA_ICON,
   MAX_EXP_LEVEL,
+  MAX_MONSTER_LEVEL,
+  MECHABERRY_FARM_ICON,
   MIN_EXP_LEVEL,
+  MIN_MONSTER_LEVEL,
+  MONSTER_PARK_ICON,
   MONSTER_PARK_OPTIONS,
-  RESOURCE_TABLES,
+  PUNCH_KING_ICON,
+  PUNCH_KING_MAX_POINTS,
   ROLL_OF_THE_DICE_JOBS,
   SELECT_BUFFS,
+  SOL_ERDA_ICON,
+  STRAWBERRY_FARM_ICON,
   WEEKLY_EXP_CONTENT,
   bestMonsterParkForLevel,
+  buildResourceBreakdown,
   calculateAllInOne,
   calculateMonsterExp,
-  expForLevel,
+  defaultBreakdownInput,
   percentOfLevel,
   type AllInOneInput,
+  type BreakdownControlId,
+  type BreakdownGroup,
+  type ResourceBreakdownInput,
   type BuffState,
   type CheckBuff,
-  type EpicDungeonRow,
   type IconRef,
   type InputBuff,
-  type LevelResourceRow,
   type MonsterExpInput,
   type MonsterExpResult,
-  type ResourceTable,
 } from "./exp-calculator-data";
 import { EXP_MONSTERS, type ExpMonster } from "./exp-monsters";
 import {
@@ -55,6 +69,7 @@ import {
 } from "../../characters/model/charactersStore";
 import { worldServerType } from "../boss-crystals/boss-crystals-types";
 import { readCharacterToolData, writeCharacterToolData } from "../characterToolStorage";
+import { readToolProgress, writeToolLevel } from "../toolLevel";
 
 type ExpTab = "buffs" | "all-in-one" | "resources";
 type AllInOneNumberKey =
@@ -89,6 +104,10 @@ const TAB_LABELS: Record<ExpTab, string> = {
 
 const FARMING_TOOL_KEY = "expFarming";
 
+/** The player's level and EXP percent, saved for the calculator as a whole rather than per tab:
+ *  they are one fact about the character, so the two tabs must not disagree about them. */
+const EXP_LEVEL_TOOL_KEY = "expLevel";
+
 const DEFAULT_MONSTER: MonsterExpInput = {
   playerLevel: 260,
   targetLevel: 270,
@@ -98,9 +117,9 @@ const DEFAULT_MONSTER: MonsterExpInput = {
   hourlyKillCount: 18000,
 };
 
-/** Farming Calculator state saved per-character. Level/percent come from the character record and
- *  monster level/EXP come from the selected monster, so none of those are saved: only the monster's
- *  key, which is enough to reproduce the hourly rate on the next visit. */
+/** Farming Calculator state saved per-character. Percent comes from the character record, level
+ *  from `EXP_LEVEL_TOOL_KEY`, and monster level/EXP from the selected monster, so none of those are
+ *  saved here: only the monster's key, which is enough to reproduce the hourly rate next visit. */
 interface SavedExpState {
   buffs: BuffState;
   targetLevel: number;
@@ -131,19 +150,32 @@ function characterPercent(character: StoredCharacterRecord): number {
   return roundToThree(Math.min(99.999, Math.max(0, percentOfLevel(character.level, character.exp))));
 }
 
+/** Where the character is right now: the record's own figures, unless the player has typed a level
+ *  the record hasn't caught up to yet, in which case what they typed stands in. A typed-ahead level
+ *  with no percent alongside it keeps showing the record's, which is what the field showed when
+ *  they typed the level and left it alone. */
+function characterProgress(character: StoredCharacterRecord): { level: number; percent: number } {
+  const ahead = readToolProgress(character, EXP_LEVEL_TOOL_KEY);
+  return {
+    level: ahead?.level ?? character.level,
+    percent: ahead?.percent ?? characterPercent(character),
+  };
+}
+
 /** Buffs + monster inputs for a character, from their saved state merged over the defaults. */
 function loadCharacterState(character: StoredCharacterRecord, monster: MonsterExpInput) {
   const saved = mergeSavedExpState(
     readCharacterToolData<Partial<SavedExpState>>(character.characterName, FARMING_TOOL_KEY),
   );
   const selectedMonster = EXP_MONSTERS.find((option) => option.key === saved.monsterKey) ?? null;
+  const progress = characterProgress(character);
   return {
     buffs: applyJobBuffRules(saved.buffs, character.jobName),
     selectedMonster,
     monster: {
       ...monster,
-      playerLevel: character.level,
-      currentPercent: characterPercent(character),
+      playerLevel: progress.level,
+      currentPercent: progress.percent,
       targetLevel: saved.targetLevel,
       hourlyKillCount: saved.hourlyKillCount,
       monsterLevel: selectedMonster?.level ?? monster.monsterLevel,
@@ -224,8 +256,9 @@ interface ImportedFarmingRate {
 }
 
 /** Daily / Weekly plan saved per-character: the Daily Content, Weekly Content, Monster Park, and
- *  Epic Dungeon panels plus target level, burning, and the date window. Current level and percent
- *  come from the character record; event tickets and growth potions stay in memory by design. */
+ *  Epic Dungeon panels plus target level, burning, and the date window. Current percent comes from
+ *  the character record and the current level from `EXP_LEVEL_TOOL_KEY`; event tickets and growth
+ *  potions stay in memory by design. */
 type SavedAllInOne = Pick<
   AllInOneInput,
   | "targetLevel"
@@ -295,7 +328,8 @@ function loadCharacterAllInOne(character: StoredCharacterRecord): AllInOneInput 
   const saved = mergeSavedAllInOne(
     readCharacterToolData<Partial<SavedAllInOne>>(character.characterName, DAILY_WEEKLY_TOOL_KEY),
   );
-  return { ...saved, startLevel: character.level, startPercent: characterPercent(character) };
+  const progress = characterProgress(character);
+  return { ...saved, startLevel: progress.level, startPercent: progress.percent };
 }
 
 /** Writes the imported rate into the character's saved plan at import time. The Daily / Weekly seed
@@ -363,15 +397,6 @@ const EXP_NODE_TILES: { label: string; detail: string; short: string; value: num
 const DAILY_REGIONS = [...new Set(DAILY_EXP_CONTENT.map((daily) => daily.region))];
 
 const iconRowStyle: React.CSSProperties = { display: "flex", alignItems: "center", gap: 8 };
-
-// Sol Erda (manifests/v270/item.json), the Epic Dungeon reward currency.
-const SOL_ERDA_ICON: IconRef = { type: "item", id: "05066300" };
-
-// Monster Park entry ticket (manifests/v270/item.json).
-const MONSTER_PARK_ICON: IconRef = { type: "item", id: "05252030" };
-
-// The Express Booster Flame, listed as Intensifying Flame in manifests/v270/mob.json.
-const EXPRESS_BOOSTER_ICON: IconRef = { type: "mob", id: "9834700" };
 
 /** The level past which no Burning type grants extra levels. */
 const BURNING_MAX_LEVEL = 270;
@@ -450,7 +475,9 @@ export default function ExpCalculatorWorkspace({ theme }: { theme: AppTheme }) {
         .exp-select-grid { display: grid; grid-template-columns: repeat(2, minmax(260px, 1fr)); gap: 12px; }
         .exp-results { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
         .exp-overview-grid { display: grid; grid-template-columns: minmax(240px, 1.1fr) minmax(260px, 1fr); gap: 14px; }
-        .exp-table { min-width: 680px; }
+        /* Two lines per entry across as many columns as fit. Only one resource shows at a time, so
+           this runs the full panel width and lands three columns instead of the old card's one. */
+        .exp-breakdown-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 2px 22px; padding: 6px 14px 12px; align-items: start; }
         .exp-buff-card { min-height: 48px; }
         .exp-monster-dropdown { scrollbar-width: thin; scrollbar-color: ${theme.muted} transparent; }
         .exp-monster-dropdown::-webkit-scrollbar { width: 8px; }
@@ -465,6 +492,7 @@ export default function ExpCalculatorWorkspace({ theme }: { theme: AppTheme }) {
         }
         @media (max-width: 760px) {
           .exp-grid { grid-template-columns: 1fr; }
+          .exp-breakdown-grid { grid-template-columns: 1fr; }
           .exp-select-grid { grid-template-columns: 1fr; }
           .exp-overview-grid { grid-template-columns: 1fr; }
           .segmented-toggle-track { flex-wrap: wrap; }
@@ -534,6 +562,18 @@ function BuffsTab({
       const next = updater(state);
       if (selectedCharName) {
         writeCharacterToolData(selectedCharName, FARMING_TOOL_KEY, toSavedExpState(next, monster, selectedMonster));
+      }
+      return next;
+    });
+  };
+  /** The character record only refreshes on a lookup, so level and EXP percent stay editable and
+   *  save under the calculator's own key (see `EXP_LEVEL_TOOL_KEY`), not the Farming state. Both
+   *  are written together: they describe one position, and the save holds them as a pair. */
+  const updateProgress = (patch: Partial<Pick<MonsterExpInput, "playerLevel" | "currentPercent">>) => {
+    setMonster((state) => {
+      const next = { ...state, ...patch };
+      if (selectedCharName) {
+        writeToolLevel(selectedCharName, EXP_LEVEL_TOOL_KEY, next.playerLevel, next.currentPercent);
       }
       return next;
     });
@@ -613,8 +653,8 @@ function BuffsTab({
             />
           </Field>
           <div className="exp-grid" style={{ marginTop: 12 }}>
-            <NumberField label="Character Level" min={MIN_EXP_LEVEL} max={MAX_EXP_LEVEL - 1} value={monster.playerLevel} labelStyle={labelStyle} inputStyle={inputStyle} disabled={selectedCharName !== null} onChange={(value) => setMonster((state) => ({ ...state, playerLevel: value }))} />
-            <NumberField label="Current EXP %" min={0} max={99.999} decimal value={monster.currentPercent} labelStyle={labelStyle} inputStyle={inputStyle} disabled={selectedCharName !== null} onChange={(value) => setMonster((state) => ({ ...state, currentPercent: value }))} />
+            <NumberField label="Character Level" min={MIN_EXP_LEVEL} max={MAX_EXP_LEVEL - 1} value={monster.playerLevel} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateProgress({ playerLevel: value })} />
+            <NumberField label="Current EXP %" min={0} max={99.999} decimal value={monster.currentPercent} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateProgress({ currentPercent: value })} />
             <NumberField label="Target Level" min={MIN_EXP_LEVEL + 1} max={MAX_EXP_LEVEL} value={monster.targetLevel} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateSavedMonsterField("targetLevel", value)} />
             <NumberField label="Hourly Kill Count" min={0} value={monster.hourlyKillCount} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateSavedMonsterField("hourlyKillCount", value)} />
           </div>
@@ -1120,6 +1160,17 @@ function AllInOneTab({ theme, imported }: { theme: AppTheme; imported: ImportedF
       dailyIds: state.dailyIds.includes(id) ? state.dailyIds.filter((dailyId) => dailyId !== id) : [...state.dailyIds, id],
     }));
   };
+  /** Same deal as the Farming tab's level and percent: editable, and saved under the calculator's
+   *  own key rather than the plan, so both tabs read the one position back. */
+  const updateProgress = (patch: Partial<Pick<AllInOneInput, "startLevel" | "startPercent">>) => {
+    updateInput((state) => {
+      const next = { ...state, ...patch };
+      if (selectedCharName) {
+        writeToolLevel(selectedCharName, EXP_LEVEL_TOOL_KEY, next.startLevel, next.startPercent);
+      }
+      return next;
+    });
+  };
   const updateWeeklyRun = (id: string, runs: number) => {
     updateInput((state) => ({ ...state, weeklyRuns: { ...state.weeklyRuns, [id]: runs } }));
   };
@@ -1150,8 +1201,8 @@ function AllInOneTab({ theme, imported }: { theme: AppTheme; imported: ImportedF
           />
         </Field>
         <div className="exp-grid" style={{ marginTop: 12 }}>
-          <NumberField label="Current Level" min={MIN_EXP_LEVEL} max={MAX_EXP_LEVEL - 1} value={input.startLevel} labelStyle={labelStyle} inputStyle={inputStyle} disabled={selectedCharName !== null} onChange={(value) => updateNumber("startLevel", value)} />
-          <NumberField label="Current EXP %" min={0} max={99.999} decimal value={input.startPercent} labelStyle={labelStyle} inputStyle={inputStyle} disabled={selectedCharName !== null} onChange={(value) => updateNumber("startPercent", value)} />
+          <NumberField label="Current Level" min={MIN_EXP_LEVEL} max={MAX_EXP_LEVEL - 1} value={input.startLevel} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateProgress({ startLevel: value })} />
+          <NumberField label="Current EXP %" min={0} max={99.999} decimal value={input.startPercent} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateProgress({ startPercent: value })} />
           <NumberField label="Target Level" min={MIN_EXP_LEVEL + 1} max={MAX_EXP_LEVEL} value={input.targetLevel} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("targetLevel", value)} />
           <Field label="Burning" style={labelStyle}>
             <select
@@ -1306,14 +1357,14 @@ function AllInOneTab({ theme, imported }: { theme: AppTheme; imported: ImportedF
         <div style={panelStyle}>
           <SectionTitle theme={theme} label="Events and Tickets" />
           <div className="exp-grid">
-            <NumberField label="Strawberry Farm Tickets" icon={{ type: "item", id: "02637501" }} min={0} value={input.strawberryTickets} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("strawberryTickets", value)} />
-            <NumberField label="Mechaberry Farm Tickets" icon={{ type: "item", id: "02831285" }} min={0} value={input.mechaberryTickets} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("mechaberryTickets", value)} />
-            <NumberField label="Punch King Score / Week" icon={{ type: "item", id: "02637502" }} min={0} max={2050} value={input.punchKingScore} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("punchKingScore", value)} />
+            <NumberField label="Strawberry Farm Tickets" icon={STRAWBERRY_FARM_ICON} min={0} value={input.strawberryTickets} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("strawberryTickets", value)} />
+            <NumberField label="Mechaberry Farm Tickets" icon={MECHABERRY_FARM_ICON} min={0} value={input.mechaberryTickets} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("mechaberryTickets", value)} />
+            <NumberField label="Punch King Score / Week" icon={PUNCH_KING_ICON} min={0} max={2050} value={input.punchKingScore} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("punchKingScore", value)} />
             <NumberField label="Express Boosters (Lv. 260+)" icon={EXPRESS_BOOSTER_ICON} min={0} value={input.expressBoosters} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("expressBoosters", value)} />
-            <NumberField label="Double Up Points / Week" icon={{ type: "item", id: "04310359" }} min={0} value={input.doubleUpPoints} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("doubleUpPoints", value)} />
-            <NumberField label="Luxe Sauna / MVP Resort Hrs" icon={{ type: "mark", id: "mvpResort" }} min={0} decimal value={input.luxeSaunaHours} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("luxeSaunaHours", value)} />
-            <NumberField label="EXP Tickets" icon={{ type: "item", id: "02637353" }} min={0} value={input.expTickets} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("expTickets", value)} />
-            <NumberField label="Advanced EXP Tickets" icon={{ type: "item", id: "02638500" }} min={0} value={input.advancedExpTickets} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("advancedExpTickets", value)} />
+            <NumberField label="Double Up Points / Week" icon={DOUBLE_UP_ICON} min={0} value={input.doubleUpPoints} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("doubleUpPoints", value)} />
+            <NumberField label="Luxe Sauna / MVP Resort Hrs" icon={LUXE_SAUNA_ICON} min={0} decimal value={input.luxeSaunaHours} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("luxeSaunaHours", value)} />
+            <NumberField label="EXP Tickets" icon={EXP_TICKET_ICON} min={0} value={input.expTickets} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("expTickets", value)} />
+            <NumberField label="Advanced EXP Tickets" icon={ADV_EXP_TICKET_ICON} min={0} value={input.advancedExpTickets} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("advancedExpTickets", value)} />
           </div>
         </div>
 
@@ -1374,111 +1425,259 @@ function ResultRow({ theme, label, value }: { theme: AppTheme; label: string; va
   );
 }
 
+/** Opens on the roster main's level, so the breakdown is useful before touching the input. */
+function initialBreakdownInput(): ResourceBreakdownInput {
+  const main = selectMainCharacter(readCharactersStore());
+  return defaultBreakdownInput(clampLevel(main?.level ?? MIN_EXP_LEVEL));
+}
+
+function clampLevel(level: number): number {
+  return clampNumber(level, MIN_EXP_LEVEL, MAX_EXP_LEVEL);
+}
+
+function clampNumber(value: number, min: number, max: number): number {
+  if (!Number.isFinite(value)) return min;
+  return Math.min(max, Math.max(min, Math.floor(value)));
+}
+
+/** `monsterParkId` is the one control that is a dropdown rather than a number. */
+type NumericBreakdownControlId = Exclude<BreakdownControlId, "monsterParkId">;
+
+/** Label and range for every numeric breakdown knob. */
+const BREAKDOWN_CONTROLS: Record<NumericBreakdownControlId, { label: string; min: number; max: number }> = {
+  arcaneRiverBonus: { label: "Arcane River Bonus %", min: 0, max: 500 },
+  grandisBonus: { label: "Grandis Bonus %", min: 0, max: 500 },
+  epicDungeonBonus: { label: "Base EXP Bonus %", min: 0, max: 500 },
+  treasureMonsterLevel: { label: "Monster Level", min: MIN_MONSTER_LEVEL, max: MAX_MONSTER_LEVEL },
+  treasureBonus: { label: "Bonus EXP %", min: 0, max: 500 },
+  monsterParkRuns: { label: "Runs", min: 0, max: 99 },
+  monsterParkBonus: { label: "Bonus EXP %", min: 0, max: 500 },
+  expTickets: { label: "Tickets", min: 0, max: 9999 },
+  punchKingPoints: { label: "Points", min: 0, max: PUNCH_KING_MAX_POINTS },
+  strawberryTickets: { label: "Tickets", min: 0, max: 9999 },
+  strawberryBonus: { label: "Bonus EXP %", min: 0, max: 500 },
+  mechaberryTickets: { label: "Tickets", min: 0, max: 9999 },
+  expressMonsterLevel: { label: "Monster Level", min: EXPRESS_BOOSTER_MIN_LEVEL, max: MAX_MONSTER_LEVEL },
+  hasteMonsterLevel: { label: "Monster Level", min: MIN_MONSTER_LEVEL, max: MAX_MONSTER_LEVEL },
+  hasteKills: { label: "Monster Kills", min: 0, max: 99999 },
+  saunaHours: { label: "Hours", min: 0, max: 999 },
+  doubleUpPoints: { label: "Points", min: 0, max: 9999 },
+};
+
 function ResourcesTab({ theme }: { theme: AppTheme }) {
   const styles = toolStyles(theme);
+  const inputStyle = fullWidthControl(styles.inputStyle);
   const selectStyle = fullWidthControl(styles.selectStyle);
   const panelStyle = expPanelStyle(styles);
-  const [tableId, setTableId] = useState(RESOURCE_TABLES[0]?.id ?? "");
-  const selected = RESOURCE_TABLES.find((table) => table.id === tableId) ?? RESOURCE_TABLES[0];
+  const [input, setInput] = useState(initialBreakdownInput);
+  // `""` is "not picked yet", which resolves to the first resource the level can reach.
+  const [sectionId, setSectionId] = useState("");
+  const sections = useMemo(() => buildResourceBreakdown(input), [input]);
+  // Level also gates which resources exist, so a pick can drop out of the list. Falling back on
+  // read rather than correcting the state hands the pick back if the level climbs to it again.
+  const section = sections.find((entry) => entry.id === sectionId) ?? sections[0];
+
+  // Changing the character level re-seeds the monster-level fields with it, since "what is this
+  // worth at Lv. X" almost always means fighting Lv. X monsters. They stay editable after.
+  const changeLevel = (value: number) => {
+    const level = clampLevel(value);
+    setInput((prev) => ({
+      ...prev,
+      level,
+      treasureMonsterLevel: clampNumber(level, MIN_MONSTER_LEVEL, MAX_MONSTER_LEVEL),
+      expressMonsterLevel: clampNumber(level, EXPRESS_BOOSTER_MIN_LEVEL, MAX_MONSTER_LEVEL),
+      hasteMonsterLevel: clampNumber(level, MIN_MONSTER_LEVEL, MAX_MONSTER_LEVEL),
+    }));
+  };
+  const updateNumber = (key: NumericBreakdownControlId, value: number) => {
+    setInput((prev) => ({ ...prev, [key]: value }));
+  };
+  const selectMonsterPark = (parkId: string) => setInput((prev) => ({ ...prev, monsterParkId: parkId }));
 
   return (
     <div style={panelStyle}>
-      <div>
-        <Field label="Resource Table" style={styles.labelStyle}>
-          <select className="tool-select" value={selected.id} onChange={(e) => setTableId(e.target.value)} style={selectStyle}>
-            {RESOURCE_TABLES.map((table) => (
-              <option key={table.id} value={table.id}>
-                {table.label}
+      {/* The picker is the tab's navigation, so it leads and takes the width; Level frames every
+          figure under it and rides alongside. Both persist across resources. */}
+      <div style={breakdownControlRowStyle}>
+        <div style={resourcePickerFieldStyle}>
+          <Field label="Resource" style={styles.labelStyle}>
+            <select className="tool-select" value={section.id} style={selectStyle} onChange={(e) => setSectionId(e.target.value)}>
+              {sections.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.title}
+                </option>
+              ))}
+            </select>
+          </Field>
+        </div>
+        <div style={levelFieldStyle}>
+          <NumberField label="Level" min={MIN_EXP_LEVEL} max={MAX_EXP_LEVEL} value={input.level} labelStyle={styles.labelStyle} inputStyle={inputStyle} onChange={changeLevel} />
+        </div>
+      </div>
+      {section.note && <p style={{ ...breakdownNoteStyle, color: theme.muted }}>{section.note}</p>}
+      {/* Keyed so switching resources replays the site-wide fade on the body that swapped. */}
+      <div key={section.id} className="fade-in" style={breakdownBodyStyle(theme)}>
+        {section.controls.length > 0 && (
+          // The body fill is `timerBg`, so the knob band is the lighter `panel` fill.
+          <div style={{ ...breakdownControlRowStyle, background: theme.panel, borderBottom: `1px solid ${theme.border}`, padding: "10px 14px" }}>
+            {section.controls.map((control) => (
+              <BreakdownControl
+                key={control}
+                id={control}
+                input={input}
+                styles={styles}
+                inputStyle={inputStyle}
+                selectStyle={selectStyle}
+                onChangeNumber={updateNumber}
+                onSelectMonsterPark={selectMonsterPark}
+              />
+            ))}
+          </div>
+        )}
+        <div className="exp-breakdown-grid">
+          {section.groups.map((group) => (
+            <Fragment key={group.id}>
+              {group.heading && (
+                <div style={{ ...breakdownHeadingStyle, color: theme.muted }}>
+                  <span>{group.heading}</span>
+                  <span style={{ ...breakdownHeadingRuleStyle, background: theme.border }} />
+                </div>
+              )}
+              <BreakdownGroupBlock theme={theme} group={group} level={input.level} />
+            </Fragment>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function BreakdownControl({
+  id,
+  input,
+  styles,
+  inputStyle,
+  selectStyle,
+  onChangeNumber,
+  onSelectMonsterPark,
+}: {
+  id: BreakdownControlId;
+  input: ResourceBreakdownInput;
+  styles: ReturnType<typeof toolStyles>;
+  inputStyle: React.CSSProperties;
+  selectStyle: React.CSSProperties;
+  onChangeNumber: (key: NumericBreakdownControlId, value: number) => void;
+  onSelectMonsterPark: (parkId: string) => void;
+}) {
+  if (id === "monsterParkId") {
+    return (
+      <div style={breakdownSelectFieldStyle}>
+        <Field label="Dungeon" style={styles.labelStyle}>
+          <select
+            className="tool-select"
+            value={input.monsterParkId}
+            style={selectStyle}
+            onChange={(e) => onSelectMonsterPark(e.target.value)}
+          >
+            <option value="">Highest available</option>
+            {MONSTER_PARK_OPTIONS.filter((park) => park.minLevel <= input.level).map((park) => (
+              <option key={park.id} value={park.id}>
+                {park.label}
               </option>
             ))}
           </select>
         </Field>
-        <div
-          style={{
-            color: theme.muted,
-            fontSize: "0.82rem",
-            fontWeight: 700,
-            lineHeight: 1.45,
-            marginTop: 8,
-            overflowWrap: "anywhere",
-          }}
-        >
-          {selected.description}
-        </div>
       </div>
-      <ResourceTableView theme={theme} table={selected} />
-    </div>
-  );
-}
-
-function ResourceTableView({ theme, table }: { theme: AppTheme; table: ResourceTable }) {
-  const thStyle: React.CSSProperties = { ...dataTableTh(theme), textAlign: "right", background: theme.timerBg };
-  const tdStyle: React.CSSProperties = { padding: "8px 12px", color: theme.text, fontSize: "0.82rem", fontWeight: 700, textAlign: "right" };
-  const levelTdStyle: React.CSSProperties = { ...tdStyle, textAlign: "left", color: theme.accentText, fontWeight: 800 };
-  const maxUnits = table.maxUnits;
-  const unitsPerHour = table.unitsPerHour;
-  // The wrapper is `timerBg`, so the zebra stripe is the lighter `panel` fill.
-  const rowStyle = (index: number): React.CSSProperties => ({ background: index % 2 === 1 ? theme.panel : "transparent" });
-
+    );
+  }
+  const control = BREAKDOWN_CONTROLS[id];
   return (
-    <div style={{ ...innerCardStyle(theme), marginTop: "1rem", overflowX: "auto" }}>
-      <table className="exp-table" style={{ width: "100%", borderCollapse: "collapse" }}>
-        <thead>
-          <tr>
-            <th style={{ ...thStyle, textAlign: "left" }}>Level</th>
-            {table.kind === "epic" ? (
-              <>
-                <th style={thStyle}>Base EXP</th>
-                <th style={thStyle} title="EXP when the weekly chest rolls the 5x reward tier">5x Reward</th>
-                <th style={thStyle} title="EXP when the weekly chest rolls the 9x reward tier">9x Reward</th>
-              </>
-            ) : (
-              <>
-                <th style={thStyle}>EXP / Unit</th>
-                {maxUnits !== undefined && <th style={thStyle} title={`Total EXP for a full ${maxUnits.toLocaleString()}-unit run`}>{table.maxUnitsLabel ?? "Full Run"}</th>}
-                {unitsPerHour !== undefined ? (
-                  <>
-                    <th style={thStyle} title="Share of this level earned per hour">% / Hour</th>
-                    <th style={thStyle} title="Hours needed to gain one full level">Hours / Level</th>
-                  </>
-                ) : (
-                  <>
-                    {!table.hidePercentOfLevel && <th style={thStyle} title="Share of this level earned per unit">% of Level</th>}
-                    <th style={thStyle} title="Units needed to gain one full level">Units / Level</th>
-                  </>
-                )}
-              </>
-            )}
-          </tr>
-        </thead>
-        <tbody>
-          {table.kind === "epic"
-            ? (table.rows as EpicDungeonRow[]).map((row, index) => (
-                <tr key={row.level} style={rowStyle(index)}>
-                  <td style={levelTdStyle}>Lv. {row.level}</td>
-                  <td style={tdStyle}>{formatMesoFull(row.baseExp)}</td>
-                  <td style={tdStyle}>{formatMesoFull(row.fiveXExp)}</td>
-                  <td style={tdStyle}>{formatMesoFull(row.nineXExp)}</td>
-                </tr>
-              ))
-            : (table.rows as LevelResourceRow[]).map((row, index) => (
-                <tr key={row.level} style={rowStyle(index)}>
-                  <td style={levelTdStyle}>Lv. {row.level}</td>
-                  <td style={tdStyle}>{formatMesoFull(row.exp)}</td>
-                  {maxUnits !== undefined && <td style={tdStyle}>{formatMesoFull(row.exp * maxUnits)}</td>}
-                  {!table.hidePercentOfLevel && <td style={tdStyle}>{percentOfLevel(row.level, row.exp * (unitsPerHour ?? 1)).toFixed(4)}%</td>}
-                  {unitsPerHour !== undefined ? (
-                    <td style={tdStyle}>{(expForLevel(row.level) / Math.max(1, row.exp * unitsPerHour)).toLocaleString(undefined, { maximumFractionDigits: 2 })}</td>
-                  ) : (
-                    <td style={tdStyle}>{Math.ceil(expForLevel(row.level) / Math.max(1, row.exp)).toLocaleString()}</td>
-                  )}
-                </tr>
-              ))}
-        </tbody>
-      </table>
+    <div style={breakdownFieldStyle}>
+      <NumberField
+        label={control.label}
+        min={control.min}
+        max={control.max}
+        value={input[id]}
+        labelStyle={styles.labelStyle}
+        inputStyle={inputStyle}
+        onChange={(value) => onChangeNumber(id, clampNumber(value, control.min, control.max))}
+      />
     </div>
   );
 }
+
+function BreakdownGroupBlock({ theme, group, level }: { theme: AppTheme; group: BreakdownGroup; level: number }) {
+  return (
+    <div style={breakdownGroupStyle}>
+      <span style={breakdownIconStyle}>
+        <BuffIcon icon={group.icon} label={group.label} />
+      </span>
+      <div style={minWidthZero}>
+        <div style={{ ...breakdownNameStyle, color: theme.text }}>{group.label}</div>
+        {group.values.map((value) => (
+          <div key={value.id} style={breakdownValueBlockStyle}>
+            {value.detail && <div style={{ ...breakdownDetailStyle, color: theme.muted }}>({value.detail})</div>}
+            <div style={{ ...breakdownValueStyle, color: theme.muted }}>
+              {formatMesoFull(value.exp)} EXP /{" "}
+              <span style={{ color: theme.accentText, fontWeight: 800 }}>{formatPct(percentOfLevel(level, value.exp))}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+const breakdownControlRowStyle: React.CSSProperties = { display: "flex", flexWrap: "wrap", alignItems: "flex-end", gap: 12 };
+
+/** Wide enough that the longest control label ("Arcane River Bonus %") stays on one line. */
+const breakdownFieldStyle: React.CSSProperties = { width: 178 };
+
+const breakdownSelectFieldStyle: React.CSSProperties = { width: 210 };
+
+/** The tab's navigation, so it outsizes every knob under it and takes the room a resource name
+ *  ("Golden Strawberry Farm") needs, without stretching across a width no select wants. */
+const resourcePickerFieldStyle: React.CSSProperties = { flex: "1 1 240px", maxWidth: 340 };
+
+/** Three digits, so it gives back the width the picker takes. */
+const levelFieldStyle: React.CSSProperties = { width: 116 };
+
+function breakdownBodyStyle(theme: AppTheme): React.CSSProperties {
+  return { ...innerCardStyle(theme), overflow: "hidden", marginTop: "1rem" };
+}
+
+/** Describes the picked resource, so it sits under the picker rather than in the body. */
+const breakdownNoteStyle: React.CSSProperties = { margin: "8px 0 0", fontSize: "0.78rem", fontWeight: 700, lineHeight: 1.45 };
+
+const breakdownGroupStyle: React.CSSProperties = { display: "flex", alignItems: "flex-start", gap: 10, padding: "9px 0" };
+
+const minWidthZero: React.CSSProperties = { minWidth: 0 };
+
+/** Icons are flex items next to a wrapping text block, so they need to be told not to squash. */
+const breakdownIconStyle: React.CSSProperties = { flexShrink: 0, lineHeight: 0 };
+
+const breakdownNameStyle: React.CSSProperties = { fontSize: "0.85rem", fontWeight: 800, lineHeight: 1.35 };
+
+/** Spans the whole grid, so it both labels a run of groups and forces it onto a fresh row. */
+const breakdownHeadingStyle: React.CSSProperties = {
+  gridColumn: "1 / -1",
+  display: "flex",
+  alignItems: "center",
+  gap: 8,
+  padding: "10px 0 2px",
+  fontSize: "0.75rem",
+  fontWeight: 800,
+  letterSpacing: "0.04em",
+  textTransform: "uppercase",
+};
+
+const breakdownHeadingRuleStyle: React.CSSProperties = { flex: 1, height: 1 };
+
+const breakdownValueBlockStyle: React.CSSProperties = { marginTop: 3 };
+
+const breakdownDetailStyle: React.CSSProperties = { fontSize: "0.75rem", fontWeight: 700, lineHeight: 1.35 };
+
+const breakdownValueStyle: React.CSSProperties = { fontSize: "0.8rem", fontWeight: 700, lineHeight: 1.4, overflowWrap: "anywhere" };
 
 function SectionTitle({ theme, label }: { theme: AppTheme; label: string }) {
   return (
@@ -1603,13 +1802,13 @@ function DateField({
   );
 }
 
-function BuffIcon({ icon, label }: { icon?: IconRef; label: string }) {
+function BuffIcon({ icon, label, size = 32 }: { icon?: IconRef; label: string; size?: number }) {
   if (!icon) return null;
-  if (icon.type === "erda-skill") return <ErdaSkillIcon id={icon.id} size={32} alt={label} />;
-  if (icon.type === "mark") return <MarkIcon id={icon.id} size={32} alt={label} />;
-  if (icon.type === "skill") return <SkillIcon id={icon.id} size={32} alt={label} />;
-  if (icon.type === "mob") return <MobSprite id={icon.id} size={32} alt={label} />;
-  return <ItemIcon id={icon.id} shadow={icon.shadow} size={32} alt={label} />;
+  if (icon.type === "erda-skill") return <ErdaSkillIcon id={icon.id} size={size} alt={label} />;
+  if (icon.type === "mark") return <MarkIcon id={icon.id} size={size} alt={label} />;
+  if (icon.type === "skill") return <SkillIcon id={icon.id} size={size} alt={label} />;
+  if (icon.type === "mob") return <MobSprite id={icon.id} size={size} alt={label} />;
+  return <ItemIcon id={icon.id} shadow={icon.shadow} size={size} alt={label} />;
 }
 
 /** Vertical icon + level tile, matching the char-flow symbol level inputs. */

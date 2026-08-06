@@ -294,3 +294,30 @@ export const SCOUTER_CLASS_CONSTANTS: Record<string, ScouterClassConstants> = {
     dpmBossDmg: -4, dpmIgnoreGuard: 69.23, dpmCritDmg: 22.75,
   },
 };
+
+/**
+ * Critical damage each point of critical rate ABOVE 100% converts into, for the
+ * archer classes whose passives do that (Vicious Shot and its equivalents).
+ *
+ * Vendored from scouter's own `criInP` field, which carries a value for exactly
+ * these seven classes and for no other class in their 102-entry table. Scouter
+ * applies it only in the link-skill efficiency ranking (`pct * cridmgeff1 * criInP`,
+ * gated on the same seven names), never in its optimizer, because its crit rate
+ * input is capped at 100 and its efficiency table has no crit rate bucket at all.
+ * Our kernel applies it everywhere, which is a deliberate divergence -- see the
+ * feature CLAUDE.md.
+ */
+export const CRIT_RATE_TO_CRIT_DMG: Record<string, number> = {
+  bow_master: 0.2425,
+  marksman: 0.235,
+  pathfinder: 0.2817,
+  wind_archer: 0.255,
+  wild_hunter: 0.2678,
+  mercedes: 0.294,
+  kain: 0.263,
+};
+
+/** This class's excess-crit-rate conversion rate, 0 for everyone who has no passive for it. */
+export function critRateToCritDmg(classId: string | undefined): number {
+  return (classId ? CRIT_RATE_TO_CRIT_DMG[classId] : undefined) ?? 0;
+}

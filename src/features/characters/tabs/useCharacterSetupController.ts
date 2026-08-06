@@ -59,7 +59,6 @@ import {
   convertScouterQuestionsDraftToStored,
   resolveLegionArtifacts,
   whRankFromRoster,
-  parseWeaponAtt,
   type LegionArtifactsDraft,
 } from "../setup/data/scouterQuestionsData";
 import {
@@ -254,9 +253,11 @@ function applyStatsDraftToRoster(
   // Ability card (if edited) fully determines the scouter-facing line — but now that
   // this question also shows a real manual ask (see InnerAbilityLineQuestion) whenever
   // the card has no data yet, fall back to that manual answer instead of discarding it.
+  const scouterQ = convertScouterQuestionsDraftToStored(statsDraft);
   const innerAbilityLine = innerAbilityHasData(stats.innerAbility)
     ? (deriveInnerAbilityLine(stats.innerAbility) ?? "neither")
-    : convertScouterQuestionsDraftToStored(statsDraft)?.innerAbilityLine;
+    : scouterQ?.innerAbilityLine;
+  const weaponAtt = scouterQ?.weaponAtt;
   upsertFn({
     ...existing,
     stats: { ...existing.stats, ...stats },
@@ -264,7 +265,9 @@ function applyStatsDraftToRoster(
     weaponHand: deriveWeaponHandFromWeapon(existing.equipment) ?? weaponHand,
     hasRuinForceShield: deriveHasRuinForceShield(existing.equipment) ?? hasRuinForceShield,
     soul,
-    scouter: innerAbilityLine ? { ...existing.scouter, innerAbilityLine } : existing.scouter,
+    scouter: innerAbilityLine || weaponAtt !== undefined
+      ? { ...existing.scouter, ...(innerAbilityLine ? { innerAbilityLine } : {}), ...(weaponAtt !== undefined ? { weaponAtt } : {}) }
+      : existing.scouter,
   });
 }
 
@@ -341,8 +344,8 @@ const WH_LEGION_RANK_SET = new Set<string>(["B", "A", "S", "SS", "SSS"]);
 // Hunter" or cleared their previous bracket pick (an explicit, deliberate clear).
 // "none" used to fall through to the WH_LEGION_RANK_SET check below and resolve to
 // undefined -- indistinguishable from never having answered at all, so anyone with
-// no Wild Hunter could never satisfy a completeness check that requires an answer
-// (Yuki, 2026-07-27). Checked explicitly now so it round-trips as its own value.
+// no Wild Hunter could never satisfy a completeness check that requires an answer.
+// Checked explicitly now so it round-trips as its own value.
 function resolveWhLegionRank(
   derived: WhLegionRank | null,
   manual: string | undefined,
@@ -430,10 +433,10 @@ function finalizeQuickOrFullSetupRecord(
 // A freshly-unlocked Legion Artifact starts at Artifact Level 1 (not 0 — namu.wiki's own
 // level table starts numbering at 1, same convention as character level), already with its
 // first 3 crystals (Orange Mushroom/Slime/Horny Mushroom) unlocked at Crystal Level 1 and
-// these exact 3 default lines — confirmed via namu.wiki (2026-07-08): "미변경 시 기본 할당
-// 옵션은 '올스탯 증가', '최대 HP/MP 증가', '공격력/마력 증가'이다" ("if unchanged, the
-// default assigned options are All Stat, Max HP/MP, ATT/Magic ATT"), and Crystal Grade 1
-// costs 0 AP (i.e. automatic, not a player action). None of our setup flows ask for a real
+// these exact 3 default lines — confirmed via namu.wiki: "미변경 시 기본 할당 옵션은
+// '올스탯 증가', '최대 HP/MP 증가', '공격력/마력 증가'이다" ("if unchanged, the default
+// assigned options are All Stat, Max HP/MP, ATT/Magic ATT"), and Crystal Grade 1 costs 0
+// AP (i.e. automatic, not a player action). None of our setup flows ask for a real
 // Artifact Level or crystal config, so this is the one piece of Legion Artifact data safe to
 // assume for literally every player, regardless of how far they've actually progressed.
 //
@@ -719,9 +722,12 @@ function buildFullSetupRecord(
   const innerAbilityLine = innerAbilityHasData(stats.innerAbility)
     ? (deriveInnerAbilityLine(stats.innerAbility) ?? "neither")
     : convertScouterQuestionsDraftToStored(statsDraft)?.innerAbilityLine;
-  // full_setup asks Weapon ATT inline in the Equipment step's weapon picker, not Stats
-  // (maplescouter_setup has no Equipment step, so it's the only flow still asking in Stats).
-  const weaponAtt = stepData.equipment ? extractWeaponAttFromEquipmentDraft(stepData.equipment) : undefined;
+  // Weapon ATT is asked in Character Info (Stats), same as maplescouter_setup/stats_flow
+  // — no longer asked inline in the Equipment step's weapon picker (that field always
+  // wrote against whichever weapon sat in preset 0, wrongly assuming that's the
+  // character's real bossing preset — there's no way to know that during full_setup,
+  // since the active preset is only ever set later).
+  const weaponAtt = convertScouterQuestionsDraftToStored(statsDraft)?.weaponAtt;
   const scouterPatch = {
     ...(ozRings ? { ozRings } : {}),
     ...(buffs ? { buffs } : {}),
@@ -760,14 +766,6 @@ function buildFullSetupRecord(
   };
 }
 
-// Weapon ATT/MATT is asked inline in the weapon slot's picker (full_setup only), not
-// stored as equipment data — pulled out of the same draft and merged into scouter.
-function extractWeaponAttFromEquipmentDraft(equipmentJson: string): number | undefined {
-  const parsed = tryParseJson(equipmentJson);
-  if (!parsed || typeof parsed !== "object") return undefined;
-  return parseWeaponAtt((parsed as { weaponAtt?: string }).weaponAtt);
-}
-
 function applyEquipmentDraftToRoster(
   character: NormalizedCharacterData | null,
   equipmentJson: string,
@@ -781,7 +779,6 @@ function applyEquipmentDraftToRoster(
   if (!existing) return;
   preserveExistingEquipmentActivePreset(equipment, existing);
   const symbolsData = buildSymbolsToolDataForRecord(character, equipmentJson);
-  const weaponAtt = extractWeaponAttFromEquipmentDraft(equipmentJson);
   // Same resync buildFullSetupRecord already does for a full Setup finish (see its own
   // deriveMaxedSacredSymbol comment) — without it, editing Symbols from the Equipment
   // bookmark's pencil (outside Setup entirely) could cross the Lv. 11 Sacred Symbols
@@ -801,8 +798,8 @@ function applyEquipmentDraftToRoster(
     weaponHand: deriveWeaponHandFromWeapon(equipment) ?? existing.weaponHand,
     hasRuinForceShield: deriveHasRuinForceShield(equipment) ?? existing.hasRuinForceShield,
     tools: symbolsData ? { ...existing.tools, symbols: symbolsData } : existing.tools,
-    scouter: weaponAtt !== undefined || scouterBuffs !== existing.scouter?.buffs
-      ? { ...existing.scouter, ...(weaponAtt !== undefined ? { weaponAtt } : {}), ...(scouterBuffs ? { buffs: scouterBuffs } : {}) }
+    scouter: scouterBuffs !== existing.scouter?.buffs
+      ? { ...existing.scouter, buffs: scouterBuffs }
       : existing.scouter,
   });
 }
@@ -1058,10 +1055,9 @@ interface InitialRouteIntent {
  *  own step component's mount-time effect, which only fires once that component
  *  actually renders — if a session jumps/skips past one of them, or a stale draft
  *  from an earlier abandoned flow lingers in memory, Finish's `<field>Data ??
- *  base.<field>` fallback (or, for Stats' weaponAtt, a step that just never asks
- *  about it) can write over real data with blank/stale values. Used both when first
- *  landing on a profile AND right after any Finish, so the in-memory drafts always
- *  resync to the just-saved truth instead of leaving other steps' untouched drafts
+ *  base.<field>` fallback can write over real data with blank/stale values. Used
+ *  both when first landing on a profile AND right after any Finish, so the in-memory
+ *  drafts always resync to the just-saved truth instead of leaving other steps' untouched drafts
  *  stale for the rest of the session. */
 // Mirrors hexaMatrixDraft.ts's readSavedHexaValue, but derives the draft from the passed-in
 // storedCharacter directly instead of an independent readCharacterToolData/localStorage read.
@@ -1101,7 +1097,7 @@ function buildSeededStepTestByStep(jobName: string, storedCharacter: StoredChara
         }))
       : "",
     equipment: storedCharacter
-      ? serializeEquipmentStepDraft(storedEquipmentToDraft(storedCharacter.equipment, equipmentSymbols?.symbols, storedCharacter.scouter?.weaponAtt))
+      ? serializeEquipmentStepDraft(storedEquipmentToDraft(storedCharacter.equipment, equipmentSymbols?.symbols))
       : "",
     v_matrix: storedCharacter?.vMatrix?.levels && Object.keys(storedCharacter.vMatrix.levels).length > 0
       ? JSON.stringify(Object.fromEntries(Object.entries(storedCharacter.vMatrix.levels).map(([k, v]) => [k, String(v)])))

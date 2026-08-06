@@ -24,9 +24,9 @@ export const STATUS: Record<StatusKind, { fill: string; on: string }> = {
   info: withInk("#3b82f6"),
   warning: withInk("#f59e0b"),
   // Distinct from both danger's crimson (hue 359) and warning's amber (hue 38) -- sits at hue 26
-  // so it doesn't blend into either neighbor. Added 2026-07-30 for Boss Clear's severity ladder.
+  // so it doesn't blend into either neighbor. For Boss Clear's severity ladder.
   critical: withInk("#bd580a"),
-  // A distinct violet, one step past critical. Added 2026-07-30 alongside critical, same reason.
+  // A distinct violet, one step past critical, same reason as critical above.
   severe: withInk("#9436ec"),
 };
 
@@ -38,8 +38,8 @@ export const STATUS: Record<StatusKind, { fill: string; on: string }> = {
 // (#ab60f0) since the fill itself only clears ~3.3-3.6:1 on dark surfaces. critical's light-mode
 // value is darkened slightly from its fill (#bd580a clears panel but not bg at 4.5:1); dark mode
 // needed a LIGHTER orange (#d5630b) since the fill only clears ~3.3-3.9:1 on dark surfaces (same
-// pattern as severe). Added 2026-07-30 for Boss Clear's tier colors -- see BossClearGrid.tsx's
-// chipTagColor and bossClearFormula.ts's ClearColorTier mapping.
+// pattern as severe). For Boss Clear's tier colors -- see BossClearGrid.tsx's chipTagColor
+// and bossClearFormula.ts's ClearColorTier mapping.
 const STATUS_TEXT: Record<ColorMode, Record<"success" | "danger" | "warning" | "info" | "critical" | "severe", string>> = {
   light: { success: "#00824f", danger: "#d82a31", warning: "#a15a04", info: "#0b62ef", critical: "#b8550a", severe: "#9436ec" },
   dark: { success: "#10b981", danger: "#ef4544", warning: "#d97706", info: "#3b82f6", critical: "#d5630b", severe: "#ab60f0" },

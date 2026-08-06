@@ -1,8 +1,8 @@
 /*
   Stateless proxy for MapleScouter's calc API. Exists purely to get around CORS
   (api.maplescouter.com only allows requests from maplescouter.com itself, confirmed
-  by testing a cross-origin fetch directly, see project_maplescouter_api_re_2026_07_27
-  memory). Forwards the browser-built payload as-is and returns the response.
+  by testing a cross-origin fetch directly). Forwards the browser-built payload as-is
+  and returns the response.
 
   Deliberately caches NOTHING here, MapleScouter's calc depends on mapledoro's own
   user-entered stat inputs, which have no server-side verification (all user data lives
@@ -13,9 +13,9 @@
 
   Rate limit is per-IP, per-minute ONLY -- no daily cap, unlike the Nexon lookup route
   (src/app/api/characters/lookup/route.ts), since there's no known MapleScouter usage
-  limit to respect the way Nexon's ranking API has one (Yuki, 2026-07-27). The minute
-  cap alone is enough to stop a runaway loop or something hitting this route directly,
-  bypassing the UI's own manual-refresh-only/hash-cache protections.
+  limit to respect the way Nexon's ranking API has one. The minute cap alone is enough
+  to stop a runaway loop or something hitting this route directly, bypassing the UI's
+  own manual-refresh-only/hash-cache protections.
 */
 import { NextRequest, NextResponse } from "next/server";
 import Redis from "ioredis";

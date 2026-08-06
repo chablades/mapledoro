@@ -19,6 +19,7 @@
 
 import type { ScouterSpecEfficiency } from "../../characters/scouter/scouterCache";
 import {
+  excessCritDamage,
   zeroCalibration,
   type ClassDamageProfile,
   type KernelCalibration,
@@ -101,11 +102,18 @@ export function calibrateFromSpecEfficiency(
 
   // Crit bucket: `cridmgeff1 = crit*0.01 / bucket`, so the bucket needs the crit
   // rate to unfold back into a crit damage total.
+  // The seeded excess-crit-rate conversion comes off here for the same reason every
+  // other known term does: the offset is only what the table's bucket has that our
+  // inputs don't, so anything the kernel will add back must not be solved into it.
   const crit = Math.min(1, inputs.critRatePct / 100);
   if (crit <= 0) return null;
   const critBucket = (crit * 0.01) / eff.cridmgeff1;
   cal.critDmgPct =
-    ((critBucket - (1 - crit)) * 100) / crit - 135 - inputs.critDamagePct - c.dpmCritDmg;
+    ((critBucket - (1 - crit)) * 100) / crit -
+    135 -
+    inputs.critDamagePct -
+    c.dpmCritDmg -
+    excessCritDamage(profile, inputs.critRatePct);
 
   const attack = solveAttack(eff, inputs.attack.flat);
   if (!attack) return null;

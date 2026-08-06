@@ -669,7 +669,7 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
                WIDTH fills the box, stretching height well past it, then object-position: center
                top (below) anchors the crop window at the top, showing only the head/shoulders
                and cutting off everything below. contain (matching desktop's own object-fit,
-               CharacterAvatar.tsx's fallback avatar bug report, 2026-07-30) letterboxes instead,
+               same fix as CharacterAvatar.tsx's fallback avatar bug) letterboxes instead,
                keeping the whole body visible. The base 64px non-setup card's own cover isn't
                touched -- that's a different, smaller context this bug wasn't reported in. */
             object-fit: contain;

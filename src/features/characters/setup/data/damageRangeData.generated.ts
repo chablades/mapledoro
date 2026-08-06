@@ -19,6 +19,7 @@ export const WEAPON_MULTIPLIER: Record<string, number> = {
   dark_knight: 1.49,
   aran: 1.49,
   zero: 1.49,
+  erel_light: 1.49,
   marksman: 1.35,
   wild_hunter: 1.35,
   kanna: 1.35,
@@ -51,7 +52,6 @@ export const WEAPON_MULTIPLIER: Record<string, number> = {
   luminous: 1.2,
   battle_mage: 1.2,
   sia_astelle: 1.2,
-  erel_light: 1.2,
   lara: 1.2,
   demon_slayer: 1.2,
 };
@@ -76,5 +76,4 @@ export const MAGIC_ATT_CLASSES: readonly string[] = [
   "battle_mage",
   "kanna",
   "sia_astelle",
-  "erel_light",
 ];

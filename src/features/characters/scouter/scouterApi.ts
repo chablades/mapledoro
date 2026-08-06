@@ -2,8 +2,8 @@
   Builds the exact request body MapleScouter's calc API expects (POST
   https://api.maplescouter.com/api/calc/dmg, body `{ userStat: ScouterUserStat }`),
   from a character's own stored data. Every field here was live-verified against real
-  captured requests/responses on maplescouter.com, see project_maplescouter_api_re_2026_07_27
-  memory for the full sourcing method and don't re-derive any of this from guesses.
+  captured requests/responses on maplescouter.com -- don't re-derive any of this from
+  guesses, re-capture a real request/response instead if a field's meaning is unclear.
 
   Not every character can be sent at all: Erel Light isn't supported by MapleScouter's
   own site, so buildScouterPayload returns null for it, callers must show a "not
@@ -308,7 +308,7 @@ function buildDoping(character: StoredCharacterRecord): ScouterDoping {
 // ── Special ──────────────────────────────────────────────────────────────────
 
 /** Ephenia/Mu Gong soul level as MapleScouter's string encoding, capped at "2" —
- *  never send "C": live-tested to zero out the whole result (see memory). */
+ *  never send "C": live-tested to zero out the whole result. */
 function soulValue(character: StoredCharacterRecord, type: "ephenia" | "mugong"): string {
   const soul = character.soul;
   if (!soul || soul.type !== type) return "0";
@@ -362,9 +362,9 @@ interface MainSubAssignment {
   offStats: TripleStatFieldId[];
 }
 
-/** Demon Avenger's kit is fully INT-independent (Yuki, 2026-07-27), its 3 leftover
- *  off-stats (DEX/INT/LUK) don't fit the 2 statThird/statFourth slots, so INT is
- *  dropped entirely rather than picked arbitrarily. */
+/** Demon Avenger's kit is fully INT-independent, and its 3 leftover off-stats
+ *  (DEX/INT/LUK) don't fit the 2 statThird/statFourth slots, so INT is dropped
+ *  entirely rather than picked arbitrarily. */
 const DEMON_AVENGER_DROPPED_OFF_STAT: TripleStatFieldId = "int";
 
 function assignMainSubStats(classId: string, requiredStats: TripleStatFieldId[]): MainSubAssignment {
@@ -376,7 +376,7 @@ function assignMainSubStats(classId: string, requiredStats: TripleStatFieldId[])
     // Demon Avenger's Main Stat is HP (buildStat overrides mainField to "hp" directly),
     // so its one real stat slot (STR, `first`) belongs in Sub, not Main -- otherwise STR
     // gets silently discarded when mainField is overridden and never reaches the payload
-    // at all (Yuki, 2026-07-27, live diff caught it).
+    // at all.
     return { main: null, sub: first, ssub: third, offStats };
   }
   return { main: first, sub: second, ssub: third, offStats };
@@ -393,8 +393,8 @@ function tripleStrings(character: StoredCharacterRecord, field: TripleStatFieldI
 // Off-stat totals live in their own private field (StoredOzRings.totallingStats), not
 // derived from stats.str/dex/int/luk's Base/%/Not Applied triple -- an earlier version
 // computed the Applied Value from that triple, which assumed the Totalling Ring step was
-// writing into Base, silently corrupting a character's real Base stat (Yuki, 2026-07-27,
-// see ozRingData.ts's file header for the full story).
+// writing into Base, silently corrupting a character's real Base stat (see ozRingData.ts's
+// file header for the full story).
 function offStatTotal(character: StoredCharacterRecord, field: TripleStatFieldId | undefined): string {
   if (!field) return "0";
   const value = character.scouter?.ozRings?.totallingStats?.[field];
@@ -433,9 +433,10 @@ function buildStat(
     atkAbs: atk.percentUnapplied || "0",
     dmg: character.stats.damage || "0",
     bossDmg: character.stats.bossDamage || "0",
-    // Field is greyed out/disabled on MapleScouter's own site (Lara, 2026-07-27) -- looks
-    // like dead/buggy input on their end, not something worth collecting from mapledoro's
-    // users. Safe to always send 0; confirmed Lara's number matched with this at 0.
+    // Field is greyed out/disabled on MapleScouter's own site -- looks like dead/buggy
+    // input on their end, not something worth collecting from mapledoro's users. Safe to
+    // always send 0; confirmed against a Lara character that its number matched with this
+    // at 0.
     normalDmg: character.stats.normalEnemyDamage || "0",
     ignoreDef: character.stats.ignoreDefense || "0",
     buffDuration: character.stats.buffDuration || "0",
@@ -456,11 +457,11 @@ function buildStat(
     statusAdditionalDmg: character.stats.additionalStatusDamage || "0",
     // The two Inner Ability lines MapleScouter cares about (scouterQuestionsData.ts's
     // IA_LINE_OPTIONS) -- previously hardcoded false, so innerAbilityLine was collected
-    // and gated on but never actually reached the payload (Yuki, 2026-07-27).
+    // and gated on but never actually reached the payload.
     passiveSkillLevelUp: character.scouter?.innerAbilityLine === "passive",
     increaseTarget: character.scouter?.innerAbilityLine === "multiTarget",
     summonPersistTime: character.stats.summonDuration || "0",
-    // Real MapleScouter capture sends this as an actual boolean, not "1"/"0" (Yuki, 2026-07-27).
+    // Real MapleScouter capture sends this as an actual boolean, not "1"/"0".
     artifact_increaseTarget: legion?.artifactExtraTarget === true,
     artifact_finalAttack: String(legion?.artifactFinalAttackDmg ?? 0),
     subStat_hyper: "",
@@ -499,8 +500,7 @@ function hexaCoreLevels(levels: HexaSkillLevels | undefined, isHexaEligible: boo
     // Origin always starts at level 1 once HEXA-eligible (real game rule, same floor
     // useHexaSkillsState.ts's defaultLevels/normalizeLevels enforce) for a character who
     // hasn't opened the HEXA Skills tool yet -- but NOT for a sub-260/legacy character, who
-    // genuinely has no Origin at all; gating on isHexaEligible keeps that case at 0
-    // (Yuki, 2026-07-27, caught this before it shipped as a regression).
+    // genuinely has no Origin at all; gating on isHexaEligible keeps that case at 0.
     skillCore1: String(levels?.origin ?? (isHexaEligible ? 1 : 0)),
     skillCore2: String(levels?.ascent ?? 0),
     mastery: [0, 1, 2, 3].map((i) => String(levels?.mastery[i] ?? 0)),
@@ -544,9 +544,9 @@ function buildHexa(characterName: string, koreanClassName: string, isHexaEligibl
       reinCore2: cores.rein[1],
       reinCore3: cores.rein[2],
       reinCore4: cores.rein[3],
-      // generalCore2 = Sol Hecate (confirmed live via hover tooltip, 2026-07-27). generalCore3
-      // ("Freud's Blessing VI") and generalCore4 have never appeared in ANY real capture this
-      // session (Freud's Blessing hasn't reached GMS yet; generalCore4 has no known content at
+      // generalCore2 = Sol Hecate (confirmed live via hover tooltip). generalCore3
+      // ("Freud's Blessing VI") and generalCore4 have never appeared in any real capture
+      // (Freud's Blessing hasn't reached GMS yet; generalCore4 has no known content at
       // all), both always "0" until something real releases into either slot.
       generalCore1: "0",
       generalCore2: String(solHecateLevel),
@@ -573,7 +573,7 @@ function buildSeedRing(character: StoredCharacterRecord): ScouterSeedRing {
     weaponRing: { level: ozRingLevel(character, "weaponJump"), efficiency: 0 },
     ringOfSum: { level: ozRingLevel(character, "totalling"), efficiency: 0 },
     continuosRing: { level: ozRingLevel(character, "continuous"), efficiency: 0 },
-    // Non-GMS rings, mapledoro has no data for these and can't collect any (Yuki, 2026-07-27).
+    // Non-GMS rings, mapledoro has no data for these and can't collect any.
     riskTakerRing: ZERO_RING,
     criDamageRing: ZERO_RING,
     levelRing: ZERO_RING,
@@ -599,23 +599,43 @@ function buildLinkSkill(linkSkills: LinkSkillsData | undefined): Record<string, 
 
 // ── Setup completeness gate ──────────────────────────────────────────────────
 
-/** Whether this character has answered everything MapleScouter Setup's own live flow
- *  actually requires before letting you click Continue -- re-derived against the
- *  PERSISTED record (this runs outside the flow's own draft state): the Stats step's
- *  Character Info substep (isStatsSubstepComplete) and its Quick Questions substep
- *  (isScouterQuestionnaireComplete in StatsSetupStep.tsx -- soul type, weapon hand if
- *  the class asks, Wild Hunter Legion rank, Inner Ability line). Oz Rings/Link Skills/
- *  Buffs are deliberately NOT required here -- those steps have no full-completeness
- *  gate even in the live flow, just sanity checks (Yuki, 2026-07-27: "they could have
- *  no oz rings or no links or no buffs which are fine, if they want an accurate calc
- *  they can go there to set that"). */
-export function hasMinimalScouterSetup(character: StoredCharacterRecord): boolean {
+/** Which part of MapleScouter Setup's own completeness requirements this character is
+ *  still missing, or null if it's fully satisfied -- see hasMinimalScouterSetup below,
+ *  which reduces this to a plain boolean for callers that don't need to say WHERE the
+ *  gap is (e.g. "Erel Light isn't a supported class" doesn't have a location).
+ *  "quickQuestions" covers everything Quick Questions asks (soul type, weapon hand if
+ *  the class asks, Wild Hunter Legion rank, Inner Ability line) -- full_setup's own
+ *  Quick Questions stays permanently optional (see isScouterQuestionnaireComplete's doc
+ *  comment), so this is the one place that data ever gets required at all.
+ *  "characterInfo" points at Stats' Character Info substep (STR/DEX/etc, Combat Stats,
+ *  Weapon ATT -- the numeric fields Full Setup can silently skip past, see
+ *  isStatsSubstepAnyFieldFilled). Checked in the same order the live flow's own substeps
+ *  appear (Quick Questions is substep 0, Character Info is substep 1) so a character
+ *  missing BOTH reports the one the player would actually hit first, not whichever
+ *  happened to be checked first in code -- a totally blank character used to report
+ *  "characterInfo" here even though Quick Questions is the earlier, more fundamental gap. */
+export type ScouterSetupGap = "characterInfo" | "quickQuestions";
+
+export function findScouterSetupGap(character: StoredCharacterRecord): ScouterSetupGap | null {
   const classData = CLASS_SKILL_DATA.find((c) => c.nexonJobName === character.jobName);
-  if (!classData) return false;
+  if (!classData) return "quickQuestions";
+
+  const stats = character.stats;
+  const soulComplete = character.soul !== null;
+  const weaponHandComplete = !classData.setupOptionsDef?.weaponType
+    || character.weaponHand !== null
+    || deriveWeaponHandFromWeapon(character.equipment) !== undefined;
+  const iaComplete = innerAbilityHasData(stats.innerAbility) || character.scouter?.innerAbilityLine !== undefined;
+
+  const store = readCharactersStore();
+  const worldRoster = selectCharactersList(store).filter((c) => c.worldID === character.worldID);
+  const whComplete = whAutofillSourceFromRoster(worldRoster) !== null
+    || store.scouterLegionByWorld[String(character.worldID)]?.wildHunterRank !== undefined;
+
+  if (!(soulComplete && weaponHandComplete && iaComplete && whComplete)) return "quickQuestions";
 
   const tripleIds = getRequiredStatsForClass(classData).filter((id): id is TripleStatFieldId => TRIPLE_IDS.has(id));
   const primaryStat = classData.requiredStats.find((s): s is TripleStatFieldId => MAIN_STAT_IDS.has(s));
-  const stats = character.stats;
   const draft: StatsStepDraft = {
     str: stats.str, dex: stats.dex, int: stats.int, luk: stats.luk, hp: stats.hp,
     attackPower: stats.attackPower, magicAtt: stats.magicAtt,
@@ -631,20 +651,18 @@ export function hasMinimalScouterSetup(character: StoredCharacterRecord): boolea
     isArcaneEligible(character.level, classData.isLegacy),
     isSacredEligible(character.level, classData.isLegacy),
   );
-  if (!characterInfoComplete) return false;
+  return characterInfoComplete ? null : "characterInfo";
+}
 
-  const soulComplete = character.soul !== null;
-  const weaponHandComplete = !classData.setupOptionsDef?.weaponType
-    || character.weaponHand !== null
-    || deriveWeaponHandFromWeapon(character.equipment) !== undefined;
-  const iaComplete = innerAbilityHasData(stats.innerAbility) || character.scouter?.innerAbilityLine !== undefined;
-
-  const store = readCharactersStore();
-  const worldRoster = selectCharactersList(store).filter((c) => c.worldID === character.worldID);
-  const whComplete = whAutofillSourceFromRoster(worldRoster) !== null
-    || store.scouterLegionByWorld[String(character.worldID)]?.wildHunterRank !== undefined;
-
-  return soulComplete && weaponHandComplete && iaComplete && whComplete;
+/** Whether this character has answered everything MapleScouter Setup's own live flow
+ *  actually requires before letting you click Continue -- re-derived against the
+ *  PERSISTED record (this runs outside the flow's own draft state). See
+ *  findScouterSetupGap for what's actually checked and why Oz Rings/Link Skills/Buffs
+ *  are deliberately NOT required here -- having none of those is a legitimate, if less
+ *  accurate, state; a player who wants a more precise calc can go fill them in without
+ *  being blocked from calculating at all in the meantime. */
+export function hasMinimalScouterSetup(character: StoredCharacterRecord): boolean {
+  return findScouterSetupGap(character) === null;
 }
 
 /** Whether MapleScouter supports this character's class at all, currently only
@@ -692,16 +710,15 @@ export function buildScouterPayload(character: StoredCharacterRecord, ctx: Scout
     isJMS: false,
     isMSEA: false,
     power: ZERO_POWER,
-    // erdaShower has no known mapledoro field, not tracked anywhere currently, see memory.
+    // erdaShower has no known mapledoro field, not tracked anywhere currently.
     huntSkill: { solJanus: String(solJanusLevel), erdaShower: "0" },
   };
 }
 
 // ── Cache hash ───────────────────────────────────────────────────────────────
 
-/** Deterministic FNV-1a hash of the built payload, used as the client-side cache
- *  key (see project_maplescouter_api_re_2026_07_27 memory's architecture decision —
- *  cached per-character, keyed by input hash, not "most recent value"). Field order is
+/** Deterministic FNV-1a hash of the built payload, used as the client-side cache key --
+ *  cached per-character, keyed by input hash, not "most recent value". Field order is
  *  already stable, buildScouterPayload constructs the object identically every call —
  *  so plain JSON.stringify is deterministic without an explicit key-sort replacer (which
  *  would otherwise strip every nested key not present at the top level). */

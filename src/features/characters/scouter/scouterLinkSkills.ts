@@ -1,11 +1,11 @@
 /*
   mapledoro's LinkSkillId (named after the skill effect, e.g. "unfairAdvantage") -> the
   literal key MapleScouter's linkSkill object uses (named after the class, e.g. "kadena").
-  Confirmed live 2026-07-27 against a real request capture. "kadena" (not "cadena") is
-  MapleScouter's own spelling, kept as-is since it's their real field.
+  Confirmed against a real request capture. "kadena" (not "cadena") is MapleScouter's own
+  spelling, kept as-is since it's their real field.
 
   MapleScouter also has mihile/kaiser/hayato keys with no mapledoro equivalent, confirmed
-  by Yuki these can't even be entered on MapleScouter's own UI, so they always send "0".
+  these can't even be entered on MapleScouter's own UI, so they always send "0".
 
   This is intentionally NOT exhaustive over LinkSkillId: MapleScouter's own linkSkill
   object is a fixed external contract that only covers the classes above, unrelated to

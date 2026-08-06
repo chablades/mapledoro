@@ -11,6 +11,7 @@ import type { AppTheme } from "../../../components/themes";
 import { ToolNumberInput } from "../shared-ui";
 import { toolStyles, type ToolStyles } from "../tool-styles";
 import { replaceZeroOnDigit } from "../numberInputHandlers";
+import { HYPER_STAT_PRESET_COUNT } from "../../characters/setup/data/hyperStatData";
 import {
   getMainStatLabel,
   getAttackLabel,
@@ -18,7 +19,13 @@ import {
   HEXA_STAT_OPTIONS,
   type HexaStatType,
 } from "../../characters/setup/data/hexaStatData";
-import type { ClassDamageProfile, MainStatId, OptimizerStatInputs, TripleStat } from "./damage-formula";
+import type {
+  ClassDamageProfile,
+  MainStatId,
+  OptimizerStatInputs,
+  OptimizeTarget,
+  TripleStat,
+} from "./damage-formula";
 import { HYPER_LINES, HYPER_MAX_LEVEL, type HyperLineId } from "./hyper-stat-data";
 import type { HyperResult, HyperAllocation } from "./hyper-stat-engine";
 import { HEXA_CORE_TOTAL, HEXA_MAX_LINE_LEVEL, type HexaCore, type HexaLine, type HexaResult } from "./hexa-stat-engine";
@@ -47,13 +54,24 @@ function statLabel(role: string, id: MainStatId | null, standalone: boolean): st
   return standalone || !id ? role : `${role} (${STAT_NAME[id]})`;
 }
 
-const SCALAR_FIELDS: { key: ScalarInputKey; label: string }[] = [
-  { key: "damagePct", label: "Damage %" },
-  { key: "bossDamagePct", label: "Boss Damage %" },
-  { key: "critRatePct", label: "Critical Rate %" },
-  { key: "critDamagePct", label: "Critical Damage %" },
-  { key: "ignoreDefPct", label: "Ignore Enemy DEF %" },
-];
+/* Mobbing drops the Ignore Enemy DEF field (the kernel doesn't value IED against
+   a normal mob) and reads the boss-damage field as the character's Normal Enemy
+   Damage %, which the game puts in the same damage bucket boss damage lands in. */
+const SCALAR_FIELDS: Record<OptimizeTarget, { key: ScalarInputKey; label: string }[]> = {
+  bossing: [
+    { key: "damagePct", label: "Damage %" },
+    { key: "bossDamagePct", label: "Boss Damage %" },
+    { key: "critRatePct", label: "Critical Rate %" },
+    { key: "critDamagePct", label: "Critical Damage %" },
+    { key: "ignoreDefPct", label: "Ignore Enemy DEF %" },
+  ],
+  mobbing: [
+    { key: "damagePct", label: "Damage %" },
+    { key: "bossDamagePct", label: "Normal Enemy Damage %" },
+    { key: "critRatePct", label: "Critical Rate %" },
+    { key: "critDamagePct", label: "Critical Damage %" },
+  ],
+};
 
 function hexaTypeLabel(type: HexaStatType | "", profile: ClassDamageProfile, standalone: boolean): string {
   // Withholding the placeholder primary stat drops getMainStatLabel onto its own
@@ -75,21 +93,45 @@ const CORE_GRID_CSS = `
   .stat-opt-core-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.75rem; }
   @media (max-width: 760px) { .stat-opt-core-grid { grid-template-columns: 1fr; } }
 `;
-// Compact segmented options for the Boss PDR picker. Both class names are on the
-// element, so the selector is doubled up to win on specificity rather than on
-// the order this <style> happens to land in relative to globals.css.
-const PDR_PICKER_CSS = `
-  .segmented-toggle-option.stat-opt-pdr-option { flex: 0 0 auto; padding: 0 14px; font-size: 0.82rem; }
+/* The character row: picker, level, and the three segmented pickers (preset,
+   optimize-for, Boss PDR). Compact options that size to their own text rather
+   than splitting the width like the mode switch above -- both class names are on
+   the element, so the selector is doubled up to win on specificity rather than on
+   the order this <style> happens to land in relative to globals.css.
+
+   Desktop holds it on one line with the target pickers against the right edge.
+   A phone stacks it one group per line, each group's columns splitting that line
+   evenly: the right anchor there only made a ragged edge, and Optimize for no
+   longer fit beside Boss PDR, so it wrapped and stranded itself on its own line
+   at the far right. Flex sizing therefore lives in these classes rather than
+   inline, so the media query can reach it. */
+const ROW_PICKER_CSS = `
+  .segmented-toggle-option.stat-opt-row-option { flex: 0 0 auto; padding: 0 14px; font-size: 0.82rem; }
+  .stat-opt-controls { display: flex; align-items: flex-end; gap: 0.75rem 1.5rem; flex-wrap: wrap; }
+  .stat-opt-char { flex: 0 1 auto; min-width: 0; }
+  .stat-opt-char-note { flex: 0 1 320px; }
+  .stat-opt-controls-end { margin-left: auto; justify-content: flex-end; }
+  .stat-opt-level-field { width: 72px; }
+  @media (max-width: 860px) {
+    .stat-opt-controls > .stat-opt-char,
+    .stat-opt-controls > .stat-opt-char-note,
+    .stat-opt-controls > .tool-control-row { flex: 1 1 100%; }
+    .stat-opt-controls > .stat-opt-controls-end { margin-left: 0; justify-content: flex-start; }
+    .stat-opt-controls .tool-control-row > * { flex: 1 1 0; min-width: 0; }
+    .stat-opt-level-field { width: auto; }
+    .segmented-toggle-option.stat-opt-row-option { flex: 1 1 auto; padding: 0 10px; }
+  }
 `;
 // Pre-mount panel heights (see LoadingPlaceholder). The 860px breakpoint is the
 // one `.page-content` drops its padding at, which is also where the character
-// row wraps and the stat grid collapses to a single column.
+// row restacks (one control group per line, see ROW_PICKER_CSS) and the stat
+// grid collapses to a single column.
 const SKELETON_CSS = `
   .stat-opt-skeleton-chars { height: 88px; }
   .stat-opt-skeleton-stats { height: 482px; }
   .stat-opt-skeleton-mode { height: 628px; }
   @media (max-width: 860px) {
-    .stat-opt-skeleton-chars { height: 146px; }
+    .stat-opt-skeleton-chars { height: 216px; }
     .stat-opt-skeleton-stats { height: 895px; }
     .stat-opt-skeleton-mode { height: 717px; }
   }
@@ -244,7 +286,6 @@ function NumberInput({
   max,
   width,
   id,
-  disabled,
 }: {
   /** Theme colors from the workspace's one `toolStyles`; shape is `.tool-input`. */
   inputStyle: CSSProperties;
@@ -254,7 +295,6 @@ function NumberInput({
   width?: number | string;
   /** Required: every box here is named by a real <label htmlFor>. */
   id: string;
-  disabled?: boolean;
 }) {
   return (
     <ToolNumberInput
@@ -263,10 +303,9 @@ function NumberInput({
       max={max}
       integer
       id={id}
-      disabled={disabled}
       onKeyDown={replaceZeroOnDigit}
       onCommit={onChange}
-      style={{ ...inputStyle, width: width ?? "100%", textAlign: "center", opacity: disabled ? 0.55 : 1 }}
+      style={{ ...inputStyle, width: width ?? "100%", textAlign: "center" }}
     />
   );
 }
@@ -327,6 +366,7 @@ function StatsPanel({
   styles,
   profile,
   standalone,
+  target,
   inputs,
   onScalarChange,
   onTripleChange,
@@ -335,6 +375,7 @@ function StatsPanel({
   styles: ToolStyles;
   profile: ClassDamageProfile;
   standalone: boolean;
+  target: OptimizeTarget;
   inputs: OptimizerStatInputs;
   onScalarChange: (key: ScalarInputKey, value: number) => void;
   onTripleChange: (key: TripleInputKey, part: TriplePart, value: number) => void;
@@ -366,7 +407,7 @@ function StatsPanel({
         ))}
       </div>
       <div style={gridTwo}>
-        {SCALAR_FIELDS.map((f) => (
+        {SCALAR_FIELDS[target].map((f) => (
           <div key={f.key}>
             <label className="tool-field-label" htmlFor={`stat-opt-${f.key}`} style={styles.labelStyle}>{f.label}</label>
             <ToolNumberInput
@@ -414,18 +455,32 @@ const HYPER_TABLE_CSS = `
 `;
 
 // In-game hyper stat window order. Display only: HYPER_LINES keeps scouter's
-// greedy iteration order, which the engine's tie-breaking depends on.
-const HYPER_DISPLAY_ORDER: HyperLineId[] = [
-  "mainStat",
-  "subStat",
-  "subStat2",
-  "critRate",
-  "critDamage",
-  "ignoreDefense",
-  "damage",
-  "bossDamage",
-  "attack",
-];
+// greedy iteration order, which the engine's tie-breaking depends on. Each list
+// holds exactly the lines its target's greedy can assign (HYPER_TARGET_LINES),
+// so a row is never shown for a line the recommendation would always leave at 0.
+const HYPER_DISPLAY_ORDER: Record<OptimizeTarget, HyperLineId[]> = {
+  bossing: [
+    "mainStat",
+    "subStat",
+    "subStat2",
+    "critRate",
+    "critDamage",
+    "ignoreDefense",
+    "damage",
+    "bossDamage",
+    "attack",
+  ],
+  mobbing: [
+    "mainStat",
+    "subStat",
+    "subStat2",
+    "critRate",
+    "critDamage",
+    "damage",
+    "normalDamage",
+    "attack",
+  ],
+};
 
 function HyperLineRow({
   theme,
@@ -470,11 +525,27 @@ function HyperLineRow({
   );
 }
 
+/** What a mobbing run is and isn't reading, since none of it is visible from the
+ *  numbers on screen: it deliberately skips the buffed-state calibration a
+ *  bossing run leans on, and the archer crit-rate overflow the kernel otherwise
+ *  values. The preset line is the actionable half — the stat window above has to
+ *  be the one the mobbing preset produces for any of this to mean anything. */
+function MobbingNote({ theme }: { theme: AppTheme }) {
+  return (
+    <WarnNote theme={theme}>
+      The mobbing hyper stat optimizer only pulls information from the panels above, as typical
+      bossing buffs and links do not apply here. Archer crit rate is ignored due to Vicious Shot
+      being 25% uptime. Ensure you have switched to your mobbing preset for the values entered above.
+    </WarnNote>
+  );
+}
+
 function HyperPanel({
   theme,
   styles,
   profile,
   standalone,
+  target,
   result,
   alloc,
   onLevelChange,
@@ -486,6 +557,7 @@ function HyperPanel({
   styles: ToolStyles;
   profile: ClassDamageProfile;
   standalone: boolean;
+  target: OptimizeTarget;
   result: HyperResult;
   alloc: HyperAllocation;
   onLevelChange: (id: HyperLineId, level: number) => void;
@@ -493,7 +565,10 @@ function HyperPanel({
   calibrationNotice: CalibrationNotice | null;
   hasStats: boolean;
 }) {
-  const rows = HYPER_DISPLAY_ORDER.filter((id) => id !== "subStat2" || profile.subStat2 !== null);
+  const mobbing = target === "mobbing";
+  const rows = HYPER_DISPLAY_ORDER[target].filter(
+    (id) => id !== "subStat2" || profile.subStat2 !== null,
+  );
   return (
     <div className="fade-in panel-card" style={styles.sectionPanel}>
       {/* Counts what the Best column spends, not the Now column: the number belongs
@@ -511,7 +586,7 @@ function HyperPanel({
       <GainBanner
         theme={theme}
         gainPct={result.gainPct}
-        label="bossing damage vs your current hyper stats"
+        label={`${mobbing ? "mobbing" : "bossing"} damage vs your current hyper stats`}
         alreadyOptimal={result.alreadyOptimal}
         pending={hyperPending(hasStats, result.pointsAvailable)}
       />
@@ -522,7 +597,9 @@ function HyperPanel({
           setup) to keep the gain accurate.
         </WarnNote>
       )}
-      {calibrationNotice && <CalibrationNote theme={theme} notice={calibrationNotice} />}
+      {/* A mobbing run never calibrates, so the calibration notice would only be
+          restating what the mobbing note already says at more length. */}
+      {mobbing ? <MobbingNote theme={theme} /> : calibrationNotice && <CalibrationNote theme={theme} notice={calibrationNotice} />}
       <table className="hyper-table">
         <caption className="sr-only">
           Hyper Stat levels: your current level per line and the recommended level.
@@ -836,16 +913,36 @@ function hexaTracked(cores: HexaCore[]): boolean {
 const BOSS_PDR_OPTIONS = ["300", "380"] as const;
 const BOSS_PDR_LABELS: Record<(typeof BOSS_PDR_OPTIONS)[number], string> = { "300": "300%", "380": "380%" };
 const bossPdrChoice = (pct: number): (typeof BOSS_PDR_OPTIONS)[number] => (pct === 300 ? "300" : "380");
-// Height matches `.tool-control-row`'s pinned control height; the options size
-// to their own text rather than splitting the width like the mode switch.
-const BOSS_PDR_TRACK: CSSProperties = { height: 34 };
+// Height matches `.tool-control-row`'s pinned control height, so all three
+// pickers line up with the level box they share the row with.
+const ROW_PICKER_TRACK: CSSProperties = { height: 34 };
+
+/* One option per in-game Hyper Stat preset slot. The picker swaps which stored
+   allocation is the "Now" column, so a mobbing run can be valued against the
+   mobbing preset rather than whichever one happens to be equipped. */
+const PRESET_OPTIONS = Array.from({ length: HYPER_STAT_PRESET_COUNT }, (_, i) => String(i));
+const PRESET_LABELS: Record<string, string> = Object.fromEntries(
+  PRESET_OPTIONS.map((v) => [v, String(Number(v) + 1)]),
+);
+
+const TARGET_OPTIONS: readonly OptimizeTarget[] = ["bossing", "mobbing"];
+const TARGET_LABELS: Record<OptimizeTarget, string> = { bossing: "Bossing", mobbing: "Mobbing" };
 
 function CharacterControls({ theme, opt, styles }: { theme: AppTheme; opt: StatOptimizerState; styles: ToolStyles }) {
+  // Both are Hyper Stat concerns: HEXA Stat has no presets to pick between and
+  // is a bossing decision, so neither control is offered while it's on screen.
+  const hyperMode = opt.mode === "hyper";
   return (
     <div className="fade-in panel-card" style={styles.sectionPanel}>
-      <div style={{ display: "flex", alignItems: "center", gap: "0.75rem 1.5rem", flexWrap: "wrap" }}>
+      {/* Layout in ROW_PICKER_CSS: it aligns on `flex-end` (the character picker
+          holds an avatar and is taller than the 34px controls beside it, so
+          centering left its box bottom floating above theirs), and restacks on a
+          phone. */}
+      <div className="stat-opt-controls">
         {opt.characters.length > 0 ? (
-          <div style={{ flex: "1 1 320px" }}>
+          // Sized to its own content rather than stretching, so the level box
+          // sits directly beside the picker instead of at the far edge.
+          <div className="stat-opt-char">
             <CharacterSyncPanel
               theme={theme}
               characters={opt.characters}
@@ -855,44 +952,90 @@ function CharacterControls({ theme, opt, styles }: { theme: AppTheme; opt: StatO
             />
           </div>
         ) : (
-          <div style={{ flex: "1 1 320px", fontSize: "0.82rem", color: theme.muted, fontWeight: 600, lineHeight: 1.5 }}>
+          <div className="stat-opt-char-note" style={{ fontSize: "0.82rem", color: theme.muted, fontWeight: 600, lineHeight: 1.5 }}>
             Enter your stats below, or add a character in{" "}
             <Link href="/characters" style={{ color: theme.accentText }}>Characters</Link> to autopopulate.
           </div>
         )}
-        {/* Opts into the shared control row so the level box and the PDR track
-            take its pinned 34px and their labels stay on one line. */}
+        {/* Opts into the shared control row so the level box and the segmented
+            pickers take its pinned 34px and their labels stay on one line. */}
         <div className="tool-control-row">
-          <div>
+          {/* The box fills its column, and the column is what's 72px wide (and
+              drops that cap on a phone, where it takes half the line). */}
+          <div className="stat-opt-level-field">
             <label className="tool-field-label" htmlFor="stat-opt-level" style={styles.labelStyle}>Level</label>
-            {/* A stored character's level (and hyper-point budget, which deducts
-                untracked-line spending) comes from the store; only standalone
-                entry edits it, recomputing the budget from the closed form. */}
+            {/* Seeds from a stored character but stays editable, so levelling between
+                lookups doesn't strand the tool; the typed level is saved per character
+                and recomputes the hyper-point budget (untracked spending still off). */}
             <NumberInput
               inputStyle={styles.inputStyle}
               id="stat-opt-level"
-              value={opt.state.inputs.level}
+              value={opt.active.inputs.level}
               onChange={opt.setLevel}
               max={300}
               width={72}
-              disabled={opt.selectedCharName !== null}
             />
           </div>
-          <div>
-            {/* A plain <div>, not a <label>: there is no single control to point
-                `htmlFor` at, so the group names itself through `ariaLabel`. */}
-            <div className="tool-field-label" style={styles.labelStyle}>Boss PDR</div>
-            <SegmentedToggle
-              theme={theme}
-              options={BOSS_PDR_OPTIONS}
-              labels={BOSS_PDR_LABELS}
-              value={bossPdrChoice(opt.bossPdrPct)}
-              ariaLabel="Boss PDR"
-              btnClassName="stat-opt-pdr-option"
-              trackStyle={BOSS_PDR_TRACK}
-              onChange={(v) => opt.setBossPdr(Number(v))}
-            />
-          </div>
+          {hyperMode && (
+            <div>
+              {/* Plain <div>s, not <label>s: there is no single control to point
+                  `htmlFor` at, so each group names itself through `ariaLabel`. */}
+              <div className="tool-field-label" style={styles.labelStyle}>Hyper Preset</div>
+              <SegmentedToggle
+                theme={theme}
+                options={PRESET_OPTIONS}
+                labels={PRESET_LABELS}
+                value={String(opt.active.presetIndex)}
+                ariaLabel="Hyper Stat preset"
+                // Nothing to switch between until a character with a stored
+                // allocation is picked, so it greys out until then.
+                disabled={opt.state.presetCount === 0}
+                btnClassName="stat-opt-row-option"
+                trackStyle={ROW_PICKER_TRACK}
+                variant="solid"
+                onChange={(v) => opt.setPresetIndex(Number(v))}
+              />
+            </div>
+          )}
+        </div>
+        {/* What the recommendation is aimed at, held against the right edge and
+            away from the character facts on the left (until a phone stacks it,
+            see ROW_PICKER_CSS). */}
+        <div className="tool-control-row stat-opt-controls-end">
+          {/* Mobbing doesn't value ignore DEF at all, so there is no boss defense
+              for the recommendation to be tuned against. */}
+          {opt.activeTarget === "bossing" && (
+            <div>
+              <div className="tool-field-label" style={styles.labelStyle}>Boss PDR</div>
+              <SegmentedToggle
+                theme={theme}
+                options={BOSS_PDR_OPTIONS}
+                labels={BOSS_PDR_LABELS}
+                value={bossPdrChoice(opt.bossPdrPct)}
+                ariaLabel="Boss PDR"
+                btnClassName="stat-opt-row-option"
+                trackStyle={ROW_PICKER_TRACK}
+                variant="solid"
+                onChange={(v) => opt.setBossPdr(Number(v))}
+              />
+            </div>
+          )}
+          {hyperMode && (
+            <div>
+              <div className="tool-field-label" style={styles.labelStyle}>Optimize for</div>
+              <SegmentedToggle
+                theme={theme}
+                options={TARGET_OPTIONS}
+                labels={TARGET_LABELS}
+                value={opt.target}
+                ariaLabel="Optimize for"
+                btnClassName="stat-opt-row-option"
+                trackStyle={ROW_PICKER_TRACK}
+                variant="solid"
+                onChange={opt.setTarget}
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -914,7 +1057,8 @@ function StatOptimizerContent({ theme, styles, opt }: { theme: AppTheme; styles:
         styles={styles}
         profile={state.profile}
         standalone={standalone}
-        inputs={state.inputs}
+        target={opt.activeTarget}
+        inputs={opt.active.inputs}
         onScalarChange={opt.setScalarInput}
         onTripleChange={opt.setTriplePart}
       />
@@ -926,10 +1070,11 @@ function StatOptimizerContent({ theme, styles, opt }: { theme: AppTheme; styles:
             styles={styles}
             profile={state.profile}
             standalone={standalone}
+            target={opt.activeTarget}
             result={opt.result.hyper}
-            alloc={state.hyperAlloc}
+            alloc={opt.active.storedHyper}
             onLevelChange={opt.setHyperLevel}
-            tracked={hyperTracked(state.hyperAlloc)}
+            tracked={hyperTracked(opt.active.storedHyper)}
             calibrationNotice={state.calibrationNotice}
             hasStats={opt.hasStats}
           />
@@ -973,7 +1118,7 @@ function LoadingPlaceholder({ styles }: { styles: ToolStyles }) {
 /* Concatenated once at module scope, not per render, and passed as a single text
    child: two children serialize differently on server and client and trip a
    hydration mismatch. */
-const STAT_OPT_CSS = CORE_GRID_CSS + HYPER_TABLE_CSS + PDR_PICKER_CSS + SKELETON_CSS;
+const STAT_OPT_CSS = CORE_GRID_CSS + HYPER_TABLE_CSS + ROW_PICKER_CSS + SKELETON_CSS;
 
 export default function StatOptimizerWorkspace({ theme }: { theme: AppTheme }) {
   const opt = useStatOptimizer();
@@ -990,7 +1135,7 @@ export default function StatOptimizerWorkspace({ theme }: { theme: AppTheme }) {
         <ToolHeader
           theme={theme}
           title="Stat Optimizer"
-          description="Find the best Hyper Stat and HEXA Stat allocation for bossing, valued against the boss defense you set."
+          description="Find the best Hyper Stat and HEXA Stat allocation for bossing, valued against the boss defense you set, or the best Hyper Stat allocation for mobbing."
         />
 
         <SegmentedToggle

@@ -1,9 +1,8 @@
 /*
   classId -> MapleScouter's Korean class name (their `stat.myClass` / `hexa.character_class`
-  value). Resolved 2026-07-27 by cross-referencing maplestorywiki.net's KoreaMS field for
-  real KMS classes, and live capture on maplescouter.com for classes that don't exist in
-  KMS at all (Kanna, Mo Xuan, Lynn, Sia, Hayato). See project_maplescouter_api_re_2026_07_27
-  memory for the full sourcing/verification method.
+  value). Resolved by cross-referencing maplestorywiki.net's KoreaMS field for real KMS
+  classes, and live capture on maplescouter.com for classes that don't exist in KMS at all
+  (Kanna, Mo Xuan, Lynn, Sia, Hayato).
 
   Erel Light is the one mapledoro class MapleScouter's own site doesn't support at all —
   callers must check for its absence here and skip the Scouter fetch entirely rather than

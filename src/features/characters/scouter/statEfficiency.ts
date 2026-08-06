@@ -19,6 +19,11 @@
     you're already wearing, so worn always reads higher.
   - `Math.round(x * 120) / 10` is scouter's own way of writing "x * 12, to 1 decimal".
 
+  One row is ours rather than theirs: the archer "Critical Rate % (past 100%)" row in the
+  Per Stat table. Scouter values excess crit rate the same way (`cridmgeff1 * criInP`) but
+  only inside its link-skill ranking, never in this table -- see the Stat Optimizer's
+  CLAUDE.md for why we apply it in both places.
+
   Verified by reproducing 7 of the 8 Main Eff. tiles exactly (12 / 13 / 3.1 / 5.1 / 10.1 /
   2.4 / 11.6) against maplescouter.com's own server-rendered HTML; the 8th (+2 per 9 Lv.)
   is the only one that reads a character level, which that page didn't expose.
@@ -139,7 +144,7 @@ export function computeMainEfficiencies(
     {
       id: "iedWorn", source: "40% Worn IED", unit: `${atk} %`,
       value: iedPerAtk(eff, -eff.igreffminus40_380), min: 0, max: 24, emphasis: "right", reverse: true,
-      hint: `What 40% of the Ignore DEF you're already wearing is worth, in ${atk}% -- what you'd lose by dropping it. Always higher than Added.`,
+      hint: `What 40% of the Ignore DEF you're already wearing is worth, in ${atk}%: what you'd lose by dropping it. Always higher than Added.`,
     },
     {
       id: "levelStat", source: "+2 per 9 Lv.", unit: `${main} %`,
@@ -155,7 +160,7 @@ export function computeMainEfficiencies(
     {
       id: "atkStat", source: `1 ${atk}`, unit: main,
       value: round(eff.atkeff1 / eff.mainStateff1, 2), min: 0, max: 6, emphasis: "right", reverse: true,
-      hint: `How much ${main} a single point of ${atk} is worth -- the exchange rate for flat lines.`,
+      hint: `How much ${main} a single point of ${atk} is worth: the exchange rate for flat lines.`,
     },
     {
       id: "allStat", source: "1% All Stat", unit: main,
@@ -186,7 +191,11 @@ export interface DetailEfficiencyRow {
 /** Amounts are scouter's own defaults -- the sizes these lines actually roll at in-game
  *  (a 40% boss damage potential line, a 9% All Stat line, ...), so the table reads as a
  *  ready-made comparison before anything is typed. */
-export function detailEfficiencyRows(eff: ScouterSpecEfficiency, labels: EfficiencyStatLabels): DetailEfficiencyRow[] {
+export function detailEfficiencyRows(
+  eff: ScouterSpecEfficiency,
+  labels: EfficiencyStatLabels,
+  critRateToDmg: number,
+): DetailEfficiencyRow[] {
   const { atk, main, sub, sub2 } = labels;
   const rows: DetailEfficiencyRow[] = [
     // 1% Damage and 1% Boss Damage are the same field in the damage kernel, so one row covers both.
@@ -194,6 +203,18 @@ export function detailEfficiencyRows(eff: ScouterSpecEfficiency, labels: Efficie
     { id: "atk", label: `Flat ${atk}`, eff: eff.atkeff1, defaultAmount: 30 },
     { id: "atkPercent", label: `${atk} %`, eff: eff.atkPereff1, defaultAmount: 12 },
     { id: "critDamage", label: "Critical Damage %", eff: eff.cridmgeff1, defaultAmount: 8 },
+    // Archers turn crit rate past the 100% cap into critical damage, so for them a crit
+    // rate line is worth that fraction of one and belongs in the table. Every other class
+    // gets nothing from the excess and gets no row -- which is also what scouter's own
+    // ranking does, since it drops any row this branch would have left at zero.
+    ...(critRateToDmg > 0
+      ? [{
+          id: "critRate",
+          label: "Critical Rate % (past 100%)",
+          eff: eff.cridmgeff1 * critRateToDmg,
+          defaultAmount: 5,
+        }]
+      : []),
     // Scouter's two IED rows are the same stat measured against two different boss defence
     // ratings, not two different stats -- 300% and 380% PDR bracket where current bosses sit.
     { id: "ied300", label: "IED % (300% PDR boss)", eff: eff.igreff1, defaultAmount: 40 },

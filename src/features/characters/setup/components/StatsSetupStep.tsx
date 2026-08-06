@@ -44,6 +44,7 @@ import {
   serializeStatsStepDraft,
   isStatsSubstepSane,
   isStatsSubstepComplete,
+  isStatsSubstepAnyFieldFilled,
   TRIPLE_IDS,
   MAIN_STAT_IDS,
   COMBAT_LEFT,
@@ -67,8 +68,8 @@ import type { StoredCharacterRecord, StoredLegionArtifact, StoredScouterLegion, 
 import { findRosterCharacterByName } from "../../model/characterKeys";
 
 // Soul Weapon tooltip illustrations. Every stat-variant "Soul" item (Beefy/Swift/Clever/
-// etc.) shares the identical icon, pixel-verified 2026-07-01 — these are just one
-// representative id from each family.
+// etc.) shares the identical icon, pixel-verified -- these are just one representative id
+// from each family.
 const MU_GONG_SOUL_ITEM_ID = "02591038"; // "Beefy Mu Gong Soul"
 const EPHENIA_SOUL_ITEM_ID = "02591187"; // "Beefy Ephenia Soul"
 const RUIN_FORCE_SHIELD_ITEM_ID = "01099015"; // "Ruin Force Shield"
@@ -402,7 +403,7 @@ function TripleStatRow({
       <div style={tripleStatGridStyle}>
         <div style={{ gridColumn: 1, position: "relative" }}>
           {showBaseWarning && <InputWarningBubble message={`That looks like your total ${label}, enter your Base Value for ${label}.`} theme={theme} />}
-          <input type="text" inputMode="numeric" aria-label={`${label} base value`} value={d.base} placeholder="0" style={sub}
+          <input type="text" inputMode="numeric" aria-label={`${label} base value`} value={d.base} style={sub}
             data-flagged-field={showBaseWarning || (requireFilled && !d.base.trim()) ? "true" : undefined}
             onChange={(e) => onUpdate(id, "base", sanitizeDigitsInput(e.target.value))}
             onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
@@ -413,14 +414,13 @@ function TripleStatRow({
         </div>
         <div style={{ gridColumn: 2 }}>
           <div style={{ position: "relative" }}>
-            <input type="text" inputMode="numeric" aria-label={`${label} percent value`} value={d.percent} placeholder="0" style={{ ...sub, paddingRight: "1.15rem" }}
+            <input type="text" inputMode="numeric" aria-label={`${label} percent value`} value={d.percent} style={sub}
               data-flagged-field={requireFilled && !d.percent.trim() ? "true" : undefined}
               onChange={(e) => onUpdate(id, "percent", sanitizeDigitsInput(e.target.value))}
               onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
               onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
               onKeyDown={numericKeyDown}
             />
-            <span style={inputSuffixStyle(theme)}>%</span>
           </div>
           <p style={{ margin: 0, marginTop: "0.15rem", fontSize: "0.75rem", color: theme.muted, fontWeight: 700, textAlign: "center" }}>% Value</p>
         </div>
@@ -428,14 +428,13 @@ function TripleStatRow({
           <div style={{ gridColumn: 3 }}>
             <div style={{ position: "relative" }}>
               {showPercentUnappliedWarning && <InputWarningBubble message={`That % looks too large, enter your % Value Not Applied for ${label}.`} theme={theme} />}
-              <input type="text" inputMode="numeric" aria-label={`${label} percent not applied`} value={d.percentUnapplied} placeholder="0" style={{ ...sub, paddingRight: "1.15rem" }}
+              <input type="text" inputMode="numeric" aria-label={`${label} percent not applied`} value={d.percentUnapplied} style={sub}
                 data-flagged-field={showPercentUnappliedWarning || (requireFilled && !d.percentUnapplied.trim()) ? "true" : undefined}
                 onChange={(e) => onUpdate(id, "percentUnapplied", sanitizeDigitsInput(e.target.value))}
                 onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
                 onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
                 onKeyDown={numericKeyDown}
               />
-              <span style={inputSuffixStyle(theme)}>%</span>
             </div>
             <p style={{ margin: 0, marginTop: "0.15rem", fontSize: "0.75rem", color: theme.muted, fontWeight: 700, textAlign: "center" }}>% Not Applied</p>
           </div>
@@ -466,7 +465,7 @@ function SingleStatRow({
       </p>
       <div style={tripleStatGridStyle}>
         <div style={{ gridColumn: 1 }}>
-          <input type="text" inputMode="numeric" aria-label={`${label} value`} value={value} placeholder="0" style={statInputStyle(theme)}
+          <input type="text" inputMode="numeric" aria-label={`${label} value`} value={value} style={statInputStyle(theme)}
             onChange={(e) => onUpdate(id, sanitizeDigitsInput(e.target.value))}
             onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
             onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
@@ -566,7 +565,7 @@ function CombatStatCell({
         <span style={{ fontSize: "0.78rem", color: theme.muted, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>{label}</span>
         <div style={{ display: "flex", alignItems: "center", gap: "0.3rem", flexShrink: 0 }}>
           <div style={{ position: "relative" }}>
-            <input type="text" inputMode="numeric" aria-label={`${label} seconds`} value={cd.seconds} placeholder="0" style={{ ...statInputStyle(theme, "2.9rem"), paddingRight: "1.05rem" }}
+            <input type="text" inputMode="numeric" aria-label={`${label} seconds`} value={cd.seconds} style={{ ...statInputStyle(theme, "2.9rem"), paddingRight: "1.05rem" }}
               data-flagged-field={requireFilled && !cd.seconds.trim() ? "true" : undefined}
               onChange={(e) => onUpdateCooldown("seconds", sanitizeDigitsInput(e.target.value))}
               onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
@@ -576,7 +575,7 @@ function CombatStatCell({
             <span style={inputSuffixStyle(theme)}>s</span>
           </div>
           <div style={{ position: "relative" }}>
-            <input type="text" inputMode="numeric" aria-label={`${label} percent`} value={cd.percent} placeholder="0" style={{ ...statInputStyle(theme, "2.9rem"), paddingRight: "1.05rem" }}
+            <input type="text" inputMode="numeric" aria-label={`${label} percent`} value={cd.percent} style={{ ...statInputStyle(theme, "2.9rem"), paddingRight: "1.05rem" }}
               data-flagged-field={requireFilled && !cd.percent.trim() ? "true" : undefined}
               onChange={(e) => onUpdateCooldown("percent", sanitizeDigitsInput(e.target.value))}
               onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
@@ -598,7 +597,7 @@ function CombatStatCell({
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.4rem", minWidth: 0 }}>
       <span style={{ fontSize: "0.78rem", color: theme.muted, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>{label}</span>
       <div style={{ position: "relative", flexShrink: 0 }}>
-        <input type="text" inputMode={allowsDecimal ? "decimal" : "numeric"} aria-label={label} value={val} placeholder="0"
+        <input type="text" inputMode={allowsDecimal ? "decimal" : "numeric"} aria-label={label} value={val}
           style={isRaw ? statInputStyle(theme, "4.6rem") : { ...statInputStyle(theme, "4.6rem"), paddingRight: "1.15rem" }}
           data-flagged-field={requireFilled && !val.trim() ? "true" : undefined}
           onChange={(e) => {
@@ -617,16 +616,19 @@ function CombatStatCell({
   );
 }
 
-// Scouter-only weapon ATT/MATT field — the "+X" attack value shown on the weapon hover.
-// Already known (locked, read-only) whenever full_setup or a prior scouter run already
-// recorded it (draft.weaponAtt is seeded from scouter.weaponAtt regardless of flow — see
-// storedStatsToStatsStepDraft's caller) — only genuinely asks when it's still blank.
-function WeaponAttField({ label, usesMagicWeapon, value, onUpdate, theme }: {
+// Weapon ATT/MATT field — the "+X" attack value shown on the weapon hover. Pre-filled
+// whenever a prior run (any flow) already recorded it (draft.weaponAtt is seeded from
+// scouter.weaponAtt regardless of flow — see storedStatsToStatsStepDraft's caller).
+function WeaponAttField({ label, usesMagicWeapon, value, onUpdate, theme, requireFilled }: {
   label: string;
   usesMagicWeapon: boolean;
   value: string;
   onUpdate: (val: string) => void;
   theme: AppTheme;
+  /** MapleScouter, or full_setup/stats_flow once any other field on this substep has
+   *  been filled in — see isStatsSubstepAnyFieldFilled. A blank field otherwise stays
+   *  unflagged so an untouched substep remains visually quiet and skippable. */
+  requireFilled: boolean;
 }) {
   const statName = usesMagicWeapon ? "Magic ATT" : "Attack Power";
   const statShortName = usesMagicWeapon ? "Magic ATT" : "ATT";
@@ -655,9 +657,8 @@ function WeaponAttField({ label, usesMagicWeapon, value, onUpdate, theme }: {
               inputMode="numeric"
               aria-label={label}
               value={value}
-              placeholder="0"
               style={statInputStyle(theme, "4.6rem")}
-              data-flagged-field={showWeaponAttWarning || !value.trim() ? "true" : undefined}
+              data-flagged-field={showWeaponAttWarning || (requireFilled && !value.trim()) ? "true" : undefined}
               onChange={(e) => onUpdate(sanitizeDigitsInput(e.target.value))}
               onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
               onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
@@ -1046,12 +1047,20 @@ function deriveKnownInnerAbilityLine(
 
 // WH Legion rank, Legion Artifacts, and Inner Ability line are all shared between
 // full_setup and maplescouter_setup (full_setup is a superset — see WildHunterRankQuestion/
-// LegionArtifactQuestions/InnerAbilityLineQuestion above). Weapon ATT is the one deliberate
-// exception, scouter-ONLY here — full_setup asks it in the Equipment step's weapon picker
-// instead, since maplescouter_setup has no Equipment step to move it into.
+// LegionArtifactQuestions/InnerAbilityLineQuestion above). Weapon ATT also shows for
+// full_setup and stats_flow (the profile's standalone Stats tab) — it used to be asked
+// inline in the Equipment step's weapon picker instead for full_setup, but that always
+// wrote against whichever weapon sat in preset 0, wrongly assuming that's the character's
+// real bossing preset (there's no way to know that during full_setup, since the active
+// preset is only ever set later) — Character Info is now the one place this is asked,
+// for every flow that shows it.
 function deriveScouterVisibility(flowId: SetupFlowId | undefined): { isScouter: boolean; showWhLegion: boolean; showWeaponAtt: boolean } {
   const isScouter = flowId === "maplescouter_setup";
-  return { isScouter, showWhLegion: isScouter || flowId === "full_setup", showWeaponAtt: isScouter };
+  return {
+    isScouter,
+    showWhLegion: isScouter || flowId === "full_setup",
+    showWeaponAtt: isScouter || flowId === "full_setup" || flowId === "stats_flow",
+  };
 }
 
 // MapleScouter needs real data to calculate correctly, but only the radio-style pick-
@@ -1168,7 +1177,20 @@ function StatsWindowSubstep({
   const showArcanePower = isArcaneEligible(characterLevel, classData?.isLegacy);
   const showSacredPower = isSacredEligible(characterLevel, classData?.isLegacy);
   const symbolIds = ([showArcanePower && "arcanePower", showSacredPower && "sacredPower"] as const).filter(Boolean) as StatFieldId[];
-  const statsComplete = isScouter
+  // full_setup stays skippable while untouched, but once a player starts filling this
+  // in, treat it the same as MapleScouter's own "every field required" — see
+  // isStatsSubstepAnyFieldFilled's doc comment for why (players missing one field,
+  // usually Weapon ATT, and finishing setup confused why MapleScouter couldn't
+  // calculate). stats_flow (the profile's standalone Stats tab, showAllStats here)
+  // is excluded from this: unlike full_setup, it always opens pre-seeded from the
+  // character's already-saved stats (see buildSeededStepTestByStep), so "any field
+  // filled" would trip immediately on open regardless of whether the player has
+  // touched anything this session — there's no reliable "just typed this" signal to
+  // gate on here, so it stays sanity-only exactly as before.
+  const anyFieldFilled = !isScouter && !showAllStats
+    && isStatsSubstepAnyFieldFilled(draft, tripleIds, showWeaponAtt, showArcanePower, showSacredPower);
+  const requireComplete = isScouter || anyFieldFilled;
+  const statsComplete = requireComplete
     ? isStatsSubstepComplete(draft, tripleIds, showWeaponAtt, primaryStat, showArcanePower, showSacredPower)
     : isStatsSubstepSane(draft, tripleIds, primaryStat, showWeaponAtt);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -1230,7 +1252,7 @@ function StatsWindowSubstep({
             {tripleIds.map((id) => (
               <TripleStatRow
                 key={id} id={id} draft={draft} onUpdate={handleTripleUpdate} theme={theme}
-                isMainStat={id === primaryStat} requireFilled={isScouter}
+                isMainStat={id === primaryStat} requireFilled={requireComplete}
                 showHpPercentUnapplied={showHpPercentUnapplied}
               />
             ))}
@@ -1246,12 +1268,12 @@ function StatsWindowSubstep({
         <div className="stats-combat-grid" style={{ display: "flex", minWidth: 0 }}>
           <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: "0.4rem" }}>
             {COMBAT_LEFT.map((id) => (
-              <CombatStatCell key={id} id={id} draft={draft} onUpdate={handleSingleUpdate} onUpdateCooldown={handleCooldownUpdate} theme={theme} requireFilled={isScouter} />
+              <CombatStatCell key={id} id={id} draft={draft} onUpdate={handleSingleUpdate} onUpdateCooldown={handleCooldownUpdate} theme={theme} requireFilled={requireComplete} />
             ))}
           </div>
           <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: "0.4rem" }}>
             {combatRightIds.map((id) => (
-              <CombatStatCell key={id} id={id} draft={draft} onUpdate={handleSingleUpdate} onUpdateCooldown={handleCooldownUpdate} theme={theme} requireFilled={isScouter} />
+              <CombatStatCell key={id} id={id} draft={draft} onUpdate={handleSingleUpdate} onUpdateCooldown={handleCooldownUpdate} theme={theme} requireFilled={requireComplete} />
             ))}
           </div>
         </div>
@@ -1263,7 +1285,7 @@ function StatsWindowSubstep({
           <div className="stats-symbols-grid" style={{ minWidth: 0 }}>
             {symbolIds.map((id) => (
               <div key={id} style={{ minWidth: 0 }}>
-                <CombatStatCell id={id} draft={draft} onUpdate={handleSingleUpdate} onUpdateCooldown={handleCooldownUpdate} theme={theme} requireFilled={isScouter} />
+                <CombatStatCell id={id} draft={draft} onUpdate={handleSingleUpdate} onUpdateCooldown={handleCooldownUpdate} theme={theme} requireFilled={requireComplete} />
               </div>
             ))}
           </div>
@@ -1277,6 +1299,7 @@ function StatsWindowSubstep({
           value={draft.weaponAtt ?? ""}
           onUpdate={(v) => handleSingleUpdate("weaponAtt", v)}
           theme={theme}
+          requireFilled={requireComplete}
         />
       )}
       {!statsComplete && (
@@ -1285,7 +1308,16 @@ function StatsWindowSubstep({
           onClick={() => scrollToFlaggedField(rootRef.current)}
           style={flaggedValueLinkStyle(theme)}
         >
-          {isScouter ? "Fill in every stat above, and fix any flagged values, to continue." : "Fix the flagged value above to continue."}
+          {(() => {
+            if (isScouter) return "Fill in every stat above, and fix any flagged values, to continue.";
+            // Full Setup's completeness requirement only kicks in once the player has
+            // already filled in something (see anyFieldFilled) — unlike MapleScouter's
+            // always-on version of this same message, Next locking here is a new state
+            // the player just caused, not a rule that was already in effect, so it needs
+            // its own copy explaining why, or a sudden lock reads as a bug.
+            if (anyFieldFilled) return "Since you filled in at least one stat, fill in the rest above (and fix any flagged values) to continue.";
+            return "Fix the flagged value above to continue.";
+          })()}
         </button>
       )}
     </SetupStepFrame>

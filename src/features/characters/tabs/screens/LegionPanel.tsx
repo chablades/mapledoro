@@ -559,11 +559,10 @@ function SpriteRow({ theme, characters, missingCount, size }: {
 }
 
 // Only skills a tracked character actually contributes to (or that already have a
-// committed level) earn the full sprite-showcase card, since with 40+ link skills
-// eventually on the roadmap (Cygnus, Resistance, ...) most will be permanently
-// irrelevant to any one account, so giving every skill a full card regardless would
-// turn this into an endless scroll of empty placeholders. Everything else collapses
-// into one compact chip.
+// committed level) earn the full sprite-showcase card -- with 40+ link skills across
+// every branch, most will be permanently irrelevant to any one account, so giving every
+// skill a full card regardless would turn this into an endless scroll of empty
+// placeholders. Everything else collapses into one compact chip.
 // A named grid (icon | label | sprites), not a flex row with wrap: flex-wrap's "does
 // this all fit on one line" test kept tripping on tiny, inconsistent text-width
 // differences (two similarly-long names could land on opposite sides of the threshold),

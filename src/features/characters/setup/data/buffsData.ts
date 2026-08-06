@@ -174,8 +174,8 @@ const HERO_ECHO_SKILL_MAP: Partial<Record<string, string>> = {
   "Illium": "150001005", "Ark": "150011005", "Adele": "150021005", "Khali": "150031005",
   // Anima — Exclusive Spell. Hoyoung and Lara share one generic icon (maplestorywiki's own
   // Exclusive Spell page shows a single "(Anima)" file used for both); only Ren has her own
-  // distinct icon (own "(Ren)" file), confirmed via her skills page 2026-07-18 — her flavor
-  // skills ("Return (Ren)", "Grounded Body") sit in the 160020xxx block, giving 160021005.
+  // distinct icon (own "(Ren)" file), confirmed via her skills page -- her flavor skills
+  // ("Return (Ren)", "Grounded Body") sit in the 160020xxx block, giving 160021005.
   "Hoyoung": "160001005", "Lara": "160001005", "Ren": "160021005",
   // Jianghu
   "Mo Xuan": "170001005",
@@ -208,7 +208,7 @@ export function extremePotionLabel(stat: StatId): string {
 // Classes that don't run a fixed attack-speed stage the same way everyone else does, so they get
 // Extreme Green Potion as its own separate buff tile instead of it being folded into Extreme Potion.
 // Ren is deliberately excluded: some of her attacks are affected by Green Potion the normal way, so
-// she doesn't need the special-case split (Yuki, 2026-07-06) — revisit if Nexon changes this.
+// she doesn't need the special-case split -- revisit if Nexon changes this.
 const HURRICANE_JOB_NAMES = new Set<string>([
   "Wild Hunter", "Bow Master", "Phantom", "Wind Archer", "Blaze Wizard", "Corsair",
 ]);

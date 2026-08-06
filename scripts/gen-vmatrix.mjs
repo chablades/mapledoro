@@ -37,13 +37,13 @@ const classIdFor = (className) => SLUG_OVERRIDES[className] ?? slugify(className
 // Removed classes still present in the manifest — Jett and old Beast Tamer ("11212").
 const EXCLUDED_CLASSES = new Set(["Jett's Return", "11212"]);
 
-// Job entries the manifest over-includes. Kinesis has 4 job nodes in-game (confirmed by
-// Yuki), but the manifest lists 8 with no field to tell them apart, so the extras are
-// excluded by id. Kinesis's 2026-07-22 revamp swapped which 4 are real: Psychic Tornado,
-// Ultimate - Mind Over Matter, Ultimate - Psychic Shockwave, and Law of Gravity are no
-// longer V matrix job nodes, replaced by Psychic Shockwave, Psychic Nova, Ultimate:
-// Checkmate, and Psychic Castle. The job-count guard below will surface any future class
-// that drifts from the 4-job / 6-boost shape.
+// Job entries the manifest over-includes. Kinesis has 4 job nodes in-game (confirmed
+// directly), but the manifest lists 8 with no field to tell them apart, so the extras are
+// excluded by id. Kinesis's revamp swapped which 4 are real: Psychic Tornado, Ultimate -
+// Mind Over Matter, Ultimate - Psychic Shockwave, and Law of Gravity are no longer V matrix
+// job nodes, replaced by Psychic Shockwave, Psychic Nova, Ultimate: Checkmate, and Psychic
+// Castle. The job-count guard below will surface any future class that drifts from the
+// 4-job / 6-boost shape.
 const EXCLUDED_NODE_IDS = new Set(["10020006", "10020018", "10020031", "10020042"]);
 
 const maxLevelFor = (id, e) => e.maxLevel;

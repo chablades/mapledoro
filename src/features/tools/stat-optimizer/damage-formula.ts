@@ -1,5 +1,5 @@
 /*
-  Bossing damage kernel for the Stat Optimizer — an exact port of the kernel
+  Damage kernel for the Stat Optimizer — an exact port of the (bossing) kernel
   maplescouter.com's optimizer evaluates candidate allocations with (their
   minified `A(...)` + helpers n8/Ng/gt/h2/_M/VQ), restricted to the terms our
   inputs can move: doping/link-skill/seed-ring session state is zero, the
@@ -16,12 +16,16 @@
   inside the base that ATT% multiplies, ignore-DEF stacking multiplicatively
   (with scouter's exact stack/unstack arithmetic in stackIedSources/applyIed),
   and the crit bucket rounded to 4 decimals like the live site.
+
+  The mobbing target (`OptimizeTarget`) is ours, not scouter's: same kernel with
+  every boss-only term switched off. See that type for exactly which.
 */
 
 import type { StoredCharacterStats, StoredTripleStatField } from "../../characters/model/charactersStore";
 import { getClassDataByNexonJobName } from "../../characters/setup/data/classSkillData";
 import { resolveClassId } from "../../characters/setup/data/nexonJobMapping";
 import {
+  critRateToCritDmg,
   SCOUTER_CLASS_CONSTANTS,
   ZERO_CLASS_CONSTANTS,
   type ScouterClassConstants,
@@ -32,6 +36,17 @@ import {
  *  around, 300% (standard endgame bosses) and 380% (the hardest tier), and
  *  opens on 380% since that is the fight an allocation gets tuned for. */
 export const DEFAULT_BOSS_PDR = 380;
+
+/**
+ * What an allocation is being valued for. `"mobbing"` drops every boss-only term
+ * the kernel carries — the class boss-damage passive (`dpmBossDmg`), the whole
+ * ignore-DEF bucket (normal mobs aren't the fight IED is bought for), and the
+ * archer excess-crit conversion (Vicious Shot and friends run ~25% uptime, and
+ * mobbing is valued at full uptime). The bossDamagePct input is NOT dropped: on
+ * a mobbing run that field is the character's Normal Enemy Damage %, which lands
+ * in the same damage bucket boss damage does.
+ */
+export type OptimizeTarget = "bossing" | "mobbing";
 
 export type MainStatId = "str" | "dex" | "int" | "luk" | "hp";
 
@@ -49,6 +64,9 @@ export interface ClassDamageProfile {
   isXenon: boolean;
   /** Scouter class-passive constants baked into the kernel's buckets. */
   constants: Omit<ScouterClassConstants, "main" | "sub" | "sub2">;
+  /** Critical damage one point of critical rate past 100% converts into (archers
+   *  only, see CRIT_RATE_TO_CRIT_DMG); 0 for every class without such a passive. */
+  critRateToDmg: number;
 }
 
 /** One tooltip stat field: base value, % value, and flat "% not applied" value. */
@@ -194,6 +212,7 @@ export function resolveClassDamageProfile(
       isHpBased: scouter.main === "hp",
       isXenon: classId === "xenon",
       constants: scouter,
+      critRateToDmg: critRateToCritDmg(classId),
     };
   }
 
@@ -209,6 +228,7 @@ export function resolveClassDamageProfile(
     isHpBased: primary === "hp",
     isXenon: false,
     constants: ZERO_CLASS_CONSTANTS,
+    critRateToDmg: critRateToCritDmg(classId),
   };
 }
 
@@ -278,7 +298,9 @@ function applyIed(pct: number, frac: number): number {
 // ── Kernel ────────────────────────────────────────────────────────────────────
 
 interface KernelOptions {
-  /** Boss DEF % (PDR) the ignore-def bucket is valued against. */
+  /** Bossing keeps every boss-only term; mobbing drops them (see OptimizeTarget). */
+  target: OptimizeTarget;
+  /** Boss DEF % (PDR) the ignore-def bucket is valued against (bossing only). */
   bossPdrPct: number;
   /** Scouter's HEXA evaluations force 100% crit; hyper uses the real crit rate. */
   forceFullCrit: boolean;
@@ -338,6 +360,20 @@ function statFactorHpBased(s: OptimizerStatInputs, d: KernelDelta): number {
 }
 
 /**
+ * Critical damage an archer's critical rate past the 100% cap converts into.
+ * Zero for every other class, and for any crit rate at or below the cap.
+ *
+ * This is the one place the kernel knowingly leaves maplescouter: theirs can't
+ * reach the mechanic (crit rate input capped at 100, no crit rate bucket in the
+ * efficiency table), so past the cap they value crit rate at nothing. Scouter
+ * does carry the per-class rate, though, and applies it in their link-skill
+ * ranking, which is where `CRIT_RATE_TO_CRIT_DMG` comes from.
+ */
+export function excessCritDamage(profile: ClassDamageProfile, critRatePct: number): number {
+  return profile.critRateToDmg * Math.max(0, critRatePct - 100);
+}
+
+/**
  * Relative bossing damage for a stat allocation delta. Only meaningful as a
  * ratio between two evaluations of the same character.
  */
@@ -349,6 +385,7 @@ export function computeScouterDamage(
 ): number {
   const c = profile.constants;
   const cal = opts.calibration;
+  const mobbing = opts.target === "mobbing";
 
   const stat = profile.isHpBased
     ? statFactorHpBased(inputs, delta)
@@ -361,21 +398,47 @@ export function computeScouterDamage(
       (1 + Math.max(0, inputs.attack.pct + c.dpmAtkPer + cal.atkPct) / 100) +
     inputs.attack.flat;
 
-  // Crit bucket, rounded to 4 decimals like the live site.
-  const critRate = opts.forceFullCrit ? 1 : Math.min(1, (inputs.critRatePct + delta.critRate) / 100);
-  const critDmg = inputs.critDamagePct + c.dpmCritDmg + cal.critDmgPct + delta.critDmg;
+  // Crit bucket, rounded to 4 decimals like the live site. The rate itself still
+  // caps at 100%, but for archers the part above the cap is not thrown away: it
+  // rides into the crit damage term instead, which is what keeps crit rate worth
+  // buying past the cap. `forceFullCrit` only pins the rate (scouter's HEXA
+  // convention) and so leaves the conversion alone -- the excess is a property of
+  // the character's stat line, not of which mode is being optimized. Mobbing is
+  // the one place it is dropped, and not because the mechanic changes: the
+  // passives granting it run ~25% uptime, and a mobbing allocation is tuned for
+  // the other 75%.
+  const rawCritRatePct = inputs.critRatePct + delta.critRate;
+  const critRate = opts.forceFullCrit ? 1 : Math.min(1, rawCritRatePct / 100);
+  const critDmg =
+    inputs.critDamagePct +
+    c.dpmCritDmg +
+    cal.critDmgPct +
+    delta.critDmg +
+    (mobbing ? 0 : excessCritDamage(profile, rawCritRatePct));
   const critBucket = Math.round(((1 - critRate) * 1 + (critRate * (135 + critDmg)) / 100) * 1e4) / 1e4;
 
+  // `bossDamagePct` is the Normal Enemy Damage % field on a mobbing run, which
+  // the game puts in this same bucket; only the class boss-damage passive drops.
   const dmgBucket =
     1 +
-    (c.dpmBossDmg + inputs.bossDamagePct + inputs.damagePct + cal.dmgPct + delta.bossDmg + delta.dmg) /
+    ((mobbing ? 0 : c.dpmBossDmg) +
+      inputs.bossDamagePct +
+      inputs.damagePct +
+      cal.dmgPct +
+      delta.bossDmg +
+      delta.dmg) /
       100;
 
-  let ied =
-    1 - (1 - inputs.ignoreDefPct / 100) * (1 - c.dpmIgnoreGuard / 100) * (1 - cal.iedPct / 100);
-  ied = applyIed(delta.ied, ied);
-  ied = applyIed(delta.iedStrip, ied);
-  const iedBucket = 1 - (opts.bossPdrPct * (1 - ied)) / 100;
+  // Mobbing doesn't value ignore DEF at all, so the bucket collapses to 1 rather
+  // than being valued against a boss's PDR.
+  let iedBucket = 1;
+  if (!mobbing) {
+    let ied =
+      1 - (1 - inputs.ignoreDefPct / 100) * (1 - c.dpmIgnoreGuard / 100) * (1 - cal.iedPct / 100);
+    ied = applyIed(delta.ied, ied);
+    ied = applyIed(delta.iedStrip, ied);
+    iedBucket = 1 - (opts.bossPdrPct * (1 - ied)) / 100;
+  }
 
   return stat * attack * critBucket * dmgBucket * iedBucket;
 }

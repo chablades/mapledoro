@@ -8,9 +8,9 @@
 // content-fingerprints the two object shapes we need (they're plain data literals, and object
 // literal keys survive minification even though local variable names don't). Re-run this after
 // every MapleScouter update; if either fingerprint stops matching, that means MapleScouter changed
-// the shape of the data itself (not just renamed a variable), which needs human investigation --
-// see project_maplescouter_bosscut_formula_2026_07_28 memory for the full RE writeup this is
-// built from.
+// the shape of the data itself (not just renamed a variable), which needs human investigation
+// before trusting the output -- see bossClearFormula.ts's own header for how this scraped data
+// feeds the Boss Clear formula.
 
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -76,9 +76,9 @@ function matchEnclosing(src, start) {
 // own module defines a local percentage-adjustment table (`let o={...}`, real numeric-expression
 // values, e.g. easyRate:.9792*o["노스우"]) immediately before the array itself, and stubbing it
 // away silently zeroes out easyRate for every entry that references it instead of throwing --
-// wrong data with no error, not caught until Yuki noticed Normal Lotus reading "Impossible" for
-// an endgame character (see project_maplescouter_bosscut_formula_2026_07_28 memory). So on an
-// unresolved identifier, don't stub blindly: first search the SAME module's source for that
+// wrong data with no error, not caught until Normal Lotus was noticed reading "Impossible" for
+// an endgame character. So on an unresolved identifier, don't stub blindly: first search the
+// SAME module's source for that
 // identifier's own `let X={...}`/`const X={...}` declaration and try to resolve it for real,
 // only falling back to an inert stub if no such declaration exists (a genuinely unneeded table)
 // or it fails to evaluate on its own.

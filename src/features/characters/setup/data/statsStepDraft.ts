@@ -488,21 +488,56 @@ export function isStatsSubstepComplete(
     && isStatsSubstepSane(draft, tripleIds, primaryStat, requireWeaponAtt);
 }
 
+// full_setup/stats_flow stay optional overall (an untouched substep must stay skippable —
+// see isStatsSubstepSane), but real testing surfaced players starting to fill this in,
+// missing one field (most often Weapon ATT, tucked at the bottom), and finishing setup
+// confused about why MapleScouter couldn't calculate. Treats the substep the same as
+// MapleScouter's own "must be complete" once ANY field here has a real value — same
+// per-field checks as isStatsSubstepComplete, just requiring at least one hit instead of
+// requiring blank fields to stay valid. A fully blank substep returns false here (nothing
+// to be partial about), leaving it skippable exactly as before.
+export function isStatsSubstepAnyFieldFilled(
+  draft: StatsStepDraft,
+  tripleIds: TripleStatFieldId[],
+  showWeaponAtt: boolean,
+  showArcanePower: boolean,
+  showSacredPower: boolean,
+): boolean {
+  const tripleTouched = tripleIds.some((id) => {
+    const t = draft[id];
+    return Boolean(t?.base?.trim() || t?.percent?.trim() || t?.percentUnapplied?.trim());
+  });
+  const combatTouched = [...COMBAT_LEFT, ...COMBAT_RIGHT].some((id) => isCombatFieldFilled(draft, id));
+  const symbolsTouched = (showArcanePower && Boolean(draft.arcanePower?.trim()))
+    || (showSacredPower && Boolean(draft.sacredPower?.trim()));
+  const weaponAttTouched = showWeaponAtt && Boolean(draft.weaponAtt?.trim());
+  return tripleTouched || combatTouched || symbolsTouched || weaponAttTouched;
+}
+
 /** Whether the Stats step's Character-Info substep (the main stat/combat/symbol/weapon-
  *  ATT fields) is valid, computed fresh from the raw stored draft string — not cached.
  *
- *  `requireComplete` is the ONLY thing that varies by flow: MapleScouter needs every
- *  field explicitly filled in (isStatsSubstepComplete, which already ANDs in the sanity
- *  check below), while every other flow that touches Stats (Full Setup, the standalone
- *  Stats flow) only requires values that ARE filled in to be sane, not blank fields to be
- *  filled. Sanity is therefore a floor every flow shares — a subset flow (MapleScouter)
- *  can only add stricter requirements on top of it, never loosen it, and its own extra
- *  strictness never applies back to a flow that didn't ask for it. */
+ *  `forceComplete` (MapleScouter only) means every field must be explicitly filled in
+ *  regardless of whether the substep's been touched (isStatsSubstepComplete, which
+ *  already ANDs in the sanity check below). Full Setup only forces that same
+ *  completeness once the player has actually started filling this substep in this
+ *  session — see isStatsSubstepAnyFieldFilled's doc comment for why (real testing
+ *  surfaced players missing one field, most often Weapon ATT, and finishing setup
+ *  confused why MapleScouter couldn't calculate) — controlled by `checkAnyFieldFilled`,
+ *  since the standalone Stats tab (stats_flow) always opens pre-seeded from the
+ *  character's already-saved stats (see buildSeededStepTestByStep) and has no reliable
+ *  "just typed this" signal to gate on — it stays sanity-only regardless of how full the
+ *  draft already is, same as before this whole any-field-filled behavior existed.
+ *  An untouched (or stats_flow) substep only requires values that ARE filled in to be
+ *  sane, not blank fields to be filled — this is the floor every flow shares;
+ *  forceComplete/any-field-filled can only add stricter requirements on top, never
+ *  loosen it. */
 export function isStatsWindowSubstepValid(
   rawValue: string,
   jobName: string | undefined,
   characterLevel: number | undefined,
-  requireComplete: boolean,
+  forceComplete: boolean,
+  checkAnyFieldFilled: boolean,
 ): boolean {
   const classData = CLASS_SKILL_DATA.find((c) => c.nexonJobName === jobName);
   const draft = parseStatsStepDraft(rawValue);
@@ -510,10 +545,12 @@ export function isStatsWindowSubstepValid(
     ? getRequiredStatsForClass(classData).filter((id): id is TripleStatFieldId => TRIPLE_IDS.has(id))
     : [];
   const primaryStat = classData?.requiredStats.find((s): s is TripleStatFieldId => MAIN_STAT_IDS.has(s));
+  const showArcanePower = isArcaneEligible(characterLevel, classData?.isLegacy);
+  const showSacredPower = isSacredEligible(characterLevel, classData?.isLegacy);
+  const requireComplete = forceComplete
+    || (checkAnyFieldFilled && isStatsSubstepAnyFieldFilled(draft, tripleIds, true, showArcanePower, showSacredPower));
   if (!requireComplete) {
     return isStatsSubstepSane(draft, tripleIds, primaryStat, false);
   }
-  const showArcanePower = isArcaneEligible(characterLevel, classData?.isLegacy);
-  const showSacredPower = isSacredEligible(characterLevel, classData?.isLegacy);
   return isStatsSubstepComplete(draft, tripleIds, true, primaryStat, showArcanePower, showSacredPower);
 }

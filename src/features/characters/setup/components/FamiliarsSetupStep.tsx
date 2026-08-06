@@ -494,6 +494,12 @@ function LinePicker({ id, openId, onToggle, onClose, onPrev, onNext, value, tier
 
 // ── Familiar slot card ─────────────────────────────────────────────────────
 
+// Each result row loads a familiar sprite, so committing a fresh result set on every
+// keystroke fires a burst of image requests (matches Equipment's ItemPicker debounce).
+const SEARCH_DEBOUNCE_MS = 150;
+// Matches Equipment's ItemPicker SEARCH_LIMIT.
+const SEARCH_LIMIT = 30;
+
 // Same-name entries that render a pixel-identical sprite (e.g. periodic card
 // reissues) are excluded from search — they'd otherwise show as two indistinguishable
 // results. The "duplicate" entry stays in FAMILIARS itself so an already-saved
@@ -505,7 +511,7 @@ const SELECTABLE_FAMILIARS = FAMILIARS.filter((f) => f.duplicateOf === undefined
 function filterFamiliars(query: string, excludeId: number | null): FamiliarEntry[] {
   if (!query.trim()) return [];
   const pool = excludeId == null ? SELECTABLE_FAMILIARS : SELECTABLE_FAMILIARS.filter((f) => f.id !== excludeId);
-  return searchAndRank(pool, query, getFamiliarDisplayLabel).slice(0, 50);
+  return searchAndRank(pool, query, getFamiliarDisplayLabel).slice(0, SEARCH_LIMIT);
 }
 
 const slotCardBase: CSSProperties = {
@@ -607,14 +613,21 @@ function FamiliarSlotCard({
   const spriteMobId = matchedEntry?.spriteMobId ?? slot.mobId;
   const inputRef = useRef<HTMLInputElement>(null);
   const { ref: wrapperRef, portalRef } = usePickerCoords(isOpen, FAM_PICKER_WIDTH);
-  const filtered = useMemo(() => isOpen ? filterFamiliars(query, slot.familiarId) : [], [isOpen, query, slot.familiarId]);
+  // Trails `query` by SEARCH_DEBOUNCE_MS; drives the result list (and everything that has
+  // to stay in sync with it) so sprite requests land once per pause, not once per keystroke.
+  const [searchQuery, setSearchQuery] = useState(query);
+  useEffect(() => {
+    const timer = setTimeout(() => setSearchQuery(query), SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [query]);
+  const filtered = useMemo(() => isOpen ? filterFamiliars(searchQuery, slot.familiarId) : [], [isOpen, searchQuery, slot.familiarId]);
   useEffect(() => {
     if (isOpen && !pendingEntry) inputRef.current?.focus();
   }, [isOpen, pendingEntry]);
 
   const { highlightedIndex, onKeyDown: navKeyDown, itemRef } = useKeyboardListNav({
     items: filtered,
-    resetKey: query,
+    resetKey: searchQuery,
     onSelect: (entry) => onSetPending(entry),
     onClose: onClosePicker,
   });
@@ -773,7 +786,7 @@ function FamiliarSlotCard({
                   style={{ ...searchInputStyle, borderColor: theme.border, background: theme.bg, color: theme.text }}
                 />
               </div>
-              {query && <div style={{ maxHeight: 200, overflowY: "auto" }}>
+              {searchQuery && <div style={{ maxHeight: 200, overflowY: "auto" }}>
                 {filtered.length === 0 && (
                   <p style={{ margin: 0, padding: "0.5rem 0.75rem", fontSize: "0.75rem", color: theme.muted, fontWeight: 600 }}>
                     No results

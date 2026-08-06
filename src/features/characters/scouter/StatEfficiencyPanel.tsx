@@ -4,8 +4,10 @@ import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import type { AppTheme } from "../../../components/themes";
 import HoverTooltip from "../../../components/HoverTooltip";
 import { ToolNumberInput } from "../../tools/shared-ui";
+import { critRateToCritDmg } from "../../tools/stat-optimizer/scouter-class-data";
 import { toolStyles } from "../../tools/tool-styles";
 import type { StoredCharacterRecord } from "../model/charactersStore";
+import { resolveClassId } from "../setup/data/nexonJobMapping";
 import type { ScouterSpecEfficiency } from "./scouterCache";
 import {
   computeMainEfficiencies, detailEfficiencyRows, efficiencyUnitOptions,
@@ -133,12 +135,25 @@ function ComparisonList({ theme, labels, level, eff }: {
 // ── Per stat ───────────────────────────────────────────────────────────────────
 
 function cellStyle(theme: AppTheme, isLast: boolean): CSSProperties {
-  return { padding: "4px 7px", borderBottom: isLast ? "none" : `1px solid ${theme.border}`, fontSize: "0.75rem", color: theme.text, lineHeight: 1.3 };
+  return { padding: "5px 9px", borderBottom: isLast ? "none" : `1px solid ${theme.border}`, fontSize: "0.75rem", color: theme.text, lineHeight: 1.3 };
 }
 
+/** Right-aligned text sitting flush on a cell's padding edge reads as touching the box, so the
+ *  Worth column carries more inset than the shared cell padding gives it. The column's own
+ *  width has to cover this: table-layout is fixed, so padding eats the width, not the table. */
+const WORTH_INSET = 10;
+
 const unitLabelStyle: CSSProperties = { display: "flex", alignItems: "center", gap: 8, fontSize: "0.75rem", fontWeight: 700 };
-const worthCellStyle: CSSProperties = { textAlign: "right", fontWeight: 800, fontFamily: "var(--font-heading)" };
-const headCellStyle: CSSProperties = { textAlign: "left", fontWeight: 800 };
+/* Body font on purpose. This column used --font-heading, but Fredoka is loaded at a single
+   weight (700, see layout.tsx), so fontWeight here was inert and the numbers rendered as a
+   block of the panel's only display type. Nunito ships 400/600/700/800, so the weight is a
+   real knob again: 800 matches the Comparisons section's answers, so both sections read
+   their values at the same weight. */
+const worthCellStyle: CSSProperties = { textAlign: "right", fontWeight: 800, paddingRight: WORTH_INSET };
+/* Header row runs taller than the body rows it labels, so the column names sit off the panel
+   edge instead of wedged against it. */
+const headCellStyle: CSSProperties = { textAlign: "left", fontWeight: 800, padding: "8px 9px" };
+const worthHeadCellStyle: CSSProperties = { ...headCellStyle, textAlign: "right", paddingRight: WORTH_INSET };
 
 /* Fixed layout so both columns' tables come out with identical tracks: Amount and Worth are
    pinned, and the stat name takes whatever is left of an equal-width half. Wide names wrap
@@ -169,7 +184,7 @@ function PerStatColumn({ theme, eff, rows, unit, amounts, onAmount, inputStyle }
           <tr style={{ background: theme.timerBg }}>
             <th style={{ ...cell, ...headCellStyle, color: theme.muted }}>Stat</th>
             <th style={{ ...cell, ...headCellStyle, color: theme.muted, width: 60 }}>Amount</th>
-            <th style={{ ...worthCell, color: theme.muted, width: 52 }}>Worth</th>
+            <th style={{ ...cell, ...worthHeadCellStyle, color: theme.muted, width: 60 }}>Worth</th>
           </tr>
         </thead>
         <tbody>
@@ -206,10 +221,13 @@ function PerStatColumn({ theme, eff, rows, unit, amounts, onAmount, inputStyle }
   );
 }
 
-function PerStatTable({ theme, labels, eff }: {
-  theme: AppTheme; labels: EfficiencyStatLabels; eff: ScouterSpecEfficiency;
+function PerStatTable({ theme, labels, eff, critRateToDmg }: {
+  theme: AppTheme; labels: EfficiencyStatLabels; eff: ScouterSpecEfficiency; critRateToDmg: number;
 }) {
-  const rows = useMemo(() => detailEfficiencyRows(eff, labels), [eff, labels]);
+  const rows = useMemo(
+    () => detailEfficiencyRows(eff, labels, critRateToDmg),
+    [eff, labels, critRateToDmg],
+  );
   const unitOptions = useMemo(() => efficiencyUnitOptions(labels), [labels]);
   const [unit, setUnit] = useState<EfficiencyUnitId>("finalDamage");
   // Amounts are a scratchpad, not character data -- typing here compares lines, it doesn't
@@ -258,6 +276,12 @@ export default function StatEfficiencyPanel({ theme, character, eff }: {
   // Both sections name the same stats, so they resolve them once here rather than each
   // running the class lookup off the same jobName.
   const labels = useMemo(() => resolveEfficiencyStatLabels(character.jobName), [character.jobName]);
+  // Non-zero only for the archers whose passives convert crit rate past 100%, which is the
+  // only case the Per Stat table has a crit rate row to show.
+  const critRateToDmg = useMemo(
+    () => critRateToCritDmg(resolveClassId(character.jobName)),
+    [character.jobName],
+  );
   return (
     <div className="stat-efficiency-panel" style={{ display: "flex", flexDirection: "column", gap: 14 }}>
       <Section
@@ -272,7 +296,7 @@ export default function StatEfficiencyPanel({ theme, character, eff }: {
         heading="Per Stat"
         caption="What each stat is worth at the amount shown, re-expressed in whichever unit you pick. Type a different amount to price a bigger or smaller line."
       >
-        <PerStatTable theme={theme} labels={labels} eff={eff} />
+        <PerStatTable theme={theme} labels={labels} eff={eff} critRateToDmg={critRateToDmg} />
       </Section>
     </div>
   );

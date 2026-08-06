@@ -53,8 +53,8 @@ function statsWithLabel(entry, label) {
 // Zero's "Long Sword Mastery" mastery value sits in rawFormulas.mastery, never promoted to the
 // classified stats[] array (a known extractor gap, reported but not yet fixed — unlike Hero's
 // "Advanced Combo"/Angelic Buster's "True Heart Inheritance", which were the same shape of bug and
-// did get fixed 2026-07-17). Remove this once the manifest promotes it properly; resolvePinned()
-// will then find it via stats[] like everything else and this override becomes a no-op to delete.
+// did get fixed). Remove this once the manifest promotes it properly; resolvePinned() will then
+// find it via stats[] like everything else and this override becomes a no-op to delete.
 const RAW_FORMULA_FALLBACK = { "101000203": "mastery" };
 
 function resolvePinned(classId, statLabel, pin) {
@@ -82,10 +82,10 @@ function resolvePinned(classId, statLabel, pin) {
  * Evaluates a pinned skill's own formula at `entry.maxLevel + levelOffset` instead of at its
  * pinned/verified maxLevel — this is the "Decent Combat Orders"/"Passive Skills +1 IA" boosted
  * state (Character Info setup always assumes at least one of these is active, since DCO sits in
- * every class's buff guide — see CLAUDE.md/memory for the full mechanism). Confirmed 2026-07-18
- * against 4 independently toggle-tested classes (Kanna/Lara/Ren/Hoyoung, done in an earlier
- * session by hand) that simply re-evaluating each skill's real formula one or two levels past its
- * normal cap exactly reproduces the empirically-measured DCO/IA+1 state — no per-class curve or
+ * every class's buff guide — see CLAUDE.md for the full mechanism). Confirmed against 4
+ * independently toggle-tested classes (Kanna/Lara/Ren/Hoyoung, tested by hand) that simply
+ * re-evaluating each skill's real formula one or two levels past its normal cap exactly
+ * reproduces the empirically-measured DCO/IA+1 state — no per-class curve or
  * "KMS vs non-KMS" rule needed; what looked like a class-level mechanic was just each skill's own
  * formula shape (e.g. Kasen's `50+2*x` climbs twice as fast as the common `55+u(x/2)` shape).
  * No `expected` check here (unlike resolvePinned) — levelOffset 0 is already drift-guarded via
@@ -106,17 +106,17 @@ function resolvePinnedAtLevel(pin, statLabel, levelOffset) {
 }
 
 // ---------------------------------------------------------------------------------------------
-// Final Damage recipes — one entry per class, ids pinned via the 2026-07-17 live-verification
-// pass (FINAL_DAMAGE_DATA.md). Combined multiplicatively.
+// Final Damage recipes — one entry per class, ids pinned via a live-verification pass
+// (FINAL_DAMAGE_DATA.md). Combined multiplicatively.
 // ---------------------------------------------------------------------------------------------
 // `job4: false` marks a pin whose skill is NOT the class's 4th-job advancement — Decent Combat
-// Orders / Passive Skills+1 IA only bump 4th-job skill levels (confirmed 2026-07-18 against a real
-// Ren tier-2 capture: the generator's old uniform "+tier to every pinned skill" logic overshot her
+// Orders / Passive Skills+1 IA only bump 4th-job skill levels (confirmed against a real Ren
+// tier-2 capture: the generator's old uniform "+tier to every pinned skill" logic overshot her
 // real 89.40% Final Damage by bumping 2nd-job Serene Verse II too; freezing it at tier0 reproduces
 // 89.40% exactly). Job-advancement per skill was cross-checked against Grandis Library for every
-// pin in both recipe tables below (2026-07-18) — pins with no `job4` field are confirmed 4th job
-// and get the normal tier offset; `job4: false` pins are frozen at their tier-0 value regardless of
-// requested tier. See resolvePinnedAtLevel's job4 gating.
+// pin in both recipe tables below — pins with no `job4` field are confirmed 4th job and get the
+// normal tier offset; `job4: false` pins are frozen at their tier-0 value regardless of requested
+// tier. See resolvePinnedAtLevel's job4 gating.
 const FINAL_DAMAGE_RECIPES = {
   hoyoung: [
     { id: "160000076", name: "Fiend Seal", expected: 10, job4: false }, // Beginner Skill
@@ -293,7 +293,7 @@ const FINAL_DAMAGE_RECIPES = {
   ],
   kaiser: [{ id: "61110004", name: "Catalyze", expected: 33, job4: false }], // 3rd job
   kinesis: [
-    // 2026-07-22 revamp: full kit renumbering, re-verified against a real character (Yuki).
+    // Post-revamp: full kit renumbering, re-verified against a real character.
     { id: "142100005", name: "Mental Strength", expected: 10, job4: false }, // 2nd job
     { id: "142110008", name: "Psychic Reinforcement", expected: 15, job4: false }, // 3rd job
     { id: "142120006", name: "ESP Expert", expected: 10 },
@@ -346,8 +346,7 @@ const FINAL_DAMAGE_RECIPES = {
 
 // ---------------------------------------------------------------------------------------------
 // Mastery skill recipes — the skill-contribution half only (see MASTERY_BASE_PERCENT below for
-// the other half). Combined additively. Ids pinned via the 2026-07-17/18 verification pass
-// (MASTERY_DATA.md).
+// the other half). Combined additively. Ids pinned via a live-verification pass (MASTERY_DATA.md).
 // ---------------------------------------------------------------------------------------------
 const MASTERY_SKILL_RECIPES = {
   hero: [{ id: "1120003", name: "Advanced Combo", expected: 70 }],
@@ -398,7 +397,7 @@ const MASTERY_SKILL_RECIPES = {
   mo_xuan: [{ id: "175120014", name: "Boundless", expected: 70 }],
   sia_astelle: [{ id: "182120002", name: "Astral Assimilation", expected: 70 }],
   erel_light: [{ id: "181120008", name: "Gram Expert", expected: 70 }],
-  // 2026-07-22 revamp: ESP Mastery (job 1, own tooltip "Psy-limiter Mastery: +50%") is
+  // Post-revamp: ESP Mastery (job 1, own tooltip "Psy-limiter Mastery: +50%") is
   // deliberately excluded — it's the lower-tier Mastery skill, superseded (not stacked) by
   // ESP Expert once learned, same as every other class's single-highest-tier-only recipe.
   kinesis: [{ id: "142120006", name: "ESP Expert", expected: 73 }],
@@ -498,7 +497,7 @@ const WEAPON_MULTIPLIER = {
   night_lord: 1.75, night_walker: 1.75, mo_xuan: 1.75,
   buccaneer: 1.7, thunder_breaker: 1.7, shade: 1.7, blaster: 1.7, angelic_buster: 1.7, ark: 1.7,
   corsair: 1.5, cannoneer: 1.5, mechanic: 1.5,
-  dark_knight: 1.49, aran: 1.49, zero: 1.49, // Beta, see comment above
+  dark_knight: 1.49, aran: 1.49, zero: 1.49, erel_light: 1.49, // Beta, see comment above
   marksman: 1.35, wild_hunter: 1.35, kanna: 1.35,
   kaiser: 1.34, lynn: 1.34,
   xenon: 1.3125,
@@ -508,7 +507,7 @@ const WEAPON_MULTIPLIER = {
   hayato: 1.25,
   mihile: 1.24,
   arch_mage_f_p: 1.2, arch_mage_i_l: 1.2, bishop: 1.2, blaze_wizard: 1.2, illium: 1.2,
-  kinesis: 1.2, evan: 1.2, luminous: 1.2, battle_mage: 1.2, sia_astelle: 1.2, erel_light: 1.2,
+  kinesis: 1.2, evan: 1.2, luminous: 1.2, battle_mage: 1.2, sia_astelle: 1.2,
   lara: 1.2, demon_slayer: 1.2,
   // hero, paladin, dawn_warrior omitted here — see WEAPON_MULTIPLIER_BY_HAND below.
 };
@@ -526,7 +525,7 @@ const WEAPON_MULTIPLIER_BY_HAND = {
 // (this script only reads JSON, matching every other gen-*.mjs script's convention).
 const MAGIC_ATT_CLASSES = new Set([
   "lara", "blaze_wizard", "arch_mage_f_p", "arch_mage_i_l", "bishop", "illium", "kinesis",
-  "evan", "luminous", "lynn", "battle_mage", "kanna", "sia_astelle", "erel_light",
+  "evan", "luminous", "lynn", "battle_mage", "kanna", "sia_astelle",
 ]);
 
 // ---------------------------------------------------------------------------------------------
@@ -553,9 +552,9 @@ for (const [classId, recipe] of Object.entries(FINAL_DAMAGE_RECIPES)) {
     // No rounding here — Final Damage compounds multiplicatively and then feeds Genesis Liberation's
     // own ×1.1 (finalDamageData.ts) and the Damage Range formula's ×(1+FD/100) term (damageRangeData.ts),
     // both of which amplify a rounded-to-2-decimals input into a visibly wrong Damage Range (confirmed
-    // 2026-07-18 on Ren: rounding tier1 to 70.64 instead of the raw 70.64085500000006 undershot her real
-    // Damage Range upper value by 833). Round only at the UI display layer (finalDamageDisplay's
-    // `.toFixed(2)`), never in stored/computed values.
+    // on Ren: rounding tier1 to 70.64 instead of the raw 70.64085500000006 undershot her real Damage
+    // Range upper value by 833). Round only at the UI display layer (finalDamageDisplay's `.toFixed(2)`),
+    // never in stored/computed values.
     return recipe.length === 0 ? 0 : (product - 1) * 100;
   });
   finalDamageOut[classId] = tiers;
@@ -595,13 +594,13 @@ function writeTieredGenerated(fileName, exportName, comment, data) {
 writeTieredGenerated(
   "masteryData.generated.ts",
   "BASE_MASTERY_PERCENT",
-  "Weapon Mastery% per class (v269), level-30 base plus Combat-Orders-family tiers.",
+  "Weapon Mastery% per class (v270), level-30 base plus Combat-Orders-family tiers.",
   masteryOut,
 );
 writeTieredGenerated(
   "finalDamageData.generated.ts",
   "BASE_FINAL_DAMAGE_PERCENT",
-  "Always-on Final Damage% per class (v269), before Genesis Liberation, level-30 base plus Combat-Orders-family tiers.",
+  "Always-on Final Damage% per class (v270), before Genesis Liberation, level-30 base plus Combat-Orders-family tiers.",
   finalDamageOut,
 );
 

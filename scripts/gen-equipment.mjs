@@ -28,7 +28,7 @@
  *   EQUIP_ICON_DIR=/path/to/dump/item node scripts/gen-equipment.mjs manifests/v270/item.json
  *
  * Set EQUIP_DEDUP_VERDICTS to the manual dedup audit's verdicts file (see
- * E:\mapledoro-image\tools\equipment\dedup-verdicts.json / its README) to apply
+ * F:\mapledoro-image\tools\equipment\dedup-verdicts.json / its README) to apply
  * human-confirmed drop/label decisions for same-name+icon groups that survive the
  * icon-based dedup above with genuinely different stats (e.g. two "Eternal Wedding
  * Ring" ids at +5 vs +7 all stat) — drops confirmed leftover/regional-ghost/cafe-only
@@ -210,12 +210,99 @@ function dedupeByName(items, linkKey, requireSamePrefix, excludeSetItemID) {
   return { deduped: [...byKey.values()], canonicalById };
 }
 
-/** Rewrites a slot's id cross-reference list to canonical ids (dropping now-dead ids). */
+/** Pet/pet-equip reissues occasionally ship one or more stub twins alongside the real
+ *  item that carry no real stats at all (e.g. Silent Death's Scythe: one id with
+ *  incPAD/incMAD 10 plus a reissue id with only upgradeSlots/wearablePets and nothing
+ *  else; Penguin Earmuff Set goes further with *two* stub ids alongside its one real
+ *  one) — a ghost the same way weapon/secondary's verdicts-file leftover ids are, but
+ *  pet/pet-equip have no verdicts file (see this script's doc comment) to drop them by
+ *  id. `upgradeSlots` and the cross-slot linkKey (wearablePets/wearableEquips) don't
+ *  count as "real" stats here — every pet-equip has both regardless of whether it's a
+ *  ghost, same exclusions dedupeByName already applies when comparing. Since the
+ *  stats-bearing id is always the one that actually exists in-game, drop every
+ *  no-real-stats sibling whenever a same-name+icon group has exactly one stats-bearing
+ *  candidate (any number of stats-less ones) — a group with zero or more than one
+ *  stats-bearing candidate is left alone rather than guessing which one is real.
+ * @param {Array<[string,string]|[string,string,object]>} items
+ * @param {"wearableEquips"|"wearablePets"} linkKey
+ */
+function dropStatlessGhosts(items, linkKey) {
+  // collabo marks a real-IP collab reissue (kept as a genuine distinguisher elsewhere,
+  // e.g. dedupeByName) but says nothing about whether THIS id actually exists in-game —
+  // a collab ghost stub (Lil Tanjiro's Nichirin Sword's 01803119) carries collabo:true
+  // same as its real sibling, so it doesn't count as "real" stats here.
+  function hasRealStats(stats) {
+    if (!stats) return false;
+    return Object.keys(stats).some((k) => k !== "upgradeSlots" && k !== linkKey && k !== "collabo");
+  }
+  const groups = new Map();
+  for (const item of items) {
+    const [id, name, stats] = item;
+    const key = `${name} ${iconHash(id)}`;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push({ item, hasStats: hasRealStats(stats) });
+  }
+  const drop = new Set();
+  for (const group of groups.values()) {
+    if (group.length < 2) continue;
+    const withStats = group.filter((g) => g.hasStats);
+    if (withStats.length !== 1) continue;
+    for (const g of group) if (!g.hasStats) drop.add(g.item);
+  }
+  return items.filter((item) => !drop.has(item));
+}
+
+/** A same-name+icon pair that differs ONLY by `collabo` (everything else, including
+ *  upgradeSlots and the link key, byte-identical) is a real Reboot-vs-non-Reboot (aka
+ *  "Permanent") sale split, e.g. Pink Yeti (nexon.com/maplestory/news/sale/15240): sold
+ *  as a Reboot-world 90-day pet and a non-Reboot permanent pet, two different cash shop
+ *  SKUs. But since neither id carries any stat difference a player would ever notice or
+ *  choose between in this app, and the collab-flagged id is the one to keep by request,
+ *  this collapses the pair to one survivor (the collabo:true id) exactly like
+ *  dropStatlessGhosts collapses a real item + stats-less ghost — it's not a ghost here
+ *  (both ids are genuinely sold/real), just a distinction with no in-app consequence.
+ *  NOTE: if a future same-name+icon collabo pair like this ever turns out to carry a
+ *  real stat difference, this function's byte-identical-otherwise guard already leaves
+ *  it alone — but double check before assuming any new case is safe to collapse the
+ *  same way.
+ * @param {Array<[string,string]|[string,string,object]>} items
+ * @param {string} linkKey
+ */
+function collapseRebootCollabPairs(items, linkKey) {
+  function withoutCollaboAndLinks(stats) {
+    if (!stats) return stats;
+    const { collabo, [linkKey]: _link, ...rest } = stats;
+    return rest;
+  }
+  const groups = new Map();
+  for (const item of items) {
+    const [id, name, stats] = item;
+    const key = `${name} ${iconHash(id)}`;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(item);
+  }
+  const drop = new Set();
+  for (const group of groups.values()) {
+    if (group.length !== 2) continue;
+    const [a, b] = group;
+    const aCollab = Boolean(a[2]?.collabo);
+    const bCollab = Boolean(b[2]?.collabo);
+    if (aCollab === bCollab) continue;
+    if (JSON.stringify(withoutCollaboAndLinks(a[2])) !== JSON.stringify(withoutCollaboAndLinks(b[2]))) continue;
+    drop.add(aCollab ? b : a);
+  }
+  return items.filter((item) => !drop.has(item));
+}
+
+/** Rewrites a slot's id cross-reference list to canonical ids, dropping any link whose
+ *  id didn't survive to the other slot's canonicalById at all (e.g. a stats-less ghost
+ *  pet-equip stripped by dropStatlessGhosts before its pet ever got a chance to remap
+ *  to it) rather than leaving a dangling reference to a now-nonexistent id. */
 function remapLinks(items, linkKey, canonicalById) {
   for (const item of items) {
     const links = item[2]?.[linkKey];
     if (!links) continue;
-    item[2][linkKey] = [...new Set(links.map((id) => canonicalById.get(id) ?? id))];
+    item[2][linkKey] = [...new Set(links.map((id) => canonicalById.get(id)).filter(Boolean))];
   }
 }
 
@@ -295,8 +382,10 @@ if (!ICON_DIR || !existsSync(ICON_DIR)) {
   console.warn(`⚠ EQUIP_ICON_DIR ${ICON_DIR ? `(${ICON_DIR}) not found` : "unset"} — skipping all slot dedup. Picker may show duplicate names.`);
 } else {
   if (outputs.pet && outputs.petequip) {
-    const pet = dedupeByName(outputs.pet, "wearableEquips", false, true);
-    const petequip = dedupeByName(outputs.petequip, "wearablePets", false, true);
+    const petPrepped = collapseRebootCollabPairs(dropStatlessGhosts(outputs.pet, "wearableEquips"), "wearableEquips");
+    const petequipPrepped = collapseRebootCollabPairs(dropStatlessGhosts(outputs.petequip, "wearablePets"), "wearablePets");
+    const pet = dedupeByName(petPrepped, "wearableEquips", false, true);
+    const petequip = dedupeByName(petequipPrepped, "wearablePets", false, true);
     remapLinks(pet.deduped, "wearableEquips", petequip.canonicalById);
     remapLinks(petequip.deduped, "wearablePets", pet.canonicalById);
     outputs.pet = pet.deduped;

@@ -1,8 +1,11 @@
 /*
-  Per-character, hash-keyed cache for MapleScouter results, see the architecture
-  decision in project_maplescouter_api_re_2026_07_27 memory for why this can't be a
-  shared server cache. Keyed by a hash of the built payload (not "most recent value"),
-  so reverting a stat change back to its original value is a cache hit, not a refetch.
+  Per-character, hash-keyed cache for MapleScouter results, lives client-side rather than
+  as a shared server cache: mapledoro's own user-entered stat inputs have no server-side
+  verification (all user data lives in localStorage per root CLAUDE.md), so a shared
+  server cache keyed by character name would let anyone importing/naming a character the
+  same way poison the cached result for every other user looking at "that" character.
+  Keyed by a hash of the built payload (not "most recent value"), so reverting a stat
+  change back to its original value is a cache hit, not a refetch.
 
   Refresh flow: hash hit -> return instantly, zero network. Hash miss -> POST through
   the stateless proxy route. Success -> cache under that hash. Failure or a malformed
@@ -37,10 +40,10 @@ interface ScouterSpline {
   m: number[];
 }
 
-/** Raw inputs to the Boss Clear (Cut) formula, see project_maplescouter_bosscut_formula_2026_07_28
- *  memory for the full RE writeup. Optional on ScouterResultEntry (not every cached entry has it
- *  yet -- a pre-existing entry just shows "not available yet, refresh" for Boss Clear instead of
- *  needing a cache-version bump) and itself nullable field-by-field, since a malformed or missing
+/** Raw inputs to the Boss Clear (Cut) formula (see bossClearFormula.ts). Optional on
+ *  ScouterResultEntry (not every cached entry has it yet -- a pre-existing entry just
+ *  shows "not available yet, refresh" for Boss Clear instead of needing a cache-version
+ *  bump) and itself nullable field-by-field, since a malformed or missing
  *  `simulatorData` shouldn't fail the whole cache entry, only the Boss Clear section. */
 export interface BossClearInputs {
   calculatedHexaDamage300: number;
@@ -147,12 +150,11 @@ interface MapleScouterCalcResponse {
     // only ever shows this one HEXA figure as "Dojo" -- mr_stat (the would-be Normal
     // counterpart) reads 0 in every real capture so far, seemingly dead on their end.
     mr_hexaStat?: number;
-    // Raw inputs the Boss Clear formula needs, live-confirmed on Kanna's real captured
-    // response to sit directly on calculatedData -- an earlier session had wrongly concluded
-    // these lived under a separate `simulatorData` object (that name only exists client-side
-    // in MapleScouter's OWN Zustand store as a working copy of calculatedData for their build
-    // simulator feature, not a real API field). See project_maplescouter_bosscut_formula_2026_07_28
-    // memory for the correction.
+    // Raw inputs the Boss Clear formula needs, live-confirmed on a real Kanna captured
+    // response to sit directly on calculatedData -- NOT under a separate `simulatorData`
+    // object (that name only exists client-side in MapleScouter's OWN Zustand store as a
+    // working copy of calculatedData for their build simulator feature, not a real API
+    // field).
     calculatedHexaDamage_300?: number;
     calculatedHexaDamage_380?: number;
     calculatedDamage_380?: number;
@@ -363,15 +365,15 @@ export async function refreshScouterResult(character: StoredCharacterRecord): Pr
 // a page reload resetting this is fine (a fresh reload asking for one more automatic try
 // isn't "spam"), and it keeps the scouter cache's stored shape untouched for something
 // that doesn't need to survive a reload. The real backstop against deliberate abuse is
-// the per-IP rate limit on the proxy route itself (Yuki, 2026-07-27).
+// the per-IP rate limit on the proxy route itself.
 const autoAttemptedThisSession = new Set<string>();
 
 /** Auto-refresh trigger for useScouterResult's "empty -> silently try once" effect.
- *  Covers both of Yuki's cases with one rule: a brand-new character finishing setup and
- *  an existing character after a real edit both land on a hash `peekScouterCache` has
- *  never seen, i.e. status "empty" -- a no-op re-save doesn't, since it reproduces a hash
- *  that's either already cached or already attempted. Returns null with no network call
- *  for every case that isn't a genuine, first-time-this-session "empty": unsupported,
+ *  Covers two cases with one rule: a brand-new character finishing setup and an existing
+ *  character after a real edit both land on a hash `peekScouterCache` has never seen,
+ *  i.e. status "empty" -- a no-op re-save doesn't, since it reproduces a hash that's
+ *  either already cached or already attempted. Returns null with no network call for
+ *  every case that isn't a genuine, first-time-this-session "empty": unsupported,
  *  already has a result, or already tried and failed this session. */
 export async function autoRefreshScouterResultIfNeeded(character: StoredCharacterRecord): Promise<ScouterRefreshResult | null> {
   const built = buildPayloadAndHash(character);

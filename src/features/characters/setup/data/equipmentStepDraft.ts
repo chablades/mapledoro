@@ -48,9 +48,6 @@ export interface EquipmentDraft extends Partial<Record<SharedSlotKey, EquipmentI
    *  finish. String, not number — blank until touched, matching Oz Rings; the
    *  controller converts to real numbers when building tools.symbols. */
   symbolLevels?: Record<string, string>;
-  /** Scouter-only weapon ATT/MATT, asked inline when picking a weapon in preset 1 (see
-   *  WeaponAttStepView) — not equipment data, folded into `scouter.weaponAtt` on finish. */
-  weaponAtt?: string;
 }
 
 export function parseEquipmentStepDraft(raw: string): EquipmentDraft {
@@ -139,9 +136,9 @@ function storedPresetOverlayToDraft(preset: StoredEquipmentPreset, base: StoredE
 }
 
 /** Reverse of parseEquipmentStepDraft/applyEquipmentDraftToRoster — rebuilds this
- *  step's draft shape from a character's already-saved equipment/symbols/weapon ATT,
- *  so the mount-time backfill in EquipmentSetupStep.tsx (matching V Matrix/HEXA
- *  Matrix/Familiars' own pattern) can seed an edit session from real data instead of
+ *  step's draft shape from a character's already-saved equipment/symbols, so the
+ *  mount-time backfill in EquipmentSetupStep.tsx (matching V Matrix/HEXA Matrix/
+ *  Familiars' own pattern) can seed an edit session from real data instead of
  *  landing blank. Without this, editing an already-equipped character's gear started
  *  blank, and finishing without re-picking every slot wholesale-replaced the stored
  *  equipment with whatever partial state was typed (applyEquipmentDraftToRoster does a
@@ -149,7 +146,6 @@ function storedPresetOverlayToDraft(preset: StoredEquipmentPreset, base: StoredE
 export function storedEquipmentToDraft(
   equipment: StoredCharacterEquipment,
   symbols: Record<string, SymbolState> | undefined,
-  weaponAtt: number | undefined,
 ): EquipmentDraft {
   return {
     presets: [
@@ -163,7 +159,6 @@ export function storedEquipmentToDraft(
     pet1: toDraftItem(equipment.pets[0]), pet2: toDraftItem(equipment.pets[1]), pet3: toDraftItem(equipment.pets[2]),
     petEquip1: toDraftItem(equipment.petEquips[0]), petEquip2: toDraftItem(equipment.petEquips[1]), petEquip3: toDraftItem(equipment.petEquips[2]),
     ...(symbols ? { symbolLevels: Object.fromEntries(Object.entries(symbols).map(([name, s]) => [name, String(s.level)])) } : {}),
-    ...(weaponAtt !== undefined ? { weaponAtt: String(weaponAtt) } : {}),
   };
 }
 

@@ -36,7 +36,6 @@ const CLASS_BRANCHES: Record<string, EquipBranch[]> = {
   dawn_warrior: ["warrior"], mihile: ["warrior"], aran: ["warrior"],
   blaster: ["warrior"], demon_slayer: ["warrior"], demon_avenger: ["warrior"],
   adele: ["warrior"], ren: ["warrior"], kaiser: ["warrior"], hayato: ["warrior"],
-  // erel_light: PTS-only; class still needs adding to classSkillData.ts at v269 launch (~2026-06-17)
   erel_light: ["warrior"],
   // legacy warrior advancements
   swordman: ["warrior"], fighter: ["warrior"], crusader: ["warrior"],

@@ -1,8 +1,8 @@
 import type { LinkSkillId, LinkSkillsData, StoredCharacterRecord } from "../../model/charactersStore";
 import { toCharacterKey } from "../../model/characterKeys";
 
-// Lore branch grouping, confirmed against grandislibrary.com/classes 2026-08-03 -- used
-// only to group the Legion panel's cards into collapsible sections, no gameplay meaning.
+// Lore branch grouping, confirmed against grandislibrary.com/classes -- used only to
+// group the Legion panel's cards into collapsible sections, no gameplay meaning.
 export type LinkSkillBranch =
   | "Explorer" | "Cygnus Knights" | "Heroes" | "Resistance" | "Nova" | "Sengoku"
   | "Flora" | "Anima" | "Jianghu" | "Shine" | "Other";
@@ -19,7 +19,7 @@ export interface LinkSkillDef {
   name: string;
   classes: string[];
   maxLevel: number;
-  /** manifests/v269/skill.json id — pixel-verified 2026-07-01 against maplestorywiki. */
+  /** manifests/v269/skill.json id — pixel-verified against maplestorywiki. */
   iconId: string;
   branch: LinkSkillBranch;
 }
@@ -40,13 +40,13 @@ export const LINK_SKILLS: LinkSkillDef[] = [
   { id: "thiefsCunning",      name: "Thief's Cunning",     classes: ["Night Lord", "Shadower", "Dual Blade"],      maxLevel: 9, iconId: "0000261", branch: "Explorer" },
   // Everything below researched against grandislibrary.com/content/link-skills and each
   // class's own page (grandislibrary.com/<branch>/<class>, live JSON embedded in the page)
-  // 2026-08-02 -- names/maxLevel/grouping pixel- and text-verified per-class rather than
-  // trusted from the site's own summary table, which turned out to have several stale
-  // groupings (e.g. claimed all Heroes share "Close Call" and all non-Xenon Resistance
-  // demons share "Hybrid Logic" -- both wrong; Aran/Combo Kill Blessing and Demon
-  // Slayer/Fury Unleashed are actually solo). iconId cross-checked against
-  // manifests/v270/skill.json by exact name. `branch` per-entry confirmed 2026-08-03
-  // against grandislibrary.com/classes's own branch headings directly (not guessed).
+  // -- names/maxLevel/grouping pixel- and text-verified per-class rather than trusted from
+  // the site's own summary table, which turned out to have several stale groupings (e.g.
+  // claimed all Heroes share "Close Call" and all non-Xenon Resistance demons share
+  // "Hybrid Logic" -- both wrong; Aran/Combo Kill Blessing and Demon Slayer/Fury Unleashed
+  // are actually solo). iconId cross-checked against manifests/v270/skill.json by exact
+  // name. `branch` per-entry confirmed against grandislibrary.com/classes's own branch
+  // headings directly (not guessed).
   { id: "nobleFire",             name: "Noble Fire",              classes: ["Adele"],                                                                          maxLevel: 3,  iconId: "150020241", branch: "Flora" },
   { id: "spiritOfFreedom",       name: "Spirit of Freedom",       classes: ["Wild Hunter", "Battle Mage", "Mechanic", "Blaster"],                                maxLevel: 12, iconId: "30000074", branch: "Resistance" },
   { id: "cygnusBlessing",        name: "Cygnus Blessing",         classes: ["Dawn Warrior", "Wind Archer", "Thunder Breaker", "Night Walker", "Blaze Wizard"],   maxLevel: 15, iconId: "10000255", branch: "Cygnus Knights" },
@@ -72,7 +72,7 @@ export const LINK_SKILLS: LinkSkillDef[] = [
   { id: "hybridLogic",           name: "Hybrid Logic",            classes: ["Xenon"],                                                                             maxLevel: 3,  iconId: "30020233", branch: "Resistance" },
   { id: "ironWill",              name: "Iron Will",               classes: ["Kaiser"],                                                                            maxLevel: 3,  iconId: "60000222", branch: "Nova" },
   // Grandis Library's page omits maxLevel for this one (typed "Active" unlike every other
-  // link skill's "Passive") -- confirmed maxLevel 3 directly by Yuki.
+  // link skill's "Passive") -- confirmed maxLevel 3 directly in-game.
   { id: "elvenBlessing",         name: "Elven Blessing",          classes: ["Mercedes"],                                                                          maxLevel: 3,  iconId: "20021110", branch: "Heroes" },
 ];
 

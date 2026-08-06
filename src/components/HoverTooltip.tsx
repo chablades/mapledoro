@@ -131,8 +131,20 @@ export default function HoverTooltip({ label, theme, style, className, children 
       // -- but that case is already handled precisely by the MODAL_OPENED_EVENT listener
       // below, and the blanket reset here was firing on every ordinary click too, closing the
       // bubble even while the mouse was still genuinely hovering.
-      onClick={() => {
-        if (!isHoverCapable()) setClickOpen((o) => !o);
+      //
+      // On touch, a tap on a wrapped REAL control (a Buffs tile's <button>, the Link Skills
+      // max button, an edit pencil, etc.) skips the clickOpen toggle entirely -- that control
+      // already has its own immediate, visible action, and its aria-label already carries
+      // this same name for assistive tech, so popping a tooltip bubble on top of it is pure
+      // friction: the bubble then sits there with no hover-driven way to dismiss it on touch,
+      // forcing an extra tap elsewhere just to see the screen again. A purely decorative
+      // child (no real control inside) still needs tap-to-reveal, since touch has no hover
+      // equivalent to show its label any other way.
+      onClick={(e) => {
+        if (isHoverCapable()) return;
+        const target = e.target as HTMLElement;
+        if (target.closest("button, a, input, select, textarea, [role='button']")) return;
+        setClickOpen((o) => !o);
       }}
       onMouseEnter={() => { if (isHoverCapable()) setHoverOpen(true); }}
       onMouseLeave={() => { if (isHoverCapable()) setHoverOpen(false); }}

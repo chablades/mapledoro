@@ -187,7 +187,8 @@ function bestTypeForLine(
 }
 
 export function optimizeHexa({ profile, inputs, cores, bossPdrPct, calibration }: OptimizeHexaInput): HexaResult {
-  const opts = { bossPdrPct, forceFullCrit: true, calibration };
+  // HEXA Stat is a bossing decision only, so it has no mobbing target to take.
+  const opts = { target: "bossing" as const, bossPdrPct, forceFullCrit: true, calibration };
   const evalAcc = (acc: TypeTally, convertXenon: boolean): number =>
     computeScouterDamage(profile, inputs, toKernelDelta(acc, profile, convertXenon), opts);
 

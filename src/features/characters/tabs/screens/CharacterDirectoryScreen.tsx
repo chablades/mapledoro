@@ -195,6 +195,12 @@ function DirectoryControls({
   theme, isUiLocked, hasMultipleWorlds, showAllWorlds, worldIds, selectedWorldId,
   directorySortBy, onWorldChange, onSortChange, activeWorldExportImport,
 }: DirectoryControlsProps) {
+  // Both selects render borderless inside a theme.panel pill, so keeping theme.panel
+  // here rather than going transparent costs nothing visually and is load-bearing:
+  // Chrome derives the native option popup's background from the select's own
+  // background-color, and paints it white when that is transparent, which against
+  // theme.text is unreadable in dark mode. Coloring the <option>s instead fixes
+  // Chrome but makes Firefox paint that background onto the closed control too.
   const selectStyle = {
     border: `1px solid ${theme.border}`,
     borderRadius: "8px",
@@ -230,7 +236,7 @@ function DirectoryControls({
                 const val = e.target.value;
                 onWorldChange(val === "all" ? null : Number(val));
               }}
-              style={{ ...selectStyle, border: "none", background: "transparent", padding: "0 0.2rem" }}
+              style={{ ...selectStyle, border: "none", padding: "0 0.2rem" }}
             >
               {worldIds.map((worldId) => (
                 <option key={worldId} value={worldId}>
@@ -253,7 +259,7 @@ function DirectoryControls({
           disabled={isUiLocked}
           value={directorySortBy}
           onChange={(e) => onSortChange(e.target.value as DirectorySortBy)}
-          style={{ ...selectStyle, border: "none", background: "transparent", padding: "0 0.2rem" }}
+          style={{ ...selectStyle, border: "none", padding: "0 0.2rem" }}
         >
           <option value="name">{CHARACTERS_COPY.characterDirectory.sortAlphabeticalOption}</option>
           <option value="level">{CHARACTERS_COPY.characterDirectory.sortByLevelOption}</option>

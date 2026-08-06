@@ -5,10 +5,10 @@
 // skills up one level past their normal cap. Passive Skills+1 IA (a Legendary Inner Ability line)
 // has the same per-skill effect and stacks with DCO if the player also has it.
 //
-// Confirmed 2026-07-18 that simply re-evaluating each pinned skill's own formula one or two
-// levels past its normal cap (see gen-stat-baselines.mjs) exactly reproduces this — no per-class
-// curve or "KMS vs non-KMS" rule needed; earlier sessions treated this as an unexplained,
-// class-specific quirk before realizing it's just each skill's own formula shape.
+// Confirmed that simply re-evaluating each pinned skill's own formula one or two levels
+// past its normal cap (see gen-stat-baselines.mjs) exactly reproduces this — no per-class
+// curve or "KMS vs non-KMS" rule needed; it's just each skill's own formula shape, not an
+// unexplained class-specific quirk.
 import type { StoredInnerAbility, StoredScouterData } from "../../model/charactersStore";
 import { IA_PASSIVE_PLUS_ONE_LINE } from "./innerAbilityData";
 

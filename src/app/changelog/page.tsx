@@ -12,6 +12,23 @@ interface ChangelogEntry {
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    date: "2026-08-06",
+    changes: [
+      { type: "changed", text: "Rebuilt the EXP Calculator's Resources tab: pick a resource from the dropdown and see what every source in it pays at your level, in EXP and as a share of the level, instead of reading a raw table." },
+    ],
+  },
+  {
+    date: "2026-08-05",
+    changes: [
+      { type: "added", text: "The Stat Optimizer can now optimize your Hyper Stats for mobbing, with its own Normal Damage line, and keeps your bossing and mobbing values separate." },
+      { type: "added", text: "Added a Hyper Preset picker to the Stat Optimizer, so you can optimize against any of your three in-game Hyper Stat presets." },
+      { type: "changed", text: "The Stat Optimizer now knows that archers turn Critical Rate above 100% into Critical Damage, so it keeps recommending Critical Rate for them past the cap instead of treating it as wasted." },
+      { type: "added", text: "Added a Critical Rate row to the Stat Efficiency panel for archers, showing what a Critical Rate line past 100% is worth to them." },
+      { type: "changed", text: "The EXP Calculator now lets you edit your level and EXP percent with a character selected, and the Stat Optimizer your level, so you can keep using them after levelling up without waiting for the next character refresh. Each tool remembers what you type until your character catches up to it." },
+      { type: "fixed", text: "Fixed the World and Sort dropdowns in Characters being unreadable when opened in dark mode." },
+    ],
+  },
+  {
     date: "2026-08-04",
     changes: [
       { type: "added", text: "Added Characters, a full character tracker: guided setup for Stats, Equipment, Link Skills, Familiars, V Matrix, HEXA Matrix, Hyper Stats, and Legion Artifact, a profile bringing all of it together alongside MapleScouter, and JSON import/export for a single character or a whole world." },

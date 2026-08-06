@@ -18,6 +18,7 @@ import {
   type ClassDamageProfile,
   type KernelCalibration,
   type OptimizerStatInputs,
+  type OptimizeTarget,
 } from "./damage-formula";
 import { calibrateFromSpecEfficiency } from "./scouter-calibration";
 import { availableHyperPoints, HYPER_COST_CUMULATIVE, HYPER_MAX_LEVEL } from "./hyper-stat-data";
@@ -50,15 +51,30 @@ export type CalibrationNotice =
    *  Demon Avenger, whose HP-based stat factor the table can't invert). */
   | "unavailable";
 
-export interface CharacterSeed {
-  profile: ClassDamageProfile;
+/** The half of the editable state that belongs to one optimize target. Bossing
+ *  and mobbing keep their own, so switching between them doesn't clobber values
+ *  typed for the other (different buffs, and usually a different in-game preset). */
+export interface TargetSeed {
   inputs: OptimizerStatInputs;
   availablePoints: number;
+  /** Already deducted from `availablePoints`, kept so editing the level can recompute the budget
+   *  from the closed form without dropping the deduction. */
+  untrackedPoints: number;
   storedHyper: HyperAllocation;
+  /** Which of the character's in-game Hyper Stat presets the levels came from. */
+  presetIndex: number;
+}
+
+export interface CharacterSeed {
+  profile: ClassDamageProfile;
   cores: HexaCore[];
-  /** Buffed-state corrections solved from the character's cached Scouter data. */
+  /** Stored in-game Hyper Stat presets; 0 greys out the panel's preset picker. */
+  presetCount: number;
+  /** Buffed-state corrections solved from the character's cached Scouter data.
+   *  Bossing only: mobbing is valued off the typed inputs alone. */
   calibration: KernelCalibration;
   calibrationNotice: CalibrationNotice | null;
+  targets: Record<OptimizeTarget, TargetSeed>;
 }
 
 /** Which notice a failed calibration earns. Ordered most-actionable first, so a
@@ -81,28 +97,25 @@ function readLine(entry: { type?: string; level?: number } | undefined): HexaLin
   return { type, level };
 }
 
-function readCore(record: StoredCharacterRecord, node: HexaStatNode | undefined, index: number): HexaCore {
+function readCore(level: number, node: HexaStatNode | undefined, index: number): HexaCore {
   const slot = node?.presets?.[node.activePreset] ?? node?.presets?.[0];
   return {
-    unlocked: record.level >= HEXA_UNLOCK_LEVELS[index] || Boolean(node),
+    unlocked: level >= HEXA_UNLOCK_LEVELS[index] || Boolean(node),
     primary: readLine(slot?.main),
     additional: [readLine(slot?.alt?.[0]), readLine(slot?.alt?.[1])],
   };
 }
 
 /**
- * Points spent on hyper lines the optimizer doesn't model (HP, Arcane Power,
- * Status Resistance, ...). Deducted from the level budget so the recommendation
- * reallocates only the damage lines, like scouter's reserved-points input.
+ * Preset keys the optimizer reallocates, in EITHER target — a mobbing run frees
+ * up the Boss Damage and Ignore Defense points, and a bossing run frees up the
+ * Normal Damage ones, so the same total is on the table either way. Keeping this
+ * target-independent is what makes the panel's points-available figure the same
+ * number in both, which is the truth: it's the character's respec budget, not a
+ * property of what they're respeccing for.
  */
-function pointsSpentOnUntrackedLines(
-  record: StoredCharacterRecord,
-  profile: ClassDamageProfile,
-): number {
-  const stored = record.stats.hyperStat;
-  const preset = stored?.presets?.[stored.activePreset];
-  if (!preset) return 0;
-  const trackedKeys = new Set<string>(
+function trackedPresetKeys(profile: ClassDamageProfile): Set<string> {
+  return new Set(
     [
       profile.mainStat,
       profile.subStat,
@@ -110,11 +123,27 @@ function pointsSpentOnUntrackedLines(
       "attackMagicAtt",
       "bossDamage",
       "damage",
+      "normalDamage",
       "criticalDamage",
       "criticalRate",
       "ignoreDefense",
     ].filter((k): k is string => k !== null),
   );
+}
+
+/**
+ * Points spent on hyper lines the optimizer never models (HP, Arcane Power,
+ * Status Resistance, ...). Deducted from the level budget so the recommendation
+ * reallocates only the damage lines, like scouter's reserved-points input.
+ */
+function pointsSpentOnUntrackedLines(
+  record: StoredCharacterRecord,
+  profile: ClassDamageProfile,
+  presetIndex: number,
+): number {
+  const preset = record.stats.hyperStat?.presets?.[presetIndex];
+  if (!preset) return 0;
+  const trackedKeys = trackedPresetKeys(profile);
   let spent = 0;
   for (const [key, rawLevel] of Object.entries(preset)) {
     if (trackedKeys.has(key)) continue;
@@ -124,25 +153,51 @@ function pointsSpentOnUntrackedLines(
   return spent;
 }
 
+/** The allocation and point budget one of the character's in-game Hyper Stat
+ *  presets seeds, for one target. Re-run when the panel's preset picker moves.
+ *  `level` is the record's level unless the tool holds a higher one the player
+ *  typed in, as in `seedFromCharacter`. */
+export function seedHyperPreset(
+  record: StoredCharacterRecord,
+  profile: ClassDamageProfile,
+  target: OptimizeTarget,
+  presetIndex: number,
+  level: number = record.level,
+): { storedHyper: HyperAllocation; availablePoints: number; untrackedPoints: number } {
+  const untrackedPoints = pointsSpentOnUntrackedLines(record, profile, presetIndex);
+  return {
+    storedHyper: mapStoredHyper(record.stats.hyperStat, profile, target, presetIndex),
+    availablePoints: Math.max(0, availableHyperPoints(level) - untrackedPoints),
+    untrackedPoints,
+  };
+}
+
+/** `level` is the record's level unless the tool holds a higher one the player typed in (the
+ *  record only refreshes on a lookup), and stands in for it everywhere level is read. */
 export function seedFromCharacter(
   record: StoredCharacterRecord,
   specEfficiency?: ScouterSpecEfficiency,
+  level: number = record.level,
 ): CharacterSeed {
   const profile = resolveClassDamageProfile(record.jobName, record.stats);
   const nodes = readHexaNodes(record);
-  const inputs = prefillFromStats(record.stats, profile, record.level);
+  const inputs = prefillFromStats(record.stats, profile, level);
   const calibration = calibrateFromSpecEfficiency(specEfficiency, profile, inputs);
+  const presetIndex = record.stats.hyperStat?.activePreset ?? 0;
+  // Both targets open on the same stat window; they diverge only as the user
+  // edits them (and mobbing never takes the buffed-state calibration).
+  const target = (t: OptimizeTarget): TargetSeed => ({
+    inputs: { ...inputs },
+    presetIndex,
+    ...seedHyperPreset(record, profile, t, presetIndex, level),
+  });
   return {
     profile,
-    inputs,
-    availablePoints: Math.max(
-      0,
-      availableHyperPoints(record.level) - pointsSpentOnUntrackedLines(record, profile),
-    ),
-    storedHyper: mapStoredHyper(record.stats.hyperStat, profile),
-    cores: Array.from({ length: HEXA_CORE_COUNT }, (_, i) => readCore(record, nodes[i], i)),
+    cores: Array.from({ length: HEXA_CORE_COUNT }, (_, i) => readCore(level, nodes[i], i)),
+    presetCount: record.stats.hyperStat?.presets?.length ?? 0,
     calibration: calibration ?? zeroCalibration(),
     calibrationNotice: calibration ? null : noticeFor(record, profile),
+    targets: { bossing: target("bossing"), mobbing: target("mobbing") },
   };
 }
 
@@ -163,17 +218,7 @@ const STANDALONE_LEVEL = 290;
  * the user unlocks and fills in by hand. A picked character overwrites this.
  */
 export function emptyCharacterSeed(): CharacterSeed {
-  return {
-    profile: {
-      classId: undefined,
-      mainStat: "str",
-      subStat: "dex",
-      subStat2: null,
-      usesMagic: false,
-      isHpBased: false,
-      isXenon: false,
-      constants: { dpmMainStat: 0, dpmAtk: 0, dpmAtkPer: 0, dpmBossDmg: 0, dpmIgnoreGuard: 0, dpmCritDmg: 0 },
-    },
+  const blankTarget = (): TargetSeed => ({
     inputs: {
       level: STANDALONE_LEVEL,
       main: zeroTriple(),
@@ -187,15 +232,34 @@ export function emptyCharacterSeed(): CharacterSeed {
       ignoreDefPct: 0,
     },
     availablePoints: availableHyperPoints(STANDALONE_LEVEL),
+    untrackedPoints: 0,
     storedHyper: zeroHyperAllocation(),
+    presetIndex: 0,
+  });
+  return {
+    profile: {
+      classId: undefined,
+      mainStat: "str",
+      subStat: "dex",
+      subStat2: null,
+      usesMagic: false,
+      isHpBased: false,
+      isXenon: false,
+      constants: { dpmMainStat: 0, dpmAtk: 0, dpmAtkPer: 0, dpmBossDmg: 0, dpmIgnoreGuard: 0, dpmCritDmg: 0 },
+      // No class behind the numbers, so no archer conversion to claim either.
+      critRateToDmg: 0,
+    },
     cores: Array.from({ length: HEXA_CORE_COUNT }, () => ({
       unlocked: false,
       primary: emptyLine(),
       additional: [emptyLine(), emptyLine()],
     })),
+    // No character, so no in-game presets to pick between either.
+    presetCount: 0,
     // Standalone mode has no character to calibrate against; the typed-in stats are
     // taken at face value, so no "uncalibrated" warning is warranted either.
     calibration: zeroCalibration(),
     calibrationNotice: null,
+    targets: { bossing: blankTarget(), mobbing: blankTarget() },
   };
 }

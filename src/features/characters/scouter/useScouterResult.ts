@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import type { StoredCharacterRecord } from "../model/charactersStore";
-import { hasMinimalScouterSetup, isScouterSupportedClass } from "./scouterApi";
+import { findScouterSetupGap, isScouterSupportedClass, type ScouterSetupGap } from "./scouterApi";
 import {
   autoRefreshScouterResultIfNeeded, peekScouterCache, refreshScouterResult,
   type ScouterErrorReason, type ScouterRefreshResult, type ScouterResultEntry,
@@ -13,7 +13,7 @@ export type { ScouterErrorReason };
 
 export type ScouterFigureStatus =
   | { kind: "unsupported" }
-  | { kind: "incomplete" }
+  | { kind: "incomplete"; gap: ScouterSetupGap }
   | { kind: "empty" }
   | { kind: "ready"; entry: ScouterResultEntry; stale: false }
   // stale is only ever reached via a failed refresh, so the reason is always known.
@@ -44,14 +44,15 @@ function resultToStatus(result: ScouterRefreshResult): ScouterFigureStatus {
 
 function initialStatus(character: StoredCharacterRecord): ScouterFigureStatus {
   if (!isScouterSupportedClass(character.jobName)) return { kind: "unsupported" };
-  if (!hasMinimalScouterSetup(character)) return { kind: "incomplete" };
+  const gap = findScouterSetupGap(character);
+  if (gap) return { kind: "incomplete", gap };
   const cached = peekScouterCache(character);
   return cached ? { kind: "ready", entry: cached, stale: false } : { kind: "empty" };
 }
 
-/** Manual-refresh-only by design (Yuki, 2026-07-27). Never fetches MapleScouter's API
- *  on its own. Reading the cache on mount (initialStatus) costs no network call, only
- *  the user clicking refresh does. */
+/** Manual-refresh-only by design. Never fetches MapleScouter's API on its own. Reading
+ *  the cache on mount (initialStatus) costs no network call, only the user clicking
+ *  refresh does. */
 export function useScouterResult(character: StoredCharacterRecord): ScouterFigureState {
   const [characterKey, setCharacterKey] = useState(character.characterName);
   const [status, setStatus] = useState<ScouterFigureStatus>(() => initialStatus(character));
@@ -80,7 +81,7 @@ export function useScouterResult(character: StoredCharacterRecord): ScouterFigur
   // hash per browser session (see autoRefreshScouterResultIfNeeded's own comment for why
   // this covers both "a new character just finished setup" and "an existing character's
   // data actually changed" with one rule, and why a failed attempt doesn't keep silently
-  // retrying just from bouncing between bookmarks). Yuki, 2026-07-27.
+  // retrying just from bouncing between bookmarks).
   useEffect(() => {
     if (status.kind !== "empty") return;
     let cancelled = false;

@@ -17,11 +17,11 @@ export function groupByBoss(entries: BossCutEntry[]): BossEntryList[] {
     if (list) list.push(e);
     else byBoss.set(e.boss, [e]);
   }
-  // Highest level requirement first (Yuki's preference), tie-broken by each boss's HIGHEST
-  // tier (e.g. Lotus's 210 floor ties Damien's, but Lotus also has a 285 Extreme tier Damien
-  // has no equivalent for, so Lotus ranks above it -- this is "how hard does it get," not
-  // "when do you unlock it") rather than falling back to the scraper's own arbitrary array
-  // order. Both Quick View and Spotlight share this order.
+  // Highest level requirement first, tie-broken by each boss's HIGHEST tier (e.g. Lotus's 210
+  // floor ties Damien's, but Lotus also has a 285 Extreme tier Damien has no equivalent for, so
+  // Lotus ranks above it -- this is "how hard does it get," not "when do you unlock it") rather
+  // than falling back to the scraper's own arbitrary array order. Both Quick View and Spotlight
+  // share this order.
   return [...byBoss.entries()].sort(([, a], [, b]) => {
     const minDiff = Math.min(...b.map((e) => e.level)) - Math.min(...a.map((e) => e.level));
     return minDiff !== 0 ? minDiff : Math.max(...b.map((e) => e.level)) - Math.max(...a.map((e) => e.level));

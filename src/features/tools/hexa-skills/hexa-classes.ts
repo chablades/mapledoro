@@ -636,7 +636,7 @@ const KINESIS: HexaClassDef = {
     node("20000139", "HEXA Ultimate: Opening", "HEXA Ultimate: Gambit"),
     node("20000185", "HEXA Kinetic Combo"),
   ],
-  // 2026-07-22 revamp: enhancement node ids unchanged, but each now enhances a different job skill.
+  // Post-revamp: enhancement node ids unchanged, but each now enhances a different job skill.
   enhancement: [s("Ultimate: Checkmate", "30000156"), s("Psychic Nova", "30000157"), s("Psychic Shockwave", "30000158"), s("Psychic Castle", "30000159")],
   ascent: s("Fractal Horizon", "10000091"),
 };

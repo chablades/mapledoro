@@ -76,7 +76,10 @@ const STATUS_VALUE: Partial<Record<string, string>> = {
 function refreshTooltip(status: ScouterFigureStatus, loading: boolean): string {
   if (loading) return "Calculating…";
   if (status.kind === "unsupported") return "MapleScouter doesn't support this class yet.";
-  if (status.kind === "incomplete") return "Fill out MapleScouter Setup before calculating this.";
+  if (status.kind === "incomplete") {
+    const area = status.gap === "quickQuestions" ? "Quick Questions" : "Character Info";
+    return `Fill out MapleScouter Setup's ${area} before calculating this.`;
+  }
   return "Refresh Scouter";
 }
 

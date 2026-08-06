@@ -1,6 +1,8 @@
 /*
-  Hyper Stat bossing optimizer — an exact port of maplescouter's greedy
-  (hyper-only path of their optimizer's main loop):
+  Hyper Stat optimizer — an exact port of maplescouter's greedy (hyper-only path
+  of their optimizer's main loop). Scouter only optimizes bossing; the mobbing
+  target runs the same greedy over a different candidate set (HYPER_TARGET_LINES)
+  with the kernel's boss-only terms switched off (see OptimizeTarget).
 
   - Candidate lines and iteration order are scouter's S1/qX lists (main stat,
     secondary stat, secondary II for the 4 dual-secondary classes, ATT, boss,
@@ -25,6 +27,7 @@ import {
   type KernelCalibration,
   type KernelDelta,
   type OptimizerStatInputs,
+  type OptimizeTarget,
 } from "./damage-formula";
 import type { StoredHyperStat } from "../../characters/model/charactersStore";
 import {
@@ -33,6 +36,7 @@ import {
   HYPER_LINES,
   HYPER_MAX_LEVEL,
   HYPER_STEP_COSTS,
+  HYPER_TARGET_LINES,
   HYPER_VALUES,
   type HyperLineId,
 } from "./hyper-stat-data";
@@ -57,6 +61,7 @@ export const zeroHyperAllocation = (): HyperAllocation => ({
   attack: 0,
   bossDamage: 0,
   damage: 0,
+  normalDamage: 0,
   critDamage: 0,
   critRate: 0,
   ignoreDefense: 0,
@@ -96,6 +101,8 @@ function presetKey(id: HyperLineId, profile: ClassDamageProfile): string | null 
       return "bossDamage";
     case "damage":
       return "damage";
+    case "normalDamage":
+      return "normalDamage";
     case "critDamage":
       return "criticalDamage";
     case "critRate":
@@ -105,17 +112,21 @@ function presetKey(id: HyperLineId, profile: ClassDamageProfile): string | null 
   }
 }
 
-/** Reads the active preset of a stored hyper allocation into the optimizer's line levels. */
+/** Reads one preset of a stored hyper allocation into the optimizer's line levels.
+ *  Lines the target doesn't assign stay 0, so they are neither stripped from the
+ *  damage baseline nor counted as spend the recommendation has to preserve. */
 export function mapStoredHyper(
   stored: StoredHyperStat | undefined,
   profile: ClassDamageProfile,
+  target: OptimizeTarget,
+  presetIndex: number,
 ): HyperAllocation {
-  const preset = stored?.presets?.[stored.activePreset] ?? {};
+  const preset = stored?.presets?.[presetIndex] ?? {};
   const alloc = zeroHyperAllocation();
-  for (const line of HYPER_LINES) {
-    const key = presetKey(line.id, profile);
+  for (const id of HYPER_TARGET_LINES[target]) {
+    const key = presetKey(id, profile);
     const n = key ? Math.floor(Number(preset[key] ?? 0)) : 0;
-    alloc[line.id] = Number.isFinite(n) ? Math.min(Math.max(n, 0), HYPER_MAX_LEVEL) : 0;
+    alloc[id] = Number.isFinite(n) ? Math.min(Math.max(n, 0), HYPER_MAX_LEVEL) : 0;
   }
   return alloc;
 }
@@ -147,7 +158,10 @@ function buildDelta(
   d.sub2Flat = v("subStat2", alloc) - v("subStat2", current);
   d.atk = v("attack", alloc) - v("attack", current);
   d.bossDmg = v("bossDamage", alloc) - v("bossDamage", current);
-  d.dmg = v("damage", alloc) - v("damage", current);
+  // Normal Damage rides the damage bucket, which is where the game puts it — and
+  // where the panel's Normal Enemy Damage % field already lands.
+  d.dmg =
+    v("damage", alloc) + v("normalDamage", alloc) - v("damage", current) - v("normalDamage", current);
   d.critDmg = v("critDamage", alloc) - v("critDamage", current);
   d.critRate = v("critRate", alloc) - v("critRate", current);
   d.ied = stackIedSources(v("ignoreDefense", alloc));
@@ -194,6 +208,7 @@ export interface OptimizeHyperInput {
   inputs: OptimizerStatInputs;
   currentHyper: HyperAllocation;
   availablePoints: number;
+  target: OptimizeTarget;
   bossPdrPct: number;
   calibration: KernelCalibration;
 }
@@ -203,14 +218,15 @@ export function optimizeHyper({
   inputs,
   currentHyper,
   availablePoints,
+  target,
   bossPdrPct,
   calibration,
 }: OptimizeHyperInput): HyperResult {
-  const opts = { bossPdrPct, forceFullCrit: false, calibration };
+  const opts = { target, bossPdrPct, forceFullCrit: false, calibration };
   const score = (alloc: HyperAllocation): number =>
     computeScouterDamage(profile, inputs, buildDelta(alloc, currentHyper, profile.isHpBased), opts);
 
-  const lineIds = HYPER_LINES.map((l) => l.id).filter(
+  const lineIds = HYPER_TARGET_LINES[target].filter(
     (id) => id !== "subStat2" || profile.subStat2 !== null,
   );
 

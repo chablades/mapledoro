@@ -62,10 +62,9 @@ const BOSS_THRESHOLD_INFO_CONTENT: TooltipContent = {
 };
 
 // MapleScouter's own "relevant" filter, ported verbatim (confirmed by clicking their own
-// "View my (relevant) boss standards" toggle live -- see project_maplescouter_bosscut_formula
-// memory) -- hides a difficulty tile once the character has wildly outgrown it (>10x, or
-// >10x/partyLimit for a party-only boss) or genuinely can't touch it yet (<0.15x, or
-// <0.85x/partyLimit).
+// "View my (relevant) boss standards" toggle live) -- hides a difficulty tile once the
+// character has wildly outgrown it (>10x, or >10x/partyLimit for a party-only boss) or
+// genuinely can't touch it yet (<0.15x, or <0.85x/partyLimit).
 function isRelevant(clearRate: number, isPartyBoss: boolean, partyLimit: number): boolean {
   const outgrown = isPartyBoss ? clearRate / partyLimit > 10 : clearRate > 10;
   if (outgrown) return false;
@@ -132,12 +131,11 @@ const BANNER_HEIGHT = 64;
 // Adversary). Not verified across the full roster yet.
 const DEFAULT_ART_POSITION = "50% 20%";
 // Per-boss override, keyed the same as BOSS_ICON_ID -- framing varies enough per splash that a
-// single default crop misses most faces entirely. Hand-tuned 2026-07-29 by eyeballing every
-// boss's real mob.png (E:\mapledoro-image\output\ui\boss\<id>\mob.png) and picking the vertical
-// anchor (as % of the source image's height) that lands on the character's face/eyes -- Gloom
-// has no face (an inanimate seal), positioned on the portal's glowing center instead. Still a
-// first pass against a wide (180x64) banner crop -- expect further tweaks once Yuki compares
-// these live rather than the raw source art.
+// single default crop misses most faces entirely. Hand-tuned by eyeballing every boss's real
+// mob.png (in the WZ image dump's ui/boss/<id>/mob.png) and picking the vertical anchor (as %
+// of the source image's height) that lands on the character's face/eyes against the actual
+// wide (180x64) banner crop -- Gloom has no face (an inanimate seal), positioned on the
+// portal's glowing center instead.
 const BOSS_ART_POSITION: Record<string, string> = {
   스우: "50% 25%", 데미안: "42% 50%", 루시드: "50% 43%", 윌: "68% 61%", 더스크: "50% 53%",
   "진 힐라": "50% 23%", 듄켈: "48% 46%", "검은 마법사": "42% 19%", 세렌: "50% 33%",
@@ -230,7 +228,7 @@ function rowStyle(isLast: boolean, theme: AppTheme): CSSProperties {
 
 // Reset to look like the plain banner wrapper it replaces -- only the banner itself opens
 // Spotlight now (used to be the whole row, which made every difficulty chip's own hover
-// tooltip fight the row's click target -- Yuki's call 2026-07-30 to scope the click down).
+// tooltip fight the row's click target, so the click target was scoped down).
 const bannerButtonStyle: CSSProperties = {
   background: "none", border: "none", padding: 0, font: "inherit", cursor: "pointer", flexShrink: 0,
   borderRadius: 10, transition: "transform 0.1s ease",
@@ -300,9 +298,9 @@ function ChipTooltipContent({ theme, difficulty, result }: { theme: AppTheme; di
   );
 }
 
-// Tag + % both visible without hovering (per Yuki's friend's ask -- MapleScouter users expect
-// both at a glance), hover expands into the adjusted stat + damage-loss factor that used to be
-// Spotlight-only. A small neutral card (icon + stacked text) instead of the old saturated pill.
+// Tag + % both visible without hovering -- MapleScouter users expect both at a glance -- hover
+// expands into the adjusted stat + damage-loss factor that used to be Spotlight-only. A small
+// neutral card (icon + stacked text) instead of the old saturated pill.
 function DifficultyChip({ theme, iconId, displayName, entry, result }: {
   theme: AppTheme; iconId: string | undefined; displayName: string; entry: BossCutEntry; result: BossClearResult;
 }) {
@@ -769,8 +767,8 @@ function SpotlightTile({ theme, iconId, displayName, entry, result }: {
         {/* diff/tag are their own max-content columns (tight-packed against each other); this
             group is 1fr and pins to the card's right edge via justifySelf: end on the group
             itself, but clear%/Adjusted stay tight-packed against EACH OTHER inside it (small
-            fixed gap, not space-between) -- Yuki wanted the pair close together as a unit, not
-            spread across the remaining row width. On mobile (.spotlight-tile-cell-numbers's
+            fixed gap, not space-between) so the pair reads as one unit instead of spreading
+            across the remaining row width. On mobile (.spotlight-tile-cell-numbers's
             container query, styles.ts) this switches to display: contents so its two spans
             become direct grid items the mobile area map can place independently under the
             diff/tag columns on their own row. */}

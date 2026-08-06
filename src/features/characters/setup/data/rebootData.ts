@@ -2,12 +2,12 @@
 // character gets automatically, no liberation/skill/setup answer involved. Not shown anywhere in
 // Character Info's own stat tooltip breakdown, but it's real and already baked into a Reboot
 // character's displayed Final Damage/Damage Range — the calc needs to add it back in explicitly or
-// it silently undershoots (strategywiki, confirmed 2026-07-18 against 4 real Reboot characters:
-// Hoyoung lv210, Zero lv231, Buccaneer lv201, Cannoneer lv210).
+// it silently undershoots (strategywiki, confirmed against 4 real Reboot characters: Hoyoung
+// lv210, Zero lv231, Buccaneer lv201, Cannoneer lv210).
 import { WORLD_NAMES } from "../../model/constants";
 
-// Kronos/Solis/Hyperion are GMS's 3 Reboot worlds; Bera/Scania/Luna are Interactive — confirmed by
-// Yuki 2026-07-18. Checked by name (not a separate hardcoded id list) so this stays correct if
+// Kronos/Solis/Hyperion are GMS's 3 Reboot worlds; Bera/Scania/Luna are Interactive — confirmed
+// in-game. Checked by name (not a separate hardcoded id list) so this stays correct if
 // WORLD_NAMES' own ids ever get renumbered.
 const REBOOT_WORLD_NAMES = new Set(["Kronos", "Solis", "Hyperion"]);
 

@@ -4,8 +4,8 @@
   stat on the same crystal). A stat's effective total level is the sum of that stat's
   level across every crystal it's assigned to, capped at 10 (like V Matrix boost nodes).
   Source: https://maplestorywiki.net/w/Legion_Artifact, cross-referenced against an
-  in-game screenshot (Yuki, 2026-07-01) confirming per-level values are linear
-  (max value / 10 per level) for every stat shown at Lv 10.
+  in-game screenshot confirming per-level values are linear (max value / 10 per level)
+  for every stat shown at Lv 10.
 */
 
 import type { StoredLegionCrystal } from "../../model/charactersStore";
@@ -52,8 +52,8 @@ export interface LegionArtifactStatDef {
   /** Increment granted at each of the 10 effective levels (index 0 = level 1, index 9 =
    *  level 10). Almost every stat is a flat `perLevel` repeated 10x, but 4 stats (mesos,
    *  itemDrop, multiTargetExp, statusResistance) actually double their per-level increment
-   *  at levels 5 and 10 specifically — confirmed against namu.wiki's per-stat footnotes
-   *  (2026-07-08), e.g. mesos: "레벨당 1%씩 증가. 단, 5레벨과 10레벨에는 2%씩 증가"
+   *  at levels 5 and 10 specifically — confirmed against namu.wiki's per-stat footnotes,
+   *  e.g. mesos: "레벨당 1%씩 증가. 단, 5레벨과 10레벨에는 2%씩 증가"
    *  ("+1%/level, except levels 5 and 10 which give +2%"). A flat perLevel model landed on
    *  the right TOTAL at level 10 (which is all the original Lv10-screenshot check verified)
    *  but was wrong at every other level. */
@@ -71,9 +71,9 @@ function uniformSteps(perLevel: number): number[] {
 // The 4 stepped stats: +1 per level, except levels 5 and 10 which grant +2 instead of +1.
 const STEPPED_PERCENT = [1, 1, 1, 1, 2, 1, 1, 1, 1, 2];
 
-// Verified against namu.wiki's Lv 10 effect text + per-stat footnotes (2026-07-08), which
-// give both the level-10 total AND (via footnotes) the per-level growth pattern — not just
-// a single-level screenshot check like the original sourcing.
+// Verified against namu.wiki's Lv 10 effect text + per-stat footnotes, which give both the
+// level-10 total AND (via footnotes) the per-level growth pattern — not just a single-level
+// screenshot check like the original sourcing.
 export const LEGION_ARTIFACT_STATS: LegionArtifactStatDef[] = [
   { id: "allStats", label: "All Stats", levelSteps: uniformSteps(15), unit: "flat" },
   { id: "hpMp", label: "Max HP/MP", levelSteps: uniformSteps(750), unit: "flat" },
@@ -94,7 +94,7 @@ export const LEGION_ARTIFACT_STATS: LegionArtifactStatDef[] = [
 ];
 
 // Every crystal starts with these exact 3 lines (in this order) before the player spends
-// a reset stone to reroll them — confirmed against Yuki's in-game board, where untouched
+// a reset stone to reroll them — confirmed against a real in-game board, where untouched
 // crystals all share this same default set.
 export const DEFAULT_CRYSTAL_STATS: LegionArtifactStatId[] = ["allStats", "hpMp", "attMatt"];
 

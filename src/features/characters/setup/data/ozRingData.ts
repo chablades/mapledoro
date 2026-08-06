@@ -14,10 +14,10 @@
   (its own in-game skill scales off "the sum of all your stats"), not the Stats
   step's Base component -- stored as their own private value (StoredOzRings.
   totallingStats), not synced with stats.str/dex/int/luk.base. An earlier design
-  did sync them, on the theory they're "the same real stat" -- reverted 2026-07-27
-  after it silently corrupted a character's real Base stats: entering a real total
-  there got stored as Base, then re-multiplied by the character's own % bonuses on
-  top of that.
+  did sync them, on the theory they're "the same real stat" -- reverted after it
+  silently corrupted a character's real Base stats: entering a real total there
+  got stored as Base, then re-multiplied by the character's own % bonuses on top
+  of that.
 */
 
 import type { StoredOzRings } from "../../model/charactersStore";
@@ -73,10 +73,10 @@ export function getOzClassStatInfo(classId: string | undefined, requiredStats: r
   const weaponJumpLabel = primaryStat ? `Weapon Jump ${WEAPON_JUMP_LETTER[primaryStat]}` : "Weapon Jump";
   const weaponJumpIconId = WEAPON_JUMP_ICON_BY_STAT[primaryStat ?? "str"];
   let totallingStats = MAIN_STATS.filter((s) => !used.includes(s));
-  // Demon Avenger's kit is fully INT-independent (Yuki, 2026-07-27, same exclusion
-  // scouterApi.ts's DEMON_AVENGER_DROPPED_OFF_STAT already applies) -- INT shouldn't be
-  // offered as a Totalling Ring off-stat for this class even though it's technically
-  // one of the 2 unused main stats.
+  // Demon Avenger's kit is fully INT-independent (same exclusion scouterApi.ts's
+  // DEMON_AVENGER_DROPPED_OFF_STAT already applies) -- INT shouldn't be offered as a
+  // Totalling Ring off-stat for this class even though it's technically one of the 2
+  // unused main stats.
   if (classId === "demon_avenger") {
     totallingStats = totallingStats.filter((s) => s !== "int");
   }

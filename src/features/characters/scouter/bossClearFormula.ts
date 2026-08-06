@@ -1,11 +1,10 @@
 /*
   TS port of MapleScouter's Boss Clear (Cut) formula, reverse-engineered from their client
-  bundle. Full byte-exact source, the real call-site argument mapping, and numeric validation
-  against a real character (73.26% exact match on Hard Malefic Star) live in the
-  project_maplescouter_bosscut_formula_2026_07_28 memory -- read that before changing any
-  constant here, they're not arbitrary.
+  bundle -- byte-exact against a real character (73.26% exact match on Hard Malefic Star).
+  Don't change any constant here without re-validating against a real MapleScouter result
+  first; these numbers are empirically fit, not arbitrary.
 
-  Deliberately NOT ported (see memory for why each is safe to skip):
+  Deliberately NOT ported:
   - Their "Additional Spec Simulator" build-preview multiplier -- always 1 for a character's own
     real, current setup, which is all mapledoro shows.
   - Newbie Standard mode -- a separate toggle on their site, out of scope for a first version.
@@ -142,24 +141,24 @@ function convertedBossPower(statValue: number, guard: number): number {
 /** Verified real English strings, found in MapleScouter's own i18n dictionary -- not a gloss. */
 // Six genuinely distinct hues, one per severity step, best to worst: green -> blue -> red ->
 // orange -> purple -> gray. Replaces an earlier attempt at same-hue lightness shifts (e.g. two
-// greens for Easy/Possible), which read as identical at a glance -- Yuki's call 2026-07-30 to
-// scrap that and use a real 6-color ladder instead. Every value here matches its STATUS/
-// statusText key directly (BossClearGrid.tsx's pillStatus maps 1:1, no renaming in between).
+// greens for Easy/Possible), which read as identical at a glance -- scrapped in favor of a real
+// 6-color ladder instead. Every value here matches its STATUS/statusText key directly
+// (BossClearGrid.tsx's pillStatus maps 1:1, no renaming in between).
 export type ClearColorTier = "green" | "blue" | "red" | "orange" | "purple" | "gray";
 
 // Single source of truth for every tag's color, so the SAME tag string always renders the SAME
 // color everywhere it appears -- both tier tables below reference this instead of assigning
-// colors inline. Bug this fixed 2026-07-30: "3p Min Cut" rendered purple for a partyLimit-3 boss
-// (its own worst tier) but red for a partyLimit-6 boss (a middle tier there), since the two
-// tables used to assign colors independently by rank-within-that-table rather than by tag
-// identity. Yuki's call: identical tag text must mean identical severity, always.
+// colors inline. Bug this fixed: "3p Min Cut" rendered purple for a partyLimit-3 boss (its own
+// worst tier) but red for a partyLimit-6 boss (a middle tier there), since the two tables used
+// to assign colors independently by rank-within-that-table rather than by tag identity --
+// identical tag text must mean identical severity, always.
 //
 // This is also why the party-only table's top tier is "1p Min Cut", not "Solo Min" like the
 // soloable table's borderline-pass tier -- they're different concepts (party-only: your own
 // damage alone covers the WHOLE party's requirement, the best outcome, green; soloable: you're
 // right at the edge of a solo pass, a worse outcome, red) that briefly shared a label and
-// therefore collided under this same-tag-same-color rule. Fixed 2026-07-30 by renaming the
-// party-only one to match its "2p/3p/4p/6p Min Cut" siblings instead of reusing "Solo Min".
+// therefore collided under this same-tag-same-color rule. Fixed by renaming the party-only one
+// to match its "2p/3p/4p/6p Min Cut" siblings instead of reusing "Solo Min".
 const TAG_COLOR: Record<string, ClearColorTier> = {
   Easy: "green", Possible: "blue", "Solo Min": "red",
   "Party-able": "orange", "Party Min": "purple",
@@ -178,19 +177,19 @@ function tier(tag: string): BossTier {
 // (SOLO_TAG_TIERS/SOLOABLE_COLOR_TIERS on their site) whose mismatched breakpoints let the same
 // tag render in two different colors -- e.g. "Easy" could show green OR their "red" (their
 // red meaning "cleared by such a wide margin the number stopped being meaningful," not danger,
-// but reading as an alert regardless). Yuki's call 2026-07-30: drop that distinction entirely --
-// one tag always maps to exactly one color, tuned to the TAG's own breakpoints (the meaningful
-// semantic categories), not a second independently-eyeballed scale. Overkill clears just stay
-// "Easy"/green with no visual distinction from a more marginal Easy clear.
+// but reading as an alert regardless). That distinction is dropped entirely here -- one tag
+// always maps to exactly one color, tuned to the TAG's own breakpoints (the meaningful semantic
+// categories), not a second independently-eyeballed scale. Overkill clears just stay "Easy"/
+// green with no visual distinction from a more marginal Easy clear.
 //
-// Bucket breakpoints started as MapleScouter's own original tag tiers (still empirically fit --
-// see the formula memory), with one deliberate departure: the Possible floor was moved from
-// MapleScouter's 1.1 (110%) to 1.3 (130%) on 2026-07-30, per a Discord poll of several players
-// finding 110% didn't feel like a comfortable clear in practice (100-150% range of opinions, one
-// citing Kalos specifically) -- 90-129% is now Solo Min end to end, matching that "still tight"
-// feel rather than splitting it at a threshold nobody agreed felt safe. This is a real, intentional
-// divergence from MapleScouter's own displayed tags for the same character -- Yuki's call, not a
-// bug. Every other breakpoint (Easy, Solo Min's own floor, Party-able, Party Min) is untouched.
+// Bucket breakpoints started as MapleScouter's own original tag tiers (still empirically fit),
+// with one deliberate departure: the Possible floor was moved from MapleScouter's 1.1 (110%) to
+// 1.3 (130%), per a Discord poll of several players finding 110% didn't feel like a comfortable
+// clear in practice (100-150% range of opinions, one citing Kalos specifically) -- 90-129% is
+// now Solo Min end to end, matching that "still tight" feel rather than splitting it at a
+// threshold nobody agreed felt safe. This is a real, intentional divergence from MapleScouter's
+// own displayed tags for the same character, not a bug. Every other breakpoint (Easy, Solo
+// Min's own floor, Party-able, Party Min) is untouched.
 const SOLO_TIERS: Record<number, [number, BossTier][]> = {
   6: [[2, tier("Easy")], [1.3, tier("Possible")], [0.9, tier("Solo Min")], [0.25, tier("Party-able")], [0.15, tier("Party Min")]],
   3: [[2, tier("Easy")], [1.3, tier("Possible")], [0.9, tier("Solo Min")], [0.36, tier("Party-able")], [0.3, tier("Party Min")]],

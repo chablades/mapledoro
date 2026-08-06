@@ -256,9 +256,9 @@ export default function OzRingsSetupStep({
 
         {/* All 4 rings shown regardless of active mode -- you can level a ring even when
             it isn't the one currently equipped, and MapleScouter wants every ring's level
-            independently of which one you actually use (Yuki, 2026-07-27). `ringMode` still
-            marks which ring is active, for useContinuousRingAsMainRing and the character's
-            actual applied stats. */}
+            independently of which one you actually use. `ringMode` still marks which ring
+            is active, for useContinuousRingAsMainRing and the character's actual applied
+            stats. */}
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
           <LeveledIconTile icon={<OzRingIcon id={OZ_RING_ICON_IDS.restraint} name="Ring of Restraint" theme={theme} />} name="Ring of Restraint"
             level={draft.levels.restraint ?? ""} onLevel={(v) => setLevel("restraint", v)} max={OZ_RING_MAX_LEVEL} theme={theme} />
