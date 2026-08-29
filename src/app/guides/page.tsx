@@ -19,7 +19,7 @@ interface GuideCard {
 
 const GUIDES: GuideCard[] = [
   {
-    title: "New Players Guide",
+    title: "New Player Guide",
     description: "Everything you need to get started in MapleStory.",
     emoji: "🌱",
     href: "/guides/new-players",
