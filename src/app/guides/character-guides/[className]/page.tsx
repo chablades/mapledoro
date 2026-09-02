@@ -9,6 +9,8 @@ import { findClassBySlug, highlightNumbers } from "../classData";
 import { CLASS_RESOURCES } from "../classResources";
 import type { ClassResource } from "../classResources";
 import { HEXA_IMAGES } from "../hexaData";
+import { CLASS_CONFIGS } from "../guide-data";
+import { ClassGuide } from "../ClassGuide";
 
 /* ── Extracted styles ─────────────────────────────────────── */
 
@@ -130,6 +132,11 @@ function ClassGuideContent({
   theme: AppTheme;
   slug: string;
 }) {
+  const guideConfig = CLASS_CONFIGS[slug];
+  if (guideConfig) {
+    return <ClassGuide config={guideConfig} theme={theme} />;
+  }
+
   const cls = findClassBySlug(slug);
 
   if (!cls) {
