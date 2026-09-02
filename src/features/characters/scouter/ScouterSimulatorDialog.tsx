@@ -8,31 +8,32 @@ import HoverTooltip from "../../../components/HoverTooltip";
 import { ItemIcon } from "../../../components/ResourceImage";
 import { ToolNumberInput, PillGroup } from "../../tools/shared-ui";
 import { SkillIcon } from "../../tools/hexa-skills/hexa-ui";
-import { findClassById, COMMON_SKILLS, type HexaClassDef } from "../../tools/hexa-skills/hexa-classes";
+import { findClassById, type HexaClassDef } from "../../tools/hexa-skills/hexa-classes";
 import type { StoredCharacterRecord } from "../model/charactersStore";
-import { readCharactersStore } from "../model/charactersStore";
 import { CLASS_SKILL_DATA } from "../setup/data/classSkillData";
 import {
   BOOL_BUFFS, BUFF_GROUP_A, BUFF_GROUP_B,
   GUILD_BUFFS, GUILD_BUFF_MAX, RENOWN_STATS, RENOWN_SKILL_ID,
-  emptyBuffsDraft, storedBuffsToDraft, toggleBoolBuff, sanitizeGuildLevel, sanitizeRenownLevel,
-  getStatPotionTiers, primaryStatForClass, convertBuffsDraftToStored,
+  toggleBoolBuff, sanitizeGuildLevel, sanitizeRenownLevel,
+  getStatPotionTiers, primaryStatForClass,
   type BuffsDraft, type BoolBuffId, type BoolBuffEntry, type GuildBuffId, type RenownStatId,
 } from "../setup/data/buffsData";
 import { BuffIconImage, BoolBuffTile, RenownCol, boolTileStyle, pickOneGroupStyle, pickOneLabelStyle, buffIconOverride, buffSecondIconOverride, boolBuffLabel } from "../setup/components/BuffsSetupStep";
 import { LeveledIconTile } from "../setup/components/LeveledIconTile";
 import { statInputStyle, inputSuffixStyle } from "../setup/components/QuestionControls";
 import {
-  OZ_RING_MAX_LEVEL, OZ_RING_ICON_IDS, emptyOzRingsDraft, storedOzRingsToOzRingsDraft, convertOzRingsDraftToStored,
+  OZ_RING_MAX_LEVEL, OZ_RING_ICON_IDS,
   sanitizeOzRingLevel, getOzClassStatInfo, type OzRingsDraft, type OzRingId, type OzRingMode,
 } from "../setup/data/ozRingData";
 import { deriveWeaponAttLabel } from "../setup/data/statsStepDraft";
 import {
-  buildScouterPayload, SIMULATOR_HEXA_CORE_MAX, simulatorStatLabels,
+  SIMULATOR_HEXA_CORE_MAX, simulatorStatLabels,
   type ScouterSimulatorOverrides, type SimulatorHexaCoreField, type SimulatorInputOverrides,
 } from "./scouterApi";
 import type { ScouterErrorReason } from "./scouterCache";
 import type { ScouterSimulatorApplyResult } from "./useScouterSimulator";
+import { useScouterSimulatorDraft, type SimulatorTab } from "./useScouterSimulatorDraft";
+import { hexaCoreFields } from "./hexaSimulatorFields";
 
 // Same copy this codebase already uses for the real result's failure states (ScouterFigure.tsx/
 // CharacterProfileOverviewScreen.tsx) -- kept as its own small local copy rather than a shared
@@ -44,7 +45,6 @@ const SIMULATOR_ERROR_TEXT: Record<ScouterErrorReason, string> = {
   network: "Couldn't reach MapleScouter's API. Try again in a moment.",
 };
 
-type SimulatorTab = "buffs" | "hexa" | "ozRings" | "input";
 const TAB_OPTIONS: { value: SimulatorTab; label: string }[] = [
   { value: "buffs", label: "Buffs" },
   { value: "hexa", label: "HEXA" },
@@ -56,33 +56,6 @@ const TAB_OPTIONS: { value: SimulatorTab; label: string }[] = [
 // once HEXA-eligible -- matches useHexaSkillsState.ts's own normalizeLevels
 // (`origin: Math.max(1, clampLevel(...))` vs every other core's plain 0-30 clampLevel).
 const HEXA_CORE_MIN: Partial<Record<SimulatorHexaCoreField, number>> = { skillCore1: 1 };
-
-// generalCore2 = Sol Hecate, a COMMON_SKILLS entry (not part of the per-class HexaClassDef),
-// same distinction buildHexa/hexaCoreLevels already draw in scouterApi.ts.
-const SOL_HECATE = COMMON_SKILLS.find((s) => s.name === "Sol Hecate");
-
-// Mastery nodes have no single name (one composite icon covers several skills at once) --
-// HexaMatrixSetupStep.tsx's own tooltip joins them the same way.
-function masteryName(node: { skills: string[] } | undefined): string | undefined {
-  return node?.skills.join("\n");
-}
-
-function hexaCoreFields(classDef: HexaClassDef | null): { field: SimulatorHexaCoreField; label: string; name: string; iconId: string; iconUrl?: string }[] {
-  const fallback = { iconId: "" };
-  return [
-    { field: "skillCore1" as const, label: "Origin", ...(classDef?.origin ?? fallback), name: classDef?.origin.name ?? "Origin" },
-    { field: "skillCore2" as const, label: "Ascent", ...(classDef?.ascent ?? fallback), name: classDef?.ascent?.name ?? "Ascent" },
-    { field: "masteryCore1" as const, label: "Mastery I", ...(classDef?.mastery[0] ?? fallback), name: masteryName(classDef?.mastery[0]) ?? "Mastery I" },
-    { field: "masteryCore2" as const, label: "Mastery II", ...(classDef?.mastery[1] ?? fallback), name: masteryName(classDef?.mastery[1]) ?? "Mastery II" },
-    { field: "masteryCore3" as const, label: "Mastery III", ...(classDef?.mastery[2] ?? fallback), name: masteryName(classDef?.mastery[2]) ?? "Mastery III" },
-    { field: "masteryCore4" as const, label: "Mastery IV", ...(classDef?.mastery[3] ?? fallback), name: masteryName(classDef?.mastery[3]) ?? "Mastery IV" },
-    { field: "reinCore1" as const, label: "Enhance I", ...(classDef?.enhancement[0] ?? fallback), name: classDef?.enhancement[0]?.name ?? "Enhance I" },
-    { field: "reinCore2" as const, label: "Enhance II", ...(classDef?.enhancement[1] ?? fallback), name: classDef?.enhancement[1]?.name ?? "Enhance II" },
-    { field: "reinCore3" as const, label: "Enhance III", ...(classDef?.enhancement[2] ?? fallback), name: classDef?.enhancement[2]?.name ?? "Enhance III" },
-    { field: "reinCore4" as const, label: "Enhance IV", ...(classDef?.enhancement[3] ?? fallback), name: classDef?.enhancement[3]?.name ?? "Enhance IV" },
-    { field: "generalCore2" as const, label: "Sol Hecate", ...(SOL_HECATE ?? fallback), name: SOL_HECATE?.name ?? "Sol Hecate" },
-  ];
-}
 
 // Real GMS level cap as of v270 -- MapleStory's max character level. Update alongside any
 // future level cap increase (root CLAUDE.md's version-bump checklist doesn't cover this,
@@ -491,13 +464,6 @@ function InputTab({ theme, finalDmgPercent, onFinalDmgChange, input, onInputChan
 
 // ── Main dialog ──────────────────────────────────────────────────────────────
 
-const EMPTY_INPUT: Record<keyof SimulatorInputOverrides, number> = {
-  mainStat: 0, mainStatPer: 0, mainStatAbs: 0, mainStat9Level: 0,
-  subStat: 0, subStatPer: 0, subStatAbs: 0, subStat9Level: 0,
-  allStatPer: 0, criRate: 0, buffDuration: 0, coolTimeReduce: 0,
-  atk: 0, atkPer: 0, bossDmg: 0, criDmg: 0, ignoreGuard: 0, resetCoolDown: 0, weaponAtk: 0,
-};
-
 export default function ScouterSimulatorDialog({
   theme,
   character,
@@ -519,60 +485,12 @@ export default function ScouterSimulatorDialog({
   const { usesMagicWeapon, label: weaponAttLabel } = deriveWeaponAttLabel(classData);
   const inputStyle = statInputStyle(theme);
 
-  // Pre-filled from the character's real current values -- matches maplescouter.com's own
-  // simulator UI (confirmed live, screenshots this session), so "max HEXA" is just bumping a
-  // few numbers up rather than re-typing everything from blank. Same reasoning extends to
-  // Buffs/Oz Rings: seed from the character's real saved state, not blank.
-  const [realUserStat] = useState(() => buildScouterPayload(character, { scouterLegionByWorld: readCharactersStore().scouterLegionByWorld }));
-
-  const [tab, setTab] = useState<SimulatorTab>("buffs");
-  const [level, setLevel] = useState(character.level);
-  // Pre-filled from the character's real current Arcane Force/Sacred Power -- typing the
-  // boss's own requirement here is how a player "closes" that gap; there's no separate
-  // on/off shortcut (see computeBossClear's own comment on why that's not needed).
-  const [arcaneForce, setArcaneForce] = useState(Number(character.stats.arcanePower) || 0);
-  const [authenticForce, setAuthenticForce] = useState(Number(character.stats.sacredPower) || 0);
-  const [finalDmgPercent, setFinalDmgPercent] = useState(0);
-  const [hexaCores, setHexaCores] = useState<Record<SimulatorHexaCoreField, number>>(() => {
-    const out = {} as Record<SimulatorHexaCoreField, number>;
-    for (const { field } of hexaCoreFields(hexaClassDef)) {
-      out[field] = realUserStat ? Number(realUserStat.hexa[field]) : 0;
-    }
-    return out;
-  });
-  const [buffsDraft, setBuffsDraft] = useState<BuffsDraft>(() => storedBuffsToDraft(character.scouter?.buffs) ?? emptyBuffsDraft());
-  const [ozRingsDraft, setOzRingsDraft] = useState<OzRingsDraft>(() => storedOzRingsToOzRingsDraft(character.scouter?.ozRings) ?? emptyOzRingsDraft());
-  const [input, setInput] = useState<Record<keyof SimulatorInputOverrides, number>>(EMPTY_INPUT);
+  const draft = useScouterSimulatorDraft(character, hexaClassDef);
   const [error, setError] = useState<ScouterErrorReason | null>(null);
-
-  const setHexaCore = (field: SimulatorHexaCoreField, value: number) => {
-    setHexaCores((prev) => ({ ...prev, [field]: value }));
-  };
-  const setInputField = (key: keyof SimulatorInputOverrides, value: number) => {
-    setInput((prev) => ({ ...prev, [key]: value }));
-  };
 
   const handleApply = () => {
     setError(null);
-    const inputOverrides: SimulatorInputOverrides = Object.fromEntries(
-      Object.entries(input).map(([key, v]) => [key, String(v)]),
-    ) as unknown as SimulatorInputOverrides;
-    const overrides: ScouterSimulatorOverrides = {
-      level,
-      arcaneForceOverride: arcaneForce,
-      authenticForceOverride: authenticForce,
-      finalDmgPercent: finalDmgPercent.toFixed(5),
-      hexaCoreOverrides: Object.fromEntries(
-        hexaCoreFields(hexaClassDef).map(({ field }) => [field, String(hexaCores[field])]),
-      ) as Partial<Record<SimulatorHexaCoreField, string>>,
-      dopingOverrides: convertBuffsDraftToStored(buffsDraft) ?? undefined,
-      ringOverrides: {
-        levels: convertOzRingsDraftToStored(ozRingsDraft)?.levels,
-        useContinuousAsMainRing: ozRingsDraft.ringMode === "continuous",
-      },
-      input: inputOverrides,
-    };
-    void onApply(overrides).then((result) => {
+    void onApply(draft.buildOverrides()).then((result) => {
       if (result.status === "error") setError(result.reason);
       // "unsupported"/"ok" both close the popup from the caller's side (ok = success per the
       // plan; unsupported shouldn't happen here since ScouterSimulatorDialog is only ever
@@ -629,39 +547,39 @@ export default function ScouterSimulatorDialog({
         <div className="scouter-sim-level-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
           <div style={{ minWidth: 0 }}>
             <LevelRowLabel full="Level" short="Level" />
-            <ToolNumberInput value={level} min={1} max={MAX_CHARACTER_LEVEL} integer onCommit={setLevel} aria-label="Simulated level" className="no-spinner" style={{ ...inputStyle, width: "100%" }} />
+            <ToolNumberInput value={draft.level} min={1} max={MAX_CHARACTER_LEVEL} integer onCommit={draft.setLevel} aria-label="Simulated level" className="no-spinner" style={{ ...inputStyle, width: "100%" }} />
           </div>
           <div style={{ minWidth: 0 }}>
             <LevelRowLabel full="Arcane Force" short="Arc. Force" />
-            <ToolNumberInput value={arcaneForce} min={0} integer onCommit={setArcaneForce} aria-label="Simulated Arcane Force" className="no-spinner" style={{ ...inputStyle, width: "100%" }} />
+            <ToolNumberInput value={draft.arcaneForce} min={0} integer onCommit={draft.setArcaneForce} aria-label="Simulated Arcane Force" className="no-spinner" style={{ ...inputStyle, width: "100%" }} />
           </div>
           <div style={{ minWidth: 0 }}>
             <LevelRowLabel full="Sacred Power" short="Sac. Power" />
-            <ToolNumberInput value={authenticForce} min={0} integer onCommit={setAuthenticForce} aria-label="Simulated Sacred Power" className="no-spinner" style={{ ...inputStyle, width: "100%" }} />
+            <ToolNumberInput value={draft.authenticForce} min={0} integer onCommit={draft.setAuthenticForce} aria-label="Simulated Sacred Power" className="no-spinner" style={{ ...inputStyle, width: "100%" }} />
           </div>
         </div>
-        <PillGroup theme={theme} options={TAB_OPTIONS} value={tab} onChange={setTab} />
+        <PillGroup theme={theme} options={TAB_OPTIONS} value={draft.tab} onChange={draft.setTab} />
       </div>
 
       <div style={{ padding: "0.85rem 1.1rem", overflowY: "auto", flex: 1, minHeight: 0 }}>
-        {tab === "buffs" && <BuffsTab theme={theme} draft={buffsDraft} onChange={setBuffsDraft} primaryStat={primaryStat} jobName={character.jobName} />}
-        {tab === "hexa" && <HexaTab theme={theme} classDef={hexaClassDef} hexaCores={hexaCores} onChange={setHexaCore} />}
-        {tab === "ozRings" && (
+        {draft.tab === "buffs" && <BuffsTab theme={theme} draft={draft.buffsDraft} onChange={draft.setBuffsDraft} primaryStat={primaryStat} jobName={character.jobName} />}
+        {draft.tab === "hexa" && <HexaTab theme={theme} classDef={hexaClassDef} hexaCores={draft.hexaCores} onChange={draft.setHexaCore} />}
+        {draft.tab === "ozRings" && (
           <OzRingsTab
             theme={theme}
-            draft={ozRingsDraft}
-            onChange={setOzRingsDraft}
+            draft={draft.ozRingsDraft}
+            onChange={draft.setOzRingsDraft}
             weaponJumpLabel={ozClassInfo.weaponJumpLabel}
             weaponJumpIconId={ozClassInfo.weaponJumpIconId}
           />
         )}
-        {tab === "input" && (
+        {draft.tab === "input" && (
           <InputTab
             theme={theme}
-            finalDmgPercent={finalDmgPercent}
-            onFinalDmgChange={setFinalDmgPercent}
-            input={input}
-            onInputChange={setInputField}
+            finalDmgPercent={draft.finalDmgPercent}
+            onFinalDmgChange={draft.setFinalDmgPercent}
+            input={draft.input}
+            onInputChange={draft.setInputField}
             statLabels={statLabels}
             usesMagicWeapon={usesMagicWeapon}
             weaponAttLabel={weaponAttLabel}
