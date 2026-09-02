@@ -6,7 +6,7 @@ import { dialogBtnColors, dialogPrimaryBtnColors, type AppTheme } from "../../..
 import { statusText } from "../../../components/statusColors";
 import HoverTooltip from "../../../components/HoverTooltip";
 import { ItemIcon } from "../../../components/ResourceImage";
-import { Field, ToolNumberInput, PillGroup } from "../../tools/shared-ui";
+import { ToolNumberInput, PillGroup } from "../../tools/shared-ui";
 import { SkillIcon } from "../../tools/hexa-skills/hexa-ui";
 import { findClassById, COMMON_SKILLS, type HexaClassDef } from "../../tools/hexa-skills/hexa-classes";
 import type { StoredCharacterRecord } from "../model/charactersStore";
@@ -92,6 +92,42 @@ const MAX_CHARACTER_LEVEL = 300;
 function sectionLabelStyle(theme: AppTheme): CSSProperties {
   return { margin: "0 0 0.5rem", fontSize: "0.75rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.05em", color: theme.muted };
 }
+
+// Same divider StatsSetupStep.tsx's own sectionLabelStyle uses under Combat Stats/Symbols --
+// only the Input tab mirrors that step closely enough to want it (Yuki's own scoping call).
+function dividedSectionLabelStyle(theme: AppTheme): CSSProperties {
+  return { ...sectionLabelStyle(theme), paddingBottom: "0.25rem", borderBottom: `1px solid ${theme.border}` };
+}
+
+// Overrides tool-field-label's default sizing for the Level/Arcane Force/Sacred Power row --
+// those 3 fields share a fixed 3-column grid down to mobile widths, and the class's default
+// size wraps "Arcane Force"/"Sacred Power" onto 2 lines at that narrow a column.
+const levelRowLabelStyle: CSSProperties = { margin: "0 0 4px", fontSize: "0.75rem", fontWeight: 800, textTransform: "none", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" };
+
+// Renders both the full and abbreviated label text and lets a container query (scoped to
+// .scouter-sim-level-grid, see the <style> block below) pick which one shows -- reacts to the
+// grid column's own rendered width rather than a viewport breakpoint, so it only abbreviates
+// once the column is actually too narrow for the full text, not based on screen size alone.
+function LevelRowLabel({ full, short }: { full: string; short: string }) {
+  return (
+    <p style={levelRowLabelStyle}>
+      <span className="scouter-sim-label-full">{full}</span>
+      <span className="scouter-sim-label-short">{short}</span>
+    </p>
+  );
+}
+
+// Same tinted-box shape as StatsSetupStep.tsx's own warningBoxStyle/successBoxStyle, using
+// info's blue (#3b82f6) since this is a plain clarification, not a warning or a success state.
+const inputNoticeBoxStyle: CSSProperties = {
+  background: "rgba(59, 130, 246, 0.08)",
+  border: "1px solid rgba(59, 130, 246, 0.35)",
+  borderRadius: "10px",
+  padding: "0.65rem 0.85rem",
+  display: "flex",
+  alignItems: "center",
+  gap: "0.45rem",
+};
 
 // Caps at ~8 tiles per row (8 * 52px tiles + 7 * 8px gaps = 472px) -- matches
 // BuffsSetupStep.tsx's own maxWidth: 520 container, which wraps at the same row width. This
@@ -241,10 +277,11 @@ function HexaTab({ theme, classDef, hexaCores, onChange }: {
 }) {
   const all = hexaCoreFields(classDef);
   const byField = (fields: SimulatorHexaCoreField[]) => all.filter((f) => fields.includes(f.field));
-  // 2x2 layout (Yuki's call, condensed for a popup) rather than the real setup step's single
-  // vertical stack of 4 sections -- same section grouping, laid out as a grid instead.
+  // Same single vertical stack HexaMatrixSetupStep.tsx itself uses -- each section takes the
+  // tab's full width and its own tile row wraps naturally, instead of splitting into a 2x2
+  // grid whose fixed columns can't hold a 4-wide row on narrow viewports.
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.1rem" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: "1.1rem" }}>
       <HexaSection theme={theme} label="Origin & Ascent" fields={byField(["skillCore1", "skillCore2"])} hexaCores={hexaCores} onChange={onChange} />
       <HexaSection theme={theme} label="Mastery" fields={byField(["masteryCore1", "masteryCore2", "masteryCore3", "masteryCore4"])} hexaCores={hexaCores} onChange={onChange} />
       <HexaSection theme={theme} label="Enhancement" fields={byField(["reinCore1", "reinCore2", "reinCore3", "reinCore4"])} hexaCores={hexaCores} onChange={onChange} />
@@ -342,8 +379,8 @@ function TripleInputRow({ theme, inputStyle, label, base, percent, abs, per9Leve
 // Same compact row shape StatsSetupStep.tsx's own CombatStatCell uses (label left,
 // ellipsis-truncated; fixed-width input right, optional % suffix badge) -- not Field's
 // label-above-input stacking, which reads far taller/looser than the real setup step.
-function InputGroupField({ theme, inputStyle, label, value, onChange, percent = true }: {
-  theme: AppTheme; inputStyle: CSSProperties; label: string; value: number; onChange: (v: number) => void; percent?: boolean;
+function InputGroupField({ theme, inputStyle, label, value, onChange, suffix = "%" }: {
+  theme: AppTheme; inputStyle: CSSProperties; label: string; value: number; onChange: (v: number) => void; suffix?: string | null;
 }) {
   return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.4rem", minWidth: 0 }}>
@@ -351,26 +388,25 @@ function InputGroupField({ theme, inputStyle, label, value, onChange, percent = 
       <div style={{ position: "relative", flexShrink: 0 }}>
         <ToolNumberInput
           value={value} min={0} onCommit={onChange} aria-label={label} className="no-spinner"
-          style={percent ? { ...inputStyle, width: "4.6rem", paddingRight: "1.15rem" } : { ...inputStyle, width: "4.6rem" }}
+          style={suffix ? { ...inputStyle, width: "4.6rem", paddingRight: "1.15rem" } : { ...inputStyle, width: "4.6rem" }}
         />
-        {percent && <span style={inputSuffixStyle(theme)}>%</span>}
+        {suffix && <span style={inputSuffixStyle(theme)}>{suffix}</span>}
       </div>
     </div>
   );
 }
 
-const COMBAT_LEFT_FIELDS: { key: keyof SimulatorInputOverrides; label: string }[] = [
-  { key: "ignoreGuard", label: "IED" },
-  { key: "coolTimeReduce", label: "Cooldown Reduction" },
-  { key: "resetCoolDown", label: "Cooldown Skip" },
+const COMBAT_LEFT_FIELDS: { key: keyof SimulatorInputOverrides; label: string; suffix?: string | null }[] = [
+  { key: "ignoreGuard", label: "Ignore DEF" },
+  { key: "coolTimeReduce", label: "Cooldown Reduction", suffix: "s" },
+  { key: "resetCoolDown", label: "Cooldown Not Applied" },
 ];
 
-const COMBAT_RIGHT_FIELDS: { key: keyof SimulatorInputOverrides; label: string }[] = [
+const COMBAT_RIGHT_FIELDS: { key: keyof SimulatorInputOverrides; label: string; suffix?: string | null }[] = [
   { key: "bossDmg", label: "Damage/Boss" },
   { key: "criRate", label: "Critical Rate" },
   { key: "criDmg", label: "Critical Damage" },
   { key: "buffDuration", label: "Buff Duration" },
-  { key: "allStatPer", label: "All Stat" },
 ];
 
 function InputTab({ theme, finalDmgPercent, onFinalDmgChange, input, onInputChange, statLabels, usesMagicWeapon, weaponAttLabel }: {
@@ -381,8 +417,8 @@ function InputTab({ theme, finalDmgPercent, onFinalDmgChange, input, onInputChan
   weaponAttLabel: string;
 }) {
   const inputStyle = statInputStyle(theme);
-  const field = (key: keyof SimulatorInputOverrides, label: string, percent = true) => (
-    <InputGroupField key={key} theme={theme} inputStyle={inputStyle} label={label} value={input[key]} onChange={(v) => onInputChange(key, v)} percent={percent} />
+  const field = (key: keyof SimulatorInputOverrides, label: string, suffix: string | null = "%") => (
+    <InputGroupField key={key} theme={theme} inputStyle={inputStyle} label={label} value={input[key]} onChange={(v) => onInputChange(key, v)} suffix={suffix} />
   );
   const tripleField = (
     label: string,
@@ -402,8 +438,14 @@ function InputTab({ theme, finalDmgPercent, onFinalDmgChange, input, onInputChan
   const atkLabel = usesMagicWeapon ? "Magic ATT" : "ATT";
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "1.1rem" }}>
+      <div style={inputNoticeBoxStyle}>
+        <span style={{ fontSize: "0.75rem", color: statusText(theme, "info"), flexShrink: 0, lineHeight: 1 }}>★</span>
+        <p style={{ margin: 0, fontSize: "0.82rem", color: statusText(theme, "info"), fontWeight: 700 }}>
+          Values here are added on top of your current stats, not set directly.
+        </p>
+      </div>
       <div>
-        <p style={sectionLabelStyle(theme)}>Stats</p>
+        <p style={dividedSectionLabelStyle(theme)}>Basic Stats</p>
         <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
           {statLabels.main && tripleField(statLabels.main.label, "mainStat", "mainStatPer", "mainStatAbs", "mainStat9Level")}
           {statLabels.sub && tripleField(statLabels.sub.label, "subStat", "subStatPer", "subStatAbs", "subStat9Level")}
@@ -418,15 +460,26 @@ function InputTab({ theme, finalDmgPercent, onFinalDmgChange, input, onInputChan
       </div>
 
       <div>
-        <p style={sectionLabelStyle(theme)}>Other</p>
+        <p style={dividedSectionLabelStyle(theme)}>Combat Stats</p>
         <div style={{ display: "flex", minWidth: 0, gap: "1.1rem" }}>
           <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: "0.4rem" }}>
-            {COMBAT_LEFT_FIELDS.map(({ key, label }) => field(key, label))}
-            {field("weaponAtk", weaponAttLabel, false)}
+            {COMBAT_LEFT_FIELDS.map(({ key, label, suffix }) => field(key, label, suffix === undefined ? "%" : suffix))}
           </div>
           <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: "0.4rem" }}>
             <InputGroupField theme={theme} inputStyle={inputStyle} label="Final Damage" value={finalDmgPercent} onChange={onFinalDmgChange} />
-            {COMBAT_RIGHT_FIELDS.map(({ key, label }) => field(key, label))}
+            {COMBAT_RIGHT_FIELDS.map(({ key, label, suffix }) => field(key, label, suffix === undefined ? "%" : suffix))}
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <p style={dividedSectionLabelStyle(theme)}>Other</p>
+        <div style={{ display: "flex", minWidth: 0, gap: "1.1rem" }}>
+          <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+            {field("weaponAtk", weaponAttLabel, null)}
+          </div>
+          <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+            {field("allStatPer", "All Stat")}
           </div>
         </div>
       </div>
@@ -531,7 +584,7 @@ export default function ScouterSimulatorDialog({
       className="scouter-simulator-dialog"
       ariaLabel="Scouter Simulator"
       onClose={onClose}
-      style={{ width: "min(700px, 100%)", maxHeight: "85vh", overflow: "hidden", display: "flex", flexDirection: "column" }}
+      style={{ width: "min(700px, 100%)", height: "min(760px, 85vh)", overflow: "hidden", display: "flex", flexDirection: "column" }}
     >
       {/* ToolNumberInput's onFocus/onBlur are already spoken for (select-all-on-focus, commit
           draft on blur -- see its own file), so a themed focus ring can't be layered on via
@@ -540,14 +593,28 @@ export default function ScouterSimulatorDialog({
           without it, input:focus-visible's outline (globals.css) has no explicit color and
           falls back to the browser's unthemed default, which reads as a stray white ring on
           this dark popup. */}
+      {/* Mobile: the subtitle only matters the first time this dialog opens, and the level
+          row/tab switcher's padding is generous enough on desktop to eat most of a phone
+          viewport's height before any real tab content shows -- shrink both there. */}
       <style>{`
         .scouter-simulator-dialog input:focus-visible { outline-color: ${theme.accent}; }
+        .scouter-sim-level-grid { container-type: inline-size; }
+        .scouter-sim-label-short { display: none; }
+        @container (max-width: 340px) {
+          .scouter-sim-label-full { display: none; }
+          .scouter-sim-label-short { display: inline; }
+        }
+        @media (max-width: 480px) {
+          .scouter-simulator-dialog .scouter-sim-subtitle { display: none; }
+          .scouter-simulator-dialog .scouter-sim-header { padding: 0.7rem 0.85rem 0.55rem; }
+          .scouter-simulator-dialog .scouter-sim-level-row { padding: 0.5rem 0.85rem; gap: 0.45rem; }
+        }
       `}</style>
-      <div style={{ padding: "1rem 1.1rem 0.75rem", borderBottom: `1px solid ${theme.border}` }}>
+      <div className="scouter-sim-header" style={{ padding: "1rem 1.1rem 0.75rem", borderBottom: `1px solid ${theme.border}` }}>
         <span className="panel-header-title" style={{ color: theme.text, fontSize: "1.05rem" }}>
           Scouter Simulation
         </span>
-        <div style={{ fontSize: "0.78rem", color: theme.muted, fontWeight: 600, marginTop: 4 }}>
+        <div className="scouter-sim-subtitle" style={{ fontSize: "0.78rem", color: theme.muted, fontWeight: 600, marginTop: 4 }}>
           Fill out what you want to simulate, then Apply to see it on the Scouter bookmark.
         </div>
       </div>
@@ -556,17 +623,20 @@ export default function ScouterSimulatorDialog({
           the scrollable per-tab body, so they read as one always-visible control row rather
           than appearing to repeat under every tab. Typing the boss's own requirement here
           already closes that gap, so there's no separate "close this gap" toggle. */}
-      <div style={{ padding: "0.7rem 1.1rem", borderBottom: `1px solid ${theme.border}`, display: "flex", flexDirection: "column", gap: "0.6rem" }}>
-        <div style={{ display: "flex", gap: 14, alignItems: "flex-end", flexWrap: "wrap" }}>
-          <Field label="Level">
-            <ToolNumberInput value={level} min={1} max={MAX_CHARACTER_LEVEL} integer onCommit={setLevel} aria-label="Simulated level" className="no-spinner" style={{ ...inputStyle, width: 90 }} />
-          </Field>
-          <Field label="Arcane Force">
-            <ToolNumberInput value={arcaneForce} min={0} integer onCommit={setArcaneForce} aria-label="Simulated Arcane Force" className="no-spinner" style={{ ...inputStyle, width: 110 }} />
-          </Field>
-          <Field label="Sacred Power">
-            <ToolNumberInput value={authenticForce} min={0} integer onCommit={setAuthenticForce} aria-label="Simulated Sacred Power" className="no-spinner" style={{ ...inputStyle, width: 110 }} />
-          </Field>
+      <div className="scouter-sim-level-row" style={{ padding: "0.7rem 1.1rem", borderBottom: `1px solid ${theme.border}`, display: "flex", flexDirection: "column", gap: "0.6rem" }}>
+        <div className="scouter-sim-level-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
+          <div style={{ minWidth: 0 }}>
+            <LevelRowLabel full="Level" short="Level" />
+            <ToolNumberInput value={level} min={1} max={MAX_CHARACTER_LEVEL} integer onCommit={setLevel} aria-label="Simulated level" className="no-spinner" style={{ ...inputStyle, width: "100%" }} />
+          </div>
+          <div style={{ minWidth: 0 }}>
+            <LevelRowLabel full="Arcane Force" short="Arc. Force" />
+            <ToolNumberInput value={arcaneForce} min={0} integer onCommit={setArcaneForce} aria-label="Simulated Arcane Force" className="no-spinner" style={{ ...inputStyle, width: "100%" }} />
+          </div>
+          <div style={{ minWidth: 0 }}>
+            <LevelRowLabel full="Sacred Power" short="Sac. Power" />
+            <ToolNumberInput value={authenticForce} min={0} integer onCommit={setAuthenticForce} aria-label="Simulated Sacred Power" className="no-spinner" style={{ ...inputStyle, width: "100%" }} />
+          </div>
         </div>
         <PillGroup theme={theme} options={TAB_OPTIONS} value={tab} onChange={setTab} />
       </div>
