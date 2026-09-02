@@ -12,6 +12,13 @@ interface ChangelogEntry {
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    date: "2026-09-01",
+    changes: [
+      { type: "added", text: "The New Player Guide is now interactive. Tell it whether you are on an Interactive or Heroic world and whether your character is on Hyper Burning, and it shows only the parts of the guide that apply to you." },
+      { type: "added", text: "The New Player Guide's class list now opens a panel for each class with a description and tags like Easy or Combo." },
+    ],
+  },
+  {
     date: "2026-08-31",
     changes: [
       { type: "added", text: "Erel Light characters now get a Scouter figure, Stat Efficiency and Stat Optimizer results, now that MapleScouter supports the class." },
