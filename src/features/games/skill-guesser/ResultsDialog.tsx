@@ -8,7 +8,8 @@ import PuzzleSkillIcon from "./PuzzleSkillIcon";
 import { MAX_GUESSES, msUntilNextPuzzle, type SkillGuesserPuzzle } from "./puzzles";
 import type { GameMode, SkillGuesserResult } from "./storage";
 
-const SHARE_URL = "https://www.mapledoro.com/games/skill-guesser";
+// Shares link straight to the day that was played, via the archive route.
+const SHARE_BASE_URL = "https://www.mapledoro.com/games/skill-guesser";
 
 function buildShareText(
   puzzleNumber: number,
@@ -21,7 +22,7 @@ function buildShareText(
   const squares = result.guesses
     .map((g) => (g === answer ? "\u{1F7E9}" : "\u{1F7E5}"))
     .join("");
-  return `Mapledle #${puzzleNumber}${tag} ${score}\n${squares}\n${SHARE_URL}`;
+  return `Mapledle #${puzzleNumber}${tag} ${score}\n${squares}\n${SHARE_BASE_URL}/${puzzleNumber}`;
 }
 
 function formatCountdown(ms: number): string {

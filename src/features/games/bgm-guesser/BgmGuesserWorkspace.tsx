@@ -10,6 +10,7 @@ import { STATUS, statusText } from "../../../components/statusColors";
 import { useMounted } from "../../../lib/useMounted";
 import { ActionButton } from "../../tools/shared-ui";
 import { toolStyles } from "../../tools/tool-styles";
+import { usePuzzleRoute } from "../usePuzzleRoute";
 import BgmPlayer from "./BgmPlayer";
 import ResultsDialog from "./ResultsDialog";
 import {
@@ -412,10 +413,17 @@ function PuzzleView({ theme, puzzleNumber }: { theme: AppTheme; puzzleNumber: nu
 /*  Workspace                                                          */
 /* ------------------------------------------------------------------ */
 
-export default function BgmGuesserWorkspace({ theme }: { theme: AppTheme }) {
+export default function BgmGuesserWorkspace({
+  theme,
+  urlPuzzle,
+}: {
+  theme: AppTheme;
+  /** Archive route segment, absent on the daily route. */
+  urlPuzzle?: string;
+}) {
   const mounted = useMounted();
   const [today, setToday] = useState(() => currentPuzzleNumber());
-  const [puzzleNumber, setPuzzleNumber] = useState(() => currentPuzzleNumber());
+  const [puzzleNumber, setPuzzleNumber] = usePuzzleRoute("/games/bgm-guesser", urlPuzzle, today);
 
   // Advance to the next puzzle when the UTC day rolls over while the page is
   // open; carry the viewer along only if they're looking at the latest day.

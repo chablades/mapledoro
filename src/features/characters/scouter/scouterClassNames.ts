@@ -2,14 +2,12 @@
   classId -> MapleScouter's Korean class name (their `stat.myClass` / `hexa.character_class`
   value). Resolved by cross-referencing maplestorywiki.net's KoreaMS field for real KMS
   classes, and live capture on maplescouter.com for classes that don't exist in KMS at all
-  (Kanna, Mo Xuan, Lynn, Sia, Hayato).
+  (Kanna, Mo Xuan, Lynn, Sia, Hayato, Erel Light).
 
-  Erel Light is the one mapledoro class MapleScouter's own site doesn't support at all —
-  callers must check for its absence here and skip the Scouter fetch entirely rather than
-  sending a request with no valid class.
+  Classes absent from this table (the legacy job names, and any class MapleScouter hasn't
+  added yet) have no valid `myClass` value, so callers must check for that absence and skip
+  the Scouter fetch entirely rather than sending a request with nowhere to route to.
 */
-
-export const SCOUTER_UNSUPPORTED_CLASS_IDS = new Set<string>(["erel_light"]);
 
 export const SCOUTER_CLASS_KOREAN_NAMES: Record<string, string> = {
   hoyoung: "호영",
@@ -63,11 +61,11 @@ export const SCOUTER_CLASS_KOREAN_NAMES: Record<string, string> = {
   hayato: "하야토",
   kanna: "칸나",
   sia_astelle: "시아",
+  erel_light: "에렐",
   zero: "제로",
 };
 
 /** Korean class name for MapleScouter, or null if this class isn't supported by their site. */
 export function scouterKoreanClassName(classId: string): string | null {
-  if (SCOUTER_UNSUPPORTED_CLASS_IDS.has(classId)) return null;
   return SCOUTER_CLASS_KOREAN_NAMES[classId] ?? null;
 }

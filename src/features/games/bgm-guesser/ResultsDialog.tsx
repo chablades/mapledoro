@@ -13,7 +13,8 @@ import {
 } from "./puzzles";
 import type { BgmGuesserResult } from "./storage";
 
-const SHARE_URL = "https://www.mapledoro.com/games/bgm-guesser";
+// Shares link straight to the day that was played, via the archive route.
+const SHARE_BASE_URL = "https://www.mapledoro.com/games/bgm-guesser";
 
 function buildShareText(
   puzzleNumber: number,
@@ -24,7 +25,7 @@ function buildShareText(
   const squares = result.guesses
     .map((g) => (g === answer ? "\u{1F7E9}" : "\u{1F7E5}"))
     .join("");
-  return `BGM Guesser #${puzzleNumber} ${score}\n${squares}\n${SHARE_URL}`;
+  return `BGM Guesser #${puzzleNumber} ${score}\n${squares}\n${SHARE_BASE_URL}/${puzzleNumber}`;
 }
 
 function formatCountdown(ms: number): string {

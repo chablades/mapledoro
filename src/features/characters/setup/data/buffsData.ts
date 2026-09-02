@@ -145,7 +145,7 @@ export const BOOL_BUFFS: readonly BoolBuffEntry[] = [
   { id: "vipBuff",           name: "VIP Buff (Stats)",               icon: { kind: "item",  id: "02024163", shadow: true } },
   { id: "mvpSuperpower",     name: "MVP Superpower Buff",            icon: { kind: "item",  id: "02023544" } },
   { id: "maxedSacredSymbol", name: "Lv. 11 Sacred Symbols",          icon: { kind: "item",  id: "02638024" } },
-  { id: "genepass",          name: "Power of the Rival",             icon: { kind: "skill", id: "80003909" } },
+  { id: "genepass",          name: "Power of the Adversary",         icon: { kind: "skill", id: "80003909" } },
   // Group A
   { id: "sparklingBlueStar",   name: "Sparkling Blue Star Potion",       icon: { kind: "item",  id: "02024173" }, group: "A" },
   { id: "greatHeroBoost",      name: "Advanced Great Hero Boost Potion", icon: { kind: "item",  id: "02024176" }, group: "A" },

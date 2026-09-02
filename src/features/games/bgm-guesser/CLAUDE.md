@@ -1,7 +1,7 @@
 # BGM Guesser
 
 Daily game: hear a MapleStory BGM track, name the **area or boss** it plays for in 3 tries. No
-hints, one mode. Puzzle rollover, replay arrows, share squares and the countdown all mirror
+hints, one mode. Puzzle rollover, replay arrows, archive routing, share squares and the countdown all mirror
 [Mapledle](../skill-guesser/CLAUDE.md); only the differences are documented here.
 
 The puzzle advances at **00:00:00 UTC**; puzzle #1 is the `EPOCH_UTC_MS` day in `puzzles.ts`

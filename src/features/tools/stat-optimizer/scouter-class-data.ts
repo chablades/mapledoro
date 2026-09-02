@@ -7,6 +7,14 @@
   maplescouter's. main/sub/sub2 are the stats that enter the stat factor.
   Classes missing here (legacy/regional) fall back to ZERO_CLASS_CONSTANTS with
   main/sub derived from classSkillData.
+
+  Refreshing these does NOT need the bundle re-read: every calc response carries the
+  same numbers for the class it was asked about, at `calculatedData.myClassData`
+  (`main`/`sub`/`sub2` plus `dpm_mainStat`, `dpm_atk`, `dpm_atkPer`, `dpm_bossDmg`,
+  `dpm_ignoreGuard`, `dpm_criticalDmg`, and `criInP` for the archer classes in
+  CRIT_RATE_TO_CRIT_DMG). POST any valid body with `stat.myClass` set to the Korean
+  name from scouterClassNames.ts and read that field. Verified 2026-08-31: the values
+  it returns for Sia Astelle, Hero and Kain reproduce their rows below exactly.
 */
 
 import type { MainStatId } from "./damage-formula";
@@ -132,6 +140,11 @@ export const SCOUTER_CLASS_CONSTANTS: Record<string, ScouterClassConstants> = {
     main: "str", sub: "dex", sub2: null,
     dpmMainStat: 0, dpmAtk: 30, dpmAtkPer: 0,
     dpmBossDmg: 81.600135, dpmIgnoreGuard: 62.43470987, dpmCritDmg: 0,
+  },
+  erel_light: {
+    main: "str", sub: "dex", sub2: null,
+    dpmMainStat: 0.41, dpmAtk: 18, dpmAtkPer: 0,
+    dpmBossDmg: 40, dpmIgnoreGuard: 48.51, dpmCritDmg: 7,
   },
   evan: {
     main: "int", sub: "luk", sub2: null,

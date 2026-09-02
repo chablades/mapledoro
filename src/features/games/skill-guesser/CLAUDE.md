@@ -8,6 +8,17 @@ Daily game: guess which class learns the shown skill icon in 5 tries. The puzzle
 payload index `(N-1) % length`. Players can replay earlier days via header arrows, clamped between #1
 and today; the workspace keys `PuzzleView` by puzzle number so each day re-reads its own results.
 
+**Archive routing** is shared with BGM Guesser by `../usePuzzleRoute.ts`. Each game has two routes:
+the bare path (always today) and `<base>/<n>` for one earlier day, both rendering the same workspace
+with the segment only seeding `puzzleNumber`. Validation is necessarily client-side, since `today`
+comes from `Date.now()` and the workspace is `useMounted`-gated; a non-numeric or out-of-range
+segment silently falls back to today rather than 404ing. Moving between days rewrites the URL with
+`history.replaceState`, **not** a router navigation: the route is fully client-rendered, so
+navigating would remount the workspace and every arrow press would stack a back-button entry.
+Today's puzzle canonicalises back to the bare path. The `[puzzle]/layout.tsx` sets `robots:
+{ index: false }` because the archive is an unbounded number space; the daily page stays indexable.
+Share text links to `<base>/<n>` so a copied result opens the day it describes.
+
 **Two modes per puzzle**, with independent guesses and results. Normal names the **class**
 (`answer = puzzle.className`, picker from `SKILL_GUESSER_CLASSES`); hard names the **skill**
 (`answer = puzzle.skillName`, picker from `allSkillNames()`). The whole board keys off that one

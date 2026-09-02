@@ -4,8 +4,8 @@
  * Pure functions over the generated FD dataset (hexa-fd-data.generated.ts) and
  * the cost tables. Two outputs:
  *   - the FD breakdown: how much FD each node currently contributes and its max.
- *   - the leveling guide: the remaining steps in maplebot's recommended order
- *     (already gated by HEXA tier unlocks), each with its FD gain and frag cost.
+ *   - the leveling guide: the remaining steps in MapleScouter's recommended order,
+ *     each with its FD gain and frag cost.
  *
  * Node curves are aligned to hexa-classes.ts node order, so a class's `classDef`
  * supplies the names/icons and this module supplies the FD/cost math.
@@ -203,9 +203,9 @@ export interface GuideResult {
   hecateFdMissing: boolean;
 }
 
-// Sol Hecate's FD curve is missing for a handful of classes; when it is, the skill
-// never appears in the recommended order, so the guide flags it and points players
-// at their class Discord instead of silently omitting it.
+// A class whose Sol Hecate FD curve is absent from the dataset never gets the skill in its
+// recommended order, so the guide flags that rather than silently omitting it. Every class
+// currently has one; this guards a future refresh that loses it.
 const HECATE_INDEX = COMMON_SKILLS.findIndex((s) => s.name === "Sol Hecate");
 
 /** A run of consecutive same-skill levels not yet emitted (all 0% FD so far). */
@@ -318,7 +318,6 @@ export function computeGuide(
   };
 
   for (const code of fd.order) {
-    if (code.startsWith("#")) continue;
     const node = byCode.get(code);
     if (!node) continue;
     const toLevel = (running[code] = (running[code] ?? 0) + 1);
