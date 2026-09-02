@@ -214,6 +214,7 @@ function BuffsTab({ theme, draft, onChange, primaryStat, jobName }: {
         // makes it obvious, so it needs the explicit fit-content here.
         <div key={groupId} style={{ ...pickOneGroupStyle(theme), width: "fit-content" }}>
           <span style={pickOneLabelStyle(theme)}>pick one</span>
+          {/* react-doctor-disable-next-line js-combine-iterations -- BOOL_BUFFS is a small fixed roster, extra pass is negligible per the rule's own FP criteria */}
           {BOOL_BUFFS.filter((b) => groupSet.has(b.id)).map(renderBuffTile)}
         </div>
       ))}
@@ -276,6 +277,7 @@ function HexaTab({ theme, classDef, hexaCores, onChange }: {
   theme: AppTheme; classDef: HexaClassDef | null; hexaCores: Record<SimulatorHexaCoreField, number>; onChange: (field: SimulatorHexaCoreField, value: number) => void;
 }) {
   const all = hexaCoreFields(classDef);
+  // react-doctor-disable-next-line js-set-map-lookups -- all is a fixed 11-entry HEXA core list, fields is 1-4 entries; a Set would cost more to build than the plain .includes scan.
   const byField = (fields: SimulatorHexaCoreField[]) => all.filter((f) => fields.includes(f.field));
   // Same single vertical stack HexaMatrixSetupStep.tsx itself uses -- each section takes the
   // tab's full width and its own tile row wraps naturally, instead of splitting into a 2x2
