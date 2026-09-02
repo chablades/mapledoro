@@ -12,6 +12,13 @@ interface ChangelogEntry {
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    date: "2026-09-02",
+    changes: [
+      { type: "added", text: "Character Guides now has a full written guide for 27 classes, covering skill builds, HEXA priority, and gearing, instead of only the link skill, Legion bonus and infographic panels. Classes without one yet still show the panels they always did." },
+      { type: "changed", text: "The New Player Guide is now built around a contents rail, so you can jump straight to the section you want instead of scrolling the whole page." },
+    ],
+  },
+  {
     date: "2026-08-31",
     changes: [
       { type: "added", text: "Erel Light characters now get a Scouter figure, Stat Efficiency and Stat Optimizer results, now that MapleScouter supports the class." },
