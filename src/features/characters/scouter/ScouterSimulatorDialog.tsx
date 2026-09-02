@@ -18,7 +18,8 @@ import {
   getStatPotionTiers, primaryStatForClass,
   type BuffsDraft, type BoolBuffId, type BoolBuffEntry, type GuildBuffId, type RenownStatId,
 } from "../setup/data/buffsData";
-import { BuffIconImage, BoolBuffTile, RenownCol, boolTileStyle, pickOneGroupStyle, pickOneLabelStyle, buffIconOverride, buffSecondIconOverride, boolBuffLabel } from "../setup/components/BuffsSetupStep";
+import { BuffIconImage, BoolBuffTile, RenownCol } from "../setup/components/BuffsSetupStep";
+import { boolTileStyle, pickOneGroupStyle, pickOneLabelStyle, buffIconOverride, buffSecondIconOverride, boolBuffLabel } from "../setup/components/buffTileHelpers";
 import { LeveledIconTile } from "../setup/components/LeveledIconTile";
 import { statInputStyle, inputSuffixStyle } from "../setup/components/QuestionControls";
 import {
