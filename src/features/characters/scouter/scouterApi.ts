@@ -5,8 +5,8 @@
   captured requests/responses on maplescouter.com -- don't re-derive any of this from
   guesses, re-capture a real request/response instead if a field's meaning is unclear.
 
-  Not every character can be sent at all: Erel Light isn't supported by MapleScouter's
-  own site, so buildScouterPayload returns null for it, callers must show a "not
+  Not every character can be sent at all: the legacy job names have no MapleScouter class
+  to map to, so buildScouterPayload returns null for them, callers must show a "not
   available for this class" state rather than attempting a fetch with nowhere to route to.
 */
 
@@ -264,6 +264,10 @@ function buildDoping(character: StoredCharacterRecord): ScouterDoping {
     dragonsMeal: false,
     extreme: Boolean(buffs?.extremePotion),
     fish: Boolean(buffs?.fishBuff),
+    // MapleScouter's own site always sends true here, but the field is inert: live-tested
+    // on a real Erel capture, true vs false returns a byte-identical response (every boss
+    // figure, converted power, dojo and the whole specEfficiency table), both fully buffed
+    // and with every other doping flag off. Left false rather than mirroring their true.
     guildBlessing: false,
     jangBi: Boolean(buffs?.advWeaponTempering),
     legendHero: Boolean(buffs?.legendaryHero),
@@ -607,7 +611,7 @@ function buildLinkSkill(linkSkills: LinkSkillsData | undefined): Record<string, 
 /** Which part of MapleScouter Setup's own completeness requirements this character is
  *  still missing, or null if it's fully satisfied -- see hasMinimalScouterSetup below,
  *  which reduces this to a plain boolean for callers that don't need to say WHERE the
- *  gap is (e.g. "Erel Light isn't a supported class" doesn't have a location).
+ *  gap is (e.g. "this isn't a supported class" doesn't have a location).
  *  "quickQuestions" covers everything Quick Questions asks (soul type, weapon hand if
  *  the class asks, Wild Hunter Legion rank, Inner Ability line) -- full_setup's own
  *  Quick Questions stays permanently optional (see isScouterQuestionnaireComplete's doc
@@ -670,8 +674,8 @@ export function hasMinimalScouterSetup(character: StoredCharacterRecord): boolea
   return findScouterSetupGap(character) === null;
 }
 
-/** Whether MapleScouter supports this character's class at all, currently only
- *  Erel Light doesn't (see class-name table above). */
+/** Whether MapleScouter supports this character's class at all (see class-name table
+ *  above -- currently only the legacy job names are missing). */
 export function isScouterSupportedClass(jobName: string): boolean {
   const classData = CLASS_SKILL_DATA.find((c) => c.nexonJobName === jobName);
   return classData ? scouterKoreanClassName(classData.id) !== null : false;
@@ -684,7 +688,7 @@ export interface ScouterPayloadContext {
 }
 
 /** Builds MapleScouter's request body for a character, or null if this class isn't
- *  supported by MapleScouter at all (currently only Erel Light). */
+ *  supported by MapleScouter at all. */
 export function buildScouterPayload(character: StoredCharacterRecord, ctx: ScouterPayloadContext): ScouterUserStat | null {
   const classData = CLASS_SKILL_DATA.find((c) => c.nexonJobName === character.jobName);
   if (!classData) return null;

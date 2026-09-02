@@ -12,6 +12,14 @@ interface ChangelogEntry {
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    date: "2026-08-31",
+    changes: [
+      { type: "added", text: "Erel Light characters now get a Scouter figure, Stat Efficiency and Stat Optimizer results, now that MapleScouter supports the class." },
+      { type: "added", text: "Sia Astelle and Erel Light now get the HEXA Skill Tracker's final damage breakdown and leveling guide. Their fragment costs are still placeholder values until Erda Link is supported properly." },
+      { type: "added", text: "Add Sol Hecate to the leveling guide for Hayato, Kanna, Lynn and Mo Xuan." },
+    ],
+  },
+  {
     date: "2026-08-25",
     changes: [
       { type: "added", text: "Buff Setup step now has a toggle for Power of the Rival." },

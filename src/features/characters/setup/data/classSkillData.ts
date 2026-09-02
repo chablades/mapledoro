@@ -717,12 +717,15 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
     id: "erel_light",
     nexonJobName: "Erel Light",
     // STR warrior (Shine). Gram weapon / Keir secondary — see classBranch.ts.
-    // No fixed gender. buffSkills are the universal decent skills only: MapleScouter
-    // doesn't support Erel Light at all yet (SCOUTER_UNSUPPORTED_CLASS_IDS), so there's
-    // no live capture to confirm which class-specific always-on skills raise stat-window
-    // values. Revisit once MapleScouter adds support and add the class-specific buff(s)
-    // (candidates: Light Enchant, Helian Blessing, and the other no-cooldown actives).
-    buffSkills: [DSE, DCO],
+    // No fixed gender. The two class-specific buffs are what MapleScouter's own input
+    // page states as Erel's requirement ("Class Specific Requirements : Use Light Enchant
+    // & Helian Blessing"), confirmed by live capture on maplescouter.com/en/input.
+    buffSkills: [
+      DSE,
+      DCO,
+      { skillIconUrl: sk("181111000"), skillName: "Light Enchant", jobAdvancement: "3" },
+      { skillIconUrl: sk("181121011"), skillName: "Helian Blessing", jobAdvancement: "4" },
+    ],
     requiredStats: ["str", "dex", "attackPower"],
   },
   {

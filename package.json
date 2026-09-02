@@ -13,8 +13,8 @@
     "@vercel/analytics": "^2.0.1",
     "chart.js": "^4.5.1",
     "ioredis": "^5.11.1",
-    "katex": "^0.18.4",
-    "next": "^16.3.3",
+    "katex": "^0.18.5",
+    "next": "^16.3.4",
     "react": "19.2.8",
     "react-chartjs-2": "^5.3.1",
     "react-dom": "19.2.8"
@@ -25,7 +25,7 @@
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.5",
     "eslint": "^9.39.5",
-    "eslint-config-next": "^16.3.3",
+    "eslint-config-next": "^16.3.4",
     "eslint-plugin-sonarjs": "^4.2.0",
     "typescript": "^5.9.3"
   },
