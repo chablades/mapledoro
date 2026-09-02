@@ -48,7 +48,7 @@ const sectionLabel = (theme: AppTheme): CSSProperties => ({
   textTransform: "uppercase", letterSpacing: "0.05em", color: theme.muted,
 });
 
-const boolTileStyle = (active: boolean, theme: AppTheme): CSSProperties => ({
+export const boolTileStyle = (active: boolean, theme: AppTheme): CSSProperties => ({
   width: 52, height: 52, flexShrink: 0,
   border: `1px solid ${active ? theme.accent : theme.border}`,
   borderRadius: 8,
@@ -57,7 +57,7 @@ const boolTileStyle = (active: boolean, theme: AppTheme): CSSProperties => ({
   display: "flex", alignItems: "center", justifyContent: "center",
 });
 
-const renownInputStyle = (theme: AppTheme, active: boolean): CSSProperties => ({
+export const renownInputStyle = (theme: AppTheme, active: boolean): CSSProperties => ({
   width: 40, textAlign: "center",
   border: `1px solid ${active ? theme.accent : theme.border}`,
   borderRadius: 6,
@@ -67,7 +67,7 @@ const renownInputStyle = (theme: AppTheme, active: boolean): CSSProperties => ({
   padding: "0.2rem", boxSizing: "border-box",
 });
 
-const pickOneGroupStyle = (theme: AppTheme): CSSProperties => ({
+export const pickOneGroupStyle = (theme: AppTheme): CSSProperties => ({
   position: "relative",
   display: "flex", gap: 8, flexWrap: "wrap",
   border: `1px dashed ${theme.border}`,
@@ -75,7 +75,7 @@ const pickOneGroupStyle = (theme: AppTheme): CSSProperties => ({
   marginTop: 6,
 });
 
-const pickOneLabelStyle = (theme: AppTheme): CSSProperties => ({
+export const pickOneLabelStyle = (theme: AppTheme): CSSProperties => ({
   position: "absolute", top: -9, left: 8,
   fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase",
   letterSpacing: "0.04em", color: theme.muted,
@@ -83,7 +83,7 @@ const pickOneLabelStyle = (theme: AppTheme): CSSProperties => ({
 });
 
 // A couple of bool buffs swap their catalog icon for a class/stat-specific one.
-function buffIconOverride(id: BoolBuffId, primaryStat: StatId, jobName: string): BoolBuffIconType | undefined {
+export function buffIconOverride(id: BoolBuffId, primaryStat: StatId, jobName: string): BoolBuffIconType | undefined {
   if (id === "extremePotion") return { kind: "item", id: extremePotionIconId(primaryStat) };
   if (id === "heroEcho") return { kind: "skill", id: heroEchoSkillId(jobName) };
   return undefined;
@@ -91,7 +91,7 @@ function buffIconOverride(id: BoolBuffId, primaryStat: StatId, jobName: string):
 
 // Non-Hurricane classes get Extreme Green Potion layered onto the Extreme Potion tile instead of
 // their own separate tile — see isHurricaneClass.
-function buffSecondIconOverride(id: BoolBuffId, jobName: string): BoolBuffIconType | undefined {
+export function buffSecondIconOverride(id: BoolBuffId, jobName: string): BoolBuffIconType | undefined {
   if (id === "extremePotion" && !isHurricaneClass(jobName)) return { kind: "item", id: EXTREME_GREEN_POTION_ITEM_ID };
   return undefined;
 }
@@ -99,7 +99,7 @@ function buffSecondIconOverride(id: BoolBuffId, jobName: string): BoolBuffIconTy
 // A missing/failed icon falls back to the buff's name-initial (mirrors VMatrixNodeIcon's
 // treatment) instead of a stray broken-image glyph. Handles both "item" and "skill" icon
 // kinds since bool buffs draw from either.
-function BuffIconImage({ icon, name, theme, size = 32 }: {
+export function BuffIconImage({ icon, name, theme, size = 32 }: {
   icon: { kind: "item"; id: string; shadow?: boolean } | { kind: "skill"; id: string };
   name: string;
   theme: AppTheme;
@@ -190,7 +190,7 @@ function StackedBuffIcon({ icon, secondIcon, thirdIcon, active, name, theme }: {
   );
 }
 
-function BoolBuffTile({ entry, active, onToggle, theme, iconOverride, secondIconOverride, label, ariaLabel }: {
+export function BoolBuffTile({ entry, active, onToggle, theme, iconOverride, secondIconOverride, label, ariaLabel }: {
   entry: BoolBuffEntry;
   active: boolean;
   onToggle: () => void;
@@ -216,7 +216,7 @@ function BoolBuffTile({ entry, active, onToggle, theme, iconOverride, secondIcon
 
 // ── RenownCol ────────────────────────────────────────────────────────────────
 
-function RenownCol({ shortLabel, fullLabel, value, onChange, theme }: {
+export function RenownCol({ shortLabel, fullLabel, value, onChange, theme }: {
   shortLabel: string;
   fullLabel: string;
   value: string;
@@ -280,7 +280,7 @@ function extremePotionMergedTooltip(theme: AppTheme, primaryStat: StatId): React
   );
 }
 
-function boolBuffLabel(id: BoolBuffEntry["id"], primaryStat: ReturnType<typeof primaryStatForClass>, theme: AppTheme, jobName: string): ReactNode | undefined {
+export function boolBuffLabel(id: BoolBuffEntry["id"], primaryStat: ReturnType<typeof primaryStatForClass>, theme: AppTheme, jobName: string): ReactNode | undefined {
   if (id === "heroEcho") return heroEchoName(jobName);
   if (id === "extremePotion") return isHurricaneClass(jobName) ? extremePotionLabel(primaryStat) : extremePotionMergedTooltip(theme, primaryStat);
   if (id === "sparklingRedStar") return sparklingRedStarTooltip(theme);

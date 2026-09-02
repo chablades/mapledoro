@@ -33,6 +33,7 @@ export default function HoverTooltip({ label, theme, style, className, children 
   const [focusOpen, setFocusOpen] = useState(false);
   const [pos, setPos] = useState<{ left: number; bottom: number } | null>(null);
   const [shiftX, setShiftX] = useState(0);
+  const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
   const ref = useRef<HTMLDivElement>(null);
   const bubbleRef = useRef<HTMLDivElement>(null);
   const open = hoverOpen || clickOpen || focusOpen;
@@ -45,6 +46,12 @@ export default function HoverTooltip({ label, theme, style, className, children 
     if (!wrapper) return;
     const rect = wrapper.getBoundingClientRect();
     setPos({ left: rect.left + rect.width / 2, bottom: window.innerHeight - rect.top + GAP });
+    // A native <dialog> opened via showModal() renders in the browser's top layer, which sits
+    // above all regular DOM content -- a bubble portaled to document.body (this component's
+    // usual target, chosen to escape overflow:hidden ancestors) would render behind the dialog
+    // regardless of z-index. Portaling into the dialog itself keeps the bubble in that same
+    // top layer, where z-index (hover-tip-bubble's 200 in globals.css) works again.
+    setPortalTarget(wrapper.closest("dialog"));
   }, []);
 
   // Horizontal viewport-edge clamp -- needs the bubble's actual width, so it can only run once
@@ -174,7 +181,7 @@ export default function HoverTooltip({ label, theme, style, className, children 
         >
           {label}
         </div>,
-        document.body,
+        portalTarget ?? document.body,
       )}
     </div>
   );

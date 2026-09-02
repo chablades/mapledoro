@@ -3,10 +3,10 @@
 import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import type { AppTheme } from "../../../components/themes";
 import HoverTooltip from "../../../components/HoverTooltip";
-import { ToolNumberInput } from "../../tools/shared-ui";
+import { clampNumber, numericKeyDown } from "../../../lib/inputUtils";
 import { critRateToCritDmg } from "../../tools/stat-optimizer/scouter-class-data";
-import { toolStyles } from "../../tools/tool-styles";
 import type { StoredCharacterRecord } from "../model/charactersStore";
+import { statInputStyle } from "../setup/components/QuestionControls";
 import { resolveClassId } from "../setup/data/nexonJobMapping";
 import type { ScouterSpecEfficiency } from "./scouterCache";
 import {
@@ -149,7 +149,10 @@ const unitLabelStyle: CSSProperties = { display: "flex", alignItems: "center", g
    block of the panel's only display type. Nunito ships 400/600/700/800, so the weight is a
    real knob again: 800 matches the Comparisons section's answers, so both sections read
    their values at the same weight. */
-const worthCellStyle: CSSProperties = { textAlign: "right", fontWeight: 800, paddingRight: WORTH_INSET };
+const worthCellStyle: CSSProperties = {
+  textAlign: "right", fontWeight: 800, paddingRight: WORTH_INSET,
+  overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+};
 /* Header row runs taller than the body rows it labels, so the column names sit off the panel
    edge instead of wedged against it. */
 const headCellStyle: CSSProperties = { textAlign: "left", fontWeight: 800, padding: "8px 9px" };
@@ -183,8 +186,8 @@ function PerStatColumn({ theme, eff, rows, unit, amounts, onAmount, inputStyle }
         <thead>
           <tr style={{ background: theme.timerBg }}>
             <th style={{ ...cell, ...headCellStyle, color: theme.muted }}>Stat</th>
-            <th style={{ ...cell, ...headCellStyle, color: theme.muted, width: 60 }}>Amount</th>
-            <th style={{ ...cell, ...worthHeadCellStyle, color: theme.muted, width: 60 }}>Worth</th>
+            <th style={{ ...cell, ...headCellStyle, color: theme.muted, width: 68 }}>Amount</th>
+            <th style={{ ...cell, ...worthHeadCellStyle, color: theme.muted, width: 84 }}>Worth</th>
           </tr>
         </thead>
         <tbody>
@@ -195,21 +198,19 @@ function PerStatColumn({ theme, eff, rows, unit, amounts, onAmount, inputStyle }
               <tr key={row.id}>
                 <td style={isLast ? lastCell : cell}>{row.label}</td>
                 <td style={isLast ? lastCell : cell}>
-                  <ToolNumberInput
-                    value={amount}
-                    min={0}
-                    max={100000}
+                  <input
+                    type="text"
+                    inputMode="numeric"
                     aria-label={`${row.label} amount`}
-                    // Shape (the compact padding/type size this narrow column needs, and dropping
-                    // the spinner arrows Chromium reserves room for even while they're hidden)
-                    // stays in CSS so the ≤560px 16px rule that stops iOS zooming on focus can
-                    // still reach it -- an inline font-size would win over that media query.
-                    className="tool-input no-spinner stat-efficiency-amount"
+                    value={String(amount)}
                     style={inputStyle}
-                    onCommit={(v) => onAmount(row.id, v)}
+                    onChange={(e) => onAmount(row.id, clampNumber(Number(e.target.value) || 0, 9999))}
+                    onKeyDown={numericKeyDown}
+                    onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; e.currentTarget.select(); }}
+                    onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
                   />
                 </td>
-                <td style={isLast ? lastWorthCell : worthCell}>
+                <td style={isLast ? lastWorthCell : worthCell} title={formatEfficiencyValue(eff, row, amount, unit)}>
                   {formatEfficiencyValue(eff, row, amount, unit)}
                 </td>
               </tr>
@@ -233,7 +234,6 @@ function PerStatTable({ theme, labels, eff, critRateToDmg }: {
   // Amounts are a scratchpad, not character data -- typing here compares lines, it doesn't
   // change anything about the character, so nothing is persisted (same as the live site).
   const [amounts, setAmounts] = useState<Record<string, number>>({});
-  const styles = toolStyles(theme);
   // Column 2 starts at the main stat instead of at the halfway mark. Every row from there down
   // is one of the same triple (a stat, its %, and its "% not applied"), so a cut at the middle
   // strands part of a stat's group at the bottom of column 1; everything above it is the
@@ -241,15 +241,18 @@ function PerStatTable({ theme, labels, eff, critRateToDmg }: {
   const splitIndex = rows.findIndex((r) => r.id === "main");
 
   const setAmount = (id: string, value: number) => setAmounts((prev) => ({ ...prev, [id]: value }));
-  const columnProps = { theme, eff, unit, amounts, onAmount: setAmount, inputStyle: styles.inputStyle };
+  // Same statInputStyle every setup step's own inputs use (StatsSetupStep.tsx etc.) --
+  // narrowed padding/font-size for this table's tighter column, everything else (border,
+  // radius, focus outline base) stays the real shared style, not tools/'s.
+  const amountInputStyle: CSSProperties = { ...statInputStyle(theme), padding: "1px 5px", fontSize: "0.75rem" };
+  const columnProps = { theme, eff, unit, amounts, onAmount: setAmount, inputStyle: amountInputStyle };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
       <label style={{ ...unitLabelStyle, color: theme.muted }}>
         Show as
         <select
-          className="tool-select"
-          style={{ ...styles.selectStyle, flex: 1, maxWidth: 180 }}
+          style={{ ...statInputStyle(theme), cursor: "pointer", flex: 1, maxWidth: 180, width: undefined }}
           value={unit}
           onChange={(e) => setUnit(e.target.value as EfficiencyUnitId)}
         >

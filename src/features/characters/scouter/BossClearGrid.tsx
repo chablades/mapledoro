@@ -246,41 +246,41 @@ const BOSS_FILTER_OPTIONS: { value: BossFilter; label: string }[] = [
   { value: "all", label: "All" },
 ];
 
-// Same on/off color-swap look as the shared Toggle button (shared-ui.tsx), minus its checkmark
-// glyph -- a local copy rather than a Toggle prop, since Toggle's other 6 usages elsewhere in the
-// app all want the checkmark and shouldn't change.
-function noGapLossToggleStyle(theme: AppTheme, checked: boolean): React.CSSProperties {
+// Same on/off color-swap look the old single Full HEXA toggle had (noGapLossToggleStyle,
+// removed when that toggle was replaced by the Scouter Simulator popup) -- same slot in the
+// filter row, same visual treatment, now opens the popup instead of directly flipping a flag.
+function openSimulatorButtonStyle(theme: AppTheme, active: boolean): React.CSSProperties {
   return {
     padding: "8px 16px", borderRadius: "10px", fontSize: "0.82rem", lineHeight: 1, fontWeight: 700,
-    cursor: "pointer", userSelect: "none", color: checked ? theme.accentText : theme.muted,
-    background: checked ? theme.accentSoft : theme.timerBg, border: `1px solid ${checked ? theme.accent : theme.border}`,
+    cursor: "pointer", userSelect: "none", color: active ? theme.accentText : theme.muted,
+    background: active ? theme.accentSoft : theme.timerBg, border: `1px solid ${active ? theme.accent : theme.border}`,
   };
 }
-function NoGapLossToggle({ theme, checked, onChange }: { theme: AppTheme; checked: boolean; onChange: (v: boolean) => void }) {
+function OpenSimulatorButton({ theme, simulated, onOpen }: { theme: AppTheme; simulated: boolean; onOpen: () => void }) {
   return (
-    <HoverTooltip theme={theme} label="Shows clear % at the max level advantage, Arcane Force, and Sacred Power.">
+    <HoverTooltip theme={theme} label={simulated ? "Edit your custom stats set." : "Preview your HEXA with custom stats set."}>
       <button
         type="button"
         className="tool-btn"
-        aria-pressed={checked}
-        onClick={() => onChange(!checked)}
-        style={noGapLossToggleStyle(theme, checked)}
+        aria-pressed={simulated}
+        onClick={onOpen}
+        style={openSimulatorButtonStyle(theme, simulated)}
       >
-        Full HEXA
+        {simulated ? "Edit Simulator" : "Simulator"}
       </button>
     </HoverTooltip>
   );
 }
 
 /** One boss+difficulty tile's computed result, or null if computeBossClear couldn't produce one
- *  (missing formula fields) -- filtered out before rendering either view. noGapLoss pins the
- *  level/Arcane/Sacred Power gaps to their ceilings (see bossClearFormula.ts), showing clear%
- *  at full HEXA damage as if every requirement gap were already closed. */
-function relevantTiles(entries: BossCutEntry[], level: number, arcaneForce: number, authenticForce: number, inputs: NonNullable<ScouterResultEntry["bossClearInputs"]>, filter: BossFilter, noGapLoss: boolean) {
+ *  (missing formula fields) -- filtered out before rendering either view. level/arcaneForce/
+ *  authenticForce can be a Scouter Simulator override (ScouterBookmark owns that state, not
+ *  this component) rather than the character's real stats. */
+function relevantTiles(entries: BossCutEntry[], level: number, arcaneForce: number, authenticForce: number, inputs: NonNullable<ScouterResultEntry["bossClearInputs"]>, filter: BossFilter) {
   const order = (entries[0] && DIFFICULTY_ORDER_OVERRIDE[entries[0].name]) ?? DIFFICULTY_ORDER;
   const sorted = [...entries].sort((a, b) => (order[a.difficulty] ?? 99) - (order[b.difficulty] ?? 99));
   return sorted.reduce<{ entry: BossCutEntry; result: BossClearResult }[]>((tiles, entry) => {
-    const result = computeBossClear(entry, level, arcaneForce, authenticForce, inputs, noGapLoss);
+    const result = computeBossClear(entry, level, arcaneForce, authenticForce, inputs);
     if (result && (filter === "all" || isRelevant(result.clearRate, result.isPartyBoss, result.partyLimit))) {
       tiles.push({ entry, result });
     }
@@ -364,13 +364,13 @@ function DifficultyChip({ theme, iconId, displayName, entry, result }: {
 }
 
 function BossQuickViewRow({
-  theme, boss, entries, level, arcaneForce, authenticForce, inputs, filter, noGapLoss, isLast, onSelect,
+  theme, boss, entries, level, arcaneForce, authenticForce, inputs, filter, isLast, onSelect,
 }: {
   theme: AppTheme; boss: string; entries: BossCutEntry[]; level: number; arcaneForce: number;
   authenticForce: number; inputs: NonNullable<ScouterResultEntry["bossClearInputs"]>;
-  filter: BossFilter; noGapLoss: boolean; isLast: boolean; onSelect: (boss: string) => void;
+  filter: BossFilter; isLast: boolean; onSelect: (boss: string) => void;
 }) {
-  const tiles = relevantTiles(entries, level, arcaneForce, authenticForce, inputs, filter, noGapLoss);
+  const tiles = relevantTiles(entries, level, arcaneForce, authenticForce, inputs, filter);
   if (tiles.length === 0) return null;
 
   const iconId = BOSS_ICON_ID[boss];
@@ -566,12 +566,13 @@ function BossPicker({ theme, grouped, onSelectBoss }: {
 // unmounts BossQuickView entirely, see the view === "quickView" conditional render) resets it for
 // free -- nobody's profile should stay stuck in the expanded layout after they navigate away.
 function BossQuickView({
-  theme, entry, grouped, filter, onFilterChange, noGapLoss, onNoGapLossChange, level, arcaneForce, authenticForce, inputs, onSelectBoss,
+  theme, entry, grouped, filter, onFilterChange, level, arcaneForce, authenticForce, inputs, onSelectBoss, simulated, onOpenSimulator,
 }: {
   theme: AppTheme; entry: ScouterResultEntry; grouped: BossEntryList[]; filter: BossFilter;
-  onFilterChange: (v: BossFilter) => void; noGapLoss: boolean; onNoGapLossChange: (v: boolean) => void;
+  onFilterChange: (v: BossFilter) => void;
   level: number; arcaneForce: number; authenticForce: number;
   inputs: NonNullable<ScouterResultEntry["bossClearInputs"]>; onSelectBoss: (boss: string) => void;
+  simulated: boolean; onOpenSimulator: () => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   // Fades whichever edge actually has more to scroll to (see useScrollEdges/edgeFadeMask)
@@ -586,7 +587,7 @@ function BossQuickView({
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <PillGroup theme={theme} options={BOSS_FILTER_OPTIONS} value={filter} onChange={onFilterChange} />
-          <NoGapLossToggle theme={theme} checked={noGapLoss} onChange={onNoGapLossChange} />
+          <OpenSimulatorButton theme={theme} simulated={simulated} onOpen={onOpenSimulator} />
           <InfoTooltip theme={theme} label="How to read this" content={QUICK_VIEW_INFO_CONTENT} />
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -631,7 +632,6 @@ function BossQuickView({
             authenticForce={authenticForce}
             inputs={inputs}
             filter={filter}
-            noGapLoss={noGapLoss}
             isLast={i === grouped.length - 1}
             onSelect={onSelectBoss}
           />
@@ -839,11 +839,11 @@ function BackToQuickViewButton({ theme, onClick }: { theme: AppTheme; onClick: (
 }
 
 function BossSpotlight({
-  theme, grouped, selectedIndex, onNavigate, level, arcaneForce, authenticForce, inputs, noGapLoss, onBack,
+  theme, grouped, selectedIndex, onNavigate, level, arcaneForce, authenticForce, inputs, onBack,
 }: {
   theme: AppTheme; grouped: BossEntryList[]; selectedIndex: number; onNavigate: (i: number) => void;
   level: number; arcaneForce: number; authenticForce: number;
-  inputs: NonNullable<ScouterResultEntry["bossClearInputs"]>; noGapLoss: boolean; onBack: () => void;
+  inputs: NonNullable<ScouterResultEntry["bossClearInputs"]>; onBack: () => void;
 }) {
   const [boss, entries] = grouped[selectedIndex];
   const iconId = BOSS_ICON_ID[boss];
@@ -852,7 +852,7 @@ function BossSpotlight({
   const wrapperRef = useRef<HTMLDivElement>(null);
   const fallbackRef = useRef<HTMLDivElement>(null);
   const stackRef = useRef<HTMLDivElement>(null);
-  const tiles = relevantTiles(entries, level, arcaneForce, authenticForce, inputs, "all", noGapLoss);
+  const tiles = relevantTiles(entries, level, arcaneForce, authenticForce, inputs, "all");
 
   // Formula estimate holds on desktop (fixed single-line tiles); below 400px tiles can wrap onto
   // a second line (.spotlight-tile-numbers) so the fixed-height assumption breaks and this gets
@@ -954,7 +954,10 @@ export type ScouterBookmarkView = "quickView" | "spotlight";
  *  Spotlight's selected boss is owned by CharacterProfileOverviewScreen (not local state) so
  *  the page header can read the same value directly instead of BossClearGrid reporting it back
  *  up through an effect -- see resolveBossDisplayName's own comment. */
-export default function BossClearGrid({ theme, character, entry, view, onViewChange, selectedIndex, onSelectedIndexChange }: {
+export default function BossClearGrid({
+  theme, character, entry, view, onViewChange, selectedIndex, onSelectedIndexChange,
+  levelOverride, arcaneForceOverride, authenticForceOverride, simulated, onOpenSimulator,
+}: {
   theme: AppTheme;
   character: StoredCharacterRecord;
   entry: ScouterResultEntry;
@@ -962,9 +965,23 @@ export default function BossClearGrid({ theme, character, entry, view, onViewCha
   onViewChange: (v: ScouterBookmarkView) => void;
   selectedIndex: number;
   onSelectedIndexChange: (i: number) => void;
+  /** From the Scouter Simulator popup's Level/Arcane Force/Sacred Power inputs (ScouterBookmark
+   *  owns the state, not this component) -- a player-typed "what if" value, used in place of
+   *  the character's real level/Arcane Force/Sacred Power when set. There's no separate
+   *  "close this gap" toggle: typing the boss's own requirement already closes it, so
+   *  computeBossClear's gap math stays a single honest calculation either way. */
+  levelOverride?: number;
+  arcaneForceOverride?: number;
+  authenticForceOverride?: number;
+  /** Whether a Scouter Simulator "what if" is currently applied -- swaps the Quick View
+   *  filter row's launcher button label from "Simulator" to "Edit". */
+  simulated: boolean;
+  /** Opens the Scouter Simulator popup -- rendered here (Quick View's filter row, where the
+   *  old single Full HEXA toggle used to sit) rather than as a separate control bar, so it
+   *  doesn't add a new row to the bookmark. */
+  onOpenSimulator: () => void;
 }) {
   const [filter, setFilter] = useState<BossFilter>("relevant");
-  const [noGapLoss, setNoGapLoss] = useState(false);
   const inputs = entry.bossClearInputs;
   const grouped = groupByBoss(BOSSCUT_DATA);
   const clampedIndex = Math.min(selectedIndex, grouped.length - 1);
@@ -977,8 +994,9 @@ export default function BossClearGrid({ theme, character, entry, view, onViewCha
     );
   }
 
-  const arcaneForce = Number(character.stats.arcanePower) || 0;
-  const authenticForce = Number(character.stats.sacredPower) || 0;
+  const level = levelOverride ?? character.level;
+  const arcaneForce = arcaneForceOverride ?? (Number(character.stats.arcanePower) || 0);
+  const authenticForce = authenticForceOverride ?? (Number(character.stats.sacredPower) || 0);
 
   const handleSelectBoss = (boss: string) => {
     const idx = grouped.findIndex(([b]) => b === boss);
@@ -995,13 +1013,13 @@ export default function BossClearGrid({ theme, character, entry, view, onViewCha
           grouped={grouped}
           filter={filter}
           onFilterChange={setFilter}
-          noGapLoss={noGapLoss}
-          onNoGapLossChange={setNoGapLoss}
-          level={character.level}
+          level={level}
           arcaneForce={arcaneForce}
           authenticForce={authenticForce}
           inputs={inputs}
           onSelectBoss={handleSelectBoss}
+          simulated={simulated}
+          onOpenSimulator={onOpenSimulator}
         />
       )}
       {view === "spotlight" && (
@@ -1010,11 +1028,10 @@ export default function BossClearGrid({ theme, character, entry, view, onViewCha
           grouped={grouped}
           selectedIndex={clampedIndex}
           onNavigate={onSelectedIndexChange}
-          level={character.level}
+          level={level}
           arcaneForce={arcaneForce}
           authenticForce={authenticForce}
           inputs={inputs}
-          noGapLoss={noGapLoss}
           onBack={() => onViewChange("quickView")}
         />
       )}

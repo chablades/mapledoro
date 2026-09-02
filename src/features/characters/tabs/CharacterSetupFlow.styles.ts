@@ -1063,24 +1063,6 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
             display: none !important;
           }
         }
-        /* The per-stat table's Amount box, tightened from .tool-input's own padding/type size to
-           fit a column that also has to hold a stat name and its value. Shape lives here rather
-           than inline so globals' iOS anti-zoom rule (a focused control under 16px scales the
-           page in on iPhone) still applies -- an inline font-size would beat that media query.
-           This block is injected after globals.css, though, so a plain .tool-input rule there
-           loses to anything declared here: the query has to be restated for this class. */
-        .stat-efficiency-amount {
-          width: 100%;
-          box-sizing: border-box;
-          padding: 1px 5px;
-          font-size: 0.75rem;
-        }
-        @media (max-width: 560px) {
-          .stat-efficiency-amount {
-            font-size: 16px;
-          }
-        }
-
         /* Spotlight's tile row (BossClearGrid.tsx, SpotlightTile) is one row across all 5
            subgrid columns (icon/difficulty/tag/clear%/Adjusted) by default. Below 400px, some
            end-game characters clear a low-tier boss at an 8-digit clear% (e.g. 474248.20%), which

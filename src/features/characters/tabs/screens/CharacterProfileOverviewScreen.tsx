@@ -46,6 +46,9 @@ import { useScouterResult, type ScouterErrorReason } from "../../scouter/useScou
 import type { ScouterSetupGap } from "../../scouter/scouterApi";
 import BossClearGrid, { type ScouterBookmarkView } from "../../scouter/BossClearGrid";
 import StatEfficiencyPanel from "../../scouter/StatEfficiencyPanel";
+import { useScouterSimulator, type ScouterSimulatorController } from "../../scouter/useScouterSimulator";
+import ScouterSimulatorDialog from "../../scouter/ScouterSimulatorDialog";
+import { dialogBtnColors } from "../../../../components/themes";
 import type { ScouterResultEntry } from "../../scouter/scouterCache";
 import { groupByBoss, resolveBossDisplayName } from "../../scouter/bossGrouping";
 import { BOSSCUT_DATA } from "../../scouter/bosscut-data.generated";
@@ -1251,8 +1254,9 @@ function renderOverviewSection(id: OverviewSectionId, ctx: OverviewSectionRender
   }
 }
 
-function OverviewBookmark({ model, onNavigateToBookmark, onNavigateToGearSlot, onSetOverviewLayout }: {
+function OverviewBookmark({ model, onNavigateToBookmark, onNavigateToGearSlot, onSetOverviewLayout, scouterSimulator }: {
   model: PreviewPaneModel; onNavigateToBookmark: (id: BookmarkId, subView?: string) => void; onNavigateToGearSlot: (slotKey: SlotKey) => void; onSetOverviewLayout: (layout: OverviewSectionId[] | null) => void;
+  scouterSimulator: ScouterSimulatorController;
 }) {
   const { theme, profile } = model;
   const character = profile.confirmedCharacter;
@@ -1329,7 +1333,7 @@ function OverviewBookmark({ model, onNavigateToBookmark, onNavigateToGearSlot, o
 
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16 }}>
         {mounted && character
-          ? <ScouterFigure character={character} theme={theme} />
+          ? <ScouterFigure character={character} theme={theme} simulator={scouterSimulator} />
           : <OverviewFigure label="Scouter" value="—" theme={theme} />}
         <div style={{ display: "flex", gap: 6 }}>
           <WseSlot label="Weapon" item={equipGrid?.weapon} theme={theme} onNavigate={() => onNavigateToGearSlot("weapon")} />
@@ -3289,25 +3293,78 @@ function ScouterResultGate({ theme, character, onEditStep, children }: {
 // the Quick View dropdown (3 ways to do the same thing), and once that got removed the
 // back-only button didn't earn its own dedicated row anymore either, so it moved into
 // BossSpotlight's own header instead.
-function ScouterBookmark({ theme, character, view, onViewChange, selectedBossIndex, onSelectedBossIndexChange, onEditStep }: {
+function ScouterBookmark({ theme, character, view, onViewChange, selectedBossIndex, onSelectedBossIndexChange, onEditStep, scouterSimulator }: {
   theme: Theme; character: StoredCharacterRecord; view: ScouterBookmarkView; onViewChange: (v: ScouterBookmarkView) => void;
   selectedBossIndex: number; onSelectedBossIndexChange: (i: number) => void;
   onEditStep: (flowId: SetupFlowId, targetSubstep?: number, confineToSubstep?: boolean, subView?: string) => void;
+  scouterSimulator: ScouterSimulatorController;
 }) {
+  const [simulatorDialogOpen, setSimulatorDialogOpen] = useState(false);
+  const simulated = scouterSimulator.active;
   return (
     <ScouterResultGate theme={theme} character={character} onEditStep={onEditStep}>
       {(entry) => (
-        <BossClearGrid
-          theme={theme}
-          character={character}
-          entry={entry}
-          view={view}
-          onViewChange={onViewChange}
-          selectedIndex={selectedBossIndex}
-          onSelectedIndexChange={onSelectedBossIndexChange}
-        />
+        <>
+          <SimulatedValuesMarker theme={theme} visible={simulated !== null} onReset={scouterSimulator.reset} />
+          <BossClearGrid
+            theme={theme}
+            character={character}
+            entry={simulated?.entry ?? entry}
+            view={view}
+            onViewChange={onViewChange}
+            selectedIndex={selectedBossIndex}
+            onSelectedIndexChange={onSelectedBossIndexChange}
+            levelOverride={simulated?.overrides.level}
+            arcaneForceOverride={simulated?.overrides.arcaneForceOverride}
+            authenticForceOverride={simulated?.overrides.authenticForceOverride}
+            simulated={simulated !== null}
+            onOpenSimulator={() => setSimulatorDialogOpen(true)}
+          />
+          {simulatorDialogOpen && (
+            <ScouterSimulatorDialog
+              theme={theme}
+              character={character}
+              applying={scouterSimulator.applying}
+              onApply={async (overrides) => {
+                const result = await scouterSimulator.apply(overrides);
+                if (result.status === "ok") setSimulatorDialogOpen(false);
+                return result;
+              }}
+              onClose={() => setSimulatorDialogOpen(false)}
+            />
+          )}
+        </>
       )}
     </ScouterResultGate>
+  );
+}
+
+function simulatedValuesMarkerStyle(theme: Theme): CSSProperties {
+  return {
+    display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8,
+    padding: "0.5rem 0.7rem", borderRadius: 10, marginBottom: 10,
+    background: `${theme.accent}15`, border: `1px solid ${theme.accent}`,
+  };
+}
+
+/** Sits above BossClearGrid on the Scouter bookmark, only while a Scouter Simulator "what if"
+ *  is applied -- the marker that the figures below are simulated, not the character's real
+ *  saved result (per the Scouter Simulator plan's product decision, the simulated result
+ *  replaces the real one in place), plus a way to reset back to real without first opening
+ *  the popup. The launcher itself (opening the popup in the first place) lives inside
+ *  BossClearGrid's Quick View filter row -- same slot the old single Full HEXA toggle used to
+ *  sit in, per Yuki's call. Renders nothing when no simulation is active. */
+function SimulatedValuesMarker({ theme, visible, onReset }: { theme: Theme; visible: boolean; onReset: () => void }) {
+  if (!visible) return null;
+  return (
+    <div style={simulatedValuesMarkerStyle(theme)}>
+      <span style={{ fontSize: "0.8rem", fontWeight: 700, color: theme.accentText }}>
+        Showing simulated values
+      </span>
+      <button type="button" onClick={onReset} className="tool-btn tool-dialog-btn" style={{ ...dialogBtnColors(theme), padding: "4px 10px", fontSize: "0.75rem" }}>
+        Reset
+      </button>
+    </div>
   );
 }
 
@@ -3470,8 +3527,12 @@ function BookmarkPageBody({
     return active.id === "scouter" && remembered === "spotlight" ? remembered : "quickView";
   });
   const [scouterSelectedBossIndex, setScouterSelectedBossIndex] = useState(0);
+  // Shared between ScouterFigure (below, inside OverviewBookmark) and ScouterBookmark (the
+  // "scouter" branch further down) -- see useScouterSimulator's own comment for why this
+  // lives here rather than inside either of those two components.
+  const scouterSimulator = useScouterSimulator(character);
 
-  if (active.id === "overview") return <OverviewBookmark model={model} onNavigateToBookmark={onNavigateToBookmark} onNavigateToGearSlot={onNavigateToGearSlot} onSetOverviewLayout={actions.setOverviewLayout} />;
+  if (active.id === "overview") return <OverviewBookmark model={model} onNavigateToBookmark={onNavigateToBookmark} onNavigateToGearSlot={onNavigateToGearSlot} onSetOverviewLayout={actions.setOverviewLayout} scouterSimulator={scouterSimulator} />;
 
   if (active.id === "setup") {
     // SetupFlowButtons calls actions.startOptionalFlow directly (it's also reused
@@ -3614,6 +3675,7 @@ function BookmarkPageBody({
             selectedBossIndex={scouterSelectedBossIndex}
             onSelectedBossIndexChange={setScouterSelectedBossIndex}
             onEditStep={onEditStep}
+            scouterSimulator={scouterSimulator}
           />
         )}
       </>

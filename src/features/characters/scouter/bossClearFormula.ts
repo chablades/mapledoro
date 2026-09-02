@@ -283,21 +283,16 @@ function gapContrastFields(entry: BossCutEntry, hasArcaneReq: boolean, hasAuthen
   };
 }
 
-/** The three gap*Dmg fields as reported to the UI -- at noGapLoss each reads as its own ceiling
- *  (matching the ceiling damage() already collapsed to), so the tooltip's loss breakdown shows
- *  0% loss instead of contradicting the displayed clear%. Split out of computeBossClear to keep
- *  its own cognitive complexity under the sonarjs cap. */
-function reportedGapFields(levelGap: number, arcaneGap: number, authenticGap: number, arcaneCorrection: number, noGapLoss: boolean) {
+/** The three gap*Dmg fields as reported to the UI. Split out of computeBossClear to keep its
+ *  own cognitive complexity under the sonarjs cap. */
+function reportedGapFields(levelGap: number, arcaneGap: number, authenticGap: number) {
   return {
-    levelGapDmg: noGapLoss ? LEVEL_GAP_CEILING : levelGap,
-    arcaneGapDmg: noGapLoss ? arcaneCorrection : arcaneGap,
-    authenticGapDmg: noGapLoss ? AUTHENTIC_GAP_CEILING : authenticGap,
+    levelGapDmg: levelGap,
+    arcaneGapDmg: arcaneGap,
+    authenticGapDmg: authenticGap,
   };
 }
 
-/** noGapLoss pins each gap to its own ceiling, which is exactly what correctionFactor
- *  (1.2 * arcaneCorrection * authenticCorrection) is built from -- gapAdjusted / correctionFactor
- *  collapses to rawDamage rather than approximating it. */
 function gapAdjustedDamage(
   rawDamage: number,
   arcaneGap: number,
@@ -305,23 +300,25 @@ function gapAdjustedDamage(
   levelGap: number,
   arcaneCorrection: number,
   hasAuthenticReq: boolean,
-  noGapLoss: boolean,
 ): number {
-  if (noGapLoss) return rawDamage;
   const correctionFactor = 1.2 * arcaneCorrection * (hasAuthenticReq ? 1.25 : 1);
   return (rawDamage * arcaneGap * authenticGap * levelGap) / correctionFactor;
 }
 
 /** Computes one boss+difficulty tile's clear rate, tag, and color for a character, or null if
  *  the character's cached Scouter result doesn't have Boss Clear inputs yet (needs a refresh) or
- *  the entry is missing required fields (bossCut/partyBossCut, or guard isn't 300/380). */
+ *  the entry is missing required fields (bossCut/partyBossCut, or guard isn't 300/380).
+ *  characterLevel/characterArcaneForce/characterAuthenticForce can be a Scouter Simulator
+ *  override (a player-typed "what if I had X Arcane Force" value) rather than the character's
+ *  real saved stat -- computeBossClear itself doesn't know or care which, the gap math is the
+ *  same honest calculation either way. There is deliberately no "pin this gap to 0% loss"
+ *  shortcut -- typing the boss's own requirement achieves that already. */
 export function computeBossClear(
   entry: BossCutEntry,
   characterLevel: number,
   characterArcaneForce: number,
   characterAuthenticForce: number,
   inputs: BossClearInputs,
-  noGapLoss = false,
 ): BossClearResult | null {
   if (entry.guard !== 300 && entry.guard !== 380) return null;
   const cutThreshold = entry.bossCut ?? entry.partyBossCut;
@@ -336,7 +333,7 @@ export function computeBossClear(
   const arcaneGap = arcaneGapDmg(entry.arcaneForce, Math.min(characterArcaneForce, 1750));
   const authenticGap = authenticGapDmg(entry.authenticForce, characterAuthenticForce);
   const levelGap = levelGapDmg(characterLevel, entry.level);
-  const damage = gapAdjustedDamage(rawDamage, arcaneGap, authenticGap, levelGap, arcaneCorrection, hasAuthenticReq, noGapLoss);
+  const damage = gapAdjustedDamage(rawDamage, arcaneGap, authenticGap, levelGap, arcaneCorrection, hasAuthenticReq);
 
   const spline = entry.guard === 300 ? inputs.spline300 : inputs.spline380;
   const cutInDamageSpace = splineEval(spline, cutThreshold);
@@ -361,7 +358,7 @@ export function computeBossClear(
     partyLimit,
     bossPower: convertedBossPower(bossStat, entry.guard),
     bossStat,
-    ...reportedGapFields(levelGap, arcaneGap, authenticGap, arcaneCorrection, noGapLoss),
+    ...reportedGapFields(levelGap, arcaneGap, authenticGap),
     levelGapCeiling: LEVEL_GAP_CEILING,
     arcaneGapCeiling: arcaneCorrection,
     authenticGapCeiling: AUTHENTIC_GAP_CEILING,

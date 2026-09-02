@@ -9,6 +9,7 @@ import InfoTooltip, { type TooltipContent } from "../setup/components/InfoToolti
 import RefreshSpinnerIcon from "../tabs/components/RefreshSpinnerIcon";
 import { formatFigure } from "./scouterFormat";
 import { useScouterResult, type ScouterErrorReason, type ScouterFigureStatus } from "./useScouterResult";
+import type { ScouterSimulatorController } from "./useScouterSimulator";
 
 // Same glyph as the profile binder's own Setup bookmark tab (CharacterProfileOverviewScreen.tsx's
 // SetupTabIcon), duplicated here rather than exported/shared -- a tiny one-off icon, matching this
@@ -143,31 +144,41 @@ function figureValueColor(theme: AppTheme, status: ScouterFigureStatus): string 
   return theme.muted;
 }
 
-export default function ScouterFigure({ character, theme }: { character: StoredCharacterRecord; theme: AppTheme }) {
+export default function ScouterFigure({ character, theme, simulator }: { character: StoredCharacterRecord; theme: AppTheme; simulator: ScouterSimulatorController }) {
   const { status, loading, canRefresh, refresh, justRefreshed } = useScouterResult(character);
+  const simulated = simulator.active;
 
-  const value = status.kind === "ready" ? formatFigure(status.entry.boss380Hexa) : (STATUS_VALUE[status.kind] ?? "—");
+  // A simulated result replaces the real figure in place (per the Scouter Simulator plan's
+  // product decision) -- same rendering path as a real "ready" status, just sourced from
+  // useScouterSimulator instead of useScouterResult, with its own always-warning color and
+  // tooltip so it never reads as an ordinary fresh result.
+  const realValue = status.kind === "ready" ? formatFigure(status.entry.boss380Hexa) : (STATUS_VALUE[status.kind] ?? "—");
+  const value = simulated ? formatFigure(simulated.entry.boss380Hexa) : realValue;
+  const valueColor = simulated ? statusText(theme, "warning") : figureValueColor(theme, status);
+  const tooltip = simulated
+    ? <>Boss 380 HEXA (simulated)<br /><span style={{ color: statusText(theme, "warning") }}>Showing a &quot;what if&quot; from the Scouter Simulator, not your real saved result.</span></>
+    : figureTooltip(status, theme);
 
   return (
     <div>
       <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 2 }}>
         <div style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: theme.muted }}>Scouter</div>
         <InfoTooltip content={SCOUTER_INFO} theme={theme} />
-        <HoverTooltip label={refreshTooltip(status, loading)} theme={theme}>
+        <HoverTooltip label={simulated ? "Editing this needs the Scouter Simulator popup, open from the Scouter bookmark." : refreshTooltip(status, loading)} theme={theme}>
           <button
             type="button"
             className="tap-target-44"
             aria-label="Refresh Scouter"
-            disabled={!canRefresh}
+            disabled={!canRefresh || simulated !== null}
             onClick={refresh}
-            style={refreshButtonStyle(theme, !canRefresh, justRefreshed)}
+            style={refreshButtonStyle(theme, !canRefresh || simulated !== null, justRefreshed)}
           >
             <RefreshSpinnerIcon color="currentColor" size={12} />
           </button>
         </HoverTooltip>
       </div>
-      <HoverTooltip label={figureTooltip(status, theme)} theme={theme}>
-        <div style={{ fontSize: 20, fontWeight: 800, color: figureValueColor(theme, status), lineHeight: 1, fontFamily: "var(--font-heading)" }}>
+      <HoverTooltip label={tooltip} theme={theme}>
+        <div style={{ fontSize: 20, fontWeight: 800, color: valueColor, lineHeight: 1, fontFamily: "var(--font-heading)" }}>
           {loading ? "…" : value}
         </div>
       </HoverTooltip>

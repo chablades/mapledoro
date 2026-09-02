@@ -10,7 +10,7 @@
   available for this class" state rather than attempting a fetch with nowhere to route to.
 */
 
-import type { StoredCharacterRecord, StoredScouterLegion, LinkSkillsData, LinkSkillId } from "../model/charactersStore";
+import type { StoredCharacterRecord, StoredScouterLegion, StoredScouterBuffs, LinkSkillsData, LinkSkillId } from "../model/charactersStore";
 import { readCharactersStore, selectCharactersList } from "../model/charactersStore";
 import { CLASS_SKILL_DATA, getRequiredStatsForClass } from "../setup/data/classSkillData";
 import type { TripleStatFieldId } from "../setup/data/statFields";
@@ -248,12 +248,15 @@ const ZERO_POWER: ScouterPower = {
 const ZERO_ENTIRE_STAT = { str: "0", dex: "0", int: "0", luk: "0" } as const;
 
 /** Renown level (0-5) as a string, or "0" if unset. */
-function renownLevel(scouter: StoredCharacterRecord["scouter"], key: "allStats" | "atkMagAtk" | "bossDmg" | "ignoreDef" | "critDmg"): string {
-  return String(scouter?.buffs?.renown?.[key] ?? 0);
+function renownLevel(buffs: StoredScouterBuffs | undefined, key: "allStats" | "atkMagAtk" | "bossDmg" | "ignoreDef" | "critDmg"): string {
+  return String(buffs?.renown?.[key] ?? 0);
 }
 
-function buildDoping(character: StoredCharacterRecord): ScouterDoping {
-  const buffs = character.scouter?.buffs;
+/** Builds the doping (buffs) block from a plain StoredScouterBuffs, not read directly off a
+ *  character -- lets buildSimulatorPayload call this SAME function twice: once with the
+ *  character's real buffs for `doping`, once with the Scouter Simulator popup's own draft-
+ *  derived buffs for `dopingSimul`, without duplicating this mapping. */
+function buildDoping(buffs: StoredScouterBuffs | undefined): ScouterDoping {
   const bossSlayers = buffs?.bossSlayers ?? 0;
   const forTheGuild = buffs?.forTheGuild ?? 0;
   const hardHitter = buffs?.hardHitter ?? 0;
@@ -287,11 +290,11 @@ function buildDoping(character: StoredCharacterRecord): ScouterDoping {
     buff275: Boolean(buffs?.honorableElixir),
     additional1: Boolean(buffs?.vipBuff),
     additional2: false,
-    championAll: renownLevel(character.scouter, "allStats"),
-    championAtk: renownLevel(character.scouter, "atkMagAtk"),
-    championBoss: renownLevel(character.scouter, "bossDmg"),
-    championIgnore: renownLevel(character.scouter, "ignoreDef"),
-    championCriDmg: renownLevel(character.scouter, "critDmg"),
+    championAll: renownLevel(buffs, "allStats"),
+    championAtk: renownLevel(buffs, "atkMagAtk"),
+    championBoss: renownLevel(buffs, "bossDmg"),
+    championIgnore: renownLevel(buffs, "ignoreDef"),
+    championCriDmg: renownLevel(buffs, "critDmg"),
     authenticDmg: Boolean(buffs?.maxedSacredSymbol),
     moonshine: Boolean(buffs?.brightMoonlight),
     cake: false,
@@ -324,11 +327,23 @@ function soulValue(character: StoredCharacterRecord, type: "ephenia" | "mugong")
   return soul.soulLevel === 1 || soul.soulLevel === 2 ? String(soul.soulLevel) : "0";
 }
 
-function ozRingLevel(character: StoredCharacterRecord, ring: "restraint" | "weaponJump" | "totalling" | "continuous"): string {
+export type OzRingId = "restraint" | "weaponJump" | "totalling" | "continuous";
+
+/** Optional per-ring level overrides for the Scouter Simulator's Oz Rings tab, plus the ring
+ *  mode toggle -- undefined/omitted means "use the character's real saved value", matching
+ *  every other simulator override in this file. */
+export interface OzRingOverrides {
+  levels?: Partial<Record<OzRingId, number>>;
+  useContinuousAsMainRing?: boolean;
+}
+
+function ozRingLevel(character: StoredCharacterRecord, ring: OzRingId, overrides?: OzRingOverrides): string {
+  const override = overrides?.levels?.[ring];
+  if (override !== undefined) return String(override);
   return String(character.scouter?.ozRings?.levels[ring] ?? 0);
 }
 
-function buildSpecial(character: StoredCharacterRecord, offStats: { third: string; fourth: string }): ScouterSpecial {
+function buildSpecial(character: StoredCharacterRecord, offStats: { third: string; fourth: string }, ringOverrides?: OzRingOverrides): ScouterSpecial {
   return {
     isReboot: isRebootWorld(character.worldID),
     combat: true,
@@ -337,14 +352,14 @@ function buildSpecial(character: StoredCharacterRecord, offStats: { third: strin
     genesis: character.isLiberated === true,
     oneHandSword: character.weaponHand === "1h",
     useRuinForceShild: character.hasRuinForceShield === true,
-    useContinuousRingAsMainRing: character.scouter?.ozRings?.ringMode === "continuous",
-    restraintRing: ozRingLevel(character, "restraint"),
-    weaponRing: ozRingLevel(character, "weaponJump"),
-    ringOfSum: ozRingLevel(character, "totalling"),
+    useContinuousRingAsMainRing: ringOverrides?.useContinuousAsMainRing ?? (character.scouter?.ozRings?.ringMode === "continuous"),
+    restraintRing: ozRingLevel(character, "restraint", ringOverrides),
+    weaponRing: ozRingLevel(character, "weaponJump", ringOverrides),
+    ringOfSum: ozRingLevel(character, "totalling", ringOverrides),
     riskTaker: "0",
     statThird: offStats.third,
     statFourth: offStats.fourth,
-    continuosRing: ozRingLevel(character, "continuous"),
+    continuosRing: ozRingLevel(character, "continuous", ringOverrides),
     challenge: false,
     is30min: false,
     destiny2ndSkill: false,
@@ -566,7 +581,7 @@ function buildHexa(characterName: string, isHexaEligible: boolean): HexaBuildRes
 
 const ZERO_RING: ScouterSeedRingEntry = { level: "0", efficiency: 0 };
 
-function buildSeedRing(character: StoredCharacterRecord): ScouterSeedRing {
+function buildSeedRing(character: StoredCharacterRecord, ringOverrides?: OzRingOverrides): ScouterSeedRing {
   return {
     // efficiency is always 0 here, even for rings mapledoro does have real level data
     // for -- a real maplescouter.com request sends real nonzero per-ring efficiency
@@ -574,10 +589,10 @@ function buildSeedRing(character: StoredCharacterRecord): ScouterSeedRing {
     // at 0, so this looks like a value the API computes itself from `level` rather than
     // trusting from the request. Left as a known mismatch rather than guessing at their
     // formula; revisit if a real result ever depends on it.
-    restraintRing: { level: ozRingLevel(character, "restraint"), efficiency: 0 },
-    weaponRing: { level: ozRingLevel(character, "weaponJump"), efficiency: 0 },
-    ringOfSum: { level: ozRingLevel(character, "totalling"), efficiency: 0 },
-    continuosRing: { level: ozRingLevel(character, "continuous"), efficiency: 0 },
+    restraintRing: { level: ozRingLevel(character, "restraint", ringOverrides), efficiency: 0 },
+    weaponRing: { level: ozRingLevel(character, "weaponJump", ringOverrides), efficiency: 0 },
+    ringOfSum: { level: ozRingLevel(character, "totalling", ringOverrides), efficiency: 0 },
+    continuosRing: { level: ozRingLevel(character, "continuous", ringOverrides), efficiency: 0 },
     // Non-GMS rings, mapledoro has no data for these and can't collect any.
     riskTakerRing: ZERO_RING,
     criDamageRing: ZERO_RING,
@@ -703,7 +718,7 @@ export function buildScouterPayload(character: StoredCharacterRecord, ctx: Scout
   const { hexa, solJanusLevel } = buildHexa(character.characterName, isHexaEligible);
 
   return {
-    doping: buildDoping(character),
+    doping: buildDoping(character.scouter?.buffs),
     linkSkill: buildLinkSkill(character.linkSkills),
     special: buildSpecial(character, offStats),
     stat: buildStat(character, classData.id, koreanClassName, assignment, legion),
@@ -720,14 +735,183 @@ export function buildScouterPayload(character: StoredCharacterRecord, ctx: Scout
   };
 }
 
+// ── Simulator ────────────────────────────────────────────────────────────────
+
+/** The HEXA core fields MapleDoro can override in a simulator run -- everything
+ *  hexaCoreLevels/buildHexa can produce. Deliberately excludes skillCore3-6/generalCore3-4
+ *  (unreleased GMS content, no real value to simulate), generalCore1 (MapleScouter's own
+ *  request omits it entirely, see buildHexa's comment), and solJanus (doesn't factor into
+ *  the boss380_hexaStat calculation at all -- confirmed it has no effect on the result, so
+ *  there's nothing to simulate by editing it despite huntSkill.solJanus being sent). */
+export type SimulatorHexaCoreField =
+  | "skillCore1" | "skillCore2"
+  | "masteryCore1" | "masteryCore2" | "masteryCore3" | "masteryCore4"
+  | "reinCore1" | "reinCore2" | "reinCore3" | "reinCore4"
+  | "generalCore2";
+
+/** Every core capped at 30 -- confirmed against useHexaSkillsState.ts's own clampLevel,
+ *  which caps Origin/Ascent/Mastery/Enhancement identically. No per-core-type cap exists
+ *  in this codebase (or in real HEXA leveling) to differentiate them. */
+export const SIMULATOR_HEXA_CORE_MAX = 30;
+
+/** Raw stat-delta fields the Scouter Simulator's Input tab exposes -- additive on top of the
+ *  character's real stats, "0"/unset = no override. Field names match ScouterSimulator's own
+ *  keys (live-captured), not MapleDoro's internal naming, so the payload builder below can
+ *  assign them straight through. */
+export interface SimulatorInputOverrides {
+  mainStat?: string; mainStatPer?: string; mainStatAbs?: string; mainStat9Level?: string;
+  subStat?: string; subStatPer?: string; subStatAbs?: string; subStat9Level?: string;
+  allStatPer?: string; criRate?: string; buffDuration?: string; coolTimeReduce?: string;
+  atk?: string; atkPer?: string; bossDmg?: string; criDmg?: string; ignoreGuard?: string;
+  resetCoolDown?: string; weaponAtk?: string;
+}
+
+export interface ScouterSimulatorOverrides {
+  /** Overrides userStat.stat.level -- MapleDoro-only, MapleScouter's simulator has no
+   *  level field of its own (confirmed via live capture). */
+  level?: number;
+  /** MapleDoro-only, local Boss Clear Grid gap math -- neither reaches the /dmg-simulator
+   *  request at all (MapleScouter's own simulator has no Arcane Force/Sacred Power override
+   *  field either, same absence as level). computeBossClear uses these in place of the
+   *  character's real character.stats.arcanePower/sacredPower when set, so typing the boss's
+   *  own requirement here closes that gap honestly -- no separate "pin to ceiling" toggle. */
+  arcaneForceOverride?: number;
+  authenticForceOverride?: number;
+  /** Percent string, e.g. "75.00000" -- MapleScouter's own simulator field format. */
+  finalDmgPercent?: string;
+  hexaCoreOverrides?: Partial<Record<SimulatorHexaCoreField, string>>;
+  /** From the Buffs tab's own draft -- a full independent buff re-pick, not a partial patch
+   *  onto the character's real buffs (matches dopingSimul's real shape: MapleScouter's own
+   *  simulator sends a full second buff object, not a delta). Undefined means "same as the
+   *  character's real buffs", not "no buffs". */
+  dopingOverrides?: StoredScouterBuffs;
+  ringOverrides?: OzRingOverrides;
+  input?: SimulatorInputOverrides;
+}
+
+export interface ScouterSimulatorRequest {
+  userStat: ScouterUserStat;
+  simulator: ScouterSimulator;
+}
+
+export interface ScouterSimulator {
+  mainStat: string; mainStatPer: string; mainStatAbs: string;
+  subStat: string; subStatPer: string; subStatAbs: string;
+  ssubStat: "0"; ssubStatPer: "0"; ssubStatAbs: "0";
+  allStatPer: string; criRate: string; buffDuration: string; coolTimeReduce: string;
+  atk: string; atkPer: string; bossDmg: string; criDmg: string; ignoreGuard: string; resetCoolDown: string;
+  weaponAtk: string; erda: "0"; solJanus: "0";
+  genesis: boolean;
+  finalDmg: string;
+  mainStat9Level: string; subStat9Level: string; ssubStat9Level: "";
+  tms_fd: ""; tms_soul: "";
+  masteryCore1: string; masteryCore2: string; masteryCore3: string; masteryCore4: string;
+  skillCore1: string; skillCore2: string;
+  // "" (not "0") -- unreleased content, same as skillCore3-6 always "" in a real
+  // maplescouter.com simulator request (their frontend never overrides these either).
+  skillCore3: ""; skillCore4: ""; skillCore5: ""; skillCore6: "";
+  reinCore1: string; reinCore2: string; reinCore3: string; reinCore4: string;
+  generalCore2: string;
+  generalCore3: ""; generalCore4: "";
+  dopingSimul: ScouterDoping;
+  restraintRing: string; weaponRing: string; ringofSum: string; riskTaker: "0"; contiRing: string;
+  destiny2ndSkill: false;
+}
+
+/** Builds the combined {userStat, simulator} body for MapleScouter's Additional Spec
+ *  Simulator endpoint (POST /api/calc/dmg-simulator via the scouter-simulator proxy route),
+ *  or null under the same conditions buildScouterPayload returns null (class unsupported).
+ *  linkSimul is deliberately omitted -- MapleDoro doesn't expose a Link Skills tab in the
+ *  popup (out of scope, see the Scouter Simulator plan). ssubStat/erda/solJanus/tms_fd/
+ *  tms_soul stay hardcoded no-ops -- unlike mainStat9Level/subStat9Level (confirmed live
+ *  against maplescouter.com's own simulator to have a real, large effect on the result),
+ *  these have no confirmed effect, same "unclear purpose / low value" reasoning as
+ *  skillCore3-6. */
+export function buildSimulatorPayload(
+  character: StoredCharacterRecord,
+  ctx: ScouterPayloadContext,
+  overrides: ScouterSimulatorOverrides,
+): ScouterSimulatorRequest | null {
+  const userStat = buildScouterPayload(character, ctx);
+  if (!userStat) return null;
+  if (overrides.level !== undefined) {
+    userStat.stat.level = String(overrides.level);
+  }
+
+  const hexaCore = (field: SimulatorHexaCoreField): string =>
+    overrides.hexaCoreOverrides?.[field] ?? userStat.hexa[field];
+  const input = overrides.input;
+  const num = (v: string | undefined): string => v ?? "0";
+
+  const ringOverrides = overrides.ringOverrides;
+
+  return {
+    userStat,
+    simulator: {
+      mainStat: num(input?.mainStat), mainStatPer: num(input?.mainStatPer), mainStatAbs: num(input?.mainStatAbs),
+      subStat: num(input?.subStat), subStatPer: num(input?.subStatPer), subStatAbs: num(input?.subStatAbs),
+      ssubStat: "0", ssubStatPer: "0", ssubStatAbs: "0",
+      allStatPer: num(input?.allStatPer), criRate: num(input?.criRate), buffDuration: num(input?.buffDuration), coolTimeReduce: num(input?.coolTimeReduce),
+      atk: num(input?.atk), atkPer: num(input?.atkPer), bossDmg: num(input?.bossDmg), criDmg: num(input?.criDmg), ignoreGuard: num(input?.ignoreGuard), resetCoolDown: num(input?.resetCoolDown),
+      weaponAtk: num(input?.weaponAtk), erda: "0", solJanus: "0",
+      genesis: userStat.special.genesis,
+      finalDmg: overrides.finalDmgPercent ?? "0.00000",
+      mainStat9Level: num(input?.mainStat9Level), subStat9Level: num(input?.subStat9Level), ssubStat9Level: "",
+      tms_fd: "", tms_soul: "",
+      masteryCore1: hexaCore("masteryCore1"), masteryCore2: hexaCore("masteryCore2"),
+      masteryCore3: hexaCore("masteryCore3"), masteryCore4: hexaCore("masteryCore4"),
+      skillCore1: hexaCore("skillCore1"), skillCore2: hexaCore("skillCore2"),
+      skillCore3: "", skillCore4: "", skillCore5: "", skillCore6: "",
+      reinCore1: hexaCore("reinCore1"), reinCore2: hexaCore("reinCore2"),
+      reinCore3: hexaCore("reinCore3"), reinCore4: hexaCore("reinCore4"),
+      generalCore2: hexaCore("generalCore2"),
+      generalCore3: "", generalCore4: "",
+      dopingSimul: buildDoping(overrides.dopingOverrides ?? character.scouter?.buffs),
+      restraintRing: ozRingLevel(character, "restraint", ringOverrides),
+      weaponRing: ozRingLevel(character, "weaponJump", ringOverrides),
+      ringofSum: ozRingLevel(character, "totalling", ringOverrides),
+      riskTaker: "0",
+      contiRing: ozRingLevel(character, "continuous", ringOverrides),
+      destiny2ndSkill: false,
+    },
+  };
+}
+
+export interface SimulatorStatLabel {
+  field: TripleStatFieldId | "hp";
+  label: string;
+}
+
+/** Per-class main/sub/ssub stat labels for the simulator popup's stat-context display --
+ *  reuses assignMainSubStats/buildStat's own assignment logic (including the Demon Avenger
+ *  special case) so the popup never has to re-derive class stat layout on its own. Returns
+ *  null entries for slots the class doesn't use (e.g. a 2-real-stat class has no ssub). */
+export function simulatorStatLabels(classId: string, requiredStats: readonly string[]): {
+  main: SimulatorStatLabel | null;
+  sub: SimulatorStatLabel | null;
+  ssub: SimulatorStatLabel | null;
+} {
+  const assignment = assignMainSubStats(classId, requiredStats.filter(isTripleStatField));
+  const mainField: TripleStatFieldId | "hp" | null = classId === "demon_avenger" ? "hp" : assignment.main;
+  const toLabel = (field: TripleStatFieldId | "hp" | null): SimulatorStatLabel | null =>
+    field ? { field, label: field.toUpperCase() } : null;
+  return {
+    main: toLabel(mainField),
+    sub: toLabel(assignment.sub),
+    ssub: toLabel(assignment.ssub),
+  };
+}
+
 // ── Cache hash ───────────────────────────────────────────────────────────────
 
-/** Deterministic FNV-1a hash of the built payload, used as the client-side cache key --
+/** Deterministic FNV-1a hash of a built payload, used as the client-side cache key --
  *  cached per-character, keyed by input hash, not "most recent value". Field order is
- *  already stable, buildScouterPayload constructs the object identically every call —
- *  so plain JSON.stringify is deterministic without an explicit key-sort replacer (which
- *  would otherwise strip every nested key not present at the top level). */
-export function hashScouterPayload(payload: ScouterUserStat): string {
+ *  already stable, buildScouterPayload/buildSimulatorPayload construct the object
+ *  identically every call — so plain JSON.stringify is deterministic without an explicit
+ *  key-sort replacer (which would otherwise strip every nested key not present at the top
+ *  level). Generic over ScouterUserStat and ScouterSimulatorRequest -- both are plain,
+ *  fully-serializable payload objects. */
+export function hashScouterPayload(payload: ScouterUserStat | ScouterSimulatorRequest): string {
   const json = JSON.stringify(payload);
   let hash = 0x811c9dc5;
   for (let i = 0; i < json.length; i++) {
