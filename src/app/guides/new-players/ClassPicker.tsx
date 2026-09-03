@@ -4,7 +4,7 @@
   in ../character-guides/classData; the guide-specific blurb and tags come from
   newPlayerGuideData, so adding a tag category never touches this file.
 */
-import React, { useState, type CSSProperties } from "react";
+import React, { type CSSProperties } from "react";
 import Image from "next/image";
 import type { AppTheme } from "../../../components/themes";
 import { statusText } from "../../../components/statusColors";
@@ -50,6 +50,16 @@ const chipRowStyle: CSSProperties = {
   marginTop: "0.75rem",
 };
 
+const overrideNoteStyle: CSSProperties = {
+  fontSize: "0.78rem",
+  fontWeight: 600,
+  lineHeight: 1.6,
+  fontStyle: "italic",
+  marginTop: "0.75rem",
+  paddingLeft: "0.9rem",
+  borderLeft: "2px solid",
+};
+
 const chipStyle: CSSProperties = {
   fontSize: "0.75rem",
   fontWeight: 700,
@@ -89,6 +99,7 @@ function TagChip({ tag, theme }: { tag: ClassTag; theme: AppTheme }) {
 
 function ClassInfoPanel({ cls, theme, id }: { cls: ClassEntry; theme: AppTheme; id: string }) {
   const tags = orderedTags(cls.name);
+  const override = classGuideInfo(cls.name).routeOverride;
   return (
     <div
       id={id}
@@ -116,6 +127,11 @@ function ClassInfoPanel({ cls, theme, id }: { cls: ClassEntry; theme: AppTheme; 
             {tags.map((tag) => (
               <TagChip key={tag.id} tag={tag} theme={theme} />
             ))}
+          </div>
+        )}
+        {override && (
+          <div style={{ ...overrideNoteStyle, color: theme.muted, borderColor: theme.border }}>
+            {override.note}
           </div>
         )}
       </div>
@@ -168,9 +184,18 @@ function ClassTile({
   );
 }
 
-export default function ClassPicker({ theme }: { theme: AppTheme }) {
-  const [selected, setSelected] = useState<string | null>(null);
-  const toggle = (name: string) => setSelected((prev) => (prev === name ? null : name));
+/* Controlled: the page owns the selection because a class can carry a route
+   override that drops whole level bands from the walkthrough below. */
+export default function ClassPicker({
+  theme,
+  selected,
+  onSelect,
+}: {
+  theme: AppTheme;
+  selected: string | null;
+  onSelect: (name: string | null) => void;
+}) {
+  const toggle = (name: string) => onSelect(selected === name ? null : name);
 
   const grouped = CLASS_REGIONS.map((region) => ({
     region,

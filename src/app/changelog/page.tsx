@@ -15,6 +15,8 @@ const CHANGELOG: ChangelogEntry[] = [
     date: "2026-09-03",
     changes: [
       { type: "added", text: "The Liberation Tracker's Astra Secondary tab now lists the meso cost of transferring a Warrior, Mage or Shadower shield, a Kanna talisman or a Dual Blade katara into its Astra version at every star force level." },
+      { type: "changed", text: "The New Player Guide is now a walkthrough from level 10 to 200. You pick your world from a side by side comparison, say whether you are on Hyper Burning, and it walks you through each system at the level it unlocks. Some sections are still being written and are marked as coming soon." },
+      { type: "added", text: "The New Player Guide now has a checkbox on each section, so you can tick off what you have finished and pick the guide back up later." },
     ],
   },
   {
