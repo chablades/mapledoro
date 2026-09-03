@@ -15,6 +15,7 @@ const CHANGELOG: ChangelogEntry[] = [
     date: "2026-09-03",
     changes: [
       { type: "added", text: "The Liberation Tracker's Astra Secondary tab now lists the meso cost of transferring a Warrior, Mage or Shadower shield, a Kanna talisman or a Dual Blade katara into its Astra version at every star force level." },
+      { type: "added", text: "Character Guides now has a full written guide for 27 classes, covering the skill sequence, leveling order for Heroic and Interactive, inner ability lines, a utility skill list and where each class's damage comes from. Classes without one yet still show the link skill, Legion and infographic panels they always did." },
     ],
   },
   {
