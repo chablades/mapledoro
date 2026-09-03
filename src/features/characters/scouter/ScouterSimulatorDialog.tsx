@@ -219,13 +219,41 @@ function BuffsTab({ theme, draft, onChange, primaryStat, jobName }: {
 
 // ── HEXA tab ─────────────────────────────────────────────────────────────────
 
+const hexaSectionBtnStyle: CSSProperties = {
+  background: "none", border: "none", font: "inherit",
+  fontSize: "0.75rem", fontWeight: 800,
+  padding: 0,
+  cursor: "pointer",
+};
+
+function HexaSectionLabel({ theme, label, onMaxAll, onClear }: { theme: AppTheme; label: string; onMaxAll: () => void; onClear: () => void }) {
+  return (
+    <div style={{
+      display: "flex", justifyContent: "space-between", alignItems: "baseline",
+      marginBottom: "0.45rem", paddingBottom: "0.25rem", borderBottom: `1px solid ${theme.border}`,
+    }}>
+      <p style={{ margin: 0, fontSize: "0.75rem", fontWeight: 800, color: theme.muted, letterSpacing: "0.05em", textTransform: "uppercase" }}>{label}</p>
+      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+        <button type="button" onClick={onClear} style={{ ...hexaSectionBtnStyle, color: theme.muted }}>Clear</button>
+        <span style={{ width: 1, alignSelf: "stretch", background: theme.border, flexShrink: 0 }} />
+        <button type="button" onClick={onMaxAll} style={{ ...hexaSectionBtnStyle, color: theme.accent }}>Max All</button>
+      </div>
+    </div>
+  );
+}
+
 function HexaSection({ theme, label, fields, hexaCores, onChange }: {
   theme: AppTheme; label: string; fields: { field: SimulatorHexaCoreField; label: string; name: string; iconId: string; iconUrl?: string }[];
   hexaCores: Record<SimulatorHexaCoreField, number>; onChange: (field: SimulatorHexaCoreField, value: number) => void;
 }) {
   return (
     <div>
-      <p style={sectionLabelStyle(theme)}>{label}</p>
+      <HexaSectionLabel
+        theme={theme}
+        label={label}
+        onMaxAll={() => fields.forEach(({ field }) => onChange(field, SIMULATOR_HEXA_CORE_MAX))}
+        onClear={() => fields.forEach(({ field }) => onChange(field, HEXA_CORE_MIN[field] ?? 0))}
+      />
       {/* No maxWidth cap here (unlike tileRowStyle, built for Buffs' wider flat tray) -- each
           section only ever holds up to 4 tiles and already sits inside its own 2x2 grid
           column, so it should fill that column's real width instead of wrapping early. */}
@@ -587,14 +615,14 @@ export default function ScouterSimulatorDialog({
           />
         )}
 
+      </div>
+
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "0.55rem", padding: "0.8rem 1.1rem", borderTop: `1px solid ${theme.border}` }}>
         {error && (
-          <p style={{ margin: "0.8rem 0 0", fontSize: "0.8rem", fontWeight: 700, color: statusText(theme, "danger") }}>
+          <p style={{ margin: 0, marginRight: "auto", fontSize: "0.8rem", fontWeight: 700, color: statusText(theme, "danger") }}>
             {SIMULATOR_ERROR_TEXT[error]}
           </p>
         )}
-      </div>
-
-      <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.55rem", padding: "0.8rem 1.1rem", borderTop: `1px solid ${theme.border}` }}>
         <button type="button" onClick={onClose} className="tool-btn tool-dialog-btn" style={dialogBtnColors(theme)}>
           Cancel
         </button>

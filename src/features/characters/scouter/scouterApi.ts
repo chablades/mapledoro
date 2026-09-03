@@ -202,6 +202,19 @@ export interface ScouterHexa {
   generalCore3: string;
   generalCore4: string;
   hexaStat: 2;
+  character_class: string;
+  // Nested duplicate of the flat core fields above, numeric instead of string -- required by
+  // /calc/dmg-simulator specifically (the plain /calc/dmg endpoint works fine without it).
+  hexaSkill: {
+    skillCore1: number; skillCore2: number; skillCore3: 0;
+    masteryCore1: number; masteryCore2: number; masteryCore3: number; masteryCore4: number;
+    reinCore1: number; reinCore2: number; reinCore3: number; reinCore4: number;
+  };
+  hexaSkill_general: { generalCore1: 0; generalCore2: number; generalCore3: 0 };
+  // MapleScouter's own derived summary (Erda spent / meso cost) -- no MapleDoro source, left
+  // at 0 since it looks informational rather than validated.
+  hexaSkill_used: { sole_Erda: 0; sole_ErdaPrice: 0 };
+  hexaStat_opened: false;
 }
 
 interface ScouterPower {
@@ -545,7 +558,7 @@ interface HexaBuildResult {
   solJanusLevel: number;
 }
 
-function buildHexa(characterName: string, isHexaEligible: boolean): HexaBuildResult {
+function buildHexa(characterName: string, isHexaEligible: boolean, koreanClassName: string): HexaBuildResult {
   const saved = readCharacterToolData<{ levels?: HexaSkillLevels }>(characterName, "hexaSkills");
   const cores = hexaCoreLevels(saved?.levels, isHexaEligible);
   const solJanusLevel = SOL_JANUS_INDEX >= 0 ? (saved?.levels?.common[SOL_JANUS_INDEX] ?? 0) : 0;
@@ -576,6 +589,17 @@ function buildHexa(characterName: string, isHexaEligible: boolean): HexaBuildRes
       generalCore3: "0",
       generalCore4: "0",
       hexaStat: 2,
+      character_class: koreanClassName,
+      hexaSkill: {
+        skillCore1: Number(cores.skillCore1), skillCore2: Number(cores.skillCore2), skillCore3: 0,
+        masteryCore1: Number(cores.mastery[0]), masteryCore2: Number(cores.mastery[1]),
+        masteryCore3: Number(cores.mastery[2]), masteryCore4: Number(cores.mastery[3]),
+        reinCore1: Number(cores.rein[0]), reinCore2: Number(cores.rein[1]),
+        reinCore3: Number(cores.rein[2]), reinCore4: Number(cores.rein[3]),
+      },
+      hexaSkill_general: { generalCore1: 0, generalCore2: solHecateLevel, generalCore3: 0 },
+      hexaSkill_used: { sole_Erda: 0, sole_ErdaPrice: 0 },
+      hexaStat_opened: false,
     },
     solJanusLevel,
   };
@@ -719,7 +743,7 @@ export function buildScouterPayload(character: StoredCharacterRecord, ctx: Scout
 
   const legion = ctx.scouterLegionByWorld[String(character.worldID)];
   const isHexaEligible = character.level >= 260 && !classData.isLegacy;
-  const { hexa, solJanusLevel } = buildHexa(character.characterName, isHexaEligible);
+  const { hexa, solJanusLevel } = buildHexa(character.characterName, isHexaEligible, koreanClassName);
 
   return {
     doping: buildDoping(character.scouter?.buffs),
@@ -811,13 +835,13 @@ export interface ScouterSimulator {
   tms_fd: ""; tms_soul: "";
   masteryCore1: string; masteryCore2: string; masteryCore3: string; masteryCore4: string;
   skillCore1: string; skillCore2: string;
-  // "" (not "0") -- unreleased content, same as skillCore3-6 always "" in a real
-  // maplescouter.com simulator request (their frontend never overrides these either).
-  skillCore3: ""; skillCore4: ""; skillCore5: ""; skillCore6: "";
+  // skillCore3 is a real slot with no GMS content yet ("0"); skillCore4-6 don't exist at all ("").
+  skillCore3: "0"; skillCore4: ""; skillCore5: ""; skillCore6: "";
   reinCore1: string; reinCore2: string; reinCore3: string; reinCore4: string;
   generalCore2: string;
-  generalCore3: ""; generalCore4: "";
+  generalCore3: "0"; generalCore4: "";
   dopingSimul: ScouterDoping;
+  linkSimul: Record<string, string>;
   restraintRing: string; weaponRing: string; ringofSum: string; riskTaker: "0"; contiRing: string;
   destiny2ndSkill: false;
 }
@@ -825,12 +849,10 @@ export interface ScouterSimulator {
 /** Builds the combined {userStat, simulator} body for MapleScouter's Additional Spec
  *  Simulator endpoint (POST /api/calc/dmg-simulator via the scouter-simulator proxy route),
  *  or null under the same conditions buildScouterPayload returns null (class unsupported).
- *  linkSimul is deliberately omitted -- MapleDoro doesn't expose a Link Skills tab in the
- *  popup (out of scope, see the Scouter Simulator plan). ssubStat/erda/solJanus/tms_fd/
- *  tms_soul stay hardcoded no-ops -- unlike mainStat9Level/subStat9Level (confirmed live
- *  against maplescouter.com's own simulator to have a real, large effect on the result),
- *  these have no confirmed effect, same "unclear purpose / low value" reasoning as
- *  skillCore3-6. */
+ *  linkSimul is a straight copy of userStat.linkSkill -- the API rejected the request
+ *  entirely without it, so it's required, not editable (no Link Skills tab in the popup).
+ *  ssubStat/erda/solJanus/tms_fd/tms_soul stay hardcoded no-ops -- no confirmed effect,
+ *  unlike mainStat9Level/subStat9Level (confirmed live to matter). */
 export function buildSimulatorPayload(
   character: StoredCharacterRecord,
   ctx: ScouterPayloadContext,
@@ -865,12 +887,13 @@ export function buildSimulatorPayload(
       masteryCore1: hexaCore("masteryCore1"), masteryCore2: hexaCore("masteryCore2"),
       masteryCore3: hexaCore("masteryCore3"), masteryCore4: hexaCore("masteryCore4"),
       skillCore1: hexaCore("skillCore1"), skillCore2: hexaCore("skillCore2"),
-      skillCore3: "", skillCore4: "", skillCore5: "", skillCore6: "",
+      skillCore3: "0", skillCore4: "", skillCore5: "", skillCore6: "",
       reinCore1: hexaCore("reinCore1"), reinCore2: hexaCore("reinCore2"),
       reinCore3: hexaCore("reinCore3"), reinCore4: hexaCore("reinCore4"),
       generalCore2: hexaCore("generalCore2"),
-      generalCore3: "", generalCore4: "",
+      generalCore3: "0", generalCore4: "",
       dopingSimul: buildDoping(overrides.dopingOverrides ?? character.scouter?.buffs),
+      linkSimul: userStat.linkSkill,
       restraintRing: ozRingLevel(character, "restraint", ringOverrides),
       weaponRing: ozRingLevel(character, "weaponJump", ringOverrides),
       ringofSum: ozRingLevel(character, "totalling", ringOverrides),

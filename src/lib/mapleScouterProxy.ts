@@ -19,6 +19,14 @@ export function parsePositiveIntEnv(name: string, fallback: number): number {
   return parsed;
 }
 
+// MapleScouter's own frontend sends this on every calc request (a static value baked into
+// their public JS bundle, not a per-user/per-session token). /calc/dmg accepts requests
+// without it; /calc/dmg-simulator rejects them ("no permission") -- inconsistent enforcement
+// across their own two endpoints, not something we're relying on being stable. Kept in an env
+// var rather than hardcoded so it's easy to drop/rotate once there's a real answer on whether
+// MapleDoro should be sending it at all (flagged for follow-up, not a settled decision).
+const mapleScouterApiKey = process.env.MAPLESCOUTER_API_KEY?.trim() ?? "";
+
 const redisUrl = process.env.REDIS_URL?.trim() ?? "";
 const REDIS_CONNECT_TIMEOUT_MS = parsePositiveIntEnv("REDIS_CONNECT_TIMEOUT_MS", 1500);
 const redis = redisUrl ? new Redis(redisUrl, { lazyConnect: true, connectTimeout: REDIS_CONNECT_TIMEOUT_MS, maxRetriesPerRequest: 1 }) : null;
@@ -131,7 +139,10 @@ export async function proxyMapleScouterCalc(request: NextRequest, opts: MapleSco
   try {
     const upstream = await fetch(opts.upstreamUrl, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...(mapleScouterApiKey ? { "api-key": mapleScouterApiKey } : {}),
+      },
       body: JSON.stringify(body),
       signal: controller.signal,
     });
