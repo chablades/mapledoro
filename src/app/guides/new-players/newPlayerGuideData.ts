@@ -20,11 +20,13 @@ export type WorldType = "interactive" | "heroic";
 export type HyperBurning = "yes" | "no";
 
 export interface GuideAnswers {
-  world: WorldType | null;
-  hyperBurning: HyperBurning | null;
+  world: WorldType;
+  hyperBurning: HyperBurning;
 }
 
-export const NO_ANSWERS: GuideAnswers = { world: null, hyperBurning: null };
+/* The guide is readable before the reader touches anything, so the switches
+   start on the most common answer rather than on an empty state. */
+export const DEFAULT_ANSWERS: GuideAnswers = { world: "interactive", hyperBurning: "no" };
 
 export interface GuideQuestionOption<T extends string> {
   value: T;
@@ -35,12 +37,16 @@ export interface GuideQuestionOption<T extends string> {
 
 export interface GuideQuestion<T extends string> {
   id: string;
+  /** Short heading above the switch. */
+  label: string;
+  /** Full question, used as the switch group's accessible name. */
   prompt: string;
   options: GuideQuestionOption<T>[];
 }
 
 export const WORLD_QUESTION: GuideQuestion<WorldType> = {
   id: "world",
+  label: "World",
   prompt: "Which kind of world are you playing on?",
   options: [
     { value: "interactive", label: "Interactive", hint: "Bera, Scania" },
@@ -50,6 +56,7 @@ export const WORLD_QUESTION: GuideQuestion<WorldType> = {
 
 export const HYPER_BURNING_QUESTION: GuideQuestion<HyperBurning> = {
   id: "hyperBurning",
+  label: "Hyper Burning",
   prompt: "Is your character on Hyper Burning?",
   options: [
     { value: "yes", label: "Yes", hint: "Skips the level 10 to 200 leveling route" },
@@ -227,8 +234,12 @@ export type GuideLeafBlock =
   /** Aside under a paragraph, tinted but quieter than a callout. */
   | { kind: "note"; text: string }
   | { kind: "callout"; title: string; text: string }
+  | { kind: "list"; ordered?: boolean; items: string[] }
+  | { kind: "image"; src: string; alt: string; caption?: string }
   /** The clickable class portrait grid. Content comes from `CLASS_GUIDE_INFO`. */
   | { kind: "classGrid" }
+  /** Picks one class at random, for readers with no idea where to start. */
+  | { kind: "classRandomizer" }
   | { kind: "mapTable"; title: string; intro: string; bands: MapBand[] }
   | { kind: "tips"; title: string; items: GuideTip[] }
   | { kind: "routeChoice"; title: string; intro: string; routes: GuideRoute[]; outro: string }
@@ -257,29 +268,50 @@ export interface GuideSection {
 
 /* ── Guide content ────────────────────────────────────────────── */
 
-export const GUIDE_INTRO =
-  "Welcome to MapleStory. If you played back in the early 2000s, the game today is very different. Back then it was slow, low-level party grinding, and the appeal was really the social side of it. Modern MapleStory keeps that social core but has evolved a lot, with faster, more structured grinding and far more progression depth on top. With so many systems added over the years, this guide will walk you through modern MapleStory and get you comfortable with how progression actually works today.";
-
 export const SECTIONS: GuideSection[] = [
   {
-    id: "getting-started",
-    title: "Getting Started",
+    id: "welcome",
+    title: "Welcome to MapleStory",
     blocks: [
       {
-        kind: "subsection",
-        id: "creating-your-character",
-        title: "Creating Your Character",
-        blocks: [
-          {
-            kind: "paragraph",
-            text: "The most important thing in MapleStory is finding a class you actually enjoy playing. Some classes are stronger than others, but what matters more is picking one you'll be happy putting a lot of hours into.",
-          },
-          { kind: "classGrid" },
-          {
-            kind: "note",
-            text: "Feel free to create any character that appeals to you. MapleStory rewards having lots of characters since they all feed into your account progression.",
-          },
-        ],
+        kind: "paragraph",
+        text: "MapleStory is a free-to-play 2D side-scrolling MMORPG that has been running since 2003. You play a character in the Maple World, leveling from 1 all the way to the cap of 300 by fighting monsters, completing quests and taking on increasingly difficult bosses.",
+      },
+      {
+        kind: "paragraph",
+        text: "If you played back in the early 2000s, the game today is very different. Back then it was slow, low-level party grinding, and the appeal was really the social side of it. Modern MapleStory keeps that social core but has evolved a lot, with faster, more structured grinding and far more progression depth on top.",
+      },
+      {
+        kind: "paragraph",
+        text: "The loop revolves around dailies, weekly bossing, farming and gear progression. Each day you clear daily quests and bosses for resources. Each week you take on harder bosses for mesos and rare drops. In between you farm maps for EXP and mesos, and pour those gains into upgrading your equipment through systems like Star Force, cubing and flaming.",
+      },
+      {
+        kind: "paragraph",
+        text: "This guide walks you through getting started, picking a class, and understanding the systems that actually drive progression today. Use the switches above to tell it which world you are on and whether your character is on Hyper Burning, and it will show only the parts that apply to you.",
+      },
+    ],
+  },
+  {
+    id: "choosing-your-class",
+    title: "Choosing Your Class",
+    blocks: [
+      {
+        kind: "paragraph",
+        text: "MapleStory has over 50 playable classes, and the most important thing is finding one you actually enjoy playing. Some classes are stronger than others, but what matters more is picking one you'll be happy putting a lot of hours into.",
+      },
+      {
+        kind: "paragraph",
+        text: "Some classes are flashy and fast, others are tanky and methodical. Some have huge mobbing skills that clear a whole map at once, others excel at bossing with high single-target damage.",
+      },
+      {
+        kind: "paragraph",
+        text: "Can't decide? Let fate choose for you.",
+      },
+      { kind: "classRandomizer" },
+      { kind: "classGrid" },
+      {
+        kind: "note",
+        text: "Feel free to create any character that appeals to you. MapleStory rewards having lots of characters since they all feed into your account progression.",
       },
     ],
   },

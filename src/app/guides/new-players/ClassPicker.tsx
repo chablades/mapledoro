@@ -1,14 +1,23 @@
 /*
-  Class portrait grid for the New Player Guide's "Creating Your Character"
-  subsection. Portraits and the fallback summary come from the shared class data
-  in ../character-guides/classData; the guide-specific blurb and tags come from
-  newPlayerGuideData, so adding a tag category never touches this file.
+  Class-picking widgets for the New Player Guide: a randomizer that lands on a
+  single class, and a browsable directory of every class grouped by faction.
+
+  Portraits, the summary and the difficulty/link/legion rows come from the shared
+  class data in ../character-guides/classData, so every class has a usable panel.
+  The guide-specific blurb and tags come from newPlayerGuideData and layer on top
+  for the classes that have them, so adding a tag category never touches this file.
 */
 import React, { useState, type CSSProperties } from "react";
 import Image from "next/image";
 import type { AppTheme } from "../../../components/themes";
 import { statusText } from "../../../components/statusColors";
-import { CLASSES, CLASS_REGIONS, type ClassEntry } from "../character-guides/classData";
+import {
+  CLASSES,
+  CLASS_REGIONS,
+  DIFFICULTY_COLORS,
+  highlightNumbers,
+  type ClassEntry,
+} from "../character-guides/classData";
 import { classGuideInfo, classTags, TAG_CATEGORIES, type ClassTag } from "./newPlayerGuideData";
 
 const gridStyle: CSSProperties = {
@@ -31,16 +40,22 @@ const tileNameStyle: CSSProperties = {
   transition: "color 0.2s ease",
 };
 
-const panelNameStyle: CSSProperties = {
-  fontFamily: "var(--font-heading)",
-  fontSize: "0.95rem",
-  marginBottom: "0.4rem",
-};
-
 const panelBlurbStyle: CSSProperties = {
   fontSize: "0.8rem",
   fontWeight: 600,
   lineHeight: 1.6,
+  marginBottom: "0.7rem",
+};
+
+const statListStyle: CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  gap: "0.32rem",
+};
+
+const statRowStyle: CSSProperties = {
+  fontSize: "0.78rem",
+  fontWeight: 700,
 };
 
 const chipRowStyle: CSSProperties = {
@@ -87,30 +102,55 @@ function TagChip({ tag, theme }: { tag: ClassTag; theme: AppTheme }) {
   );
 }
 
-function ClassInfoPanel({ cls, theme, id }: { cls: ClassEntry; theme: AppTheme; id: string }) {
+/* Shared panel body: `lg` is the randomizer's single result, `md` the directory's
+   inline panel. The blurb falls back to the shared summary when the guide has no
+   copy for that class yet, so the panel is never empty. */
+function ClassDetails({ cls, theme, size }: { cls: ClassEntry; theme: AppTheme; size: "lg" | "md" }) {
+  const px = size === "lg" ? 120 : 100;
   const tags = orderedTags(cls.name);
+
   return (
-    <div
-      id={id}
-      className="class-card"
-      style={{
-        gridColumn: "1 / -1",
-        background: theme.accentSoft,
-        border: `1px solid ${theme.border}`,
-      }}
-    >
+    <>
       <div
-        className="class-portrait-frame class-portrait-md"
+        className={`class-portrait-frame class-portrait-${size}`}
         style={{ border: `1px solid ${theme.border}`, background: theme.panel }}
       >
-        <Image src={cls.portrait} alt="" width={100} height={100} className="class-portrait-img" />
+        <Image src={cls.portrait} alt="" width={px} height={px} className="class-portrait-img" />
       </div>
 
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ ...panelNameStyle, color: theme.accentText }}>{cls.name}</div>
+        <div
+          style={{
+            fontFamily: "var(--font-heading)",
+            fontSize: size === "lg" ? "1.05rem" : "0.95rem",
+            color: theme.accentText,
+            marginBottom: "0.45rem",
+          }}
+        >
+          {cls.name}
+        </div>
+
         <div style={{ ...panelBlurbStyle, color: theme.muted }}>
           {classGuideInfo(cls.name).blurb ?? cls.summary}
         </div>
+
+        <div style={statListStyle}>
+          <div style={{ ...statRowStyle, color: theme.text }}>
+            Difficulty:{" "}
+            <span style={{ color: DIFFICULTY_COLORS[cls.difficulty] }}>{cls.difficulty}</span>
+          </div>
+          <div style={{ ...statRowStyle, color: theme.text }}>
+            Link Skill:{" "}
+            <span style={{ fontWeight: 600, color: theme.muted }}>{highlightNumbers(cls.link)}</span>
+          </div>
+          <div style={{ ...statRowStyle, color: theme.text }}>
+            Legion:{" "}
+            <span style={{ fontWeight: 600, color: theme.muted }}>
+              {highlightNumbers(cls.legion)}
+            </span>
+          </div>
+        </div>
+
         {tags.length > 0 && (
           <div style={chipRowStyle}>
             {tags.map((tag) => (
@@ -119,7 +159,7 @@ function ClassInfoPanel({ cls, theme, id }: { cls: ClassEntry; theme: AppTheme; 
           </div>
         )}
       </div>
-    </div>
+    </>
   );
 }
 
@@ -143,13 +183,6 @@ function ClassTile({
       aria-expanded={selected}
       aria-controls={panelId}
       onClick={onToggle}
-      style={{ transform: selected ? "scale(1.05)" : undefined }}
-      onMouseEnter={(e) => {
-        if (!selected) e.currentTarget.style.transform = "scale(1.05)";
-      }}
-      onMouseLeave={(e) => {
-        if (!selected) e.currentTarget.style.transform = "scale(1)";
-      }}
     >
       <div
         className="class-picker-icon"
@@ -165,6 +198,39 @@ function ClassTile({
         {cls.name}
       </div>
     </button>
+  );
+}
+
+export function ClassRandomizer({ theme }: { theme: AppTheme }) {
+  const [result, setResult] = useState<ClassEntry | null>(null);
+
+  const roll = () =>
+    setResult(CLASSES[Math.floor(Math.random() * CLASSES.length)]); // eslint-disable-line sonarjs/pseudo-random
+
+  return (
+    <div className="guide-randomizer">
+      <button
+        type="button"
+        onClick={roll}
+        className="guide-primary-btn"
+        style={{ background: theme.accent, color: theme.accentOn }}
+      >
+        Randomize my class
+      </button>
+
+      {result && (
+        <div
+          className="class-card"
+          style={{
+            width: "100%",
+            background: theme.accentSoft,
+            border: `1px solid ${theme.border}`,
+          }}
+        >
+          <ClassDetails cls={result} theme={theme} size="lg" />
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -195,7 +261,19 @@ export default function ClassPicker({ theme }: { theme: AppTheme }) {
                     panelId={panelId}
                     onToggle={() => toggle(cls.name)}
                   />
-                  {isSelected && <ClassInfoPanel cls={cls} theme={theme} id={panelId} />}
+                  {isSelected && (
+                    <div
+                      id={panelId}
+                      className="class-card"
+                      style={{
+                        gridColumn: "1 / -1",
+                        background: theme.accentSoft,
+                        border: `1px solid ${theme.border}`,
+                      }}
+                    >
+                      <ClassDetails cls={cls} theme={theme} size="md" />
+                    </div>
+                  )}
                 </React.Fragment>
               );
             })}

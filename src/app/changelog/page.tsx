@@ -15,8 +15,9 @@ const CHANGELOG: ChangelogEntry[] = [
     date: "2026-09-04",
     changes: [
       { type: "added", text: "Doro now has a speech bubble on the home page. Poke Doro for a new phrase." },
-      { type: "added", text: "The New Player Guide is now interactive. Tell it whether you are on an Interactive or Heroic world and whether your character is on Hyper Burning, and it shows only the parts of the guide that apply to you." },
-      { type: "added", text: "The New Player Guide's class list now opens a panel for each class with a description and tags like Easy or Combo." },
+      { type: "added", text: "The New Player Guide is now interactive. Set whether you are on an Interactive or Heroic world and whether your character is on Hyper Burning, and it shows only the parts of the guide that apply to you." },
+      { type: "added", text: "The New Player Guide now has a contents list beside it that tracks the section you are reading and jumps to any other." },
+      { type: "added", text: "The New Player Guide's class list now opens a panel for each class with its difficulty, link skill and Legion bonus, and there is a randomizer for when you cannot decide." },
     ],
   },
   {

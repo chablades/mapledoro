@@ -5,14 +5,23 @@ body {
   margin: 0;
   padding: 0;
   max-width: 100%;
-  overflow-x: hidden;
   font-family: var(--font-body);
+}
+
+/* `clip`, not `hidden`: `overflow-x: hidden` on <body> forces its `overflow-y`
+   to compute to `auto`, which makes <body> a scroll container. Sticky elements
+   inside it then resolve against a scrollport that never scrolls (the document
+   scroller is <html>), so they sit frozen. `clip` clips the same overflow
+   without creating a scroll container. */
+body {
+  overflow-x: clip;
 }
 
 /* Keep the root scrollport width consistent between short and tall pages.
    overscroll-behavior-y stops iOS rubber-banding, which flashed white past the
    document edges and let content slide over the fixed header. */
 html {
+  overflow-x: hidden;
   overflow-y: scroll;
   overscroll-behavior-y: none;
 }
@@ -735,6 +744,187 @@ textarea:focus-visible {
   font-weight: 700;
   text-decoration: none;
   margin-bottom: 1.25rem;
+}
+
+.guide-primary-btn:hover,
+.guide-primary-btn:focus-visible {
+  opacity: 0.85;
+}
+
+.class-picker-tile:hover,
+.class-picker-tile:focus-visible,
+.class-picker-tile[aria-expanded="true"] {
+  transform: scale(1.05);
+}
+
+/* ── Long-form guide layout: sticky contents rail beside the body ── */
+
+.guide-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+}
+
+.guide-head .page-title {
+  margin: 0 0 0.25rem;
+}
+
+.guide-mode-switch {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.4rem;
+  flex: none;
+}
+
+.guide-mode-label {
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.guide-switches {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.guide-layout {
+  display: grid;
+  grid-template-columns: 236px minmax(0, 1fr);
+  gap: 1.5rem;
+}
+
+/* The rail is the grid item and stretches to the row's full height, which is
+   what gives the sticky nav inside it room to travel. Sticking the nav itself
+   can't work: as the grid item it would be sized by its own content. */
+.guide-toc-rail {
+  min-width: 0;
+}
+
+/* `top` and the section `scroll-margin-top` both clear the 56px fixed nav. */
+.guide-toc {
+  position: sticky;
+  top: 72px;
+  border-radius: 16px;
+  padding: 1rem 0.75rem;
+  max-height: calc(100vh - 96px);
+  overflow-y: auto;
+}
+
+.guide-toc-label {
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0 0.6rem 0.6rem;
+}
+
+.guide-toc-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.guide-toc-link {
+  display: flex;
+  align-items: baseline;
+  gap: 0.55rem;
+  padding: 0.5rem 0.6rem;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1.35;
+  text-decoration: none;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.guide-toc-num {
+  font-size: 0.75rem;
+  font-weight: 800;
+  opacity: 0.65;
+  flex: none;
+}
+
+.guide-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  min-width: 0;
+}
+
+.guide-section {
+  border-radius: 18px;
+  padding: 1.75rem;
+  scroll-margin-top: 72px;
+}
+
+.guide-section-title {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  font-family: var(--font-heading);
+  font-size: 1.15rem;
+  font-weight: 400;
+  margin: 0 0 1rem;
+}
+
+.guide-blocks {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.guide-callout {
+  border-radius: 12px;
+  padding: 0.9rem 1rem;
+}
+
+.guide-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin: 0;
+  padding-left: 1.2rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  line-height: 1.75;
+}
+
+.guide-figure {
+  margin: 0;
+}
+
+/* Below the two-column breakpoint the rail becomes a wrapping chip row. */
+@media (max-width: 1000px) {
+  .guide-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .guide-toc {
+    position: static;
+    max-height: none;
+    margin-bottom: 0.25rem;
+  }
+
+  .guide-toc-list {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
+
+  .guide-mode-switch {
+    align-items: flex-start;
+  }
+
+  .guide-section {
+    padding: 1.5rem 1.25rem;
+  }
 }
 
 .pixelated-img {
