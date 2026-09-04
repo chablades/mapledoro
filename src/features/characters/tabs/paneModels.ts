@@ -195,6 +195,8 @@ export interface PreviewPaneModel {
 
 export interface PreviewPaneActions {
   setPreviewImageLoaded: (loaded: boolean) => void;
+  /** Re-point the background auto-refresh at a newly-selected world (null = all worlds). */
+  queueWorldRefresh: (worldId: number | null) => void;
   confirmFoundCharacter: () => void;
   resumeFoundCharacterDraft: () => void;
   startFreshSetup: () => void;

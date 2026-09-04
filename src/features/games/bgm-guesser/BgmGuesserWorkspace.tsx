@@ -434,7 +434,7 @@ export default function BgmGuesserWorkspace({
       setPuzzleNumber((p) => (p === today ? next : p));
     }, msUntilNextPuzzle() + 250);
     return () => clearTimeout(t);
-  }, [today]);
+  }, [today, setPuzzleNumber]);
 
   if (!mounted) return null;
 

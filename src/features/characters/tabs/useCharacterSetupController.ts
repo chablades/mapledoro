@@ -7,6 +7,7 @@ import {
   type SetupMode,
 } from "../model/constants";
 import { findRosterCharacterByName, normalizeCharacterName, toCharacterKey } from "../model/characterKeys";
+import { readStoredWorldFilter, resolveWorldFilter, rosterWorldIds } from "../model/directoryWorldFilter";
 import {
   appendExpHistoryEntry,
   createStoredCharacterRecord,
@@ -1007,6 +1008,41 @@ function normalizeGenderValue(value: string | undefined | null): "male" | "femal
 }
 
 
+/**
+ * Stale (past `expiresAt`) mains and champions to auto-refresh in the background, scoped
+ * to the world the directory is showing. `worldId` null is the explicit "All worlds"
+ * view, which sweeps every world.
+ *
+ * Scoped rather than account-wide because the lookup API's per-IP minute cap is small
+ * and shared with the visitor's own searches: spending it on worlds that aren't on
+ * screen only delays the characters they are actually looking at.
+ */
+function collectStaleWorldCharacters(
+  worldId: number | null,
+  mainKeyByWorld: Record<string, string>,
+  championKeysByWorld: Record<string, string[]>,
+  byKey: Map<string, StoredCharacterRecord>,
+): StoredCharacterRecord[] {
+  const now = Date.now();
+  const inScope = (world: string) => worldId === null || world === String(worldId);
+  const seen = new Set<string>();
+  const stale: StoredCharacterRecord[] = [];
+  const consider = (key: string) => {
+    if (seen.has(key)) return;
+    seen.add(key);
+    const character = byKey.get(key);
+    if (character && now > character.expiresAt) stale.push(character);
+  };
+  for (const [world, key] of Object.entries(mainKeyByWorld)) {
+    if (inScope(world)) consider(key);
+  }
+  for (const [world, keys] of Object.entries(championKeysByWorld)) {
+    if (!inScope(world)) continue;
+    for (const key of keys) consider(key);
+  }
+  return stale;
+}
+
 // Helpers for world-scoped main/champion key maps
 function getMainKeyForWorld(
   mainCharacterKeyByWorld: Record<string, string>,
@@ -1269,6 +1305,26 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
     queue: autoRefreshQueue,
     onRefreshed: handleRefreshed,
   });
+
+  /**
+   * Re-point the background refresh at a newly-selected world. Replacing the queue also
+   * abandons whatever the previous world had left to sweep, which is the intent: the
+   * per-IP lookup budget should follow what's on screen. Stale characters left behind
+   * get picked up the next time that world is selected.
+   */
+  const queueWorldRefresh = useCallback((worldId: number | null) => {
+    const byKey = new Map(
+      characterRosterRef.current.map((c) => [toCharacterKey(c), c] as const),
+    );
+    setAutoRefreshQueue(
+      collectStaleWorldCharacters(
+        worldId,
+        mainCharacterKeyByWorld,
+        championCharacterKeysByWorld,
+        byKey,
+      ),
+    );
+  }, [mainCharacterKeyByWorld, championCharacterKeysByWorld]);
 
   const transitions = useSetupFlowTransitions();
   const {
@@ -1709,21 +1765,19 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
         setSuppressLayoutTransition(false);
       }, CHARACTERS_TRANSITION_MS.standard);
 
-      // Compute stale main+champions for background auto-refresh
-      const now = Date.now();
-      const seen = new Set<string>();
-      const stale: StoredCharacterRecord[] = [];
-      for (const mainKey of Object.values(store.mainCharacterIdByWorld)) {
-        const char = store.charactersById[mainKey];
-        if (char && now > char.expiresAt) { seen.add(mainKey); stale.push(char); }
-      }
-      for (const champKeys of Object.values(store.championCharacterIdsByWorld)) {
-        for (const key of champKeys) {
-          if (seen.has(key)) continue;
-          const char = store.charactersById[key];
-          if (char && now > char.expiresAt) { seen.add(key); stale.push(char); }
-        }
-      }
+      // Queue stale main+champions for background auto-refresh, but only for the world
+      // the directory is about to land on — resolved exactly as the directory pane
+      // resolves its own filter, so the two always agree on which world that is.
+      const landingWorldId = resolveWorldFilter(
+        readStoredWorldFilter(),
+        rosterWorldIds(storedRoster),
+      );
+      const stale = collectStaleWorldCharacters(
+        landingWorldId,
+        store.mainCharacterIdByWorld,
+        store.championCharacterIdsByWorld,
+        new Map(Object.entries(store.charactersById)),
+      );
       if (stale.length > 0) setAutoRefreshQueue(stale);
     }, 0);
     return () => clearTimeout(hydrateTimer);
@@ -2828,9 +2882,7 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
   };
 
   // Derive sorted world IDs from roster
-  const worldIds = Array.from(
-    new Set(characterRoster.map((c) => c.worldID)),
-  ).sort((a, b) => a - b);
+  const worldIds = rosterWorldIds(characterRoster);
 
   const state = {
     refreshingKeys,
@@ -2929,6 +2981,7 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
       removeCurrentCharacter,
       openAddCharacterSearch,
       backFromAddCharacter,
+      queueWorldRefresh,
       importCharacter,
       importCharacterAsChampionSwap,
       importCharacterMerged,

@@ -105,6 +105,24 @@ columns across the whole panel. A `note` is now the picked resource's descriptio
 subtitle, so keep it to one line that reads on its own. The body is keyed by section id so switching
 resources replays the site-wide `.fade-in`.
 
+**The charts under the body** (`ResourceChartView`, one per entry) are the per-level tables the tab
+was before the breakdown, brought back as a fourth band: `resourceChartsForSection(section.id)`
+returns `ResourceChart`s (columns typed `exp` / `percent` / `count` for the formatter, rows of
+`number | null` cells, an optional `title` shown as a heading) or an empty list for sections with
+nothing worth tabling (dailies, weeklies, potions, treasure boxes, Monster Park, Double Up). They are
+**level-independent and render under a locked body too**, since what a resource pays at the levels
+ahead is the point of them. Each box caps at 340px and scrolls within itself; the typed level's row
+is highlighted with `accentSoft` and centred by an effect that sets `scrollTop` (a DOM write, so it
+clears `set-state-in-effect`). **Keys must differ from the body's**, which sits under the same parent
+keyed by section id: a shared key made React keep the old resource's content on every switch.
+Single-source charts come from `unitChart`: per-unit EXP, then `% of Level` and `<units> / Level`,
+priced on a `batch` (a 1,150-point Punch King run, an hour of sauna, a 10k-kill Fever Time) where one
+unit is a negligible slice; the to-level count is ceiled for units and fractional for batches. EXP
+Tickets is two titled charts, one per ticket, since their level ranges differ. Epic Dungeon is one
+chart with a `group` label on each column, and the view renders a spanning header row from runs of
+equal groups. The table uses `border-collapse: separate` because collapsed borders scroll out from
+under a sticky `<thead>`.
+
 A group's `heading` opens a labelled band that spans the grid and forces a fresh row; Dailies sets it
 on the first entry of each region. It is only a divider: the bonus percents stay Arcane River and
 Grandis, with Tenebris riding the Arcane River one, exactly as the simulator does.

@@ -12,7 +12,16 @@ export interface Boss {
    * crystal cap while still counting toward the account-wide 180 weekly total.
    */
   monthly?: boolean;
+  /**
+   * Largest party the boss admits, when it is not the usual 6. Caps the party-size
+   * selector and is clamped against on load, so a saved size from before a boss's
+   * cap was recorded can't leave the select showing a value it no longer offers.
+   */
+  maxParty?: number;
 }
+
+/** Party cap for a boss with no explicit `maxParty`. */
+export const DEFAULT_MAX_PARTY = 6;
 
 // haku.network `ui/boss` icon by id (ids from `manifests/v268/boss.json`).
 const icon = bossIconUrl;
@@ -33,7 +42,7 @@ export const BOSSES: Boss[] = [
   { name: "Akechi Mitsuhide", icon: icon("107"), meso: 144000000, preset: ["akechi", "nlomien", "ctene", "ekalos"] },
   { name: "Lotus (Normal)", icon: icon("13"), meso: 162562500, shared: ["Lotus (Hard)", "Lotus (Extreme)"], preset: ["nlomien"] },
   { name: "Lotus (Hard)", icon: icon("13"), meso: 444675000, shared: ["Lotus (Normal)", "Lotus (Extreme)"], preset: ["ctene", "ekalos"] },
-  { name: "Lotus (Extreme)", icon: icon("13"), meso: 1397500000, shared: ["Lotus (Normal)", "Lotus (Hard)"] },
+  { name: "Lotus (Extreme)", icon: icon("13"), meso: 1397500000, maxParty: 2, shared: ["Lotus (Normal)", "Lotus (Hard)"] },
   { name: "Damien (Normal)", icon: icon("15"), meso: 169000000, shared: ["Damien (Hard)"], preset: ["nlomien"] },
   { name: "Damien (Hard)", icon: icon("15"), meso: 421875000, shared: ["Damien (Normal)"], preset: ["ctene", "ekalos"] },
   { name: "Guardian Angel Slime (Normal)", icon: icon("29"), meso: 231673500, shared: ["Guardian Angel Slime (Chaos)"] },
@@ -57,22 +66,22 @@ export const BOSSES: Boss[] = [
   { name: "Kalos the Guardian (Normal)", icon: icon("30"), meso: 1300000000, shared: ["Kalos the Guardian (Easy)", "Kalos the Guardian (Chaos)", "Kalos the Guardian (Extreme)"] },
   { name: "Kalos the Guardian (Chaos)", icon: icon("30"), meso: 2600000000, shared: ["Kalos the Guardian (Easy)", "Kalos the Guardian (Normal)", "Kalos the Guardian (Extreme)"] },
   { name: "Kalos the Guardian (Extreme)", icon: icon("30"), meso: 5200000000, shared: ["Kalos the Guardian (Easy)", "Kalos the Guardian (Normal)", "Kalos the Guardian (Chaos)"] },
-  { name: "First Adversary (Easy)", icon: icon("35"), meso: 985000000, shared: ["First Adversary (Normal)", "First Adversary (Hard)", "First Adversary (Extreme)"] },
-  { name: "First Adversary (Normal)", icon: icon("35"), meso: 1365000000, shared: ["First Adversary (Easy)", "First Adversary (Hard)", "First Adversary (Extreme)"] },
-  { name: "First Adversary (Hard)", icon: icon("35"), meso: 2940000000, shared: ["First Adversary (Easy)", "First Adversary (Normal)", "First Adversary (Extreme)"] },
-  { name: "First Adversary (Extreme)", icon: icon("35"), meso: 5880000000, shared: ["First Adversary (Easy)", "First Adversary (Normal)", "First Adversary (Hard)"] },
+  { name: "First Adversary (Easy)", icon: icon("35"), meso: 985000000, maxParty: 3, shared: ["First Adversary (Normal)", "First Adversary (Hard)", "First Adversary (Extreme)"] },
+  { name: "First Adversary (Normal)", icon: icon("35"), meso: 1365000000, maxParty: 3, shared: ["First Adversary (Easy)", "First Adversary (Hard)", "First Adversary (Extreme)"] },
+  { name: "First Adversary (Hard)", icon: icon("35"), meso: 2940000000, maxParty: 3, shared: ["First Adversary (Easy)", "First Adversary (Normal)", "First Adversary (Extreme)"] },
+  { name: "First Adversary (Extreme)", icon: icon("35"), meso: 5880000000, maxParty: 3, shared: ["First Adversary (Easy)", "First Adversary (Normal)", "First Adversary (Hard)"] },
   { name: "Kaling (Easy)", icon: icon("31"), meso: 1031250000, shared: ["Kaling (Normal)", "Kaling (Hard)", "Kaling (Extreme)"] },
   { name: "Kaling (Normal)", icon: icon("31"), meso: 1506500000, shared: ["Kaling (Easy)", "Kaling (Hard)", "Kaling (Extreme)"] },
   { name: "Kaling (Hard)", icon: icon("31"), meso: 2990000000, shared: ["Kaling (Easy)", "Kaling (Normal)", "Kaling (Extreme)"] },
   { name: "Kaling (Extreme)", icon: icon("31"), meso: 6026000000, shared: ["Kaling (Easy)", "Kaling (Normal)", "Kaling (Hard)"] },
-  { name: "Limbo (Normal)", icon: icon("33"), meso: 2100000000, shared: ["Limbo (Hard)"] },
-  { name: "Limbo (Hard)", icon: icon("33"), meso: 3745000000, shared: ["Limbo (Normal)"] },
-  { name: "Baldrix (Normal)", icon: icon("34"), meso: 2800000000, shared: ["Baldrix (Hard)"] },
-  { name: "Baldrix (Hard)", icon: icon("34"), meso: 6026000000, shared: ["Baldrix (Normal)"] },
-  { name: "Malefic Star (Normal)", icon: icon("37"), meso: 1452000000, shared: ["Malefic Star (Hard)"] },
-  { name: "Malefic Star (Hard)", icon: icon("37"), meso: 3990000000, shared: ["Malefic Star (Normal)"] },
-  { name: "Jupiter (Normal)", icon: icon("38"), meso: 2965000000, shared: ["Jupiter (Hard)"] },
-  { name: "Jupiter (Hard)", icon: icon("38"), meso: 5954000000, shared: ["Jupiter (Normal)"] },
+  { name: "Limbo (Normal)", icon: icon("33"), meso: 2100000000, maxParty: 3, shared: ["Limbo (Hard)"] },
+  { name: "Limbo (Hard)", icon: icon("33"), meso: 3745000000, maxParty: 3, shared: ["Limbo (Normal)"] },
+  { name: "Baldrix (Normal)", icon: icon("34"), meso: 2800000000, maxParty: 3, shared: ["Baldrix (Hard)"] },
+  { name: "Baldrix (Hard)", icon: icon("34"), meso: 6026000000, maxParty: 3, shared: ["Baldrix (Normal)"] },
+  { name: "Malefic Star (Normal)", icon: icon("37"), meso: 1452000000, maxParty: 3, shared: ["Malefic Star (Hard)"] },
+  { name: "Malefic Star (Hard)", icon: icon("37"), meso: 3990000000, maxParty: 3, shared: ["Malefic Star (Normal)"] },
+  { name: "Jupiter (Normal)", icon: icon("38"), meso: 2965000000, maxParty: 3, shared: ["Jupiter (Hard)"] },
+  { name: "Jupiter (Hard)", icon: icon("38"), meso: 5954000000, maxParty: 3, shared: ["Jupiter (Normal)"] },
   // Monthly boss. Keep last so its rows stay contiguous for the XLSX top-14 formula.
   { name: "Black Mage (Hard)", icon: icon("25"), meso: 4500000000, monthly: true, shared: ["Black Mage (Extreme)"] },
   { name: "Black Mage (Extreme)", icon: icon("25"), meso: 18000000000, monthly: true, shared: ["Black Mage (Hard)"] },

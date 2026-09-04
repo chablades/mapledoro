@@ -14,7 +14,7 @@ import { formatShortDate } from "../date";
 import { replaceZeroOnDigit } from "../numberInputHandlers";
 import { Field, Toggle, ToolNumberInput } from "../shared-ui";
 import { toolStyles } from "../tool-styles";
-import { dropdownShadow } from "../shared-styles";
+import { dataTableTh, dropdownShadow } from "../shared-styles";
 import {
   ADV_EXP_TICKET_ICON,
   CHECK_BUFF_GROUPS,
@@ -49,10 +49,13 @@ import {
   calculateMonsterExp,
   defaultBreakdownInput,
   percentOfLevel,
+  resourceChartsForSection,
   type AllInOneInput,
   type BreakdownControlId,
   type BreakdownGroup,
   type ResourceBreakdownInput,
+  type ResourceChart,
+  type ResourceChartColumn,
   type BuffState,
   type CheckBuff,
   type IconRef,
@@ -477,12 +480,12 @@ export default function ExpCalculatorWorkspace({ theme }: { theme: AppTheme }) {
         .exp-overview-grid { display: grid; grid-template-columns: minmax(240px, 1.1fr) minmax(260px, 1fr); gap: 14px; }
         /* Two lines per entry across as many columns as fit. Only one resource shows at a time, so
            this runs the full panel width and lands three columns instead of the old card's one. */
-        .exp-breakdown-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 2px 22px; padding: 6px 14px 12px; align-items: start; }
+        .exp-breakdown-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 2px 22px; padding: 6px 14px; align-items: start; }
         .exp-buff-card { min-height: 48px; }
-        .exp-monster-dropdown { scrollbar-width: thin; scrollbar-color: ${theme.muted} transparent; }
-        .exp-monster-dropdown::-webkit-scrollbar { width: 8px; }
-        .exp-monster-dropdown::-webkit-scrollbar-track { background: transparent; }
-        .exp-monster-dropdown::-webkit-scrollbar-thumb { background: ${theme.muted}; border-radius: 4px; }
+        .exp-monster-dropdown, .exp-chart-scroll { scrollbar-width: thin; scrollbar-color: ${theme.muted} transparent; }
+        .exp-monster-dropdown::-webkit-scrollbar, .exp-chart-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+        .exp-monster-dropdown::-webkit-scrollbar-track, .exp-chart-scroll::-webkit-scrollbar-track { background: transparent; }
+        .exp-monster-dropdown::-webkit-scrollbar-thumb, .exp-chart-scroll::-webkit-scrollbar-thumb { background: ${theme.muted}; border-radius: 4px; }
         .exp-monster-search::placeholder { color: ${theme.muted}; opacity: 1; }
         /* The ring belongs on the bordered trigger, not the borderless input inside it. */
         .exp-monster-trigger:focus-within { outline: 2px solid; outline-offset: 2px; }
@@ -1480,6 +1483,7 @@ function ResourcesTab({ theme }: { theme: AppTheme }) {
   const sections = useMemo(() => buildResourceBreakdown(input), [input]);
   const section = sections.find((entry) => entry.id === sectionId) ?? sections[0];
   const locked = input.level < section.minLevel;
+  const charts = useMemo(() => resourceChartsForSection(section.id), [section.id]);
 
   // Changing the character level re-seeds the monster-level fields with it, since "what is this
   // worth at Lv. X" almost always means fighting Lv. X monsters. They stay editable after.
@@ -1560,9 +1564,122 @@ function ResourcesTab({ theme }: { theme: AppTheme }) {
           </>
         )}
       </div>
+      {/* The charts are level-independent, so they show under a locked body too: what a resource
+          is worth at the levels ahead is exactly what a player under its gate wants to see. Keyed
+          apart from the body above, which shares this parent. */}
+      {charts.map((chart, index) => (
+        <ResourceChartView key={`${section.id}-chart-${index}`} theme={theme} chart={chart} level={input.level} />
+      ))}
     </div>
   );
 }
+
+/** The per-level table the tab showed before the breakdown, capped to a few rows and scrolled
+ *  within itself. The typed level's row is highlighted and scrolled into the middle, so the box
+ *  opens on the levels the player is at rather than on Lv. 200 every time. */
+function ResourceChartView({ theme, chart, level }: { theme: AppTheme; chart: ResourceChart; level: number }) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const hasGroups = chart.columns.some((column) => column.group);
+  // The header band is `panel` so it reads as a band over the `timerBg` card while it sticks.
+  const thStyle: React.CSSProperties = { ...dataTableTh(theme), ...chartThStyle, background: theme.panel };
+  const levelThStyle: React.CSSProperties = { ...thStyle, textAlign: "left" };
+  const groupThStyle: React.CSSProperties = { ...thStyle, textAlign: "center", borderBottom: `1px solid ${theme.border}` };
+  const tdStyle: React.CSSProperties = { ...chartTdStyle, color: theme.text, borderBottom: `1px solid ${theme.border}` };
+  const levelTdStyle: React.CSSProperties = { ...tdStyle, textAlign: "left", color: theme.accentText, fontWeight: 800 };
+
+  useEffect(() => {
+    const container = scrollRef.current;
+    const row = container?.querySelector<HTMLElement>("[data-current='true']");
+    if (!container) return;
+    // A level off the chart (under its first row) has nothing to centre on, so open at the top.
+    container.scrollTop = row ? row.offsetTop - container.clientHeight / 2 + row.offsetHeight / 2 : 0;
+  }, [chart, level]);
+
+  return (
+    <div className="fade-in">
+      {chart.title && <h3 style={{ ...chartTitleStyle, color: theme.muted }}>{chart.title}</h3>}
+      <div ref={scrollRef} className="exp-chart-scroll" style={chartScrollStyle(theme, Boolean(chart.title))}>
+        <table style={chartTableStyle}>
+          <thead style={chartTheadStyle}>
+            {hasGroups && (
+              <tr>
+                <th style={groupThStyle} />
+                {groupSpans(chart.columns).map(({ group, span }, index) => (
+                  <th key={`${group}-${index}`} colSpan={span} style={groupThStyle}>
+                    {group}
+                  </th>
+                ))}
+              </tr>
+            )}
+            <tr>
+              <th style={levelThStyle}>Level</th>
+              {chart.columns.map((column) => (
+                <th key={column.group ? `${column.group}/${column.label}` : column.label} style={thStyle} title={column.title}>
+                  {column.label}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {chart.rows.map((row) => {
+              const current = row.level === level;
+              return (
+                <tr key={row.level} data-current={current || undefined} style={current ? { background: theme.accentSoft } : undefined}>
+                  <td style={levelTdStyle}>Lv. {row.level}</td>
+                  {row.cells.map((cell, index) => (
+                    <td key={index} style={cell === null ? { ...tdStyle, color: theme.muted } : tdStyle}>
+                      {cell === null ? "-" : formatChartCell(cell, chart.columns[index].kind)}
+                    </td>
+                  ))}
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function formatChartCell(value: number, kind: ResourceChartColumn["kind"]): string {
+  if (kind === "exp") return formatMesoFull(value);
+  if (kind === "percent") return formatPct(value);
+  return value.toLocaleString(undefined, { maximumFractionDigits: 2 });
+}
+
+/** Runs of equal `group` labels, each with the column count it spans. */
+function groupSpans(columns: ResourceChartColumn[]): { group: string; span: number }[] {
+  const spans: { group: string; span: number }[] = [];
+  for (const column of columns) {
+    const last = spans[spans.length - 1];
+    if (last && last.group === column.group) last.span += 1;
+    else spans.push({ group: column.group ?? "", span: 1 });
+  }
+  return spans;
+}
+
+/** A titled chart's box tucks up under its heading; an untitled one keeps the band gap itself. */
+function chartScrollStyle(theme: AppTheme, titled: boolean): React.CSSProperties {
+  return { ...innerCardStyle(theme), marginTop: titled ? 6 : "1rem", maxHeight: 340, overflow: "auto" };
+}
+
+/** Matches the group headings inside the breakdown grid, so the two title styles read as one. */
+const chartTitleStyle: React.CSSProperties = {
+  margin: "1rem 0 0",
+  fontSize: "0.75rem",
+  fontWeight: 800,
+  letterSpacing: "0.04em",
+  textTransform: "uppercase",
+};
+
+/** `separate` rather than `collapse`: collapsed borders scroll away from a sticky header. */
+const chartTableStyle: React.CSSProperties = { width: "100%", borderCollapse: "separate", borderSpacing: 0 };
+
+const chartTheadStyle: React.CSSProperties = { position: "sticky", top: 0, zIndex: 1 };
+
+const chartThStyle: React.CSSProperties = { textAlign: "right", whiteSpace: "nowrap" };
+
+const chartTdStyle: React.CSSProperties = { padding: "7px 12px", fontSize: "0.82rem", fontWeight: 700, textAlign: "right", whiteSpace: "nowrap" };
 
 function BreakdownControl({
   id,

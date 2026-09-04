@@ -198,6 +198,16 @@ export function useBossCrystalsState(mounted: boolean) {
     () => calcCharacterProgress(dialogBosses, server),
     [dialogBosses, server],
   );
+  // The world's crystal total as it will stand once the dialog is confirmed, so the
+  // 180 cap can be watched while picking. Editing swaps that character's committed
+  // contribution for the in-progress one; adding stacks on top of the current total.
+  const dialogWorldCrystals = useMemo(() => {
+    const pending = dialogPreview.crystals + dialogPreview.monthlyCrystals;
+    if (dialog?.type !== "edit") return totalCrystals + pending;
+    const editing = visibleCharacters.find((v) => v.index === dialog.index);
+    const committed = editing ? editing.income.crystals + editing.income.monthlyCrystals : 0;
+    return totalCrystals - committed + pending;
+  }, [dialog, dialogPreview, totalCrystals, visibleCharacters]);
   const pendingName =
     nameMode === "type" ? typedName.trim() : (selectedStoreChar?.characterName ?? "");
   // The picker can't offer a name already added, but a typed one can still collide.
@@ -320,6 +330,7 @@ export function useBossCrystalsState(mounted: boolean) {
     dialogBosses,
     dialogDisabled,
     dialogPreview,
+    dialogWorldCrystals,
     dialogTitle,
     showBossDialog,
     pendingName,

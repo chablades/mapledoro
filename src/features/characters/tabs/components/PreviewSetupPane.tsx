@@ -2,6 +2,12 @@ import { useEffect, useEffectEvent, useState } from "react";
 import type { CSSProperties } from "react";
 import { buildDirectoryGroups, getDirectoryRevealDelays, type DirectorySortBy } from "../charactersDirectory";
 import type { PreviewPaneActions, PreviewPaneModel } from "../paneModels";
+import {
+  readStoredWorldFilter,
+  resolveWorldFilter,
+  writeStoredWorldFilter,
+  type StoredWorldFilter,
+} from "../../model/directoryWorldFilter";
 import CharacterDirectoryScreen from "../screens/CharacterDirectoryScreen";
 import CharacterProfileOverviewScreen from "../screens/CharacterProfileOverviewScreen";
 import SetupFlowScreen from "../screens/SetupFlowScreen";
@@ -14,32 +20,6 @@ import { panelCardStyle } from "./uiStyles";
 // user preferences here instead of (or as fallback for) this localStorage key.
 // Hook: read `mapledoro_pref_default_world` (number | null) from settings store,
 // and use it as the initial value if present, overriding the localStorage fallback.
-const DIRECTORY_WORLD_FILTER_STORAGE_KEY = "mapledoro_directory_world_filter";
-
-function readPersistedWorldFilter(): number | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = window.localStorage.getItem(DIRECTORY_WORLD_FILTER_STORAGE_KEY);
-    if (raw === null) return null;
-    const parsed = JSON.parse(raw);
-    return typeof parsed === "number" ? parsed : null;
-  } catch {
-    return null;
-  }
-}
-
-function writePersistedWorldFilter(worldId: number | null) {
-  if (typeof window === "undefined") return;
-  try {
-    if (worldId === null) {
-      window.localStorage.removeItem(DIRECTORY_WORLD_FILTER_STORAGE_KEY);
-    } else {
-      window.localStorage.setItem(DIRECTORY_WORLD_FILTER_STORAGE_KEY, JSON.stringify(worldId));
-    }
-  } catch {
-    // Ignore localStorage write failures.
-  }
-}
 
 interface PreviewSetupPaneProps {
   model: PreviewPaneModel;
@@ -118,26 +98,11 @@ export default function PreviewSetupPane({ model, actions }: PreviewSetupPanePro
   const { theme, setup, directory, preview } = model;
   const [directorySortBy, setDirectorySortBy] = useState<DirectorySortBy>("name");
 
-  // "unset" means no explicit user choice yet — resolve to first world during render.
-  // null means user explicitly chose "All worlds".
-  // number means user chose a specific world.
-  const [directoryWorldFilterRaw, setDirectoryWorldFilterRaw] = useState<number | null | "unset">(() => {
-    const persisted = readPersistedWorldFilter();
-    // readPersistedWorldFilter returns null both when key is missing AND when value is null.
-    // Distinguish by checking if the key exists at all.
-    if (typeof window !== "undefined") {
-      const hasKey = window.localStorage.getItem(DIRECTORY_WORLD_FILTER_STORAGE_KEY) !== null;
-      if (hasKey) return persisted; // null = all worlds, number = specific world
-    }
-    return "unset"; // No persisted preference — will resolve to first world at render time
-  });
-
-  // Resolve effective filter: if unset or selected world no longer exists, use first world
-  const directoryWorldFilter: number | null =
-    directoryWorldFilterRaw === "unset" || 
-    (directoryWorldFilterRaw !== null && !directory.worldIds.includes(directoryWorldFilterRaw))
-      ? (directory.worldIds[0] ?? null)
-      : directoryWorldFilterRaw;
+  // See StoredWorldFilter for what each variant means. Resolved (not raw) below, since
+  // "unset" and a world that has since left the roster both fall back to the first world.
+  const [directoryWorldFilterRaw, setDirectoryWorldFilterRaw] =
+    useState<StoredWorldFilter>(readStoredWorldFilter);
+  const directoryWorldFilter = resolveWorldFilter(directoryWorldFilterRaw, directory.worldIds);
 
   // Mirrors CharacterDirectoryScreen's own world-scoping so the reveal-phase delay below
   // matches whether the directory view it's about to animate actually has a champions
@@ -199,10 +164,13 @@ export default function PreviewSetupPane({ model, actions }: PreviewSetupPanePro
     activeScreenId === "profile-overview",
   );
 
-  // Persist world filter changes — stores the explicit user choice
+  // Persist world filter changes — stores the explicit user choice. The background
+  // refresh only ever sweeps the world on screen, so switching is also what queues the
+  // newly-shown world's stale characters (a no-op when none of them are out of date).
   const handleWorldFilterChange = (worldId: number | null) => {
     setDirectoryWorldFilterRaw(worldId);
-    writePersistedWorldFilter(worldId);
+    writeStoredWorldFilter(worldId);
+    actions.queueWorldRefresh(worldId);
   };
 
   useEffect(() => {

@@ -12,6 +12,8 @@ import {
   ASTRA_DAILY_QUESTS,
   ASTRA_TOTAL_TRACES,
   ASTRA_TOTAL_FRAGMENTS,
+  ASTRA_TRANSFER_COLUMNS,
+  ASTRA_TRANSFER_STAR_LABELS,
   MAX_TRACES_CAPACITY,
 } from "./astra-data";
 import {
@@ -22,6 +24,9 @@ import {
 import { formatLongDate } from "../date";
 import { toolStyles } from "../tool-styles";
 import { PanelDivider, ToolNumberInput } from "../shared-ui";
+import { dataTableTd, dataTableTh } from "../shared-styles";
+import { formatMeso } from "../format";
+import { ItemIcon } from "../../../components/ResourceImage";
 import { ConfirmButton } from "../../../components/ConfirmButton";
 import { BossCard } from "./BossCard";
 import { ResultsPanel, type ResultRow } from "./ResultsPanel";
@@ -372,6 +377,95 @@ function AstraResultsSection({
 }
 
 
+// -- Transfer Costs -----------------------------------------------------------
+
+/** Caveats the wiki attaches to the transfer tables. Kept as a list so the JSX
+ *  below stays a table and nothing else. */
+const TRANSFER_NOTES = [
+  "Star force and eligible scroll stats carry over, but you cannot transfer into a stage whose star cap is below the item's star force (Stage 1: 15★, Stage 2: 20★, Stage 3: 30★).",
+  "Transferring a non-shield secondary (medallion, rosary, book) into a Warrior, Mage or Shadower Astra shield costs a flat 1B instead.",
+  "Terminus Defender is the only Warrior shield that can pass 20★, so every cost above that row assumes one.",
+  "A Terminus Defender at 27★ or above is charged as a 26★ one.",
+  "N/A marks star levels no transferable item reaches: the Mage and Shadower shields all cap at 20★.",
+];
+
+const TRANSFER_HEADER_CELL: React.CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  gap: "4px",
+};
+
+const TRANSFER_ITEM_NAME: React.CSSProperties = {
+  fontSize: "0.75rem",
+  fontWeight: 600,
+  textTransform: "none",
+  letterSpacing: "normal",
+};
+
+function AstraTransferSection({
+  theme,
+  sectionPanel,
+}: {
+  theme: AppTheme;
+  sectionPanel: React.CSSProperties;
+}) {
+  const thStyle: React.CSSProperties = { ...dataTableTh(theme), textAlign: "center", verticalAlign: "bottom" };
+  const tdStyle: React.CSSProperties = { ...dataTableTd(theme), textAlign: "center" };
+
+  return (
+    <section className="fade-in panel-card" style={sectionPanel}>
+      <h2 className="tool-panel-title" style={{ color: theme.text }}>Secondary Transfer Costs</h2>
+      <p style={{ fontSize: "0.75rem", fontWeight: 600, color: theme.muted, margin: "0 0 1rem", lineHeight: 1.4 }}>
+        Meso cost to transfer an existing secondary into its Astra counterpart, by the star force on the item you are transferring in.
+      </p>
+
+      <div style={{ overflowX: "auto" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 680 }}>
+          <thead>
+            <tr>
+              <th scope="col" style={{ ...thStyle, textAlign: "left" }}>Star Force</th>
+              {ASTRA_TRANSFER_COLUMNS.map((col) => (
+                <th key={col.label} scope="col" style={thStyle}>
+                  <span style={TRANSFER_HEADER_CELL}>
+                    <ItemIcon id={col.itemId} size={28} alt="" />
+                    <span style={{ color: theme.text }}>{col.label}</span>
+                    <span style={TRANSFER_ITEM_NAME}>{col.itemName}</span>
+                  </span>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {ASTRA_TRANSFER_STAR_LABELS.map((starLabel, row) => (
+              <tr key={starLabel}>
+                <th scope="row" style={{ ...tdStyle, textAlign: "left", color: theme.accentText }}>
+                  {starLabel}
+                </th>
+                {ASTRA_TRANSFER_COLUMNS.map((col) => {
+                  const cost = col.costs[row];
+                  return (
+                    <td key={col.label} style={cost === null ? { ...tdStyle, color: theme.muted } : tdStyle}>
+                      {cost === null ? "N/A" : formatMeso(cost)}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <ul style={{ margin: "1rem 0 0", paddingLeft: "1.1rem", fontSize: "0.75rem", fontWeight: 600, color: theme.muted, lineHeight: 1.5 }}>
+        {TRANSFER_NOTES.map((note) => (
+          <li key={note}>{note}</li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+
 // -- Main Component -----------------------------------------------------------
 
 export default function AstraSection({ theme }: { theme: AppTheme }) {
@@ -493,6 +587,8 @@ export default function AstraSection({ theme }: { theme: AppTheme }) {
         sectionPanel={sectionPanel}
         result={state.result}
       />
+
+      <AstraTransferSection theme={theme} sectionPanel={sectionPanel} />
     </>
   );
 }

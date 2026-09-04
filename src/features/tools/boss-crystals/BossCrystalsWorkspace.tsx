@@ -9,6 +9,7 @@ import { ToolHeader } from "../../../components/ToolHeader";
 import {
   BOSSES,
   BOSS_GROUPS,
+  DEFAULT_MAX_PARTY,
   PRESETS,
 } from "./bosses";
 import { formatMesoFull } from "../format";
@@ -111,6 +112,22 @@ function bcPartySizeSelectStyle(theme: AppTheme): CSSProperties {
     color: theme.text,
     padding: "2px 6px",
     fontSize: "0.75rem",
+  };
+}
+
+// Footer summary under the boss list: per-character crystals/mesos on the left,
+// the world's running 180-cap total pushed to the right.
+function bcDialogPreviewRowStyle(theme: AppTheme): CSSProperties {
+  return {
+    display: "flex",
+    alignItems: "baseline",
+    gap: "0.5rem",
+    flexWrap: "wrap",
+    paddingTop: "0.75rem",
+    borderTop: `1px solid ${theme.border}`,
+    fontSize: "0.82rem",
+    fontWeight: 700,
+    color: theme.text,
   };
 }
 
@@ -386,6 +403,7 @@ function BossSelectionDialog({
   bosses,
   disabled,
   preview,
+  worldCrystals,
   showBack,
   confirmLabel,
   onToggle,
@@ -401,6 +419,8 @@ function BossSelectionDialog({
   bosses: BossRow[];
   disabled: Set<number>;
   preview: { meso: number; crystals: number; monthlyCrystals: number };
+  /** World-wide weekly crystals once this dialog is confirmed, against the 180 cap. */
+  worldCrystals: number;
   showBack: boolean;
   confirmLabel: string;
   onToggle: (bi: number) => void;
@@ -506,7 +526,7 @@ function BossSelectionDialog({
               const boss = BOSSES[bi];
               const row = bosses[bi];
               const isDisabled = disabled.has(bi);
-              const maxParty = boss.name === "Lotus (Extreme)" ? 2 : 6;
+              const maxParty = boss.maxParty ?? DEFAULT_MAX_PARTY;
               const checked = row.checked && !isDisabled;
 
               return (
@@ -602,26 +622,31 @@ function BossSelectionDialog({
       </div>
 
       {/* Preview */}
-      <div
-        style={{
-          paddingTop: "0.75rem",
-          borderTop: `1px solid ${theme.border}`,
-          fontSize: "0.82rem",
-          fontWeight: 700,
-          color: theme.text,
-        }}
-      >
-        <span
-          style={{
-            color: preview.crystals >= 14 ? theme.accentText : theme.muted,
-          }}
-        >
-          {preview.crystals}/14
-          {preview.monthlyCrystals > 0 ? ` +${preview.monthlyCrystals}` : ""}
+      <div className="bc-dialog-preview" style={bcDialogPreviewRowStyle(theme)}>
+        <span>
+          <span
+            style={{
+              color: preview.crystals >= 14 ? theme.accentText : theme.muted,
+            }}
+          >
+            {preview.crystals}/14
+            {preview.monthlyCrystals > 0 ? ` +${preview.monthlyCrystals}` : ""}
+          </span>
+          {" crystals · "}
+          <span style={{ color: theme.accentText }}>{formatMesoFull(preview.meso)}</span>
+          {" mesos"}
         </span>
-        {" crystals · "}
-        <span style={{ color: theme.accentText }}>{formatMesoFull(preview.meso)}</span>
-        {" mesos"}
+        <span className="bc-dialog-world" style={{ marginLeft: "auto", whiteSpace: "nowrap" }}>
+          {"World: "}
+          <span
+            style={{
+              color: worldCrystals > 180 ? statusText(theme, "danger") : theme.accentText,
+            }}
+          >
+            {worldCrystals}
+          </span>
+          {" / 180 crystals"}
+        </span>
       </div>
     </ToolDialog>
   );
@@ -802,7 +827,7 @@ export default function BossCrystalsWorkspace({ theme }: { theme: AppTheme }) {
   const {
     server, setServer, visibleCharacters,
     totalWeeklyMeso, totalMonthlyMeso, totalCrystals, clearedMeso, clearedCrystals, serverMult,
-    dialog, dialogBosses, dialogDisabled, dialogPreview,
+    dialog, dialogBosses, dialogDisabled, dialogPreview, dialogWorldCrystals,
     dialogTitle, showBossDialog, pendingName, pendingNameTaken,
     nameMode, setNameMode, typedName, setTypedName,
     selectedStoreChar, setSelectedStoreChar, availableStoreChars,
@@ -851,6 +876,10 @@ export default function BossCrystalsWorkspace({ theme }: { theme: AppTheme }) {
             font-weight: 700 !important;
             color: ${theme.muted} !important;
           }
+          /* The dialog footer wraps to two lines here; center both instead of
+             leaving the world total pinned to the right edge of its own line. */
+          .bc-dialog-preview { justify-content: center; text-align: center; }
+          .bc-dialog-world { width: 100%; margin-left: 0 !important; }
           .bc-presets-label { width: 100%; margin-right: 0 !important; margin-bottom: 0.1rem; }
           .bc-preset-btn { flex: 1 1 28%; margin-left: 0 !important; text-align: center; }
         }
@@ -947,6 +976,7 @@ export default function BossCrystalsWorkspace({ theme }: { theme: AppTheme }) {
           bosses={dialogBosses}
           disabled={dialogDisabled}
           preview={dialogPreview}
+          worldCrystals={dialogWorldCrystals}
           showBack={dialog?.type === "add-bosses"}
           confirmLabel={dialog?.type === "add-bosses" ? "Add" : "Save"}
           onToggle={toggleDialogBoss}

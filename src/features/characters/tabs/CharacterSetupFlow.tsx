@@ -235,6 +235,7 @@ export default function CharacterSetupFlow({ theme, initialCharacterName, initia
 
   const previewPaneActions: PreviewPaneActions = {
     setPreviewImageLoaded: actions.setPreviewImageLoaded,
+    queueWorldRefresh: actions.queueWorldRefresh,
     confirmFoundCharacter: actions.confirmFoundCharacter,
     resumeFoundCharacterDraft: actions.resumeFoundCharacterDraft,
     startFreshSetup: actions.startFreshSetup,

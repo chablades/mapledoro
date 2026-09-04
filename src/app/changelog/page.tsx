@@ -12,10 +12,24 @@ interface ChangelogEntry {
 
 const CHANGELOG: ChangelogEntry[] = [
   {
-    date: "2026-09-01",
+    date: "2026-09-04",
     changes: [
+      { type: "added", text: "Doro now has a speech bubble on the home page. Poke Doro for a new phrase." },
       { type: "added", text: "The New Player Guide is now interactive. Tell it whether you are on an Interactive or Heroic world and whether your character is on Hyper Burning, and it shows only the parts of the guide that apply to you." },
       { type: "added", text: "The New Player Guide's class list now opens a panel for each class with a description and tags like Easy or Combo." },
+    ],
+  },
+  {
+    date: "2026-09-03",
+    changes: [
+      { type: "added", text: "The Liberation Tracker's Astra Secondary tab now lists the meso cost of transferring a Warrior, Mage or Shadower shield, a Kanna talisman or a Dual Blade katara into its Astra version at every star force level." },
+    ],
+  },
+  {
+    date: "2026-09-02",
+    changes: [
+      { type: "fixed", text: "Fixed the character lookup rate limit lasting far longer than a minute." },
+
     ],
   },
   {

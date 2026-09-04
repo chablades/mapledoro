@@ -109,6 +109,31 @@ export interface BreakdownSection {
   groups: BreakdownGroup[];
 }
 
+/** One column of a Resources chart. `kind` picks the workspace's formatter. */
+export interface ResourceChartColumn {
+  label: string;
+  kind: "exp" | "percent" | "count";
+  /** Heading spanning a run of columns, for charts holding more than one source. */
+  group?: string;
+  /** Hover text explaining the column. */
+  title?: string;
+}
+
+export interface ResourceChartRow {
+  level: number;
+  /** One cell per column; `null` where the level cannot use that source yet. */
+  cells: (number | null)[];
+}
+
+/** The per-level table under a Resources section, for scanning how a source scales across levels
+ *  where the section's cards price only the level typed in. */
+export interface ResourceChart {
+  /** Heading over the table, for sections that show more than one. */
+  title?: string;
+  columns: ResourceChartColumn[];
+  rows: ResourceChartRow[];
+}
+
 type BurningType = "" | "hyper" | "hyperMax" | "hyperMaxBeyond";
 
 interface ExpContentOption {
@@ -1492,6 +1517,109 @@ function doubleUpSection(input: ResourceBreakdownInput): BreakdownSection {
       },
     ],
   };
+}
+
+/** The charts under a section, keyed by section id. Sections priced off the level's own EXP or a
+ *  handful of fixed figures (dailies, weeklies, potions, treasure boxes, Monster Park, Double Up)
+ *  have no table worth scanning and get an empty list. Level-independent, so build once per pick. */
+export function resourceChartsForSection(sectionId: string): ResourceChart[] {
+  switch (sectionId) {
+    case "exp-tickets":
+      return [
+        { title: "EXP Ticket", ...unitChart("exp-ticket", { unit: "Ticket" }) },
+        { title: "Advanced EXP Ticket", ...unitChart("advanced-exp-ticket", { unit: "Ticket" }) },
+      ];
+    case "epic-dungeon":
+      return [epicDungeonChart()];
+    case "punch-king":
+      return [
+        unitChart("punch-king", {
+          unit: "Point",
+          batch: { label: "Run", units: PUNCH_KING_MAX_POINTS, title: `A full ${formatCount(PUNCH_KING_MAX_POINTS)}-point run` },
+        }),
+      ];
+    case "strawberry-farm":
+      return [unitChart("strawberry-farm", { unit: "Ticket", scale: STRAWBERRY_KILLS_PER_TICKET })];
+    case "mechaberry-farm":
+      return [unitChart("mechaberry-farm", { unit: "Ticket" })];
+    case "express-booster":
+      return [unitChart("express-booster", { unit: "Booster" })];
+    case "haste-fever":
+      return [
+        unitChart("haste-inferno", {
+          unit: "Kill",
+          batch: { label: "Fever Time", units: HASTE_INFERNO_MAX_KILLS, title: `The ${formatCount(HASTE_INFERNO_MAX_KILLS)}-kill cap of one Haste Fever Time` },
+        }),
+      ];
+    case "afk":
+      return [
+        unitChart("luxe-sauna", {
+          unit: "5 Secs",
+          batch: { label: "Hour", units: LUXE_SAUNA_UNITS_PER_HOUR, title: `${LUXE_SAUNA_UNITS_PER_HOUR} sauna ticks` },
+        }),
+      ];
+    default:
+      return [];
+  }
+}
+
+interface UnitChartOptions {
+  /** What one table row prices: "Ticket", "Point". */
+  unit: string;
+  /** Multiplies the table's per-row EXP when the unit is bigger than a row (a Strawberry Farm
+   *  ticket is 1,200 kills). */
+  scale?: number;
+  /** A natural batch of units (a Punch King run, an hour in the sauna). When set, the share and
+   *  to-level columns price the batch, since one unit is a negligible slice of a level. */
+  batch?: { label: string; units: number; title: string };
+}
+
+/** Per-unit EXP by level with the level's share and how many it takes to level. */
+function unitChart(tableId: string, { unit, scale = 1, batch }: UnitChartOptions): ResourceChart {
+  const per = batch?.label ?? unit;
+  const columns: ResourceChartColumn[] = [{ label: `EXP / ${unit}`, kind: "exp" }];
+  if (batch) columns.push({ label: `EXP / ${batch.label}`, kind: "exp", title: batch.title });
+  columns.push(
+    { label: "% of Level", kind: "percent", title: `Share of the level one ${per.toLowerCase()} pays` },
+    { label: `${per}s / Level`, kind: "count", title: `${per}s needed to gain one full level` },
+  );
+  const rows = (RESOURCE_TABLES.find((table) => table.id === tableId)?.rows ?? []).map(({ level, exp }) => {
+    const perUnit = exp * scale;
+    const perBatch = perUnit * (batch?.units ?? 1);
+    const cells: (number | null)[] = [perUnit];
+    if (batch) cells.push(perBatch);
+    // Units are handed in whole, so round those up; a level rarely lands on a full batch, so
+    // batches stay fractional.
+    const toLevel = expForLevel(level) / Math.max(1, perBatch);
+    cells.push(percentOfLevel(level, perBatch), batch ? toLevel : Math.ceil(toLevel));
+    return { level, cells };
+  });
+  return { columns, rows };
+}
+
+/** Every dungeon side by side, one clear at each reward tier. Angler Company and Nightmare Paradise
+ *  are fixed multiples of High Mountain, so its base table covers all three. */
+function epicDungeonChart(): ResourceChart {
+  const columns = EPIC_DUNGEON_OPTIONS.flatMap((dungeon) =>
+    EPIC_REWARD_TIERS.map(
+      (tier): ResourceChartColumn => ({
+        group: dungeon.label,
+        label: tier === 1 ? "Base" : `${tier}x`,
+        kind: "exp",
+        title: tier === 1 ? "One clear before the reward tier roll" : `One clear that rolls the ${tier}x reward tier`,
+      }),
+    ),
+  );
+  const rows = HIGH_MOUNTAIN_BASE.map((base, index) => {
+    const level = 260 + index;
+    return {
+      level,
+      cells: EPIC_DUNGEON_OPTIONS.flatMap((dungeon) =>
+        EPIC_REWARD_TIERS.map((tier) => (level >= dungeon.minLevel ? Math.ceil(base * dungeon.baseMultiplier * tier) : null)),
+      ),
+    };
+  });
+  return { columns, rows };
 }
 
 function expNeededBetween(level: number, currentExp: number, targetLevel: number): number {

@@ -619,7 +619,7 @@ export default function SkillGuesserWorkspace({
       setPuzzleNumber((p) => (p === today ? next : p));
     }, msUntilNextPuzzle() + 250);
     return () => clearTimeout(t);
-  }, [today]);
+  }, [today, setPuzzleNumber]);
 
   if (!mounted) return null;
 

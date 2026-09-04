@@ -1,6 +1,6 @@
 import { readGlobalTool, writeGlobalTool } from "../globalToolsStore";
 import { utcDateStr } from "../date";
-import { BOSSES, SHARED_INDICES } from "./bosses";
+import { BOSSES, DEFAULT_MAX_PARTY, SHARED_INDICES } from "./bosses";
 
 // -- Types --------------------------------------------------------------------
 
@@ -190,7 +190,9 @@ export function loadState(): { server: string; characters: CharacterEntry[] } | 
         const resetThis = boss.monthly ? resetMonthly : resetWeekly;
         return {
           checked: s.checked,
-          partySize: s.partySize,
+          // Clamp: a size saved before the boss's party cap was recorded (or lowered)
+          // would otherwise inflate income and leave the select showing nothing.
+          partySize: Math.min(Math.max(1, s.partySize), boss.maxParty ?? DEFAULT_MAX_PARTY),
           cleared: resetThis ? false : !!s.cleared,
         };
       }),

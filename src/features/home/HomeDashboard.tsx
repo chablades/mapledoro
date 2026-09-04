@@ -45,6 +45,9 @@ export default function HomeDashboard({ theme }: { theme: AppTheme }) {
           background: ${theme.panel};
           transition: background 0.35s ease, border-color 0.35s ease;
         }
+        .doro-poke { transition: transform 0.15s ease; }
+        .doro-poke:hover { transform: scale(1.06); }
+        .doro-poke:active { transform: scale(0.94); }
         .timer-countdown {
           font-family: var(--font-heading);
           font-size: 1.35rem;

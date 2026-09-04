@@ -14,8 +14,7 @@ const LOOKUP_TOTAL_TIMEOUT_MS = 25000;
 const CACHE_KEY_PREFIX = "mapledoro:characters:lookup:v1:";
 const RATE_LIMIT_KEY_PREFIX = "mapledoro:rate:lookup:v1:";
 const CHARACTER_NAME_REGEX = /^[a-zA-ZÀ-ÖØ-öø-ÿ0-9]{4,12}$/;
-// dont know yet if the 'weekly' for exp is actually weekly or a daily lol
-const NEXON_RANKING_URL = "https://www.nexon.com/api/maplestory/no-auth/ranking/v2/na?type=overall&id=weekly&reboot_index=0&page_index=1";
+const NEXON_RANKING_URL = "https://www.nexon.com/api/maplestory/no-auth/ranking/v2/na?type=overall&id=legendary&reboot_index=0&page_index=1";
 // Comma-separated list of proxy base URLs. Each is tried in order before falling back to direct Nexon.
 // Format: NEXON_PROXY_URLS=https://worker1.example.com,https://worker2.example.com
 const NEXON_PROXY_URLS: string[] = (process.env.NEXON_PROXY_URLS ?? "")
@@ -31,7 +30,7 @@ function parsePositiveIntEnv(name: string, fallback: number) {
 }
 
 const IP_REQUESTS_PER_DAY_LIMIT = parsePositiveIntEnv("LOOKUP_IP_DAILY_LIMIT", 60);
-const IP_REQUESTS_PER_MINUTE_LIMIT = parsePositiveIntEnv("LOOKUP_IP_MINUTE_LIMIT", 5);
+const IP_REQUESTS_PER_MINUTE_LIMIT = parsePositiveIntEnv("LOOKUP_IP_MINUTE_LIMIT", 7);
 const IP_ACTIVE_QUEUE_LIMIT = parsePositiveIntEnv("LOOKUP_IP_ACTIVE_QUEUE_LIMIT", 5);
 const STALE_WHILE_REVALIDATE_SECONDS = Number.parseInt(
   process.env.LOOKUP_CDN_STALE_SECONDS ?? "60",
@@ -215,70 +214,71 @@ function getClientIp(request: NextRequest) {
   return "unknown";
 }
 
-function getFallbackRateCount(
+interface RateWindow {
+  count: number;
+  resetInMs: number;
+}
+
+function getFallbackRateWindow(
   store: Map<string, { count: number; expiresAt: number }>,
   key: string,
   ttlMs: number,
-) {
+): RateWindow {
   const now = Date.now();
   const existing = store.get(key);
   if (!existing || now >= existing.expiresAt) {
     pruneFallbackMap(store);
     const fresh = { count: 1, expiresAt: now + ttlMs };
     store.set(key, fresh);
-    return fresh.count;
+    return { count: fresh.count, resetInMs: ttlMs };
   }
   existing.count += 1;
   store.set(key, existing);
-  return existing.count;
+  return { count: existing.count, resetInMs: existing.expiresAt - now };
 }
 
-async function checkAndTrackIpRate(ipKey: string): Promise<{
-  minuteCount: number;
-  dayCount: number;
-}> {
-  const nowMs = Date.now();
-  const minuteTtlSeconds = 60;
-  const dayTtlSeconds = Math.max(1, Math.floor((getNextUtcMidnightMs(nowMs) - nowMs) / 1000));
-
+// One fixed-window counter. The window's TTL is seeded exactly once, by SET ... NX:
+// a bare EXPIRE on every hit (what this used to do) slides the window forward, so a
+// client that keeps retrying while blocked pushes the reset out indefinitely and the
+// limit outlasts its own duration. SET/INCR is used instead of EXPIRE ... NX so this
+// works on Redis older than 7.0.
+async function trackRateWindow(
+  key: string,
+  ttlSeconds: number,
+  fallbackStore: Map<string, { count: number; expiresAt: number }>,
+): Promise<RateWindow> {
   if (redis) {
     try {
       if (redis.status === "wait") {
         await redis.connect();
       }
-      const [minuteCountRaw, dayCountRaw] = await redis
+      const rows = await redis
         .multi()
-        .incr(rateMinuteKey(ipKey))
-        .expire(rateMinuteKey(ipKey), minuteTtlSeconds)
-        .incr(rateDayKey(ipKey))
-        .expire(rateDayKey(ipKey), dayTtlSeconds)
-        .exec()
-        .then((rows) => {
-          if (!rows) return [1, 1] as const;
-          const minuteRow = rows[0];
-          const dayRow = rows[2];
-          const minuteVal = Number(minuteRow?.[1] ?? 1);
-          const dayVal = Number(dayRow?.[1] ?? 1);
-          return [minuteVal, dayVal] as const;
-        });
-      return { minuteCount: minuteCountRaw, dayCount: dayCountRaw };
+        .set(key, 0, "EX", ttlSeconds, "NX")
+        .incr(key)
+        .pttl(key)
+        .exec();
+      const count = Number(rows?.[1]?.[1] ?? 1);
+      const pttl = Number(rows?.[2]?.[1] ?? -1);
+      hasWarnedRedisFallback = false;
+      return { count, resetInMs: pttl > 0 ? pttl : ttlSeconds * 1000 };
     } catch (error) {
-      logRedisError("checkAndTrackIpRate", error);
+      logRedisError("trackRateWindow", error);
       // Fall through to memory fallback.
     }
   }
+  return getFallbackRateWindow(fallbackStore, key, ttlSeconds * 1000);
+}
 
-  const minuteCount = getFallbackRateCount(
-    fallbackMinuteRate,
-    ipKey,
-    minuteTtlSeconds * 1000,
+function rateLimitResponse(message: string, resetInMs: number) {
+  const retryAfterSeconds = Math.max(1, Math.ceil(resetInMs / 1000));
+  return NextResponse.json(
+    { error: message, retryAfterSeconds },
+    {
+      status: 429,
+      headers: { "Cache-Control": "no-store", "Retry-After": String(retryAfterSeconds) },
+    },
   );
-  const dayCount = getFallbackRateCount(
-    fallbackDailyRate,
-    ipKey,
-    dayTtlSeconds * 1000,
-  );
-  return { minuteCount, dayCount };
 }
 
 function getActiveQueueCountForIp(ipKey: string) {
@@ -673,23 +673,24 @@ export async function GET(request: NextRequest) {
     return jsonLookup(shared);
   }
 
-  // Only count against IP rate limit when actually hitting upstream.
+  // Only count against IP rate limit when actually hitting upstream. The minute window
+  // is checked before the daily one is touched, so a minute-limited retry doesn't also
+  // eat the caller's daily allowance.
   const nowMs = Date.now();
-  const { minuteCount, dayCount } = await checkAndTrackIpRate(ipKey);
-  if (dayCount > IP_REQUESTS_PER_DAY_LIMIT) {
-    return NextResponse.json(
-      {
-        error: `Daily request limit reached for this IP. Try again after UTC reset (${formatUtcResetLabel(nowMs)}).`,
-      },
-      { status: 429, headers: { "Cache-Control": "no-store" } },
+  const minuteWindow = await trackRateWindow(rateMinuteKey(ipKey), 60, fallbackMinuteRate);
+  if (minuteWindow.count > IP_REQUESTS_PER_MINUTE_LIMIT) {
+    return rateLimitResponse(
+      `Rate limit reached: max ${IP_REQUESTS_PER_MINUTE_LIMIT} requests per minute per IP. Try again in ${Math.max(1, Math.ceil(minuteWindow.resetInMs / 1000))}s.`,
+      minuteWindow.resetInMs,
     );
   }
-  if (minuteCount > IP_REQUESTS_PER_MINUTE_LIMIT) {
-    return NextResponse.json(
-      {
-        error: `Rate limit reached: max ${IP_REQUESTS_PER_MINUTE_LIMIT} requests per minute per IP.`,
-      },
-      { status: 429, headers: { "Cache-Control": "no-store" } },
+
+  const dayTtlSeconds = Math.max(1, Math.floor((getNextUtcMidnightMs(nowMs) - nowMs) / 1000));
+  const dayWindow = await trackRateWindow(rateDayKey(ipKey), dayTtlSeconds, fallbackDailyRate);
+  if (dayWindow.count > IP_REQUESTS_PER_DAY_LIMIT) {
+    return rateLimitResponse(
+      `Daily request limit reached for this IP. Try again after UTC reset (${formatUtcResetLabel(nowMs)}).`,
+      dayWindow.resetInMs,
     );
   }
 
