@@ -33,7 +33,10 @@ export default function AppShell({ currentPath, children }: AppShellProps) {
         background: theme.bg,
         color: theme.text,
         transition: "background 0.35s ease, color 0.35s ease",
-        overflowX: "hidden",
+        /* `clip`, not `hidden`: `hidden` on one axis forces the other to
+           compute to `auto`, turning this into a scroll container and breaking
+           `position: sticky` in every page below it. `clip` clips the same. */
+        overflowX: "clip",
       }}
     >
       <a
