@@ -48,6 +48,17 @@ export default function HomeDashboard({ theme }: { theme: AppTheme }) {
         .doro-poke { transition: transform 0.15s ease; }
         .doro-poke:hover { transform: scale(1.06); }
         .doro-poke:active { transform: scale(0.94); }
+        .doro-flip-explode { animation: doroFlipExplode 0.7s ease; }
+        @keyframes doroFlipExplode {
+          0% { transform: translateY(0) rotate(0deg); }
+          40%, 70% { transform: translateY(-14px) rotate(180deg); }
+          100% { transform: translateY(0) rotate(360deg); }
+        }
+        .doro-live-dot { animation: liveDotPulse 1.8s ease-in-out infinite; }
+        @keyframes liveDotPulse {
+          0%, 100% { transform: scale(1); opacity: 1; }
+          50% { transform: scale(1.3); opacity: 0.7; }
+        }
         .timer-countdown {
           font-family: var(--font-heading);
           font-size: 1.35rem;

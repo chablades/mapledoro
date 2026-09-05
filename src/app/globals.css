@@ -127,6 +127,11 @@ html.scroll-locked body {
   .fade-in {
     animation: none;
   }
+
+  .doro-flip-explode,
+  .doro-live-dot {
+    animation: none;
+  }
 }
 
 .page-shell {

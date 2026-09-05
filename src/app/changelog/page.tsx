@@ -15,6 +15,8 @@ const CHANGELOG: ChangelogEntry[] = [
     date: "2026-09-04",
     changes: [
       { type: "added", text: "Doro now has a speech bubble on the home page. Poke Doro for a new phrase." },
+      { type: "added", text: "Doro now has a chance to play a sound effect on the phrase \"buh\", and does a special upside-down jump on \"buhFlipExplode\"." },
+      { type: "added", text: "Doro now shows a live dot linking to da_wakaiyuki's Twitch when they're streaming." },
     ],
   },
   {
