@@ -33,7 +33,12 @@ const DORO_PHRASES = [
 
 export default function HeroBanner({ theme }: { theme: AppTheme }) {
   const mounted = useMounted();
-  const live = useTwitchLive();
+  // TEST-ONLY: manual triggers for the flip animation and the live dot.
+  // Remove every TEST-ONLY block in this file before merging to main.
+  const [testFlipNonce, setTestFlipNonce] = useState(0);
+  const [testLive, setTestLive] = useState(false);
+  // TEST-ONLY: the trailing "|| testLive" forces the dot on without Twitch.
+  const live = useTwitchLive() || testLive;
   const audioRef = useRef<HTMLAudioElement>(null);
   const [phraseIndex, setPhraseIndex] = useState(() =>
     Math.floor(Math.random() * DORO_PHRASES.length), // eslint-disable-line sonarjs/pseudo-random
@@ -124,6 +129,27 @@ export default function HeroBanner({ theme }: { theme: AppTheme }) {
     background: STATUS.danger.fill,
     border: `2px solid ${theme.panel}`,
   };
+  // TEST-ONLY: styling for the temporary trigger row.
+  const testPanelStyle: CSSProperties = {
+    display: "flex",
+    gap: "0.5rem",
+    justifyContent: "center",
+    margin: "0.75rem 0 0",
+    padding: "0.5rem",
+    border: `1px dashed ${theme.border}`,
+    borderRadius: 10,
+  };
+  const testButtonStyle: CSSProperties = {
+    padding: "0.3rem 0.6rem",
+    borderRadius: 8,
+    border: `1px solid ${theme.border}`,
+    background: theme.badge,
+    color: theme.text,
+    font: "inherit",
+    fontSize: "0.75rem",
+    fontWeight: 700,
+    cursor: "pointer",
+  };
   const headingStyle: CSSProperties = {
     fontFamily: "var(--font-heading)",
     fontSize: "1.75rem",
@@ -161,8 +187,10 @@ export default function HeroBanner({ theme }: { theme: AppTheme }) {
             onClick={pokeDoro}
             aria-label="Poke Doro for a new phrase"
           >
+            {/* TEST-ONLY: the nonce replays the animation when the phrase is
+                already buhFlipExplode. Restore to the plain phrase key. */}
             <span
-              key={phrase}
+              key={`${phrase}-${testFlipNonce}`}
               className={phrase === BUH_FLIP_EXPLODE ? "doro-flip-explode" : undefined}
               style={doroImageWrapStyle}
             >
@@ -195,6 +223,26 @@ export default function HeroBanner({ theme }: { theme: AppTheme }) {
           Free, open-source tools for tracking characters, planning progression,
           calculating upgrades, and staying on top of game events.
         </p>
+        {/* TEST-ONLY: remove this whole block before merging to main. */}
+        <div style={testPanelStyle}>
+          <button
+            type="button"
+            style={testButtonStyle}
+            onClick={() => {
+              setPhraseIndex(DORO_PHRASES.indexOf(BUH_FLIP_EXPLODE));
+              setTestFlipNonce((n) => n + 1);
+            }}
+          >
+            Test flip
+          </button>
+          <button
+            type="button"
+            style={testButtonStyle}
+            onClick={() => setTestLive((on) => !on)}
+          >
+            {testLive ? "Hide live dot" : "Test live dot"}
+          </button>
+        </div>
       </div>
     </div>
   );
