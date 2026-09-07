@@ -1,11 +1,15 @@
 "use client";
 
-import { useRef, useState, type CSSProperties } from "react";
+import { useMemo, useRef, useState, type CSSProperties } from "react";
 import Image from "next/image";
 import type { AppTheme } from "../../components/themes";
 import { STATUS } from "../../components/statusColors";
 import { useMounted } from "../../lib/useMounted";
 import { useTwitchLive } from "../../lib/useTwitchLive";
+import {
+  readCharactersStore,
+  selectMainCharacter,
+} from "../characters/model/charactersStore";
 
 const TWITCH_CHANNEL_URL = "https://www.twitch.tv/da_wakaiyuki";
 
@@ -18,6 +22,8 @@ const CLICK_COUNTER_THRESHOLD = 10;
 
 const BUH = "buh";
 const BUH_FLIP_EXPLODE = "buhFlipExplode";
+// Placeholder in the list below; gains the main character's name when there is one.
+const GM = "gm";
 // Odds that landing on "buh" also plays its sound effect.
 const BUH_SOUND_CHANCE = 1 / 5;
 
@@ -35,6 +41,7 @@ const DORO_PHRASES = [
   "this game sucks.",
   "mm yees bnuuy",
   "erm",
+  GM,
   BUH_FLIP_EXPLODE,
 ];
 
@@ -46,10 +53,19 @@ export default function HeroBanner({ theme }: { theme: AppTheme }) {
   const [phraseIndex, setPhraseIndex] = useState(() =>
     Math.floor(Math.random() * DORO_PHRASES.length), // eslint-disable-line sonarjs/pseudo-random
   );
+
+  // The main character is a client-only read, so the greeting picks up their
+  // name at mount and stays a bare "gm" for anyone without one.
+  const phrases = useMemo(() => {
+    const mainName = mounted
+      ? selectMainCharacter(readCharactersStore())?.characterName
+      : null;
+    return mainName ? DORO_PHRASES.map((p) => (p === GM ? `gm ${mainName}` : p)) : DORO_PHRASES;
+  }, [mounted]);
   // The server has no way to render the same random pick, so the bubble holds a
   // fixed phrase and stays invisible until mount: it reserves its space without
   // flashing one phrase before swapping to another.
-  const phrase = mounted ? DORO_PHRASES[phraseIndex] : DORO_PHRASES[0];
+  const phrase = mounted ? phrases[phraseIndex] : DORO_PHRASES[0];
   // The live greeting holds only until the first poke.
   const showLive = live && clicks === 0;
   const displayPhrase = showLive ? LIVE_PHRASE : phrase;
@@ -57,10 +73,10 @@ export default function HeroBanner({ theme }: { theme: AppTheme }) {
   const pokeDoro = () => {
     setClicks((n) => n + 1);
     // Roll over the other phrases only, so a poke always says something new.
-    const roll = Math.floor(Math.random() * (DORO_PHRASES.length - 1)); // eslint-disable-line sonarjs/pseudo-random
+    const roll = Math.floor(Math.random() * (phrases.length - 1)); // eslint-disable-line sonarjs/pseudo-random
     const next = roll >= phraseIndex ? roll + 1 : roll;
     setPhraseIndex(next);
-    if (DORO_PHRASES[next] === BUH && Math.random() < BUH_SOUND_CHANCE) { // eslint-disable-line sonarjs/pseudo-random
+    if (phrases[next] === BUH && Math.random() < BUH_SOUND_CHANCE) { // eslint-disable-line sonarjs/pseudo-random
       audioRef.current?.play().catch(() => {
         // Best-effort easter egg; a blocked or missing file just stays silent.
       });
