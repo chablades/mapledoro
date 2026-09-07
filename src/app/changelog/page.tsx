@@ -15,6 +15,7 @@ const CHANGELOG: ChangelogEntry[] = [
     date: "2026-09-07",
     changes: [
       { type: "added", text: "Doro now greets you with \"am live\" on the home page while da_wakaiyuki is streaming, linking straight to the Twitch channel. Poking Doro goes back to the usual phrases." },
+      { type: "added", text: "Poke Doro 10 times on the home page and a Doro Clicks tally appears in the corner of the banner." },
     ],
   },
   {
