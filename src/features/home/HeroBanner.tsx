@@ -9,10 +9,14 @@ import { useTwitchLive } from "../../lib/useTwitchLive";
 
 const TWITCH_CHANNEL_URL = "https://www.twitch.tv/da_wakaiyuki";
 
+/* Shown instead of a random phrase while the stream is live, until the first
+   poke drops Doro back into the normal rotation. */
+const LIVE_PHRASE = "am live";
+
 const BUH = "buh";
 const BUH_FLIP_EXPLODE = "buhFlipExplode";
 // Odds that landing on "buh" also plays its sound effect.
-const BUH_SOUND_CHANCE = 1 / 50;
+const BUH_SOUND_CHANCE = 1 / 5;
 
 /* Kept short enough to sit on one line at the bubble's max width, so poking
    Doro for a new phrase never reflows the banner. */
@@ -40,6 +44,7 @@ export default function HeroBanner({ theme }: { theme: AppTheme }) {
   // TEST-ONLY: the trailing "|| testLive" forces the dot on without Twitch.
   const live = useTwitchLive() || testLive;
   const audioRef = useRef<HTMLAudioElement>(null);
+  const [poked, setPoked] = useState(false);
   const [phraseIndex, setPhraseIndex] = useState(() =>
     Math.floor(Math.random() * DORO_PHRASES.length), // eslint-disable-line sonarjs/pseudo-random
   );
@@ -47,8 +52,12 @@ export default function HeroBanner({ theme }: { theme: AppTheme }) {
   // fixed phrase and stays invisible until mount: it reserves its space without
   // flashing one phrase before swapping to another.
   const phrase = mounted ? DORO_PHRASES[phraseIndex] : DORO_PHRASES[0];
+  // The live greeting holds only until the first poke.
+  const showLive = live && !poked;
+  const displayPhrase = showLive ? LIVE_PHRASE : phrase;
 
   const pokeDoro = () => {
+    setPoked(true);
     // Roll over the other phrases only, so a poke always says something new.
     const roll = Math.floor(Math.random() * (DORO_PHRASES.length - 1)); // eslint-disable-line sonarjs/pseudo-random
     const next = roll >= phraseIndex ? roll + 1 : roll;
@@ -102,6 +111,10 @@ export default function HeroBanner({ theme }: { theme: AppTheme }) {
     borderRight: `1px solid ${theme.border}`,
     borderBottom: `1px solid ${theme.border}`,
   };
+  const bubbleLinkStyle: CSSProperties = {
+    color: theme.accentText,
+    textDecoration: "underline",
+  };
   const doroButtonStyle: CSSProperties = {
     background: "none",
     border: "none",
@@ -111,23 +124,27 @@ export default function HeroBanner({ theme }: { theme: AppTheme }) {
     lineHeight: 0,
     cursor: "pointer",
   };
-  const doroWrapStyle: CSSProperties = {
-    position: "relative",
-    display: "inline-block",
-  };
   const doroImageWrapStyle: CSSProperties = {
     display: "inline-block",
     lineHeight: 0,
   };
-  const liveDotStyle: CSSProperties = {
+  const liveLinkStyle: CSSProperties = {
     position: "absolute",
-    top: 2,
-    right: 2,
-    width: 14,
-    height: 14,
+    top: "0.7rem",
+    right: "0.9rem",
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "0.35rem",
+    fontSize: "0.75rem",
+    fontWeight: 700,
+    color: theme.accentText,
+    textDecoration: "underline",
+  };
+  const liveDotStyle: CSSProperties = {
+    width: 9,
+    height: 9,
     borderRadius: "50%",
     background: STATUS.danger.fill,
-    border: `2px solid ${theme.panel}`,
   };
   // TEST-ONLY: styling for the temporary trigger row.
   const testPanelStyle: CSSProperties = {
@@ -169,16 +186,38 @@ export default function HeroBanner({ theme }: { theme: AppTheme }) {
   return (
     <div className="fade-in hero-banner" style={bannerStyle}>
       <div className="hero-glow" style={glowStyle} />
+      {live && (
+        <a
+          href={TWITCH_CHANNEL_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={liveLinkStyle}
+        >
+          <span className="doro-live-dot" style={liveDotStyle} />
+          Live on Twitch
+        </a>
+      )}
       <div style={{ position: "relative" }}>
         {/* The keyed inner div replays the fade on every poke; the live region
             around it stays mounted so the new phrase is announced. */}
         <div aria-live="polite">
-          <div key={phrase} className="fade-in" style={bubbleStyle}>
-            {phrase}
+          <div key={displayPhrase} className="fade-in" style={bubbleStyle}>
+            {showLive ? (
+              <a
+                href={TWITCH_CHANNEL_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={bubbleLinkStyle}
+              >
+                {LIVE_PHRASE}
+              </a>
+            ) : (
+              displayPhrase
+            )}
             <span style={bubbleTailStyle} />
           </div>
         </div>
-        <div style={doroWrapStyle}>
+        <div>
           <audio ref={audioRef} src="/sounds/buh.mp3" preload="none" />
           <button
             type="button"
@@ -190,8 +229,8 @@ export default function HeroBanner({ theme }: { theme: AppTheme }) {
             {/* TEST-ONLY: the nonce replays the animation when the phrase is
                 already buhFlipExplode. Restore to the plain phrase key. */}
             <span
-              key={`${phrase}-${testFlipNonce}`}
-              className={phrase === BUH_FLIP_EXPLODE ? "doro-flip-explode" : undefined}
+              key={`${displayPhrase}-${testFlipNonce}`}
+              className={displayPhrase === BUH_FLIP_EXPLODE ? "doro-flip-explode" : undefined}
               style={doroImageWrapStyle}
             >
               <Image
@@ -203,17 +242,6 @@ export default function HeroBanner({ theme }: { theme: AppTheme }) {
               />
             </span>
           </button>
-          {live && (
-            <a
-              href={TWITCH_CHANNEL_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="doro-live-dot"
-              style={liveDotStyle}
-              aria-label="da_wakaiyuki is live on Twitch"
-              title="Live on Twitch"
-            />
-          )}
         </div>
         <h1 style={headingStyle}>MapleDoro</h1>
         <p style={{ fontSize: "0.88rem", fontWeight: 700, color: theme.text, margin: "0 0 0.5rem" }}>

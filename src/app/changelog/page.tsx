@@ -12,6 +12,12 @@ interface ChangelogEntry {
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    date: "2026-09-07",
+    changes: [
+      { type: "added", text: "Doro now greets you with \"am live\" on the home page while da_wakaiyuki is streaming, linking straight to the Twitch channel. Poking Doro goes back to the usual phrases." },
+    ],
+  },
+  {
     date: "2026-09-04",
     changes: [
       { type: "added", text: "Doro now has a speech bubble on the home page. Poke Doro for a new phrase." },
