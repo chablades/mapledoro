@@ -12,7 +12,7 @@ import type { SetupFlowId } from "../../setup/flows";
 import type { SetupStepId } from "../../setup/steps";
 import type { PreviewPaneActions, PreviewPaneModel } from "../paneModels";
 import { primaryButtonStyle, secondaryButtonStyle, successButtonStyle } from "../components/uiStyles";
-import { findClassById, COMMON_SKILLS, type HexaSkillDef, type HexaSkillLevels, type HexaMasteryNode } from "../../../tools/hexa-skills/hexa-classes";
+import { findClassById, commonSkillsFor, type HexaSkillDef, type HexaSkillLevels, type HexaMasteryNode } from "../../../tools/hexa-skills/hexa-classes";
 import { NavChevron } from "../../DropdownChevron";
 import { SkillIcon as HexaSkillTileIcon } from "../../../tools/hexa-skills/hexa-ui";
 import { readCharacterToolData } from "../../../tools/characterToolStorage";
@@ -961,7 +961,7 @@ function OverviewHexaSkillsSection({ theme, hexaClassDef, hexaLevels, charName, 
       <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: "1.2rem" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <OverviewHexaTileGroup label="Skill" skills={skillNodes} levels={skillLevels} theme={theme} />
-          <OverviewHexaTileGroup label="Common" skills={COMMON_SKILLS} levels={hexaLevels.common ?? []} theme={theme} />
+          <OverviewHexaTileGroup label="Common" skills={commonSkillsFor(hexaClassDef?.className ?? null)} levels={hexaLevels.common ?? []} theme={theme} />
         </div>
         <div style={{ width: 1, background: theme.border }} />
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -2653,7 +2653,7 @@ function HexaSkillsBookmarkView({ theme, hexaClassDef, hexaLevels }: {
       <HexaSkillNodeSection label="Skill Nodes" skills={skillNodes} levels={skillLevels} theme={theme} />
       <HexaSkillNodeSection label="Mastery Nodes" skills={masteryNodes} levels={hexaLevels.mastery ?? []} theme={theme} />
       <HexaSkillNodeSection label="Boost Nodes" skills={boostNodes} levels={hexaLevels.enhancement ?? []} theme={theme} />
-      <HexaSkillNodeSection label="Common Nodes" skills={COMMON_SKILLS} levels={hexaLevels.common ?? []} theme={theme} />
+      <HexaSkillNodeSection label="Common Nodes" skills={commonSkillsFor(hexaClassDef?.className ?? null)} levels={hexaLevels.common ?? []} theme={theme} />
     </div>
   );
 }

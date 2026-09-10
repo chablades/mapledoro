@@ -523,7 +523,7 @@ const RESOURCE_TABLES: ResourceTable[] = [
 ];
 
 /* Icons for the sources that have no options array of their own to hang one off. Ids come from
- * manifests/v270/item.json (or mob.json / ui-mark.json) and are named here so the Daily / Weekly
+ * manifests/v271/item.json (or mob.json / ui-mark.json) and are named here so the Daily / Weekly
  * inputs and the Resources breakdown can't drift apart. */
 export const SOL_ERDA_ICON: IconRef = { type: "item", id: "05066300" }; // Sol Erda, the Epic Dungeon reward
 export const MONSTER_PARK_ICON: IconRef = { type: "item", id: "05252030" }; // Monster Park entry ticket

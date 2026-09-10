@@ -12,7 +12,7 @@ import type { SetupStepDefinition } from "../steps";
 import type { SetupFlowId } from "../flows";
 import { DropdownChevron } from "../../DropdownChevron";
 import type { HexaClassDef, HexaSkillDef } from "../../../../features/tools/hexa-skills/hexa-classes";
-import { findClassById, COMMON_SKILLS } from "../../../../features/tools/hexa-skills/hexa-classes";
+import { findClassById, commonSkillsFor, HEXA_STAT_SKILLS } from "../../../../features/tools/hexa-skills/hexa-classes";
 import { resourceImageUrl } from "../../../../lib/mapleResource";
 import { getClassDataByNexonJobName } from "../data/classSkillData";
 import type { HexaStatEntry, HexaStatSlot, HexaStatNode } from "../data/hexaStatData";
@@ -61,12 +61,7 @@ const HEXA_STAT_FIELD_ORDER = ["main", "alt0", "alt1"] as const;
 type HexaStatField = (typeof HEXA_STAT_FIELD_ORDER)[number];
 type OpenHexaStatField = HexaStatField | null;
 
-// hexa-skill ids from the "hexaStat" section of the hexa-skill manifest
-const HEXA_STAT_DEFS: HexaSkillDef[] = [
-  { iconId: "50000000", name: "HEXA Stat I" },
-  { iconId: "50000001", name: "HEXA Stat II" },
-  { iconId: "50000002", name: "HEXA Stat III" },
-];
+const HEXA_STAT_DEFS: HexaSkillDef[] = HEXA_STAT_SKILLS;
 
 // A missing/failed icon falls back to the 1-based slot number rather than the shared
 // "HEXA Stat" name's initial (all 3 nodes share that prefix, so a letter wouldn't
@@ -317,7 +312,7 @@ function emptyLevels(classDef: HexaClassDef): HexaDraft {
     origin: "1",
     mastery: classDef.mastery.map(() => ""),
     enhancement: classDef.enhancement.map(() => ""),
-    common: COMMON_SKILLS.map(() => ""),
+    common: commonSkillsFor(classDef.className).map(() => ""),
     ascent: "",
     hexaStat: [emptyNode(), emptyNode(), emptyNode()],
   };
@@ -342,7 +337,7 @@ function parseDraft(raw: string, classDef: HexaClassDef): HexaDraft {
       origin: clampLevelInput(String(parsed.origin ?? ""), MAX_LEVEL, 1),
       mastery: padBlank(parsed.mastery, classDef.mastery.length),
       enhancement: padBlank(parsed.enhancement, classDef.enhancement.length),
-      common: padBlank(parsed.common, COMMON_SKILLS.length),
+      common: padBlank(parsed.common, commonSkillsFor(classDef.className).length),
       ascent: clampLevelInput(String(parsed.ascent ?? ""), MAX_LEVEL),
       hexaStat: [parseNode(rawSlots[0]), parseNode(rawSlots[1]), parseNode(rawSlots[2])],
     };
@@ -688,6 +683,7 @@ function HexaSkillLevelsSubstep({
   onValidityChange?: (valid: boolean, substepIndex?: number) => void;
 }) {
   const isShine = classDef.group === "SHINE";
+  const commonSkills = commonSkillsFor(classDef.className);
   const stepLabel = isShine ? "Erda Link" : step.label;
   return (
     <div key={0} style={animStyle}>
@@ -762,10 +758,10 @@ function HexaSkillLevelsSubstep({
 
           <div>
             <SectionLabel label="Common" theme={theme} btnStyle={sectionBtnStyle}
-              onMaxAll={() => update({ common: COMMON_SKILLS.map(() => String(MAX_LEVEL)) })}
-              onClear={() => update({ common: COMMON_SKILLS.map(() => "") })} />
+              onMaxAll={() => update({ common: commonSkills.map(() => String(MAX_LEVEL)) })}
+              onClear={() => update({ common: commonSkills.map(() => "") })} />
             <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
-              {COMMON_SKILLS.map((skill, i) => (
+              {commonSkills.map((skill, i) => (
                 <LeveledIconTile key={skill.name} icon={<SkillIcon skill={skill} theme={theme} size={32} />} name={skill.name}
                   level={levels.common[i] ?? ""}
                   onLevel={(v) => {

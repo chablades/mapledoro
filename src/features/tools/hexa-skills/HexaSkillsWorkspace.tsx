@@ -7,6 +7,7 @@ import { ToolHeader } from "../../../components/ToolHeader";
 import { CHARACTER_DROPDOWN_HEIGHT, CharacterSyncPanel } from "../../../components/CharacterSyncPanel";
 import {
   COMMON_SKILLS,
+  commonSkillsFor,
   getClassGroups,
   getClassesInGroup,
 } from "./hexa-classes";
@@ -15,7 +16,7 @@ import {
   type SkillCostSummary,
 } from "./useHexaSkillsState";
 import { COMMON_COSTS, MAX_SKILL_LEVEL, getCostRange } from "./hexa-costs";
-import { SkillSection, MasterySection } from "./hexa-ui";
+import { SkillSection, MasterySection, HexaStatSection } from "./hexa-ui";
 import { GuideView, FdBreakdownView } from "./hexa-fd-ui";
 import { hasFdData, computeGuide, computeFdBreakdown } from "./hexa-fd";
 import { fmtNum } from "./hexa-format";
@@ -306,17 +307,23 @@ export default function HexaSkillsWorkspace({ theme }: { theme: AppTheme }) {
     resetAll,
     applyGuide,
     costs,
+    hexaStatDone,
+    hexaStatFromCharacter,
+    setHexaStatDone,
   } = useHexaSkillsState();
 
   const [includeJanus, setIncludeJanus] = useState(true);
   const [tab, setTab] = useState<HexaTab>("overview");
 
+  // Sol Janus and Sol Hecate plus this class's own 3rd Common Node.
+  const commonSkills = useMemo(() => commonSkillsFor(className), [className]);
+
   const showFd = classDef != null && hasFdData(className);
   const activeTab: HexaTab = showFd ? tab : "overview";
 
   const guide = useMemo(
-    () => (showFd ? computeGuide(className, classDef, levels, desiredLevels) : null),
-    [showFd, className, classDef, levels, desiredLevels],
+    () => (showFd ? computeGuide(className, classDef, levels, desiredLevels, hexaStatDone) : null),
+    [showFd, className, classDef, levels, desiredLevels, hexaStatDone],
   );
   const breakdown = useMemo(
     () => (showFd ? computeFdBreakdown(className, classDef, levels, desiredLevels) : null),
@@ -512,7 +519,7 @@ export default function HexaSkillsWorkspace({ theme }: { theme: AppTheme }) {
             {/* Common */}
             <SkillSection
               title="Common"
-              skills={COMMON_SKILLS}
+              skills={commonSkills}
               levels={levels.common}
               desiredLevels={desiredLevels.common}
               sectionCost={costs.common}
@@ -521,6 +528,14 @@ export default function HexaSkillsWorkspace({ theme }: { theme: AppTheme }) {
               theme={theme}
               sectionPanel={sectionPanel}
               inputStyle={inputStyle}
+            />
+
+            <HexaStatSection
+              done={hexaStatDone}
+              fromCharacter={hexaStatFromCharacter}
+              onChange={setHexaStatDone}
+              theme={theme}
+              sectionPanel={sectionPanel}
             />
           </>
         )}

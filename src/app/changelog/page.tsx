@@ -12,6 +12,14 @@ interface ChangelogEntry {
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    date: "2026-09-10",
+    changes: [
+      { type: "added", text: "Added support for the 3rd Common Node in the HEXA Skill Tracker, with its own cost table." },
+      { type: "added", text: "HEXA Stat nodes now show in the HEXA Skill Tracker's leveling guide, and can be marked done from the Overview tab." },
+      { type: "changed", text: "Refreshed the HEXA Skill Tracker's final damage values and leveling order for v271." },
+    ],
+  },
+  {
     date: "2026-09-08",
     changes: [
       { type: "fixed", text: "Fixed the Scouter bookmark showing Champion Black Mage as easier than Hard. It now reads 25% harder than Hard, matching its shorter timer, and the chip tooltip shows MapleScouter's own figure for comparison." },

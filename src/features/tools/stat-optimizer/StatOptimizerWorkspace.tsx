@@ -11,6 +11,7 @@ import type { AppTheme } from "../../../components/themes";
 import InfoTooltip, { type TooltipContent } from "../../characters/setup/components/InfoTooltip";
 import { formatFigure } from "../../characters/scouter/scouterFormat";
 import { ActionButton, ToolNumberInput } from "../shared-ui";
+import { HEXA_STAT_SKILLS } from "../hexa-skills/hexa-classes";
 import { ToolDialog } from "../ToolDialog";
 import { toolStyles, type ToolStyles } from "../tool-styles";
 import { replaceZeroOnDigit } from "../numberInputHandlers";
@@ -44,8 +45,8 @@ import {
 } from "./useStatOptimizer";
 
 const CORE_LABELS = ["Core I", "Core II", "Core III"];
-// HEXA Stat node icons (hexa-skill manifest ids), same art the character setup flow uses.
-const HEXA_NODE_ICON_IDS = ["50000000", "50000001", "50000002"];
+// Same art the character setup flow and the HEXA Skill Tracker use.
+const HEXA_NODE_ICON_IDS = HEXA_STAT_SKILLS.map((skill) => skill.iconId);
 const HEXA_LINE_LABELS: Record<CoreLineKey, string> = { primary: "Primary", alt0: "Additional 1", alt1: "Additional 2" };
 
 const STAT_NAME: Record<MainStatId, string> = { str: "STR", dex: "DEX", int: "INT", luk: "LUK", hp: "Max HP" };

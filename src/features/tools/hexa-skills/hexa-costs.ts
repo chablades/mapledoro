@@ -155,6 +155,47 @@ export const COMMON_COSTS: LevelCost[] = [
   { solErda: 20, fragments: 750 }, // 29→30
 ];
 
+// ── 3rd Common Node (5th Job Common Node Boost) ──────────────────────────────
+
+// Its own table: cheaper to unlock than Sol Janus/Sol Hecate but steeper past level 10,
+// so it can't reuse COMMON_COSTS. Source: the v271 patch notes' own cost table, checked
+// against their cumulative column (137 Sol Erda / 4,035 fragments to level 30).
+export const COMMON3_COSTS: LevelCost[] = [
+  { solErda: 4, fragments: 90 },   // unlock (0→1)
+  { solErda: 1, fragments: 25 },
+  { solErda: 1, fragments: 30 },
+  { solErda: 1, fragments: 35 },
+  { solErda: 2, fragments: 40 },
+  { solErda: 2, fragments: 45 },
+  { solErda: 2, fragments: 50 },
+  { solErda: 3, fragments: 55 },
+  { solErda: 3, fragments: 60 },
+  { solErda: 9, fragments: 180 },  // 9→10
+  { solErda: 3, fragments: 73 },
+  { solErda: 3, fragments: 81 },
+  { solErda: 3, fragments: 90 },
+  { solErda: 3, fragments: 98 },
+  { solErda: 4, fragments: 107 },
+  { solErda: 4, fragments: 115 },
+  { solErda: 4, fragments: 124 },
+  { solErda: 4, fragments: 132 },
+  { solErda: 4, fragments: 141 },
+  { solErda: 14, fragments: 315 }, // 19→20
+  { solErda: 4, fragments: 151 },
+  { solErda: 5, fragments: 160 },
+  { solErda: 5, fragments: 170 },
+  { solErda: 5, fragments: 179 },
+  { solErda: 5, fragments: 189 },
+  { solErda: 5, fragments: 198 },
+  { solErda: 5, fragments: 208 },
+  { solErda: 5, fragments: 217 },
+  { solErda: 6, fragments: 227 },
+  { solErda: 18, fragments: 450 }, // 29→30
+];
+
+/** Cost table for each Common node, by index in `commonSkillsFor()`'s list. */
+export const COMMON_COST_TABLES: LevelCost[][] = [COMMON_COSTS, COMMON_COSTS, COMMON3_COSTS];
+
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 /** Total cost to go from `fromLevel` to `toLevel` (both 0-30). */

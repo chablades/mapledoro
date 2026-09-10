@@ -212,7 +212,7 @@ export interface ScouterHexa {
     masteryCore1: number; masteryCore2: number; masteryCore3: number; masteryCore4: number;
     reinCore1: number; reinCore2: number; reinCore3: number; reinCore4: number;
   };
-  hexaSkill_general: { generalCore1: 0; generalCore2: number; generalCore3: 0 };
+  hexaSkill_general: { generalCore1: 0; generalCore2: number; generalCore3: number };
   // MapleScouter's own derived summary (Erda spent / meso cost) -- no MapleDoro source, left
   // at 0 since it looks informational rather than validated.
   hexaSkill_used: { sole_Erda: 0; sole_ErdaPrice: 0 };
@@ -538,6 +538,8 @@ function wildHunterUnionLevel(legion: StoredScouterLegion | undefined): number {
 
 const SOL_JANUS_INDEX = COMMON_SKILLS.findIndex((s) => s.name === "Sol Janus");
 const SOL_HECATE_INDEX = COMMON_SKILLS.findIndex((s) => s.name === "Sol Hecate");
+// The 3rd Common Node sits straight after the two Sol skills in every class's common list.
+const COMMON3_INDEX = COMMON_SKILLS.length;
 
 function hexaCoreLevels(levels: HexaSkillLevels | undefined, isHexaEligible: boolean): { skillCore1: string; skillCore2: string; mastery: string[]; rein: string[] } {
   return {
@@ -562,6 +564,7 @@ function buildHexa(characterName: string, isHexaEligible: boolean, koreanClassNa
   const cores = hexaCoreLevels(saved?.levels, isHexaEligible);
   const solJanusLevel = SOL_JANUS_INDEX >= 0 ? (saved?.levels?.common[SOL_JANUS_INDEX] ?? 0) : 0;
   const solHecateLevel = SOL_HECATE_INDEX >= 0 ? (saved?.levels?.common[SOL_HECATE_INDEX] ?? 0) : 0;
+  const common3Level = saved?.levels?.common[COMMON3_INDEX] ?? 0;
 
   return {
     hexa: {
@@ -579,13 +582,13 @@ function buildHexa(characterName: string, isHexaEligible: boolean, koreanClassNa
       reinCore2: cores.rein[1],
       reinCore3: cores.rein[2],
       reinCore4: cores.rein[3],
-      // generalCore2 = Sol Hecate. generalCore3 ("Freud's Blessing VI") hasn't reached
-      // GMS yet, and generalCore4 has no known content at all -- both always "0" until
-      // something real releases into either slot. No generalCore1 -- GMS doesn't have
-      // one yet either, and maplescouter.com's own request omits the key entirely
-      // rather than sending "0" for it, unlike generalCore3/4.
+      // generalCore2 = Sol Hecate, generalCore3 = the 3rd Common Node v271 gave every class
+      // (the HEXA form of its branch's 5th job common skill). generalCore4 has no known
+      // content at all, so it stays "0" until something real releases into that slot. No
+      // generalCore1 -- GMS doesn't have one yet either, and maplescouter.com's own request
+      // omits the key entirely rather than sending "0" for it, unlike generalCore3/4.
       generalCore2: String(solHecateLevel),
-      generalCore3: "0",
+      generalCore3: String(common3Level),
       generalCore4: "0",
       hexaStat: 2,
       character_class: koreanClassName,
@@ -596,7 +599,7 @@ function buildHexa(characterName: string, isHexaEligible: boolean, koreanClassNa
         reinCore1: Number(cores.rein[0]), reinCore2: Number(cores.rein[1]),
         reinCore3: Number(cores.rein[2]), reinCore4: Number(cores.rein[3]),
       },
-      hexaSkill_general: { generalCore1: 0, generalCore2: solHecateLevel, generalCore3: 0 },
+      hexaSkill_general: { generalCore1: 0, generalCore2: solHecateLevel, generalCore3: common3Level },
       hexaSkill_used: { sole_Erda: 0, sole_ErdaPrice: 0 },
       hexaStat_opened: false,
     },

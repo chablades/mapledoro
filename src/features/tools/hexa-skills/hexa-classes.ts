@@ -844,6 +844,72 @@ export const COMMON_SKILLS: HexaSkillDef[] = [
   su("Sol Hecate", "skill", "500001005"),
 ];
 
+/**
+ * HEXA Stat nodes. They're rolled rather than leveled, so their fragment cost and final
+ * damage depend on the lines you hit and can't be tabulated: the skill tracker's guide only
+ * shows where MapleScouter slots each one into the order. Icon ids come from the `hexaStat`
+ * section of the hexa-skill manifest, where they're named "Stat Node I/II/III".
+ */
+export const HEXA_STAT_SKILLS: HexaSkillDef[] = [
+  s("HEXA Stat I", "50000000"),
+  s("HEXA Stat II", "50000001"),
+  s("HEXA Stat III", "50000002"),
+];
+
+// ── 3rd Common Node (v271) ──────────────────────────────
+
+/*
+  v271 gave every class a 3rd HEXA Common Node: the HEXA form of its job branch's 5th job
+  common skill, so one skill covers a whole branch (all six Cygnus Knights share HEXA Phalanx
+  Charge). Kept as a branch table rather than a field on all 53 class defs, since that's the
+  shape the game actually has and it reads against the patch notes directly.
+
+  Icons are the `hexa-skill` 4000xxxx series added in v271. The manifest lists one id per
+  class, but they're the same skill and the same art, so each branch uses its first id.
+  Explorers split five ways, so `group` alone can't key this.
+
+  SHINE classes get the Erda Link equivalent instead (a 3rd Skill Stone, SHINE Tree of Stars),
+  which only exists under Erel Light's erda-skill folder; Sia shares it.
+*/
+const COMMON3_BY_BRANCH: { skill: HexaSkillDef; classNames: string[] }[] = [
+  { skill: s("HEXA Blitz Shield/Blitz Burst", "40000002"), classNames: ["Hero", "Paladin", "Dark Knight"] },
+  { skill: s("HEXA Arcane Overdrive", "40000005"), classNames: ["Arch Mage (F/P)", "Arch Mage (I/L)", "Bishop"] },
+  { skill: s("HEXA Fury of the Wild", "40000008"), classNames: ["Bowmaster", "Marksman", "Pathfinder"] },
+  { skill: s("HEXA Shadow Walker", "40000011"), classNames: ["Night Lord", "Shadower", "Dual Blade"] },
+  { skill: s("HEXA Pirate's Banner", "40000014"), classNames: ["Buccaneer", "Corsair", "Cannoneer"] },
+  { skill: s("HEXA Phalanx Charge", "40000017"), classNames: ["Mihile", "Dawn Warrior", "Blaze Wizard", "Wind Archer", "Night Walker", "Thunder Breaker"] },
+  { skill: s("HEXA Freud's Wisdom", "40000023"), classNames: ["Aran", "Evan", "Luminous", "Mercedes", "Phantom", "Shade"] },
+  { skill: s("HEXA Resistance Infantry", "40000029"), classNames: ["Blaster", "Battle Mage", "Wild Hunter", "Xenon", "Mechanic"] },
+  { skill: s("HEXA Defender of the Demon", "40000034"), classNames: ["Demon Slayer", "Demon Avenger"] },
+  { skill: s("HEXA Might of the Nova", "40000036"), classNames: ["Kaiser", "Kain", "Cadena", "Angelic Buster"] },
+  { skill: s("HEXA Transcendent", "40000040"), classNames: ["Zero"] },
+  { skill: s("HEXA Afterimage of the Otherworld", "40000041"), classNames: ["Kinesis"] },
+  { skill: s("HEXA Conversion Overdrive", "40000042"), classNames: ["Adele", "Illium", "Khali", "Ark"] },
+  { skill: s("HEXA Lotus Flower", "40000046"), classNames: ["Lara", "Hoyoung", "Ren"] },
+  { skill: s("HEXA Twilight Bloom", "40000050"), classNames: ["Hayato", "Kanna"] },
+  { skill: s("HEXA Ring of Samsara", "40000052"), classNames: ["Lynn", "Mo Xuan"] },
+  { skill: su("SHINE Tree of Stars", "erda-skill", "18112/skill/111"), classNames: ["Sia Astelle", "Erel Light"] },
+];
+
+const COMMON3_BY_CLASS = new Map<string, HexaSkillDef>(
+  COMMON3_BY_BRANCH.flatMap(({ skill, classNames }) => classNames.map((name) => [name, skill] as const)),
+);
+
+/** The class's 3rd Common Node, or null if it has none. */
+export function common3Skill(className: string): HexaSkillDef | null {
+  return COMMON3_BY_CLASS.get(className) ?? null;
+}
+
+/**
+ * Every Common node for a class, in level-array order: the two shared Sol skills, then the
+ * class's 3rd Common Node. `common` level arrays are indexed against this, and each entry's
+ * cost table is the matching index of COMMON_COST_TABLES.
+ */
+export function commonSkillsFor(className: string | null): HexaSkillDef[] {
+  const third = className ? common3Skill(className) : null;
+  return third ? [...COMMON_SKILLS, third] : COMMON_SKILLS;
+}
+
 // ── Exported class list ─────────────────────────
 
 const HEXA_CLASSES: HexaClassDef[] = [

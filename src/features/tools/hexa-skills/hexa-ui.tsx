@@ -6,7 +6,7 @@ import type { AppTheme } from "../../../components/themes";
 import { resourceImageUrl } from "../../../lib/mapleResource";
 import { replaceZeroOnDigit } from "../numberInputHandlers";
 import { ToolNumberInput } from "../shared-ui";
-import type { HexaSkillDef, HexaClassDef } from "./hexa-classes";
+import { HEXA_STAT_SKILLS, type HexaSkillDef, type HexaClassDef } from "./hexa-classes";
 import type { SkillCostSummary, SectionCost } from "./useHexaSkillsState";
 import { MAX_SKILL_LEVEL } from "./hexa-costs";
 import { fmtNum } from "./hexa-format";
@@ -404,6 +404,70 @@ export function MasterySection({
           />
         </div>
       ))}
+    </div>
+  );
+}
+
+// ── HEXA Stat Section ────────────────────────────────────────────────────────
+
+// Shape comes from `.tool-check-item`; colors are inline because they're theme values.
+const hexaStatRow: React.CSSProperties = { width: "100%", marginTop: 6, padding: "7px 10px" };
+const hexaStatNote: React.CSSProperties = { margin: "0 0 2px", fontSize: "0.75rem", fontWeight: 600 };
+
+/**
+ * HEXA Stat nodes are rolled rather than leveled, so there's nothing to enter but whether
+ * each one is finished: a done node drops out of the leveling guide. A node the character's
+ * own HEXA Stat data already shows as finished is locked, since ticking it by hand couldn't
+ * say anything the real data doesn't.
+ */
+export function HexaStatSection({
+  done,
+  fromCharacter,
+  onChange,
+  theme,
+  sectionPanel,
+}: {
+  done: boolean[];
+  fromCharacter: boolean[];
+  onChange: (idx: number, done: boolean) => void;
+  theme: AppTheme;
+  sectionPanel: React.CSSProperties;
+}) {
+  return (
+    <div className="fade-in panel-card" style={sectionPanel}>
+      <SectionHeader title="HEXA Stat" theme={theme} />
+      <p style={{ ...hexaStatNote, color: theme.muted }}>
+        Rolled rather than leveled, so the tracker only records whether each node is finished.
+      </p>
+      {HEXA_STAT_SKILLS.map((skill, i) => {
+        const locked = fromCharacter[i];
+        return (
+          <label
+            key={skill.name}
+            className="tool-check-item"
+            style={{
+              ...hexaStatRow,
+              background: done[i] ? theme.accentSoft : theme.timerBg,
+              border: `1px solid ${done[i] ? theme.accent : theme.border}`,
+              color: done[i] ? theme.accentText : theme.text,
+              cursor: locked ? "default" : "pointer",
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={done[i]}
+              disabled={locked}
+              onChange={(e) => onChange(i, e.target.checked)}
+              style={{ accentColor: theme.accent, cursor: locked ? "default" : "pointer", flexShrink: 0 }}
+            />
+            <SkillIcon iconId={skill.iconId} iconUrl={skill.iconUrl} name={skill.name} theme={theme} size={26} />
+            <span style={{ flex: 1, minWidth: 0 }}>{skill.name}</span>
+            {locked && (
+              <span style={{ color: theme.muted, fontWeight: 600, flexShrink: 0 }}>From HEXA Stat</span>
+            )}
+          </label>
+        );
+      })}
     </div>
   );
 }

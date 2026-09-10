@@ -15,6 +15,7 @@ const KIND_LABEL: Record<GuideStep["kind"], string> = {
   mastery: "Mastery",
   enhancement: "Enhancement",
   common: "Common",
+  hexaStat: "HEXA Stat",
 };
 
 function fmtPct(n: number): string {
@@ -119,6 +120,17 @@ const hecateBanner: CSSProperties = {
 };
 
 function GuideTip({ step, rank, theme }: { step: GuideStep; rank: number; theme: AppTheme }) {
+  // A HEXA Stat core is rolled, not leveled, so it has no level range, no fixed final damage
+  // and no fixed fragment cost. The tooltip just names it and says where it lands in the order.
+  if (step.kind === "hexaStat") {
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: 3, textAlign: "left" }}>
+        <span style={{ fontWeight: 800 }}>{step.name}</span>
+        <span style={{ color: theme.muted, fontWeight: 600 }}>#{rank} · {KIND_LABEL[step.kind]}</span>
+        <span style={{ color: theme.muted, fontWeight: 600 }}>Rolled, so its cost and final damage vary.</span>
+      </div>
+    );
+  }
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 3, textAlign: "left" }}>
       <span style={{ fontWeight: 800 }}>{step.name}</span>
@@ -137,32 +149,58 @@ function GuideTip({ step, rank, theme }: { step: GuideStep; rank: number; theme:
 }
 
 function GuideTile({ step, rank, theme, onClick }: { step: GuideStep; rank: number; theme: AppTheme; onClick: () => void }) {
+  const tileStyle: CSSProperties = {
+    ...guideTile,
+    background: theme.panel,
+    border: `1px solid ${theme.border}`,
+  };
+  const body = (
+    <>
+      <SkillIcon iconId={step.iconId} iconUrl={step.iconUrl} name={step.name} theme={theme} />
+      <span style={{ ...guideLevelText, color: theme.text }}>
+        {step.fromLevel}
+        <span style={{ color: theme.muted }}>→</span>
+        {step.toLevel}
+      </span>
+    </>
+  );
+
+  // A HEXA Stat marker isn't a step you can record, so it's a plain tile rather than a
+  // button: clicking it would "mark as done" something the tracker doesn't hold a level for.
+  if (step.kind === "hexaStat") {
+    return (
+      <HoverTooltip theme={theme} label={<GuideTip step={step} rank={rank} theme={theme} />}>
+        <div style={tileStyle}>
+          <SkillIcon iconId={step.iconId} iconUrl={step.iconUrl} name={step.name} theme={theme} />
+          <span style={{ ...guideLevelText, color: theme.muted }}>Stat</span>
+        </div>
+      </HoverTooltip>
+    );
+  }
+
   return (
     <HoverTooltip theme={theme} label={<GuideTip step={step} rank={rank} theme={theme} />}>
-      <button
-        type="button"
-        onClick={onClick}
-        style={{
-          ...guideTile,
-          background: theme.panel,
-          border: `1px solid ${theme.border}`,
-        }}
-      >
-        <SkillIcon iconId={step.iconId} iconUrl={step.iconUrl} name={step.name} theme={theme} />
-        <span style={{ ...guideLevelText, color: theme.text }}>
-          {step.fromLevel}
-          <span style={{ color: theme.muted }}>→</span>
-          {step.toLevel}
-        </span>
+      <button type="button" onClick={onClick} style={tileStyle}>
+        {body}
       </button>
     </HoverTooltip>
   );
 }
 
+/** "Sol Hecate", or "Sol Hecate and HEXA Twilight Bloom". */
+function listNames(names: string[]): string {
+  if (names.length <= 1) return names[0] ?? "";
+  return `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
+}
+
 /** "Sol Janus to Lv 10, Blade Storm to Lv 5 and …": each skill's final level across `steps`. */
 function describeSteps(steps: GuideStep[]): string {
   const finals = new Map<string, string>();
-  for (const step of steps) finals.set(step.code, `${step.name} to Lv ${step.toLevel}`);
+  // HEXA Stat cores aren't leveled, so they never appear in what gets recorded.
+  for (const step of steps) {
+    if (step.kind === "hexaStat") continue;
+    finals.set(step.code, `${step.name} to Lv ${step.toLevel}`);
+  }
   const parts = [...finals.values()];
   if (parts.length <= 1) return parts[0] ?? "";
   return `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}`;
@@ -220,9 +258,10 @@ export function GuideView({
         </div>
       </div>
 
-      {guide.hecateFdMissing && (
+      {guide.missingFdNodes.length > 0 && (
         <div style={{ ...hecateBanner, background: theme.timerBg, border: `1px solid ${theme.border}`, color: theme.muted }}>
-          Sol Hecate&apos;s final damage values aren&apos;t available yet, so it isn&apos;t in this guide. Check your class Discord for the latest leveling order.
+          Final damage values for {listNames(guide.missingFdNodes)} aren&apos;t available yet, so{" "}
+          {guide.missingFdNodes.length > 1 ? "they aren't" : "it isn't"} in this guide. Check your class Discord for the latest leveling order.
         </div>
       )}
 

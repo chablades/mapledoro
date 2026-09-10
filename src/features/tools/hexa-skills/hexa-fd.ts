@@ -16,12 +16,18 @@ import {
   MASTERY_COSTS,
   ENHANCEMENT_COSTS,
   COMMON_COSTS,
+  COMMON_COST_TABLES,
   type LevelCost,
 } from "./hexa-costs";
-import { COMMON_SKILLS, type HexaClassDef, type HexaSkillLevels } from "./hexa-classes";
+import {
+  HEXA_STAT_SKILLS,
+  commonSkillsFor,
+  type HexaClassDef,
+  type HexaSkillLevels,
+} from "./hexa-classes";
 import { HEXA_FD } from "./hexa-fd-data.generated";
 
-export type FdNodeKind = "origin" | "ascent" | "mastery" | "enhancement" | "common";
+export type FdNodeKind = "origin" | "ascent" | "mastery" | "enhancement" | "common" | "hexaStat";
 
 export interface FdNode {
   code: string;
@@ -118,7 +124,7 @@ function buildNodes(
     });
   });
 
-  COMMON_SKILLS.forEach((skill, i) => {
+  commonSkillsFor(className).forEach((skill, i) => {
     nodes.push({
       code: `c${i}`,
       kind: "common",
@@ -127,7 +133,7 @@ function buildNodes(
       iconId: skill.iconId,
       iconUrl: skill.iconUrl,
       curve: fd.common[i] ?? [],
-      costs: COMMON_COSTS,
+      costs: COMMON_COST_TABLES[i] ?? COMMON_COSTS,
       level: levels.common[i] ?? 0,
       desired: desired.common[i] ?? 0,
     });
@@ -199,14 +205,28 @@ export interface GuideResult {
   totalSolErda: number;
   /** FD still to gain by following every remaining step (to desired levels). */
   remainingFd: number;
-  /** Sol Hecate has no FD curve for this class, so it is absent from the order. */
-  hecateFdMissing: boolean;
+  /** Common nodes with no FD curve for this class, so they're absent from the order. */
+  missingFdNodes: string[];
 }
 
-// A class whose Sol Hecate FD curve is absent from the dataset never gets the skill in its
-// recommended order, so the guide flags that rather than silently omitting it. Every class
-// currently has one; this guards a future refresh that loses it.
-const HECATE_INDEX = COMMON_SKILLS.findIndex((s) => s.name === "Sol Hecate");
+/**
+ * Common nodes the dataset has no FD for. MapleScouter is KMS-first, so a class that doesn't
+ * exist there can be missing a node's numbers entirely: it then never appears in the
+ * recommended order and shows a flat 0% in the breakdown. The guide names those rather than
+ * letting a node look worthless. Sol Janus is excluded because it's an EXP skill that
+ * legitimately grants no final damage.
+ */
+function findMissingFdNodes(className: string, commonCurves: number[][]): string[] {
+  return commonSkillsFor(className)
+    .filter((skill, i) => skill.name !== "Sol Janus" && (commonCurves[i] ?? []).every((v) => v === 0))
+    .map((skill) => skill.name);
+}
+
+/** `h1`/`h2`/`h3` order tokens -> HEXA_STAT_SKILLS index, or null for a real node code. */
+function hexaStatIndex(code: string): number | null {
+  const match = /^h([1-9])$/.exec(code);
+  return match ? Number(match[1]) - 1 : null;
+}
 
 /** A run of consecutive same-skill levels not yet emitted (all 0% FD so far). */
 interface PendingRun {
@@ -270,6 +290,8 @@ export function computeGuide(
   classDef: HexaClassDef | null,
   levels: HexaSkillLevels,
   desired: HexaSkillLevels,
+  /** Per HEXA Stat node; a finished one drops out of the guide like a maxed skill does. */
+  hexaStatDone: boolean[] = [],
 ): GuideResult | null {
   if (!className || !classDef) return null;
   const fd = HEXA_FD[className];
@@ -317,7 +339,35 @@ export function computeGuide(
     });
   };
 
+  // A HEXA Stat core is rolled, not leveled: its fragment cost and FD depend on the lines
+  // you hit, so the marker carries zeros and leaves every running total untouched. It's a
+  // position in the order, nothing more.
+  const emitHexaStat = (index: number) => {
+    const skill = HEXA_STAT_SKILLS[index];
+    if (!skill || hexaStatDone[index]) return;
+    steps.push({
+      code: `h${index + 1}`,
+      kind: "hexaStat",
+      name: skill.name,
+      extraSkills: [],
+      iconId: skill.iconId,
+      iconUrl: skill.iconUrl,
+      fromLevel: 0,
+      toLevel: 0,
+      fdGain: 0,
+      fragCost: 0,
+      solErdaCost: 0,
+      fdPerFrag: 0,
+      cumFrag,
+    });
+  };
+
   for (const code of fd.order) {
+    const statIndex = hexaStatIndex(code);
+    if (statIndex !== null) {
+      emitHexaStat(statIndex);
+      continue;
+    }
     const node = byCode.get(code);
     if (!node) continue;
     const toLevel = (running[code] = (running[code] ?? 0) + 1);
@@ -331,10 +381,17 @@ export function computeGuide(
   // range (a skill, or its upper levels, that gives 0% FD). It has no milestone,
   // so the guide drops it rather than showing a step worth 0% final damage.
 
-  const hecateCurve = fd.common[HECATE_INDEX] ?? [];
-  const hecateFdMissing = hecateCurve.every((v) => v === 0);
+  // Markers alone aren't a guide: a character with everything at its desired level should
+  // see an empty guide, not three HEXA Stat tiles with no leveling around them.
+  const guideSteps = steps.some((step) => step.kind !== "hexaStat") ? steps : [];
 
-  return { steps, totalFrag: cumFrag, totalSolErda, remainingFd, hecateFdMissing };
+  return {
+    steps: guideSteps,
+    totalFrag: cumFrag,
+    totalSolErda,
+    remainingFd,
+    missingFdNodes: findMissingFdNodes(className, fd.common),
+  };
 }
 
 /**
