@@ -8,7 +8,7 @@ import {
   emptyBuffsDraft, storedBuffsToDraft, convertBuffsDraftToStored, type BuffsDraft,
 } from "../setup/data/buffsData";
 import {
-  emptyOzRingsDraft, storedOzRingsToOzRingsDraft, convertOzRingsDraftToStored, type OzRingId, type OzRingsDraft,
+  storedOzRingsToOzRingsDraft, convertOzRingsDraftToStored, type OzRingId, type OzRingsDraft,
 } from "../setup/data/ozRingData";
 import {
   buildScouterPayload, type OzRingOverrides, type ScouterSimulatorOverrides, type SimulatorHexaCoreField, type SimulatorInputOverrides,
@@ -25,7 +25,7 @@ const EMPTY_INPUT: Record<keyof SimulatorInputOverrides, number> = {
   subStat: 0, subStatPer: 0, subStatAbs: 0, subStat9Level: 0,
   ssubStat: 0, ssubStatPer: 0, ssubStatAbs: 0, ssubStat9Level: 0,
   allStatPer: 0, criRate: 0, buffDuration: 0, coolTimeReduce: 0,
-  atk: 0, atkPer: 0, bossDmg: 0, criDmg: 0, ignoreGuard: 0, resetCoolDown: 0, weaponAtk: 0,
+  atk: 0, atkPer: 0, bossDmg: 0, criDmg: 0, ignoreGuard: 0, resetCoolDown: 0,
 };
 
 export interface ScouterSimulatorDraft {
@@ -66,20 +66,15 @@ export interface ScouterSimulatorDraft {
 
 /** Builds the OzRingsDraft a previously-applied simulation's ringOverrides represents, so
  *  reopening the popup can start from what was typed in rather than the character's real
- *  rings. ringOverrides has no totallingStatValues equivalent (that block isn't editable from
- *  this popup, see the plan), so it's always seeded from the character's real value. */
+ *  rings. */
 function ozRingOverridesToDraft(character: StoredCharacterRecord, overrides: OzRingOverrides | undefined): OzRingsDraft {
-  const real = storedOzRingsToOzRingsDraft(character.scouter?.ozRings) ?? emptyOzRingsDraft();
+  const real = storedOzRingsToOzRingsDraft(character.scouter?.ozRings);
   if (!overrides) return real;
   const levels: Partial<Record<OzRingId, string>> = { ...real.levels };
   for (const [ring, level] of Object.entries(overrides.levels ?? {})) {
     if (level !== undefined) levels[ring as OzRingId] = String(level);
   }
-  return {
-    ringMode: overrides.useContinuousAsMainRing ? "continuous" : "standard",
-    levels,
-    totallingStatValues: real.totallingStatValues,
-  };
+  return { levels };
 }
 
 /** Owns every field the Scouter Simulator popup lets a player edit -- one hook rather than
@@ -142,7 +137,7 @@ export function useScouterSimulatorDraft(
   const [initialBuffsDraft] = useState<BuffsDraft>(() => storedBuffsToDraft(character.scouter?.buffs) ?? emptyBuffsDraft());
   const [buffsDraft, setBuffsDraft] = useState(() =>
     previousOverrides?.dopingOverrides ? storedBuffsToDraft(previousOverrides.dopingOverrides) : initialBuffsDraft);
-  const [initialOzRingsDraft] = useState<OzRingsDraft>(() => storedOzRingsToOzRingsDraft(character.scouter?.ozRings) ?? emptyOzRingsDraft());
+  const [initialOzRingsDraft] = useState<OzRingsDraft>(() => storedOzRingsToOzRingsDraft(character.scouter?.ozRings));
   const [ozRingsDraft, setOzRingsDraft] = useState(() => ozRingOverridesToDraft(character, previousOverrides?.ringOverrides));
   const [input, setInput] = useState<Record<keyof SimulatorInputOverrides, number>>(() => {
     if (!previousOverrides?.input) return EMPTY_INPUT;
@@ -206,7 +201,6 @@ export function useScouterSimulatorDraft(
       dopingOverrides: convertBuffsDraftToStored(buffsDraft) ?? undefined,
       ringOverrides: {
         levels: convertOzRingsDraftToStored(ozRingsDraft)?.levels,
-        useContinuousAsMainRing: ozRingsDraft.ringMode === "continuous",
       },
       input: inputOverrides,
       linkSkillOverrides: Object.fromEntries(

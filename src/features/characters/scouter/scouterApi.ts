@@ -22,7 +22,7 @@ import {
 import { deriveWeaponHandFromWeapon } from "../setup/data/classBranch";
 import { innerAbilityHasData } from "../setup/data/innerAbilityData";
 import { whAutofillSourceFromRoster } from "../setup/data/scouterQuestionsData";
-import type { OzRingId } from "../setup/data/ozRingData";
+import { OZ_RING_MAX_LEVEL, type OzRingId } from "../setup/data/ozRingData";
 import { scouterKoreanClassName } from "./scouterClassNames";
 import { LINK_SKILL_TO_SCOUTER_KEY, SCOUTER_UNMODELED_LINK_SKILL_KEYS } from "./scouterLinkSkills";
 import { readCharacterToolData } from "../../tools/characterToolStorage";
@@ -97,13 +97,16 @@ export interface ScouterSpecial {
   genesis: boolean;
   oneHandSword: boolean;
   useRuinForceShild: boolean;
-  useContinuousRingAsMainRing: boolean;
+  // Removed from GMS in the ring consolidation (no more standard-vs-continuous choice, no
+  // Totalling Ring). The API still accepts these fields, so they're sent as inert
+  // constants -- same treatment as riskTaker and the non-GMS seed rings below.
+  useContinuousRingAsMainRing: false;
   restraintRing: string;
   weaponRing: string;
-  ringOfSum: string;
+  ringOfSum: "0";
   riskTaker: "0";
-  statThird: string;
-  statFourth: string;
+  statThird: "0";
+  statFourth: "0";
   continuosRing: string;
   challenge: false;
   is30min: false;
@@ -345,21 +348,21 @@ function soulValue(character: StoredCharacterRecord, type: "ephenia" | "mugong")
   return soul.soulLevel === 1 || soul.soulLevel === 2 ? String(soul.soulLevel) : "0";
 }
 
-/** Optional per-ring level overrides for the Scouter Simulator's Oz Rings tab, plus the ring
- *  mode toggle -- undefined/omitted means "use the character's real saved value", matching
- *  every other simulator override in this file. */
+/** Optional per-ring level overrides for the Scouter Simulator's Oz Rings tab --
+ *  undefined/omitted means "use the character's real saved value", matching every other
+ *  simulator override in this file. */
 export interface OzRingOverrides {
   levels?: Partial<Record<OzRingId, number>>;
-  useContinuousAsMainRing?: boolean;
 }
 
 function ozRingLevel(character: StoredCharacterRecord, ring: OzRingId, overrides?: OzRingOverrides): string {
-  const override = overrides?.levels?.[ring];
-  if (override !== undefined) return String(override);
-  return String(character.scouter?.ozRings?.levels[ring] ?? 0);
+  const raw = overrides?.levels?.[ring] ?? character.scouter?.ozRings?.levels[ring] ?? 0;
+  // Clamp to the ring's current max so a pre-consolidation Weapon Jump level above 4,
+  // still sitting in stored data until the character re-saves, isn't sent as-is.
+  return String(Math.min(raw, OZ_RING_MAX_LEVEL[ring]));
 }
 
-function buildSpecial(character: StoredCharacterRecord, offStats: { third: string; fourth: string }, ringOverrides?: OzRingOverrides): ScouterSpecial {
+function buildSpecial(character: StoredCharacterRecord, ringOverrides?: OzRingOverrides): ScouterSpecial {
   return {
     isReboot: isRebootWorld(character.worldID),
     combat: true,
@@ -368,13 +371,13 @@ function buildSpecial(character: StoredCharacterRecord, offStats: { third: strin
     genesis: character.isLiberated === true,
     oneHandSword: character.weaponHand === "1h",
     useRuinForceShild: character.hasRuinForceShield === true,
-    useContinuousRingAsMainRing: ringOverrides?.useContinuousAsMainRing ?? (character.scouter?.ozRings?.ringMode === "continuous"),
+    useContinuousRingAsMainRing: false,
     restraintRing: ozRingLevel(character, "restraint", ringOverrides),
     weaponRing: ozRingLevel(character, "weaponJump", ringOverrides),
-    ringOfSum: ozRingLevel(character, "totalling", ringOverrides),
+    ringOfSum: "0",
     riskTaker: "0",
-    statThird: offStats.third,
-    statFourth: offStats.fourth,
+    statThird: "0",
+    statFourth: "0",
     continuosRing: ozRingLevel(character, "continuous", ringOverrides),
     challenge: false,
     is30min: false,
@@ -394,32 +397,27 @@ function isTripleStatField(id: string): id is TripleStatFieldId {
   return TRIPLE_STAT_FIELD_IDS.has(id);
 }
 
-interface MainSubAssignment {
+export interface MainSubAssignment {
   main: TripleStatFieldId | null;
   sub: TripleStatFieldId | null;
   ssub: TripleStatFieldId | null;
-  /** Real stats (str/dex/int/luk) not assigned to main/sub/ssub, feeds statThird/statFourth. */
-  offStats: TripleStatFieldId[];
 }
 
-/** Demon Avenger's kit is fully INT-independent, and its 3 leftover off-stats
- *  (DEX/INT/LUK) don't fit the 2 statThird/statFourth slots, so INT is dropped
- *  entirely rather than picked arbitrarily. */
-const DEMON_AVENGER_DROPPED_OFF_STAT: TripleStatFieldId = "int";
-
-function assignMainSubStats(classId: string, requiredStats: TripleStatFieldId[]): MainSubAssignment {
+/** Which real stat (STR/DEX/INT/LUK) each of MapleScouter's main/sub/ssub stat slots
+ *  corresponds to for a class. Exported so the reverse direction (importing a MapleScouter
+ *  export back into MapleDoro, see maplescouterImportData.ts) can un-map slot values to
+ *  the right per-stat draft fields. */
+export function assignMainSubStats(classId: string, requiredStats: TripleStatFieldId[]): MainSubAssignment {
   const realStatSlots = requiredStats.filter((s) => REAL_STATS.includes(s));
   const [first = null, second = null, third = null] = realStatSlots;
-  let offStats = REAL_STATS.filter((s) => !realStatSlots.includes(s));
   if (classId === "demon_avenger") {
-    offStats = offStats.filter((s) => s !== DEMON_AVENGER_DROPPED_OFF_STAT);
     // Demon Avenger's Main Stat is HP (buildStat overrides mainField to "hp" directly),
     // so its one real stat slot (STR, `first`) belongs in Sub, not Main -- otherwise STR
     // gets silently discarded when mainField is overridden and never reaches the payload
     // at all.
-    return { main: null, sub: first, ssub: third, offStats };
+    return { main: null, sub: first, ssub: third };
   }
-  return { main: first, sub: second, ssub: third, offStats };
+  return { main: first, sub: second, ssub: third };
 }
 
 /** Reads a stat's Base/%/Not-Applied triple as MapleScouter's Base/Per/Abs strings.
@@ -428,17 +426,6 @@ function tripleStrings(character: StoredCharacterRecord, field: TripleStatFieldI
   if (!field) return { base: "0", per: "0", abs: "0" };
   const triple = character.stats[field];
   return { base: triple.base || "0", per: triple.percent || "0", abs: triple.percentUnapplied || "0" };
-}
-
-// Off-stat totals live in their own private field (StoredOzRings.totallingStats), not
-// derived from stats.str/dex/int/luk's Base/%/Not Applied triple -- an earlier version
-// computed the Applied Value from that triple, which assumed the Totalling Ring step was
-// writing into Base, silently corrupting a character's real Base stat (see ozRingData.ts's
-// file header for the full story).
-function offStatTotal(character: StoredCharacterRecord, field: TripleStatFieldId | undefined): string {
-  if (!field) return "0";
-  const value = character.scouter?.ozRings?.totallingStats?.[field];
-  return value !== undefined ? String(value) : "0";
 }
 
 function buildStat(
@@ -491,7 +478,10 @@ function buildStat(
     // real damage benefit from over-capping crit rate, so that bonus isn't thrown away.
     critical: String(Math.max(Number(character.stats.criticalRate || "0"), 100)),
     criticalDmg: character.stats.criticalDamage || "0",
-    weaponAtk: String(character.scouter?.weaponAtt ?? 0),
+    // MapleScouter removed the Weapon ATT input from its own UI and the API ignores whatever
+    // value it's sent (live-tested: 0 vs a real number vs garbage, byte-identical result).
+    // The field is still accepted, so it's sent as an inert "0", same as ringOfSum/riskTaker.
+    weaponAtk: "0",
     atkPercent: atk.percent || "0",
     coolTimeReducePercent: character.stats.cooldownReduction.percent || "0",
     coolTimeReduce: character.stats.cooldownReduction.seconds || "0",
@@ -621,8 +611,10 @@ function buildSeedRing(character: StoredCharacterRecord, ringOverrides?: OzRingO
     // formula; revisit if a real result ever depends on it.
     restraintRing: { level: ozRingLevel(character, "restraint", ringOverrides), efficiency: 0 },
     weaponRing: { level: ozRingLevel(character, "weaponJump", ringOverrides), efficiency: 0 },
-    ringOfSum: { level: ozRingLevel(character, "totalling", ringOverrides), efficiency: 0 },
     continuosRing: { level: ozRingLevel(character, "continuous", ringOverrides), efficiency: 0 },
+    // ringOfSum (Totalling Ring) was removed from GMS in the ring consolidation; the API
+    // still accepts the field so it's sent zeroed, like the non-GMS rings below.
+    ringOfSum: ZERO_RING,
     // Non-GMS rings, mapledoro has no data for these and can't collect any.
     riskTakerRing: ZERO_RING,
     criDamageRing: ZERO_RING,
@@ -657,9 +649,9 @@ function buildLinkSkill(linkSkills: LinkSkillsData | undefined): Record<string, 
  *  the class asks, Wild Hunter Legion rank, Inner Ability line) -- full_setup's own
  *  Quick Questions stays permanently optional (see isScouterQuestionnaireComplete's doc
  *  comment), so this is the one place that data ever gets required at all.
- *  "characterInfo" points at Stats' Character Info substep (STR/DEX/etc, Combat Stats,
- *  Weapon ATT -- the numeric fields Full Setup can silently skip past, see
- *  isStatsSubstepAnyFieldFilled). Checked in the same order the live flow's own substeps
+ *  "characterInfo" points at Stats' Character Info substep (STR/DEX/etc, Combat Stats --
+ *  the numeric fields Full Setup can silently skip past, see isStatsSubstepAnyFieldFilled).
+ *  Checked in the same order the live flow's own substeps
  *  appear (Quick Questions is substep 0, Character Info is substep 1) so a character
  *  missing BOTH reports the one the player would actually hit first, not whichever
  *  happened to be checked first in code -- a totally blank character used to report
@@ -694,10 +686,9 @@ export function findScouterSetupGap(character: StoredCharacterRecord): ScouterSe
     cooldownReduction: stats.cooldownReduction, cooldownSkip: stats.cooldownSkip,
     ignoreElementalResistance: stats.ignoreElementalResistance, additionalStatusDamage: stats.additionalStatusDamage,
     summonDuration: stats.summonDuration, arcanePower: stats.arcanePower, sacredPower: stats.sacredPower,
-    weaponAtt: character.scouter?.weaponAtt !== undefined ? String(character.scouter.weaponAtt) : undefined,
   };
   const characterInfoComplete = isStatsSubstepComplete(
-    draft, tripleIds, true, primaryStat,
+    draft, tripleIds, primaryStat,
     isArcaneEligible(character.level, classData.isLegacy),
     isSacredEligible(character.level, classData.isLegacy),
   );
@@ -742,11 +733,6 @@ export function buildScouterPayload(
   if (!koreanClassName) return null;
 
   const assignment = assignMainSubStats(classData.id, classData.requiredStats.filter(isTripleStatField));
-  const [thirdField, fourthField] = assignment.offStats;
-  const offStats = {
-    third: offStatTotal(character, thirdField),
-    fourth: offStatTotal(character, fourthField),
-  };
 
   const legion = ctx.scouterLegionByWorld[String(character.worldID)];
   const isHexaEligible = character.level >= 260 && !classData.isLegacy;
@@ -755,7 +741,7 @@ export function buildScouterPayload(
   return {
     doping: buildDoping(overrides?.dopingOverrides ?? character.scouter?.buffs),
     linkSkill: buildLinkSkill(character.linkSkills),
-    special: buildSpecial(character, offStats, overrides?.ringOverrides),
+    special: buildSpecial(character, overrides?.ringOverrides),
     stat: buildStat(character, classData.id, koreanClassName, assignment, legion),
     hexa,
     seedRing: buildSeedRing(character, overrides?.ringOverrides),
@@ -799,7 +785,7 @@ export interface SimulatorInputOverrides {
   ssubStat?: string; ssubStatPer?: string; ssubStatAbs?: string; ssubStat9Level?: string;
   allStatPer?: string; criRate?: string; buffDuration?: string; coolTimeReduce?: string;
   atk?: string; atkPer?: string; bossDmg?: string; criDmg?: string; ignoreGuard?: string;
-  resetCoolDown?: string; weaponAtk?: string;
+  resetCoolDown?: string;
 }
 
 export interface ScouterSimulatorOverrides {
@@ -878,13 +864,17 @@ function applyStatFamilyOverrides(stat: ScouterStat, input: SimulatorInputOverri
 }
 
 /** Everything else on the Input tab -- combat percentages, cooldowns, ATT. ignoreGuard is the
- *  one diminishing-stack field (real + (100 - real) * (typed / 100)); the rest, including
- *  weaponAtk, are plain adds -- the popup shows Weapon ATT as a delta on top of the real value
- *  (same UX as every other field), even though MapleScouter's own API wants the resulting
- *  absolute number. criDmg is applied by applyInputOverrides itself, not here, since it needs
- *  to combine with a Final Damage% override on the same field. */
+ *  one diminishing-stack field (real + (100 - real) * (typed / 100)); the rest are plain
+ *  adds. criDmg is applied by applyInputOverrides itself, not here, since it needs to combine
+ *  with a Final Damage% override on the same field. */
 function applyCombatFieldOverrides(stat: ScouterStat, input: SimulatorInputOverrides): void {
-  if (input.criRate) addToStatField(stat, "critical", Number(input.criRate));
+  if (input.criRate) {
+    // Floor to 100 after the delta, same as buildScouterPayload does for the base value:
+    // MapleScouter's API rejects a payload with critical < 100 (its formulas assume you always
+    // crit), and its own site floors the field before POSTing too -- so a negative delta that
+    // would push the total below 100 lands at exactly 100 rather than 400ing the request.
+    stat.critical = String(Math.max(Number(stat.critical) + Number(input.criRate), 100));
+  }
   if (input.buffDuration) addToStatField(stat, "buffDuration", Number(input.buffDuration));
   if (input.coolTimeReduce) addToStatField(stat, "coolTimeReduce", Number(input.coolTimeReduce));
   if (input.atk) addToStatField(stat, "atkBase", Number(input.atk));
@@ -895,7 +885,6 @@ function applyCombatFieldOverrides(stat: ScouterStat, input: SimulatorInputOverr
     stat.ignoreDef = String(real + (100 - real) * (Number(input.ignoreGuard) / 100));
   }
   if (input.resetCoolDown) addToStatField(stat, "resetCoolDown", Number(input.resetCoolDown));
-  if (input.weaponAtk) addToStatField(stat, "weaponAtk", Number(input.weaponAtk));
 }
 
 /** Applies every Input tab field's confirmed formula onto a real ScouterStat, in place -- see

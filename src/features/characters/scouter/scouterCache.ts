@@ -39,7 +39,10 @@ const MAX_CACHE_ENTRIES = 8;
 // their own frontend never sends). The hash already changes for this on its own, but a
 // version bump gets every existing user off the old shape on their very next load instead
 // of only whenever they next happen to edit a stat.
-const SCOUTER_CACHE_VERSION = 4;
+// Bumped to 5: the GMS ring consolidation. MapleScouter dropped the Totalling Ring from
+// their calc server-side (no shape change for the hash to catch), and mapledoro now stops
+// sending ringOfSum/statThird/statFourth -- every character's figure shifts.
+const SCOUTER_CACHE_VERSION = 5;
 
 // Entries older than this are treated as a miss by refreshScouterResult (real refetch, not
 // an instant hash hit) even though the hash still matches -- catches MapleScouter formula

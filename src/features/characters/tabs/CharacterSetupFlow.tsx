@@ -244,6 +244,7 @@ export default function CharacterSetupFlow({ theme, initialCharacterName, initia
     onValidityChange: actions.onValidityChange,
     reportCurrentSubstep: actions.reportCurrentSubstep,
     stepValueChange: actions.updateActiveStepValue,
+    applyMapleScouterImport: actions.applyMapleScouterImport,
     finishSetupFlow: actions.finishSetupFlow,
     openCharacterSearch: actions.openAddCharacterSearch,
     openCharacterProfile: actions.switchToCharacterProfile,

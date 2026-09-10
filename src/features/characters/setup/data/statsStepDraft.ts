@@ -9,7 +9,7 @@ import type { CharacterMarriage, CharacterSoul, StoredCharacterStats, StoredHype
 import type { EquipmentLike } from "./equipmentStepDraft";
 import { HYPER_STAT_CATEGORIES, HYPER_STAT_PRESET_COUNT, parseStoredHyperStatLevel } from "./hyperStatData";
 import { convertInnerAbilityDraftToStored, type IADraft } from "./innerAbilityData";
-import { CLASS_SKILL_DATA, getRequiredStatsForClass, type ClassSkillData } from "./classSkillData";
+import { CLASS_SKILL_DATA, getRequiredStatsForClass } from "./classSkillData";
 import { TRIPLE_STAT_FIELDS, type StatFieldId, type TripleStatFieldId } from "./statFields";
 
 export interface TripleStatDraft {
@@ -99,11 +99,6 @@ export interface StatsStepDraft {
     soulType?: "mugong" | "ephenia" | "none";
     soulLevel?: 1 | 2;
   };
-
-  // MapleScouter-only: the weapon's ATT/MATT value (the "+X" shown when hovering the
-  // weapon in the equipment window). Scouter needs the raw number; not captured by Full
-  // setup. Committed to the `scouter` blob (StoredScouterData.weaponAtt).
-  weaponAtt?: string;
 
   // MapleScouter-only answers (render only in the scouter flow).
   // - innerAbilityLine ("passive" | "multiTarget" | "neither"): per-character, stored
@@ -324,17 +319,12 @@ export function storedStatsToStatsStepDraft(record: {
   weaponHand: "1h" | "2h" | null;
   hasRuinForceShield: boolean | null;
   soul: CharacterSoul | null;
-  /** full_setup asks this inline in the Equipment step's weapon picker, not Stats —
-   *  but maplescouter_setup (and the standalone stats_flow) ask it directly in Stats,
-   *  since maplescouter_setup has no Equipment step. Without seeding it here too,
-   *  weaponAtt already entered via a previous full_setup pass gets asked again. */
-  weaponAtt?: number;
   /** MapleScouter-only, stored in the `scouter` blob (StoredScouterData.innerAbilityLine).
    *  Without seeding it here, reopening MapleScouter Setup on a character that already
    *  answered this always shows it unanswered, even though the stored value is intact. */
   innerAbilityLine?: string;
 }): StatsStepDraft {
-  const { stats, isLiberated, weaponHand, hasRuinForceShield, soul, weaponAtt, innerAbilityLine } = record;
+  const { stats, isLiberated, weaponHand, hasRuinForceShield, soul, innerAbilityLine } = record;
   return {
     str: storedTripleToDraft(stats.str),
     dex: storedTripleToDraft(stats.dex),
@@ -360,7 +350,6 @@ export function storedStatsToStatsStepDraft(record: {
     normalEnemyDamage: stats.normalEnemyDamage,
     hyperStat: storedHyperStatToDraft(stats.hyperStat),
     innerAbility: storedInnerAbilityToDraft(stats.innerAbility),
-    weaponAtt: weaponAtt !== undefined ? String(weaponAtt) : undefined,
     scouterQuestions: innerAbilityLine !== undefined ? { innerAbilityLine } : undefined,
     setupOptions: {
       isLiberated: isLiberated ?? undefined,
@@ -370,28 +359,6 @@ export function storedStatsToStatsStepDraft(record: {
       soulLevel: soul?.soulLevel ?? undefined,
     },
   };
-}
-
-// ── Weapon ATT/MATT ──────────────────────────────────────────────────────────
-// Shared between StatsSetupStep (maplescouter_setup, which has no Equipment step to
-// ask this in) and EquipmentSetupStep (full_setup, asked inline in the weapon picker).
-
-/** Value above which a Weapon ATT/MATT entry is almost certainly the Total stat, not
- *  the weapon's own +X — MapleScouter itself flags this same mix-up. */
-export const WEAPON_ATT_WARN_AT = 1150;
-
-export function isWeaponAttSane(weaponAtt: string | undefined): boolean {
-  const trimmed = weaponAtt?.trim();
-  if (!trimmed) return true;
-  return Number(trimmed) <= WEAPON_ATT_WARN_AT;
-}
-
-/** "Weapon ATT" vs "Weapon Magic ATT", based on whether the class's required stats
- *  include Magic ATT but not Attack Power. */
-export function deriveWeaponAttLabel(classData: ClassSkillData | undefined): { usesMagicWeapon: boolean; label: string } {
-  const required = classData?.requiredStats ?? [];
-  const usesMagicWeapon = required.includes("magicAtt") && !required.includes("attackPower");
-  return { usesMagicWeapon, label: usesMagicWeapon ? "Weapon Magic ATT" : "Weapon ATT" };
 }
 
 export function marriageDraftToStored(marriageRaw: string): CharacterMarriage | null {
@@ -423,10 +390,10 @@ export const COMBAT_RIGHT: StatFieldId[] = [
   "damage", "bossDamage", "criticalRate", "criticalDamage", "buffDuration", "ignoreElementalResistance", "summonDuration",
 ];
 
-// Sanity thresholds mirroring MapleScouter's own input validation — catches the most
-// common mix-ups (Total vs. Base, character Magic ATT vs. weapon Magic ATT) before the
-// user ever hits MapleScouter's own (Korean-only) error popups. These are MapleScouter's
-// sanity bounds, not real game caps, so they warn instead of hard-blocking input.
+// Sanity thresholds mirroring MapleScouter's own input validation — catches the Total-vs-
+// Base main-stat mix-up before the user ever hits MapleScouter's own (Korean-only) error
+// popups. These are MapleScouter's sanity bounds, not real game caps, so they warn instead
+// of hard-blocking input.
 export const MAIN_STAT_BASE_VALUE_WARN_AT = 10000;
 export const MAIN_STAT_PERCENT_UNAPPLIED_WARN_AT = 40000;
 
@@ -462,11 +429,8 @@ export function isStatsSubstepSane(
   draft: StatsStepDraft,
   tripleIds: TripleStatFieldId[],
   primaryStat: TripleStatFieldId | undefined,
-  showWeaponAtt: boolean,
 ): boolean {
-  const triplesSane = tripleIds.every((id) => isTripleStatSane(draft[id], id === primaryStat));
-  const weaponAttSane = !showWeaponAtt || isWeaponAttSane(draft.weaponAtt);
-  return triplesSane && weaponAttSane;
+  return tripleIds.every((id) => isTripleStatSane(draft[id], id === primaryStat));
 }
 
 // MapleScouter's calculation needs a real number for every stat, including 0 — a blank
@@ -475,7 +439,6 @@ export function isStatsSubstepSane(
 export function isStatsSubstepComplete(
   draft: StatsStepDraft,
   tripleIds: TripleStatFieldId[],
-  requireWeaponAtt: boolean,
   primaryStat: TripleStatFieldId | undefined,
   showArcanePower: boolean,
   showSacredPower: boolean,
@@ -483,23 +446,21 @@ export function isStatsSubstepComplete(
   const tripleFilled = tripleIds.every((id) => isTripleStatFilled(draft[id], id));
   const combatFilled = [...COMBAT_LEFT, ...COMBAT_RIGHT].every((id) => isCombatFieldFilled(draft, id));
   const symbolsFilled = (!showArcanePower || Boolean(draft.arcanePower?.trim())) && (!showSacredPower || Boolean(draft.sacredPower?.trim()));
-  const weaponAttFilled = !requireWeaponAtt || Boolean(draft.weaponAtt?.trim());
-  return tripleFilled && combatFilled && symbolsFilled && weaponAttFilled
-    && isStatsSubstepSane(draft, tripleIds, primaryStat, requireWeaponAtt);
+  return tripleFilled && combatFilled && symbolsFilled
+    && isStatsSubstepSane(draft, tripleIds, primaryStat);
 }
 
 // full_setup/stats_flow stay optional overall (an untouched substep must stay skippable —
 // see isStatsSubstepSane), but real testing surfaced players starting to fill this in,
-// missing one field (most often Weapon ATT, tucked at the bottom), and finishing setup
-// confused about why MapleScouter couldn't calculate. Treats the substep the same as
-// MapleScouter's own "must be complete" once ANY field here has a real value — same
-// per-field checks as isStatsSubstepComplete, just requiring at least one hit instead of
-// requiring blank fields to stay valid. A fully blank substep returns false here (nothing
-// to be partial about), leaving it skippable exactly as before.
+// missing one field, and finishing setup confused about why MapleScouter couldn't
+// calculate. Treats the substep the same as MapleScouter's own "must be complete" once ANY
+// field here has a real value — same per-field checks as isStatsSubstepComplete, just
+// requiring at least one hit instead of requiring blank fields to stay valid. A fully blank
+// substep returns false here (nothing to be partial about), leaving it skippable exactly as
+// before.
 export function isStatsSubstepAnyFieldFilled(
   draft: StatsStepDraft,
   tripleIds: TripleStatFieldId[],
-  showWeaponAtt: boolean,
   showArcanePower: boolean,
   showSacredPower: boolean,
 ): boolean {
@@ -510,26 +471,23 @@ export function isStatsSubstepAnyFieldFilled(
   const combatTouched = [...COMBAT_LEFT, ...COMBAT_RIGHT].some((id) => isCombatFieldFilled(draft, id));
   const symbolsTouched = (showArcanePower && Boolean(draft.arcanePower?.trim()))
     || (showSacredPower && Boolean(draft.sacredPower?.trim()));
-  const weaponAttTouched = showWeaponAtt && Boolean(draft.weaponAtt?.trim());
-  return tripleTouched || combatTouched || symbolsTouched || weaponAttTouched;
+  return tripleTouched || combatTouched || symbolsTouched;
 }
 
-/** Whether the Stats step's Character-Info substep (the main stat/combat/symbol/weapon-
- *  ATT fields) is valid, computed fresh from the raw stored draft string — not cached.
+/** Whether the Stats step's Character-Info substep (the main stat/combat/symbol fields) is
+ *  valid, computed fresh from the raw stored draft string — not cached.
  *
  *  `forceComplete` (MapleScouter only) means every field must be explicitly filled in
  *  regardless of whether the substep's been touched (isStatsSubstepComplete, which
  *  already ANDs in the sanity check below). Full Setup only forces that same
  *  completeness once the player has actually started filling this substep in this
- *  session — see isStatsSubstepAnyFieldFilled's doc comment for why (real testing
- *  surfaced players missing one field, most often Weapon ATT, and finishing setup
- *  confused why MapleScouter couldn't calculate) — controlled by `checkAnyFieldFilled`,
- *  since the standalone Stats tab (stats_flow) always opens pre-seeded from the
- *  character's already-saved stats (see buildSeededStepTestByStep) and has no reliable
- *  "just typed this" signal to gate on — it stays sanity-only regardless of how full the
- *  draft already is, same as before this whole any-field-filled behavior existed.
- *  An untouched (or stats_flow) substep only requires values that ARE filled in to be
- *  sane, not blank fields to be filled — this is the floor every flow shares;
+ *  session — see isStatsSubstepAnyFieldFilled's doc comment for why — controlled by
+ *  `checkAnyFieldFilled`, since the standalone Stats tab (stats_flow) always opens
+ *  pre-seeded from the character's already-saved stats (see buildSeededStepTestByStep) and
+ *  has no reliable "just typed this" signal to gate on — it stays sanity-only regardless of
+ *  how full the draft already is, same as before this whole any-field-filled behavior
+ *  existed. An untouched (or stats_flow) substep only requires values that ARE filled in to
+ *  be sane, not blank fields to be filled — this is the floor every flow shares;
  *  forceComplete/any-field-filled can only add stricter requirements on top, never
  *  loosen it. */
 export function isStatsWindowSubstepValid(
@@ -548,9 +506,9 @@ export function isStatsWindowSubstepValid(
   const showArcanePower = isArcaneEligible(characterLevel, classData?.isLegacy);
   const showSacredPower = isSacredEligible(characterLevel, classData?.isLegacy);
   const requireComplete = forceComplete
-    || (checkAnyFieldFilled && isStatsSubstepAnyFieldFilled(draft, tripleIds, true, showArcanePower, showSacredPower));
+    || (checkAnyFieldFilled && isStatsSubstepAnyFieldFilled(draft, tripleIds, showArcanePower, showSacredPower));
   if (!requireComplete) {
-    return isStatsSubstepSane(draft, tripleIds, primaryStat, false);
+    return isStatsSubstepSane(draft, tripleIds, primaryStat);
   }
-  return isStatsSubstepComplete(draft, tripleIds, true, primaryStat, showArcanePower, showSacredPower);
+  return isStatsSubstepComplete(draft, tripleIds, primaryStat, showArcanePower, showSacredPower);
 }

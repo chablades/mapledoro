@@ -346,14 +346,14 @@ function clampFinalAttackInput(raw: string): string {
   return String(clampNumber(Number(digits), LEGION_ARTIFACT_FINAL_ATK_LIMIT));
 }
 
-// A labeled numeric row (mirrors WeaponAttField) for the Final Attack Skill artifact.
+// A labeled numeric row for the Final Attack Skill artifact.
 export function LegionFinalAttackField({ value, onUpdate, theme, required, locked, lockTooltip }: {
   value: string;
   onUpdate: (val: string) => void;
   theme: AppTheme;
   required?: boolean;
   /** Locks the field to its current (derived) value — e.g. this world's Legion
-   *  Artifacts board already proves it — same idea as WeaponAttField's own lock. */
+   *  Artifacts board already proves it. */
   locked?: boolean;
   lockTooltip?: TooltipContent;
 }) {

@@ -2,6 +2,7 @@ import type { AppTheme } from "../../../components/themes";
 import type { NormalizedCharacterData } from "../model/types";
 import type { ImportSectionId, OverviewSectionId, StoredCharacterRecord, StoredLegionArtifact, StoredScouterLegion } from "../model/charactersStore";
 import type { SetupFlowId } from "../setup/flows";
+import type { MapleScouterImportResult } from "../setup/data/maplescouterImportData";
 import type { SetupMode } from "../model/constants";
 import type { RosterRole } from "./useCharacterSetupController";
 
@@ -205,6 +206,7 @@ export interface PreviewPaneActions {
   onValidityChange: (stepId: string, valid: boolean) => void;
   reportCurrentSubstep: (substepIndex: number) => void;
   stepValueChange: (value: string) => void;
+  applyMapleScouterImport: (result: MapleScouterImportResult) => void;
   finishSetupFlow: () => void;
   openCharacterSearch: () => void;
   openCharacterProfile: (character: StoredCharacterRecord) => void;

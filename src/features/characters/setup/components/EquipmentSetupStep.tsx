@@ -1466,9 +1466,9 @@ function useEquipmentStepState({
     if (!activeSlot) return;
     // Tracks whether the mousedown that started this interaction was inside the picker, so
     // a drag that ends outside it isn't mistaken for a real gesture there — e.g. selecting
-    // the weapon-ATT description text (or a picker's search query) and releasing past the
-    // window edge, or over an unrelated slot cell, shouldn't close the picker or swap to
-    // that slot. Only the click's landing point was checked before, not where it began.
+    // a picker's search query text and releasing past the window edge, or over an unrelated
+    // slot cell, shouldn't close the picker or swap to that slot. Only the click's landing
+    // point was checked before, not where it began.
     let mouseDownInsidePicker = false;
     const handleMouseDown = (e: MouseEvent) => {
       mouseDownInsidePicker = document.elementsFromPoint(e.clientX, e.clientY)

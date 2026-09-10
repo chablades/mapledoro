@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type CSSProperties } from "react";
+import { useState, type CSSProperties, type KeyboardEvent } from "react";
 import ModalShell from "../../../components/ModalShell";
 import { dialogBtnColors, dialogPrimaryBtnColors, type AppTheme } from "../../../components/themes";
 import { statusText } from "../../../components/statusColors";
@@ -29,9 +29,8 @@ import SectionLabel from "../setup/components/SectionLabel";
 import { statInputStyle, inputSuffixStyle } from "../setup/components/QuestionControls";
 import {
   OZ_RING_MAX_LEVEL, OZ_RING_ICON_IDS,
-  sanitizeOzRingLevel, getOzClassStatInfo, type OzRingsDraft, type OzRingId, type OzRingMode,
+  sanitizeOzRingLevel, getOzWeaponJumpVariant, type OzRingsDraft, type OzRingId,
 } from "../setup/data/ozRingData";
-import { deriveWeaponAttLabel } from "../setup/data/statsStepDraft";
 import {
   SIMULATOR_HEXA_CORE_MAX, simulatorStatLabels,
   type ScouterSimulatorOverrides, type SimulatorHexaCoreField, type SimulatorInputOverrides,
@@ -354,16 +353,10 @@ function LinkSkillsTab({ theme, linkSkills, onChange }: {
 
 // ── Oz Rings tab ─────────────────────────────────────────────────────────────
 
-const RING_MODE_OPTIONS: { value: OzRingMode; label: string }[] = [
-  { value: "standard", label: "Standard" },
-  { value: "continuous", label: "Continuous" },
-];
-
 function ozRingRows(weaponJumpLabel: string, weaponJumpIconId: string): { id: OzRingId; label: string; iconId: string }[] {
   return [
     { id: "restraint", label: "Ring of Restraint", iconId: OZ_RING_ICON_IDS.restraint },
     { id: "weaponJump", label: weaponJumpLabel, iconId: weaponJumpIconId },
-    { id: "totalling", label: "Totalling Ring", iconId: OZ_RING_ICON_IDS.totalling },
     { id: "continuous", label: "Continuous Ring", iconId: OZ_RING_ICON_IDS.continuous },
   ];
 }
@@ -371,33 +364,22 @@ function ozRingRows(weaponJumpLabel: string, weaponJumpIconId: string): { id: Oz
 function OzRingsTab({ theme, draft, onChange, weaponJumpLabel, weaponJumpIconId }: {
   theme: AppTheme; draft: OzRingsDraft; onChange: (next: OzRingsDraft) => void; weaponJumpLabel: string; weaponJumpIconId: string;
 }) {
-  const setLevel = (id: OzRingId, val: string) => onChange({ ...draft, levels: { ...draft.levels, [id]: sanitizeOzRingLevel(val) } });
+  const setLevel = (id: OzRingId, val: string) => onChange({ ...draft, levels: { ...draft.levels, [id]: sanitizeOzRingLevel(id, val) } });
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "1.1rem" }}>
-      <div>
-        <p style={sectionLabelStyle(theme)}>Ring Setup</p>
-        {/* PillGroup's own wrapper has no explicit width, so as a flex (block-level) box it
-            stretches to fill this column -- same fit-content fix as the Buffs tab's pick-one
-            groups. */}
-        <div style={{ width: "fit-content" }}>
-          <PillGroup theme={theme} options={RING_MODE_OPTIONS} value={draft.ringMode} onChange={(v) => onChange({ ...draft, ringMode: v })} />
-        </div>
-      </div>
-      <div>
-        <p style={sectionLabelStyle(theme)}>Ring Levels</p>
-        <div style={tileRowStyle()}>
-          {ozRingRows(weaponJumpLabel, weaponJumpIconId).map(({ id, label, iconId }) => (
-            <LeveledIconTile
-              key={id}
-              icon={<ItemIcon id={iconId} size={32} alt={label} />}
-              name={label}
-              level={draft.levels[id] ?? ""}
-              max={OZ_RING_MAX_LEVEL}
-              onLevel={(v) => setLevel(id, v)}
-              theme={theme}
-            />
-          ))}
-        </div>
+    <div>
+      <p style={sectionLabelStyle(theme)}>Ring Levels</p>
+      <div style={tileRowStyle()}>
+        {ozRingRows(weaponJumpLabel, weaponJumpIconId).map(({ id, label, iconId }) => (
+          <LeveledIconTile
+            key={id}
+            icon={<ItemIcon id={iconId} size={32} alt={label} />}
+            name={label}
+            level={draft.levels[id] ?? ""}
+            max={OZ_RING_MAX_LEVEL[id]}
+            onLevel={(v) => setLevel(id, v)}
+            theme={theme}
+          />
+        ))}
       </div>
     </div>
   );
@@ -410,9 +392,10 @@ function OzRingsTab({ theme, draft, onChange, weaponJumpLabel, weaponJumpIconId 
 const tripleInputGridStyle: CSSProperties = { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "0.35rem" };
 
 /** Real per-field caps and whether MapleScouter's own simulator accepts a decimal for it,
- *  matching maplescouter.com's own Input panel. Every field the Input tab renders is covered
- *  here EXCEPT weaponAtk, which gets a dynamic max instead (see InputTab's own weaponAtk row). */
-const INPUT_FIELD_LIMITS: Record<Exclude<keyof SimulatorInputOverrides, "weaponAtk">, { max: number; decimal: boolean }> = {
+ *  matching maplescouter.com's own Input panel. Every field here is a delta added on top of
+ *  the character's current stats, so all of them accept a negative value (clamped to -max),
+ *  the same as maplescouter.com -- see the `signed` spread below. */
+const INPUT_FIELD_CAPS: Record<keyof SimulatorInputOverrides, { max: number; decimal: boolean }> = {
   mainStat: { max: 3000, decimal: false },
   mainStatPer: { max: 400, decimal: false },
   mainStatAbs: { max: 40000, decimal: false },
@@ -437,24 +420,39 @@ const INPUT_FIELD_LIMITS: Record<Exclude<keyof SimulatorInputOverrides, "weaponA
   resetCoolDown: { max: 27.5, decimal: true },
 };
 
-const WEAPON_ATT_ABSOLUTE_MAX = 1150;
-const FINAL_DMG_LIMIT = { max: 75, decimal: true };
+const INPUT_FIELD_LIMITS = Object.fromEntries(
+  Object.entries(INPUT_FIELD_CAPS).map(([key, cap]) => [key, { ...cap, signed: true }]),
+) as Record<keyof SimulatorInputOverrides, InputLimit>;
+
+const FINAL_DMG_LIMIT: InputLimit = { max: 75, decimal: true, signed: true };
 
 /** A field's numeric bounds for LimitedNumberInput -- max omitted means no real cap. min
- *  defaults to 0 (every field but Level, which can't go below 1). */
-interface InputLimit { max?: number; min?: number; decimal: boolean }
+ *  defaults to 0 (Level can't go below 1). `signed` fields (the whole Input tab, whose
+ *  values are deltas added on top of current stats) accept a leading "-" and clamp to
+ *  [-max, max], matching maplescouter.com -- you can simulate -10 Final Damage there. */
+interface InputLimit { max?: number; min?: number; decimal: boolean; signed?: boolean }
+
+/** Lower bound: an explicit `min`, else -max for a signed field, else 0. */
+function limitMin(limit: InputLimit): number {
+  if (limit.min !== undefined) return limit.min;
+  return limit.signed === true && limit.max !== undefined ? -limit.max : 0;
+}
 
 /** Sanitizes AND clamps a raw text-input value to the field's real cap, same logic as
  *  StatsSetupStep.tsx's own clampIgnoreDefense/clampIgnoreElementalResist -- reformats down
  *  to the max only once the typed number actually exceeds it, never mid-decimal-typing
  *  ("27." stays "27." rather than getting stripped to "27"), so the displayed box itself
- *  can't be typed past its cap the way ToolNumberInput's plain commit-time clamp could. */
+ *  can't be typed past its cap the way ToolNumberInput's plain commit-time clamp could. A
+ *  signed field keeps a leading "-" (its values are deltas that can go negative). */
 function sanitizeLimitedInput(raw: string, limit: InputLimit): string {
-  const sanitized = limit.decimal ? sanitizeDecimalInput(raw) : sanitizeDigitsInput(raw);
-  if (sanitized === "" || sanitized.endsWith(".")) return sanitized;
-  if (limit.max !== undefined && Number(sanitized) > limit.max) return String(limit.max);
-  if (limit.min !== undefined && Number(sanitized) < limit.min) return String(limit.min);
-  return sanitized;
+  const sign = limit.signed === true && raw.trimStart().startsWith("-") ? "-" : "";
+  const body = sign ? raw.replace("-", "") : raw;
+  const cleaned = limit.decimal ? sanitizeDecimalInput(body) : sanitizeDigitsInput(body);
+  if (cleaned === "" || cleaned.endsWith(".")) return sign + cleaned;
+  const n = Number(sign + cleaned);
+  if (limit.max !== undefined && n > limit.max) return String(limit.max);
+  if (n < limitMin(limit)) return String(limitMin(limit));
+  return sign + cleaned;
 }
 
 /** Draft-while-focused text input, shared by the Input tab's own fields and the Level/Arcane
@@ -472,19 +470,26 @@ function LimitedNumberInput({ theme, value, limit, onChange, style, ariaLabel }:
   // An emptied field commits as 0 (this popup's own "no override" value), rather than
   // silently keeping the last real number -- clearing the box and clicking away should
   // leave it empty, not snap back to whatever was typed before.
+  // "-", "." and "-." are half-typed states that carry no number yet -- treat as "no override".
   const commit = (raw: string) => {
     const sanitized = sanitizeLimitedInput(raw, limit);
-    if (sanitized === "" || sanitized === ".") {
+    if (sanitized === "" || sanitized === "." || sanitized === "-" || sanitized === "-.") {
       onChange(0);
       return;
     }
-    onChange(clampNumber(Number(sanitized), limit.max ?? Infinity, limit.min ?? 0));
+    onChange(clampNumber(Number(sanitized), limit.max ?? Infinity, limitMin(limit)));
+  };
+  const keyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    // Allow a leading "-" on signed fields; the shared handlers block it outright.
+    if (limit.signed === true && e.key === "-" && e.currentTarget.selectionStart === 0
+      && !e.currentTarget.value.startsWith("-")) return;
+    (limit.decimal ? decimalKeyDown : numericKeyDown)(e);
   };
   return (
     <input
       type="text" inputMode={limit.decimal ? "decimal" : "numeric"} aria-label={ariaLabel}
       value={draft ?? (value === 0 ? "" : String(value))} placeholder="0" style={style}
-      onKeyDown={limit.decimal ? decimalKeyDown : numericKeyDown}
+      onKeyDown={keyDown}
       onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; e.currentTarget.select(); }}
       onChange={(e) => {
         const sanitized = sanitizeLimitedInput(e.target.value, limit);
@@ -502,7 +507,7 @@ function LimitedNumberInput({ theme, value, limit, onChange, style, ariaLabel }:
 
 function TripleInputBox({ label, sublabel, value, limit, onChange, inputStyle, theme }: {
   theme: AppTheme; inputStyle: CSSProperties; label: string; sublabel: string; value: number;
-  limit: { max: number; decimal: boolean }; onChange: (v: number) => void;
+  limit: InputLimit; onChange: (v: number) => void;
 }) {
   return (
     <div>
@@ -512,7 +517,7 @@ function TripleInputBox({ label, sublabel, value, limit, onChange, inputStyle, t
   );
 }
 
-type StatFamilyInputKey = Exclude<keyof SimulatorInputOverrides, "weaponAtk">;
+type StatFamilyInputKey = keyof SimulatorInputOverrides;
 
 function TripleInputRow({ theme, inputStyle, label, baseKey, percentKey, absKey, per9Key, base, percent, abs, per9Levels, onChange }: {
   theme: AppTheme; inputStyle: CSSProperties; label: string;
@@ -539,7 +544,7 @@ function TripleInputRow({ theme, inputStyle, label, baseKey, percentKey, absKey,
 // label-above-input stacking, which reads far taller/looser than the real setup step.
 function InputGroupField({ theme, inputStyle, label, value, limit, onChange, suffix = "%" }: {
   theme: AppTheme; inputStyle: CSSProperties; label: string; value: number;
-  limit: { max: number; decimal: boolean }; onChange: (v: number) => void; suffix?: string | null;
+  limit: InputLimit; onChange: (v: number) => void; suffix?: string | null;
 }) {
   return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.4rem", minWidth: 0 }}>
@@ -568,13 +573,11 @@ const COMBAT_RIGHT_FIELDS: { key: StatFamilyInputKey; label: string; suffix?: st
   { key: "buffDuration", label: "Buff Duration" },
 ];
 
-function InputTab({ theme, finalDmgPercent, onFinalDmgChange, input, onInputChange, statLabels, usesMagicWeapon, weaponAttLabel, realWeaponAtt }: {
+function InputTab({ theme, finalDmgPercent, onFinalDmgChange, input, onInputChange, statLabels, usesMagicWeapon }: {
   theme: AppTheme; finalDmgPercent: number; onFinalDmgChange: (v: number) => void;
   input: Record<keyof SimulatorInputOverrides, number>; onInputChange: (key: keyof SimulatorInputOverrides, value: number) => void;
   statLabels: ReturnType<typeof simulatorStatLabels>;
   usesMagicWeapon: boolean;
-  weaponAttLabel: string;
-  realWeaponAtt: number;
 }) {
   const inputStyle = statInputStyle(theme);
   const field = (key: StatFamilyInputKey, label: string, suffix: string | null = "%") => (
@@ -636,15 +639,13 @@ function InputTab({ theme, finalDmgPercent, onFinalDmgChange, input, onInputChan
 
       <div>
         <p style={dividedSectionLabelStyle(theme)}>Other</p>
+        {/* Same two-column shape as Combat Stats so "All Stat" lines up with that section's
+            left column instead of spanning the whole width. */}
         <div style={{ display: "flex", minWidth: 0, gap: "1.1rem" }}>
-          <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: "0.4rem" }}>
-            <InputGroupField theme={theme} inputStyle={inputStyle} label={weaponAttLabel} value={input.weaponAtk}
-              limit={{ max: Math.max(0, WEAPON_ATT_ABSOLUTE_MAX - realWeaponAtt), decimal: false }}
-              onChange={(v) => onInputChange("weaponAtk", v)} suffix={null} />
-          </div>
           <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: "0.4rem" }}>
             {field("allStatPer", "All Stat")}
           </div>
+          <div style={{ flex: 1, minWidth: 0 }} />
         </div>
       </div>
     </div>
@@ -655,7 +656,7 @@ function InputTab({ theme, finalDmgPercent, onFinalDmgChange, input, onInputChan
  *  (plus the HEXA tab's own locked-or-not choice) doesn't add to the dialog function's
  *  control-flow complexity alongside everything else it already coordinates. */
 function TabContent({
-  theme, draft, character, hexaClassDef, primaryStat, statLabels, ozClassInfo, usesMagicWeapon, weaponAttLabel,
+  theme, draft, character, hexaClassDef, primaryStat, statLabels, ozClassInfo, usesMagicWeapon,
 }: {
   theme: AppTheme;
   draft: ScouterSimulatorDraft;
@@ -663,9 +664,8 @@ function TabContent({
   hexaClassDef: HexaClassDef | null;
   primaryStat: ReturnType<typeof primaryStatForClass>;
   statLabels: ReturnType<typeof simulatorStatLabels>;
-  ozClassInfo: ReturnType<typeof getOzClassStatInfo>;
+  ozClassInfo: ReturnType<typeof getOzWeaponJumpVariant>;
   usesMagicWeapon: boolean;
-  weaponAttLabel: string;
 }) {
   switch (draft.tab) {
     case "buffs":
@@ -680,8 +680,8 @@ function TabContent({
           theme={theme}
           draft={draft.ozRingsDraft}
           onChange={draft.setOzRingsDraft}
-          weaponJumpLabel={ozClassInfo.weaponJumpLabel}
-          weaponJumpIconId={ozClassInfo.weaponJumpIconId}
+          weaponJumpLabel={ozClassInfo.label}
+          weaponJumpIconId={ozClassInfo.iconId}
         />
       );
     case "linkSkills":
@@ -696,8 +696,6 @@ function TabContent({
           onInputChange={draft.setInputField}
           statLabels={statLabels}
           usesMagicWeapon={usesMagicWeapon}
-          weaponAttLabel={weaponAttLabel}
-          realWeaponAtt={character.scouter?.weaponAtt ?? 0}
         />
       );
   }
@@ -731,13 +729,15 @@ export default function ScouterSimulatorDialog({
   const classData = CLASS_SKILL_DATA.find((c) => c.nexonJobName === character.jobName);
   const primaryStat = primaryStatForClass(classData?.requiredStats ?? []);
   const statLabels = simulatorStatLabels(classData?.id ?? "", classData?.requiredStats ?? []);
-  const ozClassInfo = getOzClassStatInfo(classData?.id, classData?.requiredStats ?? []);
+  const ozClassInfo = getOzWeaponJumpVariant(classData?.requiredStats ?? []);
   // Legacy classes never get HEXA regardless of level, same as flows.ts's own gating. Level
   // alone isn't a hard block here the way it is in the real setup flow -- see
   // HexaLockedMessage's own comment for why.
   const hexaLegacyBlocked = Boolean(classData?.isLegacy);
   const hexaClassDef = classData && !hexaLegacyBlocked ? findClassById(classData.id) : null;
-  const { usesMagicWeapon, label: weaponAttLabel } = deriveWeaponAttLabel(classData);
+  // Whether the class's attack stat is Magic ATT (used for the Input tab's ATT delta label).
+  const required = classData?.requiredStats ?? [];
+  const usesMagicWeapon = required.includes("magicAtt") && !required.includes("attackPower");
   const inputStyle = statInputStyle(theme);
 
   const draft = useScouterSimulatorDraft(character, hexaClassDef, previousOverrides);
@@ -841,7 +841,7 @@ export default function ScouterSimulatorDialog({
         <TabContent
           theme={theme} draft={draft} character={character} hexaClassDef={hexaClassDef}
           primaryStat={primaryStat} statLabels={statLabels} ozClassInfo={ozClassInfo}
-          usesMagicWeapon={usesMagicWeapon} weaponAttLabel={weaponAttLabel}
+          usesMagicWeapon={usesMagicWeapon}
         />
       </div>
 

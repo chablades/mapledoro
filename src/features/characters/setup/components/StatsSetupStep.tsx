@@ -34,11 +34,9 @@ import {
   isArcaneEligible,
   isHyperStatEligible,
   isSacredEligible,
-  deriveWeaponAttLabel,
   deriveIsLiberatedFromWeapon,
   deriveHasRuinForceShield,
   getLiberationWeaponName,
-  WEAPON_ATT_WARN_AT,
   normalizeHyperStatDraft,
   parseStatsStepDraft,
   serializeStatsStepDraft,
@@ -616,61 +614,6 @@ function CombatStatCell({
   );
 }
 
-// Weapon ATT/MATT field — the "+X" attack value shown on the weapon hover. Pre-filled
-// whenever a prior run (any flow) already recorded it (draft.weaponAtt is seeded from
-// scouter.weaponAtt regardless of flow — see storedStatsToStatsStepDraft's caller).
-function WeaponAttField({ label, usesMagicWeapon, value, onUpdate, theme, requireFilled }: {
-  label: string;
-  usesMagicWeapon: boolean;
-  value: string;
-  onUpdate: (val: string) => void;
-  theme: AppTheme;
-  /** MapleScouter, or full_setup/stats_flow once any other field on this substep has
-   *  been filled in — see isStatsSubstepAnyFieldFilled. A blank field otherwise stays
-   *  unflagged so an untouched substep remains visually quiet and skippable. */
-  requireFilled: boolean;
-}) {
-  const statName = usesMagicWeapon ? "Magic ATT" : "Attack Power";
-  const statShortName = usesMagicWeapon ? "Magic ATT" : "ATT";
-  // MapleScouter flags this Total-vs-Weapon-only mix-up for every class, not just
-  // magic ones — same threshold either way.
-  const showWeaponAttWarning = Number(value) > WEAPON_ATT_WARN_AT;
-  return (
-    <div style={{ marginTop: "0.75rem" }}>
-      <p style={sectionLabelStyle(theme)}>Weapon</p>
-      <div className="stats-weapon-grid" style={{ minWidth: 0 }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.5rem", minWidth: 0 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", minWidth: 0 }}>
-            <span style={{ fontSize: "0.82rem", fontWeight: 700, color: theme.text }}>{label}</span>
-            <InfoTooltip
-              content={{
-                title: label,
-                description: `Hover over your weapon in the equipment window and enter the total ${statName} shown (the white number with a +).`,
-              }}
-              theme={theme}
-            />
-          </div>
-          <div style={{ position: "relative", flexShrink: 0 }}>
-            {showWeaponAttWarning && <InputWarningBubble message={`That looks like your total ${statShortName}, enter your weapon's ${statShortName}.`} theme={theme} />}
-            <input
-              type="text"
-              inputMode="numeric"
-              aria-label={label}
-              value={value}
-              style={statInputStyle(theme, "4.6rem")}
-              data-flagged-field={showWeaponAttWarning || (requireFilled && !value.trim()) ? "true" : undefined}
-              onChange={(e) => onUpdate(sanitizeDigitsInput(e.target.value))}
-              onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
-              onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
-              onKeyDown={numericKeyDown}
-            />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // ── Setup options section ─────────────────────────────────────────────────────
 
 // Encodes a {soulType, soulLevel} pair into the flat radio value the Soul Weapon
@@ -1047,19 +990,12 @@ function deriveKnownInnerAbilityLine(
 
 // WH Legion rank, Legion Artifacts, and Inner Ability line are all shared between
 // full_setup and maplescouter_setup (full_setup is a superset — see WildHunterRankQuestion/
-// LegionArtifactQuestions/InnerAbilityLineQuestion above). Weapon ATT also shows for
-// full_setup and stats_flow (the profile's standalone Stats tab) — it used to be asked
-// inline in the Equipment step's weapon picker instead for full_setup, but that always
-// wrote against whichever weapon sat in preset 0, wrongly assuming that's the character's
-// real bossing preset (there's no way to know that during full_setup, since the active
-// preset is only ever set later) — Character Info is now the one place this is asked,
-// for every flow that shows it.
-function deriveScouterVisibility(flowId: SetupFlowId | undefined): { isScouter: boolean; showWhLegion: boolean; showWeaponAtt: boolean } {
+// LegionArtifactQuestions/InnerAbilityLineQuestion above).
+function deriveScouterVisibility(flowId: SetupFlowId | undefined): { isScouter: boolean; showWhLegion: boolean } {
   const isScouter = flowId === "maplescouter_setup";
   return {
     isScouter,
     showWhLegion: isScouter || flowId === "full_setup",
-    showWeaponAtt: isScouter || flowId === "full_setup" || flowId === "stats_flow",
   };
 }
 
@@ -1121,17 +1057,17 @@ function statsSubstepDescription(isScouter: boolean): string {
   return "Follow the requirements below, then enter your stats exactly as shown in your Character Info window.";
 }
 
-// Substep 1 — the stat window fields (Basic/Combat/Symbols/Weapon ATT). Pulled into
-// its own component (rather than inline like substeps 0/2) purely to keep the main
-// component's cognitive complexity under the sonarjs cap — MapleScouter's completion
-// gating added enough branches here to push it over.
+// Substep 1 — the stat window fields (Basic/Combat/Symbols). Pulled into its own component
+// (rather than inline like substeps 0/2) purely to keep the main component's cognitive
+// complexity under the sonarjs cap — MapleScouter's completion gating added enough branches
+// here to push it over.
 function StatsWindowSubstep({
   theme, stepNumber, totalSteps, substep, substepCount, substepAnimStyle,
   goToSubstep, hasMoreSubsteps, onNext, onFinish, onValidityChange,
   confineToSubstep, onExitStep,
   classData, characterLevel, tripleIds, draft,
   handleTripleUpdate, handleSingleUpdate, handleCooldownUpdate,
-  showWeaponAtt, weaponAttLabel, usesMagicWeapon, isScouter, showAllStats,
+  isScouter, showAllStats,
 }: {
   theme: AppTheme;
   stepNumber: number;
@@ -1157,9 +1093,6 @@ function StatsWindowSubstep({
   handleTripleUpdate: (id: TripleStatFieldId, field: keyof TripleStatDraft, val: string) => void;
   handleSingleUpdate: (id: string, val: string) => void;
   handleCooldownUpdate: (field: "seconds" | "percent", val: string) => void;
-  showWeaponAtt: boolean;
-  weaponAttLabel: string;
-  usesMagicWeapon: boolean;
   isScouter: boolean;
   /** Profile-pencil only (stats_flow) — shows the resource bar (MP/DF/TF/PP) and
    *  Normal Enemy Damage, which the guided Setup flows never ask for. */
@@ -1179,20 +1112,19 @@ function StatsWindowSubstep({
   const symbolIds = ([showArcanePower && "arcanePower", showSacredPower && "sacredPower"] as const).filter(Boolean) as StatFieldId[];
   // full_setup stays skippable while untouched, but once a player starts filling this
   // in, treat it the same as MapleScouter's own "every field required" — see
-  // isStatsSubstepAnyFieldFilled's doc comment for why (players missing one field,
-  // usually Weapon ATT, and finishing setup confused why MapleScouter couldn't
-  // calculate). stats_flow (the profile's standalone Stats tab, showAllStats here)
-  // is excluded from this: unlike full_setup, it always opens pre-seeded from the
-  // character's already-saved stats (see buildSeededStepTestByStep), so "any field
-  // filled" would trip immediately on open regardless of whether the player has
-  // touched anything this session — there's no reliable "just typed this" signal to
-  // gate on here, so it stays sanity-only exactly as before.
+  // isStatsSubstepAnyFieldFilled's doc comment for why (players missing one field and
+  // finishing setup confused why MapleScouter couldn't calculate). stats_flow (the
+  // profile's standalone Stats tab, showAllStats here) is excluded from this: unlike
+  // full_setup, it always opens pre-seeded from the character's already-saved stats (see
+  // buildSeededStepTestByStep), so "any field filled" would trip immediately on open
+  // regardless of whether the player has touched anything this session — there's no
+  // reliable "just typed this" signal to gate on here, so it stays sanity-only.
   const anyFieldFilled = !isScouter && !showAllStats
-    && isStatsSubstepAnyFieldFilled(draft, tripleIds, showWeaponAtt, showArcanePower, showSacredPower);
+    && isStatsSubstepAnyFieldFilled(draft, tripleIds, showArcanePower, showSacredPower);
   const requireComplete = isScouter || anyFieldFilled;
   const statsComplete = requireComplete
-    ? isStatsSubstepComplete(draft, tripleIds, showWeaponAtt, primaryStat, showArcanePower, showSacredPower)
-    : isStatsSubstepSane(draft, tripleIds, primaryStat, showWeaponAtt);
+    ? isStatsSubstepComplete(draft, tripleIds, primaryStat, showArcanePower, showSacredPower)
+    : isStatsSubstepSane(draft, tripleIds, primaryStat);
   const rootRef = useRef<HTMLDivElement>(null);
   const frame = confinableFrameProps(confineToSubstep, onExitStep, onFinish, {
     substepIndex: substep,
@@ -1213,10 +1145,10 @@ function StatsWindowSubstep({
       /* Grid (not flex) so a single visible symbol — Arcane alone, Lv 200-259 — stays
          pinned to the left column's width instead of a lone flex:1 item stretching to
          fill the whole row and dragging its input far to the right. */
-      .stats-symbols-grid, .stats-weapon-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+      .stats-symbols-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
       @container (max-width: 520px) {
         .stats-combat-grid { flex-direction: column; gap: 0.4rem; }
-        .stats-symbols-grid, .stats-weapon-grid { grid-template-columns: 1fr; gap: 0.4rem; }
+        .stats-symbols-grid { grid-template-columns: 1fr; gap: 0.4rem; }
       }
     `}</style>
     <SetupStepFrame
@@ -1292,16 +1224,6 @@ function StatsWindowSubstep({
         </div>
       )}
 
-      {showWeaponAtt && (
-        <WeaponAttField
-          label={weaponAttLabel}
-          usesMagicWeapon={usesMagicWeapon}
-          value={draft.weaponAtt ?? ""}
-          onUpdate={(v) => handleSingleUpdate("weaponAtt", v)}
-          theme={theme}
-          requireFilled={requireComplete}
-        />
-      )}
       {!statsComplete && (
         <button
           type="button"
@@ -1644,7 +1566,7 @@ export default function StatsSetupStep({
   // Also hidden below Lv 140, same as Genesis Liberation/Arcane/Sacred — a character
   // that can't have Hyper Stats yet shouldn't be asked to fill them in.
   const showHyperStat = flowId !== "maplescouter_setup" && isHyperStatEligible(characterLevel);
-  const { isScouter, showWhLegion, showWeaponAtt } = deriveScouterVisibility(flowId);
+  const { isScouter, showWhLegion } = deriveScouterVisibility(flowId);
 
   // WH Legion rank is read-only/derived, scoped to this character's world.
   const whSource = deriveScouterWhSource(showWhLegion, characterRoster, confirmedWorldId);
@@ -1757,8 +1679,6 @@ export default function StatsSetupStep({
     ? TRIPLE_STAT_FIELDS.map((f) => f.id)
     : classRequiredTripleIds;
 
-  const { usesMagicWeapon, label: weaponAttLabel } = deriveWeaponAttLabel(classData);
-
   if (substep === 0) {
     return (
       <QuickQuestionsSubstep
@@ -1781,7 +1701,7 @@ export default function StatsSetupStep({
       confineToSubstep={confineToSubstep} onExitStep={onBack}
       classData={classData} characterLevel={characterLevel} tripleIds={tripleIds} draft={draft}
       handleTripleUpdate={handleTripleUpdate} handleSingleUpdate={handleSingleUpdate} handleCooldownUpdate={handleCooldownUpdate}
-      showWeaponAtt={showWeaponAtt} weaponAttLabel={weaponAttLabel} usesMagicWeapon={usesMagicWeapon} isScouter={isScouter}
+      isScouter={isScouter}
       showAllStats={showAllStats}
     />
   );

@@ -8,8 +8,10 @@ import { getFlowStepByIndex, getVisibleStepInfo, type SetupFlowId } from "./flow
 import { getClassSetupOverrides } from "./data/nexonJobMapping";
 import type { SetupStepId, SetupStepDefinition } from "./steps";
 import type { StoredCharacterRecord, StoredScouterLegion, StoredLegionArtifact } from "../model/charactersStore";
+import type { MapleScouterImportResult } from "./data/maplescouterImportData";
 import GenderSetupStep from "./components/GenderSetupStep";
 import MarriageSetupStep from "./components/MarriageSetupStep";
+import MapleScouterImportStep from "./components/MapleScouterImportStep";
 import StatsSetupStep from "./components/StatsSetupStep";
 import EquipmentSetupStep from "./components/EquipmentSetupStep";
 import LinkSkillsSetupStep from "./components/LinkSkillsSetupStep";
@@ -51,6 +53,7 @@ interface StepRendererProps {
   confirmedCharacterImgURL?: string;
   stepValue: string;
   onStepValueChange: (value: string) => void;
+  onMapleScouterImport?: (result: MapleScouterImportResult) => void;
   onBackStep: () => void;
   onNextStep: () => void;
   onFinish: () => void;
@@ -81,6 +84,7 @@ interface SetupStepComponentProps {
   confirmedCharacterImgURL?: string;
   value: string;
   onChange: (value: string) => void;
+  onImport?: (result: MapleScouterImportResult) => void;
   onBack: () => void;
   onNext: () => void;
   onFinish: () => void;
@@ -89,6 +93,7 @@ interface SetupStepComponentProps {
 const STEP_COMPONENTS: Record<SetupStepId, ComponentType<SetupStepComponentProps>> = {
   gender: GenderSetupStep,
   marriage: MarriageSetupStep,
+  maplescouter_import: MapleScouterImportStep,
   stats: StatsSetupStep,
   equipment: EquipmentSetupStep,
   v_matrix: VMatrixSetupStep,
@@ -122,6 +127,7 @@ export default function StepRenderer({
   confirmedCharacterImgURL,
   stepValue,
   onStepValueChange,
+  onMapleScouterImport,
   onBackStep,
   onNextStep,
   onFinish,
@@ -161,6 +167,7 @@ export default function StepRenderer({
       confirmedCharacterImgURL={confirmedCharacterImgURL}
       value={stepValue}
       onChange={onStepValueChange}
+      onImport={onMapleScouterImport}
       onBack={onBackStep}
       onNext={onNextStep}
       onFinish={onFinish}

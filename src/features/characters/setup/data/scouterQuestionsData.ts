@@ -30,8 +30,10 @@ const WH_RANK_BY_LEVEL: ReadonlyArray<readonly [number, WhLegionRank]> = [
 
 const WILD_HUNTER_JOB_NAME = "Wild Hunter";
 
-/** Maps a character level to its legion grade, or null below grade B (level 60). */
-function whRankForLevel(level: number): WhLegionRank | null {
+/** Maps a character level to its legion grade, or null below grade B (level 60).
+ *  Exported for the MapleScouter import (maplescouterImportData.ts), which reads the raw
+ *  Wild Hunter union level out of an export and needs the grade back. */
+export function whRankForLevel(level: number): WhLegionRank | null {
   for (const [min, rank] of WH_RANK_BY_LEVEL) {
     if (level >= min) return rank;
   }
@@ -136,24 +138,12 @@ export function resolveLegionArtifacts(
 
 // ── Conversion ─────────────────────────────────────────────────────────────────
 
-/** Parses the weapon ATT/MATT field into a non-negative integer, or undefined if blank/invalid. */
-export function parseWeaponAtt(raw: string | undefined): number | undefined {
-  const trimmed = raw?.trim();
-  if (!trimmed) return undefined;
-  const n = Number(trimmed);
-  return Number.isFinite(n) && n >= 0 ? Math.floor(n) : undefined;
-}
-
-/** Pulls the per-character scouter inputs (Inner Ability line + weapon ATT) out of the stats draft. */
+/** Pulls the per-character scouter inputs (currently just the Inner Ability line) out of
+ *  the stats draft. */
 export function convertScouterQuestionsDraftToStored(
   draft: StatsStepDraft,
-): Pick<StoredScouterData, "innerAbilityLine" | "weaponAtt"> | null {
+): Pick<StoredScouterData, "innerAbilityLine"> | null {
   const line = draft.scouterQuestions?.innerAbilityLine;
   const innerAbilityLine = line === "passive" || line === "multiTarget" || line === "neither" ? line : undefined;
-  const weaponAtt = parseWeaponAtt(draft.weaponAtt);
-  if (innerAbilityLine === undefined && weaponAtt === undefined) return null;
-  return {
-    ...(innerAbilityLine !== undefined ? { innerAbilityLine } : {}),
-    ...(weaponAtt !== undefined ? { weaponAtt } : {}),
-  };
+  return innerAbilityLine !== undefined ? { innerAbilityLine } : null;
 }

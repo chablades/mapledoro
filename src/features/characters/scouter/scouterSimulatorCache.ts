@@ -25,7 +25,8 @@ const MAX_CACHE_ENTRIES = 8;
 // entries too, same reasoning as the real cache's own version bump. Bumped independently
 // (not literally shared) so a real-result-only fix doesn't force a needless simulator-cache
 // wipe, and vice versa.
-const SCOUTER_SIMULATOR_CACHE_VERSION = 1;
+// Bumped to 2: the GMS ring consolidation changed buildScouterPayload (Totalling Ring gone).
+const SCOUTER_SIMULATOR_CACHE_VERSION = 2;
 
 interface ScouterSimulatorCacheData {
   version: number;

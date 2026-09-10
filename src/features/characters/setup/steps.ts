@@ -5,6 +5,7 @@
 const SETUP_STEPS = [
   { id: "gender", label: "Gender" },
   { id: "marriage", label: "Marriage" },
+  { id: "maplescouter_import", label: "Import" },
   { id: "stats", label: "Stats" },
   { id: "equipment", label: "Gear" },
   { id: "v_matrix", label: "V Matrix" },

@@ -43,7 +43,6 @@ import { ItemIcon } from "../../../../components/ResourceImage";
 import HoverTooltip from "../../../../components/HoverTooltip";
 import ScouterFigure, { ScouterRefreshButton } from "../../scouter/ScouterFigure";
 import { useScouterResult, type ScouterErrorReason } from "../../scouter/useScouterResult";
-import type { ScouterSetupGap } from "../../scouter/scouterApi";
 import BossClearGrid, { type ScouterBookmarkView } from "../../scouter/BossClearGrid";
 import StatEfficiencyPanel from "../../scouter/StatEfficiencyPanel";
 import { useScouterSimulator, type ScouterSimulatorController } from "../../scouter/useScouterSimulator";
@@ -72,7 +71,7 @@ interface CharacterProfileOverviewScreenProps {
 }
 
 type Theme = PreviewPaneModel["theme"];
-type BookmarkId = "overview" | "gender_marriage" | Exclude<SetupStepId, "gender" | "marriage" | "link_skills" | "legion_artifacts" | "buffs" | "oz_rings"> | "exp" | "scouter" | "efficiency" | "setup";
+type BookmarkId = "overview" | "gender_marriage" | Exclude<SetupStepId, "gender" | "marriage" | "maplescouter_import" | "link_skills" | "legion_artifacts" | "buffs" | "oz_rings"> | "exp" | "scouter" | "efficiency" | "setup";
 
 interface BookmarkDef {
   id: BookmarkId;
@@ -3253,14 +3252,12 @@ function ScouterResultGate({ theme, character, label, disabled, simulated, onEdi
     );
   }
   if (status.kind === "incomplete") {
-    const gapLabel = status.gap === "quickQuestions" ? "Quick Questions" : "Character Info";
-    // Not confined — a character that never ran MapleScouter Setup at all (e.g. "Skip
-    // for now" at the character-intro screen) is typically missing more than just this
-    // one substep (Oz Rings/Link Skills/HEXA/Buffs aren't gated here, but still worth
-    // filling in), so this opens straight onto the substep that's actually blocking the
-    // calculation, with normal Back/Next into the rest of the flow. Someone who already
-    // ran Full Setup just clicks through the already-filled steps to get here — a few
-    // extra clicks, not a real cost.
+    // Not confined, and no target substep — the flow opens on its first step (Import from
+    // MapleScouter), then Back/Next walks the rest. A character that never ran MapleScouter
+    // Setup is typically missing more than the one gated substep (Oz Rings/Link Skills/
+    // HEXA/Buffs aren't gated here but still matter), and the import step can pre-fill all
+    // of it at once from a MapleScouter export. Someone who already ran Full Setup just
+    // clicks through the already-filled steps — a few extra clicks, not a real cost.
     return (
       <>
         {header}
@@ -3273,9 +3270,9 @@ function ScouterResultGate({ theme, character, label, disabled, simulated, onEdi
               type="button"
               className="tool-dialog-btn"
               style={scouterGapButtonStyle(theme)}
-              onClick={() => onEditStep("maplescouter_setup", scouterGapTargetSubstep(status.gap))}
+              onClick={() => onEditStep("maplescouter_setup")}
             >
-              Go to {gapLabel}
+              Go to MapleScouter Setup
             </button>
           )}
         />
@@ -3476,16 +3473,6 @@ function SetupBookmark({ model, actions }: { model: PreviewPaneModel; actions: P
       <SetupFlowButtons model={model} actions={actions} isProfileBookmark />
     </div>
   );
-}
-
-// Same substep numbering as statsTargetSubstep below (0: quick questions, 1: Character
-// Info), but for MapleScouter Setup specifically rather than the stats_flow bookmark —
-// maplescouter_setup never shows Hyper Stat/Inner Ability's own substeps (see
-// StatsSetupStep's showHyperStat/showInnerAbility, both flowId !== "maplescouter_setup"),
-// so its stats step is always exactly these two, unlike statsTargetSubstep's
-// eligibility-shifted indices.
-function scouterGapTargetSubstep(gap: ScouterSetupGap): number {
-  return gap === "quickQuestions" ? 0 : 1;
 }
 
 function scouterGapButtonStyle(theme: Theme): CSSProperties {

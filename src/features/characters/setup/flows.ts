@@ -7,9 +7,9 @@ import { getSetupStepById, type SetupStepDefinition } from "./steps";
 import { isLegacyClass } from "./data/classSkillData";
 import { isHyperStatEligible, isStatsWindowSubstepValid } from "./data/statsStepDraft";
 
-/** Substep index of the Stats step's "Character Info" screen (main stat/combat/symbol/
- *  weapon-ATT fields) — stable across every flow that includes Stats (see
- *  getStepSubsteps below). The only substep whose validity genuinely differs by flow. */
+/** Substep index of the Stats step's "Character Info" screen (main stat/combat/symbol
+ *  fields) — stable across every flow that includes Stats (see getStepSubsteps below).
+ *  The only substep whose validity genuinely differs by flow. */
 const STATS_WINDOW_SUBSTEP_INDEX = 1;
 
 type GenderOverride = "male" | "female" | "none" | null;
@@ -42,27 +42,32 @@ const SETUP_FLOWS = [
     description: "Complete profile setup including stats, equipment, and more.",
     required: false,
     // Superset of maplescouter_setup: `stats` is flow-aware (shows the WH Legion rank
-    // question + Weapon ATT field here too); `buffs`/`oz_rings`/`legion_artifacts` are
-    // the scouter-only data full_setup didn't used to collect.
+    // question here too); `buffs`/`oz_rings`/`legion_artifacts` are the scouter-only data
+    // full_setup didn't used to collect.
     // Ordered to minimize in-game window switching: stats' Character-Info fields first,
     // then the equipment cluster (equipment/oz_rings/familiars), then an uninterrupted
     // Skill-window run (link_skills before v_matrix before hexa_matrix, matching the
     // Beginner→V→VI tab order so you never jump backward a tab), then legion_artifacts +
     // buffs last (weakest/most flexible window affinity).
-    steps: ["gender", "marriage", "stats", "equipment", "oz_rings", "familiars", "link_skills", "v_matrix", "hexa_matrix", "legion_artifacts", "buffs"] as const,
+    // maplescouter_import comes first (after gender/marriage): pasting a MapleScouter
+    // export seeds the drafts every later step then just displays for review. Always
+    // skippable — no-op if you don't paste anything.
+    steps: ["gender", "marriage", "maplescouter_import", "stats", "equipment", "oz_rings", "familiars", "link_skills", "v_matrix", "hexa_matrix", "legion_artifacts", "buffs"] as const,
   },
   {
     id: "maplescouter_setup",
     label: "MapleScouter Setup",
     description: "Collect the inputs MapleScouter needs to rank this character.",
     required: false,
-    // The `stats` step is flow-aware (it adds the scouter questionnaire + weapon ATT);
-    // `hexa_matrix` reuses the full-setup step as-is (auto-skipped below Lv 260).
+    // The `stats` step is flow-aware (it adds the scouter questionnaire); `hexa_matrix`
+    // reuses the full-setup step as-is (auto-skipped below Lv 260).
     // Ordered to minimize in-game window switching: oz_rings right after stats (both
     // touch Equipment/Inventory), then an uninterrupted Skill-window run (link_skills
     // before hexa_matrix), with buffs last since it draws from Guild/Skills/Inventory and
     // has no single fixed window affinity.
-    steps: ["stats", "oz_rings", "link_skills", "hexa_matrix", "buffs"] as const,
+    // maplescouter_import first: pasting a MapleScouter export seeds every later step's
+    // draft for review. Always skippable — no-op if you don't paste anything.
+    steps: ["maplescouter_import", "stats", "oz_rings", "link_skills", "hexa_matrix", "buffs"] as const,
   },
   {
     id: "stats_flow",

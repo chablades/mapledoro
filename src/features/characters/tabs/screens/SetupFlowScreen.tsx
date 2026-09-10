@@ -108,6 +108,7 @@ export default function SetupFlowScreen({ model, actions }: SetupFlowScreenProps
         confirmedCharacterImgURL={confirmed?.characterImgURL}
         stepValue={setup.activeSetupStepValue}
         onStepValueChange={actions.stepValueChange}
+        onMapleScouterImport={actions.applyMapleScouterImport}
         onBackStep={() => actions.setSetupStepWithDirection(setup.setupStepIndex - 1)}
         onNextStep={() => actions.setSetupStepWithDirection(setup.setupStepIndex + 1)}
         onFinish={actions.finishSetupFlow}
