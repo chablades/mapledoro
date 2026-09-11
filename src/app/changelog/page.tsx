@@ -12,6 +12,12 @@ interface ChangelogEntry {
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    date: "2026-09-11",
+    changes: [
+      { type: "added", text: "Added a Report a Bug page, linked in the footer. Pick the page or tool and the character involved, describe what happened, and it goes straight to the dev team." },
+    ],
+  },
+  {
     date: "2026-09-10",
     changes: [
       { type: "added", text: "Character setup now has an Import from MapleScouter step. Upload the preset file MapleScouter gives you and it pre-fills your stats, buffs, link skills, Oz Rings and HEXA skills for you to double-check, and flags any value that does not match what you already have saved." },

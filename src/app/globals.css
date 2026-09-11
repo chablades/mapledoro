@@ -242,6 +242,23 @@ html.scroll-locked body {
   font-family: var(--font-body);
 }
 
+/* Multi-line sibling of `.tool-input`: same box, but regular weight and a
+   reading line-height because it holds sentences, not a single value. */
+.tool-textarea {
+  display: block;
+  width: 100%;
+  min-height: 7.5rem;
+  resize: vertical;
+  box-sizing: border-box;
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  font-weight: 500;
+  line-height: 1.55;
+  border-radius: 8px;
+  border: 1px solid; /* color supplied inline via borderColor */
+  padding: 8px 10px;
+}
+
 /* Every <select> in the app, not just `.tool-select`, and deliberately not
    folded into the rule above: Firefox paints an open dropdown's option list in
    the parent process, which can't see @font-face fonts, so it skips every
@@ -373,7 +390,8 @@ textarea:focus-visible {
 @media (max-width: 560px) {
   .searchable-select-input,
   .tool-input,
-  .tool-select {
+  .tool-select,
+  .tool-textarea {
     font-size: 16px;
   }
 }

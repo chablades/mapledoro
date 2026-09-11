@@ -14,7 +14,16 @@ const FOOTER_LINKS: { label: string; href: Route }[] = [
   { label: "Terms of Service", href: "/terms" },
   { label: "Privacy Policy", href: "/privacy" },
   { label: "Changelog", href: "/changelog" },
+  { label: "Report a Bug", href: "/bug-report" },
 ];
+
+const BUG_REPORT_HREF: Route = "/bug-report";
+
+// The bug report form preselects the page the reporter was on.
+function footerHref(href: Route, currentPath: string): Route {
+  if (href !== BUG_REPORT_HREF || currentPath === BUG_REPORT_HREF) return href;
+  return `/bug-report?from=${encodeURIComponent(currentPath)}`;
+}
 
 interface AppShellProps {
   currentPath: string;
@@ -80,7 +89,7 @@ export default function AppShell({ currentPath, children }: AppShellProps) {
             {FOOTER_LINKS.map((link) => (
               <Link
                 key={link.href}
-                href={link.href}
+                href={footerHref(link.href, currentPath)}
                 style={{
                   fontSize: "0.78rem",
                   fontWeight: 800,

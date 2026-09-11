@@ -68,6 +68,24 @@ The character lookup route (`/api/characters/lookup`) uses Redis when `REDIS_URL
    docker exec -it mapledoro-redis redis-cli keys "mapledoro:characters:lookup:v1:*"
    ```
 
+## Bug reports to Discord (optional)
+
+The Report a Bug page posts to `/api/bug-report`, which relays the report to a Discord
+channel through a webhook. Without the env var the route answers 503 and the page shows
+that bug reporting is not set up.
+
+1. In Discord, open the channel's settings, choose Integrations, and create a webhook.
+2. Add it to `.env.local` (and to the Vercel project's environment variables):
+   ```env
+   DISCORD_BUG_REPORT_WEBHOOK_URL=https://discord.com/api/webhooks/<id>/<token>
+   ```
+3. Restart the dev server after changing env vars.
+
+Rate limits (5 reports per IP per hour, 40 total per hour) use Redis when `REDIS_URL` is set
+and fall back to per-instance memory otherwise. The embed's build field reads
+`VERCEL_GIT_COMMIT_SHA`, which Vercel provides when "Automatically expose System Environment
+Variables" is enabled for the project.
+
 ## Google Drive backup (optional)
 
 The Settings page has an optional Google Drive backup panel. It only renders when an OAuth

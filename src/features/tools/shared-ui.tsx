@@ -228,20 +228,23 @@ export function ActionButton({
   theme,
   label,
   onClick,
+  type = "button",
   disabled = false,
   fullWidth = false,
   style,
 }: {
   theme: AppTheme;
   label: string;
-  onClick: () => void;
+  /** Omit for a `type="submit"` button inside a <form>; the form's onSubmit runs instead. */
+  onClick?: () => void;
+  type?: "button" | "submit";
   disabled?: boolean;
   fullWidth?: boolean;
   style?: React.CSSProperties;
 }) {
   return (
     <button
-      type="button"
+      type={type}
       className="tool-btn"
       onClick={disabled ? undefined : onClick}
       disabled={disabled}

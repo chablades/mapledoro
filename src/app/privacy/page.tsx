@@ -63,7 +63,11 @@ function PrivacyContent({ theme }: { theme: AppTheme }) {
         information, your browser may fetch images and content directly
         from third-party domains including the Nexon CDN and MapleStory
         Wiki. These requests are subject to the privacy policies of those
-        respective services.
+        respective services. If you send a bug report, what you type is
+        relayed to the project&apos;s developers together with your
+        browser version, screen size, the page you chose, and the
+        character you picked (if any). Nothing else saved in MapleDoro is
+        sent.
       </LegalSection>
 
       <LegalSection theme={theme} title="No tracking, no advertising">
