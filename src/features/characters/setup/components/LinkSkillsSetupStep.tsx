@@ -36,7 +36,7 @@ interface LinkSkillsSetupStepProps extends LinkSkillsEditorProps {
 
 type LinkSkillsDraft = Partial<Record<LinkSkillId, string>>;
 
-// manifests/v269/skill.json
+// manifests/v<ver>/skill.json
 const LINK_MANAGER_SKILL_ID = "0001251"; // "Link Manager"
 
 const WHERE_TOOLTIP: TooltipContent = {

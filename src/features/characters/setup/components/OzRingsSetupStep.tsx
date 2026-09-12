@@ -20,7 +20,7 @@ import SetupStepFrame from "./SetupStepFrame";
 import InfoTooltip from "./InfoTooltip";
 import { LeveledIconTile } from "./LeveledIconTile";
 
-// manifests/v269/item.json, Item/Consume. Green/Red Jade's raw art fills its canvas
+// manifests/v<ver>/item.json, Item/Consume. Green/Red Jade's raw art fills its canvas
 // edge-to-edge (31x26, no padding) while Black/White Jade/Life have a visible margin
 // baked in (roughly a 36x36 canvas at 85-92% content), so they are shrunk and nudged down to
 // visually match, offsets measured directly off a 4x-zoom screenshot comparing each

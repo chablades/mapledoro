@@ -13,7 +13,7 @@
 import type { StatFieldId } from "./statFields";
 import { resourceImageUrl } from "../../../../lib/mapleResource";
 
-// Skill icon by id from the haku.network `skill` resource (ids in manifests/v268/skill.json).
+// Skill icon by id from the haku.network `skill` resource (ids in manifests/v<ver>/skill.json).
 const sk = (id: string): string => resourceImageUrl("skill", id, "icon.png");
 
 export interface BuffSkill {

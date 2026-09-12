@@ -19,7 +19,7 @@ export interface LinkSkillDef {
   name: string;
   classes: string[];
   maxLevel: number;
-  /** manifests/v269/skill.json id, pixel-verified against maplestorywiki. */
+  /** manifests/v<ver>/skill.json id, pixel-verified against maplestorywiki. */
   iconId: string;
   branch: LinkSkillBranch;
 }

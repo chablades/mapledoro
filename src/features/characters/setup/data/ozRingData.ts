@@ -30,7 +30,7 @@ const MAIN_STAT_SET = new Set<string>(["str", "dex", "int", "luk"]);
 
 const WEAPON_JUMP_LETTER: Record<MainStatId, string> = { str: "S", int: "I", luk: "L", dex: "D" };
 
-// Item icon ids (manifests/v269/item.json, Character/Ring).
+// Item icon ids (manifests/v<ver>/item.json, Character/Ring).
 export const OZ_RING_ICON_IDS: Record<"restraint" | "continuous", string> = {
   restraint: "01113098",  // Ring of Restraint
   continuous: "01113329", // Continuous Ring
