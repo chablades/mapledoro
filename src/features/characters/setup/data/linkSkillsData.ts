@@ -82,8 +82,9 @@ function inferLinkLevel(level: number): number {
   return 0;
 }
 
-/** nexonJobName → which link skill it contributes to. Shared by the setup step
- *  (roster autofill) and the read-only Legion panel (eligible-character grouping). */
+/** nexonJobName to the link skill that class contributes to. Used only by this file's own
+ *  roster math: computeLinkSkillsFromRoster, bestKnownLinkSkillFloors,
+ *  linkSkillFloorsForCharacter, propagateLinkSkillFloors and syncLinkSkillToSiblings. */
 const CLASS_TO_SKILL: Record<string, LinkSkillId> = {
   "Cadena":           "unfairAdvantage",
   "Illium":           "tideOfBattle",

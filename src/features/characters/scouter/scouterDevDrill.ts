@@ -89,7 +89,7 @@ function installScouterStatusDrill() {
       return;
     }
     overrides.set(key, status);
-    console.info(`[scouter drill] forcing ${key}'s Scouter figure to "${statusName}". Nothing is saved -- __mapledoroForceScouterStatus("${key}", null) to clear.`);
+    console.info(`[scouter drill] forcing ${key}'s Scouter figure to "${statusName}". Nothing is saved. Call __mapledoroForceScouterStatus("${key}", null) to clear.`);
     notify();
   };
 }
