@@ -299,7 +299,6 @@ export function useWorldImportConflictState(
     setResolutions,
     keepMyWorldData,
     setKeepMyWorldData,
-    customizingKey,
     setCustomizingKey,
     setRoleOverrides,
     selectedNewCharacterKeys,
