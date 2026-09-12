@@ -10,16 +10,16 @@
  * Source: manifests/v271/v-matrix.json `entries`, each keyed by id:
  *   - type 0 with `className`, id >= 10010000: job nodes (jobs === [class's own job code])
  *   - type 1 with `className` set: boost nodes (already fused per matrix slot)
- *   - type 0 without `className`: common nodes — universal (jobs === ["all"])
+ *   - type 0 without `className`: common nodes, either universal (jobs === ["all"])
  *     or branch/faction-shared (jobs includes a class's own job code)
  *   - type 0 with `className`, id < 10010000: class-EXCLUSIVE common nodes (e.g. Zero's
- *     "Transcendent", Kinesis's "Afterimage of the Otherworld") — they carry a className
+ *     "Transcendent", Kinesis's "Afterimage of the Otherworld"). They carry a className
  *     like job nodes but live in the shared common id space, so they belong in common, not job
- *   - type 2/3: special/event/unused — skipped entirely
+ *   - type 2/3: special, event or unused, skipped entirely
  *
  * Common node order: branch/faction-shared nodes (ascending id) first, then the 15 universal
- * nodes in UNIVERSAL_ORDER — the in-game "Common" tab's fixed display order, which isn't
- * derivable from any manifest field and was confirmed against 3 classes' screenshots.
+ * nodes in UNIVERSAL_ORDER, the in-game "Common" tab's fixed display order, which isn't
+ * derivable from any manifest field.
  *
  * Usage: node scripts/gen-vmatrix.mjs [v-matrix.json]
  */
@@ -34,16 +34,15 @@ const SLUG_OVERRIDES = { Bowmaster: "bow_master", "Dual Blade": "blade_master" }
 const slugify = (name) => name.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
 const classIdFor = (className) => SLUG_OVERRIDES[className] ?? slugify(className);
 
-// Removed classes still present in the manifest — Jett and old Beast Tamer ("11212").
+// Removed classes still present in the manifest: Jett and old Beast Tamer ("11212").
 const EXCLUDED_CLASSES = new Set(["Jett's Return", "11212"]);
 
-// Job entries the manifest over-includes. Kinesis has 4 job nodes in-game (confirmed
-// directly), but the manifest lists 8 with no field to tell them apart, so the extras are
-// excluded by id. Kinesis's revamp swapped which 4 are real: Psychic Tornado, Ultimate -
-// Mind Over Matter, Ultimate - Psychic Shockwave, and Law of Gravity are no longer V matrix
-// job nodes, replaced by Psychic Shockwave, Psychic Nova, Ultimate: Checkmate, and Psychic
-// Castle. The job-count guard below will surface any future class that drifts from the
-// 4-job / 6-boost shape.
+// Job entries the manifest over-includes. Kinesis has 4 job nodes in-game, but the manifest
+// lists 8 with no field to tell them apart, so the extras are excluded by id. Kinesis's
+// revamp swapped which 4 are real: Psychic Tornado, Ultimate - Mind Over Matter, Ultimate -
+// Psychic Shockwave, and Law of Gravity are no longer V matrix job nodes, replaced by
+// Psychic Shockwave, Psychic Nova, Ultimate: Checkmate, and Psychic Castle. The job-count
+// guard below will surface any future class that drifts from the 4-job / 6-boost shape.
 const EXCLUDED_NODE_IDS = new Set(["10020006", "10020018", "10020031", "10020042"]);
 
 const maxLevelFor = (id, e) => e.maxLevel;
@@ -77,7 +76,7 @@ for (const [id, e] of Object.entries(entries)) {
 // In-game order of the branch/faction-shared common nodes is NOT the manifest id order.
 // Ids listed here sort to the front in this order; everything else falls back to ascending id.
 const BRANCH_COMMON_ORDER = [
-  "10000025", // Maple World Goddess's Blessing — precedes the faction node (e.g. Resistance Infantry) in-game
+  "10000025", // Maple World Goddess's Blessing, precedes the faction node (e.g. Resistance Infantry) in-game
 ];
 const branchRank = (id) => {
   const i = BRANCH_COMMON_ORDER.indexOf(id);
@@ -125,10 +124,10 @@ for (const [classId, cls] of classes) {
 console.log(`\n${classes.size} classes written -> ${OUTPUT_DIR}`);
 
 // Every class should have exactly 4 job nodes and 6 boost nodes. Anything else signals a
-// manifest anomaly (over/under-included nodes) that needs a human look — flag it loudly.
+// manifest anomaly (over or under-included nodes) that needs a human look, so flag it loudly.
 const offShape = [...classes].filter(([, c]) => c.job.length !== 4 || c.boost.length !== 6);
 if (offShape.length > 0) {
-  console.warn(`\n⚠ ${offShape.length} class(es) not 4-job / 6-boost — verify against in-game:`);
+  console.warn(`\n⚠ ${offShape.length} class(es) not 4-job / 6-boost, verify against in-game:`);
   for (const [classId, c] of offShape) console.warn(`   ${classId.padEnd(18)} job=${c.job.length} boost=${c.boost.length}`);
 } else {
   console.log("\nAll classes are 4-job / 6-boost ✓");

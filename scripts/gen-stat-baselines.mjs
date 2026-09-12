@@ -4,18 +4,19 @@
   manifests/v271/skill-formulas.json.
 
   Each class's baseline is pinned by skill id (RECIPES below) rather than resolved by name at
-  runtime — same pattern as gen-vmatrix.mjs's EXCLUDED_NODE_IDS. Every pinned entry also carries
+  runtime, the same pattern as gen-vmatrix.mjs's EXCLUDED_NODE_IDS. Every pinned entry also carries
   the `expected` value it evaluated to when the recipe was last verified against a real character
   (see FINAL_DAMAGE_DATA.md / MASTERY_DATA.md, both project-root, uncommitted). If a future manifest
   update changes a pinned skill's formula, this script throws instead of silently shipping a new
-  number — that's a signal to re-verify against a real character (see CLAUDE.md "Class revamps"),
-  not something to auto-accept.
+  number. That is a signal to re-verify (see CLAUDE.md "Class revamps"), not something to
+  auto-accept.
 
   Final Damage combines multiplicatively: 100 * prod(1 + skill%/100) - 100.
   Mastery combines additively: MASTERY_BASE_PERCENT[classId] + sum(skill%). The "base" term is an
-  inherent per-class constant (20/25/15/etc) that is NOT encoded anywhere in skill-formulas.json —
-  it has to be sourced externally (Grandis Library + live-character verification) and hand-maintained
-  below; only the skill-contribution half of Mastery is auto-verified against the manifest.
+  inherent per-class constant (20/25/15/etc) that is not encoded anywhere in
+  skill-formulas.json, so it has to be sourced externally (Grandis Library, plus a live check)
+  and hand-maintained below. Only the skill-contribution half of Mastery is auto-verified
+  against the manifest.
 
   Run: node scripts/gen-stat-baselines.mjs
 */
@@ -47,11 +48,11 @@ function statsWithLabel(entry, label) {
  * Resolves one pinned {id, name, expected} to its current value, matching against `expected` to
  * disambiguate skills that carry more than one stat under the same label (e.g. Marksman's Greater
  * Empowered Arrows has both a flagged-for-review stat and the real always-on one, both labelled
- * "Final Damage"). Throws loudly if nothing on the pinned id still matches — that means the
+ * "Final Damage"). Throws loudly if nothing on the pinned id still matches, which means the
  * manifest changed underneath this pin and it needs re-verifying, not silently re-pinning.
  */
 // Zero's "Long Sword Mastery" mastery value sits in rawFormulas.mastery, never promoted to the
-// classified stats[] array (a known extractor gap, reported but not yet fixed — unlike Hero's
+// classified stats[] array (a known extractor gap, reported but not yet fixed, unlike Hero's
 // "Advanced Combo"/Angelic Buster's "True Heart Inheritance", which were the same shape of bug and
 // did get fixed). Remove this once the manifest promotes it properly; resolvePinned() will then
 // find it via stats[] like everything else and this override becomes a no-op to delete.
@@ -72,7 +73,7 @@ function resolvePinned(classId, statLabel, pin) {
   if (match === undefined) {
     throw new Error(
       `[gen-stat-baselines] ${classId}: pinned skill "${pin.name}" (id ${pin.id}) no longer evaluates to ${pin.expected} ` +
-        `(found: ${candidates.join(", ") || "no matching stat"}). The skill's formula changed — re-verify against a real character.`,
+        `(found: ${candidates.join(", ") || "no matching stat"}). The skill's formula changed, so re-verify it.`,
     );
   }
   return match;
@@ -80,19 +81,20 @@ function resolvePinned(classId, statLabel, pin) {
 
 /**
  * Evaluates a pinned skill's own formula at `entry.maxLevel + levelOffset` instead of at its
- * pinned/verified maxLevel — this is the "Decent Combat Orders"/"Passive Skills +1 IA" boosted
- * state (Character Info setup always assumes at least one of these is active, since DCO sits in
- * every class's buff guide — see CLAUDE.md for the full mechanism). Confirmed against 4
- * independently toggle-tested classes (Kanna/Lara/Ren/Hoyoung, tested by hand) that simply
- * re-evaluating each skill's real formula one or two levels past its normal cap exactly
- * reproduces the empirically-measured DCO/IA+1 state — no per-class curve or
- * "KMS vs non-KMS" rule needed; what looked like a class-level mechanic was just each skill's own
- * formula shape (e.g. Kasen's `50+2*x` climbs twice as fast as the common `55+u(x/2)` shape).
- * No `expected` check here (unlike resolvePinned) — levelOffset 0 is already drift-guarded via
+ * pinned and verified maxLevel. This is the "Decent Combat Orders" and "Passive Skills +1 IA"
+ * boosted state (Character Info setup always assumes at least one is active, since DCO sits in
+ * every class's buff guide, see CLAUDE.md for the full mechanism).
+ *
+ * Across 4 independently toggle-tested classes, re-evaluating each skill's own formula one or
+ * two levels past its normal cap reproduces the measured DCO/IA+1 state exactly. No per-class
+ * curve or KMS-versus-non-KMS rule is needed: what looked like a class-level mechanic is just
+ * each skill's formula shape, where Kasen's `50+2*x` climbs twice as fast as the common
+ * `55+u(x/2)`.
+ * No `expected` check here, unlike resolvePinned, since levelOffset 0 is already drift-guarded via
  * resolvePinned elsewhere, and this reuses the same verified id/formula, just at a different x.
  */
 function resolvePinnedAtLevel(pin, statLabel, levelOffset) {
-  // Decent Combat Orders / Passive Skills+1 only bump 4th-job skill levels — a pin explicitly
+  // Decent Combat Orders and Passive Skills+1 only bump 4th-job skill levels, so a pin explicitly
   // marked `job4: false` stays frozen at its tier-0 value regardless of the requested tier.
   const offset = pin.job4 === false ? 0 : levelOffset;
   const entry = entries[pin.id];
@@ -100,21 +102,21 @@ function resolvePinnedAtLevel(pin, statLabel, levelOffset) {
   if (!stat) {
     const rawKey = RAW_FORMULA_FALLBACK[pin.id];
     if (rawKey) return evalFormula(entry.rawFormulas[rawKey], entry.maxLevel + offset);
-    throw new Error(`[gen-stat-baselines] tiered lookup: no matching stat for pinned id ${pin.id} — resolvePinned should have already thrown.`);
+    throw new Error(`[gen-stat-baselines] tiered lookup: no matching stat for pinned id ${pin.id}. resolvePinned should have already thrown.`);
   }
   return evalFormula(stat.formula, entry.maxLevel + offset);
 }
 
 // ---------------------------------------------------------------------------------------------
-// Final Damage recipes — one entry per class, ids pinned via a live-verification pass
+// Final Damage recipes, one entry per class, with ids pinned by a verification pass
 // (FINAL_DAMAGE_DATA.md). Combined multiplicatively.
 // ---------------------------------------------------------------------------------------------
-// `job4: false` marks a pin whose skill is NOT the class's 4th-job advancement — Decent Combat
+// `job4: false` marks a pin whose skill is not the class's 4th-job advancement. Decent Combat
 // Orders / Passive Skills+1 IA only bump 4th-job skill levels (confirmed against a real Ren
 // tier-2 capture: the generator's old uniform "+tier to every pinned skill" logic overshot her
 // real 89.40% Final Damage by bumping 2nd-job Serene Verse II too; freezing it at tier0 reproduces
 // 89.40% exactly). Job-advancement per skill was cross-checked against Grandis Library for every
-// pin in both recipe tables below — pins with no `job4` field are confirmed 4th job and get the
+// pin in both recipe tables below. Pins with no `job4` field are 4th job and get the
 // normal tier offset; `job4: false` pins are frozen at their tier-0 value regardless of requested
 // tier. See resolvePinnedAtLevel's job4 gating.
 const FINAL_DAMAGE_RECIPES = {
@@ -345,14 +347,14 @@ const FINAL_DAMAGE_RECIPES = {
 };
 
 // ---------------------------------------------------------------------------------------------
-// Mastery skill recipes — the skill-contribution half only (see MASTERY_BASE_PERCENT below for
+// Mastery skill recipes, the skill-contribution half only (see MASTERY_BASE_PERCENT below for
 // the other half). Combined additively. Ids pinned via a live-verification pass (MASTERY_DATA.md).
 // ---------------------------------------------------------------------------------------------
 const MASTERY_SKILL_RECIPES = {
   hero: [{ id: "1120003", name: "Advanced Combo", expected: 70 }],
   paladin: [{ id: "1220018", name: "High Paladin", expected: 70 }],
   dark_knight: [{ id: "1320018", name: "Barricade Mastery", expected: 70 }],
-  bishop: [{ id: "2310008", name: "Holy Focus", expected: 70, job4: false }], // 3rd job — Bishop's Mastery is flat across all 3 tiers
+  bishop: [{ id: "2310008", name: "Holy Focus", expected: 70, job4: false }], // 3rd job, and Bishop's Mastery is flat across all 3 tiers
   blade_master: [{ id: "4340013", name: "Katara Expert", expected: 70 }],
   shadower: [{ id: "4220012", name: "Dagger Expert", expected: 70 }],
   night_lord: [{ id: "4120012", name: "Claw Expert", expected: 70 }],
@@ -398,7 +400,7 @@ const MASTERY_SKILL_RECIPES = {
   sia_astelle: [{ id: "182120002", name: "Astral Assimilation", expected: 70 }],
   erel_light: [{ id: "181120008", name: "Gram Expert", expected: 70 }],
   // Post-revamp: ESP Mastery (job 1, own tooltip "Psy-limiter Mastery: +50%") is
-  // deliberately excluded — it's the lower-tier Mastery skill, superseded (not stacked) by
+  // deliberately excluded, being the lower-tier Mastery skill, superseded rather than stacked by
   // ESP Expert once learned, same as every other class's single-highest-tier-only recipe.
   kinesis: [{ id: "142120006", name: "ESP Expert", expected: 73 }],
   zero: [{ id: "101000203", name: "Long Sword Mastery", expected: 70, job4: false }], // Lv. 100 unlock, not job-tiered
@@ -411,11 +413,11 @@ const MASTERY_SKILL_RECIPES = {
 };
 
 // ---------------------------------------------------------------------------------------------
-// Inherent per-class base Mastery% (not skill-derived — no formula for this exists anywhere in
+// Inherent per-class base Mastery%, not skill-derived, since no formula for this exists anywhere in
 // skill-formulas.json, sourced from Grandis Library + live-character verification instead, see
 // MASTERY_DATA.md's "Base%" column). Every class defaults to a "beginner equivalent" base of 20%
-// per strategywiki (some classes differ — see values below), and the combined total is capped at
-// 99% game-wide ("Mastery is capped at 99%", strategywiki Formulas page) — that cap, not a
+// per strategywiki (some classes differ, see values below), and the combined total is capped at
+// 99% game-wide ("Mastery is capped at 99%", strategywiki Formulas page). That cap, not a
 // nonstandard base, is why Hayato (20 base + 80 from Natural Talent = 100) reads 99% in-game. See
 // MASTERY_CAP below.
 // ---------------------------------------------------------------------------------------------
@@ -476,19 +478,18 @@ const MASTERY_BASE_PERCENT = {
 };
 
 // Note: Dual Blade's Shadow Meld (id 4330009, in FINAL_DAMAGE_RECIPES.blade_master) has no tooltip
-// "[Passive Effect]" marker, so the manifest conservatively marks its stat alwaysOn:false — but it
+// "[Passive Effect]" marker, so the manifest conservatively marks its stat alwaysOn:false, but it
 // IS a real always-on source (see FINAL_DAMAGE_DATA.md "WZ skill-id pins"). resolvePinned() below
 // doesn't check alwaysOn at all: inclusion is already decided by a skill's presence in a recipe, so
 // no override list is needed here.
 
 // ---------------------------------------------------------------------------------------------
-// Damage Range's "Current Applied Weapon Constant" — not skill-formula data, sourced+verified from
-// maplestorywiki.net/w/Damage_Formula (class-keyed table, cross-checked against strategywiki's
-// generic weapon-type table and confirmed exact against real characters — including one real
-// correction: Xenon's own in-game tooltip displays 1.50, which is WRONG; the real value used in
-// the actual damage calc is 1.3125, confirmed by computing Damage Range both ways against a real
-// Xenon screenshot and matching the in-game total exactly only with 1.3125). Hero/Paladin/Dawn
-// Warrior split by weaponHand (already collected — see StatsSetupStep.tsx's weaponType option).
+// Damage Range's "Current Applied Weapon Constant". Not skill-formula data, sourced from
+// maplestorywiki.net/w/Damage_Formula (a class-keyed table, cross-checked against strategywiki's
+// generic weapon-type table). One correction came out of that: Xenon's in-game tooltip displays
+// 1.50, which is wrong. The value the damage calc actually uses is 1.3125, since computing Damage
+// Range both ways matches the in-game total only with 1.3125. Hero, Paladin and Dawn Warrior
+// split by weaponHand, already collected (see StatsSetupStep.tsx's weaponType option).
 // Zero's two transformation forms (Alpha 1.34 / Beta 1.49) have different multipliers, but setup
 // already requires "Must be in Beta status" (classSkillData.ts warning) for stat capture, so Beta's
 // 1.49 is the only value that's ever consistent with already-collected Zero data.
@@ -509,7 +510,7 @@ const WEAPON_MULTIPLIER = {
   arch_mage_f_p: 1.2, arch_mage_i_l: 1.2, bishop: 1.2, blaze_wizard: 1.2, illium: 1.2,
   kinesis: 1.2, evan: 1.2, luminous: 1.2, battle_mage: 1.2, sia_astelle: 1.2,
   lara: 1.2, demon_slayer: 1.2,
-  // hero, paladin, dawn_warrior omitted here — see WEAPON_MULTIPLIER_BY_HAND below.
+  // hero, paladin, dawn_warrior omitted here, see WEAPON_MULTIPLIER_BY_HAND below.
 };
 
 /** Hero/Paladin/Dawn Warrior: multiplier depends on weaponHand (already collected per-character). */
@@ -519,7 +520,7 @@ const WEAPON_MULTIPLIER_BY_HAND = {
   dawn_warrior: { "1h": 1.24, "2h": 1.34 },
 };
 
-// Which stat feeds TotalJobATT in the Damage Range formula — Magicians use Magic ATT, everyone
+// Which stat feeds TotalJobATT in the Damage Range formula. Magicians use Magic ATT, everyone
 // else (including Xenon and Demon Avenger) uses Attack Power. Mirrors classSkillData.ts's own
 // requiredStats magicAtt list; kept as an explicit table here rather than importing that TS file
 // (this script only reads JSON, matching every other gen-*.mjs script's convention).
@@ -529,27 +530,28 @@ const MAGIC_ATT_CLASSES = new Set([
 ]);
 
 // ---------------------------------------------------------------------------------------------
-// Generate — 3 tiers per class: [0]=pure base (no Combat-Orders-family buff, drift-guarded via
-// resolvePinned), [1]=+1 skill level (Decent Combat Orders alone, OR Passive Skills+1 IA alone —
-// confirmed interchangeable when used singly), [2]=+2 skill levels (both stacked, OR the single
-// higher-tier "Combat Orders" buff alone — same numeric effect either way). Character Info setup
-// always assumes at least tier 1, since (Decent) Combat Orders sits in every class's buff guide —
-// see resolveComboOrdersTier in comboOrdersData.ts for how a character's actual tier is picked.
+// Generate 3 tiers per class. [0] is the pure base, with no Combat-Orders-family buff,
+// drift-guarded via resolvePinned. [1] is +1 skill level, from Decent Combat Orders alone or
+// Passive Skills+1 IA alone, which are interchangeable when used singly. [2] is +2 skill levels,
+// from both stacked or the single higher-tier "Combat Orders" buff alone, with the same numeric
+// effect either way. Character Info setup always assumes at least tier 1, since Decent Combat
+// Orders sits in every class's buff guide. See resolveComboOrdersTier in comboOrdersData.ts for
+// how a character's actual tier is picked.
 // ---------------------------------------------------------------------------------------------
-const MASTERY_CAP = 99; // "Mastery is capped at 99%" — strategywiki Formulas page, game-wide rule.
+const MASTERY_CAP = 99; // "Mastery is capped at 99%", strategywiki Formulas page, game-wide rule.
 
 const finalDamageOut = {};
 for (const [classId, recipe] of Object.entries(FINAL_DAMAGE_RECIPES)) {
   const tiers = [0, 1, 2].map((tier) => {
     let product = 1;
     for (const pin of recipe) {
-      // resolvePinned still runs at tier 0 for every pin, for its drift guard — the returned
+      // resolvePinned still runs at tier 0 for every pin, for its drift guard. The returned
       // value is discarded for tier>0 in favor of resolvePinnedAtLevel's own (unguarded) result.
       resolvePinned(classId, "final damage", pin);
       const value = resolvePinnedAtLevel(pin, "final damage", tier);
       product *= 1 + value / 100;
     }
-    // No rounding here — Final Damage compounds multiplicatively and then feeds Genesis Liberation's
+    // No rounding here. Final Damage compounds multiplicatively and then feeds Genesis Liberation's
     // own ×1.1 (finalDamageData.ts) and the Damage Range formula's ×(1+FD/100) term (damageRangeData.ts),
     // both of which amplify a rounded-to-2-decimals input into a visibly wrong Damage Range (confirmed
     // on Ren: rounding tier1 to 70.64 instead of the raw 70.64085500000006 undershot her real Damage
@@ -605,7 +607,8 @@ writeTieredGenerated(
 );
 
 // Not manifest-derived (no formula source exists for weapon constants), so this doesn't go through
-// resolvePinned()'s drift check — it's static reference data, same trust level as MASTERY_BASE_PERCENT.
+// resolvePinned()'s drift check, being static reference data, the same trust level as
+// MASTERY_BASE_PERCENT.
 {
   const lines = [
     `// AUTO-GENERATED by scripts/gen-stat-baselines.mjs. Do not edit.`,

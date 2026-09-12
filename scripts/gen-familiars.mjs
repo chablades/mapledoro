@@ -10,14 +10,14 @@
  * `mob/`, `familiar/`, etc.) to enable pixel-hash dedup of same-name familiars that
  * render an identical sprite (e.g. card reissues): the redundant entries get a
  * `duplicateOf` pointer instead of being removed, so old saved characters that
- * picked one still resolve fine — they just stop showing up as a second picker result.
+ * picked one still resolve fine, they just stop showing up as a second picker result.
  *   FAMILIAR_DUMP_DIR=/path/to/dump node scripts/gen-familiars.mjs manifests/v271/familiar.json
  *
  * It splices three constants and leaves everything else (types, tier data, helpers) alone:
- *   - FAMILIARS       — from the familiar.json passed as the arg
- *   - BADGE_ID_MAP    — name → ui/familiar icon id, rebuilt wholesale from the sibling
+ *   - FAMILIARS       : from the familiar.json passed as the arg
+ *   - BADGE_ID_MAP    : name to ui/familiar icon id, rebuilt wholesale from the sibling
  *                       ui-familiar.json (its entry keys ARE the icon ids)
- *   - BADGE_NAMES     — the picker's display order. NOT derivable from the manifest (it's a
+ *   - BADGE_NAMES     : the picker's display order. NOT derivable from the manifest (it's a
  *                       hand-curated progression order), so the existing order is kept as-is
  *                       and any manifest badge missing from it is appended to the end.
  */
@@ -57,11 +57,11 @@ function hashSprite(path) {
 }
 
 // Same-name entries whose effective sprite hashes identically are true duplicates
-// (e.g. periodic card reissues) — keep the lowest id (or whichever lacks
-// `cardIdsFrom`, the manifest's own "this is a reissue of X" marker) as canonical
-// and mark the rest. Different-named entries that happen to share art (recolors
-// the dump didn't capture distinctly) are NOT touched — the name itself already
-// disambiguates them in the picker.
+// (e.g. periodic card reissues). Keep the lowest id, or whichever lacks `cardIdsFrom`,
+// the manifest's own "this is a reissue of X" marker, as canonical and mark the rest.
+// Different-named entries that happen to share art (recolors the dump didn't capture
+// distinctly) are not touched, since the name itself already disambiguates them in the
+// picker.
 function computeDuplicates(rawEntries) {
   const duplicateOf = new Map();
   if (!DUMP_DIR) return duplicateOf;
@@ -105,7 +105,7 @@ for (const [rawId, entry] of entryList) {
   const mobId = String(entry.mobId ?? "");
   const cardId = String(entry.cardIds?.[0] ?? "");
   // spriteMobId overrides mobId for sprite lookups only (mobId stays the "real" mob
-  // for data/storage purposes) — some familiars' own mobId has no sprite manifest
+  // for data/storage purposes). Some familiars' own mobId has no sprite manifest
   // entry, and the WZ dump records a separate id that does.
   const spriteMobId = String(entry.spriteMobId ?? "");
   const spriteField = spriteMobId && spriteMobId !== mobId ? `,spriteMobId:${JSON.stringify(spriteMobId)}` : "";

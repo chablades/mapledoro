@@ -2,7 +2,7 @@
 /**
  * Generates per-slot equipment item JSON files from the item manifest.
  * Output: public/data/equipment/{slot}.json
- * Each file: Array<[id, name] | [id, name, stats]> — id is 8-digit zero-padded; the
+ * Each file: Array<[id, name] | [id, name, stats]>. id is 8-digit zero-padded, and the
  *   stats object is appended only for items that have base stats (cosmetics omit it).
  *   Base stats come from item-stats.json (sibling of item.json), joined by id. Items
  *   flagged `cash` there (pure cash-shop cosmetic overlays, e.g. Illusion Ring) are
@@ -31,12 +31,12 @@
  * F:\mapledoro-image\tools\equipment\dedup-verdicts.json / its README) to apply
  * human-confirmed drop/label decisions for same-name+icon groups that survive the
  * icon-based dedup above with genuinely different stats (e.g. two "Eternal Wedding
- * Ring" ids at +5 vs +7 all stat) — drops confirmed leftover/regional-ghost/cafe-only
+ * Ring" ids at +5 vs +7 all stat). It drops leftover, regional-ghost and cafe-only
  * ids entirely and appends a disambiguating label to the served `name` for the rest,
  * so the picker never shows two indistinguishable rows. Skipped (served names
  * unchanged) if unset. Pet/pet-equip are out of scope (every class can equip every
  * pet, so unlike weapon/secondary there's no branch filter downstream to keep same-name
- * survivors from co-occurring in the picker — but that's handled by dedupeByName's
+ * survivors from co-occurring in the picker, but that's handled by dedupeByName's
  * setItemID exclusion below, not this verdicts file).
  */
 
@@ -63,7 +63,7 @@ function iconHash(id) {
   return h;
 }
 
-// Human-confirmed dedup verdicts (drop / disambiguation label) from the manual audit —
+// Human-reviewed dedup verdicts (drop or disambiguation label) from the manual audit,
 // see the EQUIP_DEDUP_VERDICTS doc comment above. Keyed by `${slot}|${id}` since the
 // same id never appears in two slots.
 const VERDICTS_PATH = process.env.EQUIP_DEDUP_VERDICTS;
@@ -74,7 +74,7 @@ if (VERDICTS_PATH && existsSync(VERDICTS_PATH)) {
     for (const item of group.items) verdictsByKey.set(`${group.slot}|${item.id}`, item);
   }
 } else {
-  console.warn(`⚠ EQUIP_DEDUP_VERDICTS ${VERDICTS_PATH ? `(${VERDICTS_PATH}) not found` : "unset"} — skipping dedup verdict bake-in. Picker may show undifferentiated duplicate rows.`);
+  console.warn(`⚠ EQUIP_DEDUP_VERDICTS ${VERDICTS_PATH ? `(${VERDICTS_PATH}) not found` : "unset"}. Skipping dedup verdict bake-in. Picker may show undifferentiated duplicate rows.`);
 }
 
 /** Appends a verdict's disambiguation label to a served name, same convention as the
@@ -137,20 +137,20 @@ function wearableLinks(slot, entry) {
 
 /**
  * Nearly every equipment slot ships cash-shop/event reissues that share a display name
- * and icon but differ by id — these surfaced as duplicate rows in the setup picker (e.g.
+ * and icon but differ by id. These surfaced as duplicate rows in the setup picker (e.g.
  * "Dusk" three times, "MVP Bronze" twice, "Crystal Ventus Badge" twice). But name+icon
  * alone isn't proof of a true duplicate: MapleStory also reuses a
- * name+icon across genuinely different items — e.g. two "Eternal Wedding Ring" ids grant
+ * name and icon across genuinely different items. Two "Eternal Wedding Ring" ids grant
  * +5 vs +7 all stats, and growth-series weapons repeat a name+icon at each level
  * breakpoint with different stats. So this also requires the full stat block to match
  * before collapsing (this caught 4 already-live totem groups that had been wrongly
  * merged under the old name+icon-only key). Stat-less cosmetics (nothing to compare)
  * additionally require the same 5-digit id-type-prefix, since some ship one id per
  * weapon/armor *type* sharing a single name+icon (e.g. "Chaos Potion" weapon covers
- * exist as ~21 ids, one per weapon type) — collapsing those would delete the cover for
+ * exist as ~21 ids, one per weapon type), and collapsing those would delete the cover for
  * every type but the survivor.
  * Keeps the first id as canonical, unions the wearable* compatibility list across the
- * group (pet/petequip only — excluded from the stats-match comparison so differing
+ * group (pet and petequip only, excluded from the stats-match comparison so differing
  * compatibility lists still merge-and-union instead of blocking the match), and
  * returns `canonicalById` so the *paired* slot's id cross-references can be remapped
  * to ids that still exist after the collapse.
@@ -158,8 +158,8 @@ function wearableLinks(slot, entry) {
  * `requireSamePrefix` (weapon/secondary only) makes the 5-digit prefix match mandatory
  * even when stats are identical: `weaponPrefixesForClass`/`secondarySpecForClass`
  * (classBranch.ts) filter those pickers to a class's exact weapon/secondary TYPE by this
- * same prefix downstream, so a cross-prefix merge — even of two entries with byte-identical
- * stats — would delete the type-specific id a differently-typed class depends on (e.g. the
+ * same prefix downstream, so a cross-prefix merge, even of two entries with byte-identical
+ * stats, would delete the type-specific id a differently-typed class depends on (e.g. the
  * Lv100 "Chaos Potion" set weapon ships as one same-stat id per one-handed weapon type;
  * collapsing sword/axe/blunt into one survivor would remove it from axe/blunt users' pickers).
  * Ring/hat/title/totem/pet have no such per-type prefix filtering, so a stats match is
@@ -169,15 +169,15 @@ function wearableLinks(slot, entry) {
  * `upgradeSlots` is also excluded from the stats-match comparison (same treatment as
  * `linkKey`): the same weapon/ring/hat is routinely reissued at a different starting
  * slot count (e.g. two "Arcane Umbra Spirit Walker Fan" ids, byte-identical otherwise,
- * at 10 vs. 9 slots) — this isn't a different item the way an Eternal Wedding Ring's
+ * at 10 vs. 9 slots). This isn't a different item the way an Eternal Wedding Ring's
  * +5-vs-+7 stat difference is, it's incidental drop variance the picker has no use for
  * (found affecting 67 of 75 duplicate-name weapon groups alone).
  *
- * Pet/pet-equip also exclude `setItemID` (event/promo bundle id — incidental, like
+ * Pet and pet-equip also exclude `setItemID` (an event or promo bundle id, incidental, like
  * `upgradeSlots`; confirmed differing on 300+ of pet.json's 307 duplicate-name groups,
  * e.g. Florence's 3 ids). `collabo` (real-IP collab reissue, e.g. BUGCAT CAPOO) is kept
  * in the comparison since it's a genuine distinction, same treatment as the Eternal
- * Wedding Ring's stat difference — the 7 duplicate-name groups that differ only by
+ * Wedding Ring's stat difference). The 7 duplicate-name groups that differ only by
  * `collabo` stay split.
  * @param {Array<[string,string]|[string,string,object]>} items
  * @param {"wearableEquips"|"wearablePets"} [linkKey] omitted for slots with no cross-slot links
@@ -214,21 +214,21 @@ function dedupeByName(items, linkKey, requireSamePrefix, excludeSetItemID) {
  *  item that carry no real stats at all (e.g. Silent Death's Scythe: one id with
  *  incPAD/incMAD 10 plus a reissue id with only upgradeSlots/wearablePets and nothing
  *  else; Penguin Earmuff Set goes further with *two* stub ids alongside its one real
- *  one) — a ghost the same way weapon/secondary's verdicts-file leftover ids are, but
+ *  one), a ghost the same way weapon and secondary's verdicts-file leftover ids are, but
  *  pet/pet-equip have no verdicts file (see this script's doc comment) to drop them by
  *  id. `upgradeSlots` and the cross-slot linkKey (wearablePets/wearableEquips) don't
- *  count as "real" stats here — every pet-equip has both regardless of whether it's a
+ *  count as real stats here, since every pet-equip has both regardless of whether it's a
  *  ghost, same exclusions dedupeByName already applies when comparing. Since the
  *  stats-bearing id is always the one that actually exists in-game, drop every
  *  no-real-stats sibling whenever a same-name+icon group has exactly one stats-bearing
- *  candidate (any number of stats-less ones) — a group with zero or more than one
+ *  candidate (any number of stats-less ones). A group with zero or more than one
  *  stats-bearing candidate is left alone rather than guessing which one is real.
  * @param {Array<[string,string]|[string,string,object]>} items
  * @param {"wearableEquips"|"wearablePets"} linkKey
  */
 function dropStatlessGhosts(items, linkKey) {
   // collabo marks a real-IP collab reissue (kept as a genuine distinguisher elsewhere,
-  // e.g. dedupeByName) but says nothing about whether THIS id actually exists in-game —
+  // e.g. dedupeByName) but says nothing about whether this id actually exists in-game,
   // a collab ghost stub (Lil Tanjiro's Nichirin Sword's 01803119) carries collabo:true
   // same as its real sibling, so it doesn't count as "real" stats here.
   function hasRealStats(stats) {
@@ -259,11 +259,11 @@ function dropStatlessGhosts(items, linkKey) {
  *  SKUs. But since neither id carries any stat difference a player would ever notice or
  *  choose between in this app, and the collab-flagged id is the one to keep by request,
  *  this collapses the pair to one survivor (the collabo:true id) exactly like
- *  dropStatlessGhosts collapses a real item + stats-less ghost — it's not a ghost here
+ *  dropStatlessGhosts collapses a real item and a stats-less ghost. It's not a ghost here
  *  (both ids are genuinely sold/real), just a distinction with no in-app consequence.
  *  NOTE: if a future same-name+icon collabo pair like this ever turns out to carry a
  *  real stat difference, this function's byte-identical-otherwise guard already leaves
- *  it alone — but double check before assuming any new case is safe to collapse the
+ *  it alone. But double check before assuming any new case is safe to collapse the
  *  same way.
  * @param {Array<[string,string]|[string,string,object]>} items
  * @param {string} linkKey
@@ -338,7 +338,7 @@ const SLOT_FILTERS = {
   glove:     { cats: ["Character/Glove"] },
   shoe:      { cats: ["Character/Shoes"] },
   // Primary weapons: Character/Weapon minus the Si secondaries (cosmetics have no stats
-  // and stay here — they're weapons).
+  // and stay here, being weapons).
   weapon:    { where: (_id, entry, stats) => entry.category === "Character/Weapon" && !isSecondaryIslot(stats) },
   // Secondaries: shields plus the Si-coded items mislabeled as Character/Weapon.
   secondary: { where: (_id, entry, stats) => entry.category === "Character/Shield" || (entry.category === "Character/Weapon" && isSecondaryIslot(stats)) },
@@ -408,7 +408,7 @@ for (const [slot, filter] of Object.entries(SLOT_FILTERS)) {
 // (requireSamePrefix, see dedupeByName's doc comment); every other slot has no such
 // cross-slot concern and uses the plain name+icon+stats match.
 if (!ICON_DIR || !existsSync(ICON_DIR)) {
-  console.warn(`⚠ EQUIP_ICON_DIR ${ICON_DIR ? `(${ICON_DIR}) not found` : "unset"} — skipping all slot dedup. Picker may show duplicate names.`);
+  console.warn(`⚠ EQUIP_ICON_DIR ${ICON_DIR ? `(${ICON_DIR}) not found` : "unset"}. Skipping all slot dedup. Picker may show duplicate names.`);
 } else {
   if (outputs.pet && outputs.petequip) {
     const petPrepped = collapseRebootCollabPairs(dropStatlessGhosts(outputs.pet, "wearableEquips"), "wearableEquips");
@@ -431,10 +431,10 @@ if (!ICON_DIR || !existsSync(ICON_DIR)) {
 
 /**
  * Destiny-tier weapons (name-prefixed "Destiny ", onlyEquip) exist in exactly two
- * liberation stages sharing one name — Part 1 (lower upgradeSlots) and Part 2 (one
+ * liberation stages sharing one name: Part 1 (lower upgradeSlots) and Part 2 (one
  * higher). A few weapon types (e.g. Destiny Energy Chain) also carry two class-branch
  * variants distinguished by setItemID, each with its own Part 1/2 pair, so group by
- * (name, setItemID) before ranking — id order matches liberation order in every case
+ * (name, setItemID) before ranking, since id order matches liberation order in every case
  * checked (including the one tie, Destiny Gram, where upgradeSlots alone can't tell
  * them apart). Only labels names that actually form a clean pair.
  * @param {Array<[string,string]|[string,string,object]>} allItems
@@ -458,7 +458,7 @@ function destinyPartLabels(allItems) {
 
 /**
  * Astra secondaries (all named "Astra <Type>") come in 3 enhancement stages sharing one
- * name. Stage order matches ascending id — verified for both id schemes in use: most
+ * name. Stage order matches ascending id, for both id schemes in use: most
  * share a dedicated id range with the stage baked into the trailing digit, but a
  * handful of shield/katara Astra items reuse their base type's id range as a plain
  * sequential triplet instead. Grouping by name and ranking by ascending id handles both
@@ -480,14 +480,14 @@ function astraStageLabels(allItems) {
 }
 
 // Drop confirmed leftover/regional-ghost/cafe-only ids first, before computing any
-// label — a same-name group's disambiguation only needs to account for who's actually
+// label, since a same-name group's disambiguation only needs to account for who's actually
 // left in the served picker, not who the audit also considered and rejected.
 for (const [slot, items] of Object.entries(outputs)) {
   outputs[slot] = items.filter(([id]) => !verdictsByKey.get(`${slot}|${id}`)?.drop);
 }
 
 // Computed across every slot's items combined (not just weapon/secondary individually)
-// since Zero's dual-wield secondary picker pools weapon.json + secondary.json together —
+// since Zero's dual-wield secondary picker pools weapon.json and secondary.json together,
 // a Destiny/Astra name's parts/stages must group correctly regardless of which slot(s)
 // happen to be looked at downstream.
 const survivingItems = Object.values(outputs).flat();
@@ -495,7 +495,7 @@ const destinyLabels = destinyPartLabels(survivingItems);
 const astraLabels = astraStageLabels(survivingItems);
 
 // How many items with this exact (pre-label) name survived the drop pass, per slot.
-// A label exists to tell two same-name rows apart — if the audit dropped every sibling
+// A label exists to tell two same-name rows apart, so if the audit dropped every sibling
 // and only one id is left standing, there's nothing left to disambiguate, so the label
 // (often just verdict leftovers like "9 slots" describing a now-gone non-GMS twin)
 // becomes pure noise. Grouped by slot+name for the same cross-slot-collision reason as
@@ -509,9 +509,9 @@ for (const [slot, items] of Object.entries(outputs)) {
 }
 
 // reqJob bitmask bit per equip branch (Warrior/Magician/Bowman/Thief/Pirate), mirrored
-// from setup/data/classBranch.ts's BRANCH_BIT — keep in sync if that ever changes.
+// from setup/data/classBranch.ts's BRANCH_BIT. Keep in sync if that ever changes.
 const BRANCH_BIT = { warrior: 1, magician: 2, bowman: 4, thief: 8, pirate: 16 };
-// Every class's reqJob bitmask, but ONLY the ones spanning 2+ branches — mirrored from
+// Every class's reqJob bitmask, but only the ones spanning 2+ branches, mirrored from
 // classBranch.ts's CLASS_BRANCHES. Single-branch classes never matter here: a same-
 // name+icon group split one-variant-per-branch (e.g. Challenger Hat) is only ever seen
 // as more than one row by a class whose own mask covers more than one of that group's
@@ -524,15 +524,15 @@ const MULTI_BRANCH_MASKS = [BRANCH_BIT.thief | BRANCH_BIT.pirate]; // Xenon
  * branch" split, each item gated by a single-bit `reqJob` (Warrior xor Magician xor
  * Bowman xor Thief xor Pirate). A disambiguating label on every variant is needed only
  * for the sub-branches a MULTI_BRANCH_MASKS class can see 2+ of at once (currently just
- * Xenon's Thief+Pirate) — every other branch is only ever shown alone in any class's
+ * Xenon's Thief and Pirate). Every other branch is only ever shown alone in any class's
  * picker, so the label is pure noise there (e.g. Lara, single-branch Magician, would
  * see "Challenger Hat (Challenger Set (Magician) · ...)" when a bare "Challenger Hat"
  * is unambiguous for her). Labels are baked in once per id at generation time (not
  * per-viewing-class), so a branch that's part of some other class's ambiguous pair
  * keeps its label everywhere it's shown, even to classes who only ever see that one
- * variant alone — there's no way around that without per-class-conditional serving.
+ * variant alone, and there's no way around that without per-class-conditional serving.
  * Returns the set of ids whose label should be suppressed. Grouped by slot+name, not
- * name alone — an id from one slot must never merge with a same-named id from another
+ * name alone: an id from one slot must never merge with a same-named id from another
  * (e.g. a pet and a weapon can share a name; this has bitten an earlier ad-hoc pinning
  * pass in this project's history).
  * @param {Record<string, Array<[string,string]|[string,string,object]>>} bySlot
