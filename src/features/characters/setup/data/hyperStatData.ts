@@ -52,7 +52,7 @@ export const HYPER_STAT_CATEGORIES: HyperStatCategoryDef[] = [
   { id: "arcanePower", label: "Arcane Power" },
 ];
 
-export const HYPER_STAT_MAX_LEVEL = 15;
+const HYPER_STAT_MAX_LEVEL = 15;
 
 /** In-game Hyper Stats has 3 swappable presets; each holds a full allocation. */
 export const HYPER_STAT_PRESET_COUNT = 3;
@@ -70,7 +70,7 @@ export function sanitizeHyperStatInput(raw: string, maxLevel: number = HYPER_STA
 const HYPER_STAT_LEVEL_COST = [1, 3, 7, 15, 25, 40, 60, 85, 115, 150, 200, 265, 345, 440, 550];
 
 /** Total point cost to reach the given Hyper Stat level (0 for 0 or blank). */
-export function hyperStatCost(level: number): number {
+function hyperStatCost(level: number): number {
   if (level <= 0) return 0;
   return HYPER_STAT_LEVEL_COST[Math.min(level, HYPER_STAT_MAX_LEVEL) - 1] ?? 0;
 }

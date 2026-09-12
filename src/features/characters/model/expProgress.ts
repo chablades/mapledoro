@@ -16,7 +16,7 @@ export function characterExpPercent(level: number, exp: number): number {
  *  level-ups crossed in between (each full level crossed counts as 100%). Uncapped, since
  *  crossing multiple levels can total well past 100%. Returns 0 for a de-level (not a real
  *  in-game scenario) so callers never show a nonsense negative gain. */
-export function netExpPercentGained(fromLevel: number, fromExp: number, toLevel: number, toExp: number): number {
+function netExpPercentGained(fromLevel: number, fromExp: number, toLevel: number, toExp: number): number {
   if (toLevel < fromLevel) return 0;
   if (toLevel === fromLevel) return Math.max(0, percentOfLevel(toLevel, toExp) - percentOfLevel(fromLevel, fromExp));
   const startLevel = Math.max(fromLevel, MIN_EXP_LEVEL);

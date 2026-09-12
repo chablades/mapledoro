@@ -76,7 +76,7 @@ export const LINK_SKILLS: LinkSkillDef[] = [
   { id: "elvenBlessing",         name: "Elven Blessing",          classes: ["Mercedes"],                                                                          maxLevel: 3,  iconId: "20021110", branch: "Heroes" },
 ];
 
-export function inferLinkLevel(level: number): number {
+function inferLinkLevel(level: number): number {
   if (level >= 210) return 3;
   if (level >= 120) return 2;
   if (level >= 70)  return 1;
@@ -85,7 +85,7 @@ export function inferLinkLevel(level: number): number {
 
 /** nexonJobName → which link skill it contributes to. Shared by the setup step
  *  (roster autofill) and the read-only Legion panel (eligible-character grouping). */
-export const CLASS_TO_SKILL: Record<string, LinkSkillId> = {
+const CLASS_TO_SKILL: Record<string, LinkSkillId> = {
   "Cadena":           "unfairAdvantage",
   "Illium":           "tideOfBattle",
   "Ark":              "solus",

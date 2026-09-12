@@ -21,7 +21,7 @@ export const TIER_COLORS: Record<FamiliarTier, { bg: string; border: string; tex
   legendary: { bg: "#001e10", border: "#20a040", text: "#4ade80" },
 };
 
-export const LINES_BY_TIER: Record<FamiliarTier, readonly string[]> = {
+const LINES_BY_TIER: Record<FamiliarTier, readonly string[]> = {
   common: [
     "STR: +6", "DEX: +6", "INT: +6", "LUK: +6",
     "Max HP: +60", "Max MP: +60",
@@ -1672,10 +1672,10 @@ export interface FamiliarStatBonus { flat: number; percent: number }
 // percent the same way as the main stats made a real character's Attack Power/Magic ATT come
 // out wrong (confirmed live), unlike STR/DEX/INT/LUK/HP where it reproduced the real value
 // exactly. Whatever the game does with a familiar's ATT bonus, it isn't this.
-export type FamiliarBonusStatId = "hp" | "str" | "dex" | "int" | "luk";
+type FamiliarBonusStatId = "hp" | "str" | "dex" | "int" | "luk";
 export type FamiliarBonusMap = Record<FamiliarBonusStatId, FamiliarStatBonus>;
 
-export function emptyFamiliarBonusMap(): FamiliarBonusMap {
+function emptyFamiliarBonusMap(): FamiliarBonusMap {
   return {
     hp: { flat: 0, percent: 0 }, str: { flat: 0, percent: 0 }, dex: { flat: 0, percent: 0 },
     int: { flat: 0, percent: 0 }, luk: { flat: 0, percent: 0 },

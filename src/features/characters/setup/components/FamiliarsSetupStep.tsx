@@ -57,18 +57,18 @@ interface FamiliarsSetupStepProps {
 // ── Constants ──────────────────────────────────────────────────────────────
 
 export const PRESET_COUNT = 5;
-export const SLOT_COUNT = 3;
-export const BADGE_COUNT = 8;
+const SLOT_COUNT = 3;
+const BADGE_COUNT = 8;
 const VALID_TIERS = new Set<string>(TIER_ORDER);
 
-export const FAM_CARD_SIZE = 64;
+const FAM_CARD_SIZE = 64;
 // Bigger than the editable setup-step card's sprite -- the profile bookmark's read-only card
 // has no search picker to leave room for, so it can afford a taller card and a larger sprite.
 const FAM_CARD_SIZE_READONLY = 96;
 const FAM_LIST_SIZE = 32;
 export const BADGE_SIZE = 52;
 export const BADGE_BORDER = 4;
-export const PENTAGON = "polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%)";
+const PENTAGON = "polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%)";
 
 // ── Parse / patch helpers ──────────────────────────────────────────────────
 

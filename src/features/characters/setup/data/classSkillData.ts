@@ -77,7 +77,7 @@ export interface ClassSkillData {
 }
 
 // Stats required for every class regardless of type
-export const UNIVERSAL_REQUIRED_STATS: StatFieldId[] = [
+const UNIVERSAL_REQUIRED_STATS: StatFieldId[] = [
   "damage",
   "bossDamage",
   "ignoreDefense",

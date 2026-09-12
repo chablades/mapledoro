@@ -19,10 +19,10 @@
 
 import type { EquipmentLike } from "./equipmentStepDraft";
 
-export type EquipBranch = "warrior" | "magician" | "bowman" | "thief" | "pirate";
+type EquipBranch = "warrior" | "magician" | "bowman" | "thief" | "pirate";
 
 /** reqJob bitmask bit per branch (matches the item data's `reqJob`). */
-export const BRANCH_BIT: Record<EquipBranch, number> = {
+const BRANCH_BIT: Record<EquipBranch, number> = {
   warrior: 1,
   magician: 2,
   bowman: 4,

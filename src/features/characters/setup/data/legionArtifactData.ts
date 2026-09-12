@@ -135,7 +135,7 @@ export function serializeLegionArtifactBoardDraft(draft: LegionArtifactBoardDraf
   return JSON.stringify(draft);
 }
 
-export function sanitizeCrystalLevel(level: number | undefined): number {
+function sanitizeCrystalLevel(level: number | undefined): number {
   return Math.max(MIN_CRYSTAL_LEVEL, Math.min(MAX_CRYSTAL_LEVEL, Math.floor(level ?? MIN_CRYSTAL_LEVEL)));
 }
 
@@ -244,7 +244,7 @@ export function deriveLegionArtifactFields(board: LegionArtifactBoardDraft): { a
   };
 }
 
-export const EMPTY_CRYSTAL: LegionCrystalDraft = { level: MIN_CRYSTAL_LEVEL, stats: [...DEFAULT_CRYSTAL_STATS] };
+const EMPTY_CRYSTAL: LegionCrystalDraft = { level: MIN_CRYSTAL_LEVEL, stats: [...DEFAULT_CRYSTAL_STATS] };
 
 /**
  * A crystal newly unlocked by raising the Artifact Level can still be holding a stored

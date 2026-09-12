@@ -10,7 +10,7 @@ import type { RosterRole } from "./useCharacterSetupController";
 // chips and WorldImportModeScreen's role-transition labels.
 export type ProfileRole = "main" | "champion" | "mule";
 
-export const ROLE_LABEL: Record<ProfileRole, string> = { main: "Main", champion: "Champion", mule: "Mule" };
+const ROLE_LABEL: Record<ProfileRole, string> = { main: "Main", champion: "Champion", mule: "Mule" };
 
 // A character can hold both roles at once (Main AND a Champion slot) -- this formats
 // every role that applies, not just one, falling back to "Mule" when the list is empty.

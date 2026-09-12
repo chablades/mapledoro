@@ -95,7 +95,7 @@ export function sanitizeOzRingLevel(ring: OzRingId, raw: string): string {
 }
 
 /** Parses a raw level string into 1..that ring's max, or null if empty/zero/invalid. */
-export function parseOzRingLevel(ring: OzRingId, raw: string | undefined): number | null {
+function parseOzRingLevel(ring: OzRingId, raw: string | undefined): number | null {
   if (!raw) return null;
   const n = Number.parseInt(raw, 10);
   if (!Number.isFinite(n) || n <= 0) return null;
