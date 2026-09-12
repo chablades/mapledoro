@@ -150,7 +150,7 @@ function readCache(characterName: string): ScouterCacheData | null {
 /** Stores a fresh result under its hash, evicting the oldest entry (by computedAt)
  *  past MAX_CACHE_ENTRIES so an actively-tweaked character doesn't grow unbounded. */
 function storeCacheEntry(characterName: string, hash: string, entry: ScouterResultEntry, existing: ScouterCacheData | null): void {
-  const entries = { ...(existing?.entries ?? {}), [hash]: entry };
+  const entries = { ...existing?.entries, [hash]: entry };
   const hashes = Object.keys(entries);
   if (hashes.length > MAX_CACHE_ENTRIES) {
     const oldest = hashes.toSorted((a, b) => entries[a].computedAt - entries[b].computedAt)[0];

@@ -1590,11 +1590,11 @@ export default function StatsSetupStep({
   }
 
   function handleSetupOptUpdate(patch: Partial<NonNullable<StatsStepDraft["setupOptions"]>>) {
-    updateDraft({ setupOptions: { ...(draft.setupOptions ?? {}), ...patch } });
+    updateDraft({ setupOptions: { ...draft.setupOptions, ...patch } });
   }
 
   function handleScouterQUpdate(patch: Partial<NonNullable<StatsStepDraft["scouterQuestions"]>>) {
-    updateDraft({ scouterQuestions: { ...(draft.scouterQuestions ?? {}), ...patch } });
+    updateDraft({ scouterQuestions: { ...draft.scouterQuestions, ...patch } });
   }
 
   const hyper = normalizeHyperStatDraft(draft.hyperStat);

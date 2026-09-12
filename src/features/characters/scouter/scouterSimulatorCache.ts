@@ -39,7 +39,7 @@ function readCache(characterName: string): ScouterSimulatorCacheData | null {
 }
 
 function storeCacheEntry(characterName: string, hash: string, entry: ScouterResultEntry, existing: ScouterSimulatorCacheData | null): void {
-  const entries = { ...(existing?.entries ?? {}), [hash]: entry };
+  const entries = { ...existing?.entries, [hash]: entry };
   const hashes = Object.keys(entries);
   if (hashes.length > MAX_CACHE_ENTRIES) {
     const oldest = hashes.toSorted((a, b) => entries[a].computedAt - entries[b].computedAt)[0];

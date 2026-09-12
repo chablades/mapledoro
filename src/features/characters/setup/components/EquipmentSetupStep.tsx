@@ -1355,7 +1355,7 @@ function useEquipmentStepState({
   // this "later/override keys win, missing keys fall through" merge for free).
   const activeGrid: SlotMap = activePreset === 0
     ? (draft.presets?.[0] ?? {})
-    : { ...(draft.presets?.[0] ?? {}), ...(draft.presets?.[activePreset] ?? {}) };
+    : { ...draft.presets?.[0], ...draft.presets?.[activePreset] };
   const readSlot = (slot: SlotKey) => (isSharedSlot(slot) ? draft[slot] : activeGrid[slot]);
 
   function commitDraft(next: EquipmentDraft) {
@@ -1378,7 +1378,7 @@ function useEquipmentStepState({
   /** A fresh length-3 array of preset grids (cloned), so edits don't mutate state. */
   function clonePresets(): SlotMap[] {
     const base = draft.presets ?? [];
-    return Array.from({ length: PRESET_COUNT }, (_, i) => ({ ...(base[i] ?? {}) }));
+    return Array.from({ length: PRESET_COUNT }, (_, i) => ({ ...base[i] }));
   }
   const [substep, setSubstep] = useState(() => targetSubstep ?? (direction === "backward" ? 2 : 0));
   // Reports the mount-time default once (so entering a step "backward," which starts
@@ -1449,7 +1449,7 @@ function useEquipmentStepState({
     // Kept as strings (even "0" or "") rather than deleted, so a tile can distinguish
     // "explicitly typed 0" from "never touched" — the controller already excludes sub-1
     // levels when building the calculator's real tools.symbols data.
-    const levels = { ...(draft.symbolLevels ?? {}), ...updates };
+    const levels = { ...draft.symbolLevels, ...updates };
     commitDraft({ ...draft, symbolLevels: levels });
   }
 

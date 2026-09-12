@@ -18,5 +18,5 @@ export function readSavedHexaValue(classDef: HexaClassDef | null, characterName:
   const savedSkills = readCharacterToolData<{ levels?: HexaSkillLevels }>(characterName, "hexaSkills");
   const savedStat = readCharacterToolData<{ nodes?: HexaStatNode[] }>(characterName, "hexaStat");
   if (!savedSkills?.levels && !savedStat?.nodes) return null;
-  return JSON.stringify({ ...(savedSkills?.levels ?? {}), hexaStat: savedStat?.nodes });
+  return JSON.stringify({ ...savedSkills?.levels, hexaStat: savedStat?.nodes });
 }

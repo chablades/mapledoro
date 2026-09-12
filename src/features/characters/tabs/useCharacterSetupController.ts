@@ -208,7 +208,7 @@ function extractSymbolLevels(json: string): Record<string, string> | null {
 
 /** Merge per region: set level, preserving existing calculator fields. */
 function buildSymbolsToolData(existing: SavedSymbols | null, levels: Record<string, string>): SavedSymbols {
-  const symbols: Record<string, SymbolState> = { ...(existing?.symbols ?? {}) };
+  const symbols: Record<string, SymbolState> = { ...existing?.symbols };
   for (const [name, raw] of Object.entries(levels)) {
     const level = Number(raw) || 0;
     const found = findSymbolArea(name);
@@ -713,7 +713,7 @@ function buildFullSetupRecord(
   // would still replace the whole `buffs` object with just that one flag, dropping
   // everything else already saved.
   const buffs = deriveMaxedSacredSymbol(symbolsData)
-    ? { ...existing?.scouter?.buffs, ...(buffsConverted ?? {}), maxedSacredSymbol: true as const }
+    ? { ...existing?.scouter?.buffs, ...buffsConverted, maxedSacredSymbol: true as const }
     : buffsConverted;
   // Same derive-over-manual-answer rule as applyStatsDraftToRoster/applyMapleScouterFlow:
   // real Inner Ability card data wins when it exists; otherwise fall back to this
@@ -1099,7 +1099,7 @@ function hexaValueFromStoredCharacter(hexaClassDef: ReturnType<typeof findClassB
   const savedSkills = storedCharacter.tools?.hexaSkills as { levels?: HexaSkillLevels } | undefined;
   const savedStat = storedCharacter.tools?.hexaStat as { nodes?: HexaStatNode[] } | undefined;
   if (!savedSkills?.levels && !savedStat?.nodes) return "";
-  return JSON.stringify({ ...(savedSkills?.levels ?? {}), hexaStat: savedStat?.nodes });
+  return JSON.stringify({ ...savedSkills?.levels, hexaStat: savedStat?.nodes });
 }
 
 function buildSeededStepTestByStep(jobName: string, storedCharacter: StoredCharacterRecord | null): SetupStepInputById {
