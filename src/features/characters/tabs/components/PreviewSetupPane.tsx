@@ -15,12 +15,6 @@ import QuickSetupIntroScreen from "../screens/QuickSetupIntroScreen";
 import SearchResultPreviewScreen from "../screens/SearchResultPreviewScreen";
 import { panelCardStyle } from "./uiStyles";
 
-// Persists the user's last selected world filter across page refreshes.
-// TODO: When a "Default world" setting is added to the Settings page, read from
-// user preferences here instead of (or as fallback for) this localStorage key.
-// Hook: read `mapledoro_pref_default_world` (number | null) from settings store,
-// and use it as the initial value if present, overriding the localStorage fallback.
-
 interface PreviewSetupPaneProps {
   model: PreviewPaneModel;
   actions: PreviewPaneActions;
