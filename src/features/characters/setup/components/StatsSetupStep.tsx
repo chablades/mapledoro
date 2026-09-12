@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { numericKeyDown, sanitizeDigitsInput, decimalKeyDown, sanitizeDecimalInput } from "../../../../lib/inputUtils";
 import { joinWithAnd } from "../../../../lib/textUtils";
-import type { CSSProperties, ReactNode } from "react";
+import type { CSSProperties } from "react";
 import Image from "next/image";
 import { resourceImageUrl } from "../../../../lib/mapleResource";
 import type { AppTheme } from "../../../../components/themes";
@@ -14,7 +14,7 @@ import type { SetupStepDefinition } from "../steps";
 import type { SetupFlowId } from "../flows";
 import SetupStepFrame from "./SetupStepFrame";
 import InfoTooltip from "./InfoTooltip";
-import { CopyFromPreset } from "./CopyFromPreset";
+import { PresetBar } from "./PresetBar";
 import { statInputStyle, inputSuffixStyle, ChecklistCheckbox, ChecklistGroup, LegionFinalAttackField, InputWarningBubble, scrollToFlaggedField, flaggedValueLinkStyle } from "./QuestionControls";
 import {
   CLASS_SKILL_DATA,
@@ -208,17 +208,6 @@ const successBoxStyle: CSSProperties = {
   borderRadius: "10px",
   padding: "0.65rem 0.85rem",
 };
-
-function presetButtonStyle(theme: AppTheme, on: boolean): CSSProperties {
-  return {
-    border: `1px solid ${on ? theme.accent : theme.border}`,
-    borderRadius: 8,
-    background: on ? theme.accent : theme.bg,
-    color: on ? theme.accentOn : theme.text,
-    fontFamily: "inherit", fontWeight: 800, fontSize: "0.8rem",
-    width: 32, height: 32, cursor: "pointer",
-  };
-}
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -471,46 +460,6 @@ function SingleStatRow({
           />
           <p style={{ margin: 0, marginTop: "0.15rem", fontSize: "0.75rem", color: theme.muted, fontWeight: 700, textAlign: "center" }}>Base Value</p>
         </div>
-      </div>
-    </div>
-  );
-}
-
-function HyperPresetBar({ theme, active, onSwitch, onCopy, onClear, trailing }: {
-  theme: AppTheme;
-  active: number;
-  onSwitch: (n: number) => void;
-  onCopy: (from: number) => void;
-  onClear: () => void;
-  trailing?: ReactNode;
-}) {
-  const indices = Array.from({ length: HYPER_STAT_PRESET_COUNT }, (_, i) => i);
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 12 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <span style={{ fontSize: "0.75rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.05em", color: theme.muted }}>
-          Preset
-        </span>
-        <div style={{ display: "flex", gap: 4 }}>
-          {indices.map((i) => {
-            const on = i === active;
-            return (
-              <button
-                key={i}
-                type="button"
-                className="tap-target-44"
-                onClick={() => onSwitch(i)}
-                style={presetButtonStyle(theme, on)}
-              >
-                {i + 1}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 6 }}>
-        <CopyFromPreset theme={theme} count={HYPER_STAT_PRESET_COUNT} active={active} onCopy={onCopy} onClear={onClear} />
-        {trailing}
       </div>
     </div>
   );
@@ -1467,8 +1416,9 @@ function HyperStatSubstep({
       nextDisabled={anyPresetOverBudget}
       onValidityChange={onValidityChange}
     >
-      <HyperPresetBar
+      <PresetBar
         theme={theme}
+        count={HYPER_STAT_PRESET_COUNT}
         active={hyper.activePreset}
         onSwitch={switchHyperPreset}
         onCopy={copyHyperPreset}

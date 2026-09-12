@@ -13,6 +13,7 @@ import HoverTooltip from "../../../../components/HoverTooltip";
 import type { SetupStepDefinition } from "../steps";
 import CharacterAvatar from "../../tabs/components/CharacterAvatar";
 import SetupStepFrame from "./SetupStepFrame";
+import { PresetBar } from "./PresetBar";
 import { NavChevron } from "../../DropdownChevron";
 import {
   ARCANE_AREAS, SACRED_AREAS, GRAND_SACRED_AREAS,
@@ -191,15 +192,6 @@ const pickerItemStyle = (theme: AppTheme, isCurrent: boolean, isHighlighted: boo
   border: "none", borderBottom: `1px solid ${theme.border}`,
   cursor: "pointer", fontFamily: "inherit",
   fontSize: "0.8rem", fontWeight: 600, color: theme.text, textAlign: "left",
-});
-
-const presetButtonStyle = (theme: AppTheme, on: boolean): CSSProperties => ({
-  border: `1px solid ${on ? theme.accent : theme.border}`,
-  borderRadius: 8,
-  background: on ? theme.accent : theme.bg,
-  color: on ? "#fff" : theme.text,
-  fontFamily: "inherit", fontWeight: 800, fontSize: "0.8rem",
-  width: 34, height: 32, cursor: "pointer",
 });
 
 // Deliberately no opacity on this container: it wraps a HoverTooltip bubble (a real DOM
@@ -704,39 +696,6 @@ function SlotColumn({ slots, grid, theme, activeSlot, onToggle, pickerCtx }: {
   );
 }
 
-// ── Preset bar (3 equipment presets + copy-from) ─────────────────────────────
-
-function PresetBar({ theme, active, onSwitch }: {
-  theme: AppTheme;
-  active: number;
-  onSwitch: (n: number) => void;
-}) {
-  const indices = Array.from({ length: PRESET_COUNT }, (_, i) => i);
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-      <span style={{ fontSize: "0.75rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.05em", color: theme.muted }}>
-        Preset
-      </span>
-      <div style={{ display: "flex", gap: 4 }}>
-        {indices.map((i) => {
-          const on = i === active;
-          return (
-            <button
-              key={i}
-              type="button"
-              className="tap-target-44"
-              onClick={() => onSwitch(i)}
-              style={presetButtonStyle(theme, on)}
-            >
-              {i + 1}
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
 // ── Symbol level tile + section ──────────────────────────────────────────────
 
 // Clamps while preserving the string (blank until touched, matching Oz Rings).
@@ -1215,7 +1174,7 @@ function EquipmentGridSubstep({
       onFinish={onFinish}
       nextLabel={nextLabel}
     >
-      <PresetBar theme={theme} active={activePreset} onSwitch={switchPreset} />
+      <PresetBar theme={theme} count={PRESET_COUNT} active={activePreset} onSwitch={switchPreset} />
       {!confineToSubstep && (
         <p style={{ margin: "0 0 6px", fontSize: "0.75rem", fontWeight: 600, color: theme.muted, textAlign: "center" }}>
           Preset 1 is set as active by default. If you boss on a different preset, change that afterward from your profile.

@@ -12,7 +12,7 @@ import {
   type IADraft, type IAFull, type IALineFull, type IAPresetFull, type IATier,
 } from "../data/innerAbilityData";
 import { TIER_COLORS as IA_TIER_COLORS } from "../data/familiarsData";
-import { CopyFromPreset } from "./CopyFromPreset";
+import { PresetBar } from "./PresetBar";
 
 const PRESET_COUNT = 3;
 
@@ -93,51 +93,6 @@ const iaTierToggleStyle = (theme: AppTheme, tc: SwatchColor, active: boolean): C
   background: active ? tc.border : theme.bg, color: active ? "#fff" : theme.muted,
   fontFamily: "inherit", fontWeight: 800, fontSize: "0.75rem", cursor: "pointer",
 });
-
-const presetButtonStyle = (theme: AppTheme, on: boolean): CSSProperties => ({
-  border: `1px solid ${on ? theme.accent : theme.border}`,
-  borderRadius: 8,
-  background: on ? theme.accent : theme.bg,
-  color: on ? "#fff" : theme.text,
-  fontFamily: "inherit", fontWeight: 800, fontSize: "0.8rem",
-  width: 32, height: 32, cursor: "pointer",
-});
-
-function IAPresetBar({ theme, active, onSwitch, onCopy, onClear }: {
-  theme: AppTheme;
-  active: number;
-  onSwitch: (n: number) => void;
-  onCopy: (from: number) => void;
-  onClear: () => void;
-}) {
-  const indices = Array.from({ length: PRESET_COUNT }, (_, i) => i);
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 12 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <span style={{ fontSize: "0.75rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.05em", color: theme.muted }}>
-          Preset
-        </span>
-        <div style={{ display: "flex", gap: 4 }}>
-          {indices.map((i) => {
-            const on = i === active;
-            return (
-              <button
-                key={i}
-                type="button"
-                className="tap-target-44"
-                onClick={() => onSwitch(i)}
-                style={presetButtonStyle(theme, on)}
-              >
-                {i + 1}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-      <CopyFromPreset theme={theme} count={PRESET_COUNT} active={active} onCopy={onCopy} onClear={onClear} />
-    </div>
-  );
-}
 
 /** Colored grade banner ("Legendary Ability") that opens a 4-tier grade selector. */
 function IAGradeHeader({ grade, openId, theme, onToggle, onClose, onPick, onClear, onNext }: {
@@ -464,7 +419,7 @@ export default function InnerAbilitySetupStep({ draft, onUpdate, theme, showActi
 
   return (
     <div ref={zoneRef} style={{ maxWidth: 360, display: "flex", flexDirection: "column", gap: 6 }}>
-      <IAPresetBar theme={theme} active={ia.activePreset} onSwitch={setPreset} onCopy={copyPreset} onClear={clearGrade} />
+      <PresetBar theme={theme} count={PRESET_COUNT} active={ia.activePreset} onSwitch={setPreset} onCopy={copyPreset} onClear={clearGrade} />
       {showActivePresetHint && (
         <p style={{ margin: "0 0 6px", fontSize: "0.75rem", fontWeight: 600, color: theme.muted }}>
           Preset 1 is set as active by default. If you boss on a different preset, change that afterward from your profile.
