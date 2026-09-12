@@ -139,7 +139,7 @@ export default function PreviewSetupPane({ model, actions }: PreviewSetupPanePro
   // class back to step-forward mid-animation (or after), restarting a second, different
   // animation on top of one that had already played. Setting state during render (rather
   // than a ref) is the React-sanctioned way to derive a value once and hold it across
-  // renders — see "adjusting state when a prop changes" in the React docs.
+  // renders. See "adjusting state when a prop changes" in the React docs.
   const [lockedInitialRevealKey, setLockedInitialRevealKey] = useState<string | null>(null);
   if (lockedInitialRevealKey === null && setup.suppressLayoutTransition) {
     setLockedInitialRevealKey(contentKey);
@@ -158,7 +158,7 @@ export default function PreviewSetupPane({ model, actions }: PreviewSetupPanePro
     activeScreenId === "profile-overview",
   );
 
-  // Persist world filter changes — stores the explicit user choice. The background
+  // Persist world filter changes, storing the explicit user choice. The background
   // refresh only ever sweeps the world on screen, so switching is also what queues the
   // newly-shown world's stale characters (a no-op when none of them are out of date).
   const handleWorldFilterChange = (worldId: number | null) => {

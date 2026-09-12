@@ -19,7 +19,8 @@ export interface CharacterMarriage {
 
 export interface CharacterSoul {
   type: "mugong" | "ephenia" | "none" | null;
-  // Applies to whichever soul `type` is active — Mu Gong and Ephenia both have real Lv 1/Lv 2 tiers.
+  // Applies to whichever soul `type` is active. Mu Gong and Ephenia both have Lv 1 and Lv 2
+  // tiers.
   soulLevel: 1 | 2 | null;
 }
 
@@ -80,12 +81,12 @@ export interface StoredScouterBuffs {
   renown?: Partial<Record<"allStats" | "atkMagAtk" | "bossDmg" | "ignoreDef" | "critDmg", number>>;
 }
 
-/** MapleScouter-flow inputs — character data fed to the ranking, NOT a tool. */
+/** MapleScouter-flow inputs: character data fed to the ranking, not a tool. */
 export interface StoredScouterData {
   ozRings?: StoredOzRings;
   buffs?: StoredScouterBuffs;
   /** Scouter-relevant legendary Inner Ability line. "neither" is a real, deliberate answer
-   *  (not the same as unanswered/undefined) — must round-trip like any other value. */
+   *  rather than the same as unanswered, so it must round-trip like any other value. */
   innerAbilityLine?: "passive" | "multiTarget" | "neither";
 }
 
@@ -106,17 +107,17 @@ export interface StoredFamiliarPreset {
   badges: string[];
 }
 
-/** Character-bound Familiars setup data — real per-character game data, not a tool
- *  (no standalone `/tools/familiars` page reads/writes this). */
+/** Character-bound Familiars setup data: per-character game data, not a tool, since no
+ *  standalone `/tools/familiars` page reads or writes this. */
 export interface StoredFamiliarsData {
   presets: StoredFamiliarPreset[];
-  /** Which preset (0-4) is the one actually equipped in-game. Always saved as 0 —
-   *  same policy as Equipment/Hyper Stat/Inner Ability/HEXA Stat's activePreset. */
+  /** Which preset, 0 to 4, is the one equipped in-game. Always saved as 0, the same policy
+   *  as Equipment, Hyper Stat, Inner Ability and HEXA Stat's activePreset. */
   activePreset: number;
 }
 
-/** Character-bound V Matrix node levels — real per-character game data, not a tool
- *  (no standalone `/tools/v-matrix` page reads/writes this). */
+/** Character-bound V Matrix node levels: per-character game data, not a tool, since no
+ *  standalone `/tools/v-matrix` page reads or writes this. */
 export interface StoredVMatrixData {
   levels: Record<string, number>;
 }
@@ -125,16 +126,16 @@ export interface StoredVMatrixData {
 export type WhLegionRank = "B" | "A" | "S" | "SS" | "SSS";
 
 /** Per-character link skill levels. Mastery of a link skill is genuinely shared across a
- *  world's roster (summed per contributing class, see computeLinkSkillsFromRoster) -- a
- *  same-world Bishop and Arch Mage F/P read the identical Empirical Knowledge total. But
- *  a link skill also has to be EQUIPPED to affect a given character (limited equip slots),
- *  so mastering a link via one alt doesn't mean every other character on the account is
- *  running it. This is why storage lives per-character, not per-world: a character's own
+ *  world's roster, summed per contributing class (see computeLinkSkillsFromRoster), so a
+ *  same-world Bishop and Arch Mage F/P read the identical Empirical Knowledge total. But a link
+ *  skill also has to be equipped to affect a given character, and equip slots are limited, so
+ *  mastering a link through one alt does not mean every character on the account is running it.
+ *  That is why storage lives per character rather than per world: a character's own
  *  value is floored by what the roster proves is mastered, but is independently editable
- *  at or above that floor -- a Kanna that doesn't equip Hoyoung's link stores 0 for Bravado
- *  even if a same-world Hoyoung has mastered it to 3. See linkSkillsData.ts's
- *  computeLinkSkillsFromRoster (the floor) and propagateLinkSkillFloors (the sibling
- *  floor-raise sync that keeps stale floors from lingering after a later alt is added). */
+ *  at or above that floor. A Kanna that does not equip Hoyoung's link stores 0 for Bravado
+ *  even when a same-world Hoyoung has mastered it to 3. See computeLinkSkillsFromRoster in
+ *  linkSkillsData.ts for the floor, and propagateLinkSkillFloors for the sibling floor-raise
+ *  sync that keeps stale floors from lingering once a later alt is added. */
 export type LinkSkillId =
   | "unfairAdvantage" | "tideOfBattle" | "solus" | "timeToPrepare"
   | "termsAndConditions" | "elementalism" | "qiCultivation" | "bravado"
@@ -166,8 +167,8 @@ const LINK_SKILL_IDS = new Set<LinkSkillId>([
 export const LEGION_ARTIFACT_FINAL_ATK_MAX = 30;
 
 /** One Legion Artifact Crystal: a level (0-5) and up to 3 assigned stat lines (by id,
- *  see LegionArtifactStatId in setup/data/legionArtifactData.ts — kept as a loose string
- *  here to avoid the model layer depending on setup/data). */
+ *  see LegionArtifactStatId in setup/data/legionArtifactData.ts, kept as a loose string here
+ *  so the model layer does not depend on setup/data). */
 export interface StoredLegionCrystal {
   level: number;
   stats: (string | null)[];
@@ -178,13 +179,13 @@ export interface StoredLegionCrystal {
  * derived from the highest Wild Hunter in that world's roster. `artifactExtraTarget`/
  * `artifactFinalAttackDmg` are the 2 fields MapleScouter's API needs; MapleScouter setup
  * asks for them directly, full_setup derives them from the real Legion Artifact board
- * (`StoredLegionArtifact`, below) instead — see legionArtifactData.ts and
+ * (`StoredLegionArtifact`, below) instead. See legionArtifactData.ts and
  * useCharacterSetupController.ts's applyScouterLegionForWorld.
  */
 export interface StoredScouterLegion {
-  // "none" is a real, deliberate "No Wild Hunter" answer, distinct from `undefined`
-  // ("never answered this question") -- see resolveWhLegionRank's own comment in
-  // useCharacterSetupController.ts for why the distinction matters.
+  // "none" is a deliberate "No Wild Hunter" answer, distinct from `undefined`, which means the
+  // question was never answered. See resolveWhLegionRank in useCharacterSetupController.ts for
+  // why the distinction matters.
   wildHunterRank?: WhLegionRank | "none";
   /** "+1 targets hit on multi-target skills & EXP acquired" artifact is active. */
   artifactExtraTarget?: boolean;
@@ -193,9 +194,9 @@ export interface StoredScouterLegion {
 }
 
 /**
- * Per-world account-level Legion Artifact progress — the real game data (full_setup's
- * dedicated step), as opposed to `StoredScouterLegion`'s 2 fields derived FROM it for
- * MapleScouter's API.
+ * Per-world Legion Artifact progress: the real game data collected by full_setup's dedicated
+ * step, as opposed to the 2 fields `StoredScouterLegion` derives from it for MapleScouter's
+ * API.
  */
 export interface StoredLegionArtifact {
   /** Legion Artifact level (0-60); gates which of the 9 crystals are unlocked. */
@@ -225,19 +226,19 @@ export interface StoredCharacterStats {
   summonDuration: string;
   arcanePower: string;
   sacredPower: string;
-  /** Resource bar shown alongside HP — a raw number, not a triple field. Labeled "MP"
-   *  by default; some classes replace it entirely (Demon Fury/Time Force/Psychic
-   *  Points), see ClassSkillData.resourceLabel. Profile-pencil only (never asked in
-   *  the guided Setup flows), and optional for back-compat with records saved before
-   *  it was collected. */
+  /** Resource bar shown alongside HP, a raw number rather than a triple field. Labeled "MP"
+   *  by default, though some classes replace it entirely with Demon Fury, Time Force or
+   *  Psychic Points, see ClassSkillData.resourceLabel. Profile-pencil only, never asked in
+   *  the guided Setup flows, and optional for back-compat with records saved before it was
+   *  collected. */
   mp?: string;
   /** In-game Character Info window stat. Profile-pencil only, same reasoning as mp. */
   normalEnemyDamage?: string;
   /** Hyper Stat allocation (3 swappable presets). Optional for back-compat with
    *  records saved before hyper stat was collected. */
   hyperStat?: StoredHyperStat;
-  /** Inner Ability (3 swappable presets, each with 3 tiered lines) — a Character Info
-   *  fact (found in the in-game Stats window), collected on the Stats setup step. */
+  /** Inner Ability, 3 swappable presets with 3 tiered lines each. A Character Info fact,
+   *  found in the in-game Stats window, collected on the Stats setup step. */
   innerAbility?: StoredInnerAbility;
 }
 
@@ -246,7 +247,7 @@ export interface StoredEquipmentItem {
   name: string;
 }
 
-/** The per-preset equipment grid — everything that swaps between in-game equip presets. */
+/** The per-preset equipment grid: everything that swaps between in-game equip presets. */
 export interface StoredEquipmentPreset {
   rings: [StoredEquipmentItem | null, StoredEquipmentItem | null, StoredEquipmentItem | null, StoredEquipmentItem | null];
   face: StoredEquipmentItem | null;
@@ -310,22 +311,22 @@ export interface ExpHistoryEntry {
 const EXP_HISTORY_MAX_DAYS = 90;
 export const EXP_HISTORY_DAY_MS = 24 * 60 * 60 * 1000;
 
-// Nexon's own character/ranking data only actually refreshes once per real-world day, via a
-// batch job observed kicking off at 16:00 UTC and almost always finishing by 17:00 UTC --
-// rare outliers run to ~17:30 UTC, never later than that so far. Not at UTC midnight. A
-// refresh taken before that update lands still returns the PREVIOUS day's frozen snapshot, so
-// which day a snapshot belongs to needs to be anchored to Nexon's own update cadence, not
-// literal UTC midnight-to-midnight. Padded ~30min past the observed worst case so an
-// occasionally-delayed update doesn't get misread as having already landed for the day --
-// tightened from a much wider, less-informed 3hr pad after a real refresh landed in the old
-// dead zone and got folded into the previous day's entry instead of creating its own (two
-// real days' gains merged into one inflated delta). Revisit the margin if a delayed update is
-// ever observed running later than ~17:30 UTC.
+// Nexon's character and ranking data refreshes once per real-world day, through a batch job
+// observed starting at 16:00 UTC and almost always finishing by 17:00 UTC, with rare outliers
+// running to about 17:30 UTC and none later so far. Not at UTC midnight. A refresh taken before
+// that update lands returns the previous day's frozen snapshot, so which day a snapshot belongs
+// to has to be anchored to Nexon's update cadence rather than literal UTC midnight.
+//
+// Padded about 30 minutes past the observed worst case so a delayed update is not misread as
+// having already landed. Tightened from a much wider 3 hour pad after a refresh landed in the
+// old dead zone and was folded into the previous day's entry instead of creating its own,
+// merging two days of gains into one inflated delta. Revisit the margin if a delayed update is
+// ever seen running later than about 17:30 UTC.
 export const NEXON_DAILY_UPDATE_CUTOFF_HOUR_UTC = 18;
 
-/** Which "Nexon day" a timestamp falls into -- an integer that's equal for any two
- *  timestamps between one NEXON_DAILY_UPDATE_CUTOFF_HOUR_UTC and the next. Shared with the
- *  EXP chart's own date-bucketing/labeling so storage and display always agree. */
+/** Which "Nexon day" a timestamp falls into: an integer equal for any two timestamps between
+ *  one NEXON_DAILY_UPDATE_CUTOFF_HOUR_UTC and the next. Shared with the EXP chart's own date
+ *  bucketing and labeling so storage and display always agree. */
 export function nexonDayIndex(ms: number): number {
   return Math.floor((ms - NEXON_DAILY_UPDATE_CUTOFF_HOUR_UTC * 60 * 60 * 1000) / EXP_HISTORY_DAY_MS);
 }
@@ -351,8 +352,8 @@ export function appendExpHistoryEntry(
   return [...pruned, { date: now, level, exp }];
 }
 
-// Key Stats is deliberately not one of these -- it's fixed chrome at the top of every
-// Overview layout (alongside the Scouter figure/WSE row), never customizable.
+// Key Stats is deliberately not one of these. It is fixed chrome at the top of every Overview
+// layout, alongside the Scouter figure and WSE row, and never customizable.
 export type OverviewSectionId =
   | "arcaneSymbols"
   | "hexaStat"
@@ -408,12 +409,12 @@ export interface StoredCharacterRecord {
 }
 
 /** Mergeable sections offered by the JSON import conflict picker when the imported
- *  IGN already exists. `identity` bundles gender/marriage/isLiberated/weaponHand/
- *  hasRuinForceShield into one row -- these are exactly the fields the Bio
- *  bookmark's edit pencil lets a user hand-correct post-setup, so treating them
- *  separately from "always take imported" avoids silently reverting a correction.
- *  `soul` rides along with `scouter` instead (it's scouter-feeding data, not
- *  something the Bio bookmark surfaces) -- see mergeImportedCharacterRecord. */
+ *  IGN already exists. `identity` bundles gender, marriage, isLiberated, weaponHand and
+ *  hasRuinForceShield into one row, since those are exactly the fields the Bio bookmark's edit
+ *  pencil lets someone hand-correct after setup, so keeping them separate from a blanket
+ *  take-imported avoids reverting a correction. `soul` rides along with `scouter` instead,
+ *  being scouter-feeding data the Bio bookmark never surfaces. See
+ *  mergeImportedCharacterRecord. */
 export type ImportSectionId =
   | "identity"
   | "stats"
@@ -426,8 +427,8 @@ export type ImportSectionId =
   | "expHistory"
   | "overviewLayout";
 
-// Display order for the import conflict picker -- tuned by hand, not derived from any
-// other ordering (e.g. the profile's own bookmark order).
+// Display order for the import conflict picker, tuned by hand rather than derived from another
+// ordering such as the profile's bookmark order.
 export const IMPORT_SECTION_DEFS: { id: ImportSectionId; label: string }[] = [
   { id: "overviewLayout", label: "Overview Layout" },
   { id: "identity", label: "Gender & Marriage" },
@@ -818,15 +819,15 @@ export function parseStoredCharacterRecord(
   };
 }
 
-// The only host characterImgURL is ever legitimately set to (Nexon's own ranking API --
-// see api/characters/lookup/route.ts) and the one already allowlisted for it in
-// next.config.mjs. A JSON import is untrusted input; without this check, a crafted
+// The only host characterImgURL is ever legitimately set to, Nexon's own ranking API (see
+// api/characters/lookup/route.ts), and the one already allowlisted for it in next.config.mjs.
+// A JSON import is untrusted input, and without this check a crafted
 // characterImgURL renders as a real <img src> the moment the preview card mounts,
 // before the user has confirmed anything, leaking their IP to an attacker-chosen host.
 const TRUSTED_CHARACTER_IMAGE_HOST = "msavatar1.nexon.net";
 
-// Mirrors CharacterAvatar.tsx's own FALLBACK_SRC -- duplicated rather than imported since
-// that's a "use client" component file and this is a plain data module.
+// Mirrors FALLBACK_SRC in CharacterAvatar.tsx, duplicated rather than imported because that is
+// a "use client" component file and this is a plain data module.
 const FALLBACK_AVATAR_SRC = "https://haku.network/api/img/avatar/2000/stand1.png";
 
 function isTrustedCharacterImageUrl(url: string): boolean {
@@ -838,11 +839,11 @@ function isTrustedCharacterImageUrl(url: string): boolean {
 }
 
 /** Parses/validates an unknown JSON value as an importable StoredCharacterRecord.
- *  Reuses parseStoredCharacterRecord's exact defensiveness -- import accepts
- *  anything export can produce, nothing stricter -- except characterImgURL, which is
- *  re-checked against the one real host it can ever legitimately be (see
- *  isTrustedCharacterImageUrl), falling back to CharacterAvatar's own FALLBACK_SRC
- *  rather than trusting an arbitrary URL from an untrusted file. */
+ *  Reuses parseStoredCharacterRecord's defensiveness exactly, so import accepts anything
+ *  export can produce and nothing stricter. The exception is characterImgURL, re-checked
+ *  against the one host it can legitimately be (see isTrustedCharacterImageUrl) and falling
+ *  back to CharacterAvatar's FALLBACK_SRC rather than trusting an arbitrary URL from an
+ *  untrusted file. */
 export function parseImportedCharacterRecord(value: unknown): StoredCharacterRecord | null {
   const record = parseStoredCharacterRecord(value, null);
   if (!record) return null;
@@ -853,10 +854,10 @@ export function parseImportedCharacterRecord(value: unknown): StoredCharacterRec
 /** Merges `imported` onto `existing` one ImportSectionId at a time: "mine" keeps
  *  existing's value untouched, "imported" takes imported's value. Required
  *  non-sectioned scalars (level, exp, jobName, rank/score fields, characterImgURL,
- *  fetchedAt/expiresAt) always come from imported wholesale, since keeping "mine"
- *  for those is meaningless -- they're refreshed by the app's own lookup elsewhere,
- *  not something a user hand-edits. meta.addedAt always keeps existing's value;
- *  meta.updatedAt is always Date.now(), matching the persist effect's own convention. */
+ *  fetchedAt and expiresAt) always come from imported wholesale, since keeping the existing
+ *  value is meaningless for fields the app's own lookup refreshes and nobody hand-edits.
+ *  meta.addedAt always keeps the existing value, and meta.updatedAt is always Date.now(),
+ *  matching the persist effect's convention. */
 export function mergeImportedCharacterRecord(
   existing: StoredCharacterRecord,
   imported: StoredCharacterRecord,
@@ -890,12 +891,12 @@ export function mergeImportedCharacterRecord(
   };
 }
 
-/** One world's worth of exportable data -- every character on that world plus the
- *  world-scoped facts no per-character export can carry (Legion Artifact board,
- *  its MapleScouter-derived summary, and Main/Champion role assignments). Roles are
- *  carried as character keys (toCharacterKey, i.e. lowercased IGN), not the internal
- *  characterID -- see this feature's own CLAUDE.md: characterID is never a stable
- *  identity. Resolving a role back to a real character happens at apply-time, after
+/** One world's worth of exportable data: every character on that world plus the world-scoped
+ *  facts no per-character export can carry, meaning the Legion Artifact board, its
+ *  MapleScouter-derived summary, and Main and Champion role assignments. Roles are
+ *  carried as character keys from toCharacterKey, meaning the lowercased IGN, rather than the
+ *  internal characterID, which this feature's CLAUDE.md notes is never a stable identity.
+ *  Resolving a role back to a real character happens at apply time, after
  *  that character has actually been upserted into the importing account's roster. */
 export interface WorldExportPayload {
   kind: "world";
@@ -911,16 +912,16 @@ export interface WorldExportPayload {
 /** Parses/validates an unknown JSON value as an importable WorldExportPayload.
  *  Each character reuses parseImportedCharacterRecord's exact defensiveness; invalid
  *  characters are dropped rather than failing the whole import. Role keys are only
- *  checked for shape here (string / string array) -- whether they actually match one
- *  of `characters` is a decision for the apply step, not this parser.
+ *  checked for shape here, a string or string array. Whether they match one of `characters` is
+ *  a decision for the apply step rather than this parser.
  *
  *  Rejects the whole payload if `characters` exceeds MAX_CHARACTERS_PER_WORLD, or if any
  *  two characters share the same IGN (case-insensitive, the same identity toCharacterKey
- *  uses everywhere) -- exportWorldJson can never produce either (it only ever writes one
- *  world's own roster, itself capped at MAX_CHARACTERS_PER_WORLD with every IGN unique),
- *  so a file that violates either was hand-edited or corrupted, not a real MapleDoro
- *  export. Both are a hard reject, not a silent truncate/dedupe, so nothing is quietly
- *  dropped without the user knowing the file itself is the problem. */
+ *  uses everywhere). exportWorldJson can produce neither, since it writes one world's roster,
+ *  itself capped at MAX_CHARACTERS_PER_WORLD with every IGN unique, so a file violating either
+ *  was hand-edited or corrupted rather than a real export. Both are a hard reject rather than a
+ *  silent truncate or dedupe, so nothing is dropped without the user learning the file itself
+ *  is the problem. */
 export function parseImportedWorldPayload(value: unknown): WorldExportPayload | null {
   if (!isObject(value) || value.kind !== "world" || typeof value.worldID !== "number") return null;
   if (!Array.isArray(value.characters)) return null;
@@ -988,10 +989,10 @@ function parseLinkSkillsEntry(val: Record<string, unknown>): LinkSkillsData {
   return entry;
 }
 
-/** Per-character `linkSkills` field parse -- unlike vMatrix's untyped `parseOptionalRecord`,
- *  this validates real shape (drops unknown skill ids/non-number levels) via the same
- *  `parseLinkSkillsEntry` the old per-world map used, since link skill levels feed directly
- *  into the Scouter damage calc payload and a malformed value there isn't just cosmetic. */
+/** Per-character `linkSkills` field parse. Unlike vMatrix's untyped `parseOptionalRecord`,
+ *  this validates shape, dropping unknown skill ids and non-number levels, via the same
+ *  `parseLinkSkillsEntry` the old per-world map used. Link skill levels feed directly into
+ *  the Scouter damage calc payload, where a malformed value isn't merely cosmetic. */
 function parseOptionalLinkSkills(raw: unknown): LinkSkillsData | undefined {
   if (!isObject(raw)) return undefined;
   const entry = parseLinkSkillsEntry(raw);
@@ -1097,8 +1098,8 @@ function parseLegionArtifactByWorld(raw: unknown): Record<string, StoredLegionAr
 }
 
 /** Exported for the Drive restore preview (Settings), which parses the backup's
- *  copy of this store the same way a real load would -- returning null on a
- *  version mismatch rather than guessing at an unknown shape. */
+ *  copy of this store the way a real load would, returning null on a version mismatch rather
+ *  than guessing at an unknown shape. */
 export function parseCharactersStore(raw: string): CharactersStore | null {
   try {
     const parsed = JSON.parse(raw) as unknown;
@@ -1154,20 +1155,20 @@ export function writeLegionArtifactForWorld(worldId: number, value: StoredLegion
 
 /* Parsed-store cache, keyed on the exact raw string it was parsed from.
  *
- * readCharactersStore() is called many times per interaction -- every tool read
- * goes through characterToolStorage, which reads the whole store per key -- and
- * parsing dominates: ~3.8ms for a 60 character roster against ~0.02ms to compare
- * the raw string. Keying on the string rather than invalidating explicitly means
- * any write that bypasses writeCharactersStore (Settings' hard reset, devtools,
+ * readCharactersStore() is called many times per interaction, since every tool read goes
+ * through characterToolStorage, which reads the whole store per key, and parsing dominates:
+ * about 3.8ms for a 60 character roster against 0.02ms to compare the raw string. Keying on
+ * the string rather than invalidating explicitly means any write that bypasses
+ * writeCharactersStore (Settings' hard reset, devtools,
  * another tab) self-heals on the next read, with no storage listener to maintain
  * and no way for the cache to serve data that is no longer on disk.
  *
  * Never populated during SSR: readCharactersStore returns early without a window,
  * so this module-level state can't leak between requests on the server.
  *
- * Every caller gets the same object back, which is only safe because nothing
- * mutates a read result without persisting it -- characterToolStorage is the sole
- * mutator and it writes on the next line. Keep it that way. */
+ * Every caller gets the same object back, which is only safe because nothing mutates a read
+ * result without persisting it. characterToolStorage is the sole mutator and writes on the
+ * next line. Keep it that way. */
 let cachedRaw: string | null = null;
 let cachedStore: CharactersStore | null = null;
 
@@ -1181,18 +1182,17 @@ export function writeCharactersStore(store: CharactersStore) {
     window.localStorage.setItem(CHARACTERS_STORE_STORAGE_KEY, raw);
     // Seed the cache with what was just persisted: the serialization is already
     // paid for here, so the read that follows a write is a hit rather than a
-    // re-parse. `store` stands in for parseCharactersStore(raw) on the assumption
-    // that callers write well-formed stores -- parsing normalizes untrusted
-    // persisted data, not values the app just built.
+    // re-parse. `store` stands in for parseCharactersStore(raw) on the assumption that callers
+    // write well-formed stores, since parsing normalizes untrusted persisted data rather than
+    // values the app just built.
     cachedRaw = raw;
     cachedStore = store;
     clearStorageWriteFailure("characters");
   } catch {
-    // This store is the only copy of the player's character data, so swallowing
-    // the failure silently loses whatever change triggered the write -- the app
-    // goes on showing state that never reached disk. Surface it instead; the
-    // realistic causes are a full quota (this payload grows with roster size)
-    // and storage being blocked entirely.
+    // This store is the only copy of the player's character data, so swallowing the failure
+    // loses whatever change triggered the write and leaves the app showing state that never
+    // reached disk. Surface it instead. The realistic causes are a full quota, since this
+    // payload grows with roster size, and storage being blocked entirely.
     //
     // Drop the cache rather than seeding it: `store` holds a change that never
     // reached disk, and reads after a failed write must reflect what actually

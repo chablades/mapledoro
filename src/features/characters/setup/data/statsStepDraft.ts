@@ -119,35 +119,34 @@ export interface StatsStepDraft {
 /** Minimum character level to unlock Genesis Liberation. */
 export const GENESIS_LIBERATION_LEVEL = 255;
 
-// Both are real per-class weapon names (e.g. "Genesis Sword"/"Destiny Sword") only
-// obtainable by completing the Genesis Liberation questline — Destiny is the weapon's
-// pre-upgrade form, Genesis its fully-grown one. Equipping either is definitive proof
-// of liberation, unlike most setup questions which are genuine self-reports.
+// Both are per-class weapon names, such as "Genesis Sword" and "Destiny Sword", obtainable
+// only by completing the Genesis Liberation questline. Destiny is the weapon's pre-upgrade
+// form and Genesis its fully-grown one. Equipping either is definitive proof of liberation,
+// unlike most setup questions, which are self-reports.
 const LIBERATION_WEAPON_NAME_PREFIXES = ["Genesis ", "Destiny "];
 
-/** The active preset's weapon name, if it's a Genesis/Destiny liberation weapon — lets
- *  the UI name the specific weapon it detected instead of just saying "your weapon". */
+/** The active preset's weapon name, if it's a Genesis or Destiny liberation weapon. Lets the
+ *  UI name the weapon it detected instead of saying "your weapon". */
 export function getLiberationWeaponName(equipment: EquipmentLike | null | undefined): string | undefined {
   const weaponName = equipment?.presets?.[equipment.activePreset]?.weapon?.name;
   if (!weaponName) return undefined;
   return LIBERATION_WEAPON_NAME_PREFIXES.some((prefix) => weaponName.startsWith(prefix)) ? weaponName : undefined;
 }
 
-/** True/false whenever the active preset has a weapon on file — Genesis Liberation's
- *  Final Damage bonus lives on the weapon item itself (not a permanent character-wide
- *  flag), so a real, non-genesis weapon there is just as definitive proof of "not
- *  liberated right now" as a Genesis/Destiny one is proof of "liberated". Undefined only
- *  when there's no weapon there at all yet (Equipment step not entered for this preset) —
- *  genuinely ambiguous, not proof either way. */
+/** True or false whenever the active preset has a weapon on file. Genesis Liberation's Final
+ *  Damage bonus lives on the weapon item itself rather than a character-wide flag, so a
+ *  non-Genesis weapon there is as definitive a proof of not liberated as a Genesis or Destiny
+ *  one is of liberated. Undefined only when there's no weapon there yet, meaning the Equipment
+ *  step was never entered for this preset, which is ambiguous rather than proof either way. */
 export function deriveIsLiberatedFromWeapon(equipment: EquipmentLike | null | undefined): boolean | undefined {
   const weaponName = equipment?.presets?.[equipment.activePreset]?.weapon?.name;
   if (!weaponName) return undefined;
   return LIBERATION_WEAPON_NAME_PREFIXES.some((prefix) => weaponName.startsWith(prefix));
 }
 
-/** True/false whenever the active preset's secondary slot has an item on file; undefined
- *  when it's empty (ambiguous: never equipped there, or Equipment step never entered — an
- *  empty secondary is also just a normal, common real state for most classes). */
+/** True or false whenever the active preset's secondary slot has an item on file, undefined
+ *  when it's empty. Empty is ambiguous: never equipped there, or the Equipment step never
+ *  entered. An empty secondary is also a normal, common state for most classes. */
 export function deriveHasRuinForceShield(equipment: EquipmentLike | null | undefined): boolean | undefined {
   const secondary = equipment?.presets?.[equipment.activePreset]?.secondary;
   if (!secondary) return undefined;
@@ -160,9 +159,9 @@ export const ARCANE_POWER_LEVEL = 200;
 /** Minimum character level to unlock Sacred Symbols / Sacred Power. */
 export const SACRED_POWER_LEVEL = 260;
 
-// A character below the unlock level (or still on a pre-advancement legacy job) can
-// never have this symbol type at all — "undefined level = assume eligible" so an
-// unknown level (e.g. a lookup that hasn't resolved yet) doesn't wrongly hide the field.
+// A character below the unlock level, or still on a pre-advancement legacy job, can never
+// have this symbol type. An undefined level counts as eligible so an unresolved lookup
+// doesn't wrongly hide the field.
 export function isArcaneEligible(characterLevel: number | undefined, isLegacy: boolean | undefined): boolean {
   if (isLegacy) return false;
   return characterLevel === undefined || characterLevel >= ARCANE_POWER_LEVEL;
@@ -221,9 +220,9 @@ function draftHyperStatToStored(draft: HyperStatDraft | undefined): StoredHyperS
     }
     return out;
   });
-  // Always saved as preset 1 — the tab switcher used to view/edit each preset isn't an
-  // explicit "this is my active loadout" choice, so trusting it would silently save
-  // whatever preset was last open while editing.
+  // Always saved as preset 1. The tab switcher used to view and edit each preset isn't an
+  // explicit "this is my active loadout" choice, so trusting it would save whatever preset
+  // happened to be open last while editing.
   return { presets, activePreset: 0 };
 }
 
@@ -304,7 +303,7 @@ function storedInnerAbilityToDraft(stored: StoredInnerAbility | undefined): IADr
 }
 
 /**
- * Reverse of convertStatsStepDraftToStored — rebuilds a StatsStepDraft from a
+ * Reverse of convertStatsStepDraftToStored. Rebuilds a StatsStepDraft from a
  * character's already-saved stats. Without this, opening the Stats step for an
  * already-set-up character (e.g. the profile bookmark's edit pencil) starts from a
  * blank draft; since convertStatsStepDraftToStored always emits a fully-populated
@@ -378,8 +377,8 @@ export function marriageDraftToStored(marriageRaw: string): CharacterMarriage | 
 // component mounted. See isStatsWindowSubstepValid below for why this matters:
 // MapleScouter's per-substep validity used to be a self-reported cache that only
 // refreshed when its own component happened to remount, which went stale the moment
-// the shared draft changed under a DIFFERENT flow — this makes it a live, stateless
-// check instead, so there's no cache to go stale.
+// the shared draft changed under another flow. This makes it a live, stateless check
+// instead, so there's no cache to go stale.
 
 export const TRIPLE_IDS = new Set<string>(TRIPLE_STAT_FIELDS.map((f) => f.id));
 export const MAIN_STAT_IDS = new Set<string>(["str", "dex", "int", "luk"]);
@@ -390,10 +389,10 @@ export const COMBAT_RIGHT: StatFieldId[] = [
   "damage", "bossDamage", "criticalRate", "criticalDamage", "buffDuration", "ignoreElementalResistance", "summonDuration",
 ];
 
-// Sanity thresholds mirroring MapleScouter's own input validation — catches the Total-vs-
-// Base main-stat mix-up before the user ever hits MapleScouter's own (Korean-only) error
-// popups. These are MapleScouter's sanity bounds, not real game caps, so they warn instead
-// of hard-blocking input.
+// Sanity thresholds mirroring MapleScouter's own input validation. Catches the Total versus
+// Base main-stat mix-up before the player reaches MapleScouter's Korean-only error popups.
+// These are MapleScouter's sanity bounds, not real game caps, so they warn instead of
+// blocking input.
 export const MAIN_STAT_BASE_VALUE_WARN_AT = 10000;
 export const MAIN_STAT_PERCENT_UNAPPLIED_WARN_AT = 40000;
 
@@ -403,10 +402,10 @@ function isTripleStatFilled(t: TripleStatDraft | undefined, id: TripleStatFieldI
   return isAttack || Boolean(t.percentUnapplied?.trim());
 }
 
-// Same thresholds as the warning bubbles — a value that's clearly the wrong kind of
-// number (Total instead of Base, etc.) shouldn't be submittable, not just flagged.
-// A blank/untouched field is always sane (Number("") is 0, not a violation) — this
-// only rejects a value that's actually been typed in and is clearly wrong.
+// Same thresholds as the warning bubbles. A value that is clearly the wrong kind of number,
+// Total instead of Base for instance, shouldn't be submittable, not merely flagged. A blank
+// or untouched field is always sane, since Number("") is 0 rather than a violation, so this
+// rejects only a value that was typed in and is clearly wrong.
 function isTripleStatSane(t: TripleStatDraft | undefined, isMainStat: boolean): boolean {
   if (!isMainStat || !t) return true;
   if (Number(t.base) >= MAIN_STAT_BASE_VALUE_WARN_AT) return false;
@@ -433,9 +432,9 @@ export function isStatsSubstepSane(
   return tripleIds.every((id) => isTripleStatSane(draft[id], id === primaryStat));
 }
 
-// MapleScouter's calculation needs a real number for every stat, including 0 — a blank
-// field is ambiguous (never entered vs. genuinely 0), so every stat shown must be
-// explicitly typed in. Scouter-only; full_setup relies on isStatsSubstepSane alone.
+// MapleScouter's calculation needs a real number for every stat, including 0. A blank field
+// is ambiguous, never entered or genuinely 0, so every stat shown must be typed in
+// explicitly. Scouter only, since full_setup relies on isStatsSubstepSane alone.
 export function isStatsSubstepComplete(
   draft: StatsStepDraft,
   tripleIds: TripleStatFieldId[],
@@ -450,14 +449,13 @@ export function isStatsSubstepComplete(
     && isStatsSubstepSane(draft, tripleIds, primaryStat);
 }
 
-// full_setup/stats_flow stay optional overall (an untouched substep must stay skippable —
-// see isStatsSubstepSane), but real testing surfaced players starting to fill this in,
-// missing one field, and finishing setup confused about why MapleScouter couldn't
-// calculate. Treats the substep the same as MapleScouter's own "must be complete" once ANY
-// field here has a real value — same per-field checks as isStatsSubstepComplete, just
-// requiring at least one hit instead of requiring blank fields to stay valid. A fully blank
-// substep returns false here (nothing to be partial about), leaving it skippable exactly as
-// before.
+// full_setup and stats_flow stay optional overall, since an untouched substep must remain
+// skippable (see isStatsSubstepSane). But players were starting to fill this in, missing one
+// field, and finishing setup confused about why MapleScouter couldn't calculate. So the
+// substep is treated like MapleScouter's own must-be-complete rule once any field here holds
+// a real value: the same per-field checks as isStatsSubstepComplete, requiring at least one
+// hit rather than requiring blank fields to stay valid. A fully blank substep returns false,
+// with nothing to be partial about, and stays skippable.
 export function isStatsSubstepAnyFieldFilled(
   draft: StatsStepDraft,
   tripleIds: TripleStatFieldId[],
@@ -474,22 +472,21 @@ export function isStatsSubstepAnyFieldFilled(
   return tripleTouched || combatTouched || symbolsTouched;
 }
 
-/** Whether the Stats step's Character-Info substep (the main stat/combat/symbol fields) is
- *  valid, computed fresh from the raw stored draft string — not cached.
+/** Whether the Stats step's Character Info substep, meaning the main stat, combat and symbol
+ *  fields, is valid. Computed fresh from the raw stored draft string, not cached.
  *
- *  `forceComplete` (MapleScouter only) means every field must be explicitly filled in
- *  regardless of whether the substep's been touched (isStatsSubstepComplete, which
- *  already ANDs in the sanity check below). Full Setup only forces that same
- *  completeness once the player has actually started filling this substep in this
- *  session — see isStatsSubstepAnyFieldFilled's doc comment for why — controlled by
- *  `checkAnyFieldFilled`, since the standalone Stats tab (stats_flow) always opens
- *  pre-seeded from the character's already-saved stats (see buildSeededStepTestByStep) and
- *  has no reliable "just typed this" signal to gate on — it stays sanity-only regardless of
- *  how full the draft already is, same as before this whole any-field-filled behavior
- *  existed. An untouched (or stats_flow) substep only requires values that ARE filled in to
- *  be sane, not blank fields to be filled — this is the floor every flow shares;
- *  forceComplete/any-field-filled can only add stricter requirements on top, never
- *  loosen it. */
+ *  `forceComplete`, MapleScouter only, means every field must be filled in regardless of
+ *  whether the substep has been touched, via isStatsSubstepComplete, which already ands in
+ *  the sanity check below. Full Setup forces that same completeness only once the player has
+ *  started filling this substep in this session, controlled by `checkAnyFieldFilled`. See
+ *  isStatsSubstepAnyFieldFilled's doc comment for why.
+ *
+ *  The standalone Stats tab (stats_flow) always opens pre-seeded from the character's saved
+ *  stats (see buildSeededStepTestByStep) and has no reliable just-typed-this signal to gate
+ *  on, so it stays sanity-only however full the draft already is. An untouched substep, and
+ *  stats_flow, require only that filled-in values be sane, not that blank fields be filled.
+ *  That is the floor every flow shares: forceComplete and any-field-filled can add stricter
+ *  requirements on top, never loosen it. */
 export function isStatsWindowSubstepValid(
   rawValue: string,
   jobName: string | undefined,

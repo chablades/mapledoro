@@ -186,7 +186,7 @@ interface DirectoryControlsProps {
   directorySortBy: DirectorySortBy;
   onWorldChange: (worldId: number | null) => void;
   onSortChange: (sortBy: DirectorySortBy) => void;
-  /** Only rendered when a single world is in view -- export/import are per-world
+  /** Only rendered when a single world is in view. Export and import are per-world
    *  actions, meaningless in the All Worlds merged list. */
   activeWorldExportImport: { worldId: number; worldCharacters: StoredCharacterRecord[]; onImportClick: () => void } | null;
 }
@@ -203,8 +203,8 @@ function DirectoryControls({
   // Chrome but makes Firefox paint that background onto the closed control too.
   // No fontFamily here on purpose. It was `inherit`, which reached the same
   // Nunito as the global `select` rule in globals.css but, being inline, beat
-  // that rule -- and so lost the plain-system-font tail it appends, which is the
-  // only thing Firefox can render in an open dropdown. See that rule for why.
+  // that rule, losing the plain-system-font tail it appends, which is the only
+  // thing Firefox can render in an open dropdown. See that rule for why.
   const selectStyle = {
     border: `1px solid ${theme.border}`,
     borderRadius: "8px",
@@ -285,9 +285,9 @@ function DirectoryControls({
 }
 
 // Legion Artifact and Link Skills are shared across every character on a world, not
-// tied to any one character — this button opens a dedicated panel (LegionPanel)
-// instead of living as a per-character tab. It's a genuine screen swap, not a card
-// interaction, so it's just a button here rather than a card with its own content.
+// tied to any one character, so this button opens a dedicated panel (LegionPanel)
+// instead of living as a per-character tab. It's a screen swap rather than a card
+// interaction, so it stays a button here rather than a card with its own content.
 function LegionButtonRow({ theme, onOpen }: { theme: AppTheme; onOpen: () => void }) {
   return (
     <button
@@ -332,10 +332,10 @@ function exportWorldJson(worldId: number, worldCharacters: StoredCharacterRecord
   URL.revokeObjectURL(url);
 }
 
-// All Worlds' merged Main/Champion key sets, gathered across every tracked world --
-// pulled out of the main screen component (same reasoning as useWorldImportFile above)
-// since it's a self-contained loop-then-build step, not something the rest of the
-// component's render logic needs to see the intermediate Sets for.
+// All Worlds' merged Main and Champion key sets, gathered across every tracked world. Pulled
+// out of the main screen component, the same reasoning as useWorldImportFile above, since it's
+// a self-contained loop-then-build step and the rest of the component's render logic never
+// needs to see the intermediate Sets.
 function buildAllWorldsMergedGroups(
   directory: PreviewPaneModel["directory"],
   filteredCharacters: StoredCharacterRecord[],
@@ -384,9 +384,9 @@ function ImportTabIcon() {
   );
 }
 
-// Right-aligned pair on the same World/Sort controls row (not a separate full-width
-// row) -- these are per-world actions, same visual weight as the World/Sort pills
-// beside them, not a headline feature that deserves its own banner.
+// A right-aligned pair on the same World and Sort controls row rather than a separate
+// full-width row. These are per-world actions carrying the same visual weight as the pills
+// beside them, not a headline feature deserving its own banner.
 function WorldExportImportButtons({
   theme, worldId, worldCharacters, onImportClick,
 }: {
@@ -578,7 +578,7 @@ interface DirectoryAllWorldsViewProps {
 
 // All Worlds merges every tracked world's Main/Champions/Mules into three flat sections
 // (each card badged with its world via showWorld) instead of repeating the single-world
-// view's three-tier structure once per world — that would mean up to 6 stacked sets of
+// view's three-tier structure once per world, which would mean up to 6 stacked sets of
 // headers plus 6 separate pagers for a player with characters on every world. Main is
 // always small (one per world) and never paginates, but Champions and Mules both can reach
 // real size once merged across several worlds (up to MAX_CHAMPIONS per world for Champions),
@@ -663,10 +663,10 @@ interface CharacterDirectoryScreenProps {
 
 // This screen resolves between 3 mutually exclusive full-screen states (world import,
 // Legion panel, the real directory) and the directory itself branches again on All
-// Worlds vs single-world -- each conditional here is already its own cohesive, single-
-// purpose branch (extracted the merged-groups computation and the world-import file
-// state into buildAllWorldsMergedGroups/useWorldImportFile above); further splitting
-// would just relocate the same branch count into more functions, not remove any.
+// Worlds versus single-world. Each conditional here is already its own cohesive,
+// single-purpose branch, with the merged-groups computation and the world-import file state
+// extracted into buildAllWorldsMergedGroups and useWorldImportFile above. Splitting further
+// would relocate the same branch count into more functions rather than remove any.
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export default function CharacterDirectoryScreen({
   model, actions, directorySortBy, onDirectorySortByChange,

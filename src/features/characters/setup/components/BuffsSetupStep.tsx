@@ -107,8 +107,8 @@ function renderIcon(icon: BoolBuffEntry["icon"], size: number, active: boolean, 
 //    shrink to a smaller corner badge each (top-left/top-right) instead of competing at
 //    full size. fishBuff's 3 items (a round snowman, a tall off-center potion, a small
 //    ornament) all have their visual weight centered rather than tucked into a corner,
-//    so any full-size diagonal overlap just collides two dense shapes -- shrinking the
-//    back two avoids that regardless of their individual silhouettes.
+//    so any full-size diagonal overlap collides two dense shapes. Shrinking the back two
+//    avoids that regardless of their individual silhouettes.
 function StackedBuffIcon({ icon, secondIcon, thirdIcon, active, name, theme }: {
   icon: BoolBuffIconType;
   secondIcon: BoolBuffIconType;
@@ -211,8 +211,8 @@ export default function BuffsSetupStep({
   const statTiers = getStatPotionTiers(primaryStat);
 
   // full_setup derives this from the Equipment Symbols substep instead (see
-  // deriveMaxedSacredSymbol in useCharacterSetupController.ts) — asking it here too
-  // would be a duplicate, out-of-order entry point for the same fact.
+  // deriveMaxedSacredSymbol in useCharacterSetupController.ts). Asking it here too would
+  // be a duplicate, out-of-order entry point for the same fact.
   const showMaxedSacredSymbol = flowId === "maplescouter_setup";
 
   const draft = parseBuffsDraft(value);
@@ -222,8 +222,8 @@ export default function BuffsSetupStep({
     onChange(serializeBuffsDraft({ ...draft, ...patch }));
   }
 
-  // One-shot mount-time backfill from the character's saved buffs (only when this step
-  // lands blank) — matches Equipment/V Matrix/HEXA Matrix/Familiars' own pattern.
+  // One-shot mount-time backfill from the character's saved buffs, only when this step
+  // lands blank. Matches Equipment, V Matrix, HEXA Matrix and Familiars' own pattern.
   // Without this, editing an already-set-up character's buffs started blank, and
   // finishing without re-checking every previously-set flag wholesale-replaced the
   // stored buffs with whatever partial state was checked this time (the scouter merge

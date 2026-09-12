@@ -25,8 +25,8 @@ export interface HexaStatSlot {
 }
 /**
  * A single HEXA Stat node (Hexa Stat I/II/III). Each node holds two independent
- * presets with its own active selection — numbered (Preset 1/Preset 2) like every
- * other preset system in the app, not given special names.
+ * presets with its own active selection, numbered Preset 1 and Preset 2 like every
+ * other preset system in the app rather than given special names.
  * {@link activePreset} is 0 (Preset 1) or 1 (Preset 2).
  */
 export interface HexaStatNode {
@@ -51,7 +51,7 @@ export function hexaStatSlotLevelSum(slot: HexaStatSlot): number {
   return slot.main.level + slot.alt[0].level + slot.alt[1].level;
 }
 
-/** Labels for the two dynamic options — pass the result of getMainStatLabel / getAttackLabel.
+/** Labels for the two dynamic options. Pass the result of getMainStatLabel or getAttackLabel.
  *  Ordered to match the in-game HEXA Stat dropdown. */
 export const HEXA_STAT_OPTIONS: { value: HexaStatType; label: string }[] = [
   { value: "criticalDamage", label: "Critical Damage" },

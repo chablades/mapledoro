@@ -102,9 +102,9 @@ export type BoolBuffId =
   | "heroEcho" | "legionMight" | "masarayuGift" | "extremePotion" | "extremeGreenPotion"
   | "mvpSuperpower" | "vipBuff" | "brightMoonlight" | "candiedApple"
   | "caretakerSupport" | "sparklingRedStar" | "maxedSacredSymbol" | "fishBuff" | "genepass"
-  // Group A — pick one
+  // Group A, pick one
   | "greatHeroBoost" | "legendaryHero" | "advWeaponTempering" | "sparklingBlueStar"
-  // Group B — pick one
+  // Group B, pick one
   | "onyxApple" | "tengusJudgement";
 
 export type BoolBuffIconType = { kind: "item"; id: string; shadow?: boolean } | { kind: "skill"; id: string };
@@ -122,10 +122,11 @@ export interface BoolBuffEntry {
   group?: "A" | "B";
 }
 
-// Ungrouped order: roughly obtainability — NPC shop (candied apple) → quest shop elixirs →
-// free daily (extreme) → profession-gated (red star/advanced stat) → boss drop (bright moonlight) →
-// guild/legion/paid buffs → equipment (sacred symbols).
-// Group A/B: potions first (left-to-right matches in-game), visually distinct skill buff last.
+// Ungrouped order follows roughly how obtainable each buff is: NPC shop (candied apple), then
+// quest shop elixirs, free daily (extreme), profession-gated (red star and advanced stat),
+// boss drop (bright moonlight), guild, legion and paid buffs, then equipment (sacred symbols).
+// Groups A and B put potions first, left to right as in-game, with the visually distinct skill
+// buff last.
 export const BOOL_BUFFS: readonly BoolBuffEntry[] = [
   { id: "candiedApple",      name: "Candied Apple",                  icon: { kind: "item",  id: "02023908" } },
   { id: "sayramElixir",      name: "Sayram's Elixir",                icon: { kind: "item",  id: "02024234" } },
@@ -154,11 +155,10 @@ export const BOOL_BUFFS: readonly BoolBuffEntry[] = [
   // Group B
   { id: "onyxApple",       name: "Onyx Apple",         icon: { kind: "item", id: "02024278" }, group: "B" },
   // Same +30 ATT/Magic ATT effect under 3 different event-reskinned item names (Tree
-  // Ornament/A Flurry of Snow/Warm and Fuzzy Winter) -- MapleScouter tracks it as one
-  // "fish" buff regardless of which name a player actually has. See fishBuffTooltip
-  // in BuffsSetupStep.tsx for the full name list shown to the player. Warm and Fuzzy
-  // Winter is deliberately the backmost/dimmest layer -- it's a visually busier icon
-  // than the other two and would otherwise dominate the stack.
+  // Ornament, A Flurry of Snow, Warm and Fuzzy Winter). MapleScouter tracks it as one "fish"
+  // buff whichever name a player has. See fishBuffTooltip in BuffsSetupStep.tsx for the full
+  // name list shown to the player. Warm and Fuzzy Winter is deliberately the backmost and
+  // dimmest layer, being a busier icon that would otherwise dominate the stack.
   { id: "fishBuff",       name: "Tree Ornament",      icon: { kind: "item", id: "02022119" }, secondIcon: { kind: "item", id: "02022280" }, thirdIcon: { kind: "item", id: "02022434" }, group: "B" },
   { id: "tengusJudgement", name: "Tengu's Judgement",  icon: { kind: "item", id: "02023626" }, group: "B" },
 ];
@@ -169,13 +169,13 @@ export const BUFF_GROUP_B = new Set<BoolBuffId>(["onyxApple","tengusJudgement","
 // Classes whose Echo of Hero equivalent has a unique in-game icon.
 // All others use the generic 0001005. Confirmed via grandislibrary pixel-match against WZ exports.
 const HERO_ECHO_SKILL_MAP: Partial<Record<string, string>> = {
-  // Nova — Exclusive Spell
+  // Nova, Exclusive Spell
   "Kaiser": "60001005", "Angelic Buster": "60001005", "Cadena": "60001005", "Kain": "60001005",
-  // Flora — Exclusive Spell (each class has a distinct icon)
+  // Flora, Exclusive Spell (each class has a distinct icon)
   "Illium": "150001005", "Ark": "150011005", "Adele": "150021005", "Khali": "150031005",
-  // Anima — Exclusive Spell. Hoyoung and Lara share one generic icon (maplestorywiki's own
-  // Exclusive Spell page shows a single "(Anima)" file used for both); only Ren has her own
-  // distinct icon (own "(Ren)" file), confirmed via her skills page -- her flavor skills
+  // Anima, Exclusive Spell. Hoyoung and Lara share one generic icon: maplestorywiki's own
+  // Exclusive Spell page shows a single "(Anima)" file used for both. Only Ren has a distinct
+  // icon, her own "(Ren)" file, per maplestorywiki's Ren skills page, where her flavor skills
   // ("Return (Ren)", "Grounded Body") sit in the 160020xxx block, giving 160021005.
   "Hoyoung": "160001005", "Lara": "160001005", "Ren": "160021005",
   // Jianghu
@@ -209,7 +209,7 @@ export function extremePotionLabel(stat: StatId): string {
 // Classes that don't run a fixed attack-speed stage the same way everyone else does, so they get
 // Extreme Green Potion as its own separate buff tile instead of it being folded into Extreme Potion.
 // Ren is deliberately excluded: some of her attacks are affected by Green Potion the normal way, so
-// she doesn't need the special-case split -- revisit if Nexon changes this.
+// she doesn't need the special-case split. Revisit if Nexon changes this.
 const HURRICANE_JOB_NAMES = new Set<string>([
   "Wild Hunter", "Bow Master", "Phantom", "Wind Archer", "Blaze Wizard", "Corsair",
 ]);
@@ -335,13 +335,13 @@ function collectRenown(draft: BuffsDraft): Partial<Record<RenownStatId, number>>
   return Object.keys(renown).length > 0 ? renown : null;
 }
 
-/** Reverse of convertBuffsDraftToStored — rebuilds a BuffsDraft from a character's
- *  already-saved buffs. Without this, opening the Buffs step for an already-set-up
- *  character (full_setup/maplescouter_setup revisited, or a future profile pencil)
- *  starts from a blank draft; since convertBuffsDraftToStored/the scouter merge
- *  replace the whole `buffs` object wholesale, finishing without re-checking every
- *  previously-set flag silently drops it. Seed the draft from this before starting an
- *  edit session on a character that already has buffs saved. */
+/** Reverse of convertBuffsDraftToStored. Rebuilds a BuffsDraft from a character's already-saved
+ *  buffs. Without this, opening the Buffs step for an already-set-up character, whether
+ *  full_setup or maplescouter_setup revisited or a future profile pencil, starts from a blank
+ *  draft. Because convertBuffsDraftToStored and the scouter merge replace the whole `buffs`
+ *  object wholesale, finishing without re-checking every previously set flag drops it. Seed the
+ *  draft from this before starting an edit session on a character that already has buffs
+ *  saved. */
 export function storedBuffsToDraft(stored: StoredScouterBuffs | undefined): BuffsDraft {
   if (!stored) return emptyBuffsDraft();
   const guild: Partial<Record<GuildBuffId, string>> = {};

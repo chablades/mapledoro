@@ -482,8 +482,8 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
           }
 
           .profile-actions-wrap {
-            /* No max-width override here anymore -- falls back to the 300px cap already set
-               inline (same as desktop). The old 220px override shrank this card noticeably
+            /* No max-width override here, so it falls back to the 300px cap already set
+               inline, the same as desktop. The old 220px override shrank this card noticeably
                narrower than everything else on the page, which read as a random floating box
                rather than a normal panel at this width. */
             margin-top: 0.35rem !important;
@@ -629,10 +629,10 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
             line-height: 1.2 !important;
           }
 
-          /* Setup card: horizontal layout — round back pill | bigger avatar | info.
-             The card adds this modifier class itself (SearchPaneModel.profile.isSetupContext),
-             so these rules just cascade over the base .confirmed-summary-card rules above —
-             no ancestor scoping or !important needed. */
+          /* Setup card, laid out horizontally: round back pill, then a bigger avatar, then
+             info. The card adds this modifier class itself, via
+             SearchPaneModel.profile.isSetupContext, so these rules cascade over the base
+             .confirmed-summary-card rules above with no ancestor scoping or !important. */
           .confirmed-summary-card--setup {
             flex-direction: row;
             align-items: center;
@@ -688,11 +688,11 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
             justify-content: center;
           }
 
-          /* The setup card's info column is narrow (beside the avatar, not full card width --
-             see confirmed-summary-info above), so "Updated <date>" wraps wherever the browser
-             finds room, often splitting mid-date ("Aug 1," / "2026") instead of a clean break.
-             Force it onto its own line only here; the plain (non-setup) profile card is full
-             width with room to keep it on one line, so this shouldn't apply there. */
+          /* The setup card's info column is narrow, sitting beside the avatar rather than at
+             full card width (see confirmed-summary-info above), so "Updated <date>" wraps
+             wherever the browser finds room, often splitting mid-date ("Aug 1," then "2026")
+             instead of at a clean break. Force it onto its own line only here. The plain
+             non-setup profile card is full width with room to keep it on one line. */
           .confirmed-summary-card--setup .profile-updated-date {
             display: block;
           }
@@ -829,9 +829,9 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
           flex: 1;
         }
 
-        /* Combat/Basic Stats' label+value pairs — side by side on desktop (plenty of room for
-           even a long "15,069,287"), stacked on mobile (see mobile override below) where the
-           2-column stat grid leaves too little width per value for that to keep fitting. */
+        /* Combat and Basic Stats' label and value pairs sit side by side on desktop, which has
+           room for even a long "15,069,287", and stack on mobile (see the override below),
+           where the 2-column stat grid leaves too little width per value to keep fitting. */
         .summary-row {
           display: flex;
           justify-content: space-between;
@@ -843,9 +843,9 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
           text-align: right;
         }
 
-        /* Gear bookmark's "Titles, Totems & Symbols" nav button — full label on desktop,
-           a shorter one on mobile (see mobile override below) so it fits on one line instead
-           of wrapping and blowing up the button's height next to its "Pets"/"Gear" sibling. */
+        /* Gear bookmark's "Titles, Totems & Symbols" nav button: the full label on desktop and
+           a shorter one on mobile (see the override below), so it fits on one line instead of
+           wrapping and inflating the button's height next to its Pets or Gear sibling. */
         .equipment-action-label-full {
           display: inline;
         }
@@ -865,10 +865,10 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
         @media (max-width: 860px) {
           .profile-binder {
             flex-direction: column;
-            /* No reserved height here (unlike the desktop min-height above) -- V Matrix is
-               such an outlier in mobile height (measured 1123.90625px vs a fraction of that
-               for shorter bookmarks like Bio) that pinning to it would waste huge amounts
-               of screen space on every other bookmark. */
+            /* No reserved height here, unlike the desktop min-height above. V Matrix is such
+               an outlier in mobile height, measured at 1123.90625px against a fraction of
+               that for shorter bookmarks like Bio, that pinning to it would waste screen
+               space on every other bookmark. */
             min-height: auto;
           }
 
@@ -883,11 +883,11 @@ export function getCharacterSetupFlowStyles(theme: AppTheme) {
                render first visually, so a resize expands downward from the spine instead
                of moving it. */
             order: -1;
-            /* --edge-fade-mask is set inline via useScrollEdges/edgeFadeMask
-               (CharacterProfileOverviewScreen.tsx) -- only consumed into a real mask HERE,
-               inside this mobile-only media query, never as a literal inline style, since
-               the desktop vertical column has no horizontal overflow and would otherwise
-               get an incorrect fade clipping its content. */
+            /* --edge-fade-mask is set inline via useScrollEdges and edgeFadeMask
+               (CharacterProfileOverviewScreen.tsx), and consumed into a real mask only here,
+               inside this mobile-only media query, never as a literal inline style. The
+               desktop vertical column has no horizontal overflow and would otherwise get an
+               incorrect fade clipping its content. */
             mask-image: var(--edge-fade-mask);
             -webkit-mask-image: var(--edge-fade-mask);
             /* This row layout also kicks in on a narrowed desktop browser window, not just

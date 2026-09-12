@@ -7,13 +7,13 @@ import type { ScouterSimulatorOverrides } from "./scouterApi";
 import { runScouterSimulator } from "./scouterSimulatorCache";
 import { peekScouterLastKnown, type ScouterErrorReason, type ScouterResultEntry } from "./scouterCache";
 
-/** True when the override combo only touches level/Arcane Force/Sacred Power -- fields that
- *  never reach MapleScouter's API at all (pure local Boss Clear Grid gap math, see
+/** True when the override combo touches only level, Arcane Force and Sacred Power, fields that
+ *  never reach MapleScouter's API and feed purely local Boss Clear Grid gap math (see
  *  ScouterSimulatorOverrides' own field comments). Applying one of these alone needs no fresh
- *  API result -- the character's real, already-cached entry is exactly as accurate.
+ *  API result, since the character's already-cached entry is just as accurate.
  *
- *  buildOverrides (useScouterSimulatorDraft.ts) omits every tab group that hasn't been
- *  touched, so an absent group here means "unchanged" -- this is just a presence check. */
+ *  buildOverrides (useScouterSimulatorDraft.ts) omits every untouched tab group, so an absent
+ *  group here means unchanged. This is a presence check. */
 function isLocalOnlyOverride(overrides: ScouterSimulatorOverrides): boolean {
   return (!overrides.finalDmgPercent || Number(overrides.finalDmgPercent) === 0)
     && !overrides.hexaCoreOverrides
@@ -24,10 +24,10 @@ function isLocalOnlyOverride(overrides: ScouterSimulatorOverrides): boolean {
     && Object.values(overrides.input ?? {}).every((v) => v === undefined || Number(v) === 0);
 }
 
-/** The overrides a player can set from the Scouter Simulator popup -- level/Arcane Force/
- *  Sacred Power are MapleDoro-only concepts (never reach MapleScouter's API, pure local
- *  Boss Clear Grid formula math), the rest (finalDmgPercent/hexaCoreOverrides/etc.) become
- *  part of the real request via buildDirectScouterPayload. */
+/** The overrides a player can set from the Scouter Simulator popup. Level, Arcane Force and
+ *  Sacred Power are MapleDoro-only concepts that never reach MapleScouter's API and feed purely
+ *  local Boss Clear Grid formula math. The rest, such as finalDmgPercent and hexaCoreOverrides,
+ *  become part of the real request via buildDirectScouterPayload. */
 interface ScouterSimulatorState {
   overrides: ScouterSimulatorOverrides;
   entry: ScouterResultEntry;
@@ -40,31 +40,31 @@ export type ScouterSimulatorApplyResult =
 
 export interface ScouterSimulatorController {
   /** The currently-applied simulation, or null when the bookmark is showing the real
-   *  result. Session-only (plain React state) -- a page reload always drops back to real,
+   *  result. Session-only, held in plain React state, so a page reload drops back to real
    *  per the product decision. */
   active: ScouterSimulatorState | null;
   applying: boolean;
   /** Runs the simulator for the given overrides (cache-first, network on a miss). On success,
-   *  sets `active` and resolves { status: "ok" } -- the caller (the popup) closes itself on
-   *  this. On failure, `active` is left untouched (the bookmark keeps showing whatever it
-   *  showed before) and the reason is returned for the popup's own inline error message. */
+   *  sets `active` and resolves { status: "ok" }, which the popup uses to close itself. On
+   *  failure `active` is left untouched, so the bookmark keeps showing what it showed before,
+   *  and the reason is returned for the popup's own inline error message. */
   apply: (overrides: ScouterSimulatorOverrides) => Promise<ScouterSimulatorApplyResult>;
   /** Clears back to the real Scouter result. */
   reset: () => void;
 }
 
 /** Owns a character's currently-applied Scouter Simulator "what if" state. Lives in
- *  BookmarkPageBody (CharacterProfileOverviewScreen.tsx) -- the shared ancestor of both
- *  ScouterFigure (Overview) and ScouterBookmark (Scouter tab) -- and gets passed down to
- *  both, so an applied simulation replaces the real figure/Boss Clear grid in both places
- *  at once, per the Scouter Simulator plan's product decision, rather than each owning its
- *  own separate instance.
+ *  BookmarkPageBody (CharacterProfileOverviewScreen.tsx), the shared ancestor of both
+ *  ScouterFigure on Overview and ScouterBookmark on the Scouter tab, and is passed down to
+ *  both. So an applied simulation replaces the real figure and Boss Clear grid in both places
+ *  at once, per the Scouter Simulator plan's product decision, rather than each owning a
+ *  separate instance.
  *
  *  Accepts a possibly-null character (unlike useScouterResult, which is only ever called
  *  from an already character-gated leaf component) because BookmarkPageBody itself renders
- *  before a character is confirmed -- this hook must still be called unconditionally
- *  (Rules of Hooks), so it short-circuits internally instead of requiring its caller to
- *  gate the call. */
+ *  before a character is confirmed. The hook must still be called unconditionally under the
+ *  Rules of Hooks, so it short-circuits internally instead of requiring its caller to gate
+ *  the call. */
 export function useScouterSimulator(character: StoredCharacterRecord | null): ScouterSimulatorController {
   const [active, setActive] = useState<ScouterSimulatorState | null>(null);
   const [applying, setApplying] = useState(false);

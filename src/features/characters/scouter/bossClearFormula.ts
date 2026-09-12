@@ -105,7 +105,7 @@ function authenticGapDmg(bossAuthenticForce: number | null, characterAuthenticFo
 }
 
 // Real level floor for a handful of current-tier raid bosses, separate from the damage-loss
-// gap tables above -- below it the boss can't be entered at all, not just "hard."
+// gap tables above. Below it the boss can't be entered at all, not merely hard.
 const ENTRY_LEVEL_BY_DIFFICULTY: Record<string, Record<string, number>> = {
   메이린: { Normal: 270, Hard: 280 },
 };
@@ -138,26 +138,25 @@ function convertedBossPower(statValue: number, guard: number): number {
 
 // --- Tag bucketing (MapleScouter module 97571's `Rn`) ---------------------------------------
 
-/** Verified real English strings, found in MapleScouter's own i18n dictionary -- not a gloss. */
-// Six genuinely distinct hues, one per severity step, best to worst: green -> blue -> red ->
-// orange -> purple -> gray. Replaces an earlier attempt at same-hue lightness shifts (e.g. two
-// greens for Easy/Possible), which read as identical at a glance -- scrapped in favor of a real
-// 6-color ladder instead. Every value here matches its STATUS/statusText key directly
-// (BossClearGrid.tsx's pillStatus maps 1:1, no renaming in between).
+/** The real English strings from MapleScouter's own i18n dictionary, not a gloss. */
+// Six distinct hues, one per severity step, best to worst: green, blue, red, orange, purple,
+// gray. Replaces an earlier attempt at same-hue lightness shifts, such as two greens for Easy
+// and Possible, which read as identical at a glance. Every value here matches its STATUS and
+// statusText key directly, since BossClearGrid.tsx's pillStatus maps one to one.
 export type ClearColorTier = "green" | "blue" | "red" | "orange" | "purple" | "gray";
 
-// Single source of truth for every tag's color, so the SAME tag string always renders the SAME
-// color everywhere it appears -- both tier tables below reference this instead of assigning
-// colors inline. Bug this fixed: "3p Min Cut" rendered purple for a partyLimit-3 boss (its own
-// worst tier) but red for a partyLimit-6 boss (a middle tier there), since the two tables used
-// to assign colors independently by rank-within-that-table rather than by tag identity --
-// identical tag text must mean identical severity, always.
+// Single source of truth for every tag's color, so one tag string always renders in one color
+// everywhere it appears. Both tier tables below reference this instead of assigning colors
+// inline. The bug this fixed: "3p Min Cut" rendered purple for a partyLimit-3 boss, its worst
+// tier, but red for a partyLimit-6 boss, a middle tier there, because the two tables assigned
+// colors by rank within each table rather than by tag identity. Identical tag text must mean
+// identical severity.
 //
 // This is also why the party-only table's top tier is "1p Min Cut", not "Solo Min" like the
-// soloable table's borderline-pass tier -- they're different concepts (party-only: your own
-// damage alone covers the WHOLE party's requirement, the best outcome, green; soloable: you're
-// right at the edge of a solo pass, a worse outcome, red) that briefly shared a label and
-// therefore collided under this same-tag-same-color rule. Fixed by renaming the party-only one
+// soloable table's borderline-pass tier. They are different concepts. On a party-only boss your
+// own damage alone covers the entire party's requirement, the best outcome, so green. On a
+// soloable boss you are at the edge of a solo pass, a worse outcome, so red. They briefly shared
+// a label and collided under this same-tag-same-color rule, fixed by renaming the party-only one
 // to match its "2p/3p/4p/6p Min Cut" siblings instead of reusing "Solo Min".
 const TAG_COLOR: Record<string, ClearColorTier> = {
   Easy: "green", Possible: "blue", "Solo Min": "red",
@@ -173,23 +172,23 @@ function tier(tag: string): BossTier {
   return { tag, color: TAG_COLOR[tag] };
 }
 
-// mapledoro's own tag+color tiers, replacing MapleScouter's two independently-tuned tables
-// (SOLO_TAG_TIERS/SOLOABLE_COLOR_TIERS on their site) whose mismatched breakpoints let the same
-// tag render in two different colors -- e.g. "Easy" could show green OR their "red" (their
-// red meaning "cleared by such a wide margin the number stopped being meaningful," not danger,
-// but reading as an alert regardless). That distinction is dropped entirely here -- one tag
-// always maps to exactly one color, tuned to the TAG's own breakpoints (the meaningful semantic
-// categories), not a second independently-eyeballed scale. Overkill clears just stay "Easy"/
-// green with no visual distinction from a more marginal Easy clear.
+// MapleDoro's own tag and color tiers, replacing MapleScouter's two independently tuned tables
+// (SOLO_TAG_TIERS and SOLOABLE_COLOR_TIERS on their site) whose mismatched breakpoints let one
+// tag render in two colors. "Easy" could show green or their red, where their red meant cleared
+// by so wide a margin the number stopped being meaningful rather than danger, but read as an
+// alert regardless. That distinction is dropped here: one tag maps to one color, tuned to the
+// tag's own breakpoints, which are the meaningful semantic categories, not a second
+// independently eyeballed scale. Overkill clears stay Easy and green, with no visual
+// distinction from a more marginal Easy clear.
 //
-// Bucket breakpoints started as MapleScouter's own original tag tiers (still empirically fit),
-// with one deliberate departure: the Possible floor was moved from MapleScouter's 1.1 (110%) to
-// 1.3 (130%), per a Discord poll of several players finding 110% didn't feel like a comfortable
-// clear in practice (100-150% range of opinions, one citing Kalos specifically) -- 90-129% is
-// now Solo Min end to end, matching that "still tight" feel rather than splitting it at a
-// threshold nobody agreed felt safe. This is a real, intentional divergence from MapleScouter's
-// own displayed tags for the same character, not a bug. Every other breakpoint (Easy, Solo
-// Min's own floor, Party-able, Party Min) is untouched.
+// Bucket breakpoints started as MapleScouter's original tag tiers, which still fit empirically,
+// with one deliberate departure. The Possible floor moved from MapleScouter's 1.1 (110%) to 1.3
+// (130%), per a Discord poll where several players found 110% didn't feel like a comfortable
+// clear in practice, opinions ranging 100% to 150% with one citing Kalos specifically. So
+// 90% to 129% is now Solo Min end to end, matching that still-tight feel rather than splitting
+// it at a threshold nobody agreed felt safe. This is an intentional divergence from
+// MapleScouter's displayed tags for the same character, not a bug. Every other breakpoint,
+// meaning Easy, Solo Min's own floor, Party-able and Party Min, is untouched.
 const SOLO_MIN_FLOOR = 0.9;
 const SOLO_TIERS: Record<number, [number, BossTier][]> = {
   6: [[2, tier("Easy")], [1.3, tier("Possible")], [SOLO_MIN_FLOOR, tier("Solo Min")], [0.25, tier("Party-able")], [0.15, tier("Party Min")]],
@@ -207,14 +206,15 @@ const PARTY_ONLY_TIERS_DEFAULT: [number, BossTier][] = [
 const IMPOSSIBLE_TIER: BossTier = tier("Impossible");
 const CANNOT_ENTER_TIER: BossTier = tier("Can't Enter");
 
-/** A party-only boss's clearRate is measured against ONE cut-level party member's share, so
- *  100% there means "you're one member of a full party," not "you can clear it." The "1p Min
- *  Cut" threshold (the top tier above) is the point where your damage alone covers the whole
- *  party's requirement -- but it already carries the same 0.9 slack as the solo ladder's Solo
- *  Min floor (5.1 = 0.9 x 5.667, and 2p/3p/4p follow as 5.667/N x 0.9), so the divisor that
- *  puts clearRate on the solo scale is threshold / 0.9, which lands 1p Min Cut on exactly 90%
- *  Solo Min like every other boss. An extrapolation, not a calibration: the constants are
- *  MapleScouter's own eyeballed ones, nobody is measuring real solo clears of Extreme Kaling. */
+/** A party-only boss's clearRate is measured against one cut-level party member's share, so
+ *  100% there means you are one member of a full party, not that you can clear it. The "1p Min
+ *  Cut" threshold, the top tier above, is the point where your damage alone covers the whole
+ *  party's requirement, and it already carries the same 0.9 slack as the solo ladder's Solo Min
+ *  floor (5.1 = 0.9 x 5.667, with 2p/3p/4p following as 5.667/N x 0.9). So the divisor that
+ *  puts clearRate on the solo scale is threshold / 0.9, landing 1p Min Cut on exactly 90% Solo
+ *  Min like every other boss. This is an extrapolation, not a calibration: the constants are
+ *  MapleScouter's own eyeballed ones, and nobody is measuring real solo clears of Extreme
+ *  Kaling. */
 function soloScaleDivisor(partyLimit: number): number {
   const tiers = PARTY_ONLY_TIERS_BY_LIMIT[partyLimit] ?? PARTY_ONLY_TIERS_DEFAULT;
   return tiers[0][0] / SOLO_MIN_FLOOR;
@@ -258,23 +258,23 @@ export interface BossClearResult {
   partyLimit: number;
   bossPower: number;
   /** The character's own raw HEXA damage, inverse-splined back into stat-space AFTER the
-   *  level/arcane/authentic gap adjustments -- i.e. what this specific boss actually "sees"
-   *  as your stat, not your flat HEXA figure. Feeds bossPower; exposed so the UI can show it
-   *  directly (MapleScouter's own "adjusted stat / clear%" per-tile display). */
+   *  level, arcane and authentic gap adjustments, meaning what this boss sees as your stat
+   *  rather than your flat HEXA figure. Feeds bossPower, and exposed so the UI can show it
+   *  directly, as in MapleScouter's own adjusted-stat and clear-percent per-tile display. */
   bossStat: number;
-  /** The three damage-loss multipliers that produced bossStat. IMPORTANT: 1 is NOT "no loss" --
-   *  each stat has its own bonus ceiling above 1 (see the *GapCeiling fields below), and per the
-   *  wiki's own "Proportion compared to maximum" framing, anything short of that ceiling is real
-   *  FD loss even while the multiplier reads >= 1. Never compare these to 1 in the UI; compare
-   *  to the matching ceiling instead. */
+  /** The three damage-loss multipliers that produced bossStat. A value of 1 does not mean no
+   *  loss: each stat has its own bonus ceiling above 1 (see the *GapCeiling fields below), and
+   *  per the wiki's "Proportion compared to maximum" framing, anything short of that ceiling is
+   *  real FD loss even while the multiplier reads 1 or higher. Never compare these to 1 in the
+   *  UI. Compare to the matching ceiling instead. */
   levelGapDmg: number;
   arcaneGapDmg: number;
   authenticGapDmg: number;
-  /** The max achievable multiplier for each gap on THIS boss -- level is always 1.2 (wiki's "+5
-   *  or more" bracket), authentic is always 1.25, but arcane varies per boss (1.5 normally, 1.1
-   *  for Black Mage specifically -- see arcaneCorrection above). True FD loss is
-   *  1 - gapDmg/gapCeiling, not 1 - gapDmg; a character sitting at the exact requirement reads
-   *  gapDmg near 1.0 but can still be well short of gapCeiling. */
+  /** The max achievable multiplier for each gap on this boss. Level is always 1.2, the wiki's
+   *  "+5 or more" bracket, and authentic is always 1.25, but arcane varies per boss: 1.5
+   *  normally, 1.1 for Black Mage specifically (see arcaneCorrection above). True FD loss is
+   *  1 - gapDmg/gapCeiling, not 1 - gapDmg. A character sitting at the exact requirement reads
+   *  gapDmg near 1.0 while still falling well short of gapCeiling. */
   levelGapCeiling: number;
   arcaneGapCeiling: number;
   authenticGapCeiling: number;
@@ -288,7 +288,7 @@ export interface BossClearResult {
   bossAuthenticForce: number | null;
   characterAuthenticForce: number;
   /** MapleScouter's own uncorrected clear%, only where mapledoro deliberately diverges from it
-   *  (Champion Black Mage, see effectiveEasyRate) -- null everywhere else. Shown in the chip
+   *  (Champion Black Mage, see effectiveEasyRate), and null everywhere else. Shown in the chip
    *  tooltip so a player cross-checking against Scouter's site sees the difference is intended. */
   scouterClearRatePercent: number | null;
   /** The party-only boss's clear% on the solo scale (see soloScaleDivisor), null for every
@@ -336,7 +336,7 @@ function timerAdjustedClearRate(entry: BossCutEntry, damageOverCut: number, easy
 }
 
 /** Adjusts the character's raw HEXA damage for the handful of bosses whose real fight uses a
- *  different damage figure than the plain 300/380 HEXA number -- Guardian Angel Slime divides
+ *  different damage figure than the plain 300/380 HEXA number. Guardian Angel Slime divides
  *  by genePassConst, Kaling swaps in its own dedicated damage figure, Maerin blends in a slice
  *  of the non-HEXA number. Every other boss passes the plain figure through unchanged. */
 function adjustedHexaDamage(bossName: string, guard: number, inputs: BossClearInputs): number {
@@ -348,9 +348,9 @@ function adjustedHexaDamage(bossName: string, guard: number, inputs: BossClearIn
   return inputs.calculatedHexaDamage380;
 }
 
-/** The raw boss-vs-character values behind the arcane/authentic gaps, null'd out when the boss
- *  doesn't have that requirement at all (as opposed to 0 loss) -- split out of computeBossClear
- *  to keep its own cognitive complexity under the sonarjs cap. */
+/** The raw boss-vs-character values behind the arcane and authentic gaps, nulled out when the
+ *  boss has no such requirement, as opposed to 0 loss. Split out of computeBossClear to keep
+ *  its cognitive complexity under the sonarjs cap. */
 function gapContrastFields(entry: BossCutEntry, hasArcaneReq: boolean, hasAuthenticReq: boolean) {
   return {
     bossArcaneForce: hasArcaneReq ? entry.arcaneForce : null,
@@ -385,9 +385,9 @@ function gapAdjustedDamage(
  *  the entry is missing required fields (bossCut/partyBossCut, or guard isn't 300/380).
  *  characterLevel/characterArcaneForce/characterAuthenticForce can be a Scouter Simulator
  *  override (a player-typed "what if I had X Arcane Force" value) rather than the character's
- *  real saved stat -- computeBossClear itself doesn't know or care which, the gap math is the
- *  same honest calculation either way. There is deliberately no "pin this gap to 0% loss"
- *  shortcut -- typing the boss's own requirement achieves that already. */
+ *  real saved stat. computeBossClear doesn't know which, and the gap math is the same
+ *  calculation either way. There is deliberately no "pin this gap to 0% loss" shortcut, since
+ *  typing the boss's own requirement achieves that. */
 export function computeBossClear(
   entry: BossCutEntry,
   characterLevel: number,

@@ -130,11 +130,11 @@ export function ExportTabIcon({ strokeWidth = 1.5 }: { strokeWidth?: number }) {
   );
 }
 
-// Reads fresh from the store rather than trusting whatever `character` object got passed
-// down -- mirrors readHexaLevels/readHexaStatNodes above, which exist for the same reason:
-// tool writes elsewhere in the app don't always make it into an already-rendered `character`
-// prop. Exports the whole record (stats/equipment/tools and everything else) so this doubles
-// as an import source later -- same shape a re-import would need to reconstruct the character.
+// Reads fresh from the store rather than trusting the `character` object passed down,
+// mirroring readHexaLevels and readHexaStatNodes above, which exist for the same reason: tool
+// writes elsewhere in the app do not always reach an already rendered `character` prop.
+// Exports the whole record, stats, equipment, tools and the rest, so it doubles as an import
+// source, being the shape a re-import needs to reconstruct the character.
 function exportCharacterJson(charName: string | undefined) {
   if (!charName) return;
   const character = selectCharacterByIgn(readCharactersStore(), charName);
@@ -266,10 +266,10 @@ function RankIcon({ size = 56 }: { size?: number }) {
   );
 }
 
-// classPortraitUrl falls back to "" for a class name it doesn't have official Nexon
-// artwork for (e.g. a resolveDisplayJobName output that doesn't exactly match the map's
-// keys) -- shows the class's initial instead of a broken image in that case, same
-// fallback shape the character-guides page itself uses for the same lookup.
+// classPortraitUrl returns an empty string for a class with no official Nexon artwork, such
+// as a resolveDisplayJobName output that does not exactly match the map's keys. That case
+// shows the class's initial rather than a broken image, the same fallback the character-guides
+// page uses for this lookup.
 function ClassPortrait({ className, theme, size = 72 }: { className: string; theme: Theme; size?: number }) {
   const url = classPortraitUrl(className);
   if (!url) {
@@ -285,8 +285,8 @@ const biographyRowWrapperStyle: CSSProperties = {
   display: "flex", flexDirection: "column", gap: 14, flex: 1, alignItems: "center", justifyContent: "center",
 };
 
-// Bigger than the original tiny buttons — minHeight ensures they fill the vertical
-// space when centered, and the larger icon + padding make them feel like proper cards.
+// minHeight makes these fill the vertical space when centered, so with the larger icon and
+// padding they read as proper cards rather than small buttons.
 const biographyBlockMinHeight = 200;
 
 function biographyBlockStyle(theme: Theme, filled: boolean): CSSProperties {
@@ -300,10 +300,10 @@ function biographyBlockStyle(theme: Theme, filled: boolean): CSSProperties {
   };
 }
 
-// Every other bookmark's edit affordance is a pencil button (BookmarkPageHeader's header
-// pencil, same pencilButtonStyle/PencilIcon reused here) -- only the pencil is clickable, not
-// the whole card, so the label/caption text (e.g. a partner's name) stays plain, selectable
-// text instead of being swallowed into one big button that hijacks any tap/click as "edit".
+// Every other bookmark's edit affordance is a pencil button, and BookmarkPageHeader's
+// pencilButtonStyle and PencilIcon are reused here. Only the pencil is clickable rather than
+// the whole card, so label and caption text such as a partner's name stays plain selectable
+// text instead of being swallowed by one large button that treats any tap as edit.
 function BiographyBlock({ theme, icon, label, caption, filled, onClick, disabled }: {
   theme: Theme; icon: ReactNode; label: string; caption: string; filled: boolean; onClick: () => void; disabled: boolean;
 }) {
@@ -328,20 +328,20 @@ function BiographyBlock({ theme, icon, label, caption, filled, onClick, disabled
   );
 }
 
-// Fades the class portrait toward transparent on every edge (heaviest at the bottom,
-// where the trait row sits) so it blends into the panel's own background rather than
-// needing to know that background's color -- an ellipse mask just reveals whatever is
-// actually behind it. -webkit- duplicate is required for Safari/iOS.
+// Fades the class portrait toward transparent on every edge, heaviest at the bottom where the
+// trait row sits, so it blends into the panel background without needing to know that
+// background's color: an ellipse mask reveals whatever is behind it. The -webkit- duplicate is
+// required for Safari and iOS.
 const classPortraitFadeStyle: CSSProperties = {
   maskImage: "radial-gradient(ellipse 70% 62% at 50% 36%, black 42%, transparent 92%)",
   WebkitMaskImage: "radial-gradient(ellipse 70% 62% at 50% 36%, black 42%, transparent 92%)",
 };
 
-// 5 columns (3 stats + 2 hairline dividers), 3 rows (icon/label/value) -- CSS Grid gives
-// every column in a row the same height as that row's tallest cell for free, so whichever
-// label wraps to two lines (varies by column width -- not knowable up front, differs per
-// label length) pushes every column's value down together instead of just its own. No
-// breakpoint to tune, and it stays correct at any width.
+// 5 columns, 3 stats plus 2 hairline dividers, and 3 rows for icon, label and value. CSS Grid
+// gives every column in a row the height of that row's tallest cell, so whichever label wraps
+// to two lines, which varies by column width and label length and is not knowable up front,
+// pushes every column's value down together rather than only its own. No breakpoint to tune,
+// and it stays correct at any width.
 function bioTraitGridStyle(): CSSProperties {
   return { display: "grid", gridTemplateColumns: "auto 1px auto 1px auto", columnGap: 20, rowGap: 6, justifyContent: "center", alignItems: "center" };
 }
@@ -350,10 +350,10 @@ function bioTraitDividerStyle(theme: Theme, column: number): CSSProperties {
   return { gridColumn: column, gridRow: "1 / span 3", width: 1, background: theme.border };
 }
 
-// Sits under the faded portrait, reading as a continuation of it rather than a separate
-// card -- no background/border of its own, just icon + label + value per trait. Renders as
-// 3 separate grid children (one per row) rather than a wrapping div, so its row heights are
-// shared with its sibling columns -- see bioTraitGridStyle.
+// Sits under the faded portrait and reads as a continuation of it rather than a separate card,
+// with no background or border of its own, just an icon, label and value per trait. Renders as
+// 3 grid children, one per row, rather than a wrapping div, so its row heights are shared with
+// its sibling columns. See bioTraitGridStyle.
 function BioTraitStat({ theme, icon, label, value, column }: {
   theme: Theme; icon: ReactNode; label: string; value: string; column: number;
 }) {
@@ -382,9 +382,9 @@ function BiographyPanel({ theme, character, onEditStep, disabled }: {
   theme: Theme; character: StoredCharacterRecord | null; onEditStep: (flowId: SetupFlowId) => void; disabled: boolean;
 }) {
   const overrides = character ? getClassSetupOverrides(character.jobName) : null;
-  // Both cards always show (never hidden) — a class-level lock is a permanent, correct
-  // state to display, not missing data. "none" (Zero: no gender concept at all) is
-  // distinct from a fixedGender lock (Mihile: locked to a specific, already-set value).
+  // Both cards always show, since a class-level lock is a permanent state worth displaying
+  // rather than missing data. "none", as with Zero which has no gender concept, is distinct
+  // from a fixedGender lock like Mihile, which is locked to a specific already-set value.
   const genderLocked = Boolean(overrides?.gender);
   const marriageLocked = Boolean(overrides?.skipMarriage);
 
@@ -440,15 +440,15 @@ function BiographyPanel({ theme, character, onEditStep, disabled }: {
   );
 }
 
-// `locked` marks a field that isn't obtainable yet at this character's level (e.g. Arcane
-// Power below Lv 200) — distinct from "eligible but not filled in" (notCollected's plain
-// "—"), so it dims the row instead of reading like an ordinary data-entry gap.
-// A long unbroken value (e.g. Damage Range's "15,069,287") has no spaces to wrap at, so it
-// spills into the next grid column instead of staying inside its own — overflowWrap:"anywhere"
-// fixed that but over-applied, forcing even short values like "115.00%" to wrap awkwardly
-// mid-string whenever their column got remotely tight. A <wbr/> after each comma group gives
-// the browser a break point only where a big number can naturally take one; short values with
-// no commas get no forced break point at all, so they render on one line exactly as before.
+// `locked` marks a field not obtainable yet at this character's level, such as Arcane Power
+// below Lv 200. That is distinct from eligible but not filled in, which notCollected renders
+// as a plain dash, so it dims the row rather than reading as an ordinary data-entry gap.
+//
+// A long unbroken value such as Damage Range's "15,069,287" has no spaces to wrap at and
+// spills into the next grid column. `overflowWrap: "anywhere"` fixed that but over-applied,
+// forcing short values like "115.00%" to wrap mid-string whenever their column got tight. A
+// `<wbr/>` after each comma group gives the browser a break point only where a large number
+// can take one, and short values with no commas get none, so they render on one line.
 function BreakableValue({ value }: { value: string }) {
   const parts = value.split(",");
   if (parts.length === 1) return <>{value}</>;
@@ -483,10 +483,10 @@ function wseSlotButtonStyle(theme: Theme, filled: boolean): CSSProperties {
   };
 }
 
-// Compact icon-only slot (name + status live in the tooltip) so Weapon/Secondary/Emblem
-// fit in a tight row instead of the old bordered label+name boxes. An empty slot shows the
-// label's own first letter instead of a contentless placeholder square -- 3 identical grey
-// boxes side by side gave no clue what they even were without hovering each one.
+// Compact icon-only slot, with name and status in the tooltip, so Weapon, Secondary and Emblem
+// fit one tight row rather than three bordered label and name boxes. An empty slot shows the
+// label's first letter rather than an empty placeholder square, since three identical grey
+// boxes gave no clue what they were without hovering each one.
 function WseSlot({ label, item, theme, onNavigate }: {
   label: string; item: StoredEquipmentItem | null | undefined; theme: Theme; onNavigate: () => void;
 }) {
@@ -513,9 +513,9 @@ function resolveHexaNotice(hasHexa: boolean, isLegacyClass: boolean): string | n
   return null;
 }
 
-// HEXA Matrix unlocks at level 260 and is unavailable to legacy (pre-5th-job) classes — see
-// the characters CLAUDE.md "Level/legacy gating" table. Also drives whether BookmarkPageBody
-// shows the edit pencil — there's nothing to edit on a gated character.
+// HEXA Matrix unlocks at level 260 and is unavailable to legacy, pre-5th-job classes. See the
+// "Level / legacy gating" table in the characters CLAUDE.md. Also drives whether
+// BookmarkPageBody shows the edit pencil, since a gated character has nothing to edit.
 function isHexaMatrixAvailable(character: StoredCharacterRecord | null): boolean {
   if (!character) return false;
   return character.level >= 260 && !isLegacyClass(character.jobName);
@@ -545,8 +545,8 @@ function isStatsFilled(character: StoredCharacterRecord | null): boolean {
   return Boolean(s.attackPower.base || s.bossDamage || s.str.base || s.dex.base || s.int.base || s.luk.base || s.hp.base);
 }
 
-// Pre-mount fallback for ScouterFigure (real component, scouter/ScouterFigure.tsx) while
-// `mounted`/`character` aren't ready yet -- just renders the label with a dash value.
+// Pre-mount fallback for ScouterFigure (scouter/ScouterFigure.tsx) while `mounted` and
+// `character` are not ready, rendering the label with a placeholder value.
 function OverviewFigure({ label, value, theme }: { label: string; value: string; theme: Theme }) {
   return (
     <div>
@@ -560,12 +560,12 @@ function overviewGroupHeaderRowStyle(theme: Theme): CSSProperties {
   return { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, paddingBottom: 8, marginBottom: 12, borderBottom: `1px solid ${theme.border}` };
 }
 
-// Matching BookmarkPageHeader's plain-body h3 just traded one collision (vs. the small-caps
-// sub-labels below it) for another (vs. HexaStatLine's own 13px/700/theme.text stat values,
-// which read at nearly the same weight in the same body font). Switching to the app's
-// distinct heading typeface (--font-heading, Fredoka vs. the body's Nunito -- see LegionPanel/
-// BossCard/CharacterDirectoryScreen's own h2/h3s) separates "this is a section title" from
-// "this is data" by typeface, not just size, so it no longer competes with either neighbor.
+// Matching BookmarkPageHeader's plain-body h3 traded one collision, against the small-caps
+// sub-labels below it, for another against HexaStatLine's stat values, which sit at nearly the
+// same weight in the same body font. Using the app's heading typeface (`--font-heading`,
+// Fredoka against the body's Nunito, as LegionPanel, BossCard and CharacterDirectoryScreen do)
+// separates a section title from data by typeface rather than size alone, so it competes with
+// neither neighbor.
 function overviewGroupHeaderButtonStyle(theme: Theme): CSSProperties {
   return {
     display: "flex", alignItems: "center", gap: 4,
@@ -588,9 +588,9 @@ function OverviewToolLinkIcon() {
   );
 }
 
-// Shared by every Overview section header that also links out to a standalone calculator
-// tool -- the tools read the character back via their existing `?character=` convention
-// (useApplyCharacterQueryParam), so this just needs to build a matching URL.
+// Shared by every Overview section header that links out to a standalone calculator tool. The
+// tools read the character back through the `?character=` convention
+// (useApplyCharacterQueryParam), so this only builds a matching URL.
 function overviewToolHref(base: Route, charName: string | undefined): Route | undefined {
   return charName ? `${base}?character=${encodeURIComponent(charName)}` : undefined;
 }
@@ -600,11 +600,11 @@ function optimizeToolLinkStyle(theme: Theme): CSSProperties {
 }
 
 /** Bottom-of-panel link from a Stats bookmark sub-view into the Stat Optimizer tool,
- *  preselecting this character and (for HEXA) its mode via `?mode=hexa` -- see
- *  useStatOptimizer's initialModeFromQueryParam. Omitted with no character selected,
- *  same as every other tool link in this file. `marginTop` is caller-supplied since the
- *  two sub-views' content stacks up to it differently (HEXA's StatBlock sections already
- *  carry their own bottom spacing, Hyper Stat's flat row list doesn't). */
+ *  preselecting this character and, for HEXA, its mode via `?mode=hexa` (see
+ *  useStatOptimizer's initialModeFromQueryParam). Omitted with no character selected, like
+ *  every other tool link in this file. `marginTop` is caller-supplied because the two
+ *  sub-views stack up to it differently: HEXA's StatBlock sections carry their own bottom
+ *  spacing where Hyper Stat's flat row list does not. */
 function OptimizeToolLink({ theme, charName, mode, label, marginTop }: { theme: Theme; charName: string | undefined; mode: "hexa" | null; label: string; marginTop: number }) {
   if (!charName) return null;
   const href: Route = mode
@@ -620,18 +620,19 @@ function OptimizeToolLink({ theme, charName, mode, label, marginTop }: { theme: 
   );
 }
 
-// Every Overview section header doubles as a link to the matching profile bookmark (a
-// same-page tab switch, so it's always the primary click target) — bookmarkLabel names
-// that target's real page label (e.g. "Equipment", "HEXA Matrix") for the hover tooltip,
-// since the section label shown here doesn't always match 1:1 (Gear/Arcane Symbols both
-// land on the Equipment bookmark). Sections that also have a standalone tool covering the
-// same data (currently just HEXA Skills and Arcane Symbols; HEXA Stat has no tool of its
-// own yet, hexa-skills only tracks Skill progress) get a second, visually distinct
-// icon-button link to that tool, since one click target can't mean two destinations.
-// toolHref carries the character along via the tools' shared `?character=` convention
-// (useApplyCharacterQueryParam) so the tool opens pre-loaded. toolLabel is the tool's real
-// name (per its /tools listing card, e.g. "HEXA Skill Tracker") rather than the section
-// label, since they don't always match either.
+// Every Overview section header doubles as a link to the matching profile bookmark, a
+// same-page tab switch and so always the primary click target. bookmarkLabel names that
+// target's page label, such as "Equipment" or "HEXA Matrix", for the hover tooltip, since the
+// section label shown here does not always match: Gear and Arcane Symbols both land on the
+// Equipment bookmark.
+//
+// Sections that also have a standalone tool covering the same data, currently HEXA Skills and
+// Arcane Symbols, get a second visually distinct icon-button link to it, since one click
+// target cannot mean two destinations. HEXA Stat has no tool yet, as hexa-skills only tracks
+// Skill progress. toolHref carries the character through the tools' shared `?character=`
+// convention (useApplyCharacterQueryParam) so the tool opens pre-loaded, and toolLabel is the
+// tool's own name from its /tools card, such as "HEXA Skill Tracker", which likewise does not
+// always match the section label.
 function OverviewGroupHeader({ label, theme, onNavigate, bookmarkLabel, toolHref, toolLabel }: {
   label: string; theme: Theme; onNavigate: () => void; bookmarkLabel: string; toolHref?: Route; toolLabel?: string;
 }) {
@@ -658,13 +659,12 @@ function overviewSubLabelStyle(theme: Theme): CSSProperties {
   return { fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: theme.muted, marginBottom: 8 };
 }
 
-// classData.requiredStats is always [...raw main stats, attackPower|magicAtt] -- most classes
-// have 2 raw stats (e.g. Warrior: str/dex), but a handful are genuinely tri-stat (Dual Blade/
-// Shadower/Cadena: luk/dex/str, Xenon: str/dex/luk), so this can't hardcode indices [0]/[1].
-// Filtering by isRawStatId both picks out however many raw stats the class actually has and
-// excludes the trailing attackPower/magicAtt entry, which is handled separately. Mirrors the
-// old (deleted) resolveMainStatValue, but reuses tripleStatTotal for the same "Applied Value"
-// total the Stats bookmark shows, instead of a raw base-only number.
+// classData.requiredStats always holds the raw main stats followed by attackPower or magicAtt.
+// Most classes have 2 raw stats, Warrior being str and dex, but Dual Blade, Shadower, Cadena
+// and Xenon are genuinely tri-stat, so indices cannot be hardcoded. Filtering by isRawStatId
+// picks out however many raw stats a class has and excludes the trailing attack entry, which
+// is handled separately. Uses tripleStatTotal for the same Applied Value total the Stats
+// bookmark shows rather than a base-only number.
 const RAW_STAT_LABELS = { str: "STR", dex: "DEX", int: "INT", luk: "LUK", hp: "HP" } as const;
 type RawStatId = keyof typeof RAW_STAT_LABELS;
 
@@ -676,19 +676,18 @@ function rawStatDisplay(s: StoredCharacterStats | undefined, familiarBonus: Retu
   return { label: RAW_STAT_LABELS[id], value: tripleStatTotal(s?.[id], familiarBonus[id]) };
 }
 
-// classSkillData.ts's own top-of-file convention: an unpopulated requiredStats (Noblesse,
-// legacy's own unbranched "Pirate" stub, an unresolved classId) means "we genuinely don't
-// know which stat(s) this class uses" -- the UI falls back to showing every main stat rather
-// than a single blank "Main Stat —" placeholder. HP excluded: it's Demon Avenger's own
-// special case, already correctly assigned, never a fallback candidate.
+// Per classSkillData.ts's top-of-file convention, an unpopulated requiredStats, as with
+// Noblesse, legacy's unbranched "Pirate" stub or an unresolved classId, means the stats this
+// class uses are unknown. The UI then falls back to showing every main stat rather than a
+// single blank placeholder. HP is excluded as Demon Avenger's special case, already assigned
+// correctly and never a fallback candidate.
 const ALL_MAIN_STAT_IDS: RawStatId[] = ["str", "dex", "int", "luk"];
 
-// The most-glanced-at stats: every main stat total the class actually uses, plus the 3 big
-// damage-multiplier percentages. Shown regardless of HEXA eligibility -- unlike the sections
-// below, these don't depend on 6th job at all. Deliberately NOT a link to the Stats bookmark
-// like the other Overview sections -- these numbers are exactly the kind of thing someone
-// wants to double-click/drag-select and paste elsewhere (e.g. to a friend), and wrapping
-// them in a clickable button would fire navigation on that same click instead.
+// The most-glanced-at stats: every main stat total the class uses, plus the 3 big
+// damage-multiplier percentages. Shown regardless of HEXA eligibility, since unlike the
+// sections below these do not depend on 6th job. Deliberately not a link to the Stats bookmark
+// like the other Overview sections, because these numbers are the kind someone drag-selects
+// and pastes elsewhere, and wrapping them in a button would fire navigation on that click.
 function OverviewKeyStatsSection({ theme, character, classData }: {
   theme: Theme; character: StoredCharacterRecord | null; classData: ClassSkillData | undefined;
 }) {
@@ -715,10 +714,10 @@ function OverviewKeyStatsSection({ theme, character, classData }: {
   );
 }
 
-// Same node-tab + Main/Alt-stat readout as HexaStatBookmarkView, but flattened (no
-// StatBlock panel wrapping, no preset toggle) to match the plainer "6th job" section look
-// the default-layout mockup uses -- always reads the node's own activePreset rather than
-// letting the user switch, since Overview is meant to be a glance, not an editor.
+// The same node tabs and Main/Alt stat readout as HexaStatBookmarkView, flattened without the
+// StatBlock panel or preset toggle to match the plainer 6th job section look. Always reads the
+// node's own activePreset rather than letting the user switch, since Overview is a glance
+// rather than an editor.
 function OverviewHexaStatSection({ theme, character, classData, hexaStatNodes, onNavigateToBookmark }: {
   theme: Theme; character: StoredCharacterRecord | null; classData: ClassSkillData | undefined; hexaStatNodes: HexaStatNode[] | null;
   onNavigateToBookmark: (id: BookmarkId, subView?: string) => void;
@@ -761,14 +760,14 @@ function OverviewHexaStatSection({ theme, character, classData, hexaStatNodes, o
   );
 }
 
-// Smaller than ReadOnlyLeveledIconTile's 68px -- the level renders as a badge overlaid on
-// the icon itself instead of a text row underneath, so a whole group of tiles is roughly
-// half the height of the old grid. Shared by both the HEXA and V Matrix sections below
-// (each just supplies its own icon) since both are the same "read-only glance" shape.
+// Smaller than ReadOnlyLeveledIconTile's 68px, since the level renders as a badge over the
+// icon rather than a text row beneath it, making a group of tiles roughly half the height.
+// Shared by the HEXA and V Matrix sections below, each supplying its own icon, as both are the
+// same read-only glance shape.
 const OVERVIEW_TILE_SIZE = 48;
 
-// Static (no theme/prop dependency) -- fixed dark scrim + white text regardless of theme, so
-// the level number stays readable over any icon art, unlike text colored via theme tokens.
+// Static, with no theme or prop dependency: a fixed dark scrim and white text in every theme,
+// so the level number stays readable over any icon art where a theme token would not.
 const overviewLevelBadgeStyle: CSSProperties = {
   position: "absolute", left: 2, right: 2, bottom: 2, textAlign: "center",
   fontSize: 12, fontWeight: 800, color: "#fff", background: "rgba(0,0,0,0.6)", borderRadius: 4, lineHeight: 1.5,
@@ -873,22 +872,23 @@ function OverviewVMatrixSection({ theme, character, onNavigateToBookmark }: {
   );
 }
 
-// Arcane unlocks at the same level (200) as V Matrix and stays relevant at 260+ too (Sacred
-// layers on top of it, doesn't replace it), so this is shown alongside whichever of
-// OverviewVMatrixSection/OverviewHexaStatSection+OverviewHexaSkillsSection applies, not
-// swapped between tiers the way those are. Locked-but-not-yet-reached areas within Arcane
-// (e.g. Chu Chu Island's own higher per-zone requiredLevel) show as a dimmed 0-level tile,
-// same treatment OverviewHexaTile/OverviewVMatrixTile give an unleveled node -- but unlike
-// those, the tooltip names the unlock level too: a fresh Lv 200 player has no other way to
-// know a still-locked area even exists here, let alone when they'll get it.
+// Arcane unlocks at Lv 200, the same as V Matrix, and stays relevant past 260 since Sacred
+// layers on top rather than replacing it. So this shows alongside whichever V Matrix or HEXA
+// section applies instead of being swapped between tiers the way those are.
+//
+// An Arcane area the character has not reached yet, such as Chu Chu Island with its higher
+// per-zone requiredLevel, shows as a dimmed 0-level tile, the same treatment the HEXA and V
+// Matrix tiles give an unleveled node. Unlike those, the tooltip also names the unlock level,
+// since a fresh Lv 200 player has no other way to learn a locked area exists or when they
+// will get it.
 function OverviewSymbolTile({ area, level, locked, theme }: { area: SymbolArea; level: number; locked: boolean; theme: Theme }) {
   const name = locked ? `${area.name} (unlocks at Lv. ${area.requiredLevel})` : area.name;
   return <OverviewLevelTile icon={<ItemIcon id={area.itemId} size={OVERVIEW_TILE_SIZE - 10} />} name={name} level={level} theme={theme} />;
 }
 
-// A row of tiles for one symbol group (Arcane/Sacred/Grand Sacred) -- extracted so
-// OverviewSymbolSection can stack multiple groups once Sacred unlocks at 260, same layering
-// the Equipment bookmark's own SymbolAreaGroup already does for this data.
+// A row of tiles for one symbol group, Arcane, Sacred or Grand Sacred. Extracted so
+// OverviewSymbolSection can stack several groups once Sacred unlocks at 260, the same layering
+// the Equipment bookmark's SymbolAreaGroup already does for this data.
 function OverviewSymbolAreaRow({ areas, symbolLevels, characterLevel, theme }: {
   areas: SymbolArea[]; symbolLevels: Record<string, SymbolState> | null; characterLevel: number | undefined; theme: Theme;
 }) {
@@ -902,10 +902,10 @@ function OverviewSymbolAreaRow({ areas, symbolLevels, characterLevel, theme }: {
   );
 }
 
-// Sacred layers on top of Arcane rather than replacing it (see the characters CLAUDE.md
-// "Level/legacy gating" table: Arcane unlocks at 200, Sacred at 260, both excluded for
-// legacy) -- so this section grows a second (and, past Sacred, a third for Grand Sacred) tile
-// row once a character reaches that point, instead of ever swapping Arcane out.
+// Sacred layers on top of Arcane rather than replacing it. Per the "Level / legacy gating"
+// table in the characters CLAUDE.md, Arcane unlocks at 200 and Sacred at 260, both excluded
+// for legacy classes. So this section grows a second tile row, and a third for Grand Sacred,
+// as a character reaches those points, instead of swapping Arcane out.
 function OverviewSymbolSection({ theme, symbolLevels, characterLevel, isLegacy, charName, onNavigateToBookmark }: {
   theme: Theme; symbolLevels: Record<string, SymbolState> | null; characterLevel: number | undefined; isLegacy: boolean | undefined; charName: string | undefined;
   onNavigateToBookmark: (id: BookmarkId, subView?: string) => void;
@@ -934,10 +934,10 @@ function OverviewSymbolSection({ theme, symbolLevels, characterLevel, isLegacy, 
   );
 }
 
-// Skill+Common on the left, Mastery+Boost on the right with a vertical divider between --
-// more compact than a flat chip row and keeps Skill/Mastery paired with their own Common/Boost
-// rather than all four in one undifferentiated grid. HEXA Stat is its own section
-// (OverviewHexaStatSection), not squeezed in here.
+// Skill and Common on the left, Mastery and Boost on the right with a vertical divider
+// between. More compact than a flat chip row, and it keeps Skill and Mastery paired with their
+// own Common and Boost rather than putting all four in one undifferentiated grid. HEXA Stat
+// has its own section in OverviewHexaStatSection rather than being squeezed in here.
 function OverviewHexaSkillsSection({ theme, hexaClassDef, hexaLevels, charName, onNavigateToBookmark }: {
   theme: Theme; hexaClassDef: ReturnType<typeof resolveHexaClassDef>; hexaLevels: HexaSkillLevels; charName: string | undefined;
   onNavigateToBookmark: (id: BookmarkId, subView?: string) => void;
@@ -972,10 +972,10 @@ function OverviewHexaSkillsSection({ theme, hexaClassDef, hexaLevels, charName, 
   );
 }
 
-// A legacy character has no V Matrix/HEXA/Arcane ever, so gear IS effectively their whole
-// build -- shows the entire grid (COL6+COL7 armor, COL1+COL2 accessories), not just the
-// curated 7-piece armor set tried first. Weapon/Secondary/Emblem already have their own WSE
-// row up top, so CENTER_BOTTOM_SLOTS isn't repeated here.
+// A legacy character never has V Matrix, HEXA or Arcane, so gear is effectively their whole
+// build. Shows the entire grid, armor and accessories, rather than the curated 7-piece armor
+// set tried first. Weapon, Secondary and Emblem have their own row up top, so
+// CENTER_BOTTOM_SLOTS is not repeated here.
 function OverviewGearSection({ theme, equipGrid, onNavigateToBookmark }: {
   theme: Theme; equipGrid: SlotMap; onNavigateToBookmark: (id: BookmarkId, subView?: string) => void;
 }) {
@@ -1004,14 +1004,14 @@ function OverviewGearSection({ theme, equipGrid, onNavigateToBookmark }: {
   );
 }
 
-// Bigger than the shared OVERVIEW_TILE_SIZE (48px) -- with only 3 tiles ever in this row
-// (vs. HEXA/V Matrix's much longer node lists), there's plenty of width to spare, and 48px
-// left this section looking noticeably sparser than the rest of the panel.
+// Bigger than the shared OVERVIEW_TILE_SIZE. With only 3 tiles in this row, against the much
+// longer HEXA and V Matrix node lists, there is width to spare, and 48px left this section
+// looking sparser than the rest of the panel.
 const OVERVIEW_FAMILIAR_TILE_SIZE = 96;
 
-// No numeric level to badge-overlay here (a familiar's tier isn't a 1-30 progress number the
-// way HEXA/V Matrix nodes are), so the tier shows as the tile's own border color instead --
-// same FAMILIAR_TIER_COLORS the dedicated Familiars bookmark's card border already uses.
+// There is no numeric level to overlay, since a familiar's tier is not a 1 to 30 progress
+// number the way HEXA and V Matrix nodes are, so the tier shows as the tile's border color
+// instead, using the same FAMILIAR_TIER_COLORS as the Familiars bookmark's card border.
 function OverviewFamiliarTile({ slot, theme }: { slot: StoredFamiliarSlot; theme: Theme }) {
   const filled = Boolean(slot.name);
   const matchedEntry = FAMILIARS.find((f) => f.id === slot.familiarId);
@@ -1020,9 +1020,9 @@ function OverviewFamiliarTile({ slot, theme }: { slot: StoredFamiliarSlot; theme
   const tier = filled && slot.tier in FAMILIAR_TIER_COLORS ? (slot.tier as FamiliarTier) : null;
   const displayName = slot.name.replace(/ Familiar$/i, "");
   const familiarLines = [slot.line1, slot.line2].filter(Boolean);
-  // Name in its own bolder row, lines dimmed below -- all 3 rows read as the same weight
-  // otherwise, since hover-tip-bubble's own styling (0.75rem/700) applies uniformly to a
-  // plain string with no way to tell "this is the title" from "these are just its stats."
+  // The name gets its own bolder row with the lines dimmed below. Otherwise all 3 rows read at
+  // the same weight, since hover-tip-bubble's styling applies uniformly to a plain string and
+  // cannot distinguish the title from the stats under it.
   const tooltipLabel = filled ? (
     <>
       <div style={{ fontSize: "0.8rem", fontWeight: 800 }}>{displayName}</div>
@@ -1069,9 +1069,9 @@ function OverviewFamiliarsSection({ theme, character, onNavigateToBookmark }: {
   );
 }
 
-// Same AbilityGradeChip/IALineChip as AbilityView, but always reads the character's own
-// activePreset instead of offering a tab switcher -- mirrors OverviewHexaStatSection's own
-// "glance, not an editor" reasoning.
+// The same AbilityGradeChip and IALineChip as AbilityView, but always reads the character's
+// activePreset rather than offering a tab switcher, on the same glance-not-editor reasoning as
+// OverviewHexaStatSection.
 function OverviewInnerAbilitySection({ theme, innerAbility, onNavigateToBookmark }: {
   theme: Theme; innerAbility: StoredInnerAbility | undefined; onNavigateToBookmark: (id: BookmarkId, subView?: string) => void;
 }) {
@@ -1090,10 +1090,10 @@ function OverviewInnerAbilitySection({ theme, innerAbility, onNavigateToBookmark
   );
 }
 
-// A fixed 7-day window, no range picker -- Overview is a quick glance, not the full EXP
-// bookmark's own interactive chart. `windowExpHistory`/`ExpGainBarChart` are defined further
-// down in this file (both plain function declarations, so hoisting makes the reference here
-// safe) alongside the full ExpBookmark they were originally built for.
+// A fixed 7-day window with no range picker, since Overview is a glance rather than the EXP
+// bookmark's interactive chart. `windowExpHistory` and `ExpGainBarChart` are defined further
+// down alongside the ExpBookmark they were built for; both are plain function declarations, so
+// hoisting makes the reference here safe.
 function OverviewExpBarSection({ theme, character, onNavigateToBookmark }: {
   theme: Theme; character: StoredCharacterRecord | null; onNavigateToBookmark: (id: BookmarkId, subView?: string) => void;
 }) {
@@ -1127,12 +1127,11 @@ function OverviewExpLevelSection({ theme, character, onNavigateToBookmark }: {
 }
 
 // Canonical catalog of every customizable Overview section, in the default browse order
-// shown by CustomizeOverviewDialog. Excludes Key Stats and the Scouter figure/WSE row, which
-// stay fixed chrome (not customizable) at the top of OverviewBookmark -- Key Stats is the one
-// section that makes sense for every layout regardless of tier, same reasoning as Scouter/WSE.
-// `isLarge` flags the two sections whose tile grids can genuinely wrap across a lot of
-// content (Gear's full armor+accessory grid, V Matrix's Job/Boost/Common node lists) --
-// everything else renders as a compact, roughly fixed-size block regardless of class.
+// CustomizeOverviewDialog shows. Excludes Key Stats and the Scouter figure and WSE row, which
+// stay fixed chrome at the top of OverviewBookmark, since Key Stats makes sense for every
+// layout regardless of tier, as do those two. `isLarge` flags the sections whose tile grids
+// can wrap across a lot of content, meaning Gear's full armor and accessory grid and V
+// Matrix's node lists. Everything else renders as a roughly fixed-size block.
 const OVERVIEW_SECTION_DEFS: { id: OverviewSectionId; label: string; isLarge: boolean }[] = [
   { id: "arcaneSymbols", label: "Symbols", isLarge: false },
   { id: "hexaStat", label: "HEXA Stat", isLarge: false },
@@ -1145,9 +1144,9 @@ const OVERVIEW_SECTION_DEFS: { id: OverviewSectionId; label: string; isLarge: bo
   { id: "expLevel", label: "Level Progress", isLarge: false },
 ];
 
-// Curated bundles for the two "large" sections (Gear/V Matrix), the only ones vetted to fit
-// alongside a large section -- CustomizeOverviewDialog offers these as one-click anchors
-// instead of letting Gear/V Matrix combine freely with arbitrary add-ons.
+// Curated bundles for the two large sections, Gear and V Matrix, being the only combinations
+// vetted to fit alongside one. CustomizeOverviewDialog offers these as one-click anchors
+// rather than letting either combine freely with arbitrary add-ons.
 const OVERVIEW_ANCHORS: OverviewAnchorDef[] = [
   { id: "hexa", label: "HEXA (Stat + Skills)", sections: ["hexaStat", "hexaSkills"] },
   { id: "vmatrix_arcane", label: "V Matrix + Symbols", sections: ["vMatrix", "arcaneSymbols"] },
@@ -1156,14 +1155,14 @@ const OVERVIEW_ANCHORS: OverviewAnchorDef[] = [
   { id: "gear_alone", label: "Gear", sections: ["gear"] },
 ];
 
-// Overview is a quick-glance summary, not a full profile -- capping how many add-ons a
-// player can add on top of an anchor (or on their own, with no anchor) keeps it compact.
+// Overview is a quick-glance summary rather than a full profile, so capping how many add-ons
+// sit on top of an anchor, or stand alone without one, keeps it compact.
 const MAX_OVERVIEW_ADDONS = 2;
 
-// A section's eligibility is a hard requirement (does this character even have the data?),
-// separate from whether it's shown by default -- see the characters CLAUDE.md "Level/legacy
-// gating" table. Customization can only choose among eligible sections, never force one a
-// character doesn't qualify for.
+// Eligibility asks whether the character has the data at all, which is separate from whether a
+// section shows by default. See the "Level / legacy gating" table in the characters CLAUDE.md.
+// Customization chooses among eligible sections and can never force one the character does not
+// qualify for.
 function isOverviewSectionEligible(
   id: OverviewSectionId,
   character: StoredCharacterRecord | null,
@@ -1189,11 +1188,10 @@ function isOverviewSectionEligible(
   }
 }
 
-// The tier defaults from the original (pre-customization) design -- used whenever a
-// character has no saved overviewLayout yet. Key Stats is no longer part of this list (it's
-// fixed chrome now). Each of these also happens to exactly match one of the OVERVIEW_ANCHORS
-// below (or, for the sub-200 tier, a plain 2-add-on combo with no anchor), so
-// CustomizeOverviewDialog can pre-select the right anchor when it opens.
+// The tier defaults from the pre-customization design, used whenever a character has no saved
+// overviewLayout. Key Stats is no longer in this list, being fixed chrome. Each of these
+// matches one of the OVERVIEW_ANCHORS below, or for the sub-200 tier a plain two-add-on combo
+// with no anchor, so CustomizeOverviewDialog can pre-select the right anchor when it opens.
 function defaultOverviewSections(hasHexa: boolean, hasVMatrix: boolean, legacy: boolean): OverviewSectionId[] {
   if (hasHexa) return ["hexaStat", "hexaSkills"];
   if (hasVMatrix) return ["arcaneSymbols", "vMatrix"];
@@ -1296,18 +1294,20 @@ function OverviewBookmark({ model, onNavigateToBookmark, onNavigateToGearSlot, o
   // react-doctor-disable-next-line exhaustive-deps -- same narrowed-dependency reasoning as hexaLevels above
   }, [mounted, charName, character?.tools]);
 
-  // 3 tiers, mirroring the characters CLAUDE.md gating table exactly: 260+ non-legacy gets
-  // HEXA (the endgame default), 200-259 non-legacy has real V Matrix data worth showing
-  // instead of a blank notice, and the bottom tier splits again by legacy vs. not -- a legacy
-  // character's whole gear grid genuinely IS its whole build (no V Matrix/HEXA/Arcane ever,
-  // and a 2nd-line-legendary Inner Ability is rare enough on legacy classes that it's not
-  // worth a default slot), while a sub-200 non-legacy character is still actively leveling,
-  // so Familiars (no level gate, commonly touched well before 200) + Inner Ability read as
-  // more "in progress" than static gear there. Hyper Stat was considered for this tier too
-  // but has its own level gate at 140, reintroducing "gated content in the gated tier's default."
-  // These tiers are only the DEFAULT now -- a saved `overviewLayout` overrides them entirely
-  // (see CustomizeOverviewDialog), still filtered against eligibility below in case saved data
-  // and current eligibility ever disagree (e.g. corrupted/stale localStorage).
+  // Three tiers, mirroring the gating table in the characters CLAUDE.md. Non-legacy 260 and
+  // up gets HEXA as the endgame default. Non-legacy 200 to 259 has real V Matrix data worth
+  // showing instead of a blank notice. The bottom tier splits again by legacy.
+  //
+  // A legacy character's gear grid is its whole build, with no V Matrix, HEXA or Arcane ever,
+  // and a second legendary Inner Ability line is rare enough on legacy classes not to earn a
+  // default slot. A non-legacy character below 200 is still leveling, so Familiars, which has
+  // no level gate and is commonly touched well before 200, plus Inner Ability read as more in
+  // progress than static gear. Hyper Stat was considered here but has its own gate at 140,
+  // which would put gated content in the gated tier's default.
+  //
+  // These tiers are only the default. A saved `overviewLayout` overrides them entirely (see
+  // CustomizeOverviewDialog), still filtered against eligibility below in case saved data and
+  // current eligibility disagree, as with stale localStorage.
   const hasHexa = isHexaMatrixAvailable(character);
   const hasVMatrix = isVMatrixAvailable(character);
   const legacy = character ? isLegacyClass(character.jobName) : false;
@@ -1400,10 +1400,10 @@ function MarriageIcon({ married }: { married: boolean }) {
 }
 
 const RAW_VALUE_STAT_LABELS = new Set(["arcanePower", "sacredPower"]);
-// Mirrors StatsSetupStep.tsx's NO_DECIMAL_STAT_IDS — these 3 combat stats are always whole
-// numbers in-game, unlike Boss Damage/Crit Damage/Ignore DEF/etc. which commonly carry 2 decimal
-// places. Without this, display consistency depends on whether the player happened to type
-// trailing zeros during setup (e.g. "82" vs "82.00" for the exact same in-game value).
+// Mirrors NO_DECIMAL_STAT_IDS in StatsSetupStep.tsx. These 3 combat stats are always whole
+// numbers in game, unlike Boss Damage, Crit Damage and Ignore DEF, which commonly carry 2
+// decimal places. Without this, display consistency depends on whether the player typed
+// trailing zeros during setup, giving "82" or "82.00" for the same in-game value.
 const NO_DECIMAL_STAT_LABELS = new Set(["summonDuration", "buffDuration", "criticalRate"]);
 
 function pctStat(raw: string | undefined, id: string): string {
@@ -1414,10 +1414,10 @@ function pctStat(raw: string | undefined, id: string): string {
   return Number.isFinite(numeric) ? `${numeric.toFixed(2)}%` : `${raw}%`;
 }
 
-// MapleStory's own final-stat formula (confirmed against real in-game tooltips):
-// floor(Base Value × (1 + % Value/100)) + % Value Not Applied. The 3 inputs are exactly
-// what the Character Info window's [Applied Value] breakdown shows per stat — except that
-// window never itemizes familiar stat lines at all, see familiarStatBonuses in familiarsData.ts.
+// MapleStory's final-stat formula:
+// floor(Base Value × (1 + % Value / 100)) + % Value Not Applied. The 3 inputs are what the
+// Character Info window's Applied Value breakdown shows per stat, except that window never
+// itemizes familiar stat lines. See familiarStatBonuses in familiarsData.ts.
 function tripleStatTotal(field: StoredTripleStatField | undefined, familiarBonus?: FamiliarStatBonus): string {
   if (!field?.base) return "—";
   const base = (Number(field.base) || 0) + (familiarBonus?.flat ?? 0);
@@ -1447,8 +1447,8 @@ function finalDamageDisplay(
   return percent === undefined ? "—" : `${percent.toFixed(2)}%`;
 }
 
-// computeDamageRange returns undefined for legacy classes, Zero/Demon Avenger's unhandled
-// sub-cases, or a character missing stats — same "—" treatment as every other unavailable cell.
+// computeDamageRange returns undefined for legacy classes, Zero and Demon Avenger's unhandled
+// sub-cases, and a character missing stats, all shown the same way as any unavailable cell.
 function damageRangeDisplay(
   classId: string | undefined,
   level: number | undefined,
@@ -1465,9 +1465,9 @@ function damageRangeDisplay(
   return result.upper.toLocaleString("en-US");
 }
 
-// minmax(0, 1fr), not bare 1fr — a bare 1fr column refuses to shrink below its content's
-// natural width, so a long label/value SummaryRow pair could force this grid (and everything
-// clipped inside .profile-binder's overflow:hidden) wider than the available space.
+// `minmax(0, 1fr)` rather than a bare `1fr`, which refuses to shrink below its content's
+// natural width. A long SummaryRow label and value pair could then force this grid, and
+// everything clipped inside `.profile-binder`'s overflow, wider than the available space.
 const statGridStyle: CSSProperties = { display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)", columnGap: 16 };
 
 const statBlockLabelStyle: CSSProperties = { fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10 };
@@ -1486,14 +1486,14 @@ function StatBlock({ label, theme, children, info }: { label: string; theme: The
   );
 }
 
-// KaTeX's displaystyle metrics (fraction stacking, floor brackets) run large even at a
-// small container font-size, and the tooltip popup is only ~240px wide — inline mode
-// (displayMode: false) uses KaTeX's more compact textstyle sizing, and the small
-// fontSize here shrinks it further to actually fit.
+// KaTeX's displaystyle metrics, meaning fraction stacking and floor brackets, run large even at
+// a small container font-size, and the tooltip is only about 240px wide. Inline mode
+// (`displayMode: false`) uses KaTeX's more compact textstyle sizing, and the small fontSize
+// here shrinks it further to fit.
 const formulaHtmlStyle: CSSProperties = { overflowX: "auto", padding: "0.2rem 0", fontSize: "0.75rem" };
 
-// Renders a LaTeX string to static HTML via KaTeX at module load — pure function of the
-// tex string, no DOM/layout dependency, so this is safe to call outside a component.
+// Renders a LaTeX string to static HTML via KaTeX at module load. A pure function of the tex
+// string with no DOM or layout dependency, so it is safe to call outside a component.
 function formulaHtml(tex: string): string {
   return katex.renderToString(tex, { throwOnError: false, displayMode: false });
 }
@@ -1502,9 +1502,9 @@ function Formula({ tex }: { tex: string }) {
   return <div style={formulaHtmlStyle} dangerouslySetInnerHTML={{ __html: formulaHtml(tex) }} />;
 }
 
-// Split across 2 Formula blocks (each its own div, stacking naturally) rather than one
-// long inline string — at tooltip width, letting this wrap on its own broke mid-formula
-// right after the "+", which read as accidental rather than a deliberate line break.
+// Split across 2 Formula blocks, each its own div so they stack naturally, rather than one
+// long inline string. At tooltip width, letting it wrap on its own broke mid-formula right
+// after the plus sign, which read as accidental rather than a deliberate line break.
 const BASIC_STATS_FORMULA_TEX_LINE1 = String.raw`\lfloor \text{Base Value} \times \left(1 + \dfrac{\%\text{ Value}}{100}\right) \rfloor`;
 const BASIC_STATS_FORMULA_TEX_LINE2 = String.raw`+\ \%\text{ Value Not Applied}`;
 const COMBAT_STATS_FORMULA_TEX = String.raw`\lfloor \text{Base Value} \times \left(1 + \dfrac{\%\text{ Value}}{100}\right) \rfloor`;
@@ -1525,9 +1525,9 @@ const BASIC_STATS_INFO: TooltipContent = {
     </>
   ),
 };
-// Paladin's buff guide requires the single higher-tier "Combat Orders" (every other class
-// requires "Decent Combat Orders"), so the label can't be one static string — see
-// comboOrdersData.ts's resolveComboOrdersTier.
+// Paladin's buff guide requires the higher-tier "Combat Orders" where every other class
+// requires "Decent Combat Orders", so the label cannot be one static string. See
+// resolveComboOrdersTier in comboOrdersData.ts.
 function combatStatsInfo(classId: string | undefined): TooltipContent {
   const comboOrdersLabel = classId === "paladin"
     ? "Combat Orders"
@@ -1652,18 +1652,18 @@ function PresetTabs({
   );
 }
 
-// A legacy (pre-revamp) class never gets Arcane/Sacred Power by leveling — it'd need to
-// advance past the legacy job entirely — so its locked label can't promise a level, unlike
-// an ordinary under-leveled character that will unlock it later. Mirrors resolveHexaNotice's
-// same legacy-vs-under-leveled distinction for the HEXA panel below.
+// A legacy, pre-revamp class never gets Arcane or Sacred Power by leveling, since it would
+// have to advance past the legacy job entirely, so its locked label cannot promise a level the
+// way an under-leveled character's can. Mirrors the same legacy versus under-leveled
+// distinction resolveHexaNotice makes for the HEXA panel below.
 function lockedStatLabel(isLegacy: boolean | undefined, unlockLevel: number): string {
   return isLegacy ? "Not available for this class" : `Locked (Lv. ${unlockLevel}+)`;
 }
 
-// Arcane Power is a Hyper Stat category too (boosts Arcane Force gain), gated by the same
-// eligibility as the Symbols section's Arcane Power stat — Setup filters this category out
-// of the grid entirely below that level; the profile dims it + labels it instead, same as
-// the Symbols row, so it doesn't read as "eligible but unallocated."
+// Arcane Power is also a Hyper Stat category, boosting Arcane Force gain, gated by the same
+// eligibility as the Symbols section's Arcane Power stat. Setup filters the category out of
+// the grid below that level, while the profile dims and labels it as the Symbols row does, so
+// it does not read as eligible but unallocated.
 function hyperStatCellDisplay(cat: HyperStatCategoryDef, presetValue: number | undefined, arcaneEligible: boolean, arcaneLockedLabel: string): { value: string; locked: boolean } {
   if (cat.id === "arcanePower" && !arcaneEligible) return { value: arcaneLockedLabel, locked: true };
   return { value: `Lv. ${presetValue ?? 0}`, locked: false };
@@ -1676,8 +1676,8 @@ function HyperStatView({
 }) {
   const activePreset = hyperStat?.activePreset ?? 0;
   const [presetIdx, setPresetIdx] = useState(activePreset);
-  // Mirrors resolveHexaNotice's pattern below (HEXA panel) — a whole-panel lock message
-  // instead of preset switching that wouldn't make sense pre-unlock anyway.
+  // Mirrors resolveHexaNotice's pattern for the HEXA panel below: a whole-panel lock message
+  // rather than preset switching that would not make sense before unlock.
   if (!eligible) {
     return <p style={{ fontSize: 12, color: theme.muted, fontStyle: "italic", margin: 0 }}>{`Hyper Stats unlock at Lv. ${HYPER_STAT_LEVEL}.`}</p>;
   }
@@ -1818,17 +1818,18 @@ function StatsBookmark({
       : { label: STAT_LABELS.sacredPower ?? "Sacred Power", value: lockedStatLabel(classData?.isLegacy, SACRED_POWER_LEVEL), locked: true },
   ];
 
-  // The 3 views are stacked in the same grid cell (all present, only one visible) so the
-  // row auto-sizes to the tallest of the three — visibility:hidden keeps its box for that
-  // sizing (unlike display:none), which is what stops the action bar below from jumping
-  // up when a shorter view (Hyper Stat/Ability) becomes active. The outer flex:1 fills
-  // whatever height the panel's own min-height reserves beyond this bookmark's actual
-  // content, and marginTop: "auto" on the action bar's wrapper pins it to the panel's real
-  // bottom edge instead of sitting right under a shorter view's content.
-  // Mobile has no panel min-height to fill (see .profile-binder's mobile override), so this
-  // same trick instead reserves the full Stats view's height behind a much shorter Hyper
-  // Stat/Ability view — .bookmark-subview's mobile CSS switches the inactive panes to real
-  // display:none there, so the grid sizes to whichever view is actually showing.
+  // The 3 views stack in one grid cell, all present with only one visible, so the row
+  // auto-sizes to the tallest. `visibility: hidden` keeps each box for that sizing where
+  // `display: none` would not, which is what stops the action bar below from jumping up when
+  // a shorter view like Hyper Stat or Ability becomes active. The outer `flex: 1` fills
+  // whatever height the panel's min-height reserves beyond this bookmark's content, and
+  // `marginTop: auto` on the action bar's wrapper pins it to the panel's bottom edge rather
+  // than leaving it under a shorter view's content.
+  //
+  // Mobile has no panel min-height to fill (see `.profile-binder`'s mobile override), so the
+  // same trick would instead reserve the full Stats view's height behind a much shorter one.
+  // `.bookmark-subview`'s mobile CSS switches the inactive panes to real `display: none`
+  // there, so the grid sizes to whichever view is showing.
   return (
     <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
       <div style={{ display: "grid" }}>
@@ -1973,13 +1974,13 @@ function symbolAreaLevel(levels: Record<string, SymbolState> | null, area: Symbo
   return levels?.[area.name]?.level ?? 0;
 }
 
-// Every area always renders (never hidden) — an area the character hasn't reached yet shows
-// as a locked tile (dimmed icon + its unlock level) via ReadOnlySymbolTile's `locked` prop,
-// rather than vanishing outright. Covers per-zone gaps within an eligible tier (Chu Chu
-// Island at 210 while Arcane-eligible from 200) the same way it covers a whole tier being
-// out of reach (Grand Sacred at 290+ while only Sacred-eligible) — hiding any of these would
-// read as "bugged or missing" rather than "not unlocked yet". Legacy is handled a level up,
-// in SymbolLevelsDisplay, so this only ever runs for a non-legacy character.
+// Every area renders. An area the character has not reached shows as a locked tile, a dimmed
+// icon with its unlock level, via ReadOnlySymbolTile's `locked` prop, rather than vanishing.
+// This covers per-zone gaps inside an eligible tier, such as Chu Chu Island at 210 while
+// Arcane-eligible from 200, the same way it covers a whole tier being out of reach, such as
+// Grand Sacred at 290 while only Sacred-eligible. Hiding either would read as missing rather
+// than not yet unlocked. Legacy is handled a level up in SymbolLevelsDisplay, so this runs
+// only for non-legacy characters.
 function SymbolAreaGroup({ label, areas, levels, loadImages, characterLevel, theme }: {
   label: string; areas: SymbolArea[]; levels: Record<string, SymbolState> | null; loadImages: boolean; characterLevel: number | undefined; theme: Theme;
 }) {
@@ -2007,10 +2008,9 @@ function SymbolLevelsDisplay({
   activeTab: SymbolViewTab;
   onTabChange: (tab: SymbolViewTab) => void;
 }) {
-  // A legacy class can never advance to unlock any symbol type at all, so it gets one
-  // blanket message with no tab switcher and no per-tier labels — nothing here to switch
-  // between, showing the buttons anyway would just invite clicking through to the same
-  // message twice.
+  // A legacy class can never advance to unlock any symbol type, so it gets one blanket message
+  // with no tab switcher and no per-tier labels. There is nothing to switch between, and
+  // showing the buttons would invite clicking through to the same message twice.
   if (isLegacy) {
     return <p style={{ margin: 0, fontSize: 12, color: theme.muted, fontStyle: "italic" }}>Not available for this class.</p>;
   }
@@ -2111,22 +2111,21 @@ function EquipmentBookmark({
   const activePresetStored = equip?.activePreset ?? 0;
   const [presetIdx, setPresetIdx] = useState(activePresetStored);
   const [symbolTab, setSymbolTab] = useState<SymbolViewTab>("arcane");
-  // Starts on the Weapon page (index 1) when arriving to highlight a WSE slot (Overview's
-  // Weapon/Secondary/Emblem tiles all live in that page's CENTER_BOTTOM_SLOTS section) --
-  // otherwise a mobile visitor lands on Accessories (index 0) and the highlighted slot is
-  // never actually on screen.
+  // Starts on the Weapon page when arriving to highlight a WSE slot, since Overview's Weapon,
+  // Secondary and Emblem tiles all live in that page's CENTER_BOTTOM_SLOTS section. Otherwise
+  // a mobile visitor lands on Accessories and the highlighted slot is never on screen.
   const [mobileGridPage, setMobileGridPage] = useState(() => (highlightSlotKey && CENTER_BOTTOM_SLOTS.includes(highlightSlotKey) ? 1 : 0));
   const gearGridRef = useRef<HTMLDivElement>(null);
 
-  // One-shot: scrolls to and flashes the slot Overview linked to, the same jump-highlight
-  // pulse the setup flow uses for a flagged/missing field (scrollToFlaggedField in
-  // QuestionControls.tsx) -- reused here via the same CSS class rather than that helper
-  // directly, since this needs to target one specific slot, not "the first flagged field."
-  // Mount-only: this component remounts fresh every time the profile switches into the
-  // Equipment bookmark (BookmarkPageBody's key={active.id} above), so a plain empty deps
-  // array is the right scope -- and onHighlightSlotConsumed clears the parent's state
-  // right after, so switching away and back later (a fresh mount with no slot to highlight)
-  // doesn't replay it.
+  // One-shot scroll to and flash of the slot Overview linked to, the same jump-highlight pulse
+  // the setup flow uses for a flagged or missing field (scrollToFlaggedField in
+  // QuestionControls.tsx). Reused through the same CSS class rather than that helper, since
+  // this targets one specific slot rather than the first flagged field.
+  //
+  // Mount-only. This component remounts whenever the profile switches into the Equipment
+  // bookmark (BookmarkPageBody's key={active.id} above), so an empty deps array is the right
+  // scope, and onHighlightSlotConsumed clears the parent's state immediately after, so
+  // switching away and back does not replay it.
   // react-doctor-disable-next-line no-prop-callback-in-effect, no-pass-live-state-to-parent
   useEffect(() => {
     if (!highlightSlotKey) return;
@@ -2139,13 +2138,13 @@ function EquipmentBookmark({
     onHighlightSlotConsumed?.();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only, see comment above
   }, []);
-  // Titles/Pets stay mounted (visibility-toggled, not conditionally rendered) so the panel
-  // auto-sizes to the tallest of the 3 sub-views instead of jumping height on switch — but
-  // that means every icon across every sub-view loads immediately on arrival, even ones never
-  // clicked into, hammering the image host for no reason. Deferring real item/symbol data
-  // until a sub-view's first visit (see equip={} below) keeps the exact same box sizes (an
-  // empty slot renders at the same dimensions as a filled one) so the sizing trick is
-  // unaffected, while the actual <Image> elements simply don't exist until then.
+  // Titles and Pets stay mounted, toggled by visibility rather than conditionally rendered, so
+  // the panel auto-sizes to the tallest of the 3 sub-views instead of jumping height on
+  // switch. That would otherwise load every icon across every sub-view on arrival, including
+  // ones never opened, hammering the image host for nothing. Deferring real item and symbol
+  // data until a sub-view's first visit (see `equip={}` below) keeps the same box sizes, since
+  // an empty slot renders at the dimensions of a filled one, so the sizing trick still works
+  // while the `<Image>` elements do not exist until then.
   const [visitedViews, setVisitedViews] = useState<Set<EquipmentBookmarkView>>(() => new Set([view]));
   if (!visitedViews.has(view)) setVisitedViews((prev) => new Set(prev).add(view));
 
@@ -2165,11 +2164,11 @@ function EquipmentBookmark({
   // react-doctor-disable-next-line exhaustive-deps -- deliberately depends on the narrowed `charName` primitive, not the whole `character` object, to avoid re-running when unrelated fields change, mirrors readHexaLevels' own pattern above
   }, [mounted, charName, character?.tools]);
 
-  // The 3 views are stacked in the same grid cell (all present, only one visible) so the
-  // row auto-sizes to the tallest of the three, matching StatsBookmark's own pattern —
-  // including the outer flex:1 + action bar's marginTop: "auto" that pins it to the panel's
-  // real bottom edge, see StatsBookmark's own comment above for why (also covers the mobile
-  // display:none carve-out via .bookmark-subview — CSS-only, doesn't affect visitedViews below).
+  // The 3 views stack in one grid cell, all present with only one visible, so the row
+  // auto-sizes to the tallest, matching StatsBookmark's pattern. That includes the outer
+  // `flex: 1` and the action bar's `marginTop: auto` pinning it to the panel's bottom edge;
+  // see StatsBookmark's comment above for why, including the mobile `display: none` carve-out
+  // in `.bookmark-subview`, which is CSS-only and does not affect visitedViews below.
   return (
     <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
       <div style={{ display: "grid" }}>
@@ -2247,10 +2246,10 @@ const EMPTY_FAMILIAR_SLOT: StoredFamiliarSlot = { familiarId: null, mobId: "", n
 const EMPTY_FAMILIAR_SLOTS: StoredFamiliarSlot[] = Array(3).fill(EMPTY_FAMILIAR_SLOT);
 const EMPTY_FAMILIAR_BADGES: string[] = Array(8).fill("");
 
-// Mirrors FamiliarsSetupStep's own 3-card + staggered-4+4-badge layout, read-only. No
-// EmptyBookmarkState (matches V Matrix/Equipment/HEXA's convention) — the read view shows
-// empty dashed cards/pentagons when nothing's set up yet, so the edit pencil is always
-// available instead of gated behind a separate "Set up" button.
+// Mirrors FamiliarsSetupStep's 3-card and staggered badge layout, read-only. No
+// EmptyBookmarkState, matching the V Matrix, Equipment and HEXA convention: the read view
+// shows empty dashed cards and pentagons when nothing is set up, so the edit pencil is always
+// available rather than gated behind a separate "Set up" button.
 function FamiliarsBookmark({
   theme, character, onSetActivePreset,
 }: {
@@ -2347,11 +2346,11 @@ function GatedFeatureNotice({ theme, title, description, action }: { theme: Them
   );
 }
 
-// V Matrix unlocks at level 200 and is unavailable to legacy (pre-5th-job) classes — mirrors
-// flows.ts's isStepSkippedForLevel, the setup step's own gate for this same step. See the
-// characters CLAUDE.md "Level/legacy gating" table: the bookmark has to re-check this itself
-// since it renders independently of the setup step registry. Also drives whether
-// BookmarkPageBody shows the edit pencil — there's nothing to edit on a gated character.
+// V Matrix unlocks at level 200 and is unavailable to legacy, pre-5th-job classes, mirroring
+// isStepSkippedForLevel in flows.ts, the setup step's gate for this same step. Per the "Level /
+// legacy gating" table in the characters CLAUDE.md, the bookmark re-checks this itself because
+// it renders independently of the step registry. Also drives whether BookmarkPageBody shows the
+// edit pencil, since a gated character has nothing to edit.
 function isVMatrixAvailable(character: StoredCharacterRecord | null): boolean {
   if (!character) return false;
   return character.level >= 200 && !isLegacyClass(character.jobName);
@@ -2404,12 +2403,12 @@ function VMatrixBookmark({ theme, character }: { theme: Theme; character: Stored
 
 type HexaBookmarkView = "skills" | "stat";
 
-// A character with no saved HEXA Skills tool data at all (level-eligible but never ran the
-// step) used to render nothing below the header — this fills in the same all-zero, dimmed
-// shape VMatrixBookmark shows for an untouched V Matrix, instead of a blank panel.
-// Origin always starts at level 1 once HEXA-eligible (defaultLevels/emptyLevels elsewhere
-// already agree on this) -- 0 here made an untouched character's profile bookmark read
-// "0/30" while the setup step's own draft correctly showed "1/30".
+// A character with no saved HEXA Skills tool data, meaning level-eligible but never ran the
+// step, would render nothing below the header. This fills in the same all-zero dimmed shape
+// VMatrixBookmark shows for an untouched V Matrix rather than a blank panel. Origin starts at
+// level 1 once HEXA-eligible, which defaultLevels and emptyLevels elsewhere already agree on;
+// 0 here made an untouched character's bookmark read 0 of 30 while the setup step's draft
+// correctly showed 1 of 30.
 const EMPTY_HEXA_LEVELS: HexaSkillLevels = { origin: 1, ascent: 0, mastery: [], enhancement: [], common: [] };
 
 function hexaMatrixBookmarkHeaderLabel(view: HexaBookmarkView, defaultLabel: string): string {
@@ -2441,13 +2440,14 @@ function HexaActionBar({ view, theme, onSelect }: { view: HexaBookmarkView; them
 }
 
 const HEXA_STAT_NODE_LABELS = ["HEXA Stat I", "HEXA Stat II", "HEXA Stat III"];
-// Node I is always accessible (HEXA Matrix implies 6th job); II/III have their own level
-// gates on top of that — mirrors HexaMatrixSetupStep's own isNodeUnlocked.
+// Node I is always accessible, since HEXA Matrix implies 6th job, while II and III have their
+// own level gates on top. Mirrors isNodeUnlocked in HexaMatrixSetupStep.
 const HEXA_STAT_UNLOCK_LEVELS = [0, 265, 270];
-// Mirrors HexaMatrixSetupStep's own MAX_STAT_ENTRY_LEVEL — each HEXA Stat line caps at 10.
+// Mirrors MAX_STAT_ENTRY_LEVEL in HexaMatrixSetupStep. Each HEXA Stat line caps at 10.
 const HEXA_STAT_ENTRY_MAX_LEVEL = 10;
-// Mirrors HexaMatrixSetupStep's own local HEXA_STAT_DEFS iconIds (from the "hexaStat" section
-// of the hexa-skill manifest) — not exported there, duplicated here like the unlock levels above.
+// Mirrors the local HEXA_STAT_DEFS iconIds in HexaMatrixSetupStep, taken from the hexaStat
+// section of the hexa-skill manifest. Not exported there, so duplicated here like the unlock
+// levels above.
 const HEXA_STAT_NODE_ICON_IDS = ["50000000", "50000001", "50000002"];
 
 function emptyHexaStatEntry(): HexaStatEntry {
@@ -2462,8 +2462,8 @@ function emptyHexaStatNode(): HexaStatNode {
   return { presets: [emptyHexaStatSlot(), emptyHexaStatSlot()], activePreset: 0 };
 }
 
-// Mirrors HexaMatrixSetupStep's own isNodeEmpty — true when neither preset of a node has any
-// stat chosen, used to dim a node's tab icon the same way the setup step does.
+// Mirrors isNodeEmpty in HexaMatrixSetupStep. True when neither preset of a node has a stat
+// chosen, used to dim a node's tab icon the way the setup step does.
 function isHexaStatNodeEmpty(node: HexaStatNode): boolean {
   const slotEmpty = (s: HexaStatSlot) => !s.main.type && !s.alt[0].type && !s.alt[1].type;
   return slotEmpty(node.presets[0]) && slotEmpty(node.presets[1]);
@@ -2597,7 +2597,7 @@ function HexaStatBookmarkView({ theme, character, classData, hexaStatNodes, onSe
   );
 }
 
-// Mirrors HexaMatrixSetupStep's own MAX_LEVEL — every HEXA skill/mastery/boost/common node
+// Mirrors MAX_LEVEL in HexaMatrixSetupStep. Every HEXA skill, mastery, boost and common node
 // caps at 30.
 const HEXA_SKILL_MAX_LEVEL = 30;
 
@@ -2605,9 +2605,9 @@ function hexaMasteryNodeToSkillDef(node: HexaMasteryNode): HexaSkillDef {
   return { name: node.skills.join(" / "), iconId: node.iconId, iconUrl: node.iconUrl };
 }
 
-// Same StatBlock + grid treatment as VMatrixNodeSection — one tile per real node, no padding
-// for slots the class doesn't have (matches both VMatrixBookmark and the setup step's own
-// substep, neither of which model "reserved future slots").
+// The same StatBlock and grid treatment as VMatrixNodeSection: one tile per real node, with no
+// padding for slots the class does not have. Matches both VMatrixBookmark and the setup step's
+// substep, neither of which model reserved future slots.
 function HexaSkillNodeSection({ label, skills, levels, theme }: {
   label: string; skills: HexaSkillDef[]; levels: number[]; theme: Theme;
 }) {
@@ -2688,10 +2688,10 @@ function HexaMatrixBookmark({ theme, character, view, onViewChange, onSetActiveP
     return <GatedFeatureNotice theme={theme} title="Not Available" description={hexaNotice} />;
   }
 
-  // The 2 views are stacked in the same grid cell (both present, only one visible) so the
-  // row auto-sizes to the taller of the two, matching EquipmentBookmark's own pattern —
-  // including the outer flex:1 + action bar's marginTop: "auto", see StatsBookmark's own
-  // comment for why (also covers the mobile display:none carve-out via .bookmark-subview).
+  // The 2 views stack in one grid cell, both present with only one visible, so the row
+  // auto-sizes to the taller, matching EquipmentBookmark's pattern. That includes the outer
+  // `flex: 1` and the action bar's `marginTop: auto`; see StatsBookmark's comment for why,
+  // including the mobile `display: none` carve-out in `.bookmark-subview`.
   return (
     <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
       <div style={{ display: "grid" }}>
@@ -2709,9 +2709,9 @@ function HexaMatrixBookmark({ theme, character, view, onViewChange, onSetActiveP
   );
 }
 
-// EXP % is just arithmetic on level+exp (characterExpPercent), real for every class once
-// past level 200 -- unlike V Matrix/HEXA there's no legacy-class exclusion, the EXP-table
-// itself (exp-calculator-data.ts) only covers 200-300, the same floor the calculator uses.
+// EXP percent is arithmetic on level and exp (characterExpPercent), real for every class past
+// level 200. Unlike V Matrix and HEXA there is no legacy-class exclusion; the EXP table in
+// exp-calculator-data.ts covers 200 to 300, the same floor the calculator uses.
 function resolveExpNotice(character: StoredCharacterRecord | null): string | null {
   if (!character) return null;
   return isExpTrackingAvailable(character.level) ? null : "EXP tracking unlocks at level 200.";
@@ -2752,9 +2752,9 @@ type ExpRangeDays = "7" | "14" | "30" | "90";
 type LineChartComponent = (typeof import("react-chartjs-2"))["Line"];
 type BarChartComponent = (typeof import("react-chartjs-2"))["Bar"];
 
-// Dynamically imports chart.js + react-chartjs-2 rather than a static import, mirroring
-// StarForceWorkspace's HistogramPanel -- keeps the chart libraries out of every profile
-// load for characters that never open this bookmark.
+// Dynamically imports chart.js and react-chartjs-2 rather than importing them statically,
+// mirroring StarForceWorkspace's HistogramPanel, so the chart libraries stay out of every
+// profile load for characters that never open this bookmark.
 interface ExpChartPoint {
   x: number;
   y: number;
@@ -2763,14 +2763,12 @@ interface ExpChartPoint {
   expGained: number | null;
 }
 
-// The number of real calendar days between labeled ticks. Forcing a fixed tick COUNT (the
-// previous approach) breaks down whenever the day-span isn't a clean multiple of that count
-// -- e.g. 14 daily points split into 6 ticks unavoidably alternates between 2-day and 3-day
-// steps, which reads as jittery even though every point is genuinely one real day apart.
-// Picking a fixed day INTERVAL instead (and simply not labeling whichever point falls at the
-// very end of a partial interval) guarantees every labeled gap is identical. Values chosen so
-// the common window sizes divide evenly: 14/2=7, 30/5=6, 90/15=6 ticks. A small window has
-// room to label every single day.
+// The number of real calendar days between labeled ticks. A fixed tick count breaks down
+// whenever the day span is not a clean multiple of it: 14 daily points split into 6 ticks
+// alternates between 2-day and 3-day steps, reading as jittery even though every point is one
+// real day apart. A fixed day interval, leaving the final partial interval's point unlabeled,
+// makes every labeled gap identical. The values divide the common window sizes evenly, giving
+// 7, 6 and 6 ticks respectively, and a small window has room to label every day.
 function resolveExpTickIntervalDays(n: number): number {
   if (n <= 8) return 1;
   if (n <= 16) return 2;
@@ -2778,28 +2776,25 @@ function resolveExpTickIntervalDays(n: number): number {
   return 15;
 }
 
-// Rough minimum pixel width a single date tick label ("Jul 20") needs to not visually run into
-// its neighbor -- maxRotation:0/autoSkip:false are both deliberately off on the x-axis (see
-// pickTickIndices below) so the two charts always agree on exactly which dates to show, which
-// also means Chart.js's own built-in overlap avoidance never kicks in to save us here.
+// Rough minimum pixel width one date tick label needs to avoid running into its neighbor.
+// `maxRotation: 0` and `autoSkip: false` are both deliberately set on the x-axis (see
+// pickTickIndices below) so the two charts always agree on which dates to show, which also
+// means Chart.js's built-in overlap avoidance never applies here.
 const MIN_TICK_LABEL_WIDTH_PX = 44;
 
-// Indices of the data points (already one per Nexon day, see nexonDayAnchorMs above) that
-// get an axis tick -- every `interval`-th day starting from the first point. Shared by the
-// line chart (linear scale) and the bar chart (category scale) so both land on the exact same
-// dates. The very last point isn't force-included if it doesn't fall on the interval, same as
-// how most chart libraries handle "nice" tick spacing -- forcing it back in is what produced
-// the earlier crammed/stretched end-of-axis look.
+// Indices of the data points, already one per Nexon day (see nexonDayAnchorMs above), that get
+// an axis tick, meaning every interval-th day from the first point. Shared by the line chart
+// on a linear scale and the bar chart on a category scale so both land on the same dates. The
+// last point is not forced in when it does not fall on the interval, matching how most chart
+// libraries space ticks; forcing it back in is what crammed and stretched the end of the axis.
 //
-// axisWidthPx (the x-axis's own real rendered width, read from Chart.js's own layout at
-// afterBuildTicks time) widens the interval further than resolveExpTickIntervalDays alone
-// would pick whenever the chart itself is narrow enough that even that "nice" interval's
-// labels would overlap -- caught on a 360px-wide browser window, where a 7-point range's
-// always-one-tick-per-day default left every date label overlapping the next. This only ever
-// widens the interval (never narrows it), and only actually changes anything below roughly
-// 300px, so it trades the interval's normal "nice" divisibility (14/2, 30/5, 90/15 ticks) for
-// an uneven one only in that edge case -- unavoidable since there's no clean-dividing interval
-// that's also guaranteed to fit an arbitrarily narrow width.
+// axisWidthPx is the x-axis's rendered width, read from Chart.js's layout at afterBuildTicks
+// time. It widens the interval beyond what resolveExpTickIntervalDays alone picks whenever the
+// chart is narrow enough that even that interval's labels would overlap, as on a 360px window
+// where a 7-point range's one-tick-per-day default overlapped every date label. It only ever
+// widens, and only changes anything below roughly 300px, trading the interval's usual clean
+// divisibility for an uneven one in that case. There is no interval that both divides cleanly
+// and fits an arbitrarily narrow width.
 function pickTickIndices(n: number, axisWidthPx: number): number[] {
   let interval = resolveExpTickIntervalDays(n);
   while (axisWidthPx > 0 && interval < n && Math.ceil(n / interval) * MIN_TICK_LABEL_WIDTH_PX > axisWidthPx) {
@@ -2810,34 +2805,31 @@ function pickTickIndices(n: number, axisWidthPx: number): number[] {
   return indices;
 }
 
-// Normalizes a raw entry timestamp down to a stable anchor point for its Nexon day (see
-// nexonDayIndex in charactersStore.ts) -- the same day-boundary used to decide which day an
-// EXP snapshot belongs to when it's recorded. Refreshes land at whatever time of day a
-// refresh happened, not a fixed time -- plotting the raw timestamp made every chart's
-// x-spacing wobble by however many hours apart two same-day-count-adjacent entries happened
-// to be recorded (e.g. a 2am refresh followed by an 11pm one reads as a ~45h gap), even
-// though the real day gap was identical to every other pair. Anchoring removes that jitter
-// while still preserving real MULTI-day gaps (a skipped day still shows as a wider gap, just
-// measured in whole days) -- and keeping this in UTC (rather than the viewer's local
-// midnight) means every viewer sees the exact same date labels for the same snapshot,
-// regardless of their own timezone.
+// Normalizes a raw entry timestamp to a stable anchor for its Nexon day (see nexonDayIndex in
+// charactersStore.ts), the same boundary used to decide which day an EXP snapshot belongs to
+// when recorded. Refreshes land at whatever time of day they happened, so plotting the raw
+// timestamp made x-spacing wobble by however many hours apart two adjacent same-day-count
+// entries were recorded. A 2am refresh followed by an 11pm one reads as a 45 hour gap even
+// though the real day gap matched every other pair. Anchoring removes that jitter while still
+// showing real multi-day gaps, measured in whole days. Keeping it in UTC rather than the
+// viewer's local midnight means every viewer sees the same date labels for a given snapshot.
 function nexonDayAnchorMs(timestamp: number): number {
   return nexonDayIndex(timestamp) * EXP_HISTORY_DAY_MS + NEXON_DAILY_UPDATE_CUTOFF_HOUR_UTC * 60 * 60 * 1000;
 }
 
-// Shared by ExpChart and ExpGainBarChart below. y is a fractional level (level +
-// percent/100) rather than the raw EXP percent -- the raw percent alone visibly drops
-// back toward 0 on every level-up inside the window, which reads as a regression even
-// though real progress only ever goes up. Folding the level into the number keeps the
-// line always climbing while still landing on real level numbers on the axis; `percent`
-// is kept per-point for the tooltip, which shows the real Lv/% breakdown. expGained is
-// the raw EXP earned since the previous entry (or since `anchor` for the first point --
-// the last real snapshot before the selected window, if any -- so the first in-window
-// day still gets a real diff instead of being nulled out; only null when there's truly
-// nothing before it, i.e. the very first snapshot ever recorded). A same-level expGained
-// is a raw signed diff rather than netExpGained (which clamps a loss to 0) so a real EXP
-// loss -- dying to a boss in some modes -- comes through as negative instead of getting
-// hidden, same reasoning as resolveExpDelta in expProgress.ts.
+// Shared by ExpChart and ExpGainBarChart below. y is a fractional level, level plus percent
+// over 100, rather than the raw EXP percent, which drops back toward 0 on every level-up in
+// the window and reads as a regression even though real progress only goes up. Folding the
+// level in keeps the line climbing while still landing on real level numbers on the axis, and
+// `percent` is kept per point for the tooltip's level and percent breakdown.
+//
+// expGained is the raw EXP earned since the previous entry, or since `anchor` for the first
+// point, that being the last snapshot before the selected window if one exists, so the first
+// in-window day gets a real diff rather than being nulled out. It is null only when nothing
+// precedes it, meaning the first snapshot ever recorded. A same-level expGained is a signed
+// diff rather than netExpGained, which clamps a loss to 0, so a real EXP loss from dying to a
+// boss comes through as negative instead of being hidden. Same reasoning as resolveExpDelta
+// in expProgress.ts.
 function computeExpChartPoints(entries: ExpHistoryEntry[], anchor: ExpHistoryEntry | null = null): ExpChartPoint[] {
   return entries.map((e, i) => {
     const percent = characterExpPercent(e.level, e.exp);
@@ -2850,12 +2842,11 @@ function computeExpChartPoints(entries: ExpHistoryEntry[], anchor: ExpHistoryEnt
   });
 }
 
-// Chart.js's tooltip only updates in response to real pointer events landing on the canvas
-// itself -- a mouse gets a "mouseleave" for free when it wanders off, but a tap has no
-// equivalent, so a tapped point's tooltip on mobile just stays stuck open forever once you
-// tap elsewhere on the page. Listens for a pointerdown anywhere outside the chart's own
-// canvas and manually clears the active tooltip/elements when that happens. Shared by both
-// EXP charts (line and bar) since both have the same tap-and-stick behavior.
+// Chart.js's tooltip only updates from real pointer events landing on the canvas. A mouse gets
+// a mouseleave for free when it wanders off, but a tap has no equivalent, so on mobile a
+// tapped point's tooltip stays open once you tap elsewhere on the page. This listens for a
+// pointerdown outside the chart's canvas and clears the active tooltip and elements. Shared by
+// both EXP charts, line and bar, since both behave the same way.
 function useDismissChartTooltipOnOutsideTap<TType extends ChartType>(chartRef: React.RefObject<Chart<TType> | null>) {
   useEffect(() => {
     function handlePointerDown(event: PointerEvent) {
@@ -2906,10 +2897,10 @@ function ExpChart({ theme, entries, anchor }: { theme: Theme; entries: ExpHistor
     responsive: true,
     maintainAspectRatio: false,
     animation: false,
-    // Hovering anywhere along a point's x-slice shows its tooltip, not just the exact
-    // pixel the dot sits on -- matters most for the bar chart's own use of this same
-    // interaction mode (a 0 EXP day renders as a zero-height bar with nothing to land on),
-    // but applied here too so both charts behave the same way.
+    // Hovering anywhere along a point's x-slice shows its tooltip, not only the exact pixel
+    // the dot sits on. That matters most for the bar chart's use of this same interaction
+    // mode, where a 0 EXP day renders as a zero-height bar with nothing to land on, but it is
+    // applied here too so both charts behave alike.
     interaction: { mode: "index", intersect: false },
     plugins: {
       legend: { display: false },
@@ -2931,18 +2922,17 @@ function ExpChart({ theme, entries, anchor }: { theme: Theme; entries: ExpHistor
     scales: {
       x: {
         type: "linear",
-        // Bounded to the actual first/last plotted point rather than the selected range's
-        // exact start/end -- entries land at whatever time of day a refresh happened, not
-        // exactly "now" or "now minus N days", so pinning to the range's exact timestamps
-        // left visible gaps between the axis edges and the dots.
+        // Bounded to the first and last plotted point rather than the selected range's exact
+        // start and end. Entries land at whatever time of day a refresh happened rather than
+        // exactly now or now minus N days, so pinning to the range's timestamps left visible
+        // gaps between the axis edges and the dots.
         min: points[0]?.x,
         max: points[points.length - 1]?.x,
-        // A linear scale's default auto-generated ticks are evenly spaced across [min, max]
-        // by value, not snapped to real data points -- a tick could land between two points
-        // and read as though it belongs to whichever one it's visually closer to.
-        // pickTickIndices picks a fixed real-day interval instead (shared with the bar chart
-        // below, so both axes always agree on which dates to show), guaranteeing every
-        // labeled gap is identical.
+        // A linear scale's default ticks are evenly spaced by value across min to max rather
+        // than snapped to real data points, so a tick could land between two points and read
+        // as belonging to whichever it sits closer to. pickTickIndices uses a fixed real-day
+        // interval instead, shared with the bar chart below so both axes agree on which dates
+        // to show, making every labeled gap identical.
         afterBuildTicks: (axis) => {
           const indices = pickTickIndices(points.length, axis.width);
           axis.ticks = indices.map((i) => ({ value: points[i].x }));
@@ -2955,11 +2945,11 @@ function ExpChart({ theme, entries, anchor }: { theme: Theme; entries: ExpHistor
         grid: { display: false },
       },
       y: {
-        // Not beginAtZero -- y is a fractional level (e.g. ~260.45), not a percent, so
-        // starting the axis at 0 would flatten the whole climb into an unreadable sliver
-        // near the top. Ticks split the fractional part back out into "Lv Pct%" (mirrors
-        // MapleRanks' own axis style), rounded to a whole percent since sub-percent
-        // precision isn't meaningful as an axis label -- the tooltip has the exact figure.
+        // Not beginAtZero, since y is a fractional level rather than a percent, so starting
+        // the axis at 0 would flatten the climb into an unreadable sliver near the top. Ticks
+        // split the fractional part back out into a level and percent, mirroring MapleRanks'
+        // axis style, rounded to a whole percent because sub-percent precision is not
+        // meaningful as an axis label. The tooltip carries the exact figure.
         ticks: {
           color: theme.muted,
           callback: (value) => {
@@ -2985,12 +2975,11 @@ interface DailyExpPoint {
   expGained: number;
 }
 
-// expHistory gets an entry on every refresh/setup-flow lookup, not once a day (see
-// appendExpHistoryEntry in charactersStore.ts) -- a bar per raw entry could put several
-// bars under the same calendar date, which then desyncs from the x-axis's ticks. Summing
-// into one bar per real calendar day (keyed by the same locale string used as its label, so
-// the two can never drift apart) keeps "Daily EXP" honest and each label lined up under its
-// own bar.
+// expHistory gets an entry on every refresh and setup-flow lookup rather than once a day (see
+// appendExpHistoryEntry in charactersStore.ts), so a bar per raw entry could put several bars
+// under one calendar date and desync from the x-axis ticks. Summing into one bar per calendar
+// day, keyed by the same locale string used as its label so the two cannot drift, keeps Daily
+// EXP honest and each label under its own bar.
 function aggregateDailyExpGain(entries: ExpHistoryEntry[], anchor: ExpHistoryEntry | null): DailyExpPoint[] {
   const points = computeExpChartPoints(entries, anchor).filter((p): p is ExpChartPoint & { expGained: number } => p.expGained !== null);
   const byDay = new Map<string, DailyExpPoint>();
@@ -3003,13 +2992,13 @@ function aggregateDailyExpGain(entries: ExpHistoryEntry[], anchor: ExpHistoryEnt
   return Array.from(byDay.values());
 }
 
-// Above this bar count, an always-on "+X" label per bar overlaps too much to read (14D's
-// own bars are already narrow enough that labels collide) -- the tooltip still shows the
-// same amount on hover regardless of range. 7 keeps this to the 7D range only.
+// Above this bar count, an always-on amount label per bar overlaps too much to read, as the
+// 14-day range's bars are already narrow enough to collide. The tooltip still shows the same
+// amount on hover at any range, so this keeps the labels to the 7-day range.
 const DAILY_EXP_LABEL_MAX_POINTS = 7;
 
-// A gain reads bare ("1.89T"); only a real loss gets a sign ("-1.89T") -- everyone
-// refreshing this chart is here to see progress, so a "+" on every normal day is noise.
+// A gain reads bare and only a loss gets a sign, since everyone opening this chart is here to
+// see progress and a plus on every normal day is noise.
 function formatSignedExp(n: number): string {
   return n < 0 ? `-${formatExpCompact(-n).toUpperCase()}` : formatExpCompact(n).toUpperCase();
 }
@@ -3054,12 +3043,11 @@ function ExpGainBarChart({ theme, entries, anchor }: { theme: Theme; entries: Ex
       // Same staleness guard as the old line-chart label plugin: meta.data can briefly lag
       // one render behind `points` when the dataset length changes (e.g. switching ranges).
       if (meta.data.length !== points.length) { ctx.restore(); return; }
-      // Skip entirely (not just some of them) rather than let adjacent labels visually run
-      // into each other on a narrow chart -- caught on a 360px-wide browser window, where
-      // these overlapped badly. The tooltip already shows the same amount on hover/tap
-      // regardless of range, so hiding is a clean fallback, not a loss of information.
-      // Measures the widest label against the tightest gap between bar centers (categoryPercentage/
-      // barPercentage keep bars evenly spaced, but the chart itself can still be too narrow).
+      // Skips all labels rather than some, so adjacent ones cannot run into each other on a
+      // narrow chart, which they did badly at 360px wide. The tooltip shows the same amount on
+      // hover or tap at any range, so hiding them loses no information. Measures the widest
+      // label against the tightest gap between bar centers, since categoryPercentage and
+      // barPercentage keep bars evenly spaced but the chart itself can still be too narrow.
       let minGap = Infinity;
       for (let i = 1; i < meta.data.length; i++) minGap = Math.min(minGap, meta.data[i].x - meta.data[i - 1].x);
       const widestLabelWidth = Math.max(...points.map((p) => ctx.measureText(formatSignedExp(p.expGained)).width));
@@ -3092,8 +3080,8 @@ function ExpGainBarChart({ theme, entries, anchor }: { theme: Theme; entries: Ex
     maintainAspectRatio: false,
     animation: false,
     layout: { padding: { top: 16 } },
-    // Hovering anywhere in a bar's x-slice shows its tooltip, not just the bar itself --
-    // a 0 EXP day renders as a zero-height bar with no pixels to land on otherwise.
+    // Hovering anywhere in a bar's x-slice shows its tooltip, not only the bar itself, since a
+    // 0 EXP day renders as a zero-height bar with no pixels to land on.
     interaction: { mode: "index", intersect: false },
     plugins: {
       legend: { display: false },
@@ -3142,10 +3130,10 @@ function ExpGainBarChart({ theme, entries, anchor }: { theme: Theme; entries: Ex
 
 interface ExpHistoryWindow {
   entries: ExpHistoryEntry[];
-  // Last real snapshot before the window start, if any -- lets the first in-window point
-  // still compute a real expGained diff (see computeExpChartPoints) instead of being
-  // treated as a baseline with nothing before it, which previously dropped that day's bar
-  // entirely and made e.g. a 7D range visibly show only 6 days of bars.
+  // The last snapshot before the window start, if any, so the first in-window point can still
+  // compute a real expGained diff (see computeExpChartPoints) rather than being treated as a
+  // baseline with nothing before it. That dropped the day's bar entirely and made a 7-day
+  // range show only 6 days.
   anchor: ExpHistoryEntry | null;
   start: number;
   end: number;
@@ -3158,8 +3146,8 @@ function windowExpHistory(entries: ExpHistoryEntry[], days: number): ExpHistoryW
   return { entries: entries.filter((e) => e.date >= start), anchor: before[before.length - 1] ?? null, start, end };
 }
 
-// Read-only, auto-populated from every refresh/setup-flow lookup (see appendExpHistoryEntry
-// in charactersStore.ts) -- no edit pencil, same as Overview/Setup.
+// Read-only, auto-populated from every refresh and setup-flow lookup (see
+// appendExpHistoryEntry in charactersStore.ts), so no edit pencil, like Overview and Setup.
 function ExpBookmark({ theme, character }: { theme: Theme; character: StoredCharacterRecord | null }) {
   const [range, setRange] = useState<ExpRangeDays>("7");
   const notice = resolveExpNotice(character);
@@ -3201,8 +3189,8 @@ function ExpBookmark({ theme, character }: { theme: Theme; character: StoredChar
   );
 }
 
-// Same reasons ScouterFigure's own tooltip already covers -- restated here as a full
-// sentence since this bookmark has room for prose instead of a hover popup.
+// The same reasons ScouterFigure's tooltip covers, restated as full sentences since this
+// bookmark has room for prose rather than a hover popup.
 const SCOUTER_ERROR_REASON_TEXT: Record<ScouterErrorReason, string> = {
   rate_limited: "You're refreshing too fast. Wait a moment and try again.",
   timeout: "MapleScouter's API timed out. Try again in a moment.",
@@ -3218,15 +3206,15 @@ function scouterBookmarkHeaderLabel(view: ScouterBookmarkView, defaultLabel: str
   return view === "spotlight" ? spotlightBoss : defaultLabel;
 }
 
-// Read-only display of everything already sitting in ScouterResultEntry -- refreshing is
-// manual-refresh-only by design (see useScouterResult's own doc comment), triggered either from
-// the Scouter figure on Overview or this bookmark's own header below.
-/** The four not-ready states every MapleScouter-backed bookmark shares (class unsupported,
- *  setup incomplete, never calculated, last refresh failed) plus the stale-result banner, in
- *  one place so Scouter and Stat Efficiency can't drift apart. Also owns this bookmark's page
- *  header, sharing the SAME useScouterResult call as the body below it -- a second independent
- *  call would let a header-triggered refresh disagree with the body's own error/stale
- *  rendering about what just happened. */
+// Read-only display of what is already in ScouterResultEntry. Refreshing is manual by design
+// (see useScouterResult's doc comment), triggered from the Scouter figure on Overview or this
+// bookmark's own header below.
+/** The four not-ready states every MapleScouter-backed bookmark shares, being class
+ *  unsupported, setup incomplete, never calculated and last refresh failed, plus the stale
+ *  result banner, kept in one place so Scouter and Stat Efficiency cannot drift apart. Also
+ *  owns this bookmark's page header, sharing the same useScouterResult call as the body below
+ *  it, since a second independent call would let a header-triggered refresh disagree with the
+ *  body about what just happened. */
 function ScouterResultGate({ theme, character, label, disabled, simulated, onEditStep, children }: {
   theme: Theme; character: StoredCharacterRecord; label: string; disabled: boolean; simulated: boolean;
   onEditStep: (flowId: SetupFlowId, targetSubstep?: number, confineToSubstep?: boolean, subView?: string) => void;
@@ -3252,12 +3240,12 @@ function ScouterResultGate({ theme, character, label, disabled, simulated, onEdi
     );
   }
   if (status.kind === "incomplete") {
-    // Not confined, and no target substep — the flow opens on its first step (Import from
-    // MapleScouter), then Back/Next walks the rest. A character that never ran MapleScouter
-    // Setup is typically missing more than the one gated substep (Oz Rings/Link Skills/
-    // HEXA/Buffs aren't gated here but still matter), and the import step can pre-fill all
-    // of it at once from a MapleScouter export. Someone who already ran Full Setup just
-    // clicks through the already-filled steps — a few extra clicks, not a real cost.
+    // Not confined and with no target substep, so the flow opens on its first step, Import
+    // from MapleScouter, and Back and Next walk the rest. A character that never ran
+    // MapleScouter Setup is usually missing more than the one gated substep, since Oz Rings,
+    // Link Skills, HEXA and Buffs are not gated here but still matter, and the import step can
+    // pre-fill all of it from a MapleScouter export. Someone who already ran Full Setup clicks
+    // through the filled steps, which costs a few clicks and nothing more.
     return (
       <>
         {header}
@@ -3315,15 +3303,15 @@ function ScouterResultGate({ theme, character, label, disabled, simulated, onEdi
   );
 }
 
-// The old flat power figures (Boss 300/380, Converted Power, Dojo) live inside BossClearGrid's
-// Quick View as a header strip instead of a separate sub-view here -- they're the raw inputs
-// feeding every row below them, not unrelated data. BossClearGrid owns the Quick View/Spotlight
-// sub-view split internally, including its own Spotlight-side "back to Quick View" button --
-// this just passes view/onViewChange through. The old bottom action-bar nav (forward AND back
-// buttons) was removed: the forward direction was redundant with clicking a boss's banner or
-// the Quick View dropdown (3 ways to do the same thing), and once that got removed the
-// back-only button didn't earn its own dedicated row anymore either, so it moved into
-// BossSpotlight's own header instead.
+// The flat power figures (Boss 300/380, Converted Power, Dojo) live inside BossClearGrid's
+// Quick View as a header strip rather than a separate sub-view here, since they are the raw
+// inputs feeding every row below them rather than unrelated data.
+//
+// BossClearGrid owns the Quick View and Spotlight sub-view split internally, including its own
+// "back to Quick View" button, so this only passes view and onViewChange through. The bottom
+// action-bar nav was removed: its forward direction duplicated clicking a boss banner or using
+// the Quick View dropdown, and the back-only button left over did not earn a dedicated row, so
+// it moved into BossSpotlight's header.
 function ScouterBookmark({ theme, character, label, disabled, view, onViewChange, selectedBossIndex, onSelectedBossIndexChange, onEditStep, scouterSimulator }: {
   theme: Theme; character: StoredCharacterRecord; label: string; disabled: boolean; view: ScouterBookmarkView; onViewChange: (v: ScouterBookmarkView) => void;
   selectedBossIndex: number; onSelectedBossIndexChange: (i: number) => void;
@@ -3381,13 +3369,12 @@ function simulatedValuesMarkerStyle(theme: Theme): CSSProperties {
   };
 }
 
-/** Sits above BossClearGrid on the Scouter bookmark, only while a Scouter Simulator "what if"
- *  is applied -- the marker that the figures below are simulated, not the character's real
- *  saved result (per the Scouter Simulator plan's product decision, the simulated result
- *  replaces the real one in place), plus a way to reset back to real without first opening
- *  the popup. The launcher itself (opening the popup in the first place) lives inside
- *  BossClearGrid's Quick View filter row -- same slot the old single Full HEXA toggle used to
- *  sit in, per Yuki's call. Renders nothing when no simulation is active. */
+/** Sits above BossClearGrid on the Scouter bookmark while a Scouter Simulator what-if is
+ *  applied, marking the figures below as simulated rather than the character's saved result,
+ *  since a simulation deliberately replaces the real result in place. Also offers a reset back
+ *  to real without reopening the popup. The launcher that opens the popup lives in
+ *  BossClearGrid's Quick View filter row, the slot the old Full HEXA toggle occupied. Renders
+ *  nothing when no simulation is active. */
 function SimulatedValuesMarker({ theme, visible, onReset }: { theme: Theme; visible: boolean; onReset: () => void }) {
   if (!visible) return null;
   return (
@@ -3402,14 +3389,15 @@ function SimulatedValuesMarker({ theme, visible, onReset }: { theme: Theme; visi
   );
 }
 
-// Same MapleScouter response the Scouter bookmark reads, different slice of it: the per-unit
-// marginal damage table (statEfficiency.ts) rather than the boss-clear figures. Both its
-// sections render together in one page, so unlike Scouter it has no sub-view to remember.
-// The fifth not-ready state (a result that predates specEfficiency, or one the API returned
-// without it) is this bookmark's alone, so it sits here rather than in the shared gate --
-// Scouter's own figures are all present in that same entry.
-// Keyed by character so the per-stat table's typed amounts and unit choice don't carry over
-// onto the next character the way EquipmentBookmark's own key guards against.
+// The same MapleScouter response the Scouter bookmark reads, but a different slice: the
+// per-unit marginal damage table (statEfficiency.ts) rather than the boss-clear figures. Both
+// sections render on one page, so unlike Scouter there is no sub-view to remember.
+//
+// A fifth not-ready state, a result predating specEfficiency or returned without it, belongs
+// to this bookmark alone and so sits here rather than in the shared gate, since Scouter's own
+// figures are all present in that same entry. Keyed by character so the table's typed amounts
+// and unit choice do not carry onto the next one, the same guard EquipmentBookmark's key
+// provides.
 function StatEfficiencyBookmark({ theme, character, label, disabled, onEditStep }: {
   theme: Theme; character: StoredCharacterRecord; label: string; disabled: boolean;
   onEditStep: (flowId: SetupFlowId, targetSubstep?: number, confineToSubstep?: boolean, subView?: string) => void;
@@ -3485,11 +3473,11 @@ function scouterGapButtonStyle(theme: Theme): CSSProperties {
   };
 }
 
-// The Stats step's substeps are 0: quick questions, 1: Character Info (Basic/Combat/
-// Symbols — everything the "stats" bookmark view shows), then Hyper Stat and Inner
-// Ability, whose indices shift depending on Hyper Stat eligibility (StatsSetupStep
-// hides that substep below Lv 140). Mirrors that same substep numbering so the edit
-// pencil opens on the substep the bookmark is actually showing, not substep 0.
+// The Stats step's substeps run 0 for quick questions, 1 for Character Info covering Basic,
+// Combat and Symbols, everything the stats bookmark view shows, then Hyper Stat and Inner
+// Ability, whose indices shift with Hyper Stat eligibility since StatsSetupStep hides that
+// substep below Lv 140. Mirrors that numbering so the edit pencil opens on the substep the
+// bookmark is showing rather than substep 0.
 function statsTargetSubstep(view: StatsView, characterLevel: number | undefined): number {
   const hyperEligible = isHyperStatEligible(characterLevel);
   if (view === "hyperStat") return hyperEligible ? 2 : 1;
@@ -3497,9 +3485,9 @@ function statsTargetSubstep(view: StatsView, characterLevel: number | undefined)
   return 1;
 }
 
-// equipment_flow has exactly one step ("equipment") with 3 fixed substeps (0: main grid,
-// 1: titles/totems/symbols, 2: pets — see EquipmentSetupStep.tsx's SUBSTEP_COUNT), so
-// unlike statsTargetSubstep there's no eligibility-based index shifting to account for.
+// equipment_flow has one step with 3 fixed substeps: 0 for the main grid, 1 for titles, totems
+// and symbols, 2 for pets (see SUBSTEP_COUNT in EquipmentSetupStep.tsx). Unlike
+// statsTargetSubstep there is no eligibility-based index shifting to account for.
 function equipmentTargetSubstep(view: EquipmentBookmarkView): number {
   if (view === "titles") return 1;
   if (view === "pets") return 2;
@@ -3551,9 +3539,9 @@ function BookmarkPageBody({
     return active.id === "scouter" && remembered === "spotlight" ? remembered : "quickView";
   });
   const [scouterSelectedBossIndex, setScouterSelectedBossIndex] = useState(0);
-  // Shared between ScouterFigure (below, inside OverviewBookmark) and ScouterBookmark (the
-  // "scouter" branch further down) -- see useScouterSimulator's own comment for why this
-  // lives here rather than inside either of those two components.
+  // Shared between ScouterFigure, inside OverviewBookmark below, and ScouterBookmark in the
+  // scouter branch further down. See useScouterSimulator's own comment for why it lives here
+  // rather than inside either component.
   const scouterSimulator = useScouterSimulator(character);
 
   if (active.id === "overview") return <OverviewBookmark model={model} onNavigateToBookmark={onNavigateToBookmark} onNavigateToGearSlot={onNavigateToGearSlot} onSetOverviewLayout={actions.setOverviewLayout} scouterSimulator={scouterSimulator} />;
@@ -3584,11 +3572,11 @@ function BookmarkPageBody({
     );
   }
 
-  // Stats has 3 swappable sub-views (Stats/Hyper Stat/Ability) sharing one edit flow, so
-  // the pencil needs to know which one is showing to open the matching substep instead of
-  // always restarting at substep 0 — see statsTargetSubstep. Always confined to that one
-  // substep (no Back/Next into its siblings), filled or not — each sub-view's pencil edits
-  // just that piece of data, the same way every other bookmark's pencil is scoped to it.
+  // Stats has 3 swappable sub-views, Stats, Hyper Stat and Ability, sharing one edit flow, so
+  // the pencil needs to know which is showing to open the matching substep rather than
+  // restarting at substep 0. See statsTargetSubstep. Always confined to that substep with no
+  // Back or Next into its siblings, filled or not, since each sub-view's pencil edits just
+  // that piece of data the way every other bookmark's pencil is scoped to its own.
   if (active.id === "stats") {
     const editStats = () => { if (active.flowId) onEditStep(active.flowId, statsTargetSubstep(statsView, character?.level), true, statsView); };
     const statsHeaderLabel = statsBookmarkHeaderLabel(statsView, active.pageLabel);
@@ -3606,9 +3594,9 @@ function BookmarkPageBody({
     );
   }
 
-  // Same shape as Stats above: 3 swappable sub-views sharing the equipment_flow's 3 fixed
-  // substeps (see equipmentTargetSubstep), pencil always confined to whichever sub-view is
-  // showing, no EmptyBookmarkState — the read view shows empty-slot placeholders instead.
+  // Same shape as Stats above: 3 swappable sub-views sharing equipment_flow's 3 fixed substeps
+  // (see equipmentTargetSubstep), with the pencil confined to whichever sub-view is showing
+  // and no EmptyBookmarkState, since the read view shows empty-slot placeholders instead.
   if (active.id === "equipment") {
     const editEquipment = () => { if (active.flowId) onEditStep(active.flowId, equipmentTargetSubstep(equipmentView), true, equipmentView); };
     const equipmentHeaderLabel = equipmentBookmarkHeaderLabel(equipmentView, active.pageLabel);
@@ -3629,9 +3617,9 @@ function BookmarkPageBody({
     );
   }
 
-  // Same shape as Equipment above: no EmptyBookmarkState — the read view mirrors
-  // VMatrixSetupStep's own node grid with all-zero tiles when nothing's set up yet, so the
-  // edit pencil is always available instead of gated behind a separate "Set up" button.
+  // Same shape as Equipment above, with no EmptyBookmarkState: the read view mirrors
+  // VMatrixSetupStep's node grid with all-zero tiles when nothing is set up, so the edit
+  // pencil is always available rather than gated behind a separate "Set up" button.
   if (active.id === "v_matrix") {
     return (
       <>
@@ -3657,9 +3645,9 @@ function BookmarkPageBody({
     );
   }
 
-  // Same shape as V Matrix above: no gating (Familiars has none) and no sub-views, so this
-  // needs neither an eligibility check nor a targetSubstep helper — the pencil just opens
-  // familiars_flow's single step directly.
+  // Same shape as V Matrix above, but Familiars has no gating and no sub-views, so it needs
+  // neither an eligibility check nor a targetSubstep helper. The pencil opens familiars_flow's
+  // single step directly.
   if (active.id === "familiars") {
     return (
       <>
@@ -3669,8 +3657,8 @@ function BookmarkPageBody({
     );
   }
 
-  // Read-only and auto-populated (see ExpBookmark's own comment) -- no edit pencil, same
-  // shape as Overview/Setup/Bio rather than Equipment/V Matrix's gated-but-editable pattern.
+  // Read-only and auto-populated (see ExpBookmark's own comment), so no edit pencil. Same shape
+  // as Overview, Setup and Bio rather than the gated-but-editable Equipment and V Matrix.
   if (active.id === "exp") {
     return (
       <>
@@ -3680,10 +3668,10 @@ function BookmarkPageBody({
     );
   }
 
-  // Read-only, same shape as EXP above -- nothing here is user-editable, it's a display of
-  // whatever MapleScouter's API last returned. useScouterResult needs a real character (same
-  // constraint ScouterFigure already has on Overview), so the null-check happens at this call
-  // site rather than inside ScouterBookmark itself.
+  // Read-only, the same shape as EXP above. Nothing here is user-editable; it displays whatever
+  // MapleScouter's API last returned. useScouterResult needs a real character, the same
+  // constraint ScouterFigure has on Overview, so the null check happens at this call site
+  // rather than inside ScouterBookmark.
   if (active.id === "scouter") {
     const scouterSpotlightBoss = resolveBossDisplayName(groupByBoss(BOSSCUT_DATA), scouterSelectedBossIndex);
     const scouterHeaderLabel = scouterBookmarkHeaderLabel(scouterView, active.pageLabel, scouterSpotlightBoss);
@@ -3734,17 +3722,16 @@ function BookmarkSpine({
   // react-doctor false positive: empty new Map() is a trivial allocation, not worth lazy-init ceremony.
   // react-doctor-disable-next-line react-doctor/rerender-lazy-ref-init
   const tabRefs = useRef<Map<BookmarkId, HTMLButtonElement>>(new Map());
-  // Only the mobile layout (.profile-binder-spine's max-width: 860px media query) scrolls
-  // horizontally -- desktop's vertical column never overflows, where a solid black-to-black
-  // mask (both atStart/atEnd true when there's no horizontal overflow) is a visual no-op,
-  // so this is safe to apply unconditionally rather than gating it on viewport width.
+  // Only the mobile layout (`.profile-binder-spine`'s max-width media query) scrolls
+  // horizontally. Desktop's vertical column never overflows, where a solid mask, both atStart
+  // and atEnd being true with no horizontal overflow, is a visual no-op. So this applies
+  // unconditionally rather than being gated on viewport width.
   const { ref: spineRef, atStart: spineAtStart, atEnd: spineAtEnd } = useScrollEdges<HTMLDivElement>([bookmarks.length]);
   const spineMask = edgeFadeMask(spineAtStart, spineAtEnd);
-  // exportCharacterJson triggers a silent browser download with no confirmation of its own --
-  // some mobile browsers don't even show a download-bar UI, so tapping Export otherwise gives
-  // no feedback at all that anything happened. Flashes the same accent tint the active
-  // bookmark tab already uses (a bit stronger, see the button's own style below) rather than
-  // swapping its label or building a whole separate toast for it.
+  // exportCharacterJson triggers a silent browser download with no confirmation, and some
+  // mobile browsers show no download bar at all, so tapping Export would otherwise give no
+  // feedback. Flashes the same accent tint the active bookmark tab uses, slightly stronger
+  // (see the button's style below), rather than swapping its label or adding a toast.
   const [exported, setExported] = useState(false);
   useEffect(() => {
     if (!exported) return;
@@ -3752,9 +3739,9 @@ function BookmarkSpine({
     return () => clearTimeout(t);
   }, [exported]);
 
-  // A page tablist should switch content immediately as focus moves (WAI-ARIA APG's
-  // automatic-activation pattern) — unlike this codebase's picker-oriented
-  // useKeyboardListNav hook, which highlights first and only confirms on Enter.
+  // A page tablist should switch content as focus moves, per the WAI-ARIA APG's
+  // automatic-activation pattern, unlike this codebase's picker-oriented useKeyboardListNav
+  // hook, which highlights first and confirms on Enter.
   function handleKeyDown(e: KeyboardEvent, index: number) {
     let nextIndex: number | null = null;
     if (e.key === "ArrowDown") nextIndex = (index + 1) % bookmarks.length;
@@ -3775,13 +3762,11 @@ function BookmarkSpine({
       role="tablist"
       aria-label="Character profile sections"
       aria-orientation="vertical"
-      // Set as a custom property, not a literal maskImage/WebkitMaskImage style: the
-      // mobile media query (max-width: 860px, CharacterSetupFlow.styles.ts) is the only
-      // place that actually consumes it into a real mask. Desktop's vertical column
-      // never overflows horizontally and has no `overflow` set at all (defaults to
-      // visible), so scrollWidth/clientWidth there aren't meaningful scroll-edge signals
-      // -- applying the gradient unconditionally as a literal style previously clipped
-      // the desktop list incorrectly.
+      // Set as a custom property rather than a literal maskImage style, since the mobile media
+      // query in CharacterSetupFlow.styles.ts is the only place that consumes it into a real
+      // mask. Desktop's vertical column never overflows horizontally and has no `overflow`
+      // set, so scrollWidth and clientWidth are not meaningful scroll-edge signals there, and
+      // applying the gradient unconditionally clipped the desktop list.
       style={{ "--edge-fade-mask": spineMask } as CSSProperties}
     >
       {bookmarks.map((b, i) => {
@@ -3848,22 +3833,22 @@ export default function CharacterProfileOverviewScreen({
   const mounted = useMounted();
 
   const bookmarks = ALL_BOOKMARKS;
-  // Restores whichever bookmark was active before an optional flow was started from
-  // here — this screen unmounts while the flow runs, so plain useState("overview")
-  // would otherwise always land back on Overview once the flow finishes.
+  // Restores whichever bookmark was active before an optional flow started from here. This
+  // screen unmounts while the flow runs, so a plain useState("overview") would land back on
+  // Overview every time the flow finished.
   const [activeId, setActiveId] = useState<BookmarkId>(() => {
     const remembered = model.setup.lastActiveBookmarkId;
     return remembered && bookmarks.some((b) => b.id === remembered) ? (remembered as BookmarkId) : "overview";
   });
   const active = bookmarks.find((b) => b.id === activeId) ?? bookmarks[0];
 
-  // The remembered bookmark/sub-view is only meant for one restore, read via a lazy
-  // initializer (this one above for activeId, BookmarkPageBody's own for the sub-view) —
-  // clear it after every switch (not just the initial mount) so a later, unrelated switch
-  // away and back (BookmarkPageBody remounts per key={active.id} below) doesn't keep
-  // re-restoring a stale sub-view. Covers both the original flow-restore case (screen
-  // remounts fresh, this fires once on that mount) and OverviewBookmark's section links
-  // below (screen stays mounted, activeId just changes, so the effect needs to key off it).
+  // The remembered bookmark and sub-view are meant for one restore, read via a lazy
+  // initializer, the one above for activeId and BookmarkPageBody's own for the sub-view.
+  // Clearing after every switch rather than only on the initial mount stops a later switch
+  // away and back, which remounts BookmarkPageBody per key={active.id} below, from restoring
+  // a stale sub-view. Covers both the flow-restore case, where the screen remounts and this
+  // fires once, and OverviewBookmark's section links below, where the screen stays mounted
+  // and only activeId changes, which is why the effect keys off it.
   // react-doctor-disable-next-line no-prop-callback-in-effect, no-pass-live-state-to-parent
   useEffect(() => { actions.clearRestoredBookmark(); }, [activeId]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -3879,11 +3864,10 @@ export default function CharacterProfileOverviewScreen({
     if (active.flowId) startOptionalFlowRemembered(active.flowId);
   }
 
-  // Lets Overview's own section links (e.g. "HEXA Stat" jumping to the HEXA bookmark)
-  // switch tabs and, unlike a plain setActiveId, also seed the target bookmark's own
-  // sub-view state via the same remembered-bookmark mechanism startOptionalFlowRemembered
-  // uses for flow restores — safe to reuse now that the clear effect above keys off
-  // activeId instead of only firing once on mount.
+  // Lets Overview's section links, such as HEXA Stat jumping to the HEXA bookmark, switch tabs
+  // and, unlike a plain setActiveId, also seed the target bookmark's sub-view state through the
+  // same remembered-bookmark mechanism startOptionalFlowRemembered uses for flow restores. Safe
+  // to reuse because the clear effect above keys off activeId rather than firing once on mount.
   function navigateToBookmark(id: BookmarkId, subView?: string) {
     actions.rememberActiveBookmark(id, subView);
     setActiveId(id);

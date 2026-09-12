@@ -19,11 +19,11 @@ export type ScouterFigureStatus =
   | { kind: "ready"; entry: ScouterResultEntry; stale: false }
   // reason is set when this came from a failed refresh this session; unset on a cold
   // mount showing a previous build's last known value that simply hasn't been
-  // recomputed for the character's current inputs yet (see initialStatus below) --
-  // the UI should not say "an error happened" for that second case.
+  // recomputed for the character's current inputs yet (see initialStatus below). The
+  // UI must not say an error happened in that second case.
   | { kind: "ready"; entry: ScouterResultEntry; stale: true; reason?: ScouterErrorReason }
   // reason/repeatedFailure are optional only so the dev drill can force a bare "error"
-  // preview with neither -- a real refresh always supplies both.
+  // preview with neither. A real refresh always supplies both.
   | { kind: "error"; reason?: ScouterErrorReason; repeatedFailure?: boolean };
 
 export interface ScouterFigureState {
@@ -32,8 +32,8 @@ export interface ScouterFigureState {
   canRefresh: boolean;
   refresh: () => void;
   justRefreshed: boolean;
-  // True briefly after a refresh that returned the exact same cached entry (same computedAt)
-  // -- MapleScouter wasn't actually re-queried, since the inputs haven't changed since the
+  // True briefly after a refresh that returned the same cached entry, meaning the same
+  // computedAt. MapleScouter wasn't re-queried, since the inputs haven't changed since the
   // last calculation. Without this a refresh on unchanged stats looks like it did nothing.
   justRefreshedUnchanged: boolean;
 }
@@ -56,10 +56,10 @@ function initialStatus(character: StoredCharacterRecord): ScouterFigureStatus {
   if (gap) return { kind: "incomplete", gap };
   const cached = peekScouterCache(character);
   if (cached) return { kind: "ready", entry: cached, stale: false };
-  // No result for the CURRENT inputs (e.g. stats were just edited), but a previous
-  // build's result is still sitting in the cache -- show that instead of dropping to
-  // "empty"/"--", same last-known-value fallback a failed refresh already gets
-  // in-session, just surviving a remount too (see peekScouterLastKnown).
+  // No result for the current inputs, say because stats were just edited, but a previous
+  // build's result is still in the cache. Show that instead of dropping to empty or the
+  // "--" placeholder. Same last-known-value fallback a failed refresh gets in-session,
+  // surviving a remount too (see peekScouterLastKnown).
   const lastKnown = peekScouterLastKnown(character);
   return lastKnown ? { kind: "ready", entry: lastKnown, stale: true } : { kind: "empty" };
 }
@@ -72,8 +72,8 @@ export function useScouterResult(character: StoredCharacterRecord): ScouterFigur
   const [status, setStatus] = useState<ScouterFigureStatus>(() => initialStatus(character));
   const [loading, setLoading] = useState(false);
   // Confirms a refresh actually happened even on a cache hit, where loading resolves near-
-  // instantly and the figure often shows the same number -- otherwise clicking refresh on an
-  // already-cached character looks like the click did nothing at all.
+  // instantly and the figure often shows the same number. Otherwise clicking refresh on an
+  // already-cached character looks like the click did nothing.
   const [justRefreshed, setJustRefreshed] = useState(false);
   const [justRefreshedUnchanged, setJustRefreshedUnchanged] = useState(false);
 
@@ -93,9 +93,9 @@ export function useScouterResult(character: StoredCharacterRecord): ScouterFigur
     return () => clearTimeout(t);
   }, [justRefreshed]);
 
-  // Separate, longer-lived timeout than justRefreshed's 400ms button flash -- this drives an
-  // inline note a player needs to actually read, not just notice, so it needs real time on
-  // screen rather than disappearing with the flash.
+  // A separate, longer-lived timeout than justRefreshed's 400ms button flash. This drives an
+  // inline note a player has to read rather than merely notice, so it needs time on screen
+  // instead of disappearing with the flash.
   useEffect(() => {
     if (!justRefreshedUnchanged) return;
     const t = setTimeout(() => setJustRefreshedUnchanged(false), 4000);
@@ -111,8 +111,8 @@ export function useScouterResult(character: StoredCharacterRecord): ScouterFigur
     if (status.kind !== "empty") return;
     let cancelled = false;
     // setLoading(true) can't run synchronously in the effect body (react-hooks/set-state-
-    // in-effect) -- deferred a tick, same escape hatch useCharacterSetupController.ts's
-    // hydrate effect already uses for the same restriction.
+    // in-effect), so it is deferred a tick. Same escape hatch
+    // useCharacterSetupController.ts's hydrate effect uses for the same restriction.
     const timer = setTimeout(() => {
       if (cancelled) return;
       setLoading(true);
@@ -125,11 +125,11 @@ export function useScouterResult(character: StoredCharacterRecord): ScouterFigur
     return () => { cancelled = true; clearTimeout(timer); };
   }, [status.kind, character]);
 
-  // Reactive read of another useScouterResult instance's in-flight refresh for this SAME
-  // character (e.g. the Overview figure and a bookmark header each run their own instance,
-  // with no shared React state otherwise) -- refreshScouterResult itself already dedupes the
-  // actual network call, but without this a freshly-mounted instance's own `loading` starts
-  // false and its button would look clickable mid-refresh instead of reflecting reality.
+  // Reactive read of another useScouterResult instance's in-flight refresh for this same
+  // character. The Overview figure and a bookmark header each run their own instance with no
+  // shared React state otherwise. refreshScouterResult already dedupes the network call, but
+  // without this a freshly mounted instance's own `loading` starts false and its button would
+  // look clickable mid-refresh.
   const refreshInFlightElsewhere = useSyncExternalStore(
     subscribeScouterRefreshInFlight,
     () => isScouterRefreshInFlight(character.characterName),
@@ -155,7 +155,7 @@ export function useScouterResult(character: StoredCharacterRecord): ScouterFigur
 
   const canRefresh = !effectiveLoading && (status.kind === "ready" || status.kind === "empty" || status.kind === "error");
 
-  // Dev-only visual QA override (scouterDevDrill.ts) -- reactive via useSyncExternalStore
+  // Dev-only visual QA override (scouterDevDrill.ts), reactive via useSyncExternalStore
   // so calling __mapledoroForceScouterStatus in the console updates the figure immediately,
   // no reload or navigation needed. Called after every other hook above unconditionally,
   // so this early return never violates the Rules of Hooks.

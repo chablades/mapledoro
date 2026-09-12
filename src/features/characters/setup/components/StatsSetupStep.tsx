@@ -65,9 +65,8 @@ import InnerAbilitySetupStep from "./InnerAbilitySetupStep";
 import type { StoredCharacterRecord, StoredLegionArtifact, StoredScouterLegion, WhLegionRank } from "../../model/charactersStore";
 import { findRosterCharacterByName } from "../../model/characterKeys";
 
-// Soul Weapon tooltip illustrations. Every stat-variant "Soul" item (Beefy/Swift/Clever/
-// etc.) shares the identical icon, pixel-verified -- these are just one representative id
-// from each family.
+// Soul Weapon tooltip illustrations. Every stat variant of a Soul item, Beefy, Swift, Clever
+// and the rest, shares the same icon, so these are one representative id per family.
 const MU_GONG_SOUL_ITEM_ID = "02591038"; // "Beefy Mu Gong Soul"
 const EPHENIA_SOUL_ITEM_ID = "02591187"; // "Beefy Ephenia Soul"
 const RUIN_FORCE_SHIELD_ITEM_ID = "01099015"; // "Ruin Force Shield"
@@ -81,10 +80,9 @@ interface StatsSetupStepProps {
   jobName?: string;
   direction?: "forward" | "backward";
   targetSubstep?: number | null;
-  /** When true, targetSubstep is the substep opened from a profile bookmark's edit
-   *  pencil — it should present as if it were this step's only substep (no pips,
-   *  Back exits the step directly instead of going to a sibling substep, and
-   *  Next/Continue finishes the step instead of advancing to one). */
+  /** When true, targetSubstep is the substep opened from a profile bookmark's edit pencil and
+   *  should present as this step's only substep: no pips, Back exits the step rather than
+   *  moving to a sibling, and Next finishes the step rather than advancing to one. */
   confineToSubstep?: boolean;
   onValidityChange?: (valid: boolean, substepIndex?: number) => void;
   onSubstepChange?: (substepIndex: number) => void;
@@ -94,11 +92,10 @@ interface StatsSetupStepProps {
   confirmedCharacterName?: string;
   worldScouterLegion?: StoredScouterLegion;
   worldLegionArtifact?: StoredLegionArtifact;
-  /** This session's own live Equipment/Legion Artifacts step drafts, independent of
-   *  which step is currently active — takes priority over worldLegionArtifact/the
-   *  roster's persisted equipment when non-empty, so clearing a weapon or a Legion
-   *  Artifact line mid-session and coming back to Quick Questions reflects it
-   *  immediately instead of only after a Finish-then-reopen round trip. */
+  /** This session's live Equipment and Legion Artifacts step drafts, independent of which step
+   *  is active. Takes priority over worldLegionArtifact and the roster's persisted equipment
+   *  when non-empty, so clearing a weapon or a Legion Artifact line mid-session shows up on
+   *  returning to Quick Questions rather than only after a Finish and reopen. */
   equipmentRawValue?: string;
   legionArtifactsRawValue?: string;
   value: string;
@@ -128,17 +125,17 @@ const IGNORE_ELEMENTAL_RESIST_MAX = 15;
 function clampIgnoreElementalResist(raw: string): string {
   const sanitized = sanitizeDecimalInput(raw);
   if (sanitized === "" || sanitized.endsWith(".")) return sanitized;
-  // Only reformat when actually over the cap — round-tripping every keystroke through
-  // Number()/String() strips trailing zeros (e.g. "5.0" -> 5 -> "5"), fighting the user
-  // mid-type whenever they enter a decimal.
+  // Only reformat when actually over the cap. Round-tripping every keystroke through Number()
+  // and String() strips trailing zeros, turning "5.0" into "5" and fighting the user mid-type
+  // whenever they enter a decimal.
   if (Number(sanitized) > IGNORE_ELEMENTAL_RESIST_MAX) return String(IGNORE_ELEMENTAL_RESIST_MAX);
   return sanitized;
 }
 
-// Ignore DEF's own compounding formula (100 - 100×product of each source's remainder)
-// mathematically approaches but never exceeds 100% from real sources — and the since-removed
-// "Quick Reload" node once granted a flat, confirmed 100% Ignore DEF for its duration, so 100
-// is a real, stable ceiling worth hard-clamping the same way as Ignore Elemental Resistance.
+// Ignore DEF compounds as 100 minus 100 times the product of each source's remainder, which
+// approaches but never exceeds 100% from real sources. The since-removed Quick Reload node
+// granted a flat 100% for its duration, so 100 is a real ceiling worth hard-clamping the same
+// way as Ignore Elemental Resistance.
 const IGNORE_DEFENSE_MAX = 100;
 
 function clampIgnoreDefense(raw: string): string {
@@ -199,8 +196,8 @@ const warningBoxStyle: CSSProperties = {
   gap: "0.4rem",
 };
 
-// Same alpha-tint derivation as warningBoxStyle above (dark-mode statusText hue, 0.08
-// fill / 0.35 border) — rgb(16, 185, 129) is #10b981, dark mode's success statusText.
+// Same alpha-tint derivation as warningBoxStyle above: the dark-mode statusText hue at 0.08
+// fill and 0.35 border. rgb(16, 185, 129) is dark mode's success statusText.
 const successBoxStyle: CSSProperties = {
   marginBottom: "0.4rem",
   background: "rgba(16, 185, 129, 0.08)",
@@ -345,10 +342,10 @@ function BuffGuide({ classData, theme, characterLevel }: { classData: ClassSkill
   );
 }
 
-// Fixed 3-column grid (Base Value / % Value / % Not Applied), each field pinned to an
-// explicit gridColumn — a stat that skips a column (Attack Power's Base-only, HP's
-// missing % Not Applied for most classes) still lines up under the stats that have
-// all 3, instead of the remaining columns stretching to fill the row.
+// Fixed 3-column grid for Base Value, % Value and % Not Applied, each field pinned to an
+// explicit gridColumn. A stat that skips a column, such as Attack Power being Base-only or HP
+// having no % Not Applied for most classes, still lines up under the stats that have all 3
+// rather than letting the remaining columns stretch to fill the row.
 const tripleStatGridStyle: CSSProperties = { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "0.35rem" };
 
 function TripleStatRow({
@@ -359,27 +356,25 @@ function TripleStatRow({
   onUpdate: (id: TripleStatFieldId, field: keyof TripleStatDraft, val: string) => void;
   theme: AppTheme;
   isMainStat: boolean;
-  /** MapleScouter only — a blank field here should jump-to-fix same as a bad value. */
+  /** MapleScouter only. A blank field here jumps to fix the same way a bad value does. */
   requireFilled: boolean;
-  /** Only Demon Avenger's HP feeds a %-not-applied-style calculation (its Demon Fury
-   *  scaling) — every other class's HP is flavor/context only, so this column would be
-   *  meaningless noise for them. Guided flows never hit this (HP only ever appears in
-   *  tripleIds for Demon Avenger there already); only showAllStats' "every class, every
-   *  field" profile pencil actually needs the distinction. */
+  /** Only Demon Avenger's HP feeds a percent-not-applied calculation, through its Demon Fury
+   *  scaling. Every other class's HP is context only, so the column would be noise for them.
+   *  Guided flows never reach this, since HP already appears in tripleIds only for Demon
+   *  Avenger; only showAllStats' every-class profile pencil needs the distinction. */
   showHpPercentUnapplied?: boolean;
 }) {
   const d: TripleStatDraft = draft[id] ?? { base: "", percent: "", percentUnapplied: "" };
   const sub = statInputStyle(theme);
   const label = TRIPLE_LABELS[id];
-  // "% Not Applied" is shown for every stat EXCEPT ATT (meaningless there — it only
-  // ever existed as a legacy scouter workaround for pre-remaster Kanna's HP→MATT
-  // conversion, and a stray value produces an invalid range; MapleScouter always sends
-  // ATT % not applied as 0) and HP for classes where it isn't their Demon Fury-style
-  // scaling stat.
+  // "% Not Applied" shows for every stat except ATT and, for classes without a Demon Fury
+  // style scaling stat, HP. It is meaningless on ATT, existing only as a legacy scouter
+  // workaround for pre-remaster Kanna's HP to MATT conversion, where a stray value produces an
+  // invalid range. MapleScouter always sends ATT percent-not-applied as 0.
   const isAttack = id === "attackPower" || id === "magicAtt";
   const hidePercentUnapplied = isAttack || (id === "hp" && !showHpPercentUnapplied);
-  // Only the class's main stat (STR/DEX/INT/LUK) is at risk of the Total-vs-Base
-  // mix-up MapleScouter itself warns about — HP/ATT/MATT don't have that ambiguity.
+  // Only the class's main stat is at risk of the Total versus Base mix-up MapleScouter itself
+  // warns about. HP, ATT and MATT have no such ambiguity.
   const showBaseWarning = isMainStat && Number(d.base) >= MAIN_STAT_BASE_VALUE_WARN_AT;
   const showPercentUnappliedWarning = isMainStat && Number(d.percentUnapplied) >= MAIN_STAT_PERCENT_UNAPPLIED_WARN_AT;
   return (
@@ -431,9 +426,9 @@ function TripleStatRow({
   );
 }
 
-// Same heading + boxed-input chrome as TripleStatRow, for a single-value field (no
-// %/% Not Applied columns) — keeps the profile-only MP/DF/TF/PP row visually
-// consistent with the rest of Basic Stats instead of the compact Combat Stats row style.
+// The same heading and boxed-input chrome as TripleStatRow, for a single-value field with no
+// percent columns. Keeps the profile-only MP, DF, TF and PP row consistent with the rest of
+// Basic Stats rather than using the compact Combat Stats row style.
 function SingleStatRow({
   id, label, draft, onUpdate, theme,
 }: {
@@ -500,7 +495,7 @@ function CombatStatCell({
   onUpdate: (id: string, val: string) => void;
   onUpdateCooldown: (field: "seconds" | "percent", val: string) => void;
   theme: AppTheme;
-  /** MapleScouter only — a blank field here should jump-to-fix same as a bad value. */
+  /** MapleScouter only. A blank field here jumps to fix the same way a bad value does. */
   requireFilled: boolean;
 }) {
   const label = STAT_LABELS[id] ?? id;
@@ -605,27 +600,27 @@ function SetupOptionsSection({
   const opts = draft.setupOptions ?? {};
   const isDA = Boolean(optsDef?.epheniaSoul);
   const isLiberationEligible = characterLevel === undefined || characterLevel >= GENESIS_LIBERATION_LEVEL;
-  // A weapon already on file at the active preset is definitive proof either way —
-  // Genesis Liberation's Final Damage bonus lives on the weapon item itself, so a real,
-  // non-genesis weapon there proves "not liberated right now" just as surely as a
-  // Genesis/Destiny one proves "liberated" — so it's shown locked, same treatment as
-  // Wild Hunter rank, whenever the active preset's weapon is known at all.
+  // A weapon on file at the active preset is definitive proof either way. Genesis Liberation's
+  // Final Damage bonus lives on the weapon item, so a non-Genesis weapon there proves not
+  // liberated as surely as a Genesis or Destiny one proves liberated. So the question shows
+  // locked, the same treatment as Wild Hunter rank, whenever the active preset's weapon is
+  // known.
   const isLiberatedByWeapon = deriveIsLiberatedFromWeapon(existingEquipment);
   const liberationWeaponName = getLiberationWeaponName(existingEquipment);
   const derivedWeaponHand = deriveWeaponHandFromWeapon(existingEquipment);
   const derivedRuinForceShield = deriveHasRuinForceShield(existingEquipment);
 
   const soulValue = deriveSoulValue(opts, isDA);
-  // Deselecting the active option collapses to "none" rather than an ambiguous
-  // unanswered state — same pattern as WildHunterRankQuestion's onToggle.
+  // Deselecting the active option collapses to "none" rather than an ambiguous unanswered
+  // state, the same pattern as WildHunterRankQuestion's onToggle.
   function handleSoulToggle(val: string | null) {
     onUpdate(soulPatchForValue(val));
   }
 
-  // "Neither" is a real radio option here too, same reasoning as WH rank/IA line —
-  // it's the discoverable way to say "none", not a special opt-out. Named "Neither"
-  // rather than "No soul weapon" since a player can have a different, untracked boss
-  // soul equipped -- this question (and its answer) only concerns these two types.
+  // "Neither" is a real radio option here too, on the same reasoning as the WH rank and IA
+  // line questions: it is the discoverable way to say none rather than a special opt-out.
+  // Named "Neither" rather than "No soul weapon" because a player can have a different,
+  // untracked boss soul equipped, and this question only concerns these two types.
   const soulQuestion = isDA
     ? "Do you have a Mu Gong Soul or Ephenia Soul on your weapon?"
     : "Do you have a Mu Gong Soul on your weapon?";
@@ -745,10 +740,10 @@ function SetupOptionsSection({
 }
 
 
-// Wild Hunter Legion rank is account-level and hard-locked, so it's shown read-only
-// (derived per-world from the roster) — shown in BOTH full_setup and maplescouter_setup.
-// Lives under its own "Legion" section since it isn't sourced from any specific
-// in-game screen, unlike the Artifacts questions below.
+// Wild Hunter Legion rank is account-level and hard-locked, so it shows read-only, derived
+// per-world from the roster, in both full_setup and maplescouter_setup. Lives under its own
+// Legion section since it is not sourced from any specific in-game screen, unlike the Artifacts
+// questions below.
 function WildHunterRankQuestion({ sq, whSource, worldLegion, onUpdate, theme, required }: {
   sq: NonNullable<StatsStepDraft["scouterQuestions"]>;
   whSource: WhAutofillSource | null;
@@ -759,11 +754,10 @@ function WildHunterRankQuestion({ sq, whSource, worldLegion, onUpdate, theme, re
 }) {
   const whWorldRank = worldLegion?.wildHunterRank;
   if (whSource) {
-    // A Wild Hunter is in this world's roster — the rank is authoritative, so it's
-    // derived and locked (it auto-updates as that character levels). Renders the same
-    // ChecklistGroup component as the manual case (for visual consistency), but with
-    // only the matching bracket in the option list — the other 5 can never apply here,
-    // so showing them would just be dead, unclickable clutter.
+    // A Wild Hunter is in this world's roster, so the rank is authoritative and shows derived
+    // and locked, auto-updating as that character levels. Renders the same ChecklistGroup as
+    // the manual case for visual consistency, but with only the matching bracket in the option
+    // list, since the others can never apply here and would be unclickable clutter.
     const matchedOption = WH_RANK_OPTIONS.find((o) => o.value === whSource.rank);
     return (
       <ChecklistGroup
@@ -780,12 +774,11 @@ function WildHunterRankQuestion({ sq, whSource, worldLegion, onUpdate, theme, re
       />
     );
   }
-  // No Wild Hunter in the roster — let the user set the world's rank manually.
-  // Deselect-to-clear: clicking the active bracket clears it, same as picking "No
-  // Wild Hunter" explicitly. Both map to the "none" sentinel, NOT undefined — undefined
-  // means "untouched this session, inherit the world's stored value" (see
-  // resolveWhLegionRank), so writing it here would just make the click look like it
-  // did nothing (the displayed value falls right back to whWorldRank below).
+  // No Wild Hunter in the roster, so the user sets the world's rank manually. Clicking the
+  // active bracket clears it, the same as explicitly picking "No Wild Hunter". Both map to the
+  // "none" sentinel rather than undefined, which means untouched this session and inherit the
+  // world's stored value (see resolveWhLegionRank). Writing undefined here would make the
+  // click appear to do nothing, since the displayed value falls back to whWorldRank below.
   return (
     <ChecklistGroup
       question="What is your Wild Hunter's level?"
@@ -800,26 +793,24 @@ function WildHunterRankQuestion({ sq, whSource, worldLegion, onUpdate, theme, re
 
 const LEGION_ARTIFACT_LOCK_TOOLTIP = { title: "Why this is locked", description: "Auto-filled from this world's Legion Artifacts." };
 
-// The two Maple Union artifacts, both sourced from the Legion window's Artifacts tab.
-// Shown in both flows: full_setup's own dedicated Legion Artifacts step feeds these same
-// two fields (see deriveLegionArtifactFields), so they render here too, locked whenever
-// that board is actually customized — same superset-with-locking treatment as every
-// other field in this questionnaire.
+// The two Maple Union artifacts, both from the Legion window's Artifacts tab. Shown in both
+// flows: full_setup's dedicated Legion Artifacts step feeds these same two fields (see
+// deriveLegionArtifactFields), so they render here too, locked whenever that board is
+// customized. Same superset-with-locking treatment as every other field here.
 function LegionArtifactQuestions({ sq, worldLegion, board, onUpdate, theme }: {
   sq: NonNullable<StatsStepDraft["scouterQuestions"]>;
   worldLegion: StoredScouterLegion | undefined;
-  /** The effective (live-session-preferred, else persisted) Legion Artifact board — see
-   *  resolveEffectiveLegionBoard. */
+  /** The effective Legion Artifact board, preferring this session's live draft over the
+   *  persisted one. See resolveEffectiveLegionBoard. */
   board: LegionArtifactBoardDraft | null;
   onUpdate: (patch: Partial<NonNullable<StatsStepDraft["scouterQuestions"]>>) => void;
   theme: AppTheme;
 }) {
-  // A value merely being STORED in worldLegion could just be an earlier manual answer
-  // (not proof) — same as Wild Hunter's own manual fallback never locking just because a
-  // value is already on file (see WildHunterRankQuestion). Re-derive straight from the
-  // real crystal board instead, so each field only locks once IT specifically has been
-  // assigned to a crystal — assigning Bonus EXP somewhere says nothing about whether
-  // Final Attack Damage has ever been touched, so the two must lock independently.
+  // A value stored in worldLegion could be an earlier manual answer rather than proof, the
+  // same reason Wild Hunter's manual fallback never locks just because a value is on file (see
+  // WildHunterRankQuestion). Re-deriving from the real crystal board means each field locks
+  // only once it has been assigned to a crystal. Assigning Bonus EXP says nothing about
+  // whether Final Attack Damage was touched, so the two lock independently.
   const boardDerived = board ? deriveLegionArtifactFields(board) : undefined;
   const extraTargetDerived = boardDerived?.artifactExtraTarget;
   const finalAtkDerived = boardDerived?.artifactFinalAttackDmg;
@@ -856,16 +847,16 @@ type InnerAbilityDerivedLine = "passive" | "multiTarget" | "neither" | undefined
 // Inner Ability line is a per-character fact like Liberated/Soul/weapon type, so it
 // groups with Character Info rather than Artifacts or Legion. Same superset treatment as
 // Weapon Hand/Ruin Force Shield/Legion Artifacts: shown as a normal manual ask in BOTH
-// flows whenever the active preset's real lines aren't known yet, locked once they are
-// — full_setup having its own dedicated Inner Ability substep later in this same step
-// doesn't mean hiding this one, same reasoning that unhid Legion Artifacts.
+// flows whenever the active preset's real lines are not known yet, and locked once they are.
+// full_setup having its own Inner Ability substep later in this step is not a reason to hide
+// this one, the same reasoning that unhid Legion Artifacts.
 function InnerAbilityLineQuestion({ sq, onUpdate, theme, required, derivedLine }: {
   sq: NonNullable<StatsStepDraft["scouterQuestions"]>;
   onUpdate: (patch: Partial<NonNullable<StatsStepDraft["scouterQuestions"]>>) => void;
   theme: AppTheme;
   required?: boolean;
-  /** The active preset's real line, or "neither" if known-but-absent, or undefined if
-   *  there's no Inner Ability data on file/entered yet at all. */
+  /** The active preset's real line, "neither" when known to be absent, or undefined when no
+   *  Inner Ability data has been entered or saved yet. */
   derivedLine: InnerAbilityDerivedLine;
 }) {
   if (derivedLine !== undefined) {
@@ -894,10 +885,10 @@ function InnerAbilityLineQuestion({ sq, onUpdate, theme, required, derivedLine }
       question="Which Inner Ability line do you use for bossing?"
       options={IA_LINE_OPTIONS}
       value={sq.innerAbilityLine ?? null}
-      // Deselect-to-clear maps to the real "neither" option, same as Wild Hunter's
-      // rank question maps to "none" — both exist as explicit radio options precisely
-      // so clicking the active one again lands on a real, complete answer instead of
-      // going fully blank (which would also fail the questionnaire-complete check).
+      // Deselecting maps to the real "neither" option, as the Wild Hunter rank question maps
+      // to "none". Both exist as explicit radio options so clicking the active one again lands
+      // on a complete answer rather than going blank, which would also fail the
+      // questionnaire-complete check.
       onToggle={(v) => onUpdate({ innerAbilityLine: v ?? "neither" })}
       theme={theme}
       required={required}
@@ -921,13 +912,12 @@ function deriveScouterWhSource(
   return whAutofillSourceFromRoster(worldRoster);
 }
 
-// The Inner Ability line question needs the REAL active preset (whichever one the
-// profile's "Set Active" button last confirmed, existingActivePreset) — NOT this
-// draft's own tab switcher, which is just a viewing convenience while editing and isn't
-// an authoritative "this is what's equipped" choice (same reasoning
-// convertInnerAbilityDraftToStored's own comment gives for why it always saves preset 0).
-// Line VALUES still come from the live draft, so an edit made to that preset later in
-// this same session (full_setup's own Inner Ability substep) is reflected immediately.
+// The Inner Ability line question needs the real active preset, meaning existingActivePreset,
+// whichever one the profile's "Set Active" button chose. Not this draft's tab switcher, which
+// is a viewing convenience while editing rather than an authoritative statement of what is
+// equipped, the same reasoning convertInnerAbilityDraftToStored gives for always saving preset
+// 0. Line values still come from the live draft, so an edit made to that preset later in the
+// session, through full_setup's Inner Ability substep, shows up immediately.
 function deriveKnownInnerAbilityLine(
   draftIA: IADraft | undefined,
   existingActivePreset: number | undefined,
@@ -937,9 +927,9 @@ function deriveKnownInnerAbilityLine(
   return innerAbilityHasData(known) ? (deriveInnerAbilityLine(known) ?? "neither") : undefined;
 }
 
-// WH Legion rank, Legion Artifacts, and Inner Ability line are all shared between
-// full_setup and maplescouter_setup (full_setup is a superset — see WildHunterRankQuestion/
-// LegionArtifactQuestions/InnerAbilityLineQuestion above).
+// WH Legion rank, Legion Artifacts and the Inner Ability line are shared between full_setup
+// and maplescouter_setup, full_setup being a superset. See WildHunterRankQuestion,
+// LegionArtifactQuestions and InnerAbilityLineQuestion above.
 function deriveScouterVisibility(flowId: SetupFlowId | undefined): { isScouter: boolean; showWhLegion: boolean } {
   const isScouter = flowId === "maplescouter_setup";
   return {
@@ -948,13 +938,12 @@ function deriveScouterVisibility(flowId: SetupFlowId | undefined): { isScouter: 
   };
 }
 
-// MapleScouter needs real data to calculate correctly, but only the radio-style pick-
-// one groups actually need forcing: a checkbox left unchecked already unambiguously
-// reads as "no" (there's no distinct "unanswered" state to worry about), and Final
-// Attack Skill Damage already defaults to 0 when blank. A radio group is different —
-// each option (including "None"/"Neither") is a distinct, deliberate click, so leaving
-// the whole group untouched is genuinely ambiguous and worth blocking on.
-// full_setup never calls this — its questionnaire stays optional ("fill in what you know").
+// MapleScouter needs real data to calculate correctly, but only the pick-one radio groups need
+// forcing. An unchecked checkbox already reads unambiguously as no, with no distinct unanswered
+// state, and Final Attack Skill Damage defaults to 0 when blank. A radio group differs: every
+// option, including None and Neither, is a deliberate click, so an untouched group is genuinely
+// ambiguous and worth blocking on. full_setup never calls this, keeping its questionnaire
+// optional.
 function isScouterQuestionnaireComplete(
   optsDef: ClassSetupOptionsDef | undefined,
   opts: NonNullable<StatsStepDraft["setupOptions"]> | undefined,
@@ -966,31 +955,30 @@ function isScouterQuestionnaireComplete(
 ): boolean {
   const o = opts ?? {};
   const s = sq ?? {};
-  // A locked, derived weapon hand (see SetupOptionsSection) counts as answered too — it's
-  // never written into o.weaponHand since there's nothing to ask.
+  // A locked, derived weapon hand (see SetupOptionsSection) counts as answered. It is never
+  // written into o.weaponHand, since there is nothing to ask.
   if (optsDef?.weaponType && o.weaponHand === undefined && derivedWeaponHand === undefined) return false;
   if (o.soulType === undefined) return false;
-  // A rank already showing on screen via the world fallback (see WildHunterRankQuestion)
-  // counts as answered — s.whLegion alone doesn't know about that fallback.
+  // A rank already on screen through the world fallback (see WildHunterRankQuestion) counts as
+  // answered, since s.whLegion alone does not know about that fallback.
   if (!whSource && s.whLegion === undefined && whWorldRank === undefined) return false;
-  // A locked, derived answer (see InnerAbilityLineQuestion) counts as answered too — it's
-  // never written into s.innerAbilityLine since there's nothing to ask.
+  // A locked, derived answer (see InnerAbilityLineQuestion) counts as answered. It is never
+  // written into s.innerAbilityLine, since there is nothing to ask.
   if (derivedInnerAbilityLine === undefined && s.innerAbilityLine === undefined) return false;
   return true;
 }
 
-// "X left" / "X over" — pulled out of the main component (rather than an inline
-// ternary) purely to keep its cognitive complexity under the sonarjs cap.
+// Renders "X left" or "X over". Pulled out of the main component rather than left as an inline
+// ternary purely to keep its cognitive complexity under the sonarjs cap.
 function hyperStatBudgetSuffix(budget: number, spent: number): string {
   const remaining = budget - spent;
   return remaining < 0 ? `${Math.abs(remaining).toLocaleString()} over` : `${remaining.toLocaleString()} left`;
 }
 
-// Names EVERY over-budget preset, not just whichever isn't on screen right now — all
-// 3 presets persist to storage regardless of which is active, so all 3 must
-// independently stay within budget, and the message should say so even when the
-// currently-displayed preset is one of the offenders (mirrors HEXA Stat's node
-// message, which lists every offending node the same way).
+// Names every over-budget preset rather than only those off screen. All 3 persist to storage
+// regardless of which is active, so all 3 must independently stay within budget, and the
+// message says so even when the displayed preset is one of the offenders. Mirrors HEXA Stat's
+// node message, which lists every offending node the same way.
 function hyperOverBudgetMessage(overBudgetPresetIndices: number[]): string {
   if (overBudgetPresetIndices.length === 0) return "";
   const labels = overBudgetPresetIndices.map((i) => `Preset ${i + 1}`);
@@ -1006,10 +994,10 @@ function statsSubstepDescription(isScouter: boolean): string {
   return "Follow the requirements below, then enter your stats exactly as shown in your Character Info window.";
 }
 
-// Substep 1 — the stat window fields (Basic/Combat/Symbols). Pulled into its own component
-// (rather than inline like substeps 0/2) purely to keep the main component's cognitive
-// complexity under the sonarjs cap — MapleScouter's completion gating added enough branches
-// here to push it over.
+// Substep 1, the stat window fields for Basic, Combat and Symbols. Pulled into its own
+// component rather than left inline like substeps 0 and 2, purely to keep the main component's
+// cognitive complexity under the sonarjs cap, which MapleScouter's completion gating pushed it
+// over.
 function StatsWindowSubstep({
   theme, stepNumber, totalSteps, substep, substepCount, substepAnimStyle,
   goToSubstep, hasMoreSubsteps, onNext, onFinish, onValidityChange,
@@ -1029,11 +1017,11 @@ function StatsWindowSubstep({
   onNext: () => void;
   onFinish: () => void;
   onValidityChange?: (valid: boolean, substepIndex?: number) => void;
-  /** True when opened from a profile bookmark's edit pencil, straight into this
-   *  substep — see confineToSubstep on the default export. */
+  /** True when opened from a profile bookmark's edit pencil straight into this substep. See
+   *  confineToSubstep on the default export. */
   confineToSubstep?: boolean;
-  /** The step-level Back (leaves the "stats" step entirely) — used in place of
-   *  goToSubstep(0) when confined, since substep 0 isn't reachable there. */
+  /** The step-level Back, which leaves the stats step entirely. Used in place of
+   *  goToSubstep(0) when confined, since substep 0 is not reachable there. */
   onExitStep: () => void;
   classData: ClassSkillData | undefined;
   characterLevel?: number;
@@ -1043,14 +1031,14 @@ function StatsWindowSubstep({
   handleSingleUpdate: (id: string, val: string) => void;
   handleCooldownUpdate: (field: "seconds" | "percent", val: string) => void;
   isScouter: boolean;
-  /** Profile-pencil only (stats_flow) — shows the resource bar (MP/DF/TF/PP) and
+  /** Profile-pencil only, in stats_flow. Shows the resource bar (MP, DF, TF, PP) and
    *  Normal Enemy Damage, which the guided Setup flows never ask for. */
   showAllStats: boolean;
 }) {
   const primaryStat = classData?.requiredStats.find((s): s is TripleStatFieldId => MAIN_STAT_IDS.has(s));
   const resourceLabel = classData?.resourceLabel ?? "MP";
-  // Profile-pencil only: Normal Enemy Damage slots in right after Boss Damage, above
-  // Critical Rate — matching where it sits in the in-game Character Info window.
+  // Profile-pencil only. Normal Enemy Damage slots in right after Boss Damage and above
+  // Critical Rate, matching where it sits in the in-game Character Info window.
   const combatRightIds: StatFieldId[] = showAllStats
     ? [...COMBAT_RIGHT.slice(0, 2), "normalEnemyDamage", ...COMBAT_RIGHT.slice(2)]
     : COMBAT_RIGHT;
@@ -1059,15 +1047,16 @@ function StatsWindowSubstep({
   const showArcanePower = isArcaneEligible(characterLevel, classData?.isLegacy);
   const showSacredPower = isSacredEligible(characterLevel, classData?.isLegacy);
   const symbolIds = ([showArcanePower && "arcanePower", showSacredPower && "sacredPower"] as const).filter(Boolean) as StatFieldId[];
-  // full_setup stays skippable while untouched, but once a player starts filling this
-  // in, treat it the same as MapleScouter's own "every field required" — see
-  // isStatsSubstepAnyFieldFilled's doc comment for why (players missing one field and
-  // finishing setup confused why MapleScouter couldn't calculate). stats_flow (the
-  // profile's standalone Stats tab, showAllStats here) is excluded from this: unlike
-  // full_setup, it always opens pre-seeded from the character's already-saved stats (see
-  // buildSeededStepTestByStep), so "any field filled" would trip immediately on open
-  // regardless of whether the player has touched anything this session — there's no
-  // reliable "just typed this" signal to gate on here, so it stays sanity-only.
+  // full_setup stays skippable while untouched, but once a player starts filling it in this
+  // treats it like MapleScouter's every-field-required rule. See isStatsSubstepAnyFieldFilled's
+  // doc comment for why: players who missed one field and finished setup were confused that
+  // MapleScouter could not calculate.
+  //
+  // stats_flow, the profile's standalone Stats tab and showAllStats here, is excluded. Unlike
+  // full_setup it opens pre-seeded from the character's saved stats (see
+  // buildSeededStepTestByStep), so any-field-filled would trip on open whether or not anything
+  // was touched this session. There is no reliable just-typed signal to gate on, so it stays
+  // sanity-only.
   const anyFieldFilled = !isScouter && !showAllStats
     && isStatsSubstepAnyFieldFilled(draft, tripleIds, showArcanePower, showSacredPower);
   const requireComplete = isScouter || anyFieldFilled;
@@ -1086,14 +1075,14 @@ function StatsWindowSubstep({
     <div key={1} ref={rootRef} className="stats-substep-root" style={substepAnimStyle}>
     <style>{`
       .stats-substep-root { container-type: inline-size; }
-      /* Collapse to one column on the panel's actual width, not the viewport — the
-         setup panel is much narrower than the window, so a viewport query collapsed
-         far too late. Gap lives in CSS (not inline) so the query can tighten the
-         column seam to match the row gap when the two columns stack. */
+      /* Collapse to one column on the panel's own width rather than the viewport. The
+         setup panel is much narrower than the window, so a viewport query collapsed far
+         too late. Gap lives in CSS rather than inline so the query can tighten the column
+         seam to match the row gap when the two columns stack. */
       .stats-combat-grid { gap: 0.75rem; }
-      /* Grid (not flex) so a single visible symbol — Arcane alone, Lv 200-259 — stays
-         pinned to the left column's width instead of a lone flex:1 item stretching to
-         fill the whole row and dragging its input far to the right. */
+      /* Grid rather than flex, so a single visible symbol, meaning Arcane alone at Lv
+         200-259, stays pinned to the left column's width instead of a lone flex:1 item
+         stretching across the row and dragging its input far to the right. */
       .stats-symbols-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
       @container (max-width: 520px) {
         .stats-combat-grid { flex-direction: column; gap: 0.4rem; }
@@ -1181,11 +1170,11 @@ function StatsWindowSubstep({
         >
           {(() => {
             if (isScouter) return "Fill in every stat above, and fix any flagged values, to continue.";
-            // Full Setup's completeness requirement only kicks in once the player has
-            // already filled in something (see anyFieldFilled) — unlike MapleScouter's
-            // always-on version of this same message, Next locking here is a new state
-            // the player just caused, not a rule that was already in effect, so it needs
-            // its own copy explaining why, or a sudden lock reads as a bug.
+            // Full Setup's completeness requirement starts only once the player has filled in
+            // something (see anyFieldFilled). Unlike MapleScouter's always-on version of this
+            // message, Next locking here is a new state the player just caused rather than a
+            // rule already in effect, so it needs its own copy explaining why. Otherwise a
+            // sudden lock reads as a bug.
             if (anyFieldFilled) return "Since you filled in at least one stat, fill in the rest above (and fix any flagged values) to continue.";
             return "Fix the flagged value above to continue.";
           })()}
@@ -1198,13 +1187,12 @@ function StatsWindowSubstep({
 
 // ── Substep 0: quick questions ────────────────────────────────────────────────
 
-// A live, not-yet-saved Equipment draft from THIS session (any non-empty raw value —
-// the Equipment step's own mount-time backfill from storage means even an untouched-
-// this-session visit produces a full snapshot, not a partial one) always wins over
-// whatever's already persisted from before this session, so clearing a weapon mid-
-// session is reflected immediately instead of only after a Finish-then-reopen round
-// trip. Falls back to the roster's persisted equipment when Equipment hasn't been
-// visited THIS session at all.
+// A live, unsaved Equipment draft from this session always wins over what was persisted
+// before it, so clearing a weapon mid-session shows up immediately rather than after a Finish
+// and reopen. Any non-empty raw value counts, since the Equipment step's mount-time backfill
+// from storage means even an untouched visit produces a full snapshot rather than a partial
+// one. Falls back to the roster's persisted equipment when Equipment was never visited this
+// session.
 function resolveEffectiveEquipment(
   equipmentRawValue: string | undefined,
   existingEquipment: EquipmentLike | null | undefined,
@@ -1213,10 +1201,10 @@ function resolveEffectiveEquipment(
   return equipmentLikeFromDraft(parseEquipmentStepDraft(equipmentRawValue));
 }
 
-// Same reasoning as resolveEffectiveEquipment above, for Legion Artifacts — a live
-// in-session board draft (once any crystal's been touched) already carries forward
-// every other crystal's real persisted data via updateCrystal's own dense rebuild (see
-// LegionArtifactsSetupStep.tsx), so it's a safe, complete snapshot to prefer wholesale.
+// Same reasoning as resolveEffectiveEquipment above, for Legion Artifacts. Once any crystal is
+// touched, the live in-session board draft already carries every other crystal's persisted data
+// through updateCrystal's dense rebuild (see LegionArtifactsSetupStep.tsx), making it a
+// complete snapshot safe to prefer wholesale.
 function resolveEffectiveLegionBoard(
   legionArtifactsRawValue: string | undefined,
   worldLegionArtifact: StoredLegionArtifact | undefined,
@@ -1358,9 +1346,9 @@ function HyperStatSubstep({
   onFinish: () => void;
   onValidityChange?: (valid: boolean, substepIndex?: number) => void;
   nextLabel?: string;
-  /** True when opened from a profile bookmark's edit pencil — the profile already has
-   *  its own "Set preset X as active" control, so the first-time-setup hint below
-   *  (which only applies before that control has ever been reached) doesn't apply. */
+  /** True when opened from a profile bookmark's edit pencil. The profile already has its own
+   *  "Set preset X as active" control, so the first-time-setup hint below, which applies only
+   *  before that control has been reached, doesn't apply. */
   confineToSubstep?: boolean;
   characterLevel?: number;
   classData: ClassSkillData | undefined;
@@ -1370,8 +1358,8 @@ function HyperStatSubstep({
   copyHyperPreset: (from: number) => void;
   clearHyperPreset: () => void;
 }) {
-  // Arcane Power only appears in this window once the character can actually have
-  // Arcane Force — same eligibility as the Symbols section in the stat-window substep.
+  // Arcane Power appears only once the character can have Arcane Force, the same eligibility
+  // the Symbols section uses in the stat-window substep.
   const hyperCategories = HYPER_STAT_CATEGORIES.filter(
     (cat) => cat.id !== "arcanePower" || isArcaneEligible(characterLevel, classData?.isLegacy),
   );
@@ -1382,10 +1370,9 @@ function HyperStatSubstep({
   const hyperSpent = hyperStatPresetSpent(activeHyperPreset, hyperCategoryIds);
   const hyperBudget = hyperStatBudget(characterLevel);
   const hyperOverspent = hyperSpent > hyperBudget;
-  // All 3 presets persist to storage regardless of which is active, so Continue must
-  // stay blocked if ANY preset is over budget — otherwise switching to a valid preset
-  // silently bypasses the check while an overspent one is still saved (same class of
-  // bug as HEXA Stat's node/preset check).
+  // All 3 presets persist to storage regardless of which is active, so Continue stays blocked
+  // while any preset is over budget. Otherwise switching to a valid preset bypasses the check
+  // while an overspent one is still saved, the same class of bug as HEXA Stat's preset check.
   const overBudgetPresetIndices = hyper.presets.reduce<number[]>((acc, p, i) => {
     if (hyperStatPresetSpent(p, hyperCategoryIds) > hyperBudget) acc.push(i);
     return acc;
@@ -1395,9 +1382,9 @@ function HyperStatSubstep({
     <div key={2} className="stats-hyper-root" style={substepAnimStyle}>
     <style>{`
       .stats-hyper-root { container-type: inline-size; }
-      /* Gap lives in CSS (not inline) so the container query can override it —
-         when the two columns stack, match the inter-column gap to the row gap so
-         the seam between the columns isn't wider than the rest of the list. */
+      /* Gap lives in CSS rather than inline so the container query can override it. When
+         the two columns stack, the inter-column gap matches the row gap, so the seam
+         between columns isn't wider than the rest of the list. */
       .stats-hyper-grid { gap: 0.75rem; }
       @container (max-width: 520px) { .stats-hyper-grid { flex-direction: column; gap: 0.4rem; } }
     `}</style>
@@ -1472,8 +1459,8 @@ function InnerAbilitySubstep({
   onValidityChange?: (valid: boolean, substepIndex?: number) => void;
   draft: StatsStepDraft;
   onUpdate: (next: IADraft) => void;
-  /** True when opened from a profile bookmark's edit pencil — see HyperStatSubstep's
-   *  same prop for why this suppresses the first-time-setup active-preset hint. */
+  /** True when opened from a profile bookmark's edit pencil. See HyperStatSubstep's same
+   *  prop for why this suppresses the first-time-setup active-preset hint. */
   confineToSubstep?: boolean;
 }) {
   return (
@@ -1504,17 +1491,17 @@ export default function StatsSetupStep({
 }: StatsSetupStepProps) {
   const classData = CLASS_SKILL_DATA.find((c) => c.nexonJobName === jobName);
   const draft = parseStatsStepDraft(value);
-  // This character's already-saved record (if any) — the source for deriving already-
-  // known Genesis/Destiny liberation and Inner Ability answers below, since Equipment
-  // isn't part of this step's own draft at all.
+  // This character's saved record, if any. The source for deriving already-known Genesis and
+  // Destiny liberation and Inner Ability answers below, since Equipment is not part of this
+  // step's draft.
   const existingRecord = confirmedCharacterName
     ? findRosterCharacterByName(characterRoster ?? [], confirmedCharacterName) ?? null
     : null;
-  // Hyper Stat is a Full-setup detail that MapleScouter never uses, so it gets its
-  // own substep everywhere EXCEPT the scouter flow. ("% Not Applied" is NOT flow-
-  // specific — it shows for every non-ATT stat in all flows; see TripleStatRow.)
-  // Also hidden below Lv 140, same as Genesis Liberation/Arcane/Sacred — a character
-  // that can't have Hyper Stats yet shouldn't be asked to fill them in.
+  // Hyper Stat is a Full Setup detail MapleScouter never uses, so it gets its own substep in
+  // every flow except the scouter one. "% Not Applied" is not flow-specific and shows for every
+  // non-ATT stat everywhere (see TripleStatRow). Also hidden below Lv 140, like Genesis
+  // Liberation, Arcane and Sacred, since a character who cannot have Hyper Stats yet should not
+  // be asked to fill them in.
   const showHyperStat = flowId !== "maplescouter_setup" && isHyperStatEligible(characterLevel);
   const { isScouter, showWhLegion } = deriveScouterVisibility(flowId);
 
@@ -1571,10 +1558,9 @@ export default function StatsSetupStep({
     updateDraft({ hyperStat: { presets, activePreset: hyper.activePreset } });
   }
 
-  // Inner Ability is a Character Info fact (found in the in-game Stats window) that
-  // Full setup collects in its own detailed substep; MapleScouter asks a simpler
-  // version of the same question inline in substep 0 instead (no level gate — Inner
-  // Ability itself isn't level-locked, unlike Hyper Stat).
+  // Inner Ability is a Character Info fact from the in-game Stats window. Full Setup collects
+  // it in its own detailed substep, while MapleScouter asks a simpler version inline in substep
+  // 0. No level gate, since Inner Ability is not level-locked the way Hyper Stat is.
   const showInnerAbility = flowId !== "maplescouter_setup";
 
   // Substeps: questions → stat fields → hyper stat (Lv 140+, full setup only) →
@@ -1587,13 +1573,12 @@ export default function StatsSetupStep({
   const SUBSTEP_COUNT = lastSubstep + 1;
 
   const [substep, setSubstep] = useState(() => targetSubstep ?? (direction === "backward" ? lastSubstep : 0));
-  // Reports the mount-time default once (so entering a step "backward," which starts
-  // on a substep other than 0, still gets persisted for resume even if the player
-  // reloads before navigating again) — subsequent changes are reported directly from
-  // goToSubstep below instead of a substep-watching effect. Fully eliminating this last
-  // mount-time report would mean lifting substep into a value the parent controls
-  // directly, which isn't worth the blast radius for a bookkeeping report that never
-  // causes a visible re-render.
+  // Reports the mount-time default once, so entering a step backward, which starts on a
+  // substep other than 0, is still persisted for resume even if the player reloads before
+  // navigating again. Later changes are reported from goToSubstep below rather than a
+  // substep-watching effect. Removing this last mount-time report would mean lifting substep
+  // into a value the parent controls, which is not worth the blast radius for a bookkeeping
+  // report that never causes a visible re-render.
   // react-doctor-disable-next-line no-prop-callback-in-effect, no-pass-live-state-to-parent, react-doctor/no-pass-data-to-parent
   useEffect(() => { onSubstepChange?.(substep); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const [substepDirection, setSubstepDirection] = useState<"forward" | "backward">("forward");
@@ -1613,18 +1598,17 @@ export default function StatsSetupStep({
     animationFillMode: "both" as const,
   } : {};
 
-  // stats_flow is only ever reached from the profile bookmark's edit pencil (or a
-  // future "set up now" empty-state CTA) — never part of Full Setup/MapleScouter
-  // Setup's guided sequence, so it's a safe signal to show every stat field
-  // regardless of class ("save people time" gating stays intact for the guided flows).
+  // stats_flow is reached only from the profile bookmark's edit pencil, never from Full Setup
+  // or MapleScouter Setup's guided sequence, so it is a safe signal to show every stat field
+  // regardless of class. The time-saving gating stays intact for the guided flows.
   const showAllStats = flowId === "stats_flow";
   const classRequiredTripleIds = classData
     ? getRequiredStatsForClass(classData).filter((id): id is TripleStatFieldId => TRIPLE_IDS.has(id))
     : [];
-  // A class with no known required stats (every legacy job, or any jobName not yet
-  // mapped in CLASS_SKILL_DATA) would otherwise render zero Basic Stats fields at all —
-  // "don't know what's required" should fall back to showing everything, same rationale
-  // showAllStats already uses, not silently hide the whole section.
+  // A class with no known required stats, meaning every legacy job or any jobName not yet
+  // mapped in CLASS_SKILL_DATA, would otherwise render zero Basic Stats fields. Not knowing
+  // what is required should fall back to showing everything, the same rationale showAllStats
+  // uses, rather than hiding the section.
   const tripleIds = showAllStats || classRequiredTripleIds.length === 0
     ? TRIPLE_STAT_FIELDS.map((f) => f.id)
     : classRequiredTripleIds;
@@ -1656,8 +1640,8 @@ export default function StatsSetupStep({
     />
   );
 
-  // Substep — Hyper Stat (Full setup, Lv 140+ only). Mirrors the in-game Hyper Stats
-  // window: every category, level 0–15, entered directly into a two-column list.
+  // Hyper Stat substep, Full Setup at Lv 140 and up only. Mirrors the in-game Hyper Stats
+  // window, with every category entered directly into a two-column list.
   if (substep === hyperStatSubstep) {
     const hyperFrame = confinableFrameProps(confineToSubstep, onBack, onFinish, {
       substepIndex: substep,
@@ -1679,9 +1663,9 @@ export default function StatsSetupStep({
     );
   }
 
-  // Substep — Inner Ability (Full setup only). A Character Info fact, but detailed
-  // enough (grade + 3 tiered lines) to warrant its own substep rather than folding
-  // into substep 0's questionnaire.
+  // Inner Ability substep, Full Setup only. A Character Info fact, but detailed enough at a
+  // grade plus 3 tiered lines to warrant its own substep rather than folding into substep 0's
+  // questionnaire.
   function handleInnerAbilityUpdate(next: IADraft) {
     updateDraft({ innerAbility: next });
   }

@@ -144,7 +144,7 @@ const CLASS_WEAPON_TYPES: Record<string, string[]> = {
   shade: ["knuckle"], ark: ["knuckle"], mo_xuan: ["martialBrace"],
   // ── Multi-branch ──
   xenon: ["whipBlade"],
-  // ── Zero ── (secondary handled separately — it lives in weapon.json)
+  // ── Zero ── (secondary handled separately, since it lives in weapon.json)
   zero: ["longSword"],
 };
 
@@ -201,7 +201,7 @@ const SECONDARY_TYPE_PREFIXES: Record<string, string[]> = {
   talisman: ["0135430"], katara: ["01342"],
 };
 
-// Current Astra (Lv 200) secondary per class — a single 7-digit prefix each (the 5-digit
+// Current Astra (Lv 200) secondary per class: a single 7-digit prefix each, since the 5-digit
 // Astra prefixes 0172x lump many classes together, like the old 0135x line). Mapped by
 // item name + job from the data; classes with no Astra entry yet (mihile, aran, the demon
 // classes, blaze_wizard, shadower, dual blade) are absent. Add as the data fills in.
@@ -231,7 +231,7 @@ const CLASS_ASTRA_SECONDARY: Record<string, string> = {
 };
 
 // "shield" is a sentinel meaning "also show branch-matching shields" (war/mage/thief
-// shields share id prefixes, so they can't be split by prefix — branch handles it).
+// shields share id prefixes, so they can't be split by prefix, and branch handles it).
 const SECONDARY_SHIELD = "shield";
 
 /** classId → secondary type(s). */
@@ -264,7 +264,7 @@ const CLASS_SECONDARY_TYPES: Record<string, string[]> = {
   shade: ["foxMarble"], ark: ["abyssalPath"], mo_xuan: ["braceBand"],
   // ── Multi-branch ──
   xenon: ["coreController"],
-  // Zero is intentionally absent — its secondary (Lapis) lives in weapon.json.
+  // Zero is intentionally absent, since its secondary, Lapis, lives in weapon.json.
 };
 
 // Per-class Astra shield, by exact item NAME. The Astra shields share/interleave id

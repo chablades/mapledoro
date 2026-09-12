@@ -42,7 +42,7 @@ const WEAPON_JUMP_ICON_BY_STAT: Record<MainStatId, string> = {
   luk: "01113116", // Weapon Jump L Ring
 };
 
-/** The class's Weapon Jump ring variant — its display label and item icon id. */
+/** The class's Weapon Jump ring variant: its display label and item icon id. */
 export interface OzWeaponJumpVariant {
   /** Display label, e.g. "Weapon Jump I". */
   label: string;
@@ -117,7 +117,7 @@ export function convertOzRingsDraftToStored(draft: OzRingsDraft): StoredOzRings 
   return { levels };
 }
 
-/** Reverse of convertOzRingsDraftToStored — seeds the step's draft from what's already
+/** Reverse of convertOzRingsDraftToStored. Seeds the step's draft from what's already
  *  stored, so reopening Oz Rings on a character that already answered it doesn't start
  *  blank. Tolerates legacy stored fields (ringMode, totalling level, totallingStats) by
  *  reading only the surviving ring levels, and clamps to each ring's current max so a

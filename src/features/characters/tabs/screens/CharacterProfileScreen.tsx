@@ -143,8 +143,8 @@ function GenderMarriageIcons({
 }
 
 // Current EXP percent, decorated with a green up-arrow when there's been real progress
-// since the last snapshot -- hovering/focusing the whole thing reveals the actual delta
-// (and any level-ups crossed) rather than showing that number inline all the time.
+// since the last snapshot. Hovering or focusing it reveals the delta, and any level-ups
+// crossed, rather than showing that number inline all the time.
 function ExpPercentIndicator({ theme, percent, delta }: { theme: SearchPaneModel["theme"]; percent: number; delta: ExpDelta | null }) {
   const lost = delta !== null && delta.percentDelta < 0;
   const content = (

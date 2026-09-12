@@ -43,7 +43,7 @@ interface SetupFlowTransitionArgs {
   showCharacterDirectory: boolean;
   stepIndex: number;
   stepDirection: "forward" | "backward";
-  /** Which substep of stepIndex (if any) to land on — see setupSubstepIndex in
+  /** Which substep of stepIndex, if any, to land on. See setupSubstepIndex in
    *  setupDraftStorage.ts for why this exists. */
   substepIndex: number;
   stepData: SetupStepInputById;
@@ -218,8 +218,8 @@ export function useSetupFlowTransitions() {
           setters.setShowCharacterDirectory(args.showCharacterDirectory);
           setters.setSetupStepDirection(args.stepDirection);
           setters.setSetupStepIndex(args.stepIndex);
-          // Safe to always set (not just when non-zero) — any subsequent normal
-          // navigation already clears setSetupTargetSubstep back to null (see
+          // Safe to always set, not only when non-zero. Any subsequent normal navigation
+          // already clears setSetupTargetSubstep back to null (see
           // setSetupStepWithDirection in useCharacterSetupController.ts), so it can't
           // linger and force a stale substep later.
           setters.setSetupTargetSubstep(args.substepIndex);

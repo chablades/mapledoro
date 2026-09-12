@@ -30,7 +30,7 @@ interface StepRendererProps {
   direction?: "forward" | "backward";
   targetSubstep?: number | null;
   /** When true, the step should present targetSubstep as if it were the step's only
-   *  substep — see StatsSetupStep's confineToSubstep prop. */
+   *  substep. See StatsSetupStep's confineToSubstep prop. */
   confineToSubstep?: boolean;
   substepJumpNonce?: number;
   onValidityChange?: (valid: boolean, substepIndex?: number) => void;
@@ -42,10 +42,10 @@ interface StepRendererProps {
   worldScouterLegion?: import("../model/charactersStore").StoredScouterLegion;
   worldLegionArtifact?: import("../model/charactersStore").StoredLegionArtifact;
   /** This session's own live Equipment/Legion Artifacts step drafts, independent of
-   *  which step is currently active — lets the Stats step's Quick Questions re-derive
-   *  its locked answers from this session's own in-progress edits, not just whatever's
-   *  already persisted (see StatsSetupStep.tsx's resolveEffectiveEquipment/
-   *  resolveEffectiveLegionBoard). */
+   *  which step is currently active. Lets the Stats step's Quick Questions re-derive its
+   *  locked answers from this session's in-progress edits rather than only what's already
+   *  persisted. See StatsSetupStep.tsx's resolveEffectiveEquipment and
+   *  resolveEffectiveLegionBoard. */
   equipmentRawValue?: string;
   legionArtifactsRawValue?: string;
   characterLevel?: number;
@@ -59,8 +59,8 @@ interface StepRendererProps {
   onFinish: () => void;
 }
 
-/** Superset props shape every step component must be assignable from — each concrete
- *  component only destructures the subset it actually needs. */
+/** Superset props shape every step component must be assignable from. Each concrete
+ *  component destructures only the subset it needs. */
 interface SetupStepComponentProps {
   theme: AppTheme;
   step: SetupStepDefinition;
@@ -141,9 +141,9 @@ export default function StepRenderer({
 
   return (
     <StepComponent
-      // Remount on a substep jump even when stepIndex is unchanged (e.g. re-targeting
-      // Stats' Inner Ability while already on Stats) — substepJumpNonce always changes
-      // when jumpToSubstep fires, forcing the lazy substep-index initializer to rerun.
+      // Remount on a substep jump even when stepIndex is unchanged, such as re-targeting
+      // Stats' Inner Ability while already on Stats. substepJumpNonce always changes when
+      // jumpToSubstep fires, forcing the lazy substep-index initializer to rerun.
       key={`${step.id}-${substepJumpNonce ?? 0}`}
       theme={theme}
       step={step}

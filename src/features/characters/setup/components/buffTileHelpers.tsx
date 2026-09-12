@@ -9,7 +9,7 @@ import {
 } from "../data/buffsData";
 
 // Split out of BuffsSetupStep.tsx so that file can stay component-exports-only
-// (only-export-components -- a non-component export there defeats Fast Refresh). Used by
+// under only-export-components, since a non-component export there defeats Fast Refresh. Used by
 // BuffsSetupStep.tsx's own tile rendering and ScouterSimulatorDialog.tsx's condensed Buffs tab.
 
 export const boolTileStyle = (active: boolean, theme: AppTheme): CSSProperties => ({
@@ -54,7 +54,7 @@ export function buffIconOverride(id: BoolBuffId, primaryStat: StatId, jobName: s
 }
 
 // Non-Hurricane classes get Extreme Green Potion layered onto the Extreme Potion tile instead of
-// their own separate tile — see isHurricaneClass.
+// their own separate tile. See isHurricaneClass.
 export function buffSecondIconOverride(id: BoolBuffId, jobName: string): BoolBuffIconType | undefined {
   if (id === "extremePotion" && !isHurricaneClass(jobName)) return { kind: "item", id: EXTREME_GREEN_POTION_ITEM_ID };
   return undefined;

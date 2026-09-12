@@ -15,9 +15,9 @@ function expDeltaBadgeStyle(theme: AppTheme, fontSize: string, lost: boolean): C
 
 /** Small "progress since last check" badge, shown next to a character's current EXP percent
  *  on the directory card and the EXP bookmark. The percent shown is net across any level-ups
- *  crossed (see netExpPercentGained), so it can read past 100% -- the level count behind it
- *  is condensed into a hover/focus tooltip rather than shown inline. A same-level EXP loss
- *  (e.g. dying to a boss in some modes) shows as a red down arrow instead of green up. */
+ *  crossed (see netExpPercentGained), so it can read past 100%. The level count behind it is
+ *  condensed into a hover and focus tooltip rather than shown inline. A same-level EXP loss,
+ *  such as dying to a boss in some modes, shows as a red down arrow instead of green up. */
 export default function ExpDeltaBadge({ theme, delta, fontSize = "0.75rem" }: { theme: AppTheme; delta: ExpDelta; fontSize?: string }) {
   const lost = delta.percentDelta < 0;
   const pct = formatPercent(delta.percentDelta);

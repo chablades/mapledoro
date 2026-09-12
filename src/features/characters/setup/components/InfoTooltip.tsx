@@ -11,10 +11,11 @@ export interface TooltipContent {
   description: ReactNode;
   /** Plain URLs render at full size, no offset; pass `{ src, scale, offsetY }` for an icon
    *  whose raw art isn't cropped consistently with its neighbors (a real MapleStory asset
-   *  inconsistency, not something CSS alone can fix — see the Oz Ring Boss Ring Box icons).
-   *  `scale` (0-1) shrinks it, `offsetY` (px, +down) nudges vertical position. Both apply
-   *  via `transform` rather than width/height/margin, so every icon's box stays the same
-   *  size and position in the row — no separate re-centering to get slightly wrong. */
+   *  inconsistency, not something CSS alone can fix, as with the Oz Ring Boss Ring Box icons).
+   *  `scale`, 0 to 1, shrinks it, and `offsetY`, in px where positive is down, nudges vertical
+   *  position. Both apply via `transform` rather than width, height or margin, so every icon's
+   *  box keeps the same size and position in the row, with no separate re-centering to get
+   *  slightly wrong. */
   imageUrls?: (string | { src: string; scale?: number; offsetY?: number })[];
   link?: { href: string; label: string };
 }
@@ -60,10 +61,10 @@ export function LockGlyph() {
 }
 
 // Rendered via a portal straight to document.body (position: fixed, viewport coordinates) rather
-// than position: absolute within the page flow — any ancestor with overflow other than "visible"
-// (even just overflow-x, which silently forces overflow-y to "auto" too, see AppShell.tsx) turns
-// into an accidental clipping container for an absolutely-positioned popup. Fixed + portal sidesteps
-// the whole class of "which ancestor is clipping it this time" bugs instead of chasing each one.
+// than position: absolute within the page flow. Any ancestor with overflow other than "visible",
+// even overflow-x alone, which silently forces overflow-y to "auto" too (see AppShell.tsx),
+// becomes an accidental clipping container for an absolutely positioned popup. Fixed plus a
+// portal sidesteps that whole class of which-ancestor-is-clipping-it bugs.
 const infoPopupStyle = (theme: AppTheme, top: number, left: number, maxHeight: number): CSSProperties => ({
   position: "fixed",
   top,
@@ -110,8 +111,8 @@ function TooltipImage({ src, scale = 1, offsetY = 0 }: { src: string; scale?: nu
   );
 }
 
-// 0.4rem gap between trigger and popup, matching the original CSS-based spacing — computed off
-// the root font-size rather than hardcoded 16px in case the user has browser text zoom active.
+// A 0.4rem gap between trigger and popup, matching the original CSS-based spacing. Computed off
+// the root font-size rather than a hardcoded 16px, in case browser text zoom is active.
 function remToPx(rem: number): number {
   if (typeof document === "undefined") return rem * 16;
   return rem * parseFloat(getComputedStyle(document.documentElement).fontSize);
@@ -140,8 +141,8 @@ export default function InfoTooltip({ content, theme, icon = "?", label = "More 
     if (next && containerRef.current) {
       const rect = containerRef.current.getBoundingClientRect();
       // Generous placeholder for the one frame before the effect below measures the
-      // popup's real height and picks a side/cap -- never actually visible as a scroll gap
-      // since it's corrected before paint settles.
+      // popup's real height and picks a side and cap. Never visible as a scroll gap, since
+      // it's corrected before paint settles.
       setPos({ top: rect.bottom + remToPx(0.4), left: rect.left, maxHeight: window.innerHeight });
     }
     setOpen(next);
@@ -158,12 +159,11 @@ export default function InfoTooltip({ content, theme, icon = "?", label = "More 
       const spaceBelow = window.innerHeight - rect.bottom - gap - margin;
       const spaceAbove = rect.top - gap - margin;
       const naturalHeight = popup.offsetHeight;
-      // Flip above the trigger when there isn't enough room below in the viewport —
-      // otherwise a tooltip opened near the bottom of a step forces the page to grow
-      // to fit it, visibly pushing content past the footer. If the popup's natural height
-      // doesn't fully fit on EITHER side (a long description on a short viewport), pick
-      // whichever side has more room and cap it there with an internal scroll instead of
-      // running off the bottom of the screen uncapped.
+      // Flip above the trigger when there isn't enough room below in the viewport. Otherwise
+      // a tooltip opened near the bottom of a step forces the page to grow to fit it, pushing
+      // content past the footer. When the popup's natural height fits on neither side, as with
+      // a long description on a short viewport, pick whichever side has more room and cap it
+      // there with an internal scroll rather than running off the bottom of the screen.
       const openAbove = naturalHeight > spaceBelow && (naturalHeight <= spaceAbove || spaceAbove > spaceBelow);
       const maxHeight = Math.max(80, openAbove ? Math.min(naturalHeight, spaceAbove) : Math.min(naturalHeight, spaceBelow));
       const top = openAbove ? rect.top - maxHeight - gap : rect.bottom + gap;
@@ -179,11 +179,12 @@ export default function InfoTooltip({ content, theme, icon = "?", label = "More 
       if (popupRef.current?.contains(target)) return;
       setOpen(false);
     }
-    // Fixed positioning is computed once at open time, not tracked live — closing on scroll
-    // avoids the popup visibly detaching from its trigger as the page moves under it. Capture
-    // phase (see addEventListener below) means this also fires for a scroll *inside* the
-    // popup itself (its own overflowY: auto content, see infoPopupStyle's maxHeight) — that's
-    // not the page moving under it, so it shouldn't close, unlike every other scroll source.
+    // Fixed positioning is computed once at open time rather than tracked live, so closing on
+    // scroll keeps the popup from visibly detaching from its trigger as the page moves under
+    // it. Capture phase (see addEventListener below) means this also fires for a scroll inside
+    // the popup itself, in its own overflowY: auto content (see infoPopupStyle's maxHeight).
+    // That isn't the page moving under it, so it shouldn't close, unlike every other scroll
+    // source.
     function handleScroll(e: Event) {
       if (e.target instanceof Node && popupRef.current?.contains(e.target)) return;
       setOpen(false);

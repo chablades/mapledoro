@@ -74,10 +74,10 @@ function ChoiceRow({
   );
 }
 
-// Expands a bulk choice (or an existing per-section map) into a full per-section map --
-// shared by the dialog's own default (all "mine") and by a caller that already has a
-// row-level bulk choice (Keep existing/Use imported) selected before Customize is
-// opened, so the dialog starts reflecting what's already chosen instead of always
+// Expands a bulk choice, or an existing per-section map, into a full per-section map. Shared
+// by the dialog's own all-"mine" default and by a caller that already has a row-level bulk
+// choice of Keep existing or Use imported selected before Customize opens, so the dialog
+// starts reflecting what's already chosen instead of always
 // resetting to Keep existing regardless of the row's own visible state.
 function expandInitialChoices(initial: Choice | Record<ImportSectionId, Choice> | undefined): Record<ImportSectionId, Choice> {
   return IMPORT_SECTION_DEFS.reduce((acc, section) => {
@@ -96,11 +96,11 @@ export default function ImportConflictDialog({
 }: {
   theme: AppTheme;
   existing: StoredCharacterRecord;
-  /** The row's current bulk choice ("mine"/"imported") or an already-customized
-   *  per-section map, if one exists -- omit to start every section at "mine" (the
-   *  single-character import flow's own behavior, which has no outer bulk toggle). */
+  /** The row's current bulk choice, "mine" or "imported", or an already-customized per-section
+   *  map when one exists. Omit to start every section at "mine", which is the single-character
+   *  import flow's behavior, since it has no outer bulk toggle. */
   initialChoice?: Choice | Record<ImportSectionId, Choice>;
-  /** Only present for World Import's Customize usage -- a single-character export has
+  /** Only present for World Import's Customize usage. A single-character export has
    *  no role data at all (Main/Champion is world-scoped state, not a character-record
    *  field), so ImportModeScreen's own usage omits this and the role row doesn't render.
    *  The role's own current/file values are already shown on the outer conflict row's
@@ -114,8 +114,8 @@ export default function ImportConflictDialog({
   const [choices, setChoices] = useState<Record<ImportSectionId, Choice>>(() => expandInitialChoices(initialChoice));
   const [useFileRole, setUseFileRole] = useState(() => roleControl?.initialUseFileRole ?? false);
 
-  // Fades whichever edge actually has more to scroll to (see useScrollEdges/edgeFadeMask)
-  // -- same treatment as every other scrollable list in the import flows.
+  // Fades whichever edge has more to scroll to (see useScrollEdges and edgeFadeMask), the
+  // same treatment as every other scrollable list in the import flows.
   const { ref: sectionsRef, atStart: sectionsAtStart, atEnd: sectionsAtEnd } =
     useScrollEdges<HTMLDivElement>([Boolean(roleControl)], "vertical");
   const sectionsMask = edgeFadeMask(sectionsAtStart, sectionsAtEnd, 28, "vertical");

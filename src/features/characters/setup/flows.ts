@@ -8,7 +8,7 @@ import { isLegacyClass } from "./data/classSkillData";
 import { isHyperStatEligible, isStatsWindowSubstepValid } from "./data/statsStepDraft";
 
 /** Substep index of the Stats step's "Character Info" screen (main stat/combat/symbol
- *  fields) — stable across every flow that includes Stats (see getStepSubsteps below).
+ *  fields). Stable across every flow that includes Stats (see getStepSubsteps below).
  *  The only substep whose validity genuinely differs by flow. */
 const STATS_WINDOW_SUBSTEP_INDEX = 1;
 
@@ -50,8 +50,8 @@ const SETUP_FLOWS = [
     // Beginner→V→VI tab order so you never jump backward a tab), then legion_artifacts +
     // buffs last (weakest/most flexible window affinity).
     // maplescouter_import comes first (after gender/marriage): pasting a MapleScouter
-    // export seeds the drafts every later step then just displays for review. Always
-    // skippable — no-op if you don't paste anything.
+    // export seeds the drafts every later step then displays for review. Always
+    // skippable, and a no-op when nothing is pasted.
     steps: ["gender", "marriage", "maplescouter_import", "stats", "equipment", "oz_rings", "familiars", "link_skills", "v_matrix", "hexa_matrix", "legion_artifacts", "buffs"] as const,
   },
   {
@@ -66,7 +66,7 @@ const SETUP_FLOWS = [
     // before hexa_matrix), with buffs last since it draws from Guild/Skills/Inventory and
     // has no single fixed window affinity.
     // maplescouter_import first: pasting a MapleScouter export seeds every later step's
-    // draft for review. Always skippable — no-op if you don't paste anything.
+    // draft for review. Always skippable, and a no-op when nothing is pasted.
     steps: ["maplescouter_import", "stats", "oz_rings", "link_skills", "hexa_matrix", "buffs"] as const,
   },
   {
@@ -125,9 +125,9 @@ export function getFlowStepCount(flowId: SetupFlowId) {
   return getSetupFlowById(flowId).steps.length;
 }
 
-/** Whether finishing this flow is supposed to touch the given step's data at all —
- *  used to stop leftover draft values from an abandoned different flow (e.g. Full
- *  Setup steps typed in before backing out to Quick Setup) from leaking into storage. */
+/** Whether finishing this flow is supposed to touch the given step's data at all. Stops
+ *  leftover draft values from an abandoned flow, such as Full Setup steps typed in before
+ *  backing out to Quick Setup, from leaking into storage. */
 export function flowIncludesStep(flowId: SetupFlowId, stepId: SetupStepId): boolean {
   return (getSetupFlowById(flowId).steps as readonly string[]).includes(stepId);
 }
@@ -181,7 +181,7 @@ export function computeEffectiveFlowStart(
 }
 
 export interface VisibleSetupStep {
-  /** Real (possibly-skipped-inclusive) index into the flow's step list — pass to setSetupStepWithDirection to jump here. */
+  /** Index into the flow's full step list, skipped steps included. Pass to setSetupStepWithDirection to jump here. */
   index: number;
   /** 1-based position among only the currently-visible steps. */
   visibleNumber: number;
@@ -208,49 +208,47 @@ export function getVisibleSteps(
   return steps;
 }
 
-// Stats' own Next-button validity genuinely differs by flow — MapleScouter requires
-// the full scouter questionnaire answered (questionnaireComplete) and strict per-stat
-// completeness (isStatsSubstepComplete), while Full Setup only checks values aren't
-// insane (isStatsSubstepSane), not that every field is filled. So a "false" reported
-// while MapleScouter was active doesn't necessarily still apply once Full Setup is —
-// its validity has to be tracked per flow. Every other gated step (Marriage, Oz Rings,
-// HEXA Matrix) uses the exact same rule regardless of which flow got there, so those
-// stay flow-agnostic and keep persisting across a flow switch without needing a revisit.
+// Stats' own Next-button validity differs by flow. MapleScouter requires the full scouter
+// questionnaire answered (questionnaireComplete) and strict per-stat completeness
+// (isStatsSubstepComplete), while Full Setup checks only that values aren't insane
+// (isStatsSubstepSane), not that every field is filled. So a false reported while MapleScouter
+// was active may not still apply once Full Setup is, and its validity has to be tracked per
+// flow. Every other gated step, meaning Marriage, Oz Rings and HEXA Matrix, uses the same rule
+// whichever flow got there, so those stay flow-agnostic and persist across a flow switch
+// without needing a revisit.
 function isFlowScopedValidityStep(stepId: SetupStepId): boolean {
   return stepId === "stats";
 }
 
 /** The key SetupStepFrame's onValidityChange reports validity under for a given
- *  step/substep — must be used identically when writing (SetupFlowScreen's callback)
- *  and reading (the functions below), or the two will silently disagree. */
+ *  step and substep. It must be used identically when writing, in SetupFlowScreen's
+ *  callback, and when reading, in the functions below, or the two will disagree. */
 export function getStepValidityKey(stepId: SetupStepId, substepIndex: number, flowId: SetupFlowId): string {
   return isFlowScopedValidityStep(stepId) ? `${flowId}:${stepId}:${substepIndex}` : `${stepId}:${substepIndex}`;
 }
 
-// MapleScouter's Stats report is the only one with an extra "every field filled"
-// requirement layered on top of the shared sanity check (isStatsSubstepComplete
-// always calls isStatsSubstepSane too — see statsStepDraft/StatsSetupStep). So a
-// false reported by any OTHER stats-carrying flow is a pure sanity failure, which
-// also fails MapleScouter's check — it's safe (and necessary) to inherit. A
-// MapleScouter-only false might just mean blank fields, which is fine everywhere
-// else, so it must NOT inherit outward.
+// MapleScouter's Stats report is the only one with an every-field-filled requirement layered
+// on top of the shared sanity check, since isStatsSubstepComplete always calls
+// isStatsSubstepSane too (see statsStepDraft and StatsSetupStep). So a false reported by any
+// other stats-carrying flow is a pure sanity failure, which also fails MapleScouter's check,
+// making it safe and necessary to inherit. A MapleScouter-only false may mean blank fields,
+// which is fine everywhere else, so it must not inherit outward.
 function isSanityOnlyValidityFlow(stepId: SetupStepId, flowId: SetupFlowId): boolean {
   return stepId === "stats" && flowId !== "maplescouter_setup";
 }
 
 /** Whether a step/substep's last-known validity report is false.
  *
- *  The Stats step's "Character Info" substep (STATS_WINDOW_SUBSTEP_INDEX) is a special
- *  case: rather than trusting a self-reported cache (which only refreshes when that
- *  substep's own component happens to mount under the CURRENT flow, and otherwise goes
- *  silently stale the moment the shared draft changes under a DIFFERENT flow), its
- *  validity is computed fresh from the persisted draft every time — see
- *  isStatsWindowSubstepValid. There's no cache to go stale.
+ *  The Stats step's "Character Info" substep (STATS_WINDOW_SUBSTEP_INDEX) is a special case.
+ *  Rather than trusting a self-reported cache, which refreshes only when that substep's own
+ *  component mounts under the current flow and otherwise goes stale the moment the shared
+ *  draft changes under another flow, its validity is computed fresh from the persisted draft
+ *  every time. See isStatsWindowSubstepValid. There is no cache to go stale.
  *
- *  Every other flow-scoped substep (see isFlowScopedValidityStep) still uses the cache,
- *  with one adjustment: a substep never revisited under the CURRENT flow doesn't default
- *  to "valid" just because nothing's been reported here yet — it falls back to any other
- *  sanity-only flow's report for that same substep (see isSanityOnlyValidityFlow). */
+ *  Every other flow-scoped substep (see isFlowScopedValidityStep) still uses the cache, with
+ *  one adjustment: a substep never revisited under the current flow doesn't default to valid
+ *  merely because nothing has been reported here yet. It falls back to any other sanity-only
+ *  flow's report for that same substep (see isSanityOnlyValidityFlow). */
 function isSubstepKnownInvalid(
   stepId: SetupStepId,
   flowId: SetupFlowId,
@@ -298,7 +296,7 @@ function stepHasInvalidSubstep(
  *  stay reachable; only it and everything after are blocked).
  *
  *  jobName/statsRawValue are only needed for the Stats step's live-computed substep
- *  (see isSubstepKnownInvalid) — pass "" for statsRawValue when gating a non-Stats step. */
+ *  (see isSubstepKnownInvalid). Pass "" for statsRawValue when gating a non-Stats step. */
 export function getFirstInvalidSubstepIndex(
   stepId: SetupStepId,
   flowId: SetupFlowId,
@@ -316,15 +314,15 @@ export function getFirstInvalidSubstepIndex(
 
 /**
  * The flow-index of the earliest visible step with an invalid substep (see
- * stepHasInvalidSubstep above) — steps never reported on, or not part of this flow,
- * don't count. Used to gate forward jumps in the step-jump dropdown: a step's own
- * draft data (and thus its validity) is shared across flows and across navigating
- * away from it, so this has to walk the CURRENT flow's steps fresh each time rather
- * than trusting whichever step happened to be mounted most recently.
+ * stepHasInvalidSubstep above). Steps never reported on, or not part of this flow, don't
+ * count. Used to gate forward jumps in the step-jump dropdown. A step's draft data, and
+ * therefore its validity, is shared across flows and across navigating away from it, so this
+ * walks the current flow's steps fresh each time rather than trusting whichever step was
+ * mounted most recently.
  *
- * statsRawValue is the Stats step's own persisted draft string, needed for its live-
- * computed Character-Info substep (see isSubstepKnownInvalid) — pass "" if unavailable
- * or the flow doesn't include the Stats step.
+ * statsRawValue is the Stats step's persisted draft string, needed for its live-computed
+ * Character Info substep (see isSubstepKnownInvalid). Pass "" when unavailable or when the
+ * flow doesn't include the Stats step.
  */
 export function getFirstInvalidStepIndex(
   flowId: SetupFlowId,
@@ -344,8 +342,8 @@ export function getFirstInvalidStepIndex(
  * Substeps for the few step types that split one in-game window's worth of questions
  * across multiple screens (Stats: Character Info window; Equipment: Equipment/Inventory
  * window's main grid + Titles/Totems/Symbols + Pets; HEXA Matrix: Skills window's skill
- * levels + HEXA Stat). Mirrors each component's own substep show/hide conditions — keep
- * in sync with StatsSetupStep/EquipmentSetupStep/HexaMatrixSetupStep if those change.
+ * levels plus HEXA Stat). Mirrors each component's own substep show and hide conditions, so
+ * keep it in sync with StatsSetupStep, EquipmentSetupStep and HexaMatrixSetupStep.
  * Returns null for step types that don't split into substeps.
  */
 export function getStepSubsteps(

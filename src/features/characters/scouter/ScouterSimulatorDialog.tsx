@@ -42,8 +42,8 @@ import { useScouterSimulatorDraft, type InfoDraft, type ScouterSimulatorDraft, t
 import { hexaCoreFields } from "./hexaSimulatorFields";
 
 // Same copy this codebase already uses for the real result's failure states (ScouterFigure.tsx/
-// CharacterProfileOverviewScreen.tsx) -- kept as its own small local copy rather than a shared
-// export, matching how those two files each already keep their own rather than sharing one.
+// CharacterProfileOverviewScreen.tsx), kept as a small local copy rather than a shared export,
+// matching how those two files each keep their own.
 const SIMULATOR_ERROR_TEXT: Record<ScouterErrorReason, string> = {
   rate_limited: "You're refreshing too fast. Wait a moment and try again.",
   timeout: "MapleScouter's API timed out. Try again in a moment.",
@@ -61,18 +61,17 @@ const TAB_OPTIONS: { value: SimulatorTab; label: string }[] = [
 ];
 
 // HEXA core level range: 0-30 for every core except Origin (skillCore1), which floors at 1
-// once HEXA-eligible -- matches useHexaSkillsState.ts's own normalizeLevels
+// once HEXA-eligible. Matches useHexaSkillsState.ts's own normalizeLevels
 // (`origin: Math.max(1, clampLevel(...))` vs every other core's plain 0-30 clampLevel).
 const HEXA_CORE_MIN: Partial<Record<SimulatorHexaCoreField, number>> = { skillCore1: 1 };
 
-// Only the link skills MapleScouter's own payload accepts -- same filter the real Link Skills
-// setup step uses (see its own comment: LINK_SKILLS grew far beyond this for the Legion
-// panel's read-only display, but those extra entries have nowhere to go once saved).
+// Only the link skills MapleScouter's own payload accepts, the same filter the real Link
+// Skills setup step uses. See its own comment: LINK_SKILLS grew well beyond this for the
+// Legion panel's read-only display, but those extra entries have nowhere to go once saved.
 const SIMULATOR_LINK_SKILLS = LINK_SKILLS.filter((s) => s.id in LINK_SKILL_TO_SCOUTER_KEY);
 
-// Real GMS level cap as of v271 -- MapleStory's max character level. Update alongside any
-// future level cap increase (root CLAUDE.md's version-bump checklist doesn't cover this,
-// it's not manifest-derived).
+// GMS max character level as of v271. Update alongside any future level cap increase. The
+// root CLAUDE.md's version-bump checklist doesn't cover this, since it isn't manifest-derived.
 const MAX_CHARACTER_LEVEL = 300;
 
 // Arcane Force's cap is a real game/formula constant (bossClearFormula.ts's own
@@ -85,21 +84,21 @@ function sectionLabelStyle(theme: AppTheme): CSSProperties {
   return { margin: "0 0 0.5rem", fontSize: "0.75rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.05em", color: theme.muted };
 }
 
-// Same divider StatsSetupStep.tsx's own sectionLabelStyle uses under Combat Stats/Symbols --
-// only the Input tab mirrors that step closely enough to want it (Yuki's own scoping call).
+// The same divider sectionLabelStyle in StatsSetupStep.tsx uses under Combat Stats and
+// Symbols. Only the Input tab mirrors that step closely enough to want it.
 function dividedSectionLabelStyle(theme: AppTheme): CSSProperties {
   return { ...sectionLabelStyle(theme), paddingBottom: "0.25rem", borderBottom: `1px solid ${theme.border}` };
 }
 
-// Overrides tool-field-label's default sizing for the Level/Arcane Force/Sacred Power row --
-// those 3 fields share a fixed 3-column grid down to mobile widths, and the class's default
-// size wraps "Arcane Force"/"Sacred Power" onto 2 lines at that narrow a column.
+// Overrides tool-field-label's default sizing for the Level/Arcane Force/Sacred Power row.
+// Those 3 fields share a fixed 3-column grid down to mobile widths, where the class's
+// default size wraps "Arcane Force" and "Sacred Power" onto 2 lines.
 const levelRowLabelStyle: CSSProperties = { margin: "0 0 4px", fontSize: "0.75rem", fontWeight: 800, textTransform: "none", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" };
 
 // Renders both the full and abbreviated label text and lets a container query (scoped to
-// .scouter-sim-level-grid, see the <style> block below) pick which one shows -- reacts to the
-// grid column's own rendered width rather than a viewport breakpoint, so it only abbreviates
-// once the column is actually too narrow for the full text, not based on screen size alone.
+// .scouter-sim-level-grid, see the <style> block below) pick which one shows. It reacts to
+// the grid column's rendered width rather than a viewport breakpoint, so it abbreviates only
+// once the column is too narrow for the full text, not on screen size alone.
 function LevelRowLabel({ full, short }: { full: string; short: string }) {
   return (
     <p style={levelRowLabelStyle}>
@@ -121,21 +120,21 @@ const inputNoticeBoxStyle: CSSProperties = {
   gap: "0.45rem",
 };
 
-// Caps at ~8 tiles per row (8 * 52px tiles + 7 * 8px gaps = 472px) -- matches
+// Caps at 8 tiles per row (8 * 52px tiles + 7 * 8px gaps = 472px), matching
 // BuffsSetupStep.tsx's own maxWidth: 520 container, which wraps at the same row width. This
-// popup is wider (700px) than that step's own layout, so without a matching cap here rows
-// would fit more than 8 tiles and read as differently-shaped from the real setup step.
+// popup is wider at 700px, so without a matching cap here rows would fit more than 8 tiles
+// and read as differently shaped from the real setup step.
 function tileRowStyle(): CSSProperties {
   return { display: "flex", gap: 8, flexWrap: "wrap", maxWidth: 480 };
 }
 
 // ── Buffs tab ────────────────────────────────────────────────────────────────
 
-// Same ordering/filtering as BuffsSetupStep.tsx's own ungroupedBools -- Advanced Stat Potion
-// inserted right after Sparkling Red Star, not appended at the end. maxedSacredSymbol is
-// always included here (the real step's showMaxedSacredSymbol gate is about which SETUP FLOW
-// is running, a concept that doesn't apply to this popup) and extremeGreenPotion is always
-// excluded (Hurricane-class-only tile, out of scope for this condensed tab).
+// Same ordering and filtering as BuffsSetupStep.tsx's own ungroupedBools, with Advanced Stat
+// Potion inserted after Sparkling Red Star rather than appended. maxedSacredSymbol is always
+// included, since the real step's showMaxedSacredSymbol gate is about which setup flow is
+// running, which doesn't apply to this popup. extremeGreenPotion is always excluded, being a
+// Hurricane-class-only tile and out of scope for this condensed tab.
 const UNGROUPED_BUFFS = BOOL_BUFFS.filter((b) => !b.group && b.id !== "extremeGreenPotion");
 const STAT_POTION_INSERT_IDX = UNGROUPED_BUFFS.findIndex((b) => b.id === "sparklingRedStar") + 1;
 
@@ -198,12 +197,11 @@ function BuffsTab({ theme, draft, onChange, primaryStat, jobName }: {
       </div>
 
       {([["A", BUFF_GROUP_A], ["B", BUFF_GROUP_B]] as const).map(([groupId, groupSet]) => (
-        // width: fit-content -- pickOneGroupStyle's flex-wrap box otherwise stretches to fill
-        // this column's full width (a plain flex div with no explicit width defaults to
-        // block-level, filling its parent) regardless of how few tiles it actually holds,
-        // leaving the dashed border trailing off past the last tile. The real setup step's
-        // narrower 520px column mostly hides this same behavior; this popup's wider body
-        // makes it obvious, so it needs the explicit fit-content here.
+        // width: fit-content, because pickOneGroupStyle's flex-wrap box otherwise stretches
+        // to fill this column's full width regardless of how few tiles it holds, leaving the
+        // dashed border trailing past the last tile. A plain flex div with no explicit width
+        // is block-level and fills its parent. The real setup step's narrower 520px column
+        // mostly hides this; this popup's wider body makes it obvious.
         <div key={groupId} style={{ ...pickOneGroupStyle(theme), width: "fit-content" }}>
           <span style={pickOneLabelStyle(theme)}>pick one</span>
           {/* react-doctor-disable-next-line js-combine-iterations -- BOOL_BUFFS is a small fixed roster, extra pass is negligible per the rule's own FP criteria */}
@@ -242,9 +240,9 @@ const hexaSectionBtnStyle: CSSProperties = {
   cursor: "pointer",
 };
 
-/** Small text-only "Reset" link, same look as HexaSection's own Max All/Clear -- used both
- *  next to the Level/Arc. Force/Sac. Power row and next to the tab switcher (resets whichever
- *  tab is active), so every group of simulated fields has one consistent way back to real. */
+/** Small text-only "Reset" link, same look as HexaSection's own Max All/Clear. Used next to
+ *  the Level/Arc. Force/Sac. Power row and next to the tab switcher, where it resets whichever
+ *  tab is active, so every group of simulated fields has one way back to real values. */
 function ResetLink({ theme, onReset, label = "Reset" }: { theme: AppTheme; onReset: () => void; label?: string }) {
   return (
     <button type="button" onClick={onReset} style={{ ...hexaSectionBtnStyle, color: theme.muted }}>
@@ -289,10 +287,10 @@ function HexaSection({ theme, label, fields, hexaCores, onChange }: {
   );
 }
 
-// HEXA has no real level requirement on MapleScouter's own API side (a level-250 character
-// still gets real HEXA numbers back) -- but simulating HEXA below the level it actually
-// unlocks at is a "what if I were also higher level" combination, not a straightforward one,
-// so it needs the Level row bumped to 260+ first rather than showing right away.
+// HEXA has no level requirement on MapleScouter's API side, and a level-250 character still
+// gets real HEXA numbers back. But simulating HEXA below the level it unlocks at is a "what if
+// I were also higher level" combination rather than a straightforward one, so it requires the
+// Level row bumped to 260+ first instead of showing right away.
 function HexaLockedMessage({ theme }: { theme: AppTheme }) {
   return (
     <p style={{ margin: 0, fontSize: "0.85rem", color: theme.muted, fontWeight: 700, textAlign: "center", padding: "1.5rem 0" }}>
@@ -307,9 +305,9 @@ function HexaTab({ theme, classDef, hexaCores, onChange }: {
   const all = hexaCoreFields(classDef);
   // react-doctor-disable-next-line js-set-map-lookups -- all is a fixed 11-entry HEXA core list, fields is 1-4 entries; a Set would cost more to build than the plain .includes scan.
   const byField = (fields: SimulatorHexaCoreField[]) => all.filter((f) => fields.includes(f.field));
-  // Same single vertical stack HexaMatrixSetupStep.tsx itself uses -- each section takes the
-  // tab's full width and its own tile row wraps naturally, instead of splitting into a 2x2
-  // grid whose fixed columns can't hold a 4-wide row on narrow viewports.
+  // Same single vertical stack HexaMatrixSetupStep.tsx uses: each section takes the tab's
+  // full width and its own tile row wraps naturally, instead of splitting into a 2x2 grid
+  // whose fixed columns can't hold a 4-wide row on narrow viewports.
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "1.1rem" }}>
       <HexaSection theme={theme} label="Origin & Ascent" fields={byField(["skillCore1", "skillCore2"])} hexaCores={hexaCores} onChange={onChange} />
@@ -389,14 +387,14 @@ function OzRingsTab({ theme, draft, onChange, weaponJumpLabel, weaponJumpIconId 
 
 // ── Input tab ────────────────────────────────────────────────────────────────
 
-// Same 3-box row shape StatsSetupStep.tsx's own TripleStatRow uses for a stat's Base/%/%-
-// Not-Applied trio (Yuki's real reference: Character Info's Basic Stats section).
+// The same 3-box row shape TripleStatRow in StatsSetupStep.tsx uses for a stat's Base, percent
+// and percent-not-applied trio, matching the in-game Character Info Basic Stats section.
 const tripleInputGridStyle: CSSProperties = { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "0.35rem" };
 
 /** Real per-field caps and whether MapleScouter's own simulator accepts a decimal for it,
  *  matching maplescouter.com's own Input panel. Every field here is a delta added on top of
  *  the character's current stats, so all of them accept a negative value (clamped to -max),
- *  the same as maplescouter.com -- see the `signed` spread below. */
+ *  the same as maplescouter.com. See the `signed` spread below. */
 const INPUT_FIELD_CAPS: Record<keyof SimulatorInputOverrides, { max: number; decimal: boolean }> = {
   mainStat: { max: 3000, decimal: false },
   mainStatPer: { max: 400, decimal: false },
@@ -428,10 +426,10 @@ const INPUT_FIELD_LIMITS = Object.fromEntries(
 
 const FINAL_DMG_LIMIT: InputLimit = { max: 75, decimal: true, signed: true };
 
-/** A field's numeric bounds for LimitedNumberInput -- max omitted means no real cap. min
- *  defaults to 0 (Level can't go below 1). `signed` fields (the whole Input tab, whose
- *  values are deltas added on top of current stats) accept a leading "-" and clamp to
- *  [-max, max], matching maplescouter.com -- you can simulate -10 Final Damage there. */
+/** A field's numeric bounds for LimitedNumberInput. An omitted max means no cap, and min
+ *  defaults to 0 (Level can't go below 1). `signed` fields, meaning the whole Input tab,
+ *  whose values are deltas added on top of current stats, accept a leading "-" and clamp to
+ *  [-max, max]. That matches maplescouter.com, where -10 Final Damage is simulatable. */
 interface InputLimit { max?: number; min?: number; decimal: boolean; signed?: boolean }
 
 /** Lower bound: an explicit `min`, else -max for a signed field, else 0. */
@@ -440,12 +438,12 @@ function limitMin(limit: InputLimit): number {
   return limit.signed === true && limit.max !== undefined ? -limit.max : 0;
 }
 
-/** Sanitizes AND clamps a raw text-input value to the field's real cap, same logic as
- *  StatsSetupStep.tsx's own clampIgnoreDefense/clampIgnoreElementalResist -- reformats down
- *  to the max only once the typed number actually exceeds it, never mid-decimal-typing
- *  ("27." stays "27." rather than getting stripped to "27"), so the displayed box itself
- *  can't be typed past its cap the way ToolNumberInput's plain commit-time clamp could. A
- *  signed field keeps a leading "-" (its values are deltas that can go negative). */
+/** Sanitizes and clamps a raw text-input value to the field's cap, same logic as
+ *  StatsSetupStep.tsx's own clampIgnoreDefense/clampIgnoreElementalResist. It reformats down
+ *  to the max only once the typed number exceeds it, never mid-decimal-typing, so "27." stays
+ *  "27." rather than being stripped to "27". That keeps the displayed box from being typed
+ *  past its cap, which ToolNumberInput's commit-time clamp allows. A signed field keeps a
+ *  leading "-", since its values are deltas that can go negative. */
 function sanitizeLimitedInput(raw: string, limit: InputLimit): string {
   const sign = limit.signed === true && raw.trimStart().startsWith("-") ? "-" : "";
   const body = sign ? raw.replace("-", "") : raw;
@@ -458,21 +456,20 @@ function sanitizeLimitedInput(raw: string, limit: InputLimit): string {
 }
 
 /** Draft-while-focused text input, shared by the Input tab's own fields and the Level/Arcane
- *  Force/Sacred Power row -- keeps raw keystrokes visible (so a trailing "." isn't stomped
- *  mid-type) while committing a clamped number on every change, same division of labor as
- *  ToolNumberInput's own draft/commit split. Sets the focus outline color inline
- *  (StatsSetupStep.tsx's own pattern) rather than relying on :focus-visible -- that only
- *  lights up for keyboard focus in most browsers, so a plain mouse click into the box showed
- *  no highlight at all. */
+ *  Force/Sacred Power row. It keeps raw keystrokes visible, so a trailing "." isn't stomped
+ *  mid-type, while committing a clamped number on every change. Same division of labor as
+ *  ToolNumberInput's own draft/commit split. Sets the focus outline color inline, following
+ *  StatsSetupStep.tsx's pattern, rather than relying on :focus-visible, which lights up only
+ *  for keyboard focus in most browsers and leaves a mouse click into the box unhighlighted. */
 function LimitedNumberInput({ theme, value, limit, onChange, style, ariaLabel }: {
   theme: AppTheme; value: number; limit: InputLimit; onChange: (v: number) => void;
   style: CSSProperties; ariaLabel: string;
 }) {
   const [draft, setDraft] = useState<string | null>(null);
-  // An emptied field commits as 0 (this popup's own "no override" value), rather than
-  // silently keeping the last real number -- clearing the box and clicking away should
-  // leave it empty, not snap back to whatever was typed before.
-  // "-", "." and "-." are half-typed states that carry no number yet -- treat as "no override".
+  // An emptied field commits as 0, this popup's "no override" value, rather than keeping the
+  // last real number. Clearing the box and clicking away should leave it empty, not snap back
+  // to whatever was typed before. "-", "." and "-." are half-typed states carrying no number
+  // yet, so they count as "no override" too.
   const commit = (raw: string) => {
     const sanitized = sanitizeLimitedInput(raw, limit);
     if (sanitized === "" || sanitized === "." || sanitized === "-" || sanitized === "-.") {
@@ -541,9 +538,9 @@ function TripleInputRow({ theme, inputStyle, label, baseKey, percentKey, absKey,
   );
 }
 
-// Same compact row shape StatsSetupStep.tsx's own CombatStatCell uses (label left,
-// ellipsis-truncated; fixed-width input right, optional % suffix badge) -- not Field's
-// label-above-input stacking, which reads far taller/looser than the real setup step.
+// Same compact row shape StatsSetupStep.tsx's own CombatStatCell uses: ellipsis-truncated
+// label on the left, fixed-width input on the right, optional % suffix badge. Not Field's
+// label-above-input stacking, which reads much taller than the real setup step.
 function InputGroupField({ theme, inputStyle, label, value, limit, onChange, suffix = "%" }: {
   theme: AppTheme; inputStyle: CSSProperties; label: string; value: number;
   limit: InputLimit; onChange: (v: number) => void; suffix?: string | null;
@@ -657,8 +654,8 @@ function InputTab({ theme, finalDmgPercent, onFinalDmgChange, input, onInputChan
 // ── Info tab ─────────────────────────────────────────────────────────────────
 
 // Genesis Liberation is a real API field (special.genesis), unlike Level. Gated on the
-// SIMULATED level, same "what if I were also higher level" reasoning as the HEXA tab's
-// 260 gate -- below 255 there's genuinely no liberation to have.
+// Simulated level, same "what if I were also higher level" reasoning as the HEXA tab's
+// 260 gate. Below 255 there is no liberation to have.
 const GENESIS_LIBERATION_LEVEL = 255;
 
 const FINAL_ATTACK_LIMIT: InputLimit = { max: LEGION_ARTIFACT_FINAL_ATK_LIMIT, decimal: false };
@@ -866,14 +863,14 @@ export default function ScouterSimulatorDialog({
   theme: AppTheme;
   character: StoredCharacterRecord;
   applying: boolean;
-  /** The last-applied simulation's overrides, if one is currently active -- reopening the
-   *  popup should show what was typed in, not the character's real values again. */
+  /** The last-applied simulation's overrides, if one is currently active. Reopening the
+   *  popup shows what was typed in, not the character's real values again. */
   previousOverrides: ScouterSimulatorOverrides | null;
   onApply: (overrides: ScouterSimulatorOverrides) => Promise<ScouterSimulatorApplyResult>;
   /** Clears an active simulation back to the real Scouter result. Called instead of onApply
-   *  when a simulation is active and every field has been put back to its real value -- an
-   *  onApply call in that state would be a no-op request, but just closing the popup would
-   *  leave the OLD simulated result showing instead of reverting to real. */
+   *  when a simulation is active and every field has been put back to its real value. An
+   *  onApply call in that state would be a no-op request, while closing the popup would leave
+   *  the previous simulated result showing instead of reverting to real. */
   onReset: () => void;
   onClose: () => void;
 }) {
@@ -882,7 +879,7 @@ export default function ScouterSimulatorDialog({
   const statLabels = simulatorStatLabels(classData?.id ?? "", classData?.requiredStats ?? []);
   const ozClassInfo = getOzWeaponJumpVariant(classData?.requiredStats ?? []);
   // Legacy classes never get HEXA regardless of level, same as flows.ts's own gating. Level
-  // alone isn't a hard block here the way it is in the real setup flow -- see
+  // alone isn't a hard block here the way it is in the real setup flow. See
   // HexaLockedMessage's own comment for why.
   const hexaLegacyBlocked = Boolean(classData?.isLegacy);
   const hexaClassDef = classData && !hexaLegacyBlocked ? findClassById(classData.id) : null;
@@ -899,11 +896,11 @@ export default function ScouterSimulatorDialog({
   };
 
   const handleApply = () => {
-    // Nothing to simulate -- every field is still at its real starting value, so a request
-    // would just return the same result the real Scouter figure already shows. If a simulation
-    // is currently active, clear it back to real instead of just closing (closing alone would
-    // leave the OLD simulated result on screen); otherwise there's nothing to revert, so just
-    // close as if it had succeeded rather than round-tripping the API for a known no-op.
+    // Nothing to simulate: every field is still at its real starting value, so a request would
+    // return the same result the real Scouter figure already shows. If a simulation is active,
+    // clear it back to real instead of closing, since closing alone would leave the previous
+    // simulated result on screen. Otherwise there's nothing to revert, so close as if it had
+    // succeeded rather than round-tripping the API for a known no-op.
     if (!draft.hasChanges) {
       if (previousOverrides) onReset();
       onClose();

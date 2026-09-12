@@ -78,8 +78,8 @@ function OrderCard({
   );
 }
 
-// An eligible-but-hidden add-on: click to add. Sits in the 2-col Choose grid, so no drag --
-// its position among other unpicked add-ons has no effect on anything.
+// An eligible but hidden add-on: click to add. It sits in the 2-column Choose grid, so there
+// is no drag, since its position among other unpicked add-ons has no effect.
 function AddonCard({ theme, label, disabled, onAdd }: { theme: AppTheme; label: string; disabled: boolean; onAdd: () => void }) {
   return (
     <button
@@ -120,19 +120,20 @@ function cardGridStyle(): CSSProperties {
   return { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: "0.5rem" };
 }
 
-// Lets a player show/hide and reorder any Overview section their character is currently
-// eligible for -- not just the ones their level/legacy tier defaults to (e.g. a 260+ player
-// re-adding Gear or Familiars). Two tiers:
-// - Anchor (pick at most one, or "None"): curated bundles, each already vetted to fill
-//   Overview's available room on its own -- whether that's one big section (Gear/V Matrix
-//   alone) or a pair of smaller ones (HEXA Stat + Skills, V Matrix + Arcane). Picking any
-//   anchor other than "None" blocks add-ons entirely, since the bundle is already sized to fit.
-// - Add-ons (pick up to `maxAddons`, only available when Anchor is "None"): freely
-//   combinable, fixed-size sections for building a custom mix from scratch.
-// Both feed into one draggable `order` list (a separate "Order" column on wide viewports,
-// below on narrow ones) -- the anchor/add-on split only decides what CAN be added, not how
-// the final saved order works. Removing a card that belongs to the active anchor breaks that
-// bundle back into loose add-ons (clears anchorId) rather than leaving a half-selected anchor.
+// Lets a player show, hide and reorder any Overview section their character is eligible for,
+// not only the ones their level or legacy tier defaults to, so a 260+ player can re-add Gear
+// or Familiars. Two tiers:
+// - Anchor, at most one or "None": curated bundles, each vetted to fill Overview's available
+//   room on its own, whether that is one big section like Gear or V Matrix alone, or a pair of
+//   smaller ones like HEXA Stat plus Skills, or V Matrix plus Arcane. Picking any anchor other
+//   than "None" blocks add-ons, since the bundle is already sized to fit.
+// - Add-ons, up to `maxAddons` and available only when Anchor is "None": freely combinable
+//   fixed-size sections for building a custom mix from scratch.
+//
+// Both feed one draggable `order` list, shown as a separate Order column on wide viewports and
+// below on narrow ones. The anchor and add-on split decides only what can be added, not how
+// the saved order works. Removing a card belonging to the active anchor breaks that bundle
+// back into loose add-ons, clearing anchorId, rather than leaving a half-selected anchor.
 export default function CustomizeOverviewDialog({
   theme,
   eligibleSections,
@@ -149,15 +150,15 @@ export default function CustomizeOverviewDialog({
   anchors: OverviewAnchorDef[];
   maxAddons: number;
   current: OverviewSectionId[];
-  // Whether this character currently has a saved custom layout to reset away from -- hides
-  // the Reset button entirely when there's nothing to reset (still on the tier default).
+  // Whether this character has a saved custom layout to reset away from. Hides the Reset
+  // button entirely when there is nothing to reset, meaning still on the tier default.
   canReset: boolean;
   onClose: () => void;
   onSave: (next: OverviewSectionId[]) => void;
-  // Clears the saved layout override back to "follow the tier default" -- distinct from
-  // Save, which would instead freeze whatever's currently in `order` as a permanent choice
-  // even if it happens to match today's default. Applies immediately (like Cancel/Save),
-  // not staged into local state first.
+  // Clears the saved layout override back to following the tier default. Distinct from Save,
+  // which freezes whatever is currently in `order` as a permanent choice even when it matches
+  // today's default. Applies immediately, like Cancel and Save, rather than being staged into
+  // local state first.
   onReset: () => void;
 }) {
   // Captured once on purpose: the dialog is mounted fresh per edit session, so these props
@@ -166,8 +167,8 @@ export default function CustomizeOverviewDialog({
   const [order, setOrder] = useState<OverviewSectionId[]>(() => current);
   const [anchorId, setAnchorId] = useState<string | null>(() => {
     // Both arrays are single-digit in length (a handful of anchors, at most 2 sections each)
-    // and this runs once on mount, not per render -- a Set would add indirection with no
-    // measurable benefit at this scale.
+    // and this runs once on mount rather than per render, so a Set would add indirection
+    // with no measurable benefit at this scale.
     // react-doctor-disable-next-line js-set-map-lookups
     const match = anchors.find((a) => a.sections.length === current.length && a.sections.every((id) => current.includes(id)));
     return match?.id ?? null;
@@ -184,9 +185,9 @@ export default function CustomizeOverviewDialog({
 
   const labelsById = new Map(eligibleSections.map((s) => [s.id, s.label]));
   const activeAnchorSections = anchors.find((a) => a.id === anchorId)?.sections ?? [];
-  // Any picked anchor (not just a "large" one) is already a fitted bundle -- HEXA Stat +
-  // Skills together take up as much room as Gear or V Matrix alone, so it blocks add-ons the
-  // same way. Only "None" leaves room to freely combine add-ons.
+  // Any picked anchor, not only a large one, is already a fitted bundle. HEXA Stat plus Skills
+  // together take as much room as Gear or V Matrix alone, so it blocks add-ons the same way.
+  // Only "None" leaves room to freely combine add-ons.
   const anchorActive = anchorId !== null;
   const atAddonCap = order.length >= maxAddons;
 
@@ -203,11 +204,11 @@ export default function CustomizeOverviewDialog({
     setOrder((prev) => prev.filter((x) => x !== id));
   };
 
-  // Large sections only ever come from the Anchor group above -- excluded here so there's
-  // exactly one path to picking Gear/V Matrix, not two that could disagree. `eligibleSections`
-  // and `order` are both single-digit in length (at most 9 catalog sections, at most 3
-  // shown), and this only re-runs when the user opens this dialog and clicks around in it,
-  // not on any hot path -- a Set would add indirection with no measurable benefit here.
+  // Large sections come only from the Anchor group above, excluded here so there is exactly
+  // one path to picking Gear or V Matrix rather than two that could disagree.
+  // `eligibleSections` and `order` are both single-digit in length, at most 9 catalog sections
+  // and at most 3 shown, and this re-runs only while someone has this dialog open and is
+  // clicking around in it, not on any hot path, so a Set would add indirection for nothing.
   // react-doctor-disable-next-line js-set-map-lookups
   const availableAddons = eligibleSections.filter((s) => !s.isLarge && !order.includes(s.id));
 
@@ -217,9 +218,9 @@ export default function CustomizeOverviewDialog({
       className="customize-overview-dialog"
       ariaLabel="Customize Overview layout"
       onClose={onClose}
-      // Fixed height (not maxHeight/shrink-to-fit) -- picking an anchor or add-on changes how
-      // much content each group renders (e.g. the Add-ons grid disappears entirely once an
-      // anchor is picked), and a shrink-to-fit dialog would visibly resize on every click.
+      // A fixed height rather than maxHeight or shrink-to-fit. Picking an anchor or add-on
+      // changes how much content each group renders, since the Add-ons grid disappears once an
+      // anchor is picked, and a shrink-to-fit dialog would visibly resize on every click.
       // The scrollable body below absorbs any content taller than this instead of growing it.
       style={{ width: "min(720px, 100%)", height: "min(520px, 85vh)", overflow: "hidden" }}
     >

@@ -231,19 +231,19 @@ function PerStatTable({ theme, labels, eff, critRateToDmg }: {
   );
   const unitOptions = useMemo(() => efficiencyUnitOptions(labels), [labels]);
   const [unit, setUnit] = useState<EfficiencyUnitId>("finalDamage");
-  // Amounts are a scratchpad, not character data -- typing here compares lines, it doesn't
-  // change anything about the character, so nothing is persisted (same as the live site).
+  // Amounts are a scratchpad, not character data. Typing here compares lines and changes
+  // nothing about the character, so nothing is persisted, the same as the live site.
   const [amounts, setAmounts] = useState<Record<string, number>>({});
   // Column 2 starts at the main stat instead of at the halfway mark. Every row from there down
   // is one of the same triple (a stat, its %, and its "% not applied"), so a cut at the middle
   // strands part of a stat's group at the bottom of column 1; everything above it is the
-  // damage-side stats. Sub2 classes make column 2 the longer of the two -- that's the trade.
+  // damage-side stats. Sub2 classes make column 2 the longer of the two, which is the trade.
   const splitIndex = rows.findIndex((r) => r.id === "main");
 
   const setAmount = (id: string, value: number) => setAmounts((prev) => ({ ...prev, [id]: value }));
-  // Same statInputStyle every setup step's own inputs use (StatsSetupStep.tsx etc.) --
-  // narrowed padding/font-size for this table's tighter column, everything else (border,
-  // radius, focus outline base) stays the real shared style, not tools/'s.
+  // Same statInputStyle every setup step's own inputs use, as in StatsSetupStep.tsx, with
+  // narrowed padding and font-size for this table's tighter column. Everything else, meaning
+  // border, radius and focus outline base, stays the shared style rather than tools/'s.
   const amountInputStyle: CSSProperties = { ...statInputStyle(theme), padding: "1px 5px", fontSize: "0.75rem" };
   const columnProps = { theme, eff, unit, amounts, onAmount: setAmount, inputStyle: amountInputStyle };
 

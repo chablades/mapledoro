@@ -115,7 +115,7 @@ function substepIndicatorStyle(theme: AppTheme, active: boolean): CSSProperties 
 
 // Mobile tap-to-expand substeps otherwise share near-identical padding/font/color with
 // their parent row (desktop's hover flyout gets nesting for free from being a visually
-// separate side panel) — an indent plus a connecting rail marks them as children of the
+// separate side panel). An indent plus a connecting rail marks them as children of the
 // row above instead of more flat list entries.
 function tapSubstepListStyle(theme: AppTheme): CSSProperties {
   return {
@@ -144,12 +144,12 @@ function substepItemStyle(theme: AppTheme, disabled: boolean): CSSProperties {
   };
 }
 
-// Rendered as a sibling of the scrollable menu box (not nested inside it) — a
-// scrollable ancestor's overflow-y forces overflow-x to clip too, per the CSS spec,
-// which would silently hide a right-side flyout nested inside it. Positioned absolute
-// relative to the outer container (not fixed to the viewport): the setup flow's
-// step-transition slide animation puts a `transform` on an ancestor, which redefines
-// the containing block for `position: fixed` and sends it flying to the wrong spot.
+// Rendered as a sibling of the scrollable menu box rather than nested inside it. Per the CSS
+// spec, a scrollable ancestor's overflow-y forces overflow-x to clip too, which would hide a
+// right-side flyout nested inside it. Positioned absolute relative to the outer container
+// rather than fixed to the viewport, because the setup flow's step-transition slide animation
+// puts a `transform` on an ancestor, which redefines the containing block for
+// `position: fixed` and sends it to the wrong spot.
 function flyoutPanelStyle(theme: AppTheme, top: number, left: number): CSSProperties {
   return {
     position: "absolute",
@@ -169,8 +169,8 @@ function flyoutPanelStyle(theme: AppTheme, top: number, left: number): CSSProper
 // nest their row button at different DOM depths under the menu.
 const TOP_LEVEL_SELECTOR = '[data-jump-row="true"]:not(:disabled)';
 
-// Shared by both substep layouts (hover flyout, tap-expanded inline list) — only
-// the scope to search within and the "step back out" target differ between them.
+// Shared by both substep layouts, the hover flyout and the tap-expanded inline list. Only
+// the scope to search within and the step-back-out target differ between them.
 // Takes no component state, so it lives at module scope instead of being rebuilt
 // every render.
 function handleSubstepKeyDown(e: ReactKeyboardEvent<HTMLButtonElement>, scope: HTMLElement | null, backTarget: HTMLButtonElement | undefined) {
@@ -211,25 +211,25 @@ function backToIntroItemStyle(theme: AppTheme): CSSProperties {
 
 interface JumpSubstep {
   label: string;
-  /** True while this specific substep can't be jumped to — its parent step is fully
-   *  disabled, or it sits at/after the specific substep that's currently invalid. */
+  /** True while this substep can't be jumped to, because its parent step is fully disabled
+   *  or it sits at or after the substep that is currently invalid. */
   disabled: boolean;
 }
 
 interface JumpStep extends VisibleSetupStep {
-  /** Substeps for steps that split one in-game window across multiple screens (e.g.
-   *  Stats' Quick Questions/Stats/Hyper Stats/Inner Ability) — null if this step has
-   *  no substeps to jump into directly. */
+  /** Substeps for steps that split one in-game window across multiple screens, such as Stats'
+   *  Quick Questions, Stats, Hyper Stats and Inner Ability. Null when this step has no
+   *  substeps to jump into directly. */
   substeps: JumpSubstep[] | null;
-  /** True while this step can't be jumped to — the earliest invalid step (in this
-   *  flow's order) is before it (same gate as the Next button, forward-only). */
+  /** True while this step can't be jumped to, because the earliest invalid step in this flow's
+   *  order comes before it. Same forward-only gate as the Next button. */
   disabled: boolean;
 }
 
 // Touch-device row: split label/expand-toggle button, plus its own tap-expanded
 // substeps list. Extracted from the main component's steps.map() to keep that
-// function under the cognitive-complexity cap — all state/refs/handlers stay owned
-// by the parent (rows never mount/unmount independently of it) and are passed down,
+// function under the cognitive-complexity cap. All state, refs and handlers stay owned by
+// the parent, since rows never mount or unmount independently of it, and are passed down,
 // so behavior is unchanged.
 function TapStepRow({
   theme, step, isActive, isTapExpanded, rowButtonRefs, tapSubstepsRef,
@@ -388,9 +388,9 @@ interface StepJumpMenuProps {
   totalSteps: number;
   onJumpStep: (stepIndex: number) => void;
   onJumpSubstep: (stepIndex: number, substepIndex: number) => void;
-  /** Omit when jumping back to step 0 wouldn't land on the setup-selection screen
-   *  (e.g. this character already has required setup completed, so step 0 would show
-   *  its profile instead) — showing this entry there would be a misleading label. */
+  /** Omit when jumping back to step 0 wouldn't land on the setup-selection screen, such as
+   *  when this character already has required setup completed and step 0 shows its profile
+   *  instead. Showing this entry there would be a misleading label. */
   onBackToIntro?: () => void;
   /** The other side of that omission: shown instead of onBackToIntro when this step
    *  was reached by editing an already-set-up character (a profile bookmark), where
@@ -413,7 +413,7 @@ export default function StepJumpMenu({
   const [open, setOpen] = useState(false);
   const [openAbove, setOpenAbove] = useState(false);
   // Touch devices have no hover at all, so the hover-reveal flyout is unreachable
-  // there — fall back to tap-to-toggle instead. Checked once at mount: hover support
+  // there, so it falls back to tap-to-toggle. Checked once at mount, since hover support
   // doesn't change mid-session for any real device this app needs to support. Safe as a
   // lazy useState initializer (not useSyncExternalStore) since every usage below is
   // nested behind `open &&`, which is false on both server and first client render.
@@ -430,9 +430,9 @@ export default function StepJumpMenu({
   // react-doctor false positive: empty new Map() is a trivial allocation, not worth lazy-init ceremony.
   // react-doctor-disable-next-line react-doctor/rerender-lazy-ref-init
   const rowButtonRefs = useRef<Map<number, HTMLButtonElement>>(new Map());
-  // Set by the trigger's ArrowDown/ArrowUp handler when the menu is still closed —
-  // the menu (and its rows) don't exist in the DOM yet to focus this same tick, so the
-  // post-open effect below reads this once the rows have actually rendered.
+  // Set by the trigger's ArrowDown and ArrowUp handler while the menu is still closed. The
+  // menu and its rows don't exist in the DOM yet to focus this same tick, so the post-open
+  // effect below reads this once the rows have rendered.
   const pendingFocusRef = useRef<"first" | "last" | null>(null);
   // Same idea for the tap-to-expand layout's substeps: set by ArrowRight on a row
   // that isn't expanded yet, read once the substeps effect below sees them mount.
@@ -538,8 +538,8 @@ export default function StepJumpMenu({
     tapSubstepsRef.current?.querySelector<HTMLButtonElement>("button:not(:disabled)")?.focus();
   }, [tapExpandedStep]);
 
-  // Plain value derived during render (not read inside the flyout's ref-bearing JSX
-  // via a called function) — keeps `ref={flyoutRef}` in an ordinary conditional render
+  // A plain value derived during render rather than read inside the flyout's ref-bearing JSX
+  // via a called function. That keeps `ref={flyoutRef}` in an ordinary conditional render
   // instead of nested inside an IIFE, which the refs lint rule can't verify is safe.
   const activeFlyoutSubsteps = (activeFlyoutStep !== null ? steps.find((s) => s.index === activeFlyoutStep)?.substeps : null) ?? [];
 
@@ -550,8 +550,8 @@ export default function StepJumpMenu({
     if (container && menu) {
       const rect = container.getBoundingClientRect();
       const spaceBelow = window.innerHeight - rect.bottom;
-      // Flip above the trigger when there isn't enough room below — otherwise a menu
-      // opened near the bottom of the page forces it to grow past the footer.
+      // Flip above the trigger when there isn't enough room below. Otherwise a menu opened
+      // near the bottom of the page forces it to grow past the footer.
       setOpenAbove(spaceBelow < menu.offsetHeight + 8 && rect.top > spaceBelow);
     }
     function handleMouseDown(e: MouseEvent) {
@@ -565,8 +565,8 @@ export default function StepJumpMenu({
     return () => {
       document.removeEventListener("mousedown", handleMouseDown);
       document.removeEventListener("keydown", handleKeyDown);
-      // Menu is closing (for any reason) — drop stale flyout state so reopening
-      // doesn't briefly show a flyout from wherever the mouse last was.
+      // The menu is closing, for whatever reason, so drop stale flyout state and keep
+      // reopening from briefly showing a flyout from wherever the mouse last was.
       cancelFlyoutClose();
       setActiveFlyoutStep(null);
     };

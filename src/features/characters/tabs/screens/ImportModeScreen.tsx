@@ -35,10 +35,10 @@ type ImportState =
   | { status: "idle" }
   | { status: "error"; message: string }
   | { status: "readyToAdd"; record: StoredCharacterRecord }
-  // The parsed IGN collides with an existing character. Arriving here does NOT open the
-  // conflict dialog by itself -- same as readyToAdd, the user gets a beat to look at the
-  // preview first and opens the merge picker deliberately (conflictDialogOpen), matching
-  // how championSwap only opens once the user actually clicks Add Character.
+  // The parsed IGN collides with an existing character. Arriving here does not open the
+  // conflict dialog by itself. As with readyToAdd, the player gets a beat to look at the
+  // preview first and opens the merge picker deliberately via conflictDialogOpen, matching
+  // how championSwap opens only once they click Add Character.
   | { status: "conflict"; existing: StoredCharacterRecord; imported: StoredCharacterRecord }
   | { status: "championSwap"; record: StoredCharacterRecord; champions: StoredCharacterRecord[] };
 
@@ -50,10 +50,10 @@ async function readImportFile(file: File): Promise<ImportState> {
     return { status: "error", message: CHARACTERS_COPY.importCharacter.invalidJsonError };
   }
 
-  // A world export (multiple characters + world-scoped Legion data) belongs in the
-  // directory's own "Import World" button, not here -- this screen only ever handles
-  // one character, and silently redirecting a world file into a totally different bulk
-  // flow from an unrelated entry point would be a confusing surprise, not a convenience.
+  // A world export, meaning multiple characters plus world-scoped Legion data, belongs in the
+  // directory's own "Import World" button rather than here. This screen handles one character,
+  // and redirecting a world file into a different bulk flow from an unrelated entry point
+  // would be a confusing surprise, not a convenience.
   if (typeof parsedJson === "object" && parsedJson !== null && (parsedJson as Record<string, unknown>).kind === "world") {
     return { status: "error", message: CHARACTERS_COPY.importCharacter.wrongFileTypeWorldError };
   }
@@ -107,9 +107,9 @@ export default function ImportModeScreen({ model, actions }: ImportModeScreenPro
     if (state.status !== "readyToAdd") return;
     const record = state.record;
     // First-time setup (no roster yet, isAddingCharacter is false) has nothing to be a
-    // mule/champion of -- every add path already defaults a world's first-ever character
-    // to main, so import matches that here instead of showing a role picker with only
-    // one sensible answer.
+    // mule or champion of. Every add path already defaults a world's first-ever character
+    // to main, so import matches that here instead of showing a role picker with one
+    // sensible answer.
     const effectiveRole: RosterRole = profile.isAddingCharacter ? role : "main";
     if (effectiveRole !== "champion") {
       actions.importCharacter(record, effectiveRole);
@@ -121,8 +121,8 @@ export default function ImportModeScreen({ model, actions }: ImportModeScreenPro
       actions.importCharacter(record, effectiveRole);
       return;
     }
-    // championKeys is capped at MAX_CHAMPIONS (5), and this only runs once per Add
-    // Character click with Champion selected and slots full -- a Set would add
+    // championKeys is capped at MAX_CHAMPIONS, which is 5, and this runs once per Add
+    // Character click with Champion selected and slots full, so a Set would add
     // indirection with no measurable benefit at this scale.
     const champions = selectCharactersList(store).filter((c) => {
       // react-doctor-disable-next-line js-set-map-lookups
@@ -137,7 +137,7 @@ export default function ImportModeScreen({ model, actions }: ImportModeScreenPro
   }
 
   // Changing role away from "champion" while the swap dialog is open would otherwise leave
-  // it open on a decision the user just abandoned -- collapse back to the plain preview.
+  // it open on a decision just abandoned, so collapse back to the plain preview.
   function handleRoleChange(next: RosterRole) {
     setRole(next);
     if (state.status === "championSwap") setState({ status: "readyToAdd", record: state.record });
@@ -201,10 +201,10 @@ export default function ImportModeScreen({ model, actions }: ImportModeScreenPro
       )}
 
       {(() => {
-        // The same preview card for readyToAdd, conflict (shows the imported file's own
-        // data, not the existing character it collides with -- that's what's actually
-        // being proposed), and championSwap -- otherwise the screen behind those dialogs
-        // goes blank with no indication of which character is even being imported.
+        // The same preview card serves readyToAdd, conflict and championSwap. For conflict it
+        // shows the imported file's own data rather than the existing character it collides
+        // with, since that is what's being proposed. Without this the screen behind those
+        // dialogs goes blank, with no indication of which character is being imported.
         let previewRecord: StoredCharacterRecord | null = null;
         if (state.status === "readyToAdd" || state.status === "championSwap") previewRecord = state.record;
         else if (state.status === "conflict") previewRecord = state.imported;

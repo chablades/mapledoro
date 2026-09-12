@@ -41,9 +41,9 @@ function isSectionChoiceMap(value: ConflictResolution): value is Record<string, 
   return typeof value === "object";
 }
 
-// A character can hold both roles at once (Main AND a Champion slot), so this returns
-// every role that applies rather than picking one -- mirrors getProfileRoleChips'
-// (CharacterProfileScreen.tsx) own main+champion handling.
+// A character can hold both roles at once, Main and a Champion slot, so this returns every
+// role that applies rather than picking one. Mirrors getProfileRoleChips' own handling in
+// CharacterProfileScreen.tsx.
 function resolveRoles(characterKey: string, mainCharacterKey: string | null, championCharacterKeys: string[]): ProfileRole[] {
   const roles: ProfileRole[] = [];
   if (characterKey === mainCharacterKey) roles.push("main");
@@ -66,8 +66,8 @@ function RoleTransitionLabel({
 }) {
   const newLabel = formatRoles(newRoles);
   if (currentRoles === null) {
-    // New character, nothing to compare against -- only worth a line when it's landing
-    // as Main/Champion; silently becoming a Mule isn't worth calling out.
+    // New character, nothing to compare against. Worth a line only when it lands as Main or
+    // Champion, since becoming a Mule isn't worth calling out.
     if (newRoles.length === 0) return null;
     return (
       <span style={{ fontSize: "0.75rem", fontWeight: 700, color: theme.accentText }}>{newLabel}</span>
@@ -213,10 +213,10 @@ function NewCharacterRow({
   newRoles: ProfileRole[];
   checked: boolean;
   onToggle: () => void;
-  /** The role the FILE assigns this character, independent of whether it's currently
-   *  applied (roleDropped) -- only passed for actual new characters (not residents), so
-   *  the toggle can flip both ways: drop a role-carrying character down to a plain mule,
-   *  or take it back, instead of a one-way action with no undo. */
+  /** The role the file assigns this character, independent of whether it's currently applied
+   *  (roleDropped). Passed only for new characters, not residents, so the toggle can flip
+   *  both ways: drop a role-carrying character to a plain mule, or take it back, instead of a
+   *  one-way action with no undo. */
   fileRoles?: ProfileRole[];
   roleDropped?: boolean;
   onToggleDropRole?: () => void;
@@ -292,11 +292,11 @@ interface WorldImportConflictViewProps {
 // The post-parse view: partitions the payload's characters into new-vs-conflicting,
 // and lets the user resolve conflicts in bulk (or per-character) before confirming.
 // Rendered by WorldImportModeScreen below once a file has actually been chosen and
-// parsed -- this component itself has no "pick a file" step and no back button of its
-// own (the outer screen owns navigation across both its idle and loaded states).
+// parsed. This component has no pick-a-file step and no back button of its own, since the
+// outer screen owns navigation across both its idle and loaded states.
 
-// Extracted purely to keep WorldImportConflictView's own render body short -- each of
-// these four sections is only ever rendered from there, one call site each.
+// Extracted to keep WorldImportConflictView's own render body short. Each of these four
+// sections is rendered only from there, one call site each.
 function ConflictsSection({
   theme,
   payload,
@@ -359,8 +359,8 @@ function ConflictsSection({
               onSetBulkChoice={(choice) => {
                 setResolutions((prev) => ({ ...prev, [key]: choice }));
                 // Clicking Keep/Use directly on the row is also a reset for that one
-                // character -- drops any role override a prior Customize visit set, so
-                // role goes back to following this new data choice.
+                // character. It drops any role override a prior Customize visit set, so
+                // the role goes back to following this new data choice.
                 setRoleOverrides((prev) => {
                   if (!(key in prev)) return prev;
                   const next = { ...prev };
@@ -537,7 +537,7 @@ function CapSummarySection({
 // Splits a loaded file's characters into new-vs-conflicting against the live roster, and
 // finds this world's residents (characters the file doesn't mention at all). Extracted
 // out of WorldImportConflictView's own render body purely to stay under the
-// cognitive-complexity cap -- called once from that component's useMemo, no other caller.
+// cognitive-complexity cap. Called once from that component's useMemo, no other caller.
 function partitionWorldImportPayload(payload: WorldExportPayload): {
   newCharacters: StoredCharacterRecord[];
   conflicts: ConflictEntry[];
@@ -566,9 +566,9 @@ function partitionWorldImportPayload(payload: WorldExportPayload): {
   const hasWorldData = Boolean(
     store.legionArtifactByWorld[String(payload.worldID)] || store.scouterLegionByWorld[String(payload.worldID)],
   );
-  // Characters already on the target world that the FILE doesn't mention at all -- not a
-  // conflict (that IGN already has a resolution above), just existing residents who may
-  // need to be dropped to make room if the import would otherwise go over cap.
+  // Characters already on the target world that the file doesn't mention. Not a conflict,
+  // since that IGN already has a resolution above, but existing residents who may need to be
+  // dropped to make room if the import would otherwise go over cap.
   const residents: ResidentEntry[] = [];
   for (const character of selectCharactersList(store)) {
     if (character.worldID !== payload.worldID || conflictKeys.has(toCharacterKey(character))) continue;
@@ -586,10 +586,10 @@ function partitionWorldImportPayload(payload: WorldExportPayload): {
 
 function WorldImportConflictView({ theme, isUiLocked, payload, onImportWorldBulk, onChooseDifferentFile }: WorldImportConflictViewProps) {
 
-  // Partitioned once per loaded file, not on every render -- selectCharacterByIgn reads
-  // the roster fresh from storage, and the conflict set this screen operates on should
-  // stay fixed for the duration of resolving it, not shift under the user's feet if
-  // something else in the app happened to touch storage mid-review.
+  // Partitioned once per loaded file, not on every render. selectCharacterByIgn reads the
+  // roster fresh from storage, and the conflict set this screen operates on should stay fixed
+  // while it is being resolved, not shift underfoot because something else in the app touched
+  // storage mid-review.
   const { newCharacters, conflicts, worldDataConflict, worldResidents } = useMemo(
     () => partitionWorldImportPayload(payload),
     [payload],
@@ -797,7 +797,7 @@ async function readWorldImportFile(file: File): Promise<WorldImportFileState> {
   }
 
   // A single-character export (no "kind" wrapper, just the raw record) belongs in the
-  // Import Character screen -- same reasoning as that screen's own world-file rejection,
+  // Import Character screen. Same reasoning as that screen's own world-file rejection,
   // mirrored the other direction.
   if (
     typeof parsedJson === "object" &&
@@ -808,10 +808,10 @@ async function readWorldImportFile(file: File): Promise<WorldImportFileState> {
     return { status: "error", message: CHARACTERS_COPY.worldImport.wrongFileTypeCharacterError };
   }
 
-  // Checked here (not just left to parseImportedWorldPayload's own rejection) so this
-  // gets its own specific message -- a file over the cap is shaped correctly, it's just
-  // too big to be a real MapleDoro export, which "doesn't look like a world export"
-  // would misleadingly suggest is a structural problem.
+  // Checked here rather than left to parseImportedWorldPayload's own rejection, so it gets
+  // its own specific message. A file over the cap is shaped correctly and merely too big to
+  // be a real MapleDoro export, which "doesn't look like a world export" would misleadingly
+  // frame as a structural problem.
   if (
     typeof parsedJson === "object" &&
     parsedJson !== null &&
@@ -821,9 +821,9 @@ async function readWorldImportFile(file: File): Promise<WorldImportFileState> {
     return { status: "error", message: CHARACTERS_COPY.worldImport.tooManyCharactersError };
   }
 
-  // Same "specific message before the generic parser rejection" pattern as the two
-  // checks above -- a real export can never have two characters share an IGN, so this
-  // gets its own message rather than the generic "doesn't look like a world export."
+  // Same specific-message-before-the-generic-parser-rejection pattern as the two checks
+  // above. A real export can never have two characters share an IGN, so this gets its own
+  // message rather than the generic "doesn't look like a world export."
   if (
     typeof parsedJson === "object" &&
     parsedJson !== null &&
@@ -851,20 +851,20 @@ interface WorldImportModeScreenProps {
   actions: SearchPaneActions;
 }
 
-// Owns the "pick a file" step -- clicking Import World from the directory (via
+// Owns the pick-a-file step. Clicking Import World from the directory, via
 // actions.runTransitionToMode("worldImport"), the same cross-pane mechanism
-// FirstTimeSetupScreen's "Import instead" link uses for the single-character case)
-// lands here first (idle, just a Choose File button), not straight into the
-// conflict-resolution view. Rendered by SearchPaneCard alongside ImportModeScreen, so
-// it gets that panel's real transition + narrow centered layout for free -- no lookalike
-// CSS needed, unlike an earlier attempt that rendered this inside the directory panel
-// and tried to imitate the look with a fade-in class and a width cap.
+// FirstTimeSetupScreen's "Import instead" link uses for the single-character case, lands here
+// first in an idle state with a Choose File button, not straight into the conflict-resolution
+// view. Rendered by SearchPaneCard alongside ImportModeScreen, so it inherits that panel's
+// real transition and narrow centered layout. No lookalike CSS is needed, unlike an earlier
+// attempt that rendered this inside the directory panel and imitated the look with a fade-in
+// class and a width cap.
 export default function WorldImportModeScreen({ model, actions }: WorldImportModeScreenProps) {
   const { theme, shell } = model;
   const [state, setState] = useState<WorldImportFileState>({ status: "idle" });
   // Bumped on every file pick so WorldImportConflictView remounts with fresh resolution
-  // state instead of reusing a previous file's stale conflicts/choices -- payload alone
-  // isn't a safe key since re-picking a file for the same world keeps the same worldID.
+  // state instead of reusing a previous file's stale conflicts and choices. payload alone
+  // isn't a safe key, since re-picking a file for the same world keeps the same worldID.
   const [loadNonce, setLoadNonce] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 

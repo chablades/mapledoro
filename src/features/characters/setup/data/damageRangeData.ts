@@ -16,7 +16,7 @@ import { familiarStatBonuses, type FamiliarStatBonus } from "./familiarsData";
 import { isRebootWorld, rebootFinalDamageBonusPercent } from "./rebootData";
 
 // Familiar stat lines (e.g. a unique-tier "INT: +6%") never appear in the Character Info stat
-// tooltip's own Base Value/% Value breakdown, but they're real — see familiarStatBonuses in
+// tooltip's own Base Value and % Value breakdown, but they are real. See familiarStatBonuses in
 // familiarsData.ts. Basic Stats already folds this in; StatValue needs the same treatment or
 // Damage Range silently undershoots for any character with an active INT/STR/DEX/LUK/HP-boosting
 // familiar line (confirmed against a real character: a missing +6% INT familiar line alone
@@ -36,10 +36,10 @@ function resolveWeaponMultiplier(classId: string, weaponHand: "1h" | "2h" | unde
 }
 
 // strategywiki: Demon Avenger's Pure HP, 4th job and beyond, assuming all AP is invested into HP
-// (the standard build — HP is Demon Avenger's entire damage stat, unlike every other class):
-// 545 + 90×Level. Not read from any in-game UI field — Nexon doesn't expose Pure HP directly (the
-// Character Info HP tooltip only shows the generic Base/%/Not Applied breakdown, confirmed
-// against a real screenshot), this level-derived formula is the only way to get it.
+// (the standard build, since HP is Demon Avenger's entire damage stat, unlike every other class):
+// 545 + 90×Level. It is not read from any in-game UI field, because Nexon doesn't expose Pure HP
+// directly. The Character Info HP tooltip shows only the generic Base, %, and Not Applied
+// breakdown, so this level-derived formula is the only way to get it.
 function demonAvengerPureHp(level: number): number {
   return 545 + 90 * level;
 }

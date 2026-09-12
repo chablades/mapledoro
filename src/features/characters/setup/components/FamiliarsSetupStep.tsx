@@ -62,8 +62,8 @@ const BADGE_COUNT = 8;
 const VALID_TIERS = new Set<string>(TIER_ORDER);
 
 const FAM_CARD_SIZE = 64;
-// Bigger than the editable setup-step card's sprite -- the profile bookmark's read-only card
-// has no search picker to leave room for, so it can afford a taller card and a larger sprite.
+// Bigger than the editable setup-step card's sprite. The profile bookmark's read-only card
+// has no search picker to leave room for, so it can afford a taller card and larger sprite.
 const FAM_CARD_SIZE_READONLY = 96;
 const FAM_LIST_SIZE = 32;
 export const BADGE_SIZE = 52;
@@ -256,15 +256,15 @@ const presetSquareStyle = (theme: AppTheme, active: boolean): CSSProperties => (
 export function FamiliarCardSprite({ mobId, familiarId, cardId, name, size, theme, fill }: { mobId: string; familiarId: number | null; cardId: string; name: string; size: number; theme: AppTheme; fill?: boolean }) {
   const sources = [
     resourceImageUrl("mob", mobId, "sprite.png"),
-    // "familiar" sprites are keyed by the familiar's OWN id, not mobId — these are
-    // "direct sprite" familiars (spriteFrom: "familiar") with no real monster to
-    // borrow a mob sprite from.
+    // "familiar" sprites are keyed by the familiar's own id, not mobId. These are the
+    // direct-sprite familiars (spriteFrom: "familiar") with no real monster to borrow a
+    // mob sprite from.
     ...(familiarId !== null ? [resourceImageUrl("familiar", String(familiarId), "sprite.png")] : []),
     ...(cardId ? [resourceImageUrl("item", cardId, "icon.png")] : []),
   ];
-  // `fill` sizes the sprite off its (flex-grown) container instead of a fixed px square --
-  // used by the read-only profile card so the sprite expands to soak up whatever vertical
-  // space the card has left over, rather than sitting at a fixed size with dead space around it.
+  // `fill` sizes the sprite off its flex-grown container instead of a fixed px square. The
+  // read-only profile card uses it so the sprite expands into whatever vertical space the
+  // card has left over, rather than sitting at a fixed size with dead space around it.
   const dims: CSSProperties = fill ? { width: "100%", height: "100%" } : { width: size, height: size };
   return (
     <span style={{ ...dims, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -303,7 +303,7 @@ export function FamiliarCardSprite({ mobId, familiarId, cardId, name, size, them
 // A missing/failed badge icon falls back to the badge's name-initial (mirrors
 // FamiliarCardSprite's treatment above) instead of a stray broken-image glyph. Used both
 // as a plain square (currently-selected header, picker rows) and inside a pentagon-clipped
-// tile (BadgeSlot/ReadOnlyBadgeSlot) — the parent's own clip-path handles the pentagon
+// tile (BadgeSlot/ReadOnlyBadgeSlot). The parent's own clip-path handles the pentagon
 // shape either way, so this stays a plain rounded box. `pentagon` nudges the letter down
 // ~5.5% of the box (PENTAGON's own centroid, not the geometric center of its bounding box,
 // since the shape's point-up tip leaves the top third empty) so it reads as centered inside
@@ -348,10 +348,9 @@ function LinePicker({ id, openId, onToggle, onClose, onPrev, onNext, value, tier
   tier: FamiliarTier;
   placeholder: string;
   theme: AppTheme;
-  /** viaKeyboard distinguishes an Enter-driven pick from a mouse click — only a keyboard
-   *  pick should be allowed to jump to the next card, since a mouse click means the user's
-   *  cursor (and attention) is staying local, and teleporting the popover elsewhere would
-   *  just make them go hunt for it. */
+  /** viaKeyboard distinguishes an Enter-driven pick from a mouse click. Only a keyboard
+   *  pick may jump to the next card, since a mouse click means the cursor and attention are
+   *  staying local, and teleporting the popover elsewhere would leave them hunting for it. */
   onChange: (val: string, viaKeyboard: boolean) => void;
 }) {
   const isOpen = openId === id;
@@ -366,9 +365,9 @@ function LinePicker({ id, openId, onToggle, onClose, onPrev, onNext, value, tier
     if (isOpen) inputRef.current?.focus();
   }, [isOpen]);
 
-  // Doesn't call onClose itself — the caller's onChange decides whether picking this
-  // value should advance to the next field in the group (e.g. Line 1 → Line 2) or close
-  // outright, so a real pick and an explicit close aren't conflated.
+  // Doesn't call onClose itself. The caller's onChange decides whether picking this value
+  // advances to the next field in the group (Line 1 to Line 2) or closes outright, so a
+  // real pick and an explicit close aren't conflated.
   function select(line: string, viaKeyboard: boolean) {
     onChange(line, viaKeyboard);
   }
@@ -500,10 +499,10 @@ const SEARCH_DEBOUNCE_MS = 150;
 // Matches Equipment's ItemPicker SEARCH_LIMIT.
 const SEARCH_LIMIT = 30;
 
-// Same-name entries that render a pixel-identical sprite (e.g. periodic card
-// reissues) are excluded from search — they'd otherwise show as two indistinguishable
-// results. The "duplicate" entry stays in FAMILIARS itself so an already-saved
-// character that picked one still resolves correctly via FAMILIARS.find().
+// Same-name entries that render a pixel-identical sprite, such as periodic card reissues,
+// are excluded from search, where they would show as two indistinguishable results. The
+// duplicate entry stays in FAMILIARS itself so an already-saved character that picked one
+// still resolves correctly via FAMILIARS.find().
 const SELECTABLE_FAMILIARS = FAMILIARS.filter((f) => f.duplicateOf === undefined);
 
 // Empty query: nothing (this catalog is too large to browse unfiltered, matching
@@ -531,8 +530,8 @@ function TierPickerView({ entry, theme, onBack, onSelect }: {
   entry: FamiliarEntry;
   theme: AppTheme;
   onBack: () => void;
-  /** viaKeyboard distinguishes an Enter-driven pick from a mouse click — only a keyboard
-   *  pick jumps to Line 1, since a mouse click means the user's cursor is staying local. */
+  /** viaKeyboard distinguishes an Enter-driven pick from a mouse click. Only a keyboard
+   *  pick jumps to Line 1, since a mouse click means the cursor is staying local. */
   onSelect: (tier: FamiliarTier, viaKeyboard: boolean) => void;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -601,8 +600,8 @@ function FamiliarSlotCard({
   onSetPending: (entry: FamiliarEntry | null) => void;
   onTogglePicker: (id: string) => void;
   onClosePicker: () => void;
-  /** Tab from Line 2 jumps here — opens the next familiar slot's search picker. Undefined
-   *  for the last slot, so Tab there just falls through to native focus movement. */
+  /** Tab from Line 2 jumps here, opening the next familiar slot's search picker. Undefined
+   *  for the last slot, so Tab there falls through to native focus movement. */
   onNextCard?: () => void;
 }) {
   const isOpen = openId === slotId;
@@ -830,8 +829,8 @@ function ReadOnlyLineChip({ value, theme }: { value: string; theme: AppTheme }) 
   return value ? <HoverTooltip label={value} theme={theme}>{chip}</HoverTooltip> : chip;
 }
 
-/** Read-only counterpart to FamiliarSlotCard for the profile Familiars bookmark — same
- *  sprite/tier-border card and Line 1/Line 2 chips, no search picker or interactivity. */
+/** Read-only counterpart to FamiliarSlotCard for the profile Familiars bookmark. Same sprite
+ *  and tier-border card with Line 1/Line 2 chips, no search picker or interactivity. */
 export function ReadOnlyFamiliarSlotCard({ slot, theme }: { slot: StoredFamiliarSlot; theme: AppTheme }) {
   const isEmpty = !slot.name;
   const displayName = slot.name.replace(/ Familiar$/i, "");
@@ -847,18 +846,18 @@ export function ReadOnlyFamiliarSlotCard({ slot, theme }: { slot: StoredFamiliar
     background: isEmpty ? "transparent" : theme.panel,
     justifyContent: isEmpty ? "center" : "flex-start",
     cursor: "default",
-    // Taller than the editable card (slotCardBase's 140) -- gives the enlarged sprite below
+    // Taller than the editable card's 140 (slotCardBase), giving the enlarged sprite below
     // room to breathe instead of cramming it against the Line 1/Line 2 chips.
     minHeight: 200,
   };
   const sprite = tier ? (
     // flex: 1 so the sprite grows to fill whatever vertical room the card has past the chips
     // below it, instead of sitting at a fixed size with dead space under it. position: relative
-    // + the HoverTooltip wrapper below pinned via inset: 0 (not width/height: 100%) -- .hover-tip
-    // is inline-flex and shrink-wraps its own box by default, so percentage sizing chained
-    // through it is circular (it and FamiliarCardSprite's fill mode would each be waiting on
-    // the other's size). Absolute positioning sidesteps that: inset: 0 sizes directly off this
-    // div's real box regardless of how that box's own size was determined.
+    // plus the HoverTooltip wrapper below pinned via inset: 0 rather than width/height: 100%.
+    // .hover-tip is inline-flex and shrink-wraps its own box, so percentage sizing chained
+    // through it is circular, with it and FamiliarCardSprite's fill mode each waiting on the
+    // other's size. Absolute positioning sidesteps that, since inset: 0 sizes directly off
+    // this div's real box however that box's size was determined.
     <div style={{ flex: 1, minHeight: 0, width: "100%", position: "relative" }}>
       <HoverTooltip label={displayName} theme={theme} style={{ position: "absolute", inset: 0 }}>
         <FamiliarCardSprite mobId={spriteMobId} familiarId={slot.familiarId} cardId={cardId} name={displayName} size={FAM_CARD_SIZE_READONLY} fill theme={theme} />
@@ -873,10 +872,9 @@ export function ReadOnlyFamiliarSlotCard({ slot, theme }: { slot: StoredFamiliar
     <div style={{ flex: 1, minWidth: 0 }}>
       <div style={cardStyle}>
         {isEmpty ? (
-          // No "+" here, unlike the editable FamiliarSlotCard above -- this card isn't
+          // No "+" here, unlike the editable FamiliarSlotCard above. This card isn't
           // clickable, and a "+" reads as an invitation to tap it. The dashed border alone
-          // already signals "empty" (matches ReadOnlyBadgeSlot's empty pentagon, which has
-          // no glyph either).
+          // signals empty, matching ReadOnlyBadgeSlot's empty pentagon, which has no glyph.
           <span style={{ fontSize: "0.75rem", color: theme.muted, fontWeight: 700 }}>Empty</span>
         ) : (
           <>
@@ -915,10 +913,9 @@ function BadgeSlot({
   onOpen: () => void;
   onQueryChange: (q: string) => void;
   onPick: (name: string) => void;
-  /** Called (instead of onClose) after an actual pick — opens the next badge slot, if it's
-   *  still empty. viaKeyboard distinguishes an Enter-driven pick from a mouse click — only
-   *  a keyboard pick jumps slots, since a mouse click means the user's cursor is staying
-   *  local. */
+  /** Called instead of onClose after an actual pick, opening the next badge slot if it's
+   *  still empty. viaKeyboard distinguishes an Enter-driven pick from a mouse click. Only a
+   *  keyboard pick jumps slots, since a mouse click means the cursor is staying local. */
   onAdvance: (viaKeyboard: boolean) => void;
   onClear: () => void;
   onPrev?: () => void;
@@ -1048,7 +1045,7 @@ function BadgeSlot({
   );
 }
 
-/** Read-only counterpart to BadgeSlot for the profile Familiars bookmark — same pentagon
+/** Read-only counterpart to BadgeSlot for the profile Familiars bookmark. Same pentagon
  *  tile, no picker or interactivity. */
 export function ReadOnlyBadgeSlot({ badge, theme }: { badge: string; theme: AppTheme }) {
   const outerSize = BADGE_SIZE + BADGE_BORDER * 2;
@@ -1074,10 +1071,10 @@ export default function FamiliarsSetupStep({
   const zoneRef = useRef<HTMLDivElement>(null);
   const initialValueRef = useRef(value);
 
-  // One-shot mount-time backfill from the character's saved tools data (only when this
-  // step lands blank) — can't run during render since it depends on a client-only
-  // localStorage read. Not worth lifting into the parent controller (which owns none of
-  // this step's domain logic) for a fetch that only ever fires once, at mount.
+  // One-shot mount-time backfill from the character's saved tools data, only when this step
+  // lands blank. It can't run during render, since it depends on a client-only localStorage
+  // read. Not worth lifting into the parent controller, which owns none of this step's
+  // domain logic, for a fetch that fires once at mount.
   useEffect(() => {
     if (initialValueRef.current) return;
     if (!confirmedCharacterName) return;
@@ -1166,11 +1163,11 @@ export default function FamiliarsSetupStep({
         <div ref={zoneRef} style={{ display: "flex", gap: 8, marginBottom: "1rem" }}>
           {preset.familiars.map((slot, i) => {
             const slotId = `f${i}`;
-            // Reaching the end of this card's chain — via Enter-picking Line 2 or via an
-            // explicit Tab — always lands here, so both paths behave identically. Only
-            // considers the immediately adjacent slot, and only jumps in if it's still
-            // empty; barging into a card someone already finished (e.g. while correcting
-            // an earlier one) would be more surprising than helpful, so it just closes.
+            // Reaching the end of this card's chain, by Enter-picking Line 2 or an explicit
+            // Tab, lands here either way, so both paths behave identically. It considers only
+            // the adjacent slot, and jumps in only if that slot is still empty. Barging into
+            // a card someone already finished, say while correcting an earlier one, would
+            // surprise more than it helps, so it closes instead.
             const nextSlot = i < SLOT_COUNT - 1 ? preset.familiars[i + 1] : null;
             const goToNextCard = nextSlot && !nextSlot.name ? () => openPicker(`f${i + 1}`) : closePicker;
             return (
@@ -1188,16 +1185,16 @@ export default function FamiliarsSetupStep({
                 onSetPending={setPendingFamiliar}
                 onSelect={(entry, tier, viaKeyboard) => {
                   onChange(JSON.stringify(patchSlot(parsed, activePreset, i, { familiarId: entry.id, mobId: entry.mobId, name: entry.name, tier, line1: "", line2: "" })));
-                  // Only a keyboard pick (Enter) jumps to Line 1 — a mouse click means the
-                  // user's cursor is staying local, so just close for them.
+                  // Only a keyboard pick (Enter) jumps to Line 1. A mouse click means the
+                  // cursor is staying local, so close instead.
                   if (viaKeyboard) { openPicker(`${slotId}-line1`); } else { closePicker(); }
                 }}
                 onClear={() => { onChange(JSON.stringify(patchSlot(parsed, activePreset, i, emptySlot()))); closePicker(); }}
                 onLineChange={(field, val, viaKeyboard) => {
                   onChange(JSON.stringify(patchSlot(parsed, activePreset, i, { [field]: val })));
                   if (val === "") { closePicker(); return; }
-                  // Only a keyboard pick (Enter) jumps to the next line/card — a mouse click
-                  // means the user's cursor is staying local, so just close for them.
+                  // Only a keyboard pick (Enter) jumps to the next line or card. A mouse
+                  // click means the cursor is staying local, so close instead.
                   if (!viaKeyboard) { closePicker(); return; }
                   if (field === "line1") { openPicker(`${slotId}-line2`); return; }
                   goToNextCard();
@@ -1217,11 +1214,10 @@ export default function FamiliarsSetupStep({
           </p>
           {(() => {
             const usedBadges = new Set(preset.badges.filter(Boolean));
-            // Reaching the end of a badge's picker — via Enter-picking a badge or via an
-            // explicit Tab — only ever considers the immediately adjacent badge slot, and
-            // only jumps in if it's still empty; barging into a slot someone already filled
-            // (e.g. while correcting an earlier one) would be more surprising than helpful,
-            // so it just closes instead.
+            // Reaching the end of a badge's picker, by Enter-picking a badge or an explicit
+            // Tab, considers only the adjacent badge slot, and jumps in only if that slot is
+            // still empty. Barging into a slot someone already filled, say while correcting
+            // an earlier one, would surprise more than it helps, so it closes instead.
             function goToNextBadge(bi: number): () => void {
               const nextBadge = bi < BADGE_COUNT - 1 ? preset.badges[bi + 1] : null;
               return nextBadge !== null && !nextBadge ? () => openPicker(`b${bi + 1}`) : closePicker;

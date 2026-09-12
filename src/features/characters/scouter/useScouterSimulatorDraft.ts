@@ -18,10 +18,10 @@ import { LINK_SKILL_TO_SCOUTER_KEY } from "./scouterLinkSkills";
 
 export type SimulatorTab = "buffs" | "hexa" | "ozRings" | "input" | "linkSkills" | "extras";
 
-/** The Info tab's editable state -- every field resolved to a concrete value (seeded from the
- *  character's real saved answers, or their "none"/"neither" equivalent), never undefined, so
- *  the radio/checkbox controls always have a definite selection. `buildOverrides` diffs this
- *  against `initialInfo` and only emits the fields that actually changed. */
+/** The Info tab's editable state, with every field resolved to a concrete value seeded from the
+ *  character's real saved answers or their "none" and "neither" equivalents, never undefined, so
+ *  the radio and checkbox controls always have a definite selection. `buildOverrides` diffs this
+ *  against `initialInfo` and emits only the fields that changed. */
 export interface InfoDraft {
   soulType: "mugong" | "ephenia" | "none";
   soulLevel: 1 | 2;
@@ -67,11 +67,12 @@ export interface ScouterSimulatorDraft {
   setLinkSkill: (id: LinkSkillId, value: number) => void;
   info: InfoDraft;
   setInfoField: <K extends keyof InfoDraft>(key: K, value: InfoDraft[K]) => void;
-  /** False once every field is back to its real starting value -- Apply can skip the request
-   *  entirely in that case, since there'd be nothing to simulate. */
+  /** False once every field is back to its real starting value. Apply can then skip the request
+   *  entirely, since there would be nothing to simulate. */
   hasChanges: boolean;
-  /** Per-group resets back to the character's real values -- one per tab, plus the persistent
-   *  Level/Arc. Force/Sac. Power row (not part of any tab). Each touches only its own group. */
+  /** Per-group resets back to the character's real values: one per tab, plus the persistent
+   *  Level, Arc. Force and Sac. Power row, which belongs to no tab. Each touches only its own
+   *  group. */
   resetLevelRow: () => void;
   resetBuffs: () => void;
   resetHexa: () => void;
@@ -133,7 +134,7 @@ function infoDraftFromOverrides(character: StoredCharacterRecord, info: Simulato
 }
 
 /** Diffs an InfoDraft against the character's real answers, emitting only the fields that
- *  changed -- an all-unchanged draft returns undefined so `hasChanges` stays false. */
+ *  changed. An all-unchanged draft returns undefined, so `hasChanges` stays false. */
 function infoOverridesFromDraft(draft: InfoDraft, real: InfoDraft): SimulatorInfoOverrides | undefined {
   const out: SimulatorInfoOverrides = {};
   if (draft.soulType !== real.soulType || (draft.soulType !== "none" && draft.soulLevel !== real.soulLevel)) {
@@ -164,13 +165,13 @@ function ozRingOverridesToDraft(character: StoredCharacterRecord, overrides: OzR
   return { levels };
 }
 
-/** Owns every field the Scouter Simulator popup lets a player edit -- one hook rather than
- *  ScouterSimulatorDialog declaring 9 separate useState calls itself, so that component can
- *  stay focused on class-derived lookups and rendering. Every field is pre-filled from the
- *  character's real current values (matches maplescouter.com's own simulator UI) so "max HEXA"
- *  is just bumping a few numbers up rather than re-typing everything from blank -- unless a
- *  simulation is already active (previousOverrides), in which case fields start from what was
- *  last typed in instead, so reopening the popup doesn't silently discard it. */
+/** Owns every field the Scouter Simulator popup lets a player edit. One hook rather than
+ *  ScouterSimulatorDialog declaring 9 separate useState calls itself, so that component stays
+ *  focused on class-derived lookups and rendering. Every field is pre-filled from the
+ *  character's real current values, matching maplescouter.com's own simulator UI, so maxing
+ *  HEXA means bumping a few numbers up rather than re-typing everything from blank. The
+ *  exception is when a simulation is already active (previousOverrides), where fields start
+ *  from what was last typed in, so reopening the popup doesn't discard it. */
 export function useScouterSimulatorDraft(
   character: StoredCharacterRecord,
   hexaClassDef: HexaClassDef | null,
@@ -273,14 +274,14 @@ export function useScouterSimulatorDraft(
   const linkSkillsChanged = JSON.stringify(linkSkills) !== JSON.stringify(initialLinkSkills);
   const inputChanged = finalDmgPercent !== 0 || Object.values(input).some((v) => v !== 0);
   const infoOverrides = infoOverridesFromDraft(info, initialInfo);
-  // Level/Arcane Force/Sacred Power are local-only (never reach the API) -- deliberately NOT
-  // part of localOnly, which is the "changed something, but only client-side-computable
-  // things" signal the dialog uses to skip the network request entirely.
+  // Level, Arcane Force and Sacred Power are local-only and never reach the API, and are
+  // deliberately not part of localOnly. That flag signals "something changed, but only
+  // client-side computable things", which the dialog uses to skip the network request.
   const localOnly = !hexaChanged && !buffsChanged && !ozRingsChanged && !linkSkillsChanged
     && !inputChanged && infoOverrides === undefined;
   const levelRowChanged = level !== initialLevel || arcaneForce !== initialArcaneForce || authenticForce !== initialAuthenticForce;
 
-  // False once every field is back to (or still at) its real starting value -- lets the
+  // False once every field is back to, or still at, its real starting value. Lets the
   // dialog skip an Apply that would be a no-op.
   const hasChanges = !localOnly || levelRowChanged;
 

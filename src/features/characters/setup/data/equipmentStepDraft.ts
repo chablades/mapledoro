@@ -37,15 +37,15 @@ export function sameItem(a: EquipmentItem | null | undefined, b: EquipmentItem |
 }
 
 export interface EquipmentDraft extends Partial<Record<SharedSlotKey, EquipmentItem | null>> {
-  /** Three equipment-grid presets. Presets 1-2 are sparse — a slot key is only present
-   *  once explicitly touched in that preset; untouched slots mirror preset 0 live (see
-   *  activeGrid in EquipmentSetupStep.tsx), matching in-game behavior where each slot
+  /** Three equipment-grid presets. Presets 1-2 are sparse: a slot key appears only once
+   *  explicitly touched in that preset, and untouched slots mirror preset 0 live (see
+   *  activeGrid in EquipmentSetupStep.tsx). That matches in-game behavior, where each slot
    *  mirrors independently rather than a whole preset diverging at once. */
   presets?: SlotMap[];
   /** Which preset (0-2) is being edited / is primary. */
   activePreset?: number;
   /** Symbol levels keyed by region name; folded into the calculator's tools.symbols on
-   *  finish. String, not number — blank until touched, matching Oz Rings; the
+   *  finish. String, not number, so it stays blank until touched, matching Oz Rings. The
    *  controller converts to real numbers when building tools.symbols. */
   symbolLevels?: Record<string, string>;
 }
@@ -66,7 +66,7 @@ export interface EquipmentLikeItem {
 }
 
 /** Minimal shape the Genesis Liberation/Weapon Hand/Ruin Force Shield derivations need
- *  from an equipment object — satisfied by both a real StoredCharacterEquipment and the
+ *  from an equipment object. Satisfied by both a real StoredCharacterEquipment and the
  *  synthesized object equipmentLikeFromDraft below produces, so those derivations can
  *  run against either source with the same functions. */
 export interface EquipmentLike {
@@ -76,14 +76,13 @@ export interface EquipmentLike {
 
 /**
  * The active preset's effective weapon/secondary from a live, not-yet-saved Equipment
- * step draft — accounting for presets 1-2 being sparse per-slot overlays on preset 0
- * (see EquipmentDraft's own comment above), same per-slot merge as draftPresetToStored
- * in useCharacterSetupController.ts. Lets the Stats step's Quick Questions re-derive
- * Genesis Liberation/Weapon Hand/Ruin Force Shield from this session's own in-progress
- * Equipment edits, instead of only whatever's already persisted from before this
- * session — without this, clearing the weapon/secondary mid-session and going back to
- * Quick Questions would keep showing the stale, already-persisted locked answer until a
- * full Finish-then-reopen round trip.
+ * step draft, accounting for presets 1-2 being sparse per-slot overlays on preset 0 (see
+ * EquipmentDraft's own comment above). Same per-slot merge as draftPresetToStored in
+ * useCharacterSetupController.ts. It lets the Stats step's Quick Questions re-derive Genesis
+ * Liberation, Weapon Hand and Ruin Force Shield from this session's in-progress Equipment
+ * edits rather than only what was persisted before this session. Without it, clearing the
+ * weapon or secondary mid-session and going back to Quick Questions would keep showing the
+ * stale persisted locked answer until a full Finish-then-reopen round trip.
  */
 export function equipmentLikeFromDraft(draft: EquipmentDraft): EquipmentLike {
   const activePreset = draft.activePreset ?? 0;
@@ -103,8 +102,8 @@ export function toDraftItem(item: StoredEquipmentItem | null): EquipmentItem | n
   return { id: item.id ?? "", name: item.name };
 }
 
-/** Converts a stored equipment preset (grid slots) into the draft's SlotMap shape — shared
- *  by the setup step's own backfill (below) and the profile Gear bookmark's read view. */
+/** Converts a stored equipment preset's grid slots into the draft's SlotMap shape. Shared by
+ *  the setup step's own backfill below and the profile Gear bookmark's read view. */
 export function storedPresetToDraft(preset: StoredEquipmentPreset): SlotMap {
   return {
     ring1: toDraftItem(preset.rings[0]), ring2: toDraftItem(preset.rings[1]),
@@ -122,9 +121,9 @@ export function storedPresetToDraft(preset: StoredEquipmentPreset): SlotMap {
 
 /** Presets 1-2 are stored dense (every slot resolved, see draftPresetToStored's own
  *  fallback-to-base merge in useCharacterSetupController.ts), but the draft/activeGrid
- *  model needs them sparse — only a slot actually diverged from preset 0 should appear,
- *  so untouched slots keep mirroring preset 0 live. Diffs the stored preset against the
- *  stored base and keeps only the slots that differ. */
+ *  model needs them sparse, where only a slot diverged from preset 0 appears, so untouched
+ *  slots keep mirroring preset 0 live. This diffs the stored preset against the stored base
+ *  and keeps only the slots that differ. */
 function storedPresetOverlayToDraft(preset: StoredEquipmentPreset, base: StoredEquipmentPreset): SlotMap {
   const full = storedPresetToDraft(preset);
   const baseFull = storedPresetToDraft(base);
@@ -135,14 +134,13 @@ function storedPresetOverlayToDraft(preset: StoredEquipmentPreset, base: StoredE
   return overlay;
 }
 
-/** Reverse of parseEquipmentStepDraft/applyEquipmentDraftToRoster — rebuilds this
- *  step's draft shape from a character's already-saved equipment/symbols, so the
- *  mount-time backfill in EquipmentSetupStep.tsx (matching V Matrix/HEXA Matrix/
- *  Familiars' own pattern) can seed an edit session from real data instead of
- *  landing blank. Without this, editing an already-equipped character's gear started
- *  blank, and finishing without re-picking every slot wholesale-replaced the stored
- *  equipment with whatever partial state was typed (applyEquipmentDraftToRoster does a
- *  full replace, not a merge). */
+/** Reverse of parseEquipmentStepDraft and applyEquipmentDraftToRoster. Rebuilds this step's
+ *  draft shape from a character's already-saved equipment and symbols, so the mount-time
+ *  backfill in EquipmentSetupStep.tsx, matching V Matrix, HEXA Matrix and Familiars' own
+ *  pattern, can seed an edit session from real data instead of landing blank. Without this,
+ *  editing an already-equipped character's gear started blank, and finishing without
+ *  re-picking every slot replaced the stored equipment wholesale with whatever partial state
+ *  was typed, since applyEquipmentDraftToRoster does a full replace rather than a merge. */
 export function storedEquipmentToDraft(
   equipment: StoredCharacterEquipment,
   symbols: Record<string, SymbolState> | undefined,
@@ -164,8 +162,8 @@ export function storedEquipmentToDraft(
 
 // ── Equipment grid layout constants + shared tile/nav styles ────────────────
 // Also pulled out of EquipmentSetupStep.tsx for the same only-export-components reason as
-// the rest of this file — these are plain data/style values shared with the profile Gear
-// bookmark (CharacterProfileOverviewScreen.tsx), not component-local.
+// the rest of this file. These are plain data and style values shared with the profile Gear
+// bookmark in CharacterProfileOverviewScreen.tsx, not component-local.
 
 export const SLOT_LABELS: Record<SlotKey, string> = {
   ring1: "Ring", ring2: "Ring", ring3: "Ring", ring4: "Ring",

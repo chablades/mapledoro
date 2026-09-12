@@ -181,7 +181,7 @@ export const BADGE_NAMES: readonly string[] = [
 ];
 
 // AUTO-GENERATED (name → ui/familiar icon id) by scripts/gen-familiars.mjs from
-// manifests/v<ver>/ui-familiar.json — its entry keys are the ids. Do not hand-edit; re-run
+// manifests/v<ver>/ui-familiar.json, whose entry keys are the ids. Do not hand-edit. Re-run
 // the generator on a version bump. Icon URL: haku.network /api/img/ui/familiar/{id}/icon.png.
 export const BADGE_ID_MAP: Record<string, number> = {
   "Starter Badge": 0, "Snowflake Badge": 1, "Oppressor Badge": 2, "Shadow Badge": 3,
@@ -205,7 +205,7 @@ export interface FamiliarEntry {
   cardId: string;
   /** Overrides mobId for sprite lookups only, when mobId itself has no sprite. */
   spriteMobId?: string;
-  /** Set when this entry is a pixel-identical same-name duplicate of another entry's id (e.g. a card reissue) — excluded from picker search results, but kept here so already-saved characters still resolve. */
+  /** Set when this entry is a pixel-identical same-name duplicate of another entry's id, such as a card reissue. Excluded from picker search results, but kept here so already-saved characters still resolve. */
   duplicateOf?: number;
 }
 
@@ -1658,20 +1658,20 @@ export function getFamiliarDisplayLabel(f: FamiliarEntry): string {
 }
 
 // ── Familiar stat-line bonus folding ────────────────────────────────────────────
-// The Character Info stat tooltip window never itemizes familiar stat lines at all
-// (confirmed: a flat "DEX: +24" and a percent "INT: +6%" familiar line both reproduced an
-// otherwise-unexplained gap between the tooltip's own self-consistent breakdown and the real
-// displayed total, exactly once folded into base/percent the same way as the tooltip's own
-// listed Base Value/% Value) — so these need adding back in separately wherever a stat total
-// is computed, not just Basic Stats. Shared by CharacterProfileOverviewScreen.tsx (Basic
-// Stats) and damageRangeData.ts (StatValue for Damage Range) — both need identical folding.
+// The Character Info stat tooltip window never itemizes familiar stat lines. A flat "DEX: +24"
+// line and a percent "INT: +6%" line each account for an otherwise unexplained gap between the
+// tooltip's self-consistent breakdown and the displayed total, but only once folded into base
+// and percent the same way as the tooltip's own listed Base Value and % Value. So these have to
+// be added back separately wherever a stat total is computed, not only in Basic Stats. Shared
+// by CharacterProfileOverviewScreen.tsx for Basic Stats and damageRangeData.ts for Damage
+// Range's StatValue, and both need identical folding.
 
 export interface FamiliarStatBonus { flat: number; percent: number }
 
-// Attack Power/Magic ATT deliberately excluded — folding a familiar's ATT line into base/
-// percent the same way as the main stats made a real character's Attack Power/Magic ATT come
-// out wrong (confirmed live), unlike STR/DEX/INT/LUK/HP where it reproduced the real value
-// exactly. Whatever the game does with a familiar's ATT bonus, it isn't this.
+// Attack Power and Magic ATT are deliberately excluded. Folding a familiar's ATT line into
+// base and percent the same way as the main stats produces a wrong Attack Power and Magic ATT,
+// unlike STR, DEX, INT, LUK and HP, where it reproduces the real value exactly. Whatever the
+// game does with a familiar's ATT bonus, it isn't this.
 type FamiliarBonusStatId = "hp" | "str" | "dex" | "int" | "luk";
 export type FamiliarBonusMap = Record<FamiliarBonusStatId, FamiliarStatBonus>;
 
@@ -1683,10 +1683,10 @@ function emptyFamiliarBonusMap(): FamiliarBonusMap {
 }
 
 // Familiar lines are picked from a fixed, closed list per tier (LINES_BY_TIER above), always
-// in this "Label: +N" or "Label: +N%" shape — not free text, so this is a reliable parse, not
-// a guess. "All Stats" only ever means STR/DEX/INT/LUK (matches strategywiki's own "All Stats
-// % ... same as STR%, DEX%, INT% and LUK%" note), never HP/ATT/MATT. Attack Power/Magic ATT
-// lines are intentionally not mapped here.
+// in this "Label: +N" or "Label: +N%" shape. It is not free text, so this parse is reliable
+// rather than a guess. "All Stats" means STR, DEX, INT and LUK, matching strategywiki's own
+// "All Stats % ... same as STR%, DEX%, INT% and LUK%" note, never HP, ATT or MATT. Attack Power
+// and Magic ATT lines are intentionally not mapped here.
 const FAMILIAR_LINE_PATTERN = /^(STR|DEX|INT|LUK|Max HP|All Stats): \+(\d+)(%)?$/;
 const FAMILIAR_LINE_STAT_IDS: Record<string, FamiliarBonusStatId[]> = {
   STR: ["str"], DEX: ["dex"], INT: ["int"], LUK: ["luk"],

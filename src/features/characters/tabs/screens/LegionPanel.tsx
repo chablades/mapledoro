@@ -225,7 +225,7 @@ function resolveResyncedField<T>(wasProvenBefore: boolean, after: T | undefined,
 
 // A dedicated component so its local draft state naturally resets each time the user
 // re-enters edit mode (it only mounts while editing=true). The draft is purely local
-// until Save — closing without saving (tab switch, back to Directory) just unmounts
+// until Save. Closing without saving, by tab switch or going back to Directory, unmounts
 // this component and discards it, same as backing out of the wizard mid-step.
 function LegionArtifactEditPanel({ theme, worldId, worldLegionArtifact, onSave, ref }: {
   theme: AppTheme; worldId: number; worldLegionArtifact?: StoredLegionArtifact; onSave: () => void; ref?: Ref<EditorHandle>;
@@ -234,10 +234,10 @@ function LegionArtifactEditPanel({ theme, worldId, worldLegionArtifact, onSave, 
   function handleSave() {
     const parsed = parseLegionArtifactBoardDraft(value);
     // The level input allows a blank mid-typing state (see clampArtifactLevelInput's own
-    // comment), which Number() would otherwise collapse to 0 — a level below the real
-    // minimum that wipes the whole board back to "Not set up yet." A blank field on Save
-    // means "didn't touch this," not "reset to 0," so it falls back to whatever was
-    // already stored (or the real starting level, if this is a first-time setup).
+    // comment), which Number() would collapse to 0, a level below the minimum that wipes
+    // the whole board back to "Not set up yet." A blank field on Save means untouched, not
+    // reset to 0, so it falls back to whatever was already stored, or the starting level on
+    // a first-time setup.
     const artifactLevel = parsed.artifactLevel
       ? Number(parsed.artifactLevel)
       : worldLegionArtifact?.artifactLevel ?? MIN_ARTIFACT_LEVEL;
@@ -245,16 +245,16 @@ function LegionArtifactEditPanel({ theme, worldId, worldLegionArtifact, onSave, 
     writeLegionArtifactForWorld(worldId, { artifactLevel, crystals });
     // Resync scouterLegionByWorld's 2 derived fields against this edit, per field:
     // - The fresh board proves a value -> write it (real board evidence always wins).
-    // - The board USED to prove a value (before this edit) but no longer does -> clear
-    //   it (a respec correctly un-derives, doesn't leave a stale value stuck forever —
-    //   this was the original bug: a full reset left artifactExtraTarget/
-    //   artifactFinalAttackDmg stuck at their old board-derived values).
+    // - The board used to prove a value before this edit but no longer does -> clear it, so
+    //   a respec un-derives rather than leaving a stale value stuck. This was the original
+    //   bug: a full reset left artifactExtraTarget and artifactFinalAttackDmg stuck at their
+    //   old board-derived values.
     // - Neither the old nor the new board ever proved it -> leave whatever's already
     //   stored completely untouched. That existing value could be a manual Quick
     //   Questions answer with no board backing at all (e.g. someone typed 20% Final
-    //   Attack Damage with an untouched board) — this edit provides no new evidence
-    //   about it, so it must not be silently erased just by opening this editor and
-    //   hitting Save without customizing anything.
+    //   Attack Damage with an untouched board). This edit provides no new evidence about
+    //   it, so it must not be erased by opening this editor and hitting Save without
+    //   customizing anything.
     const before = deriveLegionArtifactFields({
       artifactLevel: worldLegionArtifact?.artifactLevel !== undefined ? String(worldLegionArtifact.artifactLevel) : undefined,
       crystals: worldLegionArtifact?.crystals as LegionCrystalDraft[] | undefined,
@@ -440,8 +440,8 @@ function HoverTooltip({ theme, label, sublabel, ariaLabel, wrapSublabel, wrapper
   // Touch devices have no hover at all, so mouseenter/mouseleave never fire there,
   // so fall back to tap-to-toggle instead. Hover support doesn't change mid-session for
   // any real device this app needs to support. Read via useSyncExternalStore (not a lazy
-  // useState initializer) since this value feeds an unconditional inline style below —
-  // a plain useState would seed the server's `false` and never reconcile it against the
+  // useState initializer) since this value feeds an unconditional inline style below. A
+  // plain useState would seed the server's `false` and never reconcile it against the
   // client's real value, causing a hydration mismatch on hover-capable devices.
   const supportsHover = useSyncExternalStore(
     emptySubscribe,
@@ -527,11 +527,11 @@ function MissingCharacterSlot({ theme, size }: { theme: AppTheme; size: number }
   );
 }
 
-// missingCount fills out the row to the skill's real member-class count -- a multi-class
-// skill (Empirical Knowledge/Thief's Cunning, 3 classes each) showing only 2 real sprites
-// otherwise reads as "why is this 9/9 with only 2 characters," when the 3rd class's
-// contribution is really just an untracked lump baked into the stored total (see
-// computeLinkSkillsFromRoster's own doc comment on that limitation).
+// missingCount fills out the row to the skill's member-class count. A multi-class skill like
+// Empirical Knowledge or Thief's Cunning, 3 classes each, showing only 2 sprites otherwise
+// reads as "why is this 9/9 with only 2 characters," when the third class's contribution is
+// an untracked lump baked into the stored total. See computeLinkSkillsFromRoster's own doc
+// comment on that limitation.
 function SpriteRow({ theme, characters, missingCount, size }: {
   theme: AppTheme; characters: StoredCharacterRecord[]; missingCount: number; size: number;
 }) {
@@ -559,7 +559,7 @@ function SpriteRow({ theme, characters, missingCount, size }: {
 }
 
 // Only skills a tracked character actually contributes to (or that already have a
-// committed level) earn the full sprite-showcase card -- with 40+ link skills across
+// committed level) earn the full sprite-showcase card. With 40+ link skills across
 // every branch, most will be permanently irrelevant to any one account, so giving every
 // skill a full card regardless would turn this into an endless scroll of empty
 // placeholders. Everything else collapses into one compact chip.
@@ -625,7 +625,7 @@ function DormantSkillChip({ theme, skill }: { theme: AppTheme; skill: (typeof LI
 
 // One branch's worth of active cards (single- and multi-class grids) plus its dormant
 // chips. Rendered only for whichever branch tab is currently selected (see
-// LinkSkillsSection) -- with 53+ classes across 11 branches now covered (see
+// LinkSkillsSection). With 53+ classes across 11 branches now covered (see
 // linkSkillsData.ts), showing every branch's cards at once would turn this into an
 // endless scroll even for a modest roster.
 function LinkSkillBranchGrids({ theme, active, dormant }: {
@@ -677,9 +677,9 @@ function LinkSkillBranchGrids({ theme, active, dormant }: {
   );
 }
 
-// Landing/"All" view: one dense row per skill (icon, name, level), no big sprite cards --
-// scannable in a glance across every branch without the vertical weight of the full card
-// grids. Clicking a specific branch pill switches to LinkSkillBranchGrids instead.
+// The landing "All" view: one dense row per skill with icon, name and level, and no sprite
+// cards. Scannable at a glance across every branch without the vertical weight of the full
+// card grids. Clicking a branch pill switches to LinkSkillBranchGrids instead.
 function LinkSkillCompactRow({ theme, skill, level }: {
   theme: AppTheme; skill: (typeof LINK_SKILLS)[number]; level: number | undefined;
 }) {
@@ -704,10 +704,10 @@ function LinkSkillCompactRow({ theme, skill, level }: {
 // Read-only: link skill LEVELS live per-character now (each character's own linkSkills
 // field, see charactersStore.ts's file-header reasoning), not one shared per-world value,
 // so there's no longer a single number this world-level screen could save an edit back
-// to. This section shows what the same-world roster PROVES is mastered (a floor/ceiling
-// on what any one character here could equip), not any specific character's actual
-// choice of which links it runs -- editing that per-character choice happens on each
-// character's own Link Skills setup step instead.
+// to. This section shows what the same-world roster proves is mastered, a floor and ceiling
+// on what any one character here could equip, rather than a specific character's choice of
+// which links it runs. Editing that per-character choice happens on each character's own Link
+// Skills setup step.
 type LinkSkillTab = "All" | LinkSkillBranch;
 
 function LinkSkillsSection({ theme, worldId, worldCharacters }: {
@@ -721,8 +721,8 @@ function LinkSkillsSection({ theme, worldId, worldCharacters }: {
   // "All" lands first: a dense scannable list beats forcing a branch pick before seeing
   // anything (see LinkSkillCompactRow). Picking a specific branch pill swaps the content
   // area to that branch's full card grids instead of stacking every branch open at once
-  // (53+ classes across 11 branches -- see linkSkillsData.ts -- would be an endless
-  // scroll if every branch rendered its cards simultaneously).
+  // (53+ classes across 11 branches, see linkSkillsData.ts, would be an endless scroll if
+  // every branch rendered its cards simultaneously).
   const [tab, setTab] = useState<LinkSkillTab>("All");
 
   const withEligibility = LINK_SKILLS.map((skill) => ({
@@ -731,19 +731,18 @@ function LinkSkillsSection({ theme, worldId, worldCharacters }: {
     level: levels?.[skill.id],
   }));
   // A skill explicitly set to 0 (no progress yet) reads the same as never having been
-  // touched — level 0 with no eligible tracked character still belongs in the dormant
-  // chip list, not the full sprite card (which would otherwise render an empty "no
-  // tracked character" placeholder for a skill that has no real data either way).
+  // touched. Level 0 with no eligible tracked character belongs in the dormant chip list,
+  // not the full sprite card, which would render an empty "no tracked character" placeholder
+  // for a skill that has no data either way.
   const active = withEligibility.filter(({ eligible, level }) => eligible.length > 0 || Boolean(level));
   const dormant = withEligibility.filter(({ eligible, level }) => eligible.length === 0 && !level);
 
   const branchesWithData = new Set(withEligibility.map(({ skill }) => skill.branch));
   const tabOptions: LinkSkillTab[] = ["All", ...LINK_SKILL_BRANCH_ORDER.filter((b) => branchesWithData.has(b))];
 
-  // Fades whichever edge actually has more to scroll to (see useScrollEdges/edgeFadeMask)
-  // -- a static fade misreads as "more to scroll" even once fully scrolled to an edge, or
-  // when the row never overflows in the first place (branchesWithData can be short
-  // enough to fit).
+  // Fades whichever edge has more to scroll to (see useScrollEdges and edgeFadeMask). A
+  // static fade misreads as more-to-scroll once fully scrolled to an edge, or when the row
+  // never overflows at all, since branchesWithData can be short enough to fit.
   const { ref: tabsRef, atStart, atEnd } = useScrollEdges<HTMLDivElement>([tabOptions.length]);
   const tabsMask = edgeFadeMask(atStart, atEnd);
 

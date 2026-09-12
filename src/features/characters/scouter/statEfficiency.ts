@@ -41,12 +41,12 @@ import { TRIPLE_STAT_FIELDS, type TripleStatFieldId } from "../setup/data/statFi
  *  in the same order (main, sub, then sub2, with the ATT or MATT field last), so it names
  *  them without a second class table to keep in sync.
  *
- *  It does NOT agree on which classes HAVE a sub2, though: every LUK class lists STR here,
- *  while scouter grants a real sub2 only to Dual Blade / Shadower / Cadena / Xenon. So `sub2`
- *  is a name for a third stat, not a claim that it counts -- whether to show those rows comes
- *  from the response's own `ssub*eff1` fields, which scouter zeroes for everyone else. */
+ *  The two do not agree on which classes have a sub2, though. Every LUK class lists STR here,
+ *  while scouter grants a real sub2 only to Dual Blade, Shadower, Cadena and Xenon. So `sub2`
+ *  names a third stat rather than claiming it counts. Whether to show those rows comes from
+ *  the response's own `ssub*eff1` fields, which scouter zeroes for everyone else. */
 export interface EfficiencyStatLabels {
-  /** "ATT" or "MATT" -- one field in the damage kernel, two names in-game. */
+  /** "ATT" or "MATT": one field in the damage kernel, two names in-game. */
   atk: string;
   main: string;
   sub: string | null;
@@ -80,9 +80,9 @@ export interface MainEfficiencyRow {
   /** What `value` is counted in ("ATT %", "DEX"). */
   unit: string;
   value: number;
-  /** Ends of the meter's scale, hardcoded per row on the site -- these are the ranges real
-   *  characters land in, not a min/max the value is guaranteed to sit inside (it's clamped
-   *  for positioning only). */
+  /** Ends of the meter's scale, hardcoded per row on the site. These are the ranges real
+   *  characters land in, not bounds the value is guaranteed to sit inside, since it's
+   *  clamped for positioning only. */
   min: number;
   max: number;
   /** Where the "typical" band sits on the meter: the middle 30% or the right half. */
@@ -188,9 +188,9 @@ export interface DetailEfficiencyRow {
   defaultAmount: number;
 }
 
-/** Amounts are scouter's own defaults -- the sizes these lines actually roll at in-game
- *  (a 40% boss damage potential line, a 9% All Stat line, ...), so the table reads as a
- *  ready-made comparison before anything is typed. */
+/** Amounts are scouter's own defaults: the sizes these lines roll at in-game, such as a 40%
+ *  boss damage potential line or a 9% All Stat line, so the table reads as a ready-made
+ *  comparison before anything is typed. */
 export function detailEfficiencyRows(
   eff: ScouterSpecEfficiency,
   labels: EfficiencyStatLabels,
@@ -205,8 +205,8 @@ export function detailEfficiencyRows(
     { id: "critDamage", label: "Critical Damage %", eff: eff.cridmgeff1, defaultAmount: 8 },
     // Archers turn crit rate past the 100% cap into critical damage, so for them a crit
     // rate line is worth that fraction of one and belongs in the table. Every other class
-    // gets nothing from the excess and gets no row -- which is also what scouter's own
-    // ranking does, since it drops any row this branch would have left at zero.
+    // gets nothing from the excess and gets no row, which is what scouter's own ranking
+    // does too, since it drops any row this branch would have left at zero.
     ...(critRateToDmg > 0
       ? [{
           id: "critRate",
@@ -216,7 +216,7 @@ export function detailEfficiencyRows(
         }]
       : []),
     // Scouter's two IED rows are the same stat measured against two different boss defence
-    // ratings, not two different stats -- 300% and 380% PDR bracket where current bosses sit.
+    // ratings, not two stats. 300% and 380% PDR bracket where current bosses sit.
     { id: "ied300", label: "IED % (300% PDR boss)", eff: eff.igreff1, defaultAmount: 40 },
     { id: "ied380", label: "IED % (380% PDR boss)", eff: eff.igreff1_380, defaultAmount: 40 },
     { id: "main", label: main, eff: eff.mainStateff1, defaultAmount: 30 },
@@ -231,7 +231,7 @@ export function detailEfficiencyRows(
     );
   }
   // Zero here means the class has no third stat in scouter's own damage kernel, whatever
-  // requiredStats happens to name -- see resolveEfficiencyStatLabels.
+  // requiredStats happens to name. See resolveEfficiencyStatLabels.
   if (sub2 && eff.ssubStateff1 !== 0) {
     rows.push(
       { id: "sub2", label: sub2, eff: eff.ssubStateff1, defaultAmount: 30 },

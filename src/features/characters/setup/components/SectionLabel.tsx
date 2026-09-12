@@ -3,22 +3,23 @@
 import type { CSSProperties } from "react";
 import type { AppTheme } from "../../../../components/themes";
 
-// Shared by every "editable node list" section (V Matrix, HEXA Matrix, the Scouter
-// Simulator's HEXA tab) -- a label, optionally with Clear/Max All controls above a divider.
-// onMaxAll/onClear/btnStyle are all optional since HexaMatrixSetupStep also uses this as a
-// bare section header (Main Stat/Alternative Stats) with no controls at all. The button style
-// is passed in rather than baked in here: V Matrix/HEXA Matrix's own sectionBtnStyle expands
-// the click target via negative-margin padding, which the Simulator's tighter flex layout
-// can't use without visually compressing its tiles (see hexaSectionBtnStyle's own comment),
-// so each caller keeps its own tuned style.
+// Shared by every editable-node-list section, meaning V Matrix, HEXA Matrix and the Scouter
+// Simulator's HEXA tab. It renders a label, optionally with Clear and Max All controls above a
+// divider. onMaxAll, onClear and btnStyle are all optional, since HexaMatrixSetupStep also uses
+// this as a bare section header for Main Stat and Alternative Stats with no controls.
+//
+// The button style is passed in rather than baked in here. V Matrix and HEXA Matrix's own
+// sectionBtnStyle expands the click target via negative-margin padding, which the Simulator's
+// tighter flex layout can't use without compressing its tiles (see hexaSectionBtnStyle's own
+// comment), so each caller keeps its own tuned style.
 export default function SectionLabel({ theme, label, onMaxAll, onClear, btnStyle }: {
   theme: AppTheme;
   label: string;
   onMaxAll?: () => void;
   onClear?: () => void;
-  /** Base button style (background/border/font/padding/margin, no color) -- theme.muted/
-   *  theme.accent are applied per-button on top of this. Required whenever onMaxAll/onClear
-   *  is passed. */
+  /** Base button style covering background, border, font, padding and margin, but no color.
+   *  theme.muted and theme.accent are applied per-button on top of this. Required whenever
+   *  onMaxAll or onClear is passed. */
   btnStyle?: CSSProperties;
 }) {
   return (

@@ -1,9 +1,9 @@
 /*
   Builds the exact request body MapleScouter's calc API expects (POST
   https://api.maplescouter.com/api/calc/dmg, body `{ userStat: ScouterUserStat }`),
-  from a character's own stored data. Every field here was live-verified against real
-  captured requests/responses on maplescouter.com -- don't re-derive any of this from
-  guesses, re-capture a real request/response instead if a field's meaning is unclear.
+  from a character's own stored data. Every field here comes from real captured requests and
+  responses on maplescouter.com. Do not re-derive any of it from guesses; capture a real
+  request and response instead when a field's meaning is unclear.
 
   Not every character can be sent at all: the legacy job names have no MapleScouter class
   to map to, so buildScouterPayload returns null for them, callers must show a "not
@@ -84,8 +84,8 @@ export interface ScouterDoping {
   rainbow: boolean;
   thanks: boolean;
   genePass: boolean;
-  // Not a GMS buff -- always "0" here, same treatment as the KMS-only seed rings below
-  // (buildSeedRing's own comment).
+  // Not a GMS buff, so always "0" here, the same treatment as the KMS-only seed rings below
+  // (see buildSeedRing).
   criDmgRing: "0";
 }
 
@@ -99,7 +99,7 @@ export interface ScouterSpecial {
   useRuinForceShild: boolean;
   // Removed from GMS in the ring consolidation (no more standard-vs-continuous choice, no
   // Totalling Ring). The API still accepts these fields, so they're sent as inert
-  // constants -- same treatment as riskTaker and the non-GMS seed rings below.
+  // constants, the same treatment as riskTaker and the non-GMS seed rings below.
   useContinuousRingAsMainRing: false;
   restraintRing: string;
   weaponRing: string;
@@ -128,8 +128,8 @@ export interface ScouterStat {
   ssubStatAbs: string;
   arcaneForce: string;
   authenticForce: string;
-  // Some later tribe-force stat GMS has no class using yet (unreleased content, same
-  // treatment as hexa's skillCore3-6 below) -- always "0" until something real needs it.
+  // A later tribe-force stat no GMS class uses yet, unreleased content given the same
+  // treatment as hexa's skillCore3 through 6 below. Always "0" until something needs it.
   classForce: "0";
   atkBase: string;
   atkAbs: string;
@@ -165,7 +165,7 @@ export interface ScouterStat {
   ignoreElementalResist: string;
   maple_combatPower: "";
   tms_fd: "0";
-  // TMS (Taiwan) soul weapon stat -- we're GMS, always "0".
+  // TMS (Taiwan) soul weapon stat. Always "0" on GMS.
   tms_soul: "0";
 }
 
@@ -189,7 +189,7 @@ export interface ScouterSeedRing {
 export interface ScouterHexa {
   skillCore1: string;
   skillCore2: string;
-  // GMS has no content for skill cores past Origin (1)/Ascent (2) yet -- always "0" until
+  // GMS has no content for skill cores past Origin and Ascent yet, so these stay "0" until
   // something releases into one of these slots.
   skillCore3: "0";
   skillCore4: "0";
@@ -208,16 +208,16 @@ export interface ScouterHexa {
   generalCore4: string;
   hexaStat: 2;
   character_class: string;
-  // Nested duplicate of the flat core fields above, numeric instead of string -- required by
-  // /calc/dmg-simulator specifically (the plain /calc/dmg endpoint works fine without it).
+  // A nested duplicate of the flat core fields above, numeric rather than string. Required by
+  // /calc/dmg-simulator specifically; the plain /calc/dmg endpoint works without it.
   hexaSkill: {
     skillCore1: number; skillCore2: number; skillCore3: 0;
     masteryCore1: number; masteryCore2: number; masteryCore3: number; masteryCore4: number;
     reinCore1: number; reinCore2: number; reinCore3: number; reinCore4: number;
   };
   hexaSkill_general: { generalCore1: 0; generalCore2: number; generalCore3: number };
-  // MapleScouter's own derived summary (Erda spent / meso cost) -- no MapleDoro source, left
-  // at 0 since it looks informational rather than validated.
+  // MapleScouter's derived summary of Erda spent and meso cost. There is no source for it
+  // here, and it reads as informational rather than validated, so it stays at 0.
   hexaSkill_used: { sole_Erda: 0; sole_ErdaPrice: 0 };
   hexaStat_opened: false;
 }
@@ -271,8 +271,8 @@ function renownLevel(buffs: StoredScouterBuffs | undefined, key: "allStats" | "a
 }
 
 /** Builds the doping (buffs) block from a plain StoredScouterBuffs, not read directly off a
- *  character -- lets buildScouterPayload pass the Scouter Simulator popup's own draft-derived
- *  buffs override in place of the character's real ones, without a separate code path. */
+ *  character. That lets buildScouterPayload pass the Scouter Simulator popup's draft-derived
+ *  buffs override in place of the character's real ones without a separate code path. */
 function buildDoping(buffs: StoredScouterBuffs | undefined): ScouterDoping {
   const bossSlayers = buffs?.bossSlayers ?? 0;
   const forTheGuild = buffs?.forTheGuild ?? 0;
@@ -284,10 +284,10 @@ function buildDoping(buffs: StoredScouterBuffs | undefined): ScouterDoping {
     dragonsMeal: false,
     extreme: Boolean(buffs?.extremePotion),
     fish: Boolean(buffs?.fishBuff),
-    // MapleScouter's own site always sends true here, but the field is inert: live-tested
-    // on a real Erel capture, true vs false returns a byte-identical response (every boss
-    // figure, converted power, dojo and the whole specEfficiency table), both fully buffed
-    // and with every other doping flag off. Left false rather than mirroring their true.
+    // MapleScouter's own site always sends true here, but the field is inert: true and false
+    // return a byte-identical response, covering every boss figure, converted power, dojo and
+    // the whole specEfficiency table, both fully buffed and with every other doping flag off.
+    // Left false rather than mirroring their true.
     guildBlessing: false,
     jangBi: Boolean(buffs?.advWeaponTempering),
     legendHero: Boolean(buffs?.legendaryHero),
@@ -340,18 +340,18 @@ function buildDoping(buffs: StoredScouterBuffs | undefined): ScouterDoping {
 
 // ── Special ──────────────────────────────────────────────────────────────────
 
-/** Ephenia/Mu Gong soul level as MapleScouter's string encoding, capped at "2" —
- *  never send "C": live-tested to zero out the whole result. The simulator's Info tab can
- *  override the character's real soul with a pure what-if (`infoSoul`). */
+/** Ephenia or Mu Gong soul level in MapleScouter's string encoding, capped at "2". Never send
+ *  "C", which zeroes out the whole result. The simulator's Info tab can override the
+ *  character's real soul with a what-if through `infoSoul`. */
 function soulValue(character: StoredCharacterRecord, type: "ephenia" | "mugong", infoSoul?: CharacterSoul): string {
   const soul = infoSoul ?? character.soul;
   if (!soul || soul.type !== type) return "0";
   return soul.soulLevel === 1 || soul.soulLevel === 2 ? String(soul.soulLevel) : "0";
 }
 
-/** Optional per-ring level overrides for the Scouter Simulator's Oz Rings tab --
- *  undefined/omitted means "use the character's real saved value", matching every other
- *  simulator override in this file. */
+/** Optional per-ring level overrides for the Scouter Simulator's Oz Rings tab. Undefined or
+ *  omitted means use the character's real saved value, matching every other simulator
+ *  override in this file. */
 export interface OzRingOverrides {
   levels?: Partial<Record<OzRingId, number>>;
 }
@@ -413,9 +413,8 @@ export function assignMainSubStats(classId: string, requiredStats: TripleStatFie
   const [first = null, second = null, third = null] = realStatSlots;
   if (classId === "demon_avenger") {
     // Demon Avenger's Main Stat is HP (buildStat overrides mainField to "hp" directly),
-    // so its one real stat slot (STR, `first`) belongs in Sub, not Main -- otherwise STR
-    // gets silently discarded when mainField is overridden and never reaches the payload
-    // at all.
+    // so its one real stat slot, STR in `first`, belongs in Sub rather than Main. Otherwise
+    // STR is discarded when mainField is overridden and never reaches the payload.
     return { main: null, sub: first, ssub: third };
   }
   return { main: first, sub: second, ssub: third };
@@ -471,26 +470,24 @@ function buildStat(
     atkAbs: atk.percentUnapplied || "0",
     dmg: character.stats.damage || "0",
     bossDmg: character.stats.bossDamage || "0",
-    // Field is greyed out/disabled on MapleScouter's own site -- looks like dead/buggy
-    // input on their end, not something worth collecting from mapledoro's users. Safe to
-    // always send 0; confirmed against a Lara character that its number matched with this
-    // at 0. MapleScouter's own site sends a bogus nonzero value here regardless (seen "37"
-    // in real captures) -- that's their dead field's leftover state, not a real stat to
-    // match; we deliberately always send our own 0 instead of trying to replicate it.
+    // The field is greyed out on MapleScouter's own site, so it reads as dead input on their
+    // end rather than something worth collecting from users here. Sending 0 is safe and the
+    // result still matches theirs. Their site sends a bogus nonzero value regardless, seen as
+    // "37" in captures, which is their dead field's leftover state rather than a real stat, so
+    // this deliberately sends 0 instead of replicating it.
     normalDmg: character.stats.normalEnemyDamage || "0",
     ignoreDef: character.stats.ignoreDefense || "0",
     buffDuration: character.stats.buffDuration || "0",
-    // MapleScouter's own form rejects anything below 100% ("크확 100%미만!!" -- Crit Rate
-    // under 100%), since damage formulas assume you're always critting. Clamped up to 100
-    // here rather than validating/blocking the field itself, so the stored number stays a
-    // real, unrestricted stat (useful elsewhere) and only the payload we send is floored.
-    // A real value above 100 is sent as-is, uncapped -- some classes (Marksman, etc.) get
-    // real damage benefit from over-capping crit rate, so that bonus isn't thrown away.
+    // MapleScouter's own form rejects anything below 100%, since its damage formulas assume you
+    // always crit. Clamped up to 100 here rather than validating or blocking the field, so the
+    // stored number stays a real unrestricted stat useful elsewhere and only the payload is
+    // floored. A value above 100 is sent as-is and uncapped, since some classes such as
+    // Marksman get real damage benefit from over-capping crit rate.
     critical: String(Math.max(Number(character.stats.criticalRate || "0"), 100)),
     criticalDmg: character.stats.criticalDamage || "0",
-    // MapleScouter removed the Weapon ATT input from its own UI and the API ignores whatever
-    // value it's sent (live-tested: 0 vs a real number vs garbage, byte-identical result).
-    // The field is still accepted, so it's sent as an inert "0", same as ringOfSum/riskTaker.
+    // MapleScouter removed the Weapon ATT input from its UI and the API ignores whatever value
+    // it is sent: 0, a real number and garbage all return a byte-identical result. The field
+    // is still accepted, so it goes as an inert "0", like ringOfSum and riskTaker.
     weaponAtk: "0",
     atkPercent: atk.percent || "0",
     coolTimeReducePercent: character.stats.cooldownReduction.percent || "0",
@@ -498,9 +495,9 @@ function buildStat(
     wildhunterUnion: String(wildhunterUnion),
     resetCoolDown: character.stats.cooldownSkip || "0",
     statusAdditionalDmg: character.stats.additionalStatusDamage || "0",
-    // The two Inner Ability lines MapleScouter cares about (scouterQuestionsData.ts's
-    // IA_LINE_OPTIONS) -- previously hardcoded false, so innerAbilityLine was collected
-    // and gated on but never actually reached the payload.
+    // The two Inner Ability lines MapleScouter cares about, per IA_LINE_OPTIONS in
+    // scouterQuestionsData.ts. These were hardcoded false, so innerAbilityLine was collected
+    // and gated on but never reached the payload.
     passiveSkillLevelUp: innerAbilityLine === "passive",
     increaseTarget: innerAbilityLine === "multiTarget",
     summonPersistTime: character.stats.summonDuration || "0",
@@ -548,8 +545,8 @@ function hexaCoreLevels(levels: HexaSkillLevels | undefined, isHexaEligible: boo
   return {
     // Origin always starts at level 1 once HEXA-eligible (real game rule, same floor
     // useHexaSkillsState.ts's defaultLevels/normalizeLevels enforce) for a character who
-    // hasn't opened the HEXA Skills tool yet -- but NOT for a sub-260/legacy character, who
-    // genuinely has no Origin at all; gating on isHexaEligible keeps that case at 0.
+    // has not opened the HEXA Skills tool yet. Not for a sub-260 or legacy character, who has
+    // no Origin at all, which is why gating on isHexaEligible keeps that case at 0.
     skillCore1: String(levels?.origin ?? (isHexaEligible ? 1 : 0)),
     skillCore2: String(levels?.ascent ?? 0),
     mastery: [0, 1, 2, 3].map((i) => String(levels?.mastery[i] ?? 0)),
@@ -588,8 +585,8 @@ function buildHexa(characterName: string, isHexaEligible: boolean, koreanClassNa
       // generalCore2 = Sol Hecate, generalCore3 = the 3rd Common Node v271 gave every class
       // (the HEXA form of its branch's 5th job common skill). generalCore4 has no known
       // content at all, so it stays "0" until something real releases into that slot. No
-      // generalCore1 -- GMS doesn't have one yet either, and maplescouter.com's own request
-      // omits the key entirely rather than sending "0" for it, unlike generalCore3/4.
+      // generalCore1, which GMS does not have yet either, and maplescouter.com's own request
+      // omits that key entirely rather than sending "0" as it does for generalCore3 and 4.
       generalCore2: String(solHecateLevel),
       generalCore3: String(common3Level),
       generalCore4: "0",
@@ -616,11 +613,10 @@ const ZERO_RING: ScouterSeedRingEntry = { level: "0", efficiency: 0 };
 
 function buildSeedRing(character: StoredCharacterRecord, ringOverrides?: OzRingOverrides): ScouterSeedRing {
   return {
-    // efficiency is always 0 here, even for rings mapledoro does have real level data
-    // for -- a real maplescouter.com request sends real nonzero per-ring efficiency
-    // numbers, but the result matched ours anyway in a same-inputs test with these left
-    // at 0, so this looks like a value the API computes itself from `level` rather than
-    // trusting from the request. Left as a known mismatch rather than guessing at their
+    // efficiency is always 0 here, even for rings there is real level data for. A real
+    // maplescouter.com request sends nonzero per-ring efficiency numbers, but the result
+    // matches with these at 0, so the API appears to compute this from `level` rather than
+    // trusting the request. Left as a known mismatch rather than guessing at their
     // formula; revisit if a real result ever depends on it.
     restraintRing: { level: ozRingLevel(character, "restraint", ringOverrides), efficiency: 0 },
     weaponRing: { level: ozRingLevel(character, "weaponJump", ringOverrides), efficiency: 0 },
@@ -637,9 +633,9 @@ function buildSeedRing(character: StoredCharacterRecord, ringOverrides?: OzRingO
   };
 }
 
-/** Reads this character's OWN link skill levels directly -- Scouter's calc needs what's
- *  actually equipped on THIS character, not a shared world total (see linkSkillsData.ts's
- *  file-header reasoning: mastery is shared per-world, but equipping is per-character). */
+/** Reads this character's own link skill levels directly. Scouter's calc needs what is
+ *  equipped on this character, not a shared world total. See linkSkillsData.ts's file-header
+ *  reasoning: mastery is shared per-world, but equipping is per-character. */
 function buildLinkSkill(linkSkills: LinkSkillsData | undefined): Record<string, string> {
   const stored = linkSkills ?? {};
   const out: Record<string, string> = {};
@@ -654,21 +650,22 @@ function buildLinkSkill(linkSkills: LinkSkillsData | undefined): Record<string, 
 
 // ── Setup completeness gate ──────────────────────────────────────────────────
 
-/** Which part of MapleScouter Setup's own completeness requirements this character is
- *  still missing, or null if it's fully satisfied -- see hasMinimalScouterSetup below,
- *  which reduces this to a plain boolean for callers that don't need to say WHERE the
- *  gap is (e.g. "this isn't a supported class" doesn't have a location).
- *  "quickQuestions" covers everything Quick Questions asks (soul type, weapon hand if
- *  the class asks, Wild Hunter Legion rank, Inner Ability line) -- full_setup's own
- *  Quick Questions stays permanently optional (see isScouterQuestionnaireComplete's doc
- *  comment), so this is the one place that data ever gets required at all.
- *  "characterInfo" points at Stats' Character Info substep (STR/DEX/etc, Combat Stats --
- *  the numeric fields Full Setup can silently skip past, see isStatsSubstepAnyFieldFilled).
- *  Checked in the same order the live flow's own substeps
- *  appear (Quick Questions is substep 0, Character Info is substep 1) so a character
- *  missing BOTH reports the one the player would actually hit first, not whichever
- *  happened to be checked first in code -- a totally blank character used to report
- *  "characterInfo" here even though Quick Questions is the earlier, more fundamental gap. */
+/** Which of MapleScouter Setup's completeness requirements this character is still missing, or
+ *  null when fully satisfied. hasMinimalScouterSetup below reduces this to a boolean for
+ *  callers that do not need to say where the gap is, such as an unsupported class, which has
+ *  no location.
+ *
+ *  "quickQuestions" covers everything Quick Questions asks: soul type, weapon hand where the
+ *  class asks for it, Wild Hunter Legion rank and Inner Ability line. full_setup's own Quick
+ *  Questions stays permanently optional (see isScouterQuestionnaireComplete), so this is the
+ *  only place that data is ever required. "characterInfo" points at Stats' Character Info
+ *  substep, the numeric stat fields Full Setup can skip past (see
+ *  isStatsSubstepAnyFieldFilled).
+ *
+ *  Checked in the order the flow's substeps appear, Quick Questions then Character Info, so a
+ *  character missing both reports the one the player hits first rather than whichever the code
+ *  happened to check first. A blank character previously reported "characterInfo" even though
+ *  Quick Questions is the earlier and more fundamental gap. */
 export type ScouterSetupGap = "characterInfo" | "quickQuestions";
 
 export function findScouterSetupGap(character: StoredCharacterRecord): ScouterSetupGap | null {
@@ -709,18 +706,18 @@ export function findScouterSetupGap(character: StoredCharacterRecord): ScouterSe
 }
 
 /** Whether this character has answered everything MapleScouter Setup's own live flow
- *  actually requires before letting you click Continue -- re-derived against the
- *  PERSISTED record (this runs outside the flow's own draft state). See
- *  findScouterSetupGap for what's actually checked and why Oz Rings/Link Skills/Buffs
- *  are deliberately NOT required here -- having none of those is a legitimate, if less
+ *  actually requires before letting you click Continue, re-derived against the persisted
+ *  record since this runs outside the flow's draft state. See findScouterSetupGap for what is
+ *  checked and why Oz Rings, Link Skills and Buffs are deliberately not required, having none
+ *  of those being a legitimate, if less
  *  accurate, state; a player who wants a more precise calc can go fill them in without
  *  being blocked from calculating at all in the meantime. */
 export function hasMinimalScouterSetup(character: StoredCharacterRecord): boolean {
   return findScouterSetupGap(character) === null;
 }
 
-/** Whether MapleScouter supports this character's class at all (see class-name table
- *  above -- currently only the legacy job names are missing). */
+/** Whether MapleScouter supports this character's class at all. See the class-name table
+ *  above; currently only the legacy job names are missing. */
 export function isScouterSupportedClass(jobName: string): boolean {
   const classData = CLASS_SKILL_DATA.find((c) => c.nexonJobName === jobName);
   return classData ? scouterKoreanClassName(classData.id) !== null : false;
@@ -734,7 +731,7 @@ export interface ScouterPayloadContext {
 
 /** Builds MapleScouter's request body for a character, or null if this class isn't
  *  supported by MapleScouter at all. `overrides` is only ever passed by
- *  buildDirectScouterPayload -- omit it for the real, unmodified payload. */
+ *  buildDirectScouterPayload; omit it for the real, unmodified payload. */
 export function buildScouterPayload(
   character: StoredCharacterRecord,
   ctx: ScouterPayloadContext,
@@ -771,12 +768,12 @@ export function buildScouterPayload(
 
 // ── Simulator ────────────────────────────────────────────────────────────────
 
-/** The HEXA core fields MapleDoro can override in a simulator run -- everything
- *  hexaCoreLevels/buildHexa can produce. Deliberately excludes skillCore3-6/generalCore4
+/** The HEXA core fields MapleDoro can override in a simulator run, meaning everything
+ *  hexaCoreLevels and buildHexa can produce. Deliberately excludes skillCore3-6/generalCore4
  *  (unreleased GMS content, no real value to simulate), generalCore1 (MapleScouter's own
  *  request omits it entirely, see buildHexa's comment), and solJanus (doesn't factor into
- *  the boss380_hexaStat calculation at all -- confirmed it has no effect on the result, so
- *  there's nothing to simulate by editing it despite huntSkill.solJanus being sent).
+ *  the boss380_hexaStat calculation at all and has no effect on the result, so there is
+ *  nothing to simulate by editing it even though huntSkill.solJanus is sent).
  *  generalCore3 is the 3rd Common Node v271 gave every class, so it IS simulatable. */
 export type SimulatorHexaCoreField =
   | "skillCore1" | "skillCore2"
@@ -784,15 +781,15 @@ export type SimulatorHexaCoreField =
   | "reinCore1" | "reinCore2" | "reinCore3" | "reinCore4"
   | "generalCore2" | "generalCore3";
 
-/** Every core capped at 30 -- confirmed against useHexaSkillsState.ts's own clampLevel,
- *  which caps Origin/Ascent/Mastery/Enhancement identically. No per-core-type cap exists
- *  in this codebase (or in real HEXA leveling) to differentiate them. */
+/** Every core caps at 30, matching clampLevel in useHexaSkillsState.ts, which caps Origin,
+ *  Ascent, Mastery and Enhancement identically. No per-core-type cap exists in this codebase
+ *  or in real HEXA leveling to differentiate them. */
 export const SIMULATOR_HEXA_CORE_MAX = 30;
 
-/** Raw stat-delta fields the Scouter Simulator's Input tab exposes -- additive on top of the
- *  character's real stats, "0"/unset = no override. Field names match ScouterSimulator's own
- *  keys (live-captured), not MapleDoro's internal naming, so the payload builder below can
- *  assign them straight through. */
+/** Raw stat-delta fields the Scouter Simulator's Input tab exposes, additive on top of the
+ *  character's real stats, where "0" or unset means no override. Field names match
+ *  MapleScouter's own request keys rather than this app's internal naming, so the payload
+ *  builder below can assign them straight through. */
 export interface SimulatorInputOverrides {
   mainStat?: string; mainStatPer?: string; mainStatAbs?: string; mainStat9Level?: string;
   subStat?: string; subStatPer?: string; subStatAbs?: string; subStat9Level?: string;
@@ -802,19 +799,20 @@ export interface SimulatorInputOverrides {
   resetCoolDown?: string;
 }
 
-/** The Scouter Simulator's "Info" tab -- the discrete character/account answers MapleScouter
- *  Setup's Quick Questions step collects. Every field is an absolute override (not a delta):
- *  undefined means "use the character's real saved value", matching hexaCoreOverrides/
- *  linkSkillOverrides. The account-level fields (artifact*, wildHunterRank) are pure what-ifs
- *  here -- they never write back to scouterLegionByWorld, only this one simulation's payload. */
+/** The Scouter Simulator's "Info" tab, holding the discrete character and account answers
+ *  MapleScouter Setup's Quick Questions step collects. Every field is an absolute override
+ *  rather than a delta, so undefined means use the character's real saved value, matching
+ *  hexaCoreOverrides and linkSkillOverrides. The account-level fields, meaning artifact* and
+ *  wildHunterRank, are pure what-ifs here. They never write back to scouterLegionByWorld and
+ *  reach only this simulation's payload. */
 export interface SimulatorInfoOverrides {
-  /** {type, soulLevel} the character's weapon soul -- type "none" simulates removing it. */
+  /** The character's weapon soul as {type, soulLevel}; type "none" simulates removing it. */
   soul?: CharacterSoul;
   /** Genesis Liberation complete (special.genesis). */
   isLiberated?: boolean;
-  /** One-handed weapon (special.oneHandSword) -- only meaningful for weaponType classes. */
+  /** One-handed weapon (special.oneHandSword), meaningful only for weaponType classes. */
   weaponHand?: "1h" | "2h";
-  /** Ruin Force Shield equipped (special.useRuinForceShild) -- Demon Slayer/Avenger only. */
+  /** Ruin Force Shield equipped (special.useRuinForceShild), Demon Slayer and Avenger only. */
   hasRuinForceShield?: boolean;
   /** Legendary Inner Ability line MapleScouter models (stat.passiveSkillLevelUp/increaseTarget). */
   innerAbilityLine?: "passive" | "multiTarget" | "neither";
@@ -827,39 +825,39 @@ export interface SimulatorInfoOverrides {
 }
 
 export interface ScouterSimulatorOverrides {
-  /** MapleDoro-only, local Boss Clear Grid gap math -- never reaches the API at all.
-   *  computeBossClear uses this in place of character.level when set. Live-confirmed a Level
-   *  override doesn't affect boss380Hexa on MapleScouter's own site either. */
+  /** Local Boss Clear Grid gap math only; never reaches the API. computeBossClear uses this in
+   *  place of character.level when set. A Level override does not affect boss380Hexa on
+   *  MapleScouter's own site either. */
   level?: number;
-  /** MapleDoro-only, local Boss Clear Grid gap math -- neither reaches the API at all.
-   *  computeBossClear uses these in place of the character's real
-   *  character.stats.arcanePower/sacredPower when set, so typing the boss's own requirement
-   *  here closes that gap honestly -- no separate "pin to ceiling" toggle. */
+  /** Local Boss Clear Grid gap math only; neither reaches the API. computeBossClear uses these
+   *  in place of the character's real arcanePower and sacredPower when set, so typing the
+   *  boss's own requirement here closes that gap honestly, with no separate pin-to-ceiling
+   *  toggle. */
   arcaneForceOverride?: number;
   authenticForceOverride?: number;
-  /** Percent string, e.g. "75.00000". No real ScouterUserStat field of its own -- converted
-   *  into an equivalent Critical Damage% amount at request-build time, see
+  /** Percent string, e.g. "75.00000". It has no ScouterUserStat field of its own and is
+   *  converted into an equivalent Critical Damage% amount at request-build time. See
    *  applyCritDmgAndFinalDmg. */
   finalDmgPercent?: string;
   hexaCoreOverrides?: Partial<Record<SimulatorHexaCoreField, string>>;
-  /** From the Buffs tab's own draft -- a full independent buff re-pick, not a partial patch
-   *  onto the character's real buffs. Undefined means "same as the character's real buffs",
-   *  not "no buffs". */
+  /** From the Buffs tab's own draft. A full independent buff re-pick, not a partial patch onto
+   *  the character's real buffs. Undefined means the same as the character's real buffs, not
+   *  no buffs. */
   dopingOverrides?: StoredScouterBuffs;
   ringOverrides?: OzRingOverrides;
   input?: SimulatorInputOverrides;
   /** Real ScouterUserStat.linkSkill levels, only for the 10 link skills MapleScouter's own
-   *  payload accepts (LINK_SKILL_TO_SCOUTER_KEY) -- absolute levels like hexaCoreOverrides,
-   *  not deltas, matching the level the real Link Skills setup step stores. */
+   *  payload accepts, per LINK_SKILL_TO_SCOUTER_KEY. Absolute levels like hexaCoreOverrides
+   *  rather than deltas, matching what the real Link Skills setup step stores. */
   linkSkillOverrides?: Partial<Record<LinkSkillId, string>>;
-  /** The Info tab -- MapleScouter Setup's Quick Questions answers as pure what-ifs. Applied
-   *  in buildScouterPayload (buildSpecial/buildStat), same as dopingOverrides/ringOverrides,
-   *  so it needs no special handling in buildDirectScouterPayload. */
+  /** The Info tab: MapleScouter Setup's Quick Questions answers as pure what-ifs. Applied in
+   *  buildScouterPayload, via buildSpecial and buildStat, the same as dopingOverrides and
+   *  ringOverrides, so it needs no special handling in buildDirectScouterPayload. */
   infoOverrides?: SimulatorInfoOverrides;
 }
 
 /** The subset of ScouterSimulatorOverrides that has a real 1:1 field on ScouterUserStat
- *  itself, either directly or through a same-value equivalence -- everything a
+ *  itself, either directly or through a same-value equivalence. Everything a
  *  ScouterSimulatorOverrides can carry ends up mutating this real payload instead of the
  *  separate `simulator` overlay object, so the whole popup can run through MapleScouter's
  *  plain /calc/dmg endpoint (no api-key header) instead of the api-key-gated
@@ -871,10 +869,10 @@ function addToStatField(stat: ScouterStat, field: keyof ScouterStat, amount: num
   (stat[field] as string) = String(Number(stat[field]) + amount);
 }
 
-/** floor(level / 9) * amount, the "X per 9 Levels" potential line's real formula. Uses the
- *  character's REAL level, not a simulated Level override -- live-confirmed that
- *  MapleScouter's own mainStat9Level/subStat9Level fields ignore a Level override entirely
- *  and always compute off the real level, even in the same request. */
+/** floor(level / 9) * amount, the formula behind the "X per 9 Levels" potential line. Uses the
+ *  character's real level rather than a simulated Level override, because MapleScouter's own
+ *  mainStat9Level and subStat9Level fields ignore a Level override entirely and always compute
+ *  off the real level, even within the same request. */
 function per9LevelsAmount(realLevel: number, amount: number): number {
   return Math.floor(realLevel / 9) * amount;
 }
@@ -883,7 +881,7 @@ function per9LevelsAmount(realLevel: number, amount: number): number {
  *  fans out across all of them at once). ssubStatPer only gets allStatPer's share when the
  *  class actually has a 3rd real stat slot (ssubStatBase nonzero, or already touched by its
  *  own override this call). realLevel is the character's real level, for the 9-per-level
- *  fields -- NOT stat.level, which may already carry a Level override by this point. */
+ *  fields, rather than stat.level, which may already carry a Level override by this point. */
 function applyStatFamilyOverrides(stat: ScouterStat, input: SimulatorInputOverrides, realLevel: number): void {
   if (input.mainStat) addToStatField(stat, "mainStatBase", Number(input.mainStat));
   if (input.mainStatPer) addToStatField(stat, "mainStatPer", Number(input.mainStatPer));
@@ -905,16 +903,16 @@ function applyStatFamilyOverrides(stat: ScouterStat, input: SimulatorInputOverri
   }
 }
 
-/** Everything else on the Input tab -- combat percentages, cooldowns, ATT. ignoreGuard is the
- *  one diminishing-stack field (real + (100 - real) * (typed / 100)); the rest are plain
- *  adds. criDmg is applied by applyInputOverrides itself, not here, since it needs to combine
- *  with a Final Damage% override on the same field. */
+/** Everything else on the Input tab: combat percentages, cooldowns and ATT. ignoreGuard is the
+ *  one diminishing-stack field, computed as real + (100 - real) * (typed / 100), and the rest
+ *  are plain adds. criDmg is applied by applyInputOverrides itself rather than here, since it
+ *  has to combine with a Final Damage% override on the same field. */
 function applyCombatFieldOverrides(stat: ScouterStat, input: SimulatorInputOverrides): void {
   if (input.criRate) {
     // Floor to 100 after the delta, same as buildScouterPayload does for the base value:
     // MapleScouter's API rejects a payload with critical < 100 (its formulas assume you always
-    // crit), and its own site floors the field before POSTing too -- so a negative delta that
-    // would push the total below 100 lands at exactly 100 rather than 400ing the request.
+    // crit), and its own site floors the field before POSTing too, so a negative delta that
+    // would push the total below 100 lands at exactly 100 rather than failing the request.
     stat.critical = String(Math.max(Number(stat.critical) + Number(input.criRate), 100));
   }
   if (input.buffDuration) addToStatField(stat, "buffDuration", Number(input.buffDuration));
@@ -929,20 +927,21 @@ function applyCombatFieldOverrides(stat: ScouterStat, input: SimulatorInputOverr
   if (input.resetCoolDown) addToStatField(stat, "resetCoolDown", Number(input.resetCoolDown));
 }
 
-/** Applies every Input tab field's confirmed formula onto a real ScouterStat, in place -- see
- *  applyStatFamilyOverrides/applyCombatFieldOverrides for the field-by-field rules. There's no
- *  field for Final Damage% itself, so it's expressed as a Critical Damage delta instead --
- *  needs specEfficiency (cridmgeff1) from the character's last computed Scouter result.
+/** Applies every Input tab field's formula onto a real ScouterStat, in place. See
+ *  applyStatFamilyOverrides and applyCombatFieldOverrides for the field-by-field rules. There
+ *  is no field for Final Damage percent itself, so it is expressed as a Critical Damage delta,
+ *  which needs specEfficiency (cridmgeff1) from the character's last computed Scouter result.
  *
- *  Critical Damage% and Final Damage% share this field because they're both Final Damage
- *  sources, and multiple sources multiply together rather than adding (typing 7% Crit Damage
- *  AND 10% Final Damage isn't 7 + 10's-Crit-Damage-equivalent, it compounds to a bigger total).
- *  The 7 archer classes with a critRateToCritDmg rate add a third source: typing more Crit
- *  Rate grows their excess-Crit-Rate-to-Crit-Damage conversion, which is itself a Final Damage
- *  source and has to compound in too. Only the DELTA of that conversion caused by THIS Apply's
- *  typed Crit Rate counts -- the character's real, pre-existing excess is already part of
- *  reality, not a new source this Apply introduces, so realCritRate (the un-overridden value)
- *  is needed to isolate the delta from stat.critical's already-mutated total. */
+ *  Critical Damage and Final Damage share this field because both are Final Damage sources,
+ *  and multiple sources multiply rather than add: typing 7% Crit Damage and 10% Final Damage
+ *  compounds to more than their sum. The archer classes with a critRateToCritDmg rate add a
+ *  third source, since typing more Crit Rate grows their excess-Crit-Rate-to-Crit-Damage
+ *  conversion, itself a Final Damage source that must compound in.
+ *
+ *  Only the delta of that conversion caused by this Apply's typed Crit Rate counts. The
+ *  character's pre-existing excess is already part of reality rather than a new source, so
+ *  realCritRate, the un-overridden value, isolates the delta from stat.critical's already
+ *  mutated total. */
 function applyCritDmgAndFinalDmg(stat: ScouterStat, typedCritDmg: number, finalDmgPercent: string | undefined, cridmgeff1: number | undefined, critRateToDmg: number, realCritRate: number): void {
   const finalDmg = finalDmgPercent ? Number(finalDmgPercent) : 0;
   if (!finalDmg || !cridmgeff1) {
@@ -979,10 +978,10 @@ export function buildDirectScouterPayload(
 ): ScouterUserStat | null {
   const userStat = buildScouterPayload(character, ctx, overrides);
   if (!userStat) return null;
-  // level is NOT sent to the API -- live-confirmed a Level override doesn't change
-  // boss380Hexa on MapleScouter's own site at all (only the Boss Clear Grid's own level-gap
-  // math, computed entirely locally in bossClearFormula.ts, uses it). Sending it here used
-  // to change boss380Hexa on mapledoro's side when it shouldn't have.
+  // level is deliberately not sent to the API. A Level override does not change boss380Hexa on
+  // MapleScouter's own site, and only the Boss Clear Grid's level-gap math, computed locally in
+  // bossClearFormula.ts, uses it. Sending it here changed boss380Hexa on this side when it
+  // should not have.
   if (overrides.hexaCoreOverrides) {
     for (const [field, value] of Object.entries(overrides.hexaCoreOverrides)) {
       if (value !== undefined) userStat.hexa[field as SimulatorHexaCoreField] = value;
@@ -1005,10 +1004,10 @@ export interface SimulatorStatLabel {
   label: string;
 }
 
-/** Per-class main/sub/ssub stat labels for the simulator popup's stat-context display --
- *  reuses assignMainSubStats/buildStat's own assignment logic (including the Demon Avenger
- *  special case) so the popup never has to re-derive class stat layout on its own. Returns
- *  null entries for slots the class doesn't use (e.g. a 2-real-stat class has no ssub). */
+/** Per-class main, sub and ssub stat labels for the simulator popup's stat-context display.
+ *  Reuses assignMainSubStats and buildStat's own assignment logic, Demon Avenger special case
+ *  included, so the popup never re-derives class stat layout itself. Returns null entries for
+ *  slots the class doesn't use, since a 2-real-stat class has no ssub. */
 export function simulatorStatLabels(classId: string, requiredStats: readonly string[]): {
   main: SimulatorStatLabel | null;
   sub: SimulatorStatLabel | null;
@@ -1027,12 +1026,11 @@ export function simulatorStatLabels(classId: string, requiredStats: readonly str
 
 // ── Cache hash ───────────────────────────────────────────────────────────────
 
-/** Deterministic FNV-1a hash of a built payload, used as the client-side cache key --
- *  cached per-character, keyed by input hash, not "most recent value". Field order is
- *  already stable, buildScouterPayload/buildDirectScouterPayload construct the object
- *  identically every call — so plain JSON.stringify is deterministic without an explicit
- *  key-sort replacer (which would otherwise strip every nested key not present at the top
- *  level). */
+/** Deterministic FNV-1a hash of a built payload, used as the client-side cache key. Cached per
+ *  character and keyed by input hash rather than most recent value. Field order is already
+ *  stable, since buildScouterPayload and buildDirectScouterPayload construct the object
+ *  identically every call, so plain JSON.stringify is deterministic without a key-sort
+ *  replacer, which would otherwise strip every nested key absent from the top level. */
 export function hashScouterPayload(payload: ScouterUserStat): string {
   const json = JSON.stringify(payload);
   let hash = 0x811c9dc5;

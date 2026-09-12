@@ -24,7 +24,7 @@ interface MapleScouterImportStepProps {
   confirmedWorldId?: number;
   worldScouterLegion?: StoredScouterLegion;
   /** The uploaded file's JSON text, persisted as this step's draft so a resumed setup can
-   *  re-parse it. The player never sees or edits this directly -- they upload a file. */
+   *  re-parse it. The player never sees or edits this directly, only uploads a file. */
   value: string;
   onChange: (value: string) => void;
   onBack: () => void;
@@ -272,8 +272,8 @@ function HowToBox({ theme }: { theme: AppTheme }) {
   );
 }
 
-/** The upload target: a drop zone with a file picker, or -- after a rejected upload -- the
- *  same zone with the error shown inside it and a retry button. */
+/** The upload target: a drop zone with a file picker, or, after a rejected upload, the same
+ *  zone with the error shown inside it and a retry button. */
 function UploadZone({ theme, dragging, error, errorClassName, onPick, onDragOver, onDragLeave, onDrop }: {
   theme: AppTheme;
   dragging: boolean;
@@ -422,8 +422,8 @@ export default function MapleScouterImportStep({
     onNext();
   }
 
-  // A rejected file doesn't count as "have a file" -- the drop zone stays up so they can
-  // try another, with the error shown inside it. Only a successful parse (result set)
+  // A rejected file doesn't count as having a file, so the drop zone stays up for another
+  // try, with the error shown inside it. Only a successful parse, where result is set,
   // swaps the drop zone out for the summary card.
   const showDropZone = result === null;
 

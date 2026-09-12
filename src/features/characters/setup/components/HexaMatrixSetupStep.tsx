@@ -33,7 +33,7 @@ interface HexaMatrixSetupStepProps {
   direction?: "forward" | "backward";
   targetSubstep?: number | null;
   /** When true, targetSubstep is the substep opened from a profile bookmark's edit
-   *  pencil — it should present as if it were this step's only substep, mirroring
+   *  pencil. It presents as if it were this step's only substep, mirroring
    *  EquipmentSetupStep/StatsSetupStep's own confineToSubstep prop. */
   confineToSubstep?: boolean;
   onValidityChange?: (valid: boolean, substepIndex?: number) => void;
@@ -52,8 +52,8 @@ interface HexaMatrixSetupStepProps {
 const MAX_LEVEL = 30;
 const MAX_STAT_ENTRY_LEVEL = 10;
 
-// Each HEXA Stat node holds two presets — numbered like every other preset system in the app
-// (Equipment/Hyper Stat/Inner Ability), not given special names.
+// Each HEXA Stat node holds two presets, numbered like every other preset system in the app
+// (Equipment, Hyper Stat, Inner Ability) rather than given special names.
 const PRESET_LABELS = ["1", "2"] as const;
 const NODE_LABELS = ["I", "II", "III"] as const;
 // Reading order for a slot's 3 stat lines, matching the in-game window (Main → Alt 1 → Alt 2).
@@ -94,9 +94,9 @@ export function HexaStatNodeIcon({ id, slot, theme, size = 28, disabled = false 
   );
 }
 
-// Padding + matching negative margin grows the actual clickable box toward a 44px
-// touch target without shifting surrounding layout — the button still occupies its
-// original space, it just responds to taps/clicks a bit outside its visible text.
+// Padding plus a matching negative margin grows the clickable box toward a 44px touch
+// target without shifting surrounding layout. The button still occupies its original
+// space, and responds to clicks slightly outside its visible text.
 const sectionBtnStyle: React.CSSProperties = {
   background: "none", border: "none", font: "inherit",
   fontSize: "0.75rem", fontWeight: 800,
@@ -179,11 +179,11 @@ function isNodeEmpty(node: HexaStatNode): boolean {
   return isSlotEmpty(node.presets[0]) && isSlotEmpty(node.presets[1]);
 }
 
-// Builds one condensed sentence naming every node with an over-limit preset, instead
-// of enumerating each (node, preset) pair individually (gets unreadable fast once more
-// than one node is affected). Groups by node — "both presets" when both are over,
-// otherwise names the one that is — and collapses to a single line if every node is
-// affected on both presets (worst case: nothing left to name, so just say "every node").
+// Builds one condensed sentence naming every node with an over-limit preset, rather than
+// enumerating each node and preset pair, which gets unreadable once more than one node is
+// affected. It groups by node, saying "both presets" when both are over and otherwise
+// naming the one that is, and collapses to a single line when every node is affected on
+// both presets, where there is nothing left to name beyond "every node".
 function buildOverLimitMessage(hexaStat: [HexaStatNode, HexaStatNode, HexaStatNode]): string {
   const perNode = hexaStat.map((node) => node.presets.map((p) => hexaStatSlotLevelSum(p) > HEXA_STAT_NODE_MAX_LEVEL));
   const affectedIndices = perNode.reduce<number[]>((acc, presets, i) => {
@@ -282,10 +282,10 @@ function parseNode(raw: unknown): HexaStatNode {
 
 // Skill levels are strings in the draft (blank until touched, matching Oz Rings) even
 // though the final stored HexaSkillLevels shape (and the standalone HEXA Skills
-// calculator that also reads it) stays numeric — the controller converts at save time.
-// Origin is the one exception: every character has it from level 1 on, so it's never
-// really "unset" the way ascent/mastery/enhancement/common are; clampLevelInput's `min`
-// keeps it from ever going blank.
+// calculator that also reads it) stays numeric. The controller converts at save time.
+// Origin is the one exception: every character has it from level 1 on, so it is never unset
+// the way ascent, mastery, enhancement and common are, and clampLevelInput's `min` keeps it
+// from going blank.
 interface HexaSkillLevelsDraft {
   origin: string;
   ascent: string;
@@ -295,7 +295,7 @@ interface HexaSkillLevelsDraft {
 }
 
 // Clamps while preserving the string (blank stays blank unless min > 0, in which case
-// blank snaps to the min — see the origin note above).
+// blank snaps to the min, as in the origin note above).
 function clampLevelInput(raw: string, max: number, min = 0): string {
   const digits = sanitizeDigitsInput(raw);
   if (digits === "") return min > 0 ? String(min) : "";
@@ -325,7 +325,7 @@ function parseDraft(raw: string, classDef: HexaClassDef): HexaDraft {
     const parsed = JSON.parse(raw) as Record<string, unknown>;
     if (!parsed || typeof parsed !== "object") return empty;
     // Normalizes to strings regardless of whether the source is a number (a prefill
-    // from real saved tool data) or already a string (a prior draft) — both land here.
+    // from real saved tool data) or already a string (a prior draft). Both land here.
     const padBlank = (arr: unknown, len: number): string[] => {
       const a = Array.isArray(arr) ? arr : [];
       const result = a.slice(0, len).map((v) => clampLevelInput(String(v ?? ""), MAX_LEVEL));
@@ -372,10 +372,10 @@ function SkillIcon({ skill, theme, size = 28 }: { skill: HexaSkillDef; theme: Ap
 
 // HexaStatEntry.level stays a real number (shared with the standalone HEXA Skills
 // calculator and profile display via HexaStatNode), so unlike the plain skill-level
-// tiles above, this can't just become a string draft. `touched` is a display-only flag
-// (not part of the saved data) so a 0 the user actually typed this session shows as a
-// literal "0" instead of collapsing back to the placeholder — see the `touchedLevels`
-// tracking in the main component below for how it's set.
+// tiles above, this can't become a string draft. `touched` is a display-only flag, not part
+// of the saved data, so a 0 typed this session shows as a literal "0" instead of collapsing
+// back to the placeholder. See the `touchedLevels` tracking in the main component below for
+// how it's set.
 function LevelInput({ value, onChange, theme, min = 0, max = MAX_LEVEL, label, touched = false, onTouch }: { value: number; onChange: (v: number) => void; theme: AppTheme; min?: number; max?: number; label?: string; touched?: boolean; onTouch?: () => void }) {
   const showBlank = value === 0 && !touched;
   return (
@@ -401,18 +401,18 @@ function StatDropdown({ value, options, onChange, onAdvance, isOpen, onToggle, o
   value: string;
   options: { value: string; label: string }[];
   onChange: (val: string) => void;
-  /** Called (instead of onClose) after an actual pick — opens the next line's dropdown, if
-   *  it's still unset. viaKeyboard distinguishes an Enter-driven pick from a mouse click —
-   *  only a keyboard pick jumps lines, since a mouse click means the user's cursor is
-   *  staying local. */
+  /** Called instead of onClose after an actual pick, opening the next line's dropdown if
+   *  it's still unset. viaKeyboard distinguishes an Enter-driven pick from a mouse click.
+   *  Only a keyboard pick jumps lines, since a mouse click means the cursor is staying
+   *  local. */
   onAdvance?: (viaKeyboard: boolean) => void;
   isOpen: boolean;
   onToggle: () => void;
   onClose: () => void;
   theme: AppTheme;
   isError?: boolean;
-  /** Stat types already used elsewhere (sibling lines, other nodes) — excluded from the
-   *  list entirely, not just greyed out, so there's nothing to accidentally pick. */
+  /** Stat types already used elsewhere, on sibling lines or other nodes. Excluded from the
+   *  list entirely rather than greyed out, so there's nothing to pick by accident. */
   disabledTypes: Set<string>;
 }) {
   const [query, setQuery] = useState("");
@@ -421,10 +421,10 @@ function StatDropdown({ value, options, onChange, onAdvance, isOpen, onToggle, o
   const menuRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // These 3 dropdowns (Main/Alt 1/Alt 2) are fixed, always-mounted instances shared
-  // across every node and preset (switching the active node/preset tab just feeds them
-  // different data, it never remounts them) — so a stale search term would otherwise
-  // ride along indefinitely across nodes/presets, not just within this one field.
+  // These 3 dropdowns (Main, Alt 1, Alt 2) are fixed, always-mounted instances shared
+  // across every node and preset. Switching the active node or preset tab feeds them
+  // different data rather than remounting them, so a stale search term would otherwise
+  // ride along indefinitely across nodes and presets, not only within this one field.
   // Reset synchronously during render on the open transition, per CLAUDE.md's
   // set-state-in-effect rule (the "adjusting state on a prop change" pattern), rather
   // than a bare setState in a useEffect.
@@ -444,9 +444,9 @@ function StatDropdown({ value, options, onChange, onAdvance, isOpen, onToggle, o
     return () => document.removeEventListener("mousedown", closeOnOutsideClick);
   }, [isOpen]);
 
-  // Flip the menu above the trigger when there isn't enough room below in the viewport —
-  // otherwise a dropdown opened near the bottom of the HEXA node grid forces the page to
-  // grow to fit it, visibly pushing content past the footer.
+  // Flip the menu above the trigger when there isn't enough room below in the viewport.
+  // Otherwise a dropdown opened near the bottom of the HEXA node grid forces the page to
+  // grow to fit it, pushing content past the footer.
   useLayoutEffect(() => {
     if (!isOpen) return;
     const container = containerRef.current;
@@ -783,10 +783,10 @@ function HexaSkillLevelsSubstep({
 }
 
 // Substep 1: the HEXA Stat node/preset editor. Extracted for the same reason as
-// HexaSkillLevelsSubstep above — keeps the main step component under the
-// cognitive-complexity cap. State (activeSlot/openField/touchedLevels) stays owned by
-// the parent and is passed down, so switching back and forth between substeps doesn't
-// reset it (this component mounts/unmounts with the substep, the parent doesn't).
+// HexaSkillLevelsSubstep above, to keep the main step component under the
+// cognitive-complexity cap. State (activeSlot, openField, touchedLevels) stays owned by the
+// parent and is passed down, so switching between substeps doesn't reset it. This component
+// mounts and unmounts with the substep, while the parent does not.
 function HexaStatSubstep({
   theme, stepNumber, totalSteps, substepIndex, substepCount, animStyle,
   characterLevel, classData, hexaStat, activeSlot, selectNode,
@@ -849,9 +849,9 @@ function HexaStatSubstep({
   }
 
   // Picking a line's stat via Enter jumps to the next line in reading order, only if it's
-  // still unset (barging into a line someone already filled would be more surprising than
-  // helpful, so it just closes instead — same rule as every other picker in this flow). A
-  // mouse-clicked pick never jumps at all, handled by StatDropdown's own onAdvance branch.
+  // still unset. Barging into a line someone already filled would surprise more than it
+  // helps, so it closes instead, the same rule as every other picker in this flow. A
+  // mouse-clicked pick never jumps, handled by StatDropdown's own onAdvance branch.
   function goToNextHexaStatField(from: HexaStatField): () => void {
     const idx = HEXA_STAT_FIELD_ORDER.indexOf(from);
     const next = idx < HEXA_STAT_FIELD_ORDER.length - 1 ? HEXA_STAT_FIELD_ORDER[idx + 1] : null;
@@ -901,10 +901,10 @@ function HexaStatSubstep({
 
           <div style={{ display: "flex", gap: "0.4rem", alignItems: "flex-start" }}>
             {HEXA_STAT_DEFS.map((def, i) => {
-              // Nodes the character's level hasn't reached yet are hidden entirely, not
-              // shown disabled — matches the Symbols convention (see SymbolSection's
-              // isUnlocked comment): the setup flow doesn't preview content the character
-              // can't have yet, that's the profile page's job.
+              // Nodes the character's level hasn't reached yet are hidden entirely rather
+              // than shown disabled, matching the Symbols convention (see SymbolSection's
+              // isUnlocked comment). The setup flow doesn't preview content the character
+              // can't have yet, which is the profile page's job.
               if (!isNodeUnlocked(i, charLevel)) return null;
               const isActive = activeSlot === i;
               const iconDisabled = isNodeEmpty(hexaStat[i]);
@@ -1019,10 +1019,10 @@ function HexaStatSubstep({
   );
 }
 
-// Confinement resolvers for each substep — extracted so the main component's own branching
-// doesn't also have to hold this logic inline (mirrors EquipmentSetupStep's confinableFrameProps,
-// split into two since HexaSkillLevelsSubstep's confinement also touches showHexaStat/onContinue,
-// which don't fit that generic single-shape helper).
+// Confinement resolvers for each substep, extracted so the main component's branching doesn't
+// also hold this logic inline. Mirrors EquipmentSetupStep's confinableFrameProps, split into
+// two because HexaSkillLevelsSubstep's confinement also touches showHexaStat and onContinue,
+// which don't fit that generic single-shape helper.
 function hexaSkillFrameProps(
   confined: boolean, showHexaStat: boolean, substep: number, substepCount: number,
   onContinue: () => void, onNext: () => void, onFinish: () => void,
@@ -1054,7 +1054,7 @@ export default function HexaMatrixSetupStep({
   const [substep, setSubstep] = useState(() => targetSubstep ?? (direction === "backward" && showHexaStat ? 1 : 0));
   // Reports the mount-time default once (so entering a step "backward," which starts
   // on a substep other than 0, still gets persisted for resume even if the player
-  // reloads before navigating again) — subsequent changes are reported directly from
+  // reloads before navigating again). Subsequent changes are reported directly from
   // goToSubstep below instead of a substep-watching effect. Fully eliminating this last
   // mount-time report would mean lifting substep into a value the parent controls
   // directly, which isn't worth the blast radius for a bookkeeping report that never
@@ -1074,18 +1074,18 @@ export default function HexaMatrixSetupStep({
   }
   // Display-only: tracks which HEXA Stat level fields the user has actually typed into
   // this session, so a level they set to 0 shows a literal "0" instead of collapsing
-  // back to the placeholder (HexaStatEntry.level itself stays a real number — see
-  // LevelInput's comment). Resets on remount (e.g. leaving this step and coming back),
-  // which only affects the blank-vs-"0" look, never the saved value.
+  // back to the placeholder. HexaStatEntry.level itself stays a real number, see
+  // LevelInput's comment. This resets on remount, such as leaving this step and coming
+  // back, which affects only the blank-versus-"0" look, never the saved value.
   const [touchedLevels, setTouchedLevels] = useState<Set<string>>(() => new Set());
   function markLevelTouched(key: string) {
     setTouchedLevels((prev) => (prev.has(key) ? prev : new Set(prev).add(key)));
   }
 
-  // One-shot mount-time backfill from the character's saved tools data (only when this
-  // step lands blank) — can't run during render since it depends on a client-only
-  // localStorage read. Not worth lifting into the parent controller (which owns none of
-  // this step's domain logic) for a fetch that only ever fires once, at mount.
+  // One-shot mount-time backfill from the character's saved tools data, only when this step
+  // lands blank. It can't run during render, since it depends on a client-only localStorage
+  // read. Not worth lifting into the parent controller, which owns none of this step's
+  // domain logic, for a fetch that fires once at mount.
   useEffect(() => {
     if (initialValueRef.current) return;
     const saved = readSavedHexaValue(classDef, confirmedCharacterName);

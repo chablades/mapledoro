@@ -1,14 +1,14 @@
-// Reboot's Final Damage bonus — a permanent, level-bracketed multiplicative buff every Reboot-world
-// character gets automatically, no liberation/skill/setup answer involved. Not shown anywhere in
-// Character Info's own stat tooltip breakdown, but it's real and already baked into a Reboot
-// character's displayed Final Damage/Damage Range — the calc needs to add it back in explicitly or
-// it silently undershoots (strategywiki, confirmed against 4 real Reboot characters: Hoyoung
-// lv210, Zero lv231, Buccaneer lv201, Cannoneer lv210).
+// Reboot's Final Damage bonus: a permanent, level-bracketed multiplicative buff every
+// Reboot-world character gets automatically, with no liberation, skill or setup answer involved.
+// It appears nowhere in Character Info's own stat tooltip breakdown, but it is real and already
+// baked into a Reboot character's displayed Final Damage and Damage Range, so the calc has to add
+// it back explicitly or it silently undershoots. Per strategywiki, and checked against 4 Reboot
+// characters: Hoyoung lv210, Zero lv231, Buccaneer lv201 and Cannoneer lv210.
 import { WORLD_NAMES } from "../../model/constants";
 
-// Kronos/Solis/Hyperion are GMS's 3 Reboot worlds; Bera/Scania/Luna are Interactive — confirmed
-// in-game. Checked by name (not a separate hardcoded id list) so this stays correct if
-// WORLD_NAMES' own ids ever get renumbered.
+// Kronos, Solis and Hyperion are GMS's 3 Reboot worlds, while Bera, Scania and Luna are
+// Interactive. Checked by name rather than a separate hardcoded id list, so this stays correct
+// if WORLD_NAMES' own ids are ever renumbered.
 const REBOOT_WORLD_NAMES = new Set(["Kronos", "Solis", "Hyperion"]);
 
 export function isRebootWorld(worldId: number | undefined): boolean {

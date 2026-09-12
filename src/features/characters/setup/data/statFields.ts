@@ -25,11 +25,11 @@ export type SingleStatFieldId =
   | "summonDuration"
   | "arcanePower"
   | "sacredPower"
-  // Resource bar shown alongside HP — a raw number, not a percentage. Labeled "MP" by
-  // default; some classes replace MP with their own resource entirely (Demon Fury,
-  // Time Force, Psychic Points) via ClassSkillData.resourceLabel. Profile-pencil only
-  // (stats_flow) — never asked in the guided Setup flows, see StatsSetupStep's
-  // showAllStats.
+  // Resource bar shown alongside HP, a raw number rather than a percentage. Labeled "MP"
+  // by default, though some classes replace MP with their own resource entirely, such as
+  // Demon Fury, Time Force or Psychic Points, via ClassSkillData.resourceLabel.
+  // Profile-pencil only, in stats_flow, and never asked in the guided Setup flows. See
+  // StatsSetupStep's showAllStats.
   | "mp"
   // In-game Character Info window stat, profile-pencil only (same reasoning as mp).
   | "normalEnemyDamage";

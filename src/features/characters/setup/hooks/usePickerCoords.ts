@@ -50,12 +50,12 @@ export function usePickerCoords(isOpen: boolean, width: number) {
       portal.style.left = `${left}px`;
     }
 
-    // Re-decides which side to open on (used at open time and on window resize, both real
-    // viewport changes). Deliberately NOT re-run on every content-height change (e.g. a
-    // search query narrowing the result list) — the picker's content starts at its tallest
-    // (the full, unfiltered list) on open, so deciding the side then and keeping it sticky
-    // is always a valid fit for anything the content later shrinks/regrows to. Re-deciding
-    // on every keystroke instead made the popover visibly flip between above/below mid-type.
+    // Re-decides which side to open on, used at open time and on window resize, both real
+    // viewport changes. Deliberately not re-run on every content-height change, such as a
+    // search query narrowing the result list. The picker's content starts at its tallest,
+    // the full unfiltered list, on open, so deciding the side then and keeping it sticky
+    // fits anything the content later shrinks or regrows to. Re-deciding on every keystroke
+    // made the popover visibly flip between above and below mid-type.
     function recomputeSide() {
       const anchor = ref.current;
       const portal = portalRef.current;

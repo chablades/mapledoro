@@ -1,9 +1,8 @@
-// Dev-only preview drill for the Scouter figure's UI states -- lets a developer eyeball
-// every status/tooltip variant without needing to actually trigger each one for real (a
-// real timeout/rate-limit/etc. is now genuinely detected, but still awkward to reproduce
-// on demand for visual QA). Throwaway visual-QA tooling, not a permanent feature. Every
-// entry point is behind NODE_ENV, same convention as wipeTripwire.ts's
-// __mapledoroTestTripwire drill.
+// Dev-only preview drill for the Scouter figure's UI states, letting a developer eyeball every
+// status and tooltip variant without triggering each one for real. A real timeout or rate limit
+// is genuinely detected now, but still awkward to reproduce on demand for visual QA. This is
+// throwaway visual-QA tooling, not a permanent feature. Every entry point is behind NODE_ENV,
+// the same convention as wipeTripwire.ts's __mapledoroTestTripwire drill.
 
 import type { ScouterFigureStatus } from "./useScouterResult";
 
@@ -36,9 +35,9 @@ function placeholderEntry(computedAt: number) {
   };
 }
 
-// Built fresh per call (not a module-scope constant) -- Date.now() frozen at module load
-// would make "As of X ago" drift wrong the longer the page's been open before the drill
-// runs (a "1 hour stale" example would read as "3 hours ago" after sitting open a while).
+// Built fresh per call rather than as a module-scope constant. Date.now() frozen at module
+// load would make "As of X ago" drift wrong the longer the page has been open before the
+// drill runs, so a "1 hour stale" example would read as "3 hours ago" after sitting open.
 function buildExampleStatuses(): Record<string, ScouterFigureStatus> {
   const now = Date.now();
   const staleEntry = placeholderEntry(now - 3600_000);
@@ -49,7 +48,7 @@ function buildExampleStatuses(): Record<string, ScouterFigureStatus> {
     empty: { kind: "empty" },
     ready: { kind: "ready", entry: placeholderEntry(now), stale: false },
     // No reason: the cold-mount last-known-value case (initialStatus in
-    // useScouterResult.ts), not a failed refresh -- see its own comment there.
+    // useScouterResult.ts), not a failed refresh. See its own comment there.
     ready_stale_no_reason: { kind: "ready", entry: staleEntry, stale: true },
     ready_stale_rate_limited: { kind: "ready", entry: staleEntry, stale: true, reason: "rate_limited" },
     ready_stale_timeout: { kind: "ready", entry: staleEntry, stale: true, reason: "timeout" },
@@ -64,11 +63,11 @@ function buildExampleStatuses(): Record<string, ScouterFigureStatus> {
   };
 }
 
-/** Dev-only drill: `__mapledoroForceScouterStatus("fuyurin64", "error_timeout")` forces
- *  that character's Scouter figure to render as if in that state, reactively (no reload,
- *  no navigation needed). Pass `null` as the second argument to clear the override. Valid
- *  names are buildExampleStatuses()' keys. Nothing is saved -- purely an in-memory render
- *  override. */
+/** Dev-only drill: `__mapledoroForceScouterStatus("<character name>", "error_timeout")` forces
+ *  that character's Scouter figure to render as if in that state, reactively, with no reload
+ *  or navigation. Pass `null` as the second argument to clear the override. Valid status names
+ *  are the keys of buildExampleStatuses(). Nothing is saved; this is purely an in-memory
+ *  render override. */
 function installScouterStatusDrill() {
   if (process.env.NODE_ENV === "production" || typeof window === "undefined") return;
   const target = window as typeof window & {

@@ -20,11 +20,11 @@ import type { StoredCharacterRecord } from "../model/charactersStore";
 const SCOUTER_SIMULATOR_RESULT_TOOL_KEY = "scouterSimulatorResult";
 const MAX_CACHE_ENTRIES = 8;
 
-// Kept in lockstep with scouterCache.ts's SCOUTER_CACHE_VERSION conceptually -- a payload-
-// shape fix to buildScouterPayload/buildDirectScouterPayload should invalidate stale simulator
-// entries too, same reasoning as the real cache's own version bump. Bumped independently
-// (not literally shared) so a real-result-only fix doesn't force a needless simulator-cache
-// wipe, and vice versa.
+// Kept conceptually in lockstep with scouterCache.ts's SCOUTER_CACHE_VERSION, since a
+// payload-shape fix to buildScouterPayload or buildDirectScouterPayload should invalidate stale
+// simulator entries too, the same reasoning as the real cache's version bump. Bumped
+// independently rather than literally shared, so a real-result-only fix doesn't force a needless
+// simulator-cache wipe, and vice versa.
 // Bumped to 2: the GMS ring consolidation changed buildScouterPayload (Totalling Ring gone).
 const SCOUTER_SIMULATOR_CACHE_VERSION = 2;
 
@@ -63,8 +63,8 @@ const ERROR_CODE_TO_REASON: Record<string, ScouterErrorReason> = {
 /** Runs a Scouter Simulator "what if", hash-cached the same way the real result is: an
  *  identical override combo (down to the character's own current real stats) is an instant
  *  hit, no network call. A hash miss POSTs the mutated payload to /api/scouter (MapleScouter's
- *  plain /calc/dmg, no api-key header). Never throws -- every failure resolves to a tagged
- *  reason, same contract as the real cache's own fetch helper. */
+ *  plain /calc/dmg, no api-key header). Never throws: every failure resolves to a tagged
+ *  reason, the same contract as the real cache's own fetch helper. */
 export async function runScouterSimulator(
   character: StoredCharacterRecord,
   ctx: ScouterPayloadContext,

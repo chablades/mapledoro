@@ -22,7 +22,7 @@ import { LeveledIconTile } from "./LeveledIconTile";
 
 // manifests/v269/item.json, Item/Consume. Green/Red Jade's raw art fills its canvas
 // edge-to-edge (31x26, no padding) while Black/White Jade/Life have a visible margin
-// baked in (~36x36 canvas, content ~85-92% of it) — shrunk + nudged down here to
+// baked in (roughly a 36x36 canvas at 85-92% content), so they are shrunk and nudged down to
 // visually match, offsets measured directly off a 4x-zoom screenshot comparing each
 // icon's bottom edge against Black Jade's (the only one with zero baked-in padding
 // asymmetry, so treated as the reference).
@@ -42,8 +42,8 @@ const OZ_RING_TOOLTIP = {
 };
 
 // A missing/failed icon falls back to the ring's name-initial (mirrors VMatrixNodeIcon's
-// treatment) rather than a stray broken-image glyph — each Oz Ring has a distinct name,
-// unlike HEXA Stat's shared-prefix case that needed a slot number instead.
+// treatment) rather than a stray broken-image glyph. Each Oz Ring has a distinct name,
+// unlike HEXA Stat's shared-prefix case, which needed a slot number instead.
 function OzRingIcon({ id, name, theme, size = 32 }: { id: string; name: string; theme: AppTheme; size?: number }) {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const fallbackRef = useRef<HTMLDivElement>(null);

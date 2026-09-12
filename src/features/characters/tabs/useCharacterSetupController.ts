@@ -119,9 +119,9 @@ interface EquipmentDraftPreset {
   android?: EquipmentDraftItem; heart?: EquipmentDraftItem; badge?: EquipmentDraftItem;
 }
 interface EquipmentDraft {
-  /** Presets 1-2 are sparse per-slot overrides on top of preset 0 — see
-   *  draftPresetToStored, which merges each slot individually rather than choosing one
-   *  whole preset or the other. */
+  /** Presets 1-2 are sparse per-slot overrides on top of preset 0. See draftPresetToStored,
+   *  which merges each slot individually rather than choosing one whole preset or the
+   *  other. */
   presets?: EquipmentDraftPreset[];
   activePreset?: number;
   // Shared across presets:
@@ -129,9 +129,9 @@ interface EquipmentDraft {
   totem1?: EquipmentDraftItem; totem2?: EquipmentDraftItem; totem3?: EquipmentDraftItem;
   pet1?: EquipmentDraftItem; pet2?: EquipmentDraftItem; pet3?: EquipmentDraftItem;
   petEquip1?: EquipmentDraftItem; petEquip2?: EquipmentDraftItem; petEquip3?: EquipmentDraftItem;
-  /** Symbol levels keyed by region name; folded into tools.symbols (the calculator
-   *  store). String, not number — the setup step's draft keeps it blank until typed
-   *  (matching Oz Rings); converted to real numbers below. */
+  /** Symbol levels keyed by region name, folded into tools.symbols (the calculator store).
+   *  String rather than number, since the setup step's draft keeps it blank until typed,
+   *  matching Oz Rings. Converted to real numbers below. */
   symbolLevels?: Record<string, string>;
 }
 
@@ -140,7 +140,7 @@ function draftItem(v: EquipmentDraftItem) {
   return v.id !== undefined ? { id: v.id, name: v.name } : { name: v.name };
 }
 
-// Merges each slot individually — a slot present in `overrides` (this preset's own
+// Merges each slot individually. A slot present in `overrides` (this preset's own
 // explicit picks) wins, otherwise it falls through to `base` (preset 0), so an
 // untouched slot keeps mirroring preset 0 even when other slots in the same preset
 // have been customized. Same per-slot model as EquipmentSetupStep.tsx's activeGrid;
@@ -174,8 +174,8 @@ function parseEquipmentDraft(json: string): StoredCharacterEquipment | null {
     const presetAt = (i: number) => draftPresetToStored(d.presets?.[i], base);
     return {
       presets: [presetAt(0), presetAt(1), presetAt(2)],
-      // Always saved as preset 1, regardless of which tab was last open while editing —
-      // the tab switcher isn't an explicit "this is my active loadout" choice, so trusting
+      // Always saved as preset 1, regardless of which tab was last open while editing.
+      // The tab switcher isn't an explicit "this is my active loadout" choice, so trusting
       // it would silently save whatever preset the user happened to edit last.
       activePreset: 0,
       title: draftItem(d.title ?? null),
@@ -215,7 +215,7 @@ function buildSymbolsToolData(existing: SavedSymbols | null, levels: Record<stri
     if (!found) continue;
     const prev = symbols[name];
     // Skip only when there's nothing to update yet (an untouched area shouldn't create a
-    // fresh 0-level calculator entry) — an existing entry must still update down to 0, or
+    // fresh 0-level calculator entry). An existing entry must still update down to 0, or
     // clearing/zeroing a level in the equipment step silently no-ops.
     if (!prev && level < 1) continue;
     symbols[name] = prev
@@ -252,9 +252,9 @@ function applyStatsDraftToRoster(
   preserveExistingActivePresets(stats, existing);
   // Same derive-over-manual-answer rule as buildFullSetupRecord/applyMapleScouterFlow:
   // a Genesis/Destiny weapon already on file is definitive, and this step's own Inner
-  // Ability card (if edited) fully determines the scouter-facing line — but now that
-  // this question also shows a real manual ask (see InnerAbilityLineQuestion) whenever
-  // the card has no data yet, fall back to that manual answer instead of discarding it.
+  // Ability card, if edited, fully determines the scouter-facing line. Since this question
+  // also shows a real manual ask (see InnerAbilityLineQuestion) whenever the card has no
+  // data yet, fall back to that manual answer instead of discarding it.
   const scouterQ = convertScouterQuestionsDraftToStored(statsDraft);
   const innerAbilityLine = innerAbilityHasData(stats.innerAbility)
     ? (deriveInnerAbilityLine(stats.innerAbility) ?? "neither")
@@ -272,21 +272,18 @@ function applyStatsDraftToRoster(
   });
 }
 
-// Propagates any resulting floor-raise from a just-upserted character's link skills to
-// same-world siblings whose own stored value is now stale (e.g. this character being the
-// 2nd tracked magician just raised Empirical Knowledge's true floor for a 1st-set-up
-// sibling who's still sitting at their own, now-too-low, saved number).
+// Propagates a floor raise from a just-upserted character's link skills to same-world
+// siblings whose stored value is now too low, for example a second tracked magician raising
+// Empirical Knowledge's floor above what the first one saved.
 //
-// Takes `justUpserted` and folds it into `roster` itself rather than re-reading
-// readCharactersStore() -- the actual localStorage write for a same-tick upsertFn call
-// only happens later, in the writeCharactersStore effect keyed off characterRoster state
-// (see upsertRosterCharacter's own comment above), so a disk re-read here would still see
-// the PRE-finish record. This is also why linkSkills must be folded directly into
-// buildFullSetupRecord's/applyMapleScouterFlow's one atomic upsertFn call rather than
-// upserted as a separate step afterward that reads "existing" from disk first: for a
-// brand-new character, that separate read would find nothing on disk yet (this same
-// character's own upsertFn call hasn't flushed), so an `if (!existing) return` guard
-// would silently no-op the whole linkSkills write.
+// Folds `justUpserted` into `roster` rather than re-reading readCharactersStore(), because
+// the localStorage write for a same-tick upsertFn call happens later, in the
+// writeCharactersStore effect keyed off characterRoster state (see upsertRosterCharacter
+// above), so a disk read here would still see the pre-finish record. That is also why
+// linkSkills must fold into buildFullSetupRecord's and applyMapleScouterFlow's single
+// upsertFn call rather than a separate step that reads existing data from disk first: for a
+// new character nothing is on disk yet, so an `if (!existing) return` guard would no-op the
+// whole linkSkills write.
 function propagateLinkSkillFloorsAfterUpsert(
   justUpserted: StoredCharacterRecord,
   roster: StoredCharacterRecord[],
@@ -301,10 +298,10 @@ function propagateLinkSkillFloorsAfterUpsert(
 }
 
 // Same propagation as propagateLinkSkillFloorsAfterUpsert, but mutates `roster` in place
-// instead of taking an upsertFn -- for callers (handleRefreshed) already inside a
-// setCharacterRoster functional updater that owns the array being built, where routing
-// through upsertRosterCharacter isn't an option (not yet in scope at that call site) and
-// isn't needed anyway (this functional update already IS the commit).
+// instead of taking an upsertFn. For callers such as handleRefreshed that are already inside
+// a setCharacterRoster functional updater owning the array being built, routing through
+// upsertRosterCharacter is not in scope at that call site and is not needed, since the
+// functional update is itself the commit.
 function applyLinkSkillFloorsInPlace(roster: StoredCharacterRecord[], worldId: number): void {
   propagateLinkSkillFloors(roster, worldId, (raised) => {
     const i = roster.findIndex((c) => toCharacterKey(c) === toCharacterKey(raised));
@@ -312,16 +309,14 @@ function applyLinkSkillFloorsInPlace(roster: StoredCharacterRecord[], worldId: n
   });
 }
 
-// Shared by both full_setup/quick_setup (finalizeQuickOrFullSetupRecord) and
-// maplescouter_setup (finishSetupFlow) after their own atomic upsert: `link_skills`
-// genuinely present in this run's step data means a human just looked at the pre-filled
-// value and deliberately kept or changed it -- mastery reads as one identical number
-// across every character sharing a skill in-game (live-tested), so that saved value
-// becomes every same-world sibling's new synced truth too (syncLinkSkillToSiblings,
-// clamped at the level-proven floor). No `link_skills` this run (Quick Setup never has
-// that step; a redo that didn't revisit it) means nobody made a deliberate choice to
-// sync from, so only a stale sibling gets raised, never overwritten down to a number
-// nobody actually chose (propagateLinkSkillFloorsAfterUpsert, raise-only).
+// Shared by full and quick setup (finalizeQuickOrFullSetupRecord) and maplescouter_setup
+// (finishSetupFlow) after their own upsert. `link_skills` present in this run's step data
+// means someone looked at the pre-filled value and deliberately kept or changed it. In game
+// a link skill's mastery reads as one identical number across every character sharing it, so
+// that saved value becomes every same-world sibling's synced truth (syncLinkSkillToSiblings,
+// clamped at the level-proven floor). Absent, as in Quick Setup or a redo that skipped the
+// step, nobody made a deliberate choice, so a stale sibling is only raised and never pulled
+// down to a number nobody chose (propagateLinkSkillFloorsAfterUpsert, raise-only).
 function syncOrPropagateLinkSkills(
   linkSkillsStepValue: string | undefined,
   justUpserted: StoredCharacterRecord,
@@ -337,16 +332,15 @@ function syncOrPropagateLinkSkills(
 
 const WH_LEGION_RANK_SET = new Set<string>(["B", "A", "S", "SS", "SSS"]);
 
-// Resolves the world's WH Legion rank: roster-derived wins, else the manual pick,
-// else whatever was already stored. `manual` is undefined when this session never
-// touched the question (preserve the existing value — writeScouterLegionForWorld
-// replaces the whole per-world blob, so dropping this would silently erase it on
-// every unrelated finish) vs. "none" when the user explicitly picked "No Wild
-// Hunter" or cleared their previous bracket pick (an explicit, deliberate clear).
-// "none" used to fall through to the WH_LEGION_RANK_SET check below and resolve to
-// undefined -- indistinguishable from never having answered at all, so anyone with
-// no Wild Hunter could never satisfy a completeness check that requires an answer.
-// Checked explicitly now so it round-trips as its own value.
+// Resolves the world's WH Legion rank: roster-derived wins, then the manual pick, then
+// whatever was stored. `manual` is undefined when this session never touched the question, in
+// which case the existing value must be preserved, since writeScouterLegionForWorld replaces
+// the whole per-world blob and dropping it would erase the rank on every unrelated finish.
+// It is "none" when someone explicitly picked "No Wild Hunter" or cleared a previous bracket
+// pick. "none" is checked explicitly rather than falling through to the WH_LEGION_RANK_SET
+// check below, which would resolve it to undefined and make it indistinguishable from never
+// having answered, leaving anyone without a Wild Hunter unable to satisfy a completeness
+// check.
 function resolveWhLegionRank(
   derived: WhLegionRank | null,
   manual: string | undefined,
@@ -359,18 +353,17 @@ function resolveWhLegionRank(
 }
 
 /**
- * Re-derives the world's WH Legion rank from its current roster and persists it if
- * it changed. `applyScouterLegionForWorld` only runs when a Full/MapleScouter setup
- * finishes, so it misses roster changes that should also keep this in sync: a new
- * character added via quick setup (no Stats questionnaire at all), an existing Wild
- * Hunter leveling into a new bracket via auto-refresh, and a character being deleted
- * from the roster (`excludeKey`, so a just-removed Wild Hunter can't still count toward
- * its own re-derivation — without it, deleting the world's HIGHEST-ranked Wild Hunter
- * would leave the rank stuck rather than recomputing down to the next-highest one still
- * in the roster). A no-WH-in-roster result never touches storage — that would erase a
- * legitimate manual pick for a Wild Hunter who just isn't in this local roster (this
- * applies identically after a delete: the real in-game Wild Hunter may still exist even
- * though it's no longer tracked locally, so its rank isn't actively cleared to "none").
+ * Re-derives the world's WH Legion rank from its roster and persists it if it changed.
+ * `applyScouterLegionForWorld` runs only when a Full or MapleScouter setup finishes, missing
+ * three roster changes that should also keep this in sync: a character added via quick setup,
+ * which has no Stats questionnaire; an existing Wild Hunter leveling into a new bracket via
+ * auto-refresh; and a deletion. `excludeKey` covers the last of those, keeping a just-removed
+ * Wild Hunter from counting toward its own re-derivation, without which deleting the
+ * highest-ranked one would leave the rank stuck instead of recomputing to the next highest.
+ *
+ * A roster with no Wild Hunter never touches storage, since that would erase a legitimate
+ * manual pick for one who simply is not tracked locally. The same holds after a delete: the
+ * real character may still exist in game, so its rank is not cleared to "none".
  */
 function syncWhLegionRankForWorld(worldId: number, base?: StoredCharacterRecord, excludeKey?: string): void {
   const store = readCharactersStore();
@@ -386,9 +379,9 @@ function syncWhLegionRankForWorld(worldId: number, base?: StoredCharacterRecord,
   writeScouterLegionForWorld(worldId, { ...existingLegion, wildHunterRank: derived });
 }
 
-/** Guard wrapper for the auto-refresh callsite — kept separate so the null-check
- *  narrows normally (the record is only ever assigned from inside a setState
- *  closure at the callsite, which defeats TS's control-flow narrowing there). */
+/** Guard wrapper for the auto-refresh callsite, kept separate so the null-check narrows
+ *  normally. The record is assigned only from inside a setState closure at the callsite,
+ *  which defeats TypeScript's control-flow narrowing there. */
 function syncWhLegionRankAfterRefresh(record: StoredCharacterRecord | null): void {
   if (record) syncWhLegionRankForWorld(record.worldID, record);
 }
@@ -410,7 +403,7 @@ function finalizeQuickOrFullSetupRecord(
   } else {
     const gender = normalizeGenderValue(setupStepTestByStep.gender);
     const marriage = marriageDraftToStored(setupStepTestByStep.marriage ?? "");
-    // Quick Setup only ever collects gender + marriage — merge those two fields onto
+    // Quick Setup only collects gender and marriage, so merge those two fields onto
     // whatever's already on record for this character instead of building a bare record
     // and replacing it wholesale, which would silently wipe stats/equipment/hexa/v-matrix/
     // familiars/tools that a prior Full Setup (or standalone tool flow) already saved.
@@ -424,27 +417,26 @@ function finalizeQuickOrFullSetupRecord(
     syncWhLegionRankForWorld(confirmedCharacter.worldID, storedRecord);
     // full_setup already seeds this via buildFullSetupRecord → applyScouterLegionForWorld;
     // Quick Setup never touches Legion data at all otherwise, but the data is account-level
-    // (per-world) and safe to assume regardless of entry path — see the helper's own comment.
+    // (per-world) and safe to assume regardless of entry path. See the helper's own comment.
     ensureLegionArtifactDefaultForWorld(confirmedCharacter.worldID);
   }
   // See syncOrPropagateLinkSkills's own comment for the sync-vs-raise-only split.
   syncOrPropagateLinkSkills(setupStepTestByStep.link_skills, storedRecord, characterRoster, upsertRosterCharacter);
 }
 
-// A freshly-unlocked Legion Artifact starts at Artifact Level 1 (not 0 — namu.wiki's own
-// level table starts numbering at 1, same convention as character level), already with its
-// first 3 crystals (Orange Mushroom/Slime/Horny Mushroom) unlocked at Crystal Level 1 and
-// these exact 3 default lines — confirmed via namu.wiki: "미변경 시 기본 할당 옵션은
+// A freshly unlocked Legion Artifact starts at Artifact Level 1, not 0, since namu.wiki's
+// level table numbers from 1 like character level. It already has its first 3 crystals
+// (Orange Mushroom, Slime, Horny Mushroom) at Crystal Level 1 with these 3 default lines,
+// per namu.wiki: "미변경 시 기본 할당 옵션은
 // '올스탯 증가', '최대 HP/MP 증가', '공격력/마력 증가'이다" ("if unchanged, the default
 // assigned options are All Stat, Max HP/MP, ATT/Magic ATT"), and Crystal Grade 1 costs 0
-// AP (i.e. automatic, not a player action). None of our setup flows ask for a real
-// Artifact Level or crystal config, so this is the one piece of Legion Artifact data safe to
-// assume for literally every player, regardless of how far they've actually progressed.
+// AP, so it is automatic rather than a player action. No setup flow asks for a real Artifact
+// Level or crystal config, making this the one piece of Legion Artifact data safe to assume
+// for every player whatever their progress.
 //
-// Seeded lazily, once per world, the first time ANY setup flow finishes for a character on
-// a world that doesn't have real Legion Artifact data yet — not just full_setup, since the
-// data is account-level (per-world) and independent of which flow happened to touch it.
-// Never overwrites real data (existence check only).
+// Seeded lazily, once per world, the first time any setup flow finishes for a character on a
+// world with no real Legion Artifact data yet. Not just full_setup, since the data is
+// per-world and independent of which flow touched it. Never overwrites real data.
 function ensureLegionArtifactDefaultForWorld(worldId: number): void {
   const store = readCharactersStore();
   if (store.legionArtifactByWorld[String(worldId)]) return;
@@ -457,11 +449,11 @@ function ensureLegionArtifactDefaultForWorld(worldId: number): void {
 }
 
 /**
- * Resolves + persists this world's Legion data (WH rank, Maple Union artifacts) from a
- * Stats-draft WH-rank pick and an (optional) Legion Artifacts draft. Shared between
- * maplescouter_setup (artifacts collected inline in the Stats questionnaire) and
- * full_setup (artifacts collected on their own dedicated step) — both now show the WH
- * Legion rank question in Stats, so this write can't live in just one flow anymore.
+ * Resolves and persists this world's Legion data (WH rank, Maple Union artifacts) from a
+ * Stats-draft WH-rank pick and an optional Legion Artifacts draft. Shared between
+ * maplescouter_setup, which collects artifacts inline in the Stats questionnaire, and
+ * full_setup, which gives them their own step. Both show the WH Legion rank question in
+ * Stats, so this write cannot live in one flow alone.
  */
 function applyScouterLegionForWorld(
   store: CharactersStore,
@@ -481,25 +473,25 @@ function applyScouterLegionForWorld(
     : [...worldRoster, base];
   const existingLegion = store.scouterLegionByWorld[String(character.worldID)];
   const wildHunterRank = resolveWhLegionRank(whRankFromRoster(legionRoster), whLegionDraft, existingLegion?.wildHunterRank);
-  // Maple Union artifacts are also account-level (per-world), not derivable — keep them
-  // on the same per-world blob next to the WH rank. (For full_setup these are already
-  // derived from `board` by the caller before this function runs.)
+  // Maple Union artifacts are also per-world and not derivable, so they live on the same
+  // per-world blob next to the WH rank. For full_setup the caller has already derived them
+  // from `board` before this function runs.
   const artifacts = resolveLegionArtifacts(legionArtifactsDraft, existingLegion);
   writeScouterLegionForWorld(character.worldID, {
     ...(wildHunterRank ? { wildHunterRank } : {}),
     ...artifacts,
   });
 
-  // The full 9-crystal board (full_setup only) is real Legion Artifact data, not a
-  // scouter input — lives on its own per-world store. Preserve whatever's already
-  // stored when this session didn't touch it (e.g. a second character on the same
-  // world finishing full_setup without revisiting Legion Artifacts).
+  // The full 9-crystal board, full_setup only, is real Legion Artifact data rather than a
+  // scouter input, so it lives in its own per-world store. Preserve what is already stored
+  // when this session did not touch it, such as a second character on the same world
+  // finishing full_setup without revisiting Legion Artifacts.
   if (board) {
     const existingArtifact = store.legionArtifactByWorld[String(character.worldID)];
-    // board.artifactLevel is a string that can be "" (level input cleared mid-edit, see
-    // clampArtifactLevelInput's own comment) without being undefined — a truthy check (not
-    // !== undefined) is required so a blank field is treated the same as "didn't touch it"
-    // and falls back to existingArtifact, instead of Number("") silently collapsing to 0.
+    // board.artifactLevel is a string that can be empty without being undefined, when the
+    // level input was cleared mid-edit (see clampArtifactLevelInput). A truthy check rather
+    // than !== undefined is required so a blank field reads as untouched and falls back to
+    // existingArtifact, instead of Number("") collapsing to 0.
     const artifactLevel = board.artifactLevel ? Number(board.artifactLevel) : existingArtifact?.artifactLevel;
     const crystals = toStoredLegionCrystals(board.crystals, artifactLevel ?? 0) ?? existingArtifact?.crystals;
     writeLegionArtifactForWorld(character.worldID, {
@@ -511,11 +503,11 @@ function applyScouterLegionForWorld(
 }
 
 /**
- * Builds/merges the MapleScouter flow's data into the roster in ONE upsert;
- * returns true if it created a new record. `upsertFn` writes via React state, so
- * we can't create-then-read within a tick — start from the existing record if
- * present, otherwise a fresh base (MapleScouter is a first-time entry mode and
- * collects no gender/marriage), and apply stats + oz rings before the single write.
+ * Builds and merges the MapleScouter flow's data into the roster in one upsert, returning
+ * true if it created a new record. `upsertFn` writes via React state, so a record cannot be
+ * created and read back within a tick. Start from the existing record if there is one,
+ * otherwise a fresh base, since MapleScouter is a first-time entry mode that collects no
+ * gender or marriage, then apply stats and oz rings before the single write.
  */
 function applyMapleScouterFlow(
   character: NormalizedCharacterData | null,
@@ -526,9 +518,9 @@ function applyMapleScouterFlow(
   const store = readCharactersStore();
   const existing = selectCharacterById(store, toCharacterKey(character));
   const created = !existing;
-  // MapleScouter setup has no gender/marriage step (see doc comment above) — don't read
-  // stepData.gender/marriage here, since that field is shared draft state that can still be
-  // holding a value left over from an abandoned Quick/Full Setup attempt on this character.
+  // MapleScouter setup has no gender or marriage step (see the doc comment above), so do not
+  // read them from stepData here. That draft state is shared and can still hold a value left
+  // over from an abandoned Quick or Full Setup attempt on this character.
   const base = existing ?? createStoredCharacterRecord({ character });
 
   const statsDraft = parseStatsStepDraft(stepData.stats ?? "");
@@ -541,10 +533,10 @@ function applyMapleScouterFlow(
   const ozRings = convertOzRingsDraftToStored(ozRingsDraft);
   const buffs = convertBuffsDraftToStored(parseBuffsDraft(stepData.buffs ?? ""));
   const scouterQ = convertScouterQuestionsDraftToStored(statsDraft);
-  // maplescouter_setup has no Inner Ability substep of its own, so this is the only place
-  // that can derive it — from whatever this character's Stats bookmark/full_setup already
-  // recorded, same rule as buildFullSetupRecord/applyStatsDraftToRoster. Only overrides the
-  // direct-ask answer when the active preset's lines are actually known.
+  // maplescouter_setup has no Inner Ability substep, so this is the only place that can
+  // derive it, from whatever the character's Stats bookmark or full_setup already recorded.
+  // Same rule as buildFullSetupRecord and applyStatsDraftToRoster. Overrides the direct-ask
+  // answer only when the active preset's lines are known.
   const innerAbilityLine = innerAbilityHasData(base.stats.innerAbility)
     ? (deriveInnerAbilityLine(base.stats.innerAbility) ?? "neither")
     : scouterQ?.innerAbilityLine;
@@ -574,8 +566,8 @@ function applyMapleScouterFlow(
   upsertFn({
     ...base,
     stats: { ...base.stats, ...stats },
-    // Same Genesis/Destiny-weapon-is-definitive rule as the other finalize paths — this
-    // flow has no Equipment step, so the only source is whatever's already on file.
+    // Same rule as the other finalize paths, where a Genesis or Destiny weapon on file is
+    // definitive. This flow has no Equipment step, so that is the only source.
     isLiberated: deriveIsLiberatedFromWeapon(base.equipment) ?? isLiberated,
     weaponHand: deriveWeaponHandFromWeapon(base.equipment) ?? weaponHand,
     hasRuinForceShield: deriveHasRuinForceShield(base.equipment) ?? hasRuinForceShield,
@@ -589,23 +581,22 @@ function applyMapleScouterFlow(
   return created;
 }
 
-// "Lv. 11 Sacred Symbols" (the Buffs step's maxedSacredSymbol tile) is about the 6 boss
-// regions' Sacred Symbols specifically (Grand Sacred grants EXP/meso/drop, not a boss
-// bonus, so it's excluded) — full_setup already has this data from the Equipment step's
-// Symbols substep, so it's derived here rather than trusting a separate manual toggle.
+// "Lv. 11 Sacred Symbols", the Buffs step's maxedSacredSymbol tile, is about the 6 boss
+// regions' Sacred Symbols specifically. Grand Sacred is excluded because it grants EXP, meso
+// and drop rather than a boss bonus. full_setup already has this data from the Equipment
+// step's Symbols substep, so it is derived here rather than from a separate manual toggle.
 function deriveMaxedSacredSymbol(symbolsData: SavedSymbols | null): boolean {
   if (!symbolsData) return false;
   return SACRED_AREAS.every((a) => (symbolsData.symbols[a.name]?.level ?? 0) >= SACRED_MAX_LEVEL);
 }
 
-// Hyper Stat/Inner Ability's activePreset always converts to 0 from the draft (see
-// draftHyperStatToStored/convertInnerAbilityDraftToStored) — the preset tab switcher
-// used while editing lines isn't an explicit "make this active in-game" choice, so it
-// can't be trusted for a brand-new character either. But for an already-set-up
-// character, the profile's dedicated "Set preset X as active" button is the only
-// authoritative way to change it — re-running this step (e.g. a bookmark's confined
-// edit pencil) must never silently reset it back to preset 1 just because Finish was
-// pressed. Restores whichever preset was actually active before this edit.
+// Hyper Stat and Inner Ability activePreset always convert to 0 from the draft (see
+// draftHyperStatToStored and convertInnerAbilityDraftToStored), because the preset tab
+// switcher used while editing lines is not an explicit "make this active in game" choice and
+// cannot be trusted even for a new character. For an already set-up character the profile's
+// "Set preset X as active" button is the only authoritative way to change it, so re-running
+// this step, such as from a bookmark's confined edit pencil, must not reset it to preset 1
+// just because Finish was pressed. Restores whichever preset was active before this edit.
 function preserveExistingActivePresets(
   stats: Partial<StoredCharacterStats>,
   existing: StoredCharacterRecord | null,
@@ -615,11 +606,11 @@ function preserveExistingActivePresets(
   if (stats.innerAbility) stats.innerAbility.activePreset = existing.stats.innerAbility?.activePreset ?? 0;
 }
 
-// Same "the profile's Set-active correction is the only authoritative source" rule as
-// preserveExistingActivePresets above, for Equipment/Familiars/HEXA Stat's own presets --
-// parseEquipmentDraft/buildFamiliarsDataForRecord/buildHexaStatToolData all hardcode a
-// fresh activePreset (0, or 0 per node) since a setup draft never carries one, so every
-// write of these fields must restore it afterward or silently discard a profile correction.
+// Same rule as preserveExistingActivePresets above, where the profile's Set-active correction
+// is the only authoritative source, applied to Equipment, Familiars and HEXA Stat presets.
+// parseEquipmentDraft, buildFamiliarsDataForRecord and buildHexaStatToolData all hardcode a
+// fresh activePreset, 0 or 0 per node, since a setup draft never carries one, so every write
+// of these fields must restore it afterward or discard a profile correction.
 function preserveExistingEquipmentActivePreset(
   equipment: StoredCharacterEquipment | null,
   existing: StoredCharacterRecord | null,
@@ -661,14 +652,14 @@ function buildFullSetupRecord(
     character,
     base,
     statsDraft.scouterQuestions?.whLegion,
-    // Per-field merge, not whole-object fallback: deriveLegionArtifactFields can return
-    // just ONE of the two fields (e.g. only Bonus EXP was ever assigned to a crystal this
-    // session) -- a `??` on the whole object would let that partial result silently win
-    // over a real manual answer for the OTHER field, reintroducing the same silent-
-    // discard bug this fallback was meant to fix. Spreading the manual answer first, then
-    // overlaying only whichever field(s) the board actually proved, keeps each field's
-    // own fallback chain independent: board-derived (if that stat's ever been assigned)
-    // -> this session's manual answer -> whatever was already stored.
+    // Per-field merge rather than a whole-object fallback. deriveLegionArtifactFields can
+    // return just one of the two fields, for example when only Bonus EXP was assigned to a
+    // crystal this session, and a `??` on the whole object would let that partial result win
+    // over a real manual answer for the other field, reintroducing the silent-discard bug
+    // this fallback exists to fix. Spreading the manual answer first, then overlaying only
+    // the fields the board proved, keeps each field's fallback chain independent:
+    // board-derived if that stat was ever assigned, then this session's manual answer, then
+    // whatever was already stored.
     { ...statsDraft.scouterQuestions, ...deriveLegionArtifactFields(legionBoard) },
     legionBoard,
   );
@@ -681,20 +672,20 @@ function buildFullSetupRecord(
   const hexaStatToolData = buildHexaStatToolData(stepData.hexa_matrix ?? "");
   preserveExistingHexaStatActivePresets(hexaStatToolData, existing);
   const vMatrixData = buildVMatrixDataForRecord(stepData.v_matrix ?? "");
-  // Falls back to existing.linkSkills (not base.linkSkills, always undefined on a fresh
-  // record) when this run's Link Skills step produced no draft data -- same rule as
-  // equipment/familiars/vMatrix below, so a full-setup redo that didn't revisit the step
-  // doesn't wipe a previously saved value.
+  // Falls back to existing.linkSkills, not base.linkSkills which is always undefined on a
+  // fresh record, when this run's Link Skills step produced no draft data. Same rule as
+  // equipment, familiars and vMatrix below, so a full-setup redo that skipped the step does
+  // not wipe a previously saved value.
   const linkSkillsData = stepData.link_skills ? linkSkillsDraftToStored(stepData.link_skills) : null;
   const familiarsData = buildFamiliarsDataForRecord(stepData.familiars ?? "");
   preserveExistingFamiliarsActivePreset(familiarsData, existing);
   const equipmentData = stepData.equipment ? parseEquipmentDraft(stepData.equipment) : null;
   preserveExistingEquipmentActivePreset(equipmentData, existing);
   const symbolsData = stepData.equipment ? buildSymbolsToolDataForRecord(character, stepData.equipment) : null;
-  // Spread existing.tools first (not just base.tools, which is a fresh blank record's
-  // empty tools) so tool data this flow never touches -- liberation, astra, symbols,
-  // exp-calculator, mystic-frontier -- survives a full-setup redo instead of being
-  // dropped. hexaSkills/hexaStat/symbols then overlay only when this run produced them.
+  // Spread existing.tools first, not just base.tools which is a fresh record's empty tools,
+  // so tool data this flow never touches (liberation, astra, symbols, exp-calculator,
+  // mystic-frontier) survives a full-setup redo instead of being dropped. hexaSkills,
+  // hexaStat and symbols then overlay only when this run produced them.
   const tools = {
     ...existing?.tools,
     ...base.tools,
@@ -705,20 +696,18 @@ function buildFullSetupRecord(
 
   const ozRings = convertOzRingsDraftToStored(ozRingsDraft);
   const buffsConverted = convertBuffsDraftToStored(parseBuffsDraft(stepData.buffs ?? ""));
-  // Based on the EXISTING stored buffs, not just buffsConverted — Buffs now backfills
-  // on mount (see BuffsSetupStep's own effect), so a visited-and-finished step's
-  // buffsConverted already reflects the full true state. But if Buffs wasn't visited
-  // this session at all (buffsConverted null) and this character's Sacred Symbols
-  // just happen to be maxed, forcing maxedSacredSymbol:true here without this base
-  // would still replace the whole `buffs` object with just that one flag, dropping
-  // everything else already saved.
+  // Based on the existing stored buffs rather than buffsConverted alone. Buffs backfills on
+  // mount (see BuffsSetupStep's own effect), so a step that was visited and finished already
+  // has the full state in buffsConverted. But if Buffs was never visited this session,
+  // leaving buffsConverted null, and the character's Sacred Symbols happen to be maxed,
+  // forcing maxedSacredSymbol true without this base would replace the whole `buffs` object
+  // with that one flag and drop everything else already saved.
   const buffs = deriveMaxedSacredSymbol(symbolsData)
     ? { ...existing?.scouter?.buffs, ...buffsConverted, maxedSacredSymbol: true as const }
     : buffsConverted;
-  // Same derive-over-manual-answer rule as applyStatsDraftToRoster/applyMapleScouterFlow:
-  // real Inner Ability card data wins when it exists; otherwise fall back to this
-  // session's manual Quick Questions answer (see InnerAbilityLineQuestion) instead of
-  // discarding it.
+  // Same derive-over-manual-answer rule as applyStatsDraftToRoster and applyMapleScouterFlow.
+  // Real Inner Ability card data wins when it exists, otherwise fall back to this session's
+  // manual Quick Questions answer (see InnerAbilityLineQuestion) rather than discarding it.
   const innerAbilityLine = innerAbilityHasData(stats.innerAbility)
     ? (deriveInnerAbilityLine(stats.innerAbility) ?? "neither")
     : convertScouterQuestionsDraftToStored(statsDraft)?.innerAbilityLine;
@@ -728,19 +717,19 @@ function buildFullSetupRecord(
     ...(innerAbilityLine ? { innerAbilityLine } : {}),
   };
 
-  // equipment/familiars/vMatrix fall back to `existing` (not `base`, which is always a
-  // fresh blank record here) when this run's steps produced no draft data -- e.g. a
-  // full-setup redo that didn't revisit them, or a step skipped by level/legacy gating.
-  // Falling back to the blank base instead would silently wipe them. This is the same
-  // merge-against-existing rule the scouter/expHistory fields below already follow.
+  // equipment, familiars and vMatrix fall back to `existing` rather than `base`, which is
+  // always a fresh blank record here, when this run's steps produced no draft data. That
+  // covers a full-setup redo that skipped them and a step skipped by level or legacy gating.
+  // Falling back to the blank base would wipe them. Same merge-against-existing rule the
+  // scouter and expHistory fields below follow.
   const knownEquipment = equipmentData ?? existing?.equipment ?? base.equipment;
   return {
     ...base,
     stats: { ...base.stats, ...stats },
     equipment: knownEquipment,
-    // A Genesis/Destiny weapon already known (this run's Equipment step, or a prior
-    // run's) is definitive proof either way — takes priority over the manual checkbox
-    // answer, same rule as applyStatsDraftToRoster/applyEquipmentDraftToRoster.
+    // A known Genesis or Destiny weapon, whether from this run's Equipment step or a prior
+    // one, is definitive proof either way and takes priority over the manual checkbox answer.
+    // Same rule as applyStatsDraftToRoster and applyEquipmentDraftToRoster.
     isLiberated: deriveIsLiberatedFromWeapon(knownEquipment) ?? isLiberated,
     weaponHand: deriveWeaponHandFromWeapon(knownEquipment) ?? weaponHand,
     hasRuinForceShield: deriveHasRuinForceShield(knownEquipment) ?? hasRuinForceShield,
@@ -749,12 +738,11 @@ function buildFullSetupRecord(
     vMatrix: vMatrixData ?? existing?.vMatrix ?? base.vMatrix,
     linkSkills: linkSkillsData ?? existing?.linkSkills ?? base.linkSkills,
     expHistory: existing ? appendExpHistoryEntry(existing.expHistory, character.level, character.exp) : base.expHistory,
-    // Merged against the EXISTING record's scouter (not `base`, which is always a
-    // fresh blank object here — see the equipment/familiars/vMatrix comment above for
-    // why that matters): scouterPatch only holds whichever of ozRings/buffs/
-    // innerAbilityLine actually got recomputed THIS run. Replacing scouter outright
-    // (the old behavior) silently dropped the others whenever a redo of full setup
-    // didn't happen to revisit Oz Rings/Buffs this time.
+    // Merged against the existing record's scouter rather than `base`, which is always a
+    // fresh blank object here (see the equipment comment above for why that matters).
+    // scouterPatch holds only whichever of ozRings, buffs and innerAbilityLine were
+    // recomputed this run, so replacing scouter outright would drop the others whenever a
+    // full-setup redo skipped Oz Rings or Buffs.
     scouter: { ...existing?.scouter, ...scouterPatch },
   };
 }
@@ -772,21 +760,21 @@ function applyEquipmentDraftToRoster(
   if (!existing) return;
   preserveExistingEquipmentActivePreset(equipment, existing);
   const symbolsData = buildSymbolsToolDataForRecord(character, equipmentJson);
-  // Same resync buildFullSetupRecord already does for a full Setup finish (see its own
-  // deriveMaxedSacredSymbol comment) — without it, editing Symbols from the Equipment
-  // bookmark's pencil (outside Setup entirely) could cross the Lv. 11 Sacred Symbols
-  // threshold and leave this buff flag stale until the next full Setup run happens to
-  // touch it. Positive-only (never clears back to unset), matching buildFullSetupRecord's
-  // own established behavior for this same flag.
+  // Same resync buildFullSetupRecord does on a full Setup finish (see its own
+  // deriveMaxedSacredSymbol comment). Without it, editing Symbols from the Equipment
+  // bookmark's pencil, outside Setup entirely, could cross the Lv. 11 Sacred Symbols
+  // threshold and leave this flag stale until the next full Setup run touched it.
+  // Positive-only, never clearing back to unset, matching buildFullSetupRecord's behavior
+  // for the same flag.
   const scouterBuffs = symbolsData && deriveMaxedSacredSymbol(symbolsData)
     ? { ...existing.scouter?.buffs, maxedSacredSymbol: true as const }
     : existing.scouter?.buffs;
   upsertFn({
     ...existing,
     equipment,
-    // Genesis Liberation's Final Damage bonus lives on the weapon item itself, so a
-    // newly-picked weapon is just as definitive proof of losing it as gaining it —
-    // re-derive from whichever preset is active rather than only ever setting true.
+    // Genesis Liberation's Final Damage bonus lives on the weapon item itself, so a newly
+    // picked weapon proves losing it as definitively as gaining it. Re-derive from whichever
+    // preset is active rather than only ever setting true.
     isLiberated: deriveIsLiberatedFromWeapon(equipment) ?? existing.isLiberated,
     weaponHand: deriveWeaponHandFromWeapon(equipment) ?? existing.weaponHand,
     hasRuinForceShield: deriveHasRuinForceShield(equipment) ?? existing.hasRuinForceShield,
@@ -804,9 +792,9 @@ function applyStandaloneToolDrafts(
   flowId: SetupFlowId,
 ) {
   if (!character) return;
-  // Gate each field by whether the flow actually being finished includes that step —
-  // otherwise leftover draft data from a different, abandoned flow (e.g. Equipment typed
-  // in during Full Setup, then backing out to finish Quick Setup) silently leaks in.
+  // Gate each field on whether the flow being finished includes that step. Otherwise leftover
+  // draft data from a different, abandoned flow leaks in, such as Equipment typed during Full
+  // Setup before backing out to finish Quick Setup.
   if (stepData.equipment && flowIncludesStep(flowId, "equipment")) {
     applyEquipmentDraftToRoster(character, stepData.equipment, upsertFn);
   }
@@ -819,12 +807,11 @@ function applyStandaloneToolDrafts(
   if (stepData.familiars && flowIncludesStep(flowId, "familiars")) {
     applyFamiliarsDraftToRoster(character, stepData.familiars, upsertFn);
   }
-  // Unlike the fields above, an empty draft is a legitimate final value here (clearing
-  // gender/marriage back to "not set" is a real, intentional choice from the Biography
-  // blocks), so these two aren't gated on the draft string being truthy — only on the
-  // flow actually being the one that owns the field. quick_setup/full_setup already
-  // persist both via finalizeQuickOrFullSetupRecord, so this only fires for the
-  // standalone single-step flows the Biography blocks use.
+  // Unlike the fields above, an empty draft is a legitimate final value here, since clearing
+  // gender or marriage back to "not set" is a real choice from the Biography blocks. So these
+  // two are gated only on the flow owning the field, not on the draft string being truthy.
+  // quick_setup and full_setup already persist both via finalizeQuickOrFullSetupRecord, so
+  // this fires only for the standalone single-step flows the Biography blocks use.
   if (flowId === "gender_flow") {
     applyGenderDraftToRoster(character, stepData.gender, upsertFn);
   }
@@ -855,9 +842,9 @@ function applyMarriageDraftToRoster(
   upsertFn(existing ? { ...existing, marriage } : createStoredCharacterRecord({ character, marriage }));
 }
 
-// The setup step's own draft never carries an activePreset at all (its preset tab is
-// local React state, not serialized) — always save preset 1, same policy as the other
-// three preset-based systems, rather than trusting whichever tab was last open.
+// The setup step's draft never carries an activePreset, since its preset tab is local React
+// state and is not serialized. Always save preset 1, the same policy as the other three
+// preset-based systems, rather than trusting whichever tab was last open.
 function buildFamiliarsDataForRecord(familiarsJson: string): StoredFamiliarsData | null {
   const parsed = tryParseJson(familiarsJson);
   if (!parsed || typeof parsed !== "object") return null;
@@ -956,8 +943,8 @@ function toNumericHexaSkillLevels(raw: Record<string, unknown>): HexaSkillLevels
   };
 }
 
-// 6th-job HEXA Skills data (origin/mastery/enhancement/common/ascent), persisted to
-// tools.hexaSkills. HEXA Stat is stripped out — it lives in its own key (see below).
+// 6th-job HEXA Skills data (origin, mastery, enhancement, common, ascent), persisted to
+// tools.hexaSkills. HEXA Stat is stripped out and lives in its own key, see below.
 function buildHexaSkillsToolData(jobName: string, hexaJson: string): { className: string; levels: HexaSkillLevels } | null {
   try {
     const parsed = JSON.parse(hexaJson) as Record<string, unknown>;
@@ -971,17 +958,17 @@ function buildHexaSkillsToolData(jobName: string, hexaJson: string): { className
   return null;
 }
 
-// HEXA Stat is its own progression system — stored separately from the HEXA Skills
-// calculator under tools.hexaStat. Only persisted when at least one node has data.
+// HEXA Stat is its own progression system, stored separately from the HEXA Skills calculator
+// under tools.hexaStat. Only persisted when at least one node has data.
 function buildHexaStatToolData(hexaJson: string): { nodes: HexaStatNode[] } | null {
   try {
     const parsed = JSON.parse(hexaJson) as { hexaStat?: unknown };
     const nodes = parsed?.hexaStat;
     if (Array.isArray(nodes) && hexaStatHasData(nodes as HexaStatNode[])) {
-      // Always saved as preset 0 per node — the preset toggle used while editing isn't an
-      // explicit "this is what's live in-game" choice, so trusting it would silently save
-      // whichever one was last open while editing. Correcting a node's real active preset
-      // happens on the profile page instead, via setHexaStatActivePreset below.
+      // Always saved as preset 0 per node. The preset toggle used while editing is not an
+      // explicit "this is what is live in game" choice, so trusting it would save whichever
+      // one happened to be open. Correcting a node's real active preset happens on the
+      // profile page instead, via setHexaStatActivePreset below.
       return { nodes: (nodes as HexaStatNode[]).map((n) => ({ ...n, activePreset: 0 })) };
     }
   } catch { /* ignore */ }
@@ -1077,23 +1064,20 @@ interface InitialRouteIntent {
   action?: string;
 }
 
-/** Seeds every step draft that has its own "starts blank, silently wipes on Finish"
- *  risk (see applyConfirmedProfileView/finishSetupFlow) from the character's actual
- *  stored data. Equipment/V Matrix/HEXA Matrix/Familiars each only backfill via their
- *  own step component's mount-time effect, which only fires once that component
- *  actually renders — if a session jumps/skips past one of them, or a stale draft
- *  from an earlier abandoned flow lingers in memory, Finish's `<field>Data ??
- *  base.<field>` fallback can write over real data with blank/stale values. Used
- *  both when first landing on a profile AND right after any Finish, so the in-memory
- *  drafts always resync to the just-saved truth instead of leaving other steps' untouched drafts
- *  stale for the rest of the session. */
-// Mirrors hexaMatrixDraft.ts's readSavedHexaValue, but derives the draft from the passed-in
-// storedCharacter directly instead of an independent readCharacterToolData/localStorage read.
-// The right-after-Finish seeding call site passes lastUpsertedCharacterRef.current specifically
-// because the roster's actual localStorage write is still pending in a separate effect at that
-// point (see the "Resyncs every step draft" comment below) — an independent localStorage read
-// here would silently re-seed hexa_matrix with the pre-Finish value, so the profile's HEXA edit
-// pencil always showed a stale level right after saving a new one.
+/** Seeds every step draft that risks starting blank and silently wiping data on Finish (see
+ *  applyConfirmedProfileView and finishSetupFlow) from the character's stored data. Equipment,
+ *  V Matrix, HEXA Matrix and Familiars each backfill only from their own step component's
+ *  mount effect, which needs that component to render. If a session skips past one, or a
+ *  stale draft from an abandoned flow is still in memory, Finish's `<field>Data ??
+ *  base.<field>` fallback can overwrite real data with blank or stale values. Runs both on
+ *  first landing on a profile and after every Finish, so drafts resync to the just-saved
+ *  state rather than staying stale for the session. */
+// Mirrors readSavedHexaValue in hexaMatrixDraft.ts, but derives the draft from the passed-in
+// storedCharacter rather than its own localStorage read. The after-Finish call site passes
+// lastUpsertedCharacterRef.current because the roster's localStorage write is still pending in
+// a separate effect at that point. Reading localStorage here instead would re-seed hexa_matrix
+// with the pre-Finish value, leaving the profile's HEXA edit pencil on a stale level right
+// after saving a new one.
 function hexaValueFromStoredCharacter(hexaClassDef: ReturnType<typeof findClassById>, storedCharacter: StoredCharacterRecord | null): string {
   if (!hexaClassDef || !storedCharacter) return "";
   const savedSkills = storedCharacter.tools?.hexaSkills as { levels?: HexaSkillLevels } | undefined;
@@ -1113,10 +1097,10 @@ function buildSeededStepTestByStep(jobName: string, storedCharacter: StoredChara
   return {
     gender: storedCharacter?.gender ?? "",
     marriage: marriageValue,
-    // Seeded from the character's already-saved stats (not blank) — the Stats
-    // step's finish path merges its draft onto the existing record wholesale
-    // (see applyStatsDraftToRoster), so starting blank meant finishing without
-    // retyping every field silently wiped whatever wasn't retyped.
+    // Seeded from the character's saved stats rather than blank. The Stats step's finish
+    // path merges its draft onto the existing record wholesale (see applyStatsDraftToRoster),
+    // so starting blank meant finishing without retyping every field wiped whatever was not
+    // retyped.
     stats: storedCharacter
       ? serializeStatsStepDraft(storedStatsToStatsStepDraft({
           ...storedCharacter,
@@ -1131,9 +1115,9 @@ function buildSeededStepTestByStep(jobName: string, storedCharacter: StoredChara
       : "",
     hexa_matrix: hexaValueFromStoredCharacter(hexaClassDef, storedCharacter),
     familiars: storedCharacter?.familiars ? JSON.stringify(storedCharacter.familiars) : "",
-    // Never seeded before (a real gap, not intentional — every other step above is):
-    // reopening Oz Rings on a character that already answered it always started blank,
-    // even though the stored ring levels were intact.
+    // Seeded like every other step above. Without this, reopening Oz Rings on a character
+    // that had already answered it started blank even though the stored ring levels were
+    // intact.
     oz_rings: storedCharacter ? serializeOzRingsDraft(storedOzRingsToOzRingsDraft(storedCharacter.scouter?.ozRings)) : "",
   };
 }
@@ -1196,43 +1180,39 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
   const [mainCharacterKeyByWorld, setMainCharacterKeyByWorld] = useState<Record<string, string>>({});
   const [championCharacterKeysByWorld, setChampionCharacterKeysByWorld] = useState<Record<string, string[]>>({});
 
-  // Which profile bookmark to return to after finishing an optional flow started from
-  // it (e.g. a Biography block, or any bookmark's edit pencil) — the profile-overview
-  // screen unmounts while a flow is active (see PreviewSetupPane's contentKey), so its
-  // own local "active bookmark" state can't survive the round trip on its own. Keyed to
-  // the character it was captured for so it never leaks into a later, unrelated visit
-  // to a different character's profile (see currentCharacterKey / restorableBookmarkId
-  // below, which is what actually gets exposed to the screen).
-  // subView additionally remembers a bookmark's own internal sub-view (e.g. Stats'
-  // Hyper Stat/Ability toggle), so editing from one of those lands back on it too
-  // instead of the bookmark's default sub-view once the round trip above completes.
+  // Which profile bookmark to return to after finishing an optional flow started from it,
+  // such as a Biography block or any bookmark's edit pencil. The profile-overview screen
+  // unmounts while a flow is active (see PreviewSetupPane's contentKey), so its own local
+  // active-bookmark state cannot survive the round trip. Keyed to the character it was
+  // captured for so it never leaks into a later visit to a different character's profile;
+  // currentCharacterKey and restorableBookmarkId below are what reach the screen.
+  // subView also remembers a bookmark's internal sub-view, such as Stats' Hyper Stat and
+  // Ability toggle, so editing from one of those returns to it rather than the default.
   const [lastActiveBookmark, setLastActiveBookmark] = useState<{ characterKey: string; bookmarkId: string; subView?: string } | null>(null);
 
   const [setupStepIndex, setSetupStepIndex] = useState(0);
   const [setupStepDirection, setSetupStepDirection] = useState<"forward" | "backward">("forward");
-  // Substep to force-open a step on (e.g. jumping straight to Stats' Inner Ability
-  // substep) — only set by jumpToSubstep below, and cleared by every other
-  // navigation action so it never overrides normal Prev/Next substep placement.
+  // Substep to force-open a step on, such as jumping straight to Stats' Inner Ability
+  // substep. Only set by jumpToSubstep below, and cleared by every other navigation action
+  // so it never overrides normal Prev and Next substep placement.
   // substepJumpNonce forces a remount even when jumping to the same target substep
   // twice in a row (the step component may have since navigated away internally).
   const [setupTargetSubstep, setSetupTargetSubstep] = useState<number | null>(null);
-  // Paired with setupTargetSubstep, reset to false everywhere that clears it back to
-  // null — see startOptionalSetupFlow for where it's actually set true.
+  // Paired with setupTargetSubstep, reset to false everywhere that clears it back to null.
+  // See startOptionalSetupFlow for where it is set true.
   const [setupConfineToSubstep, setSetupConfineToSubstep] = useState(false);
   const [substepJumpNonce, setSubstepJumpNonce] = useState(0);
-  // Live-tracks whichever substep the currently-mounted step (Stats/Equipment/HEXA
-  // Matrix) is actually showing, reported up via each step's onSubstepChange as it
-  // navigates internally (0 for step types without substeps). Persisted alongside
-  // setupStepIndex so a full page reload can restore into the exact substep the player
-  // left off on, instead of always falling back to substep 0.
+  // Tracks whichever substep the mounted step (Stats, Equipment, HEXA Matrix) is showing,
+  // reported up via each step's onSubstepChange as it navigates internally, and 0 for step
+  // types without substeps. Persisted alongside setupStepIndex so a page reload restores the
+  // exact substep the player left off on rather than falling back to substep 0.
   const [setupSubstepIndex, setSetupSubstepIndex] = useState(0);
-  // Last-known Next-button validity per step id (see SetupStepFrame's onValidityChange),
-  // for the ~5 steps that actually gate Next on something. Keyed by step id (not
-  // reset on navigation) because a step's draft data — and thus its validity — is
-  // shared across flows and outlives leaving that step; a naive "reset on navigate"
-  // version let you dodge the gate by backing out to an invalid step and switching
-  // flows instead of fixing it. Cleared only where setupStepTestByStep itself resets
-  // (switching to a different character's draft, or abandoning setup entirely).
+  // Last-known Next-button validity per step id (see SetupStepFrame's onValidityChange), for
+  // the few steps that gate Next on something. Keyed by step id and not reset on navigation,
+  // because a step's draft data, and so its validity, is shared across flows and outlives
+  // leaving that step. Resetting on navigate let you dodge the gate by backing out of an
+  // invalid step and switching flows instead of fixing it. Cleared only where
+  // setupStepTestByStep itself resets, on switching character drafts or abandoning setup.
   const [stepValidityById, setStepValidityById] = useState<Record<string, boolean>>({});
   const [setupStepTestByStep, setSetupStepTestByStep] = useState<SetupStepInputById>({});
   const [draftSummaries, setDraftSummaries] = useState<SetupDraftSummary[]>([]);
@@ -1248,11 +1228,11 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
     const key = toCharacterKey(fresh);
     const existing = characterRosterRef.current.find((c) => toCharacterKey(c) === key);
     if (!existing) return;
-    // Refreshing only ever brings back fresh rank/level/exp-shaped data from Nexon (see
-    // NormalizedCharacterData) -- everything else on the record (marriage, liberation/
-    // weapon-hand/Ruin Force Shield/soul flags, scouter/familiars/V Matrix data) has to be
-    // explicitly carried over from `existing` or createStoredCharacterRecord defaults it
-    // back to null/undefined, silently wiping it on every auto-refresh.
+    // Refreshing brings back only rank, level and exp-shaped data from Nexon (see
+    // NormalizedCharacterData). Everything else on the record, including marriage, the
+    // liberation, weapon-hand, Ruin Force Shield and soul flags, and scouter, familiars and
+    // V Matrix data, has to be carried over from `existing`, or createStoredCharacterRecord
+    // defaults it back to null and wipes it on every auto-refresh.
     const updated: StoredCharacterRecord = {
       ...createStoredCharacterRecord({
         character: fresh,
@@ -1278,22 +1258,20 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
       if (existingIndex === -1) return prev;
       const next = [...prev];
       next[existingIndex] = updated;
-      // A level-up crossing 70/120/210 can raise this character's OWN floor, and (for a
-      // magician/thief) a same-world sibling's floor too -- e.g. this character just being
-      // the one that pushed Empirical Knowledge's true total higher. Checked on every
-      // refresh, not just setup finishes, since a level-up is exactly the kind of
-      // "sibling fact changed without anyone visiting Link Skills" case propagation needs
-      // to catch. Applied in-place here (rather than via upsertRosterCharacter, which
-      // isn't in scope yet at handleRefreshed's position in this file) since this
-      // functional update already owns the array being mutated.
+      // A level-up crossing 70, 120 or 210 can raise this character's own floor, and for a
+      // magician or thief a same-world sibling's floor too, by being the character that
+      // pushed Empirical Knowledge's total higher. Checked on every refresh rather than only
+      // on setup finishes, since a level-up is exactly the case where a sibling fact changes
+      // without anyone visiting Link Skills. Applied in place rather than through
+      // upsertRosterCharacter, which is not in scope yet at this point in the file, since
+      // this functional update already owns the array being mutated.
       applyLinkSkillFloorsInPlace(next, updated.worldID);
       return next;
     });
-    // A Wild Hunter leveling into a new legion bracket over time should update the
-    // world's derived rank the same way finishing a setup for it would. Pass the
-    // refreshed record explicitly as `base` — the roster in localStorage still has
-    // this character's PRE-refresh level at this point, since the persistence effect
-    // for `characterRoster` hasn't run yet.
+    // A Wild Hunter leveling into a new legion bracket should update the world's derived
+    // rank the same way finishing a setup for it would. The refreshed record is passed
+    // explicitly as `base` because the roster in localStorage still holds this character's
+    // pre-refresh level, the persistence effect for `characterRoster` not having run yet.
     syncWhLegionRankAfterRefresh(updated);
   }, []);
 
@@ -1376,11 +1354,11 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
     );
   }, [isResumableDraft]);
 
-  // Tracks the freshest record passed to upsertRosterCharacter this tick — the actual
-  // localStorage write only happens later, in the writeCharactersStore effect below
-  // (keyed off the characterRoster state this schedules, not a synchronous write), so
-  // anything that needs the just-upserted data immediately after calling this (see
-  // finishSetupFlow's resync) would otherwise read stale storage.
+  // Tracks the freshest record passed to upsertRosterCharacter this tick. The localStorage
+  // write happens later, in the writeCharactersStore effect below, keyed off the
+  // characterRoster state this schedules rather than written synchronously, so anything
+  // needing the just-upserted data immediately afterward (see finishSetupFlow's resync) would
+  // otherwise read stale storage.
   const lastUpsertedCharacterRef = useRef<StoredCharacterRecord | null>(null);
   const upsertRosterCharacter = useCallback((character: StoredCharacterRecord) => {
     lastUpsertedCharacterRef.current = character;
@@ -1392,11 +1370,10 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
       next[existingIndex] = character;
       return next;
     });
-    // Set as main for their world only if this is the world's first-ever character -- not
-    // just "no main is currently set," which used to also fire for e.g. a 2nd/3rd mule added
-    // after the main was removed, silently promoting whichever character happened to be added
-    // next. A world with any other characters already in it never gets an automatic main;
-    // Set Main (setMainCharacter) stays the only way to assign one from that point on.
+    // Set as main only when this is the world's first character, not merely when no main is
+    // set. The looser check also fired for a mule added after the main was removed, promoting
+    // whichever character happened to come next. A world that already has characters never
+    // gets an automatic main, leaving setMainCharacter as the only way to assign one.
     const worldIsEmpty = !characterRoster.some(
       (entry) => entry.worldID === character.worldID && toCharacterKey(entry) !== key,
     );
@@ -1408,20 +1385,20 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
     });
   }, [characterRoster]);
 
-  // Profile-page correction for which Hyper Stat/Inner Ability preset is actually
-  // equipped in-game — these are saved as preset 1 by default at setup time (never asked),
-  // so this is the only way that value ever becomes accurate. No-ops if the character
-  // never collected that field at all (nothing to mark active).
+  // Profile-page correction for which Hyper Stat or Inner Ability preset is equipped in game.
+  // Setup never asks and saves preset 1 by default, so this is the only way that value
+  // becomes accurate. No-ops when the character never collected the field, leaving nothing to
+  // mark active.
   const setStatsActivePreset = useCallback((field: "hyperStat" | "innerAbility", presetIndex: number) => {
     if (!confirmedCharacter) return;
     const existing = selectCharacterById(readCharactersStore(), toCharacterKey(confirmedCharacter));
     const current = existing?.stats?.[field];
     if (!existing || !current) return;
     const updated = { ...current, activePreset: presetIndex };
-    // Switching to a different active Inner Ability preset can change the scouter-facing
-    // line (Passive/Multi Target +1) — recompute it here too, or it goes stale relative to
-    // whatever preset is now actually active. Only ever sets a real derived answer, never
-    // clears one back to unset (matches the other derive-over-manual call sites).
+    // Switching the active Inner Ability preset can change the scouter-facing line (Passive
+    // or Multi Target +1), so recompute it here or it goes stale against whichever preset is
+    // now active. Only ever sets a derived answer, never clearing one back to unset, matching
+    // the other derive-over-manual call sites.
     let innerAbilityLine: "passive" | "multiTarget" | "neither" | undefined;
     if (field === "innerAbility") {
       const updatedIA = updated as StoredInnerAbility;
@@ -1444,26 +1421,25 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
     upsertRosterCharacter({
       ...existing,
       equipment: updated,
-      // Whichever preset is now active is the definitive one — re-derive against it
-      // rather than only ever flipping true, since switching presets can genuinely
-      // gain or lose Genesis Liberation/weapon hand/Ruin Force Shield.
+      // Whichever preset is now active is definitive, so re-derive against it rather than
+      // only flipping true. Switching presets can genuinely gain or lose Genesis Liberation,
+      // weapon hand or Ruin Force Shield.
       isLiberated: deriveIsLiberatedFromWeapon(updated) ?? existing.isLiberated,
       weaponHand: deriveWeaponHandFromWeapon(updated) ?? existing.weaponHand,
       hasRuinForceShield: deriveHasRuinForceShield(updated) ?? existing.hasRuinForceShield,
     });
   }, [confirmedCharacter, upsertRosterCharacter]);
 
-  // Same profile-page correction as setStatsActivePreset/setEquipmentActivePreset above, for
-  // which of a single HEXA Stat node's 2 presets is actually equipped in-game — each node has
-  // its own independent activePreset. No-ops if the character has no saved HEXA Stat data at
-  // all, or hasn't reached that node's index yet.
-  // Unlike setStatsActivePreset/setEquipmentActivePreset above, HEXA Stat and Familiars
-  // (below) are collected by optional, standalone flows never bundled into the character's
-  // required setup — a character can exist in the roster with no saved data for either at
-  // all, which used to make this a silent no-op (and the profile's "Set active" button
-  // never showing at all, since it's gated on the same saved data existing). Both now build
-  // an empty shell on demand instead, so setting the active preset works even before the
-  // step has ever been visited.
+  // Same profile-page correction as setStatsActivePreset and setEquipmentActivePreset above,
+  // for which of a HEXA Stat node's 2 presets is equipped in game. Each node has its own
+  // activePreset. No-ops when the character has no saved HEXA Stat data or has not reached
+  // that node's index.
+  //
+  // Unlike those two, HEXA Stat and Familiars below are collected by optional standalone
+  // flows that are never bundled into required setup, so a character can exist with no saved
+  // data for either. That made this a no-op, and hid the profile's "Set active" button, which
+  // is gated on the same saved data. Both now build an empty shell on demand, so setting the
+  // active preset works before the step has been visited.
   const setHexaStatActivePreset = useCallback((nodeIndex: number, presetIndex: number) => {
     if (!confirmedCharacter) return;
     const existing = selectCharacterById(readCharactersStore(), toCharacterKey(confirmedCharacter));
@@ -1509,18 +1485,17 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
       setSetupStepIndex(draft.setupStepIndex);
       setSetupStepDirection(draft.setupStepDirection);
       setSetupSubstepIndex(draft.setupSubstepIndex ?? 0);
-      // Seeds the freshly-mounted step's initial substep (see targetSubstep ?? ...
-      // fallback in each of Stats/Equipment/HexaMatrixSetupStep) — safe to always set
-      // here since any subsequent normal navigation already clears it right back to
-      // null (see setSetupStepWithDirection), so it can't linger and force a stale
-      // substep after the player has since navigated elsewhere within the step.
+      // Seeds the freshly mounted step's initial substep (see the targetSubstep fallback in
+      // Stats, Equipment and HexaMatrixSetupStep). Safe to always set here, since normal
+      // navigation clears it back to null (see setSetupStepWithDirection), so it cannot
+      // linger and force a stale substep after the player has moved elsewhere in the step.
       setSetupTargetSubstep(draft.setupSubstepIndex ?? null);
       // A draft resume is always normal full navigation, never a bookmark's confined
       // single-substep edit.
       setSetupConfineToSubstep(false);
       setSetupStepTestByStep(draft.setupStepTestByStep ?? {});
-      // Restored from the draft (not wiped) — the draft's own step data can still be
-      // invalid, and forgetting that here is exactly what let people resume past it.
+      // Restored from the draft rather than wiped. The draft's step data can still be
+      // invalid, and forgetting that here is what let people resume past it.
       setStepValidityById(draft.stepValidityById ?? {});
       setConfirmedCharacter(draft.confirmedCharacter);
 
@@ -1543,10 +1518,9 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
       const store = readCharactersStore();
       const storedCharacter = selectCharacterById(store, toCharacterKey(character));
       setConfirmedCharacter(character);
-      // Every fresh arrival at a profile (from the directory, search, or first paint)
-      // should land on Overview — the remembered bookmark only applies to returning
-      // from a flow started mid-session on this same still-open profile, not to a
-      // later, separate visit to it.
+      // Every fresh arrival at a profile, whether from the directory, search or first paint,
+      // lands on Overview. The remembered bookmark applies only to returning from a flow
+      // started mid-session on this same open profile, not to a later separate visit.
       setLastActiveBookmark(null);
       setSetupMode("search");
       setSetupFlowStarted(true);
@@ -1645,10 +1619,11 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
       storedRoster: StoredCharacterRecord[],
       accountHasCompletedRequiredFlow: boolean,
     ) => {
-      // Route intent (?character=/?action=add from a fresh navigation) resolves straight to
-      // its target here, before first paint, instead of restoring the last session's draft/
-      // directory state and correcting course afterward — that two-step "restore, then
-      // redirect" is what caused a visible flash of the wrong screen on a deep-linked reload.
+      // Route intent, meaning ?character= or ?action=add from a fresh navigation, resolves
+      // straight to its target here before first paint, rather than restoring the last
+      // session's draft and directory state and correcting course afterward. Restoring then
+      // redirecting is what caused a visible flash of the wrong screen on a deep-linked
+      // reload.
       if (initialCharacterName) {
         const key = normalizeCharacterName(initialCharacterName);
         const character = storedRoster.find((c) => toCharacterKey(c) === key);
@@ -1662,10 +1637,10 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
           return;
         }
       } else if (initialAction === "add" && accountHasCompletedRequiredFlow) {
-        // A true first-time user (no characters yet) falls through instead of forcing
-        // search mode here -- the homepage's empty-state "Add Character" link should land
-        // on the intro screen's Import/Search choice, same as visiting /characters fresh,
-        // not skip straight past it the way a returning user's "add another" action should.
+        // A first-time user with no characters yet falls through rather than being forced
+        // into search mode. The homepage's empty-state "Add Character" link should land on
+        // the intro screen's Import or Search choice, the same as visiting /characters
+        // fresh, instead of skipping past it the way a returning user's action should.
         setCharacterRoster(storedRoster);
         setMainCharacterKeyByWorld(store.mainCharacterIdByWorld);
         setChampionCharacterKeysByWorld(store.championCharacterIdsByWorld);
@@ -1731,13 +1706,12 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
   }, [foundCharacter]);
 
   useEffect(() => {
-    // Meant to run exactly once per mount. handleDraftHydration (and its dependency
-    // applyAddCharacterView) transitively depends on `lookup`, which useCharacterLookup
-    // returns as a fresh object every render — so without this guard, this effect's own
-    // [handleDraftHydration, refreshDraftSummaries] deps would churn on every render and
-    // re-run hydration, stomping whatever state the user had navigated to since (e.g.
-    // wiping the search query on every keystroke, or snapping back to the initial route
-    // intent's screen instead of wherever the user just clicked).
+    // Meant to run exactly once per mount. handleDraftHydration, and its dependency
+    // applyAddCharacterView, transitively depend on `lookup`, which useCharacterLookup
+    // returns as a fresh object every render. Without this guard the effect's own deps would
+    // churn every render and re-run hydration, stomping whatever state the user had
+    // navigated to, wiping the search query on every keystroke or snapping back to the
+    // initial route intent's screen instead of wherever they just clicked.
     if (hasHydratedSetupDraftRef.current) return;
 
     const draft = readLastSetupDraft();
@@ -1747,12 +1721,12 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
 
     const hydrateTimer = window.setTimeout(() => {
       handleDraftHydration(draft, store, storedRoster, accountHasCompletedRequiredFlow);
-      // handleDraftHydration's branches (showCompletedDirectoryState etc.) reset this to
-      // false; set it after so it wins for this batch. Suppresses the search-pane/preview-
-      // pane width transition for this first resolved paint only — without it, the pane
-      // visibly animates from its collapsed pre-hydration width up to its final width, and
-      // content that wraps at narrow widths (e.g. the HEXA skill icon row) visibly reflows
-      // mid-transition. Cleared a beat later so normal in-session transitions keep animating.
+      // handleDraftHydration's branches, such as showCompletedDirectoryState, reset this to
+      // false, so it is set afterward to win for this batch. Suppresses the search and
+      // preview pane width transition for this first resolved paint only. Without it the
+      // pane animates from its collapsed pre-hydration width up to its final width, and
+      // content that wraps at narrow widths, such as the HEXA skill icon row, reflows
+      // mid-transition. Cleared a beat later so normal transitions keep animating.
       setSuppressLayoutTransition(true);
       hasHydratedSetupDraftRef.current = true;
       setIsDraftHydrated(true);
@@ -1761,9 +1735,9 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
         setSuppressLayoutTransition(false);
       }, CHARACTERS_TRANSITION_MS.standard);
 
-      // Queue stale main+champions for background auto-refresh, but only for the world
-      // the directory is about to land on — resolved exactly as the directory pane
-      // resolves its own filter, so the two always agree on which world that is.
+      // Queue stale mains and champions for background auto-refresh, but only for the world
+      // the directory is about to land on. Resolved exactly as the directory pane resolves
+      // its own filter, so the two always agree on which world that is.
       const landingWorldId = resolveWorldFilter(
         readStoredWorldFilter(),
         rosterWorldIds(storedRoster),
@@ -1796,56 +1770,53 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
     if (typeof window === "undefined") return;
 
     const existingStore = readCharactersStore();
-    // The pre-hydration race (roster momentarily empty before load) is already handled by
-    // the hasHydratedSetupDraftRef guard above. By this point hydration has run, so an empty
-    // roster is intentional — e.g. the user removed their last character — and must be
-    // persisted; otherwise that final character would survive in storage and reappear.
+    // The pre-hydration race, where the roster is momentarily empty before load, is handled
+    // by the hasHydratedSetupDraftRef guard above. By this point hydration has run, so an
+    // empty roster is intentional, such as the user removing their last character, and must
+    // be persisted. Otherwise that final character would survive in storage and reappear.
     const now = Date.now();
-    // characterRoster is already StoredCharacterRecord[]. Gender/marriage only change when
-    // the roster itself changes (a setup flow's Finish calling upsertRosterCharacter), not
-    // live as the draft is typed — now that there are multiple setup flows, a value typed
-    // into one flow shouldn't count until that flow's own Finish actually commits it (see
-    // finalizeQuickOrFullSetupRecord / applyMapleScouterFlow). Also update meta.updatedAt if
-    // the character data changed since last save.
+    // characterRoster is already StoredCharacterRecord[]. Gender and marriage change only
+    // when the roster itself changes, via a setup flow's Finish calling upsertRosterCharacter,
+    // not live as the draft is typed. With multiple setup flows, a value typed into one flow
+    // should not count until that flow's own Finish commits it (see
+    // finalizeQuickOrFullSetupRecord and applyMapleScouterFlow). Also updates meta.updatedAt
+    // when the character data changed since the last save.
     const nextCharactersById = characterRoster.reduce<Record<string, StoredCharacterRecord>>(
       (acc, character) => {
         const id = toCharacterKey(character);
         const existingRecord = existingStore.charactersById[id];
-        // Same reference as last pass means nothing in-band changed this character's tools this
-        // tick -- trust disk as-is instead of re-merging, so an unrelated roster update can't
-        // drag it back to a stale memory copy over a newer out-of-band write. Only a character
-        // whose tools reference actually changed (an in-band write, or its first time through)
-        // goes through the disk+memory merge below.
+        // The same reference as last pass means nothing in-band changed this character's
+        // tools this tick, so trust disk as-is rather than re-merging, and an unrelated
+        // roster update cannot drag it back to a stale memory copy over a newer out-of-band
+        // write. Only a character whose tools reference changed, from an in-band write or
+        // its first pass, goes through the disk and memory merge below.
         const toolsUnchangedSinceLastPass = lastSeenToolsRef.current[id] === character.tools;
         lastSeenToolsRef.current[id] = character.tools;
         const mergedTools = toolsUnchangedSinceLastPass && existingRecord
           ? existingRecord.tools
-          // Two independent paths write `tools`: out-of-band, via characterToolStorage.ts's
-          // writeCharacterToolData (symbols, liberation, hexa skills, scouterResult, etc.,
-          // edited from their own tool pages -- patches disk directly, never syncs back into
-          // characterRoster), and in-band, via a setup-flow finish (e.g. HEXA Matrix inside
-          // MapleScouter/Full Setup), which builds a fresh tools object and pushes it into
-          // characterRoster BEFORE this very effect runs -- this effect is what's supposed to
-          // flush that fresh value to disk. Picking one side outright breaks the other: an
-          // outright `existingRecord.tools` (disk) discards the setup-flow finish that's
-          // mid-flight in `character.tools` right now; an outright `character.tools` (memory)
-          // is what caused the original out-of-band-write regression this comment used to
-          // describe. Spread disk first so a key only an out-of-band write has survives, then
-          // overlay memory so a key the current character object actually carries wins.
+          // Two independent paths write `tools`. Out-of-band writes go through
+          // characterToolStorage.ts's writeCharacterToolData for symbols, liberation, hexa
+          // skills, scouterResult and the rest, edited from their own tool pages, patching
+          // disk directly and never syncing back into characterRoster. In-band writes come
+          // from a setup-flow finish, such as HEXA Matrix inside MapleScouter or Full Setup,
+          // which builds a fresh tools object and pushes it into characterRoster before this
+          // effect runs, this effect being what flushes it to disk. Picking either side
+          // outright breaks the other: disk alone discards the setup-flow finish in flight in
+          // `character.tools`, and memory alone discards an out-of-band write. Spread disk
+          // first so a key only an out-of-band write has survives, then overlay memory so a
+          // key the current character object carries wins.
           : { ...existingRecord?.tools, ...character.tools };
         acc[id] = {
           ...character,
           tools: mergedTools,
-          // `character` (from characterRoster, the in-memory state) is always the
-          // authoritative value for these two -- every upsert path already either sets them
-          // explicitly (applyGenderDraftToRoster/applyMarriageDraftToRoster, quick/full setup)
-          // or carries them forward itself via spread (handleRefreshed passes existing.gender/
-          // existing.marriage through explicitly; every other upsert spreads ...existing).
-          // Falling back to existingRecord here (the pre-write value still on disk) used `??`,
-          // which can't tell "never touched this field" apart from "explicitly cleared to
-          // null" -- an intentional clear from the Bio bookmark's Gender/Partner pencil got
-          // silently reverted on the very next persist, since it looked identical to the
-          // untouched case.
+          // `character`, the in-memory state from characterRoster, is authoritative for these
+          // two. Every upsert path either sets them explicitly, as
+          // applyGenderDraftToRoster, applyMarriageDraftToRoster and quick and full setup do,
+          // or carries them forward by spread, as handleRefreshed and every other upsert do.
+          // Falling back to existingRecord, the pre-write value on disk, needed `??`, which
+          // cannot tell an untouched field from one explicitly cleared to null, so an
+          // intentional clear from the Bio bookmark's Gender or Partner pencil was reverted
+          // on the next persist.
           meta: {
             addedAt: character.meta.addedAt,
             updatedAt:
@@ -1871,13 +1842,12 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
     }
 
     // Re-read the world-scoped fields immediately before writing rather than reusing the
-    // earlier existingStore read: this effect fires on every setup-flow keystroke (any step,
-    // any open tab), and the roster rebuild above takes real time, leaving a window where a
-    // concurrent writeLegionArtifactForWorld call (e.g. from another tab) could land in
-    // between and get silently clobbered by this pass-through write. Link skills no longer
-    // need this treatment -- they live on each character's own record now (rides through
-    // nextCharactersById above via the ...character spread), not a world-scoped map that
-    // could race a separate writer.
+    // earlier existingStore read. This effect fires on every setup-flow keystroke in any step
+    // and any open tab, and the roster rebuild above takes real time, leaving a window where
+    // a concurrent writeLegionArtifactForWorld call from another tab could land in between
+    // and be clobbered by this pass-through write. Link skills no longer need this, since
+    // they live on each character's own record and ride through nextCharactersById above,
+    // rather than in a world-scoped map that could race a separate writer.
     const freshWorldFields = readCharactersStore();
     const nextStore = {
       version: existingStore.version,
@@ -2028,14 +1998,14 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
     (nextMode: SetupMode) => {
       if (immediateUiLockRef.current) return;
       immediateUiLockRef.current = true;
-      // Does NOT reset isAddingCharacter -- a mode switch (search <-> import) isn't leaving
-      // the add-character flow, just picking a different screen within it. Search/Import's
-      // own "instead" links call this while mid-flow (isAddingCharacter true, arrived via
-      // the directory's + tile) and need that flag to survive, or Import's Back button would
-      // wrongly fall through to runBackToIntroTransition (first-time-setup) instead of
-      // backFromAddCharacter (directory) afterward. FirstTimeSetupScreen's own Search/Import
-      // buttons are the only other caller and are unaffected either way, since
-      // isAddingCharacter is already false whenever that screen is reachable.
+      // Deliberately does not reset isAddingCharacter. Switching between search and import is
+      // not leaving the add-character flow, just picking a different screen within it. The
+      // "instead" links on Search and Import call this mid-flow, with isAddingCharacter true
+      // after arriving via the directory's add tile, and need that flag to survive, or
+      // Import's Back button falls through to runBackToIntroTransition rather than
+      // backFromAddCharacter. FirstTimeSetupScreen's own buttons are the only other caller
+      // and are unaffected, since isAddingCharacter is already false wherever that screen is
+      // reachable.
       transitions.runTransitionToMode(nextMode, {
         resetSearchStateMessage: lookup.resetSearchStateMessage,
         setSetupMode,
@@ -2107,8 +2077,8 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
 
   const setSetupStepWithDirection = useCallback(
     (nextStep: number, forceDirection?: "forward" | "backward") => {
-      // Any normal navigation (Prev/Next/step-level jump) supersedes a prior
-      // substep-jump target — only jumpToSubstep below is allowed to set one.
+      // Any normal navigation, whether Prev, Next or a step-level jump, supersedes a prior
+      // substep-jump target. Only jumpToSubstep below may set one.
       setSetupTargetSubstep(null);
       setSetupConfineToSubstep(false);
       const direction = forceDirection ?? (nextStep > setupStepIndex ? "forward" : "backward");
@@ -2122,26 +2092,23 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
       }
       target = Math.max(0, Math.min(stepCount, target));
       if (target === setupStepIndex) return;
-      // Same rule as the Next button's own disabled state (SetupStepFrame's
-      // nextDisabled) — jumping forward past the earliest invalid/incomplete step (in
-      // THIS flow's order, since a stepId's validity can outlive leaving it) is
-      // blocked the same way advancing normally already is. Backward, and jumping onto
-      // the broken step itself, are always allowed.
+      // Same rule as the Next button's disabled state (SetupStepFrame's nextDisabled).
+      // Jumping forward past the earliest invalid or incomplete step, in this flow's order
+      // since a step's validity can outlive leaving it, is blocked the way advancing normally
+      // is. Backward jumps, and jumping onto the broken step itself, are always allowed.
       if (target > setupStepIndex) {
         const firstInvalid = getFirstInvalidStepIndex(activeFlowId, stepValidityById, gender, skipMarriage, setupStepTestByStep.stats ?? "", characterLevel, jobName);
         if (firstInvalid !== null && target > firstInvalid) return;
       }
       setSetupStepDirection(direction);
       setSetupStepIndex(target);
-      // Backing out of an optional flow to the profile overview (step 0) abandons
-      // whatever wasn't Finished — for an ALREADY-CONFIRMED character (storedCharacter
-      // exists), there's no "resume this later" feature for that abandoned edit the
-      // way brand-new characters' Quick/Full Setup onboarding drafts have, so discard
-      // it here by reseeding straight from the stored truth instead of leaving a stale
-      // draft sitting in memory for the rest of the session (only a full page reload
-      // used to clear it). A character with no stored record yet (still mid-onboarding,
-      // never confirmed) is left alone — that's exactly the case the separate
-      // setupDraftStorage resumable-draft system exists to preserve.
+      // Backing out of an optional flow to the profile overview, step 0, abandons whatever
+      // was not Finished. For a character that already has a stored record there is no
+      // resume-later feature for that abandoned edit, unlike a new character's Quick or Full
+      // Setup onboarding draft, so discard it by reseeding from the stored truth rather than
+      // leaving a stale draft in memory for the session, which previously only a page reload
+      // cleared. A character with no stored record yet, still mid-onboarding, is left alone,
+      // since that is exactly what the separate setupDraftStorage system preserves.
       if (target === 0 && confirmedCharacter) {
         const storedCharacter = selectCharacterById(readCharactersStore(), toCharacterKey(confirmedCharacter));
         if (storedCharacter) {
@@ -2152,11 +2119,11 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
     [activeFlowId, confirmedCharacter, setupStepIndex, stepValidityById, setupStepTestByStep],
   );
 
-  // Jumps directly into a specific substep of a step (e.g. Stats' Inner Ability) —
-  // the target step index is trusted to already be a visible, non-skipped step (the
-  // jump menu only offers substeps for steps it's already showing). substepJumpNonce
-  // always changes so the target step component remounts even when re-targeting the
-  // same substep it's already showing but has since navigated away from internally.
+  // Jumps directly into a specific substep of a step, such as Stats' Inner Ability. The
+  // target step index is trusted to be a visible, non-skipped step, since the jump menu only
+  // offers substeps for steps it is already showing. substepJumpNonce always changes so the
+  // target step remounts even when re-targeting the same substep it is showing but has since
+  // navigated away from internally.
   const jumpToSubstep = useCallback((nextStep: number, substepIndex: number) => {
     const jobName = confirmedCharacter?.jobName ?? "";
     const { gender, skipMarriage } = getClassSetupOverrides(jobName);
@@ -2173,16 +2140,15 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
     setSubstepJumpNonce((n) => n + 1);
   }, [activeFlowId, confirmedCharacter, stepValidityById, setupStepTestByStep]);
 
-  // SetupStepFrame reports whichever step id is currently mounted's own Next-button
-  // validity here (see its onValidityChange prop) — bound to the active step id in
-  // SetupFlowScreen, since the frame itself only knows a plain valid/invalid boolean.
+  // SetupStepFrame reports the mounted step's Next-button validity here (see its
+  // onValidityChange prop), bound to the active step id in SetupFlowScreen since the frame
+  // itself only knows a plain valid or invalid boolean.
   const reportStepValidity = useCallback((stepId: string, valid: boolean) => {
     setStepValidityById((prev) => (prev[stepId] === valid ? prev : { ...prev, [stepId]: valid }));
   }, []);
 
-  // Stats/Equipment/HEXA Matrix report their own current substep here (see each
-  // component's onSubstepChange), so it can be persisted for resume — see
-  // setupSubstepIndex above.
+  // Stats, Equipment and HEXA Matrix report their current substep here (see each component's
+  // onSubstepChange) so it can be persisted for resume. See setupSubstepIndex above.
   const reportCurrentSubstep = useCallback((substepIndex: number) => {
     setSetupSubstepIndex((prev) => (prev === substepIndex ? prev : substepIndex));
   }, []);
@@ -2197,10 +2163,10 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
     setSetupMode("search");
     setIsStaleFallbackPreview(false);
 
-    // The snapshot's base data is past its reset window — re-fetch live via the normal
-    // search→preview path instead of resuming on stale stats. Confirming the refreshed
+    // The snapshot's base data is past its reset window, so re-fetch live through the normal
+    // search and preview path instead of resuming on stale stats. Confirming the refreshed
     // result preserves the draft's entered step data (see confirmFoundCharacter). If the
-    // refresh fails, fall back to the stale snapshot so the draft isn't a dead end.
+    // refresh fails, fall back to the stale snapshot so the draft is not a dead end.
     if (Date.now() > snapshot.expiresAt) {
       setSetupFlowStarted(false);
       setConfirmedCharacter(null);
@@ -2249,11 +2215,11 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
     refreshDraftSummaries();
   }, [refreshDraftSummaries]);
 
-  // The searched character has a started, resumable draft — the preview offers
-  // Resume / Start fresh. A stepIndex-0 draft (flow not yet chosen) has no real
-  // progress, so it confirms normally instead of prompting. Derived from
-  // draftSummaries (not a fresh localStorage read) so clearing the draft from the
-  // dropdown immediately flips this off and the preview drops back to confirm.
+  // True when the searched character has a started, resumable draft, so the preview offers
+  // Resume or Start fresh. A draft still at step 0, with no flow chosen, has no real progress
+  // and confirms normally instead of prompting. Derived from draftSummaries rather than a
+  // fresh localStorage read, so clearing the draft from the dropdown flips this off
+  // immediately and the preview drops back to confirm.
   const foundCharacterHasResumableDraft = useMemo(() => {
     if (!foundCharacter) return false;
     const key = toCharacterKey(foundCharacter);
@@ -2310,11 +2276,10 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
       completedFlowIds: normalizeCompletedFlowIds(
         existingCharacterDraft?.completedFlowIds ?? [],
       ),
-      // A fresh confirm from search always lands on the intro (first step), never
-      // mid-flow — resuming is the job of the explicit Resume button. Previously this
-      // restored the draft's step index, so re-confirming a character whose draft had
-      // advanced would skip the intro entirely. Entered stepData is still preserved
-      // (passed below) so nothing the user typed is lost.
+      // A fresh confirm from search always lands on the intro step, never mid-flow, since
+      // resuming is the Resume button's job. Restoring the draft's step index here meant
+      // re-confirming a character whose draft had advanced skipped the intro entirely.
+      // Entered stepData is still preserved below, so nothing typed is lost.
       showFlowOverview: false,
       showCharacterDirectory: false,
       stepIndex: 0,
@@ -2346,16 +2311,15 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
     setIsFinishingSetup(true);
 
     transitions.queueTransitionTimer(() => {
-      // Reset so the post-commit resync below can tell whether THIS finish actually
-      // upserted anything, rather than reusing a leftover reference from an earlier,
-      // unrelated finish this session.
+      // Reset so the post-commit resync below can tell whether this finish upserted
+      // anything, rather than reusing a leftover reference from an earlier finish.
       lastUpsertedCharacterRef.current = null;
       const effectiveFlowId = typeof overrideFlowId === "string" ? overrideFlowId : activeFlowId;
-      // overrideStepData lets a caller (e.g. skipSetupEntirely) force specific field
-      // values instead of whatever's sitting in the ambient draft — passing it as an
-      // argument (rather than writing setupStepTestByStep and calling finishSetupFlow
-      // right after) avoids relying on a state update landing before this closure reads
-      // it, which isn't guaranteed.
+      // overrideStepData lets a caller such as skipSetupEntirely force specific field values
+      // instead of whatever sits in the ambient draft. Passing it as an argument, rather than
+      // writing setupStepTestByStep and calling finishSetupFlow straight after, avoids
+      // relying on a state update landing before this closure reads it, which is not
+      // guaranteed.
       const effectiveStepData: SetupStepInputById = overrideStepData
         ? { ...setupStepTestByStep, ...overrideStepData }
         : setupStepTestByStep;
@@ -2374,42 +2338,40 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
       if (effectiveFlowId === "maplescouter_setup"
         && applyMapleScouterFlow(confirmedCharacter, effectiveStepData, upsertRosterCharacter)) {
         setHasCompletedRequiredSetupEver(true);
-        // full_setup/quick_setup already run their own sync/propagation inside
-        // finalizeQuickOrFullSetupRecord above (right where storedRecord is built) --
-        // maplescouter_setup's own atomic upsert happens inside applyMapleScouterFlow
-        // instead, so it needs its own call here. Uses lastUpsertedCharacterRef (not a
-        // stale disk read) -- see propagateLinkSkillFloorsAfterUpsert's own comment for
-        // why; see syncOrPropagateLinkSkills's own comment for the sync-vs-raise split.
+        // full_setup and quick_setup run their own sync and propagation inside
+        // finalizeQuickOrFullSetupRecord above, where storedRecord is built.
+        // maplescouter_setup's upsert happens inside applyMapleScouterFlow instead, so it
+        // needs its own call here. Uses lastUpsertedCharacterRef rather than a stale disk
+        // read, per propagateLinkSkillFloorsAfterUpsert's comment; syncOrPropagateLinkSkills
+        // explains the sync versus raise-only split.
         if (lastUpsertedCharacterRef.current) {
           syncOrPropagateLinkSkills(effectiveStepData.link_skills, lastUpsertedCharacterRef.current, characterRoster, upsertRosterCharacter);
         }
       }
 
-      // maplescouter_setup, like full_setup, already handles every step it owns (stats,
-      // oz_rings, buffs, hexa_matrix) inside applyMapleScouterFlow's own single upsert above.
-      // Running applyStandaloneToolDrafts afterward re-processed hexa_matrix a second time
-      // against a STALE readCharactersStore() snapshot (the first upsert's write hasn't
-      // reached storage yet this tick — see upsertRosterCharacter's own comment), silently
-      // reverting stats/isLiberated/weaponHand/scouter answers back to their pre-finish
-      // values while only hexa_matrix appeared to actually save.
+      // maplescouter_setup, like full_setup, handles every step it owns (stats, oz_rings,
+      // buffs, hexa_matrix) inside applyMapleScouterFlow's single upsert above. Running
+      // applyStandaloneToolDrafts afterward re-processed hexa_matrix against a stale
+      // readCharactersStore() snapshot, the first upsert's write not having reached storage
+      // this tick (see upsertRosterCharacter), reverting stats, isLiberated, weaponHand and
+      // scouter answers to their pre-finish values while only hexa_matrix appeared to save.
       const isMapleScouterFlow = effectiveFlowId === "maplescouter_setup";
       if (confirmedCharacter && !isFullSetupFlow && !isMapleScouterFlow) {
         applyStandaloneToolDrafts(confirmedCharacter, effectiveStepData, upsertRosterCharacter, effectiveFlowId);
       }
 
-      // Resyncs every step draft to the just-committed truth — without this, a stale
-      // or stepped-past draft for a DIFFERENT step (e.g. a stat typed into an abandoned
-      // MapleScouter Setup attempt, never cleared) keeps sitting in memory and can
-      // outlive this Finish, surfacing again the next time some other flow touches that
-      // same step this session (only a full page reload used to fix it, since that's the
-      // only other place this same seeding ran).
+      // Resyncs every step draft to the just-committed state. Without it, a stale or
+      // stepped-past draft for a different step, such as a stat typed into an abandoned
+      // MapleScouter Setup attempt and never cleared, stays in memory and outlives this
+      // Finish, resurfacing the next time another flow touches that step. Previously only a
+      // page reload fixed it, being the only other place this seeding ran.
       if (confirmedCharacter) {
-        // Uses the just-upserted record directly (lastUpsertedCharacterRef), NOT a
-        // fresh readCharactersStore() read — the actual localStorage write happens in
-        // a separate effect keyed off the characterRoster state upsertRosterCharacter
-        // just scheduled, which hasn't run yet in this same synchronous tick. Reading
-        // storage here would see the PRE-finish data, seeding the resync with stale
-        // values despite everything above having just committed correctly.
+        // Uses the just-upserted record via lastUpsertedCharacterRef rather than a fresh
+        // readCharactersStore() read. The localStorage write happens in a separate effect
+        // keyed off the characterRoster state upsertRosterCharacter just scheduled, which has
+        // not run yet in this synchronous tick, so reading storage here would see pre-finish
+        // data and seed the resync with stale values despite everything above committing
+        // correctly.
         const freshStored = lastUpsertedCharacterRef.current
           ?? selectCharacterById(readCharactersStore(), toCharacterKey(confirmedCharacter));
         setSetupStepTestByStep(buildSeededStepTestByStep(confirmedCharacter.jobName, freshStored ?? null));
@@ -2420,9 +2382,9 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
       const updatedCompleted = Array.from(new Set([
         ...completedFlowIds,
         effectiveFlowId,
-        // Full and MapleScouter are entry modes — finishing either also satisfies
-        // the required (quick) flow, so the completed profile pane shows instead of
-        // looping back to the setup intro.
+        // Full and MapleScouter are entry modes, so finishing either also satisfies the
+        // required quick flow and the completed profile pane shows instead of looping back
+        // to the setup intro.
         ...(effectiveFlowId === "full_setup" || effectiveFlowId === "maplescouter_setup" ? [requiredFlowId] : []),
       ]));
       setCompletedFlowIds(updatedCompleted);
@@ -2563,16 +2525,16 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
       lookup.resetSearchStateMessage();
       setHasCompletedRequiredSetupEver(!isLastCharacter);
       if (isLastCharacter) {
-        // Removed the final character — return to the first-time "add a character" state
-        // instead of an empty directory view (which has nothing to show and bounces the
-        // user back and forth with a dangling "back to directory" affordance).
+        // Removing the final character returns to the first-time "add a character" state
+        // rather than an empty directory view, which has nothing to show and leaves a
+        // dangling "back to directory" affordance.
         setSetupMode("intro");
         setSetupFlowStarted(false);
         setShowFlowOverview(false);
         setShowCharacterDirectory(false);
         transitions.setSetupPanelVisible(false);
-        // Keep isSwitchingToDirectory true here so the first-time card stays blanked
-        // until the closing animation has fully played -- the next timer below clears it.
+        // Keep isSwitchingToDirectory true so the first-time card stays blanked until the
+        // closing animation has played. The next timer below clears it.
       } else {
         setSetupMode("search");
         setSetupFlowStarted(true);
@@ -2582,9 +2544,9 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
       }
       setSetupStepIndex(0);
       setSetupStepDirection("forward");
-      // Waits for the slowed-down closing animation (--characters-slow, see the CSS'
-      // .deleting modifier) instead of the usual --characters-standard, so the state swap
-      // doesn't land while the binder is still visibly closing.
+      // Waits for the slowed closing animation (`--characters-slow`, see the CSS `.deleting`
+      // modifier) rather than the usual `--characters-standard`, so the state swap does not
+      // land while the binder is still visibly closing.
     }, CHARACTERS_TRANSITION_MS.slow);
 
     transitions.queueTransitionTimer(() => {
@@ -2612,10 +2574,10 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
     transitions.runBackTransition(applyAddCharacterView);
   }, [applyAddCharacterView, transitions]);
 
-  // Direct-add path: the imported IGN isn't in the roster yet. `role` is chosen on
-  // ImportModeScreen's own role picker -- "champion" is only ever passed here when the
-  // caller has already confirmed a free slot exists (ImportModeScreen checks first and
-  // routes to importCharacterAsChampionSwap instead when slots are full).
+  // Direct-add path, for an imported IGN not yet in the roster. `role` comes from
+  // ImportModeScreen's role picker, and "champion" is only passed when the caller has
+  // confirmed a free slot exists. ImportModeScreen checks first and routes to
+  // importCharacterAsChampionSwap when slots are full.
   const importCharacter = useCallback((record: StoredCharacterRecord, role: RosterRole) => {
     upsertRosterCharacter(record);
     // Same reasoning as finalizeQuickOrFullSetupRecord's own propagation call: floors
@@ -2623,18 +2585,18 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
     // its own Link Skills field was ever exported/filled in, so a same-world sibling's
     // stored value can still go stale the moment this import lands.
     propagateLinkSkillFloorsAfterUpsert(record, characterRoster, upsertRosterCharacter);
-    // Import is as valid an entry path as search-based setup -- see
-    // ensureLegionArtifactDefaultForWorld's own comment ("regardless of entry path").
+    // Import is as valid an entry path as search-based setup, per
+    // ensureLegionArtifactDefaultForWorld's own comment about entry paths.
     ensureLegionArtifactDefaultForWorld(record.worldID);
     if (role === "main") setMainCharacter(record);
     if (role === "champion") toggleChampionCharacter(record);
     switchToCharacterProfile(record);
   }, [characterRoster, setMainCharacter, switchToCharacterProfile, toggleChampionCharacter, upsertRosterCharacter]);
 
-  // Champion-slot-full path: adds the imported character as a champion while removing
+  // Champion-slot-full path. Adds the imported character as a champion while removing
   // `swapOutKey` from the champion list in the same store update, rather than two separate
-  // toggle calls -- avoids a moment where the world briefly has 6 champions (over MAX_CHAMPIONS)
-  // or, if the add happened to lose a race with the remove, silently drops back to 4.
+  // toggle calls, which would briefly leave the world over MAX_CHAMPIONS or, if the add lost
+  // a race with the remove, one champion short.
   const importCharacterAsChampionSwap = useCallback((record: StoredCharacterRecord, swapOutKey: string) => {
     upsertRosterCharacter(record);
     propagateLinkSkillFloorsAfterUpsert(record, characterRoster, upsertRosterCharacter);
@@ -2647,10 +2609,10 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
     switchToCharacterProfile(record);
   }, [characterRoster, switchToCharacterProfile, upsertRosterCharacter]);
 
-  // Conflict-resolved path: the imported IGN already exists -- apply the user's
-  // per-section choices from the conflict dialog before upserting. Never touches
-  // main/champion status itself: upsertRosterCharacter only auto-assigns main for a
-  // world's first-ever character, which this can't be since the IGN already exists.
+  // Conflict-resolved path, for an imported IGN that already exists. Applies the per-section
+  // choices from the conflict dialog before upserting. Never touches main or champion status,
+  // since upsertRosterCharacter only auto-assigns main for a world's first character, which
+  // this cannot be.
   const importCharacterMerged = useCallback((
     existing: StoredCharacterRecord,
     imported: StoredCharacterRecord,
@@ -2663,30 +2625,27 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
     switchToCharacterProfile(merged);
   }, [characterRoster, switchToCharacterProfile, upsertRosterCharacter]);
 
-  // World-import bulk apply: `resolvedCharacters` is already the caller's final answer
-  // per character (straight new adds plus any conflicts already merged via
-  // mergeImportedCharacterRecord) -- this just commits all of them in ONE setCharacterRoster
-  // update, same "already building the array" pattern as applyLinkSkillFloorsInPlace/
-  // handleRefreshed use, rather than N sequential upsertRosterCharacter calls. Looping
-  // upsertRosterCharacter here would be wrong, not just slow: it reads characterRoster from
-  // this closure to decide "is this world empty -> auto-assign main", and every call in a
-  // tight loop would see the SAME stale pre-import snapshot, misfiring that auto-assign for
-  // every character in a brand-new world. Applying roleKeys afterward overwrites whatever
-  // upsertRosterCharacter would have guessed anyway, but building the roster in one shot
-  // avoids relying on that overwrite to paper over N-1 wrong intermediate states.
-  // Link Skill floor propagation intentionally runs once, after every character in the
-  // world is already in the roster array (effectiveRoster), so a floor raised by character
-  // #40 can still reach character #3 -- propagating one-at-a-time per upsert would miss
-  // that depending on file order.
+  // World-import bulk apply. `resolvedCharacters` is already the caller's final answer per
+  // character, new adds plus conflicts merged via mergeImportedCharacterRecord, so this
+  // commits them in one setCharacterRoster update, the same pattern applyLinkSkillFloorsInPlace
+  // and handleRefreshed use. Looping upsertRosterCharacter would be wrong rather than merely
+  // slow: it reads characterRoster from this closure to decide whether the world is empty and
+  // a main should be auto-assigned, so every call in the loop would see the same pre-import
+  // snapshot and misfire that auto-assign for every character in a new world. Applying roleKeys
+  // afterward would overwrite those guesses, but building the roster in one shot avoids relying
+  // on that to paper over wrong intermediate states.
+  // Link Skill floor propagation runs once, after every character in the world is in the roster
+  // array, so a floor raised by the last character can still reach the first. Propagating per
+  // upsert would miss that depending on file order.
   const importWorldBulk = useCallback((
     resolvedCharacters: StoredCharacterRecord[],
     roleKeys: { mainCharacterKey: string | null; championCharacterKeys: string[] },
     worldId: number,
     legionData: { legionArtifact?: StoredLegionArtifact; scouterLegion?: StoredScouterLegion } | null,
-    // Existing residents the user explicitly unchecked on the conflict-resolution screen
-    // to free up room under MAX_CHARACTERS_PER_WORLD -- removed in the SAME roster update
-    // as the upserts below, not a separate pass, so there's never an intermediate state
-    // that's still over cap or briefly missing a character mid-import.
+    // Existing residents unchecked on the conflict-resolution screen to free room under
+    // MAX_CHARACTERS_PER_WORLD. Removed in the same roster update as the upserts below rather
+    // than a separate pass, so there is never an intermediate state still over cap or briefly
+    // missing a character mid-import.
     removedKeys: string[] = [],
   ) => {
     setCharacterRoster((prev) => {
@@ -2703,11 +2662,11 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
     });
 
     const worldKey = String(worldId);
-    // Role keys can point at an untouched resident (kept, not imported/customized this
-    // pass) -- resolvedCharacters alone only covers what THIS import actively upserted,
-    // so validKeys has to be the real post-import roster on this world, not just that
-    // subset, or an untouched resident's role assignment gets silently rejected as
-    // "invalid" even though they're staying right where they are.
+    // Role keys can point at an untouched resident, kept rather than imported or customized
+    // this pass, and resolvedCharacters covers only what this import actively upserted. So
+    // validKeys has to be the real post-import roster for the world rather than that subset,
+    // or an untouched resident's role assignment is rejected as invalid even though they are
+    // staying exactly where they are.
     const removedSet = new Set(removedKeys);
     const validKeys = new Set<string>();
     for (const character of characterRoster) {
@@ -2739,9 +2698,8 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
       if (legionData.legionArtifact) writeLegionArtifactForWorld(worldId, legionData.legionArtifact);
       if (legionData.scouterLegion) writeScouterLegionForWorld(worldId, legionData.scouterLegion);
     }
-    // Existence-checked, so this is a no-op whenever legionData above already wrote real
-    // data (or the world already had some) -- same "regardless of entry path" reasoning as
-    // every other import callback here.
+    // Existence-checked, so this is a no-op whenever legionData above wrote real data or the
+    // world already had some. Same entry-path reasoning as every other import callback here.
     ensureLegionArtifactDefaultForWorld(worldId);
 
     backToCharactersDirectory();
@@ -2762,10 +2720,10 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
         setIsAddingCharacter(false);
         setFoundCharacter(null);
         setSetupFlowStarted(true);
-        // Reachable with setupMode still "import" (Directory -> Search -> "Import a
-        // character instead" -> Import screen -> Back), not just the plain search-add
-        // path (already "search") -- reset unconditionally rather than branching, a
-        // no-op for search, the fix for import.
+        // Reachable with setupMode still "import", via Directory, Search, "Import a character
+        // instead", Import screen, Back, not only the plain search-add path which is already
+        // "search". Reset unconditionally rather than branching: a no-op for search, the fix
+        // for import.
         setSetupMode("search");
         transitions.setSetupPanelVisible(true);
         setShowFlowOverview(targetShowFlowOverview);
@@ -2852,15 +2810,15 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
   const activeSetupStepValue = activeSetupStep
     ? setupStepTestByStep[activeSetupStep.id] ?? ""
     : "";
-  // The Stats step's own draft, independent of which step is currently active — needed
-  // for its live-computed Character-Info substep gate (see getFirstInvalidStepIndex).
+  // The Stats step's own draft, independent of which step is active, needed for its
+  // live-computed Character Info substep gate (see getFirstInvalidStepIndex).
   const statsRawValue = setupStepTestByStep.stats ?? "";
-  // Equipment/Legion Artifacts' own drafts, independent of which step is currently
-  // active — the Stats step's Quick Questions derives Genesis Liberation/Weapon Hand/
-  // Ruin Force Shield/Legion Artifacts from whichever of these is most current, and a
-  // live in-session edit to either step (not yet Finished) should win over whatever's
-  // still sitting in storage from before this session, so it can't stay stuck locked to
-  // a stale answer until a full Finish-then-reopen round trip.
+  // The Equipment and Legion Artifacts drafts, independent of which step is active. The
+  // Stats step's Quick Questions derive Genesis Liberation, Weapon Hand, Ruin Force Shield
+  // and Legion Artifacts from whichever of these is most current, and an in-session edit to
+  // either step, not yet Finished, should win over what is still in storage from before this
+  // session, rather than staying locked to a stale answer until a Finish and reopen round
+  // trip.
   const equipmentRawValue = setupStepTestByStep.equipment ?? "";
   const legionArtifactsRawValue = setupStepTestByStep.legion_artifacts ?? "";
   const currentCharacterKey = confirmedCharacter ? toCharacterKey(confirmedCharacter) : null;
@@ -2876,8 +2834,9 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
   );
   const canSetCurrentChampion =
     isCurrentChampionCharacter || championCharacterKeys.length < MAX_CHAMPIONS;
-  // Sourced from the roster (what's actually saved), not the live draft — a value typed
-  // into an in-progress step shouldn't show here until its flow's Finish actually commits it.
+  // Sourced from the roster, meaning what is actually saved, rather than the live draft. A
+  // value typed into an in-progress step should not show here until its flow's Finish
+  // commits it.
   const currentRosterCharacter = currentCharacterKey
     ? characterRoster.find((c) => toCharacterKey(c) === currentCharacterKey) ?? null
     : null;
@@ -2961,12 +2920,12 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
         }));
       },
       // Applies a parsed MapleScouter export by seeding the other steps' drafts with its
-      // values -- the inverse of buildSeededStepTestByStep. Every later step then renders
-      // those values for the player to review before Finish. The account-level bits (Wild
-      // Hunter Legion rank, Legion Artifact) ride in the stats draft's scouterQuestions
-      // block, which the normal finish path already persists per-world. Passing the stored
-      // record lets the stats draft start from the character's saved stats, so an import
-      // only overwrites what the export actually covers (see mapImportToDrafts).
+      // values, the inverse of buildSeededStepTestByStep. Every later step then renders those
+      // values for the player to review before Finish. The account-level parts, Wild Hunter
+      // Legion rank and Legion Artifact, ride in the stats draft's scouterQuestions block,
+      // which the normal finish path persists per-world. Passing the stored record lets the
+      // stats draft start from the character's saved stats, so an import overwrites only what
+      // the export covers (see mapImportToDrafts).
       applyMapleScouterImport: (result: MapleScouterImportResult) => {
         const existing = confirmedCharacter
           ? selectCharacterById(readCharactersStore(), toCharacterKey(confirmedCharacter))
@@ -3020,14 +2979,14 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
       clearRestoredBookmark: () => setLastActiveBookmark(null),
       startOptionalSetupFlow: (flowId: SetupFlowId, targetSubstep?: number, confineToSubstep?: boolean) => {
         if (immediateUiLockRef.current) return;
-        // Re-seeds from the freshest stored record before entering the flow — mirrors the
-        // resync that already runs right after Finish (see its own comment below), just on
-        // the opposite end. Without this, re-running an optional flow (e.g. Full Setup again
-        // from the profile's Setup bookmark, or a bookmark's confined pencil edit) reused
-        // whatever setupStepTestByStep last held from the PREVIOUS run — stale enough to
-        // still be missing any profile-page-only correction made since (e.g. HEXA Stat/
-        // Equipment/Familiars/Hyper Stat's "Set preset X as active" button), so finishing
-        // without touching that field silently reverted the correction back to preset 1.
+        // Re-seeds from the freshest stored record before entering the flow, mirroring the
+        // resync that runs after Finish (see its comment below) from the opposite end.
+        // Without this, re-running an optional flow, such as Full Setup from the profile's
+        // Setup bookmark or a bookmark's confined pencil edit, reused whatever
+        // setupStepTestByStep held from the previous run. That is stale enough to miss any
+        // profile-page correction made since, such as HEXA Stat, Equipment, Familiars or
+        // Hyper Stat's "Set preset X as active", so finishing without touching that field
+        // reverted the correction to preset 1.
         if (confirmedCharacter) {
           const freshStored = selectCharacterById(readCharactersStore(), toCharacterKey(confirmedCharacter));
           setSetupStepTestByStep(buildSeededStepTestByStep(confirmedCharacter.jobName, freshStored ?? null));
@@ -3043,7 +3002,7 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
           setSetupStepTestByStep((prev) => ({ ...prev, gender: autoFillGender }));
         }
         if (startStep > stepCount) {
-          // All steps skipped — finish immediately with this flow
+          // All steps skipped, so finish immediately with this flow
           setActiveFlowId(flowId);
           finishSetupFlow(flowId);
           return;
@@ -3051,10 +3010,10 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
         setActiveFlowId(flowId);
         setSetupStepIndex(startStep);
         setSetupStepDirection("forward");
-        // Seeds the freshly-mounted step's initial substep — same mechanism used to
-        // resume a draft mid-substep (see applyDraftFlowState above). Lets a bookmark
-        // like Stats' Hyper Stat/Inner Ability sub-views open the edit flow straight on
-        // the substep they're showing instead of always restarting at substep 0.
+        // Seeds the freshly mounted step's initial substep, the same mechanism used to resume
+        // a draft mid-substep (see applyDraftFlowState above). Lets a bookmark such as Stats'
+        // Hyper Stat or Inner Ability sub-views open the edit flow on the substep they are
+        // showing instead of restarting at substep 0.
         setSetupTargetSubstep(targetSubstep ?? null);
         setSetupConfineToSubstep(Boolean(confineToSubstep));
         setShowFlowOverview(false);

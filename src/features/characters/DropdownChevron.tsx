@@ -18,7 +18,7 @@ export function DropdownChevron({ open, size = 14 }: { open: boolean; size?: num
   );
 }
 
-// Shared left/right nav-arrow indicator -- replaces ad hoc "‹"/"›" text glyphs, which sit near
+// Shared left and right nav-arrow indicator, replacing ad hoc "‹" and "›" glyphs, which sit near
 // cap-height rather than spanning the full line box, so flex centering visually centers empty
 // space below the glyph instead of the glyph itself.
 export function NavChevron({ direction, size = 14 }: { direction: "prev" | "next"; size?: number }) {

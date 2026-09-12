@@ -8,28 +8,28 @@
 //
 // So this is a safety net first and a diagnostic second: it snapshots the pre-write
 // store whenever a populated field goes blank, and logs the stack of whoever did it.
-// Compiled out of production builds -- every entry point is behind NODE_ENV.
+// Compiled out of production builds, since every entry point is behind NODE_ENV.
 
 import type { CharactersStore, StoredCharacterRecord } from "./charactersStore";
 
 const SNAPSHOT_KEY = "dev_wipe_snapshots_v1";
 const MAX_SNAPSHOTS = 3;
 
-// Deliberately does NOT start with "mapledoro": the /settings export/import walks keys
+// Deliberately does not start with "mapledoro": the /settings export and import walk keys
 // by that prefix, and snapshots would triple the size of every backup file.
 
 /** Record fields worth guarding. Scaffolding (ign, level, meta) is excluded: it is
  *  rewritten on every refresh and would only generate noise. `tools` is absent on purpose
- *  -- it is a bag of independent per-tool blobs, checked one subkey at a time below so
- *  losing just one tool's data isn't masked by its neighbours still being populated. */
+ *  since it is a bag of independent per-tool blobs, checked one subkey at a time below so
+ *  losing one tool's data isn't masked by its neighbours still being populated. */
 const WATCHED_FIELDS = [
   "equipment", "vMatrix", "linkSkills", "familiars", "stats", "scouter", "expHistory",
 ] as const satisfies readonly (keyof StoredCharacterRecord)[];
 
 /** World-keyed maps that live on the store rather than on a character record, so the
- *  per-character pass never sees them (Legion's Artifact board -- Link Skills moved to a
- *  per-character field, see charactersStore.ts's file-header reasoning, so it's covered
- *  by WATCHED_FIELDS above now instead of here). */
+ *  per-character pass never sees them, meaning Legion's Artifact board. Link Skills moved to
+ *  a per-character field (see charactersStore.ts's file-header reasoning), so they are now
+ *  covered by WATCHED_FIELDS above instead of here. */
 const WATCHED_WORLD_MAPS = [
   "legionArtifactByWorld",
 ] as const satisfies readonly (keyof CharactersStore)[];
@@ -122,7 +122,7 @@ function saveSnapshot(rawBefore: string, wipes: Wipe[]): string | null {
   }
 }
 
-/** Dev-only drill: `__mapledoroTestTripwire("fuyurin64")` in the console runs the real
+/** Dev-only drill: `__mapledoroTestTripwire("<character name>")` in the console runs the real
  *  detector against the real stored data with one character's equipment blanked, so the
  *  wiring, the snapshot write and the log output can all be checked in a browser. Builds
  *  the blanked store in memory and never persists it, so no character data is touched. */

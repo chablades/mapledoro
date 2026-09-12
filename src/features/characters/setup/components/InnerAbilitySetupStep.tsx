@@ -101,8 +101,8 @@ function IAGradeHeader({ grade, openId, theme, onToggle, onClose, onPick, onClea
   theme: AppTheme;
   onToggle: () => void;
   onClose: () => void;
-  /** viaKeyboard distinguishes an Enter-driven pick from a mouse click — only a keyboard
-   *  pick jumps to Line 1, since a mouse click means the user's cursor is staying local. */
+  /** viaKeyboard distinguishes an Enter-driven pick from a mouse click. Only a keyboard
+   *  pick jumps to Line 1, since a mouse click means the cursor is staying local. */
   onPick: (tier: IATier, viaKeyboard: boolean) => void;
   onClear: () => void;
   onNext?: () => void;
@@ -185,9 +185,9 @@ function IALineOptions({ tier, currentValue, theme, onPick, onClose, onPrev, onN
   tier: IATier;
   currentValue: string;
   theme: AppTheme;
-  /** viaKeyboard distinguishes an Enter-driven pick from a mouse click — only a keyboard
-   *  pick jumps to the next line, since a mouse click means the user's cursor is staying
-   *  local. Always false for a clear (Backspace or the Clear button), which never jumps. */
+  /** viaKeyboard distinguishes an Enter-driven pick from a mouse click. Only a keyboard pick
+   *  jumps to the next line, since a mouse click means the cursor is staying local. Always
+   *  false for a clear, by Backspace or the Clear button, which never jumps. */
   onPick: (value: string, viaKeyboard: boolean) => void;
   onClose: () => void;
   onPrev?: () => void;
@@ -320,10 +320,9 @@ export default function InnerAbilitySetupStep({ draft, onUpdate, theme, showActi
   draft: IADraft | undefined;
   onUpdate: (next: IADraft) => void;
   theme: AppTheme;
-  /** Shows a hint that the active preset can be set later from the profile — only
-   *  true during first-time full setup; false when opened from a profile bookmark's
-   *  edit pencil, since the profile's own "Set preset X as active" control is right
-   *  there already. */
+  /** Shows a hint that the active preset can be set later from the profile. True only during
+   *  first-time full setup, and false when opened from a profile bookmark's edit pencil, where
+   *  the profile's own "Set preset X as active" control is already right there. */
   showActivePresetHint?: boolean;
 }) {
   const [openId, setOpenId] = useState<string | null>(null);
@@ -379,9 +378,9 @@ export default function InnerAbilitySetupStep({ draft, onUpdate, theme, showActi
     onUpdate({ ...ia, presets });
   }
 
-  // Jumps into line `idx`'s popover only if it's still untouched (empty value); barging
-  // into a line someone already filled (e.g. while correcting an earlier one) would be
-  // more surprising than helpful, so it just closes instead — same rule as Familiars/Legion.
+  // Jumps into line `idx`'s popover only if it's still untouched, meaning an empty value.
+  // Barging into a line someone already filled, say while correcting an earlier one, would
+  // surprise more than it helps, so it closes instead. Same rule as Familiars and Legion.
   function goToLine(idx: number) {
     const target = ia.presets[ia.activePreset].lines[idx];
     setOpenId(target && !target.value ? `ia-line-${idx}` : null);

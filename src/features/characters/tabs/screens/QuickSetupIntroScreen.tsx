@@ -13,9 +13,9 @@ interface SetupIntroScreenProps {
 
 interface SetupFlowButtonsProps extends SetupIntroScreenProps {
   /** True when reused from the profile's "Setup" bookmark rather than the first-run
-   *  intro screen — the character already exists, so the "Skip setup, add character
-   *  and go to profile" copy/action (for classes with nothing for Quick Setup to ask,
-   *  e.g. Zero) doesn't apply and the whole Quick Setup entry is hidden instead. */
+   *  intro screen. The character already exists, so the "Skip setup, add character and go
+   *  to profile" copy and action, meant for classes with nothing for Quick Setup to ask like
+   *  Zero, doesn't apply, and the whole Quick Setup entry is hidden instead. */
   isProfileBookmark?: boolean;
 }
 
@@ -35,8 +35,8 @@ function skipButtonStyle(theme: AppTheme, disabled: boolean): CSSProperties {
   };
 }
 
-/** The Quick/MapleScouter/Full setup flow picker — shared between the first-run intro
- *  screen and the profile binder's "Setup" bookmark (re-entering setup later). */
+/** The Quick, MapleScouter and Full setup flow picker. Shared between the first-run intro
+ *  screen and the profile binder's Setup bookmark, used when re-entering setup later. */
 export function SetupFlowButtons({ model, actions, isProfileBookmark }: SetupFlowButtonsProps) {
   const { theme, setup } = model;
   const jobName = model.profile.confirmedCharacter?.jobName ?? "";
@@ -51,9 +51,9 @@ export function SetupFlowButtons({ model, actions, isProfileBookmark }: SetupFlo
   let quickSetupSubtitle = "Gender & marriage only";
   if (genderSkipped) quickSetupSubtitle = "Marriage only";
   else if (overrides.skipMarriage) quickSetupSubtitle = "Gender only";
-  // In the profile's Setup bookmark, the character already exists — there's nothing
-  // for Quick Setup to do for a quickSetupAllSkipped class (e.g. Zero), so the entry
-  // is hidden entirely rather than showing the intro screen's "add character" copy.
+  // In the profile's Setup bookmark the character already exists, so there is nothing for
+  // Quick Setup to do for a quickSetupAllSkipped class like Zero. The entry is hidden
+  // entirely rather than showing the intro screen's add-character copy.
   const hideQuickSetup = quickSetupAllSkipped && isProfileBookmark;
 
   return (
@@ -187,8 +187,8 @@ export default function QuickSetupIntroScreen({ model, actions }: SetupIntroScre
           fontSize: "1.3rem",
           lineHeight: 1.2,
           color: theme.text,
-          // Skip button floats top-right via position:absolute — reserve room so long
-          // titles wrap before reaching its corner instead of rendering underneath it.
+          // The Skip button floats top-right via position: absolute, so reserve room and let
+          // long titles wrap before reaching its corner instead of rendering underneath it.
           paddingRight: quickSetupAllSkipped ? 0 : "6.5rem",
         }}
       >

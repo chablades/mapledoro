@@ -18,9 +18,9 @@ type Choice = "mine" | "imported";
 interface ConflictEntry {
   existing: StoredCharacterRecord;
   imported: StoredCharacterRecord;
-  // Existing's role on whichever world it's CURRENTLY on -- not the import's target
-  // world, which can differ (e.g. importing a world file while the same IGN is Main
-  // somewhere else entirely).
+  // Existing's role on whichever world it currently sits on, not the import's target
+  // world, which can differ. Importing a world file while the same IGN is Main somewhere
+  // else entirely is the case to watch.
   currentRoles: ProfileRole[];
 }
 
@@ -38,18 +38,17 @@ function isSectionChoiceMap(value: ConflictResolution): value is Record<ImportSe
   return typeof value === "object";
 }
 
-// Main is a single world-level slot -- unlike a data section, one character's role
-// choice can silently bump ANOTHER character's role, including someone never even shown
-// a choice (an untouched resident who's currently Main but not mentioned in the file at
-// all). Detects that clash before commit instead of letting importWorldBulk's own
-// unconditional overwrite happen invisibly.
+// Main is a single world-level slot. Unlike a data section, one character's role choice can
+// silently bump another character's role, including someone never shown a choice, such as an
+// untouched resident who is currently Main but not mentioned in the file. This detects that
+// clash before commit instead of letting importWorldBulk's unconditional overwrite happen
+// invisibly.
 //
-// Only a KEPT conflict's current Main status counts as a real clash -- a conflict
-// resolved "Use imported"/customized is deliberately giving up whatever role they
-// currently hold (that's what usesFileRole means), so finding them as "currently Main"
-// is not a conflict, it's the expected outcome of their own choice. Residents have no
-// choice mechanism at all (they either stay untouched or get removed), so their current
-// Main status is always effectively "kept."
+// Only a kept conflict's current Main status counts as a real clash. A conflict resolved as
+// "Use imported" or customized is deliberately giving up whatever role it currently holds,
+// which is what usesFileRole means, so finding it as currently Main is the expected outcome
+// of that choice rather than a conflict. Residents have no choice mechanism, since they
+// either stay untouched or get removed, so their current Main status is always kept.
 function resolveMainConflict(
   keptConflicts: ConflictEntry[],
   worldResidents: ResidentEntry[],
@@ -80,22 +79,21 @@ function resolveMainConflict(
 }
 
 // Collapses a per-section map back into a plain bulk Choice when every section actually
-// agrees -- Customize's own "Keep all existing"/"Use all imported" buttons produce a map
-// that's uniform in exactly this way, and without this it reads as "Customized" even
-// though nothing about the outcome differs from clicking the row's own Keep/Use pill.
+// agrees. Customize's "Keep all existing" and "Use all imported" buttons produce a map
+// uniform in exactly this way, and without this it reads as "Customized" even though the
+// outcome is identical to clicking the row's own Keep or Use pill.
 function collapseUniformChoiceMap(choices: Record<ImportSectionId, Choice>): ConflictResolution {
   const values = Object.values(choices);
   const first = values[0];
   return values.every((v) => v === first) ? first : choices;
 }
 
-// Resolves the ACTUAL Main/Champion assignment that will be committed, honoring each
-// conflicting character's own data choice -- "Keep existing" also keeps their current
-// role untouched (the file's assignment for that key is dropped), while "Use imported"/
-// customized takes the file's assignment. A key only actually gets the file's role if
-// it's not a kept conflict AND is really going to exist post-import (a deselected new
-// character, or one with its role explicitly dropped via "Make Mule", can't hold a role
-// for a character that isn't being added, or isn't being added WITH that role).
+// Resolves the Main and Champion assignment that will actually be committed, honoring each
+// conflicting character's own data choice. "Keep existing" keeps their current role untouched,
+// dropping the file's assignment for that key, while "Use imported" or customized takes the
+// file's assignment. A key gets the file's role only if it is not a kept conflict and will
+// really exist post-import. A deselected new character, or one whose role was dropped via
+// "Make Mule", can't hold a role.
 function resolveEffectiveRoles({
   payload,
   conflicts,
@@ -124,11 +122,10 @@ function resolveEffectiveRoles({
     !keptConflictKeys.has(key) && resolvedCharacterKeys.has(key) && !droppedNewCharacterRoleKeys.has(key);
   const effectiveMainCharacterKey =
     payload.mainCharacterKey && fileRoleApplies(payload.mainCharacterKey) ? payload.mainCharacterKey : null;
-  // importWorldBulk's champion merge is "replace with this list if non-empty, else keep
-  // whatever's already stored" -- not a union -- so a kept conflict's (or a kept, not-
-  // removed resident's) real current champion status has to be folded into THIS list
-  // explicitly, or it would be silently dropped whenever the file assigns anyone else as
-  // champion.
+  // importWorldBulk's champion merge replaces with this list when non-empty and otherwise
+  // keeps what's already stored. It is not a union, so the current champion status of a kept
+  // conflict, or of a kept and not-removed resident, has to be folded into this list
+  // explicitly, or it gets dropped whenever the file assigns anyone else as champion.
   const keptCurrentChampionKeys: string[] = [];
   for (const entry of keptConflicts) {
     if (entry.currentRoles.includes("champion")) keptCurrentChampionKeys.push(toCharacterKey(entry.existing));
@@ -152,7 +149,7 @@ function resolveEffectiveRoles({
 // choices, role overrides, new-character/resident selection) plus every value derived
 // from it (resolved character list, projected world count, cap/role-conflict checks).
 // Extracted out of the component itself purely to keep that component under the
-// react-doctor giant-component line threshold -- this hook has exactly one call site.
+// react-doctor giant-component line threshold. This hook has exactly one call site.
 export function useWorldImportConflictState(
   payload: WorldExportPayload,
   conflicts: ConflictEntry[],
@@ -166,29 +163,29 @@ export function useWorldImportConflictState(
   });
   const [keepMyWorldData, setKeepMyWorldData] = useState(true);
   const [customizingKey, setCustomizingKey] = useState<string | null>(null);
-  // Explicit per-conflict role overrides set via Customize's role row -- absent means the
-  // default (role follows the data resolution: "mine" keeps the current role, "imported"/
-  // customized applies the file's role), present means the user explicitly chose
-  // independent of their data choice (e.g. keep existing data but still take the file's
-  // role, or the reverse).
+  // Explicit per-conflict role overrides set via Customize's role row. Absent means the
+  // default, where the role follows the data resolution: "mine" keeps the current role, and
+  // "imported" or customized applies the file's role. Present means the player chose
+  // independently of their data choice, such as keeping existing data while still taking
+  // the file's role, or the reverse.
   const [roleOverrides, setRoleOverrides] = useState<Record<string, boolean>>({});
-  // Every new character starts checked -- unchecking is how someone stays under the
-  // per-world cap (MAX_CHARACTERS_PER_WORLD) when the file would otherwise push them over
-  // it, since conflicts never add a NET-NEW slot (they replace/keep an existing IGN) and
-  // can't be the cause of going over.
+  // Every new character starts checked. Unchecking is how someone stays under the per-world
+  // cap (MAX_CHARACTERS_PER_WORLD) when the file would otherwise push them over it. Conflicts
+  // never add a net-new slot, since they replace or keep an existing IGN, so they can't be
+  // the cause of going over.
   const [selectedNewCharacterKeys, setSelectedNewCharacterKeys] = useState<Set<string>>(
     () => new Set(newCharacters.map(toCharacterKey)),
   );
-  // Existing residents default to KEPT (checked) -- storing the deselected set rather
-  // than the selected one, since "keep everyone" is the common case and residents is
-  // usually large (up to MAX_CHARACTERS_PER_WORLD), so tracking exceptions is cheaper
-  // to reason about than tracking the whole default-true set.
+  // Existing residents default to kept, meaning checked. This stores the deselected set
+  // rather than the selected one: keeping everyone is the common case and residents is
+  // usually large, up to MAX_CHARACTERS_PER_WORLD, so tracking exceptions is easier to
+  // reason about than tracking the whole default-true set.
   const [deselectedResidentKeys, setDeselectedResidentKeys] = useState<Set<string>>(() => new Set());
-  // A new character can be added WITHOUT taking the file's Main/Champion assignment for
-  // them -- e.g. they'd push Champion count over cap, but there's no reason a Champion
-  // conflict should force dropping the character entirely when they'd otherwise fit fine
-  // as a plain mule. Keyed independently of selectedNewCharacterKeys since "add them" and
-  // "give them this role" are separate decisions.
+  // A new character can be added without taking the file's Main or Champion assignment for
+  // them, say when they would push the Champion count over cap. A Champion conflict shouldn't
+  // force dropping the character entirely when they would fit fine as a plain mule. Keyed
+  // independently of selectedNewCharacterKeys, since adding them and giving them a role are
+  // separate decisions.
   const [droppedNewCharacterRoleKeys, setDroppedNewCharacterRoleKeys] = useState<Set<string>>(() => new Set());
 
   function applyBulkChoiceToAll(choice: Choice) {
@@ -196,16 +193,16 @@ export function useWorldImportConflictState(
     for (const entry of conflicts) next[toCharacterKey(entry.existing)] = choice;
     setResolutions(next);
     setKeepMyWorldData(choice === "mine");
-    // Clears any explicit per-character role override set via a previous Customize visit
-    // -- a bulk choice is a full reset, so a stale override from before shouldn't keep
-    // pinning that one character's role against what the bulk buttons now say.
+    // Clears any explicit per-character role override set during a previous Customize visit.
+    // A bulk choice is a full reset, so a stale override shouldn't keep pinning one
+    // character's role against what the bulk buttons now say.
     setRoleOverrides({});
   }
 
-  // Conflicts resolved "imported"/customized land ON payload.worldID (that's what
-  // entry.imported's own worldID already is); "mine" keeps entry.existing wherever it
-  // already lives, which can be a different world entirely -- so this is NOT simply
-  // "current count + selected new characters", it's the real post-import membership.
+  // Conflicts resolved as "imported" or customized land on payload.worldID, which is what
+  // entry.imported's own worldID already is. "mine" keeps entry.existing wherever it lives,
+  // which can be a different world entirely. So this is not the current count plus selected
+  // new characters, it is the real post-import membership.
   const resolvedConflicts: StoredCharacterRecord[] = conflicts.map((entry) => {
     const key = toCharacterKey(entry.existing);
     const resolution = resolutions[key] ?? "mine";
@@ -220,9 +217,9 @@ export function useWorldImportConflictState(
 
   // Same "upsert by key, then drop removed" merge importWorldBulk itself performs (see
   // useCharacterSetupController.ts), mirrored here purely to preview the resulting
-  // per-world count before committing -- every resolved character's worldID already
-  // reflects where it will actually end up (payload.worldID for imported/customized
-  // conflicts and new characters, wherever it already was for "keep mine" conflicts).
+  // per-world count before committing. Every resolved character's worldID already reflects
+  // where it will end up: payload.worldID for imported or customized conflicts and new
+  // characters, and wherever it already was for "keep mine" conflicts.
   const removedSet = new Set(removedResidentKeys);
   const rosterByKey = new Map<string, StoredCharacterRecord>();
   for (const character of selectCharactersList(readCharactersStore())) {
@@ -260,14 +257,15 @@ export function useWorldImportConflictState(
     });
   }
 
-  // A conflicting character resolved "mine" (Keep existing) keeps their real current
-  // role untouched, same as their data -- the file's role assignment for that specific
-  // key is dropped rather than applied, so "Keep existing" actually means keep
-  // everything about them, not just their stats/equipment/etc. New characters have no
-  // current role to preserve, so the file's assignment always applies to them.
-  // roleOverrides (set via Customize's own role row) lets someone decouple role from
-  // data entirely -- e.g. keep existing data but still take the file's role, or the
-  // reverse -- overriding the data-resolution default when present.
+  // A conflicting character resolved as "mine", meaning Keep existing, keeps their current
+  // role untouched along with their data. The file's role assignment for that key is dropped
+  // rather than applied, so Keep existing means keep everything about them, not only their
+  // stats and equipment. New characters have no current role to preserve, so the file's
+  // assignment always applies to them.
+  //
+  // roleOverrides, set via Customize's role row, decouples role from data entirely, letting
+  // someone keep existing data while taking the file's role, or the reverse. It overrides the
+  // data-resolution default when present.
   function usesFileRole(key: string): boolean {
     if (key in roleOverrides) return roleOverrides[key];
     return (resolutions[key] ?? "mine") !== "mine";
@@ -282,9 +280,9 @@ export function useWorldImportConflictState(
     usesFileRole,
   });
 
-  // Champion overflow gets the same "surface before commit" treatment -- see
-  // resolveMainConflict's own comment for why this can't just be left to
-  // importWorldBulk's silent MAX_CHAMPIONS truncation.
+  // Champion overflow gets the same surface-before-commit treatment. See resolveMainConflict's
+  // own comment for why this can't be left to importWorldBulk's silent MAX_CHAMPIONS
+  // truncation.
   const mainConflict = resolveMainConflict(keptConflicts, worldResidents, effectiveMainCharacterKey, removedSet, rosterByKey);
   const championOverflowCount = Math.max(0, effectiveChampionCharacterKeys.length - MAX_CHAMPIONS);
 

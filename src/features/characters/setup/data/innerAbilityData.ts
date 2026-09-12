@@ -166,7 +166,7 @@ export function getLinesForIATier(tier: IATier): string[] {
 }
 
 // The only two legendary lines MapleScouter cares about (see scouterQuestionsData.ts's
-// IA_LINE_OPTIONS) — full_setup derives its scouter-facing Inner Ability line answer by
+// IA_LINE_OPTIONS). full_setup derives its scouter-facing Inner Ability line answer by
 // checking for these exact strings in the Stats step's Inner Ability card instead of
 // asking again.
 export const IA_PASSIVE_PLUS_ONE_LINE = "Passive Skills: +1 Level (excludes Active Hybrids, 5th job skills, 6th job skills)";
@@ -174,8 +174,8 @@ export const IA_MULTI_TARGET_PLUS_ONE_LINE = "Number of enemies hit by multi-tar
 
 // ── Draft shape (setup UI) ───────────────────────────────────────────────────
 // Inner Ability presets (3 lines each, each with an independent tier). Lives on the
-// Stats step's draft (StatsStepDraft.innerAbility) — it's a Character Info fact
-// (found in the in-game Stats window), not an Equipment one.
+// Stats step's draft (StatsStepDraft.innerAbility), since it is a Character Info fact
+// found in the in-game Stats window, not an Equipment one.
 
 export interface IALineDraft {
   tier?: IATier | "";
@@ -211,8 +211,8 @@ export function normalizeIA(ia: IADraft | undefined): IAFull {
 const IA_TIER_INDEX: Record<IATier, number> = { rare: 0, epic: 1, unique: 2, legendary: 3 };
 
 /** Tiers a line may take given the ability grade. Line 1 is always the grade; lines 2-3 floor at
- *  two tiers below (clamped to Rare). Line 2 may reach the grade itself — covering legacy GMS /
- *  TMS Hyper-circulator Legendary 2nd lines — while line 3 caps one tier below the grade. */
+ *  two tiers below, clamped to Rare. Line 2 may reach the grade itself, covering legacy GMS and
+ *  TMS Hyper-circulator Legendary 2nd lines, while line 3 caps one tier below the grade. */
 export function allowedLineTiers(grade: IATier, lineIdx: number): IATier[] {
   if (lineIdx === 0) return [grade];
   const g = IA_TIER_INDEX[grade];
@@ -234,23 +234,23 @@ function draftIAPresetToStored(p: IAPresetDraft | undefined): StoredInnerAbility
 export function convertInnerAbilityDraftToStored(draft: IADraft | undefined): StoredInnerAbility {
   const presets = draft?.presets ?? [];
   return {
-    // Always saved as preset 1 — the tab switcher used to view/edit each preset isn't an
-    // explicit "this is my active loadout" choice, so trusting it would silently save
-    // whatever preset was last open while editing.
+    // Always saved as preset 1. The tab switcher used to view and edit each preset isn't an
+    // explicit "this is my active loadout" choice, so trusting it would save whatever preset
+    // happened to be open last while editing.
     activePreset: 0,
     presets: [draftIAPresetToStored(presets[0]), draftIAPresetToStored(presets[1]), draftIAPresetToStored(presets[2])],
   };
 }
 
 // ── Scouter-facing derivation ────────────────────────────────────────────────
-// The only two legendary Inner Ability lines MapleScouter cares about — both full_setup
-// and maplescouter_setup derive their scouter-facing answer from the active preset's
-// lines instead of asking the question separately (see scouterQuestionsData.ts's
-// IA_LINE_OPTIONS for the manual-ask fallback used when there's no IA data yet).
+// The only two legendary Inner Ability lines MapleScouter cares about. Both full_setup and
+// maplescouter_setup derive their scouter-facing answer from the active preset's lines instead
+// of asking separately. See scouterQuestionsData.ts's IA_LINE_OPTIONS for the manual-ask
+// fallback used when there is no IA data yet.
 
-/** True if the active preset has any real line filled in (a tier + value), as opposed to
- *  a brand-new/untouched record — distinguishes "definitely neither special line" from
- *  "we don't know yet". */
+/** True if the active preset has any line filled in, meaning both a tier and a value, as
+ *  opposed to an untouched record. Distinguishes definitely-neither-special-line from
+ *  not-known-yet. */
 export function innerAbilityHasData(innerAbility: StoredInnerAbility | undefined): boolean {
   const preset = innerAbility?.presets[innerAbility.activePreset];
   return (preset?.lines ?? []).some((l) => l.tier && l.value);

@@ -72,7 +72,7 @@ export interface ClassSkillData {
   buffSkills: BuffSkill[];
   /** Class-specific required stats, ordered by importance (primary first). Universal stats are added automatically. */
   requiredStats: StatFieldId[];
-  /** Legacy classes (lower job advancements) — no V Matrix or HEXA Matrix. */
+  /** Legacy classes, meaning lower job advancements, with no V Matrix or HEXA Matrix. */
   isLegacy?: true;
 }
 
@@ -716,7 +716,7 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
   {
     id: "erel_light",
     nexonJobName: "Erel Light",
-    // STR warrior (Shine). Gram weapon / Keir secondary — see classBranch.ts.
+    // STR warrior (Shine). Gram weapon with Keir secondary, see classBranch.ts.
     // No fixed gender. The two class-specific buffs are what MapleScouter's own input
     // page states as Erel's requirement ("Class Specific Requirements : Use Light Enchant
     // & Helian Blessing"), confirmed by live capture on maplescouter.com/en/input.
@@ -745,25 +745,25 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
   // vetted against grandislibrary) for the branches that are internally stat-uniform
   // (warrior/magician/bowman are the same main stat regardless of which sub-job), cross-
   // checked against each branch's real 4th-job analog entry above (Hero/Bishop/Marksman) for
-  // the exact primary/secondary order. Thief and Pirate are NOT internally uniform, so those
-  // needed the real job-tree lineage, not just classBranch.ts's coarser 5-way bucket:
-  //   Thief: Rogue(1st) -> Assassin/Hermit -> Night Lord (claw, simple luk/dex) is a DIFFERENT
-  //   lineage from Bandit/Chief Bandit -> Shadower (dagger, tri-stat luk/dex/str) -- these were
-  //   all wrongly assigned the Night Lord shape on the first pass, since classBranch.ts groups
-  //   both lineages under one "thief" bucket for equip-filtering purposes only.
-  //   Pirate: Brawler/Marauder->Buccaneer (STR) and Gunslinger/Outlaw->Corsair (DEX) are
-  //   genuinely different primary stats with no shared lineage-wide default the way Rogue has
-  //   (LUK/DEX either way) -- dormant "Pirate"-jobName characters observed in practice
-  //   consistently land DEX/STR (Corsair), so that's what's assigned below.
-  // beginner/citizen/noblesse stay empty: no real job/branch to derive a stat from (Noblesse
-  // precedes Cygnus Knights' own 5-way branch split, which spans all 4 main stats with no
-  // overlap) -- Overview/Stats fall back to showing all 4 main stats for these.
-  // ancient_archer/soulchaser are Pathfinder's 2nd/3rd job (bowman), confirmed directly.
+  // the exact primary and secondary order. Thief and Pirate are not internally uniform, so
+  // those needed the real job-tree lineage rather than classBranch.ts's coarser 5-way bucket:
+  //   Thief: Rogue at 1st, then Assassin or Hermit, then Night Lord (claw, simple luk/dex) is
+  //   a different lineage from Bandit, Chief Bandit, Shadower (dagger, tri-stat luk/dex/str).
+  //   All were wrongly assigned the Night Lord shape on the first pass, since classBranch.ts
+  //   groups both lineages under one "thief" bucket for equip-filtering purposes only.
+  //   Pirate: Brawler, Marauder, Buccaneer (STR) and Gunslinger, Outlaw, Corsair (DEX) are
+  //   genuinely different primary stats with no shared lineage-wide default the way Rogue has,
+  //   which is LUK/DEX either way. Dormant "Pirate"-jobName characters consistently land
+  //   DEX/STR, the Corsair shape, so that is what's assigned below.
+  // beginner, citizen and noblesse stay empty, having no job or branch to derive a stat from.
+  // Noblesse precedes Cygnus Knights' own 5-way branch split, which spans all 4 main stats
+  // with no overlap, so Overview and Stats fall back to showing all 4 for these.
+  // ancient_archer and soulchaser are Pathfinder's 2nd and 3rd job, in the bowman branch.
   { id: "ancient_archer", nexonJobName: "Ancient Archer", buffSkills: [], requiredStats: ["dex", "str", "attackPower"], isLegacy: true },
   { id: "archer", nexonJobName: "Archer", buffSkills: [], requiredStats: ["dex", "str", "attackPower"], isLegacy: true },
   { id: "assassin", nexonJobName: "Assassin", buffSkills: [], requiredStats: ["luk", "dex", "attackPower"], isLegacy: true },
-  // Bandit -> Chief Bandit -> Shadower lineage (dagger), NOT the Assassin/Hermit -> Night Lord
-  // lineage (claw) -- tri-stat like Shadower/Dual Blade/Cadena, not simple luk/dex.
+  // The Bandit, Chief Bandit, Shadower lineage (dagger), not the Assassin, Hermit, Night Lord
+  // one (claw). Tri-stat like Shadower, Dual Blade and Cadena rather than simple luk/dex.
   { id: "bandit", nexonJobName: "Bandit", buffSkills: [], requiredStats: ["luk", "dex", "str", "attackPower"], isLegacy: true },
   { id: "beginner", nexonJobName: "Beginner", buffSkills: [], requiredStats: [], isLegacy: true },
   { id: "berserker", nexonJobName: "Berserker", buffSkills: [], requiredStats: ["str", "dex", "attackPower"], isLegacy: true },
@@ -776,7 +776,7 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
   // The modern, currently-played Cannoneer's live jobName is actually "Cannon Master" (see the "cannoneer" entry above).
   { id: "cannon_master", nexonJobName: "Cannoneer", buffSkills: [], requiredStats: ["str", "dex", "attackPower"], isLegacy: true },
   { id: "cannon_trooper", nexonJobName: "Cannon Trooper", buffSkills: [], requiredStats: ["str", "dex", "attackPower"], isLegacy: true },
-  // Same Shadower lineage as Bandit above -- tri-stat, not simple luk/dex.
+  // Same Shadower lineage as Bandit above: tri-stat, not simple luk/dex.
   { id: "chief_bandit", nexonJobName: "Chief Bandit", buffSkills: [], requiredStats: ["luk", "dex", "str", "attackPower"], isLegacy: true },
   { id: "citizen", nexonJobName: "Citizen", buffSkills: [], requiredStats: [], isLegacy: true },
   { id: "cleric", nexonJobName: "Cleric", buffSkills: [], requiredStats: ["int", "luk", "magicAtt"], isLegacy: true },

@@ -101,8 +101,8 @@ interface SetupStepFrameProps {
   /** When provided, always shows this label and always calls onNext (never Finish). */
   nextLabel?: string;
   /** "primary" (default) is the accent-filled forward button. "quiet" renders it like the
-   *  Back link (muted text, no fill) -- for a forward action that shouldn't compete with a
-   *  more important accent button in the step body, e.g. a "Skip" on an optional step. */
+   *  Back link, as muted text with no fill, for a forward action that shouldn't compete with a
+   *  more important accent button in the step body, such as a Skip on an optional step. */
   nextVariant?: "primary" | "quiet";
   /** Disables the Next/Finish button, e.g. while required questions are unanswered. */
   nextDisabled?: boolean;
@@ -137,10 +137,9 @@ export default function SetupStepFrame({
 }: SetupStepFrameProps) {
   const isLastStep = !nextLabel && stepNumber >= totalSteps;
   const nextButtonLabel = nextLabel ?? (isLastStep ? "Finish" : "Next Step");
-  // "Prev Step" implies an earlier step to go back to — true from step 2 onward, but
-  // on step 1 of any flow (single-step or not) there's no previous step within the
-  // flow itself; the button still works (it exits back to the profile/intro), it's
-  // just not a "step" it's going back to.
+  // "Prev Step" implies an earlier step to go back to, true from step 2 onward. On step 1 of
+  // any flow, single-step or not, there is no previous step within the flow itself. The button
+  // still works, exiting back to the profile or intro, but what it returns to isn't a step.
   const backLabel = stepNumber > 1 ? "← Prev Step" : "← Back";
 
   useEffect(() => {

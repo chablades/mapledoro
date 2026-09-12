@@ -84,9 +84,9 @@ export function InputWarningBubble({ message, theme }: { message: string; theme:
 
 // Jumps to whatever a "fix the flagged value" message is actually pointing at, since on
 // a long step that field can easily be scrolled out of view by the time the message
-// appears. Finds the first field marked `data-flagged-field="true"` — either an actual
-// bad value (next to its InputWarningBubble) or, in flows like MapleScouter where every
-// field must be filled, the first still-blank required field. No-op if none is present.
+// appears. Finds the first field marked `data-flagged-field="true"`, either a bad value
+// next to its InputWarningBubble or, in flows like MapleScouter where every field must be
+// filled, the first still-blank required field. No-op when none is present.
 // react-doctor-disable-next-line only-export-components -- intentionally grouped with the components that use it; not worth fragmenting the file just to buy back Fast Refresh (dev-only)
 export function scrollToFlaggedField(container: HTMLElement | null) {
   if (!container) return;
@@ -113,15 +113,15 @@ export function flaggedValueLinkStyle(theme: AppTheme): CSSProperties {
 // Traits render as checkbox rows in a flat list rather than competing pill buttons,
 // so a "none of these" answer reads as one more line item, not a peer choice.
 
-// `trailingPadding` spaces a row out from whatever follows it inline. ChecklistGroup's
-// option buttons need it (so wrapped options don't crowd each other); ChecklistCheckbox
-// doesn't, since its tooltip sits right after with its own gap — keeping both would
-// double up and push the tooltip noticeably further from the label than on a
-// ChecklistGroup question.
-// Vertical padding + min-height live in the "checklist-row" CSS class (globals.css),
-// not here, so a mobile media query can grow the real tap target toward the 44px WCAG
-// minimum without touching desktop — an inline style would always win over a class's
-// media-query rule for the same property, so those two can't overlap.
+// `trailingPadding` spaces a row out from whatever follows it inline. ChecklistGroup's option
+// buttons need it so wrapped options don't crowd each other. ChecklistCheckbox doesn't, since
+// its tooltip sits right after with its own gap, and keeping both would double up and push
+// the tooltip further from the label than on a ChecklistGroup question.
+//
+// Vertical padding and min-height live in the "checklist-row" CSS class (globals.css) rather
+// than here, so a mobile media query can grow the tap target toward the 44px WCAG minimum
+// without touching desktop. An inline style would always beat a class's media-query rule for
+// the same property, so those two can't overlap.
 function checklistRowStyle(theme: AppTheme, trailingPadding = "0.6rem"): CSSProperties {
   return {
     display: "inline-grid",
@@ -139,16 +139,16 @@ function checklistRowStyle(theme: AppTheme, trailingPadding = "0.6rem"): CSSProp
     color: theme.text,
     // Without this, Safari's double-tap-to-zoom gesture detection can eat or garble
     // two real taps landing close together in time on adjacent rows (one toggles back
-    // off, the other never registers) — this tells it these are real controls, not
+    // off, the other never registers). This tells Safari these are real controls, not
     // page content to zoom into.
     touchAction: "manipulation",
   };
 }
 
-// Square box for a true multi-select trait (ChecklistItem) — any number of these can
-// be checked at once. `locked` (a disabled, derived answer) dims the active color to
-// theme.muted instead of theme.accent, so a locked field reads as different from a
-// normal answered one at a glance, without needing any accompanying text.
+// Square box for a true multi-select trait (ChecklistItem), where any number can be checked
+// at once. `locked`, a disabled derived answer, dims the active color to theme.muted instead
+// of theme.accent, so a locked field reads as different from a normal answered one at a
+// glance, with no accompanying text needed.
 function checklistBoxStyle(theme: AppTheme, checked: boolean, locked?: boolean): CSSProperties {
   const activeColor = locked ? theme.muted : theme.accent;
   return {
@@ -164,8 +164,8 @@ function checklistBoxStyle(theme: AppTheme, checked: boolean, locked?: boolean):
   };
 }
 
-// Round radio dot for a pick-one group (ChecklistGroup) — picking one option in the
-// group clears any other, so it reads as a radio rather than a checkbox at a glance.
+// Round radio dot for a pick-one group (ChecklistGroup). Picking one option in the group
+// clears any other, so it reads as a radio rather than a checkbox at a glance.
 function checklistRadioStyle(theme: AppTheme, active: boolean, locked?: boolean): CSSProperties {
   const activeColor = locked ? theme.muted : theme.accent;
   return {
@@ -193,25 +193,25 @@ function RequiredMark({ theme }: { theme: AppTheme }) {
   return <span style={{ color: theme.accent, fontWeight: 900, marginLeft: "0.15rem" }}>*</span>;
 }
 
-// A plain yes/no checkbox — click just toggles checked/unchecked, like any normal
-// checkbox. Before the first click `checked` is undefined (never answered), which
-// renders identically to unchecked but is preserved as a distinct "unknown" value in
-// storage if the question is never touched (e.g. full_setup, which stays optional).
-// Once clicked, it only ever alternates true/false — there's no way back to
-// "unanswered" from the UI, since nothing downstream needs to re-create that state.
+// A plain yes/no checkbox, where a click toggles checked and unchecked like any normal
+// checkbox. Before the first click `checked` is undefined, meaning never answered, which
+// renders identically to unchecked but is preserved as a distinct unknown value in storage
+// when the question is never touched, as in full_setup, which stays optional. Once clicked it
+// alternates true and false, with no way back to unanswered from the UI, since nothing
+// downstream needs to re-create that state.
 export function ChecklistCheckbox({ label, checked, onToggle, theme, tooltip, lockTooltip, required, disabled }: {
   label: string;
   checked: boolean | undefined;
   onToggle: (checked: boolean) => void;
   theme: AppTheme;
   tooltip?: TooltipContent;
-  /** Shown as a second, lock-glyph tooltip alongside `tooltip` when `disabled` — keeps
-   *  "what this question means" (tooltip) separate from "why yours is locked"
-   *  (lockTooltip) instead of cramming both into one popover. */
+  /** Shown as a second, lock-glyph tooltip alongside `tooltip` when `disabled`. Keeps what
+   *  the question means, in `tooltip`, separate from why this one is locked, in
+   *  `lockTooltip`, instead of cramming both into one popover. */
   lockTooltip?: TooltipContent;
   required?: boolean;
-  /** Locks the checkbox to its current (derived) value — e.g. a Genesis/Destiny weapon
-   *  already on file — same idea as ChecklistGroup's disabled prop. */
+  /** Locks the checkbox to its current derived value, such as a Genesis or Destiny weapon
+   *  already on file. Same idea as ChecklistGroup's disabled prop. */
   disabled?: boolean;
 }) {
   return (
@@ -275,13 +275,13 @@ export function ChecklistGroup({ question, options, value, onToggle, theme, tool
   onToggle: (value: string | null) => void;
   theme: AppTheme;
   tooltip?: TooltipContent;
-  /** Shown as a second, lock-glyph tooltip alongside `tooltip` when `disabled` — keeps
-   *  "what this question means" (tooltip) separate from "why yours is locked"
-   *  (lockTooltip) instead of cramming both into one popover. */
+  /** Shown as a second, lock-glyph tooltip alongside `tooltip` when `disabled`. Keeps what
+   *  the question means, in `tooltip`, separate from why this one is locked, in
+   *  `lockTooltip`, instead of cramming both into one popover. */
   lockTooltip?: TooltipContent;
   required?: boolean;
-  /** Locks the group to its current value (e.g. a derived Wild Hunter rank) — options
-   *  still render for context, but none of them are clickable. */
+  /** Locks the group to its current value, such as a derived Wild Hunter rank. Options
+   *  still render for context, but none are clickable. */
   disabled?: boolean;
 }) {
   return (
@@ -352,7 +352,7 @@ export function LegionFinalAttackField({ value, onUpdate, theme, required, locke
   onUpdate: (val: string) => void;
   theme: AppTheme;
   required?: boolean;
-  /** Locks the field to its current (derived) value — e.g. this world's Legion
+  /** Locks the field to its current derived value, such as when this world's Legion
    *  Artifacts board already proves it. */
   locked?: boolean;
   lockTooltip?: TooltipContent;

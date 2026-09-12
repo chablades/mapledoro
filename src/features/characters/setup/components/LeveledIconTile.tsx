@@ -73,8 +73,8 @@ export function LeveledIconTile({ icon, name, level, onLevel, max, min = 0, them
 }
 
 /**
- * Read-only counterpart to LeveledIconTile for profile bookmarks — same icon tile, but the
- * level renders as plain "level/max" text (matching the in-game V Matrix readout) instead of
+ * Read-only counterpart to LeveledIconTile for profile bookmarks. Same icon tile, but the
+ * level renders as plain "level/max" text, matching the in-game V Matrix readout, instead of
  * an input.
  */
 export function ReadOnlyLeveledIconTile({ icon, name, level, max, theme }: {

@@ -6,16 +6,16 @@ import type { SimulatorHexaCoreField } from "./scouterApi";
 // the class's own 3rd Common Node (v271), keyed by class name via common3Skill.
 const SOL_HECATE = COMMON_SKILLS.find((s) => s.name === "Sol Hecate");
 
-// Mastery nodes have no single name (one composite icon covers several skills at once) --
+// Mastery nodes have no single name, since one composite icon covers several skills at once.
 // HexaMatrixSetupStep.tsx's own tooltip joins them the same way.
 function masteryName(node: { skills: string[] } | undefined): string | undefined {
   return node?.skills.join("\n");
 }
 
 /** Split out of ScouterSimulatorDialog.tsx so that file can stay component-exports-only
- *  (only-export-components -- a non-component export there defeats Fast Refresh). Used by
- *  both ScouterSimulatorDialog.tsx's own HEXA tab rendering and useScouterSimulatorDraft.ts
- *  (which only needs each entry's `field` key, to seed/serialize hexaCores). */
+ *  under only-export-components, since a non-component export there defeats Fast Refresh. Used
+ *  by both ScouterSimulatorDialog.tsx's HEXA tab rendering and useScouterSimulatorDraft.ts,
+ *  which needs only each entry's `field` key to seed and serialize hexaCores. */
 export function hexaCoreFields(classDef: HexaClassDef | null): { field: SimulatorHexaCoreField; label: string; name: string; iconId: string; iconUrl?: string }[] {
   const fallback = { iconId: "" };
   const common3 = classDef ? common3Skill(classDef.className) : null;

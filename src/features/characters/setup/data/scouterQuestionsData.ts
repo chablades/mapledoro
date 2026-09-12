@@ -62,14 +62,14 @@ export function whRankFromRoster(roster: readonly StoredCharacterRecord[]): WhLe
   return whAutofillSourceFromRoster(roster)?.rank ?? null;
 }
 
-// Manual-entry buttons, shown ONLY when no Wild Hunter is in the world's roster. The
-// question asks for the WH's level (what people know); each bracket maps to a grade
-// (lv200 = lv201 = SS), so the buttons are the brackets. Stored value = grade. "No
-// Wild Hunter" is a real radio option (not a special opt-out) — with these rendered
-// as radio dots, an explicit "none" is the standard, discoverable way to say so,
-// rather than relying on knowing you can click the active bracket again to clear it.
-// It's functionally identical to leaving every bracket unchecked either way, since
-// resolveWhLegionRank treats any value outside the real bracket set as "no Wild Hunter".
+// Manual-entry buttons, shown only when no Wild Hunter is in the world's roster. The question
+// asks for the WH's level, which is what people know, and each bracket maps to a grade, so
+// lv200 and lv201 are both SS. The buttons are the brackets, and the stored value is the grade.
+// "No Wild Hunter" is a real radio option rather than a special opt-out: with these rendered as
+// radio dots, an explicit "none" is the discoverable way to say so, instead of relying on
+// knowing you can click the active bracket again to clear it. Either way it is functionally
+// identical to leaving every bracket unchecked, since resolveWhLegionRank treats any value
+// outside the real bracket set as no Wild Hunter.
 export const WH_RANK_OPTIONS: { value: string; label: string; sublabel?: string; standalone?: boolean }[] = [
   { value: "B", label: "Lv 60–99", sublabel: "B" },
   { value: "A", label: "Lv 100–139", sublabel: "A" },
@@ -80,11 +80,11 @@ export const WH_RANK_OPTIONS: { value: string; label: string; sublabel?: string;
 ];
 
 // ── Inner Ability line ─────────────────────────────────────────────────────────
-// The only Inner Ability lines MapleScouter cares about are the two legendary
-// utility lines; everything else is captured by the stat window. "Neither" is a real
-// radio option for the same reason as WH rank's "none" above — convertScouterQuestionsDraftToStored
-// already only recognizes "passive"/"multiTarget", so "neither" resolves to the same
-// "no line" outcome as leaving both unchecked.
+// The only Inner Ability lines MapleScouter cares about are the two legendary utility lines,
+// since everything else is captured by the stat window. "Neither" is a real radio option for
+// the same reason as WH rank's "none" above. convertScouterQuestionsDraftToStored recognizes
+// only "passive" and "multiTarget", so "neither" resolves to the same no-line outcome as
+// leaving both unchecked.
 
 export const IA_LINE_OPTIONS: { value: string; label: string; standalone?: boolean }[] = [
   { value: "passive", label: IA_PASSIVE_PLUS_ONE_LINE },
@@ -94,8 +94,8 @@ export const IA_LINE_OPTIONS: { value: string; label: string; standalone?: boole
 
 // ── Legion artifacts (Maple Union) ───────────────────────────────────────────────
 // Two account-level (per-world) artifact effects MapleScouter wants, neither derivable:
-//  - "+1 targets hit on multi-target skills & EXP acquired" — a yes/no effect.
-//  - "Damage of Final Attack Skills" — a percent (caps at LEGION_ARTIFACT_FINAL_ATK_MAX).
+//  - "+1 targets hit on multi-target skills & EXP acquired", a yes/no effect.
+//  - "Damage of Final Attack Skills", a percent capped at LEGION_ARTIFACT_FINAL_ATK_MAX.
 // Both persist per-world on StoredScouterLegion alongside the WH rank.
 
 export const LEGION_ARTIFACT_FINAL_ATK_LIMIT = LEGION_ARTIFACT_FINAL_ATK_MAX;
@@ -109,18 +109,18 @@ function parseFinalAttackDmg(raw: string | undefined): number | undefined {
 
 type LegionArtifactFields = Pick<StoredScouterLegion, "artifactExtraTarget" | "artifactFinalAttackDmg">;
 
-/** Draft shape for full_setup's standalone Legion Artifacts step — same field names as
- *  the scouter questionnaire's artifact fields, so `resolveLegionArtifacts` (below)
- *  works unchanged for either caller. */
+/** Draft shape for full_setup's standalone Legion Artifacts step. Same field names as the
+ *  scouter questionnaire's artifact fields, so `resolveLegionArtifacts` below works
+ *  unchanged for either caller. */
 export interface LegionArtifactsDraft {
   artifactExtraTarget?: boolean;
   artifactFinalAttackDmg?: string;
 }
 
 /**
- * Resolves the per-world legion artifact fields for a finish: the draft entry wins
- * (including clearing — an empty numeric field or "No" toggle removes the value),
- * otherwise the existing stored value is preserved. Returns only set fields.
+ * Resolves the per-world legion artifact fields for a finish. The draft entry wins, clearing
+ * included, so an empty numeric field or a "No" toggle removes the value. Otherwise the
+ * existing stored value is preserved. Returns only set fields.
  */
 export function resolveLegionArtifacts(
   sq: LegionArtifactsDraft | undefined,

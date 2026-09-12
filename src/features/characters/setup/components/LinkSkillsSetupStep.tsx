@@ -116,18 +116,17 @@ export function LinkSkillIcon({ iconId, name, theme, size = 32 }: { iconId: stri
 }
 
 // Reset a native button back to plain content so the icon reads the same as a static
-// image at rest — the accent ring on hover/focus is the only cue this is clickable,
+// image at rest. The accent ring on hover and focus is the only cue this is clickable,
 // matching the tap-target-friendly, chrome-at-rest-free style used elsewhere in setup.
 // Real CSS :hover/:focus-visible (see .link-skill-max-btn in LinkSkillsEditor's own
 // <style> block) for pointer/keyboard, plus LinkSkillRow's own JS-driven "flashing" state
-// for a guaranteed-visible tap flash (see MAX_BTN_FLASH_MS) -- not JS mouseenter/
-// mouseleave/focus/blur handlers, since touch devices routinely fire a tap's synthetic
-// mouseenter/focus without ever firing a matching mouseleave/blur afterward, leaving the
-// ring stuck lit permanently after a single tap, and :active alone isn't reliably computed
-// for a plain tap on several mobile browsers either. The transition here is intentionally
-// quick (0.15s) -- MAX_BTN_FLASH_MS controls how long the flash is actually visible, so a
-// slow transition just made the whole thing feel sluggish on top of that already-
-// deliberate hold time.
+// for a guaranteed-visible tap flash (see MAX_BTN_FLASH_MS). Not JS mouseenter, mouseleave,
+// focus or blur handlers, since touch devices routinely fire a tap's synthetic mouseenter
+// and focus without a matching mouseleave or blur, leaving the ring lit permanently after a
+// single tap. :active alone isn't reliably computed for a plain tap on several mobile
+// browsers either. The transition here is deliberately quick at 0.15s, since
+// MAX_BTN_FLASH_MS controls how long the flash stays visible and a slow transition reads as
+// sluggish on top of that hold time.
 const linkSkillMaxButtonStyle: CSSProperties = {
   background: "none",
   border: "none",
@@ -158,7 +157,7 @@ const linkLevelInputStyle = (theme: AppTheme): CSSProperties => ({
 });
 
 // Renders a token list (class names, "name (Lv N)" entries) so long lines wrap
-// between tokens rather than inside one — a plain joined string lets the browser
+// between tokens rather than inside one. A plain joined string lets the browser
 // break at any space, including ones inside a token like "Arch Mage (I/L)".
 function NowrapTokens({ tokens, separator }: { tokens: string[]; separator: string }) {
   return (
@@ -174,16 +173,16 @@ function NowrapTokens({ tokens, separator }: { tokens: string[]; separator: stri
 }
 
 // How long the tap-feedback flash (see LinkSkillRow's handleMaxClick) stays lit before
-// clearing itself via setTimeout -- a real, self-clearing JS timer rather than relying on
-// :active, since several mobile browsers don't reliably compute :active for a plain tap
-// without touch-event listeners already present, which made the CSS-only flash read as
-// completely absent on touch (see linkSkillMaxButtonStyle's comment for the rest of this
-// fix's history).
+// clearing itself via setTimeout. A self-clearing JS timer rather than :active, since
+// several mobile browsers don't reliably compute :active for a plain tap without
+// touch-event listeners already present, which makes a CSS-only flash absent on touch.
+// See linkSkillMaxButtonStyle's comment for the rest.
 const MAX_BTN_FLASH_MS = 180;
 
 /** Exported for the Scouter Simulator's Links tab, which reuses this exact row (icon + name/
- *  classes + level input) rather than duplicating it -- source/min are setup-step-only
- *  concepts (propagation source, per-character floor) and stay undefined there. */
+ *  classes and level input) rather than duplicating it. `source` and `min` are
+ *  setup-step-only concepts, a propagation source and a per-character floor, and stay
+ *  undefined there. */
 export function LinkSkillRow({
   skill, value, source, onUpdate, theme, fullWidth, min,
 }: {
@@ -276,7 +275,7 @@ export function LinkSkillRow({
 
 /** This character's own floor: prefers the real tracked record (confirmedRecord) when it
  *  exists, else falls back to just jobName/worldID for a character still mid-setup and
- *  not yet a real persisted record -- linkSkillFloorsForCharacter only needs those two. */
+ *  not yet a persisted record. linkSkillFloorsForCharacter needs only those two. */
 function resolveLinkSkillFloors(
   confirmedRecord: StoredCharacterRecord | undefined,
   jobName: string,
@@ -288,12 +287,12 @@ function resolveLinkSkillFloors(
   return linkSkillFloorsForCharacter({ jobName, worldID: confirmedWorldId }, characterRoster);
 }
 
-/** The Link Skills step's actual editable content, with no wizard-frame chrome — reused
- *  standalone by LegionPanel's edit-in-place view as well as by the wizard step below.
- *  Values here belong to ONE character (identified by confirmedCharacterName within
- *  characterRoster, if it's already a tracked record) -- the same-world roster is only
- *  used to compute a FLOOR (what mastery the roster proves), never to overwrite this
- *  character's own saved choice of which links it actually has equipped. */
+/** The Link Skills step's editable content with no wizard-frame chrome, reused standalone by
+ *  LegionPanel's edit-in-place view as well as by the wizard step below. Values here belong
+ *  to one character, identified by confirmedCharacterName within characterRoster if it's
+ *  already a tracked record. The same-world roster is used only to compute a floor, meaning
+ *  what mastery the roster proves, never to overwrite this character's own saved choice of
+ *  which links it has equipped. */
 function LinkSkillsEditor({
   theme, jobName = "", value, onChange,
   characterRoster = [], confirmedWorldId, confirmedCharacterName,
@@ -301,15 +300,16 @@ function LinkSkillsEditor({
   const draft = parseDraft(value);
   const initialValueRef = useRef(value);
 
-  // This character's own floor: only the ONE skill its own class belongs to (never every
-  // skill the roster happens to have data for -- a Kanna's floor must never involve
-  // Empirical Knowledge just because a same-world Bishop is tracked). Falls back to just
-  // jobName/worldID when the character isn't in characterRoster yet (still mid-setup, not
-  // yet a real persisted record) -- linkSkillFloorsForCharacter only needs those two.
-  // Filtered to only the hand-picked skills MapleScouter's payload reads (see
-  // scouterLinkSkills.ts) -- this step must never render, suggest, or silently save a
-  // value for any of the newer LINK_SKILLS entries added for the Legion panel's own
-  // read-only display, since this step never asks the player about them at all.
+  // This character's own floor: only the one skill its class belongs to, never every skill
+  // the roster happens to have data for. A Kanna's floor must never involve Empirical
+  // Knowledge because a same-world Bishop is tracked. Falls back to jobName and worldID when
+  // the character isn't in characterRoster yet, still mid-setup and not a persisted record,
+  // since linkSkillFloorsForCharacter needs only those two.
+  //
+  // Filtered to the hand-picked skills MapleScouter's payload reads (see
+  // scouterLinkSkills.ts). This step must never render, suggest or save a value for the
+  // newer LINK_SKILLS entries added for the Legion panel's read-only display, since it
+  // never asks the player about them.
   const confirmedRecord = characterRoster.find((c) => c.characterName === confirmedCharacterName);
   const rawFloors = resolveLinkSkillFloors(confirmedRecord, jobName, confirmedWorldId, characterRoster);
   const floors: LinkSkillsData = {};
@@ -317,12 +317,12 @@ function LinkSkillsEditor({
     if (skillId in LINK_SKILL_TO_SCOUTER_KEY) floors[skillId] = rawFloors[skillId];
   }
 
-  // "from X, Y" provenance text: scoped to ONLY the skill(s) `floors` already proved this
-  // character is eligible for (never every skill the world roster happens to have data
-  // on) -- a Kanna's Bravado row must never say "from Hoyoung" just because a same-world
-  // Hoyoung exists, since that's not this character's own link at all. For a multi-class
-  // skill (Empirical Knowledge/Thief's Cunning) this lists the real contributing siblings;
-  // for a single-class skill it's just this character itself (or empty if untracked).
+  // "from X, Y" provenance text, scoped to the skills `floors` already proved this character
+  // is eligible for, never every skill the world roster has data on. A Kanna's Bravado row
+  // must never say "from Hoyoung" because a same-world Hoyoung exists, since that isn't this
+  // character's link. For a multi-class skill like Empirical Knowledge or Thief's Cunning
+  // this lists the contributing siblings. For a single-class skill it is this character
+  // itself, or empty when untracked.
   const rawSources = confirmedWorldId !== undefined
     ? computeLinkSkillsFromRoster(characterRoster, confirmedWorldId).sources
     : {};
@@ -331,35 +331,35 @@ function LinkSkillsEditor({
     if (rawSources[skillId]) sources[skillId] = rawSources[skillId];
   }
 
-  // One-shot mount-time backfill, only when this step lands blank -- a SUGGESTION only,
-  // never a constraint (the field stays freely editable down to `floors`, the real
-  // level-only minimum, regardless of what this seeds). Two sources, in priority order:
-  // (1) this character's OWN already-stored value, if it's a tracked record -- the
-  // strongest signal, since it's literally what was last saved for THIS character; (2)
-  // if not yet tracked at all (e.g. a fresh Full/MapleScouter Setup search-and-open,
-  // before Finish -- confirmedRecord doesn't exist, so (1) is empty), the roster's
-  // best-known value (bestKnownLinkSkillFloors -- levels + any tracked sibling's own
-  // stored value, e.g. Bishop's manually-saved 7) is the only useful starting number.
-  // Never a shared value written back to a world bucket -- purely a local draft seed.
-  // Can't run during render since it depends on a client-only localStorage read
-  // (characterRoster is already resolved by the caller, but the "landed blank" check
-  // below still needs to run post-mount to avoid clobbering an in-progress draft). Not
-  // worth lifting into the parent controller (which owns none of this step's domain
-  // logic) for a fetch that only ever fires once, at mount.
+  // One-shot mount-time backfill, only when this step lands blank. A suggestion, never a
+  // constraint: the field stays editable down to `floors`, the level-only minimum, whatever
+  // this seeds. Two sources in priority order. First, this character's own already-stored
+  // value if it's a tracked record, the strongest signal since it is what was last saved for
+  // this character. Second, when not tracked at all, such as a fresh Full or MapleScouter
+  // Setup search-and-open before Finish where confirmedRecord doesn't exist, the roster's
+  // best-known value from bestKnownLinkSkillFloors, meaning levels plus any tracked
+  // sibling's stored value like a Bishop's manually saved 7. Never a shared value written
+  // back to a world bucket, purely a local draft seed.
+  //
+  // It can't run during render, since it depends on a client-only localStorage read. The
+  // caller already resolved characterRoster, but the landed-blank check below still has to
+  // run post-mount to avoid clobbering an in-progress draft. Not worth lifting into the
+  // parent controller, which owns none of this step's domain logic, for a fetch that fires
+  // once at mount.
   useEffect(() => {
     if (initialValueRef.current) return;
-    // Two different scopes on purpose: `confirmedRecord.linkSkills` is this character's
-    // OWN already-saved choice of which links it runs -- e.g. a Kanna's own record can
-    // legitimately have a manually-entered Unfair Advantage value even though Cadena's
-    // link has nothing to do with Kanna's own class, because this step shows every
-    // scouter-relevant row to every character regardless of class (see "Only enter the
-    // levels for the links that this character actually has equipped" above) -- so a
-    // stored value must be re-suggested for ANY of those rows, not just the row(s)
-    // matching this character's own class. `bestKnownLinkSkillFloors` (the untracked-
-    // character fallback) is the opposite: it has no per-character record to trust yet,
-    // so it's still scoped to `floors` (this character's own class) to avoid seeding an
-    // untracked F/P's blank Bravado/Elementalism/etc. rows from an unrelated same-world
-    // Hoyoung/Kanna.
+    // Two different scopes on purpose. `confirmedRecord.linkSkills` is this character's own
+    // saved choice of which links it runs. A Kanna's record can legitimately hold a
+    // manually entered Unfair Advantage value even though Cadena's link has nothing to do
+    // with Kanna's class, because this step shows every scouter-relevant row to every
+    // character regardless of class (see "Only enter the levels for the links that this
+    // character actually has equipped" above). So a stored value is re-suggested for any of
+    // those rows, not only the ones matching this character's class.
+    //
+    // `bestKnownLinkSkillFloors`, the untracked-character fallback, is the opposite. It has
+    // no per-character record to trust, so it stays scoped to `floors`, this character's own
+    // class, to avoid seeding an untracked F/P's blank Bravado or Elementalism rows from an
+    // unrelated same-world Hoyoung or Kanna.
     const suggestion: LinkSkillsData = {};
     if (confirmedRecord?.linkSkills) {
       for (const skillId of Object.keys(confirmedRecord.linkSkills) as LinkSkillId[]) {
@@ -387,10 +387,10 @@ function LinkSkillsEditor({
     onChange(JSON.stringify({ ...draft, [id]: val }));
   }
 
-  // This step only ever asks about the hand-picked link skills MapleScouter's own payload
-  // accepts (see scouterLinkSkills.ts) -- LINK_SKILLS grew far beyond that for the
-  // Legion panel's own read-only display (see linkSkillsData.ts), but none of those newer
-  // entries have anywhere to go once saved, so showing them here would just be noise.
+  // This step asks only about the hand-picked link skills MapleScouter's payload accepts
+  // (see scouterLinkSkills.ts). LINK_SKILLS grew well beyond that for the Legion panel's
+  // read-only display (see linkSkillsData.ts), but none of those newer entries have anywhere
+  // to go once saved, so showing them here would be noise.
   const scouterRelevantSkills = LINK_SKILLS.filter((s) => s.id in LINK_SKILL_TO_SCOUTER_KEY);
   const singleSkills = scouterRelevantSkills.filter((s) => s.maxLevel === 3);
   const multiSkills  = scouterRelevantSkills.filter((s) => s.maxLevel > 3);

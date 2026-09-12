@@ -69,9 +69,9 @@ function sectionLabelStyle(theme: AppTheme): CSSProperties {
   };
 }
 
-// Padding + matching negative margin grows the actual clickable box toward a 44px
-// touch target without shifting surrounding layout — the button still occupies its
-// original space, it just responds to taps/clicks a bit outside its visible text.
+// Padding plus a matching negative margin grows the clickable box toward a 44px touch
+// target without shifting surrounding layout. The button still occupies its original
+// space, and responds to clicks slightly outside its visible text.
 const sectionBtnStyle: CSSProperties = {
   background: "none", border: "none", font: "inherit",
   fontSize: "0.75rem", fontWeight: 800,
@@ -288,14 +288,14 @@ function StatSlotChip({
   theme: AppTheme;
   onToggle: () => void;
   onClose: () => void;
-  /** Called (instead of onClose) after an actual pick — opens the next stat slot in the
-   *  crystal, or (on the last slot) jumps to the next unlocked crystal's first slot. Lets a
-   *  whole board be filled without re-clicking each chip. viaKeyboard distinguishes an
-   *  Enter-driven pick from a mouse click — only a keyboard pick jumps crystals, since a
-   *  mouse click means the user's cursor is staying local. */
+  /** Called instead of onClose after an actual pick. Opens the next stat slot in the crystal,
+   *  or on the last slot jumps to the next unlocked crystal's first slot, so a whole board can
+   *  be filled without re-clicking each chip. viaKeyboard distinguishes an Enter-driven pick
+   *  from a mouse click. Only a keyboard pick jumps crystals, since a mouse click means the
+   *  cursor is staying local. */
   onAdvance: (viaKeyboard: boolean) => void;
   onPrev?: () => void;
-  /** Tab (no pick) — moves to the next slot untouched; on the last slot, jumps to the
+  /** Tab with no pick. Moves to the next slot untouched, and on the last slot jumps to the
    *  next unlocked crystal's first slot. */
   onNext?: () => void;
   onPick: (statId: LegionArtifactStatId | null) => void;
@@ -419,12 +419,12 @@ function CrystalTile({
   onSetStat: (slotIndex: number, statId: LegionArtifactStatId | null) => void;
   onToggleSlot: (slotIndex: number) => void;
   onClosePicker: () => void;
-  /** Tab from the last stat slot jumps here — opens the next unlocked crystal's first
+  /** Tab from the last stat slot jumps here, opening the next unlocked crystal's first
    *  slot directly. */
   onNextCard: () => void;
-  /** Resets this crystal back to level 1 with the same 3 default lines every crystal
-   *  starts with in-game (see DEFAULT_CRYSTAL_STATS) — not a blank/null state, since a
-   *  crystal is never actually empty once unlocked. */
+  /** Resets this crystal back to level 1 with the 3 default lines every crystal starts with
+   *  in-game (see DEFAULT_CRYSTAL_STATS), not a blank state, since a crystal is never empty
+   *  once unlocked. */
   onReset: () => void;
 }) {
   const level = Math.max(MIN_CRYSTAL_LEVEL, crystal.level ?? MIN_CRYSTAL_LEVEL);
@@ -483,8 +483,8 @@ function CrystalTile({
                 theme={theme}
                 onToggle={() => onToggleSlot(slotIndex)}
                 onClose={onClosePicker}
-                // Only a keyboard pick (Enter) advances — a mouse click means the user's
-                // cursor is staying local, so just close for them either way.
+                // Only a keyboard pick (Enter) advances. A mouse click means the cursor is
+                // staying local, so close instead.
                 onAdvance={(viaKeyboard) => {
                   if (!viaKeyboard) { onClosePicker(); return; }
                   if (slotIndex < CRYSTAL_STAT_SLOTS - 1) { onToggleSlot(slotIndex + 1); } else { onNextCard(); }
@@ -504,9 +504,9 @@ function CrystalTile({
 
 // ── Main component ───────────────────────────────────────────────────────────
 
-/** The Legion Artifact step's actual editable content, with no wizard-frame chrome —
- *  reused standalone by LegionPanel's edit-in-place view (world-scoped, no confirmed
- *  character needed) as well as by the wizard step below. */
+/** The Legion Artifact step's editable content with no wizard-frame chrome. Reused standalone
+ *  by LegionPanel's edit-in-place view, which is world-scoped and needs no confirmed
+ *  character, as well as by the wizard step below. */
 export function LegionArtifactsEditor({
   theme, worldLegionArtifact, value, onChange,
 }: LegionArtifactsEditorProps) {
@@ -524,13 +524,15 @@ export function LegionArtifactsEditor({
   // Closes both the open crystal card and its nested stat picker on outside clicks. Both
   // popovers are portaled straight to document.body (not nested inside any wrapping "zone"
   // element here) and already stop propagation on their own onMouseDown, so any mousedown
-  // that reaches this listener is guaranteed to be outside them — no containment check
-  // needed (a zoneRef-based one used to leave dead zones in the grid's blank space, e.g.
-  // past the 3-column grid's fixed width inside its wider flex container). Trigger buttons
-  // (crystal tiles, stat chips) are excluded too — they only stop propagation on `click`,
-  // not `mousedown`, so without this exclusion this listener would force-close things a
-  // moment before the trigger's own onClick runs, breaking its own open/close toggle (the
-  // toggle's functional update would read the just-forced-null state and reopen instead).
+  // that reaches this listener is outside them, so no containment check is needed. A
+  // zoneRef-based one used to leave dead zones in the grid's blank space, such as past the
+  // 3-column grid's fixed width inside its wider flex container.
+  //
+  // Trigger buttons, meaning crystal tiles and stat chips, are excluded too. They stop
+  // propagation on `click` but not `mousedown`, so without the exclusion this listener would
+  // force-close things a moment before the trigger's own onClick runs, breaking its open and
+  // close toggle: the toggle's functional update would read the just-forced-null state and
+  // reopen instead.
   useEffect(() => {
     if (openCardIndex === null && !openId) return;
     function handleMouseDown(e: MouseEvent) {
@@ -547,18 +549,18 @@ export function LegionArtifactsEditor({
   }
 
   function updateCrystal(index: number, patch: Partial<LegionCrystalDraft>) {
-    // Build a dense 9-length array (every slot filled) rather than writing into a
-    // possibly-shorter array — leaving holes would serialize as `null` via
-    // JSON.stringify, which every downstream reader would then have to guard against.
+    // Build a dense 9-length array with every slot filled, rather than writing into a
+    // possibly shorter one. Leaving holes would serialize as `null` via JSON.stringify,
+    // which every downstream reader would then have to guard against.
     const nextCrystals = LEGION_CRYSTALS.map((_, i) => effectiveCrystal(crystals[i], isCrystalUnlocked(i, artifactLevelNum)));
     nextCrystals[index] = { ...nextCrystals[index], ...patch };
     onChange(serializeLegionArtifactBoardDraft({ artifactLevel, crystals: nextCrystals }));
   }
 
-  // Bulk-sets every unlocked crystal's level only — stat picks stay per-crystal untouched,
-  // since the whole point of 9 crystals is deliberately different stats per crystal (totals
-  // sum across crystals, capped at 10 per stat), unlike the flat skill tiles elsewhere that
-  // have nothing but a level to bulk-set.
+  // Bulk-sets every unlocked crystal's level only. Stat picks stay per-crystal and untouched,
+  // since the point of 9 crystals is deliberately different stats per crystal, with totals
+  // summing across crystals and capped at 10 per stat. That differs from the flat skill tiles
+  // elsewhere, which have nothing but a level to bulk-set.
   function setAllCrystalLevels(level: number) {
     const nextCrystals = LEGION_CRYSTALS.map((_, i) => {
       const unlocked = isCrystalUnlocked(i, artifactLevelNum);
@@ -589,16 +591,17 @@ export function LegionArtifactsEditor({
     setOpenId((cur) => (cur === id ? null : id));
   }
 
-  // Reaching the end of a crystal's 3 stat slots — via Enter-picking the last one or via an
-  // explicit Tab — only ever considers the next crystal in sequence (skipping over locked
-  // placeholders, which aren't real targets), and only jumps in if its stat lines are still
-  // untouched (still the in-game default 3 lines every crystal starts with — a crystal is
-  // never truly "blank" once unlocked, so we can't check for empty/null stats). Level is
-  // deliberately not part of this check: bulk actions like "Max All" only ever change level,
+  // Reaching the end of a crystal's 3 stat slots, by Enter-picking the last one or an explicit
+  // Tab, considers only the next crystal in sequence, skipping locked placeholders, and jumps
+  // in only if its stat lines are still untouched, meaning the in-game default 3 lines every
+  // crystal starts with. A crystal is never blank once unlocked, so checking for empty stats
+  // isn't possible.
+  //
+  // Level is deliberately not part of this check. Bulk actions like Max All change level only,
   // never stat picks (see setAllCrystalLevels), so a maxed crystal can still have fully
-  // unpicked default stats and should still get walked through. Barging into a crystal whose
-  // stats were actually chosen already (e.g. while correcting an earlier one) would be more
-  // surprising than helpful, so it just closes the nested picker instead.
+  // unpicked default stats and should be walked through. Barging into a crystal whose stats
+  // were already chosen, say while correcting an earlier one, would surprise more than it
+  // helps, so it closes the nested picker instead.
   function goToNextCrystal(fromIndex: number) {
     for (let i = fromIndex + 1; i < LEGION_CRYSTALS.length; i++) {
       if (!isCrystalUnlocked(i, artifactLevelNum)) continue;

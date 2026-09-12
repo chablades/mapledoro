@@ -40,7 +40,7 @@ interface VMatrixSetupStepProps {
 const catalogCache: Record<string, VMatrixData> = {};
 
 // Shared with the profile V Matrix bookmark, which reads the same per-class catalog
-// read-only — keeps both surfaces on the exact same fetch/cache behavior.
+// read-only, keeping both surfaces on the same fetch and cache behavior.
 export function useVMatrixCatalog(classId: string | undefined): { catalog: VMatrixData | null; loadFailed: boolean } {
   const [catalog, setCatalog] = useState<VMatrixData | null>(classId ? catalogCache[classId] ?? null : null);
   const [loadFailed, setLoadFailed] = useState(false);
@@ -61,9 +61,9 @@ export function useVMatrixCatalog(classId: string | undefined): { catalog: VMatr
   return { catalog, loadFailed };
 }
 
-// Padding + matching negative margin grows the actual clickable box toward a 44px
-// touch target without shifting surrounding layout — the button still occupies its
-// original space, it just responds to taps/clicks a bit outside its visible text.
+// Padding plus a matching negative margin grows the clickable box toward a 44px touch
+// target without shifting surrounding layout. The button still occupies its original
+// space, and responds to clicks slightly outside its visible text.
 const sectionBtnStyle: React.CSSProperties = {
   background: "none", border: "none", font: "inherit",
   fontSize: "0.75rem", fontWeight: 800,
@@ -96,7 +96,7 @@ function clampLevelInput(raw: string, max: number): string {
 }
 
 // Namespaced to the v-matrix manifest (no shared component for it in ResourceImage.tsx per the
-// Image Policy's one-off convention) — exported for reuse by the profile V Matrix bookmark.
+// Image Policy's one-off convention), and exported for reuse by the profile V Matrix bookmark.
 export function VMatrixNodeIcon({ id, name, theme, size = 28 }: { id: string; name: string; theme: AppTheme; size?: number }) {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const fallbackRef = useRef<HTMLDivElement>(null);
@@ -204,7 +204,7 @@ export default function VMatrixSetupStep({
           <style>{`
             .vmatrix-root { container-type: inline-size; }
             .vmatrix-grid { grid-template-columns: repeat(6, 68px); }
-            /* 6 tiles × 68px + 5 × 0.4rem gaps = 440px — the fixed 6-column grid needs at
+            /* 6 tiles × 68px plus 5 × 0.4rem gaps is 440px. The fixed 6-column grid needs at
                least that much room, so the breakpoint has to sit above 440, not below it. */
             @container (max-width: 450px) {
               .vmatrix-grid { grid-template-columns: repeat(auto-fill, 68px); }

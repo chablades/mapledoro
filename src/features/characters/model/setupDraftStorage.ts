@@ -20,15 +20,14 @@ export interface SetupDraft {
   showCharacterDirectory: boolean;
   setupStepIndex: number;
   setupStepDirection: "forward" | "backward";
-  /** Which substep of the current step (Stats/Equipment/HEXA Matrix) was active —
-   *  without this, resuming after a full page reload always fell back to substep 0,
-   *  forgetting how far into a multi-screen step the player actually was. Reported up
-   *  via each step's onSubstepChange as it navigates internally; 0 for step types
-   *  without substeps. */
+  /** Which substep of the current step (Stats, Equipment, HEXA Matrix) was active. Without
+   *  this, resuming after a full page reload always fell back to substep 0, forgetting how far
+   *  into a multi-screen step the player was. Reported up via each step's onSubstepChange as it
+   *  navigates internally, and 0 for step types without substeps. */
   setupSubstepIndex: number;
   setupStepTestByStep: SetupStepInputById;
   /** Last-known Next-button validity per "stepId:substepIndex" (or
-   *  "flowId:stepId:substepIndex" for the few steps whose rule differs by flow) — see
+   *  "flowId:stepId:substepIndex" for the few steps whose rule differs by flow). See
    *  SetupStepFrame's onValidityChange. Persisted alongside setupStepTestByStep so
    *  resuming a draft that was left on invalid data doesn't silently forget that and
    *  ungate the step-jump dropdown until the step happens to be revisited. */
@@ -141,7 +140,7 @@ export function pruneAndReadSetupDrafts(): SetupDraft[] {
   const live: { key: string; draft: SetupDraft }[] = [];
   for (const entry of collectSetupDraftEntries()) {
     // savedAt === 0 is a freshly-created draft not yet stamped by the persistence
-    // effect — keep it rather than mistaking the epoch for a 56-year-old draft.
+    // effect. Keep it rather than mistaking the epoch for a 56-year-old draft.
     if (entry.draft.savedAt > 0 && now - entry.draft.savedAt > SETUP_DRAFT_TTL_MS) {
       window.localStorage.removeItem(entry.key);
       continue;

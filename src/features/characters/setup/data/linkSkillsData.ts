@@ -1,14 +1,14 @@
 import type { LinkSkillId, LinkSkillsData, StoredCharacterRecord } from "../../model/charactersStore";
 import { toCharacterKey } from "../../model/characterKeys";
 
-// Lore branch grouping, confirmed against grandislibrary.com/classes -- used only to
-// group the Legion panel's cards into collapsible sections, no gameplay meaning.
+// Lore branch grouping, confirmed against grandislibrary.com/classes. Groups the Legion
+// panel's cards into collapsible sections and has no gameplay meaning.
 export type LinkSkillBranch =
   | "Explorer" | "Cygnus Knights" | "Heroes" | "Resistance" | "Nova" | "Sengoku"
   | "Flora" | "Anima" | "Jianghu" | "Shine" | "Other";
 
-// Display order for the Legion panel's branch sections -- roughly release/prominence
-// order, not alphabetical.
+// Display order for the Legion panel's branch sections: roughly release order by
+// prominence, not alphabetical.
 export const LINK_SKILL_BRANCH_ORDER: LinkSkillBranch[] = [
   "Explorer", "Cygnus Knights", "Heroes", "Resistance", "Nova", "Sengoku",
   "Flora", "Anima", "Jianghu", "Shine", "Other",
@@ -19,7 +19,7 @@ export interface LinkSkillDef {
   name: string;
   classes: string[];
   maxLevel: number;
-  /** manifests/v269/skill.json id — pixel-verified against maplestorywiki. */
+  /** manifests/v269/skill.json id, pixel-verified against maplestorywiki. */
   iconId: string;
   branch: LinkSkillBranch;
 }
@@ -40,13 +40,12 @@ export const LINK_SKILLS: LinkSkillDef[] = [
   { id: "thiefsCunning",      name: "Thief's Cunning",     classes: ["Night Lord", "Shadower", "Dual Blade"],      maxLevel: 9, iconId: "0000261", branch: "Explorer" },
   // Everything below researched against grandislibrary.com/content/link-skills and each
   // class's own page (grandislibrary.com/<branch>/<class>, live JSON embedded in the page)
-  // -- names/maxLevel/grouping pixel- and text-verified per-class rather than trusted from
-  // the site's own summary table, which turned out to have several stale groupings (e.g.
-  // claimed all Heroes share "Close Call" and all non-Xenon Resistance demons share
-  // "Hybrid Logic" -- both wrong; Aran/Combo Kill Blessing and Demon Slayer/Fury Unleashed
-  // are actually solo). iconId cross-checked against manifests/v271/skill.json by exact
-  // name. `branch` per-entry confirmed against grandislibrary.com/classes's own branch
-  // headings directly (not guessed).
+  // (names, maxLevel and grouping verified per-class rather than taken from the site's
+  // summary table, which has several stale groupings: it claims all Heroes share "Close
+  // Call" and all non-Xenon Resistance demons share "Hybrid Logic", but Aran/Combo Kill
+  // Blessing and Demon Slayer/Fury Unleashed are solo). iconId cross-checked against
+  // manifests/v271/skill.json by exact name, and `branch` against
+  // grandislibrary.com/classes's own branch headings.
   { id: "nobleFire",             name: "Noble Fire",              classes: ["Adele"],                                                                          maxLevel: 3,  iconId: "150020241", branch: "Flora" },
   { id: "spiritOfFreedom",       name: "Spirit of Freedom",       classes: ["Wild Hunter", "Battle Mage", "Mechanic", "Blaster"],                                maxLevel: 12, iconId: "30000074", branch: "Resistance" },
   { id: "cygnusBlessing",        name: "Cygnus Blessing",         classes: ["Dawn Warrior", "Wind Archer", "Thunder Breaker", "Night Walker", "Blaze Wizard"],   maxLevel: 15, iconId: "10000255", branch: "Cygnus Knights" },
@@ -72,7 +71,7 @@ export const LINK_SKILLS: LinkSkillDef[] = [
   { id: "hybridLogic",           name: "Hybrid Logic",            classes: ["Xenon"],                                                                             maxLevel: 3,  iconId: "30020233", branch: "Resistance" },
   { id: "ironWill",              name: "Iron Will",               classes: ["Kaiser"],                                                                            maxLevel: 3,  iconId: "60000222", branch: "Nova" },
   // Grandis Library's page omits maxLevel for this one (typed "Active" unlike every other
-  // link skill's "Passive") -- confirmed maxLevel 3 directly in-game.
+  // link skill's "Passive"). Its real maxLevel is 3.
   { id: "elvenBlessing",         name: "Elven Blessing",          classes: ["Mercedes"],                                                                          maxLevel: 3,  iconId: "20021110", branch: "Heroes" },
 ];
 
@@ -149,12 +148,13 @@ type ClassWinner = { character: StoredCharacterRecord; contribution: number };
  *  not per-character, so a second alt of an already-mastered class contributes nothing),
  *  then those per-class bests are summed across the skill's member classes. This is a
  *  lower bound on the true total, never an overstatement, which is what makes it safe to
- *  use as a per-character FLOOR (never lowers a character's own stored value, only ever
- *  raises it towards this -- see linkSkillFloorsForCharacter/propagateLinkSkillFloors).
- *  `winners` is the actual per-class winning character records -- the only ones that
- *  really contribute -- for callers (LegionPanel's sprite row) that need more than just
- *  a formatted name/level string; `sources` derives its display strings from the same
- *  reduction so the two never drift apart. */
+ *  use as a per-character floor: it never lowers a character's own stored value, it raises
+ *  it towards this (see linkSkillFloorsForCharacter/propagateLinkSkillFloors).
+ *
+ *  `winners` is the per-class winning character records, the only ones that contribute, for
+ *  callers like LegionPanel's sprite row that need more than a formatted name and level
+ *  string. `sources` derives its display strings from the same reduction, so the two never
+ *  drift apart. */
 export function computeLinkSkillsFromRoster(
   roster: StoredCharacterRecord[],
   worldId: number,
@@ -169,11 +169,11 @@ export function computeLinkSkillsFromRoster(
     if (contribution === 0) continue;
     const perClass = (bestByClass[skillId] ??= {});
     const existing = perClass[char.jobName];
-    // Compare char.level, not contribution -- inferLinkLevel caps at 3 for any level
-    // 210+, so a 295 and a 210 of the same class tie on contribution and the first one
-    // seen would otherwise "win" and never get replaced by the genuinely higher character.
-    // level is monotonic with contribution, so this can never pick a lower-contribution
-    // character over a higher one either.
+    // Compare char.level, not contribution. inferLinkLevel caps at 3 for any level 210+,
+    // so a 295 and a 210 of the same class tie on contribution, and the first one seen
+    // would otherwise win and never be replaced by the genuinely higher character. Level
+    // is monotonic with contribution, so this can't pick a lower-contribution character
+    // over a higher one either.
     if (!existing || char.level > existing.character.level) {
       perClass[char.jobName] = { character: char, contribution };
     }
@@ -191,24 +191,25 @@ export function computeLinkSkillsFromRoster(
   return { values, sources, winners };
 }
 
-/** The best-known VALUE for each skill in `worldId`: the higher of (a) what tracked
- *  levels prove (computeLinkSkillsFromRoster) and (b) the highest value ANY same-world,
- *  same-skill character already has stored. (b) matters because a stored value can
- *  exceed what levels alone prove -- e.g. Bishop manually saved at 7 when its own level
- *  only proves 3 (say a 3rd, untracked magician is the source of the other 4). Two
- *  legitimate uses, both READ-ONLY suggestions, NEVER a hard `min`/floor on an editable
- *  field (see linkSkillFloorsForCharacter's own comment for why that trap is worse):
- *  (1) propagateLinkSkillFloors' auto-add WRITE target (Quick Setup finish, refresh,
- *  import) -- nobody's looking at a field to override, so writing the best-known value
- *  outright is safe; (2) LinkSkillsSetupStep's mount-time backfill SUGGESTION for a
- *  character not yet in the roster at all (a fresh Full/MapleScouter Setup search-and-
- *  open, before Finish) -- there's no confirmedRecord.linkSkills to seed the pre-fill
- *  from yet, so this is the only source of a useful starting number; the field itself
- *  stays freely editable down to the real level-only floor regardless. Never used to
- *  inflate ANY single character's own per-class CONTRIBUTION past inferLinkLevel's 0-3
- *  cap (that would let a multi-class skill's summed floor exceed its real maxLevel) --
- *  only ever compared against the skill's already-summed total, as a competing
- *  whole-skill claim. */
+/** The best-known value for each skill in `worldId`: the higher of what tracked levels
+ *  prove (computeLinkSkillsFromRoster) and the highest value any same-world, same-skill
+ *  character already has stored. The stored value matters because it can exceed what
+ *  levels alone prove, such as a Bishop manually saved at 7 whose own level proves 3,
+ *  where an untracked third magician is the source of the other 4.
+ *
+ *  Both uses are read-only suggestions, never a hard `min` on an editable field (see
+ *  linkSkillFloorsForCharacter for why that trap is worse). propagateLinkSkillFloors uses
+ *  it as an auto-add write target (Quick Setup finish, refresh, import), where nobody is
+ *  looking at a field to override. LinkSkillsSetupStep uses it as a mount-time backfill
+ *  suggestion for a character not yet in the roster, during a fresh Full or MapleScouter
+ *  Setup search-and-open before Finish: there is no confirmedRecord.linkSkills to seed
+ *  from, so this is the only source of a useful starting number, and the field stays
+ *  editable down to the real level-only floor.
+ *
+ *  This never inflates a single character's own per-class contribution past inferLinkLevel's
+ *  0-3 cap, which would let a multi-class skill's summed floor exceed its real maxLevel. It
+ *  is only compared against the skill's already-summed total, as a competing whole-skill
+ *  claim. */
 export function bestKnownLinkSkillFloors(roster: StoredCharacterRecord[], worldId: number): LinkSkillsData {
   const { values: levelFloors } = computeLinkSkillsFromRoster(roster, worldId);
   const floors: LinkSkillsData = { ...levelFloors };
@@ -223,22 +224,23 @@ export function bestKnownLinkSkillFloors(roster: StoredCharacterRecord[], worldI
   return floors;
 }
 
-/** The HARD floor for ONE character's own link skill entry: level-math only, exactly
- *  what computeLinkSkillsFromRoster proves (Bishop@210 + F/P@210 = 6), regardless of what
- *  anyone has manually saved. Deliberately does NOT use bestKnownLinkSkillFloors -- a
- *  stored value (e.g. Bishop manually saved at 7) is a useful AUTOFILL SUGGESTION (see
- *  the mount-time backfill in LinkSkillsSetupStep.tsx) but must never become a hard
- *  constraint on what a human can type into their own field, or the input becomes a
- *  one-way ratchet with no way back down (Bishop alone typing 9 would floor itself at 9
- *  forever, since its own stored 9 would count as evidence against itself the moment this
- *  function re-ran on its own field). Not every skill computeLinkSkillsFromRoster returns
- *  applies to every character -- a Kanna's floor only ever covers Elementalism, never
- *  Empirical Knowledge, regardless of what other classes are tracked on the world -- so
- *  this filters the full per-world result down to just the skill(s) `character` itself
- *  can contribute to. Takes only jobName/worldID (a Pick, not the full record) so a
- *  caller mid-setup -- before the character it's asking about is a real tracked
- *  StoredCharacterRecord yet -- can pass a plain literal instead of fabricating/casting a
- *  fake full record. */
+/** The hard floor for one character's own link skill entry: level math only, exactly what
+ *  computeLinkSkillsFromRoster proves (Bishop at 210 plus F/P at 210 is 6), regardless of
+ *  what anyone has manually saved.
+ *
+ *  Deliberately not bestKnownLinkSkillFloors. A stored value, say a Bishop manually saved
+ *  at 7, is a useful autofill suggestion (see the mount-time backfill in
+ *  LinkSkillsSetupStep.tsx) but must never become a hard constraint on what a human can
+ *  type into their own field, or the input becomes a one-way ratchet with no way back
+ *  down. A lone Bishop typing 9 would floor itself at 9 forever, its own stored 9 counting
+ *  as evidence against itself the moment this function re-ran on its field.
+ *
+ *  Not every skill computeLinkSkillsFromRoster returns applies to every character. A
+ *  Kanna's floor covers Elementalism, never Empirical Knowledge, whatever else is tracked
+ *  on the world, so this filters the per-world result down to the skills `character` can
+ *  contribute to. Takes a Pick of jobName and worldID rather than the full record, so a
+ *  caller mid-setup, before its subject is a real tracked StoredCharacterRecord, can pass
+ *  a plain literal instead of casting a fake one. */
 export function linkSkillFloorsForCharacter(
   character: Pick<StoredCharacterRecord, "jobName" | "worldID">,
   roster: StoredCharacterRecord[],
@@ -254,17 +256,17 @@ export function linkSkillFloorsForCharacter(
  *  best-known floor (see bestKnownLinkSkillFloors), without collapsing them back into
  *  one shared number. Mastery is genuinely shared/summed per skill (see
  *  computeLinkSkillsFromRoster), so when a new or leveled sibling raises a skill's true
- *  floor -- or an already-tracked sibling's OWN stored value turns out to be the highest
- *  known truth -- every other same-world character who already has a stored value for
- *  that skill needs to be re-floored too -- otherwise a character set up BEFORE the
- *  sibling existed is left stale below the new true minimum (e.g. Bishop set up alone
- *  floors Empirical Knowledge at 3 and saves 3; a same-world Arch Mage F/P set up
- *  afterward raises the true floor to 6; without this, Bishop's already-saved 3 would
- *  never get bumped to 6). This only ever RAISES a stored value to the new floor, never
- *  lowers one -- a character that already stores something at or above the floor
- *  (including one deliberately left below what a sibling could prove, like a Kanna
- *  intentionally at 0 for a link it hasn't equipped, which isn't touched because Kanna's
- *  own floor never involves Bravado's siblings at all) is left untouched. */
+ *  floor, or an already-tracked sibling's own stored value turns out to be the highest
+ *  known truth, every other same-world character with a stored value for that skill needs
+ *  re-flooring too. Otherwise a character set up before the sibling existed is left stale
+ *  below the new true minimum: a Bishop set up alone floors Empirical Knowledge at 3 and
+ *  saves 3, then a same-world Arch Mage F/P raises the true floor to 6, and without this
+ *  the Bishop's saved 3 never gets bumped.
+ *
+ *  This only raises a stored value to the new floor, never lowers one. A character already
+ *  at or above the floor is left untouched, including one deliberately left below what a
+ *  sibling could prove, like a Kanna at 0 for a link it hasn't equipped, whose own floor
+ *  never involves Bravado's siblings. */
 export function propagateLinkSkillFloors(
   roster: StoredCharacterRecord[],
   worldId: number,
@@ -286,27 +288,24 @@ export function propagateLinkSkillFloors(
   }
 }
 
-/** Syncs every same-world sibling sharing `editedCharacter`'s skill to the EXACT value
- *  `editedCharacter` was just explicitly saved at -- both up AND down, unlike
- *  propagateLinkSkillFloors (raise-only). In-game, mastery of a link skill genuinely
- *  reads as one identical number across every character who can use it (live-tested: a
- *  same-world Bishop/Arch Mage F/P/Arch Mage I/L all display the SAME Empirical
- *  Knowledge total, never three different numbers) -- so once a human deliberately saves
- *  a value on ANY one of them, that's the new shared truth for all of them, not just a
- *  floor for the others to clear.
+/** Syncs every same-world sibling sharing `editedCharacter`'s skill to the exact value
+ *  `editedCharacter` was just saved at, both up and down, unlike propagateLinkSkillFloors,
+ *  which only raises. In-game, mastery of a link skill reads as one identical number across
+ *  every character who can use it: a same-world Bishop, Arch Mage F/P and Arch Mage I/L all
+ *  display the same Empirical Knowledge total, never three different numbers. So once a
+ *  human saves a value on one of them, that is the new shared truth for all of them, not
+ *  just a floor for the others to clear.
  *
- *  Only call this from a path where a human just explicitly finished the Link Skills
- *  step for `editedCharacter` -- NOT from an auto-add path (Quick Setup finish, refresh,
- *  import) that never gave anyone a chance to see/choose a value. An auto-add has no
- *  human decision to sync from, so it must stay raise-only (propagateLinkSkillFloors):
- *  silently overwriting Bishop's deliberately-chosen 7 down to a freshly-computed lower
- *  floor just because an unrelated character was auto-added would erase real information
- *  nobody asked to erase.
+ *  Call this only from a path where a human explicitly finished the Link Skills step for
+ *  `editedCharacter`, and never from an auto-add path (Quick Setup finish, refresh, import)
+ *  that gave nobody a chance to choose a value. An auto-add has no human decision to sync
+ *  from, so it stays raise-only via propagateLinkSkillFloors. Overwriting a Bishop's chosen
+ *  7 down to a freshly computed lower floor because an unrelated character was auto-added
+ *  would erase real information.
  *
- *  Still clamped at the level-proven floor as a safety minimum (via
- *  linkSkillFloorsForCharacter's own math) -- a sync can't push anyone BELOW what their
- *  own level already proves, only exactly to editedCharacter's saved value or that floor,
- *  whichever is higher. */
+ *  Still clamped at the level-proven floor as a safety minimum, via
+ *  linkSkillFloorsForCharacter's math. A sync can't push anyone below what their own level
+ *  proves, only to editedCharacter's saved value or that floor, whichever is higher. */
 export function syncLinkSkillToSiblings(
   editedCharacter: StoredCharacterRecord,
   roster: StoredCharacterRecord[],

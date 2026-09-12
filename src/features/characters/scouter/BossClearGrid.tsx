@@ -22,25 +22,25 @@ import { computeBossClear, type BossClearResult, type ClearColorTier } from "./b
 import { formatFigure } from "./scouterFormat";
 import type { ScouterResultEntry } from "./scouterCache";
 
-// Icon ids hand-looked-up from manifests/v271/ui-boss.json (renamed from boss.json as of v269
-// -- see root CLAUDE.md "Image Policy"), cross-checked against the same bosses already mapped in
-// liberation-data.ts and trace-restoration-data.ts.
+// Icon ids looked up by hand from manifests/v271/ui-boss.json, renamed from boss.json as of
+// v269 (see the Image Policy in the root CLAUDE.md), cross-checked against the same bosses
+// already mapped in liberation-data.ts and trace-restoration-data.ts.
 const BOSS_ICON_ID: Record<string, string> = {
   스우: "13", 데미안: "15", 루시드: "19", 윌: "23", 더스크: "26", "진 힐라": "24",
   듄켈: "27", "검은 마법사": "25", 세렌: "28", 칼로스: "30", 대적자: "35", 흉성: "37",
   카링: "31", 림보: "33", 발드릭스: "34", 유피테르: "38", 가엔슬: "29", 카이: "36",
 };
 
-// Easiest to hardest. Champion and Destiny are solo variants of a party tier (nearly always
-// Hard) and sit BELOW Extreme on every boss that has one -- Lotus, Black Mage, Seren, Adversary
-// all read wrong with Extreme ranked under them. Checked per boss against the scraped cut and
-// easyRate, not just assumed from the names.
+// Easiest to hardest. Champion and Destiny are solo variants of a party tier, nearly always
+// Hard, and sit below Extreme on every boss that has one. Lotus, Black Mage, Seren and
+// Adversary all read wrong with Extreme ranked under them. Checked per boss against the
+// scraped cut and easyRate rather than assumed from the names.
 const DIFFICULTY_ORDER: Record<string, number> = { Easy: 0, Normal: 1, Hard: 2, Chaos: 3, Champion: 4, Destiny: 5, Extreme: 6 };
 
 // The two bosses whose solo variant doesn't mirror Hard: Kalos's Champion is a solo Normal
 // (same 49800 cut as Normal, about half of Chaos's), and Kaling's Destiny is rated easier than
-// its Hard (same cut, easyRate x1.2 -- confirmed in practice, people do Destiny before soloing
-// Hard). Every other boss follows the global ladder.
+// its Hard, sharing the same cut at easyRate x1.2, since players clear Destiny before soloing
+// Hard. Every other boss follows the global ladder.
 const DIFFICULTY_ORDER_OVERRIDE: Partial<Record<string, Record<string, number>>> = {
   kalos: { Easy: 0, Normal: 1, Champion: 2, Chaos: 3, Destiny: 4, Extreme: 5 },
   kaling: { Easy: 0, Normal: 1, Destiny: 2, Hard: 3, Extreme: 4 },
@@ -94,10 +94,10 @@ const BOSS_THRESHOLD_INFO_CONTENT: TooltipContent = {
   ),
 };
 
-// MapleScouter's own "relevant" filter, ported verbatim (confirmed by clicking their own
-// "View my (relevant) boss standards" toggle live) -- hides a difficulty tile once the
-// character has wildly outgrown it (>10x, or >10x/partyLimit for a party-only boss) or
-// genuinely can't touch it yet (<0.15x, or <0.85x/partyLimit).
+// MapleScouter's own relevant filter, ported verbatim from their "View my (relevant) boss
+// standards" toggle. Hides a difficulty tile once the character has wildly outgrown it, past
+// 10x or 10x over partyLimit for a party-only boss, or cannot touch it yet, below 0.15x or
+// 0.85x over partyLimit.
 function isRelevant(clearRate: number, isPartyBoss: boolean, partyLimit: number): boolean {
   const outgrown = isPartyBoss ? clearRate / partyLimit > 10 : clearRate > 10;
   if (outgrown) return false;
@@ -120,10 +120,11 @@ function pillStatus(colorTier: ClearColorTier): PillStatus {
   return null;
 }
 
-// Dual-render with refs (display:none on the fallback, swap via onError) rather than useState,
-// per root CLAUDE.md's React-Doctor Rules -- same pattern for every boss sprite here (row
-// difficulty chips, spotlight tile icons). Covers both a real load failure AND a boss with no
-// confirmed icon id at all (src undefined) by simply never mounting the Image in the latter case.
+// Dual-render with refs, keeping the fallback at display:none and swapping via onError, rather
+// than useState, per the React-Doctor Rules in the root CLAUDE.md. The same pattern covers
+// every boss sprite here, including row difficulty chips and spotlight tile icons. Handles both
+// a load failure and a boss with no known icon id, where src is undefined and the Image simply
+// never mounts.
 function FallbackSpriteIcon({ theme, src, size, displayName }: {
   theme: AppTheme; src: string | undefined; size: number; displayName: string;
 }) {
@@ -159,16 +160,15 @@ function FallbackSpriteIcon({ theme, src, size, displayName }: {
 
 const BANNER_WIDTH = 180;
 const BANNER_HEIGHT = 64;
-// Vertical anchor for the wide banner crop of mob.png (a tall splash) -- 20% lands roughly on
-// a character's head/shoulders for the 2 splashes checked so far (Malefic Star, First
-// Adversary). Not verified across the full roster yet.
+// Vertical anchor for the wide banner crop of mob.png, which is a tall splash. 20% lands
+// roughly on the head and shoulders for the 2 splashes checked so far, Malefic Star and First
+// Adversary. Not checked across the full roster.
 const DEFAULT_ART_POSITION = "50% 20%";
-// Per-boss override, keyed the same as BOSS_ICON_ID -- framing varies enough per splash that a
-// single default crop misses most faces entirely. Hand-tuned by eyeballing every boss's real
-// mob.png (in the WZ image dump's ui/boss/<id>/mob.png) and picking the vertical anchor (as %
-// of the source image's height) that lands on the character's face/eyes against the actual
-// wide (180x64) banner crop -- Gloom has no face (an inanimate seal), positioned on the
-// portal's glowing center instead.
+// Per-boss override, keyed like BOSS_ICON_ID, since framing varies enough per splash that a
+// single default crop misses most faces. Tuned by hand against each boss's real mob.png in the
+// WZ image dump, picking the vertical anchor as a percentage of source height that lands on the
+// face in the wide banner crop. Gloom has no face, being an inanimate seal, so it is positioned
+// on the portal's glowing center.
 const BOSS_ART_POSITION: Record<string, string> = {
   스우: "50% 25%", 데미안: "42% 50%", 루시드: "50% 43%", 윌: "68% 61%", 더스크: "50% 53%",
   "진 힐라": "50% 23%", 듄켈: "48% 46%", "검은 마법사": "42% 19%", 세렌: "50% 33%",
@@ -176,11 +176,11 @@ const BOSS_ART_POSITION: Record<string, string> = {
   발드릭스: "50% 40%", 유피테르: "48% 25%", 가엔슬: "50% 51%", 카이: "50% 28%",
 };
 
-// Spotlight's own crop anchors -- deliberately separate from BOSS_ART_POSITION above, which was
-// hand-tuned for Quick View's tiny wide 180x64 banner crop, not Spotlight's much taller/wider
-// SPOTLIGHT_HEIGHT-tall card. Left empty (falls back to DEFAULT_ART_POSITION for every boss)
-// until it gets its own eyeball pass against Spotlight's real aspect ratio -- BOSS_ART_POSITION's
-// values don't transfer, so a wrong per-boss override is worse than a plain, honest default.
+// Spotlight's own crop anchors, deliberately separate from BOSS_ART_POSITION above, which was
+// tuned for Quick View's small wide banner crop rather than Spotlight's much taller card. Left
+// empty, falling back to DEFAULT_ART_POSITION for every boss, until it gets its own pass
+// against Spotlight's real aspect ratio. BOSS_ART_POSITION's values do not transfer, and a
+// wrong per-boss override is worse than an honest default.
 const SPOTLIGHT_ART_POSITION: Record<string, string> = {};
 
 function bannerMaskStyle(): CSSProperties {
@@ -202,10 +202,10 @@ const bannerNameStyle: CSSProperties = {
   overflow: "hidden", textOverflow: "ellipsis",
 };
 
-// The Quick View row's "extended" boss art -- a wide slice of mob.png, faded to transparent on
-// its right edge (bannerMaskStyle) instead of hard-cropped, so it blends into the row's own
-// background rather than reading as an obviously-cropped rectangle. Same dual-render-with-refs
-// fallback shape as FallbackSpriteIcon, just sized for a banner instead of a small icon.
+// The Quick View row's extended boss art: a wide slice of mob.png faded to transparent on its
+// right edge through bannerMaskStyle rather than hard-cropped, so it blends into the row's
+// background instead of reading as a cropped rectangle. Same dual-render-with-refs fallback as
+// FallbackSpriteIcon, sized for a banner rather than a small icon.
 function BossBanner({ theme, boss, iconId, displayName }: {
   theme: AppTheme; boss: string; iconId: string | undefined; displayName: string;
 }) {
@@ -249,9 +249,9 @@ function BossBanner({ theme, boss, iconId, displayName }: {
   );
 }
 
-// flexWrap so the chip column drops to its own full-width line below the banner once the row
-// gets too narrow for both side by side (mobile) -- see the chip container's own flex-basis
-// below, which is what actually triggers that wrap.
+// flexWrap drops the chip column to its own full-width line below the banner once the row is
+// too narrow for both side by side, as on mobile. The chip container's flex-basis below is what
+// triggers the wrap.
 function rowStyle(isLast: boolean, theme: AppTheme): CSSProperties {
   return {
     display: "flex", flexWrap: "wrap", alignItems: "center", gap: 12, width: "100%",
@@ -259,9 +259,9 @@ function rowStyle(isLast: boolean, theme: AppTheme): CSSProperties {
   };
 }
 
-// Reset to look like the plain banner wrapper it replaces -- only the banner itself opens
-// Spotlight now (used to be the whole row, which made every difficulty chip's own hover
-// tooltip fight the row's click target, so the click target was scoped down).
+// Reset to look like the plain banner wrapper it replaces. Only the banner opens Spotlight
+// now; it used to be the whole row, which made every difficulty chip's hover tooltip fight the
+// row's click target, so the target was scoped down.
 const bannerButtonStyle: CSSProperties = {
   background: "none", border: "none", padding: 0, font: "inherit", cursor: "pointer", flexShrink: 0,
   borderRadius: 10, transition: "transform 0.1s ease",
@@ -273,9 +273,9 @@ const BOSS_FILTER_OPTIONS: { value: BossFilter; label: string }[] = [
   { value: "all", label: "All" },
 ];
 
-// Same on/off color-swap look the old single Full HEXA toggle had (noGapLossToggleStyle,
-// removed when that toggle was replaced by the Scouter Simulator popup) -- same slot in the
-// filter row, same visual treatment, now opens the popup instead of directly flipping a flag.
+// The same on/off color swap the old Full HEXA toggle had in noGapLossToggleStyle, removed when
+// the Scouter Simulator popup replaced it. Same slot in the filter row and same visual
+// treatment, but it opens the popup rather than flipping a flag directly.
 function openSimulatorButtonStyle(theme: AppTheme, active: boolean): React.CSSProperties {
   return {
     padding: "8px 16px", borderRadius: "10px", fontSize: "0.82rem", lineHeight: 1, fontWeight: 700,
@@ -300,9 +300,10 @@ function OpenSimulatorButton({ theme, simulated, onOpen }: { theme: AppTheme; si
 }
 
 /** One boss+difficulty tile's computed result, or null if computeBossClear couldn't produce one
- *  (missing formula fields) -- filtered out before rendering either view. level/arcaneForce/
- *  authenticForce can be a Scouter Simulator override (ScouterBookmark owns that state, not
- *  this component) rather than the character's real stats. */
+ *  because formula fields are missing, in which case it is filtered out before either view
+ *  renders. level, arcaneForce and authenticForce can each be a Scouter Simulator override,
+ *  state ScouterBookmark owns rather than this component, instead of the character's real
+ *  stats. */
 function relevantTiles(entries: BossCutEntry[], level: number, arcaneForce: number, authenticForce: number, inputs: NonNullable<ScouterResultEntry["bossClearInputs"]>, filter: BossFilter) {
   const order = (entries[0] && DIFFICULTY_ORDER_OVERRIDE[entries[0].name]) ?? DIFFICULTY_ORDER;
   const sorted = [...entries].sort((a, b) => (order[a.difficulty] ?? 99) - (order[b.difficulty] ?? 99));
@@ -332,11 +333,10 @@ function chipTagColor(theme: AppTheme, status: PillStatus): string {
   return theme.muted;
 }
 
-// Sectioned, left-aligned tooltip content -- the default hover-tip-bubble CSS centers short
-// one-line labels, which reads fine for those but turns a multi-row breakdown into an
-// unscannable wall of centered text. Overrides text-align via HoverTooltip's style prop.
-// Difficulty/clear% are deliberately left out: both are already visible on the chip being
-// hovered, so repeating them here was just noise.
+// Sectioned, left-aligned tooltip content. The default hover-tip-bubble CSS centers short
+// one-line labels, which suits those but turns a multi-row breakdown into an unscannable wall
+// of centered text, so this overrides text-align through HoverTooltip's style prop. Difficulty
+// and clear percent are left out, since both are already visible on the chip being hovered.
 function chipTooltipDividerStyle(theme: AppTheme): CSSProperties {
   return { borderTop: `1px solid ${theme.border}`, margin: "4px 0" };
 }
@@ -385,9 +385,10 @@ function ChipTooltipContent({ theme, difficulty, result }: { theme: AppTheme; di
   );
 }
 
-// Tag + % both visible without hovering -- MapleScouter users expect both at a glance -- hover
-// expands into the adjusted stat + damage-loss factor that used to be Spotlight-only. A small
-// neutral card (icon + stacked text) instead of the old saturated pill.
+// Tag and percent are both visible without hovering, since MapleScouter users expect both at a
+// glance, and hovering expands into the adjusted stat and damage-loss factor that used to be
+// Spotlight-only. A small neutral card with an icon and stacked text rather than the old
+// saturated pill.
 function DifficultyChip({ theme, iconId, displayName, entry, result }: {
   theme: AppTheme; iconId: string | undefined; displayName: string; entry: BossCutEntry; result: BossClearResult;
 }) {
@@ -462,10 +463,10 @@ function PowerStripDelta({ theme, value, realValue }: { theme: AppTheme; value: 
   );
 }
 
-/** The FD-equivalent of a simulation for one boss -- (simulated raw HEXA damage / real, minus
- *  one), the same figure MapleScouter's own "Additional Spec Simulation" cards show as "FD %".
- *  Sits under the (+X) chip on the Boss 300 / Boss 380 cells, so it's self-labelled by which
- *  cell it's in. Null when either result predates the Boss Clear fields, or rounds to nothing. */
+/** The FD-equivalent of a simulation for one boss: simulated raw HEXA damage over real, minus
+ *  one. The same figure MapleScouter's own "Additional Spec Simulation" cards show as "FD %".
+ *  It sits under the (+X) chip on the Boss 300 and Boss 380 cells, so the cell labels it. Null
+ *  when either result predates the Boss Clear fields, or rounds to nothing. */
 function fdEquivalentPercent(realDamage?: number, simDamage?: number): number | null {
   if (!realDamage || !simDamage) return null;
   const pct = (simDamage / realDamage - 1) * 100;
@@ -487,7 +488,7 @@ function PowerStripFdEquiv({ theme, pct }: { theme: AppTheme; pct: number }) {
 function PowerStripItem({ theme, label, value, sub, realValue, fdEquiv }: {
   theme: AppTheme; label: string; value: number; sub?: number;
   /** The character's real (pre-simulation) figure for this slot. Set only while a Scouter
-   *  Simulator "what if" is applied -- drives the (+X)/(-X) chip and the "was" tooltip line. */
+   *  Simulator what-if is applied. Drives the delta chip and the "was" tooltip line. */
   realValue?: number;
   /** This boss's FD-equivalent % for the simulation (Boss 300 / Boss 380 only). */
   fdEquiv?: number | null;
@@ -507,9 +508,9 @@ function PowerStripItem({ theme, label, value, sub, realValue, fdEquiv }: {
     if (sub === undefined) return content;
     return <HoverTooltip theme={theme} label={`Normal: ${formatFigure(sub)}`}>{content}</HoverTooltip>;
   }
-  // Simulated: the strip itself already shows the current figure and its (+X)/(-X) chip, so the
-  // tooltip only carries what the strip can't -- the pre-simulation value ("was", muted since
-  // it's history) and the Normal-tier figure, if any (full weight, still a current number).
+  // While simulated, the strip already shows the current figure and its delta chip, so the
+  // tooltip carries only what the strip cannot: the pre-simulation value, muted since it is
+  // history, and the Normal-tier figure if there is one, at full weight since it is current.
   return (
     <HoverTooltip
       theme={theme}
@@ -525,13 +526,13 @@ function PowerStripItem({ theme, label, value, sub, realValue, fdEquiv }: {
   );
 }
 
-// The old ScouterSummaryView's 3 StatBlocks, collapsed into one compact strip that sits above
-// the boss table instead of behind a separate page -- these are the raw power figures that feed
-// every row below it, so they read as this view's header now instead of an unrelated sibling.
+// The old ScouterSummaryView's 3 StatBlocks, collapsed into one compact strip above the boss
+// table rather than behind a separate page. These are the raw power figures feeding every row
+// below, so they read as this view's header rather than an unrelated sibling.
 function PowerStrip({ theme, entry, realEntry }: { theme: AppTheme; entry: ScouterResultEntry; realEntry?: ScouterResultEntry }) {
-  // A level/Arcane Force/Sacred Power-only simulation reuses the character's cached result
-  // untouched (those fields never reach MapleScouter), so the power figures are identical --
-  // skip the "was" tooltip line and the always-zero chip in that case.
+  // A simulation touching only level, Arcane Force or Sacred Power reuses the character's
+  // cached result untouched, since those fields never reach MapleScouter, so the power figures
+  // are identical. Skip the "was" tooltip line and the always-zero chip in that case.
   const showDeltas = realEntry !== undefined && (
     Math.round(entry.boss300Hexa) !== Math.round(realEntry.boss300Hexa) ||
     Math.round(entry.boss380Hexa) !== Math.round(realEntry.boss380Hexa) ||
@@ -558,9 +559,9 @@ function PowerStrip({ theme, entry, realEntry }: { theme: AppTheme; entry: Scout
 
 const BOSS_PICKER_WIDTH = 220;
 
-// Matches the search-input/option-list visual convention used by the setup flow's own pickers
-// (e.g. FamiliarsSetupStep.tsx's LinePicker) -- those constants are file-local there too (no
-// shared export exists for them), so this is its own copy, not a duplicate import.
+// Matches the search-input and option-list convention the setup flow's pickers use, such as
+// LinePicker in FamiliarsSetupStep.tsx. Those constants are file-local there too, with no
+// shared export, so this is its own copy rather than a duplicated import.
 const bossPickerSearchInputStyle: CSSProperties = {
   width: "100%", boxSizing: "border-box", borderRadius: 6, fontFamily: "inherit",
   fontSize: "0.78rem", fontWeight: 600, padding: "0.3rem 0.5rem", outline: "none", border: "1px solid",
@@ -576,12 +577,13 @@ function bossOptionStyle(theme: AppTheme, isHighlighted: boolean): CSSProperties
   };
 }
 
-/** Searchable replacement for the old plain <select> -- lets a player type a boss name instead
- *  of scrolling a long native dropdown (~15-17 bosses). Reuses the same shared pieces as the
- *  setup flow's own search pickers (usePickerCoords for portal positioning, useKeyboardListNav
- *  for arrow/Enter/Escape, searchAndRank for fuzzy-ish ranked matching) rather than a plain
- *  <select>, but is its own standalone open/close (no cross-field openId chaining -- there's
- *  only one picker here, not a group of them like a familiar's Line 1/Line 2). */
+/** Searchable replacement for the old plain <select>, letting a player type a boss name instead
+ *  of scrolling a native dropdown of 15 to 17 bosses. Reuses the same shared pieces as the
+ *  setup flow's own search pickers: usePickerCoords for portal positioning, useKeyboardListNav
+ *  for arrow, Enter and Escape keys, and searchAndRank for ranked matching, rather than a plain
+ *  <select>, but owns its open and close state standalone, with no cross-field openId
+ *  chaining, since there is only one picker here rather than a group like a familiar's two
+ *  line slots. */
 function BossPicker({ theme, grouped, onSelectBoss }: {
   theme: AppTheme; grouped: BossEntryList[]; onSelectBoss: (boss: string) => void;
 }) {
@@ -688,12 +690,13 @@ function BossPicker({ theme, grouped, onSelectBoss }: {
   );
 }
 
-// Drops the row list's height cap/scroll/fade so every boss renders and the page grows instead
-// -- lets someone screenshot the whole list in one shot to share (e.g. "can I see your scouter"),
-// which the normal capped+scrollable list can't do without stitching two screenshots together.
-// State lives here, not lifted to BossClearGrid, specifically so switching to Spotlight (which
-// unmounts BossQuickView entirely, see the view === "quickView" conditional render) resets it for
-// free -- nobody's profile should stay stuck in the expanded layout after they navigate away.
+// Drops the row list's height cap, scroll and fade so every boss renders and the page grows
+// instead, letting someone screenshot the whole list in one shot to share. The normal capped,
+// scrollable list cannot do that without stitching two screenshots together.
+//
+// State lives here rather than lifted to BossClearGrid so that switching to Spotlight, which
+// unmounts BossQuickView entirely through the quickView conditional render, resets it for free.
+// Nobody's profile should stay stuck in the expanded layout after navigating away.
 function BossQuickView({
   theme, entry, realEntry, grouped, filter, onFilterChange, level, arcaneForce, authenticForce, inputs, onSelectBoss, simulated, onOpenSimulator,
 }: {
@@ -704,9 +707,9 @@ function BossQuickView({
   simulated: boolean; onOpenSimulator: () => void;
 }) {
   const [expanded, setExpanded] = useState(false);
-  // Fades whichever edge actually has more to scroll to (see useScrollEdges/edgeFadeMask)
-  // -- the previous static bottom fade stayed visible even once fully scrolled to the end,
-  // or when grouped was short enough to never overflow the 506px cap in the first place.
+  // Fades whichever edge has more to scroll to (see useScrollEdges and edgeFadeMask). The
+  // previous static bottom fade stayed visible even when fully scrolled to the end, or when
+  // grouped was short enough never to overflow the cap.
   const { ref: quickViewListRef, atStart: quickViewAtStart, atEnd: quickViewAtEnd } =
     useScrollEdges<HTMLDivElement>([grouped.length, expanded], "vertical");
   const quickViewListMask = edgeFadeMask(quickViewAtStart, quickViewAtEnd, 28, "vertical");
@@ -774,17 +777,17 @@ function BossQuickView({
   );
 }
 
-// Fixed (not min/flex) so every boss's banner crops identically regardless of tile count --
-// 623px was measured the same way as BossQuickView's 526px cap (see that comment): .profile-
-// binder's pinned 697px content area, minus .profile-binder-page's 32px vertical padding (665px
-// usable), minus Spotlight's own header row (back button + nav arrows, 32px) and its 10px gap.
+// Fixed rather than min or flex, so every boss's banner crops identically regardless of tile
+// count. Measured the same way as BossQuickView's cap (see that comment): `.profile-binder`'s
+// pinned content area, minus `.profile-binder-page`'s vertical padding, minus Spotlight's own
+// header row of back button and nav arrows plus its gap.
 const SPOTLIGHT_HEIGHT = 623;
 
 // SpotlightTile is always 2 lines tall (difficulty/tag over clear%/Adjusted, see its own grid
-// layout): 2 x ~15px lines + 2px internal row-gap + 6px+6px padding = 44px per tile, 8px gap
-// between stacked tiles. This is only the initial-render estimate before BossSpotlight's
-// ResizeObserver measurement lands -- tiles can grow taller than this if a value wraps, so the
-// live measurement is what actually drives the fade once mounted.
+// layout): two roughly 15px lines, a 2px internal row gap and 6px padding top and bottom, for
+// 44px per tile with an 8px gap between stacked tiles. This is only the initial-render estimate
+// before BossSpotlight's ResizeObserver measurement lands. Tiles can grow taller when a value
+// wraps, so the live measurement drives the fade once mounted.
 const SPOTLIGHT_TILE_HEIGHT = 44;
 const SPOTLIGHT_TILE_GAP = 8;
 // Total height the tile stack occupies (including its 1rem top+bottom padding) for a given count.
@@ -834,12 +837,13 @@ function NavArrowButton({ theme, direction, disabled, onClick }: {
   );
 }
 
-/** Every gap the boss actually requires (e.g. Arcane is omitted entirely for a Grandis boss --
- *  see BossClearResult's boss/characterArcaneForce doc), each with the boss-vs-character values
- *  behind it (MapleScouter shows this as a Boss/User table; we fold it into the same line) AND
- *  its individual loss%, null when that stat isn't costing any damage. Requirement-relevant
- *  stats are returned even at no loss so the UI can show a quiet boss-vs-you reference line for
- *  players just checking whether they meet a requirement, not only when something's wrong. */
+/** Every gap the boss requires, where Arcane is omitted entirely for a Grandis boss (see
+ *  BossClearResult's bossArcaneForce and characterArcaneForce docs). Each carries the
+ *  boss-versus-character values behind it, which MapleScouter shows as a separate Boss and User
+ *  table and this folds into one line, plus its own loss percentage, null when that stat costs
+ *  no damage. Requirement-relevant stats are returned even at no loss, so the UI can show a
+ *  quiet boss-versus-you reference line for players checking whether they meet a requirement,
+ *  not only when something is wrong. */
 function lossBreakdown(result: BossClearResult): { combinedLossPercent: number; lines: { label: string; bossValue: number; yourValue: number; lossPercent: number | null }[] } {
   const gaps: { label: string; bossValue: number; yourValue: number; gapDmg: number; gapCeiling: number }[] = [
     { label: "Level", bossValue: result.bossLevel, yourValue: result.characterLevel, gapDmg: result.levelGapDmg, gapCeiling: result.levelGapCeiling },
@@ -850,16 +854,16 @@ function lossBreakdown(result: BossClearResult): { combinedLossPercent: number; 
   if (result.bossAuthenticForce !== null) {
     gaps.push({ label: "Sacred Power", bossValue: result.bossAuthenticForce, yourValue: result.characterAuthenticForce, gapDmg: result.authenticGapDmg, gapCeiling: result.authenticGapCeiling });
   }
-  // Loss is relative to each stat's own bonus CEILING, not to 1 -- sitting exactly at a boss's
-  // requirement reads gapDmg ~1.0 but is still short of the max bonus tier (confirmed against a
-  // real MapleScouter reading: Black Mage arcane 1350/1320 required reads gapDmg 1.0 against a
-  // 1.1 ceiling for that boss specifically, i.e. 9.09% loss, not 0%).
+  // Loss is relative to each stat's own bonus ceiling rather than to 1. Sitting exactly at a
+  // boss's requirement reads gapDmg around 1.0 but is still short of the max bonus tier: Black
+  // Mage at 1350 arcane against 1320 required reads gapDmg 1.0 against a 1.1 ceiling for that
+  // boss, a 9.09% loss rather than 0%.
   //
-  // The combined total isn't a sum of the per-stat losses -- it's the achieved/ceiling PRODUCT
-  // across all gaps (confirmed against a real MapleScouter reading: Jupiter Level 295/295 +
-  // Sacred Power 810/820 gives 8.33% + 16% individually, but MapleScouter's own displayed total
-  // is 23.00%, which only matches (1.10*1.05)/(1.20*1.25)). A gap the boss doesn't require
-  // contributes gapDmg=gapCeiling=1 and drops out of the product on its own.
+  // The combined total is not a sum of the per-stat losses but the achieved-over-ceiling
+  // product across all gaps. Jupiter at Level 295/295 with Sacred Power 810/820 gives 8.33%
+  // and 16% individually, while MapleScouter's own displayed total is 23.00%, which matches
+  // only (1.10*1.05)/(1.20*1.25). A gap the boss does not require contributes 1 to both sides
+  // and drops out of the product.
   const achievedProduct = gaps.reduce((acc, g) => acc * g.gapDmg, 1);
   const ceilingProduct = gaps.reduce((acc, g) => acc * g.gapCeiling, 1);
   const combinedLossPercent = Math.round((1 - achievedProduct / ceilingProduct) * 100 * 100) / 100;
@@ -883,11 +887,11 @@ function lossBreakdown(result: BossClearResult): { combinedLossPercent: number; 
 // tiles). Desktop is one row (.spotlight-tile-cell classes place each cell in its own column);
 // below 400px (.spotlight-tile's container query, CharacterSetupFlow.styles.ts) the placement
 // classes switch clear%/Adjusted onto a second row sharing the difficulty/tag columns instead,
-// since a maxed-out end-game clear% has no room left on the same line as icon+difficulty+tag on
-// a narrow panel. Placement lives in CSS classes, not inline styles, specifically so the
-// container query can override it -- an inline gridColumn/gridRow would always win over any
-// stylesheet rule regardless of breakpoint. Requires the caller (stackRef's div) to be the
-// actual grid with the matching column template; this component only supplies rows.
+// since a maxed-out end-game clear percent has no room left beside the icon, difficulty and tag
+// on a narrow panel. Placement lives in CSS classes rather than inline styles so the container
+// query can override it; an inline gridColumn or gridRow would beat any stylesheet rule at every
+// breakpoint. Requires the caller's stackRef div to be the actual grid with the matching column
+// template, since this component only supplies rows.
 function SpotlightTile({ theme, iconId, displayName, entry, result }: {
   theme: AppTheme; iconId: string | undefined; displayName: string; entry: BossCutEntry; result: BossClearResult;
 }) {
@@ -895,13 +899,13 @@ function SpotlightTile({ theme, iconId, displayName, entry, result }: {
   return (
     <HoverTooltip
       theme={theme}
-      // .hover-tip is inline-flex and shrink-wraps its own box by default (see globals.css and
-      // FamiliarsSetupStep.tsx's sprite for the same issue) -- without an explicit grid-column
-      // span, the wrapper wouldn't participate in the parent subgrid's column tracks at all.
-      // className reuses .spotlight-tile's own gridRow rule (styles.ts) rather than setting it
-      // inline, since it needs to be 1 row on desktop (single-line, content vertically centers
-      // in a 1-row-tall box) and 2 rows on mobile (wrapped) -- an inline gridRow would always
-      // beat the container query that switches between them.
+      // `.hover-tip` is inline-flex and shrink-wraps its own box by default (see globals.css,
+      // and FamiliarsSetupStep.tsx's sprite for the same issue), so without an explicit
+      // grid-column span the wrapper would not participate in the parent subgrid's column
+      // tracks. The className reuses `.spotlight-tile`'s gridRow rule from styles.ts rather
+      // than setting it inline, since it needs 1 row on desktop, where content centers
+      // vertically in a one-row box, and 2 rows on mobile where it wraps. An inline gridRow
+      // would beat the container query that switches between them.
       className="spotlight-tile"
       style={{ display: "grid", gridColumn: "1 / -1", gridTemplateColumns: "subgrid", gridTemplateRows: "subgrid" }}
       label={<ChipTooltipContent theme={theme} difficulty={entry.difficulty} result={result} />}
@@ -950,9 +954,9 @@ function SpotlightTile({ theme, iconId, displayName, entry, result }: {
   );
 }
 
-// Full-bleed backdrop version of BossBanner's fade trick -- a radial mask (same shape as the
-// Bio bookmark's ClassPortrait fade) instead of a linear one, since this backdrop has content
-// overlaid on all sides rather than just needing to fade into whatever sits to its right.
+// A full-bleed backdrop version of BossBanner's fade trick, using a radial mask like the Bio
+// bookmark's ClassPortrait fade rather than a linear one, since this backdrop has content
+// overlaid on all sides rather than only needing to fade into what sits to its right.
 // Matches the "← Characters" nav button's look (secondaryButtonStyle, ← arrow glyph).
 function BackToQuickViewButton({ theme, onClick }: { theme: AppTheme; onClick: () => void }) {
   return (
@@ -988,8 +992,8 @@ function BossSpotlight({
   // replaced by a live measurement of the stack's actual rendered height once it's mounted. No
   // reset-to-null on boss change: ResizeObserver's callback fires immediately on observe() with
   // the newly-observed node's current size, so a boss switch naturally overwrites the stale
-  // value on its own -- an explicit reset would just be a same-effect setState with nothing to
-  // show for the one frame between the reset and the observer's own first callback.
+  // value on its own. An explicit reset would be a same-effect setState with nothing to show
+  // for the one frame between the reset and the observer's first callback.
   const [measuredStackHeight, setMeasuredStackHeight] = useState<number | null>(null);
   useEffect(() => {
     const node = stackRef.current;
@@ -1075,14 +1079,14 @@ function BossSpotlight({
 
 export type ScouterBookmarkView = "quickView" | "spotlight";
 
-/** Renders once BossClearGrid confirms bossClearInputs exists -- kept as a separate component
- *  so that null-check lives at the call site, not scattered through every sub-view. Owns both
- *  swappable sub-views (Quick View table / Spotlight card) internally, same stacked-grid-cell
+/** Renders once BossClearGrid confirms bossClearInputs exists. Kept as a separate component so
+ *  that null-check lives at the call site rather than scattered through every sub-view. Owns
+ *  both swappable sub-views, the Quick View table and Spotlight card, with the same stacked-cell
  *  shape as every other multi-sub-view bookmark (see CharacterSetupFlow.styles.ts's
- *  .bookmark-subview comment) -- ScouterBookmark just passes view/onViewChange through.
- *  Spotlight's selected boss is owned by CharacterProfileOverviewScreen (not local state) so
- *  the page header can read the same value directly instead of BossClearGrid reporting it back
- *  up through an effect -- see resolveBossDisplayName's own comment. */
+ *  `.bookmark-subview` comment), with ScouterBookmark passing view and onViewChange through.
+ *  Spotlight's selected boss is owned by CharacterProfileOverviewScreen rather than local
+ *  state, so the page header can read the same value directly instead of BossClearGrid
+ *  reporting it back up through an effect. See resolveBossDisplayName. */
 export default function BossClearGrid({
   theme, character, entry, realEntry, view, onViewChange, selectedIndex, onSelectedIndexChange,
   levelOverride, arcaneForceOverride, authenticForceOverride, simulated, onOpenSimulator,
@@ -1097,20 +1101,20 @@ export default function BossClearGrid({
   onViewChange: (v: ScouterBookmarkView) => void;
   selectedIndex: number;
   onSelectedIndexChange: (i: number) => void;
-  /** From the Scouter Simulator popup's Level/Arcane Force/Sacred Power inputs (ScouterBookmark
-   *  owns the state, not this component) -- a player-typed "what if" value, used in place of
-   *  the character's real level/Arcane Force/Sacred Power when set. There's no separate
-   *  "close this gap" toggle: typing the boss's own requirement already closes it, so
-   *  computeBossClear's gap math stays a single honest calculation either way. */
+  /** From the Scouter Simulator popup's Level, Arcane Force and Sacred Power inputs, state
+   *  ScouterBookmark owns rather than this component. A player-typed what-if used in place of
+   *  the character's real values when set. There is no separate close-this-gap toggle, since
+   *  typing the boss's own requirement already closes it, leaving computeBossClear's gap math
+   *  a single honest calculation either way. */
   levelOverride?: number;
   arcaneForceOverride?: number;
   authenticForceOverride?: number;
-  /** Whether a Scouter Simulator "what if" is currently applied -- swaps the Quick View
-   *  filter row's launcher button label from "Simulator" to "Edit". */
+  /** Whether a Scouter Simulator "what if" is currently applied. Swaps the Quick View filter
+   *  row's launcher button label from "Simulator" to "Edit". */
   simulated: boolean;
-  /** Opens the Scouter Simulator popup -- rendered here (Quick View's filter row, where the
-   *  old single Full HEXA toggle used to sit) rather than as a separate control bar, so it
-   *  doesn't add a new row to the bookmark. */
+  /** Opens the Scouter Simulator popup. Rendered in Quick View's filter row, where the old
+   *  single Full HEXA toggle sat, rather than as a separate control bar, so it doesn't add a
+   *  new row to the bookmark. */
   onOpenSimulator: () => void;
 }) {
   const [filter, setFilter] = useState<BossFilter>("relevant");

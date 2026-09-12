@@ -52,11 +52,11 @@ export interface LegionArtifactStatDef {
   /** Increment granted at each of the 10 effective levels (index 0 = level 1, index 9 =
    *  level 10). Almost every stat is a flat `perLevel` repeated 10x, but 4 stats (mesos,
    *  itemDrop, multiTargetExp, statusResistance) actually double their per-level increment
-   *  at levels 5 and 10 specifically — confirmed against namu.wiki's per-stat footnotes,
-   *  e.g. mesos: "레벨당 1%씩 증가. 단, 5레벨과 10레벨에는 2%씩 증가"
-   *  ("+1%/level, except levels 5 and 10 which give +2%"). A flat perLevel model landed on
-   *  the right TOTAL at level 10 (which is all the original Lv10-screenshot check verified)
-   *  but was wrong at every other level. */
+   *  at levels 5 and 10 specifically, per namu.wiki's per-stat footnotes. For mesos:
+   *  "레벨당 1%씩 증가. 단, 5레벨과 10레벨에는 2%씩 증가"
+   *  ("+1%/level, except levels 5 and 10 which give +2%"). A flat perLevel model lands on the
+   *  right total at level 10, all the original Lv10-screenshot check covered, but is wrong at
+   *  every other level. */
   levelSteps: number[];
   unit: "flat" | "percent";
   /** A level-independent flat effect this stat also grants once its total level is >= 1
@@ -71,9 +71,9 @@ function uniformSteps(perLevel: number): number[] {
 // The 4 stepped stats: +1 per level, except levels 5 and 10 which grant +2 instead of +1.
 const STEPPED_PERCENT = [1, 1, 1, 1, 2, 1, 1, 1, 1, 2];
 
-// Verified against namu.wiki's Lv 10 effect text + per-stat footnotes, which give both the
-// level-10 total AND (via footnotes) the per-level growth pattern — not just a single-level
-// screenshot check like the original sourcing.
+// Verified against namu.wiki's Lv 10 effect text and per-stat footnotes, which give both the
+// level-10 total and the per-level growth pattern, rather than the single-level screenshot
+// check the original sourcing relied on.
 export const LEGION_ARTIFACT_STATS: LegionArtifactStatDef[] = [
   { id: "allStats", label: "All Stats", levelSteps: uniformSteps(15), unit: "flat" },
   { id: "hpMp", label: "Max HP/MP", levelSteps: uniformSteps(750), unit: "flat" },
@@ -93,9 +93,8 @@ export const LEGION_ARTIFACT_STATS: LegionArtifactStatDef[] = [
   { id: "finalAttackDamage", label: "Damage of Final Attack Skill", levelSteps: uniformSteps(3), unit: "percent" },
 ];
 
-// Every crystal starts with these exact 3 lines (in this order) before the player spends
-// a reset stone to reroll them — confirmed against a real in-game board, where untouched
-// crystals all share this same default set.
+// Every crystal starts with these exact 3 lines, in this order, before the player spends a
+// reset stone to reroll them. Untouched crystals all share this default set.
 export const DEFAULT_CRYSTAL_STATS: LegionArtifactStatId[] = ["allStats", "hpMp", "attMatt"];
 
 const STAT_BY_ID = new Map(LEGION_ARTIFACT_STATS.map((s) => [s.id, s]));
@@ -114,9 +113,9 @@ export interface LegionCrystalDraft {
 }
 
 export interface LegionArtifactBoardDraft {
-  // String, not number — matches Oz Rings' draft pattern so the input can stay blank
-  // until touched instead of a typed "0" collapsing back to an indistinguishable empty
-  // state (see the input's own sanitizer for the clamp/leading-zero handling).
+  // String, not number, matching Oz Rings' draft pattern so the input can stay blank until
+  // touched instead of a typed "0" collapsing into an indistinguishable empty state. See the
+  // input's own sanitizer for the clamp and leading-zero handling.
   artifactLevel?: string;
   crystals?: LegionCrystalDraft[];
 }
@@ -140,13 +139,12 @@ function sanitizeCrystalLevel(level: number | undefined): number {
 }
 
 // The draft shape allows optional/sparse fields (mid-edit); storage wants every crystal
-// fully filled in (level defaults to 0, stats padded to 3 slots). The setup step's own
-// draft densely pre-fills EVERY crystal slot (including still-locked ones) with default
-// level-1/allStats-hpMp-attMatt data the moment any single crystal is touched (see
-// updateCrystal's comment in LegionArtifactsSetupStep.tsx) — that's fine as scratch draft
-// state, but a locked crystal has no real in-game data, so storage must not persist it as
-// if it were unlocked. Force locked indices back to an explicit "no data" entry here,
-// at the actual persistence boundary.
+// fully filled in (level defaults to 0, stats padded to 3 slots). The setup step's own draft
+// densely pre-fills every crystal slot, still-locked ones included, with default level-1
+// allStats/hpMp/attMatt data the moment any single crystal is touched (see updateCrystal's
+// comment in LegionArtifactsSetupStep.tsx). That is fine as scratch draft state, but a locked
+// crystal has no real in-game data, so storage must not persist it as if it were unlocked.
+// Force locked indices back to an explicit no-data entry here, at the persistence boundary.
 //
 // The reverse transition (locked -> unlocked, e.g. raising Artifact Level on a later visit)
 // needs the same treatment in the other direction: a crystal that was previously stored as
@@ -193,14 +191,14 @@ export function computeRawStatLevels(
   return totals;
 }
 
-/** Effective (capped) level for a stat, 0-10 — extra points beyond 10 are wasted. */
+/** Effective capped level for a stat, 0 to 10. Extra points beyond 10 are wasted. */
 export function effectiveStatLevel(rawLevel: number | undefined): number {
   return Math.min(MAX_STAT_TOTAL_LEVEL, Math.max(0, rawLevel ?? 0));
 }
 
 /** Numeric bonus value at a stat's effective level (before unit formatting). Rounded to 2
- *  decimals, not 1 — Skill Cooldown Bypass Chance's 0.75/level step produces real values
- *  like 2.25 and 6.75 that a 1-decimal round would corrupt (2.25 -> 2.3). */
+ *  decimals, not 1, because Skill Cooldown Bypass Chance's 0.75-per-level step produces
+ *  values like 2.25 and 6.75 that a 1-decimal round would corrupt (2.25 to 2.3). */
 export function statBonusValue(statId: LegionArtifactStatId, effectiveLevel: number): number {
   const def = STAT_BY_ID.get(statId);
   if (!def || effectiveLevel <= 0) return 0;
@@ -208,9 +206,9 @@ export function statBonusValue(statId: LegionArtifactStatId, effectiveLevel: num
   return Math.round(sum * 100) / 100;
 }
 
-/** True if a crystal still holds its untouched-default 3 lines (in original order) —
- *  a crystal starts here in-game the moment it's unlocked, so this alone doesn't mean
- *  "never opened", only "never rerolled". */
+/** True if a crystal still holds its untouched default 3 lines in their original order. A
+ *  crystal starts here in-game the moment it unlocks, so this means never rerolled rather
+ *  than never opened. */
 export function isCrystalUntouched(crystal: LegionCrystalDraft | undefined): boolean {
   const stats = crystal?.stats ?? DEFAULT_CRYSTAL_STATS;
   return stats.length === DEFAULT_CRYSTAL_STATS.length
@@ -218,19 +216,19 @@ export function isCrystalUntouched(crystal: LegionCrystalDraft | undefined): boo
 }
 
 /**
- * The scouter API only needs 2 of the 16 Legion Artifact stats — derive them from the
- * full board instead of storing a separately-entered value. Each field derives
- * independently: a crystal's default 3 lines never include multiTargetExp/
- * finalAttackDamage (see DEFAULT_CRYSTAL_STATS), so computeRawStatLevels only produces an
- * entry for one of these stats once it's been assigned to an unlocked crystal at least
- * once — that's real proof for THAT stat specifically, not a signal about the other one
- * or about the board in general. Locking both fields off "some crystal was customized
- * somewhere" would be wrong: assigning Bonus EXP to one crystal says nothing about
- * whether Final Attack Damage has ever been touched. Deliberately asserts both true AND
- * false once a stat is assigned (not positive-only) so a later respec correctly
- * un-derives back down instead of getting stuck on a stale true — this is also why the UI
- * must call this directly to decide whether a field is locked, rather than trusting a
- * stored value's mere presence (which could just be a prior manual answer, not proof).
+ * The scouter API needs only 2 of the 16 Legion Artifact stats, so they are derived from the
+ * full board instead of stored as separately entered values. Each field derives
+ * independently. A crystal's default 3 lines never include multiTargetExp or
+ * finalAttackDamage (see DEFAULT_CRYSTAL_STATS), so computeRawStatLevels produces an entry
+ * for one of these stats only once it has been assigned to an unlocked crystal. That is proof
+ * for that stat specifically, not a signal about the other one or about the board in general.
+ * Locking both fields off "some crystal was customized somewhere" would be wrong: assigning
+ * Bonus EXP to one crystal says nothing about whether Final Attack Damage was ever touched.
+ *
+ * This deliberately asserts both true and false once a stat is assigned, rather than
+ * positive-only, so a later respec un-derives back down instead of sticking on a stale true.
+ * That is also why the UI must call this directly to decide whether a field is locked, rather
+ * than trusting a stored value's presence, which could be a prior manual answer.
  */
 export function deriveLegionArtifactFields(board: LegionArtifactBoardDraft): { artifactExtraTarget?: boolean; artifactFinalAttackDmg?: string } | undefined {
   const artifactLevel = Number(board.artifactLevel) || 0;
@@ -247,14 +245,14 @@ export function deriveLegionArtifactFields(board: LegionArtifactBoardDraft): { a
 const EMPTY_CRYSTAL: LegionCrystalDraft = { level: MIN_CRYSTAL_LEVEL, stats: [...DEFAULT_CRYSTAL_STATS] };
 
 /**
- * A crystal newly unlocked by raising the Artifact Level can still be holding a stored
- * "no data" placeholder (level 0, all-null stats) from before it was reachable — e.g. this
- * world's Legion Artifact data already existed from an earlier character that stopped short
- * of this crystal's threshold. `crystals[i] ?? EMPTY_CRYSTAL` only catches a missing array
- * slot, not one that's present but still shaped like that placeholder, so it must be resolved
- * to the real level-1/default-3-lines state here — the same place every read of a crystal's
- * data goes through (setup editing and read-only display alike) — rather than showing the
- * stored nulls as empty.
+ * A crystal newly unlocked by raising the Artifact Level can still hold a stored no-data
+ * placeholder, meaning level 0 with all-null stats, from before it was reachable. That happens
+ * when this world's Legion Artifact data already existed from an earlier character who stopped
+ * short of this crystal's threshold. `crystals[i] ?? EMPTY_CRYSTAL` catches only a missing
+ * array slot, not one present but shaped like that placeholder, so it is resolved to the real
+ * level-1 default-3-lines state here, the same place every read of a crystal's data goes
+ * through for both setup editing and read-only display, rather than showing the stored nulls
+ * as empty.
  */
 export function effectiveCrystal(crystal: LegionCrystalDraft | undefined, unlocked: boolean): LegionCrystalDraft {
   if (!crystal) return EMPTY_CRYSTAL;
