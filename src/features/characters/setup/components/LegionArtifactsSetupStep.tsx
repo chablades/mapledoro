@@ -435,7 +435,7 @@ function CrystalTile({
 
   if (!unlocked) {
     return (
-      <div className="legion-crystal-tile" style={crystalTileStyle(theme, false, false)} title={`${def.name} — Lv ${def.requiredArtifactLevel}+ required`}>
+      <div className="legion-crystal-tile" style={crystalTileStyle(theme, false, false)} title={`${def.name}, Lv ${def.requiredArtifactLevel}+ required`}>
         <CrystalIcon src={iconSrc} name={def.name} theme={theme} />
         <span style={crystalLockedBadgeStyle(theme)}>Lv {def.requiredArtifactLevel}+</span>
       </div>
