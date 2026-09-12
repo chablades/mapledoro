@@ -7,6 +7,7 @@ import type { CSSProperties } from "react";
 import Image from "next/image";
 import { resourceImageUrl } from "../../../../lib/mapleResource";
 import type { AppTheme } from "../../../../components/themes";
+import { alpha } from "../../../../components/themes";
 import { statusText } from "../../../../components/statusColors";
 import HoverTooltip from "../../../../components/HoverTooltip";
 import WarningIcon from "../../../../components/WarningIcon";
@@ -185,26 +186,26 @@ function sectionLabelStyle(theme: AppTheme): CSSProperties {
   };
 }
 
-const warningBoxStyle: CSSProperties = {
+// Both boxes tint from the status hue their own text already uses, at 0.08 fill and 0.35
+// border, so the surround follows the active color mode instead of freezing one mode's hue.
+const warningBoxStyle = (theme: AppTheme): CSSProperties => ({
   marginBottom: "0.8rem",
-  background: "rgba(217, 119, 6, 0.08)",
-  border: "1px solid rgba(217, 119, 6, 0.35)",
+  background: alpha(statusText(theme, "warning"), 0.08),
+  border: `1px solid ${alpha(statusText(theme, "warning"), 0.35)}`,
   borderRadius: "10px",
   padding: "0.65rem 0.85rem",
   display: "flex",
   flexDirection: "column",
   gap: "0.4rem",
-};
+});
 
-// Same alpha-tint derivation as warningBoxStyle above: the dark-mode statusText hue at 0.08
-// fill and 0.35 border. rgb(16, 185, 129) is dark mode's success statusText.
-const successBoxStyle: CSSProperties = {
+const successBoxStyle = (theme: AppTheme): CSSProperties => ({
   marginBottom: "0.4rem",
-  background: "rgba(16, 185, 129, 0.08)",
-  border: "1px solid rgba(16, 185, 129, 0.35)",
+  background: alpha(statusText(theme, "success"), 0.08),
+  border: `1px solid ${alpha(statusText(theme, "success"), 0.35)}`,
   borderRadius: "10px",
   padding: "0.65rem 0.85rem",
-};
+});
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -288,7 +289,7 @@ function WarningList({ warnings, theme, characterLevel }: { warnings: ClassWarni
   const others = unlocked.filter((w) => !(w.skill && w.message === "Do not use"));
 
   return (
-    <div style={warningBoxStyle}>
+    <div style={warningBoxStyle(theme)}>
       {others.map((w) => (
         <div key={w.skill?.skillName ?? w.message}>
           <div style={{ display: "flex", alignItems: "center", gap: "0.45rem" }}>
@@ -325,7 +326,7 @@ function BuffGuide({ classData, theme, characterLevel }: { classData: ClassSkill
     .filter((skill) => isSkillUnlocked(skill, characterLevel));
   return (
     <>
-    <div style={successBoxStyle}>
+    <div style={successBoxStyle(theme)}>
       <div style={{ display: "flex", alignItems: "center", gap: "0.45rem", marginBottom: "0.5rem" }}>
         <span style={{ fontSize: "0.75rem", color: statusText(theme, "success"), flexShrink: 0, lineHeight: 1 }}>★</span>
         <p style={{ margin: 0, fontSize: "0.82rem", color: statusText(theme, "success"), fontWeight: 700 }}>
