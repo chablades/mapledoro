@@ -103,7 +103,7 @@ interface ImportStalenessWarning {
 
 export interface MapleScouterImportResult {
   ok: true;
-  /** The export's own label ("Lv 295 Kanna"), for display only. */
+  /** The export's own label, which MapleScouter writes as "Lv <level> <class>". Display only. */
   label: string;
   /** MapleDoro classId resolved from stat.myClass. */
   classId: string;

@@ -3,7 +3,8 @@
 // It appears nowhere in Character Info's own stat tooltip breakdown, but it is real and already
 // baked into a Reboot character's displayed Final Damage and Damage Range, so the calc has to add
 // it back explicitly or it silently undershoots. Per strategywiki, and checked against 4 Reboot
-// characters: Hoyoung lv210, Zero lv231, Buccaneer lv201 and Cannoneer lv210.
+// characters, all of them inside the 200-249 bracket below, so the other brackets rest on
+// strategywiki's table alone.
 import { WORLD_NAMES } from "../../model/constants";
 
 // Kronos, Solis and Hyperion are GMS's 3 Reboot worlds, while Bera, Scania and Luna are

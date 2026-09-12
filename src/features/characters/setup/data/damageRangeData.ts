@@ -1,11 +1,12 @@
-// Damage Range calculation (strategywiki, confirmed exact against real characters):
+// Damage Range calculation, per strategywiki, and exact in practice:
 //   UpperActual = round(Multiplier × StatValue × TotalJobATT / 100)
 //   LowerActual = round(UpperActual × Mastery% / 100)
 //   UpperShown  = floor(UpperActual × (1+Damage%/100) × (1+Final%/100))
 //   LowerShown  = floor(1 + LowerActual × (1+Damage%/100) × (1+Final%/100))
-// Multiplier/TotalJobATT-stat sourced from maplestorywiki.net/w/Damage_Formula, cross-checked
-// against strategywiki and real characters (see damageRangeData.generated.ts for the Xenon
-// correction: its own in-game tooltip is wrong, verified 1.3125 not the displayed 1.50).
+// Multiplier and the TotalJobATT stat come from maplestorywiki.net/w/Damage_Formula,
+// cross-checked against strategywiki. See damageRangeData.generated.ts for the Xenon
+// correction, where the in-game tooltip is wrong: the real value is 1.3125, not the
+// displayed 1.50.
 import type { StoredCharacterStats, StoredTripleStatField, StoredFamiliarsData } from "../../model/charactersStore";
 import { CLASS_SKILL_DATA } from "./classSkillData";
 import { resolveMasteryPercent } from "./masteryData";
@@ -19,8 +20,8 @@ import { isRebootWorld, rebootFinalDamageBonusPercent } from "./rebootData";
 // tooltip's own Base Value and % Value breakdown, but they are real. See familiarStatBonuses in
 // familiarsData.ts. Basic Stats already folds this in; StatValue needs the same treatment or
 // Damage Range silently undershoots for any character with an active INT/STR/DEX/LUK/HP-boosting
-// familiar line (confirmed against a real character: a missing +6% INT familiar line alone
-// accounted for the entire remaining gap between computed and real Damage Range).
+// familiar line. A missing +6% INT familiar line alone accounted for the entire remaining gap
+// between the computed and the displayed Damage Range.
 function tripleStatValue(field: StoredTripleStatField | undefined, familiarBonus?: FamiliarStatBonus): number {
   if (!field?.base) return 0;
   const base = (Number(field.base) || 0) + (familiarBonus?.flat ?? 0);
