@@ -1,9 +1,9 @@
 "use client";
 
-import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
+import { useMemo, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
 import type { AppTheme } from "../../../components/themes";
 import HoverTooltip from "../../../components/HoverTooltip";
-import { clampNumber, numericKeyDown } from "../../../lib/inputUtils";
+import { clampNumber } from "../../../lib/inputUtils";
 import { critRateToCritDmg } from "../../tools/stat-optimizer/scouter-class-data";
 import type { StoredCharacterRecord } from "../model/charactersStore";
 import { statInputStyle } from "../setup/components/QuestionControls";
@@ -14,6 +14,17 @@ import {
   formatEfficiencyValue, meterPosition, resolveEfficiencyStatLabels,
   type DetailEfficiencyRow, type EfficiencyStatLabels, type EfficiencyUnitId, type MainEfficiencyRow,
 } from "./statEfficiency";
+
+const EDIT_KEYS = ["Backspace", "Delete", "ArrowLeft", "ArrowRight", "Tab", "Home", "End"];
+
+/** Like inputUtils' numericKeyDown, but also allows a leading "-": this table's amounts
+ *  price a bigger OR smaller line, so unlike every other numeric input in the app, negative
+ *  values are meaningful here rather than invalid. */
+function signedNumericKeyDown(e: KeyboardEvent<HTMLInputElement>) {
+  if (e.ctrlKey || e.metaKey) return;
+  const isMinus = e.key === "-" && e.currentTarget.selectionStart === 0 && !e.currentTarget.value.includes("-");
+  if (!/^\d$/.test(e.key) && !isMinus && !EDIT_KEYS.includes(e.key)) e.preventDefault();
+}
 
 // ── Shared chrome ──────────────────────────────────────────────────────────────
 
@@ -163,6 +174,35 @@ const worthHeadCellStyle: CSSProperties = { ...headCellStyle, textAlign: "right"
    rather than widening one table against the other. */
 const perStatTableStyle: CSSProperties = { width: "100%", borderCollapse: "collapse", tableLayout: "fixed" };
 
+/** A lone "-" parses as 0 and, fed straight back through the controlled `value`, would be
+ *  wiped before it could ever become a real negative number. Draft string state (same pattern
+ *  as ToolNumberInput) holds the in-progress text so a trailing "-" survives on screen; the
+ *  Worth column still updates live off the same keystroke via onCommit's clamped parse. */
+function AmountInput({ theme, label, amount, style, onCommit }: {
+  theme: AppTheme; label: string; amount: number; style: CSSProperties; onCommit: (value: number) => void;
+}) {
+  const [draft, setDraft] = useState<string | null>(null);
+  return (
+    <input
+      type="text"
+      inputMode="numeric"
+      aria-label={`${label} amount`}
+      value={draft ?? String(amount)}
+      style={style}
+      onChange={(e) => {
+        setDraft(e.target.value);
+        onCommit(clampNumber(Number(e.target.value) || 0, 9999, -9999));
+      }}
+      onKeyDown={signedNumericKeyDown}
+      onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; e.currentTarget.select(); }}
+      onBlur={(e) => {
+        e.currentTarget.style.outlineColor = "transparent";
+        setDraft(null);
+      }}
+    />
+  );
+}
+
 interface PerStatColumnProps {
   theme: AppTheme;
   eff: ScouterSpecEfficiency;
@@ -198,16 +238,12 @@ function PerStatColumn({ theme, eff, rows, unit, amounts, onAmount, inputStyle }
               <tr key={row.id}>
                 <td style={isLast ? lastCell : cell}>{row.label}</td>
                 <td style={isLast ? lastCell : cell}>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    aria-label={`${row.label} amount`}
-                    value={String(amount)}
+                  <AmountInput
+                    theme={theme}
+                    label={row.label}
+                    amount={amount}
                     style={inputStyle}
-                    onChange={(e) => onAmount(row.id, clampNumber(Number(e.target.value) || 0, 9999))}
-                    onKeyDown={numericKeyDown}
-                    onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; e.currentTarget.select(); }}
-                    onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
+                    onCommit={(value) => onAmount(row.id, value)}
                   />
                 </td>
                 <td style={isLast ? lastWorthCell : worthCell} title={formatEfficiencyValue(eff, row, amount, unit)}>

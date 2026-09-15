@@ -12,6 +12,12 @@ interface ChangelogEntry {
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    date: "2026-09-15",
+    changes: [
+      { type: "fixed", text: "Fixed the Stat Efficiency panel's Per Stat amount boxes not accepting negative numbers." },
+    ],
+  },
+  {
     date: "2026-09-14",
     changes: [
       { type: "added", text: "The Mystic Frontier Solver now has the v271 potential lines, including the new \"for each element\" and \"for every type\" lines that count matching familiars, and the \"all dice odd, even, 3 or less, 4 or higher\" lines." },
