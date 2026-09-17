@@ -41,5 +41,7 @@ stone is activated, `icon.png` after (Origin/Ascent have no disabled art, so the
 Only Erel's folder has the full rush-stone set; Sia borrows Erel's generic stat art and uses its
 own for LUK/INT/Magic ATT/Summon Duration. Sol Janus, Sol Hecate and Tree of Stars live under
 Erel's folder for both classes. Fragment of Distorted Time uses Fruits of Mastery's boost icon,
-as in game (not the item); shinestones and the core draw glyphs, and the locked slot under the
-core is not drawn at all (it only anchors the line down to the DEX/LUK stone).
+as in game (not the item). Shinestones draw the slot art from `ui/erdalink/runestone`
+(`erdaLinkShinestoneUrl`), a tier by level: 0 locked, 1 at levels 1-9, 2 at 10-14, 3 at
+15-20; the core draws a glyph, and the locked slot under the core is not drawn at all (it only
+anchors the line down to the DEX/LUK stone).

@@ -10,7 +10,13 @@ import { ActionButton, PanelDivider, ToolNumberInput, Toggle } from "../shared-u
 import { SkillIcon } from "../hexa-skills/hexa-ui";
 import { fmtNum } from "../hexa-skills/hexa-format";
 import type { ErdaLinkClassKey } from "./erda-link-order";
-import { erdaLinkDisabledArtNeedsTint, erdaLinkHasDisabledArt, erdaLinkIconOffset, erdaLinkIconUrl } from "./erda-link-data";
+import {
+  erdaLinkDisabledArtNeedsTint,
+  erdaLinkHasDisabledArt,
+  erdaLinkIconOffset,
+  erdaLinkIconUrl,
+  erdaLinkShinestoneUrl,
+} from "./erda-link-data";
 import {
   applyErdaLinkStep,
   computeErdaLinkProgress,
@@ -231,7 +237,6 @@ function frameColor(theme: AppTheme, kind: ErdaLinkNode["kind"]): string {
       return statusText(theme, "success");
     case "boost":
       return statusText(theme, "danger");
-    case "shinestone":
     case "lock":
       return theme.muted;
     default:
@@ -265,16 +270,13 @@ const badgeBase: CSSProperties = {
   pointerEvents: "none",
 };
 
-function glyphFor(node: ErdaLinkNode): string {
-  if (node.kind === "core") return "✦";
-  if (node.kind === "shinestone") return node.key.replace(/\D/g, "");
-  return "";
-}
 
 /** The stone's own art: the in-game greyed `iconDisabled` until it's activated. Fruits of
  *  Mastery's disabled art isn't actually grey (it's the blue orb), so that one gets the tint
  *  here. */
-function StoneIcon({ node, active, size, theme }: { node: ErdaLinkNode; active: boolean; size: number; theme: AppTheme }) {
+function StoneIcon({ node, active, level, size, theme }: { node: ErdaLinkNode; active: boolean; level: number; size: number; theme: AppTheme }) {
+  // Shinestones have no stone art of their own: the slot itself changes with the level.
+  if (node.kind === "shinestone") return <SkillIcon iconId="" iconUrl={erdaLinkShinestoneUrl(level)} name={node.label} theme={theme} size={size} />;
   const icon = <SkillIcon iconId="" iconUrl={node.icon ? erdaLinkIconUrl(node.icon, active) : undefined} name={node.label} theme={theme} size={size} />;
   if (node.icon == null) return icon;
   const tint = !active && erdaLinkDisabledArtNeedsTint(node.icon);
@@ -290,19 +292,21 @@ function StoneIcon({ node, active, size, theme }: { node: ErdaLinkNode; active: 
   );
 }
 
-function NodeGlyph({ node, active, theme }: { node: ErdaLinkNode; active: boolean; theme: AppTheme }) {
+function NodeGlyph({ node, active, level, theme }: { node: ErdaLinkNode; active: boolean; level: number; theme: AppTheme }) {
   // A stone with no art on the host shows its initial, the same fallback the HEXA tracker uses.
-  if (node.icon || node.kind === "boost") return <StoneIcon node={node} active={active} size={NODE - 6} theme={theme} />;
-  const glyph = glyphFor(node);
+  if (node.icon || node.kind === "boost" || node.kind === "shinestone") {
+    return <StoneIcon node={node} active={active} level={level} size={NODE - 6} theme={theme} />;
+  }
   return (
     <span aria-hidden="true" style={{ fontSize: "0.9rem", fontWeight: 800, color: node.kind === "core" ? theme.accentOn : theme.muted }}>
-      {glyph}
+      {node.kind === "core" ? "✦" : ""}
     </span>
   );
 }
 
 /** Stones with disabled art carry the locked look themselves; the rest dim instead. */
 function isDimmed(node: ErdaLinkNode, active: boolean, isNext: boolean): boolean {
+  if (node.kind === "shinestone") return false;
   return !active && !isNext && !(node.icon != null && erdaLinkHasDisabledArt(node.icon));
 }
 
@@ -312,7 +316,7 @@ function treeNodeStyle(
   { active, isNext, isSelected, inert, frame }: { active: boolean; isNext: boolean; isSelected: boolean; inert: boolean; frame: string },
 ): CSSProperties {
   const { x, y } = nodeCenter(node);
-  const dashed = node.kind === "lock" || node.kind === "shinestone";
+  const dashed = node.kind === "lock" || (node.kind === "shinestone" && !active);
   const dim = isDimmed(node, active, isNext);
   // Dim the border (and, in TreeNode, the glyph) rather than the whole node: a translucent
   // node would show the connector running underneath it.
@@ -362,7 +366,7 @@ function TreeNode({
   if (inert) {
     return (
       <div style={style} title={title}>
-        <NodeGlyph node={node} active theme={theme} />
+        <NodeGlyph node={node} active level={level} theme={theme} />
       </div>
     );
   }
@@ -377,7 +381,7 @@ function TreeNode({
       onClick={onClick}
     >
       <span style={{ display: "inline-flex", opacity: isDimmed(node, active, isNext) ? 0.45 : 1 }}>
-        <NodeGlyph node={node} active={active} theme={theme} />
+        <NodeGlyph node={node} active={active} level={level} theme={theme} />
       </span>
       {badgeEl}
     </button>
@@ -501,7 +505,7 @@ function NextUpgrade({
   return (
     <>
       <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
-        {node && <StoneIcon node={node} active size={44} theme={theme} />}
+        {node && <StoneIcon node={node} active level={next.level} size={44} theme={theme} />}
         <div style={{ flex: 1, minWidth: 180 }}>
           <div style={{ fontSize: "0.95rem", fontWeight: 800, color: theme.text }}>
             {node?.label ?? next.key}
@@ -564,7 +568,7 @@ function SelectedStone({
   }
   return (
     <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
-      <StoneIcon node={node} active={level > node.minLevel} size={44} theme={theme} />
+      <StoneIcon node={node} active={level > node.minLevel} level={level} size={44} theme={theme} />
       <div style={{ flex: 1, minWidth: 180 }}>
         <div style={{ fontSize: "0.95rem", fontWeight: 800, color: theme.text }}>{node.label}</div>
         <div style={{ fontSize: "0.75rem", fontWeight: 600, color: theme.muted }}>

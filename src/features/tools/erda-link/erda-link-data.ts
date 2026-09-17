@@ -16,10 +16,11 @@
  * (18112); the stat art is class-agnostic so Sia borrows Erel's except for its own
  * LUK/INT/Magic ATT/Summon Duration stones (18212). A manifest entry doesn't guarantee an icon
  * on the host, so each id here was checked to resolve. Fragment of Distorted Time shares
- * Fruits of Mastery's art in game. The shinestones, the core and the locked slot have no icon.
+ * Fruits of Mastery's art in game. Shinestones draw the `ui/erdalink/runestone` tier art by
+ * level (`erdaLinkShinestoneUrl`); the core and the locked slot have no icon.
  */
 
-import { resourceImageUrl } from "../../../lib/mapleResource";
+import { erdaLinkRunestoneUrl, resourceImageUrl } from "../../../lib/mapleResource";
 import type { ErdaLinkClassKey } from "./erda-link-order";
 
 export type ErdaLinkNodeKind =
@@ -101,6 +102,14 @@ const ART_OFFSET: Record<string, { active?: ArtOffset; disabled?: ArtOffset }> =
 export function erdaLinkIconOffset(icon: string, active: boolean): ArtOffset {
   const entry = ART_OFFSET[icon];
   return (active ? entry?.active : entry?.disabled) ?? NO_OFFSET;
+}
+
+/** Shinestone slot art by level: locked, then the tiers at 1, 10 and 15. */
+export function erdaLinkShinestoneUrl(level: number): string {
+  if (level >= 15) return erdaLinkRunestoneUrl(3);
+  if (level >= 10) return erdaLinkRunestoneUrl(2);
+  if (level >= 1) return erdaLinkRunestoneUrl(1);
+  return erdaLinkRunestoneUrl(0);
 }
 
 export function erdaLinkIconUrl(icon: string, active: boolean): string {
