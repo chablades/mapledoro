@@ -1,8 +1,10 @@
 // Pure Erda Link progression logic: the tree for a class, its recommended order, and where a
 // character is along it. No React, no storage.
 
+import type { HexaSkillLevels } from "../hexa-skills/hexa-classes";
 import {
   ERDA_LINK_EDGES,
+  ERDA_LINK_HEXA_SLOTS,
   ERDA_LINK_MAX_LEVEL,
   ERDA_LINK_SLOTS,
   type ErdaLinkNodeKind,
@@ -143,6 +145,69 @@ export function upcomingErdaLinkSteps(progress: ErdaLinkProgress, count: number)
 export function nextErdaLinkStepFor(progress: ErdaLinkProgress, key: string): ErdaLinkStep | null {
   const i = progress.steps.findIndex((s, idx) => s.key === key && !progress.done[idx]);
   return i === -1 ? null : progress.steps[i];
+}
+
+/**
+ * The stones folded into the HEXA tracker's level shape, so the character overview and the
+ * Scouter see the same levels the Erda Link tracker does. Split stones sum; everything is
+ * capped at 30 like a HEXA skill.
+ */
+export function erdaLinkToHexaLevels(cls: ErdaLinkClassKey, levels: ErdaLinkLevels): HexaSkillLevels {
+  const map = ERDA_LINK_HEXA_SLOTS[cls];
+  const sum = (keys: string[]) => Math.min(30, keys.reduce((acc, k) => acc + Math.max(0, Math.round(levels[k] ?? 0)), 0));
+  return {
+    origin: Math.max(1, sum([map.origin])),
+    ascent: sum([map.ascent]),
+    mastery: map.mastery.map(sum),
+    enhancement: map.enhancement.map(sum),
+    common: map.common.map(sum),
+  };
+}
+
+function clampHexa(level: number | undefined): number {
+  return Math.max(0, Math.min(30, Math.round(level ?? 0) || 0));
+}
+
+/**
+ * The reverse of `erdaLinkToHexaLevels`: HEXA levels edited elsewhere (character setup, the
+ * overview's edit pencil, a MapleScouter import) folded back into the stones. A single stone
+ * takes the level as is. A split pair keeps its current split when the sum already matches;
+ * otherwise a raise fills stone (1) to its cap before spilling into (2), and a cut takes from
+ * (2) before (1). Stones with no HEXA counterpart are left alone.
+ */
+export function erdaLinkFromHexaLevels(cls: ErdaLinkClassKey, levels: ErdaLinkLevels, hexa: HexaSkillLevels): ErdaLinkLevels {
+  const map = ERDA_LINK_HEXA_SLOTS[cls];
+  const next = { ...levels };
+  const current = (k: string) => Math.max(0, Math.round(next[k] ?? 0) || 0);
+  const apply = (keys: string[], level: number | undefined) => {
+    const target = clampHexa(level);
+    if (keys.length === 1) {
+      next[keys[0]] = target;
+      return;
+    }
+    const [a, b] = keys;
+    let la = current(a);
+    let lb = current(b);
+    const sum = la + lb;
+    if (sum === target) return;
+    if (target > sum) {
+      const toA = Math.min(ERDA_LINK_MAX_LEVEL.split - la, target - sum);
+      la += toA;
+      lb += target - sum - toA;
+    } else {
+      const fromB = Math.min(lb, sum - target);
+      lb -= fromB;
+      la -= sum - target - fromB;
+    }
+    next[a] = la;
+    next[b] = lb;
+  };
+  apply([map.origin], hexa.origin);
+  apply([map.ascent], hexa.ascent);
+  map.mastery.forEach((keys, i) => apply(keys, hexa.mastery?.[i]));
+  map.enhancement.forEach((keys, i) => apply(keys, hexa.enhancement?.[i]));
+  map.common.forEach((keys, i) => apply(keys, hexa.common?.[i]));
+  return next;
 }
 
 /** Mark a step done in game: raise its node to the step's level (never lower it). */

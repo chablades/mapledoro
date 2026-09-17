@@ -5,6 +5,15 @@ route of its own: `HexaSkillsWorkspace` swaps in `ErdaLinkSummary` + `ErdaLinkTr
 `erdaLinkClassKey(className)` is non-null, and the levels persist inside the character's
 `hexaSkills` tool blob under `erdaLink` (a `Record<nodeKey, level>`).
 
+**Every Erda Link write also rewrites the blob's `levels`** (the HEXA tracker's shape, which
+the character overview and the Scouter read) through `erdaLinkToHexaLevels`, using
+`ERDA_LINK_HEXA_SLOTS` to place each stone: the ultimate stones are the two mastery slots, the
+four skill stones the enhancement slots (a split pair sums), Sol Janus / Sol Hecate / Tree of
+Stars the common slots. The reverse runs when the tracker loads a character
+(`parseHexaSkills`): if `levels` disagrees with the stones, it was edited elsewhere (setup, the
+overview's edit pencil, a MapleScouter import) and `erdaLinkFromHexaLevels` folds it back,
+splitting a paired stone by filling (1) first on a raise and cutting (2) first on a drop.
+
 **The upgrade order is hand-maintained data**, not WZ data. `erda-link-order.ts` holds one
 entry per single level-up per class: node key, target level, erda, frags, FD gain as a fraction.
 Shinestone fragment costs are RNG-averaged expectations (fractional); FD totals are a plain sum

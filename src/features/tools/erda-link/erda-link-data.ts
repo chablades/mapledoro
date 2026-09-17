@@ -337,6 +337,32 @@ export const ERDA_LINK_EDGES: readonly (readonly [string, string])[] = [
   ["SENTINEL RISE 2", "DAMAGE PERCENTILE 4"],
 ];
 
+/**
+ * Which stones fill each slot of the HEXA tracker's level shape (`HexaSkillLevels`), which the
+ * character overview and the Scouter read. Order matches the class's entry in
+ * `hexa-classes.ts`: mastery = the two ultimate stones, enhancement = the four skill stones
+ * (a split pair sums to the skill's level), common = Sol Janus, Sol Hecate, Tree of Stars.
+ */
+export const ERDA_LINK_HEXA_SLOTS: Record<
+  ErdaLinkClassKey,
+  { origin: string; ascent: string; mastery: string[][]; enhancement: string[][]; common: string[][] }
+> = {
+  erel: {
+    origin: "ORIGIN",
+    ascent: "ASCENT",
+    mastery: [["M1"], ["M2"]],
+    enhancement: [["ETERNAL LIGHT"], ["SENTINEL RISE 1", "SENTINEL RISE 2"], ["ETERNAL GUARDIAN 1", "ETERNAL GUARDIAN 2"], ["DESTRUCTION OF ROAN 1", "DESTRUCTION OF ROAN 2"]],
+    common: [["SOL JANUS"], ["SOL HECATE"], ["TREE OF STARS"]],
+  },
+  sia: {
+    origin: "ORIGIN",
+    ascent: "ASCENT",
+    mastery: [["M1"], ["M2"]],
+    enhancement: [["SHINE BOOST 1", "SHINE BOOST 2"], ["SIRIUS BOOST"], ["SADALSUUD 1", "SADALSUUD 2"], ["SAVIOR'S CIRCLE 1", "SAVIOR'S CIRCLE 2"]],
+    common: [["SOL JANUS"], ["SOL HECATE"], ["TREE OF STARS"]],
+  },
+};
+
 /** Which Erda Link data a HEXA class name maps to, or null for non-SHINE classes. */
 export function erdaLinkClassKey(className: string | null): ErdaLinkClassKey | null {
   if (className === "Erel Light") return "erel";

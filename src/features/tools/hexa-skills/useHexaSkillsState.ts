@@ -26,7 +26,8 @@ import {
   type HexaSkillLevels,
 } from "./hexa-classes";
 import { applyGuideSteps, type GuideStep } from "./hexa-fd";
-import type { ErdaLinkLevels } from "../erda-link/erda-link";
+import { erdaLinkFromHexaLevels, erdaLinkToHexaLevels, type ErdaLinkLevels } from "../erda-link/erda-link";
+import { erdaLinkClassKey } from "../erda-link/erda-link-data";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -211,13 +212,28 @@ function hexaStatDoneFromCharacter(charName: string | null): boolean[] {
   });
 }
 
+/** Erda Link stones written through to `levels` as well, the shape the character overview and
+ *  the Scouter read, so a stone levelled in the tracker shows up there too. */
+function withErdaLink(prev: SavedState, erdaLink: ErdaLinkLevels | undefined): SavedState {
+  const cls = erdaLinkClassKey(prev.className);
+  if (!cls) return { ...prev, erdaLink };
+  return { ...prev, erdaLink, levels: erdaLinkToHexaLevels(cls, erdaLink ?? {}) };
+}
+
 // ── Hook ─────────────────────────────────────────────────────────────────────
 
 function parseHexaSkills(
   saved: SavedState | null,
   char: StoredCharacterRecord | undefined,
 ): SavedState {
-  if (saved) return saved;
+  if (saved) {
+    // For a SHINE class, `levels` is normally derived from the Erda Link stones (see
+    // withErdaLink), so if the two disagree here the levels were edited elsewhere (setup, the
+    // overview, an import) and are the newer truth: fold them back into the stones.
+    const cls = erdaLinkClassKey(saved.className);
+    if (!cls || !saved.levels) return saved;
+    return { ...saved, erdaLink: erdaLinkFromHexaLevels(cls, saved.erdaLink ?? {}, saved.levels) };
+  }
   // Seed the class from the character's job when we recognise it.
   const autoClass = char && findClassByName(char.jobName) ? char.jobName : null;
   return { className: autoClass, levels: defaultLevels(), desiredLevels: defaultDesiredLevels() };
@@ -301,15 +317,15 @@ export function useHexaSkillsState() {
   }, [updateState]);
 
   const setErdaLevel = useCallback((key: string, level: number) => {
-    updateState((prev) => ({ ...prev, erdaLink: { ...prev.erdaLink, [key]: level } }));
+    updateState((prev) => withErdaLink(prev, { ...prev.erdaLink, [key]: level }));
   }, [updateState]);
 
   const setErdaLevels = useCallback((next: ErdaLinkLevels) => {
-    updateState((prev) => ({ ...prev, erdaLink: next }));
+    updateState((prev) => withErdaLink(prev, next));
   }, [updateState]);
 
   const resetErdaLink = useCallback(() => {
-    updateState((prev) => ({ ...prev, erdaLink: undefined }));
+    updateState((prev) => withErdaLink(prev, undefined));
   }, [updateState]);
 
   /** Mark leveling-guide steps as done in game: raise each node to the step's target level. */
