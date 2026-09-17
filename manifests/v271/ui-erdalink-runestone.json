@@ -1,0 +1,14 @@
+{
+  "_meta": {
+    "assets": [
+      "icon.png"
+    ],
+    "urlPattern": "/api/img/ui/erdalink/runestone/{id}/icon.png"
+  },
+  "entries": {
+    "0": {},
+    "1": {},
+    "2": {},
+    "3": {}
+  }
+}

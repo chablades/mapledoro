@@ -20,6 +20,13 @@ export function markIconUrl(id: string): string {
   return `${RESOURCE_BASE}/api/img/ui/mark/${id}/icon.png`;
 }
 
+// Erda Link shinestone slot art (haku.network `ui/erdalink/runestone` namespace, from
+// `manifests/v<version>/ui-erdalink-runestone.json`). The id is a tier, not a stone: 0 is the
+// locked slot, then 1 through 3 as the stone levels up; see `erdaLinkShinestoneUrl`.
+export function erdaLinkRunestoneUrl(tier: number): string {
+  return `${RESOURCE_BASE}/api/img/ui/erdalink/runestone/${tier}/icon.png`;
+}
+
 // Boss Maple Guide icon (haku.network `ui/boss` namespace). IDs are looked up by hand
 // from `manifests/v<version>/ui-boss.json` (named `boss.json` pre-v269) and hardcoded at
 // the call site.

@@ -35,8 +35,10 @@ kept in the `hexaSkills` saved state as `hexaStatDone`. A node marked done drops
 guide.
 
 **SHINE classes (Sia, Erel Light) use the Erda Link system**, not the HEXA Matrix, so
-`HexaSkillsWorkspace` shows a placeholder-cost notice for any class with `group === "SHINE"`.
-Their kits (and the Sol skills) draw icons from the `erda-skill`/`skill` resource types rather
+`HexaSkillsWorkspace` becomes the Erda Link Tracker for them (`erdaLinkClassKey()` non-null):
+the character/class pickers stay, and `src/features/tools/erda-link/` supplies the summary and
+tree in place of the HEXA sections. Their stone levels live in the same `hexaSkills` blob under
+`erdaLink`, keyed by node name (see that feature's CLAUDE.md). Their kits (and the Sol skills) draw icons from the `erda-skill`/`skill` resource types rather
 than `hexa-skill`; the specific ids live inline in `hexa-classes.ts`. Note the `erda-skill` url
 pattern gained a per-class `{outerId}` folder in v269 (`/api/img/erda-skill/{outerId}/{type}/{id}/{asset}`,
 vs v268's flat `/{type}/{id}/`); Sia = 18212, Erel Light = 18112.
