@@ -10,7 +10,6 @@ import {
   commonSkillsFor,
   getClassGroups,
   getClassesInGroup,
-  type HexaClassDef,
 } from "./hexa-classes";
 import {
   useHexaSkillsState,
@@ -26,6 +25,8 @@ import { PanelDivider } from "../shared-ui";
 import { SegmentedToggle } from "../../../components/SegmentedToggle";
 import { ConfirmButton } from "../../../components/ConfirmButton";
 import { ItemIcon } from "../../../components/ResourceImage";
+import { erdaLinkClassKey } from "../erda-link/erda-link-data";
+import { ErdaLinkSummary, ErdaLinkTracker } from "../erda-link/ErdaLinkTracker";
 
 type HexaTab = "overview" | "guide" | "fd";
 const TAB_LABELS: Record<HexaTab, string> = { overview: "Overview", guide: "Leveling Guide", fd: "FD Breakdown" };
@@ -43,13 +44,6 @@ const checkboxLabelStyle: React.CSSProperties = {
   fontWeight: 700,
   cursor: "pointer",
   userSelect: "none",
-};
-
-const shineNoticeStyle: React.CSSProperties = {
-  padding: "0.75rem 1rem",
-  fontSize: "0.82rem",
-  fontWeight: 600,
-  lineHeight: 1.5,
 };
 
 // ── Class Selector ───────────────────────────────────────────────────────────
@@ -284,35 +278,6 @@ function EmptyState({ theme, sectionPanel }: { theme: AppTheme; sectionPanel: Re
 
 // ── Main Workspace ───────────────────────────────────────────────────────────
 
-/** SHINE classes use Erda Link, which the tracker only approximates. */
-function ShineNotice({
-  theme,
-  classDef,
-  sectionPanel,
-}: {
-  theme: AppTheme;
-  classDef: HexaClassDef | null;
-  sectionPanel: React.CSSProperties;
-}) {
-  if (classDef?.group !== "SHINE") return null;
-  return (
-    <div
-      className="fade-in panel-card"
-      style={{
-        ...sectionPanel,
-        ...shineNoticeStyle,
-        background: theme.accentSoft,
-        border: `1px solid ${theme.accent}`,
-        color: theme.text,
-      }}
-    >
-      <strong>Note:</strong> {classDef.className} uses the Erda Link system instead of the traditional HEXA skill system.
-      The fragment costs shown below are placeholder values based on standard classes.
-      Accurate Erda Link costs will be supported in a future update.
-    </div>
-  );
-}
-
 type HexaCosts = ReturnType<typeof useHexaSkillsState>["costs"];
 
 /** Grand totals with Sol Janus taken back out, for players who skip it. */
@@ -351,10 +316,19 @@ export default function HexaSkillsWorkspace({ theme }: { theme: AppTheme }) {
     resetAll,
     applyGuide,
     costs,
+    erdaLevels,
+    setErdaLevel,
+    setErdaLevels,
+    resetErdaLink,
     hexaStatDone,
     hexaStatFromCharacter,
     setHexaStatDone,
   } = useHexaSkillsState();
+
+  // SHINE classes (Sia, Erel) have the Erda Link tree instead of a HEXA Matrix, so the
+  // page becomes the Erda Link Tracker for them: same character and class pickers, and the
+  // sheet-derived upgrade order in place of the HEXA sections.
+  const erdaKey = classDef ? erdaLinkClassKey(classDef.className) : null;
 
   const [includeJanus, setIncludeJanus] = useState(true);
   const [tab, setTab] = useState<HexaTab>("overview");
@@ -362,7 +336,7 @@ export default function HexaSkillsWorkspace({ theme }: { theme: AppTheme }) {
   // Sol Janus and Sol Hecate plus this class's own 3rd Common Node.
   const commonSkills = useMemo(() => commonSkillsFor(className), [className]);
 
-  const showFd = classDef != null && hasFdData(className);
+  const showFd = classDef != null && erdaKey == null && hasFdData(className);
   const activeTab: HexaTab = showFd ? tab : "overview";
 
   const guide = useMemo(
@@ -428,20 +402,34 @@ export default function HexaSkillsWorkspace({ theme }: { theme: AppTheme }) {
           {classDef && (
             <>
               <PanelDivider theme={theme} />
-              <SummaryPanel
-                theme={theme}
-                grand={adjusted.grand}
-                maxGrand={adjusted.maxGrand}
-                progressPct={adjusted.progressPct}
-                includeJanus={includeJanus}
-                onIncludeJanusChange={setIncludeJanus}
-                onReset={resetAll}
-              />
+              {erdaKey ? (
+                <ErdaLinkSummary theme={theme} classKey={erdaKey} levels={erdaLevels} onReset={resetErdaLink} />
+              ) : (
+                <SummaryPanel
+                  theme={theme}
+                  grand={adjusted.grand}
+                  maxGrand={adjusted.maxGrand}
+                  progressPct={adjusted.progressPct}
+                  includeJanus={includeJanus}
+                  onIncludeJanusChange={setIncludeJanus}
+                  onReset={resetAll}
+                />
+              )}
             </>
           )}
         </div>
 
-        <ShineNotice theme={theme} classDef={classDef} sectionPanel={sectionPanel} />
+        {erdaKey && (
+          <ErdaLinkTracker
+            theme={theme}
+            classKey={erdaKey}
+            levels={erdaLevels}
+            sectionPanel={sectionPanel}
+            inputStyle={inputStyle}
+            onLevel={setErdaLevel}
+            onLevels={setErdaLevels}
+          />
+        )}
 
         {showFd && (
           <div className="fade-in">
@@ -468,7 +456,7 @@ export default function HexaSkillsWorkspace({ theme }: { theme: AppTheme }) {
           <FdBreakdownView theme={theme} breakdown={breakdown} sectionPanel={sectionPanel} />
         )}
 
-        {classDef && activeTab === "overview" && (
+        {classDef && !erdaKey && activeTab === "overview" && (
           <>
             {/* Origin + Ascent */}
             <div style={{ display: "flex", gap: "1.25rem", flexWrap: "wrap", marginBottom: "1.25rem" }}>

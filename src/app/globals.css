@@ -123,9 +123,30 @@ html.scroll-locked body {
   }
 }
 
+/* Erda Link tracker: the stone the guide says to buy next. Pulses a ring in the
+   theme accent (passed as --erda-next) so it reads from across the tree. */
+.erda-link-next {
+  z-index: 1;
+  animation: erdaLinkNextPulse 1.4s ease-in-out infinite;
+}
+
+@keyframes erdaLinkNextPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 3px var(--erda-next), 0 0 10px 2px var(--erda-next);
+  }
+  50% {
+    box-shadow: 0 0 0 6px var(--erda-next), 0 0 26px 8px var(--erda-next);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .fade-in {
     animation: none;
+  }
+  .erda-link-next {
+    animation: none;
+    box-shadow: 0 0 0 5px var(--erda-next), 0 0 18px 5px var(--erda-next);
   }
 }
 

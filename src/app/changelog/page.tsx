@@ -12,6 +12,12 @@ interface ChangelogEntry {
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    date: "2026-09-17",
+    changes: [
+      { type: "added", text: "Add full Erda Link tracking support for SHINE classes, integrated into the existing HEXA Tracker." },
+    ],
+  },
+  {
     date: "2026-09-15",
     changes: [
       { type: "fixed", text: "Fixed the Stat Efficiency panel's Per Stat amount boxes not accepting negative numbers." },

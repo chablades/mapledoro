@@ -26,6 +26,7 @@ import {
   type HexaSkillLevels,
 } from "./hexa-classes";
 import { applyGuideSteps, type GuideStep } from "./hexa-fd";
+import type { ErdaLinkLevels } from "../erda-link/erda-link";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -38,7 +39,11 @@ interface SavedState {
   /** Per HEXA Stat node, ticked by hand for a character whose HEXA Stat isn't filled in.
    *  Completion read from the character's own HEXA Stat data wins over this. */
   hexaStatDone?: boolean[];
+  /** Erda Link stone levels, for the SHINE classes, which have this instead of a HEXA Matrix. */
+  erdaLink?: ErdaLinkLevels;
 }
+
+const NO_ERDA_LEVELS: ErdaLinkLevels = {};
 
 export interface SkillCostSummary {
   solErda: number;
@@ -269,6 +274,7 @@ export function useHexaSkillsState() {
       const keepLevels = prev.className === name;
       return {
         className: name,
+        erdaLink: keepLevels ? prev.erdaLink : undefined,
         levels: normalizeLevels(keepLevels ? prev.levels : defaultLevels(), newClassDef),
         desiredLevels: normalizeLevels(
           keepLevels ? (prev.desiredLevels ?? defaultDesiredLevels()) : defaultDesiredLevels(),
@@ -292,6 +298,18 @@ export function useHexaSkillsState() {
 
   const resetAll = useCallback(() => {
     updateState((prev) => ({ ...prev, levels: defaultLevels() }));
+  }, [updateState]);
+
+  const setErdaLevel = useCallback((key: string, level: number) => {
+    updateState((prev) => ({ ...prev, erdaLink: { ...prev.erdaLink, [key]: level } }));
+  }, [updateState]);
+
+  const setErdaLevels = useCallback((next: ErdaLinkLevels) => {
+    updateState((prev) => ({ ...prev, erdaLink: next }));
+  }, [updateState]);
+
+  const resetErdaLink = useCallback(() => {
+    updateState((prev) => ({ ...prev, erdaLink: undefined }));
   }, [updateState]);
 
   /** Mark leveling-guide steps as done in game: raise each node to the step's target level. */
@@ -319,6 +337,10 @@ export function useHexaSkillsState() {
     resetAll,
     applyGuide,
     costs,
+    erdaLevels: state.erdaLink ?? NO_ERDA_LEVELS,
+    setErdaLevel,
+    setErdaLevels,
+    resetErdaLink,
     hexaStatDone,
     /** Nodes whose completion came from the character's HEXA Stat data, so the manual tick
      *  is redundant and the tracker shows it as locked rather than editable. */
