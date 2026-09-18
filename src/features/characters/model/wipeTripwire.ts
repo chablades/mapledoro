@@ -99,8 +99,50 @@ function findWorldWipes(before: CharactersStore, after: CharactersStore): Wipe[]
   return wipes;
 }
 
+/** Whole records and role assignments disappearing, which findCharacterWipes skips on
+ *  purpose (a vanishing character is usually a deliberate removal, and that has its own
+ *  confirmation dialog). Removal routes through markIntentionalRemoval first, so anything
+ *  reported here is a character or role that went away without one. */
+function findVanishedSubjects(before: CharactersStore, after: CharactersStore): Wipe[] {
+  const wipes: Wipe[] = [];
+
+  for (const key of Object.keys(before.charactersById)) {
+    if (after.charactersById[key] || intentionalRemovals.has(key)) continue;
+    wipes.push({ subject: key, field: "(whole record)", leavesBefore: countLeaves(before.charactersById[key]) });
+  }
+
+  for (const [worldId, charId] of Object.entries(before.mainCharacterIdByWorld)) {
+    if (after.mainCharacterIdByWorld[worldId] === charId || intentionalRemovals.has(charId)) continue;
+    wipes.push({ subject: `world ${worldId}`, field: `main (${charId})`, leavesBefore: 1 });
+  }
+
+  for (const [worldId, ids] of Object.entries(before.championCharacterIdsByWorld)) {
+    const kept = new Set(after.championCharacterIdsByWorld[worldId] ?? []);
+    const lost = ids.filter((id) => !kept.has(id) && !intentionalRemovals.has(id));
+    if (lost.length > 0) {
+      wipes.push({ subject: `world ${worldId}`, field: `champions (${lost.join(", ")})`, leavesBefore: ids.length });
+    }
+  }
+
+  return wipes;
+}
+
+/** Character keys whose removal was requested by the user, so the vanish check above can
+ *  tell a real deletion from a record silently dropped by a rebuild-from-memory write. */
+const intentionalRemovals = new Set<string>();
+
+/** Call from a delete path immediately before the write that removes the character. */
+export function markIntentionalRemoval(characterKey: string) {
+  if (process.env.NODE_ENV === "production") return;
+  intentionalRemovals.add(characterKey.trim().toLowerCase());
+}
+
 function findWipes(before: CharactersStore, after: CharactersStore): Wipe[] {
-  return [...findCharacterWipes(before, after), ...findWorldWipes(before, after)];
+  return [
+    ...findCharacterWipes(before, after),
+    ...findWorldWipes(before, after),
+    ...findVanishedSubjects(before, after),
+  ];
 }
 
 function saveSnapshot(rawBefore: string, wipes: Wipe[]): string | null {

@@ -11,7 +11,11 @@ const MAX_PENDING_UPSTREAM_REQUESTS = 100;
 const MAX_ESTIMATED_QUEUE_WAIT_MS = 25000;
 const UPSTREAM_FETCH_TIMEOUT_MS = 8000;
 const LOOKUP_TOTAL_TIMEOUT_MS = 25000;
-const CACHE_KEY_PREFIX = "mapledoro:characters:lookup:v1:";
+// v2 retires every entry cached before rank-metadata fields were defaulted. Those entries
+// hold `undefined` for fields Nexon stopped sending, and serving one re-poisons a client's
+// stored record. Bumping the prefix orphans them instantly rather than waiting out their TTL
+// or needing a production Redis flush; the abandoned v1 keys expire on their own.
+const CACHE_KEY_PREFIX = "mapledoro:characters:lookup:v2:";
 const RATE_LIMIT_KEY_PREFIX = "mapledoro:rate:lookup:v1:";
 const CHARACTER_NAME_REGEX = /^[a-zA-ZÀ-ÖØ-öø-ÿ0-9]{4,12}$/;
 const NEXON_RANKING_URL = "https://www.nexon.com/api/maplestory/no-auth/ranking/v2/na?type=overall&id=legendary&reboot_index=0&page_index=1";
@@ -37,22 +41,29 @@ const STALE_WHILE_REVALIDATE_SECONDS = Number.parseInt(
   10,
 );
 
+/* Nexon's ranking row. Only the fields the app actually identifies a character by are
+ * required; the rest are optional because upstream has already dropped some of them once
+ * without warning (characterID, startRank, isSearchTarget and score disappeared, and
+ * starSum appeared). Declaring those required did not make them arrive -- the row is cast,
+ * not validated -- it only meant `undefined` flowed into stored records and deleted
+ * characters on the next load. Optional here, defaulted in `merged` below. */
 interface MapleRankRow {
-  characterID: number;
   characterName: string;
-  exp: number;
-  gap: number;
   level: number;
-  rank: number;
-  startRank: number;
   worldID: number;
-  characterImgURL: string;
   jobName: string;
-  isSearchTarget: boolean;
-  legionLevel: number;
-  raidPower: number;
-  tierID: number;
-  score: number;
+  characterImgURL: string;
+  exp?: number;
+  gap?: number;
+  rank?: number;
+  characterID?: number;
+  startRank?: number;
+  isSearchTarget?: boolean;
+  legionLevel?: number;
+  raidPower?: number;
+  tierID?: number;
+  score?: number;
+  starSum?: number;
 }
 
 interface NormalizedCharacterData {
@@ -339,17 +350,27 @@ function getExactRankRow(payload: unknown, expectedName: string): MapleRankRow |
 // Canary for upstream drift: if Nexon renames/drops/retypes a ranking field, the row still
 // gets cast as MapleRankRow with no runtime check, so bad data would otherwise flow through
 // silently. This only logs, it never blocks the response, and warns once per process.
-const EXPECTED_RANK_ROW_FIELDS: [keyof MapleRankRow, "string" | "number" | "boolean"][] = [
-  ["characterID", "number"],
+//
+// Split in two, because the two cases need different volume. A missing IDENTITY field means
+// a character cannot be described at all and is worth shouting about; a missing OPTIONAL one
+// is cosmetic rank metadata that `merged` defaults, and Nexon has already dropped four of
+// those at once, so treating it as an error would mean a permanent false alarm.
+type RankRowFieldCheck = [keyof MapleRankRow, "string" | "number" | "boolean"];
+
+const REQUIRED_RANK_ROW_FIELDS: RankRowFieldCheck[] = [
   ["characterName", "string"],
+  ["level", "number"],
+  ["worldID", "number"],
+  ["jobName", "string"],
+  ["characterImgURL", "string"],
+];
+
+const OPTIONAL_RANK_ROW_FIELDS: RankRowFieldCheck[] = [
+  ["characterID", "number"],
   ["exp", "number"],
   ["gap", "number"],
-  ["level", "number"],
   ["rank", "number"],
   ["startRank", "number"],
-  ["worldID", "number"],
-  ["characterImgURL", "string"],
-  ["jobName", "string"],
   ["isSearchTarget", "boolean"],
   ["legionLevel", "number"],
   ["raidPower", "number"],
@@ -359,10 +380,12 @@ const EXPECTED_RANK_ROW_FIELDS: [keyof MapleRankRow, "string" | "number" | "bool
 
 let hasWarnedRankRowShape = false;
 
-function warnIfRankRowShapeChanged(row: MapleRankRow): void {
-  if (hasWarnedRankRowShape) return;
+function collectFieldIssues(
+  row: MapleRankRow,
+  fields: RankRowFieldCheck[],
+): string[] {
   const issues: string[] = [];
-  for (const [key, type] of EXPECTED_RANK_ROW_FIELDS) {
+  for (const [key, type] of fields) {
     const value = row[key];
     if (value === undefined) {
       issues.push(`"${key}" is missing`);
@@ -370,10 +393,26 @@ function warnIfRankRowShapeChanged(row: MapleRankRow): void {
       issues.push(`"${key}" is type "${typeof value}" (expected "${type}")`);
     }
   }
-  if (issues.length > 0) {
-    hasWarnedRankRowShape = true;
+  return issues;
+}
+
+function warnIfRankRowShapeChanged(row: MapleRankRow): void {
+  if (hasWarnedRankRowShape) return;
+  const required = collectFieldIssues(row, REQUIRED_RANK_ROW_FIELDS);
+  const optional = collectFieldIssues(row, OPTIONAL_RANK_ROW_FIELDS);
+  if (required.length === 0 && optional.length === 0) return;
+
+  hasWarnedRankRowShape = true;
+  if (required.length > 0) {
+    console.error(
+      `[lookup] Nexon ranking row is missing IDENTITY fields: ${required.join(", ")}. ` +
+      `Characters cannot be described without these -- the upstream API has changed in a way that needs code changes.`,
+    );
+  }
+  if (optional.length > 0) {
     console.warn(
-      `[lookup] Nexon ranking row shape looks different than expected: ${issues.join(", ")}. The upstream API may have changed.`,
+      `[lookup] Nexon ranking row dropped optional rank metadata: ${optional.join(", ")}. ` +
+      `These are defaulted and safe to ignore unless the app starts needing them.`,
     );
   }
 }
@@ -557,24 +596,26 @@ async function buildLookup(characterName: string, key: string): Promise<LookupRe
 
   const fetchedAt = Date.now();
   const expiresAt = getNextUtcMidnightMs(fetchedAt);
+  // Every optional row field is defaulted rather than passed through, so a field upstream
+  // stops sending can never reach a client as `undefined` (see MapleRankRow).
   const merged: NormalizedCharacterData = {
-    characterID: overallRow.characterID,
+    characterID: overallRow.characterID ?? 0,
     characterName: overallRow.characterName,
     worldID: overallRow.worldID,
     level: overallRow.level,
-    exp: overallRow.exp,
+    exp: overallRow.exp ?? 0,
     jobName: overallRow.jobName,
     characterImgURL: overallRow.characterImgURL,
-    isSearchTarget: overallRow.isSearchTarget,
-    startRank: overallRow.startRank,
-    overallRank: overallRow.rank,
-    overallGap: overallRow.gap,
+    isSearchTarget: overallRow.isSearchTarget ?? false,
+    startRank: overallRow.startRank ?? 0,
+    overallRank: overallRow.rank ?? 0,
+    overallGap: overallRow.gap ?? 0,
     legionRank: 0,
     legionGap: 0,
     legionLevel: 0,
     raidPower: 0,
-    tierID: overallRow.tierID,
-    score: overallRow.score,
+    tierID: overallRow.tierID ?? 0,
+    score: overallRow.score ?? 0,
     fetchedAt,
     expiresAt,
   };

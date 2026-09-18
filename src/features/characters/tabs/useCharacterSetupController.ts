@@ -30,6 +30,7 @@ import {
   writeLegionArtifactForWorld,
   writeCharactersStore,
 } from "../model/charactersStore";
+import { markIntentionalRemoval } from "../model/wipeTripwire";
 import { findClassById, type HexaSkillLevels } from "../../tools/hexa-skills/hexa-classes";
 import { getClassDataByNexonJobName } from "../setup/data/classSkillData";
 import { deriveWeaponHandFromWeapon } from "../setup/data/classBranch";
@@ -2510,6 +2511,7 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
     }
 
     removeSetupDraftForCharacter(removedCharacter);
+    markIntentionalRemoval(removedKey);
     // isDeleteTransitioning drives the profile binder's own "closing" animation (see
     // CharacterProfileOverviewScreen's profile-binder-closing class) instead of the fade
     // every other isSwitchingToDirectory transition gets, so the deletion reads as the

@@ -461,29 +461,60 @@ function isObject(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object";
 }
 
+/**
+ * Whether a record carries the facts a character cannot exist without: who it is, where it
+ * is, and what it is. Everything else on NormalizedCharacterData is ranking metadata that
+ * `normalizeRankingFields` defaults instead, because none of it identifies anyone.
+ *
+ * This deliberately validates far less than the type declares, and the reason is a real
+ * incident: Nexon's ranking API dropped characterID, startRank, isSearchTarget and score
+ * from its rows (and added starSum). Those arrived as undefined, were spread into stored
+ * records, and on the next load a strict check here rejected the whole record -- which then
+ * dropped it from `order` and from the main/champion maps, so a player's main and champions
+ * silently disappeared. A cosmetic rank field going missing upstream must never be able to
+ * delete someone's character, so only identity is load-bearing here.
+ */
 function isNormalizedCharacterData(value: unknown): value is NormalizedCharacterData {
   return (
     isObject(value) &&
-    typeof value.characterID === "number" &&
     typeof value.characterName === "string" &&
     typeof value.worldID === "number" &&
     typeof value.level === "number" &&
-    typeof value.exp === "number" &&
-    typeof value.jobName === "string" &&
-    typeof value.characterImgURL === "string" &&
-    typeof value.isSearchTarget === "boolean" &&
-    typeof value.startRank === "number" &&
-    typeof value.overallRank === "number" &&
-    typeof value.overallGap === "number" &&
-    typeof value.legionRank === "number" &&
-    typeof value.legionGap === "number" &&
-    typeof value.legionLevel === "number" &&
-    typeof value.raidPower === "number" &&
-    typeof value.tierID === "number" &&
-    typeof value.score === "number" &&
-    typeof value.fetchedAt === "number" &&
-    typeof value.expiresAt === "number"
+    typeof value.jobName === "string"
   );
+}
+
+/** A ranking field that survived, or a safe default in its place. Keeps a parsed record
+ *  matching its declared type even when upstream stopped sending part of the row, so a
+ *  reader never sees the `undefined` the interface says is impossible. */
+function numOr(value: unknown, fallback: number): number {
+  return typeof value === "number" && Number.isFinite(value) ? value : fallback;
+}
+
+/** The non-identity half of NormalizedCharacterData, defaulted field by field. Split out
+ *  so the parse path stays within the cognitive-complexity cap. */
+function normalizeRankingFields(
+  value: Record<string, unknown>,
+): Omit<NormalizedCharacterData, "characterName" | "worldID" | "level" | "jobName"> {
+  return {
+    characterID: numOr(value.characterID, 0),
+    exp: numOr(value.exp, 0),
+    characterImgURL: typeof value.characterImgURL === "string" ? value.characterImgURL : FALLBACK_AVATAR_SRC,
+    isSearchTarget: typeof value.isSearchTarget === "boolean" ? value.isSearchTarget : false,
+    startRank: numOr(value.startRank, 0),
+    overallRank: numOr(value.overallRank, 0),
+    overallGap: numOr(value.overallGap, 0),
+    legionRank: numOr(value.legionRank, 0),
+    legionGap: numOr(value.legionGap, 0),
+    legionLevel: numOr(value.legionLevel, 0),
+    raidPower: numOr(value.raidPower, 0),
+    tierID: numOr(value.tierID, 0),
+    score: numOr(value.score, 0),
+    fetchedAt: numOr(value.fetchedAt, 0),
+    // A record whose expiry did not survive is treated as already stale, so the next lookup
+    // refreshes it rather than trusting a value that was never really there.
+    expiresAt: numOr(value.expiresAt, 0),
+  };
 }
 
 function createEmptyTripleStatField(): StoredTripleStatField {
@@ -786,16 +817,22 @@ export function parseStoredCharacterRecord(
   idHint: string | null,
 ): StoredCharacterRecord | null {
   if (!isObject(value)) return null;
-  const ign = typeof value.ign === "string" ? value.ign : null;
-  const worldId = typeof value.worldId === "number" ? value.worldId : null;
-  const normalizedCharacterData = isNormalizedCharacterData(value) ? value : null;
-  const meta = isObject(value.meta) ? value.meta : null;
-  if (!ign || worldId === null || !normalizedCharacterData || !meta) return null;
-  const derivedIgn = ign || idHint || normalizedCharacterData.characterName;
+  // Identity is the only hard requirement (see isNormalizedCharacterData). Everything that
+  // can be recovered is recovered rather than costing the player a character: `ign` falls
+  // back to the store key it was filed under and then to characterName, `worldId` to the
+  // ranking row's own worldID, and `meta` to fresh timestamps.
+  if (!isNormalizedCharacterData(value)) return null;
+  const ign = typeof value.ign === "string" && value.ign ? value.ign : (idHint ?? value.characterName);
+  const worldId = typeof value.worldId === "number" ? value.worldId : value.worldID;
+  const meta = isObject(value.meta) ? value.meta : {};
 
   return {
-    ...normalizedCharacterData,
-    ign: derivedIgn,
+    characterName: value.characterName,
+    worldID: value.worldID,
+    level: value.level,
+    jobName: value.jobName,
+    ...normalizeRankingFields(value),
+    ign,
     worldId,
     gender: value.gender === "male" || value.gender === "female" ? value.gender : null,
     marriage: parseMarriage(value.marriage),
@@ -1097,6 +1134,21 @@ function parseLegionArtifactByWorld(raw: unknown): Record<string, StoredLegionAr
   return result;
 }
 
+/** A discarded record means a player lost a character, and everything recoverable is already
+ *  recovered by this point (see parseStoredCharacterRecord), so reaching here means the entry
+ *  could not identify anyone at all. Names the identity fields so the cause is visible
+ *  instead of the character just being gone. */
+function reportDroppedRecord(id: string, entry: unknown): void {
+  const v = isObject(entry) ? entry : {};
+  const shape = ["characterName", "worldID", "level", "jobName"]
+    .map((field) => `${field}: ${typeof v[field]}`)
+    .join(", ");
+  console.error(
+    `[characters] Discarded stored character "${id}": it is missing the identity fields a ` +
+    `character cannot exist without (${shape}).`,
+  );
+}
+
 /** Exported for the Drive restore preview (Settings), which parses the backup's
  *  copy of this store the way a real load would, returning null on a version mismatch rather
  *  than guessing at an unknown shape. */
@@ -1110,7 +1162,10 @@ export function parseCharactersStore(raw: string): CharactersStore | null {
     const charactersById: Record<string, StoredCharacterRecord> = {};
     for (const [id, entry] of Object.entries(charactersByIdInput)) {
       const parsedEntry = parseStoredCharacterRecord(entry, id);
-      if (!parsedEntry) continue;
+      if (!parsedEntry) {
+        reportDroppedRecord(id, entry);
+        continue;
+      }
       charactersById[id] = parsedEntry;
     }
 
