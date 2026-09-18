@@ -23,6 +23,7 @@ import {
   type CharacterCacheEntry,
 } from "../model/browserCharacterCache";
 import type { LookupResponse, NormalizedCharacterData } from "../model/types";
+import { normalizeLookupData } from "../model/types";
 
 function clearLookupTimers(slowTimer: ReturnType<typeof setTimeout>, timeoutTimer: ReturnType<typeof setTimeout>) {
   clearTimeout(slowTimer);
@@ -96,20 +97,25 @@ export function useCharacterLookup({
   };
 
   const applyLookupResult = (name: string, normalized: string, result: LookupResponse) => {
-    const found = result.found;
-    const resolvedName = found ? result.data.characterName : result.characterName || name;
+    // Normalized before anything keeps it: response.json() is a cast, and this both seeds the
+    // local cache and feeds the roster, so an under-filled payload would otherwise be stored
+    // twice over and delete the character on the next load. A payload too thin to describe
+    // anyone reads as not-found rather than being written.
+    const data = result.found ? normalizeLookupData(result.data) : null;
+    const found = data !== null;
+    const resolvedName = data?.characterName ?? (result.found ? name : result.characterName || name);
     cacheRef.current!.set(normalized, {
       characterName: resolvedName,
-      found: result.found,
+      found,
       expiresAt: result.expiresAt,
       savedAt: Date.now(),
-      data: result.found ? result.data : null,
+      data,
     });
     persistCache();
     setDegradedCode(result.degraded ? (result.degradedCode ?? "UNKNOWN") : null);
-    if (found) {
+    if (data) {
       setStatusTone("neutral");
-      onFoundCharacterChange(result.data);
+      onFoundCharacterChange(data);
       setStatusMessage(getFoundMessage());
       return true;
     }

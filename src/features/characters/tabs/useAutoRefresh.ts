@@ -4,6 +4,7 @@ import { toCharacterKey } from "../model/characterKeys";
 import { LOOKUP_RESPONSE_SCHEMA_VERSION } from "../model/constants";
 import type { StoredCharacterRecord } from "../model/charactersStore";
 import type { LookupResponse, NormalizedCharacterData } from "../model/types";
+import { normalizeLookupData } from "../model/types";
 
 // The lookup API caps an IP at LOOKUP_IP_MINUTE_LIMIT (7) requests per minute, so this
 // background sweep has to stay well under that or it 429s itself on load for anyone with
@@ -38,7 +39,9 @@ async function fetchFreshCharacter(
     if (response.status === 429) return { kind: "rate_limited" };
     if (!response.ok) return { kind: "done", data: null };
     const result = (await response.json()) as LookupResponse;
-    return { kind: "done", data: result.found ? result.data : null };
+    // Normalized rather than trusted: the cast above checks nothing, and a record built from
+    // a payload missing fields deletes the character on the next load.
+    return { kind: "done", data: result.found ? normalizeLookupData(result.data) : null };
   } catch {
     return { kind: "done", data: null };
   }

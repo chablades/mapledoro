@@ -9,7 +9,11 @@ export const LOOKUP_RESPONSE_SCHEMA_VERSION = "v1";
 export const COOLDOWN_MS = 5000;
 export const LOOKUP_REQUEST_TIMEOUT_MS = 25000;
 export const LOOKUP_SLOW_NOTICE_MS = 12000;
-export const CHARACTER_CACHE_STORAGE_KEY = `mapledoro_character_cache_${LOOKUP_RESPONSE_SCHEMA_VERSION}`;
+// Versioned independently of LOOKUP_RESPONSE_SCHEMA_VERSION: v2 abandons entries cached
+// before lookup payloads were normalized, since those hold `undefined` for rank fields Nexon
+// stopped sending and re-poison a stored record when replayed. Kept separate so retiring the
+// cache does not also rotate SETUP_DRAFT_STORAGE_PREFIX and throw away in-progress setups.
+export const CHARACTER_CACHE_STORAGE_KEY = "mapledoro_character_cache_v2";
 export const SETUP_DRAFT_STORAGE_PREFIX = `mapledoro_character_setup_draft_${LOOKUP_RESPONSE_SCHEMA_VERSION}:`;
 export const MAX_BROWSER_CACHE_ENTRIES = 100;
 // Nexon's own per-world character slot cap. Bump alongside a new class per

@@ -15,6 +15,7 @@ const CHANGELOG: ChangelogEntry[] = [
     date: "2026-09-17",
     changes: [
       { type: "added", text: "Add full Erda Link tracking support for SHINE classes, integrated into the existing HEXA Tracker." },
+      { type: "fixed", text: "Fixed saved characters disappearing after using a tool, which could also clear a world's Main and Champion picks. If a character was already lost, it will need to be added again." },
     ],
   },
   {
