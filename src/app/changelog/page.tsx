@@ -12,6 +12,12 @@ interface ChangelogEntry {
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    date: "2026-10-01",
+    changes: [
+      { type: "fixed", text: "Fixed the MapleScouter import in Character Setup setting the 3rd Common HEXA core to level 0." },
+    ],
+  },
+  {
     date: "2026-09-17",
     changes: [
       { type: "added", text: "Add full Erda Link tracking support for SHINE classes, integrated into the existing HEXA Tracker." },

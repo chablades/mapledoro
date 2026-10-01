@@ -26,6 +26,7 @@ import { serializeStatsStepDraft, storedStatsToStatsStepDraft, type StatsStepDra
 import { serializeOzRingsDraft, OZ_RING_MAX_LEVEL, type OzRingId } from "./ozRingData";
 import { serializeBuffsDraft, emptyBuffsDraft, BOOL_BUFFS, GUILD_BUFFS, RENOWN_STATS, type BuffsDraft } from "./buffsData";
 import { whRankForLevel } from "./scouterQuestionsData";
+import { common3Skill, findClassById } from "../../../tools/hexa-skills/hexa-classes";
 import { isRebootWorld } from "./rebootData";
 import type { SetupStepInputById } from "../types";
 
@@ -56,7 +57,7 @@ const EXPORT_FILE_TYPE = "maplescouter-manual-preset";
     entireStat / power                          - MapleScouter's own derived snapshots
     stat.classForce                             - unreleased tribe-force stat
     stat.tms_* / doping.criDmgRing              - non-GMS
-    hexa.skillCore3-6 / hexa.generalCore3-4     - unreleased GMS content
+    hexa.skillCore3-6 / hexa.generalCore4       - unreleased GMS content
     huntSkill.erdaShower                        - no MapleDoro field
 */
 
@@ -490,8 +491,9 @@ function buildHexaDraft(payload: ScouterUserStat): Record<string, unknown> | nul
   const ascent = num(hexa.skillCore2);
   const mastery = [hexa.masteryCore1, hexa.masteryCore2, hexa.masteryCore3, hexa.masteryCore4].map(num);
   const enhancement = [hexa.reinCore1, hexa.reinCore2, hexa.reinCore3, hexa.reinCore4].map(num);
-  // common[0] = Sol Janus (huntSkill.solJanus), common[1] = Sol Hecate (hexa.generalCore2).
-  const common = [num(payload.huntSkill?.solJanus), num(hexa.generalCore2)];
+  // common[0] = Sol Janus (huntSkill.solJanus), common[1] = Sol Hecate (hexa.generalCore2),
+  // common[2] = the 3rd Common Node (hexa.generalCore3).
+  const common = [num(payload.huntSkill?.solJanus), num(hexa.generalCore2), num(hexa.generalCore3)];
 
   const anyData = origin > 0 || ascent > 0 || mastery.some((v) => v > 0)
     || enhancement.some((v) => v > 0) || common.some((v) => v > 0);
@@ -656,9 +658,17 @@ function comparedFields(classId: string, requiredStats: readonly string[]): Comp
     { label: "HEXA Enhancement", read: (p) => [p.hexa.reinCore1, p.hexa.reinCore2, p.hexa.reinCore3, p.hexa.reinCore4].map(normNum).join("/") },
     { label: "Sol Janus", read: (p) => normNum(p.huntSkill?.solJanus ?? "0") },
     { label: "Sol Hecate", read: (p) => normNum(p.hexa.generalCore2) },
+    { label: common3Label(classId), read: (p) => normNum(p.hexa.generalCore3) },
     ...linkSkillFields(),
     ...buffFields(),
   ];
+}
+
+/** The class's own 3rd Common Node skill name, falling back to a generic label for a class
+ *  HEXA data doesn't cover. */
+function common3Label(classId: string): string {
+  const classDef = findClassById(classId);
+  return (classDef && common3Skill(classDef.className)?.name) ?? "3rd Common Node";
 }
 
 /** One row per link skill MapleScouter accepts (LINK_SKILL_TO_SCOUTER_KEY), labeled with
