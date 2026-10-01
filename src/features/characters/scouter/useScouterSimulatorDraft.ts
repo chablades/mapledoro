@@ -269,7 +269,9 @@ export function useScouterSimulatorDraft(
   // Per-tab "has this group been touched at all" flags. finalDmgPercent and input have no
   // real baseline to seed from, so "unchanged" for them is simply their 0/empty default.
   const hexaChanged = JSON.stringify(hexaCores) !== JSON.stringify(initialHexaCores);
-  const buffsChanged = JSON.stringify(buffsDraft) !== JSON.stringify(initialBuffsDraft);
+  // Compared in stored form, since toggling a grouped buff on writes explicit `false` keys for
+  // its siblings, so a draft toggled off and back on differs from the real one only in shape.
+  const buffsChanged = JSON.stringify(convertBuffsDraftToStored(buffsDraft)) !== JSON.stringify(convertBuffsDraftToStored(initialBuffsDraft));
   const ozRingsChanged = JSON.stringify(ozRingsDraft) !== JSON.stringify(initialOzRingsDraft);
   const linkSkillsChanged = JSON.stringify(linkSkills) !== JSON.stringify(initialLinkSkills);
   const inputChanged = finalDmgPercent !== 0 || Object.values(input).some((v) => v !== 0);
