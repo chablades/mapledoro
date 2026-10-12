@@ -56,6 +56,20 @@ const chipBtn: CSSProperties = {
   cursor: "pointer",
 };
 
+const backBtn: CSSProperties = {
+  ...resetBtn,
+  position: "absolute",
+  top: 8,
+  right: 8,
+  zIndex: 3,
+  padding: "5px 12px",
+  borderRadius: 999,
+  fontSize: "0.75rem",
+  fontWeight: 800,
+  boxShadow: "0 1px 4px rgba(0,0,0,0.4)",
+  cursor: "pointer",
+};
+
 const mapOptionBtn: CSSProperties = {
   ...resetBtn,
   padding: "6px 10px",
@@ -210,6 +224,7 @@ function ScreenArt({
   missedSpots,
   answerSpot,
   onSelect,
+  onBack,
 }: {
   theme: AppTheme;
   screen: WorldScreen;
@@ -217,9 +232,28 @@ function ScreenArt({
   missedSpots: Set<number>;
   answerSpot: number | null;
   onSelect: (index: number) => void;
+  /** Goes up one screen; null at a world's top screen. Also bound to right-click. */
+  onBack: (() => void) | null;
 }) {
   return (
-    <div style={{ position: "relative", width: "100%", borderRadius: 10, overflow: "hidden", border: `1px solid ${theme.border}` }}>
+    <div
+      onContextMenu={(e) => {
+        if (!onBack) return;
+        e.preventDefault();
+        onBack();
+      }}
+      style={{ position: "relative", width: "100%", borderRadius: 10, overflow: "hidden", border: `1px solid ${theme.border}` }}
+    >
+      {onBack && (
+        <button
+          type="button"
+          onClick={onBack}
+          title="Back (or right-click the map)"
+          style={{ ...backBtn, color: theme.accentOn, background: theme.accent }}
+        >
+          ← Back
+        </button>
+      )}
       <Image
         src={worldMapUrl(screen.id)}
         alt={`${screen.label} world map`}
@@ -323,6 +357,7 @@ export default function WorldMapPicker({
         missedSpots={missedSpots}
         answerSpot={answerSpot}
         onSelect={setSelected}
+        onBack={screen.parent ? () => goTo(screen.parent!) : null}
       />
 
       {childScreens(screenId).length > 0 && (
@@ -354,7 +389,8 @@ export default function WorldMapPicker({
         </SpotPanel>
       ) : (
         <div style={{ fontSize: "0.8rem", fontWeight: 600, color: theme.muted }}>
-          Click a spot on the map to see the maps there. Hollow rings zoom into a closer map.
+          Click a spot on the map to see the maps there. Hollow rings zoom into a closer map; Back or
+          right-click zooms out.
         </div>
       )}
 
