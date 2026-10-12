@@ -20,11 +20,7 @@ export function markIconUrl(id: string): string {
   return `${RESOURCE_BASE}/api/img/ui/mark/${id}/icon.png`;
 }
 
-// Map art base (haku.network `map` namespace). TEMPORARY (MapGuessr testing): points at the copy
-// bundled under public/map-guesser-test/ until the namespace is live on haku.network, which holds
-// every world map screen but only the test puzzles' minimaps. Restore when testing is done:
-// const MAP_ART_BASE = `${RESOURCE_BASE}/api/img/map`;
-const MAP_ART_BASE = "/map-guesser-test";
+const MAP_ART_BASE = `${RESOURCE_BASE}/api/img/map`;
 
 // Field map minimap. Map ids are 9-digit, zero-padded on disk.
 export function mapMinimapUrl(mapId: number): string {
