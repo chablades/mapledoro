@@ -7,7 +7,7 @@ import type { AppTheme } from "../../../components/themes";
 import { STATUS, statusText } from "../../../components/statusColors";
 import { bgmTrackUrl, mapMinimapUrl } from "../../../lib/mapleResource";
 import { useMounted } from "../../../lib/useMounted";
-import { ActionButton } from "../../tools/shared-ui";
+import { ActionButton, PillGroup } from "../../tools/shared-ui";
 import { toolStyles } from "../../tools/tool-styles";
 import { mapName } from "./hierarchy";
 import {
@@ -26,6 +26,7 @@ import {
   writeMapGuesserResult,
   type MapGuesserResult,
 } from "./storage";
+import { TEST_PUZZLES } from "./testPuzzles"; // TEMPORARY (MapGuessr testing)
 import WorldMapPicker from "./WorldMapPicker";
 
 /* Puzzles roll over at 00:00 UTC, so the date label is formatted in UTC too. */
@@ -228,10 +229,24 @@ function StatsPanel({ theme, sectionPanel }: { theme: AppTheme; sectionPanel: CS
 /*  Single puzzle                                                      */
 /* ------------------------------------------------------------------ */
 
-function PuzzleView({ theme, puzzleNumber }: { theme: AppTheme; puzzleNumber: number }) {
-  const puzzle = useMemo(() => getPuzzle(puzzleNumber), [puzzleNumber]);
+function PuzzleView({
+  theme,
+  puzzleNumber,
+  testIndex,
+}: {
+  theme: AppTheme;
+  puzzleNumber: number;
+  /** TEMPORARY (MapGuessr testing): plays TEST_PUZZLES[testIndex] without saving results. */
+  testIndex: number | null;
+}) {
+  const puzzle = useMemo(
+    () => (testIndex !== null ? TEST_PUZZLES[testIndex] : getPuzzle(puzzleNumber)),
+    [puzzleNumber, testIndex],
+  );
   const styles = toolStyles(theme);
-  const [result, setResult] = useState(() => readMapGuesserResult(puzzleNumber) ?? EMPTY_RESULT);
+  const [result, setResult] = useState(() =>
+    testIndex !== null ? EMPTY_RESULT : (readMapGuesserResult(puzzleNumber) ?? EMPTY_RESULT),
+  );
   const [staged, setStaged] = useState<number | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -247,7 +262,7 @@ function PuzzleView({ theme, puzzleNumber }: { theme: AppTheme; puzzleNumber: nu
       const guesses = [...prev.guesses, guess];
       const won = guess === puzzle.mapId;
       const next = { guesses, won, done: won || guesses.length >= MAX_GUESSES };
-      writeMapGuesserResult(puzzleNumber, next);
+      if (testIndex === null) writeMapGuesserResult(puzzleNumber, next);
       return next;
     });
     const finished = guess === puzzle.mapId || result.guesses.length + 1 >= MAX_GUESSES;
@@ -333,6 +348,8 @@ export default function MapGuesserWorkspace({ theme }: { theme: AppTheme }) {
   const mounted = useMounted();
   const [today, setToday] = useState(() => currentPuzzleNumber());
   const [puzzleNumber, setPuzzleNumber] = useState(() => currentPuzzleNumber());
+  const [testMode, setTestMode] = useState("daily"); // TEMPORARY (MapGuessr testing)
+  const testIndex = testMode === "daily" ? null : Number(testMode);
 
   // Advance to the next puzzle when the UTC day rolls over while the page is
   // open; carry the viewer along only if they're looking at the latest day.
@@ -412,7 +429,25 @@ export default function MapGuesserWorkspace({ theme }: { theme: AppTheme }) {
           </div>
         </div>
 
-        <PuzzleView key={puzzleNumber} theme={theme} puzzleNumber={puzzleNumber} />
+        {/* TEMPORARY (MapGuessr testing): test puzzle switcher. */}
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: "1rem" }}>
+          <PillGroup
+            theme={theme}
+            options={[
+              { value: "daily", label: "Daily" },
+              ...TEST_PUZZLES.map((_, i) => ({ value: String(i), label: `Test ${i + 1}` })),
+            ]}
+            value={testMode}
+            onChange={setTestMode}
+          />
+        </div>
+
+        <PuzzleView
+          key={testIndex !== null ? `test-${testIndex}` : puzzleNumber}
+          theme={theme}
+          puzzleNumber={puzzleNumber}
+          testIndex={testIndex}
+        />
       </div>
     </div>
   );

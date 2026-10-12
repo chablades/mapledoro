@@ -20,14 +20,20 @@ export function markIconUrl(id: string): string {
   return `${RESOURCE_BASE}/api/img/ui/mark/${id}/icon.png`;
 }
 
-// Field map minimap (haku.network `map` namespace). Map ids are 9-digit, zero-padded on disk.
+// Map art base (haku.network `map` namespace). TEMPORARY (MapGuessr testing): points at the copy
+// bundled under public/map-guesser-test/ until the namespace is live on haku.network, which holds
+// every world map screen but only the test puzzles' minimaps. Restore when testing is done:
+// const MAP_ART_BASE = `${RESOURCE_BASE}/api/img/map`;
+const MAP_ART_BASE = "/map-guesser-test";
+
+// Field map minimap. Map ids are 9-digit, zero-padded on disk.
 export function mapMinimapUrl(mapId: number): string {
-  return `${RESOURCE_BASE}/api/img/map/${String(mapId).padStart(9, "0")}/minimap.png`;
+  return `${MAP_ART_BASE}/${String(mapId).padStart(9, "0")}/minimap.png`;
 }
 
-// World map screen art (haku.network `map/worldmap` namespace), keyed by screen name ("WorldMap010").
+// World map screen art, keyed by screen name ("WorldMap010").
 export function worldMapUrl(screenId: string): string {
-  return `${RESOURCE_BASE}/api/img/map/worldmap/${screenId}/base.png`;
+  return `${MAP_ART_BASE}/worldmap/${screenId}/base.png`;
 }
 
 // BGM track (haku.network `bgm` namespace), keyed "{group}/{track}" as in map/bgm manifests.
