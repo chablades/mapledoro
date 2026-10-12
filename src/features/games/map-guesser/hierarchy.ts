@@ -29,6 +29,8 @@ export interface WorldScreen {
   w: number;
   h: number;
   spots: WorldSpot[];
+  /** Linked screens that aren't children (Cernium <-> Burning Cernium). */
+  links?: string[];
 }
 
 interface MapLocation {

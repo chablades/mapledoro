@@ -22,6 +22,15 @@ common street. Spot `x/y` are already in image pixels of the screen art
 the image identifies exactly one answer, plus "Hidden Street" quest maps. **Guessable** maps are all
 named placed maps (not just the pool), so the picker doesn't leak which maps can be answers.
 
+**Picker:** clicking a ring (spot with a `child`) zooms straight in; that spot's own maps (ones
+the child screen doesn't place) show under the map as "Also at ...". MapLinks to non-child screens
+(Cernium <-> Burning Cernium) become `links`, drawn under the top-right Back button. Right-click on
+the map also goes back.
+
+**Minimap reveal** (`MinimapReveal.tsx`): only a square of the minimap shows, growing per miss via
+`REVEAL_STEPS`; its position is hashed from the map id (lower half, where minimaps put their
+ground). The image must load eagerly: a fully clipped lazy image never loads.
+
 **Scoring** compares the guess and target paths (world → screens → spot → map): green while
 matching, red where they diverge. Below the world level, a compass gives direction and rough
 distance from guess to answer on the deepest shared screen (`positionOn`).

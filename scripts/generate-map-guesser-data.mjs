@@ -19,6 +19,7 @@
   Each named map is placed at its DEEPEST listing (parent screens roll up their
   children's maps, e.g. Maple World's "Victoria Island" spot lists all 384 Victoria
   maps). A spot whose maps mostly fall inside one child screen becomes a drill-in spot.
+  MapLinks to screens that aren't children (Cernium <-> Burning Cernium) become `links`.
 
   Puzzle pool: placed maps with their own minimap that no other map borrows (so the
   image identifies exactly one map), minus "Hidden Street" quest maps. PUZZLE_COUNT are
@@ -192,6 +193,10 @@ for (const screen of [...out].reverse()) {
 }
 const kept = out.filter((screen) => hasContent.get(screen.id));
 for (const screen of kept) {
+  const siblings = worldmaps[screen.id].links
+    .map((l) => l.map)
+    .filter((id) => hasContent.get(id) && worldmaps[id].parent !== screen.id && id !== screen.id);
+  if (siblings.length) screen.links = [...new Set(siblings)];
   screen.spots = screen.spots
     .map(({ child, ...sp }) => (child && hasContent.get(child) ? { ...sp, child } : sp))
     .filter((sp) => sp.child || sp.maps.length);

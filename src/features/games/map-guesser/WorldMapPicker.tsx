@@ -40,6 +40,21 @@ const markerBase: CSSProperties = {
   cursor: "pointer",
 };
 
+/* Name tag floating above a zoom-in ring. Not clickable: the ring is the target. */
+const markerLabel: CSSProperties = {
+  position: "absolute",
+  transform: `translate(-50%, calc(-100% - ${MARKER_SIZE / 2 + 3}px))`,
+  padding: "1px 6px",
+  borderRadius: 6,
+  background: "rgba(0,0,0,0.72)",
+  color: "#fff",
+  fontSize: "0.75rem",
+  fontWeight: 700,
+  whiteSpace: "nowrap",
+  pointerEvents: "none",
+  zIndex: 2,
+};
+
 const crumbBtn: CSSProperties = {
   ...resetBtn,
   fontSize: "0.8rem",
@@ -56,18 +71,36 @@ const chipBtn: CSSProperties = {
   cursor: "pointer",
 };
 
-const backBtn: CSSProperties = {
-  ...resetBtn,
+/* Top-right corner stack: Back, then linked sibling screens. */
+const cornerStack: CSSProperties = {
   position: "absolute",
   top: 8,
   right: 8,
   zIndex: 3,
-  padding: "5px 12px",
+  display: "grid",
+  justifyItems: "end",
+  gap: 6,
+};
+
+const cornerBtn: CSSProperties = {
+  ...resetBtn,
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 6,
+  padding: "4px 10px",
   borderRadius: 999,
   fontSize: "0.75rem",
   fontWeight: 800,
   boxShadow: "0 1px 4px rgba(0,0,0,0.4)",
   cursor: "pointer",
+};
+
+const linkRing: CSSProperties = {
+  width: MARKER_SIZE,
+  height: MARKER_SIZE,
+  borderRadius: "50%",
+  boxSizing: "border-box",
+  background: "rgba(255,255,255,0.85)",
 };
 
 const mapOptionBtn: CSSProperties = {
@@ -78,12 +111,18 @@ const mapOptionBtn: CSSProperties = {
   fontWeight: 600,
 };
 
+/** A spot picked to show its maps; may sit on the parent screen (a zoom-in spot's own maps). */
+interface Selection {
+  screen: string;
+  index: number;
+}
+
 /** Marker look: zoom-in spots are hollow rings, map spots are filled dots. */
 function markerStyle(theme: AppTheme, spot: WorldSpot, selected: boolean, missed: boolean, answer: boolean): CSSProperties {
   let fill = theme.accent;
   if (answer) fill = STATUS.success.fill;
   else if (missed) fill = STATUS.danger.fill;
-  const drill = spot.child !== undefined && spot.maps.length === 0;
+  const drill = spot.child !== undefined;
   return {
     ...markerBase,
     background: drill ? "rgba(255,255,255,0.85)" : fill,
@@ -132,37 +171,6 @@ function MapOptions({
           </button>
         );
       })}
-    </div>
-  );
-}
-
-function SpotPanel({
-  theme,
-  spot,
-  onZoom,
-  children,
-}: {
-  theme: AppTheme;
-  spot: WorldSpot;
-  onZoom: (screenId: string) => void;
-  children: React.ReactNode;
-}) {
-  const child = spot.child ? getScreen(spot.child) : undefined;
-  return (
-    <div style={{ display: "grid", gap: "0.5rem" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", flexWrap: "wrap" }}>
-        <span style={{ fontSize: "0.85rem", fontWeight: 800, color: theme.text }}>{spot.label}</span>
-        {child && (
-          <button
-            type="button"
-            onClick={() => onZoom(child.id)}
-            style={{ ...chipBtn, color: theme.accentOn, background: theme.accent }}
-          >
-            Zoom into {child.label} →
-          </button>
-        )}
-      </div>
-      {spot.maps.length > 0 && children}
     </div>
   );
 }
@@ -217,24 +225,66 @@ function spotLabel(mapId: number): string {
   return loc ? getScreen(loc.screen)!.spots[loc.spot].label : "";
 }
 
+function CornerButtons({
+  theme,
+  links,
+  onBack,
+  onLink,
+}: {
+  theme: AppTheme;
+  links: WorldScreen[];
+  onBack: (() => void) | null;
+  onLink: (screenId: string) => void;
+}) {
+  if (!onBack && links.length === 0) return null;
+  return (
+    <div style={cornerStack}>
+      {onBack && (
+        <button
+          type="button"
+          onClick={onBack}
+          title="Back (or right-click the map)"
+          style={{ ...cornerBtn, color: theme.accentOn, background: theme.accent }}
+        >
+          ← Back
+        </button>
+      )}
+      {links.map((link) => (
+        <button
+          key={link.id}
+          type="button"
+          onClick={() => onLink(link.id)}
+          style={{ ...cornerBtn, color: "#fff", background: "rgba(0,0,0,0.72)" }}
+        >
+          {link.label}
+          <span aria-hidden="true" style={{ ...linkRing, border: `3px solid ${theme.accent}` }} />
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function ScreenArt({
   theme,
   screen,
   selected,
   missedSpots,
   answerSpot,
-  onSelect,
+  onSpot,
   onBack,
+  onLink,
 }: {
   theme: AppTheme;
   screen: WorldScreen;
   selected: number | null;
   missedSpots: Set<number>;
   answerSpot: number | null;
-  onSelect: (index: number) => void;
+  onSpot: (index: number) => void;
   /** Goes up one screen; null at a world's top screen. Also bound to right-click. */
   onBack: (() => void) | null;
+  onLink: (screenId: string) => void;
 }) {
+  const links = (screen.links ?? []).map((id) => getScreen(id)!);
   return (
     <div
       onContextMenu={(e) => {
@@ -244,16 +294,6 @@ function ScreenArt({
       }}
       style={{ position: "relative", width: "100%", borderRadius: 10, overflow: "hidden", border: `1px solid ${theme.border}` }}
     >
-      {onBack && (
-        <button
-          type="button"
-          onClick={onBack}
-          title="Back (or right-click the map)"
-          style={{ ...backBtn, color: theme.accentOn, background: theme.accent }}
-        >
-          ← Back
-        </button>
-      )}
       <Image
         src={worldMapUrl(screen.id)}
         alt={`${screen.label} world map`}
@@ -262,20 +302,23 @@ function ScreenArt({
         unoptimized
         style={{ display: "block", width: "100%", height: "auto" }}
       />
-      {screen.spots.map((spot, i) => (
-        <button
-          key={i}
-          type="button"
-          aria-label={spot.label}
-          title={spot.label}
-          onClick={() => onSelect(i)}
-          style={{
-            ...markerStyle(theme, spot, selected === i, missedSpots.has(i), answerSpot === i),
-            left: `${(spot.x / screen.w) * 100}%`,
-            top: `${(spot.y / screen.h) * 100}%`,
-          }}
-        />
-      ))}
+      <CornerButtons theme={theme} links={links} onBack={onBack} onLink={onLink} />
+      {screen.spots.map((spot, i) => {
+        const pos = { left: `${(spot.x / screen.w) * 100}%`, top: `${(spot.y / screen.h) * 100}%` };
+        const child = spot.child ? getScreen(spot.child) : undefined;
+        return (
+          <span key={i}>
+            {child && <span style={{ ...markerLabel, ...pos }}>{child.label}</span>}
+            <button
+              type="button"
+              aria-label={child ? `Zoom into ${child.label}` : spot.label}
+              title={child ? `Zoom into ${child.label}` : spot.label}
+              onClick={() => onSpot(i)}
+              style={{ ...markerStyle(theme, spot, selected === i, missedSpots.has(i), answerSpot === i), ...pos }}
+            />
+          </span>
+        );
+      })}
     </div>
   );
 }
@@ -291,8 +334,8 @@ function spotsOf(screenId: string, mapIds: Iterable<number>): Set<number> {
 }
 
 /**
- * The clickable world map players enter guesses on: pick a world, zoom through its
- * screens, click a spot, then pick a map at that spot (or search by name).
+ * The clickable world map players enter guesses on: pick a world, click rings to zoom
+ * through its screens, click a spot, then pick a map at that spot (or search by name).
  */
 export default function WorldMapPicker({
   theme,
@@ -312,16 +355,30 @@ export default function WorldMapPicker({
 }) {
   const reveal = revealMapId !== null ? mapLocation(revealMapId) : undefined;
   const [screenId, setScreenId] = useState(() => reveal?.screen ?? WORLDS[0].id);
-  const [selected, setSelected] = useState<number | null>(() => reveal?.spot ?? null);
+  const [selected, setSelected] = useState<Selection | null>(() =>
+    reveal ? { screen: reveal.screen, index: reveal.spot } : null,
+  );
   const screen = getScreen(screenId)!;
   const chain = screenChain(screenId);
   const missedSpots = useMemo(() => spotsOf(screenId, guessed), [screenId, guessed]);
   const answerSpot = reveal?.screen === screenId ? reveal.spot : null;
-  const spot = selected !== null ? screen.spots[selected] : undefined;
+  const selectedSpot = selected ? getScreen(selected.screen)!.spots[selected.index] : undefined;
 
   function goTo(id: string) {
     setScreenId(id);
     setSelected(null);
+  }
+
+  // A ring zooms straight in. Its own maps (ones the zoomed screen doesn't place)
+  // stay listed under the map as "Also at ...".
+  function handleSpot(index: number) {
+    const spot = screen.spots[index];
+    if (!spot.child) {
+      setSelected({ screen: screenId, index });
+      return;
+    }
+    setScreenId(spot.child);
+    setSelected(spot.maps.length > 0 ? { screen: screenId, index } : null);
   }
 
   return (
@@ -353,11 +410,12 @@ export default function WorldMapPicker({
       <ScreenArt
         theme={theme}
         screen={screen}
-        selected={selected}
+        selected={selected?.screen === screenId ? selected.index : null}
         missedSpots={missedSpots}
         answerSpot={answerSpot}
-        onSelect={setSelected}
+        onSpot={handleSpot}
         onBack={screen.parent ? () => goTo(screen.parent!) : null}
+        onLink={goTo}
       />
 
       {childScreens(screenId).length > 0 && (
@@ -376,21 +434,23 @@ export default function WorldMapPicker({
         </div>
       )}
 
-      {spot ? (
-        <SpotPanel theme={theme} spot={spot} onZoom={goTo}>
+      {selectedSpot && selectedSpot.maps.length > 0 ? (
+        <div style={{ display: "grid", gap: "0.5rem" }}>
+          <span style={{ fontSize: "0.85rem", fontWeight: 800, color: theme.text }}>
+            {selected?.screen === screenId ? selectedSpot.label : `Also at ${selectedSpot.label}`}
+          </span>
           <MapOptions
             theme={theme}
-            maps={spot.maps}
+            maps={selectedSpot.maps}
             staged={staged}
             guessed={guessed}
             disabled={disabled}
             onStage={onStage}
           />
-        </SpotPanel>
+        </div>
       ) : (
         <div style={{ fontSize: "0.8rem", fontWeight: 600, color: theme.muted }}>
-          Click a spot on the map to see the maps there. Hollow rings zoom into a closer map; Back or
-          right-click zooms out.
+          Click a dot to see the maps there; labeled rings zoom in. Back or right-click zooms out.
         </div>
       )}
 

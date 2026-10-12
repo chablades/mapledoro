@@ -1,11 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import type { AppTheme } from "../../../components/themes";
 import { STATUS, statusText } from "../../../components/statusColors";
-import { bgmTrackUrl, mapMinimapUrl } from "../../../lib/mapleResource";
+import { bgmTrackUrl } from "../../../lib/mapleResource";
 import { useMounted } from "../../../lib/useMounted";
 import { ActionButton, PillGroup } from "../../tools/shared-ui";
 import { toolStyles } from "../../tools/tool-styles";
@@ -18,6 +17,7 @@ import {
   puzzleDateMs,
   type MapGuesserPuzzle,
 } from "./puzzles";
+import MinimapReveal from "./MinimapReveal";
 import ResultsDialog from "./ResultsDialog";
 import { feedbackForGuess, type LevelColor } from "./scoring";
 import {
@@ -38,14 +38,6 @@ const PUZZLE_DATE_FMT = new Intl.DateTimeFormat(undefined, {
 });
 
 const EMPTY_RESULT: MapGuesserResult = { guesses: [], won: false, done: false };
-
-const minimapFrame: CSSProperties = {
-  position: "relative",
-  width: "100%",
-  height: 200,
-  borderRadius: 14,
-  overflow: "hidden",
-};
 
 const guessSlot: CSSProperties = {
   borderRadius: 10,
@@ -135,7 +127,6 @@ function HintCards({ theme, puzzle, failedCount }: { theme: AppTheme; puzzle: Ma
       label: "Map BGM",
       unlockAfter: 2,
       value: puzzle.bgm ? (
-        // eslint-disable-next-line jsx-a11y/media-has-caption -- background music has no dialogue to caption
         <audio controls preload="none" src={bgmTrackUrl(puzzle.bgm)} style={{ width: "100%", height: 32 }} />
       ) : (
         "This map has no music"
@@ -273,16 +264,10 @@ function PuzzleView({
     <>
       <div className="fade-in panel-card" style={styles.sectionPanel}>
         <div style={{ display: "grid", justifyItems: "center", gap: "0.4rem", marginBottom: "1.1rem" }}>
-          <div style={{ ...minimapFrame, border: `1px solid ${theme.border}`, background: theme.timerBg }}>
-            <Image
-              src={mapMinimapUrl(puzzle.mapId)}
-              alt="Mystery map minimap"
-              fill
-              unoptimized
-              style={{ objectFit: "contain", imageRendering: "pixelated", padding: 8, boxSizing: "border-box" }}
-            />
+          <MinimapReveal theme={theme} mapId={puzzle.mapId} misses={result.done ? null : failedCount} />
+          <div style={{ fontSize: "0.85rem", fontWeight: 700, color: theme.text }}>
+            Where is this map? Each miss reveals more of it.
           </div>
-          <div style={{ fontSize: "0.85rem", fontWeight: 700, color: theme.text }}>Where is this map?</div>
           <div style={{ fontSize: "0.75rem", fontWeight: 600, color: theme.muted }}>
             {result.done
               ? `The answer was ${mapName(puzzle.mapId)}`
