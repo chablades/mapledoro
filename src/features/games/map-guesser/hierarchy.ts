@@ -1,137 +1,110 @@
 /*
-  Curated MapleStory world hierarchy for MapGuessr.
+  MapGuessr's world: the client's own world map screens (Maple World → Victoria
+  Island → ...), generated from the WZ by scripts/generate-map-guesser-data.mjs.
 
-  Levels: World → Continent → Region → Field map (exact mapId).
-  WZ only gives streetName/mapName; continents are curated from world-map UI.
-  Stub pool — replace/expand when the map API lands.
+  A map's path is its chain of screens from the world down to the screen it sits
+  on, then the spot it sits at, then the map itself. Scoring compares guess and
+  target paths level by level.
 */
 
-export type HierarchyLevel = "world" | "continent" | "region" | "map";
+import { WORLD_SCREENS } from "./world-data.generated";
 
-export interface HierarchyNode {
+export interface WorldSpot {
+  /** Position in the screen art's image pixels. */
+  x: number;
+  y: number;
+  label: string;
+  /** Child screen this spot zooms into, if any. */
+  child?: string;
+  /** Guessable maps placed at this spot, as [mapId, name]. */
+  maps: [number, string][];
+}
+
+export interface WorldScreen {
   id: string;
   label: string;
-  level: HierarchyLevel;
-  parentId: string | null;
-  /** Present only on field maps. */
-  mapId?: number;
-  children: string[];
+  /** Null for a world (root screen). */
+  parent: string | null;
+  /** Art size in image pixels. */
+  w: number;
+  h: number;
+  spots: WorldSpot[];
 }
 
-/** Path from world down to the leaf map: [world, continent, region, map]. */
-export type MapPath = [string, string, string, string];
-
-const LEVEL_LABELS: Record<HierarchyLevel, string> = {
-  world: "World",
-  continent: "Continent",
-  region: "Region",
-  map: "Map",
-};
-
-export function levelLabel(level: HierarchyLevel): string {
-  return LEVEL_LABELS[level];
+interface MapLocation {
+  name: string;
+  screen: string;
+  spot: number;
 }
 
-function n(
-  id: string,
-  label: string,
-  level: HierarchyLevel,
-  parentId: string | null,
-  children: string[],
-  mapId?: number,
-): HierarchyNode {
-  return { id, label, level, parentId, children, ...(mapId !== undefined ? { mapId } : {}) };
+const SCREENS = new Map(WORLD_SCREENS.map((s) => [s.id, s]));
+
+const LOCATIONS = new Map<number, MapLocation>();
+for (const screen of WORLD_SCREENS) {
+  screen.spots.forEach((spot, i) => {
+    for (const [mapId, name] of spot.maps) LOCATIONS.set(mapId, { name, screen: screen.id, spot: i });
+  });
+}
+
+export const WORLDS = WORLD_SCREENS.filter((s) => s.parent === null);
+
+/** Every guessable map as [mapId, name]. */
+export const ALL_MAPS: [number, string][] = WORLD_SCREENS.flatMap((s) => s.spots.flatMap((sp) => sp.maps));
+
+export function getScreen(id: string): WorldScreen | undefined {
+  return SCREENS.get(id);
+}
+
+export function childScreens(id: string): WorldScreen[] {
+  return WORLD_SCREENS.filter((s) => s.parent === id);
+}
+
+/** Screen ids from the world down to `id`. */
+export function screenChain(id: string): string[] {
+  const chain: string[] = [];
+  for (let cur = SCREENS.get(id); cur; cur = cur.parent ? SCREENS.get(cur.parent) : undefined) {
+    chain.unshift(cur.id);
+  }
+  return chain;
+}
+
+export function mapName(mapId: number): string {
+  return LOCATIONS.get(mapId)?.name ?? String(mapId);
+}
+
+export function mapLocation(mapId: number): MapLocation | undefined {
+  return LOCATIONS.get(mapId);
+}
+
+/** One step of a map's path, with the label shown to players. */
+export interface PathLevel {
+  key: string;
+  label: string;
+}
+
+/** World → ... → screen → spot → map. */
+export function pathForMapId(mapId: number): PathLevel[] | null {
+  const loc = LOCATIONS.get(mapId);
+  if (!loc) return null;
+  const screens = screenChain(loc.screen).map((id) => ({ key: id, label: SCREENS.get(id)!.label }));
+  const spot = SCREENS.get(loc.screen)!.spots[loc.spot];
+  return [
+    ...screens,
+    { key: `${loc.screen}#${loc.spot}`, label: spot.label },
+    { key: String(mapId), label: loc.name },
+  ];
 }
 
 /**
- * Stub tree covering the color-feedback examples (Henesys vs Kerning vs Pantheon)
- * plus a thin Arcane River branch so all three worlds exist in the browser.
+ * Where `mapId` shows up on `screenId`: its own spot when it sits on that screen,
+ * else the spot that zooms toward it. Null when the screen has no marker for it.
  */
-export const HIERARCHY: Record<string, HierarchyNode> = {
-  "maple-world": n("maple-world", "Maple World", "world", null, ["victoria", "ossyria"]),
-  grandis: n("grandis", "Grandis", "world", null, ["eastern-grandis"]),
-  "arcane-river": n("arcane-river", "Arcane River", "world", null, ["vanishing-journey"]),
-
-  victoria: n("victoria", "Victoria Island", "continent", "maple-world", [
-    "henesys",
-    "kerning",
-    "ellinia",
-  ]),
-  ossyria: n("ossyria", "Ossyria", "continent", "maple-world", ["orbis"]),
-
-  "eastern-grandis": n("eastern-grandis", "Eastern Grandis", "continent", "grandis", [
-    "pantheon",
-  ]),
-
-  "vanishing-journey": n(
-    "vanishing-journey",
-    "Vanishing Journey",
-    "continent",
-    "arcane-river",
-    ["vj-lake"],
-  ),
-
-  henesys: n("henesys", "Henesys", "region", "victoria", [
-    "100000000",
-    "100010000",
-    "100020000",
-  ]),
-  kerning: n("kerning", "Kerning City", "region", "victoria", ["103000000", "103010000"]),
-  ellinia: n("ellinia", "Ellinia", "region", "victoria", ["101000000"]),
-  orbis: n("orbis", "Orbis", "region", "ossyria", ["200000000"]),
-  pantheon: n("pantheon", "Pantheon", "region", "eastern-grandis", ["400000000", "400010000"]),
-  "vj-lake": n("vj-lake", "Lake of Oblivion", "region", "vanishing-journey", ["450001000"]),
-
-  "100000000": n("100000000", "Henesys", "map", "henesys", [], 100000000),
-  "100010000": n("100010000", "The Hill North of Henesys", "map", "henesys", [], 100010000),
-  "100020000": n("100020000", "Henesys Hunting Ground I", "map", "henesys", [], 100020000),
-  "103000000": n("103000000", "Kerning City", "map", "kerning", [], 103000000),
-  "103010000": n("103010000", "Kerning City Subway", "map", "kerning", [], 103010000),
-  "101000000": n("101000000", "Ellinia", "map", "ellinia", [], 101000000),
-  "200000000": n("200000000", "Orbis", "map", "orbis", [], 200000000),
-  "400000000": n("400000000", "Pantheon", "map", "pantheon", [], 400000000),
-  "400010000": n("400010000", "Great Temple Interior", "map", "pantheon", [], 400010000),
-  "450001000": n("450001000", "Lake of Oblivion", "map", "vj-lake", [], 450001000),
-};
-
-export const WORLD_IDS = ["maple-world", "grandis", "arcane-river"] as const;
-
-export function getNode(id: string): HierarchyNode | undefined {
-  return HIERARCHY[id];
-}
-
-export function getChildren(id: string): HierarchyNode[] {
-  const node = HIERARCHY[id];
-  if (!node) return [];
-  return node.children.map((cid) => HIERARCHY[cid]).filter(Boolean);
-}
-
-/** Walk parents from a map node up to the world; returns path leaf→root flipped to root→leaf. */
-export function pathForMapId(mapId: number): MapPath | null {
-  const leaf = HIERARCHY[String(mapId)];
-  if (!leaf || leaf.level !== "map") return null;
-  const chain: string[] = [leaf.id];
-  let cur: HierarchyNode | undefined = leaf;
-  while (cur?.parentId) {
-    chain.push(cur.parentId);
-    cur = HIERARCHY[cur.parentId];
-  }
-  chain.reverse();
-  if (chain.length !== 4) return null;
-  return chain as MapPath;
-}
-
-export function displayNameForMapId(mapId: number): string {
-  const leaf = HIERARCHY[String(mapId)];
-  if (!leaf) return String(mapId);
-  const region = leaf.parentId ? HIERARCHY[leaf.parentId] : undefined;
-  if (region) return `${region.label} : ${leaf.label}`;
-  return leaf.label;
-}
-
-/** All guessable field mapIds in the stub tree. */
-export function allMapIds(): number[] {
-  return Object.values(HIERARCHY)
-    .filter((n) => n.level === "map" && n.mapId !== undefined)
-    .map((n) => n.mapId as number);
+export function positionOn(screenId: string, mapId: number): { x: number; y: number } | null {
+  const loc = LOCATIONS.get(mapId);
+  const screen = SCREENS.get(screenId);
+  if (!loc || !screen) return null;
+  if (loc.screen === screenId) return screen.spots[loc.spot];
+  const chain = screenChain(loc.screen);
+  const next = chain[chain.indexOf(screenId) + 1];
+  return (next && screen.spots.find((s) => s.child === next)) || null;
 }

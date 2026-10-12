@@ -34,7 +34,8 @@ function emptyStore(): GamesStore {
 }
 
 /* v1: { version: 1, skillGuesser: { results: Record<string, SkillGuesserResult>, hardMode? } }.
-   Old results scored against the class, so they all fold into the `normal` slot. */
+   Old results scored against the class, so they all fold into the `normal` slot. Other
+   games' fields (MapGuessr's `mapGuesser`) carry over untouched. */
 function migrateV1(parsed: { skillGuesser?: { results?: Record<string, SkillGuesserResult> } }): GamesStore | null {
   const oldResults = parsed.skillGuesser?.results;
   if (!oldResults) return null;
@@ -42,7 +43,7 @@ function migrateV1(parsed: { skillGuesser?: { results?: Record<string, SkillGues
   for (const [key, result] of Object.entries(oldResults)) {
     results[key] = { normal: result };
   }
-  return { version: 2, skillGuesser: { results } };
+  return { ...parsed, version: 2, skillGuesser: { results } };
 }
 
 function readStore(): GamesStore {

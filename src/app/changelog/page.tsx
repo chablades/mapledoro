@@ -12,6 +12,12 @@ interface ChangelogEntry {
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    date: "2026-10-12",
+    changes: [
+      { type: "added", text: "Added MapGuessr, a daily game where you find a map from its minimap by clicking through the in-game world map." },
+    ],
+  },
+  {
     date: "2026-07-25",
     changes: [
       { type: "added", text: "The Drop Tracker can now track Original Sin of Pride, Blissful Nightmare, Total Control, Eternal Twisted Armor Box, Eternal Armor of Radiance Box, Arcane Umbra Armor Box, and AbsoLab Armor Box." },

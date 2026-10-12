@@ -24,6 +24,12 @@ const GAMES: GameCard[] = [
     icon: "🎯",
     href: "/games/skill-guesser",
   },
+  {
+    title: "MapGuessr",
+    description: "Find the daily map from its minimap on the world map in 6 tries.",
+    icon: "🗺️",
+    href: "/games/map-guesser",
+  },
 ];
 
 // Uppercase category label inside the panel; color (theme.muted) inline.

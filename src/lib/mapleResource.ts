@@ -20,6 +20,22 @@ export function markIconUrl(id: string): string {
   return `${RESOURCE_BASE}/api/img/ui/mark/${id}/icon.png`;
 }
 
+// Field map minimap (haku.network `map` namespace). Map ids are 9-digit, zero-padded on disk.
+export function mapMinimapUrl(mapId: number): string {
+  return `${RESOURCE_BASE}/api/img/map/${String(mapId).padStart(9, "0")}/minimap.png`;
+}
+
+// World map screen art (haku.network `map/worldmap` namespace), keyed by screen name ("WorldMap010").
+export function worldMapUrl(screenId: string): string {
+  return `${RESOURCE_BASE}/api/img/map/worldmap/${screenId}/base.png`;
+}
+
+// BGM track (haku.network `bgm` namespace), keyed "{group}/{track}" as in map/bgm manifests.
+// Track names carry spaces and apostrophes, so each segment is encoded.
+export function bgmTrackUrl(key: string): string {
+  return `${RESOURCE_BASE}/api/bgm/${key.split("/").map(encodeURIComponent).join("/")}/track.mp3`;
+}
+
 // Boss Maple Guide icon (haku.network `ui/boss` namespace). IDs are looked up by hand
 // from `manifests/v<version>/boss.json` and hardcoded at the call site.
 export function bossIconUrl(id: string): string {
