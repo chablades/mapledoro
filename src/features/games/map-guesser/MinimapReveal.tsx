@@ -5,8 +5,11 @@ import Image from "next/image";
 import type { AppTheme } from "../../../components/themes";
 import { mapMinimapUrl } from "../../../lib/mapleResource";
 
-/** Side of the revealed square as a share of the minimap's longer side, by misses so far. */
-const REVEAL_STEPS = [0.15, 0.25, 0.38, 0.52, 0.7, 0.85];
+/**
+ * Side of the revealed square as a share of the minimap's shorter side, by misses so far.
+ * Below 1 so even the last step stays a square section, never a full-width/height band.
+ */
+const REVEAL_STEPS = [0.3, 0.42, 0.54, 0.66, 0.78, 0.9];
 
 const FRAME_HEIGHT = 200;
 const FRAME_PAD = 8;
@@ -34,17 +37,15 @@ function revealCenter(mapId: number): [number, number] {
   return [0.25 + 0.5 * ((h & 0xffff) / 0xffff), 0.5 + 0.3 * (((h >>> 16) & 0xffff) / 0xffff)];
 }
 
-/** clip-path showing a square of `fraction` x the longer side, clamped inside the image. */
+/** clip-path showing a square of `fraction` x the shorter side, clamped inside the image. */
 function revealClip(mapId: number, w: number, h: number, fraction: number): string | undefined {
   if (fraction >= 1) return undefined;
-  const side = fraction * Math.max(w, h);
-  const sw = Math.min(side, w);
-  const sh = Math.min(side, h);
+  const side = fraction * Math.min(w, h);
   const [fx, fy] = revealCenter(mapId);
-  const x0 = Math.min(Math.max(fx * w - sw / 2, 0), w - sw);
-  const y0 = Math.min(Math.max(fy * h - sh / 2, 0), h - sh);
+  const x0 = Math.min(Math.max(fx * w - side / 2, 0), w - side);
+  const y0 = Math.min(Math.max(fy * h - side / 2, 0), h - side);
   const pct = (v: number, total: number) => `${(v / total) * 100}%`;
-  return `inset(${pct(y0, h)} ${pct(w - x0 - sw, w)} ${pct(h - y0 - sh, h)} ${pct(x0, w)})`;
+  return `inset(${pct(y0, h)} ${pct(w - x0 - side, w)} ${pct(h - y0 - side, h)} ${pct(x0, w)})`;
 }
 
 /**
@@ -66,6 +67,8 @@ export default function MinimapReveal({
   const fraction = misses === null ? 1 : REVEAL_STEPS[Math.min(misses, REVEAL_STEPS.length - 1)];
   const aspect = size ? size.w / size.h : 2;
   const clip = size ? revealClip(mapId, size.w, size.h, fraction) : "inset(50%)";
+  // Whole-number upscale that fits the frame: fractional scaling blurs or warps pixels this small.
+  const scale = size ? Math.max(1, Math.floor((FRAME_HEIGHT - FRAME_PAD * 2) / size.h)) : 1;
 
   return (
     <div style={{ ...frame, border: `1px solid ${theme.border}`, background: theme.timerBg }}>
@@ -73,7 +76,7 @@ export default function MinimapReveal({
         style={{
           position: "relative",
           aspectRatio: String(aspect),
-          width: `min(calc(100% - ${FRAME_PAD * 2}px), ${(FRAME_HEIGHT - FRAME_PAD * 2) * aspect}px)`,
+          width: `min(calc(100% - ${FRAME_PAD * 2}px), ${(FRAME_HEIGHT - FRAME_PAD * 2) * aspect}px, ${size ? size.w * scale : 9999}px)`,
           outline: `1px dashed ${theme.border}`,
         }}
       >
@@ -89,7 +92,7 @@ export default function MinimapReveal({
             if (img?.complete && img.naturalWidth > 0 && !size) setSize({ w: img.naturalWidth, h: img.naturalHeight });
           }}
           onLoad={(e) => setSize({ w: e.currentTarget.naturalWidth, h: e.currentTarget.naturalHeight })}
-          style={{ imageRendering: "pixelated", clipPath: clip, transition: "clip-path 0.5s ease" }}
+          style={{ imageRendering: scale > 1 ? "pixelated" : undefined, clipPath: clip, transition: "clip-path 0.5s ease" }}
         />
       </div>
     </div>

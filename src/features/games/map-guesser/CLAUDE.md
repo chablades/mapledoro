@@ -28,8 +28,11 @@ the child screen doesn't place) show under the map as "Also at ...". MapLinks to
 the map also goes back.
 
 **Minimap reveal** (`MinimapReveal.tsx`): only a square of the minimap shows, growing per miss via
-`REVEAL_STEPS`; its position is hashed from the map id (lower half, where minimaps put their
-ground). The image must load eagerly: a fully clipped lazy image never loads.
+`REVEAL_STEPS` (shares of the **shorter** side, all < 1, so it stays a square section on tall or
+wide minimaps instead of clamping to a full band); its position is hashed from the map id (lower half, where minimaps put their
+ground). The image must load eagerly: a fully clipped lazy image never loads. Minimaps are tiny
+(~100-300px), so they upscale only by a whole-number factor (pixelated) that fits the frame height;
+fractional stretching to fill the frame blurred them.
 
 **Scoring** compares the guess and target paths (world → screens → spot → map): green while
 matching, red where they diverge. Below the world level, a compass gives direction and rough
