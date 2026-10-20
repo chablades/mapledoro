@@ -12,6 +12,8 @@ export interface MapGuesserPuzzle {
   street: string | null;
   /** bgm namespace key ("{group}/{track}") of the map's music, for the BGM hint. */
   bgm: string | null;
+  /** Centre of the first reveal square as [x, y] fractions of the minimap, picked by the generator. */
+  reveal: [number, number];
 }
 
 export const MAX_GUESSES = 6;
@@ -27,8 +29,8 @@ function decodePuzzles(): MapGuesserPuzzle[] {
   if (!cache) {
     const bytes = Uint8Array.from(atob(MAP_GUESSER_PUZZLE_DATA), (c) => c.charCodeAt(0));
     for (let i = 0; i < bytes.length; i++) bytes[i] ^= XOR_KEY.charCodeAt(i % XOR_KEY.length);
-    const tuples = JSON.parse(new TextDecoder().decode(bytes)) as [number, string | null, string | null][];
-    cache = tuples.map(([mapId, street, bgm]) => ({ mapId, street, bgm }));
+    const tuples = JSON.parse(new TextDecoder().decode(bytes)) as [number, string | null, string | null, number, number][];
+    cache = tuples.map(([mapId, street, bgm, x, y]) => ({ mapId, street, bgm, reveal: [x, y] }));
   }
   return cache;
 }

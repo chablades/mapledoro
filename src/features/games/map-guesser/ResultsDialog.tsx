@@ -4,7 +4,7 @@ import { useEffect, useState, type CSSProperties } from "react";
 import Image from "next/image";
 import ModalShell from "../../../components/ModalShell";
 import type { AppTheme } from "../../../components/themes";
-import { mapMinimapUrl } from "../../../lib/mapleResource";
+import { mapBackUrl, mapMinimapUrl } from "../../../lib/mapleResource";
 import { toolStyles } from "../../tools/tool-styles";
 import { mapName } from "./hierarchy";
 import { MAX_GUESSES, msUntilNextPuzzle, type MapGuesserPuzzle } from "./puzzles";
@@ -106,6 +106,16 @@ export default function ResultsDialog({
 
         <div style={{ ...revealCard, border: `1px solid ${theme.border}`, background: theme.timerBg }}>
           <div style={revealMinimap}>
+            <Image
+              src={mapBackUrl(puzzle.mapId)}
+              alt=""
+              fill
+              unoptimized
+              onError={(e) => {
+                e.currentTarget.style.display = "none";
+              }}
+              style={{ objectFit: "contain", imageRendering: "pixelated" }}
+            />
             <Image
               src={mapMinimapUrl(puzzle.mapId)}
               alt={mapName(puzzle.mapId)}

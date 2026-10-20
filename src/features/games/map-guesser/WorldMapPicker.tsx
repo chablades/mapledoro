@@ -40,7 +40,7 @@ const markerBase: CSSProperties = {
   cursor: "pointer",
 };
 
-/* Name tag floating above a zoom-in ring. Not clickable: the ring is the target. */
+/* Name tag floating above a marker, shown on hover/focus. Not clickable: the marker is the target. */
 const markerLabel: CSSProperties = {
   position: "absolute",
   transform: `translate(-50%, calc(-100% - ${MARKER_SIZE / 2 + 3}px))`,
@@ -52,8 +52,23 @@ const markerLabel: CSSProperties = {
   fontWeight: 700,
   whiteSpace: "nowrap",
   pointerEvents: "none",
-  zIndex: 2,
 };
+
+/* Hover grows the marker and slides its name tag in. `scale`/`translate` compose with
+   the inline centering `transform`. Mouse-only hover so taps don't leave a sticky tag. */
+const MARKER_CSS = `
+.mg-marker { transition: scale 0.15s ease; }
+.mg-marker-label { z-index: 3; opacity: 0; translate: 0 4px; transition: opacity 0.15s ease, translate 0.15s ease; }
+.mg-marker:focus-visible { scale: 1.35; }
+.mg-marker:focus-visible + .mg-marker-label { opacity: 1; translate: 0 0; }
+@media (hover: hover) and (pointer: fine) {
+  .mg-marker:hover { scale: 1.35; }
+  .mg-marker:hover + .mg-marker-label { opacity: 1; translate: 0 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mg-marker, .mg-marker-label { transition: none; }
+}
+`;
 
 const crumbBtn: CSSProperties = {
   ...resetBtn,
@@ -302,20 +317,23 @@ function ScreenArt({
         unoptimized
         style={{ display: "block", width: "100%", height: "auto" }}
       />
+      <style>{MARKER_CSS}</style>
       <CornerButtons theme={theme} links={links} onBack={onBack} onLink={onLink} />
       {screen.spots.map((spot, i) => {
         const pos = { left: `${(spot.x / screen.w) * 100}%`, top: `${(spot.y / screen.h) * 100}%` };
         const child = spot.child ? getScreen(spot.child) : undefined;
         return (
           <span key={i}>
-            {child && <span style={{ ...markerLabel, ...pos }}>{child.label}</span>}
             <button
               type="button"
+              className="mg-marker"
               aria-label={child ? `Zoom into ${child.label}` : spot.label}
-              title={child ? `Zoom into ${child.label}` : spot.label}
               onClick={() => onSpot(i)}
               style={{ ...markerStyle(theme, spot, selected === i, missedSpots.has(i), answerSpot === i), ...pos }}
             />
+            <span aria-hidden="true" className="mg-marker-label" style={{ ...markerLabel, ...pos }}>
+              {child ? child.label : spot.label}
+            </span>
           </span>
         );
       })}
@@ -450,7 +468,7 @@ export default function WorldMapPicker({
         </div>
       ) : (
         <div style={{ fontSize: "0.8rem", fontWeight: 600, color: theme.muted }}>
-          Click a dot to see the maps there; labeled rings zoom in. Back or right-click zooms out.
+          Click a dot to see the maps there; rings zoom in. Back or right-click zooms out.
         </div>
       )}
 

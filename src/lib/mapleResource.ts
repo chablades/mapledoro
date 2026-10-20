@@ -27,6 +27,12 @@ export function mapMinimapUrl(mapId: number): string {
   return `${MAP_ART_BASE}/${String(mapId).padStart(9, "0")}/minimap.png`;
 }
 
+// Field map backdrop: its back layers at minimap scale, aligned to sit behind the
+// minimap. Not every map has one (the manifest's `back` flag), so callers hide it on error.
+export function mapBackUrl(mapId: number): string {
+  return `${MAP_ART_BASE}/${String(mapId).padStart(9, "0")}/back.png`;
+}
+
 // World map screen art, keyed by screen name ("WorldMap010").
 export function worldMapUrl(screenId: string): string {
   return `${MAP_ART_BASE}/worldmap/${screenId}/base.png`;

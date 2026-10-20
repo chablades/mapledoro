@@ -264,7 +264,12 @@ function PuzzleView({
     <>
       <div className="fade-in panel-card" style={styles.sectionPanel}>
         <div style={{ display: "grid", justifyItems: "center", gap: "0.4rem", marginBottom: "1.1rem" }}>
-          <MinimapReveal theme={theme} mapId={puzzle.mapId} misses={result.done ? null : failedCount} />
+          <MinimapReveal
+            theme={theme}
+            mapId={puzzle.mapId}
+            center={puzzle.reveal}
+            misses={result.done ? null : failedCount}
+          />
           <div style={{ fontSize: "0.85rem", fontWeight: 700, color: theme.text }}>
             Where is this map? Each miss reveals more of it.
           </div>
