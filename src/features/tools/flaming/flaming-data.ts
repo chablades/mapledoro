@@ -418,55 +418,6 @@ export function flameMesoCost(flames: number, guildDiscount: boolean): number | 
   return Math.round(flames * (guildDiscount ? POWERFUL_COST_GUILD : POWERFUL_COST));
 }
 
-// -- Flame score --------------------------------------------------------------
-
-export interface FlameScoreInputs {
-  mainStat: number;
-  secondaryStat: number;
-  allStatPct: number;
-  attack: number;
-  bossPct: number;
-  dmgPct: number;
-  hp: number;
-  dex: number;
-  str: number;
-  luk: number;
-}
-
-function safeReciprocal(v: number): number {
-  return v > 0 ? 1 / v : 0;
-}
-
-function classSecondaryScore(cls: FlameClass, inputs: FlameScoreInputs, eq: StatEquivalences): number {
-  if (cls === "other") return inputs.secondaryStat * safeReciprocal(eq.secondaryStat);
-  if (cls === "db" || cls === "shadower" || cls === "cadena") {
-    return inputs.dex * safeReciprocal(eq.dexStat) + inputs.str * safeReciprocal(eq.strStat);
-  }
-  return 0;
-}
-
-export function computeFlameScore(
-  cls: FlameClass,
-  itemType: ItemType,
-  inputs: FlameScoreInputs,
-  eq: StatEquivalences,
-): number {
-  let score = inputs.attack * eq.attack;
-
-  if (cls === "da") {
-    score += inputs.hp;
-  } else {
-    score += inputs.mainStat + inputs.allStatPct * eq.allStat;
-    score += classSecondaryScore(cls, inputs, eq);
-  }
-
-  if (itemType === "weapon") {
-    score += (inputs.bossPct + inputs.dmgPct) * eq.dmg;
-  }
-
-  return Math.round(score);
-}
-
 // -- Formatting ---------------------------------------------------------------
 
 const mesoFmt = new Intl.NumberFormat("en-US");
