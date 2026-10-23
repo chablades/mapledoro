@@ -667,7 +667,7 @@ interface CharacterDirectoryScreenProps {
 // Worlds versus single-world. Each conditional here is already its own cohesive,
 // single-purpose branch, with the merged-groups computation and the world-import file state
 // extracted into buildAllWorldsMergedGroups and useWorldImportFile above.
-/* eslint-disable-next-line sonarjs/cognitive-complexity */ /* react-doctor-disable-next-line no-high-complexity-react-function */
+/* react-doctor-disable-next-line no-high-complexity-react-function */
 export default function CharacterDirectoryScreen({
   model, actions, directorySortBy, onDirectorySortByChange,
   directoryWorldFilter, onDirectoryWorldFilterChange, directoryRevealPhase,

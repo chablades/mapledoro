@@ -1,0 +1,67 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": [
+    "typescript",
+    "unicorn",
+    "oxc",
+    "react",
+    "jsx-a11y",
+    "nextjs"
+  ],
+  "jsPlugins": [
+    "oxlint-plugin-complexity"
+  ],
+  "options": {
+    "typeAware": true
+  },
+  "ignorePatterns": [
+    "scripts/**"
+  ],
+  "rules": {
+    "typescript/await-thenable": "error",
+    "typescript/no-floating-promises": "error",
+    "typescript/no-misused-promises": [
+      "error",
+      {
+        "checksVoidReturn": {
+          "attributes": false
+        }
+      }
+    ],
+    "react/rules-of-hooks": "error",
+    "react/exhaustive-deps": "warn",
+    "react/error-boundaries": "error",
+    "react/globals": "error",
+    "react/immutability": "error",
+    "react/incompatible-library": "warn",
+    "react/preserve-manual-memoization": "error",
+    "react/purity": "error",
+    "react/refs": "error",
+    "react/set-state-in-effect": "error",
+    "react/set-state-in-render": "error",
+    "react/static-components": "error",
+    "react/unsupported-syntax": "warn",
+    "react/use-memo": "error",
+    "no-nested-ternary": "warn",
+    "no-lonely-if": "warn",
+    "no-useless-return": "warn",
+    "no-useless-catch": "error",
+    "no-self-compare": "error",
+    "no-dupe-else-if": "error",
+    "typescript/no-deprecated": "warn",
+    "typescript/no-redundant-type-constituents": "warn",
+    "typescript/no-duplicate-type-constituents": "warn",
+    "typescript/no-base-to-string": "warn",
+    "typescript/prefer-promise-reject-errors": "warn",
+    "unicorn/prefer-regexp-test": "warn",
+    "complexity/complexity": [
+      "warn",
+      {
+        "cyclomatic": 1000,
+        "cognitive": 15
+      }
+    ],
+    "jsx-a11y/control-has-associated-label": "off",
+    "jsx-a11y/prefer-tag-over-role": "off"
+  }
+}
