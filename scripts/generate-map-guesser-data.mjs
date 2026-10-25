@@ -175,7 +175,7 @@ const out = screens.map((id) => {
       const child = spotChildren.get(id).get(i);
       const placed = spot.maps.filter((m) => placement.get(m)?.screen === id && placement.get(m).spot === i);
       if (!child && placed.length === 0) return null;
-      const label = spot.title ?? (child ? labels.get(child) : mostCommonStreet(placed) ?? maps[placed[0]].name);
+      const label = spot.title ?? (child ? labels.get(child) : maps[placed[0]].name);
       return {
         x: e.origin[0] + spot.x,
         y: e.origin[1] + spot.y,

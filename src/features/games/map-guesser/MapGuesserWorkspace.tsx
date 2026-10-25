@@ -267,8 +267,9 @@ function PuzzleView({
           <MinimapReveal
             theme={theme}
             mapId={puzzle.mapId}
-            center={puzzle.reveal}
+            center={testIndex !== null ? [0.5, 0.6] : puzzle.reveal}
             misses={result.done ? null : failedCount}
+            viewSrc={testIndex !== null ? `/map-guesser-test/${puzzle.mapId}.webp` : undefined} // TEMPORARY (map render preview)
           />
           <div style={{ fontSize: "0.85rem", fontWeight: 700, color: theme.text }}>
             Where is this map? Each miss reveals more of it.

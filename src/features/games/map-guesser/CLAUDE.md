@@ -29,17 +29,19 @@ the child screen doesn't place) show under the map as "Also at ...". MapLinks to
 (Cernium <-> Burning Cernium) become `links`, drawn under the top-right Back button. Right-click on
 the map also goes back.
 
-**Minimap reveal** (`MinimapReveal.tsx`): only a square of the minimap shows, growing per miss via
-`REVEAL_STEPS` (shares of the **shorter** side, all < 1, so it stays a square section on tall or
-wide minimaps instead of clamping to a full band), grown around the puzzle's `reveal` centre.
+**Minimap reveal** (`MinimapReveal.tsx`): a fixed square frame zoomed into a square of the
+minimap, widening (zooming out) per miss via `REVEAL_STEPS` (shares of the **shorter** side, so it
+stays a square section on tall or wide minimaps), grown around the puzzle's `reveal` centre. The
+game never shows the whole minimap; the results dialog does.
 `scripts/map-guesser-reveal.mjs` picks that centre: the first-step square with the most
 platform/building outline and texture, damped when it's nearly all sky or solid ground, with a
 mild pull to the middle. Its `FIRST_STEP` must match `REVEAL_STEPS[0]`. The map's backdrop
-(`back.png`, its back layers at minimap scale) sits under the minimap inside the same clip, so
+(`back.png`, its back layers at minimap scale) sits under the minimap in the same zoomed layer, so
 the sky the minimap leaves transparent shows scenery; maps without one hide it on error. The
-images must load eagerly: a fully clipped lazy image never loads. Minimaps are tiny
-(~100-300px), so they upscale only by a whole-number factor (pixelated) that fits the frame height;
-fractional stretching to fill the frame blurred them.
+images must load eagerly: the layer is zero-size until the minimap's natural size is known (so
+the first placement doesn't animate in from the whole map), and a lazy image there never loads.
+The zoom fills the frame, so it's fractional; `pixelated` keeps it crisp (whole-number-only
+scaling can't fill a fixed frame and would make the square jump in size between misses).
 
 **Scoring** compares the guess and target paths (world → screens → spot → map): green while
 matching, red where they diverge. Below the world level, a compass gives direction and rough

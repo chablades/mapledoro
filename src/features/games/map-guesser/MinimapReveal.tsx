@@ -7,75 +7,71 @@ import { mapBackUrl, mapMinimapUrl } from "../../../lib/mapleResource";
 
 /**
  * Side of the revealed square as a share of the minimap's shorter side, by misses so far.
- * Below 1 so even the last step stays a square section, never a full-width/height band.
  * The first step must match FIRST_STEP in scripts/map-guesser-reveal.mjs, which picks
  * where that square sits.
  */
 const REVEAL_STEPS = [0.3, 0.42, 0.54, 0.66, 0.78, 0.9];
+/** TEMPORARY (map render preview): steps for `viewSrc`, tighter since a render is full size. */
+const VIEW_STEPS = [0.15, 0.24, 0.35, 0.5, 0.68, 0.88];
 
-const FRAME_HEIGHT = 200;
-const FRAME_PAD = 8;
+const FRAME_SIZE = 260;
 
 const frame: CSSProperties = {
   position: "relative",
-  width: "100%",
-  height: FRAME_HEIGHT,
+  width: `min(100%, ${FRAME_SIZE}px)`,
+  aspectRatio: "1",
   borderRadius: 14,
   overflow: "hidden",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
 };
 
-const layers: CSSProperties = { position: "absolute", inset: 0, transition: "clip-path 0.5s ease" };
+const layers: CSSProperties = {
+  position: "absolute",
+  transition: "left 0.5s ease, top 0.5s ease, width 0.5s ease, height 0.5s ease",
+};
 
-/** clip-path showing a square of `fraction` x the shorter side around `center`, clamped inside the image. */
-function revealClip([fx, fy]: [number, number], w: number, h: number, fraction: number): string | undefined {
-  if (fraction >= 1) return undefined;
+/**
+ * Places the minimap so its square of `fraction` x the shorter side around `center`
+ * (clamped inside the image) fills the frame. Percentages of the square frame's side.
+ */
+function revealBox([fx, fy]: [number, number], w: number, h: number, fraction: number): CSSProperties {
   const side = fraction * Math.min(w, h);
   const x0 = Math.min(Math.max(fx * w - side / 2, 0), w - side);
   const y0 = Math.min(Math.max(fy * h - side / 2, 0), h - side);
-  const pct = (v: number, total: number) => `${(v / total) * 100}%`;
-  return `inset(${pct(y0, h)} ${pct(w - x0 - side, w)} ${pct(h - y0 - side, h)} ${pct(x0, w)})`;
+  const pct = (v: number) => `${(v / side) * 100}%`;
+  return { left: pct(-x0), top: pct(-y0), width: pct(w), height: pct(h) };
 }
 
 /**
- * The puzzle's minimap over its backdrop, hidden except for a square that grows with each
- * miss around `center`. The minimap's outline stays visible, so its shape is part of the
- * clue. `misses` null shows the whole minimap (puzzle finished).
+ * The puzzle's minimap over its backdrop, zoomed into a square that widens with each miss
+ * around `center`. `misses` null shows the largest square (puzzle finished; the results
+ * dialog shows the whole map).
  */
 export default function MinimapReveal({
   theme,
   mapId,
   center,
   misses,
+  viewSrc,
 }: {
   theme: AppTheme;
   mapId: number;
   center: [number, number];
   misses: number | null;
+  /** TEMPORARY (map render preview): a square full-size render of part of the map, shown instead of the minimap. */
+  viewSrc?: string;
 }) {
-  // Natural size, read on load: the clip and the wrapper's aspect ratio both need it.
+  // Natural size, read on load: placing the square needs it. Until then the layer has no
+  // size (auto, so the first placement doesn't animate in from a full view of the map).
   const [size, setSize] = useState<{ w: number; h: number } | null>(null);
-  const fraction = misses === null ? 1 : REVEAL_STEPS[Math.min(misses, REVEAL_STEPS.length - 1)];
-  const aspect = size ? size.w / size.h : 2;
-  const clip = size ? revealClip(center, size.w, size.h, fraction) : "inset(50%)";
-  // Whole-number upscale that fits the frame: fractional scaling blurs or warps pixels this small.
-  const scale = size ? Math.max(1, Math.floor((FRAME_HEIGHT - FRAME_PAD * 2) / size.h)) : 1;
-  const pixelated = scale > 1 ? "pixelated" : undefined;
+  const steps = viewSrc ? VIEW_STEPS : REVEAL_STEPS;
+  const fraction = misses === null ? 1 : steps[Math.min(misses, steps.length - 1)];
+  const box = size ? revealBox(center, size.w, size.h, fraction) : undefined;
 
   return (
     <div style={{ ...frame, border: `1px solid ${theme.border}`, background: theme.timerBg }}>
-      <div
-        style={{
-          position: "relative",
-          aspectRatio: String(aspect),
-          width: `min(calc(100% - ${FRAME_PAD * 2}px), ${(FRAME_HEIGHT - FRAME_PAD * 2) * aspect}px, ${size ? size.w * scale : 9999}px)`,
-          outline: `1px dashed ${theme.border}`,
-        }}
-      >
-        <div style={{ ...layers, clipPath: clip }}>
-          {/* Backdrop: same size as the minimap, so it lines up beneath it. Some maps have none. */}
+      <div style={{ ...layers, ...box }}>
+        {/* Backdrop: same size as the minimap, so it lines up beneath it. Some maps have none. */}
+        {!viewSrc && (
           <Image
             src={mapBackUrl(mapId)}
             alt=""
@@ -85,23 +81,23 @@ export default function MinimapReveal({
             onError={(e) => {
               e.currentTarget.style.display = "none";
             }}
-            style={{ imageRendering: pixelated }}
+            style={{ imageRendering: "pixelated" }}
           />
-          <Image
-            src={mapMinimapUrl(mapId)}
-            alt="Mystery map minimap"
-            fill
-            unoptimized
-            // Eager: a fully clipped lazy image counts as off-screen and would never load.
-            loading="eager"
-            ref={(img) => {
-              // Covers an image that finished loading before React attached onLoad.
-              if (img?.complete && img.naturalWidth > 0 && !size) setSize({ w: img.naturalWidth, h: img.naturalHeight });
-            }}
-            onLoad={(e) => setSize({ w: e.currentTarget.naturalWidth, h: e.currentTarget.naturalHeight })}
-            style={{ imageRendering: pixelated }}
-          />
-        </div>
+        )}
+        <Image
+          src={viewSrc ?? mapMinimapUrl(mapId)}
+          alt="Mystery map minimap"
+          fill
+          unoptimized
+          // Eager: a zero-size or mostly off-frame lazy image counts as off-screen and would never load.
+          loading="eager"
+          ref={(img) => {
+            // Covers an image that finished loading before React attached onLoad.
+            if (img?.complete && img.naturalWidth > 0 && !size) setSize({ w: img.naturalWidth, h: img.naturalHeight });
+          }}
+          onLoad={(e) => setSize({ w: e.currentTarget.naturalWidth, h: e.currentTarget.naturalHeight })}
+          style={{ imageRendering: "pixelated" }}
+        />
       </div>
     </div>
   );
