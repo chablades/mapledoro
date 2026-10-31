@@ -12,7 +12,7 @@ import { CLASS_SKILL_DATA } from "../data/classSkillData";
 import { readCharactersStore, selectCharacterByIgn } from "../../model/charactersStore";
 import {
   GUILD_BUFFS, GUILD_BUFF_MAX,
-  BOOL_BUFFS, BUFF_GROUP_A, BUFF_GROUP_B,
+  BOOL_BUFFS, BUFF_GROUP_A, BUFF_GROUP_B, buffShownForClass,
   RENOWN_STATS, RENOWN_MAX, RENOWN_SKILL_ID,
   parseBuffsDraft, serializeBuffsDraft, storedBuffsToDraft,
   sanitizeGuildLevel, sanitizeRenownLevel, toggleBoolBuff,
@@ -244,6 +244,7 @@ export default function BuffsSetupStep({
   const requiredStats = classData?.requiredStats ?? [];
   const primaryStat = primaryStatForClass(requiredStats);
   const classMainStats = mainStatsForClass(requiredStats);
+  const usesMagicAtt = requiredStats.includes("magicAtt");
   const statTiers = getStatPotionTiers(primaryStat);
 
   // full_setup derives Maxed Symbols from the Equipment Symbols substep instead (see
@@ -406,7 +407,7 @@ export default function BuffsSetupStep({
                   pick one
                 </span>
                 {/* react-doctor-disable-next-line js-combine-iterations -- BOOL_BUFFS is a small fixed roster, extra pass is negligible per the rule's own FP criteria */}
-                {BOOL_BUFFS.filter((b) => groupSet.has(b.id)).map((b) => (
+                {BOOL_BUFFS.filter((b) => groupSet.has(b.id) && buffShownForClass(b, usesMagicAtt)).map((b) => (
                   <BoolBuffTile
                     key={b.id}
                     entry={b}

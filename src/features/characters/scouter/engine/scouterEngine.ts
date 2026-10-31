@@ -87,7 +87,11 @@ const DOPING: Record<DopingGroup, Partial<Record<DopingKey, number>>> = {
     // Gourmand Power's own description says +10, a known error (MapleStory Wiki: really +30).
     // The Enlightened One's +5 lasts 5 minutes on a 1-hour cooldown, so once per 20-minute fight:
     // +5 x 5/20 averaged over the fight.
-    believeInYourself: 20, gourmandPower: 30, enlightenedOne: 1.25, peerlessMarble: 30 },
+    believeInYourself: 20, gourmandPower: 30, enlightenedOne: 1.25, peerlessMarble: 30,
+    // The pick-one group's additions, each a class's own ATT or Magic ATT (the Buffs step only
+    // offers a magic one to a magic class and the reverse): Ssiws Cheese Magic ATT +220, The
+    // Energizer Drink ATT +25 or Magic ATT +30, Advanced Attack or Magic Potion V +10.
+    ssiwsCheese: 220, witchStew: 40, energizerDrink: 25, energizerDrinkMagic: 30, attackPotionV: 10, magicPotionV: 10 },
   dmg: { additional1: 15, sayram: 10, shiningRed: 20, authenticDmg: 20, house: 15, bigHero: 10, statPotion: 3 },
   crit: { sayram: 8, jangBi: 5 },
   atkPct: { sayram: 10, heroesHawl: 4 },
@@ -100,8 +104,10 @@ const DOPING: Record<DopingGroup, Partial<Record<DopingKey, number>>> = {
 };
 const AUTHENTIC_DMG_PCT = 20;
 // Demon Avenger only: base HP the same items add (scaled by HP %), and Guild Blessing's 30 ATT,
-// which no other measured class gets.
-const DA_HP: Partial<Record<DopingKey, number>> = { sayram: 1295, additional1: 1505, collector: 182 };
+// which no other measured class gets. Bright Moonlight Potion and Extreme Red Potion are
+// MapleDoro's own: MapleScouter doesn't count their +2000 HP, but it's a full-fight buff to
+// Demon Avenger's damage like the rest.
+const DA_HP: Partial<Record<DopingKey, number>> = { sayram: 1295, additional1: 1505, collector: 182, moonshine: 2000, extreme: 2000 };
 const DA_HP_PER_CHAMPION_ALL = 490;
 
 // Mu Gong's soul (Memories: +25% ATT for 10 or 20 s every 120 s) counts as 3 ATT% at either level:

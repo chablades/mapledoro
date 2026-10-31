@@ -86,6 +86,12 @@ export interface StoredScouterBuffs {
   onyxApple?: true;
   tengusJudgement?: true;
   fishBuff?: true;
+  ssiwsCheese?: true;
+  witchStew?: true;
+  energizerDrink?: true;
+  energizerDrinkMagic?: true;
+  attackPotionV?: true;
+  magicPotionV?: true;
   genepass?: true;
   renown?: Partial<Record<"allStats" | "atkMagAtk" | "bossDmg" | "ignoreDef" | "critDmg", number>>;
 }

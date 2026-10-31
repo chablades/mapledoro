@@ -16,7 +16,7 @@ import { LINK_SKILLS } from "../setup/data/linkSkillsData";
 import { LinkSkillRow } from "../setup/components/LinkSkillsSetupStep";
 import { LINK_SKILL_TO_SCOUTER_KEY } from "./scouterLinkSkills";
 import {
-  BOOL_BUFFS, BUFF_GROUP_A, BUFF_GROUP_B,
+  BOOL_BUFFS, BUFF_GROUP_A, BUFF_GROUP_B, buffShownForClass,
   GUILD_BUFFS, GUILD_BUFF_MAX, RENOWN_STATS, RENOWN_SKILL_ID,
   toggleBoolBuff, sanitizeGuildLevel, sanitizeRenownLevel,
   getStatPotionTiers, primaryStatForClass,
@@ -141,6 +141,7 @@ function BuffsTab({ theme, draft, onChange, primaryStat, jobName }: {
 }) {
   const statPotionTier = Number.parseInt(draft.statPotionTier, 10) || 0;
   const statTier10 = getStatPotionTiers(primaryStat)[9];
+  const usesMagicAtt = CLASS_SKILL_DATA.find((c) => c.nexonJobName === jobName)?.requiredStats.includes("magicAtt") ?? false;
 
   const toggleBool = (id: BoolBuffId) => onChange(toggleBoolBuff(draft, id));
   const setGuild = (id: GuildBuffId, val: string) => onChange({ ...draft, guild: { ...draft.guild, [id]: sanitizeGuildLevel(val) } });
@@ -203,7 +204,7 @@ function BuffsTab({ theme, draft, onChange, primaryStat, jobName }: {
         <div key={groupId} style={{ ...pickOneGroupStyle(theme), width: "fit-content" }}>
           <span style={pickOneLabelStyle(theme)}>pick one</span>
           {/* react-doctor-disable-next-line js-combine-iterations -- BOOL_BUFFS is a small fixed roster, extra pass is negligible per the rule's own FP criteria */}
-          {BOOL_BUFFS.filter((b) => groupSet.has(b.id)).map(renderBuffTile)}
+          {BOOL_BUFFS.filter((b) => groupSet.has(b.id) && buffShownForClass(b, usesMagicAtt)).map(renderBuffTile)}
         </div>
       ))}
 

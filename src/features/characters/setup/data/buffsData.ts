@@ -106,7 +106,8 @@ export type BoolBuffId =
   // Group A, pick one
   | "greatHeroBoost" | "legendaryHero" | "advWeaponTempering" | "sparklingBlueStar"
   // Group B, pick one
-  | "onyxApple" | "tengusJudgement";
+  | "onyxApple" | "tengusJudgement" | "ssiwsCheese" | "witchStew" | "energizerDrink" | "energizerDrinkMagic"
+  | "attackPotionV" | "magicPotionV";
 
 export type BoolBuffIconType = { kind: "item"; id: string; shadow?: boolean } | { kind: "skill"; id: string };
 
@@ -121,11 +122,15 @@ export interface BoolBuffEntry {
    *  effect (fishBuff's 3 renamed event potions) rather than 2. */
   thirdIcon?: BoolBuffIconType;
   group?: "A" | "B";
+  /** Shown only to classes that use this attack type (buffShownForClass): an item that raises
+   *  only ATT or only Magic ATT, or one whose value differs between them. */
+  attackType?: "physical" | "magic";
 }
 
 // Ungrouped order follows roughly how obtainable each buff is: NPC shop (candied apple), then
 // quest shop elixirs, free daily (extreme), profession-gated (red star and advanced stat),
-// boss drop (bright moonlight), guild, legion and paid buffs, then equipment (sacred symbols).
+// boss drop (bright moonlight), guild, legion and paid buffs, then the daily and event buffs
+// (Yu Garden, Tangyoon, Grako's marble), the Genesis Pass, and the once-per-fight title.
 // Groups A and B put potions first, left to right as in-game, with the visually distinct skill
 // buff last.
 export const BOOL_BUFFS: readonly BoolBuffEntry[] = [
@@ -140,41 +145,58 @@ export const BOOL_BUFFS: readonly BoolBuffEntry[] = [
   { id: "sparklingRedStar",  name: "Sparkling Red Star Potion",      icon: { kind: "item",  id: "02024174" }, secondIcon: { kind: "item", id: "02024175" } },
   // Advanced Stat Potion tile is inserted here at render time
   { id: "brightMoonlight",   name: "Bright Moonlight Potion",        icon: { kind: "item",  id: "02023136" } },
-  // Event buffs that last the whole 20-minute fight: Yu Garden's fortune (the one fortune worth
-  // having for bosses) and Tangyoon's Gourmand Power. Believe in Yourself has no shadowless icon.
-  { id: "believeInYourself", name: "Believe in Yourself",            icon: { kind: "item",  id: "02023534", shadow: true } },
-  { id: "gourmandPower",     name: "Gourmand Power",                 icon: { kind: "item",  id: "02023163" } },
-  // A title whose Concentration buff (ATT and Magic ATT +5 for 5 minutes, 1-hour cooldown) is
-  // used once per fight; the engine averages it over the fight.
-  { id: "enlightenedOne",    name: "The Enlightened One",            icon: { kind: "item",  id: "03700266" } },
-  // The one Grako Marble Gift worth having for bosses; the other marbles' +5 or +10 to a stat is
-  // under 0.1% damage. No shadowless icon.
-  { id: "peerlessMarble",    name: "Peerless Marble",                icon: { kind: "item",  id: "02023906", shadow: true } },
   { id: "heroEcho",          name: "Hero's Echo",                    icon: { kind: "skill", id: "0001005"  } },
   { id: "legionMight",       name: "Legion's Might",                 icon: { kind: "item",  id: "02024188" } },
   { id: "masarayuGift",      name: "Masarayu's Gift Atmospheric Effect", icon: { kind: "item", id: "02024193", shadow: true } },
   { id: "caretakerSupport",  name: "Caretaker's Support",            icon: { kind: "skill", id: "80011827" } },
   { id: "vipBuff",           name: "VIP Buff (Stats)",               icon: { kind: "item",  id: "02024163", shadow: true } },
   { id: "mvpSuperpower",     name: "MVP Superpower Buff",            icon: { kind: "item",  id: "02023544" } },
+  // Event buffs that last the whole 20-minute fight: Yu Garden's fortune (the one fortune worth
+  // having for bosses) and Tangyoon's Gourmand Power. Believe in Yourself has no shadowless icon.
+  { id: "believeInYourself", name: "Believe in Yourself",            icon: { kind: "item",  id: "02023534", shadow: true } },
+  { id: "gourmandPower",     name: "Gourmand Power",                 icon: { kind: "item",  id: "02023163" } },
+  // The one Grako Marble Gift worth having for bosses; the other marbles' +5 or +10 to a stat is
+  // under 0.1% damage. No shadowless icon.
+  { id: "peerlessMarble",    name: "Peerless Marble",                icon: { kind: "item",  id: "02023906", shadow: true } },
   { id: "genepass",          name: "Power of the Adversary",         icon: { kind: "skill", id: "80003909" } },
+  // A title whose Concentration buff (ATT and Magic ATT +5 for 5 minutes, 1-hour cooldown) is
+  // used once per fight; the engine averages it over the fight.
+  { id: "enlightenedOne",    name: "The Enlightened One",            icon: { kind: "item",  id: "03700266" } },
   // Group A
   { id: "sparklingBlueStar",   name: "Sparkling Blue Star Potion",       icon: { kind: "item",  id: "02024173" }, group: "A" },
   { id: "greatHeroBoost",      name: "Advanced Great Hero Boost Potion", icon: { kind: "item",  id: "02024176" }, group: "A" },
   { id: "legendaryHero",       name: "Legendary Hero Potion",            icon: { kind: "item",  id: "02024179" }, group: "A" },
   { id: "advWeaponTempering",  name: "Advanced Weapon Tempering",        icon: { kind: "skill", id: "80002363" }, group: "A" },
-  // Group B
+  // Group B. Every item here can be reused for as long as the fight lasts. Tengu's Judgement's
+  // tooltip also names Cold Winter Energy, and Cider for physical classes: the same +20.
+  { id: "tengusJudgement", name: "Tengu's Judgement",  icon: { kind: "item", id: "02023626" }, group: "B" },
+  // The magic Potion V tile stands for Yakisoba too, the same +10, with Yakisoba's icon in front.
+  { id: "attackPotionV",   name: "Advanced Attack Potion V", icon: { kind: "item", id: "02004109" }, group: "B", attackType: "physical" },
+  { id: "magicPotionV",    name: "Advanced Magic Potion V",  icon: { kind: "item", id: "02022027" }, secondIcon: { kind: "item", id: "02004119" }, group: "B", attackType: "magic" },
   { id: "onyxApple",       name: "Onyx Apple",         icon: { kind: "item", id: "02024278" }, group: "B" },
+  // The Energizer Drink gives ATT +25 but Magic ATT +30, so each attack type gets its own tile.
+  { id: "energizerDrink",      name: "The Energizer Drink", icon: { kind: "item", id: "02022345" }, group: "B", attackType: "physical" },
+  { id: "energizerDrinkMagic", name: "The Energizer Drink", icon: { kind: "item", id: "02022345" }, group: "B", attackType: "magic" },
   // Same +30 ATT/Magic ATT effect under 3 different event-reskinned item names (Tree
   // Ornament, A Flurry of Snow, Warm and Fuzzy Winter). MapleScouter tracks it as one "fish"
   // buff whichever name a player has. See fishBuffTooltip in BuffsSetupStep.tsx for the full
   // name list shown to the player. Warm and Fuzzy Winter is deliberately the backmost and
   // dimmest layer, being a busier icon that would otherwise dominate the stack.
   { id: "fishBuff",       name: "Tree Ornament",      icon: { kind: "item", id: "02022119" }, secondIcon: { kind: "item", id: "02022280" }, thirdIcon: { kind: "item", id: "02022434" }, group: "B" },
-  { id: "tengusJudgement", name: "Tengu's Judgement",  icon: { kind: "item", id: "02023626" }, group: "B" },
+  { id: "witchStew",       name: "Witch's Special Stew", icon: { kind: "item", id: "02022629" }, group: "B" },
+  { id: "ssiwsCheese",     name: "Ssiws Cheese",       icon: { kind: "item", id: "02022273" }, group: "B", attackType: "magic" },
 ];
 
 export const BUFF_GROUP_A = new Set<BoolBuffId>(["greatHeroBoost","legendaryHero","advWeaponTempering","sparklingBlueStar"]);
-export const BUFF_GROUP_B = new Set<BoolBuffId>(["onyxApple","tengusJudgement","fishBuff"]);
+export const BUFF_GROUP_B = new Set<BoolBuffId>([
+  "onyxApple", "tengusJudgement", "fishBuff", "ssiwsCheese", "witchStew", "energizerDrink", "energizerDrinkMagic",
+  "attackPotionV", "magicPotionV",
+]);
+
+/** Whether a class that does or doesn't use Magic ATT sees this buff (see attackType). */
+export function buffShownForClass(entry: BoolBuffEntry, usesMagicAtt: boolean): boolean {
+  return !entry.attackType || (entry.attackType === "magic") === usesMagicAtt;
+}
 
 // Classes whose Echo of Hero equivalent has a unique in-game icon.
 // All others use the generic 0001005. Confirmed via grandislibrary pixel-match against WZ exports.

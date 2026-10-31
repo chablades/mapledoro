@@ -90,6 +90,12 @@ export interface ScouterDoping {
   gourmandPower: boolean;
   enlightenedOne: boolean;
   peerlessMarble: boolean;
+  ssiwsCheese: boolean;
+  witchStew: boolean;
+  energizerDrink: boolean;
+  energizerDrinkMagic: boolean;
+  attackPotionV: boolean;
+  magicPotionV: boolean;
   // Not a GMS buff, so always "0" here, the same treatment as the KMS-only seed rings below
   // (see buildSeedRing).
   criDmgRing: "0";
@@ -344,6 +350,12 @@ function buildDoping(buffs: StoredScouterBuffs | undefined): ScouterDoping {
     gourmandPower: Boolean(buffs?.gourmandPower),
     enlightenedOne: Boolean(buffs?.enlightenedOne),
     peerlessMarble: Boolean(buffs?.peerlessMarble),
+    ssiwsCheese: Boolean(buffs?.ssiwsCheese),
+    witchStew: Boolean(buffs?.witchStew),
+    energizerDrink: Boolean(buffs?.energizerDrink),
+    energizerDrinkMagic: Boolean(buffs?.energizerDrinkMagic),
+    attackPotionV: Boolean(buffs?.attackPotionV),
+    magicPotionV: Boolean(buffs?.magicPotionV),
     criDmgRing: "0",
   };
 }
