@@ -14,6 +14,14 @@ const CHANGELOG: ChangelogEntry[] = [
   {
     date: "2026-10-31",
     changes: [
+      { type: "added", text: "My Characters on the dashboard can now be reordered with the new reorder button." },
+      { type: "added", text: "The Legion panel's Link Skills can now be edited, so you can enter link skill levels from characters you don't track." },
+      { type: "added", text: "Hovering a link skill's icon in the Legion panel now shows which characters contribute to it." },
+      { type: "fixed", text: "Fixed Import data in Settings replacing your existing data without asking first. It now shows what you'd lose, like a Google Drive restore." },
+      { type: "fixed", text: "Fixed Import World dropping the file's Legion data when that world had none saved." },
+      { type: "fixed", text: "Fixed Import World moving a character off another world when the file had a character with the same name." },
+      { type: "fixed", text: "Fixed the Character Info setup step keeping a box marked as changed after typing its old value back, for players using Dark Reader." },
+      { type: "fixed", text: "Fixed the Character Info setup step marking every box as changed for characters with no stats saved yet." },
       { type: "changed", text: "Boss Clear's 100% Solo HEXA is now the same line for every class. Your Sacred Symbols, Genesis Pass and Ascent now raise your Adjusted HEXA Stat instead of lowering the line." },
       { type: "changed", text: "Hayato's Scouter HEXA and Boss Clear are now adjusted for how the class clears in real fights, and Mo Xuan's adjustment is slightly larger." },
       { type: "changed", text: "Your Boss 380 HEXA now includes Sacred Symbol damage only once all 8 Sacred Symbols are at Lv. 11, Tallahart and Geardock included, and its tooltip says which applies." },
