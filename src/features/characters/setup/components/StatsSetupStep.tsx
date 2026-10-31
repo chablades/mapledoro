@@ -997,7 +997,8 @@ function deriveScouterVisibility(flowId: SetupFlowId | undefined): { isScouter: 
   const isScouter = flowId === "maplescouter_setup";
   return {
     isScouter,
-    showWhLegion: isScouter || flowId === "full_setup",
+    // stats_flow too: its Quick Questions opens alone as the Scouter bookmark's Scouter Questions.
+    showWhLegion: isScouter || flowId === "full_setup" || flowId === "stats_flow",
   };
 }
 
@@ -1302,7 +1303,7 @@ function resolveEffectiveLegionBoard(
 
 function QuickQuestionsSubstep({
   theme, stepNumber, totalSteps, substepCount, substepAnimStyle,
-  onBack, onNext, onFinish, onValidityChange,
+  onBack, onNext, onFinish, onValidityChange, confined,
   classData, draft, whSource, worldScouterLegion, worldLegionArtifact, equipmentRawValue, legionArtifactsRawValue,
   isScouter, showWhLegion, characterLevel, existingRecord,
   handleSetupOptUpdate, handleScouterQUpdate,
@@ -1325,6 +1326,9 @@ function QuickQuestionsSubstep({
   legionArtifactsRawValue: string | undefined;
   isScouter: boolean;
   showWhLegion: boolean;
+  /** Opened on its own from the Scouter bookmark's pencil, as "Scouter Questions", finishing on
+   *  its own Next. */
+  confined: boolean;
   characterLevel?: number;
   existingRecord: StoredCharacterRecord | null;
   handleSetupOptUpdate: (patch: Partial<NonNullable<StatsStepDraft["setupOptions"]>>) => void;
@@ -1343,15 +1347,15 @@ function QuickQuestionsSubstep({
       <SetupStepFrame
         theme={theme}
         substepIndex={0}
-        substepCount={substepCount}
-        stepLabel="Quick Questions"
+        substepCount={confined ? 1 : substepCount}
+        stepLabel={confined ? "Scouter Questions" : "Quick Questions"}
         stepNumber={stepNumber}
         totalSteps={totalSteps}
         description="Answer what applies to your character below."
         onBack={onBack}
-        onNext={onNext}
+        onNext={confined ? onFinish : onNext}
         onFinish={onFinish}
-        nextLabel="Continue"
+        nextLabel={confined ? undefined : "Continue"}
         nextDisabled={isScouter && !questionnaireComplete}
         onValidityChange={onValidityChange}
       >
@@ -1709,6 +1713,7 @@ export default function StatsSetupStep({
         theme={theme} stepNumber={stepNumber} totalSteps={totalSteps}
         substepCount={SUBSTEP_COUNT} substepAnimStyle={substepAnimStyle}
         onBack={onBack} onNext={() => goToSubstep(1)} onFinish={onFinish} onValidityChange={onValidityChange}
+        confined={confineToSubstep === true}
         classData={classData} draft={draft} whSource={whSource} worldScouterLegion={worldScouterLegion} worldLegionArtifact={worldLegionArtifact}
         equipmentRawValue={equipmentRawValue} legionArtifactsRawValue={legionArtifactsRawValue}
         isScouter={isScouter} showWhLegion={showWhLegion} characterLevel={characterLevel} existingRecord={existingRecord}

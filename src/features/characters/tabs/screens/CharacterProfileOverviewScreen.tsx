@@ -150,8 +150,71 @@ function exportCharacterJson(charName: string | undefined) {
   URL.revokeObjectURL(url);
 }
 
-function BookmarkPageHeader({ theme, label, onEdit, disabled, extraAction }: {
+interface EditMenuItem {
+  label: string;
+  onSelect: () => void;
+}
+
+const editMenuStyle = (theme: Theme): CSSProperties => ({
+  position: "absolute", top: "calc(100% + 4px)", right: 0, zIndex: 50,
+  display: "flex", flexDirection: "column", minWidth: 140, padding: 4,
+  background: theme.panel, border: `1px solid ${theme.border}`, borderRadius: 10,
+  boxShadow: "0 6px 24px rgba(0,0,0,0.18)",
+});
+
+const editMenuItemStyle = (theme: Theme): CSSProperties => ({
+  border: "none", background: "none", padding: "6px 10px", borderRadius: 6, textAlign: "left",
+  fontFamily: "inherit", fontSize: "0.8rem", fontWeight: 700, color: theme.text, cursor: "pointer",
+});
+
+/** The pencil for a bookmark whose inputs come from several setup steps: it opens a menu of them
+ *  instead of one step. Closes when focus leaves it or on Escape. */
+function EditMenuButton({ theme, label, items, disabled }: { theme: Theme; label: string; items: EditMenuItem[]; disabled: boolean }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div
+      style={{ position: "relative" }}
+      onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setOpen(false); }}
+      onKeyDown={(e) => { if (e.key === "Escape") setOpen(false); }}
+    >
+      <HoverTooltip label={`Edit ${label}`} theme={theme}>
+        <button
+          type="button"
+          className="tap-target-44"
+          aria-label={`Edit ${label}`}
+          aria-expanded={open}
+          disabled={disabled}
+          onClick={() => setOpen((o) => !o)}
+          style={pencilButtonStyle(theme)}
+        >
+          <PencilIcon />
+        </button>
+      </HoverTooltip>
+      {open && (
+        <div role="menu" style={editMenuStyle(theme)}>
+          {items.map((item) => (
+            <button
+              key={item.label}
+              type="button"
+              role="menuitem"
+              onClick={() => { setOpen(false); item.onSelect(); }}
+              style={editMenuItemStyle(theme)}
+              onMouseEnter={(e) => { e.currentTarget.style.background = `${theme.accent}18`; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "none"; }}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function BookmarkPageHeader({ theme, label, onEdit, disabled, extraAction, editMenu }: {
   theme: Theme; label: string; onEdit: (() => void) | null; disabled: boolean; extraAction?: ReactNode;
+  /** In place of onEdit, a pencil that opens a menu of setup steps. */
+  editMenu?: EditMenuItem[];
 }) {
   return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, gap: 10 }}>
@@ -159,7 +222,8 @@ function BookmarkPageHeader({ theme, label, onEdit, disabled, extraAction }: {
         <h3 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 800, color: theme.text }}>{label}</h3>
         {extraAction}
       </div>
-      {onEdit !== null && (
+      {editMenu && <EditMenuButton theme={theme} label={label} items={editMenu} disabled={disabled} />}
+      {!editMenu && onEdit !== null && (
         <HoverTooltip label={`Edit ${label}`} theme={theme}>
           <button
             type="button"
@@ -3169,6 +3233,15 @@ function scouterBookmarkHeaderLabel(view: ScouterBookmarkView, defaultLabel: str
   return view === "spotlight" ? spotlightBoss : defaultLabel;
 }
 
+// The Scouter inputs no other bookmark edits (Stats and HEXA have their own pencils), each opening
+// its single MapleScouter Setup step. Scouter Questions is the Stats step's Quick Questions alone.
+const SCOUTER_INPUT_FLOWS: readonly { label: string; flowId: SetupFlowId; substep?: number }[] = [
+  { label: "Scouter Questions", flowId: "stats_flow", substep: 0 },
+  { label: "Oz Rings", flowId: "oz_rings_flow" },
+  { label: "Link Skills", flowId: "link_skills_flow" },
+  { label: "Buffs", flowId: "buffs_flow" },
+];
+
 /** The not-ready states every Scouter-backed bookmark shares (class unsupported, setup
  *  incomplete, engine data loading, calculation failed) plus the engine notice banner, kept in one
  *  place so Scouter and Stat Efficiency cannot drift apart. Also owns this bookmark's page header.
@@ -3179,7 +3252,13 @@ function ScouterResultGate({ theme, character, label, disabled, onEditStep, chil
   children: (entry: ScouterResultEntry) => ReactNode;
 }) {
   const status = useScouterResult(character);
-  const header = <BookmarkPageHeader theme={theme} label={label} onEdit={null} disabled={disabled} />;
+  const editMenu = status.kind === "unsupported"
+    ? undefined
+    : SCOUTER_INPUT_FLOWS.map((f) => ({
+        label: f.label,
+        onSelect: () => (f.substep === undefined ? onEditStep(f.flowId) : onEditStep(f.flowId, f.substep, true)),
+      }));
+  const header = <BookmarkPageHeader theme={theme} label={label} onEdit={null} disabled={disabled} editMenu={editMenu} />;
 
   if (status.kind === "unsupported") {
     return (
@@ -3575,8 +3654,8 @@ function BookmarkPageBody({
     );
   }
 
-  // Read-only, the same shape as EXP above. Nothing here is user-editable; it displays whatever
-  // the last Scouter refresh computed. useScouterResult needs a real character, the same
+  // The results themselves aren't editable; the header's pencil menu (ScouterResultGate) opens
+  // the setup steps behind them. useScouterResult needs a real character, the same
   // constraint ScouterFigure has on Overview, so the null check happens at this call site
   // rather than inside ScouterBookmark.
   if (active.id === "scouter") {

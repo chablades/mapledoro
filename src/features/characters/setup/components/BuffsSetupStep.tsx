@@ -249,7 +249,7 @@ export default function BuffsSetupStep({
   // full_setup derives Maxed Symbols from the Equipment Symbols substep instead (see
   // withDerivedMaxedSymbols in useCharacterSetupController.ts). Asking it here too would be a
   // duplicate, out-of-order entry point for the same fact.
-  const showMaxedSymbols = flowId === "maplescouter_setup";
+  const showMaxedSymbols = flowId === "maplescouter_setup" || flowId === "buffs_flow";
 
   const draft = parseBuffsDraft(value);
   const initialValueRef = useRef(value);

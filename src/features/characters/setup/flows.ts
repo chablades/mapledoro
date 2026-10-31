@@ -104,6 +104,28 @@ const SETUP_FLOWS = [
     required: false,
     steps: ["familiars"] as const,
   },
+  // The Scouter bookmark's pencil menu: one MapleScouter Setup step each, saved the same way.
+  {
+    id: "oz_rings_flow",
+    label: "Oz Rings",
+    description: "Set this character's Oz Rings.",
+    required: false,
+    steps: ["oz_rings"] as const,
+  },
+  {
+    id: "link_skills_flow",
+    label: "Link Skills",
+    description: "Set this character's Link Skills.",
+    required: false,
+    steps: ["link_skills"] as const,
+  },
+  {
+    id: "buffs_flow",
+    label: "Buffs",
+    description: "Set the buffs this character uses for bossing.",
+    required: false,
+    steps: ["buffs"] as const,
+  },
 ] as const;
 
 type SetupFlowDefinition = (typeof SETUP_FLOWS)[number];
