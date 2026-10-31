@@ -412,7 +412,7 @@ function TripleStatRow({
       <div style={tripleStatGridStyle}>
         <div style={{ gridColumn: 1, position: "relative" }}>
           {showBaseWarning && <InputWarningBubble message={`That looks like your total ${label}, enter your Base Value for ${label}.`} theme={theme} />}
-          <WasHint theme={theme} hint={wasHint(saved, `${id}.base`)} block>
+          <WasHint theme={theme} hint={wasHint(saved, `${id}.base`)} hideBubble={showBaseWarning} block>
             <input type="text" inputMode="numeric" aria-label={`${label} base value`} data-stat-key={`${id}.base`} value={d.base} style={sub}
               data-flagged-field={showBaseWarning || (requireFilled && !d.base.trim()) ? "true" : undefined}
               onChange={(e) => onUpdate(id, "base", sanitizeDigitsInput(e.target.value))}
@@ -441,7 +441,7 @@ function TripleStatRow({
           <div style={{ gridColumn: 3 }}>
             <div style={{ position: "relative" }}>
               {showPercentUnappliedWarning && <InputWarningBubble message={`That % looks too large, enter your % Value Not Applied for ${label}.`} theme={theme} />}
-              <WasHint theme={theme} hint={wasHint(saved, `${id}.percentUnapplied`)} block>
+              <WasHint theme={theme} hint={wasHint(saved, `${id}.percentUnapplied`)} hideBubble={showPercentUnappliedWarning} block>
                 <input type="text" inputMode="numeric" aria-label={`${label} percent not applied`} data-stat-key={`${id}.percentUnapplied`} value={d.percentUnapplied} style={sub}
                   data-flagged-field={showPercentUnappliedWarning || (requireFilled && !d.percentUnapplied.trim()) ? "true" : undefined}
                   onChange={(e) => onUpdate(id, "percentUnapplied", sanitizeDigitsInput(e.target.value))}
@@ -1141,11 +1141,16 @@ function wasHint(saved: ReadonlyMap<string, string>, key: string): string | null
  *  stylesheet turns into a bar down the box's left edge (a different shape and color from the
  *  focus ring, so a changed box never reads as selected). A class toggle rather than per-key CSS
  *  text regenerated on every keystroke: style-rewriting browser extensions (dark mode ones in
- *  particular) can miss a <style> element's text changing and keep painting a stale bar. */
-function WasHint({ theme, hint, block = false, children }: { theme: AppTheme; hint: string | null; block?: boolean; children: ReactNode }) {
+ *  particular) can miss a <style> element's text changing and keep painting a stale bar.
+ *
+ *  `hideBubble` keeps the bar but drops the "Was" bubble, for a box whose input warning bubble
+ *  already sits in the same spot above it. */
+function WasHint({ theme, hint, hideBubble = false, block = false, children }: {
+  theme: AppTheme; hint: string | null; hideBubble?: boolean; block?: boolean; children: ReactNode;
+}) {
   return (
     <HoverTooltip
-      label={hint}
+      label={hideBubble ? null : hint}
       theme={theme}
       className={hint !== null ? "stat-changed" : undefined}
       style={block ? { display: "block" } : undefined}
