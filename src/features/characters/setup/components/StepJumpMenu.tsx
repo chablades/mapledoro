@@ -6,6 +6,8 @@ import type { AppTheme } from "../../../../components/themes";
 import { DropdownChevron } from "../../DropdownChevron";
 import type { VisibleSetupStep } from "../flows";
 
+// In the accent color, with a dotted underline on hover (set inline below), while it opens a
+// menu, so it reads as a control rather than a plain "Step 3 of 9" label.
 const triggerStyle = (theme: AppTheme, interactive: boolean): CSSProperties => ({
   display: "inline-flex",
   alignItems: "center",
@@ -13,8 +15,10 @@ const triggerStyle = (theme: AppTheme, interactive: boolean): CSSProperties => (
   border: "none",
   background: "none",
   padding: 0,
+  textDecorationStyle: "dotted",
+  textUnderlineOffset: "3px",
   fontFamily: "inherit",
-  color: theme.muted,
+  color: interactive ? theme.accentText : theme.muted,
   fontWeight: 800,
   fontSize: "0.8rem",
   letterSpacing: "0.03em",
@@ -398,6 +402,9 @@ interface StepJumpMenuProps {
    *  screen. Mutually exclusive with onBackToIntro in practice, since both are gated
    *  on the same completed-required-flow check from opposite sides. */
   onExitToProfile?: () => void;
+  /** Saves and finishes from any step, when editing an already-set-up character with no step
+   *  invalid (see SetupFlowScreen). */
+  onSaveAndFinish?: () => void;
 }
 
 export default function StepJumpMenu({
@@ -409,6 +416,7 @@ export default function StepJumpMenu({
   onJumpSubstep,
   onBackToIntro,
   onExitToProfile,
+  onSaveAndFinish,
 }: StepJumpMenuProps) {
   const [open, setOpen] = useState(false);
   const [openAbove, setOpenAbove] = useState(false);
@@ -580,6 +588,8 @@ export default function StepJumpMenu({
         onClick={() => canJump && setOpen((o) => !o)}
         onKeyDown={handleTriggerKeyDown}
         style={triggerStyle(theme, canJump)}
+        onMouseEnter={(e) => { if (canJump) e.currentTarget.style.textDecorationLine = "underline"; }}
+        onMouseLeave={(e) => { e.currentTarget.style.textDecorationLine = "none"; }}
       >
         Step {currentVisibleNumber} of {totalSteps}
         {canJump && <DropdownChevron open={open} />}
@@ -658,6 +668,22 @@ export default function StepJumpMenu({
               />
             );
           })}
+          {onSaveAndFinish && (
+            <button
+              type="button"
+              onClick={() => {
+                onSaveAndFinish();
+                setOpen(false);
+              }}
+              style={backToIntroItemStyle(theme)}
+              onMouseEnter={(e) => { e.currentTarget.style.background = `${theme.accent}18`; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "none"; }}
+              onKeyDown={handleBackToIntroKeyDown}
+              data-jump-row="true"
+            >
+              ✓ Save &amp; finish
+            </button>
+          )}
         </div>
       )}
       {open && supportsHover && activeFlyoutStep !== null && flyoutPos && activeFlyoutSubsteps.length > 0 && (
