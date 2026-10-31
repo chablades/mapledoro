@@ -150,8 +150,71 @@ function exportCharacterJson(charName: string | undefined) {
   URL.revokeObjectURL(url);
 }
 
-function BookmarkPageHeader({ theme, label, onEdit, disabled, extraAction }: {
+interface EditMenuItem {
+  label: string;
+  onSelect: () => void;
+}
+
+const editMenuStyle = (theme: Theme): CSSProperties => ({
+  position: "absolute", top: "calc(100% + 4px)", right: 0, zIndex: 50,
+  display: "flex", flexDirection: "column", minWidth: 140, padding: 4,
+  background: theme.panel, border: `1px solid ${theme.border}`, borderRadius: 10,
+  boxShadow: "0 6px 24px rgba(0,0,0,0.18)",
+});
+
+const editMenuItemStyle = (theme: Theme): CSSProperties => ({
+  border: "none", background: "none", padding: "6px 10px", borderRadius: 6, textAlign: "left",
+  fontFamily: "inherit", fontSize: "0.8rem", fontWeight: 700, color: theme.text, cursor: "pointer",
+});
+
+/** The pencil for a bookmark whose inputs come from several setup steps: it opens a menu of them
+ *  instead of one step. Closes when focus leaves it or on Escape. */
+function EditMenuButton({ theme, label, items, disabled }: { theme: Theme; label: string; items: EditMenuItem[]; disabled: boolean }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div
+      style={{ position: "relative" }}
+      onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setOpen(false); }}
+      onKeyDown={(e) => { if (e.key === "Escape") setOpen(false); }}
+    >
+      <HoverTooltip label={`Edit ${label}`} theme={theme}>
+        <button
+          type="button"
+          className="tap-target-44"
+          aria-label={`Edit ${label}`}
+          aria-expanded={open}
+          disabled={disabled}
+          onClick={() => setOpen((o) => !o)}
+          style={pencilButtonStyle(theme)}
+        >
+          <PencilIcon />
+        </button>
+      </HoverTooltip>
+      {open && (
+        <div role="menu" style={editMenuStyle(theme)}>
+          {items.map((item) => (
+            <button
+              key={item.label}
+              type="button"
+              role="menuitem"
+              onClick={() => { setOpen(false); item.onSelect(); }}
+              style={editMenuItemStyle(theme)}
+              onMouseEnter={(e) => { e.currentTarget.style.background = `${theme.accent}18`; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "none"; }}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function BookmarkPageHeader({ theme, label, onEdit, disabled, extraAction, editMenu }: {
   theme: Theme; label: string; onEdit: (() => void) | null; disabled: boolean; extraAction?: ReactNode;
+  /** In place of onEdit, a pencil that opens a menu of setup steps. */
+  editMenu?: EditMenuItem[];
 }) {
   return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, gap: 10 }}>
@@ -159,7 +222,8 @@ function BookmarkPageHeader({ theme, label, onEdit, disabled, extraAction }: {
         <h3 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 800, color: theme.text }}>{label}</h3>
         {extraAction}
       </div>
-      {onEdit !== null && (
+      {editMenu && <EditMenuButton theme={theme} label={label} items={editMenu} disabled={disabled} />}
+      {!editMenu && onEdit !== null && (
         <HoverTooltip label={`Edit ${label}`} theme={theme}>
           <button
             type="button"
@@ -875,8 +939,11 @@ function OverviewSymbolAreaRow({ areas, symbolLevels, characterLevel, theme }: {
   return (
     <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
       {areas.map((area) => {
-        const locked = characterLevel !== undefined && characterLevel < area.requiredLevel;
-        return <OverviewSymbolTile key={area.name} area={area} level={symbolAreaLevel(symbolLevels, area)} locked={locked} theme={theme} />;
+        // Locked only while empty: a level filled in above the saved level (which can be a day
+        // behind, see symbolUnlock.ts) still shows.
+        const level = symbolAreaLevel(symbolLevels, area);
+        const locked = characterLevel !== undefined && characterLevel < area.requiredLevel && level < 1;
+        return <OverviewSymbolTile key={area.name} area={area} level={level} locked={locked} theme={theme} />;
       })}
     </div>
   );
@@ -890,7 +957,10 @@ function OverviewSymbolSection({ theme, symbolLevels, characterLevel, isLegacy, 
   theme: Theme; symbolLevels: Record<string, SymbolState> | null; characterLevel: number | undefined; isLegacy: boolean | undefined; charName: string | undefined;
   onNavigateToBookmark: (id: BookmarkId, subView?: string) => void;
 }) {
-  const showSacred = isSacredEligible(characterLevel, isLegacy);
+  // Also once any Sacred Symbol has a level, which a character can fill in before Nexon's daily
+  // update catches their level up to 260.
+  const showSacred = isSacredEligible(characterLevel, isLegacy)
+    || (!isLegacy && [...SACRED_AREAS, ...GRAND_SACRED_AREAS].some((a) => symbolAreaLevel(symbolLevels, a) >= 1));
   return (
     <div>
       <OverviewGroupHeader
@@ -1236,9 +1306,10 @@ function renderOverviewSection(id: OverviewSectionId, ctx: OverviewSectionRender
   }
 }
 
-function OverviewBookmark({ model, onNavigateToBookmark, onNavigateToGearSlot, onSetOverviewLayout, scouterSimulator }: {
+function OverviewBookmark({ model, onNavigateToBookmark, onNavigateToGearSlot, onSetOverviewLayout, scouterSimulator, onEditStep }: {
   model: PreviewPaneModel; onNavigateToBookmark: (id: BookmarkId, subView?: string) => void; onNavigateToGearSlot: (slotKey: SlotKey) => void; onSetOverviewLayout: (layout: OverviewSectionId[] | null) => void;
   scouterSimulator: ScouterSimulatorController;
+  onEditStep: (flowId: SetupFlowId, targetSubstep?: number, confineToSubstep?: boolean) => void;
 }) {
   const { theme, profile } = model;
   const character = profile.confirmedCharacter;
@@ -1315,9 +1386,12 @@ function OverviewBookmark({ model, onNavigateToBookmark, onNavigateToGearSlot, o
         </HoverTooltip>
       </div>
 
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16 }}>
+      {/* Wraps so the Weapon/Secondary/Emblem icons drop under the Scouter figure on a narrow
+          screen instead of the last one being cut off. */}
+      <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "flex-start", gap: "10px 16px" }}>
         {mounted && character
-          ? <ScouterFigure character={character} theme={theme} simulator={scouterSimulator} />
+          ? <ScouterFigure character={character} theme={theme} simulator={scouterSimulator}
+              editAction={<EditMenuButton theme={theme} label="Scouter" items={scouterEditMenu(character, onEditStep)} disabled={model.setup.isUiLocked} />} />
           : <OverviewFigure label="Scouter" value="—" theme={theme} />}
         <div style={{ display: "flex", gap: 6 }}>
           <WseSlot label="Weapon" item={equipGrid?.weapon} theme={theme} onNavigate={() => onNavigateToGearSlot("weapon")} />
@@ -1973,8 +2047,10 @@ function SymbolAreaGroup({ label, areas, levels, loadImages, characterLevel, the
       <BookmarkSectionLabel label={label} theme={theme} />
       <div style={{ display: "grid", gridTemplateColumns: `repeat(3, ${SYMBOL_TILE_SIZE}px)`, gap: 4 }}>
         {areas.map((area) => {
-          const locked = characterLevel !== undefined && characterLevel < area.requiredLevel;
-          return <ReadOnlySymbolTile key={area.name} area={area} level={symbolAreaLevel(levels, area)} locked={locked} loadImage={loadImages} theme={theme} />;
+          // Locked only while empty, as in OverviewSymbolAreaRow.
+          const level = symbolAreaLevel(levels, area);
+          const locked = characterLevel !== undefined && characterLevel < area.requiredLevel && level < 1;
+          return <ReadOnlySymbolTile key={area.name} area={area} level={level} locked={locked} loadImage={loadImages} theme={theme} />;
         })}
       </div>
     </div>
@@ -3169,6 +3245,32 @@ function scouterBookmarkHeaderLabel(view: ScouterBookmarkView, defaultLabel: str
   return view === "spotlight" ? spotlightBoss : defaultLabel;
 }
 
+// Every MapleScouter Setup step, in its order, each opening on its own (a substep confined, as the
+// Stats and HEXA bookmarks' own pencils do), so the Scouter's inputs are all in one place. The two
+// Stats pages use scouter_stats_flow, MapleScouter Setup's own Stats step alone, which asks only
+// what MapleScouter uses, where the Stats bookmark's pencil lists every stat.
+const SCOUTER_INPUT_FLOWS: readonly { label: string; flowId: SetupFlowId; substep?: number }[] = [
+  { label: "Scouter Questions", flowId: "scouter_stats_flow", substep: 0 },
+  { label: "Character Info", flowId: "scouter_stats_flow", substep: 1 },
+  { label: "Oz Rings", flowId: "oz_rings_flow" },
+  { label: "Link Skills", flowId: "link_skills_flow" },
+  { label: "HEXA Skills", flowId: "hexa_matrix_flow", substep: 0 },
+  { label: "Buffs", flowId: "buffs_flow" },
+];
+
+/** The Scouter pencil menu's items, for the Scouter and Stat Efficiency bookmarks and the
+ *  Overview's Scouter figure alike. HEXA Skills only where the HEXA bookmark's own pencil shows
+ *  (Lv 260+, not a legacy class). */
+function scouterEditMenu(
+  character: StoredCharacterRecord,
+  onEditStep: (flowId: SetupFlowId, targetSubstep?: number, confineToSubstep?: boolean) => void,
+): EditMenuItem[] {
+  return SCOUTER_INPUT_FLOWS.filter((f) => f.flowId !== "hexa_matrix_flow" || isHexaMatrixAvailable(character)).map((f) => ({
+    label: f.label,
+    onSelect: () => (f.substep === undefined ? onEditStep(f.flowId) : onEditStep(f.flowId, f.substep, true)),
+  }));
+}
+
 /** The not-ready states every Scouter-backed bookmark shares (class unsupported, setup
  *  incomplete, engine data loading, calculation failed) plus the engine notice banner, kept in one
  *  place so Scouter and Stat Efficiency cannot drift apart. Also owns this bookmark's page header.
@@ -3179,7 +3281,8 @@ function ScouterResultGate({ theme, character, label, disabled, onEditStep, chil
   children: (entry: ScouterResultEntry) => ReactNode;
 }) {
   const status = useScouterResult(character);
-  const header = <BookmarkPageHeader theme={theme} label={label} onEdit={null} disabled={disabled} />;
+  const editMenu = status.kind === "unsupported" ? undefined : scouterEditMenu(character, onEditStep);
+  const header = <BookmarkPageHeader theme={theme} label={label} onEdit={null} disabled={disabled} editMenu={editMenu} />;
 
   if (status.kind === "unsupported") {
     return (
@@ -3451,7 +3554,7 @@ function BookmarkPageBody({
   // rather than inside either component.
   const scouterSimulator = useScouterSimulator(character);
 
-  if (active.id === "overview") return <OverviewBookmark model={model} onNavigateToBookmark={onNavigateToBookmark} onNavigateToGearSlot={onNavigateToGearSlot} onSetOverviewLayout={actions.setOverviewLayout} scouterSimulator={scouterSimulator} />;
+  if (active.id === "overview") return <OverviewBookmark model={model} onNavigateToBookmark={onNavigateToBookmark} onNavigateToGearSlot={onNavigateToGearSlot} onSetOverviewLayout={actions.setOverviewLayout} scouterSimulator={scouterSimulator} onEditStep={onEditStep} />;
 
   if (active.id === "setup") {
     // SetupFlowButtons calls actions.startOptionalFlow directly (it's also reused
@@ -3575,8 +3678,8 @@ function BookmarkPageBody({
     );
   }
 
-  // Read-only, the same shape as EXP above. Nothing here is user-editable; it displays whatever
-  // the last Scouter refresh computed. useScouterResult needs a real character, the same
+  // The results themselves aren't editable; the header's pencil menu (ScouterResultGate) opens
+  // the setup steps behind them. useScouterResult needs a real character, the same
   // constraint ScouterFigure has on Overview, so the null check happens at this call site
   // rather than inside ScouterBookmark.
   if (active.id === "scouter") {

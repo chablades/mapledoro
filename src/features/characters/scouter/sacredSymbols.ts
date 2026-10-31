@@ -59,8 +59,8 @@ export function sacredSwitchOn(maxed: readonly string[]): boolean {
 export function sacredFigureNote(switchOn: boolean | undefined): string | null {
   if (switchOn === undefined) return null;
   return switchOn
-    ? "Includes all 8 Sacred Symbols"
-    : "Excludes Sacred Symbols until all 8 are maxed. Boss Clear counts each boss's own symbol.";
+    ? "With all 8 Sacred Symbols"
+    : "Without Sacred Symbols until all 8 are maxed";
 }
 
 type SavedSymbols = Partial<Record<string, { level?: number } | undefined>>;

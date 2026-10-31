@@ -16,14 +16,14 @@ import { LINK_SKILLS } from "../setup/data/linkSkillsData";
 import { LinkSkillRow } from "../setup/components/LinkSkillsSetupStep";
 import { LINK_SKILL_TO_SCOUTER_KEY } from "./scouterLinkSkills";
 import {
-  BOOL_BUFFS, BUFF_GROUP_A, BUFF_GROUP_B,
+  BOOL_BUFFS, BUFF_GROUP_A, BUFF_GROUP_B, buffShownForClass,
   GUILD_BUFFS, GUILD_BUFF_MAX, RENOWN_STATS, RENOWN_SKILL_ID,
   toggleBoolBuff, sanitizeGuildLevel, sanitizeRenownLevel,
-  getStatPotionTiers, primaryStatForClass,
+  getStatPotionTiers, mainStatsForClass, primaryStatForClass,
   type BuffsDraft, type BoolBuffId, type BoolBuffEntry, type GuildBuffId, type RenownStatId,
 } from "../setup/data/buffsData";
 import { BuffIconImage, BoolBuffTile, MaxedSymbolTiles, RenownCol } from "../setup/components/BuffsSetupStep";
-import { boolTileStyle, pickOneGroupStyle, pickOneLabelStyle, buffIconOverride, buffSecondIconOverride, boolBuffLabel } from "../setup/components/buffTileHelpers";
+import { boolTileStyle, pickOneGroupStyle, pickOneLabelStyle, buffIconOverride, buffSecondIconOverride, boolBuffLabel, statPotionTooltip } from "../setup/components/buffTileHelpers";
 import { LeveledIconTile } from "../setup/components/LeveledIconTile";
 import SectionLabel from "../setup/components/SectionLabel";
 import { statInputStyle, inputSuffixStyle, ChecklistCheckbox, ChecklistGroup } from "../setup/components/QuestionControls";
@@ -136,11 +136,17 @@ function tileRowStyle(): CSSProperties {
 const UNGROUPED_BUFFS = BOOL_BUFFS.filter((b) => !b.group && b.id !== "extremeGreenPotion");
 const STAT_POTION_INSERT_IDX = UNGROUPED_BUFFS.findIndex((b) => b.id === "sparklingRedStar") + 1;
 
-function BuffsTab({ theme, draft, onChange, primaryStat, jobName }: {
+function BuffsTab({ theme, draft, onChange, primaryStat, jobName, level }: {
   theme: AppTheme; draft: BuffsDraft; onChange: (next: BuffsDraft) => void; primaryStat: ReturnType<typeof primaryStatForClass>; jobName: string;
+  /** The simulation's level, for Maxed Symbols' warning on symbols above it. */
+  level: number;
 }) {
   const statPotionTier = Number.parseInt(draft.statPotionTier, 10) || 0;
   const statTier10 = getStatPotionTiers(primaryStat)[9];
+  const classData = CLASS_SKILL_DATA.find((c) => c.nexonJobName === jobName);
+  const requiredStats = classData?.requiredStats ?? [];
+  const usesMagicAtt = requiredStats.includes("magicAtt");
+  const classMainStats = mainStatsForClass(requiredStats);
 
   const toggleBool = (id: BoolBuffId) => onChange(toggleBoolBuff(draft, id));
   const setGuild = (id: GuildBuffId, val: string) => onChange({ ...draft, guild: { ...draft.guild, [id]: sanitizeGuildLevel(val) } });
@@ -183,7 +189,7 @@ function BuffsTab({ theme, draft, onChange, primaryStat, jobName }: {
         <p style={sectionLabelStyle(theme)}>Buffs</p>
         <div style={tileRowStyle()}>
           {UNGROUPED_BUFFS.slice(0, STAT_POTION_INSERT_IDX).map(renderBuffTile)}
-          <HoverTooltip theme={theme} label={`${statTier10.name} (Tier X)`}>
+          <HoverTooltip theme={theme} label={statPotionTooltip(theme, classMainStats.length > 0 ? classMainStats : [primaryStat])}>
             <button type="button" onClick={toggleStatPotion} aria-label="Advanced Stat Potion (Tier X)" aria-pressed={statPotionTier > 0} style={boolTileStyle(statPotionTier > 0, theme)}>
               <div style={{ opacity: statPotionTier > 0 ? 1 : 0.32, filter: statPotionTier > 0 ? "none" : "grayscale(1)", lineHeight: 0 }}>
                 <BuffIconImage icon={{ kind: "item", id: statTier10.itemId }} name={statTier10.name} theme={theme} size={32} />
@@ -203,14 +209,17 @@ function BuffsTab({ theme, draft, onChange, primaryStat, jobName }: {
         <div key={groupId} style={{ ...pickOneGroupStyle(theme), width: "fit-content" }}>
           <span style={pickOneLabelStyle(theme)}>pick one</span>
           {/* react-doctor-disable-next-line js-combine-iterations -- BOOL_BUFFS is a small fixed roster, extra pass is negligible per the rule's own FP criteria */}
-          {BOOL_BUFFS.filter((b) => groupSet.has(b.id)).map(renderBuffTile)}
+          {BOOL_BUFFS.filter((b) => groupSet.has(b.id) && buffShownForClass(b, usesMagicAtt)).map(renderBuffTile)}
         </div>
       ))}
 
-      <div>
-        <p style={sectionLabelStyle(theme)}>Maxed Symbols</p>
-        <MaxedSymbolTiles theme={theme} selected={draft.symbols} onToggle={(area) => onChange({ ...draft, symbols: { ...draft.symbols, [area]: !draft.symbols[area] } })} />
-      </div>
+      {/* Never for a legacy class, who can't have Sacred Symbols. */}
+      {!classData?.isLegacy && (
+        <div>
+          <p style={sectionLabelStyle(theme)}>Maxed Symbols</p>
+          <MaxedSymbolTiles theme={theme} characterLevel={level} selected={draft.symbols} onToggle={(area) => onChange({ ...draft, symbols: { ...draft.symbols, [area]: !draft.symbols[area] } })} />
+        </div>
+      )}
       <div>
         <p style={sectionLabelStyle(theme)}>Champion&apos;s Renown</p>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -807,7 +816,7 @@ function TabContent({
 }) {
   switch (draft.tab) {
     case "buffs":
-      return <BuffsTab theme={theme} draft={draft.buffsDraft} onChange={draft.setBuffsDraft} primaryStat={primaryStat} jobName={character.jobName} />;
+      return <BuffsTab theme={theme} draft={draft.buffsDraft} onChange={draft.setBuffsDraft} primaryStat={primaryStat} jobName={character.jobName} level={draft.level} />;
     case "hexa":
       return draft.level < 260
         ? <HexaLockedMessage theme={theme} />

@@ -1,6 +1,7 @@
-import { useEffect, type CSSProperties } from "react";
+import { useContext, useEffect, type CSSProperties } from "react";
 import type { ReactNode } from "react";
 import type { AppTheme } from "../../../../components/themes";
+import { SaveAndFinishContext } from "./saveAndFinishContext";
 
 /** The muted text-link style shared by the Back button and a "quiet" Next button. */
 function quietLinkStyle(theme: AppTheme): CSSProperties {
@@ -141,6 +142,7 @@ export default function SetupStepFrame({
   // any flow, single-step or not, there is no previous step within the flow itself. The button
   // still works, exiting back to the profile or intro, but what it returns to isn't a step.
   const backLabel = stepNumber > 1 ? "← Prev Step" : "← Back";
+  const saveAndFinish = useContext(SaveAndFinishContext);
 
   useEffect(() => {
     onValidityChange?.(!nextDisabled, substepIndex);
@@ -185,13 +187,20 @@ export default function SetupStepFrame({
         }}
       >
         <QuietButton theme={theme} label={backLabel} onClick={onBack} className="tap-target-44" />
-        <NextButton
-          theme={theme}
-          label={nextButtonLabel}
-          quiet={nextVariant === "quiet"}
-          disabled={nextDisabled}
-          onClick={isLastStep ? onFinish : onNext}
-        />
+        <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+          {/* Not beside a quiet Next (a skippable step's "Skip this step"), where two muted
+              links would read alike; the jump menu still offers it there. */}
+          {saveAndFinish && !isLastStep && !nextDisabled && nextVariant !== "quiet" && (
+            <QuietButton theme={theme} label="Save & finish" onClick={saveAndFinish} className="tap-target-44" />
+          )}
+          <NextButton
+            theme={theme}
+            label={nextButtonLabel}
+            quiet={nextVariant === "quiet"}
+            disabled={nextDisabled}
+            onClick={isLastStep ? onFinish : onNext}
+          />
+        </div>
       </div>
     </>
   );

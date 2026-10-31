@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { numericKeyDown, sanitizeDigitsInput, decimalKeyDown, sanitizeDecimalInput, clampNumber } from "../../../../lib/inputUtils";
 import { joinWithAnd } from "../../../../lib/textUtils";
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import Image from "next/image";
 import { resourceImageUrl } from "../../../../lib/mapleResource";
 import type { AppTheme } from "../../../../components/themes";
@@ -12,7 +12,7 @@ import { statusText } from "../../../../components/statusColors";
 import HoverTooltip from "../../../../components/HoverTooltip";
 import WarningIcon from "../../../../components/WarningIcon";
 import type { SetupStepDefinition } from "../steps";
-import type { SetupFlowId } from "../flows";
+import { isScouterStatsFlow, type SetupFlowId } from "../flows";
 import SetupStepFrame from "./SetupStepFrame";
 import InfoTooltip from "./InfoTooltip";
 import { PresetBar } from "./PresetBar";
@@ -28,6 +28,7 @@ import {
   type ClassWarning,
 } from "../data/classSkillData";
 import { STAT_LABELS, TRIPLE_STAT_FIELDS, type StatFieldId, type TripleStatFieldId } from "../data/statFields";
+import { statChanges, type StatChange } from "../data/statsChanges";
 import { deriveWeaponHandFromWeapon } from "../data/classBranch";
 import { equipmentLikeFromDraft, parseEquipmentStepDraft, type EquipmentLike } from "../data/equipmentStepDraft";
 import {
@@ -40,6 +41,7 @@ import {
   getLiberationWeaponName,
   normalizeHyperStatDraft,
   parseStatsStepDraft,
+  storedStatsToStatsStepDraft,
   serializeStatsStepDraft,
   isStatsSubstepSane,
   isStatsSubstepComplete,
@@ -388,6 +390,7 @@ function TripleStatRow({
    *  Avenger; only showAllStats' every-class profile pencil needs the distinction. */
   showHpPercentUnapplied?: boolean;
 }) {
+  const saved = useContext(SavedStatValuesContext);
   const d: TripleStatDraft = draft[id] ?? { base: "", percent: "", percentUnapplied: "" };
   const sub = statInputStyle(theme);
   const label = TRIPLE_LABELS[id];
@@ -409,24 +412,28 @@ function TripleStatRow({
       <div style={tripleStatGridStyle}>
         <div style={{ gridColumn: 1, position: "relative" }}>
           {showBaseWarning && <InputWarningBubble message={`That looks like your total ${label}, enter your Base Value for ${label}.`} theme={theme} />}
-          <input type="text" inputMode="numeric" aria-label={`${label} base value`} value={d.base} style={sub}
-            data-flagged-field={showBaseWarning || (requireFilled && !d.base.trim()) ? "true" : undefined}
-            onChange={(e) => onUpdate(id, "base", sanitizeDigitsInput(e.target.value))}
-            onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
-            onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
-            onKeyDown={numericKeyDown}
-          />
-          <p style={{ margin: 0, marginTop: "0.15rem", fontSize: "0.75rem", color: theme.muted, fontWeight: 700, textAlign: "center" }}>Base Value</p>
-        </div>
-        <div style={{ gridColumn: 2 }}>
-          <div style={{ position: "relative" }}>
-            <input type="text" inputMode="numeric" aria-label={`${label} percent value`} value={d.percent} style={sub}
-              data-flagged-field={requireFilled && !d.percent.trim() ? "true" : undefined}
-              onChange={(e) => onUpdate(id, "percent", sanitizeDigitsInput(e.target.value))}
+          <WasHint theme={theme} hint={wasHint(saved, `${id}.base`)} block>
+            <input type="text" inputMode="numeric" aria-label={`${label} base value`} data-stat-key={`${id}.base`} value={d.base} style={sub}
+              data-flagged-field={showBaseWarning || (requireFilled && !d.base.trim()) ? "true" : undefined}
+              onChange={(e) => onUpdate(id, "base", sanitizeDigitsInput(e.target.value))}
               onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
               onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
               onKeyDown={numericKeyDown}
             />
+          </WasHint>
+          <p style={{ margin: 0, marginTop: "0.15rem", fontSize: "0.75rem", color: theme.muted, fontWeight: 700, textAlign: "center" }}>Base Value</p>
+        </div>
+        <div style={{ gridColumn: 2 }}>
+          <div style={{ position: "relative" }}>
+            <WasHint theme={theme} hint={wasHint(saved, `${id}.percent`)} block>
+              <input type="text" inputMode="numeric" aria-label={`${label} percent value`} data-stat-key={`${id}.percent`} value={d.percent} style={sub}
+                data-flagged-field={requireFilled && !d.percent.trim() ? "true" : undefined}
+                onChange={(e) => onUpdate(id, "percent", sanitizeDigitsInput(e.target.value))}
+                onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
+                onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
+                onKeyDown={numericKeyDown}
+              />
+            </WasHint>
           </div>
           <p style={{ margin: 0, marginTop: "0.15rem", fontSize: "0.75rem", color: theme.muted, fontWeight: 700, textAlign: "center" }}>% Value</p>
         </div>
@@ -434,13 +441,15 @@ function TripleStatRow({
           <div style={{ gridColumn: 3 }}>
             <div style={{ position: "relative" }}>
               {showPercentUnappliedWarning && <InputWarningBubble message={`That % looks too large, enter your % Value Not Applied for ${label}.`} theme={theme} />}
-              <input type="text" inputMode="numeric" aria-label={`${label} percent not applied`} value={d.percentUnapplied} style={sub}
-                data-flagged-field={showPercentUnappliedWarning || (requireFilled && !d.percentUnapplied.trim()) ? "true" : undefined}
-                onChange={(e) => onUpdate(id, "percentUnapplied", sanitizeDigitsInput(e.target.value))}
-                onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
-                onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
-                onKeyDown={numericKeyDown}
-              />
+              <WasHint theme={theme} hint={wasHint(saved, `${id}.percentUnapplied`)} block>
+                <input type="text" inputMode="numeric" aria-label={`${label} percent not applied`} data-stat-key={`${id}.percentUnapplied`} value={d.percentUnapplied} style={sub}
+                  data-flagged-field={showPercentUnappliedWarning || (requireFilled && !d.percentUnapplied.trim()) ? "true" : undefined}
+                  onChange={(e) => onUpdate(id, "percentUnapplied", sanitizeDigitsInput(e.target.value))}
+                  onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
+                  onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
+                  onKeyDown={numericKeyDown}
+                />
+              </WasHint>
             </div>
             <p style={{ margin: 0, marginTop: "0.15rem", fontSize: "0.75rem", color: theme.muted, fontWeight: 700, textAlign: "center" }}>% Not Applied</p>
           </div>
@@ -462,6 +471,7 @@ function SingleStatRow({
   onUpdate: (id: string, val: string) => void;
   theme: AppTheme;
 }) {
+  const saved = useContext(SavedStatValuesContext);
   const raw = (draft as Record<string, unknown>)[id];
   const value = typeof raw === "string" ? raw : "";
   return (
@@ -471,12 +481,14 @@ function SingleStatRow({
       </p>
       <div style={tripleStatGridStyle}>
         <div style={{ gridColumn: 1 }}>
-          <input type="text" inputMode="numeric" aria-label={`${label} value`} value={value} style={statInputStyle(theme)}
-            onChange={(e) => onUpdate(id, sanitizeDigitsInput(e.target.value))}
-            onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
-            onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
-            onKeyDown={numericKeyDown}
-          />
+          <WasHint theme={theme} hint={wasHint(saved, id)} block>
+            <input type="text" inputMode="numeric" aria-label={`${label} value`} data-stat-key={id} value={value} style={statInputStyle(theme)}
+              onChange={(e) => onUpdate(id, sanitizeDigitsInput(e.target.value))}
+              onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
+              onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
+              onKeyDown={numericKeyDown}
+            />
+          </WasHint>
           <p style={{ margin: 0, marginTop: "0.15rem", fontSize: "0.75rem", color: theme.muted, fontWeight: 700, textAlign: "center" }}>Base Value</p>
         </div>
       </div>
@@ -522,29 +534,34 @@ function CooldownReductionCell({
   theme: AppTheme;
   requireFilled: boolean;
 }) {
+  const saved = useContext(SavedStatValuesContext);
   const cd = draft.cooldownReduction ?? { seconds: "", percent: "" };
   return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.4rem", minWidth: 0 }}>
       <span style={{ fontSize: "0.78rem", color: theme.muted, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>{label}</span>
       <div style={{ display: "flex", alignItems: "center", gap: "0.3rem", flexShrink: 0 }}>
         <div style={{ position: "relative" }}>
-          <input type="text" inputMode="numeric" aria-label={`${label} seconds`} value={cd.seconds} style={{ ...statInputStyle(theme, "2.9rem"), paddingRight: "1.05rem" }}
-            data-flagged-field={requireFilled && !cd.seconds.trim() ? "true" : undefined}
-            onChange={(e) => onUpdateCooldown("seconds", sanitizeDigitsInput(e.target.value))}
-            onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
-            onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
-            onKeyDown={numericKeyDown}
-          />
+          <WasHint theme={theme} hint={wasHint(saved, "cooldownReduction.seconds")}>
+            <input type="text" inputMode="numeric" aria-label={`${label} seconds`} data-stat-key="cooldownReduction.seconds" value={cd.seconds} style={{ ...statInputStyle(theme, "2.9rem"), paddingRight: "1.05rem" }}
+              data-flagged-field={requireFilled && !cd.seconds.trim() ? "true" : undefined}
+              onChange={(e) => onUpdateCooldown("seconds", sanitizeDigitsInput(e.target.value))}
+              onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
+              onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
+              onKeyDown={numericKeyDown}
+            />
+          </WasHint>
           <span style={inputSuffixStyle(theme)}>s</span>
         </div>
         <div style={{ position: "relative" }}>
-          <input type="text" inputMode="numeric" aria-label={`${label} percent`} value={cd.percent} style={{ ...statInputStyle(theme, "2.9rem"), paddingRight: "1.05rem" }}
-            data-flagged-field={requireFilled && !cd.percent.trim() ? "true" : undefined}
-            onChange={(e) => onUpdateCooldown("percent", sanitizeDigitsInput(e.target.value))}
-            onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
-            onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
-            onKeyDown={numericKeyDown}
-          />
+          <WasHint theme={theme} hint={wasHint(saved, "cooldownReduction.percent")}>
+            <input type="text" inputMode="numeric" aria-label={`${label} percent`} data-stat-key="cooldownReduction.percent" value={cd.percent} style={{ ...statInputStyle(theme, "2.9rem"), paddingRight: "1.05rem" }}
+              data-flagged-field={requireFilled && !cd.percent.trim() ? "true" : undefined}
+              onChange={(e) => onUpdateCooldown("percent", sanitizeDigitsInput(e.target.value))}
+              onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
+              onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
+              onKeyDown={numericKeyDown}
+            />
+          </WasHint>
           <span style={inputSuffixStyle(theme)}>%</span>
         </div>
       </div>
@@ -563,6 +580,7 @@ function CombatStatCell({
   /** MapleScouter only. A blank field here jumps to fix the same way a bad value does. */
   requireFilled: boolean;
 }) {
+  const saved = useContext(SavedStatValuesContext);
   const label = STAT_LABELS[id] ?? id;
 
   if (id === "cooldownReduction") {
@@ -577,21 +595,23 @@ function CombatStatCell({
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.4rem", minWidth: 0 }}>
       <span style={{ fontSize: "0.78rem", color: theme.muted, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>{label}</span>
       <div style={{ position: "relative", flexShrink: 0 }}>
-        <input type="text" inputMode={allowsDecimal ? "decimal" : "numeric"} aria-label={label} value={val}
-          style={isRaw ? statInputStyle(theme, "4.6rem") : { ...statInputStyle(theme, "4.6rem"), paddingRight: "1.15rem" }}
-          data-flagged-field={requireFilled && !val.trim() ? "true" : undefined}
-          onChange={(e) => {
-            const max = COMBAT_STAT_MAX[id];
-            if (id === "ignoreElementalResistance") onUpdate(id, clampDecimalStatInput(e.target.value, IGNORE_ELEMENTAL_RESIST_MAX));
-            else if (id === "ignoreDefense") onUpdate(id, clampDecimalStatInput(e.target.value, IGNORE_DEFENSE_MAX));
-            else if (max !== undefined) onUpdate(id, allowsDecimal ? clampDecimalStatInput(e.target.value, max) : clampIntegerStatInput(e.target.value, max));
-            else if (allowsDecimal) onUpdate(id, sanitizeDecimalInput(e.target.value));
-            else onUpdate(id, sanitizeDigitsInput(e.target.value));
-          }}
-          onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
-          onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
-          onKeyDown={allowsDecimal ? decimalKeyDown : numericKeyDown}
-        />
+        <WasHint theme={theme} hint={wasHint(saved, id)}>
+          <input type="text" inputMode={allowsDecimal ? "decimal" : "numeric"} aria-label={label} data-stat-key={id} value={val}
+            style={isRaw ? statInputStyle(theme, "4.6rem") : { ...statInputStyle(theme, "4.6rem"), paddingRight: "1.15rem" }}
+            data-flagged-field={requireFilled && !val.trim() ? "true" : undefined}
+            onChange={(e) => {
+              const max = COMBAT_STAT_MAX[id];
+              if (id === "ignoreElementalResistance") onUpdate(id, clampDecimalStatInput(e.target.value, IGNORE_ELEMENTAL_RESIST_MAX));
+              else if (id === "ignoreDefense") onUpdate(id, clampDecimalStatInput(e.target.value, IGNORE_DEFENSE_MAX));
+              else if (max !== undefined) onUpdate(id, allowsDecimal ? clampDecimalStatInput(e.target.value, max) : clampIntegerStatInput(e.target.value, max));
+              else if (allowsDecimal) onUpdate(id, sanitizeDecimalInput(e.target.value));
+              else onUpdate(id, sanitizeDigitsInput(e.target.value));
+            }}
+            onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
+            onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
+            onKeyDown={allowsDecimal ? decimalKeyDown : numericKeyDown}
+          />
+        </WasHint>
         {!isRaw && <span style={inputSuffixStyle(theme)}>%</span>}
       </div>
     </div>
@@ -994,7 +1014,7 @@ function deriveKnownInnerAbilityLine(
 // and maplescouter_setup, full_setup being a superset. See WildHunterRankQuestion,
 // LegionArtifactQuestions and InnerAbilityLineQuestion above.
 function deriveScouterVisibility(flowId: SetupFlowId | undefined): { isScouter: boolean; showWhLegion: boolean } {
-  const isScouter = flowId === "maplescouter_setup";
+  const isScouter = isScouterStatsFlow(flowId);
   return {
     isScouter,
     showWhLegion: isScouter || flowId === "full_setup",
@@ -1099,13 +1119,40 @@ function deriveStatsSubstepValidation({
   return { showHpPercentUnapplied, symbolIds, anyFieldFilled, requireComplete, statsComplete };
 }
 
+/** The saved character's stats as a draft, to compare the boxes against, or null for a
+ *  character with none saved yet (a first setup), which has nothing to compare. */
+function savedStatsDraft(record: StoredCharacterRecord | null): StatsStepDraft | null {
+  return record ? storedStatsToStatsStepDraft(record) : null;
+}
+
+/** Marks each changed box (its input's data-stat-key) with a bar down its left edge, a different
+ *  shape and color from the focus ring so changed boxes never read as selected. */
+function changedInputsCss(changes: StatChange[], color: string): string {
+  return changes.map((c) => `.stats-substep-root input[data-stat-key="${c.key}"] { box-shadow: inset 3px 0 0 ${color}; }`).join("\n");
+}
+
+/** Saved values of the changed boxes by data-stat-key, for each box's "Was …" hover hint. */
+const SavedStatValuesContext = createContext<ReadonlyMap<string, string>>(new Map());
+
+function wasHint(saved: ReadonlyMap<string, string>, key: string): string | null {
+  const before = saved.get(key);
+  return before === undefined ? null : `Was ${before || "blank"}`;
+}
+
+/** A stat box's "Was …" hint in the app's tooltip, on hover and while typing. Always wraps the
+ *  box, with no bubble while it's unchanged, so changing it never remounts the input mid-typing.
+ *  `block` keeps a full-width box full width. */
+function WasHint({ theme, hint, block = false, children }: { theme: AppTheme; hint: string | null; block?: boolean; children: ReactNode }) {
+  return <HoverTooltip label={hint} theme={theme} style={block ? { display: "block" } : undefined}>{children}</HoverTooltip>;
+}
+
 function StatsWindowSubstep({
   theme, stepNumber, totalSteps, substep, substepCount, substepAnimStyle,
   goToSubstep, hasMoreSubsteps, onNext, onFinish, onValidityChange,
   confineToSubstep, onExitStep,
   classData, characterLevel, tripleIds, draft,
   handleTripleUpdate, handleSingleUpdate, handleCooldownUpdate,
-  isScouter, showAllStats,
+  isScouter, showAllStats, savedDraft,
 }: {
   theme: AppTheme;
   stepNumber: number;
@@ -1135,6 +1182,9 @@ function StatsWindowSubstep({
   /** Profile-pencil only, in stats_flow. Shows the resource bar (MP, DF, TF, PP) and
    *  Normal Enemy Damage, which the guided Setup flows never ask for. */
   showAllStats: boolean;
+  /** The character's saved stats as a draft, when editing one that has them, for the boxes
+   *  changed from them (statsChanges.ts). */
+  savedDraft: StatsStepDraft | null;
 }) {
   const primaryStat = classData?.requiredStats.find((s): s is TripleStatFieldId => MAIN_STAT_IDS.has(s));
   const resourceLabel = classData?.resourceLabel ?? "MP";
@@ -1146,6 +1196,10 @@ function StatsWindowSubstep({
   const { showHpPercentUnapplied, symbolIds, anyFieldFilled, requireComplete, statsComplete } = deriveStatsSubstepValidation({
     characterLevel, classData, isScouter, showAllStats, draft, tripleIds, primaryStat,
   });
+  const changes = savedDraft
+    ? statChanges(draft, savedDraft, tripleIds, (id) => TRIPLE_LABELS[id], [...COMBAT_LEFT, ...combatRightIds, ...symbolIds, ...(showAllStats ? ["mp" as const] : [])])
+    : [];
+  const savedValues = new Map(changes.map((c) => [c.key, c.before]));
   const rootRef = useRef<HTMLDivElement>(null);
   const frame = confinableFrameProps(confineToSubstep, onExitStep, onFinish, {
     substepIndex: substep,
@@ -1171,7 +1225,9 @@ function StatsWindowSubstep({
         .stats-combat-grid { flex-direction: column; gap: 0.4rem; }
         .stats-symbols-grid { grid-template-columns: 1fr; gap: 0.4rem; }
       }
+      ${changedInputsCss(changes, statusText(theme, "info"))}
     `}</style>
+    <SavedStatValuesContext.Provider value={savedValues}>
     <SetupStepFrame
       theme={theme}
       substepIndex={frame.substepIndex}
@@ -1264,6 +1320,7 @@ function StatsWindowSubstep({
         </button>
       )}
     </SetupStepFrame>
+    </SavedStatValuesContext.Provider>
     </div>
   );
 }
@@ -1302,7 +1359,7 @@ function resolveEffectiveLegionBoard(
 
 function QuickQuestionsSubstep({
   theme, stepNumber, totalSteps, substepCount, substepAnimStyle,
-  onBack, onNext, onFinish, onValidityChange,
+  onBack, onNext, onFinish, onValidityChange, confined,
   classData, draft, whSource, worldScouterLegion, worldLegionArtifact, equipmentRawValue, legionArtifactsRawValue,
   isScouter, showWhLegion, characterLevel, existingRecord,
   handleSetupOptUpdate, handleScouterQUpdate,
@@ -1325,6 +1382,9 @@ function QuickQuestionsSubstep({
   legionArtifactsRawValue: string | undefined;
   isScouter: boolean;
   showWhLegion: boolean;
+  /** Opened on its own from the Scouter bookmark's pencil, as "Scouter Questions", finishing on
+   *  its own Next. */
+  confined: boolean;
   characterLevel?: number;
   existingRecord: StoredCharacterRecord | null;
   handleSetupOptUpdate: (patch: Partial<NonNullable<StatsStepDraft["setupOptions"]>>) => void;
@@ -1343,15 +1403,15 @@ function QuickQuestionsSubstep({
       <SetupStepFrame
         theme={theme}
         substepIndex={0}
-        substepCount={substepCount}
-        stepLabel="Quick Questions"
+        substepCount={confined ? 1 : substepCount}
+        stepLabel={confined ? "Scouter Questions" : "Quick Questions"}
         stepNumber={stepNumber}
         totalSteps={totalSteps}
         description="Answer what applies to your character below."
         onBack={onBack}
-        onNext={onNext}
+        onNext={confined ? onFinish : onNext}
         onFinish={onFinish}
-        nextLabel="Continue"
+        nextLabel={confined ? undefined : "Continue"}
         nextDisabled={isScouter && !questionnaireComplete}
         onValidityChange={onValidityChange}
       >
@@ -1591,7 +1651,7 @@ export default function StatsSetupStep({
   // non-ATT stat everywhere (see TripleStatRow). Also hidden below Lv 140, like Genesis
   // Liberation, Arcane and Sacred, since a character who cannot have Hyper Stats yet should not
   // be asked to fill them in.
-  const showHyperStat = flowId !== "maplescouter_setup" && isHyperStatEligible(characterLevel);
+  const showHyperStat = !isScouterStatsFlow(flowId) && isHyperStatEligible(characterLevel);
   const { isScouter, showWhLegion } = deriveScouterVisibility(flowId);
 
   // WH Legion rank is read-only/derived, scoped to this character's world.
@@ -1651,7 +1711,7 @@ export default function StatsSetupStep({
   // Inner Ability is a Character Info fact from the in-game Stats window. Full Setup collects
   // it in its own detailed substep, while MapleScouter asks a simpler version inline in substep
   // 0. No level gate, since Inner Ability is not level-locked the way Hyper Stat is.
-  const showInnerAbility = flowId !== "maplescouter_setup";
+  const showInnerAbility = !isScouterStatsFlow(flowId);
 
   // Substeps: questions → stat fields → hyper stat (Lv 140+, full setup only) →
   // inner ability (full setup only). Hyper Stat and Inner Ability each occupy the
@@ -1709,6 +1769,7 @@ export default function StatsSetupStep({
         theme={theme} stepNumber={stepNumber} totalSteps={totalSteps}
         substepCount={SUBSTEP_COUNT} substepAnimStyle={substepAnimStyle}
         onBack={onBack} onNext={() => goToSubstep(1)} onFinish={onFinish} onValidityChange={onValidityChange}
+        confined={confineToSubstep === true}
         classData={classData} draft={draft} whSource={whSource} worldScouterLegion={worldScouterLegion} worldLegionArtifact={worldLegionArtifact}
         equipmentRawValue={equipmentRawValue} legionArtifactsRawValue={legionArtifactsRawValue}
         isScouter={isScouter} showWhLegion={showWhLegion} characterLevel={characterLevel} existingRecord={existingRecord}
@@ -1727,6 +1788,7 @@ export default function StatsSetupStep({
       handleTripleUpdate={handleTripleUpdate} handleSingleUpdate={handleSingleUpdate} handleCooldownUpdate={handleCooldownUpdate}
       isScouter={isScouter}
       showAllStats={showAllStats}
+      savedDraft={savedStatsDraft(existingRecord)}
     />
   );
 

@@ -1,6 +1,6 @@
 "use client";
 
-import type { CSSProperties, ReactNode } from "react";
+import { useRef, type CSSProperties, type ReactNode } from "react";
 import type { AppTheme } from "../../../components/themes";
 import HoverTooltip from "../../../components/HoverTooltip";
 import { statusText } from "../../../components/statusColors";
@@ -9,6 +9,8 @@ import InfoTooltip, { type TooltipContent } from "../setup/components/InfoToolti
 import { formatFigure } from "./scouterFormat";
 import type { ScouterResultEntry } from "./scouterResult";
 import { sacredFigureNote } from "./sacredSymbols";
+import { changeLine, useCountUp, useScouterChange, type ScouterChange } from "./useScouterChange";
+import ScouterChangeChip from "./ScouterChangeChip";
 import { useScouterResult, type ScouterErrorReason, type ScouterFigureStatus } from "./useScouterResult";
 import type { ScouterSimulatorController } from "./useScouterSimulator";
 
@@ -65,12 +67,14 @@ const ERROR_REASON_TOOLTIP: Record<ScouterErrorReason, string> = {
   network: "Couldn't load the Scouter data. Check your connection and reload the page.",
 };
 
-function readyTooltip(entry: ScouterResultEntry, theme: AppTheme): ReactNode {
+function readyTooltip(entry: ScouterResultEntry, theme: AppTheme, change: ScouterChange | null): ReactNode {
   const scouter = entry.scouterFigures;
   const note = sacredFigureNote(entry.bossClearInputs?.sacredBonusOn);
+  const was = change && changeLine(change, change.before, entry.boss380Hexa);
   return (
     <>
-      {scouter ? "Boss 380 HEXA, adjusted for how this class clears bosses in practice" : "Boss 380 HEXA"}
+      {scouter ? "Boss 380 HEXA, adjusted for this class" : "Boss 380 HEXA"}
+      {was && <><br /><span>{was}</span></>}
       {note && <><br /><span style={{ color: theme.muted }}>{note}</span></>}
       {scouter && <><br /><span style={{ color: theme.muted }}>MapleScouter est.: {formatFigure(scouter.boss380Hexa)}</span></>}
     </>
@@ -78,9 +82,9 @@ function readyTooltip(entry: ScouterResultEntry, theme: AppTheme): ReactNode {
 }
 
 /** The figure's own tooltip: what the number is when there is one, otherwise why there's none. */
-function figureTooltip(status: ScouterFigureStatus, theme: AppTheme): ReactNode {
+function figureTooltip(status: ScouterFigureStatus, theme: AppTheme, change: ScouterChange | null): ReactNode {
   switch (status.kind) {
-    case "ready": return readyTooltip(status.entry, theme);
+    case "ready": return readyTooltip(status.entry, theme, change);
     case "unsupported": return "Scouter doesn't support this class yet.";
     case "incomplete": return `Fill out MapleScouter Setup's ${status.gap === "quickQuestions" ? "Quick Questions" : "Character Info"} to see this.`;
     case "loading": return "Calculating…";
@@ -89,6 +93,21 @@ function figureTooltip(status: ScouterFigureStatus, theme: AppTheme): ReactNode 
         ? <>{ERROR_REASON_TOOLTIP[status.reason]}<br /><span style={{ color: theme.muted }}>{status.detail}</span></>
         : ERROR_REASON_TOOLTIP[status.reason];
   }
+}
+
+// The pencil is taller than the label row; negative margins keep the row (and the figure under
+// it) where it was.
+const editActionSlotStyle: CSSProperties = { display: "inline-flex", margin: "-6px 0 -6px 2px" };
+
+function ScouterFigureLabel({ theme, editAction, unsupported }: { theme: AppTheme; editAction?: ReactNode; unsupported: boolean }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 2 }}>
+      <div style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: theme.muted }}>Scouter</div>
+      <span style={betaTagStyle(theme)}>Beta</span>
+      <InfoTooltip content={SCOUTER_INFO} theme={theme} />
+      {editAction && !unsupported && <span style={editActionSlotStyle}>{editAction}</span>}
+    </div>
+  );
 }
 
 // A real ready value should read as prominent data, not a dim placeholder. theme.muted is right
@@ -100,9 +119,20 @@ function figureValueColor(theme: AppTheme, status: ScouterFigureStatus): string 
   return theme.muted;
 }
 
-export default function ScouterFigure({ character, theme, simulator }: { character: StoredCharacterRecord; theme: AppTheme; simulator: ScouterSimulatorController }) {
+/** `editAction`, the Overview's Scouter pencil menu, sits in the label row; a class Scouter doesn't
+ *  support has nothing to edit, so it's left out there. */
+export default function ScouterFigure({ character, theme, simulator, editAction }: {
+  character: StoredCharacterRecord; theme: AppTheme; simulator: ScouterSimulatorController; editAction?: ReactNode;
+}) {
   const status = useScouterResult(character);
   const simulated = simulator.active;
+  const real = status.kind === "ready" ? status.entry.boss380Hexa : null;
+  const change = useScouterChange(character, status.kind === "ready" ? { boss380: status.entry.boss380Hexa, boss300: status.entry.boss300Hexa } : null);
+  // The change only describes the real figure, so a simulation hides it. It plays once, until
+  // the chip's animation ends and marks it seen.
+  const changeDiff = change?.fresh && real !== null && !simulated ? Math.round(real) - change.before : 0;
+  const valueRef = useRef<HTMLDivElement>(null);
+  useCountUp(valueRef, change?.before ?? 0, Math.round(real ?? 0), changeDiff !== 0);
 
   // A simulated result replaces the real figure in place, per the Scouter Simulator plan's
   // product decision. Same rendering path as a real "ready" status, sourced from
@@ -113,18 +143,19 @@ export default function ScouterFigure({ character, theme, simulator }: { charact
   const valueColor = simulated ? statusText(theme, "warning") : figureValueColor(theme, status);
   const tooltip = simulated
     ? <>Boss 380 HEXA (simulated)<br /><span style={{ color: statusText(theme, "warning") }}>Showing a &quot;what if&quot; from the Scouter Simulator, not your real result.</span></>
-    : figureTooltip(status, theme);
+    : figureTooltip(status, theme, change);
 
   return (
     <div>
-      <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 2 }}>
-        <div style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: theme.muted }}>Scouter</div>
-        <span style={betaTagStyle(theme)}>Beta</span>
-        <InfoTooltip content={SCOUTER_INFO} theme={theme} />
-      </div>
+      <ScouterFigureLabel theme={theme} editAction={editAction} unsupported={status.kind === "unsupported"} />
       <HoverTooltip label={tooltip} theme={theme}>
-        <div style={{ fontSize: 20, fontWeight: 800, color: valueColor, lineHeight: 1, fontFamily: "var(--font-heading)" }}>
-          {value}
+        <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+          <div ref={valueRef} style={{ fontSize: 20, fontWeight: 800, color: valueColor, lineHeight: 1, fontFamily: "var(--font-heading)" }}>
+            {value}
+          </div>
+          {changeDiff !== 0 && change && (
+            <ScouterChangeChip key={`${change.before}-${Math.round(real ?? 0)}`} theme={theme} diff={changeDiff} onDone={change.markSeen} />
+          )}
         </div>
       </HoverTooltip>
     </div>

@@ -6,17 +6,19 @@ import { numericKeyDown } from "../../../../lib/inputUtils";
 import { resourceImageUrl } from "../../../../lib/mapleResource";
 import type { AppTheme } from "../../../../components/themes";
 import HoverTooltip from "../../../../components/HoverTooltip";
+import { statusText } from "../../../../components/statusColors";
+import { symbolUnlockWarning } from "../data/symbolUnlock";
 import type { SetupStepDefinition } from "../steps";
 import type { SetupFlowId } from "../flows";
 import { CLASS_SKILL_DATA } from "../data/classSkillData";
 import { readCharactersStore, selectCharacterByIgn } from "../../model/charactersStore";
 import {
   GUILD_BUFFS, GUILD_BUFF_MAX,
-  BOOL_BUFFS, BUFF_GROUP_A, BUFF_GROUP_B,
+  BOOL_BUFFS, BUFF_GROUP_A, BUFF_GROUP_B, buffShownForClass,
   RENOWN_STATS, RENOWN_MAX, RENOWN_SKILL_ID,
   parseBuffsDraft, serializeBuffsDraft, storedBuffsToDraft,
   sanitizeGuildLevel, sanitizeRenownLevel, toggleBoolBuff,
-  primaryStatForClass, mainStatsForClass, getStatPotionTiers, statAbbrev,
+  primaryStatForClass, mainStatsForClass, getStatPotionTiers,
   heroEchoName, isHurricaneClass,
   type GuildBuffId, type BoolBuffId, type RenownStatId, type BoolBuffEntry,
   type BoolBuffIconType,
@@ -26,7 +28,7 @@ import SetupStepFrame from "./SetupStepFrame";
 import { LeveledIconTile } from "./LeveledIconTile";
 import {
   boolTileStyle, renownInputStyle, pickOneGroupStyle, pickOneLabelStyle,
-  buffIconOverride, buffSecondIconOverride, boolBuffLabel,
+  buffIconOverride, buffSecondIconOverride, boolBuffLabel, statPotionTooltip,
 } from "./buffTileHelpers";
 
 interface BuffsSetupStepProps {
@@ -37,6 +39,8 @@ interface BuffsSetupStepProps {
   totalSteps: number;
   jobName?: string;
   confirmedCharacterName?: string;
+  /** For Maxed Symbols' warning on symbols above it (symbolUnlock.ts). */
+  characterLevel?: number;
   value: string;
   onChange: (value: string) => void;
   onBack: () => void;
@@ -173,15 +177,20 @@ export function BoolBuffTile({ entry, active, onToggle, theme, iconOverride, sec
 
 /** One tile per Sacred Symbol, on when it is at Lv 11. Each boosts only its own boss (see
  *  scouter/sacredSymbols.ts). Shared with the Scouter Simulator's Buffs tab. */
-export function MaxedSymbolTiles({ theme, selected, onToggle }: {
+/** `characterLevel` marks a symbol above the saved level with a warning (symbolUnlock.ts). It
+ *  stays selectable, since that level can be a day behind. */
+export function MaxedSymbolTiles({ theme, selected, onToggle, characterLevel }: {
   theme: AppTheme;
   selected: Partial<Record<string, boolean>>;
   onToggle: (area: string) => void;
+  characterLevel?: number;
 }) {
   return (
     <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
       {SACRED_SYMBOL_BOSSES.map((symbol) => {
         const active = selected[symbol.area] ?? false;
+        const warning = symbolUnlockWarning(symbol.area, characterLevel);
+        const tileStyle = boolTileStyle(active, theme);
         return (
           <HoverTooltip
             key={symbol.area}
@@ -191,10 +200,12 @@ export function MaxedSymbolTiles({ theme, selected, onToggle }: {
                 <span>{symbol.grand ? "Grand Sacred" : "Sacred"} Symbol:</span>
                 <span>{symbol.area} (Lv. 11)</span>
                 <span style={{ opacity: 0.7, color: theme.muted }}>+20% damage vs. {symbol.bossLabel}</span>
+                {warning && <span style={{ color: statusText(theme, "warning") }}>{warning}</span>}
               </div>
             }
           >
-            <button type="button" onClick={() => onToggle(symbol.area)} aria-label={`${symbol.area} symbol at Lv. 11`} aria-pressed={active} style={boolTileStyle(active, theme)}>
+            <button type="button" onClick={() => onToggle(symbol.area)} aria-label={`${symbol.area} symbol at Lv. 11`} aria-pressed={active}
+              style={warning ? { ...tileStyle, border: `1px dashed ${statusText(theme, "warning")}` } : tileStyle}>
               {renderIcon({ kind: "item", id: symbol.itemId }, 32, active, symbol.area, theme)}
             </button>
           </HoverTooltip>
@@ -238,18 +249,20 @@ export function RenownCol({ shortLabel, fullLabel, value, onChange, theme }: {
 // ── Main component ───────────────────────────────────────────────────────────
 
 export default function BuffsSetupStep({
-  theme, step, flowId, stepNumber, totalSteps, jobName = "", confirmedCharacterName, value, onChange, onBack, onNext, onFinish,
+  theme, step, flowId, stepNumber, totalSteps, jobName = "", confirmedCharacterName, characterLevel, value, onChange, onBack, onNext, onFinish,
 }: BuffsSetupStepProps) {
   const classData = CLASS_SKILL_DATA.find((c) => c.nexonJobName === jobName);
   const requiredStats = classData?.requiredStats ?? [];
   const primaryStat = primaryStatForClass(requiredStats);
   const classMainStats = mainStatsForClass(requiredStats);
+  const usesMagicAtt = requiredStats.includes("magicAtt");
   const statTiers = getStatPotionTiers(primaryStat);
 
   // full_setup derives Maxed Symbols from the Equipment Symbols substep instead (see
   // withDerivedMaxedSymbols in useCharacterSetupController.ts). Asking it here too would be a
   // duplicate, out-of-order entry point for the same fact.
-  const showMaxedSymbols = flowId === "maplescouter_setup";
+  // Never for a legacy class, who can't have Sacred Symbols.
+  const showMaxedSymbols = (flowId === "maplescouter_setup" || flowId === "buffs_flow") && !classData?.isLegacy;
 
   const draft = parseBuffsDraft(value);
   const initialValueRef = useRef(value);
@@ -352,23 +365,7 @@ export default function BuffsSetupStep({
             ))}
             {/* Advanced Stat Potion — always tier X (+30), tooltip lists all class stats */}
             <HoverTooltip
-              label={(() => {
-                const stats = classMainStats.length > 0 ? classMainStats : [primaryStat];
-                return (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                    {stats.flatMap((s) => {
-                      const t = getStatPotionTiers(s)[9];
-                      return [
-                        <span key={`${s}-potion`}>{t.name}</span>,
-                        <span key={`${s}-pill`} style={{ opacity: 0.6, color: theme.muted, paddingLeft: "0.6em" }}>or {t.pillName}</span>,
-                      ];
-                    })}
-                    <span style={{ opacity: 0.7 }}>
-                      +30 {stats.map(statAbbrev).join(", ")}
-                    </span>
-                  </div>
-                );
-              })()}
+              label={statPotionTooltip(theme, classMainStats.length > 0 ? classMainStats : [primaryStat])}
               theme={theme}
             >
               <button
@@ -406,7 +403,7 @@ export default function BuffsSetupStep({
                   pick one
                 </span>
                 {/* react-doctor-disable-next-line js-combine-iterations -- BOOL_BUFFS is a small fixed roster, extra pass is negligible per the rule's own FP criteria */}
-                {BOOL_BUFFS.filter((b) => groupSet.has(b.id)).map((b) => (
+                {BOOL_BUFFS.filter((b) => groupSet.has(b.id) && buffShownForClass(b, usesMagicAtt)).map((b) => (
                   <BoolBuffTile
                     key={b.id}
                     entry={b}
@@ -424,7 +421,7 @@ export default function BuffsSetupStep({
         {showMaxedSymbols && (
           <div>
             <p style={sectionLabel(theme)}>Maxed Symbols</p>
-            <MaxedSymbolTiles theme={theme} selected={draft.symbols} onToggle={(area) => update({ symbols: { ...draft.symbols, [area]: !draft.symbols[area] } })} />
+            <MaxedSymbolTiles theme={theme} characterLevel={characterLevel} selected={draft.symbols} onToggle={(area) => update({ symbols: { ...draft.symbols, [area]: !draft.symbols[area] } })} />
           </div>
         )}
 

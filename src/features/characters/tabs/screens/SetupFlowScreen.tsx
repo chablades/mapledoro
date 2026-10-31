@@ -1,13 +1,31 @@
 import StepRenderer from "../../setup/StepRenderer";
 import StepJumpMenu from "../../setup/components/StepJumpMenu";
+import { SaveAndFinishContext } from "../../setup/components/saveAndFinishContext";
 import type { PreviewPaneActions, PreviewPaneModel } from "../paneModels";
-import { readCharactersStore, type StoredScouterLegion, type StoredLegionArtifact } from "../../model/charactersStore";
+import { readCharactersStore, selectCharacterById, type StoredScouterLegion, type StoredLegionArtifact } from "../../model/charactersStore";
+import { toCharacterKey } from "../../model/characterKeys";
+import { findScouterSetupGap } from "../../scouter/scouterApi";
 import { getClassSetupOverrides } from "../../setup/data/nexonJobMapping";
 import { getVisibleSteps, getVisibleStepInfo, getRequiredSetupFlowId, getStepSubsteps, getFirstInvalidStepIndex, getFirstInvalidSubstepIndex, getFlowStepByIndex, getStepValidityKey } from "../../setup/flows";
 
 interface SetupFlowScreenProps {
   model: PreviewPaneModel;
   actions: PreviewPaneActions;
+}
+
+/** Save & finish skips the steps after this one, which only keeps what clicking through would
+ *  when every step already holds valid saved data: the saved character has nothing MapleScouter
+ *  Setup still needs, and no step opened here is invalid. Only the two long flows offer it; a
+ *  confined edit from a profile pencil already finishes on its own Next. */
+function canSaveAndFinishEarly(
+  setup: PreviewPaneModel["setup"],
+  confirmed: PreviewPaneModel["profile"]["confirmedCharacter"],
+  firstInvalidStepIndex: number | null,
+): boolean {
+  if (setup.activeFlowId !== "maplescouter_setup" && setup.activeFlowId !== "full_setup") return false;
+  if (setup.setupConfineToSubstep || firstInvalidStepIndex !== null || !confirmed) return false;
+  const saved = selectCharacterById(readCharactersStore(), toCharacterKey(confirmed));
+  return saved !== undefined && findScouterSetupGap(saved) === null;
 }
 
 export default function SetupFlowScreen({ model, actions }: SetupFlowScreenProps) {
@@ -34,6 +52,7 @@ export default function SetupFlowScreen({ model, actions }: SetupFlowScreenProps
   const firstInvalidStepIndex = getFirstInvalidStepIndex(
     setup.activeFlowId, setup.stepValidityById, gender, skipMarriage, setup.statsRawValue, confirmed?.level, jobName,
   );
+  const saveAndFinish = canSaveAndFinishEarly(setup, confirmed, firstInvalidStepIndex) ? () => actions.finishSetupFlow() : null;
   const jumpSteps = visibleSteps.map((s) => {
     const stepDisabled = firstInvalidStepIndex !== null && s.index > firstInvalidStepIndex;
     const labels = getStepSubsteps(s.stepId, setup.activeFlowId, confirmed?.level);
@@ -82,36 +101,39 @@ export default function SetupFlowScreen({ model, actions }: SetupFlowScreenProps
         onJumpSubstep={(stepIndex, substepIndex) => actions.jumpToSubstep(stepIndex, substepIndex)}
         onBackToIntro={canBackToIntro ? () => actions.setSetupStepWithDirection(0, "backward") : undefined}
         onExitToProfile={canBackToIntro ? undefined : () => actions.setSetupStepWithDirection(0, "backward")}
+        onSaveAndFinish={saveAndFinish ?? undefined}
       />
-      <StepRenderer
-        theme={theme}
-        flowId={setup.activeFlowId}
-        stepIndex={setup.setupStepIndex}
-        jobName={jobName}
-        direction={setup.setupStepDirection}
-        targetSubstep={setup.setupTargetSubstep}
-        confineToSubstep={setup.setupConfineToSubstep}
-        substepJumpNonce={setup.substepJumpNonce}
-        onValidityChange={currentStepId
-          ? (valid: boolean, substepIndex = 0) => actions.onValidityChange(getStepValidityKey(currentStepId, substepIndex, setup.activeFlowId), valid)
-          : undefined}
-        onSubstepChange={actions.reportCurrentSubstep}
-        characterRoster={characterRoster}
-        confirmedWorldId={confirmed?.worldID}
-        worldScouterLegion={worldScouterLegion}
-        worldLegionArtifact={worldLegionArtifact}
-        equipmentRawValue={setup.equipmentRawValue}
-        legionArtifactsRawValue={setup.legionArtifactsRawValue}
-        characterLevel={confirmed?.level}
-        confirmedCharacterName={confirmed?.characterName}
-        confirmedCharacterImgURL={confirmed?.characterImgURL}
-        stepValue={setup.activeSetupStepValue}
-        onStepValueChange={actions.stepValueChange}
-        onMapleScouterImport={actions.applyMapleScouterImport}
-        onBackStep={() => actions.setSetupStepWithDirection(setup.setupStepIndex - 1)}
-        onNextStep={() => actions.setSetupStepWithDirection(setup.setupStepIndex + 1)}
-        onFinish={actions.finishSetupFlow}
-      />
+      <SaveAndFinishContext.Provider value={saveAndFinish}>
+        <StepRenderer
+          theme={theme}
+          flowId={setup.activeFlowId}
+          stepIndex={setup.setupStepIndex}
+          jobName={jobName}
+          direction={setup.setupStepDirection}
+          targetSubstep={setup.setupTargetSubstep}
+          confineToSubstep={setup.setupConfineToSubstep}
+          substepJumpNonce={setup.substepJumpNonce}
+          onValidityChange={currentStepId
+            ? (valid: boolean, substepIndex = 0) => actions.onValidityChange(getStepValidityKey(currentStepId, substepIndex, setup.activeFlowId), valid)
+            : undefined}
+          onSubstepChange={actions.reportCurrentSubstep}
+          characterRoster={characterRoster}
+          confirmedWorldId={confirmed?.worldID}
+          worldScouterLegion={worldScouterLegion}
+          worldLegionArtifact={worldLegionArtifact}
+          equipmentRawValue={setup.equipmentRawValue}
+          legionArtifactsRawValue={setup.legionArtifactsRawValue}
+          characterLevel={confirmed?.level}
+          confirmedCharacterName={confirmed?.characterName}
+          confirmedCharacterImgURL={confirmed?.characterImgURL}
+          stepValue={setup.activeSetupStepValue}
+          onStepValueChange={actions.stepValueChange}
+          onMapleScouterImport={actions.applyMapleScouterImport}
+          onBackStep={() => actions.setSetupStepWithDirection(setup.setupStepIndex - 1)}
+          onNextStep={() => actions.setSetupStepWithDirection(setup.setupStepIndex + 1)}
+          onFinish={actions.finishSetupFlow}
+        />
+      </SaveAndFinishContext.Provider>
     </>
   );
 }

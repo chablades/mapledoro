@@ -6,6 +6,8 @@ import type { AppTheme } from "../../../../components/themes";
 import { DropdownChevron } from "../../DropdownChevron";
 import type { VisibleSetupStep } from "../flows";
 
+// In the accent color, with a dotted underline on hover (.step-jump-trigger in globals.css),
+// while it opens a menu, so it reads as a control rather than a plain "Step 3 of 9" label.
 const triggerStyle = (theme: AppTheme, interactive: boolean): CSSProperties => ({
   display: "inline-flex",
   alignItems: "center",
@@ -13,8 +15,12 @@ const triggerStyle = (theme: AppTheme, interactive: boolean): CSSProperties => (
   border: "none",
   background: "none",
   padding: 0,
+  textDecorationStyle: "dotted",
+  textUnderlineOffset: "3px",
+  // Read by .step-jump-trigger:hover, so only a trigger that opens a menu underlines.
+  ["--step-jump-hover-line" as string]: interactive ? "underline" : "none",
   fontFamily: "inherit",
-  color: theme.muted,
+  color: interactive ? theme.accentText : theme.muted,
   fontWeight: 800,
   fontSize: "0.8rem",
   letterSpacing: "0.03em",
@@ -209,6 +215,30 @@ function backToIntroItemStyle(theme: AppTheme): CSSProperties {
   };
 }
 
+/** One of the menu's actions around the step list (Setup selection, Exit setup, Save & finish),
+ *  or nothing when this menu doesn't offer it. `atEnd` puts it after the list, divided above
+ *  instead of below. */
+function MenuActionItem({ theme, label, onSelect, onClose, onKeyDown, atEnd = false }: {
+  theme: AppTheme; label: string; onSelect: (() => void) | undefined; onClose: () => void;
+  onKeyDown: (e: ReactKeyboardEvent<HTMLButtonElement>) => void; atEnd?: boolean;
+}) {
+  if (!onSelect) return null;
+  const style = backToIntroItemStyle(theme);
+  return (
+    <button
+      type="button"
+      onClick={() => { onSelect(); onClose(); }}
+      style={atEnd ? { ...style, borderBottom: "none", borderTop: `1px solid ${theme.border}`, marginBottom: 0, marginTop: "0.3rem" } : style}
+      onMouseEnter={(e) => { e.currentTarget.style.background = `${theme.accent}18`; }}
+      onMouseLeave={(e) => { e.currentTarget.style.background = "none"; }}
+      onKeyDown={onKeyDown}
+      data-jump-row="true"
+    >
+      {label}
+    </button>
+  );
+}
+
 interface JumpSubstep {
   label: string;
   /** True while this substep can't be jumped to, because its parent step is fully disabled
@@ -398,6 +428,9 @@ interface StepJumpMenuProps {
    *  screen. Mutually exclusive with onBackToIntro in practice, since both are gated
    *  on the same completed-required-flow check from opposite sides. */
   onExitToProfile?: () => void;
+  /** Saves and finishes from any step, when editing an already-set-up character with no step
+   *  invalid (see SetupFlowScreen). */
+  onSaveAndFinish?: () => void;
 }
 
 export default function StepJumpMenu({
@@ -409,6 +442,7 @@ export default function StepJumpMenu({
   onJumpSubstep,
   onBackToIntro,
   onExitToProfile,
+  onSaveAndFinish,
 }: StepJumpMenuProps) {
   const [open, setOpen] = useState(false);
   const [openAbove, setOpenAbove] = useState(false);
@@ -580,44 +614,15 @@ export default function StepJumpMenu({
         onClick={() => canJump && setOpen((o) => !o)}
         onKeyDown={handleTriggerKeyDown}
         style={triggerStyle(theme, canJump)}
+        className="step-jump-trigger"
       >
         Step {currentVisibleNumber} of {totalSteps}
         {canJump && <DropdownChevron open={open} />}
       </button>
       {open && canJump && (
         <div ref={menuRef} style={menuStyle(theme, openAbove)}>
-          {onBackToIntro && (
-            <button
-              type="button"
-              onClick={() => {
-                onBackToIntro();
-                setOpen(false);
-              }}
-              style={backToIntroItemStyle(theme)}
-              onMouseEnter={(e) => { e.currentTarget.style.background = `${theme.accent}18`; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "none"; }}
-              onKeyDown={handleBackToIntroKeyDown}
-              data-jump-row="true"
-            >
-              ← Setup selection
-            </button>
-          )}
-          {onExitToProfile && (
-            <button
-              type="button"
-              onClick={() => {
-                onExitToProfile();
-                setOpen(false);
-              }}
-              style={backToIntroItemStyle(theme)}
-              onMouseEnter={(e) => { e.currentTarget.style.background = `${theme.accent}18`; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "none"; }}
-              onKeyDown={handleBackToIntroKeyDown}
-              data-jump-row="true"
-            >
-              ← Exit setup
-            </button>
-          )}
+          <MenuActionItem theme={theme} label="← Setup selection" onSelect={onBackToIntro} onClose={() => setOpen(false)} onKeyDown={handleBackToIntroKeyDown} />
+          <MenuActionItem theme={theme} label="← Exit setup" onSelect={onExitToProfile} onClose={() => setOpen(false)} onKeyDown={handleBackToIntroKeyDown} />
           {steps.map((step) => {
             const isActive = step.visibleNumber === currentVisibleNumber;
 
@@ -658,6 +663,7 @@ export default function StepJumpMenu({
               />
             );
           })}
+          <MenuActionItem theme={theme} label="✓ Save & finish" atEnd onSelect={onSaveAndFinish} onClose={() => setOpen(false)} onKeyDown={handleBackToIntroKeyDown} />
         </div>
       )}
       {open && supportsHover && activeFlyoutStep !== null && flyoutPos && activeFlyoutSubsteps.length > 0 && (

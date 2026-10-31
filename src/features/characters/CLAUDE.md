@@ -45,6 +45,13 @@ skip logic. Check this table before adding or reworking a bookmark:
 | Sacred Symbols/Power | Lv 260 | excluded | `isSacredEligible` (`statsStepDraft.ts`) | `SymbolLevelsDisplay`/`SymbolAreaGroup` |
 | HEXA Matrix | Lv 260 | excluded | `isStepSkippedForLevel` (`flows.ts`) | `HexaMatrixBookmark`'s `resolveHexaNotice` |
 
+Symbol **levels** (Full Setup's Symbols page, Maxed Symbols in Buffs and the Scouter Simulator) are
+the exception to the level column: they're never hidden by level, only by legacy class. An area
+above the saved level shows with a warning (`setup/data/symbolUnlock.ts`), because the saved
+level comes from Nexon's daily update and can be a day behind a character who just leveled in. The
+profile locks an area only while it's both above the level and empty. The Arcane/Sacred
+**Power** fields in Stats still follow the table.
+
 Legacy-class exclusion for V Matrix/HEXA is `isLegacyClass(jobName)` (reads `ClassSkillData.isLegacy`
 in `classSkillData.ts`) — the same field `flows.ts` gates on. Use this directly for any legacy-class
 check rather than re-deriving it from other `ClassSkillData` fields.

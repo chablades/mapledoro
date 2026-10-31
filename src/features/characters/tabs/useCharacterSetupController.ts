@@ -249,6 +249,9 @@ function applyStatsDraftToRoster(
   const existing = selectCharacterById(store, toCharacterKey(character));
   if (!existing) return;
   const statsDraft = parseStatsStepDraft(rawDraft);
+  // Its Quick Questions (the Scouter bookmark's Scouter Questions) ask the world's Wild Hunter
+  // rank and Legion Artifact lines too, saved as applyMapleScouterFlow saves them.
+  applyScouterLegionForWorld(store, character, existing, statsDraft.scouterQuestions?.whLegion, statsDraft.scouterQuestions);
   const { stats, isLiberated, weaponHand, hasRuinForceShield, soul } =
     convertStatsStepDraftToStored(statsDraft, character.level);
   preserveExistingActivePresets(stats, existing);
@@ -848,6 +851,34 @@ function buildFamiliarsDataForRecord(familiarsJson: string): StoredFamiliarsData
   const parsed = tryParseJson(familiarsJson);
   if (!parsed || typeof parsed !== "object") return null;
   return { ...(parsed as Omit<StoredFamiliarsData, "activePreset">), activePreset: 0 };
+}
+
+/** The Scouter bookmark's single-step edits (oz_rings_flow, buffs_flow, link_skills_flow), saved
+ *  the same way applyMapleScouterFlow saves those steps. Returns the saved record, or null when
+ *  the flow isn't one of them. */
+function applyScouterSingleStepDraft(
+  character: NormalizedCharacterData | null,
+  stepData: import("../setup/types").SetupStepInputById,
+  upsertFn: (c: StoredCharacterRecord) => void,
+  flowId: SetupFlowId,
+): StoredCharacterRecord | null {
+  if (!character) return null;
+  const existing = selectCharacterById(readCharactersStore(), toCharacterKey(character));
+  if (!existing) return null;
+  // The step opens on the saved values, so a draft that converts to nothing was cleared on
+  // purpose and saves as nothing.
+  let next: StoredCharacterRecord;
+  if (flowId === "oz_rings_flow") {
+    next = { ...existing, scouter: { ...existing.scouter, ozRings: convertOzRingsDraftToStored(parseOzRingsDraft(stepData.oz_rings ?? "")) ?? undefined } };
+  } else if (flowId === "buffs_flow") {
+    next = { ...existing, scouter: { ...existing.scouter, buffs: convertBuffsDraftToStored(parseBuffsDraft(stepData.buffs ?? "")) ?? undefined } };
+  } else if (flowId === "link_skills_flow" && stepData.link_skills) {
+    next = { ...existing, linkSkills: linkSkillsDraftToStored(stepData.link_skills) };
+  } else {
+    return null;
+  }
+  upsertFn(next);
+  return next;
 }
 
 function applyFamiliarsDraftToRoster(
@@ -1860,6 +1891,7 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
       charactersById: nextCharactersById,
       scouterLegionByWorld: freshWorldFields.scouterLegionByWorld,
       legionArtifactByWorld: freshWorldFields.legionArtifactByWorld,
+      scouterSeenByCharacter: freshWorldFields.scouterSeenByCharacter,
       updatedAt: now,
     };
 
@@ -2334,7 +2366,8 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
         removeSetupDraftForCharacter(confirmedCharacter);
       }
 
-      if (effectiveFlowId === "stats_flow") {
+      // scouter_stats_flow is MapleScouter Setup's Stats step alone (the Scouter bookmark's pencil).
+      if (effectiveFlowId === "stats_flow" || effectiveFlowId === "scouter_stats_flow") {
         applyStatsDraftToRoster(confirmedCharacter, effectiveStepData.stats ?? "", upsertRosterCharacter);
       }
 
@@ -2361,6 +2394,11 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
       const isMapleScouterFlow = effectiveFlowId === "maplescouter_setup";
       if (confirmedCharacter && !isFullSetupFlow && !isMapleScouterFlow) {
         applyStandaloneToolDrafts(confirmedCharacter, effectiveStepData, upsertRosterCharacter, effectiveFlowId);
+      }
+      // Link Skills sync to same-world siblings after their own upsert, as in maplescouter_setup.
+      const scouterStepRecord = applyScouterSingleStepDraft(confirmedCharacter, effectiveStepData, upsertRosterCharacter, effectiveFlowId);
+      if (scouterStepRecord && effectiveFlowId === "link_skills_flow") {
+        syncOrPropagateLinkSkills(effectiveStepData.link_skills, scouterStepRecord, characterRoster, upsertRosterCharacter);
       }
 
       // Resyncs every step draft to the just-committed state. Without it, a stale or

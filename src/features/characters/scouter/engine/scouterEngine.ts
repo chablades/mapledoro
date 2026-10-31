@@ -82,19 +82,33 @@ type DopingGroup = "flatAtk" | "dmg" | "crit" | "atkPct" | "fd" | "ied" | "allSt
 // final-damage / ignore-defense fraction, or base points of every stat). Several items add to more
 // than one group. Keys missing here had no effect when measured.
 const DOPING: Record<DopingGroup, Partial<Record<DopingKey, number>>> = {
-  flatAtk: { unionsPower: 30, urus: 30, extreme: 30, superPower: 30, thanks: 30, superVip: 30, legendHero: 30, fish: 30, sayram: 30, additional1: 15, collector: 44, rebootAtkPotion: 10, moonshine: 20, tengu: 20, rainbow: 20, cake: 40, truffle: 40, hyperRainbow: 40, ultraVip: 50, buff275: 60, whiteBear: 80, apple: 100, medal: 120 },
+  flatAtk: { unionsPower: 30, urus: 30, extreme: 30, superPower: 30, thanks: 30, superVip: 30, legendHero: 30, fish: 30, sayram: 30, additional1: 15, collector: 44, rebootAtkPotion: 10, moonshine: 20, tengu: 20, rainbow: 20, cake: 40, truffle: 40, hyperRainbow: 40, ultraVip: 50, buff275: 60, whiteBear: 80, apple: 100, medal: 120,
+    // Not MapleScouter buffs, so unmeasured: their in-game ATT and Magic ATT, which flat ATT is.
+    // Gourmand Power's own description says +10, a known error (MapleStory Wiki: really +30).
+    // The Enlightened One's +5 lasts 5 minutes on a 1-hour cooldown, so once per 20-minute fight:
+    // +5 x 5/20 averaged over the fight.
+    believeInYourself: 20, gourmandPower: 30, enlightenedOne: 1.25, peerlessMarble: 30,
+    // The pick-one group's additions, each a class's own ATT or Magic ATT (the Buffs step only
+    // offers a magic one to a magic class and the reverse): The Energizer Drink ATT +25 or Magic
+    // ATT +30, Advanced Attack or Magic Potion V +10. Ssiws Cheese is Magic ATT +220 for 2
+    // minutes, but so costly it's eaten once per fight, so +220 x 2/20 averaged over the fight.
+    ssiwsCheese: 22, witchStew: 40, energizerDrink: 25, energizerDrinkMagic: 30, attackPotionV: 10, magicPotionV: 10 },
   dmg: { additional1: 15, sayram: 10, shiningRed: 20, authenticDmg: 20, house: 15, bigHero: 10, statPotion: 3 },
   crit: { sayram: 8, jangBi: 5 },
   atkPct: { sayram: 10, heroesHawl: 4 },
   fd: {},
   ied: { shiningBlue: 0.2, additional1: 0.15 },
   // Candy: base all stat (0.06% on a reference sheet, 0.03% at 0% main stat), nothing on Demon Avenger.
-  allStat: { additional1: 15, collector: 13, candy: 7 },
+  // Peerless Marble (Grako's daily Marble Gift, not a MapleScouter buff): STR, DEX, INT and LUK
+  // +30, with its +30 ATT and Magic ATT in flatAtk above.
+  allStat: { additional1: 15, collector: 13, candy: 7, peerlessMarble: 30 },
 };
 const AUTHENTIC_DMG_PCT = 20;
 // Demon Avenger only: base HP the same items add (scaled by HP %), and Guild Blessing's 30 ATT,
-// which no other measured class gets.
-const DA_HP: Partial<Record<DopingKey, number>> = { sayram: 1295, additional1: 1505, collector: 182 };
+// which no other measured class gets. Bright Moonlight Potion and Extreme Red Potion are
+// MapleDoro's own: MapleScouter doesn't count their +2000 HP, but it's a full-fight buff to
+// Demon Avenger's damage like the rest.
+const DA_HP: Partial<Record<DopingKey, number>> = { sayram: 1295, additional1: 1505, collector: 182, moonshine: 2000, extreme: 2000 };
 const DA_HP_PER_CHAMPION_ALL = 490;
 
 // Mu Gong's soul (Memories: +25% ATT for 10 or 20 s every 120 s) counts as 3 ATT% at either level:

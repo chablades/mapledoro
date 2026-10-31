@@ -104,6 +104,37 @@ const SETUP_FLOWS = [
     required: false,
     steps: ["familiars"] as const,
   },
+  // The Scouter bookmark's pencil menu: one MapleScouter Setup step each, saved the same way.
+  // scouter_stats_flow is MapleScouter Setup's own Stats step (isScouterStatsFlow), for the menu's
+  // Scouter Questions and Character Info.
+  {
+    id: "scouter_stats_flow",
+    label: "MapleScouter Stats",
+    description: "Set the stats MapleScouter uses.",
+    required: false,
+    steps: ["stats"] as const,
+  },
+  {
+    id: "oz_rings_flow",
+    label: "Oz Rings",
+    description: "Set this character's Oz Rings.",
+    required: false,
+    steps: ["oz_rings"] as const,
+  },
+  {
+    id: "link_skills_flow",
+    label: "Link Skills",
+    description: "Set this character's Link Skills.",
+    required: false,
+    steps: ["link_skills"] as const,
+  },
+  {
+    id: "buffs_flow",
+    label: "Buffs",
+    description: "Set the buffs this character uses for bossing.",
+    required: false,
+    steps: ["buffs"] as const,
+  },
 ] as const;
 
 type SetupFlowDefinition = (typeof SETUP_FLOWS)[number];
@@ -123,6 +154,12 @@ function getSetupFlowById(flowId: SetupFlowId) {
 
 export function getFlowStepCount(flowId: SetupFlowId) {
   return getSetupFlowById(flowId).steps.length;
+}
+
+/** Whether this flow's Stats step is MapleScouter's version: every field required, the scouter
+ *  questions required, and no Hyper Stat or Inner Ability substep. */
+export function isScouterStatsFlow(flowId: SetupFlowId | undefined): boolean {
+  return flowId === "maplescouter_setup" || flowId === "scouter_stats_flow";
 }
 
 /** Whether finishing this flow is supposed to touch the given step's data at all. Stops
@@ -234,7 +271,7 @@ export function getStepValidityKey(stepId: SetupStepId, substepIndex: number, fl
 // making it safe and necessary to inherit. A MapleScouter-only false may mean blank fields,
 // which is fine everywhere else, so it must not inherit outward.
 function isSanityOnlyValidityFlow(stepId: SetupStepId, flowId: SetupFlowId): boolean {
-  return stepId === "stats" && flowId !== "maplescouter_setup";
+  return stepId === "stats" && !isScouterStatsFlow(flowId);
 }
 
 /** Whether a step/substep's last-known validity report is false.
@@ -259,7 +296,7 @@ function isSubstepKnownInvalid(
   characterLevel: number | undefined,
 ): boolean {
   if (stepId === "stats" && substepIndex === STATS_WINDOW_SUBSTEP_INDEX) {
-    const forceComplete = flowId === "maplescouter_setup";
+    const forceComplete = isScouterStatsFlow(flowId);
     // stats_flow always opens pre-seeded from already-saved data (see
     // isStatsWindowSubstepValid's doc comment), so it never checks any-field-filled.
     const checkAnyFieldFilled = flowId !== "stats_flow";
@@ -351,7 +388,7 @@ export function getStepSubsteps(
   flowId: SetupFlowId,
   characterLevel?: number,
 ): string[] | null {
-  const isScouter = flowId === "maplescouter_setup";
+  const isScouter = isScouterStatsFlow(flowId);
   if (stepId === "stats") {
     const showHyperStat = !isScouter && isHyperStatEligible(characterLevel);
     const showInnerAbility = !isScouter;
