@@ -140,6 +140,13 @@ html.scroll-locked body {
   }
 }
 
+/* Setup's "Step 3 of 9" jump menu trigger (StepJumpMenu.tsx): underlined on hover while it can
+   open, which its inline --step-jump-hover-line says. */
+.step-jump-trigger:hover,
+.step-jump-trigger:focus-visible {
+  text-decoration-line: var(--step-jump-hover-line, none);
+}
+
 /* Scouter figure: the change chip shown once after the HEXA changes. It rises in while the
    figure counts from the old value to the new one (ScouterFigure.tsx), then fades out, and its
    animationend marks the change as seen. */

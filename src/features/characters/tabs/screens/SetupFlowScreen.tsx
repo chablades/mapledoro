@@ -1,6 +1,6 @@
 import StepRenderer from "../../setup/StepRenderer";
 import StepJumpMenu from "../../setup/components/StepJumpMenu";
-import { SaveAndFinishContext } from "../../setup/components/SetupStepFrame";
+import { SaveAndFinishContext } from "../../setup/components/saveAndFinishContext";
 import type { PreviewPaneActions, PreviewPaneModel } from "../paneModels";
 import { readCharactersStore, selectCharacterById, type StoredScouterLegion, type StoredLegionArtifact } from "../../model/charactersStore";
 import { toCharacterKey } from "../../model/characterKeys";

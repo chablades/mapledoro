@@ -106,6 +106,19 @@ const changeChipStyle: CSSProperties = { fontSize: 12, fontWeight: 800, fontFami
 const COUNT_DELAY_MS = 260;
 const COUNT_MS = 1000;
 
+/** The "+1,234" beside the figure while it counts, fading out after; onDone fires when it has. */
+function ChangeChip({ theme, diff, onDone }: { theme: AppTheme; diff: number; onDone: () => void }) {
+  return (
+    <span
+      className="scouter-change-chip"
+      onAnimationEnd={onDone}
+      style={{ ...changeChipStyle, color: statusText(theme, diff > 0 ? "success" : "danger") }}
+    >
+      {diff > 0 ? "+" : "-"}{formatFigure(Math.abs(diff))}
+    </span>
+  );
+}
+
 /** Counts the figure from `from` up (or down) to `to` by editing its text node in place, so React
  *  keeps owning the node and a later re-render still updates it. Skipped under reduced motion. */
 function useCountUp(ref: RefObject<HTMLDivElement | null>, from: number, to: number, active: boolean) {
@@ -167,14 +180,7 @@ export default function ScouterFigure({ character, theme, simulator }: { charact
             {value}
           </div>
           {changeDiff !== 0 && change && (
-            <span
-              key={`${change.before}-${Math.round(real ?? 0)}`}
-              className="scouter-change-chip"
-              onAnimationEnd={change.markSeen}
-              style={{ ...changeChipStyle, color: statusText(theme, changeDiff > 0 ? "success" : "danger") }}
-            >
-              {changeDiff > 0 ? "+" : "-"}{formatFigure(Math.abs(changeDiff))}
-            </span>
+            <ChangeChip key={`${change.before}-${Math.round(real ?? 0)}`} theme={theme} diff={changeDiff} onDone={change.markSeen} />
           )}
         </div>
       </HoverTooltip>
