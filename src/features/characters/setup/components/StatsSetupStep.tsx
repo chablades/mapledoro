@@ -28,7 +28,7 @@ import {
   type ClassWarning,
 } from "../data/classSkillData";
 import { STAT_LABELS, TRIPLE_STAT_FIELDS, type StatFieldId, type TripleStatFieldId } from "../data/statFields";
-import { statChanges, type StatChange } from "../data/statsChanges";
+import { statChanges } from "../data/statsChanges";
 import { deriveWeaponHandFromWeapon } from "../data/classBranch";
 import { equipmentLikeFromDraft, parseEquipmentStepDraft, type EquipmentLike } from "../data/equipmentStepDraft";
 import {
@@ -1125,12 +1125,6 @@ function savedStatsDraft(record: StoredCharacterRecord | null): StatsStepDraft |
   return record ? storedStatsToStatsStepDraft(record) : null;
 }
 
-/** Marks each changed box (its input's data-stat-key) with a bar down its left edge, a different
- *  shape and color from the focus ring so changed boxes never read as selected. */
-function changedInputsCss(changes: StatChange[], color: string): string {
-  return changes.map((c) => `.stats-substep-root input[data-stat-key="${c.key}"] { box-shadow: inset 3px 0 0 ${color}; }`).join("\n");
-}
-
 /** Saved values of the changed boxes by data-stat-key, for each box's "Was …" hover hint. */
 const SavedStatValuesContext = createContext<ReadonlyMap<string, string>>(new Map());
 
@@ -1141,9 +1135,24 @@ function wasHint(saved: ReadonlyMap<string, string>, key: string): string | null
 
 /** A stat box's "Was …" hint in the app's tooltip, on hover and while typing. Always wraps the
  *  box, with no bubble while it's unchanged, so changing it never remounts the input mid-typing.
- *  `block` keeps a full-width box full width. */
+ *  `block` keeps a full-width box full width.
+ *
+ *  Also marks a changed box with the `stat-changed` class, which a fixed rule in the substep's
+ *  stylesheet turns into a bar down the box's left edge (a different shape and color from the
+ *  focus ring, so a changed box never reads as selected). A class toggle rather than per-key CSS
+ *  text regenerated on every keystroke: style-rewriting browser extensions (dark mode ones in
+ *  particular) can miss a <style> element's text changing and keep painting a stale bar. */
 function WasHint({ theme, hint, block = false, children }: { theme: AppTheme; hint: string | null; block?: boolean; children: ReactNode }) {
-  return <HoverTooltip label={hint} theme={theme} style={block ? { display: "block" } : undefined}>{children}</HoverTooltip>;
+  return (
+    <HoverTooltip
+      label={hint}
+      theme={theme}
+      className={hint !== null ? "stat-changed" : undefined}
+      style={block ? { display: "block" } : undefined}
+    >
+      {children}
+    </HoverTooltip>
+  );
 }
 
 function StatsWindowSubstep({
@@ -1225,7 +1234,7 @@ function StatsWindowSubstep({
         .stats-combat-grid { flex-direction: column; gap: 0.4rem; }
         .stats-symbols-grid { grid-template-columns: 1fr; gap: 0.4rem; }
       }
-      ${changedInputsCss(changes, statusText(theme, "info"))}
+      .stats-substep-root .stat-changed input { box-shadow: inset 3px 0 0 ${statusText(theme, "info")}; }
     `}</style>
     <SavedStatValuesContext.Provider value={savedValues}>
     <SetupStepFrame

@@ -32,7 +32,9 @@ function single(draft: StatsStepDraft, id: StatFieldId): string {
 }
 
 /** The boxes shown (tripleIds' three parts, singleIds, Cooldown Reduction's two) whose draft
- *  value differs from `saved`, in the order they appear. */
+ *  value differs from `saved`, in the order they appear. A box with no saved value is never a
+ *  change: filling in a blank (a character that skipped setup or went through Quick Setup has
+ *  no stats saved at all) isn't an edit worth flagging. */
 export function statChanges(
   draft: StatsStepDraft,
   saved: StatsStepDraft,
@@ -42,7 +44,7 @@ export function statChanges(
 ): StatChange[] {
   const changes: StatChange[] = [];
   const add = (key: string, label: string, before: string, after: string) => {
-    if (!sameValue(before, after)) changes.push({ key, label, before: before.trim(), after: after.trim() });
+    if (before.trim() !== "" && !sameValue(before, after)) changes.push({ key, label, before: before.trim(), after: after.trim() });
   };
   for (const id of tripleIds) {
     for (const { part, label } of TRIPLE_PARTS) {
