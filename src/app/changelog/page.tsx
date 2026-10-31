@@ -12,6 +12,15 @@ interface ChangelogEntry {
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    date: "2026-10-31",
+    changes: [
+      { type: "changed", text: "Boss Clear's 100% Solo HEXA is now the same line for every class. Your Sacred Symbols, Genesis Pass and Ascent now raise your Adjusted HEXA Stat instead of lowering the line." },
+      { type: "changed", text: "Hayato's Scouter HEXA and Boss Clear are now adjusted for how the class clears in real fights, and Mo Xuan's adjustment is slightly larger." },
+      { type: "changed", text: "Your Boss 380 HEXA now includes Sacred Symbol damage only once all 8 Sacred Symbols are at Lv. 11, Tallahart and Geardock included, and its tooltip says which applies." },
+      { type: "fixed", text: "Fixed Extreme Lotus's Boss Clear counting Sacred Symbol damage, which no symbol gives on that boss." },
+    ],
+  },
+  {
     date: "2026-10-21",
     changes: [
       { type: "changed", text: "The Scouter figure, Boss Clear and Stat Efficiency are now calculated by MapleDoro itself, so they no longer depend on MapleScouter being reachable and update as soon as you edit your character. The refresh button is gone, and Boss Clear no longer shows Converted and Dojo." },
