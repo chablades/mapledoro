@@ -17,6 +17,7 @@ const CHANGELOG: ChangelogEntry[] = [
       { type: "added", text: "My Characters on the dashboard can now be reordered with the new reorder button." },
       { type: "added", text: "The Legion panel's Link Skills can now be edited, so you can enter link skill levels from characters you don't track." },
       { type: "added", text: "Hovering a link skill's icon in the Legion panel now shows which characters contribute to it." },
+      { type: "fixed", text: "Fixed Full Setup and MapleScouter Setup crashing when setting up a character that wasn't saved yet." },
       { type: "fixed", text: "Fixed Import data in Settings replacing your existing data without asking first. It now shows what you'd lose, like a Google Drive restore." },
       { type: "fixed", text: "Fixed Import World dropping the file's Legion data when that world had none saved." },
       { type: "fixed", text: "Fixed Import World moving a character off another world when the file had a character with the same name." },

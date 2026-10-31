@@ -25,7 +25,9 @@ function canSaveAndFinishEarly(
   if (setup.activeFlowId !== "maplescouter_setup" && setup.activeFlowId !== "full_setup") return false;
   if (setup.setupConfineToSubstep || firstInvalidStepIndex !== null || !confirmed) return false;
   const saved = selectCharacterById(readCharactersStore(), toCharacterKey(confirmed));
-  return saved !== undefined && findScouterSetupGap(saved) === null;
+  // selectCharacterById returns null (not undefined) for a character that isn't saved yet,
+  // such as one being set up for the first time.
+  return saved !== null && findScouterSetupGap(saved) === null;
 }
 
 export default function SetupFlowScreen({ model, actions }: SetupFlowScreenProps) {
