@@ -21,7 +21,7 @@ const CHANGELOG: ChangelogEntry[] = [
       { type: "added", text: "When your Scouter HEXA changes, the next time you view it on the Overview or the Scouter bookmark it animates from the old number to the new one, and hovering it shows what it was before." },
       { type: "added", text: "The Scouter figure on the Overview and the Scouter and Stat Efficiency bookmarks now have a pencil that edits any MapleScouter Setup step on its own." },
       { type: "added", text: "Full Setup and MapleScouter Setup can now be saved and finished from any step when editing a character that's already set up, with Save & finish next to Next Step and in the step menu." },
-      { type: "added", text: "Character Info now marks each box you've changed from your saved stats, and hovering it shows the old value." },
+      { type: "added", text: "The Character Info setup step now marks each box you've changed from your saved stats, and hovering it shows the old value." },
       { type: "added", text: "The Buffs step adds Believe in Yourself, Gourmand Power, The Enlightened One, Peerless Marble, Ssiws Cheese, Witch's Special Stew, The Energizer Drink and the Advanced Potion Vs, and only shows the ATT or Magic ATT items your class uses." },
       { type: "added", text: "Every buff now shows what it gives when you hover it." },
       { type: "changed", text: "Demon Avenger's Scouter now counts the Max HP from Bright Moonlight Potion and Extreme Red Potion." },
