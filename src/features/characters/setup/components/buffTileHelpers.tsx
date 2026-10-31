@@ -100,6 +100,12 @@ export function boolBuffLabel(id: BoolBuffEntry["id"], primaryStat: ReturnType<t
   if (id === "extremePotion") return isHurricaneClass(jobName) ? extremePotionLabel(primaryStat) : extremePotionMergedTooltip(theme, primaryStat);
   if (id === "sparklingRedStar") return sparklingRedStarTooltip(theme);
   if (id === "fishBuff") return fishBuffTooltip(theme);
+  if (id === "peerlessMarble") return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+      <span>Peerless Marble</span>
+      <span style={{ opacity: 0.7 }}>+30 All Stats, ATT/Magic ATT</span>
+    </div>
+  );
   if (id === "genepass") return (
     <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
       <span>Power of the Adversary</span>

@@ -85,6 +85,11 @@ export interface ScouterDoping {
   rainbow: boolean;
   thanks: boolean;
   genePass: boolean;
+  // Not MapleScouter buffs: only MapleDoro's local engine reads these (flat ATT, scouterEngine.ts).
+  believeInYourself: boolean;
+  gourmandPower: boolean;
+  enlightenedOne: boolean;
+  peerlessMarble: boolean;
   // Not a GMS buff, so always "0" here, the same treatment as the KMS-only seed rings below
   // (see buildSeedRing).
   criDmgRing: "0";
@@ -335,6 +340,10 @@ function buildDoping(buffs: StoredScouterBuffs | undefined): ScouterDoping {
     rainbow: false,
     thanks: false,
     genePass: Boolean(buffs?.genepass),
+    believeInYourself: Boolean(buffs?.believeInYourself),
+    gourmandPower: Boolean(buffs?.gourmandPower),
+    enlightenedOne: Boolean(buffs?.enlightenedOne),
+    peerlessMarble: Boolean(buffs?.peerlessMarble),
     criDmgRing: "0",
   };
 }

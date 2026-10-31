@@ -101,7 +101,7 @@ export function mainStatsForClass(requiredStats: readonly string[]): StatId[] {
 export type BoolBuffId =
   | "sayramElixir" | "collectorElixir" | "honorableElixir"
   | "heroEcho" | "legionMight" | "masarayuGift" | "extremePotion" | "extremeGreenPotion"
-  | "mvpSuperpower" | "vipBuff" | "brightMoonlight" | "candiedApple"
+  | "mvpSuperpower" | "vipBuff" | "brightMoonlight" | "candiedApple" | "believeInYourself" | "gourmandPower" | "enlightenedOne" | "peerlessMarble"
   | "caretakerSupport" | "sparklingRedStar" | "fishBuff" | "genepass"
   // Group A, pick one
   | "greatHeroBoost" | "legendaryHero" | "advWeaponTempering" | "sparklingBlueStar"
@@ -140,6 +140,16 @@ export const BOOL_BUFFS: readonly BoolBuffEntry[] = [
   { id: "sparklingRedStar",  name: "Sparkling Red Star Potion",      icon: { kind: "item",  id: "02024174" }, secondIcon: { kind: "item", id: "02024175" } },
   // Advanced Stat Potion tile is inserted here at render time
   { id: "brightMoonlight",   name: "Bright Moonlight Potion",        icon: { kind: "item",  id: "02023136" } },
+  // Event buffs that last the whole 20-minute fight: Yu Garden's fortune (the one fortune worth
+  // having for bosses) and Tangyoon's Gourmand Power. Believe in Yourself has no shadowless icon.
+  { id: "believeInYourself", name: "Believe in Yourself",            icon: { kind: "item",  id: "02023534", shadow: true } },
+  { id: "gourmandPower",     name: "Gourmand Power",                 icon: { kind: "item",  id: "02023163" } },
+  // A title whose Concentration buff (ATT and Magic ATT +5 for 5 minutes, 1-hour cooldown) is
+  // used once per fight; the engine averages it over the fight.
+  { id: "enlightenedOne",    name: "The Enlightened One",            icon: { kind: "item",  id: "03700266" } },
+  // The one Grako Marble Gift worth having for bosses; the other marbles' +5 or +10 to a stat is
+  // under 0.1% damage. No shadowless icon.
+  { id: "peerlessMarble",    name: "Peerless Marble",                icon: { kind: "item",  id: "02023906", shadow: true } },
   { id: "heroEcho",          name: "Hero's Echo",                    icon: { kind: "skill", id: "0001005"  } },
   { id: "legionMight",       name: "Legion's Might",                 icon: { kind: "item",  id: "02024188" } },
   { id: "masarayuGift",      name: "Masarayu's Gift Atmospheric Effect", icon: { kind: "item", id: "02024193", shadow: true } },

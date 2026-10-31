@@ -66,6 +66,10 @@ export interface StoredScouterBuffs {
   mvpSuperpower?: true;
   vipBuff?: true;
   brightMoonlight?: true;
+  believeInYourself?: true;
+  gourmandPower?: true;
+  enlightenedOne?: true;
+  peerlessMarble?: true;
   candiedApple?: true;
   caretakerSupport?: true;
   sparklingRedStar?: true;
