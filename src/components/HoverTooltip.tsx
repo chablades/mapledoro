@@ -166,7 +166,9 @@ export default function HoverTooltip({ label, theme, style, className, children 
       }}
     >
       {children}
-      {open && pos && typeof document !== "undefined" && createPortal(
+      {/* A null label keeps the wrapper but shows nothing, for a control that only sometimes has
+          a hint and must keep the same tree either way (so typing into it never remounts it). */}
+      {open && pos && label !== null && typeof document !== "undefined" && createPortal(
         <div
           ref={bubbleRef}
           className="hover-tip-bubble"
