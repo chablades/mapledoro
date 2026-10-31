@@ -320,6 +320,7 @@ function exportWorldJson(worldId: number, worldCharacters: StoredCharacterRecord
     characters: worldCharacters,
     legionArtifact: store.legionArtifactByWorld[worldIdKey],
     scouterLegion: store.scouterLegionByWorld[worldIdKey],
+    linkSkillTotals: store.linkSkillTotalsByWorld[worldIdKey],
     mainCharacterKey: store.mainCharacterIdByWorld[worldIdKey] ?? null,
     championCharacterKeys: store.championCharacterIdsByWorld[worldIdKey] ?? [],
   };

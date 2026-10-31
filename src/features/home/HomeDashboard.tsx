@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import MiracleTimePanel from "../../components/MiracleTimePanel";
 import SunnySundayPanel from "../../components/SunnySundayPanel";
 import type { AppTheme } from "../../components/themes";
@@ -8,7 +8,9 @@ import { useMounted } from "../../lib/useMounted";
 import {
   readCharactersStore,
   selectCharactersList,
+  writeCharacterOrder,
 } from "../characters/model/charactersStore";
+import { moveInArray } from "../tools/useCardReorder";
 import type { StoredCharacterRecord } from "../characters/model/charactersStore";
 import CharactersPanel from "./CharactersPanel";
 import HeroBanner from "./HeroBanner";
@@ -21,10 +23,24 @@ export default function HomeDashboard({ theme }: { theme: AppTheme }) {
   const mounted = useMounted();
   // Memoized so the store is parsed once per mount rather than on every render of
   // this component, and so CharactersPanel keeps a stable array identity.
-  const characters: StoredCharacterRecord[] = useMemo(
+  const storedCharacters: StoredCharacterRecord[] = useMemo(
     () => (mounted ? selectCharactersList(readCharactersStore()) : []),
     [mounted],
   );
+  // Set by a reorder on the dashboard, so the list updates without re-reading the store.
+  const [reordered, setReordered] = useState<StoredCharacterRecord[] | null>(null);
+  const characters = reordered ?? storedCharacters;
+
+  // `order` lines up index for index with `characters`: the store parse drops order entries
+  // with no record, which is exactly what selectCharactersList skips.
+  function reorderCharacters(from: number, to: number) {
+    const nextOrder = moveInArray(readCharactersStore().order, from, to);
+    const nextList = moveInArray(characters, from, to);
+    setReordered(() => {
+      writeCharacterOrder(nextOrder);
+      return nextList;
+    });
+  }
 
   return (
     <>
@@ -186,7 +202,7 @@ export default function HomeDashboard({ theme }: { theme: AppTheme }) {
               />
             </div>
             <div className="dash-sec sec-characters">
-              <CharactersPanel theme={theme} characters={characters} />
+              <CharactersPanel theme={theme} characters={characters} onReorder={reorderCharacters} />
             </div>
           </div>
           <aside className="dashboard-sidebar-right">

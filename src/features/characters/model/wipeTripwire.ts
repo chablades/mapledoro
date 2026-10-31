@@ -27,11 +27,12 @@ const WATCHED_FIELDS = [
 ] as const satisfies readonly (keyof StoredCharacterRecord)[];
 
 /** World-keyed maps that live on the store rather than on a character record, so the
- *  per-character pass never sees them, meaning Legion's Artifact board. Link Skills moved to
- *  a per-character field (see charactersStore.ts's file-header reasoning), so they are now
- *  covered by WATCHED_FIELDS above instead of here. */
+ *  per-character pass never sees them: Legion's Artifact board and the hand-entered link
+ *  skill totals. Each character's own link skill levels are a per-character field (see
+ *  charactersStore.ts's file-header reasoning), covered by WATCHED_FIELDS above instead. */
 const WATCHED_WORLD_MAPS = [
   "legionArtifactByWorld",
+  "linkSkillTotalsByWorld",
 ] as const satisfies readonly (keyof CharactersStore)[];
 
 /** Ignore fields that were near-empty to begin with, so adding then clearing a single
