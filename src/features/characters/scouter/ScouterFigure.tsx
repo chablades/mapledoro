@@ -95,6 +95,21 @@ function figureTooltip(status: ScouterFigureStatus, theme: AppTheme, change: Sco
   }
 }
 
+// The pencil is taller than the label row; negative margins keep the row (and the figure under
+// it) where it was.
+const editActionSlotStyle: CSSProperties = { display: "inline-flex", margin: "-6px 0 -6px 2px" };
+
+function ScouterFigureLabel({ theme, editAction, unsupported }: { theme: AppTheme; editAction?: ReactNode; unsupported: boolean }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 2 }}>
+      <div style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: theme.muted }}>Scouter</div>
+      <span style={betaTagStyle(theme)}>Beta</span>
+      <InfoTooltip content={SCOUTER_INFO} theme={theme} />
+      {editAction && !unsupported && <span style={editActionSlotStyle}>{editAction}</span>}
+    </div>
+  );
+}
+
 // A real ready value should read as prominent data, not a dim placeholder. theme.muted is right
 // for the "—" and "N/A" this slot shows before Scouter has anything to say. An error takes its
 // own status color so a problem stands out.
@@ -104,7 +119,11 @@ function figureValueColor(theme: AppTheme, status: ScouterFigureStatus): string 
   return theme.muted;
 }
 
-export default function ScouterFigure({ character, theme, simulator }: { character: StoredCharacterRecord; theme: AppTheme; simulator: ScouterSimulatorController }) {
+/** `editAction`, the Overview's Scouter pencil menu, sits in the label row; a class Scouter doesn't
+ *  support has nothing to edit, so it's left out there. */
+export default function ScouterFigure({ character, theme, simulator, editAction }: {
+  character: StoredCharacterRecord; theme: AppTheme; simulator: ScouterSimulatorController; editAction?: ReactNode;
+}) {
   const status = useScouterResult(character);
   const simulated = simulator.active;
   const real = status.kind === "ready" ? status.entry.boss380Hexa : null;
@@ -128,11 +147,7 @@ export default function ScouterFigure({ character, theme, simulator }: { charact
 
   return (
     <div>
-      <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 2 }}>
-        <div style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: theme.muted }}>Scouter</div>
-        <span style={betaTagStyle(theme)}>Beta</span>
-        <InfoTooltip content={SCOUTER_INFO} theme={theme} />
-      </div>
+      <ScouterFigureLabel theme={theme} editAction={editAction} unsupported={status.kind === "unsupported"} />
       <HoverTooltip label={tooltip} theme={theme}>
         <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
           <div ref={valueRef} style={{ fontSize: 20, fontWeight: 800, color: valueColor, lineHeight: 1, fontFamily: "var(--font-heading)" }}>

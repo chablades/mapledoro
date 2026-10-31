@@ -1306,9 +1306,10 @@ function renderOverviewSection(id: OverviewSectionId, ctx: OverviewSectionRender
   }
 }
 
-function OverviewBookmark({ model, onNavigateToBookmark, onNavigateToGearSlot, onSetOverviewLayout, scouterSimulator }: {
+function OverviewBookmark({ model, onNavigateToBookmark, onNavigateToGearSlot, onSetOverviewLayout, scouterSimulator, onEditStep }: {
   model: PreviewPaneModel; onNavigateToBookmark: (id: BookmarkId, subView?: string) => void; onNavigateToGearSlot: (slotKey: SlotKey) => void; onSetOverviewLayout: (layout: OverviewSectionId[] | null) => void;
   scouterSimulator: ScouterSimulatorController;
+  onEditStep: (flowId: SetupFlowId, targetSubstep?: number, confineToSubstep?: boolean) => void;
 }) {
   const { theme, profile } = model;
   const character = profile.confirmedCharacter;
@@ -1385,9 +1386,12 @@ function OverviewBookmark({ model, onNavigateToBookmark, onNavigateToGearSlot, o
         </HoverTooltip>
       </div>
 
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16 }}>
+      {/* Wraps so the Weapon/Secondary/Emblem icons drop under the Scouter figure on a narrow
+          screen instead of the last one being cut off. */}
+      <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "flex-start", gap: "10px 16px" }}>
         {mounted && character
-          ? <ScouterFigure character={character} theme={theme} simulator={scouterSimulator} />
+          ? <ScouterFigure character={character} theme={theme} simulator={scouterSimulator}
+              editAction={<EditMenuButton theme={theme} label="Scouter" items={scouterEditMenu(character, onEditStep)} disabled={model.setup.isUiLocked} />} />
           : <OverviewFigure label="Scouter" value="—" theme={theme} />}
         <div style={{ display: "flex", gap: 6 }}>
           <WseSlot label="Weapon" item={equipGrid?.weapon} theme={theme} onNavigate={() => onNavigateToGearSlot("weapon")} />
@@ -3254,6 +3258,19 @@ const SCOUTER_INPUT_FLOWS: readonly { label: string; flowId: SetupFlowId; subste
   { label: "Buffs", flowId: "buffs_flow" },
 ];
 
+/** The Scouter pencil menu's items, for the Scouter and Stat Efficiency bookmarks and the
+ *  Overview's Scouter figure alike. HEXA Skills only where the HEXA bookmark's own pencil shows
+ *  (Lv 260+, not a legacy class). */
+function scouterEditMenu(
+  character: StoredCharacterRecord,
+  onEditStep: (flowId: SetupFlowId, targetSubstep?: number, confineToSubstep?: boolean) => void,
+): EditMenuItem[] {
+  return SCOUTER_INPUT_FLOWS.filter((f) => f.flowId !== "hexa_matrix_flow" || isHexaMatrixAvailable(character)).map((f) => ({
+    label: f.label,
+    onSelect: () => (f.substep === undefined ? onEditStep(f.flowId) : onEditStep(f.flowId, f.substep, true)),
+  }));
+}
+
 /** The not-ready states every Scouter-backed bookmark shares (class unsupported, setup
  *  incomplete, engine data loading, calculation failed) plus the engine notice banner, kept in one
  *  place so Scouter and Stat Efficiency cannot drift apart. Also owns this bookmark's page header.
@@ -3264,13 +3281,7 @@ function ScouterResultGate({ theme, character, label, disabled, onEditStep, chil
   children: (entry: ScouterResultEntry) => ReactNode;
 }) {
   const status = useScouterResult(character);
-  const editMenu = status.kind === "unsupported"
-    ? undefined
-    // HEXA Skills only where the HEXA bookmark's own pencil shows (Lv 260+, not a legacy class).
-    : SCOUTER_INPUT_FLOWS.filter((f) => f.flowId !== "hexa_matrix_flow" || isHexaMatrixAvailable(character)).map((f) => ({
-        label: f.label,
-        onSelect: () => (f.substep === undefined ? onEditStep(f.flowId) : onEditStep(f.flowId, f.substep, true)),
-      }));
+  const editMenu = status.kind === "unsupported" ? undefined : scouterEditMenu(character, onEditStep);
   const header = <BookmarkPageHeader theme={theme} label={label} onEdit={null} disabled={disabled} editMenu={editMenu} />;
 
   if (status.kind === "unsupported") {
@@ -3543,7 +3554,7 @@ function BookmarkPageBody({
   // rather than inside either component.
   const scouterSimulator = useScouterSimulator(character);
 
-  if (active.id === "overview") return <OverviewBookmark model={model} onNavigateToBookmark={onNavigateToBookmark} onNavigateToGearSlot={onNavigateToGearSlot} onSetOverviewLayout={actions.setOverviewLayout} scouterSimulator={scouterSimulator} />;
+  if (active.id === "overview") return <OverviewBookmark model={model} onNavigateToBookmark={onNavigateToBookmark} onNavigateToGearSlot={onNavigateToGearSlot} onSetOverviewLayout={actions.setOverviewLayout} scouterSimulator={scouterSimulator} onEditStep={onEditStep} />;
 
   if (active.id === "setup") {
     // SetupFlowButtons calls actions.startOptionalFlow directly (it's also reused
