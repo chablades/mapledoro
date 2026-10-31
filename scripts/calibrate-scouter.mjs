@@ -54,6 +54,15 @@ const BOSS_CHANGED = { kaling: "2026-09-09" };
 // Classes rebalanced since then, by their latest GMS balance patch.
 const CLASS_CHANGED = { erel_light: "2026-09-09", sia_astelle: "2026-09-09" };
 const clearCutoff = (clear) => [LAST_SCOUTER_UPDATE, BOSS_CHANGED[clear.boss] ?? "", CLASS_CHANGED[clear.class] ?? ""].sort().at(-1);
+// Event items whose bonus is small and predictable enough to divide out instead of dropping the
+// clear. Mapae Nodestone: +40% Boss Damage for 20 s of every 30. Boss Damage shares one bucket of
+// about 1,100% with damage, buffs and links on endgame sheets, so that's about +2.2% damage at
+// average uptime and +3.3% with bursts inside the window; rounded up so the clear errs weaker.
+const EVENT_DAMAGE = { "Mapae Nodestone": 1.03 };
+// Only close clears are averaged: one with lots of time left (fixed phases, invulnerability) only
+// says "at least this strong". Overkill clears are still listed.
+const MIN_TIMER_USED = 0.85;
+const isClose = (r) => r.actualPercent <= 100 / MIN_TIMER_USED;
 // Level gaps cap at 5 levels above the boss; an unknown level is assumed capped (endgame clears).
 const LEVEL_GAP_CAP = 5;
 // Destiny-tier clears always have Sacred Power past the cap, so the Authentic gap is maxed.
@@ -146,9 +155,9 @@ function evaluateClear(clear, probes) {
   if (!entry) return { error: `no bosscut entry for ${clear.boss} ${clear.difficulty}` };
   if (clear.hexa380 == null) return { skipped: "no HEXA value, logged only" };
   // A boss-adjusted HEXA already includes the boss's gap penalties, so recomputing from it would
-  // apply them twice. The clear % MapleScouter showed with it is the prediction itself.
-  if (clear.hexaAdjusted) {
-    if (clear.shownPercent == null) return { skipped: "boss-adjusted HEXA with no shown %, logged only" };
+  // apply them twice. The clear % MapleScouter showed with it is the prediction itself; without
+  // one, the formula runs on it with every gap at its ceiling, which leaves it unchanged.
+  if (clear.hexaAdjusted && clear.shownPercent != null) {
     const actualPercent = (100 * clear.timerSeconds) / (clear.timerSeconds - clear.secondsLeft);
     return {
       scouterPercent: clear.shownPercent, actualPercent,
@@ -170,7 +179,7 @@ function evaluateClear(clear, probes) {
     spline380: probe.spline380,
     genePassConst: probe.genePassConst,
   };
-  const level = clear.level ?? entry.level + LEVEL_GAP_CAP;
+  const level = clear.hexaAdjusted || clear.level == null ? entry.level + LEVEL_GAP_CAP : clear.level;
   const result = computeBossClear(entry, level, ASSUMED_ARCANE_FORCE, ASSUMED_AUTHENTIC_FORCE, inputs);
   if (!result) return { error: `Boss Clear formula has no result for ${clear.boss} ${clear.difficulty}` };
 
@@ -194,7 +203,7 @@ function formatRow(clear, r) {
   if (r.skipped) return `${label} (${r.skipped})`;
   const hexa = `${clear.hexaRounded ? "~" : ""}${clear.hexa380}`.padStart(8);
   const shown = clear.shownPercent == null ? "" : `  shown ${clear.shownPercent}%${r.shownMismatch ? " (MISMATCH)" : ""}`;
-  const flags = [clear.runQuality !== "clean" && clear.runQuality, r.levelAssumed && "level assumed", clear.partySize > 1 && `party of ${clear.partySize}`]
+  const flags = [clear.runQuality !== "clean" && clear.runQuality, r.levelAssumed && "level assumed", clear.partySize > 1 && `party of ${clear.partySize}`, !isClose(r) && "overkill, not averaged"]
     .filter(Boolean)
     .join(", ");
   const factor = r.factor == null ? "  -  " : r.factor.toFixed(2);
@@ -203,13 +212,13 @@ function formatRow(clear, r) {
 
 function summarize(values) {
   const mean = values.reduce((a, b) => a + b, 0) / values.length;
-  return `n=${values.length}  mean ${mean.toFixed(2)}  range ${Math.min(...values).toFixed(2)}-${Math.max(...values).toFixed(2)}`;
+  return `n=${values.length}  median ${median(values).toFixed(2)}  mean ${mean.toFixed(2)}  range ${Math.min(...values).toFixed(2)}-${Math.max(...values).toFixed(2)}`;
 }
 
 function groupFactors(rows, keyOf) {
   const groups = new Map();
   for (const { clear, r } of rows) {
-    if (r.error || r.factor == null || clear.runQuality !== "clean") continue;
+    if (r.error || r.factor == null || clear.runQuality !== "clean" || !isClose(r)) continue;
     const key = keyOf(clear);
     groups.set(key, [...(groups.get(key) ?? []), r.factor]);
   }
@@ -219,20 +228,36 @@ function groupFactors(rows, keyOf) {
 function runReport() {
   const { clears: logged } = readJson(CLEARS_FILE);
   // A temporary event skill inflates a clear, and other regions differ from GMS in attack speed cap,
-  // patch state and MapleScouter's class data, so neither counts toward a class factor.
-  const clears = logged.filter((clear) => !clear.eventSkill && (clear.region ?? "GMS") === "GMS"
+  // patch state and MapleScouter's class data, so neither counts toward a class factor (except an
+  // EVENT_DAMAGE item, divided out below).
+  const clears = logged.filter((clear) => (!clear.eventSkill || EVENT_DAMAGE[clear.eventSkill]) && (clear.region ?? "GMS") === "GMS"
     && !(clear.uploaded && clear.uploaded < clearCutoff(clear)));
   if (clears.length < logged.length) console.log(`${logged.length - clears.length} event-skill, non-GMS or outdated (before ${LAST_SCOUTER_UPDATE}, or before a boss rework) clear(s) left out.`);
+  const seen = new Set();
+  for (const c of logged.filter((clear) => clear.hexa380 != null)) {
+    const key = [c.class, c.boss, c.difficulty, c.hexa380, c.secondsLeft].join("|");
+    if (seen.has(key)) console.log(`Possible duplicate: ${c.class} ${c.difficulty} ${c.boss}, HEXA ${c.hexa380}, ${c.secondsLeft} s left.`);
+    seen.add(key);
+  }
   const unknownRegion = clears.filter((clear) => clear.region == null).length;
   if (unknownRegion > 0) console.log(`${unknownRegion} clear(s) have no region yet and are counted as GMS until confirmed.`);
   console.log();
   const probes = readJson(PROBES_FILE, {});
-  const rows = clears.map((clear) => ({ clear, r: evaluateClear(clear, probes) }));
+  const rows = clears.map((clear) => {
+    const r = evaluateClear(clear, probes);
+    const eventDamage = EVENT_DAMAGE[clear.eventSkill] ?? 1;
+    // Clear rate is linear in damage below the Ascent bonus, so the item's damage scales it directly.
+    if (eventDamage !== 1 && r.scouterPercent != null) {
+      r.scouterPercent *= eventDamage;
+      if (r.factor != null) r.factor /= eventDamage;
+    }
+    return { clear, r };
+  });
 
   console.log("Clears (scouter = today's MapleScouter via bossClearFormula.ts; factor = actual / scouter)\n");
   for (const { clear, r } of rows) console.log(formatRow(clear, r));
 
-  console.log("\nPer class (clean solo runs only):");
+  console.log(`\nPer class (clean solo runs that used at least ${MIN_TIMER_USED * 100}% of the timer):`);
   for (const [classId, factors] of groupFactors(rows, (c) => c.class)) {
     console.log(`  ${classId.padEnd(14)} ${NON_KMS_CLASSES.has(classId) ? "non-KMS" : "control"}  ${summarize(factors)}`);
   }
@@ -240,6 +265,63 @@ function runReport() {
   for (const [key, factors] of groupFactors(rows, (c) => `${c.class} ${c.difficulty} ${c.boss}`)) {
     console.log(`  ${key.padEnd(30)} ${summarize(factors)}`);
   }
+  printTwoWayFit(rows);
+}
+
+// ── Two-way fit ──────────────────────────────────────────────────────────────
+
+// GMS Hard Limbo and Hard Baldrix are KMS Destiny (same cut), so each pair is one fight.
+const SAME_FIGHT = { "Destiny limbo": "Hard limbo", "Destiny bardrix": "Hard bardrix" };
+const fightOf = (clear) => SAME_FIGHT[`${clear.difficulty} ${clear.boss}`] ?? `${clear.difficulty} ${clear.boss}`;
+const median = (values) => {
+  const sorted = values.toSorted((a, b) => a - b), mid = sorted.length / 2;
+  return sorted.length % 2 ? sorted[Math.floor(mid)] : (sorted[mid - 1] + sorted[mid]) / 2;
+};
+// The median of each group's values of a per-point quantity.
+function groupMedians(points, keyOf, valueOf) {
+  const groups = new Map();
+  for (const p of points) groups.set(keyOf(p), [...(groups.get(keyOf(p)) ?? []), valueOf(p)]);
+  return new Map([...groups].map(([key, values]) => [key, median(values)]));
+}
+
+/** Splits every close clear's factor into baseline x class x boss (median polish on logs), so a
+ *  class is judged against how hard its bosses were for everyone, and a boss against how strong
+ *  the classes that cleared it are. Class factors are relative to the KMS classes (their median is
+ *  1), boss factors to the typical boss, and the baseline is what's left: a typical clear's factor
+ *  against MapleScouter. A class+boss pair whose clears still sit well off the fit is a candidate
+ *  exception. */
+function printTwoWayFit(rows) {
+  const points = rows
+    .filter(({ clear, r }) => !r.error && r.factor != null && clear.runQuality === "clean" && isClose(r))
+    .map(({ clear, r }) => ({ cls: clear.class, fight: fightOf(clear), y: Math.log(r.factor) }));
+  let baseline = median(points.map((p) => p.y));
+  let classOf = new Map(), bossOf = new Map();
+  for (let i = 0; i < 30; i++) {
+    classOf = groupMedians(points, (p) => p.cls, (p) => p.y - baseline - (bossOf.get(p.fight) ?? 0));
+    bossOf = groupMedians(points, (p) => p.fight, (p) => p.y - baseline - classOf.get(p.cls));
+  }
+  // Move the KMS classes' median class effect and the median boss effect into the baseline.
+  const classShift = median([...classOf].filter(([id]) => !NON_KMS_CLASSES.has(id)).map(([, v]) => v));
+  const bossShift = median([...bossOf.values()]);
+  baseline += classShift + bossShift;
+  const counts = (keyOf) => points.reduce((m, p) => m.set(keyOf(p), (m.get(keyOf(p)) ?? 0) + 1), new Map());
+  const classCount = counts((p) => p.cls), bossCount = counts((p) => p.fight);
+
+  console.log(`\nTwo-way fit (close clean solo clears): baseline ${Math.exp(baseline).toFixed(2)}, a typical clear against MapleScouter`);
+  console.log("Class factors (KMS classes' median = 1):");
+  for (const [id, v] of [...classOf].sort(([, a], [, b]) => b - a)) {
+    console.log(`  ${id.padEnd(16)} ${NON_KMS_CLASSES.has(id) ? "non-KMS" : "control"}  ${Math.exp(v - classShift).toFixed(2)}  (${classCount.get(id)} clears)`);
+  }
+  console.log("Boss factors (typical boss = 1; under 1 is harder than MapleScouter's cut):");
+  for (const [fight, v] of [...bossOf].sort(([, a], [, b]) => b - a)) {
+    console.log(`  ${fight.padEnd(22)} ${Math.exp(v - bossShift).toFixed(2)}  (${bossCount.get(fight)} clears)`);
+  }
+  const residuals = groupMedians(points, (p) => `${p.cls} ${p.fight}`, (p) => p.y - baseline - (classOf.get(p.cls) - classShift) - (bossOf.get(p.fight) - bossShift));
+  const pairCount = counts((p) => `${p.cls} ${p.fight}`);
+  const off = [...residuals].filter(([key, v]) => pairCount.get(key) >= 2 && Math.abs(v) > Math.log(1.1));
+  console.log("Class+boss pairs at least 10% off the fit, with 2+ clears (candidate exceptions):");
+  for (const [key, v] of off.sort(([, a], [, b]) => a - b)) console.log(`  ${key.padEnd(30)} x${Math.exp(v).toFixed(2)}  (${pairCount.get(key)} clears)`);
+  if (off.length === 0) console.log("  none");
 }
 
 const [mode, ...args] = process.argv.slice(2).filter((a, i, all) => !["--data", "--clears", "--since"].includes(a) && !["--data", "--clears", "--since"].includes(all[i - 1]));

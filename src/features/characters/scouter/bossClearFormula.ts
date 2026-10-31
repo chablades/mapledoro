@@ -261,7 +261,8 @@ export interface BossClearResult {
   partyLimit: number;
   bossPower: number;
   /** The character's own raw HEXA damage, inverse-splined back into stat-space AFTER the
-   *  level, arcane and authentic gap adjustments, meaning what this boss sees as your stat
+   *  level, arcane and authentic gap adjustments, the boss-specific buffs and Ascent's bonus,
+   *  meaning what this boss sees as your stat
    *  rather than your flat HEXA figure. Feeds bossPower, and exposed so the UI can show it
    *  directly, as in MapleScouter's own adjusted-stat and clear-percent per-tile display. */
   bossStat: number;
@@ -330,10 +331,12 @@ function sacredSymbolOf(entry: BossCutEntry, inputs: BossClearInputs): BossClear
 }
 
 /** Corrects the shared Sacred Symbol switch to this boss's own symbol: the bonus added if the
- *  symbol is maxed but the switch is off, removed if the switch is on but it isn't. */
+ *  symbol is maxed but the switch is off, removed if the switch is on but it isn't, or if the
+ *  boss has no symbol at all (Extreme Lotus). The 300 figure already leaves it out. */
 function sacredSymbolFactor(entry: BossCutEntry, inputs: BossClearInputs): number {
+  if (!inputs.sacredMaxed || inputs.sacredBoost === undefined || inputs.sacredBonusOn === undefined) return 1;
   const area = BOSS_SACRED_SYMBOL[entry.name];
-  if (!area || !inputs.sacredMaxed || inputs.sacredBoost === undefined || inputs.sacredBonusOn === undefined) return 1;
+  if (!area) return inputs.sacredBonusOn && entry.guard >= 380 ? 1 / inputs.sacredBoost : 1;
   const maxed = inputs.sacredMaxed.includes(area);
   if (maxed === inputs.sacredBonusOn) return 1;
   return maxed ? inputs.sacredBoost : 1 / inputs.sacredBoost;
@@ -390,12 +393,15 @@ function effectiveEasyRate(entry: BossCutEntry): number {
  *  for how many minutes one use "covers" (20 / 5.667 ~ 3.5, so a full fight is the 3-use
  *  baseline). Only bites near or above 100%, and only when ascentConst isn't 1 (their "no
  *  Ascent" sentinel). */
-function timerAdjustedClearRate(entry: BossCutEntry, damageOverCut: number, easyRate: number, ascentConst: number): number {
-  const preTimerClearRate = damageOverCut * easyRate;
+function ascentMultiplier(entry: BossCutEntry, preTimerClearRate: number, ascentConst: number): number {
   const ascentR = ascentConst === 1 ? 0 : ascentConst;
   const timerDivisor = entry.boss === "루시드" && entry.difficulty === "Hard" ? 0.4 : Math.min(3, Math.ceil(20 / preTimerClearRate / 5.667));
   const timerCorrection = (3 * ascentR) / timerDivisor - ascentR || 0;
-  return preTimerClearRate * (1 + timerCorrection) || 0;
+  return 1 + timerCorrection;
+}
+function timerAdjustedClearRate(entry: BossCutEntry, damageOverCut: number, easyRate: number, ascentConst: number): number {
+  const preTimerClearRate = damageOverCut * easyRate;
+  return preTimerClearRate * ascentMultiplier(entry, preTimerClearRate, ascentConst) || 0;
 }
 
 /** Adjusts the character's raw HEXA damage for the handful of bosses whose real fight uses a
@@ -479,13 +485,14 @@ export function computeBossClear(
 
   const spline = guard === 300 ? inputs.spline300 : inputs.spline380;
   const cutInDamageSpace = splineEval(spline, cutThreshold);
-  const bossStat = splineInverse(spline, damage);
 
   const damageOverCut = damage / (cutInDamageSpace < 0 ? 1e4 : cutInDamageSpace);
   const isChampionBlackMage = entry.name === "blackMage" && entry.difficulty === "Champion";
   const scouterEasyRate = entry.easyRate ?? 1;
   const easyRate = effectiveEasyRate(entry);
   const clearRate = timerAdjustedClearRate(entry, damageOverCut, easyRate, inputs.ascentConst);
+  // Ascent's bonus is the character's, so it counts toward their adjusted stat like any buff.
+  const bossStat = splineInverse(spline, damage * ascentMultiplier(entry, damageOverCut * easyRate, inputs.ascentConst));
   const scouterClearRatePercent = isChampionBlackMage
     ? timerAdjustedClearRate(entry, damageOverCut, scouterEasyRate, inputs.ascentConst) * 100
     : null;
@@ -526,37 +533,32 @@ export function computeBossClear(
 const MINIMUM_LEVEL_LEAD = 5;
 const MINIMUM_FORCE = 99999;
 
-/** The HEXA needed to read exactly 100% on this boss with its level and force requirements
- *  comfortably met (every gap bonus at its ceiling), so it is the same for every character of a
- *  class: their HEXA curve, Ascent and class clear factor, plus the boss-specific buffs in the
- *  inputs (Maxed Symbols, Power of the Adversary). A character below the boss's requirements needs
- *  more, which the tooltip's damage-loss lines show. Boss 380 HEXA, or Boss 300 HEXA for a boss
- *  under 380% defense. A party-only boss's 100% is on the solo scale (soloScaleDivisor). Found by
- *  scaling the damage until the clear rate is 1, then turning that damage back into HEXA. Null
- *  when the formula has no result for the boss. */
+/** The Adjusted HEXA Stat (bossStat) that reads exactly 100% on this boss: the boss's own line,
+ *  which the character's buffs, symbols, Ascent and class clear factor move their adjusted stat
+ *  toward rather than moving the line. Measured with the level and force requirements comfortably
+ *  met (every gap bonus at its ceiling). A party-only boss's 100% is on the solo scale
+ *  (soloScaleDivisor). Found by scaling the damage until the clear rate is 1. Null when the
+ *  formula has no result for the boss. */
 export function minimumClearHexa(entry: BossCutEntry, inputs: BossClearInputs): number | null {
-  const rateAt = (scale: number) => {
-    const result = computeBossClear(entry, entry.level + MINIMUM_LEVEL_LEAD, MINIMUM_FORCE, MINIMUM_FORCE, {
+  const resultAt = (scale: number) =>
+    computeBossClear(entry, entry.level + MINIMUM_LEVEL_LEAD, MINIMUM_FORCE, MINIMUM_FORCE, {
       ...inputs,
       calculatedHexaDamage300: inputs.calculatedHexaDamage300 * scale,
       calculatedHexaDamage380: inputs.calculatedHexaDamage380 * scale,
       calculatedDamage380: inputs.calculatedDamage380 * scale,
       calculatedHexaDamageKaling: inputs.calculatedHexaDamageKaling * scale,
     });
-    if (!result) return null;
-    return result.isPartyBoss && result.soloScalePercent !== null ? result.soloScalePercent / 100 : result.clearRate;
-  };
-  if (rateAt(1) === null) return null;
+  const rateOf = (result: BossClearResult) =>
+    result.isPartyBoss && result.soloScalePercent !== null ? result.soloScalePercent / 100 : result.clearRate;
+  if (!resultAt(1)) return null;
   // Damage scale, searched on a log scale between 1/1000x and 1000x the character's own.
   let lo = Math.log(1e-3);
   let hi = Math.log(1e3);
   for (let i = 0; i < 50; i++) {
     const mid = (lo + hi) / 2;
-    if ((rateAt(Math.exp(mid)) ?? 0) < 1) lo = mid;
+    const result = resultAt(Math.exp(mid));
+    if (!result || rateOf(result) < 1) lo = mid;
     else hi = mid;
   }
-  const scale = Math.exp(hi);
-  return entry.guard >= 380
-    ? splineInverse(inputs.spline380, inputs.calculatedHexaDamage380 * scale)
-    : splineInverse(inputs.spline300, inputs.calculatedHexaDamage300 * scale);
+  return resultAt(Math.exp(hi))?.bossStat ?? null;
 }
