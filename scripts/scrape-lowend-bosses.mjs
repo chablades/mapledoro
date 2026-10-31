@@ -7,9 +7,10 @@
 // and within one boss HP x easyRate is constant to a few digits (Damien, Slime, Will, Gloom,
 // Verus Hilla): easyRate there is "reference HP / this boss's HP". What differs between bosses is
 // a measured per-boss factor (mechanics, uptime), about 0.5-1.1x across the older 300% defense
-// bosses. So the reference constant here is the median of HP x easyRate over those bosses, and a
-// new boss gets easyRate = 0.969 x reference x (time limit / 30 min) / HP. Expect roughly +-40%
-// against a real measured cut; for these bosses that only matters to very weak characters.
+// bosses. So the reference constant here is the median of HP x easyRate x (30 min / time limit)
+// over those bosses, and a new boss gets easyRate = 0.969 x reference x (time limit / 30 min) / HP.
+// Expect roughly +-40% against a real measured cut; for these bosses that only matters to very weak
+// characters.
 //
 // Boss stats come from the MapleStory Wiki's page source (`?action=raw`, which isn't behind the
 // Cloudflare challenge the rendered pages are), fetched a few seconds apart. Re-run after a patch
@@ -154,7 +155,10 @@ async function referenceConstant() {
       if (!cut || cut.bossCut !== FLOOR_CUT || cut.guard !== 300 || !cut.easyRate) continue;
       // Main bodies only: the low-defense parts on these pages are optional adds.
       const hp = totalHp(d.parts.filter((p) => p.pdr >= 300));
-      values.push({ boss: `${ref.page} ${d.difficulty}`, k: (hp * cut.easyRate) / DEFAULT_EASY_RATE });
+      // Per 30 minutes of its own timer, so a reference boss whose timer changes with its HP (the
+      // 30-to-20-minute patch) keeps the same constant.
+      if (!d.timeLimit) continue;
+      values.push({ boss: `${ref.page} ${d.difficulty}`, k: ((hp * cut.easyRate) / DEFAULT_EASY_RATE) * (30 / d.timeLimit) });
     }
   }
   if (values.length < 10) throw new Error(`only ${values.length} reference difficulties matched; check the wiki pages and scrape-bosscut output`);
