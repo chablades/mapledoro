@@ -3233,12 +3233,16 @@ function scouterBookmarkHeaderLabel(view: ScouterBookmarkView, defaultLabel: str
   return view === "spotlight" ? spotlightBoss : defaultLabel;
 }
 
-// The Scouter inputs no other bookmark edits (Stats and HEXA have their own pencils), each opening
-// its single MapleScouter Setup step. Scouter Questions is the Stats step's Quick Questions alone.
+// Every MapleScouter Setup step, in its order, each opening on its own (a substep confined, as the
+// Stats and HEXA bookmarks' own pencils do), so the Scouter's inputs are all in one place. The two
+// Stats pages use scouter_stats_flow, MapleScouter Setup's own Stats step alone, which asks only
+// what MapleScouter uses, where the Stats bookmark's pencil lists every stat.
 const SCOUTER_INPUT_FLOWS: readonly { label: string; flowId: SetupFlowId; substep?: number }[] = [
-  { label: "Scouter Questions", flowId: "stats_flow", substep: 0 },
+  { label: "Scouter Questions", flowId: "scouter_stats_flow", substep: 0 },
+  { label: "Character Info", flowId: "scouter_stats_flow", substep: 1 },
   { label: "Oz Rings", flowId: "oz_rings_flow" },
   { label: "Link Skills", flowId: "link_skills_flow" },
+  { label: "HEXA Skills", flowId: "hexa_matrix_flow", substep: 0 },
   { label: "Buffs", flowId: "buffs_flow" },
 ];
 
@@ -3254,7 +3258,8 @@ function ScouterResultGate({ theme, character, label, disabled, onEditStep, chil
   const status = useScouterResult(character);
   const editMenu = status.kind === "unsupported"
     ? undefined
-    : SCOUTER_INPUT_FLOWS.map((f) => ({
+    // HEXA Skills only where the HEXA bookmark's own pencil shows (Lv 260+, not a legacy class).
+    : SCOUTER_INPUT_FLOWS.filter((f) => f.flowId !== "hexa_matrix_flow" || isHexaMatrixAvailable(character)).map((f) => ({
         label: f.label,
         onSelect: () => (f.substep === undefined ? onEditStep(f.flowId) : onEditStep(f.flowId, f.substep, true)),
       }));

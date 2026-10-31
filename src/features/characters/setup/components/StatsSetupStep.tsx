@@ -12,7 +12,7 @@ import { statusText } from "../../../../components/statusColors";
 import HoverTooltip from "../../../../components/HoverTooltip";
 import WarningIcon from "../../../../components/WarningIcon";
 import type { SetupStepDefinition } from "../steps";
-import type { SetupFlowId } from "../flows";
+import { isScouterStatsFlow, type SetupFlowId } from "../flows";
 import SetupStepFrame from "./SetupStepFrame";
 import InfoTooltip from "./InfoTooltip";
 import { PresetBar } from "./PresetBar";
@@ -1014,11 +1014,10 @@ function deriveKnownInnerAbilityLine(
 // and maplescouter_setup, full_setup being a superset. See WildHunterRankQuestion,
 // LegionArtifactQuestions and InnerAbilityLineQuestion above.
 function deriveScouterVisibility(flowId: SetupFlowId | undefined): { isScouter: boolean; showWhLegion: boolean } {
-  const isScouter = flowId === "maplescouter_setup";
+  const isScouter = isScouterStatsFlow(flowId);
   return {
     isScouter,
-    // stats_flow too: its Quick Questions opens alone as the Scouter bookmark's Scouter Questions.
-    showWhLegion: isScouter || flowId === "full_setup" || flowId === "stats_flow",
+    showWhLegion: isScouter || flowId === "full_setup",
   };
 }
 
@@ -1652,7 +1651,7 @@ export default function StatsSetupStep({
   // non-ATT stat everywhere (see TripleStatRow). Also hidden below Lv 140, like Genesis
   // Liberation, Arcane and Sacred, since a character who cannot have Hyper Stats yet should not
   // be asked to fill them in.
-  const showHyperStat = flowId !== "maplescouter_setup" && isHyperStatEligible(characterLevel);
+  const showHyperStat = !isScouterStatsFlow(flowId) && isHyperStatEligible(characterLevel);
   const { isScouter, showWhLegion } = deriveScouterVisibility(flowId);
 
   // WH Legion rank is read-only/derived, scoped to this character's world.
@@ -1712,7 +1711,7 @@ export default function StatsSetupStep({
   // Inner Ability is a Character Info fact from the in-game Stats window. Full Setup collects
   // it in its own detailed substep, while MapleScouter asks a simpler version inline in substep
   // 0. No level gate, since Inner Ability is not level-locked the way Hyper Stat is.
-  const showInnerAbility = flowId !== "maplescouter_setup";
+  const showInnerAbility = !isScouterStatsFlow(flowId);
 
   // Substeps: questions → stat fields → hyper stat (Lv 140+, full setup only) →
   // inner ability (full setup only). Hyper Stat and Inner Ability each occupy the

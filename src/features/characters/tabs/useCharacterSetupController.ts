@@ -2366,7 +2366,8 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
         removeSetupDraftForCharacter(confirmedCharacter);
       }
 
-      if (effectiveFlowId === "stats_flow") {
+      // scouter_stats_flow is MapleScouter Setup's Stats step alone (the Scouter bookmark's pencil).
+      if (effectiveFlowId === "stats_flow" || effectiveFlowId === "scouter_stats_flow") {
         applyStatsDraftToRoster(confirmedCharacter, effectiveStepData.stats ?? "", upsertRosterCharacter);
       }
 
