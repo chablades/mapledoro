@@ -288,6 +288,45 @@ function resolveLinkSkillFloors(
   return linkSkillFloorsForCharacter({ jobName, worldID: confirmedWorldId }, characterRoster);
 }
 
+/** This class's own link skill, only when it's one the step asks about (see
+ *  LINK_SKILL_TO_SCOUTER_KEY). Keyed off the class rather than `floors`, which is empty for an
+ *  untracked character with no tracked siblings, exactly the case hand entry exists for. */
+function scouterOwnSkillId(jobName: string): LinkSkillId | undefined {
+  const skillId = linkSkillForClass(jobName);
+  return skillId && skillId in LINK_SKILL_TO_SCOUTER_KEY ? skillId : undefined;
+}
+
+/** "from X, Y" provenance text, scoped to the skills `floors` already proved this character
+ *  is eligible for, never every skill the world roster has data on. A Kanna's Bravado row
+ *  must never say "from Hoyoung" because a same-world Hoyoung exists, since that isn't this
+ *  character's link. For a multi-class skill like Empirical Knowledge or Thief's Cunning
+ *  this lists the contributing siblings. For a single-class skill it is this character
+ *  itself, or empty when untracked.
+ *
+ *  A total hand-entered on the Legion panel has no character name to credit, so it adds its
+ *  own "Legion entry" token to the character's own link, only when it beats what the tracked
+ *  roster proves (the same rule the Legion panel uses to keep it). */
+function resolveSourceLines(
+  characterRoster: StoredCharacterRecord[],
+  confirmedWorldId: number | undefined,
+  floors: LinkSkillsData,
+  ownSkillId: LinkSkillId | undefined,
+  handEnteredTotals: LinkSkillsData,
+): Partial<Record<LinkSkillId, string[]>> {
+  const rawSources = confirmedWorldId !== undefined
+    ? computeLinkSkillsFromRoster(characterRoster, confirmedWorldId).sources
+    : {};
+  const sources: Partial<Record<LinkSkillId, string[]>> = {};
+  for (const skillId of Object.keys(floors) as LinkSkillId[]) {
+    if (rawSources[skillId]) sources[skillId] = rawSources[skillId];
+  }
+  const ownHandTotal = ownSkillId ? handEnteredTotals[ownSkillId] : undefined;
+  if (ownSkillId && ownHandTotal !== undefined && ownHandTotal > (floors[ownSkillId] ?? 0)) {
+    sources[ownSkillId] = [...(sources[ownSkillId] ?? []), `Legion entry (${ownHandTotal})`];
+  }
+  return sources;
+}
+
 /** The mount-time backfill's starting values, before flooring. See the effect in
  *  LinkSkillsEditor for why the two sources are scoped differently. */
 function seedSuggestion(
@@ -351,29 +390,12 @@ function LinkSkillsEditor({
   // character's link. For a multi-class skill like Empirical Knowledge or Thief's Cunning
   // this lists the contributing siblings. For a single-class skill it is this character
   // itself, or empty when untracked.
-  const rawSources = confirmedWorldId !== undefined
-    ? computeLinkSkillsFromRoster(characterRoster, confirmedWorldId).sources
-    : {};
-  const sources: Partial<Record<LinkSkillId, string[]>> = {};
-  for (const skillId of Object.keys(floors) as LinkSkillId[]) {
-    if (rawSources[skillId]) sources[skillId] = rawSources[skillId];
-  }
-
-  // A total hand-entered on the Legion panel, for players who don't track every character
-  // on the world, has no character name to credit, so it shows as its own "Legion entry"
-  // token. Only when it beats what the tracked roster proves, the same rule the Legion panel
-  // uses to keep it. Keyed off this character's class, not `floors`, which is empty for an
-  // untracked character with no tracked siblings, exactly the case hand entry exists for.
   const mounted = useMounted();
   const handEnteredTotals = mounted && confirmedWorldId !== undefined
     ? readCharactersStore().linkSkillTotalsByWorld[String(confirmedWorldId)] ?? {}
     : {};
-  const rawOwnSkillId = linkSkillForClass(confirmedRecord?.jobName ?? jobName);
-  const ownSkillId = rawOwnSkillId && rawOwnSkillId in LINK_SKILL_TO_SCOUTER_KEY ? rawOwnSkillId : undefined;
-  const ownHandTotal = ownSkillId ? handEnteredTotals[ownSkillId] : undefined;
-  if (ownSkillId && ownHandTotal !== undefined && ownHandTotal > (floors[ownSkillId] ?? 0)) {
-    sources[ownSkillId] = [...(sources[ownSkillId] ?? []), `Legion entry (${ownHandTotal})`];
-  }
+  const ownSkillId = scouterOwnSkillId(confirmedRecord?.jobName ?? jobName);
+  const sources = resolveSourceLines(characterRoster, confirmedWorldId, floors, ownSkillId, handEnteredTotals);
 
   // One-shot mount-time backfill, only when this step lands blank. A suggestion, never a
   // constraint: the field stays editable down to `floors`, the level-only minimum, whatever
