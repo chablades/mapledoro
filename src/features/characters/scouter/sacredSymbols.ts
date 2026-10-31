@@ -1,8 +1,8 @@
 /*
   Sacred Symbols and the bosses they boost. Each region's symbol gives +20% damage to its own boss
   at Lv 11, Grand Sacred included (Tallahart Baldrix, Geardock Jupiter). MapleScouter has a single
-  switch for all of them (doping.authenticDmg), which MapleDoro still sends for the HEXA figure;
-  Boss Clear applies each boss's own symbol instead (bossClearFormula.ts).
+  switch for all of them (doping.authenticDmg), which MapleDoro sends for the HEXA figure once all
+  of them are maxed; Boss Clear applies each boss's own symbol instead (bossClearFormula.ts).
 */
 
 import type { StoredCharacterRecord, StoredScouterBuffs } from "../model/charactersStore";
@@ -47,11 +47,20 @@ export function maxedSacredSymbols(buffs: StoredScouterBuffs | undefined, savedL
   return buffs?.maxedSacredSymbol ? SACRED_SYMBOL_BOSSES.map((s) => s.area) : [];
 }
 
-/** MapleScouter's single switch: on when all six regular regions are maxed, as MapleDoro has
- *  always sent it. */
+/** MapleScouter's single switch, which adds the symbols' damage to the HEXA figure: on only when
+ *  every symbol is maxed, Grand Sacred included, so the figure carries it only once every symbol
+ *  boss would. Boss Clear then removes it from bosses with no symbol (bossClearFormula.ts). */
 export function sacredSwitchOn(maxed: readonly string[]): boolean {
   const maxedSet = new Set(maxed);
-  return SACRED_SYMBOL_BOSSES.filter((s) => !s.grand).every((s) => maxedSet.has(s.area));
+  return SACRED_SYMBOL_BOSSES.every((s) => maxedSet.has(s.area));
+}
+
+/** The Boss 380 tooltip line saying whether the figure carries the symbols' damage. */
+export function sacredFigureNote(switchOn: boolean | undefined): string | null {
+  if (switchOn === undefined) return null;
+  return switchOn
+    ? "Includes all 8 Sacred Symbols"
+    : "Excludes Sacred Symbols until all 8 are maxed. Boss Clear counts each boss's own symbol.";
 }
 
 type SavedSymbols = Partial<Record<string, { level?: number } | undefined>>;

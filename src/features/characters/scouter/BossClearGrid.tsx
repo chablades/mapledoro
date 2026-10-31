@@ -21,7 +21,7 @@ import { BOSS_CLEAR_GROUPS, BOSS_DISPLAY_NAME, type BossEntryList } from "./boss
 import { computeBossClear, isEstimatedBoss, minimumClearHexa, type BossClearResult, type ClearColorTier } from "./bossClearFormula";
 import { formatFigure } from "./scouterFormat";
 import type { BossClearInputs, ScouterResultEntry } from "./scouterResult";
-import { maxedSacredSymbols, savedMaxedSymbols, savedSacredLevels } from "./sacredSymbols";
+import { maxedSacredSymbols, sacredFigureNote, savedMaxedSymbols, savedSacredLevels } from "./sacredSymbols";
 import type { StoredScouterBuffs } from "../model/charactersStore";
 
 // Icon ids looked up by hand from manifests/v271/ui-boss.json, renamed from boss.json as of
@@ -533,8 +533,10 @@ function PowerStripFdEquiv({ theme, pct }: { theme: AppTheme; pct: number }) {
   );
 }
 
-function PowerStripItem({ theme, label, value, sub, realValue, fdEquiv, scouterValue }: {
+function PowerStripItem({ theme, label, value, sub, realValue, fdEquiv, scouterValue, note }: {
   theme: AppTheme; label: string; value: number; sub?: number;
+  /** Whether the figure carries the Sacred Symbols' damage (Boss 380 only). */
+  note?: string | null;
   /** The character's real (pre-simulation) figure for this slot. Set only while a Scouter
    *  Simulator what-if is applied. Drives the delta chip and the "was" tooltip line. */
   realValue?: number;
@@ -551,6 +553,7 @@ function PowerStripItem({ theme, label, value, sub, realValue, fdEquiv, scouterV
     realValue !== undefined && <span key="was" style={{ color: theme.muted }}>Was: {formatFigure(realValue)}</span>,
     sub !== undefined && <span key="normal">Normal: {formatFigure(sub)}</span>,
     scouterValue !== undefined && <span key="scouter" style={{ color: theme.muted }}>MapleScouter est.: {formatFigure(scouterValue)}</span>,
+    note && <span key="sacred" style={{ color: theme.muted }}>{note}</span>,
   ].filter(Boolean);
   const tooltip: ReactNode = lines.length === 0 ? null : <span style={{ display: "flex", flexDirection: "column", gap: 1, minWidth: 88 }}>{lines}</span>;
   const figure = <span style={{ fontSize: 14, fontWeight: 800, color: theme.text, fontFamily: "var(--font-heading)" }}>{formatFigure(value)}</span>;
@@ -586,7 +589,7 @@ function PowerStrip({ theme, entry, realEntry }: { theme: AppTheme; entry: Scout
       <span style={{ fontSize: 12, fontWeight: 700, color: theme.muted }}>Boss 300 / 380 shown as HEXA</span>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16 }}>
         <PowerStripItem theme={theme} label="Boss 300" value={entry.boss300Hexa} sub={entry.boss300Normal} realValue={real?.boss300Hexa} fdEquiv={fdEquiv300} scouterValue={entry.scouterFigures?.boss300Hexa} />
-        <PowerStripItem theme={theme} label="Boss 380" value={entry.boss380Hexa} sub={entry.boss380Normal} realValue={real?.boss380Hexa} fdEquiv={fdEquiv380} scouterValue={entry.scouterFigures?.boss380Hexa} />
+        <PowerStripItem theme={theme} label="Boss 380" value={entry.boss380Hexa} sub={entry.boss380Normal} realValue={real?.boss380Hexa} fdEquiv={fdEquiv380} scouterValue={entry.scouterFigures?.boss380Hexa} note={sacredFigureNote(entry.bossClearInputs?.sacredBonusOn)} />
       </div>
     </div>
   );

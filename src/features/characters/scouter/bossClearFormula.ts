@@ -331,10 +331,12 @@ function sacredSymbolOf(entry: BossCutEntry, inputs: BossClearInputs): BossClear
 }
 
 /** Corrects the shared Sacred Symbol switch to this boss's own symbol: the bonus added if the
- *  symbol is maxed but the switch is off, removed if the switch is on but it isn't. */
+ *  symbol is maxed but the switch is off, removed if the switch is on but it isn't, or if the
+ *  boss has no symbol at all (Extreme Lotus). The 300 figure already leaves it out. */
 function sacredSymbolFactor(entry: BossCutEntry, inputs: BossClearInputs): number {
+  if (!inputs.sacredMaxed || inputs.sacredBoost === undefined || inputs.sacredBonusOn === undefined) return 1;
   const area = BOSS_SACRED_SYMBOL[entry.name];
-  if (!area || !inputs.sacredMaxed || inputs.sacredBoost === undefined || inputs.sacredBonusOn === undefined) return 1;
+  if (!area) return inputs.sacredBonusOn && entry.guard >= 380 ? 1 / inputs.sacredBoost : 1;
   const maxed = inputs.sacredMaxed.includes(area);
   if (maxed === inputs.sacredBonusOn) return 1;
   return maxed ? inputs.sacredBoost : 1 / inputs.sacredBoost;

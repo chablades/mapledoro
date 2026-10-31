@@ -7,6 +7,8 @@ import { statusText } from "../../../components/statusColors";
 import type { StoredCharacterRecord } from "../model/charactersStore";
 import InfoTooltip, { type TooltipContent } from "../setup/components/InfoTooltip";
 import { formatFigure } from "./scouterFormat";
+import type { ScouterResultEntry } from "./scouterResult";
+import { sacredFigureNote } from "./sacredSymbols";
 import { useScouterResult, type ScouterErrorReason, type ScouterFigureStatus } from "./useScouterResult";
 import type { ScouterSimulatorController } from "./useScouterSimulator";
 
@@ -63,20 +65,22 @@ const ERROR_REASON_TOOLTIP: Record<ScouterErrorReason, string> = {
   network: "Couldn't load the Scouter data. Check your connection and reload the page.",
 };
 
+function readyTooltip(entry: ScouterResultEntry, theme: AppTheme): ReactNode {
+  const scouter = entry.scouterFigures;
+  const note = sacredFigureNote(entry.bossClearInputs?.sacredBonusOn);
+  return (
+    <>
+      {scouter ? "Boss 380 HEXA, adjusted for how this class clears bosses in practice" : "Boss 380 HEXA"}
+      {note && <><br /><span style={{ color: theme.muted }}>{note}</span></>}
+      {scouter && <><br /><span style={{ color: theme.muted }}>MapleScouter est.: {formatFigure(scouter.boss380Hexa)}</span></>}
+    </>
+  );
+}
+
 /** The figure's own tooltip: what the number is when there is one, otherwise why there's none. */
 function figureTooltip(status: ScouterFigureStatus, theme: AppTheme): ReactNode {
   switch (status.kind) {
-    case "ready": {
-      const scouter = status.entry.scouterFigures;
-      if (!scouter) return "Boss 380 HEXA";
-      return (
-        <>
-          Boss 380 HEXA, adjusted for how this class clears bosses in practice
-          <br />
-          <span style={{ color: theme.muted }}>MapleScouter est.: {formatFigure(scouter.boss380Hexa)}</span>
-        </>
-      );
-    }
+    case "ready": return readyTooltip(status.entry, theme);
     case "unsupported": return "Scouter doesn't support this class yet.";
     case "incomplete": return `Fill out MapleScouter Setup's ${status.gap === "quickQuestions" ? "Quick Questions" : "Character Info"} to see this.`;
     case "loading": return "Calculating…";
