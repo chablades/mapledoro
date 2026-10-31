@@ -1860,6 +1860,7 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
       charactersById: nextCharactersById,
       scouterLegionByWorld: freshWorldFields.scouterLegionByWorld,
       legionArtifactByWorld: freshWorldFields.legionArtifactByWorld,
+      scouterSeenByCharacter: freshWorldFields.scouterSeenByCharacter,
       updatedAt: now,
     };
 

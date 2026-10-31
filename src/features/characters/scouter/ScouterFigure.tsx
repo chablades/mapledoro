@@ -1,6 +1,6 @@
 "use client";
 
-import type { CSSProperties, ReactNode } from "react";
+import { useLayoutEffect, useRef, type CSSProperties, type ReactNode, type RefObject } from "react";
 import type { AppTheme } from "../../../components/themes";
 import HoverTooltip from "../../../components/HoverTooltip";
 import { statusText } from "../../../components/statusColors";
@@ -9,6 +9,8 @@ import InfoTooltip, { type TooltipContent } from "../setup/components/InfoToolti
 import { formatFigure } from "./scouterFormat";
 import type { ScouterResultEntry } from "./scouterResult";
 import { sacredFigureNote } from "./sacredSymbols";
+import { useScouterChange, type ScouterChange } from "./useScouterChange";
+import { formatShortDate } from "../../tools/date";
 import { useScouterResult, type ScouterErrorReason, type ScouterFigureStatus } from "./useScouterResult";
 import type { ScouterSimulatorController } from "./useScouterSimulator";
 
@@ -65,12 +67,18 @@ const ERROR_REASON_TOOLTIP: Record<ScouterErrorReason, string> = {
   network: "Couldn't load the Scouter data. Check your connection and reload the page.",
 };
 
-function readyTooltip(entry: ScouterResultEntry, theme: AppTheme): ReactNode {
+function changeLine(change: ScouterChange): string {
+  const when = change.changedAt ? ` (${formatShortDate(new Date(change.changedAt))})` : "";
+  return `Was ${formatFigure(change.before)}${when}`;
+}
+
+function readyTooltip(entry: ScouterResultEntry, theme: AppTheme, change: ScouterChange | null): ReactNode {
   const scouter = entry.scouterFigures;
   const note = sacredFigureNote(entry.bossClearInputs?.sacredBonusOn);
   return (
     <>
-      {scouter ? "Boss 380 HEXA, adjusted for how this class clears bosses in practice" : "Boss 380 HEXA"}
+      {scouter ? "Boss 380 HEXA, adjusted for this class" : "Boss 380 HEXA"}
+      {change && <><br /><span>{changeLine(change)}</span></>}
       {note && <><br /><span style={{ color: theme.muted }}>{note}</span></>}
       {scouter && <><br /><span style={{ color: theme.muted }}>MapleScouter est.: {formatFigure(scouter.boss380Hexa)}</span></>}
     </>
@@ -78,9 +86,9 @@ function readyTooltip(entry: ScouterResultEntry, theme: AppTheme): ReactNode {
 }
 
 /** The figure's own tooltip: what the number is when there is one, otherwise why there's none. */
-function figureTooltip(status: ScouterFigureStatus, theme: AppTheme): ReactNode {
+function figureTooltip(status: ScouterFigureStatus, theme: AppTheme, change: ScouterChange | null): ReactNode {
   switch (status.kind) {
-    case "ready": return readyTooltip(status.entry, theme);
+    case "ready": return readyTooltip(status.entry, theme, change);
     case "unsupported": return "Scouter doesn't support this class yet.";
     case "incomplete": return `Fill out MapleScouter Setup's ${status.gap === "quickQuestions" ? "Quick Questions" : "Character Info"} to see this.`;
     case "loading": return "Calculating…";
@@ -89,6 +97,30 @@ function figureTooltip(status: ScouterFigureStatus, theme: AppTheme): ReactNode 
         ? <>{ERROR_REASON_TOOLTIP[status.reason]}<br /><span style={{ color: theme.muted }}>{status.detail}</span></>
         : ERROR_REASON_TOOLTIP[status.reason];
   }
+}
+
+const changeChipStyle: CSSProperties = { fontSize: 12, fontWeight: 800, fontFamily: "var(--font-heading)", whiteSpace: "nowrap" };
+
+// Lines up with .scouter-change-chip in globals.css: the chip is in by 10% of its 2.6 s, then the
+// figure counts for a second while it stays.
+const COUNT_DELAY_MS = 260;
+const COUNT_MS = 1000;
+
+/** Counts the figure from `from` up (or down) to `to` by editing its text node in place, so React
+ *  keeps owning the node and a later re-render still updates it. Skipped under reduced motion. */
+function useCountUp(ref: RefObject<HTMLDivElement | null>, from: number, to: number, active: boolean) {
+  useLayoutEffect(() => {
+    const node = ref.current?.firstChild;
+    if (!active || !node || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    node.nodeValue = formatFigure(from);
+    const start = performance.now() + COUNT_DELAY_MS;
+    let frame = requestAnimationFrame(function step(now) {
+      const t = Math.min(1, Math.max(0, (now - start) / COUNT_MS));
+      node.nodeValue = formatFigure(from + (to - from) * (1 - (1 - t) ** 3));
+      if (t < 1) frame = requestAnimationFrame(step);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [ref, from, to, active]);
 }
 
 // A real ready value should read as prominent data, not a dim placeholder. theme.muted is right
@@ -103,6 +135,13 @@ function figureValueColor(theme: AppTheme, status: ScouterFigureStatus): string 
 export default function ScouterFigure({ character, theme, simulator }: { character: StoredCharacterRecord; theme: AppTheme; simulator: ScouterSimulatorController }) {
   const status = useScouterResult(character);
   const simulated = simulator.active;
+  const real = status.kind === "ready" ? status.entry.boss380Hexa : null;
+  const change = useScouterChange(character, real);
+  // The change only describes the real figure, so a simulation hides it. It plays once, until
+  // the chip's animation ends and marks it seen.
+  const changeDiff = change?.fresh && real !== null && !simulated ? Math.round(real) - change.before : 0;
+  const valueRef = useRef<HTMLDivElement>(null);
+  useCountUp(valueRef, change?.before ?? 0, Math.round(real ?? 0), changeDiff !== 0);
 
   // A simulated result replaces the real figure in place, per the Scouter Simulator plan's
   // product decision. Same rendering path as a real "ready" status, sourced from
@@ -113,7 +152,7 @@ export default function ScouterFigure({ character, theme, simulator }: { charact
   const valueColor = simulated ? statusText(theme, "warning") : figureValueColor(theme, status);
   const tooltip = simulated
     ? <>Boss 380 HEXA (simulated)<br /><span style={{ color: statusText(theme, "warning") }}>Showing a &quot;what if&quot; from the Scouter Simulator, not your real result.</span></>
-    : figureTooltip(status, theme);
+    : figureTooltip(status, theme, change);
 
   return (
     <div>
@@ -123,8 +162,20 @@ export default function ScouterFigure({ character, theme, simulator }: { charact
         <InfoTooltip content={SCOUTER_INFO} theme={theme} />
       </div>
       <HoverTooltip label={tooltip} theme={theme}>
-        <div style={{ fontSize: 20, fontWeight: 800, color: valueColor, lineHeight: 1, fontFamily: "var(--font-heading)" }}>
-          {value}
+        <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+          <div ref={valueRef} style={{ fontSize: 20, fontWeight: 800, color: valueColor, lineHeight: 1, fontFamily: "var(--font-heading)" }}>
+            {value}
+          </div>
+          {changeDiff !== 0 && change && (
+            <span
+              key={`${change.before}-${Math.round(real ?? 0)}`}
+              className="scouter-change-chip"
+              onAnimationEnd={change.markSeen}
+              style={{ ...changeChipStyle, color: statusText(theme, changeDiff > 0 ? "success" : "danger") }}
+            >
+              {changeDiff > 0 ? "+" : "-"}{formatFigure(Math.abs(changeDiff))}
+            </span>
+          )}
         </div>
       </HoverTooltip>
     </div>

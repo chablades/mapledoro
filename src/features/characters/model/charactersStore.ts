@@ -459,7 +459,20 @@ export interface CharactersStore {
   scouterLegionByWorld: Record<string, StoredScouterLegion>;
   // Per-world: worldID (as string key) -> real Legion Artifact board progress
   legionArtifactByWorld: Record<string, StoredLegionArtifact>;
+  // Per-character: character id -> the Boss 380 HEXA the overview's Scouter figure last showed
+  scouterSeenByCharacter: Record<string, StoredScouterSeen>;
   updatedAt: number;
+}
+
+/** What the overview's Scouter figure last showed for a character, and what it showed before
+ *  that value changed, so the figure can show what the latest change did (scouter/useScouterChange.ts). */
+export interface StoredScouterSeen {
+  last: number;
+  previous?: number;
+  /** When `last` replaced `previous`, as an ISO date. */
+  changedAt?: string;
+  /** Set once the overview has played this change's animation to the end. */
+  seen?: true;
 }
 
 function isObject(value: unknown): value is Record<string, unknown> {
@@ -756,6 +769,7 @@ function createEmptyCharactersStore(): CharactersStore {
     charactersById: {},
     scouterLegionByWorld: {},
     legionArtifactByWorld: {},
+    scouterSeenByCharacter: {},
     updatedAt: 0,
   };
 }
@@ -1139,6 +1153,22 @@ function parseLegionArtifactByWorld(raw: unknown): Record<string, StoredLegionAr
   return result;
 }
 
+// Entries for characters no longer in the store are dropped.
+function parseScouterSeenByCharacter(raw: unknown, charactersById: Record<string, StoredCharacterRecord>): Record<string, StoredScouterSeen> {
+  if (!isObject(raw)) return {};
+  const result: Record<string, StoredScouterSeen> = {};
+  for (const [id, val] of Object.entries(raw)) {
+    if (!charactersById[id] || !isObject(val) || typeof val.last !== "number") continue;
+    result[id] = {
+      last: val.last,
+      ...(typeof val.previous === "number" ? { previous: val.previous } : {}),
+      ...(typeof val.changedAt === "string" ? { changedAt: val.changedAt } : {}),
+      ...(val.seen === true ? { seen: true as const } : {}),
+    };
+  }
+  return result;
+}
+
 /** A discarded record means a player lost a character, and everything recoverable is already
  *  recovered by this point (see parseStoredCharacterRecord), so reaching here means the entry
  *  could not identify anyone at all. Names the identity fields so the cause is visible
@@ -1196,6 +1226,7 @@ export function parseCharactersStore(raw: string): CharactersStore | null {
       charactersById,
       scouterLegionByWorld: parseScouterLegionByWorld(parsed.scouterLegionByWorld),
       legionArtifactByWorld: parseLegionArtifactByWorld(parsed.legionArtifactByWorld),
+      scouterSeenByCharacter: parseScouterSeenByCharacter(parsed.scouterSeenByCharacter, charactersById),
       updatedAt: typeof parsed.updatedAt === "number" ? parsed.updatedAt : Date.now(),
     };
   } catch {
@@ -1206,6 +1237,11 @@ export function parseCharactersStore(raw: string): CharactersStore | null {
 export function writeScouterLegionForWorld(worldId: number, value: StoredScouterLegion) {
   const store = readCharactersStore();
   writeCharactersStore({ ...store, scouterLegionByWorld: { ...store.scouterLegionByWorld, [String(worldId)]: value } });
+}
+
+export function writeScouterSeen(characterId: string, value: StoredScouterSeen) {
+  const store = readCharactersStore();
+  writeCharactersStore({ ...store, scouterSeenByCharacter: { ...store.scouterSeenByCharacter, [characterId]: value } });
 }
 
 export function writeLegionArtifactForWorld(worldId: number, value: StoredLegionArtifact) {
