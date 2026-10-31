@@ -123,7 +123,7 @@ const BUFF_EFFECTS: Partial<Record<BoolBuffId, string>> = {
   greatHeroBoost: "+10% DMG",
   legendaryHero: "+30 ATT/Magic ATT",
   advWeaponTempering: "+5% Crit DMG",
-  ssiwsCheese: "+220 Magic ATT",
+  ssiwsCheese: "+220 Magic ATT for 2 min, once per fight",
   onyxApple: "+100 ATT/Magic ATT",
   witchStew: "+40 ATT/Magic ATT",
   energizerDrink: "+25 ATT",

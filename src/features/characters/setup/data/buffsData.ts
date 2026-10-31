@@ -167,8 +167,9 @@ export const BOOL_BUFFS: readonly BoolBuffEntry[] = [
   { id: "greatHeroBoost",      name: "Advanced Great Hero Boost Potion", icon: { kind: "item",  id: "02024176" }, group: "A" },
   { id: "legendaryHero",       name: "Legendary Hero Potion",            icon: { kind: "item",  id: "02024179" }, group: "A" },
   { id: "advWeaponTempering",  name: "Advanced Weapon Tempering",        icon: { kind: "skill", id: "80002363" }, group: "A" },
-  // Group B. Every item here can be reused for as long as the fight lasts. Tengu's Judgement's
-  // tooltip also names Cold Winter Energy, and Cider for physical classes: the same +20.
+  // Group B. Every item here is reused for the whole fight except Ssiws Cheese, eaten once (see
+  // scouterEngine.ts). Tengu's Judgement's tooltip also names Cold Winter Energy, and Cider for
+  // physical classes: the same +20.
   { id: "tengusJudgement", name: "Tengu's Judgement",  icon: { kind: "item", id: "02023626" }, group: "B" },
   // The magic Potion V tile stands for Yakisoba too, the same +10, with Yakisoba's icon in front.
   { id: "attackPotionV",   name: "Advanced Attack Potion V", icon: { kind: "item", id: "02004109" }, group: "B", attackType: "physical" },

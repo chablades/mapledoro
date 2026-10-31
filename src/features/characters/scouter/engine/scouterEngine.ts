@@ -89,9 +89,10 @@ const DOPING: Record<DopingGroup, Partial<Record<DopingKey, number>>> = {
     // +5 x 5/20 averaged over the fight.
     believeInYourself: 20, gourmandPower: 30, enlightenedOne: 1.25, peerlessMarble: 30,
     // The pick-one group's additions, each a class's own ATT or Magic ATT (the Buffs step only
-    // offers a magic one to a magic class and the reverse): Ssiws Cheese Magic ATT +220, The
-    // Energizer Drink ATT +25 or Magic ATT +30, Advanced Attack or Magic Potion V +10.
-    ssiwsCheese: 220, witchStew: 40, energizerDrink: 25, energizerDrinkMagic: 30, attackPotionV: 10, magicPotionV: 10 },
+    // offers a magic one to a magic class and the reverse): The Energizer Drink ATT +25 or Magic
+    // ATT +30, Advanced Attack or Magic Potion V +10. Ssiws Cheese is Magic ATT +220 for 2
+    // minutes, but so costly it's eaten once per fight, so +220 x 2/20 averaged over the fight.
+    ssiwsCheese: 22, witchStew: 40, energizerDrink: 25, energizerDrinkMagic: 30, attackPotionV: 10, magicPotionV: 10 },
   dmg: { additional1: 15, sayram: 10, shiningRed: 20, authenticDmg: 20, house: 15, bigHero: 10, statPotion: 3 },
   crit: { sayram: 8, jangBi: 5 },
   atkPct: { sayram: 10, heroesHawl: 4 },
