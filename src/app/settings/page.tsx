@@ -84,7 +84,7 @@ function exportData() {
 const CLOCK_SLACK_MS = 60_000;
 
 function formatSyncTime(ms: number): string {
-  // react-doctor-disable-next-line no-locale-format-in-render -- unreachable during SSR: every caller is behind DriveSyncPanel's `mounted` gate or inside DriveCompareModal, which only opens after a user-triggered Drive action, and readDriveSyncState returns the disconnected state (lastSyncedAt null) on the server. The viewer's own zone is the point of a backup timestamp, so no fixed timeZone.
+  // react-doctor-disable-next-line no-locale-format-in-render -- unreachable during SSR: every caller is behind DriveSyncPanel's `mounted` gate or inside BackupCompareModal, which only opens after a user-triggered Drive action, and readDriveSyncState returns the disconnected state (lastSyncedAt null) on the server. The viewer's own zone is the point of a backup timestamp, so no fixed timeZone.
   return new Date(ms).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
 }
 
@@ -99,8 +99,8 @@ function nameList(names: string[]): string {
   return `${names.slice(0, MAX_NAMES).join(", ")} and ${names.length - MAX_NAMES} more`;
 }
 
-interface DriveComparison {
-  /** Drive's modifiedTime for the backup file. */
+interface BackupComparison {
+  /** When the backup was saved: Drive's modifiedTime, or the imported file's lastModified. */
   savedAt: number | null;
   localNames: string[];
   /** null = the backup's character data couldn't be parsed (a different
@@ -115,8 +115,9 @@ interface DriveComparison {
    dialog sticks to facts: counts, names, and the two exact times.
 
    `entries` is null when the file in Drive isn't a readable backup at all; the
-   backup direction still offers to overwrite it, so that isn't fatal here. */
-function buildDriveComparison(entries: [string, string][] | null, savedAt: number | null): DriveComparison {
+   backup direction still offers to overwrite it, so that isn't fatal here. Shared by the
+   Drive dialogs and the file import, which overwrites local data the same way a restore does. */
+function buildBackupComparison(entries: [string, string][] | null, savedAt: number | null): BackupComparison {
   const rawBackupStore = entries?.find(([key]) => key === CHARACTERS_STORE_STORAGE_KEY)?.[1];
   const backupStore = rawBackupStore == null ? null : parseCharactersStore(rawBackupStore);
   return {
@@ -141,7 +142,8 @@ function comparisonInterpretation(
   savedAt: number | null,
   lastSyncedAt: number | null,
 ): string | null {
-  if (savedAt === null) return null;
+  // A file's timestamp says nothing about Drive sync history.
+  if (mode === "import" || savedAt === null) return null;
   if (lastSyncedAt === null) {
     return "This browser hasn't backed up before, so the file in your Drive came from another browser or device.";
   }
@@ -153,7 +155,7 @@ function comparisonInterpretation(
     : "This is the backup this browser last wrote.";
 }
 
-type CompareMode = "restore" | "backup";
+type CompareMode = "restore" | "backup" | "import";
 
 /* Same two-column comparison for both directions, because the question is the
    same one either way: what does this write add, and what does it destroy? Only
@@ -162,17 +164,30 @@ type CompareMode = "restore" | "backup";
 const COMPARE_COPY = {
   restore: {
     title: "Restore from Google Drive?",
+    backupTitle: "Drive backup",
     gainedLabel: "Only in the backup",
     lostLabel: "Only in this browser, lost on restore",
+    unreadable: "The file in your Drive couldn't be read as a MapleDoro backup, so no character comparison is shown.",
     warning: "Restoring replaces all of this browser's MapleDoro data. There is no undo.",
     confirmLabel: "Restore backup",
   },
   backup: {
     title: "Back up to Google Drive?",
+    backupTitle: "Drive backup",
     gainedLabel: "Added to the backup",
     lostLabel: "Removed from the backup",
+    unreadable: "The file in your Drive couldn't be read as a MapleDoro backup, so no character comparison is shown.",
     warning: "Backing up replaces the file in your Drive. There is no undo.",
     confirmLabel: "Back up",
+  },
+  import: {
+    title: "Import this backup?",
+    backupTitle: "Backup file",
+    gainedLabel: "Only in the file",
+    lostLabel: "Only in this browser, lost on import",
+    unreadable: "The file's character data couldn't be read, so no character comparison is shown.",
+    warning: "Importing replaces all of this browser's MapleDoro data. There is no undo.",
+    confirmLabel: "Import backup",
   },
 } as const;
 
@@ -235,18 +250,18 @@ function ComparisonNotes({
       {backupReadable && gained.length === 0 && lost.length === 0 && (
         <p style={mutedStyle}>Same characters on both sides. Tool, game, and tracker data still updates.</p>
       )}
-      {!backupReadable && (
-        <p style={mutedStyle}>
-          The file in your Drive couldn&apos;t be read as a MapleDoro backup, so no character
-          comparison is shown.
-        </p>
-      )}
+      {!backupReadable && <p style={mutedStyle}>{copy.unreadable}</p>}
       {interpretation && <p style={mutedStyle}>{interpretation}</p>}
     </>
   );
 }
 
-function DriveCompareModal({
+function localTimeLabel(mode: CompareMode, lastSyncedAt: number | null): string {
+  if (mode === "import") return "Current data";
+  return lastSyncedAt === null ? "Never backed up from here" : `Last backed up ${formatSyncTime(lastSyncedAt)}`;
+}
+
+function BackupCompareModal({
   theme,
   mode,
   comparison,
@@ -256,7 +271,7 @@ function DriveCompareModal({
 }: {
   theme: AppTheme;
   mode: CompareMode;
-  comparison: DriveComparison;
+  comparison: BackupComparison;
   lastSyncedAt: number | null;
   onConfirm: () => void;
   onCancel: () => void;
@@ -266,10 +281,10 @@ function DriveCompareModal({
   const backupSet = comparison.backupNames === null ? null : new Set(comparison.backupNames);
   const localOnly = backupSet === null ? [] : [...localSet].filter((name) => !backupSet.has(name));
   const backupOnly = backupSet === null ? [] : [...backupSet].filter((name) => !localSet.has(name));
-  // Whichever side the write destroys is the red one: restoring drops what only
-  // this browser has, backing up drops what only the backup has.
-  const gained = mode === "restore" ? backupOnly : localOnly;
-  const lost = mode === "restore" ? localOnly : backupOnly;
+  // Whichever side the write destroys is the red one: restoring or importing drops what
+  // only this browser has, backing up drops what only the backup has.
+  const gained = mode === "backup" ? localOnly : backupOnly;
+  const lost = mode === "backup" ? backupOnly : localOnly;
   const interpretation = comparisonInterpretation(mode, comparison.savedAt, lastSyncedAt);
 
   return (
@@ -286,11 +301,11 @@ function DriveCompareModal({
             theme={theme}
             title="This browser"
             count={countCharacters(comparison.localNames.length)}
-            time={lastSyncedAt === null ? "Never backed up from here" : `Last backed up ${formatSyncTime(lastSyncedAt)}`}
+            time={localTimeLabel(mode, lastSyncedAt)}
           />
           <ComparisonColumn
             theme={theme}
-            title="Drive backup"
+            title={copy.backupTitle}
             count={comparison.backupNames === null ? "Characters unreadable" : countCharacters(comparison.backupNames.length)}
             time={comparison.savedAt === null ? "Save time unknown" : `Saved ${formatSyncTime(comparison.savedAt)}`}
           />
@@ -330,11 +345,11 @@ function DriveCompareModal({
             type="button"
             onClick={onConfirm}
             className="tool-btn tool-dialog-btn"
-            // Red only when this write actually destroys something -- a restore
-            // always replaces local data, a backup only sometimes drops a
+            // Red only when this write actually destroys something -- a restore or
+            // import always replaces local data, a backup only sometimes drops a
             // character from the file. A routine backup shouldn't look alarming.
             style={
-              mode === "restore" || lost.length > 0
+              mode !== "backup" || lost.length > 0
                 ? { background: STATUS.danger.fill, border: `1px solid ${STATUS.danger.fill}`, color: STATUS.danger.on }
                 : dialogPrimaryBtnColors(theme)
             }
@@ -370,8 +385,8 @@ function DriveSyncPanel({
   /* The dialog awaiting confirmation. A restore carries the parsed payload it
      will write locally; a backup carries the Drive file it will overwrite. */
   const [pending, setPending] = useState<
-    | { mode: "restore"; comparison: DriveComparison; entries: [string, string][] }
-    | { mode: "backup"; comparison: DriveComparison; existing: { id: string } }
+    | { mode: "restore"; comparison: BackupComparison; entries: [string, string][] }
+    | { mode: "backup"; comparison: BackupComparison; existing: { id: string } }
     | null
   >(null);
 
@@ -415,7 +430,7 @@ function DriveSyncPanel({
         return;
       }
       const entries = parseBackupEntries(await loadFromAppData(meta.id));
-      setPending({ mode: "backup", comparison: buildDriveComparison(entries, meta.savedAt), existing: meta });
+      setPending({ mode: "backup", comparison: buildBackupComparison(entries, meta.savedAt), existing: meta });
     });
 
   const handleRestore = () =>
@@ -431,7 +446,7 @@ function DriveSyncPanel({
         setStatus("The file in your Drive doesn't look like a MapleDoro backup.");
         return;
       }
-      setPending({ mode: "restore", comparison: buildDriveComparison(entries, meta.savedAt), entries });
+      setPending({ mode: "restore", comparison: buildBackupComparison(entries, meta.savedAt), entries });
     });
 
   const applyPending = () => {
@@ -538,7 +553,7 @@ function DriveSyncPanel({
         ))}
       </div>
       {pending && (
-        <DriveCompareModal
+        <BackupCompareModal
           theme={theme}
           mode={pending.mode}
           comparison={pending.comparison}
@@ -554,6 +569,9 @@ function DriveSyncPanel({
 function SettingsContent({ theme }: { theme: AppTheme }) {
   const { themeKey, setThemeKey, colorMode, setColorMode } = useTheme();
   const [importStatus, setImportStatus] = useState<string | null>(null);
+  // A parsed backup file awaiting confirmation, shown in the same comparison dialog as a
+  // Drive restore, since importing overwrites local data exactly like a restore does.
+  const [pendingImport, setPendingImport] = useState<{ comparison: BackupComparison; entries: [string, string][] } | null>(null);
   const [accentDropdownOpen, setAccentDropdownOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -593,14 +611,24 @@ function SettingsContent({ theme }: { theme: AppTheme }) {
         setImportStatus("That file doesn't look like a MapleDoro backup.");
         return;
       }
-      for (const [key, value] of entries) {
-        localStorage.setItem(key, value);
+      // Nothing local to lose, so nothing to confirm.
+      if (Object.keys(collectBackupData()).length === 0) {
+        applyImport(entries);
+        return;
       }
-      setImportStatus(`Imported ${entries.length} item${entries.length === 1 ? "" : "s"}. Reloading...`);
-      setTimeout(() => window.location.reload(), 800);
+      setPendingImport({ comparison: buildBackupComparison(entries, file.lastModified), entries });
     };
     reader.readAsText(file);
     if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const applyImport = (entries: [string, string][]) => {
+    setPendingImport(null);
+    for (const [key, value] of entries) {
+      localStorage.setItem(key, value);
+    }
+    setImportStatus(`Imported ${entries.length} item${entries.length === 1 ? "" : "s"}. Reloading...`);
+    setTimeout(() => window.location.reload(), 800);
   };
 
   const panelStyle = {
@@ -773,6 +801,16 @@ function SettingsContent({ theme }: { theme: AppTheme }) {
               </span>
             )}
           </div>
+          {pendingImport && (
+            <BackupCompareModal
+              theme={theme}
+              mode="import"
+              comparison={pendingImport.comparison}
+              lastSyncedAt={null}
+              onConfirm={() => applyImport(pendingImport.entries)}
+              onCancel={() => setPendingImport(null)}
+            />
+          )}
         </div>
 
         {/* Google Drive backup, only in deployments with an OAuth client ID configured */}
