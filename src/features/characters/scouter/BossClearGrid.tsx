@@ -22,6 +22,8 @@ import { computeBossClear, isEstimatedBoss, minimumClearHexa, type BossClearResu
 import { formatFigure } from "./scouterFormat";
 import type { BossClearInputs, ScouterResultEntry } from "./scouterResult";
 import { maxedSacredSymbols, sacredFigureNote, savedMaxedSymbols, savedSacredLevels } from "./sacredSymbols";
+import { changeLine, useCountUp, useScouterChange, type ScouterChange } from "./useScouterChange";
+import ScouterChangeChip from "./ScouterChangeChip";
 import type { StoredScouterBuffs } from "../model/charactersStore";
 
 // Icon ids looked up by hand from manifests/v271/ui-boss.json, renamed from boss.json as of
@@ -533,10 +535,15 @@ function PowerStripFdEquiv({ theme, pct }: { theme: AppTheme; pct: number }) {
   );
 }
 
-function PowerStripItem({ theme, label, value, sub, realValue, fdEquiv, scouterValue, note }: {
+function PowerStripItem({ theme, label, value, sub, realValue, fdEquiv, scouterValue, note, change, wasLine }: {
   theme: AppTheme; label: string; value: number; sub?: number;
   /** Whether the figure carries the Sacred Symbols' damage (Boss 380 only). */
   note?: string | null;
+  /** The latest change to the figure, played once: it counts up from `from` with the chip under
+   *  it (Boss 380 only, as on the overview's Scouter figure). */
+  change?: { from: number; diff: number; onDone: () => void };
+  /** "Was …" for the latest change, kept in the tooltip after it has played. */
+  wasLine?: string | null;
   /** The character's real (pre-simulation) figure for this slot. Set only while a Scouter
    *  Simulator what-if is applied. Drives the delta chip and the "was" tooltip line. */
   realValue?: number;
@@ -551,12 +558,15 @@ function PowerStripItem({ theme, label, value, sub, realValue, fdEquiv, scouterV
   // figure when a clear factor changed it.
   const lines = [
     realValue !== undefined && <span key="was" style={{ color: theme.muted }}>Was: {formatFigure(realValue)}</span>,
+    wasLine && <span key="change">{wasLine}</span>,
     sub !== undefined && <span key="normal">Normal: {formatFigure(sub)}</span>,
     scouterValue !== undefined && <span key="scouter" style={{ color: theme.muted }}>MapleScouter est.: {formatFigure(scouterValue)}</span>,
     note && <span key="sacred" style={{ color: theme.muted }}>{note}</span>,
   ].filter(Boolean);
   const tooltip: ReactNode = lines.length === 0 ? null : <span style={{ display: "flex", flexDirection: "column", gap: 1, minWidth: 88 }}>{lines}</span>;
-  const figure = <span style={{ fontSize: 14, fontWeight: 800, color: theme.text, fontFamily: "var(--font-heading)" }}>{formatFigure(value)}</span>;
+  const figureRef = useRef<HTMLSpanElement>(null);
+  useCountUp(figureRef, change?.from ?? 0, Math.round(value), change !== undefined);
+  const figure = <span ref={figureRef} style={{ fontSize: 14, fontWeight: 800, color: theme.text, fontFamily: "var(--font-heading)" }}>{formatFigure(value)}</span>;
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
       <span style={{ fontSize: 12, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.06em", color: theme.muted }}>{label}</span>
@@ -564,6 +574,7 @@ function PowerStripItem({ theme, label, value, sub, realValue, fdEquiv, scouterV
           have to share one line inside a 2-column strip at 360px. The tooltip wraps only the
           figure, sized to it, so its bubble opens over the number rather than the whole cell. */}
       {tooltip === null ? figure : <HoverTooltip theme={theme} label={tooltip} style={{ alignSelf: "flex-start" }}>{figure}</HoverTooltip>}
+      {change && <ScouterChangeChip key={`${change.from}-${Math.round(value)}`} theme={theme} diff={change.diff} onDone={change.onDone} />}
       {realValue !== undefined && <PowerStripDelta theme={theme} value={value} realValue={realValue} />}
       {fdEquiv != null && <PowerStripFdEquiv theme={theme} pct={fdEquiv} />}
     </div>
@@ -573,7 +584,25 @@ function PowerStripItem({ theme, label, value, sub, realValue, fdEquiv, scouterV
 // The old ScouterSummaryView's 3 StatBlocks, collapsed into one compact strip above the boss
 // table rather than behind a separate page. These are the raw power figures feeding every row
 // below, so they read as this view's header rather than an unrelated sibling.
-function PowerStrip({ theme, entry, realEntry }: { theme: AppTheme; entry: ScouterResultEntry; realEntry?: ScouterResultEntry }) {
+/** One strip figure's part of the latest change: its count-up and chip while the change is fresh
+ *  and the figure moved, and its "Was …" tooltip line. Nothing while simulating. */
+function figureChange(change: ScouterChange | null, before: number | undefined, now: number, simulated: boolean) {
+  if (!change || simulated || before === undefined) return { wasLine: null };
+  const diff = Math.round(now) - before;
+  return {
+    change: change.fresh && diff !== 0 ? { from: before, diff, onDone: change.markSeen } : undefined,
+    wasLine: changeLine(change, before, now),
+  };
+}
+
+function PowerStrip({ theme, character, entry, realEntry }: { theme: AppTheme; character: StoredCharacterRecord; entry: ScouterResultEntry; realEntry?: ScouterResultEntry }) {
+  // The latest change to the real figures (useScouterChange), played here or on the overview's
+  // Scouter figure, whichever the player sees first. A simulation hides it.
+  const realFigures = realEntry ?? entry;
+  const change = useScouterChange(character, { boss380: realFigures.boss380Hexa, boss300: realFigures.boss300Hexa });
+  const simulating = realEntry !== undefined;
+  const change300 = figureChange(change, change?.before300, realFigures.boss300Hexa, simulating);
+  const change380 = figureChange(change, change?.before, realFigures.boss380Hexa, simulating);
   // A simulation touching only level, Arcane Force or Sacred Power reuses the character's
   // cached result untouched, since those fields don't enter the damage calculation, so the power
   // figures are identical. Skip the "was" tooltip line and the always-zero chip in that case.
@@ -588,8 +617,10 @@ function PowerStrip({ theme, entry, realEntry }: { theme: AppTheme; entry: Scout
     <div style={{ display: "flex", flexDirection: "column", gap: 6, padding: "10px 14px", background: theme.panel, border: `1px solid ${theme.border}`, borderRadius: 12 }}>
       <span style={{ fontSize: 12, fontWeight: 700, color: theme.muted }}>Boss 300 / 380 shown as HEXA</span>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16 }}>
-        <PowerStripItem theme={theme} label="Boss 300" value={entry.boss300Hexa} sub={entry.boss300Normal} realValue={real?.boss300Hexa} fdEquiv={fdEquiv300} scouterValue={entry.scouterFigures?.boss300Hexa} />
-        <PowerStripItem theme={theme} label="Boss 380" value={entry.boss380Hexa} sub={entry.boss380Normal} realValue={real?.boss380Hexa} fdEquiv={fdEquiv380} scouterValue={entry.scouterFigures?.boss380Hexa} note={sacredFigureNote(entry.bossClearInputs?.sacredBonusOn)} />
+        <PowerStripItem theme={theme} label="Boss 300" value={entry.boss300Hexa} sub={entry.boss300Normal} realValue={real?.boss300Hexa} fdEquiv={fdEquiv300} scouterValue={entry.scouterFigures?.boss300Hexa}
+          change={change300.change} wasLine={change300.wasLine} />
+        <PowerStripItem theme={theme} label="Boss 380" value={entry.boss380Hexa} sub={entry.boss380Normal} realValue={real?.boss380Hexa} fdEquiv={fdEquiv380} scouterValue={entry.scouterFigures?.boss380Hexa} note={sacredFigureNote(entry.bossClearInputs?.sacredBonusOn)}
+          change={change380.change} wasLine={change380.wasLine} />
       </div>
     </div>
   );
@@ -736,9 +767,9 @@ function BossPicker({ theme, grouped, onSelectBoss }: {
 // unmounts BossQuickView entirely through the quickView conditional render, resets it for free.
 // Nobody's profile should stay stuck in the expanded layout after navigating away.
 function BossQuickView({
-  theme, entry, realEntry, grouped, filter, onFilterChange, level, arcaneForce, authenticForce, inputs, onSelectBoss, simulated, onOpenSimulator,
+  theme, character, entry, realEntry, grouped, filter, onFilterChange, level, arcaneForce, authenticForce, inputs, onSelectBoss, simulated, onOpenSimulator,
 }: {
-  theme: AppTheme; entry: ScouterResultEntry; realEntry?: ScouterResultEntry; grouped: BossEntryList[]; filter: BossFilter;
+  theme: AppTheme; character: StoredCharacterRecord; entry: ScouterResultEntry; realEntry?: ScouterResultEntry; grouped: BossEntryList[]; filter: BossFilter;
   onFilterChange: (v: BossFilter) => void;
   level: number; arcaneForce: number; authenticForce: number;
   inputs: NonNullable<ScouterResultEntry["bossClearInputs"]>; onSelectBoss: (boss: string) => void;
@@ -753,7 +784,7 @@ function BossQuickView({
   const quickViewListMask = edgeFadeMask(quickViewAtStart, quickViewAtEnd, 28, "vertical");
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-      <PowerStrip theme={theme} entry={entry} realEntry={realEntry} />
+      <PowerStrip theme={theme} character={character} entry={entry} realEntry={realEntry} />
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <PillGroup theme={theme} options={BOSS_FILTER_OPTIONS} value={filter} onChange={onFilterChange} />
@@ -1213,6 +1244,7 @@ export default function BossClearGrid({
       {view === "quickView" && (
         <BossQuickView
           theme={theme}
+          character={character}
           entry={entry}
           realEntry={realEntry}
           grouped={grouped}

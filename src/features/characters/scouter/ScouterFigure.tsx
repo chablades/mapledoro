@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useRef, type CSSProperties, type ReactNode, type RefObject } from "react";
+import { useRef, type CSSProperties, type ReactNode } from "react";
 import type { AppTheme } from "../../../components/themes";
 import HoverTooltip from "../../../components/HoverTooltip";
 import { statusText } from "../../../components/statusColors";
@@ -9,8 +9,8 @@ import InfoTooltip, { type TooltipContent } from "../setup/components/InfoToolti
 import { formatFigure } from "./scouterFormat";
 import type { ScouterResultEntry } from "./scouterResult";
 import { sacredFigureNote } from "./sacredSymbols";
-import { useScouterChange, type ScouterChange } from "./useScouterChange";
-import { formatShortDate } from "../../tools/date";
+import { changeLine, useCountUp, useScouterChange, type ScouterChange } from "./useScouterChange";
+import ScouterChangeChip from "./ScouterChangeChip";
 import { useScouterResult, type ScouterErrorReason, type ScouterFigureStatus } from "./useScouterResult";
 import type { ScouterSimulatorController } from "./useScouterSimulator";
 
@@ -67,18 +67,14 @@ const ERROR_REASON_TOOLTIP: Record<ScouterErrorReason, string> = {
   network: "Couldn't load the Scouter data. Check your connection and reload the page.",
 };
 
-function changeLine(change: ScouterChange): string {
-  const when = change.changedAt ? ` (${formatShortDate(new Date(change.changedAt))})` : "";
-  return `Was ${formatFigure(change.before)}${when}`;
-}
-
 function readyTooltip(entry: ScouterResultEntry, theme: AppTheme, change: ScouterChange | null): ReactNode {
   const scouter = entry.scouterFigures;
   const note = sacredFigureNote(entry.bossClearInputs?.sacredBonusOn);
+  const was = change && changeLine(change, change.before, entry.boss380Hexa);
   return (
     <>
       {scouter ? "Boss 380 HEXA, adjusted for this class" : "Boss 380 HEXA"}
-      {change && <><br /><span>{changeLine(change)}</span></>}
+      {was && <><br /><span>{was}</span></>}
       {note && <><br /><span style={{ color: theme.muted }}>{note}</span></>}
       {scouter && <><br /><span style={{ color: theme.muted }}>MapleScouter est.: {formatFigure(scouter.boss380Hexa)}</span></>}
     </>
@@ -99,43 +95,6 @@ function figureTooltip(status: ScouterFigureStatus, theme: AppTheme, change: Sco
   }
 }
 
-const changeChipStyle: CSSProperties = { fontSize: 12, fontWeight: 800, fontFamily: "var(--font-heading)", whiteSpace: "nowrap" };
-
-// Lines up with .scouter-change-chip in globals.css: the chip is in by 10% of its 2.6 s, then the
-// figure counts for a second while it stays.
-const COUNT_DELAY_MS = 260;
-const COUNT_MS = 1000;
-
-/** The "+1,234" beside the figure while it counts, fading out after; onDone fires when it has. */
-function ChangeChip({ theme, diff, onDone }: { theme: AppTheme; diff: number; onDone: () => void }) {
-  return (
-    <span
-      className="scouter-change-chip"
-      onAnimationEnd={onDone}
-      style={{ ...changeChipStyle, color: statusText(theme, diff > 0 ? "success" : "danger") }}
-    >
-      {diff > 0 ? "+" : "-"}{formatFigure(Math.abs(diff))}
-    </span>
-  );
-}
-
-/** Counts the figure from `from` up (or down) to `to` by editing its text node in place, so React
- *  keeps owning the node and a later re-render still updates it. Skipped under reduced motion. */
-function useCountUp(ref: RefObject<HTMLDivElement | null>, from: number, to: number, active: boolean) {
-  useLayoutEffect(() => {
-    const node = ref.current?.firstChild;
-    if (!active || !node || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    node.nodeValue = formatFigure(from);
-    const start = performance.now() + COUNT_DELAY_MS;
-    let frame = requestAnimationFrame(function step(now) {
-      const t = Math.min(1, Math.max(0, (now - start) / COUNT_MS));
-      node.nodeValue = formatFigure(from + (to - from) * (1 - (1 - t) ** 3));
-      if (t < 1) frame = requestAnimationFrame(step);
-    });
-    return () => cancelAnimationFrame(frame);
-  }, [ref, from, to, active]);
-}
-
 // A real ready value should read as prominent data, not a dim placeholder. theme.muted is right
 // for the "—" and "N/A" this slot shows before Scouter has anything to say. An error takes its
 // own status color so a problem stands out.
@@ -149,7 +108,7 @@ export default function ScouterFigure({ character, theme, simulator }: { charact
   const status = useScouterResult(character);
   const simulated = simulator.active;
   const real = status.kind === "ready" ? status.entry.boss380Hexa : null;
-  const change = useScouterChange(character, real);
+  const change = useScouterChange(character, status.kind === "ready" ? { boss380: status.entry.boss380Hexa, boss300: status.entry.boss300Hexa } : null);
   // The change only describes the real figure, so a simulation hides it. It plays once, until
   // the chip's animation ends and marks it seen.
   const changeDiff = change?.fresh && real !== null && !simulated ? Math.round(real) - change.before : 0;
@@ -180,7 +139,7 @@ export default function ScouterFigure({ character, theme, simulator }: { charact
             {value}
           </div>
           {changeDiff !== 0 && change && (
-            <ChangeChip key={`${change.before}-${Math.round(real ?? 0)}`} theme={theme} diff={changeDiff} onDone={change.markSeen} />
+            <ScouterChangeChip key={`${change.before}-${Math.round(real ?? 0)}`} theme={theme} diff={changeDiff} onDone={change.markSeen} />
           )}
         </div>
       </HoverTooltip>

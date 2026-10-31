@@ -477,8 +477,13 @@ export interface CharactersStore {
 /** What the overview's Scouter figure last showed for a character, and what it showed before
  *  that value changed, so the figure can show what the latest change did (scouter/useScouterChange.ts). */
 export interface StoredScouterSeen {
+  /** Boss 380 HEXA. */
   last: number;
   previous?: number;
+  /** Boss 300 HEXA alongside it, for the Scouter bookmark's strip. Missing on entries saved
+   *  before it was tracked, until the next visit records it. */
+  last300?: number;
+  previous300?: number;
   /** When `last` replaced `previous`, as an ISO date. */
   changedAt?: string;
   /** Set once the overview has played this change's animation to the end. */
@@ -1172,6 +1177,8 @@ function parseScouterSeenByCharacter(raw: unknown, charactersById: Record<string
     result[id] = {
       last: val.last,
       ...(typeof val.previous === "number" ? { previous: val.previous } : {}),
+      ...(typeof val.last300 === "number" ? { last300: val.last300 } : {}),
+      ...(typeof val.previous300 === "number" ? { previous300: val.previous300 } : {}),
       ...(typeof val.changedAt === "string" ? { changedAt: val.changedAt } : {}),
       ...(val.seen === true ? { seen: true as const } : {}),
     };
