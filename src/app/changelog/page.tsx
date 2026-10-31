@@ -18,7 +18,7 @@ const CHANGELOG: ChangelogEntry[] = [
       { type: "changed", text: "Hayato's Scouter HEXA and Boss Clear are now adjusted for how the class clears in real fights, and Mo Xuan's adjustment is slightly larger." },
       { type: "changed", text: "Your Boss 380 HEXA now includes Sacred Symbol damage only once all 8 Sacred Symbols are at Lv. 11, Tallahart and Geardock included, and its tooltip says which applies." },
       { type: "fixed", text: "Fixed Extreme Lotus's Boss Clear counting Sacred Symbol damage, which no symbol gives on that boss." },
-      { type: "added", text: "After your Scouter HEXA changes, the Overview and the Scouter bookmark count it up from the old value once, and the tooltip keeps what it was." },
+      { type: "added", text: "When your Scouter HEXA changes, the next time you view it on the Overview or the Scouter bookmark it animates from the old number to the new one, and hovering it shows what it was before." },
       { type: "added", text: "The Scouter figure on the Overview and the Scouter and Stat Efficiency bookmarks now have a pencil that edits any MapleScouter Setup step on its own." },
       { type: "added", text: "Full Setup and MapleScouter Setup can now be saved and finished from any step when editing a character that's already set up." },
       { type: "added", text: "Character Info now marks each box you've changed from your saved stats, and hovering it shows the old value." },
