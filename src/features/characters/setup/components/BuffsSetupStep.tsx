@@ -16,7 +16,7 @@ import {
   RENOWN_STATS, RENOWN_MAX, RENOWN_SKILL_ID,
   parseBuffsDraft, serializeBuffsDraft, storedBuffsToDraft,
   sanitizeGuildLevel, sanitizeRenownLevel, toggleBoolBuff,
-  primaryStatForClass, mainStatsForClass, getStatPotionTiers, statAbbrev,
+  primaryStatForClass, mainStatsForClass, getStatPotionTiers,
   heroEchoName, isHurricaneClass,
   type GuildBuffId, type BoolBuffId, type RenownStatId, type BoolBuffEntry,
   type BoolBuffIconType,
@@ -26,7 +26,7 @@ import SetupStepFrame from "./SetupStepFrame";
 import { LeveledIconTile } from "./LeveledIconTile";
 import {
   boolTileStyle, renownInputStyle, pickOneGroupStyle, pickOneLabelStyle,
-  buffIconOverride, buffSecondIconOverride, boolBuffLabel,
+  buffIconOverride, buffSecondIconOverride, boolBuffLabel, statPotionTooltip,
 } from "./buffTileHelpers";
 
 interface BuffsSetupStepProps {
@@ -353,23 +353,7 @@ export default function BuffsSetupStep({
             ))}
             {/* Advanced Stat Potion — always tier X (+30), tooltip lists all class stats */}
             <HoverTooltip
-              label={(() => {
-                const stats = classMainStats.length > 0 ? classMainStats : [primaryStat];
-                return (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                    {stats.flatMap((s) => {
-                      const t = getStatPotionTiers(s)[9];
-                      return [
-                        <span key={`${s}-potion`}>{t.name}</span>,
-                        <span key={`${s}-pill`} style={{ opacity: 0.6, color: theme.muted, paddingLeft: "0.6em" }}>or {t.pillName}</span>,
-                      ];
-                    })}
-                    <span style={{ opacity: 0.7 }}>
-                      +30 {stats.map(statAbbrev).join(", ")}
-                    </span>
-                  </div>
-                );
-              })()}
+              label={statPotionTooltip(theme, classMainStats.length > 0 ? classMainStats : [primaryStat])}
               theme={theme}
             >
               <button

@@ -2,7 +2,7 @@ import type { CSSProperties, ReactNode } from "react";
 import type { AppTheme } from "../../../../components/themes";
 import { statusText } from "../../../../components/statusColors";
 import {
-  BOOL_BUFFS, primaryStatForClass,
+  BOOL_BUFFS, primaryStatForClass, getStatPotionTiers, statAbbrev,
   extremePotionIconId, extremePotionLabel, heroEchoSkillId, heroEchoName,
   isHurricaneClass, EXTREME_GREEN_POTION_ITEM_ID,
   type BoolBuffId, type BoolBuffEntry, type StatId, type BoolBuffIconType,
@@ -141,6 +141,23 @@ const DEMON_AVENGER_HP: Partial<Record<BoolBuffId, number>> = {
 function withDemonAvengerHp(effect: string, id: BoolBuffId, jobName: string): string {
   const hp = jobName === "Demon Avenger" ? DEMON_AVENGER_HP[id] : undefined;
   return hp === undefined ? effect : `${effect}, +${hp.toLocaleString("en-US")} Max HP`;
+}
+
+/** The Advanced Stat Potion tile's tooltip, for the Buffs step and the Scouter Simulator alike:
+ *  the Tier X potion (or its pill) for each of the class's main stats, then their +30. */
+export function statPotionTooltip(theme: AppTheme, stats: StatId[]): ReactNode {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+      {stats.flatMap((s) => {
+        const t = getStatPotionTiers(s)[9];
+        return [
+          <span key={`${s}-potion`}>{t.name}</span>,
+          <span key={`${s}-pill`} style={{ opacity: 0.6, color: theme.muted, paddingLeft: "0.6em" }}>or {t.pillName}</span>,
+        ];
+      })}
+      <span style={{ opacity: 0.7 }}>+30 {stats.map(statAbbrev).join(", ")}</span>
+    </div>
+  );
 }
 
 /** A buff's name over its effect, the same shape as the multi-item tooltips. */

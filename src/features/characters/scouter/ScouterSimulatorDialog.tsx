@@ -19,11 +19,11 @@ import {
   BOOL_BUFFS, BUFF_GROUP_A, BUFF_GROUP_B, buffShownForClass,
   GUILD_BUFFS, GUILD_BUFF_MAX, RENOWN_STATS, RENOWN_SKILL_ID,
   toggleBoolBuff, sanitizeGuildLevel, sanitizeRenownLevel,
-  getStatPotionTiers, primaryStatForClass,
+  getStatPotionTiers, mainStatsForClass, primaryStatForClass,
   type BuffsDraft, type BoolBuffId, type BoolBuffEntry, type GuildBuffId, type RenownStatId,
 } from "../setup/data/buffsData";
 import { BuffIconImage, BoolBuffTile, MaxedSymbolTiles, RenownCol } from "../setup/components/BuffsSetupStep";
-import { boolTileStyle, pickOneGroupStyle, pickOneLabelStyle, buffIconOverride, buffSecondIconOverride, boolBuffLabel } from "../setup/components/buffTileHelpers";
+import { boolTileStyle, pickOneGroupStyle, pickOneLabelStyle, buffIconOverride, buffSecondIconOverride, boolBuffLabel, statPotionTooltip } from "../setup/components/buffTileHelpers";
 import { LeveledIconTile } from "../setup/components/LeveledIconTile";
 import SectionLabel from "../setup/components/SectionLabel";
 import { statInputStyle, inputSuffixStyle, ChecklistCheckbox, ChecklistGroup } from "../setup/components/QuestionControls";
@@ -141,7 +141,9 @@ function BuffsTab({ theme, draft, onChange, primaryStat, jobName }: {
 }) {
   const statPotionTier = Number.parseInt(draft.statPotionTier, 10) || 0;
   const statTier10 = getStatPotionTiers(primaryStat)[9];
-  const usesMagicAtt = CLASS_SKILL_DATA.find((c) => c.nexonJobName === jobName)?.requiredStats.includes("magicAtt") ?? false;
+  const requiredStats = CLASS_SKILL_DATA.find((c) => c.nexonJobName === jobName)?.requiredStats ?? [];
+  const usesMagicAtt = requiredStats.includes("magicAtt");
+  const classMainStats = mainStatsForClass(requiredStats);
 
   const toggleBool = (id: BoolBuffId) => onChange(toggleBoolBuff(draft, id));
   const setGuild = (id: GuildBuffId, val: string) => onChange({ ...draft, guild: { ...draft.guild, [id]: sanitizeGuildLevel(val) } });
@@ -184,7 +186,7 @@ function BuffsTab({ theme, draft, onChange, primaryStat, jobName }: {
         <p style={sectionLabelStyle(theme)}>Buffs</p>
         <div style={tileRowStyle()}>
           {UNGROUPED_BUFFS.slice(0, STAT_POTION_INSERT_IDX).map(renderBuffTile)}
-          <HoverTooltip theme={theme} label={`${statTier10.name} (Tier X)`}>
+          <HoverTooltip theme={theme} label={statPotionTooltip(theme, classMainStats.length > 0 ? classMainStats : [primaryStat])}>
             <button type="button" onClick={toggleStatPotion} aria-label="Advanced Stat Potion (Tier X)" aria-pressed={statPotionTier > 0} style={boolTileStyle(statPotionTier > 0, theme)}>
               <div style={{ opacity: statPotionTier > 0 ? 1 : 0.32, filter: statPotionTier > 0 ? "none" : "grayscale(1)", lineHeight: 0 }}>
                 <BuffIconImage icon={{ kind: "item", id: statTier10.itemId }} name={statTier10.name} theme={theme} size={32} />
