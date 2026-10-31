@@ -21,7 +21,8 @@ import {
 } from "../../../tools/symbols/symbol-data";
 import type { SymbolState } from "../../../tools/symbols/useSymbolState";
 import { getClassDataByNexonJobName } from "../data/classSkillData";
-import { isArcaneEligible, isSacredEligible } from "../data/statsStepDraft";
+import { symbolUnlockWarning } from "../data/symbolUnlock";
+import { statusText } from "../../../../components/statusColors";
 import { branchMaskForClass, weaponPrefixesForClass, secondarySpecForClass, isShieldId } from "../data/classBranch";
 import { readCharactersStore, selectCharacterByIgn } from "../../model/charactersStore";
 import {
@@ -726,17 +727,23 @@ function clampSymbolLevelInput(raw: string, maxLevel: number): string {
   return String(Math.min(maxLevel, Number(digits)));
 }
 
-function SymbolLevelTile({ area, level, maxLevel, theme, onLevel }: {
+function SymbolLevelTile({ area, level, maxLevel, theme, onLevel, warning }: {
   area: SymbolArea;
   level: string;
   maxLevel: number;
   theme: AppTheme;
   onLevel: (level: string) => void;
+  /** symbolUnlockWarning: above the saved level, shown with a dashed warning border. */
+  warning: string | null;
 }) {
   const placed = (Number(level) || 0) >= 1;
+  const tileStyle = symbolTileStyle(theme, placed);
+  const label = warning
+    ? <>{area.name}<br /><span style={{ color: statusText(theme, "warning") }}>{warning}</span></>
+    : area.name;
   return (
-    <div style={symbolTileStyle(theme, placed)}>
-      <HoverTooltip label={area.name} theme={theme}>
+    <div style={warning ? { ...tileStyle, border: `1px dashed ${statusText(theme, "warning")}` } : tileStyle}>
+      <HoverTooltip label={label} theme={theme}>
         <div style={{ opacity: placed ? 1 : 0.3, filter: placed ? "none" : "grayscale(1)", lineHeight: 0, cursor: "pointer" }}>
           <EquipItemIcon id={area.itemId} name={area.name} theme={theme} size={32} />
         </div>
@@ -775,30 +782,29 @@ function SymbolGroupHeader({ label, theme, onMaxAll, onClear }: {
   );
 }
 
-// The whole group, including its Max All/Clear header, is skipped when none of its areas
-// are unlocked yet, such as Grand Sacred (Lv 290+) for a freshly-260 character.
-function SymbolGroup({ label, areas, maxLevel, symbolLevels, theme, isUnlocked, onLevel, onLevelMany }: {
+// Every area shows, those above the saved level with a warning (symbolUnlock.ts). Max All only
+// maxes the areas already reached, so it never fills in one the character may not have yet.
+function SymbolGroup({ label, areas, maxLevel, symbolLevels, theme, characterLevel, onLevel, onLevelMany }: {
   label: string;
   areas: SymbolArea[];
   maxLevel: number;
   symbolLevels: Record<string, string>;
   theme: AppTheme;
-  isUnlocked: (area: SymbolArea) => boolean;
+  characterLevel?: number;
   onLevel: (regionName: string, level: string) => void;
   onLevelMany: (updates: Record<string, string>) => void;
 }) {
-  const unlockedAreas = areas.filter(isUnlocked);
-  if (unlockedAreas.length === 0) return null;
+  const reached = areas.filter((a) => !symbolUnlockWarning(a.name, characterLevel));
   return (
     <div style={{ width: SYMBOL_GRID_WIDTH }}>
       <SymbolGroupHeader
         label={label}
         theme={theme}
-        onMaxAll={() => onLevelMany(Object.fromEntries(unlockedAreas.map((a) => [a.name, String(maxLevel)])))}
-        onClear={() => onLevelMany(Object.fromEntries(unlockedAreas.map((a) => [a.name, ""])))}
+        onMaxAll={() => onLevelMany(Object.fromEntries(reached.map((a) => [a.name, String(maxLevel)])))}
+        onClear={() => onLevelMany(Object.fromEntries(areas.map((a) => [a.name, ""])))}
       />
       <div style={{ display: "grid", gridTemplateColumns: `repeat(3, ${SYMBOL_TILE_SIZE}px)`, gap: 4 }}>
-        {unlockedAreas.map((area) => (
+        {areas.map((area) => (
           <SymbolLevelTile
             key={area.itemId}
             area={area}
@@ -806,6 +812,7 @@ function SymbolGroup({ label, areas, maxLevel, symbolLevels, theme, isUnlocked, 
             maxLevel={maxLevel}
             theme={theme}
             onLevel={(level) => onLevel(area.name, level)}
+            warning={symbolUnlockWarning(area.name, characterLevel)}
           />
         ))}
       </div>
@@ -823,13 +830,6 @@ function SymbolSection({ symbolLevels, activeTab, availableTabs, characterLevel,
   onLevel: (regionName: string, level: string) => void;
   onLevelMany: (updates: Record<string, string>) => void;
 }) {
-  // Undefined level = assume eligible, same convention as isArcaneEligible/isSacredEligible
-  // (an unresolved lookup shouldn't wrongly hide every area). Areas the character hasn't
-  // reached yet are hidden entirely rather than shown disabled. This is the setup flow, and
-  // the convention here (see isArcaneEligible/isSacredEligible hiding the whole tab) is not
-  // to ask about content the character can't have yet. The profile page's "show disabled
-  // with a reason" treatment doesn't apply.
-  const isUnlocked = (area: SymbolArea) => characterLevel === undefined || characterLevel >= area.requiredLevel;
   return (
     <div>
       {availableTabs.length > 1 && (
@@ -850,12 +850,12 @@ function SymbolSection({ symbolLevels, activeTab, availableTabs, characterLevel,
       </div>
       )}
       {activeTab === "arcane" ? (
-        <SymbolGroup label="Arcane" areas={ARCANE_AREAS} maxLevel={ARCANE_MAX_LEVEL} symbolLevels={symbolLevels} theme={theme} isUnlocked={isUnlocked} onLevel={onLevel} onLevelMany={onLevelMany} />
+        <SymbolGroup label="Arcane" areas={ARCANE_AREAS} maxLevel={ARCANE_MAX_LEVEL} symbolLevels={symbolLevels} theme={theme} characterLevel={characterLevel} onLevel={onLevel} onLevelMany={onLevelMany} />
       ) : (
         <>
-          <SymbolGroup label="Sacred" areas={SACRED_AREAS} maxLevel={SACRED_MAX_LEVEL} symbolLevels={symbolLevels} theme={theme} isUnlocked={isUnlocked} onLevel={onLevel} onLevelMany={onLevelMany} />
+          <SymbolGroup label="Sacred" areas={SACRED_AREAS} maxLevel={SACRED_MAX_LEVEL} symbolLevels={symbolLevels} theme={theme} characterLevel={characterLevel} onLevel={onLevel} onLevelMany={onLevelMany} />
           <div style={{ marginTop: "0.75rem" }}>
-            <SymbolGroup label="Grand Sacred" areas={GRAND_SACRED_AREAS} maxLevel={SACRED_MAX_LEVEL} symbolLevels={symbolLevels} theme={theme} isUnlocked={isUnlocked} onLevel={onLevel} onLevelMany={onLevelMany} />
+            <SymbolGroup label="Grand Sacred" areas={GRAND_SACRED_AREAS} maxLevel={SACRED_MAX_LEVEL} symbolLevels={symbolLevels} theme={theme} characterLevel={characterLevel} onLevel={onLevel} onLevelMany={onLevelMany} />
           </div>
         </>
       )}
@@ -1314,8 +1314,10 @@ function useEquipmentStepState({
   const classData = getClassDataByNexonJobName(jobName);
   const classId = classData?.id;
   const branchMask = branchMaskForClass(classId);
-  const showArcaneSymbols = isArcaneEligible(characterLevel, classData?.isLegacy);
-  const showSacredSymbols = isSacredEligible(characterLevel, classData?.isLegacy);
+  // Hidden only for legacy classes, who can never have them. A level gap is only a warning
+  // (symbolUnlock.ts), since the saved level can be a day behind.
+  const showArcaneSymbols = !classData?.isLegacy;
+  const showSacredSymbols = !classData?.isLegacy;
   const availableSymbolTabs = SYMBOL_TABS.filter(
     (tab) => (tab.key === "arcane" ? showArcaneSymbols : showSacredSymbols),
   );

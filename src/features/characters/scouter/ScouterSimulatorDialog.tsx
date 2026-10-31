@@ -136,12 +136,15 @@ function tileRowStyle(): CSSProperties {
 const UNGROUPED_BUFFS = BOOL_BUFFS.filter((b) => !b.group && b.id !== "extremeGreenPotion");
 const STAT_POTION_INSERT_IDX = UNGROUPED_BUFFS.findIndex((b) => b.id === "sparklingRedStar") + 1;
 
-function BuffsTab({ theme, draft, onChange, primaryStat, jobName }: {
+function BuffsTab({ theme, draft, onChange, primaryStat, jobName, level }: {
   theme: AppTheme; draft: BuffsDraft; onChange: (next: BuffsDraft) => void; primaryStat: ReturnType<typeof primaryStatForClass>; jobName: string;
+  /** The simulation's level, for Maxed Symbols' warning on symbols above it. */
+  level: number;
 }) {
   const statPotionTier = Number.parseInt(draft.statPotionTier, 10) || 0;
   const statTier10 = getStatPotionTiers(primaryStat)[9];
-  const requiredStats = CLASS_SKILL_DATA.find((c) => c.nexonJobName === jobName)?.requiredStats ?? [];
+  const classData = CLASS_SKILL_DATA.find((c) => c.nexonJobName === jobName);
+  const requiredStats = classData?.requiredStats ?? [];
   const usesMagicAtt = requiredStats.includes("magicAtt");
   const classMainStats = mainStatsForClass(requiredStats);
 
@@ -210,10 +213,13 @@ function BuffsTab({ theme, draft, onChange, primaryStat, jobName }: {
         </div>
       ))}
 
-      <div>
-        <p style={sectionLabelStyle(theme)}>Maxed Symbols</p>
-        <MaxedSymbolTiles theme={theme} selected={draft.symbols} onToggle={(area) => onChange({ ...draft, symbols: { ...draft.symbols, [area]: !draft.symbols[area] } })} />
-      </div>
+      {/* Never for a legacy class, who can't have Sacred Symbols. */}
+      {!classData?.isLegacy && (
+        <div>
+          <p style={sectionLabelStyle(theme)}>Maxed Symbols</p>
+          <MaxedSymbolTiles theme={theme} characterLevel={level} selected={draft.symbols} onToggle={(area) => onChange({ ...draft, symbols: { ...draft.symbols, [area]: !draft.symbols[area] } })} />
+        </div>
+      )}
       <div>
         <p style={sectionLabelStyle(theme)}>Champion&apos;s Renown</p>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -810,7 +816,7 @@ function TabContent({
 }) {
   switch (draft.tab) {
     case "buffs":
-      return <BuffsTab theme={theme} draft={draft.buffsDraft} onChange={draft.setBuffsDraft} primaryStat={primaryStat} jobName={character.jobName} />;
+      return <BuffsTab theme={theme} draft={draft.buffsDraft} onChange={draft.setBuffsDraft} primaryStat={primaryStat} jobName={character.jobName} level={draft.level} />;
     case "hexa":
       return draft.level < 260
         ? <HexaLockedMessage theme={theme} />

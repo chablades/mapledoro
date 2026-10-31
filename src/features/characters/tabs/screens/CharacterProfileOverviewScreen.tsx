@@ -939,8 +939,11 @@ function OverviewSymbolAreaRow({ areas, symbolLevels, characterLevel, theme }: {
   return (
     <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
       {areas.map((area) => {
-        const locked = characterLevel !== undefined && characterLevel < area.requiredLevel;
-        return <OverviewSymbolTile key={area.name} area={area} level={symbolAreaLevel(symbolLevels, area)} locked={locked} theme={theme} />;
+        // Locked only while empty: a level filled in above the saved level (which can be a day
+        // behind, see symbolUnlock.ts) still shows.
+        const level = symbolAreaLevel(symbolLevels, area);
+        const locked = characterLevel !== undefined && characterLevel < area.requiredLevel && level < 1;
+        return <OverviewSymbolTile key={area.name} area={area} level={level} locked={locked} theme={theme} />;
       })}
     </div>
   );
@@ -954,7 +957,10 @@ function OverviewSymbolSection({ theme, symbolLevels, characterLevel, isLegacy, 
   theme: Theme; symbolLevels: Record<string, SymbolState> | null; characterLevel: number | undefined; isLegacy: boolean | undefined; charName: string | undefined;
   onNavigateToBookmark: (id: BookmarkId, subView?: string) => void;
 }) {
-  const showSacred = isSacredEligible(characterLevel, isLegacy);
+  // Also once any Sacred Symbol has a level, which a character can fill in before Nexon's daily
+  // update catches their level up to 260.
+  const showSacred = isSacredEligible(characterLevel, isLegacy)
+    || (!isLegacy && [...SACRED_AREAS, ...GRAND_SACRED_AREAS].some((a) => symbolAreaLevel(symbolLevels, a) >= 1));
   return (
     <div>
       <OverviewGroupHeader
@@ -2037,8 +2043,10 @@ function SymbolAreaGroup({ label, areas, levels, loadImages, characterLevel, the
       <BookmarkSectionLabel label={label} theme={theme} />
       <div style={{ display: "grid", gridTemplateColumns: `repeat(3, ${SYMBOL_TILE_SIZE}px)`, gap: 4 }}>
         {areas.map((area) => {
-          const locked = characterLevel !== undefined && characterLevel < area.requiredLevel;
-          return <ReadOnlySymbolTile key={area.name} area={area} level={symbolAreaLevel(levels, area)} locked={locked} loadImage={loadImages} theme={theme} />;
+          // Locked only while empty, as in OverviewSymbolAreaRow.
+          const level = symbolAreaLevel(levels, area);
+          const locked = characterLevel !== undefined && characterLevel < area.requiredLevel && level < 1;
+          return <ReadOnlySymbolTile key={area.name} area={area} level={level} locked={locked} loadImage={loadImages} theme={theme} />;
         })}
       </div>
     </div>
