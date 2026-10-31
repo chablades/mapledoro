@@ -469,6 +469,11 @@ export interface CharactersStore {
   scouterLegionByWorld: Record<string, StoredScouterLegion>;
   // Per-world: worldID (as string key) -> real Legion Artifact board progress
   legionArtifactByWorld: Record<string, StoredLegionArtifact>;
+  // Per-world: worldID (as string key) -> hand-entered link skill mastery totals, for players
+  // who don't track every character on the world. Only values above what the tracked roster
+  // proves are kept (see LinkSkillsSection in LegionPanel.tsx). Not the old per-world
+  // `linkSkillsByWorld` key, renamed so any leftover data under that name can't resurface.
+  linkSkillTotalsByWorld: Record<string, LinkSkillsData>;
   // Per-character: character id -> the Boss 380 HEXA the overview's Scouter figure last showed
   scouterSeenByCharacter: Record<string, StoredScouterSeen>;
   updatedAt: number;
@@ -784,6 +789,7 @@ function createEmptyCharactersStore(): CharactersStore {
     charactersById: {},
     scouterLegionByWorld: {},
     legionArtifactByWorld: {},
+    linkSkillTotalsByWorld: {},
     scouterSeenByCharacter: {},
     updatedAt: 0,
   };
@@ -976,6 +982,8 @@ export interface WorldExportPayload {
   characters: StoredCharacterRecord[];
   legionArtifact?: StoredLegionArtifact;
   scouterLegion?: StoredScouterLegion;
+  /** The Legion panel's hand-entered link skill totals for this world. */
+  linkSkillTotals?: LinkSkillsData;
   mainCharacterKey: string | null;
   championCharacterKeys: string[];
 }
@@ -1003,6 +1011,9 @@ export function parseImportedWorldPayload(value: unknown): WorldExportPayload | 
   if (characters.length === 0) return null;
   const characterKeys = characters.map(toCharacterKey);
   if (new Set(characterKeys).size !== characterKeys.length) return null;
+  // Every character in a real export lives on the exported world (exportWorldJson writes one
+  // world's roster), so a mismatch means the file was edited.
+  if (characters.some((c) => c.worldID !== value.worldID)) return null;
 
   const legionArtifact = isObject(value.legionArtifact) ? parseLegionArtifactEntry(value.legionArtifact) : undefined;
   const scouterLegion = isObject(value.scouterLegion) ? parseScouterLegionEntry(value.scouterLegion) : undefined;
@@ -1018,6 +1029,7 @@ export function parseImportedWorldPayload(value: unknown): WorldExportPayload | 
     characters,
     legionArtifact: legionArtifact && !isEmptyLegionArtifactEntry(legionArtifact) ? legionArtifact : undefined,
     scouterLegion: scouterLegion && !isEmptyScouterLegionEntry(scouterLegion) ? scouterLegion : undefined,
+    linkSkillTotals: parseOptionalLinkSkills(value.linkSkillTotals),
     mainCharacterKey,
     championCharacterKeys,
   };
@@ -1157,6 +1169,16 @@ function isEmptyLegionArtifactEntry(entry: StoredLegionArtifact): boolean {
   return entry.artifactLevel === undefined && entry.crystals === undefined;
 }
 
+function parseLinkSkillTotalsByWorld(raw: unknown): Record<string, LinkSkillsData> {
+  if (!isObject(raw)) return {};
+  const result: Record<string, LinkSkillsData> = {};
+  for (const [worldId, val] of Object.entries(raw)) {
+    const entry = parseOptionalLinkSkills(val);
+    if (entry) result[worldId] = entry;
+  }
+  return result;
+}
+
 function parseLegionArtifactByWorld(raw: unknown): Record<string, StoredLegionArtifact> {
   if (!isObject(raw)) return {};
   const result: Record<string, StoredLegionArtifact> = {};
@@ -1243,6 +1265,7 @@ export function parseCharactersStore(raw: string): CharactersStore | null {
       charactersById,
       scouterLegionByWorld: parseScouterLegionByWorld(parsed.scouterLegionByWorld),
       legionArtifactByWorld: parseLegionArtifactByWorld(parsed.legionArtifactByWorld),
+      linkSkillTotalsByWorld: parseLinkSkillTotalsByWorld(parsed.linkSkillTotalsByWorld),
       scouterSeenByCharacter: parseScouterSeenByCharacter(parsed.scouterSeenByCharacter, charactersById),
       updatedAt: typeof parsed.updatedAt === "number" ? parsed.updatedAt : Date.now(),
     };
@@ -1264,6 +1287,18 @@ export function writeScouterSeen(characterId: string, value: StoredScouterSeen) 
 export function writeLegionArtifactForWorld(worldId: number, value: StoredLegionArtifact) {
   const store = readCharactersStore();
   writeCharactersStore({ ...store, legionArtifactByWorld: { ...store.legionArtifactByWorld, [String(worldId)]: value } });
+}
+
+export function writeLinkSkillTotalsForWorld(worldId: number, value: LinkSkillsData) {
+  const store = readCharactersStore();
+  writeCharactersStore({ ...store, linkSkillTotalsByWorld: { ...store.linkSkillTotalsByWorld, [String(worldId)]: value } });
+}
+
+/** Rewrites the roster's display order (the dashboard's My Characters list). `order` holds
+ *  every character key, so callers pass a full reordered copy of the current one. */
+export function writeCharacterOrder(order: string[]) {
+  const store = readCharactersStore();
+  writeCharactersStore({ ...store, order });
 }
 
 /* Parsed-store cache, keyed on the exact raw string it was parsed from.

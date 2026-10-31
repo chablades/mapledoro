@@ -4,8 +4,8 @@ import { useScrollEdges, edgeFadeMask } from "../../../../lib/useScrollEdges";
 import { WORLD_NAMES } from "../../model/constants";
 import {
   readCharactersStore,
-  writeLegionArtifactForWorld, writeScouterLegionForWorld,
-  type StoredCharacterRecord, type StoredLegionArtifact,
+  writeLegionArtifactForWorld, writeScouterLegionForWorld, writeLinkSkillTotalsForWorld,
+  type StoredCharacterRecord, type StoredLegionArtifact, type LinkSkillsData,
 } from "../../model/charactersStore";
 import {
   LEGION_CRYSTALS, MAX_ARTIFACT_LEVEL, MIN_ARTIFACT_LEVEL, MIN_CRYSTAL_LEVEL, MAX_CRYSTAL_LEVEL, MAX_STAT_TOTAL_LEVEL,
@@ -20,6 +20,8 @@ import { LegionArtifactsEditor, CrystalIcon } from "../../setup/components/Legio
 import type { AppTheme } from "../../../../components/themes";
 import { statusText } from "../../../../components/statusColors";
 import { legionCrystalIconUrl } from "../../../../lib/mapleResource";
+import { numericKeyDown, sanitizeDigitsInput } from "../../../../lib/inputUtils";
+import { statInputStyle } from "../../setup/components/QuestionControls";
 import CharacterAvatar, { FALLBACK_SRC } from "../components/CharacterAvatar";
 
 type LegionSection = "artifact" | "linkSkills";
@@ -573,11 +575,12 @@ function SpriteRow({ theme, characters, missingCount, size }: {
 // complete a partial row of otherwise-active cards, never for the full backlog of
 // untracked skills (see LinkSkillsSection: that stays a compact chip list, so a future
 // 40+-skill roster still can't turn this into an endless wall of empty cards).
-function LinkSkillCard({ theme, skill, eligible, level, spriteSize, dormant = false }: {
+function LinkSkillCard({ theme, skill, eligible, level, handTotal, spriteSize, dormant = false }: {
   theme: AppTheme;
   skill: (typeof LINK_SKILLS)[number];
   eligible: StoredCharacterRecord[];
   level: number | undefined;
+  handTotal: number | undefined;
   spriteSize: number;
   dormant?: boolean;
 }) {
@@ -589,7 +592,7 @@ function LinkSkillCard({ theme, skill, eligible, level, spriteSize, dormant = fa
       padding: "0.85rem 1rem", borderRadius: 12, border: `1px solid ${theme.border}`, background: theme.bg,
       opacity: dormant ? 0.6 : 1,
     }}>
-      <LinkSkillIcon iconId={skill.iconId} name={skill.name} theme={theme} size={44} />
+      <LinkSkillIconWithContributors theme={theme} skill={skill} eligible={eligible} handTotal={handTotal} size={44} />
       <div style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
         <span style={{ fontSize: "0.85rem", fontWeight: 800, color: theme.text, lineHeight: 1.25 }}>
           {skill.name}
@@ -604,6 +607,29 @@ function LinkSkillCard({ theme, skill, eligible, level, spriteSize, dormant = fa
         </div>
       )}
     </div>
+  );
+}
+
+const DIMMED_OPACITY = 0.55;
+
+// Hovering (or tapping) a link skill's icon lists what feeds its total: the winning tracked
+// character per member class, plus a hand-entered total when one beats what they prove.
+// `dimmed` fades only the icon: opacity on a parent would fade the tooltip popup with it.
+function LinkSkillIconWithContributors({ theme, skill, eligible, handTotal, size, dimmed = false }: {
+  theme: AppTheme; skill: (typeof LINK_SKILLS)[number]; eligible: StoredCharacterRecord[];
+  handTotal: number | undefined; size: number; dimmed?: boolean;
+}) {
+  const lines = eligible.map((c) => `${c.characterName} (Lv. ${c.level})`);
+  if (handTotal !== undefined) lines.push(`Entered by hand: ${handTotal}`);
+  const sublabel = lines.length > 0
+    ? lines.map((line) => <span key={line} style={{ display: "block" }}>{line}</span>)
+    : "No tracked characters";
+  return (
+    <HoverTooltip theme={theme} label={skill.name} sublabel={sublabel} ariaLabel={`${skill.name} contributors`} wrapperStyle={{ flexShrink: 0, display: "flex" }}>
+      <span style={{ display: "flex", opacity: dimmed ? DIMMED_OPACITY : 1 }}>
+        <LinkSkillIcon iconId={skill.iconId} name={skill.name} theme={theme} size={size} />
+      </span>
+    </HoverTooltip>
   );
 }
 
@@ -630,7 +656,7 @@ function DormantSkillChip({ theme, skill }: { theme: AppTheme; skill: (typeof LI
 // endless scroll even for a modest roster.
 function LinkSkillBranchGrids({ theme, active, dormant }: {
   theme: AppTheme;
-  active: { skill: (typeof LINK_SKILLS)[number]; eligible: StoredCharacterRecord[]; level: number | undefined }[];
+  active: { skill: (typeof LINK_SKILLS)[number]; eligible: StoredCharacterRecord[]; level: number | undefined; handTotal: number | undefined }[];
   dormant: { skill: (typeof LINK_SKILLS)[number] }[];
 }) {
   const activeMulti = active.filter(({ skill }) => skill.classes.length > 1);
@@ -654,15 +680,15 @@ function LinkSkillBranchGrids({ theme, active, dormant }: {
       `}</style>
       {activeSingle.length > 0 && (
         <div className="legion-single-grid" style={{ display: "grid", gap: 10 }}>
-          {activeSingle.map(({ skill, eligible, level }) => (
-            <LinkSkillCard key={skill.id} theme={theme} skill={skill} eligible={eligible} level={level} spriteSize={56} />
+          {activeSingle.map(({ skill, eligible, level, handTotal }) => (
+            <LinkSkillCard key={skill.id} theme={theme} skill={skill} eligible={eligible} level={level} handTotal={handTotal} spriteSize={56} />
           ))}
         </div>
       )}
       {activeMulti.length > 0 && (
         <div className="legion-multi-grid" style={{ display: "grid", gap: 10 }}>
-          {activeMulti.map(({ skill, eligible, level }) => (
-            <LinkSkillCard key={skill.id} theme={theme} skill={skill} eligible={eligible} level={level} spriteSize={56} />
+          {activeMulti.map(({ skill, eligible, level, handTotal }) => (
+            <LinkSkillCard key={skill.id} theme={theme} skill={skill} eligible={eligible} level={level} handTotal={handTotal} spriteSize={56} />
           ))}
         </div>
       )}
@@ -680,43 +706,139 @@ function LinkSkillBranchGrids({ theme, active, dormant }: {
 // The landing "All" view: one dense row per skill with icon, name and level, and no sprite
 // cards. Scannable at a glance across every branch without the vertical weight of the full
 // card grids. Clicking a branch pill switches to LinkSkillBranchGrids instead.
-function LinkSkillCompactRow({ theme, skill, level }: {
+function LinkSkillCompactRow({ theme, skill, level, eligible, handTotal }: {
   theme: AppTheme; skill: (typeof LINK_SKILLS)[number]; level: number | undefined;
+  eligible: StoredCharacterRecord[]; handTotal: number | undefined;
 }) {
   const hasProgress = Boolean(level);
   return (
     <div style={{
       display: "flex", alignItems: "center", gap: 10,
       padding: "0.4rem 0.6rem", borderRadius: 8,
-      opacity: hasProgress ? 1 : 0.55,
     }}>
-      <LinkSkillIcon iconId={skill.iconId} name={skill.name} theme={theme} size={24} />
-      <span style={{ flex: 1, minWidth: 0, fontSize: "0.8rem", fontWeight: 700, color: theme.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+      <LinkSkillIconWithContributors theme={theme} skill={skill} eligible={eligible} handTotal={handTotal} size={24} dimmed={!hasProgress} />
+      <span style={{ flex: 1, minWidth: 0, fontSize: "0.8rem", fontWeight: 700, color: theme.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", opacity: hasProgress ? 1 : DIMMED_OPACITY }}>
         {skill.name}
       </span>
-      <span style={{ fontSize: "0.75rem", fontWeight: 700, color: hasProgress ? theme.text : theme.muted, flexShrink: 0 }}>
+      <span style={{ fontSize: "0.75rem", fontWeight: 700, color: hasProgress ? theme.text : theme.muted, flexShrink: 0, opacity: hasProgress ? 1 : DIMMED_OPACITY }}>
         {level ?? 0} / {skill.maxLevel}
       </span>
     </div>
   );
 }
 
-// Read-only: link skill LEVELS live per-character now (each character's own linkSkills
-// field, see charactersStore.ts's file-header reasoning), not one shared per-world value,
-// so there's no longer a single number this world-level screen could save an edit back
-// to. This section shows what the same-world roster proves is mastered, a floor and ceiling
-// on what any one character here could equip, rather than a specific character's choice of
-// which links it runs. Editing that per-character choice happens on each character's own Link
-// Skills setup step.
+// Shared by the "All" view and the hand-entry editor, which lay out the same skill list.
+const ALL_GRID_CSS = `
+  .legion-link-skills-all-root { container-type: inline-size; }
+  .legion-link-skills-all-grid { display: grid; gap: 2px 10px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  @container (max-width: 860px) {
+    .legion-link-skills-all-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @container (max-width: 520px) {
+    .legion-link-skills-all-grid { grid-template-columns: minmax(0, 1fr); }
+  }
+`;
+
+const totalsEditRowStyle: CSSProperties = { display: "flex", alignItems: "center", gap: 10, padding: "0.4rem 0.6rem" };
+
+// Hand entry for players who don't track every character on the world. Each field opens at
+// the level currently shown and can't go below what the tracked roster proves. Save keeps
+// only values above that proof, so a field left at its prefilled roster value doesn't
+// outlive the character it came from if that character is deleted later.
+function LinkSkillTotalsEditPanel({ theme, rosterLevels, handTotals, onSave, ref }: {
+  theme: AppTheme; rosterLevels: LinkSkillsData; handTotals: LinkSkillsData;
+  onSave: (kept: LinkSkillsData) => void; ref?: Ref<EditorHandle>;
+}) {
+  const [draft, setDraft] = useState<Partial<Record<keyof LinkSkillsData, string>>>(() => {
+    const initial: Partial<Record<keyof LinkSkillsData, string>> = {};
+    for (const skill of LINK_SKILLS) {
+      initial[skill.id] = String(Math.max(rosterLevels[skill.id] ?? 0, handTotals[skill.id] ?? 0));
+    }
+    return initial;
+  });
+  function handleSave() {
+    const kept: LinkSkillsData = {};
+    for (const skill of LINK_SKILLS) {
+      const value = Math.min(parseInt(draft[skill.id] ?? "", 10) || 0, skill.maxLevel);
+      if (value > (rosterLevels[skill.id] ?? 0)) kept[skill.id] = value;
+    }
+    onSave(kept);
+  }
+  useImperativeHandle(ref, () => ({ save: handleSave }));
+  // Same text box as the Character Info step's stat fields: digits only, capped at the max
+  // while typing, raised to the roster-proven minimum on blur.
+  function handleChange(skill: (typeof LINK_SKILLS)[number], raw: string) {
+    const sanitized = sanitizeDigitsInput(raw);
+    const n = parseInt(sanitized, 10);
+    setDraft((prev) => ({ ...prev, [skill.id]: !isNaN(n) && n > skill.maxLevel ? String(skill.maxLevel) : sanitized }));
+  }
+  function handleBlur(skill: (typeof LINK_SKILLS)[number], input: HTMLInputElement) {
+    input.style.outlineColor = "transparent";
+    const floor = rosterLevels[skill.id] ?? 0;
+    const n = parseInt(input.value, 10);
+    if (isNaN(n) || n < floor) setDraft((prev) => ({ ...prev, [skill.id]: String(floor) }));
+  }
+  return (
+    <div className="legion-link-skills-all-root" style={{ display: "grid", gap: 10 }}>
+      <style>{ALL_GRID_CSS}</style>
+      <p style={{ margin: 0, fontSize: "0.75rem", fontWeight: 700, color: theme.muted }}>
+        Enter your link skill totals from in-game if you don&apos;t track every character on this world. A total can&apos;t go below what your tracked characters already prove.
+      </p>
+      <div className="legion-link-skills-all-grid">
+        {LINK_SKILLS.map((skill) => (
+          <div key={skill.id} style={totalsEditRowStyle}>
+            <LinkSkillIcon iconId={skill.iconId} name={skill.name} theme={theme} size={24} />
+            <span style={{ flex: 1, minWidth: 0, fontSize: "0.8rem", fontWeight: 700, color: theme.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {skill.name}
+            </span>
+            <input
+              type="text"
+              inputMode="numeric"
+              aria-label={`${skill.name} total`}
+              value={draft[skill.id] ?? ""}
+              placeholder="0"
+              onChange={(e) => handleChange(skill, e.target.value)}
+              onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
+              onBlur={(e) => handleBlur(skill, e.currentTarget)}
+              onKeyDown={numericKeyDown}
+              style={{ ...statInputStyle(theme, "3rem"), flexShrink: 0, textAlign: "center" }}
+            />
+            <span style={{ fontSize: "0.75rem", fontWeight: 700, color: theme.muted, flexShrink: 0, width: "4ch" }}>/ {skill.maxLevel}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Each character's own link skill levels live on its record (see charactersStore.ts's
+// file-header reasoning) and are edited from that character's Link Skills setup step. This
+// section shows the world's mastery: what the tracked roster proves, raised by any total
+// entered by hand here for characters that aren't tracked.
 type LinkSkillTab = "All" | LinkSkillBranch;
 
-function LinkSkillsSection({ theme, worldId, worldCharacters }: {
+function LinkSkillsSection({ theme, worldId, worldCharacters, editing, onEditDone, editorRef }: {
   theme: AppTheme; worldId: number; worldCharacters: StoredCharacterRecord[];
+  editing: boolean; onEditDone: () => void; editorRef: Ref<EditorHandle>;
 }) {
   const mounted = useMounted();
-  const { values: levels, winners } = mounted
+  const { values: rosterLevels, winners } = mounted
     ? computeLinkSkillsFromRoster(worldCharacters, worldId)
-    : { values: {}, winners: {} };
+    : { values: {} as LinkSkillsData, winners: {} as Partial<Record<keyof LinkSkillsData, StoredCharacterRecord[]>> };
+  // Held in state after a save rather than re-read from the store: the React Compiler
+  // memoizes the store read on [mounted, worldId], so a fresh read wouldn't show the save
+  // until the page reloads.
+  const [savedHandTotals, setSavedHandTotals] = useState<LinkSkillsData | null>(null);
+  const handTotals: LinkSkillsData = savedHandTotals ?? (mounted
+    ? readCharactersStore().linkSkillTotalsByWorld[String(worldId)] ?? {}
+    : {});
+  function saveHandTotals(kept: LinkSkillsData) {
+    setSavedHandTotals(() => {
+      writeLinkSkillTotalsForWorld(worldId, kept);
+      return kept;
+    });
+    onEditDone();
+  }
 
   // "All" lands first: a dense scannable list beats forcing a branch pick before seeing
   // anything (see LinkSkillCompactRow). Picking a specific branch pill swaps the content
@@ -725,11 +847,12 @@ function LinkSkillsSection({ theme, worldId, worldCharacters }: {
   // every branch rendered its cards simultaneously).
   const [tab, setTab] = useState<LinkSkillTab>("All");
 
-  const withEligibility = LINK_SKILLS.map((skill) => ({
-    skill,
-    eligible: winners[skill.id] ?? [],
-    level: levels?.[skill.id],
-  }));
+  const withEligibility = LINK_SKILLS.map((skill) => {
+    const rosterLevel = rosterLevels[skill.id];
+    const hand = handTotals[skill.id];
+    const handTotal = hand !== undefined && hand > (rosterLevel ?? 0) ? hand : undefined;
+    return { skill, eligible: winners[skill.id] ?? [], level: handTotal ?? rosterLevel, handTotal };
+  });
   // A skill explicitly set to 0 (no progress yet) reads the same as never having been
   // touched. Level 0 with no eligible tracked character belongs in the dormant chip list,
   // not the full sprite card, which would render an empty "no tracked character" placeholder
@@ -745,6 +868,10 @@ function LinkSkillsSection({ theme, worldId, worldCharacters }: {
   // never overflows at all, since branchesWithData can be short enough to fit.
   const { ref: tabsRef, atStart, atEnd } = useScrollEdges<HTMLDivElement>([tabOptions.length]);
   const tabsMask = edgeFadeMask(atStart, atEnd);
+
+  if (editing) {
+    return <LinkSkillTotalsEditPanel theme={theme} rosterLevels={rosterLevels} handTotals={handTotals} onSave={saveHandTotals} ref={editorRef} />;
+  }
 
   return (
     <div style={{ display: "grid", gap: 14 }}>
@@ -782,19 +909,10 @@ function LinkSkillsSection({ theme, worldId, worldCharacters }: {
       </div>
       {tab === "All" ? (
         <div className="legion-link-skills-all-root">
-          <style>{`
-            .legion-link-skills-all-root { container-type: inline-size; }
-            .legion-link-skills-all-grid { display: grid; gap: 2px 10px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
-            @container (max-width: 860px) {
-              .legion-link-skills-all-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-            }
-            @container (max-width: 520px) {
-              .legion-link-skills-all-grid { grid-template-columns: minmax(0, 1fr); }
-            }
-          `}</style>
+          <style>{ALL_GRID_CSS}</style>
           <div className="legion-link-skills-all-grid">
-            {withEligibility.map(({ skill, level }) => (
-              <LinkSkillCompactRow key={skill.id} theme={theme} skill={skill} level={level} />
+            {withEligibility.map(({ skill, level, eligible, handTotal }) => (
+              <LinkSkillCompactRow key={skill.id} theme={theme} skill={skill} level={level} eligible={eligible} handTotal={handTotal} />
             ))}
           </div>
         </div>
@@ -842,11 +960,8 @@ export default function LegionPanel({ theme, worldId, worldCharacters, onBack }:
         </div>
         {/* Lives in the header (fixed regardless of tab/edit state) instead of inside each
             section's own content, so opening the editor (and its Save button replacing
-            this one) never shifts anything below it. Link Skills has no edit affordance
-            at all here -- levels live per-character now, editable only from each
-            character's own Link Skills setup step, not from this world-level screen
-            (see LinkSkillsSection's own comment). */}
-        {section === "artifact" && (editing
+            this one) never shifts anything below it. */}
+        {(editing
           ? <button type="button" onClick={() => editorRef.current?.save()} style={saveButtonStyle(theme)}>Save</button>
           : (
             <HoverTooltip label={`Edit ${sectionLabel}`} theme={theme}>
@@ -882,7 +997,7 @@ export default function LegionPanel({ theme, worldId, worldCharacters, onBack }:
       <div key={section} className="legion-section-content">
         {section === "artifact"
           ? <LegionArtifactSection theme={theme} worldId={worldId} editing={editing} onEditDone={() => setEditing(false)} editorRef={editorRef} />
-          : <LinkSkillsSection theme={theme} worldId={worldId} worldCharacters={worldCharacters} />}
+          : <LinkSkillsSection theme={theme} worldId={worldId} worldCharacters={worldCharacters} editing={editing} onEditDone={() => setEditing(false)} editorRef={editorRef} />}
       </div>
     </div>
   );

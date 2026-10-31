@@ -211,9 +211,19 @@ export function computeLinkSkillsFromRoster(
  *  0-3 cap, which would let a multi-class skill's summed floor exceed its real maxLevel. It
  *  is only compared against the skill's already-summed total, as a competing whole-skill
  *  claim. */
-export function bestKnownLinkSkillFloors(roster: StoredCharacterRecord[], worldId: number): LinkSkillsData {
+export function bestKnownLinkSkillFloors(
+  roster: StoredCharacterRecord[],
+  worldId: number,
+  handEnteredTotals: LinkSkillsData = {},
+): LinkSkillsData {
   const { values: levelFloors } = computeLinkSkillsFromRoster(roster, worldId);
   const floors: LinkSkillsData = { ...levelFloors };
+  // The Legion panel's hand-entered totals are another whole-skill claim, same standing as a
+  // sibling's stored value below. Passed only by the setup step's seed, never by
+  // propagateLinkSkillFloors, so a hand-entered total never silently rewrites saved records.
+  for (const [skillId, total] of Object.entries(handEnteredTotals)) {
+    floors[skillId as LinkSkillId] = Math.max(floors[skillId as LinkSkillId] ?? 0, total);
+  }
   for (const character of roster) {
     if (character.worldID !== worldId) continue;
     const skillId = CLASS_TO_SKILL[character.jobName];
@@ -330,4 +340,9 @@ export function syncLinkSkillToSiblings(
       linkSkills: { ...character.linkSkills, [skillId]: target },
     });
   }
+}
+
+/** The link skill `jobName` contributes to, or undefined for a class with none. */
+export function linkSkillForClass(jobName: string): LinkSkillId | undefined {
+  return CLASS_TO_SKILL[jobName];
 }

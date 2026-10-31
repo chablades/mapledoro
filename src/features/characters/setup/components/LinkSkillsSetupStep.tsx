@@ -8,8 +8,9 @@ import { resourceImageUrl } from "../../../../lib/mapleResource";
 import type { AppTheme } from "../../../../components/themes";
 import type { SetupStepDefinition } from "../steps";
 import HoverTooltip from "../../../../components/HoverTooltip";
-import { linkSkillsStoredToDraftString, type StoredCharacterRecord, type LinkSkillId, type LinkSkillsData } from "../../model/charactersStore";
-import { LINK_SKILLS, computeLinkSkillsFromRoster, linkSkillFloorsForCharacter, bestKnownLinkSkillFloors, type LinkSkillDef } from "../data/linkSkillsData";
+import { useMounted } from "../../../../lib/useMounted";
+import { linkSkillsStoredToDraftString, readCharactersStore, type StoredCharacterRecord, type LinkSkillId, type LinkSkillsData } from "../../model/charactersStore";
+import { LINK_SKILLS, computeLinkSkillsFromRoster, linkSkillFloorsForCharacter, bestKnownLinkSkillFloors, linkSkillForClass, type LinkSkillDef } from "../data/linkSkillsData";
 import { LINK_SKILL_TO_SCOUTER_KEY } from "../../scouter/scouterLinkSkills";
 import SetupStepFrame from "./SetupStepFrame";
 import InfoTooltip, { type TooltipContent } from "./InfoTooltip";
@@ -287,6 +288,33 @@ function resolveLinkSkillFloors(
   return linkSkillFloorsForCharacter({ jobName, worldID: confirmedWorldId }, characterRoster);
 }
 
+/** The mount-time backfill's starting values, before flooring. See the effect in
+ *  LinkSkillsEditor for why the two sources are scoped differently. */
+function seedSuggestion(
+  confirmedRecord: StoredCharacterRecord | undefined,
+  confirmedWorldId: number | undefined,
+  characterRoster: StoredCharacterRecord[],
+  handEnteredTotals: LinkSkillsData,
+  floors: LinkSkillsData,
+  ownSkillId: LinkSkillId | undefined,
+): LinkSkillsData {
+  const suggestion: LinkSkillsData = {};
+  if (confirmedRecord?.linkSkills) {
+    for (const skillId of Object.keys(confirmedRecord.linkSkills) as LinkSkillId[]) {
+      if (skillId in LINK_SKILL_TO_SCOUTER_KEY) suggestion[skillId] = confirmedRecord.linkSkills[skillId];
+    }
+    return suggestion;
+  }
+  if (confirmedWorldId === undefined) return suggestion;
+  const rawSuggestion = bestKnownLinkSkillFloors(characterRoster, confirmedWorldId, handEnteredTotals);
+  const seedIds = new Set(Object.keys(floors) as LinkSkillId[]);
+  if (ownSkillId) seedIds.add(ownSkillId);
+  for (const skillId of seedIds) {
+    if (rawSuggestion[skillId] !== undefined) suggestion[skillId] = rawSuggestion[skillId];
+  }
+  return suggestion;
+}
+
 /** The Link Skills step's editable content with no wizard-frame chrome, reused standalone by
  *  LegionPanel's edit-in-place view as well as by the wizard step below. Values here belong
  *  to one character, identified by confirmedCharacterName within characterRoster if it's
@@ -331,6 +359,22 @@ function LinkSkillsEditor({
     if (rawSources[skillId]) sources[skillId] = rawSources[skillId];
   }
 
+  // A total hand-entered on the Legion panel, for players who don't track every character
+  // on the world, has no character name to credit, so it shows as its own "Legion entry"
+  // token. Only when it beats what the tracked roster proves, the same rule the Legion panel
+  // uses to keep it. Keyed off this character's class, not `floors`, which is empty for an
+  // untracked character with no tracked siblings, exactly the case hand entry exists for.
+  const mounted = useMounted();
+  const handEnteredTotals = mounted && confirmedWorldId !== undefined
+    ? readCharactersStore().linkSkillTotalsByWorld[String(confirmedWorldId)] ?? {}
+    : {};
+  const rawOwnSkillId = linkSkillForClass(confirmedRecord?.jobName ?? jobName);
+  const ownSkillId = rawOwnSkillId && rawOwnSkillId in LINK_SKILL_TO_SCOUTER_KEY ? rawOwnSkillId : undefined;
+  const ownHandTotal = ownSkillId ? handEnteredTotals[ownSkillId] : undefined;
+  if (ownSkillId && ownHandTotal !== undefined && ownHandTotal > (floors[ownSkillId] ?? 0)) {
+    sources[ownSkillId] = [...(sources[ownSkillId] ?? []), `Legion entry (${ownHandTotal})`];
+  }
+
   // One-shot mount-time backfill, only when this step lands blank. A suggestion, never a
   // constraint: the field stays editable down to `floors`, the level-only minimum, whatever
   // this seeds. Two sources in priority order. First, this character's own already-stored
@@ -360,17 +404,7 @@ function LinkSkillsEditor({
     // no per-character record to trust, so it stays scoped to `floors`, this character's own
     // class, to avoid seeding an untracked F/P's blank Bravado or Elementalism rows from an
     // unrelated same-world Hoyoung or Kanna.
-    const suggestion: LinkSkillsData = {};
-    if (confirmedRecord?.linkSkills) {
-      for (const skillId of Object.keys(confirmedRecord.linkSkills) as LinkSkillId[]) {
-        if (skillId in LINK_SKILL_TO_SCOUTER_KEY) suggestion[skillId] = confirmedRecord.linkSkills[skillId];
-      }
-    } else if (confirmedWorldId !== undefined) {
-      const rawSuggestion = bestKnownLinkSkillFloors(characterRoster, confirmedWorldId);
-      for (const skillId of Object.keys(floors) as LinkSkillId[]) {
-        if (rawSuggestion[skillId] !== undefined) suggestion[skillId] = rawSuggestion[skillId];
-      }
-    }
+    const suggestion = seedSuggestion(confirmedRecord, confirmedWorldId, characterRoster, handEnteredTotals, floors, ownSkillId);
     const reconciled: LinkSkillsData = { ...suggestion };
     for (const [skillId, floor] of Object.entries(floors)) {
       const id = skillId as LinkSkillId;

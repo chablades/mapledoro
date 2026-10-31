@@ -9,10 +9,12 @@ import {
   type StoredCharacterRecord,
   type StoredLegionArtifact,
   type StoredScouterLegion,
+  type LinkSkillsData,
   type WorldExportPayload,
 } from "../../model/charactersStore";
 import { toCharacterKey } from "../../model/characterKeys";
 import { MAX_CHAMPIONS, MAX_CHARACTERS_PER_WORLD } from "../useCharacterSetupController";
+import { WORLD_NAMES } from "../../model/constants";
 import {
   useWorldImportConflictState,
   collapseUniformChoiceMap,
@@ -283,7 +285,7 @@ interface WorldImportConflictViewProps {
     resolvedCharacters: StoredCharacterRecord[],
     roleKeys: { mainCharacterKey: string | null; championCharacterKeys: string[] },
     worldId: number,
-    legionData: { legionArtifact?: StoredLegionArtifact; scouterLegion?: StoredScouterLegion } | null,
+    legionData: { legionArtifact?: StoredLegionArtifact; scouterLegion?: StoredScouterLegion; linkSkillTotals?: LinkSkillsData } | null,
     removedKeys?: string[],
   ) => void;
   onChooseDifferentFile: () => void;
@@ -543,14 +545,22 @@ function partitionWorldImportPayload(payload: WorldExportPayload): {
   conflicts: ConflictEntry[];
   worldDataConflict: boolean;
   worldResidents: ResidentEntry[];
+  otherWorldSkipped: StoredCharacterRecord[];
 } {
   const store = readCharactersStore();
   const newChars: StoredCharacterRecord[] = [];
   const conflictEntries: ConflictEntry[] = [];
   const conflictKeys = new Set<string>();
+  // An IGN already tracked on a different world is left alone, not offered as a conflict.
+  // Resolving it as "imported" would overwrite that character with the file's record and move
+  // it onto the file's world, and its roles on its real world would leak into this import's
+  // Main/Champion checks.
+  const otherWorldSkipped: StoredCharacterRecord[] = [];
   for (const imported of payload.characters) {
     const existing = selectCharacterByIgn(store, imported.characterName);
-    if (existing) {
+    if (existing && existing.worldID !== payload.worldID) {
+      otherWorldSkipped.push(existing);
+    } else if (existing) {
       const existingKey = toCharacterKey(existing);
       const currentRoles = resolveRoles(
         existingKey,
@@ -564,7 +574,8 @@ function partitionWorldImportPayload(payload: WorldExportPayload): {
     }
   }
   const hasWorldData = Boolean(
-    store.legionArtifactByWorld[String(payload.worldID)] || store.scouterLegionByWorld[String(payload.worldID)],
+    store.legionArtifactByWorld[String(payload.worldID)] || store.scouterLegionByWorld[String(payload.worldID)]
+      || store.linkSkillTotalsByWorld[String(payload.worldID)],
   );
   // Characters already on the target world that the file doesn't mention. Not a conflict,
   // since that IGN already has a resolution above, but existing residents who may need to be
@@ -581,7 +592,7 @@ function partitionWorldImportPayload(payload: WorldExportPayload): {
       ),
     });
   }
-  return { newCharacters: newChars, conflicts: conflictEntries, worldDataConflict: hasWorldData, worldResidents: residents };
+  return { newCharacters: newChars, conflicts: conflictEntries, worldDataConflict: hasWorldData, worldResidents: residents, otherWorldSkipped };
 }
 
 // Already decomposed into ConflictsSection/NewCharactersSection/ResidentsSection/
@@ -595,7 +606,7 @@ function WorldImportConflictView({ theme, isUiLocked, payload, onImportWorldBulk
   // roster fresh from storage, and the conflict set this screen operates on should stay fixed
   // while it is being resolved, not shift underfoot because something else in the app touched
   // storage mid-review.
-  const { newCharacters, conflicts, worldDataConflict, worldResidents } = useMemo(
+  const { newCharacters, conflicts, worldDataConflict, worldResidents, otherWorldSkipped } = useMemo(
     () => partitionWorldImportPayload(payload),
     [payload],
   );
@@ -625,7 +636,7 @@ function WorldImportConflictView({ theme, isUiLocked, payload, onImportWorldBulk
     championOverflowCount,
     customizingEntry,
     buildLegionDataForCommit,
-  } = useWorldImportConflictState(payload, conflicts, newCharacters, worldResidents);
+  } = useWorldImportConflictState(payload, conflicts, newCharacters, worldResidents, worldDataConflict);
 
   function handleConfirm() {
     if (isOverCap || mainConflict || championOverflowCount > 0) return;
@@ -659,6 +670,13 @@ function WorldImportConflictView({ theme, isUiLocked, payload, onImportWorldBulk
         applyBulkChoiceToAll={applyBulkChoiceToAll}
       />
 
+      {otherWorldSkipped.length > 0 && (
+        <p style={{ fontSize: "0.8rem", fontWeight: 700, color: theme.muted, margin: "0 0 0.9rem" }}>
+          {CHARACTERS_COPY.worldImport.otherWorldSkippedPrefix}{" "}
+          {otherWorldSkipped.map((c) => `${c.characterName} (${WORLD_NAMES[c.worldID] ?? "World " + c.worldID})`).join(", ")}
+        </p>
+      )}
+
       <NewCharactersSection
         theme={theme}
         payload={payload}
@@ -685,7 +703,7 @@ function WorldImportConflictView({ theme, isUiLocked, payload, onImportWorldBulk
         mainConflict={mainConflict}
       />
 
-      {(payload.legionArtifact || payload.scouterLegion) && worldDataConflict && (
+      {(payload.legionArtifact || payload.scouterLegion || payload.linkSkillTotals) && worldDataConflict && (
         <div style={{ marginBottom: "0.9rem" }}>
           <p style={{ fontSize: "0.8rem", fontWeight: 700, color: theme.text, margin: "0 0 0.4rem" }}>
             {CHARACTERS_COPY.worldImport.legionDataConflict}
@@ -841,6 +859,12 @@ async function readWorldImportFile(file: File): Promise<WorldImportFileState> {
       .map((n) => n.trim().toLowerCase());
     if (new Set(names).size !== names.length) {
       return { status: "error", message: CHARACTERS_COPY.worldImport.duplicateCharacterError };
+    }
+    const fileWorldId = (parsedJson as Record<string, unknown>).worldID;
+    const hasMixedWorlds = rawCharacters.some((c) =>
+      typeof c === "object" && c !== null && (c as Record<string, unknown>).worldID !== fileWorldId);
+    if (hasMixedWorlds) {
+      return { status: "error", message: CHARACTERS_COPY.worldImport.mixedWorldError };
     }
   }
 

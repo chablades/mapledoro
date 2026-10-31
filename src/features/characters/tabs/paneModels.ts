@@ -1,6 +1,6 @@
 import type { AppTheme } from "../../../components/themes";
 import type { NormalizedCharacterData } from "../model/types";
-import type { ImportSectionId, OverviewSectionId, StoredCharacterRecord, StoredLegionArtifact, StoredScouterLegion } from "../model/charactersStore";
+import type { ImportSectionId, OverviewSectionId, LinkSkillsData, StoredCharacterRecord, StoredLegionArtifact, StoredScouterLegion } from "../model/charactersStore";
 import type { SetupFlowId } from "../setup/flows";
 import type { MapleScouterImportResult } from "../setup/data/maplescouterImportData";
 import type { SetupMode } from "../model/constants";
@@ -113,7 +113,7 @@ export interface SearchPaneActions {
     resolvedCharacters: StoredCharacterRecord[],
     roleKeys: { mainCharacterKey: string | null; championCharacterKeys: string[] },
     worldId: number,
-    legionData: { legionArtifact?: StoredLegionArtifact; scouterLegion?: StoredScouterLegion } | null,
+    legionData: { legionArtifact?: StoredLegionArtifact; scouterLegion?: StoredScouterLegion; linkSkillTotals?: LinkSkillsData } | null,
     removedKeys?: string[],
   ) => void;
 }

@@ -1,14 +1,16 @@
 "use client";
 
-import { useMemo, type CSSProperties } from "react";
+import { useState, type CSSProperties } from "react";
 import type { Route } from "next";
 import Link from "next/link";
 import CharacterChip from "../../components/CharacterChip";
+import HoverTooltip from "../../components/HoverTooltip";
 import Panel from "../../components/Panel";
 import { ItemIcon } from "../../components/ResourceImage";
 import type { AppTheme } from "../../components/themes";
 import type { StoredCharacterRecord } from "../characters/model/charactersStore";
 import { WORLD_NAMES } from "../characters/model/constants";
+import { useCardReorder } from "../tools/useCardReorder";
 
 // -- Character tracker quick-launch icons --------------------------------------
 interface TrackerLink {
@@ -89,21 +91,30 @@ const charRowLinkStyle: CSSProperties = {
 function CharacterRow({
   theme,
   char,
+  reordering,
 }: {
   theme: AppTheme;
   char: StoredCharacterRecord;
+  reordering: boolean;
 }) {
+  const chip = (
+    <CharacterChip
+      theme={theme}
+      characterImgURL={char.characterImgURL}
+      characterName={char.characterName}
+      subtitle={`Lv. ${char.level} ${char.jobName}`}
+    />
+  );
+  // While reordering the whole row is a drag handle, so the profile link and tracker icons
+  // step aside: a drag starting on a link would otherwise begin the browser's own link drag.
   return (
-    <div className="row-hover char-row" style={charRowStyle}>
-      <Link href={`/characters?character=${encodeURIComponent(char.characterName)}`} style={charRowLinkStyle}>
-        <CharacterChip
-          theme={theme}
-          characterImgURL={char.characterImgURL}
-          characterName={char.characterName}
-          subtitle={`Lv. ${char.level} ${char.jobName}`}
-        />
-      </Link>
-      <TrackerIcons theme={theme} char={char} />
+    <div className={reordering ? "char-row" : "row-hover char-row"} style={charRowStyle}>
+      {reordering ? <div style={charRowLinkStyle}>{chip}</div> : (
+        <Link href={`/characters?character=${encodeURIComponent(char.characterName)}`} style={charRowLinkStyle}>
+          {chip}
+        </Link>
+      )}
+      {!reordering && <TrackerIcons theme={theme} char={char} />}
       <div
         className="char-row-world"
         style={{
@@ -122,16 +133,73 @@ function CharacterRow({
   );
 }
 
-export default function CharactersPanel({ theme, characters }: { theme: AppTheme; characters: StoredCharacterRecord[] }) {
-  const hasCharacters = characters.length > 0;
-  const manageLink = useMemo(
-    () =>
-      hasCharacters && (
-        <Link href="/characters" className="accent-link" style={{ color: theme.accentText }}>
+function reorderButtonStyle(theme: AppTheme): CSSProperties {
+  return {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: 26,
+    height: 26,
+    padding: 0,
+    color: theme.muted,
+    background: theme.bg,
+    border: `1px solid ${theme.border}`,
+    borderRadius: 8,
+    cursor: "pointer",
+  };
+}
+
+function doneButtonStyle(theme: AppTheme): CSSProperties {
+  return {
+    padding: "0.25rem 0.75rem",
+    borderRadius: 8,
+    border: "none",
+    background: theme.accent,
+    color: theme.accentOn,
+    fontFamily: "inherit",
+    fontSize: "0.75rem",
+    fontWeight: 800,
+    cursor: "pointer",
+  };
+}
+
+function ReorderIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M7 4v16M3 8l4-4 4 4M17 20V4M13 16l4 4 4-4" />
+    </svg>
+  );
+}
+
+export default function CharactersPanel({ theme, characters, onReorder }: {
+  theme: AppTheme;
+  characters: StoredCharacterRecord[];
+  onReorder: (from: number, to: number) => void;
+}) {
+  const [reordering, setReordering] = useState(false);
+  const { dragProps, isDragging, isDropTarget } = useCardReorder(onReorder);
+  // Reordering one character has nothing to move, so the toggle only shows from two up.
+  // Manage sits beside the title (overriding .accent-link's auto margin); only the reorder
+  // control is pushed to the right edge.
+  const headerRight = characters.length > 0 && (
+    <>
+      {!reordering && (
+        <Link href="/characters" className="accent-link" style={{ color: theme.accentText, marginLeft: "0.25rem" }}>
           Manage →
         </Link>
-      ),
-    [hasCharacters, theme.accentText]
+      )}
+      {characters.length > 1 && <div style={{ marginLeft: "auto" }}>{reordering ? (
+        <button type="button" onClick={() => setReordering(false)} style={doneButtonStyle(theme)}>
+          Done
+        </button>
+      ) : (
+        <HoverTooltip label="Reorder characters" theme={theme}>
+          <button type="button" aria-label="Reorder characters" onClick={() => setReordering(true)} style={reorderButtonStyle(theme)}>
+            <ReorderIcon />
+          </button>
+        </HoverTooltip>
+      )}</div>}
+    </>
   );
   const emptyStateStyle: CSSProperties = {
     padding: "3rem 2rem",
@@ -179,7 +247,7 @@ export default function CharactersPanel({ theme, characters }: { theme: AppTheme
       theme={theme}
       icon="⭐"
       title="My Characters"
-      headerRight={manageLink}
+      headerRight={headerRight}
     >
       {characters.length === 0 ? (
         <div style={emptyStateStyle}>
@@ -193,13 +261,33 @@ export default function CharactersPanel({ theme, characters }: { theme: AppTheme
       ) : (
         <div className="characters-scroll-area" style={{ padding: "0.5rem", maxHeight: 420, overflowY: "auto" }}>
           <div className={characters.length > 6 ? "characters-grid characters-grid-two-col" : "characters-grid"}>
-            {characters.map((char) => (
-              <CharacterRow key={char.characterName.toLowerCase()} theme={theme} char={char} />
+            {characters.map((char, index) => reordering ? (
+              <div
+                key={char.characterName.toLowerCase()}
+                className="card-reorder-surface"
+                {...dragProps(index)}
+                style={{
+                  cursor: "grab",
+                  borderRadius: 12,
+                  border: `1px dashed ${isDropTarget(index) ? theme.accent : theme.border}`,
+                  opacity: isDragging(index) ? 0.4 : 1,
+                }}
+              >
+                <CharacterRow theme={theme} char={char} reordering />
+              </div>
+            ) : (
+              <CharacterRow key={char.characterName.toLowerCase()} theme={theme} char={char} reordering={false} />
             ))}
           </div>
-          <Link href="/characters?action=add" className="add-character-link" style={addDashedStyle}>
-            + Add Character
-          </Link>
+          {reordering ? (
+            <p style={{ margin: "0.5rem 0.75rem", fontSize: "0.75rem", fontWeight: 700, color: theme.muted, textAlign: "center" }}>
+              Drag characters into the order you want, then press Done.
+            </p>
+          ) : (
+            <Link href="/characters?action=add" className="add-character-link" style={addDashedStyle}>
+              + Add Character
+            </Link>
+          )}
         </div>
       )}
     </Panel>

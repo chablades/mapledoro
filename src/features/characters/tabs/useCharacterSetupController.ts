@@ -27,6 +27,7 @@ import {
   selectCharactersList,
   linkSkillsDraftToStored,
   writeScouterLegionForWorld,
+  writeLinkSkillTotalsForWorld,
   writeLegionArtifactForWorld,
   writeCharactersStore,
 } from "../model/charactersStore";
@@ -50,7 +51,7 @@ import {
   type SetupDraft,
   writeSetupDraft,
 } from "../model/setupDraftStorage";
-import type { ImportSectionId, OverviewSectionId, StoredCharacterRecord, StoredCharacterStats, StoredLegionArtifact, StoredScouterBuffs, StoredScouterLegion } from "../model/charactersStore";
+import type { ImportSectionId, OverviewSectionId, StoredCharacterRecord, StoredCharacterStats, StoredLegionArtifact, StoredScouterBuffs, StoredScouterLegion, LinkSkillsData } from "../model/charactersStore";
 import {
   convertStatsStepDraftToStored, deriveHasRuinForceShield, deriveIsLiberatedFromWeapon, marriageDraftToStored,
   parseStatsStepDraft, serializeStatsStepDraft, storedStatsToStatsStepDraft,
@@ -1891,6 +1892,7 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
       charactersById: nextCharactersById,
       scouterLegionByWorld: freshWorldFields.scouterLegionByWorld,
       legionArtifactByWorld: freshWorldFields.legionArtifactByWorld,
+      linkSkillTotalsByWorld: freshWorldFields.linkSkillTotalsByWorld,
       scouterSeenByCharacter: freshWorldFields.scouterSeenByCharacter,
       updatedAt: now,
     };
@@ -2683,7 +2685,7 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
     resolvedCharacters: StoredCharacterRecord[],
     roleKeys: { mainCharacterKey: string | null; championCharacterKeys: string[] },
     worldId: number,
-    legionData: { legionArtifact?: StoredLegionArtifact; scouterLegion?: StoredScouterLegion } | null,
+    legionData: { legionArtifact?: StoredLegionArtifact; scouterLegion?: StoredScouterLegion; linkSkillTotals?: LinkSkillsData } | null,
     // Existing residents unchecked on the conflict-resolution screen to free room under
     // MAX_CHARACTERS_PER_WORLD. Removed in the same roster update as the upserts below rather
     // than a separate pass, so there is never an intermediate state still over cap or briefly
@@ -2739,6 +2741,7 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
     if (legionData) {
       if (legionData.legionArtifact) writeLegionArtifactForWorld(worldId, legionData.legionArtifact);
       if (legionData.scouterLegion) writeScouterLegionForWorld(worldId, legionData.scouterLegion);
+      if (legionData.linkSkillTotals) writeLinkSkillTotalsForWorld(worldId, legionData.linkSkillTotals);
     }
     // Existence-checked, so this is a no-op whenever legionData above wrote real data or the
     // world already had some. Same entry-path reasoning as every other import callback here.

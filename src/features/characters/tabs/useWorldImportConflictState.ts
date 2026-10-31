@@ -7,6 +7,7 @@ import {
   type StoredCharacterRecord,
   type StoredLegionArtifact,
   type StoredScouterLegion,
+  type LinkSkillsData,
   type WorldExportPayload,
 } from "../model/charactersStore";
 import { toCharacterKey } from "../model/characterKeys";
@@ -155,6 +156,7 @@ export function useWorldImportConflictState(
   conflicts: ConflictEntry[],
   newCharacters: StoredCharacterRecord[],
   worldResidents: ResidentEntry[],
+  worldDataConflict: boolean,
 ) {
   const [resolutions, setResolutions] = useState<Record<string, ConflictResolution>>(() => {
     const initial: Record<string, ConflictResolution> = {};
@@ -288,8 +290,12 @@ export function useWorldImportConflictState(
 
   const customizingEntry = customizingKey !== null ? conflicts.find((e) => toCharacterKey(e.existing) === customizingKey) : undefined;
 
-  function buildLegionDataForCommit(): { legionArtifact?: StoredLegionArtifact; scouterLegion?: StoredScouterLegion } | null {
-    return keepMyWorldData ? null : { legionArtifact: payload.legionArtifact, scouterLegion: payload.scouterLegion };
+  // keepMyWorldData only means something when the world already has Legion data to keep: the
+  // keep/use toggle renders only then. With nothing saved there, the file's data always applies,
+  // or the default "keep" would quietly throw it away.
+  function buildLegionDataForCommit(): { legionArtifact?: StoredLegionArtifact; scouterLegion?: StoredScouterLegion; linkSkillTotals?: LinkSkillsData } | null {
+    if (worldDataConflict && keepMyWorldData) return null;
+    return { legionArtifact: payload.legionArtifact, scouterLegion: payload.scouterLegion, linkSkillTotals: payload.linkSkillTotals };
   }
 
   return {
