@@ -864,40 +864,43 @@ export const HEXA_STAT_SKILLS: HexaSkillDef[] = [
   Charge). Kept as a branch table rather than a field on all 53 class defs, since that's the
   shape the game actually has and it reads against the patch notes directly.
 
-  Icons are the `hexa-skill` 4000xxxx series added in v271. The manifest lists one id per
-  class; a branch usually shares one piece of art, so most rows below just use the branch's
-  first id. Not always though -- Hayato and Kanna share HEXA Twilight Bloom the skill but
-  have visibly different in-game icons (40000050 is swords, 40000051 is Kanna's), so that
-  row is split per class. Verify a branch's art in-game before collapsing it to one id.
-  Explorers split five ways, so `group` alone can't key this.
+  Icons are the `hexa-skill` 4000xxxx series added in v271: one id per class, each with its
+  own art (the skill is shared, the icon isn't). The manifest gives no class per id; ids run
+  consecutively in the order of each row's classNames, matched against the in-game icons.
+  The Demon and Anima branches have only one id, flagged sharedIcon. Explorers split five
+  ways, so `group` alone can't key this.
 
   SHINE classes get the Erda Link equivalent instead (a 3rd Skill Stone, SHINE Tree of Stars),
   which only exists under Erel Light's erda-skill folder; Sia shares it.
 */
-const COMMON3_BY_BRANCH: { skill: HexaSkillDef; classNames: string[] }[] = [
-  { skill: s("HEXA Blitz Shield/Blitz Burst", "40000002"), classNames: ["Hero", "Paladin", "Dark Knight"] },
-  { skill: s("HEXA Arcane Overdrive", "40000005"), classNames: ["Arch Mage (F/P)", "Arch Mage (I/L)", "Bishop"] },
-  { skill: s("HEXA Fury of the Wild", "40000008"), classNames: ["Bowmaster", "Marksman", "Pathfinder"] },
-  { skill: s("HEXA Shadow Walker", "40000011"), classNames: ["Night Lord", "Shadower", "Dual Blade"] },
-  { skill: s("HEXA Pirate's Banner", "40000014"), classNames: ["Buccaneer", "Corsair", "Cannoneer"] },
-  { skill: s("HEXA Phalanx Charge", "40000017"), classNames: ["Mihile", "Dawn Warrior", "Blaze Wizard", "Wind Archer", "Night Walker", "Thunder Breaker"] },
-  { skill: s("HEXA Freud's Wisdom", "40000023"), classNames: ["Aran", "Evan", "Luminous", "Mercedes", "Phantom", "Shade"] },
-  { skill: s("HEXA Resistance Infantry", "40000029"), classNames: ["Blaster", "Battle Mage", "Wild Hunter", "Xenon", "Mechanic"] },
-  { skill: s("HEXA Defender of the Demon", "40000034"), classNames: ["Demon Slayer", "Demon Avenger"] },
-  { skill: s("HEXA Might of the Nova", "40000036"), classNames: ["Kaiser", "Kain", "Cadena", "Angelic Buster"] },
-  { skill: s("HEXA Transcendent", "40000040"), classNames: ["Zero"] },
-  { skill: s("HEXA Afterimage of the Otherworld", "40000041"), classNames: ["Kinesis"] },
-  { skill: s("HEXA Conversion Overdrive", "40000042"), classNames: ["Adele", "Illium", "Khali", "Ark"] },
-  { skill: s("HEXA Lotus Flower", "40000046"), classNames: ["Lara", "Hoyoung", "Ren"] },
-  { skill: s("HEXA Twilight Bloom", "40000050"), classNames: ["Hayato"] },
-  { skill: s("HEXA Twilight Bloom", "40000051"), classNames: ["Kanna"] },
-  { skill: s("HEXA Ring of Samsara", "40000052"), classNames: ["Lynn", "Mo Xuan"] },
-  { skill: su("SHINE Tree of Stars", "erda-skill", "18112/skill/111"), classNames: ["Sia Astelle", "Erel Light"] },
+const COMMON3_BY_BRANCH: { name: string; firstId: number; classNames: string[]; sharedIcon?: boolean }[] = [
+  { name: "HEXA Blitz Shield/Blitz Burst", firstId: 40000002, classNames: ["Hero", "Paladin", "Dark Knight"] },
+  { name: "HEXA Arcane Overdrive", firstId: 40000005, classNames: ["Arch Mage (F/P)", "Arch Mage (I/L)", "Bishop"] },
+  { name: "HEXA Fury of the Wild", firstId: 40000008, classNames: ["Bowmaster", "Marksman", "Pathfinder"] },
+  { name: "HEXA Shadow Walker", firstId: 40000011, classNames: ["Night Lord", "Shadower", "Dual Blade"] },
+  { name: "HEXA Pirate's Banner", firstId: 40000014, classNames: ["Buccaneer", "Corsair", "Cannoneer"] },
+  { name: "HEXA Phalanx Charge", firstId: 40000017, classNames: ["Mihile", "Dawn Warrior", "Blaze Wizard", "Wind Archer", "Night Walker", "Thunder Breaker"] },
+  { name: "HEXA Freud's Wisdom", firstId: 40000023, classNames: ["Aran", "Evan", "Luminous", "Mercedes", "Phantom", "Shade"] },
+  { name: "HEXA Resistance Infantry", firstId: 40000029, classNames: ["Blaster", "Battle Mage", "Wild Hunter", "Xenon", "Mechanic"] },
+  { name: "HEXA Defender of the Demon", firstId: 40000034, classNames: ["Demon Slayer", "Demon Avenger"], sharedIcon: true },
+  { name: "HEXA Might of the Nova", firstId: 40000036, classNames: ["Kaiser", "Kain", "Cadena", "Angelic Buster"] },
+  { name: "HEXA Transcendent", firstId: 40000040, classNames: ["Zero"] },
+  { name: "HEXA Afterimage of the Otherworld", firstId: 40000041, classNames: ["Kinesis"] },
+  { name: "HEXA Conversion Overdrive", firstId: 40000042, classNames: ["Adele", "Illium", "Khali", "Ark"] },
+  { name: "HEXA Lotus Flower", firstId: 40000046, classNames: ["Lara", "Hoyoung", "Ren"], sharedIcon: true },
+  { name: "HEXA Twilight Bloom", firstId: 40000050, classNames: ["Hayato", "Kanna"] },
+  { name: "HEXA Ring of Samsara", firstId: 40000052, classNames: ["Lynn", "Mo Xuan"] },
 ];
 
-const COMMON3_BY_CLASS = new Map<string, HexaSkillDef>(
-  COMMON3_BY_BRANCH.flatMap(({ skill, classNames }) => classNames.map((name) => [name, skill] as const)),
-);
+const SHINE_TREE_OF_STARS = su("SHINE Tree of Stars", "erda-skill", "18112/skill/111");
+
+const COMMON3_BY_CLASS = new Map<string, HexaSkillDef>([
+  ...COMMON3_BY_BRANCH.flatMap(({ name, firstId, classNames, sharedIcon }) =>
+    classNames.map((cls, i) => [cls, s(name, String(sharedIcon ? firstId : firstId + i))] as const),
+  ),
+  ["Sia Astelle", SHINE_TREE_OF_STARS],
+  ["Erel Light", SHINE_TREE_OF_STARS],
+]);
 
 /** The class's 3rd Common Node, or null if it has none. */
 export function common3Skill(className: string): HexaSkillDef | null {
