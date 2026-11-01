@@ -12,6 +12,12 @@ interface ChangelogEntry {
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    date: "2026-11-01",
+    changes: [
+      { type: "fixed", text: "Fixed the Boss Crystals tool showing the wrong crystal prices for Hard Baldrix and Hard Jupiter." },
+    ],
+  },
+  {
     date: "2026-10-31",
     changes: [
       { type: "added", text: "My Characters on the dashboard can now be reordered with the new reorder button." },

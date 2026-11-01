@@ -77,11 +77,11 @@ export const BOSSES: Boss[] = [
   { name: "Limbo (Normal)", icon: icon("33"), meso: 2100000000, maxParty: 3, shared: ["Limbo (Hard)"] },
   { name: "Limbo (Hard)", icon: icon("33"), meso: 3745000000, maxParty: 3, shared: ["Limbo (Normal)"] },
   { name: "Baldrix (Normal)", icon: icon("34"), meso: 2800000000, maxParty: 3, shared: ["Baldrix (Hard)"] },
-  { name: "Baldrix (Hard)", icon: icon("34"), meso: 6026000000, maxParty: 3, shared: ["Baldrix (Normal)"] },
+  { name: "Baldrix (Hard)", icon: icon("34"), meso: 4200000000, maxParty: 3, shared: ["Baldrix (Normal)"] },
   { name: "Malefic Star (Normal)", icon: icon("37"), meso: 1452000000, maxParty: 3, shared: ["Malefic Star (Hard)"] },
   { name: "Malefic Star (Hard)", icon: icon("37"), meso: 3990000000, maxParty: 3, shared: ["Malefic Star (Normal)"] },
   { name: "Jupiter (Normal)", icon: icon("38"), meso: 2965000000, maxParty: 3, shared: ["Jupiter (Hard)"] },
-  { name: "Jupiter (Hard)", icon: icon("38"), meso: 5954000000, maxParty: 3, shared: ["Jupiter (Normal)"] },
+  { name: "Jupiter (Hard)", icon: icon("38"), meso: 5953000000, maxParty: 3, shared: ["Jupiter (Normal)"] },
   // Monthly boss. Keep last so its rows stay contiguous for the XLSX top-14 formula.
   { name: "Black Mage (Hard)", icon: icon("25"), meso: 4500000000, monthly: true, shared: ["Black Mage (Extreme)"] },
   { name: "Black Mage (Extreme)", icon: icon("25"), meso: 18000000000, monthly: true, shared: ["Black Mage (Hard)"] },
