@@ -725,7 +725,11 @@ export function encodeCharacterQr(record: StoredCharacterRecord, world: Characte
 /** Fetches game data JSON from public/data (V Matrix nodes, equipment names). Injectable so
  *  decoding can run outside the browser. */
 type LoadJson = (path: string) => Promise<unknown>;
-const fetchJson: LoadJson = async (path) => (await fetch(path)).json();
+const fetchJson: LoadJson = async (path) => {
+  const response = await fetch(path);
+  if (!response.ok) throw new Error(`${path}: ${response.status}`);
+  return response.json();
+};
 
 async function resolveVMatrix(entries: { hash: number; level: number }[], jobName: string, load: LoadJson) {
   if (entries.length === 0) return undefined;
@@ -742,23 +746,21 @@ async function resolveVMatrix(entries: { hash: number; level: number }[], jobNam
 }
 
 async function resolveItemNames(eq: StoredCharacterEquipment, load: LoadJson) {
-  const files = new Map<string, Map<string, string>>();
-  const namesIn = async (file: string) => {
-    let names = files.get(file);
-    if (!names) {
-      const rows = (await load(`/data/equipment/${file}.json`)) as [string, string][];
-      names = new Map(rows.map(([id, name]) => [id, name]));
-      files.set(file, names);
-    }
-    return names;
-  };
-  const fill = async (item: StoredEquipmentItem | null, file: string) => {
-    if (item?.id && !item.name) item.name = (await namesIn(file)).get(item.id) ?? "";
-  };
   const preset = eq.presets[eq.activePreset];
-  for (const slot of GEAR_SLOTS) await fill(presetSlot(preset, slot), slot.file);
-  await fill(eq.title, "title");
-  for (const { key, file } of SHARED_GEAR) for (const item of eq[key]) await fill(item, file);
+  const needed: { item: StoredEquipmentItem; file: string }[] = [];
+  const add = (item: StoredEquipmentItem | null, file: string) => { if (item?.id && !item.name) needed.push({ item, file }); };
+  for (const slot of GEAR_SLOTS) add(presetSlot(preset, slot), slot.file);
+  add(eq.title, "title");
+  for (const { key, file } of SHARED_GEAR) for (const item of eq[key]) add(item, file);
+
+  // Each equipment file is fetched once, all in parallel.
+  const files = [...new Set(needed.map((n) => n.file))];
+  const tables = await Promise.all(files.map(async (file) => {
+    const rows = (await load(`/data/equipment/${file}.json`)) as [string, string][];
+    return [file, new Map(rows.map(([id, name]) => [id, name]))] as const;
+  }));
+  const names = new Map(tables);
+  for (const { item, file } of needed) item.name = names.get(file)?.get(item.id ?? "") ?? "";
 }
 
 /** Decodes the data after a card QR's #. Returns null when it isn't a valid card. Missing
