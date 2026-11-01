@@ -15,6 +15,7 @@ const CHANGELOG: ChangelogEntry[] = [
     date: "2026-10-31",
     changes: [
       { type: "added", text: "My Characters on the dashboard can now be reordered with the new reorder button." },
+      { type: "fixed", text: "Fixed the HEXA Skills tracker showing another class's icon for the 3rd Common Node, like Shadower and Dual Blade showing Night Lord's HEXA Shadow Walker." },
       { type: "added", text: "The Legion panel's Link Skills can now be edited, so you can enter link skill levels from characters you don't track." },
       { type: "added", text: "Hovering a link skill's icon in the Legion panel now shows which characters contribute to it." },
       { type: "fixed", text: "Fixed Full Setup and MapleScouter Setup crashing when setting up a character that wasn't saved yet." },
