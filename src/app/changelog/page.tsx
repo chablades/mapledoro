@@ -654,13 +654,21 @@ const TYPE_STATUS: Record<ChangelogEntry["changes"][number]["type"], StatusKind>
   fixed: "warning",
 };
 
+// Each date lists Added, then Changed, then Fixed, whatever order the entries
+// were written in. The sort is stable, so the written order holds within a type.
+const TYPE_ORDER = Object.keys(TYPE_LABEL);
+const SORTED_CHANGELOG: ChangelogEntry[] = CHANGELOG.map((entry) => ({
+  ...entry,
+  changes: [...entry.changes].sort((a, b) => TYPE_ORDER.indexOf(a.type) - TYPE_ORDER.indexOf(b.type)),
+}));
+
 const ENTRIES_PER_PAGE = 7;
 
 function ChangelogContent({ theme }: { theme: AppTheme }) {
   const [page, setPage] = useState(1);
   const totalPages = Math.ceil(CHANGELOG.length / ENTRIES_PER_PAGE);
   const firstEntry = (page - 1) * ENTRIES_PER_PAGE;
-  const visibleEntries = CHANGELOG.slice(firstEntry, firstEntry + ENTRIES_PER_PAGE);
+  const visibleEntries = SORTED_CHANGELOG.slice(firstEntry, firstEntry + ENTRIES_PER_PAGE);
 
   const paginationButtonStyle = {
     border: `1px solid ${theme.border}`,
