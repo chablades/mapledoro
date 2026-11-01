@@ -6,6 +6,7 @@ import {
   selectCharacterByIgn,
   selectCharactersList,
   parseImportedWorldPayload,
+  worldHasLegionData,
   type StoredCharacterRecord,
   type StoredLegionArtifact,
   type StoredScouterLegion,
@@ -573,10 +574,7 @@ function partitionWorldImportPayload(payload: WorldExportPayload): {
       newChars.push(imported);
     }
   }
-  const hasWorldData = Boolean(
-    store.legionArtifactByWorld[String(payload.worldID)] || store.scouterLegionByWorld[String(payload.worldID)]
-      || store.linkSkillTotalsByWorld[String(payload.worldID)],
-  );
+  const hasWorldData = worldHasLegionData(store, payload.worldID);
   // Characters already on the target world that the file doesn't mention. Not a conflict,
   // since that IGN already has a resolution above, but existing residents who may need to be
   // dropped to make room if the import would otherwise go over cap.

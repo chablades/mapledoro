@@ -19,7 +19,8 @@ import { readCharacterToolData } from "../../../tools/characterToolStorage";
 import { resolveClassId, getClassSetupOverrides, resolveDisplayJobName } from "../../setup/data/nexonJobMapping";
 import { CLASS_SKILL_DATA, getClassDataByNexonJobName, isLegacyClass, type ClassSkillData } from "../../setup/data/classSkillData";
 import { HEXA_STAT_OPTIONS, getHexaStatBonus, getMainStatLabel, getAttackLabel, type HexaStatNode, type HexaStatEntry, type HexaStatSlot } from "../../setup/data/hexaStatData";
-import { EXP_HISTORY_DAY_MS, nexonDayIndex, NEXON_DAILY_UPDATE_CUTOFF_HOUR_UTC, readCharactersStore, selectCharacterByIgn } from "../../model/charactersStore";
+import { EXP_HISTORY_DAY_MS, nexonDayIndex, NEXON_DAILY_UPDATE_CUTOFF_HOUR_UTC, readCharactersStore, selectCharacterByIgn, selectCharactersList, type CharacterExportPayload } from "../../model/charactersStore";
+import { whRankFromRoster } from "../../setup/data/scouterQuestionsData";
 import { WORLD_NAMES } from "../../model/constants";
 import type { StoredCharacterEquipment, StoredCharacterRecord, StoredCharacterStats, StoredEquipmentItem, StoredHyperStat, StoredInnerAbility, StoredIATier, StoredTripleStatField, StoredFamiliarSlot, ExpHistoryEntry, OverviewSectionId } from "../../model/charactersStore";
 import CustomizeOverviewDialog, { type OverviewAnchorDef } from "./CustomizeOverviewDialog";
@@ -136,12 +137,30 @@ export function ExportTabIcon({ strokeWidth = 1.5 }: { strokeWidth?: number }) {
 // mirroring readHexaLevels and readHexaStatNodes above, which exist for the same reason: tool
 // writes elsewhere in the app do not always reach an already rendered `character` prop.
 // Exports the whole record, stats, equipment, tools and the rest, so it doubles as an import
-// source, being the shape a re-import needs to reconstruct the character.
+// source, being the shape a re-import needs to reconstruct the character. The world's Legion
+// data rides along so the importer's Scouter can compute. The Wild Hunter rank can come from a
+// Wild Hunter elsewhere in the roster, which a lone exported character would lose, so a rank
+// that was never stored is resolved from the world's roster here.
 function exportCharacterJson(charName: string | undefined) {
   if (!charName) return;
-  const character = selectCharacterByIgn(readCharactersStore(), charName);
+  const store = readCharactersStore();
+  const character = selectCharacterByIgn(store, charName);
   if (!character) return;
-  const blob = new Blob([JSON.stringify(character, null, 2)], { type: "application/json" });
+  const worldKey = String(character.worldID);
+  const storedLegion = store.scouterLegionByWorld[worldKey];
+  const rosterRank = whRankFromRoster(selectCharactersList(store).filter((c) => c.worldID === character.worldID));
+  const wildHunterRank = storedLegion?.wildHunterRank ?? rosterRank ?? undefined;
+  const payload: CharacterExportPayload = {
+    kind: "character",
+    version: 1,
+    character,
+    world: {
+      scouterLegion: storedLegion || wildHunterRank ? { ...storedLegion, wildHunterRank } : undefined,
+      legionArtifact: store.legionArtifactByWorld[worldKey],
+      linkSkillTotals: store.linkSkillTotalsByWorld[worldKey],
+    },
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;

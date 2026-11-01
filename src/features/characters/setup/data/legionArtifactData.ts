@@ -8,7 +8,7 @@
   for every stat shown at Lv 10.
 */
 
-import type { StoredLegionCrystal } from "../../model/charactersStore";
+import type { StoredLegionArtifact, StoredLegionCrystal } from "../../model/charactersStore";
 
 // A crystal can't be "unleveled": once unlocked it's always at least level 1 in-game.
 export const MIN_CRYSTAL_LEVEL = 1;
@@ -105,6 +105,28 @@ export function getLegionArtifactStat(id: LegionArtifactStatId): LegionArtifactS
 
 export function isCrystalUnlocked(index: number, artifactLevel: number): boolean {
   return artifactLevel >= LEGION_CRYSTALS[index].requiredArtifactLevel;
+}
+
+/** The board a world gets automatically with its first character: artifact level 1, every
+ *  unlocked crystal at the minimum level with the default lines. */
+export function buildDefaultLegionArtifact(): Required<StoredLegionArtifact> {
+  const crystals: StoredLegionCrystal[] = LEGION_CRYSTALS.map((_, index) =>
+    isCrystalUnlocked(index, 1)
+      ? { level: MIN_CRYSTAL_LEVEL, stats: [...DEFAULT_CRYSTAL_STATS] }
+      : { level: 0, stats: [null, null, null] },
+  );
+  return { artifactLevel: 1, crystals };
+}
+
+/** Whether a board is still the untouched automatic default, holding nothing the player entered. */
+export function isDefaultLegionArtifact(board: StoredLegionArtifact): boolean {
+  const fallback = buildDefaultLegionArtifact();
+  const crystals = board.crystals ?? [];
+  return board.artifactLevel === fallback.artifactLevel
+    && crystals.length === fallback.crystals.length
+    && crystals.every((crystal, i) =>
+      crystal.level === fallback.crystals[i].level
+      && crystal.stats.every((stat, j) => stat === fallback.crystals[i].stats[j]));
 }
 
 export interface LegionCrystalDraft {

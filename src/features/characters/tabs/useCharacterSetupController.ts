@@ -18,7 +18,6 @@ import {
   type CharactersStore,
   type StoredCharacterEquipment,
   type StoredEquipmentPreset,
-  type StoredLegionCrystal,
   type StoredInnerAbility,
   type StoredFamiliarsData,
   type StoredFamiliarSlot,
@@ -67,11 +66,8 @@ import {
   type LegionArtifactsDraft,
 } from "../setup/data/scouterQuestionsData";
 import {
-  DEFAULT_CRYSTAL_STATS,
+  buildDefaultLegionArtifact,
   deriveLegionArtifactFields,
-  isCrystalUnlocked,
-  LEGION_CRYSTALS,
-  MIN_CRYSTAL_LEVEL,
   parseLegionArtifactBoardDraft,
   toStoredLegionCrystals,
   type LegionArtifactBoardDraft,
@@ -446,12 +442,7 @@ function finalizeQuickOrFullSetupRecord(
 function ensureLegionArtifactDefaultForWorld(worldId: number): void {
   const store = readCharactersStore();
   if (store.legionArtifactByWorld[String(worldId)]) return;
-  const crystals: StoredLegionCrystal[] = LEGION_CRYSTALS.map((_, index) =>
-    isCrystalUnlocked(index, 1)
-      ? { level: MIN_CRYSTAL_LEVEL, stats: [...DEFAULT_CRYSTAL_STATS] }
-      : { level: 0, stats: [null, null, null] },
-  );
-  writeLegionArtifactForWorld(worldId, { artifactLevel: 1, crystals });
+  writeLegionArtifactForWorld(worldId, buildDefaultLegionArtifact());
 }
 
 /**

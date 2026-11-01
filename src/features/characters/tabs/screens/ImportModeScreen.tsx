@@ -2,13 +2,18 @@
 
 import { useRef, useState } from "react";
 import {
-  parseImportedCharacterRecord,
+  parseImportedCharacterFile,
   readCharactersStore,
   selectCharacterByIgn,
   selectCharactersList,
+  writeLegionArtifactForWorld,
+  writeLinkSkillTotalsForWorld,
+  writeScouterLegionForWorld,
+  type CharacterExportWorldData,
   type ImportSectionId,
   type StoredCharacterRecord,
 } from "../../model/charactersStore";
+import { isDefaultLegionArtifact } from "../../setup/data/legionArtifactData";
 import { toCharacterKey } from "../../model/characterKeys";
 import { resolveDisplayJobName } from "../../setup/data/nexonJobMapping";
 import { statusText } from "../../../../components/statusColors";
@@ -84,12 +89,50 @@ function ImportPreviewCard({ theme, record }: { theme: SearchPaneModel["theme"];
   );
 }
 
-async function readImportFile(file: File): Promise<ImportState> {
+/** Fills in the world Legion data an imported file carries, but only when the world holds no
+ *  character other than the one being imported. A world with other characters belongs to the
+ *  player, and even filling an answer they never gave (say, a friend's artifact Final Attack
+ *  damage) would silently change their own characters' Scouter numbers. Re-importing a world's
+ *  only character still fills it. Within that, each piece is filled only where missing, so
+ *  nothing already there is replaced: Scouter Legion answers fill only unanswered fields, the
+ *  artifact board only replaces the untouched automatic default, and link skill totals only
+ *  fill an empty slot. */
+function applyImportedWorldData(record: StoredCharacterRecord, world: CharacterExportWorldData) {
+  const store = readCharactersStore();
+  const worldId = record.worldID;
+  const importedKey = toCharacterKey(record);
+  const hasOtherCharacters = selectCharactersList(store)
+    .some((c) => c.worldID === worldId && toCharacterKey(c) !== importedKey);
+  if (hasOtherCharacters) return;
+  const key = String(worldId);
+  const existingLegion = store.scouterLegionByWorld[key];
+  if (world.scouterLegion) {
+    // Only answered fields win; a key present but undefined must not erase the imported value.
+    const answered = Object.fromEntries(Object.entries(existingLegion ?? {}).filter(([, v]) => v !== undefined));
+    const merged = { ...world.scouterLegion, ...answered };
+    if (JSON.stringify(merged) !== JSON.stringify(existingLegion ?? {})) writeScouterLegionForWorld(worldId, merged);
+  }
+  const existingBoard = store.legionArtifactByWorld[key];
+  if (world.legionArtifact && (!existingBoard || isDefaultLegionArtifact(existingBoard))) {
+    writeLegionArtifactForWorld(worldId, world.legionArtifact);
+  }
+  if (world.linkSkillTotals && !store.linkSkillTotalsByWorld[key]) {
+    writeLinkSkillTotalsForWorld(worldId, world.linkSkillTotals);
+  }
+}
+
+interface ImportFileResult {
+  state: ImportState;
+  /** The file's world Legion data, applied only once the character is actually added. */
+  world: CharacterExportWorldData;
+}
+
+async function readImportFile(file: File): Promise<ImportFileResult> {
   let parsedJson: unknown;
   try {
     parsedJson = JSON.parse(await file.text());
   } catch {
-    return { status: "error", message: CHARACTERS_COPY.importCharacter.invalidJsonError };
+    return { state: { status: "error", message: CHARACTERS_COPY.importCharacter.invalidJsonError }, world: {} };
   }
 
   // A world export, meaning multiple characters plus world-scoped Legion data, belongs in the
@@ -97,18 +140,20 @@ async function readImportFile(file: File): Promise<ImportState> {
   // and redirecting a world file into a different bulk flow from an unrelated entry point
   // would be a confusing surprise, not a convenience.
   if (typeof parsedJson === "object" && parsedJson !== null && (parsedJson as Record<string, unknown>).kind === "world") {
-    return { status: "error", message: CHARACTERS_COPY.importCharacter.wrongFileTypeWorldError };
+    return { state: { status: "error", message: CHARACTERS_COPY.importCharacter.wrongFileTypeWorldError }, world: {} };
   }
 
-  const record = parseImportedCharacterRecord(parsedJson);
-  if (!record) {
-    return { status: "error", message: CHARACTERS_COPY.importCharacter.invalidShapeError };
+  const parsed = parseImportedCharacterFile(parsedJson);
+  if (!parsed) {
+    return { state: { status: "error", message: CHARACTERS_COPY.importCharacter.invalidShapeError }, world: {} };
   }
 
+  const { record, world } = parsed;
   const existing = selectCharacterByIgn(readCharactersStore(), record.characterName);
-  return existing
-    ? { status: "conflict", existing, imported: record }
-    : { status: "readyToAdd", record };
+  return {
+    state: existing ? { status: "conflict", existing, imported: record } : { status: "readyToAdd", record },
+    world,
+  };
 }
 
 // Nesting depth 1 throughout: handleAddCharacter is a flat chain of early returns over the
@@ -122,6 +167,7 @@ export default function ImportModeScreen({ model, actions }: ImportModeScreenPro
   const [role, setRole] = useState<RosterRole>("mule");
   const [conflictDialogOpen, setConflictDialogOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const importedWorldRef = useRef<CharacterExportWorldData>({});
 
   function handleBack() {
     if (shell.isUiLocked) return;
@@ -138,11 +184,14 @@ export default function ImportModeScreen({ model, actions }: ImportModeScreenPro
     if (!file) return;
     setRole("mule");
     setConflictDialogOpen(false);
-    setState(await readImportFile(file));
+    const result = await readImportFile(file);
+    importedWorldRef.current = result.world;
+    setState(result.state);
   }
 
   function handleConflictConfirm(choices: Record<ImportSectionId, "mine" | "imported">) {
     if (state.status !== "conflict") return;
+    applyImportedWorldData(state.imported, importedWorldRef.current);
     actions.importCharacterMerged(state.existing, state.imported, choices);
   }
 
@@ -159,12 +208,14 @@ export default function ImportModeScreen({ model, actions }: ImportModeScreenPro
     // sensible answer.
     const effectiveRole: RosterRole = profile.isAddingCharacter ? role : "main";
     if (effectiveRole !== "champion") {
+      applyImportedWorldData(record, importedWorldRef.current);
       actions.importCharacter(record, effectiveRole);
       return;
     }
     const store = readCharactersStore();
     const championKeys = store.championCharacterIdsByWorld[String(record.worldID)] ?? [];
     if (championKeys.length < MAX_CHAMPIONS) {
+      applyImportedWorldData(record, importedWorldRef.current);
       actions.importCharacter(record, effectiveRole);
       return;
     }
@@ -180,6 +231,7 @@ export default function ImportModeScreen({ model, actions }: ImportModeScreenPro
 
   function handleChampionSwapConfirm(swapOutKey: string) {
     if (state.status !== "championSwap") return;
+    applyImportedWorldData(state.record, importedWorldRef.current);
     actions.importCharacterAsChampionSwap(state.record, swapOutKey);
   }
 
