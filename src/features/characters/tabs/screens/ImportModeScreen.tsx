@@ -14,6 +14,7 @@ import {
   type StoredCharacterRecord,
 } from "../../model/charactersStore";
 import { isDefaultLegionArtifact } from "../../setup/data/legionArtifactData";
+import { extractJsonFromPng, isPngSignature } from "../../../../lib/pngDataChunk";
 import { toCharacterKey } from "../../model/characterKeys";
 import { resolveDisplayJobName } from "../../setup/data/nexonJobMapping";
 import { statusText } from "../../../../components/statusColors";
@@ -127,12 +128,25 @@ interface ImportFileResult {
   world: CharacterExportWorldData;
 }
 
+const importError = (message: string): ImportFileResult => ({ state: { status: "error", message }, world: {} });
+
+// A character card PNG carries the same JSON as a JSON export, gzipped in a private chunk, so it
+// joins the JSON path right after extraction. Re-encoded copies (screenshots, sites that
+// recompress uploads) lose the chunk and land on invalidPngError.
+async function readImportText(file: File): Promise<string | ImportFileResult> {
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  if (!isPngSignature(bytes)) return new TextDecoder().decode(bytes);
+  return (await extractJsonFromPng(bytes)) ?? importError(CHARACTERS_COPY.importCharacter.invalidPngError);
+}
+
 async function readImportFile(file: File): Promise<ImportFileResult> {
+  const text = await readImportText(file);
+  if (typeof text !== "string") return text;
   let parsedJson: unknown;
   try {
-    parsedJson = JSON.parse(await file.text());
+    parsedJson = JSON.parse(text);
   } catch {
-    return { state: { status: "error", message: CHARACTERS_COPY.importCharacter.invalidJsonError }, world: {} };
+    return importError(CHARACTERS_COPY.importCharacter.invalidJsonError);
   }
 
   // A world export, meaning multiple characters plus world-scoped Legion data, belongs in the
@@ -140,12 +154,12 @@ async function readImportFile(file: File): Promise<ImportFileResult> {
   // and redirecting a world file into a different bulk flow from an unrelated entry point
   // would be a confusing surprise, not a convenience.
   if (typeof parsedJson === "object" && parsedJson !== null && (parsedJson as Record<string, unknown>).kind === "world") {
-    return { state: { status: "error", message: CHARACTERS_COPY.importCharacter.wrongFileTypeWorldError }, world: {} };
+    return importError(CHARACTERS_COPY.importCharacter.wrongFileTypeWorldError);
   }
 
   const parsed = parseImportedCharacterFile(parsedJson);
   if (!parsed) {
-    return { state: { status: "error", message: CHARACTERS_COPY.importCharacter.invalidShapeError }, world: {} };
+    return importError(CHARACTERS_COPY.importCharacter.invalidShapeError);
   }
 
   const { record, world } = parsed;
@@ -386,7 +400,7 @@ export default function ImportModeScreen({ model, actions }: ImportModeScreenPro
       <input
         ref={fileInputRef}
         type="file"
-        accept="application/json"
+        accept="application/json,image/png,.json,.png"
         onChange={handleFileChange}
         style={{ display: "none" }}
       />

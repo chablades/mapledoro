@@ -11,7 +11,7 @@ export const CHARACTERS_COPY = {
   },
   importCharacter: {
     title: "Import Character",
-    subtitlePrefix: "Choose a JSON file from a character's",
+    subtitlePrefix: "Choose a JSON file or card image from a character's",
     subtitleSuffix: "Export.",
     backButton: "Back",
     pickFileButton: "Choose File",
@@ -19,6 +19,7 @@ export const CHARACTERS_COPY = {
     addCharacterButton: "Add Character",
     invalidJsonError: "That file isn't valid JSON.",
     invalidShapeError: "That file doesn't look like a MapleDoro character export.",
+    invalidPngError: "That image doesn't have a MapleDoro character in it. Use the original card file, not a screenshot or a re-saved copy.",
     wrongFileTypeWorldError: "That's a world export, not a single character.",
     roleLabel: "Add as",
     roleMule: "Mule",
