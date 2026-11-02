@@ -2609,6 +2609,13 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
     transitions.runBackTransition(applyAddCharacterView);
   }, [applyAddCharacterView, transitions]);
 
+  // An imported record already past its refresh time is looked up right away, the same rule
+  // the load-time sweep uses. A card read from its QR always is: the QR carries no avatar or
+  // ranking data, and its decoder sets expiresAt to the export time.
+  const refreshImportedIfStale = useCallback((record: StoredCharacterRecord) => {
+    if (Date.now() > record.expiresAt) void refreshSingle(record);
+  }, [refreshSingle]);
+
   // Direct-add path, for an imported IGN not yet in the roster. `role` comes from
   // ImportModeScreen's role picker, and "champion" is only passed when the caller has
   // confirmed a free slot exists. ImportModeScreen checks first and routes to
@@ -2626,7 +2633,8 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
     if (role === "main") setMainCharacter(record);
     if (role === "champion") toggleChampionCharacter(record);
     switchToCharacterProfile(record);
-  }, [characterRoster, setMainCharacter, switchToCharacterProfile, toggleChampionCharacter, upsertRosterCharacter]);
+    refreshImportedIfStale(record);
+  }, [characterRoster, refreshImportedIfStale, setMainCharacter, switchToCharacterProfile, toggleChampionCharacter, upsertRosterCharacter]);
 
   // Champion-slot-full path. Adds the imported character as a champion while removing
   // `swapOutKey` from the champion list in the same store update, rather than two separate
@@ -2642,7 +2650,8 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
       return setChampionKeysForWorld(prev, worldId, [...cur, toCharacterKey(record)]);
     });
     switchToCharacterProfile(record);
-  }, [characterRoster, switchToCharacterProfile, upsertRosterCharacter]);
+    refreshImportedIfStale(record);
+  }, [characterRoster, refreshImportedIfStale, switchToCharacterProfile, upsertRosterCharacter]);
 
   // Conflict-resolved path, for an imported IGN that already exists. Applies the per-section
   // choices from the conflict dialog before upserting. Never touches main or champion status,
@@ -2658,7 +2667,8 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
     propagateLinkSkillFloorsAfterUpsert(merged, characterRoster, upsertRosterCharacter);
     ensureLegionArtifactDefaultForWorld(merged.worldID);
     switchToCharacterProfile(merged);
-  }, [characterRoster, switchToCharacterProfile, upsertRosterCharacter]);
+    refreshImportedIfStale(merged);
+  }, [characterRoster, refreshImportedIfStale, switchToCharacterProfile, upsertRosterCharacter]);
 
   // World-import bulk apply. `resolvedCharacters` is already the caller's final answer per
   // character, new adds plus conflicts merged via mergeImportedCharacterRecord, so this

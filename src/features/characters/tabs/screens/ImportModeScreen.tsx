@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useSyncExternalStore, type CSSProperties } from "react";
 import {
   parseImportedCharacterFile,
   readCharactersStore,
@@ -15,6 +15,8 @@ import {
 } from "../../model/charactersStore";
 import { isDefaultLegionArtifact } from "../../setup/data/legionArtifactData";
 import { extractJsonFromPng, isPngSignature } from "../../../../lib/pngDataChunk";
+import { decodeCharacterQr } from "../../share/qrCodec";
+import { readCardQrFromImage } from "../../share/qrImage";
 import { toCharacterKey } from "../../model/characterKeys";
 import { resolveDisplayJobName } from "../../setup/data/nexonJobMapping";
 import { statusText } from "../../../../components/statusColors";
@@ -32,6 +34,28 @@ import {
   titleStyle,
 } from "../components/uiStyles";
 
+const retryLinksRowStyle: CSSProperties = {
+  display: "flex",
+  flexWrap: "wrap",
+  columnGap: "1.25rem",
+  rowGap: "0.4rem",
+  marginBottom: "0.75rem",
+};
+
+function retryLinkStyle(color: string, locked: boolean): CSSProperties {
+  return {
+    background: "none",
+    border: "none",
+    padding: 0,
+    font: "inherit",
+    textAlign: "left",
+    fontSize: "0.78rem",
+    fontWeight: 700,
+    color,
+    cursor: locked ? "not-allowed" : "pointer",
+  };
+}
+
 interface ImportModeScreenProps {
   model: SearchPaneModel;
   actions: SearchPaneActions;
@@ -39,6 +63,8 @@ interface ImportModeScreenProps {
 
 type ImportState =
   | { status: "idle" }
+  // An image is being read; reading its QR can take a few seconds on a phone.
+  | { status: "reading" }
   | { status: "error"; message: string }
   | { status: "readyToAdd"; record: StoredCharacterRecord }
   // The parsed IGN collides with an existing character. Arriving here does not open the
@@ -126,22 +152,76 @@ interface ImportFileResult {
   state: ImportState;
   /** The file's world Legion data, applied only once the character is actually added. */
   world: CharacterExportWorldData;
+  /** Set when read from a card's QR rather than full data (only the equipped presets came
+   *  along): "strippedPng" for a PNG whose embedded data was missing, "image" for any other
+   *  image. The two get different notes, since "import the PNG" means nothing to someone who did. */
+  qrSource?: QrSource;
+}
+
+type QrSource = "image" | "strippedPng";
+
+const { importCharacter: IMPORT_COPY } = CHARACTERS_COPY;
+
+const qrNoteStyle = (theme: SearchPaneModel["theme"]) => ({ margin: "-0.25rem 0 0.75rem", fontSize: "0.78rem", fontWeight: 700, color: theme.muted, lineHeight: 1.45 });
+
+/** What a QR import left out, and why, plus when the avatar arrives. */
+function QrImportNote({ theme, source }: { theme: SearchPaneModel["theme"]; source: QrSource }) {
+  return (
+    <div style={qrNoteStyle(theme)}>
+      {source === "image" ? (
+        <p style={{ margin: 0 }}>
+          {IMPORT_COPY.qrImportNoteBefore} <strong style={{ color: theme.text }}>{IMPORT_COPY.qrImportNoteBold}</strong> {IMPORT_COPY.qrImportNoteAfter}
+        </p>
+      ) : (
+        <p style={{ margin: 0 }}>{IMPORT_COPY.qrImportStrippedPngNote}</p>
+      )}
+      <p style={{ margin: "0.3rem 0 0" }}>{IMPORT_COPY.qrImportAvatarNote}</p>
+    </div>
+  );
 }
 
 const importError = (message: string): ImportFileResult => ({ state: { status: "error", message }, world: {} });
 
-// A character card PNG carries the same JSON as a JSON export, gzipped in a private chunk, so it
-// joins the JSON path right after extraction. Re-encoded copies (screenshots, sites that
-// recompress uploads) lose the chunk and land on invalidPngError.
-async function readImportText(file: File): Promise<string | ImportFileResult> {
-  const bytes = new Uint8Array(await file.arrayBuffer());
-  if (!isPngSignature(bytes)) return new TextDecoder().decode(bytes);
-  return (await extractJsonFromPng(bytes)) ?? importError(CHARACTERS_COPY.importCharacter.invalidPngError);
+const emptySubscribe = () => () => {};
+
+/** Touch-first devices (phones, tablets), where "Scan QR code" opens the camera. On a desktop
+ *  it would open the same file picker as "Choose File", so it is only offered on touch. Read
+ *  through useSyncExternalStore so the server's `false` reconciles without a hydration mismatch. */
+function useTouchDevice(): boolean {
+  return useSyncExternalStore(
+    emptySubscribe,
+    () => window.matchMedia("(pointer: coarse)").matches,
+    () => false,
+  );
 }
 
+function importResult(record: StoredCharacterRecord, world: CharacterExportWorldData, qrSource?: QrSource): ImportFileResult {
+  const existing = selectCharacterByIgn(readCharactersStore(), record.characterName);
+  return {
+    state: existing ? { status: "conflict", existing, imported: record } : { status: "readyToAdd", record },
+    world,
+    qrSource,
+  };
+}
+
+// A card whose embedded data is gone (stripped, re-saved, or a WebP dragged out of Discord), or
+// any photo or screenshot of one, can still be read from its QR code.
+async function readQrImport(file: File, source: QrSource): Promise<ImportFileResult> {
+  const data = await readCardQrFromImage(file);
+  if (data === null) return importError(CHARACTERS_COPY.importCharacter.noCardInImageError);
+  const decoded = await decodeCharacterQr(data);
+  if (!decoded) return importError(CHARACTERS_COPY.importCharacter.invalidQrError);
+  return importResult(decoded.record, decoded.world, source);
+}
+
+// A card PNG carries the same JSON as a JSON export, gzipped in a private chunk, so it joins
+// the JSON path right after extraction. Any other image falls back to the card's QR.
 async function readImportFile(file: File): Promise<ImportFileResult> {
-  const text = await readImportText(file);
-  if (typeof text !== "string") return text;
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const isPng = isPngSignature(bytes);
+  const embedded = isPng ? await extractJsonFromPng(bytes) : null;
+  if ((isPng || file.type.startsWith("image/")) && embedded === null) return readQrImport(file, isPng ? "strippedPng" : "image");
+  const text = embedded ?? new TextDecoder().decode(bytes);
   let parsedJson: unknown;
   try {
     parsedJson = JSON.parse(text);
@@ -161,13 +241,7 @@ async function readImportFile(file: File): Promise<ImportFileResult> {
   if (!parsed) {
     return importError(CHARACTERS_COPY.importCharacter.invalidShapeError);
   }
-
-  const { record, world } = parsed;
-  const existing = selectCharacterByIgn(readCharactersStore(), record.characterName);
-  return {
-    state: existing ? { status: "conflict", existing, imported: record } : { status: "readyToAdd", record },
-    world,
-  };
+  return importResult(parsed.record, parsed.world);
 }
 
 // Nesting depth 1 throughout: handleAddCharacter is a flat chain of early returns over the
@@ -181,7 +255,10 @@ export default function ImportModeScreen({ model, actions }: ImportModeScreenPro
   const [role, setRole] = useState<RosterRole>("mule");
   const [conflictDialogOpen, setConflictDialogOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const scanInputRef = useRef<HTMLInputElement>(null);
   const importedWorldRef = useRef<CharacterExportWorldData>({});
+  const [qrSource, setQrSource] = useState<QrSource | undefined>(undefined);
+  const isTouch = useTouchDevice();
 
   function handleBack() {
     if (shell.isUiLocked) return;
@@ -198,8 +275,10 @@ export default function ImportModeScreen({ model, actions }: ImportModeScreenPro
     if (!file) return;
     setRole("mule");
     setConflictDialogOpen(false);
+    if (file.type.startsWith("image/")) setState({ status: "reading" });
     const result = await readImportFile(file);
     importedWorldRef.current = result.world;
+    setQrSource(result.qrSource);
     setState(result.state);
   }
 
@@ -301,10 +380,15 @@ export default function ImportModeScreen({ model, actions }: ImportModeScreenPro
           <h1 style={titleStyle()}>{CHARACTERS_COPY.importCharacter.title}</h1>
           <p style={{ ...subtitleStyle(theme), display: "flex", alignItems: "center", gap: "0.3rem", flexWrap: "wrap" }}>
             {CHARACTERS_COPY.importCharacter.subtitlePrefix}
-            <span style={{ display: "inline-flex", alignItems: "center", gap: "0.2rem", fontWeight: 800, color: theme.text }}>
-              <ExportTabIcon strokeWidth={2.5} />
-              {CHARACTERS_COPY.importCharacter.subtitleSuffix}
+            {/* The punctuation shares the bold label's flex item so the row's gap doesn't land before it. */}
+            <span style={{ display: "inline-flex", alignItems: "center" }}>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: "0.2rem", fontWeight: 800, color: theme.text }}>
+                <ExportTabIcon strokeWidth={2.5} />
+                {CHARACTERS_COPY.importCharacter.subtitleSuffix}
+              </span>
+              {isTouch ? "," : "."}
             </span>
+            {isTouch && CHARACTERS_COPY.importCharacter.subtitleQr}
           </p>
         </div>
       </div>
@@ -315,7 +399,15 @@ export default function ImportModeScreen({ model, actions }: ImportModeScreenPro
         </p>
       )}
 
+      {state.status === "reading" && (
+        <p role="status" style={{ margin: "0 0 1rem", color: theme.muted, fontWeight: 700, fontSize: "0.85rem" }}>
+          {IMPORT_COPY.readingImage}
+        </p>
+      )}
+
       {previewRecord && <ImportPreviewCard theme={theme} record={previewRecord} />}
+
+      {previewRecord && qrSource && <QrImportNote theme={theme} source={qrSource} />}
 
       {profile.isAddingCharacter && (state.status === "readyToAdd" || state.status === "championSwap") && (
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.75rem", flexWrap: "wrap" }}>
@@ -352,26 +444,26 @@ export default function ImportModeScreen({ model, actions }: ImportModeScreenPro
       )}
 
       {(state.status === "readyToAdd" || state.status === "championSwap" || state.status === "conflict") && (
-        <button
-          type="button"
-          disabled={shell.isUiLocked}
-          onClick={() => fileInputRef.current?.click()}
-          style={{
-            display: "block",
-            background: "none",
-            border: "none",
-            padding: 0,
-            font: "inherit",
-            textAlign: "left",
-            fontSize: "0.78rem",
-            fontWeight: 700,
-            color: theme.muted,
-            cursor: shell.isUiLocked ? "not-allowed" : "pointer",
-            marginBottom: "0.75rem",
-          }}
-        >
-          {CHARACTERS_COPY.importCharacter.chooseDifferentFileButton}
-        </button>
+        <div style={retryLinksRowStyle}>
+          <button
+            type="button"
+            disabled={shell.isUiLocked}
+            onClick={() => fileInputRef.current?.click()}
+            style={retryLinkStyle(theme.muted, shell.isUiLocked)}
+          >
+            {CHARACTERS_COPY.importCharacter.chooseDifferentFileButton}
+          </button>
+          {isTouch && (
+            <button
+              type="button"
+              disabled={shell.isUiLocked}
+              onClick={() => scanInputRef.current?.click()}
+              style={retryLinkStyle(theme.muted, shell.isUiLocked)}
+            >
+              {CHARACTERS_COPY.importCharacter.scanDifferentQrButton}
+            </button>
+          )}
+        </div>
       )}
 
       <div style={{ display: "flex", gap: "0.6rem" }}>
@@ -395,12 +487,34 @@ export default function ImportModeScreen({ model, actions }: ImportModeScreenPro
             {CHARACTERS_COPY.importCharacter.pickFileButton}
           </button>
         )}
+        {isTouch && (state.status === "idle" || state.status === "error") && (
+          <button
+            type="button"
+            disabled={shell.isUiLocked || search.isSearching}
+            onClick={() => scanInputRef.current?.click()}
+            style={secondaryButtonStyle(theme)}
+          >
+            {CHARACTERS_COPY.importCharacter.scanQrButton}
+          </button>
+        )}
       </div>
 
+      {/* Any image is accepted: a card PNG imports in full, and anything else (a WebP dragged
+          out of Discord, a screenshot) falls back to reading the card's QR. */}
       <input
         ref={fileInputRef}
         type="file"
-        accept="application/json,image/png,.json,.png"
+        accept="application/json,image/*,.json"
+        onChange={handleFileChange}
+        style={{ display: "none" }}
+      />
+      {/* On phones `capture` opens the camera to photograph a card's QR; on computers it opens
+          the file picker for a screenshot or photo of one. */}
+      <input
+        ref={scanInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
         onChange={handleFileChange}
         style={{ display: "none" }}
       />
