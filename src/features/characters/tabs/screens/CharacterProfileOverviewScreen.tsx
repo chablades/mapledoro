@@ -3499,7 +3499,7 @@ function hexaMatrixTargetSubstep(view: HexaBookmarkView): number {
 // A flat dispatch of per-bookmark branches; each branch is its own cohesive, low-complexity
 // block, splitting further would just move the same branches into an equally-long if/else
 // chain of function calls.
-/* eslint-disable-next-line sonarjs/cognitive-complexity */ /* react-doctor-disable-next-line no-high-complexity-react-function */
+/* oxlint-disable-next-line complexity/complexity */ /* react-doctor-disable-next-line no-high-complexity-react-function */
 function BookmarkPageBody({
   model, actions, active, onEdit, onEditStep, onNavigateToBookmark, onNavigateToGearSlot, highlightSlotKey, onHighlightSlotConsumed,
 }: {

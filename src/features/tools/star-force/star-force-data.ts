@@ -283,8 +283,8 @@ export function computeExpectedCosts(opts: StarForceOpts): StarResult[] {
 
   const results: StarResult[] = [];
   const lowestNeeded = Math.min(startStar, 12);
-  const E: number[] = new Array(30).fill(0);
-  const N: number[] = new Array(30).fill(0);
+  const E: number[] = Array.from({ length: 30 }, () => 0);
+  const N: number[] = Array.from({ length: 30 }, () => 0);
 
   for (let s = lowestNeeded; s < targetStar; s++) {
     const cost = attemptCost(level, s, opts);
@@ -337,7 +337,7 @@ export function expectedAttempts(opts: StarForceOpts): number {
   const { startStar, targetStar } = opts;
   if (startStar >= targetStar) return 0;
 
-  const A: number[] = new Array(30).fill(0);
+  const A: number[] = Array.from({ length: 30 }, () => 0);
   const lowestNeeded = Math.min(startStar, 12);
   let total = 0;
 

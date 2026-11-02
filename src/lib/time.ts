@@ -8,8 +8,8 @@ export function getNextReset(base: Date, hour: number, dayOfWeek?: number) {
     let diff = dayOfWeek - day;
     if (diff < 0 || (diff === 0 && base >= next)) diff += 7;
     next.setUTCDate(base.getUTCDate() + diff);
-  } else {
-    if (base >= next) next.setUTCDate(next.getUTCDate() + 1);
+  } else if (base >= next) {
+    next.setUTCDate(next.getUTCDate() + 1);
   }
   return next;
 }

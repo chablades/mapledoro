@@ -1,0 +1,31 @@
+{
+  "_meta": {
+    "assets": [
+      "icon.png"
+    ],
+    "urlPattern": "/api/img/misc/world/{id}/icon.png"
+  },
+  "entries": {
+    "bera": {
+      "name": "Bera"
+    },
+    "hyperion": {
+      "name": "Hyperion"
+    },
+    "kronos": {
+      "name": "Kronos"
+    },
+    "luna": {
+      "name": "Luna"
+    },
+    "scania": {
+      "name": "Scania"
+    },
+    "solis": {
+      "name": "Solis"
+    },
+    "special": {
+      "name": "Special"
+    }
+  }
+}

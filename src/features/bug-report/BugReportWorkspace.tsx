@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useRef, useState, type CSSProperties, type FormEvent } from "react";
+import { useId, useRef, useState, type CSSProperties, type SubmitEvent } from "react";
 import type { AppTheme } from "../../components/themes";
 import { statusText } from "../../components/statusColors";
 import { useMounted } from "../../lib/useMounted";
@@ -150,7 +150,7 @@ function BugReportForm({ theme }: { theme: AppTheme }) {
   const update = <K extends keyof Draft>(key: K, value: Draft[K]) =>
     setDraft((prev) => ({ ...prev, [key]: value }));
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (status.kind === "sending") return;
     if (!draft.happened.trim()) {

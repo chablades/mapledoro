@@ -29,6 +29,27 @@ function heroPortraitStyle(theme: AppTheme): CSSProperties {
   };
 }
 
+// Reset <button> around a zoomable guide image; the image's alt names it.
+const zoomTriggerStyle: CSSProperties = {
+  display: "block",
+  width: "100%",
+  background: "none",
+  border: "none",
+  padding: 0,
+  font: "inherit",
+  cursor: "zoom-in",
+};
+
+function zoomImageStyle(theme: AppTheme): CSSProperties {
+  return {
+    display: "block",
+    width: "100%",
+    height: "auto",
+    borderRadius: "10px",
+    border: `1px solid ${theme.border}`,
+  };
+}
+
 function collapsibleButtonStyle(theme: AppTheme): CSSProperties {
   return {
     width: "100%",
@@ -451,24 +472,16 @@ function InfographicPanel({ className, theme }: { className: string; theme: AppT
       {open && (
         <div style={{ padding: "0 1.25rem 1.25rem" }}>
           {hasImage ? (
-            <Image
-              src={infographic.url}
-              alt={`${className} infographic`}
-              role="button"
-              tabIndex={0}
-              onClick={() => setZoomed(true)}
-              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setZoomed(true); } }}
-              width={900}
-              height={1200}
-              sizes="(max-width: 900px) 100vw, 900px"
-              style={{
-                width: "100%",
-                height: "auto",
-                borderRadius: "10px",
-                border: `1px solid ${theme.border}`,
-                cursor: "zoom-in",
-              }}
-            />
+            <button type="button" onClick={() => setZoomed(true)} style={zoomTriggerStyle}>
+              <Image
+                src={infographic.url}
+                alt={`${className} infographic`}
+                width={900}
+                height={1200}
+                sizes="(max-width: 900px) 100vw, 900px"
+                style={zoomImageStyle(theme)}
+              />
+            </button>
           ) : (
             <div style={wipPlaceholderStyle(theme)}>
               <span>Work in Progress</span>
@@ -560,24 +573,16 @@ function HexaGuidePanel({ className, theme }: { className: string; theme: AppThe
         </div>
       </div>
       {imageUrl ? (
-        <Image
-          src={imageUrl}
-          alt={`${className} HEXA guide (${server})`}
-          role="button"
-          tabIndex={0}
-          onClick={() => setZoomed(true)}
-          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setZoomed(true); } }}
-          width={900}
-          height={1200}
-          sizes="(max-width: 900px) 100vw, 900px"
-          style={{
-            width: "100%",
-            height: "auto",
-            borderRadius: "10px",
-            border: `1px solid ${theme.border}`,
-            cursor: "zoom-in",
-          }}
-        />
+        <button type="button" onClick={() => setZoomed(true)} style={zoomTriggerStyle}>
+          <Image
+            src={imageUrl}
+            alt={`${className} HEXA guide (${server})`}
+            width={900}
+            height={1200}
+            sizes="(max-width: 900px) 100vw, 900px"
+            style={zoomImageStyle(theme)}
+          />
+        </button>
       ) : (
         <div style={wipPlaceholderStyle(theme)}>
           <span>Work in Progress</span>

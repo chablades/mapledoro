@@ -6,34 +6,32 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint .",
+    "lint": "oxlint",
+    "lint:full": "oxlint -c .oxlintrc.full.json",
     "doctor": "npx --yes react-doctor@latest . --verbose --scope changed"
   },
   "dependencies": {
     "@vercel/analytics": "^2.0.1",
-    "chart.js": "^4.5.1",
-    "ioredis": "^5.11.1",
-    "katex": "^0.18.7",
-    "next": "^16.3.5",
+    "chart.js": "^4.6.1",
+    "ioredis": "^6.0.0",
+    "katex": "^0.19.1",
+    "next": "^16.4.3",
     "qrcode-generator": "^2.0.4",
-    "react": "19.3.0",
+    "react": "19.3.1",
     "react-chartjs-2": "^5.3.1",
-    "react-dom": "19.3.0",
+    "react-dom": "19.3.1",
     "zxing-wasm": "^3.1.6"
   },
   "devDependencies": {
-    "@types/node": "^22",
+    "@types/node": "^24",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
-    "babel-plugin-react-compiler": "^1.0.0",
-    "eslint": "^9.39.5",
-    "eslint-config-next": "^16.3.5",
-    "eslint-plugin-sonarjs": "^4.2.1",
-    "typescript": "^5.9.3"
+    "oxlint": "^1.90.0",
+    "oxlint-plugin-complexity": "^4",
+    "oxlint-tsgolint": "^7",
+    "typescript": "^7.0.2"
   },
   "overrides": {
-    "brace-expansion": "5.0.9",
-    "js-yaml": "4.3.2",
-    "minimatch": "10.2.6"
+    "postcss": "8.5.32"
   }
 }

@@ -6,7 +6,7 @@
   is a change, played once wherever the player sees it first.
 */
 
-import { useEffect, useLayoutEffect, type RefObject } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 import { toCharacterKey } from "../model/characterKeys";
 import { readCharactersStore, writeScouterSeen, type StoredCharacterRecord, type StoredScouterSeen } from "../model/charactersStore";
 import { formatShortDate } from "../../tools/date";
@@ -85,8 +85,10 @@ const COUNT_DELAY_MS = 260;
 const COUNT_MS = 1000;
 
 /** Counts a figure from `from` up (or down) to `to` by editing its text node in place, so React
- *  keeps owning the node and a later re-render still updates it. Skipped under reduced motion. */
-export function useCountUp(ref: RefObject<HTMLElement | null>, from: number, to: number, active: boolean) {
+ *  keeps owning the node and a later re-render still updates it. Skipped under reduced motion.
+ *  Returns the ref to attach to the figure's element. */
+export function useCountUp<T extends HTMLElement>(from: number, to: number, active: boolean) {
+  const ref = useRef<T>(null);
   useLayoutEffect(() => {
     const node = ref.current?.firstChild;
     if (!active || !node || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -98,5 +100,6 @@ export function useCountUp(ref: RefObject<HTMLElement | null>, from: number, to:
       if (t < 1) frame = requestAnimationFrame(step);
     });
     return () => cancelAnimationFrame(frame);
-  }, [ref, from, to, active]);
+  }, [from, to, active]);
+  return ref;
 }
