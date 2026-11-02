@@ -1,15 +1,15 @@
 "use client";
 
 // The View a Character block's art: a real card, drawn by the same renderer Export uses so it
-// always matches the current card design, for a sample character (Doro) rather than anyone's own.
+// always matches the current card design, for Doro (the MapleDoro mascot) rather than anyone's
+// own character. Her details are a joke on purpose: a Lop Bunny from Kamakura, at level 67.
 
 import { useEffect, useState } from "react";
-import { worldIconUrl } from "../../../lib/mapleResource";
-import { classPortraitUrl } from "../../../lib/classPortraits";
 import { renderCharacterCard } from "../share/cardRender";
 
-// Its QR opens the viewer, which is what the block itself does.
-const SAMPLE_QR_TEXT = "https://mapledoro.com/characters/view";
+// Scanning it just leads home.
+const SAMPLE_QR_TEXT = "https://mapledoro.com/";
+const DORO = "/icons/doro.png";
 
 async function linkQrModules(text: string): Promise<boolean[][]> {
   const { default: qrcode } = await import("qrcode-generator");
@@ -23,13 +23,15 @@ async function linkQrModules(text: string): Promise<boolean[][]> {
 async function renderSampleCard(): Promise<string> {
   const png = await renderCharacterCard({
     ign: "Doro",
-    level: 285,
-    className: "Hero",
-    worldName: "Bera",
-    worldIconUrl: worldIconUrl("bera"),
-    avatarUrl: "/icons/doro.png",
-    classArtUrl: classPortraitUrl("Hero"),
-    scouter: 123456,
+    level: 67,
+    className: "Lop Bunny",
+    // A kamakura is a Japanese snow dome: a snow bunny's snow fortress. It has no server crest.
+    worldName: "Kamakura",
+    worldIconUrl: "",
+    avatarUrl: DORO,
+    // Her own class splash art is also just her.
+    classArtUrl: DORO,
+    scouter: 6767,
     date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
     qr: { modules: await linkQrModules(SAMPLE_QR_TEXT) },
   });
