@@ -1,6 +1,7 @@
 import { toCharacterKey } from "./characterKeys";
 import type { NormalizedCharacterData } from "./types";
 import { checkForWipe } from "./wipeTripwire";
+import { clearIntentionalRemovals, restoreVanishedCharacters } from "./vanishGuard";
 import { MAX_CHARACTERS_PER_WORLD } from "./constants";
 import {
   clearStorageWriteFailure,
@@ -1368,9 +1369,16 @@ export function writeCharacterOrder(order: string[]) {
 let cachedRaw: string | null = null;
 let cachedStore: CharactersStore | null = null;
 
-export function writeCharactersStore(store: CharactersStore) {
+export function writeCharactersStore(nextStore: CharactersStore) {
   if (typeof window === "undefined") return;
   try {
+    const { store, restored, removed } = restoreVanishedCharacters(readCharactersStore(), nextStore);
+    if (restored.length > 0) {
+      console.warn(
+        `[characters] A save would have erased ${restored.join(", ")} without a removal ` +
+        `request (likely a stale roster, such as another tab's), so they were kept.`,
+      );
+    }
     if (process.env.NODE_ENV !== "production") {
       checkForWipe(window.localStorage.getItem(CHARACTERS_STORE_STORAGE_KEY), store);
     }
@@ -1383,6 +1391,7 @@ export function writeCharactersStore(store: CharactersStore) {
     // values the app just built.
     cachedRaw = raw;
     cachedStore = store;
+    clearIntentionalRemovals(removed);
     clearStorageWriteFailure("characters");
   } catch {
     // This store is the only copy of the player's character data, so swallowing the failure

@@ -30,7 +30,7 @@ import {
   writeLegionArtifactForWorld,
   writeCharactersStore,
 } from "../model/charactersStore";
-import { markIntentionalRemoval } from "../model/wipeTripwire";
+import { markIntentionalRemoval } from "../model/vanishGuard";
 import { findClassById, type HexaSkillLevels } from "../../tools/hexa-skills/hexa-classes";
 import { getClassDataByNexonJobName } from "../setup/data/classSkillData";
 import { deriveWeaponHandFromWeapon } from "../setup/data/classBranch";
@@ -2693,6 +2693,7 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
     // missing a character mid-import.
     removedKeys: string[] = [],
   ) => {
+    for (const key of removedKeys) markIntentionalRemoval(key);
     setCharacterRoster((prev) => {
       const removedSet = new Set(removedKeys);
       const byKey = new Map<string, StoredCharacterRecord>();
