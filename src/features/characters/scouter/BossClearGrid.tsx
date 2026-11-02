@@ -564,8 +564,7 @@ function PowerStripItem({ theme, label, value, sub, realValue, fdEquiv, scouterV
     note && <span key="sacred" style={{ color: theme.muted }}>{note}</span>,
   ].filter(Boolean);
   const tooltip: ReactNode = lines.length === 0 ? null : <span style={{ display: "flex", flexDirection: "column", gap: 1, minWidth: 88 }}>{lines}</span>;
-  const figureRef = useRef<HTMLSpanElement>(null);
-  useCountUp(figureRef, change?.from ?? 0, Math.round(value), change !== undefined);
+  const figureRef = useCountUp<HTMLSpanElement>(change?.from ?? 0, Math.round(value), change !== undefined);
   const figure = <span ref={figureRef} style={{ fontSize: 14, fontWeight: 800, color: theme.text, fontFamily: "var(--font-heading)" }}>{formatFigure(value)}</span>;
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>

@@ -2825,7 +2825,7 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
   }, []);
 
   const handleSearchSubmit = useCallback(
-    async (event: React.FormEvent<HTMLFormElement>) => {
+    async (event: React.SubmitEvent<HTMLFormElement>) => {
       event.preventDefault();
       const duplicateByName = findRosterCharacterByName(characterRoster, lookup.trimmedQuery);
       if (duplicateByName) {

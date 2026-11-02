@@ -318,6 +318,11 @@ function emptyLevels(classDef: HexaClassDef): HexaDraft {
   };
 }
 
+// A saved level is a number (real tool data) or a string (a prior draft); anything else is blank.
+function levelText(v: unknown): string {
+  return typeof v === "number" || typeof v === "string" ? String(v) : "";
+}
+
 function parseDraft(raw: string, classDef: HexaClassDef): HexaDraft {
   const empty = emptyLevels(classDef);
   if (!raw) return empty;
@@ -334,11 +339,11 @@ function parseDraft(raw: string, classDef: HexaClassDef): HexaDraft {
     };
     const rawSlots = Array.isArray(parsed.hexaStat) ? (parsed.hexaStat as unknown[]) : [];
     return {
-      origin: clampLevelInput(String(parsed.origin ?? ""), MAX_LEVEL, 1),
+      origin: clampLevelInput(levelText(parsed.origin), MAX_LEVEL, 1),
       mastery: padBlank(parsed.mastery, classDef.mastery.length),
       enhancement: padBlank(parsed.enhancement, classDef.enhancement.length),
       common: padBlank(parsed.common, commonSkillsFor(classDef.className).length),
-      ascent: clampLevelInput(String(parsed.ascent ?? ""), MAX_LEVEL),
+      ascent: clampLevelInput(levelText(parsed.ascent), MAX_LEVEL),
       hexaStat: [parseNode(rawSlots[0]), parseNode(rawSlots[1]), parseNode(rawSlots[2])],
     };
   } catch { return empty; }
