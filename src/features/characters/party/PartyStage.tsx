@@ -1,5 +1,9 @@
 "use client";
 
+import Image from "next/image";
+import { useRef } from "react";
+import { worldIconUrl } from "../../../lib/mapleResource";
+import { WORLD_NAMES } from "../model/constants";
 import { CHARACTERS_COPY } from "../tabs/content";
 import CharacterAvatar from "../tabs/components/CharacterAvatar";
 import { resolveDisplayJobName } from "../setup/data/nexonJobMapping";
@@ -12,6 +16,27 @@ function hexaOf(member: PartyMember): string {
   return member.status.kind === "ready" ? formatFigure(member.status.entry.boss380Hexa) : "–";
 }
 
+/** The member's world, as its emblem, so a party spread across worlds shows at a glance. Hidden
+ *  if the emblem fails to load (the world is still in its alt text and the warning line). */
+function WorldEmblem({ worldID }: { worldID: number }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const name = WORLD_NAMES[worldID];
+  if (!name) return null;
+  return (
+    <span ref={ref} className="party-world">
+      <Image
+        src={worldIconUrl(name.toLowerCase())}
+        alt={name}
+        title={name}
+        width={14}
+        height={14}
+        unoptimized
+        onError={() => { if (ref.current) ref.current.style.display = "none"; }}
+      />
+    </span>
+  );
+}
+
 function MemberSlot({ member, onToggle, onRemove }: { member: PartyMember; onToggle: () => void; onRemove: () => void }) {
   const { record } = member;
   return (
@@ -22,7 +47,7 @@ function MemberSlot({ member, onToggle, onRemove }: { member: PartyMember; onTog
           <CharacterAvatar src={record.characterImgURL} alt="" width={96} height={96} />
         </span>
         <span className="party-plinth" style={{ background: member.color }} />
-        <b>{record.characterName}</b>
+        <b className="party-name"><WorldEmblem worldID={record.worldID} />{record.characterName}</b>
         <small><span>{resolveDisplayJobName(record.jobName)}</span><span className="party-sep"> · </span><span>Lv {record.level}</span></small>
         <span className="party-hexa">{hexaOf(member)}</span>
       </button>

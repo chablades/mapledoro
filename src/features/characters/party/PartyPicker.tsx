@@ -11,9 +11,16 @@ import type { ScouterPayloadContext } from "../scouter/scouterApi";
 import { readCharacterFile } from "../share/readCharacterFile";
 import { CHARACTERS_COPY } from "../tabs/content";
 import CharacterAvatar from "../tabs/components/CharacterAvatar";
+import CardOutline from "../share/CardOutline";
+import { useTouchDevice } from "../share/useTouchDevice";
 import { canJoinParty, memberKey } from "./usePartyMembers";
 
 const COPY = CHARACTERS_COPY.partyScouter;
+
+function dropTitle(reading: boolean, isTouch: boolean): string {
+  if (reading) return COPY.pickerReading;
+  return isTouch ? COPY.pickerDropTouch : COPY.pickerDrop;
+}
 
 export type PickResult = "added" | "already" | "full";
 
@@ -45,8 +52,9 @@ function DirectoryRow({ theme, character, inParty, onPick }: {
       <span className="party-pick-name">
         <b>{character.characterName}</b>
         <small style={{ color: theme.muted }}>{resolveDisplayJobName(character.jobName)} · Lv {character.level}</small>
+        {/* Under the name rather than beside it, so it never squeezes the name on a phone. */}
+        {note && <small style={{ color: theme.muted, fontWeight: 800 }}>{note}</small>}
       </span>
-      {note && <small style={{ color: theme.muted, fontWeight: 800 }}>{note}</small>}
     </button>
   );
 }
@@ -63,6 +71,8 @@ export default function PartyPicker({ theme, inParty, onPick, onClose }: {
   const [dragging, setDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // Phones can't drag a file in, so they get one plain prompt.
+  const isTouch = useTouchDevice();
   const roster = selectCharactersList(readCharactersStore());
 
   function pick(record: StoredCharacterRecord, ctx: ScouterPayloadContext | null, fromFile: boolean) {
@@ -99,15 +109,18 @@ export default function PartyPicker({ theme, inParty, onPick, onClose }: {
         <p className="party-label">{COPY.pickerFile}</p>
         <button
           type="button"
-          className={`party-pick-drop${dragging ? " is-dragging" : ""}`}
+          className={`party-pick-drop${dragging ? " is-dragging" : ""}${reading ? " is-reading" : ""}`}
           disabled={reading}
           onClick={() => fileInputRef.current?.click()}
           onDragOver={(e) => { e.preventDefault(); if (!dragging) setDragging(true); }}
           onDragLeave={() => setDragging(false)}
           onDrop={handleDrop}
         >
-          <b>{reading ? COPY.pickerReading : COPY.pickerDrop}</b>
-          {!reading && <small style={{ color: theme.muted }}>{COPY.pickerDropHint}</small>}
+          <CardOutline theme={theme} />
+          <span className="party-pick-drop-text">
+            <b>{dropTitle(reading, isTouch)}</b>
+            {!reading && !isTouch && <small style={{ color: theme.muted }}>{COPY.pickerDropHint}</small>}
+          </span>
         </button>
         <input
           ref={fileInputRef}

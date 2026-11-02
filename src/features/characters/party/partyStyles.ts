@@ -31,6 +31,9 @@ export const partyStyles = `
   }
   .party-add .party-fig::after { bottom: -6px; width: 70px; background: rgba(0,0,0,0.06); }
   .party-plinth { width: 76%; max-width: 92px; height: 6px; border-radius: 999px; margin: 2px 0 7px; }
+  .party-name { display: inline-flex; align-items: center; gap: 4px; }
+  .party-world { display: inline-flex; flex-shrink: 0; }
+  .party-world img { display: block; width: 14px; height: 14px; object-fit: contain; }
   .party-member b { font-size: 0.88rem; font-weight: 800; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .party-member small { font-size: 0.75rem; font-weight: 700; color: var(--party-muted); white-space: nowrap; }
   .party-hexa { font-family: var(--font-heading); font-size: 1rem; line-height: 1.2; }
@@ -55,6 +58,8 @@ export const partyStyles = `
   .party-add .party-plinth { background: transparent; }
   .party-add:hover .party-add-box, .party-add:focus-visible .party-add-box { border-color: var(--party-accent); color: var(--party-text); }
   .party-add:focus-visible { outline: none; }
+
+  .party-worlds { margin: 12px 2px 0; font-size: 0.85rem; font-weight: 700; }
 
   /* The bosses as a boss select: a strip of boss art to pick from, the picked one's hero below. */
   .party-board { margin-top: 14px; }
@@ -144,13 +149,28 @@ export const partyStyles = `
     font: inherit; font-size: 1.1rem; line-height: 1; color: var(--party-muted); background: none; border: 1px solid var(--party-border);
   }
   .party-pick-body { padding: 4px 18px 18px; max-height: min(70vh, 640px); overflow-y: auto; }
+  /* The card outline (the same one View a Character shows) beside the drop prompt. */
   .party-pick-drop {
-    width: 100%; display: grid; justify-items: center; gap: 2px; padding: 18px 12px; cursor: pointer; text-align: center;
-    font: inherit; color: inherit; background: none;
-    border: 2px dashed var(--party-line); border-radius: 14px; transition: border-color 160ms ease;
+    width: 100%; display: flex; align-items: center; justify-content: center; gap: 16px; padding: 12px 14px; cursor: pointer;
+    font: inherit; color: inherit; background: none; text-align: left;
+    border: 2px dashed var(--party-line); border-radius: 14px; transition: border-color 160ms ease, background-color 160ms ease;
   }
-  .party-pick-drop:hover, .party-pick-drop.is-dragging, .party-pick-drop:focus-visible { border-color: var(--party-accent); outline: none; }
-  .party-pick-drop b { font-weight: 800; font-size: 0.9rem; }
+  .party-pick-drop:hover, .party-pick-drop.is-dragging, .party-pick-drop:focus-visible {
+    border-color: var(--party-accent); outline: none; background: color-mix(in srgb, var(--party-accent) 8%, transparent);
+  }
+  .party-pick-drop:disabled { background: none; }
+  .party-pick-drop:disabled { cursor: progress; }
+  .party-pick-drop svg { width: 54px; height: auto; display: block; flex-shrink: 0; }
+  /* The drop zone's own dashed border frames it, so the card's frame is left out here. */
+  .party-pick-drop .viewer-card-outline { display: none; }
+  .party-pick-drop.is-reading .viewer-qr-finders { animation: partyScan 0.9s ease-in-out infinite alternate; }
+  @keyframes partyScan { from { stroke-opacity: 0.2; } to { stroke-opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { .party-pick-drop.is-reading .viewer-qr-finders { animation: none; } }
+  .party-pick-drop-text { display: grid; gap: 2px; }
+  .party-pick-drop b { font-weight: 800; font-size: 0.9rem; color: var(--party-muted); transition: color 160ms ease; }
+  .party-pick-drop:hover b, .party-pick-drop.is-dragging b, .party-pick-drop:focus-visible b { color: var(--party-text); }
+  /* No hover on touch screens, so the prompt starts at full strength there. */
+  @media (hover: none) { .party-pick-drop b { color: var(--party-text); } }
   .party-pick-drop small { font-size: 0.78rem; font-weight: 700; }
   .party-pick-error { margin: 8px 0 0; font-size: 0.82rem; font-weight: 700; }
   .party-pick-world > p { font-size: 0.75rem; font-weight: 800; margin: 10px 0 4px; }
