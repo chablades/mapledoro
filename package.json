@@ -15,6 +15,7 @@
     "ioredis": "^5.11.1",
     "katex": "^0.18.7",
     "next": "^16.3.5",
+    "qrcode-generator": "^2.0.4",
     "react": "19.3.0",
     "react-chartjs-2": "^5.3.1",
     "react-dom": "19.3.0"

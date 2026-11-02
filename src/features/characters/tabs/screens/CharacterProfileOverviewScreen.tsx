@@ -19,8 +19,8 @@ import { readCharacterToolData } from "../../../tools/characterToolStorage";
 import { resolveClassId, getClassSetupOverrides, resolveDisplayJobName } from "../../setup/data/nexonJobMapping";
 import { CLASS_SKILL_DATA, getClassDataByNexonJobName, isLegacyClass, type ClassSkillData } from "../../setup/data/classSkillData";
 import { HEXA_STAT_OPTIONS, getHexaStatBonus, getMainStatLabel, getAttackLabel, type HexaStatNode, type HexaStatEntry, type HexaStatSlot } from "../../setup/data/hexaStatData";
-import { EXP_HISTORY_DAY_MS, nexonDayIndex, NEXON_DAILY_UPDATE_CUTOFF_HOUR_UTC, readCharactersStore, selectCharacterByIgn, selectCharactersList, type CharacterExportPayload } from "../../model/charactersStore";
-import { whRankFromRoster } from "../../setup/data/scouterQuestionsData";
+import { EXP_HISTORY_DAY_MS, nexonDayIndex, NEXON_DAILY_UPDATE_CUTOFF_HOUR_UTC } from "../../model/charactersStore";
+import ExportMenuButton from "../components/ExportMenuButton";
 import { WORLD_NAMES } from "../../model/constants";
 import type { StoredCharacterEquipment, StoredCharacterRecord, StoredCharacterStats, StoredEquipmentItem, StoredHyperStat, StoredInnerAbility, StoredIATier, StoredTripleStatField, StoredFamiliarSlot, ExpHistoryEntry, OverviewSectionId } from "../../model/charactersStore";
 import CustomizeOverviewDialog, { type OverviewAnchorDef } from "./CustomizeOverviewDialog";
@@ -131,42 +131,6 @@ export function ExportTabIcon({ strokeWidth = 1.5 }: { strokeWidth?: number }) {
       <path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M12 4v12m-4-4l4 4 4-4" />
     </svg>
   );
-}
-
-// Reads fresh from the store rather than trusting the `character` object passed down,
-// mirroring readHexaLevels and readHexaStatNodes above, which exist for the same reason: tool
-// writes elsewhere in the app do not always reach an already rendered `character` prop.
-// Exports the whole record, stats, equipment, tools and the rest, so it doubles as an import
-// source, being the shape a re-import needs to reconstruct the character. The world's Legion
-// data rides along so the importer's Scouter can compute. The Wild Hunter rank can come from a
-// Wild Hunter elsewhere in the roster, which a lone exported character would lose, so a rank
-// that was never stored is resolved from the world's roster here.
-function exportCharacterJson(charName: string | undefined) {
-  if (!charName) return;
-  const store = readCharactersStore();
-  const character = selectCharacterByIgn(store, charName);
-  if (!character) return;
-  const worldKey = String(character.worldID);
-  const storedLegion = store.scouterLegionByWorld[worldKey];
-  const rosterRank = whRankFromRoster(selectCharactersList(store).filter((c) => c.worldID === character.worldID));
-  const wildHunterRank = storedLegion?.wildHunterRank ?? rosterRank ?? undefined;
-  const payload: CharacterExportPayload = {
-    kind: "character",
-    version: 1,
-    character,
-    world: {
-      scouterLegion: storedLegion || wildHunterRank ? { ...storedLegion, wildHunterRank } : undefined,
-      legionArtifact: store.legionArtifactByWorld[worldKey],
-      linkSkillTotals: store.linkSkillTotalsByWorld[worldKey],
-    },
-  };
-  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `mapledoro-${charName.toLowerCase()}-${new Date().toISOString().slice(0, 10)}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
 }
 
 interface EditMenuItem {
@@ -3753,17 +3717,6 @@ function BookmarkSpine({
   // unconditionally rather than being gated on viewport width.
   const { ref: spineRef, atStart: spineAtStart, atEnd: spineAtEnd } = useScrollEdges<HTMLDivElement>([bookmarks.length]);
   const spineMask = edgeFadeMask(spineAtStart, spineAtEnd);
-  // exportCharacterJson triggers a silent browser download with no confirmation, and some
-  // mobile browsers show no download bar at all, so tapping Export would otherwise give no
-  // feedback. Flashes the same accent tint the active bookmark tab uses, slightly stronger
-  // (see the button's style below), rather than swapping its label or adding a toast.
-  const [exported, setExported] = useState(false);
-  useEffect(() => {
-    if (!exported) return;
-    const t = setTimeout(() => setExported(false), 400);
-    return () => clearTimeout(t);
-  }, [exported]);
-
   // A page tablist should switch content as focus moves, per the WAI-ARIA APG's
   // automatic-activation pattern, unlike this codebase's picker-oriented useKeyboardListNav
   // hook, which highlights first and confirms on Enter.
@@ -3827,20 +3780,7 @@ function BookmarkSpine({
         return (
           <div key={b.id} className="profile-bookmark-pinned-group">
             <div className="profile-bookmark-divider" />
-            <button
-              type="button"
-              className="profile-bookmark-tab tap-target-44"
-              onClick={() => { exportCharacterJson(charName); setExported(true); }}
-              style={{
-                background: exported ? `${theme.accent}33` : "transparent",
-                color: exported ? theme.accentText : theme.muted,
-                gap: 6,
-                transition: "background 0.3s ease, color 0.3s ease",
-              }}
-            >
-              <ExportTabIcon />
-              Export
-            </button>
+            <ExportMenuButton theme={theme} charName={charName} icon={<ExportTabIcon />} className="profile-bookmark-tab tap-target-44" />
             {tab}
           </div>
         );
