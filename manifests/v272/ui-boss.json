@@ -1,0 +1,164 @@
+{
+  "_meta": {
+    "assets": [
+      "icon.png",
+      "mob.png",
+      "easy.png",
+      "normal.png",
+      "hard.png",
+      "chaos.png",
+      "extreme.png"
+    ],
+    "urlPattern": "/api/img/ui/boss/{id}/{asset} - mob.png only present when hasSplash is true"
+  },
+  "entries": {
+    "1": {
+      "name": "Zakum",
+      "hasSplash": true
+    },
+    "10": {
+      "name": "Magnus",
+      "hasSplash": true
+    },
+    "107": {
+      "name": "Akechi Mitsuhide",
+      "hasSplash": true
+    },
+    "11": {
+      "name": "Pink Bean",
+      "hasSplash": true
+    },
+    "12": {
+      "name": "Cygnus",
+      "hasSplash": true
+    },
+    "13": {
+      "name": "Lotus",
+      "hasSplash": true
+    },
+    "15": {
+      "name": "Damien",
+      "hasSplash": true
+    },
+    "16": {
+      "name": "Gollux",
+      "hasSplash": true
+    },
+    "17": {
+      "name": "Ranmaru",
+      "hasSplash": true
+    },
+    "18": {
+      "name": "Princess No",
+      "hasSplash": true
+    },
+    "19": {
+      "name": "Lucid",
+      "hasSplash": true
+    },
+    "2": {
+      "name": "Horntail",
+      "hasSplash": true
+    },
+    "21": {
+      "name": "OMNI-CLN",
+      "hasSplash": true
+    },
+    "22": {
+      "name": "Papulatus",
+      "hasSplash": true
+    },
+    "23": {
+      "name": "Will",
+      "hasSplash": true
+    },
+    "24": {
+      "name": "Verus Hilla",
+      "hasSplash": true
+    },
+    "25": {
+      "name": "Black Mage",
+      "hasSplash": true
+    },
+    "26": {
+      "name": "Gloom",
+      "hasSplash": true
+    },
+    "27": {
+      "name": "Darknell",
+      "hasSplash": true
+    },
+    "28": {
+      "name": "Chosen Seren",
+      "hasSplash": true
+    },
+    "29": {
+      "name": "Guardian Angel Slime",
+      "hasSplash": true
+    },
+    "3": {
+      "name": "Hilla",
+      "hasSplash": true
+    },
+    "30": {
+      "name": "Kalos the Guardian",
+      "hasSplash": true
+    },
+    "31": {
+      "name": "Kaling",
+      "hasSplash": true
+    },
+    "33": {
+      "name": "Limbo",
+      "hasSplash": true
+    },
+    "34": {
+      "name": "Baldrix",
+      "hasSplash": true
+    },
+    "35": {
+      "name": "First Adversary",
+      "hasSplash": true
+    },
+    "36": {
+      "name": "Kai",
+      "hasSplash": true
+    },
+    "37": {
+      "name": "Malefic Star",
+      "hasSplash": true
+    },
+    "38": {
+      "name": "Jupiter",
+      "hasSplash": true
+    },
+    "4": {
+      "name": "Pierre",
+      "hasSplash": true
+    },
+    "40": {
+      "name": "Mayrin",
+      "hasSplash": true
+    },
+    "5": {
+      "name": "Von Bon",
+      "hasSplash": true
+    },
+    "6": {
+      "name": "Crimson Queen",
+      "hasSplash": true
+    },
+    "7": {
+      "name": "Vellum",
+      "hasSplash": true
+    },
+    "8": {
+      "name": "Von Leon",
+      "hasSplash": true
+    },
+    "9": {
+      "name": "Arkarium",
+      "hasSplash": true
+    }
+  }
+}
