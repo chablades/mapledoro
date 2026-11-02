@@ -188,7 +188,9 @@ export interface AllInOneInput {
   epicDungeonId: string;
   epicDungeonMultiplier: number;
   strawberryTickets: number;
+  blueberryTickets: number;
   mechaberryTickets: number;
+  crimsonMechaberryTickets: number;
   expressBoosters: number;
   expTickets: number;
   advancedExpTickets: number;
@@ -510,6 +512,21 @@ const EXPRESS_BOOSTER_EXP = BASE_MONSTER_EXP_GRANDIS.map(
   (_, index) => expressBoosterFlameExp(260 + index) * EXPRESS_BOOSTER_FLAMES,
 );
 
+const BLUEBERRY_FARM_MIN_LEVEL = 260;
+
+/** EXP per Blueberry Farm ticket: a band-stepped multiple of the level's base monster EXP that
+ *  stops scaling past Lv. 279, matching the whackybeanz table. */
+const BLUEBERRY_FARM_EXP = BASE_MONSTER_EXP_GRANDIS.map((base, index) => {
+  const level = 260 + index;
+  if (level <= 269) return 475200 * base;
+  return 712800 * BASE_MONSTER_EXP_GRANDIS[Math.min(index, 279 - 260)];
+});
+
+/** EXP per Crimson Mechaberry Farm ticket (Lv. 280+), a flat multiple of base monster EXP. */
+const CRIMSON_MECHABERRY_FARM_EXP = BASE_MONSTER_EXP_GRANDIS.slice(MECHABERRY_FARM_MIN_LEVEL - 260).map(
+  (base) => 1478400 * base,
+);
+
 /** Per-unit EXP for every event resource, from the local EXP Ticket workbook (after KMS CROWN /
  *  GMS Ride the Lightning). None of these take EXP buffs, which is why they are looked up by level
  *  instead of run through `calculateBuffMultiplier`. */
@@ -518,7 +535,9 @@ const RESOURCE_TABLES: ResourceTable[] = [
   { id: "advanced-exp-ticket", rows: makeLevelRows(260, ADV_EXP_TICKET) },
   { id: "punch-king", rows: makeLevelRows(200, PUNCH_KING) },
   { id: "strawberry-farm", rows: makeLevelRows(200, STRAWBERRY_FARM) },
+  { id: "blueberry-farm", rows: makeLevelRows(BLUEBERRY_FARM_MIN_LEVEL, BLUEBERRY_FARM_EXP) },
   { id: "mechaberry-farm", rows: makeLevelRows(MECHABERRY_FARM_MIN_LEVEL, MECHABERRY_FARM) },
+  { id: "crimson-mechaberry-farm", rows: makeLevelRows(MECHABERRY_FARM_MIN_LEVEL, CRIMSON_MECHABERRY_FARM_EXP) },
   { id: "luxe-sauna", rows: makeLevelRows(200, LUXE_SAUNA) },
   { id: "express-booster", rows: makeLevelRows(260, EXPRESS_BOOSTER_EXP) },
   { id: "haste-inferno", rows: makeLevelRows(200, HASTE_INFERNO_EXP) },
@@ -536,6 +555,8 @@ export const ADV_EXP_TICKET_ICON: IconRef = { type: "item", id: "02638500" };
 export const PUNCH_KING_ICON: IconRef = { type: "item", id: "02637502" };
 export const STRAWBERRY_FARM_ICON: IconRef = { type: "item", id: "02637501" };
 export const MECHABERRY_FARM_ICON: IconRef = { type: "item", id: "02831285" };
+export const BLUEBERRY_FARM_ICON: IconRef = { type: "item", id: "02832350" }; // Blueberry Farm Entry Pass (v272)
+export const CRIMSON_MECHABERRY_FARM_ICON: IconRef = { type: "item", id: "02832979" }; // Crimson Mechaberry Farm Entry Pass (v272)
 export const HASTE_FEVER_ICON: IconRef = { type: "item", id: "02831711" }; // Haste Fever Time Booster
 export const DOUBLE_UP_ICON: IconRef = { type: "item", id: "04310359" };
 export const LUXE_SAUNA_ICON: IconRef = { type: "mark", id: "mvpResort" };
@@ -844,12 +865,16 @@ function applyStartingEventResources(state: SimulationState, input: AllInOneInpu
     "strawberry-farm",
     date,
   );
+  if (next.level >= BLUEBERRY_FARM_MIN_LEVEL) {
+    next = applyResourceUnits(next, Math.max(0, input.blueberryTickets), "blueberry-farm", date);
+  }
   next = applyResourceUnits(next, Math.max(0, input.luxeSaunaHours) * LUXE_SAUNA_UNITS_PER_HOUR, "luxe-sauna", date);
   if (next.level >= 260) {
     next = applyResourceUnits(next, Math.max(0, input.expressBoosters), "express-booster", date);
   }
-  if (next.level >= 280) {
+  if (next.level >= MECHABERRY_FARM_MIN_LEVEL) {
     next = applyResourceUnits(next, Math.max(0, input.mechaberryTickets), "mechaberry-farm", date);
+    next = applyResourceUnits(next, Math.max(0, input.crimsonMechaberryTickets), "crimson-mechaberry-farm", date);
   }
   return next;
 }
@@ -1090,7 +1115,9 @@ export type BreakdownControlId =
   | "punchKingPoints"
   | "strawberryTickets"
   | "strawberryBonus"
+  | "blueberryTickets"
   | "mechaberryTickets"
+  | "crimsonMechaberryTickets"
   | "expressMonsterLevel"
   | "hasteMonsterLevel"
   | "hasteKills"
@@ -1111,7 +1138,9 @@ export interface ResourceBreakdownInput {
   punchKingPoints: number;
   strawberryTickets: number;
   strawberryBonus: number;
+  blueberryTickets: number;
   mechaberryTickets: number;
+  crimsonMechaberryTickets: number;
   expressMonsterLevel: number;
   hasteMonsterLevel: number;
   hasteKills: number;
@@ -1135,7 +1164,9 @@ export function defaultBreakdownInput(level: number): ResourceBreakdownInput {
     punchKingPoints: PUNCH_KING_MAX_POINTS,
     strawberryTickets: 1,
     strawberryBonus: 0,
+    blueberryTickets: 1,
     mechaberryTickets: 1,
+    crimsonMechaberryTickets: 1,
     expressMonsterLevel: clamp(level, EXPRESS_BOOSTER_MIN_LEVEL, MAX_MONSTER_LEVEL),
     hasteMonsterLevel: clamp(level, MIN_MONSTER_LEVEL, MAX_MONSTER_LEVEL),
     hasteKills: HASTE_INFERNO_MAX_KILLS,
@@ -1163,7 +1194,9 @@ export function buildResourceBreakdown(input: ResourceBreakdownInput): Breakdown
     expTicketSection(input),
     punchKingSection(input),
     strawberryFarmSection(input),
+    blueberryFarmSection(input),
     mechaberryFarmSection(input),
+    crimsonMechaberryFarmSection(input),
     expressBoosterSection(input),
     hasteFeverSection(input),
     afkSection(input),
@@ -1405,30 +1438,70 @@ function strawberryFarmSection(input: ResourceBreakdownInput): BreakdownSection 
   };
 }
 
-function mechaberryFarmSection(input: ResourceBreakdownInput): BreakdownSection {
+/** A farm whose ticket pays a flat, unbuffed amount by level: Blueberry and both Mechaberries. */
+function flatTicketFarmSection(
+  input: ResourceBreakdownInput,
+  farm: {
+    id: string;
+    title: string;
+    minLevel: number;
+    icon: IconRef;
+    control: "blueberryTickets" | "mechaberryTickets" | "crimsonMechaberryTickets";
+  },
+): BreakdownSection {
   return {
-    id: "mechaberry-farm",
-    title: "Mechaberry Farm",
-    minLevel: MECHABERRY_FARM_MIN_LEVEL,
+    id: farm.id,
+    title: farm.title,
+    minLevel: farm.minLevel,
     note: "Per ticket used. NOT affected by EXP multipliers.",
-    controls: ["mechaberryTickets"],
+    controls: [farm.control],
     groups:
-      input.level >= MECHABERRY_FARM_MIN_LEVEL
+      input.level >= farm.minLevel
         ? [
             {
-              id: "mechaberry-farm",
-              label: "Mechaberry Farm",
-              icon: MECHABERRY_FARM_ICON,
+              id: farm.id,
+              label: farm.title,
+              icon: farm.icon,
               values: [
                 {
-                  id: "mechaberry-farm",
-                  exp: resourceExpWithFallback("mechaberry-farm", input.level) * Math.max(0, input.mechaberryTickets),
+                  id: farm.id,
+                  exp: resourceExpWithFallback(farm.id, input.level) * Math.max(0, input[farm.control]),
                 },
               ],
             },
           ]
         : [],
   };
+}
+
+function blueberryFarmSection(input: ResourceBreakdownInput): BreakdownSection {
+  return flatTicketFarmSection(input, {
+    id: "blueberry-farm",
+    title: "Blueberry Farm",
+    minLevel: BLUEBERRY_FARM_MIN_LEVEL,
+    icon: BLUEBERRY_FARM_ICON,
+    control: "blueberryTickets",
+  });
+}
+
+function mechaberryFarmSection(input: ResourceBreakdownInput): BreakdownSection {
+  return flatTicketFarmSection(input, {
+    id: "mechaberry-farm",
+    title: "Mechaberry Farm",
+    minLevel: MECHABERRY_FARM_MIN_LEVEL,
+    icon: MECHABERRY_FARM_ICON,
+    control: "mechaberryTickets",
+  });
+}
+
+function crimsonMechaberryFarmSection(input: ResourceBreakdownInput): BreakdownSection {
+  return flatTicketFarmSection(input, {
+    id: "crimson-mechaberry-farm",
+    title: "Crimson Mechaberry Farm",
+    minLevel: MECHABERRY_FARM_MIN_LEVEL,
+    icon: CRIMSON_MECHABERRY_FARM_ICON,
+    control: "crimsonMechaberryTickets",
+  });
 }
 
 function expressBoosterSection(input: ResourceBreakdownInput): BreakdownSection {
@@ -1543,8 +1616,10 @@ export function resourceChartsForSection(sectionId: string): ResourceChart[] {
       ];
     case "strawberry-farm":
       return [unitChart("strawberry-farm", { unit: "Ticket", scale: STRAWBERRY_KILLS_PER_TICKET })];
+    case "blueberry-farm":
     case "mechaberry-farm":
-      return [unitChart("mechaberry-farm", { unit: "Ticket" })];
+    case "crimson-mechaberry-farm":
+      return [unitChart(sectionId, { unit: "Ticket" })];
     case "express-booster":
       return [unitChart("express-booster", { unit: "Booster" })];
     case "haste-fever":

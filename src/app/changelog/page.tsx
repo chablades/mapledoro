@@ -12,6 +12,12 @@ interface ChangelogEntry {
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    date: "2026-11-02",
+    changes: [
+      { type: "added", text: "The EXP Calculator now includes Blueberry Farm and Crimson Mechaberry Farm tickets in the Resources tab and the Daily / Weekly calculator." },
+    ],
+  },
+  {
     date: "2026-11-01",
     changes: [
       { type: "fixed", text: "Fixed the Boss Crystals tool showing the wrong crystal prices for Hard Baldrix and Hard Jupiter." },
