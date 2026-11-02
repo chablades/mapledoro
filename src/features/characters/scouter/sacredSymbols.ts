@@ -7,6 +7,7 @@
 
 import type { StoredCharacterRecord, StoredScouterBuffs } from "../model/charactersStore";
 import { readCharacterToolData } from "../../tools/characterToolStorage";
+import type { BossClearInputs } from "./scouterResult";
 
 interface SacredSymbolBoss {
   /** Symbol region, as named in the Symbols tool (symbol-data.ts). */
@@ -82,4 +83,16 @@ export function savedSacredLevels(character: StoredCharacterRecord): Partial<Rec
   const symbols = savedSymbols(character);
   if (!symbols || !SACRED_SYMBOL_BOSSES.some((s) => symbols[s.area])) return null;
   return Object.fromEntries(SACRED_SYMBOL_BOSSES.map((s) => [s.area, symbols[s.area]?.level ?? 0]));
+}
+
+/** Boss Clear inputs with the character's Maxed Symbols: the Simulator's buffs while one is
+ *  applied, otherwise their saved buffs, falling back to saved symbol levels for a character saved
+ *  before Maxed Symbols existed. */
+export function withMaxedSymbols(inputs: BossClearInputs | undefined, character: StoredCharacterRecord, buffsOverride?: StoredScouterBuffs): BossClearInputs | undefined {
+  if (!inputs) return inputs;
+  return {
+    ...inputs,
+    sacredMaxed: maxedSacredSymbols(buffsOverride ?? character.scouter?.buffs, savedMaxedSymbols(character)),
+    sacredLevels: savedSacredLevels(character) ?? undefined,
+  };
 }

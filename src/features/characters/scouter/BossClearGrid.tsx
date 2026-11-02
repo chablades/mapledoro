@@ -17,45 +17,18 @@ import InfoTooltip, { type TooltipContent } from "../setup/components/InfoToolti
 import type { StoredCharacterRecord } from "../model/charactersStore";
 import { secondaryButtonStyle } from "../tabs/components/uiStyles";
 import { BOSSCUT_SCRAPED_AT, type BossCutEntry } from "./bosscut-data.generated";
-import { BOSS_CLEAR_GROUPS, BOSS_DISPLAY_NAME, type BossEntryList } from "./bossGrouping";
-import { computeBossClear, isEstimatedBoss, minimumClearHexa, type BossClearResult, type ClearColorTier } from "./bossClearFormula";
+import { BOSS_CLEAR_GROUPS, BOSS_DISPLAY_NAME, bossIconId, sortByDifficulty, type BossEntryList } from "./bossGrouping";
+import FallbackSpriteIcon from "./FallbackSpriteIcon";
+import BossBanner, { DEFAULT_ART_POSITION } from "./BossBanner";
+import { computeBossClear, minimumClearHexa, type BossClearResult, type ClearColorTier } from "./bossClearFormula";
 import { formatFigure } from "./scouterFormat";
-import type { BossClearInputs, ScouterResultEntry } from "./scouterResult";
-import { maxedSacredSymbols, sacredFigureNote, savedMaxedSymbols, savedSacredLevels } from "./sacredSymbols";
+import type { ScouterResultEntry } from "./scouterResult";
+import { sacredFigureNote, withMaxedSymbols } from "./sacredSymbols";
+import { lossBreakdown } from "./bossLoss";
 import { changeLine, useCountUp, useScouterChange, type ScouterChange } from "./useScouterChange";
 import ScouterChangeChip from "./ScouterChangeChip";
 import type { StoredScouterBuffs } from "../model/charactersStore";
 import { BackLabel } from "../tabs/components/ArrowLabels";
-
-// Icon ids looked up by hand from manifests/v271/ui-boss.json, renamed from boss.json as of
-// v269 (see the Image Policy in the root CLAUDE.md), cross-checked against the same bosses
-// already mapped in liberation-data.ts and trace-restoration-data.ts.
-const BOSS_ICON_ID: Record<string, string> = {
-  스우: "13", 데미안: "15", 루시드: "19", 윌: "23", 더스크: "26", "진 힐라": "24",
-  듄켈: "27", "검은 마법사": "25", 세렌: "28", 칼로스: "30", 대적자: "35", 흉성: "37",
-  카링: "31", 림보: "33", 발드릭스: "34", 유피테르: "38", 가엔슬: "29", 카이: "36",
-};
-
-/** The low-end bosses MapleDoro estimates carry their own icon id. */
-function bossIconId(boss: string, entries: BossCutEntry[]): string | undefined {
-  const first = entries[0];
-  return BOSS_ICON_ID[boss] ?? (isEstimatedBoss(first) ? first.iconId : undefined);
-}
-
-// Easiest to hardest. Champion and Destiny are solo variants of a party tier, nearly always
-// Hard, and sit below Extreme on every boss that has one. Lotus, Black Mage, Seren and
-// Adversary all read wrong with Extreme ranked under them. Checked per boss against the
-// scraped cut and easyRate rather than assumed from the names.
-const DIFFICULTY_ORDER: Record<string, number> = { Easy: 0, Normal: 1, Hard: 2, Chaos: 3, Champion: 4, Destiny: 5, Extreme: 6 };
-
-// The two bosses whose solo variant doesn't mirror Hard: Kalos's Champion is a solo Normal
-// (same 49800 cut as Normal, about half of Chaos's), and Kaling's Destiny is rated easier than
-// its Hard, sharing the same cut at easyRate x1.2, since players clear Destiny before soloing
-// Hard. Every other boss follows the global ladder.
-const DIFFICULTY_ORDER_OVERRIDE: Partial<Record<string, Record<string, number>>> = {
-  kalos: { Easy: 0, Normal: 1, Champion: 2, Chaos: 3, Destiny: 4, Extreme: 5 },
-  kaling: { Easy: 0, Normal: 1, Destiny: 2, Hard: 3, Extreme: 4 },
-};
 
 // Tag order matches the severity ladder in bossClearFormula.ts's TAG_COLOR (best to worst),
 // so this list stays a direct reading aid for the pill colors on every chip/tile.
@@ -131,137 +104,12 @@ function pillStatus(colorTier: ClearColorTier): PillStatus {
   return null;
 }
 
-// Dual-render with refs, keeping the fallback at display:none and swapping via onError, rather
-// than useState, per the React-Doctor Rules in the root CLAUDE.md. The same pattern covers
-// every boss sprite here, including row difficulty chips and spotlight tile icons. Handles both
-// a load failure and a boss with no known icon id, where src is undefined and the Image simply
-// never mounts.
-function FallbackSpriteIcon({ theme, src, size, displayName }: {
-  theme: AppTheme; src: string | undefined; size: number; displayName: string;
-}) {
-  const wrapperRef = useRef<HTMLDivElement>(null);
-  const fallbackRef = useRef<HTMLDivElement>(null);
-  const fallbackStyle: CSSProperties = {
-    width: size, height: size, borderRadius: 6, background: theme.accentSoft,
-    display: src ? "none" : "flex", alignItems: "center", justifyContent: "center",
-    fontSize: Math.max(12, size * 0.35), fontWeight: 800, color: theme.accentText, flexShrink: 0,
-  };
-  return (
-    <>
-      {src && (
-        <div ref={wrapperRef} style={{ width: size, height: size, flexShrink: 0 }}>
-          <Image
-            src={src}
-            alt=""
-            width={size}
-            height={size}
-            unoptimized
-            onError={() => {
-              if (wrapperRef.current) wrapperRef.current.style.display = "none";
-              if (fallbackRef.current) fallbackRef.current.style.display = "flex";
-            }}
-            style={{ borderRadius: 6, objectFit: "cover", display: "block" }}
-          />
-        </div>
-      )}
-      <div ref={fallbackRef} style={fallbackStyle}>{displayName.charAt(0)}</div>
-    </>
-  );
-}
-
-const BANNER_WIDTH = 180;
-const BANNER_HEIGHT = 64;
-// Vertical anchor for the wide banner crop of mob.png, which is a tall splash. 20% lands
-// roughly on the head and shoulders for the 2 splashes checked so far, Malefic Star and First
-// Adversary. Not checked across the full roster.
-const DEFAULT_ART_POSITION = "50% 20%";
-// Per-boss override, keyed like BOSS_ICON_ID, since framing varies enough per splash that a
-// single default crop misses most faces. Tuned by hand against each boss's real mob.png in the
-// WZ image dump, picking the vertical anchor as a percentage of source height that lands on the
-// face in the wide banner crop. Gloom has no face, being an inanimate seal, so it is positioned
-// on the portal's glowing center.
-const BOSS_ART_POSITION: Record<string, string> = {
-  스우: "50% 25%", 데미안: "42% 50%", 루시드: "50% 43%", 윌: "68% 61%", 더스크: "50% 53%",
-  "진 힐라": "50% 23%", 듄켈: "48% 46%", "검은 마법사": "42% 19%", 세렌: "50% 33%",
-  칼로스: "55% 60%", 대적자: "75% 29%", 흉성: "50% 26%", 카링: "50% 26%", 림보: "50% 58%",
-  발드릭스: "50% 40%", 유피테르: "48% 25%", 가엔슬: "50% 51%", 카이: "50% 28%",
-  "Akechi Mitsuhide": "50% 29%", "Princess No": "50% 35%", Vellum: "50% 65%", "Pink Bean": "50% 50%", Cygnus: "50% 62%", Arkarium: "50% 74%", Horntail: "50% 30%", Papulatus: "50% 35%",
-  Pierre: "50% 40%", "Von Bon": "50% 40%", "Crimson Queen": "50% 24%",
-  "Von Leon": "50% 54%", Hilla: "50% 40%", Magnus: "50% 40%", Zakum: "50% 54%",
-};
-
 // Spotlight's own crop anchors, deliberately separate from BOSS_ART_POSITION above, which was
 // tuned for Quick View's small wide banner crop rather than Spotlight's much taller card. Left
 // empty, falling back to DEFAULT_ART_POSITION for every boss, until it gets its own pass
 // against Spotlight's real aspect ratio. BOSS_ART_POSITION's values do not transfer, and a
 // wrong per-boss override is worse than an honest default.
 const SPOTLIGHT_ART_POSITION: Record<string, string> = {};
-
-function bannerMaskStyle(): CSSProperties {
-  return {
-    position: "absolute", inset: 0,
-    maskImage: "linear-gradient(to right, black 55%, transparent 100%)",
-    WebkitMaskImage: "linear-gradient(to right, black 55%, transparent 100%)",
-  };
-}
-
-const bannerScrimStyle: CSSProperties = {
-  position: "absolute", inset: 0,
-  background: "linear-gradient(90deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.1) 55%, transparent 80%)",
-};
-
-const bannerNameStyle: CSSProperties = {
-  position: "absolute", left: 8, bottom: 6, fontSize: 12, fontWeight: 800, color: "#fff",
-  textShadow: "0 1px 3px rgba(0,0,0,0.8)", maxWidth: BANNER_WIDTH - 16, whiteSpace: "nowrap",
-  overflow: "hidden", textOverflow: "ellipsis",
-};
-
-// The Quick View row's extended boss art: a wide slice of mob.png faded to transparent on its
-// right edge through bannerMaskStyle rather than hard-cropped, so it blends into the row's
-// background instead of reading as a cropped rectangle. Same dual-render-with-refs fallback as
-// FallbackSpriteIcon, sized for a banner rather than a small icon.
-function BossBanner({ theme, boss, iconId, displayName }: {
-  theme: AppTheme; boss: string; iconId: string | undefined; displayName: string;
-}) {
-  const wrapperRef = useRef<HTMLDivElement>(null);
-  const fallbackRef = useRef<HTMLDivElement>(null);
-  const artPosition = BOSS_ART_POSITION[boss] ?? DEFAULT_ART_POSITION;
-  const containerStyle: CSSProperties = {
-    position: "relative", width: BANNER_WIDTH, height: BANNER_HEIGHT, borderRadius: 10,
-    overflow: "hidden", flexShrink: 0, background: theme.bg,
-  };
-  const fallbackStyle: CSSProperties = {
-    position: "absolute", inset: 0, display: iconId ? "none" : "flex",
-    alignItems: "center", justifyContent: "center", background: theme.accentSoft,
-  };
-  return (
-    <div style={containerStyle}>
-      {iconId && (
-        <div ref={wrapperRef} style={{ position: "absolute", inset: 0 }}>
-          <div style={bannerMaskStyle()}>
-            <Image
-              src={bossSplashUrl(iconId)}
-              alt=""
-              fill
-              unoptimized
-              sizes={`${BANNER_WIDTH}px`}
-              onError={() => {
-                if (wrapperRef.current) wrapperRef.current.style.display = "none";
-                if (fallbackRef.current) fallbackRef.current.style.display = "flex";
-              }}
-              style={{ objectFit: "cover", objectPosition: artPosition }}
-            />
-          </div>
-          <div style={bannerScrimStyle} />
-          <span style={bannerNameStyle}>{displayName}</span>
-        </div>
-      )}
-      <div ref={fallbackRef} style={fallbackStyle}>
-        <span style={{ fontSize: 13, fontWeight: 800, color: theme.accentText }}>{displayName}</span>
-      </div>
-    </div>
-  );
-}
 
 // flexWrap drops the chip column to its own full-width line below the banner once the row is
 // too narrow for both side by side, as on mobile. The chip container's flex-basis below is what
@@ -319,9 +167,7 @@ function OpenSimulatorButton({ theme, simulated, onOpen }: { theme: AppTheme; si
  *  state ScouterBookmark owns rather than this component, instead of the character's real
  *  stats. */
 function relevantTiles(entries: BossCutEntry[], level: number, arcaneForce: number, authenticForce: number, inputs: NonNullable<ScouterResultEntry["bossClearInputs"]>, filter: BossFilter) {
-  const order = (entries[0] && DIFFICULTY_ORDER_OVERRIDE[entries[0].name]) ?? DIFFICULTY_ORDER;
-  const sorted = [...entries].sort((a, b) => (order[a.difficulty] ?? 99) - (order[b.difficulty] ?? 99));
-  return sorted.reduce<{ entry: BossCutEntry; result: BossClearResult }[]>((tiles, entry) => {
+  return sortByDifficulty(entries).reduce<{ entry: BossCutEntry; result: BossClearResult }[]>((tiles, entry) => {
     const result = computeBossClear(entry, level, arcaneForce, authenticForce, inputs);
     if (result && (filter === "all" || isRelevant(result.clearRate, result.isPartyBoss, result.partyLimit))) {
       const scouter = inputs.scouterInputs && computeBossClear(entry, level, arcaneForce, authenticForce, inputs.scouterInputs);
@@ -915,50 +761,6 @@ function NavArrowButton({ theme, direction, disabled, onClick }: {
  *  not only when something is wrong. */
 /** The symbol's level for its loss row: the saved level when it agrees with Maxed Symbols, else
  *  "<11" (ticked off without saved levels, or unticked in the Simulator despite a maxed save). */
-function sacredSymbolLevelText(symbol: NonNullable<BossClearResult["sacredSymbol"]>): string {
-  if (symbol.maxed) return "11";
-  return symbol.level !== null && symbol.level < 11 ? String(symbol.level) : "<11";
-}
-
-function lossBreakdown(result: BossClearResult): { combinedLossPercent: number; lines: { label: string; bossValue: number | string; yourValue: number | string; lossPercent: number | null }[] } {
-  const gaps: { label: string; bossValue: number | string; yourValue: number | string; gapDmg: number; gapCeiling: number }[] = [
-    { label: "Level", bossValue: result.bossLevel, yourValue: result.characterLevel, gapDmg: result.levelGapDmg, gapCeiling: result.levelGapCeiling },
-  ];
-  if (result.bossArcaneForce !== null) {
-    gaps.push({ label: "Arcane Force", bossValue: result.bossArcaneForce, yourValue: result.characterArcaneForce, gapDmg: result.arcaneGapDmg, gapCeiling: result.arcaneGapCeiling });
-  }
-  if (result.bossAuthenticForce !== null) {
-    gaps.push({ label: "Sacred Power", bossValue: result.bossAuthenticForce, yourValue: result.characterAuthenticForce, gapDmg: result.authenticGapDmg, gapCeiling: result.authenticGapCeiling });
-  }
-  // The boss's own Sacred Symbol, from saved symbol levels: its +20% damage is the ceiling.
-  const symbol = result.sacredSymbol;
-  if (symbol) {
-    gaps.push({
-      label: `${symbol.area} Symbol`, bossValue: "11", yourValue: sacredSymbolLevelText(symbol),
-      gapDmg: symbol.maxed ? symbol.boost : 1, gapCeiling: symbol.boost,
-    });
-  }
-  // Loss is relative to each stat's own bonus ceiling rather than to 1. Sitting exactly at a
-  // boss's requirement reads gapDmg around 1.0 but is still short of the max bonus tier: Black
-  // Mage at 1350 arcane against 1320 required reads gapDmg 1.0 against a 1.1 ceiling for that
-  // boss, a 9.09% loss rather than 0%.
-  //
-  // The combined total is not a sum of the per-stat losses but the achieved-over-ceiling
-  // product across all gaps. Jupiter at Level 295/295 with Sacred Power 810/820 gives 8.33%
-  // and 16% individually, while MapleScouter's own displayed total is 23.00%, which matches
-  // only (1.10*1.05)/(1.20*1.25). A gap the boss does not require contributes 1 to both sides
-  // and drops out of the product.
-  const achievedProduct = gaps.reduce((acc, g) => acc * g.gapDmg, 1);
-  const ceilingProduct = gaps.reduce((acc, g) => acc * g.gapCeiling, 1);
-  const combinedLossPercent = Math.round((1 - achievedProduct / ceilingProduct) * 100 * 100) / 100;
-  const lines = gaps.map((g) => ({
-    label: g.label,
-    bossValue: g.bossValue,
-    yourValue: g.yourValue,
-    lossPercent: g.gapDmg < g.gapCeiling ? Math.round((1 - g.gapDmg / g.gapCeiling) * 100 * 100) / 100 : null,
-  }));
-  return { combinedLossPercent, lines };
-}
 
 // Mirrors DifficultyChip's tag-text + hover-tooltip pattern (Quick View's current design,
 // replacing the old saturated pill this used to share) so both views read as the same system.
@@ -1171,17 +973,6 @@ export type ScouterBookmarkView = "quickView" | "spotlight";
  *  Spotlight's selected boss is owned by CharacterProfileOverviewScreen rather than local
  *  state, so the page header can read the same value directly instead of BossClearGrid
  *  reporting it back up through an effect. See resolveBossDisplayName. */
-/** Boss Clear inputs with the character's Maxed Symbols: the Simulator's buffs while one is
- *  applied, otherwise their saved buffs, falling back to saved symbol levels for a character saved
- *  before Maxed Symbols existed. */
-function withMaxedSymbols(inputs: BossClearInputs | undefined, character: StoredCharacterRecord, buffsOverride: StoredScouterBuffs | undefined): BossClearInputs | undefined {
-  if (!inputs) return inputs;
-  return {
-    ...inputs,
-    sacredMaxed: maxedSacredSymbols(buffsOverride ?? character.scouter?.buffs, savedMaxedSymbols(character)),
-    sacredLevels: savedSacredLevels(character) ?? undefined,
-  };
-}
 
 export default function BossClearGrid({
   theme, character, entry, realEntry, view, onViewChange, selectedIndex, onSelectedIndexChange,

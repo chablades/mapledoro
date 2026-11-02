@@ -206,18 +206,15 @@ export default function CharactersHub({ theme }: { theme: AppTheme }) {
             )}
           </Link>
 
-          <section className="hub-block hub-side hub-party">
-            <h2>
-              {COPY.partyTitle}
-              <span className="hub-soon" style={{ color: theme.muted, borderColor: theme.border }}>{COPY.comingSoon}</span>
-            </h2>
+          <Link href="/characters/party" className="hub-block hub-side hub-party" style={{ color: theme.text }}>
+            <h2>{COPY.partyTitle}</h2>
             <p style={{ color: theme.muted }}>{COPY.partySubtitle}</p>
             <div className="hub-heroes" aria-hidden="true">
               {PARTY_ART.map((name) => (
                 <Image key={name} src={classPortraitUrl(name)} alt="" width={395} height={400} unoptimized style={{ "--pull": PARTY_ART_PULL[name] ?? "0px" } as CSSProperties} />
               ))}
             </div>
-          </section>
+          </Link>
         </div>
       </div>
     </div>

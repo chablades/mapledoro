@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "oxlint",
     "lint:full": "oxlint -c .oxlintrc.full.json",
-    "test": "node --test \"tests/**/*.test.mjs\"",
+    "test": "node --import ./tests/register.mjs --test \"tests/**/*.test.mjs\"",
     "doctor": "npx --yes react-doctor@latest . --verbose --scope changed"
   },
   "dependencies": {

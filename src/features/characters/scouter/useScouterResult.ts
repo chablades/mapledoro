@@ -19,7 +19,9 @@ export type ScouterFigureStatus =
   // detail names the check that failed, when the engine knows (see scouterLocal.ts).
   | { kind: "error"; reason: ScouterErrorReason; detail?: string };
 
-function statusFor(character: StoredCharacterRecord, engineFailed: boolean, ctx: ScouterPayloadContext | null): ScouterFigureStatus {
+/** The Scouter status for a character outside a hook, for a page showing several at once (the
+ *  Party Scouter). engineFailed is whether the engine's class data failed to load. */
+export function scouterStatusFor(character: StoredCharacterRecord, engineFailed: boolean, ctx: ScouterPayloadContext | null): ScouterFigureStatus {
   if (!isScouterSupportedClass(character.jobName)) return { kind: "unsupported" };
   const gap = findScouterSetupGap(character, ctx ?? undefined);
   if (gap) return { kind: "incomplete", gap };
@@ -47,5 +49,5 @@ export function useScouterResult(character: StoredCharacterRecord): ScouterFigur
     () => getScouterDevOverride(character.characterName),
     () => null,
   );
-  return devOverride ?? statusFor(character, engineState === "failed", worldCtx);
+  return devOverride ?? scouterStatusFor(character, engineState === "failed", worldCtx);
 }

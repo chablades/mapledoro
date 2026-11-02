@@ -39,7 +39,8 @@ export const hubStyles = `
     content: ""; position: absolute; bottom: 2px; width: 54px; height: 8px;
     border-radius: 50%; background: rgba(0,0,0,0.09);
   }
-  .hub-who--main .hub-fig::after { width: 80px; height: 10px; }
+  /* The sprite's empty space under the feet scales with it, so the bigger Main stands higher. */
+  .hub-who--main .hub-fig::after { width: 80px; height: 10px; bottom: 6px; }
   .hub-fig img { position: relative; z-index: 1; display: block; width: 96px; height: 96px; }
   .hub-who--main .hub-fig img { width: 160px; height: 160px; }
   .hub-who b { font-size: 0.82rem; font-weight: 800; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
@@ -64,15 +65,10 @@ export const hubStyles = `
     -webkit-mask-image: linear-gradient(to bottom, #000 30%, transparent 92%);
     mask-image: linear-gradient(to bottom, #000 30%, transparent 92%);
   }
-  /* Three Heroes standing together, faded until Party Scouter ships. */
-  .hub-party { cursor: default; }
-  .hub-heroes { position: absolute; right: 6px; bottom: -6px; display: flex; align-items: flex-end; opacity: 0.55; filter: saturate(0.7); }
+  /* Three Heroes standing together. */
+  .hub-heroes { position: absolute; right: 6px; bottom: -6px; display: flex; align-items: flex-end; opacity: 0.85; }
   .hub-heroes img { width: auto; height: 116px; margin-left: calc(-30px - var(--pull, 0px)); }
   .hub-heroes img:nth-child(2) { height: 132px; position: relative; z-index: 1; }
-  .hub-soon {
-    display: inline-block; vertical-align: 3px; margin-left: 8px; font-family: var(--font-body, inherit);
-    font-size: 0.75rem; font-weight: 800; border: 1px solid; border-radius: 999px; padding: 1px 9px;
-  }
 
   @media (max-width: 720px) {
     .hub-grid { grid-template-columns: 1fr; grid-template-rows: auto; min-height: 0; }

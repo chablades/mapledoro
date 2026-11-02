@@ -110,9 +110,14 @@ function authenticGapDmg(bossAuthenticForce: number | null, characterAuthenticFo
 // gap tables above. Below it the boss can't be entered at all, not merely hard.
 const ENTRY_LEVEL_BY_DIFFICULTY: Record<string, Record<string, number>> = {
   메이린: { Normal: 270, Hard: 280 },
+  // maplestorywiki.net/w/Kai
+  카이: { Normal: 270, Hard: 280 },
 };
+// From the MapleStory Wiki's boss list (maplestorywiki.net/w/Bosses).
 const ENTRY_LEVEL_DEFAULT: Record<string, number> = {
-  유피테르: 295, 발드릭스: 290, 림보: 285, 카링: 275, 대적자: 270, 칼로스: 265, 세렌: 260,
+  유피테르: 295, 발드릭스: 290, 림보: 285, 흉성: 280, 카링: 275, 대적자: 270, 칼로스: 265, 세렌: 260,
+  "검은 마법사": 255, 듄켈: 255, "진 힐라": 250, 더스크: 245, 윌: 235, 루시드: 220, 가엔슬: 210,
+  스우: 190, 데미안: 190,
 };
 function cannotEnter(entry: BossCutEntry, characterLevel: number): boolean {
   const required = (isEstimatedBoss(entry) ? entry.entryLevel : undefined)
@@ -457,13 +462,11 @@ function gapAdjustedDamage(
  *  real saved stat. computeBossClear doesn't know which, and the gap math is the same
  *  calculation either way. There is deliberately no "pin this gap to 0% loss" shortcut, since
  *  typing the boss's own requirement achieves that. */
-export function computeBossClear(
-  entry: BossCutEntry,
-  characterLevel: number,
-  characterArcaneForce: number,
-  characterAuthenticForce: number,
-  inputs: BossClearInputs,
-): BossClearResult | null {
+/** One character's damage against one boss, before Ascent's timer bonus: the gap-adjusted
+ *  damage, the same over the boss's cut, and the pieces computeBossClear reports. Null when the
+ *  entry is missing required fields (see computeBossClear). Shared with the Party Scouter, which
+ *  adds members up at this stage and applies the timer to the party's combined pace. */
+function bossDamage(entry: BossCutEntry, characterLevel: number, characterArcaneForce: number, characterAuthenticForce: number, inputs: BossClearInputs) {
   // Below 300% defense (only the estimated low-end bosses) is scored on the 300 curve.
   const guard = entry.guard < 300 ? 300 : entry.guard;
   if (guard !== 300 && guard !== 380) return null;
@@ -485,8 +488,21 @@ export function computeBossClear(
 
   const spline = guard === 300 ? inputs.spline300 : inputs.spline380;
   const cutInDamageSpace = splineEval(spline, cutThreshold);
-
   const damageOverCut = damage / (cutInDamageSpace < 0 ? 1e4 : cutInDamageSpace);
+  return { damage, damageOverCut, spline, arcaneForce, arcaneGap, authenticGap, levelGap, arcaneCorrection, hasArcaneReq, hasAuthenticReq };
+}
+
+export function computeBossClear(
+  entry: BossCutEntry,
+  characterLevel: number,
+  characterArcaneForce: number,
+  characterAuthenticForce: number,
+  inputs: BossClearInputs,
+): BossClearResult | null {
+  const terms = bossDamage(entry, characterLevel, characterArcaneForce, characterAuthenticForce, inputs);
+  if (!terms) return null;
+  const { damage, damageOverCut, spline, arcaneForce, arcaneGap, authenticGap, levelGap, arcaneCorrection, hasArcaneReq, hasAuthenticReq } = terms;
+
   const isChampionBlackMage = entry.name === "blackMage" && entry.difficulty === "Champion";
   const scouterEasyRate = entry.easyRate ?? 1;
   const easyRate = effectiveEasyRate(entry);
@@ -561,4 +577,84 @@ export function minimumClearHexa(entry: BossCutEntry, inputs: BossClearInputs): 
     else hi = mid;
   }
   return resultAt(Math.exp(hi))?.bossStat ?? null;
+}
+
+// --- Party Scouter ----------------------------------------------------------------------------
+
+/** One party member's figures for computePartyClear: their real level and forces, and the Boss
+ *  Clear inputs from their own Scouter result. */
+export interface PartyMemberStats {
+  level: number;
+  arcaneForce: number;
+  authenticForce: number;
+  inputs: BossClearInputs;
+}
+
+export interface PartyMemberShare {
+  /** This member's own share of the boss on the solo scale (1 = 100%), Ascent included. The
+   *  members' shares add up to the party's clearRate. */
+  clearRate: number;
+  /** Below the boss's entry level. */
+  cannotEnter: boolean;
+  /** The member's own Boss Clear here, alone, for their level and force gaps and Sacred Symbol. */
+  solo: BossClearResult;
+}
+
+export interface PartyClearResult {
+  /** The party's combined clear rate on the solo scale (1 = 100%). */
+  clearRate: number;
+  tagEnglish: string;
+  colorTier: ClearColorTier;
+  /** Why the party can't go in, when it can't: more members than the boss allows, or a member
+   *  below its entry level. The clear rate is still worked out. */
+  cannotEnter: "partyLimit" | "level" | null;
+  partyLimit: number;
+  members: PartyMemberShare[];
+  /** The Adjusted HEXA Stat one character would need to deal the whole party's damage, on the
+   *  same scale as a character's own (bossStat). */
+  partyHexa: number;
+}
+
+const PARTY_TIERS: [number, BossTier][] = [[2, tier("Easy")], [1.3, tier("Possible")], [SOLO_MIN_FLOOR, tier("Party Min")]];
+
+/** The party's Boss Clear: each member's damage worked out alone (their own gaps, buffs, symbols
+ *  and class factor), put on the solo scale and added up, the clear tiers applied to the sum. No
+ *  party buffs. Ascent's timer bonus stays each member's own (their own Ascent share), but its
+ *  fight length comes from the whole party's pace, since the boss dies at the party's speed.
+ *  That pace is the solo-scale sum on every boss, including party-only ones, where a character's
+ *  own tile assumes a full party of clones instead. Null when the formula has no result for the
+ *  boss or there are no members. */
+export function computePartyClear(entry: BossCutEntry, party: PartyMemberStats[]): PartyClearResult | null {
+  const terms = party.map((m) => bossDamage(entry, m.level, m.arcaneForce, m.authenticForce, m.inputs))
+    .filter((t): t is NonNullable<ReturnType<typeof bossDamage>> => t !== null);
+  if (terms.length === 0 || terms.length !== party.length) return null;
+  const isPartyBoss = !!entry.partyBossCut;
+  const partyLimit = entry.partyLimit || 6;
+  const toSoloScale = effectiveEasyRate(entry) / (isPartyBoss ? soloScaleDivisor(partyLimit) : 1);
+  const preTimer = terms.map((t) => t.damageOverCut * toSoloScale);
+  const pace = preTimer.reduce((sum, rate) => sum + rate, 0);
+  const ascent = party.map((m) => ascentMultiplier(entry, pace, m.inputs.ascentConst));
+
+  const members: PartyMemberShare[] = [];
+  for (const [i, m] of party.entries()) {
+    const solo = computeBossClear(entry, m.level, m.arcaneForce, m.authenticForce, m.inputs);
+    if (!solo) return null;
+    members.push({ clearRate: preTimer[i] * ascent[i] || 0, cannotEnter: cannotEnter(entry, m.level), solo });
+  }
+  const clearRate = members.reduce((sum, m) => sum + m.clearRate, 0);
+  let blocked: PartyClearResult["cannotEnter"] = null;
+  if (party.length > partyLimit) blocked = "partyLimit";
+  else if (members.some((m) => m.cannotEnter)) blocked = "level";
+  const shown = blocked ? CANNOT_ENTER_TIER : pickTier(clearRate, PARTY_TIERS, IMPOSSIBLE_TIER);
+  // Every member's damage is on the same curve (the boss's defense picks it), so they add there.
+  const partyDamage = terms.reduce((sum, t, i) => sum + t.damage * ascent[i], 0);
+  return {
+    clearRate,
+    tagEnglish: shown.tag,
+    colorTier: shown.color,
+    cannotEnter: blocked,
+    partyLimit,
+    members,
+    partyHexa: splineInverse(terms[0].spline, partyDamage),
+  };
 }
