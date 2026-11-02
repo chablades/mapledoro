@@ -8,9 +8,6 @@
     "jsx-a11y",
     "nextjs"
   ],
-  "jsPlugins": [
-    "oxlint-plugin-complexity"
-  ],
   "options": {
     "typeAware": true
   },
@@ -54,13 +51,6 @@
     "typescript/no-base-to-string": "warn",
     "typescript/prefer-promise-reject-errors": "warn",
     "unicorn/prefer-regexp-test": "warn",
-    "complexity/complexity": [
-      "warn",
-      {
-        "cyclomatic": 1000,
-        "cognitive": 18
-      }
-    ],
     "jsx-a11y/control-has-associated-label": "off",
     "jsx-a11y/prefer-tag-over-role": "off"
   }
