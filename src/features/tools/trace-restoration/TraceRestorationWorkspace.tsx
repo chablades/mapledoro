@@ -145,6 +145,12 @@ function computeWeeklyPointGain(selected: ReadonlySet<string>, bosses: TraceBoss
   return { weekly, monthly };
 }
 
+function daysUntil(date: Date): number {
+  const now = new Date();
+  now.setUTCHours(0, 0, 0, 0);
+  return Math.round((date.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+}
+
 function EstimateResult({
   theme,
   result,
@@ -155,9 +161,7 @@ function EstimateResult({
   emptyMessage: string;
 }) {
   if (result) {
-    const now = new Date();
-    now.setUTCHours(0, 0, 0, 0);
-    const diffDays = Math.round((result.date.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    const diffDays = daysUntil(result.date);
     if (diffDays <= 0) {
       return (
         <span style={{ fontWeight: 700, color: theme.accentText, fontSize: "0.82rem" }}>

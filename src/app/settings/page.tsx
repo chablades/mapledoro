@@ -454,7 +454,7 @@ function DriveSyncPanel({
     setPending(null);
     if (pending.mode === "backup") {
       // react-doctor-disable-next-line no-impure-state-updater -- same as handleConnect: an action-runner callback, not an updater.
-      runDriveAction(() => performBackup(pending.existing));
+      void runDriveAction(() => performBackup(pending.existing));
       return;
     }
     for (const [key, value] of pending.entries) {

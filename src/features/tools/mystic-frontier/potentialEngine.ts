@@ -196,7 +196,7 @@ function resolvePotential(def: MfPotentialDef): ResolvedPotential {
   const informational = /chance to roll/.test(body);
   const condition = body.split(",")[0].trim();
   const w = def.params.w ?? 0;
-  const isCap = /^Prevents dice from rolling over/.test(condition);
+  const isCap = condition.startsWith("Prevents dice from rolling over");
 
   return {
     id: def.id,

@@ -146,7 +146,7 @@ export default function CharacterSetupFlow({ theme, initialCharacterName, initia
         ? state.refreshingKeys.has(toCharacterKey(confirmedStoredCharacter))
         : false,
       onRefresh: confirmedStoredCharacter
-        ? () => { actions.refreshSingle(confirmedStoredCharacter); }
+        ? () => { void actions.refreshSingle(confirmedStoredCharacter); }
         : null,
     },
   };
@@ -157,7 +157,7 @@ export default function CharacterSetupFlow({ theme, initialCharacterName, initia
     backFromSetupFlow: actions.backFromSetupFlowToAddCharacter,
     backToCharactersDirectory: actions.backToCharactersDirectory,
     backFromAddCharacter: actions.backFromAddCharacter,
-    resumeDraft: actions.resumeDraft,
+    resumeDraft: (characterKey) => { void actions.resumeDraft(characterKey); },
     clearDraft: actions.clearDraft,
     setCurrentAsMain: () => {
       if (!confirmedStoredCharacter) return;
@@ -172,7 +172,7 @@ export default function CharacterSetupFlow({ theme, initialCharacterName, initia
       actions.toggleChampionCharacter(confirmedStoredCharacter);
     },
     removeCurrentCharacter: actions.removeCurrentCharacter,
-    searchSubmit: actions.handleSearchSubmit,
+    searchSubmit: (event) => { void actions.handleSearchSubmit(event); },
     queryChange: actions.handleQueryInput,
     confirmedImageLoaded: () => actions.setConfirmedImageLoaded(true),
     toggleCharacterDirectory: actions.toggleCharacterDirectory,

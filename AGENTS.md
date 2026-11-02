@@ -6,7 +6,7 @@ MapleDoro — MapleStory community web app (character tracking, gameplay tools, 
 
 ## Tech Stack
 
-**Next.js 16** (App Router, typed routes), **React 19**, **TypeScript** (strict). Styling is inline styles for dynamic theming plus global CSS (no Tailwind, no CSS-in-JS). State is hooks + Context (theme) + localStorage. Server side: Redis (ioredis) char-lookup cache, Nexon CDN patch notes, Discord Sunny Sunday + Miracle Time. Lint is ESLint 9 (eslint-config-next + eslint-plugin-sonarjs). Charts use `react-chartjs-2` / `chart.js`, with hand-rolled SVG for small one-offs.
+**Next.js 16** (App Router, typed routes), **React 19**, **TypeScript 7** (strict). Styling is inline styles for dynamic theming plus global CSS (no Tailwind, no CSS-in-JS). State is hooks + Context (theme) + localStorage. Server side: Redis (ioredis) char-lookup cache, Nexon CDN patch notes, Discord Sunny Sunday + Miracle Time. Lint is oxlint (type-aware via oxlint-tsgolint, cognitive complexity via oxlint-plugin-complexity), configured in `.oxlintrc.json`. Charts use `react-chartjs-2` / `chart.js`, with hand-rolled SVG for small one-offs.
 
 ## Behavioral Guidelines
 
@@ -29,7 +29,7 @@ Both must pass before work is complete. Skip `npm run build` for text-only chang
 
 ```powershell
 $out = npm run build 2>&1; if ($LASTEXITCODE -ne 0) { $out }
-$out = npx eslint (git diff --name-only --diff-filter=ACM -- '*.ts' '*.tsx') 2>&1; if ($LASTEXITCODE -ne 0) { $out }
+$out = npx oxlint (git diff --name-only --diff-filter=ACM -- '*.ts' '*.tsx') 2>&1; if ($LASTEXITCODE -ne 0) { $out }
 ```
 
 (bash: `out=$(<cmd> 2>&1); [ $? -ne 0 ] && echo "$out"`)
@@ -46,8 +46,8 @@ Tool output stays in context for every later request, so one careless command in
 
 ### Lint Gotchas
 
-- **`react-hooks/set-state-in-effect`** — No bare `setState()` in `useEffect`. Use lazy `useState` initializers, `useSyncExternalStore`, or `useRef` + DOM mutation.
-- **`sonarjs/cognitive-complexity`** — Cap 15. Extract cohesive sub-steps (parser, validator, renderer) or `eslint-disable` if any split would be artificial. Don't micro-shuffle branches.
+- **`react/set-state-in-effect`** — No bare `setState()` in `useEffect`. Use lazy `useState` initializers, `useSyncExternalStore`, or `useRef` + DOM mutation.
+- **`complexity/complexity`** — Cognitive complexity (oxlint-plugin-complexity), cap 15. Extract cohesive sub-steps (parser, validator, renderer) or `eslint-disable` if any split would be artificial. Don't micro-shuffle branches.
 
 ## React-Doctor Rules
 

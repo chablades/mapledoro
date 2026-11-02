@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, type CSSProperties, type ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import type { AppTheme } from "../../../components/themes";
 import HoverTooltip from "../../../components/HoverTooltip";
 import { statusText } from "../../../components/statusColors";
@@ -131,8 +131,7 @@ export default function ScouterFigure({ character, theme, simulator, editAction 
   // The change only describes the real figure, so a simulation hides it. It plays once, until
   // the chip's animation ends and marks it seen.
   const changeDiff = change?.fresh && real !== null && !simulated ? Math.round(real) - change.before : 0;
-  const valueRef = useRef<HTMLDivElement>(null);
-  useCountUp(valueRef, change?.before ?? 0, Math.round(real ?? 0), changeDiff !== 0);
+  const valueRef = useCountUp<HTMLDivElement>(change?.before ?? 0, Math.round(real ?? 0), changeDiff !== 0);
 
   // A simulated result replaces the real figure in place, per the Scouter Simulator plan's
   // product decision. Same rendering path as a real "ready" status, sourced from

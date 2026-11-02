@@ -214,7 +214,7 @@ function buildRangeBins(sorted: Float64Array, format: (n: number) => string): Bi
   }
 
   const width = (max - min) / BIN_COUNT;
-  const counts = new Array<number>(BIN_COUNT).fill(0);
+  const counts = Array.from({ length: BIN_COUNT }, () => 0);
   for (const v of sorted) {
     counts[Math.min(BIN_COUNT - 1, Math.floor((v - min) / width))]++;
   }
@@ -236,7 +236,7 @@ function buildBoomBins(sorted: Float64Array): Bins {
     return buildRangeBins(sorted, (n) => Math.round(n).toLocaleString());
   }
 
-  const counts = new Array<number>(max + 1).fill(0);
+  const counts = Array.from({ length: max + 1 }, () => 0);
   for (const v of sorted) counts[v]++;
   const labels = counts.map((_, i) => String(i));
   return {

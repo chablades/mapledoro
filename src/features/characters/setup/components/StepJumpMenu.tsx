@@ -269,7 +269,7 @@ function TapStepRow({
   step: JumpStep;
   isActive: boolean;
   isTapExpanded: boolean;
-  rowButtonRefs: React.MutableRefObject<Map<number, HTMLButtonElement>>;
+  rowButtonRefs: React.RefObject<Map<number, HTMLButtonElement>>;
   tapSubstepsRef: React.RefObject<HTMLDivElement | null>;
   onRowClick: () => void;
   onToggleExpand: () => void;
@@ -335,7 +335,7 @@ function HoverStepRow({
   step: JumpStep;
   isActive: boolean;
   isFlyoutActive: boolean;
-  rowButtonRefs: React.MutableRefObject<Map<number, HTMLButtonElement>>;
+  rowButtonRefs: React.RefObject<Map<number, HTMLButtonElement>>;
   onRowClick: () => void;
   onRowEnter: (e: React.MouseEvent<HTMLButtonElement>) => void;
   onRowLeave: (e: React.MouseEvent<HTMLButtonElement>) => void;
@@ -379,7 +379,7 @@ function SubstepFlyout({
   left: number;
   substeps: JumpSubstep[];
   activeStepIndex: number;
-  rowButtonRefs: React.MutableRefObject<Map<number, HTMLButtonElement>>;
+  rowButtonRefs: React.RefObject<Map<number, HTMLButtonElement>>;
   onCancelClose: () => void;
   onScheduleClose: () => void;
   onSelect: (substepIndex: number) => void;

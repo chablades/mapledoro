@@ -188,7 +188,7 @@ const statField = (s: ScouterStat, k: StatKey, part: "Base" | "Per" | "Abs"): nu
 interface Buffs { flatAtk: number; dmg: number; crit: number; atkPct: number; allStat: number; hp: number; fd: number; iedKeep: number }
 
 // Buff contributions of a whole sheet, per group. `links` is damage % by link and level.
-// eslint-disable-next-line sonarjs/cognitive-complexity -- one flat list of independent buff sources; splitting it would only scatter them
+// oxlint-disable-next-line complexity/complexity -- one flat list of independent buff sources; splitting it would only scatter them
 export function buffs(u: ScouterUserStat, classId: string, links: EngineData["links"]): Buffs {
   const d = u.doping, out: Buffs = { flatAtk: 0, dmg: 0, crit: 0, atkPct: 0, allStat: 0, hp: 0, fd: 1, iedKeep: 1 };
   for (const [group, items] of Object.entries(DOPING) as [DopingGroup, Partial<Record<DopingKey, number>>][]) {

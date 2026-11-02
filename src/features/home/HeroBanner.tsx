@@ -24,7 +24,7 @@ const DORO_PHRASES = [
 export default function HeroBanner({ theme }: { theme: AppTheme }) {
   const mounted = useMounted();
   const [phraseIndex, setPhraseIndex] = useState(() =>
-    Math.floor(Math.random() * DORO_PHRASES.length), // eslint-disable-line sonarjs/pseudo-random
+    Math.floor(Math.random() * DORO_PHRASES.length),
   );
   // The server has no way to render the same random pick, so the bubble holds a
   // fixed phrase and stays invisible until mount: it reserves its space without
@@ -34,7 +34,7 @@ export default function HeroBanner({ theme }: { theme: AppTheme }) {
   const pokeDoro = () =>
     setPhraseIndex((current) => {
       // Roll over the other phrases only, so a poke always says something new.
-      const roll = Math.floor(Math.random() * (DORO_PHRASES.length - 1)); // eslint-disable-line sonarjs/pseudo-random
+      const roll = Math.floor(Math.random() * (DORO_PHRASES.length - 1));
       return roll >= current ? roll + 1 : roll;
     });
 

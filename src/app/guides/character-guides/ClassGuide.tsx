@@ -680,8 +680,9 @@ export function ClassGuide({ config, theme }: { config: ClassConfig; theme: AppT
           <RecommendedLinks config={config} />
           <CommunityResources config={config} />
         </div>
+        {/* Inside .root so it inherits the --cg-* theme variables. */}
+        {tip && <SkillTooltip tip={tip} />}
       </div>
-      {tip && <SkillTooltip tip={tip} />}
     </TipContext.Provider>
   );
 }

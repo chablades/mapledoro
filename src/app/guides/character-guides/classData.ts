@@ -85,7 +85,7 @@ const NUM_BLUE = "#4a9eff";
 export function highlightNumbers(text: string): React.ReactNode[] {
   const parts = text.split(/(Lv\d+|\+?\-?\d[\d,.]*%?s?)/g);
   return parts.map((part, i) =>
-    /\d/.test(part) || /^Lv/.test(part)
+    /\d/.test(part) || part.startsWith("Lv")
       ? React.createElement("span", { key: i, style: { color: NUM_BLUE, fontWeight: 700 } }, part)
       : React.createElement("span", { key: i }, part),
   );

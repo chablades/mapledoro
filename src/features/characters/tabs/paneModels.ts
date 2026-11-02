@@ -98,7 +98,7 @@ export interface SearchPaneActions {
   removeCurrentAsMain: () => void;
   toggleCurrentChampion: () => void;
   removeCurrentCharacter: () => void;
-  searchSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
+  searchSubmit: (event: React.SubmitEvent<HTMLFormElement>) => void;
   queryChange: (value: string) => void;
   confirmedImageLoaded: () => void;
   toggleCharacterDirectory: () => void;

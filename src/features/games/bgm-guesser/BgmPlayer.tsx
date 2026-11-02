@@ -102,6 +102,7 @@ export default function BgmPlayer({
           .bgm-player .bgm-duration { display: none; }
         }
       `}</style>
+      {/* oxlint-disable-next-line jsx-a11y/media-has-caption -- captions would name the track and give away the answer */}
       <audio
         // Callback ref rather than an effect: sets the starting volume the moment
         // the element exists, without a mount-time setState.
