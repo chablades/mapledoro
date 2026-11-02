@@ -1,0 +1,21 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "extends": [
+    "./.oxlintrc.json"
+  ],
+  "ignorePatterns": [
+    "scripts/**"
+  ],
+  "jsPlugins": [
+    "oxlint-plugin-complexity"
+  ],
+  "rules": {
+    "complexity/complexity": [
+      "warn",
+      {
+        "cyclomatic": 1000,
+        "cognitive": 18
+      }
+    ]
+  }
+}

@@ -6,7 +6,7 @@ MapleDoro — MapleStory community web app (character tracking, gameplay tools, 
 
 ## Tech Stack
 
-**Next.js 16** (App Router, typed routes), **React 19**, **TypeScript 7** (strict). Styling is inline styles for dynamic theming plus global CSS (no Tailwind, no CSS-in-JS). State is hooks + Context (theme) + localStorage. Server side: Redis (ioredis) char-lookup cache, Nexon CDN patch notes, Discord Sunny Sunday + Miracle Time. Lint is oxlint (type-aware via oxlint-tsgolint, cognitive complexity via oxlint-plugin-complexity), configured in `.oxlintrc.json`. Charts use `react-chartjs-2` / `chart.js`, with hand-rolled SVG for small one-offs.
+**Next.js 16** (App Router, typed routes), **React 19**, **TypeScript 7** (strict). Styling is inline styles for dynamic theming plus global CSS (no Tailwind, no CSS-in-JS). State is hooks + Context (theme) + localStorage. Server side: Redis (ioredis) char-lookup cache, Nexon CDN patch notes, Discord Sunny Sunday + Miracle Time. Lint is oxlint (type-aware via oxlint-tsgolint, cognitive complexity via oxlint-plugin-complexity), configured in `.oxlintrc.json`. The complexity plugin is a JS plugin, which crashes on Vercel, so it lives in `.oxlintrc.full.json` (extends the base): `npm run lint` (Vercel) skips it, `npm run lint:full` includes it. Charts use `react-chartjs-2` / `chart.js`, with hand-rolled SVG for small one-offs.
 
 ## Behavioral Guidelines
 
@@ -29,12 +29,12 @@ Both must pass before work is complete. Skip `npm run build` for text-only chang
 
 ```powershell
 $out = npm run build 2>&1; if ($LASTEXITCODE -ne 0) { $out }
-$out = npx oxlint (git diff --name-only --diff-filter=ACM -- '*.ts' '*.tsx') 2>&1; if ($LASTEXITCODE -ne 0) { $out }
+$out = npx oxlint -c .oxlintrc.full.json (git diff --name-only --diff-filter=ACM -- '*.ts' '*.tsx') 2>&1; if ($LASTEXITCODE -ne 0) { $out }
 ```
 
 (bash: `out=$(<cmd> 2>&1); [ $? -ne 0 ] && echo "$out"`)
 
-Run the full `npm run lint` when the change touches shared config or a widely-imported helper, where scoping to the diff could miss a ripple effect.
+Run the full `npm run lint:full` when the change touches shared config or a widely-imported helper, where scoping to the diff could miss a ripple effect.
 
 ### Context Discipline
 
