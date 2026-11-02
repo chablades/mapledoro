@@ -72,7 +72,7 @@ export function writeText(w: BitWriter, text: string) {
     w.put(0, 6);
     return;
   }
-  if (text.length <= 15 && [...text].every((ch) => TEXT6.includes(ch))) {
+  if (text.length <= 15 && text.split("").every((ch) => TEXT6.includes(ch))) {
     w.put(text.length, 4);
     for (const ch of text) w.put(TEXT6.indexOf(ch), 6);
     return;
@@ -135,7 +135,7 @@ export function toBase43(bytes: Uint8Array): string {
 
 /** Returns null for characters outside the base43 set or a malformed length. */
 export function fromBase43(text: string): Uint8Array | null {
-  const digits = [...text.toUpperCase()].map((ch) => B43.indexOf(ch));
+  const digits = text.toUpperCase().split("").map((ch) => B43.indexOf(ch));
   if (digits.some((d) => d < 0) || digits.length % 3 === 1) return null;
   const out: number[] = [];
   let i = 0;

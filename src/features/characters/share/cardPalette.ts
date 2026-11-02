@@ -87,8 +87,8 @@ const isSkin = (L: number, C: number, H: number, maxL: number, maxC: number) => 
 
 /** Chroma-weighted dominant hue over opaque, colourful, non-skin pixels (10-degree buckets). */
 function dominantHue(pixels: Uint8ClampedArray): number {
-  const weight = new Array<number>(36).fill(0);
-  const hueSum = new Array<number>(36).fill(0);
+  const weight = Array.from({ length: 36 }, () => 0);
+  const hueSum = Array.from({ length: 36 }, () => 0);
   for (let i = 0; i < pixels.length; i += 4) {
     if (pixels[i + 3] < 200) continue;
     const { L, C, H } = rgbToOklch(pixels[i], pixels[i + 1], pixels[i + 2]);

@@ -129,8 +129,8 @@ interface ArtBounds { x0: number; x1: number; y0: number; y1: number; touch: { l
  *  image edges any faint glow runs into, measured separately with a low threshold. */
 function artBounds(pixels: Uint8ClampedArray, w: number, h: number): ArtBounds {
   const alpha = (x: number, y: number) => pixels[(y * w + x) * 4 + 3];
-  const rows = new Array<number>(h).fill(0);
-  const cols = new Array<number>(w).fill(0);
+  const rows = Array.from({ length: h }, () => 0);
+  const cols = Array.from({ length: w }, () => 0);
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (alpha(x, y) > 128) { rows[y]++; cols[x]++; }
   const first = (a: number[]) => Math.max(0, a.findIndex((n) => n >= 3));
   const last = (a: number[]) => { const i = [...a].reverse().findIndex((n) => n >= 3); return i < 0 ? a.length - 1 : a.length - 1 - i; };
