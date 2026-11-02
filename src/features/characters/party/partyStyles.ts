@@ -105,7 +105,7 @@ export const partyStyles = `
   .party-hero .party-facts { margin: 0 0 14px; }
   .party-diffs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
   .party-diff {
-    width: 88px; display: grid; justify-items: center; padding: 6px 4px 0; cursor: pointer; overflow: hidden;
+    min-width: 88px; display: grid; justify-items: center; padding: 6px 8px 0; cursor: pointer; overflow: hidden;
     font: inherit; color: inherit; background: var(--party-panel); border: 1px solid var(--party-border); border-radius: 10px;
     transition: border-color 140ms ease;
   }
@@ -117,7 +117,7 @@ export const partyStyles = `
   .party-diff.is-blocked strong { color: var(--party-muted); }
   .party-tag { font-size: 0.75rem; font-weight: 800; white-space: nowrap; }
   .party-diff .party-tag { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
-  .party-strip { width: calc(100% + 8px); display: flex; height: 4px; margin: 5px -4px 0; background: var(--party-line); }
+  .party-strip { width: calc(100% + 16px); display: flex; height: 4px; margin: 5px -8px 0; background: var(--party-line); }
   .party-diff.is-blocked .party-strip { background: repeating-linear-gradient(90deg, var(--party-line) 0 6px, transparent 6px 10px); }
   .party-strip i { display: block; height: 100%; transition: width 260ms ease; }
   .party-note { font-size: 0.78rem; font-weight: 700; color: var(--party-muted); margin: 12px 0 0; }

@@ -78,8 +78,9 @@ export function isRelevantForParty(result: PartyClearResult): boolean {
   return result.cannotEnter === null && result.clearRate >= 0.3 && result.clearRate <= 10;
 }
 
+// Two decimals, like a character's own Boss Clear.
 const PERCENT_CAP = 9999;
 export function formatPartyPercent(rate: number): string {
   const percent = rate * 100;
-  return percent > PERCENT_CAP ? `${PERCENT_CAP.toLocaleString("en-US")}%+` : `${Math.round(percent).toLocaleString("en-US")}%`;
+  return percent > PERCENT_CAP ? `${PERCENT_CAP.toLocaleString("en-US")}%+` : `${percent.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`;
 }
