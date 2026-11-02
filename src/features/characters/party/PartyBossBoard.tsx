@@ -1,15 +1,18 @@
 "use client";
 
-import { useState } from "react";
+// Party Scouter's bosses as a boss select: a strip of boss art to pick from, and one hero panel
+// for the picked boss holding its difficulties and the chosen difficulty's breakdown together.
+
+import Image from "next/image";
+import { useRef, useState, type CSSProperties } from "react";
+import HoverTooltip from "../../../components/HoverTooltip";
 import type { AppTheme } from "../../../components/themes";
 import { statusText } from "../../../components/statusColors";
-import { bossDifficultyIconUrl } from "../../../lib/mapleResource";
+import { bossSplashUrl } from "../../../lib/mapleResource";
 import { PillGroup } from "../../tools/shared-ui";
 import type { ClearColorTier, PartyMemberShare } from "../scouter/bossClearFormula";
-import FallbackSpriteIcon from "../scouter/FallbackSpriteIcon";
-import BossBanner from "../scouter/BossBanner";
+import { BOSS_ART_POSITION, DEFAULT_ART_POSITION } from "../scouter/BossBanner";
 import { lossBreakdown } from "../scouter/bossLoss";
-import HoverTooltip from "../../../components/HoverTooltip";
 import { formatFigure } from "../scouter/scouterFormat";
 import { CHARACTERS_COPY } from "../tabs/content";
 import { formatPartyPercent, isRelevantForParty, type BossRegion, type PartyTile } from "./partyBoard";
@@ -17,19 +20,38 @@ import type { PartyMember } from "./usePartyMembers";
 
 const COPY = CHARACTERS_COPY.partyScouter;
 
-type Filter = "relevant" | "all";
+type Filter = "relevant" | BossRegion;
 const FILTER_OPTIONS: { value: Filter; label: string }[] = [
   { value: "relevant", label: COPY.filterRelevant },
-  { value: "all", label: COPY.filterAll },
+  { value: "grandis", label: COPY.regionGrandis },
+  { value: "arcaneRiver", label: COPY.regionArcaneRiver },
+  { value: "mapleWorld", label: COPY.regionMapleWorld },
 ];
 
-// All splits the bosses by where they live, Grandis open and the rest folded, so it doesn't run a
-// hundred tiles long.
-const REGIONS: { region: BossRegion; label: string; open: boolean }[] = [
-  { region: "grandis", label: COPY.regionGrandis, open: true },
-  { region: "arcaneRiver", label: COPY.regionArcaneRiver, open: false },
-  { region: "mapleWorld", label: COPY.regionMapleWorld, open: false },
-];
+interface BossGroup {
+  boss: string;
+  displayName: string;
+  iconId: string | undefined;
+  /** Every difficulty of the boss, easiest first. */
+  tiles: PartyTile[];
+}
+
+function byBoss(tiles: PartyTile[]): BossGroup[] {
+  const groups = new Map<string, BossGroup>();
+  for (const tile of tiles) {
+    const group = groups.get(tile.entry.boss);
+    if (group) group.tiles.push(tile);
+    else groups.set(tile.entry.boss, { boss: tile.entry.boss, displayName: tile.displayName, iconId: tile.iconId, tiles: [tile] });
+  }
+  return [...groups.values()];
+}
+
+const clears = (tile: PartyTile) => tile.result.cannotEnter === null && tile.result.colorTier !== "gray";
+
+/** The hardest difficulty this party clears, else the first one it can enter, else the first. */
+function defaultTile(group: BossGroup): PartyTile {
+  return group.tiles.findLast(clears) ?? group.tiles.find((t) => t.result.cannotEnter === null) ?? group.tiles[0];
+}
 
 // The same tag colours as a character's own Boss Clear, where Party Min is purple too.
 function tagColor(theme: AppTheme, tier: ClearColorTier): string {
@@ -45,7 +67,48 @@ function tagText(tile: PartyTile): string {
   return tile.result.cannotEnter === "partyLimit" ? COPY.partyLimit(tile.result.partyLimit) : tile.result.tagEnglish;
 }
 
-/** Each member's part of the tile's strip, as a share of the party's total. */
+// Bosses whose art sits too high in Party Scouter's frames, moved further down (a share of the
+// frame's height).
+const ART_SHIFT: Partial<Record<string, string>> = { 루시드: "8%", "진 힐라": "4%" };
+
+/** A boss's splash art, aimed at its face (the profile's Quick View crops), with the top strip
+ *  where the art letters the boss's name always cut off. Hidden if it fails to load. */
+function BossArt({ boss, iconId, className, sizes }: { boss: string; iconId: string | undefined; className: string; sizes: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  if (!iconId) return null;
+  return (
+    <div ref={ref} className={className} aria-hidden="true">
+      {/* Reaches above the visible area so the name lettered across the top of every splash
+          stays cut off at any width. */}
+      <div className="party-art-crop" style={{ "--art-shift": ART_SHIFT[boss] ?? "0%" } as CSSProperties}>
+        <Image
+          src={bossSplashUrl(iconId)}
+          alt=""
+          fill
+          unoptimized
+          sizes={sizes}
+          onError={() => { if (ref.current) ref.current.style.display = "none"; }}
+          style={{ objectFit: "cover", objectPosition: BOSS_ART_POSITION[boss] ?? DEFAULT_ART_POSITION }}
+        />
+      </div>
+    </div>
+  );
+}
+
+/** A boss in the strip: its art and name, with a bar in the colour of the hardest difficulty this
+ *  party clears (none when it clears nothing). */
+function BossThumb({ theme, group, selected, onSelect }: { theme: AppTheme; group: BossGroup; selected: boolean; onSelect: () => void }) {
+  const best = group.tiles.findLast(clears);
+  return (
+    <button type="button" className="party-thumb" aria-pressed={selected} onClick={onSelect}>
+      <BossArt boss={group.boss} iconId={group.iconId} className="party-thumb-art" sizes="160px" />
+      <b>{group.displayName}</b>
+      {best && <span className="party-thumb-bar" style={{ background: tagColor(theme, best.result.colorTier) }} />}
+    </button>
+  );
+}
+
+/** Each member's part of a difficulty, as a share of the party's total. */
 function Strip({ tile, members }: { tile: PartyTile; members: PartyMember[] }) {
   const total = tile.result.clearRate;
   return (
@@ -57,55 +120,28 @@ function Strip({ tile, members }: { tile: PartyTile; members: PartyMember[] }) {
   );
 }
 
-function DifficultyRow({ theme, tile, members, selected, onSelect }: {
+function DifficultyTab({ theme, tile, members, selected, onSelect }: {
   theme: AppTheme; tile: PartyTile; members: PartyMember[]; selected: boolean; onSelect: () => void;
 }) {
   const { entry, result } = tile;
   return (
-    <button type="button" className={`party-row${result.cannotEnter ? " is-blocked" : ""}`} aria-pressed={selected} onClick={onSelect}>
-      <FallbackSpriteIcon theme={theme} src={tile.iconId ? bossDifficultyIconUrl(tile.iconId, entry.difficulty) : undefined} size={24} displayName={tile.displayName} />
-      <span className="party-row-name">
-        <span>{entry.difficulty}</span>
-        <span className="party-tag" style={{ color: tagColor(theme, result.colorTier) }}>{tagText(tile)}</span>
-      </span>
+    <button type="button" role="tab" aria-selected={selected} className={`party-diff${result.cannotEnter ? " is-blocked" : ""}`} onClick={onSelect}>
+      <span className="party-diff-name">{entry.difficulty}</span>
       <strong>{formatPartyPercent(result.clearRate)}</strong>
+      <span className="party-tag" style={{ color: tagColor(theme, result.colorTier) }}>{tagText(tile)}</span>
       <Strip tile={tile} members={members} />
     </button>
   );
 }
 
-/** One row per boss: its art (the profile's Quick View banner) and its difficulties beside it. */
-function BossCard({ theme, tiles, members, selectedId, onSelect }: {
-  theme: AppTheme; tiles: PartyTile[]; members: PartyMember[]; selectedId: string | null; onSelect: (id: string) => void;
-}) {
-  const first = tiles[0];
-  return (
-    <div className="party-boss">
-      <BossBanner theme={theme} boss={first.entry.boss} iconId={first.iconId} displayName={first.displayName} />
-      <div className="party-boss-cells">
-        {tiles.map((tile) => (
-          <DifficultyRow key={tile.id} theme={theme} tile={tile} members={members} selected={tile.id === selectedId} onSelect={() => onSelect(tile.id)} />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-/** Tiles grouped by boss, in the order they came. */
-function byBoss(tiles: PartyTile[]): PartyTile[][] {
-  const groups = new Map<string, PartyTile[]>();
-  for (const tile of tiles) groups.set(tile.entry.boss, [...(groups.get(tile.entry.boss) ?? []), tile]);
-  return [...groups.values()];
-}
-
 /** The boss's own numbers: its level, force requirement and party size. */
-function BossFacts({ tile }: { tile: PartyTile }) {
+function bossFacts(tile: PartyTile): string {
   const { entry, result } = tile;
   const facts = [COPY.bossLevel(entry.level)];
   if (entry.arcaneForce) facts.push(COPY.bossArcane(formatFigure(entry.arcaneForce)));
   if (entry.authenticForce) facts.push(COPY.bossSacred(formatFigure(entry.authenticForce)));
   facts.push(COPY.partyLimit(result.partyLimit));
-  return <p className="party-facts">{facts.join(" · ")}</p>;
+  return facts.join(" · ");
 }
 
 const figure = (value: number | string) => (typeof value === "number" ? formatFigure(value) : value);
@@ -137,18 +173,14 @@ function MemberLosses({ theme, share }: { theme: AppTheme; share: PartyMemberSha
   );
 }
 
-function Breakdown({ theme, tile, members }: { theme: AppTheme; tile: PartyTile | null; members: PartyMember[] }) {
-  if (!tile) return <aside className="party-panel party-side"><p className="party-empty">{COPY.pickTile}</p></aside>;
+/** Who carries the chosen difficulty: each member's share, their losses, the total and the
+ *  Adjusted party HEXA. */
+function Breakdown({ theme, tile, members }: { theme: AppTheme; tile: PartyTile; members: PartyMember[] }) {
   const { result } = tile;
   // Bars share one scale, the strongest member's share, so the longest bar is full.
   const top = Math.max(...result.members.map((m) => m.clearRate), 0.0001);
   return (
-    <aside className="party-panel party-side" aria-live="polite">
-      <div className="party-side-head">
-        <h3>{tile.displayName} <span>{tile.entry.difficulty}</span></h3>
-        <span className="party-tag" style={{ color: tagColor(theme, result.colorTier), fontSize: "0.8rem" }}>{tagText(tile)}</span>
-      </div>
-      <BossFacts tile={tile} />
+    <div className="party-breakdown" role="tabpanel" aria-live="polite">
       <p className="party-label">{COPY.breakdownTitle}</p>
       {result.members.map((share, i) => {
         const member = members[i];
@@ -173,7 +205,28 @@ function Breakdown({ theme, tile, members }: { theme: AppTheme; tile: PartyTile 
         <p className="party-label" style={{ margin: 0 }}>{COPY.partyHexa}</p>
         <strong>{formatFigure(result.partyHexa)}</strong>
       </div>
-    </aside>
+    </div>
+  );
+}
+
+/** The picked boss: its art large, its difficulties as tabs, and the chosen one's breakdown. */
+function BossHero({ theme, group, tile, members, onSelectTile }: {
+  theme: AppTheme; group: BossGroup; tile: PartyTile; members: PartyMember[]; onSelectTile: (id: string) => void;
+}) {
+  return (
+    <section className="party-hero">
+      <BossArt key={group.boss} boss={group.boss} iconId={group.iconId} className="party-hero-art" sizes="760px" />
+      <div className="party-hero-body">
+        <h3>{group.displayName}</h3>
+        <p className="party-facts">{bossFacts(tile)}</p>
+        <div className="party-diffs" role="tablist" aria-label={group.displayName}>
+          {group.tiles.map((t) => (
+            <DifficultyTab key={t.id} theme={theme} tile={t} members={members} selected={t.id === tile.id} onSelect={() => onSelectTile(t.id)} />
+          ))}
+        </div>
+        <Breakdown theme={theme} tile={tile} members={members} />
+      </div>
+    </section>
   );
 }
 
@@ -185,7 +238,7 @@ function levelBlocker(tiles: PartyTile[], members: PartyMember[]): PartyMember |
 }
 
 /** When Relevant leaves nothing (typically a low-level member keeping the party out of every boss
- *  the rest haven't outgrown), says who and offers the two ways out. */
+ *  the rest haven't outgrown), says who and offers the ways out. */
 function NothingRelevant({ theme, tiles, members, onSitOut, onShowAll }: {
   theme: AppTheme; tiles: PartyTile[]; members: PartyMember[]; onSitOut: (key: string) => void; onShowAll: () => void;
 }) {
@@ -207,42 +260,48 @@ function NothingRelevant({ theme, tiles, members, onSitOut, onShowAll }: {
   );
 }
 
-/** The bosses as tiles, each with the party's combined clear and a strip showing who carries,
- *  and the chosen boss's breakdown beside them. */
+/** The bosses in the strip for a filter: Relevant keeps those with at least one relevant
+ *  difficulty, a region keeps its own. Either way a boss brings all its difficulties along. */
+function groupsFor(filter: Filter, tiles: PartyTile[]): BossGroup[] {
+  const groups = byBoss(tiles);
+  if (filter === "relevant") return groups.filter((g) => g.tiles.some((t) => isRelevantForParty(t.result)));
+  return groups.filter((g) => g.tiles[0].region === filter);
+}
+
 export default function PartyBossBoard({ theme, tiles, members, onSitOut }: {
   theme: AppTheme; tiles: PartyTile[]; members: PartyMember[]; onSitOut: (key: string) => void;
 }) {
   const [filter, setFilter] = useState<Filter>("relevant");
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const shown = tiles.filter((t) => isRelevantForParty(t.result));
-  const selected = tiles.find((t) => t.id === selectedId) ?? null;
-  const tileList = (list: PartyTile[]) => (
-    <div className="party-tiles">
-      {byBoss(list).map((group) => (
-        <BossCard key={group[0].entry.boss} theme={theme} tiles={group} members={members} selectedId={selectedId} onSelect={setSelectedId} />
-      ))}
-    </div>
-  );
+  const groups = groupsFor(filter, tiles);
+  const picked = groups.find((g) => g.tiles.some((t) => t.id === selectedId)) ?? groups[0];
+  const tile = picked?.tiles.find((t) => t.id === selectedId) ?? (picked ? defaultTile(picked) : null);
 
   return (
-    <div className="party-work">
-      <section className="party-panel">
-        <div className="party-panel-head">
-          <h2>{COPY.bossClearTitle}</h2>
-          <PillGroup theme={theme} options={FILTER_OPTIONS} value={filter} onChange={setFilter} />
-        </div>
-        {filter === "relevant" && (shown.length > 0
-          ? tileList(shown)
-          : <NothingRelevant theme={theme} tiles={tiles} members={members} onSitOut={onSitOut} onShowAll={() => setFilter("all")} />)}
-        {filter === "all" && REGIONS.map(({ region, label, open }) => (
-          <details key={region} className="party-fold" open={open}>
-            <summary>{label}</summary>
-            {tileList(tiles.filter((t) => t.region === region))}
-          </details>
-        ))}
-        <p className="party-note">{COPY.caveat}</p>
-      </section>
-      <Breakdown theme={theme} tile={selected} members={members} />
-    </div>
+    <section className="party-panel party-board">
+      <div className="party-panel-head">
+        <h2>{COPY.bossClearTitle}</h2>
+        <PillGroup theme={theme} options={FILTER_OPTIONS} value={filter} onChange={setFilter} wrap />
+      </div>
+      {groups.length === 0 ? (
+        <NothingRelevant theme={theme} tiles={tiles} members={members} onSitOut={onSitOut} onShowAll={() => setFilter("grandis")} />
+      ) : (
+        <>
+          <div className="party-thumbs">
+            {groups.map((group) => (
+              <BossThumb
+                key={group.boss}
+                theme={theme}
+                group={group}
+                selected={group === picked}
+                onSelect={() => setSelectedId(defaultTile(group).id)}
+              />
+            ))}
+          </div>
+          {picked && tile && <BossHero theme={theme} group={picked} tile={tile} members={members} onSelectTile={setSelectedId} />}
+        </>
+      )}
+      <p className="party-note">{COPY.caveat}</p>
+    </section>
   );
 }

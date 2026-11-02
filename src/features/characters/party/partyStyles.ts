@@ -56,51 +56,74 @@ export const partyStyles = `
   .party-add:hover .party-add-box, .party-add:focus-visible .party-add-box { border-color: var(--party-accent); color: var(--party-text); }
   .party-add:focus-visible { outline: none; }
 
-  /* The bosses, with the chosen one's breakdown beside them. */
-  .party-work { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 14px; margin-top: 14px; align-items: start; }
+  /* The bosses as a boss select: a strip of boss art to pick from, the picked one's hero below. */
+  .party-board { margin-top: 14px; }
   .party-panel { background: var(--party-panel); border: 1px solid var(--party-border); border-radius: 18px; padding: 16px 18px; }
   .party-panel-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
   .party-panel-head h2 { font-family: var(--font-heading); font-size: 1.25rem; margin: 0; }
-  /* One row per boss: its art on the left, its difficulties beside it. Every row is one height. */
-  .party-tiles { display: grid; gap: 8px; }
-  .party-boss { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 10px; align-items: center; }
-  .party-boss-cells { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 8px; }
-  .party-row {
-    width: 100%; display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; column-gap: 8px; align-items: center;
-    padding: 7px 8px 0; text-align: left; cursor: pointer; font: inherit; color: inherit;
-    background: none; border: 1px solid var(--party-border); border-radius: 10px; overflow: hidden; transition: border-color 140ms ease;
+  .party-thumbs { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 8px; }
+  .party-thumb {
+    position: relative; overflow: hidden; height: 72px; padding: 0; cursor: pointer; font: inherit; text-align: left;
+    background: var(--party-floor); border: 1px solid var(--party-border); border-radius: 12px; transition: border-color 140ms ease;
   }
-  .party-row:hover { border-color: var(--party-accent); }
-  .party-row:focus-visible { outline: 2px solid var(--party-accent); outline-offset: 1px; }
-  .party-row[aria-pressed="true"] { border-color: var(--party-accent); box-shadow: inset 0 0 0 1px var(--party-accent); }
-  /* The difficulty with its tag under it, the % beside both. */
-  .party-row-name { display: grid; min-width: 0; line-height: 1.25; }
-  .party-row-name > span:first-child { font-size: 0.82rem; font-weight: 700; color: var(--party-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .party-row strong { font-family: var(--font-heading); font-size: 1.25rem; line-height: 1.2; text-align: right; }
-  .party-row.is-blocked strong { color: var(--party-muted); }
+  .party-thumb-art { position: absolute; inset: 0; }
+  /* The splash art letters the boss's name across its top. Drawing it in a box that starts 16%
+     above the visible area (and runs 6% below it) keeps that strip out of view whatever the width (cover then scales
+     the picture to this taller box, so its top always lands above the cut). */
+  .party-art-crop { position: absolute; left: 0; right: 0; bottom: -6%; top: -16%; transform: translateY(var(--art-shift, 0%)); }
+  .party-thumb::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.7), transparent 65%); }
+  .party-thumb b {
+    position: absolute; left: 9px; right: 9px; bottom: 8px; z-index: 1; font-size: 0.85rem; font-weight: 800; color: #fff;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.8); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .party-thumb-bar { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; z-index: 1; }
+  .party-thumb:hover { border-color: var(--party-accent); }
+  .party-thumb:focus-visible { outline: 2px solid var(--party-accent); outline-offset: 2px; }
+  .party-thumb[aria-pressed="true"] { border-color: var(--party-accent); box-shadow: 0 0 0 1px var(--party-accent); }
+
+  /* The picked boss: its art large on the right, its difficulties and breakdown on the left. */
+  .party-hero {
+    position: relative; overflow: hidden; isolation: isolate; margin-top: 14px; min-height: 360px;
+    border: 1px solid var(--party-border); border-radius: 16px; background: var(--party-panel);
+  }
+  .party-hero-art {
+    /* From just inside the body's right edge (460px wide) to the panel's, faded in from the left.
+       Never narrower than 560px: on a narrow window it slides left under the faded part instead,
+       since a narrow box would scale the art to its height and bring the lettered name at the top
+       of every splash into view. */
+    position: absolute; top: 0; bottom: 0; right: 0; left: clamp(0px, calc(100% - 560px), 420px); z-index: -1;
+    -webkit-mask-image: linear-gradient(to left, #000 35%, rgba(0,0,0,0.6) 65%, transparent 100%);
+    mask-image: linear-gradient(to left, #000 35%, rgba(0,0,0,0.6) 65%, transparent 100%);
+  }
+  .party-hero-body { position: relative; width: min(460px, 100%); padding: 18px 20px 20px; }
+  .party-hero-body h3 { font-family: var(--font-heading); font-size: 1.6rem; line-height: 1.15; margin: 0 0 2px; }
+  .party-hero .party-facts { margin: 0 0 14px; }
+  .party-diffs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+  .party-diff {
+    width: 88px; display: grid; justify-items: center; padding: 6px 4px 0; cursor: pointer; overflow: hidden;
+    font: inherit; color: inherit; background: var(--party-panel); border: 1px solid var(--party-border); border-radius: 10px;
+    transition: border-color 140ms ease;
+  }
+  .party-diff:hover { border-color: var(--party-accent); }
+  .party-diff:focus-visible { outline: 2px solid var(--party-accent); outline-offset: 1px; }
+  .party-diff[aria-selected="true"] { border-color: var(--party-accent); box-shadow: inset 0 0 0 1px var(--party-accent); }
+  .party-diff-name { font-size: 0.75rem; font-weight: 800; color: var(--party-muted); }
+  .party-diff strong { font-family: var(--font-heading); font-size: 1.15rem; line-height: 1.15; }
+  .party-diff.is-blocked strong { color: var(--party-muted); }
   .party-tag { font-size: 0.75rem; font-weight: 800; white-space: nowrap; }
-  .party-strip { grid-column: 1 / -1; display: flex; height: 4px; margin: 7px -8px 0; background: var(--party-line); }
-  .party-row.is-blocked .party-strip { background: repeating-linear-gradient(90deg, var(--party-line) 0 6px, transparent 6px 10px); }
+  .party-diff .party-tag { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+  .party-strip { width: calc(100% + 8px); display: flex; height: 4px; margin: 5px -4px 0; background: var(--party-line); }
+  .party-diff.is-blocked .party-strip { background: repeating-linear-gradient(90deg, var(--party-line) 0 6px, transparent 6px 10px); }
   .party-strip i { display: block; height: 100%; transition: width 260ms ease; }
-  .party-fold { margin-top: 12px; border-top: 1px solid var(--party-border); padding-top: 10px; }
-  .party-fold summary {
-    cursor: pointer; font-weight: 800; font-size: 0.85rem; color: var(--party-muted); padding: 4px 0; width: fit-content;
-  }
-  .party-fold summary:hover, .party-fold summary:focus-visible { color: var(--party-text); }
-  .party-fold[open] summary { margin-bottom: 10px; }
   .party-note { font-size: 0.78rem; font-weight: 700; color: var(--party-muted); margin: 12px 0 0; }
   .party-empty { padding: 28px 8px; text-align: center; font-weight: 700; color: var(--party-muted); }
 
-  .party-side { position: sticky; top: 16px; }
-  .party-side-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 14px; }
-  .party-side-head h3 { font-family: var(--font-heading); font-size: 1.2rem; margin: 0; line-height: 1.2; }
-  .party-side-head span { font-size: 0.85rem; font-weight: 700; color: var(--party-muted); }
   .party-label { font-size: 0.75rem; font-weight: 800; color: var(--party-muted); margin: 0 0 8px; }
   .party-share { margin-bottom: 11px; }
   .party-share-line { display: flex; justify-content: space-between; gap: 8px; font-size: 0.85rem; font-weight: 800; margin-bottom: 4px; }
   .party-bar { height: 9px; border-radius: 999px; background: var(--party-line); overflow: hidden; }
   .party-bar i { display: block; height: 100%; border-radius: 999px; transition: width 260ms ease; }
-  .party-facts { font-size: 0.78rem; font-weight: 700; color: var(--party-muted); margin: -6px 0 14px; }
+  .party-facts { font-size: 0.8rem; font-weight: 700; color: var(--party-muted); }
   .party-share-name { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
   .party-share-name > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .party-loss { flex-shrink: 0; font-size: 0.75rem; font-weight: 800; white-space: nowrap; cursor: help; }
@@ -142,10 +165,6 @@ export const partyStyles = `
   .party-pick-name b { font-size: 0.88rem; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .party-pick-name small { font-size: 0.75rem; font-weight: 700; }
 
-  @media (max-width: 860px) {
-    .party-work { grid-template-columns: 1fr; }
-    .party-side { position: static; }
-  }
   @media (max-width: 640px) {
     .party-stage { grid-template-columns: repeat(3, minmax(0, 1fr)); padding: 0 4px; }
     .party-floor { display: none; }
@@ -161,6 +180,9 @@ export const partyStyles = `
     .party-member small { display: grid; justify-items: center; }
     .party-member small span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
     .party-sep { display: none; }
-    .party-boss { grid-template-columns: 1fr; }
+    .party-thumbs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .party-hero-art { left: 0; width: 100%; height: 150px; bottom: auto; -webkit-mask-image: linear-gradient(to top, transparent, #000 60%); mask-image: linear-gradient(to top, transparent, #000 60%); }
+    .party-hero-body { padding: 110px 14px 16px; }
+    .party-diff { flex: 1 1 76px; width: auto; }
   }
 `;

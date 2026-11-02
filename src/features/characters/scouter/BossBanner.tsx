@@ -16,7 +16,7 @@ export const DEFAULT_ART_POSITION = "50% 20%";
 // WZ image dump, picking the vertical anchor as a percentage of source height that lands on the
 // face in the wide banner crop. Gloom has no face, being an inanimate seal, so it is positioned
 // on the portal's glowing center.
-const BOSS_ART_POSITION: Record<string, string> = {
+export const BOSS_ART_POSITION: Record<string, string> = {
   스우: "50% 25%", 데미안: "42% 50%", 루시드: "50% 43%", 윌: "68% 61%", 더스크: "50% 53%",
   "진 힐라": "50% 23%", 듄켈: "48% 46%", "검은 마법사": "42% 19%", 세렌: "50% 33%",
   칼로스: "55% 60%", 대적자: "75% 29%", 흉성: "50% 26%", 카링: "50% 26%", 림보: "50% 58%",
