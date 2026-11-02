@@ -1,34 +1,16 @@
 "use client";
 
 /*
-  Characters route shell.
+  Characters hub: Your Characters (the directory), View a Character, and Party Scouter.
+  The directory itself lives at /characters/directory.
 */
-import { Suspense } from "react";
-import { useSearchParams } from "next/navigation";
 import AppShell from "../../components/AppShell";
-import CharactersWorkspace from "../../features/characters/CharactersWorkspace";
+import CharactersHub from "../../features/characters/hub/CharactersHub";
 
-function CharactersContent() {
-  const params = useSearchParams();
-  const initialCharacterName = params.get("character") ?? undefined;
-  const initialAction = params.get("action") ?? undefined;
+export default function CharactersHubPage() {
   return (
     <AppShell currentPath="/characters">
-      {({ theme }) => (
-        <CharactersWorkspace
-          theme={theme}
-          initialCharacterName={initialCharacterName}
-          initialAction={initialAction}
-        />
-      )}
+      {({ theme }) => <CharactersHub theme={theme} />}
     </AppShell>
-  );
-}
-
-export default function CharactersPage() {
-  return (
-    <Suspense fallback={null}>
-      <CharactersContent />
-    </Suspense>
   );
 }

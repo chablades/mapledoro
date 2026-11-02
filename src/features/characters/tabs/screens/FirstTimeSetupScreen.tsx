@@ -1,4 +1,5 @@
 import { CHARACTERS_COPY } from "../content";
+import BackToHubLink from "../components/BackToHubLink";
 import type { SearchPaneActions, SearchPaneModel } from "../paneModels";
 import {
   primaryButtonStyle,
@@ -18,6 +19,9 @@ export default function FirstTimeSetupScreen({ model, actions }: IntroModeScreen
   return (
     <>
       <div style={{ marginBottom: "1rem" }}>
+        <div style={{ marginBottom: "0.65rem" }}>
+          <BackToHubLink theme={theme} />
+        </div>
         <h1 style={titleStyle()}>{CHARACTERS_COPY.firstTimeSetup.title}</h1>
         <p style={subtitleStyle(theme)}>{CHARACTERS_COPY.firstTimeSetup.subtitle}</p>
       </div>

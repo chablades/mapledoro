@@ -12,6 +12,7 @@ import {
   type ImportFieldDiff,
 } from "../data/maplescouterImportData";
 import SetupStepFrame from "./SetupStepFrame";
+import { InlineArrow } from "../../tabs/components/ArrowLabels";
 
 interface MapleScouterImportStepProps {
   theme: AppTheme;
@@ -256,7 +257,7 @@ function HowToBox({ theme }: { theme: AppTheme }) {
             rel="noopener noreferrer"
             style={{ color: theme.accent, fontWeight: 700, textDecoration: "none" }}
           >
-            MapleScouter&apos;s Input page →
+            MapleScouter&apos;s Input page<InlineArrow />
           </a>
         </li>
         <li style={liStyle}>

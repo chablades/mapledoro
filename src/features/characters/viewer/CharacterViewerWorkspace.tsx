@@ -130,7 +130,7 @@ export default function CharacterViewerWorkspace({ theme }: { theme: AppTheme })
   function addToDirectory() {
     if (!viewing) return;
     stashPendingImport({ record: viewing.record, world: viewing.world, qrSource: viewing.qrSource });
-    router.push("/characters?action=import");
+    router.push("/characters/directory?action=import");
   }
 
   const reading = view.status === "reading" || (view.status === "idle" && linkData !== null);

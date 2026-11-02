@@ -8,6 +8,7 @@ import { resolveDisplayJobName } from "../setup/data/nexonJobMapping";
 import { CHARACTERS_COPY } from "../tabs/content";
 import CharacterAvatar from "../tabs/components/CharacterAvatar";
 import { panelCardStyle, primaryButtonStyle, secondaryButtonStyle } from "../tabs/components/uiStyles";
+import { BackLabel } from "../tabs/components/ArrowLabels";
 
 const COPY = CHARACTERS_COPY.characterViewer;
 
@@ -68,8 +69,8 @@ export default function ViewerProfileCard({ theme, character, existsInDirectory,
               <button type="button" onClick={onOpenAnother} className="char-profile-back-btn tap-target-44" style={backButtonStyle(theme)}>
                 {/* The same desktop and mobile pair as a profile's own back button: the longer
                     label pushed the card past a phone's width. */}
-                <span className="desktop-back-label">{`← ${COPY.openAnotherButton}`}</span>
-                <span className="mobile-back-label">← Back</span>
+                <span className="desktop-back-label"><BackLabel>{COPY.openAnotherButton}</BackLabel></span>
+                <span className="mobile-back-label"><BackLabel>Back</BackLabel></span>
               </button>
             </div>
             <div className={`confirmed-avatar-wrap ${imageLoaded ? "" : "image-skeleton-wrap"}`}>

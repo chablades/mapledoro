@@ -822,7 +822,7 @@ function NoCharactersState({ theme }: { theme: AppTheme }) {
         over time.
       </div>
       <Link
-        href="/characters"
+        href="/characters/directory"
         style={{
           display: "inline-flex",
           alignItems: "center",

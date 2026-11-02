@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import type { CSSProperties, ReactNode } from "react";
 import Image from "next/image";
 import type { AppTheme } from "../../../../components/themes";
+import { ForwardLabel } from "../../tabs/components/ArrowLabels";
 
 export interface TooltipContent {
   title: string;
@@ -230,7 +231,7 @@ export default function InfoTooltip({ content, theme, icon = "?", label = "More 
               rel="noreferrer"
               style={{ display: "inline-block", marginTop: "0.45rem", fontSize: "0.75rem", color: theme.accent, fontWeight: 700, textDecoration: "none" }}
             >
-              {content.link.label} →
+              <ForwardLabel>{content.link.label}</ForwardLabel>
             </a>
           )}
         </div>,

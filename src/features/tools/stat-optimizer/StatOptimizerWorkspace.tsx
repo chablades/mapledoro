@@ -350,7 +350,7 @@ function CalibrationNote({ theme, notice }: { theme: AppTheme; notice: Calibrati
     <WarnNote theme={theme}>
       This is valued against your unbuffed stat window, so it will not line up with MapleScouter.
       For the most accurate recommendation, {action} in{" "}
-      <Link href="/characters" style={{ color: theme.accentText }}>Characters</Link>, which accounts
+      <Link href="/characters/directory" style={{ color: theme.accentText }}>Characters</Link>, which accounts
       for your link skills and buffs.
     </WarnNote>
   );
@@ -384,7 +384,7 @@ function ApplyOutcomeLine({ theme, run }: { theme: AppTheme; run: ApplyRun }) {
     return (
       <div style={{ ...APPLY_NOTE, color: theme.muted }}>
         Applied. Finish this character&apos;s Scouter setup in{" "}
-        <Link href="/characters" style={{ color: theme.accentText }}>Characters</Link> to get a Boss
+        <Link href="/characters/directory" style={{ color: theme.accentText }}>Characters</Link> to get a Boss
         380 HEXA figure.
       </div>
     );
@@ -393,7 +393,7 @@ function ApplyOutcomeLine({ theme, run }: { theme: AppTheme; run: ApplyRun }) {
     return (
       <div style={{ ...APPLY_NOTE, color: statusText(theme, "warning") }}>
         Applied, but the Boss 380 HEXA lookup did not come back. Refresh the figure in{" "}
-        <Link href="/characters" style={{ color: theme.accentText }}>Characters</Link>.
+        <Link href="/characters/directory" style={{ color: theme.accentText }}>Characters</Link>.
       </div>
     );
   }
@@ -1265,7 +1265,7 @@ function CharacterControls({ theme, opt, styles }: { theme: AppTheme; opt: StatO
         ) : (
           <div className="stat-opt-char-note" style={{ fontSize: "0.82rem", color: theme.muted, fontWeight: 600, lineHeight: 1.5 }}>
             Enter your stats below, or add a character in{" "}
-            <Link href="/characters" style={{ color: theme.accentText }}>Characters</Link> to autopopulate.
+            <Link href="/characters/directory" style={{ color: theme.accentText }}>Characters</Link> to autopopulate.
           </div>
         )}
         {/* Opts into the shared control row so the level box and the segmented

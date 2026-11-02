@@ -21,6 +21,7 @@ import { familiarBadgeUrl } from "../../../../lib/mapleResource";
 import { FamiliarCardSprite } from "../../../../components/FamiliarCardSprite";
 import SetupStepFrame from "./SetupStepFrame";
 import { CopyFromPreset } from "./CopyFromPreset";
+import { BackLabel } from "../../tabs/components/ArrowLabels";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -509,7 +510,7 @@ function TierPickerView({ entry, theme, onBack, onSelect }: {
         onClick={onBack}
         style={tierBackButtonStyle(theme)}
       >
-        ← {getFamiliarDisplayLabel(entry)}
+        <BackLabel>{getFamiliarDisplayLabel(entry)}</BackLabel>
       </button>
       <p style={{ margin: "0 0 2px", fontSize: "0.75rem", color: theme.muted, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em" }}>
         Pick rarity

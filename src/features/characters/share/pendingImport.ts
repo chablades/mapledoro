@@ -1,5 +1,5 @@
 // Hands a character from the viewer to Import Character: the viewer stashes what it was showing
-// and opens /characters?action=import, where the import screen picks it up as if the file had
+// and opens /characters/directory?action=import, where the import screen picks it up as if the file had
 // been chosen there, conflict handling and all. sessionStorage, so it never outlives the tab.
 
 import { parseImportedCharacterFile, type CharacterExportWorldData, type StoredCharacterRecord } from "../model/charactersStore";

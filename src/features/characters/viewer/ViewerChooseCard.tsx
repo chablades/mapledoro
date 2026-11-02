@@ -5,8 +5,9 @@ import type { AppTheme } from "../../../components/themes";
 import { statusText } from "../../../components/statusColors";
 import { CHARACTERS_COPY } from "../tabs/content";
 import { secondaryButtonStyle, subtitleStyle, titleStyle } from "../tabs/components/uiStyles";
-import { ExportTabIcon } from "../tabs/screens/CharacterProfileOverviewScreen";
+import ExportMention from "../tabs/components/ExportMention";
 import { useTouchDevice } from "../share/useTouchDevice";
+import BackToHubLink from "../tabs/components/BackToHubLink";
 
 const COPY = CHARACTERS_COPY.characterViewer;
 
@@ -105,17 +106,14 @@ export default function ViewerChooseCard({ theme, reading, error, onFile }: {
 
   return (
     <>
+      <div style={{ marginBottom: "0.65rem" }}>
+        <BackToHubLink theme={theme} />
+      </div>
       <h1 style={titleStyle()}>{COPY.title}</h1>
-      <p style={{ ...subtitleStyle(theme), display: "flex", alignItems: "center", gap: "0.3rem", flexWrap: "wrap" }}>
-        {COPY.subtitlePrefix}
-        <span style={{ display: "inline-flex", alignItems: "center" }}>
-          <span style={{ display: "inline-flex", alignItems: "center", gap: "0.2rem", fontWeight: 800, color: theme.text }}>
-            <ExportTabIcon strokeWidth={2.5} />
-            {COPY.subtitleSuffix}
-          </span>
-          {isTouch ? "," : "."}
-        </span>
-        {isTouch && COPY.subtitleQr}
+      <p style={subtitleStyle(theme)}>
+        {COPY.subtitlePrefix}{" "}
+        <ExportMention theme={theme} label={COPY.subtitleSuffix} punctuation={isTouch ? "," : "."} />
+        {isTouch && " " + COPY.subtitleQr}
       </p>
       <p style={{ ...subtitleStyle(theme), marginTop: "0.25rem" }}>{COPY.subtitleNote}</p>
 

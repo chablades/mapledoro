@@ -696,7 +696,7 @@ function OverviewGroupHeader({ label, theme, onNavigate, bookmarkLabel, toolHref
       <HoverTooltip label={`View in ${bookmarkLabel} bookmark`} theme={theme}>
         <button type="button" onClick={onNavigate} style={overviewGroupHeaderButtonStyle(theme)}>
           {label}
-          <span aria-hidden="true" style={{ fontFamily: "var(--font-body)", fontSize: 17, fontWeight: 700, lineHeight: 1 }}>›</span>
+          <NavChevron direction="next" size={15} />
         </button>
       </HoverTooltip>
       {toolHref && (
@@ -1634,12 +1634,12 @@ function StatsActionBar({ view, theme, onSelect }: { view: StatsView; theme: The
   return (
     <div style={{ display: "flex", gap: 10 }}>
       <div style={{ flex: 1 }}>
-        {view === "stats" && <button type="button" style={btnStyle} onClick={() => onSelect("hyperStat")}><span aria-hidden="true">‹</span> Hyper Stats</button>}
-        {view === "ability" && <button type="button" style={btnStyle} onClick={() => onSelect("stats")}><span aria-hidden="true">‹</span> Stats</button>}
+        {view === "stats" && <button type="button" style={btnStyle} onClick={() => onSelect("hyperStat")}><NavChevron direction="prev" size={12} /> Hyper Stats</button>}
+        {view === "ability" && <button type="button" style={btnStyle} onClick={() => onSelect("stats")}><NavChevron direction="prev" size={12} /> Stats</button>}
       </div>
       <div style={{ flex: 1 }}>
-        {view === "stats" && <button type="button" style={btnStyle} onClick={() => onSelect("ability")}>Ability <span aria-hidden="true">›</span></button>}
-        {view === "hyperStat" && <button type="button" style={btnStyle} onClick={() => onSelect("stats")}>Stats <span aria-hidden="true">›</span></button>}
+        {view === "stats" && <button type="button" style={btnStyle} onClick={() => onSelect("ability")}>Ability <NavChevron direction="next" size={12} /></button>}
+        {view === "hyperStat" && <button type="button" style={btnStyle} onClick={() => onSelect("stats")}>Stats <NavChevron direction="next" size={12} /></button>}
       </div>
     </div>
   );
@@ -1967,27 +1967,25 @@ function equipmentBookmarkHeaderLabel(view: EquipmentBookmarkView, defaultLabel:
   return defaultLabel;
 }
 
-const equipmentActionArrowStyle: CSSProperties = { flexShrink: 0 };
-
 function EquipmentActionBar({ view, theme, onSelect }: { view: EquipmentBookmarkView; theme: Theme; onSelect: (v: EquipmentBookmarkView) => void }) {
   // height: "100%" + the parent row's default stretch alignment keeps both buttons equal
   // height even when one label (e.g. "Titles, Totems & Symbols") wraps to 2 lines and its
-  // sibling doesn't. The label is its own <span> (not a bare text node beside the arrow's
-  // span) so it wraps as a normal flex item instead of the arrow drifting to the edge.
+  // sibling doesn't. The label is its own <span> (not a bare text node beside the arrow)
+  // so it wraps as a normal flex item instead of the arrow drifting to the edge.
   const btnStyle: CSSProperties = { ...secondaryButtonStyle(theme, "8px 0"), width: "100%", height: "100%", fontSize: 12, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 };
   return (
     <div style={{ display: "flex", gap: 10 }}>
       <div style={{ flex: 1 }}>
         {view === "gear" && (
           <button type="button" style={btnStyle} onClick={() => onSelect("titles")}>
-            <span aria-hidden="true" style={equipmentActionArrowStyle}>‹</span>
+            <NavChevron direction="prev" size={12} />
             <span className="equipment-action-label-full">Titles, Totems & Symbols</span>
             <span className="equipment-action-label-short">Titles & Symbols</span>
           </button>
         )}
         {view === "pets" && (
           <button type="button" style={btnStyle} onClick={() => onSelect("gear")}>
-            <span aria-hidden="true" style={equipmentActionArrowStyle}>‹</span>
+            <NavChevron direction="prev" size={12} />
             <span>Gear</span>
           </button>
         )}
@@ -1996,13 +1994,13 @@ function EquipmentActionBar({ view, theme, onSelect }: { view: EquipmentBookmark
         {view === "gear" && (
           <button type="button" style={btnStyle} onClick={() => onSelect("pets")}>
             <span>Pets</span>
-            <span aria-hidden="true" style={equipmentActionArrowStyle}>›</span>
+            <NavChevron direction="next" size={12} />
           </button>
         )}
         {view === "titles" && (
           <button type="button" style={btnStyle} onClick={() => onSelect("gear")}>
             <span>Gear</span>
-            <span aria-hidden="true" style={equipmentActionArrowStyle}>›</span>
+            <NavChevron direction="next" size={12} />
           </button>
         )}
       </div>
@@ -2503,7 +2501,7 @@ function HexaActionBar({ view, theme, onSelect }: { view: HexaBookmarkView; them
       <div style={{ flex: 1 }}>
         {view === "stat" && (
           <button type="button" style={btnStyle} onClick={() => onSelect("skills")}>
-            <span aria-hidden="true" style={equipmentActionArrowStyle}>‹</span>
+            <NavChevron direction="prev" size={12} />
             <span>HEXA Skills</span>
           </button>
         )}
@@ -2512,7 +2510,7 @@ function HexaActionBar({ view, theme, onSelect }: { view: HexaBookmarkView; them
         {view === "skills" && (
           <button type="button" style={btnStyle} onClick={() => onSelect("stat")}>
             <span>HEXA Stat</span>
-            <span aria-hidden="true" style={equipmentActionArrowStyle}>›</span>
+            <NavChevron direction="next" size={12} />
           </button>
         )}
       </div>

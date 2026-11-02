@@ -6,6 +6,15 @@ const nextConfig = {
   // have no hand-written React.memo, so this is what stops a workspace-level
   // state change from re-rendering every card and row beneath it.
   reactCompiler: true,
+  // /characters became the Characters hub and the directory moved to /characters/directory.
+  // Links from before the move (bookmarks, the home page, shared profile links) carry the
+  // directory's own query, so those go straight there; the query string passes through.
+  async redirects() {
+    return [
+      { source: "/characters", has: [{ type: "query", key: "character" }], destination: "/characters/directory", permanent: false },
+      { source: "/characters", has: [{ type: "query", key: "action" }], destination: "/characters/directory", permanent: false },
+    ];
+  },
   async headers() {
     return [
       {

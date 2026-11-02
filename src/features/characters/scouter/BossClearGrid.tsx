@@ -25,6 +25,7 @@ import { maxedSacredSymbols, sacredFigureNote, savedMaxedSymbols, savedSacredLev
 import { changeLine, useCountUp, useScouterChange, type ScouterChange } from "./useScouterChange";
 import ScouterChangeChip from "./ScouterChangeChip";
 import type { StoredScouterBuffs } from "../model/charactersStore";
+import { BackLabel } from "../tabs/components/ArrowLabels";
 
 // Icon ids looked up by hand from manifests/v271/ui-boss.json, renamed from boss.json as of
 // v269 (see the Image Policy in the root CLAUDE.md), cross-checked against the same bosses
@@ -1040,7 +1041,7 @@ function SpotlightTile({ theme, iconId, displayName, entry, result }: {
 // A full-bleed backdrop version of BossBanner's fade trick, using a radial mask like the Bio
 // bookmark's ClassPortrait fade rather than a linear one, since this backdrop has content
 // overlaid on all sides rather than only needing to fade into what sits to its right.
-// Matches the "← Characters" nav button's look (secondaryButtonStyle, ← arrow glyph).
+// Matches the "Characters" back pill's look (secondaryButtonStyle and the drawn back arrow).
 function BackToQuickViewButton({ theme, onClick }: { theme: AppTheme; onClick: () => void }) {
   return (
     <button
@@ -1049,7 +1050,7 @@ function BackToQuickViewButton({ theme, onClick }: { theme: AppTheme; onClick: (
       onClick={onClick}
       style={{ ...secondaryButtonStyle(theme, "0.38rem 0.62rem"), fontSize: "0.76rem" }}
     >
-      ← Quick View
+      <BackLabel>Quick View</BackLabel>
     </button>
   );
 }

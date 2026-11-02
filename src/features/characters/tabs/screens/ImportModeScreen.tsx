@@ -25,7 +25,8 @@ import { MAX_CHAMPIONS, type RosterRole } from "../useCharacterSetupController";
 import CharacterAvatar from "../components/CharacterAvatar";
 import ImportConflictDialog from "./ImportConflictDialog";
 import ChampionSwapDialog from "./ChampionSwapDialog";
-import { ExportTabIcon } from "./CharacterProfileOverviewScreen";
+import ExportMention from "../components/ExportMention";
+import { BackLabel } from "../components/ArrowLabels";
 import {
   primaryButtonStyle,
   secondaryButtonStyle,
@@ -309,7 +310,7 @@ export default function ImportModeScreen({ model, actions }: ImportModeScreenPro
             }}
           >
             {search.hasCompletedRequiredFlow
-              ? CHARACTERS_COPY.searchEntry.backToCharactersButton
+              ? <BackLabel>{CHARACTERS_COPY.searchEntry.backToCharactersButton}</BackLabel>
               : CHARACTERS_COPY.importCharacter.backButton}
           </button>
           <button
@@ -334,17 +335,10 @@ export default function ImportModeScreen({ model, actions }: ImportModeScreenPro
         </div>
         <div>
           <h1 style={titleStyle()}>{CHARACTERS_COPY.importCharacter.title}</h1>
-          <p style={{ ...subtitleStyle(theme), display: "flex", alignItems: "center", gap: "0.3rem", flexWrap: "wrap" }}>
-            {CHARACTERS_COPY.importCharacter.subtitlePrefix}
-            {/* The punctuation shares the bold label's flex item so the row's gap doesn't land before it. */}
-            <span style={{ display: "inline-flex", alignItems: "center" }}>
-              <span style={{ display: "inline-flex", alignItems: "center", gap: "0.2rem", fontWeight: 800, color: theme.text }}>
-                <ExportTabIcon strokeWidth={2.5} />
-                {CHARACTERS_COPY.importCharacter.subtitleSuffix}
-              </span>
-              {isTouch ? "," : "."}
-            </span>
-            {isTouch && CHARACTERS_COPY.importCharacter.subtitleQr}
+          <p style={subtitleStyle(theme)}>
+            {CHARACTERS_COPY.importCharacter.subtitlePrefix}{" "}
+            <ExportMention theme={theme} label={CHARACTERS_COPY.importCharacter.subtitleSuffix} punctuation={isTouch ? "," : "."} />
+            {isTouch && " " + CHARACTERS_COPY.importCharacter.subtitleQr}
           </p>
         </div>
       </div>

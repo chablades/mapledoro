@@ -9,6 +9,7 @@ import WarningIcon from "../../../../components/WarningIcon";
 import HoverTooltip from "../../../../components/HoverTooltip";
 import { statusText } from "../../../../components/statusColors";
 import { characterExpPercent, isExpTrackingAvailable, resolveExpDelta, type ExpDelta } from "../../model/expProgress";
+import { BackLabel } from "../components/ArrowLabels";
 
 function navBackButtonColorStyle(theme: SearchPaneModel["theme"]): CSSProperties {
   const { border, background, color } = secondaryButtonStyle(theme);
@@ -223,9 +224,9 @@ export default function CharacterProfileScreen({
             {profile.canViewCharacterDirectory ? (
               <>
                 <span className="desktop-back-label">
-                  {`← ${CHARACTERS_COPY.characterProfile.viewYourCharactersButton}`}
+                  <BackLabel>{CHARACTERS_COPY.characterProfile.viewYourCharactersButton}</BackLabel>
                 </span>
-                <span className="mobile-back-label">← Back</span>
+                <span className="mobile-back-label"><BackLabel>Back</BackLabel></span>
               </>
             ) : (
               CHARACTERS_COPY.characterProfile.backButton

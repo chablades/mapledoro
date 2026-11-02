@@ -6,6 +6,7 @@ import type { SearchPaneActions, SearchPaneModel, SetupDraftSummary } from "../p
 import { statusText } from "../../../../components/statusColors";
 import CharacterAvatar from "../components/CharacterAvatar";
 import { DropdownChevron } from "../../DropdownChevron";
+import { BackLabel } from "../components/ArrowLabels";
 import {
   primaryButtonStyle,
   secondaryButtonStyle,
@@ -255,7 +256,7 @@ export default function SearchEntryScreen({ model, actions }: SearchEntryScreenP
             }}
           >
             {search.hasCompletedRequiredFlow
-              ? CHARACTERS_COPY.searchEntry.backToCharactersButton
+              ? <BackLabel>{CHARACTERS_COPY.searchEntry.backToCharactersButton}</BackLabel>
               : CHARACTERS_COPY.searchEntry.backButton}
           </button>
           <button
