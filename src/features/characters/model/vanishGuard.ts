@@ -77,9 +77,10 @@ export function restoreVanishedCharacters(before: CharactersStore, next: Charact
     mainCharacterIdByWorld: { ...next.mainCharacterIdByWorld },
     championCharacterIdsByWorld: { ...next.championCharacterIdsByWorld },
   };
+  const ordered = new Set(store.order);
   for (const key of restored) {
     store.charactersById[key] = before.charactersById[key];
-    if (!store.order.includes(key)) store.order.push(key);
+    if (!ordered.has(key)) store.order.push(key);
     restoreRoles(before, store, key);
   }
   return { store, restored, removed };
