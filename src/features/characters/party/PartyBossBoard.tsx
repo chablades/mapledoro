@@ -11,7 +11,7 @@ import { statusText } from "../../../components/statusColors";
 import { bossSplashUrl } from "../../../lib/mapleResource";
 import { PillGroup } from "../../tools/shared-ui";
 import type { ClearColorTier, PartyMemberShare } from "../scouter/bossClearFormula";
-import { BOSS_ART_POSITION, DEFAULT_ART_POSITION } from "../scouter/BossBanner";
+import { BOSS_ART_POSITION, DEFAULT_ART_POSITION } from "../scouter/bossArt";
 import { lossBreakdown } from "../scouter/bossLoss";
 import { formatFigure } from "../scouter/scouterFormat";
 import { CHARACTERS_COPY } from "../tabs/content";
