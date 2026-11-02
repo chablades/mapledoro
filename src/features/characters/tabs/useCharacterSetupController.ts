@@ -24,6 +24,7 @@ import {
   type StoredVMatrixData,
   type WhLegionRank,
   selectCharactersList,
+  CHARACTERS_STORE_STORAGE_KEY,
   linkSkillsDraftToStored,
   writeScouterLegionForWorld,
   writeLinkSkillTotalsForWorld,
@@ -1194,6 +1195,10 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
   // unrelated out-of-band write (e.g. a Scouter refresh) with memory's now-stale copy. See the
   // tools merge below for the read side.
   const lastSeenToolsRef = useRef<Record<string, StoredCharacterRecord["tools"]>>({});
+  // Set when the roster was just reloaded from another tab's save, so the persist effect skips
+  // the pass that reload triggers. Saving it back would be a no-op at best, and would fire the
+  // same storage event in the other tab, which would reload and save, and so on.
+  const skipNextPersistRef = useRef(false);
   const [autoRefreshQueue, setAutoRefreshQueue] = useState<StoredCharacterRecord[]>([]);
 
   // Dev-only: surfaces malformed CLASS_SKILL_DATA entries (empty id/nexonJobName,
@@ -1794,6 +1799,10 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
   useEffect(() => {
     if (!hasHydratedSetupDraftRef.current) return;
     if (typeof window === "undefined") return;
+    if (skipNextPersistRef.current) {
+      skipNextPersistRef.current = false;
+      return;
+    }
 
     const existingStore = readCharactersStore();
     // The pre-hydration race, where the roster is momentarily empty before load, is handled
@@ -2102,6 +2111,36 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
       setIsSwitchingToDirectory(false);
     }, CHARACTERS_TRANSITION_MS.slow);
   }, [transitions]);
+
+  // Another tab saved the store (or Settings cleared it, which reports a null key). Reload the
+  // roster and roles from disk so this tab shows the change, and so its next save builds on it
+  // rather than writing back its older copy: reverting edits, undoing role changes, bringing
+  // back removed characters, or letting a cap check pass against an out-of-date count.
+  useEffect(() => {
+    const onStorage = (event: StorageEvent) => {
+      if (event.key !== null && event.key !== CHARACTERS_STORE_STORAGE_KEY) return;
+      if (!hasHydratedSetupDraftRef.current) return;
+      const store = readCharactersStore();
+      const roster = selectCharactersList(store);
+      // Treat the reloaded tools as already seen, so the next real save trusts disk for them.
+      for (const character of roster) lastSeenToolsRef.current[toCharacterKey(character)] = character.tools;
+      skipNextPersistRef.current = true;
+      setCharacterRoster(roster);
+      setMainCharacterKeyByWorld(store.mainCharacterIdByWorld);
+      setChampionCharacterKeysByWorld(store.championCharacterIdsByWorld);
+      // The character open here was removed in the other tab. A character mid-setup that was
+      // never saved isn't in either roster, so it stays put.
+      if (!confirmedCharacter) return;
+      const key = toCharacterKey(confirmedCharacter);
+      const wasSaved = characterRosterRef.current.some((c) => toCharacterKey(c) === key);
+      if (wasSaved && !store.charactersById[key]) {
+        setConfirmedCharacter(null);
+        backToCharactersDirectory();
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, [backToCharactersDirectory, confirmedCharacter]);
 
   const setSetupStepWithDirection = useCallback(
     (nextStep: number, forceDirection?: "forward" | "backward") => {
