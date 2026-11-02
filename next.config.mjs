@@ -29,6 +29,10 @@ const nextConfig = {
     // IP here, since it's specific to whoever's machine is running `next dev`.
     ...(process.env.DEV_LAN_ORIGIN ? [process.env.DEV_LAN_ORIGIN] : []),
   ],
+  experimental: {
+    // Use the Rust port instead of the Babel transform
+    turbopackRustReactCompiler: true,
+  },
   images: {
     minimumCacheTTL: 2678400,
     remotePatterns: [

@@ -19,7 +19,6 @@ import {
   type ItemLevel,
   type WeaponLevel,
   computeFlameResults,
-  computeFlameScore,
   defaultEquivalences,
   defaultDesiredStat,
   flameMesoCost,
@@ -28,7 +27,6 @@ import {
   type FlameType,
   type ItemType,
   type StatEquivalences,
-  type FlameScoreInputs,
   type FlameResults,
 } from "./flaming-data";
 
@@ -50,7 +48,6 @@ interface CalcState {
   desiredStat: number;
   guildDiscount: boolean;
   equivalences: StatEquivalences;
-  flameScore: FlameScoreInputs;
 }
 
 type CalcAction =
@@ -63,8 +60,7 @@ type CalcAction =
   | { type: "setFlameAdvantaged"; value: boolean }
   | { type: "setDesiredStat"; value: number }
   | { type: "setGuildDiscount"; value: boolean }
-  | { type: "setEquiv"; field: keyof StatEquivalences; value: number }
-  | { type: "setFlameScoreField"; field: keyof FlameScoreInputs; value: number };
+  | { type: "setEquiv"; field: keyof StatEquivalences; value: number };
 
 function initState(): CalcState {
   const eq = defaultEquivalences("other");
@@ -79,7 +75,6 @@ function initState(): CalcState {
     desiredStat: 100,
     guildDiscount: true,
     equivalences: eq,
-    flameScore: { mainStat: 0, secondaryStat: 0, allStatPct: 0, attack: 0, bossPct: 0, dmgPct: 0, hp: 0, dex: 0, str: 0, luk: 0 },
   };
 }
 
@@ -112,8 +107,6 @@ function reducer(state: CalcState, action: CalcAction): CalcState {
       return { ...state, guildDiscount: action.value };
     case "setEquiv":
       return { ...state, equivalences: { ...state.equivalences, [action.field]: action.value } };
-    case "setFlameScoreField":
-      return { ...state, flameScore: { ...state.flameScore, [action.field]: action.value } };
   }
 }
 
@@ -488,89 +481,6 @@ function ResultsBody({ theme, results, showMeso, guildDiscount, desiredStat, tar
   );
 }
 
-function FlameScorePanel({
-  theme,
-  state,
-  dispatch,
-  inputStyle,
-  labelStyle,
-  panelStyle,
-  summaryRowStyle,
-}: {
-  theme: AppTheme;
-  state: CalcState;
-  dispatch: React.ActionDispatch<[action: CalcAction]>;
-  inputStyle: CSSProperties;
-  labelStyle: CSSProperties;
-  panelStyle: CSSProperties;
-  summaryRowStyle: CSSProperties;
-}) {
-  const uid = useId();
-  const cls = state.flameClass;
-  const setField = useCallback(
-    (field: keyof FlameScoreInputs, value: number) => dispatch({ type: "setFlameScoreField", field, value }),
-    [dispatch],
-  );
-
-  const score = useMemo(
-    () => computeFlameScore(cls, state.itemType, state.flameScore, state.equivalences),
-    [cls, state.itemType, state.flameScore, state.equivalences],
-  );
-
-  const fieldInputStyle: CSSProperties = { ...inputStyle, width: "100%", textAlign: "center", padding: "8px 10px" };
-  const flexItem: CSSProperties = { flex: "1 1 0", minWidth: 0 };
-
-  const scoreField = (field: keyof FlameScoreInputs, label: string) => {
-    const id = `${uid}-${field}`;
-    return (
-      <Field label={label} htmlFor={id} style={labelStyle} containerStyle={flexItem}>
-        <ToolNumberInput
-          id={id}
-          min={0}
-          value={state.flameScore[field]}
-          onKeyDown={replaceZeroOnDigit}
-          onCommit={(value) => setField(field, value)}
-          style={fieldInputStyle}
-        />
-      </Field>
-    );
-  };
-
-  return (
-    <section className="fade-in panel-card" style={panelStyle}>
-      <h2 className="tool-panel-title" style={{ color: theme.text }}>Flame Score Checker</h2>
-      <p style={{ fontSize: "0.75rem", fontWeight: 600, color: theme.muted, margin: "0 0 1rem" }}>
-        Enter your current bonus stats to calculate your flame score.
-      </p>
-
-      <div className="flame-score-fields" style={{ display: "flex", gap: "12px", marginBottom: "1rem" }}>
-        {cls !== "da" && scoreField("mainStat", "Main Stat")}
-        {cls === "da" && scoreField("hp", "HP")}
-        {cls === "other" && scoreField("secondaryStat", "Secondary Stat")}
-        {(cls === "db" || cls === "shadower" || cls === "cadena") && (
-          <>
-            {scoreField("dex", "DEX")}
-            {scoreField("str", "STR")}
-          </>
-        )}
-        {cls !== "da" && scoreField("allStatPct", "All Stat %")}
-        {scoreField("attack", "Attack Power")}
-        {state.itemType === "weapon" && (
-          <>
-            {scoreField("bossPct", "Boss %")}
-            {scoreField("dmgPct", "Damage %")}
-          </>
-        )}
-      </div>
-
-      <div style={summaryRowStyle}>
-        <span style={{ fontSize: "0.82rem", fontWeight: 700, color: theme.muted }}>Flame score</span>
-        <span style={{ fontSize: "1.15rem", fontWeight: 800, color: theme.accentText }}>{score}</span>
-      </div>
-    </section>
-  );
-}
-
 // -- Main workspace -----------------------------------------------------------
 
 export default function FlamingWorkspace({ theme }: { theme: AppTheme }) {
@@ -622,7 +532,6 @@ export default function FlamingWorkspace({ theme }: { theme: AppTheme }) {
     <div className="page-content">
       <style>{`
         @media (max-width: 640px) {
-          .flame-score-fields { flex-wrap: wrap; }
           .flame-toggles { flex-direction: column; align-items: stretch !important; }
           .flame-toggles .tool-btn { width: 100%; }
         }
@@ -669,8 +578,6 @@ export default function FlamingWorkspace({ theme }: { theme: AppTheme }) {
             )}
           </div>
         </section>
-
-        <FlameScorePanel theme={theme} state={state} dispatch={dispatch} inputStyle={inputStyle} labelStyle={labelStyle} panelStyle={panelStyle} summaryRowStyle={summaryRowStyle} />
       </div>
     </div>
   );

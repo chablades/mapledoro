@@ -1,0 +1,48 @@
+{
+  "_meta": {
+    "note": "CUSTOM ART - NOT from the game WZ. champion.png and destiny.png are hand-made difficulty badges (tiers above extreme), for mapledoro only. Not produced by dump.bat/patch-day.bat, not covered by prune - lives in the misc namespace alongside other hand-authored non-WZ assets (see the assets/misc convention). Composited with the same offset/style as the real easy/normal/hard/chaos/extreme boss badges (see src/Extractor/BossDifficultyCompositor.cs in mapledoro-image) onto each boss icon.png.",
+    "assets": [
+      "champion.png",
+      "destiny.png"
+    ],
+    "urlPattern": "/api/img/misc/boss/{id}/{asset}"
+  },
+  "entries": {
+    "1": { "name": "Zakum" },
+    "2": { "name": "Horntail" },
+    "3": { "name": "Hilla" },
+    "4": { "name": "Pierre" },
+    "5": { "name": "Von Bon" },
+    "6": { "name": "Crimson Queen" },
+    "7": { "name": "Vellum" },
+    "8": { "name": "Von Leon" },
+    "9": { "name": "Arkarium" },
+    "10": { "name": "Magnus" },
+    "11": { "name": "Pink Bean" },
+    "12": { "name": "Cygnus" },
+    "13": { "name": "Lotus" },
+    "15": { "name": "Damien" },
+    "16": { "name": "Gollux" },
+    "17": { "name": "Ranmaru" },
+    "18": { "name": "Princess No" },
+    "19": { "name": "Lucid" },
+    "21": { "name": "OMNI-CLN" },
+    "22": { "name": "Papulatus" },
+    "23": { "name": "Will" },
+    "24": { "name": "Verus Hilla" },
+    "25": { "name": "Black Mage" },
+    "26": { "name": "Gloom" },
+    "27": { "name": "Darknell" },
+    "28": { "name": "Chosen Seren" },
+    "29": { "name": "Guardian Angel Slime" },
+    "30": { "name": "Kalos the Guardian" },
+    "31": { "name": "Kaling" },
+    "33": { "name": "Limbo" },
+    "34": { "name": "Baldrix" },
+    "35": { "name": "First Adversary" },
+    "36": { "name": "Kai" },
+    "37": { "name": "Malefic Star" },
+    "38": { "name": "Jupiter" },
+    "107": { "name": "Akechi Mitsuhide" }
+  }
+}
