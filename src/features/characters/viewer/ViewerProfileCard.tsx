@@ -11,6 +11,11 @@ import { panelCardStyle, primaryButtonStyle, secondaryButtonStyle } from "../tab
 
 const COPY = CHARACTERS_COPY.characterViewer;
 
+/** Local time, matching a saved profile's own "Updated" line (CharacterProfileScreen.tsx). */
+function formatFetchedAt(fetchedAt: number): string {
+  return new Date(fetchedAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+}
+
 const lineStyle = (theme: AppTheme, size: string): CSSProperties => ({
   margin: 0, width: "100%", fontSize: size, color: theme.muted, fontWeight: 700, lineHeight: 1.3, textAlign: "center",
 });
@@ -52,7 +57,7 @@ export default function ViewerProfileCard({ theme, character, existsInDirectory,
   onAdd: () => void;
 }) {
   const [imageLoaded, setImageLoaded] = useState(false);
-  const fetchedDate = new Date(character.fetchedAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+  const fetchedDate = formatFetchedAt(character.fetchedAt);
 
   return (
     <>
