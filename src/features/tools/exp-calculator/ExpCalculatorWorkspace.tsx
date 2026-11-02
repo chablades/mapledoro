@@ -18,7 +18,9 @@ import { dataTableTh, dropdownShadow } from "../shared-styles";
 import {
   ADV_EXP_TICKET_ICON,
   ADDITIVE_BUFF_GROUP,
+  BLUEBERRY_FARM_ICON,
   CHECK_BUFF_GROUPS,
+  CRIMSON_MECHABERRY_FARM_ICON,
   DAILY_EXP_CONTENT,
   DEFAULT_BUFF_STATE,
   DOUBLE_UP_ICON,
@@ -87,7 +89,9 @@ type AllInOneNumberKey =
   | "mpeRuns"
   | "epicDungeonMultiplier"
   | "strawberryTickets"
+  | "blueberryTickets"
   | "mechaberryTickets"
+  | "crimsonMechaberryTickets"
   | "expressBoosters"
   | "expTickets"
   | "advancedExpTickets"
@@ -235,7 +239,9 @@ function defaultAllInOneInput(): AllInOneInput {
     epicDungeonId: "",
     epicDungeonMultiplier: 1,
     strawberryTickets: 0,
+    blueberryTickets: 0,
     mechaberryTickets: 0,
+    crimsonMechaberryTickets: 0,
     expressBoosters: 0,
     expTickets: 0,
     advancedExpTickets: 0,
@@ -1355,7 +1361,9 @@ function AllInOneTab({ theme, imported }: { theme: AppTheme; imported: ImportedF
           <SectionTitle theme={theme} label="Events and Tickets" />
           <div className="exp-grid">
             <NumberField label="Strawberry Farm Tickets" icon={STRAWBERRY_FARM_ICON} min={0} value={input.strawberryTickets} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("strawberryTickets", value)} />
+            <NumberField label="Blueberry Farm Tickets" icon={BLUEBERRY_FARM_ICON} min={0} value={input.blueberryTickets} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("blueberryTickets", value)} />
             <NumberField label="Mechaberry Farm Tickets" icon={MECHABERRY_FARM_ICON} min={0} value={input.mechaberryTickets} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("mechaberryTickets", value)} />
+            <NumberField label="Crimson Mechaberry Tickets" icon={CRIMSON_MECHABERRY_FARM_ICON} min={0} value={input.crimsonMechaberryTickets} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("crimsonMechaberryTickets", value)} />
             <NumberField label="Punch King Score / Week" icon={PUNCH_KING_ICON} min={0} max={2050} value={input.punchKingScore} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("punchKingScore", value)} />
             <NumberField label="Express Boosters (Lv. 260+)" icon={EXPRESS_BOOSTER_ICON} min={0} value={input.expressBoosters} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("expressBoosters", value)} />
             <NumberField label="Double Up Points / Week" icon={DOUBLE_UP_ICON} min={0} value={input.doubleUpPoints} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updateNumber("doubleUpPoints", value)} />
@@ -1453,7 +1461,9 @@ const BREAKDOWN_CONTROLS: Record<NumericBreakdownControlId, { label: string; min
   punchKingPoints: { label: "Points", min: 0, max: PUNCH_KING_MAX_POINTS },
   strawberryTickets: { label: "Tickets", min: 0, max: 9999 },
   strawberryBonus: { label: "Bonus EXP %", min: 0, max: 500 },
+  blueberryTickets: { label: "Tickets", min: 0, max: 9999 },
   mechaberryTickets: { label: "Tickets", min: 0, max: 9999 },
+  crimsonMechaberryTickets: { label: "Tickets", min: 0, max: 9999 },
   expressMonsterLevel: { label: "Monster Level", min: EXPRESS_BOOSTER_MIN_LEVEL, max: MAX_MONSTER_LEVEL },
   hasteMonsterLevel: { label: "Monster Level", min: MIN_MONSTER_LEVEL, max: MAX_MONSTER_LEVEL },
   hasteKills: { label: "Monster Kills", min: 0, max: 99999 },
