@@ -244,7 +244,7 @@ export default function PreviewSetupPane({ model, actions }: PreviewSetupPanePro
             {activeScreenId === "setup-flow" && <SetupFlowScreen model={model} actions={actions} />}
 
             {activeScreenId === "profile-overview" && (
-              <CharacterProfileOverviewScreen model={model} actions={actions} />
+              <CharacterProfileOverviewScreen model={model} actions={actions} setupTab={{ model, actions }} />
             )}
           </div>
         </aside>

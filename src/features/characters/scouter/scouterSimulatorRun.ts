@@ -21,7 +21,7 @@ export async function runScouterSimulator(
   ctx: ScouterPayloadContext,
   overrides: ScouterSimulatorOverrides,
 ): Promise<ScouterSimulatorRunResult> {
-  const real = scouterResultFor(character);
+  const real = scouterResultFor(character, ctx);
   const cridmgeff1 = real?.ok ? real.entry.specEfficiency?.cridmgeff1 : undefined;
   const request = buildDirectScouterPayload(character, ctx, overrides, cridmgeff1);
   if (!request) return { status: "unsupported" };

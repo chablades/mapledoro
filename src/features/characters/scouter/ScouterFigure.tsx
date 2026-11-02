@@ -13,6 +13,8 @@ import { changeLine, useCountUp, useScouterChange, type ScouterChange } from "./
 import ScouterChangeChip from "./ScouterChangeChip";
 import { useScouterResult, type ScouterErrorReason, type ScouterFigureStatus } from "./useScouterResult";
 import type { ScouterSimulatorController } from "./useScouterSimulator";
+import { useScouterWorldContext } from "./scouterWorldContext";
+import { standaloneGapText } from "./scouterApi";
 
 // Same glyph as the profile binder's own Setup bookmark tab (CharacterProfileOverviewScreen.tsx's
 // SetupTabIcon), duplicated here rather than shared. It's a one-off icon, matching this
@@ -82,11 +84,12 @@ function readyTooltip(entry: ScouterResultEntry, theme: AppTheme, change: Scoute
 }
 
 /** The figure's own tooltip: what the number is when there is one, otherwise why there's none. */
-function figureTooltip(status: ScouterFigureStatus, theme: AppTheme, change: ScouterChange | null): ReactNode {
+function figureTooltip(status: ScouterFigureStatus, theme: AppTheme, change: ScouterChange | null, standalone: boolean): ReactNode {
   switch (status.kind) {
     case "ready": return readyTooltip(status.entry, theme, change);
     case "unsupported": return "Scouter doesn't support this class yet.";
-    case "incomplete": return `Fill out MapleScouter Setup's ${status.gap === "quickQuestions" ? "Quick Questions" : "Character Info"} to see this.`;
+    // A card in the viewer can't be filled in from here, so say why it has no figure instead.
+    case "incomplete": return standalone ? standaloneGapText(status.gap) : `Fill out MapleScouter Setup's ${status.gap === "quickQuestions" ? "Quick Questions" : "Character Info"} to see this.`;
     case "loading": return "Calculating…";
     case "error":
       return status.detail
@@ -125,6 +128,7 @@ export default function ScouterFigure({ character, theme, simulator, editAction 
   character: StoredCharacterRecord; theme: AppTheme; simulator: ScouterSimulatorController; editAction?: ReactNode;
 }) {
   const status = useScouterResult(character);
+  const standalone = useScouterWorldContext()?.standalone === true;
   const simulated = simulator.active;
   const real = status.kind === "ready" ? status.entry.boss380Hexa : null;
   const change = useScouterChange(character, status.kind === "ready" ? { boss380: status.entry.boss380Hexa, boss300: status.entry.boss300Hexa } : null);
@@ -142,7 +146,7 @@ export default function ScouterFigure({ character, theme, simulator, editAction 
   const valueColor = simulated ? statusText(theme, "warning") : figureValueColor(theme, status);
   const tooltip = simulated
     ? <>Boss 380 HEXA (simulated)<br /><span style={{ color: statusText(theme, "warning") }}>Showing a &quot;what if&quot; from the Scouter Simulator, not your real result.</span></>
-    : figureTooltip(status, theme, change);
+    : figureTooltip(status, theme, change, standalone);
 
   return (
     <div>

@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { classPortraitUrl } from "../../../../lib/classPortraits";
 import { worldIconUrl } from "../../../../lib/mapleResource";
-import { Fragment, useEffect, useMemo, useRef, useState, type ComponentType, type CSSProperties, type KeyboardEvent, type ReactNode, type Ref } from "react";
+import { createContext, Fragment, useContext, useEffect, useMemo, useRef, useState, type ComponentType, type CSSProperties, type KeyboardEvent, type ReactNode, type Ref } from "react";
 import { useMounted } from "../../../../lib/useMounted";
 import { useScrollEdges, edgeFadeMask } from "../../../../lib/useScrollEdges";
 import type { SetupFlowId } from "../../setup/flows";
@@ -44,6 +44,7 @@ import { statusText } from "../../../../components/statusColors";
 import { ItemIcon } from "../../../../components/ResourceImage";
 import HoverTooltip from "../../../../components/HoverTooltip";
 import ScouterFigure from "../../scouter/ScouterFigure";
+import { standaloneGapText } from "../../scouter/scouterApi";
 import ScouterEngineNotice from "../../scouter/ScouterEngineNotice";
 import { useScouterResult, type ScouterErrorReason } from "../../scouter/useScouterResult";
 import BossClearGrid, { type ScouterBookmarkView } from "../../scouter/BossClearGrid";
@@ -68,10 +69,31 @@ import {
 import { ARCANE_AREAS, SACRED_AREAS, GRAND_SACRED_AREAS, type SymbolArea } from "../../../tools/symbols/symbol-data";
 import type { SymbolState } from "../../../tools/symbols/useSymbolState";
 
-interface CharacterProfileOverviewScreenProps {
-  model: PreviewPaneModel;
-  actions: PreviewPaneActions;
+/** What the binder reads from the page model: the full PreviewPaneModel satisfies it, and the
+ *  read-only viewer (features/characters/viewer) builds just this much. */
+export interface ProfileScreenModel {
+  theme: PreviewPaneModel["theme"];
+  profile: { confirmedCharacter: StoredCharacterRecord | null };
+  setup: Pick<PreviewPaneModel["setup"], "isUiLocked" | "isDeleteTransitioning" | "lastActiveBookmarkId" | "lastActiveBookmarkSubView">;
 }
+
+export type ProfileScreenActions = Pick<
+  PreviewPaneActions,
+  | "rememberActiveBookmark" | "clearRestoredBookmark" | "startOptionalFlow" | "setOverviewLayout"
+  | "setStatsActivePreset" | "setEquipmentActivePreset" | "setHexaStatActivePreset" | "setFamiliarsActivePreset"
+>;
+
+interface CharacterProfileOverviewScreenProps {
+  model: ProfileScreenModel;
+  actions: ProfileScreenActions;
+  /** The Setup tab's own needs, which are the whole page's. Omitted by the viewer, which makes
+   *  the binder read-only: no Setup or Export, no edit pencils, and no lookups in the saved
+   *  store by the character's name. */
+  setupTab?: { model: PreviewPaneModel; actions: PreviewPaneActions };
+}
+
+/** True inside the viewer, where the character shown is a card rather than the player's own. */
+const ProfileReadOnlyContext = createContext(false);
 
 type Theme = PreviewPaneModel["theme"];
 type BookmarkId = "overview" | "gender_marriage" | Exclude<SetupStepId, "gender" | "marriage" | "maplescouter_import" | "link_skills" | "legion_artifacts" | "buffs" | "oz_rings"> | "exp" | "scouter" | "efficiency" | "setup";
@@ -154,6 +176,8 @@ const editMenuItemStyle = (theme: Theme): CSSProperties => ({
  *  instead of one step. Closes when focus leaves it or on Escape. */
 function EditMenuButton({ theme, label, items, disabled }: { theme: Theme; label: string; items: EditMenuItem[]; disabled: boolean }) {
   const [open, setOpen] = useState(false);
+  const readOnly = useContext(ProfileReadOnlyContext);
+  if (readOnly) return null;
   return (
     <div
       style={{ position: "relative" }}
@@ -199,6 +223,7 @@ function BookmarkPageHeader({ theme, label, onEdit, disabled, extraAction, editM
   /** In place of onEdit, a pencil that opens a menu of setup steps. */
   editMenu?: EditMenuItem[];
 }) {
+  const readOnly = useContext(ProfileReadOnlyContext);
   return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, gap: 10 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
@@ -206,7 +231,7 @@ function BookmarkPageHeader({ theme, label, onEdit, disabled, extraAction, editM
         {extraAction}
       </div>
       {editMenu && <EditMenuButton theme={theme} label={label} items={editMenu} disabled={disabled} />}
-      {!editMenu && onEdit !== null && (
+      {!readOnly && !editMenu && onEdit !== null && (
         <HoverTooltip label={`Edit ${label}`} theme={theme}>
           <button
             type="button"
@@ -337,8 +362,10 @@ function biographyBlockStyle(theme: Theme, filled: boolean): CSSProperties {
 function BiographyBlock({ theme, icon, label, caption, filled, onClick, disabled }: {
   theme: Theme; icon: ReactNode; label: string; caption: string; filled: boolean; onClick: () => void; disabled: boolean;
 }) {
+  const readOnly = useContext(ProfileReadOnlyContext);
   return (
     <div style={biographyBlockStyle(theme, filled)}>
+      {!readOnly && (
       <HoverTooltip label={`Edit ${label}`} theme={theme} style={{ position: "absolute", top: 8, right: 8 }}>
         <button
           type="button"
@@ -351,6 +378,7 @@ function BiographyBlock({ theme, icon, label, caption, filled, onClick, disabled
           <PencilIcon />
         </button>
       </HoverTooltip>
+      )}
       <div style={{ color: filled ? theme.accentText : theme.muted }}>{icon}</div>
       <div style={{ fontSize: 15, fontWeight: 800, color: theme.text }}>{label}</div>
       <div style={{ fontSize: 13, color: theme.muted }}>{caption}</div>
@@ -1290,7 +1318,7 @@ function renderOverviewSection(id: OverviewSectionId, ctx: OverviewSectionRender
 }
 
 function OverviewBookmark({ model, onNavigateToBookmark, onNavigateToGearSlot, onSetOverviewLayout, scouterSimulator, onEditStep }: {
-  model: PreviewPaneModel; onNavigateToBookmark: (id: BookmarkId, subView?: string) => void; onNavigateToGearSlot: (slotKey: SlotKey) => void; onSetOverviewLayout: (layout: OverviewSectionId[] | null) => void;
+  model: ProfileScreenModel; onNavigateToBookmark: (id: BookmarkId, subView?: string) => void; onNavigateToGearSlot: (slotKey: SlotKey) => void; onSetOverviewLayout: (layout: OverviewSectionId[] | null) => void;
   scouterSimulator: ScouterSimulatorController;
   onEditStep: (flowId: SetupFlowId, targetSubstep?: number, confineToSubstep?: boolean) => void;
 }) {
@@ -1304,29 +1332,30 @@ function OverviewBookmark({ model, onNavigateToBookmark, onNavigateToGearSlot, o
   const hexaClassDef = resolveHexaClassDef(classId);
 
   const mounted = useMounted();
+  const readOnly = useContext(ProfileReadOnlyContext);
   const charName = character?.characterName;
   const [customizing, setCustomizing] = useState(false);
   const hexaLevels = useMemo(() => {
     if (!mounted) return null;
     const fromState = (character?.tools?.hexaSkills as { levels?: HexaSkillLevels } | undefined)?.levels;
-    if (fromState) return fromState;
+    if (fromState || readOnly) return fromState ?? null;
     return readHexaLevels(charName);
   // react-doctor-disable-next-line exhaustive-deps -- deliberately depends on the narrowed `charName` primitive, not the whole `character` object, to avoid re-running when unrelated fields change
-  }, [mounted, charName, character?.tools]);
+  }, [mounted, readOnly, charName, character?.tools]);
   const hexaStatNodes = useMemo(() => {
     if (!mounted) return null;
     const fromState = (character?.tools?.hexaStat as { nodes?: HexaStatNode[] } | undefined)?.nodes;
-    if (fromState) return fromState;
+    if (fromState || readOnly) return fromState ?? null;
     return readHexaStatNodes(charName);
   // react-doctor-disable-next-line exhaustive-deps -- same narrowed-dependency reasoning as hexaLevels above
-  }, [mounted, charName, character?.tools]);
+  }, [mounted, readOnly, charName, character?.tools]);
   const symbolLevels = useMemo(() => {
     if (!mounted) return null;
     const fromState = (character?.tools?.symbols as { symbols?: Record<string, SymbolState> } | undefined)?.symbols;
-    if (fromState) return fromState;
+    if (fromState || readOnly) return fromState ?? null;
     return readSymbolLevels(charName);
   // react-doctor-disable-next-line exhaustive-deps -- same narrowed-dependency reasoning as hexaLevels above
-  }, [mounted, charName, character?.tools]);
+  }, [mounted, readOnly, charName, character?.tools]);
 
   // Three tiers, mirroring the gating table in the characters CLAUDE.md. Non-legacy 260 and
   // up gets HEXA as the endgame default. Non-legacy 200 to 259 has real V Matrix data worth
@@ -1357,6 +1386,7 @@ function OverviewBookmark({ model, onNavigateToBookmark, onNavigateToGearSlot, o
     <div style={{ display: "flex", flexDirection: "column", gap: 18, flex: 1 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
         <h3 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 800, color: theme.text }}>Overview</h3>
+        {!readOnly && (
         <HoverTooltip label="Customize Layout" theme={theme}>
           <button
             type="button"
@@ -1367,6 +1397,7 @@ function OverviewBookmark({ model, onNavigateToBookmark, onNavigateToGearSlot, o
             <CustomizeLayoutIcon />
           </button>
         </HoverTooltip>
+        )}
       </div>
 
       {/* Wraps so the Weapon/Secondary/Emblem icons drop under the Scouter figure on a narrow
@@ -1632,6 +1663,8 @@ function PresetTabs({
   theme: Theme; active: number; activePreset: number; onSelect: (n: number) => void; onSetActive: ((presetIndex: number) => void) | null; count?: number;
 }) {
   const isPreviewingActive = active === activePreset;
+  // A card in the viewer can be browsed by preset, but which one it has equipped isn't ours to set.
+  const readOnly = useContext(ProfileReadOnlyContext);
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -1673,7 +1706,7 @@ function PresetTabs({
             StatsBookmark) is also visibility-toggled when a sibling sub-view is active, and
             visibility is inherited — an explicit "visible" here would override that ancestor
             and punch the button through even while its whole view is hidden. */}
-        {onSetActive && (
+        {onSetActive && !readOnly && (
           <button
             type="button"
             tabIndex={isPreviewingActive ? -1 : 0}
@@ -2203,13 +2236,14 @@ function EquipmentBookmark({
 
   const charName = character?.characterName;
   const mounted = useMounted();
+  const readOnly = useContext(ProfileReadOnlyContext);
   const symbolLevels = useMemo(() => {
     if (!mounted) return null;
     const fromState = (character?.tools?.symbols as { symbols?: Record<string, SymbolState> } | undefined)?.symbols;
-    if (fromState) return fromState;
+    if (fromState || readOnly) return fromState ?? null;
     return readSymbolLevels(charName);
   // react-doctor-disable-next-line exhaustive-deps -- deliberately depends on the narrowed `charName` primitive, not the whole `character` object, to avoid re-running when unrelated fields change, mirrors readHexaLevels' own pattern above
-  }, [mounted, charName, character?.tools]);
+  }, [mounted, readOnly, charName, character?.tools]);
 
   // The 3 views stack in one grid cell, all present with only one visible, so the row
   // auto-sizes to the tallest, matching StatsBookmark's pattern. That includes the outer
@@ -2709,21 +2743,22 @@ function HexaMatrixBookmark({ theme, character, view, onViewChange, onSetActiveP
   onSetActivePreset: (nodeIndex: number, presetIndex: number) => void;
 }) {
   const mounted = useMounted();
+  const readOnly = useContext(ProfileReadOnlyContext);
   const charName = character?.characterName;
   const hexaLevels = useMemo(() => {
     if (!mounted) return null;
     const fromState = (character?.tools?.hexaSkills as { levels?: HexaSkillLevels } | undefined)?.levels;
-    if (fromState) return fromState;
+    if (fromState || readOnly) return fromState ?? null;
     return readHexaLevels(charName);
   // react-doctor-disable-next-line exhaustive-deps -- deliberately depends on the narrowed `charName` primitive, not the whole `character` object, to avoid re-running when unrelated fields change
-  }, [mounted, charName, character?.tools]);
+  }, [mounted, readOnly, charName, character?.tools]);
   const hexaStatNodes = useMemo(() => {
     if (!mounted) return null;
     const fromState = (character?.tools?.hexaStat as { nodes?: HexaStatNode[] } | undefined)?.nodes;
-    if (fromState) return fromState;
+    if (fromState || readOnly) return fromState ?? null;
     return readHexaStatNodes(charName);
   // react-doctor-disable-next-line exhaustive-deps -- same narrowed-dependency reasoning as hexaLevels above
-  }, [mounted, charName, character?.tools]);
+  }, [mounted, readOnly, charName, character?.tools]);
 
   const classId = character ? resolveClassId(character.jobName) : undefined;
   const hexaClassDef = resolveHexaClassDef(classId);
@@ -3264,6 +3299,7 @@ function ScouterResultGate({ theme, character, label, disabled, onEditStep, chil
   children: (entry: ScouterResultEntry) => ReactNode;
 }) {
   const status = useScouterResult(character);
+  const readOnly = useContext(ProfileReadOnlyContext);
   const editMenu = status.kind === "unsupported" ? undefined : scouterEditMenu(character, onEditStep);
   const header = <BookmarkPageHeader theme={theme} label={label} onEdit={null} disabled={disabled} editMenu={editMenu} />;
 
@@ -3288,8 +3324,8 @@ function ScouterResultGate({ theme, character, label, disabled, onEditStep, chil
         <GatedFeatureNotice
           theme={theme}
           title="Not Available"
-          description={"Fill out MapleScouter Setup\nbefore viewing this."}
-          action={(
+          description={readOnly ? standaloneGapText(status.gap) : "Fill out MapleScouter Setup\nbefore viewing this."}
+          action={readOnly ? undefined : (
             <button
               type="button"
               className="tool-dialog-btn"
@@ -3501,10 +3537,11 @@ function hexaMatrixTargetSubstep(view: HexaBookmarkView): number {
 // chain of function calls.
 /* oxlint-disable-next-line complexity/complexity */ /* react-doctor-disable-next-line no-high-complexity-react-function */
 function BookmarkPageBody({
-  model, actions, active, onEdit, onEditStep, onNavigateToBookmark, onNavigateToGearSlot, highlightSlotKey, onHighlightSlotConsumed,
+  model, actions, setupTab, active, onEdit, onEditStep, onNavigateToBookmark, onNavigateToGearSlot, highlightSlotKey, onHighlightSlotConsumed,
 }: {
-  model: PreviewPaneModel;
-  actions: PreviewPaneActions;
+  model: ProfileScreenModel;
+  actions: ProfileScreenActions;
+  setupTab: CharacterProfileOverviewScreenProps["setupTab"];
   active: BookmarkDef;
   onEdit: () => void;
   onEditStep: (flowId: SetupFlowId, targetSubstep?: number, confineToSubstep?: boolean, subView?: string) => void;
@@ -3539,16 +3576,16 @@ function BookmarkPageBody({
 
   if (active.id === "overview") return <OverviewBookmark model={model} onNavigateToBookmark={onNavigateToBookmark} onNavigateToGearSlot={onNavigateToGearSlot} onSetOverviewLayout={actions.setOverviewLayout} scouterSimulator={scouterSimulator} onEditStep={onEditStep} />;
 
-  if (active.id === "setup") {
+  if (active.id === "setup" && setupTab) {
     // SetupFlowButtons calls actions.startOptionalFlow directly (it's also reused
     // standalone on the first-run intro screen, which has no bookmark to remember), so
     // route its calls through onEditStep here to keep the remembered-bookmark tracking
     // correct for Quick/Full/MapleScouter Setup launched from this bookmark too.
-    const setupBookmarkActions: PreviewPaneActions = { ...actions, startOptionalFlow: onEditStep };
+    const setupBookmarkActions: PreviewPaneActions = { ...setupTab.actions, startOptionalFlow: onEditStep };
     return (
       <>
         <BookmarkPageHeader theme={theme} label={active.pageLabel} onEdit={null} disabled={setup.isUiLocked} />
-        <SetupBookmark model={model} actions={setupBookmarkActions} />
+        <SetupBookmark model={setupTab.model} actions={setupBookmarkActions} />
       </>
     );
   }
@@ -3789,14 +3826,18 @@ function BookmarkSpine({
   );
 }
 
+const VIEWER_BOOKMARKS = ALL_BOOKMARKS.filter((b) => b.id !== "setup");
+
 export default function CharacterProfileOverviewScreen({
   model,
   actions,
+  setupTab,
 }: CharacterProfileOverviewScreenProps) {
   const { theme, profile } = model;
   const character = profile.confirmedCharacter;
+  const readOnly = !setupTab;
 
-  const bookmarks = ALL_BOOKMARKS;
+  const bookmarks = readOnly ? VIEWER_BOOKMARKS : ALL_BOOKMARKS;
   // Restores whichever bookmark was active before an optional flow started from here. This
   // screen unmounts while the flow runs, so a plain useState("overview") would land back on
   // Overview every time the flow finished.
@@ -3843,6 +3884,7 @@ export default function CharacterProfileOverviewScreen({
   }
 
   return (
+    <ProfileReadOnlyContext value={readOnly}>
     <div className={`profile-binder${model.setup.isDeleteTransitioning ? " profile-binder-closing" : ""}`}>
       <div
         className="profile-binder-page"
@@ -3855,6 +3897,7 @@ export default function CharacterProfileOverviewScreen({
           <BookmarkPageBody
             model={model}
             actions={actions}
+            setupTab={setupTab}
             active={active}
             onEdit={handleEdit}
             onEditStep={startOptionalFlowRemembered}
@@ -3867,5 +3910,6 @@ export default function CharacterProfileOverviewScreen({
       </div>
       <BookmarkSpine theme={theme} bookmarks={bookmarks} activeId={active.id} onSelect={setActiveId} charName={character?.characterName} />
     </div>
+    </ProfileReadOnlyContext>
   );
 }

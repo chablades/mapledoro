@@ -1,8 +1,7 @@
 "use client";
 
-import { useRef, useState, useSyncExternalStore, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import {
-  parseImportedCharacterFile,
   readCharactersStore,
   selectCharacterByIgn,
   selectCharactersList,
@@ -14,9 +13,9 @@ import {
   type StoredCharacterRecord,
 } from "../../model/charactersStore";
 import { isDefaultLegionArtifact } from "../../setup/data/legionArtifactData";
-import { extractJsonFromPng, isPngSignature } from "../../../../lib/pngDataChunk";
-import { decodeCharacterQr } from "../../share/qrCodec";
-import { readCardQrFromImage } from "../../share/qrImage";
+import { readCharacterFile, type CharacterFileResult, type QrSource } from "../../share/readCharacterFile";
+import { clearPendingImport, peekPendingImport } from "../../share/pendingImport";
+import { useTouchDevice } from "../../share/useTouchDevice";
 import { toCharacterKey } from "../../model/characterKeys";
 import { resolveDisplayJobName } from "../../setup/data/nexonJobMapping";
 import { statusText } from "../../../../components/statusColors";
@@ -152,13 +151,9 @@ interface ImportFileResult {
   state: ImportState;
   /** The file's world Legion data, applied only once the character is actually added. */
   world: CharacterExportWorldData;
-  /** Set when read from a card's QR rather than full data (only the equipped presets came
-   *  along): "strippedPng" for a PNG whose embedded data was missing, "image" for any other
-   *  image. The two get different notes, since "import the PNG" means nothing to someone who did. */
+  /** Set when read from a card's QR rather than full data (see QrSource). */
   qrSource?: QrSource;
 }
-
-type QrSource = "image" | "strippedPng";
 
 const { importCharacter: IMPORT_COPY } = CHARACTERS_COPY;
 
@@ -168,7 +163,7 @@ const qrNoteStyle = (theme: SearchPaneModel["theme"]) => ({ margin: "-0.25rem 0 
 function QrImportNote({ theme, source }: { theme: SearchPaneModel["theme"]; source: QrSource }) {
   return (
     <div style={qrNoteStyle(theme)}>
-      {source === "image" ? (
+      {source !== "strippedPng" ? (
         <p style={{ margin: 0 }}>
           {IMPORT_COPY.qrImportNoteBefore} <strong style={{ color: theme.text }}>{IMPORT_COPY.qrImportNoteBold}</strong> {IMPORT_COPY.qrImportNoteAfter}
         </p>
@@ -182,19 +177,6 @@ function QrImportNote({ theme, source }: { theme: SearchPaneModel["theme"]; sour
 
 const importError = (message: string): ImportFileResult => ({ state: { status: "error", message }, world: {} });
 
-const emptySubscribe = () => () => {};
-
-/** Touch-first devices (phones, tablets), where "Scan QR code" opens the camera. On a desktop
- *  it would open the same file picker as "Choose File", so it is only offered on touch. Read
- *  through useSyncExternalStore so the server's `false` reconciles without a hydration mismatch. */
-function useTouchDevice(): boolean {
-  return useSyncExternalStore(
-    emptySubscribe,
-    () => window.matchMedia("(pointer: coarse)").matches,
-    () => false,
-  );
-}
-
 function importResult(record: StoredCharacterRecord, world: CharacterExportWorldData, qrSource?: QrSource): ImportFileResult {
   const existing = selectCharacterByIgn(readCharactersStore(), record.characterName);
   return {
@@ -204,44 +186,14 @@ function importResult(record: StoredCharacterRecord, world: CharacterExportWorld
   };
 }
 
-// A card whose embedded data is gone (stripped, re-saved, or a WebP dragged out of Discord), or
-// any photo or screenshot of one, can still be read from its QR code.
-async function readQrImport(file: File, source: QrSource): Promise<ImportFileResult> {
-  const data = await readCardQrFromImage(file);
-  if (data === null) return importError(CHARACTERS_COPY.importCharacter.noCardInImageError);
-  const decoded = await decodeCharacterQr(data);
-  if (!decoded) return importError(CHARACTERS_COPY.importCharacter.invalidQrError);
-  return importResult(decoded.record, decoded.world, source);
+function importFileResult(result: CharacterFileResult): ImportFileResult {
+  return result.ok ? importResult(result.record, result.world, result.qrSource) : importError(result.message);
 }
 
-// A card PNG carries the same JSON as a JSON export, gzipped in a private chunk, so it joins
-// the JSON path right after extraction. Any other image falls back to the card's QR.
-async function readImportFile(file: File): Promise<ImportFileResult> {
-  const bytes = new Uint8Array(await file.arrayBuffer());
-  const isPng = isPngSignature(bytes);
-  const embedded = isPng ? await extractJsonFromPng(bytes) : null;
-  if ((isPng || file.type.startsWith("image/")) && embedded === null) return readQrImport(file, isPng ? "strippedPng" : "image");
-  const text = embedded ?? new TextDecoder().decode(bytes);
-  let parsedJson: unknown;
-  try {
-    parsedJson = JSON.parse(text);
-  } catch {
-    return importError(CHARACTERS_COPY.importCharacter.invalidJsonError);
-  }
-
-  // A world export, meaning multiple characters plus world-scoped Legion data, belongs in the
-  // directory's own "Import World" button rather than here. This screen handles one character,
-  // and redirecting a world file into a different bulk flow from an unrelated entry point
-  // would be a confusing surprise, not a convenience.
-  if (typeof parsedJson === "object" && parsedJson !== null && (parsedJson as Record<string, unknown>).kind === "world") {
-    return importError(CHARACTERS_COPY.importCharacter.wrongFileTypeWorldError);
-  }
-
-  const parsed = parseImportedCharacterFile(parsedJson);
-  if (!parsed) {
-    return importError(CHARACTERS_COPY.importCharacter.invalidShapeError);
-  }
-  return importResult(parsed.record, parsed.world);
+/** The character the viewer handed over with "Add to directory", if any (see pendingImport.ts). */
+function initialImport(): ImportFileResult | null {
+  const pending = peekPendingImport();
+  return pending ? importResult(pending.record, pending.world, pending.qrSource) : null;
 }
 
 // Nesting depth 1 throughout: handleAddCharacter is a flat chain of early returns over the
@@ -251,14 +203,18 @@ async function readImportFile(file: File): Promise<ImportFileResult> {
 // react-doctor-disable-next-line no-high-complexity-react-function
 export default function ImportModeScreen({ model, actions }: ImportModeScreenProps) {
   const { theme, shell, search, profile } = model;
-  const [state, setState] = useState<ImportState>({ status: "idle" });
+  const [initial] = useState(initialImport);
+  const [state, setState] = useState<ImportState>(initial?.state ?? { status: "idle" });
   const [role, setRole] = useState<RosterRole>("mule");
   const [conflictDialogOpen, setConflictDialogOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scanInputRef = useRef<HTMLInputElement>(null);
-  const importedWorldRef = useRef<CharacterExportWorldData>({});
-  const [qrSource, setQrSource] = useState<QrSource | undefined>(undefined);
+  const importedWorldRef = useRef<CharacterExportWorldData>(initial?.world ?? {});
+  const [qrSource, setQrSource] = useState<QrSource | undefined>(initial?.qrSource);
   const isTouch = useTouchDevice();
+  // Picked up once; cleared after mount rather than while reading it, since a Strict Mode
+  // double render would otherwise find it already gone.
+  useEffect(() => { clearPendingImport(); }, []);
 
   function handleBack() {
     if (shell.isUiLocked) return;
@@ -276,7 +232,7 @@ export default function ImportModeScreen({ model, actions }: ImportModeScreenPro
     setRole("mule");
     setConflictDialogOpen(false);
     if (file.type.startsWith("image/")) setState({ status: "reading" });
-    const result = await readImportFile(file);
+    const result = importFileResult(await readCharacterFile(file));
     importedWorldRef.current = result.world;
     setQrSource(result.qrSource);
     setState(result.state);

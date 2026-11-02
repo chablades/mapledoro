@@ -18,9 +18,7 @@ import {
   type CharactersStore,
   type StoredCharacterEquipment,
   type StoredEquipmentPreset,
-  type StoredInnerAbility,
   type StoredFamiliarsData,
-  type StoredFamiliarSlot,
   type StoredVMatrixData,
   type WhLegionRank,
   selectCharactersList,
@@ -35,7 +33,7 @@ import { markIntentionalRemoval } from "../model/vanishGuard";
 import { findClassById, type HexaSkillLevels } from "../../tools/hexa-skills/hexa-classes";
 import { getClassDataByNexonJobName } from "../setup/data/classSkillData";
 import { deriveWeaponHandFromWeapon } from "../setup/data/classBranch";
-import { hexaStatHasData, type HexaStatNode, type HexaStatEntry, type HexaStatSlot } from "../setup/data/hexaStatData";
+import { hexaStatHasData, type HexaStatNode } from "../setup/data/hexaStatData";
 import { deriveInnerAbilityLine, innerAbilityHasData } from "../setup/data/innerAbilityData";
 import { propagateLinkSkillFloors, syncLinkSkillToSiblings } from "../setup/data/linkSkillsData";
 import { ARCANE_AREAS, ALL_SACRED_AREAS, type SymbolArea, type SymbolType } from "../../tools/symbols/symbol-data";
@@ -57,6 +55,7 @@ import {
   parseStatsStepDraft, serializeStatsStepDraft, storedStatsToStatsStepDraft,
 } from "../setup/data/statsStepDraft";
 import { serializeEquipmentStepDraft, storedEquipmentToDraft } from "../setup/data/equipmentStepDraft";
+import { withEquipmentActivePreset, withFamiliarsActivePreset, withHexaStatActivePreset, withStatsActivePreset } from "../model/presetSwitch";
 import { mapImportToDrafts, type MapleScouterImportResult } from "../setup/data/maplescouterImportData";
 import { convertOzRingsDraftToStored, parseOzRingsDraft, serializeOzRingsDraft, storedOzRingsToOzRingsDraft } from "../setup/data/ozRingData";
 import { convertBuffsDraftToStored, parseBuffsDraft } from "../setup/data/buffsData";
@@ -889,20 +888,6 @@ function applyFamiliarsDraftToRoster(
   upsertFn({ ...existing, familiars: data });
 }
 
-function emptyHexaStatNodeShell(): HexaStatNode {
-  const emptyEntry = (): HexaStatEntry => ({ type: "", level: 0 });
-  const emptySlot = (): HexaStatSlot => ({ main: emptyEntry(), alt: [emptyEntry(), emptyEntry()] });
-  return { presets: [emptySlot(), emptySlot()], activePreset: 0 };
-}
-
-function emptyStoredFamiliarsData(): StoredFamiliarsData {
-  const emptySlot = (): StoredFamiliarSlot => ({ familiarId: null, mobId: "", name: "", tier: "", line1: "", line2: "" });
-  return {
-    presets: Array.from({ length: 5 }, () => ({ familiars: Array.from({ length: 3 }, emptySlot), badges: Array<string>(8).fill("") })),
-    activePreset: 0,
-  };
-}
-
 function applyHexaDraftToRoster(
   character: NormalizedCharacterData | null,
   hexaJson: string,
@@ -1160,6 +1145,10 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
   const [frozenRouteIntent] = useState(() => initialRouteIntent);
   const initialCharacterName = frozenRouteIntent?.characterName;
   const initialAction = frozenRouteIntent?.action;
+  // ?action=import is the viewer's "Add to directory": Import Character with the viewed character
+  // already loaded (ImportModeScreen picks it up from pendingImport.ts). It opens from the same
+  // add-character view, and switches to import once hydration settles (see the hydrate effect).
+  const opensAddView = initialAction === "add" || initialAction === "import";
   const immediateUiLockRef = useRef(false);
   const [query, setQuery] = useState("");
   const [foundCharacter, setFoundCharacter] = useState<NormalizedCharacterData | null>(null);
@@ -1423,73 +1412,27 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
   const setStatsActivePreset = useCallback((field: "hyperStat" | "innerAbility", presetIndex: number) => {
     if (!confirmedCharacter) return;
     const existing = selectCharacterById(readCharactersStore(), toCharacterKey(confirmedCharacter));
-    const current = existing?.stats?.[field];
-    if (!existing || !current) return;
-    const updated = { ...current, activePreset: presetIndex };
-    // Switching the active Inner Ability preset can change the scouter-facing line (Passive
-    // or Multi Target +1), so recompute it here or it goes stale against whichever preset is
-    // now active. Only ever sets a derived answer, never clearing one back to unset, matching
-    // the other derive-over-manual call sites.
-    let innerAbilityLine: "passive" | "multiTarget" | "neither" | undefined;
-    if (field === "innerAbility") {
-      const updatedIA = updated as StoredInnerAbility;
-      if (innerAbilityHasData(updatedIA)) innerAbilityLine = deriveInnerAbilityLine(updatedIA) ?? "neither";
-    }
-    upsertRosterCharacter({
-      ...existing,
-      stats: { ...existing.stats, [field]: updated },
-      scouter: innerAbilityLine ? { ...existing.scouter, innerAbilityLine } : existing.scouter,
-    });
+    const updated = existing ? withStatsActivePreset(existing, field, presetIndex) : null;
+    if (updated) upsertRosterCharacter(updated);
   }, [confirmedCharacter, upsertRosterCharacter]);
 
-  // Same profile-page correction as setStatsActivePreset above, for which equipment
-  // preset (0-2) is actually equipped in-game.
+  // The same correction for equipment, HEXA Stat and Familiars presets (see presetSwitch.ts).
   const setEquipmentActivePreset = useCallback((presetIndex: number) => {
     if (!confirmedCharacter) return;
     const existing = selectCharacterById(readCharactersStore(), toCharacterKey(confirmedCharacter));
-    if (!existing) return;
-    const updated = { ...existing.equipment, activePreset: presetIndex };
-    upsertRosterCharacter({
-      ...existing,
-      equipment: updated,
-      // Whichever preset is now active is definitive, so re-derive against it rather than
-      // only flipping true. Switching presets can genuinely gain or lose Genesis Liberation,
-      // weapon hand or Ruin Force Shield.
-      isLiberated: deriveIsLiberatedFromWeapon(updated) ?? existing.isLiberated,
-      weaponHand: deriveWeaponHandFromWeapon(updated) ?? existing.weaponHand,
-      hasRuinForceShield: deriveHasRuinForceShield(updated) ?? existing.hasRuinForceShield,
-    });
+    if (existing) upsertRosterCharacter(withEquipmentActivePreset(existing, presetIndex));
   }, [confirmedCharacter, upsertRosterCharacter]);
 
-  // Same profile-page correction as setStatsActivePreset and setEquipmentActivePreset above,
-  // for which of a HEXA Stat node's 2 presets is equipped in game. Each node has its own
-  // activePreset. No-ops when the character has no saved HEXA Stat data or has not reached
-  // that node's index.
-  //
-  // Unlike those two, HEXA Stat and Familiars below are collected by optional standalone
-  // flows that are never bundled into required setup, so a character can exist with no saved
-  // data for either. That made this a no-op, and hid the profile's "Set active" button, which
-  // is gated on the same saved data. Both now build an empty shell on demand, so setting the
-  // active preset works before the step has been visited.
   const setHexaStatActivePreset = useCallback((nodeIndex: number, presetIndex: number) => {
     if (!confirmedCharacter) return;
     const existing = selectCharacterById(readCharactersStore(), toCharacterKey(confirmedCharacter));
-    if (!existing) return;
-    const saved = (existing.tools?.hexaStat as { nodes?: HexaStatNode[] } | undefined) ?? { nodes: [] };
-    const nodes = [...(saved.nodes ?? [])];
-    while (nodes.length <= nodeIndex) nodes.push(emptyHexaStatNodeShell());
-    nodes[nodeIndex] = { ...nodes[nodeIndex], activePreset: presetIndex };
-    upsertRosterCharacter({ ...existing, tools: { ...existing.tools, hexaStat: { ...saved, nodes } } });
+    if (existing) upsertRosterCharacter(withHexaStatActivePreset(existing, nodeIndex, presetIndex));
   }, [confirmedCharacter, upsertRosterCharacter]);
 
-  // Same profile-page correction as setStatsActivePreset/setEquipmentActivePreset above, for
-  // which familiars preset (0-4) is actually equipped in-game.
   const setFamiliarsActivePreset = useCallback((presetIndex: number) => {
     if (!confirmedCharacter) return;
     const existing = selectCharacterById(readCharactersStore(), toCharacterKey(confirmedCharacter));
-    if (!existing) return;
-    const familiars = existing.familiars ?? emptyStoredFamiliarsData();
-    upsertRosterCharacter({ ...existing, familiars: { ...familiars, activePreset: presetIndex } });
+    if (existing) upsertRosterCharacter(withFamiliarsActivePreset(existing, presetIndex));
   }, [confirmedCharacter, upsertRosterCharacter]);
 
   // Persists the Overview bookmark's per-character customized section list (order +
@@ -1667,7 +1610,7 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
           setSetupPanelVisible(true);
           return;
         }
-      } else if (initialAction === "add" && accountHasCompletedRequiredFlow) {
+      } else if (opensAddView && accountHasCompletedRequiredFlow) {
         // A first-time user with no characters yet falls through rather than being forced
         // into search mode. The homepage's empty-state "Add Character" link should land on
         // the intro screen's Import or Search choice, the same as visiting /characters
@@ -1704,8 +1647,8 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
       applyConfirmedProfileView,
       applyDraftFlowState,
       hydrateDraftCommonState,
-      initialAction,
       initialCharacterName,
+      opensAddView,
       restoreCompletedFlowState,
       setSetupPanelVisible,
       showCompletedDirectoryState,
@@ -1752,6 +1695,8 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
 
     const hydrateTimer = window.setTimeout(() => {
       handleDraftHydration(draft, store, storedRoster, accountHasCompletedRequiredFlow);
+      // A first-time visitor lands on the same Import screen the intro's Import button opens.
+      if (initialAction === "import") setSetupMode("import");
       // handleDraftHydration's branches, such as showCompletedDirectoryState, reset this to
       // false, so it is set afterward to win for this batch. Suppresses the search and
       // preview pane width transition for this first resolved paint only. Without it the
@@ -1782,7 +1727,7 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
       if (stale.length > 0) setAutoRefreshQueue(stale);
     }, 0);
     return () => clearTimeout(hydrateTimer);
-  }, [handleDraftHydration, queueTransitionTimer, refreshDraftSummaries, setSuppressLayoutTransition]);
+  }, [handleDraftHydration, initialAction, queueTransitionTimer, refreshDraftSummaries, setSuppressLayoutTransition]);
 
   // Keep the resumable-draft list fresh each time the search-entry screen is shown
   // (covers add-character, back navigation, and post-finish returns). The setState
@@ -2732,7 +2677,7 @@ export function useCharacterSetupController(initialRouteIntent?: InitialRouteInt
     // missing a character mid-import.
     removedKeys: string[] = [],
   ) => {
-    for (const key of removedKeys) markIntentionalRemoval(key);
+    removedKeys.forEach((key) => markIntentionalRemoval(key));
     setCharacterRoster((prev) => {
       const removedSet = new Set(removedKeys);
       const byKey = new Map<string, StoredCharacterRecord>();

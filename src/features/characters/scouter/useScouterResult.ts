@@ -2,7 +2,8 @@
 
 import { useEffect, useSyncExternalStore } from "react";
 import type { StoredCharacterRecord } from "../model/charactersStore";
-import { findScouterSetupGap, isScouterSupportedClass, type ScouterSetupGap } from "./scouterApi";
+import { findScouterSetupGap, isScouterSupportedClass, type ScouterPayloadContext, type ScouterSetupGap } from "./scouterApi";
+import { useScouterWorldContext } from "./scouterWorldContext";
 import { scouterResultFor, type ScouterErrorReason, type ScouterResultEntry } from "./scouterResult";
 import { ensureScouterEngine, getScouterEngineState, subscribeScouterEngine } from "./engine/scouterLocal";
 import { getScouterDevOverride, subscribeScouterDevOverride } from "./scouterDevDrill";
@@ -18,12 +19,12 @@ export type ScouterFigureStatus =
   // detail names the check that failed, when the engine knows (see scouterLocal.ts).
   | { kind: "error"; reason: ScouterErrorReason; detail?: string };
 
-function statusFor(character: StoredCharacterRecord, engineFailed: boolean): ScouterFigureStatus {
+function statusFor(character: StoredCharacterRecord, engineFailed: boolean, ctx: ScouterPayloadContext | null): ScouterFigureStatus {
   if (!isScouterSupportedClass(character.jobName)) return { kind: "unsupported" };
-  const gap = findScouterSetupGap(character);
+  const gap = findScouterSetupGap(character, ctx ?? undefined);
   if (gap) return { kind: "incomplete", gap };
   if (engineFailed) return { kind: "error", reason: "network" };
-  const result = scouterResultFor(character);
+  const result = scouterResultFor(character, ctx);
   if (!result) return { kind: "loading" };
   return result.ok ? { kind: "ready", entry: result.entry } : { kind: "error", reason: result.reason, detail: result.detail };
 }
@@ -32,6 +33,7 @@ function statusFor(character: StoredCharacterRecord, engineFailed: boolean): Sco
  *  the local engine computes a result in milliseconds (and remembers it by input hash, so
  *  re-renders cost nothing). The only wait is the engine's class data loading once per page. */
 export function useScouterResult(character: StoredCharacterRecord): ScouterFigureStatus {
+  const worldCtx = useScouterWorldContext();
   const engineState = useSyncExternalStore(subscribeScouterEngine, getScouterEngineState, () => "idle" as const);
   // Starts the one-time data load, or retries a failed one when a Scouter view mounts again.
   useEffect(() => {
@@ -45,5 +47,5 @@ export function useScouterResult(character: StoredCharacterRecord): ScouterFigur
     () => getScouterDevOverride(character.characterName),
     () => null,
   );
-  return devOverride ?? statusFor(character, engineState === "failed");
+  return devOverride ?? statusFor(character, engineState === "failed", worldCtx);
 }

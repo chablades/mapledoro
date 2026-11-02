@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { HexaClassDef } from "../../tools/hexa-skills/hexa-classes";
 import type { LinkSkillId, StoredCharacterRecord, WhLegionRank } from "../model/charactersStore";
-import { readCharactersStore } from "../model/charactersStore";
+import { resolveScouterContext, useScouterWorldContext } from "./scouterWorldContext";
 import {
   emptyBuffsDraft, storedBuffsToDraft, convertBuffsDraftToStored, type BuffsDraft,
 } from "../setup/data/buffsData";
@@ -11,7 +11,7 @@ import {
   storedOzRingsToOzRingsDraft, convertOzRingsDraftToOverrideLevels, type OzRingId, type OzRingsDraft,
 } from "../setup/data/ozRingData";
 import {
-  buildScouterPayload, type OzRingOverrides, type ScouterSimulatorOverrides, type SimulatorHexaCoreField, type SimulatorInfoOverrides, type SimulatorInputOverrides,
+  buildScouterPayload, type OzRingOverrides, type ScouterPayloadContext, type ScouterSimulatorOverrides, type SimulatorHexaCoreField, type SimulatorInfoOverrides, type SimulatorInputOverrides,
 } from "./scouterApi";
 import { hexaCoreFields } from "./hexaSimulatorFields";
 import { LINK_SKILL_TO_SCOUTER_KEY } from "./scouterLinkSkills";
@@ -88,9 +88,9 @@ export interface ScouterSimulatorDraft {
 /** The character's real Info-tab answers, as a fully-resolved InfoDraft. A missing weapon
  *  soul / IA line / Wild Hunter answer seeds to its explicit "none"/"neither" so the radios
  *  render with a definite (if empty-meaning) selection rather than nothing checked. */
-function realInfoDraft(character: StoredCharacterRecord): InfoDraft {
+function realInfoDraft(character: StoredCharacterRecord, ctx: ScouterPayloadContext): InfoDraft {
   const soul = character.soul;
-  const legion = readCharactersStore().scouterLegionByWorld[String(character.worldID)];
+  const legion = ctx.scouterLegionByWorld[String(character.worldID)];
   return {
     soulType: soul?.type === "mugong" || soul?.type === "ephenia" ? soul.type : "none",
     soulLevel: soul?.soulLevel === 2 ? 2 : 1,
@@ -118,8 +118,8 @@ function overriddenSoulLevel(info: SimulatorInfoOverrides, fallback: 1 | 2): 1 |
   return info.soul.soulLevel === 2 ? 2 : 1;
 }
 
-function infoDraftFromOverrides(character: StoredCharacterRecord, info: SimulatorInfoOverrides | undefined): InfoDraft {
-  const real = realInfoDraft(character);
+function infoDraftFromOverrides(character: StoredCharacterRecord, ctx: ScouterPayloadContext, info: SimulatorInfoOverrides | undefined): InfoDraft {
+  const real = realInfoDraft(character, ctx);
   if (!info) return real;
   return {
     soulType: overriddenSoulType(info, real.soulType),
@@ -178,7 +178,10 @@ export function useScouterSimulatorDraft(
   hexaClassDef: HexaClassDef | null,
   previousOverrides: ScouterSimulatorOverrides | null,
 ): ScouterSimulatorDraft {
-  const [realUserStat] = useState(() => buildScouterPayload(character, { scouterLegionByWorld: readCharactersStore().scouterLegionByWorld }));
+  const worldCtx = useScouterWorldContext();
+  // Read once, like every other initial value here: the popup works from a snapshot.
+  const [ctx] = useState(() => resolveScouterContext(worldCtx));
+  const [realUserStat] = useState(() => buildScouterPayload(character, ctx));
 
   const [tab, setTab] = useState<SimulatorTab>("buffs");
   const [initialLevel] = useState(character.level);
@@ -236,8 +239,8 @@ export function useScouterSimulatorDraft(
     }
     return out;
   });
-  const [initialInfo] = useState<InfoDraft>(() => realInfoDraft(character));
-  const [info, setInfo] = useState<InfoDraft>(() => infoDraftFromOverrides(character, previousOverrides?.infoOverrides));
+  const [initialInfo] = useState<InfoDraft>(() => realInfoDraft(character, ctx));
+  const [info, setInfo] = useState<InfoDraft>(() => infoDraftFromOverrides(character, ctx, previousOverrides?.infoOverrides));
 
   const setHexaCore = (field: SimulatorHexaCoreField, value: number) => {
     setHexaCores((prev) => ({ ...prev, [field]: value }));

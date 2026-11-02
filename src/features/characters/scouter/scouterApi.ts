@@ -690,10 +690,34 @@ function buildLinkSkill(linkSkills: LinkSkillsData | undefined): Record<string, 
  *  Checked in the order the flow's substeps appear, Quick Questions then Character Info, so a
  *  character missing both reports the one the player hits first rather than whichever the code
  *  happened to check first. A blank character previously reported "characterInfo" even though
- *  Quick Questions is the earlier and more fundamental gap. */
-export type ScouterSetupGap = "characterInfo" | "quickQuestions";
+ *  Quick Questions is the earlier and more fundamental gap.
+ *
+ *  "worldLegion" is only reported for a standalone character (a card in the viewer) whose own
+ *  answers are complete but whose file carries no Wild Hunter rank: exports from before world
+ *  data was included have none, and there is no world roster to fill it from. Saying Setup
+ *  wasn't finished would be wrong there. Checked last, so a real Setup gap still wins. */
+export type ScouterSetupGap = "characterInfo" | "quickQuestions" | "worldLegion";
 
-export function findScouterSetupGap(character: StoredCharacterRecord): ScouterSetupGap | null {
+/** Why a standalone character (a card in the viewer) has no Scouter figure, since there it
+ *  can't be fixed from the page. */
+export function standaloneGapText(gap: ScouterSetupGap): string {
+  if (gap === "worldLegion") {
+    return "This export doesn't include the data Scouter needs, so it can't be calculated.";
+  }
+  return "MapleScouter Setup wasn't finished before this character was exported.";
+}
+
+/** A standalone character's world is just itself plus the Legion answers it came with. */
+function worldForGap(character: StoredCharacterRecord, ctx: ScouterPayloadContext | undefined) {
+  if (ctx?.standalone) return { roster: [character], legion: ctx.scouterLegionByWorld };
+  const store = readCharactersStore();
+  return {
+    roster: selectCharactersList(store).filter((c) => c.worldID === character.worldID),
+    legion: store.scouterLegionByWorld,
+  };
+}
+
+export function findScouterSetupGap(character: StoredCharacterRecord, ctx?: ScouterPayloadContext): ScouterSetupGap | null {
   const classData = CLASS_SKILL_DATA.find((c) => c.nexonJobName === character.jobName);
   if (!classData) return "quickQuestions";
 
@@ -704,12 +728,13 @@ export function findScouterSetupGap(character: StoredCharacterRecord): ScouterSe
     || deriveWeaponHandFromWeapon(character.equipment) !== undefined;
   const iaComplete = innerAbilityHasData(stats.innerAbility) || character.scouter?.innerAbilityLine !== undefined;
 
-  const store = readCharactersStore();
-  const worldRoster = selectCharactersList(store).filter((c) => c.worldID === character.worldID);
-  const whComplete = whAutofillSourceFromRoster(worldRoster) !== null
-    || store.scouterLegionByWorld[String(character.worldID)]?.wildHunterRank !== undefined;
+  const world = worldForGap(character, ctx);
+  const whComplete = whAutofillSourceFromRoster(world.roster) !== null
+    || world.legion[String(character.worldID)]?.wildHunterRank !== undefined;
 
-  if (!(soulComplete && weaponHandComplete && iaComplete && whComplete)) return "quickQuestions";
+  if (!(soulComplete && weaponHandComplete && iaComplete)) return "quickQuestions";
+  const standalone = ctx?.standalone === true;
+  if (!whComplete && !standalone) return "quickQuestions";
 
   const classRequiredTripleIds = getRequiredStatsForClass(classData).filter((id): id is TripleStatFieldId => TRIPLE_IDS.has(id));
   const tripleIds = classRequiredTripleIds.length === 0 ? TRIPLE_STAT_FIELDS.map((f) => f.id) : classRequiredTripleIds;
@@ -729,7 +754,8 @@ export function findScouterSetupGap(character: StoredCharacterRecord): ScouterSe
     isSacredEligible(character.level, classData.isLegacy),
     requiredStatsSetHasHp(classData),
   );
-  return characterInfoComplete ? null : "characterInfo";
+  if (!characterInfoComplete) return "characterInfo";
+  return whComplete ? null : "worldLegion";
 }
 
 /** Whether this character has answered everything MapleScouter Setup's own live flow
@@ -754,6 +780,9 @@ export function isScouterSupportedClass(jobName: string): boolean {
 
 export interface ScouterPayloadContext {
   scouterLegionByWorld: Record<string, StoredScouterLegion>;
+  /** The character isn't in the saved store (a card in the viewer), so nothing is looked up
+   *  there by its name or world: not its tool data, and not its world's roster. */
+  standalone?: boolean;
 }
 
 /** Builds MapleScouter's request body for a character, or null if this class isn't

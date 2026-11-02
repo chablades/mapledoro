@@ -27,7 +27,7 @@ type RefreshOutcome =
   | { kind: "done"; data: NormalizedCharacterData | null }
   | { kind: "rate_limited" };
 
-async function fetchFreshCharacter(
+export async function fetchFreshCharacter(
   characterName: string,
   signal: AbortSignal,
 ): Promise<RefreshOutcome> {
