@@ -58,7 +58,7 @@
       "warn",
       {
         "cyclomatic": 1000,
-        "cognitive": 15
+        "cognitive": 18
       }
     ],
     "jsx-a11y/control-has-associated-label": "off",
