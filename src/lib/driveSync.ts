@@ -172,7 +172,7 @@ async function requestToken(): Promise<string> {
 
 /* ---------- Drive REST, with the silent 401 retry ---------- */
 
-async function driveFetch(url: string, init: RequestInit & { headers?: Record<string, string> }): Promise<Response> {
+async function driveFetch(url: string, init: Omit<RequestInit, "headers"> & { headers?: Record<string, string> }): Promise<Response> {
   const call = (token: string) =>
     fetch(url, { ...init, headers: { ...init.headers, Authorization: `Bearer ${token}` } });
   let response = await call(accessToken ?? (await requestToken()));
