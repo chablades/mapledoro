@@ -661,7 +661,9 @@ function optimizeToolLinkStyle(theme: Theme): CSSProperties {
  *  sub-views stack up to it differently: HEXA's StatBlock sections carry their own bottom
  *  spacing where Hyper Stat's flat row list does not. */
 function OptimizeToolLink({ theme, charName, mode, label, marginTop }: { theme: Theme; charName: string | undefined; mode: "hexa" | null; label: string; marginTop: number }) {
-  if (!charName) return null;
+  // A viewed character isn't in the directory, so the tool would have nothing to load.
+  const readOnly = useContext(ProfileReadOnlyContext);
+  if (!charName || readOnly) return null;
   const href: Route = mode
     ? `/tools/stat-optimizer?character=${encodeURIComponent(charName)}&mode=${mode}`
     : `/tools/stat-optimizer?character=${encodeURIComponent(charName)}`;
@@ -691,6 +693,8 @@ function OptimizeToolLink({ theme, charName, mode, label, marginTop }: { theme: 
 function OverviewGroupHeader({ label, theme, onNavigate, bookmarkLabel, toolHref, toolLabel }: {
   label: string; theme: Theme; onNavigate: () => void; bookmarkLabel: string; toolHref?: Route; toolLabel?: string;
 }) {
+  // Read-only profiles (View a Character) skip the tool link, like OptimizeToolLink.
+  const readOnly = useContext(ProfileReadOnlyContext);
   return (
     <div style={overviewGroupHeaderRowStyle(theme)}>
       <HoverTooltip label={`View in ${bookmarkLabel} bookmark`} theme={theme}>
@@ -699,7 +703,7 @@ function OverviewGroupHeader({ label, theme, onNavigate, bookmarkLabel, toolHref
           <NavChevron direction="next" size={15} />
         </button>
       </HoverTooltip>
-      {toolHref && (
+      {toolHref && !readOnly && (
         <HoverTooltip label={`Open in ${toolLabel ?? label}`} theme={theme}>
           <Link href={toolHref} aria-label={`Open in ${toolLabel ?? label}`} style={overviewToolLinkStyle(theme)}>
             <OverviewToolLinkIcon />
