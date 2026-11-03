@@ -39,6 +39,25 @@ const ACTIVE_RINGS = new Set<string>([
   "01113124", "01113125", "01113126", "01113127", "01113128",
 ]);
 
+/** The Oz Rings step's levels, keyed like StoredOzRings.levels. */
+export type OzRingLevels = Partial<Record<string, number>>;
+
+// Which Oz Rings step level an equipped ring shows. The Challenger versions and every Weapon
+// Jump letter share their ring's one level; rings the step doesn't cover show none.
+const OZ_LEVEL_KEY: Partial<Record<string, string>> = {
+  "01113098": "restraint", "01113344": "restraint",
+  "01113329": "continuous", "01113345": "continuous",
+  "01113113": "weaponJump", "01113114": "weaponJump", "01113115": "weaponJump", "01113116": "weaponJump",
+  "01113346": "weaponJump", "01113347": "weaponJump", "01113348": "weaponJump", "01113349": "weaponJump",
+};
+
+/** The level to show on an equipped Oz Ring, from the Oz Rings step; null when unset or 0. */
+export function equippedOzLevel(id: string | undefined, levels: OzRingLevels | undefined): number | null {
+  const key = id ? OZ_LEVEL_KEY[id] : undefined;
+  const level = key ? levels?.[key] : undefined;
+  return level && level > 0 ? level : null;
+}
+
 export function isSpecialSkillRing(id: string | undefined): boolean {
   return !!id && (ACTIVE_RINGS.has(id) || PASSIVE_RINGS.has(id));
 }

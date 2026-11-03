@@ -22,7 +22,8 @@ import {
 import type { SymbolState } from "../../../tools/symbols/useSymbolState";
 import { getClassDataByNexonJobName } from "../data/classSkillData";
 import {
-  fitsSkillSlot, gridSkillSlotKind, isRingKey, isSpecialSkillRing, skillRingFits, skillRingHost, specialRingElsewhere,
+  equippedOzLevel, fitsSkillSlot, gridSkillSlotKind, isRingKey, isSpecialSkillRing, skillRingFits, skillRingHost,
+  specialRingElsewhere, type OzRingLevels,
 } from "../data/specialRingData";
 import { symbolUnlockWarning } from "../data/symbolUnlock";
 import { statusText } from "../../../../components/statusColors";
@@ -601,6 +602,8 @@ const PICKER_WIDTH = 240;
  *  the game's cog: the cog bottom-right, the ring in it (when set) small in the top-right. */
 interface SkillRingSlot {
   item: EquipmentItem | null | undefined;
+  /** The skill ring's Oz Rings step level, for the cog's tooltip. */
+  level: number | null;
   isActive: boolean;
   onClick: () => void;
   picker: ReactNode;
@@ -630,25 +633,41 @@ function cogStyle(theme: AppTheme, filled: boolean, isActive: boolean): CSSPrope
   };
 }
 
+// An Oz Ring's level from the Oz Rings step, bottom-left of its tile (the cog takes the right).
+// Text until the game's own level badge art is dumped.
+const levelBadgeStyle = (theme: AppTheme): CSSProperties => ({
+  position: "absolute", left: 4, bottom: 4, zIndex: 1, padding: "0 4px", borderRadius: 4, pointerEvents: "none",
+  fontSize: "0.75rem", fontWeight: 800, lineHeight: "16px", color: theme.text, background: theme.panel,
+  border: `1px solid ${theme.border}`,
+});
+
+function LevelBadge({ level, theme }: { level: number; theme: AppTheme }) {
+  return <span style={levelBadgeStyle(theme)}>Lv. {level}</span>;
+}
+
+const levelSuffix = (level: number | null) => (level ? ` (Lv. ${level})` : "");
+const skillRingLabel = (item: EquipmentItem, level: number | null) => `Skill Ring: ${item.name}${levelSuffix(level)}`;
+const EMPTY_SKILL_RING_LABEL = "Skill Ring: empty (needs Lv. 4+)";
+
 const pickerHeadingStyle = (theme: AppTheme): CSSProperties => ({
   margin: 0, padding: "6px 10px", fontSize: "0.75rem", fontWeight: 800, textTransform: "uppercase",
   letterSpacing: "0.05em", color: theme.muted, borderBottom: `1px solid ${theme.border}`,
 });
 
 /** What a read-only cog shows on hover: the skill ring worn with this ring. */
-function SkillRingTooltip({ item, theme }: { item: EquipmentItem; theme: AppTheme }) {
+function SkillRingTooltip({ item, level, theme }: { item: EquipmentItem; level: number | null; theme: AppTheme }) {
   return (
     <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
       <EquipItemIcon id={item.id} name={item.name} theme={theme} size={28} />
       <span>
         <span style={{ display: "block", fontSize: "0.75rem", color: theme.muted, fontWeight: 700 }}>{SLOT_LABELS.skillRing}</span>
-        {item.name}
+        {item.name}{levelSuffix(level)}
       </span>
     </span>
   );
 }
 
-function SlotCell({ slotKey, item, theme, isActive, onClick, picker, skillRing }: {
+function SlotCell({ slotKey, item, theme, isActive, onClick, picker, skillRing, level }: {
   slotKey: SlotKey;
   item: EquipmentItem | null | undefined;
   theme: AppTheme;
@@ -656,6 +675,8 @@ function SlotCell({ slotKey, item, theme, isActive, onClick, picker, skillRing }
   onClick: () => void;
   picker?: ReactNode;
   skillRing?: SkillRingSlot;
+  /** An equipped Oz Ring's level from the Oz Rings step. */
+  level?: number | null;
 }) {
   const skillOpen = !!skillRing?.isActive;
   const { ref: wrapperRef, portalRef } = usePickerCoords(isActive || skillOpen, PICKER_WIDTH);
@@ -683,12 +704,13 @@ function SlotCell({ slotKey, item, theme, isActive, onClick, picker, skillRing }
   return (
     <div ref={wrapperRef} style={{ position: "relative", width: SLOT_SIZE, flexShrink: 0 }}>
       {item ? <HoverTooltip label={item.name} theme={theme}>{button}</HoverTooltip> : button}
+      {level && <LevelBadge level={level} theme={theme} />}
       {skillRing && (
-        <HoverTooltip label={skillRing.item ? `Skill Ring: ${skillRing.item.name}` : "Skill Ring (Lv. 4+)"} theme={theme} style={cogCornerStyle}>
+        <HoverTooltip label={skillRing.item ? skillRingLabel(skillRing.item, skillRing.level) : EMPTY_SKILL_RING_LABEL} theme={theme} style={cogCornerStyle}>
           <button
             type="button"
             data-slot="skillRing"
-            aria-label={skillRing.item ? `Skill Ring: ${skillRing.item.name}` : "Set Skill Ring"}
+            aria-label={skillRing.item ? skillRingLabel(skillRing.item, skillRing.level) : "Set Skill Ring"}
             onClick={(e) => { e.stopPropagation(); if (isStrayClick(e)) { return; } skillRing.onClick(); }}
             style={cogStyle(theme, !!skillRing.item, skillOpen)}
           >
@@ -714,13 +736,17 @@ function SlotCell({ slotKey, item, theme, isActive, onClick, picker, skillRing }
 /** Read-only counterpart to SlotCell for the profile Gear bookmark. Same icon/empty-label
  *  box and sizing (slotCellStyle/SLOT_SIZE), but no button semantics, hover-swap, or picker
  *  portal, since nothing here is clickable. */
-export function ReadOnlySlotTile({ slotKey, item, theme, skillRing }: {
+export function ReadOnlySlotTile({ slotKey, item, theme, skillRing, ozLevels }: {
   slotKey: SlotKey;
   item: EquipmentItem | null | undefined;
   theme: AppTheme;
-  /** The skill ring worn with this ring, shown small in the corner with a non-clickable cog. */
+  /** Set on the ring that unlocks the skill ring slot: the skill ring worn with it, or null when
+   *  that slot is empty (an outlined cog, so it reads as not set up yet). */
   skillRing?: EquipmentItem | null;
+  /** The Oz Rings step's levels, shown on an equipped Oz Ring. */
+  ozLevels?: OzRingLevels;
 }) {
+  const level = equippedOzLevel(item?.id, ozLevels);
   const box = (
     <div data-slot-key={slotKey} style={{ ...slotCellStyle(theme, false), cursor: "default", width: SLOT_SIZE, flexShrink: 0 }}>
       {item ? (
@@ -733,15 +759,22 @@ export function ReadOnlySlotTile({ slotKey, item, theme, skillRing }: {
     </div>
   );
   const tile = item ? <HoverTooltip label={item.name} theme={theme}>{box}</HoverTooltip> : box;
-  if (!skillRing) return tile;
+  if (skillRing === undefined && !level) return tile;
   // The cog sits beside the ring's own tooltip rather than inside it, so hovering the cog shows
   // only the skill ring, not both.
   return (
     <div style={{ position: "relative", width: SLOT_SIZE, flexShrink: 0 }}>
       {tile}
-      <HoverTooltip label={<SkillRingTooltip item={skillRing} theme={theme} />} theme={theme} style={cogCornerStyle}>
-        <span style={{ ...cogStyle(theme, true, false), cursor: "default" }}><CogIcon /></span>
-      </HoverTooltip>
+      {level && <LevelBadge level={level} theme={theme} />}
+      {skillRing !== undefined && (
+        <HoverTooltip
+          label={skillRing ? <SkillRingTooltip item={skillRing} level={equippedOzLevel(skillRing.id, ozLevels)} theme={theme} /> : EMPTY_SKILL_RING_LABEL}
+          theme={theme}
+          style={cogCornerStyle}
+        >
+          <span style={{ ...cogStyle(theme, !!skillRing, false), cursor: "default" }}><CogIcon /></span>
+        </HoverTooltip>
+      )}
     </div>
   );
 }
@@ -805,8 +838,10 @@ function SlotColumn({ slots, grid, theme, activeSlot, onToggle, pickerCtx }: {
           isActive={activeSlot === slot}
           onClick={() => onToggle(slot)}
           picker={<SlotPicker slot={slot} ctx={pickerCtx} />}
+          level={equippedOzLevel(grid[slot]?.id, pickerCtx.ozLevels)}
           skillRing={slot === host ? {
             item: grid.skillRing,
+            level: equippedOzLevel(grid.skillRing?.id, pickerCtx.ozLevels),
             isActive: activeSlot === "skillRing",
             onClick: () => onToggle("skillRing"),
             picker: <SlotPicker slot="skillRing" ctx={pickerCtx} />,
@@ -989,6 +1024,8 @@ interface SlotPickerContext {
   chainNavForSlot: (slot: SlotKey) => { onPrev?: () => void; onNext?: () => void };
   updateSlot: (slot: SlotKey, item: EquipmentItem | null) => void;
   setActiveSlot: (slot: SlotKey | null) => void;
+  /** The saved Oz Rings step levels, for the level shown on an equipped Oz Ring. */
+  ozLevels: OzRingLevels | undefined;
 }
 
 function SlotPicker({ slot, ctx }: { slot: SlotKey; ctx: SlotPickerContext }) {
@@ -1466,6 +1503,13 @@ function useEquipmentStepState({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // The saved Oz Rings step levels, read once like the backfill above. A level changed later in
+  // this same setup run shows once it's saved.
+  const [ozLevels] = useState<OzRingLevels | undefined>(() => {
+    if (typeof window === "undefined" || !confirmedCharacterName) return undefined;
+    return selectCharacterByIgn(readCharactersStore(), confirmedCharacterName)?.scouter?.ozRings?.levels;
+  });
+
   /** A fresh length-3 array of preset grids (cloned), so edits don't mutate state. */
   function clonePresets(): SlotMap[] {
     const base = draft.presets ?? [];
@@ -1636,7 +1680,7 @@ function useEquipmentStepState({
 
   const pickerCtx: SlotPickerContext = {
     activeSlot, classId, branchMask, draft, theme, characterLevel,
-    readSlot, siblingItemIds, presetBaseItemFor, chainNavForSlot, updateSlot, setActiveSlot,
+    readSlot, siblingItemIds, presetBaseItemFor, chainNavForSlot, updateSlot, setActiveSlot, ozLevels,
   };
 
   return {

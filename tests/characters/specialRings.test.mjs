@@ -2,7 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  fitsSkillSlot, gridSkillSlotKind, skillRingFits, skillRingHost, specialRingElsewhere,
+  equippedOzLevel, fitsSkillSlot, gridSkillSlotKind, skillRingFits, skillRingHost, specialRingElsewhere,
 } from "../../src/features/characters/setup/data/specialRingData.ts";
 
 const RESTRAINT = { id: "01113098" };
@@ -40,4 +40,13 @@ void test("only one special skill ring across the 4 ring slots", () => {
   assert.ok(specialRingElsewhere({ ring1: RESTRAINT }, "ring2"));
   assert.ok(!specialRingElsewhere({ ring1: RESTRAINT }, "ring1"));
   assert.ok(!specialRingElsewhere({ ring1: PLAIN_RING, ring3: PLAIN_RING }, "ring2"));
+});
+
+void test("an equipped Oz Ring shows its Oz Rings step level, shared by Challenger and every Weapon Jump letter", () => {
+  const levels = { restraint: 4, weaponJump: 3, continuous: 0 };
+  assert.equal(equippedOzLevel("01113344", levels), 4); // Challenger Ring of Restraint
+  assert.equal(equippedOzLevel("01113115", levels), 3); // Weapon Jump I Ring
+  assert.equal(equippedOzLevel(CONTINUOUS.id, levels), null); // level 0 shows nothing
+  assert.equal(equippedOzLevel(RORO_EXP.id, levels), null); // not in the Oz Rings step
+  assert.equal(equippedOzLevel(RESTRAINT.id, undefined), null);
 });
