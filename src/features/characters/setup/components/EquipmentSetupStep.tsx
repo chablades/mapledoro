@@ -21,6 +21,9 @@ import {
 } from "../../../tools/symbols/symbol-data";
 import type { SymbolState } from "../../../tools/symbols/useSymbolState";
 import { getClassDataByNexonJobName } from "../data/classSkillData";
+import {
+  fitsSkillSlot, gridSkillSlotKind, isRingKey, isSpecialSkillRing, skillRingFits, skillRingHost, specialRingElsewhere,
+} from "../data/specialRingData";
 import { symbolUnlockWarning } from "../data/symbolUnlock";
 import { statusText } from "../../../../components/statusColors";
 import { branchMaskForClass, weaponPrefixesForClass, secondarySpecForClass, isShieldId } from "../data/classBranch";
@@ -95,7 +98,7 @@ interface EquipmentSetupStepProps {
 // equipmentStepDraft.ts (react-doctor's only-export-components rule), imported above.
 
 const SLOT_DATA_FILE: Record<SlotKey, string> = {
-  ring1: "ring", ring2: "ring", ring3: "ring", ring4: "ring",
+  ring1: "ring", ring2: "ring", ring3: "ring", ring4: "ring", skillRing: "ring",
   face: "face", eye: "eye", earring: "earring",
   pendant1: "pendant", pendant2: "pendant",
   belt: "belt", pocket: "pocket",
@@ -352,6 +355,13 @@ const cachedSlotItems: Partial<Record<string, CatalogItem[]>> = {};
 
 type RawCatalogEntry = [string, string] | [string, string, { reqJob?: number; reqLevel?: number; onlyEquip?: boolean; wearablePets?: string[]; wearableEquips?: string[] }];
 
+function ringGridOf(readSlot: (slot: SlotKey) => EquipmentItem | null | undefined) {
+  return {
+    ring1: readSlot("ring1"), ring2: readSlot("ring2"), ring3: readSlot("ring3"), ring4: readSlot("ring4"),
+    skillRing: readSlot("skillRing"),
+  };
+}
+
 /** Slot groups where the same `onlyEquip` item can't occupy more than one slot at once. */
 const RING_SLOTS: readonly SlotKey[] = ["ring1", "ring2", "ring3", "ring4"];
 const PENDANT_SLOTS: readonly SlotKey[] = ["pendant1", "pendant2"];
@@ -440,7 +450,7 @@ function useItemPickerCatalog({
 
 function ItemPicker({
   slot, current, theme, files, itemFilter, maxLevel, excludeIds, presetBaseItem, showAllWhenEmpty,
-  onSelect, onClose, onAdvance, onPrev, onNext,
+  onSelect, onClose, onAdvance, onPrev, onNext, heading,
 }: {
   slot: SlotKey;
   current: EquipmentItem | null | undefined;
@@ -464,6 +474,8 @@ function ItemPicker({
   onAdvance?: (viaKeyboard: boolean) => void;
   onPrev?: () => void;
   onNext?: () => void;
+  /** A title row on top, for a picker that's its own window (the skill ring's). */
+  heading?: string;
 }) {
   const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -503,6 +515,7 @@ function ItemPicker({
 
   return (
     <div style={{ border: `1px solid ${theme.accent}`, borderRadius: 10, background: theme.panel, boxShadow: "0 4px 20px rgba(0,0,0,0.3)", overflow: "hidden" }}>
+      {heading && <p style={pickerHeadingStyle(theme)}>{heading}</p>}
       {current && (
         <div style={equippedHeaderStyle(theme)}>
           {current.id && <EquipItemIcon id={current.id} name={current.name} theme={theme} size={28} revealed={isAndroid} />}
@@ -584,15 +597,68 @@ const PICKER_WIDTH = 240;
 
 // ── Slot cell ──────────────────────────────────────────────────────────────
 
-function SlotCell({ slotKey, item, theme, isActive, onClick, picker }: {
+/** The skill ring slot a Lv. 4+ Restraint or Continuous unlocks, drawn on that ring's tile like
+ *  the game's cog: the cog bottom-right, the ring in it (when set) small in the top-right. */
+interface SkillRingSlot {
+  item: EquipmentItem | null | undefined;
+  isActive: boolean;
+  onClick: () => void;
+  picker: ReactNode;
+}
+
+function CogIcon() {
+  return (
+    <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" />
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+    </svg>
+  );
+}
+
+// On the tooltip wrapper, not the cog: HoverTooltip wraps the cog in its own div, which is
+// what has to sit in the tile's corner.
+const cogCornerStyle: CSSProperties = { position: "absolute", right: 4, bottom: 4, zIndex: 1, lineHeight: 0 };
+
+/** Solid once a skill ring is in, an outline while the slot is empty. */
+function cogStyle(theme: AppTheme, filled: boolean, isActive: boolean): CSSProperties {
+  return {
+    width: 22, height: 22, padding: 0, borderRadius: "50%",
+    display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", font: "inherit",
+    background: filled ? theme.accent : theme.panel,
+    color: filled ? theme.accentOn : theme.accentText,
+    border: `1.5px solid ${isActive ? theme.text : theme.accent}`,
+  };
+}
+
+const pickerHeadingStyle = (theme: AppTheme): CSSProperties => ({
+  margin: 0, padding: "6px 10px", fontSize: "0.75rem", fontWeight: 800, textTransform: "uppercase",
+  letterSpacing: "0.05em", color: theme.muted, borderBottom: `1px solid ${theme.border}`,
+});
+
+/** What a read-only cog shows on hover: the skill ring worn with this ring. */
+function SkillRingTooltip({ item, theme }: { item: EquipmentItem; theme: AppTheme }) {
+  return (
+    <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+      <EquipItemIcon id={item.id} name={item.name} theme={theme} size={28} />
+      <span>
+        <span style={{ display: "block", fontSize: "0.75rem", color: theme.muted, fontWeight: 700 }}>{SLOT_LABELS.skillRing}</span>
+        {item.name}
+      </span>
+    </span>
+  );
+}
+
+function SlotCell({ slotKey, item, theme, isActive, onClick, picker, skillRing }: {
   slotKey: SlotKey;
   item: EquipmentItem | null | undefined;
   theme: AppTheme;
   isActive: boolean;
   onClick: () => void;
   picker?: ReactNode;
+  skillRing?: SkillRingSlot;
 }) {
-  const { ref: wrapperRef, portalRef } = usePickerCoords(isActive, PICKER_WIDTH);
+  const skillOpen = !!skillRing?.isActive;
+  const { ref: wrapperRef, portalRef } = usePickerCoords(isActive || skillOpen, PICKER_WIDTH);
   const button = (
     <button
       type="button"
@@ -617,14 +683,27 @@ function SlotCell({ slotKey, item, theme, isActive, onClick, picker }: {
   return (
     <div ref={wrapperRef} style={{ position: "relative", width: SLOT_SIZE, flexShrink: 0 }}>
       {item ? <HoverTooltip label={item.name} theme={theme}>{button}</HoverTooltip> : button}
-      {isActive && typeof document !== "undefined" && createPortal(
+      {skillRing && (
+        <HoverTooltip label={skillRing.item ? `Skill Ring: ${skillRing.item.name}` : "Skill Ring (Lv. 4+)"} theme={theme} style={cogCornerStyle}>
+          <button
+            type="button"
+            data-slot="skillRing"
+            aria-label={skillRing.item ? `Skill Ring: ${skillRing.item.name}` : "Set Skill Ring"}
+            onClick={(e) => { e.stopPropagation(); if (isStrayClick(e)) { return; } skillRing.onClick(); }}
+            style={cogStyle(theme, !!skillRing.item, skillOpen)}
+          >
+            <CogIcon />
+          </button>
+        </HoverTooltip>
+      )}
+      {(isActive || skillOpen) && typeof document !== "undefined" && createPortal(
         <div
           ref={portalRef}
           data-equipment-picker
           onClick={(e) => e.stopPropagation()}
           style={{ position: "absolute", width: PICKER_WIDTH, zIndex: 300, top: 0, left: 0 }}
         >
-          {picker}
+          {skillOpen ? skillRing?.picker : picker}
         </div>,
         document.body!
       )}
@@ -635,10 +714,12 @@ function SlotCell({ slotKey, item, theme, isActive, onClick, picker }: {
 /** Read-only counterpart to SlotCell for the profile Gear bookmark. Same icon/empty-label
  *  box and sizing (slotCellStyle/SLOT_SIZE), but no button semantics, hover-swap, or picker
  *  portal, since nothing here is clickable. */
-export function ReadOnlySlotTile({ slotKey, item, theme }: {
+export function ReadOnlySlotTile({ slotKey, item, theme, skillRing }: {
   slotKey: SlotKey;
   item: EquipmentItem | null | undefined;
   theme: AppTheme;
+  /** The skill ring worn with this ring, shown small in the corner with a non-clickable cog. */
+  skillRing?: EquipmentItem | null;
 }) {
   const box = (
     <div data-slot-key={slotKey} style={{ ...slotCellStyle(theme, false), cursor: "default", width: SLOT_SIZE, flexShrink: 0 }}>
@@ -651,7 +732,18 @@ export function ReadOnlySlotTile({ slotKey, item, theme }: {
       )}
     </div>
   );
-  return item ? <HoverTooltip label={item.name} theme={theme}>{box}</HoverTooltip> : box;
+  const tile = item ? <HoverTooltip label={item.name} theme={theme}>{box}</HoverTooltip> : box;
+  if (!skillRing) return tile;
+  // The cog sits beside the ring's own tooltip rather than inside it, so hovering the cog shows
+  // only the skill ring, not both.
+  return (
+    <div style={{ position: "relative", width: SLOT_SIZE, flexShrink: 0 }}>
+      {tile}
+      <HoverTooltip label={<SkillRingTooltip item={skillRing} theme={theme} />} theme={theme} style={cogCornerStyle}>
+        <span style={{ ...cogStyle(theme, true, false), cursor: "default" }}><CogIcon /></span>
+      </HoverTooltip>
+    </div>
+  );
 }
 
 /** Read-only counterpart to SymbolLevelTile for the profile Gear bookmark. Same icon tile,
@@ -701,6 +793,7 @@ function SlotColumn({ slots, grid, theme, activeSlot, onToggle, pickerCtx }: {
   onToggle: (slot: SlotKey) => void;
   pickerCtx: SlotPickerContext;
 }) {
+  const host = skillRingHost(grid);
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 4, flexShrink: 0 }}>
       {slots.map((slot) => (
@@ -712,6 +805,12 @@ function SlotColumn({ slots, grid, theme, activeSlot, onToggle, pickerCtx }: {
           isActive={activeSlot === slot}
           onClick={() => onToggle(slot)}
           picker={<SlotPicker slot={slot} ctx={pickerCtx} />}
+          skillRing={slot === host ? {
+            item: grid.skillRing,
+            isActive: activeSlot === "skillRing",
+            onClick: () => onToggle("skillRing"),
+            picker: <SlotPicker slot="skillRing" ctx={pickerCtx} />,
+          } : undefined}
         />
       ))}
     </div>
@@ -904,7 +1003,16 @@ function SlotPicker({ slot, ctx }: { slot: SlotKey; ctx: SlotPickerContext }) {
 
   const pairedPet = PET_EQUIP_TO_PET[slot]; // set ⇒ this is a petEquip slot
   const pairedEquip = PET_TO_PET_EQUIP[slot]; // set ⇒ this is a pet slot
-  if (pairedPet) {
+  const ringGrid = ringGridOf(readSlot);
+  if (slot === "skillRing") {
+    // Only the kind the host ring's slot takes, a short list, so shown without searching.
+    const kind = gridSkillSlotKind(ringGrid);
+    itemFilter = (item) => kind !== null && fitsSkillSlot(kind, item.id) && source.filter(item);
+    showAllWhenEmpty = true;
+  } else if (isRingKey(slot) && specialRingElsewhere(ringGrid, slot)) {
+    // One special skill ring across the 4 slots; a second goes in the skill ring slot.
+    itemFilter = (item) => !isSpecialSkillRing(item.id) && source.filter(item);
+  } else if (pairedPet) {
     // Pet chosen: show only the equips it can wear. Short enough to reveal without searching.
     const pet = draft[pairedPet];
     if (pet) {
@@ -939,6 +1047,7 @@ function SlotPicker({ slot, ctx }: { slot: SlotKey; ctx: SlotPickerContext }) {
       onAdvance={goNext && ((viaKeyboard) => (viaKeyboard ? goNext() : setActiveSlot(null)))}
       onPrev={goPrev}
       onNext={goNext}
+      heading={slot === "skillRing" ? SLOT_LABELS.skillRing : undefined}
     />
   );
 }
@@ -1412,7 +1521,11 @@ function useEquipmentStepState({
     // stays absent, so it keeps falling through to preset 0 (see activeGrid above)
     // rather than getting frozen by a whole-preset clone.
     const presets = clonePresets();
-    presets[activePreset] = { ...presets[activePreset], [slot]: item };
+    const next: SlotMap = { ...presets[activePreset], [slot]: item };
+    // Swapping the host ring can leave a skill ring its slot no longer takes (Continuous ->
+    // Restraint with Weapon Jump in it), or no slot at all, so it comes off.
+    if (isRingKey(slot) && !skillRingFits({ ...activeGrid, [slot]: item })) next.skillRing = null;
+    presets[activePreset] = next;
     commitDraft({ ...draft, presets });
   }
 

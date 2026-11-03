@@ -11,7 +11,7 @@ import type { StoredCharacterEquipment, StoredEquipmentItem, StoredEquipmentPres
 import type { SymbolState } from "../../../tools/symbols/useSymbolState";
 
 export type SlotKey =
-  | "ring1" | "ring2" | "ring3" | "ring4"
+  | "ring1" | "ring2" | "ring3" | "ring4" | "skillRing"
   | "face" | "eye" | "earring" | "pendant1" | "pendant2" | "belt" | "pocket"
   | "hat" | "cape" | "top" | "glove" | "bottom" | "shoe" | "shoulder" | "medal"
   | "weapon" | "secondary" | "emblem" | "android" | "heart" | "badge" | "title"
@@ -108,6 +108,7 @@ export function storedPresetToDraft(preset: StoredEquipmentPreset): SlotMap {
   return {
     ring1: toDraftItem(preset.rings[0]), ring2: toDraftItem(preset.rings[1]),
     ring3: toDraftItem(preset.rings[2]), ring4: toDraftItem(preset.rings[3]),
+    skillRing: toDraftItem(preset.skillRing ?? null),
     face: toDraftItem(preset.face), eye: toDraftItem(preset.eye), earring: toDraftItem(preset.earring),
     pendant1: toDraftItem(preset.pendants[0]), pendant2: toDraftItem(preset.pendants[1]),
     belt: toDraftItem(preset.belt), pocket: toDraftItem(preset.pocket),
@@ -166,7 +167,7 @@ export function storedEquipmentToDraft(
 // bookmark in CharacterProfileOverviewScreen.tsx, not component-local.
 
 export const SLOT_LABELS: Record<SlotKey, string> = {
-  ring1: "Ring", ring2: "Ring", ring3: "Ring", ring4: "Ring",
+  ring1: "Ring", ring2: "Ring", ring3: "Ring", ring4: "Ring", skillRing: "Skill Ring",
   face: "Face", eye: "Eye", earring: "Earring",
   pendant1: "Pendant", pendant2: "Pendant",
   belt: "Belt", pocket: "Pocket",

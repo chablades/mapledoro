@@ -56,6 +56,7 @@ import type { ScouterResultEntry } from "../../scouter/scouterResult";
 import { BOSS_CLEAR_GROUPS, resolveBossDisplayName } from "../../scouter/bossGrouping";
 import InfoTooltip, { type TooltipContent } from "../../setup/components/InfoTooltip";
 import { ReadOnlySlotTile, ReadOnlySymbolTile } from "../../setup/components/EquipmentSetupStep";
+import { skillRingHost } from "../../setup/data/specialRingData";
 import { ReadOnlyLeveledIconTile } from "../../setup/components/LeveledIconTile";
 import { VMatrixNodeIcon, useVMatrixCatalog, type VMatrixNode } from "../../setup/components/VMatrixSetupStep";
 import { HexaStatNodeIcon } from "../../setup/components/HexaMatrixSetupStep";
@@ -1044,6 +1045,7 @@ function OverviewHexaSkillsSection({ theme, hexaClassDef, hexaLevels, charName, 
 function OverviewGearSection({ theme, equipGrid, onNavigateToBookmark }: {
   theme: Theme; equipGrid: SlotMap; onNavigateToBookmark: (id: BookmarkId, subView?: string) => void;
 }) {
+  const skillHost = skillRingHost(equipGrid);
   return (
     <div>
       <OverviewGroupHeader label="Gear" theme={theme} onNavigate={() => onNavigateToBookmark("equipment", "gear")} bookmarkLabel="Gear" />
@@ -1060,7 +1062,7 @@ function OverviewGearSection({ theme, equipGrid, onNavigateToBookmark }: {
           <div style={overviewSubLabelStyle(theme)}>Accessories</div>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             {[...COL1_SLOTS, ...COL2_SLOTS].map((slotKey) => (
-              <ReadOnlySlotTile key={slotKey} slotKey={slotKey} item={equipGrid[slotKey]} theme={theme} />
+              <ReadOnlySlotTile key={slotKey} slotKey={slotKey} item={equipGrid[slotKey]} theme={theme} skillRing={slotKey === skillHost ? equipGrid.skillRing : undefined} />
             ))}
           </div>
         </div>
@@ -2021,10 +2023,11 @@ function BookmarkSectionLabel({ label, theme }: { label: string; theme: Theme })
 }
 
 function ReadOnlySlotColumn({ slots, grid, theme }: { slots: SlotKey[]; grid: SlotMap; theme: Theme }) {
+  const host = skillRingHost(grid);
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 4, flexShrink: 0 }}>
       {slots.map((slot) => (
-        <ReadOnlySlotTile key={slot} slotKey={slot} item={grid[slot]} theme={theme} />
+        <ReadOnlySlotTile key={slot} slotKey={slot} item={grid[slot]} theme={theme} skillRing={slot === host ? grid.skillRing : undefined} />
       ))}
     </div>
   );
