@@ -266,6 +266,9 @@ export interface StoredEquipmentItem {
 /** The per-preset equipment grid: everything that swaps between in-game equip presets. */
 export interface StoredEquipmentPreset {
   rings: [StoredEquipmentItem | null, StoredEquipmentItem | null, StoredEquipmentItem | null, StoredEquipmentItem | null];
+  /** The extra special skill ring a Lv. 4+ Ring of Restraint or Continuous Ring unlocks (see
+   *  specialRingData.ts). Optional: records saved before it existed don't have it. */
+  skillRing?: StoredEquipmentItem | null;
   face: StoredEquipmentItem | null;
   eye: StoredEquipmentItem | null;
   earring: StoredEquipmentItem | null;
@@ -592,6 +595,7 @@ function createEmptyCharacterStats(): StoredCharacterStats {
 function createEmptyEquipmentPreset(): StoredEquipmentPreset {
   return {
     rings: [null, null, null, null],
+    skillRing: null,
     face: null,
     eye: null,
     earring: null,
@@ -716,6 +720,7 @@ function isStoredEquipmentPreset(value: unknown): value is StoredEquipmentPreset
     Array.isArray(value.rings) &&
     value.rings.length === 4 &&
     value.rings.every(isNullableStoredEquipmentItem) &&
+    (value.skillRing === undefined || isNullableStoredEquipmentItem(value.skillRing)) &&
     isNullableStoredEquipmentItem(value.face) &&
     isNullableStoredEquipmentItem(value.eye) &&
     isNullableStoredEquipmentItem(value.pocket) &&

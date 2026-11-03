@@ -32,7 +32,12 @@ export class BitWriter {
 
 export class BitReader {
   private pos = 0;
-  constructor(private readonly data: Uint8Array) {}
+  private readonly data: Uint8Array;
+  // A plain field rather than a parameter property, which Node's type stripping (npm test)
+  // can't run.
+  constructor(data: Uint8Array) {
+    this.data = data;
+  }
 
   get(width: number): number {
     let value = 0;

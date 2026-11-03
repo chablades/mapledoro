@@ -108,6 +108,7 @@ type EquipmentDraftItem = { id?: string; name: string } | null;
 /** One preset's grid slots (the part that swaps between equipment presets). */
 interface EquipmentDraftPreset {
   ring1?: EquipmentDraftItem; ring2?: EquipmentDraftItem; ring3?: EquipmentDraftItem; ring4?: EquipmentDraftItem;
+  skillRing?: EquipmentDraftItem;
   face?: EquipmentDraftItem; eye?: EquipmentDraftItem; earring?: EquipmentDraftItem;
   pendant1?: EquipmentDraftItem; pendant2?: EquipmentDraftItem;
   belt?: EquipmentDraftItem; pocket?: EquipmentDraftItem;
@@ -154,6 +155,7 @@ function draftPresetToStored(
   const field = (key: keyof EquipmentDraftPreset) => draftItem((o[key] !== undefined ? o[key] : b[key]) ?? null);
   return {
     rings: [field("ring1"), field("ring2"), field("ring3"), field("ring4")],
+    skillRing: field("skillRing"),
     face: field("face"), eye: field("eye"), earring: field("earring"),
     pendants: [field("pendant1"), field("pendant2")],
     belt: field("belt"), pocket: field("pocket"),

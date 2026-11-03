@@ -56,6 +56,7 @@ import type { ScouterResultEntry } from "../../scouter/scouterResult";
 import { BOSS_CLEAR_GROUPS, resolveBossDisplayName } from "../../scouter/bossGrouping";
 import InfoTooltip, { type TooltipContent } from "../../setup/components/InfoTooltip";
 import { ReadOnlySlotTile, ReadOnlySymbolTile } from "../../setup/components/EquipmentSetupStep";
+import { skillRingHost, type OzRingLevels } from "../../setup/data/specialRingData";
 import { ReadOnlyLeveledIconTile } from "../../setup/components/LeveledIconTile";
 import { VMatrixNodeIcon, useVMatrixCatalog, type VMatrixNode } from "../../setup/components/VMatrixSetupStep";
 import { HexaStatNodeIcon } from "../../setup/components/HexaMatrixSetupStep";
@@ -1041,9 +1042,10 @@ function OverviewHexaSkillsSection({ theme, hexaClassDef, hexaLevels, charName, 
 // build. Shows the entire grid, armor and accessories, rather than the curated 7-piece armor
 // set tried first. Weapon, Secondary and Emblem have their own row up top, so
 // CENTER_BOTTOM_SLOTS is not repeated here.
-function OverviewGearSection({ theme, equipGrid, onNavigateToBookmark }: {
-  theme: Theme; equipGrid: SlotMap; onNavigateToBookmark: (id: BookmarkId, subView?: string) => void;
+function OverviewGearSection({ theme, equipGrid, ozLevels, onNavigateToBookmark }: {
+  theme: Theme; equipGrid: SlotMap; ozLevels: OzRingLevels | undefined; onNavigateToBookmark: (id: BookmarkId, subView?: string) => void;
 }) {
+  const skillHost = skillRingHost(equipGrid);
   return (
     <div>
       <OverviewGroupHeader label="Gear" theme={theme} onNavigate={() => onNavigateToBookmark("equipment", "gear")} bookmarkLabel="Gear" />
@@ -1060,7 +1062,7 @@ function OverviewGearSection({ theme, equipGrid, onNavigateToBookmark }: {
           <div style={overviewSubLabelStyle(theme)}>Accessories</div>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             {[...COL1_SLOTS, ...COL2_SLOTS].map((slotKey) => (
-              <ReadOnlySlotTile key={slotKey} slotKey={slotKey} item={equipGrid[slotKey]} theme={theme} />
+              <ReadOnlySlotTile key={slotKey} slotKey={slotKey} item={equipGrid[slotKey]} theme={theme} skillRing={slotKey === skillHost ? equipGrid.skillRing ?? null : undefined} ozLevels={ozLevels} />
             ))}
           </div>
         </div>
@@ -1309,7 +1311,7 @@ function renderOverviewSection(id: OverviewSectionId, ctx: OverviewSectionRender
     case "vMatrix":
       return <OverviewVMatrixSection theme={theme} character={character} onNavigateToBookmark={onNavigateToBookmark} />;
     case "gear":
-      return <OverviewGearSection theme={theme} equipGrid={draftEquipGrid} onNavigateToBookmark={onNavigateToBookmark} />;
+      return <OverviewGearSection theme={theme} equipGrid={draftEquipGrid} ozLevels={character?.scouter?.ozRings?.levels} onNavigateToBookmark={onNavigateToBookmark} />;
     case "familiars":
       return <OverviewFamiliarsSection theme={theme} character={character} onNavigateToBookmark={onNavigateToBookmark} />;
     case "innerAbility":
@@ -2020,11 +2022,12 @@ function BookmarkSectionLabel({ label, theme }: { label: string; theme: Theme })
   );
 }
 
-function ReadOnlySlotColumn({ slots, grid, theme }: { slots: SlotKey[]; grid: SlotMap; theme: Theme }) {
+function ReadOnlySlotColumn({ slots, grid, theme, ozLevels }: { slots: SlotKey[]; grid: SlotMap; theme: Theme; ozLevels?: OzRingLevels }) {
+  const host = skillRingHost(grid);
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 4, flexShrink: 0 }}>
       {slots.map((slot) => (
-        <ReadOnlySlotTile key={slot} slotKey={slot} item={grid[slot]} theme={theme} />
+        <ReadOnlySlotTile key={slot} slotKey={slot} item={grid[slot]} theme={theme} skillRing={slot === host ? grid.skillRing ?? null : undefined} ozLevels={ozLevels} />
       ))}
     </div>
   );
@@ -2285,7 +2288,7 @@ function EquipmentBookmark({
                 <button type="button" className="eq-page-nav-btn" aria-label="Previous section" onClick={() => setMobileGridPage((p) => (p + 2) % 3)} style={navBtnStyle(theme)}><NavChevron direction="prev" /></button>
                 <div style={{ display: "flex", gap: 4, alignItems: "stretch" }}>
                   <div className="eq-section eq-section-0" style={{ gap: 4, flexShrink: 0 }}>
-                    <ReadOnlySlotColumn slots={COL1_SLOTS} grid={activeGrid} theme={theme} />
+                    <ReadOnlySlotColumn slots={COL1_SLOTS} grid={activeGrid} theme={theme} ozLevels={character?.scouter?.ozRings?.levels} />
                     <ReadOnlySlotColumn slots={COL2_SLOTS} grid={activeGrid} theme={theme} />
                   </div>
                   <div className="eq-section eq-section-1" style={{ flexDirection: "column", justifyContent: "flex-end", gap: 4, flexShrink: 0, width: CENTER_WIDTH }}>

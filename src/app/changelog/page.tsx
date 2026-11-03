@@ -12,6 +12,14 @@ interface ChangelogEntry {
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    date: "2026-11-03",
+    changes: [
+      { type: "added", text: "Equipment setup now has the Skill Ring slot: a cog on your Ring of Restraint or Continuous Ring lets you equip a second special skill ring, like in game." },
+      { type: "added", text: "Equipped Oz Rings now show their level from the Oz Rings step on the Gear bookmark." },
+      { type: "fixed", text: "Fixed equipment setup letting you equip more than one special skill ring in the 4 ring slots." },
+    ],
+  },
+  {
     date: "2026-11-02",
     changes: [
       { type: "added", text: "The EXP Calculator now includes Blueberry Farm and Crimson Mechaberry Farm tickets in the Resources tab and the Daily / Weekly calculator." },
