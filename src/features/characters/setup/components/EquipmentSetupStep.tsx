@@ -538,7 +538,7 @@ function ItemPicker({
       {presetBaseItem && !presetBaseConflicts && (
         <button
           type="button"
-          onClick={() => selectItem({ id: presetBaseItem.id, name: presetBaseItem.name }, false)}
+          onClick={() => selectItem(presetBaseItem, false)}
           style={presetBaseItemStyle(theme)}
         >
           {presetBaseItem.id && <EquipItemIcon id={presetBaseItem.id} name={presetBaseItem.name} theme={theme} size={28} revealed={isAndroid} />}

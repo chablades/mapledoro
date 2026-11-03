@@ -54,7 +54,8 @@ import {
   convertStatsStepDraftToStored, deriveHasRuinForceShield, deriveIsLiberatedFromWeapon, marriageDraftToStored,
   parseStatsStepDraft, serializeStatsStepDraft, storedStatsToStatsStepDraft,
 } from "../setup/data/statsStepDraft";
-import { serializeEquipmentStepDraft, storedEquipmentToDraft } from "../setup/data/equipmentStepDraft";
+import { itemUpgrades, serializeEquipmentStepDraft, storedEquipmentToDraft } from "../setup/data/equipmentStepDraft";
+import type { StoredFlameLine } from "../setup/data/flameData";
 import { withEquipmentActivePreset, withFamiliarsActivePreset, withHexaStatActivePreset, withStatsActivePreset } from "../model/presetSwitch";
 import { mapImportToDrafts, type MapleScouterImportResult } from "../setup/data/maplescouterImportData";
 import { convertOzRingsDraftToStored, parseOzRingsDraft, serializeOzRingsDraft, storedOzRingsToOzRingsDraft } from "../setup/data/ozRingData";
@@ -104,7 +105,7 @@ function tryParseJson(raw: string): unknown {
   try { return JSON.parse(raw); } catch { return null; }
 }
 
-type EquipmentDraftItem = { id?: string; name: string } | null;
+type EquipmentDraftItem = { id?: string; name: string; starForce?: number; flame?: StoredFlameLine[] } | null;
 /** One preset's grid slots (the part that swaps between equipment presets). */
 interface EquipmentDraftPreset {
   ring1?: EquipmentDraftItem; ring2?: EquipmentDraftItem; ring3?: EquipmentDraftItem; ring4?: EquipmentDraftItem;
@@ -137,7 +138,7 @@ interface EquipmentDraft {
 
 function draftItem(v: EquipmentDraftItem) {
   if (!v?.name) return null;
-  return v.id !== undefined ? { id: v.id, name: v.name } : { name: v.name };
+  return { ...(v.id !== undefined && { id: v.id }), name: v.name, ...itemUpgrades(v) };
 }
 
 // Merges each slot individually. A slot present in `overrides` (this preset's own

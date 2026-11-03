@@ -1,4 +1,5 @@
 import { toCharacterKey } from "./characterKeys";
+import type { StoredFlameLine } from "../setup/data/flameData";
 import type { NormalizedCharacterData } from "./types";
 import { checkForWipe } from "./wipeTripwire";
 import { clearIntentionalRemovals, restoreVanishedCharacters } from "./vanishGuard";
@@ -261,6 +262,9 @@ export interface StoredCharacterStats {
 export interface StoredEquipmentItem {
   id?: string;
   name: string;
+  /** Upgrades the player logged on this item. Kept in JSON and card exports only, never the QR. */
+  starForce?: number;
+  flame?: StoredFlameLine[];
 }
 
 /** The per-preset equipment grid: everything that swaps between in-game equip presets. */
@@ -702,11 +706,17 @@ function isStoredCharacterStats(value: unknown): value is StoredCharacterStats {
   );
 }
 
+function isStoredFlameLine(value: unknown): boolean {
+  return isObject(value) && typeof value.line === "string" && typeof value.tier === "number";
+}
+
 function isStoredEquipmentItem(value: unknown): value is StoredEquipmentItem {
   return (
     isObject(value) &&
     typeof value.name === "string" &&
-    (value.id === undefined || typeof value.id === "string")
+    (value.id === undefined || typeof value.id === "string") &&
+    (value.starForce === undefined || typeof value.starForce === "number") &&
+    (value.flame === undefined || (Array.isArray(value.flame) && value.flame.every(isStoredFlameLine)))
   );
 }
 
