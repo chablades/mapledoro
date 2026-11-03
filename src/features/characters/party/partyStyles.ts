@@ -120,7 +120,8 @@ export const partyStyles = `
   .party-strip { width: calc(100% + 16px); display: flex; height: 4px; margin: 5px -8px 0; background: var(--party-line); }
   .party-diff.is-blocked .party-strip { background: repeating-linear-gradient(90deg, var(--party-line) 0 6px, transparent 6px 10px); }
   .party-strip i { display: block; height: 100%; transition: width 260ms ease; }
-  .party-note { font-size: 0.78rem; font-weight: 700; color: var(--party-muted); margin: 12px 0 0; }
+  .party-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 16px; margin-top: 12px; }
+  .party-note { font-size: 0.78rem; font-weight: 700; color: var(--party-muted); margin: 0; }
   .party-empty { padding: 28px 8px; text-align: center; font-weight: 700; color: var(--party-muted); }
 
   .party-label { font-size: 0.75rem; font-weight: 800; color: var(--party-muted); margin: 0 0 8px; }

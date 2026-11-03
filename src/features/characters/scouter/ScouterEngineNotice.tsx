@@ -52,11 +52,11 @@ function InfoIcon({ color }: { color: string }) {
 
 /** Slim, dismissible note above the Scouter and Stat Efficiency bookmarks, saying the figures now
  *  come from MapleDoro's own engine. Hidden during server render and once dismissed. */
-export default function ScouterEngineNotice({ theme }: { theme: AppTheme }) {
+export default function ScouterEngineNotice({ theme, style }: { theme: AppTheme; style?: CSSProperties }) {
   const dismissed = useSyncExternalStore(subscribe, readDismissed, () => true);
   if (dismissed) return null;
   return (
-    <div role="note" style={noticeStyle(theme)}>
+    <div role="note" style={{ ...noticeStyle(theme), ...style }}>
       <InfoIcon color={statusText(theme, "info")} />
       <span>{SCOUTER_ENGINE_NOTICE}</span>
       <button type="button" className="tap-target-44" aria-label="Dismiss notice" onClick={dismiss} style={{ ...dismissStyle, color: theme.muted }}>✕</button>

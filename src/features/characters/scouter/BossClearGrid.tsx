@@ -16,7 +16,8 @@ import { DropdownChevron, NavChevron } from "../DropdownChevron";
 import InfoTooltip, { type TooltipContent } from "../setup/components/InfoTooltip";
 import type { StoredCharacterRecord } from "../model/charactersStore";
 import { secondaryButtonStyle } from "../tabs/components/uiStyles";
-import { BOSSCUT_SCRAPED_AT, type BossCutEntry } from "./bosscut-data.generated";
+import type { BossCutEntry } from "./bosscut-data.generated";
+import BossThresholdsNote from "./BossThresholdsNote";
 import { BOSS_CLEAR_GROUPS, BOSS_DISPLAY_NAME, bossIconId, sortByDifficulty, type BossEntryList } from "./bossGrouping";
 import FallbackSpriteIcon from "./FallbackSpriteIcon";
 import BossBanner from "./BossBanner";
@@ -52,28 +53,6 @@ const QUICK_VIEW_INFO_CONTENT: TooltipContent = {
       <p style={{ margin: 0 }}>
         Party-only bosses use your HEXA alone, never your party members&apos;. A Min Cut tag
         (1p/2p/3p...) is how many players like you it would take.
-      </p>
-    </>
-  ),
-};
-
-const BOSS_THRESHOLD_INFO_CONTENT: TooltipContent = {
-  title: "Boss thresholds",
-  description: (
-    <>
-      <p style={{ margin: "0 0 0.5rem" }}>
-        Boss Clear thresholds from MapleScouter, informally curated by a small group of experienced
-        players rather than measured across the whole playerbase.
-      </p>
-      {/* Temporary until GMS gets the 20-minute timer patch: MapleScouter already models every
-          boss on KMS's post-patch 20-minute timer with HP scaled to match, which preserves the
-          required DPS, so the numbers hold for GMS's current timers. Drop this paragraph once
-          the patch lands. (Champion Black Mage, the one exception, explains itself on its own
-          chip -- see bossClearFormula.ts's effectiveEasyRate.) */}
-      <p style={{ margin: 0 }}>
-        MapleScouter already uses the 20-minute boss timers with HP cut to match, so the damage
-        you need per minute is the same as on GMS&apos;s current timers and these numbers still
-        apply.
       </p>
     </>
   ),
@@ -685,10 +664,7 @@ function BossQuickView({
           />
         ))}
       </div>
-      <span style={{ fontSize: 12, color: theme.muted, textAlign: "right", display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 4 }}>
-        Boss thresholds as of {BOSSCUT_SCRAPED_AT}
-        <InfoTooltip theme={theme} label="Where do these numbers come from?" content={BOSS_THRESHOLD_INFO_CONTENT} />
-      </span>
+      <BossThresholdsNote theme={theme} />
     </div>
   );
 }

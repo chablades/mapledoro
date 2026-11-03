@@ -9,6 +9,7 @@ import { statusText } from "../../../components/statusColors";
 import { WORLD_NAMES } from "../model/constants";
 import type { StoredCharacterRecord } from "../model/charactersStore";
 import type { ScouterPayloadContext } from "../scouter/scouterApi";
+import ScouterEngineNotice from "../scouter/ScouterEngineNotice";
 import { CHARACTERS_COPY } from "../tabs/content";
 import BackToHubLink from "../tabs/components/BackToHubLink";
 import { fetchFreshCharacter } from "../tabs/useAutoRefresh";
@@ -71,6 +72,7 @@ export default function PartyScouterWorkspace({ theme }: { theme: AppTheme }) {
           </div>
         </div>
         <div className="fade-in">
+          <ScouterEngineNotice theme={theme} style={{ marginBottom: 12 }} />
           <PartyStage members={party.members} onToggle={party.toggle} onRemove={party.remove} onAdd={() => setPicking(true)} />
           {worlds && (
             <p role="status" className="party-worlds" style={{ color: statusText(theme, "warning") }}>

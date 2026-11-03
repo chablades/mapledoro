@@ -12,6 +12,7 @@ import { bossSplashUrl } from "../../../lib/mapleResource";
 import { PillGroup } from "../../tools/shared-ui";
 import type { ClearColorTier, PartyMemberShare } from "../scouter/bossClearFormula";
 import { BOSS_ART_POSITION, DEFAULT_ART_POSITION } from "../scouter/bossArt";
+import BossThresholdsNote from "../scouter/BossThresholdsNote";
 import { lossBreakdown } from "../scouter/bossLoss";
 import { formatFigure } from "../scouter/scouterFormat";
 import { CHARACTERS_COPY } from "../tabs/content";
@@ -301,7 +302,10 @@ export default function PartyBossBoard({ theme, tiles, members, onSitOut }: {
           {picked && tile && <BossHero theme={theme} group={picked} tile={tile} members={members} onSelectTile={setSelectedId} />}
         </>
       )}
-      <p className="party-note">{COPY.caveat}</p>
+      <div className="party-foot">
+        <p className="party-note">{COPY.caveat}</p>
+        <BossThresholdsNote theme={theme} />
+      </div>
     </section>
   );
 }
