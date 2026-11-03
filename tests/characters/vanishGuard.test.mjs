@@ -20,7 +20,7 @@ function storeOf(names, roles = {}) {
   };
 }
 
-test("a character missing from the new store without a removal request is put back", () => {
+void test("a character missing from the new store without a removal request is put back", () => {
   // The two-tab case: disk has alpha + bravo (bravo added in another tab), and this tab's
   // roster, which never saw bravo, saves only alpha.
   const before = storeOf(["Alpha", "Bravo"]);
@@ -31,7 +31,7 @@ test("a character missing from the new store without a removal request is put ba
   assert.equal(store.charactersById.bravo, before.charactersById.bravo);
 });
 
-test("the rest of the write still goes through", () => {
+void test("the rest of the write still goes through", () => {
   const before = storeOf(["Alpha", "Bravo"]);
   const next = storeOf(["Alpha"]);
   next.charactersById.alpha = { ...next.charactersById.alpha, level: 285 };
@@ -40,7 +40,7 @@ test("the rest of the write still goes through", () => {
   assert.deepEqual(store.legionArtifactByWorld, next.legionArtifactByWorld);
 });
 
-test("inputs are not modified", () => {
+void test("inputs are not modified", () => {
   const before = storeOf(["Alpha", "Bravo"]);
   const next = storeOf(["Alpha"]);
   const nextCopy = structuredClone(next);
@@ -48,7 +48,7 @@ test("inputs are not modified", () => {
   assert.deepEqual(next, nextCopy);
 });
 
-test("a requested removal goes through and is reported as removed", () => {
+void test("a requested removal goes through and is reported as removed", () => {
   const before = storeOf(["Alpha", "Charlie"]);
   const next = storeOf(["Alpha"]);
   markIntentionalRemoval(" Charlie ");
@@ -59,21 +59,21 @@ test("a requested removal goes through and is reported as removed", () => {
   clearIntentionalRemovals(removed);
 });
 
-test("a cleared marker protects the character again", () => {
+void test("a cleared marker protects the character again", () => {
   markIntentionalRemoval("delta");
   clearIntentionalRemovals(["delta"]);
   const { restored } = restoreVanishedCharacters(storeOf(["Alpha", "Delta"]), storeOf(["Alpha"]));
   assert.deepEqual(restored, ["delta"]);
 });
 
-test("a restored character gets its Main back only if the world has none", () => {
+void test("a restored character gets its Main back only if the world has none", () => {
   const before = storeOf(["Alpha", "Bravo"], { main: { 1: "bravo", 2: "bravo" } });
   const next = storeOf(["Alpha"], { main: { 2: "alpha" } });
   const { store } = restoreVanishedCharacters(before, next);
   assert.deepEqual(store.mainCharacterIdByWorld, { 1: "bravo", 2: "alpha" });
 });
 
-test("a restored character gets its Champion slot back while the world is under the cap", () => {
+void test("a restored character gets its Champion slot back while the world is under the cap", () => {
   const before = storeOf(["Alpha", "Bravo"], { champions: { 1: ["alpha", "bravo"], 2: ["bravo"] } });
   const full = ["c1", "c2", "c3", "c4", "c5"];
   const next = storeOf(["Alpha"], { champions: { 1: ["alpha"], 2: full } });
@@ -82,7 +82,7 @@ test("a restored character gets its Champion slot back while the world is under 
   assert.deepEqual(store.championCharacterIdsByWorld[2], full);
 });
 
-test("nothing missing returns the new store untouched", () => {
+void test("nothing missing returns the new store untouched", () => {
   const next = storeOf(["Alpha", "Bravo"]);
   const result = restoreVanishedCharacters(storeOf(["Alpha"]), next);
   assert.equal(result.store, next);

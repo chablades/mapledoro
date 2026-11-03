@@ -31,7 +31,7 @@ function damageFor(entry, rate) {
   return (1e8 * rate) / soloRate;
 }
 
-test("a party of one matches the character's own Boss Clear on a solo-cut boss, Ascent included", () => {
+void test("a party of one matches the character's own Boss Clear on a solo-cut boss, Ascent included", () => {
   const seren = boss("seren", "Normal");
   for (const rate of [0.5, 1.2, 2.4, 5]) {
     const solo = member(damageFor(seren, rate), 0.12);
@@ -43,7 +43,7 @@ test("a party of one matches the character's own Boss Clear on a solo-cut boss, 
   }
 });
 
-test("members' shares add up to the party's clear rate, without Ascent a plain sum", () => {
+void test("members' shares add up to the party's clear rate, without Ascent a plain sum", () => {
   const seren = boss("seren", "Normal");
   const party = computePartyClear(seren, [member(damageFor(seren, 0.6), 1), member(damageFor(seren, 0.3), 1)]);
   assert.ok(Math.abs(party.members[0].clearRate - 0.6) < 1e-9);
@@ -52,7 +52,7 @@ test("members' shares add up to the party's clear rate, without Ascent a plain s
   assert.equal(party.tagEnglish, "Party Min");
 });
 
-test("Ascent is each member's own, at the party's pace", () => {
+void test("Ascent is each member's own, at the party's pace", () => {
   const seren = boss("seren", "Normal");
   // Two members at 1.0 each: alone neither is fast enough for an Ascent bonus (it starts at
   // 176%), together the party is at 200%, so each member's 3 uses land in a shorter fight.
@@ -64,14 +64,14 @@ test("Ascent is each member's own, at the party's pace", () => {
   assert.ok(Math.abs(party.members[1].clearRate - 1) < 1e-9, "a member with no Ascent gets nothing");
 });
 
-test("tags follow the combined rate", () => {
+void test("tags follow the combined rate", () => {
   const seren = boss("seren", "Normal");
   const tagAt = (rate) => computePartyClear(seren, [member(damageFor(seren, rate / 2), 1), member(damageFor(seren, rate / 2), 1)]);
   assert.deepEqual([tagAt(2.1).tagEnglish, tagAt(1.5).tagEnglish, tagAt(1).tagEnglish, tagAt(0.5).tagEnglish], ["Easy", "Possible", "Party Min", "Impossible"]);
   assert.equal(tagAt(1).colorTier, "purple");
 });
 
-test("more members than the boss allows can't enter, but still get a rate", () => {
+void test("more members than the boss allows can't enter, but still get a rate", () => {
   const champion = boss("seren", "Champion");
   assert.equal(champion.partyLimit, 1);
   const party = computePartyClear(champion, [member(damageFor(champion, 1), 1), member(damageFor(champion, 1), 1)]);
@@ -80,7 +80,7 @@ test("more members than the boss allows can't enter, but still get a rate", () =
   assert.ok(Math.abs(party.clearRate - 2) < 1e-9);
 });
 
-test("a member below the entry level blocks the party", () => {
+void test("a member below the entry level blocks the party", () => {
   const seren = boss("seren", "Normal");
   const party = computePartyClear(seren, [member(damageFor(seren, 1), 1), member(damageFor(seren, 1), 1, 250)]);
   assert.equal(party.cannotEnter, "level");
@@ -88,7 +88,7 @@ test("a member below the entry level blocks the party", () => {
   assert.equal(party.members[0].cannotEnter, false);
 });
 
-test("a party-only boss counts each member on the solo scale", () => {
+void test("a party-only boss counts each member on the solo scale", () => {
   const kalos = boss("kalos", "Extreme");
   assert.ok(kalos.partyBossCut);
   const solo = member(damageFor(kalos, 0.4), 1);
@@ -98,6 +98,6 @@ test("a party-only boss counts each member on the solo scale", () => {
   assert.ok(Math.abs(party.clearRate - 0.8) < 1e-9);
 });
 
-test("no members, no result", () => {
+void test("no members, no result", () => {
   assert.equal(computePartyClear(boss("seren", "Normal"), []), null);
 });
