@@ -39,7 +39,7 @@ export function itemUpgrades(item: { starForce?: number; flame?: StoredFlameLine
 
 /** Same item with the same logged upgrades. A Preset 2/3 slot holding the same item as Preset 1
  *  but different upgrades is its own copy, not a mirror of Preset 1's. */
-function sameUpgradedItem(a: EquipmentItem | null | undefined, b: EquipmentItem | null | undefined): boolean {
+export function sameUpgradedItem(a: EquipmentItem | null | undefined, b: EquipmentItem | null | undefined): boolean {
   if (!sameItem(a, b) || !a || !b) return sameItem(a, b);
   return a.starForce === b.starForce && JSON.stringify(a.flame ?? []) === JSON.stringify(b.flame ?? []);
 }

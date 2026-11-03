@@ -1,17 +1,19 @@
 "use client";
 
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import Image from "next/image";
 import { createPortal } from "react-dom";
 import { usePickerCoords } from "../../../../lib/usePickerCoords";
 import { numericKeyDown, sanitizeDigitsInput, isStrayClick } from "../../../../lib/inputUtils";
 import { useKeyboardListNav } from "../../../../lib/useKeyboardListNav";
 import { searchAndRank } from "../../../../lib/searchMatch";
-import { resourceImageUrl } from "../../../../lib/mapleResource";
 import type { AppTheme } from "../../../../components/themes";
 import HoverTooltip from "../../../../components/HoverTooltip";
 import type { SetupStepDefinition } from "../steps";
 import CharacterAvatar from "../../tabs/components/CharacterAvatar";
+import EquipItemIcon from "./EquipItemIcon";
+import EquipmentUpgradeDialog, { type ItemUpgrades, type UpgradeEntry } from "./EquipmentUpgradeDialog";
+import { isUpgradeable } from "../data/equipmentInfo";
+import { useEquipInfo } from "../data/useEquipInfo";
 import SetupStepFrame from "./SetupStepFrame";
 import { PresetBar } from "./PresetBar";
 import { NavChevron } from "../../DropdownChevron";
@@ -30,7 +32,7 @@ import { statusText } from "../../../../components/statusColors";
 import { branchMaskForClass, weaponPrefixesForClass, secondarySpecForClass, isShieldId } from "../data/classBranch";
 import { readCharactersStore, selectCharacterByIgn } from "../../model/charactersStore";
 import {
-  isSharedSlot, sameItem, parseEquipmentStepDraft, serializeEquipmentStepDraft, storedEquipmentToDraft,
+  isSharedSlot, sameItem, sameUpgradedItem, parseEquipmentStepDraft, serializeEquipmentStepDraft, storedEquipmentToDraft,
   SLOT_LABELS, SLOT_SIZE, CENTER_WIDTH, SYMBOL_TILE_SIZE, EQUIPMENT_PAGE_LABELS,
   COL1_SLOTS, COL2_SLOTS, COL6_SLOTS, COL7_SLOTS, CENTER_BOTTOM_SLOTS,
   slotCellStyle, navBtnStyle,
@@ -54,6 +56,13 @@ interface CatalogItem extends EquipmentItem {
 type SymbolTabKey = "arcane" | "sacred";
 
 const PRESET_COUNT = 3;
+
+// The upgrade window's rail, in the game's equipment window order.
+const UPGRADE_SLOT_ORDER: readonly SlotKey[] = [
+  "weapon", "secondary", "emblem", "hat", "top", "bottom", "shoe", "glove", "cape", "shoulder",
+  "face", "eye", "earring", "pendant1", "pendant2", "belt", "pocket",
+  "ring1", "ring2", "ring3", "ring4", "medal", "badge", "heart", "android",
+];
 /** Substeps in this step: 0 = main grid, 1 = additional equipment, 2 = pets. */
 const SUBSTEP_COUNT = 3;
 
@@ -148,6 +157,11 @@ const equippedHeaderStyle = (theme: AppTheme): CSSProperties => ({
   display: "flex", alignItems: "center", gap: 8, width: "100%",
   padding: "0.4rem 0.6rem",
   borderBottom: `1px solid ${theme.border}`,
+});
+
+const upgradeOpenStyle = (theme: AppTheme): CSSProperties => ({
+  display: "flex", alignItems: "center", justifyContent: "center", width: 30, height: 30, padding: 0, flexShrink: 0,
+  borderRadius: 8, border: `1px solid ${theme.border}`, background: theme.bg, color: theme.text, cursor: "pointer",
 });
 
 const equippedHeaderLabelStyle = (theme: AppTheme): CSSProperties => ({
@@ -261,43 +275,6 @@ const spritePreviewStyle = (theme: AppTheme): CSSProperties => ({
   overflow: "hidden",
   minHeight: SLOT_SIZE * 2,
 });
-
-// ── Icon ───────────────────────────────────────────────────────────────────
-
-// A missing/failed icon falls back to the item's name-initial (mirrors VMatrixNodeIcon's
-// treatment) instead of a stray broken-image glyph. `revealed` mirrors ItemIcon's own prop
-// (androids' actual-appearance variant vs. their pre-equip egg icon).
-function EquipItemIcon({ id, name, theme, size, revealed }: {
-  id: string;
-  name: string;
-  theme: AppTheme;
-  size: number;
-  revealed?: boolean;
-}) {
-  const wrapperRef = useRef<HTMLDivElement>(null);
-  const fallbackRef = useRef<HTMLDivElement>(null);
-  const src = resourceImageUrl("item", id, `iconRaw${revealed ? "D" : ""}.png`);
-  return (
-    <>
-      <div ref={wrapperRef} style={{ flexShrink: 0 }}>
-        <Image src={src} alt={name} width={size} height={size} unoptimized
-          onError={() => {
-            if (wrapperRef.current) wrapperRef.current.style.display = "none";
-            if (fallbackRef.current) fallbackRef.current.style.display = "flex";
-          }}
-          style={{ objectFit: "contain", display: "block" }}
-        />
-      </div>
-      <div ref={fallbackRef} style={{
-        display: "none", alignItems: "center", justifyContent: "center", width: size, height: size,
-        borderRadius: "6px", flexShrink: 0, fontWeight: 800, fontSize: Math.max(12, size * 0.35),
-        background: "rgba(127,127,127,0.18)", color: theme.muted,
-      }}>
-        {name.match(/[a-zA-Z0-9]/)?.[0] ?? "?"}
-      </div>
-    </>
-  );
-}
 
 // ── Item search ─────────────────────────────────────────────────────────────
 
@@ -451,7 +428,7 @@ function useItemPickerCatalog({
 
 function ItemPicker({
   slot, current, theme, files, itemFilter, maxLevel, excludeIds, presetBaseItem, showAllWhenEmpty,
-  onSelect, onClose, onAdvance, onPrev, onNext, heading,
+  onSelect, onClose, onAdvance, onPrev, onNext, heading, onUpgrade,
 }: {
   slot: SlotKey;
   current: EquipmentItem | null | undefined;
@@ -477,6 +454,8 @@ function ItemPicker({
   onNext?: () => void;
   /** A title row on top, for a picker that's its own window (the skill ring's). */
   heading?: string;
+  /** Opens the equipped item's Star Force and flames, shown when the item takes either. */
+  onUpgrade?: () => void;
 }) {
   const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -520,10 +499,17 @@ function ItemPicker({
       {current && (
         <div style={equippedHeaderStyle(theme)}>
           {current.id && <EquipItemIcon id={current.id} name={current.name} theme={theme} size={28} revealed={isAndroid} />}
-          <div style={{ overflow: "hidden" }}>
+          <div style={{ overflow: "hidden", flex: 1 }}>
             <p style={equippedHeaderLabelStyle(theme)}>Currently Equipped</p>
             <p style={equippedHeaderNameStyle(theme)}>{current.name}</p>
           </div>
+          {onUpgrade && (
+            <HoverTooltip label="Star Force and flames" theme={theme}>
+              <button type="button" aria-label="Star Force and flames" onClick={() => { onClose(); onUpgrade(); }} style={upgradeOpenStyle(theme)}>
+                <NavChevron direction="next" size={16} />
+              </button>
+            </HoverTooltip>
+          )}
         </div>
       )}
       {current && (
@@ -1026,46 +1012,50 @@ interface SlotPickerContext {
   setActiveSlot: (slot: SlotKey | null) => void;
   /** The saved Oz Rings step levels, for the level shown on an equipped Oz Ring. */
   ozLevels: OzRingLevels | undefined;
+  openUpgrades: (slot: SlotKey) => void;
 }
 
 function SlotPicker({ slot, ctx }: { slot: SlotKey; ctx: SlotPickerContext }) {
-  const {
-    activeSlot, classId, branchMask, draft, theme, characterLevel,
-    readSlot, siblingItemIds, presetBaseItemFor, chainNavForSlot, updateSlot, setActiveSlot,
-  } = ctx;
-  if (activeSlot !== slot) return null;
-  const source = resolvePickerSource(slot, classId, branchMask);
-  let itemFilter = source.filter;
-  let showAllWhenEmpty = false;
+  if (ctx.activeSlot !== slot) return null;
+  return <OpenSlotPicker slot={slot} ctx={ctx} />;
+}
 
-  const pairedPet = PET_EQUIP_TO_PET[slot]; // set ⇒ this is a petEquip slot
-  const pairedEquip = PET_TO_PET_EQUIP[slot]; // set ⇒ this is a pet slot
+/** The slot's item list, narrowed by what's already equipped around it, and whether that list
+ *  is short enough to show before any search. */
+function slotItemFilter(slot: SlotKey, ctx: SlotPickerContext, base: (item: CatalogItem) => boolean): { itemFilter: (item: CatalogItem) => boolean; showAllWhenEmpty: boolean } {
+  const { draft, readSlot } = ctx;
   const ringGrid = ringGridOf(readSlot);
   if (slot === "skillRing") {
     // Only the kind the host ring's slot takes, a short list, so shown without searching.
     const kind = gridSkillSlotKind(ringGrid);
-    itemFilter = (item) => kind !== null && fitsSkillSlot(kind, item.id) && source.filter(item);
-    showAllWhenEmpty = true;
-  } else if (isRingKey(slot) && specialRingElsewhere(ringGrid, slot)) {
-    // One special skill ring across the 4 slots; a second goes in the skill ring slot.
-    itemFilter = (item) => !isSpecialSkillRing(item.id) && source.filter(item);
-  } else if (pairedPet) {
-    // Pet chosen: show only the equips it can wear. Short enough to reveal without searching.
-    const pet = draft[pairedPet];
-    if (pet) {
-      itemFilter = (item) => source.filter(item) && (item.wearablePets?.includes(pet.id) ?? false);
-      showAllWhenEmpty = true;
-    }
-  } else if (pairedEquip && !readSlot(slot)) {
-    // Equip chosen but this pet slot is empty: narrow the pet list to its wearers (guides equip→pet
-    // order) and reveal that short list without searching.
-    const equip = draft[pairedEquip];
-    if (equip) {
-      itemFilter = (item) => source.filter(item) && (item.wearableEquips?.includes(equip.id) ?? false);
-      showAllWhenEmpty = true;
-    }
+    return { itemFilter: (item) => kind !== null && fitsSkillSlot(kind, item.id) && base(item), showAllWhenEmpty: true };
   }
+  if (isRingKey(slot) && specialRingElsewhere(ringGrid, slot)) {
+    // One special skill ring across the 4 slots; a second goes in the skill ring slot.
+    return { itemFilter: (item) => !isSpecialSkillRing(item.id) && base(item), showAllWhenEmpty: false };
+  }
+  const pairedPet = PET_EQUIP_TO_PET[slot]; // set ⇒ this is a petEquip slot
+  const pairedEquip = PET_TO_PET_EQUIP[slot]; // set ⇒ this is a pet slot
+  // Pet chosen: show only the equips it can wear. Short enough to reveal without searching.
+  const pet = pairedPet ? draft[pairedPet] : null;
+  if (pet) return { itemFilter: (item) => base(item) && (item.wearablePets?.includes(pet.id) ?? false), showAllWhenEmpty: true };
+  // Equip chosen but this pet slot is empty: narrow the pet list to its wearers (guides equip→pet
+  // order) and reveal that short list without searching.
+  const equip = pairedEquip && !readSlot(slot) ? draft[pairedEquip] : null;
+  if (equip) return { itemFilter: (item) => base(item) && (item.wearableEquips?.includes(equip.id) ?? false), showAllWhenEmpty: true };
+  return { itemFilter: base, showAllWhenEmpty: false };
+}
 
+function OpenSlotPicker({ slot, ctx }: { slot: SlotKey; ctx: SlotPickerContext }) {
+  const {
+    classId, branchMask, theme, characterLevel,
+    readSlot, siblingItemIds, presetBaseItemFor, chainNavForSlot, updateSlot, setActiveSlot,
+  } = ctx;
+  const equipped = readSlot(slot);
+  const gridItem = !isSharedSlot(slot) && equipped?.id ? equipped : null;
+  const upgradeInfo = useEquipInfo(gridItem ? [{ slot, item: gridItem }] : [])[slot];
+  const source = resolvePickerSource(slot, classId, branchMask);
+  const { itemFilter, showAllWhenEmpty } = slotItemFilter(slot, ctx, source.filter);
   const { onPrev: goPrev, onNext: goNext } = chainNavForSlot(slot);
 
   return (
@@ -1085,6 +1075,7 @@ function SlotPicker({ slot, ctx }: { slot: SlotKey; ctx: SlotPickerContext }) {
       onPrev={goPrev}
       onNext={goNext}
       heading={slot === "skillRing" ? SLOT_LABELS.skillRing : undefined}
+      onUpgrade={isUpgradeable(upgradeInfo) ? () => ctx.openUpgrades(slot) : undefined}
     />
   );
 }
@@ -1437,6 +1428,10 @@ interface EquipmentStepState {
   setSymbolLevel: (regionName: string, level: string) => void;
   setSymbolLevels: (updates: Record<string, string>) => void;
   pickerCtx: SlotPickerContext;
+  upgradeSlot: SlotKey | null;
+  setUpgradeSlot: (slot: SlotKey | null) => void;
+  upgradeEntries: UpgradeEntry[];
+  saveUpgrades: (changes: Partial<Record<SlotKey, ItemUpgrades>>) => void;
 }
 
 /** All of EquipmentSetupStep's state, derived values, and slot/substep handlers, kept in
@@ -1505,6 +1500,7 @@ function useEquipmentStepState({
 
   // The saved Oz Rings step levels, read once like the backfill above. A level changed later in
   // this same setup run shows once it's saved.
+  const [upgradeSlot, setUpgradeSlot] = useState<SlotKey | null>(null);
   const [ozLevels] = useState<OzRingLevels | undefined>(() => {
     if (typeof window === "undefined" || !confirmedCharacterName) return undefined;
     return selectCharacterByIgn(readCharactersStore(), confirmedCharacterName)?.scouter?.ozRings?.levels;
@@ -1566,6 +1562,8 @@ function useEquipmentStepState({
     // rather than getting frozen by a whole-preset clone.
     const presets = clonePresets();
     const next: SlotMap = { ...presets[activePreset], [slot]: item };
+    // Picking Preset 1's own item in Preset 2/3 means mirroring it again, not a copy of it.
+    if (activePreset !== 0 && item && sameUpgradedItem(item, presets[0]?.[slot])) delete next[slot];
     // Swapping the host ring can leave a skill ring its slot no longer takes (Continuous ->
     // Restraint with Weapon Jump in it), or no slot at all, so it comes off.
     if (isRingKey(slot) && !skillRingFits({ ...activeGrid, [slot]: item })) next.skillRing = null;
@@ -1678,15 +1676,43 @@ function useEquipmentStepState({
     };
   }
 
+  /** The preset an edit to this slot lands in: Preset 2/3's own item, else Preset 1's, which
+   *  a slot that hasn't been changed in this preset still mirrors. */
+  function ownerPreset(slot: SlotKey): number {
+    return activePreset !== 0 && draft.presets?.[activePreset]?.[slot] !== undefined ? activePreset : 0;
+  }
+
+  const upgradeEntries: UpgradeEntry[] = UPGRADE_SLOT_ORDER.flatMap((slot) => {
+    const item = readSlot(slot);
+    return item?.id ? [{ slot, item, preset: ownerPreset(slot) + 1 }] : [];
+  });
+
+  function saveUpgrades(changes: Partial<Record<SlotKey, ItemUpgrades>>) {
+    const presets = clonePresets();
+    for (const [slot, upgrades] of Object.entries(changes) as [SlotKey, ItemUpgrades][]) {
+      const owner = ownerPreset(slot);
+      const item = presets[owner]?.[slot];
+      if (!item) continue;
+      const { starForce, flame } = upgrades;
+      presets[owner] = {
+        ...presets[owner],
+        [slot]: { id: item.id, name: item.name, ...(starForce ? { starForce } : null), ...(flame?.length ? { flame } : null) },
+      };
+    }
+    commitDraft({ ...draft, presets });
+  }
+
   const pickerCtx: SlotPickerContext = {
     activeSlot, classId, branchMask, draft, theme, characterLevel,
     readSlot, siblingItemIds, presetBaseItemFor, chainNavForSlot, updateSlot, setActiveSlot, ozLevels,
+    openUpgrades: setUpgradeSlot,
   };
 
   return {
     draft, activeSlot, toggleSlot, activePreset, activeGrid, substep, substepAnimStyle,
     symbolTab, setSymbolTab, mobileGridPage, setMobileGridPage, availableSymbolTabs,
     goToSubstep, switchPreset, setSymbolLevel, setSymbolLevels, pickerCtx,
+    upgradeSlot, setUpgradeSlot, upgradeEntries, saveUpgrades,
   };
 }
 
@@ -1712,6 +1738,7 @@ export default function EquipmentSetupStep({
     draft, activeSlot, toggleSlot, activePreset, activeGrid, substep, substepAnimStyle,
     symbolTab, setSymbolTab, mobileGridPage, setMobileGridPage, availableSymbolTabs,
     goToSubstep, switchPreset, setSymbolLevel, setSymbolLevels, pickerCtx,
+    upgradeSlot, setUpgradeSlot, upgradeEntries, saveUpgrades,
   } = useEquipmentStepState({
     theme, jobName, characterLevel, confirmedCharacterName, direction, targetSubstep, onSubstepChange, value, onChange,
   });
@@ -1774,6 +1801,7 @@ export default function EquipmentSetupStep({
     substepIndex: 0, substepCount: SUBSTEP_COUNT, onBack, onNext: () => goToSubstep(1), nextLabel: "Continue",
   });
   return (
+    <>
     <EquipmentGridSubstep
       theme={theme}
       stepNumber={stepNumber}
@@ -1796,5 +1824,12 @@ export default function EquipmentSetupStep({
       onFinish={onFinish}
       nextLabel={frame.nextLabel}
     />
+    {upgradeSlot && (
+      <EquipmentUpgradeDialog
+        key={upgradeSlot} theme={theme} entries={upgradeEntries} initialSlot={upgradeSlot}
+        onSave={saveUpgrades} onClose={() => setUpgradeSlot(null)}
+      />
+    )}
+    </>
   );
 }
