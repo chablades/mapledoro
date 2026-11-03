@@ -14,6 +14,7 @@ const CHANGELOG: ChangelogEntry[] = [
   {
     date: "2026-11-02",
     changes: [
+      { type: "added", text: "The EXP Calculator now includes Blueberry Farm and Crimson Mechaberry Farm tickets in the Resources tab and the Daily / Weekly calculator." },
       { type: "added", text: "Added Party Scouter, which shows which bosses a party of up to 6 characters can clear together, using characters from your directory or a friend's card or JSON." },
       { type: "added", text: "Added the Characters hub, with your Main and Champions for a world up front and links to your directory, View a Character and Party Scouter." },
       { type: "added", text: "Added View a Character, which opens a character card or JSON export without adding it to your directory. Scanning a card's QR code opens it there." },
