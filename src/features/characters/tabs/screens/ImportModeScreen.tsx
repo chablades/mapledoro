@@ -1,14 +1,21 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import {
-  parseImportedCharacterRecord,
   readCharactersStore,
   selectCharacterByIgn,
   selectCharactersList,
+  writeLegionArtifactForWorld,
+  writeLinkSkillTotalsForWorld,
+  writeScouterLegionForWorld,
+  type CharacterExportWorldData,
   type ImportSectionId,
   type StoredCharacterRecord,
 } from "../../model/charactersStore";
+import { isDefaultLegionArtifact } from "../../setup/data/legionArtifactData";
+import { readCharacterFile, type CharacterFileResult, type QrSource } from "../../share/readCharacterFile";
+import { clearPendingImport, peekPendingImport } from "../../share/pendingImport";
+import { useTouchDevice } from "../../share/useTouchDevice";
 import { toCharacterKey } from "../../model/characterKeys";
 import { resolveDisplayJobName } from "../../setup/data/nexonJobMapping";
 import { statusText } from "../../../../components/statusColors";
@@ -18,13 +25,36 @@ import { MAX_CHAMPIONS, type RosterRole } from "../useCharacterSetupController";
 import CharacterAvatar from "../components/CharacterAvatar";
 import ImportConflictDialog from "./ImportConflictDialog";
 import ChampionSwapDialog from "./ChampionSwapDialog";
-import { ExportTabIcon } from "./CharacterProfileOverviewScreen";
+import ExportMention from "../components/ExportMention";
+import { BackLabel } from "../components/ArrowLabels";
 import {
   primaryButtonStyle,
   secondaryButtonStyle,
   subtitleStyle,
   titleStyle,
 } from "../components/uiStyles";
+
+const retryLinksRowStyle: CSSProperties = {
+  display: "flex",
+  flexWrap: "wrap",
+  columnGap: "1.25rem",
+  rowGap: "0.4rem",
+  marginBottom: "0.75rem",
+};
+
+function retryLinkStyle(color: string, locked: boolean): CSSProperties {
+  return {
+    background: "none",
+    border: "none",
+    padding: 0,
+    font: "inherit",
+    textAlign: "left",
+    fontSize: "0.78rem",
+    fontWeight: 700,
+    color,
+    cursor: locked ? "not-allowed" : "pointer",
+  };
+}
 
 interface ImportModeScreenProps {
   model: SearchPaneModel;
@@ -33,6 +63,8 @@ interface ImportModeScreenProps {
 
 type ImportState =
   | { status: "idle" }
+  // An image is being read; reading its QR can take a few seconds on a phone.
+  | { status: "reading" }
   | { status: "error"; message: string }
   | { status: "readyToAdd"; record: StoredCharacterRecord }
   // The parsed IGN collides with an existing character. Arriving here does not open the
@@ -84,31 +116,85 @@ function ImportPreviewCard({ theme, record }: { theme: SearchPaneModel["theme"];
   );
 }
 
-async function readImportFile(file: File): Promise<ImportState> {
-  let parsedJson: unknown;
-  try {
-    parsedJson = JSON.parse(await file.text());
-  } catch {
-    return { status: "error", message: CHARACTERS_COPY.importCharacter.invalidJsonError };
+/** Fills in the world Legion data an imported file carries, but only when the world holds no
+ *  character other than the one being imported. A world with other characters belongs to the
+ *  player, and even filling an answer they never gave (say, a friend's artifact Final Attack
+ *  damage) would silently change their own characters' Scouter numbers. Re-importing a world's
+ *  only character still fills it. Within that, each piece is filled only where missing, so
+ *  nothing already there is replaced: Scouter Legion answers fill only unanswered fields, the
+ *  artifact board only replaces the untouched automatic default, and link skill totals only
+ *  fill an empty slot. */
+function applyImportedWorldData(record: StoredCharacterRecord, world: CharacterExportWorldData) {
+  const store = readCharactersStore();
+  const worldId = record.worldID;
+  const importedKey = toCharacterKey(record);
+  const hasOtherCharacters = selectCharactersList(store)
+    .some((c) => c.worldID === worldId && toCharacterKey(c) !== importedKey);
+  if (hasOtherCharacters) return;
+  const key = String(worldId);
+  const existingLegion = store.scouterLegionByWorld[key];
+  if (world.scouterLegion) {
+    // Only answered fields win; a key present but undefined must not erase the imported value.
+    const answered = Object.fromEntries(Object.entries(existingLegion ?? {}).filter(([, v]) => v !== undefined));
+    const merged = { ...world.scouterLegion, ...answered };
+    if (JSON.stringify(merged) !== JSON.stringify(existingLegion ?? {})) writeScouterLegionForWorld(worldId, merged);
   }
-
-  // A world export, meaning multiple characters plus world-scoped Legion data, belongs in the
-  // directory's own "Import World" button rather than here. This screen handles one character,
-  // and redirecting a world file into a different bulk flow from an unrelated entry point
-  // would be a confusing surprise, not a convenience.
-  if (typeof parsedJson === "object" && parsedJson !== null && (parsedJson as Record<string, unknown>).kind === "world") {
-    return { status: "error", message: CHARACTERS_COPY.importCharacter.wrongFileTypeWorldError };
+  const existingBoard = store.legionArtifactByWorld[key];
+  if (world.legionArtifact && (!existingBoard || isDefaultLegionArtifact(existingBoard))) {
+    writeLegionArtifactForWorld(worldId, world.legionArtifact);
   }
-
-  const record = parseImportedCharacterRecord(parsedJson);
-  if (!record) {
-    return { status: "error", message: CHARACTERS_COPY.importCharacter.invalidShapeError };
+  if (world.linkSkillTotals && !store.linkSkillTotalsByWorld[key]) {
+    writeLinkSkillTotalsForWorld(worldId, world.linkSkillTotals);
   }
+}
 
+interface ImportFileResult {
+  state: ImportState;
+  /** The file's world Legion data, applied only once the character is actually added. */
+  world: CharacterExportWorldData;
+  /** Set when read from a card's QR rather than full data (see QrSource). */
+  qrSource?: QrSource;
+}
+
+const { importCharacter: IMPORT_COPY } = CHARACTERS_COPY;
+
+const qrNoteStyle = (theme: SearchPaneModel["theme"]) => ({ margin: "-0.25rem 0 0.75rem", fontSize: "0.78rem", fontWeight: 700, color: theme.muted, lineHeight: 1.45 });
+
+/** What a QR import left out, and why, plus when the avatar arrives. */
+function QrImportNote({ theme, source }: { theme: SearchPaneModel["theme"]; source: QrSource }) {
+  return (
+    <div style={qrNoteStyle(theme)}>
+      {source !== "strippedPng" ? (
+        <p style={{ margin: 0 }}>
+          {IMPORT_COPY.qrImportNoteBefore} <strong style={{ color: theme.text }}>{IMPORT_COPY.qrImportNoteBold}</strong> {IMPORT_COPY.qrImportNoteAfter}
+        </p>
+      ) : (
+        <p style={{ margin: 0 }}>{IMPORT_COPY.qrImportStrippedPngNote}</p>
+      )}
+      <p style={{ margin: "0.3rem 0 0" }}>{IMPORT_COPY.qrImportAvatarNote}</p>
+    </div>
+  );
+}
+
+const importError = (message: string): ImportFileResult => ({ state: { status: "error", message }, world: {} });
+
+function importResult(record: StoredCharacterRecord, world: CharacterExportWorldData, qrSource?: QrSource): ImportFileResult {
   const existing = selectCharacterByIgn(readCharactersStore(), record.characterName);
-  return existing
-    ? { status: "conflict", existing, imported: record }
-    : { status: "readyToAdd", record };
+  return {
+    state: existing ? { status: "conflict", existing, imported: record } : { status: "readyToAdd", record },
+    world,
+    qrSource,
+  };
+}
+
+function importFileResult(result: CharacterFileResult): ImportFileResult {
+  return result.ok ? importResult(result.record, result.world, result.qrSource) : importError(result.message);
+}
+
+/** The character the viewer handed over with "Add to directory", if any (see pendingImport.ts). */
+function initialImport(): ImportFileResult | null {
+  const pending = peekPendingImport();
+  return pending ? importResult(pending.record, pending.world, pending.qrSource) : null;
 }
 
 // Nesting depth 1 throughout: handleAddCharacter is a flat chain of early returns over the
@@ -118,10 +204,18 @@ async function readImportFile(file: File): Promise<ImportState> {
 // react-doctor-disable-next-line no-high-complexity-react-function
 export default function ImportModeScreen({ model, actions }: ImportModeScreenProps) {
   const { theme, shell, search, profile } = model;
-  const [state, setState] = useState<ImportState>({ status: "idle" });
+  const [initial] = useState(initialImport);
+  const [state, setState] = useState<ImportState>(initial?.state ?? { status: "idle" });
   const [role, setRole] = useState<RosterRole>("mule");
   const [conflictDialogOpen, setConflictDialogOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const scanInputRef = useRef<HTMLInputElement>(null);
+  const importedWorldRef = useRef<CharacterExportWorldData>(initial?.world ?? {});
+  const [qrSource, setQrSource] = useState<QrSource | undefined>(initial?.qrSource);
+  const isTouch = useTouchDevice();
+  // Picked up once; cleared after mount rather than while reading it, since a Strict Mode
+  // double render would otherwise find it already gone.
+  useEffect(() => { clearPendingImport(); }, []);
 
   function handleBack() {
     if (shell.isUiLocked) return;
@@ -138,11 +232,16 @@ export default function ImportModeScreen({ model, actions }: ImportModeScreenPro
     if (!file) return;
     setRole("mule");
     setConflictDialogOpen(false);
-    setState(await readImportFile(file));
+    if (file.type.startsWith("image/")) setState({ status: "reading" });
+    const result = importFileResult(await readCharacterFile(file));
+    importedWorldRef.current = result.world;
+    setQrSource(result.qrSource);
+    setState(result.state);
   }
 
   function handleConflictConfirm(choices: Record<ImportSectionId, "mine" | "imported">) {
     if (state.status !== "conflict") return;
+    applyImportedWorldData(state.imported, importedWorldRef.current);
     actions.importCharacterMerged(state.existing, state.imported, choices);
   }
 
@@ -159,12 +258,14 @@ export default function ImportModeScreen({ model, actions }: ImportModeScreenPro
     // sensible answer.
     const effectiveRole: RosterRole = profile.isAddingCharacter ? role : "main";
     if (effectiveRole !== "champion") {
+      applyImportedWorldData(record, importedWorldRef.current);
       actions.importCharacter(record, effectiveRole);
       return;
     }
     const store = readCharactersStore();
     const championKeys = store.championCharacterIdsByWorld[String(record.worldID)] ?? [];
     if (championKeys.length < MAX_CHAMPIONS) {
+      applyImportedWorldData(record, importedWorldRef.current);
       actions.importCharacter(record, effectiveRole);
       return;
     }
@@ -180,6 +281,7 @@ export default function ImportModeScreen({ model, actions }: ImportModeScreenPro
 
   function handleChampionSwapConfirm(swapOutKey: string) {
     if (state.status !== "championSwap") return;
+    applyImportedWorldData(state.record, importedWorldRef.current);
     actions.importCharacterAsChampionSwap(state.record, swapOutKey);
   }
 
@@ -208,7 +310,7 @@ export default function ImportModeScreen({ model, actions }: ImportModeScreenPro
             }}
           >
             {search.hasCompletedRequiredFlow
-              ? CHARACTERS_COPY.searchEntry.backToCharactersButton
+              ? <BackLabel>{CHARACTERS_COPY.searchEntry.backToCharactersButton}</BackLabel>
               : CHARACTERS_COPY.importCharacter.backButton}
           </button>
           <button
@@ -233,12 +335,10 @@ export default function ImportModeScreen({ model, actions }: ImportModeScreenPro
         </div>
         <div>
           <h1 style={titleStyle()}>{CHARACTERS_COPY.importCharacter.title}</h1>
-          <p style={{ ...subtitleStyle(theme), display: "flex", alignItems: "center", gap: "0.3rem", flexWrap: "wrap" }}>
-            {CHARACTERS_COPY.importCharacter.subtitlePrefix}
-            <span style={{ display: "inline-flex", alignItems: "center", gap: "0.2rem", fontWeight: 800, color: theme.text }}>
-              <ExportTabIcon strokeWidth={2.5} />
-              {CHARACTERS_COPY.importCharacter.subtitleSuffix}
-            </span>
+          <p style={subtitleStyle(theme)}>
+            {CHARACTERS_COPY.importCharacter.subtitlePrefix}{" "}
+            <ExportMention theme={theme} label={CHARACTERS_COPY.importCharacter.subtitleSuffix} punctuation={isTouch ? "," : "."} />
+            {isTouch && " " + CHARACTERS_COPY.importCharacter.subtitleQr}
           </p>
         </div>
       </div>
@@ -249,7 +349,15 @@ export default function ImportModeScreen({ model, actions }: ImportModeScreenPro
         </p>
       )}
 
+      {state.status === "reading" && (
+        <p role="status" style={{ margin: "0 0 1rem", color: theme.muted, fontWeight: 700, fontSize: "0.85rem" }}>
+          {IMPORT_COPY.readingImage}
+        </p>
+      )}
+
       {previewRecord && <ImportPreviewCard theme={theme} record={previewRecord} />}
+
+      {previewRecord && qrSource && <QrImportNote theme={theme} source={qrSource} />}
 
       {profile.isAddingCharacter && (state.status === "readyToAdd" || state.status === "championSwap") && (
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.75rem", flexWrap: "wrap" }}>
@@ -286,26 +394,26 @@ export default function ImportModeScreen({ model, actions }: ImportModeScreenPro
       )}
 
       {(state.status === "readyToAdd" || state.status === "championSwap" || state.status === "conflict") && (
-        <button
-          type="button"
-          disabled={shell.isUiLocked}
-          onClick={() => fileInputRef.current?.click()}
-          style={{
-            display: "block",
-            background: "none",
-            border: "none",
-            padding: 0,
-            font: "inherit",
-            textAlign: "left",
-            fontSize: "0.78rem",
-            fontWeight: 700,
-            color: theme.muted,
-            cursor: shell.isUiLocked ? "not-allowed" : "pointer",
-            marginBottom: "0.75rem",
-          }}
-        >
-          {CHARACTERS_COPY.importCharacter.chooseDifferentFileButton}
-        </button>
+        <div style={retryLinksRowStyle}>
+          <button
+            type="button"
+            disabled={shell.isUiLocked}
+            onClick={() => fileInputRef.current?.click()}
+            style={retryLinkStyle(theme.muted, shell.isUiLocked)}
+          >
+            {CHARACTERS_COPY.importCharacter.chooseDifferentFileButton}
+          </button>
+          {isTouch && (
+            <button
+              type="button"
+              disabled={shell.isUiLocked}
+              onClick={() => scanInputRef.current?.click()}
+              style={retryLinkStyle(theme.muted, shell.isUiLocked)}
+            >
+              {CHARACTERS_COPY.importCharacter.scanDifferentQrButton}
+            </button>
+          )}
+        </div>
       )}
 
       <div style={{ display: "flex", gap: "0.6rem" }}>
@@ -329,12 +437,34 @@ export default function ImportModeScreen({ model, actions }: ImportModeScreenPro
             {CHARACTERS_COPY.importCharacter.pickFileButton}
           </button>
         )}
+        {isTouch && (state.status === "idle" || state.status === "error") && (
+          <button
+            type="button"
+            disabled={shell.isUiLocked || search.isSearching}
+            onClick={() => scanInputRef.current?.click()}
+            style={secondaryButtonStyle(theme)}
+          >
+            {CHARACTERS_COPY.importCharacter.scanQrButton}
+          </button>
+        )}
       </div>
 
+      {/* Any image is accepted: a card PNG imports in full, and anything else (a WebP dragged
+          out of Discord, a screenshot) falls back to reading the card's QR. */}
       <input
         ref={fileInputRef}
         type="file"
-        accept="application/json"
+        accept="application/json,image/*,.json"
+        onChange={handleFileChange}
+        style={{ display: "none" }}
+      />
+      {/* On phones `capture` opens the camera to photograph a card's QR; on computers it opens
+          the file picker for a screenshot or photo of one. */}
+      <input
+        ref={scanInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
         onChange={handleFileChange}
         style={{ display: "none" }}
       />

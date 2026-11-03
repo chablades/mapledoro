@@ -6,6 +6,7 @@ import {
   selectCharacterByIgn,
   selectCharactersList,
   parseImportedWorldPayload,
+  worldHasLegionData,
   type StoredCharacterRecord,
   type StoredLegionArtifact,
   type StoredScouterLegion,
@@ -31,7 +32,8 @@ import type { AppTheme } from "../../../../components/themes";
 import { formatRoles, type ProfileRole, type SearchPaneActions, type SearchPaneModel } from "../paneModels";
 import CharacterAvatar from "../components/CharacterAvatar";
 import ImportConflictDialog from "./ImportConflictDialog";
-import { ExportTabIcon } from "./CharacterProfileOverviewScreen";
+import ExportMention from "../components/ExportMention";
+import { InlineArrow } from "../components/ArrowLabels";
 import {
   primaryButtonStyle,
   secondaryButtonStyle,
@@ -79,7 +81,7 @@ function RoleTransitionLabel({
   if (currentLabel === newLabel) return null;
   return (
     <span style={{ fontSize: "0.75rem", fontWeight: 700, color: theme.accentText }}>
-      {currentLabel} → {newLabel}
+      {currentLabel}<InlineArrow />{newLabel}
     </span>
   );
 }
@@ -573,10 +575,7 @@ function partitionWorldImportPayload(payload: WorldExportPayload): {
       newChars.push(imported);
     }
   }
-  const hasWorldData = Boolean(
-    store.legionArtifactByWorld[String(payload.worldID)] || store.scouterLegionByWorld[String(payload.worldID)]
-      || store.linkSkillTotalsByWorld[String(payload.worldID)],
-  );
+  const hasWorldData = worldHasLegionData(store, payload.worldID);
   // Characters already on the target world that the file doesn't mention. Not a conflict,
   // since that IGN already has a resolution above, but existing residents who may need to be
   // dropped to make room if the import would otherwise go over cap.
@@ -923,12 +922,9 @@ export default function WorldImportModeScreen({ model, actions }: WorldImportMod
           {CHARACTERS_COPY.worldImport.backButton}
         </button>
         <h1 style={titleStyle()}>{CHARACTERS_COPY.worldImport.title}</h1>
-        <p style={{ ...subtitleStyle(theme), display: "flex", alignItems: "center", gap: "0.3rem", flexWrap: "wrap" }}>
-          {CHARACTERS_COPY.worldImport.subtitlePrefix}
-          <span style={{ display: "inline-flex", alignItems: "center", gap: "0.2rem", fontWeight: 800, color: theme.text }}>
-            <ExportTabIcon strokeWidth={2.5} />
-            {CHARACTERS_COPY.worldImport.subtitleSuffix}
-          </span>
+        <p style={subtitleStyle(theme)}>
+          {CHARACTERS_COPY.worldImport.subtitlePrefix}{" "}
+          <ExportMention theme={theme} label={CHARACTERS_COPY.worldImport.subtitleSuffix} />
         </p>
       </div>
 

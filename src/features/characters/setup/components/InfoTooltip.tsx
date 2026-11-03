@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { CSSProperties, ReactNode } from "react";
 import Image from "next/image";
 import type { AppTheme } from "../../../../components/themes";
+import { ForwardLabel } from "../../tabs/components/ArrowLabels";
 
 export interface TooltipContent {
   title: string;
@@ -140,15 +141,17 @@ export default function InfoTooltip({ content, theme, icon = "?", label = "More 
     const next = !open;
     if (next && containerRef.current) {
       const rect = containerRef.current.getBoundingClientRect();
-      // Generous placeholder for the one frame before the effect below measures the
-      // popup's real height and picks a side and cap. Never visible as a scroll gap, since
-      // it's corrected before paint settles.
+      // Generous placeholder for the first render, before the layout effect below measures the
+      // popup's real height and picks a side and cap. That runs before paint, so this spot is
+      // never seen.
       setPos({ top: rect.bottom + remToPx(0.4), left: rect.left, maxHeight: window.innerHeight });
     }
     setOpen(next);
   }
 
-  useEffect(() => {
+  // A layout effect, not a plain one: a plain effect runs after paint, so the popup would flash
+  // at the placeholder spot for a frame before jumping to its real side.
+  useLayoutEffect(() => {
     if (!open) return;
     const container = containerRef.current;
     const popup = popupRef.current;
@@ -173,6 +176,10 @@ export default function InfoTooltip({ content, theme, icon = "?", label = "More 
       if (left < margin) left = margin;
       setPos({ top, left, maxHeight });
     }
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
     function handleMouseDown(e: MouseEvent) {
       const target = e.target as Node;
       if (containerRef.current?.contains(target)) return;
@@ -230,7 +237,7 @@ export default function InfoTooltip({ content, theme, icon = "?", label = "More 
               rel="noreferrer"
               style={{ display: "inline-block", marginTop: "0.45rem", fontSize: "0.75rem", color: theme.accent, fontWeight: 700, textDecoration: "none" }}
             >
-              {content.link.label} →
+              <ForwardLabel>{content.link.label}</ForwardLabel>
             </a>
           )}
         </div>,

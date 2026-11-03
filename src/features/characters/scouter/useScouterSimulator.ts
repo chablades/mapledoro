@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from "react";
 import type { StoredCharacterRecord } from "../model/charactersStore";
-import { readCharactersStore } from "../model/charactersStore";
+import { resolveScouterContext, useScouterWorldContext } from "./scouterWorldContext";
 import type { ScouterSimulatorOverrides } from "./scouterApi";
 import { runScouterSimulator } from "./scouterSimulatorRun";
 import { loadScouterResultFor, type ScouterErrorReason, type ScouterResultEntry } from "./scouterResult";
@@ -68,26 +68,26 @@ export interface ScouterSimulatorController {
 export function useScouterSimulator(character: StoredCharacterRecord | null): ScouterSimulatorController {
   const [active, setActive] = useState<ScouterSimulatorState | null>(null);
   const [applying, setApplying] = useState(false);
+  const worldCtx = useScouterWorldContext();
 
   const apply = useCallback(async (overrides: ScouterSimulatorOverrides): Promise<ScouterSimulatorApplyResult> => {
     if (!character) return { status: "unsupported" };
     if (isLocalOnlyOverride(overrides)) {
-      const real = await loadScouterResultFor(character);
+      const real = await loadScouterResultFor(character, worldCtx);
       if (!real) return { status: "unsupported" };
       if (!real.ok) return { status: "error", reason: real.reason, detail: real.detail };
       setActive({ overrides, entry: real.entry });
       return { status: "ok" };
     }
     setApplying(true);
-    const store = readCharactersStore();
-    const result = await runScouterSimulator(character, { scouterLegionByWorld: store.scouterLegionByWorld }, overrides);
+    const result = await runScouterSimulator(character, resolveScouterContext(worldCtx), overrides);
     setApplying(false);
     if (result.status === "ok") {
       setActive({ overrides, entry: result.entry });
       return { status: "ok" };
     }
     return result;
-  }, [character]);
+  }, [character, worldCtx]);
 
   const reset = useCallback(() => setActive(null), []);
 

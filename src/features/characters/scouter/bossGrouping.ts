@@ -1,5 +1,6 @@
 import { BOSSCUT_DATA, type BossCutEntry } from "./bosscut-data.generated";
 import { LOWEND_BOSS_DATA } from "./lowend-boss-data.generated";
+import { isEstimatedBoss } from "./bossClearFormula";
 
 export type BossEntryList = [string, BossCutEntry[]];
 
@@ -40,4 +41,40 @@ export function resolveBossDisplayName(grouped: BossEntryList[], selectedIndex: 
   const clampedIndex = Math.min(selectedIndex, grouped.length - 1);
   const boss = grouped[clampedIndex][0];
   return BOSS_DISPLAY_NAME[boss] ?? boss;
+}
+
+// Icon ids looked up by hand from manifests/v271/ui-boss.json, renamed from boss.json as of
+// v269 (see the Image Policy in the root CLAUDE.md), cross-checked against the same bosses
+// already mapped in liberation-data.ts and trace-restoration-data.ts.
+const BOSS_ICON_ID: Record<string, string> = {
+  스우: "13", 데미안: "15", 루시드: "19", 윌: "23", 더스크: "26", "진 힐라": "24",
+  듄켈: "27", "검은 마법사": "25", 세렌: "28", 칼로스: "30", 대적자: "35", 흉성: "37",
+  카링: "31", 림보: "33", 발드릭스: "34", 유피테르: "38", 가엔슬: "29", 카이: "36",
+};
+
+/** The low-end bosses MapleDoro estimates carry their own icon id. */
+export function bossIconId(boss: string, entries: BossCutEntry[]): string | undefined {
+  const first = entries[0];
+  return BOSS_ICON_ID[boss] ?? (isEstimatedBoss(first) ? first.iconId : undefined);
+}
+
+// Easiest to hardest. Champion and Destiny are solo variants of a party tier, nearly always
+// Hard, and sit below Extreme on every boss that has one. Lotus, Black Mage, Seren and
+// Adversary all read wrong with Extreme ranked under them. Checked per boss against the
+// scraped cut and easyRate rather than assumed from the names.
+const DIFFICULTY_ORDER: Record<string, number> = { Easy: 0, Normal: 1, Hard: 2, Chaos: 3, Champion: 4, Destiny: 5, Extreme: 6 };
+
+// The two bosses whose solo variant doesn't mirror Hard: Kalos's Champion is a solo Normal
+// (same 49800 cut as Normal, about half of Chaos's), and Kaling's Destiny is rated easier than
+// its Hard, sharing the same cut at easyRate x1.2, since players clear Destiny before soloing
+// Hard. Every other boss follows the global ladder.
+const DIFFICULTY_ORDER_OVERRIDE: Partial<Record<string, Record<string, number>>> = {
+  kalos: { Easy: 0, Normal: 1, Champion: 2, Chaos: 3, Destiny: 4, Extreme: 5 },
+  kaling: { Easy: 0, Normal: 1, Destiny: 2, Hard: 3, Extreme: 4 },
+};
+
+/** A boss's difficulties, easiest first. */
+export function sortByDifficulty(entries: BossCutEntry[]): BossCutEntry[] {
+  const order = (entries[0] && DIFFICULTY_ORDER_OVERRIDE[entries[0].name]) ?? DIFFICULTY_ORDER;
+  return [...entries].sort((a, b) => (order[a.difficulty] ?? 99) - (order[b.difficulty] ?? 99));
 }

@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { CSSProperties, KeyboardEvent as ReactKeyboardEvent } from "react";
+import type { CSSProperties, KeyboardEvent as ReactKeyboardEvent, ReactNode } from "react";
 import type { AppTheme } from "../../../../components/themes";
 import { DropdownChevron } from "../../DropdownChevron";
 import type { VisibleSetupStep } from "../flows";
+import { BackLabel } from "../../tabs/components/ArrowLabels";
 
 // In the accent color, with a dotted underline on hover (.step-jump-trigger in globals.css),
 // while it opens a menu, so it reads as a control rather than a plain "Step 3 of 9" label.
@@ -219,7 +220,7 @@ function backToIntroItemStyle(theme: AppTheme): CSSProperties {
  *  or nothing when this menu doesn't offer it. `atEnd` puts it after the list, divided above
  *  instead of below. */
 function MenuActionItem({ theme, label, onSelect, onClose, onKeyDown, atEnd = false }: {
-  theme: AppTheme; label: string; onSelect: (() => void) | undefined; onClose: () => void;
+  theme: AppTheme; label: ReactNode; onSelect: (() => void) | undefined; onClose: () => void;
   onKeyDown: (e: ReactKeyboardEvent<HTMLButtonElement>) => void; atEnd?: boolean;
 }) {
   if (!onSelect) return null;
@@ -621,8 +622,8 @@ export default function StepJumpMenu({
       </button>
       {open && canJump && (
         <div ref={menuRef} style={menuStyle(theme, openAbove)}>
-          <MenuActionItem theme={theme} label="← Setup selection" onSelect={onBackToIntro} onClose={() => setOpen(false)} onKeyDown={handleBackToIntroKeyDown} />
-          <MenuActionItem theme={theme} label="← Exit setup" onSelect={onExitToProfile} onClose={() => setOpen(false)} onKeyDown={handleBackToIntroKeyDown} />
+          <MenuActionItem theme={theme} label={<BackLabel>Setup selection</BackLabel>} onSelect={onBackToIntro} onClose={() => setOpen(false)} onKeyDown={handleBackToIntroKeyDown} />
+          <MenuActionItem theme={theme} label={<BackLabel>Exit setup</BackLabel>} onSelect={onExitToProfile} onClose={() => setOpen(false)} onKeyDown={handleBackToIntroKeyDown} />
           {steps.map((step) => {
             const isActive = step.visibleNumber === currentVisibleNumber;
 

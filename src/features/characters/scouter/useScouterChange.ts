@@ -10,6 +10,7 @@ import { useEffect, useLayoutEffect, useRef } from "react";
 import { toCharacterKey } from "../model/characterKeys";
 import { readCharactersStore, writeScouterSeen, type StoredCharacterRecord, type StoredScouterSeen } from "../model/charactersStore";
 import { formatShortDate } from "../../tools/date";
+import { useScouterWorldContext } from "./scouterWorldContext";
 import { formatFigure } from "./scouterFormat";
 
 export interface ScouterChange {
@@ -53,13 +54,16 @@ export function useScouterChange(character: StoredCharacterRecord, figures: Figu
   const id = toCharacterKey(character);
   const r380 = figures === null ? null : Math.round(figures.boss380);
   const r300 = figures === null ? null : Math.round(figures.boss300);
-  const seen = readCharactersStore().scouterSeenByCharacter[id];
+  // A card in the viewer isn't the player's character: it has no history here, and recording its
+  // figures would write into the store, onto the player's own character of the same name if any.
+  const standalone = useScouterWorldContext()?.standalone === true;
+  const seen = standalone ? undefined : readCharactersStore().scouterSeenByCharacter[id];
 
   // Recording new figures writes to storage, not React state: the render below already shows
   // the change from what was stored, and the next render reads it back as `previous`.
   useEffect(() => {
-    if (r380 !== null && r300 !== null) recordFigures(id, r380, r300);
-  }, [id, r380, r300]);
+    if (!standalone && r380 !== null && r300 !== null) recordFigures(id, r380, r300);
+  }, [standalone, id, r380, r300]);
 
   if (r380 === null || r300 === null || !seen) return null;
   const markSeen = () => {

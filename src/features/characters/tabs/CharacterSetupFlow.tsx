@@ -54,11 +54,11 @@ export default function CharacterSetupFlow({ theme, initialCharacterName, initia
       !state.showCharacterDirectory &&
       !state.isAddingCharacter;
 
-    let target = "/characters";
+    let target = "/characters/directory";
     if (state.isAddingCharacter) {
-      target = "/characters?action=add";
+      target = "/characters/directory?action=add";
     } else if (showingCharacterContext && state.confirmedCharacter) {
-      target = `/characters?character=${encodeURIComponent(state.confirmedCharacter.characterName)}`;
+      target = `/characters/directory?character=${encodeURIComponent(state.confirmedCharacter.characterName)}`;
     }
 
     if (`${window.location.pathname}${window.location.search}` !== target) {

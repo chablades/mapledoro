@@ -5,8 +5,8 @@
 */
 
 import type { StoredCharacterRecord } from "../model/charactersStore";
-import { readCharactersStore } from "../model/charactersStore";
-import { buildScouterPayload, hashScouterPayload } from "./scouterApi";
+import { buildScouterPayload, hashScouterPayload, type ScouterPayloadContext } from "./scouterApi";
+import { resolveScouterContext } from "./scouterWorldContext";
 import { computeScouterResult, computeScouterResultSync, type ScouterComputeResult } from "./engine/scouterLocal";
 
 interface ScouterSpline {
@@ -77,21 +77,22 @@ export interface ScouterResultEntry {
  *  payload into a real result. */
 export type ScouterErrorReason = "bad_response" | "network";
 
-function payloadFor(character: StoredCharacterRecord) {
-  const payload = buildScouterPayload(character, { scouterLegionByWorld: readCharactersStore().scouterLegionByWorld });
+function payloadFor(character: StoredCharacterRecord, ctx?: ScouterPayloadContext | null) {
+  const payload = buildScouterPayload(character, resolveScouterContext(ctx));
   return payload ? { payload, hash: hashScouterPayload(payload) } : null;
 }
 
 /** The character's result from its current data: null when the class or setup can't produce a
- *  payload, or while the engine data is still loading. */
-export function scouterResultFor(character: StoredCharacterRecord): ScouterComputeResult | null {
-  const built = payloadFor(character);
+ *  payload, or while the engine data is still loading. `ctx` is only passed for a character
+ *  outside the saved store (see scouterWorldContext.ts). */
+export function scouterResultFor(character: StoredCharacterRecord, ctx?: ScouterPayloadContext | null): ScouterComputeResult | null {
+  const built = payloadFor(character, ctx);
   return built ? computeScouterResultSync(built.payload, built.hash) : null;
 }
 
 /** Same as scouterResultFor, loading the engine data first if needed. Null when the class or
  *  setup can't produce a payload. */
-export async function loadScouterResultFor(character: StoredCharacterRecord): Promise<ScouterComputeResult | null> {
-  const built = payloadFor(character);
+export async function loadScouterResultFor(character: StoredCharacterRecord, ctx?: ScouterPayloadContext | null): Promise<ScouterComputeResult | null> {
+  const built = payloadFor(character, ctx);
   return built ? computeScouterResult(built.payload, built.hash) : null;
 }

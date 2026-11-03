@@ -110,7 +110,7 @@ function CharacterRow({
   return (
     <div className={reordering ? "char-row" : "row-hover char-row"} style={charRowStyle}>
       {reordering ? <div style={charRowLinkStyle}>{chip}</div> : (
-        <Link href={`/characters?character=${encodeURIComponent(char.characterName)}`} style={charRowLinkStyle}>
+        <Link href={`/characters/directory?character=${encodeURIComponent(char.characterName)}`} style={charRowLinkStyle}>
           {chip}
         </Link>
       )}
@@ -184,7 +184,7 @@ export default function CharactersPanel({ theme, characters, onReorder }: {
   const headerRight = characters.length > 0 && (
     <>
       {!reordering && (
-        <Link href="/characters" className="accent-link" style={{ color: theme.accentText, marginLeft: "0.25rem" }}>
+        <Link href="/characters/directory" className="accent-link" style={{ color: theme.accentText, marginLeft: "0.25rem" }}>
           Manage →
         </Link>
       )}
@@ -256,7 +256,7 @@ export default function CharactersPanel({ theme, characters, onReorder }: {
           <div style={{ fontSize: "0.8rem", opacity: 0.8 }}>
             Add your first character to get started!
           </div>
-          <Link href="/characters?action=add" style={addBtnStyle}>+ Add Character</Link>
+          <Link href="/characters/directory?action=add" style={addBtnStyle}>+ Add Character</Link>
         </div>
       ) : (
         <div className="characters-scroll-area" style={{ padding: "0.5rem", maxHeight: 420, overflowY: "auto" }}>
@@ -284,7 +284,7 @@ export default function CharactersPanel({ theme, characters, onReorder }: {
               Drag characters into the order you want, then press Done.
             </p>
           ) : (
-            <Link href="/characters?action=add" className="add-character-link" style={addDashedStyle}>
+            <Link href="/characters/directory?action=add" className="add-character-link" style={addDashedStyle}>
               + Add Character
             </Link>
           )}

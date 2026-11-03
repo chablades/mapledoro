@@ -19,6 +19,7 @@ import CharacterAvatar from "../components/CharacterAvatar";
 import RefreshSpinnerIcon from "../components/RefreshSpinnerIcon";
 import WarningIcon from "../../../../components/WarningIcon";
 import LegionPanel from "./LegionPanel";
+import BackToHubLink from "../components/BackToHubLink";
 import { ExportTabIcon } from "./CharacterProfileOverviewScreen";
 
 const rowStyle: CSSProperties = { display: "grid", gridTemplateColumns: "repeat(auto-fill, 190px)", justifyContent: "center", alignItems: "start", gap: "0.6rem", width: "100%" };
@@ -730,7 +731,8 @@ export default function CharacterDirectoryScreen({
 
   return (
     <div className="fade-in">
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.75rem", marginBottom: "0.75rem" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.75rem" }}>
+        <BackToHubLink theme={theme} />
         <h2 style={{ margin: 0, fontFamily: "var(--font-heading)", fontSize: "1.2rem", lineHeight: 1.2, color: theme.text }}>
           {CHARACTERS_COPY.characterDirectory.title}
         </h2>

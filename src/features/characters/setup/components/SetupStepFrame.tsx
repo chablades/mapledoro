@@ -2,6 +2,7 @@ import { useContext, useEffect, type CSSProperties } from "react";
 import type { ReactNode } from "react";
 import type { AppTheme } from "../../../../components/themes";
 import { SaveAndFinishContext } from "./saveAndFinishContext";
+import { BackLabel } from "../../tabs/components/ArrowLabels";
 
 /** The muted text-link style shared by the Back button and a "quiet" Next button. */
 function quietLinkStyle(theme: AppTheme): CSSProperties {
@@ -19,7 +20,7 @@ function quietLinkStyle(theme: AppTheme): CSSProperties {
 
 /** A muted text-link button (Back, or a quiet Skip) that brightens to `theme.text` on hover. */
 function QuietButton({ theme, label, onClick, className }: {
-  theme: AppTheme; label: string; onClick: () => void; className?: string;
+  theme: AppTheme; label: ReactNode; onClick: () => void; className?: string;
 }) {
   return (
     <button
@@ -141,7 +142,7 @@ export default function SetupStepFrame({
   // "Prev Step" implies an earlier step to go back to, true from step 2 onward. On step 1 of
   // any flow, single-step or not, there is no previous step within the flow itself. The button
   // still works, exiting back to the profile or intro, but what it returns to isn't a step.
-  const backLabel = stepNumber > 1 ? "← Prev Step" : "← Back";
+  const backLabel = <BackLabel>{stepNumber > 1 ? "Prev Step" : "Back"}</BackLabel>;
   const saveAndFinish = useContext(SaveAndFinishContext);
 
   useEffect(() => {

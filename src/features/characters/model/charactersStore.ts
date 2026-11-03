@@ -1,6 +1,7 @@
 import { toCharacterKey } from "./characterKeys";
 import type { NormalizedCharacterData } from "./types";
 import { checkForWipe } from "./wipeTripwire";
+import { clearIntentionalRemovals, restoreVanishedCharacters } from "./vanishGuard";
 import { MAX_CHARACTERS_PER_WORLD } from "./constants";
 import {
   clearStorageWriteFailure,
@@ -921,7 +922,7 @@ function isTrustedCharacterImageUrl(url: string): boolean {
  *  against the one host it can legitimately be (see isTrustedCharacterImageUrl) and falling
  *  back to CharacterAvatar's FALLBACK_SRC rather than trusting an arbitrary URL from an
  *  untrusted file. */
-export function parseImportedCharacterRecord(value: unknown): StoredCharacterRecord | null {
+function parseImportedCharacterRecord(value: unknown): StoredCharacterRecord | null {
   const record = parseStoredCharacterRecord(value, null);
   if (!record) return null;
   if (isTrustedCharacterImageUrl(record.characterImgURL)) return record;
@@ -1033,6 +1034,54 @@ export function parseImportedWorldPayload(value: unknown): WorldExportPayload | 
     mainCharacterKey,
     championCharacterKeys,
   };
+}
+
+/** The world-scoped data a single-character export carries, so the importer's Scouter has
+ *  every input: the Scouter's Legion answers (Wild Hunter rank and the two artifact effects),
+ *  the Legion Artifact board, and the Legion panel's link skill totals. */
+export interface CharacterExportWorldData {
+  scouterLegion?: StoredScouterLegion;
+  legionArtifact?: StoredLegionArtifact;
+  linkSkillTotals?: LinkSkillsData;
+}
+
+/** A single-character export file. Exports made before this wrapper existed are the bare
+ *  StoredCharacterRecord, which parseImportedCharacterFile still accepts. */
+export interface CharacterExportPayload {
+  kind: "character";
+  version: 1;
+  character: StoredCharacterRecord;
+  world: CharacterExportWorldData;
+}
+
+/** Parses a single-character export: the current wrapper, or an older bare record with no
+ *  world data. The record goes through parseImportedCharacterRecord either way. */
+export function parseImportedCharacterFile(
+  value: unknown,
+): { record: StoredCharacterRecord; world: CharacterExportWorldData } | null {
+  if (!isObject(value) || value.kind !== "character") {
+    const record = parseImportedCharacterRecord(value);
+    return record ? { record, world: {} } : null;
+  }
+  const record = parseImportedCharacterRecord(value.character);
+  if (!record) return null;
+  const world = isObject(value.world) ? value.world : {};
+  const legionArtifact = isObject(world.legionArtifact) ? parseLegionArtifactEntry(world.legionArtifact) : undefined;
+  const scouterLegion = isObject(world.scouterLegion) ? parseScouterLegionEntry(world.scouterLegion) : undefined;
+  return {
+    record,
+    world: {
+      legionArtifact: legionArtifact && !isEmptyLegionArtifactEntry(legionArtifact) ? legionArtifact : undefined,
+      scouterLegion: scouterLegion && !isEmptyScouterLegionEntry(scouterLegion) ? scouterLegion : undefined,
+      linkSkillTotals: parseOptionalLinkSkills(world.linkSkillTotals),
+    },
+  };
+}
+
+/** Whether a world already holds any Legion data of its own. */
+export function worldHasLegionData(store: CharactersStore, worldId: number): boolean {
+  const key = String(worldId);
+  return Boolean(store.legionArtifactByWorld[key] || store.scouterLegionByWorld[key] || store.linkSkillTotalsByWorld[key]);
 }
 
 function parseWorldScopedRoles(
@@ -1320,9 +1369,16 @@ export function writeCharacterOrder(order: string[]) {
 let cachedRaw: string | null = null;
 let cachedStore: CharactersStore | null = null;
 
-export function writeCharactersStore(store: CharactersStore) {
+export function writeCharactersStore(nextStore: CharactersStore) {
   if (typeof window === "undefined") return;
   try {
+    const { store, restored, removed } = restoreVanishedCharacters(readCharactersStore(), nextStore);
+    if (restored.length > 0) {
+      console.warn(
+        `[characters] A save would have erased ${restored.join(", ")} without a removal ` +
+        `request (likely a stale roster, such as another tab's), so they were kept.`,
+      );
+    }
     if (process.env.NODE_ENV !== "production") {
       checkForWipe(window.localStorage.getItem(CHARACTERS_STORE_STORAGE_KEY), store);
     }
@@ -1335,6 +1391,7 @@ export function writeCharactersStore(store: CharactersStore) {
     // values the app just built.
     cachedRaw = raw;
     cachedStore = store;
+    clearIntentionalRemovals(removed);
     clearStorageWriteFailure("characters");
   } catch {
     // This store is the only copy of the player's character data, so swallowing the failure
