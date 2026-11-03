@@ -2212,12 +2212,15 @@ function EquipmentBookmark({
   useEffect(() => {
     if (!highlightSlotKey) return;
     const target = gearGridRef.current?.querySelector<HTMLElement>(`[data-slot-key="${highlightSlotKey}"]`);
-    if (target) {
-      target.scrollIntoView({ behavior: "smooth", block: "center" });
-      target.classList.add("jump-highlight");
-      window.setTimeout(() => target.classList.remove("jump-highlight"), 1100);
+    if (!target) {
+      onHighlightSlotConsumed?.();
+      return;
     }
+    target.scrollIntoView({ behavior: "smooth", block: "center" });
+    target.classList.add("jump-highlight");
+    const timer = window.setTimeout(() => target.classList.remove("jump-highlight"), 1100);
     onHighlightSlotConsumed?.();
+    return () => window.clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only, see comment above
   }, []);
   // Titles and Pets stay mounted, toggled by visibility rather than conditionally rendered, so
