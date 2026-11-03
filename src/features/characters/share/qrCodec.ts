@@ -120,6 +120,8 @@ const GEAR_SLOTS: { key: keyof StoredEquipmentPreset; index?: number; file: stri
   { key: "medal", file: "medal" }, { key: "weapon", file: "weapon" }, { key: "secondary", file: "secondary" },
   { key: "emblem", file: "emblem" }, { key: "android", file: "android" }, { key: "heart", file: "heart" },
   { key: "badge", file: "badge" },
+  // Appended after the rest so older decoders, which read the slot count, skip it.
+  { key: "skillRing", file: "ring" },
 ];
 const SHARED_GEAR: { key: "totems" | "pets" | "petEquips"; file: string }[] = [
   { key: "totems", file: "totem" }, { key: "pets", file: "pet" }, { key: "petEquips", file: "petequip" },
