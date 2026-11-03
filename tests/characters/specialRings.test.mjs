@@ -50,3 +50,9 @@ void test("an equipped Oz Ring shows its Oz Rings step level, shared by Challeng
   assert.equal(equippedOzLevel(RORO_EXP.id, levels), null); // not in the Oz Rings step
   assert.equal(equippedOzLevel(RESTRAINT.id, undefined), null);
 });
+
+void test("the Red Beryl rings split like Restraint and Continuous", () => {
+  assert.ok(fitsSkillSlot("active", "01113356")); // Finite Red Beryl Ring, Restraint-like
+  assert.ok(!fitsSkillSlot("passive", "01113356"));
+  assert.ok(fitsSkillSlot("passive", "01113355")); // Infinite Red Beryl Ring, Continuous-like
+});

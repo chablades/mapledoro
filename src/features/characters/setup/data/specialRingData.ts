@@ -23,7 +23,6 @@ const PASSIVE_RINGS = new Set<string>([
   "01113345", // Challenger Continuous Ring
   "01113362", // Libae's Prototype C Ring
   "01113355", // Infinite Red Beryl Ring
-  "01113356", // Finite Red Beryl Ring
 ]);
 
 const ACTIVE_RINGS = new Set<string>([
@@ -31,6 +30,7 @@ const ACTIVE_RINGS = new Set<string>([
   "01113113", "01113114", "01113115", "01113116", // Weapon Jump S/D/I/L Ring
   "01113346", "01113347", "01113348", "01113349", // Challenger Weapon Jump S/D/I/L Ring
   "01113357", "01113358", "01113359", // Roro's Experience / Hunting / Thunder Ring
+  "01113356", // Finite Red Beryl Ring (Restraint's zone; the Infinite one is Continuous-like)
   "01113361", "01113363", "01113364", "01113365", "01113366", // Libae's Prototype R, W-S/D/I/L Ring
   // The older Oz rings, Ultimatum Ring through Tower Boost Ring.
   "01113099", "01113100", "01113101", "01113102", "01113103", "01113104", "01113105",
