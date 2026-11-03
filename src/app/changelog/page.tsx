@@ -12,6 +12,20 @@ interface ChangelogEntry {
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    date: "2026-11-02",
+    changes: [
+      { type: "added", text: "Added Party Scouter, which shows which bosses a party of up to 6 characters can clear together, using characters from your directory or a friend's card or JSON." },
+      { type: "added", text: "Added the Characters hub, with your Main and Champions for a world up front and links to your directory, View a Character and Party Scouter." },
+      { type: "added", text: "Added View a Character, which opens a character card or JSON export without adding it to your directory. Scanning a card's QR code opens it there." },
+      { type: "added", text: "Characters can now be exported as a card image, with a QR code that opens the character on MapleDoro." },
+      { type: "added", text: "Import Character now accepts card images, including screenshots and photos of a card, and phones can scan a card's QR code with the camera." },
+      { type: "changed", text: "Character exports now include the world's Legion data, which fills in on import when you have no other characters in that world." },
+      { type: "changed", text: "The Characters page now picks up changes saved in another tab." },
+      { type: "fixed", text: "Fixed characters disappearing when the Characters page was open in two tabs and one of them saved." },
+      { type: "fixed", text: "Fixed Boss Clear using the wrong entry level for most bosses, so characters below Darknell, Black Mage or Malefic Star's level now show Can't Enter." },
+    ],
+  },
+  {
     date: "2026-11-01",
     changes: [
       { type: "fixed", text: "Fixed the Boss Crystals tool showing the wrong crystal prices for Hard Baldrix and Hard Jupiter." },
