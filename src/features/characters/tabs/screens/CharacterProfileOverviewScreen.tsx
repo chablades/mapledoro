@@ -57,6 +57,8 @@ import { BOSS_CLEAR_GROUPS, resolveBossDisplayName } from "../../scouter/bossGro
 import InfoTooltip, { type TooltipContent } from "../../setup/components/InfoTooltip";
 import { ReadOnlySlotTile, ReadOnlySymbolTile } from "../../setup/components/EquipmentSetupStep";
 import { skillRingHost, type OzRingLevels } from "../../setup/data/specialRingData";
+import { DetailsSwitch } from "../../setup/components/FlameLines";
+import { useFlameDetails } from "../../setup/data/flameDetailsPref";
 import { ReadOnlyLeveledIconTile } from "../../setup/components/LeveledIconTile";
 import { VMatrixNodeIcon, useVMatrixCatalog, type VMatrixNode } from "../../setup/components/VMatrixSetupStep";
 import { HexaStatNodeIcon } from "../../setup/components/HexaMatrixSetupStep";
@@ -1664,9 +1666,11 @@ function presetTabButtonStyle(theme: Theme, on: boolean): CSSProperties {
 }
 
 function PresetTabs({
-  theme, active, activePreset, onSelect, onSetActive, count = 3,
+  theme, active, activePreset, onSelect, onSetActive, count = 3, end,
 }: {
   theme: Theme; active: number; activePreset: number; onSelect: (n: number) => void; onSetActive: ((presetIndex: number) => void) | null; count?: number;
+  /** Pinned to the right end of the preset row. */
+  end?: ReactNode;
 }) {
   const isPreviewingActive = active === activePreset;
   // A card in the viewer can be browsed by preset, but which one it has equipped isn't ours to set.
@@ -1701,6 +1705,7 @@ function PresetTabs({
             );
           })}
         </div>
+        {end && <div style={{ marginLeft: "auto" }}>{end}</div>}
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
         <span style={{ fontSize: "0.75rem", fontWeight: 700, color: isPreviewingActive ? statusText(theme, "success") : theme.muted }}>
@@ -2022,12 +2027,12 @@ function BookmarkSectionLabel({ label, theme }: { label: string; theme: Theme })
   );
 }
 
-function ReadOnlySlotColumn({ slots, grid, theme, ozLevels }: { slots: SlotKey[]; grid: SlotMap; theme: Theme; ozLevels?: OzRingLevels }) {
+function ReadOnlySlotColumn({ slots, grid, theme, ozLevels, character }: { slots: SlotKey[]; grid: SlotMap; theme: Theme; ozLevels?: OzRingLevels; character?: StoredCharacterRecord | null }) {
   const host = skillRingHost(grid);
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 4, flexShrink: 0 }}>
       {slots.map((slot) => (
-        <ReadOnlySlotTile key={slot} slotKey={slot} item={grid[slot]} theme={theme} skillRing={slot === host ? grid.skillRing ?? null : undefined} ozLevels={ozLevels} />
+        <ReadOnlySlotTile key={slot} slotKey={slot} item={grid[slot]} theme={theme} skillRing={slot === host ? grid.skillRing ?? null : undefined} ozLevels={ozLevels} character={character ?? undefined} />
       ))}
     </div>
   );
@@ -2117,10 +2122,12 @@ function SymbolLevelsDisplay({
 }
 
 function TitlesView({
-  theme, equip, symbolLevels, loadSymbolImages, characterLevel, isLegacy, symbolTab, onSymbolTabChange,
+  theme, equip, symbolLevels, loadSymbolImages, characterLevel, isLegacy, symbolTab, onSymbolTabChange, character,
 }: {
   theme: Theme;
   equip: StoredCharacterEquipment | undefined;
+  /** The wearer, for a flamed totem's flame score. */
+  character?: StoredCharacterRecord;
   symbolLevels: Record<string, SymbolState> | null;
   loadSymbolImages: boolean;
   characterLevel: number | undefined;
@@ -2138,7 +2145,7 @@ function TitlesView({
         <BookmarkSectionLabel label="Totems" theme={theme} />
         <div style={{ display: "flex", gap: 4 }}>
           {(["totem1", "totem2", "totem3"] as const).map((slotKey, i) => (
-            <ReadOnlySlotTile key={slotKey} slotKey={slotKey} item={toDraftItem(equip?.totems?.[i] ?? null)} theme={theme} />
+            <ReadOnlySlotTile key={slotKey} slotKey={slotKey} item={toDraftItem(equip?.totems?.[i] ?? null)} theme={theme} character={character} />
           ))}
         </div>
       </div>
@@ -2241,6 +2248,8 @@ function EquipmentBookmark({
 
   const preset = equip?.presets?.[presetIdx];
   const activeGrid: SlotMap = preset ? storedPresetToDraft(preset) : {};
+  const gridHasFlames = Object.values(activeGrid).some((item) => !!item?.flame?.length);
+  const [flameDetails, setFlameDetails] = useFlameDetails();
 
   const charName = character?.characterName;
   const mounted = useMounted();
@@ -2262,7 +2271,12 @@ function EquipmentBookmark({
     <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
       <div style={{ display: "grid" }}>
         <div className={`bookmark-subview${view === "gear" ? " bookmark-subview-active" : ""}`} style={{ gridArea: "1 / 1", visibility: view === "gear" ? "visible" : "hidden", display: "flex", flexDirection: "column", gap: 10 }}>
-          <PresetTabs theme={theme} active={presetIdx} activePreset={activePresetStored} onSelect={setPresetIdx} onSetActive={equip ? onSetActivePreset : null} />
+          <PresetTabs
+            theme={theme} active={presetIdx} activePreset={activePresetStored} onSelect={setPresetIdx} onSetActive={equip ? onSetActivePreset : null}
+            // How the gear tooltips show flames, like the game's Bonus Stats switch; only once this
+            // preset has a flame to show. Shared with the Enhancements window's switch.
+            end={gridHasFlames && <DetailsSwitch theme={theme} flameLabel on={flameDetails} onToggle={() => setFlameDetails(!flameDetails)} />}
+          />
           {/* Same container-query carousel as EquipmentSetupStep's EquipmentGridSubstep — kicks
               in once the panel itself (not the viewport) narrows past ~520px, reusing the same
               .eq-* global classes so a narrow Gear bookmark gets the identical prev/next,
@@ -2288,19 +2302,19 @@ function EquipmentBookmark({
                 <button type="button" className="eq-page-nav-btn" aria-label="Previous section" onClick={() => setMobileGridPage((p) => (p + 2) % 3)} style={navBtnStyle(theme)}><NavChevron direction="prev" /></button>
                 <div style={{ display: "flex", gap: 4, alignItems: "stretch" }}>
                   <div className="eq-section eq-section-0" style={{ gap: 4, flexShrink: 0 }}>
-                    <ReadOnlySlotColumn slots={COL1_SLOTS} grid={activeGrid} theme={theme} ozLevels={character?.scouter?.ozRings?.levels} />
-                    <ReadOnlySlotColumn slots={COL2_SLOTS} grid={activeGrid} theme={theme} />
+                    <ReadOnlySlotColumn slots={COL1_SLOTS} grid={activeGrid} theme={theme} ozLevels={character?.scouter?.ozRings?.levels} character={character} />
+                    <ReadOnlySlotColumn slots={COL2_SLOTS} grid={activeGrid} theme={theme} character={character} />
                   </div>
                   <div className="eq-section eq-section-1" style={{ flexDirection: "column", justifyContent: "flex-end", gap: 4, flexShrink: 0, width: CENTER_WIDTH }}>
                     <div style={{ display: "flex", gap: 4 }}>
                       {CENTER_BOTTOM_SLOTS.map((slot) => (
-                        <ReadOnlySlotTile key={slot} slotKey={slot} item={activeGrid[slot]} theme={theme} />
+                        <ReadOnlySlotTile key={slot} slotKey={slot} item={activeGrid[slot]} theme={theme} character={character ?? undefined} />
                       ))}
                     </div>
                   </div>
                   <div className="eq-section eq-section-2" style={{ gap: 4, flexShrink: 0 }}>
-                    <ReadOnlySlotColumn slots={COL6_SLOTS} grid={activeGrid} theme={theme} />
-                    <ReadOnlySlotColumn slots={COL7_SLOTS} grid={activeGrid} theme={theme} />
+                    <ReadOnlySlotColumn slots={COL6_SLOTS} grid={activeGrid} theme={theme} character={character} />
+                    <ReadOnlySlotColumn slots={COL7_SLOTS} grid={activeGrid} theme={theme} character={character} />
                   </div>
                 </div>
                 <button type="button" className="eq-page-nav-btn" aria-label="Next section" onClick={() => setMobileGridPage((p) => (p + 1) % 3)} style={navBtnStyle(theme)}><NavChevron direction="next" /></button>
@@ -2318,6 +2332,7 @@ function EquipmentBookmark({
             isLegacy={classData?.isLegacy}
             symbolTab={symbolTab}
             onSymbolTabChange={setSymbolTab}
+            character={character ?? undefined}
           />
         </div>
         <div className={`bookmark-subview${view === "pets" ? " bookmark-subview-active" : ""}`} style={{ gridArea: "1 / 1", visibility: view === "pets" ? "visible" : "hidden" }}>

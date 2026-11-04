@@ -54,6 +54,11 @@ button {
   color: #fff;
 }
 
+/* The Gear bookmark's "Flame Details" switch drops "Flame" where the preset row is too narrow. */
+@media (max-width: 480px) {
+  .details-switch-prefix { display: none; }
+}
+
 /* Content for assistive technology only: live-region status text, table captions. */
 .sr-only {
   position: absolute;
@@ -736,7 +741,8 @@ textarea:focus-visible {
   border-radius: 6px;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
   pointer-events: none;
-  z-index: 200;
+  /* Above the floating pickers (300-310), so a tooltip inside one is never hidden by it. */
+  z-index: 400;
 }
 
 /* Tool page header block (back link + title + description) */

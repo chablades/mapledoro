@@ -9,6 +9,7 @@ import type { CSSProperties } from "react";
 import type { AppTheme } from "../../../../components/themes";
 import type { StoredCharacterEquipment, StoredEquipmentItem, StoredEquipmentPreset } from "../../model/charactersStore";
 import type { SymbolState } from "../../../tools/symbols/useSymbolState";
+import type { StoredFlameLine } from "./flameData";
 
 export type SlotKey =
   | "ring1" | "ring2" | "ring3" | "ring4" | "skillRing"
@@ -24,6 +25,26 @@ export type SharedSlotKey = "title" | "totem1" | "totem2" | "totem3" | "pet1" | 
 export interface EquipmentItem {
   id: string;
   name: string;
+  starForce?: number;
+  flame?: StoredFlameLine[];
+}
+
+/** An item's logged upgrades, only the fields it has, for copying between item shapes. */
+export function itemUpgrades(item: { starForce?: number; flame?: StoredFlameLine[] }): Pick<EquipmentItem, "starForce" | "flame"> {
+  return {
+    ...(item.starForce !== undefined && { starForce: item.starForce }),
+    ...(item.flame !== undefined && { flame: item.flame }),
+  };
+}
+
+/** Whether an item has any logged enhancement to show in its tooltip. */
+export const hasEnhancements = (item: EquipmentItem) => !!item.starForce || !!item.flame?.length;
+
+/** Same item with the same logged upgrades. A Preset 2/3 slot holding the same item as Preset 1
+ *  but different upgrades is its own copy, not a mirror of Preset 1's. */
+export function sameUpgradedItem(a: EquipmentItem | null | undefined, b: EquipmentItem | null | undefined): boolean {
+  if (!sameItem(a, b) || !a || !b) return sameItem(a, b);
+  return a.starForce === b.starForce && JSON.stringify(a.flame ?? []) === JSON.stringify(b.flame ?? []);
 }
 
 export type SlotMap = Partial<Record<SlotKey, EquipmentItem | null>>;
@@ -99,7 +120,7 @@ export function equipmentLikeFromDraft(draft: EquipmentDraft): EquipmentLike {
 
 export function toDraftItem(item: StoredEquipmentItem | null): EquipmentItem | null {
   if (!item) return null;
-  return { id: item.id ?? "", name: item.name };
+  return { id: item.id ?? "", name: item.name, ...itemUpgrades(item) };
 }
 
 /** Converts a stored equipment preset's grid slots into the draft's SlotMap shape. Shared by
@@ -130,7 +151,7 @@ function storedPresetOverlayToDraft(preset: StoredEquipmentPreset, base: StoredE
   const baseFull = storedPresetToDraft(base);
   const overlay: SlotMap = {};
   for (const key of Object.keys(full) as (keyof SlotMap)[]) {
-    if (!sameItem(full[key], baseFull[key])) overlay[key] = full[key];
+    if (!sameUpgradedItem(full[key], baseFull[key])) overlay[key] = full[key];
   }
   return overlay;
 }
@@ -208,8 +229,10 @@ export const slotCellStyle = (theme: AppTheme, isActive: boolean): CSSProperties
   font: "inherit", textAlign: "inherit",
 });
 
+// No display here: globals.css hides the carousel arrows by default and the grid's narrow-width
+// container query shows them as flex. An inline display would beat that rule and show them on
+// wide screens too.
 export const navBtnStyle = (theme: AppTheme): CSSProperties => ({
-  display: "flex", alignItems: "center", justifyContent: "center",
   border: `1px solid ${theme.border}`,
   borderRadius: 8,
   background: theme.bg,

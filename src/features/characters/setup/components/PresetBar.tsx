@@ -33,7 +33,7 @@ const footerRowStyle: CSSProperties = {
  *  Pass onCopy to get the copy/clear footer below the tabs; the equipment step
  *  omits it and renders tabs alone. `trailing` puts a node opposite that footer
  *  (Hyper Stat's points-used counter) and needs onCopy to have a row to sit in. */
-export function PresetBar({ theme, count, active, onSwitch, onCopy, onClear, trailing }: {
+export function PresetBar({ theme, count, active, onSwitch, onCopy, onClear, trailing, end }: {
   theme: AppTheme;
   count: number;
   active: number;
@@ -41,6 +41,8 @@ export function PresetBar({ theme, count, active, onSwitch, onCopy, onClear, tra
   onCopy?: (from: number) => void;
   onClear?: () => void;
   trailing?: ReactNode;
+  /** Pinned to the right end of the preset row itself (trailing goes on the row below). */
+  end?: ReactNode;
 }) {
   const indices = Array.from({ length: count }, (_, i) => i);
   const footer = onCopy ? (
@@ -64,6 +66,7 @@ export function PresetBar({ theme, count, active, onSwitch, onCopy, onClear, tra
             </button>
           ))}
         </div>
+        {end && <div style={{ marginLeft: "auto" }}>{end}</div>}
       </div>
       {trailing ? <div style={footerRowStyle}>{footer}{trailing}</div> : footer}
     </div>

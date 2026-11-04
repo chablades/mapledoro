@@ -1,17 +1,22 @@
 "use client";
 
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import Image from "next/image";
 import { createPortal } from "react-dom";
 import { usePickerCoords } from "../../../../lib/usePickerCoords";
 import { numericKeyDown, sanitizeDigitsInput, isStrayClick } from "../../../../lib/inputUtils";
 import { useKeyboardListNav } from "../../../../lib/useKeyboardListNav";
 import { searchAndRank } from "../../../../lib/searchMatch";
-import { resourceImageUrl } from "../../../../lib/mapleResource";
-import type { AppTheme } from "../../../../components/themes";
+import { dialogBtnColors, type AppTheme } from "../../../../components/themes";
 import HoverTooltip from "../../../../components/HoverTooltip";
 import type { SetupStepDefinition } from "../steps";
 import CharacterAvatar from "../../tabs/components/CharacterAvatar";
+import EquipItemIcon from "./EquipItemIcon";
+import ItemTooltip from "./ItemTooltip";
+import { ItemIcon } from "../../../../components/ResourceImage";
+import EquipmentUpgradeDialog, { type ItemUpgrades, type UpgradeEntry } from "./EquipmentUpgradeDialog";
+import { isUpgradeable } from "../data/equipmentInfo";
+import { canFlame } from "../data/flameData";
+import { useEquipInfo } from "../data/useEquipInfo";
 import SetupStepFrame from "./SetupStepFrame";
 import { PresetBar } from "./PresetBar";
 import { NavChevron } from "../../DropdownChevron";
@@ -28,9 +33,9 @@ import {
 import { symbolUnlockWarning } from "../data/symbolUnlock";
 import { statusText } from "../../../../components/statusColors";
 import { branchMaskForClass, weaponPrefixesForClass, secondarySpecForClass, isShieldId } from "../data/classBranch";
-import { readCharactersStore, selectCharacterByIgn } from "../../model/charactersStore";
+import { readCharactersStore, selectCharacterByIgn, type StoredCharacterRecord } from "../../model/charactersStore";
 import {
-  isSharedSlot, sameItem, parseEquipmentStepDraft, serializeEquipmentStepDraft, storedEquipmentToDraft,
+  hasEnhancements, isSharedSlot, sameItem, sameUpgradedItem, parseEquipmentStepDraft, serializeEquipmentStepDraft, storedEquipmentToDraft,
   SLOT_LABELS, SLOT_SIZE, CENTER_WIDTH, SYMBOL_TILE_SIZE, EQUIPMENT_PAGE_LABELS,
   COL1_SLOTS, COL2_SLOTS, COL6_SLOTS, COL7_SLOTS, CENTER_BOTTOM_SLOTS,
   slotCellStyle, navBtnStyle,
@@ -54,6 +59,19 @@ interface CatalogItem extends EquipmentItem {
 type SymbolTabKey = "arcane" | "sacred";
 
 const PRESET_COUNT = 3;
+// The main grid's full width: two 2-slot columns either side of the centre block, 4px gaps.
+const GRID_WIDTH = 4 * SLOT_SIZE + CENTER_WIDTH + 4 * 4;
+
+// The upgrade window's rail, in the game's equipment window order.
+const UPGRADE_SLOT_ORDER: readonly SlotKey[] = [
+  "weapon", "secondary", "emblem", "hat", "top", "bottom", "shoe", "glove", "cape", "shoulder",
+  "face", "eye", "earring", "pendant1", "pendant2", "belt", "pocket",
+  "ring1", "ring2", "ring3", "ring4", "medal", "badge", "heart", "android",
+  // Shared across presets; the Ancient Slate Replica is the one totem that takes flames.
+  "totem1", "totem2", "totem3",
+];
+
+const isTotemSlot = (slot: SlotKey) => slot === "totem1" || slot === "totem2" || slot === "totem3";
 /** Substeps in this step: 0 = main grid, 1 = additional equipment, 2 = pets. */
 const SUBSTEP_COUNT = 3;
 
@@ -148,6 +166,12 @@ const equippedHeaderStyle = (theme: AppTheme): CSSProperties => ({
   display: "flex", alignItems: "center", gap: 8, width: "100%",
   padding: "0.4rem 0.6rem",
   borderBottom: `1px solid ${theme.border}`,
+});
+
+// A bare chevron, not a boxed button: it reads as "there's more behind this item".
+const upgradeOpenStyle = (theme: AppTheme): CSSProperties => ({
+  display: "flex", alignItems: "center", justifyContent: "center", width: 30, height: 30, padding: 0, flexShrink: 0,
+  border: "none", borderRadius: 8, background: "none", color: theme.muted, cursor: "pointer",
 });
 
 const equippedHeaderLabelStyle = (theme: AppTheme): CSSProperties => ({
@@ -261,43 +285,6 @@ const spritePreviewStyle = (theme: AppTheme): CSSProperties => ({
   overflow: "hidden",
   minHeight: SLOT_SIZE * 2,
 });
-
-// ── Icon ───────────────────────────────────────────────────────────────────
-
-// A missing/failed icon falls back to the item's name-initial (mirrors VMatrixNodeIcon's
-// treatment) instead of a stray broken-image glyph. `revealed` mirrors ItemIcon's own prop
-// (androids' actual-appearance variant vs. their pre-equip egg icon).
-function EquipItemIcon({ id, name, theme, size, revealed }: {
-  id: string;
-  name: string;
-  theme: AppTheme;
-  size: number;
-  revealed?: boolean;
-}) {
-  const wrapperRef = useRef<HTMLDivElement>(null);
-  const fallbackRef = useRef<HTMLDivElement>(null);
-  const src = resourceImageUrl("item", id, `iconRaw${revealed ? "D" : ""}.png`);
-  return (
-    <>
-      <div ref={wrapperRef} style={{ flexShrink: 0 }}>
-        <Image src={src} alt={name} width={size} height={size} unoptimized
-          onError={() => {
-            if (wrapperRef.current) wrapperRef.current.style.display = "none";
-            if (fallbackRef.current) fallbackRef.current.style.display = "flex";
-          }}
-          style={{ objectFit: "contain", display: "block" }}
-        />
-      </div>
-      <div ref={fallbackRef} style={{
-        display: "none", alignItems: "center", justifyContent: "center", width: size, height: size,
-        borderRadius: "6px", flexShrink: 0, fontWeight: 800, fontSize: Math.max(12, size * 0.35),
-        background: "rgba(127,127,127,0.18)", color: theme.muted,
-      }}>
-        {name.match(/[a-zA-Z0-9]/)?.[0] ?? "?"}
-      </div>
-    </>
-  );
-}
 
 // ── Item search ─────────────────────────────────────────────────────────────
 
@@ -451,7 +438,7 @@ function useItemPickerCatalog({
 
 function ItemPicker({
   slot, current, theme, files, itemFilter, maxLevel, excludeIds, presetBaseItem, showAllWhenEmpty,
-  onSelect, onClose, onAdvance, onPrev, onNext, heading,
+  onSelect, onClose, onAdvance, onPrev, onNext, heading, onUpgrade,
 }: {
   slot: SlotKey;
   current: EquipmentItem | null | undefined;
@@ -477,6 +464,8 @@ function ItemPicker({
   onNext?: () => void;
   /** A title row on top, for a picker that's its own window (the skill ring's). */
   heading?: string;
+  /** Opens the equipped item's enhancements (Star Force, flames), shown when the item takes any. */
+  onUpgrade?: () => void;
 }) {
   const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -520,10 +509,21 @@ function ItemPicker({
       {current && (
         <div style={equippedHeaderStyle(theme)}>
           {current.id && <EquipItemIcon id={current.id} name={current.name} theme={theme} size={28} revealed={isAndroid} />}
-          <div style={{ overflow: "hidden" }}>
+          <div style={{ overflow: "hidden", flex: 1 }}>
             <p style={equippedHeaderLabelStyle(theme)}>Currently Equipped</p>
             <p style={equippedHeaderNameStyle(theme)}>{current.name}</p>
           </div>
+          {onUpgrade && (
+            <HoverTooltip label="Enhancements" theme={theme}>
+              <button
+                type="button" aria-label="Enhancements" onClick={() => { onClose(); onUpgrade(); }} style={upgradeOpenStyle(theme)}
+                onMouseEnter={(e) => { e.currentTarget.style.color = theme.text; e.currentTarget.style.background = "rgba(127,127,127,0.14)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = theme.muted; e.currentTarget.style.background = "none"; }}
+              >
+                <NavChevron direction="next" size={16} />
+              </button>
+            </HoverTooltip>
+          )}
         </div>
       )}
       {current && (
@@ -538,7 +538,7 @@ function ItemPicker({
       {presetBaseItem && !presetBaseConflicts && (
         <button
           type="button"
-          onClick={() => selectItem({ id: presetBaseItem.id, name: presetBaseItem.name }, false)}
+          onClick={() => selectItem(presetBaseItem, false)}
           style={presetBaseItemStyle(theme)}
         >
           {presetBaseItem.id && <EquipItemIcon id={presetBaseItem.id} name={presetBaseItem.name} theme={theme} size={28} revealed={isAndroid} />}
@@ -667,6 +667,11 @@ function SkillRingTooltip({ item, level, theme }: { item: EquipmentItem; level: 
   );
 }
 
+/** An item's name, or its name, stars and flame lines once it has any logged. */
+function itemTooltipLabel(theme: AppTheme, slot: SlotKey, item: EquipmentItem, character?: StoredCharacterRecord): ReactNode {
+  return hasEnhancements(item) ? <ItemTooltip theme={theme} slot={slot} item={item} character={character} /> : item.name;
+}
+
 function SlotCell({ slotKey, item, theme, isActive, onClick, picker, skillRing, level }: {
   slotKey: SlotKey;
   item: EquipmentItem | null | undefined;
@@ -703,7 +708,7 @@ function SlotCell({ slotKey, item, theme, isActive, onClick, picker, skillRing, 
   );
   return (
     <div ref={wrapperRef} style={{ position: "relative", width: SLOT_SIZE, flexShrink: 0 }}>
-      {item ? <HoverTooltip label={item.name} theme={theme}>{button}</HoverTooltip> : button}
+      {item ? <HoverTooltip label={itemTooltipLabel(theme, slotKey, item)} theme={theme}>{button}</HoverTooltip> : button}
       {level && <LevelBadge level={level} theme={theme} />}
       {skillRing && (
         <HoverTooltip label={skillRing.item ? skillRingLabel(skillRing.item, skillRing.level) : EMPTY_SKILL_RING_LABEL} theme={theme} style={cogCornerStyle}>
@@ -736,10 +741,12 @@ function SlotCell({ slotKey, item, theme, isActive, onClick, picker, skillRing, 
 /** Read-only counterpart to SlotCell for the profile Gear bookmark. Same icon/empty-label
  *  box and sizing (slotCellStyle/SLOT_SIZE), but no button semantics, hover-swap, or picker
  *  portal, since nothing here is clickable. */
-export function ReadOnlySlotTile({ slotKey, item, theme, skillRing, ozLevels }: {
+export function ReadOnlySlotTile({ slotKey, item, theme, skillRing, ozLevels, character }: {
   slotKey: SlotKey;
   item: EquipmentItem | null | undefined;
   theme: AppTheme;
+  /** The wearer, so a flamed item's tooltip can show its flame score. */
+  character?: StoredCharacterRecord;
   /** Set on the ring that unlocks the skill ring slot: the skill ring worn with it, or null when
    *  that slot is empty (an outlined cog, so it reads as not set up yet). */
   skillRing?: EquipmentItem | null;
@@ -758,7 +765,7 @@ export function ReadOnlySlotTile({ slotKey, item, theme, skillRing, ozLevels }: 
       )}
     </div>
   );
-  const tile = item ? <HoverTooltip label={item.name} theme={theme}>{box}</HoverTooltip> : box;
+  const tile = item ? <HoverTooltip label={itemTooltipLabel(theme, slotKey, item, character)} theme={theme}>{box}</HoverTooltip> : box;
   if (skillRing === undefined && !level) return tile;
   // The cog sits beside the ring's own tooltip rather than inside it, so hovering the cog shows
   // only the skill ring, not both.
@@ -997,15 +1004,31 @@ function SymbolSection({ symbolLevels, activeTab, availableTabs, characterLevel,
   );
 }
 
-function SectionHeading({ label, theme }: { label: string; theme: AppTheme }) {
+/** Opens the Enhancements window, for anyone who never reopens an item to find its ›. `short`
+ *  always reads "Enhance"; otherwise it shortens only on narrow screens. */
+function EnhanceButton({ theme, onClick, short = false }: { theme: AppTheme; onClick: () => void; short?: boolean }) {
   return (
-    <p style={{
-      margin: "0 0 0.5rem", fontSize: "0.8rem", fontWeight: 800,
-      letterSpacing: "0.03em", textTransform: "uppercase", color: theme.muted,
-    }}>
-      {label}
-    </p>
+    <button type="button" aria-label="Enhancements" onClick={onClick} className="tool-btn tool-dialog-btn eq-enhance-btn" style={{ ...dialogBtnColors(theme), display: "inline-flex", alignItems: "center", gap: 6 }}>
+      {/* Burning Rebirth Flame, so the button reads as "upgrade this gear" at a glance. */}
+      <ItemIcon id="02536002" size={22} alt="" style={{ margin: "-4px 0" }} />
+      {short ? <span>Enhance</span> : (
+        <>
+          <span className="eq-enhance-label">Enhancements</span>
+          <span className="eq-enhance-short">Enhance</span>
+        </>
+      )}
+      <NavChevron direction="next" size={14} />
+    </button>
   );
+}
+
+const sectionHeadingStyle = (theme: AppTheme): CSSProperties => ({
+  margin: "0 0 0.5rem", fontSize: "0.8rem", fontWeight: 800,
+  letterSpacing: "0.03em", textTransform: "uppercase", color: theme.muted,
+});
+
+function SectionHeading({ label, theme }: { label: string; theme: AppTheme }) {
+  return <p style={sectionHeadingStyle(theme)}>{label}</p>;
 }
 
 // ── Slot picker (per-slot ItemPicker wrapper) ────────────────────────────────
@@ -1026,46 +1049,51 @@ interface SlotPickerContext {
   setActiveSlot: (slot: SlotKey | null) => void;
   /** The saved Oz Rings step levels, for the level shown on an equipped Oz Ring. */
   ozLevels: OzRingLevels | undefined;
+  openUpgrades: (slot: SlotKey) => void;
 }
 
 function SlotPicker({ slot, ctx }: { slot: SlotKey; ctx: SlotPickerContext }) {
-  const {
-    activeSlot, classId, branchMask, draft, theme, characterLevel,
-    readSlot, siblingItemIds, presetBaseItemFor, chainNavForSlot, updateSlot, setActiveSlot,
-  } = ctx;
-  if (activeSlot !== slot) return null;
-  const source = resolvePickerSource(slot, classId, branchMask);
-  let itemFilter = source.filter;
-  let showAllWhenEmpty = false;
+  if (ctx.activeSlot !== slot) return null;
+  return <OpenSlotPicker slot={slot} ctx={ctx} />;
+}
 
-  const pairedPet = PET_EQUIP_TO_PET[slot]; // set ⇒ this is a petEquip slot
-  const pairedEquip = PET_TO_PET_EQUIP[slot]; // set ⇒ this is a pet slot
+/** The slot's item list, narrowed by what's already equipped around it, and whether that list
+ *  is short enough to show before any search. */
+function slotItemFilter(slot: SlotKey, ctx: SlotPickerContext, base: (item: CatalogItem) => boolean): { itemFilter: (item: CatalogItem) => boolean; showAllWhenEmpty: boolean } {
+  const { draft, readSlot } = ctx;
   const ringGrid = ringGridOf(readSlot);
   if (slot === "skillRing") {
     // Only the kind the host ring's slot takes, a short list, so shown without searching.
     const kind = gridSkillSlotKind(ringGrid);
-    itemFilter = (item) => kind !== null && fitsSkillSlot(kind, item.id) && source.filter(item);
-    showAllWhenEmpty = true;
-  } else if (isRingKey(slot) && specialRingElsewhere(ringGrid, slot)) {
-    // One special skill ring across the 4 slots; a second goes in the skill ring slot.
-    itemFilter = (item) => !isSpecialSkillRing(item.id) && source.filter(item);
-  } else if (pairedPet) {
-    // Pet chosen: show only the equips it can wear. Short enough to reveal without searching.
-    const pet = draft[pairedPet];
-    if (pet) {
-      itemFilter = (item) => source.filter(item) && (item.wearablePets?.includes(pet.id) ?? false);
-      showAllWhenEmpty = true;
-    }
-  } else if (pairedEquip && !readSlot(slot)) {
-    // Equip chosen but this pet slot is empty: narrow the pet list to its wearers (guides equip→pet
-    // order) and reveal that short list without searching.
-    const equip = draft[pairedEquip];
-    if (equip) {
-      itemFilter = (item) => source.filter(item) && (item.wearableEquips?.includes(equip.id) ?? false);
-      showAllWhenEmpty = true;
-    }
+    return { itemFilter: (item) => kind !== null && fitsSkillSlot(kind, item.id) && base(item), showAllWhenEmpty: true };
   }
+  if (isRingKey(slot) && specialRingElsewhere(ringGrid, slot)) {
+    // One special skill ring across the 4 slots; a second goes in the skill ring slot.
+    return { itemFilter: (item) => !isSpecialSkillRing(item.id) && base(item), showAllWhenEmpty: false };
+  }
+  const pairedPet = PET_EQUIP_TO_PET[slot]; // set ⇒ this is a petEquip slot
+  const pairedEquip = PET_TO_PET_EQUIP[slot]; // set ⇒ this is a pet slot
+  // Pet chosen: show only the equips it can wear. Short enough to reveal without searching.
+  const pet = pairedPet ? draft[pairedPet] : null;
+  if (pet) return { itemFilter: (item) => base(item) && (item.wearablePets?.includes(pet.id) ?? false), showAllWhenEmpty: true };
+  // Equip chosen but this pet slot is empty: narrow the pet list to its wearers (guides equip→pet
+  // order) and reveal that short list without searching.
+  const equip = pairedEquip && !readSlot(slot) ? draft[pairedEquip] : null;
+  if (equip) return { itemFilter: (item) => base(item) && (item.wearableEquips?.includes(equip.id) ?? false), showAllWhenEmpty: true };
+  return { itemFilter: base, showAllWhenEmpty: false };
+}
 
+function OpenSlotPicker({ slot, ctx }: { slot: SlotKey; ctx: SlotPickerContext }) {
+  const {
+    classId, branchMask, theme, characterLevel,
+    readSlot, siblingItemIds, presetBaseItemFor, chainNavForSlot, updateSlot, setActiveSlot,
+  } = ctx;
+  const equipped = readSlot(slot);
+  // Grid slots and totems can carry enhancements; titles and pets can't.
+  const upgradable = (!isSharedSlot(slot) || isTotemSlot(slot)) && equipped?.id ? equipped : null;
+  const upgradeInfo = useEquipInfo(upgradable ? [{ slot, item: upgradable }] : [])[slot];
+  const source = resolvePickerSource(slot, classId, branchMask);
+  const { itemFilter, showAllWhenEmpty } = slotItemFilter(slot, ctx, source.filter);
   const { onPrev: goPrev, onNext: goNext } = chainNavForSlot(slot);
 
   return (
@@ -1085,6 +1113,7 @@ function SlotPicker({ slot, ctx }: { slot: SlotKey; ctx: SlotPickerContext }) {
       onPrev={goPrev}
       onNext={goNext}
       heading={slot === "skillRing" ? SLOT_LABELS.skillRing : undefined}
+      onUpgrade={isUpgradeable(upgradeInfo) ? () => ctx.openUpgrades(slot) : undefined}
     />
   );
 }
@@ -1139,6 +1168,8 @@ function AdditionalEquipSubstep({
   onFinish: () => void;
   nextLabel?: string;
 }) {
+  // The Ancient Slate Replica is the one totem that takes flames; the button opens on it.
+  const flameTotem = (["totem1", "totem2", "totem3"] as const).find((slot) => { const id = draft[slot]?.id; return !!id && canFlame(slot, id); });
   return (
     <div key={1} style={substepAnimStyle}>
       <SetupStepFrame
@@ -1166,8 +1197,12 @@ function AdditionalEquipSubstep({
               picker={<SlotPicker slot="title" ctx={pickerCtx} />}
             />
           </div>
-          <div>
-            <SectionHeading label="Totems" theme={theme} />
+          {/* Sized to the three tiles, so the button lines up with the last one. */}
+          <div style={{ display: "inline-flex", flexDirection: "column", alignSelf: "flex-start" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: "0.5rem" }}>
+              <p style={{ ...sectionHeadingStyle(theme), margin: 0 }}>Totems</p>
+              {flameTotem && <EnhanceButton theme={theme} short onClick={() => pickerCtx.openUpgrades(flameTotem)} />}
+            </div>
             <div style={{ display: "flex", gap: 4 }}>
               {(["totem1", "totem2", "totem3"] as const).map((slotKey) => (
                 <SlotCell
@@ -1286,7 +1321,7 @@ function PetsSubstep({
 function EquipmentGridSubstep({
   theme, stepNumber, totalSteps, substepAnimStyle, activeGrid, activeSlot, toggleSlot, pickerCtx,
   activePreset, switchPreset, mobileGridPage, setMobileGridPage, confirmedCharacterImgURL,
-  substepIndex, substepCount, onBack, onNext, onFinish, nextLabel, confineToSubstep,
+  substepIndex, substepCount, onBack, onNext, onFinish, nextLabel, confineToSubstep, onOpenEnhancements,
 }: {
   theme: AppTheme;
   stepNumber: number;
@@ -1311,6 +1346,8 @@ function EquipmentGridSubstep({
    *  confined edit, since the profile's own "Set preset X as active" control is right
    *  there. Same reasoning as Stats/Inner Ability's own confineToSubstep gating. */
   confineToSubstep?: boolean;
+  /** Opens the Enhancements window on the first item; absent while nothing is equipped. */
+  onOpenEnhancements?: () => void;
 }) {
   return (
     <div key={0} className="eq-substep-root" style={substepAnimStyle}>
@@ -1320,12 +1357,16 @@ function EquipmentGridSubstep({
       }
       /* Carousel kicks in once the available width can't fit the full grid (~500px),
          regardless of which page-layout breakpoint produced that width. */
+      .eq-enhance-short { display: none; }
       @container (max-width: 520px) {
         .eq-page-0 .eq-section-1, .eq-page-0 .eq-section-2,
         .eq-page-1 .eq-section-0, .eq-page-1 .eq-section-2,
         .eq-page-2 .eq-section-0, .eq-page-2 .eq-section-1 { display: none; }
         .eq-page-label.eq-page-label { display: block; }
         .eq-page-nav-btn.eq-page-nav-btn { display: flex; align-items: center; justify-content: center; }
+        .eq-enhance-label { display: none; }
+        .eq-enhance-short.eq-enhance-short { display: inline; }
+        .eq-enhance-btn.eq-enhance-btn { padding-left: 10px; padding-right: 8px; }
       }
     `}</style>
     <SetupStepFrame
@@ -1341,7 +1382,18 @@ function EquipmentGridSubstep({
       onFinish={onFinish}
       nextLabel={nextLabel}
     >
-      <PresetBar theme={theme} count={PRESET_COUNT} active={activePreset} onSwitch={switchPreset} />
+      {/* As wide as the grid below, so the presets and Enhancements line up with its edges. */}
+      <div style={{ maxWidth: GRID_WIDTH, margin: "0 auto" }}>
+      <PresetBar
+        theme={theme} count={PRESET_COUNT} active={activePreset} onSwitch={switchPreset}
+        end={onOpenEnhancements && (
+          // The same window each item's picker opens with its ›, for anyone who never reopens an
+          // item they already entered.
+          // Narrow screens shorten the word so it fits beside the presets.
+          <EnhanceButton theme={theme} onClick={onOpenEnhancements} />
+        )}
+      />
+      </div>
       {!confineToSubstep && (
         <p style={{ margin: "0 0 6px", fontSize: "0.75rem", fontWeight: 600, color: theme.muted, textAlign: "center" }}>
           Preset 1 is set as active by default. If you boss on a different preset, change that afterward from your profile.
@@ -1437,6 +1489,11 @@ interface EquipmentStepState {
   setSymbolLevel: (regionName: string, level: string) => void;
   setSymbolLevels: (updates: Record<string, string>) => void;
   pickerCtx: SlotPickerContext;
+  /** The item the Enhancements window opened on, "first" from the button under the grid. */
+  upgradeSlot: SlotKey | "first" | null;
+  setUpgradeSlot: (slot: SlotKey | "first" | null) => void;
+  upgradeEntries: UpgradeEntry[];
+  saveUpgrades: (changes: Partial<Record<SlotKey, ItemUpgrades>>) => void;
 }
 
 /** All of EquipmentSetupStep's state, derived values, and slot/substep handlers, kept in
@@ -1505,6 +1562,7 @@ function useEquipmentStepState({
 
   // The saved Oz Rings step levels, read once like the backfill above. A level changed later in
   // this same setup run shows once it's saved.
+  const [upgradeSlot, setUpgradeSlot] = useState<SlotKey | "first" | null>(null);
   const [ozLevels] = useState<OzRingLevels | undefined>(() => {
     if (typeof window === "undefined" || !confirmedCharacterName) return undefined;
     return selectCharacterByIgn(readCharactersStore(), confirmedCharacterName)?.scouter?.ozRings?.levels;
@@ -1566,6 +1624,8 @@ function useEquipmentStepState({
     // rather than getting frozen by a whole-preset clone.
     const presets = clonePresets();
     const next: SlotMap = { ...presets[activePreset], [slot]: item };
+    // Picking Preset 1's own item in Preset 2/3 means mirroring it again, not a copy of it.
+    if (activePreset !== 0 && item && sameUpgradedItem(item, presets[0]?.[slot])) delete next[slot];
     // Swapping the host ring can leave a skill ring its slot no longer takes (Continuous ->
     // Restraint with Weapon Jump in it), or no slot at all, so it comes off.
     if (isRingKey(slot) && !skillRingFits({ ...activeGrid, [slot]: item })) next.skillRing = null;
@@ -1678,15 +1738,47 @@ function useEquipmentStepState({
     };
   }
 
+  /** The preset an edit to this slot lands in: Preset 2/3's own item, else Preset 1's, which
+   *  a slot that hasn't been changed in this preset still mirrors. */
+  function ownerPreset(slot: SlotKey): number {
+    return activePreset !== 0 && draft.presets?.[activePreset]?.[slot] !== undefined ? activePreset : 0;
+  }
+
+  const upgradeEntries: UpgradeEntry[] = UPGRADE_SLOT_ORDER.flatMap((slot) => {
+    const item = readSlot(slot);
+    return item?.id ? [{ slot, item, preset: isSharedSlot(slot) ? 0 : ownerPreset(slot) + 1 }] : [];
+  });
+
+  function saveUpgrades(changes: Partial<Record<SlotKey, ItemUpgrades>>) {
+    const presets = clonePresets();
+    const shared: Partial<Record<SharedSlotKey, EquipmentItem>> = {};
+    const withUpgrades = (item: EquipmentItem, { starForce, flame }: ItemUpgrades): EquipmentItem =>
+      ({ id: item.id, name: item.name, ...(starForce ? { starForce } : null), ...(flame?.length ? { flame } : null) });
+    for (const [slot, upgrades] of Object.entries(changes) as [SlotKey, ItemUpgrades][]) {
+      if (isSharedSlot(slot)) {
+        // Totems are the same in every preset, so they live on the draft itself.
+        const item = draft[slot];
+        if (item) shared[slot] = withUpgrades(item, upgrades);
+        continue;
+      }
+      const owner = ownerPreset(slot);
+      const item = presets[owner]?.[slot];
+      if (item) presets[owner] = { ...presets[owner], [slot]: withUpgrades(item, upgrades) };
+    }
+    commitDraft({ ...draft, ...shared, presets });
+  }
+
   const pickerCtx: SlotPickerContext = {
     activeSlot, classId, branchMask, draft, theme, characterLevel,
     readSlot, siblingItemIds, presetBaseItemFor, chainNavForSlot, updateSlot, setActiveSlot, ozLevels,
+    openUpgrades: setUpgradeSlot,
   };
 
   return {
     draft, activeSlot, toggleSlot, activePreset, activeGrid, substep, substepAnimStyle,
     symbolTab, setSymbolTab, mobileGridPage, setMobileGridPage, availableSymbolTabs,
     goToSubstep, switchPreset, setSymbolLevel, setSymbolLevels, pickerCtx,
+    upgradeSlot, setUpgradeSlot, upgradeEntries, saveUpgrades,
   };
 }
 
@@ -1712,15 +1804,25 @@ export default function EquipmentSetupStep({
     draft, activeSlot, toggleSlot, activePreset, activeGrid, substep, substepAnimStyle,
     symbolTab, setSymbolTab, mobileGridPage, setMobileGridPage, availableSymbolTabs,
     goToSubstep, switchPreset, setSymbolLevel, setSymbolLevels, pickerCtx,
+    upgradeSlot, setUpgradeSlot, upgradeEntries, saveUpgrades,
   } = useEquipmentStepState({
     theme, jobName, characterLevel, confirmedCharacterName, direction, targetSubstep, onSubstepChange, value, onChange,
   });
+
+  const enhancementsWindow = upgradeSlot && (
+    <EquipmentUpgradeDialog
+      key={upgradeSlot} theme={theme} entries={upgradeEntries} initialSlot={upgradeSlot === "first" ? undefined : upgradeSlot}
+      onSave={saveUpgrades} onClose={() => setUpgradeSlot(null)}
+    />
+  );
 
   if (substep === 1) {
     const frame = confinableFrameProps(confineToSubstep, onBack, onFinish, {
       substepIndex: 1, substepCount: SUBSTEP_COUNT, onBack: () => goToSubstep(0), onNext: () => goToSubstep(2), nextLabel: "Continue",
     });
     return (
+      <>
+      {enhancementsWindow}
       <AdditionalEquipSubstep
         theme={theme}
         stepNumber={stepNumber}
@@ -1743,6 +1845,7 @@ export default function EquipmentSetupStep({
         onFinish={onFinish}
         nextLabel={frame.nextLabel}
       />
+      </>
     );
   }
 
@@ -1774,6 +1877,7 @@ export default function EquipmentSetupStep({
     substepIndex: 0, substepCount: SUBSTEP_COUNT, onBack, onNext: () => goToSubstep(1), nextLabel: "Continue",
   });
   return (
+    <>
     <EquipmentGridSubstep
       theme={theme}
       stepNumber={stepNumber}
@@ -1789,6 +1893,7 @@ export default function EquipmentSetupStep({
       setMobileGridPage={setMobileGridPage}
       confirmedCharacterImgURL={confirmedCharacterImgURL}
       confineToSubstep={confineToSubstep}
+      onOpenEnhancements={upgradeEntries.length > 0 ? () => setUpgradeSlot("first") : undefined}
       substepIndex={frame.substepIndex}
       substepCount={frame.substepCount}
       onBack={frame.onBack}
@@ -1796,5 +1901,7 @@ export default function EquipmentSetupStep({
       onFinish={onFinish}
       nextLabel={frame.nextLabel}
     />
+    {enhancementsWindow}
+    </>
   );
 }

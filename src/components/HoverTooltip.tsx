@@ -50,7 +50,7 @@ export default function HoverTooltip({ label, theme, style, className, children 
     // above all regular DOM content -- a bubble portaled to document.body (this component's
     // usual target, chosen to escape overflow:hidden ancestors) would render behind the dialog
     // regardless of z-index. Portaling into the dialog itself keeps the bubble in that same
-    // top layer, where z-index (hover-tip-bubble's 200 in globals.css) works again.
+    // top layer, where z-index (hover-tip-bubble's 400 in globals.css) works again.
     setPortalTarget(wrapper.closest("dialog"));
   }, []);
 
