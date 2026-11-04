@@ -12,6 +12,15 @@ interface ChangelogEntry {
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    date: "2026-11-04",
+    changes: [
+      { type: "added", text: "Added an Enhancements window to equipment setup for each item's Star Force and flames. Type the green numbers from the hover tooltip and it works out the flame lines, or pick each line and tier with Details on." },
+      { type: "added", text: "Gear tooltips on the profile now show an item's Star Force and flames, with a Flame Details switch for lines or totals." },
+      { type: "fixed", text: "Fixed the equipment grid showing section arrows that did nothing on wide screens." },
+      { type: "fixed", text: "Fixed tooltips inside item pickers showing behind the picker." },
+    ],
+  },
+  {
     date: "2026-11-03",
     changes: [
       { type: "added", text: "Equipment setup now has the Skill Ring slot: a cog on your Ring of Restraint or Continuous Ring lets you equip a second special skill ring, like in game." },
