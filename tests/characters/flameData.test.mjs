@@ -2,7 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  canFlame, flameLinesFor, flameTiers, flameValue, formatFlameValue, maxStarForce,
+  canFlame, flameLinesFor, flameTiers, flameValue, formatFlameValue, maxStarForce, solveFlame, totalsOf,
 } from "../../src/features/characters/setup/data/flameData.ts";
 
 const armor = (level, bossReward = false) => ({ level, isWeapon: false, bossReward, baseAtt: 0, baseMatt: 0 });
@@ -52,4 +52,37 @@ void test("the Star Force cap comes from level, with the Superior sets capped lo
   assert.equal(maxStarForce("Tyrant Lycaon Boots", 150, 0), 15);
   assert.equal(maxStarForce("Sweetwater Shoes", 160, 8), 15);
   assert.equal(maxStarForce("Some Emblem", 200, 0), 0);
+});
+
+// A made-up Lv. 200 Flame Advantaged weapon with base ATT 200 / Magic ATT 300.
+const WEAPON = { level: 200, isWeapon: true, bossReward: true, baseAtt: 200, baseMatt: 300 };
+// Its flame: Defense T5, ATT T6, Magic ATT T7, Boss Damage T5, summed as the tooltip shows it.
+const WEAPON_TOTALS = { "Defense": 55, "Attack Power": 96, "Magic ATT": 185, "Boss Damage": 10 };
+
+void test("a boss weapon's summed flame resolves to one set of lines", () => {
+  const { matches, missingLine } = solveFlame(WEAPON, WEAPON_TOTALS);
+  assert.equal(missingLine, false);
+  assert.equal(matches.length, 1);
+  const byLine = Object.fromEntries(matches[0].map((l) => [l.line, l.tier]));
+  assert.deepEqual(byLine, { defense: 5, att: 6, matt: 7, bossDamage: 5 });
+});
+
+void test("solving and summing are inverses", () => {
+  const hat = { level: 200, isWeapon: false, bossReward: true, baseAtt: 0, baseMatt: 0 };
+  const lines = [{ line: "str", tier: 6 }, { line: "strDex", tier: 5 }, { line: "allStat", tier: 6 }, { line: "att", tier: 5 }];
+  const totals = totalsOf(lines, hat);
+  assert.deepEqual(totals, { "STR": 96, "DEX": 30, "All Stats": 6, "Attack Power": 5 });
+  assert.ok(solveFlame(hat, totals).matches.some((m) => m.length === 4 && lines.every((l) => m.some((x) => x.line === l.line && x.tier === l.tier))));
+});
+
+void test("a boss flame with a stat left out is flagged, not silently matched", () => {
+  // Only 3 of the weapon's 4 green numbers.
+  const { Defense: _left, ...three } = WEAPON_TOTALS;
+  const { matches, missingLine } = solveFlame(WEAPON, three);
+  assert.equal(missingLine, true);
+  assert.ok(matches.every((m) => m.length < 4));
+});
+
+void test("numbers no flame can make find nothing", () => {
+  assert.deepEqual(solveFlame(WEAPON, { "Defense": 56 }).matches, []);
 });

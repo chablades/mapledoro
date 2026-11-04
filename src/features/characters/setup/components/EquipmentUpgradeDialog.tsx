@@ -4,7 +4,8 @@
 // Star Force and flames on the right. Every change saves as it's made, so closing the window
 // (a misclick outside it included) never loses anything.
 
-import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { searchAndRank } from "../../../../lib/searchMatch";
 import { useKeyboardListNav } from "../../../../lib/useKeyboardListNav";
 import ModalShell from "../../../../components/ModalShell";
@@ -16,8 +17,8 @@ import { statInputStyle } from "./QuestionControls";
 import { SLOT_LABELS, type EquipmentItem, type SlotKey } from "../data/equipmentStepDraft";
 import { isUpgradeable, type EquipInfo } from "../data/equipmentInfo";
 import {
-  FLAME_LINES, MAX_FLAME_LINES, flameContributions, flameLinesFor, flameTiers, flameValue, formatFlameValue,
-  type FlameLineId, type StoredFlameLine,
+  FLAME_LINES, MAX_FLAME_LINES, flameContributions, flameLinesFor, flameTiers, flameTotalLabels, flameValue, formatFlameValue,
+  solveFlame, totalsOf, type FlameLineId, type FlameTotals, type StoredFlameLine,
 } from "../data/flameData";
 import { useEquipInfo } from "../data/useEquipInfo";
 import { edgeFadeMask, useScrollEdges } from "../../../../lib/useScrollEdges";
@@ -83,8 +84,34 @@ const tierBadgeStyle: CSSProperties = {
   fontSize: "0.75rem", fontWeight: 800, background: STATUS.success.fill, color: STATUS.success.on,
 };
 
+const resultBoxStyle = (theme: AppTheme, picked: boolean): CSSProperties => ({
+  all: "unset", boxSizing: "border-box", display: "block", cursor: "pointer", padding: "9px 12px", borderRadius: 10,
+  background: picked ? theme.accentSoft : theme.timerBg, border: `1px solid ${picked ? theme.accent : theme.border}`,
+});
+
+const switchButtonStyle = (theme: AppTheme): CSSProperties => ({
+  all: "unset", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 8, padding: "2px 4px",
+  borderRadius: 6, fontSize: "0.8rem", fontWeight: 800, color: theme.text,
+});
+
+const switchTrackStyle = (theme: AppTheme, on: boolean): CSSProperties => ({
+  position: "relative", width: 32, height: 18, borderRadius: 9, transition: "background 0.15s ease",
+  background: on ? theme.accent : theme.border,
+});
+
+const switchKnobStyle = (theme: AppTheme, on: boolean): CSSProperties => ({
+  position: "absolute", top: 2, left: on ? 16 : 2, width: 14, height: 14, borderRadius: "50%",
+  transition: "left 0.15s ease", background: on ? theme.accentOn : theme.panel,
+});
+
+const rowListStyle = (theme: AppTheme): CSSProperties => ({
+  boxSizing: "border-box", maxHeight: 200, overflowY: "auto",
+  padding: 4, borderRadius: 10, background: theme.panel, border: `1px solid ${theme.accent}`,
+  boxShadow: "0 4px 20px rgba(0,0,0,0.3)", display: "flex", flexDirection: "column",
+});
+
 const chooserStyle = (theme: AppTheme): CSSProperties => ({
-  position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, zIndex: 2, padding: 8,
+  boxSizing: "border-box", padding: 8,
   borderRadius: 10, background: theme.panel, border: `1px solid ${theme.accent}`,
   boxShadow: "0 4px 20px rgba(0,0,0,0.3)", display: "flex", flexDirection: "column", gap: 6,
 });
@@ -168,9 +195,58 @@ function TierButtons({ theme, info, line, tier, onPick }: {
 
 /** The chooser under a line: search the stats, then pick the tier. Picking a tier saves and
  *  closes; Escape or a click outside closes without changing anything. */
-function FlameChooser({ theme, info, options, current, onPick, onClose }: {
+/** Places a floating panel under its anchor, or above it when the window has no room below.
+ *  The panel sits on the dialog itself, so the item pane's scrolling never clips it. */
+/** A ref holding the latest value, for listeners that shouldn't re-subscribe when a callback
+ *  prop changes identity. */
+function useLatest<T>(value: T) {
+  const ref = useRef(value);
+  useEffect(() => {
+    ref.current = value;
+  });
+  return ref;
+}
+
+function placeAgainst(panel: HTMLElement | null, anchor: HTMLElement | null) {
+  const dialog = panel?.offsetParent;
+  if (!panel || !anchor || !dialog) return;
+  const d = dialog.getBoundingClientRect();
+  const a = anchor.getBoundingClientRect();
+  const height = panel.offsetHeight;
+  const fitsBelow = a.bottom + 4 + height <= d.bottom - 8;
+  panel.style.left = `${a.left - d.left}px`;
+  panel.style.width = `${a.width}px`;
+  panel.style.top = `${fitsBelow || a.top - d.top < height + 12 ? a.bottom - d.top + 4 : a.top - d.top - height - 4}px`;
+}
+
+/** A list or chooser floating over the Enhancements window, pinned to `anchor`. Scrolling the
+ *  pane under it would leave it behind, so a scroll outside it dismisses it. */
+function FloatingPanel({ anchor, onDismiss, style, children }: {
+  anchor: React.RefObject<HTMLElement | null>; onDismiss: () => void; style: CSSProperties; children: ReactNode;
+}) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  const dismiss = useLatest(onDismiss);
+  useEffect(() => {
+    function onScroll(e: Event) {
+      if (!panelRef.current?.contains(e.target as Node)) dismiss.current();
+    }
+    document.addEventListener("scroll", onScroll, true);
+    return () => document.removeEventListener("scroll", onScroll, true);
+  }, [dismiss]);
+  // Only ever rendered after a click or focus inside the open window, so the document exists.
+  const [dialog] = useState(() => (typeof document === "undefined" ? null : document.querySelector<HTMLElement>("dialog.upgrade-dialog")));
+  if (!dialog) return null;
+  return createPortal(
+    <div ref={(el) => { panelRef.current = el; placeAgainst(el, anchor.current); }} style={{ ...style, position: "absolute", zIndex: 5 }}>
+      {children}
+    </div>,
+    dialog,
+  );
+}
+
+function FlameChooser({ theme, info, options, current, anchor, onPick, onClose }: {
   theme: AppTheme; info: EquipInfo; options: FlameLineId[]; current: StoredFlameLine | null;
-  onPick: (line: StoredFlameLine) => void; onClose: () => void;
+  anchor: React.RefObject<HTMLDivElement | null>; onPick: (line: StoredFlameLine) => void; onClose: () => void;
 }) {
   const [query, setQuery] = useState("");
   const [stat, setStat] = useState<FlameLineId | null>(current?.line ?? null);
@@ -178,10 +254,12 @@ function FlameChooser({ theme, info, options, current, onPick, onClose }: {
   const nav = useKeyboardListNav({ items: results, resetKey: query, onSelect: (id) => setStat(id) });
   const rootRef = useRef<HTMLDivElement>(null);
   const focused = useRef(false);
+  const close = useLatest(onClose);
 
   useEffect(() => {
     function onDown(e: MouseEvent) {
-      if (!rootRef.current?.contains(e.target as Node)) onClose();
+      const target = e.target as Node;
+      if (!rootRef.current?.contains(target) && !anchor.current?.contains(target)) close.current();
     }
     // Escape closes just this chooser: caught before the window's own Escape, which would
     // otherwise close the whole Enhancements window.
@@ -189,7 +267,7 @@ function FlameChooser({ theme, info, options, current, onPick, onClose }: {
       if (e.key !== "Escape") return;
       e.preventDefault();
       e.stopPropagation();
-      onClose();
+      close.current();
     }
     document.addEventListener("mousedown", onDown);
     document.addEventListener("keydown", onKey, true);
@@ -197,10 +275,11 @@ function FlameChooser({ theme, info, options, current, onPick, onClose }: {
       document.removeEventListener("mousedown", onDown);
       document.removeEventListener("keydown", onKey, true);
     };
-  }, [onClose]);
+  }, [close, anchor]);
 
   return (
-    <div ref={rootRef} className="upgrade-chooser" style={chooserStyle(theme)}>
+    <FloatingPanel anchor={anchor} onDismiss={onClose} style={chooserStyle(theme)}>
+    <div ref={rootRef} className="upgrade-chooser" style={{ display: "flex", flexDirection: "column", gap: 6 }}>
       {stat ? (
         <>
           <button type="button" onClick={() => setStat(null)} style={chooserBackStyle(theme)}>
@@ -234,6 +313,7 @@ function FlameChooser({ theme, info, options, current, onPick, onClose }: {
         </>
       )}
     </div>
+    </FloatingPanel>
   );
 }
 
@@ -247,9 +327,10 @@ function FlameLineRow({ theme, info, line, taken, onChange, onRemove }: {
   const known = line && FLAME_LINES[line.line] ? line : null;
   const options = flameLinesFor(info).filter((id) => id === known?.line || !taken.has(id));
   const close = useCallback(() => setOpen(false), []);
+  const rowRef = useRef<HTMLDivElement>(null);
   return (
-    <div style={{ position: "relative" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+    <div>
+      <div ref={rowRef} style={{ display: "flex", alignItems: "center", gap: 6 }}>
         <button type="button" aria-expanded={open} onClick={() => setOpen((o) => !o)} style={flameRowStyle(theme, !known, open)}>
           {known ? (
             <>
@@ -267,7 +348,7 @@ function FlameLineRow({ theme, info, line, taken, onChange, onRemove }: {
       </div>
       {open && (
         <FlameChooser
-          theme={theme} info={info} options={options} current={known} onClose={close}
+          theme={theme} info={info} options={options} current={known} anchor={rowRef} onClose={close}
           onPick={(next) => { onChange(next); setOpen(false); }}
         />
       )}
@@ -287,21 +368,204 @@ function flameTotals(lines: StoredFlameLine[], info: EquipInfo): { label: string
   return [...totals].map(([label, { value, line }]) => ({ label, text: formatFlameValue(line, value) }));
 }
 
-function FlameSection({ theme, info, lines, onChange }: {
+// What players type for a stat besides its name, so "matt" finds Magic ATT and "bd" Boss Damage.
+const SEARCH_ALIASES: Partial<Record<string, string>> = {
+  "Max HP": "hp", "Max MP": "mp", "Defense": "def", "Attack Power": "att watt", "Magic ATT": "matt",
+  "All Stats": "as allstat", "Boss Damage": "bd boss", "Damage": "dmg", "Required Level": "req lv",
+};
+const searchText = (label: string) => `${label} ${SEARCH_ALIASES[label] ?? ""}`;
+const PERCENT_TOTALS = new Set(["All Stats", "Boss Damage", "Damage"]);
+
+const sameLines = (a: StoredFlameLine[], b: StoredFlameLine[]) =>
+  a.length === b.length && a.every((l) => b.some((x) => x.line === l.line && x.tier === l.tier));
+
+/** One flame as read-only lines in the game's Details style. */
+function FlameLinesView({ theme, info, lines }: { theme: AppTheme; info: EquipInfo; lines: StoredFlameLine[] }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+      {lines.map(({ line, tier }) => (
+        <div key={line} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "0.85rem", fontWeight: 700 }}>
+          <span aria-hidden="true" style={tierBadgeStyle}>{tier}</span>
+          <span>{FLAME_LINES[line].label}</span>
+          <span style={{ color: statusText(theme, "success"), fontWeight: 800 }}>{formatFlameValue(line, flameValue(line, tier, info))}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** What the totals turned into: the one flame they make, a choice when several do, or why none fit. */
+function SolveResult({ theme, info, totals, lines, onPick }: {
+  theme: AppTheme; info: EquipInfo; totals: FlameTotals; lines: StoredFlameLine[]; onPick: (lines: StoredFlameLine[]) => void;
+}) {
+  const typed = Object.values(totals).some((v) => (v ?? 0) > 0);
+  if (!typed) return null;
+  const { matches, missingLine } = solveFlame(info, totals);
+  const note = (text: string) => <p style={{ margin: 0, fontSize: "0.8rem", fontWeight: 700, color: statusText(theme, "warning") }}>{text}</p>;
+  if (matches.length === 0) return note(`No flame on a Lv. ${info.level} item adds up to these numbers. Check each one is the green number.`);
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      {missingLine && note("Boss items have 4 lines, so a number is probably missing.")}
+      {matches.length === 1 ? (
+        <div style={resultBoxStyle(theme, false)}><FlameLinesView theme={theme} info={info} lines={matches[0]!} /></div>
+      ) : (
+        <>
+          <p style={{ margin: 0, fontSize: "0.8rem", fontWeight: 700, color: theme.muted }}>{matches.length} flames add up to this. Pick yours:</p>
+          {matches.map((m) => {
+            const picked = sameLines(m, lines);
+            return (
+              <button key={m.map((l) => `${l.line}${l.tier}`).join("-")} type="button" aria-pressed={picked} onClick={() => onPick(m)} style={resultBoxStyle(theme, picked)}>
+                <FlameLinesView theme={theme} info={info} lines={m} />
+              </button>
+            );
+          })}
+        </>
+      )}
+    </div>
+  );
+}
+
+/** A typed row. `id` keeps the row's identity while its stat is still being typed. */
+const MAX_TOTAL_ROWS = 6;
+
+interface TotalRowValue { id: number; label: string | null; value: string }
+
+/** A summed row as the game shows it with Details off: the stat, then its green total. Typing in
+ *  the stat box and pressing Enter takes the top match and moves to the number; Enter on the
+ *  number moves to the next row. */
+function TotalRow({ theme, options, row, statRef, valueRef, onStat, onValue, onNext, onRemove }: {
+  theme: AppTheme; options: string[]; row: TotalRowValue;
+  statRef: (el: HTMLInputElement | null) => void; valueRef: (el: HTMLInputElement | null) => void;
+  onStat: (label: string) => void; onValue: (value: string) => void; onNext: () => void; onRemove?: () => void;
+}) {
+  const [query, setQuery] = useState("");
+  const [open, setOpen] = useState(false);
+  const results = searchAndRank(options, query, searchText);
+  function pick(label: string) {
+    onStat(label);
+    setOpen(false);
+    setQuery("");
+  }
+  const nav = useKeyboardListNav({ items: results, resetKey: `${open}:${query}`, onSelect: pick, onClose: () => setOpen(false) });
+  const boxRef = useRef<HTMLDivElement>(null);
+  const dismiss = useCallback(() => setOpen(false), []);
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "1fr 96px 28px", gap: 6, alignItems: "center" }}>
+      <div ref={boxRef} style={{ minWidth: 0 }}>
+        <input
+          ref={statRef} type="text" aria-label="Flame stat" placeholder={row.label ?? "Stat…"}
+          value={open ? query : row.label ?? ""}
+          onFocus={() => { setOpen(true); setQuery(""); }}
+          onBlur={() => setOpen(false)}
+          onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
+          onKeyDown={nav.onKeyDown}
+          className="upgrade-stat-input" style={statBoxStyle(theme)}
+        />
+        {open && results.length > 0 && (
+          <FloatingPanel anchor={boxRef} onDismiss={dismiss} style={rowListStyle(theme)}>
+          <div role="listbox" aria-label="Flame stats" style={{ display: "flex", flexDirection: "column" }}>
+            {results.map((label, i) => (
+              <button
+                key={label} ref={nav.itemRef(i)} type="button" role="option" aria-selected={label === row.label} tabIndex={-1}
+                // Keeps the input focused, so its blur doesn't close the list before the click lands.
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => pick(label)}
+                style={statOptionStyle(theme, i === nav.highlightedIndex, label === row.label)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          </FloatingPanel>
+        )}
+      </div>
+      <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+        <input
+          ref={valueRef} type="text" inputMode="numeric" aria-label={`${row.label ?? "Stat"} total`} placeholder="+0"
+          value={row.value}
+          onChange={(e) => onValue(sanitizeDigitsInput(e.target.value))}
+          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); onNext(); } else numericKeyDown(e); }}
+          className="upgrade-stat-input"
+          style={{ ...statBoxStyle(theme), textAlign: "center", color: statusText(theme, "success"), fontWeight: 800 }}
+        />
+        {row.label && PERCENT_TOTALS.has(row.label) && <span style={{ fontSize: "0.8rem", fontWeight: 800, color: theme.muted }}>%</span>}
+      </span>
+      {onRemove ? (
+        <button type="button" aria-label="Remove row" onClick={onRemove} style={iconBtnStyle(theme)}><CloseIcon /></button>
+      ) : <span />}
+    </div>
+  );
+}
+
+function rowsFrom(lines: StoredFlameLine[], info: EquipInfo): TotalRowValue[] {
+  const totals = totalsOf(lines, info);
+  return flameTotalLabels(info).filter((label) => totals[label]).map((label, id) => ({ id, label, value: String(totals[label]) }));
+}
+
+function totalsFrom(rows: TotalRowValue[]): FlameTotals {
+  const totals: FlameTotals = {};
+  for (const { label, value } of rows) if (label && value) totals[label] = (totals[label] ?? 0) + Number(value);
+  return totals;
+}
+
+/** Details off: the summed rows, typed as the game lists them. The lines they add up to show
+ *  underneath; one match saves straight away, several wait for a pick. */
+function FlameTotalsEntry({ theme, info, lines, onChange }: {
+  theme: AppTheme; info: EquipInfo; lines: StoredFlameLine[]; onChange: (lines: StoredFlameLine[]) => void;
+}) {
+  const [rows, setRows] = useState<TotalRowValue[]>(() => rowsFrom(lines, info));
+  const statInputs = useRef<(HTMLInputElement | null)[]>([]);
+  const valueInputs = useRef<(HTMLInputElement | null)[]>([]);
+  const allLabels = flameTotalLabels(info);
+  // One empty row stays at the end, ready for the next stat, with the next unused id.
+  // Stops at 6 rows, the most a flame can make: 4 lines, two doubles covering the four main
+  // stats and two lines of one stat each.
+  const emptyId = rows.reduce((max, r) => Math.max(max, r.id), -1) + 1;
+  const shown: TotalRowValue[] = rows.length < MAX_TOTAL_ROWS ? [...rows, { id: emptyId, label: null, value: "" }] : rows;
+
+  function update(next: TotalRowValue[]) {
+    setRows(next);
+    const { matches, missingLine } = solveFlame(info, totalsFrom(next));
+    // One answer saves; none or several clear the old lines until there's one, so the saved
+    // flame never disagrees with the numbers on screen.
+    onChange(matches.length === 1 && !missingLine ? matches[0]! : []);
+  }
+  function setRow(i: number, patch: Partial<TotalRowValue>) {
+    const next = shown.map((r, j) => (j === i ? { ...r, ...patch } : r)).filter((r) => r.label || r.value);
+    update(next);
+  }
+
+  return (
+    <>
+      <p style={{ margin: 0, fontSize: "0.75rem", fontWeight: 700, color: theme.muted }}>
+        Green numbers: STR +172 (10 +131 <b style={{ color: statusText(theme, "success") }}>+30</b>)
+      </p>
+      {shown.map((row, i) => (
+        <TotalRow
+          key={row.id}
+          theme={theme} row={row}
+          options={allLabels.filter((label) => label === row.label || !rows.some((r) => r.label === label))}
+          statRef={(el) => { statInputs.current[i] = el; }}
+          valueRef={(el) => { valueInputs.current[i] = el; }}
+          onStat={(label) => { setRow(i, { label }); valueInputs.current[i]?.focus(); }}
+          onValue={(value) => setRow(i, { value })}
+          onNext={() => statInputs.current[i + 1]?.focus()}
+          onRemove={i < rows.length ? () => update(rows.filter((_, j) => j !== i)) : undefined}
+        />
+      ))}
+      <SolveResult theme={theme} info={info} totals={totalsFrom(rows)} lines={lines} onPick={onChange} />
+    </>
+  );
+}
+
+/** Manual entry: each line picked by stat and tier. */
+function FlameLinesEntry({ theme, info, lines, onChange }: {
   theme: AppTheme; info: EquipInfo; lines: StoredFlameLine[]; onChange: (lines: StoredFlameLine[]) => void;
 }) {
   const taken = new Set(lines.map((l) => l.line));
   const totals = flameTotals(lines, info);
   return (
-    <section style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-      <span style={{ ...labelStyle(theme), marginBottom: 0 }}>Flame</span>
-      {/* The game only lists each line and tier with Bonus Stats' Details on; off, it shows the
-          summed stats, which the total row matches. Shown until the first line is in. */}
-      {lines.length === 0 && (
-        <p style={{ margin: 0, fontSize: "0.75rem", fontWeight: 700, color: theme.muted }}>
-          Copy from Bonus Stats with <b style={{ color: theme.text }}>Details</b> on.
-        </p>
-      )}
+    <>
       {lines.map((line, i) => (
         <FlameLineRow
           key={line.line}
@@ -320,6 +584,37 @@ function FlameSection({ theme, info, lines, onChange }: {
           ))}
         </div>
       )}
+    </>
+  );
+}
+
+/** The game's Details switch, as a real one: on lists each line and tier, off the summed stats. */
+function DetailsSwitch({ theme, on, onToggle }: { theme: AppTheme; on: boolean; onToggle: () => void }) {
+  return (
+    <button type="button" role="switch" aria-checked={on} onClick={onToggle} style={switchButtonStyle(theme)}>
+      Details
+      <span aria-hidden="true" style={switchTrackStyle(theme, on)}>
+        <span style={switchKnobStyle(theme, on)} />
+      </span>
+    </button>
+  );
+}
+
+/** Details off types the summed stats the hover tooltip shows; Details on picks each line and
+ *  tier, like the game's Bonus Stats panel with Details on. Both store the same lines. */
+function FlameSection({ theme, info, lines, onChange }: {
+  theme: AppTheme; info: EquipInfo; lines: StoredFlameLine[]; onChange: (lines: StoredFlameLine[]) => void;
+}) {
+  const [details, setDetails] = useState(false);
+  return (
+    <section style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+        <span style={{ ...labelStyle(theme), marginBottom: 0 }}>Flame</span>
+        <DetailsSwitch theme={theme} on={details} onToggle={() => setDetails((d) => !d)} />
+      </div>
+      {details
+        ? <FlameLinesEntry theme={theme} info={info} lines={lines} onChange={onChange} />
+        : <FlameTotalsEntry theme={theme} info={info} lines={lines} onChange={onChange} />}
     </section>
   );
 }

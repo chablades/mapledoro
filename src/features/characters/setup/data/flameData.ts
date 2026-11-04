@@ -165,3 +165,78 @@ export function maxStarForce(name: string, level: number, upgradeSlots: number):
   if (upgradeSlots <= 0) return 0;
   return STAR_FORCE_BY_LEVEL.find(([from]) => level >= from)?.[1] ?? 5;
 }
+
+// ── Working out the lines from summed totals ────────────────────────────────
+
+/** Summed flame stats as the hover tooltip shows them (its green numbers), keyed by the
+ *  same labels flameContributions uses: "STR", "Max HP", "All Stats" and so on. */
+export type FlameTotals = Partial<Record<string, number>>;
+
+export interface FlameSolve {
+  /** Every flame (at most a dozen) whose lines add up to the totals exactly. */
+  matches: StoredFlameLine[][];
+  /** A boss item always has 4 lines, but no 4-line flame fits: these matches use fewer, so a
+   *  stat was probably left out. */
+  missingLine: boolean;
+}
+
+const MAX_MATCHES = 12;
+
+/** The stats a flame on this item can add, in the order the totals boxes show them. */
+export function flameTotalLabels(item: FlameItemInfo): string[] {
+  // A Set keeps first-seen order, so the single stats lead and each stat appears once.
+  const labels = new Set<string>();
+  for (const id of flameLinesFor(item)) for (const [label] of flameContributions(id, 0)) labels.add(label);
+  return [...labels];
+}
+
+/** The flames whose lines add up to exactly these totals. Only lines whose every stat is in
+ *  the totals can be part of one, which keeps the search small. */
+export function solveFlame(item: FlameItemInfo, totals: FlameTotals): FlameSolve {
+  const remaining = new Map(Object.entries(totals).filter((e): e is [string, number] => (e[1] ?? 0) > 0));
+  if (remaining.size === 0) return { matches: [], missingLine: false };
+  const options = flameLinesFor(item).map((line) => flameTiers(line, item).map((tier) => ({
+    line, tier, adds: flameContributions(line, flameValue(line, tier, item)),
+  })).filter((o) => o.adds.every(([label, value]) => (remaining.get(label) ?? 0) >= value))).filter((o) => o.length > 0);
+
+  type Option = (typeof options)[number][number];
+  const found: StoredFlameLine[][] = [];
+  const chosen: StoredFlameLine[] = [];
+  const done = () => [...remaining.values()].every((v) => v === 0);
+  const fits = (o: Option) => o.adds.every(([label, value]) => (remaining.get(label) ?? 0) >= value);
+  const take = (o: Option, sign: 1 | -1) => {
+    for (const [label, value] of o.adds) remaining.set(label, (remaining.get(label) ?? 0) - sign * value);
+  };
+  // Each line is used at most once, so lines are tried in order from `from` on.
+  function search(from: number) {
+    if (found.length >= MAX_MATCHES * 4) return;
+    if (done()) { found.push([...chosen]); return; }
+    if (chosen.length === MAX_FLAME_LINES) return;
+    for (let i = from; i < options.length; i++) tryLine(i);
+  }
+  function tryLine(i: number) {
+    for (const o of options[i]!.filter(fits)) {
+      take(o, 1);
+      chosen.push({ line: o.line, tier: o.tier });
+      search(i + 1);
+      chosen.pop();
+      take(o, -1);
+    }
+  }
+  search(0);
+  if (!item.bossReward) return { matches: found.slice(0, MAX_MATCHES), missingLine: false };
+  const full = found.filter((m) => m.length === MAX_FLAME_LINES);
+  return full.length > 0
+    ? { matches: full.slice(0, MAX_MATCHES), missingLine: false }
+    : { matches: found.slice(0, MAX_MATCHES), missingLine: found.length > 0 };
+}
+
+/** The totals a set of lines adds up to: the reverse of solveFlame, for filling the boxes. */
+export function totalsOf(lines: StoredFlameLine[], item: FlameItemInfo): FlameTotals {
+  const totals: FlameTotals = {};
+  for (const { line, tier } of lines) {
+    if (!FLAME_LINES[line]) continue;
+    for (const [label, value] of flameContributions(line, flameValue(line, tier, item))) totals[label] = (totals[label] ?? 0) + value;
+  }
+  return totals;
+}
