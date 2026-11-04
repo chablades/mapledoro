@@ -1,13 +1,18 @@
 "use client";
 
 // The equipment upgrade window: the preset's gear down a rail on the left, the picked item's
-// Star Force and flames on the right. Edits stay in the window until Save.
+// Star Force and flames on the right. Every change saves as it's made, so closing the window
+// (a misclick outside it included) never loses anything.
 
-import { useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
+import { searchAndRank } from "../../../../lib/searchMatch";
+import { useKeyboardListNav } from "../../../../lib/useKeyboardListNav";
 import ModalShell from "../../../../components/ModalShell";
-import { dialogBtnColors, dialogPrimaryBtnColors, type AppTheme } from "../../../../components/themes";
-import { statusText } from "../../../../components/statusColors";
-import { ToolNumberInput } from "../../../tools/shared-ui";
+import { dialogPrimaryBtnColors, type AppTheme } from "../../../../components/themes";
+import { STATUS, statusText } from "../../../../components/statusColors";
+import { NavChevron } from "../../DropdownChevron";
+import { clampNumber, numericKeyDown, sanitizeDigitsInput } from "../../../../lib/inputUtils";
+import { statInputStyle } from "./QuestionControls";
 import { SLOT_LABELS, type EquipmentItem, type SlotKey } from "../data/equipmentStepDraft";
 import { isUpgradeable, type EquipInfo } from "../data/equipmentInfo";
 import {
@@ -15,6 +20,7 @@ import {
   type FlameLineId, type StoredFlameLine,
 } from "../data/flameData";
 import { useEquipInfo } from "../data/useEquipInfo";
+import { edgeFadeMask, useScrollEdges } from "../../../../lib/useScrollEdges";
 import EquipItemIcon from "./EquipItemIcon";
 
 export interface UpgradeEntry {
@@ -40,14 +46,14 @@ const dialogCss = `
   .upgrade-tile:focus-visible { outline: 2px solid var(--up-accent); outline-offset: 1px; }
   .upgrade-tile.is-on { background: var(--up-soft); border-color: var(--up-accent); }
   .upgrade-pane { padding: 18px 22px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; }
-  .upgrade-line { position: relative; }
-  .upgrade-line select { position: absolute; inset: 0; width: 100%; opacity: 0; cursor: pointer; }
-  .upgrade-line:focus-within .upgrade-line-box { outline: 2px solid var(--up-accent); outline-offset: 2px; }
+  .upgrade-stat-input:focus { outline: 2px solid var(--up-accent); outline-offset: 2px; }
+  .upgrade-stat-input::placeholder { color: inherit; opacity: 0.6; }
   @container (max-width: 560px) {
     .upgrade-body { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
-    .upgrade-rail { flex-direction: row; overflow-x: auto; border-right: none; border-bottom: 1px solid var(--up-border); padding: 8px; }
-    .upgrade-tile { flex-direction: column; gap: 2px; min-width: 58px; text-align: center; }
-    .upgrade-tile-name { display: none; }
+    /* Fades whichever end still has more gear to scroll to, like the profile binder spine.
+       Only here: the desktop rail is a vertical list this horizontal mask would clip. */
+    .upgrade-rail { flex-direction: row; overflow-x: auto; border-right: none; border-bottom: 1px solid var(--up-border); padding: 8px; mask-image: var(--rail-fade); -webkit-mask-image: var(--rail-fade); }
+    .upgrade-tile { flex-direction: column; gap: 2px; min-width: 58px; flex-shrink: 0; text-align: center; }
     .upgrade-pane { padding: 14px 16px; }
   }
 `;
@@ -57,10 +63,46 @@ const labelStyle = (theme: AppTheme): CSSProperties => ({
   color: theme.muted, marginBottom: 5,
 });
 
-const lineBoxStyle = (theme: AppTheme, empty: boolean): CSSProperties => ({
-  height: 38, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8,
-  padding: "0 12px", fontSize: "0.85rem", fontWeight: 700, background: theme.bg,
-  border: `1px ${empty ? "dashed" : "solid"} ${theme.border}`, color: empty ? theme.muted : theme.text,
+const statBoxStyle = (theme: AppTheme): CSSProperties => ({
+  boxSizing: "border-box", width: "100%", height: 36, borderRadius: 8, padding: "0 10px",
+  font: "inherit", fontSize: "0.85rem", fontWeight: 700, background: theme.bg, outline: "none",
+  border: `1px solid ${theme.border}`, color: theme.text,
+});
+
+// A line as the game's Bonus Stats panel shows it; dashed when it's the empty "add" row.
+const flameRowStyle = (theme: AppTheme, empty: boolean, open: boolean): CSSProperties => ({
+  flex: 1, minWidth: 0, height: 36, display: "flex", alignItems: "center", gap: 8, padding: "0 10px",
+  borderRadius: 8, cursor: "pointer", font: "inherit", fontSize: "0.85rem", fontWeight: 700, textAlign: "left",
+  background: theme.bg, color: empty ? theme.muted : theme.text,
+  border: `1px ${empty ? "dashed" : "solid"} ${open ? theme.accent : theme.border}`,
+});
+
+// The tier number in a small square, like the game's teal flame tier marks.
+const tierBadgeStyle: CSSProperties = {
+  width: 18, height: 18, borderRadius: 4, display: "grid", placeItems: "center", flexShrink: 0,
+  fontSize: "0.75rem", fontWeight: 800, background: STATUS.success.fill, color: STATUS.success.on,
+};
+
+const chooserStyle = (theme: AppTheme): CSSProperties => ({
+  position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, zIndex: 2, padding: 8,
+  borderRadius: 10, background: theme.panel, border: `1px solid ${theme.accent}`,
+  boxShadow: "0 4px 20px rgba(0,0,0,0.3)", display: "flex", flexDirection: "column", gap: 6,
+});
+
+const chooserBackStyle = (theme: AppTheme): CSSProperties => ({
+  all: "unset", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 4, alignSelf: "flex-start",
+  padding: "2px 6px 2px 2px", borderRadius: 6, fontSize: "0.85rem", fontWeight: 800, color: theme.text,
+});
+
+const statOptionStyle = (theme: AppTheme, highlighted: boolean, selected: boolean): CSSProperties => ({
+  all: "unset", boxSizing: "border-box", cursor: "pointer", padding: "7px 10px", borderRadius: 6,
+  fontSize: "0.85rem", fontWeight: selected ? 800 : 700, color: selected ? theme.accentText : theme.text,
+  background: highlighted ? "rgba(127,127,127,0.14)" : "transparent",
+});
+
+const tierButtonStyle = (theme: AppTheme, selected: boolean): CSSProperties => ({
+  padding: "5px 0", borderRadius: 8, cursor: "pointer", font: "inherit", textAlign: "center",
+  background: selected ? theme.accentSoft : theme.bg, border: `1px solid ${selected ? theme.accent : theme.border}`,
 });
 
 const iconBtnStyle = (theme: AppTheme): CSSProperties => ({
@@ -94,7 +136,7 @@ function RailTile({ theme, entry, info, upgrades, active, onPick }: {
     <button type="button" className={`upgrade-tile${active ? " is-on" : ""}`} aria-current={active} onClick={onPick} aria-label={`${SLOT_LABELS[entry.slot]}: ${entry.item.name}`}>
       <EquipItemIcon id={entry.item.id} name={entry.item.name} theme={theme} size={34} />
       <span style={{ minWidth: 0 }}>
-        <b className="upgrade-tile-name" style={{ display: "block", fontSize: "0.8rem", color: theme.text }}>{SLOT_LABELS[entry.slot]}</b>
+        <b style={{ display: "block", whiteSpace: "nowrap", fontSize: "0.8rem", color: theme.text }}>{SLOT_LABELS[entry.slot]}</b>
         {info && info.maxStars > 0 && (
           <span style={{ fontSize: "0.75rem", fontWeight: 800, color: stars > 0 ? starInk(theme) : theme.muted }}>
             {stars}<StarIcon />
@@ -105,49 +147,130 @@ function RailTile({ theme, entry, info, upgrades, active, onPick }: {
   );
 }
 
+/** One button per tier the item can roll, each showing that tier's real value. */
+function TierButtons({ theme, info, line, tier, onPick }: {
+  theme: AppTheme; info: EquipInfo; line: FlameLineId; tier: number | null; onPick: (tier: number) => void;
+}) {
+  const tiers = flameTiers(line, info);
+  return (
+    <div role="radiogroup" aria-label={`${FLAME_LINES[line].label} tier`} style={{ display: "grid", gridTemplateColumns: `repeat(${tiers.length}, 1fr)`, gap: 4 }}>
+      {tiers.map((t) => (
+        <button key={t} type="button" role="radio" aria-checked={t === tier} onClick={() => onPick(t)} style={tierButtonStyle(theme, t === tier)}>
+          <span style={{ display: "block", fontSize: "0.8rem", fontWeight: 800, color: t === tier ? statusText(theme, "success") : theme.text }}>
+            {formatFlameValue(line, flameValue(line, t, info))}
+          </span>
+          <span style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: theme.muted }}>T{t}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** The chooser under a line: search the stats, then pick the tier. Picking a tier saves and
+ *  closes; Escape or a click outside closes without changing anything. */
+function FlameChooser({ theme, info, options, current, onPick, onClose }: {
+  theme: AppTheme; info: EquipInfo; options: FlameLineId[]; current: StoredFlameLine | null;
+  onPick: (line: StoredFlameLine) => void; onClose: () => void;
+}) {
+  const [query, setQuery] = useState("");
+  const [stat, setStat] = useState<FlameLineId | null>(current?.line ?? null);
+  const results = searchAndRank(options, query, (id) => FLAME_LINES[id].label);
+  const nav = useKeyboardListNav({ items: results, resetKey: query, onSelect: (id) => setStat(id) });
+  const rootRef = useRef<HTMLDivElement>(null);
+  const focused = useRef(false);
+
+  useEffect(() => {
+    function onDown(e: MouseEvent) {
+      if (!rootRef.current?.contains(e.target as Node)) onClose();
+    }
+    // Escape closes just this chooser: caught before the window's own Escape, which would
+    // otherwise close the whole Enhancements window.
+    function onKey(e: KeyboardEvent) {
+      if (e.key !== "Escape") return;
+      e.preventDefault();
+      e.stopPropagation();
+      onClose();
+    }
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey, true);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey, true);
+    };
+  }, [onClose]);
+
+  return (
+    <div ref={rootRef} className="upgrade-chooser" style={chooserStyle(theme)}>
+      {stat ? (
+        <>
+          <button type="button" onClick={() => setStat(null)} style={chooserBackStyle(theme)}>
+            <NavChevron direction="prev" size={14} />
+            {FLAME_LINES[stat].label}
+          </button>
+          <TierButtons
+            theme={theme} info={info} line={stat} tier={current?.line === stat ? current.tier : null}
+            onPick={(tier) => onPick({ line: stat, tier })}
+          />
+        </>
+      ) : (
+        <>
+          <input
+            ref={(el) => { if (el && !focused.current) { focused.current = true; el.focus(); } }}
+            type="text" aria-label="Search a flame stat" placeholder="Search a stat…"
+            value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={nav.onKeyDown}
+            className="upgrade-stat-input" style={statBoxStyle(theme)}
+          />
+          <div role="listbox" aria-label="Flame stats" style={{ display: "flex", flexDirection: "column", maxHeight: 200, overflowY: "auto" }}>
+            {results.map((id, i) => (
+              <button
+                key={id} ref={nav.itemRef(i)} type="button" role="option" aria-selected={id === current?.line}
+                onClick={() => setStat(id)} style={statOptionStyle(theme, i === nav.highlightedIndex, id === current?.line)}
+              >
+                {FLAME_LINES[id].label}
+              </button>
+            ))}
+            {results.length === 0 && <span style={{ padding: "7px 10px", fontSize: "0.8rem", color: theme.muted }}>No matching stat</span>}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+/** A flame line as the game shows it (tier badge, stat, value), opening the chooser on click.
+ *  The empty row adds a line. */
 function FlameLineRow({ theme, info, line, taken, onChange, onRemove }: {
   theme: AppTheme; info: EquipInfo; line: StoredFlameLine | null; taken: ReadonlySet<FlameLineId>;
   onChange: (line: StoredFlameLine) => void; onRemove?: () => void;
 }) {
-  const options = flameLinesFor(info).filter((id) => id === line?.line || !taken.has(id));
+  const [open, setOpen] = useState(false);
   const known = line && FLAME_LINES[line.line] ? line : null;
-  const value = known ? formatFlameValue(known.line, flameValue(known.line, known.tier, info)) : null;
+  const options = flameLinesFor(info).filter((id) => id === known?.line || !taken.has(id));
+  const close = useCallback(() => setOpen(false), []);
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "1fr 28px", gap: 6, alignItems: "center" }}>
-      <div className="upgrade-line">
-        <div className="upgrade-line-box" style={lineBoxStyle(theme, !known)}>
+    <div style={{ position: "relative" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+        <button type="button" aria-expanded={open} onClick={() => setOpen((o) => !o)} style={flameRowStyle(theme, !known, open)}>
           {known ? (
             <>
+              <span aria-hidden="true" style={tierBadgeStyle}>{known.tier}</span>
               <span>{FLAME_LINES[known.line].label}</span>
               <span style={{ color: statusText(theme, "success"), fontWeight: 800 }}>
-                {value} <span style={{ color: theme.muted, fontSize: "0.75rem", marginLeft: 6 }}>T{known.tier}</span>
+                {formatFlameValue(known.line, flameValue(known.line, known.tier, info))}
               </span>
             </>
-          ) : <span>Add a flame line</span>}
-        </div>
-        <select
-          aria-label={known ? `Flame line: ${FLAME_LINES[known.line].label} ${value}` : "Add a flame line"}
-          value={known ? `${known.line}:${known.tier}` : ""}
-          onChange={(e) => {
-            const [id, tier] = e.target.value.split(":");
-            if (id && tier) onChange({ line: id as FlameLineId, tier: Number(tier) });
-          }}
-        >
-          {!known && <option value="">Add a flame line</option>}
-          {options.map((id) => (
-            <optgroup key={id} label={FLAME_LINES[id].label}>
-              {flameTiers(id, info).map((tier) => (
-                <option key={tier} value={`${id}:${tier}`}>
-                  {FLAME_LINES[id].label} {formatFlameValue(id, flameValue(id, tier, info))} (T{tier})
-                </option>
-              ))}
-            </optgroup>
-          ))}
-        </select>
+          ) : <span>+ Add flame</span>}
+        </button>
+        {onRemove && (
+          <button type="button" aria-label="Remove line" onClick={onRemove} style={iconBtnStyle(theme)}><CloseIcon /></button>
+        )}
       </div>
-      {onRemove ? (
-        <button type="button" aria-label="Remove line" onClick={onRemove} style={iconBtnStyle(theme)}><CloseIcon /></button>
-      ) : <span />}
+      {open && (
+        <FlameChooser
+          theme={theme} info={info} options={options} current={known} onClose={close}
+          onPick={(next) => { onChange(next); setOpen(false); }}
+        />
+      )}
     </div>
   );
 }
@@ -171,7 +294,14 @@ function FlameSection({ theme, info, lines, onChange }: {
   const totals = flameTotals(lines, info);
   return (
     <section style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-      <span style={labelStyle(theme)}>Flame</span>
+      <span style={{ ...labelStyle(theme), marginBottom: 0 }}>Flame</span>
+      {/* The game only lists each line and tier with Bonus Stats' Details on; off, it shows the
+          summed stats, which the total row matches. Shown until the first line is in. */}
+      {lines.length === 0 && (
+        <p style={{ margin: 0, fontSize: "0.75rem", fontWeight: 700, color: theme.muted }}>
+          Copy from Bonus Stats with <b style={{ color: theme.text }}>Details</b> on.
+        </p>
+      )}
       {lines.map((line, i) => (
         <FlameLineRow
           key={line.line}
@@ -181,7 +311,7 @@ function FlameSection({ theme, info, lines, onChange }: {
         />
       ))}
       {lines.length < MAX_FLAME_LINES && (
-        <FlameLineRow theme={theme} info={info} line={null} taken={taken} onChange={(next) => onChange([...lines, next])} />
+        <FlameLineRow key="new" theme={theme} info={info} line={null} taken={taken} onChange={(next) => onChange([...lines, next])} />
       )}
       {totals.length > 0 && (
         <div style={{ marginTop: 4, padding: "9px 12px", borderRadius: 10, background: theme.timerBg, display: "flex", flexWrap: "wrap", gap: "4px 18px", fontSize: "0.8rem", fontWeight: 800 }}>
@@ -206,11 +336,6 @@ function ItemPane({ theme, entry, info, upgrades, onChange }: {
         <div style={{ minWidth: 0 }}>
           <h2 style={{ margin: 0, fontFamily: "Fredoka, sans-serif", fontSize: "1.15rem", color: theme.text }}>
             {entry.item.name}
-            {info?.bossReward && (
-              <span style={{ marginLeft: 8, verticalAlign: 2, fontFamily: "Nunito, sans-serif", fontSize: "0.75rem", fontWeight: 800, color: starInk(theme), border: "1px solid #d7a047", borderRadius: 6, padding: "1px 6px" }}>
-                Boss
-              </span>
-            )}
           </h2>
           <p style={{ margin: 0, fontSize: "0.8rem", fontWeight: 700, color: theme.muted }}>
             {info ? `Lv. ${info.level} · ` : ""}Preset {entry.preset}
@@ -223,10 +348,19 @@ function ItemPane({ theme, entry, info, upgrades, onChange }: {
         <div>
           <span style={labelStyle(theme)}>Star Force</span>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <ToolNumberInput
-              value={upgrades.starForce ?? 0} min={0} max={info.maxStars} integer
-              onCommit={(starForce) => onChange({ ...upgrades, starForce })}
-              aria-label="Star Force" style={{ width: 90, color: theme.text, background: theme.bg, borderColor: theme.border }}
+            {/* Same box as the Stats step: digits only, capped as you type, so it can never read
+                past the item's limit. */}
+            <input
+              type="text" inputMode="numeric" aria-label="Star Force" placeholder="0"
+              value={upgrades.starForce ? String(upgrades.starForce) : ""}
+              onChange={(e) => {
+                const digits = sanitizeDigitsInput(e.target.value);
+                onChange({ ...upgrades, starForce: digits === "" ? undefined : clampNumber(Number(digits), info.maxStars) });
+              }}
+              onKeyDown={numericKeyDown}
+              onFocus={(e) => { e.currentTarget.style.outlineColor = theme.accent; }}
+              onBlur={(e) => { e.currentTarget.style.outlineColor = "transparent"; }}
+              style={{ ...statInputStyle(theme, "3.4rem"), textAlign: "center" }}
             />
             <span style={{ fontSize: "0.85rem", fontWeight: 700, color: theme.muted }}>/ {info.maxStars}</span>
           </div>
@@ -246,15 +380,16 @@ export default function EquipmentUpgradeDialog({ theme, entries, initialSlot, on
   entries: UpgradeEntry[];
   /** The item to start on; without one, the first item that takes Star Force or flames. */
   initialSlot?: SlotKey;
+  /** Called on every change, with the one item it touched. */
   onSave: (changes: Partial<Record<SlotKey, ItemUpgrades>>) => void;
   onClose: () => void;
 }) {
   const infos = useEquipInfo(entries);
   const [current, setCurrent] = useState<SlotKey | undefined>(initialSlot);
-  const [edits, setEdits] = useState<Partial<Record<SlotKey, ItemUpgrades>>>({});
   const rail = entries.filter((e) => e.slot === initialSlot || infos[e.slot] === undefined || isUpgradeable(infos[e.slot]));
+  const { ref: railRef, atStart, atEnd } = useScrollEdges<HTMLElement>([rail.length]);
   const entry = rail.find((e) => e.slot === current) ?? rail.find((e) => isUpgradeable(infos[e.slot])) ?? rail[0];
-  const upgradesFor = (e: UpgradeEntry) => edits[e.slot] ?? upgradesOf(e.item);
+  const upgradesFor = (e: UpgradeEntry) => upgradesOf(e.item);
   const vars = { "--up-border": theme.border, "--up-accent": theme.accent, "--up-soft": theme.accentSoft, "--up-hover": "rgba(127,127,127,0.14)" } as CSSProperties;
 
   return (
@@ -264,7 +399,7 @@ export default function EquipmentUpgradeDialog({ theme, entries, initialSlot, on
     >
       <style>{dialogCss}</style>
       <div className="upgrade-body">
-        <nav className="upgrade-rail" aria-label="Equipped items">
+        <nav ref={railRef} className="upgrade-rail" aria-label="Equipped items" style={{ "--rail-fade": edgeFadeMask(atStart, atEnd) } as CSSProperties}>
           {rail.map((e) => (
             <RailTile key={e.slot} theme={theme} entry={e} info={infos[e.slot]} upgrades={upgradesFor(e)} active={e === entry} onPick={() => setCurrent(e.slot)} />
           ))}
@@ -272,13 +407,12 @@ export default function EquipmentUpgradeDialog({ theme, entries, initialSlot, on
         {entry && (
           <ItemPane
             key={entry.slot} theme={theme} entry={entry} info={infos[entry.slot]} upgrades={upgradesFor(entry)}
-            onChange={(next) => setEdits((prev) => ({ ...prev, [entry.slot]: next }))}
+            onChange={(next) => onSave({ [entry.slot]: next })}
           />
         )}
       </div>
       <div style={{ display: "flex", justifyContent: "flex-end", gap: 9, padding: "12px 18px", borderTop: `1px solid ${theme.border}` }}>
-        <button type="button" onClick={onClose} className="tool-btn tool-dialog-btn" style={dialogBtnColors(theme)}>Cancel</button>
-        <button type="button" onClick={() => { onSave(edits); onClose(); }} className="tool-btn tool-dialog-btn" style={dialogPrimaryBtnColors(theme)}>Save</button>
+        <button type="button" onClick={onClose} className="tool-btn tool-dialog-btn" style={dialogPrimaryBtnColors(theme)}>Done</button>
       </div>
     </ModalShell>
   );

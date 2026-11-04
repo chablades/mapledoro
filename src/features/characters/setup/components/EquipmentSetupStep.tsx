@@ -11,6 +11,7 @@ import HoverTooltip from "../../../../components/HoverTooltip";
 import type { SetupStepDefinition } from "../steps";
 import CharacterAvatar from "../../tabs/components/CharacterAvatar";
 import EquipItemIcon from "./EquipItemIcon";
+import { ItemIcon } from "../../../../components/ResourceImage";
 import EquipmentUpgradeDialog, { type ItemUpgrades, type UpgradeEntry } from "./EquipmentUpgradeDialog";
 import { isUpgradeable } from "../data/equipmentInfo";
 import { useEquipInfo } from "../data/useEquipInfo";
@@ -1354,6 +1355,8 @@ function EquipmentGridSubstep({
           // item they already entered.
           // Narrow screens shorten the word so it fits beside the presets.
           <button type="button" aria-label="Enhancements" onClick={onOpenEnhancements} className="tool-btn tool-dialog-btn eq-enhance-btn" style={{ ...dialogBtnColors(theme), display: "inline-flex", alignItems: "center", gap: 6 }}>
+            {/* Burning Rebirth Flame, so the button reads as "upgrade this gear" at a glance. */}
+            <ItemIcon id="02536002" size={22} alt="" style={{ margin: "-4px 0" }} />
             <span className="eq-enhance-label">Enhancements</span>
             <span className="eq-enhance-short">Enhance</span>
             <NavChevron direction="next" size={14} />

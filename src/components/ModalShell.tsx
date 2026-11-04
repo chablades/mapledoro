@@ -28,6 +28,13 @@ export default function ModalShell({
   children: ReactNode;
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
+  // The latest onClose, so the open effect below runs once. Callers often pass an inline arrow,
+  // and re-running that effect on every render would refocus the dialog, pulling focus out of
+  // whatever input the user is typing in.
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  });
 
   // Mounted fresh per session, so open once on mount. Backdrop click-to-close
   // is a pointer-only convenience (keyboard users dismiss via Escape/cancel),
@@ -48,11 +55,11 @@ export default function ModalShell({
     // the accessible name is still announced and Tab still walks the contents.
     dlg.focus();
     const onBackdropClick = (e: MouseEvent) => {
-      if (e.target === dlg) onClose();
+      if (e.target === dlg) onCloseRef.current();
     };
     dlg.addEventListener("click", onBackdropClick);
     return () => dlg.removeEventListener("click", onBackdropClick);
-  }, [onClose]);
+  }, []);
 
   // showModal() blocks interaction behind the dialog but not scrolling, so the
   // page still slides around under it (worst on touch, where the modal reads as
