@@ -226,8 +226,10 @@ export const slotCellStyle = (theme: AppTheme, isActive: boolean): CSSProperties
   font: "inherit", textAlign: "inherit",
 });
 
+// No display here: globals.css hides the carousel arrows by default and the grid's narrow-width
+// container query shows them as flex. An inline display would beat that rule and show them on
+// wide screens too.
 export const navBtnStyle = (theme: AppTheme): CSSProperties => ({
-  display: "flex", alignItems: "center", justifyContent: "center",
   border: `1px solid ${theme.border}`,
   borderRadius: 8,
   background: theme.bg,

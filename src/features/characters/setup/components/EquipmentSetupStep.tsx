@@ -6,7 +6,7 @@ import { usePickerCoords } from "../../../../lib/usePickerCoords";
 import { numericKeyDown, sanitizeDigitsInput, isStrayClick } from "../../../../lib/inputUtils";
 import { useKeyboardListNav } from "../../../../lib/useKeyboardListNav";
 import { searchAndRank } from "../../../../lib/searchMatch";
-import type { AppTheme } from "../../../../components/themes";
+import { dialogBtnColors, type AppTheme } from "../../../../components/themes";
 import HoverTooltip from "../../../../components/HoverTooltip";
 import type { SetupStepDefinition } from "../steps";
 import CharacterAvatar from "../../tabs/components/CharacterAvatar";
@@ -56,6 +56,8 @@ interface CatalogItem extends EquipmentItem {
 type SymbolTabKey = "arcane" | "sacred";
 
 const PRESET_COUNT = 3;
+// The main grid's full width: two 2-slot columns either side of the centre block, 4px gaps.
+const GRID_WIDTH = 4 * SLOT_SIZE + CENTER_WIDTH + 4 * 4;
 
 // The upgrade window's rail, in the game's equipment window order.
 const UPGRADE_SLOT_ORDER: readonly SlotKey[] = [
@@ -159,9 +161,10 @@ const equippedHeaderStyle = (theme: AppTheme): CSSProperties => ({
   borderBottom: `1px solid ${theme.border}`,
 });
 
+// A bare chevron, not a boxed button: it reads as "there's more behind this item".
 const upgradeOpenStyle = (theme: AppTheme): CSSProperties => ({
   display: "flex", alignItems: "center", justifyContent: "center", width: 30, height: 30, padding: 0, flexShrink: 0,
-  borderRadius: 8, border: `1px solid ${theme.border}`, background: theme.bg, color: theme.text, cursor: "pointer",
+  border: "none", borderRadius: 8, background: "none", color: theme.muted, cursor: "pointer",
 });
 
 const equippedHeaderLabelStyle = (theme: AppTheme): CSSProperties => ({
@@ -454,7 +457,7 @@ function ItemPicker({
   onNext?: () => void;
   /** A title row on top, for a picker that's its own window (the skill ring's). */
   heading?: string;
-  /** Opens the equipped item's Star Force and flames, shown when the item takes either. */
+  /** Opens the equipped item's enhancements (Star Force, flames), shown when the item takes any. */
   onUpgrade?: () => void;
 }) {
   const [query, setQuery] = useState("");
@@ -504,8 +507,12 @@ function ItemPicker({
             <p style={equippedHeaderNameStyle(theme)}>{current.name}</p>
           </div>
           {onUpgrade && (
-            <HoverTooltip label="Star Force and flames" theme={theme}>
-              <button type="button" aria-label="Star Force and flames" onClick={() => { onClose(); onUpgrade(); }} style={upgradeOpenStyle(theme)}>
+            <HoverTooltip label="Enhancements" theme={theme}>
+              <button
+                type="button" aria-label="Enhancements" onClick={() => { onClose(); onUpgrade(); }} style={upgradeOpenStyle(theme)}
+                onMouseEnter={(e) => { e.currentTarget.style.color = theme.text; e.currentTarget.style.background = "rgba(127,127,127,0.14)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = theme.muted; e.currentTarget.style.background = "none"; }}
+              >
                 <NavChevron direction="next" size={16} />
               </button>
             </HoverTooltip>
@@ -1277,7 +1284,7 @@ function PetsSubstep({
 function EquipmentGridSubstep({
   theme, stepNumber, totalSteps, substepAnimStyle, activeGrid, activeSlot, toggleSlot, pickerCtx,
   activePreset, switchPreset, mobileGridPage, setMobileGridPage, confirmedCharacterImgURL,
-  substepIndex, substepCount, onBack, onNext, onFinish, nextLabel, confineToSubstep,
+  substepIndex, substepCount, onBack, onNext, onFinish, nextLabel, confineToSubstep, onOpenEnhancements,
 }: {
   theme: AppTheme;
   stepNumber: number;
@@ -1302,6 +1309,8 @@ function EquipmentGridSubstep({
    *  confined edit, since the profile's own "Set preset X as active" control is right
    *  there. Same reasoning as Stats/Inner Ability's own confineToSubstep gating. */
   confineToSubstep?: boolean;
+  /** Opens the Enhancements window on the first item; absent while nothing is equipped. */
+  onOpenEnhancements?: () => void;
 }) {
   return (
     <div key={0} className="eq-substep-root" style={substepAnimStyle}>
@@ -1311,12 +1320,16 @@ function EquipmentGridSubstep({
       }
       /* Carousel kicks in once the available width can't fit the full grid (~500px),
          regardless of which page-layout breakpoint produced that width. */
+      .eq-enhance-short { display: none; }
       @container (max-width: 520px) {
         .eq-page-0 .eq-section-1, .eq-page-0 .eq-section-2,
         .eq-page-1 .eq-section-0, .eq-page-1 .eq-section-2,
         .eq-page-2 .eq-section-0, .eq-page-2 .eq-section-1 { display: none; }
         .eq-page-label.eq-page-label { display: block; }
         .eq-page-nav-btn.eq-page-nav-btn { display: flex; align-items: center; justify-content: center; }
+        .eq-enhance-label { display: none; }
+        .eq-enhance-short.eq-enhance-short { display: inline; }
+        .eq-enhance-btn.eq-enhance-btn { padding-left: 10px; padding-right: 8px; }
       }
     `}</style>
     <SetupStepFrame
@@ -1332,7 +1345,22 @@ function EquipmentGridSubstep({
       onFinish={onFinish}
       nextLabel={nextLabel}
     >
-      <PresetBar theme={theme} count={PRESET_COUNT} active={activePreset} onSwitch={switchPreset} />
+      {/* As wide as the grid below, so the presets and Enhancements line up with its edges. */}
+      <div style={{ maxWidth: GRID_WIDTH, margin: "0 auto" }}>
+      <PresetBar
+        theme={theme} count={PRESET_COUNT} active={activePreset} onSwitch={switchPreset}
+        end={onOpenEnhancements && (
+          // The same window each item's picker opens with its ›, for anyone who never reopens an
+          // item they already entered.
+          // Narrow screens shorten the word so it fits beside the presets.
+          <button type="button" aria-label="Enhancements" onClick={onOpenEnhancements} className="tool-btn tool-dialog-btn eq-enhance-btn" style={{ ...dialogBtnColors(theme), display: "inline-flex", alignItems: "center", gap: 6 }}>
+            <span className="eq-enhance-label">Enhancements</span>
+            <span className="eq-enhance-short">Enhance</span>
+            <NavChevron direction="next" size={14} />
+          </button>
+        )}
+      />
+      </div>
       {!confineToSubstep && (
         <p style={{ margin: "0 0 6px", fontSize: "0.75rem", fontWeight: 600, color: theme.muted, textAlign: "center" }}>
           Preset 1 is set as active by default. If you boss on a different preset, change that afterward from your profile.
@@ -1428,8 +1456,9 @@ interface EquipmentStepState {
   setSymbolLevel: (regionName: string, level: string) => void;
   setSymbolLevels: (updates: Record<string, string>) => void;
   pickerCtx: SlotPickerContext;
-  upgradeSlot: SlotKey | null;
-  setUpgradeSlot: (slot: SlotKey | null) => void;
+  /** The item the Enhancements window opened on, "first" from the button under the grid. */
+  upgradeSlot: SlotKey | "first" | null;
+  setUpgradeSlot: (slot: SlotKey | "first" | null) => void;
   upgradeEntries: UpgradeEntry[];
   saveUpgrades: (changes: Partial<Record<SlotKey, ItemUpgrades>>) => void;
 }
@@ -1500,7 +1529,7 @@ function useEquipmentStepState({
 
   // The saved Oz Rings step levels, read once like the backfill above. A level changed later in
   // this same setup run shows once it's saved.
-  const [upgradeSlot, setUpgradeSlot] = useState<SlotKey | null>(null);
+  const [upgradeSlot, setUpgradeSlot] = useState<SlotKey | "first" | null>(null);
   const [ozLevels] = useState<OzRingLevels | undefined>(() => {
     if (typeof window === "undefined" || !confirmedCharacterName) return undefined;
     return selectCharacterByIgn(readCharactersStore(), confirmedCharacterName)?.scouter?.ozRings?.levels;
@@ -1817,6 +1846,7 @@ export default function EquipmentSetupStep({
       setMobileGridPage={setMobileGridPage}
       confirmedCharacterImgURL={confirmedCharacterImgURL}
       confineToSubstep={confineToSubstep}
+      onOpenEnhancements={upgradeEntries.length > 0 ? () => setUpgradeSlot("first") : undefined}
       substepIndex={frame.substepIndex}
       substepCount={frame.substepCount}
       onBack={frame.onBack}
@@ -1826,7 +1856,7 @@ export default function EquipmentSetupStep({
     />
     {upgradeSlot && (
       <EquipmentUpgradeDialog
-        key={upgradeSlot} theme={theme} entries={upgradeEntries} initialSlot={upgradeSlot}
+        key={upgradeSlot} theme={theme} entries={upgradeEntries} initialSlot={upgradeSlot === "first" ? undefined : upgradeSlot}
         onSave={saveUpgrades} onClose={() => setUpgradeSlot(null)}
       />
     )}

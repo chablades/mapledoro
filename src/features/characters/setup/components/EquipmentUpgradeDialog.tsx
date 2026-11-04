@@ -244,21 +244,22 @@ function ItemPane({ theme, entry, info, upgrades, onChange }: {
 export default function EquipmentUpgradeDialog({ theme, entries, initialSlot, onSave, onClose }: {
   theme: AppTheme;
   entries: UpgradeEntry[];
-  initialSlot: SlotKey;
+  /** The item to start on; without one, the first item that takes Star Force or flames. */
+  initialSlot?: SlotKey;
   onSave: (changes: Partial<Record<SlotKey, ItemUpgrades>>) => void;
   onClose: () => void;
 }) {
   const infos = useEquipInfo(entries);
-  const [current, setCurrent] = useState(initialSlot);
+  const [current, setCurrent] = useState<SlotKey | undefined>(initialSlot);
   const [edits, setEdits] = useState<Partial<Record<SlotKey, ItemUpgrades>>>({});
   const rail = entries.filter((e) => e.slot === initialSlot || infos[e.slot] === undefined || isUpgradeable(infos[e.slot]));
-  const entry = rail.find((e) => e.slot === current) ?? rail[0];
+  const entry = rail.find((e) => e.slot === current) ?? rail.find((e) => isUpgradeable(infos[e.slot])) ?? rail[0];
   const upgradesFor = (e: UpgradeEntry) => edits[e.slot] ?? upgradesOf(e.item);
   const vars = { "--up-border": theme.border, "--up-accent": theme.accent, "--up-soft": theme.accentSoft, "--up-hover": "rgba(127,127,127,0.14)" } as CSSProperties;
 
   return (
     <ModalShell
-      theme={theme} ariaLabel="Item upgrades" onClose={onClose} className="upgrade-dialog"
+      theme={theme} ariaLabel="Enhancements" onClose={onClose} className="upgrade-dialog"
       style={{ ...vars, width: "min(780px, 100%)", height: "min(640px, 88vh)", padding: 0, overflow: "hidden", display: "flex", flexDirection: "column" }}
     >
       <style>{dialogCss}</style>
