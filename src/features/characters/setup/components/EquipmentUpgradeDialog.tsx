@@ -21,6 +21,7 @@ import {
   solveFlame, totalsOf, type FlameLineId, type FlameTotals, type StoredFlameLine,
 } from "../data/flameData";
 import { useEquipInfo } from "../data/useEquipInfo";
+import { moveInArray, useCardReorder, type CardDragProps } from "../../../tools/useCardReorder";
 import { edgeFadeMask, useScrollEdges } from "../../../../lib/useScrollEdges";
 import EquipItemIcon from "./EquipItemIcon";
 
@@ -148,6 +149,15 @@ function StarIcon({ size = 11 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style={{ verticalAlign: -1 }}>
       <path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z" />
+    </svg>
+  );
+}
+
+/** The dotted grip on a line that can be dragged to a new place. */
+function GripIcon({ theme }: { theme: AppTheme }) {
+  return (
+    <svg width={10} height={18} viewBox="0 0 10 18" aria-hidden="true" style={{ flexShrink: 0, cursor: "grab" }}>
+      {[2, 8].flatMap((cx) => [3, 9, 15].map((cy) => <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r={1.4} fill={theme.muted} />))}
     </svg>
   );
 }
@@ -324,9 +334,11 @@ function FlameChooser({ theme, info, options, current, anchor, onPick, onClose }
 
 /** A flame line as the game shows it (tier badge, stat, value), opening the chooser on click.
  *  The empty row adds a line. */
-function FlameLineRow({ theme, info, line, taken, onChange, onRemove }: {
+function FlameLineRow({ theme, info, line, taken, onChange, onRemove, drag }: {
   theme: AppTheme; info: EquipInfo; line: StoredFlameLine | null; taken: ReadonlySet<FlameLineId>;
   onChange: (line: StoredFlameLine) => void; onRemove?: () => void;
+  /** Drag-to-reorder for a saved line, so its order can match the game's. */
+  drag?: { props: CardDragProps; isDragging: boolean; isDropTarget: boolean };
 }) {
   const [open, setOpen] = useState(false);
   const known = line && FLAME_LINES[line.line] ? line : null;
@@ -335,7 +347,14 @@ function FlameLineRow({ theme, info, line, taken, onChange, onRemove }: {
   const rowRef = useRef<HTMLDivElement>(null);
   return (
     <div>
-      <div ref={rowRef} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+      <div
+        ref={rowRef} {...drag?.props} className={drag ? "card-reorder-surface" : undefined}
+        style={{
+          display: "flex", alignItems: "center", gap: 6, borderRadius: 10, opacity: drag?.isDragging ? 0.4 : 1,
+          outline: drag?.isDropTarget ? `2px solid ${theme.accent}` : "none", outlineOffset: 2,
+        }}
+      >
+        {drag && <GripIcon theme={theme} />}
         <button type="button" aria-expanded={open} onClick={() => setOpen((o) => !o)} style={flameRowStyle(theme, !known, open)}>
           {known ? (
             <>
@@ -493,7 +512,7 @@ function TotalRow({ theme, options, row, statRef, valueRef, onStat, onValue, onN
           onChange={(e) => onValue(sanitizeDigitsInput(e.target.value))}
           onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); onNext(); } else numericKeyDown(e); }}
           className="upgrade-stat-input"
-          style={{ ...statBoxStyle(theme), textAlign: "center", color: statusText(theme, "success"), fontWeight: 800, ...(percent && { paddingRight: 22 }) }}
+          style={{ ...statBoxStyle(theme), textAlign: "center", color: statusText(theme, "success"), fontWeight: 800, ...(percent && { paddingLeft: 22, paddingRight: 22 }) }}
         />
         {percent && <span aria-hidden="true" style={percentSuffixStyle(theme)}>%</span>}
       </span>
@@ -535,7 +554,9 @@ function FlameTotalsEntry({ theme, info, lines, onChange }: {
     const { matches, missingLine } = solveFlame(info, totalsFrom(next));
     // One answer saves; none or several clear the old lines until there's one, so the saved
     // flame never disagrees with the numbers on screen.
-    onChange(matches.length === 1 && !missingLine ? matches[0]! : []);
+    const match = matches.length === 1 && !missingLine ? matches[0]! : [];
+    // The same lines in another order are the same flame: keep the order the player set.
+    if (!sameLines(match, lines)) onChange(match);
   }
   function setRow(i: number, patch: Partial<TotalRowValue>) {
     const next = shown.map((r, j) => (j === i ? { ...r, ...patch } : r)).filter((r) => r.label || r.value);
@@ -576,12 +597,14 @@ function FlameLinesEntry({ theme, info, lines, onChange }: {
 }) {
   const taken = new Set(lines.map((l) => l.line));
   const totals = flameTotals(lines, info);
+  const reorder = useCardReorder((from, to) => onChange(moveInArray(lines, from, to)));
   return (
     <>
       {lines.map((line, i) => (
         <FlameLineRow
           key={line.line}
           theme={theme} info={info} line={line} taken={taken}
+          drag={{ props: reorder.dragProps(i), isDragging: reorder.isDragging(i), isDropTarget: reorder.isDropTarget(i) }}
           onChange={(next) => onChange(lines.map((l, j) => (j === i ? next : l)))}
           onRemove={() => onChange(lines.filter((_, j) => j !== i))}
         />
