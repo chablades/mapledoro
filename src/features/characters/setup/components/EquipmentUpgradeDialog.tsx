@@ -104,6 +104,11 @@ const switchKnobStyle = (theme: AppTheme, on: boolean): CSSProperties => ({
   transition: "left 0.15s ease", background: on ? theme.accentOn : theme.panel,
 });
 
+const percentSuffixStyle = (theme: AppTheme): CSSProperties => ({
+  position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", pointerEvents: "none",
+  fontSize: "0.8rem", fontWeight: 800, color: theme.muted,
+});
+
 const rowListStyle = (theme: AppTheme): CSSProperties => ({
   boxSizing: "border-box", maxHeight: 200, overflowY: "auto",
   padding: 4, borderRadius: 10, background: theme.panel, border: `1px solid ${theme.accent}`,
@@ -407,7 +412,7 @@ function SolveResult({ theme, info, totals, lines, onPick }: {
     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
       {missingLine && note("Boss items have 4 lines, so a number is probably missing.")}
       {matches.length === 1 ? (
-        <div style={resultBoxStyle(theme, false)}><FlameLinesView theme={theme} info={info} lines={matches[0]!} /></div>
+        <div style={{ ...resultBoxStyle(theme, false), cursor: "default" }}><FlameLinesView theme={theme} info={info} lines={matches[0]!} /></div>
       ) : (
         <>
           <p style={{ margin: 0, fontSize: "0.8rem", fontWeight: 700, color: theme.muted }}>{matches.length} flames add up to this. Pick yours:</p>
@@ -449,6 +454,7 @@ function TotalRow({ theme, options, row, statRef, valueRef, onStat, onValue, onN
   const nav = useKeyboardListNav({ items: results, resetKey: `${open}:${query}`, onSelect: pick, onClose: () => setOpen(false) });
   const boxRef = useRef<HTMLDivElement>(null);
   const dismiss = useCallback(() => setOpen(false), []);
+  const percent = !!row.label && PERCENT_TOTALS.has(row.label);
   return (
     <div style={{ display: "grid", gridTemplateColumns: "1fr 96px 28px", gap: 6, alignItems: "center" }}>
       <div ref={boxRef} style={{ minWidth: 0 }}>
@@ -479,16 +485,17 @@ function TotalRow({ theme, options, row, statRef, valueRef, onStat, onValue, onN
           </FloatingPanel>
         )}
       </div>
-      <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+      {/* The % sits inside the box, so every number box keeps the same width. */}
+      <span style={{ position: "relative", display: "block" }}>
         <input
           ref={valueRef} type="text" inputMode="numeric" aria-label={`${row.label ?? "Stat"} total`} placeholder="+0"
           value={row.value}
           onChange={(e) => onValue(sanitizeDigitsInput(e.target.value))}
           onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); onNext(); } else numericKeyDown(e); }}
           className="upgrade-stat-input"
-          style={{ ...statBoxStyle(theme), textAlign: "center", color: statusText(theme, "success"), fontWeight: 800 }}
+          style={{ ...statBoxStyle(theme), textAlign: "center", color: statusText(theme, "success"), fontWeight: 800, ...(percent && { paddingRight: 22 }) }}
         />
-        {row.label && PERCENT_TOTALS.has(row.label) && <span style={{ fontSize: "0.8rem", fontWeight: 800, color: theme.muted }}>%</span>}
+        {percent && <span aria-hidden="true" style={percentSuffixStyle(theme)}>%</span>}
       </span>
       {onRemove ? (
         <button type="button" aria-label="Remove row" onClick={onRemove} style={iconBtnStyle(theme)}><CloseIcon /></button>
@@ -538,7 +545,12 @@ function FlameTotalsEntry({ theme, info, lines, onChange }: {
   return (
     <>
       <p style={{ margin: 0, fontSize: "0.75rem", fontWeight: 700, color: theme.muted }}>
-        Green numbers: STR +172 (10 +131 <b style={{ color: statusText(theme, "success") }}>+30</b>)
+        {/* A made-up stat in the tooltip's colours: base, Star Force (yellow), scrolls (purple),
+            then the flame (green), the one to type. */}
+        Type the <b style={{ color: statusText(theme, "success") }}>green</b> number: STR +100 (10{" "}
+        <span style={{ color: starInk(theme) }}>+40</span>{" "}
+        <span style={{ color: statusText(theme, "severe") }}>+5</span>{" "}
+        <b style={{ color: statusText(theme, "success") }}>+45</b>)
       </p>
       {shown.map((row, i) => (
         <TotalRow
