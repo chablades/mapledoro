@@ -30,7 +30,8 @@ import { useFlameDetails } from "../data/flameDetailsPref";
 export interface UpgradeEntry {
   slot: SlotKey;
   item: EquipmentItem;
-  /** The preset whose item this is (1-3): Preset 1 for a slot still mirroring it. */
+  /** The preset whose item this is (1-3): Preset 1 for a slot still mirroring it, 0 for a slot
+   *  shared by every preset (totems). */
   preset: number;
 }
 
@@ -622,7 +623,7 @@ function ItemPane({ theme, entry, info, upgrades, onChange }: {
             {entry.item.name}
           </h2>
           <p style={{ margin: 0, fontSize: "0.8rem", fontWeight: 700, color: theme.muted }}>
-            {info ? `Lv. ${info.level} · ` : ""}Preset {entry.preset}
+            {info ? `Lv. ${info.level} · ` : ""}{entry.preset ? `Preset ${entry.preset}` : "All presets"}
           </p>
         </div>
       </div>

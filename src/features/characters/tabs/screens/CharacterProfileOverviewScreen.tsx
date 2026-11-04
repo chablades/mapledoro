@@ -1666,9 +1666,11 @@ function presetTabButtonStyle(theme: Theme, on: boolean): CSSProperties {
 }
 
 function PresetTabs({
-  theme, active, activePreset, onSelect, onSetActive, count = 3,
+  theme, active, activePreset, onSelect, onSetActive, count = 3, end,
 }: {
   theme: Theme; active: number; activePreset: number; onSelect: (n: number) => void; onSetActive: ((presetIndex: number) => void) | null; count?: number;
+  /** Pinned to the right end of the preset row. */
+  end?: ReactNode;
 }) {
   const isPreviewingActive = active === activePreset;
   // A card in the viewer can be browsed by preset, but which one it has equipped isn't ours to set.
@@ -1703,6 +1705,7 @@ function PresetTabs({
             );
           })}
         </div>
+        {end && <div style={{ marginLeft: "auto" }}>{end}</div>}
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
         <span style={{ fontSize: "0.75rem", fontWeight: 700, color: isPreviewingActive ? statusText(theme, "success") : theme.muted }}>
@@ -2266,14 +2269,12 @@ function EquipmentBookmark({
     <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
       <div style={{ display: "grid" }}>
         <div className={`bookmark-subview${view === "gear" ? " bookmark-subview-active" : ""}`} style={{ gridArea: "1 / 1", visibility: view === "gear" ? "visible" : "hidden", display: "flex", flexDirection: "column", gap: 10 }}>
-          <PresetTabs theme={theme} active={presetIdx} activePreset={activePresetStored} onSelect={setPresetIdx} onSetActive={equip ? onSetActivePreset : null} />
-          {/* How the gear tooltips show flames, like the game's Bonus Stats switch; only once this
-              preset has a flame to show. Shared with the Enhancements window's switch. */}
-          {gridHasFlames && (
-            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: -4 }}>
-              <DetailsSwitch theme={theme} label="Flame Details" on={flameDetails} onToggle={() => setFlameDetails(!flameDetails)} />
-            </div>
-          )}
+          <PresetTabs
+            theme={theme} active={presetIdx} activePreset={activePresetStored} onSelect={setPresetIdx} onSetActive={equip ? onSetActivePreset : null}
+            // How the gear tooltips show flames, like the game's Bonus Stats switch; only once this
+            // preset has a flame to show. Shared with the Enhancements window's switch.
+            end={gridHasFlames && <DetailsSwitch theme={theme} flameLabel on={flameDetails} onToggle={() => setFlameDetails(!flameDetails)} />}
+          />
           {/* Same container-query carousel as EquipmentSetupStep's EquipmentGridSubstep — kicks
               in once the panel itself (not the viewport) narrows past ~520px, reusing the same
               .eq-* global classes so a narrow Gear bookmark gets the identical prev/next,

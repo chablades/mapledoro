@@ -27,6 +27,7 @@ const FILES: Partial<Record<SlotKey, string[]>> = {
   bottom: ["bottom"], shoe: ["shoe"], shoulder: ["shoulder"], medal: ["medal"],
   weapon: ["weapon"], secondary: ["secondary", "weapon"], emblem: ["emblem"],
   android: ["android"], heart: ["heart"], badge: ["badge"],
+  totem1: ["totem"], totem2: ["totem"], totem3: ["totem"],
 };
 
 const fileCache = new Map<string, Promise<Map<string, RawStats>>>();

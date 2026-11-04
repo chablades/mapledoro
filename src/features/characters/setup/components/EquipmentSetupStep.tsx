@@ -15,6 +15,7 @@ import ItemTooltip from "./ItemTooltip";
 import { ItemIcon } from "../../../../components/ResourceImage";
 import EquipmentUpgradeDialog, { type ItemUpgrades, type UpgradeEntry } from "./EquipmentUpgradeDialog";
 import { isUpgradeable } from "../data/equipmentInfo";
+import { canFlame } from "../data/flameData";
 import { useEquipInfo } from "../data/useEquipInfo";
 import SetupStepFrame from "./SetupStepFrame";
 import { PresetBar } from "./PresetBar";
@@ -66,7 +67,11 @@ const UPGRADE_SLOT_ORDER: readonly SlotKey[] = [
   "weapon", "secondary", "emblem", "hat", "top", "bottom", "shoe", "glove", "cape", "shoulder",
   "face", "eye", "earring", "pendant1", "pendant2", "belt", "pocket",
   "ring1", "ring2", "ring3", "ring4", "medal", "badge", "heart", "android",
+  // Shared across presets; the Ancient Slate Replica is the one totem that takes flames.
+  "totem1", "totem2", "totem3",
 ];
+
+const isTotemSlot = (slot: SlotKey) => slot === "totem1" || slot === "totem2" || slot === "totem3";
 /** Substeps in this step: 0 = main grid, 1 = additional equipment, 2 = pets. */
 const SUBSTEP_COUNT = 3;
 
@@ -997,15 +1002,31 @@ function SymbolSection({ symbolLevels, activeTab, availableTabs, characterLevel,
   );
 }
 
-function SectionHeading({ label, theme }: { label: string; theme: AppTheme }) {
+/** Opens the Enhancements window, for anyone who never reopens an item to find its ›. `short`
+ *  always reads "Enhance"; otherwise it shortens only on narrow screens. */
+function EnhanceButton({ theme, onClick, short = false }: { theme: AppTheme; onClick: () => void; short?: boolean }) {
   return (
-    <p style={{
-      margin: "0 0 0.5rem", fontSize: "0.8rem", fontWeight: 800,
-      letterSpacing: "0.03em", textTransform: "uppercase", color: theme.muted,
-    }}>
-      {label}
-    </p>
+    <button type="button" aria-label="Enhancements" onClick={onClick} className="tool-btn tool-dialog-btn eq-enhance-btn" style={{ ...dialogBtnColors(theme), display: "inline-flex", alignItems: "center", gap: 6 }}>
+      {/* Burning Rebirth Flame, so the button reads as "upgrade this gear" at a glance. */}
+      <ItemIcon id="02536002" size={22} alt="" style={{ margin: "-4px 0" }} />
+      {short ? <span>Enhance</span> : (
+        <>
+          <span className="eq-enhance-label">Enhancements</span>
+          <span className="eq-enhance-short">Enhance</span>
+        </>
+      )}
+      <NavChevron direction="next" size={14} />
+    </button>
   );
+}
+
+const sectionHeadingStyle = (theme: AppTheme): CSSProperties => ({
+  margin: "0 0 0.5rem", fontSize: "0.8rem", fontWeight: 800,
+  letterSpacing: "0.03em", textTransform: "uppercase", color: theme.muted,
+});
+
+function SectionHeading({ label, theme }: { label: string; theme: AppTheme }) {
+  return <p style={sectionHeadingStyle(theme)}>{label}</p>;
 }
 
 // ── Slot picker (per-slot ItemPicker wrapper) ────────────────────────────────
@@ -1066,8 +1087,9 @@ function OpenSlotPicker({ slot, ctx }: { slot: SlotKey; ctx: SlotPickerContext }
     readSlot, siblingItemIds, presetBaseItemFor, chainNavForSlot, updateSlot, setActiveSlot,
   } = ctx;
   const equipped = readSlot(slot);
-  const gridItem = !isSharedSlot(slot) && equipped?.id ? equipped : null;
-  const upgradeInfo = useEquipInfo(gridItem ? [{ slot, item: gridItem }] : [])[slot];
+  // Grid slots and totems can carry enhancements; titles and pets can't.
+  const upgradable = (!isSharedSlot(slot) || isTotemSlot(slot)) && equipped?.id ? equipped : null;
+  const upgradeInfo = useEquipInfo(upgradable ? [{ slot, item: upgradable }] : [])[slot];
   const source = resolvePickerSource(slot, classId, branchMask);
   const { itemFilter, showAllWhenEmpty } = slotItemFilter(slot, ctx, source.filter);
   const { onPrev: goPrev, onNext: goNext } = chainNavForSlot(slot);
@@ -1144,6 +1166,8 @@ function AdditionalEquipSubstep({
   onFinish: () => void;
   nextLabel?: string;
 }) {
+  // The Ancient Slate Replica is the one totem that takes flames; the button opens on it.
+  const flameTotem = (["totem1", "totem2", "totem3"] as const).find((slot) => { const id = draft[slot]?.id; return !!id && canFlame(slot, id); });
   return (
     <div key={1} style={substepAnimStyle}>
       <SetupStepFrame
@@ -1171,8 +1195,12 @@ function AdditionalEquipSubstep({
               picker={<SlotPicker slot="title" ctx={pickerCtx} />}
             />
           </div>
-          <div>
-            <SectionHeading label="Totems" theme={theme} />
+          {/* Sized to the three tiles, so the button lines up with the last one. */}
+          <div style={{ display: "inline-flex", flexDirection: "column", alignSelf: "flex-start" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: "0.5rem" }}>
+              <p style={{ ...sectionHeadingStyle(theme), margin: 0 }}>Totems</p>
+              {flameTotem && <EnhanceButton theme={theme} short onClick={() => pickerCtx.openUpgrades(flameTotem)} />}
+            </div>
             <div style={{ display: "flex", gap: 4 }}>
               {(["totem1", "totem2", "totem3"] as const).map((slotKey) => (
                 <SlotCell
@@ -1360,13 +1388,7 @@ function EquipmentGridSubstep({
           // The same window each item's picker opens with its ›, for anyone who never reopens an
           // item they already entered.
           // Narrow screens shorten the word so it fits beside the presets.
-          <button type="button" aria-label="Enhancements" onClick={onOpenEnhancements} className="tool-btn tool-dialog-btn eq-enhance-btn" style={{ ...dialogBtnColors(theme), display: "inline-flex", alignItems: "center", gap: 6 }}>
-            {/* Burning Rebirth Flame, so the button reads as "upgrade this gear" at a glance. */}
-            <ItemIcon id="02536002" size={22} alt="" style={{ margin: "-4px 0" }} />
-            <span className="eq-enhance-label">Enhancements</span>
-            <span className="eq-enhance-short">Enhance</span>
-            <NavChevron direction="next" size={14} />
-          </button>
+          <EnhanceButton theme={theme} onClick={onOpenEnhancements} />
         )}
       />
       </div>
@@ -1722,22 +1744,26 @@ function useEquipmentStepState({
 
   const upgradeEntries: UpgradeEntry[] = UPGRADE_SLOT_ORDER.flatMap((slot) => {
     const item = readSlot(slot);
-    return item?.id ? [{ slot, item, preset: ownerPreset(slot) + 1 }] : [];
+    return item?.id ? [{ slot, item, preset: isSharedSlot(slot) ? 0 : ownerPreset(slot) + 1 }] : [];
   });
 
   function saveUpgrades(changes: Partial<Record<SlotKey, ItemUpgrades>>) {
     const presets = clonePresets();
+    const shared: Partial<Record<SharedSlotKey, EquipmentItem>> = {};
+    const withUpgrades = (item: EquipmentItem, { starForce, flame }: ItemUpgrades): EquipmentItem =>
+      ({ id: item.id, name: item.name, ...(starForce ? { starForce } : null), ...(flame?.length ? { flame } : null) });
     for (const [slot, upgrades] of Object.entries(changes) as [SlotKey, ItemUpgrades][]) {
+      if (isSharedSlot(slot)) {
+        // Totems are the same in every preset, so they live on the draft itself.
+        const item = draft[slot];
+        if (item) shared[slot] = withUpgrades(item, upgrades);
+        continue;
+      }
       const owner = ownerPreset(slot);
       const item = presets[owner]?.[slot];
-      if (!item) continue;
-      const { starForce, flame } = upgrades;
-      presets[owner] = {
-        ...presets[owner],
-        [slot]: { id: item.id, name: item.name, ...(starForce ? { starForce } : null), ...(flame?.length ? { flame } : null) },
-      };
+      if (item) presets[owner] = { ...presets[owner], [slot]: withUpgrades(item, upgrades) };
     }
-    commitDraft({ ...draft, presets });
+    commitDraft({ ...draft, ...shared, presets });
   }
 
   const pickerCtx: SlotPickerContext = {
@@ -1781,11 +1807,20 @@ export default function EquipmentSetupStep({
     theme, jobName, characterLevel, confirmedCharacterName, direction, targetSubstep, onSubstepChange, value, onChange,
   });
 
+  const enhancementsWindow = upgradeSlot && (
+    <EquipmentUpgradeDialog
+      key={upgradeSlot} theme={theme} entries={upgradeEntries} initialSlot={upgradeSlot === "first" ? undefined : upgradeSlot}
+      onSave={saveUpgrades} onClose={() => setUpgradeSlot(null)}
+    />
+  );
+
   if (substep === 1) {
     const frame = confinableFrameProps(confineToSubstep, onBack, onFinish, {
       substepIndex: 1, substepCount: SUBSTEP_COUNT, onBack: () => goToSubstep(0), onNext: () => goToSubstep(2), nextLabel: "Continue",
     });
     return (
+      <>
+      {enhancementsWindow}
       <AdditionalEquipSubstep
         theme={theme}
         stepNumber={stepNumber}
@@ -1808,6 +1843,7 @@ export default function EquipmentSetupStep({
         onFinish={onFinish}
         nextLabel={frame.nextLabel}
       />
+      </>
     );
   }
 
@@ -1863,12 +1899,7 @@ export default function EquipmentSetupStep({
       onFinish={onFinish}
       nextLabel={frame.nextLabel}
     />
-    {upgradeSlot && (
-      <EquipmentUpgradeDialog
-        key={upgradeSlot} theme={theme} entries={upgradeEntries} initialSlot={upgradeSlot === "first" ? undefined : upgradeSlot}
-        onSave={saveUpgrades} onClose={() => setUpgradeSlot(null)}
-      />
-    )}
+    {enhancementsWindow}
     </>
   );
 }

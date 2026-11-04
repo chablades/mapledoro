@@ -44,6 +44,8 @@ void test("which slots take flames, with the three named exceptions", () => {
   assert.ok(!canFlame("ring1", "01113098"));
   assert.ok(!canFlame("shoulder", "01152000"));
   assert.ok(canFlame("shoulder", "01152155")); // Scarlet Shoulder
+  assert.ok(canFlame("totem2", "01202287")); // Ancient Slate Replica
+  assert.ok(!canFlame("totem2", "01202001"));
 });
 
 void test("the Star Force cap comes from level, with the Superior sets capped lower", () => {

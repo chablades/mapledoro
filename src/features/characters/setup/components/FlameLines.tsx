@@ -15,7 +15,7 @@ const tierBadgeStyle: CSSProperties = {
 };
 
 const switchButtonStyle = (theme: AppTheme): CSSProperties => ({
-  all: "unset", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 8, padding: "2px 4px",
+  all: "unset", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 8, padding: "2px 4px", whiteSpace: "nowrap", flexShrink: 0,
   borderRadius: 6, fontSize: "0.8rem", fontWeight: 800, color: theme.text,
 });
 
@@ -30,14 +30,14 @@ const switchKnobStyle = (theme: AppTheme, on: boolean): CSSProperties => ({
 });
 
 /** The game's Details switch: on lists each line and tier, off the summed stats. */
-export function DetailsSwitch({ theme, on, onToggle, label = "Details" }: {
+export function DetailsSwitch({ theme, on, onToggle, flameLabel = false }: {
   theme: AppTheme; on: boolean; onToggle: () => void;
-  /** "Details" beside the Flame heading; somewhere without one, say what it's for. */
-  label?: string;
+  /** Reads "Flame Details" where there's no Flame heading beside it; phones drop the "Flame". */
+  flameLabel?: boolean;
 }) {
   return (
-    <button type="button" role="switch" aria-checked={on} onClick={onToggle} style={switchButtonStyle(theme)}>
-      {label}
+    <button type="button" role="switch" aria-checked={on} aria-label="Flame Details" onClick={onToggle} style={switchButtonStyle(theme)}>
+      <span>{flameLabel && <span className="details-switch-prefix">Flame </span>}Details</span>
       <span aria-hidden="true" style={switchTrackStyle(theme, on)}>
         <span style={switchKnobStyle(theme, on)} />
       </span>

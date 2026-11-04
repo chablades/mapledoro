@@ -54,6 +54,11 @@ button {
   color: #fff;
 }
 
+/* The Gear bookmark's "Flame Details" switch drops "Flame" where the preset row is too narrow. */
+@media (max-width: 480px) {
+  .details-switch-prefix { display: none; }
+}
+
 /* Content for assistive technology only: live-region status text, table captions. */
 .sr-only {
   position: absolute;
