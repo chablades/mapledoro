@@ -37,6 +37,9 @@ export function itemUpgrades(item: { starForce?: number; flame?: StoredFlameLine
   };
 }
 
+/** Whether an item has any logged enhancement to show in its tooltip. */
+export const hasEnhancements = (item: EquipmentItem) => !!item.starForce || !!item.flame?.length;
+
 /** Same item with the same logged upgrades. A Preset 2/3 slot holding the same item as Preset 1
  *  but different upgrades is its own copy, not a mirror of Preset 1's. */
 export function sameUpgradedItem(a: EquipmentItem | null | undefined, b: EquipmentItem | null | undefined): boolean {

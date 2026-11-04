@@ -10,7 +10,7 @@ import { searchAndRank } from "../../../../lib/searchMatch";
 import { useKeyboardListNav } from "../../../../lib/useKeyboardListNav";
 import ModalShell from "../../../../components/ModalShell";
 import { dialogPrimaryBtnColors, type AppTheme } from "../../../../components/themes";
-import { STATUS, statusText } from "../../../../components/statusColors";
+import { statusText } from "../../../../components/statusColors";
 import { NavChevron } from "../../DropdownChevron";
 import { clampNumber, numericKeyDown, sanitizeDigitsInput } from "../../../../lib/inputUtils";
 import { statInputStyle } from "./QuestionControls";
@@ -24,6 +24,8 @@ import { useEquipInfo } from "../data/useEquipInfo";
 import { moveInArray, useCardReorder, type CardDragProps } from "../../../tools/useCardReorder";
 import { edgeFadeMask, useScrollEdges } from "../../../../lib/useScrollEdges";
 import EquipItemIcon from "./EquipItemIcon";
+import FlameLines, { DetailsSwitch, TierBadge } from "./FlameLines";
+import { useFlameDetails } from "../data/flameDetailsPref";
 
 export interface UpgradeEntry {
   slot: SlotKey;
@@ -79,30 +81,9 @@ const flameRowStyle = (theme: AppTheme, empty: boolean, open: boolean): CSSPrope
   border: `1px ${empty ? "dashed" : "solid"} ${open ? theme.accent : theme.border}`,
 });
 
-// The tier number in a small square, like the game's teal flame tier marks.
-const tierBadgeStyle: CSSProperties = {
-  width: 18, height: 18, borderRadius: 4, display: "grid", placeItems: "center", flexShrink: 0,
-  fontSize: "0.75rem", fontWeight: 800, background: STATUS.success.fill, color: STATUS.success.on,
-};
-
 const resultBoxStyle = (theme: AppTheme, picked: boolean): CSSProperties => ({
   all: "unset", boxSizing: "border-box", display: "block", cursor: "pointer", padding: "9px 12px", borderRadius: 10,
   background: picked ? theme.accentSoft : theme.timerBg, border: `1px solid ${picked ? theme.accent : theme.border}`,
-});
-
-const switchButtonStyle = (theme: AppTheme): CSSProperties => ({
-  all: "unset", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 8, padding: "2px 4px",
-  borderRadius: 6, fontSize: "0.8rem", fontWeight: 800, color: theme.text,
-});
-
-const switchTrackStyle = (theme: AppTheme, on: boolean): CSSProperties => ({
-  position: "relative", width: 32, height: 18, borderRadius: 9, transition: "background 0.15s ease",
-  background: on ? theme.accent : theme.border,
-});
-
-const switchKnobStyle = (theme: AppTheme, on: boolean): CSSProperties => ({
-  position: "absolute", top: 2, left: on ? 16 : 2, width: 14, height: 14, borderRadius: "50%",
-  transition: "left 0.15s ease", background: on ? theme.accentOn : theme.panel,
 });
 
 const percentSuffixStyle = (theme: AppTheme): CSSProperties => ({
@@ -358,7 +339,7 @@ function FlameLineRow({ theme, info, line, taken, onChange, onRemove, drag }: {
         <button type="button" aria-expanded={open} onClick={() => setOpen((o) => !o)} style={flameRowStyle(theme, !known, open)}>
           {known ? (
             <>
-              <span aria-hidden="true" style={tierBadgeStyle}>{known.tier}</span>
+              <TierBadge tier={known.tier} />
               <span>{FLAME_LINES[known.line].label}</span>
               <span style={{ color: statusText(theme, "success"), fontWeight: 800 }}>
                 {formatFlameValue(known.line, flameValue(known.line, known.tier, info))}
@@ -403,21 +384,6 @@ const PERCENT_TOTALS = new Set(["All Stats", "Boss Damage", "Damage"]);
 const sameLines = (a: StoredFlameLine[], b: StoredFlameLine[]) =>
   a.length === b.length && a.every((l) => b.some((x) => x.line === l.line && x.tier === l.tier));
 
-/** One flame as read-only lines in the game's Details style. */
-function FlameLinesView({ theme, info, lines }: { theme: AppTheme; info: EquipInfo; lines: StoredFlameLine[] }) {
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-      {lines.map(({ line, tier }) => (
-        <div key={line} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "0.85rem", fontWeight: 700 }}>
-          <span aria-hidden="true" style={tierBadgeStyle}>{tier}</span>
-          <span>{FLAME_LINES[line].label}</span>
-          <span style={{ color: statusText(theme, "success"), fontWeight: 800 }}>{formatFlameValue(line, flameValue(line, tier, info))}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 /** What the totals turned into: the one flame they make, a choice when several do, or why none fit. */
 function SolveResult({ theme, info, totals, lines, onPick }: {
   theme: AppTheme; info: EquipInfo; totals: FlameTotals; lines: StoredFlameLine[]; onPick: (lines: StoredFlameLine[]) => void;
@@ -431,7 +397,7 @@ function SolveResult({ theme, info, totals, lines, onPick }: {
     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
       {missingLine && note("Boss items have 4 lines, so a number is probably missing.")}
       {matches.length === 1 ? (
-        <div style={{ ...resultBoxStyle(theme, false), cursor: "default" }}><FlameLinesView theme={theme} info={info} lines={matches[0]!} /></div>
+        <div style={{ ...resultBoxStyle(theme, false), cursor: "default" }}><FlameLines theme={theme} info={info} lines={matches[0]!} /></div>
       ) : (
         <>
           <p style={{ margin: 0, fontSize: "0.8rem", fontWeight: 700, color: theme.muted }}>{matches.length} flames add up to this. Pick yours:</p>
@@ -439,7 +405,7 @@ function SolveResult({ theme, info, totals, lines, onPick }: {
             const picked = sameLines(m, lines);
             return (
               <button key={m.map((l) => `${l.line}${l.tier}`).join("-")} type="button" aria-pressed={picked} onClick={() => onPick(m)} style={resultBoxStyle(theme, picked)}>
-                <FlameLinesView theme={theme} info={info} lines={m} />
+                <FlameLines theme={theme} info={info} lines={m} />
               </button>
             );
           })}
@@ -623,29 +589,17 @@ function FlameLinesEntry({ theme, info, lines, onChange }: {
   );
 }
 
-/** The game's Details switch, as a real one: on lists each line and tier, off the summed stats. */
-function DetailsSwitch({ theme, on, onToggle }: { theme: AppTheme; on: boolean; onToggle: () => void }) {
-  return (
-    <button type="button" role="switch" aria-checked={on} onClick={onToggle} style={switchButtonStyle(theme)}>
-      Details
-      <span aria-hidden="true" style={switchTrackStyle(theme, on)}>
-        <span style={switchKnobStyle(theme, on)} />
-      </span>
-    </button>
-  );
-}
-
 /** Details off types the summed stats the hover tooltip shows; Details on picks each line and
  *  tier, like the game's Bonus Stats panel with Details on. Both store the same lines. */
 function FlameSection({ theme, info, lines, onChange }: {
   theme: AppTheme; info: EquipInfo; lines: StoredFlameLine[]; onChange: (lines: StoredFlameLine[]) => void;
 }) {
-  const [details, setDetails] = useState(false);
+  const [details, setDetails] = useFlameDetails();
   return (
     <section style={{ display: "flex", flexDirection: "column", gap: 8 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
         <span style={{ ...labelStyle(theme), marginBottom: 0 }}>Flame</span>
-        <DetailsSwitch theme={theme} on={details} onToggle={() => setDetails((d) => !d)} />
+        <DetailsSwitch theme={theme} on={details} onToggle={() => setDetails(!details)} />
       </div>
       {details
         ? <FlameLinesEntry theme={theme} info={info} lines={lines} onChange={onChange} />

@@ -11,6 +11,7 @@ import HoverTooltip from "../../../../components/HoverTooltip";
 import type { SetupStepDefinition } from "../steps";
 import CharacterAvatar from "../../tabs/components/CharacterAvatar";
 import EquipItemIcon from "./EquipItemIcon";
+import ItemTooltip from "./ItemTooltip";
 import { ItemIcon } from "../../../../components/ResourceImage";
 import EquipmentUpgradeDialog, { type ItemUpgrades, type UpgradeEntry } from "./EquipmentUpgradeDialog";
 import { isUpgradeable } from "../data/equipmentInfo";
@@ -33,7 +34,7 @@ import { statusText } from "../../../../components/statusColors";
 import { branchMaskForClass, weaponPrefixesForClass, secondarySpecForClass, isShieldId } from "../data/classBranch";
 import { readCharactersStore, selectCharacterByIgn } from "../../model/charactersStore";
 import {
-  isSharedSlot, sameItem, sameUpgradedItem, parseEquipmentStepDraft, serializeEquipmentStepDraft, storedEquipmentToDraft,
+  hasEnhancements, isSharedSlot, sameItem, sameUpgradedItem, parseEquipmentStepDraft, serializeEquipmentStepDraft, storedEquipmentToDraft,
   SLOT_LABELS, SLOT_SIZE, CENTER_WIDTH, SYMBOL_TILE_SIZE, EQUIPMENT_PAGE_LABELS,
   COL1_SLOTS, COL2_SLOTS, COL6_SLOTS, COL7_SLOTS, CENTER_BOTTOM_SLOTS,
   slotCellStyle, navBtnStyle,
@@ -661,6 +662,11 @@ function SkillRingTooltip({ item, level, theme }: { item: EquipmentItem; level: 
   );
 }
 
+/** An item's name, or its name, stars and flame lines once it has any logged. */
+function itemTooltipLabel(theme: AppTheme, slot: SlotKey, item: EquipmentItem): ReactNode {
+  return hasEnhancements(item) ? <ItemTooltip theme={theme} slot={slot} item={item} /> : item.name;
+}
+
 function SlotCell({ slotKey, item, theme, isActive, onClick, picker, skillRing, level }: {
   slotKey: SlotKey;
   item: EquipmentItem | null | undefined;
@@ -697,7 +703,7 @@ function SlotCell({ slotKey, item, theme, isActive, onClick, picker, skillRing, 
   );
   return (
     <div ref={wrapperRef} style={{ position: "relative", width: SLOT_SIZE, flexShrink: 0 }}>
-      {item ? <HoverTooltip label={item.name} theme={theme}>{button}</HoverTooltip> : button}
+      {item ? <HoverTooltip label={itemTooltipLabel(theme, slotKey, item)} theme={theme}>{button}</HoverTooltip> : button}
       {level && <LevelBadge level={level} theme={theme} />}
       {skillRing && (
         <HoverTooltip label={skillRing.item ? skillRingLabel(skillRing.item, skillRing.level) : EMPTY_SKILL_RING_LABEL} theme={theme} style={cogCornerStyle}>
@@ -752,7 +758,7 @@ export function ReadOnlySlotTile({ slotKey, item, theme, skillRing, ozLevels }: 
       )}
     </div>
   );
-  const tile = item ? <HoverTooltip label={item.name} theme={theme}>{box}</HoverTooltip> : box;
+  const tile = item ? <HoverTooltip label={itemTooltipLabel(theme, slotKey, item)} theme={theme}>{box}</HoverTooltip> : box;
   if (skillRing === undefined && !level) return tile;
   // The cog sits beside the ring's own tooltip rather than inside it, so hovering the cog shows
   // only the skill ring, not both.

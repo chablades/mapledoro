@@ -57,6 +57,8 @@ import { BOSS_CLEAR_GROUPS, resolveBossDisplayName } from "../../scouter/bossGro
 import InfoTooltip, { type TooltipContent } from "../../setup/components/InfoTooltip";
 import { ReadOnlySlotTile, ReadOnlySymbolTile } from "../../setup/components/EquipmentSetupStep";
 import { skillRingHost, type OzRingLevels } from "../../setup/data/specialRingData";
+import { DetailsSwitch } from "../../setup/components/FlameLines";
+import { useFlameDetails } from "../../setup/data/flameDetailsPref";
 import { ReadOnlyLeveledIconTile } from "../../setup/components/LeveledIconTile";
 import { VMatrixNodeIcon, useVMatrixCatalog, type VMatrixNode } from "../../setup/components/VMatrixSetupStep";
 import { HexaStatNodeIcon } from "../../setup/components/HexaMatrixSetupStep";
@@ -2241,6 +2243,8 @@ function EquipmentBookmark({
 
   const preset = equip?.presets?.[presetIdx];
   const activeGrid: SlotMap = preset ? storedPresetToDraft(preset) : {};
+  const gridHasFlames = Object.values(activeGrid).some((item) => !!item?.flame?.length);
+  const [flameDetails, setFlameDetails] = useFlameDetails();
 
   const charName = character?.characterName;
   const mounted = useMounted();
@@ -2263,6 +2267,13 @@ function EquipmentBookmark({
       <div style={{ display: "grid" }}>
         <div className={`bookmark-subview${view === "gear" ? " bookmark-subview-active" : ""}`} style={{ gridArea: "1 / 1", visibility: view === "gear" ? "visible" : "hidden", display: "flex", flexDirection: "column", gap: 10 }}>
           <PresetTabs theme={theme} active={presetIdx} activePreset={activePresetStored} onSelect={setPresetIdx} onSetActive={equip ? onSetActivePreset : null} />
+          {/* How the gear tooltips show flames, like the game's Bonus Stats switch; only once this
+              preset has a flame to show. Shared with the Enhancements window's switch. */}
+          {gridHasFlames && (
+            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: -4 }}>
+              <DetailsSwitch theme={theme} label="Flame Details" on={flameDetails} onToggle={() => setFlameDetails(!flameDetails)} />
+            </div>
+          )}
           {/* Same container-query carousel as EquipmentSetupStep's EquipmentGridSubstep — kicks
               in once the panel itself (not the viewport) narrows past ~520px, reusing the same
               .eq-* global classes so a narrow Gear bookmark gets the identical prev/next,
