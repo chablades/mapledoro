@@ -2027,12 +2027,12 @@ function BookmarkSectionLabel({ label, theme }: { label: string; theme: Theme })
   );
 }
 
-function ReadOnlySlotColumn({ slots, grid, theme, ozLevels }: { slots: SlotKey[]; grid: SlotMap; theme: Theme; ozLevels?: OzRingLevels }) {
+function ReadOnlySlotColumn({ slots, grid, theme, ozLevels, character }: { slots: SlotKey[]; grid: SlotMap; theme: Theme; ozLevels?: OzRingLevels; character?: StoredCharacterRecord | null }) {
   const host = skillRingHost(grid);
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 4, flexShrink: 0 }}>
       {slots.map((slot) => (
-        <ReadOnlySlotTile key={slot} slotKey={slot} item={grid[slot]} theme={theme} skillRing={slot === host ? grid.skillRing ?? null : undefined} ozLevels={ozLevels} />
+        <ReadOnlySlotTile key={slot} slotKey={slot} item={grid[slot]} theme={theme} skillRing={slot === host ? grid.skillRing ?? null : undefined} ozLevels={ozLevels} character={character ?? undefined} />
       ))}
     </div>
   );
@@ -2122,10 +2122,12 @@ function SymbolLevelsDisplay({
 }
 
 function TitlesView({
-  theme, equip, symbolLevels, loadSymbolImages, characterLevel, isLegacy, symbolTab, onSymbolTabChange,
+  theme, equip, symbolLevels, loadSymbolImages, characterLevel, isLegacy, symbolTab, onSymbolTabChange, character,
 }: {
   theme: Theme;
   equip: StoredCharacterEquipment | undefined;
+  /** The wearer, for a flamed totem's flame score. */
+  character?: StoredCharacterRecord;
   symbolLevels: Record<string, SymbolState> | null;
   loadSymbolImages: boolean;
   characterLevel: number | undefined;
@@ -2143,7 +2145,7 @@ function TitlesView({
         <BookmarkSectionLabel label="Totems" theme={theme} />
         <div style={{ display: "flex", gap: 4 }}>
           {(["totem1", "totem2", "totem3"] as const).map((slotKey, i) => (
-            <ReadOnlySlotTile key={slotKey} slotKey={slotKey} item={toDraftItem(equip?.totems?.[i] ?? null)} theme={theme} />
+            <ReadOnlySlotTile key={slotKey} slotKey={slotKey} item={toDraftItem(equip?.totems?.[i] ?? null)} theme={theme} character={character} />
           ))}
         </div>
       </div>
@@ -2300,19 +2302,19 @@ function EquipmentBookmark({
                 <button type="button" className="eq-page-nav-btn" aria-label="Previous section" onClick={() => setMobileGridPage((p) => (p + 2) % 3)} style={navBtnStyle(theme)}><NavChevron direction="prev" /></button>
                 <div style={{ display: "flex", gap: 4, alignItems: "stretch" }}>
                   <div className="eq-section eq-section-0" style={{ gap: 4, flexShrink: 0 }}>
-                    <ReadOnlySlotColumn slots={COL1_SLOTS} grid={activeGrid} theme={theme} ozLevels={character?.scouter?.ozRings?.levels} />
-                    <ReadOnlySlotColumn slots={COL2_SLOTS} grid={activeGrid} theme={theme} />
+                    <ReadOnlySlotColumn slots={COL1_SLOTS} grid={activeGrid} theme={theme} ozLevels={character?.scouter?.ozRings?.levels} character={character} />
+                    <ReadOnlySlotColumn slots={COL2_SLOTS} grid={activeGrid} theme={theme} character={character} />
                   </div>
                   <div className="eq-section eq-section-1" style={{ flexDirection: "column", justifyContent: "flex-end", gap: 4, flexShrink: 0, width: CENTER_WIDTH }}>
                     <div style={{ display: "flex", gap: 4 }}>
                       {CENTER_BOTTOM_SLOTS.map((slot) => (
-                        <ReadOnlySlotTile key={slot} slotKey={slot} item={activeGrid[slot]} theme={theme} />
+                        <ReadOnlySlotTile key={slot} slotKey={slot} item={activeGrid[slot]} theme={theme} character={character ?? undefined} />
                       ))}
                     </div>
                   </div>
                   <div className="eq-section eq-section-2" style={{ gap: 4, flexShrink: 0 }}>
-                    <ReadOnlySlotColumn slots={COL6_SLOTS} grid={activeGrid} theme={theme} />
-                    <ReadOnlySlotColumn slots={COL7_SLOTS} grid={activeGrid} theme={theme} />
+                    <ReadOnlySlotColumn slots={COL6_SLOTS} grid={activeGrid} theme={theme} character={character} />
+                    <ReadOnlySlotColumn slots={COL7_SLOTS} grid={activeGrid} theme={theme} character={character} />
                   </div>
                 </div>
                 <button type="button" className="eq-page-nav-btn" aria-label="Next section" onClick={() => setMobileGridPage((p) => (p + 1) % 3)} style={navBtnStyle(theme)}><NavChevron direction="next" /></button>
@@ -2330,6 +2332,7 @@ function EquipmentBookmark({
             isLegacy={classData?.isLegacy}
             symbolTab={symbolTab}
             onSymbolTabChange={setSymbolTab}
+            character={character ?? undefined}
           />
         </div>
         <div className={`bookmark-subview${view === "pets" ? " bookmark-subview-active" : ""}`} style={{ gridArea: "1 / 1", visibility: view === "pets" ? "visible" : "hidden" }}>

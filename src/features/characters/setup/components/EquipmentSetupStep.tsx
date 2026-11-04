@@ -33,7 +33,7 @@ import {
 import { symbolUnlockWarning } from "../data/symbolUnlock";
 import { statusText } from "../../../../components/statusColors";
 import { branchMaskForClass, weaponPrefixesForClass, secondarySpecForClass, isShieldId } from "../data/classBranch";
-import { readCharactersStore, selectCharacterByIgn } from "../../model/charactersStore";
+import { readCharactersStore, selectCharacterByIgn, type StoredCharacterRecord } from "../../model/charactersStore";
 import {
   hasEnhancements, isSharedSlot, sameItem, sameUpgradedItem, parseEquipmentStepDraft, serializeEquipmentStepDraft, storedEquipmentToDraft,
   SLOT_LABELS, SLOT_SIZE, CENTER_WIDTH, SYMBOL_TILE_SIZE, EQUIPMENT_PAGE_LABELS,
@@ -668,8 +668,8 @@ function SkillRingTooltip({ item, level, theme }: { item: EquipmentItem; level: 
 }
 
 /** An item's name, or its name, stars and flame lines once it has any logged. */
-function itemTooltipLabel(theme: AppTheme, slot: SlotKey, item: EquipmentItem): ReactNode {
-  return hasEnhancements(item) ? <ItemTooltip theme={theme} slot={slot} item={item} /> : item.name;
+function itemTooltipLabel(theme: AppTheme, slot: SlotKey, item: EquipmentItem, character?: StoredCharacterRecord): ReactNode {
+  return hasEnhancements(item) ? <ItemTooltip theme={theme} slot={slot} item={item} character={character} /> : item.name;
 }
 
 function SlotCell({ slotKey, item, theme, isActive, onClick, picker, skillRing, level }: {
@@ -741,10 +741,12 @@ function SlotCell({ slotKey, item, theme, isActive, onClick, picker, skillRing, 
 /** Read-only counterpart to SlotCell for the profile Gear bookmark. Same icon/empty-label
  *  box and sizing (slotCellStyle/SLOT_SIZE), but no button semantics, hover-swap, or picker
  *  portal, since nothing here is clickable. */
-export function ReadOnlySlotTile({ slotKey, item, theme, skillRing, ozLevels }: {
+export function ReadOnlySlotTile({ slotKey, item, theme, skillRing, ozLevels, character }: {
   slotKey: SlotKey;
   item: EquipmentItem | null | undefined;
   theme: AppTheme;
+  /** The wearer, so a flamed item's tooltip can show its flame score. */
+  character?: StoredCharacterRecord;
   /** Set on the ring that unlocks the skill ring slot: the skill ring worn with it, or null when
    *  that slot is empty (an outlined cog, so it reads as not set up yet). */
   skillRing?: EquipmentItem | null;
@@ -763,7 +765,7 @@ export function ReadOnlySlotTile({ slotKey, item, theme, skillRing, ozLevels }: 
       )}
     </div>
   );
-  const tile = item ? <HoverTooltip label={itemTooltipLabel(theme, slotKey, item)} theme={theme}>{box}</HoverTooltip> : box;
+  const tile = item ? <HoverTooltip label={itemTooltipLabel(theme, slotKey, item, character)} theme={theme}>{box}</HoverTooltip> : box;
   if (skillRing === undefined && !level) return tile;
   // The cog sits beside the ring's own tooltip rather than inside it, so hovering the cog shows
   // only the skill ring, not both.

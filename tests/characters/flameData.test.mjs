@@ -88,3 +88,19 @@ void test("a boss flame with a stat left out is flagged, not silently matched", 
 void test("numbers no flame can make find nothing", () => {
   assert.deepEqual(solveFlame(WEAPON, { "Defense": 56 }).matches, []);
 });
+
+void test("flame score converts a flame into main stat with the character's own rates", async () => {
+  const { flameScore } = await import("../../src/features/characters/setup/data/flameScore.ts");
+  // An INT mage whose rates match the community's example ones: LUK 0.1, MATT 4, 1% All Stats 15.
+  const eff = { mainStateff1: 1, subStateff1: 0.1, ssubStateff1: 0, atkeff1: 4, allStatEff: 15, dmgeff1: 0 };
+  const labels = { atk: "MATT", main: "INT", sub: "LUK", sub2: null };
+  // A made-up Lv. 160 boss item: INT +45, INT, LUK +30, STR, DEX +20, All Stats +5%.
+  const hat = { level: 160, isWeapon: false, bossReward: true, baseAtt: 0, baseMatt: 0 };
+  const lines = [{ line: "int", tier: 5 }, { line: "intLuk", tier: 6 }, { line: "strDex", tier: 4 }, { line: "allStat", tier: 5 }];
+  // 75 INT + 30 LUK x 0.1 + 5% x 15; STR and DEX add nothing to a mage.
+  assert.ok(Math.abs(flameScore(lines, hat, eff, labels) - (75 + 3 + 75)) < 1e-9);
+  // Demon Avenger: Max HP is its main stat, counted point for point; STR is its secondary.
+  const da = { atk: "ATT", main: "HP", sub: "STR", sub2: null };
+  assert.ok(Math.abs(flameScore([{ line: "maxHp", tier: 5 }, { line: "att", tier: 4 }], hat, { ...eff, atkeff1: 50 }, da) - (2400 + 4 * 50)) < 1e-9);
+  assert.equal(flameScore(lines, hat, eff, { ...labels, main: "Main Stat" }), null);
+});
