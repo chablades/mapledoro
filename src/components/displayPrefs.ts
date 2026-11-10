@@ -21,7 +21,7 @@ export const TEXT_SIZES: readonly TextSize[] = ["default", "large", "larger"];
 /** Root font size per text size. Type and spacing are in rem, so both scale. */
 export const TEXT_SIZE_ROOT: Record<TextSize, string> = {
   default: "100%",
-  large: "112.5%",
+  large: "110%",
   larger: "125%",
 };
 

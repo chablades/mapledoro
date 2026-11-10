@@ -34,7 +34,7 @@ const COLOR_MODES = ["light", "dark"] as const;
 const COLOR_MODE_LABELS = { light: "Light", dark: "Dark" } as const;
 const CONTRAST_LABELS = { standard: "Standard", high: "High" } as const;
 const MOTION_LABELS = { system: "Device", reduce: "Reduced" } as const;
-const TEXT_SIZE_LABELS = { default: "Default", large: "Large", larger: "Larger" } as const;
+const TEXT_SIZE_LABELS = { default: "Default (100%)", large: "Large (110%)", larger: "Larger (125%)" } as const;
 
 function hardReset() {
   const keys = Object.keys(localStorage).filter((k) => k.startsWith("mapledoro"));
