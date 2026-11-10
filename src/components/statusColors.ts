@@ -1,4 +1,4 @@
-import { inkOn, type AppTheme, type ColorMode } from "./themes";
+import { highContrastInk, inkOn, type AppTheme, type ColorMode } from "./themes";
 
 // Status colors carry the same split as the accent tokens: a `fill` is one hex
 // shared by both color modes, so it can never also be the text color (a hex dark
@@ -47,5 +47,7 @@ const STATUS_TEXT: Record<ColorMode, Record<"success" | "danger" | "warning" | "
 
 /** Status-colored *text* on a neutral surface, per color mode — like `accentText`. */
 export function statusText(theme: AppTheme, kind: "success" | "danger" | "warning" | "info" | "critical" | "severe"): string {
-  return STATUS_TEXT[theme.colorMode][kind];
+  const ink = STATUS_TEXT[theme.colorMode][kind];
+  if (theme.contrast !== "high") return ink;
+  return highContrastInk(ink, theme.colorMode, [theme.bg, theme.panel, theme.timerBg]);
 }

@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, type CSSProperties } from "react";
+import { useState, type CSSProperties, type ReactNode } from "react";
 import ModalShell from "../../../../components/ModalShell";
 import { dialogBtnColors, dialogPrimaryBtnColors, type AppTheme } from "../../../../components/themes";
-import { useCardReorder, type CardDragProps } from "../../../tools/useCardReorder";
+import { moveInArray, useCardReorder, type CardDragProps } from "../../../tools/useCardReorder";
+import { MoveButtons } from "../../../tools/MoveButtons";
 import type { OverviewSectionId } from "../../model/charactersStore";
 
 export interface OverviewAnchorDef {
@@ -39,8 +40,8 @@ function cardStyle(theme: AppTheme, accented: boolean, isDropTarget: boolean, is
 
 function removeButtonStyle(theme: AppTheme): CSSProperties {
   return {
-    width: 20,
-    height: 20,
+    width: 24,
+    height: 24,
     borderRadius: 6,
     flexShrink: 0,
     border: `1px solid ${theme.accent}`,
@@ -58,9 +59,9 @@ function removeButtonStyle(theme: AppTheme): CSSProperties {
 
 // A currently-shown section, in the Order column: draggable to reorder, click to remove.
 function OrderCard({
-  theme, label, isDragging, isDropTarget, dragProps, onRemove,
+  theme, label, isDragging, isDropTarget, dragProps, moveButtons, onRemove,
 }: {
-  theme: AppTheme; label: string; isDragging: boolean; isDropTarget: boolean; dragProps: CardDragProps; onRemove: () => void;
+  theme: AppTheme; label: string; isDragging: boolean; isDropTarget: boolean; dragProps: CardDragProps; moveButtons: ReactNode; onRemove: () => void;
 }) {
   return (
     <div className="card-reorder-surface" {...dragProps} style={{ ...cardStyle(theme, true, isDropTarget, isDragging), cursor: "grab" }}>
@@ -73,6 +74,7 @@ function OrderCard({
         ✓
       </button>
       <span style={{ flex: 1, fontWeight: 700, fontSize: "0.82rem", color: theme.text }}>{label}</span>
+      {moveButtons}
       <DragHandleIcon theme={theme} />
     </div>
   );
@@ -174,14 +176,8 @@ export default function CustomizeOverviewDialog({
     return match?.id ?? null;
   });
 
-  const { dragProps, isDragging, isDropTarget } = useCardReorder((from, to) => {
-    setOrder((prev) => {
-      const next = [...prev];
-      const [moved] = next.splice(from, 1);
-      next.splice(to, 0, moved);
-      return next;
-    });
-  });
+  const moveSection = (from: number, to: number) => setOrder((prev) => moveInArray(prev, from, to));
+  const { dragProps, isDragging, isDropTarget } = useCardReorder(moveSection);
 
   const labelsById = new Map(eligibleSections.map((s) => [s.id, s.label]));
   const activeAnchorSections = anchors.find((a) => a.id === anchorId)?.sections ?? [];
@@ -238,7 +234,7 @@ export default function CustomizeOverviewDialog({
           Customize Layout
         </span>
         <div style={{ fontSize: "0.78rem", color: theme.muted, fontWeight: 600, marginTop: 4 }}>
-          Pick an anchor, or up to {maxAddons} add-ons of your own, to show below Key Stats. Drag to reorder them.
+          Pick an anchor, or up to {maxAddons} add-ons of your own, to show below Key Stats. Drag or use the arrows to reorder them.
         </div>
       </div>
 
@@ -280,6 +276,9 @@ export default function CustomizeOverviewDialog({
                 isDragging={isDragging(index)}
                 isDropTarget={isDropTarget(index)}
                 dragProps={dragProps(index)}
+                moveButtons={
+                  <MoveButtons theme={theme} label={labelsById.get(id) ?? id} index={index} count={order.length} axis="y" onMove={moveSection} />
+                }
                 onRemove={() => removeSection(id)}
               />
             ))}

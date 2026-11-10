@@ -191,7 +191,7 @@ const popoverShellStyle: CSSProperties = {
 const statSearchInputStyle: CSSProperties = {
   width: "100%", boxSizing: "border-box", borderRadius: 6,
   fontFamily: "inherit", fontSize: "0.78rem", fontWeight: 600,
-  padding: "0.3rem 0.5rem", outline: "none", border: "1px solid",
+  padding: "0.3rem 0.5rem", border: "1px solid",
 };
 
 const cardPopoverShellStyle: CSSProperties = {

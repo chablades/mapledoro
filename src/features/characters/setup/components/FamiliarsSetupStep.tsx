@@ -160,7 +160,6 @@ const searchInputStyle: CSSProperties = {
   fontSize: "0.78rem",
   fontWeight: 600,
   padding: "0.3rem 0.5rem",
-  outline: "none",
   border: "1px solid",
 };
 

@@ -7,6 +7,9 @@ import { ACCENT_THEMES, composeTheme, type ColorMode } from "../components/theme
 import CookieConsentBanner from "../components/CookieConsentBanner";
 import StorageWriteFailureBanner from "../components/StorageWriteFailureBanner";
 import { RESOURCE_BASE } from "../lib/mapleResource";
+import {
+  CONTRAST_KEY, CONTRASTS, MOTION_KEY, MOTION_PREFS, TEXT_SIZE_KEY, TEXT_SIZE_ROOT, TEXT_SIZES, parsePref,
+} from "../components/displayPrefs";
 
 const nunito = Nunito({
   subsets: ["latin"],
@@ -55,13 +58,18 @@ export default async function RootLayout({
   // date input's calendar icon, scrollbars, <select> menus) — without it they
   // stay light and the dark icon disappears against a dark input. Both are kept
   // in sync after theme changes by ThemeProvider.
-  const initialBg = composeTheme(initialThemeKey, initialColorMode).bg;
+  const initialContrast = parsePref(cookieStore.get(CONTRAST_KEY)?.value, CONTRASTS, "standard");
+  const initialMotion = parsePref(cookieStore.get(MOTION_KEY)?.value, MOTION_PREFS, "system");
+  const initialTextSize = parsePref(cookieStore.get(TEXT_SIZE_KEY)?.value, TEXT_SIZES, "default");
+  const initialBg = composeTheme(initialThemeKey, initialColorMode, initialContrast).bg;
 
   return (
     <html
       lang="en"
       className={`${nunito.variable} ${fredoka.variable}`}
-      style={{ background: initialBg, colorScheme: initialColorMode }}
+      style={{ background: initialBg, colorScheme: initialColorMode, fontSize: TEXT_SIZE_ROOT[initialTextSize] }}
+      data-motion={initialMotion}
+      data-contrast={initialContrast}
     >
       <head>
         {/* Nearly every page renders game art from the MapleResource host, but the
@@ -72,7 +80,13 @@ export default async function RootLayout({
         <link rel="preconnect" href={RESOURCE_BASE} />
       </head>
       <body>
-        <ThemeProvider initialThemeKey={initialThemeKey} initialColorMode={initialColorMode}>
+        <ThemeProvider
+          initialThemeKey={initialThemeKey}
+          initialColorMode={initialColorMode}
+          initialContrast={initialContrast}
+          initialMotion={initialMotion}
+          initialTextSize={initialTextSize}
+        >
           {children}
           <StorageWriteFailureBanner />
           <CookieConsentBanner />

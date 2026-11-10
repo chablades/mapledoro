@@ -12,6 +12,7 @@ import { readCharactersStore, writeScouterSeen, type StoredCharacterRecord, type
 import { formatShortDate } from "../../tools/date";
 import { useScouterWorldContext } from "./scouterWorldContext";
 import { formatFigure } from "./scouterFormat";
+import { prefersReducedMotion } from "../../../lib/motion";
 
 export interface ScouterChange {
   /** Boss 380 HEXA before the change. */
@@ -95,7 +96,7 @@ export function useCountUp<T extends HTMLElement>(from: number, to: number, acti
   const ref = useRef<T>(null);
   useLayoutEffect(() => {
     const node = ref.current?.firstChild;
-    if (!active || !node || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (!active || !node || prefersReducedMotion()) return;
     node.nodeValue = formatFigure(from);
     const start = performance.now() + COUNT_DELAY_MS;
     let frame = requestAnimationFrame(function step(now) {

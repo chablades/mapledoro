@@ -12,6 +12,15 @@ interface ChangelogEntry {
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    date: "2026-11-10",
+    changes: [
+      { type: "added", text: "Settings now has accessibility options: a high contrast mode, a reduced motion switch and a text size control." },
+      { type: "added", text: "Anything you reorder by dragging (Boss Crystals, Dailies, My Characters, Customize Layout and flame lines) now also has arrow buttons, so it works by keyboard and without dragging." },
+      { type: "changed", text: "The whole site now follows your device's reduced motion setting, including smooth scrolling." },
+      { type: "fixed", text: "Fixed search boxes in several pickers and the Enhancements window's stat boxes showing no outline when focused by keyboard." },
+    ],
+  },
+  {
     date: "2026-11-04",
     changes: [
       { type: "added", text: "Added an Enhancements window to equipment setup for each item's Star Force and flames. Type the green numbers from the hover tooltip and it works out the flame lines, or pick each line and tier with Details on." },

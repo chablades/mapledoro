@@ -27,7 +27,7 @@ import RemindersConfigBar from "./RemindersConfigBar";
 import { ActionButton } from "../shared-ui";
 import { AddCharacterNameDialog } from "../AddCharacterNameDialog";
 import { AddCharacterCard } from "../AddCharacterCard";
-import { CardActions } from "../TrackerCard";
+import { CardActions, type CardMove } from "../TrackerCard";
 import { ToolDialog } from "../ToolDialog";
 import { useCardReorder, type CardDragProps } from "../useCardReorder";
 
@@ -253,6 +253,7 @@ function CardHeader({
   storeChar,
   worldLabel,
   progress,
+  move,
   onDelete,
   onCheckAll,
   onEdit,
@@ -262,6 +263,7 @@ function CardHeader({
   storeChar: StoredCharacterRecord | null;
   worldLabel: string | null;
   progress: { done: number; total: number };
+  move: CardMove;
   onDelete: () => void;
   onCheckAll: (done: boolean) => void;
   onEdit: () => void;
@@ -290,6 +292,8 @@ function CardHeader({
         />
         <CardActions
           theme={theme}
+          name={name}
+          move={move}
           onDelete={onDelete}
           onEdit={onEdit}
           editTitle="Edit tracked tasks"
@@ -683,6 +687,7 @@ function CharacterCard({
   isDragging,
   isDropTarget,
   dragProps,
+  move,
   worldTotalFor,
   onToggle,
   onCounterChange,
@@ -697,6 +702,7 @@ function CharacterCard({
   isDragging: boolean;
   isDropTarget: boolean;
   dragProps: CardDragProps;
+  move: CardMove;
   worldTotalFor: (counterId: string) => number;
   onToggle: (section: TaskSection, id: string) => void;
   onCounterChange: (task: CounterTask, next: number) => void;
@@ -728,6 +734,7 @@ function CharacterCard({
         storeChar={storeChar}
         worldLabel={worldLabel}
         progress={progress}
+        move={move}
         onDelete={onDelete}
         onCheckAll={onCheckAll}
         onEdit={onEdit}
@@ -817,6 +824,7 @@ export default function DailiesWorkspace({ theme }: { theme: AppTheme }) {
                 isDragging={isDragging(index)}
                 isDropTarget={isDropTarget(index)}
                 dragProps={dragProps(index)}
+                move={{ index, count: characters.length, onMove: reorderCharacters }}
                 worldTotalFor={(cid) => getWorldCounterTotal(char.name, cid)}
                 onToggle={(section, id) => toggleTask(index, section, id)}
                 onCounterChange={(task, next) =>

@@ -459,7 +459,7 @@ const BOSS_PICKER_WIDTH = 220;
 // shared export, so this is its own copy rather than a duplicated import.
 const bossPickerSearchInputStyle: CSSProperties = {
   width: "100%", boxSizing: "border-box", borderRadius: 6, fontFamily: "inherit",
-  fontSize: "0.78rem", fontWeight: 600, padding: "0.3rem 0.5rem", outline: "none", border: "1px solid",
+  fontSize: "0.78rem", fontWeight: 600, padding: "0.3rem 0.5rem", border: "1px solid",
 };
 const bossPickerPopoverStyle: CSSProperties = { borderRadius: 10, boxShadow: "0 6px 24px rgba(0,0,0,0.28)", overflow: "hidden" };
 function bossOptionStyle(theme: AppTheme, isHighlighted: boolean): CSSProperties {

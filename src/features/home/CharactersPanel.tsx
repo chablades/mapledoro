@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type CSSProperties } from "react";
+import { useState, type CSSProperties, type ReactNode } from "react";
 import type { Route } from "next";
 import Link from "next/link";
 import CharacterChip from "../../components/CharacterChip";
@@ -11,6 +11,7 @@ import type { AppTheme } from "../../components/themes";
 import type { StoredCharacterRecord } from "../characters/model/charactersStore";
 import { WORLD_NAMES } from "../characters/model/constants";
 import { useCardReorder } from "../tools/useCardReorder";
+import { MoveButtons } from "../tools/MoveButtons";
 
 // -- Character tracker quick-launch icons --------------------------------------
 interface TrackerLink {
@@ -92,10 +93,13 @@ function CharacterRow({
   theme,
   char,
   reordering,
+  moveButtons,
 }: {
   theme: AppTheme;
   char: StoredCharacterRecord;
   reordering: boolean;
+  /** The non-drag way to reorder, shown at the end of the row while reordering. */
+  moveButtons?: ReactNode;
 }) {
   const chip = (
     <CharacterChip
@@ -129,6 +133,7 @@ function CharacterRow({
       >
         {WORLD_NAMES[char.worldID] ?? `World ${char.worldID}`}
       </div>
+      {moveButtons}
     </div>
   );
 }
@@ -273,7 +278,14 @@ export default function CharactersPanel({ theme, characters, onReorder }: {
                   opacity: isDragging(index) ? 0.4 : 1,
                 }}
               >
-                <CharacterRow theme={theme} char={char} reordering />
+                <CharacterRow
+                  theme={theme}
+                  char={char}
+                  reordering
+                  moveButtons={
+                    <MoveButtons theme={theme} label={char.characterName} index={index} count={characters.length} axis="y" onMove={onReorder} />
+                  }
+                />
               </div>
             ) : (
               <CharacterRow key={char.characterName.toLowerCase()} theme={theme} char={char} reordering={false} />
@@ -281,7 +293,7 @@ export default function CharactersPanel({ theme, characters, onReorder }: {
           </div>
           {reordering ? (
             <p style={{ margin: "0.5rem 0.75rem", fontSize: "0.75rem", fontWeight: 700, color: theme.muted, textAlign: "center" }}>
-              Drag characters into the order you want, then press Done.
+              Drag characters or use the arrows to set the order you want, then press Done.
             </p>
           ) : (
             <Link href="/characters/directory?action=add" className="add-character-link" style={addDashedStyle}>

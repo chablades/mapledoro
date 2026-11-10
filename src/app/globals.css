@@ -187,17 +187,49 @@ html.scroll-locked body {
   }
 }
 
+/* Reduced motion, from the device setting or the Settings > Accessibility switch
+   (html[data-motion="reduce"]); the two blocks below must stay identical. One
+   blanket rule covers every animation and transition on the site, including the
+   ones in per-feature <style> blocks, so new motion is covered without opting in.
+   Durations go to 0.01ms rather than `none` so animationend/transitionend still
+   fire. Two exemptions: the Scouter change chip keeps its timing (it swaps to a
+   fade-only keyframe below, and its animationend marks the change as seen), and
+   the refresh spinner keeps turning, because a frozen spinner reads as a hang.
+   Scripted scrolling asks prefersReducedMotion() (src/lib/motion.ts) instead. */
 @media (prefers-reduced-motion: reduce) {
-  .fade-in {
-    animation: none;
+  *:not(.scouter-change-chip, .char-refresh-spin),
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0s !important;
+    scroll-behavior: auto !important;
   }
   .scouter-change-chip {
     animation-name: scouterChangeChipFade;
   }
   .erda-link-next {
-    animation: none;
     box-shadow: 0 0 0 5px var(--erda-next), 0 0 18px 5px var(--erda-next);
   }
+}
+
+html[data-motion="reduce"] *:not(.scouter-change-chip, .char-refresh-spin),
+html[data-motion="reduce"] *::before,
+html[data-motion="reduce"] *::after {
+  animation-duration: 0.01ms !important;
+  animation-delay: 0s !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  transition-delay: 0s !important;
+  scroll-behavior: auto !important;
+}
+html[data-motion="reduce"] .scouter-change-chip {
+  animation-name: scouterChangeChipFade;
+}
+html[data-motion="reduce"] .erda-link-next {
+  box-shadow: 0 0 0 5px var(--erda-next), 0 0 18px 5px var(--erda-next);
 }
 
 .page-shell {
@@ -1033,3 +1065,29 @@ textarea:focus-visible {
   }
 }
 
+
+/* Windows High Contrast (forced colors) repaints every background with a system
+   color, so anything that shows state through a fill alone loses it. Selected
+   toggles and current items get an outline, progress bars keep a visible fill,
+   and color swatches keep their real color. */
+@media (forced-colors: active) {
+  [aria-pressed="true"],
+  [aria-selected="true"],
+  [aria-current="page"] {
+    outline: 2px solid Highlight;
+    outline-offset: -2px;
+  }
+  /* Keyboard focus still has to read apart from "selected". */
+  [aria-pressed="true"]:focus-visible,
+  [aria-selected="true"]:focus-visible,
+  [aria-current="page"]:focus-visible {
+    outline-width: 4px;
+  }
+  [role="progressbar"] > div {
+    forced-color-adjust: none;
+    background: Highlight !important;
+  }
+  .settings-swatch {
+    forced-color-adjust: none;
+  }
+}

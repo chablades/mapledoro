@@ -6,6 +6,8 @@ export interface AppTheme {
   /** Which base the theme was composed from. Lets per-mode palettes (see
    *  `statusColors.ts`) resolve from a theme alone. */
   colorMode: ColorMode;
+  /** "high" is the Settings high-contrast option: text tokens clear 7:1 (WCAG AAA). */
+  contrast: Contrast;
   bg: string;
   panel: string;
   border: string;
@@ -26,6 +28,7 @@ export interface AppTheme {
 }
 
 export type ColorMode = "light" | "dark";
+export type Contrast = "standard" | "high";
 
 interface ColorModeBase {
   bg: string;
@@ -74,6 +77,33 @@ const DARK_BASE: ColorModeBase = {
 const COLOR_MODE_BASES: Record<ColorMode, ColorModeBase> = {
   light: LIGHT_BASE,
   dark: DARK_BASE,
+};
+
+// High contrast: pure black/white text, `muted` well past 7:1, and borders that
+// clear 3:1 against every surface so panels and controls keep a visible edge.
+const HIGH_CONTRAST_BASES: Record<ColorMode, ColorModeBase> = {
+  light: {
+    bg: "#ffffff",
+    panel: "#ffffff",
+    border: "#6e655d",
+    text: "#000000",
+    muted: "#403a35",
+    sidebar: "#ffffff",
+    timerBg: "#f4f2ef",
+    badge: "#e6e0d8",
+    badgeText: "#3a2a1c",
+  },
+  dark: {
+    bg: "#000000",
+    panel: "#0b0b0f",
+    border: "#8e8e9a",
+    text: "#ffffff",
+    muted: "#c9c5cd",
+    sidebar: "#000000",
+    timerBg: "#101014",
+    badge: "#1c1c20",
+    badgeText: "#d0c8d0",
+  },
 };
 
 // Every `accentText` here clears 4.5:1 against its own `accentSoft` and against
@@ -193,6 +223,36 @@ export function inkOn(fill: string): string {
   return whiteContrast >= 4.5 ? "#ffffff" : ACCENT_INK;
 }
 
+function contrastRatio(a: string, b: string): number {
+  const la = relativeLuminance(a);
+  const lb = relativeLuminance(b);
+  return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+}
+
+function mixHex(from: string, to: string, t: number): string {
+  return `#${[1, 3, 5]
+    .map((i) => {
+      const a = parseInt(from.slice(i, i + 2), 16);
+      const b = parseInt(to.slice(i, i + 2), 16);
+      return Math.round(a + (b - a) * t).toString(16).padStart(2, "0");
+    })
+    .join("")}`;
+}
+
+const HIGH_CONTRAST_RATIO = 7;
+
+/** High contrast only: slides `color` toward black (light mode) or white (dark
+ *  mode) in small steps until it clears 7:1 on every surface in `surfaces`, so
+ *  each ink keeps as much of its hue as the ratio allows. */
+export function highContrastInk(color: string, colorMode: ColorMode, surfaces: string[]): string {
+  const toward = colorMode === "light" ? "#000000" : "#ffffff";
+  for (let t = 0; t < 1; t += 0.05) {
+    const mixed = mixHex(color, toward, t);
+    if (surfaces.every((s) => contrastRatio(mixed, s) >= HIGH_CONTRAST_RATIO)) return mixed;
+  }
+  return toward;
+}
+
 /** A translucent version of a solid theme color, for state borders and tints.
  *  Replaces appending alpha hex digits to the color string, which silently
  *  produces garbage for any notation other than a 6-digit hex. */
@@ -200,16 +260,31 @@ export function alpha(color: string, opacity: number): string {
   return `color-mix(in srgb, ${color} ${Math.round(opacity * 100)}%, transparent)`;
 }
 
-export function composeTheme(accentKey: string, colorMode: ColorMode): AppTheme {
+export function composeTheme(accentKey: string, colorMode: ColorMode, contrast: Contrast = "standard"): AppTheme {
   const accent = ACCENT_THEMES[accentKey] ?? ACCENT_THEMES["default"];
-  const base = COLOR_MODE_BASES[colorMode];
   const modeAccent = accent[colorMode];
+  const identity = { name: accent.name, emoji: accent.emoji, colorMode, contrast };
+
+  if (contrast === "high") {
+    const base = HIGH_CONTRAST_BASES[colorMode];
+    // The fill darkens until white ink clears 7:1 on it, the same in both modes.
+    const fill = highContrastInk(accent.accent, "light", ["#ffffff"]);
+    return {
+      ...identity,
+      ...base,
+      accent: fill,
+      accentSoft: modeAccent.accentSoft,
+      accentText: highContrastInk(modeAccent.accentText, colorMode, [
+        modeAccent.accentSoft, base.bg, base.panel, base.timerBg, base.sidebar,
+      ]),
+      accentOn: "#ffffff",
+      sidebarAccent: fill,
+    };
+  }
 
   return {
-    name: accent.name,
-    emoji: accent.emoji,
-    colorMode,
-    ...base,
+    ...identity,
+    ...COLOR_MODE_BASES[colorMode],
     accent: accent.accent,
     accentSoft: modeAccent.accentSoft,
     accentText: modeAccent.accentText,

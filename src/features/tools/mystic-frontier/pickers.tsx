@@ -65,7 +65,6 @@ const searchInputStyle: CSSProperties = {
   fontSize: "0.75rem",
   fontWeight: 600,
   padding: "0.3rem 0.5rem",
-  outline: "none",
   borderWidth: 1,
   borderStyle: "solid",
 };
