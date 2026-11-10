@@ -71,6 +71,7 @@ import {
 } from "../../setup/data/equipmentStepDraft";
 import { ARCANE_AREAS, SACRED_AREAS, GRAND_SACRED_AREAS, type SymbolArea } from "../../../tools/symbols/symbol-data";
 import type { SymbolState } from "../../../tools/symbols/useSymbolState";
+import { scrollBehavior } from "../../../../lib/motion";
 
 /** What the binder reads from the page model: the full PreviewPaneModel satisfies it, and the
  *  read-only viewer (features/characters/viewer) builds just this much. */
@@ -2226,7 +2227,7 @@ function EquipmentBookmark({
       onHighlightSlotConsumed?.();
       return;
     }
-    target.scrollIntoView({ behavior: "smooth", block: "center" });
+    target.scrollIntoView({ behavior: scrollBehavior(), block: "center" });
     target.classList.add("jump-highlight");
     const timer = window.setTimeout(() => target.classList.remove("jump-highlight"), 1100);
     onHighlightSlotConsumed?.();

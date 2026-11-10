@@ -57,7 +57,6 @@ export const partyStyles = `
   }
   .party-add .party-plinth { background: transparent; }
   .party-add:hover .party-add-box, .party-add:focus-visible .party-add-box { border-color: var(--party-accent); color: var(--party-text); }
-  .party-add:focus-visible { outline: none; }
 
   .party-worlds { margin: 12px 2px 0; font-size: 0.85rem; font-weight: 700; }
 
@@ -157,7 +156,7 @@ export const partyStyles = `
     border: 2px dashed var(--party-line); border-radius: 14px; transition: border-color 160ms ease, background-color 160ms ease;
   }
   .party-pick-drop:hover, .party-pick-drop.is-dragging, .party-pick-drop:focus-visible {
-    border-color: var(--party-accent); outline: none; background: color-mix(in srgb, var(--party-accent) 8%, transparent);
+    border-color: var(--party-accent); background: color-mix(in srgb, var(--party-accent) 8%, transparent);
   }
   .party-pick-drop:disabled { background: none; }
   .party-pick-drop:disabled { cursor: progress; }
@@ -179,7 +178,7 @@ export const partyStyles = `
     width: 100%; display: flex; align-items: center; gap: 10px; padding: 6px 8px; text-align: left; cursor: pointer;
     font: inherit; color: inherit; background: none; border: 1px solid transparent; border-radius: 12px;
   }
-  .party-pick-row:hover:not(:disabled), .party-pick-row:focus-visible { border-color: var(--party-accent); outline: none; }
+  .party-pick-row:hover:not(:disabled), .party-pick-row:focus-visible { border-color: var(--party-accent); }
   .party-pick-row:disabled { cursor: default; opacity: 0.55; }
   .party-pick-row img { width: 44px; height: 44px; image-rendering: pixelated; object-fit: contain; }
   .party-pick-name { flex: 1; min-width: 0; display: grid; }

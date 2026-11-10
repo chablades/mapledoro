@@ -7,6 +7,7 @@ import { ACCENT_THEMES, dialogBtnColors, dialogPrimaryBtnColors } from "../../co
 import { useTheme } from "../../components/ThemeContext";
 import { ConfirmButton } from "../../components/ConfirmButton";
 import { SegmentedToggle } from "../../components/SegmentedToggle";
+import { CONTRASTS, MOTION_PREFS, TEXT_SIZES } from "../../components/displayPrefs";
 import { useMounted } from "../../lib/useMounted";
 import {
   DRIVE_SYNC_STORAGE_KEY,
@@ -31,6 +32,9 @@ import {
 
 const COLOR_MODES = ["light", "dark"] as const;
 const COLOR_MODE_LABELS = { light: "Light", dark: "Dark" } as const;
+const CONTRAST_LABELS = { standard: "Standard", high: "High" } as const;
+const MOTION_LABELS = { system: "Device", reduce: "Reduced" } as const;
+const TEXT_SIZE_LABELS = { default: "Default (100%)", large: "Large (110%)", larger: "Larger (125%)" } as const;
 
 function hardReset() {
   const keys = Object.keys(localStorage).filter((k) => k.startsWith("mapledoro"));
@@ -567,7 +571,10 @@ function DriveSyncPanel({
 }
 
 function SettingsContent({ theme }: { theme: AppTheme }) {
-  const { themeKey, setThemeKey, colorMode, setColorMode } = useTheme();
+  const {
+    themeKey, setThemeKey, colorMode, setColorMode,
+    contrast, setContrast, motion, setMotion, textSize, setTextSize,
+  } = useTheme();
   const [importStatus, setImportStatus] = useState<string | null>(null);
   // A parsed backup file awaiting confirmation, shown in the same comparison dialog as a
   // Drive restore, since importing overwrites local data exactly like a restore does.
@@ -646,6 +653,14 @@ function SettingsContent({ theme }: { theme: AppTheme }) {
     color: theme.text,
   };
 
+  const sectionHeadingStyle = {
+    margin: "1.75rem 0 0",
+    fontFamily: "var(--font-heading)",
+    fontSize: "1.05rem",
+    fontWeight: 700 as const,
+    color: theme.text,
+  };
+
   const descStyle = {
     margin: 0,
     marginTop: "0.2rem",
@@ -664,13 +679,15 @@ function SettingsContent({ theme }: { theme: AppTheme }) {
           Customize your MapleDoro experience
         </div>
 
+        <h2 style={sectionHeadingStyle}>Appearance</h2>
+
         {/* Color mode (same setting as the sun/moon toggle in the top nav) */}
         <div
           className="fade-in panel-card settings-row-panel"
           style={panelStyle}
         >
           <div>
-            <p style={labelStyle}>Appearance</p>
+            <p style={labelStyle}>Color mode</p>
             <p style={descStyle}>Switch between light and dark mode.</p>
           </div>
           <SegmentedToggle
@@ -759,13 +776,60 @@ function SettingsContent({ theme }: { theme: AppTheme }) {
           </div>
         </div>
 
+        <h2 style={sectionHeadingStyle}>Accessibility</h2>
+
+        <div className="fade-in panel-card settings-row-panel" style={panelStyle}>
+          <div>
+            <p style={labelStyle}>Contrast</p>
+            <p style={descStyle}>High contrast uses stronger text, borders and colors.</p>
+          </div>
+          <SegmentedToggle
+            theme={theme}
+            options={CONTRASTS}
+            value={contrast}
+            labels={CONTRAST_LABELS}
+            ariaLabel="Contrast"
+            onChange={setContrast}
+          />
+        </div>
+        <div className="fade-in panel-card settings-row-panel" style={panelStyle}>
+          <div>
+            <p style={labelStyle}>Motion</p>
+            <p style={descStyle}>Reduced turns off animations and smooth scrolling. Device follows your system setting.</p>
+          </div>
+          <SegmentedToggle
+            theme={theme}
+            options={MOTION_PREFS}
+            value={motion}
+            labels={MOTION_LABELS}
+            ariaLabel="Motion"
+            onChange={setMotion}
+          />
+        </div>
+        <div className="fade-in panel-card settings-row-panel" style={panelStyle}>
+          <div>
+            <p style={labelStyle}>Text size</p>
+            <p style={descStyle}>Makes text and spacing larger across the site.</p>
+          </div>
+          <SegmentedToggle
+            theme={theme}
+            options={TEXT_SIZES}
+            value={textSize}
+            labels={TEXT_SIZE_LABELS}
+            ariaLabel="Text size"
+            onChange={setTextSize}
+          />
+        </div>
+
+        <h2 style={sectionHeadingStyle}>Backup</h2>
+
         {/* Import / Export */}
         <div
           className="fade-in panel-card settings-row-panel"
           style={panelStyle}
         >
           <div>
-            <p style={labelStyle}>Data management</p>
+            <p style={labelStyle}>Backup file</p>
             <p style={descStyle}>Export your data as a backup, or import a previous backup.</p>
           </div>
           <div className="settings-data-actions">
@@ -822,6 +886,8 @@ function SettingsContent({ theme }: { theme: AppTheme }) {
             descStyle={descStyle}
           />
         )}
+
+        <h2 style={sectionHeadingStyle}>Data</h2>
 
         {/* Reset */}
         <div

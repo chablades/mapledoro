@@ -22,6 +22,7 @@ import {
 } from "../data/flameData";
 import { useEquipInfo } from "../data/useEquipInfo";
 import { moveInArray, useCardReorder, type CardDragProps } from "../../../tools/useCardReorder";
+import { MoveButtons } from "../../../tools/MoveButtons";
 import { edgeFadeMask, useScrollEdges } from "../../../../lib/useScrollEdges";
 import EquipItemIcon from "./EquipItemIcon";
 import FlameLines, { DetailsSwitch, TierBadge } from "./FlameLines";
@@ -70,7 +71,7 @@ const labelStyle = (theme: AppTheme): CSSProperties => ({
 
 const statBoxStyle = (theme: AppTheme): CSSProperties => ({
   boxSizing: "border-box", width: "100%", height: 36, borderRadius: 8, padding: "0 10px",
-  font: "inherit", fontSize: "0.85rem", fontWeight: 700, background: theme.bg, outline: "none",
+  font: "inherit", fontSize: "0.85rem", fontWeight: 700, background: theme.bg,
   border: `1px solid ${theme.border}`, color: theme.text,
 });
 
@@ -319,8 +320,8 @@ function FlameChooser({ theme, info, options, current, anchor, onPick, onClose }
 function FlameLineRow({ theme, info, line, taken, onChange, onRemove, drag }: {
   theme: AppTheme; info: EquipInfo; line: StoredFlameLine | null; taken: ReadonlySet<FlameLineId>;
   onChange: (line: StoredFlameLine) => void; onRemove?: () => void;
-  /** Drag-to-reorder for a saved line, so its order can match the game's. */
-  drag?: { props: CardDragProps; isDragging: boolean; isDropTarget: boolean };
+  /** Reordering for a saved line (drag, or the move buttons), so its order can match the game's. */
+  drag?: { props: CardDragProps; isDragging: boolean; isDropTarget: boolean; moveButtons: ReactNode };
 }) {
   const [open, setOpen] = useState(false);
   const known = line && FLAME_LINES[line.line] ? line : null;
@@ -348,6 +349,7 @@ function FlameLineRow({ theme, info, line, taken, onChange, onRemove, drag }: {
             </>
           ) : <span>+ Add flame</span>}
         </button>
+        {drag?.moveButtons}
         {onRemove && (
           <button type="button" aria-label="Remove line" onClick={onRemove} style={iconBtnStyle(theme)}><CloseIcon /></button>
         )}
@@ -564,14 +566,18 @@ function FlameLinesEntry({ theme, info, lines, onChange }: {
 }) {
   const taken = new Set(lines.map((l) => l.line));
   const totals = flameTotals(lines, info);
-  const reorder = useCardReorder((from, to) => onChange(moveInArray(lines, from, to)));
+  const moveLine = (from: number, to: number) => onChange(moveInArray(lines, from, to));
+  const reorder = useCardReorder(moveLine);
   return (
     <>
       {lines.map((line, i) => (
         <FlameLineRow
           key={line.line}
           theme={theme} info={info} line={line} taken={taken}
-          drag={{ props: reorder.dragProps(i), isDragging: reorder.isDragging(i), isDropTarget: reorder.isDropTarget(i) }}
+          drag={{
+            props: reorder.dragProps(i), isDragging: reorder.isDragging(i), isDropTarget: reorder.isDropTarget(i),
+            moveButtons: <MoveButtons theme={theme} label={FLAME_LINES[line.line]?.label ?? "line"} index={i} count={lines.length} axis="y" onMove={moveLine} />,
+          }}
           onChange={(next) => onChange(lines.map((l, j) => (j === i ? next : l)))}
           onRemove={() => onChange(lines.filter((_, j) => j !== i))}
         />

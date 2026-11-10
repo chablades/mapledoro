@@ -3,6 +3,7 @@
 import { useSyncExternalStore } from "react";
 import type { CSSProperties } from "react";
 import type { AppTheme } from "./themes";
+import { scrollBehavior } from "../lib/motion";
 
 const SCROLL_THRESHOLD = 400;
 
@@ -40,7 +41,7 @@ export default function ScrollToTopButton({ theme }: { theme: AppTheme }) {
     <button
       type="button"
       aria-label="Back to top"
-      onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+      onClick={() => window.scrollTo({ top: 0, behavior: scrollBehavior() })}
       style={{
         ...buttonBase,
         background: theme.accent,

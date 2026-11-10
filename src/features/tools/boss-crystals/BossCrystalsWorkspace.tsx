@@ -24,7 +24,7 @@ import { statValueStyle } from "../shared-styles";
 import { useBossCrystalsState } from "./useBossCrystalsState";
 import { AddCharacterNameDialog } from "../AddCharacterNameDialog";
 import { AddCharacterCard } from "../AddCharacterCard";
-import { CardActions } from "../TrackerCard";
+import { CardActions, type CardMove } from "../TrackerCard";
 import { ToolDialog } from "../ToolDialog";
 import { useCardReorder, type CardDragProps } from "../useCardReorder";
 import { Z } from "../zIndex";
@@ -186,6 +186,7 @@ function CharacterCard({
   isDragging,
   isDropTarget,
   dragProps,
+  move,
   onEdit,
   onDelete,
   onToggleCleared,
@@ -198,6 +199,7 @@ function CharacterCard({
   isDragging: boolean;
   isDropTarget: boolean;
   dragProps: CardDragProps;
+  move: CardMove;
   onEdit: () => void;
   onDelete: () => void;
   onToggleCleared: (bossIndex: number) => void;
@@ -281,6 +283,8 @@ function CharacterCard({
             </div>
             <CardActions
               theme={theme}
+              name={char.name}
+              move={move}
               onDelete={onDelete}
               onEdit={onEdit}
               editTitle="Edit bosses"
@@ -921,7 +925,7 @@ export default function BossCrystalsWorkspace({ theme }: { theme: AppTheme }) {
               alignItems: "start",
             }}
           >
-            {visibleCharacters.map(({ char, index, income }) => (
+            {visibleCharacters.map(({ char, index, income }, position) => (
               <CharacterCard
                 key={char.name}
                 theme={theme}
@@ -931,6 +935,12 @@ export default function BossCrystalsWorkspace({ theme }: { theme: AppTheme }) {
                 isDragging={isDragging(index)}
                 isDropTarget={isDropTarget(index)}
                 dragProps={dragProps(index)}
+                // Positions are within this server's cards; map them back to the full list.
+                move={{
+                  index: position,
+                  count: visibleCharacters.length,
+                  onMove: (from, to) => reorderCharacters(visibleCharacters[from].index, visibleCharacters[to].index),
+                }}
                 onEdit={() => openEdit(index)}
                 onDelete={() => deleteCharacter(index)}
                 onToggleCleared={(bi) => toggleBossCleared(index, bi)}

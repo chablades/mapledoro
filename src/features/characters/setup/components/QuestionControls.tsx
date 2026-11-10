@@ -8,6 +8,7 @@
 import { Fragment, type CSSProperties } from "react";
 import { numericKeyDown, sanitizeDigitsInput, clampNumber } from "../../../../lib/inputUtils";
 import type { AppTheme } from "../../../../components/themes";
+import { scrollBehavior } from "../../../../lib/motion";
 import InfoTooltip, { LockGlyph, type TooltipContent } from "./InfoTooltip";
 import { LEGION_ARTIFACT_FINAL_ATK_LIMIT } from "../data/scouterQuestionsData";
 import { statusText } from "../../../../components/statusColors";
@@ -92,7 +93,7 @@ export function scrollToFlaggedField(container: HTMLElement | null) {
   if (!container) return;
   const target = container.querySelector<HTMLElement>('[data-flagged-field="true"]');
   if (!target) return;
-  target.scrollIntoView({ behavior: "smooth", block: "center" });
+  target.scrollIntoView({ behavior: scrollBehavior(), block: "center" });
   target.classList.add("jump-highlight");
   window.setTimeout(() => target.classList.remove("jump-highlight"), 1100);
 }

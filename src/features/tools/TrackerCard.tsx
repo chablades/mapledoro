@@ -3,6 +3,7 @@
 import type { CSSProperties } from "react";
 import type { AppTheme } from "../../components/themes";
 import { statusText } from "../../components/statusColors";
+import { MoveButtons } from "./MoveButtons";
 
 // Shared "character card" chrome for the manually-populated trackers (Boss
 // Crystals, Dailies): one drag handle plus a delete / edit / mark-all cluster,
@@ -49,10 +50,19 @@ function CheckAllIcon({ color }: { color: string }) {
   );
 }
 
-/** Delete / edit / mark-all cluster, shared so both trackers use one icon set.
- *  Reordering comes from the draggable card body, not from a separate handle. */
+/** Where a card sits in its list, for the move buttons in `CardActions`. */
+export interface CardMove {
+  index: number;
+  count: number;
+  onMove: (from: number, to: number) => void;
+}
+
+/** Move / delete / edit / mark-all cluster, shared so both trackers use one icon set.
+ *  Reordering comes from dragging the card body or from the move buttons here. */
 export function CardActions({
   theme,
+  name,
+  move,
   onDelete,
   onEdit,
   editTitle,
@@ -62,6 +72,9 @@ export function CardActions({
   toggleOffTitle,
 }: {
   theme: AppTheme;
+  /** Character name, for the move buttons' labels. */
+  name: string;
+  move: CardMove;
   onDelete: () => void;
   onEdit: () => void;
   editTitle: string;
@@ -71,7 +84,8 @@ export function CardActions({
   toggleOffTitle: string;
 }) {
   return (
-    <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
+      <MoveButtons theme={theme} label={name} axis="x" {...move} />
       <button
         type="button"
         className="btn-reset"
