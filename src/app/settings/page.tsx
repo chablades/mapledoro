@@ -653,6 +653,14 @@ function SettingsContent({ theme }: { theme: AppTheme }) {
     color: theme.text,
   };
 
+  const sectionHeadingStyle = {
+    margin: "1.75rem 0 0",
+    fontFamily: "var(--font-heading)",
+    fontSize: "1.05rem",
+    fontWeight: 700 as const,
+    color: theme.text,
+  };
+
   const descStyle = {
     margin: 0,
     marginTop: "0.2rem",
@@ -671,13 +679,15 @@ function SettingsContent({ theme }: { theme: AppTheme }) {
           Customize your MapleDoro experience
         </div>
 
+        <h2 style={sectionHeadingStyle}>Appearance</h2>
+
         {/* Color mode (same setting as the sun/moon toggle in the top nav) */}
         <div
           className="fade-in panel-card settings-row-panel"
           style={panelStyle}
         >
           <div>
-            <p style={labelStyle}>Appearance</p>
+            <p style={labelStyle}>Color mode</p>
             <p style={descStyle}>Switch between light and dark mode.</p>
           </div>
           <SegmentedToggle
@@ -766,7 +776,8 @@ function SettingsContent({ theme }: { theme: AppTheme }) {
           </div>
         </div>
 
-        {/* Accessibility */}
+        <h2 style={sectionHeadingStyle}>Accessibility</h2>
+
         <div className="fade-in panel-card settings-row-panel" style={panelStyle}>
           <div>
             <p style={labelStyle}>Contrast</p>
@@ -810,13 +821,15 @@ function SettingsContent({ theme }: { theme: AppTheme }) {
           />
         </div>
 
+        <h2 style={sectionHeadingStyle}>Backup</h2>
+
         {/* Import / Export */}
         <div
           className="fade-in panel-card settings-row-panel"
           style={panelStyle}
         >
           <div>
-            <p style={labelStyle}>Data management</p>
+            <p style={labelStyle}>Backup file</p>
             <p style={descStyle}>Export your data as a backup, or import a previous backup.</p>
           </div>
           <div className="settings-data-actions">
@@ -873,6 +886,8 @@ function SettingsContent({ theme }: { theme: AppTheme }) {
             descStyle={descStyle}
           />
         )}
+
+        <h2 style={sectionHeadingStyle}>Data</h2>
 
         {/* Reset */}
         <div
