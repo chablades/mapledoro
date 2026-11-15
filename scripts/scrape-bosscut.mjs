@@ -13,6 +13,8 @@
 //     A result saved in your browser holds every boss's clear rate: localStorage "manual-store"
 //     -> state.result.calculatedData.bossCuts. Read it there; don't script their API.
 // Champion Black Mage is stored as Hard x0.75 (MapleScouter's own numbers agree since v272).
+// Set BOSSCUT_SCRAPED_AT to the update's date too: it's the "Boss thresholds as of" date
+// players see under every Boss Clear view.
 // Run: node scripts/scrape-bosscut.mjs [--har <file>]
 // Writes src/features/characters/scouter/bosscut-data.generated.ts
 //
