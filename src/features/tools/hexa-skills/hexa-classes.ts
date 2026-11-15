@@ -553,6 +553,20 @@ const DEMON_AVENGER: HexaClassDef = {
   ascent: s("Rageborne Devil", "10000085"),
 };
 
+const LETHE: HexaClassDef = {
+  className: "Lethe",
+  group: "Demon",
+  origin: s("Dominus: Eye of Eternity", "10000151"),
+  mastery: [
+    node("20000208", "HEXA Assize", "HEXA Edict: Fel Storm"),
+    node("20000209", "HEXA Beckon: Vargr", "HEXA Edict: Rampage"),
+    node("20000210", "HEXA Beckon: Dread Knight", "HEXA Edict: Dread Advance"),
+    node("20000211", "HEXA Majeure", "Oath Incarnate"),
+  ],
+  enhancement: [s("Dominus: Dread Onslaught", "30000217"), s("Dominus: Pack United", "30000218"), s("Dominus: Azrath", "30000219"), s("Chains of Command", "30000220")],
+  ascent: s("Sovereign Everlasting", "10000152"),
+};
+
 // ── Nova ───────────────────────────
 const KAISER: HexaClassDef = {
   className: "Kaiser",
@@ -890,6 +904,7 @@ const COMMON3_BY_BRANCH: { name: string; firstId: number; classNames: string[]; 
   { name: "HEXA Lotus Flower", firstId: 40000046, classNames: ["Lara", "Hoyoung", "Ren"], sharedIcon: true },
   { name: "HEXA Twilight Bloom", firstId: 40000050, classNames: ["Hayato", "Kanna"] },
   { name: "HEXA Ring of Samsara", firstId: 40000052, classNames: ["Lynn", "Mo Xuan"] },
+  { name: "HEXA Demonic Wroth", firstId: 40000049, classNames: ["Lethe"] },
 ];
 
 const SHINE_TREE_OF_STARS = su("SHINE Tree of Stars", "erda-skill", "18112/skill/111");
@@ -929,7 +944,7 @@ const HEXA_CLASSES: HexaClassDef[] = [
   // Resistance
   BLASTER, BATTLE_MAGE, WILD_HUNTER, XENON, MECHANIC,
   // Demons
-  DEMON_SLAYER, DEMON_AVENGER,
+  DEMON_SLAYER, DEMON_AVENGER, LETHE,
   // Nova
   KAISER, KAIN, CADENA, ANGELIC_BUSTER,
   // Transcendent
@@ -994,6 +1009,7 @@ const CLASS_ID_TO_NAME: Record<string, string> = {
   dawn_warrior: "Dawn Warrior",
   demon_avenger: "Demon Avenger",
   demon_slayer: "Demon Slayer",
+  lethe: "Lethe",
   erel_light: "Erel Light",
   evan: "Evan",
   hayato: "Hayato",

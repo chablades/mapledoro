@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /*
   Regenerates Mastery%/Final Damage% baselines for the 53 non-legacy classes from
-  manifests/v271/skill-formulas.json.
+  the current manifest's skill-formulas.json (scripts/manifest-version.mjs).
 
   Each class's baseline is pinned by skill id (RECIPES below) rather than resolved by name at
   runtime, the same pattern as gen-vmatrix.mjs's EXCLUDED_NODE_IDS. Every pinned entry also carries
@@ -24,10 +24,11 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { MANIFEST_VERSION, manifestFile } from "./manifest-version.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
-const MANIFEST_PATH = path.join(ROOT, "manifests/v271/skill-formulas.json");
+const MANIFEST_PATH = path.join(ROOT, manifestFile("skill-formulas.json"));
 const DATA_DIR = path.join(ROOT, "src/features/characters/setup/data");
 
 const manifest = JSON.parse(fs.readFileSync(MANIFEST_PATH, "utf8"));
@@ -344,6 +345,17 @@ const FINAL_DAMAGE_RECIPES = {
     { id: "182110000", name: "Stellar Enhancement I", expected: 25, job4: false }, // 3rd job
     { id: "182120000", name: "Stellar Enhancement II", expected: 35 },
   ],
+  // Verified in-game: 160.64% at level 30, 162.66% with Combat Orders (only Sovereign
+  // Supremacy moves, 29 -> 30).
+  lethe: [
+    { id: "192100009", name: "Poise", expected: 10, job4: false }, // 2nd job
+    { id: "192110010", name: "Lordly Wisdom", expected: 10, job4: false }, // 3rd job
+    { id: "192120002", name: "Majeure", expected: 15 },
+    { id: "192120008", name: "Fidelity", expected: 20 },
+    { id: "192120011", name: "Ratify", expected: 10 },
+    { id: "192120012", name: "Royal Prerogative", expected: 10 },
+    { id: "192120013", name: "Sovereign Supremacy", expected: 29 },
+  ],
 };
 
 // ---------------------------------------------------------------------------------------------
@@ -399,6 +411,7 @@ const MASTERY_SKILL_RECIPES = {
   mo_xuan: [{ id: "175120014", name: "Boundless", expected: 70 }],
   sia_astelle: [{ id: "182120002", name: "Astral Assimilation", expected: 70 }],
   erel_light: [{ id: "181120008", name: "Gram Expert", expected: 70 }],
+  lethe: [{ id: "192120011", name: "Ratify", expected: 70 }],
   // Post-revamp: ESP Mastery (job 1, own tooltip "Psy-limiter Mastery: +50%") is
   // deliberately excluded, being the lower-tier Mastery skill, superseded rather than stacked by
   // ESP Expert once learned, same as every other class's single-highest-tier-only recipe.
@@ -470,6 +483,7 @@ const MASTERY_BASE_PERCENT = {
   mo_xuan: 20,
   sia_astelle: 25,
   erel_light: 20,
+  lethe: 20, // in-game 90% = 20 + Ratify 70
   kinesis: 20,
   zero: 20,
   angelic_buster: 15,
@@ -509,7 +523,7 @@ const WEAPON_MULTIPLIER = {
   mihile: 1.24,
   arch_mage_f_p: 1.2, arch_mage_i_l: 1.2, bishop: 1.2, blaze_wizard: 1.2, illium: 1.2,
   kinesis: 1.2, evan: 1.2, luminous: 1.2, battle_mage: 1.2, sia_astelle: 1.2,
-  lara: 1.2, demon_slayer: 1.2,
+  lara: 1.2, demon_slayer: 1.2, lethe: 1.2,
   // hero, paladin, dawn_warrior omitted here, see WEAPON_MULTIPLIER_BY_HAND below.
 };
 
@@ -526,7 +540,7 @@ const WEAPON_MULTIPLIER_BY_HAND = {
 // (this script only reads JSON, matching every other gen-*.mjs script's convention).
 const MAGIC_ATT_CLASSES = new Set([
   "lara", "blaze_wizard", "arch_mage_f_p", "arch_mage_i_l", "bishop", "illium", "kinesis",
-  "evan", "luminous", "lynn", "battle_mage", "kanna", "sia_astelle",
+  "evan", "luminous", "lynn", "battle_mage", "kanna", "sia_astelle", "lethe",
 ]);
 
 // ---------------------------------------------------------------------------------------------
@@ -596,13 +610,13 @@ function writeTieredGenerated(fileName, exportName, comment, data) {
 writeTieredGenerated(
   "masteryData.generated.ts",
   "BASE_MASTERY_PERCENT",
-  "Weapon Mastery% per class (v271), level-30 base plus Combat-Orders-family tiers.",
+  `Weapon Mastery% per class (${MANIFEST_VERSION}), level-30 base plus Combat-Orders-family tiers.`,
   masteryOut,
 );
 writeTieredGenerated(
   "finalDamageData.generated.ts",
   "BASE_FINAL_DAMAGE_PERCENT",
-  "Always-on Final Damage% per class (v271), before Genesis Liberation, level-30 base plus Combat-Orders-family tiers.",
+  `Always-on Final Damage% per class (${MANIFEST_VERSION}), before Genesis Liberation, level-30 base plus Combat-Orders-family tiers.`,
   finalDamageOut,
 );
 
