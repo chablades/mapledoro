@@ -87,7 +87,7 @@ Game art comes from the self-hosted **MapleResource API** (`haku.network`), via 
 - **Item icons** default to shadowless `iconRaw.png`; pass `shadow` for framed `icon.png` (inventory only). The `revealed` variant is documented on `ItemIcon`.
 - **Boss icons** have no component — use `bossIconUrl(id)` (`ui/boss` URL); stored as `icon` strings in boss data (`bosses.ts`, `liberation-data.ts`, `astra-data.ts`, `trace-restoration-data.ts`).
 - **Familiars:** `<FamiliarCardSprite>` (`src/components/FamiliarCardSprite.tsx`) is the one portrait component; pass `spriteMobId ?? mobId` as its `mobId` (the fallback chain is documented on the component). Mob/card-backed ones elsewhere use `<MobSprite>`/`<ItemIcon>` per manifest `spriteFrom`.
-- **Finding IDs:** grep `manifests/v271/<type>.json` for the exact `name` (see Context Discipline), then hardcode the id with a name comment. There is no name→ID map; manifests are dev-only and never bundled. Current game version is **v271**. Older features whose generated data was built from an earlier manifest (and says so) are correct as-is.
+- **Finding IDs:** grep `manifests/v272/<type>.json` for the exact `name` (see Context Discipline), then hardcode the id with a name comment. There is no name→ID map; manifests are dev-only and never bundled. Current game version is **v272**. Older features whose generated data was built from an earlier manifest (and says so) are correct as-is.
 
 ## Generated Data
 
