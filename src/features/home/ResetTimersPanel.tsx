@@ -3,11 +3,9 @@
 import type { CSSProperties, ReactNode } from "react";
 import HoverTooltip from "../../components/HoverTooltip";
 import Panel from "../../components/Panel";
-import { STATUS, statusText } from "../../components/statusColors";
 import type { AppTheme } from "../../components/themes";
 import { formatCountdown, formatCountdownDays, getNextReset } from "../../lib/time";
 import { useClock } from "../../lib/useClock";
-import { getUrsusStatus } from "../../lib/ursus";
 
 const PLACEHOLDER_COUNTDOWN = "--:--:--";
 const WEEKLY_RESET_DAY = 4; // Thursday, UTC
@@ -51,13 +49,12 @@ function liveEventNames(day: number, nowMs: number): string[] {
   return EVENT_RESETS.filter((e) => e.day === day && isLive(e)).map((e) => e.name);
 }
 
-type RowKey = "daily" | "weekly" | "events" | "ursus";
+type RowKey = "daily" | "weekly" | "events";
 
 /** The time-dependent half of a row, blank until the clock mounts. */
 interface RowValues {
   schedule: string;
   countdown: string;
-  active?: boolean;
 }
 
 interface TimerRow extends RowValues {
@@ -92,13 +89,6 @@ const DAILY_TOOLTIP = (
   />
 );
 
-const URSUS_TOOLTIP = (
-  <TooltipBody
-    utc="1:00 – 5:00 and 18:00 – 22:00 UTC"
-    summary="Ursus pays double meso during these two windows every day."
-  />
-);
-
 /** Every formatter below is unreachable during SSR: `now` is null until useClock()
  *  ticks post-mount, and buildRows() returns the placeholder rows until then. */
 function localTime(d: Date) {
@@ -116,10 +106,6 @@ function liveValues(now: Date): Record<RowKey, RowValues> {
   const daily = getNextReset(now, 0);
   const weekly = getNextReset(now, 0, WEEKLY_RESET_DAY);
   const events = getNextReset(now, 0, EVENT_RESET_DAY);
-  const ursus = getUrsusStatus(now);
-  // The window boundary the countdown is running toward, so the schedule line names
-  // the same moment the number does.
-  const ursusEdge = new Date(nowMs + (ursus.active ? ursus.remaining : ursus.until));
 
   return {
     daily: {
@@ -134,11 +120,6 @@ function liveValues(now: Date): Record<RowKey, RowValues> {
       schedule: localDayTime(events),
       countdown: formatCountdownDays(events.getTime() - nowMs),
     },
-    ursus: {
-      schedule: `${ursus.active ? "Until" : "Next"} ${localTime(ursusEdge)}`,
-      countdown: formatCountdown(ursus.active ? ursus.remaining : ursus.until),
-      active: ursus.active,
-    },
   };
 }
 
@@ -150,7 +131,6 @@ function buildRows(now: Date | null): TimerRow[] {
   const eventDayEvents = liveEventNames(EVENT_RESET_DAY, nowMs);
 
   return [
-    { key: "ursus", label: "Ursus 2× Meso", tooltip: URSUS_TOOLTIP, ...valuesFor("ursus") },
     { key: "daily", label: "Daily Reset", tooltip: DAILY_TOOLTIP, ...valuesFor("daily") },
     {
       key: "weekly",
@@ -189,19 +169,7 @@ function buildRows(now: Date | null): TimerRow[] {
   ];
 }
 
-const activeBadgeStyle: CSSProperties = {
-  color: STATUS.success.on,
-  background: STATUS.success.fill,
-  letterSpacing: "0.05em",
-};
-
 const rowTextStyle: CSSProperties = { minWidth: 0, flex: 1 };
-const rowValueStyle: CSSProperties = {
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "flex-end",
-  gap: 4,
-};
 const scheduleStyle: CSSProperties = { fontSize: "0.75rem", fontWeight: 700 };
 
 function timerRowStyle(theme: AppTheme): CSSProperties {
@@ -227,14 +195,8 @@ function TimerRowCard({ theme, row }: { theme: AppTheme; row: TimerRow }) {
         </div>
         {row.schedule && <div style={{ ...scheduleStyle, color: theme.muted }}>{row.schedule}</div>}
       </div>
-      <div style={rowValueStyle}>
-        {row.active && <span className="tool-badge" style={activeBadgeStyle}>ACTIVE</span>}
-        <div
-          className="timer-countdown"
-          style={{ color: row.active ? statusText(theme, "success") : theme.accentText }}
-        >
-          {row.countdown}
-        </div>
+      <div className="timer-countdown" style={{ color: theme.accentText }}>
+        {row.countdown}
       </div>
     </div>
   );
@@ -242,7 +204,7 @@ function TimerRowCard({ theme, row }: { theme: AppTheme; row: TimerRow }) {
 
 const tooltipWrapStyle: CSSProperties = { display: "block" };
 
-/** Ursus / daily / weekly / event countdowns in one panel. Owns its own clock so a
+/** Daily / weekly / event countdowns in one panel. Owns its own clock so a
  *  per-second tick re-renders these rows alone, not the whole dashboard. */
 export default function ResetTimersPanel({ theme }: { theme: AppTheme }) {
   const now = useClock();

@@ -7,7 +7,7 @@ A free, open-source companion app for the MapleStory community, characters, prog
 ### Dashboard
 - Live patch notes feed, filterable by category
 - Sunny Sunday and Miracle Time schedule panels
-- Ursus 2x Meso and daily/weekly reset countdowns
+- Daily/weekly reset countdowns
 - Character roster panel with quick links
 - Customizable quick-launch tool grid
 

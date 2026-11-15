@@ -17,6 +17,7 @@ const CHANGELOG: ChangelogEntry[] = [
       { type: "changed", text: "The Pitched Whisper Crystal calculator now lists Extreme Black Mage separately, counting 3 crystals a month instead of 1." },
       { type: "added", text: "The Pitched Whisper Crystal calculator can now target the Red Jade and Black Jade Boss Ring Boxes and Total Control." },
       { type: "added", text: "The Dawn Whisper Crystal calculator now has a target picker, with the Green Jade Boss Ring Box as a new option." },
+      { type: "changed", text: "Removed the Ursus 2x Meso timer from the home page's Timers panel." },
     ],
   },
   {
