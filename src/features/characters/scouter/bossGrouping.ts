@@ -9,7 +9,7 @@ export const BOSS_DISPLAY_NAME: Record<string, string> = {
   "진 힐라": "Verus Hilla", 듄켈: "Darknell", "검은 마법사": "Black Mage", 세렌: "Seren",
   칼로스: "Kalos", 대적자: "Adversary", 흉성: "Malefic Star", 카링: "Kaling",
   림보: "Limbo", 발드릭스: "Baldrix", 유피테르: "Jupiter", 가엔슬: "Guardian Angel Slime",
-  카이: "Kai",
+  카이: "Kai", 메이린: "Mayrin",
 };
 
 function groupByBoss(entries: BossCutEntry[]): BossEntryList[] {
@@ -43,13 +43,14 @@ export function resolveBossDisplayName(grouped: BossEntryList[], selectedIndex: 
   return BOSS_DISPLAY_NAME[boss] ?? boss;
 }
 
-// Icon ids looked up by hand from manifests/v271/ui-boss.json, renamed from boss.json as of
-// v269 (see the Image Policy in the root CLAUDE.md), cross-checked against the same bosses
-// already mapped in liberation-data.ts and trace-restoration-data.ts.
+// Icon ids looked up by hand from the manifest's ui-boss.json (boss.json before v269; see the
+// Image Policy in the root CLAUDE.md), cross-checked against the same bosses already mapped in
+// liberation-data.ts and trace-restoration-data.ts.
 const BOSS_ICON_ID: Record<string, string> = {
   스우: "13", 데미안: "15", 루시드: "19", 윌: "23", 더스크: "26", "진 힐라": "24",
   듄켈: "27", "검은 마법사": "25", 세렌: "28", 칼로스: "30", 대적자: "35", 흉성: "37",
   카링: "31", 림보: "33", 발드릭스: "34", 유피테르: "38", 가엔슬: "29", 카이: "36",
+  메이린: "40",
 };
 
 /** The low-end bosses MapleDoro estimates carry their own icon id. */
