@@ -3704,16 +3704,22 @@
       "lengthMs": 158225
     },
     "GL_Quanah/Quanah_Central": {
-      "lengthMs": 106654
+      "lengthMs": 109784
     },
     "GL_Quanah/Quanah_Entrance": {
       "lengthMs": 116879
     },
-    "GL_Quanah/Quanah_Proving_Fields": {
-      "lengthMs": 85406
+    "GL_Quanah/Quanah_Proving_Fields1": {
+      "lengthMs": 86753
+    },
+    "GL_Quanah/Quanah_Proving_Fields2": {
+      "lengthMs": 86753
+    },
+    "GL_Quanah/Quanah_Proving_Fields3": {
+      "lengthMs": 87066
     },
     "GL_Quanah/Quanah_Residential_Zone": {
-      "lengthMs": 127575
+      "lengthMs": 124078
     },
     "GL_RideOrDie/Boss_Darknell": {
       "lengthMs": 83362

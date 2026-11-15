@@ -18625,7 +18625,7 @@
       "name": "Lv. 3 Ghost Mushroom\u0027s Mysterious Power"
     },
     "80010573": {
-      "name": "Quanah world"
+      "name": "Quanah World"
     },
     "80010577": {},
     "80011001": {
@@ -20544,6 +20544,9 @@
     "80013286": {
       "name": "Overclocked Fusion"
     },
+    "80013287": {
+      "name": "Empty Bottle"
+    },
     "80013288": {
       "name": "Debuggy"
     },
@@ -20576,6 +20579,36 @@
     },
     "80013299": {
       "name": "Bug: Blue Pill"
+    },
+    "80013306": {
+      "name": "Amplify Damage"
+    },
+    "80013307": {
+      "name": "Quickdraw"
+    },
+    "80013308": {
+      "name": "Swift Attack"
+    },
+    "80013309": {
+      "name": "Protective Shield"
+    },
+    "80013310": {
+      "name": "Blood for Blood"
+    },
+    "80013311": {
+      "name": "Malleable Hide"
+    },
+    "80013312": {
+      "name": "Potion Resistance"
+    },
+    "80013315": {
+      "name": "Fortune Teller\u0027s Charm"
+    },
+    "80013316": {
+      "name": "Dependency Injection - Drop Rate"
+    },
+    "80013325": {
+      "name": "Entropy"
     },
     "9001003": {
       "name": "Admin\u0027s Blessing"

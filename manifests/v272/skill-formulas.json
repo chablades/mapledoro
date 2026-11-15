@@ -26189,7 +26189,7 @@
         "q2": "4",
         "u3": "75",
         "q3": "85",
-        "cooltime": "240"
+        "cooltime": "180"
       }
     },
     "80013024": {
@@ -26207,7 +26207,7 @@
         }
       ],
       "rawFormulas": {
-        "cooltime": "240",
+        "cooltime": "180",
         "time": "5",
         "y": "50",
         "time2": "3",
@@ -26282,7 +26282,7 @@
       "maxLevel": 8,
       "stats": [
         {
-          "key": "indiePMdR",
+          "key": "dummyStr6",
           "label": "Final Damage",
           "formula": "5*x",
           "alwaysOn": true,
@@ -26291,8 +26291,108 @@
       ],
       "rawFormulas": {
         "dummyStr": "20",
-        "dummyStr2": "855\u002B3300*x",
-        "dummyStr3": "5"
+        "dummyStr2": "15",
+        "dummyStr3": "825\u002B214*x",
+        "dummyStr4": "15",
+        "dummyStr5": "5",
+        "pdR": "5*x",
+        "mdR": "5*x"
+      }
+    },
+    "80013213": {
+      "name": "[Hologram] Critical Damage Enhancement",
+      "jobId": "800132",
+      "maxLevel": 8,
+      "stats": [
+        {
+          "key": "dummyStr",
+          "label": "Final Damage",
+          "formula": "1\u002Bd(x/2)",
+          "alwaysOn": true,
+          "flaggedForReview": false
+        }
+      ],
+      "rawFormulas": {
+        "pdR": "1\u002Bd(x/2)",
+        "criticaldamage": "5*x",
+        "mdR": "1\u002Bd(x/2)"
+      }
+    },
+    "80013214": {
+      "name": "[Hologram] Damage Enhancement",
+      "jobId": "800132",
+      "maxLevel": 8,
+      "stats": [
+        {
+          "key": "dummyStr",
+          "label": "Final Damage",
+          "formula": "1\u002Bd(x/2)",
+          "alwaysOn": true,
+          "flaggedForReview": false
+        }
+      ],
+      "rawFormulas": {
+        "damR": "5*x",
+        "pdR": "1\u002Bd(x/2)",
+        "mdR": "1\u002Bd(x/2)"
+      }
+    },
+    "80013215": {
+      "name": "[Hologram] Attack Power \u0026 Magic ATT Enhancement",
+      "jobId": "800132",
+      "maxLevel": 8,
+      "stats": [
+        {
+          "key": "dummyStr",
+          "label": "Final Damage",
+          "formula": "1\u002Bd(x/2)",
+          "alwaysOn": true,
+          "flaggedForReview": false
+        }
+      ],
+      "rawFormulas": {
+        "pdR": "1\u002Bd(x/2)",
+        "mdR": "1\u002Bd(x/2)",
+        "padR": "5*x",
+        "madR": "5*x"
+      }
+    },
+    "80013216": {
+      "name": "[Hologram] Boss Damage Increase Enhancement",
+      "jobId": "800132",
+      "maxLevel": 8,
+      "stats": [
+        {
+          "key": "dummyStr",
+          "label": "Final Damage",
+          "formula": "1\u002Bd(x/2)",
+          "alwaysOn": true,
+          "flaggedForReview": false
+        }
+      ],
+      "rawFormulas": {
+        "pdR": "1\u002Bd(x/2)",
+        "mdR": "1\u002Bd(x/2)",
+        "bdR": "5*x"
+      }
+    },
+    "80013217": {
+      "name": "[Hologram] Ignore Defense Enhancement",
+      "jobId": "800132",
+      "maxLevel": 8,
+      "stats": [
+        {
+          "key": "dummyStr",
+          "label": "Final Damage",
+          "formula": "1\u002Bd(x/2)",
+          "alwaysOn": true,
+          "flaggedForReview": false
+        }
+      ],
+      "rawFormulas": {
+        "ignoreMobpdpR": "5*x",
+        "pdR": "1\u002Bd(x/2)",
+        "mdR": "1\u002Bd(x/2)"
       }
     },
     "80013242": {
@@ -26309,7 +26409,8 @@
         }
       ],
       "rawFormulas": {
-        "v": "5*x"
+        "v": "5*x",
+        "mdR": "6\u002B2*x"
       }
     },
     "80013244": {
@@ -26346,41 +26447,6 @@
       ],
       "rawFormulas": {}
     },
-    "80013258": {
-      "name": "Hard Reset Bonus",
-      "jobId": "800132",
-      "maxLevel": 100,
-      "stats": [
-        {
-          "key": "indiePMdR",
-          "label": "Final Damage",
-          "formula": "5*x",
-          "alwaysOn": true,
-          "flaggedForReview": false
-        }
-      ],
-      "rawFormulas": {
-        "time": "99999"
-      }
-    },
-    "80013280": {
-      "name": "Entropy",
-      "jobId": "800132",
-      "maxLevel": 1,
-      "stats": [
-        {
-          "key": "pdR",
-          "label": "Final Damage",
-          "formula": "50",
-          "alwaysOn": true,
-          "flaggedForReview": false
-        }
-      ],
-      "rawFormulas": {
-        "prop": "30",
-        "x": "3"
-      }
-    },
     "80013286": {
       "name": "Overclocked Fusion",
       "jobId": "800132",
@@ -26412,7 +26478,26 @@
           "flaggedForReview": false
         }
       ],
-      "rawFormulas": {}
+      "rawFormulas": {
+        "mdR": "-5"
+      }
+    },
+    "80013315": {
+      "name": "Fortune Teller\u0027s Charm",
+      "jobId": "800133",
+      "maxLevel": 1,
+      "stats": [
+        {
+          "key": "pdR",
+          "label": "Final Damage",
+          "formula": "10",
+          "alwaysOn": true,
+          "flaggedForReview": false
+        }
+      ],
+      "rawFormulas": {
+        "mdR": "10"
+      }
     }
   }
 }

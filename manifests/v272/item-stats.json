@@ -7161,6 +7161,14 @@
       "islot": "Fc",
       "cash": true
     },
+    "00022083": {
+      "islot": "Fc",
+      "cash": true
+    },
+    "00022084": {
+      "islot": "Fc",
+      "cash": true
+    },
     "00022100": {
       "islot": "Fc",
       "cash": true
@@ -7427,6 +7435,14 @@
       "cash": true
     },
     "00022163": {
+      "islot": "Fc",
+      "cash": true
+    },
+    "00022183": {
+      "islot": "Fc",
+      "cash": true
+    },
+    "00022184": {
       "islot": "Fc",
       "cash": true
     },
@@ -7699,6 +7715,14 @@
       "islot": "Fc",
       "cash": true
     },
+    "00022283": {
+      "islot": "Fc",
+      "cash": true
+    },
+    "00022284": {
+      "islot": "Fc",
+      "cash": true
+    },
     "00022300": {
       "islot": "Fc",
       "cash": true
@@ -7965,6 +7989,14 @@
       "cash": true
     },
     "00022363": {
+      "islot": "Fc",
+      "cash": true
+    },
+    "00022383": {
+      "islot": "Fc",
+      "cash": true
+    },
+    "00022384": {
       "islot": "Fc",
       "cash": true
     },
@@ -8237,6 +8269,14 @@
       "islot": "Fc",
       "cash": true
     },
+    "00022483": {
+      "islot": "Fc",
+      "cash": true
+    },
+    "00022484": {
+      "islot": "Fc",
+      "cash": true
+    },
     "00022500": {
       "islot": "Fc",
       "cash": true
@@ -8503,6 +8543,14 @@
       "cash": true
     },
     "00022563": {
+      "islot": "Fc",
+      "cash": true
+    },
+    "00022583": {
+      "islot": "Fc",
+      "cash": true
+    },
+    "00022584": {
       "islot": "Fc",
       "cash": true
     },
@@ -8775,6 +8823,14 @@
       "islot": "Fc",
       "cash": true
     },
+    "00022683": {
+      "islot": "Fc",
+      "cash": true
+    },
+    "00022684": {
+      "islot": "Fc",
+      "cash": true
+    },
     "00022700": {
       "islot": "Fc",
       "cash": true
@@ -9044,6 +9100,14 @@
       "islot": "Fc",
       "cash": true
     },
+    "00022783": {
+      "islot": "Fc",
+      "cash": true
+    },
+    "00022784": {
+      "islot": "Fc",
+      "cash": true
+    },
     "00022800": {
       "islot": "Fc",
       "cash": true
@@ -9246,6 +9310,14 @@
       "cash": true
     },
     "00022862": {
+      "islot": "Fc",
+      "cash": true
+    },
+    "00022883": {
+      "islot": "Fc",
+      "cash": true
+    },
+    "00022884": {
       "islot": "Fc",
       "cash": true
     },
@@ -123920,6 +123992,38 @@
       "islot": "Hr",
       "cash": true
     },
+    "00070080": {
+      "islot": "Hr",
+      "cash": true
+    },
+    "00070081": {
+      "islot": "Hr",
+      "cash": true
+    },
+    "00070082": {
+      "islot": "Hr",
+      "cash": true
+    },
+    "00070083": {
+      "islot": "Hr",
+      "cash": true
+    },
+    "00070084": {
+      "islot": "Hr",
+      "cash": true
+    },
+    "00070085": {
+      "islot": "Hr",
+      "cash": true
+    },
+    "00070086": {
+      "islot": "Hr",
+      "cash": true
+    },
+    "00070087": {
+      "islot": "Hr",
+      "cash": true
+    },
     "00071000": {
       "islot": "Hr",
       "cash": true
@@ -125616,6 +125720,38 @@
       "islot": "Hr",
       "cash": true
     },
+    "00071690": {
+      "islot": "Hr",
+      "cash": true
+    },
+    "00071691": {
+      "islot": "Hr",
+      "cash": true
+    },
+    "00071692": {
+      "islot": "Hr",
+      "cash": true
+    },
+    "00071693": {
+      "islot": "Hr",
+      "cash": true
+    },
+    "00071694": {
+      "islot": "Hr",
+      "cash": true
+    },
+    "00071695": {
+      "islot": "Hr",
+      "cash": true
+    },
+    "00071696": {
+      "islot": "Hr",
+      "cash": true
+    },
+    "00071697": {
+      "islot": "Hr",
+      "cash": true
+    },
     "00080000": {
       "islot": "Fc",
       "cash": true
@@ -125641,10 +125777,6 @@
       "cash": true
     },
     "00080011": {
-      "islot": "Fc",
-      "cash": true
-    },
-    "00080012": {
       "islot": "Fc",
       "cash": true
     },
@@ -125676,10 +125808,6 @@
       "islot": "Fc",
       "cash": true
     },
-    "00080112": {
-      "islot": "Fc",
-      "cash": true
-    },
     "00080200": {
       "islot": "Fc",
       "cash": true
@@ -125705,10 +125833,6 @@
       "cash": true
     },
     "00080211": {
-      "islot": "Fc",
-      "cash": true
-    },
-    "00080212": {
       "islot": "Fc",
       "cash": true
     },
@@ -125740,10 +125864,6 @@
       "islot": "Fc",
       "cash": true
     },
-    "00080312": {
-      "islot": "Fc",
-      "cash": true
-    },
     "00080400": {
       "islot": "Fc",
       "cash": true
@@ -125769,10 +125889,6 @@
       "cash": true
     },
     "00080411": {
-      "islot": "Fc",
-      "cash": true
-    },
-    "00080412": {
       "islot": "Fc",
       "cash": true
     },
@@ -125804,10 +125920,6 @@
       "islot": "Fc",
       "cash": true
     },
-    "00080512": {
-      "islot": "Fc",
-      "cash": true
-    },
     "00080600": {
       "islot": "Fc",
       "cash": true
@@ -125833,10 +125945,6 @@
       "cash": true
     },
     "00080611": {
-      "islot": "Fc",
-      "cash": true
-    },
-    "00080612": {
       "islot": "Fc",
       "cash": true
     },
@@ -125868,10 +125976,6 @@
       "islot": "Fc",
       "cash": true
     },
-    "00080712": {
-      "islot": "Fc",
-      "cash": true
-    },
     "00080800": {
       "islot": "Fc",
       "cash": true
@@ -125897,10 +126001,6 @@
       "cash": true
     },
     "00080811": {
-      "islot": "Fc",
-      "cash": true
-    },
-    "00080812": {
       "islot": "Fc",
       "cash": true
     },
@@ -125981,10 +126081,6 @@
       "islot": "Fc",
       "cash": true
     },
-    "00081028": {
-      "islot": "Fc",
-      "cash": true
-    },
     "00081100": {
       "islot": "Fc",
       "cash": true
@@ -126059,10 +126155,6 @@
       "cash": true
     },
     "00081127": {
-      "islot": "Fc",
-      "cash": true
-    },
-    "00081128": {
       "islot": "Fc",
       "cash": true
     },
@@ -126143,10 +126235,6 @@
       "islot": "Fc",
       "cash": true
     },
-    "00081228": {
-      "islot": "Fc",
-      "cash": true
-    },
     "00081300": {
       "islot": "Fc",
       "cash": true
@@ -126221,10 +126309,6 @@
       "cash": true
     },
     "00081327": {
-      "islot": "Fc",
-      "cash": true
-    },
-    "00081328": {
       "islot": "Fc",
       "cash": true
     },
@@ -126305,10 +126389,6 @@
       "islot": "Fc",
       "cash": true
     },
-    "00081428": {
-      "islot": "Fc",
-      "cash": true
-    },
     "00081500": {
       "islot": "Fc",
       "cash": true
@@ -126383,10 +126463,6 @@
       "cash": true
     },
     "00081527": {
-      "islot": "Fc",
-      "cash": true
-    },
-    "00081528": {
       "islot": "Fc",
       "cash": true
     },
@@ -126467,10 +126543,6 @@
       "islot": "Fc",
       "cash": true
     },
-    "00081628": {
-      "islot": "Fc",
-      "cash": true
-    },
     "00081700": {
       "islot": "Fc",
       "cash": true
@@ -126548,10 +126620,6 @@
       "islot": "Fc",
       "cash": true
     },
-    "00081728": {
-      "islot": "Fc",
-      "cash": true
-    },
     "00081801": {
       "islot": "Fc",
       "cash": true
@@ -126613,10 +126681,6 @@
       "cash": true
     },
     "00081827": {
-      "islot": "Fc",
-      "cash": true
-    },
-    "00081828": {
       "islot": "Fc",
       "cash": true
     },
@@ -151043,7 +151107,8 @@
     },
     "01006821": {
       "islot": "Cp",
-      "cash": true
+      "cash": true,
+      "colorvar": true
     },
     "01006822": {
       "islot": "Cp",
@@ -152871,83 +152936,87 @@
     },
     "01007353": {
       "islot": "Cp",
-      "reqLevel": 150,
+      "reqLevel": 160,
       "reqJob": 1,
-      "incSTR": 40,
-      "incDEX": 40,
+      "incSTR": 80,
+      "incDEX": 80,
       "incMHP": 360,
       "incMMP": 360,
-      "incPAD": 2,
-      "incPDD": 390,
+      "incPAD": 10,
+      "incPDD": 750,
       "incACC": 240,
       "incEVA": 120,
-      "imdR": 10,
+      "imdR": 15,
       "tuc": 12,
+      "setItemID": 1174,
       "bossReward": true
     },
     "01007354": {
       "islot": "Cp",
-      "reqLevel": 150,
+      "reqLevel": 160,
       "reqJob": 4,
-      "incSTR": 40,
-      "incDEX": 40,
+      "incSTR": 80,
+      "incDEX": 80,
       "incMHP": 360,
       "incMMP": 360,
-      "incPAD": 2,
-      "incPDD": 300,
+      "incPAD": 10,
+      "incPDD": 750,
       "incACC": 240,
       "incEVA": 120,
-      "imdR": 10,
+      "imdR": 15,
       "tuc": 12,
+      "setItemID": 1175,
       "bossReward": true
     },
     "01007355": {
       "islot": "Cp",
-      "reqLevel": 150,
+      "reqLevel": 160,
       "reqJob": 2,
-      "incINT": 40,
-      "incLUK": 40,
+      "incINT": 80,
+      "incLUK": 80,
       "incMHP": 360,
       "incMMP": 360,
-      "incMAD": 2,
-      "incPDD": 180,
-      "incMDD": 240,
+      "incMAD": 10,
+      "incPDD": 750,
       "incACC": 240,
       "incEVA": 120,
-      "imdR": 10,
+      "imdR": 15,
       "tuc": 12,
+      "setItemID": 1176,
       "bossReward": true
     },
     "01007356": {
       "islot": "Cp",
-      "reqLevel": 150,
+      "reqLevel": 160,
       "reqJob": 8,
-      "incDEX": 40,
-      "incLUK": 40,
+      "incDEX": 80,
+      "incLUK": 80,
       "incMHP": 360,
       "incMMP": 360,
-      "incPAD": 2,
-      "incPDD": 300,
+      "incPAD": 10,
+      "incPDD": 750,
       "incACC": 240,
       "incEVA": 120,
-      "imdR": 10,
+      "imdR": 15,
       "tuc": 12,
+      "setItemID": 1177,
       "bossReward": true
     },
     "01007357": {
       "islot": "Cp",
-      "reqLevel": 150,
+      "reqLevel": 160,
       "reqJob": 16,
-      "incSTR": 40,
-      "incDEX": 40,
+      "incSTR": 80,
+      "incDEX": 80,
       "incMHP": 360,
       "incMMP": 360,
-      "incPAD": 2,
-      "incPDD": 300,
+      "incPAD": 10,
+      "incPDD": 750,
       "incACC": 240,
       "incEVA": 120,
-      "imdR": 10,
+      "imdR": 15,
       "tuc": 12,
+      "setItemID": 1178,
       "bossReward": true
     },
     "01007391": {
@@ -152975,6 +153044,22 @@
       "cash": true
     },
     "01007404": {
+      "islot": "Cp",
+      "cash": true
+    },
+    "01007424": {
+      "islot": "Cp",
+      "cash": true
+    },
+    "01007425": {
+      "islot": "Cp",
+      "cash": true
+    },
+    "01007426": {
+      "islot": "Cp",
+      "cash": true
+    },
+    "01007427": {
       "islot": "Cp",
       "cash": true
     },
@@ -167787,77 +167872,77 @@
     },
     "01042484": {
       "islot": "Ma",
-      "reqLevel": 150,
+      "reqLevel": 160,
       "reqJob": 1,
-      "incSTR": 30,
-      "incDEX": 30,
-      "incPAD": 2,
-      "incPDD": 210,
-      "incMDD": 60,
+      "incSTR": 50,
+      "incDEX": 50,
+      "incPAD": 6,
+      "incPDD": 325,
       "incACC": 30,
       "incEVA": 30,
       "imdR": 5,
       "tuc": 8,
+      "setItemID": 1174,
       "bossReward": true
     },
     "01042485": {
       "islot": "Ma",
-      "reqLevel": 150,
+      "reqLevel": 160,
       "reqJob": 4,
-      "incSTR": 30,
-      "incDEX": 30,
-      "incPAD": 2,
-      "incPDD": 135,
-      "incMDD": 135,
+      "incSTR": 50,
+      "incDEX": 50,
+      "incPAD": 6,
+      "incPDD": 325,
       "incACC": 48,
       "incEVA": 12,
       "imdR": 5,
       "tuc": 8,
+      "setItemID": 1175,
       "bossReward": true
     },
     "01042486": {
       "islot": "Ma",
-      "reqLevel": 150,
+      "reqLevel": 160,
       "reqJob": 2,
-      "incINT": 30,
-      "incLUK": 30,
-      "incMAD": 2,
-      "incPDD": 120,
-      "incMDD": 150,
+      "incINT": 50,
+      "incLUK": 50,
+      "incMAD": 6,
+      "incPDD": 325,
       "incACC": 30,
       "incEVA": 30,
       "imdR": 5,
       "tuc": 8,
+      "setItemID": 1176,
       "bossReward": true
     },
     "01042487": {
       "islot": "Ma",
-      "reqLevel": 150,
+      "reqLevel": 160,
       "reqJob": 8,
-      "incDEX": 30,
-      "incLUK": 30,
-      "incPAD": 2,
-      "incPDD": 135,
-      "incMDD": 135,
+      "incDEX": 50,
+      "incLUK": 50,
+      "incPAD": 6,
+      "incPDD": 325,
       "incACC": 12,
       "incEVA": 48,
       "imdR": 5,
       "tuc": 8,
+      "setItemID": 1177,
       "bossReward": true
     },
     "01042488": {
       "islot": "Ma",
-      "reqLevel": 150,
+      "reqLevel": 160,
       "reqJob": 16,
-      "incSTR": 30,
-      "incDEX": 30,
-      "incPAD": 2,
-      "incPDD": 135,
-      "incMDD": 135,
+      "incSTR": 50,
+      "incDEX": 50,
+      "incPAD": 6,
+      "incPDD": 325,
       "incACC": 30,
       "incEVA": 30,
       "imdR": 5,
       "tuc": 8,
+      "setItemID": 1178,
       "bossReward": true
     },
     "01048000": {
@@ -186806,7 +186891,8 @@
     },
     "01054433": {
       "islot": "MaPn",
-      "cash": true
+      "cash": true,
+      "colorvar": true
     },
     "01054434": {
       "islot": "MaPn",
@@ -187992,6 +188078,22 @@
       "cash": true
     },
     "01054880": {
+      "islot": "MaPn",
+      "cash": true
+    },
+    "01054901": {
+      "islot": "MaPn",
+      "cash": true
+    },
+    "01054902": {
+      "islot": "MaPn",
+      "cash": true
+    },
+    "01054903": {
+      "islot": "MaPn",
+      "cash": true
+    },
+    "01054904": {
       "islot": "MaPn",
       "cash": true
     },
@@ -192449,77 +192551,77 @@
     },
     "01062324": {
       "islot": "Pn",
-      "reqLevel": 150,
+      "reqLevel": 160,
       "reqJob": 1,
-      "incSTR": 30,
-      "incDEX": 30,
-      "incPAD": 2,
-      "incPDD": 210,
-      "incMDD": 60,
+      "incSTR": 50,
+      "incDEX": 50,
+      "incPAD": 6,
+      "incPDD": 325,
       "incACC": 30,
       "incEVA": 30,
       "imdR": 5,
       "tuc": 8,
+      "setItemID": 1174,
       "bossReward": true
     },
     "01062325": {
       "islot": "Pn",
-      "reqLevel": 150,
+      "reqLevel": 160,
       "reqJob": 4,
-      "incSTR": 30,
-      "incDEX": 30,
-      "incPAD": 2,
-      "incPDD": 135,
-      "incMDD": 135,
+      "incSTR": 50,
+      "incDEX": 50,
+      "incPAD": 6,
+      "incPDD": 325,
       "incACC": 48,
       "incEVA": 12,
       "imdR": 5,
       "tuc": 8,
+      "setItemID": 1175,
       "bossReward": true
     },
     "01062326": {
       "islot": "Pn",
-      "reqLevel": 150,
+      "reqLevel": 160,
       "reqJob": 2,
-      "incINT": 30,
-      "incLUK": 30,
-      "incMAD": 2,
-      "incPDD": 120,
-      "incMDD": 150,
+      "incINT": 50,
+      "incLUK": 50,
+      "incMAD": 6,
+      "incPDD": 325,
       "incACC": 30,
       "incEVA": 30,
       "imdR": 5,
       "tuc": 8,
+      "setItemID": 1176,
       "bossReward": true
     },
     "01062327": {
       "islot": "Pn",
-      "reqLevel": 150,
+      "reqLevel": 160,
       "reqJob": 8,
-      "incDEX": 30,
-      "incLUK": 30,
-      "incPAD": 2,
-      "incPDD": 135,
-      "incMDD": 135,
+      "incDEX": 50,
+      "incLUK": 50,
+      "incPAD": 6,
+      "incPDD": 325,
       "incACC": 12,
       "incEVA": 48,
       "imdR": 5,
       "tuc": 8,
+      "setItemID": 1177,
       "bossReward": true
     },
     "01062328": {
       "islot": "Pn",
-      "reqLevel": 150,
+      "reqLevel": 160,
       "reqJob": 16,
-      "incSTR": 30,
-      "incDEX": 30,
-      "incPAD": 2,
-      "incPDD": 135,
-      "incMDD": 135,
+      "incSTR": 50,
+      "incDEX": 50,
+      "incPAD": 6,
+      "incPDD": 325,
       "incACC": 30,
       "incEVA": 30,
       "imdR": 5,
       "tuc": 8,
+      "setItemID": 1178,
       "bossReward": true
     },
     "01070000": {
@@ -205866,7 +205968,8 @@
     },
     "01074145": {
       "islot": "So",
-      "cash": true
+      "cash": true,
+      "colorvar": true
     },
     "01074146": {
       "islot": "So",
@@ -206921,70 +207024,75 @@
       "islot": "So",
       "reqLevel": 160,
       "reqJob": 1,
-      "incSTR": 20,
-      "incDEX": 20,
-      "incPAD": 5,
-      "incPDD": 150,
-      "incMDD": 150,
+      "incSTR": 55,
+      "incDEX": 55,
+      "incPAD": 12,
+      "incPDD": 325,
+      "incMDD": 325,
       "incSpeed": 10,
       "incJump": 7,
       "tuc": 8,
+      "setItemID": 1174,
       "bossReward": true
     },
     "01074466": {
       "islot": "So",
       "reqLevel": 160,
       "reqJob": 4,
-      "incSTR": 20,
-      "incDEX": 20,
-      "incPAD": 5,
-      "incPDD": 150,
-      "incMDD": 150,
+      "incSTR": 55,
+      "incDEX": 55,
+      "incPAD": 12,
+      "incPDD": 325,
+      "incMDD": 325,
       "incSpeed": 10,
       "incJump": 7,
       "tuc": 8,
+      "setItemID": 1175,
       "bossReward": true
     },
     "01074467": {
       "islot": "So",
       "reqLevel": 160,
       "reqJob": 2,
-      "incINT": 20,
-      "incLUK": 20,
-      "incMAD": 5,
-      "incPDD": 150,
-      "incMDD": 150,
+      "incINT": 55,
+      "incLUK": 55,
+      "incMAD": 12,
+      "incPDD": 325,
+      "incMDD": 325,
       "incSpeed": 10,
       "incJump": 7,
       "tuc": 8,
+      "setItemID": 1176,
       "bossReward": true
     },
     "01074468": {
       "islot": "So",
       "reqLevel": 160,
       "reqJob": 8,
-      "incDEX": 20,
-      "incLUK": 20,
-      "incPAD": 5,
-      "incPDD": 150,
-      "incMDD": 150,
+      "incDEX": 55,
+      "incLUK": 55,
+      "incPAD": 12,
+      "incPDD": 325,
+      "incMDD": 250,
       "incSpeed": 10,
       "incJump": 7,
       "tuc": 8,
+      "setItemID": 1177,
       "bossReward": true
     },
     "01074469": {
       "islot": "So",
       "reqLevel": 160,
       "reqJob": 16,
-      "incSTR": 20,
-      "incDEX": 20,
-      "incPAD": 5,
-      "incPDD": 150,
-      "incMDD": 150,
+      "incSTR": 55,
+      "incDEX": 55,
+      "incPAD": 12,
+      "incPDD": 325,
+      "incMDD": 250,
       "incSpeed": 10,
       "incJump": 7,
       "tuc": 8,
+      "setItemID": 1178,
       "bossReward": true
     },
     "01074481": {
@@ -206996,6 +207104,22 @@
       "cash": true
     },
     "01074489": {
+      "islot": "So",
+      "cash": true
+    },
+    "01074508": {
+      "islot": "So",
+      "cash": true
+    },
+    "01074509": {
+      "islot": "So",
+      "cash": true
+    },
+    "01074510": {
+      "islot": "So",
+      "cash": true
+    },
+    "01074511": {
       "islot": "So",
       "cash": true
     },
@@ -213260,60 +213384,65 @@
       "islot": "Gv",
       "reqLevel": 160,
       "reqJob": 1,
-      "incSTR": 20,
-      "incDEX": 20,
-      "incPAD": 5,
-      "incPDD": 150,
-      "incMDD": 150,
+      "incSTR": 55,
+      "incDEX": 55,
+      "incPAD": 12,
+      "incPDD": 325,
+      "incMDD": 250,
       "tuc": 8,
+      "setItemID": 1174,
       "bossReward": true
     },
     "01082979": {
       "islot": "Gv",
       "reqLevel": 160,
       "reqJob": 4,
-      "incSTR": 20,
-      "incDEX": 20,
-      "incPAD": 5,
-      "incPDD": 150,
-      "incMDD": 150,
+      "incSTR": 55,
+      "incDEX": 55,
+      "incPAD": 12,
+      "incPDD": 325,
+      "incMDD": 250,
       "tuc": 8,
+      "setItemID": 1175,
       "bossReward": true
     },
     "01082980": {
       "islot": "Gv",
       "reqLevel": 160,
       "reqJob": 2,
-      "incINT": 20,
-      "incLUK": 20,
-      "incMAD": 5,
-      "incPDD": 150,
-      "incMDD": 150,
+      "incINT": 55,
+      "incLUK": 55,
+      "incMAD": 12,
+      "incPDD": 325,
+      "incMDD": 250,
       "tuc": 8,
+      "setItemID": 1176,
       "bossReward": true
     },
     "01082981": {
       "islot": "Gv",
       "reqLevel": 160,
       "reqJob": 8,
-      "incDEX": 20,
-      "incLUK": 20,
-      "incPAD": 5,
-      "incPDD": 150,
-      "incMDD": 150,
+      "incDEX": 55,
+      "incLUK": 55,
+      "incPAD": 12,
+      "incPDD": 325,
+      "incMDD": 250,
       "tuc": 8,
+      "setItemID": 1177,
       "bossReward": true
     },
     "01082982": {
       "islot": "Gv",
       "reqLevel": 160,
       "reqJob": 16,
-      "incSTR": 20,
-      "incDEX": 20,
-      "incPAD": 5,
-      "incPDD": 150,
-      "incMDD": 150,
+      "incSTR": 55,
+      "incDEX": 55,
+      "incPAD": 12,
+      "incPDD": 325,
+      "incMDD": 250,
       "tuc": 8,
+      "setItemID": 1178,
       "bossReward": true
     },
     "01090000": {
@@ -224454,75 +224583,80 @@
       "islot": "Sr",
       "reqLevel": 160,
       "reqJob": 1,
-      "incSTR": 15,
-      "incDEX": 15,
-      "incINT": 15,
-      "incLUK": 15,
-      "incPAD": 2,
-      "incMAD": 2,
-      "incPDD": 250,
-      "incMDD": 250,
+      "incSTR": 50,
+      "incDEX": 50,
+      "incINT": 50,
+      "incLUK": 50,
+      "incPAD": 9,
+      "incMAD": 9,
+      "incPDD": 600,
+      "incMDD": 450,
       "tuc": 8,
+      "setItemID": 1174,
       "bossReward": true
     },
     "01104137": {
       "islot": "Sr",
       "reqLevel": 160,
       "reqJob": 4,
-      "incSTR": 15,
-      "incDEX": 15,
-      "incINT": 15,
-      "incLUK": 15,
-      "incPAD": 2,
-      "incMAD": 2,
-      "incPDD": 250,
-      "incMDD": 250,
+      "incSTR": 50,
+      "incDEX": 50,
+      "incINT": 50,
+      "incLUK": 50,
+      "incPAD": 9,
+      "incMAD": 9,
+      "incPDD": 600,
+      "incMDD": 450,
       "tuc": 8,
+      "setItemID": 1175,
       "bossReward": true
     },
     "01104138": {
       "islot": "Sr",
       "reqLevel": 160,
       "reqJob": 2,
-      "incSTR": 15,
-      "incDEX": 15,
-      "incINT": 15,
-      "incLUK": 15,
-      "incPAD": 2,
-      "incMAD": 2,
-      "incPDD": 250,
-      "incMDD": 250,
+      "incSTR": 50,
+      "incDEX": 50,
+      "incINT": 50,
+      "incLUK": 50,
+      "incPAD": 9,
+      "incMAD": 9,
+      "incPDD": 600,
+      "incMDD": 450,
       "tuc": 8,
+      "setItemID": 1176,
       "bossReward": true
     },
     "01104139": {
       "islot": "Sr",
       "reqLevel": 160,
       "reqJob": 8,
-      "incSTR": 15,
-      "incDEX": 15,
-      "incINT": 15,
-      "incLUK": 15,
-      "incPAD": 2,
-      "incMAD": 2,
-      "incPDD": 250,
-      "incMDD": 250,
+      "incSTR": 50,
+      "incDEX": 50,
+      "incINT": 50,
+      "incLUK": 50,
+      "incPAD": 9,
+      "incMAD": 9,
+      "incPDD": 600,
+      "incMDD": 450,
       "tuc": 8,
+      "setItemID": 1177,
       "bossReward": true
     },
     "01104140": {
       "islot": "Sr",
       "reqLevel": 160,
       "reqJob": 16,
-      "incSTR": 15,
-      "incDEX": 15,
-      "incINT": 15,
-      "incLUK": 15,
-      "incPAD": 2,
-      "incMAD": 2,
-      "incPDD": 250,
-      "incMDD": 250,
+      "incSTR": 50,
+      "incDEX": 50,
+      "incINT": 50,
+      "incLUK": 50,
+      "incPAD": 9,
+      "incMAD": 9,
+      "incPDD": 600,
+      "incMDD": 450,
       "tuc": 8,
+      "setItemID": 1178,
       "bossReward": true
     },
     "01104169": {
@@ -224542,6 +224676,10 @@
       "cash": true
     },
     "01104173": {
+      "islot": "Sr",
+      "cash": true
+    },
+    "01104188": {
       "islot": "Sr",
       "cash": true
     },
@@ -255542,74 +255680,74 @@
       "islot": "Sh",
       "reqLevel": 160,
       "reqJob": 1,
-      "incSTR": 14,
-      "incDEX": 14,
-      "incINT": 14,
-      "incLUK": 14,
-      "incPAD": 10,
-      "incMAD": 10,
-      "incPDD": 100,
-      "incMDD": 100,
-      "tuc": 2
+      "incSTR": 51,
+      "incDEX": 51,
+      "incINT": 51,
+      "incLUK": 51,
+      "incPAD": 28,
+      "incMAD": 28,
+      "incPDD": 450,
+      "tuc": 2,
+      "setItemID": 1174
     },
     "01152242": {
       "islot": "Sh",
       "reqLevel": 160,
       "reqJob": 4,
-      "incSTR": 14,
-      "incDEX": 14,
-      "incINT": 14,
-      "incLUK": 14,
-      "incPAD": 10,
-      "incMAD": 10,
-      "incPDD": 100,
-      "incMDD": 100,
+      "incSTR": 51,
+      "incDEX": 51,
+      "incINT": 51,
+      "incLUK": 51,
+      "incPAD": 28,
+      "incMAD": 28,
+      "incPDD": 450,
       "tuc": 2,
+      "setItemID": 1175,
       "bossReward": true
     },
     "01152243": {
       "islot": "Sh",
       "reqLevel": 160,
       "reqJob": 2,
-      "incSTR": 14,
-      "incDEX": 14,
-      "incINT": 14,
-      "incLUK": 14,
-      "incPAD": 10,
-      "incMAD": 10,
-      "incPDD": 100,
-      "incMDD": 100,
+      "incSTR": 51,
+      "incDEX": 51,
+      "incINT": 51,
+      "incLUK": 51,
+      "incPAD": 28,
+      "incMAD": 28,
+      "incPDD": 450,
       "tuc": 2,
+      "setItemID": 1176,
       "bossReward": true
     },
     "01152244": {
       "islot": "Sh",
       "reqLevel": 160,
       "reqJob": 8,
-      "incSTR": 14,
-      "incDEX": 14,
-      "incINT": 14,
-      "incLUK": 14,
-      "incPAD": 10,
-      "incMAD": 10,
-      "incPDD": 100,
-      "incMDD": 100,
+      "incSTR": 51,
+      "incDEX": 51,
+      "incINT": 51,
+      "incLUK": 51,
+      "incPAD": 28,
+      "incMAD": 28,
+      "incPDD": 450,
       "tuc": 2,
+      "setItemID": 1177,
       "bossReward": true
     },
     "01152245": {
       "islot": "Sh",
       "reqLevel": 160,
       "reqJob": 16,
-      "incSTR": 14,
-      "incDEX": 14,
-      "incINT": 14,
-      "incLUK": 14,
-      "incPAD": 10,
-      "incMAD": 10,
-      "incPDD": 100,
-      "incMDD": 100,
+      "incSTR": 51,
+      "incDEX": 51,
+      "incINT": 51,
+      "incLUK": 51,
+      "incPAD": 28,
+      "incMAD": 28,
+      "incPDD": 450,
       "tuc": 2,
+      "setItemID": 1178,
       "bossReward": true
     },
     "01162000": {
@@ -256180,6 +256318,20 @@
       "incMMP": 100,
       "incPAD": 10,
       "incMAD": 10,
+      "bossReward": true
+    },
+    "01162092": {
+      "islot": "Po",
+      "reqLevel": 140,
+      "incSTR": 5,
+      "incDEX": 5,
+      "incINT": 5,
+      "incLUK": 5,
+      "incMHP": 50,
+      "incMMP": 50,
+      "incPAD": 5,
+      "incMAD": 5,
+      "setItemID": 462,
       "bossReward": true
     },
     "01182000": {
@@ -262300,14 +262452,15 @@
       "islot": "Wp",
       "reqLevel": 160,
       "reqJob": 2,
-      "incINT": 60,
-      "incLUK": 60,
-      "incPAD": 143,
-      "incMAD": 241,
+      "incINT": 100,
+      "incLUK": 100,
+      "incPAD": 206,
+      "incMAD": 347,
       "incACC": 140,
       "bdR": 30,
-      "imdR": 10,
+      "imdR": 20,
       "tuc": 9,
+      "setItemID": 1176,
       "bossReward": true
     },
     "01213000": {
@@ -262875,14 +263028,15 @@
       "islot": "Wp",
       "reqLevel": 160,
       "reqJob": 1,
-      "incSTR": 60,
-      "incDEX": 60,
-      "incPAD": 205,
+      "incSTR": 100,
+      "incDEX": 100,
+      "incPAD": 295,
       "incACC": 140,
       "bdR": 30,
-      "imdR": 10,
+      "imdR": 20,
       "attackSpeed": 4,
       "tuc": 9,
+      "setItemID": 1174,
       "bossReward": true
     },
     "01214000": {
@@ -263465,15 +263619,16 @@
       "islot": "WpSi",
       "reqLevel": 160,
       "reqJob": 4,
-      "incSTR": 60,
-      "incDEX": 60,
-      "incPAD": 192,
+      "incSTR": 100,
+      "incDEX": 100,
+      "incPAD": 276,
       "incACC": 140,
       "incSpeed": 12,
       "bdR": 30,
-      "imdR": 10,
+      "imdR": 20,
       "attackSpeed": 4,
       "tuc": 9,
+      "setItemID": 1175,
       "bossReward": true
     },
     "01215000": {
@@ -263988,14 +264143,15 @@
       "islot": "Wp",
       "reqLevel": 160,
       "reqJob": 1,
-      "incSTR": 60,
-      "incDEX": 60,
-      "incPAD": 205,
+      "incSTR": 100,
+      "incDEX": 100,
+      "incPAD": 295,
       "incACC": 140,
       "bdR": 30,
-      "imdR": 10,
+      "imdR": 20,
       "attackSpeed": 4,
       "tuc": 9,
+      "setItemID": 1174,
       "bossReward": true
     },
     "01216000": {
@@ -264551,15 +264707,16 @@
       "islot": "Wp",
       "reqLevel": 160,
       "reqJob": 2,
-      "incINT": 60,
-      "incLUK": 60,
-      "incPAD": 143,
-      "incMAD": 241,
+      "incINT": 100,
+      "incLUK": 100,
+      "incPAD": 206,
+      "incMAD": 347,
       "incACC": 140,
       "bdR": 30,
-      "imdR": 10,
+      "imdR": 20,
       "attackSpeed": 6,
       "tuc": 9,
+      "setItemID": 1176,
       "bossReward": true
     },
     "01222000": {
@@ -265771,14 +265928,15 @@
       "islot": "Wp",
       "reqLevel": 160,
       "reqJob": 16,
-      "incSTR": 60,
-      "incDEX": 60,
-      "incPAD": 154,
+      "incSTR": 100,
+      "incDEX": 100,
+      "incPAD": 221,
       "incACC": 140,
       "bdR": 30,
-      "imdR": 10,
+      "imdR": 20,
       "attackSpeed": 5,
       "tuc": 9,
+      "setItemID": 1178,
       "bossReward": true
     },
     "01232000": {
@@ -266962,14 +267120,15 @@
       "islot": "Wp",
       "reqLevel": 160,
       "reqJob": 1,
-      "incSTR": 60,
+      "incSTR": 100,
       "incMHP": 2250,
-      "incPAD": 205,
+      "incPAD": 295,
       "incACC": 140,
       "bdR": 30,
-      "imdR": 10,
+      "imdR": 20,
       "attackSpeed": 6,
       "tuc": 9,
+      "setItemID": 1174,
       "bossReward": true
     },
     "01242000": {
@@ -268476,28 +268635,30 @@
       "islot": "Wp",
       "reqLevel": 160,
       "reqJob": 24,
-      "incDEX": 60,
-      "incLUK": 60,
-      "incPAD": 154,
+      "incDEX": 100,
+      "incLUK": 100,
+      "incPAD": 221,
       "incACC": 140,
       "bdR": 30,
-      "imdR": 10,
+      "imdR": 20,
       "attackSpeed": 5,
       "tuc": 9,
+      "setItemID": 1177,
       "bossReward": true
     },
     "01242168": {
       "islot": "Wp",
       "reqLevel": 160,
       "reqJob": 24,
-      "incDEX": 60,
-      "incLUK": 60,
-      "incPAD": 154,
+      "incDEX": 100,
+      "incLUK": 100,
+      "incPAD": 221,
       "incACC": 140,
       "bdR": 30,
-      "imdR": 10,
+      "imdR": 20,
       "attackSpeed": 5,
       "tuc": 9,
+      "setItemID": 1177,
       "bossReward": true
     },
     "01252000": {
@@ -269641,15 +269802,16 @@
       "reqLevel": 160,
       "reqJob": 2,
       "reqINT": 480,
-      "incINT": 60,
-      "incLUK": 60,
-      "incPAD": 143,
-      "incMAD": 241,
+      "incINT": 100,
+      "incLUK": 100,
+      "incPAD": 206,
+      "incMAD": 347,
       "incACC": 140,
       "bdR": 30,
-      "imdR": 10,
+      "imdR": 20,
       "attackSpeed": 6,
       "tuc": 8,
+      "setItemID": 1176,
       "bossReward": true
     },
     "01253000": {
@@ -270228,15 +270390,16 @@
       "reqLevel": 160,
       "reqJob": 2,
       "reqINT": 480,
-      "incINT": 60,
-      "incLUK": 60,
-      "incPAD": 143,
-      "incMAD": 241,
+      "incINT": 100,
+      "incLUK": 100,
+      "incPAD": 206,
+      "incMAD": 347,
       "incACC": 140,
       "bdR": 30,
-      "imdR": 10,
+      "imdR": 20,
       "attackSpeed": 6,
       "tuc": 8,
+      "setItemID": 1176,
       "bossReward": true
     },
     "01254000": {
@@ -271225,16 +271388,17 @@
       "islot": "Wp",
       "reqLevel": 160,
       "reqJob": 2,
-      "incINT": 60,
-      "incLUK": 60,
-      "incPAD": 143,
-      "incMAD": 241,
+      "incINT": 100,
+      "incLUK": 100,
+      "incPAD": 206,
+      "incMAD": 347,
       "incACC": 140,
       "bdR": 30,
-      "imdR": 10,
+      "imdR": 20,
       "attackSpeed": 8,
       "tuc": 9,
       "charmEXP": 100,
+      "setItemID": 1176,
       "bossReward": true
     },
     "01262000": {
@@ -271942,15 +272106,16 @@
       "islot": "Wp",
       "reqLevel": 160,
       "reqJob": 2,
-      "incINT": 60,
-      "incLUK": 60,
-      "incPAD": 143,
-      "incMAD": 241,
+      "incINT": 100,
+      "incLUK": 100,
+      "incPAD": 206,
+      "incMAD": 347,
       "incACC": 140,
       "bdR": 30,
-      "imdR": 10,
+      "imdR": 20,
       "attackSpeed": 6,
       "tuc": 9,
+      "setItemID": 1176,
       "bossReward": true
     },
     "01272000": {
@@ -272567,14 +272732,15 @@
       "islot": "Wp",
       "reqLevel": 160,
       "reqJob": 8,
-      "incDEX": 60,
-      "incLUK": 60,
-      "incPAD": 192,
+      "incDEX": 100,
+      "incLUK": 100,
+      "incPAD": 276,
       "incACC": 140,
       "bdR": 30,
-      "imdR": 10,
+      "imdR": 20,
       "attackSpeed": 4,
       "tuc": 9,
+      "setItemID": 1177,
       "bossReward": true
     },
     "01282000": {
@@ -273251,15 +273417,16 @@
       "islot": "Wp",
       "reqLevel": 160,
       "reqJob": 2,
-      "incINT": 60,
-      "incLUK": 60,
-      "incPAD": 143,
-      "incMAD": 241,
+      "incINT": 100,
+      "incLUK": 100,
+      "incPAD": 206,
+      "incMAD": 347,
       "incACC": 140,
       "bdR": 30,
-      "imdR": 10,
+      "imdR": 20,
       "attackSpeed": 6,
       "tuc": 9,
+      "setItemID": 1176,
       "bossReward": true
     },
     "01292000": {
@@ -273827,14 +273994,15 @@
       "islot": "Wp",
       "reqLevel": 160,
       "reqJob": 8,
-      "incDEX": 60,
-      "incLUK": 60,
-      "incPAD": 192,
+      "incDEX": 100,
+      "incLUK": 100,
+      "incPAD": 276,
       "incACC": 140,
       "bdR": 30,
-      "imdR": 10,
+      "imdR": 20,
       "attackSpeed": 4,
       "tuc": 9,
+      "setItemID": 1177,
       "bossReward": true
     },
     "01300000": {
@@ -276620,14 +276788,15 @@
       "islot": "Wp",
       "reqLevel": 160,
       "reqJob": 1,
-      "incSTR": 60,
-      "incDEX": 60,
-      "incPAD": 197,
+      "incSTR": 100,
+      "incDEX": 100,
+      "incPAD": 283,
       "incACC": 140,
       "bdR": 30,
-      "imdR": 10,
+      "imdR": 20,
       "attackSpeed": 5,
       "tuc": 9,
+      "setItemID": 1174,
       "bossReward": true
     },
     "01302900": {
@@ -278640,14 +278809,15 @@
       "islot": "Wp",
       "reqLevel": 160,
       "reqJob": 1,
-      "incSTR": 60,
-      "incDEX": 60,
-      "incPAD": 197,
+      "incSTR": 100,
+      "incDEX": 100,
+      "incPAD": 283,
       "incACC": 140,
       "bdR": 30,
-      "imdR": 10,
+      "imdR": 20,
       "attackSpeed": 5,
       "tuc": 9,
+      "setItemID": 1174,
       "bossReward": true
     },
     "01322000": {
@@ -280879,14 +281049,15 @@
       "islot": "Wp",
       "reqLevel": 160,
       "reqJob": 1,
-      "incSTR": 60,
-      "incDEX": 60,
-      "incPAD": 197,
+      "incSTR": 100,
+      "incDEX": 100,
+      "incPAD": 283,
       "incACC": 140,
       "bdR": 30,
-      "imdR": 10,
+      "imdR": 20,
       "attackSpeed": 5,
       "tuc": 9,
+      "setItemID": 1174,
       "bossReward": true
     },
     "01332000": {
@@ -283447,14 +283618,15 @@
       "islot": "Wp",
       "reqLevel": 160,
       "reqJob": 8,
-      "incDEX": 60,
-      "incLUK": 60,
-      "incPAD": 192,
+      "incDEX": 100,
+      "incLUK": 100,
+      "incPAD": 276,
       "incACC": 140,
       "bdR": 30,
-      "imdR": 10,
+      "imdR": 20,
       "attackSpeed": 4,
       "tuc": 9,
+      "setItemID": 1177,
       "bossReward": true
     },
     "01342000": {
@@ -289537,14 +289709,15 @@
       "islot": "Wp",
       "reqLevel": 160,
       "reqJob": 8,
-      "incDEX": 60,
-      "incLUK": 60,
-      "incPAD": 197,
+      "incDEX": 100,
+      "incLUK": 100,
+      "incPAD": 283,
       "incACC": 140,
       "bdR": 30,
-      "imdR": 10,
+      "imdR": 20,
       "attackSpeed": 5,
       "tuc": 9,
+      "setItemID": 1177,
       "bossReward": true
     },
     "01372000": {
@@ -291839,15 +292012,16 @@
       "islot": "Wp",
       "reqLevel": 160,
       "reqJob": 2,
-      "incINT": 60,
-      "incLUK": 60,
-      "incPAD": 143,
-      "incMAD": 241,
+      "incINT": 100,
+      "incLUK": 100,
+      "incPAD": 206,
+      "incMAD": 347,
       "incACC": 140,
       "bdR": 30,
-      "imdR": 10,
+      "imdR": 20,
       "attackSpeed": 6,
       "tuc": 9,
+      "setItemID": 1176,
       "bossReward": true
     },
     "01382000": {
@@ -294498,15 +294672,16 @@
       "islot": "Wp",
       "reqLevel": 160,
       "reqJob": 2,
-      "incINT": 60,
-      "incLUK": 60,
-      "incPAD": 151,
-      "incMAD": 245,
+      "incINT": 100,
+      "incLUK": 100,
+      "incPAD": 218,
+      "incMAD": 353,
       "incACC": 140,
       "bdR": 30,
-      "imdR": 10,
+      "imdR": 20,
       "attackSpeed": 8,
       "tuc": 9,
+      "setItemID": 1176,
       "bossReward": true
     },
     "01390000": {
@@ -296911,14 +297086,15 @@
       "islot": "WpSi",
       "reqLevel": 160,
       "reqJob": 1,
-      "incSTR": 60,
-      "incDEX": 60,
-      "incPAD": 205,
+      "incSTR": 100,
+      "incDEX": 100,
+      "incPAD": 295,
       "incACC": 140,
       "bdR": 30,
-      "imdR": 10,
+      "imdR": 20,
       "attackSpeed": 6,
       "tuc": 9,
+      "setItemID": 1174,
       "bossReward": true
     },
     "01403000": {
@@ -297487,14 +297663,15 @@
       "reqLevel": 160,
       "reqJob": 16,
       "reqDEX": 480,
-      "incSTR": 60,
-      "incDEX": 60,
-      "incPAD": 154,
+      "incSTR": 100,
+      "incDEX": 100,
+      "incPAD": 221,
       "incACC": 140,
       "bdR": 30,
-      "imdR": 10,
+      "imdR": 20,
       "attackSpeed": 4,
       "tuc": 8,
+      "setItemID": 1178,
       "bossReward": true
     },
     "01404000": {
@@ -298025,14 +298202,15 @@
       "islot": "Wp",
       "reqLevel": 160,
       "reqJob": 8,
-      "incDEX": 60,
-      "incLUK": 60,
-      "incPAD": 192,
+      "incDEX": 100,
+      "incLUK": 100,
+      "incPAD": 276,
       "incACC": 140,
       "bdR": 30,
-      "imdR": 10,
+      "imdR": 20,
       "attackSpeed": 4,
       "tuc": 9,
+      "setItemID": 1177,
       "bossReward": true
     },
     "01412000": {
@@ -299693,14 +299871,15 @@
       "islot": "WpSi",
       "reqLevel": 160,
       "reqJob": 1,
-      "incSTR": 60,
-      "incDEX": 60,
-      "incPAD": 205,
+      "incSTR": 100,
+      "incDEX": 100,
+      "incPAD": 295,
       "incACC": 140,
       "bdR": 30,
-      "imdR": 10,
+      "imdR": 20,
       "attackSpeed": 6,
       "tuc": 9,
+      "setItemID": 1174,
       "bossReward": true
     },
     "01422000": {
@@ -301424,14 +301603,15 @@
       "islot": "WpSi",
       "reqLevel": 160,
       "reqJob": 1,
-      "incSTR": 60,
-      "incDEX": 60,
-      "incPAD": 205,
+      "incSTR": 100,
+      "incDEX": 100,
+      "incPAD": 295,
       "incACC": 140,
       "bdR": 30,
-      "imdR": 10,
+      "imdR": 20,
       "attackSpeed": 6,
       "tuc": 9,
+      "setItemID": 1174,
       "bossReward": true
     },
     "01432000": {
@@ -303454,14 +303634,15 @@
       "islot": "Wp",
       "reqLevel": 160,
       "reqJob": 1,
-      "incSTR": 60,
-      "incDEX": 60,
-      "incPAD": 205,
+      "incSTR": 100,
+      "incDEX": 100,
+      "incPAD": 295,
       "incACC": 140,
       "bdR": 30,
-      "imdR": 10,
+      "imdR": 20,
       "attackSpeed": 6,
       "tuc": 9,
+      "setItemID": 1174,
       "bossReward": true
     },
     "01433000": {
@@ -303959,14 +304140,15 @@
       "islot": "Wp",
       "reqLevel": 160,
       "reqJob": 1,
-      "incSTR": 60,
-      "incDEX": 60,
-      "incPAD": 205,
+      "incSTR": 100,
+      "incDEX": 100,
+      "incPAD": 295,
       "incACC": 140,
       "bdR": 30,
-      "imdR": 10,
+      "imdR": 20,
       "attackSpeed": 6,
       "tuc": 9,
+      "setItemID": 1174,
       "bossReward": true
     },
     "01442000": {
@@ -306350,14 +306532,15 @@
       "islot": "Wp",
       "reqLevel": 160,
       "reqJob": 1,
-      "incSTR": 60,
-      "incDEX": 60,
-      "incPAD": 184,
+      "incSTR": 100,
+      "incDEX": 100,
+      "incPAD": 264,
       "incACC": 140,
       "bdR": 30,
-      "imdR": 10,
+      "imdR": 20,
       "attackSpeed": 5,
       "tuc": 9,
+      "setItemID": 1174,
       "bossReward": true
     },
     "01452000": {
@@ -308789,15 +308972,16 @@
       "islot": "WpSi",
       "reqLevel": 160,
       "reqJob": 4,
-      "incSTR": 60,
-      "incDEX": 60,
-      "incPAD": 192,
+      "incSTR": 100,
+      "incDEX": 100,
+      "incPAD": 276,
       "incACC": 140,
       "incSpeed": 12,
       "bdR": 30,
-      "imdR": 10,
+      "imdR": 20,
       "attackSpeed": 6,
       "tuc": 9,
+      "setItemID": 1175,
       "bossReward": true
     },
     "01462000": {
@@ -311113,15 +311297,16 @@
       "islot": "WpSi",
       "reqLevel": 160,
       "reqJob": 4,
-      "incSTR": 60,
-      "incDEX": 60,
-      "incPAD": 197,
+      "incSTR": 100,
+      "incDEX": 100,
+      "incPAD": 283,
       "incACC": 140,
       "incSpeed": 15,
       "bdR": 30,
-      "imdR": 10,
+      "imdR": 20,
       "attackSpeed": 6,
       "tuc": 9,
+      "setItemID": 1175,
       "bossReward": true
     },
     "01472000": {
@@ -313708,14 +313893,15 @@
       "islot": "Wp",
       "reqLevel": 160,
       "reqJob": 8,
-      "incDEX": 60,
-      "incLUK": 60,
-      "incPAD": 103,
+      "incDEX": 100,
+      "incLUK": 100,
+      "incPAD": 149,
       "incACC": 140,
       "bdR": 30,
-      "imdR": 10,
+      "imdR": 20,
       "attackSpeed": 4,
       "tuc": 9,
+      "setItemID": 1177,
       "bossReward": true
     },
     "01482000": {
@@ -315725,14 +315911,15 @@
       "islot": "Wp",
       "reqLevel": 160,
       "reqJob": 16,
-      "incSTR": 60,
-      "incDEX": 60,
-      "incPAD": 154,
+      "incSTR": 100,
+      "incDEX": 100,
+      "incPAD": 221,
       "incACC": 140,
       "bdR": 30,
-      "imdR": 10,
+      "imdR": 20,
       "attackSpeed": 5,
       "tuc": 9,
+      "setItemID": 1178,
       "bossReward": true
     },
     "01492000": {
@@ -317739,14 +317926,15 @@
       "islot": "Wp",
       "reqLevel": 160,
       "reqJob": 16,
-      "incSTR": 60,
-      "incDEX": 60,
-      "incPAD": 150,
+      "incSTR": 100,
+      "incDEX": 100,
+      "incPAD": 216,
       "incACC": 140,
       "bdR": 30,
-      "imdR": 10,
+      "imdR": 20,
       "attackSpeed": 5,
       "tuc": 9,
+      "setItemID": 1178,
       "bossReward": true
     },
     "01522000": {
@@ -319204,15 +319392,16 @@
       "islot": "Wp",
       "reqLevel": 160,
       "reqJob": 4,
-      "incSTR": 60,
-      "incDEX": 60,
-      "incPAD": 192,
+      "incSTR": 100,
+      "incDEX": 100,
+      "incPAD": 276,
       "incACC": 140,
       "incSpeed": 15,
       "bdR": 30,
-      "imdR": 10,
+      "imdR": 20,
       "attackSpeed": 6,
       "tuc": 9,
+      "setItemID": 1175,
       "bossReward": true
     },
     "01532000": {
@@ -320792,15 +320981,16 @@
       "islot": "Wp",
       "reqLevel": 160,
       "reqJob": 16,
-      "incSTR": 60,
-      "incDEX": 60,
-      "incPAD": 210,
+      "incSTR": 100,
+      "incDEX": 100,
+      "incPAD": 302,
       "incPDD": 160,
       "incACC": 140,
       "bdR": 30,
-      "imdR": 10,
+      "imdR": 20,
       "attackSpeed": 8,
       "tuc": 9,
+      "setItemID": 1178,
       "bossReward": true
     },
     "01542000": {
@@ -321970,14 +322160,15 @@
       "reqLevel": 160,
       "reqJob": 1,
       "reqSTR": 480,
-      "incSTR": 60,
-      "incDEX": 60,
-      "incPAD": 197,
+      "incSTR": 100,
+      "incDEX": 100,
+      "incPAD": 283,
       "incACC": 140,
       "bdR": 30,
-      "imdR": 10,
+      "imdR": 20,
       "attackSpeed": 5,
       "tuc": 8,
+      "setItemID": 1174,
       "bossReward": true
     },
     "01552000": {
@@ -324187,14 +324378,15 @@
       "islot": "Wp",
       "reqLevel": 160,
       "reqJob": 1,
-      "incSTR": 60,
-      "incDEX": 60,
-      "incPAD": 154,
+      "incSTR": 100,
+      "incDEX": 100,
+      "incPAD": 221,
       "incACC": 140,
       "bdR": 30,
-      "imdR": 10,
+      "imdR": 20,
       "attackSpeed": 5,
       "tuc": 9,
+      "setItemID": 1174,
       "bossReward": true
     },
     "01592000": {
@@ -324836,15 +325028,16 @@
       "islot": "WpSi",
       "reqLevel": 160,
       "reqJob": 4,
-      "incSTR": 60,
-      "incDEX": 60,
-      "incPAD": 192,
+      "incSTR": 100,
+      "incDEX": 100,
+      "incPAD": 276,
       "incACC": 140,
       "incSpeed": 12,
       "bdR": 30,
-      "imdR": 10,
+      "imdR": 20,
       "attackSpeed": 6,
       "tuc": 9,
+      "setItemID": 1175,
       "bossReward": true
     },
     "01602000": {
@@ -326330,6 +326523,10 @@
       "islot": "Tm",
       "reqLevel": 10,
       "charmEXP": 80
+    },
+    "01662344": {
+      "islot": "Tm",
+      "charmEXP": 30
     },
     "01672000": {
       "islot": "Tm",
@@ -333155,6 +333352,7 @@
     "01703402": {
       "islot": "Wp",
       "cash": true,
+      "colorvar": true,
       "collabo": true
     },
     "01703403": {
@@ -335252,6 +335450,18 @@
       "cash": true
     },
     "01704045": {
+      "islot": "Wp",
+      "cash": true
+    },
+    "01704063": {
+      "islot": "Wp",
+      "cash": true
+    },
+    "01704064": {
+      "islot": "Wp",
+      "cash": true
+    },
+    "01704065": {
       "islot": "Wp",
       "cash": true
     },
@@ -359272,6 +359482,9 @@
       "cash": true
     },
     "05010502": {
+      "cash": true
+    },
+    "05010524": {
       "cash": true
     },
     "05010999": {

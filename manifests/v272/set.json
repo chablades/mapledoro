@@ -5775,6 +5775,626 @@
       },
       "jokerPossible": true
     },
+    "1174": {
+      "name": "Libae\u0027s Supercharged Equipment Set",
+      "completeCount": 8,
+      "members": [
+        {
+          "itemIds": [
+            "01007353"
+          ]
+        },
+        {
+          "itemIds": [
+            "01042484"
+          ]
+        },
+        {
+          "itemIds": [
+            "01062324"
+          ]
+        },
+        {
+          "itemIds": [
+            "01082978"
+          ]
+        },
+        {
+          "itemIds": [
+            "01074465"
+          ]
+        },
+        {
+          "itemIds": [
+            "01104136"
+          ]
+        },
+        {
+          "itemIds": [
+            "01152241"
+          ]
+        },
+        {
+          "itemIds": [
+            "01302386"
+          ]
+        },
+        {
+          "itemIds": [
+            "01312231"
+          ]
+        },
+        {
+          "itemIds": [
+            "01322287"
+          ]
+        },
+        {
+          "itemIds": [
+            "01213059"
+          ]
+        },
+        {
+          "itemIds": [
+            "01582063"
+          ]
+        },
+        {
+          "itemIds": [
+            "01402300"
+          ]
+        },
+        {
+          "itemIds": [
+            "01412202"
+          ]
+        },
+        {
+          "itemIds": [
+            "01422215"
+          ]
+        },
+        {
+          "itemIds": [
+            "01432247"
+          ]
+        },
+        {
+          "itemIds": [
+            "01442307"
+          ]
+        },
+        {
+          "itemIds": [
+            "01232139"
+          ]
+        },
+        {
+          "itemIds": [
+            "01215049"
+          ]
+        },
+        {
+          "itemIds": [
+            "01542153"
+          ]
+        },
+        {
+          "itemIds": [
+            "01433041"
+          ]
+        }
+      ],
+      "effects": {
+        "2": {
+          "incAllStat": 40,
+          "incMHP": 2500,
+          "incMMP": 2500,
+          "incPAD": 40,
+          "incMAD": 40
+        },
+        "3": {
+          "incAllStat": 50,
+          "incMHP": 2500,
+          "incMMP": 2500,
+          "incPAD": 50,
+          "incMAD": 50
+        },
+        "4": {
+          "incAllStat": 50,
+          "incMHP": 2500,
+          "incMMP": 2500,
+          "incPAD": 50,
+          "incMAD": 50
+        },
+        "5": {
+          "incPAD": 50,
+          "incMAD": 50,
+          "incPDD": 200,
+          "incMDD": 200
+        },
+        "6": {
+          "incPAD": 80,
+          "incMAD": 80
+        },
+        "7": {
+          "incPAD": 80,
+          "incMAD": 80
+        },
+        "8": {
+          "incPAD": 100,
+          "incMAD": 100
+        }
+      },
+      "jokerPossible": true
+    },
+    "1175": {
+      "name": "Libae\u0027s Supercharged Equipment Set",
+      "completeCount": 8,
+      "members": [
+        {
+          "itemIds": [
+            "01007354"
+          ]
+        },
+        {
+          "itemIds": [
+            "01042485"
+          ]
+        },
+        {
+          "itemIds": [
+            "01062325"
+          ]
+        },
+        {
+          "itemIds": [
+            "01082979"
+          ]
+        },
+        {
+          "itemIds": [
+            "01074466"
+          ]
+        },
+        {
+          "itemIds": [
+            "01104137"
+          ]
+        },
+        {
+          "itemIds": [
+            "01152242"
+          ]
+        },
+        {
+          "itemIds": [
+            "01452292"
+          ]
+        },
+        {
+          "itemIds": [
+            "01462275"
+          ]
+        },
+        {
+          "itemIds": [
+            "01522171"
+          ]
+        },
+        {
+          "itemIds": [
+            "01592056"
+          ]
+        },
+        {
+          "itemIds": [
+            "01214053"
+          ]
+        }
+      ],
+      "effects": {
+        "2": {
+          "incAllStat": 40,
+          "incMHP": 2500,
+          "incMMP": 2500,
+          "incPAD": 40,
+          "incMAD": 40
+        },
+        "3": {
+          "incAllStat": 50,
+          "incMHP": 2500,
+          "incMMP": 2500,
+          "incPAD": 50,
+          "incMAD": 50
+        },
+        "4": {
+          "incAllStat": 50,
+          "incMHP": 2500,
+          "incMMP": 2500,
+          "incPAD": 50,
+          "incMAD": 50
+        },
+        "5": {
+          "incPAD": 50,
+          "incMAD": 50,
+          "incPDD": 200,
+          "incMDD": 200
+        },
+        "6": {
+          "incPAD": 80,
+          "incMAD": 80
+        },
+        "7": {
+          "incPAD": 80,
+          "incMAD": 80
+        },
+        "8": {
+          "incPAD": 100,
+          "incMAD": 100
+        }
+      },
+      "jokerPossible": true
+    },
+    "1176": {
+      "name": "Libae\u0027s Supercharged Equipment Set",
+      "completeCount": 8,
+      "members": [
+        {
+          "itemIds": [
+            "01007355"
+          ]
+        },
+        {
+          "itemIds": [
+            "01042486"
+          ]
+        },
+        {
+          "itemIds": [
+            "01062326"
+          ]
+        },
+        {
+          "itemIds": [
+            "01082980"
+          ]
+        },
+        {
+          "itemIds": [
+            "01074467"
+          ]
+        },
+        {
+          "itemIds": [
+            "01104138"
+          ]
+        },
+        {
+          "itemIds": [
+            "01152243"
+          ]
+        },
+        {
+          "itemIds": [
+            "01372257"
+          ]
+        },
+        {
+          "itemIds": [
+            "01382294"
+          ]
+        },
+        {
+          "itemIds": [
+            "01262069"
+          ]
+        },
+        {
+          "itemIds": [
+            "01282059"
+          ]
+        },
+        {
+          "itemIds": [
+            "01212149"
+          ]
+        },
+        {
+          "itemIds": [
+            "01216043"
+          ]
+        },
+        {
+          "itemIds": [
+            "01252133"
+          ]
+        },
+        {
+          "itemIds": [
+            "01253041"
+          ]
+        },
+        {
+          "itemIds": [
+            "01254093"
+          ]
+        }
+      ],
+      "effects": {
+        "2": {
+          "incAllStat": 40,
+          "incMHP": 2500,
+          "incMMP": 2500,
+          "incPAD": 40,
+          "incMAD": 40
+        },
+        "3": {
+          "incAllStat": 50,
+          "incMHP": 2500,
+          "incMMP": 2500,
+          "incPAD": 50,
+          "incMAD": 50
+        },
+        "4": {
+          "incAllStat": 50,
+          "incMHP": 2500,
+          "incMMP": 2500,
+          "incPAD": 50,
+          "incMAD": 50
+        },
+        "5": {
+          "incPAD": 50,
+          "incMAD": 50,
+          "incPDD": 200,
+          "incMDD": 200
+        },
+        "6": {
+          "incPAD": 80,
+          "incMAD": 80
+        },
+        "7": {
+          "incPAD": 80,
+          "incMAD": 80
+        },
+        "8": {
+          "incPAD": 100,
+          "incMAD": 100
+        }
+      },
+      "jokerPossible": true
+    },
+    "1177": {
+      "name": "Libae\u0027s Supercharged Equipment Set",
+      "completeCount": 8,
+      "members": [
+        {
+          "itemIds": [
+            "01007356"
+          ]
+        },
+        {
+          "itemIds": [
+            "01042487"
+          ]
+        },
+        {
+          "itemIds": [
+            "01062327"
+          ]
+        },
+        {
+          "itemIds": [
+            "01082981"
+          ]
+        },
+        {
+          "itemIds": [
+            "01074468"
+          ]
+        },
+        {
+          "itemIds": [
+            "01104139"
+          ]
+        },
+        {
+          "itemIds": [
+            "01152244"
+          ]
+        },
+        {
+          "itemIds": [
+            "01332312"
+          ]
+        },
+        {
+          "itemIds": [
+            "01362169"
+          ]
+        },
+        {
+          "itemIds": [
+            "01272058"
+          ]
+        },
+        {
+          "itemIds": [
+            "01292056"
+          ]
+        },
+        {
+          "itemIds": [
+            "01472295"
+          ]
+        },
+        {
+          "itemIds": [
+            "01404050"
+          ]
+        },
+        {
+          "itemIds": [
+            "01242167"
+          ]
+        },
+        {
+          "itemIds": [
+            "01242168"
+          ]
+        }
+      ],
+      "effects": {
+        "2": {
+          "incAllStat": 40,
+          "incMHP": 2500,
+          "incMMP": 2500,
+          "incPAD": 40,
+          "incMAD": 40
+        },
+        "3": {
+          "incAllStat": 50,
+          "incMHP": 2500,
+          "incMMP": 2500,
+          "incPAD": 50,
+          "incMAD": 50
+        },
+        "4": {
+          "incAllStat": 50,
+          "incMHP": 2500,
+          "incMMP": 2500,
+          "incPAD": 50,
+          "incMAD": 50
+        },
+        "5": {
+          "incPAD": 50,
+          "incMAD": 50,
+          "incPDD": 200,
+          "incMDD": 200
+        },
+        "6": {
+          "incPAD": 80,
+          "incMAD": 80
+        },
+        "7": {
+          "incPAD": 80,
+          "incMAD": 80
+        },
+        "8": {
+          "incPAD": 100,
+          "incMAD": 100
+        }
+      },
+      "jokerPossible": true
+    },
+    "1178": {
+      "name": "Libae\u0027s Supercharged Equipment Set",
+      "completeCount": 8,
+      "members": [
+        {
+          "itemIds": [
+            "01007357"
+          ]
+        },
+        {
+          "itemIds": [
+            "01042488"
+          ]
+        },
+        {
+          "itemIds": [
+            "01062328"
+          ]
+        },
+        {
+          "itemIds": [
+            "01082982"
+          ]
+        },
+        {
+          "itemIds": [
+            "01074469"
+          ]
+        },
+        {
+          "itemIds": [
+            "01104140"
+          ]
+        },
+        {
+          "itemIds": [
+            "01152245"
+          ]
+        },
+        {
+          "itemIds": [
+            "01482252"
+          ]
+        },
+        {
+          "itemIds": [
+            "01492267"
+          ]
+        },
+        {
+          "itemIds": [
+            "01532177"
+          ]
+        },
+        {
+          "itemIds": [
+            "01222141"
+          ]
+        },
+        {
+          "itemIds": [
+            "01403056"
+          ]
+        }
+      ],
+      "effects": {
+        "2": {
+          "incAllStat": 40,
+          "incMHP": 2500,
+          "incMMP": 2500,
+          "incPAD": 40,
+          "incMAD": 40
+        },
+        "3": {
+          "incAllStat": 50,
+          "incMHP": 2500,
+          "incMMP": 2500,
+          "incPAD": 50,
+          "incMAD": 50
+        },
+        "4": {
+          "incAllStat": 50,
+          "incMHP": 2500,
+          "incMMP": 2500,
+          "incPAD": 50,
+          "incMAD": 50
+        },
+        "5": {
+          "incPAD": 50,
+          "incMAD": 50,
+          "incPDD": 200,
+          "incMDD": 200
+        },
+        "6": {
+          "incPAD": 80,
+          "incMAD": 80
+        },
+        "7": {
+          "incPAD": 80,
+          "incMAD": 80
+        },
+        "8": {
+          "incPAD": 100,
+          "incMAD": 100
+        }
+      },
+      "jokerPossible": true
+    },
     "118": {
       "name": "M-Forcer Set",
       "completeCount": 2,
