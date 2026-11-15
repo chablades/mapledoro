@@ -17,7 +17,8 @@ import {
   PITCHED_WHISPER_BOSSES,
   PITCHED_TARGETS,
   DAWN_WHISPER_BOSSES,
-  DAWN_TARGET_COST,
+  DAWN_TARGETS,
+  type CrystalTarget,
   PITCHED_CRYSTAL_ITEM_ID,
   DAWN_CRYSTAL_ITEM_ID,
   TRACE_ITEMS,
@@ -56,6 +57,8 @@ interface StarForceResearchStore {
   pitchedTarget: string;
   dawnCount: number;
   dawnBosses: string[];
+  /** Absent in saves from before Dawn had a target choice; treated as "dawn-set". */
+  dawnTarget?: string;
 }
 
 interface TraceRestorationStore {
@@ -70,7 +73,7 @@ const STORAGE_KEY_RESTORATION = "traceRestorationSystem";
 function readResearch(): StarForceResearchStore {
   const stored = readGlobalTool<StarForceResearchStore>(STORAGE_KEY_RESEARCH);
   if (stored && Array.isArray(stored.pitchedBosses)) return stored;
-  return { pitchedCount: 0, pitchedBosses: [], pitchedTarget: "pitched-set", dawnCount: 0, dawnBosses: [] };
+  return { pitchedCount: 0, pitchedBosses: [], pitchedTarget: "pitched-set", dawnCount: 0, dawnBosses: [], dawnTarget: "dawn-set" };
 }
 
 function readRestoration(): TraceRestorationStore {
@@ -366,7 +369,6 @@ function CrystalSection({
   target,
   targetOptions,
   onTargetChange,
-  targetCost,
 }: {
   theme: AppTheme;
   title: string;
@@ -376,11 +378,11 @@ function CrystalSection({
   bosses: WhisperBoss[];
   selectedBosses: ReadonlySet<string>;
   onBossToggle: (id: string) => void;
-  target?: string;
-  targetOptions?: { id: string; name: string; cost: number }[];
-  onTargetChange?: (id: string) => void;
-  targetCost: number;
+  target: CrystalTarget;
+  targetOptions: CrystalTarget[];
+  onTargetChange: (id: string) => void;
 }) {
+  const targetCost = target.cost;
   const styles = toolStyles(theme);
 
   const weeklyBosses: WhisperBoss[] = [];
@@ -422,37 +424,22 @@ function CrystalSection({
             style={{ ...styles.inputStyle, width: 100 }}
           />
         </div>
-        {targetOptions && target !== undefined && onTargetChange && (
-          <div style={{ flex: "1 1 200px" }}>
-            <div className="tool-field-label" style={styles.labelStyle}>Target</div>
-            <select
-              className="tool-select"
-              aria-label={`${title} target`}
-              value={target}
-              onChange={(e) => onTargetChange(e.target.value)}
-              style={{ ...styles.selectStyle, width: "100%" }}
-            >
-              {targetOptions.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name} ({t.cost} crystals)
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
-        {!targetOptions && (
-          <div>
-            <div className="tool-field-label" style={styles.labelStyle}>Target</div>
-            {/* Not a control, but it sits in a control row, so it takes the row's
-                pinned height and centers its text to line up with the input. */}
-            <div
-              className="tool-input"
-              style={{ ...styles.inputStyle, background: "transparent", border: "none", padding: 0, fontWeight: 700, display: "flex", alignItems: "center" }}
-            >
-              Dawn Boss Set Equipment (65 crystals)
-            </div>
-          </div>
-        )}
+        <div style={{ flex: "1 1 200px" }}>
+          <div className="tool-field-label" style={styles.labelStyle}>Target</div>
+          <select
+            className="tool-select"
+            aria-label={`${title} target`}
+            value={target.id}
+            onChange={(e) => onTargetChange(e.target.value)}
+            style={{ ...styles.selectStyle, width: "100%" }}
+          >
+            {targetOptions.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.name} ({t.cost} crystals)
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       <TrackerProgressBar
@@ -522,6 +509,7 @@ function StarForceResearchTab({ theme }: { theme: AppTheme }) {
   }
 
   const pitchedTarget = PITCHED_TARGETS.find((t) => t.id === state.pitchedTarget) ?? PITCHED_TARGETS[0];
+  const dawnTarget = DAWN_TARGETS.find((t) => t.id === (state.dawnTarget ?? "dawn-set")) ?? DAWN_TARGETS[0];
   const pitchedSelected = new Set(state.pitchedBosses);
   const dawnSelected = new Set(state.dawnBosses);
 
@@ -536,10 +524,9 @@ function StarForceResearchTab({ theme }: { theme: AppTheme }) {
         bosses={PITCHED_WHISPER_BOSSES}
         selectedBosses={pitchedSelected}
         onBossToggle={(id) => toggleBoss("pitched", id)}
-        target={state.pitchedTarget}
+        target={pitchedTarget}
         targetOptions={PITCHED_TARGETS}
         onTargetChange={(id) => save({ ...state, pitchedTarget: id })}
-        targetCost={pitchedTarget.cost}
       />
 
       <CrystalSection
@@ -551,7 +538,9 @@ function StarForceResearchTab({ theme }: { theme: AppTheme }) {
         bosses={DAWN_WHISPER_BOSSES}
         selectedBosses={dawnSelected}
         onBossToggle={(id) => toggleBoss("dawn", id)}
-        targetCost={DAWN_TARGET_COST}
+        target={dawnTarget}
+        targetOptions={DAWN_TARGETS}
+        onTargetChange={(id) => save({ ...state, dawnTarget: id })}
       />
     </>
   );
