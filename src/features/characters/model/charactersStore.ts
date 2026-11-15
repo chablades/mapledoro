@@ -163,7 +163,7 @@ export type LinkSkillId =
   | "judgment" | "naturesFriend" | "lightWash" | "spiritGuideBlessing"
   | "knightsWatch" | "phantomInstinct" | "groundedBody" | "closeCall"
   | "rhinnesBlessing" | "comboKillBlessing" | "hybridLogic" | "ironWill"
-  | "elvenBlessing";
+  | "elvenBlessing" | "covenant";
 
 export type LinkSkillsData = Partial<Record<LinkSkillId, number>>;
 

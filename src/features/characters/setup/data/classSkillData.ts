@@ -729,6 +729,13 @@ export const CLASS_SKILL_DATA: ClassSkillData[] = [
     requiredStats: ["str", "dex", "attackPower"],
   },
   {
+    id: "lethe",
+    nexonJobName: "Lethe",
+    // INT magician (v272). Dominium weapon with Quill secondary, see classBranch.ts.
+    buffSkills: [DSE, DCO],
+    requiredStats: ["int", "luk", "magicAtt"],
+  },
+  {
     id: "zero",
     nexonJobName: "Zero",
     skipGender: true,

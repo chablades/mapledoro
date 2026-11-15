@@ -1,6 +1,21 @@
 // One-shot scraper for MapleScouter's crowdsourced Boss Clear (Cut) data -- the community-
 // measured minimum-damage thresholds and boss requirement physics behind their Boss Clear grid.
-// Run: node scripts/scrape-bosscut.mjs
+//
+// NO LONGER WORKS as of Nov 2026: MapleScouter moved the cut values (bossCut/partyBossCut/
+// easyRate) server-side. The page now POSTs the character to their API (CALC_BOSS_CUTS) and gets
+// clear rates back; only boss metadata (level, defense, forces, party limit, renewalDate and
+// renewalDetail) is still in the client chunk. Since then bosscut-data.generated.ts is updated
+// by hand:
+//   - Existing bosses: apply the multiplier each boss's renewalDetail states ("배율 2.5% 증가",
+//     "실전딜 일괄 1.5%증가", "(14% 상승)") to its easyRate, and copy renewalDate/renewalDetail.
+//   - Anything else (a new boss, or a change the changelog doesn't explain): scale against a
+//     boss with the same defense and a clear rate in the same Ascent bracket on a real result.
+//     A result saved in your browser holds every boss's clear rate: localStorage "manual-store"
+//     -> state.result.calculatedData.bossCuts. Read it there; don't script their API.
+// Champion Black Mage is stored as Hard x0.75 (MapleScouter's own numbers agree since v272).
+// Set BOSSCUT_SCRAPED_AT to the update's date too: it's the "Boss thresholds as of" date
+// players see under every Boss Clear view.
+// Run: node scripts/scrape-bosscut.mjs [--har <file>]
 // Writes src/features/characters/scouter/bosscut-data.generated.ts
 //
 // No login, no headless browser, no hardcoded webpack module ID or chunk filename -- MapleScouter
@@ -11,6 +26,11 @@
 // the shape of the data itself (not just renamed a variable), which needs human investigation
 // before trusting the output -- see bossClearFormula.ts's own header for how this scraped data
 // feeds the Boss Clear formula.
+//
+// --har <file>: read the page and its chunks from a HAR you saved in your own browser instead of
+// fetching them, for when MapleScouter answers scripted requests with a Cloudflare challenge
+// (403). Never work around the challenge itself. To save one: open `/en/result` in Chrome,
+// DevTools > Network, reload, then right-click any request > "Save all as HAR (with content)".
 
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -33,13 +53,36 @@ const PHYSICS_FINGERPRINT = new RegExp(`=(\\{\\w+:\\{(?:${DIFFICULTIES}):\\{leve
 // region codes: {kms:0, gms:1, tms:1, msea:1, jms:2}.
 const REGION_ARRAY_SELECTOR = /(\w+)=1===(\w+)\?(\w+):2===\2\?(\w+)\.(\w+):/;
 
+// url -> body from --har, or null to fetch live.
+const harBodies = await loadHar();
+
+async function loadHar() {
+  const i = process.argv.indexOf("--har");
+  if (i < 0) return null;
+  const har = JSON.parse(await fs.readFile(process.argv[i + 1], "utf8"));
+  const bodies = new Map();
+  for (const { request, response } of har.log.entries) {
+    const c = response.content;
+    if (c?.text) bodies.set(request.url.split("?")[0], c.encoding === "base64" ? Buffer.from(c.text, "base64").toString("utf8") : c.text);
+  }
+  console.log(`Read ${bodies.size} responses from the HAR.`);
+  return bodies;
+}
+
 async function fetchText(url) {
+  if (harBodies) {
+    const body = harBodies.get(url);
+    if (body === undefined) throw new Error(`${url} is not in the HAR`);
+    return body;
+  }
   const res = await fetch(url);
   if (!res.ok) throw new Error(`${url} -> ${res.status}`);
   return res.text();
 }
 
 async function findChunkUrls() {
+  // A HAR also holds the chunks the page loaded after the first paint, so take every one.
+  if (harBodies) return [...harBodies.keys()].filter((u) => u.startsWith(`${BASE}/_next/static/chunks/`) && u.endsWith(".js"));
   const html = await fetchText(RESULT_PAGE);
   const matches = [...html.matchAll(/src="(\/_next\/static\/chunks\/[^"]+\.js)"/g)];
   return [...new Set(matches.map((m) => BASE + m[1]))];

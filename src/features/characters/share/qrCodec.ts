@@ -59,6 +59,7 @@ const CLASSES = [
   "Cannon Trooper", "Chief Bandit", "Citizen", "Cleric", "Crossbowman", "Crusader", "Fighter", "Gunslinger", "Hermit",
   "Hunter", "Mage (F/P)", "Mage (I/L)", "Magician", "Marauder", "Noblesse", "Outlaw", "Page", "Pirate", "Priest", "Ranger",
   "Rogue", "Sniper", "Soulchaser", "Spearman", "Swordman", "White Knight", "Wizard (F/P)", "Wizard (I/L)",
+  "Lethe",
 ] as const;
 const CLASS_ESCAPE = 127;
 

@@ -33,7 +33,7 @@ function parsePositiveIntEnv(name: string, fallback: number) {
   return parsed;
 }
 
-const IP_REQUESTS_PER_DAY_LIMIT = parsePositiveIntEnv("LOOKUP_IP_DAILY_LIMIT", 60);
+const IP_REQUESTS_PER_DAY_LIMIT = parsePositiveIntEnv("LOOKUP_IP_DAILY_LIMIT", 61);
 const IP_REQUESTS_PER_MINUTE_LIMIT = parsePositiveIntEnv("LOOKUP_IP_MINUTE_LIMIT", 7);
 const IP_ACTIVE_QUEUE_LIMIT = parsePositiveIntEnv("LOOKUP_IP_ACTIVE_QUEUE_LIMIT", 5);
 const STALE_WHILE_REVALIDATE_SECONDS = Number.parseInt(

@@ -68,7 +68,7 @@ const HEXA_CORE_MIN: Partial<Record<SimulatorHexaCoreField, number>> = { skillCo
 // Legion panel's read-only display, but those extra entries have nowhere to go once saved.
 const SIMULATOR_LINK_SKILLS = LINK_SKILLS.filter((s) => s.id in LINK_SKILL_TO_SCOUTER_KEY);
 
-// GMS max character level as of v271. Update alongside any future level cap increase. The
+// GMS max character level. Update alongside any future level cap increase. The
 // root CLAUDE.md's version-bump checklist doesn't cover this, since it isn't manifest-derived.
 const MAX_CHARACTER_LEVEL = 300;
 

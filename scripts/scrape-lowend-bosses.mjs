@@ -42,7 +42,7 @@ const REFERENCE = [
   { page: "Verus Hilla", name: "verusHilla" }, { page: "Darknell", name: "darknell" },
 ];
 
-// Ids from manifests/v271/ui-boss.json, by exact name.
+// Ids from the current manifest's ui-boss.json, by exact name.
 const LOW_END = [
   { page: "Zakum", icon: "1" }, { page: "Horntail", icon: "2" }, { page: "Hilla", icon: "3" },
   { page: "Pierre", icon: "4" }, { page: "Von Bon", icon: "5" }, { page: "Crimson Queen", icon: "6" },

@@ -44,7 +44,7 @@ export const LINK_SKILLS: LinkSkillDef[] = [
   // summary table, which has several stale groupings: it claims all Heroes share "Close
   // Call" and all non-Xenon Resistance demons share "Hybrid Logic", but Aran/Combo Kill
   // Blessing and Demon Slayer/Fury Unleashed are solo). iconId cross-checked against
-  // manifests/v271/skill.json by exact name, and `branch` against
+  // the manifest's skill.json by exact name, and `branch` against
   // grandislibrary.com/classes's own branch headings.
   { id: "nobleFire",             name: "Noble Fire",              classes: ["Adele"],                                                                          maxLevel: 3,  iconId: "150020241", branch: "Flora" },
   { id: "spiritOfFreedom",       name: "Spirit of Freedom",       classes: ["Wild Hunter", "Battle Mage", "Mechanic", "Blaster"],                                maxLevel: 12, iconId: "30000074", branch: "Resistance" },
@@ -54,6 +54,7 @@ export const LINK_SKILLS: LinkSkillDef[] = [
   { id: "invincibleBelief",      name: "Invincible Belief",       classes: ["Hero", "Paladin", "Dark Knight"],                                                    maxLevel: 9,  iconId: "0000252", branch: "Explorer" },
   { id: "wildRage",              name: "Wild Rage",               classes: ["Demon Avenger"],                                                                     maxLevel: 3,  iconId: "30010241", branch: "Resistance" },
   { id: "furyUnleashed",         name: "Fury Unleashed",          classes: ["Demon Slayer"],                                                                      maxLevel: 3,  iconId: "30010112", branch: "Resistance" },
+  { id: "covenant",              name: "Covenant",                classes: ["Lethe"],                                                                             maxLevel: 3,  iconId: "190000000", branch: "Other" },
   { id: "guidingStars",          name: "Guiding Stars",           classes: ["Sia Astelle", "Erel Light"],                                                         maxLevel: 6,  iconId: "180000001", branch: "Shine" },
   { id: "runePersistence",       name: "Rune Persistence",        classes: ["Evan"],                                                                              maxLevel: 3,  iconId: "20010294", branch: "Heroes" },
   { id: "moonlitBladeLearnings", name: "Moonlit Blade Learnings", classes: ["Hayato"],                                                                            maxLevel: 3,  iconId: "40010001", branch: "Sengoku" },
@@ -123,6 +124,7 @@ const CLASS_TO_SKILL: Record<string, LinkSkillId> = {
   "Demon Slayer":     "furyUnleashed",
   "Sia Astelle":      "guidingStars",
   "Erel Light":       "guidingStars",
+  "Lethe":            "covenant",
   "Evan":             "runePersistence",
   "Hayato":           "moonlitBladeLearnings",
   "Khali":            "innateGift",

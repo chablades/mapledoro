@@ -54,6 +54,7 @@ export const WEAPON_MULTIPLIER: Record<string, number> = {
   sia_astelle: 1.2,
   lara: 1.2,
   demon_slayer: 1.2,
+  lethe: 1.2,
 };
 
 export const WEAPON_MULTIPLIER_BY_HAND: Record<string, { "1h": number; "2h": number }> = {
@@ -76,4 +77,5 @@ export const MAGIC_ATT_CLASSES: readonly string[] = [
   "battle_mage",
   "kanna",
   "sia_astelle",
+  "lethe",
 ];

@@ -69,7 +69,7 @@ export const HYPER_BURNING_QUESTION: GuideQuestion<HyperBurning> = {
 /* ── World comparison ─────────────────────────────────────────── */
 
 /*
-  `iconIds` are ids from `manifests/v271/misc-world.json`, which are just the
+  `iconIds` are ids from the manifest's `misc-world.json`, which are just the
   lowercased world name. They resolve through `worldIconUrl`.
 */
 export interface WorldColumn {
@@ -301,7 +301,7 @@ export interface PairedCallout {
   title: string;
   text: string;
   worldText?: Record<WorldType, string>;
-  /** Item id from `manifests/v271/item.json`, rendered as the callout's icon. */
+  /** Item id from the manifest's `item.json`, rendered as the callout's icon. */
   itemId?: string;
 }
 
@@ -485,7 +485,7 @@ export const SECTIONS: GuideSection[] = [
               interactive: "On Interactive worlds the Hyper Teleport Rock is bought with NX.",
               heroic: "On Heroic worlds it is bought with mesos in the cash shop.",
             },
-            // Hyper Teleport Rock (manifests/v271/item.json)
+            // Hyper Teleport Rock
             itemId: "05040004",
           },
         ],
@@ -570,7 +570,7 @@ export const SECTIONS: GuideSection[] = [
       {
         kind: "itemNote",
         worlds: ["heroic"],
-        // Spell Trace, the scroll-enhancement currency (manifests/v271/item.json)
+        // Spell Trace, the scroll-enhancement currency
         itemId: "04001832",
         itemName: "Spell Trace",
         text: "On Heroic worlds, scrolls are not usable at all. You upgrade with Spell Traces instead, which drop from mobs as you grind, so your gear improves from the same activity that levels you.",

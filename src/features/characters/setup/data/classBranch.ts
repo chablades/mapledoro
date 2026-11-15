@@ -46,6 +46,7 @@ const CLASS_BRANCHES: Record<string, EquipBranch[]> = {
   blaze_wizard: ["magician"], evan: ["magician"], luminous: ["magician"],
   battle_mage: ["magician"], illium: ["magician"], lara: ["magician"],
   lynn: ["magician"], kanna: ["magician"], kinesis: ["magician"], sia_astelle: ["magician"],
+  lethe: ["magician"],
   // legacy magician advancements
   magician: ["magician"], wizard_f_p: ["magician"], wizard_i_l: ["magician"],
   mage_f_p: ["magician"], mage_i_l: ["magician"], cleric: ["magician"], priest: ["magician"],
@@ -111,6 +112,7 @@ const WEAPON_TYPE_PREFIX: Record<string, string> = {
   psyLimiter: "01262", chain: "01272", lucentGauntlet: "01282", ritualFan: "01292",
   martialBrace: "01403", chakram: "01404", gram: "01433", armCannon: "01582",
   ancientBow: "01592", longSword: "01572", // longSword = Zero's Lazuli
+  dominium: "01216",
 };
 
 /** classId → weapon type(s) it can equip. */
@@ -129,7 +131,7 @@ const CLASS_WEAPON_TYPES: Record<string, string[]> = {
   bishop: ["wand", "staff"], blaze_wizard: ["wand", "staff"], evan: ["wand", "staff"],
   luminous: ["shiningRod"], battle_mage: ["staff"], illium: ["lucentGauntlet"],
   lara: ["wand"], lynn: ["memorialStaff"], kanna: ["fanKanna"],
-  kinesis: ["psyLimiter"], sia_astelle: ["celestialLight"],
+  kinesis: ["psyLimiter"], sia_astelle: ["celestialLight"], lethe: ["dominium"],
   // ── Bowman ──
   bow_master: ["bow"], marksman: ["crossbow"], pathfinder: ["ancientBow"],
   wind_archer: ["bow"], mercedes: ["dualBowguns"], wild_hunter: ["crossbow"],
@@ -199,6 +201,7 @@ const SECONDARY_TYPE_PREFIXES: Record<string, string[]> = {
   fanTassel: ["0135380"], bladebinder: ["0135400"], weaponBelt: ["0135401"],
   ornament: ["0135402"], hexSeeker: ["0135403"], imugiGem: ["0135404"],
   talisman: ["0135430"], katara: ["01342"],
+  quill: ["0172600", "0172601"], // every Lethe Quill, Astra Quill included
 };
 
 // Current Astra (Lv 200) secondary per class: a single 7-digit prefix each, since the 5-digit
@@ -249,7 +252,7 @@ const CLASS_SECONDARY_TYPES: Record<string, string[]> = {
   evan: ["document", SECONDARY_SHIELD], luminous: ["orb"],
   battle_mage: ["magicMarble", SECONDARY_SHIELD], illium: ["lucentWings"],
   lara: ["ornament"], lynn: ["leaf", SECONDARY_SHIELD], kanna: ["talisman"],
-  kinesis: ["chessPiece"], sia_astelle: ["compass"],
+  kinesis: ["chessPiece"], sia_astelle: ["compass"], lethe: ["quill"],
   // ── Bowman ──
   bow_master: ["arrowFletching"], marksman: ["bowThimble"], pathfinder: ["relic"],
   wind_archer: ["jewel"], mercedes: ["magicArrow"], wild_hunter: ["arrowhead"],

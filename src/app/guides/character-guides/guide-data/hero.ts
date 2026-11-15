@@ -7,7 +7,7 @@ import { classPortraitUrl } from "../../../../lib/classPortraits";
   `recLinks.mobbing`, and the exact sequence are drafts — confirm with the Hero Discord
   before publishing.
 
-  Skill `iconId`s are MapleResource `skill` ids from manifests/v268/skill.json.
+  Skill `iconId`s are MapleResource `skill` ids from the manifest's skill.json.
 */
 
 export const hero: ClassConfig = {

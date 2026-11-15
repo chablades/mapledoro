@@ -158,9 +158,6 @@ function relevantTiles(entries: BossCutEntry[], level: number, arcaneForce: numb
   }, []);
 }
 
-// Trailing * flags a clear% mapledoro deliberately corrects away from MapleScouter's own figure
-// (Champion Black Mage, see bossClearFormula.ts's effectiveEasyRate) so a player comparing the
-// two sites sees at a glance that the mismatch is intended, with the hover tooltip explaining it.
 // A leading ~ marks MapleDoro's own estimate for a boss MapleScouter doesn't cover. Past
 // CLEAR_PERCENT_CAP the exact figure says nothing (a low-end boss reads in the billions), so it
 // shows as the cap with a +.
@@ -169,7 +166,7 @@ function formatClearPercent(result: BossClearResult): string {
   const value = result.clearRatePercent > CLEAR_PERCENT_CAP
     ? `${CLEAR_PERCENT_CAP.toLocaleString()}%+`
     : `${result.clearRatePercent.toFixed(2)}%`;
-  return `${result.estimated ? "~" : ""}${value}${result.scouterClearRatePercent === null ? "" : "*"}`;
+  return `${result.estimated ? "~" : ""}${value}`;
 }
 
 // Status-colored TEXT on a neutral card (statusText), not a filled/saturated pill.
@@ -245,16 +242,6 @@ function ChipTooltipContent({ theme, difficulty, result }: { theme: AppTheme; di
           <div style={{ color: theme.muted, fontWeight: 500 }}>
             Estimate. MapleScouter doesn&apos;t cover this boss, so MapleDoro works it out from the
             boss&apos;s HP and time limit.
-          </div>
-        </>
-      )}
-      {result.scouterClearRatePercent !== null && (
-        <>
-          <div style={chipTooltipDividerStyle(theme)} />
-          <div style={{ color: theme.muted, fontWeight: 500 }}>
-            Current GMS Scouter incorrectly deflates the Champion Mode Black Mage difficulty. Black
-            Mage values will stabilize after GMS receives the 20-minute change. Adjusted from{" "}
-            {result.scouterClearRatePercent.toFixed(2)}%.
           </div>
         </>
       )}

@@ -27,7 +27,7 @@ export interface ClassEntry {
   portrait: string;
 }
 
-/* ── Link skill icons (haku.network `skill` ids from manifests/v268/skill.json) ── */
+/* ── Link skill icons (haku.network `skill` ids from the manifest's skill.json) ── */
 
 function ls(skillName: string, skillId: string): { linkSkillName: string; linkSkillIcon: string } {
   return { linkSkillName: skillName, linkSkillIcon: resourceImageUrl("skill", skillId, "icon.png") };

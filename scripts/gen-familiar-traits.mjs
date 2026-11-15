@@ -4,7 +4,7 @@
  * from the WZ familiar manifest.
  *
  * Usage:
- *   node scripts/gen-familiar-traits.mjs manifests/v271/familiar.json
+ *   node scripts/gen-familiar-traits.mjs [manifest path, default: the current version's familiar.json]
  *
  * The familiar list itself (names, sprites, card ids) is regenerated separately by
  * gen-familiars.mjs into the character setup flow's familiarsData.ts; Mystic Frontier's
@@ -19,8 +19,9 @@
 
 import { readFileSync, writeFileSync } from "fs";
 import { resolve } from "path";
+import { manifestFile } from "./manifest-version.mjs";
 
-const manifestPath = process.argv[2];
+const manifestPath = process.argv[2] ?? manifestFile("familiar.json");
 if (!manifestPath) {
   console.error("Usage: node scripts/gen-familiar-traits.mjs <path/to/familiar.json>");
   process.exit(1);

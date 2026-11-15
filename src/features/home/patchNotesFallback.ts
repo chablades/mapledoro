@@ -11,24 +11,31 @@ export type PatchNote = { version: string; date: string; title: string; tags: st
 
 export const FALLBACK_PATCH_NOTES: PatchNote[] = [
   {
-    version: "v271",
-    date: "Sep 9",
-    title: "V.271 KNOWN ISSUES",
+    version: "v272",
+    date: "Nov 13",
+    title: "V.272 KNOWN ISSUES",
     tags: ["MAINTENANCE"],
-    url: "https://www.nexon.com/maplestory/news/maintenance/45226/v-271-known-issues",
+    url: "https://www.nexon.com/maplestory/news/maintenance/48436/v-272-known-issues",
   },
   {
     version: "",
-    date: "Sep 9",
-    title: "FRIEREN'S SPELL COLLECTION",
+    date: "Nov 11",
+    title: "NOW AVAILABLE: LETHE, SOVEREIGN OF OATHS!",
     tags: ["EVENTS"],
-    url: "https://www.nexon.com/maplestory/news/events/44414/frieren-s-spell-collection",
+    url: "https://www.nexon.com/maplestory/news/events/47306/now-available-lethe-sovereign-of-oaths",
   },
   {
     version: "",
-    date: "Sep 9",
-    title: "ADVENTURE WITH FRIEREN'S COMPANIONS",
+    date: "Nov 11",
+    title: "ADVENTURE IN EVENT WORLD: QUANAH!",
     tags: ["EVENTS"],
-    url: "https://www.nexon.com/maplestory/news/events/44415/adventure-with-frieren-s-companions",
+    url: "https://www.nexon.com/maplestory/news/events/47304/adventure-in-event-world-quanah",
+  },
+  {
+    version: "v272",
+    date: "Nov 10",
+    title: "V.272 - MAPLAYER ONE PATCH NOTES",
+    tags: ["UPDATE"],
+    url: "https://www.nexon.com/maplestory/news/update/47132/v-272-maplayer-one-patch-notes",
   },
 ];

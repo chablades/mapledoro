@@ -20,12 +20,12 @@
  *   coupons/boxes also start with those words but aren't part of this weapon lineage).
  *
  * Usage:
- *   node scripts/gen-equipment.mjs manifests/v271/item.json
+ *   node scripts/gen-equipment.mjs [manifest path, default: the current version's item.json]
  *
  * Set EQUIP_ICON_DIR to the local WZ image dump's `item/` dir to enable icon-based
  * dedup, applied to every slot (collapses look-alike name reissues; keeps distinct
  * same-name entries that just happen to share a display name and/or icon):
- *   EQUIP_ICON_DIR=/path/to/dump/item node scripts/gen-equipment.mjs manifests/v271/item.json
+ *   EQUIP_ICON_DIR=/path/to/dump/item node scripts/gen-equipment.mjs
  *
  * Set EQUIP_DEDUP_VERDICTS to the manual dedup audit's verdicts file (see
  * F:\mapledoro-image\tools\equipment\dedup-verdicts.json / its README) to apply
@@ -43,8 +43,9 @@
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from "fs";
 import { resolve, dirname } from "path";
 import { createHash } from "crypto";
+import { manifestFile } from "./manifest-version.mjs";
 
-const manifestPath = process.argv[2] ?? "manifests/v271/item.json";
+const manifestPath = process.argv[2] ?? manifestFile("item.json");
 const OUTPUT_DIR = resolve("public/data/equipment");
 
 // Local WZ image dump (dev-only, not in-repo, machine-specific path) used to dedupe

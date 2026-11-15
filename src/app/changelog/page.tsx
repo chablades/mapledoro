@@ -18,6 +18,11 @@ const CHANGELOG: ChangelogEntry[] = [
       { type: "added", text: "The Pitched Whisper Crystal calculator can now target the Red Jade and Black Jade Boss Ring Boxes and Total Control." },
       { type: "added", text: "The Dawn Whisper Crystal calculator now has a target picker, with the Green Jade Boss Ring Box as a new option." },
       { type: "changed", text: "Removed the Ursus 2x Meso timer from the home page's Timers panel." },
+      { type: "added", text: "Added Lethe to character setup and the HEXA Skills tool." },
+      { type: "changed", text: "The Characters page now allows up to 61 characters per world, up from 60, to make room for Lethe." },
+      { type: "added", text: "Boss Clear now includes Mayrin and Kai." },
+      { type: "changed", text: "Updated Boss Clear for v272's boss changes and MapleScouter's latest numbers. Hard and Champion Black Mage are now about twice as easy to clear, and Easy Cygnus is gone." },
+      { type: "changed", text: "Updated equipment and familiars for v272, adding the Mapaeroid android and 9 new familiars." },
     ],
   },
   {
