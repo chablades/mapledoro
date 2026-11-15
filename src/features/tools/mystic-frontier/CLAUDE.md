@@ -43,8 +43,8 @@ matcher table. Two special cases:
   `activations` (0..3) rather than a boolean and `calc.ts` scales `flat`/`mult` by it. The manifest
   says "Electric" where the app says Lightning (`ELEMENT_ALIASES`).
 
-**Generated data:** `familiarTraits.ts` comes from `manifests/v271/familiar.json` via
-`scripts/gen-familiar-traits.mjs` and `potentialsData.ts` from `manifests/v271/familiar-potentials.json`
+**Generated data:** `familiarTraits.ts` comes from the current manifest's `familiar.json` via
+`scripts/gen-familiar-traits.mjs` and `potentialsData.ts` from its `familiar-potentials.json`
 via `scripts/gen-mf-potentials.mjs` (selects by the 11xxxx-15xxxx id range and cross-checks the
 manifest's `mf` flag, which has been wrong before). `bonusItemsData.ts` is hand-maintained: its ids
 and names are from `item.json`, but the flat/multiplier values come from the 2xxxxx potential entries,
