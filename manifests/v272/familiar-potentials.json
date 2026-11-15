@@ -8276,7 +8276,7 @@
     "level": {
       "add": 3
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "130732": {
@@ -8284,7 +8284,7 @@
     "level": {
       "add": 2
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "130733": {
@@ -8292,7 +8292,7 @@
     "level": {
       "add": 1
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "130734": {
@@ -8300,7 +8300,7 @@
     "level": {
       "mul": 0.6
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "130735": {
@@ -8308,7 +8308,7 @@
     "level": {
       "mul": 0.4
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "130736": {
@@ -8316,7 +8316,7 @@
     "level": {
       "mul": 0.2
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "130737": {
@@ -8324,7 +8324,7 @@
     "level": {
       "add": 3
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "130738": {
@@ -8332,7 +8332,7 @@
     "level": {
       "add": 2
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "130739": {
@@ -8340,7 +8340,7 @@
     "level": {
       "add": 1
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "130740": {
@@ -8348,7 +8348,7 @@
     "level": {
       "mul": 0.6
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "130741": {
@@ -8356,7 +8356,7 @@
     "level": {
       "mul": 0.4
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "130742": {
@@ -8364,7 +8364,7 @@
     "level": {
       "mul": 0.2
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "130743": {
@@ -8372,7 +8372,7 @@
     "level": {
       "add": 3
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "130744": {
@@ -8380,7 +8380,7 @@
     "level": {
       "add": 2
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "130745": {
@@ -8388,7 +8388,7 @@
     "level": {
       "add": 1
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "130746": {
@@ -8396,7 +8396,7 @@
     "level": {
       "mul": 0.6
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "130747": {
@@ -8404,7 +8404,7 @@
     "level": {
       "mul": 0.4
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "130748": {
@@ -8412,7 +8412,7 @@
     "level": {
       "mul": 0.2
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "131001": {
@@ -9104,7 +9104,7 @@
     "level": {
       "add": 3
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "131932": {
@@ -9112,7 +9112,7 @@
     "level": {
       "add": 2
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "131933": {
@@ -9120,7 +9120,7 @@
     "level": {
       "add": 1
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "131934": {
@@ -9128,7 +9128,7 @@
     "level": {
       "mul": 0.6
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "131935": {
@@ -9136,7 +9136,7 @@
     "level": {
       "mul": 0.4
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "131936": {
@@ -9144,7 +9144,7 @@
     "level": {
       "mul": 0.2
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "131937": {
@@ -9152,7 +9152,7 @@
     "level": {
       "add": 3
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "131938": {
@@ -9160,7 +9160,7 @@
     "level": {
       "add": 2
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "131939": {
@@ -9168,7 +9168,7 @@
     "level": {
       "add": 1
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "131940": {
@@ -9176,7 +9176,7 @@
     "level": {
       "mul": 0.6
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "131941": {
@@ -9184,7 +9184,7 @@
     "level": {
       "mul": 0.4
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "131942": {
@@ -9192,7 +9192,7 @@
     "level": {
       "mul": 0.2
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "131943": {
@@ -9200,7 +9200,7 @@
     "level": {
       "add": 3
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "131944": {
@@ -9208,7 +9208,7 @@
     "level": {
       "add": 2
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "131945": {
@@ -9216,7 +9216,7 @@
     "level": {
       "add": 1
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "131946": {
@@ -9224,7 +9224,7 @@
     "level": {
       "mul": 0.6
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "131947": {
@@ -9232,7 +9232,7 @@
     "level": {
       "mul": 0.4
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "131948": {
@@ -9240,7 +9240,7 @@
     "level": {
       "mul": 0.2
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "131949": {
@@ -9248,7 +9248,7 @@
     "level": {
       "add": 3
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "131950": {
@@ -9256,7 +9256,7 @@
     "level": {
       "add": 2
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "131951": {
@@ -9264,7 +9264,7 @@
     "level": {
       "add": 1
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "131952": {
@@ -9272,7 +9272,7 @@
     "level": {
       "mul": 0.6
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "131953": {
@@ -9280,7 +9280,7 @@
     "level": {
       "mul": 0.4
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "131954": {
@@ -9288,7 +9288,7 @@
     "level": {
       "mul": 0.2
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "131955": {
@@ -9296,7 +9296,7 @@
     "level": {
       "add": 3
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "131956": {
@@ -9304,7 +9304,7 @@
     "level": {
       "add": 2
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "131957": {
@@ -9312,7 +9312,7 @@
     "level": {
       "add": 1
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "131958": {
@@ -9320,7 +9320,7 @@
     "level": {
       "mul": 0.6
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "131959": {
@@ -9328,7 +9328,7 @@
     "level": {
       "mul": 0.4
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "131960": {
@@ -9336,7 +9336,7 @@
     "level": {
       "mul": 0.2
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "132001": {
@@ -11830,7 +11830,7 @@
     "level": {
       "add": 6
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "140732": {
@@ -11838,7 +11838,7 @@
     "level": {
       "add": 5
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "140733": {
@@ -11846,7 +11846,7 @@
     "level": {
       "add": 4
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "140734": {
@@ -11854,7 +11854,7 @@
     "level": {
       "mul": 1.2
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "140735": {
@@ -11862,7 +11862,7 @@
     "level": {
       "mul": 1
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "140736": {
@@ -11870,7 +11870,7 @@
     "level": {
       "mul": 0.8
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "140737": {
@@ -11878,7 +11878,7 @@
     "level": {
       "add": 6
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "140738": {
@@ -11886,7 +11886,7 @@
     "level": {
       "add": 5
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "140739": {
@@ -11894,7 +11894,7 @@
     "level": {
       "add": 4
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "140740": {
@@ -11902,7 +11902,7 @@
     "level": {
       "mul": 1.2
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "140741": {
@@ -11910,7 +11910,7 @@
     "level": {
       "mul": 1
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "140742": {
@@ -11918,7 +11918,7 @@
     "level": {
       "mul": 0.8
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "140743": {
@@ -11926,7 +11926,7 @@
     "level": {
       "add": 6
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "140744": {
@@ -11934,7 +11934,7 @@
     "level": {
       "add": 5
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "140745": {
@@ -11942,7 +11942,7 @@
     "level": {
       "add": 4
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "140746": {
@@ -11950,7 +11950,7 @@
     "level": {
       "mul": 1.2
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "140747": {
@@ -11958,7 +11958,7 @@
     "level": {
       "mul": 1
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "140748": {
@@ -11966,7 +11966,7 @@
     "level": {
       "mul": 0.8
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "141001": {
@@ -12658,7 +12658,7 @@
     "level": {
       "add": 6
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "141932": {
@@ -12666,7 +12666,7 @@
     "level": {
       "add": 5
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "141933": {
@@ -12674,7 +12674,7 @@
     "level": {
       "add": 4
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "141934": {
@@ -12682,7 +12682,7 @@
     "level": {
       "mul": 1.2
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "141935": {
@@ -12690,7 +12690,7 @@
     "level": {
       "mul": 1
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "141936": {
@@ -12698,7 +12698,7 @@
     "level": {
       "mul": 0.8
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "141937": {
@@ -12706,7 +12706,7 @@
     "level": {
       "add": 6
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "141938": {
@@ -12714,7 +12714,7 @@
     "level": {
       "add": 5
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "141939": {
@@ -12722,7 +12722,7 @@
     "level": {
       "add": 4
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "141940": {
@@ -12730,7 +12730,7 @@
     "level": {
       "mul": 1.2
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "141941": {
@@ -12738,7 +12738,7 @@
     "level": {
       "mul": 1
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "141942": {
@@ -12746,7 +12746,7 @@
     "level": {
       "mul": 0.8
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "141943": {
@@ -12754,7 +12754,7 @@
     "level": {
       "add": 6
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "141944": {
@@ -12762,7 +12762,7 @@
     "level": {
       "add": 5
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "141945": {
@@ -12770,7 +12770,7 @@
     "level": {
       "add": 4
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "141946": {
@@ -12778,7 +12778,7 @@
     "level": {
       "mul": 1.2
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "141947": {
@@ -12786,7 +12786,7 @@
     "level": {
       "mul": 1
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "141948": {
@@ -12794,7 +12794,7 @@
     "level": {
       "mul": 0.8
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "141949": {
@@ -12802,7 +12802,7 @@
     "level": {
       "add": 6
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "141950": {
@@ -12810,7 +12810,7 @@
     "level": {
       "add": 5
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "141951": {
@@ -12818,7 +12818,7 @@
     "level": {
       "add": 4
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "141952": {
@@ -12826,7 +12826,7 @@
     "level": {
       "mul": 1.2
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "141953": {
@@ -12834,7 +12834,7 @@
     "level": {
       "mul": 1
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "141954": {
@@ -12842,7 +12842,7 @@
     "level": {
       "mul": 0.8
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "141955": {
@@ -12850,7 +12850,7 @@
     "level": {
       "add": 6
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "141956": {
@@ -12858,7 +12858,7 @@
     "level": {
       "add": 5
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "141957": {
@@ -12866,7 +12866,7 @@
     "level": {
       "add": 4
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "141958": {
@@ -12874,7 +12874,7 @@
     "level": {
       "mul": 1.2
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "141959": {
@@ -12882,7 +12882,7 @@
     "level": {
       "mul": 1
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "141960": {
@@ -12890,7 +12890,7 @@
     "level": {
       "mul": 0.8
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "142001": {
@@ -15486,7 +15486,7 @@
     "level": {
       "add": 9
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "150732": {
@@ -15494,7 +15494,7 @@
     "level": {
       "add": 8
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "150733": {
@@ -15502,7 +15502,7 @@
     "level": {
       "add": 7
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "150734": {
@@ -15510,7 +15510,7 @@
     "level": {
       "mul": 1.4
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "150735": {
@@ -15518,7 +15518,7 @@
     "level": {
       "mul": 1.2
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "150736": {
@@ -15526,7 +15526,7 @@
     "level": {
       "mul": 1
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "150737": {
@@ -15534,7 +15534,7 @@
     "level": {
       "add": 9
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "150738": {
@@ -15542,7 +15542,7 @@
     "level": {
       "add": 8
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "150739": {
@@ -15550,7 +15550,7 @@
     "level": {
       "add": 7
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "150740": {
@@ -15558,7 +15558,7 @@
     "level": {
       "mul": 1.4
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "150741": {
@@ -15566,7 +15566,7 @@
     "level": {
       "mul": 1.2
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "150742": {
@@ -15574,7 +15574,7 @@
     "level": {
       "mul": 1
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "150743": {
@@ -15582,7 +15582,7 @@
     "level": {
       "add": 9
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "150744": {
@@ -15590,7 +15590,7 @@
     "level": {
       "add": 8
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "150745": {
@@ -15598,7 +15598,7 @@
     "level": {
       "add": 7
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "150746": {
@@ -15606,7 +15606,7 @@
     "level": {
       "mul": 1.4
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "150747": {
@@ -15614,7 +15614,7 @@
     "level": {
       "mul": 1.2
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "150748": {
@@ -15622,7 +15622,7 @@
     "level": {
       "mul": 1
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "151001": {
@@ -16314,7 +16314,7 @@
     "level": {
       "add": 9
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "151932": {
@@ -16322,7 +16322,7 @@
     "level": {
       "add": 8
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "151933": {
@@ -16330,7 +16330,7 @@
     "level": {
       "add": 7
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "151934": {
@@ -16338,7 +16338,7 @@
     "level": {
       "mul": 1.4
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "151935": {
@@ -16346,7 +16346,7 @@
     "level": {
       "mul": 1.2
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "151936": {
@@ -16354,7 +16354,7 @@
     "level": {
       "mul": 1
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "151937": {
@@ -16362,7 +16362,7 @@
     "level": {
       "add": 9
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "151938": {
@@ -16370,7 +16370,7 @@
     "level": {
       "add": 8
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "151939": {
@@ -16378,7 +16378,7 @@
     "level": {
       "add": 7
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "151940": {
@@ -16386,7 +16386,7 @@
     "level": {
       "mul": 1.4
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "151941": {
@@ -16394,7 +16394,7 @@
     "level": {
       "mul": 1.2
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "151942": {
@@ -16402,7 +16402,7 @@
     "level": {
       "mul": 1
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "151943": {
@@ -16410,7 +16410,7 @@
     "level": {
       "add": 9
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "151944": {
@@ -16418,7 +16418,7 @@
     "level": {
       "add": 8
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "151945": {
@@ -16426,7 +16426,7 @@
     "level": {
       "add": 7
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "151946": {
@@ -16434,7 +16434,7 @@
     "level": {
       "mul": 1.4
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "151947": {
@@ -16442,7 +16442,7 @@
     "level": {
       "mul": 1.2
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "151948": {
@@ -16450,7 +16450,7 @@
     "level": {
       "mul": 1
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "151949": {
@@ -16458,7 +16458,7 @@
     "level": {
       "add": 9
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "151950": {
@@ -16466,7 +16466,7 @@
     "level": {
       "add": 8
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "151951": {
@@ -16474,7 +16474,7 @@
     "level": {
       "add": 7
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "151952": {
@@ -16482,7 +16482,7 @@
     "level": {
       "mul": 1.4
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "151953": {
@@ -16490,7 +16490,7 @@
     "level": {
       "mul": 1.2
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "151954": {
@@ -16498,7 +16498,7 @@
     "level": {
       "mul": 1
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "151955": {
@@ -16506,7 +16506,7 @@
     "level": {
       "add": 9
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "151956": {
@@ -16514,7 +16514,7 @@
     "level": {
       "add": 8
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "151957": {
@@ -16522,7 +16522,7 @@
     "level": {
       "add": 7
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "151958": {
@@ -16530,7 +16530,7 @@
     "level": {
       "mul": 1.4
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "151959": {
@@ -16538,7 +16538,7 @@
     "level": {
       "mul": 1.2
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "151960": {
@@ -16546,7 +16546,7 @@
     "level": {
       "mul": 1
     },
-    "mf": false,
+    "mf": true,
     "source": "FamiliarOption"
   },
   "152001": {
