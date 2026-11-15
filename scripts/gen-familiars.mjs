@@ -4,14 +4,14 @@
  * WZ manifests.
  *
  * Usage:
- *   node scripts/gen-familiars.mjs manifests/v271/familiar.json
+ *   node scripts/gen-familiars.mjs [manifest path, default: the current version's familiar.json]
  *
  * Set FAMILIAR_DUMP_DIR to the local WZ image dump's output root (the dir containing
  * `mob/`, `familiar/`, etc.) to enable pixel-hash dedup of same-name familiars that
  * render an identical sprite (e.g. card reissues): the redundant entries get a
  * `duplicateOf` pointer instead of being removed, so old saved characters that
  * picked one still resolve fine, they just stop showing up as a second picker result.
- *   FAMILIAR_DUMP_DIR=/path/to/dump node scripts/gen-familiars.mjs manifests/v271/familiar.json
+ *   FAMILIAR_DUMP_DIR=/path/to/dump node scripts/gen-familiars.mjs
  *
  * It splices three constants and leaves everything else (types, tier data, helpers) alone:
  *   - FAMILIARS       : from the familiar.json passed as the arg
@@ -25,8 +25,9 @@
 import { readFileSync, writeFileSync, existsSync } from "fs";
 import { resolve, join, dirname } from "path";
 import { createHash } from "crypto";
+import { manifestFile } from "./manifest-version.mjs";
 
-const manifestPath = process.argv[2];
+const manifestPath = process.argv[2] ?? manifestFile("familiar.json");
 if (!manifestPath) {
   console.error("Usage: node scripts/gen-familiars.mjs <path/to/familiar.json>");
   process.exit(1);

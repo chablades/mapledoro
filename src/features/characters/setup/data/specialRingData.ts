@@ -4,10 +4,10 @@
   In game only one special skill ring fits in the 4 ring slots. A Lv. 4+ Ring of Restraint or
   Continuous Ring then unlocks one more, the skill ring slot (the cog on that ring's tile):
   Restraint's takes a passive ring, Continuous's an active one. Both rules are in the two rings'
-  own item text (manifests/v272/item.json). Active rings have a skill you use (Restraint, Weapon
+  own item text (the manifest's item.json). Active rings have a skill you use (Restraint, Weapon
   Jump, Roro's rings, the old Oz rings); passive ones trigger on their own (Continuous).
 
-  Item ids from manifests/v272/item.json (Character/Ring).
+  Item ids from the manifest's item.json (Character/Ring).
 */
 
 export type SkillRingKind = "active" | "passive";

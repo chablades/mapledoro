@@ -4,7 +4,7 @@
  * potential line list) from the WZ familiar-potentials manifest.
  *
  * Usage:
- *   node scripts/gen-mf-potentials.mjs manifests/v271/familiar-potentials.json
+ *   node scripts/gen-mf-potentials.mjs [manifest path, default: the current version's familiar-potentials.json]
  *
  * Mystic Frontier lines live in ids 110001-153303: the second digit is the rarity
  * (1 common .. 5 legendary). The manifest also flags them `mf: true`, but the flag has
@@ -22,8 +22,9 @@
 
 import { readFileSync, writeFileSync } from "fs";
 import { resolve } from "path";
+import { manifestFile } from "./manifest-version.mjs";
 
-const manifestPath = process.argv[2];
+const manifestPath = process.argv[2] ?? manifestFile("familiar-potentials.json");
 if (!manifestPath) {
   console.error("Usage: node scripts/gen-mf-potentials.mjs <path/to/familiar-potentials.json>");
   process.exit(1);
