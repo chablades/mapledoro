@@ -653,10 +653,10 @@ export const GROWTH_POTION_OPTIONS: GrowthPotionOption[] = [
   { id: "potion2", label: "Growth Potion 2", minLevel: 200, maxLevel: 219, icon: { type: "item", id: "02633424" } },
   { id: "potion3", label: "Growth Potion 3", minLevel: 200, maxLevel: 229, icon: { type: "item", id: "02633423" } },
   { id: "tgp", label: "Typhoon Pot", minLevel: 200, maxLevel: 239, icon: { type: "item", id: "02439660" } },
-  { id: "mgp", label: "Mag Pot", minLevel: 200, maxLevel: 249, icon: { type: "item", id: "02633621" } },
-  { id: "leapgp", label: "Leap Pot", minLevel: 200, maxLevel: 259, icon: { type: "item", id: "02831238" } },
-  { id: "trgp", label: "Transc. Pot", minLevel: 200, maxLevel: 269, icon: { type: "item", id: "02637134" } },
-  { id: "lgp", label: "Legendary Pot", minLevel: 200, maxLevel: 279, icon: { type: "item", id: "02831239" } },
+  { id: "mgp", label: "Growth Potion (200 - 249)", minLevel: 200, maxLevel: 249, icon: { type: "item", id: "02633621" } },
+  { id: "leapgp", label: "Growth Potion (200 - 259)", minLevel: 200, maxLevel: 259, icon: { type: "item", id: "02831238" } },
+  { id: "trgp", label: "Growth Potion (200 - 269)", minLevel: 200, maxLevel: 269, icon: { type: "item", id: "02637134" } },
+  { id: "lgp", label: "Growth Potion (200 - 279)", minLevel: 200, maxLevel: 279, icon: { type: "item", id: "02831239" } },
 ];
 
 /** The Intermediate (Lv. 200+) and Advanced (Lv. 260+) Monster Park dungeons, ordered by EXP so

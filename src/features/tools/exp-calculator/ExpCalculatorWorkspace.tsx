@@ -1377,7 +1377,7 @@ function AllInOneTab({ theme, imported }: { theme: AppTheme; imported: ImportedF
           <SectionTitle theme={theme} label="Growth Potions" />
           <div className="exp-grid">
             {GROWTH_POTION_OPTIONS.map((potion) => (
-              <NumberField key={potion.id} label={`${potion.label} (Lv ${potion.minLevel}-${potion.maxLevel})`} icon={potion.icon} min={0} max={1000} value={input.potions[potion.id] ?? 0} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updatePotion(potion.id, value)} />
+              <NumberField key={potion.id} label={potion.label.endsWith(")") ? potion.label : `${potion.label} (Lv ${potion.minLevel}-${potion.maxLevel})`} icon={potion.icon} min={0} max={1000} value={input.potions[potion.id] ?? 0} labelStyle={labelStyle} inputStyle={inputStyle} onChange={(value) => updatePotion(potion.id, value)} />
             ))}
           </div>
         </div>
