@@ -12,6 +12,12 @@ interface ChangelogEntry {
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    date: "2026-11-15",
+    changes: [
+      { type: "changed", text: "The Pitched Whisper Crystal calculator now lists Extreme Black Mage separately, counting 3 crystals a month instead of 1." },
+    ],
+  },
+  {
     date: "2026-11-04",
     changes: [
       { type: "added", text: "Added an Enhancements window to equipment setup for each item's Star Force and flames. Type the green numbers from the hover tooltip and it works out the flame lines, or pick each line and tier with Details on." },

@@ -388,7 +388,7 @@ function CrystalSection({
   let weeklyGain = 0;
   let monthlyGain = 0;
   for (const boss of bosses) {
-    const cleared = selectedBosses.has(boss.id) ? 1 : 0;
+    const cleared = selectedBosses.has(boss.id) ? (boss.crystals ?? 1) : 0;
     if (boss.frequency === "weekly") {
       weeklyBosses.push(boss);
       weeklyGain += cleared;
@@ -507,9 +507,12 @@ function StarForceResearchTab({ theme }: { theme: AppTheme }) {
 
   function toggleBoss(type: "pitched" | "dawn", id: string) {
     const current = type === "pitched" ? state.pitchedBosses : state.dawnBosses;
+    const bosses = type === "pitched" ? PITCHED_WHISPER_BOSSES : DAWN_WHISPER_BOSSES;
+    const group = bosses.find((b) => b.id === id)?.exclusiveGroup;
+    const rivals = new Set(bosses.filter((b) => group && b.exclusiveGroup === group).map((b) => b.id));
     const next = current.includes(id)
       ? current.filter((b) => b !== id)
-      : [...current, id];
+      : [...current.filter((b) => !rivals.has(b)), id];
 
     if (type === "pitched") {
       save({ ...state, pitchedBosses: next });

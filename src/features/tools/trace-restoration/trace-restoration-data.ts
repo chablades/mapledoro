@@ -8,6 +8,10 @@ export interface WhisperBoss {
   id: string;
   name: string;
   frequency: "weekly" | "monthly";
+  /** Crystals per clear; defaults to 1. */
+  crystals?: number;
+  /** Bosses sharing a group are one clear (difficulties of the same boss), so selecting one deselects the rest. */
+  exclusiveGroup?: string;
 }
 
 export const PITCHED_WHISPER_BOSSES: WhisperBoss[] = [
@@ -19,7 +23,8 @@ export const PITCHED_WHISPER_BOSSES: WhisperBoss[] = [
   { id: "vhilla", name: "Hard Verus Hilla", frequency: "weekly" },
   { id: "darknell", name: "Hard Darknell", frequency: "weekly" },
   { id: "seren", name: "Hard / Extreme Seren", frequency: "weekly" },
-  { id: "bm", name: "Hard / Extreme Black Mage", frequency: "monthly" },
+  { id: "bm", name: "Hard Black Mage", frequency: "monthly", exclusiveGroup: "bm" },
+  { id: "bm-extreme", name: "Extreme Black Mage", frequency: "monthly", crystals: 3, exclusiveGroup: "bm" },
 ];
 
 interface PitchedTarget {
