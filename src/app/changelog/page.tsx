@@ -12,6 +12,14 @@ interface ChangelogEntry {
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    date: "2026-11-15",
+    changes: [
+      { type: "changed", text: "The Pitched Whisper Crystal calculator now lists Extreme Black Mage separately, counting 3 crystals a month instead of 1." },
+      { type: "added", text: "The Pitched Whisper Crystal calculator can now target the Red Jade and Black Jade Boss Ring Boxes and Total Control." },
+      { type: "added", text: "The Dawn Whisper Crystal calculator now has a target picker, with the Green Jade Boss Ring Box as a new option." },
+    ],
+  },
+  {
     date: "2026-11-04",
     changes: [
       { type: "added", text: "Added an Enhancements window to equipment setup for each item's Star Force and flames. Type the green numbers from the hover tooltip and it works out the flame lines, or pick each line and tier with Details on." },

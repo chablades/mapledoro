@@ -8,6 +8,10 @@ export interface WhisperBoss {
   id: string;
   name: string;
   frequency: "weekly" | "monthly";
+  /** Crystals per clear; defaults to 1. */
+  crystals?: number;
+  /** Bosses sharing a group are one clear (difficulties of the same boss), so selecting one deselects the rest. */
+  exclusiveGroup?: string;
 }
 
 export const PITCHED_WHISPER_BOSSES: WhisperBoss[] = [
@@ -19,19 +23,23 @@ export const PITCHED_WHISPER_BOSSES: WhisperBoss[] = [
   { id: "vhilla", name: "Hard Verus Hilla", frequency: "weekly" },
   { id: "darknell", name: "Hard Darknell", frequency: "weekly" },
   { id: "seren", name: "Hard / Extreme Seren", frequency: "weekly" },
-  { id: "bm", name: "Hard / Extreme Black Mage", frequency: "monthly" },
+  { id: "bm", name: "Hard Black Mage", frequency: "monthly", exclusiveGroup: "bm" },
+  { id: "bm-extreme", name: "Extreme Black Mage", frequency: "monthly", crystals: 3, exclusiveGroup: "bm" },
 ];
 
-interface PitchedTarget {
+export interface CrystalTarget {
   id: string;
   name: string;
   cost: number;
 }
 
-export const PITCHED_TARGETS: PitchedTarget[] = [
+export const PITCHED_TARGETS: CrystalTarget[] = [
+  { id: "red-jade-ring", name: "Red Jade Boss Ring Box", cost: 25 },
+  { id: "black-jade-ring", name: "Black Jade Boss Ring Box", cost: 45 },
   { id: "pitched-set", name: "Pitched Boss Set Equipment", cost: 130 },
   { id: "mitras-rage", name: "Mitra's Rage Selection Box", cost: 260 },
   { id: "genesis-badge", name: "Genesis Badge", cost: 390 },
+  { id: "total-control", name: "Total Control", cost: 480 },
 ];
 
 export const DAWN_WHISPER_BOSSES: WhisperBoss[] = [
@@ -44,7 +52,10 @@ export const DAWN_WHISPER_BOSSES: WhisperBoss[] = [
   { id: "seren", name: "Normal / Hard / Extreme Seren", frequency: "weekly" },
 ];
 
-export const DAWN_TARGET_COST = 65;
+export const DAWN_TARGETS: CrystalTarget[] = [
+  { id: "green-jade-ring", name: "Green Jade Boss Ring Box", cost: 15 },
+  { id: "dawn-set", name: "Dawn Boss Set Equipment", cost: 65 },
+];
 
 export const PITCHED_CRYSTAL_ITEM_ID = "04001956"; // Pitched Whisper Crystal
 export const DAWN_CRYSTAL_ITEM_ID = "04001955"; // Dawn Whisper Crystal

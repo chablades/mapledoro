@@ -16,23 +16,23 @@
     "chart.js": "^4.6.1",
     "ioredis": "^6.0.0",
     "katex": "^0.19.1",
-    "next": "^16.4.3",
+    "next": "^16.4.6",
     "qrcode-generator": "^2.0.4",
     "react": "19.3.1",
     "react-chartjs-2": "^5.3.1",
     "react-dom": "19.3.1",
-    "zxing-wasm": "^3.1.6"
+    "zxing-wasm": "^3.1.7"
   },
   "devDependencies": {
     "@types/node": "^24",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
-    "oxlint": "^1.90.0",
-    "oxlint-plugin-complexity": "^4",
-    "oxlint-tsgolint": "^7",
+    "oxlint": "^1.93.0",
+    "oxlint-plugin-complexity": "^4.1.0",
+    "oxlint-tsgolint": "^7.0.2007",
     "typescript": "^7.0.2"
   },
   "overrides": {
-    "postcss": "8.5.32"
+    "postcss": "8.5.33"
   }
 }
