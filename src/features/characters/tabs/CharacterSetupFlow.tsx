@@ -13,7 +13,7 @@ import SearchPaneCard from "./components/SearchPaneCard";
 import type { PreviewPaneActions, PreviewPaneModel, SearchPaneActions, SearchPaneModel } from "./paneModels";
 import { useCharacterSetupController, MAX_CHAMPIONS, MAX_CHARACTERS_PER_WORLD } from "./useCharacterSetupController";
 import { toCharacterKey } from "../model/characterKeys";
-import type { StoredCharacterRecord } from "../model/charactersStore";
+import { createStoredCharacterRecord } from "../model/charactersStore";
 
 interface CharacterSetupFlowProps {
   theme: AppTheme;
@@ -76,9 +76,10 @@ export default function CharacterSetupFlow({ theme, initialCharacterName, initia
   const confirmedCharacterKey = state.confirmedCharacter
     ? toCharacterKey(state.confirmedCharacter)
     : null;
-  const confirmedStoredCharacter = confirmedCharacterKey !== null
+  // Fresh lookup results have no stats/equipment yet; setup consumers need a full record.
+  const confirmedStoredCharacter = state.confirmedCharacter
     ? (state.characterRoster.find((r) => toCharacterKey(r) === confirmedCharacterKey) ??
-      (state.confirmedCharacter as unknown as StoredCharacterRecord))
+      createStoredCharacterRecord({ character: state.confirmedCharacter }))
     : null;
   const currentCharacterHasCompletedRequiredFlow = state.completedFlowIds.includes(
     state.requiredFlowId,
