@@ -13,6 +13,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { ENGINE_DATA_FILE, engineModule } from "./predict.mjs";
+import { applyMeasuredClasses, readMeasuredClasses } from "./measured-classes.mjs";
 
 const {
   CORE_ATT, coreAtt, coreAttAt, buffs, statWeights, soulAtkPct, contAtt, contBoss, sheetDmg, critOver, CRIT_RATE_TO_CRIT_DMG,
@@ -182,15 +183,10 @@ for (const [classId, c] of Object.entries(classes)) {
   u.stat.myClass = c.koreanName;
   c.scale = SWEEP[classId].probes.base.damage / unscaled.predict(u).damage;
 }
-// Classes MapleScouter no longer lets us probe (it stopped sending class curves and constants in
-// Nov 2026) are estimated: another class's hidden amounts, with the new class's own curves measured
-// from MapleScouter's HEXA and damage figures for one sheet at several strengths, plus its own
-// defense constant and scale fitted to that sheet. See estimated-classes.json.
-const ESTIMATED = JSON.parse(readFileSync(new URL("./estimated-classes.json", import.meta.url), "utf8"));
-for (const [classId, { borrowFrom, scaleVsBorrowed, ...own }] of Object.entries(ESTIMATED)) {
-  if (classes[classId]) continue; // probed for real since
-  classes[classId] = { ...structuredClone(classes[borrowFrom]), ...own, scale: classes[borrowFrom].scale * scaleVsBorrowed };
-}
+// Measured class data (new classes, and corrections to probed ones) goes on top of the probes:
+// MapleScouter stopped sending class curves and constants in Nov 2026, so anything after that is
+// measured from its results. See measured-classes.mjs.
+applyMeasuredClasses(classes, readMeasuredClasses());
 // Toggles a class has no probe for drop out of the JSON.
 for (const c of Object.values(classes)) for (const k of Object.keys(c.toggles)) if (c.toggles[k] === undefined) delete c.toggles[k];
 writeFileSync(ENGINE_DATA_FILE, `${JSON.stringify(data)}\n`);

@@ -1,0 +1,124 @@
+{
+ "lethe": {
+  "how": "New in v272, never probed. Curves: MapleScouter HEXA and damage for one sheet at 19 strengths (HEXA 3k to 155k), on the shared 13 knots. cores: MapleScouter's per-core shares (hexaPoss) scaled to an all-cores-at-0 calculation. defenseK, dmg (boss amount), dmgPerBuffDuration and scaleFactor fitted to the same sheet's stat efficiency table and a Buff Duration 0 calculation. Everything else is Ren's, the class whose damage tracks hers best as Magic ATT changes.",
+  "borrowFrom": "ren",
+  "scaleFactor": 1.47125007014,
+  "set": {
+   "koreanName": "레테",
+   "defenseK": 2.892275186,
+   "splineScale": 1,
+   "spline300": {
+    "x": [
+     0,
+     24704,
+     33228,
+     46826,
+     57262,
+     68952,
+     85358,
+     99025,
+     110921,
+     120444,
+     131008,
+     144366,
+     155498
+    ],
+    "y": [
+     0,
+     208562195.634,
+     341610395.872,
+     779793240.414,
+     1264492457.45,
+     1993842084.95,
+     3306291194.13,
+     4795349498.76,
+     7023258908.54,
+     9704913285.17,
+     13748464248.7,
+     20297915459,
+     25983658946.6
+    ],
+    "m": [
+     8493.4568563,
+     10510.1810076,
+     24848.6126077,
+     40191.9828223,
+     54110.1969833,
+     69237.414566,
+     91925.4921288,
+     135742.313968,
+     235846.527459,
+     325350.631681,
+     456367.153673,
+     481076.587279,
+     609276.586329
+    ]
+   },
+   "spline380": {
+    "x": [
+     0,
+     24704,
+     33228,
+     46826,
+     57262,
+     68952,
+     85358,
+     99025,
+     110921,
+     120444,
+     131008,
+     144366,
+     155498
+    ],
+    "y": [
+     0,
+     205368765.335,
+     336493044.804,
+     771016100.125,
+     1253164396.5,
+     1974998072.25,
+     3291553464.02,
+     4767743752.14,
+     6989888344.49,
+     9661495000.3,
+     13690589826.2,
+     20197329264.5,
+     25964548875.1
+    ],
+    "m": [
+     8355.04465206,
+     10401.9797223,
+     24607.750205,
+     39997.5488296,
+     54211.0183994,
+     69028.2895995,
+     92104.4267344,
+     135386.07229,
+     234602.096267,
+     323967.055407,
+     454719.671149,
+     479821.510444,
+     619041.122999
+    ]
+   },
+   "cores": {
+    "allCores=0": 0.457615,
+    "masteryCore1=0": 0.880081,
+    "masteryCore2=0": 0.903391,
+    "masteryCore3=0": 0.884251,
+    "masteryCore4=0": 0.96851,
+    "skillCore1=0": 0.971771,
+    "skillCore2=0": 0.985944,
+    "reinCore1=0": 0.977064,
+    "reinCore2=0": 0.980806,
+    "reinCore3=0": 0.977866,
+    "reinCore4=0": 0.978401,
+    "generalCore2=0": 0.955518,
+    "generalCore3=0": 0.994012
+   },
+   "perSummonDuration": 0,
+   "dmgPerBuffDuration": 0.00078279582,
+   "dmg": 1.506878649
+  }
+ }
+}
