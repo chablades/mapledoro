@@ -3,7 +3,7 @@
   "koreanName": "레테",
   "borrowFrom": "ren",
   "defenseK": 2.892275186,
-  "scaleVsBorrowed": 1.53907964896,
+  "scaleVsBorrowed": 1.47125007014,
   "splineScale": 1,
   "spline300": {
    "x": [
@@ -115,6 +115,7 @@
    "generalCore3=0": 0.994012
   },
   "perSummonDuration": 0,
-  "dmgPerBuffDuration": 0.00074829682
+  "dmgPerBuffDuration": 0.00078279582,
+  "dmg": 1.506878649
  }
 }
