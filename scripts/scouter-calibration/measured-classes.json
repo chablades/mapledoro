@@ -1,6 +1,6 @@
 {
  "lethe": {
-  "how": "New in v272, never probed. Curves: MapleScouter HEXA and damage for one sheet at 19 strengths (HEXA 3k to 155k), on the shared 13 knots. cores: MapleScouter's per-core shares (hexaPoss) scaled to an all-cores-at-0 calculation. defenseK, dmg (boss amount), dmgPerBuffDuration and scaleFactor fitted to the same sheet's stat efficiency table and a Buff Duration 0 calculation. Everything else is Ren's, the class whose damage tracks hers best as Magic ATT changes.",
+  "how": "New in v272, never probed. Curves: MapleScouter HEXA and damage for one sheet at 19 strengths (HEXA 3k to 155k), on the shared 13 knots. cores: MapleScouter's per-core shares (hexaPoss) scaled to an all-cores-at-0 calculation, except Ascent (skillCore2), whose hexaPoss figure is the whole-damage Ascent share itself (as for Ren and Dual Blade), so its core value gives exactly that share; kalingAscent is the same share. defenseK, dmg (boss amount), dmgPerBuffDuration and scaleFactor fitted to the same sheet's stat efficiency table and a Buff Duration 0 calculation. Everything else is Ren's, the class whose damage tracks hers best as Magic ATT changes.",
   "borrowFrom": "ren",
   "scaleFactor": 1.47125007014,
   "set": {
@@ -108,7 +108,7 @@
     "masteryCore3=0": 0.884251,
     "masteryCore4=0": 0.96851,
     "skillCore1=0": 0.971771,
-    "skillCore2=0": 0.985944,
+    "skillCore2=0": 0.974383,
     "reinCore1=0": 0.977064,
     "reinCore2=0": 0.980806,
     "reinCore3=0": 0.977866,
@@ -118,7 +118,8 @@
    },
    "perSummonDuration": 0,
    "dmgPerBuffDuration": 0.00078279582,
-   "dmg": 1.506878649
+   "dmg": 1.506878649,
+   "kalingAscent": 0.02629089051559515
   }
  }
 }
