@@ -57,10 +57,11 @@ void test("a party of one matches the character's own Boss Clear on a solo-cut b
 
 void test("members' shares add up to the party's clear rate, without Ascent a plain sum", () => {
   const seren = boss("seren", "Normal");
-  const party = computePartyClear(seren, [member(damageFor(seren, 0.6), 1), member(damageFor(seren, 0.3), 1)]);
+  // 0.95, not the 0.9 Party Min floor itself, where float rounding would pick the tier.
+  const party = computePartyClear(seren, [member(damageFor(seren, 0.6), 1), member(damageFor(seren, 0.35), 1)]);
   assert.ok(Math.abs(party.members[0].clearRate - 0.6) < 1e-9);
-  assert.ok(Math.abs(party.members[1].clearRate - 0.3) < 1e-9);
-  assert.ok(Math.abs(party.clearRate - 0.9) < 1e-9);
+  assert.ok(Math.abs(party.members[1].clearRate - 0.35) < 1e-9);
+  assert.ok(Math.abs(party.clearRate - 0.95) < 1e-9);
   assert.equal(party.tagEnglish, "Party Min");
 });
 
