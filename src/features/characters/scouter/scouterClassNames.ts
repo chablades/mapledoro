@@ -62,6 +62,7 @@ export const SCOUTER_CLASS_KOREAN_NAMES: Record<string, string> = {
   kanna: "칸나",
   sia_astelle: "시아",
   erel_light: "에렐",
+  lethe: "레테",
   zero: "제로",
 };
 

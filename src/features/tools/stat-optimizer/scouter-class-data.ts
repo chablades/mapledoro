@@ -201,6 +201,15 @@ export const SCOUTER_CLASS_CONSTANTS: Record<string, ScouterClassConstants> = {
     dpmMainStat: 0, dpmAtk: 27, dpmAtkPer: 0,
     dpmBossDmg: 77.84603723, dpmIgnoreGuard: 22.30743059, dpmCritDmg: 3.448309067,
   },
+  // Not vendored: MapleScouter stopped sending class constants before Lethe (v272) arrived.
+  // Measured from her MapleScouter efficiency table the same way as her Scouter engine entry
+  // (scripts/scouter-calibration/measured-classes.json): Ren's constants, with the boss and
+  // ignore DEF terms her table showed Ren's were short of. The others matched within 0.6%.
+  lethe: {
+    main: "int", sub: "luk", sub2: null,
+    dpmMainStat: 0, dpmAtk: 0, dpmAtkPer: 0,
+    dpmBossDmg: 67.06, dpmIgnoreGuard: 22.68, dpmCritDmg: 0,
+  },
   luminous: {
     main: "int", sub: "luk", sub2: null,
     dpmMainStat: 0.4583, dpmAtk: 45, dpmAtkPer: 0,

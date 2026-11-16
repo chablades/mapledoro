@@ -7,11 +7,15 @@
 // renewalDetail) is still in the client chunk. Since then bosscut-data.generated.ts is updated
 // by hand:
 //   - Existing bosses: apply the multiplier each boss's renewalDetail states ("배율 2.5% 증가",
-//     "실전딜 일괄 1.5%증가", "(14% 상승)") to its easyRate, and copy renewalDate/renewalDetail.
+//     "실전딜 일괄 1.5%증가") to its easyRate, and copy renewalDate/renewalDetail. A note that
+//     converts a cut's basis ("6인기준 -> 솔플기준 변환", Extreme Kaling) is not a difficulty change:
+//     checked against two classes, applying its "+14%" made Kaling read 14% too easy.
 //   - Anything else (a new boss, or a change the changelog doesn't explain): scale against a
 //     boss with the same defense and a clear rate in the same Ascent bracket on a real result.
 //     A result saved in your browser holds every boss's clear rate: localStorage "manual-store"
 //     -> state.result.calculatedData.bossCuts. Read it there; don't script their API.
+//     Use more than one class: MapleScouter boosts some non-KMS classes on some bosses, so a single
+//     class can be off by several percent on a given boss.
 // Champion Black Mage is stored as Hard x0.75 (MapleScouter's own numbers agree since v272).
 // Set BOSSCUT_SCRAPED_AT to the update's date too: it's the "Boss thresholds as of" date
 // players see under every Boss Clear view.

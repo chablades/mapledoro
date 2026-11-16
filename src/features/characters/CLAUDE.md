@@ -22,7 +22,7 @@ When Nexon ships a new class, characters of that class appear in rankings **imme
 8. **`share/qrCodec.ts`** — append the jobName to the end of `CLASSES`. Append only: each class's index is baked into every shared card, so inserting or reordering makes old cards decode as the wrong class.
 9. **`setup/data/linkSkillsData.ts`** — add the class's link skill to `LINK_SKILLS` (a new skill also needs its id in `LinkSkillId`, `model/charactersStore.ts`) and map the jobName in `CLASS_TO_SKILL`.
 10. **`src/lib/classPortraits.ts`** — the class art, from Nexon's own CDN (`g.nexonstatic.com`, the 395x400 image on the class's page).
-11. **Scouter** — `scouter/scouterClassNames.ts` maps the class to MapleScouter's Korean name (it must match their `myClass` exactly), and the local engine needs the class's full probe set plus a `scouter-class-data.ts` row in the Stat Optimizer (`tools/stat-optimizer`). Both call MapleScouter's API: see `scripts/CLAUDE.md`'s "Scouter engine: after a patch" and its request limits. Until then, the class shows no Scouter results; nothing breaks.
+11. **Scouter** — `scouter/scouterClassNames.ts` maps the class to MapleScouter's Korean name (it must match their `myClass` exactly), and the local engine needs a `measured-classes.json` entry plus a `scouter-class-data.ts` row in the Stat Optimizer (`tools/stat-optimizer`). Both are measured from MapleScouter's results in a browser tab: see `scripts/CLAUDE.md`'s "Scouter engine: after a patch". Lethe is the worked example. Until then, the class shows no Scouter results; nothing breaks.
 
 Not ours: the character guide entry (`src/app/guides/character-guides/classData.ts`) is Cha's. Erda Link only covers the SHINE classes.
 
