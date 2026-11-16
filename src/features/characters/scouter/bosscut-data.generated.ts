@@ -83,5 +83,6 @@ export const BOSSCUT_DATA: BossCutEntry[] = [
   { boss: "데미안", name: "damien", difficulty: "Normal", level: 210, guard: 300, arcaneForce: null, authenticForce: null, partyLimit: 6, bossCut: 40600, partyBossCut: null, easyRate: 368.82562, challenger: 0.97, renewalDate: "2026-09-22", renewalDetail: "실전딜 일괄 1.5%증가 적용" },
   { boss: "메이린", name: "maerin", difficulty: "Hard", level: 280, guard: 380, arcaneForce: null, authenticForce: null, partyLimit: 1, bossCut: 49800, partyBossCut: null, easyRate: 1.135087, challenger: null, renewalDate: "2026-06-22", renewalDetail: "1최종뎀 2오리진 1초기화 1어센트 1바인드 기준" },
   { boss: "메이린", name: "maerin", difficulty: "Normal", level: 270, guard: 380, arcaneForce: null, authenticForce: null, partyLimit: 1, bossCut: 40600, partyBossCut: null, easyRate: 3.397069, challenger: null, renewalDate: "2026-06-22", renewalDetail: "1최종뎀 2오리진 1초기화 1어센트 1바인드 기준" },
-  { boss: "카이", name: "kai", difficulty: "Normal", level: 270, guard: 380, arcaneForce: null, authenticForce: null, partyLimit: 1, bossCut: 40600, partyBossCut: null, easyRate: 39.016827, challenger: null, renewalDate: "", renewalDetail: "" },
+  // GMS v272 WZ: Mob/8881860.img and 8881864.img info/level = 235, overriding MapleScouter's 270.
+  { boss: "카이", name: "kai", difficulty: "Normal", level: 235, guard: 380, arcaneForce: null, authenticForce: null, partyLimit: 1, bossCut: 40600, partyBossCut: null, easyRate: 39.016827, challenger: null, renewalDate: "", renewalDetail: "" },
 ];

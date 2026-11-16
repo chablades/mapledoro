@@ -24,6 +24,18 @@ const LEVEL = 290;
 const FORCE = 99999;
 const member = (damage, ascentConst, level = LEVEL) => ({ level, arcaneForce: FORCE, authenticForce: FORCE, inputs: inputs(damage, ascentConst) });
 
+void test("Normal Kai allows entry at level 235, but not 234", () => {
+  const kai = boss("kai", "Normal");
+  const below = computeBossClear(kai, 234, FORCE, FORCE, inputs(1e8));
+  const eligible = computeBossClear(kai, 235, FORCE, FORCE, inputs(1e8));
+  assert.equal(kai.level, 235);
+  assert.equal(eligible.levelGapDmg, 1.1);
+  assert.equal(below.tagEnglish, "Can't Enter");
+  assert.notEqual(eligible.tagEnglish, "Can't Enter");
+  assert.equal(computePartyClear(kai, [member(1e8, 1, 234)]).cannotEnter, "level");
+  assert.equal(computePartyClear(kai, [member(1e8, 1, 235)]).cannotEnter, null);
+});
+
 /** The damage that gives `rate` alone on `entry`, with no Ascent (clear rate is then linear). */
 function damageFor(entry, rate) {
   const unit = computeBossClear(entry, LEVEL, FORCE, FORCE, inputs(1e8));

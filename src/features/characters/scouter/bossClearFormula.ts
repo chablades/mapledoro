@@ -110,8 +110,8 @@ function authenticGapDmg(bossAuthenticForce: number | null, characterAuthenticFo
 // gap tables above. Below it the boss can't be entered at all, not merely hard.
 const ENTRY_LEVEL_BY_DIFFICULTY: Record<string, Record<string, number>> = {
   메이린: { Normal: 270, Hard: 280 },
-  // maplestorywiki.net/w/Kai
-  카이: { Normal: 270, Hard: 280 },
+  // GMS v272 Returning Boss: Kai requires Lv. 235 (separate from the monster's level).
+  카이: { Normal: 235, Hard: 280 },
 };
 // From the MapleStory Wiki's boss list (maplestorywiki.net/w/Bosses).
 const ENTRY_LEVEL_DEFAULT: Record<string, number> = {
