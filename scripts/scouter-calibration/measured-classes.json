@@ -1,6 +1,6 @@
 {
  "lethe": {
-  "how": "New in v272, never probed. Curves: MapleScouter HEXA and damage for one sheet at 19 strengths (HEXA 3k to 155k), on the shared 13 knots. cores: MapleScouter's per-core shares (hexaPoss) scaled to an all-cores-at-0 calculation, except Ascent (skillCore2), whose hexaPoss figure is the whole-damage Ascent share itself (as for Ren and Dual Blade), so its core value gives exactly that share; kalingAscent is the same share. defenseK, dmg (boss amount), dmgPerBuffDuration and scaleFactor fitted to the same sheet's stat efficiency table and a Buff Duration 0 calculation. Everything else is Ren's, the class whose damage tracks hers best as Magic ATT changes. Curves refitted to the same 19 results on the v272 layout (curve points at 30140 and 37900, PCHIP), every point within 11 HEXA.",
+  "how": "New in v272, never probed. Curves: MapleScouter HEXA and damage for one sheet at 19 strengths (HEXA 3k to 155k), on the shared 13 knots. cores: MapleScouter's per-core shares (hexaPoss) scaled to an all-cores-at-0 calculation, except Ascent (skillCore2), whose hexaPoss figure is the whole-damage Ascent share itself (as for Ren and Dual Blade), so its core value gives exactly that share; kalingAscent is the same share. defenseK, dmg (boss amount), dmgPerBuffDuration and scaleFactor fitted to the same sheet's stat efficiency table and a Buff Duration 0 calculation. Everything else is Ren's, the class whose damage tracks hers best as Magic ATT changes. Curves refitted to the same 19 results on the v272 layout (curve points at 30140 and 37900, PCHIP), every point within 11 HEXA. Cooldown seconds: scale at 4 s and 6 s from MapleScouter results at those settings.",
   "borrowFrom": "ren",
   "scaleFactor": 1.47125007014,
   "set": {
@@ -120,10 +120,16 @@
    "dmgPerBuffDuration": 0.00078279582,
    "dmg": 1.506878649,
    "kalingAscent": 0.02629089051559515
+  },
+  "patch": {
+   "cooldownScale": {
+    "4": 0.00955996,
+    "6": 0.00963292
+   }
   }
  },
  "ren": {
-  "how": "v272 curves: low curve points moved to 30140/37900 like every class; values at 30140, 37900 and 46826-68952 fitted to 9 results on one sheet (HEXA 8k to 115k), every point within 2 HEXA, both curves.",
+  "how": "v272 curves: low curve points moved to 30140/37900 like every class; values at 30140, 37900 and 46826-68952 fitted to 9 results on one sheet (HEXA 8k to 115k), every point within 2 HEXA, both curves. Cooldown seconds: scale at 4 s and 6 s from MapleScouter results at those settings.",
   "set": {
    "spline380": {
     "x": [
@@ -218,6 +224,12 @@
      310593.529467,
      309819.183615
     ]
+   }
+  },
+  "patch": {
+   "cooldownScale": {
+    "4": 0.00979566,
+    "6": 0.00976998
    }
   }
  },
@@ -321,7 +333,7 @@
   }
  },
  "hoyoung": {
-  "how": "v272 curves: low curve points moved to 30140/37900 like every class; values at 30140, 37900 and 46826 fitted to 7 results on one sheet (HEXA 8k to 111k), every point within 3 HEXA, both curves.",
+  "how": "v272 curves: low curve points moved to 30140/37900 like every class; values at 30140, 37900 and 46826 fitted to 7 results on one sheet (HEXA 8k to 111k), every point within 3 HEXA, both curves. Cooldown seconds: scale at 4 s and 6 s from MapleScouter results at those settings.",
   "set": {
    "spline380": {
     "x": [
@@ -417,10 +429,16 @@
      398962.548329
     ]
    }
+  },
+  "patch": {
+   "cooldownScale": {
+    "4": 0.0096408,
+    "6": 0.00967922
+   }
   }
  },
  "kanna": {
-  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (still PCHIP, slopes from the values) and reshaped Kanna's 46826-99025 range. Values fitted to 11 results on one sheet (HEXA 7k to 110k, attack and main stat lowered), every point within 1 HEXA, both curves.",
+  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (still PCHIP, slopes from the values) and reshaped Kanna's 46826-99025 range. Values fitted to 11 results on one sheet (HEXA 7k to 110k, attack and main stat lowered), every point within 1 HEXA, both curves. Core losses x0.989 (all except Ascent), fitted to MapleScouter with every HEXA core at 0 and checked at every core at 12. Cooldown seconds: scale at 4 s and 6 s from MapleScouter results at those settings.",
   "set": {
    "spline380": {
     "x": [
@@ -516,10 +534,160 @@
      243212.123428
     ]
    }
+  },
+  "patch": {
+   "cores": {
+    "skillCore1=0": 0.969454,
+    "masteryCore1=0": 0.960036,
+    "masteryCore2=0": 0.847312,
+    "masteryCore3=0": 0.945345,
+    "masteryCore4=0": 0.918116,
+    "reinCore1=0": 0.977702,
+    "reinCore2=0": 0.94544,
+    "reinCore3=0": 0.983609,
+    "reinCore4=0": 0.977774,
+    "generalCore2=0": 0.919596,
+    "generalCore3=0": 0.991209,
+    "allCores=0": 0.446341,
+    "only skillCore1": 0.474634,
+    "only skillCore2": 0.472625,
+    "only masteryCore1": 0.478778,
+    "only masteryCore2": 0.587768,
+    "only masteryCore3": 0.496965,
+    "only masteryCore4": 0.522186,
+    "only reinCore1": 0.466995,
+    "only reinCore2": 0.47176,
+    "only reinCore3": 0.461523,
+    "only reinCore4": 0.466929,
+    "only generalCore2": 0.520816,
+    "only generalCore3": 0.450246,
+    "skillCore1=5": 0.972899,
+    "skillCore1=15": 0.982062,
+    "skillCore1=25": 0.99237,
+    "skillCore2=5": 0.979377,
+    "skillCore2=15": 0.987402,
+    "skillCore2=25": 0.995705,
+    "masteryCore1=5": 0.97545,
+    "masteryCore1=15": 0.985661,
+    "masteryCore1=25": 0.994852,
+    "reinCore1=5": 0.983276,
+    "reinCore1=15": 0.988851,
+    "reinCore1=25": 0.994425,
+    "generalCore2=5": 0.949965,
+    "generalCore2=15": 0.966679,
+    "generalCore2=25": 0.984259,
+    "generalCore3=5": 0.992967,
+    "generalCore3=15": 0.996484,
+    "generalCore3=25": 1,
+    "masteryCore1=1": 0.972014,
+    "masteryCore2=1": 0.914758,
+    "masteryCore3=1": 0.959177,
+    "masteryCore4=1": 0.944964,
+    "masteryCore2=15": 0.955909,
+    "masteryCore3=15": 0.978885,
+    "masteryCore4=15": 0.971533,
+    "reinCore2=1": 0.94544,
+    "reinCore2=2": 0.94544,
+    "reinCore2=3": 0.947745,
+    "reinCore2=4": 0.947745,
+    "reinCore2=5": 0.947745,
+    "reinCore2=6": 0.950051,
+    "reinCore2=7": 0.950051,
+    "reinCore2=8": 0.950051,
+    "reinCore2=9": 0.952356,
+    "reinCore2=10": 0.958119,
+    "reinCore2=11": 0.958119,
+    "reinCore2=12": 0.960501,
+    "reinCore2=13": 0.960501,
+    "reinCore2=14": 0.960501,
+    "reinCore2=15": 0.962884,
+    "reinCore2=16": 0.962884,
+    "reinCore2=17": 0.962884,
+    "reinCore2=18": 0.965266,
+    "reinCore2=19": 0.965266,
+    "reinCore2=20": 0.977254,
+    "reinCore2=21": 0.97979,
+    "reinCore2=22": 0.97979,
+    "reinCore2=23": 0.97979,
+    "reinCore2=24": 0.982326,
+    "reinCore2=25": 0.982326,
+    "reinCore2=26": 0.982326,
+    "reinCore2=27": 0.984861,
+    "reinCore2=28": 0.984861,
+    "reinCore2=29": 0.984861,
+    "generalCore3=1": 0.992967,
+    "generalCore3=2": 0.992967,
+    "generalCore3=3": 0.992967,
+    "generalCore3=4": 0.992967,
+    "generalCore3=6": 0.992967,
+    "generalCore3=7": 0.994725,
+    "generalCore3=8": 0.994725,
+    "generalCore3=9": 0.994725,
+    "generalCore3=10": 0.994725,
+    "generalCore3=11": 0.994725,
+    "generalCore3=12": 0.994725,
+    "generalCore3=13": 0.996484,
+    "generalCore3=14": 0.996484,
+    "generalCore3=16": 0.996484,
+    "generalCore3=17": 0.996484,
+    "generalCore3=18": 0.996484,
+    "generalCore3=19": 0.998242,
+    "generalCore3=20": 0.998242,
+    "generalCore3=21": 0.998242,
+    "generalCore3=22": 0.998242,
+    "generalCore3=23": 0.998242,
+    "generalCore3=24": 0.998242,
+    "generalCore3=26": 1,
+    "generalCore3=27": 1,
+    "generalCore3=28": 1,
+    "generalCore3=29": 1,
+    "generalCore2=1": 0.94364,
+    "skillCore1=8": 0.975482,
+    "skillCore2=1": 0.976275,
+    "masteryCore2=9": 0.938273,
+    "masteryCore4=26": 0.992409,
+    "reinCore3=18": 0.992624,
+    "reinCore4=29": 0.995925,
+    "generalCore2=9": 0.95629,
+    "reinCore1=1": 0.98179,
+    "reinCore3=1": 0.986614,
+    "reinCore3=15": 0.991805,
+    "reinCore4=1": 0.981848,
+    "reinCore4=15": 0.988887,
+    "skillCore1=1": 0.969454,
+    "masteryCore1=0,masteryCore2=0": 0.809009,
+    "masteryCore1=0,masteryCore2=1": 0.875722,
+    "masteryCore1=1,masteryCore2=0": 0.820987,
+    "masteryCore1=1,masteryCore2=1": 0.8877,
+    "masteryCore1=0,masteryCore3=0": 0.905976,
+    "masteryCore1=0,masteryCore3=1": 0.919657,
+    "masteryCore1=1,masteryCore3=0": 0.917954,
+    "masteryCore1=1,masteryCore3=1": 0.931635,
+    "masteryCore1=0,masteryCore4=0": 0.879043,
+    "masteryCore1=0,masteryCore4=1": 0.905599,
+    "masteryCore1=1,masteryCore4=0": 0.891021,
+    "masteryCore1=1,masteryCore4=1": 0.917576,
+    "masteryCore2=0,masteryCore3=0": 0.792657,
+    "masteryCore2=0,masteryCore3=1": 0.806489,
+    "masteryCore2=1,masteryCore3=0": 0.860104,
+    "masteryCore2=1,masteryCore3=1": 0.873935,
+    "masteryCore2=0,masteryCore4=0": 0.765428,
+    "masteryCore2=0,masteryCore4=1": 0.792275,
+    "masteryCore2=1,masteryCore4=0": 0.832875,
+    "masteryCore2=1,masteryCore4=1": 0.859722,
+    "masteryCore3=0,masteryCore4=0": 0.863462,
+    "masteryCore3=0,masteryCore4=1": 0.890309,
+    "masteryCore3=1,masteryCore4=0": 0.877293,
+    "masteryCore3=1,masteryCore4=1": 0.904141
+   },
+   "cooldownScale": {
+    "4": 0.00977199,
+    "6": 0.00977934
+   }
   }
  },
  "hayato": {
-  "how": "v272 curves: low curve points moved to 30140/37900 like every class, and the 46826-99025 range reshaped. Values fitted to 11 results on one sheet (HEXA 7k to 111k), every point within 1 HEXA, both curves.",
+  "how": "v272 curves: low curve points moved to 30140/37900 like every class, and the 46826-99025 range reshaped. Values fitted to 11 results on one sheet (HEXA 7k to 111k), every point within 1 HEXA, both curves. Core losses x0.9959 (all except Ascent), fitted to MapleScouter with every HEXA core at 0 and checked at every core at 12.",
   "set": {
    "spline380": {
     "x": [
@@ -615,10 +783,169 @@
      280555.009432
     ]
    }
+  },
+  "patch": {
+   "cores": {
+    "skillCore1=0": 0.983012,
+    "masteryCore1=0": 0.876976,
+    "masteryCore2=0": 0.964011,
+    "masteryCore3=0": 0.913242,
+    "masteryCore4=0": 0.878285,
+    "reinCore1=0": 0.940136,
+    "reinCore2=0": 0.980718,
+    "reinCore3=0": 0.986902,
+    "reinCore4=0": 0.922873,
+    "generalCore2=0": 0.936288,
+    "generalCore3=0": 0.991305,
+    "allCores=0": 0.393526,
+    "only skillCore1": 0.409354,
+    "only skillCore2": 0.41237,
+    "only masteryCore1": 0.508145,
+    "only masteryCore2": 0.427057,
+    "only masteryCore3": 0.474357,
+    "only masteryCore4": 0.506926,
+    "only reinCore1": 0.418432,
+    "only reinCore2": 0.41149,
+    "only reinCore3": 0.40573,
+    "only reinCore4": 0.465384,
+    "only generalCore2": 0.452885,
+    "only generalCore3": 0.396956,
+    "masteryCore1=1": 0.929582,
+    "masteryCore1=2": 0.93201,
+    "masteryCore1=3": 0.934439,
+    "masteryCore1=4": 0.936867,
+    "masteryCore1=5": 0.939295,
+    "masteryCore1=6": 0.941723,
+    "masteryCore1=7": 0.944151,
+    "masteryCore1=8": 0.94658,
+    "masteryCore1=9": 0.949008,
+    "masteryCore1=10": 0.951436,
+    "masteryCore1=11": 0.953864,
+    "masteryCore1=12": 0.956292,
+    "masteryCore1=13": 0.958721,
+    "masteryCore1=14": 0.961149,
+    "masteryCore1=15": 0.963577,
+    "masteryCore1=16": 0.966005,
+    "masteryCore1=17": 0.968433,
+    "masteryCore1=18": 0.970862,
+    "masteryCore1=19": 0.97329,
+    "masteryCore1=20": 0.975718,
+    "masteryCore1=21": 0.978146,
+    "masteryCore1=22": 0.980574,
+    "masteryCore1=23": 0.983003,
+    "masteryCore1=24": 0.985431,
+    "masteryCore1=25": 0.987859,
+    "masteryCore1=26": 0.990287,
+    "masteryCore1=27": 0.992715,
+    "masteryCore1=28": 0.995144,
+    "masteryCore1=29": 0.997572,
+    "reinCore1=1": 0.944213,
+    "reinCore1=2": 0.944219,
+    "reinCore1=3": 0.945827,
+    "reinCore1=4": 0.949942,
+    "reinCore1=5": 0.949953,
+    "reinCore1=6": 0.951582,
+    "reinCore1=7": 0.955735,
+    "reinCore1=8": 0.955752,
+    "reinCore1=9": 0.957403,
+    "reinCore1=10": 0.961594,
+    "reinCore1=11": 0.961616,
+    "reinCore1=12": 0.963289,
+    "reinCore1=13": 0.967518,
+    "reinCore1=14": 0.967545,
+    "reinCore1=15": 0.96924,
+    "reinCore1=16": 0.973508,
+    "reinCore1=17": 0.973541,
+    "reinCore1=18": 0.975258,
+    "reinCore1=19": 0.979564,
+    "reinCore1=20": 0.979603,
+    "reinCore1=21": 0.981343,
+    "reinCore1=22": 0.985688,
+    "reinCore1=23": 0.985732,
+    "reinCore1=24": 0.987494,
+    "reinCore1=25": 0.991878,
+    "reinCore1=26": 0.991929,
+    "reinCore1=27": 0.993713,
+    "reinCore1=28": 0.998136,
+    "reinCore1=29": 0.998192,
+    "masteryCore2=1": 0.987371,
+    "masteryCore3=1": 0.970722,
+    "masteryCore4=1": 0.937882,
+    "masteryCore2=15": 0.993468,
+    "masteryCore3=15": 0.984856,
+    "masteryCore4=15": 0.96787,
+    "generalCore3=1": 0.993044,
+    "generalCore3=2": 0.993044,
+    "generalCore3=3": 0.993044,
+    "generalCore3=4": 0.993044,
+    "generalCore3=5": 0.993044,
+    "generalCore3=6": 0.993044,
+    "generalCore3=7": 0.994783,
+    "generalCore3=8": 0.994783,
+    "generalCore3=9": 0.994783,
+    "generalCore3=10": 0.994783,
+    "generalCore3=11": 0.994783,
+    "generalCore3=12": 0.994783,
+    "generalCore3=13": 0.996522,
+    "generalCore3=14": 0.996522,
+    "generalCore3=15": 0.996522,
+    "generalCore3=16": 0.996522,
+    "generalCore3=17": 0.996522,
+    "generalCore3=18": 0.996522,
+    "generalCore3=19": 0.998261,
+    "generalCore3=20": 0.998261,
+    "generalCore3=21": 0.998261,
+    "generalCore3=22": 0.998261,
+    "generalCore3=23": 0.998261,
+    "generalCore3=24": 0.998261,
+    "generalCore3=25": 1,
+    "generalCore3=26": 1,
+    "generalCore3=27": 1,
+    "generalCore3=28": 1,
+    "generalCore3=29": 1,
+    "generalCore2=1": 0.955397,
+    "reinCore2=1": 0.984253,
+    "reinCore2=15": 0.990359,
+    "reinCore3=1": 0.989303,
+    "reinCore3=15": 0.993451,
+    "reinCore4=1": 0.937013,
+    "reinCore4=15": 0.961436,
+    "skillCore1=1": 0.983012,
+    "skillCore1=15": 0.990102,
+    "skillCore2=1": 0.983091,
+    "skillCore2=15": 0.991021,
+    "skillCore1=8": 0.986417,
+    "skillCore1=22": 0.994332,
+    "skillCore1=29": 0.997858,
+    "skillCore2=8": 0.986959,
+    "skillCore2=22": 0.995223,
+    "skillCore2=29": 0.999228,
+    "masteryCore2=8": 0.990419,
+    "masteryCore2=22": 0.996516,
+    "masteryCore2=29": 0.999565,
+    "masteryCore3=8": 0.977789,
+    "masteryCore3=22": 0.991923,
+    "masteryCore3=29": 0.99899,
+    "masteryCore4=8": 0.952876,
+    "masteryCore4=22": 0.982864,
+    "masteryCore4=29": 0.997858,
+    "reinCore2=8": 0.986503,
+    "reinCore2=22": 0.994215,
+    "reinCore2=29": 0.996465,
+    "reinCore3=8": 0.990831,
+    "reinCore3=22": 0.99607,
+    "reinCore3=29": 0.997599,
+    "reinCore4=8": 0.946011,
+    "reinCore4=22": 0.976862,
+    "reinCore4=29": 0.98586,
+    "generalCore2=8": 0.96421,
+    "generalCore2=22": 0.983987,
+    "generalCore2=29": 0.993218
+   }
   }
  },
  "mo_xuan": {
-  "how": "v272 curves: low curve points moved to 30140/37900 like every class, and the 46826-99025 range reshaped. Values fitted to 11 results on one sheet (HEXA 14k to 111k), every point within 1 HEXA, both curves.",
+  "how": "v272 curves: low curve points moved to 30140/37900 like every class, and the 46826-99025 range reshaped. Values fitted to 11 results on one sheet (HEXA 14k to 111k), every point within 1 HEXA, both curves. Cooldown seconds: scale at 4 s and 6 s from MapleScouter results at those settings.",
   "set": {
    "spline380": {
     "x": [
@@ -714,10 +1041,16 @@
      362329.022188
     ]
    }
+  },
+  "patch": {
+   "cooldownScale": {
+    "4": 0.0100269,
+    "6": 0.00997813
+   }
   }
  },
  "night_lord": {
-  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 12k to 115k, attack and main stat lowered), both curves.",
+  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 12k to 115k, attack and main stat lowered), both curves. Core losses x0.9987 (all except Ascent), fitted to MapleScouter with every HEXA core at 0 and checked at every core at 12. Cooldown seconds: scale at 4 s and 6 s from MapleScouter results at those settings.",
   "set": {
    "spline380": {
     "x": [
@@ -813,10 +1146,100 @@
      388630.341897
     ]
    }
+  },
+  "patch": {
+   "cores": {
+    "skillCore1=0": 0.960677,
+    "masteryCore1=0": 0.924229,
+    "masteryCore2=0": 0.904103,
+    "masteryCore3=0": 0.919681,
+    "masteryCore4=0": 0.958596,
+    "reinCore1=0": 0.963237,
+    "reinCore2=0": 0.98009,
+    "reinCore3=0": 0.971427,
+    "reinCore4=0": 0.968078,
+    "generalCore2=0": 0.932347,
+    "generalCore3=0": 0.972242,
+    "allCores=0": 0.461477,
+    "only skillCore1": 0.500422,
+    "only skillCore2": 0.489274,
+    "only masteryCore1": 0.533659,
+    "only masteryCore2": 0.52961,
+    "only masteryCore3": 0.516264,
+    "only masteryCore4": 0.497606,
+    "only reinCore1": 0.497887,
+    "only reinCore2": 0.481196,
+    "only reinCore3": 0.489776,
+    "only reinCore4": 0.493093,
+    "only generalCore2": 0.528481,
+    "only generalCore3": 0.484283,
+    "masteryCore1=1": 0.956118,
+    "masteryCore2=1": 0.941364,
+    "masteryCore3=1": 0.959041,
+    "masteryCore4=1": 0.953566,
+    "masteryCore1=15": 0.977302,
+    "masteryCore2=15": 0.969671,
+    "masteryCore3=15": 0.978814,
+    "masteryCore4=15": 0.975982,
+    "generalCore3=1": 0.979651,
+    "generalCore3=2": 0.980022,
+    "generalCore3=3": 0.980393,
+    "generalCore3=4": 0.980764,
+    "generalCore3=5": 0.981135,
+    "generalCore3=6": 0.981506,
+    "generalCore3=7": 0.981878,
+    "generalCore3=8": 0.982249,
+    "generalCore3=9": 0.98262,
+    "generalCore3=10": 0.982991,
+    "generalCore3=11": 0.983362,
+    "generalCore3=12": 0.983733,
+    "generalCore3=13": 0.984104,
+    "generalCore3=14": 0.984475,
+    "generalCore3=15": 0.989613,
+    "generalCore3=16": 0.989986,
+    "generalCore3=17": 0.990359,
+    "generalCore3=18": 0.990732,
+    "generalCore3=19": 0.991104,
+    "generalCore3=20": 0.991477,
+    "generalCore3=21": 0.99185,
+    "generalCore3=22": 0.992223,
+    "generalCore3=23": 0.992596,
+    "generalCore3=24": 0.992969,
+    "generalCore3=25": 0.993341,
+    "generalCore3=26": 0.993714,
+    "generalCore3=27": 0.994087,
+    "generalCore3=28": 0.99446,
+    "generalCore3=29": 0.994833,
+    "masteryCore2=0,masteryCore3=0": 0.835292,
+    "masteryCore2=0,masteryCore3=1": 0.863144,
+    "masteryCore2=1,masteryCore3=0": 0.868082,
+    "masteryCore2=1,masteryCore3=1": 0.900405,
+    "masteryCore2=0,masteryCore4=0": 0.880422,
+    "masteryCore2=0,masteryCore4=1": 0.874422,
+    "masteryCore2=1,masteryCore4=0": 0.900253,
+    "masteryCore2=1,masteryCore4=1": 0.89493,
+    "generalCore2=1": 0.952419,
+    "reinCore1=1": 0.969977,
+    "reinCore1=15": 0.981619,
+    "reinCore2=1": 0.98374,
+    "reinCore2=15": 0.990045,
+    "reinCore3=1": 0.976665,
+    "reinCore3=15": 0.985713,
+    "reinCore4=1": 0.973931,
+    "reinCore4=15": 0.984039,
+    "skillCore1=1": 0.960677,
+    "skillCore1=15": 0.977417,
+    "skillCore2=1": 0.976567,
+    "skillCore2=15": 0.987557
+   },
+   "cooldownScale": {
+    "4": 0.0102464,
+    "6": 0.0102479
+   }
   }
  },
  "night_walker": {
-  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 10k to 114k, attack and main stat lowered), both curves.",
+  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 10k to 114k, attack and main stat lowered), both curves. Core losses x1.0041 (all except Ascent), fitted to MapleScouter with every HEXA core at 0 and checked at every core at 12. Cooldown seconds: scale at 4 s and 6 s from MapleScouter results at those settings.",
   "set": {
    "spline380": {
     "x": [
@@ -912,10 +1335,136 @@
      407794.851509
     ]
    }
+  },
+  "patch": {
+   "cores": {
+    "skillCore1=0": 0.964184,
+    "masteryCore1=0": 0.901158,
+    "masteryCore2=0": 0.951622,
+    "masteryCore3=0": 0.942884,
+    "masteryCore4=0": 0.950572,
+    "reinCore1=0": 0.977728,
+    "reinCore2=0": 0.983867,
+    "reinCore3=0": 0.969115,
+    "reinCore4=0": 0.968936,
+    "generalCore2=0": 0.933086,
+    "generalCore3=0": 0.959418,
+    "allCores=0": 0.481321,
+    "masteryCore1=1": 0.920071,
+    "masteryCore2=1": 0.974863,
+    "masteryCore3=1": 0.948007,
+    "masteryCore4=1": 0.972727,
+    "masteryCore1=15": 0.958657,
+    "masteryCore2=15": 0.986998,
+    "masteryCore3=15": 0.973107,
+    "masteryCore4=15": 0.985893,
+    "masteryCore1=0,masteryCore2=0": 0.852779,
+    "masteryCore1=0,masteryCore2=1": 0.87602,
+    "masteryCore1=1,masteryCore2=0": 0.871692,
+    "masteryCore1=1,masteryCore2=1": 0.894934,
+    "masteryCore1=0,masteryCore3=0": 0.844042,
+    "masteryCore1=0,masteryCore3=1": 0.849165,
+    "masteryCore1=1,masteryCore3=0": 0.862955,
+    "masteryCore1=1,masteryCore3=1": 0.868078,
+    "masteryCore1=0,masteryCore4=0": 0.851729,
+    "masteryCore1=0,masteryCore4=1": 0.873885,
+    "masteryCore1=1,masteryCore4=0": 0.870642,
+    "masteryCore1=1,masteryCore4=1": 0.892798,
+    "masteryCore2=0,masteryCore3=0": 0.894506,
+    "masteryCore2=0,masteryCore3=1": 0.899628,
+    "masteryCore2=1,masteryCore3=0": 0.917747,
+    "masteryCore2=1,masteryCore3=1": 0.92287,
+    "masteryCore2=0,masteryCore4=0": 0.902193,
+    "masteryCore2=0,masteryCore4=1": 0.924349,
+    "masteryCore2=1,masteryCore4=0": 0.925434,
+    "masteryCore2=1,masteryCore4=1": 0.94759,
+    "masteryCore3=0,masteryCore4=0": 0.893456,
+    "masteryCore3=0,masteryCore4=1": 0.915612,
+    "masteryCore3=1,masteryCore4=0": 0.898578,
+    "masteryCore3=1,masteryCore4=1": 0.920734,
+    "only skillCore1": 0.517137,
+    "only skillCore2": 0.508575,
+    "only masteryCore1": 0.576544,
+    "only masteryCore2": 0.529699,
+    "only masteryCore3": 0.538437,
+    "only masteryCore4": 0.530749,
+    "only reinCore1": 0.503593,
+    "only reinCore2": 0.491449,
+    "only reinCore3": 0.512205,
+    "only reinCore4": 0.509999,
+    "only generalCore2": 0.548235,
+    "only generalCore3": 0.521903,
+    "generalCore2=1": 0.953006,
+    "generalCore3=1": 0.969924,
+    "skillCore1=14": 0.978384,
+    "skillCore2=17": 0.989446,
+    "masteryCore1=20": 0.972438,
+    "masteryCore2=4": 0.977463,
+    "masteryCore3=4": 0.953385,
+    "masteryCore4=19": 0.989655,
+    "reinCore1=16": 0.989235,
+    "reinCore2=5": 0.986556,
+    "reinCore3=7": 0.976837,
+    "reinCore4=12": 0.982915,
+    "generalCore2=2": 0.954311,
+    "reinCore3=1": 0.973291,
+    "reinCore3=10": 0.978873,
+    "reinCore3=15": 0.982903,
+    "reinCore2=1": 0.984405,
+    "reinCore2=15": 0.991934,
+    "reinCore1=1": 0.981811,
+    "reinCore1=15": 0.988864,
+    "reinCore4=1": 0.974631,
+    "reinCore4=15": 0.984468,
+    "skillCore1=1": 0.964184,
+    "skillCore1=15": 0.979451,
+    "skillCore2=1": 0.977281,
+    "skillCore2=15": 0.987936,
+    "skillCore1=8": 0.971581,
+    "skillCore1=22": 0.988304,
+    "skillCore1=29": 0.995962,
+    "skillCore2=8": 0.982478,
+    "skillCore2=22": 0.993582,
+    "skillCore2=29": 0.998962,
+    "masteryCore1=8": 0.939364,
+    "masteryCore1=22": 0.977951,
+    "masteryCore1=29": 0.997244,
+    "masteryCore2=8": 0.98093,
+    "masteryCore2=22": 0.993066,
+    "masteryCore2=29": 0.999133,
+    "masteryCore3=8": 0.960557,
+    "masteryCore3=22": 0.985657,
+    "masteryCore3=29": 0.998207,
+    "masteryCore4=8": 0.97931,
+    "masteryCore4=22": 0.992477,
+    "masteryCore4=29": 0.99906,
+    "reinCore1=8": 0.98441,
+    "reinCore1=22": 0.993318,
+    "reinCore1=29": 0.995917,
+    "reinCore2=8": 0.988169,
+    "reinCore2=22": 0.995698,
+    "reinCore2=29": 0.999462,
+    "reinCore3=8": 0.977091,
+    "reinCore3=22": 0.989772,
+    "reinCore3=29": 0.99636,
+    "reinCore4=8": 0.978255,
+    "reinCore4=22": 0.990681,
+    "reinCore4=29": 0.994305,
+    "generalCore2=8": 0.962136,
+    "generalCore2=22": 0.982462,
+    "generalCore2=29": 0.991995,
+    "generalCore3=8": 0.977184,
+    "generalCore3=22": 0.991703,
+    "generalCore3=29": 0.998963
+   },
+   "cooldownScale": {
+    "4": 0.00976728,
+    "6": 0.00979948
+   }
   }
  },
  "dark_knight": {
-  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 12k to 112k, attack and main stat lowered), both curves.",
+  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 12k to 112k, attack and main stat lowered), both curves. Cooldown seconds: scale at 4 s and 6 s from MapleScouter results at those settings.",
   "set": {
    "spline380": {
     "x": [
@@ -1011,10 +1560,16 @@
      627074.573392
     ]
    }
+  },
+  "patch": {
+   "cooldownScale": {
+    "4": 0.0101846,
+    "6": 0.0101545
+   }
   }
  },
  "demon_slayer": {
-  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 8k to 112k, attack and main stat lowered), both curves.",
+  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 8k to 112k, attack and main stat lowered), both curves. Cooldown seconds: scale at 4 s and 6 s from MapleScouter results at those settings.",
   "set": {
    "spline380": {
     "x": [
@@ -1110,10 +1665,16 @@
      282637.617858
     ]
    }
+  },
+  "patch": {
+   "cooldownScale": {
+    "4": 0.00969914,
+    "6": 0.00970291
+   }
   }
  },
  "lara": {
-  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 8k to 112k, attack and main stat lowered), both curves.",
+  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 8k to 112k, attack and main stat lowered), both curves. Cooldown seconds: scale at 4 s and 6 s from MapleScouter results at those settings.",
   "set": {
    "spline380": {
     "x": [
@@ -1209,10 +1770,16 @@
      357500.768326
     ]
    }
+  },
+  "patch": {
+   "cooldownScale": {
+    "4": 0.00966228,
+    "6": 0.00968
+   }
   }
  },
  "luminous": {
-  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 11k to 113k, attack and main stat lowered), both curves.",
+  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 11k to 113k, attack and main stat lowered), both curves. Cooldown seconds: scale at 4 s and 6 s from MapleScouter results at those settings.",
   "set": {
    "spline380": {
     "x": [
@@ -1308,10 +1875,16 @@
      375310.242724
     ]
    }
+  },
+  "patch": {
+   "cooldownScale": {
+    "4": 0.0101359,
+    "6": 0.0100846
+   }
   }
  },
  "mercedes": {
-  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 10k to 108k, attack and main stat lowered), both curves.",
+  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 10k to 108k, attack and main stat lowered), both curves. Cooldown seconds: scale at 4 s and 6 s from MapleScouter results at those settings.",
   "set": {
    "spline380": {
     "x": [
@@ -1407,10 +1980,16 @@
      399603.452749
     ]
    }
+  },
+  "patch": {
+   "cooldownScale": {
+    "4": 0.00999503,
+    "6": 0.0100302
+   }
   }
  },
  "mihile": {
-  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 8k to 112k, attack and main stat lowered), both curves.",
+  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 8k to 112k, attack and main stat lowered), both curves. Core losses x0.9942 (all except Ascent), fitted to MapleScouter with every HEXA core at 0 and checked at every core at 12. Cooldown seconds: scale at 4 s and 6 s from MapleScouter results at those settings.",
   "set": {
    "spline380": {
     "x": [
@@ -1506,10 +2085,180 @@
      374855.36166
     ]
    }
+  },
+  "patch": {
+   "cores": {
+    "skillCore1=0": 0.973542,
+    "masteryCore1=0": 0.966584,
+    "masteryCore2=0": 0.947488,
+    "masteryCore3=0": 0.949028,
+    "masteryCore4=0": 0.922639,
+    "reinCore1=0": 0.931057,
+    "reinCore2=0": 0.971248,
+    "reinCore3=0": 0.940204,
+    "reinCore4=0": 0.947855,
+    "generalCore2=0": 0.936042,
+    "generalCore3=0": 0.967233,
+    "allCores=0": 0.47736,
+    "only skillCore1": 0.501186,
+    "only skillCore2": 0.49868,
+    "only masteryCore1": 0.507452,
+    "only masteryCore2": 0.519874,
+    "only masteryCore3": 0.523262,
+    "only masteryCore4": 0.547026,
+    "only reinCore1": 0.512497,
+    "only reinCore2": 0.503252,
+    "only reinCore3": 0.531208,
+    "only reinCore4": 0.517676,
+    "only generalCore2": 0.534955,
+    "only generalCore3": 0.506867,
+    "masteryCore1=1": 0.970634,
+    "masteryCore2=1": 0.965307,
+    "masteryCore3=1": 0.954938,
+    "masteryCore4=1": 0.931992,
+    "masteryCore1=15": 0.984811,
+    "masteryCore2=15": 0.982056,
+    "masteryCore3=15": 0.976692,
+    "masteryCore4=15": 0.964823,
+    "reinCore1=1": 0.938356,
+    "reinCore1=2": 0.938356,
+    "reinCore1=3": 0.940032,
+    "reinCore1=4": 0.940032,
+    "reinCore1=5": 0.947479,
+    "reinCore1=6": 0.947479,
+    "reinCore1=7": 0.949205,
+    "reinCore1=8": 0.949205,
+    "reinCore1=9": 0.950931,
+    "reinCore1=10": 0.9568,
+    "reinCore1=11": 0.958575,
+    "reinCore1=12": 0.958575,
+    "reinCore1=13": 0.96035,
+    "reinCore1=14": 0.96035,
+    "reinCore1=15": 0.968142,
+    "reinCore1=16": 0.968142,
+    "reinCore1=17": 0.969967,
+    "reinCore1=18": 0.969967,
+    "reinCore1=19": 0.971792,
+    "reinCore1=20": 0.977907,
+    "reinCore1=21": 0.979781,
+    "reinCore1=22": 0.979781,
+    "reinCore1=23": 0.981655,
+    "reinCore1=24": 0.981655,
+    "reinCore1=25": 0.989792,
+    "reinCore1=26": 0.989792,
+    "reinCore1=27": 0.991715,
+    "reinCore1=28": 0.991715,
+    "reinCore1=29": 0.993638,
+    "reinCore4=1": 0.965554,
+    "reinCore4=2": 0.966127,
+    "reinCore4=3": 0.967593,
+    "reinCore4=4": 0.968167,
+    "reinCore4=5": 0.969635,
+    "reinCore4=6": 0.970872,
+    "reinCore4=7": 0.972371,
+    "reinCore4=8": 0.972946,
+    "reinCore4=9": 0.974446,
+    "reinCore4=10": 0.975023,
+    "reinCore4=11": 0.976524,
+    "reinCore4=12": 0.977853,
+    "reinCore4=13": 0.979386,
+    "reinCore4=14": 0.979964,
+    "reinCore4=15": 0.981498,
+    "reinCore4=16": 0.982076,
+    "reinCore4=17": 0.983613,
+    "reinCore4=18": 0.985034,
+    "reinCore4=19": 0.986601,
+    "reinCore4=20": 0.987181,
+    "reinCore4=21": 0.98875,
+    "reinCore4=22": 0.989331,
+    "reinCore4=23": 0.990901,
+    "reinCore4=24": 0.992415,
+    "reinCore4=25": 0.994018,
+    "reinCore4=26": 0.9946,
+    "reinCore4=27": 0.996204,
+    "reinCore4=28": 0.996787,
+    "reinCore4=29": 0.998393,
+    "generalCore2=1": 0.955341,
+    "generalCore3=1": 0.972278,
+    "skillCore1=25": 0.993774,
+    "skillCore2=29": 0.999097,
+    "masteryCore1=25": 0.994937,
+    "masteryCore3=28": 0.996892,
+    "masteryCore4=17": 0.969513,
+    "reinCore2=9": 0.980353,
+    "reinCore3=13": 0.968109,
+    "generalCore2=27": 0.989639,
+    "generalCore3=11": 0.981837,
+    "reinCore2=1": 0.976519,
+    "reinCore2=15": 0.985624,
+    "reinCore3=1": 0.951166,
+    "reinCore3=15": 0.970102,
+    "skillCore1=1": 0.973542,
+    "skillCore1=15": 0.984811,
+    "skillCore2=1": 0.980246,
+    "skillCore2=15": 0.98951,
+    "masteryCore1=0,masteryCore2=0": 0.914534,
+    "masteryCore1=0,masteryCore2=1": 0.931891,
+    "masteryCore1=1,masteryCore2=0": 0.918528,
+    "masteryCore1=1,masteryCore2=1": 0.935942,
+    "masteryCore1=0,masteryCore3=0": 0.915612,
+    "masteryCore1=0,masteryCore3=1": 0.921522,
+    "masteryCore1=1,masteryCore3=0": 0.919662,
+    "masteryCore1=1,masteryCore3=1": 0.925572,
+    "masteryCore1=0,masteryCore4=0": 0.889223,
+    "masteryCore1=0,masteryCore4=1": 0.898576,
+    "masteryCore1=1,masteryCore4=0": 0.893273,
+    "masteryCore1=1,masteryCore4=1": 0.902626,
+    "masteryCore2=0,masteryCore3=0": 0.89722,
+    "masteryCore2=0,masteryCore3=1": 0.903048,
+    "masteryCore2=1,masteryCore3=0": 0.914335,
+    "masteryCore2=1,masteryCore3=1": 0.920245,
+    "masteryCore2=0,masteryCore4=0": 0.871195,
+    "masteryCore2=0,masteryCore4=1": 0.880419,
+    "masteryCore2=1,masteryCore4=0": 0.887946,
+    "masteryCore2=1,masteryCore4=1": 0.897299,
+    "masteryCore3=0,masteryCore4=0": 0.871667,
+    "masteryCore3=0,masteryCore4=1": 0.88102,
+    "masteryCore3=1,masteryCore4=0": 0.877576,
+    "masteryCore3=1,masteryCore4=1": 0.886929,
+    "skillCore1=8": 0.979,
+    "skillCore1=22": 0.991353,
+    "skillCore1=29": 0.997003,
+    "skillCore2=8": 0.984764,
+    "skillCore2=22": 0.994419,
+    "masteryCore1=8": 0.977723,
+    "masteryCore1=22": 0.991899,
+    "masteryCore1=29": 0.998987,
+    "masteryCore2=8": 0.973681,
+    "masteryCore2=22": 0.99043,
+    "masteryCore2=29": 0.998804,
+    "masteryCore3=8": 0.965815,
+    "masteryCore3=22": 0.987569,
+    "masteryCore3=29": 0.998446,
+    "masteryCore4=8": 0.948407,
+    "masteryCore4=22": 0.981239,
+    "masteryCore4=29": 0.997655,
+    "reinCore2=8": 0.979874,
+    "reinCore2=22": 0.991374,
+    "reinCore2=29": 0.994729,
+    "reinCore3=8": 0.958142,
+    "reinCore3=22": 0.982061,
+    "reinCore3=29": 0.989037,
+    "generalCore2=8": 0.963963,
+    "generalCore2=22": 0.983208,
+    "generalCore2=29": 0.992211,
+    "generalCore3=8": 0.978969,
+    "generalCore3=22": 0.992353,
+    "generalCore3=29": 0.999044
+   },
+   "cooldownScale": {
+    "4": 0.00954697,
+    "6": 0.00963678
+   }
   }
  },
  "battle_mage": {
-  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 10k to 108k, attack and main stat lowered), both curves.",
+  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 10k to 108k, attack and main stat lowered), both curves. Cooldown seconds: scale at 4 s and 6 s from MapleScouter results at those settings.",
   "set": {
    "spline380": {
     "x": [
@@ -1605,10 +2354,16 @@
      334646.713439
     ]
    }
+  },
+  "patch": {
+   "cooldownScale": {
+    "4": 0.00681038,
+    "6": 0.00742405
+   }
   }
  },
  "bow_master": {
-  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 11k to 109k, attack and main stat lowered), both curves.",
+  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 11k to 109k, attack and main stat lowered), both curves. Cooldown seconds: scale at 4 s and 6 s from MapleScouter results at those settings.",
   "set": {
    "spline380": {
     "x": [
@@ -1704,10 +2459,16 @@
      397292.022817
     ]
    }
+  },
+  "patch": {
+   "cooldownScale": {
+    "4": 0.00998715,
+    "6": 0.0100268
+   }
   }
  },
  "blaster": {
-  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 11k to 114k, attack and main stat lowered), both curves.",
+  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 11k to 114k, attack and main stat lowered), both curves. Cooldown seconds: scale at 4 s and 6 s from MapleScouter results at those settings.",
   "set": {
    "spline380": {
     "x": [
@@ -1803,10 +2564,16 @@
      469642.647323
     ]
    }
+  },
+  "patch": {
+   "cooldownScale": {
+    "4": 0.0101472,
+    "6": 0.0101846
+   }
   }
  },
  "bishop": {
-  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 9k to 110k, attack and main stat lowered), both curves.",
+  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 9k to 110k, attack and main stat lowered), both curves. Cooldown seconds: scale at 4 s and 6 s from MapleScouter results at those settings.",
   "set": {
    "spline380": {
     "x": [
@@ -1902,10 +2669,16 @@
      587429.694125
     ]
    }
+  },
+  "patch": {
+   "cooldownScale": {
+    "4": 0.0103138,
+    "6": 0.0102167
+   }
   }
  },
  "shadower": {
-  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 10k to 110k, attack and main stat lowered), both curves.",
+  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 10k to 110k, attack and main stat lowered), both curves. Cooldown seconds: scale at 4 s and 6 s from MapleScouter results at those settings.",
   "set": {
    "spline380": {
     "x": [
@@ -2001,10 +2774,16 @@
      341673.138969
     ]
    }
+  },
+  "patch": {
+   "cooldownScale": {
+    "4": 0.00994424,
+    "6": 0.00995257
+   }
   }
  },
  "dawn_warrior": {
-  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 8k to 112k, attack and main stat lowered), both curves.",
+  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 8k to 112k, attack and main stat lowered), both curves. Cooldown seconds: scale at 4 s and 6 s from MapleScouter results at those settings.",
   "set": {
    "spline380": {
     "x": [
@@ -2100,10 +2879,16 @@
      304844.417984
     ]
    }
+  },
+  "patch": {
+   "cooldownScale": {
+    "4": 0.00969054,
+    "6": 0.00974999
+   }
   }
  },
  "marksman": {
-  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 11k to 111k, attack and main stat lowered), both curves.",
+  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 11k to 111k, attack and main stat lowered), both curves. Cooldown seconds: scale at 4 s and 6 s from MapleScouter results at those settings.",
   "set": {
    "spline380": {
     "x": [
@@ -2199,10 +2984,16 @@
      412539.661337
     ]
    }
+  },
+  "patch": {
+   "cooldownScale": {
+    "4": 0.0101433,
+    "6": 0.0101171
+   }
   }
  },
  "adele": {
-  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 9k to 112k, attack and main stat lowered), both curves.",
+  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 9k to 112k, attack and main stat lowered), both curves. Cooldown seconds: scale at 4 s and 6 s from MapleScouter results at those settings.",
   "set": {
    "spline380": {
     "x": [
@@ -2298,10 +3089,16 @@
      350027.976644
     ]
    }
+  },
+  "patch": {
+   "cooldownScale": {
+    "4": 0.0095951,
+    "6": 0.00964852
+   }
   }
  },
  "aran": {
-  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 11k to 112k, attack and main stat lowered), both curves.",
+  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 11k to 112k, attack and main stat lowered), both curves. Cooldown seconds: scale at 4 s and 6 s from MapleScouter results at those settings.",
   "set": {
    "spline380": {
     "x": [
@@ -2397,10 +3194,16 @@
      324068.439184
     ]
    }
+  },
+  "patch": {
+   "cooldownScale": {
+    "4": 0.01014,
+    "6": 0.0100651
+   }
   }
  },
  "arch_mage_f_p": {
-  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 9k to 109k, attack and main stat lowered), both curves.",
+  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 9k to 109k, attack and main stat lowered), both curves. Cooldown seconds: scale at 4 s and 6 s from MapleScouter results at those settings.",
   "set": {
    "spline380": {
     "x": [
@@ -2496,10 +3299,16 @@
      498012.679932
     ]
    }
+  },
+  "patch": {
+   "cooldownScale": {
+    "4": 0.0102166,
+    "6": 0.0100944
+   }
   }
  },
  "arch_mage_i_l": {
-  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 9k to 109k, attack and main stat lowered), both curves.",
+  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 9k to 109k, attack and main stat lowered), both curves. Cooldown seconds: scale at 4 s and 6 s from MapleScouter results at those settings.",
   "set": {
    "spline380": {
     "x": [
@@ -2595,10 +3404,16 @@
      546132.024075
     ]
    }
+  },
+  "patch": {
+   "cooldownScale": {
+    "4": 0.0100802,
+    "6": 0.0100582
+   }
   }
  },
  "wild_hunter": {
-  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 9k to 108k, attack and main stat lowered), both curves.",
+  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 9k to 108k, attack and main stat lowered), both curves. Cooldown seconds: scale at 4 s and 6 s from MapleScouter results at those settings.",
   "set": {
    "spline380": {
     "x": [
@@ -2694,10 +3509,16 @@
      493686.339202
     ]
    }
+  },
+  "patch": {
+   "cooldownScale": {
+    "4": 0.00994474,
+    "6": 0.00998762
+   }
   }
  },
  "wind_archer": {
-  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 6k to 107k, attack and main stat lowered), both curves.",
+  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 6k to 107k, attack and main stat lowered), both curves. Cooldown seconds: scale at 4 s and 6 s from MapleScouter results at those settings.",
   "set": {
    "spline380": {
     "x": [
@@ -2793,10 +3614,16 @@
      400180.517158
     ]
    }
+  },
+  "patch": {
+   "cooldownScale": {
+    "4": 0.00961062,
+    "6": 0.009613
+   }
   }
  },
  "illium": {
-  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 9k to 109k, attack and main stat lowered), both curves.",
+  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 9k to 109k, attack and main stat lowered), both curves. Cooldown seconds: scale at 4 s and 6 s from MapleScouter results at those settings.",
   "set": {
    "spline380": {
     "x": [
@@ -2892,10 +3719,16 @@
      285044.767517
     ]
    }
+  },
+  "patch": {
+   "cooldownScale": {
+    "4": 0.00970414,
+    "6": 0.00970489
+   }
   }
  },
  "cadena": {
-  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 7k to 111k, attack and main stat lowered), both curves.",
+  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 7k to 111k, attack and main stat lowered), both curves. Cooldown seconds: scale at 4 s and 6 s from MapleScouter results at those settings.",
   "set": {
    "spline380": {
     "x": [
@@ -2991,10 +3824,16 @@
      263422.523536
     ]
    }
+  },
+  "patch": {
+   "cooldownScale": {
+    "4": 0.00939201,
+    "6": 0.00938827
+   }
   }
  },
  "kaiser": {
-  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 7k to 109k, attack and main stat lowered), both curves.",
+  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 7k to 109k, attack and main stat lowered), both curves. Core losses x1.0012 (all except Ascent), fitted to MapleScouter with every HEXA core at 0 and checked at every core at 12. Cooldown seconds: scale at 4 s and 6 s from MapleScouter results at those settings.",
   "set": {
    "spline380": {
     "x": [
@@ -3090,10 +3929,99 @@
      366087.25539
     ]
    }
+  },
+  "patch": {
+   "cores": {
+    "skillCore1=0": 0.977011,
+    "masteryCore1=0": 0.926391,
+    "masteryCore2=0": 0.906533,
+    "masteryCore3=0": 0.888884,
+    "masteryCore4=0": 0.939658,
+    "reinCore1=0": 0.9822,
+    "reinCore2=0": 0.981616,
+    "reinCore3=0": 0.941192,
+    "reinCore4=0": 0.971857,
+    "generalCore2=0": 0.933042,
+    "generalCore3=0": 0.972161,
+    "allCores=0": 0.419219,
+    "only skillCore1": 0.442208,
+    "only skillCore2": 0.44577,
+    "only masteryCore1": 0.475048,
+    "only masteryCore2": 0.512686,
+    "only masteryCore3": 0.530334,
+    "only masteryCore4": 0.45367,
+    "only reinCore1": 0.437018,
+    "only reinCore2": 0.437603,
+    "only reinCore3": 0.470416,
+    "only reinCore4": 0.447362,
+    "only generalCore2": 0.486177,
+    "only generalCore3": 0.447723,
+    "masteryCore1=1": 0.957589,
+    "masteryCore2=1": 0.959844,
+    "masteryCore3=1": 0.929455,
+    "masteryCore4=1": 0.950469,
+    "masteryCore1=15": 0.978063,
+    "masteryCore2=15": 0.97923,
+    "masteryCore3=15": 0.963511,
+    "masteryCore4=15": 0.97438,
+    "reinCore3=1": 0.951974,
+    "reinCore3=2": 0.952954,
+    "reinCore3=3": 0.953934,
+    "reinCore3=4": 0.954914,
+    "reinCore3=5": 0.955894,
+    "reinCore3=6": 0.956874,
+    "reinCore3=7": 0.957854,
+    "reinCore3=8": 0.958834,
+    "reinCore3=9": 0.959815,
+    "reinCore3=10": 0.965695,
+    "reinCore3=11": 0.966676,
+    "reinCore3=12": 0.967656,
+    "reinCore3=13": 0.968636,
+    "reinCore3=14": 0.969616,
+    "reinCore3=15": 0.970596,
+    "reinCore3=16": 0.971576,
+    "reinCore3=17": 0.972556,
+    "reinCore3=18": 0.973536,
+    "reinCore3=19": 0.974517,
+    "reinCore3=20": 0.980397,
+    "reinCore3=21": 0.981378,
+    "reinCore3=22": 0.982358,
+    "reinCore3=23": 0.983338,
+    "reinCore3=24": 0.984318,
+    "reinCore3=25": 0.985298,
+    "reinCore3=26": 0.986278,
+    "reinCore3=27": 0.987258,
+    "reinCore3=28": 0.988238,
+    "reinCore3=29": 0.989219,
+    "masteryCore1=0,masteryCore4=0": 0.884329,
+    "masteryCore1=0,masteryCore4=1": 0.890996,
+    "masteryCore1=1,masteryCore4=0": 0.897248,
+    "masteryCore1=1,masteryCore4=1": 0.908058,
+    "masteryCore4=0,reinCore3=0": 0.888461,
+    "masteryCore4=0,reinCore3=1": 0.897847,
+    "masteryCore4=1,reinCore3=0": 0.89768,
+    "masteryCore4=1,reinCore3=1": 0.907358,
+    "generalCore2=1": 0.953485,
+    "generalCore3=1": 0.978192,
+    "reinCore1=1": 0.985464,
+    "reinCore1=15": 0.9911,
+    "reinCore2=1": 0.984986,
+    "reinCore2=15": 0.990808,
+    "reinCore4=1": 0.977017,
+    "reinCore4=15": 0.985929,
+    "skillCore1=1": 0.977011,
+    "skillCore1=15": 0.986806,
+    "skillCore2=1": 0.977802,
+    "skillCore2=15": 0.988212
+   },
+   "cooldownScale": {
+    "4": 0.0108091,
+    "6": 0.0106799
+   }
   }
  },
  "kain": {
-  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 8k to 109k, attack and main stat lowered), both curves.",
+  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 8k to 109k, attack and main stat lowered), both curves. Cooldown seconds: scale at 4 s and 6 s from MapleScouter results at those settings.",
   "set": {
    "spline380": {
     "x": [
@@ -3189,10 +4117,16 @@
      534776.868757
     ]
    }
+  },
+  "patch": {
+   "cooldownScale": {
+    "4": 0.0097192,
+    "6": 0.00970857
+   }
   }
  },
  "khali": {
-  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 8k to 110k, attack and main stat lowered), both curves.",
+  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 8k to 110k, attack and main stat lowered), both curves. Cooldown seconds: scale at 4 s and 6 s from MapleScouter results at those settings.",
   "set": {
    "spline380": {
     "x": [
@@ -3288,10 +4222,16 @@
      378121.492724
     ]
    }
+  },
+  "patch": {
+   "cooldownScale": {
+    "4": 0.00965155,
+    "6": 0.00968256
+   }
   }
  },
  "kinesis": {
-  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 11k to 109k, attack and main stat lowered), both curves.",
+  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 11k to 109k, attack and main stat lowered), both curves. Cooldown seconds: scale at 4 s and 6 s from MapleScouter results at those settings.",
   "set": {
    "spline380": {
     "x": [
@@ -3387,10 +4327,16 @@
      519750.967032
     ]
    }
+  },
+  "patch": {
+   "cooldownScale": {
+    "4": 0.0102574,
+    "6": 0.0102662
+   }
   }
  },
  "paladin": {
-  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 15k to 115k, attack and main stat lowered), both curves.",
+  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 15k to 115k, attack and main stat lowered), both curves. Core losses x0.9679 (all except Ascent), fitted to MapleScouter with every HEXA core at 0 and checked at every core at 12. Cooldown seconds: scale at 4 s and 6 s from MapleScouter results at those settings.",
   "set": {
    "spline380": {
     "x": [
@@ -3486,10 +4432,110 @@
      332697.73419
     ]
    }
+  },
+  "patch": {
+   "cores": {
+    "skillCore1=0": 0.97164,
+    "masteryCore1=0": 0.818241,
+    "masteryCore2=0": 0.882421,
+    "masteryCore3=0": 0.919231,
+    "masteryCore4=0": 0.929711,
+    "reinCore1=0": 0.930314,
+    "reinCore2=0": 0.967859,
+    "reinCore3=0": 0.972067,
+    "reinCore4=0": 0.977724,
+    "generalCore2=0": 0.9356,
+    "generalCore3=0": 0.972939,
+    "allCores=0": 0.411678,
+    "only skillCore1": 0.437997,
+    "only skillCore2": 0.434885,
+    "only masteryCore1": 0.52331,
+    "only masteryCore2": 0.467679,
+    "only masteryCore3": 0.429591,
+    "only masteryCore4": 0.423794,
+    "only reinCore1": 0.441127,
+    "only reinCore2": 0.441505,
+    "only reinCore3": 0.4376,
+    "only reinCore4": 0.43235,
+    "only generalCore2": 0.471441,
+    "only generalCore3": 0.436791,
+    "masteryCore1=1": 0.911735,
+    "masteryCore2=1": 0.976526,
+    "masteryCore3=1": 0.956152,
+    "masteryCore4=1": 0.969677,
+    "masteryCore1=15": 0.954346,
+    "masteryCore2=15": 0.987858,
+    "masteryCore3=15": 0.97732,
+    "masteryCore4=15": 0.984316,
+    "reinCore1=1": 0.93496,
+    "reinCore1=2": 0.93496,
+    "reinCore1=3": 0.939606,
+    "reinCore1=4": 0.939606,
+    "reinCore1=5": 0.944252,
+    "reinCore1=6": 0.944252,
+    "reinCore1=7": 0.948897,
+    "reinCore1=8": 0.948897,
+    "reinCore1=9": 0.953543,
+    "reinCore1=10": 0.953543,
+    "reinCore1=11": 0.958189,
+    "reinCore1=12": 0.958189,
+    "reinCore1=13": 0.962834,
+    "reinCore1=14": 0.962834,
+    "reinCore1=15": 0.96748,
+    "reinCore1=16": 0.96748,
+    "reinCore1=17": 0.972126,
+    "reinCore1=18": 0.972126,
+    "reinCore1=19": 0.976771,
+    "reinCore1=20": 0.976771,
+    "reinCore1=21": 0.981417,
+    "reinCore1=22": 0.981417,
+    "reinCore1=23": 0.986063,
+    "reinCore1=24": 0.986063,
+    "reinCore1=25": 0.990709,
+    "reinCore1=26": 0.990709,
+    "reinCore1=27": 0.995354,
+    "reinCore1=28": 0.995354,
+    "masteryCore3=0,masteryCore1=0": 0.798938,
+    "masteryCore3=0,masteryCore1=1": 0.828899,
+    "masteryCore3=0,masteryCore1=15": 0.872507,
+    "masteryCore3=1,masteryCore1=0": 0.811618,
+    "masteryCore3=1,masteryCore1=1": 0.867887,
+    "masteryCore2=0,masteryCore4=0": 0.869366,
+    "masteryCore2=0,masteryCore4=1": 0.875585,
+    "masteryCore2=1,masteryCore4=0": 0.906237,
+    "masteryCore2=1,masteryCore4=1": 0.946202,
+    "reinCore1=0,masteryCore1=0": 0.761641,
+    "reinCore1=0,masteryCore1=1": 0.848405,
+    "reinCore1=1,masteryCore1=0": 0.765414,
+    "reinCore1=1,masteryCore1=1": 0.852627,
+    "reinCore1=0,masteryCore2=0": 0.821201,
+    "reinCore1=0,masteryCore2=1": 0.90853,
+    "reinCore1=1,masteryCore2=0": 0.825282,
+    "reinCore1=1,masteryCore2=1": 0.913063,
+    "reinCore3=27": 0.993948,
+    "reinCore4=20": 0.992575,
+    "generalCore2=20": 0.980296,
+    "generalCore2=1": 0.955618,
+    "generalCore3=1": 0.977111,
+    "reinCore2=1": 0.973752,
+    "reinCore2=15": 0.98393,
+    "reinCore3=1": 0.977188,
+    "reinCore3=15": 0.986033,
+    "reinCore4=1": 0.981808,
+    "reinCore4=15": 0.988862,
+    "skillCore1=1": 0.97164,
+    "skillCore1=15": 0.983724,
+    "skillCore2=1": 0.979104,
+    "skillCore2=15": 0.988904
+   },
+   "cooldownScale": {
+    "4": 0.0101985,
+    "6": 0.0102249
+   }
   }
  },
  "pathfinder": {
-  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 11k to 108k, attack and main stat lowered), both curves.",
+  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 11k to 108k, attack and main stat lowered), both curves. Cooldown seconds: scale at 4 s and 6 s from MapleScouter results at those settings.",
   "set": {
    "spline380": {
     "x": [
@@ -3585,10 +4631,16 @@
      383733.520571
     ]
    }
+  },
+  "patch": {
+   "cooldownScale": {
+    "4": 0.0187896,
+    "6": 0.0160556
+   }
   }
  },
  "blaze_wizard": {
-  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 8k to 112k, attack and main stat lowered), both curves.",
+  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 8k to 112k, attack and main stat lowered), both curves. Cooldown seconds: scale at 4 s and 6 s from MapleScouter results at those settings.",
   "set": {
    "spline380": {
     "x": [
@@ -3684,10 +4736,16 @@
      408625.016888
     ]
    }
+  },
+  "patch": {
+   "cooldownScale": {
+    "4": 0.00975079,
+    "6": 0.00976171
+   }
   }
  },
  "hero": {
-  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 12k to 114k, attack and main stat lowered), both curves.",
+  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 12k to 114k, attack and main stat lowered), both curves. Cooldown seconds: scale at 4 s and 6 s from MapleScouter results at those settings.",
   "set": {
    "spline380": {
     "x": [
@@ -3783,10 +4841,16 @@
      702836.882501
     ]
    }
+  },
+  "patch": {
+   "cooldownScale": {
+    "4": 0.0102084,
+    "6": 0.0101877
+   }
   }
  },
  "lynn": {
-  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 11k to 109k, attack and main stat lowered), both curves. Ascent (skillCore2) set to MapleScouter's own share (2.59%, 0.7x what the probes gave), kalingAscent the same; Boss Clear above the Ascent threshold then matches within 1%.",
+  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 11k to 109k, attack and main stat lowered), both curves. Ascent (skillCore2) set to MapleScouter's own share (2.59%, 0.7x what the probes gave), kalingAscent the same; Boss Clear above the Ascent threshold then matches within 1%. Cooldown seconds: scale at 4 s and 6 s from MapleScouter results at those settings.",
   "set": {
    "spline380": {
     "x": [
@@ -3887,11 +4951,15 @@
   "patch": {
    "cores": {
     "skillCore2=0": 0.974786
+   },
+   "cooldownScale": {
+    "4": 0.0103092,
+    "6": 0.0102797
    }
   }
  },
  "sia_astelle": {
-  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 9k to 107k, attack and main stat lowered), both curves. Ascent (skillCore2) set to MapleScouter's own share (2.75%, 0.7x what the probes gave), kalingAscent the same; Boss Clear above the Ascent threshold then matches within 1%.",
+  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 9k to 107k, attack and main stat lowered), both curves. Ascent (skillCore2) set to MapleScouter's own share (2.75%, 0.7x what the probes gave), kalingAscent the same; Boss Clear above the Ascent threshold then matches within 1%. Cooldown seconds: scale at 4 s and 6 s from MapleScouter results at those settings.",
   "set": {
    "spline380": {
     "x": [
@@ -3992,11 +5060,15 @@
   "patch": {
    "cores": {
     "skillCore2=0": 0.973245
+   },
+   "cooldownScale": {
+    "4": 0.00978422,
+    "6": 0.00978753
    }
   }
  },
  "erel_light": {
-  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 10k to 109k, attack and main stat lowered), both curves. Ascent (skillCore2) set to MapleScouter's own share (1.43%, 0.7x what the probes gave), kalingAscent the same; Boss Clear above the Ascent threshold then matches within 1%.",
+  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 10k to 109k, attack and main stat lowered), both curves. Ascent (skillCore2) set to MapleScouter's own share (1.43%, 0.7x what the probes gave), kalingAscent the same; Boss Clear above the Ascent threshold then matches within 1%. Cooldown seconds: scale at 4 s and 6 s from MapleScouter results at those settings.",
   "set": {
    "spline380": {
     "x": [
@@ -4097,11 +5169,15 @@
   "patch": {
    "cores": {
     "skillCore2=0": 0.985949
+   },
+   "cooldownScale": {
+    "4": 0.00981089,
+    "6": 0.0098033
    }
   }
  },
  "zero": {
-  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 10k to 114k, attack and main stat lowered), both curves. scaleFactor 1.00661 (MapleScouter's damage is 0.66% higher at every result).",
+  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 10k to 114k, attack and main stat lowered), both curves. scaleFactor 1.00661 (MapleScouter's damage is 0.66% higher at every result). Cooldown seconds: scale at 4 s and 6 s from MapleScouter results at those settings.",
   "set": {
    "spline380": {
     "x": [
@@ -4198,10 +5274,16 @@
     ]
    }
   },
-  "scaleFactor": 1.00661
+  "scaleFactor": 1.00661,
+  "patch": {
+   "cooldownScale": {
+    "4": 0.00920995,
+    "6": 0.00927428
+   }
+  }
  },
  "phantom": {
-  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 13k to 113k, attack and main stat lowered), both curves. flatAtk -13.0 (MapleScouter changed the class's hidden flat attack; one shift fits its damage at all 11 results within 0.02%).",
+  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 13k to 113k, attack and main stat lowered), both curves. flatAtk -13.0 (MapleScouter changed the class's hidden flat attack; one shift fits its damage at all 11 results within 0.02%). Cooldown seconds: scale at 4 s and 6 s from MapleScouter results at those settings.",
   "set": {
    "spline380": {
     "x": [
@@ -4298,10 +5380,16 @@
     ]
    },
    "flatAtk": 35.721
+  },
+  "patch": {
+   "cooldownScale": {
+    "4": 0.010362,
+    "6": 0.0103305
+   }
   }
  },
  "evan": {
-  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 9k to 107k, attack and main stat lowered), both curves.",
+  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 9k to 107k, attack and main stat lowered), both curves. Cooldown seconds: scale at 4 s and 6 s from MapleScouter results at those settings.",
   "set": {
    "spline380": {
     "x": [
@@ -4397,10 +5485,16 @@
      329611.019583
     ]
    }
+  },
+  "patch": {
+   "cooldownScale": {
+    "4": 0.0101518,
+    "6": 0.0101843
+   }
   }
  },
  "demon_avenger": {
-  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 3k to 42k, attack and main stat lowered), both curves. stat.flat -3820 (hidden flat HP stat; fits its damage at all 11 results within 0.01%). Its results only reach 42k HEXA on this sheet (main stat is HP), so only its low curve values are fitted.",
+  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 3k to 42k, attack and main stat lowered), both curves. stat.flat -3820 (hidden flat HP stat; fits its damage at all 11 results within 0.01%). Its results only reach 42k HEXA on this sheet (main stat is HP), so only its low curve values are fitted. Cooldown seconds: scale at 4 s and 6 s from MapleScouter results at those settings.",
   "set": {
    "spline380": {
     "x": [
@@ -4500,11 +5594,15 @@
   "patch": {
    "stat": {
     "flat": -2268.526
+   },
+   "cooldownScale": {
+    "4": 0.0123345,
+    "6": 0.012437
    }
   }
  },
  "buccaneer": {
-  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and for pirates and Xenon moved the 46826 point to 49800 and raised the whole curve about 3.5 percent. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 21k to 112k, attack and main stat lowered), both curves. flatAtk +149.5 (MapleScouter changed the class's hidden flat attack; one shift fits its damage at all 11 results within 0.02%).",
+  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and for pirates and Xenon moved the 46826 point to 49800 and raised the whole curve about 3.5 percent. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 21k to 112k, attack and main stat lowered), both curves. flatAtk +149.5 (MapleScouter changed the class's hidden flat attack; one shift fits its damage at all 11 results within 0.02%). Cooldown seconds: scale at 4 s and 6 s from MapleScouter results at those settings.",
   "set": {
    "spline380": {
     "x": [
@@ -4601,10 +5699,16 @@
     ]
    },
    "flatAtk": 326.756
+  },
+  "patch": {
+   "cooldownScale": {
+    "4": 0.0106714,
+    "6": 0.0107339
+   }
   }
  },
  "corsair": {
-  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and for pirates and Xenon moved the 46826 point to 49800 and raised the whole curve about 3.5 percent. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 21k to 109k, attack and main stat lowered), both curves. flatAtk +150.0 (MapleScouter changed the class's hidden flat attack; one shift fits its damage at all 11 results within 0.02%).",
+  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and for pirates and Xenon moved the 46826 point to 49800 and raised the whole curve about 3.5 percent. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 21k to 109k, attack and main stat lowered), both curves. flatAtk +150.0 (MapleScouter changed the class's hidden flat attack; one shift fits its damage at all 11 results within 0.02%). Cooldown seconds: scale at 4 s and 6 s from MapleScouter results at those settings.",
   "set": {
    "spline380": {
     "x": [
@@ -4701,10 +5805,16 @@
     ]
    },
    "flatAtk": 360.944
+  },
+  "patch": {
+   "cooldownScale": {
+    "4": 0.0105635,
+    "6": 0.0105882
+   }
   }
  },
  "cannoneer": {
-  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and for pirates and Xenon moved the 46826 point to 49800 and raised the whole curve about 3.5 percent. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 22k to 112k, attack and main stat lowered), both curves. flatAtk +203.7 (MapleScouter changed the class's hidden flat attack; one shift fits its damage at all 11 results within 0.02%).",
+  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and for pirates and Xenon moved the 46826 point to 49800 and raised the whole curve about 3.5 percent. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 22k to 112k, attack and main stat lowered), both curves. flatAtk +203.7 (MapleScouter changed the class's hidden flat attack; one shift fits its damage at all 11 results within 0.02%). Cooldown seconds: scale at 4 s and 6 s from MapleScouter results at those settings.",
   "set": {
    "spline380": {
     "x": [
@@ -4801,10 +5911,16 @@
     ]
    },
    "flatAtk": 351.148
+  },
+  "patch": {
+   "cooldownScale": {
+    "4": 0.0106468,
+    "6": 0.0106998
+   }
   }
  },
  "angelic_buster": {
-  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and for pirates and Xenon moved the 46826 point to 49800 and raised the whole curve about 3.5 percent. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 14k to 112k, attack and main stat lowered), both curves. flatAtk +161.1 (MapleScouter changed the class's hidden flat attack; one shift fits its damage at all 11 results within 0.02%).",
+  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and for pirates and Xenon moved the 46826 point to 49800 and raised the whole curve about 3.5 percent. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 14k to 112k, attack and main stat lowered), both curves. flatAtk +161.1 (MapleScouter changed the class's hidden flat attack; one shift fits its damage at all 11 results within 0.02%). Cooldown seconds: scale at 4 s and 6 s from MapleScouter results at those settings.",
   "set": {
    "spline380": {
     "x": [
@@ -4901,10 +6017,16 @@
     ]
    },
    "flatAtk": 359.65
+  },
+  "patch": {
+   "cooldownScale": {
+    "4": 0.00961968,
+    "6": 0.00982285
+   }
   }
  },
  "ark": {
-  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and for pirates and Xenon moved the 46826 point to 49800 and raised the whole curve about 3.5 percent. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 13k to 113k, attack and main stat lowered), both curves. flatAtk +151.1 (MapleScouter changed the class's hidden flat attack; one shift fits its damage at all 11 results within 0.02%).",
+  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and for pirates and Xenon moved the 46826 point to 49800 and raised the whole curve about 3.5 percent. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 13k to 113k, attack and main stat lowered), both curves. flatAtk +151.1 (MapleScouter changed the class's hidden flat attack; one shift fits its damage at all 11 results within 0.02%). Core losses x1.0044 (all except Ascent), fitted to MapleScouter with every HEXA core at 0 and checked at every core at 12. Cooldown seconds: scale at 4 s and 6 s from MapleScouter results at those settings.",
   "set": {
    "spline380": {
     "x": [
@@ -5001,10 +6123,114 @@
     ]
    },
    "flatAtk": 221.055
+  },
+  "patch": {
+   "cores": {
+    "skillCore1=0": 0.975765,
+    "masteryCore1=0": 0.86591,
+    "masteryCore2=0": 0.895332,
+    "masteryCore3=0": 0.956105,
+    "masteryCore4=0": 0.900306,
+    "reinCore1=0": 0.992631,
+    "reinCore2=0": 0.960806,
+    "reinCore3=0": 0.979551,
+    "reinCore4=0": 0.98692,
+    "generalCore2=0": 0.932107,
+    "generalCore3=0": 0.986266,
+    "allCores=0": 0.400827,
+    "masteryCore1=1": 0.939311,
+    "masteryCore2=1": 0.945295,
+    "masteryCore3=1": 0.973382,
+    "masteryCore4=1": 0.94355,
+    "masteryCore1=15": 0.968609,
+    "masteryCore2=15": 0.971704,
+    "masteryCore3=15": 0.986232,
+    "masteryCore4=15": 0.970802,
+    "masteryCore1=0,masteryCore2=0": 0.761243,
+    "masteryCore1=0,masteryCore2=1": 0.811205,
+    "masteryCore1=1,masteryCore2=0": 0.834644,
+    "masteryCore1=1,masteryCore2=1": 0.884606,
+    "masteryCore1=0,masteryCore3=0": 0.827068,
+    "masteryCore1=0,masteryCore3=1": 0.839293,
+    "masteryCore1=1,masteryCore3=0": 0.897055,
+    "masteryCore1=1,masteryCore3=1": 0.912694,
+    "masteryCore1=0,masteryCore4=0": 0.766216,
+    "masteryCore1=0,masteryCore4=1": 0.80946,
+    "masteryCore1=1,masteryCore4=0": 0.839617,
+    "masteryCore1=1,masteryCore4=1": 0.882861,
+    "masteryCore2=0,masteryCore3=0": 0.839903,
+    "masteryCore2=0,masteryCore3=1": 0.868715,
+    "masteryCore2=1,masteryCore3=0": 0.896809,
+    "masteryCore2=1,masteryCore3=1": 0.918677,
+    "masteryCore2=0,masteryCore4=0": 0.795638,
+    "masteryCore2=0,masteryCore4=1": 0.838882,
+    "masteryCore2=1,masteryCore4=0": 0.8456,
+    "masteryCore2=1,masteryCore4=1": 0.888845,
+    "masteryCore3=0,masteryCore4=0": 0.856411,
+    "masteryCore3=0,masteryCore4=1": 0.899655,
+    "masteryCore3=1,masteryCore4=0": 0.873688,
+    "masteryCore3=1,masteryCore4=1": 0.916932,
+    "only skillCore1": 0.425062,
+    "only skillCore2": 0.422698,
+    "only masteryCore1": 0.529865,
+    "only masteryCore2": 0.517029,
+    "only masteryCore3": 0.451204,
+    "only masteryCore4": 0.501082,
+    "only reinCore1": 0.408196,
+    "only reinCore2": 0.441981,
+    "only reinCore3": 0.421276,
+    "only reinCore4": 0.413907,
+    "only generalCore2": 0.46872,
+    "only generalCore3": 0.417081,
+    "generalCore2=1": 0.952317,
+    "generalCore3=1": 0.983324,
+    "skillCore1=18": 0.988258,
+    "skillCore2=10": 0.98725,
+    "masteryCore1=22": 0.983258,
+    "masteryCore2=29": 0.998114,
+    "masteryCore3=17": 0.988068,
+    "masteryCore4=21": 0.982481,
+    "reinCore1=26": 0.998281,
+    "reinCore2=26": 0.994774,
+    "reinCore3=22": 0.993865,
+    "reinCore4=14": 0.993242,
+    "generalCore2=22": 0.982098,
+    "generalCore3=9": 0.987928,
+    "skillCore1=24": 0.993564,
+    "skillCore2=20": 0.993597,
+    "masteryCore1=25": 0.989536,
+    "masteryCore2=8": 0.958499,
+    "masteryCore3=8": 0.979807,
+    "masteryCore4=12": 0.964962,
+    "reinCore1=10": 0.995701,
+    "reinCore2=4": 0.966032,
+    "reinCore3=11": 0.988412,
+    "reinCore4=15": 0.99346,
+    "generalCore2=12": 0.967522,
+    "generalCore3=15": 0.991381,
+    "reinCore2=1": 0.962112,
+    "reinCore2=9": 0.972564,
+    "reinCore2=10": 0.97387,
+    "reinCore2=15": 0.980403,
+    "reinCore2=20": 0.986935,
+    "reinCore1=1": 0.993982,
+    "reinCore1=15": 0.996316,
+    "reinCore3=1": 0.9833,
+    "reinCore3=15": 0.989776,
+    "reinCore4=1": 0.989318,
+    "skillCore1=1": 0.975765,
+    "skillCore1=15": 0.986093,
+    "skillCore2=1": 0.981715,
+    "skillCore2=15": 0.99029
+   },
+   "cooldownScale": {
+    "4": 0.0100889,
+    "6": 0.0101195
+   }
   }
  },
  "shade": {
-  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and for pirates and Xenon moved the 46826 point to 49800 and raised the whole curve about 3.5 percent. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 17k to 112k, attack and main stat lowered), both curves. flatAtk +164.2 (MapleScouter changed the class's hidden flat attack; one shift fits its damage at all 11 results within 0.02%).",
+  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and for pirates and Xenon moved the 46826 point to 49800 and raised the whole curve about 3.5 percent. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 17k to 112k, attack and main stat lowered), both curves. flatAtk +164.2 (MapleScouter changed the class's hidden flat attack; one shift fits its damage at all 11 results within 0.02%). Cooldown seconds: scale at 4 s and 6 s from MapleScouter results at those settings.",
   "set": {
    "spline380": {
     "x": [
@@ -5101,10 +6327,16 @@
     ]
    },
    "flatAtk": 254.328
+  },
+  "patch": {
+   "cooldownScale": {
+    "4": 0.0102002,
+    "6": 0.0102463
+   }
   }
  },
  "thunder_breaker": {
-  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and for pirates and Xenon moved the 46826 point to 49800 and raised the whole curve about 3.5 percent. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 13k to 112k, attack and main stat lowered), both curves. flatAtk +152.6 (MapleScouter changed the class's hidden flat attack; one shift fits its damage at all 11 results within 0.02%).",
+  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and for pirates and Xenon moved the 46826 point to 49800 and raised the whole curve about 3.5 percent. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 13k to 112k, attack and main stat lowered), both curves. flatAtk +152.6 (MapleScouter changed the class's hidden flat attack; one shift fits its damage at all 11 results within 0.02%). Cooldown seconds: scale at 4 s and 6 s from MapleScouter results at those settings.",
   "set": {
    "spline380": {
     "x": [
@@ -5201,10 +6433,16 @@
     ]
    },
    "flatAtk": 317.275
+  },
+  "patch": {
+   "cooldownScale": {
+    "4": 0.00990639,
+    "6": 0.00995737
+   }
   }
  },
  "xenon": {
-  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and for pirates and Xenon moved the 46826 point to 49800 and raised the whole curve about 3.5 percent. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 23k to 105k, attack and main stat lowered), both curves. flatAtk +168.6 (MapleScouter changed the class's hidden flat attack; one shift fits its damage at all 11 results within 0.02%).",
+  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and for pirates and Xenon moved the 46826 point to 49800 and raised the whole curve about 3.5 percent. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 23k to 105k, attack and main stat lowered), both curves. flatAtk +168.6 (MapleScouter changed the class's hidden flat attack; one shift fits its damage at all 11 results within 0.02%). Cooldown seconds: scale at 4 s and 6 s from MapleScouter results at those settings.",
   "set": {
    "spline380": {
     "x": [
@@ -5301,10 +6539,16 @@
     ]
    },
    "flatAtk": 397.286
+  },
+  "patch": {
+   "cooldownScale": {
+    "4": 0.0104002,
+    "6": 0.00985027
+   }
   }
  },
  "mechanic": {
-  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and for pirates and Xenon moved the 46826 point to 49800 and raised the whole curve about 3.5 percent. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 20k to 115k, attack and main stat lowered), both curves. flatAtk +154.9 (MapleScouter changed the class's hidden flat attack; one shift fits its damage at all 11 results within 0.02%). Its three results from before the pirate change were dropped, so everything from 68952 up shares one fitted factor.",
+  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and for pirates and Xenon moved the 46826 point to 49800 and raised the whole curve about 3.5 percent. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 20k to 115k, attack and main stat lowered), both curves. flatAtk +154.9 (MapleScouter changed the class's hidden flat attack; one shift fits its damage at all 11 results within 0.02%). Fitted to 13 results (values from 30140 up to 120444 free); its Nov 15 results turned out unchanged, so all are used. Cooldown seconds: scale at 4 s and 6 s from MapleScouter results at those settings.",
   "set": {
    "spline380": {
     "x": [
@@ -5324,31 +6568,31 @@
     ],
     "y": [
      0,
-     171439458.9,
-     287382354.5,
-     538188002.5,
-     761599278.1,
-     1188071040.6,
-     1993126044.4,
-     2915574146,
-     4236904317.4,
-     5803947096.4,
+     171437659.7,
+     287333569,
+     538176098.4,
+     759322427.1,
+     1207233640.9,
+     1996740586.8,
+     2914775017.3,
+     4233586380.6,
+     5774150272.6,
      8247285340,
      12375030866.2,
      15781709177.2
     ],
     "m": [
-     5688.10414399,
-     9037.32078656,
-     17279.4938616,
-     25070.7782418,
-     32652.0069362,
-     41508.2856449,
-     57100.6675204,
-     84442.2779705,
-     133582.295745,
-     191737.358416,
-     263085.943799,
+     5688.04444924,
+     9035.93430013,
+     17276.1276276,
+     24957.5961688,
+     33110.5310526,
+     42393.9201138,
+     56356.449077,
+     84132.6042429,
+     132477.420071,
+     190730.511871,
+     264972.293511,
      307465.057091,
      306025.719637
     ]
@@ -5371,36 +6615,42 @@
     ],
     "y": [
      0,
-     174818862.5,
-     292337330,
-     545358319.2,
-     770047866.7,
-     1202907970.6,
-     2006522473.9,
-     2929298045.3,
-     4257882468,
-     5835867063.7,
+     174816470.2,
+     292273509.2,
+     545346429.4,
+     767106835.9,
+     1219325885.3,
+     2010042033.8,
+     2927923724.4,
+     4256414590.5,
+     5805894451.6,
      8284880600.3,
      12419002310.4,
      15840395093.3
     ],
     "m": [
-     5800.22768746,
-     9195.3584653,
-     17482.8912869,
-     25257.0125046,
-     32963.480462,
-     41849.3574269,
-     57051.7972712,
-     84640.3614965,
-     134399.509135,
-     192711.226035,
-     263613.247214,
+     5800.14831453,
+     9193.5313347,
+     17478.615585,
+     25110.1105165,
+     33292.7673232,
+     42658.43289,
+     56401.3634119,
+     84362.6388316,
+     133362.369119,
+     191572.576444,
+     265509.482086,
      308380.94811,
      307347.537091
     ]
    },
    "flatAtk": 307.847
+  },
+  "patch": {
+   "cooldownScale": {
+    "4": 0.0115161,
+    "6": 0.0109837
+   }
   }
  }
 }
