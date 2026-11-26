@@ -49,6 +49,9 @@ interface EngineClassData {
   kalingAscent?: number;
   scale: number;
   cooldownScale?: Record<string, number>;
+  /** Per core level, a factor on the share of value a core still lacks at that level, fitted to
+   *  MapleScouter's "every core at Lv L" results. Linear between the listed levels, 1 at Lv 0 and 30. */
+  coreLevelScale?: Record<string, number>;
 }
 
 interface CooldownRow {
@@ -410,7 +413,16 @@ export function createEngine(data: EngineData) {
   // core: Marksman's 3rd node keeps 30.4% at Lv 1, Ren's 14.3%), else Ren's curve, bent to the
   // class's Lv 5 / 15 / 25 spot probes when those were measured.
   function coreShareSpot(classId: string, core: CoreKey, level: number): number {
-    const r = classes[classId].cores, L = Math.max(0, Math.min(30, Math.round(level)));
+    const L = Math.max(0, Math.min(30, Math.round(level))), kept = probedShareSpot(classId, core, L);
+    const scale = classes[classId].coreLevelScale;
+    if (!scale || kept >= 1) return kept;
+    const pts = [[0, 1], ...Object.entries(scale).map(([k, v]) => [Number(k), v]), [30, 1]].sort((a, b) => a[0] - b[0]);
+    const i = pts.findIndex((_, j) => j < pts.length - 1 && L <= pts[j + 1][0]);
+    const [x0, y0] = pts[i], [x1, y1] = pts[i + 1];
+    return 1 - (1 - kept) * (y0 + ((L - x0) / (x1 - x0)) * (y1 - y0));
+  }
+  function probedShareSpot(classId: string, core: CoreKey, L: number): number {
+    const r = classes[classId].cores;
     if (L === 0 || L === 30) return L / 30;
     const z = r[`${core}=0`], has = (k: number) => r[`${core}=${k}`] !== undefined, at = (k: number) => (r[`${core}=${k}`] - z) / (1 - z);
     // Some cores carry no value in MapleScouter for some classes (Lynn's 4th Mastery core).
