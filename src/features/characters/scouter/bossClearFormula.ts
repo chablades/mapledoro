@@ -349,12 +349,14 @@ function sacredSymbolFactor(entry: BossCutEntry, inputs: BossClearInputs): numbe
 const GENE_PASS_BOSSES: ReadonlySet<string> = new Set(["lucid", "will", "gloom", "verusHilla", "darknell", "blackMage", "lotus", "damien"]);
 const GENE_PASS_ARCANE_POWER = 150;
 
-/** Buffs that only count against some bosses: the boss's own Sacred Symbol and the Genesis Pass.
- *  Returns their damage multiplier and the Arcane Force to use (capped at 1750 as elsewhere). */
+/** Damage factors that only count against some bosses: the boss's own Sacred Symbol, the Genesis
+ *  Pass, and the class's per-boss factor (MapleScouter's own adjustment for this class on this
+ *  boss). Returns their damage multiplier and the Arcane Force to use (capped at 1750 as elsewhere). */
 function bossSpecificBuffs(entry: BossCutEntry, inputs: BossClearInputs, characterArcaneForce: number): { damage: number; arcaneForce: number } {
   const genePass = inputs.genePassBoost !== undefined && GENE_PASS_BOSSES.has(entry.name);
+  const classBoss = inputs.bossFactors?.[`${entry.boss}|${entry.difficulty}`] ?? 1;
   return {
-    damage: sacredSymbolFactor(entry, inputs) * (genePass ? (inputs.genePassBoost ?? 1) : 1),
+    damage: sacredSymbolFactor(entry, inputs) * (genePass ? (inputs.genePassBoost ?? 1) : 1) * classBoss,
     arcaneForce: Math.min(characterArcaneForce + (genePass ? GENE_PASS_ARCANE_POWER : 0), 1750),
   };
 }

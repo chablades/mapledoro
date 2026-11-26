@@ -8,6 +8,7 @@
 
 import type { ScouterStat, ScouterUserStat } from "../scouterApi";
 import type { BossClearInputs, ScouterErrorReason, ScouterResultEntry, ScouterSpecEfficiency } from "../scouterResult";
+import { CLASS_BOSS_FACTOR } from "./classBossFactors";
 import { CLASS_CLEAR_FACTOR } from "./classClearFactors";
 import { coreAtt, coreAttAt, createEngine, splineEval, type EngineData, type EnginePrediction, type ScouterEngine } from "./scouterEngine";
 
@@ -125,6 +126,7 @@ function bossClearInputs(eng: ScouterEngine, u: ScouterUserStat, base: EnginePre
     sacredBonusOn: u.doping.authenticDmg,
     sacredBoost: sacredBoost(eng, u, base),
     genePassBoost: u.doping.genePass ? genePassBoost(eng, u, base) : undefined,
+    bossFactors: CLASS_BOSS_FACTOR[base.classId],
   };
 }
 

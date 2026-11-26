@@ -19,9 +19,9 @@
 //     table built from them read 2-16% too hard per boss. Copy renewalDate/renewalDetail anyway.
 //   - Extreme Adversary and Extreme Kalos are reported on the solo scale now (isPartyBoss false),
 //     so divide their correction by the party's solo-scale divisor first (3 and 5.667).
-//   - Known leftover: on Grandis bosses (Seren, Adversary, Kalos, Kaling, Malefic Star) above
-//     about 250%, MapleScouter gives Kanna, Hayato and Mo Xuan (less so Hoyoung) a bigger Ascent
-//     bonus than ours, so those read 2-8% harder here. It doesn't follow the class's Ascent share.
+//   - MapleScouter also adjusts some classes on some bosses (up to about 12%, the same at every
+//     strength). Those live in src/features/characters/scouter/engine/classBossFactors.ts, measured
+//     per class at two strengths; re-measure them after recalibrating this table.
 // Champion Black Mage is stored as Hard x0.75 (MapleScouter's own numbers agree since v272).
 // Set BOSSCUT_SCRAPED_AT to the update's date too: it's the "Boss thresholds as of" date
 // players see under every Boss Clear view.
