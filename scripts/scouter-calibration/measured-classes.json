@@ -1,6 +1,6 @@
 {
  "lethe": {
-  "how": "New in v272, never probed. Curves: MapleScouter HEXA and damage for one sheet at 19 strengths (HEXA 3k to 155k), on the shared 13 knots. cores: MapleScouter's per-core shares (hexaPoss) scaled to an all-cores-at-0 calculation, except Ascent (skillCore2), whose hexaPoss figure is the whole-damage Ascent share itself (as for Ren and Dual Blade), so its core value gives exactly that share; kalingAscent is the same share. defenseK, dmg (boss amount), dmgPerBuffDuration and scaleFactor fitted to the same sheet's stat efficiency table and a Buff Duration 0 calculation. Everything else is Ren's, the class whose damage tracks hers best as Magic ATT changes. Curves refitted to the same 19 results on the v272 layout (curve points at 30140 and 37900, PCHIP), every point within 11 HEXA. Cooldown seconds: scale at 4 s and 6 s from MapleScouter results at those settings. Her curve uses the 49800 point instead of 46826 (as the pirates and Xenon do): with it and three more results near 54k (attack 400, 484, 600), every point is within 10. Core values: every core loss scaled by 0.9777 so all cores at 0 matches MapleScouter. Core levels: coreLevelScale fitted to MapleScouter with every core at one level (Lv 1, 5, 12, 20). Core groups: coreGroupScale fitted to MapleScouter with one group of cores at Lv 10 (origin, ascent, mastery, enhancement, common), refitting coreLevelScale alongside.",
+  "how": "New in v272, never probed. Curves: MapleScouter HEXA and damage for one sheet at 19 strengths (HEXA 3k to 155k), on the shared 13 knots. cores: each core at 0 measured on its own (its HEXA as a share of full), and all cores at 0, except Ascent (skillCore2), whose hexaPoss figure is the whole-damage Ascent share itself (as for Ren and Dual Blade), so its core value gives exactly that share; kalingAscent is the same share. defenseK, dmg (boss amount), dmgPerBuffDuration and scaleFactor fitted to the same sheet's stat efficiency table and a Buff Duration 0 calculation. Everything else is Ren's, the class whose damage tracks hers best as Magic ATT changes. Curves refitted to the same 19 results on the v272 layout (curve points at 30140 and 37900, PCHIP), every point within 11 HEXA. Cooldown seconds: scale at 4 s and 6 s from MapleScouter results at those settings. Her curve uses the 49800 point instead of 46826 (as the pirates and Xenon do): with it and three more results near 54k (attack 400, 484, 600), every point is within 10. Core values: every core loss scaled by 0.9747 so all cores at 0 matches MapleScouter. Core levels: coreLevelScale fitted to every core at one level (Lv 1, 5, 12, 20) and coreGroupScale per core to each core alone at Lv 10.",
   "borrowFrom": "ren",
   "scaleFactor": 1.47125007014,
   "set": {
@@ -102,45 +102,66 @@
     ]
    },
    "cores": {
-    "allCores=0": 0.457615,
-    "masteryCore1=0": 0.880081,
-    "masteryCore2=0": 0.903391,
-    "masteryCore3=0": 0.884251,
-    "masteryCore4=0": 0.96851,
-    "skillCore1=0": 0.971771,
+    "skillCore1=0": 0.975041,
+    "masteryCore1=0": 0.905183,
+    "reinCore1=0": 0.984319,
+    "reinCore2=0": 0.986899,
+    "reinCore3=0": 0.984874,
+    "reinCore4=0": 0.959646,
+    "masteryCore2=0": 0.918903,
+    "masteryCore3=0": 0.905691,
+    "masteryCore4=0": 0.942624,
     "skillCore2=0": 0.974383,
-    "reinCore1=0": 0.977064,
-    "reinCore2=0": 0.980806,
-    "reinCore3=0": 0.977866,
-    "reinCore4=0": 0.978401,
-    "generalCore2=0": 0.955518,
-    "generalCore3=0": 0.994012
+    "generalCore3=0": 0.987915,
+    "generalCore2=0": 0.918964,
+    "allCores=0": 0.45786
    },
    "perSummonDuration": 0,
    "dmgPerBuffDuration": 0.00078279582,
    "dmg": 1.506878649,
    "kalingAscent": 0.02629089051559515,
    "coreLevelScale": {
-    "1": 1.0869,
-    "5": 1.0681,
-    "12": 1.0499,
-    "20": 1.0711
+    "1": 1.0852,
+    "5": 1.0523,
+    "12": 1.0221,
+    "20": 1.0482
    },
    "coreGroupScale": {
-    "origin": {
-     "10": 0.8152
+    "skillCore1": {
+     "10": 0.9494
     },
-    "ascent": {
-     "10": 0.9259
+    "skillCore2": {
+     "10": 0.9504
     },
-    "mastery": {
-     "10": 1.0216
+    "masteryCore1": {
+     "10": 1.2206
     },
-    "enh": {
-     "10": 0.8824
+    "masteryCore2": {
+     "10": 1.2566
     },
-    "common": {
-     "10": 1.7346
+    "masteryCore3": {
+     "10": 1.2127
+    },
+    "masteryCore4": {
+     "10": 0.8802
+    },
+    "reinCore1": {
+     "10": 0.9928
+    },
+    "reinCore2": {
+     "10": 0.9951
+    },
+    "reinCore3": {
+     "10": 0.9958
+    },
+    "reinCore4": {
+     "10": 0.8933
+    },
+    "generalCore2": {
+     "10": 0.984
+    },
+    "generalCore3": {
+     "10": 0.8622
     }
    }
   },
@@ -150,18 +171,18 @@
     "6": 0.00963292
    },
    "cores": {
-    "allCores=0": 0.469688,
-    "masteryCore1=0": 0.88275,
-    "masteryCore2=0": 0.905542,
-    "masteryCore3=0": 0.886828,
-    "masteryCore4=0": 0.969211,
-    "skillCore1=0": 0.972399,
-    "reinCore1=0": 0.977575,
-    "reinCore2=0": 0.981233,
-    "reinCore3=0": 0.978359,
-    "reinCore4=0": 0.978882,
-    "generalCore2=0": 0.956508,
-    "generalCore3=0": 0.994145
+    "skillCore1=0": 0.975673,
+    "masteryCore1=0": 0.907584,
+    "reinCore1=0": 0.984716,
+    "reinCore2=0": 0.987231,
+    "reinCore3=0": 0.985257,
+    "reinCore4=0": 0.960668,
+    "masteryCore2=0": 0.920956,
+    "masteryCore3=0": 0.908079,
+    "masteryCore4=0": 0.944077,
+    "generalCore3=0": 0.988221,
+    "generalCore2=0": 0.921016,
+    "allCores=0": 0.471587
    }
   }
  },
@@ -7485,7 +7506,7 @@
   }
  },
  "lynn": {
-  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 11k to 109k, attack and main stat lowered), both curves. Ascent (skillCore2) set to MapleScouter's own share (2.59%, 0.7x what the probes gave), kalingAscent the same; Boss Clear above the Ascent threshold then matches within 1%. Cooldown seconds: scale at 4 s and 6 s from MapleScouter results at those settings. Main stat: hidden base and flat stat refit to ten results with main stat base, % and % not applied lowered (within 0.5%); scale kept so full strength is unchanged. Core values: every core loss scaled by 1.0225 so all cores at 0 matches MapleScouter. Core levels: coreLevelScale fitted to MapleScouter with every core at one level (Lv 1, 5, 12, 20). Core groups: coreGroupScale fitted to MapleScouter with one group of cores at Lv 10 (origin, ascent, mastery, enhancement, common), refitting coreLevelScale alongside.",
+  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 11k to 109k, attack and main stat lowered), both curves. Ascent (skillCore2) set to MapleScouter's own share (2.59%, 0.7x what the probes gave), kalingAscent the same; Boss Clear above the Ascent threshold then matches within 1%. Cooldown seconds: scale at 4 s and 6 s from MapleScouter results at those settings.5%); scale kept so full strength is unchanged. Core values: every core loss scaled by 1.0225 so all cores at 0 matches MapleScouter. Core levels: coreLevelScale fitted to MapleScouter with every core at one level (Lv 1, 5, 12, 20). Core groups: coreGroupScale fitted to MapleScouter with one group of cores at Lv 10 (origin, ascent, mastery, enhancement, common), refitting coreLevelScale alongside. Main stat: MapleScouter's stat value bends at low main stat, so hidden base, flat stat and sqrtMain (a term on the square root of total main stat) are fitted to 31 results from 14k to 96k main stat, with attack 40 to 4841; every one within 0.8%. Scale kept so full strength is unchanged.",
   "set": {
    "spline380": {
     "x": [
@@ -7715,14 +7736,15 @@
    },
    "stat": {
     "hiddenBase": {
-     "main": 693,
+     "main": 487,
      "sub": 29.756653992350948
     },
-    "flat": -23932,
-    "perLevel": 0
+    "flat": 7100,
+    "perLevel": 0,
+    "sqrtMain": -198.8
    }
   },
-  "scaleFactor": 1.056433
+  "scaleFactor": 1.164518773
  },
  "sia_astelle": {
   "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 9k to 107k, attack and main stat lowered), both curves. Ascent (skillCore2) set to MapleScouter's own share (2.75%, 0.7x what the probes gave), kalingAscent the same; Boss Clear above the Ascent threshold then matches within 1%. Cooldown seconds: scale at 4 s and 6 s from MapleScouter results at those settings. Core values: every core loss scaled by 1.0142 so all cores at 0 matches MapleScouter. Core levels: coreLevelScale fitted to MapleScouter with every core at one level (Lv 1, 5, 12, 20).",

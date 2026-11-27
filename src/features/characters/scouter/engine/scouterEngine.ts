@@ -28,7 +28,9 @@ type CurveKey = "skill1" | "skill2" | "mastery" | "rein" | "general2" | "general
 
 interface EngineClassData {
   koreanName: string;
-  stat: { hiddenBase: Partial<Record<StatKey, number>>; flat: number; perLevel: number };
+  /** sqrtMain: a term on the square root of the sheet's total main stat, for a class whose stat value
+   *  bends at low main stat in MapleScouter (Lynn). */
+  stat: { hiddenBase: Partial<Record<StatKey, number>>; flat: number; perLevel: number; sqrtMain?: number };
   flatAtk: number;
   atkPct: number;
   restraint: { lv4: number; lv5: number };
@@ -52,9 +54,9 @@ interface EngineClassData {
   /** Per core level, a factor on the share of value a core still lacks at that level, fitted to
    *  MapleScouter's "every core at Lv L" results. Linear between the listed levels, 1 at Lv 0 and 30. */
   coreLevelScale?: Record<string, number>;
-  /** The same per core group (origin, ascent, mastery, enh, common), multiplied onto coreLevelScale,
-   *  fitted to results with one group of cores lowered. */
-  coreGroupScale?: Partial<Record<CoreGroup, Record<string, number>>>;
+  /** The same per core group (origin, ascent, mastery, enh, common) or per single core, multiplied onto
+   *  coreLevelScale, fitted to results with one group or one core lowered. */
+  coreGroupScale?: Partial<Record<CoreGroup | CoreKey, Record<string, number>>>;
 }
 
 type CoreGroup = "origin" | "ascent" | "mastery" | "enh" | "common";
@@ -307,10 +309,16 @@ export function hexaAt(spline: EngineSpline, target: number): number {
   }
   return lo;
 }
-// A cooldown table's bonus for s seconds at no-cooldown HEXA h0, linear between rows, held at the ends.
+// A cooldown table's bonus for s seconds at no-cooldown HEXA h0, linear between rows, held at the top
+// end. Below the first row the first two rows' slope carries on (MapleScouter's bonus keeps growing
+// on weaker sheets).
 export function tableBonus(rows: CooldownRow[], s: number, h0: number): number {
   const i = rows.findIndex((r) => r.h0 >= h0);
-  if (i <= 0) return rows[i === 0 ? 0 : rows.length - 1].bonus[s];
+  if (i < 0) return rows[rows.length - 1].bonus[s];
+  if (i === 0) {
+    const [a, b] = rows;
+    return a.bonus[s] + ((h0 - a.h0) / (b.h0 - a.h0)) * (b.bonus[s] - a.bonus[s]);
+  }
   const a = rows[i - 1], b = rows[i];
   return a.bonus[s] + ((h0 - a.h0) / (b.h0 - a.h0)) * (b.bonus[s] - a.bonus[s]);
 }
@@ -436,7 +444,8 @@ export function createEngine(data: EngineData) {
     const L = Math.max(0, Math.min(30, Math.round(level))), kept = probedShareSpot(classId, core, L);
     const c = classes[classId];
     if ((!c.coreLevelScale && !c.coreGroupScale) || kept >= 1) return kept;
-    return 1 - (1 - kept) * levelTable(c.coreLevelScale, L) * (withGroup ? levelTable(c.coreGroupScale?.[coreGroup(core)], L) : 1);
+    const group = withGroup ? levelTable(c.coreGroupScale?.[coreGroup(core)], L) * levelTable(c.coreGroupScale?.[core], L) : 1;
+    return 1 - (1 - kept) * levelTable(c.coreLevelScale, L) * group;
   }
   function probedShareSpot(classId: string, core: CoreKey, L: number): number {
     const r = classes[classId].cores;
@@ -565,7 +574,8 @@ export function createEngine(data: EngineData) {
       // Explorers, Heroes and Resistance; the other classes don't change), so main stat % scales it.
       stat: (Object.entries(c.stat.hiddenBase) as [StatKey, number][]).reduce((t, [k, hidden]) => t + w[k] * (hidden + b.allStat + (k === "main" ? b.hp : 0)) * mult(k), 0)
         + STAT_KEYS.reduce((t, k) => t + w[k] * (statField(s, k, "Base") * mult(k) + statField(s, k, "Abs")), 0)
-        + c.stat.flat + c.stat.perLevel * n(s.level) * mult("main"),
+        + c.stat.flat + c.stat.perLevel * n(s.level) * mult("main")
+        + (c.stat.sqrtMain ?? 0) * Math.sqrt(Math.max(0, statField(s, "main", "Base") * mult("main") + statField(s, "main", "Abs"))),
       flatAtk: c.flatAtk + n(s.atkBase) + b.flatAtk + coreAtt(classId, u.hexa),
       atkPct: c.atkPct + (n(s.atkPercent) + b.atkPct + soulAtkPct(u) + contAtt(u)) / 100 + restraintPts(c.restraint, u),
       // Buff duration keeps damage buffs up longer, so it adds damage % points.
