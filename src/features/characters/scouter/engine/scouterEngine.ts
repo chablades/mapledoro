@@ -52,6 +52,25 @@ interface EngineClassData {
   /** Per core level, a factor on the share of value a core still lacks at that level, fitted to
    *  MapleScouter's "every core at Lv L" results. Linear between the listed levels, 1 at Lv 0 and 30. */
   coreLevelScale?: Record<string, number>;
+  /** The same per core group (origin, ascent, mastery, enh, common), multiplied onto coreLevelScale,
+   *  fitted to results with one group of cores lowered. */
+  coreGroupScale?: Partial<Record<CoreGroup, Record<string, number>>>;
+}
+
+type CoreGroup = "origin" | "ascent" | "mastery" | "enh" | "common";
+const coreGroup = (core: CoreKey): CoreGroup => {
+  if (core === "skillCore1") return "origin";
+  if (core === "skillCore2") return "ascent";
+  if (core.startsWith("mastery")) return "mastery";
+  return core.startsWith("rein") ? "enh" : "common";
+};
+// Piecewise-linear over the listed levels, 1 at Lv 0 and 30.
+function levelTable(table: Record<string, number> | undefined, L: number): number {
+  if (!table) return 1;
+  const pts = [[0, 1], ...Object.entries(table).map(([k, v]) => [Number(k), v]), [30, 1]].sort((a, b) => a[0] - b[0]);
+  const i = pts.findIndex((_, j) => j < pts.length - 1 && L <= pts[j + 1][0]);
+  const [x0, y0] = pts[i], [x1, y1] = pts[i + 1];
+  return y0 + ((L - x0) / (x1 - x0)) * (y1 - y0);
 }
 
 interface CooldownRow {
@@ -412,14 +431,12 @@ export function createEngine(data: EngineData) {
   // 3rd common node (their curves are straight lines, but start at a different share per class and
   // core: Marksman's 3rd node keeps 30.4% at Lv 1, Ren's 14.3%), else Ren's curve, bent to the
   // class's Lv 5 / 15 / 25 spot probes when those were measured.
-  function coreShareSpot(classId: string, core: CoreKey, level: number): number {
+  // withGroup false leaves out coreGroupScale: a measured pair applies its group's factor to the pair as a whole.
+  function coreShareSpot(classId: string, core: CoreKey, level: number, withGroup = true): number {
     const L = Math.max(0, Math.min(30, Math.round(level))), kept = probedShareSpot(classId, core, L);
-    const scale = classes[classId].coreLevelScale;
-    if (!scale || kept >= 1) return kept;
-    const pts = [[0, 1], ...Object.entries(scale).map(([k, v]) => [Number(k), v]), [30, 1]].sort((a, b) => a[0] - b[0]);
-    const i = pts.findIndex((_, j) => j < pts.length - 1 && L <= pts[j + 1][0]);
-    const [x0, y0] = pts[i], [x1, y1] = pts[i + 1];
-    return 1 - (1 - kept) * (y0 + ((L - x0) / (x1 - x0)) * (y1 - y0));
+    const c = classes[classId];
+    if ((!c.coreLevelScale && !c.coreGroupScale) || kept >= 1) return kept;
+    return 1 - (1 - kept) * levelTable(c.coreLevelScale, L) * (withGroup ? levelTable(c.coreGroupScale?.[coreGroup(core)], L) : 1);
   }
   function probedShareSpot(classId: string, core: CoreKey, L: number): number {
     const r = classes[classId].cores;
@@ -475,23 +492,25 @@ export function createEngine(data: EngineData) {
   function coreRatio(classId: string, hexa: ScouterHexa): number {
     const r = classes[classId].cores, shares = multiplierShares(classId);
     const L = Object.fromEntries(HEXA_CORES.map((c) => [c, Math.max(0, Math.min(30, Math.round(n(hexa[c]))))])) as Record<CoreKey, number>;
-    const single = (c: CoreKey, level: number) => 1 - (1 - r[`${c}=0`]) * (1 - coreShareSpot(classId, c, level));
+    const single = (c: CoreKey, level: number, withGroup = true) => 1 - (1 - r[`${c}=0`]) * (1 - coreShareSpot(classId, c, level, withGroup));
     const nodes = (c: CoreKey, level: number): [number, number][] => {
       if (level === 0) return [[0, 1]];
-      const f1 = coreShareSpot(classId, c, 1), t = f1 >= 1 ? 1 : (coreShareSpot(classId, c, level) - f1) / (1 - f1);
+      const f1 = coreShareSpot(classId, c, 1, false), t = f1 >= 1 ? 1 : (coreShareSpot(classId, c, level, false) - f1) / (1 - f1);
       return [[1, 1 - t], [30, t]];
     };
+    const groupScale = classes[classId].coreGroupScale;
     let add = 1;
     for (const c of HEXA_CORES) if (!(c in shares)) add -= 1 - single(c, L[c]);
     for (const { a, b, grid } of corePairs(classId)) {
       if (a in shares || b in shares) continue;
       const at = (i: number, j: number) => {
         if (i === 30 && j === 30) return 1;
-        if (j === 30) return single(a, i);
-        return i === 30 ? single(b, j) : grid[`${i},${j}`];
+        if (j === 30) return single(a, i, false);
+        return i === 30 ? single(b, j, false) : grid[`${i},${j}`];
       };
       let pair = 0;
       for (const [i, wi] of nodes(a, L[a])) for (const [j, wj] of nodes(b, L[b])) pair += wi * wj * at(i, j);
+      if (groupScale && coreGroup(a) === coreGroup(b)) pair = 1 - (1 - pair) * levelTable(groupScale[coreGroup(a)], (L[a] + L[b]) / 2);
       add += pair - (single(a, L[a]) + single(b, L[b]) - 1);
     }
     let scale = 1, flat = 0;
