@@ -8783,7 +8783,7 @@
   }
  },
  "demon_avenger": {
-  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 3k to 42k, attack and main stat lowered), both curves. stat.flat -3820 (hidden flat HP stat; fits its damage at all 11 results within 0.01%). Its results only reach 42k HEXA on this sheet (main stat is HP); three more with HP base raised to 20k, 35k and 50k (HEXA 48k to 60k) fit the curve values at 46826 to 68952, every point within 16. Cooldown seconds: scale at 4 s and 6 s from MapleScouter results at those settings. Core values: every core loss scaled by 0.9996 so all cores at 0 matches MapleScouter. Core levels: coreLevelScale fitted to MapleScouter with every core at one level (Lv 12).",
+  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 3k to 42k, attack and main stat lowered), both curves. Hidden HP base -842 and flat stat 1540 fit its damage at all 16 stat and attack results within 0.08%, including one with HP % lowered to 600. Its results only reach 42k HEXA on this sheet (main stat is HP); three more with HP base raised to 20k, 35k and 50k (HEXA 48k to 60k) fit the curve values at 46826 to 68952, every point within 16. Cooldown seconds: scale at 4 s and 6 s from MapleScouter results at those settings. Core values: every core loss scaled by 0.9996 so all cores at 0 matches MapleScouter. Core levels: coreLevelScale fitted to MapleScouter with every core at one level (Lv 12).",
   "set": {
    "spline380": {
     "x": [
@@ -8885,7 +8885,11 @@
   },
   "patch": {
    "stat": {
-    "flat": -2268.526
+    "flat": 1539.5,
+    "hiddenBase": {
+     "main": -841.9,
+     "sub": 31.721636182980546
+    }
    },
    "cooldownScale": {
     "4": 0.0123345,
@@ -8943,7 +8947,8 @@
     "skillCore2=1": 0.978938,
     "skillCore2=15": 0.988816
    }
-  }
+  },
+  "scaleFactor": 0.999451
  },
  "buccaneer": {
   "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and for pirates and Xenon moved the 46826 point to 49800 and raised the whole curve about 3.5 percent. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 21k to 112k, attack and main stat lowered), both curves. flatAtk +149.5 (MapleScouter changed the class's hidden flat attack; one shift fits its damage at all 11 results within 0.02%). Cooldown seconds: scale at 4 s and 6 s from MapleScouter results at those settings. Core values: every core loss scaled by 0.9992 so all cores at 0 matches MapleScouter.",
