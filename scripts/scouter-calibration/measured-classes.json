@@ -7747,7 +7747,7 @@
   "scaleFactor": 1.164518773
  },
  "sia_astelle": {
-  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 9k to 107k, attack and main stat lowered), both curves. Ascent (skillCore2) set to MapleScouter's own share (2.75%, 0.7x what the probes gave), kalingAscent the same; Boss Clear above the Ascent threshold then matches within 1%. Cooldown seconds: scale at 4 s and 6 s from MapleScouter results at those settings. Core values: every core loss scaled by 1.0142 so all cores at 0 matches MapleScouter. Core levels: coreLevelScale fitted to MapleScouter with every core at one level (Lv 1, 5, 12, 20).",
+  "how": "v272 curves: MapleScouter moved every class's low curve points from 24704/33228 to 30140/37900 (PCHIP, slopes from the values) and reshaped many classes between 46826 and 99025. Values at 30140, 37900 and 46826-99025 fitted to 11 results on one sheet (HEXA 9k to 107k, attack and main stat lowered), both curves. Ascent (skillCore2) set to MapleScouter's own share (2.75%, 0.7x what the probes gave), kalingAscent the same; Boss Clear above the Ascent threshold then matches within 1%. Cooldown seconds: scale at 4 s and 6 s from MapleScouter results at those settings. Core values: every core loss scaled by 1.0142 so all cores at 0 matches MapleScouter. Core levels: coreLevelScale fitted to MapleScouter with every core at one level (Lv 1, 5, 12, 20). Core groups: coreGroupScale fitted to one group of cores at Lv 10 with attack 3000 (relative to attack 3000 with every core at 30), refitting coreLevelScale alongside.",
   "set": {
    "spline380": {
     "x": [
@@ -7845,10 +7845,27 @@
    },
    "kalingAscent": 0.027490993377483442,
    "coreLevelScale": {
-    "1": 0.9717,
-    "5": 0.97,
-    "12": 0.9688,
-    "20": 0.9657
+    "1": 0.9667,
+    "5": 0.9456,
+    "12": 0.9254,
+    "20": 0.9405
+   },
+   "coreGroupScale": {
+    "origin": {
+     "10": 1.0869
+    },
+    "ascent": {
+     "10": 0.7609
+    },
+    "mastery": {
+     "10": 1.0772
+    },
+    "enh": {
+     "10": 1.0801
+    },
+    "common": {
+     "10": 1.0794
+    }
    }
   },
   "patch": {
