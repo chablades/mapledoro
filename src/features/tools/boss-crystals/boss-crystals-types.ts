@@ -1,6 +1,6 @@
 import { readGlobalTool, writeGlobalTool } from "../globalToolsStore";
 import { utcDateStr } from "../date";
-import { BOSSES, DEFAULT_MAX_PARTY, SHARED_INDICES } from "./bosses";
+import { BOSSES, DEFAULT_MAX_PARTY, PRE_V272_REMOVED, SHARED_INDICES } from "./bosses";
 
 // -- Types --------------------------------------------------------------------
 
@@ -43,6 +43,9 @@ interface SavedState {
   columns?: { name: string; bosses: BossRow[] }[];
   weekId?: string;
   monthId?: string;
+  /** Boss name of each saved row, in order. Saves from before v272 lack it: their rows were the four
+   *  bosses v272 removed, then today's list. */
+  bossNames?: string[];
 }
 
 // -- Helpers ------------------------------------------------------------------
@@ -174,6 +177,9 @@ export function loadState(): { server: string; characters: CharacterEntry[] } | 
   const resetMonthly = parsed.monthId !== currentMonthId();
   // Characters saved before world tracking inherit the last-selected server.
   const fallbackWorld: ServerType = parsed.server === "interactive" ? "interactive" : "heroic";
+  // Saved rows line up with the boss list they were saved with, so match them by name.
+  const savedNames = parsed.bossNames ?? [...PRE_V272_REMOVED, ...BOSSES.map((b) => b.name)];
+  const savedIndex = new Map(savedNames.map((name, i) => [name, i]));
   return {
     server: parsed.server,
     characters: chars.map((c) => ({
@@ -184,8 +190,9 @@ export function loadState(): { server: string; characters: CharacterEntry[] } | 
         (c as Partial<CharacterEntry>).world === "interactive"
           ? (c as CharacterEntry).world
           : fallbackWorld,
-      bosses: BOSSES.map((boss, i) => {
-        const s = c.bosses[i];
+      bosses: BOSSES.map((boss) => {
+        const at = savedIndex.get(boss.name);
+        const s = at === undefined ? undefined : c.bosses[at];
         if (!s) return { checked: false, partySize: 1, cleared: false };
         const resetThis = boss.monthly ? resetMonthly : resetWeekly;
         return {
@@ -206,6 +213,7 @@ export function saveState(server: string, characters: CharacterEntry[]) {
     characters,
     weekId: currentWeekId(),
     monthId: currentMonthId(),
+    bossNames: BOSSES.map((b) => b.name),
   });
 }
 

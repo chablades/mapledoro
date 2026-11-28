@@ -17,6 +17,10 @@
   typed chars take the current toggle), and only matching-world characters, totals, the per-world 180
   cap, the import picker, and export are shown. A single-world roster opens on that world.
   Pre-world-tracking saves migrate to the last-saved server.
+- **Saved rows are matched by boss name** — `saveState` writes `bossNames` (the list order at save
+  time) and `loadState` maps each saved row to today's `BOSSES` by name, so adding, removing or
+  reordering bosses never shifts anyone's plan. Saves from before `bossNames` existed are read as
+  `PRE_V272_REMOVED` followed by today's list; keep that constant as long as such saves may exist.
 - **XLSX export** is zero-dependency (hand-rolled CRC32/ZIP). Don't replace it with a library.
 - **`cleared` vs `checked`** — `checked` means the boss is in the character's weekly plan (drives
   income and export); `cleared` means completed this week (the card checkbox). Export reads

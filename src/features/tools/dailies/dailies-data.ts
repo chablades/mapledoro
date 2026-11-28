@@ -35,6 +35,7 @@ export const SACRED_SYMBOL_QUESTS: DailyTask[] = [
 export const DAILY_BOSSES: DailyTask[] = [
   { id: "zakum", label: "Normal Zakum" },
   { id: "hilla", label: "Normal Hilla" },
+  { id: "hard_hilla", label: "Hard Hilla" },
   { id: "von_bon", label: "Normal Von Bon" },
   { id: "crimson_queen", label: "Normal Crimson Queen" },
   { id: "pierre", label: "Normal Pierre" },
@@ -42,6 +43,8 @@ export const DAILY_BOSSES: DailyTask[] = [
   { id: "chaos_horntail", label: "Chaos Horntail" },
   { id: "hard_von_leon", label: "Hard Von Leon" },
   { id: "pink_bean", label: "Normal Pink Bean" },
+  { id: "chaos_pink_bean", label: "Chaos Pink Bean" },
+  { id: "cygnus", label: "Normal Cygnus" },
   { id: "magnus", label: "Normal Magnus" },
   { id: "arkarium", label: "Normal Arkarium" },
   { id: "papulatus", label: "Normal Papulatus" },
