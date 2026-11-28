@@ -192,15 +192,16 @@ const CONTINUOUS_BOSS = [0, 9, 18, 27, 36, 45, 54];
 const contLevel = (u: ScouterUserStat): number => Math.max(0, Math.min(6, Math.round(n(u.special.continuosRing))));
 export const contAtt = (u: ScouterUserStat): number => CONTINUOUS_ATT[contLevel(u)];
 export const contBoss = (u: ScouterUserStat): number => CONTINUOUS_BOSS[contLevel(u)];
-// Ephenia's soul (A Queenly Fragrance) on Demon Avenger: +30 HP% at either level, which is Lv 1's
-// 50% for 180 s of every 300 s (its probe comes to 30.000 HP% points). No other class gains damage.
-const EPHENIA_HP_PCT = 30;
+// Ephenia's soul (A Queenly Fragrance) on Demon Avenger, the same at either level: worth 22.97 HP% points
+// on this engine's Demon Avenger stat (MapleScouter's result with it on reads +1.468% damage). No other
+// class gains damage.
+const EPHENIA_HP_PCT = 22.97;
 // Ruin Force Shield: 10% final damage (its probe reads exactly 1.100). Genesis weapon: 10% too.
 const RUIN_FORCE_SHIELD_FD = 1.1;
 const GENESIS_FD = 1.1;
-// Classes whose final attack skills the artifact's Final Attack damage boosts.
-const FINAL_ATTACK_CLASSES = new Set(["hero", "paladin", "dark_knight", "arch_mage_f_p", "arch_mage_i_l", "bishop", "bow_master", "marksman",
-  "blade_master", "buccaneer", "corsair", "aran", "evan", "mercedes", "demon_avenger", "battle_mage", "wild_hunter", "blaster", "mihile", "ren"]);
+// The artifact's Final Attack damage (up to 30) boosts final attack skills only, so each class gains its own
+// share: total damage gained at 30, measured per class from MapleScouter (linear in the level). Other classes gain nothing.
+const FINAL_ATTACK_GAIN: Record<string, number> = { hero: 0.00286, paladin: 0.00059, dark_knight: 0.00064, arch_mage_f_p: 0.00153, arch_mage_i_l: 0.00175, bishop: 0.00152, bow_master: 0.00232, marksman: 0.00073, blade_master: 0.00189, buccaneer: 0.00147, corsair: 0.00231, aran: 0.00095, evan: 0.00039, mercedes: 0.0025, demon_avenger: 0.00085, battle_mage: 0.00103, wild_hunter: 0.00762, blaster: 0.00202, mihile: 0.00131, ren: 0.00137 };
 // Summon duration: only Lara's damage moves with it, linear from 0 and flat somewhere between 42
 // (measured still rising) and 82 (measured same as 42), so 42 is used as the cap.
 const SUMMON_CAP = 42;
@@ -597,7 +598,7 @@ export function createEngine(data: EngineData) {
         * (1 + c.perSummonDuration * Math.min(SUMMON_CAP, n(s.summonPersistTime)))
         // Artifact final attack: only measured on Ren (30 -> +0.136%), assumed linear and the same
         // on the other classes with final attack skills; nothing on the rest.
-        * (FINAL_ATTACK_CLASSES.has(classId) ? 1 + (0.00136 * n(s.artifact_finalAttack)) / 30 : 1)
+        * (1 + ((FINAL_ATTACK_GAIN[classId] ?? 0) * n(s.artifact_finalAttack)) / 30)
         // Below Lv 260 everything does 3% less, flat (the same at 200 and 259).
         * (!normal && n(s.level) < 260 ? 0.97 : 1),
     };
