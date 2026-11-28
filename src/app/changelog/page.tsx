@@ -18,6 +18,12 @@ const CHANGELOG: ChangelogEntry[] = [
     ],
   },
   {
+    date: "2026-11-22",
+    changes: [
+      { type: "fixed", text: "Fixed adding characters failing with \"Lookup failed\" after Nexon moved its ranking service." },
+    ],
+  },
+  {
     date: "2026-11-15",
     changes: [
       { type: "fixed", text: "Fixed Boss Clear using level 270 instead of 235 for Normal Kai's entry requirement and damage penalty." },
