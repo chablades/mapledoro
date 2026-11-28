@@ -44,6 +44,8 @@ export interface BossClearInputs {
   genePassBoost?: number;
   /** Saved Sacred Symbol levels by region, when known, so the tooltip can show the real level. */
   sacredLevels?: Partial<Record<string, number>>;
+  /** This class's per-boss damage factors, keyed "boss|difficulty" (engine/classBossFactors.ts). */
+  bossFactors?: Readonly<Record<string, number>>;
 }
 
 /** The Stat Efficiency bookmark's table, MapleScouter's `specEfficiency` rebuilt by the local

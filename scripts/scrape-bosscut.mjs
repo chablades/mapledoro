@@ -5,17 +5,23 @@
 // easyRate) server-side. The page now POSTs the character to their API (CALC_BOSS_CUTS) and gets
 // clear rates back; only boss metadata (level, defense, forces, party limit, renewalDate and
 // renewalDetail) is still in the client chunk. Since then bosscut-data.generated.ts is updated
-// by hand:
-//   - Existing bosses: apply the multiplier each boss's renewalDetail states ("배율 2.5% 증가",
-//     "실전딜 일괄 1.5%증가") to its easyRate, and copy renewalDate/renewalDetail. A note that
-//     converts a cut's basis ("6인기준 -> 솔플기준 변환", Extreme Kaling) is not a difficulty change:
-//     checked against two classes, applying its "+14%" made Kaling read 14% too easy.
-//   - Anything else (a new boss, or a change the changelog doesn't explain): scale against a
-//     boss with the same defense and a clear rate in the same Ascent bracket on a real result.
-//     A result saved in your browser holds every boss's clear rate: localStorage "manual-store"
-//     -> state.result.calculatedData.bossCuts. Read it there; don't script their API.
-//     Use more than one class: MapleScouter boosts some non-KMS classes on some bosses, so a single
-//     class can be off by several percent on a given boss.
+// by calibrating easyRate against MapleScouter's own results:
+//   - Take one sheet and a KMS class (Ren works: its Ascent matches ours exactly), and get
+//     MapleScouter's result at a few strengths (lower only the attack, then the main stat too),
+//     so every boss reads below about 170% in at least one of them. Below that their Ascent
+//     bonus doesn't apply, so our rate / their rate is that boss's correction alone, the same at
+//     every strength (to 0.04% in Nov 2026) and for every class to about 1%. Divide each row's
+//     easyRate by it. Four results plus the full-strength one covered every boss.
+//   - Their results come from their own Result button in a browser, a few seconds apart (the
+//     last one is saved in localStorage "manual-store" -> state.result.calculatedData.bossCuts).
+//     Don't script their API.
+//   - The changelog's renewalDetail multipliers ("배율 2.5% 증가") alone were not enough: the
+//     table built from them read 2-16% too hard per boss. Copy renewalDate/renewalDetail anyway.
+//   - Extreme Adversary and Extreme Kalos are reported on the solo scale now (isPartyBoss false),
+//     so divide their correction by the party's solo-scale divisor first (3 and 5.667).
+//   - MapleScouter also adjusts some classes on some bosses (up to about 12%, the same at every
+//     strength). Those live in src/features/characters/scouter/engine/classBossFactors.ts, measured
+//     per class at two strengths; re-measure them after recalibrating this table.
 // Champion Black Mage is stored as Hard x0.75 (MapleScouter's own numbers agree since v272).
 // Set BOSSCUT_SCRAPED_AT to the update's date too: it's the "Boss thresholds as of" date
 // players see under every Boss Clear view.

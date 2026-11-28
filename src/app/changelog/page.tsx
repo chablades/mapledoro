@@ -12,6 +12,12 @@ interface ChangelogEntry {
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    date: "2026-11-28",
+    changes: [
+      { type: "changed", text: "Reworked how the Scouter figure and Boss Clear are calculated, fixing large gaps for weaker characters, HEXA cores at different levels, Cooldown Reduction and class-specific boss differences." },
+    ],
+  },
+  {
     date: "2026-11-22",
     changes: [
       { type: "fixed", text: "Fixed adding characters failing with \"Lookup failed\" after Nexon moved its ranking service." },

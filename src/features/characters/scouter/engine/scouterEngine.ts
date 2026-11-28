@@ -28,7 +28,9 @@ type CurveKey = "skill1" | "skill2" | "mastery" | "rein" | "general2" | "general
 
 interface EngineClassData {
   koreanName: string;
-  stat: { hiddenBase: Partial<Record<StatKey, number>>; flat: number; perLevel: number };
+  /** sqrtMain: a term on the square root of the sheet's total main stat, for a class whose stat value
+   *  bends at low main stat in MapleScouter (Lynn). */
+  stat: { hiddenBase: Partial<Record<StatKey, number>>; flat: number; perLevel: number; sqrtMain?: number };
   flatAtk: number;
   atkPct: number;
   restraint: { lv4: number; lv5: number };
@@ -49,6 +51,28 @@ interface EngineClassData {
   kalingAscent?: number;
   scale: number;
   cooldownScale?: Record<string, number>;
+  /** Per core level, a factor on the share of value a core still lacks at that level, fitted to
+   *  MapleScouter's "every core at Lv L" results. Linear between the listed levels, 1 at Lv 0 and 30. */
+  coreLevelScale?: Record<string, number>;
+  /** The same per core group (origin, ascent, mastery, enh, common) or per single core, multiplied onto
+   *  coreLevelScale, fitted to results with one group or one core lowered. */
+  coreGroupScale?: Partial<Record<CoreGroup | CoreKey, Record<string, number>>>;
+}
+
+type CoreGroup = "origin" | "ascent" | "mastery" | "enh" | "common";
+const coreGroup = (core: CoreKey): CoreGroup => {
+  if (core === "skillCore1") return "origin";
+  if (core === "skillCore2") return "ascent";
+  if (core.startsWith("mastery")) return "mastery";
+  return core.startsWith("rein") ? "enh" : "common";
+};
+// Piecewise-linear over the listed levels, 1 at Lv 0 and 30.
+function levelTable(table: Record<string, number> | undefined, L: number): number {
+  if (!table) return 1;
+  const pts = [[0, 1], ...Object.entries(table).map(([k, v]) => [Number(k), v]), [30, 1]].sort((a, b) => a[0] - b[0]);
+  const i = pts.findIndex((_, j) => j < pts.length - 1 && L <= pts[j + 1][0]);
+  const [x0, y0] = pts[i], [x1, y1] = pts[i + 1];
+  return y0 + ((L - x0) / (x1 - x0)) * (y1 - y0);
 }
 
 interface CooldownRow {
@@ -168,15 +192,16 @@ const CONTINUOUS_BOSS = [0, 9, 18, 27, 36, 45, 54];
 const contLevel = (u: ScouterUserStat): number => Math.max(0, Math.min(6, Math.round(n(u.special.continuosRing))));
 export const contAtt = (u: ScouterUserStat): number => CONTINUOUS_ATT[contLevel(u)];
 export const contBoss = (u: ScouterUserStat): number => CONTINUOUS_BOSS[contLevel(u)];
-// Ephenia's soul (A Queenly Fragrance) on Demon Avenger: +30 HP% at either level, which is Lv 1's
-// 50% for 180 s of every 300 s (its probe comes to 30.000 HP% points). No other class gains damage.
-const EPHENIA_HP_PCT = 30;
+// Ephenia's soul (A Queenly Fragrance) on Demon Avenger, the same at either level: worth 22.97 HP% points
+// on this engine's Demon Avenger stat (MapleScouter's result with it on reads +1.468% damage). No other
+// class gains damage.
+const EPHENIA_HP_PCT = 22.97;
 // Ruin Force Shield: 10% final damage (its probe reads exactly 1.100). Genesis weapon: 10% too.
 const RUIN_FORCE_SHIELD_FD = 1.1;
 const GENESIS_FD = 1.1;
-// Classes whose final attack skills the artifact's Final Attack damage boosts.
-const FINAL_ATTACK_CLASSES = new Set(["hero", "paladin", "dark_knight", "arch_mage_f_p", "arch_mage_i_l", "bishop", "bow_master", "marksman",
-  "blade_master", "buccaneer", "corsair", "aran", "evan", "mercedes", "demon_avenger", "battle_mage", "wild_hunter", "blaster", "mihile", "ren"]);
+// The artifact's Final Attack damage (up to 30) boosts final attack skills only, so each class gains its own
+// share: total damage gained at 30, measured per class from MapleScouter (linear in the level). Other classes gain nothing.
+const FINAL_ATTACK_GAIN: Record<string, number> = { hero: 0.00286, paladin: 0.00059, dark_knight: 0.00064, arch_mage_f_p: 0.00153, arch_mage_i_l: 0.00175, bishop: 0.00152, bow_master: 0.00232, marksman: 0.00073, blade_master: 0.00189, buccaneer: 0.00147, corsair: 0.00231, aran: 0.00095, evan: 0.00039, mercedes: 0.0025, demon_avenger: 0.00085, battle_mage: 0.00103, wild_hunter: 0.00762, blaster: 0.00202, mihile: 0.00131, ren: 0.00137 };
 // Summon duration: only Lara's damage moves with it, linear from 0 and flat somewhere between 42
 // (measured still rising) and 82 (measured same as 42), so 42 is used as the cap.
 const SUMMON_CAP = 42;
@@ -285,10 +310,16 @@ export function hexaAt(spline: EngineSpline, target: number): number {
   }
   return lo;
 }
-// A cooldown table's bonus for s seconds at no-cooldown HEXA h0, linear between rows, held at the ends.
+// A cooldown table's bonus for s seconds at no-cooldown HEXA h0, linear between rows, held at the top
+// end. Below the first row the first two rows' slope carries on (MapleScouter's bonus keeps growing
+// on weaker sheets).
 export function tableBonus(rows: CooldownRow[], s: number, h0: number): number {
   const i = rows.findIndex((r) => r.h0 >= h0);
-  if (i <= 0) return rows[i === 0 ? 0 : rows.length - 1].bonus[s];
+  if (i < 0) return rows[rows.length - 1].bonus[s];
+  if (i === 0) {
+    const [a, b] = rows;
+    return a.bonus[s] + ((h0 - a.h0) / (b.h0 - a.h0)) * (b.bonus[s] - a.bonus[s]);
+  }
   const a = rows[i - 1], b = rows[i];
   return a.bonus[s] + ((h0 - a.h0) / (b.h0 - a.h0)) * (b.bonus[s] - a.bonus[s]);
 }
@@ -409,8 +440,16 @@ export function createEngine(data: EngineData) {
   // 3rd common node (their curves are straight lines, but start at a different share per class and
   // core: Marksman's 3rd node keeps 30.4% at Lv 1, Ren's 14.3%), else Ren's curve, bent to the
   // class's Lv 5 / 15 / 25 spot probes when those were measured.
-  function coreShareSpot(classId: string, core: CoreKey, level: number): number {
-    const r = classes[classId].cores, L = Math.max(0, Math.min(30, Math.round(level)));
+  // withGroup false leaves out coreGroupScale: a measured pair applies its group's factor to the pair as a whole.
+  function coreShareSpot(classId: string, core: CoreKey, level: number, withGroup = true): number {
+    const L = Math.max(0, Math.min(30, Math.round(level))), kept = probedShareSpot(classId, core, L);
+    const c = classes[classId];
+    if ((!c.coreLevelScale && !c.coreGroupScale) || kept >= 1) return kept;
+    const group = withGroup ? levelTable(c.coreGroupScale?.[coreGroup(core)], L) * levelTable(c.coreGroupScale?.[core], L) : 1;
+    return 1 - (1 - kept) * levelTable(c.coreLevelScale, L) * group;
+  }
+  function probedShareSpot(classId: string, core: CoreKey, L: number): number {
+    const r = classes[classId].cores;
     if (L === 0 || L === 30) return L / 30;
     const z = r[`${core}=0`], has = (k: number) => r[`${core}=${k}`] !== undefined, at = (k: number) => (r[`${core}=${k}`] - z) / (1 - z);
     // Some cores carry no value in MapleScouter for some classes (Lynn's 4th Mastery core).
@@ -463,23 +502,25 @@ export function createEngine(data: EngineData) {
   function coreRatio(classId: string, hexa: ScouterHexa): number {
     const r = classes[classId].cores, shares = multiplierShares(classId);
     const L = Object.fromEntries(HEXA_CORES.map((c) => [c, Math.max(0, Math.min(30, Math.round(n(hexa[c]))))])) as Record<CoreKey, number>;
-    const single = (c: CoreKey, level: number) => 1 - (1 - r[`${c}=0`]) * (1 - coreShareSpot(classId, c, level));
+    const single = (c: CoreKey, level: number, withGroup = true) => 1 - (1 - r[`${c}=0`]) * (1 - coreShareSpot(classId, c, level, withGroup));
     const nodes = (c: CoreKey, level: number): [number, number][] => {
       if (level === 0) return [[0, 1]];
-      const f1 = coreShareSpot(classId, c, 1), t = f1 >= 1 ? 1 : (coreShareSpot(classId, c, level) - f1) / (1 - f1);
+      const f1 = coreShareSpot(classId, c, 1, false), t = f1 >= 1 ? 1 : (coreShareSpot(classId, c, level, false) - f1) / (1 - f1);
       return [[1, 1 - t], [30, t]];
     };
+    const groupScale = classes[classId].coreGroupScale;
     let add = 1;
     for (const c of HEXA_CORES) if (!(c in shares)) add -= 1 - single(c, L[c]);
     for (const { a, b, grid } of corePairs(classId)) {
       if (a in shares || b in shares) continue;
       const at = (i: number, j: number) => {
         if (i === 30 && j === 30) return 1;
-        if (j === 30) return single(a, i);
-        return i === 30 ? single(b, j) : grid[`${i},${j}`];
+        if (j === 30) return single(a, i, false);
+        return i === 30 ? single(b, j, false) : grid[`${i},${j}`];
       };
       let pair = 0;
       for (const [i, wi] of nodes(a, L[a])) for (const [j, wj] of nodes(b, L[b])) pair += wi * wj * at(i, j);
+      if (groupScale && coreGroup(a) === coreGroup(b)) pair = 1 - (1 - pair) * levelTable(groupScale[coreGroup(a)], (L[a] + L[b]) / 2);
       add += pair - (single(a, L[a]) + single(b, L[b]) - 1);
     }
     let scale = 1, flat = 0;
@@ -534,7 +575,8 @@ export function createEngine(data: EngineData) {
       // Explorers, Heroes and Resistance; the other classes don't change), so main stat % scales it.
       stat: (Object.entries(c.stat.hiddenBase) as [StatKey, number][]).reduce((t, [k, hidden]) => t + w[k] * (hidden + b.allStat + (k === "main" ? b.hp : 0)) * mult(k), 0)
         + STAT_KEYS.reduce((t, k) => t + w[k] * (statField(s, k, "Base") * mult(k) + statField(s, k, "Abs")), 0)
-        + c.stat.flat + c.stat.perLevel * n(s.level) * mult("main"),
+        + c.stat.flat + c.stat.perLevel * n(s.level) * mult("main")
+        + (c.stat.sqrtMain ?? 0) * Math.sqrt(Math.max(0, statField(s, "main", "Base") * mult("main") + statField(s, "main", "Abs"))),
       flatAtk: c.flatAtk + n(s.atkBase) + b.flatAtk + coreAtt(classId, u.hexa),
       atkPct: c.atkPct + (n(s.atkPercent) + b.atkPct + soulAtkPct(u) + contAtt(u)) / 100 + restraintPts(c.restraint, u),
       // Buff duration keeps damage buffs up longer, so it adds damage % points.
@@ -556,7 +598,7 @@ export function createEngine(data: EngineData) {
         * (1 + c.perSummonDuration * Math.min(SUMMON_CAP, n(s.summonPersistTime)))
         // Artifact final attack: only measured on Ren (30 -> +0.136%), assumed linear and the same
         // on the other classes with final attack skills; nothing on the rest.
-        * (FINAL_ATTACK_CLASSES.has(classId) ? 1 + (0.00136 * n(s.artifact_finalAttack)) / 30 : 1)
+        * (1 + ((FINAL_ATTACK_GAIN[classId] ?? 0) * n(s.artifact_finalAttack)) / 30)
         // Below Lv 260 everything does 3% less, flat (the same at 200 and 259).
         * (!normal && n(s.level) < 260 ? 0.97 : 1),
     };
