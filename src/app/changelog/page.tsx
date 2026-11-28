@@ -14,7 +14,7 @@ const CHANGELOG: ChangelogEntry[] = [
   {
     date: "2026-11-28",
     changes: [
-      { type: "changed", text: "Reworked how the Scouter figure and Boss Clear are calculated, so they're now much more accurate for weaker characters, HEXA cores at different levels, Cooldown Reduction and class-specific boss differences." },
+      { type: "changed", text: "Reworked how the Scouter figure and Boss Clear are calculated, fixing large gaps for weaker characters, HEXA cores at different levels, Cooldown Reduction and class-specific boss differences." },
     ],
   },
   {
