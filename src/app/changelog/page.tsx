@@ -17,6 +17,7 @@ const CHANGELOG: ChangelogEntry[] = [
       { type: "changed", text: "Reworked how the Scouter figure and Boss Clear are calculated, fixing large gaps for weaker characters, HEXA cores at different levels, Cooldown Reduction and class-specific boss differences." },
       { type: "changed", text: "Updated the Boss Crystal Tracker for v272: Easy Cygnus is gone, and Hard Hilla, Chaos Pink Bean and Normal Cygnus moved out of the weekly list now that they're daily bosses." },
       { type: "added", text: "The Daily Tracker now includes Hard Hilla, Chaos Pink Bean and Normal Cygnus as daily bosses." },
+      { type: "added", text: "The HEXA Skills tool's leveling guide now includes Lethe." },
     ],
   },
   {
