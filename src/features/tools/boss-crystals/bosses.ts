@@ -26,11 +26,11 @@ export const DEFAULT_MAX_PARTY = 6;
 // haku.network `ui/boss` icon by id (ids from `manifests/v268/boss.json`).
 const icon = bossIconUrl;
 
+// v272 made Hard Hilla, Chaos Pink Bean and Normal Cygnus daily bosses and removed Easy Cygnus, so they
+// left this weekly list. Saves from before v272 had their rows first; loadState maps those away.
+export const PRE_V272_REMOVED = ["Hilla (Hard)", "Pink Bean (Chaos)", "Cygnus (Easy)", "Cygnus (Normal)"];
+
 export const BOSSES: Boss[] = [
-  { name: "Hilla (Hard)", icon: icon("3"), meso: 56250000, preset: ["cra", "akechi", "nlomien"] },
-  { name: "Pink Bean (Chaos)", icon: icon("11"), meso: 64000000, preset: ["cra", "akechi", "nlomien"] },
-  { name: "Cygnus (Easy)", icon: icon("12"), meso: 45562500, shared: ["Cygnus (Normal)"] },
-  { name: "Cygnus (Normal)", icon: icon("12"), meso: 72250000, shared: ["Cygnus (Easy)"], preset: ["cra", "akechi", "nlomien"] },
   { name: "Crimson Queen (Chaos)", icon: icon("6"), meso: 81000000, preset: ["cra", "akechi", "nlomien"] },
   { name: "Von Bon (Chaos)", icon: icon("5"), meso: 81000000, preset: ["cra", "akechi", "nlomien"] },
   { name: "Pierre (Chaos)", icon: icon("4"), meso: 81000000, preset: ["cra", "akechi", "nlomien"] },

@@ -517,7 +517,7 @@ function BossSelectionDialog({
       >
         {BOSS_GROUPS.map((group) => (
           <div key={group.label}>
-            {group.bossIndices.length > 1 && group.label !== "Cygnus" && (
+            {group.bossIndices.length > 1 && (
               <div style={bcBossGroupLabelStyle(theme)}>
                 {group.label}
               </div>
